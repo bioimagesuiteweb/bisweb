@@ -12,7 +12,9 @@ tools, and desktop and web applications. In addition the code is
 modular/componentized and may be useful as a basis for other applications as well.
 
 The software is currently in late beta version. A fully working `demo` version
-can be found at [bisweb.yale.edu/demo](bisweb.yale.edu/demo).
+can be found at [bisweb.yale.edu/demo](bisweb.yale.edu/demo) or at
+[https://bioimagesuiteweb.github.io/webapp/](https://bioimagesuiteweb.github.io/webapp/).
+
 
 For developer documentation please look in the [doc](doc) directory of this
 repository, starting with [doc/README.md](doc/README.md).
