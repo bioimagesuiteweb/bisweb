@@ -172,7 +172,7 @@ them. I tend to create a directory called "bisweb" in my home directory.
 
     cd ~
     mkdir bisweb
-    git clone https://git.yale.edu/BioImageSuite/javascript bisweb
+    git clone https://github.com/bioimagesuiteweb/bisweb.git bisweb
 
 We will move this repository to github _very soon_.
 
