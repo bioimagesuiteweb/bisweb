@@ -1,0 +1,13 @@
+{
+    "module": "projectImage",
+    "params": {
+        "mode": "project",
+        "sigma": 0,
+        "axis": "y",
+        "gradsigma": 4.000000000000001,
+        "flip": false,
+        "window": 3,
+        "threshold": 1,
+        "debug": false
+    }
+}

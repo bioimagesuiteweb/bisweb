@@ -1,0 +1,75 @@
+{
+    "bisformat": "BisDataObjectCollection",
+    "filename": "testdata/test_motion_correction__test_motion_correction__mot.json",
+    "comments": [
+        {
+            "ModuleOutput": {
+                "command ": "/usr/bin/node /home/xenios/javascript/biscpplib/js/bin/bisweb.js motionCorrection -t testdata/test_motion_correction.nii.gz -r testdata/test_motion_correction.nii.gz --doreslice true -o /home/xenios/winhome/Desktop/motionparams.json --resliced /home/xenios/winhome/Desktop/motioncorrect.nii.gz",
+                "output": "output",
+                "parameters": {
+                    "doreslice": true,
+                    "norm": true,
+                    "intscale": 1,
+                    "numbins": 1024,
+                    "extrasmoothing": 0,
+                    "metric": "CC",
+                    "optimization": "HillClimb",
+                    "stepsize": 0.25,
+                    "levels": 3,
+                    "iterations": 32,
+                    "resolution": 1.01,
+                    "debug": false,
+                    "steps": 4,
+                    "refno": 0
+                },
+                "systeminfo": {
+                    "os": "linux",
+                    "arch": "x64",
+                    "hostname": "z230pc",
+                    "user": "xenios",
+                    "date": "2018-04-02T20:13:52.377Z",
+                    "nodeversion": "v8.9.4",
+                    "biswebversion": "04/02/2018"
+                }
+            }
+        }
+    ],
+    "numitems": 5,
+    "itemlist": [
+        {
+            "type": "transform",
+            "data": "{\"bisformat\":\"BisLinearTransformation\",\"filename\":\"identity.matr\",\"comments\":[],\"matrix\":[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]],\"parameters\":[0,0,0,0,0,0]}",
+            "metadata": {
+                "frame": 0
+            }
+        },
+        {
+            "type": "transform",
+            "data": "{\"bisformat\":\"BisLinearTransformation\",\"filename\":\"identity.matr\",\"comments\":[],\"matrix\":[[0.9049245715141296,-0.425572007894516,0,61.54688262939453],[0.425572007894516,0.9049245715141296,0,-39.15327453613281],[0,0,1,0],[0,0,0,1]],\"parameters\":[2.651249885559082,-1.7674999237060547,0,0,0,-25.186874389648438]}",
+            "metadata": {
+                "frame": 1
+            }
+        },
+        {
+            "type": "transform",
+            "data": "{\"bisformat\":\"BisLinearTransformation\",\"filename\":\"identity.matr\",\"comments\":[],\"matrix\":[[0.9049245715141296,0.425572007894516,0,-39.15327453613281],[-0.425572007894516,0.9049245715141296,0,61.54688262939453],[0,0,1,0],[0,0,0,1]],\"parameters\":[-1.7674999237060547,2.651249885559082,0,0,0,25.186874389648438]}",
+            "metadata": {
+                "frame": 2
+            }
+        },
+        {
+            "type": "transform",
+            "data": "{\"bisformat\":\"BisLinearTransformation\",\"filename\":\"identity.matr\",\"comments\":[],\"matrix\":[[0.9081797003746033,0,-0.41858047246932983,34.94537353515625],[0,1,0,0],[0.41858047246932983,0,0.9081797003746033,-43.92396545410156],[0,0,0,1]],\"parameters\":[0.8837499618530273,0,-1.7674999237060547,0,-24.744998931884766,0]}",
+            "metadata": {
+                "frame": 3
+            }
+        },
+        {
+            "type": "transform",
+            "data": "{\"bisformat\":\"BisLinearTransformation\",\"filename\":\"identity.matr\",\"comments\":[],\"matrix\":[[1,0,0,-37.55937194824219],[0,1,0,0],[0,0,1,0],[0,0,0,1]],\"parameters\":[-37.55937576293945,0,0,0,0,0]}",
+            "metadata": {
+                "frame": 4
+            }
+        }
+    ]
+}

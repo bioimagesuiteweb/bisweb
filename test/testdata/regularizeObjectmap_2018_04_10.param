@@ -1,0 +1,10 @@
+{
+    "module": "regularizeObjectmap",
+    "params": {
+        "smoothness": 16,
+        "convergence": 0.2,
+        "iterations": 8,
+        "internaliterations": 4,
+        "debug": false
+    }
+}

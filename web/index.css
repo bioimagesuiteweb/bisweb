@@ -1,0 +1,18 @@
+
+.carousel-inner {
+    margin-top : 30px;
+    height: 550px;
+    min-height: 550px;
+}
+
+.item {
+    height : 500px;
+}
+
+.carousel-control {
+    z-index : 1000;
+    position : absolute;
+    height : 200px;
+    min-height: 200px;
+    top: 100px;
+}

@@ -1,0 +1,3 @@
+@echo off
+SET DIRNAME=%~dp0
+node.exe %DIRNAME%..\lib\bisweb.js @item@ %*

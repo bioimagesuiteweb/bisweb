@@ -1,0 +1,13 @@
+{
+    "module": "manualRegistration",
+    "params": {
+        "shifti": -3,
+        "shiftj": 2,
+        "shiftk": 4,
+        "rotatei": 4,
+        "rotatej": -2,
+        "rotatek": 1,
+        "scale": 102,
+        "debug": false
+    }
+}

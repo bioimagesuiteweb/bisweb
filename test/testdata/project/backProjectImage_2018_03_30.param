@@ -1,0 +1,11 @@
+{
+    "module": "backProjectImage",
+    "params": {
+        "axis": "y",
+        "flip": false,
+        "reduce" : 1,
+        "window": 8,
+        "threshold": 0.5,
+        "debug": false
+    }
+}

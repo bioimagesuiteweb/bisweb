@@ -1,0 +1,1003 @@
+# 1 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MSME.ppg"
+;****************************************************************
+;
+; Copyright (c) 2002
+; Bruker BioSpin MRI GmbH
+; D-76275 Ettlingen, Germany
+;
+; All Rights Reserved
+;
+; a RARE imaging experiment
+;
+;****************************************************************
+;
+;
+
+# 1 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MRI.include" 1
+;****************************************************************
+;
+; $Source: /pv/CvsTree/pv/gen/src/prg/methManag/PPG/Attic/MRI.include,v $
+;
+; Copyright (c) 2006
+; Bruker BioSpin MRI GmbH
+; D-76275 Ettlingen, Germany
+;
+; All Rights Reserved
+;
+;;****************************************************************
+;MRI.include
+
+# 1 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/Avance.incl" 1
+;Avance3aqs.incl
+;   for AV III with AQS IPSO
+;
+;avance-version (13/06/17)
+;
+;$CLASS=HighRes Incl
+;$COMMENT=
+# 170 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/Avance.incl"
+;$Id: Avance3aqs.incl,v 1.1.6.3 2015/03/05 16:37:14 uhei Exp $
+# 14 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MRI.include" 2
+
+define delay aqq
+define delay deparx
+define delay derxadc
+define delay rdepa
+
+# 21 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MRI.include"
+"aqq=dw*td"
+"rdepa=de-depa"
+"deparx=depa-derx"
+"derxadc=derx-deadc"
+
+
+; contents of De2.incl - usage for different hardware versions to 
+; be checked - intermediate solution to support Jobs
+define delay rde1
+# 31 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MRI.include"
+"rde1=de-de1"
+
+
+# 44 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MRI.include"
+; end of contents of De2.incl
+
+
+# 65 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MRI.include"
+	
+	
+
+
+# 74 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MRI.include"
+	
+
+
+# 128 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MRI.include"
+# 129 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MRI.include"
+   
+
+
+# 141 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MRI.include"
+	
+
+
+# 15 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MSME.ppg" 2
+
+preset off
+
+define delay denab
+"denab = d3 - de"
+# 21 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MSME.ppg"
+define delay d5m40u
+"d5m40u = d5 - 40u"
+
+define loopcounter lsize = {$ACQ_size[1]}
+"l1 = lsize +ds"
+
+# 1 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/PrepModulesHead.mod" 1
+;****************************************************************
+;
+; Copyright (c) 2003-2007
+; Bruker BioSpin MRI GmbH
+; D-76275 Ettlingen, Germany
+;
+; $Id: PrepModulesHead.mod,v 1.19 2012/01/20 10:19:48 wemch Exp $
+;
+; All Rights Reserved
+;
+; Declaration of pulseprogram parameters and subroutines for 
+; preparation  modules
+;
+; Must be included after MRI.include!
+;
+;****************************************************************
+# 18 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/PrepModulesHead.mod"
+;**** Fat Suppression ****
+
+# 1 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/FatSupDef.mod" 1
+;****************************************************************
+;
+; Copyright (c) 2002-2007
+; Bruker BioSpin MRI GmbH
+; D-76275 Ettlingen, Germany
+;
+; $Id: FatSupDef.mod,v 1.7 2013/07/05 14:15:26 sako Exp $
+;
+; All Rights Reserved
+;
+; FatSupDef.mod : Declaration of Fat Suppression Subroutine
+;
+;****************************************************************
+
+if (PVM_FatSupPerform == Yes)
+{
+  define pulse           fatSupPul   = {$PVM_FatSupRfLength}
+  define list<frequency> fatSupList  = {$PVM_FatSupFL}
+  
+  define delay fatSupRamp  = {$PVM_FatSupRampTime}
+  define delay fatSupAmp   = {$PVM_FatSupAmpEnable}
+  define delay fatSupGrad  = {$PVM_FatSupGradWait}
+  define delay fatSupSpoil = {$PVM_FatSupSpoilDur}
+# 25 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/FatSupDef.mod"
+  ; convert from ms to s
+  "fatSupRamp  = fatSupRamp  / 1000"
+  "fatSupAmp   = fatSupAmp   / 1000"
+  "fatSupGrad  = fatSupGrad  / 1000"
+  "fatSupSpoil = fatSupSpoil / 1000"
+}
+
+subroutine FatSup
+
+# 20 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/PrepModulesHead.mod" 2
+
+
+;**** Flow Saturation ****
+# 1 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/FlowSatDef.mod" 1
+;****************************************************************
+;
+; Copyright (c) 2005-2007
+; Bruker BioSpin MRI GmbH
+; D-76275 Ettlingen, Germany
+;
+; $Id: FlowSatDef.mod,v 1.7 2013/06/04 10:11:30 sako Exp $
+;
+; All Rights Reserved
+;
+; FlowSatDef.mod: Declaration of subroutines for Flow Saturation 
+; call
+; subr FlowSat()
+; subr FlowSatInit()
+; subr FlowSatInc()
+; 
+;****************************************************************
+
+if(PVM_InFlowSatOnOff == 1)
+{
+define list<frequency> modlis4 = {$PVM_InFlowSatFL}
+define list<grad_scalar> flowSatGrad={$PVM_InFlowSatGrad}
+define delay SfD0 = {$PVM_SfD0}
+define delay SfD1 = {$PVM_SfD1}
+define delay SfD2 = {$PVM_SfD2}
+
+define pulse SfP0 = {$PVM_SfP0}
+define loopcounter SfLp0 = {$PVM_SfLp0}
+}
+subroutine FlowSat
+subroutine FlowSatInc
+subroutine FlowSatInit
+# 24 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/PrepModulesHead.mod" 2
+
+
+;**** Inversion Pulse ****
+# 1 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/InvPulseDef.mod" 1
+;****************************************************************
+;
+; Copyright (c) 2002-2007
+; Bruker BioSpin MRI GmbH
+; D-76275 Ettlingen, Germany
+;
+; $Id: InvPulseDef.mod,v 1.2 2010/12/15 10:52:31 mah Exp $
+;
+; All Rights Reserved
+;
+; InvPulseDef.mod : Declaration of Inversion Pulse subroutine
+;
+; call
+; subr InvPulse()
+;
+;****************************************************************
+;   
+;       PVM_InvRFPulseArr      :  
+;     
+;       sp22            TPQQ[14].name : PVM_InvRFPulsePropertyArr[0].Filename
+;
+;       PVM_IpP0                      :  PVM_InvRFPulseArr[0].PulseLength
+;
+;       PVM_IpD2                      :  PVM_InvPulseDelay[0]
+;       PVM_IpD3                      :  PVM_InvPulseSpoilTime[0]
+;       PVM_IpD1                      :  CONFIG_amplifier _enable
+;       PVM_IpD0                      :  PVM_RampTime
+;
+
+if(PVM_InvPulseOnOff == 1)
+{
+define list<frequency>  modlis2= {$PVM_InvPulseOffsetHz}
+define delay IpD0 = {$PVM_IpD0}
+define delay IpD1 = {$PVM_IpD1}
+define delay IpD2 = {$PVM_IpD2}
+define delay IpD3 = {$PVM_IpD3}
+
+define pulse IpP0 = {$PVM_IpP0}
+}
+subroutine InvPulse
+# 28 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/PrepModulesHead.mod" 2
+
+
+;**** Magnetisation Transfer ****
+# 1 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MagTransDef.mod" 1
+;****************************************************************
+; $Source: /pv/CvsTree/pv/gen/src/prg/methManag/PPG/Attic/MagTransDef.mod,v $
+;
+; Copyright (c) 2005-2007
+; Bruker BioSpin MRI GmbH
+; D-76275 Ettlingen, Germany
+;
+; All Rights Reserved
+;
+; MagTransDef.mod: Declaration of subroutine for Magnetization 
+;                  transfer 
+; call
+; subr MagTrans()
+;
+; $Id: MagTransDef.mod,v 1.6.2.1 2015/03/24 14:30:00 sako Exp $
+;****************************************************************
+;**** Magnetisation Transfer Module ****
+
+
+if(PVM_MagTransOnOff)
+{
+define list<frequency> modlis3 = {$PVM_MagTransFL} 
+define delay MtD0 = {$PVM_MtD0}
+define delay MtD1 = {$PVM_MtD1}
+define delay MtD2 = {$PVM_MtD2}
+define delay MtD3 = {$PVM_MtD3}
+# 28 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MagTransDef.mod"
+define pulse MtP0 = {$PVM_MtP0}
+
+define loopcounter MtLp0 = {$PVM_MtLp0}
+}
+
+subroutine MagTrans
+# 32 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/PrepModulesHead.mod" 2
+
+
+;**** Saturation Pulse ****
+# 1 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/SatPulseDef.mod" 1
+;****************************************************************
+;
+; Copyright (c) 2002-2003
+; Bruker BioSpin MRI GmbH
+; D-76275 Ettlingen, Germany
+;
+; $Id: SatPulseDef.mod,v 1.3 2010/12/15 10:52:31 mah Exp $
+;
+; All Rights Reserved
+;
+; SatPulseDef.mod : Declaration of Saturation Pulse subroutines
+; call 
+; subr SatPulse()
+;
+;****************************************************************
+;   
+;    PVM_SatRFPulseArr      :  
+;     
+;       sp28            DPQQ[12].name : PVM_SatRFPulsePropertyArr[0].Filename
+;       sp29            DPQQ[13].name : PVM_SatRFPulsePropertyArr[1].Filename
+;       sp30            DPQQ[14].name : PVM_SatRFPulsePropertyArr[2].Filename
+;       sp31            DPQQ[15].name : PVM_SatRFPulsePropertyArr[3].Filename
+;
+;       PVM_SpP0                     :  PVM_SatRFPulseArr[0].PulseLength
+;       PVM_SpP1                     :  PVM_SatRFPulseArr[1].PulseLength
+;       PVM_SpP2                     :  PVM_SatRFPulseArr[2].PulseLength
+;       PVM_SpP3                     :  PVM_SatRFPulseArr[3].PulseLength
+;
+;       PVM_SpD2                     :  PVM_SatPulseDelay1[0]
+;       PVM_SpD6                     :  PVM_SatPulseSpoilTime[0]
+;       PVM_SpD10                    :  PVM_SatPulseDelay2[0]
+;       PVM_SpD3                     :  PVM_SatPulseSpoilTime[1]
+;       PVM_SpD7                     :  PVM_SatPulseDelay1[1]
+;       PVM_SpD11                    :  PVM_SatPulseDelay2[1]
+;       PVM_SpD4                     :  PVM_SatPulseDelay1[2]
+;       PVM_SpD8                     :  PVM_SatPulseSpoilTime[2]
+;       PVM_SpD12                    :  PVM_SatPulseDelay2[2]
+;       PVM_SpD5                     :  PVM_SatPulseDelay1[3]
+;       PVM_SpD9                     :  PVM_SatPulseSpoilTime[3]
+;       PVM_SpD13                    :  PVM_SatPulseDelay2[3]
+;
+
+if(PVM_SatPulseOnOff == 1)
+   {
+define list<frequency> modlis7 = {$PVM_SatPulseOffsetHz}
+
+define delay SpD0 = {$PVM_SpD0}
+define delay SpD1 = {$PVM_SpD1}
+define delay SpD2 = {$PVM_SpD2}
+define delay SpD3 = {$PVM_SpD3}
+define delay SpD4 = {$PVM_SpD4}
+define delay SpD5 = {$PVM_SpD5}
+define delay SpD6 = {$PVM_SpD6}
+define delay SpD7 = {$PVM_SpD7}
+define delay SpD8 = {$PVM_SpD8}
+define delay SpD9 = {$PVM_SpD9}
+define delay SpD10 = {$PVM_SpD10}
+define delay SpD11 = {$PVM_SpD11}
+define delay SpD12 = {$PVM_SpD12}
+define delay SpD13 = {$PVM_SpD13}
+define pulse SpP0 = {$PVM_SpP0}
+define pulse SpP1 = {$PVM_SpP1}
+define pulse SpP2 = {$PVM_SpP2}
+define pulse SpP3 = {$PVM_SpP3}
+# 66 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/SatPulseDef.mod"
+   }
+
+
+subroutine SatPulse
+# 36 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/PrepModulesHead.mod" 2
+
+
+;*** FOV Saturation ***
+# 1 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/FovSatDef.mod" 1
+;****************************************************************
+;
+; Copyright (c) 2002-2007
+; Bruker BioSpin MRI GmbH
+; D-76275 Ettlingen, Germany
+;
+; $Id: FovSatDef.mod,v 1.8 2013/08/06 08:09:43 sako Exp $
+;
+; All Rights Reserved
+;
+; FovSat.mod : Declaration of FOV Saturation subroutine
+; call: subr FovSat()
+;
+;****************************************************************
+
+
+if (PVM_FovSatOnOff == On)
+{
+  define pulse           fovSatPul   = {$PVM_FovSatRfLength}
+  define list<frequency> fovSatList  = {$PVM_FovSatFL}
+  
+  define delay fovSatRamp  = {$PVM_FovSatRampTime}
+  define delay fovSatAmp   = {$PVM_FovSatAmpEnable}
+  define delay fovSatGrad  = {$PVM_FovSatGradWait}
+  define delay fovSatSpoil = {$PVM_FovSatSpoilDur}
+# 27 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/FovSatDef.mod"
+  ; convert from ms to s
+  "fovSatRamp  = fovSatRamp  / 1000"
+  "fovSatAmp   = fovSatAmp   / 1000"
+  "fovSatGrad  = fovSatGrad  / 1000"
+  "fovSatSpoil = fovSatSpoil / 1000"  
+}
+
+subroutine FovSat
+
+# 53 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/FovSatDef.mod"
+; backwards compatibility
+subroutine SatSlices
+
+
+# 40 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/PrepModulesHead.mod" 2
+
+
+;**** Black Blood ****
+# 1 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/BlBloodDef.mod" 1
+;****************************************************************
+;
+; Copyright (c) 2007
+; Bruker BioSpin MRI GmbH
+; D-76275 Ettlingen, Germany
+;
+; $Id: BlBloodDef.mod,v 1.4 2013/06/04 10:11:30 sako Exp $
+;
+; All Rights Reserved
+;
+; BlBloodDef.mod : Declaration of Black blood  subroutine
+;
+; call
+; subr BlBlood(ph0) : Black blood preparation with RF phaselist
+;                     ph0
+;
+;****************************************************************
+
+if(PVM_BlBloodOnOff)
+{
+define list<frequency> modlis8 = {$PVM_BlBloodFL}
+define delay BlbD0 = {$PVM_BlbD0}
+define delay BlbD1 = {$PVM_BlbD1}
+define delay BlbD2 = {$PVM_BlbD2}
+define delay BlbD3 = {$PVM_BlbD3}
+
+define pulse BlbP0 = {$PVM_BlbP0}
+}
+subroutine BlBlood
+# 44 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/PrepModulesHead.mod" 2
+
+
+;**** Trigger ****
+# 1 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/TriggerDef.mod" 1
+;****************************************************************
+;
+; Copyright (c) 1998-2003
+; Bruker BioSpin MRI GmbH
+; D-76275 Ettlingen, Germany
+;
+; All Rights Reserved
+;
+; TriggerDef.mod - Trigger Module
+;
+;****************************************************************
+
+if (PVM_TriggerModule == On)
+{
+  define delay trigDur = {$PVM_TriggerDur}
+  define delay trigDel = {$PVM_TriggerDelay}
+
+  ; convert from ms to s
+  "trigDur = trigDur / 1000"
+  "trigDel = trigDel / 1000"
+}
+subroutine Trigger
+subroutine TriggerPhase
+subroutine TriggerSlice
+# 48 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/PrepModulesHead.mod" 2
+
+
+;**** Trigger Out ****
+# 1 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/TriggerOutDef.mod" 1
+;****************************************************************
+;
+; Copyright (c) 2003
+; Bruker BioSpin MRI GmbH
+; D-76275 Ettlingen, Germany
+;
+; All Rights Reserved
+; $Id: TriggerOutDef.mod,v 1.2 2013/07/05 14:15:26 sako Exp $
+;****************************************************************
+
+if (PVM_TriggerOutOnOff == On)
+{
+  define delay trigOutDur = {$PVM_TriggerOutDur}
+  define delay trigOutDel = {$PVM_TriggerOutDelay}
+
+  ; convert from ms to s
+  "trigOutDur = trigOutDur / 1000"
+  "trigOutDel = trigOutDel / 1000"
+}
+subroutine TriggerOut
+subroutine TriggerOutStart
+subroutine TriggerOutSlice
+subroutine TriggerOutVolume
+# 52 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/PrepModulesHead.mod" 2
+
+
+;**** Outer Volume Suppression ****
+# 1 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/WsOvsDef.mod" 1
+;****************************************************************
+;
+; Copyright (c) 2005-2007
+; Bruker BioSpin MRI GmbH
+; D-76275 Ettlingen, Germany
+;
+; $Id: WsOvsDef.mod,v 1.6 2013/07/08 08:33:32 josh Exp $
+;
+; All Rights Reserved
+;
+; WsOvsDef.mod: Declaration of water suppression and Outer 
+;               volume suppression subroutines
+;
+; call 
+; subr Ovs(ph0) ;  execution of OVS with ph0 phaselist
+;
+; subr WsOvs(ph0,ph1) : execution of OVS with ph0 and WS with ph1
+;                       phaselist
+;****************************************************************
+
+;**** OuterVolumeSuppression ****
+
+if(PVM_OvsOnOff == 1)
+{
+define list<frequency> Ovslist={$PVM_OvsFrequencyList}
+define delay OvsD0 = {$PVM_OvsD0}
+define delay OvsD1 = {$PVM_OvsD1}
+define pulse OvsP0 = {$PVM_OvsP0}
+}
+subroutine Ovs
+# 59 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/WsOvsDef.mod"
+;*** WaterSuppression Module with OVS ****
+
+if (PVM_WsMode)
+{
+
+define list<frequency> Wslist={$PVM_WsOffsetHz}
+define pulse WsP0 = {$PVM_WsP0}
+define pulse WsP1 = {$PVM_WsP1}
+define pulse WsP2 = {$PVM_WsP2}
+define delay WsNp0 
+"WsNp0 = WsP0"
+define delay WsNp1 
+"WsNp1 = WsP1"
+define delay WsNp2 
+"WsNp2 = WsP2"
+define list<delay> ChD1={$PVM_ChppgD1}
+define list<delay> ChD2={$PVM_ChppgD2}
+define list<delay> VpD1={$PVM_VpppgD1}
+define list<delay> VpD2={$PVM_VpppgD2}
+# 79 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/WsOvsDef.mod"
+}
+
+
+subroutine WsOvsMain
+subroutine WsOvs
+subroutine Ws
+# 56 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/PrepModulesHead.mod" 2
+
+
+;**** Solvent Suppression module ****
+# 1 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/WsSatDef.mod" 1
+;******************************************************************
+;
+; Copyright (c) 2002-2007
+; Bruker BioSpin MRI GmbH
+; D-76275 Ettlingen, Germany
+;
+; $Id: WsSatDef.mod,v 1.11 2013/08/23 08:37:06 josh Exp $ 
+;
+; All Rights Reserved
+;
+; WsSatDef.mod - Declaration of water suppression and FOV saturation 
+;                subroutines
+; call
+; subr WsSat(ph0) : execution of WS with ph0 phaselist and 
+;                   FOV saturation (as passed as argument)    
+;      
+;*******************************************************************
+
+
+; Definitions for WsPpgParams are included in WsOvsDef.mod
+subroutine WsSatMain
+subroutine WsSat
+# 60 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/PrepModulesHead.mod" 2
+
+
+;**** Selective Inversion Recovery ****
+# 1 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/SelSliceIrDef.mod" 1
+;****************************************************************
+;
+; Copyright (c) 2007
+; Bruker BioSpin MRI GmbH
+; D-76275 Ettlingen, Germany
+;
+; $Id: SelSliceIrDef.mod,v 1.5 2013/06/04 10:11:30 sako Exp $
+;
+; All Rights Reserved
+;
+; SelSliceIrDef.mod : declaration of slice Selective Inversion 
+;                     Recovery subroutine
+; call SliceSelIr()
+; 
+;
+;****************************************************************
+
+
+if(PVM_SelIrOnOff)
+{
+  define list<frequency> IrFL = {$PVM_SelIrFL} 
+  define delay IrD0 = {$PVM_SelIrD0}
+  define delay IrD1 = {$PVM_SelIrD1}
+  define delay IrD2 = {$PVM_SelIrD2}
+  define delay IrD3 = {$PVM_SelIrD3}
+  define delay IrD4 = {$PVM_SelIrD4}
+# 28 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/SelSliceIrDef.mod"
+  define pulse IrP0 = {$PVM_SelIrP0}
+  define loopcounter IrL0 = {$PVM_SelIrL0}
+}
+
+subroutine SliceSelIr
+
+# 64 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/PrepModulesHead.mod" 2
+
+
+;**** Tagging ****
+# 1 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/TagDef.mod" 1
+;****************************************************************
+;
+; Copyright (c) 2007
+; Bruker BioSpin MRI GmbH
+; D-76275 Ettlingen, Germany
+;
+; $Id: TagDef.mod,v 1.6 2013/06/05 12:55:35 sako Exp $
+;
+; All Rights Reserved
+;
+; TagDef.mod : Declaration of tagging subroutine
+; call
+; subr Tagging()
+;
+;****************************************************************
+
+if(PVM_TaggingOnOff)
+{
+define list<frequency> taggfreq={$PVM_TaggingFL}
+
+define delay TaggD0 = {$PVM_TaggingD0}
+define delay TaggD1 = {$PVM_TaggingD1}
+define delay TaggD2 = {$PVM_TaggingD2}
+define delay TaggD3 = {$PVM_TaggingD3}
+define delay TaggD4 = {$PVM_TaggingD4}
+define delay TaggD5 = {$PVM_TaggingD5}
+# 28 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/TagDef.mod"
+define pulse TaggP0 = {$PVM_TaggingP0}
+define loopcounter TaggL0 = {$PVM_TaggingLp0}
+}
+
+subroutine Tagging
+
+# 68 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/PrepModulesHead.mod" 2
+
+
+;**** Noe ****
+# 1 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/NoeDef.mod" 1
+;****************************************************************
+;
+; Copyright (c) 2007
+; Bruker BioSpin MRI GmbH
+; D-76275 Ettlingen, Germany
+;
+; $Id: NoeDef.mod,v 1.1 2007/07/02 14:26:00 mawi Exp $
+;
+; All Rights Reserved
+;
+; NoeDef.mod: Declaration of Nuclear Overhouser Enhancement 
+;             subroutine
+; call
+; subr Noe()
+;
+;****************************************************************
+
+if(PVM_NoeOnOff == On)
+{
+define delay NoeD0 = {$PVM_NoeD0}
+define delay NoeD1 = {$PVM_NoeD1}
+}
+
+subroutine Noe
+# 72 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/PrepModulesHead.mod" 2
+
+
+;**** Evolution ****
+# 1 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/EvolutionDef.mod" 1
+;****************************************************************
+;
+; Copyright (c) 1998-2003
+; Bruker BioSpin MRI GmbH
+; D-76275 Ettlingen, Germany
+;
+; All Rights Reserved
+;
+; EvolutionDef.mod - Evolution Module
+;
+;****************************************************************
+
+if (PVM_EvolutionOnOff == On)
+{
+  define delay       evolDel  = {$PVM_EvolutionDelay}
+  define list<delay> evolTime = {$PVM_EvolutionTime}
+}
+
+subroutine Evolution
+# 76 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/PrepModulesHead.mod" 2
+
+
+# 27 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MSME.ppg" 2
+# 29 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MSME.ppg"
+dccorr                                             \n                           \n if (CONFIG_preemp_type == GREAT_60)               \n {                                                 \n if (CONFIG_instrument_type != Avance_III)      \n {                                              \n 500m setnmr0|34|33|32                          \n }                                              \n else                                           \n {                                              \n 200u setnmr0|34|33|32                          \n }                                              \n }                                                 \n if (CONFIG_preemp_type == DPP_with_SW_Blanking)   \n {\n 10u ctrlgrad 0  \n 10u grad{(0)|(0)|(0) }	  \n 200u setnmr0|34|33|32     \n }\n if (CONFIG_preemp_type == DPP)  \n {    \n 10u groff \n }
+
+
+# 34 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MSME.ppg"
+grad_zero_for_gs <ACQ_spatial_phase_1, ACQ_spatial_phase_2>
+
+subr FlowSatInit
+;EXEC_begin FlowSatInit FlowSatInit()
+# 55 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/FlowSatDef.mod"
+ 
+if(PVM_InFlowSatOnOff == 1)
+   {
+
+        40u     modlis4.res
+        10u     flowSatGrad.res
+   }
+ 
+;EXEC_end   FlowSatInit
+# 36 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MSME.ppg"
+
+;pre-setting the ACQ_spatial_phase_1 counter for the dummy scans:
+decr,   dgrad ACQ_spatial_phase_1
+        lo to decr times DS
+# 42 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MSME.ppg"
+start,  10u
+
+subr TriggerPhase
+;EXEC_begin TriggerPhase TriggerPhase()
+# 45 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/TriggerDef.mod"
+ 
+  if (PVM_TriggerMode == per_PhaseStep)
+  {
+;EXEC_begin Trigger Trigger()
+# 23 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/TriggerDef.mod"
+ 
+  if (PVM_TriggerModule == On)
+  {
+    trigDur     
+  
+    if (CONFIG_instrument_type == Avance_III)
+    {
+      trigDur   trignl1
+      trigDur   trigpe3
+    }
+    else
+    {
+      trigDur
+      trigDur   trigpl1
+    }
+  
+    trigDur      
+    trigDel
+  }
+ 
+;EXEC_end   Trigger
+  }
+ 
+;EXEC_end   TriggerPhase
+# 44 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MSME.ppg"
+subr SliceSelIr
+;EXEC_begin SliceSelIr SliceSelIr()
+# 32 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/SelSliceIrDef.mod"
+ 
+  if(PVM_SelIrOnOff == On)
+  {
+    50u      IrFL.res
+    irloop19,  10u IrFL :f1
+    IrD4     grad_ramp{0, 0, PVM_SelIrGradAmp*100}
+    IrD3     gatepulse 1
+    (IrP0:sp42  ph0):f1
+    IrD4     grad_off
+    IrD0     grad_matrix.inc IrFL.inc
+    lo to irloop19 times IrL0
+    IrD2     grad_ramp{0, 0, PVM_SelIrSpoilAmp}
+    IrD4     grad_off IrFL.res
+    IrD1     grad_matrix.res
+  }
+ 
+;EXEC_end   SliceSelIr
+# 45 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MSME.ppg"
+	
+slice,  10u	fq8(receive):f1
+	20u     reload B0
+
+;----------------------------------preparation modules -------------
+subr TriggerSlice
+;EXEC_begin TriggerSlice TriggerSlice()
+# 53 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/TriggerDef.mod"
+ 
+  if (PVM_TriggerMode == per_Slice)
+  {
+;EXEC_begin Trigger Trigger()
+# 23 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/TriggerDef.mod"
+ 
+  if (PVM_TriggerModule == On)
+  {
+    trigDur     
+  
+    if (CONFIG_instrument_type == Avance_III)
+    {
+      trigDur   trignl1
+      trigDur   trigpe3
+    }
+    else
+    {
+      trigDur
+      trigDur   trigpl1
+    }
+  
+    trigDur      
+    trigDel
+  }
+ 
+;EXEC_end   Trigger
+  }
+ 
+;EXEC_end   TriggerSlice
+# 51 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MSME.ppg"
+subr FlowSat
+;EXEC_begin FlowSat FlowSat()
+# 32 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/FlowSatDef.mod"
+ 
+if(PVM_InFlowSatOnOff == 1)
+{
+
+flow120,  SfD0   	modlis4:f1   	grad_ramp{0, 0, flowSatGrad*100}
+        SfD1    gatepulse 1
+        (SfP0:sp44):f1
+        SfD2            	grad_ramp{0, 0, PVM_InFlowSatSpoilGrad}
+        SfD0	        	grad_off
+}
+  
+;EXEC_end   FlowSat
+# 52 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MSME.ppg"
+subr FovSat
+;EXEC_begin FovSat FovSat()
+# 34 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/FovSatDef.mod"
+ 
+  if (PVM_FovSatOnOff == On)
+  {
+         PVM_FovSatGrad.res
+         fovSatList.res
+
+    fov21, fovSatRamp   grad_ramp<object_coord>{PVM_FovSatGrad[]}
+         fovSatAmp    fovSatList:f1 gatepulse 1
+         (fovSatPul    :sp41):f1
+         fovSatSpoil  fovSatList.inc  grad_ramp{0, 0, PVM_FovSatSpoilAmp}
+         PVM_FovSatGrad.inc        
+    lo to fov21 times PVM_FovSatNSlices
+         
+         fovSatRamp   grad_off
+         fovSatGrad
+  }
+ 
+;EXEC_end   FovSat
+# 53 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MSME.ppg"
+subr MagTrans
+;EXEC_begin MagTrans MagTrans()
+# 33 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MagTransDef.mod"
+ 
+
+  if(PVM_MagTransOnOff)
+  {
+ 
+      50u  modlis3.res
+      MtD1 
+mtc22,MtD2 modlis3:f1 gatepulse 1
+      MtP0:sp43:f1 
+      lo to mtc22 times MtLp0
+      MtD3  		grad_ramp{0, 0, PVM_MagTransSpoiler}
+      MtD0       	groff
+      100u
+  }
+ 
+;EXEC_end   MagTrans
+# 54 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MSME.ppg"
+subr FatSup
+;EXEC_begin FatSup FatSup()
+# 32 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/FatSupDef.mod"
+ 
+  if (PVM_FatSupPerform == Yes)
+  {
+    fatSupAmp       fatSupList:f1 gatepulse 1
+    (fatSupPul       :sp40):f1
+    fatSupSpoil     grad_shape {0, 0, PVM_FatSupSpoilAmp}
+    fatSupRamp      grad_off
+    fatSupGrad
+  }
+ 
+;EXEC_end   FatSup
+# 55 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MSME.ppg"
+;---------------------------------- excitation ---------------------
+# 58 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MSME.ppg"
+        d9	grad_ramp{g1, 0, g1}           ;TR spoiler
+	d3 	grad_ramp{0, 0, g0} fq1:f1     ;slice on
+        d8	gatepulse 1
+	(p0:sp0 ph0):f1                        ;exc pulse
+
+        d2      grad_ramp{g2, 0, g7}           ;read deph, slice spoil 
+	d1 	grad_off                       ;TE-fill 1
+
+;---------------------------------- refocusing  -----------------	    
+echo,	d3      grad_ramp{0, 0, g0} gatepulse 1  ;slice on
+# 69 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MSME.ppg"
+        (p1:sp1 ph1):f1                          ;pi-pulse
+
+        d5      grad_ramp{g8,  ACQ_spatial_phase_1*g4, g3-ACQ_spatial_phase_2*g6} ;enc+slice-reph
+        d6      grad_off                         ;TE-fill 2a
+
+	denab   grad_ramp{g5, 0, 0}              ;read-on + acq
+        rdepa						 \n deparx     adc ph0  syrec fqatofqb:f1 \n derxadc     ph1:r  			 \n deadc        
+	aqq	cpdngs17:f1
+# 78 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MSME.ppg"
+        d6      grad_off                         ;TE-fill 2b
+        d5m40u  grad_ramp{g8, -ACQ_spatial_phase_1*g4, g3+ACQ_spatial_phase_2*g6} ;enc+slice-reph2
+	40u     eoscnp
+lo to echo  times NECHOES
+
+
+;--------------------------------- flipback ------------------------
+# 86 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MSME.ppg"
+if( PVM_FlipBackOnOff == On)
+{
+
+	d3      grad_ramp{0, 0, g0} gatepulse 1   ;slice on
+        (p1:sp1 ph1):f1                           ;pi-pulse
+	d1 	grad_off   
+        d2      grad_ramp{g2, 0, 0}               ;read-dephase
+	d3      grad_ramp{0, 0, g0} gatepulse 1   ;slice on
+	(p0:sp0 ph3):f1                           ;flipback
+}	
+	d3 	grad_off
+;----------------------------------slice loop-----------------------
+	grad_matrix.inc
+	d0
+subr FlowSatInc
+;EXEC_begin FlowSatInc FlowSatInc()
+# 45 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/FlowSatDef.mod"
+ 
+if(PVM_InFlowSatOnOff == 1)
+{
+
+         5u 	modlis4.inc 
+          
+}
+ 
+;EXEC_end   FlowSatInc
+# 100 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MSME.ppg"
+	lo to slice times NSLICES
+	d10    
+	2.5u	ipp0
+	2.5u	ipp3
+;----------------------------------averaging loop-------------------
+	lo to start times NA
+	2.5u	rpp0
+	2.5u	rpp3
+;----------------------------------2d loop--------------------------
+if( ACQ_dim >= 2 )
+{
+        ACQ_spatial_phase_1.inc
+	lo to start times l1    ; ACQ_size[1] (+DS in first run)	
+}
+        "l1=lsize"            
+;----------------------------------3d loop--------------------------
+if( ACQ_dim >= 3 )
+{
+	ACQ_spatial_phase_2.inc
+	lo to start times ACQ_size[2]
+}
+        5u
+        lo to start times NAE
+        5u
+subr Evolution
+;EXEC_begin Evolution Evolution()
+# 19 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/EvolutionDef.mod"
+ 
+  if (PVM_EvolutionOnOff == On)
+  {
+    if (PVM_EvolutionMode == Variable_Delay)
+    {
+      evolTime
+      evolTime.inc
+    }
+    else
+    {
+      evolDel
+    }
+  }
+ 
+;EXEC_end   Evolution
+# 125 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MSME.ppg"
+        5u
+        lo to start times NR
+if (ACQ_scan_type != Scan_Experiment) \n{ \n goto start \n}
+
+exit
+# 132 "/opt/PV6.0.1/exp/stan/nmr/lists/pp/MSME.ppg"
+ph0 = 0 2
+ph1 = 1
+ph3 = 2 0
+

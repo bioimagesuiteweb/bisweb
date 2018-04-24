@@ -1,0 +1,462 @@
+{
+    "testlist" : [
+	{ 
+	    "command" : "smoothImage --sigma 2.0 --radiusfactor 2.0 --debug true --inmm true --input testdata/MNI_2mm_resliced.nii.gz ",
+	    "test"    : "--test_target testdata/newtests/goldsmooth2sigma.nii.gz",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "smoothImage --sigma 2.0 --radiusfactor 2.0 --debug false --inmm false --input testdata/MNI_2mm_resliced.nii.gz",
+	    "test"    : "--test_target testdata/newtests/goldsmooth2sigma.nii.gz",
+	    "result"  : false,
+	    "dopython": true
+	},
+	{
+	    "command" : "smoothImage --sigma 2.0 --paramfile smoothParam.json --input testdata/MNI_2mm_resliced.nii.gz",
+	    "test"    : "--test_target testdata/newtests/goldsmooth2sigma.nii.gz",
+	    "result"  : true,
+	    "dopython": false
+	},
+	{
+	    "command" : "computeCorrelation -i testdata/ButterWorthOutput.csv --zscore false",
+	    "test"    : "--test_target testdata/newtests/goldcorrelation.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "regressOut -i testdata/newtests/drift_input.csv -r testdata/newtests/drift.csv",
+	    "test"    : "--test_target testdata/simpleregress.csv --test_type matrix --test_comparison ssd --test_threshold 0.1",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "regressOut -i testdata/newtests/driftw_input.csv -r testdata/newtests/drift2.csv -w testdata/newtests/drift_weights.matr",
+	    "test"    : "--test_target testdata/newtests/weighted_drift_gold.csv --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "regressOut -i testdata/newtests/driftw_input.csv -r testdata/newtests/drift2.csv",
+	    "test"    : "--test_target testdata/newtests/weighted_drift_gold.csv --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : false,
+	    "dopython": true
+	},
+	{
+	    "command" : "regressGlobal -i testdata/newtests/global_inp.matr --debug true ",
+	    "test"    : "--test_target testdata/newtests/global_out.matr --test_type matrix --test_comparison ssd --test_threshold 0.001",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "butterworthFilter -i testdata/newtests/but_low_inp.matr  --type  low --tr 1.0 --low 0.15",
+	    "test"    : "--test_target testdata/newtests/but_low_out.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "butterworthFilter -i testdata/newtests/but_low_inp.matr  --type  high --tr 1.0 --high 0.03 --debug true",
+	    "test"    : "--test_target testdata/newtests/but_high_out.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "butterworthFilter -i testdata/newtests/but_low_inp.matr  --type  band --tr 1.0 --high 0.03 --low 0.15",
+	    "test"    : "--test_target testdata/newtests/but_band_out.matr --test_type matrix --test_comparison ssd --test_threshold 0.4 --debug true" ,
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "computeROI -i testdata/simple4dtest.nii.gz -r testdata/simpleroi.nii.gz --debug true",
+	    "test"    : "--test_target testdata/newtests/simpleroi_result.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "thresholdImage -i testdata/MNI_6mm.nii.gz --low 128.0 --high 1000 --debug 1",
+	    "test"    : "--test_target testdata/newtests/MNI_thr.nii.gz ",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "prepareRegistration -i testdata/MNI_6mm.nii.gz  --sigma 2.0 --numbins 32 --debug 1",
+	    "test"    : "--test_target testdata/newtests/MNI_6mm_prepare.nii.gz",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "extractFrame -i testdata/simple4dtest.nii.gz --frame 3 --debug true",
+	    "test"    : "--test_target testdata/simple4dtest_frame3.nii.gz",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "extractFrame -i testdata/simple4dtest.nii.gz --frame 5 --debug true",
+	    "test"    : "--test_target testdata/simple4dtest_frame3.nii.gz",
+	    "result"  : false,
+	    "dopython": true
+	},
+	{
+	    "command" : "extractFrame -i testdata/simple4dtest.nii.gz --frame 3 --usewasm false --debug true",
+	    "test"    : "--test_target testdata/simple4dtest_frame3.nii.gz",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "extractSlice -i testdata/ras_avg152T1_LR_nifti.nii.gz --plane 2 --slice 18 --frame 0 --component 0 --debug true",
+	    "test"    : "--test_target testdata/ras152_slicek18.nii.gz",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "extractSlice -i testdata/ras_avg152T1_LR_nifti.nii.gz --plane 1 --slice 54 --frame 0 --component 0 --debug true",
+	    "test"    : "--test_target testdata/ras152_slicej54.nii.gz",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "extractSlice -i testdata/ras_avg152T1_LR_nifti.nii.gz --plane 0 --slice 56",
+	    "test"    : "--test_target testdata/ras152_slicei56.nii.gz",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "normalizeImage -i testdata/avg152T1_LR_nifti.nii.gz --perlow 0.1 --perhigh 0.75 --maxval 255 --debug true",
+	    "test"    : "--test_target testdata/avg152T1_LR_nifti_normalized.nii.gz",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "resliceImage -i testdata/avg152T1_LR_nifti.nii.gz -r testdata/avg152T1_LR_nifti_resampled.nii.gz -x testdata/newtests/reslice_transform.matr --interpolation 1 --debug true --backgroundvalue 0.0",
+	    "test"    : "--test_target testdata/avg152T1_LR_nifti_resampled_resliced.nii.gz --test_threshold 0.999 --test_type image --test_comparison cc",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "resliceImage -i testdata/avg152T1_LR_nifti.nii.gz -r testdata/avg152T1_LR_nifti_resampled.nii.gz -x testdata/newtests/reslice_transform.matr --interpolation 0 --debug false --backgroundvalue 0.0",
+	    "test"    : "--test_target testdata/avg152T1_LR_nifti_resampled_resliced_NN.nii.gz --test_threshold 0.999 --test_type image --test_comparison cc",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "resliceImage -i testdata/avg152T1_LR_nifti.nii.gz -r testdata/avg152T1_LR_nifti_resampled.nii.gz -x testdata/newtests/reslice_transform.matr --interpolation 3 --debug false --backgroundvalue 0.0 --forcefloat true",
+	    "test"    : "--test_target testdata/avg152T1_LR_nifti_resampled_resliced_Cubic.nii.gz --test_threshold 0.999 --test_type image --test_comparison cc",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "resampleImage -i testdata/avg152T1_LR_nifti.nii.gz --interpolation 1 --debug false --backgroundvalue 0.0 --xsp 2.5 --ysp 4.5 --zsp 6.5",
+	    "test"    : "--test_target testdata/avg152T1_LR_nifti_resampled.nii.gz --test_threshold 0.999 --test_type image --test_comparison cc",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "computeGLM -i testdata/glm/Test_allruns.nii.gz --regressor testdata/glm/Test_bis_glm.matr --debug true --numtasks 3",
+	    "test"    : "--test_target testdata/glm/test_beta.nii.gz",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "segmentImage -i testdata/MNI_2mm_orig.nii.gz --numclasses 3 --maxsigmaratio 0.2 --smoothness 0.0 --robust false --debug true --smoothhisto false",
+	    "test"    : "--test_target testdata/histo_MNI_2mm_orig.nii.gz --test_comparison cc --test_threshold 0.99",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "segmentImage -i testdata/MNI_2mm_orig.nii.gz --numclasses 3 --maxsigmaratio 0.2 --smoothness 100.0 --robust false --debug true --smoothhisto false --mrfiterations 8 --noisesigma2 1000.0 --internaliterations 12",
+	    "test"    : "--test_target testdata/mrf_MNI_2mm_orig.nii.gz --test_comparison cc --test_threshold 0.98",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "sliceBiasCorrect -i testdata/MNI_T1_1mm_resampled_biasz.nii.gz --axis z --threshold 0.0002 --returnbiasfield false --debug true",
+	    "test"    : "--test_target testdata/MNI_T1_1mm_resampled_biasz_corrected.nii.gz --test_comparison cc --test_threshold 0.95",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "sliceBiasCorrect -i testdata/MNI_T1_1mm_resampled_triplebias.nii.gz --axis triple --threshold 0.0002 --returnbiasfield false --debug true",
+	    "test"    : "--test_target testdata/MNI_T1_1mm_resampled.nii.gz --test_comparison cc --test_threshold 0.85",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "clusterThreshold -i testdata/glm/Test_deconvolve_stats_beta.nii.gz --threshold 1.0 --size 10 --debug 1 --outclustno false",
+	    "test"    : "--test_target testdata/glm/cluster_thr.nii.gz",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "clusterThreshold -i testdata/glm/Test_deconvolve_stats_beta.nii.gz --threshold 1.0 --size 10 --debug 1 --outclustno true",
+	    "test"    : "--test_target testdata/glm/clusterno.nii.gz",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "displacementField -i testdata/MNI_6mm.nii.gz -x testdata/MNI_2mm_scaled.grd --debug true",
+	    "test"    : "--test_target testdata/MNI_6mm_scaleddispfield.nii.gz",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "displacementField  -i testdata/MNI_6mm.nii.gz -x testdata/resample.matr -y testdata/resample.matr  --debug true",
+	    "test"    : "--test_target testdata/combo_disp.nii.gz",
+	    "result"  : true,
+	    "dopython": false
+	},
+	{
+	    "command" : "displacementField  -i testdata/MNI_6mm.nii.gz -x testdata/resample.matr -y testdata/complex.grd --debug true",
+	    "test"    : "--test_target testdata/combo_disp2.nii.gz --test_threshold 0.1",
+	    "result"  : true,
+	    "dopython": false
+	},
+	{
+	    "command" : "displacementField  -i testdata/MNI_6mm.nii.gz -x testdata/resample.matr -y testdata/complex.grd -z testdata/2dreslice.matr --debug true",
+	    "test"    : "--test_target testdata/combo_disp3.nii.gz --test_threshold 0.1",
+	    "result"  : true,
+	    "dopython": false
+	},
+	{
+	    "command" : "approximateField -i testdata/MNI_6mm_scaleddispfield.nii.gz --spacing 30.0 --debug false",
+	    "test"    : "--test_target testdata/newtests/fitgrid.grd --test_type gridtransform",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "linearRegistration -t testdata/MNI_2mm_orig.nii.gz -r testdata/newtests/reg_input.nii.gz --intscale 2 --numbins  64 --levels  3 --extrasmoothing -1.0 --optimization ConjugateGradient --stepsize 0.5 --metric NMI --steps 1 --iterations 20 --mode Affine --resolution 1.1 --debug true",
+	    "test"    : "--test_target testdata/newtests/linear.matr --test_type matrixtransform ",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "linearRegistration -t testdata/MNI_2mm_orig.nii.gz -r testdata/newtests/reg_input.nii.gz --intscale 2 --numbins  64 --levels  3 --extrasmoothing -1.0 --optimization ConjugateGradient --stepsize 0.5 --metric NMI --steps 1 --iterations 20 --mode Affine --resolution 1.1 --debug true",
+	    "test"    : "--test_target testdata/newtests/reg_input.nii.gz --test_type registration --test_comparison cc --test_threshold 0.99",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "nonlinearRegistration -r testdata/MNI_2mm_orig.nii.gz -t testdata/MNI_2mm_scaled.nii.gz --intscale 1 --numbins  64 --levels  2  --optimization ConjugateGradient --stepsize 1.0 --metric NMI --steps 1 --iterations 5 --cps  40.0 --resolution 2.0 --lambda  0.1",
+	    "test"    : "--test_target testdata/MNI_2mm_orig.nii.gz --test_type registration --test_comparison cc --test_threshold 0.83",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "nonlinearRegistration -r testdata/MNI_2mm_orig.nii.gz -t testdata/MNI_2mm_scaled.nii.gz --intscale 1 --numbins  64 --levels  1 --optimization ConjugateGradient --stepsize 1.0 --metric NMI --steps 1 --iterations 1 --cps  40.0 --resolution  3.0 --lambda  0.1 --linearmode None --debug false",
+	    "test"    : "--test_target testdata/MNI_2mm_orig.nii.gz --test_type registration --test_comparison cc --test_threshold 0.77",
+	    "result"  : false,
+	    "dopython": true
+	},
+	{
+	    "command" : "resliceImage -i testdata/ras152_slicek18.nii.gz -r testdata/ras152_slicek18.nii.gz -x testdata/2dreslice.matr  --interpolation 0  --debug true --forcefloat true --debug true",
+	    "test"    : "--test_target testdata/ras152_slicek18_ras152_slicek18_resl_NN.nii.gz  --test_comparison cc --test_threshold 0.99",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "resliceImage -i testdata/ras152_slicek18.nii.gz -r testdata/ras152_slicek18.nii.gz -x testdata/2dreslice.matr  --interpolation 1  --debug true --forcefloat true --debug true",
+	    "test"    : "--test_target testdata/ras152_slicek18_ras152_slicek18_resl_LN.nii.gz  --test_comparison cc --test_threshold 0.99",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "resliceImage -i testdata/ras152_slicek18.nii.gz -r testdata/ras152_slicek18.nii.gz -x testdata/2dreslice.matr  --interpolation 3  --debug true --forcefloat true --debug true",
+	    "test"    : "--test_target testdata/ras152_slicek18_ras152_slicek18_resl_CC.nii.gz  --test_comparison cc --test_threshold 0.99",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "motionCorrection  -t testdata/test_motion_correction.nii.gz  -r testdata/test_motion_correction.nii.gz --doreslice true",
+	    "test"    : "--test_target testdata/motioncorrection_result.nii.gz --test_type registration",
+	    "result"  : true,
+	    "dopython": false
+	},
+	{
+	    "command" : "motionCorrection  -t testdata/test_motion_correction.nii.gz  -r testdata/test_motion_correction.nii.gz --doreslice true",
+	    "test"    : "--test_target testdata/test_motion_correction.nii.gz --test_type registration",
+	    "result"  : false,
+	    "dopython": false
+	},
+	{
+	    "command" : "flipImage --flipi 1 --debug true -i testdata/MNI_6mm.nii.gz",
+	    "test"    : "--test_target testdata/MNI_6mm_flipx.nii.gz",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "flipImage --flipj 1 --debug false -i testdata/MNI_6mm.nii.gz",
+	    "test"    : "--test_target testdata/MNI_6mm_flipy.nii.gz",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "flipImage --flipk 1 --debug false -i testdata/MNI_6mm.nii.gz",
+	    "test"    : "--test_target testdata/MNI_6mm_flipz.nii.gz",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "flipImage --flipi 1 --flipk 1 --debug true -i testdata/MNI_6mm.nii.gz",
+	    "test"    : "--test_target testdata/MNI_6mm_flipxz.nii.gz",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "cropImage --i0 -5 --i1 15 --di 2 --j0 4 --j1 24 --dj 3 --k0 2 --k1 11 --dk 4 --t0 9 --t1 179 --dt 10 --input testdata/glm/Test_allruns.nii.gz --debug true",
+	    "test"    : "--test_target testdata/glm/Test_allruns_crop.nii.gz",
+	    "result"  : true,
+	    "dopython": true
+	},
+        { 
+	    "command" : "blankImage --i0 10 --i1 73  --j0 20 --j1 67 --k0 12 --k1 44 --input testdata/newtests/reg_input.nii.gz --debug true",
+	    "test"    : "--test_target testdata/newtests/reg_input_blank.nii.gz",
+	    "result"  : true,
+	    "dopython": true
+        },
+        { 
+	    "command" : "binaryThresholdImage --low 250 --high 256 --debug true --input testdata/morphology/morphology_base.nii.gz",
+	    "test"    : "--test_target testdata/morphology/mask_250.nii.gz",
+	    "result"  : true,
+	    "dopython": false
+	},
+        { 
+	    "command" : "binaryThresholdImage --low 128 --high 256 --debug true --input testdata/morphology/morphology_base.nii.gz",
+	    "test"    : "--test_target testdata/morphology/mask_128.nii.gz",
+	    "result"  : true,
+	    "dopython": false
+	},
+        { 
+	    "command" : "morphologyFilter --radius 1 --mode median --debug true --input testdata/morphology/mask_128.nii.gz",
+	    "test"    : "--test_target testdata/morphology/median_mask_128.nii.gz --test_comparison cc --test_threshold 0.98",
+	    "result"  : true,
+	    "dopython": false
+	},
+        { 
+	    "command" : "morphologyFilter --radius 1 --mode connect --seedi 25 --seedj 54 --seedk 47 --debug true --input testdata/morphology/mask_250.nii.gz",
+	    "test"    : "--test_target testdata/morphology/connect_25_54_47.nii.gz",
+	    "result"  : true,
+	    "dopython": false
+	},
+        { 
+	    "command" : "morphologyFilter --radius 1 --mode erode --debug true --input testdata/morphology/connect_25_54_47.nii.gz",
+	    "test"    : "--test_target testdata/morphology/erode_connect.nii.gz",
+	    "result"  : true,
+	    "dopython": false
+	},
+        { 
+	    "command" : "morphologyFilter --radius 1 --mode dilate --debug true --input testdata/morphology/erode_connect.nii.gz",
+	    "test"    : "--test_target testdata/morphology/dilate_erode_connect.nii.gz",
+	    "result"  : true,
+	    "dopython": false
+	},
+        { 
+	    "command" : "combineImages --mode add  --debug true --input testdata/combine/tt_1.nii.gz --second testdata/combine/tt_2.nii.gz",
+	    "test"    : "--test_target testdata/combine/tt_add.nii.gz",
+	    "result"  : true,
+	    "dopython": false
+	},
+        { 
+	    "command" : "combineImages --mode subtract  --debug true --input testdata/combine/tt_1.nii.gz --second testdata/combine/tt_2.nii.gz",
+	    "test"    : "--test_target testdata/combine/tt_subtract.nii.gz",
+	    "result"  : true,
+	    "dopython": false
+	},
+        { 
+	    "command" : "combineImages --mode multiply  --debug true --input testdata/combine/tt_1.nii.gz --second testdata/combine/tt_2.nii.gz",
+	    "test"    : "--test_target testdata/combine/tt_multiply.nii.gz",
+	    "result"  : true,
+	    "dopython": false
+	},
+        { 
+	    "command" : "combineImages --mode divide  --debug true --input testdata/combine/tt_1.nii.gz --second testdata/combine/tt_2.nii.gz",
+	    "test"    : "--test_target testdata/combine/tt_divide.nii.gz",
+	    "result"  : true,
+	    "dopython": false
+	},
+        { 
+	    "command" : "combineImages --mode add --weight1 2.0 --weight2 3.0  --debug true --input testdata/combine/tt_1.nii.gz --second testdata/combine/tt_2.nii.gz",
+	    "test"    : "--test_target testdata/combine/tt_add23.nii.gz",
+	    "result"  : true,
+	    "dopython": false
+	},
+        { 
+	    "command" : "combineImages --mode divide --weight1 4.0 --weight2 2.0  --debug true --input testdata/combine/tt_1.nii.gz --second testdata/combine/tt_2.nii.gz",
+	    "test"    : "--test_target testdata/combine/tt_divide42.nii.gz",
+	    "result"  : true,
+	    "dopython": false
+	},
+        { 
+	    "command" : "process4DImage --operation mean  --debug true --input testdata/combine/4d_inp.nii.gz",
+	    "test"    : "--test_target testdata/combine/4d_mean.nii.gz",
+	    "result"  : true,
+	    "dopython": false
+	},
+        { 
+	    "command" : "process4DImage --operation meansigma  --debug true --input testdata/combine/4d_inp.nii.gz",
+	    "test"    : "--test_target testdata/combine/4d_meansigma.nii.gz",
+	    "result"  : true,
+	    "dopython": false
+	},
+        { 
+	    "command" : "process4DImage --operation rms  --debug true --input testdata/combine/4d_inp.nii.gz",
+	    "test"    : "--test_target testdata/combine/4d_rms.nii.gz",
+	    "result"  : true,
+	    "dopython": false
+	},
+        { 
+	    "command" : "process4DImage --operation max  --debug true --input testdata/combine/4d_inp.nii.gz",
+	    "test"    : "--test_target testdata/combine/4d_max.nii.gz",
+	    "result"  : true,
+	    "dopython": false
+	},
+        { 
+	    "command" : "process4DImage --operation min  --debug true --input testdata/combine/4d_inp.nii.gz",
+	    "test"    : "--test_target testdata/combine/4d_min.nii.gz",
+	    "result"  : true,
+	    "dopython": false
+	},
+        {
+	    "command" : "projectImage --paramfile testdata/project/projectImage_2018_03_30.param --input testdata/project/project_base.nii.gz",
+	    "test"    : "--test_target testdata/project/project_2mm.nii.gz",
+	    "result"  : true,
+	    "dopython": false
+	},
+        {
+	    "command" : "backProjectImage --paramfile testdata/project/backProjectImage_2018_03_30.param --input testdata/project/project_2mm.nii.gz --target testdata/project/backproject_threed.nii.gz",
+	    "test"    : "--test_target testdata/project/backproject.nii.gz",
+	    "result"  : true,
+	    "dopython": false
+	},
+        { 
+	    "command" : "maskImage --threshold 0.5 --debug true -i testdata/morphology/morphology_base.nii.gz -m testdata/morphology/mask_128.nii.gz",
+	    "test"    : "--test_target testdata/morphology/morphology_base__mask_128__msk.nii.gz",
+	    "result"  : true,
+	    "dopython": false
+	},
+        {
+            "command" : "manualRegistration --paramfile testdata/morphology/manualRegistration_2018_03_30.param -r testdata/morphology/morphology_base_float.nii.gz -t testdata/morphology/morphology_base_float.nii.gz",
+            "test"    : "--test_target testdata/morphology/manualreg.nii.gz --test_type registration --test_comparison cc --test_threshold 0.999",
+            "result"  : true,
+            "dopython": false
+        },
+        {
+	    "command" : "resliceImage -i testdata/MNI_6mm.nii.gz --r testdata/MNI_6mm.nii.gz -x testdata/resample.matr -y testdata/2dreslice.matr --interpolation 1 --debug true --backgroundvalue 0.0",
+	    "test"    : "--test_target testdata/dualreslice.nii.gz --test_threshold 0.999 --test_type image --test_comparison cc",
+	    "result"  : true,
+	    "dopython": false
+	},
+        {
+	    "command" : "motionReslice -r testdata/MNI_2mm_orig.nii.gz -i testdata/test_motion_correction.nii.gz -x testdata/2dreslice.matr --res 1.0 -m testdata/motionparams.json --debug true",
+	    "test"    : "--test_target testdata/atlasmotion.nii.gz --test_threshold 0.999 --test_type image --test_comparison cc",
+	    "result"  : true,
+	    "dopython": false
+	},
+        {
+            "command" : "regularizeObjectmap --smoothness 16 --convergence 0.2 --iterations 8 --internaliterations 4 --debug true -i testdata/thr_obj.nii.gz",
+            "test"    : "--test_target testdata/thr_regobj.nii.gz",
+            "result"  : true,
+            "dopython": true
+        }
+    ]
+}
+
+

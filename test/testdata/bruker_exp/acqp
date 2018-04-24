@@ -1,0 +1,564 @@
+##TITLE=Parameter List, ParaVision 6.0.1
+##JCAMPDX=4.24
+##DATATYPE=Parameter Values
+##ORIGIN=Bruker BioSpin MRI GmbH
+##OWNER=dc
+$$ 2016-09-21 15:44:36.515 -0400  dc@CZC5467V67
+$$ /opt/PV6.0.1/data/dc/20160921_145526_Test_CSI_work_1_1/15/acqp
+$$ process /opt/PV6.0.1/prog/mod/acq_out
+##$PULPROG=( 32 )
+<MSME.ppg>
+##$GRDPROG=( 16 )
+<>
+##$ACQ_experiment_mode=SingleExperiment
+##$ACQ_PexSelect=0
+##$ACQ_load_shim_set_list=No
+##$ACQ_user_filter=No
+$$ @vis= PULPROG GRDPROG ACQ_experiment_mode ACQ_load_shim_set_list
+##$ACQ_DS_enabled=Yes
+##$ACQ_switch_pll_enabled=No
+##$ACQ_preload=0
+##$ACQ_branch_preload=( 10, 2 )
+1000000 1000000 1000000 1000000 1000000 1000000 1000000 1000000 1000000 
+1000000 1000000 1000000 1000000 1000000 1000000 1000000 1000000 1000000 500 
+500
+$$ @vis= ACQ_user_filter ACQ_DS_enabled ACQ_switch_pll_enabled ACQ_preload
+##$ACQ_jobs_size=0
+##$ACQ_jobs=( 1 )
+(0, 1, 0, 1, 64, 100, 0, 0)
+##$ACQ_dim=2
+##$ACQ_dim_desc=( 2 )
+Spatial Spatial
+##$ACQ_size=( 2 )
+256 128
+##$ACQ_ns_list_size=1
+$$ @vis= ACQ_branch_preload ACQ_jobs_size ACQ_dim ACQ_dim_desc ACQ_size
+##$ACQ_ns=1
+##$ACQ_ns_list=( 1 )
+1
+##$ACQ_phase_factor=1
+##$ACQ_scan_size=One_scan
+##$NI=25
+$$ @vis= ACQ_ns_list_size ACQ_ns ACQ_ns_list ACQ_phase_factor ACQ_scan_size
+##$NA=1
+##$NAE=1
+##$NR=1
+##$DS=1
+##$D=( 64 )
+0.023535 0.00034 0.00256 0.0002 0 0.00247 0.0002 0 2.5e-05 0.001 1e-05 
+0.00256 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+##$P=( 64 )
+2100 1700 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+##$PLW=( 64 )
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+##$SPPEX=( 64 )
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+##$ACQ_RfShapes=( 64 )
+(<$ExcPulse1Shape>, 0.406611333011538, 0, 0.5, 0, 100 100 100 100 100 100 100 
+100, 0 0 0 0 0 0 0 0) (<$RefPulse1Shape>, 4.86492167373222, 0, 0, 0, 100 100 
+100 100 100 100 100 100, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 
+0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 
+0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 
+0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 
+0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 
+0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) 
+(<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 
+0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 
+0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 
+0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 
+0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0,
+ 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 
+0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 
+0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 
+0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 
+0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 
+0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 
+0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 
+0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) 
+(<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 
+0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 
+0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 
+0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 
+0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0,
+ 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 
+0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 
+0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<$PVM_FatSupPulShape>, 
+0.311075653484771, 0, 0.5, 0, 100 100 100 100 100 100 100 100, 0 0 0 0 0 0 0 
+0) (<sech.exc>, 0.538244727070112, 0, 0.5, 0, 100 100 100 100 100 100 100 100,
+ 0 0 0 0 0 0 0 0) (<$PVM_SelIrPulShape>, 4.7445265951439, 0, 0, 0, 100 100 
+100 100 100 100 100 100, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 
+0 0 0 0 0 0 0 0) (<$PVM_FlowSatPulShape>, 0.91487549927596, 0, 0.5, 0, 100 
+100 100 100 100 100 100 100, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 
+0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>
+, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 
+0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0)
+ (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 
+0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 
+0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 
+0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 
+0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 
+0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 
+0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 
+0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 
+0 0 0 0 0 0 0 0) (<>, 0, 0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0) (<>, 0, 
+0, 0.5, 0, 0 0 0 0 0 0 0 0, 0 0 0 0 0 0 0 0)
+##$SW_h=50000
+##$SW=100.037479362719
+##$FW=0
+##$RG=101
+##$AQ_mod=qdig
+##$DR=21
+##$PAPS=QP
+##$PH_ref=0
+$$ @vis= NI NA NAE NR DS D P PLW ACQ_RfShapes SW_h SW RG AQ_mod DR PAPS
+##$BF1=499.812673395222
+##$SFO1=499.812673395222
+##$O1=0
+##$ACQ_O1_list_size=25
+##$ACQ_O1_list=( 25 )
+-24000 -20000 -16000 -12000 -8000 -4000 0 4000 8000 12000 16000 20000 24000 
+-22000 -18000 -14000 -10000 -6000 -2000 2000 6000 10000 14000 18000 22000
+##$ACQ_O1B_list_size=25
+##$ACQ_O1B_list=( 25 )
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+$$ @vis= PH_ref BF1 SFO1 O1 ACQ_O1_list_size ACQ_O1_list ACQ_O1B_list_size
+##$BF2=499.8
+##$SFO2=499.8
+##$O2=0
+##$ACQ_O2_list_size=1
+##$ACQ_O2_list=( 1 )
+0
+##$BF3=499.8
+##$SFO3=499.8
+##$O3=0
+##$ACQ_O3_list_size=1
+$$ @vis= ACQ_O1B_list BF2 SFO2 O2 ACQ_O2_list_size ACQ_O2_list BF3 SFO3 O3
+##$ACQ_O3_list=( 1 )
+0
+##$BF4=499.8
+##$SFO4=499.8
+##$O4=0
+##$BF5=499.8
+##$SFO5=499.8
+##$O5=0
+##$BF6=499.8
+##$SFO6=499.8
+##$O6=0
+##$BF7=499.8
+##$SFO7=499.8
+$$ @vis= ACQ_O3_list_size ACQ_O3_list BF4 SFO4 O4 BF5 SFO5 O5 BF6 SFO6 O6 BF7
+##$O7=0
+##$BF8=499.8
+##$SFO8=499.8
+##$O8=0
+##$NUC1=( 8 )
+<1H>
+##$NUC2=( 8 )
+<off>
+##$NUC3=( 8 )
+<off>
+##$NUC4=( 8 )
+<off>
+##$NUC5=( 8 )
+<off>
+##$NUC6=( 8 )
+<off>
+##$NUC7=( 8 )
+<off>
+##$NUC8=( 8 )
+<off>
+##$NUCLEUS=( 8 )
+<1H>
+##$ACQ_Routing=RouteDefinedByCoil
+##$ACQ_vd_list_size=1
+$$ @vis= SFO7 O7 BF8 SFO8 O8 NUC1 NUC2 NUC3 NUC4 NUC5 NUC6 NUC7 NUC8 NUCLEUS
+##$ACQ_vd_list=( 1 )
+1e-06
+##$ACQ_vp_list_size=1
+##$ACQ_vp_list=( 1 )
+1e-06
+##$ACQ_protocol_name=( 64 )
+<MSME>
+$$ @vis= ACQ_vd_list_size ACQ_vd_list ACQ_vp_list_size ACQ_vp_list
+##$ACQ_scan_name=( 64 )
+<MSME Start Phase Enc plus 1 (E15)>
+##$ACQ_method=( 40 )
+<Bruker:MSME>
+##$ACQ_completed=Yes
+##$ACQ_pipe_status=Wrapup
+$$ @vis= ACQ_protocol_name ACQ_scan_name ACQ_method ACQ_completed
+##$ACQ_scans_completed=0
+##$ACQ_nr_completed=1
+##$ACQ_total_completed=3200
+$$ @vis= ACQ_pipe_status ACQ_scans_completed ACQ_nr_completed
+##$ACQ_word_size=_32_BIT
+##$NECHOES=1
+##$ACQ_n_echo_images=1
+##$ACQ_n_movie_frames=1
+$$ @vis= ACQ_total_completed ACQ_word_size NECHOES ACQ_n_echo_images
+##$ACQ_echo_descr=( 1, 20 )
+<>
+##$ACQ_movie_descr=( 1, 20 )
+<>
+##$ACQ_fov=( 2 )
+2.5 2.5
+##$ACQ_read_ext=1
+$$ @vis= ACQ_n_movie_frames ACQ_echo_descr ACQ_movie_descr ACQ_fov
+##$ACQ_slice_angle=( 1 )
+0
+##$ACQ_slice_orient=Arbitrary_Oblique
+##$ACQ_patient_pos=Head_Prone
+##$ACQ_read_offset=( 25 )
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+$$ @vis= ACQ_read_ext ACQ_slice_angle ACQ_slice_orient ACQ_patient_pos
+##$ACQ_phase1_offset=( 25 )
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+##$ACQ_phase2_offset=( 25 )
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+##$ACQ_slice_sepn=( 1 )
+1
+##$ACQ_slice_sepn_mode=Contiguous
+$$ @vis= ACQ_read_offset ACQ_phase1_offset ACQ_phase2_offset ACQ_slice_sepn
+##$ACQ_slice_thick=1
+##$ACQ_slice_offset=( 25 )
+-12 -11 -10 -9 -8 -7 -6 -5 -4 -3 -2 -1 0 1 2 3 4 5 6 7 8 9 10 11 12
+##$ACQ_obj_order=( 25 )
+0 2 4 6 8 10 12 14 16 18 20 22 24 1 3 5 7 9 11 13 15 17 19 21 23
+##$ACQ_flip_angle=90
+$$ @vis= ACQ_slice_sepn_mode ACQ_slice_thick ACQ_slice_offset ACQ_obj_order
+##$ACQ_flipback=No
+##$ACQ_echo_time=( 1 )
+10
+##$ACQ_inter_echo_time=( 1 )
+10
+##$ACQ_recov_time=( 1 )
+995
+$$ @vis= ACQ_flip_angle ACQ_flipback ACQ_echo_time ACQ_inter_echo_time
+##$ACQ_repetition_time=( 1 )
+1000
+##$ACQ_scan_time=0
+##$ACQ_temporal_delay=( 1 )
+0
+##$ACQ_time=<2016-09-21T15:42:23,884-0400>
+$$ @vis= ACQ_recov_time ACQ_repetition_time ACQ_scan_time ACQ_temporal_delay
+##$ACQ_time_points=( 1 )
+0
+##$ACQ_abs_time=(1474486943, 884, -240)
+##$ACQ_operator=( 16 )
+<dc>
+##$ACQ_RF_power=0
+##$ACQ_transmitter_coil=( 16 )
+<>
+$$ @vis= ACQ_time ACQ_time_points ACQ_abs_time ACQ_operator ACQ_RF_power
+##$ACQ_contrast_agent=( 20 )
+<>
+##$ACQ_trigger_enable=No
+##$ACQ_institution=( 48 )
+<Yale University>
+$$ @vis= ACQ_transmitter_coil ACQ_contrast_agent ACQ_trigger_enable
+##$ACQ_station=( 64 )
+<BioSpec 117 / 20>
+##$ACQ_system_order_number=( 24 )
+<10213998>
+##$ACQ_sw_version=( 65 )
+<PV 6.0.1>
+##$ACQ_grad_str_X=0
+$$ @vis= ACQ_institution ACQ_station ACQ_system_order_number ACQ_sw_version
+##$ACQ_grad_str_Y=0
+##$ACQ_grad_str_Z=0
+##$ACQ_position_X=0
+##$ACQ_position_Y=0
+$$ @vis= ACQ_grad_str_X ACQ_grad_str_Y ACQ_grad_str_Z ACQ_position_X
+##$ACQ_position_Z=0
+##$BYTORDA=little
+##$INSTRUM=( 64 )
+<spect>
+##$ACQ_fit_function_name=( 32 )
+<t2vtr>
+##$ACQ_adc_overflow=( 1 )
+No
+$$ @vis= ACQ_position_Y ACQ_position_Z BYTORDA INSTRUM ACQ_fit_function_name
+##$GRPDLY=35.9937744140625
+##$FRQLO3=0
+##$ACQ_CalibratedRG=( 1, 1 )
+100.66
+##$FQ1LIST=( 16 )
+<ACQ_O1_list>
+##$FQ2LIST=( 16 )
+<ACQ_O2_list>
+$$ @vis= ACQ_adc_overflow GRPDLY FRQLO3 ACQ_CalibratedRG ACQ_INFO FQ1LIST
+##$FQ3LIST=( 16 )
+<ACQ_O3_list>
+##$FQ8LIST=( 16 )
+<ACQ_O1B_list>
+##$SPW=( 64 )
+0.406611333011538 4.86492167373222 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.311075653484771 0.538244727070112 
+4.7445265951439 0 0.91487549927596 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+##$SPOAL=( 64 )
+0.5 0 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 
+0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 
+0.5 0.5 0.5 0 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 
+0.5 0.5 0.5 0.5 0.5
+##$SPOFFS=( 64 )
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+##$SPNAM0=( 64 )
+<$ExcPulse1Shape>
+##$SPNAM1=( 64 )
+<$RefPulse1Shape>
+##$SPNAM2=( 64 )
+<>
+##$SPNAM3=( 64 )
+<>
+##$SPNAM4=( 64 )
+<>
+$$ @vis= FQ2LIST FQ3LIST FQ8LIST SPW SPOAL SPOFFS SPNAM0 SPNAM1 SPNAM2 SPNAM3
+##$SPNAM5=( 64 )
+<>
+##$SPNAM6=( 64 )
+<>
+##$SPNAM7=( 64 )
+<>
+##$SPNAM8=( 64 )
+<>
+##$SPNAM9=( 64 )
+<>
+##$SPNAM10=( 64 )
+<>
+##$SPNAM11=( 64 )
+<>
+##$SPNAM12=( 64 )
+<>
+##$SPNAM13=( 64 )
+<>
+$$ @vis= SPNAM4 SPNAM5 SPNAM6 SPNAM7 SPNAM8 SPNAM9 SPNAM10 SPNAM11 SPNAM12
+##$SPNAM14=( 64 )
+<>
+##$SPNAM15=( 64 )
+<>
+##$SPNAM16=( 64 )
+<>
+##$SPNAM17=( 64 )
+<>
+##$SPNAM18=( 64 )
+<>
+##$SPNAM19=( 64 )
+<>
+##$SPNAM20=( 64 )
+<>
+##$SPNAM21=( 64 )
+<>
+$$ @vis= SPNAM13 SPNAM14 SPNAM15 SPNAM16 SPNAM17 SPNAM18 SPNAM19 SPNAM20
+##$SPNAM22=( 64 )
+<>
+##$SPNAM23=( 64 )
+<>
+##$SPNAM24=( 64 )
+<>
+##$SPNAM25=( 64 )
+<>
+##$SPNAM26=( 64 )
+<>
+##$SPNAM27=( 64 )
+<>
+##$SPNAM28=( 64 )
+<>
+##$SPNAM29=( 64 )
+<>
+$$ @vis= SPNAM21 SPNAM22 SPNAM23 SPNAM24 SPNAM25 SPNAM26 SPNAM27 SPNAM28
+##$SPNAM30=( 64 )
+<>
+##$SPNAM31=( 64 )
+<>
+##$SPNAM32=( 64 )
+<>
+##$SPNAM33=( 64 )
+<>
+##$SPNAM34=( 64 )
+<>
+##$SPNAM35=( 64 )
+<>
+##$SPNAM36=( 64 )
+<>
+##$SPNAM37=( 64 )
+<>
+$$ @vis= SPNAM29 SPNAM30 SPNAM31 SPNAM32 SPNAM33 SPNAM34 SPNAM35 SPNAM36
+##$SPNAM38=( 64 )
+<>
+##$SPNAM39=( 64 )
+<>
+##$SPNAM40=( 64 )
+<$PVM_FatSupPulShape>
+##$SPNAM41=( 64 )
+<sech.exc>
+##$SPNAM42=( 64 )
+<$PVM_SelIrPulShape>
+##$SPNAM43=( 64 )
+<>
+##$SPNAM44=( 64 )
+<$PVM_FlowSatPulShape>
+##$SPNAM45=( 64 )
+<>
+$$ @vis= SPNAM37 SPNAM38 SPNAM39 SPNAM40 SPNAM41 SPNAM42 SPNAM43 SPNAM44
+##$SPNAM46=( 64 )
+<>
+##$SPNAM47=( 64 )
+<>
+##$SPNAM48=( 64 )
+<>
+##$SPNAM49=( 64 )
+<>
+##$SPNAM50=( 64 )
+<>
+##$SPNAM51=( 64 )
+<>
+##$SPNAM52=( 64 )
+<>
+##$SPNAM53=( 64 )
+<>
+$$ @vis= SPNAM45 SPNAM46 SPNAM47 SPNAM48 SPNAM49 SPNAM50 SPNAM51 SPNAM52
+##$SPNAM54=( 64 )
+<>
+##$SPNAM55=( 64 )
+<>
+##$SPNAM56=( 64 )
+<>
+##$SPNAM57=( 64 )
+<>
+##$SPNAM58=( 64 )
+<>
+##$SPNAM59=( 64 )
+<>
+##$SPNAM60=( 64 )
+<>
+##$SPNAM61=( 64 )
+<>
+$$ @vis= SPNAM53 SPNAM54 SPNAM55 SPNAM56 SPNAM57 SPNAM58 SPNAM59 SPNAM60
+##$SPNAM62=( 64 )
+<>
+##$SPNAM63=( 64 )
+<>
+##$HPPRGN=normal
+##$LOCNUC=( 8 )
+<off>
+##$QNP=1
+##$SOLVENT=( 16 )
+<>
+##$DIGMOD=digital_mode
+$$ @vis= SPNAM61 SPNAM62 SPNAM63 SPNAMES HPPRGN LOCNUC QNP SOLVENT HIRES
+##$DIGTYP=DRU
+##$DQDMODE=DQDMODE_sub
+##$DSPFIRM=DSP_medium
+##$DECIM=400
+##$DSPFVS=23
+##$ACQ_scan_shift=-72
+##$DEOSC=5190
+##$DE=6
+##$HDDUTY=20
+$$ @vis= DIGMOD DIGTYP DQDMODE DSPFIRM DECIM DSPFVS ACQ_scan_shift DEOSC DE
+##$HDRATE=1
+##$ACQ_n_trim=1
+##$ACQ_scaling_read=1
+$$ @vis= HDDUTY HDRATE AVANCE_PARS ACQ_n_trim ACQ_trim_values
+##$ACQ_scaling_phase=1
+##$ACQ_scaling_slice=1
+##$ACQ_grad_matrix_size=25
+$$ @vis= ACQ_scaling_read ACQ_scaling_phase ACQ_scaling_slice
+##$ACQ_grad_matrix=( 25, 3, 3 )
+1 0 0 0 1 0 0 0 1 1 0 0 0 1 0 0 0 1 1 0 0 0 1 0 0 0 1 1 0 0 0 1 0 0 0 1 1 0 0 
+0 1 0 0 0 1 1 0 0 0 1 0 0 0 1 1 0 0 0 1 0 0 0 1 1 0 0 0 1 0 0 0 1 1 0 0 0 1 0 
+0 0 1 1 0 0 0 1 0 0 0 1 1 0 0 0 1 0 0 0 1 1 0 0 0 1 0 0 0 1 1 0 0 0 1 0 0 0 1 
+1 0 0 0 1 0 0 0 1 1 0 0 0 1 0 0 0 1 1 0 0 0 1 0 0 0 1 1 0 0 0 1 0 0 0 1 1 0 0 
+0 1 0 0 0 1 1 0 0 0 1 0 0 0 1 1 0 0 0 1 0 0 0 1 1 0 0 0 1 0 0 0 1 1 0 0 0 1 0 
+0 0 1 1 0 0 0 1 0 0 0 1 1 0 0 0 1 0 0 0 1 1 0 0 0 1 0 0 0 1
+##$NSLICES=25
+##$ACQ_rare_factor=1
+##$ACQ_phase_encoding_mode=( 2 )
+Read User_Defined_Encoding
+$$ @vis= ACQ_grad_matrix_size ACQ_grad_matrix NSLICES ACQ_rare_factor
+##$ACQ_phase_enc_start=( 2 )
+-1 -1
+##$ACQ_spatial_size_1=128
+##$ACQ_spatial_phase_1=( 128 )
+-1 -0.984375 -0.96875 -0.953125 -0.9375 -0.921875 -0.90625 -0.890625 -0.875 
+-0.859375 -0.84375 -0.828125 -0.8125 -0.796875 -0.78125 -0.765625 -0.75 
+-0.734375 -0.71875 -0.703125 -0.6875 -0.671875 -0.65625 -0.640625 -0.625 
+-0.609375 -0.59375 -0.578125 -0.5625 -0.546875 -0.53125 -0.515625 -0.5 
+-0.484375 -0.46875 -0.453125 -0.4375 -0.421875 -0.40625 -0.390625 -0.375 
+-0.359375 -0.34375 -0.328125 -0.3125 -0.296875 -0.28125 -0.265625 -0.25 
+-0.234375 -0.21875 -0.203125 -0.1875 -0.171875 -0.15625 -0.140625 -0.125 
+-0.109375 -0.09375 -0.078125 -0.0625 -0.046875 -0.03125 -0.015625 0 0.015625 
+0.03125 0.046875 0.0625 0.078125 0.09375 0.109375 0.125 0.140625 0.15625 
+0.171875 0.1875 0.203125 0.21875 0.234375 0.25 0.265625 0.28125 0.296875 
+0.3125 0.328125 0.34375 0.359375 0.375 0.390625 0.40625 0.421875 0.4375 
+0.453125 0.46875 0.484375 0.5 0.515625 0.53125 0.546875 0.5625 0.578125 
+0.59375 0.609375 0.625 0.640625 0.65625 0.671875 0.6875 0.703125 0.71875 
+0.734375 0.75 0.765625 0.78125 0.796875 0.8125 0.828125 0.84375 0.859375 
+0.875 0.890625 0.90625 0.921875 0.9375 0.953125 0.96875 0.984375
+$$ @vis= ACQ_phase_encoding_mode ACQ_phase_enc_start ACQ_spatial_size_1
+##$ACQ_gradient_amplitude=( 100 )
+10.6304381335077 21.2608762670153 8.3880800897209 7.10130482602739 
+5.50889101655458 10.6304381335077 0 2.07625744795072 2.75444550827729 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0
+##$GS_dim=1
+##$GS_disp_update=Each_Accum
+$$ @vis= ACQ_spatial_phase_1 ACQ_gradient_amplitude GRAD_PARS GS_dim
+##$GS_online_reco=Yes
+##$GS_reco_display=Yes
+##$GS_shuffle_profiles=Yes
+##$GS_typ=Spectrometer_Parameters
+$$ @vis= GS_disp_update GS_online_reco GS_reco_display GS_shuffle_profiles
+##$GS_info_dig_filling=Yes
+##$GS_info_normalized_area=No_info
+##$GS_info_max_point=No_info
+##$GS_get_info_points=No_info
+$$ @vis= GS_typ GS_info_dig_filling GS_info_normalized_area GS_info_max_point
+##$GS_continue=Exit_gsauto
+##$GO_init_files=No
+##$GO_data_save=Yes
+##$GO_block_size=Standard_KBlock_Format
+$$ @vis= GS_get_info_points GS_continue GS GO_init_files GO_data_save
+##$GO_raw_data_format=GO_32BIT_SGN_INT
+##$GO_disp_update=Each_Accum
+##$GO_online_reco=Yes
+##$GO_reco_display=Yes
+$$ @vis= GO_block_size GO_raw_data_format GO_disp_update GO_online_reco
+##$GO_reco_each_nr=No
+##$GO_max_reco_mem=0
+##$GO_time_est=Yes
+##$GO_use_macro=No
+$$ @vis= GO_reco_display GO_reco_each_nr GO_max_reco_mem GO_time_est
+##$GO_macro=( 4096 )
+<>
+##$GO_LogTimestamp=No
+##$ACQ_DriftCompActive=No
+##$ACQ_DriftCompJob=1
+##$ACQ_DriftCompFilterWidth=1
+$$ @vis= GO_use_macro GO_LogTimestamp GO ACQ_DriftCompActive ACQ_DriftCompJob
+##$ACQ_DriftCompStep=1
+##$ACQ_DriftCompOffset=0
+##$ACQ_DriftCompDebug=No
+$$ @vis= ACQ_DriftCompFilterWidth ACQ_DriftCompStep ACQ_DriftCompOffset
+##$ACQ_MPI_field_steps=1
+##$ACQ_MPI_drive_field_cycle=0
+$$ @vis= ACQ_DriftCompDebug Drift ACQ_MPI_field_steps
+##$ACQ_MPI_selection_field_gradient=0
+##$ACQ_MPI_base_frequency=0
+$$ @vis= ACQ_MPI_drive_field_cycle ACQ_MPI_selection_field_gradient
+##$ACQ_MPI_drive_field_strength=( 3 )
+0 0 0
+##$ACQ_MPI_div=( 3 )
+0 0 0
+##$ACQ_MPI_frequency_select=( 3 )
+Yes Yes Yes
+$$ @vis= ACQ_MPI_base_frequency ACQ_MPI_drive_field_strength ACQ_MPI_div
+$$ @vis= ACQ_MPI_frequency_select MPI ACQP
+##END=
+$$ File finished by PARX at 2016-09-21 15:44:36.517 -0400

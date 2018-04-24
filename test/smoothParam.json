@@ -1,0 +1,9 @@
+{
+    "module" : "smoothImage",
+    "params" : {
+	"sigma" :  1.9,
+	"radiusfactor" : 2.0,
+	"debug" : true,
+	"inmm" :  true
+    }
+}

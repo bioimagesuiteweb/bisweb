@@ -1,0 +1,7 @@
+	"spectviewer" : {
+	    "title" : "diff-SPECT Tool",
+	    "url"   : "spectviewer",
+	    "description" : "The diff-SPECT processing tool.",
+	    "picture" : "images/spectviewer.png",
+	    "electrononly": true
+	},

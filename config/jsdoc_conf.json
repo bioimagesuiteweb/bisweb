@@ -1,0 +1,27 @@
+{
+    "tags": {
+        "allowUnknownTags": true,
+        "dictionaries": ["jsdoc"]
+    },
+    "source": {
+	"include": [ "js/", "main/", "js/cloud/" , "js/core/", "js/dataobjects/", "js/legacy/", "js/modules/", "js/node/" , "js/scripts/" , "js/webcomponents/", "js/coreweb/" ],
+	"includePattern": ".+\\.js(doc)?$",
+	"excludePattern": "js/libbiswasm*"
+    },
+    "plugins": [],
+    "templates": {
+        "cleverLinks": false,
+        "monospaceLinks": false,
+	"systemName" : "BioImage Suite Web",
+	"footer"      : "",
+	"copyright"       : "",
+	"navType"         : "horizontal",
+	"theme"           : "flatly",
+	"linenums"        : true,
+	"collapseSymbols" : false,
+	"inverseNav"      : false
+    },
+    "opts" : {
+	"destination": "./build/web/doc/"
+    }
+}

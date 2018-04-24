@@ -1,0 +1,48 @@
+<!DOCTYPE html> 
+
+<html>
+    <head> 
+        <title id='pagetitle'>Working...</title>
+        <script src='https://cdnjs.cloudflare.com/ajax/libs/localforage/1.5.5/localforage.min.js'></script>
+        <script>
+                function handleIncoming() {
+                    //parse access token out of query string
+                    let access_token = 'not found';
+                    let user_id = '';
+                    let params = window.location.hash.split('&');
+                    console.log(params);
+                    for (let param of params) {
+                        let pair = param.split('=');
+                        console.log('param', param, 'pair', pair);
+                        if (decodeURIComponent(pair[0]) == 'access_token' || decodeURIComponent(pair[0]) == '#access_token') {
+                            access_token = pair[1];
+                        } else if (decodeURIComponent(pair[0]) == 'uid'|| decodeURIComponent(pair[0]) == '#uid') {
+                            user_id = pair[1];
+                        }
+                        console.log(access_token);
+                    }
+                    console.log(access_token);
+                    let biswebstorage = localforage.createInstance({ name : 'dropbox' });
+                    biswebstorage.setItem('auth_session_token', access_token, (err) => {
+                        if(err) { alert('An error occured during authentication. Please try again.') }
+                        else {
+                            biswebstorage.setItem('authed_user', user_id, (err) => {
+                                if (err) { alert('An error occured during authentication. Please try again'); }
+                                else {
+                                    //window.close();
+                                    document.getElementById('workingmessage').innerText = 'Process complete, you may now close the window';
+                                    biswebstorage.getItem('auth_session_token', (err, value) => {
+                                        console.log('session token: ', value);
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+            </script>
+    </head>
+    <body onload = 'handleIncoming()'>
+        <p id='workingmessage'>Just a second...</p>
+
+    </body>
+</html>

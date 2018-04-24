@@ -1,0 +1,104 @@
+CONFIGURATION INFORMATION
+=========================
+
+Path         : /opt/PV6.0.1/conf/instr/spect/uxnmr.info
+Date         : Mon Feb 29 10:57:51 2016
+Release      : TopSpin Acquisition Version 3.1PV beta-pl1
+Installed in : /opt/PV6.0.1
+Host         : CZC5467V67
+OS           : CentOS Linux release 7.2.1511 (Core) 
+CPU          : Intel(R) Xeon(R) CPU E5-1620 v3 @ 3.50GHz (8 cores at 1201 MHz with Hyperthreading)
+User         : nmrsu (NMR SuperUser)
+Description  : BioSpec 117 / 20
+Location     : Yale University
+System       : Avance III NMR spectrometer
+1H-frequency : 500.30 MHz
+Order Number : 10213998
+Configured in: /opt/PV6.0.1/conf/instr/spect
+
+IPSO: connected to spectrometer subnet
+- TCP/IP address = 149.236.99.92
+ - IPSO type: AQS
+- Tctrl : 1
+- Fctrls: 2
+- Gctrl1: with digital preemphasis
+- Rctrl : 1
+- FREDs : 1
+- DPP : 1
+
+DRU: AQS DRU-E Z102520/05010 ECL 07.00
+- TCP/IP address = 149.236.99.89
+- Firmware Version = 150604
+- DRU controls AQS-Rack and HPPR/2
+
+AQS: connected to 149.236.99.89:/dev/tty10
+  _Slot_ SBSB _____________________Board_____________________
+  Number Addr Type HW-VS FW-VS ID  ECL Name   Description
+  -----------------------------------------------------------
+     0   0x24 0x32     0        S  2.3 SGU-1  AQS SGU/3 600 (2CH) Z117129/02820 ECL 02.03 FPGA-Vs=20131031
+     2   0x10 0x43   0x5    CD  R  0.3 REC-1  AQS RXAD/2 600 Z130588/2428 ECL 00.03
+     3   0x34 0xd6   0x1        X  4.2 REF-1  REF/3-600 Reference Board for AQS/3 Receiver
+    13   0xa0 0x93     0        V  0.1 PS-1   
+    14   0xa1 0x91     0        V  1.2 PS-2   AQS PSM-D Power Supply Module
+    --   0x20 0xd8     0        B  2.0 MASTER AQS/3+ Chassis
+     1   0x20  0x7     0        B      MASTER AQS Rack Master
+
+
+Router: none installed
+
+
+Transmitters at the spectrometer subnet:
+----------------------------------------
+BLA_W1345502_0101 W1345502/0101 ECL 0:
+- TCP/IP address = 149.236.99.93
+- Firmware VS    = 20120627
+- Amplifier      = BLA UPGRADE CONTROLLER: W1345502/0101 ECL 0
+- Controller     = BLA CONTROL BOARD 6 2CH: W1522050/11059 ECL 60
+
+Gradient amplifiers at the spectrometer subnet:
+----------------------------------------------
+BGA1: BGAU_W129556_0105
+- TCP/IP address   = 149.236.99.90
+- Firmware version = 20140528
+- Web version      = 6.0
+- Current limits   = 0.0/X, 0.0/Y, 0.0/Z (in A)
+
+Preamplifiers :
+HPPR: - HPPR/2 preamplifier connected to 149.236.99.89:/dev/tty10
+    Type      : HPPR/2
+    Controller: Application firmware = c.
+                no LED display for tuning and matching
+    Module  1 : HPLNA 19F1H (virtual 50 Ohm reference: 100.2%/0.1deg, reflection meter)
+                 PN=Z103204, SN=00745 from 20151208
+    Module  2 : HPLNA BB31P (reflection meter)
+                 PN=Z111092, SN=00233 from 20151105
+    Module  3 : HPLNA 19F1H (virtual 50 Ohm reference: 99.8%/0.2deg, reflection meter)
+                 PN=Z103204, SN=00701 from 20150820
+    Module  4 : ADM Function Module
+
+
+
+Frequency generation:
+- F1: for SGU
+- F2: for SGU
+
+
+
+RF cable connections (detected by 'confamp')
+--------------------------------------------------------------------
+SGU1 NORM output -> input 1 of transmitter 1 (BLA UPGRADE CONTROLLER W1345502/0101 at TCP/IP 149.236.99.93)
+SGU1 AUX  output -> open
+SGU2 NORM output -> input 2 of transmitter 1 (BLA UPGRADE CONTROLLER W1345502/0101 at TCP/IP 149.236.99.93)
+SGU2 AUX  output -> TUNE signal input of HPPR
+
+Blanking cable connections (detected by 'confamp')
+--------------------------------------------------------------------
+transmitter 1 (BLA UPGRADE CONTROLLER W1345502/0101 at TCP/IP 149.236.99.93) amplifier B-400W uses blanking 1
+transmitter 1 (BLA UPGRADE CONTROLLER W1345502/0101 at TCP/IP 149.236.99.93) amplifier 1H-500W uses blanking 2
+
+Preamplifier connections (detected by 'confrecpre')
+--------------------------------------------------------------------
+Tune-SGU2 -> HPLNA 19F1H -> REC1
+Tune-SGU2 -> HPLNA BB31P -> REC1
+Tune-SGU2 -> HPLNA 19F1H -> REC1
+

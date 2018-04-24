@@ -1,0 +1,34 @@
+##TITLE=Parameter List, ParaVision 6.0.1
+##JCAMPDX=4.24
+##DATATYPE=Parameter Values
+##ORIGIN=Bruker BioSpin MRI GmbH
+##OWNER=ph
+$$ 2016-05-16 15:14:53.680 -0400  ph@CZC5467V67
+$$ /opt/PV6.0.1/conf/instr/spect/specpar
+$$ process /opt/PV6.0.1/prog/mod/pvsysman
+##$BF1=499.8
+##$BF2=499.8
+##$BF3=499.8
+##$HPMOD=0 0 0 0 0 0 0 0
+##$HPPRECH=-1 1 0 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+##$NUC1=<1H>
+##$NUC2=<off>
+##$NUC3=<off>
+##$NUC4=<off>
+##$NUC5=<off>
+##$NUC6=<off>
+##$NUC7=<off>
+##$NUC8=<off>
+##$PRECHAN=-1 1 2 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+##$RECPRE=-1 0 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+##$RECSEL=0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+##$SELREC=0 0 0 0 0 0 0 0 0 0
+##$SFO1=499.8
+##$SFO2=499.8
+##$SFO3=499.8
+##$SFO4=499.8
+##$SFO5=499.8
+##$SFO6=499.8
+##$SFO7=499.8
+##$SFO8=499.8
+##END=

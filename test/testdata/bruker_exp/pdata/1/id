@@ -1,0 +1,12 @@
+##TITLE=Parameter List, ParaVision 6.0.1
+##JCAMPDX=4.24
+##DATATYPE=Parameter Values
+##ORIGIN=Bruker BioSpin MRI GmbH
+##OWNER=dc
+$$ 2016-09-21 15:40:30.696 -0400  dc@CZC5467V67
+$$ /opt/PV6.0.1/data/dc/20160921_145526_Test_CSI_work_1_1/15/pdata/1/id
+$$ process /opt/PV6.0.1/prog/bin/parxserver
+##$DATASET_KEY=( 65 )
+<2.16.756.5.5.100.8323328.25355.1474486830.434>
+##END=
+$$ File finished by PARX at 2016-09-21 15:40:30.697 -0400

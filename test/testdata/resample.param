@@ -1,0 +1,2 @@
+#bis_algorithm parameter file
+bis_manualregistration.tcl --shiftx 0 --shifty 10 --shiftz 0 --anglex 0 --angley 0 --anglez 30 --scalex 100 --scaley 105 --scalez 100 --reslimage Resliced --usepoints 0 --mode affine

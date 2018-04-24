@@ -1,0 +1,123 @@
+<!---  LICENSE
+ 
+ _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+ 
+ BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+ 
+ - you may not use this software except in compliance with the License.
+ - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+ 
+ __Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.__
+ 
+ ENDLICENSE -->
+
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <title>BioImage Suite Web Console</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no">
+    <link rel="icon" href="images/favicon.ico">
+
+    <!-- begin browserify/gulp modifications -->
+    <!-- external css files -->
+    <!-- build:css -->
+    <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_dark.css">
+    <!-- endbuild -->
+
+    <!-- build:js -->
+    <script src="../build/web/jquery.min.js"></script>
+    <script src="../build/web/bootstrap.min.js"></script>
+    <!-- endbuild -->
+
+
+</head>
+<body>
+
+  <script>
+    window.onload= function() {
+    
+    var clearalltext=function() {
+	$("#consoletext").empty();
+    };
+
+    var addtext=function(a) {
+	$("#consoletext").append(a+"\n");
+    };
+
+    var savetext=function() {
+	
+	window.BISELECTRON.dialog.showSaveDialog( null, {
+	    title: 'Select file to save console text in',
+	    defaultPath : 'console.txt',
+	    filters  : [ { name: 'Log Files', extensions: ['txt','log' ]}],
+	    
+	}, function(filename) {
+	    if(filename) {
+		var fs=window.BISELECTRON.fs;
+		var data=$("#consoletext").text();
+		fs.writeFileSync(filename,data);
+	    }
+	});
+    };
+						
+
+    window.BISELECTRON.ipc.on('add-text', function(evt,text) {
+	addtext(text);
+    });
+
+    window.BISELECTRON.ipc.on('clear-text', function() {
+	clearalltext();
+    });
+
+    window.BISELECTRON.ipc.send('bisconsoleinit','');
+    
+
+    $("#clearconsole").click(function(e) {
+	e.preventDefault();
+	clearalltext();
+    });
+
+    $("#saveconsole").click(function(e) {
+	e.preventDefault();
+	savetext();
+    });
+
+    
+    };
+    </script>
+
+
+  
+  <nav class="navbar navbar-default navbar-fixed-top">
+    <div class="container-fluid" id="bismenucontainer">
+      <!-- Brand and toggle get grouped for better mobile display -->
+      <div class="navbar-header" id="bismenuheader" >
+	<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bismenu">
+	  <span class="sr-only">Toggle navigation</span>
+	  <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+	</button>
+      </div>  <!-- Collect the nav links, forms, and other content for toggling -->
+      <div class="collapse navbar-collapse" id="bismenu">
+	<ul class="nav navbar-nav" id="bismenuparent">
+	  <li><a  href="#" role="button" id="clearconsole">Clear Console</a></li>
+	  <li><a  href="#" role="button" id="saveconsole">Save Console</a></li>
+	</ul>
+      </div>
+    </div><!-- /.container-fluid -->
+  </nav>
+
+    <div>
+    <pre id="consoletext" style="color:#fefefe; background-color:#000000;
+    margin-left:5px; margin-right:5px; margin-top:70px; padding:5px; border-radius:4px overflow-y: scroll; height:90%; width:99%"></pre>
+  </div>
+
+</body>
+</html>
