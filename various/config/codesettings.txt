@@ -1,0 +1,8 @@
+{
+    "editor.insertSpaces": false,
+    "window.zoomLevel": 2,
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "editor.detectIndentation": false,
+
+}

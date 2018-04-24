@@ -1,0 +1,29 @@
+#Image Header Info
+originalfilename: C:/Users/Xenios/javascript/bioimagesuite/test/testdata/bruker_exp/pdata/1/2dseq
+forceras: true
+havereco: true
+orient: axial
+method: <Bruker:MSME>
+patientpos: Head_Prone
+byteorder: littleEndian
+wordtype: _16BIT_SGN_INT
+dims: 128, 128, 25
+fov: 25, 25, 25
+names: Not set
+coreunits: <mm>, <mm>
+fovscale: 1
+spa: 0.1953125, 0.1953125, 1
+twod: <2D>
+thick: 1
+gapmode: non_contiguous
+gap: 0
+axis: L_R
+repeats: 1
+bitpix: 16
+ndir: -1
+nbval: 0
+nb0: 1
+diffdir: false
+basename: C:\Users\Xenios\javascript\bioimagesuite\test\testdata\bruker_exp\bruker_exp_1_MSME_ras
+displaynames: bruker_exp_MSME_1
+partnames: C:\Users\Xenios\javascript\bioimagesuite\test\testdata\bruker_exp\bruker_exp_1_MSME_ras.nii.gz
