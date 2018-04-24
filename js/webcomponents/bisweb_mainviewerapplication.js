@@ -450,7 +450,6 @@ class ViewerApplicationElement extends HTMLElement {
         const loadfuncts=this.createFileAndOverlayMenus(menubar,painttoolid);
         const loadimage=loadfuncts.loadimage;
         const loadobjectmap=loadfuncts.loadobjectmap;
-        console.log('l=',loadobjectmap);
 
         // ----------------------------------------------------------
         // Module Manager
