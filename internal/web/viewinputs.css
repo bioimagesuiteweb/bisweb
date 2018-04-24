@@ -1,0 +1,32 @@
+.modal-name {
+    background-color: inherit;
+    border: 1px solid black;
+    text-align: left;
+    vertical-align: center;
+    word-wrap: break-word;
+    margin: auto;
+}
+
+.modal-divider {
+    background-color: inherit;
+}
+
+.modal-description {
+    background-color: inherit;
+    text-align: left;
+    vertical-align: middle;
+    word-wrap: break-word;
+    margin: auto;
+}
+
+.row {
+    background-color: #3C3C3C;
+}
+
+.row:hover {
+    background-color: rgb(97, 95, 95);
+}
+
+.row.active {
+    background-color: rgb(97, 95, 95);
+}
