@@ -130,7 +130,7 @@ var initialize_wasm=function(obj=null) {
             if (typeof window !== 'undefined') {
                 obj=window;
                 binary=genericio.fromzbase64(window.biswebpack);
-                console.log('In initialize wasm read binary from window.biswebpack len=',binary.length);
+                //                console.log('In initialize wasm read binary from window.biswebpack len=',binary.length);
 
                 let clb=function() {
                     libbiswasm_raw(resolve,dname,binary);

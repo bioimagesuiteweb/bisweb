@@ -147,6 +147,8 @@ var initialize=function() {
         ModulePromise=wrapperutil.initialize_wasm();
         ModulePromise.then( (mod) => {
             Module=mod;
+            if (Module._uses_gpl())
+                console.log('++++ Web Assembly code loaded (has GPL plugin. See https://github.com/bioimagesuiteweb/gplcppcode)');
         });
     }
     return ModulePromise;
