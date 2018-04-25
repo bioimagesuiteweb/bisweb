@@ -1,7 +1,7 @@
 # Aspects of JavaScript
 
 In this section, we will cover some aspects of JavaScript that are
-particularly relevant for our needs. This is not meant to be a complete
+particularly relevant to our needs. This is not meant to be a complete
 introduction to the language.  For this the reader is referred to the two books
 by Axel Rauschmayer. The first, which covers JavaScript up to version 5
 (standard usage until maybe 2016) , is
@@ -10,7 +10,7 @@ JavaScript QuickStart" may be all that you need to read to get
 started. JavaScript v6 (ES2015) is now fast becoming the new standard. A
 second book called [Exploring ES6](http://exploringjs.com/es6/index.html) by
 the same author covers some of the changes. I strongly recommend reading
-Chapters 1-4 for a clear understanding of that is new here.
+Chapters 1-4 for a clear understanding of all that is new here.
 
 
 ---
@@ -37,13 +37,13 @@ Note that we use __triple__ === (and !==) for comparison. This performs strict c
 
 Consider the function
 
-    let fn=dosomething(val) {
+    let fn=doSomething(val) {
 
         val = val || 2;
     }
 
 
-This old-style JS construct can be used to set the value of val to 2 if no value was specified (and hence set to `undefined`, i.e. the function was called as dosomething(). Note that  `||` is the logical OR operator.
+This old-style JS construct can be used to set the value of val to 2 if no value was specified (and hence set to `undefined`, i.e. the function was called as `doSomething()`. Note that  `||` is the logical OR operator.
 
 The only catch here is that, if val was specified as 0 this will also be mapped to 2 as `0`, `null` and `undefined` all fail the
 test. A better way to express this in ES6 is with default arguments as follows:
@@ -53,20 +53,20 @@ test. A better way to express this in ES6 is with default arguments as follows:
 
     }
 
-If val is not specified then it will be set to `2`.
+If `val` is not specified then it will be set to `2`.
 
 ---
 
 ## Closures
 
-A closure is a function plus the connection to the variables of its surrounding scopes. In the example below, what createIncrementor() returns is a closure. This is an internal function that also _knows_ about the variable _start_ which lives in its surrounding scope_.
+A closure is a function with its own scope that can also access variables from its enclosing scope. In the example below, what `createIncrementor()` returns is a closure. This is an internal function that also _knows_ about the variable `start` which lives in an external scope.
 
     let createIncrementor = function(st) {
         let start=st;
         let outfunction=function () {  
                 start++;
-                        return start;
-            };
+                return start;
+        };
         return outfunction;
     }
 
@@ -76,7 +76,7 @@ A closure is a function plus the connection to the variables of its surrounding 
     > inc()
     7
 
-Closures are incredibly powerful for simplifying code. The function createIncrementor is really a function factory. It creates a new function with a bound scope.
+Closures are incredibly powerful for simplifying code. The function `createIncrementor` is really a function factory — it creates and returns a new function with a bound scope.
 
 ## TypedArrays
 
@@ -91,14 +91,14 @@ For example,  we can define an array as:
 
     let names = [ 'Yale', 'Harvard', 'Princeton' ];
 
-Then names[0] -> Yale, names[1]=Harvard etc.
+Then `names[0]` -> Yale, `names[1]` -> Harvard etc.
 
 We can then add to our array an element:
 
     names[5]='Columbia';
 
 At this point names[3] and names[4] are simply empty elements that return
-'undefined'. Note that the size of each element in the array is also different
+`undefined`. Note that the size of each element in the array is also different
 (Yale has 4 letters as opposed to Harvard having 7). This type of construct is
 ideal for managing some forms of data but it is completely unsuitable for
 storing images as looking up a value in an array can be slow.
@@ -107,18 +107,17 @@ The reason for this is that the JavaScript array is more of an associative
 array mapping from a set of keys to set of values as opposed to a continuous
 raw memory storage (which is what actual images need). So if we look at the
 how the actual memory is used, the first element uses up 5 bytes (if we assume
-0-terminated strings), the second 8 bytes, the third 10 bytes etc. So to get
+0-terminated strings), the second 8 bytes, the third 10 bytes, etc. So to get
 to element 5 we need to compute the offset from the previous elements or to
-have a lookup table (this is at the implementation level) that points us to
-where each element starts. This might work OK for finite number of elements
-but in the case of 3D medical image that has over a million voxels this
+have a lookup table at the implementation level that points us to
+the start of each element. This might be OK for finite number of elements
+but in the case of a 3D medical image that has over a million voxels this
 becomes problematic.
 
 __What is an Image:__ Consider a 64x64 grayscale image. This images consists
 of 4096 voxels. From a programming perspective this is stored  in an array of
 size 4096, where each element in the array has a value ranging from 0 (black)
-to 255 (white) with intermediate values representing various shades of gray
-color. Elements 0 to 63 store the contents of  the first row the image,
+to 255 (white) with intermediate values representing various shades of gray. Elements 0 to 63 store the contents of  the first row the image,
 elements 64 to 127 the second row etc. So our two-dimension image I(i,j) is
 mapped into an array data[i+j*width] where ``width`` (in this case 64) is the
 width of the image.
@@ -137,8 +136,8 @@ In JavaScript the ability to map data directly to raw memory storage (what in
 C would have been called pointer-style programming) is provided by
 [Typed Arrays](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Typed_arrays). Typed
 Arrays provide the ability to map data storage directly into raw memory which
-allows for faster read/write. As always, there is a trade-off. Typed Arrays
-are of fixed size (once allocated) and can not be dynamically resized or have
+allows for faster read/write; however, there is a trade-off. Typed Arrays
+are of fixed size once allocated and can not be dynamically resized or have
 extra elements inserted later.
 
 The key to understanding Typed Arrays is that they work on a data/view
@@ -147,17 +146,17 @@ class.
 
     let buffer= new ArrayBuffer(16);
 
-This is the equivalent in C of doing (ignore this if you are not familiar with C)
+This is the C equivalent of:
 
     void* buffer=malloc(16);
 
-It allocates a 16-byte long memory buffer. We can confirm the size of the
+This allocates a 16-byte long memory buffer. We can confirm the size of the
 allocate buffer by looking at its ``byteLength`` property as:
 
     let sizeInBytes=buffer.byteLength; // should return 16
 
 The next step is to cast the buffer
-to something useful so that we can use it. To do this we have to have to use
+to something more useful. To do this we have to have to use
 one of the types (hence typed-array) of data available to us. The table below
 (modified from the MDN page) lists the core types.
 
@@ -172,8 +171,8 @@ Uint32Array	| 4	| 32-bit unsigned integer	| uint32_t or unsigned int
 Float32Array	| 4	| 32-bit IEEE floating point number	|  float
 Float64Array	| 8	| 64-bit IEEE floating point number	|  double
 
-So if we wanted to store float numbers (4 bytes each) we can create a view on
-the buffer (in C-terminology ``cast it``) as follows
+So if we wanted to store 4 byte float numbers (4 bytes each) we can create a view on
+the buffer (or in C-terminology cast it) as follows
 
     let floatarray=new Float32Array(buffer);
     
@@ -183,7 +182,7 @@ which again is the C-equivalent of
 
 Now we can get the size of the array as
 
-    let arrlength = floatarray.length; // should return 4 16 bytes/4 bytes per element
+    let arrlength = floatarray.length; // should return 4 (16 bytes/4 bytes per element)
 
 (Note that the ordinary JavaScript array also has an exact same ``.length``
 property).
@@ -193,22 +192,21 @@ Now we can access values in floatarray using standard array syntax, e.g.
     floatarray[2]=3.0;
     let v=floatarray[1];
     
-Naturally you can also create the array and the buffer in one step. Simply
-type:
+You can also create the array and the buffer in one step:
 
     let floatarray=new Float32Array(4);
 
 The cast method is useful when reading complex data structures from files,
 where the structure is read as one chunk of memory and different parts of it
-can be cast to different types to simulate a C ``struct'' construct.
+can be cast to different types to simulate a C ``struct``.
 
-Please also note that things being JavaScript one can do the following
+The following is also valid JavaScript:
 
     let datatype=Float32Array;
     let c=new datatype(10);
     
 This allocates a Float32Array of size 10. This type of construct is useful if
-the type of the array (e.g. the type of the image) is something that can only
+the type of the array (i.e. the type of the image) is something that can only
 be known at runtime. Images are commonly of type unsigned char, short or
 float and less frequently other types. When loading an image from a file, the
 type information is in the image header and hence the type of the array is
@@ -217,32 +215,29 @@ only known once the header is read.
 #### Node.js Buffers
 
 Node.js has a type called ``Buffer`` which is mostly analogous to the the
-``ArrayBuffer`` type described in the previous section (though ArrayBuffers
-are  zero-filled on creation whereas Buffers are not). As the Node.js
+``ArrayBuffer`` type described in the previous section, though ArrayBuffers
+are  zero-filled on creation whereas Buffers are not. As the Node.js
 [documentation](https://nodejs.org/api/buffer.html#buffer_buffer) states
 
 > Prior to the introduction of TypedArray in ECMAScript 2015 (ES6), the JavaScript language had no mechanism for reading or manipulating streams of binary data. The Buffer class was introduced as part of the Node.js API to make it possible to interact with octet streams in the context of things like TCP streams and file system operations.
 
 In our use cases, Buffers appear as the result of reading/writing binary files
 in Node.js. You can copy back and forth as follows: (these actually __copy the
-memory__, they are __not__ cast operations)
+memory__; they are __not__ cast operations)
 
     let intarray=new Int16Array(buffer);
     let buffer=new Buffer(intarray);
 
 Buffers are useful in many Node.js server operations but we will for the most
 part abstract them away in this text and rely on standard JavaScript
-Typed Arrays (and underlying Array Buffers) for our work.
+Typed Arrays and ArrayBuffers for our work.
 
 ---
 
 ## Asynchronous Programming   
 
-In general, software programs operate in one of two modes which fit into the
-category of "command line" and "GUI-driven". In command line mode, typically a
-program follows a very predictable linear path whereas in GUI mode, other than
-for some initialization code, the program sits there and reacts to user
-input. Let's consider as an example a program that smooths an image. In
+In general, interactive software programs operate in one of two modes — "command line" or "GUI-driven". In command line mode, a
+program typically follows pre-set path whereas in GUI mode the program will respond to a user's input in whatever order the user specifies. Consider for example a program that smooths an image. In
 command line mode this can take the form:
 
 * Parse the command line to get the input and output filenames
@@ -251,7 +246,7 @@ command line mode this can take the form:
 * Save the smoothed image to the output filename
 * Exit
     
-Translated into "pseudo-code" this perhaps takes the form
+Translated into "pseudo-code" this takes the form:
 
     input_filename = getinputfilename();
     output_filename = getoutputfilename();
@@ -261,7 +256,7 @@ Translated into "pseudo-code" this perhaps takes the form
     exit();
     
 In Node.js style command line code, one key distinction is that File I/O is
-(can be, _should be_) an asynchronous operation. In synchronous mode, a
+_should_ be an asynchronous operation. In synchronous mode, a
 program interacts with the underlying operating system/interpreter by issuing
 one request at a time and then waiting for the result before proceeding to the
 next step. When ``load_image`` is called, in synchronous mode, the function
@@ -271,9 +266,7 @@ does not return until the image _has been loaded_.
 
 In asynchronous mode, however, this paradigm is no longer valid. Instead our
 program and the underlying system operate more like ordering something
-on-line. You place your order, Amazon (or your favorite store) says fine, I
-will sent it to you, you move to your next task in life and then when
-Amazon/UPS/.. get their act together your package arrives. In software terms,
+on-line. You place your order, Amazon (or your favorite store) accepts the order, and sends it to you once your order is ready. You resume your daily tasks while waiting for the order to ship rather than waiting until the package arrives. In software terms,
 this is effectively means that load_image returns immediately as it is less of
 a command __load this image__ and more of a request __when it is convenient
 please load this image and let me know__. In pseudo code this takes the form:
@@ -315,7 +308,7 @@ in nested fashion as follows:
     });
     
 In this case the callback functions are defined ``in-place'' which
-sometimes makes for more readable code as what are internal functions do
+sometimes makes for more readable code as internal functions do
 not have to be named or placed outside where they are actually called.
 
 
