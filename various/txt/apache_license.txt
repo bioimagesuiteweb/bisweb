@@ -1,3 +1,11 @@
+This binary build of BioImage Suite is released under the Apache License v2
+
+You may obtain the source code from:
+
+https://github.com/bioimagesuiteweb/bisweb
+
+----
+
 Apache License
 
 Version 2.0, January 2004
@@ -155,10 +163,4 @@ incurred by, or claims asserted against, such Contributor by reason of your
 accepting any such warranty or additional liability.
 
 END OF TERMS AND CONDITIONS
-
-------------------------------------------------------------------
-
-Notes: Permission is explicitly granted by the copyright holders to
-relicense/redistribute any code in this repository licensed under the Apache
-license to the GPL v2 or later.
 
