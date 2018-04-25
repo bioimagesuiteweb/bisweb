@@ -1,19 +1,19 @@
 /*  LICENSE
- 
- _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
- 
- BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
- 
- - you may not use this software except in compliance with the License.
- - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
- 
- __Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.__
- 
- ENDLICENSE */
+    
+    _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+    
+    BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+    
+    - you may not use this software except in compliance with the License.
+    - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+    
+    __Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.__
+    
+    ENDLICENSE */
 
 "use strict";
 
@@ -40,78 +40,82 @@ const genericio=require('bis_genericio.js');
 
 var serializeObject=function(Module,obj,datatype) {
 
-	if (obj.constructor.name === "Number") {
-	    //  console.log('Not serializing object is already a WASM array');
-	    return obj;
-	}
-	
-	if (datatype!=='Matrix' && datatype!=='Vector')
-	    return obj.serializeWasm(Module);
+    if (obj.constructor.name === "Number") {
+        //  console.log('Not serializing object is already a WASM array');
+        return obj;
+    }
+    
+    if (datatype!=='Matrix' && datatype!=='Vector')
+        return obj.serializeWasm(Module);
 
-	if (obj.constructor.name==='BisWebMatrix')
-	    return obj.serializeWasm(Module);
-	
-	if (datatype==='Vector') {
-	    let name=obj.constructor.name;
-	    if (name==="Array") {
-			let v=new Float32Array(obj.length);
-			for (let i=0;i<obj.length;i++) {
-				v[i]=obj[i];
-			}
-			return wasmutil.packStructure(Module,v,[ v.length]);
-	    }
-	}
-	
-	return wasmutil.packStructure(Module,obj,[ obj.length]);
+    if (obj.constructor.name==='BisWebMatrix')
+        return obj.serializeWasm(Module);
+    
+    if (datatype==='Vector') {
+        let name=obj.constructor.name;
+        if (name==="Array") {
+            let v=new Float32Array(obj.length);
+            for (let i=0;i<obj.length;i++) {
+                v[i]=obj[i];
+            }
+            return wasmutil.packStructure(Module,v,[ v.length]);
+        }
+    }
+    
+    return wasmutil.packStructure(Module,obj,[ obj.length]);
 };
 
 
 var deserializeAndDeleteObject=function(Module,ptr,datatype,first_input=0) {
 
-	first_input=first_input || 0;
-	
-	if (datatype==='Matrix' || datatype==='Vector') {
-	    let output=new BisWebMatrix();
-	    output.deserializeWasmAndDelete(Module,ptr);
-	    return output;
-	}
-	
-	if (datatype==='bisImage' || datatype==='image' || datatype==='Image') {
+    if (ptr===0) {
+        throw new Error("<p>Bad output from calling WebAssembly function. Perhaps this function is not available.</p><HR>");
+    }
+    
+    first_input=first_input || 0;
+    
+    if (datatype==='Matrix' || datatype==='Vector') {
+        let output=new BisWebMatrix();
+        output.deserializeWasmAndDelete(Module,ptr);
+        return output;
+    }
+    
+    if (datatype==='bisImage' || datatype==='image' || datatype==='Image') {
 
-	    let output=new BisWebImage();
-	    if (first_input!==0 && first_input.constructor.name !== "Number") 
-			output.deserializeWasmAndDelete(Module,ptr,first_input);
-	    else
-			output.deserializeWasmAndDelete(Module,ptr);
-	    return output;
-	}
-	
-	if (datatype==='bisComboTransformation') {
-	    const output=bistransforms.createComboTransformation();
-	    output.deserializeWasmAndDelete(Module,ptr);
-	    return output;
-	}
+        let output=new BisWebImage();
+        if (first_input!==0 && first_input.constructor.name !== "Number") 
+            output.deserializeWasmAndDelete(Module,ptr,first_input);
+        else
+            output.deserializeWasmAndDelete(Module,ptr);
+        return output;
+    }
+    
+    if (datatype==='bisComboTransformation') {
+        const output=bistransforms.createComboTransformation();
+        output.deserializeWasmAndDelete(Module,ptr);
+        return output;
+    }
 
-	
-	if (datatype==='bisGridTransformation') {
-	    const output=bistransforms.createGridTransformation();
-	    output.deserializeWasmAndDelete(Module,ptr);
-	    return output;
-	}
-	
-	if (datatype==='bisLinearTransformation') {
-	    const output=bistransforms.createLinearTransformation(2);
-	    output.deserializeWasmAndDelete(Module,ptr);
-	    return output;
-	}
+    
+    if (datatype==='bisGridTransformation') {
+        const output=bistransforms.createGridTransformation();
+        output.deserializeWasmAndDelete(Module,ptr);
+        return output;
+    }
+    
+    if (datatype==='bisLinearTransformation') {
+        const output=bistransforms.createLinearTransformation(2);
+        output.deserializeWasmAndDelete(Module,ptr);
+        return output;
+    }
 
-	if (datatype=='String') {
-	    const wasmobj=wasmutil.unpackStructure(Module,ptr);
-	    wasmutil.release_memory(Module,ptr);
-	    return wasmutil.map_array_to_string(wasmobj.data_array);
-	}
+    if (datatype=='String') {
+        const wasmobj=wasmutil.unpackStructure(Module,ptr);
+        wasmutil.release_memory(Module,ptr);
+        return wasmutil.map_array_to_string(wasmobj.data_array);
+    }
 
-	return 0;
+    return 0;
 };
 
 
@@ -201,7 +205,7 @@ var initialize_wasm=function(obj=null) {
         
         libbiswasm_raw(resolve,dname,binary);
     });
-                     
+    
 };
 // ----------------------------------------------------------------------------------
 // Output Object
