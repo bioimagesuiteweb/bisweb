@@ -67,6 +67,7 @@ IF (BIS_USEGPL)
     gpl/bisLinearImageRegistration.cpp
     gpl/bisNonLinearImageRegistration.cpp
     gpl/bisApproximateDisplacementField.cpp
+    gpl/bisDTIAlgorithms.cpp
     gpl/bisGPLExportedFunctions.cpp
     )
 ELSE (BIS_USEGPL)
@@ -96,7 +97,6 @@ SET(KITSRCS
   bisDataObjectFactory.cpp
   bisSimpleImageSegmentationAlgorithms.cpp
   bisfMRIAlgorithms.cpp
-  bisDTIAlgorithms.cpp
   bisJointHistogram.cpp
   bisExportedFunctions.cpp
   bisExportedFunctions2.cpp

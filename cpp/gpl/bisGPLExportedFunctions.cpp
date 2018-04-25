@@ -32,7 +32,7 @@
 #include "bisComboTransformation.h"
 #include "bisDataObjectFactory.h"
 #include "bisOptimizer.h"
-
+#include "bisDTIAlgorithms.h"
 #include "bisImageSegmentationAlgorithms.h"
 #include "bisLinearImageRegistration.h"
 #include "bisNonLinearImageRegistration.h"
@@ -471,3 +471,235 @@ int  test_optimizer(int numparam) {
   return numfail;
 }
 
+// ---------------------------------------- DTI Stuff --------------------------------
+unsigned char* computeDTITensorFitWASM(unsigned char* input_ptr,
+				       unsigned char* baseline_ptr,
+				       unsigned char* mask_ptr,
+				       unsigned char* directions_ptr,
+				       const char* jsonstring,
+				       int debug)
+{
+
+  std::unique_ptr<bisJSONParameterList> params(new bisJSONParameterList());
+  if (!params->parseJSONString(jsonstring))
+    return 0;
+
+  if(debug)
+    params->print("computeCorrelationMatrixJSON","_____");
+
+  
+  std::unique_ptr<bisSimpleImage<short> > in_image(new bisSimpleImage<short>("input_dti_data"));
+  if (!in_image->linkIntoPointer(input_ptr))
+    return 0;
+
+  std::unique_ptr<bisSimpleImage<short> > baseline_image(new bisSimpleImage<short>("baseline_dti_data"));
+  if (!baseline_image->linkIntoPointer(baseline_ptr))
+    return 0;
+  
+  
+
+  Eigen::MatrixXf directions;
+  std::unique_ptr<bisSimpleMatrix<float> > s_matrix(new bisSimpleMatrix<float>("directions"));
+  if (!bisEigenUtil::deserializeAndMapToEigenMatrix(s_matrix.get(),directions_ptr,directions,debug))
+    return 0;
+
+  std::unique_ptr<bisSimpleImage<float> > out_image(new bisSimpleImage<float>("output_dti_data"));
+
+
+  float bvalue=params->getFloatValue("bvalue",1000.0f);
+  if (debug)
+    std::cout << "Beginning Fit " << bvalue << std::endl;
+
+  int ok=0;
+  if (mask_ptr==0)
+    {
+      if (debug)
+	std::cout << "Not using mask " << std::endl;
+      ok=bisDTIAlgorithms::computeTensorFit(in_image.get(),
+					    baseline_image.get(),
+					    0,
+					    directions,
+					    bvalue,
+					    out_image.get());
+    }
+  else
+    {
+      std::unique_ptr<bisSimpleImage<unsigned char> > mask_image(new bisSimpleImage<unsigned char>("mask_dti_data"));
+      if (!mask_image->linkIntoPointer(mask_ptr))
+	return 0;
+      if (debug)
+	std::cout << "Using mask " << std::endl;
+      ok=bisDTIAlgorithms::computeTensorFit(in_image.get(),
+					    baseline_image.get(),
+					    mask_image.get(),
+					    directions,
+					    bvalue,
+					    out_image.get());
+    }
+
+
+  if (debug)
+    std::cout << "Fitting Done " << ok << std::endl;
+
+  return out_image->releaseAndReturnRawArray();
+}
+
+
+/** Computes Eigenvalues and Eigenvector as a single image of 4 components x 3 frames
+ * component 0 = eigenvalues
+ * components 1-3 eigenvectors
+ * frames are x,y,z
+ * @param tensor the input dti tensor (from computeTensorFit)
+ * @param mask the input mask image (can be NULL,0)
+ * @param eigenSystem the output images as defined above
+ * @returns 1 if success, 0 if failed */
+unsigned char* computeTensorEigenSystemWASM(unsigned char* input_ptr,
+					    unsigned char* mask_ptr,
+					    int debug) 
+{
+  std::unique_ptr<bisSimpleImage<float> > in_image(new bisSimpleImage<float>("input_eigensystem_data"));
+  if (!in_image->linkIntoPointer(input_ptr))
+    return 0;
+
+
+  std::unique_ptr<bisSimpleImage<unsigned char> > mask_image(new bisSimpleImage<unsigned char>("mask_dti_data"));
+  bisSimpleImage<unsigned char>* mask=0;
+  if (mask_ptr!=0)
+    {
+      if (!mask_image->linkIntoPointer(mask_ptr))
+	return 0;
+      mask=mask_image.get();
+    }
+  
+  if (debug)
+    {
+      std::cout << "Beginning Compute Tensor Eigen System ";
+      if (mask!=0)
+	std::cout <<  "using mask";
+      std::cout << std::endl;
+    }
+  
+  std::unique_ptr<bisSimpleImage<float> > output(new bisSimpleImage<float>("out_dti_eigensystem"));
+  
+  int ok=bisDTIAlgorithms::computeTensorEigenSystem(in_image.get(),mask,output.get());
+
+  if (debug)
+    std::cout << "Done Computing ok=" << ok << std::endl;
+  
+  return output->releaseAndReturnRawArray();
+  
+}
+/** Compute DTI Tensor Invariants
+ * @param input_ptr the image tensor eigensystem as a serialized array
+ * @param mask_ptr the Mask Image (optional, set this to 0) as a serialized array
+ * @param jsonstring { "mode": 0 } // mode 0=FA, 1=RA etc. -- see bisDTIAlgorithms::computeTensorInvariants
+ * @param debug if > 0 print debug messages
+ * @returns a pointer to the invarient image */
+BISEXPORT unsigned char* computeDTITensorInvariantsWASM(unsigned char* input_ptr,
+							unsigned char* mask_ptr,
+							const char* jsonstring,
+							int debug)
+{
+  std::unique_ptr<bisJSONParameterList> params(new bisJSONParameterList());
+  int ok=params->parseJSONString(jsonstring);
+  if (!ok) 
+    return 0;
+
+  if(debug)
+    params->print();
+
+  std::unique_ptr<bisSimpleImage<float> > in_image(new bisSimpleImage<float>("input_eigensystem_data"));
+  if (!in_image->linkIntoPointer(input_ptr))
+    return 0;
+
+
+  std::unique_ptr<bisSimpleImage<unsigned char> > mask_image(new bisSimpleImage<unsigned char>("mask_dti_data"));
+  if (mask_ptr!=0)
+    {
+      if (!mask_image->linkIntoPointer(mask_ptr))
+	return 0;
+    }
+  else
+    {
+      mask_image=bisImageAlgorithms::createMaskImage<float>(in_image.get());
+    }
+
+  int mode=params->getIntValue("mode",0);
+  
+  if (debug)
+    std::cout << "Beginning Compute Tensor Invariants mode=" << mode  << std::endl;
+  
+  std::unique_ptr<bisSimpleImage<float> > output(new bisSimpleImage<float>("out_dti_eigensystem"));
+  
+  ok=bisDTIAlgorithms::computeTensorInvariants(in_image.get(),mask_image.get(),mode,output.get());
+
+  if (debug)
+    std::cout << "Done Computing ok=" << ok << std::endl;
+  
+  return output->releaseAndReturnRawArray();
+
+
+}
+
+/** Compute DTI Orientation Map
+ * @param input_ptr the image tensor eigensystem as a serialized array
+ * @param mask_ptr the Mask Image (optional, set this to 0) as a serialized array
+ * @param magnitude_ptr the Magnitude Image (e.g. FA map) (optional, set this to 0) as a serialized array
+ * @param jsonstring { "scaling": 1.0 } Optional extra scaling
+ * @param debug if > 0 print debug messages
+ * @returns a pointer to the colormap image */
+BISEXPORT unsigned char* computeDTIColorMapImageWASM(unsigned char* input_ptr,
+						     unsigned char* mask_ptr,
+						     unsigned char* magnitude_ptr,
+						     const char* jsonstring,
+						     int debug)
+{
+  std::unique_ptr<bisJSONParameterList> params(new bisJSONParameterList());
+  int ok=params->parseJSONString(jsonstring);
+  if (!ok) 
+    return 0;
+
+  if(debug)
+    params->print();
+
+  std::unique_ptr<bisSimpleImage<float> > in_image(new bisSimpleImage<float>("input_eigensystem_data"));
+  if (!in_image->linkIntoPointer(input_ptr))
+    return 0;
+
+
+  std::unique_ptr<bisSimpleImage<unsigned char> > mask_image(new bisSimpleImage<unsigned char>("mask_dti_data"));
+  if (mask_ptr!=0)
+    {
+      if (!mask_image->linkIntoPointer(mask_ptr))
+	return 0;
+    }
+  else
+    {
+      mask_image=bisImageAlgorithms::createMaskImage<float>(in_image.get());
+    }
+  
+
+  std::unique_ptr<bisSimpleImage<float> > magn_image(new bisSimpleImage<float>("magnitude_dti_data"));
+  bisSimpleImage<float>* magn=0;
+  if (magnitude_ptr!=0)
+    {
+      if (!magn_image->linkIntoPointer(magnitude_ptr))
+	return 0;
+      magn=magn_image.get();
+    }
+
+
+  float scaling=params->getFloatValue("scaling",1.0);
+  
+  if (debug)
+    std::cout << "Beginning Compute Tensor Colormap scaling=" << scaling  << std::endl;
+  
+  std::unique_ptr<bisSimpleImage<unsigned char> > output(new bisSimpleImage<unsigned char>("out_dti_colormap"));
+  
+  ok=bisDTIAlgorithms::computeTensorColormap(in_image.get(),mask_image.get(),magn,scaling,output.get());
+  
+  if (debug)
+    std::cout << "Done Computing ok=" << ok << std::endl;
+  
+  return output->releaseAndReturnRawArray();
+}

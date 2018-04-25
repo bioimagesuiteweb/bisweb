@@ -1,4 +1,11 @@
-[ This license applies to all files in this repository other than the files in the cpp/gpl directory.]
+Notes:
+
+This license applies to all files in this repository other than the files in
+the cpp/gpl directory which are released under the GPL v2.
+
+Permission is explicitly granted by the copyright holders to
+relicense/redistribute any code in this repository licensed under the Apache
+license to the GPL v2 or later.
 
 ------------------------------------------------------------------
 

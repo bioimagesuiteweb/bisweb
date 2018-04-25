@@ -87,3 +87,53 @@ int  test_optimizer(int numparam) {
   std::cout << "_____ This is simply a stub function" << std::endl;
   return 0;
 }  
+
+// -----------------------------------------------------------------------------------------------------
+// DTI Code
+// -----------------------------------------------------------------------------------------------------
+
+unsigned char* computeDTITensorFitWASM(unsigned char* ,
+                                       unsigned char* ,
+                                       unsigned char* ,
+                                       unsigned char* ,
+                                       const char* ,
+                                       int)
+{
+    std::cout << "_____ This is simply a stub function" << std::endl;
+  return 0;
+}
+
+
+/** Stub Function */
+unsigned char* computeTensorEigenSystemWASM(unsigned char* ,
+                                            unsigned char* ,
+                                            int )
+{
+  std::cout << "_____ This is simply a stub function" << std::endl;
+  return 0;
+}
+
+
+
+/** Stub Function */
+unsigned char* computeDTITensorInvariantsWASM(unsigned char* ,
+                                              unsigned char* ,
+                                              const char* ,
+                                              int )
+{
+  std::cout << "_____ This is simply a stub function" << std::endl;
+  return 0;
+}
+
+
+/** Stub Function */
+unsigned char* computeDTIColorMapImageWASM(unsigned char* ,
+                                           unsigned char* ,
+                                           unsigned char*,
+                                           const char* ,
+                                           int )
+{
+  std::cout << "_____ This is simply a stub function" << std::endl;
+  return 0;
+}
+
