@@ -16,11 +16,11 @@ Next we will discuss the core data objects in bisweb which all derive from biswe
 * BisWebMatrix (`js/dataobjects/bisweb_matrix.js`) -- a class for storing 2D float matrices.
 * BisWebImage (`js/dataobjects/bisweb_image.js`) -- a class for storing 2D->5D images. This stores both the image data and a [NIFTI-1](https://nifti.nimh.nih.gov/nifti-1/) image header describing the image metadata (orientation etc.)
 * The transformation classes that derive from BisWebBaseTransformation (`js/dataobjects/bisweb_basetransformation.js`). 
-    - The linear transformation class BisWebLinearTransformation -- this is used to store the results of linear/affine registrations.
-    - The grid transformation class BisWebGridTransformation. This is used to store the results of nonlinear (tensor b-spline grid) registrations.
-    - The combo transformation class BisWebComboTransformation. This stores a combination of a linear transformation and a collection of grids. This is the most common output of a nonlinear image registration as this is often preceeded by a linear transformation
-    - The class BisWebTransformationCollection which stores arbitrary combinations of transformations (inspired by the VTK class vtkGeneralTransform).
-* The collection class BisWebDataObjectCollection (`js/dataobjects/bisweb_dataobjectcollection.js`) which stores and serializes a collection of bisweb_dataobjects.js. It also has some static functions to create any type of BisWebDataObject from a json string or file (for de-serialization).
+    - The linear transformation class `BisWebLinearTransformation` -- this is used to store the results of linear/affine registrations.
+    - The grid transformation class `BisWebGridTransformation`. This is used to store the results of nonlinear (tensor b-spline grid) registrations.
+    - The combo transformation class `BisWebComboTransformation`. This stores a combination of a linear transformation and a collection of grids. This is the most common output of a nonlinear image registration as this is often preceeded by a linear transformation
+    - The class `BisWebTransformationCollection` which stores arbitrary combinations of transformations (inspired by the VTK class vtkGeneralTransform).
+* The collection class `BisWebDataObjectCollection` (`js/dataobjects/bisweb_dataobjectcollection.js`) which stores and serializes a collection of `bisweb_dataobjects.js`. It also has some static functions to create any type of BisWebDataObject from a JSON string or file (for de-serialization).
 
 ---
 
@@ -28,13 +28,13 @@ Next we will discuss the core data objects in bisweb which all derive from biswe
 
 ### Introduction
 
-File I/O in JavaScript is complicated by the fact that it is different depending on whether it is being performed in a Web Application or a commandline/desktop application.
+File I/O in JavaScript is complicated by the fact that it is different depending on whether it is being performed in a web application or a command line/desktop application.
 
-For desktop (Electron) and commandline applications, file I/O in JS is very similar in spirit to any other language. The only difference here is that (though there are options for synchronous I/O) the bisweb code uses asynchronous file reading and writing which add a small layer of complexity.
+For desktop (Electron) and command line applications, file I/O in JS is very similar to any other language. The only difference is that the bisweb code uses asynchronous file reading and writing which adds a small amount of complexity.
 
-On the other hand, Web Applications have no way to directly access the filesystem. File input is restricted to files opened as a result of the user interfacing with an `<input type="file">` element. File output is effectively a download file event. In both cases we have limited information from the system. For example, in file input we actually get an opaque file handle as our input which does not provide full path information (for obvious security reasons). 
+On the other hand, web applications have no way to directly access the filesystem. File input is restricted to files opened by an `<input type="file">` element. File output is effectively a download file event. In both cases, only limited information is provided about the system. For example, in file input the system supplies an opaque file handle as input,which does not provide full path information for obvious security reasons. 
 
-For file output, all we can do is request that a file be downloaded. We have no information as to whether the user pressed cancel or as to what the actual filename was (we can provide an initial filename but the user can change it.). One complication of this is that the hard work of creating the output file has to be done before the filename is requested from the user.
+For file output, all a browser can do is request that a file be downloaded. There is no information as to whether the user pressed cancel or as to what the actual filename was (we can provide an initial filename but the user can change it.) One complication of this is that the hard work of creating the output file has to be done before the filename is requested from the user.
 
 See the following [MDN page](https://developer.mozilla.org/en-US/docs/Web/API/File) for more information. Given a file object we can get at least the tail part of the filename using its `.name` member variable.
 
@@ -42,78 +42,61 @@ Our goal in bisweb is to abstract away these details to enable the programmer to
 
     * @param {string} filename - the url or filename or file object
 
-This is because filename may be a string or it may be a [FILE object](https://developer.mozilla.org/en-US/docs/Web/API/File) depending on whether we are in commandline/desktop or web application mode.
+This is because filename may be a string or it may be a [FILE object](https://developer.mozilla.org/en-US/docs/Web/API/File) depending on whether we are in command line/desktop or web application mode.
 
 ### Compressed Files
 
-The Bisweb code can read and write gzipped (`.gz`) compressed files. This is part of the core dependence on the [NIFTI][NIFTI] (`.nii.gz`) as our main image file format. Files ending in `.nii.gz` will be automatically un-gzipped `on read` and filenames ending in `.nii.gz` will be compressed `on save`. A complication is that in web applications we have no way of knowing the final filename. Hence for images changing the extension for .nii.gz to .nii on save will not change the internal compression as this has already been done.
+The Bisweb code can read and write gzipped (`.gz`) compressed files. This is part of the core dependence on the [NIFTI][NIFTI] (`.nii.gz`) as our main image file format. Files ending in `.nii.gz` will be automatically un-gzipped on file read and filenames ending in `.nii.gz` will be compressed on file save. A complication is that in web applications we have no way of knowing the final filename. Hence for images changing the extension for .nii.gz to .nii on save will not change the internal compression as this has already been done.
 
 ### A quick note on Electron
 
-We use Electron for desktop applications. While Electron is essentially built on node.js, we disable node.js functionality in the "desktop" application by default to ensure better compatibility of web-based code. However we create back-door (described elsewhere) via the use of a preload file (`web/bispreload.js`) that provides access to a select subset of node functionality in our web application (See the document [DesktopAppsWithElectron.md](DesktopAppsWithElectron.md) for more details.)
+We use Electron for desktop applications. While Electron is essentially built on Node.js, we disable Node.js functionality in the "desktop" application by default to ensure better compatibility of web-based code. However we create back-door (described elsewhere) via the use of a preload file (`web/bispreload.js`) that provides access to a select subset of node functionality in our web application (See [DesktopAppsWithElectron.md](DesktopAppsWithElectron.md) for more details.)
 
-__To ensure compatibility in node.js and Electron__ if using standard node.js packages such as 'fs', 'path' and 'os', you should always request these through bis_genericio and not directly.
+__To ensure compatibility in Node.js and Electron__ if using standard Node.js packages like `fs`, `path` and `os`, you should always request these through `bis_genericio` and not directly.
 
-For example, in bisweb we never specify (unless the code will only work in commandline node.js applications)
+For example, bisweb never specifies the following (unless the code will only run in command line Node.js applications)
 
     let fs=require('fs');
 
-Instead we access fs as:
+Instead we access `fs` as:
 
     let bis_genericio=require('bis_genericio')
     let fs=bis_genericio.getfsmodule();
 
-The same applies to the commonly used 'path', 'os' and 'glob' modules. See the description of bis_genericio next.
+The same applies to the commonly used `path`, `os` and `glob` modules. See the description of `bis_genericio` next.
 
 ### The bis_genericio module
 
 This provides the following exported functions.
 
-    const bisgenericio = {
+Name    | Description | Inputs | Return Type
+--------|---------------|---------------|-------------------------
+getmode	| Returns the environment bisweb is currently running on | none | One of `node`, `browser`, or `electron`
+getenvironment	| Same as above	| none | One of `node`, `browser`, or `electron`
+createBuffer | Creates a Node.js style Buffer from a data stream. Typically invoked from Electron. | Compressed data stream	| Node.js Buffer 
+getfsmodule	| Provides access to `fs` from Node and Electron | none | `fs` on Node or Electron
+getpathmodule | Provides access to `path` from Node and Electron | none	| `path` on Node or Electron
+getosmodule	| Provides access to `os` from Node and Electron | none	| `os` on Node or Electron
+getglobmodule | Provides access to `glob` from Node and Electron | none | `glob` on Node or Electron 
+tozbase64 | Converts a String to a gzipped [base-64](https://www.base64encode.org/) encoded string. Used to encode binary data | String |  base-64 encoded gzipped String
+fromzbase64 | Converts a gzipped base-64 encoded String to a String. Used to decode binary data | base-64 encoded gzipped String | String
+string2binary | Converts a JS String to a binary String. Needed for integration with the C++/WASM code | JS String | binary String
+binary2string | Converts a binary String to a JS String | binary String | JS String
+readtextdatafromurl | Sends a GET request to a given URL and tries to read the response as text data. Calls callback on 200 reply and errorback on any other. | URL, callback, errorback | none (response handled by callback and errorback) 
+readbinarydatafromurl | Sends a GET request to a given URL and tries to read the response as binary data. Calls callback on 200 reply and errorback on any other. | URL, callback, errorback | none (response handled by callback and errorback)
+readJSON | Invokes `read` on a url (see section below) and tries to parse the response as JSON. | URL, data format | JSON parsed data, filename
+read | See section below | URL, whether data is binary | Data retrieved from URL, filename
+write | See section below | URL, data, whether data is binary | success or failure
 
-The first two functions (which are identical) simply return one of `node`, `browser` or `electron`. 
-
-        getmode : function() { return environment;},
-        getenvironment : function() { return environment;},
-
-This function creates a node.js style buffer when needed in Electron.
-
-        createBuffer : createBuffer,
-
-The following provide access to four core Node.js modules in node and electron:
-
-        getfsmodule : getfsmodule,
-        getpathmodule : getpathmodule,
-        getosmodule : getosmodule,
-        getglobmodule : getglobmodule,
-
-These two function convert strings to gzipped [base-64](https://www.base64encode.org/) encoded strings and back. These are used to serialize and de-serialize binary data in JSON files.
-
-        tozbase64 : tozbase64,
-        fromzbase64 : fromzbase64,
-
-The next two functions convert JS strings to binary strings and back. These are needed for integration with C++/WASM code. 
-
-        string2binary :     string2binary ,
-        binary2string :     binary2string ,
-
-The remaining functions are used to perform core I/O operations. We will disucss the last two in more detail as they are the two core functions:
-
-        readtextdatafromurl : readtextdatafromurl, 
-        readbinarydatafromurl : readbinarydatafromurl, 
-        readJSON : readJSON, // Gloabl ReadJSON
-        read  : read, // Global Read data
-        write : write // Global Write data
-    };
 
 #### bis_genericio.read
 
-This function can be used to read files in arbitrary contexts. One is encouraged to read through the source code to see the full complexity that this entails. On the user-end however this takes two arguments:
+This function can be used to read files regardless of the context it is called from, i.e. whether it is called from a browser, Node, etc. The reader is encouraged to look through the source code to see the full complexity that this entails. The function takes two arguments:
 
 * url -- abstract file handle object
 * isbinary -- is data binary (false if not specified)
 
-and returns a Promise (see the document [AspectsOfJS.md](AspectsOfJS.md) for more information and also this [MDN Page](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise). The `.then` function of the promise has an object with two members data and filename that contain the actual data read and the actual filename read respectively.
+and returns a Promise (see the document [AspectsOfJS.md](AspectsOfJS.md) for more information and also this [MDN Page](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise). The `.then` function of the promise has an object with two members, data and filename, that contain the data retrieved from the URL and the filename read from the URL respectively.
  
 Here is an example:
 
