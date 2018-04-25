@@ -206,7 +206,17 @@ IF (BIS_A_EMSCRIPTEN)
   add_custom_target(wasm ALL DEPENDS ${WEBPACK_WASM_MODULE})
   
   # --------------------- Copy to windows
-    
+
+  IF (BIS_USEGPL)
+    SET (LICENSE_FILE "${PROJECT_SOURCE_DIR}/../various/txt/gpl_license.txt")
+  ELSE (BIS_USEGPL)
+    SET (LICENSE_FILE "${PROJECT_SOURCE_DIR}/../various/txt/apache_license.txt")
+  ENDIF (BIS_USEGPL)
+
+  install (FILES ${LICENSE_FILE} DESTINATION bisweb/ RENAME LICENSE)
+  configure_file( ${LICENSE_FILE} "${EXECUTABLE_OUTPUT_PATH}/../web/LICENSE" @ONLY )
+
+  
   IF (BIS_WASMLIB_COPY)
     MESSAGE("-- Copying to second directory ${BIS_EXTRAPATH}")
     ADD_CUSTOM_COMMAND(
@@ -231,9 +241,13 @@ IF (BIS_A_EMSCRIPTEN)
       COMMENT "Copying Webpack Masm Module to windows"
       COMMAND ${CMAKE_COMMAND} -E copy ${WEBPACK_WASM_MODULE} ${WEBPACK_WASM_MODULE_COPY})
     add_custom_target(wasm2 ALL DEPENDS ${WEBPACK_WASM_MODULE_COPY})
-  ENDIF(BIS_WASMLIB_COPY)
 
-  
+    configure_file( ${LICENSE_FILE} "${BIS_EXTRAPATH}/../web/LICENSE" @ONLY )
+
+  ENDIF(BIS_WASMLIB_COPY)
+ 
+    
+ 
   # ------------------ create wrapper ---------------------------
 
   
