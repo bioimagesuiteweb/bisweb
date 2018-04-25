@@ -21,19 +21,20 @@ at [https://bioimagesuiteweb.github.io/webapp/](https://bioimagesuiteweb.github.
 For developer documentation please look in the [doc](doc) directory of this
 repository, starting with [doc/README.md](doc/README.md).
 
-__Licensing__: Almost all of the source code of BioImage Suite Web is made
-available freely under the terms of the
+__Licensing__: The source code of the core BioImage Suite Web (as found in
+this repository) is made available freely under the terms of the
 [Apache open source license](http://www.apache.org/licenses/LICENSE-2.0). It
 is not approved for clinical use. Use at your own risk. Permission is
-explicitly granted to reuse (and relicense) any Apache licensed source files
+explicitly granted to reuse (and re-license) any Apache licensed source files
 in this repository in software released under GPL v2 or later.
 
-A small number of C++ files (see [cpp/gpl](cpp/gpl)) are made available under
-the [GPL v2](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html). If
+__Binary Versions__: The binary versions of BioImage Suite Web use an
+additional
+[set of GPL-licensed files](https://github.com/bioimagesuiteweb/gplcppcode). If
 the C++ code is compiled so as to include these files (by turning the flag
-BIS_USEGPL to `ON` which is the default) any resulting binary distribution
-must comply with the terms of the GPL v2. (This is the case with the supplied
-binary versions of BioImage Suite Web.)
+BIS_USEGPL to `ON`) any resulting binary distribution must comply with the
+terms of the GPL v2. (This is the case with the supplied binary versions of
+BioImage Suite Web.)
 
 
 __Code Acknoledgements:__ We have greatly benefited from reading the source
