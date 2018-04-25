@@ -35,7 +35,7 @@ extern "C" {
 
 
   /** Returns 0*/
-  // BIS: { 'test_wasm', 'Int' } 
+  // BIS: { 'uses_gpl', 'Int' } 
   BISEXPORT int uses_gpl();
 
   /** Stub Function */
