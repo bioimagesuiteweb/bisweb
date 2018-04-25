@@ -29,7 +29,7 @@ Consider the following if ... else if ... else construct:
         // else
     }
 
-Note that we use __triple__ === (and !==) for comparison. This performs strict comparison. The more C-like == and != perform “sloppy” comparisons. I suggest avoiding these unless you really know what you are doing!
+Note that we use __triple__ === (and !==) for comparison. This performs strict comparison. The more C-like == and != perform “sloppy” comparisons. Avoid these unless you really know what you are doing!
 
 ---
 
@@ -326,14 +326,13 @@ programming. The first is Promises.
             });
 
 
-The function img.load returns a Promise. If the operation succeeds then the
-function inside _.then_ is called else the error is handled as an exception
-using the _.catch_ construct.
+The function `img.load` returns a Promise. If the operation succeeds then the
+function inside `.then` is called else the error is handled as an exception
+using the `.catch` construct.
 
-This is internally no different than using callbacks but it makes the code
-easier to read.
+This is no different than using the nested callback structure from above, but the Promise template is more standard and requires less code than programming callback and errorback behavior manually.
 
-An example of wrapping old code to return promises can be found in the load
+Old-style callback behavior can be Promisified as well. Consider the following
 function of the bisweb_image object (in _js/bisweb_image.js_)
 
     load(fobj,forceras=false) {
@@ -355,13 +354,12 @@ function of the bisweb_image object (in _js/bisweb_image.js_)
       });
     }
 
-This calls an old style function (readbinaryfile) that takes two callbacks
-(loaded,failedtoload) as arguments. This gets packaged inside a Promise which
-is returned to the user. The 'loaded' callback calls the Promise's 'resolve'
-function and similarly 'failedtoload' calls the Promise's 'reject' function.
+This calls an old-style function (readbinaryfile) that takes two callbacks
+(loaded,failedtoload) as arguments. This is wrapped inside a Promise which
+is returned to the calling function. The `loaded` callback calls the Promise's `resolve`
+function and similarly `failedtoload` calls the Promise's `reject` function.
 
-The user when calling this new function ('load') obtains a promise which they
-can subsequently query ('.then()') as to whether to proceed. 
+`load` is now a Promise exposing `.then` and `.catch` functions to the caller. 
 
 One possible use of this setup is to ensure that a number of operations have
 been completed when invoked in parallel. For example, if we are loading 2
@@ -374,29 +372,25 @@ images we can now:
        .then(do_something)
        .catch( (e) => { console.log('something failed',e); });
 
-The _Promise.all_ function takes an array of promises. The 'then' construct is
-called only if _all_ asynchronous operations (defined as promises in this
-array) have finished. 
+The `Promise.all` function takes an array of Promises and returns a single Promise. Its `.then` construct is
+called only if _all_ asynchronous operations supplied to it, in this case `promise1` and `promise2`, have finished. 
 
 
 
 ### Asynchronous vs Synchronous Programming
 
-While this asynchronous style of development sounds unnecessarily complicated,
-it has some significant advantages. Primarily, your program (think GUI or
-Server) does not block while a file is being read or written. That operation
-is handled by a separate thread (even though JavaScript is single-threaded in
+While the asynchronous style of development sounds unnecessarily complicated,
+it has some significant advantages. Primarily, your program does not block while a file is being read or written (think GUI or
+Server). That operation is handled by a separate thread — even though JavaScript is single-threaded in
 concept, the underlying Browser or Node.js interpreter does fork other threads
-for these types of operations.) which makes the underlying program more
-responsive. In Node.js there is a way force synchronous I/O (if desired) but
-we will avoid this as we aim to design code that works similarly in all
-contexts.
+for these types of operations. This makes the underlying program more
+responsive. Node.js may optionally perform synchronous I/O, but this is generally considered bad practice because it decreases program responsiveness.
 
 ---
 
 ## The two meanings of `$`
 
-A potentially confusing aspect of the latest version of JavaScript is the $ operator. This when used in conjunction with the new string delimiter ` operator allows for value substitution inside strings. for For example consider the case:
+A potentially confusing aspect of the latest version of JavaScript is the $ operator. This when used in conjunction with the new string delimiter ` operator allows for value substitution inside strings. For example consider the case:
 
     let a=2;
     console.log(`The value of a is ${a}`);
@@ -406,7 +400,7 @@ This will print
     The value of a is 2.
 
 The other common use of the $ character is as a shortcut for [JQuery](https://jquery.com/
-) which is probably the most common JS library. In some of our code you will text of the form:
+), which is probably the most common JS library. It may be invoked as follows:
 
     // Import JQuery
     const $ = require('jquery');
@@ -419,19 +413,21 @@ This can be confusing to many. In general if you see a $ inside a back-quote del
 
 it performs value substitution. Otherwise it is most likely being used to call JQuery.
 
+_Note: [The '$' character is used for JQuery as a matter of convention and carries no special meaning.](https://stackoverflow.com/questions/205853/why-would-a-javascript-variable-start-with-a-dollar-sign) In theory the `require('jquery')` statement in the code block could assign the library to any key, but '$' is by far the most commonly used key._
+
 ---
 
 ## Classes and Objects in JavaScript
 
 First some terms:
 
-* Class -- is a new complex type (e.g. Button)
-* Object -- an instance of a class (e.g. a specific Button)
-* Inherited Class - class that extends a parent or super class.
+* Class — a new complex type (e.g. Button)
+* Object — an instance of a class (e.g. a specific Button)
+* Inherited Class — a class that extends a parent or super class.
 
-In Web-development, confusingly, the concept of class is also used to prescribe the appearance characteristics of an element on the web page via [CSS styling](https://developer.mozilla.org/en-US/docs/Web/CSS).
+Rather confusingly, the concept of class is also used to prescribe the appearance characteristics of an element on the web page via [CSS styling](https://developer.mozilla.org/en-US/docs/Web/CSS).
 
-Historically JavaScript had a prototype-based implementation of object-oriented programming. This is extremely flexible. Effectively in this setup on can inherit from an object (an actual instance). With ES6 JavaScript introduced an actual class constructor that creates syntax that looks more familiar to programmers used to C++ or Python class-definitions instead.
+Historically JavaScript had a prototype-based implementation of object-oriented programming. This is extremely flexible. Effectively in this setup an object can inherit from an actual instance of another object. With ES6 JavaScript introduced an actual class constructor that creates syntax that looks more familiar to programmers used to C++ or Python class-definitions instead.
 
 ### Objects
 
@@ -444,14 +440,14 @@ Objects in JavaScript are essentially dictionaries containing both variables and
     point.x        // returns 4
     point.y=0;  // sets point.y to 0
 
-We can also add members to an object e.g.
+We can also add members to an object, e.g.
     
     point.z=3  
     
-adds an element called z to the object and sets its value to 3. Objects can also contain functions (or methods). For example:
+adds an element called `z` to the object and sets its value to 3. Objects can also contain functions (or methods). For example:
 
     let pair = {
-          add : function(x,y) { return x+y;},
+        add : function(x,y) { return x+y;},
         multiply: function(x,y) { return x*y;}
     };
 
@@ -461,7 +457,7 @@ Calling pair.add(3,4) returns 7. We can also add functions to an object later e.
 
 Then calling pair.subtract(8,5) returns 3;
 
-We often used objects defined in this way as C++ namespaces to collect functionality in one place. Objects are also incredibly useful in functions that need to return more than one thing. It is trivial to "on-the-fly" create an object and return it. For example consider the function below:
+We often used objects defined in this way like C++ namespaces to collect functionality in one place. Objects are also incredibly useful in functions that need to return more than one thing. It is trivial to "on-the-fly" create an object and return it. For example consider the function below:
 
     let fn=addsubtract(a,b) {
         return {
@@ -474,7 +470,7 @@ This function computes both the sum of and the difference between two numbers. I
 
 ### Classes
 
-JavaScript (as of 2015) now also has proper (from the perspective of C++ or Python) class definitions
+As of 2015, JavaScript has more formal Object-Oriented class definitions.
 
 The pair example before would be rewritten as:
 
@@ -490,7 +486,7 @@ We could then instantiate a new object of type PointType as
 
     let point=new PointType();
 
-JavaScript class can be used to extend other classes. For example, we can make a complex point as follows:
+JavaScript classes can inherit from other classes too. For example, we can make a complex point as follows:
 
     class Point3DType extends PointType {
         constructor() {
@@ -499,7 +495,7 @@ JavaScript class can be used to extend other classes. For example, we can make a
         }
     };
 
-The keyword _extends_ defines the new Point3DType class as deriving from PointType. The keyword _super_ (as in python) calls the parent class constructor.
+The keyword `extends` defines the new Point3DType class as deriving from PointType. The keyword `super` (as in Python) calls the parent class constructor.
 
 
 ## This, that and a big mess
@@ -512,7 +508,7 @@ Consider the following simple case:
         print() {
             this.name = “John”;   
             let callback =function() { 
-                console.log(“My name is“ 		,this.name);
+                console.log(“My name is“, this.name);
             };
         setTimeout(callback,1000);
     }; 
@@ -524,22 +520,22 @@ To drive this code
     let myobj=new Hello();
     myobj.print(); 
 
-The print function, calls the internal function callback 1000 ms after it is invoked. This is accomplished using the [setTimeout function.](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/setTimeout). As it stands our code will fail, however, because inside the function callback, __this__ refers to the scope of the function and not our object. 
+`print` calls the internal function callback 1000 ms after it is invoked (see documentation for [`setTimeout`](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/setTimeout).) As it stands this code will fail because inside the function callback, `this` refers to the scope of the function and not the object. 
 
-There are two ways around the problem (one is tempted to say _this problem_). The first is the "that" approach (we often use self instead of that).
+There are two ways around the problem (one is tempted to say _this problem_). The first is the "that" approach:
 
     class Hello {
         print() {
         this.name = “John”;   
         const that=this;
         let callback =function() { 
-            console.log(“My name is“ 		,that.name);
+            console.log(“My name is“, that.name);
         };
 
         setTimeOut(callback,1000);
     }
 
-The above version of the code works by taking advantage of the fact that callback is a closure. The variable __that__ stores the value of __this__ (which at that point of the code is the current object). When callback is called, it uses __that__ to refer to the object which enables it to access its member variables.
+The above version of the code works by taking advantage of the fact that callback is a closure. The variable `that` stores the value of `this`, which at that point of the code is the current object. When `callback` is invoked, it uses `that` to refer to the object which enables it to access its member variables.
 
 The second solution uses "fat-arrow" functions. These are special functions introduced in ES6 that __DO NOT__ create a new context. A traditional JS-function can be defined as:
 
@@ -565,14 +561,14 @@ The two are equivalent other than for the fact that fat arrow functions do not c
             setTimeOut(callback,1000);
     } 
 
-__Note:__ Most anytime one is in a callback situation (whether via button presses, promises, setTimeout etc.) the __this__ problem may arise. This is one of the most common forms of bugs in JS-code.
+_Note: Most anytime one is in a callback situation (whether via button presses, promises, setTimeout etc.) the `this` problem may arise. This is one of the most common forms of bugs in JS-code._
 
 
 ### From Objects to JSON and back
 
-[JSON](https://www.json.org/) is the standard file object notation from JavaScript. JSON makes storing database "like" files very easy. We use JSON strings (and ultimately files) extensively within BioImage Suite Web. For example, consider an object dictionary of the form:
+[JSON](https://www.json.org/) is the standard file object notation from JavaScript. JSON makes storing "database-like" files very easy. We use JSON strings (and ultimately files) extensively within BioImage Suite Web. For example, consider an object dictionary of the form:
 
-    let obj={
+    let obj = {
         weight: 80
         height: 1.75,
         ismetric: true
@@ -582,18 +578,18 @@ This will be serialized to text (JSON) as:
 
     {"weight":"80","height":"1.75","ismetric":true}
 
-As you can see this is more or less the same thing which is why JSON is such a hugely popular format.
+As you can see this is more or less the same thing, which is why JSON is such a hugely popular format.
 You can have nested dictionaries, arrays etc. The one missing aspect of this is binary data which we often get around by Base-64 encoding (and optionally compressing). More on this later.
 
-To go from Object to JSON
+Object to JSON:
 
     let output_text=JSON.stringify(obj);
 
-To go from text (hopefully JSON formatted to object) 
+JSON to Object (note that the text has to be properly formatted):
 
     let obj= JSON.parse(input);
 
-Best practice is to surround this with a try .. Catch blog to catch any possible parsing errors (defensive programming) 
+The best practice is to surround this with a `try ... catch` block to catch any possible parsing errors
 
     let obj = {}; // Empty object
     try {
@@ -601,6 +597,8 @@ Best practice is to surround this with a try .. Catch blog to catch any possible
     }  catch(e) {
         console.log(“Some Error”);
     }
+
+Strategies of this kind are often referred to as __Defensive Programming__
 
 #### A Python aside
 
@@ -625,12 +623,12 @@ Take a look at the [json package](https://docs.python.org/3/library/json.html) d
 ## Modules
 
 ### Node.js modules
-Originally JavaScript had no concepts of modules. The most popular "third-party" module architecture was probably the node.js module style of module. These are known as [CommonJS Modules](http://www.commonjs.org/specs/modules/1.0/). These modules depend on two extensions to JS (which are not supported by browsers, though tools such as webpack can be used to correct this) namely:
+Originally JavaScript had no concepts of modules. The most popular "third-party" module architecture was probably the Node.js module style of module. These are known as [CommonJS Modules](http://www.commonjs.org/specs/modules/1.0/). These modules depend on two extensions to JS that are not supported by browsers:
 
 * the statement require
 * the magic variable module.exports
 
-Consider the following example (in node.js). First our module that provides two functions that check if the extension of a filename is `csv` or `txt`.
+There are tools in the Web ecosystem designed to correct this, e.g. Webpack. Consider the following example (in Node.js). First our module that provides two functions that check if the extension of a filename is `csv` or `txt`.
 
 
     let isfilenamecsv = function(fname) {
@@ -647,7 +645,7 @@ Consider the following example (in node.js). First our module that provides two 
         return true;
     };
 
-So far this is normal JS code. The next statement is the module.exports extensions which determines the functionality that this module provides to the outside world. This often a dictionary object containing a collection of functions and/or variables as in this case:
+So far this is normal JS code. The next statement is the module.exports extension which determines the functionality that this module provides to the outside world. This often a dictionary object containing a collection of functions and/or variables as in this case:
 
     module.exports = {
         istxt : isfilenametxt,
@@ -672,7 +670,7 @@ __'fnameutils' takes the value of 'module.exports' from above.__ The rest is sim
 
 ### ES6 Modules
 
-This is is the formal JavaScript Module system introduced with v6 of the languge in 2015. Take a look at this document  [linked to by the Webpack documentation](https://auth0.com/blog/javascript-module-systems-showdown/) for more information.
+This is is the formal JavaScript Module system introduced with v6 of the languge in 2015. Take a look at this document [linked to by the Webpack documentation](https://auth0.com/blog/javascript-module-systems-showdown/) for more information.
 
 ### Webpack
 
@@ -684,7 +682,7 @@ In the bisweb build process Webpack is invoked via gulp. The configuration files
 
 ## Regression Testing with Mocha
 
-We use [MOCHA](https://mochajs.org) for regression testing. Writing tests in Mocha is straight-forward. Consider the following simple example (let's call this `test.js )
+ [Mocha](https://mochajs.org) is used for regression testing. Writing tests in Mocha is straight-forward. Consider the following simple example (let's call this `test.js )
 
 First we import the assert package
 
@@ -703,7 +701,7 @@ Inside this we write some code and end with a call to `assert` to test that the 
             assert.equal(4, 2+2);
         });
 
-Here is a second, more "complicated" test:
+Here is a second, more complicated test:
 
         it('2+2 != 5', function() {
 
@@ -738,9 +736,7 @@ JavaScript when running in the Browser can interface with the [Document Object M
 
 ## Native vs JQuery
 
-In the old days of web browsers, the interface to the DOM was very "variable" among browsers. JQuery was created to (in part) solve this problem and provide a uniform interface to the DOM regardless of the browser one was using. While this situation has significantly improved, we now have two "ways" of manipulating the DOM. One is the native way using methods of the JavaScript _document_ object and the other is via JQuery. A good set of examples can be found at the [you might not need jquery webpage](http://youmightnotneedjquery.com/).
-
-
+In the old days of web browsers, the interface to the DOM was very "variable" among browsers. JQuery was created to (in part) solve this problem and provide a uniform interface to the DOM regardless of the browser one was using. While this situation has significantly improved, there are two common ways to manipulate the DOM. One is the native way using methods of the JavaScript `document` object and the other is via JQuery. A good set of examples can be found at the [you might not need jquery webpage](http://youmightnotneedjquery.com/).
 
 Either is fine and you will see examples of both in our code. A point of confusion comes in converting between the two:
 
@@ -752,14 +748,14 @@ or
 
     let jqueryviewer = $(viewerid);
 
-The two are almost equivalent. JQuery returns an array (you will see this marked in our documentation as JQueryElement) by default as it could have found multiple items. To get the equivalent viewer you need to call:
+The two are almost equivalent. JQuery returns an array (you will see this marked in our documentation as `JQueryElement`) by default as it could have found multiple items. To get the equivalent viewer you need to call:
 
     viewer=jqueryviewer[0];
 
 
 ## Creating HTML Elements in JS
 
-We will use JQuery here. The easiest way to do this is to create an HTML multiline string (using the back-quote ` delimiter) and then execute it using JQuery. For example:
+We will use JQuery here. The easiest way to do this is to create an HTML multiline string (using the back-quote ` delimiter) and then parse it using JQuery. For example:
 
     const $=require('jquery');
 
