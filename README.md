@@ -16,7 +16,7 @@ well.
 
 The software is currently in late beta version. A fully working `demo` version
 can be found
-at[https://bioimagesuiteweb.github.io/webapp/](https://bioimagesuiteweb.github.io/webapp/).
+at [https://bioimagesuiteweb.github.io/webapp/](https://bioimagesuiteweb.github.io/webapp/).
 
 For developer documentation please look in the [doc](doc) directory of this
 repository, starting with [doc/README.md](doc/README.md).
