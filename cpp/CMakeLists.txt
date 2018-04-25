@@ -56,24 +56,20 @@ SET (HEADER_SCRIPT ${TOOLS_DIR}/bis_create_matlab_header_file.js)
 # SOURCE Files and GPL Flags
 # ---------------------------------------------------------------------------------------------
 
-OPTION(BIS_USEGPL "Include the GPL-licensed files" ON)
+OPTION(BIS_USEGPL "Include the GPL-licensed C++ files (plugin)" OFF)
 MARK_AS_ADVANCED(BIS_USEGPL)
 
 
 IF (BIS_USEGPL)
-  SET (EXTRASRCS
-    gpl/bisOptimizer.cpp
-    gpl/bisAbstractImageRegistration.cpp
-    gpl/bisLinearImageRegistration.cpp
-    gpl/bisNonLinearImageRegistration.cpp
-    gpl/bisApproximateDisplacementField.cpp
-    gpl/bisDTIAlgorithms.cpp
-    gpl/bisGPLExportedFunctions.cpp
-    )
+
+  FIND_PATH(BIS_GPL_DIR BisWebExtra.cmake  REQUIRED)
+  get_filename_component(BIS_GPL_DIR ${BIS_GPL_DIR} ABSOLUTE)
+  MESSAGE("-- Using GPL Licensed Code from ${BIS_GPL_DIR}")
+  INCLUDE (${BIS_GPL_DIR}/BisWebExtra.cmake)
+  
+  SET (EXTRASRCS ${GPLSOURCES})
 ELSE (BIS_USEGPL)
-  SET (EXTRASRCS
-    nongpl/bisReplacementExportedFunctions.cpp
-    )
+  SET (EXTRASRCS nongpl/bisReplacementExportedFunctions.cpp)
 ENDIF (BIS_USEGPL)
 
     
@@ -132,7 +128,7 @@ SET(PARSE_HEADERS
 IF (BIS_USEGPL)
   SET(PARSE_HEADERS
     ${PARSE_HEADERS}
-    ${CPP_SOURCE_DIR}/gpl/bisGPLExportedFunctions.h
+    ${GPLHEADERS}
     )
 ELSE (BIS_USEGPL)
   SET(PARSE_HEADERS

@@ -33,6 +33,11 @@ extern "C" {
   
   /** @file bisReplacementExportedFunctions.h */
 
+
+  /** Returns 0*/
+  // BIS: { 'test_wasm', 'Int' } 
+  BISEXPORT int uses_gpl();
+
   /** Stub Function */
   // BIS: { 'runLinearRegistrationWASM', 'bisLinearTransformation', [ 'bisImage', 'bisImage', 'bisLinearTransformation_opt', 'ParamObj', 'debug' ] } 
   BISEXPORT  unsigned char*  runLinearRegistrationWASM(unsigned char* reference,
