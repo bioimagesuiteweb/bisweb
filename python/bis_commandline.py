@@ -26,6 +26,7 @@ import bis_objects;
 
 
 def initialError(extra=''):
+
     print(extra+'\nUsage: cmd-load.js modulename [ options ].\n');
     print("Type 'python cmd-load [function name] --help' for more information");
 
@@ -93,7 +94,7 @@ def loadParse(mod,args,addModuleFlag=True):
         return False;
 
 
-    parser = argparse.ArgumentParser(description='bisweb python module '+toolname);
+    parser = argparse.ArgumentParser(description='\nThis python module ('+toolname+')  is part of the BioImage Suite Web image analysis package. See https://github.com/bioimagesuiteweb/bisweb for more information.');
     attachFlags(mod,parser);
     args = vars(parser.parse_args());
 
