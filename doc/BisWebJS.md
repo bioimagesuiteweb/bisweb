@@ -108,17 +108,17 @@ Here is an example:
         // handle the error e
     });
 
-__Note:__ bis_genericio.read(filename) is the same as bis_genericio.read(filename,false). By default this function will read a text file unless the binary flag is set to true.
+_Note: bis_genericio.read(filename) is the same as bis_genericio.read(filename,false). By default this function will read a text file unless the binary flag is set to true._
 
 #### bis_genericio.write
 
 This is the complementary function to bis_genericio.read. It takes three arguments
 
  * url -- abstract file handle object
- * data -- the data to save, either a `sting` or a `Uint8Array`
- * isbinary -- is data binary, default=false
+ * data -- the data to save, either a `String` or a `Uint8Array`
+ * isbinary -- is data binary, default=`false`
 
- It returns a Promise object which supplies a text message as to what happened. Here is an example of saving some text in the variable `txt` to a file handle `f`.
+ It returns a Promise object which will resolve whether the write succeeded. Here is an example of saving some text in the variable `txt` to a file handle `f`.
 
         bis_genericio.write(f,txt).then( () => {
             console.log('Saved job in',f,'\n',txt);
@@ -129,76 +129,71 @@ This is the complementary function to bis_genericio.read. It takes three argumen
 
 ## A Note on Multi-Dimensional Arrays
 
-Many of the core objects below (BisWebImage, BisWebMatrix, BisWebGridTransformation) contain multi-dimensional arrays. These are all stored in 1D TypedArrays (see [AspectsofJS.md](AspectsOfJS.md).). The indexing scheme used is the so-called [raster scan scheme](https://en.wikipedia.org/wiki/Raster_scan) where, in a 2D matrix of dimensions (width=number of columns,height=number of rows), for example we index elements as:
+Many of the core objects below (BisWebImage, BisWebMatrix, BisWebGridTransformation) contain multi-dimensional arrays. These are all stored in 1D TypedArrays (see [AspectsofJS.md](AspectsOfJS.md).) Arrays are indexed using the [raster scan scheme](https://en.wikipedia.org/wiki/Raster_scan), which stores elements as follows:
 
     (row,column) -> row*width+column
 
-This uses ['row-major'](https://en.wikipedia.org/wiki/Row-_and_column-major_order) indexing order, which is the most common order in C/C++. (As an aside Fortran uses column-major storage as any C-code calling Fortran code for matrix operations needs to transpose any matrices at both the input and output stage to convert from row-major to column major mode.)
+This uses ['row-major'](https://en.wikipedia.org/wiki/Row-_and_column-major_order) indexing order, which is the most common order in C/C++. As an aside Fortran uses column-major storage, so any C-code calling Fortran code for matrix operations needs to transpose any matrices at both the input and output stage to convert from row-major to column major mode.
 
-For images we use five dimensional indexing (i,j,k,frame,component), with corresponding dimensions (width,height,depth,numframes,numcomponents). Here the indexing is:
+Images in bisweb use five dimensional indexing (i, j, k, frame, component), with corresponding dimensions (width, height, depth, numframes, numcomponents). Here the indexing is:
 
-    slicesize = width*height;
-    volumesize= slicesize*depth;
-    framesize= volumesize*numframes;
-    (i,j,k,frame,component) --> i+j*width+k*slicesize+frame*volumesize+component*framesize;
+    slicesize = width * height
+    volumesize = slicesize * depth
+    framesize = volumesize * numframes
+    (i, j, k, frame, component) --> i + (j * width) + (k * slicesize) + (frame * volumesize) + (component * framesize)
 
-Confusingly if thing of our coordinates in this order, the storage is effectively "column-major", i.e. the leftmost coordinate (i) iterates first.
+Confusingly, if thinking of the coordinates in this order, the storage is effectively "column-major", i.e. the leftmost coordinate (i) iterates first.
 
 ---
 
 ## BisWebDataObject
 
-All data objects in bisweb derive from BisWebDataObject. This defines the common functionality that all objects need to implement. Here are is annotated description of the (abbreviated) source code for this class:
+All data objects in bisweb derive from `BisWebDataObject`, which defines the common functionality that all objects implement. 
 
+The constructor creates the four shared members with relevant getters and setters:
+* `jsonformatname`:  identifies this type of object in a JSON string (e.g. for `BisWebMatrix` it is "BisMatrix").
 
-The constructor creates the four shared members. The jsonformatname member is the magic type to identify this type of object in a JSON string (e.g. for BisWebMatrix it is "BisMatrix"). The filename stores the last filename of this object (as a result of  it being loaded from/saved to a file.). The extension field defines the default extension for saving and the commentlist is an array of strings that contain metadata for this object.
+* `filename`: Stores the last filename of the object (as a result of  it being loaded from/saved to a file.). 
 
-    class BisWebDataObject {
+* `extension`: The default filetype the object should be saved as.
 
-        constructor() {
-            this.jsonformatname='';
-            this.commentlist=[];
-            this.filename='';
-            this.extension=".json";
-        }
+* `commentlist`: A `String` array that contains metadata for the object.
 
-
-Then we have a number of setter/getter functions:
-
-        getExtension() {  return this.extension;}
-        getFilename()  { return this.filename;}
-        setFilename(s)  { ...}
-
-The getObjectType function returns a string type for the object (in BisWebMatrix this returns 'matrix'.) This must be overridden in a derived class
+`getObjectType` function returns a `String` corresponding to the type of the object (in `BisWebMatrix` this returns 'matrix'.) Must be implemented by an inherited class.
 
         getObjectType() {
-            throw new Error('getObjectType not implemented for '+this.constructor.name);
+            throw new Error('getObjectType not implemented for ' + this.constructor.name);
         }
 
-This provides a short description of the object for user info
+`getDescription` provides a short description of the object for user info.
 
-        getDescription() { return "Object "+this.constructor.name }
+        getDescription() { return "Object " + this.constructor.name }
 
-This computes a hash-string for the data contained in the object for data verification purposes.
+`computeHash` calculates a hash-string for the data contained in the object for data verification purposes.
 
         computeHash() { return "0000";}
 
-This returns the size of the object in memory in bytes.
+`getMemorySize` returns the size of the object in bytes.
 
         getMemorySize() {  return 0;  }
 
 
-Next we get a set of I/O functions and in particular load and save. Both of these _must be implemented_ in derived classes.
+Next are get a set of I/O functions that __must be implemented__ in derived classes: 
+
+`load` defines how the object should be loaded into memory.
 
         load(fobj) {
-            throw new Error('load not implemented for '+this.constructor.name+' '+fobj);
+            throw new Error('load not implemented for ' + this.constructor.name + ' ' + fobj);
         }
+`save` defines how the object should be saved to disk.
 
         save(filename) {
-            throw new Error('save not implemented for '+this.constructor.name+' '+filename);
+            throw new Error('save not implemented for ' + this.constructor.name + ' ' + filename);
         }
 
-Next come two functions that serialize and parse our object to JSON strings.
+The following two functions handle I/O to and from JSON.
+
+`serializeToJSON` converts the object to JSON using the built-in `JSON.stringify` method.
 
         /** serializes object to json  string
             @returns {String} JSON String
@@ -212,6 +207,7 @@ Next come two functions that serialize and parse our object to JSON strings.
             
         }
 
+`parseFromJson` tries to read an object converted by `serializeToJSON` and parse it into a `BisWebDataObject`. 
 
         /** parses from JSON 
         * @param {String} JSON String
