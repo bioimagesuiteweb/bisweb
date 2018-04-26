@@ -27,8 +27,8 @@ const boldon = "";
 const boldoff = "";
 //Image processing functions are expected to be templated as Promises.
 let initialError = function (extra) {
-    console.log(`${extra}\nUsage: bisweb.js modulename [ options ].\n`);
-    console.log(` Type 'node bisweb.js [function name] --help' for more information`);
+    console.log(`${extra}\nUsage: bisweb modulename [ options ].\n`);
+    console.log(` Type 'node bisweb [function name] --help' for more information`);
     let outstring = Object.keys(modules.moduleNamesArray).join(" ");
 
     console.log('\tThe list of available modules is :', outstring);
@@ -87,6 +87,7 @@ let attachFlags = function (module, cmd) {
  */
 let loadParse = function (args, toolname) {
 
+    toolname= toolname || "";
 
     return new Promise((resolve, reject) => {
         if (args.length < 1) {
@@ -95,9 +96,13 @@ let loadParse = function (args, toolname) {
         }
 
         let mod = modules.getModule(toolname);
-        if (mod === null) {
-            initialError(`No Module ${toolname} exists`);
+        if (!mod) {
+            if (toolname.length>2) 
+                initialError(`\n---- The module ${toolname} does not exist`);
+            else
+                initialError(`\n---- No module specified`);
             return 1;
+            
         }
 
 
@@ -109,7 +114,7 @@ let loadParse = function (args, toolname) {
             .option('--paramfile [s]', 'Specifies that parameters should be read from a file as opposed to parsed from the command line.')
             .option('--silent', 'Run in silent mode (no output on the console)')
             .on('-h, --help', function () {
-                console.log('This program is part of the commandline suite of tools from BioImage Suite Web.\n');
+                console.log('This program is part of the commandline suite of tools from BioImage Suite Web. See https://github.com/bioimagesuiteweb/bisweb for more information.\n');
             });
 
         let ln = args.length;
