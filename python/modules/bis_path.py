@@ -20,6 +20,7 @@ import sys;
 
 my_path=os.path.dirname(os.path.realpath(__file__));
 sys.path.append(os.path.abspath(my_path+'/..'))
+sys.path.append(os.path.abspath(my_path+'/../lib'))
 sys.path.append(os.path.abspath(my_path+'/../../build/native'))
 
 

@@ -379,62 +379,6 @@ extern "C" {
    */
   // BIS: { 'weightedRegressGlobalSignalWASM', 'Matrix', [ 'Matrix', 'Vector_opt',  'debug' ] } 
   BISEXPORT  unsigned char* weightedRegressGlobalSignalWASM(unsigned char* input_ptr,unsigned char* weights_ptr,int debug);
-
-  /** Compute DTI Tensor
-   * @param input_ptr the images as a serialized array
-   * @param baseline_ptr the "Baseline" T2 Image as a serialized array
-   * @param mask_ptr the Mask Image (optional, set this to 0) as a serialized array
-   * @param directions_ptr the directions matrix
-   * @param jsonstring { "bvalue": 1000, "numbaseline:" 1 }
-   * @param debug if > 0 print debug messages
-   * @returns a pointer to the tensor image */
-  // BIS: { 'computeDTITensorFitWASM', 'bisImage', [ 'bisImage', 'bisImage',  'bisImage_opt' ,'Matrix', 'ParamObj', 'debug'] } 
-  BISEXPORT unsigned char* computeDTITensorFitWASM(unsigned char* input_ptr,
-						   unsigned char* baseline_ptr,
-						   unsigned char* mask_ptr,
-						   unsigned char* directions_ptr,
-						   const char* jsonstring,
-						   int debug);
-
-
-  /** Compute DTI Tensor EigenSystem
-   * @param input_ptr the image tensor as a serialized array
-   * @param mask_ptr the Mask Image (optional, set this to 0) as a serialized array
-   * @param debug if > 0 print debug messages
-   * @returns a pointer to the eigensystem image */
-  // BIS: { 'computeTensorEigenSystemWASM', 'bisImage', [ 'bisImage', 'bisImage_opt' , 'debug'] } 
-  unsigned char* computeTensorEigenSystemWASM(unsigned char* input_ptr,
-					      unsigned char* mask_ptr,
-					      int debug);
-
-
-  /** Compute DTI Tensor Invariants
-   * @param input_ptr the image tensor eigensystem as a serialized array
-   * @param mask_ptr the Mask Image (optional, set this to 0) as a serialized array
-   * @param jsonstring { "mode": 0 } // mode 0=FA, 1=RA etc. -- see bisDTIAlgorithms::computeTensorInvariants
-   * @param debug if > 0 print debug messages
-   * @returns a pointer to the invarient image */
-  // BIS: { 'computeDTITensorInvariantsWASM', 'bisImage', [ 'bisImage', 'bisImage_opt' , 'ParamObj', 'debug'] } 
-  BISEXPORT unsigned char* computeDTITensorInvariantsWASM(unsigned char* input_ptr,
-							  unsigned char* mask_ptr,
-							  const char* jsonstring,
-							  int debug);
-
-  /** Compute DTI Orientation Map
-   * @param input_ptr the image tensor eigensystem as a serialized array
-   * @param mask_ptr the Mask Image (optional, set this to 0) as a serialized array
-   * @param magnitude_ptr the Magnitude Image (e.g. FA map) (optional, set this to 0) as a serialized array
-   * @param jsonstring { "scaling": 1.0 } Optional extra scaling
-   * @param debug if > 0 print debug messages
-   * @returns a pointer to the colormap image */
-  // BIS: { 'computeDTIColorMapImageWASM', 'bisImage', [ 'bisImage', 'bisImage_opt' ,'bisImage_opt', 'ParamObj', 'debug'] } 
-  BISEXPORT unsigned char* computeDTIColorMapImageWASM(unsigned char* input_ptr,
-						       unsigned char* mask_ptr,
-						       unsigned char* magnitude_ptr,
-						       const char* jsonstring,
-						       int debug);
-
-
   
     
 #ifdef __cplusplus

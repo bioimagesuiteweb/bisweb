@@ -394,7 +394,8 @@ class CustomModule {
                     this.executeModule().then(() => {
                         enableUI(true);
                     }).catch((e) => {
-                        console.log(e.stack);
+                        if (e.stack)
+                            console.log(e.stack);
                         enableUI(true);
                         bootbox.alert(e);  
                     });

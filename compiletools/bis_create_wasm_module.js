@@ -66,7 +66,7 @@ try {
 }
 
 let arr=new Uint8Array(d);
-console.log("++++ RAW Binary WASM Array length=",arr.length);
+//console.log("++++ RAW Binary WASM Array length=",arr.length);
 let str=genericio.tozbase64(arr);
 
 let output_text=`

@@ -56,23 +56,20 @@ SET (HEADER_SCRIPT ${TOOLS_DIR}/bis_create_matlab_header_file.js)
 # SOURCE Files and GPL Flags
 # ---------------------------------------------------------------------------------------------
 
-OPTION(BIS_USEGPL "Include the GPL-licensed files" ON)
+OPTION(BIS_USEGPL "Include the GPL-licensed C++ files (plugin)" OFF)
 MARK_AS_ADVANCED(BIS_USEGPL)
 
 
 IF (BIS_USEGPL)
-  SET (EXTRASRCS
-    gpl/bisOptimizer.cpp
-    gpl/bisAbstractImageRegistration.cpp
-    gpl/bisLinearImageRegistration.cpp
-    gpl/bisNonLinearImageRegistration.cpp
-    gpl/bisApproximateDisplacementField.cpp
-    gpl/bisGPLExportedFunctions.cpp
-    )
+
+  FIND_PATH(BIS_GPL_DIR BisWebExtra.cmake  REQUIRED)
+  get_filename_component(BIS_GPL_DIR ${BIS_GPL_DIR} ABSOLUTE)
+  MESSAGE("-- Using GPL Licensed Code from ${BIS_GPL_DIR}")
+  INCLUDE (${BIS_GPL_DIR}/BisWebExtra.cmake)
+  
+  SET (EXTRASRCS ${GPLSOURCES})
 ELSE (BIS_USEGPL)
-  SET (EXTRASRCS
-    nongpl/bisReplacementExportedFunctions.cpp
-    )
+  SET (EXTRASRCS nongpl/bisReplacementExportedFunctions.cpp)
 ENDIF (BIS_USEGPL)
 
     
@@ -96,7 +93,6 @@ SET(KITSRCS
   bisDataObjectFactory.cpp
   bisSimpleImageSegmentationAlgorithms.cpp
   bisfMRIAlgorithms.cpp
-  bisDTIAlgorithms.cpp
   bisJointHistogram.cpp
   bisExportedFunctions.cpp
   bisExportedFunctions2.cpp
@@ -132,7 +128,7 @@ SET(PARSE_HEADERS
 IF (BIS_USEGPL)
   SET(PARSE_HEADERS
     ${PARSE_HEADERS}
-    ${CPP_SOURCE_DIR}/gpl/bisGPLExportedFunctions.h
+    ${GPLHEADERS}
     )
 ELSE (BIS_USEGPL)
   SET(PARSE_HEADERS
@@ -164,8 +160,16 @@ OPTION(BIS_MODULETEST "Enable MODULE Tests" ON)
 MARK_AS_ADVANCED(BIS_MODULETEST)
 
 # ---------------------------------------------------------------------------------------------
-# Emscripten and Native
+# License File depending on whether we are using the GPL plugin or not
 # ---------------------------------------------------------------------------------------------
+
+IF (BIS_USEGPL)
+  SET (LICENSE_FILE "${PROJECT_SOURCE_DIR}/../various/txt/gpl_license.txt")
+ELSE (BIS_USEGPL)
+  SET (LICENSE_FILE "${PROJECT_SOURCE_DIR}/../various/txt/apache_license.txt")
+ENDIF (BIS_USEGPL)
+
+install (FILES ${LICENSE_FILE} DESTINATION bisweb/ RENAME LICENSE)
 
 
 IF (BIS_A_EMSCRIPTEN)
@@ -205,12 +209,19 @@ IF (BIS_A_EMSCRIPTEN)
   # ------------------ create webpack wasm module ---------------
   ADD_CUSTOM_COMMAND(OUTPUT ${WEBPACK_WASM_MODULE}
     DEPENDS ${LIBNAME} ${TOOLS_DIR}/bis_create_wasm_module.js
-    COMMENT "\nCcd .reating Webpack Wasm Module"
+    COMMENT "\nCreating Webpack Wasm Module"
     COMMAND ${NodeInterp} ${TOOLS_DIR}/bis_create_wasm_module.js -i ${FVAR2} -o ${WEBPACK_WASM_MODULE})
   add_custom_target(wasm ALL DEPENDS ${WEBPACK_WASM_MODULE})
   
   # --------------------- Copy to windows
-    
+
+
+  SET (README_FILE "${PROJECT_SOURCE_DIR}/../various/txt/README_js.txt")
+  install (FILES ${README_FILE} DESTINATION bisweb/)
+  
+  configure_file( ${LICENSE_FILE} "${EXECUTABLE_OUTPUT_PATH}/../web/LICENSE" @ONLY )
+
+  
   IF (BIS_WASMLIB_COPY)
     MESSAGE("-- Copying to second directory ${BIS_EXTRAPATH}")
     ADD_CUSTOM_COMMAND(
@@ -235,9 +246,13 @@ IF (BIS_A_EMSCRIPTEN)
       COMMENT "Copying Webpack Masm Module to windows"
       COMMAND ${CMAKE_COMMAND} -E copy ${WEBPACK_WASM_MODULE} ${WEBPACK_WASM_MODULE_COPY})
     add_custom_target(wasm2 ALL DEPENDS ${WEBPACK_WASM_MODULE_COPY})
-  ENDIF(BIS_WASMLIB_COPY)
 
-  
+    configure_file( ${LICENSE_FILE} "${BIS_EXTRAPATH}/../web/LICENSE" @ONLY )
+
+  ENDIF(BIS_WASMLIB_COPY)
+ 
+    
+ 
   # ------------------ create wrapper ---------------------------
 
   
@@ -277,15 +292,17 @@ IF (BIS_A_EMSCRIPTEN)
   SET(OUTFILES "")
   SET(OUTFILESWIN "")
   foreach(item ${MODULES})
-    SET (OFILE ${LIBRARY_OUTPUT_PATH}/${item})
-    SET (OFILE2 ${LIBRARY_OUTPUT_PATH}/${item}.bat)
+    SET (OFILE ${LIBRARY_OUTPUT_PATH}/bw_${item})
+    SET (OFILE2 ${LIBRARY_OUTPUT_PATH}/bw_${item}.bat)
     configure_file( ${PROJECT_SOURCE_DIR}/../config/runscript.in ${OFILE} @ONLY )
     configure_file( ${PROJECT_SOURCE_DIR}/../config/runscript.bat.in ${OFILE2} @ONLY )
     SET(OUTFILES ${OUTFILES} ${OFILE})
     SET(OUTFILESWIN ${OUTFILESWIN} ${OFILE2})
   endforeach(item ${MODULES})
-  install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.sh   DESTINATION bisweb)
-  install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.bat  DESTINATION bisweb)
+  install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.sh  DESTINATION bisweb)
+  install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.csh DESTINATION bisweb)
+  install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.bat DESTINATION bisweb)
+
   
   install (FILES ${OUTFILES} DESTINATION bisweb/bin 
     PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
@@ -402,8 +419,19 @@ ELSE(BIS_A_EMSCRIPTEN)
     install (FILES ${PYLIST} DESTINATION bisweb/python)
     install (FILES ${PYLIST2} DESTINATION bisweb/python/modules
       PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
-    install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.sh  DESTINATION bisweb
-      PERMISSIONS OWNER_READ  WORLD_READ)
+
+    IF (WIN32)
+      install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.bat  DESTINATION bisweb
+        PERMISSIONS OWNER_READ  WORLD_READ)
+    ELSE (WIN32)
+      install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.sh  DESTINATION bisweb
+        PERMISSIONS OWNER_READ  WORLD_READ)
+      install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.csh   DESTINATION bisweb
+        PERMISSIONS OWNER_READ  WORLD_READ)
+    ENDIF (WIN32)
+
+    SET (README_FILE "${PROJECT_SOURCE_DIR}/../various/txt/README_py.txt")
+    install (FILES ${README_FILE} DESTINATION bisweb/)
 
     # This overwrites bis_path.py with one suitable for install purposes
     MESSAGE("Installing ${BISWEB_PYTHON_PATH}")

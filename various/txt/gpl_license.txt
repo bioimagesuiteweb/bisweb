@@ -1,4 +1,21 @@
-                    GNU GENERAL PUBLIC LICENSE
+This binary build of BioImage Suite is released under the GPL V2
+
+You may obtain the source code from:
+
+https://github.com/bioimagesuiteweb/bisweb
+
+and
+
+https://github.com/bioimagesuiteweb/gplcppcode
+
+Note that while the code in the first repository is released under the Apache
+License, the authors explicitly grant permission to re-license all files in
+this under the GPL as well.
+
+------------------------------------------
+
+
+
                        Version 2, June 1991
 
  Copyright (C) 1989, 1991 Free Software Foundation, Inc.,

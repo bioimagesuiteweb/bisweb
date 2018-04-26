@@ -33,6 +33,11 @@ extern "C" {
   
   /** @file bisReplacementExportedFunctions.h */
 
+
+  /** Returns 0*/
+  // BIS: { 'uses_gpl', 'Int' } 
+  BISEXPORT int uses_gpl();
+
   /** Stub Function */
   // BIS: { 'runLinearRegistrationWASM', 'bisLinearTransformation', [ 'bisImage', 'bisImage', 'bisLinearTransformation_opt', 'ParamObj', 'debug' ] } 
   BISEXPORT  unsigned char*  runLinearRegistrationWASM(unsigned char* reference,
@@ -72,6 +77,37 @@ extern "C" {
   /** Stub Function */
   // BIS: { 'test_optimizer', 'Int', [ 'Int'] } 
   BISEXPORT int test_optimizer(int numdof);
+
+
+  /** Stub Function */
+  // BIS: { 'computeDTITensorFitWASM', 'bisImage', [ 'bisImage', 'bisImage',  'bisImage_opt' ,'Matrix', 'ParamObj', 'debug'] } 
+  BISEXPORT unsigned char* computeDTITensorFitWASM(unsigned char* input_ptr,
+						   unsigned char* baseline_ptr,
+						   unsigned char* mask_ptr,
+						   unsigned char* directions_ptr,
+						   const char* jsonstring,
+						   int debug);
+
+
+  /** Stub Function */
+  unsigned char* computeTensorEigenSystemWASM(unsigned char* input_ptr,
+					      unsigned char* mask_ptr,
+					      int debug);
+
+
+  /** Stub Function */
+  BISEXPORT unsigned char* computeDTITensorInvariantsWASM(unsigned char* input_ptr,
+							  unsigned char* mask_ptr,
+							  const char* jsonstring,
+							  int debug);
+
+  /** Stub Function */
+  BISEXPORT unsigned char* computeDTIColorMapImageWASM(unsigned char* input_ptr,
+						       unsigned char* mask_ptr,
+						       unsigned char* magnitude_ptr,
+						       const char* jsonstring,
+						       int debug);
+
 
 
 #ifdef __cplusplus

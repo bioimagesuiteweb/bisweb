@@ -30,6 +30,7 @@ if (n<8.0) {
     process.exit(1);
 }
 
-console.log(`....\n.... Using node.js version ${v} (OK)\n....`);
+console.log(`....\n.... Using node.js version ${v} ( OK )\n`);
+console.log('.... This program is part of the tools from BioImage Suite Web. See https://github.com/bioimagesuiteweb/bisweb for more information.\n....');
 
 module.exports=n;

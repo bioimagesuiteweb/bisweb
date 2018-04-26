@@ -104,7 +104,7 @@ exports.getModule = function(toolname) {
     
     let newmodulecommand=this.moduleNamesArray[toolname.toLowerCase()];
     if (newmodulecommand===undefined) {
-        console.log('Error: could not find module',toolname,' in getModule()');
+        //    console.log('Error: could not find module',toolname,' in getModule()');
         return null;
     }
     

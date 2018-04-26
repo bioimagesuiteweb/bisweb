@@ -22,13 +22,17 @@
 // Linear Image Registration
 // --------------------------------------------------------------------------------------------------------------------------------------------------------
 
+int uses_gpl() {
+  return 0;
+}
+
 unsigned char* runLinearRegistrationWASM(unsigned char* ,
 					 unsigned char* ,
 					 unsigned char* _ptr,
 					 const char* ,
 					 int )
 {
-  std::cout << "_____ This is simply a stub function" << std::endl;
+  std::cout << "_____ This is simply a stub function. The actual code can be obtained from the plugin repository https://github.com/bioimagesuiteweb/gplcppcode. To use this code see the instructions in the README.md file of the main cpp directory." << std::endl;
   return 0;
 }
 
@@ -42,7 +46,7 @@ unsigned char* runNonLinearRegistrationWASM(unsigned char* ,
 					    const char* ,
 					    int )
 {
-  std::cout << "_____ This is simply a stub function" << std::endl;
+  std::cout << "_____ This is simply a stub function. The actual code can be obtained from the plugin repository https://github.com/bioimagesuiteweb/gplcppcode. To use this code see the instructions in the README.md file of the main cpp directory." << std::endl;
   return 0;
 }
 
@@ -51,7 +55,7 @@ unsigned char* runNonLinearRegistrationWASM(unsigned char* ,
 unsigned char* segmentImageWASM(unsigned char* ,
                                 const char* ,int)
 {
-  std::cout << "_____ This is simply a stub function" << std::endl;
+  std::cout << "_____ This is simply a stub function. The actual code can be obtained from the plugin repository https://github.com/bioimagesuiteweb/gplcppcode. To use this code see the instructions in the README.md file of the main cpp directory." << std::endl;
   return 0;
 }
 
@@ -61,7 +65,7 @@ unsigned char* approximateDisplacementFieldWASM(unsigned char* ,
 						const char*,
 						int )
 {
-  std::cout << "_____ This is simply a stub function" << std::endl;
+  std::cout << "_____ This is simply a stub function. The actual code can be obtained from the plugin repository https://github.com/bioimagesuiteweb/gplcppcode. To use this code see the instructions in the README.md file of the main cpp directory." << std::endl;
   return 0;
 }
 
@@ -70,7 +74,7 @@ unsigned char* approximateDisplacementFieldWASM2(unsigned char* ,
 						 const char* ,
 						 int )
 {
-  std::cout << "_____ This is simply a stub function" << std::endl;
+  std::cout << "_____ This is simply a stub function. The actual code can be obtained from the plugin repository https://github.com/bioimagesuiteweb/gplcppcode. To use this code see the instructions in the README.md file of the main cpp directory." << std::endl;
   return 0;
 }
 // -----------------------------------------------------------------------------------------------------
@@ -78,12 +82,62 @@ unsigned char* approximateDisplacementFieldWASM2(unsigned char* ,
 // -----------------------------------------------------------------------------------------------------
   unsigned char* regularizeObjectmapWASM(unsigned char* input,const char* jsonstring,int debug)
 {
-  std::cout << "_____ This is simply a stub function" << std::endl;
+  std::cout << "_____ This is simply a stub function. The actual code can be obtained from the plugin repository https://github.com/bioimagesuiteweb/gplcppcode. To use this code see the instructions in the README.md file of the main cpp directory." << std::endl;
   return 0;
 }
 
 int  test_optimizer(int numparam) {
 
-  std::cout << "_____ This is simply a stub function" << std::endl;
+  std::cout << "_____ This is simply a stub function. The actual code can be obtained from the plugin repository https://github.com/bioimagesuiteweb/gplcppcode. To use this code see the instructions in the README.md file of the main cpp directory." << std::endl;
   return 0;
 }  
+
+// -----------------------------------------------------------------------------------------------------
+// DTI Code
+// -----------------------------------------------------------------------------------------------------
+
+unsigned char* computeDTITensorFitWASM(unsigned char* ,
+                                       unsigned char* ,
+                                       unsigned char* ,
+                                       unsigned char* ,
+                                       const char* ,
+                                       int)
+{
+    std::cout << "_____ This is simply a stub function. The actual code can be obtained from the plugin repository https://github.com/bioimagesuiteweb/gplcppcode. To use this code see the instructions in the README.md file of the main cpp directory." << std::endl;
+  return 0;
+}
+
+
+/** Stub Function */
+unsigned char* computeTensorEigenSystemWASM(unsigned char* ,
+                                            unsigned char* ,
+                                            int )
+{
+  std::cout << "_____ This is simply a stub function. The actual code can be obtained from the plugin repository https://github.com/bioimagesuiteweb/gplcppcode. To use this code see the instructions in the README.md file of the main cpp directory." << std::endl;
+  return 0;
+}
+
+
+
+/** Stub Function */
+unsigned char* computeDTITensorInvariantsWASM(unsigned char* ,
+                                              unsigned char* ,
+                                              const char* ,
+                                              int )
+{
+  std::cout << "_____ This is simply a stub function. The actual code can be obtained from the plugin repository https://github.com/bioimagesuiteweb/gplcppcode. To use this code see the instructions in the README.md file of the main cpp directory." << std::endl;
+  return 0;
+}
+
+
+/** Stub Function */
+unsigned char* computeDTIColorMapImageWASM(unsigned char* ,
+                                           unsigned char* ,
+                                           unsigned char*,
+                                           const char* ,
+                                           int )
+{
+  std::cout << "_____ This is simply a stub function. The actual code can be obtained from the plugin repository https://github.com/bioimagesuiteweb/gplcppcode. To use this code see the instructions in the README.md file of the main cpp directory." << std::endl;
+  return 0;
+}
+
