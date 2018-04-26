@@ -1,4 +1,4 @@
-This binary build of BioImage Suite is released under the Apache License v2
+This binary build of BioImage Suite Web is released under the Apache License v2
 
 You may obtain the source code from:
 
