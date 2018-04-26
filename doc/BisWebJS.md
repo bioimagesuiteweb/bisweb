@@ -854,7 +854,7 @@ This means that coordinate wise the mapping goes from I to J. The reslicing oper
     c. Interpolate image __J__ at location x' (x' need not be an integer) and compute the value v
     d. Set __J'__(x) = v
 
-__This creates the usual saying that `coordinates move forward` and `images move backwards`.__ Reslicing an image __J__ to match an image I requires a transformation _from_ __I__ _to_ __J__. When computing this transformation in bisweb, __I__ is the reference image and __J__ is the target image. In other software the notation of 'moving' and 'fixed' is also used.
+__This creates the usual saying that _coordinates move forward_ and _images move backwards_.__ Reslicing an image __J__ to match an image I requires a transformation _from_ __I__ _to_ __J__. When computing this transformation in bisweb, __I__ is the reference image and __J__ is the target image. In other software the notation of 'moving' and 'fixed' is also used.
 
 Consider now the case of an fMRI experiment that maps timeseries data into the space of a reference 3D image, e.g. the MNI template. Here there are potentially 3 transformations
 
