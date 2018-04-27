@@ -1294,6 +1294,12 @@ const webutil = {
      */
     runAfterAllLoaded : function(clb) {
 
+        // https://stackoverflow.com/questions/13364613/how-to-know-if-window-load-event-was-fired-already?noredirect=1&lq=1
+        if (document.readyState == 'complete') {
+            clb();
+            return;
+        }
+        
         //need to execute attachViewers after all the elements have been loaded, attach it to page load event
         //https://stackoverflow.com/questions/807878/javascript-that-executes-after-page-load
 
