@@ -260,8 +260,6 @@ gulp.task('commonfiles', function() {
     gulp.src([ 'node_modules/bootstrap/dist/css/*']).pipe(gulp.dest(options.outdir+'css/'));
     gulp.src([ 'node_modules/bootstrap/dist/fonts/*']).pipe(gulp.dest(options.outdir+'fonts/'));
     gulp.src([ 'web/images/**/*']).pipe(gulp.dest(options.outdir+'/images/'));
-    gulp.src([ 'config/redirect/mni2tal/*.html']).pipe(gulp.dest(options.outdir+'/mni2tal/'));
-    gulp.src([ 'config/redirect/connviewer/*.html']).pipe(gulp.dest(options.outdir+'/connviewer/'));
     gulp.src('./web/biswebdropbox.html').pipe(gulp.dest(options.outdir));
     gulp.src([ 'lib/fonts/*']).pipe(gulp.dest(options.outdir+'/fonts/'));
     gulp.src('./web/bispreload.js').pipe(gulp.dest(options.outdir));
