@@ -37,7 +37,7 @@ let createIndex=function(obj) {
     
     menu.empty();
 
-    let bb=$(`<div align="center" style="padding:15px;  left:90vw; top:90vh; border-radius:30px;background-color:#884400; z-index:5000; position: absolute; color:#ffffff">
+    let bb=$(`<div align="center" style="padding:15px;  left:75vw; top:0vh; border-radius:30px;background-color:#221100; z-index:5000; position: absolute; color:#ffffff">
 	     Version: ${bisdate}</div>`);
 
     $('body').append(bb);
@@ -99,7 +99,7 @@ let parsejson = function(text) {
     // Remove all previous alerts -- only one is needed
     
     let parent = $("#bisslides");
-    let msg=`<B>These applications are still in 'alpha' (development) stage. Use with care.</B>`;
+    let msg=`<B>These applications are still in 'beta' (development) stage. Use with care.</B>`;
     
     let w = $(`<div class="alert alert-info alert-dismissible" role="alert"  style="position:absolute; top:70px; left:10px; z-index:100">
 	      <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${msg}
