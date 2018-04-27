@@ -185,7 +185,7 @@ var createCSSCommon=function(dependcss,out,outdir) {
 
 var createDateFile=function(datefile) {
 
-    let a=getDate2();
+    let a=getDate();
     let output_text=`module.exports = { date : "${a}"};\n`;
     console.log(`++++ Creating ${datefile} : ${a}`);
     fs.writeFileSync(datefile,output_text);
