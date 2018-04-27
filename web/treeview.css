@@ -1,0 +1,17 @@
+.active {
+    fill : lightblue
+}
+
+g .root {
+    fill : red
+}
+
+g .child { 
+    fill : blue
+}
+
+g text { 
+    fill : black;
+    font: 10px sans-serif;
+    text-anchor: start;
+}

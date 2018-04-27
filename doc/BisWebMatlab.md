@@ -3,7 +3,7 @@
 
 ## Introduction
 
-The BioImage Suite web Matlab code is very primitive compared to the  [JavaScript codebase](BisWebJS.md) and even the [Python codebase](BisWebPython.md). It really is more of a proof of principle at this point than a serious fully-fledged interface for production use. In particular, there are no Matlab-based regression tests. However the C++ library used with Matlab is __the same, identical__ library used with Python so at least the C++ code is implicitly regression tested via Python. 
+The BioImage Suite web Matlab code is primitive compared to the  [JavaScript codebase](BisWebJS.md) and even the [Python codebase](BisWebPython.md). It is more of a proof of concept at its current stage rather than a serious fully-fledged interface for production use. In particular, there are no Matlab-based regression tests. However the C++ library used with Matlab is identical to library used with Python so at least the C++ code is implicitly regression tested via Python. 
 
 The Matlab code can be found in the `matlab` subdirectory. The interface consists of a single file
 
@@ -30,7 +30,7 @@ Then we create a list of image filenames:
     imagenames{2}='avg152T1_LR_nifti.nii.gz';
     imagenames{3}='avg152T1_LR_nifti_resampled_resliced.nii.gz'
 
-We load the images one by one using the [Matlab NIFTI package by Jimmy Shen](https://www.mathworks.com/matlabcentral/fileexchange/8797-tools-for-nifti-and-analyze-image) which needs to be installed and in your Matlab path.
+Images are loaded one by one using the [Matlab NIFTI package by Jimmy Shen](https://www.mathworks.com/matlabcentral/fileexchange/8797-tools-for-nifti-and-analyze-image) which needs to be installed and in your Matlab path.
 
     images = { };
 
@@ -39,7 +39,7 @@ We load the images one by one using the [Matlab NIFTI package by Jimmy Shen](htt
     images{i} = load_untouch_nii(filename,[],[],[],[],[],[]);
     end
 
-We then create the 4x4 matrix:
+Then create the 4x4 matrix:
 
     reslice_matr = [   0.866,  -0.525  , 0.000,  68.758 ;
                     0.500,   0.909 ,  0.000 ,  9.793 ;
@@ -56,11 +56,11 @@ We create the parameter object:
     paramobj.datatype='float';
     paramobj.backgroundValue=0.0;
 
-Then we call resliceImageWASM to perform the reslicing:
+Then call `resliceImageWASM` to perform the reslicing:
 
     out_img=lib.resliceImageWASM(images{2},reslice_matr,paramobj,2);
 
-This returns the output image structure. The raw intensities can be accessed via out_img.data e.g.
+This returns the output image structure. The raw intensities can be accessed via `out_img.data`, e.g.
 
     size(out_img.data)
     out_img.data(37,25,14)
@@ -72,12 +72,12 @@ This returns the output image structure. The raw intensities can be accessed via
 
 ### Loading the Library
 
-We use the Matlab function [loadlibrary](https://www.mathworks.com/help/matlab/ref/loadlibrary.html) to load the C++ library. This takes two arguments:
+Bisweb for Matlab uses the Matlab function [loadlibrary](https://www.mathworks.com/help/matlab/ref/loadlibrary.html) to load the C++ library. This takes two arguments:
 
 * the .dll/.so/.dylib library itself
 * a header file defining the functions using pure C-style definitions
 
-The header file is created using `compiletools/bis_create_wrappers.js` (invoked via CMake). This consists of the parsed header files from the C++ code (removing conditional statements such as #ifdef, #extern etc.) defining the actual functions. For example, the entry for gaussianSmoothImageWasm 
+The header file is created using `compiletools/bis_create_wrappers.js` (invoked via CMake). This consists of the parsed header files from the C++ code, i.e. the header files stripped of conditional statements such as #ifdef, #extern,etc., defining the actual functions. For example, the entry for `gaussianSmoothImageWasm`
 
     unsigned char*  gaussianSmoothImageWASM(unsigned char* input,const char* jsonstring,int debug);
 
@@ -85,12 +85,12 @@ The header file is created using `compiletools/bis_create_wrappers.js` (invoked 
 
 #### Serialization
 
-We rely heavily on the function [typecast](https://www.mathworks.com/help/matlab/ref/typecast.html?searchHighlight=typecast&s_tid=doc_srchtitle) to create byte arrays. The following shows the code for serializing a Matrix, split into two functions.
+The bisweb Matlab code relies heavily on the function [typecast](https://www.mathworks.com/help/matlab/ref/typecast.html?searchHighlight=typecast&s_tid=doc_srchtitle) to create byte arrays. The following shows the code for serializing a Matrix, split into two functions.
 
-The first function contains a bytearray for a matrix -- please take a look at [BisWebJS.md](BisWebJS.md) for the serialization format. Essentially the byte-array has
+The first function contains a bytearray for a matrix — see [BisWebJS.md](BisWebJS.md) for the serialization format. Essentially the byte-array has:
 
-*  4 x int32 header
-*  2 x int32 matrix header (dimensions)
+*  4 x `int32` header
+*  2 x `int32` matrix header (dimensions)
 *  the raw data
 
 Because of Matlab's Fortran root's we need to transpose the matrix prior to serialization to make it 'row-major'.
@@ -98,92 +98,92 @@ Because of Matlab's Fortran root's we need to transpose the matrix prior to seri
     function out=serialize_dataobject_bytearray(mat)
      
 
-We get the data type and the matrix dimensions first
+Get the data type and the matrix dimensions first.
 
-        itemsize=get_type_size(mat);
-        shp=size(mat);
+        itemsize = get_type_size(mat);
+        shp = size(mat);
 
-We then create the global int32[4] header
+Then create the global `int32[4]` header.
 
-        top_header=zeros(1,4,'int32');
-        top_header(1)=get_matrix_magic_code();
-        top_header(2)=get_nifti_code(mat);
-        top_header(3)=8;
-        top_header(4)=itemsize*shp(1)*shp(2);
+        top_header = zeros(1,4,'int32');
+        top_header(1) = get_matrix_magic_code();
+        top_header(2) = get_nifti_code(mat);
+        top_header(3) = 8;
+        top_header(4) = itemsize*shp(1)*shp(2);
 
-Next comes the matrix header
+Next comes the matrix header,
 
-        dimensions=[shp(1),shp(2) ];
+        dimensions=[ shp(1),shp(2) ];
 
-Next comes the transposed and flattened matrix:
+then the transposed and flattened matrix.
 
-        m2=reshape((mat'),1,prod(dimensions));
+        m2=reshape( (mat'), 1, prod(dimensions) );
 
-Next we create raw byte arrays for the three parts
+Next create raw byte arrays for the three parts:
 
-        head_b=typecast(top_header,'uint8');
-        dim_b=typecast(dimensions,'uint8');
-        data_b=typecast(m2,'uint8');
+        head_b = typecast(top_header, 'uint8');
+        dim_b = typecast(dimensions, 'uint8');
+        data_b = typecast(m2, 'uint8');
  
  These are then combined to create a single 1-d byte array
  
-        out=cat(2,head_b,dim_b,data_b);
+        out = cat(2,head_b,dim_b,data_b);
         
     end
 
 The second function calls the first and then creates a pointer using the [libpointer function](https://www.mathworks.com/help/matlab/ref/libpointer.html?searchHighlight=libpointer&s_tid=doc_srchtitle)
 
-    function out=serialize_dataobject(mat)
+    function out = serialize_dataobject(mat)
 
-        ptr=serialize_dataobject_bytearray(mat,spa,debug);
-        out=libpointer('voidPtr',ptr);
+        ptr = serialize_dataobject_bytearray(mat, spa, debug);
+        out = libpointer('voidPtr', ptr);
     end
     
     
 
 #### Deserialization
 
-This is simplified for a matrix object
+Deserialization is simplified for a matrix object
 
-    function out=deserialize_pointer(ptr)
+    function out = deserialize_pointer(ptr)
 
-This is the offset into the ptr. For our purpose it is zero:
+This is the offset into the ptr. It may be set to zero here.
 
-        offset=0;
+        offset = 0;
 
-First he extract the first 16-bytes and create the main header. `get_matlab_type` and `get_matlab_type_size` are utility functions inside `bis_wrapper.m`
+Extract the first 16-bytes and create the main header. `get_matlab_type` and `get_matlab_type_size` are utility functions inside `bis_wrapper.m`
 
-        reshape(ptr,16+offset,1);
-        top_header=typecast(ptr.Value(1+offset:16+offset),'int32');
-        typename=get_matlab_type(top_header(2));
-        headersize=top_header(3);
-        data_bytelength=top_header(4);
+        reshape(ptr, 16 + offset, 1);
+        top_header = typecast(ptr.Value(1 + offset: 16 + offset),'int32');
+        typename = get_matlab_type(top_header(2));
+        headersize = top_header(3);
+        data_bytelength = top_header(4);
 
-        typesize=get_matlab_type_size(typename);
-        data_length=data_bytelength/typesize;
+        typesize = get_matlab_type_size(typename);
+        data_length = data_bytelength / typesize;
 
-        total_length=16+headersize+data_bytelength;
+        total_length = 16 + headersize + data_bytelength;
 
-Then we get the raw data
+Then get the raw data
 
-        reshape(ptr,total_length+offset,1);
-        rawdata=ptr.Value;
+        reshape(ptr, total_length + offset, 1);
+        rawdata = ptr.Value;
 
 In the case that top_header(1) has the type of matrix
 
         switch(top_header(1))
         case get_matrix_magic_code()
 
-We extract the matrix dimensions (bytes 17:24)
-            dimensions=typecast(rawdata(17+offset:24+offset,:),'int32');
+Rxtract the matrix dimensions (bytes 17:24)
+            dimensions = typecast(rawdata(17 + offset: 24 + offset, :),'int32');
 
 We extract the raw data
 
-            data=typecast(rawdata(25+offset:total_length+offset,1:1),typename);
+            data = typecast(rawdata(25 + offset: total_length + offset, 1: 1), typename);
 
 We reshape and then transpose back to col-major 'Fortran' style order
 
-            out=reshape(data,dimensions(2),dimensions(1))';
+            out = reshape(data, dimensions(2), dimensions(1));
         end
         
     end
@@ -191,38 +191,38 @@ We reshape and then transpose back to col-major 'Fortran' style order
 
 ### Calling the C-function
 
-Again we make use of the wrapper functions. For gaussianSmoothImageWASM the Matlab interface function has the form
+Again we make use of the wrapper functions. For `gaussianSmoothImageWASM` the Matlab interface function has the form:
 
-    function output = gaussianSmoothImageWASM(image1,paramobj,debug)
+    function output = gaussianSmoothImageWASM(image1, paramobj, debug)
 
-        if debug~=1 && debug~=2
-            debug=0;
+        if debug ~= 1 && debug ~= 2
+            debug = 0;
         end
 
-This is a custom simple JSON serializer for our paramobj
+`biswasm` has a custom JSON serializer for `paramobj`.
 
-        jsonstring=biswasm.json_stringify(paramobj);
+        jsonstring = biswasm.json_stringify(paramobj);
 
-We serialize the image
+Serialize the image.
 
         % Serialize objects
-        image1_ptr=biswasm.wrapper_serialize(image1,'bisImage');
+        image1_ptr = biswasm.wrapper_serialize(image1, 'bisImage');
 
 We use the [Matlab function calllib](https://www.mathworks.com/help/matlab/ref/calllib.html?searchHighlight=calllib&s_tid=doc_srchtitle) to call the function:
 
-        wasm_output=calllib(biswasm.Module,'gaussianSmoothImageWASM',image1_ptr,jsonstring,debug);
+        wasm_output = calllib(biswasm.Module, 'gaussianSmoothImageWASM', image1_ptr, jsonstring, debug);
 
 We then deserialize the output and return
 
-        output=biswasm.wrapper_deserialize_and_delete(wasm_output,'bisImage');
+        output = biswasm.wrapper_deserialize_and_delete(wasm_output, 'bisImage');
   
     end
 
-For matrices and vectors the result is just a matlab matrix. For images the deserialization creates a structure with members (dimensions, spacing and data) that contain the image dimensions the image spacing and the 5-d matrix containing the image data respectively. The following is a snippet from the image deserialization code:
+For matrices and vectors the result is a matlab matrix. For images the deserialization creates a structure with members that contain the image dimensions, the image spacing, and the 5-d matrix containing the image data respectively. The following is a snippet from the image deserialization code:
 
-        out={ };
-	    dimensions=typecast(rawdata(17+offset:36+offset,:),'int32');
-	    out.dimensions=dimensions;
-        out.spacing=typecast(rawdata(37+offset:56+offset,:),'single');
-	    tmp=typecast(rawdata(57+offset:total_length+offset,1:1),typename);
-	    out.data=reshape(tmp,dimensions(1),dimensions(2),dimensions(3),dimensions(4),dimensions(5));
+        out = { };
+	    dimensions = typecast(rawdata(17 + offset: 36 + offset, :), 'int32');
+	    out.dimensions = dimensions;
+        out.spacing = typecast(rawdata(37 + offset: 56 + offset, :), 'single');
+	    tmp = typecast(rawdata(57 + offset: total_length + offset, 1: 1), typename);
+	    out.data = reshape(tmp, dimensions(1), dimensions(2), dimensions(3), dimensions(4), dimensions(5));
