@@ -125,30 +125,38 @@ var initialize_wasm=function(obj=null) {
     let binary=null;
     
     return new Promise( (resolve,reject) => {
+
+        let done=function(m) {
+            resolve(m);
+        };
         
         if (!obj) {
             if (typeof window !== 'undefined') {
                 obj=window;
                 binary=genericio.fromzbase64(window.biswebpack);
-                //                console.log('In initialize wasm read binary from window.biswebpack len=',binary.length);
 
                 let clb=function() {
-                    libbiswasm_raw(resolve,dname,binary);
+                    libbiswasm_raw(done,dname,binary);
                 };
-                
-                if (window.attachEvent) {
-                    window.attachEvent('onload', clb);
+                    
+                if (document.readyState == 'complete') {
+                    clb();
                 } else {
-                    if (window.onload) {
-                        let currentOnLoad = window.onload;
-                        let newOnload = (event) => {
-                            currentOnLoad(event);
-                            clb();
-                        };
-                        window.onload = newOnload;
+                    
+                    if (window.attachEvent) {
+                        window.attachEvent('onload', clb);
                     } else {
-                        //window invokes attachViewers so have to bind algorithm controller explicitly
-                        window.onload = clb;
+                        if (window.onload) {
+                            let currentOnLoad = window.onload;
+                            let newOnload = (event) => {
+                                currentOnLoad(event);
+                                clb();
+                            };
+                            window.onload = newOnload;
+                        } else {
+                            //window invokes attachViewers so have to bind algorithm controller explicitly
+                            window.onload = clb;
+                        }
                     }
                 }
             }
@@ -156,7 +164,7 @@ var initialize_wasm=function(obj=null) {
             binary=obj.biswebpack;
             if (!binary)
                 reject('No binary in obj.biswebpack');
-            libbiswasm_raw(resolve,dname,binary);
+            libbiswasm_raw(done,dname,binary);
         }
 
         if (binary) {

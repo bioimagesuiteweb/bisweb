@@ -62,7 +62,6 @@ let auth = function() {
     let box = new dbox({ clientId : keys.DropboxAppKey });
     let url = 'https://bioimagesuiteweb.github.io/webapp/biswebdropbox.html'; 
     let authUrl = box.getAuthenticationUrl(url);
-    console.log(authUrl);   
     window.open(authUrl, '', 'width=500, height=500');
 };
 

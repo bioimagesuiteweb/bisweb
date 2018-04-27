@@ -174,7 +174,6 @@ class ModuleManagerElement extends HTMLElement {
 
         if (this.mode==='overlay') {
             webutil.createMenuItem(this.moduleMenu[0], '');
-            biswrap.initialize(); // This theoretically should be a promise but it will happen ...
             this.createModule('Reslice Image',0, false, modules.resliceImage, {'numViewers' : 1 });
             return this.moduleMenu[0];
         } 

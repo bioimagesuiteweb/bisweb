@@ -1,0 +1,11 @@
+# Denote all files that are truly binary and should not be modified.
+*.eot binary
+*.svg binary
+*.ttf binary
+*.woff binary
+*.woff2 binary
+*.zip binary
+*.png binary
+*.gif binary
+*.jpg binary
+*.nii.gz binary
