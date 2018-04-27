@@ -57,7 +57,6 @@ class ModuleManagerElement extends HTMLElement {
         this.modules = {};
         this.moduleMenu = [ null,null,null,null];
         this.viewers = [];
-        biswrap.initialize();
     }
 
 
@@ -133,9 +132,7 @@ class ModuleManagerElement extends HTMLElement {
         }
     }
 
-    
     initializeElements(menubar, viewers = []) {
-
         if (!this.algorithmController) {
             return;
         }
@@ -177,6 +174,7 @@ class ModuleManagerElement extends HTMLElement {
 
         if (this.mode==='overlay') {
             webutil.createMenuItem(this.moduleMenu[0], '');
+            biswrap.initialize(); // This theoretically should be a promise but it will happen ...
             this.createModule('Reslice Image',0, false, modules.resliceImage, {'numViewers' : 1 });
             return this.moduleMenu[0];
         } 
@@ -193,6 +191,20 @@ class ModuleManagerElement extends HTMLElement {
             this.moduleMenu[3] = webutil.createTopMenuBarMenu('Registration', menubar);
         }
 
+        biswrap.initialize().then( () => {
+            this.initializeElementsInternal(menubar,viewers,moduleoptions);
+        });
+    }
+
+    
+    initializeElementsInternal(menubar, viewers = [],moduleoptions) {
+
+        let usesgpl=biswrap.uses_gpl();
+        if (usesgpl)
+            usesgpl=true;
+        else
+            usesgpl=false;
+    
         this.createModule('Smooth Image',1, false, modules.smoothImage, moduleoptions);
         this.createModule('Normalize Image',1, false, modules.normalizeImage, moduleoptions);
         this.createModule('Threshold Image',1, false, modules.thresholdImage, moduleoptions);
@@ -209,19 +221,25 @@ class ModuleManagerElement extends HTMLElement {
         this.createModule('Combine Images',1, false, modules.combineImages, moduleoptions);
         this.createModule('Average 4D Image',1, dosep, modules.process4DImage, moduleoptions);
         this.createModule('Create Mask',2, false, modules.binaryThresholdImage, moduleoptions);
-        this.createModule('Segment Image',2, true, modules.segmentImage, moduleoptions);
         this.createModule('Morphology Filter',2, false, modules.morphologyFilter, moduleoptions);
+        if (usesgpl) {
+            this.createModule('Segment Image',2, true, modules.segmentImage, moduleoptions);
+        }
         this.createModule('Regularize Objectmap',2, true, modules.regularizeObjectmap, moduleoptions);
         this.createModule('Mask Image', 2, false, modules.maskImage, moduleoptions);
 
         if (this.mode!=='single') {
             this.createModule('Reslice Image',3, true, modules.resliceImage, moduleoptions);
             this.createModule('Manual Registration',3, true, modules.manualRegistration, moduleoptions);
-            this.createModule('Linear Registration',3, false, modules.linearRegistration, moduleoptions);
-            this.createModule('Non Linear Registration',3, true, modules.nonlinearRegistration, moduleoptions);
+            if (usesgpl) {
+                this.createModule('Linear Registration',3, false, modules.linearRegistration, moduleoptions);
+                this.createModule('Non Linear Registration',3, true, modules.nonlinearRegistration, moduleoptions);
+            }
             this.createModule('Project Image',3, false, modules.projectImage, moduleoptions);
-            this.createModule('Back-Project Image',3, true, modules.backProjectImage, moduleoptions);
-            this.createModule('Motion Correction',3, false, modules.motionCorrection, moduleoptions);
+            this.createModule('Back-Project Image',3, usesgpl, modules.backProjectImage, moduleoptions);
+            if (usesgpl) {
+                this.createModule('Motion Correction',3, false, modules.motionCorrection, moduleoptions);
+            }
         } else {
             webutil.createMenuItem(this.moduleMenu[1], '');
             this.createModule('Reslice Image',1, false, modules.resliceImage, moduleoptions);

@@ -33,7 +33,7 @@ const bootbox=require('bootbox');
 const bisweb_apputil=require("bisweb_apputilities.js");
 const biscustom = require('bisweb_custommodule.js');
 const modules = require('moduleindex.js');
-
+const biswrap = require('libbiswasm_wrapper');
 
 
 // -------------------------------------------------------------------------
@@ -183,14 +183,17 @@ class PaintToolElement extends HTMLElement {
                                                                   this.internal.algocontroller,
                                                                   new modules.morphologyFilter(),
                                                                   {'numViewers' : 0 });
-            this.internal.regularizeModule=biscustom.createCustom(this.internal.layoutcontroller.createToolWidget('Regularize Objectmap'),
-                                                                  this.internal.algocontroller,
-                                                                  new modules.regularizeObjectmap(),
-                                                                  {'numViewers' : 0 });
-            this.internal.maskModule=biscustom.createCustom(this.internal.layoutcontroller.createToolWidget('Mask Image'),
-                                                            this.internal.algocontroller,
-                                                            new modules.maskImage(),
-                                                            {'numViewers' : 0 });
+            biswrap.initialize().then( () => {
+                if (biswrap.uses_gpl())
+                    this.internal.regularizeModule=biscustom.createCustom(this.internal.layoutcontroller.createToolWidget('Regularize Objectmap'),
+                                                                          this.internal.algocontroller,
+                                                                          new modules.regularizeObjectmap(),
+                                                                          {'numViewers' : 0 });
+                this.internal.maskModule=biscustom.createCustom(this.internal.layoutcontroller.createToolWidget('Mask Image'),
+                                                                this.internal.algocontroller,
+                                                                new modules.maskImage(),
+                                                                {'numViewers' : 0 });
+            });
 
         }
     }
