@@ -140,7 +140,7 @@ class SimpleAlgorithmControllerElement extends HTMLElement {
             }
         }
         if (obj===null) {
-            console.log('returning identity');
+//            console.log('returning identity');
             return this.identityTransform;
         }
 
@@ -168,7 +168,7 @@ class SimpleAlgorithmControllerElement extends HTMLElement {
             return false;
 
         let sz=input.getMemorySize();
-        console.log('input=',input.getFilename(),sz);
+        //console.log('input=',input.getFilename(),sz);
 
         if (sz< (50*1024*1024)) {
             
