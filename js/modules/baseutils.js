@@ -472,7 +472,7 @@ module.exports = {
             return [ 'node'];
         
         let s=window.location.href+" "+name;
-        console.log(s);
+        //        console.log(s);
         return s;
     }
 
