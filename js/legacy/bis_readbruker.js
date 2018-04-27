@@ -44,7 +44,9 @@ const path=bisgenericio.getpathmodule();
 const glob=bisgenericio.getglobmodule();
 
 const biswrap = require('libbiswasm_wrapper');
-biswrap.initialize();
+if (typeof window === 'undefined') {
+    biswrap.initialize();
+}
 
 const inelectron=( bisgenericio.getmode() === "electron");
 
