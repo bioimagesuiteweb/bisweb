@@ -4,29 +4,23 @@
 # Developing with Electron 
 
 [Electron][ELECTRON] was originally developed as a basis for GitHub's Atom
-editor and went by the name "Atom-shell". It was then refactored into a
+editor and went by the name "Atom Shell". It was then refactored into a
 full-blown standalone platform for HTML/CSS/JS-based Desktop
 Applications. The [Electron webpage][ELECTRON] is an excellent source of
-documentation for this which we will not duplicate here. Instead, the focus
-here is on ensuring that our multi-platform modules work with Electron as
-well as command line node.js and browser-based setups.
+documentation for further reference. This document will focus on how the multi-platform modules work with Electron as well as command line Node.js and browser-based setups.
 
-__Note:__ As far as modules are concerned Electron is essentially
-browser-plus. Most of the code will be used like in the browser but we will
-use a "preload-injection" mechanism to add a finite number of node modules
-that do not work in the browser. For those modules that are universal
-(i.e. both node and browser) we will use the browser mechanism (via the
-Universal modules defined above) to maintain maximum compatibility.
+All the code in this section can be found under
+`examples/electronmodule`, which is a slightly modified version of
+`examples/universalmodule`.
 
-All the code in this section can be found in the [repository][REPO] under
-``examples/electronmodule`` which is a slightly modified version of
-``examples/universalmodule``.
+_Note: As far as modules are concerned Electron is essentially
+an expanded browser. Most of the code is used like in the browser but the Electron code uses a "preload-injection" mechanism to add a finite number of Node modules that do not work in the browser. For those modules that are universal, i.e. those that work in both Node and browser, we will use the browser mechanism via the Universal modules defined above to maintain maximum compatibility._
 
 ---
 
 ## The Main Process
 
-When electron starts it takes as a first argument a directory. In this directory it looks for a JSON-formatted configuration file called package.json. This takes the form:
+The code to start Electron must be invoked with a path to a directory containing a JSON-formatted  configuration file called `package.json`. This takes the form:
 
     {
         "name" : "Application Name",
@@ -34,10 +28,10 @@ When electron starts it takes as a first argument a directory. In this directory
         "main" : "biselectron.js"
     }
 
-(You can look at the bisweb version of this file in [web/package.json](../web/package.json).)
+The bisweb version of this file may be found in [web/package.json](../web/package.json).
 
-The "main" field stores a pointer to the javascript file that will be
-executed when the executable starts. This is the base or core process. This process then starts a second process (a renderer
+The `"main"` field stores a pointer to the Javascript file that will be
+run when the executable starts. This is the base or core process. This process then starts a second process (a renderer
 process) by creating a RenderWindow object. This second process (and
 potentially a third and fourth and fifth and ... if more BrowserWindows are
 created) is effectively a packaged web browser. Let's now take a look at a simplified version of [the main electron file](../web/biselectron.js).
