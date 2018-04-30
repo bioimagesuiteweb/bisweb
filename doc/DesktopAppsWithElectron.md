@@ -44,46 +44,47 @@ First require some core modules:
      const BrowserWindow = electron.BrowserWindow;  // Module to create native browser window.
 
 Next store a reference to the main window of the application, `mainWindow`. Once it is created, the app will not terminate
-until `mainWindow` is set to null or goes out of scope. This typically happens when the app is closed.
+until `mainWindow` goes out of scope. That typically happens when the app is closed.
 
-     let mainWindow=null;
+     let mainWindow = null;
 
-This function creates the main window (using `index.html`)
+This function creates the main window using `index.html`:
 
      var createWindow = function() {
 
          let hidden = 'shown';
-         let opts = {width: 600, height: 400};
+         let opts = { width: 600, height: 400 };
          let fullURL='file://' + path.resolve(__dirname , 'index.html');
 
-This is the key here -- this script `bispreload.js` is run __before__ the html file is loaded
-and can include node-style requires even if the rest of the window
-has no node integration (turned off below nodeIntegration:false). See the [section on the renderer process](#The-Renderer-Process) for more details.
+This is key here — the script `bispreload.js` is run _before_ the html file is loaded
+and can include Node-style requires even if the rest of the window
+has no node integration (note the `nodeIntegration:false` line in the block below). See the [section on the renderer process](#The-Renderer-Process) for more details.
 
          let preload =  path.resolve(__dirname, 'bispreload.js');
 
-We next create the main window:
+Next create the main window:
 
-         mainWindow=new BrowserWindow({width: opts.width,
-                       height: opts.height,
-                       show: true,
-                       webPreferences: {
-                           nodeIntegration: false,
-                           preload: preload,
-                       },
-                      });
+         mainWindow = new BrowserWindow({
+                    width: opts.width,
+                    height: opts.height,
+                    show: true,
+                    webPreferences: {
+                        nodeIntegration: false,
+                        preload: preload,
+                    },
+                    });
 
-We register callbacks using ES6-style arrow functions
+Register callbacks using ES6-style arrow functions
 
          mainWindow.once('ready-to-show', () => { mainWindow.show(); });
-         mainWindow.on('closed', () => { mainWindow = null;});
+         mainWindow.on('closed', () => { mainWindow = null; });
 
-We load the URL to start
+Load the URL to start
 
          mainWindow.loadURL(fullURL);
      };
 
-The callbacks are copied straight from Electron examples:
+These callbacks are copied directly from Electron examples:
 
      // Quit when all windows are closed.
      app.on('window-all-closed', function() {
@@ -100,24 +101,21 @@ The callbacks are copied straight from Electron examples:
          createWindow();
      });
 
-Most of the rest of the code is boilerplate, adapted from the Electron
-examples. The only key change occurs in the creation of the BrowserWindow
-and specifically the lines
+The rest of the code is boilerplate adapted from Electron examples for the most part. The only notable change is in the `webPreferences` options in creation of the `BrowserWindow` (see line on `webPreferences` in [BrowserWindow API](https://github.com/electron/electron/blob/master/docs/api/browser-window.md)):
 
     webPreferences: {
           nodeIntegration: false,
           preload: preload,
     },
 
-which (1) supply a preload javascript file (we will look at this next) that
-is loaded __before__ the HTML file and (2) disables node integration
-(i.e. the _require_ function) for all JavaScript code that is loaded from
-within the BrowserWindow. This ensures that we (i) _can use_ some node.js
-code (through the preload script) and (ii) _we have maximum compatibility_
-with code developed with the browser in mind as there no
-node.js-symbols/functions in the global scope.
+These settings mean the following:
 
-To run this code in development mode, first cd to the root directory of the source tree. Then ensure you have a valid build using:
+* `nodeIntegration : false` disables the `require` statement for all JavaScript code loaded in the `BrowserWindow`.  This will enforce maximum compatibility with the native web codebase by disabling Node-only keywords.
+
+* `preload : preload` specifies a JavaScript file to be loaded _before_ the HTML file. This will allow the use of some Node.js specific code in a structured way. 
+ 
+
+To run this code in development mode, first navigate to the root directory of the source tree. Then ensure a valid build using:
 
     gulp build
 
@@ -125,18 +123,16 @@ Then start the electron process in BioImage Suite Web using
 
     electron web
 
-This will open the file ``web/package.json`` and use this to determine the
-initial script (biselectron.js). This will then instantiate a Browser
-Window and load our familiar ``web/index.html`` file (or `viewer.html` if this was specified.) This is set by the
+This will open the file ``web/package.json`` and use this to load the
+initial script, `biselectron.js`. This will then instantiate a `BrowserWindow` and load the familiar ``web/index.html`` (or `viewer.html` if this was specified). This is set by the
 combination of the following two statements:
 
-       let fullURL='file://' + path.resolve(__dirname , 'index.html');
+       let fullURL = 'file://' + path.resolve(__dirname , 'index.html');
        mainWindow.loadURL(fullURL);
 
-The first resolves index.html using a ``file://`` style URL in global scope
-and the second loads the URL.
+The first resolves index.html using a ``file://`` style URI in global scopeand the second loads the URL.
 
-If you want to start the viewer tool directly type (the full version `biselectron.js` parses the arguments to load a specific html file (in this case `viewer.html` instead of `index.html` if this is specified!)
+The Electron scripts can also open a `BrowserWindow` at a different HTML. For example, to open a browser window and load `viewer.html`, type: 
 
     electron main viewer
 
@@ -144,17 +140,15 @@ If you want to start the viewer tool directly type (the full version `biselectro
 
 ## The Renderer Process
 
-The renderer process is effectively (in our configuration) a localized web
-browser that loads local HTML file and all associated JS/CSS files. The one
-difference is the preload script which is loaded before the HTML and which
-(again in our usage) access node.js style code. Here is our example preload
-script [web/bispreload.js](../web/bispreload.js).
+The renderer process is effectively a localized web
+browser that loads an HTML file and all associated JS/CSS files. The one
+difference is the preload script, which loads before the HTML and accesses Node-specific code. Consider [web/bispreload.js](../web/bispreload.js), the preload file for BioImage Suite's Electron bindings:
 
     /* global  window,Buffer,__dirname */
     "use strict";
 
-    const electron= require('electron');
-    const remote=electron.remote;
+    const electron = require('electron');
+    const remote = electron.remote;
 
     window.BISELECTRON = {
         // ----------------------------------------------------
@@ -173,20 +167,11 @@ script [web/bispreload.js](../web/bispreload.js).
         Buffer : Buffer,
     };
 
-This is essentially defines a global object BISELECTRON (which is stored
-explicitly as a member of the Browser's global window object). In this we
-store references to key node.js modules that we would like to use
-later. This include the core file-system modules (``fs``, ``path`` and
-``zlib``) and the ``dialog`` sub-package which can be used to create System
-File|Open and File|Save dialogs. Please note that all this functionality is
-``name-spaced`` inside window.BISELECTRON and needs to explicitly retrieved
-from there. We make heavy use of these packages in [bis_genericio.js](../js/core/bis_genericio.js), where we abstract file I/O -- see also the description in [BisWebJS.md](BisWebJS.md#A-quick-note-on-Electron)
+This defines a global object, `BISELECTRON`, and attaches it to the browser's `window`. This object is used to store references to resolved Node.js dependencies that the native code may reference later. This include the core File System modules (``fs``, ``path`` and
+``zlib``) and the ``dialog`` sub-package which can be used to create 
+File -> Open and File -> Save dialogs. Note that this functionality is encapsulated in `window.BISELECTRON`. This construct is heavily used in [bis_genericio.js](../js/core/bis_genericio.js) — see also the description in [BisWebJS.md](BisWebJS.md#A-quick-note-on-Electron)
 
-A minor point is that the dialog package is a reference to an object of the
-remote (base) process. Read the Electron documentation for more details of
-why this is so. Here we will not worry about this distinction, instead we
-will encapsulate the necessary code and not deal with this issue from here
-on out.
+The attentive reader may note that the dialog package is a reference to an object contained in `remote`, the base process. The Electron documentation contains more details of why this is so, but this distinction is unimportant for the purposes of the preload.
 
 ---
 
@@ -194,14 +179,14 @@ on out.
 
 ### Introduction
 
-Unlike the Web-applications, in Electron we can initiate file dialogs programmatically. Here is an example of the file|Open dialog.
+Unlike a Web Application, Electron can initiate file dialogs programmatically. Here is an example of the File -> Open dialog,
 
             window.BISELECTRON.dialog.showOpenDialog( null, {
                 title: 'Select file to save image in',
                 defaultPath : 'initial.jpg',
                 filters : [ 
-                    { name: 'JPEG Files', extensions: [ "jpeg","jpg","JPG"]},
-                    { name: 'All Files', extensions: [ "*"]}
+                    { name: 'JPEG Files', extensions: [ "jpeg","jpg","JPG" ] },
+                    { name: 'All Files', extensions: [ "*" ] }
               ],
             }, function(filename) {
                 if(filename) {
@@ -209,13 +194,13 @@ Unlike the Web-applications, in Electron we can initiate file dialogs programmat
                 }
             });
 
-Her is the same for file|Save
+ and the same for File -> Save.
 
             window.BISELECTRON.dialog.showSaveDialog( null, {
                 title: 'Select file to save image in',
                 defaultPath : 'initial.jpg',
                 filters : [ 
-                    { name: 'JPEG Files', extensions: [ "jpeg","jpg","JPG"]},
+                    { name: 'JPEG Files', extensions: [ "jpeg","jpg","JPG" ] },
                     { name: 'All Files', extensions: [ "*"]}
               ],
             }, function(filename) {
@@ -227,35 +212,35 @@ Her is the same for file|Save
 
 ### Specifying Filename Filters:
 
-The filters in the Electron file dialogs are defined as arrays of dictionaries. Each dictionary has two elements
+The filters in the Electron file dialogs are defined as arrays of dictionaries. Each dictionary has two elements:
 
-* name -- the name of the filter as a string
-* extension -- an array of strings specifying the extensions __without the preceeding period (`.`)__
+* `name` — the name of the filter as a string
+* `extension` — an array of strings specifying the extensions __without the preceeding period ('.')__
 
 ### Electron File Selection and the Module `bis_webutil`
 
-BioImage Suite Web has a module [js/coreweb/bis_webutil](../js/coreweb/bis_webutil.js) which contains code to abstract many GUI operations. One particular function is `electronFileCallback` which can be used to show the above dialogs etc.
+BioImage Suite Web has a module [js/coreweb/bis_webutil](../js/coreweb/bis_webutil.js) which contains code to abstract common GUI operations. Consider in particular `electronFileCallback`, which can be used to show the dialogs above.
 
-The code is below. The function takes two inputs
+The function takes two inputs:
 
-* electronopts -- a dictionary object with parameters
-* callback -- the function to call with the selected filename as the argument
+* `electronopts` — a parameters object
+* `callback` — the function to call with the selected filename as the argument
 
 Here is the actual code:
 
 
         /** electron file callback function
         * @alias WebUtil.electronfilecallbackoptions
-        * @param {object} opts - the electron options object -- used if in electron
-        * @param {string} opts.title - if in file mode and electron set the title of the file dialog
-        * @param {boolean} opts.save - if in file mode and electron determine load or save
-        * @param {string} opts.defaultpath - if in file mode and electron use this as original filename
-        * @param {string} opts.filter - if in file mode and electron use this to filter electron style
-        * @param {function} callback - callback to call when done
+        * @param {Object} electronopts - the electron options object - used if in electron
+        * @param {String} electronopts.title - if in file mode and electron set the title of the file dialog
+        * @param {Boolean} electronopts.save - if in file mode and electron determine load or save
+        * @param {String} electronopts.defaultpath - if in file mode and electron use this as original filename
+        * @param {String} electronopts.filter - if in file mode and electron use this to filter electron style
+        * @param {Function} callback - callback to call when done
         */
         electronFileCallback: function (electronopts, callback) {
 
-We parse the options and ensure sane default values:
+Parse the options and assign default values:
 
             electronopts = electronopts || {};
             electronopts.save = electronopts.save || false;
@@ -264,12 +249,12 @@ We parse the options and ensure sane default values:
             electronopts.filters = electronopts.filters ||
                 [{ name: 'All Files', extensions: ['*'] }];
 
-If we are loading images, we can simply specify our filter as the string "NII" and this function takes care of this very common scenario:
+The filters has a shortcut hardcoded for loading images — '`NII`' will produce two filters that specify either NIFTI Images or any file.
 
             if (electronopts.filters === "NII")
                 electronopts.filters = [
-                    { name: 'NIFTI Images', extensions: ['nii.gz', 'nii'] },
-                    { name: 'All Files', extensions: ['*'] },
+                    { name: 'NIFTI Images', extensions: [ 'nii.gz', 'nii' ] },
+                    { name: 'All Files', extensions: [ '*' ] },
                 ];
 
 Select which electron dialog to invoke (load or save)
@@ -278,7 +263,7 @@ Select which electron dialog to invoke (load or save)
             if (!electronopts.save)
                 cmd = window.BISELECTRON.dialog.showOpenDialog;
 
-If the filter is the word "DIRECTORY" use the special call to electron.showOpenDialog below
+If the filter is the word "DIRECTORY" use the special call to `electron.showOpenDialog` below,
 
             if (electronopts.filters === "DIRECTORY") {
                 cmd(null, {
@@ -292,7 +277,7 @@ If the filter is the word "DIRECTORY" use the special call to electron.showOpenD
                 });
             } else {
 
-Else try to get a filename:
+else try to get a filename:
 
                 cmd(null, {
                     title: electronopts.title,
@@ -306,7 +291,7 @@ Else try to get a filename:
             }
         };
 
-Here are a couple of examples of calling this from various places. The following selects a directory and calls `clb(directoryname)`, when done.
+Here are a couple of examples of this function being invoked. The following selects a directory and calls `clb(directoryname)`, when done.
 
         webutil.electronFileCallback({
             filters : "DIRECTORY",
@@ -321,19 +306,19 @@ This is a call to save a transformation file:
                 filename : initial_filename,
                 title    : 'Select filename to save the transformation to',
                 filters  :  [
-                                { name: 'Transformation Files', extensions: [ "bisxform","matr","grd"]},
-                                { name: 'All Files', extensions: [ "*"]}
+                                { name: 'Transformation Files', extensions: [ "bisxform","matr","grd" ] },
+                                { name: 'All Files', extensions: [ "*" ] }
                           ],
                 save : true,
             },function(f) { 
                 saveItem(f);  // this is a random function
             });
 
-To load a transformation simply change `save:true` to `save:false` above.
+To load a transformation, change `save:true` to `save:false`.
 
 The module `bis_webutil` has some other interesting functions such as:
 
-     * createfilebutton
-     * createMenuItem
+* `createfilebutton`
+* `createMenuItem`
 
 These call `electronFileCallback` to handle file selection operations.
