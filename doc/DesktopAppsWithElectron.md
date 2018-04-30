@@ -14,13 +14,13 @@ All the code in this section can be found under
 `examples/universalmodule`.
 
 _Note: As far as modules are concerned Electron is essentially
-an expanded browser. Most of the code is used like in the browser but the Electron code uses a "preload-injection" mechanism to add a finite number of Node modules that do not work in the browser. For those modules that are universal, i.e. those that work in both Node and browser, we will use the browser mechanism via the Universal modules defined above to maintain maximum compatibility._
+an expanded browser. Most of the code is used like in the browser but the Electron code uses a "preload-injection" mechanism to add a finite number of Node modules that do not work in the browser._
 
 ---
 
 ## The Main Process
 
-The code to start Electron must be invoked with a path to a directory containing a JSON-formatted  configuration file called `package.json`. This takes the form:
+The code to start Electron must be invoked with a path to a directory containing a JSON-formatted configuration file called `package.json`. This takes the form:
 
     {
         "name" : "Application Name",
@@ -31,12 +31,11 @@ The code to start Electron must be invoked with a path to a directory containing
 The bisweb version of this file may be found in [web/package.json](../web/package.json).
 
 The `"main"` field stores a pointer to the Javascript file that will be
-run when the executable starts. This is the base or core process. This process then starts a second process (a renderer
-process) by creating a RenderWindow object. This second process (and
-potentially a third and fourth and fifth and ... if more BrowserWindows are
-created) is effectively a packaged web browser. Let's now take a look at a simplified version of [the main electron file](../web/biselectron.js).
+run when the executable starts. This is the base or core process. This process then starts a renderer process by creating a `RenderWindow` object. This second process, and 
+potentially a third and fourth and fifth, etc. if more BrowserWindows are
+created, is effectively a packaged web browser. Consider now a simplified version of [the main electron file](../web/biselectron.js).
 
-We first require some core modules:
+First require some core modules:
 
      "use strict";
      const electron = require('electron');
@@ -44,24 +43,24 @@ We first require some core modules:
      const app=electron.app;  // Module to control application life.
      const BrowserWindow = electron.BrowserWindow;  // Module to create native browser window.
 
-Next we store a reference to the main window of the application (`mainWindow`). Once this is created the app will not terminate
-until this is set (back) to null to free the pointer to the window (once it is closed).
+Next store a reference to the main window of the application, `mainWindow`. Once it is created, the app will not terminate
+until `mainWindow` is set to null or goes out of scope. This typically happens when the app is closed.
 
      let mainWindow=null;
 
 This function creates the main window (using `index.html`)
 
-     var createWindow=function() {
+     var createWindow = function() {
 
-         let hidden='shown';
-         let opts= {width: 600, height: 400};
+         let hidden = 'shown';
+         let opts = {width: 600, height: 400};
          let fullURL='file://' + path.resolve(__dirname , 'index.html');
 
 This is the key here -- this script `bispreload.js` is run __before__ the html file is loaded
 and can include node-style requires even if the rest of the window
 has no node integration (turned off below nodeIntegration:false). See the [section on the renderer process](#The-Renderer-Process) for more details.
 
-         let preload=  path.resolve(__dirname, 'bispreload.js');
+         let preload =  path.resolve(__dirname, 'bispreload.js');
 
 We next create the main window:
 
