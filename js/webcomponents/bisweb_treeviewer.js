@@ -255,10 +255,12 @@ class TreeViewer extends HTMLElement {
 
     /**
      * Recreates the flattened network and calls createTabs. Uses d3 to join the data in flattenedNetwork to the svg.
+     * 
+     * @param {Boolean} redrawNetwork - Whether the flattened network should be regenerated. Note that flattened network will also be regenerated if none exists.
      */
-    drawNetwork() {
+    drawNetwork(redrawNetwork = false) {
         /* jshint ignore: start */
-        if (!this.flattenedNetwork) { 
+        if (redrawNetwork || !this.flattenedNetwork) { 
             this.flattenedNetwork = this.makeFlattenedNetwork();
         }
 
@@ -356,10 +358,10 @@ class TreeViewer extends HTMLElement {
 
         //create new database entry for beginning of tree
         let newRoot = this.createNode(name, webutil.getuniqueid(), currentImage);
-
         this.network.push(newRoot);
+
         this.setCurrentNode(this.network[this.network.length-1]);
-        this.drawNetwork();
+        this.drawNetwork(true);
     }
 
     /**
