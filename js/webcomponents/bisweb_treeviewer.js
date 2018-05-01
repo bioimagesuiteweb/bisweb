@@ -49,6 +49,7 @@ class TreeViewer extends HTMLElement {
                 'id': webutil.getuniqueid(),
                 'class': 'root',
                 'name': 'Base Image',
+                'networkName': 'Base Image',
                 'children': [
                     {
                         'id': webutil.getuniqueid(),
@@ -77,7 +78,8 @@ class TreeViewer extends HTMLElement {
             {
                 'id': webutil.getuniqueid(),
                 'class': 'root',
-                'name': 'No Children'
+                'name': 'No Children',
+                'networkName': 'No Children'
             }
         ];
 
@@ -160,7 +162,7 @@ class TreeViewer extends HTMLElement {
         //-----------------------------------------------------------------------------------
         let createTabButtonBar = function () {
             let barTemplate = `<div class="btn-group" role="group" aria-label="Viewer Buttons" style="float: right"></div>`;
-            let topBar = $(barTemplate);
+            let bar = $(barTemplate);
 
             let viewInputButton = webutil.createbutton({ 'name': 'View', 'type': 'success' });
             let deleteInputButton = webutil.createbutton({ 'name': 'Delete', 'type': 'warning' });
@@ -196,11 +198,11 @@ class TreeViewer extends HTMLElement {
                 });
             });
 
-            topBar.append(viewInputButton);
-            topBar.append(deleteInputButton);
-            topBar.append(renameInputButton);
+            bar.append(viewInputButton);
+            bar.append(deleteInputButton);
+            bar.append(renameInputButton);
 
-            return { 'topBar': topBar};
+            return bar;
         };
 
         let modalHTML =
@@ -227,7 +229,17 @@ class TreeViewer extends HTMLElement {
 
             if (!tabExists) {
                 //root is always the first item in a flattened tree
-                let listItem = $(`<li><a data-toggle='tab' href="#${tree[0].id}">${tree[0].name}</a></li>`);
+                let tab = $(`<li><a data-toggle='tab' href="#${tree[0].id}">${tree[0].networkName}</a></li>`);
+
+                //bind rename tab action to double clicking on the tab
+                tab.on('dblclick', () => {
+                    webutil.createRenameInputModal( (obj) => {
+                        console.log(tab.find('a'));
+                        tab.find('a').text(obj.name);
+                        tree[0].networkName = obj.name;
+                    });
+                });
+
 
                 let tabID = tree[0].id + 'contentpane';
                 let tabHTML =
@@ -238,14 +250,13 @@ class TreeViewer extends HTMLElement {
                     </div>
                 </div>`;
 
-                let tab = $(tabHTML);
+                let tabBody = $(tabHTML);
 
                 let bar = createTabButtonBar();
-                tab.append(bar.topBar);
-                tab.append(bar.bottomBar);
+                tabBody.append(bar);
 
-                $(modal).find('.nav-tabs').append(listItem);
-                $(modal).find('.tab-content').append(tab);
+                $(modal).find('.nav-tabs').append(tab);
+                $(modal).find('.tab-content').append(tabBody);
             }
 
         }
@@ -264,6 +275,7 @@ class TreeViewer extends HTMLElement {
             this.flattenedNetwork = this.makeFlattenedNetwork();
         }
 
+        //create bootstrap tabs and content panes that svgs live in
         this.createTabs();
         let that = this;
 
@@ -356,8 +368,10 @@ class TreeViewer extends HTMLElement {
         let currentImage = this.algorithmcontroller.getImage(this.defaultViewer, 'image');
         console.log('image', currentImage);
 
-        //create new database entry for beginning of tree
+        //create new database entry for beginning of tree. networkName is the name that displays on the tab in the modal
         let newRoot = this.createNode(name, webutil.getuniqueid(), currentImage);
+        newRoot.networkName = name;
+
         this.network.push(newRoot);
 
         this.setCurrentNode(this.network[this.network.length-1]);

@@ -1399,7 +1399,7 @@ const webutil = {
 
             let textbox =
                 `<div class = 'form-group'> 
-					<label for='saveNameBox'>Enter your filename</label>
+					<label for='saveNameBox'>Enter a name</label>
 					<input type='text' id='saveNameBox' class='form-control'>
 				</div>`
                 ;
