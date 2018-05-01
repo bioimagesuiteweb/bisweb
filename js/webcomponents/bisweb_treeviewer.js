@@ -122,7 +122,7 @@ class TreeViewer extends HTMLElement {
 
         document.addEventListener('undoTree', () => {
             console.log('hello from undoTree');
-            this.deleteCurrentNode();
+            this.undoNode();
         });
 
     }
@@ -511,11 +511,14 @@ class TreeViewer extends HTMLElement {
     /**
      * Adds a new node to the network by appending it as a child to this.currentNode.
      * 
-     * @param {Object} obj - Output produced from module.execute
+     * @param {BiswebDataObject} obj - Output produced from module.execute
      */
     addNode(obj) {
         if (this.currentNode) {
-            let node = this.createNode(obj.filename, obj.id, obj.data);
+            console.log('data', obj);
+            let filename = obj.filename || undefined;
+            let id = obj.id || webutil.getuniqueid();
+            let node = this.createNode(filename, id, obj);
 
             if (!this.currentNode.children) { this.currentNode.children = []; }
             this.currentNode.children.push(node);
@@ -524,18 +527,31 @@ class TreeViewer extends HTMLElement {
         }
     }
 
+    undoNode() {
+        let id = this.currentNode.id;
+        console.log('currentNode', this.currentNode);
+
+        this.currentNode = this.deleteNode(id);
+    }
+
     /**
      * Deletes a node selected on the active pane of the tree viewer, removing it from the svg, this.network, and this.flattenedNetwork. 
      * If the node has children its children are deleted as well.
-     * @param {String} id - ID of the node to delete.
+     * @param {Object,String} node - Node to delete. May be either an id of a node or the node itself
+     * @return {Object} Parent of deleted node.
      */
-    deleteNode(id) {
-        let foundNode = this.findNode(id);
-        let node = foundNode.node;
-        let deleteList = [node.id];
+    deleteNode(node) {
 
+        //if node is a string it should be an id that can be searched for directly, otherwise it's assumed that node is an object with an id field
+        let foundNode;
+        if (typeof node === 'string')
+            foundNode = this.findNode(node);
+        else 
+            foundNode = this.findNode(node.id);
+
+        console.log('foundNode', foundNode);
         //if the root node is being deleted just call delete tree
-        if (!node.parent) {
+        if (!foundNode.parent) {
             let popup = webutil.createPopupModal('Delete tree?', 'Deleting the root node will delete the whole tree. Are you sure you want to continue?');
             console.log('modal', popup);
             popup.confirmButton.on('click', () => {
@@ -552,35 +568,41 @@ class TreeViewer extends HTMLElement {
         }
 
         //need to delete each node from the flattened network manually
-        if (node.children) {
-            for (let child of node.children) {
+        if (foundNode.children) {
+            for (let child of foundNode.children) {
                 deleteList.push(child.id);
             }
         }
 
-        //remove entry from base network
-        for (let i = 0; i < node.parent.children.length; i++) { 
-            if (node.parent.children[i].id === id) { 
-                node.parent.children.splice(i,1); 
+        //remove entry from base network by unrooting it from its parent node
+        for (let i = 0; i < foundNode.parent.children.length; i++) { 
+            if (foundNode.parent.children[i].id === foundNode.node.id) { 
+                console.log('splicing at', i);
+                foundNode.parent.children.splice(i,1); 
                 break;
             }
         }
 
-        //remove entry from flattened network
-        for (let i = 0; i < this.flattenedNetwork[foundNode.tree].length; i++) {
-            for (let j = 0; j < deleteList.length; j++) {
-                if (this.flattenedNetwork[foundNode.tree][i].id === deleteList[j]) {
-                    this.flattenedNetwork[foundNode.tree].splice(i, 1);
-                    deleteList.splice(j,1);
-                    i--; //splice shortens array so have to stay in-place to avoid skipping
-                    break;
+        let deleteList = [foundNode.id];
+        //flattened network shouldn't exist when undo occurs, but if by some chance it does handle the delete there, too.
+        if (this.flattenedNetwork) {
+            for (let i = 0; i < this.flattenedNetwork[foundNode.tree].length; i++) {
+                for (let j = 0; j < deleteList.length; j++) {
+                    if (this.flattenedNetwork[foundNode.tree][i].id === deleteList[j]) {
+                        this.flattenedNetwork[foundNode.tree].splice(i, 1);
+                        deleteList.splice(j,1);
+                        i--; //splice shortens array so have to stay in-place to avoid skipping
+                        break;
+                    }
                 }
             }
-
         }
 
         this.drawNetwork();
+        return foundNode.parent;
     }
+
+
 
     /**
      * Pops up a modal dialog prompting a user for a new name for the currently selected node in the active pane of the tree viewer. 
