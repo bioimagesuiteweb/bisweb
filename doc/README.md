@@ -408,7 +408,7 @@ For the JS code simply type
 
     gulp jsdoc
 
-This will create a set of html files in `build/web/doc`.
+This will create a set of html files in `build/doc`.
 
 For the C++ code you will need to install doxygen and dot.l On Ubuntu this can be done as:
 
@@ -423,7 +423,7 @@ Then simply type
 
     gulp cdoc
 
-The final output will go in the directory `build/web/doxygen/html`.
+The final output will go in the directory `build/doc/doxygen/html`.
 
 ---
 

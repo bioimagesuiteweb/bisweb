@@ -353,7 +353,6 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
     let zipopts='-ry';
     if (os.platform()==='win32')
         zipopts='-r';
-    //    zipopts+=" -x node_modules";
     
     var errorf=function() { };
     console.log(colors.cyan(getTime()+' (electron '+version+') for: '+platform));
@@ -365,19 +364,18 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
             suffix=".app.zip";
         }
         var basefile=distdir+"/bisweb_"+m+"_"+getVersionTag(version);
-        var zipfile=basefile+suffix;
+        var zipfile=path.normalize(path.resolve(basefile+suffix));
 
         try {
             fs.unlink(zipfile,errorf);
         } catch(e) { errorf('error '+e); }
 
-
-        var zipindir=distdir+'/BioImageSuiteWeb-'+n+'-x64';
+        let absdistdir=path.normalize(path.resolve(distdir));
+        var zipindir='BioImageSuiteWeb-'+n+'-x64';
         if (n==="linux") {
             cmdlist.push(cmdline+' --platform=linux');
             if (dopackage>1) {
-                console.log('zip '+zipopts+' '+zipfile+' '+zipindir);
-                cmdlist.push('zip '+zipopts+' '+zipfile+' '+zipindir);
+                cmdlist.push('cd '+absdistdir+'; zip '+zipopts+' '+zipfile+' '+zipindir);
             }
         } else if (n==="win32") {
             cmdlist.push(cmdline+' --platform=win32 --icon web/images/bioimagesuite.png.ico');
@@ -385,8 +383,6 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
                 if (os.platform()!=='win32') {
                     cmdlist.push('zip '+zipopts+' '+zipfile+' '+zipindir);
                 } else {
-                    if (dopackage>2)
-                        cmdlist.push('zip '+zipopts+' '+zipfile+' '+zipindir);
                     inno(tools,version,indir,distdir);
                     cmdlist.push('c:\\unix\\innosetup5\\ISCC.exe '+distdir+'/biselectron.iss');
                 }
@@ -394,11 +390,12 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
         } else if (n==="darwin") {
             cmdlist.push(cmdline+' --platform=darwin --icon web/images/bioimagesuite.icns');
             if (dopackage>1)  {
-		cmdlist.push('zip '+zipopts+' '+zipfile+' '+zipindir);
+                cmdlist.push('cd '+absdistdir+'; zip '+zipopts+' '+zipfile+' '+zipindir);
             }
         }
     }
 
+    console.log('cmdlist=',cmdlist.join('\n\t'));
     executeCommandList(cmdlist,indir,done);
     
 };

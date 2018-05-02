@@ -22,6 +22,6 @@
 	"inverseNav"      : false
     },
     "opts" : {
-	"destination": "./build/web/doc/"
+	"destination": "./build/doc/"
     }
 }
