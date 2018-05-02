@@ -14,9 +14,12 @@ command line tools, and desktop and web applications. In addition the code is
 modular/componentized and may be useful as a basis for other applications as
 well.
 
-The software is currently in late beta version. A fully working `demo` version
+The software is currently in late beta version. A fully working (beta) version
 can be found
 at [https://bioimagesuiteweb.github.io/webapp/](https://bioimagesuiteweb.github.io/webapp/).
+You may also download desktop and command line versions from [our download side](http://bisweb.yale.edu/binaries).
+
+
 
 For developer documentation please look in the [doc](doc) directory of this
 repository, starting with [doc/README.md](doc/README.md).
