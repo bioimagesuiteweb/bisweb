@@ -231,20 +231,10 @@ class TreeViewer extends HTMLElement {
                 //root is always the first item in a flattened tree
                 let tab = $(`<li><a data-toggle='tab' href="#${tree[0].id}">${tree[0].networkName}</a></li>`);
 
-                //bind rename tab action to double clicking on the tab
-                tab.on('dblclick', () => {
-                    webutil.createRenameInputModal( (obj) => {
-                        console.log(tab.find('a'));
-                        tab.find('a').text(obj.name);
-                        tree[0].networkName = obj.name;
-                    });
-                });
-
-
                 let tabID = tree[0].id + 'contentpane';
                 let tabHTML =
                     `<div id="${tree[0].id}" class="tab-pane fade">
-                    <h3>${tree[0].name}</h3>
+                    <h3>${tree[0].networkName}</h3>
                     <div id=${tabID}>
                         <svg class='svg' style='width: 100%; height: ${this.svgHeight}px'></svg>
                     </div>
@@ -254,6 +244,20 @@ class TreeViewer extends HTMLElement {
 
                 let bar = createTabButtonBar();
                 tabBody.append(bar);
+
+
+                //bind rename tab action to double clicking on the tab
+                tab.on('dblclick', () => {
+                    webutil.createRenameInputModal((obj) => {
+                        console.log(tab.find('a'));
+
+                        //rename the tab and the name that displays in the content pane
+                        tab.find('a').text(obj.name);
+                        tabBody.find('h3').text(obj.name);
+                        tree[0].networkName = obj.name;
+                    });
+                });
+
 
                 $(modal).find('.nav-tabs').append(tab);
                 $(modal).find('.tab-content').append(tabBody);
