@@ -64,7 +64,14 @@ class TreeViewer extends HTMLElement {
                             {
                                 'id': webutil.getuniqueid(),
                                 'name': 'Tresholded Normalized Image',
-                                'class': 'child'
+                                'class': 'child',
+                                'children': [
+                                    {
+                                        'id': webutil.getuniqueid(),
+                                        'name': 'Thresholded Normalized Resliced Image',
+                                        'class': 'child'
+                                    }
+                                ]
                             }
                         ]
                     },
@@ -585,24 +592,33 @@ class TreeViewer extends HTMLElement {
             return;
         }
 
-        //need to delete each node from the flattened network manually
-        if (foundNode.children) {
-            for (let child of foundNode.children) {
-                deleteList.push(child.id);
-            }
-        }
-
         //remove entry from base network by unrooting it from its parent node
         for (let i = 0; i < foundNode.parent.children.length; i++) { 
             if (foundNode.parent.children[i].id === foundNode.node.id) { 
-                console.log('splicing at', i);
                 foundNode.parent.children.splice(i,1); 
                 break;
             }
         }
 
-        let deleteList = [foundNode.id];
-        //flattened network shouldn't exist when undo occurs, but if by some chance it does handle the delete there, too.
+        let deleteList = [foundNode.node.id];
+        //need to delete each node from the flattened network manually
+        if (foundNode.node.children) {
+
+            //search through the children of each node to see if they have children. if they do search the children and flag them too.
+            let findChildren = function(childList) {
+                if (!childList) return;
+
+                for (let child of childList) {
+                    deleteList.push(child.id);
+                    findChildren(child.children);
+                }
+            }
+
+            findChildren(foundNode.node.children);
+        }
+
+        console.log('delete list', deleteList);
+        //flattened network may not necessarily exist when nodes are being deleted from the network
         if (this.flattenedNetwork) {
             for (let i = 0; i < this.flattenedNetwork[foundNode.tree].length; i++) {
                 for (let j = 0; j < deleteList.length; j++) {
