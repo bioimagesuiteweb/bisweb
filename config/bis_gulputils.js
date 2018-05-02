@@ -275,7 +275,7 @@ var inno=function(tools, version, indir , distdir ) {
     
     var i_odir    = path.resolve(indir, distdir);
     var i_icon    = path.resolve(indir, 'web/images/bioimagesuite.png.ico');
-    var i_license = path.resolve(indir, 'config/LICENSE');
+    var i_license = path.resolve(indir, 'build/web/LICENSE');
     var i_indir   = path.resolve(indir, distdir+'/BioImageSuiteWeb-win32-x64');
     var i_date    = getDate();
 

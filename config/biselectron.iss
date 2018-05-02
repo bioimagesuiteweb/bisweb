@@ -1,7 +1,7 @@
 [Setup]
 AppVerName=BioImage Suite Web <%= version%>
 AppPublisher=Yale BioImage Suite Project
-AppPublisherURL=http://www.bioimagesuite.org
+AppPublisherURL=http://www.bisweb.yale.edu
 AppSupportURL=http://bisweb.yale.edu
 AppUpdatesURL=http://bisweb.yale.edu
 OutputDir=<%= outputdir%>
