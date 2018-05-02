@@ -298,6 +298,9 @@ class TreeViewer extends HTMLElement {
             let tabID = '#' + tree[0].id + 'contentpane';
             let pane = d3.select(tabID).select('.svg');
 
+
+            
+
             let data = pane.selectAll('g')
                 .data(tree, function(d) { });
 
