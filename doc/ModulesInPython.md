@@ -1,14 +1,14 @@
 # Creating New BisWeb Modules in Python
 
-Please read the [JavaScript version of this document](ModulesInJS.md) before reading this one. The JS description is more detailed and the description here simply focuses on the differences between the JS and the Python versions. Please also take a look at the core document [BisWebPython.md](BisWebPython.md) for an introduction to the use of Python in the BioImage Suite Web environment.
+Please read the [JavaScript version of this document](ModulesInJS.md) before reading this one. The JS description is more detailed and the description here simply focuses on the differences between the JS and the Python versions. Please also look at the core document [BisWebPython.md](BisWebPython.md) for an introduction to the use of Python in the BioImage Suite Web environment.
 
 ## The SmoothImage Module in Python
 
-This module (which can be found in `python/modules/smoothImage.py`) directly mimics (and in part __depends on__ the JS modules from `js/modules/smoothImage.js`)
+This module, which can be found in `python/modules/smoothImage.py`, directly mimics and in part __depends on__ the JS modules from `js/modules/smoothImage.js`
 
 ### Descriptions
 
-In the JS document we describe the creation of Module descriptions. The inital Python Modules are all simply adaptations of the JS modules (to allow use of the C++ code from Python) and hence use the exact same descriptions as the paired JS modules -- just about the only change is the mapping of `true` and `false` (JS) to `True` and `False` (Python). In particular we use the script  `compiletools/bis_createmoduledescriptions.js` (invoked as part of the CMake process) which creates the Python file `buildcpp/modules_desc.py` (which runs to about 4000 lines). This contains `Pythonized` versions of all the module descriptions in a giant dictionary object. For the smoothImage module this has the form:
+The JS document describes the creation of Module descriptions. The inital Python Modules are simply adaptations of the JS modules to allow use of the C++ code from Python, and hence use the same descriptions as the paired JS modules. The only change is the mapping of `true` and `false`  to `True` and `False` (Python uses uppercase boolean names). The Python file `buildcpp/modules_desc.py` is created by `compiletools/bis_createmoduledescriptions.js`. This contains "Pythonized" versions of all the module descriptions in a giant dictionary object. For the `smoothImage` module this has the form:
 
 
         "smoothImage": {
@@ -123,7 +123,7 @@ The constructor is practically identical to the JS version.
             super().__init__();
             self.name='smoothImage';
     
-The description is simply extracted from the modules_desc module.
+The description is simply extracted from the `modules_desc` module.
 
         def createDescription(self):
             return modules_desc.descriptions['smoothImage'];
@@ -136,7 +136,7 @@ The only interesting function is `directInvokeAlgorithm`.
             input = self.inputs['input'];
             s = (vals['sigma']);
 
-We surround the actual C++ call in a `try ... except` block.
+The actual C++ call is contained in a `try ... except` block.
 
             try:
                 self.outputs['output'] = libbis.gaussianSmoothImageWASM(input,
@@ -147,13 +147,13 @@ We surround the actual C++ call in a `try ... except` block.
                                                                         }, debug=self.parseBoolean(vals['debug']))
             except:
 
-If this fails we print a detailed log and return false
+If this fails, print a detailed log and return `False`
 
                 e = sys.exc_info()[0]
                 print('---- Failed to invoke algorithm',e);
                 return False
 
-If success, we return True;
+If success, return `True`;
 
             return True
 
