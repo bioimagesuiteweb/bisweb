@@ -1,0 +1,19 @@
+{
+    "id": "",
+    "class": "child",
+    "name": "Thresholded Image",
+    "children": [
+        {
+        "id": "",
+        "name": "Tresholded Normalized Image",
+        "class": "child",
+        "children": [
+            {
+                "id": "",
+                "name": "Thresholded Normalized Resliced Image",
+                "class": "child"
+            }
+        ]
+        }
+    ]
+}

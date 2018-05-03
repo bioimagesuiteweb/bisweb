@@ -97,6 +97,8 @@ class TreeViewer extends HTMLElement {
         //add buttons to bottom bar
         let beginTreeButton = webutil.createbutton({ 'name': 'Begin New Tree', 'type': 'success' });
         let deleteTreeButton = webutil.createbutton({ 'name': 'Delete Tree', 'type': 'warning' });
+        let importTreeButton = webutil.createbutton({ 'name' : 'Import Tree', 'type': 'info' });
+        let exportTreeButton = webutil.createbutton({ 'name' : 'Export Tree', 'type': 'primary' });
 
         beginTreeButton.on('click', (e) => {
             e.preventDefault();
@@ -108,12 +110,19 @@ class TreeViewer extends HTMLElement {
             this.deleteTree();
         });
 
+        importTreeButton.on('click', (e) => {
+            e.preventDefault();
+            this.loadTreeFromFile();
+        });
+
         //remove 'close' button
         $(this.modalFrame.footer).find('.btn').remove();
 
         let buttonGroup = $(`<br><div class="btn-group" role="group" aria-label="Viewer Buttons" style="float: right"></div>`);
         buttonGroup.append(beginTreeButton);
         buttonGroup.append(deleteTreeButton);
+        buttonGroup.append(importTreeButton);
+        buttonGroup.append(exportTreeButton);
         this.modalFrame.footer.append(buttonGroup);
 
         //delete network when modal is closed
@@ -697,6 +706,41 @@ class TreeViewer extends HTMLElement {
             }
         }
         return null;
+    }
+
+    loadTreeFromFile() {
+        let network = this.network;
+        let hiddenFileButton = webutil.createhiddeninputfile('.json, .JSON', (file) => {
+            let reader = new FileReader();
+            reader.onload = () => {
+                console.log('read file', reader.result);
+                try {
+                    let tree = JSON.parse(reader.result);
+
+                    //replace 'id' field with a new value to ensure internal consistency.
+                    let replaceID = (node) => {
+                        node.id = webutil.getuniqueid();
+                        if (node.children) {
+                            for (let child of node.children) 
+                                replaceID(child);
+                        }     
+                    }
+                    replaceID(tree);
+                    tree.networkName = 'New Tree';
+                    console.log('tree', tree);
+                    network.push(tree);
+
+                    this.drawNetwork(true);
+                } catch (err) {
+                    console.log('an error occured when parsing the file', err);
+                }
+            }
+
+            reader.readAsText(file);
+           
+        }, false);
+
+        hiddenFileButton.click();
     }
 }
 
