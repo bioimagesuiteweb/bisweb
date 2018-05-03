@@ -112,7 +112,7 @@ class TreeViewer extends HTMLElement {
 
         importTreeButton.on('click', (e) => {
             e.preventDefault();
-            this.loadTreeFromFile();
+            this.loadNetworkFromFile();
         });
 
         //remove 'close' button
@@ -708,16 +708,16 @@ class TreeViewer extends HTMLElement {
         return null;
     }
 
-    loadTreeFromFile() {
-        let network = this.network;
+    loadNetworkFromFile() {
+        let existingNetwork = this.network;
         let hiddenFileButton = webutil.createhiddeninputfile('.json, .JSON', (file) => {
             let reader = new FileReader();
             reader.onload = () => {
                 console.log('read file', reader.result);
                 try {
-                    let tree = JSON.parse(reader.result);
+                    let newNetwork = JSON.parse(reader.result).network;
 
-                    //replace 'id' field with a new value to ensure internal consistency.
+                    //recursive function that will replace the id of a given node then call itself on all the node's children
                     let replaceID = (node) => {
                         node.id = webutil.getuniqueid();
                         if (node.children) {
@@ -725,10 +725,14 @@ class TreeViewer extends HTMLElement {
                                 replaceID(child);
                         }     
                     }
-                    replaceID(tree);
-                    tree.networkName = 'New Tree';
-                    console.log('tree', tree);
-                    network.push(tree);
+
+                    for (let tree of newNetwork) {
+                        //replace 'id' field with a new value to ensure internal consistency.
+                        replaceID(tree);
+                        tree.networkName = 'New Tree';
+                        console.log('tree', tree);
+                        existingNetwork.push(tree);
+                    }
 
                     this.drawNetwork(true);
                 } catch (err) {
@@ -741,6 +745,10 @@ class TreeViewer extends HTMLElement {
         }, false);
 
         hiddenFileButton.click();
+    }
+
+    writeNetworkToFile() {
+
     }
 }
 
