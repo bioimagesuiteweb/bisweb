@@ -1,0 +1,60 @@
+{
+	"variables": [
+	{
+		"name" : "input",
+		"files" : [
+			"a1.nii.gz",
+			"a2.nii.gz", 
+			"a3.nii.gz"
+		]
+	},
+	{
+		"name": "mask",
+		"files": [
+			"mask.nii.gz"
+		]
+	},
+	{
+        "name" : "out1",
+        "extension" : ".nii.gz",
+		"depends": [
+			"%input%",
+			"%mask%"
+		]
+	},
+	{
+        "name": "out2",
+        "extension" : ".nii.gz", 
+		"depends": [
+			"%out1%"
+		]
+	},
+	{
+		"name": "out3",
+		"extension": ".nii.gz",
+		"depends": [
+			"%out2%"
+		]
+	}
+	],
+	"jobs": [
+		{
+			"command": "maskImage",
+			"rule": "append",
+			"appendText": "masked",
+			"options": "--debug true --input %input% --mask %mask% --output %out1%"
+		},
+		{
+			"command": "registerImage",
+			"rule": "append",
+			"appendText": "registered",
+			"options": "--debug true --input %out1% --output %out2%"
+		},
+		{
+			"command": "thresholdImage",
+			"rule": "append",
+			"appendText": "thresholded",
+			"options": "--debug true --input %out2% --output %out3%"
+		}
+	]
+}
