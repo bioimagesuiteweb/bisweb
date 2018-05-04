@@ -147,8 +147,6 @@ var createWindow=function(index,fullURL) {
     
     state.winlist[index].on('closed', function() {
         state.winlist[index] = null;
-	if (process.platform === 'darwin')
-	    return;
 	
 	var anyalive=false;
 	state.winlist.forEach(function(e) {
@@ -156,6 +154,9 @@ var createWindow=function(index,fullURL) {
 		anyalive=true;
 	});
 	
+	if (process.platform === 'darwin') 
+	    return;
+
 	if (anyalive===false) {
 	    state.console.hide();
 	    state.console=null;
@@ -164,6 +165,30 @@ var createWindow=function(index,fullURL) {
     });
     state.winlist[index].loadURL(fullURL);
     return index;
+};
+
+var macExit=function() {
+
+    let anyalive=false;
+    state.winlist.forEach(function(e) {
+	if (e!==null)
+	    anyalive=true;
+    });
+
+    if (anyalive===false)
+	process.exit();
+
+    const dialog = electron.dialog;
+    dialog.showMessageBox({
+	title : "Are you sure?",
+	type  : "question",
+	buttons : [ "Cancel", "Quit" ],
+	defaultId : 0,
+	message : "This will close all open BioImage Suite Web Applications",
+    }, (f) => { 
+	if (f===1)
+	    process.exit();
+    });
 };
     
 var attachWindow=function(index) {
@@ -287,14 +312,10 @@ var createOrShowMainWindow = function() {
 app.on('window-all-closed', function() {
     // On OS X it is common for applications and their menu bar
 	// to stay active until the user quits explicitly with Cmd + Q
-    /*if (process.platform !== 'darwin') {
+    if (process.platform !== 'darwin') {
         app.quit();
-	}*/
+    }
 	
-	//I've been testing Electron a little on my Mac. 
-	//Given the low overhead to starting an Electron session and the comparative difficulty of actually closing the program (I had to kill it in terminal) I removed this check.
-	//-Zach
-	app.quit();
 });
 
 
@@ -349,10 +370,8 @@ app.on('ready', function() {
 	for (i=0;i<keys.length;i++)  {
 	    var key=keys[i];
 	    var a='file://'+path.resolve(__dirname , tools[key].url+'.html');
-	    console.log('outside ='+a);
 	    /* jshint ignore:start */
 	    (function outer(a){
-		console.log('inside here'+a);
 		mitems.push({ label: tools[key].title, click: () =>{
 		    createNewWindow(a);
 		}});
@@ -364,7 +383,27 @@ app.on('ready', function() {
 	    {  label: "Main Menu Page", click: () => { createOrShowMainWindow(); }},
 	    {  label: 'Tools', submenu : mitems }
 	]);
+
+	var menu2=Menu.buildFromTemplate([
+	    {  label: 'Main',  
+	       submenu : [
+		   { 
+		       label : 'Exit', 
+		       click: () => { 
+			   macExit();
+		       }
+		   }
+	       ]
+	    },
+	    {  label: 'Tools', 
+	       submenu : mitems 
+	    }
+	]);
 	app.dock.setMenu(menu);
+	Menu.setApplicationMenu(menu2);
+
+	
+	
     }
 
     createConsole();
