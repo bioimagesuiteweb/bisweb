@@ -37,7 +37,7 @@ let createIndex=function(obj) {
     
     menu.empty();
 
-    let bb=$(`<div align="center" style="padding:15px;  left:75vw; top:0vh; border-radius:30px;background-color:#221100; z-index:5000; position: absolute; color:#ffffff">
+    let bb=$(`<div align="center" style="padding:15px;  left:75vw; top:90px; border-radius:30px;background-color:#221100; z-index:5000; position: absolute; color:#ffffff">
 	     Version: ${bisdate}</div>`);
 
     $('body').append(bb);

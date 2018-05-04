@@ -58,51 +58,63 @@
 			     color:#ffffff;  opacity: 0.8;">Loading Components</div>
   <script> window.onload=function() {
   $("#bis_loading_overlay").css({'visibility' :'hidden'});} </script> -->
-  
-  <div style="padding-bottom:10px; padding-top:20px; margin-top:0px">
+
+  <nav class="navbar navbar-default navbar-fixed-top">
+    <div class="container-fluid" id="bismenucontainer0">
+      <!-- Brand and toggle get grouped for better mobile display -->
+      <div class="navbar-header" id="bismenuheader0" >
+	<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bismenu0">
+	  <span class="sr-only">Toggle navigation</span>
+	  <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+	</button>
+        <img src="images/bioimagesuite.png" height="50px" id="bislogo" style="margin-top:5px">
+      </div>  <!-- Collect the nav links, forms, and other content for
+      toggling -->
+
+
+      <div class="collapse navbar-collapse" id="bismenu0">
+	<ul class="nav navbar-nav" id="bismenuparent0">
+	  <li><a href="http://bisweb.yale.edu/binaries/binaries.html"
+	         target="_blank">Download Desktop Apps</a></li>
+
+
+          <li class='dropdown'>
+            <a href='#' class='dropdown-toggle'  data-toggle='dropdown'
+               role='button' aria-expanded='false'>Documentation <span class='caret'></span></a>
+            <ul class='dropdown-menu' role='menu'>
+              <li><a href="https://bioimagesuiteweb.github.io/webapp/images/BioImageSuiteWeb_NIHBrainInitiativeMeeting_April2018.pdf"
+                     target="_blank">Overview Presentation</a></LI>
+              <li><a href="https://github.com/bioimagesuiteweb/bisweb/tree/master/doc">Developer Documentation</a></li>
+            </ul>
+          </li>
+          
+
+          
+          <li><a href="https://medicine.yale.edu/bioimaging/suite/">
+              <span style="color: red;">Legacy BioImage Suite
+                Webpage<span></a></LI>
+
+          <li class='dropdown'>
+            <a href='#' class='dropdown-toggle'  data-toggle='dropdown'
+               role='button' aria-expanded='false'>Source Code <span class='caret'></span></a>
+            <ul class='dropdown-menu' role='menu'>
+              <li><a href="https://github.com/bioimagesuiteweb/bisweb">Main Repository</a></LI>
+              <li><a href="https://github.com/bioimagesuiteweb/gplcppcode"  target="_blank">Plugin Rpository</a></li> 
+            </ul>
+          </li>
+
+	</ul>
+      </div>
+    </div><!-- /.container-fluid -->
+  </nav>
+
+  <div style="padding-bottom:10px; padding-top:80px; margin-top:0px">
     <div style="margin-left:20px; margin-right:50px; margin-bottom:10px;margin-top:0px; padding-top:0px">
       <H2 id="biswarningparent">Welcome to BioImage Suite <EM>Web</EM>.</H2>
       <HR>
-      <UL>
-      <LI>Select any tool from the taskbar below, or simply click on the
-	application picture below, to open the application.</LI>
-
-      <LI>BioImage Suite Web also comes in desktop and commandline
-      versions. You may download these
-      from <a href="http://bisweb.yale.edu/binaries/binaries.html" target="_blank">our
-      download site.</a></LI> 
-      
-
-      <LI>  BioImage
-	Suite <EM>Web</EM> is written in Javascript and has been mostly
-	tested on Google Chrome. All applications are running on your local
-	machine. <B>No data</B> is ever uploaded to any server.</LI>
-      <LI><EM>BioImage
-	Suite Web is not approved for clinical use. Use at your own risk.</EM></LI>
-      
-      <LI>We gratefully acknowledge
-        support from the <a href="https://www.braininitiative.nih.gov/"
-        target="_blank">NIH Brain Initiative</a> under grant R24 MH114805
-        (Papademetris X. and Scheinost D. PIs, Dept. of Radiology and
-        Biomedical Imaging, Yale School of Medicine.)</LI>
-
-      <LI>A good overview of the scope of this project can be found in a
-      <a href="https://bioimagesuiteweb.github.io/webapp/images/BioImageSuiteWeb_NIHBrainInitiativeMeeting_April2018.pdf"
-         target="_blank">presentation
-      given at the 2018 NIH Brain Initiative Meeting</a>.
-      
-      <LI> You may obtain the source code from our <a href="https://github.com/bioimagesuiteweb/bisweb"
-      target="_blank">main github repository</a> and
-      (optionally <a href="https://github.com/bioimagesuiteweb/gplcppcode" target="_blank">the
-          plugin repository</a>.)</LI> 
-
-      </UL>
-
-      <HR>
-    </div>
-  </div>
-
-  <div class="container" style="margin-top:5px" id="biscontainer">
+        <div class="container" style="margin-top:5px" id="biscontainer">
     <div id="mycarousel" class="carousel slide" data-ride="carousel">
       
       <!-- Indicators -->
@@ -141,6 +153,36 @@
       </div>
     </div>
   </div>
+<HR>
+      <UL>
+      <LI>Select any tool from the taskbar below, or simply click on the
+	application picture above, to open the application.</LI>
+
+      <LI>In addition to the web applications (accessible from this page), we
+      also provide in desktop and commandline versions. You may download these
+      from <a href="http://bisweb.yale.edu/binaries/binaries.html"
+      target="_blank">our download site.</a></LI>
+      
+
+      <LI>  BioImage
+	Suite <EM>Web</EM> is written in Javascript and has been mostly
+	tested on Google Chrome. All applications are running on your local
+	machine. <B>No data</B> is ever uploaded to any server.</LI>
+      <LI><B>This software is not approved for clinical use.  Use at your own risk.</B></LI>
+      
+      <LI>We gratefully acknowledge
+        support from the <a href="https://www.braininitiative.nih.gov/"
+        target="_blank">NIH Brain Initiative</a> under grant R24 MH114805
+        (Papademetris X. and Scheinost D. PIs, Dept. of Radiology and
+        Biomedical Imaging, Yale School of Medicine.)</LI>
+
+      
+      </UL>
+
+
+    </div>
+  </div>
+
   
   <nav class="navbar navbar-default navbar-fixed-bottom">
     <div class="container-fluid" id="bismenucontainer">
