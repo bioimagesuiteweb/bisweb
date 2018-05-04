@@ -26,6 +26,7 @@ const FastClick = require('fastclick');
 const userPreferences = require('bisweb_userpreferences.js');
 const $ = require('jquery');
 const bisdbase = require('bisweb_dbase');
+const pipeline = require('pipelineTool');
 
 
 /**
@@ -529,6 +530,8 @@ class ViewerApplicationElement extends HTMLElement {
         //signal other modules waiting for top bar to render
         let mainViewerDoneEvent = new CustomEvent('mainViewerDone');
         document.dispatchEvent(mainViewerDoneEvent);
+
+        pipeline.makePipeline('../../data/sampleformat.json');
     }
 }
 

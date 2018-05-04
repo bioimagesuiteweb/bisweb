@@ -183,7 +183,7 @@ let makePipeline = function (filename) {
                     formattedJobOutput.outputs.push(output);
                 });
 
-                formattedJobOutput.command = commandArray.join(' ');
+                formattedJobOutput.command = job.command + ' ' + commandArray.join(' ');
                 formattedJobOutputs.push(formattedJobOutput);
             }
 
