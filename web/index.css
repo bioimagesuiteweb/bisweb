@@ -2,9 +2,9 @@
 #main {
     left : 20px;
     top: 55px;
-    margin-bottom: 60px;
+    margin-bottom: 40px;
     overflow-y : auto;
-    width : 100%;
+    width : 90vw;
     position: relative;
     margin-left: 20px;
     margin-right: 20px;
@@ -39,3 +39,4 @@ li {
 h4 {
     margin: 0 0 4px 0;
 }
+
