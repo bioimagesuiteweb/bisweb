@@ -1,4 +1,4 @@
-<!---  LICENSE
+y<!---  LICENSE
  
  _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
  
@@ -63,9 +63,27 @@
       </div>      
       
       <div class="collapse navbar-collapse" id="topmenu">
-	    <ul class="nav navbar-nav" id="bismenuparent0">
-	      <li><a href="http://bisweb.yale.edu/binaries/binaries.html"
+	<ul class="nav navbar-nav" id="bismenuparent0">
+
+          <li class='dropdown' id="appmenu"o>
+            <a href='#' class='dropdown-toggle'  data-toggle='dropdown'
+               role='button' aria-expanded='false'>Applications<span class='caret'></span></a>
+            <ul class='dropdown-menu' role='menu' id='topappmenu'>
+            </ul>
+          </li>
+          
+          <li class='dropdown'>
+            <a href='#' class='dropdown-toggle'  data-toggle='dropdown'
+               role='button' aria-expanded='false'>Download<span class='caret'></span></a>
+            
+            <ul class='dropdown-menu' role='menu'>
+              <li><a href="http://bisweb.yale.edu/binaries/binaries.html"
 	             target="_blank">Download Desktop Apps</a></li>
+              <li class="divider"></li>
+              <li><a href="https://medicine.yale.edu/bioimaging/suite/">Legacy BioImage Suite
+                    Webpage<span></a></li>
+            </ul>
+            
           <li class='dropdown'>
             <a href='#' class='dropdown-toggle'  data-toggle='dropdown'
                role='button' aria-expanded='false'>Documentation <span class='caret'></span></a>
@@ -76,55 +94,52 @@
             </ul>
           </li>
           
-          <li><a href="https://medicine.yale.edu/bioimaging/suite/">
-              <span style="color: red;">Legacy BioImage Suite
-                Webpage<span></a></LI>
-          
           <li class='dropdown'>
             <a href='#' class='dropdown-toggle'  data-toggle='dropdown'
                role='button' aria-expanded='false'>Source Code <span class='caret'></span></a>
             <ul class='dropdown-menu' role='menu'>
               <li><a href="https://github.com/bioimagesuiteweb/bisweb">Main Repository</a></LI>
-              <li><a href="https://github.com/bioimagesuiteweb/gplcppcode"  target="_blank">Plugin Rpository</a></li> 
+              <li><a href="https://github.com/bioimagesuiteweb/gplcppcode"  target="_blank">Plugin Repository</a></li> 
             </ul>
           </li>
 
+          
+
+          
 	</ul>
       </div>
     </div><!-- /.container-fluid -->
   </nav>
   
   <div id="main">
-    <div style="margin-left:20px; margin-right:50px; margin-bottom:0px;margin-top:0px; padding-top:0px">
-
-      <div id="mycarousel" class="carousel slide" data-ride="carousel">
-        
-        <!-- Indicators -->
-        <ol class="carousel-indicators">
-        </ol>
-        
-        <!-- Wrapper for slides -->
-        <div class="carousel-inner" role="listbox" align="center" id="bisslides">
-        </div>
-        <div id="carouselcontrols">
-	      <!-- Controls -->
-	      <a class="left carousel-control" href="#mycarousel" role="button" data-slide="prev">
-	        <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
-	        <span class="sr-only">Previous</span>
-	      </a>
-	      <a class="right carousel-control" href="#mycarousel" role="button" data-slide="next">
-	        <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
-	        <span class="sr-only">Next</span>
-	      </a>
-        </div>
+    <div id="mycarousel" class="carousel slide" data-ride="carousel">
+      
+      <!-- Indicators -->
+      <ol class="carousel-indicators">
+      </ol>
+      
+      <!-- Wrapper for slides -->
+      <div class="carousel-inner" role="listbox" align="center" id="bisslides">
       </div>
     </div>
-
-    <H4>Welcome to BioImage Suite <EM>Web</EM>.</h4>
+  </div>
     
+  <a class="left carousel-control" id="leftarrow" href="#mycarousel" role="button" data-slide="prev">
+    <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+    <span class="sr-only">Previous</span>
+  </a>
+  <a class="right carousel-control" id="rightarrow" href="#mycarousel" role="button" data-slide="next">
+    <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+    <span class="sr-only">Next</span>
+  </a>
+  
+  <div id="bottom">
+  
+    <H4>Welcome to BioImage Suite <EM>Web</EM>.</h4>
+
     <UL>
-      <LI>Select any tool from the taskbar below, or simply click on the
-	    application picture above, to open the application, or visit 
+      <LI>Select any tool from the <span style="color:red">Applications</span> menu above, or simply click on the
+	    application picture, to open the application. Please visit 
         <a href="http://bisweb.yale.edu/binaries/binaries.html"
            target="_blank">our download site</a> for commandline and
         desktop versions of the software.</LI>
@@ -134,8 +149,8 @@
       <LI>We gratefully acknowledge
         support from the <a href="https://www.braininitiative.nih.gov/"
                             target="_blank">NIH Brain Initiative</a> under grant R24 MH114805
-        (Papademetris X. and Scheinost D. PIs, Dept. of Radiology and
-        Biomedical Imaging, Yale School of Medicine.)</LI>
+        (<EM>Papademetris X. and Scheinost D. PIs, Dept. of Radiology and
+        Biomedical Imaging, Yale School of Medicine.</EM>)</LI>
       
       <LI>  BioImage
 	    Suite <EM>Web</EM> is written in Javascript and has been mostly
@@ -143,29 +158,11 @@
 	      machine. <B>No data</B> is ever uploaded to any server.</LI>
           
     </UL>
-
-    <BR> <BR> <BR> <BR>
+    <HR>
+    <p> If you are looking for the old desktop based BioImage Suite software you may download it from the <a href="https://medicine.yale.edu/bioimaging/suite/">
+        <span style="color: #ff8800;">Legacy BioImage Suite
+          Webpage<span></a>.
   </div>
-  
-  
-  <nav class="navbar navbar-default navbar-fixed-bottom">
-    <div class="container-fluid" id="bismenucontainer">
-      <!-- Brand and toggle get grouped for better mobile display -->
-      <div class="navbar-header" id="bismenuheader" >
-	    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bismenu">
-	      <span class="sr-only">Toggle navigation</span>
-	      <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-	    </button>
-      </div>  <!-- Collect the nav links, forms, and other content for toggling -->
-      <div class="collapse navbar-collapse" id="bismenu">
-	    <ul class="nav navbar-nav" id="bismenuparent">
-	    </ul>
-      </div>
-    </div><!-- /.container-fluid -->
-  </nav>
-  
   <bisweb-applicationselector> </bisweb-applicationselector>
     
 </body>

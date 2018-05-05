@@ -31,48 +31,52 @@ if (typeof (window.BISELECTRON) !== "undefined") {
 
 let createIndex=function(obj) {
     
-    var menu=$("#bismenuparent");
-    var container=$("#bisslides");
-    var indicators=$(".carousel-indicators");
-    
+    let menu=$("#bismenuparent");
+    let container=$("#bisslides");
+    let indicators=$(".carousel-indicators");
+    let topmenu=$("#topappmenu");
+
     menu.empty();
 
-    let bb=$(`<div align="center" style="padding:15px;  right:5px; top:80px; border-radius:30px;background-color:#221100; z-index:5000; position: absolute; color:#ffffff">
+    let bb=$(`<div align="center" style="padding:15px;  right:5.5vw; top:570px; border-radius:30px;background-color:#221100; z-index:5000; position: absolute; color:#ffffff">
          Version: ${bisdate}</div>`);
 
     $('body').append(bb);
     container.empty();
     indicators.empty();
     
-    var keys=Object.keys(obj);
-    var max=keys.length;
+    let keys=Object.keys(obj);
+    let max=keys.length;
     
-    for (var i=0;i<max;i++) {
-        var elem=obj[keys[i]];
-        var title=elem.title;
-        var url='./'+elem.url+'.html';
-        var description=elem.description;
-        var picture=elem.picture;
-        var electrononly=elem.electrononly || false;
+    for (let i=0;i<max;i++) {
+        let elem=obj[keys[i]];
+        let title=elem.title;
+        let url='./'+elem.url+'.html';
+        let description=elem.description;
+        let picture=elem.picture;
+        let electrononly=elem.electrononly || false;
         
         if ( inelectron === true ||
              (inelectron === false && electrononly===false)) {
             
-            var cname="";
+            let cname="";
             if (i===0)
                 cname=" active";
             
-            var a='<div class="item'+cname+'">'+
+            let a='<div class="item'+cname+'">'+
                 '<a href="'+url+'" target="_blank"><img src="'+picture+'">'+
                 '<div class="carousel-caption">'+description+
                 '</div>'+
                 '</div>';
             container.append($(a));
             
-            menu.append($('<li><a  href="'+url+'" target="_blank" role="button"><B>'+
-                          title+'</B></a></li>'));
-            
-            var b='<li data-target="#mycarousel" data-slide-to="'+i+'"';
+            //            menu.append($('<li><a  href="'+url+'" target="_blank" role="button"><B>'+
+            //                        title+'</B></a></li>'));
+
+            topmenu.append($('<li><a  href="'+url+'" target="_blank" role="button">'+
+                             title+'</a></li>'));
+
+            let b='<li data-target="#mycarousel" data-slide-to="'+i+'"';
             if (i===0)
                 b+='class="active"';
             b+="></li>";
@@ -99,16 +103,16 @@ let parsejson = function(text) {
     // Remove all previous alerts -- only one is needed
     
     let parent = $("#bisslides");
-    let msg=`<B>These applications are still in 'beta' (development) stage. Use with care.</B>`;
+    let msg=`These applications are still in 'beta' (development) stage. Use with care.`;
     
-    let w = $(`<div class="alert alert-info alert-dismissible" role="alert"  style="position:absolute; top:70px; left:10px; z-index:100">
+    let w = $(`<div class="alert alert-info alert-dismissible" role="alert"  style="position:absolute; top:30px; left:20px; z-index:100">
           <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${msg}
           </div>`);
     parent.append(w);
     w.alert();
     setTimeout(function () {
         $('.alert-info').remove();
-    }, 10000);
+    }, 20000);
     
     
     $('.carousel').carousel({
@@ -121,7 +125,7 @@ let parsejson = function(text) {
 
 let readtextdata = function (url, loadedcallback, errorcallback) {
 
-    var xhr = new XMLHttpRequest();
+    let xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
     xhr.responseType = 'text';
 

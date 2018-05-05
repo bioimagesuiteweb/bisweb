@@ -1,18 +1,25 @@
 
 #main {
-    left : 20px;
-    top: 55px;
-    margin-bottom: 40px;
-    overflow-y : auto;
+    left : 5vw;
+    top: 75px;
     width : 90vw;
-    position: relative;
-    margin-left: 20px;
-    margin-right: 20px;
+    height : 525px;
+    position: absolute;
+    background-color : #000011
 }
-                  
+
+#bottom {
+    left : 5vw;
+    width : 90vw;
+    position: absolute;
+    top: 625px;
+
+}
+
 
 .carousel-inner {
-    margin-top : 40px;
+    margin-top : 2vw;
+    margin-bottom : 2vw;
     height: 500px;
     min-height: 500px;
 }
@@ -29,14 +36,28 @@
     top: 100px;
 }
 
+#leftarrow,#rightarrow {
+    width : 5vw;
+    position : absolute;
+    top : 200px;
+}
+
+#leftarrow {
+    left: 5vw;
+}
+
+#rightarrow {
+    right: 5vw;
+}
 
 li {
     margin: 0 0 2px 0;
-    font-size : 16px
+    font-size : 14px
 }
 
 
+
 h4 {
-    margin: 0 0 4px 0;
+    margin: 0px 0 10px 0;
 }
 
