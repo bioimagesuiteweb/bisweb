@@ -49,37 +49,23 @@
 </head>
 <body oncontextmenu="return false;" ondragstart="return false;" ondrop="return false;">
 
-<!--  <div id="bis_loading_overlay" align="center" style="padding:5px; width:50vw; left:25vw; top:10vh;
-			     height:50vh;
-			     padding:10vh;
-			     font-size: 10vh;
-			     border-radius:50px;background-color:#884400;
-			     z-index:5000; position: absolute;
-			     color:#ffffff;  opacity: 0.8;">Loading Components</div>
-  <script> window.onload=function() {
-  $("#bis_loading_overlay").css({'visibility' :'hidden'});} </script> -->
-
   <nav class="navbar navbar-default navbar-fixed-top">
     <div class="container-fluid" id="bismenucontainer0">
       <!-- Brand and toggle get grouped for better mobile display -->
       <div class="navbar-header" id="bismenuheader0" >
-	<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bismenu0">
-	  <span class="sr-only">Toggle navigation</span>
-	  <span class="icon-bar"></span>
+	    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#topmenu">
+	      <span class="sr-only">Toggle navigation</span>
+	      <span class="icon-bar"></span>
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
-	</button>
+	    </button>
         <img src="images/bioimagesuite.png" height="50px" id="bislogo" style="margin-top:5px">
-      </div>  <!-- Collect the nav links, forms, and other content for
-      toggling -->
-
-
-      <div class="collapse navbar-collapse" id="bismenu0">
-	<ul class="nav navbar-nav" id="bismenuparent0">
-	  <li><a href="http://bisweb.yale.edu/binaries/binaries.html"
-	         target="_blank">Download Desktop Apps</a></li>
-
-
+      </div>      
+      
+      <div class="collapse navbar-collapse" id="topmenu">
+	    <ul class="nav navbar-nav" id="bismenuparent0">
+	      <li><a href="http://bisweb.yale.edu/binaries/binaries.html"
+	             target="_blank">Download Desktop Apps</a></li>
           <li class='dropdown'>
             <a href='#' class='dropdown-toggle'  data-toggle='dropdown'
                role='button' aria-expanded='false'>Documentation <span class='caret'></span></a>
@@ -90,12 +76,10 @@
             </ul>
           </li>
           
-
-          
           <li><a href="https://medicine.yale.edu/bioimaging/suite/">
               <span style="color: red;">Legacy BioImage Suite
                 Webpage<span></a></LI>
-
+          
           <li class='dropdown'>
             <a href='#' class='dropdown-toggle'  data-toggle='dropdown'
                role='button' aria-expanded='false'>Source Code <span class='caret'></span></a>
@@ -109,104 +93,79 @@
       </div>
     </div><!-- /.container-fluid -->
   </nav>
+  
+  <div id="main">
+    <div style="margin-left:20px; margin-right:50px; margin-bottom:0px;margin-top:0px; padding-top:0px">
 
-  <div style="padding-bottom:10px; padding-top:80px; margin-top:0px">
-    <div style="margin-left:20px; margin-right:50px; margin-bottom:10px;margin-top:0px; padding-top:0px">
-      <H2 id="biswarningparent">Welcome to BioImage Suite <EM>Web</EM>.</H2>
-      <HR>
-        <div class="container" style="margin-top:5px" id="biscontainer">
-    <div id="mycarousel" class="carousel slide" data-ride="carousel">
-      
-      <!-- Indicators -->
-      <ol class="carousel-indicators">
-	<li data-target="#mycarousel" data-slide-to="0" class="active"></li>
-	<li data-target="#mycarousel" data-slide-to="1"></li>
-      </ol>
-      
-      <!-- Wrapper for slides -->
-      <div class="carousel-inner" role="listbox" align="center" id="bisslides">
-	<div class="item active">
-	  <a href="./connviewer.html" target="_blank"><img src="images/connviewer.png">
-	    <div class="carousel-caption">
-	      The fMRI connectivity display tool.
-	    </div>
-	  </a>
-	</div>
-	<div class="item">
-	  <a href="./mni2tal.html" target="_blank"><img src="images/mni2tal.png" alt="">
-	    <div class="carousel-caption">
-	      The MNI 2 Talairach Converter program.
-	    </div>
-	  </a>
-	</div>
-      </div>
-      <div id="carouselcontrols">
-	<!-- Controls -->
-	<a class="left carousel-control" href="#mycarousel" role="button" data-slide="prev">
-	  <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
-	  <span class="sr-only">Previous</span>
-	</a>
-	<a class="right carousel-control" href="#mycarousel" role="button" data-slide="next">
-	  <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
-	  <span class="sr-only">Next</span>
-	</a>
+      <div id="mycarousel" class="carousel slide" data-ride="carousel">
+        
+        <!-- Indicators -->
+        <ol class="carousel-indicators">
+        </ol>
+        
+        <!-- Wrapper for slides -->
+        <div class="carousel-inner" role="listbox" align="center" id="bisslides">
+        </div>
+        <div id="carouselcontrols">
+	      <!-- Controls -->
+	      <a class="left carousel-control" href="#mycarousel" role="button" data-slide="prev">
+	        <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+	        <span class="sr-only">Previous</span>
+	      </a>
+	      <a class="right carousel-control" href="#mycarousel" role="button" data-slide="next">
+	        <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+	        <span class="sr-only">Next</span>
+	      </a>
+        </div>
       </div>
     </div>
-  </div>
-<HR>
-      <UL>
+
+    <H4>Welcome to BioImage Suite <EM>Web</EM>.</h4>
+    
+    <UL>
       <LI>Select any tool from the taskbar below, or simply click on the
-	application picture above, to open the application.</LI>
-
-      <LI>In addition to the web applications (accessible from this page), we
-      also provide in desktop and commandline versions. You may download these
-      from <a href="http://bisweb.yale.edu/binaries/binaries.html"
-      target="_blank">our download site.</a></LI>
+	    application picture above, to open the application, or visit 
+        <a href="http://bisweb.yale.edu/binaries/binaries.html"
+           target="_blank">our download site</a> for commandline and
+        desktop versions of the software.</LI>
       
-
-      <LI>  BioImage
-	Suite <EM>Web</EM> is written in Javascript and has been mostly
-	tested on Google Chrome. All applications are running on your local
-	machine. <B>No data</B> is ever uploaded to any server.</LI>
       <LI><B>This software is not approved for clinical use.  Use at your own risk.</B></LI>
       
       <LI>We gratefully acknowledge
         support from the <a href="https://www.braininitiative.nih.gov/"
-        target="_blank">NIH Brain Initiative</a> under grant R24 MH114805
+                            target="_blank">NIH Brain Initiative</a> under grant R24 MH114805
         (Papademetris X. and Scheinost D. PIs, Dept. of Radiology and
         Biomedical Imaging, Yale School of Medicine.)</LI>
-
       
-      </UL>
-
-
-    </div>
+      <LI>  BioImage
+	    Suite <EM>Web</EM> is written in Javascript and has been mostly
+	    tested on Google Chrome. All applications are running on your local
+	      machine. <B>No data</B> is ever uploaded to any server.</LI>
+          
+    </UL>
+    
   </div>
-
+  
   
   <nav class="navbar navbar-default navbar-fixed-bottom">
     <div class="container-fluid" id="bismenucontainer">
       <!-- Brand and toggle get grouped for better mobile display -->
       <div class="navbar-header" id="bismenuheader" >
-	<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bismenu">
-	  <span class="sr-only">Toggle navigation</span>
-	  <span class="icon-bar"></span>
+	    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bismenu">
+	      <span class="sr-only">Toggle navigation</span>
+	      <span class="icon-bar"></span>
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
-	</button>
+	    </button>
       </div>  <!-- Collect the nav links, forms, and other content for toggling -->
       <div class="collapse navbar-collapse" id="bismenu">
-	<ul class="nav navbar-nav" id="bismenuparent">
-	  <li><a  href="./connviewer.html" target="_blank" role="button">Connectivity Viewer</a></li>
-	  <li><a  href="./mni2tal.html" target="_blank" role="button">MNI2TAL Tool</a></li>
-	</ul>
+	    <ul class="nav navbar-nav" id="bismenuparent">
+	    </ul>
       </div>
     </div><!-- /.container-fluid -->
   </nav>
-
+  
   <bisweb-applicationselector> </bisweb-applicationselector>
-
-  
-  
+    
 </body>
 </html>

@@ -1,8 +1,20 @@
 
+#main {
+    left : 20px;
+    top: 55px;
+    margin-bottom: 60px;
+    overflow-y : auto;
+    width : 100%;
+    position: relative;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+                  
+
 .carousel-inner {
-    margin-top : 30px;
-    height: 550px;
-    min-height: 550px;
+    margin-top : 40px;
+    height: 500px;
+    min-height: 500px;
 }
 
 .item {
@@ -19,6 +31,11 @@
 
 
 li {
-    margin: 0 0 3px 0;
+    margin: 0 0 2px 0;
     font-size : 16px
+}
+
+
+h4 {
+    margin: 0 0 4px 0;
 }
