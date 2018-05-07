@@ -1,3 +1,10 @@
+This document contains developer documentation for
+[BioImage Suite Web](https://bioimagesuiteweb.github.io/webapp/). Follow this
+link
+[for the end-user documentation/manual](https://bioimagesuiteweb.github.io/manual/).
+
+---
+
 # Introduction
 
 [NODE.JS]: https://nodejs.org/en/
@@ -18,13 +25,13 @@
 [EMSCRIPTEN]:http://kripken.github.io/emscripten-site/
 [EIGEN]:http://eigen.tuxfamily.org/index.php?title=Main_Page
 
-This document  contains instructions for configuring BioImage Suite Web as well as some information on its background and motivation.
+
 
 BioImage Suite Web (BisWeb) is a web-based medical image analysis tool primarily
 geared towards processing neural images. We gratefully acknowledge support from
 the [NIH Brain Initiative](https://www.braininitiative.nih.gov/) under grant R24 MH114805 (Papademetris X. and Scheinost D. PIs).
 A good overview of the software can be found
-[in slides from a presentation at the 2018 NIH Brain Initiative Meeting](web/images/BioImageSuiteWeb_NIHBrainInitiativeMeeting_April2018.pdf),
+[in slides from a presentation at the 2018 NIH Brain Initiative Meeting](https://bioimagesuiteweb.github.io/webapp/images/BioImageSuiteWeb_NIHBrainInitiativeMeeting_April2018.pdf),
 which was the first public introduction of the software.
 
 The architecture of BioImage Suite Web is shown below:

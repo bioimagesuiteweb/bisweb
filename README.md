@@ -6,7 +6,7 @@ support from the [NIH Brain Initiative](https://www.braininitiative.nih.gov/)
 under grant R24 MH114805 (Papademetris X. and Scheinost D. PIs).
 
 A good overview of the software can be found
-[in slides from a presentation at the 2018 NIH Brain Initiative Meeting](web/images/BioImageSuiteWeb_NIHBrainInitiativeMeeting_April2018.pdf),
+[in slides from a presentation at the 2018 NIH Brain Initiative Meeting](https://bioimagesuiteweb.github.io/webapp/images/BioImageSuiteWeb_NIHBrainInitiativeMeeting_April2018.pdf),
 which was the first public introduction of the software.
 
 BioimageSuite Web is a hybrid application and toolkit. It contains a set of
