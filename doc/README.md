@@ -18,9 +18,9 @@
 [EMSCRIPTEN]:http://kripken.github.io/emscripten-site/
 [EIGEN]:http://eigen.tuxfamily.org/index.php?title=Main_Page
 
-This document  contains instructions for configuring BioImage Suite Web as well as some information on its background and motivation.
+This document contains instructions for configuring BioImage Suite Web as well as some information on its background and motivation.
 
-BioImage Suite Web (BisWeb) is a web-based medical image analysis tool primarily
+BioImage Suite Web (BisWeb) is a web-based medical image analysis tool 
 geared towards processing neural images. We gratefully acknowledge support from
 the [NIH Brain Initiative](https://www.braininitiative.nih.gov/) under grant R24 MH114805 (Papademetris X. and Scheinost D. PIs).
 A good overview of the software can be found
@@ -159,52 +159,47 @@ In addition there are two key files that live in the main directory
 ### Getting the BioImage Suite Web code
 
 First create an empty directory somewhere. Avoid paths that have spaces in
-them. I tend to create a directory called "bisweb" in my home directory.
+them; a folder named 'bisweb' or something similar in the home directory will work well.
 
     cd ~
     mkdir bisweb
-    git clone https://github.com/bioimagesuiteweb/bisweb.git bisweb
+    git clone https://github.com/bioimagesuiteweb/bisweb bisweb
 
-We will move this repository to github _very soon_.
+This code may be found on [Github](https://github.com/bioimagesuiteweb/bisweb).
 
 ---
 
 ## Building the JS Code
 
-First go to the biscpplib directory inside the source tree. If you installed
-BioImage Suite Web in the default location (i.e. ~/javascript) then simply
-first
+Assuming the steps above, the BioImageSuite Web code should be inside a folder named ``bisweb``. This will be used as the name of the root directory for the project, but the user may safely name this directory whatever he or she wants. 
 
-    cd ~/bisweb/biscpplib
+    cd bisweb
 
-__Note:__ Once we move to github the `biscpp` directory will be eliminated and the source will sit directly inside the root `bisweb` directory.
-
-Then download all dependencies using npm (the node package manager as):
+Note the presence of ``package.json``. This contains references to the dependencies required by BioImageSuite Web. Ensure that these are up to date by typing:
 
     npm update
 
-If you want a more verbose output type instead:
+or, for more verbose output:
 
     npm update -d
 
-_Note:_ You will need to perform this step periodically as new dependencies
-are added to the software.
+_Note:_ Dependencies may change over time. If Bisweb performs strangely or breaks after an update try checking if there are updates to the dependencies.
 
-If you envision building the Web Assembly code from source you can create the build directory structure using the `createbuild.sh` script (see instructions below in the section [Installing Emscripten and Eigen and ...](#Installing-Emscripten-and-Eigen-and-Configuring-your-Build-Directories)). If you are only interested in the JS only code for now instead type:
+ To create the WebAssembly binaries and ``build`` folder structure from the source files, see `createbuild.sh` (instructions can be found in [Installing Emscripten and Eigen and Configuring your Build Directories](#installing-emscripten-and-eigen-and-configuring-your-build-directories)). Otherwise, a prebaked version of the wasm binaries can be substituted:
 
     chmod +x config/createjsbuild.sh
     ./config/createjsbuild.sh
 
-This will create three directories `build/web`, `build/wasm` and `build/dist` and copy (from various/wasm) a recent version of the wasm binary compilation in the right places so that you can run BisWeb without the need to build the C++ to Web Assembly from source (instructions for this are below.)
+This will create three directories, ``build/web``, ``build/wasm``, and ``build/dist``, and copy the wasm binary in ``various/wasm`` to the build folders. This will perform the same function as making the WebAssembly binaries from the C++ code, though the prebaked binaries may not be fully up-to-date in every version of the software.
 
-__You need to use these exact directories as this is where the build tools (gulp, webpack) will look for the files.__ (For the curious: take a look at the configuration files `config/webpack_config.js`, `config/app_config.js` and `config/bisweb_pathconfig.js`.)
+__Important: The build tools (Gulp, webpack, etc.) will look for the files in exactly these locations, so moving them elsewhere may cause build steps to fail.__ For the curious: take a look at the configuration files `config/webpack_config.js`, `config/app_config.js` and `config/bisweb_pathconfig.js`.
 
 
-Now you are ready to go. Type:
+The last step is to build the entire application:
 
     gulp build
 
-This will copy core files in `build/web`. This is the destination for the webpage/electron build.
+This will copy core files to `build/web`, the destination for the both the web and Electron builds.
 
 ### Open the Web Applications
 
@@ -215,74 +210,69 @@ This will copy core files in `build/web`. This is the destination for the webpag
 This does three things:
 
 * It creates a light-weight web server.
-* It runs jshint that performs syntax checking on all your JS files
-* It runs webpack which packages all the js files into a single
-  "web-compatible" JS output
+* It runs JSHint that performs syntax checking on all the JS files
+* It runs webpack which packages all the ``.js`` files into a single
+  web-compatible JS output
 
-Open a web-browser and navigate to
-[http://localhost:8080/web](http://localhost:8080/web). If it all works you
-should the main screen pop up.
+Open a web-browser and go to
+[http://localhost:8080/web](http://localhost:8080/web). If it all works the main screen should pop up.
 
-__Note:__ If you look around you will notice that the `html` files live in the `web` directory. Executing `gulp build` modifies these and places them in `build/web` for eventual distribution/packaging. This does some re-writing of the HTML header to change paths etc.
+_Note: The observant reader may notice that the `.html` files live in the `web` directory. Executing `gulp build` modifies these and places them in `build/web` for eventual distribution/packaging. This does some re-writing of the HTML header to change paths etc._
 
 ### Running Regression Tests
 
-At this point you should try running the regression tests. To do this, type:
+The regression tests should function by this point. These should be executed to test proper integration of the WebAssembly code. To do so, type:
 
     mocha test
 
-After a few minutes this will run the regression tests (see the .js files in
-the _tests_ directory) and hopefully report that they all pass.
+This will take a few minutes to finish. The results will be stored in ``.js`` files under ``tests``. If not all tests are reported as successful, there may be a problem with the WebAssembly code.
 
-At this point you have a working JS-development directory.
+At this point the JS-development directory should be fully functional.
 
 ---
 
-## Building the C++ Code as a Web Assembly Library
+## Building the C++ Code as a WebAssembly Library
 
-In the previous section, we used precompiled versions of the C++/WebAssembly code to get us started. In this section, we will describe how to build this final part of the software, the C++ code. Our instructions are for Unix-style operating systems (Linux, MacOS and the WSL version of Ubuntu Linux that can be easily installed from the MS-Windows Store).
+The previous sections used prebaked versions of the WebAssembly binaries. This section will describe how to build this final part of the software, the C++/WebAssembly binaries. These instructions are for Unix-style operating systems, e.g. Linux, MacOS and the [WSL version of Ubuntu Linux](https://docs.microsoft.com/en-us/windows/wsl/install-win10) that can be installed from the MS-Windows Store.
 
-To do this, we first need to install three software packages that are required for this step:
+This process requires three tools:
 
-* [_CMake_][CMAKE] : this is the cross-platform make tool that was originally
-  created for the needs of the Insight Toolkit (ITK).
-* [_Emscripten_][EMSCRIPTEN] : this is a project out of Mozilla that can be used to compile
-  C++ to webassembly
-* [_Eigen_][EIGEN] : this is a numerical linear algebra library that is used
-  by our code. This is the only external library used by BioImage Suite web.
+* [_CMake_](https://cmake.org/) : The cross-platform ``make`` tool originally created for the needs of the [Insight Toolkit (ITK)](https://itk.org/).
+* [_Emscripten_](https://github.com/kripken/emscripten): A project from Mozilla that can be used to compile
+  C++ to WebAssembly
+* [_Eigen_](http://eigen.tuxfamily.org/index.php?title=Main_Page) : A numerical linear algebra library. This is the only external library used by BioImage Suite Web.
 
 ### Installing CMake
 
 #### Ubuntu/Debian
 
-Download and install this from the webpage. On Ubuntu install this using apt
-as follows:
+Ubuntu and Debian support CMake through their built-in package manager, [``apt``](https://help.ubuntu.com/lts/serverguide/apt.html). Enter the following:
 
     sudo apt-get install cmake cmake-curses-gui
 
 #### MacOS
 
-On MacOS install cmake from [cmake.org](cmake.org) and then from the GUI follow the instructions under Tools | How to Install for CommandLine Use to install this for command line use. The easiest option is propabably to create symbolic links in /usr/local as follows:
+On MacOS install CMake from [their website](https://cmake.org/download/) and then from the GUI follow the instructions under Tools | How to Install for CommandLine Use to install it for command line use. The easiest option is propabably to create symbolic links in ``/usr/local`` as follows:
 
     sudo "/Applications/CMake.app/Contents/bin/cmake-gui" --install
 
 ### Installing Python v3.5 or later
 
-You should also install `python` (v3.5 or later) at this point as well. Emscripten will fail to install without a modern version of python installed (especially on MacOS).
+A modern build of Python is needed as well, i.e. v3.5 or later. Emscripten will fail to install without one.
 
-On Ubuntu simply type:
+On Ubuntu type:
 
     sudo apt-get install python3
 
-On MacOS, you can use [brew](https://brew.sh/), you can install this using
+MacOS has its own package manager, [brew](https://brew.sh/), that maintains versions of Python. If ``brew`` is installed, the latest version of python can be installed using:
 
     brew install python3
 
-Please make sure that `python3` is in your path. To test:
+Ensure that `python3` is in your path. If it is, then
 
     which python3
 
-You should get a response that looks like `/usr/bin/python3` or `/usr/local/bin/python3`.
+should return a response that looks like `/usr/bin/python3` or `/usr/local/bin/python3`.
 
 #### Python Packages
 
