@@ -22,8 +22,8 @@ You may also download desktop and command line versions from [our download side]
 The current _draft_ user documentation can be found
 [in the manual repository](https://github.com/bioimagesuiteweb/manual).
 
-For developer documentation please look in the [doc](doc) directory of this
-repository, starting with [doc/README.md](doc/README.md).
+For developer documentation please look in the [docs](docs) directory of this
+repository, starting with [docs/README.md](docs/README.md).
 
 __Licensing__: The source code of the core BioImage Suite Web (as found in
 this repository) is made available freely under the terms of the
