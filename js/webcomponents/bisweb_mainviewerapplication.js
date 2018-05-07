@@ -531,7 +531,7 @@ class ViewerApplicationElement extends HTMLElement {
         let mainViewerDoneEvent = new CustomEvent('mainViewerDone');
         document.dispatchEvent(mainViewerDoneEvent);
 
-        pipeline.makePipeline('../../data/sampleformat.json');
+        pipeline.makePipeline('../../data/pipelineExample/examplepipeline.json');
     }
 }
 

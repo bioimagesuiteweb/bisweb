@@ -166,7 +166,7 @@ let makePipeline = function (filename) {
 
             //construct the inputs, outputs, and command in the way that make expects
             for (let i = 0; i < numOutputs; i++) {
-                let commandArray = [], formattedJobOutput = { 'inputs' : [], 'outputs' : [], 'command' : undefined};
+                let commandArray = [], formattedJobOutput = { 'inputs' : [], 'outputs' : [], 'command' : undefined };
                 for (let option of optionsArray) {
                     //add appropriate entry from expanded variable if necessary
                     let expandedOption = Array.isArray(option) ? ( option.length > 1 ?  option[i] : option[0]) : option;
@@ -183,17 +183,18 @@ let makePipeline = function (filename) {
                     formattedJobOutput.outputs.push(output);
                 });
 
-                formattedJobOutput.command = job.command + ' ' + commandArray.join(' ');
+                formattedJobOutput.command = 'node bisweb.js ' + job.command + ' ' + commandArray.join(' ');
                 formattedJobOutputs.push(formattedJobOutput);
             }
 
-            
+            //generate the makefile from formattedJobOutputs
             console.log('formatted commands', formattedJobOutputs);
+
 
         }
 
 
-    }).catch((e) => { console.log('An error occured', e); });
+    }).catch( (e) => { console.log('An error occured', e); });
 
 };
 

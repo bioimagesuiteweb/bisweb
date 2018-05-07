@@ -1,0 +1,53 @@
+{
+	"variables": [
+	{
+		"name" : "input",
+		"files" : [
+			"a1.nii.gz",
+			"a2.nii.gz", 
+			"a3.nii.gz"
+		]
+	},
+	{
+        "name" : "out1",
+        "extension" : ".nii.gz",
+		"depends": [
+			"%input%"
+		]
+	},
+	{
+        "name": "out2",
+        "extension" : ".nii.gz", 
+		"depends": [
+			"%out1%"
+		]
+	},
+	{
+		"name": "out3",
+		"extension": ".nii.gz",
+		"depends": [
+			"%out2%"
+		]
+	}
+	],
+	"jobs": [
+		{
+			"command": "smoothImage",
+			"rule": "append",
+			"appendText": "smoothed",
+			"options": "--debug true --input %input% --output %out1%"
+		},
+		{
+			"command": "thresholdImage",
+			"rule": "append",
+			"appendText": "thresholded",
+			"options": "--debug true --input %out1% --output %out2%"
+		},
+		{
+			"command": "linearRegistration",
+			"rule": "append",
+			"appendText": "registered",
+			"options": "--debug true --input %out2% --output %out3%"
+		}
+	]
+}
