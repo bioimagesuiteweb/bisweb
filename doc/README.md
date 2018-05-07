@@ -18,152 +18,143 @@
 [EMSCRIPTEN]:http://kripken.github.io/emscripten-site/
 [EIGEN]:http://eigen.tuxfamily.org/index.php?title=Main_Page
 
-This is the "initial" file of the BioImage Suite Web _developer_ documentation. It contains instructions for configuring and building the software.
+This document  contains instructions for configuring BioImage Suite Web as well as some information on its background and motivation.
 
-
-BioImage Suite Web (BisWeb) is a web-based medical image analysis suite primarily
-geared towards Neuroimaging Analysis. We gratefully acknowledge support from
+BioImage Suite Web (BisWeb) is a web-based medical image analysis tool primarily
+geared towards processing neural images. We gratefully acknowledge support from
 the [NIH Brain Initiative](https://www.braininitiative.nih.gov/) under grant R24 MH114805 (Papademetris X. and Scheinost D. PIs).
 A good overview of the software can be found
 [in slides from a presentation at the 2018 NIH Brain Initiative Meeting](web/images/BioImageSuiteWeb_NIHBrainInitiativeMeeting_April2018.pdf),
 which was the first public introduction of the software.
 
-The architecure of BioImage Suite Web is shown below:
+The architecture of BioImage Suite Web is shown below:
 
 ![BioImage Suite Web Software Architecture](figures/bisweb.png)
 ---
 
-As you can see this involves a mixture of JavaScript and C++ code with optional Python and Matlab wrappers.  Additional information about aspects of the software can be found in other files in this directory, such as:
+ BioImage Suite Web uses a mixture of JavaScript for the user interfaces and C++ for the image processing with optional Python and Matlab wrappers.  Additional information about aspects of the software can be found in other files in this directory, such as:
 
-* Some background material on why we selected JavaScript as the primary language for Biomage Suite Web can be found in [WhyJS.md](WhyJS.md).
-* We cover some aspects of JavaScript that are particularly relevant to our project in [AspectsofJS.md](AspectsOfJS.md).
-* The next document is describing how to program using the base BioImage Suite Web Libraries in JS [BisWebJS.md](BisWebJS.md).
-* The interface from JavaScript to WebAssembly is described in [FromJStoWASMAndBack.md](FromJStoWASMAndBack.md).
-* We briefly touch on using the base BioImage Suite Web Libraries from Python in [BisWebPython.md](BisWebPython.md).
-* The same native libraries that work in Python can be accessed through Matlab. This interface is primitive but if you are curious/adventurous see [BisWebMatlab.md](BisWebMatlab.md). This is _unsupported code._ Use at your own risk!
-* We discuss the module architecture in two separate documents 
+* Some background material on why JavaScript is the primary language for Biomage Suite Web in [WhyJS.md](WhyJS.md).
+* Aspects of JavaScript that are particularly relevant to the project in [AspectsofJS.md](AspectsOfJS.md).
+* How to program using the base BioImage Suite Web Libraries in JS in [BisWebJS.md](BisWebJS.md).
+* The interface from JavaScript to WebAssembly in [FromJStoWASMAndBack.md](FromJStoWASMAndBack.md).
+* Using the base BioImage Suite Web libraries from Python in [BisWebPython.md](BisWebPython.md).
+* Using the base BioImage Suite Web libraries from Matlab in[BisWebMatlab.md](BisWebMatlab.md). This code is primitive compared to the rest of the code base and more importantly is __unsupported__. Use at your own risk!
+* Descriptions of the module architecture in two separate documents 
     - JavaScript: [ModulesInJS.md](ModulesInJS.md)
     - Python: [ModulesInPython.md](ModulesInPython.md).
-* Details about how the [Electron][ELECTRON] desktop applications are constructed can be found in the document [DesktopAppsWithElectron.md](DesktopAppsWithElectron.md).
+* Details about how the [Electron](https://electronjs.org/) desktop applications are constructed in [DesktopAppsWithElectron.md](DesktopAppsWithElectron.md).
 
 ---
 
 ## Setting up your Development Environment
 
-Having set the context we are now ready to begin. The goal of this
-section is to help the reader set up a proper software development
-environment. We use the following tools:
+The goal of this section is to help the reader set up a proper software development
+environment. BioImage Suite Web uses the following tools:
 
-* [_git_][GIT] : A popular version control system.
-* [_node.js_][NODE.JS] : The command line JavaScript interpreter. This will also provide you with _npm_ which is the package manager that comes with node.js.
-* [_gulp_][GULP]: A tool to automate JavaScript
-  development.
-* [_webpack_][WEBPACK]: A tool that enables the use of node.js style modules in browser applications.
-* [_mocha_][MOCHA]: A tool for regression testing.
-* [_jshint_][JSHINT]: "A tool that helps to detect errors and potential problems in your JavaScript code" (per the webpage!).
-* [_jsdoc_][JSDOC]: A tool for code documentation.
-* [_electron_][ELECTRON]: A tool that allows the use
+* [__Git__](https://git-scm.com/) : A popular version control system.
+* [__Node.js__](https://nodejs.org/en/) : The command line JavaScript interpreter. Packaged with __npm__ which is the package manager that comes with node.js.
+* [__Gulp__](https://gulpjs.com/): An automation tool designed to ease JavaScript build tasks.
+* [__webpack__](https://webpack.js.org/): A packaging tool that enables Node.js style modules in browser applications.
+* [__Mocha__](https://mochajs.org/): A scripting library designed to automate regression testing.
+* [__JSHint__](http://jshint.com/): "A tool that helps to detect errors and potential problems in your JavaScript code" (from the webpage).
+* [__JSDoc__](http://usejsdoc.org/): A parsing tool that generates documentation from comments in code.
+* [__Electron__](https://electronjs.org/): A tool that allows the use
   of HTML/CSS/JS to create a desktop application.
 
-You will also need a text editor. There are many many good text editors out
-there. If you have no prior experience you can try  Microsoft's
-[Visual Code](https://code.visualstudio.com/) editor. I personally use Emacs as the shortcut keystrokes are burned into memory from over 20 years of playing with this but Emacs is not the easiest editor to get started with.
+Editing code also requires a text editor. Users with no prior experience may want to try Microsoft's
+[Visual Code](https://code.visualstudio.com/) editor. I personally use [Emacs](https://www.gnu.org/software/emacs/) as the shortcut keystrokes are burned into memory from over 20 years of playing with this but Emacs is not the easiest editor to get started with.
 
-All of the tools above have extensive online documentation which we
-will not replicate here. We will instead adopt a "recipe"-based
-approach moving from example to example (with minimal explanations)
-and assume that the interested reader can find additional information online.
+More information about each of these tools may be found in the links contained in this section.
 
 ### Aside: If you are using Microsoft Windows
 
 The instructions in this documents are primarily for Linux (Ubuntu) and secondarily MacOS. These are Unix-y operating systems with a common set of commandline tools and package managers which make life a little easier.
 
-If you are developing on a Microsoft Windows machine (as is the primary author of this document), we strongly recommend compiling/building BioImage Suite Web using the Ubuntu distribution available from the Windows Store. This is part of the [Windows Subsystem for Linux(WSL)](https://docs.microsoft.com/en-us/windows/wsl/install-win10). WSL has been an amazing addition to Windows as of 2016 (or so). This will simplify your life immensely. See also [https://github.com/QMonkey/wsl-tutorial](https://github.com/QMonkey/wsl-tutorial) and also the section [ Microsoft Windows and WSL](#Microsoft-Windows-and-WSL) at the end of this document for more details.
+If you are developing on a Windows machine, we strongly recommend compiling/building BioImage Suite Web using the Ubuntu distribution available from the Windows Store as of 2016. This is part of the [Windows Subsystem for Linux (WSL)](https://docs.microsoft.com/en-us/windows/wsl/install-win10) and will simplify your life immensely. See also [https://github.com/QMonkey/wsl-tutorial](https://github.com/QMonkey/wsl-tutorial) and also the section [ Microsoft Windows and WSL](#Microsoft-Windows-and-WSL) at the end of the document for more details.
 
 ---
 
-### Installing GIT
+### Installing Git
 
-The first step is to install git. On Linux and Mac this might already
-be installed on your system so test using ``git --version`` (see
- below). For MS-windows please go to the [Git Webpage][GIT]
-and download the appropriate installer. This will also install a bash
-command line shell which we will use for all command line operations
-in Windows. On MacOS/Linux you can use the built-in command line bash
-shell and git as supplied by your system.
+Git may already be installed on Linux and Mac. ``which git`` will  return the path for Git if it is installed, or an error message otherwise. For MS-Windows please see [this page](https://git-scm.com/download/win). This will also install a bash
+command line shell which can be used in the same way as a standard bash shell (the shell that ships with MacOS and Linux).
 
 To test that git is correctly installed type:
 
     git --version
 
-If you get a reasonable answer (e.g. ``git version ...``) then git is properly installed.
+If it returns a descriptive answer (e.g. ``git version ...``) then Git is properly installed.
 
 ### Installing Node.js
 
-I recommend that you download Node.js from the
-[Node.js webpage][NODE.JS] (download the latest stable version which should be
-8.9.x or newer). You may need to add the directory that the executables ``node`` and ``npm`` are to your path.
+It it recommended the install the latest version of Node.js from the
+[Node.js webpage](https://nodejs.org/en/) (download the latest stable version which should be
+8.9.x or newer). The ``node`` and ``npm`` binary may need to be added to ``PATH``.
 
-To test type
+To test a correct installation type
 
     node -v
 
-If you get something like ``v8.9.0`` as output then node is correctly installed.
+If it returns a descriptive answer, e.g. ``v8.9.0``, then Node is correctly installed.
 
 ### Setting up
 
-Once you have both git and node set up you can install the rest of the tools as follows. Open a bash console (on Windows use the Git Bash console) and type (On MacOS/Linux use __sudo npm install__ ...)
+Once both Git and Node are set up, install the rest of the tools as follows: on MacOS or Linux open a terminal and type
 
     sudo npm install -g gulp mocha jsdoc jshint webpack webpack-cli
 
-These operations (which will take some time) will install the core
+or on Windows type
+
+    npm install -g gulp mocha jsdoc jshint webpack webpack-cli
+
+This will install the core
 tools. Please note that the '-g' flag stands for 'global', i.e. these
 modules are installed in the global package directory
-(e.g. /usr/local/node_modules) as opposed to your local package directory,
-hence the need for ``sudo`` or elevated access. Should you get an error
-simply re-run the same command (sometimes there are server timeouts) until
-it is complete. On MS-Windows skip ''sudo''. At this point you are set to go.
+(e.g. /usr/local/node_modules) as opposed to the local package directory. If there is an error or the server times out,
+simply re-run the same command until
+it is complete.
 
-Next install electron and its associated tools. As of April 2018 there is bug in
-the electron installer which requires a more complex command. To do this enter
+Next install Electron and its associated tools. As of April 2018 there is bug in
+the electron installer which requires a more complex command:
 
      sudo npm install -g electron --unsafe-perm=true --allow-root
      sudo npm install -g electron-packager
 
-Your JS development environment is now complete.
+The JS development environment is now complete.
 
 ## Building and Running BioImage Suite Web
 
-_Note_: BioImage Suite Web (right now) is compiled/packaged in directories inside the source tree. One day we might change this (though npm putting node_modules inside your package sort of makes this unavoidable). You will eventually have a source tree will acquire two extra directories as follows:
+BioImage Suite Web is currently compiled/packaged in directories inside the source tree. One day this might change, though npm putting node_modules inside your package sort of makes this unavoidable. Eventually have the source tree will acquire two extra directories as follows:
 
-* node_modules -- the location of dependent node_modules. This will be populated by npm
-* build -- the core build directory
-    - build/wasm -- the build directory for the web assembly code (You can move this out if your prefer). The key output files, however, will be redirected to the build directory so that webpack can find them
-    - build/dist -- the output directory for zip files or packaged electron applications
-    - build/cpp -- this is where the native libraries (optional) for accessing the C++ code from Python and Matlab will be built.
-    - build/web -- the output directory for creating the final web-applications and associated .css,.html files etc.
+* node_modules — The location of dependent node_modules. This will be populated by npm.
+* build — The core build directory.
+    - build/wasm — The build directory for the WebAssembly code. You can move this out if your prefer; however, the key output files will be redirected to the build directory so that webpack can find them.
+    - build/dist — The output directory for ``.zip`` files or packaged Electron applications.
+    - build/cpp — (optional) This is where the native libraries for accessing the C++ code from Python and Matlab will be built.
+    - build/web — The output directory for creating the final web-applications and associated ``.css``, ``.html`` files etc.
 
-The rest of the directories in your source tree are
+The rest of the directories in the source tree are:
 
-* compiletools -- scripts and configuration files to help with compiling
-* config -- configuration files for webpack, jsdoc etc.
-* cpp -- The C++ code
-* doc -- the directory containing this and other documentation files
-* js -- the directory containing all js code
-* lib -- a directory containing js external libraries (and some css/html) that are not distributed via npm or are customized in some way
-* matlab -- the directory containing the fairly primitive matlab wrapper code
-* python -- the directory containing the python code
-* test -- the directory containing the regression tests and data
-* various -- miscellaneous files
-    - various/download -- versions of Emscripten (this is a skeleton version) and Eigen (see below) for installation.
-    - various/wasm -- pre-built version of the wasm-related JS files to expedite getting started. These can be copied to `build/wasm` to eliminate the need to compile C++ to Web Assembly (at least initially). We update these periodically.
-    - various/config -- configuration files for Emacs, Bash and Visual Studio Code that you find useful. 
-* web -- the directory containing the html/css files for the web and desktop applications. This also contains the configuration files for Electron desktop applications
+* compiletools — Scripts and configuration files to help with compiling.
+* config — Configuration files for webpack, JSDoc etc.
+* cpp — C++ code.
+* doc — Directory containing this and other documentation files.
+* js — Directory containing all js code
+* lib — Directory containing js external libraries and some css/html that are either not distributed via npm or are customized in some way.
+* matlab — Directory containing the primitive Matlab wrapper code.
+* python — Directory containing the Python code.
+* test — Directory containing the regression tests and data.
+* various — Miscellaneous files.
+    - various/download — Versions of Emscripten (this is a skeleton version) and Eigen for installation.
+    - various/wasm — Pre-built version of the Wasm-related JS files to expedite getting started. These can be copied to `build/wasm` to eliminate the need to compile C++ to Web Assembly. These are updated periodically though so to use up-to-date code they will have to be recompiled.
+    - various/config — Configuration files for Emacs, Bash and Visual Studio Code that may be useful. 
+* web — The directory containing the ``.html`` /``.css`` files for the web and desktop applications. This also contains the configuration files for Electron desktop applications.
 
 In addition there are two key files that live in the main directory
 
-* package.json -- the package description file for npm that captures the dependencies of our software (and its companion file package-lock.json)
-* gulpfile.js  -- the configuration file for gulp
+* ``package.json`` — The package description file for npm that lists the dependencies of our software. Generates a companion file, ``package-lock.json``
+* ``gulpfile.js``  — The configuration file for Gulp.
 
 ### Getting the BioImage Suite Web code
 
