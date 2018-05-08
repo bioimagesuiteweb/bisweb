@@ -1,3 +1,7 @@
+This document contains [developer documentation](README.md) for
+[BioImage Suite Web](https://bioimagesuiteweb.github.io/webapp/). 
+
+---
 
 [NIFTI]: https://nifti.nimh.nih.gov/nifti-1/
 

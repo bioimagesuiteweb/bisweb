@@ -1,3 +1,7 @@
+This document contains [developer documentation](README.md) for
+[BioImage Suite Web](https://bioimagesuiteweb.github.io/webapp/). 
+
+---
 # Aspects of JavaScript
 
 In this section, we will cover some aspects of JavaScript that are
