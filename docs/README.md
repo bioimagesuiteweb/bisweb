@@ -44,7 +44,7 @@ The architecture of BioImage Suite Web is shown below:
 * Some background material on why JavaScript is the primary language for Biomage Suite Web in [WhyJS.md](WhyJS.md).
 * Aspects of JavaScript that are particularly relevant to the project in [AspectsofJS.md](AspectsOfJS.md).
 * How to program using the base BioImage Suite Web Libraries in JS in [BisWebJS.md](BisWebJS.md).
-* The interface from JavaScript to WebAssembly in [FromJStoWASMAndBack.md](FromJStoWASMAndBack.md).
+* The interface from JavaScript to WebAssembly in [JStoWASM.md](JStoWASM.md).
 * Using the base BioImage Suite Web libraries from Python in [BisWebPython.md](BisWebPython.md).
 * Using the base BioImage Suite Web libraries from Matlab in[BisWebMatlab.md](BisWebMatlab.md). This code is primitive compared to the rest of the code base and more importantly is __unsupported__. Use at your own risk!
 * Descriptions of the module architecture in two separate documents 
