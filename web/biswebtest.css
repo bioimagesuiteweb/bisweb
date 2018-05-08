@@ -1,0 +1,23 @@
+
+#main {
+    left : 5vw;
+    top: 10vh;
+    width : 90vw;
+    height : 80vh;
+    position: absolute;
+    background-color : #000044;
+    overflow-x : auto;
+    overflow-y : auto;
+}
+
+#console {
+    left : 5vw;
+    width : 90vw;
+    position: absolute;
+    top: 92vh;
+    background-color : #000055;
+    height : 5vh;
+    overflow-x : auto;
+    overflow-y : auto;
+   
+}

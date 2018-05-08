@@ -219,6 +219,22 @@ gulp.task('webpack', function(done) {
                              });
 });
 
+
+gulp.task('testweb', function(done) {
+
+    connect.server(internal.serveroptions);
+    console.log('++++ Server root directory=',internal.serveroptions.root);
+
+    let mydone=function() {
+        console.log('webpack killed');
+    };
+
+    bis_gutil.runWebpackCore('./web/biswebtest.js',options.internal,
+                             'biswebtest.js',
+                             __dirname,
+                             options.minify,options.outdir,mydone,1);
+});
+
 gulp.task('css', function() {
     bis_gutil.createCSSCommon(internal.dependcss,internal.biscss,options.outdir);
 });
