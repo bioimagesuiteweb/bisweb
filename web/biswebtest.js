@@ -4,6 +4,35 @@ const biswrap = require('libbiswasm_wrapper');
 const BisWebDataObjectCollection = require('bisweb_dataobjectcollection.js');
 const webutil=require('bis_webutil');
 
+var loadparamfile=function(paramfile,modulename,params) {
+
+    if (paramfile.length<2)
+        return Promise.resolve();
+
+    return new Promise( (resolve,reject) => {
+        
+        fetch('/test/'+paramfile).then( (response) => { 
+            if(response.ok) {
+                response.json().then( (obj) => {
+                    obj=obj.params;
+                    let keys=Object.keys(obj);
+                    for (let i=0;i<keys.length;i++) {
+                        if (keys[i]!=='module') {
+                            if (params[keys[i]]=== undefined)
+                                params[keys[i]]=obj[keys[i]];
+                        }
+                    }
+                    resolve('');
+                });
+            } else {
+                reject('Network response was not ok.');
+            }
+        }).catch( (e) => {
+            reject(e);
+        });
+    });
+};
+
 var execute_test=function(test) {
 
     return new Promise( (resolve,reject) => {
@@ -15,7 +44,7 @@ var execute_test=function(test) {
 
         let params={};
         let inputs={};
-
+        let paramfile='';
         let des=module.getDescription();
 
         console.log('Num values for module=',modulename,'=',command.length,JSON.stringify(command));
@@ -26,7 +55,6 @@ var execute_test=function(test) {
                 let pname=flag.replace(/--/g,'').replace(/-/g,'');
                 let value=command[i+1];
                 let j=0,found=false;
-                console.log(`\n Looking for *${pname}*`);
                 while (j<des.inputs.length && found===false) {
                     
                     let inp=des.inputs[j];
@@ -45,7 +73,6 @@ var execute_test=function(test) {
                         let s=p.shortname || '';
                         if (pname===s || pname===p.varname) {
                             params[p.varname]=value;
-                            console.log('Setting ',p.varname,' to ',value,JSON.stringify(params));
                             found=true;
                         }
                     j=j+1;
@@ -53,29 +80,41 @@ var execute_test=function(test) {
                 }
                 
                 if (found===false) {
-                    reject(`parameter ${flag} not found`);
+                    if (pname==='paramfile') {
+                        paramfile=value;
+                    } else {
+                        reject(`parameter ${flag} not found`);
+                    }
                 }
             }
         }
-        console.log('Inputs=',JSON.stringify(inputs));
-        console.log('Params=',JSON.stringify(params));
 
-        module.loadInputs(inputs).then( () => {
-            console.log('oooo Loaded.');
-            module.directInvokeAlgorithm(params).then(() => {
-                console.log('oooo -------------------------------------------------------');
-                resolve( {
-                    result : 'Test completed, now checking results.',
-                    module : module,
+
+        loadparamfile(paramfile,module.name,params).then( () => {
+
+            console.log('Inputs=',JSON.stringify(inputs));
+            console.log('Params=',JSON.stringify(params));
+            
+            module.loadInputs(inputs).then( () => {
+                console.log('oooo Loaded.');
+                module.directInvokeAlgorithm(params).then(() => {
+                    console.log('oooo -------------------------------------------------------');
+                    resolve( {
+                        result : 'Test completed, now checking results.',
+                        module : module,
+                    });
+                    
+                }).catch((e) => {
+                    reject('---- Failed to invoke algorithm'+e);
                 });
-                       
             }).catch((e) => {
-                reject('---- Failed to invoke algorithm'+e);
+                reject('----- Bad input filenames '+e);
             });
         }).catch((e) => {
-            reject('----- Bad input filenames '+e);
+            reject('----- Bad param file '+e);
         });
     });
+        
 };
 
 const execute_compare=function(module,test) {
@@ -94,7 +133,6 @@ const execute_compare=function(module,test) {
          */
         let testtrue=test.result;
         let t=test.test.replace(/\t/g,' ').replace(/ +/g,' ').replace(/-+/g,'').split(' ');
-        console.log('t',t);
         let tobj={ };
         for (let i=0;i<t.length;i=i+2) {
             tobj[t[i]]=t[i+1];
@@ -118,6 +156,7 @@ const execute_compare=function(module,test) {
 
         console.log('====\n============================================================\n');
         console.log(`==== C o m p a r i n g  ${test_type}  u s i n g  ${comparison} and  t h r e s h o l d=${threshold}.\n====`);
+        let c=`==== C o m p a r i n g  ${test_type}  u s i n g  ${comparison} and  t h r e s h o l d=${threshold}.<BR>====<BR>`;
 
         if (test_type === "matrixtransform" || test_type==="gridtransform") {
             test_type="transform";
@@ -131,12 +170,12 @@ const execute_compare=function(module,test) {
             console.log('Result=',JSON.stringify(result),obj.getDescription(),resultObject.getDescription());
             if (result.testresult) {
                 resolve({ result : result.testresult,
-                          text   : `++++ Module ${module.name} test pass.<BR>++++  deviation (${result.metric}) from expected: ${result.value} < ${threshold}`
+                          text   : c+`++++ Module ${module.name} test pass.<BR>++++  deviation (${result.metric}) from expected: ${result.value} < ${threshold}`
                         });
             } else {
                 resolve({
                     result : result.testresult,
-                    text : `---- Module ${module.name} test failed. Module produced output significantly different from expected.<BR>----  deviation (${result.metric}) from expected: ${result.value} > ${threshold}`
+                    text : c+`---- Module ${module.name} test failed. Module produced output significantly different from expected.<BR>----  deviation (${result.metric}) from expected: ${result.value} > ${threshold}`
                 });
             }
         }).catch((e) => {
@@ -169,6 +208,8 @@ const run_tests=async function(testlist) {
         run=run+1;
         let v=testlist[i];
         main.append(`<P>Running test ${i+1}: ${v.command}<UL><LI>${v.test},${v.result}</LI></P>`);
+        console.log(`-------------------------------`);
+        console.log(`-------------------------------\nRunning test ${i+1}: ${v.command}, ${v.test},${v.result}\n------------------------`);
         try {
             let obj=await execute_test(v,i)
             main.append(`<p>${obj.result}</p>`);
@@ -208,7 +249,6 @@ window.onload = function() {
         
         fetch('../test/module_tests.json').then( (response) => { 
             if(response.ok) {
-                console.log(response.body);
                 // Examine the text in the response
                 response.json().then(function(data) {
                     run_tests(data.testlist);
