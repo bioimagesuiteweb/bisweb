@@ -19,7 +19,7 @@ can be found
 at [https://bioimagesuiteweb.github.io/webapp/](https://bioimagesuiteweb.github.io/webapp/).
 You may also download desktop and command line versions from [our download side](http://bisweb.yale.edu/binaries).
 
-For end-user documentation please see the [User Manual (_Draft_)](https://bioimagesuiteweb.github.io/bisweb-manual/). (The sources for this are also on github at [the manual repository](https://github.com/bioimagesuiteweb/bisweb-manual).
+For end-user documentation please see the [User Manual (_Draft_)](https://bioimagesuiteweb.github.io/bisweb-manual/). (The sources for this are also on github at [the manual repository](https://github.com/bioimagesuiteweb/bisweb-manual).)
 
 For developer documentation please look in the [docs](docs) directory of this
 repository, starting with [docs/README.md](docs/README.md).
