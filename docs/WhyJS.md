@@ -1,7 +1,5 @@
 This document contains [developer documentation](README.md) for
-[BioImage Suite Web](https://bioimagesuiteweb.github.io/webapp/). Follow this
-link
-[for the end-user documentation/manual](https://bioimagesuiteweb.github.io/bisweb-manual/).
+[BioImage Suite Web](https://bioimagesuiteweb.github.io/webapp/). 
 
 ---
 
