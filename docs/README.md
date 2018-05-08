@@ -584,10 +584,10 @@ If you are not planning to modify the C++ code then you can simply build this on
 
 To run tests in the browser (this applies only to the module tests) type
 
-   gulp testweb
+      gulp testweb
 
 Then navigate to:
 
-     http://localhost:8080/web/biswebtest.html?first=46&last=47
+      http://localhost:8080/web/biswebtest.html?first=46&last=47
 
 Replace `first=` and `last=` with the range of tests to run. As of May 9th, 2018, there are 72 tests. The first test is test `0` (C-style!).
