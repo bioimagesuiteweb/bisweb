@@ -3,6 +3,8 @@ This document contains developer documentation for
 link
 [for the end-user documentation/manual](https://bioimagesuiteweb.github.io/bisweb-manual/).
 
+A web page version (as opposed to browsing the source) of this page can be found [at this link](https://bioimagesuiteweb.github.io/bisweb/).
+
 ---
 
 # Introduction
