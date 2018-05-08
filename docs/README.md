@@ -577,3 +577,17 @@ Under WSL (Ubuntu) in CMake set the two variables (under advanced)
 This will instruct CMake to copy the output of the WebAssembly compilation (the three files `libbiswasm.js`, `libbiswasm_wasm.js` and `libbiswasm_wrapper.js` to 'c:\users\user\bisweb\build\wasm' each time they are regenerated. This is done automatically as a post-build rule within CMake. __This takes advantage of the fact that WASM results in completely platform-independent bytecode__, hence we can compile it one one platform and use it everywhere. The advent of WSL means that one does not need to fight with Windows tools and paths anymore. (Though it has been done, but the WSL solution is so much nicer!) Much of the initial testing of the Electron version of BioImage Suite Web was performed in exactly this dual platform setup.
 
 If you are not planning to modify the C++ code then you can simply build this once under WSL and just copy the three files above manually.
+
+---
+
+### Web-based Tests (_experimental_)
+
+To run tests in the browser (this applies only to the module tests) type
+
+   gulp testweb
+
+Then navigate to:
+
+     http://localhost:8080/web/biswebtest.html?first=46&last=47
+
+Replace `first=` and `last=` with the range of tests to run. As of May 9th, 2018, there are 72 tests. The first test is test `0` (C-style!).
