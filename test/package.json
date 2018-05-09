@@ -1,6 +1,0 @@
-{
-    "name": "bioimagesuiteweb-test",
-    "version": "0.9.1",
-    "description": "Test Runner for BioImage Suite Web",
-    "main" : "biselectrontest.js"
-}

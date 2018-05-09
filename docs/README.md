@@ -604,7 +604,7 @@ To run tests in Electron (this applies only to the module tests) type
 
 Then (assuming you are in the `src` directory) type:
 
-      electron test
+      electron web biswebtest
 
 Then select the tests to run and click `Run Tests` to execute.
 
