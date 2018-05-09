@@ -206,19 +206,35 @@ gulp.task('webpack', function(done) {
                                  bis_gutil.runWebpackCore('./web/'+internal.indexlib,options.internal,
                                                           internal.indexlib,__dirname,
                                                           options.minify,options.outdir,function() {
-                                                              
-                                                              if (options.webworker)
-                                                                  bis_gutil.runWebpackCore('./js/modules/'+internal.webworkerlib,options.internal,
-                                                                                           internal.webworkerlib,__dirname,
-                                                                                           options.minify,options.outdir,function() {
+
+                                                              bis_gutil.runWebpackCore('./test/biswebtest.js',options.internal,
+                                                                                       'test/biswebtest.js',
+                                                                                       __dirname,
+                                                                                       options.minify,options.outdir,function() {
+                                                                                           if (options.webworker)
+                                                                                               bis_gutil.runWebpackCore('./js/modules/'+internal.webworkerlib,options.internal,
+                                                                                                                        internal.webworkerlib,__dirname,
+                                                                                                                        options.minify,options.outdir,function() {
+                                                                                                                            done();
+                                                                                                                        });
+                                                                                           else
                                                                                                done();
-                                                                                           });
-                                                              else
-                                                                  done();
+                                                                                       });
                                                           });
                              });
 });
 
+
+gulp.task('buildtest',function() {
+
+    let testoutdir=path.resolve(path.join(options.outdir,'test'));
+    console.log('Test output dir=',testoutdir);
+    gulp.src(['./test/testdata/**/*']).pipe(gulp.dest(testoutdir+'/testdata'));
+    gulp.src('./test/module_tests.json').pipe(gulp.dest(testoutdir));
+    bis_gutil.createTestHTML('biswebtest',testoutdir,'biswebtest.js',internal.biscss);
+    bis_gutil.createCSSCommon([ 'test/biswebtest.css'] ,'biswebtest.css',testoutdir);
+
+});
 
 gulp.task('testweb', function(done) {
 
@@ -234,7 +250,7 @@ gulp.task('testweb', function(done) {
     };
 
     bis_gutil.runWebpackCore('./test/biswebtest.js',options.internal,
-                             'biswebtest.js',
+                             'test/biswebtest.js',
                              __dirname,
                              options.minify,options.outdir,mydone,1);
 });
@@ -313,6 +329,7 @@ gulp.task('build', function(callback) {
 
     runSequence('commonfiles',
                 'tools',
+                'buildtest',
                 callback);
 });
 

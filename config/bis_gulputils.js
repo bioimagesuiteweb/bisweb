@@ -158,6 +158,26 @@ var createHTML=function(toolname,outdir,libjs,commoncss) {
 	.pipe(gulp.dest(outdir));
 };
 
+var createTestHTML=function(toolname,outdir,libjs,commoncss) {
+
+    if (toolname==="bisjs")
+	return;
+    
+    var mainhtml   = path.normalize(path.join(__dirname,'../test/'+toolname+'.html'));
+    var bundlecss  = '../'+commoncss;
+
+    console.log(getTime()+colors.green(' Building HTML '+mainhtml));
+    let alljs=[ '../webcomponents-lite.js', '../jquery.min.js', '../bootstrap.min.js', '../libbiswasm_wasm.js', libjs  ];
+    
+    return gulp.src([ mainhtml ])
+    	.pipe(htmlreplace({
+	    'js': alljs,
+	    'css': bundlecss,
+            'icon' : `<link rel="icon" href="../images/favicon.ico">`
+	}))
+	.pipe(gulp.dest(outdir));
+};
+
 /*var createCSS=function(toolname,dependcss,outdir) {
 
   if (toolname==="bisjs")
@@ -257,11 +277,7 @@ var createZIPFile = function(dozip,baseoutput,outdir,version,distdir) {
                      outdir+"css/*",
                      outdir+"fonts/*",
                      outdir+"images/*",
-                     outdir+"doc/*",
-                     outdir+"doxygen/html/*",
-                     outdir+"doc/*/*",
-                     outdir+"doc/*/*/*",
-                     outdir+"doxygen/html/*/*",
+                     outdir+"test/**/*",
                      outdir+"var/*"],
                     {base:outdir}).pipe(gulpzip(outfile)).pipe(gulp.dest('.'));
 
@@ -441,6 +457,7 @@ module.exports = {
     executeCommand : executeCommand,
     executeCommandList : executeCommandList,
     createHTML : createHTML,
+    createTestHTML : createTestHTML,
     createDateFile : createDateFile,
     createCSSCommon  : createCSSCommon,
     runWebpackCore : runWebpackCore,
