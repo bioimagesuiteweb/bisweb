@@ -472,7 +472,8 @@ class BisWebImage extends BisWebDataObject {
             if (newnumcomponents!==0) {
                 newnumcomponents=util.range(newnumcomponents,1,9999);
                 internal.header.struct.dim[5]=newnumcomponents;
-                internal.dimensions[4]=newnumframes;
+                internal.dimensions[4]=newnumcomponents;
+                
             }
             internal.volsize=internal.dimensions[0]*internal.dimensions[1]*
                 internal.dimensions[2]*internal.dimensions[3]*internal.dimensions[4];
