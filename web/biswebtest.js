@@ -4,6 +4,8 @@ const biswrap = require('libbiswasm_wrapper');
 const BisWebDataObjectCollection = require('bisweb_dataobjectcollection.js');
 const webutil=require('bis_webutil');
 const systemprint=console.log;
+const bis_genericio=require('bis_genericio');
+const userPreferences = require('bisweb_userpreferences.js');
 let replacing=false;
 
 let logtext="";
@@ -53,22 +55,21 @@ var loadparamfile=function(paramfile,modulename,params) {
         return Promise.resolve();
 
     return new Promise( (resolve,reject) => {
-        
-        fetch('/test/'+paramfile).then( (response) => { 
-            if(response.ok) {
-                response.json().then( (obj) => {
-                    console.log('.... Parameter File read from /test/'+paramfile);
-                    obj=obj.params;
-                    let keys=Object.keys(obj);
-                    for (let i=0;i<keys.length;i++) {
-                        if (keys[i]!=='module') {
-                            if (params[keys[i]]=== undefined)
-                                params[keys[i]]=obj[keys[i]];
-                        }
+
+        bis_genericio.read('../test/'+paramfile).then( (res) => {
+            
+            try {
+                let obj=JSON.parse(res.data);
+                obj=obj.params;
+                let keys=Object.keys(obj);
+                for (let i=0;i<keys.length;i++) {
+                    if (keys[i]!=='module') {
+                        if (params[keys[i]]=== undefined)
+                            params[keys[i]]=obj[keys[i]];
                     }
-                    resolve('');
-                });
-            } else {
+                }
+                resolve('');
+            } catch(e) {
                 reject('Network response was not ok.');
             }
         }).catch( (e) => {
@@ -101,7 +102,7 @@ var execute_test=function(test) {
                     
                     let inp=des.inputs[j];
                     if (inp.shortname===pname || inp.varname===pname) {
-                        inputs[inp.varname]="/test/"+value;
+                        inputs[inp.varname]="../test/"+value;
                         found=true;
                     }
                     j=j+1;
@@ -185,7 +186,7 @@ const execute_compare=function(module,test) {
         let threshold = tobj['test_threshold'] || 0.01;
         let comparison = tobj['test_comparison'] || "maxabs";
         let test_type = tobj['test_type'] || 'image';
-        let test_target = "/test/"+tobj['test_target'];
+        let test_target = "../test/"+tobj['test_target'];
         if (test_type === 'image') {
             if (comparison !== "maxabs") {
                 comparison = "cc";
@@ -298,50 +299,59 @@ const run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') 
             main.append(`<P>Ignoring test ${i+1}: ${v.command} <span style="color:green">as it does not match ${testname}</span></p>`);
         }
     }
-    console.log('Done');
-    main.append('<BR> <BR>All Tests Finished');
+    main.append('<BR><BR><H3>All Tests Finished</H3>');
+    main.append(`<BR>Tests completed ${run}/${lasttest-firsttest+1}, passed=${good}, failed=${bad}, skipped=${skipped}`);
 };
 
 
 
 window.onload = function() {
 
-    biswrap.initialize().then( () => {
-        
-        fetch('../test/module_tests.json').then( (response) => { 
-            if(response.ok) {
-                // Examine the text in the response
-                response.json().then(function(data) {
+    if (webutil.inElectronApp()) {
+        window.BISELECTRON.remote.getCurrentWindow().openDevTools();
+    }
 
-                    let testlist=data.testlist;
-                    
-                    let firsttest=parseInt(webutil.getQueryParameter('first')) || 0;
-                    if (firsttest<0)
-                        firsttest=0;
-                    
-                    let lasttest=parseInt(webutil.getQueryParameter('last') || 0);
-                    if (lasttest === undefined || lasttest<=0 || lasttest>=testlist.length)
-                        lasttest=2;
-                    
-                    $('#first').val(firsttest);
-                    $('#last').val(lasttest);
-                    $('#testname').val('All');
-                      let fn=( (e) => {
-                          e.preventDefault(); // cancel default behavior
-                          let first=parseInt($("#first").val())||0;
-                          let last=parseInt($("#last").val());
-                          let testname=$('#testname').val() || 'All';
+    biswrap.initialize().then( () => {
+
+        userPreferences.setImageOrientationOnLoad('None');
+        console.log('Mode=',bis_genericio.getmode());
+        bis_genericio.read('../test/module_tests.json').then( (obj) => { 
+            
+            let txt=obj.data;
+            try {
+                let data=JSON.parse(txt);
+
+                let testlist=data.testlist;
+                
+                let firsttest=parseInt(webutil.getQueryParameter('first')) || 0;
+                if (firsttest<0)
+                    firsttest=0;
+                
+                let lasttest=parseInt(webutil.getQueryParameter('last') || 0);
+                if (lasttest === undefined || lasttest<=0 || lasttest>=testlist.length)
+                    lasttest=2;
+                
+                $('#first').val(firsttest);
+                $('#last').val(lasttest);
+                $('#testname').val('All');
+                let fn=( (e) => {
+                    e.preventDefault(); // cancel default behavior
+                    let first=parseInt($("#first").val())||0;
+                    let last=parseInt($("#last").val());
+                    let testname=$('#testname').val() || 'All';
                         if (last===undefined)
                             last=testlist.length-1;
-                        run_tests(testlist,first,last,testname);
-                    });
-
-                    
-                    $('#compute').click(fn);
+                    run_tests(testlist,first,last,testname);
                 });
-            } else {
+                
+                
+                $('#compute').click(fn);
+            } catch(e) {
                 throw new Error('Network response was not ok.');
             }
+        }).catch( (e) => {
+            throw new Error(e);
         });
     });
-}
+
+};
