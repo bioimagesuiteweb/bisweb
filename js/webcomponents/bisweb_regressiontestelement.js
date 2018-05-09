@@ -223,7 +223,7 @@ const execute_compare=function(module,test) {
 
         console.log('====\n============================================================\n');
         console.log(`==== C o m p a r i n g  ${test_type}  u s i n g  ${comparison} and  t h r e s h o l d=${threshold}.\n====`);
-        let c=`<H4>C o m p a r i n g   ${test_type}   u s i n g   ${comparison}  and  t h r e s h o l d=${threshold}</H4>`;
+        let c=`<H4>Comparing   ${test_type} using ${comparison} and threshold=${threshold}</H4>`;
 
         const orig_test_type=test_type;
         
