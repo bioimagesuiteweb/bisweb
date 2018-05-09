@@ -274,6 +274,8 @@ as follows:
 On MacOS install cmake from [cmake.org](cmake.org) and then from the GUI follow the instructions under Tools | How to Install for CommandLine Use to install this for command line use. The easiest option is propabably to create symbolic links in /usr/local as follows:
 
     sudo "/Applications/CMake.app/Contents/bin/cmake-gui" --install
+    
+
 
 ### Installing Python v3.5 or later
 
@@ -302,6 +304,9 @@ Please install the packages `numpy` and `nibabel` using the pip package manager 
 These are used by the Python regression tests.
 
 ### Installing Emscripten and Eigen and Configuring your Build Directories
+
+__Note:__ On MacOS you may need to install Java for OSX -- see [this Apple Support page](https://support.apple.com/kb/DL1572?locale=en_US).
+
 
 The C++ BisWeb code has a single external library dependency -- Eigen. We also need to install Emscripten to compile the C++ code to Web Assembly. Both the installation of these tools and the creation of the correct development directories is automated using the [createbuild.sh](../config/createbuild.sh) script from the config directory as follows:
 
