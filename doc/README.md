@@ -59,11 +59,11 @@ environment. BioImage Suite Web uses the following tools:
 * [__Mocha__](https://mochajs.org/): A scripting library designed to automate regression testing.
 * [__JSHint__](http://jshint.com/): "A tool that helps to detect errors and potential problems in your JavaScript code" (from the webpage).
 * [__JSDoc__](http://usejsdoc.org/): A parsing tool that generates documentation from comments in code.
-* [__Electron__](https://electronjs.org/): A tool that allows the use
-  of HTML/CSS/JS to create a desktop application.
+* [__Electron__](https://electronjs.org/): A tool that uses
+  the HTML/CSS/JS that makes up a webpage to create a desktop application.
 
 Editing code also requires a text editor. Users with no prior experience may want to try Microsoft's
-[Visual Code](https://code.visualstudio.com/) editor. I personally use [Emacs](https://www.gnu.org/software/emacs/) as the shortcut keystrokes are burned into memory from over 20 years of playing with this but Emacs is not the easiest editor to get started with.
+[Visual Code](https://code.visualstudio.com/) editor. [Sublime](https://www.sublimetext.com/) and [Atom](https://atom.io/) are also fine choices. [Emacs](https://www.gnu.org/software/emacs/) or [Vim](https://www.vim.org/) may be considered for the truly dedicated/crazy, but users of such esoterica tend to know who they are already.
 
 More information about each of these tools may be found in the links contained in this section.
 
@@ -71,14 +71,14 @@ More information about each of these tools may be found in the links contained i
 
 The instructions in this documents are primarily for Linux (Ubuntu) and secondarily MacOS. These are Unix-y operating systems with a common set of commandline tools and package managers which make life a little easier.
 
-If you are developing on a Windows machine, we strongly recommend compiling/building BioImage Suite Web using the Ubuntu distribution available from the Windows Store as of 2016. This is part of the [Windows Subsystem for Linux (WSL)](https://docs.microsoft.com/en-us/windows/wsl/install-win10) and will simplify your life immensely. See also [https://github.com/QMonkey/wsl-tutorial](https://github.com/QMonkey/wsl-tutorial) and also the section [ Microsoft Windows and WSL](#Microsoft-Windows-and-WSL) at the end of the document for more details.
+If you are developing on a Windows machine, it is strongly recommended to compile/build BioImage Suite Web using the Ubuntu distribution available from the Windows Store as of 2016. This is part of the [Windows Subsystem for Linux (WSL)](https://docs.microsoft.com/en-us/windows/wsl/install-win10) and will simplify your life immensely. See also [https://github.com/QMonkey/wsl-tutorial](https://github.com/QMonkey/wsl-tutorial) and also the section [ Microsoft Windows and WSL](#Microsoft-Windows-and-WSL) at the end of the document for more details.
 
 ---
 
 ### Installing Git
 
-Git may already be installed on Linux and Mac. ``which git`` will  return the path for Git if it is installed, or an error message otherwise. For MS-Windows please see [this page](https://git-scm.com/download/win). This will also install a bash
-command line shell which can be used in the same way as a standard bash shell (the shell that ships with MacOS and Linux).
+Git may already be installed on Linux and Mac. ``which git`` will  return the path for Git if it is installed, or an error message otherwise. For MS-Windows please see [this page](https://git-scm.com/download/win). This will also install a `bash`
+command line shell which can be used in the same way as a standard `bash` shell (the shell that ships with MacOS and Linux).
 
 To test that git is correctly installed type:
 
@@ -109,9 +109,9 @@ or on Windows type
     npm install -g gulp mocha jsdoc jshint webpack webpack-cli
 
 This will install the core
-tools. Please note that the '-g' flag stands for 'global', i.e. these
+tools. Please note that the '-g' flag stands for 'global', which means these
 modules are installed in the global package directory
-(e.g. /usr/local/node_modules) as opposed to the local package directory. If there is an error or the server times out,
+(e.g. /usr/local/node_modules) instead of the local package directory. If there is an error or the server times out,
 simply re-run the same command until
 it is complete.
 
@@ -125,7 +125,7 @@ The JS development environment is now complete.
 
 ## Building and Running BioImage Suite Web
 
-BioImage Suite Web is currently compiled/packaged in directories inside the source tree. One day this might change, though npm putting node_modules inside your package sort of makes this unavoidable. Eventually have the source tree will acquire two extra directories as follows:
+BioImage Suite Web is currently compiled/packaged in directories inside the source tree. The contents are as follows:
 
 * node_modules — The location of dependent node_modules. This will be populated by npm.
 * build — The core build directory.
@@ -133,8 +133,6 @@ BioImage Suite Web is currently compiled/packaged in directories inside the sour
     - build/dist — The output directory for ``.zip`` files or packaged Electron applications.
     - build/cpp — (optional) This is where the native libraries for accessing the C++ code from Python and Matlab will be built.
     - build/web — The output directory for creating the final web-applications and associated ``.css``, ``.html`` files etc.
-
-The rest of the directories in the source tree are:
 
 * compiletools — Scripts and configuration files to help with compiling.
 * config — Configuration files for webpack, JSDoc etc.
@@ -158,14 +156,14 @@ In addition there are two key files that live in the main directory
 
 ### Getting the BioImage Suite Web code
 
-First create an empty directory somewhere. Avoid paths that have spaces in
+First create an empty director. Avoid paths that have spaces in
 them; a folder named 'bisweb' or something similar in the home directory will work well.
 
     cd ~
     mkdir bisweb
     git clone https://github.com/bioimagesuiteweb/bisweb bisweb
 
-This code may be found on [Github](https://github.com/bioimagesuiteweb/bisweb).
+The source code for the project may be found on [Github](https://github.com/bioimagesuiteweb/bisweb).
 
 ---
 
@@ -183,16 +181,16 @@ or, for more verbose output:
 
     npm update -d
 
-_Note:_ Dependencies may change over time. If Bisweb performs strangely or breaks after an update try checking if there are updates to the dependencies.
+_Note:_ Dependencies may change over time. If Bisweb does not perform as expected try checking if there are updates to the dependencies.
 
- To create the WebAssembly binaries and ``build`` folder structure from the source files, see `createbuild.sh` (instructions can be found in [Installing Emscripten and Eigen and Configuring your Build Directories](#installing-emscripten-and-eigen-and-configuring-your-build-directories)). Otherwise, a prebaked version of the wasm binaries can be substituted:
+ To create the WebAssembly binaries and ``build`` folder structure from the source files, see `createbuild.sh` (instructions can be found in [Installing Emscripten and Eigen and Configuring your Build Directories](#installing-emscripten-and-eigen-and-configuring-your-build-directories)). Otherwise, Bisweb comes with a prebaked version of the wasm binaries:
 
     chmod +x config/createjsbuild.sh
     ./config/createjsbuild.sh
 
-This will create three directories, ``build/web``, ``build/wasm``, and ``build/dist``, and copy the wasm binary in ``various/wasm`` to the build folders. This will perform the same function as making the WebAssembly binaries from the C++ code, though the prebaked binaries may not be fully up-to-date in every version of the software.
+This will create three directories, ``build/web``, ``build/wasm``, and ``build/dist`` and copy the wasm binary in ``various/wasm`` to the build folders. This will perform the same function as making the WebAssembly binaries from the C++ code, though the prebaked binaries may not be fully up-to-date in every version of the software.
 
-__Important: The build tools (Gulp, webpack, etc.) will look for the files in exactly these locations, so moving them elsewhere may cause build steps to fail.__ For the curious: take a look at the configuration files `config/webpack_config.js`, `config/app_config.js` and `config/bisweb_pathconfig.js`.
+__Important: The build tools (Gulp, webpack, etc.) will look for the files in exactly these locations, so moving them elsewhere may cause build steps to fail.__ The curious may want to look at the configuration files `config/webpack_config.js`, `config/app_config.js` and `config/bisweb_pathconfig.js`.
 
 
 The last step is to build the entire application:
@@ -258,7 +256,7 @@ On MacOS install CMake from [their website](https://cmake.org/download/) and the
 
 ### Installing Python v3.5 or later
 
-A modern build of Python is needed as well, i.e. v3.5 or later. Emscripten will fail to install without one.
+Emscripten needs a modern version of Python, i.e. v3.5 or later, and will fail to install without one.
 
 On Ubuntu type:
 
@@ -284,7 +282,7 @@ These are used by the Python regression tests.
 
 ### Installing Emscripten and Eigen and Configuring your Build Directories
 
-The C++ BisWeb code has a single external library dependency -- Eigen. We also need to install Emscripten to compile the C++ code to Web Assembly. Both the installation of these tools and the creation of the correct development directories is automated using the [createbuild.sh](../config/createbuild.sh) script from the config directory as follows:
+The C++ BisWeb code has a single external library dependency — Eigen. We also need to install Emscripten to compile the C++ code to Web Assembly. Both the installation of these tools and the creation of the correct development directories is automated using the [createbuild.sh](../config/createbuild.sh) script from the config directory as follows:
 
 First go to your source directory
 
