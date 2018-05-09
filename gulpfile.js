@@ -225,6 +225,10 @@ gulp.task('testweb', function(done) {
     connect.server(internal.serveroptions);
     console.log('++++ Server root directory=',internal.serveroptions.root);
 
+    for (let i=0;i<internal.myscripts.length;i++) {
+        gulp.watch(internal.myscripts[i], ['jshint']);
+    }
+
     let mydone=function() {
         console.log('webpack killed');
     };

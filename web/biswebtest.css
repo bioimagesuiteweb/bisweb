@@ -1,23 +1,40 @@
+#form {
+    margin-top: 10px
+}
+
+#first,#last, #testname {
+    background-color: #000000;
+    color : #ffffff;
+    width : 100px;
+    margin-left: 10px;
+}
+
+#testname {
+    width: 200px;
+}
+
+
+#top {
+    top: 70px;
+    left : 2vw;
+    width : 98vw;
+    position: absolute
+}
 
 #main {
-    left : 5vw;
-    top: 10vh;
-    width : 90vw;
-    height : 80vh;
+    left : 2vw;
+    top: 250px;
+    width : 98vw;
     position: absolute;
-    background-color : #000044;
     overflow-x : auto;
     overflow-y : auto;
 }
 
-#console {
-    left : 5vw;
-    width : 90vw;
-    position: absolute;
-    top: 92vh;
-    background-color : #000055;
-    height : 5vh;
-    overflow-x : auto;
-    overflow-y : auto;
-   
+#results {
+    color : yellow
+}
+
+pre {
+    color : yellow;
+    background-color : #000000;
 }

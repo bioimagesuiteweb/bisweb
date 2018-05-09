@@ -64,25 +64,31 @@
       <div class="collapse navbar-collapse" id="topmenu">
 	<ul class="nav navbar-nav" id="bismenuparent0">
 
-          <li class='dropdown'>
-            <a href='#' class='dropdown-toggle'  data-toggle='dropdown'
-               role='button' aria-expanded='false'>Source Code <span class='caret'></span></a>
-            <ul class='dropdown-menu' role='menu'>
-              <li><a href="https://github.com/bioimagesuiteweb/bisweb">Main Repository</a></LI>
-              <li><a href="https://github.com/bioimagesuiteweb/gplcppcode"  target="_blank">Plugin Repository</a></li> 
-            </ul>
-          </li>
 	</ul>
+        
+        <div id="results">      </div>
+  
       </div>
     </div><!-- /.container-fluid -->
   </nav>
-  
-  <div id="main">
-    <H3>Running tests </H3><HR>
+
+  <div id="top"> 
+    <form class="form-inline" id="form">
+      <label for="weight">First:</label>
+      <input type="number" step="1"  id="first" placeholder="0">
+      <label for="height">Last:</label>
+      <input type="number" step="1"  id="last" placeholder="5">
+      <label for="">Testname:</label>
+      <input type="string" id="testname" placeholder="All">
+      <button class="btn-small btn-primary" type="submit" id="compute">Run Tests</button>
+    </form>
+    <HR>
+    <HR>
   </div>
 
-  <div id="console">
+  <div id="main">
   </div>
+
 
 
     

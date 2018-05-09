@@ -3,6 +3,49 @@ const moduleindex=require('moduleindex');
 const biswrap = require('libbiswasm_wrapper');
 const BisWebDataObjectCollection = require('bisweb_dataobjectcollection.js');
 const webutil=require('bis_webutil');
+const systemprint=console.log;
+let replacing=false;
+
+let logtext="";
+
+var replacesystemprint=function(doreplace=true) {
+
+    if (doreplace===true && replacing===false) {
+        const oldLog = console.log;
+        replacing=true;
+        logtext="";
+        console.log = function () {
+            // DO MESSAGE HERE.
+            let keys=Object.keys(arguments);
+            let s='';
+            for(let i=0;i<keys.length;i++) {
+                let v=arguments[keys[i]];
+                if (typeof(v) === "object") {
+                    let l=v.length || null;
+                    if (l!==null) {
+                        s+=' [' + v.join(' ')+' ] ';
+                    } else  {
+                        let d=Object.keys(v);
+                        s+=' { ';
+                        for (let i=0;i<d.length;i++) {
+                            s+=`${d}: ${v[d]} `;
+                        }
+                        s+=' } ';
+                    }
+                } else {
+                    s+=v+' ';
+                }
+            }
+            logtext=logtext+s+'<BR>';
+            oldLog.apply(console, arguments);
+        };
+    }
+
+    if (doreplace===false && replacing===true) {
+        console.log=systemprint;
+        replacing=false;
+    }
+};
 
 var loadparamfile=function(paramfile,modulename,params) {
 
@@ -14,6 +57,7 @@ var loadparamfile=function(paramfile,modulename,params) {
         fetch('/test/'+paramfile).then( (response) => { 
             if(response.ok) {
                 response.json().then( (obj) => {
+                    console.log('.... Parameter File read from /test/'+paramfile);
                     obj=obj.params;
                     let keys=Object.keys(obj);
                     for (let i=0;i<keys.length;i++) {
@@ -47,8 +91,6 @@ var execute_test=function(test) {
         let paramfile='';
         let des=module.getDescription();
 
-        console.log('Num values for module=',modulename,'=',command.length,JSON.stringify(command));
-            
         for (let i=1;i<command.length;i=i+2) {
             let flag=command[i];
             if (flag.length>0) {
@@ -92,12 +134,14 @@ var execute_test=function(test) {
 
         loadparamfile(paramfile,module.name,params).then( () => {
 
-            console.log('Inputs=',JSON.stringify(inputs));
-            console.log('Params=',JSON.stringify(params));
+            console.log(' ');
+            console.log('oooo Loading Inputs ',JSON.stringify(inputs));
             
             module.loadInputs(inputs).then( () => {
                 console.log('oooo Loaded.');
-                module.directInvokeAlgorithm(params).then(() => {
+                console.log('oooo Invoking Module with params=',JSON.stringify(params));
+                let newParams = module.parseValuesAndAddDefaults(params);
+                module.directInvokeAlgorithm(newParams).then(() => {
                     console.log('oooo -------------------------------------------------------');
                     resolve( {
                         result : 'Test completed, now checking results.',
@@ -121,16 +165,6 @@ const execute_compare=function(module,test) {
 
     return new Promise( (resolve,reject) => {
 
-        /** Process the result of a test
-         * @param{Sting} toolname - the name of the tool
-         * @param{String} resultFile - the filename of the output file
-         * @param{String} test_target - the filename of the gold standard file
-         * @param{String} test_type - the type of object we re testing (image,matrix,transform)
-         * @param{Number} test_threshold - the threshold below which the test passes 
-         * @param{String} test_comparison - one of "ssd" , "maxabs" or "cc" metric to compare objects with
-         * @param{Function} cleanupAndExit - a function to call on exit (default =process.exit)
-         * @alias CommandLine.processTestResult
-         */
         let testtrue=test.result;
         let t=test.test.replace(/\t/g,' ').replace(/ +/g,' ').replace(/-+/g,'').split(' ');
         let tobj={ };
@@ -164,15 +198,20 @@ const execute_compare=function(module,test) {
         
         BisWebDataObjectCollection.loadObject(test_target,test_type).then( (obj) => {
 
-            console.log(module);
             let resultObject=module.getOutputObject();
+            if (test_type==='registration') {
+                resultObject=module.getOutputObject('resliced');
+                console.log('.... using resliced output for test');
+            }
             let result=resultObject.compareWithOther(obj,comparison,threshold);
-            console.log('Result=',JSON.stringify(result),obj.getDescription(),resultObject.getDescription());
+
             if (result.testresult) {
+                console.log(`++++ Module ${module.name} test pass.<BR>++++  deviation (${result.metric}) from expected: ${result.value} < ${threshold}`);
                 resolve({ result : result.testresult,
                           text   : c+`++++ Module ${module.name} test pass.<BR>++++  deviation (${result.metric}) from expected: ${result.value} < ${threshold}`
                         });
             } else {
+                console.log(`---- Module ${module.name} test failed. Module produced output significantly different from expected.<BR>----  deviation (${result.metric}) from expected: ${result.value} > ${threshold}`);
                 resolve({
                     result : result.testresult,
                     text : c+`---- Module ${module.name} test failed. Module produced output significantly different from expected.<BR>----  deviation (${result.metric}) from expected: ${result.value} > ${threshold}`
@@ -185,20 +224,21 @@ const execute_compare=function(module,test) {
 };
 
 
-const run_tests=async function(testlist) {
+const run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') {
 
     
-    let firsttest=parseInt(webutil.getQueryParameter('first')) || 0;
     if (firsttest<0)
         firsttest=0;
     
-    let lasttest=parseInt(webutil.getQueryParameter('last') || 0);
-    if (lasttest === undefined || lasttest<=0 || lasttest>=testlist.length)
+    if (lasttest<=0 || lasttest>=testlist.length)
         lasttest=testlist.length-1;
     
     const main=$('#main');
-    main.append(`Executing tests ${firsttest}:${lasttest} of ${testlist.length}<HR>`);
+    main.empty();
+    main.append('<H3>Running Tests</H3><HR>');
+    main.append(`Executing tests ${firsttest}:${lasttest} of ${testlist.length}. Name filter=${testname}<HR>`);
 
+    
     let run=0;
     let good=0;
     let bad=0;
@@ -207,38 +247,49 @@ const run_tests=async function(testlist) {
     for (let i=firsttest;i<=lasttest;i++) {
         run=run+1;
         let v=testlist[i];
-        main.append(`<P>Running test ${i+1}: ${v.command}<UL><LI>${v.test},${v.result}</LI></P>`);
-        console.log(`-------------------------------`);
-        console.log(`-------------------------------\nRunning test ${i+1}: ${v.command}, ${v.test},${v.result}\n------------------------`);
-        try {
-            let obj=await execute_test(v,i)
-            main.append(`<p>${obj.result}</p>`);
-            let obj2=await execute_compare(obj.module,v);
-            let result=obj2.result;
-            let text=obj2.text;
-
-            main.append(`.... result=${result}, expected=${v.result}`);
+        let name=testlist[i].command.split(' ')[0].trim();
+        console.log('Comparing ',name,testname);
+        if (testname==='All' || testname.toLowerCase()===name.toLowerCase()) {
             
-            if (result && v.result)  {
-                main.append(`<p>${text}</p><HR>`);
-                good+=1;
-            } else if (!result && !v.result) {
-                main.append(`<p>${text} <BR>++++ <B>This is OK as this test WAS EXPECTED to fail!</B></p><HR>`);
-                good+=1;
-            }  else {
-                main.append(`<p><span style="color:red">${text}</span> </p><HR>`);
-                bad+=1;
+            main.append(`<P>Running test ${i+1}: ${v.command}<UL><LI>${v.test},${v.result}</LI></P>`);
+            console.log(`-------------------------------`);
+            console.log(`-------------------------------\nRunning test ${i+1}: ${v.command}, ${v.test},${v.result}\n------------------------`);
+            replacesystemprint(true);
+            try {
+                let obj=await execute_test(v,i)
+                main.append(`<p>${obj.result}</p>`);
+                let obj2=await execute_compare(obj.module,v);
+                let result=obj2.result;
+                let text=obj2.text;
+                
+                main.append(`.... result=${result}, expected=${v.result}`);
+                
+                if (result && v.result)  {
+                    main.append(`<p>${text}</p>`);
+                    good+=1;
+                } else if (!result && !v.result) {
+                    main.append(`<p>${text} <BR>++++ <B>This is OK as this test WAS EXPECTED to fail!</B></p>`);
+                    good+=1;
+                }  else {
+                    main.append(`<p><span style="color:red">${text}</span> </p>`);
+                    bad+=1;
+                }
+            } catch(e) {
+                main.append(`<p><span style="color:red">Skipping Test ${e}</span></p>`);
+                skipped+=1;
             }
-        } catch(e) {
-            main.append(`<p><span style="color:red">Skipping Test ${e}</span></p><HR>`);
-            skipped+=1;
+            replacesystemprint(false);
+            main.append(`<details><summary><B>Details</B></summary><PRE>${logtext}</PRE></details><HR>`);
+            
+            const webconsole=$('#results');
+            webconsole.empty();
+            webconsole.append(`<BR>Tests completed ${run}/${lasttest-firsttest+1}, passed=${good}, failed=${bad}, skipped=${skipped}`);
+        } else {
+            main.append(`<P>Ignoring test ${i+1}: ${v.command} <span style="color:green">as it does not match ${testname}</span></p>`);
         }
-
-        const webconsole=$('#console');
-        webconsole.empty();
-        webconsole.append(`<BR>Tests completed ${run}/${lasttest-firsttest+1}, passed=${good}, failed=${bad}, skipped=${skipped}`);
     }
-    
+    console.log('Done');
+    main.append('<BR> <BR>All Tests Finished');
 };
 
 
@@ -251,7 +302,32 @@ window.onload = function() {
             if(response.ok) {
                 // Examine the text in the response
                 response.json().then(function(data) {
-                    run_tests(data.testlist);
+
+                    let testlist=data.testlist;
+                    
+                    let firsttest=parseInt(webutil.getQueryParameter('first')) || 0;
+                    if (firsttest<0)
+                        firsttest=0;
+                    
+                    let lasttest=parseInt(webutil.getQueryParameter('last') || 0);
+                    if (lasttest === undefined || lasttest<=0 || lasttest>=testlist.length)
+                        lasttest=2;
+                    
+                    $('#first').val(firsttest);
+                    $('#last').val(lasttest);
+                    $('#testname').val('All');
+                      let fn=( (e) => {
+                          e.preventDefault(); // cancel default behavior
+                          let first=parseInt($("#first").val())||0;
+                          let last=parseInt($("#last").val());
+                          let testname=$('#testname').val() || 'All';
+                        if (last===undefined)
+                            last=testlist.length-1;
+                        run_tests(testlist,first,last,testname);
+                    });
+
+                    
+                    $('#compute').click(fn);
                 });
             } else {
                 throw new Error('Network response was not ok.');
