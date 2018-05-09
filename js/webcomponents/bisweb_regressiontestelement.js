@@ -360,7 +360,7 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') { 
 let initialize=function(txt) {
 
     const topform=$(`
-<H4 class="toph4">BioImage Suite Web Regression Test Runner</H4>
+<H4 class="toph4">BioImage Suite Web Regression Test Runner v0.9.1</H4>
     <div id="top">
       
       <form class="form-inline" id="form">
@@ -383,7 +383,11 @@ let initialize=function(txt) {
     let parent=menubar.parent();
     parent.prepend(topform);
     menubar.remove();
-    
+
+    if (typeof window.BIS ==='undefined') {
+        let logo=$('#bislogo').parent();
+        logo.attr('href','../index.html');
+    }
     
     biswrap.initialize();
     console.log('Read file:', extradir+'module_tests.json');
