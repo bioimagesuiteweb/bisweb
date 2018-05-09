@@ -58,7 +58,7 @@ const state = {
     indev : process.defaultApp || /[\\/]electron-prebuilt[\\/]/.test(process.execPath) || /[\\/]electron[\\/]/.test(process.execPath)
 };
 
-state.mainfilename="biswebtest.html";
+state.mainfilename="../web/biswebtest.html";
 
 if (state.indev) {
     console.log(getTime()+' Electron version='+process.versions.electron+' node='+process.versions.node);
