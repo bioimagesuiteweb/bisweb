@@ -302,7 +302,9 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') { 
                     good+=1;
                 }  else {
                     main.append(`<p><span style="color:red">${text}</span> </p>`);
+                    main.append('<H4> T E S T  F A I L E D</H4>');
                     bad+=1;
+                    
                 }
             } catch(e) {
                 main.append(`<p><span style="color:red">Test Failed ${e}</span></p>`);
