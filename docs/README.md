@@ -588,6 +588,6 @@ To run tests in the browser (this applies only to the module tests) type
 
 Then navigate to:
 
-      http://localhost:8080/web/biswebtest.html?first=46&last=47
+      http://localhost:8080/test/biswebtest.html
 
-Replace `first=` and `last=` with the range of tests to run. As of May 9th, 2018, there are 72 tests. The first test is test `0` (C-style!).
+Then select the tests to run and click `Run Tests` to execute.

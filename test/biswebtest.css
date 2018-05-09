@@ -1,0 +1,68 @@
+#form {
+    margin-top: 10px;
+    margin-left: 20vw;
+}
+
+.toph4 {
+    margin-left: 20vw;
+}
+
+.testhead {
+    color : yellow;
+}
+
+
+#first,#last, #testname, #testselect {
+    background-color: #183748;
+    color : #ffffff;
+    width : 60px;
+    margin-left: 5px;
+    margin-right: 10px;
+}
+
+#testname,#testselect {
+    width: 200px;
+}
+
+
+
+
+#top {
+    left : 2vw;
+    width : 98vw;
+}
+
+#main {
+    margin-top: 100px;
+    margin-left : 20px;
+    margin-right : 20px;
+    margin-bottom: 100px;
+}
+
+#results {
+    margin-top : 20px;
+    margin-left : 40px;
+    font-family: monospace;
+    font-size: 18px;
+    color : yellow
+}
+
+details {
+    border : 0px;
+}
+
+pre {
+    border: 0px;
+    color : yellow;
+    margin-left : 20px;
+    margin-right : 20px;
+    background-color : #000000;
+}
+
+.passed {
+    color: lightgreen
+}
+
+.failed {
+    color : red
+}

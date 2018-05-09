@@ -233,7 +233,7 @@ gulp.task('testweb', function(done) {
         console.log('webpack killed');
     };
 
-    bis_gutil.runWebpackCore('./web/biswebtest.js',options.internal,
+    bis_gutil.runWebpackCore('./test/biswebtest.js',options.internal,
                              'biswebtest.js',
                              __dirname,
                              options.minify,options.outdir,mydone,1);

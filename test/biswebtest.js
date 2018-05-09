@@ -1,3 +1,9 @@
+/* global window,document */
+
+"use strict";
+
+
+
 const $=require('jquery');
 const moduleindex=require('moduleindex');
 const biswrap = require('libbiswasm_wrapper');
@@ -56,7 +62,7 @@ var loadparamfile=function(paramfile,modulename,params) {
 
     return new Promise( (resolve,reject) => {
 
-        bis_genericio.read('../test/'+paramfile).then( (res) => {
+        bis_genericio.read(paramfile).then( (res) => {
             
             try {
                 let obj=JSON.parse(res.data);
@@ -82,7 +88,7 @@ var execute_test=function(test) {
 
     return new Promise( (resolve,reject) => {
 
-        let cmd=test.command.replace(/\t/g,' ').replace(/ +/g,' ')
+        let cmd=test.command.replace(/\t/g,' ').replace(/ +/g,' ');
         let command=cmd.split(' ');
         let modulename=command[0];
         let module=moduleindex.getModule(modulename);
@@ -102,7 +108,7 @@ var execute_test=function(test) {
                     
                     let inp=des.inputs[j];
                     if (inp.shortname===pname || inp.varname===pname) {
-                        inputs[inp.varname]="../test/"+value;
+                        inputs[inp.varname]=value;
                         found=true;
                     }
                     j=j+1;
@@ -149,7 +155,7 @@ var execute_test=function(test) {
                 module.directInvokeAlgorithm(newParams).then(() => {
                     console.log('oooo -------------------------------------------------------');
                     resolve( {
-                        result : 'Test completed, now checking results.',
+                        result : ' Test completed, now checking results.',
                         module : module,
                     });
                     
@@ -180,13 +186,13 @@ const execute_compare=function(module,test) {
 
     return new Promise( (resolve,reject) => {
 
-        let testtrue=test.result;
+        //let testtrue=test.result;
         let tobj=get_test_object(test);
         
         let threshold = tobj['test_threshold'] || 0.01;
         let comparison = tobj['test_comparison'] || "maxabs";
         let test_type = tobj['test_type'] || 'image';
-        let test_target = "../test/"+tobj['test_target'];
+        let test_target = tobj['test_target'];
         if (test_type === 'image') {
             if (comparison !== "maxabs") {
                 comparison = "cc";
@@ -201,7 +207,7 @@ const execute_compare=function(module,test) {
 
         console.log('====\n============================================================\n');
         console.log(`==== C o m p a r i n g  ${test_type}  u s i n g  ${comparison} and  t h r e s h o l d=${threshold}.\n====`);
-        let c=`==== C o m p a r i n g  ${test_type}  u s i n g  ${comparison} and  t h r e s h o l d=${threshold}.<BR>====<BR>`;
+        let c=`<H4>C o m p a r i n g   ${test_type}   u s i n g   ${comparison}  and  t h r e s h o l d=${threshold}</H4>`;
 
         if (test_type === "matrixtransform" || test_type==="gridtransform") {
             test_type="transform";
@@ -217,15 +223,15 @@ const execute_compare=function(module,test) {
             let result=resultObject.compareWithOther(obj,comparison,threshold);
 
             if (result.testresult) {
-                console.log(`++++ Module ${module.name} test pass.<BR>++++  deviation (${result.metric}) from expected: ${result.value} < ${threshold}`);
+                console.log(`++++ Module ${module.name} test passed.\n++++  deviation (${result.metric}) from expected: ${result.value} < ${threshold}`);
                 resolve({ result : result.testresult,
-                          text   : c+`++++ Module ${module.name} test pass.<BR>++++  deviation (${result.metric}) from expected: ${result.value} < ${threshold}`
+                          text   : c+` Module ${module.name} test <span class="passed">passed</span>.<BR>  deviation (${result.metric}) from expected: ${result.value} < ${threshold}`
                         });
             } else {
-                console.log(`---- Module ${module.name} test failed. Module produced output significantly different from expected.<BR>----  deviation (${result.metric}) from expected: ${result.value} > ${threshold}`);
+                console.log(`---- Module ${module.name} test failed.\n---- Module produced output significantly different from expected.<BR>----  deviation (${result.metric}) from expected: ${result.value} > ${threshold}`);
                 resolve({
                     result : result.testresult,
-                    text : c+`---- Module ${module.name} test failed. Module produced output significantly different from expected.<BR>----  deviation (${result.metric}) from expected: ${result.value} > ${threshold}`
+                    text : c+` Module ${module.name} test <span class="failed">failed</span>. Module produced output significantly different from expected.<BR>  deviation (${result.metric}) from expected: ${result.value} > ${threshold}`
                 });
             }
         }).catch((e) => {
@@ -234,8 +240,7 @@ const execute_compare=function(module,test) {
     });
 };
 
-
-const run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') {
+var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') { // jshint ignore:line
 
     
     if (firsttest<0)
@@ -246,8 +251,15 @@ const run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') 
     
     const main=$('#main');
     main.empty();
-    main.append('<H3>Running Tests</H3><HR>');
-    main.append(`Executing tests ${firsttest}:${lasttest} of ${testlist.length}. Name filter=${testname}<HR>`);
+    if (testname!=="None") {
+        main.append('<H2>Running Tests</H2>');
+        main.append(`Executing tests ${firsttest}:${lasttest} (Max index=${testlist.length-1}).`);
+        if (testname!=="All")
+            main.append(`Only runnng tests with name=${testname}<HR>`);
+    } else {
+        main.append('<H2>Listing Tests</H2><HR>');
+    }
+
 
     
     let run=0;
@@ -256,30 +268,29 @@ const run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') 
     let skipped=0;
     
     for (let i=firsttest;i<=lasttest;i++) {
-        run=run+1;
         let v=testlist[i];
         let name=testlist[i].command.split(' ')[0].trim();
-        console.log('Comparing ',name,testname);
         if (testname==='All' || testname.toLowerCase()===name.toLowerCase()) {
-            
-            main.append(`<P>Running test ${i+1}: ${v.command}<UL><LI> Test details: ${v.test}</LI><LI> Should pass: ${v.result}</LI></P>`);
+
+            run=run+1;
+            main.append(`<H3 class="testhead">Running Test ${i}: ${name}</H3><p><UL><LI> Command: ${v.command}</LI><LI> Test details: ${v.test}</LI><LI> Should pass: ${v.result}</LI>`);
             console.log(`-------------------------------`);
             console.log(`-------------------------------\nRunning test ${i+1}: ${v.command}, ${v.test},${v.result}\n------------------------`);
             replacesystemprint(true);
             try {
-                let obj=await execute_test(v,i)
+                let obj=await execute_test(v,i); // jshint ignore:line
                 main.append(`<p>${obj.result}</p>`);
-                let obj2=await execute_compare(obj.module,v);
+                let obj2=await execute_compare(obj.module,v); // jshint ignore:line
                 let result=obj2.result;
                 let text=obj2.text;
                 
-                main.append(`.... result=${result}, expected=${v.result}`);
+                //                main.append(`.... result=${result}, expected=${v.result}`);
                 
                 if (result && v.result)  {
                     main.append(`<p>${text}</p>`);
                     good+=1;
                 } else if (!result && !v.result) {
-                    main.append(`<p>${text} <BR>++++ <B>This is OK as this test WAS EXPECTED to fail!</B></p>`);
+                    main.append(`<p>${text} <BR> <B>This is OK as this test WAS EXPECTED to fail!</B></p>`);
                     good+=1;
                 }  else {
                     main.append(`<p><span style="color:red">${text}</span> </p>`);
@@ -291,67 +302,94 @@ const run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') 
             }
             replacesystemprint(false);
             main.append(`<details><summary><B>Details</B></summary><PRE>${logtext}</PRE></details><HR>`);
+            window.scrollTo(0,document.body.scrollHeight-100);
+
             
-            const webconsole=$('#results');
-            webconsole.empty();
-            webconsole.append(`<BR>Tests completed ${run}/${lasttest-firsttest+1}, passed=${good}, failed=${bad}, skipped=${skipped}`);
         } else {
-            main.append(`<P>Ignoring test ${i+1}: ${v.command} <span style="color:green">as it does not match ${testname}</span></p>`);
+            if (testname==="None") {
+                main.append(`<P>Test ${i}: ${v.command}</p>`);
+                window.scrollTo(0,document.body.scrollHeight-100);
+            }
+            skipped+=1;
         }
+        const webconsole=$('#results');
+        webconsole.empty();
+        let numtests=lasttest-firsttest+1;
+        webconsole.append(`Tests completed=${run}/${numtests}, passed=${good}/${numtests}, failed=${bad}/${numtests}, skipped=${skipped}/${numtests}`);
     }
-    main.append('<BR><BR><H3>All Tests Finished</H3>');
-    main.append(`<BR>Tests completed ${run}/${lasttest-firsttest+1}, passed=${good}, failed=${bad}, skipped=${skipped}`);
-};
+
+    if (testname!=="None") {
+        main.append('<BR><BR><H3>All Tests Finished</H3>');
+        window.scrollTo(0,document.body.scrollHeight-100);
+    } else {
+        main.append(`<BR> <BR> <BR>`);
+        window.scrollTo(0,0);
+    }
+
+};  // jshint ignore:line
 
 
 
-window.onload = function() {
+window.onload = (() => {
 
     if (webutil.inElectronApp()) {
         window.BISELECTRON.remote.getCurrentWindow().openDevTools();
     }
 
-    biswrap.initialize().then( () => {
+    userPreferences.setImageOrientationOnLoad('None');
+    console.log('Mode=',bis_genericio.getmode());
+    bis_genericio.read('module_tests.json').then( (obj) => { 
 
-        userPreferences.setImageOrientationOnLoad('None');
-        console.log('Mode=',bis_genericio.getmode());
-        bis_genericio.read('../test/module_tests.json').then( (obj) => { 
+        console.clear();
+        biswrap.initialize();
+        console.log('Read module_tests.json');
+        let txt=obj.data;
+        let data=null;
+        try {
+            data=JSON.parse(txt);
+        } catch(e) {
+            throw new Error('Network response was not ok.');
+        }
             
-            let txt=obj.data;
-            try {
-                let data=JSON.parse(txt);
-
-                let testlist=data.testlist;
-                
-                let firsttest=parseInt(webutil.getQueryParameter('first')) || 0;
-                if (firsttest<0)
-                    firsttest=0;
-                
-                let lasttest=parseInt(webutil.getQueryParameter('last') || 0);
-                if (lasttest === undefined || lasttest<=0 || lasttest>=testlist.length)
-                    lasttest=2;
-                
-                $('#first').val(firsttest);
-                $('#last').val(lasttest);
-                $('#testname').val('All');
-                let fn=( (e) => {
-                    e.preventDefault(); // cancel default behavior
-                    let first=parseInt($("#first").val())||0;
-                    let last=parseInt($("#last").val());
-                    let testname=$('#testname').val() || 'All';
-                        if (last===undefined)
-                            last=testlist.length-1;
-                    run_tests(testlist,first,last,testname);
-                });
-                
-                
-                $('#compute').click(fn);
-            } catch(e) {
-                throw new Error('Network response was not ok.');
-            }
-        }).catch( (e) => {
-            throw new Error(e);
+        let testlist=data.testlist;
+        let names=[];
+        for (let i=0;i<testlist.length;i++) {
+            let cmd=testlist[i].command.replace(/\t/g,' ').replace(/ +/g,' ');
+            let command=cmd.split(' ');
+            let modulename=command[0];
+            if (names.indexOf(modulename)<0)
+                names.push(modulename);
+        }
+        names=names.sort();
+        let select=$("#testselect");
+        for (let i=0;i<names.length;i++) {
+            select.append($(`<option value="${names[i]}">${names[i]}</option>`));
+        }
+        
+        let firsttest=parseInt(webutil.getQueryParameter('first')) || 0;
+        if (firsttest<0)
+            firsttest=0;
+        
+        let lasttest=parseInt(webutil.getQueryParameter('last') || 0);
+        if (lasttest === undefined || lasttest<=0 || lasttest>=testlist.length)
+            lasttest=testlist.length-1;
+        
+        $('#first').val(firsttest);
+        $('#last').val(lasttest);
+        $('#testselect').val('None');
+        let fn=( (e) => {
+            e.preventDefault(); // cancel default behavior
+            let first=parseInt($("#first").val())||0;
+            let last=parseInt($("#last").val());
+            let testname=$('#testselect').val() || 'All';
+            if (last===undefined)
+                last=testlist.length-1;
+            run_tests(testlist,first,last,testname);
         });
+        
+        
+        $('#compute').click(fn);
+        
     });
+});
 
-};

@@ -20,21 +20,21 @@
 <html>
 
 <head>
-    <title>BioImage Suite Web Module Test </title>
+    <title>BisWeb Module Tests </title>
     <meta name="viewport" content="width=device-width, user-scalable=no">
-    <link rel="icon" href="images/favicon.ico">
+    <link rel="icon" href="../web/images/favicon.ico">
 
     <!-- begin webpack/gulp modifications -->
     <!-- external css files -->
     <!-- build:css -->
     <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_dark.css">
     <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap-colorselector.css">
-    <link rel="stylesheet" type="text/css" href="biscommon.css">
+    <link rel="stylesheet" type="text/css" href="../web/biscommon.css">
     <!-- endbuild -->
 
     <!-- all javascript files -->
     <!-- build:js -->
-    <script src="bis.js"></script>
+    <script src="../web/bis.js"></script>
     <script src="../build/web/webcomponents-lite.js"></script>
     <script src="../build/web/jquery.min.js"></script>
     <script src="../build/web/bootstrap.min.js"></script>
@@ -48,43 +48,30 @@
 </head>
 <body oncontextmenu="return false;" ondragstart="return false;" ondrop="return false;">
 
-  <nav class="navbar navbar-default navbar-fixed-top">
-    <div class="container-fluid" id="bismenucontainer0">
-      <!-- Brand and toggle get grouped for better mobile display -->
-      <div class="navbar-header" id="bismenuheader0" >
-	    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#topmenu">
-	      <span class="sr-only">Toggle navigation</span>
-	      <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-	    </button>
-        <img src="images/bioimagesuite.png" height="50px" id="bislogo" style="margin-top:5px">
-      </div>      
-      
-      <div class="collapse navbar-collapse" id="topmenu">
-	<ul class="nav navbar-nav" id="bismenuparent0">
-
-	</ul>
-        
-        <div id="results">      </div>
-  
-      </div>
-    </div><!-- /.container-fluid -->
+  <nav class="navbar navbar-default navbar-fixed-bottom">
+    <div id="results">      </div>
+    
   </nav>
 
-  <div id="top"> 
-    <form class="form-inline" id="form">
-      <label for="weight">First:</label>
-      <input type="number" step="1"  id="first" placeholder="0">
-      <label for="height">Last:</label>
-      <input type="number" step="1"  id="last" placeholder="5">
-      <label for="">Testname:</label>
-      <input type="string" id="testname" placeholder="All">
-      <button class="btn-small btn-primary" type="submit" id="compute">Run Tests</button>
-    </form>
-    <HR>
-    <HR>
-  </div>
+  <nav class="navbar navbar-default navbar-fixed-top">
+    <H4 class="toph4">BioImage Suite Web Test Runner</H4>
+    <div id="top">
+      
+      <form class="form-inline" id="form">
+        <label for="weight">First:</label>
+        <input type="number" step="1"  id="first" placeholder="0">
+        <label for="height">Last:</label>
+        <input type="number" step="1"  id="last" placeholder="5">
+        <label for="">Testname:</label>
+        <select id="testselect">
+          <option value="None">List (but not run) tests</option>
+          <option value="All">All</option>
+        </select>
+
+        <button class="btn-small btn-primary" type="submit" id="compute">Run Tests</button>
+      </form>
+    </div>
+  </nav>
 
   <div id="main">
   </div>
