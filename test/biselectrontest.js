@@ -108,7 +108,12 @@ var createWindow=function(index,fullURL) {
 	    yval=undefined;
     }
 
-    var preload=  path.resolve(__dirname, 'bispreload.js');
+    var preload;
+    if (state.indev)
+        preload=path.resolve(__dirname, '../web/bispreload.js');
+    else
+        preload=path.resolve(__dirname, '../bispreload.js');
+    console.log('Preload=',preload);
     console.log(getTime()+' Creating new window '+fullURL + ', index='+index);
     console.log(getTime()+' Screen size = '+[state.screensize.width,state.screensize.height]+' size='+[opts.width,opts.height]);
     state.winlist[index]=new BrowserWindow({width: state.screensize.width,
