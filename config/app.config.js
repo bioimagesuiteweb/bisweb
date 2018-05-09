@@ -54,6 +54,12 @@ module.exports = {
                     path.resolve(mypath,'build/wasm') ]
     },
     target : "node",
+    plugins: [
+        new webpack.BannerPlugin( {
+            banner : '#!/usr/bin/env node\n',
+            raw : true
+        }),
+    ]
 };
 
 module.exports.resolve.modules.push(extrapath);
