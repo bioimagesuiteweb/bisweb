@@ -743,7 +743,6 @@ var writedataelectron = function (url, data, isbinary, donecallback, errorcallba
  */
 var readdataelectron = function (url, isbinary, donecallback, errorcallback) {
 
-    console.log('//+++++ in readdataelectron binary=' + isbinary);
     var readcommand = readtextdatanode;
     if (isbinary)
         readcommand = readbinarydatanode;
