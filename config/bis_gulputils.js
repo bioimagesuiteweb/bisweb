@@ -363,7 +363,7 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
 
 
     let cmdlist = [];
-    let eversion ="2.0";
+    let eversion ="2.0.0";
     let cmdline='electron-packager '+outdir+' BioImageSuiteWeb --arch=x64 --electron-version '+eversion+' --out '+distdir+' --overwrite '+
         '--app-version '+version;
     let zipopts='-ry';
