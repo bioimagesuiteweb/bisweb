@@ -318,7 +318,7 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') { 
                     good+=1;
                 }  else {
                     main.append(`<p><span style="color:red">${text}</span> </p>`);
-                    main.append('<H4> T E S T  F A I L E D</H4>');
+                    main.append('<BR><H4 style="color:red"> T E S T  F A I L E D</H4><BR>');
                     bad+=1;
                     
                 }
@@ -347,6 +347,9 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') { 
     if (testname!=="None") {
         main.append('<BR><BR><H3>All Tests Finished</H3>');
         window.scrollTo(0,document.body.scrollHeight-100);
+        
+        biswrap.get_module()._print_memory();
+        
     } else {
         main.append(`<BR> <BR> <BR>`);
         window.scrollTo(0,0);
@@ -356,6 +359,32 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') { 
 
 let initialize=function(txt) {
 
+    const topform=$(`
+<H4 class="toph4">BioImage Suite Web Regression Test Runner</H4>
+    <div id="top">
+      
+      <form class="form-inline" id="form">
+        <label for="weight">First:</label>
+        <input type="number" step="1"  id="first" placeholder="0">
+        <label for="height">Last:</label>
+        <input type="number" step="1"  id="last" placeholder="5">
+        <label for="">Testname:</label>
+        <select id="testselect">
+          <option value="None" style="color:#dddddd">List (but not run) tests</option>
+          <option value="All"  style="color:red">Test all modules</option>
+        </select>
+
+        <button class="btn-small btn-primary" type="submit" id="compute">Run Tests</button>
+      </form>
+    </div>
+`);
+
+    let menubar = document.querySelector("#topmenubar").getMenuBar();
+    let parent=menubar.parent();
+    parent.prepend(topform);
+    menubar.remove();
+    
+    
     biswrap.initialize();
     console.log('Read file:', extradir+'module_tests.json');
     let data=null;
@@ -458,14 +487,22 @@ var startFunction = (() => {
         
         bis_genericio.read(extradir+'module_tests.json').then( (obj) => {
             console.log('++++ Read',obj.filename);
-            initialize(obj.data);
+            try {
+                initialize(obj.data);
+            } catch(e) {
+                console.log(e);
+            }
         }).catch( () => {
             extradir="./test/";
             console.log('\n\n\n Failed to read ',extradir+'module_tests.json, trying again with extradir='+extradir);
             
             bis_genericio.read(extradir+'module_tests.json').then( (obj) => {
                 console.log('++++ Read',obj.filename);
-                initialize(obj.data);
+                try {
+                    initialize(obj.data);
+                } catch(e) {
+                    console.log(e);
+                }
             }).catch((e) => {
                 console.log('Failed to read ',extradir+'module_tests.json.'+'\n'+e);
             });

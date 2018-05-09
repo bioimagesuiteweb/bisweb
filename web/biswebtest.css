@@ -1,10 +1,10 @@
 #form {
     margin-top: 10px;
-    margin-left: 20vw;
+    margin-left: 10vw;
 }
 
 .toph4 {
-    margin-left: 20vw;
+    margin-left: 10vw;
 }
 
 .testhead {
@@ -32,16 +32,27 @@
     width : 98vw;
 }
 
+#help {
+    background-color : #222222;
+}
+
+#helptext {
+    margin-top: 40px;
+    margin-left : 20px;
+    margin-right : 20px;
+    margin-bottom: 10px;
+}
+
 #main {
-    margin-top: 100px;
+    margin-top: 10px;
     margin-left : 20px;
     margin-right : 20px;
     margin-bottom: 100px;
 }
 
 #results {
-    margin-top : 20px;
-    margin-left : 20vw;
+    margin-top : 15px;
+    margin-left : 10vw;
     font-family: monospace;
     font-size: 18px;
     color : yellow

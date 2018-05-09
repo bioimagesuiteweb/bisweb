@@ -51,29 +51,56 @@
 <body>
 
   <nav class="navbar navbar-default navbar-fixed-bottom">
-    <div id="results">      </div>
-    
+    <div id="results"> A summary of the test results will appear here. </div>
   </nav>
 
-  <nav class="navbar navbar-default navbar-fixed-top">
-    <H4 class="toph4">BioImage Suite Web Test Runner</H4>
-    <div id="top">
+  <bisweb-topmenubar   id="topmenubar">
+  </bisweb-topmenubar>    
+  
+
+  
+  <div id="help">
+    <div id="helptext">
+      <BR> <BR>
       
-      <form class="form-inline" id="form">
-        <label for="weight">First:</label>
-        <input type="number" step="1"  id="first" placeholder="0">
-        <label for="height">Last:</label>
-        <input type="number" step="1"  id="last" placeholder="5">
-        <label for="">Testname:</label>
-        <select id="testselect">
-          <option value="None" style="color:#dddddd">List (but not run) tests</option>
-          <option value="All"  style="color:red">Test all modules</option>
-        </select>
+      <H4>Welcome to the BioImage Suite Web Regression Test Runner</H4>
+      
+      <p>Select the tests you would like to run from the controls above and then
+        press `Run Tests` (or Enter) to run the tests.</P>
+      
+      <details><summary><B> Additional Help</B></summary>
+        <p> The options above have the following functionality. </p>
+        
+        <UL>
+          <LI> "First" : This sets the first test (beginning at zero) to run. </LI>
+          <LI> "Last" : This sets the last test (beginning at zero) to run. </LI>
+          <LI> "Testname": This allows you to select an additional filter to only
+            run tests for a single module.</LI>
+          <OL>
+            <LI>If you select <EM>'List (but not run) tests'</EM>, then all tests in the range first:last will be listed but not
+              run.</LI>
+            <LI>If you select <EM>'Test all Modules'</EM>, then all tests in the range
+              first:last will be run.</LI>
+            <LI>If you select an individual module (e.g. blankImage) then only the
+              tests in the range first:last that are for the selected module will be
+              run.
+            </LI>
+          </OL>
+        </UL>
+      </details>
+      
+      <BR>
+      
+      <p>
+        <B>Note:</B> You may, before running tests, like to open
+        the JavaScript console under Developer Tools (on Chrome simply press
+        'F12') to observe the print outs from the algorithms.</p>
 
-        <button class="btn-small btn-primary" type="submit" id="compute">Run Tests</button>
-      </form>
+      <BR> 
+      
     </div>
-  </nav>
+  </div>
+  
 
   <div id="main">
   </div>
