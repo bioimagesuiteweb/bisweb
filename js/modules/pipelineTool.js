@@ -55,16 +55,14 @@ let makePipeline = function (filename) {
         }
 
         let expandedVariables = {};
+        //each job should output a list of commands with inputs, outputs, and dependencies
+        let formattedJobOutputs = [];
 
         for (let job of parsedFile.jobs) {
             let variablesReferencedByCurrentJob = []; //variables resolved in scope of current job are used to generate output names appropriate to the current job
             let inputsUsedByJob = [];
             let outputsGeneratedByJob = [];
             let variablesWithDependencies = [];
-
-            //each job should output a list of commands with inputs, outputs, and dependencies
-            let formattedJobOutputs = [];
-
 
             //construct array of variables from array of options
             let optionsArray = job.options.split(' ');
@@ -139,7 +137,7 @@ let makePipeline = function (filename) {
                     //generate output names
                     let outputFilenames = [], currentASCII = 'a';
                     for (let i = 0; i < numOutputs; i++) {
-                        let outputFilename = currentASCII + '_' + job.appendText + '.nii.gz';
+                        let outputFilename = currentASCII + '_' + job.appendText + '.o.nii.gz';
                         outputFilenames.push(outputFilename);
                         currentASCII = getNextASCIIChar(currentASCII);
                     }
@@ -164,7 +162,7 @@ let makePipeline = function (filename) {
 
             }
 
-            //construct the inputs, outputs, and command in the way that make expects
+            //construct the inputs, outputs, and command in the way that 'make' expects
             for (let i = 0; i < numOutputs; i++) {
                 let commandArray = [], formattedJobOutput = { 'inputs' : [], 'outputs' : [], 'command' : undefined };
                 for (let option of optionsArray) {
@@ -186,12 +184,11 @@ let makePipeline = function (filename) {
                 formattedJobOutput.command = 'node bisweb.js ' + job.command + ' ' + commandArray.join(' ');
                 formattedJobOutputs.push(formattedJobOutput);
             }
-
-            //generate the makefile from formattedJobOutputs
-            console.log('formatted commands', formattedJobOutputs);
-
-
         }
+
+        //generate the makefile from formattedJobOutputs
+        console.log('formatted commands', formattedJobOutputs);
+
 
 
     }).catch( (e) => { console.log('An error occured', e); });
