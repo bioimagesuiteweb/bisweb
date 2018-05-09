@@ -3,9 +3,9 @@
 	{
 		"name" : "input",
 		"files" : [
-			"a1.nii.gz",
-			"a2.nii.gz", 
-			"a3.nii.gz"
+			"MNI_2mm_orig.nii.gz",
+			"MNI_2mm_resliced.nii.gz", 
+			"MNI_2mm_scaled.nii.gz"
 		]
 	},
 	{
@@ -24,7 +24,7 @@
 	},
 	{
 		"name": "out3",
-		"extension": ".nii.gz",
+		"extension": ".grd",
 		"depends": [
 			"%out2%"
 		]
@@ -41,13 +41,13 @@
 			"command": "thresholdImage",
 			"rule": "append",
 			"appendText": "thresholded",
-			"options": "--debug true --input %out1% --output %out2%"
+			"options": "--debug true --input %out1% --output %out2% --low 50 --high 100"
 		},
 		{
 			"command": "linearRegistration",
 			"rule": "append",
 			"appendText": "registered",
-			"options": "--debug true --input %out2% --output %out3%"
+			"options": "--debug true --reference %input% --target %out2% --output %out3%"
 		}
 	]
 }

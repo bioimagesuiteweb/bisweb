@@ -11,5 +11,8 @@ build/*
 **/TAGS
 **/.DS_Store
 **/.vscode
+**/*.o.*
+data/**/*.nii.gz
+data/Makefile
 
 

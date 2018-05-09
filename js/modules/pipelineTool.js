@@ -113,7 +113,6 @@ let makePipeline = function (filename) {
             //note that an input is any variable that has its file list available to the job (this relies on jobs being specified in the order in which they run in the JSON file)
             let numOutputs;
             for (let variable of variablesWithDependencies) {
-
                 //if names have already been generated then the output is produced by a node upstream, so don't overwrite the names
                 if (expandedVariables[variable.name].length === 0) {
                     let dependencies = parsedFile.variables[variable.index].depends;
@@ -137,7 +136,7 @@ let makePipeline = function (filename) {
                     //generate output names
                     let outputFilenames = [], currentASCII = 'a';
                     for (let i = 0; i < numOutputs; i++) {
-                        let outputFilename = currentASCII + '_' + job.appendText + '.o.nii.gz';
+                        let outputFilename = currentASCII + '_' + job.appendText + '.o' + fileExtension;
                         outputFilenames.push(outputFilename);
                         currentASCII = getNextASCIIChar(currentASCII);
                     }
@@ -189,8 +188,26 @@ let makePipeline = function (filename) {
         //generate the makefile from formattedJobOutputs
         console.log('formatted commands', formattedJobOutputs);
 
+        //add 'make all' 
+        let makefile = '.PHONY: all\nall :\n\tmake ';
+        for (let formattedJobOutput of formattedJobOutputs) {
+            for (let output of formattedJobOutput.outputs) { 
+                makefile = makefile + output + ' ';
+            }
+        }
 
+        //add 'make clean'
+        makefile = makefile + '\n.PHONY: clean\nclean:\n\trm -rf *.o.*\n';
 
+        //make the rest of the commands with job names set to the name of outputs
+        for (let formattedJobOutput of formattedJobOutputs) {
+            for (let output of formattedJobOutput.outputs) {
+                makefile = makefile + output + ' : ' + formattedJobOutput.inputs.join(' ') + '\n\t' + formattedJobOutput.command + '\n';
+            }
+        }
+
+        console.log(makefile);
+        io.write('Makefile', makefile);
     }).catch( (e) => { console.log('An error occured', e); });
 
 };
