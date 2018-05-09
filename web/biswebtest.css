@@ -1,10 +1,10 @@
 #form {
     margin-top: 10px;
-    margin-left: 10vw;
+    margin-left: 5vw;
 }
 
 .toph4 {
-    margin-left: 10vw;
+    margin-left: 5vw;
 }
 
 .testhead {
@@ -52,7 +52,7 @@
 
 #results {
     margin-top : 15px;
-    margin-left : 10vw;
+    margin-left : 5vw;
     font-family: monospace;
     font-size: 18px;
     color : yellow

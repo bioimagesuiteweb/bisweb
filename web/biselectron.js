@@ -111,6 +111,8 @@ var createWindow=function(index,fullURL) {
     if (opts.width>state.screensize.width-100)
 	opts.width=state.screensize.width-100;
 
+    console.log('Dimensions=',opts.width,opts.height,state.screensize.width);
+    
 
     if (index!==0) {
 	xval+=Math.round(Math.random()*50);
@@ -121,6 +123,17 @@ var createWindow=function(index,fullURL) {
 	    yval=undefined;
     }
 
+    let i=fullURL.indexOf('biswebtest');
+    if (i>=0) {
+        xval=0;
+        yval=0;
+        opts.width=state.screensize.width;
+        opts.height=state.screensize.height;
+    }
+        
+    
+
+    
     var preload=  path.resolve(__dirname, 'bispreload.js');
     console.log(getTime()+' Creating new window '+fullURL + ', index='+index);
     console.log(getTime()+' Screen size = '+[state.screensize.width,state.screensize.height]+' size='+[opts.width,opts.height]);
