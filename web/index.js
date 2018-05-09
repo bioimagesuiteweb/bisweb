@@ -84,6 +84,10 @@ let createIndex=function(obj) {
         }
     }
 
+    if (typeof window.BIS !=='undefined')
+        $("#devmenu").append(`<li><a href="../test/biswebtest.html" target="_blank">Run Regression Tests</a></li>`);
+    else
+        $("#devmenu").append(`<li><a href="./test/biswebtest.html" target="_blank">Run Regression Tests</a></li>`);
 
 };
 
