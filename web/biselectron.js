@@ -59,6 +59,23 @@ const state = {
     indev : process.defaultApp || /[\\/]electron-prebuilt[\\/]/.test(process.execPath) || /[\\/]electron[\\/]/.test(process.execPath)
 };
 
+
+let v=process.versions.node;
+let s=v.split(".");
+let major=parseInt(s[0]);
+let minor=parseInt(s[1]);
+
+if (major<8 || (major===8 && minor<9)) {
+    console.log(`----\n---- You are using a version of node older than 8.9 (actual version=${v}). You need to update to electron v2.0.\n`);
+    process.exit(1);
+}
+
+if (major>=9) {
+    console.log(`----\n---- You are using a version of node that is 9.0 or newer (actual version=${v})\n`);
+    process.exit(1);
+}
+
+
 if (state.indev) {
     state.commandargs= process.argv.slice(3) || [];
     state.mainfilename=process.argv[2];
@@ -111,7 +128,7 @@ var createWindow=function(index,fullURL) {
     if (opts.width>state.screensize.width-100)
 	opts.width=state.screensize.width-100;
 
-    console.log('Dimensions=',opts.width,opts.height,state.screensize.width);
+    //    console.log('Dimensions=',opts.width,opts.height,state.screensize.width);
     
 
     if (index!==0) {
@@ -136,7 +153,7 @@ var createWindow=function(index,fullURL) {
     
     var preload=  path.resolve(__dirname, 'bispreload.js');
     console.log(getTime()+' Creating new window '+fullURL + ', index='+index);
-    console.log(getTime()+' Screen size = '+[state.screensize.width,state.screensize.height]+' size='+[opts.width,opts.height]);
+//    console.log(getTime()+' Screen size = '+[state.screensize.width,state.screensize.height]+' size='+[opts.width,opts.height]);
     state.winlist[index]=new BrowserWindow({width: opts.width,
 					    height: opts.height,
 					    show: true,
@@ -444,7 +461,7 @@ ipcMain.on('showconsole',function() {
 
 ipcMain.on('bisconsoleinit',function(event) {
     state.consolehandler=event.sender;
-    console.log(getTime()+' console initialized');
+    //    console.log(getTime()+' console initialized');
 });
 
 ipcMain.on('bisconsole', function (event,arg) {
