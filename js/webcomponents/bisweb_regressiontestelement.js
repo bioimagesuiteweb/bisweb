@@ -266,6 +266,10 @@ const execute_compare=function(module,test) {
 
 var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') { // jshint ignore:line
 
+    if (webutil.inElectronApp()) {
+        window.BISELECTRON.remote.getCurrentWindow().openDevTools();
+    }
+    console.clear();
     
     if (firsttest<0)
         firsttest=0;
@@ -472,10 +476,9 @@ let initialize=function(txt) {
 var startFunction = (() => {
 
     if (webutil.inElectronApp()) {
-        window.BISELECTRON.remote.getCurrentWindow().openDevTools();
         $('#cnote').remove();
     }
-
+    
     userPreferences.setImageOrientationOnLoad('None');
     console.log('Mode=',bis_genericio.getmode());
     
