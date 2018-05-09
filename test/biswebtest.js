@@ -209,6 +209,8 @@ const execute_compare=function(module,test) {
         console.log(`==== C o m p a r i n g  ${test_type}  u s i n g  ${comparison} and  t h r e s h o l d=${threshold}.\n====`);
         let c=`<H4>C o m p a r i n g   ${test_type}   u s i n g   ${comparison}  and  t h r e s h o l d=${threshold}</H4>`;
 
+        const orig_test_type=test_type;
+        
         if (test_type === "matrixtransform" || test_type==="gridtransform") {
             test_type="transform";
         }
@@ -220,6 +222,12 @@ const execute_compare=function(module,test) {
                 resultObject=module.getOutputObject('resliced');
                 console.log('.... using resliced output for test');
             }
+            if (orig_test_type==='gridtransform') {
+                obj=obj.getGridTransformation(0);
+                console.log('.... extracting grid transformation from loaded result for test');
+            }
+
+            
             let result=resultObject.compareWithOther(obj,comparison,threshold);
 
             if (result.testresult) {
@@ -228,7 +236,7 @@ const execute_compare=function(module,test) {
                           text   : c+` Module ${module.name} test <span class="passed">passed</span>.<BR>  deviation (${result.metric}) from expected: ${result.value} < ${threshold}`
                         });
             } else {
-                console.log(`---- Module ${module.name} test failed.\n---- Module produced output significantly different from expected.<BR>----  deviation (${result.metric}) from expected: ${result.value} > ${threshold}`);
+                console.log(`---- Module ${module.name} test failed.\n---- Module produced output significantly different from expected.\n----  deviation (${result.metric}) from expected: ${result.value} > ${threshold}`);
                 resolve({
                     result : result.testresult,
                     text : c+` Module ${module.name} test <span class="failed">failed</span>. Module produced output significantly different from expected.<BR>  deviation (${result.metric}) from expected: ${result.value} > ${threshold}`
@@ -275,7 +283,7 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') { 
             run=run+1;
             main.append(`<H3 class="testhead">Running Test ${i}: ${name}</H3><p><UL><LI> Command: ${v.command}</LI><LI> Test details: ${v.test}</LI><LI> Should pass: ${v.result}</LI>`);
             console.log(`-------------------------------`);
-            console.log(`-------------------------------\nRunning test ${i+1}: ${v.command}, ${v.test},${v.result}\n------------------------`);
+            console.log(`-------------------------------\nRunning test ${i}: ${v.command}, ${v.test},${v.result}\n------------------------`);
             replacesystemprint(true);
             try {
                 let obj=await execute_test(v,i); // jshint ignore:line
