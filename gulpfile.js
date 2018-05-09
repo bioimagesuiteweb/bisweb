@@ -207,19 +207,14 @@ gulp.task('webpack', function(done) {
                                                           internal.indexlib,__dirname,
                                                           options.minify,options.outdir,function() {
 
-                                                              bis_gutil.runWebpackCore('./test/biswebtest.js',options.internal,
-                                                                                       'test/biswebtest.js',
-                                                                                       __dirname,
-                                                                                       options.minify,options.outdir,function() {
-                                                                                           if (options.webworker)
-                                                                                               bis_gutil.runWebpackCore('./js/modules/'+internal.webworkerlib,options.internal,
-                                                                                                                        internal.webworkerlib,__dirname,
-                                                                                                                        options.minify,options.outdir,function() {
-                                                                                                                            done();
-                                                                                                                        });
-                                                                                           else
+                                                              if (options.webworker)
+                                                                  bis_gutil.runWebpackCore('./js/modules/'+internal.webworkerlib,options.internal,
+                                                                                           internal.webworkerlib,__dirname,
+                                                                                           options.minify,options.outdir,function() {
                                                                                                done();
-                                                                                       });
+                                                                                           });
+                                                              else
+                                                                  done();
                                                           });
                              });
 });
@@ -231,29 +226,11 @@ gulp.task('buildtest',function() {
     console.log('Test output dir=',testoutdir);
     gulp.src(['./test/testdata/**/*']).pipe(gulp.dest(testoutdir+'/testdata'));
     gulp.src('./test/module_tests.json').pipe(gulp.dest(testoutdir));
-    bis_gutil.createTestHTML('biswebtest',testoutdir,'biswebtest.js',internal.biscss);
-    bis_gutil.createCSSCommon([ 'test/biswebtest.css'] ,'biswebtest.css',testoutdir);
+    bis_gutil.createTestHTML('biswebtest',testoutdir,'../bislib.js',internal.biscss);
+    bis_gutil.createCSSCommon([ './web/biswebtest.css'] ,'biswebtest.css',testoutdir);
 
 });
 
-gulp.task('testweb', function(done) {
-
-    connect.server(internal.serveroptions);
-    console.log('++++ Server root directory=',internal.serveroptions.root);
-
-    for (let i=0;i<internal.myscripts.length;i++) {
-        gulp.watch(internal.myscripts[i], ['jshint']);
-    }
-
-    let mydone=function() {
-        console.log('webpack killed');
-    };
-
-    bis_gutil.runWebpackCore('./test/biswebtest.js',options.internal,
-                             'test/biswebtest.js',
-                             __dirname,
-                             options.minify,options.outdir,mydone,1);
-});
 
 gulp.task('css', function() {
     bis_gutil.createCSSCommon(internal.dependcss,internal.biscss,options.outdir);

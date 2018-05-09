@@ -163,7 +163,7 @@ var createTestHTML=function(toolname,outdir,libjs,commoncss) {
     if (toolname==="bisjs")
 	return;
     
-    var mainhtml   = path.normalize(path.join(__dirname,'../test/'+toolname+'.html'));
+    var mainhtml   = path.normalize(path.join(__dirname,'../web/'+toolname+'.html'));
     var bundlecss  = '../'+commoncss;
 
     console.log(getTime()+colors.green(' Building HTML '+mainhtml));
