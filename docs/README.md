@@ -582,6 +582,8 @@ If you are not planning to modify the C++ code then you can simply build this on
 
 ### Web-based Tests (_experimental_)
 
+__Browser__:
+
 To run tests in the browser (this applies only to the module tests) type
 
       gulp testweb
@@ -591,3 +593,19 @@ Then navigate to:
       http://localhost:8080/test/biswebtest.html
 
 Then select the tests to run and click `Run Tests` to execute.
+
+
+__Electron__:
+
+
+To run tests in Electron (this applies only to the module tests) type
+
+      gulp testweb &
+
+Then (assuming you are in the `src` directory) type:
+
+      electron test
+
+Then select the tests to run and click `Run Tests` to execute.
+
+
