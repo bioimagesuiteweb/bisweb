@@ -1,0 +1,85 @@
+<!---  LICENSE
+ 
+ _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+ 
+ BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+ 
+ - you may not use this software except in compliance with the License.
+ - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+ 
+ __Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.__
+ 
+ ENDLICENSE -->
+
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <title>BisWeb Module Tests </title>
+    <meta name="viewport" content="width=device-width, user-scalable=no">
+    <!-- build:icon -->
+    <link rel="icon" href="images/favicon.ico">
+    <!-- endbuild -->
+    
+    <!-- begin webpack/gulp modifications -->
+    <!-- external css files -->
+    <!-- build:css -->
+    <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_dark.css">
+    <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap-colorselector.css">
+    <link rel="stylesheet" type="text/css" href="./biscommon.css">
+    <!-- endbuild -->
+
+    <!-- all javascript files -->
+    <!-- build:js -->
+    <script src="./bis.js"></script>
+    <script src="../build/web/webcomponents-lite.js"></script>
+    <script src="../build/web/jquery.min.js"></script>
+    <script src="../build/web/bootstrap.min.js"></script>
+    <script src="../build/web/libbiswasm_wasm.js"></script>
+    <script src="../build/web/bislib.js"></script>
+    <!-- endbuild -->
+    <!-- end webpack/gulp modifications -->
+
+    <link rel="stylesheet" type="text/css" href="biswebtest.css">
+    
+</head>
+<body>
+
+  <nav class="navbar navbar-default navbar-fixed-bottom">
+    <div id="results">      </div>
+    
+  </nav>
+
+  <nav class="navbar navbar-default navbar-fixed-top">
+    <H4 class="toph4">BioImage Suite Web Test Runner</H4>
+    <div id="top">
+      
+      <form class="form-inline" id="form">
+        <label for="weight">First:</label>
+        <input type="number" step="1"  id="first" placeholder="0">
+        <label for="height">Last:</label>
+        <input type="number" step="1"  id="last" placeholder="5">
+        <label for="">Testname:</label>
+        <select id="testselect">
+          <option value="None" style="color:#dddddd">List (but not run) tests</option>
+          <option value="All"  style="color:red">Test all modules</option>
+        </select>
+
+        <button class="btn-small btn-primary" type="submit" id="compute">Run Tests</button>
+      </form>
+    </div>
+  </nav>
+
+  <div id="main">
+  </div>
+
+
+  <bisweb-regressiontestelement></bisweb-regressiontestelement>
+    
+</body>
+</html>
