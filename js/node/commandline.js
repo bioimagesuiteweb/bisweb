@@ -25,6 +25,7 @@ const baseutils = require('baseutils');
 const biswrap = require('libbiswasm_wrapper');
 const boldon = "";
 const boldoff = "";
+
 //Image processing functions are expected to be templated as Promises.
 let initialError = function (extra) {
     console.log(`${extra}\nUsage: bisweb modulename [ options ].\n`);

@@ -66,7 +66,7 @@ module.exports = {
                     path.resolve(mypath,'js/coreweb'),
                     path.resolve(mypath,'js/legacy'),
                     path.resolve(mypath,'js/modules'),
-                    path.resolve(mypath,'build/wasm') ]
+                    path.resolve(mypath,'build/wasm')]
     },
     mode : 'development',
     target : "web",

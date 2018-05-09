@@ -17,17 +17,17 @@
 
 const modules = require('moduleindex');
 const io = require('bis_genericio');
-
 let endASCII = 'z'.charCodeAt(0);
 
 /**
  * Takes a series of actions and forms a sequence parseable by 'make'. 
  * 
  * @param {String} filename - Name of file containing JSON that specifies the inputs, outputs, and jobs
+ * @param {String} location - Where to write the file to. Note that file save dialog opens for browser regardless.
+ * @return The Makefile for the set of jobs.
  */
-let makePipeline = function (filename) {
+let makePipeline = function(filename, location) {
     io.read(filename).then((file) => {
-        console.log('file', typeof (file));
         let parsedFile;
         try {
             parsedFile = JSON.parse(file.data);
@@ -35,6 +35,7 @@ let makePipeline = function (filename) {
             console.log('Could not parse file', e);
             parsedFile = file;
             console.log('parsedFile', file);
+            return null;
         }
 
 
@@ -51,6 +52,7 @@ let makePipeline = function (filename) {
                 appendTexts[appendText] = { 'text' : appendText, 'job' : job.command };
             } else {
                 console.log('Error: appendTexts of jobs must be unique. Jobs', appendTexts[appendText].job, 'and', job.command, 'have same appendText.');
+                return false;
             }
         }
 
@@ -149,7 +151,6 @@ let makePipeline = function (filename) {
             }
 
 
-            console.log('expandedVariables', expandedVariables);
             //replace entry in optionsArray with appropriate expanded variable
             for (let i = 0; i < optionsArray.length; i++) {
                 let option = optionsArray[i];
@@ -185,9 +186,6 @@ let makePipeline = function (filename) {
             }
         }
 
-        //generate the makefile from formattedJobOutputs
-        console.log('formatted commands', formattedJobOutputs);
-
         //add 'make all' 
         let makefile = '.PHONY: all\nall :\n\tmake ';
         for (let formattedJobOutput of formattedJobOutputs) {
@@ -206,9 +204,10 @@ let makePipeline = function (filename) {
             }
         }
 
-        console.log(makefile);
-        io.write('Makefile', makefile);
-    }).catch( (e) => { console.log('An error occured', e); });
+        io.write(location, makefile).then( () => {
+            console.log('Wrote Makefile to', location, 'successfully');
+        }).catch( (e) => { console.log('An error occured', e); return null; }); 
+    }).catch( (e) => { console.log('An error occured', e); return null; });
 
 };
 
