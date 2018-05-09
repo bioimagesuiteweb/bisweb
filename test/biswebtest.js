@@ -15,7 +15,12 @@ const userPreferences = require('bisweb_userpreferences.js');
 let replacing=false;
 
 let logtext="";
+let extradir="";
 
+
+//    extradir="../test/";
+
+    
 var replacesystemprint=function(doreplace=true) {
 
     if (doreplace===true && replacing===false) {
@@ -62,7 +67,7 @@ var loadparamfile=function(paramfile,modulename,params) {
 
     return new Promise( (resolve,reject) => {
 
-        bis_genericio.read(paramfile).then( (res) => {
+        bis_genericio.read(extradir+paramfile).then( (res) => {
             
             try {
                 let obj=JSON.parse(res.data);
@@ -108,7 +113,7 @@ var execute_test=function(test) {
                     
                     let inp=des.inputs[j];
                     if (inp.shortname===pname || inp.varname===pname) {
-                        inputs[inp.varname]=value;
+                        inputs[inp.varname]=extradir+value;
                         found=true;
                     }
                     j=j+1;
@@ -215,7 +220,7 @@ const execute_compare=function(module,test) {
             test_type="transform";
         }
         
-        BisWebDataObjectCollection.loadObject(test_target,test_type).then( (obj) => {
+        BisWebDataObjectCollection.loadObject(extradir+test_target,test_type).then( (obj) => {
 
             let resultObject=module.getOutputObject();
             if (test_type==='registration') {
@@ -338,7 +343,85 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') { 
 
 };  // jshint ignore:line
 
+let initialize=function(txt) {
 
+    biswrap.initialize();
+    console.log('Read file:', extradir+'module_tests.json');
+    let data=null;
+    try {
+        data=JSON.parse(txt);
+    } catch(e) {
+        throw new Error('Failed to parse ',extradir+'module_tests.json');
+    }
+    
+    let testlist=data.testlist;
+    console.log('There are ',testlist.length,' tests');
+    let names=[];
+    for (let i=0;i<testlist.length;i++) {
+        let cmd=testlist[i].command.replace(/\t/g,' ').replace(/ +/g,' ');
+        let command=cmd.split(' ');
+        let modulename=command[0];
+        if (names.indexOf(modulename)<0)
+            names.push(modulename);
+    }
+    
+    names=names.sort();
+    let select=$("#testselect");
+    for (let i=0;i<names.length;i++) {
+        select.append($(`<option value="${names[i]}">${names[i]}</option>`));
+    }
+    
+    let firsttest=parseInt(webutil.getQueryParameter('first')) || 0;
+    if (firsttest<0)
+        firsttest=0;
+    
+    let lasttest=parseInt(webutil.getQueryParameter('last') || 0);
+    if (lasttest === undefined || lasttest<=0 || lasttest>=testlist.length)
+        lasttest=testlist.length-1;
+    
+    $('#first').val(firsttest);
+    $('#last').val(lasttest);
+    $('#testselect').val('None');
+
+    var fixRange=function(targetname) {
+
+        let target=$(targetname);
+
+        console.log('targ=',target);
+        let val=target.val();
+        if (val<0)
+            val=0;
+        if (val>=testlist.length)
+            val=testlist.length-1;
+        target.val(val);
+        
+    };
+    
+    $('#first').change( (e) => {
+        e.preventDefault();
+        console.log('Here ',e);
+        fixRange("#first");
+    });
+
+    $('#last').change( (e) => {
+        e.preventDefault();
+        fixRange("#last");
+    });
+
+    let fn=( (e) => {
+        e.preventDefault(); // cancel default behavior
+        let first=parseInt($("#first").val())||0;
+        let last=parseInt($("#last").val());
+        let testname=$('#testselect').val() || 'All';
+        if (last===undefined)
+            last=testlist.length-1;
+        run_tests(testlist,first,last,testname);
+    });
+    
+    
+    $('#compute').click(fn);
+
+};
 
 window.onload = (() => {
 
@@ -348,58 +431,36 @@ window.onload = (() => {
 
     userPreferences.setImageOrientationOnLoad('None');
     console.log('Mode=',bis_genericio.getmode());
-    bis_genericio.read('module_tests.json').then( (obj) => { 
-
-        console.clear();
-        biswrap.initialize();
-        console.log('Read module_tests.json');
-        let txt=obj.data;
-        let data=null;
+    
+    bis_genericio.read(extradir+'module_tests.json').then( (obj) => {
+        console.log('++++ Read',obj.filename);
         try {
-            data=JSON.parse(txt);
+            initialize(obj.data);
         } catch(e) {
-            throw new Error('Network response was not ok.');
+            console.log(e);
         }
+        console.log('Done Initializing');
+        return;
+    }).catch( () => {
+        extradir="../test/";
+        console.log('\n\n\n Failed to read ',extradir+'module_tests.json, trying again with extradir='+extradir);
+        
+        bis_genericio.read(extradir+'module_tests.json').then( (obj) => {
+            console.log('++++ Read',obj.filename);
+            initialize(obj.data);
+        }).catch( () => {
+            extradir="./test/";
+            console.log('\n\n\n Failed to read ',extradir+'module_tests.json, trying again with extradir='+extradir);
             
-        let testlist=data.testlist;
-        let names=[];
-        for (let i=0;i<testlist.length;i++) {
-            let cmd=testlist[i].command.replace(/\t/g,' ').replace(/ +/g,' ');
-            let command=cmd.split(' ');
-            let modulename=command[0];
-            if (names.indexOf(modulename)<0)
-                names.push(modulename);
-        }
-        names=names.sort();
-        let select=$("#testselect");
-        for (let i=0;i<names.length;i++) {
-            select.append($(`<option value="${names[i]}">${names[i]}</option>`));
-        }
-        
-        let firsttest=parseInt(webutil.getQueryParameter('first')) || 0;
-        if (firsttest<0)
-            firsttest=0;
-        
-        let lasttest=parseInt(webutil.getQueryParameter('last') || 0);
-        if (lasttest === undefined || lasttest<=0 || lasttest>=testlist.length)
-            lasttest=testlist.length-1;
-        
-        $('#first').val(firsttest);
-        $('#last').val(lasttest);
-        $('#testselect').val('None');
-        let fn=( (e) => {
-            e.preventDefault(); // cancel default behavior
-            let first=parseInt($("#first").val())||0;
-            let last=parseInt($("#last").val());
-            let testname=$('#testselect').val() || 'All';
-            if (last===undefined)
-                last=testlist.length-1;
-            run_tests(testlist,first,last,testname);
+            bis_genericio.read(extradir+'module_tests.json').then( (obj) => {
+                console.log('++++ Read',obj.filename);
+                initialize(obj.data);
+            }).catch((e) => {
+                console.log('Failed to read ',extradir+'module_tests.json.'+'\n'+e);
+            });
         });
-        
-        
-        $('#compute').click(fn);
-        
     });
+    
+        
 });
 
