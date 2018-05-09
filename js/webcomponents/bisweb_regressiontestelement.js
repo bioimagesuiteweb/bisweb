@@ -388,6 +388,8 @@ let initialize=function(txt) {
         let logo=$('#bislogo').parent();
         logo.attr('href','../index.html');
     }
+
+    
     
     biswrap.initialize();
     console.log('Read file:', extradir+'module_tests.json');
@@ -471,6 +473,7 @@ var startFunction = (() => {
 
     if (webutil.inElectronApp()) {
         window.BISELECTRON.remote.getCurrentWindow().openDevTools();
+        $('#cnote').remove();
     }
 
     userPreferences.setImageOrientationOnLoad('None');
