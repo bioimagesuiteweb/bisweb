@@ -85,10 +85,6 @@ let createIndex=function(obj) {
     }
 
 
-    if (!inelectron) {
-        let opt=$("#devmenu");
-        opt.append($(`<li class="divider"></li><li><a href="./test/biswebtest.html" target="_blank">Run Regression Tests</a></li>`));
-    }
 };
 
 let parsejson = function(text) {
