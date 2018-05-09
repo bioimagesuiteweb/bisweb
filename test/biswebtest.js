@@ -160,10 +160,10 @@ var execute_test=function(test) {
                     });
                     
                 }).catch((e) => {
-                    reject('---- Failed to invoke algorithm'+e);
+                    reject('---- Failed to invoke algorithm '+e);
                 });
             }).catch((e) => {
-                reject('----- Bad input filenames '+e);
+                reject('----- Bad input filenames in test '+e);
             });
         }).catch((e) => {
             reject('----- Bad param file '+e);
@@ -297,8 +297,8 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') { 
                     bad+=1;
                 }
             } catch(e) {
-                main.append(`<p><span style="color:red">Skipping Test ${e}</span></p>`);
-                skipped+=1;
+                main.append(`<p><span style="color:red">Test Failed ${e}</span></p>`);
+                bad+=1;
             }
             replacesystemprint(false);
             main.append(`<details><summary><B>Details</B></summary><PRE>${logtext}</PRE></details><HR>`);
