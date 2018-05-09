@@ -131,6 +131,10 @@ var execute_test=function(test) {
             }
         }
 
+        let tobj=get_test_object(test);
+        let test_type = tobj['test_type'] || 'image';
+        if (test_type==='registration')
+            params['doreslice']=true;
 
         loadparamfile(paramfile,module.name,params).then( () => {
 
@@ -161,16 +165,22 @@ var execute_test=function(test) {
         
 };
 
+let get_test_object=function(test) {
+    
+    let t=test.test.replace(/\t/g,' ').replace(/ +/g,' ').replace(/-+/g,'').split(' ');
+    let tobj={ };
+    for (let i=0;i<t.length;i=i+2) {
+        tobj[t[i]]=t[i+1];
+    }
+    return tobj;
+};
+
 const execute_compare=function(module,test) {
 
     return new Promise( (resolve,reject) => {
 
         let testtrue=test.result;
-        let t=test.test.replace(/\t/g,' ').replace(/ +/g,' ').replace(/-+/g,'').split(' ');
-        let tobj={ };
-        for (let i=0;i<t.length;i=i+2) {
-            tobj[t[i]]=t[i+1];
-        }
+        let tobj=get_test_object(test);
         
         let threshold = tobj['test_threshold'] || 0.01;
         let comparison = tobj['test_comparison'] || "maxabs";
@@ -251,7 +261,7 @@ const run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') 
         console.log('Comparing ',name,testname);
         if (testname==='All' || testname.toLowerCase()===name.toLowerCase()) {
             
-            main.append(`<P>Running test ${i+1}: ${v.command}<UL><LI>${v.test},${v.result}</LI></P>`);
+            main.append(`<P>Running test ${i+1}: ${v.command}<UL><LI> Test details: ${v.test}</LI><LI> Should pass: ${v.result}</LI></P>`);
             console.log(`-------------------------------`);
             console.log(`-------------------------------\nRunning test ${i+1}: ${v.command}, ${v.test},${v.result}\n------------------------`);
             replacesystemprint(true);
