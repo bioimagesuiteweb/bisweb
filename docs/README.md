@@ -586,11 +586,11 @@ __Browser__:
 
 To run tests in the browser (this applies only to the module tests) type
 
-      gulp testweb
+      gulp serve
 
 Then navigate to:
 
-      http://localhost:8080/test/biswebtest.html
+      http://localhost:8080/web/biswebtest.html
 
 Then select the tests to run and click `Run Tests` to execute.
 
@@ -600,7 +600,7 @@ __Electron__:
 
 To run tests in Electron (this applies only to the module tests) type
 
-      gulp testweb &
+      gulp build 
 
 Then (assuming you are in the `src` directory) type:
 
