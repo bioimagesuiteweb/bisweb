@@ -160,26 +160,31 @@ unsigned char*  projectImageWASM(unsigned char* input,unsigned char* funcinput,c
 
 // BIS: { 'backProjectImageWASM', 'bisImage', [ 'bisImage', 'ParamObj', 'debug' ] } 
 unsigned char*  backProjectImageWASM(unsigned char* input_ptr,unsigned char* input2d_ptr,const char* jsonstring,int debug) {
-  
-    
+
   if (debug)
     std::cout << "_____ Beginning backProjectImageWASM" << std::endl;
   
   std::unique_ptr<bisJSONParameterList> params(new bisJSONParameterList());
-  if (!params->parseJSONString(jsonstring))
+  if (!params->parseJSONString(jsonstring)) {
+    std::cout << "_____ Failed to parse parameters in backProjectImageWASM" << std::endl;
     return 0;
-
+  }
+  
   if(debug)
     params->print("from backProjectImageWASM","_____");
 
   std::unique_ptr<bisSimpleImage<float> > threed(new bisSimpleImage<float>("threed"));
 
-  if (!threed->linkIntoPointer(input_ptr))
+  if (!threed->linkIntoPointer(input_ptr)) {
+    std::cout << "_____ Failed to link into input_ptr in backProjectImageWASM" << std::endl;
     return 0;
+  }
 
   std::unique_ptr<bisSimpleImage<float> > twod(new bisSimpleImage<float>("twod"));
-  if (!twod->linkIntoPointer(input2d_ptr))
+  if (!twod->linkIntoPointer(input2d_ptr)) {
+    std::cout << "_____ Failed to link into two2d_ptr in backProjectImageWASM" << std::endl;
     return 0;
+  }
 
 
   int flip=params->getBooleanValue("flip",0);
