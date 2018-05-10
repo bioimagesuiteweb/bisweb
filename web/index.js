@@ -38,17 +38,13 @@ let createIndex=function(obj) {
     let indicators=$(".carousel-indicators");
     let topmenu=$("#topappmenu");
 
-    let bb=$(`<div align="center" style="padding:15px;  right:5.5vw; top:570px; border-radius:30px;background-color:#221100; z-index:5000; position: absolute; color:#ffffff">
-         Version: ${bisdate}</div>`);
-
-    $('body').append(bb);
-    indicators.empty();
     
     let keys=Object.keys(obj);
     let max=keys.length;
 
     let imagestring="";
     let menustring="";
+    let indstring="";
     
     for (let i=0;i<max;i++) {
         let elem=obj[keys[i]];
@@ -65,7 +61,7 @@ let createIndex=function(obj) {
             if (i===0)
                 cname=" active";
             
-            let a=`<div class="item${cname}"><a href="${url}" target="_blank"><img src="${picture}" alt="${title}"><div class="carousel-caption">${description}</div></div>`;
+            let a=`<div class="item${cname}"><a href="${url}" target="_blank"><img src="${picture}" alt="${title}"><div class="carousel-caption">${i+1}. ${description}</div></div>`;
             imagestring+=a;
             
             menustring+=`<li><a  href="${url}" target="_blank" role="button">${title}</a></li>`;
@@ -74,7 +70,7 @@ let createIndex=function(obj) {
             if (i===0)
                 b+='class="active"';
             b+="></li>";
-            indicators.append($(b));
+            indstring+=b;
         }
     }
 
@@ -83,20 +79,28 @@ let createIndex=function(obj) {
     topmenu.empty();
     topmenu.append($(menustring));
 
+    indicators.empty();
+    indicators.append($(indstring));
+
 
     if (typeof window.BIS !=='undefined')
         $("#devmenu").append(`<li><a href="./biswebtest.html" target="_blank">Run Regression Tests</a></li>`);
     else
         $("#devmenu").append(`<li><a href="./test/biswebtest.html" target="_blank">Run Regression Tests</a></li>`);
 
+    let bb=$(`<div align="center" style="padding:15px;  right:5.5vw; top:570px; border-radius:30px;background-color:#221100; z-index:5000; position: absolute; color:#ffffff">
+             Version: ${bisdate}</div>`);
+    $('body').append(bb);
+
 };
 
 
 let initialize=function() {
 
-    setTimeout(
-        createIndex(tools.tools),
-        10);
+    setTimeout( () => {
+        createIndex(tools.tools);
+        $('.carousel').carousel({   interval : 1000,    wrap : true  });
+    }, 10);
 
     // Remove all previous alerts -- only one is needed
     
@@ -113,23 +117,15 @@ let initialize=function() {
     }, 20000);
     
     
-    $('.carousel').carousel({
-        interval : 4000,
-        wrap : true
-    });
-    $('body').css({"background-color":"rgb(28,45,64)"});
+
 };
 
 
-class ApplicationSelectorElement extends HTMLElement {
+window.onload = (() => {
+    $('body').css({"background-color":"rgb(28,45,64)"});
+    initialize();
+});
 
 
-    
-    connectedCallback() {
-        initialize();
-    }
-}
-
-window.customElements.define('bisweb-applicationselector', ApplicationSelectorElement);
 
 
