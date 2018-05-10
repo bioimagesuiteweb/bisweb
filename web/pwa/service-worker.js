@@ -52,6 +52,7 @@ self.addEventListener('install', e => {
           '/libbiswasm_wasm.js',
           '/mni2tal.css',
           '/mni2tal.html',
+          '/manifest.json',
           '/overlayviewer.css',
           '/overlayviewer.html',
           '/viewer.css',
