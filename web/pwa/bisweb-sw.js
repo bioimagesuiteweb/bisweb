@@ -5,8 +5,6 @@ self.addEventListener('install', e => {
         caches.open('bisweb').then(cache => {
 
             return cache.addAll([
-                '',
-                '/webapp',
 	        'fonts/glyphicons-halflings-regular.woff',
 	        'fonts/glyphicons-halflings-regular.woff2',
                 'biscommon.css',
