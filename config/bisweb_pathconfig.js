@@ -36,8 +36,6 @@ if (major>=9) {
 console.log(`....\n.... Using node.js version ${v} (OK)`);
 console.log('.... This program is part of the commandline suite of tools from BioImage Suite Web.\n.... See https://github.com/bioimagesuiteweb/bisweb for more information.\n....');
 
-module.exports=n;
-
 let d=path.dirname(__dirname);
 
 // webgui below should go but needed for ancient parcellation class which should be split into compute and gui sometime
@@ -71,5 +69,5 @@ else
 require("module").Module._initPaths();
 
 
-module.exports=a;
+module.exports=v;
 

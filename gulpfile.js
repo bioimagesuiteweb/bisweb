@@ -48,7 +48,7 @@ program
     .option('-p, --dopack <s>','dopackage 0=no, 1=electron-packager, 2=run inno or zip in addition')
     .option('-z, --dozip <s>','dozip')
     .option('--internal <n>','if 1 serve the internal directory as well',parseInt)
-
+    .option('--production <n>','if 1 serve the build directory as root',parseInt)
     .parse(process.argv);
 
 
@@ -64,6 +64,7 @@ let options = {
     zip : program.dozip || 0,
     webworker : program.webworker || false,
     internal : parseInt(program.internal || 0) || 0,
+    production : parseInt(program.production ||0) ||0,
 };
 
 
@@ -140,7 +141,15 @@ if (options.internal) {
     internal.myscripts.push('../internal/js/*/*.js');
     internal.myscripts.push('../internal/js/*.js');
     
-} 
+}
+
+if (options.production) {
+    internal.serveroptions = {
+        "root" : path.normalize(path.resolve(__dirname,'build/web'))
+    };
+}
+
+
 
 
 let tlines=fs.readFileSync(internal.tooldescriptionfile);
@@ -276,6 +285,9 @@ gulp.task('commonfiles', function() {
     gulp.src([ 'web/images/**/*']).pipe(gulp.dest(options.outdir+'/images/'));
     gulp.src('./web/biswebdropbox.html').pipe(gulp.dest(options.outdir));
     gulp.src([ 'lib/fonts/*']).pipe(gulp.dest(options.outdir+'/fonts/'));
+    gulp.src([ 'web/pwa/*.png']).pipe(gulp.dest(options.outdir));
+    gulp.src([ 'web/pwa/*.js']).pipe(gulp.dest(options.outdir));
+    gulp.src([ 'web/pwa/*.json']).pipe(gulp.dest(options.outdir));
     gulp.src('./web/bispreload.js').pipe(gulp.dest(options.outdir));
     gulp.src('./web/biselectron.js').pipe(gulp.dest(options.outdir));
     gulp.src('./web/package.json').pipe(gulp.dest(options.outdir));

@@ -154,6 +154,26 @@ var createHTML=function(toolname,outdir,libjs,commoncss) {
     	.pipe(htmlreplace({
 	    'js': alljs,
 	    'css': bundlecss,
+            'manifest' : `<link rel="manifest" href="./manifest.json">`,
+            'serviceworker' : `
+
+    <script type="text/javascript">
+    // is service worker supported?
+    if('serviceWorker' in navigator) {
+        // service worker registered
+        navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
+            .then(function(registration) {
+                // console.log('service worker registered');
+            }
+                 );
+        
+        // service worker ready
+        navigator.serviceWorker.ready.then(function(registration) {
+            // console.log('service worker ready');
+        });
+    }
+    </script>`
+
 	}))
 	.pipe(gulp.dest(outdir));
 };
