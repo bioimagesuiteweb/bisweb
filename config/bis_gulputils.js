@@ -28,7 +28,10 @@ let colors=require('colors/safe'),
     gulpzip = require('gulp-zip'),
     template=require('gulp-template'),
     del = require('del'),
-    gulp=require("gulp");
+    gulp=require("gulp"),
+    pwaconfig=require('../web/pwa/pwa_config.js');
+
+//console.log(pwaconfig);
 
 
 var getTime=function() {
@@ -154,30 +157,9 @@ var createHTML=function(toolname,outdir,libjs,commoncss) {
     	.pipe(htmlreplace({
 	    'js': alljs,
 	    'css': bundlecss,
-            'manifest' : `<link rel="manifest" href="/webapp/manifest.json">`,
-            'serviceworker' : `
-
-    <script type="text/javascript">
-    // is service worker supported?
-if (typeof (window.BISELECTRON) === "undefined") {
-    if('serviceWorker' in navigator) {
-        // service worker registered
-        navigator.serviceWorker.register('/webapp/service-worker.js', { scope: '/webapp/' })
-            .then(function(registration) {
-                // console.log('service worker registered');
-            }
-                 );
-        
-        // service worker ready
-        navigator.serviceWorker.ready.then(function(registration) {
-            // console.log('service worker ready');
-        });
-    }
-}
-    </script>`
-
-	}))
-	.pipe(gulp.dest(outdir));
+            'manifest' : pwaconfig.manifest,
+            'serviceworker' : pwaconfig.serviceworker
+	})).pipe(gulp.dest(outdir));
 };
 
 var createTestHTML=function(toolname,outdir,libjs,commoncss) {

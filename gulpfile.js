@@ -98,7 +98,6 @@ if (options.debug!==0) {
 // -----------------------------------------------------------------------------------------
 
 let internal = {
-    tooldescriptionfile : './web/bislist.txt',
     dependcss : [ 
         "./lib/css/bootstrap_dark_edited.css", 
         "./lib/css/bootstrap-colorselector.css",
@@ -149,11 +148,7 @@ if (options.production) {
     };
 }
 
-
-
-
-let tlines=fs.readFileSync(internal.tooldescriptionfile);
-internal.setup=JSON.parse(tlines);
+internal.setup=require('./web/images/tools.json');
 let keys=Object.keys(internal.setup.tools);
 console.log(bis_gutil.getTime()+colors.cyan(' Read '+internal.tooldescriptionfile+' versiontag='+bis_gutil.getVersionTag(internal.setup.version)+' tools='+keys));
 
@@ -286,8 +281,8 @@ gulp.task('commonfiles', function() {
     gulp.src('./web/biswebdropbox.html').pipe(gulp.dest(options.outdir));
     gulp.src([ 'lib/fonts/*']).pipe(gulp.dest(options.outdir+'/fonts/'));
     gulp.src([ 'web/pwa/*.png']).pipe(gulp.dest(options.outdir));
-    gulp.src([ 'web/pwa/*.js']).pipe(gulp.dest(options.outdir));
-    gulp.src([ 'web/pwa/*.json']).pipe(gulp.dest(options.outdir));
+    gulp.src([ 'web/pwa/service-worker.js']).pipe(gulp.dest(options.outdir));
+    gulp.src([ 'web/pwa/manifest.json']).pipe(gulp.dest(options.outdir));
     gulp.src('./web/bispreload.js').pipe(gulp.dest(options.outdir));
     gulp.src('./web/biselectron.js').pipe(gulp.dest(options.outdir));
     gulp.src('./web/bislist.txt').pipe(gulp.dest(options.outdir));

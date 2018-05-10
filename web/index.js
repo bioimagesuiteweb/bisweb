@@ -22,6 +22,8 @@
 
 const $=require('jquery');
 const bisdate=require('bisdate.js').date;
+import tools from './images/tools.json';
+
 
 let inelectron=false;
 if (typeof (window.BISELECTRON) !== "undefined") {
@@ -91,7 +93,7 @@ let createIndex=function(obj) {
 
 };
 
-let parsejson = function(text) {
+/*let parsejson = function(text) {
     
     let obj;
     try {
@@ -101,10 +103,11 @@ let parsejson = function(text) {
         console.log('Failed to parse JSON');
         return;
     }
-    
-    if (obj!==null) {
-        createIndex(obj.tools);
-    }
+*/
+
+let initialize=function() {
+
+    createIndex(tools.tools);
 
     // Remove all previous alerts -- only one is needed
     
@@ -158,7 +161,8 @@ class ApplicationSelectorElement extends HTMLElement {
 
     
     connectedCallback() {
-        readtextdata('./bislist.txt',parsejson,console.log);
+        //        readtextdata('./bislist.txt',parsejson,console.log);
+        initialize();
     }
 }
 

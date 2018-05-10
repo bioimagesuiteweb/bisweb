@@ -10,7 +10,6 @@ self.addEventListener('install', e => {
           'biscommon.css',
           'bislib.css',
           'bislib.js',
-          'bislist.txt',
           'biswebdropbox.html',
           'bootstrap.min.js',
           'connviewer.css',

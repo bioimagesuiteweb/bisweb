@@ -46,7 +46,7 @@ const app=electron.app;  // Module to control application life.
 const BrowserWindow = electron.BrowserWindow;  // Module to create native browser window.
 const ipcMain = electron.ipcMain;
 const shell=electron.shell;
-
+const toolfile=require('./images/tools.json');
 
 const state = {
     winlist : [null],
@@ -355,11 +355,8 @@ app.on('window-all-closed', function() {
 // initialization and is ready to create browser windows.
 app.on('ready', function() {
 
-    var tooldescriptionfile=path.resolve(__dirname + '/bislist.txt');
-    var tlines=fs.readFileSync(tooldescriptionfile);
-    var setup=JSON.parse(tlines);
+    var setup=toolfile;
     var keys=Object.keys(setup.tools);
-    
     let fullURL='';
     if (state.mainfilename.length>1) {
 	console.log(getTime()+' Testing starting file=',state.mainfilename);
