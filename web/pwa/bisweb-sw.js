@@ -1,4 +1,7 @@
-console.log('**** Hello from Bioimage Suite Web Service Worker');
+console.log('swsw Hello from Bioimage Suite Web Service Worker');
+
+let offline=false;
+let count=0;
 
 self.addEventListener('install', e => {
     e.waitUntil(
@@ -11,7 +14,9 @@ self.addEventListener('install', e => {
                 'bislib.css',
                 'bislib.js',
                 'biswebdropbox.html',
+                'bisweb-sw.js',
                 'bootstrap.min.js',
+                'bootstrap_dark_edited.css',
                 'connviewer.css',
                 'connviewer.html',
                 'console.html',
@@ -64,8 +69,10 @@ self.addEventListener('install', e => {
                 'images/shen.json',
                 'images/pos_mat.txt',
                 'images/neg_mat.txt',
-            ])
-                .then(() => self.skipWaiting());
+                'https://fonts.googleapis.com/css?family=Lato:400,700,400italic',
+                'https://fonts.gstatic.com/s/lato/v14/S6u9w4BMUTPHh6UVSwiPGQ.woff2',
+                'https://fonts.gstatic.com/s/lato/v14/S6uyw4BMUTPHjx4wXg.woff2',
+            ]).then(() => self.skipWaiting());
         })
     )
 });
@@ -74,17 +81,44 @@ self.addEventListener('activate',  event => {
     event.waitUntil(self.clients.claim());
 });
 
-self.addEventListener('fetch', event => {
-    event.respondWith(
-        caches.match(
-            event.request, {
-                ignoreSearch : true
-            }
-        ).then(response => {
 
-            return response || fetch(event.request);
-        }).catch(function(error) {
-            //console.log('Fetch failed; returning offline page instead.', error);
-        })
-    );
+self.addEventListener('fetch', function(event) {
+
+    //    count=count+1;
+    //    let i=count;
+    //    console.log(i,'Looking for ',event.request.url);
+
+    let debug=false;
+
+    
+    if (offline)  {
+        let t=event.request.url.split('.').pop();
+        let x=event.request.url.split('/').pop();
+        if (t==='html' || x.length<1 ) {
+            offline=false;
+            console.log('swsw We are looking for an HTML file',event.request.url);
+            debug=true;
+        }
+    }
+    
+    if (offline) {
+        count=count+1;
+        if (count===1)
+            console.log('swsw returning cached version',event.request.url);
+        let res=caches.match(event.request);
+        event.respondWith(res);
+    } else {
+        count=0;
+        if (debug)
+            console.log('swsw Testing to see if we have a network connection first ',event.request.url);
+        try {
+            event.respondWith(fetch(event.request).catch( (e) => {
+                console.log('swsw Tried but no network ... returning cached version',event.request.url);
+                offline=true;
+                return caches.match(event.request);
+            }));
+        } catch(e) {
+            console.log(e);
+        }
+    }
 });
