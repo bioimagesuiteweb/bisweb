@@ -288,6 +288,7 @@ gulp.task('commonfiles', function() {
     gulp.src('./web/bislist.txt').pipe(gulp.dest(options.outdir));
     gulp.src('./web/package.json').pipe(gulp.dest(options.outdir));
     gulp.src('./web/biscommon.css').pipe(gulp.dest(options.outdir));
+    gulp.src('./lib/css/bootstrap_dark_edited.css').pipe(gulp.dest(options.outdir));
     gulp.src('./lib/js/webcomponents-lite.js').pipe(gulp.dest(options.outdir));
     gulp.src('./node_modules/jquery/dist/jquery.min.js').pipe(gulp.dest(options.outdir));
     gulp.src('./node_modules/bootstrap/dist/js/bootstrap.min.js').pipe(gulp.dest(options.outdir));
