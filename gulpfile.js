@@ -145,7 +145,7 @@ if (options.internal) {
 
 if (options.production) {
     internal.serveroptions = {
-        "root" : path.normalize(path.resolve(__dirname,'build/web'))
+        "root" : path.normalize(path.resolve(__dirname,'build/'))
     };
 }
 
