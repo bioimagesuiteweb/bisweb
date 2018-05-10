@@ -17,12 +17,30 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
 
 <head>
     <title>BioImage Suite Web</title>
     <meta name="viewport" content="width=device-width, user-scalable=no">
     <meta name="theme-color" content="rgb(28,45,64)">
+    <meta name="description" content="Yale BioImage Suite Medical Image
+                                      Analysis Software">
+    <meta name="keywords" content="Image Segmentation, Registration,
+                                   Visualization, fMRI, Connectivity, JS,
+                                   WebAssembly, NIH Brain Inititative">
+    <meta name="author" content="Xenophon Papademetris and Dustin Scheinost,
+                                 Dept of Radiology and Biomedical Imaging,
+                                 Yale School of Medicine">
+
+    <meta name="theme-color" content="rgb(28,45,64)">
+    <meta name="description" content="Yale BioImage Suite Medical Image
+                                      Analysis Software">
+    <meta name="keywords" content="Image Segmentation, Registration,
+                                   Visualization, fMRI, Connectivity, JS,
+                                   WebAssembly, NIH Brain Inititative">
+    <meta name="author" content="Xenophon Papademetris and Dustin Scheinost,
+                                 Dept of Radiology and Biomedical Imaging,
+                                 Yale School of Medicine">
     <link rel="icon" href="images/favicon.ico">
 
     <!-- begin webpack/gulp modifications -->
@@ -64,16 +82,19 @@
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
 	    </button>
-        <img src="images/bioimagesuite.png" height="50px" id="bislogo" style="margin-top:5px">
+        <img src="images/bioimagesuite.png" height="50px" id="bislogo"
+             alt="logo" style="margin-top:5px">
       </div>      
       
       <div class="collapse navbar-collapse" id="topmenu">
 	<ul class="nav navbar-nav" id="bismenuparent0">
 
-          <li class='dropdown' id="appmenu"o>
+          <li class='dropdown' id="appmenu">
             <a href='#' class='dropdown-toggle'  data-toggle='dropdown'
                role='button' aria-expanded='false'>Applications<span class='caret'></span></a>
             <ul class='dropdown-menu' role='menu' id='topappmenu'>
+              <li><a  href="./viewer.html" target="_blank" role="button">Orthogonal Viewer Tool</a></li><li><a  href="./connviewer.html" target="_blank" role="button">Connectivity Viewer</a></li><li><a  href="./mni2tal.html" target="_blank" role="button">MNI2TAL</a></li><li><a  href="./editor.html" target="_blank" role="button">Image Editor</a></li><li><a  href="./overlayviewer.html" target="_blank" role="button">Overlay Viewer</a></li><li><a  href="./dualviewer.html" target="_blank" role="button">Dual Viewer Tool</a></li>
+
             </ul>
           </li>
           
@@ -130,7 +151,12 @@
       </ol>
       
       <!-- Wrapper for slides -->
-      <div class="carousel-inner" role="listbox" align="center" id="bisslides">
+      <div class="carousel-inner" role="listbox" align="center"
+           id="bisslides">
+        <div class="item active"><a href="./viewer.html" target="_blank"><img src="images/viewer.png" alt="Orthogonal Viewer Tool"><div class="carousel-caption">The orthogonal viewer + image processing tool.</div></div><div class="item"><a href="./connviewer.html" target="_blank"><img src="images/connviewer.png" alt="Connectivity Viewer"><div class="carousel-caption">The fMRI connectivity display tool.</div></div><div class="item"><a href="./mni2tal.html" target="_blank"><img src="images/mni2tal.png" alt="MNI2TAL"><div class="carousel-caption">The MNI 2 Talairach Converter program.</div></div><div class="item"><a href="./editor.html" target="_blank"><img src="images/editor.png" alt="Image Editor"><div class="carousel-caption">The orthogonal viewer and editor.</div></div><div class="item"><a href="./overlayviewer.html" target="_blank"><img src="images/overlayviewer.png" alt="Overlay Viewer"><div class="carousel-caption">The orthogonal and mosaic functional overlay viewer.</div></div><div class="item"><a href="./dualviewer.html" target="_blank"><img src="images/dualviewer.png" alt="Dual Viewer Tool"><div class="carousel-caption">A dual registration viewer with linked cursors.</div></div>
+index.js:87 
+
+
       </div>
     </div>
   </div>
