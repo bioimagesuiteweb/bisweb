@@ -57,6 +57,13 @@ self.addEventListener('install', e => {
           '/viewer.css',
           '/viewer.html',
           '/webcomponents-lite.js',
+          '/images/gray_highres_groupncut150_right5_left1_emily_reord_new.nii.gz',
+          '/images/lobes_left.json',
+          '/images/lobes_right.json',
+          '/images/Reorder_Atlas.nii.gz',
+          '/images/shen.json',
+          '/images/pos_mat.txt',
+          '/images/neg_mat.txt',
       ])
       .then(() => self.skipWaiting());
     })
