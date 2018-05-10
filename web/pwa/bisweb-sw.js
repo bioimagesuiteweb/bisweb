@@ -37,7 +37,6 @@ self.addEventListener('install', e => {
                 'images/editor.png',
                 'images/favicon.ico',
                 'images/mni2tal.png',
-                'images/mosaic.png',
                 'images/overlayviewer.png',
                 'images/paravision.png',
                 'images/sampleanat.nii.gz',
