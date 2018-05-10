@@ -147,12 +147,17 @@ var createHTML=function(toolname,outdir,libjs,commoncss) {
 
     console.log(getTime()+colors.green(' Building HTML '+mainhtml));
     var alljs;
-    if (libjs!=='')
-	alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'bootstrap.min.js', 'libbiswasm_wasm.js', libjs  ];
-    else
+    if (libjs!=='') {
+        if (toolname!=="index") {
+	    alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'bootstrap.min.js', 'libbiswasm_wasm.js', libjs  ];
+        } else {
+	    alljs=[ 'jquery.min.js', 'bootstrap.min.js', libjs  ];
+            bundlecss=[ "./bootstrap_dark_edited.css" ];
+        }
+    } else {
 	alljs = [ 'jquery.min.js', 'bootstrap.min.js' ];
+    }
 
-    
     return gulp.src([ mainhtml ])
     	.pipe(htmlreplace({
 	    'js': alljs,
