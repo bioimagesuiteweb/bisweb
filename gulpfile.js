@@ -281,7 +281,7 @@ gulp.task('commonfiles', function() {
     gulp.src('./web/biswebdropbox.html').pipe(gulp.dest(options.outdir));
     gulp.src([ 'lib/fonts/*']).pipe(gulp.dest(options.outdir+'/fonts/'));
     gulp.src([ 'web/pwa/*.png']).pipe(gulp.dest(options.outdir));
-    gulp.src([ 'web/pwa/service-worker.js']).pipe(gulp.dest(options.outdir));
+    gulp.src([ 'web/pwa/bisweb-sw.js']).pipe(gulp.dest(options.outdir));
     gulp.src([ 'web/pwa/manifest.json']).pipe(gulp.dest(options.outdir));
     gulp.src('./web/bispreload.js').pipe(gulp.dest(options.outdir));
     gulp.src('./web/biselectron.js').pipe(gulp.dest(options.outdir));
