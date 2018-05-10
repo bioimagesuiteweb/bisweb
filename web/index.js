@@ -38,17 +38,17 @@ let createIndex=function(obj) {
     let indicators=$(".carousel-indicators");
     let topmenu=$("#topappmenu");
 
-    menu.empty();
-
     let bb=$(`<div align="center" style="padding:15px;  right:5.5vw; top:570px; border-radius:30px;background-color:#221100; z-index:5000; position: absolute; color:#ffffff">
          Version: ${bisdate}</div>`);
 
     $('body').append(bb);
-    container.empty();
     indicators.empty();
     
     let keys=Object.keys(obj);
     let max=keys.length;
+
+    let imagestring="";
+    let menustring="";
     
     for (let i=0;i<max;i++) {
         let elem=obj[keys[i]];
@@ -65,18 +65,10 @@ let createIndex=function(obj) {
             if (i===0)
                 cname=" active";
             
-            let a='<div class="item'+cname+'">'+
-                '<a href="'+url+'" target="_blank"><img src="'+picture+'">'+
-                '<div class="carousel-caption">'+description+
-                '</div>'+
-                '</div>';
-            container.append($(a));
+            let a=`<div class="item${cname}"><a href="${url}" target="_blank"><img src="${picture}" alt="${title}"><div class="carousel-caption">${description}</div></div>`;
+            imagestring+=a;
             
-            //            menu.append($('<li><a  href="'+url+'" target="_blank" role="button"><B>'+
-            //                        title+'</B></a></li>'));
-
-            topmenu.append($('<li><a  href="'+url+'" target="_blank" role="button">'+
-                             title+'</a></li>'));
+            menustring+=`<li><a  href="${url}" target="_blank" role="button">${title}</a></li>`;
 
             let b='<li data-target="#mycarousel" data-slide-to="'+i+'"';
             if (i===0)
@@ -86,6 +78,12 @@ let createIndex=function(obj) {
         }
     }
 
+    container.empty();
+    container.append($(imagestring));
+    topmenu.empty();
+    topmenu.append($(menustring));
+
+
     if (typeof window.BIS !=='undefined')
         $("#devmenu").append(`<li><a href="./biswebtest.html" target="_blank">Run Regression Tests</a></li>`);
     else
@@ -93,21 +91,12 @@ let createIndex=function(obj) {
 
 };
 
-/*let parsejson = function(text) {
-    
-    let obj;
-    try {
-        obj=JSON.parse(text);
-    } catch(e) {
-        obj=null;
-        console.log('Failed to parse JSON');
-        return;
-    }
-*/
 
 let initialize=function() {
 
-    createIndex(tools.tools);
+    setTimeout(
+        createIndex(tools.tools),
+        10);
 
     // Remove all previous alerts -- only one is needed
     
@@ -128,40 +117,15 @@ let initialize=function() {
         interval : 4000,
         wrap : true
     });
-    //  $('.carousel').carousel('cycle');
     $('body').css({"background-color":"rgb(28,45,64)"});
 };
 
-let readtextdata = function (url, loadedcallback, errorcallback) {
-
-    let xhr = new XMLHttpRequest();
-    xhr.open('GET', url, true);
-    xhr.responseType = 'text';
-
-    xhr.onload = function () {
-        if (this.status == 200) {
-            loadedcallback(xhr.response, url);
-        } else {
-            errorcallback('failed toread ' + url);
-        }
-        return false;
-    };
-
-    xhr.onerror = function () {
-        errorcallback('Failed to get url=' + url);
-    };
-
-    xhr.send();
-    return false;
-
-};
 
 class ApplicationSelectorElement extends HTMLElement {
 
 
     
     connectedCallback() {
-        //        readtextdata('./bislist.txt',parsejson,console.log);
         initialize();
     }
 }
