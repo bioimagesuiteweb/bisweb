@@ -21,6 +21,7 @@
 const $ = require('jquery');
 const webutil = require('bis_webutil.js');
 const d3 = require('d3'); // jshint ignore:line
+const io = require('bis_genericio.js');
 
 /**
  * Tree viewer is an HTML Element designed to display inputs in a hierarchical fashion based on their relationship to each other.
@@ -115,6 +116,11 @@ class TreeViewer extends HTMLElement {
             this.loadNetworkFromFile();
         });
 
+        exportTreeButton.on('click', (e) => {
+            e.preventDefault();
+            this.writeNetworkToFile();
+        });
+
         //remove 'close' button
         $(this.modalFrame.footer).find('.btn').remove();
 
@@ -134,12 +140,10 @@ class TreeViewer extends HTMLElement {
 
         //bind events dispatched from execute and undo functions of modules
         document.addEventListener('updateTree', (e) => {
-            console.log('hello from updateTree', e);
             this.addNode(e.detail);
         });
 
         document.addEventListener('undoTree', () => {
-            console.log('hello from undoTree');
             this.undoNode();
         });
 
@@ -299,7 +303,6 @@ class TreeViewer extends HTMLElement {
         this.createTabs();
         let that = this;
 
-        console.log('flat network', this.flattenedNetwork);
         for (let i = 0; i < this.flattenedNetwork.length; i++) {
             let tree = this.flattenedNetwork[i];
 
@@ -342,6 +345,7 @@ class TreeViewer extends HTMLElement {
                         }
                     })
                     .on('dblclick', function (d) {
+                        console.log('node', d);
                         that.displayNode(d.id);
                     });
             
@@ -748,7 +752,45 @@ class TreeViewer extends HTMLElement {
     }
 
     writeNetworkToFile() {
+        //create a new network identical to this.network and save it to disk
+        let saveNetwork = [];
 
+        //removes extraneous fields from node and serializes the node's data, if it has any.
+        let sanitizeNode = (node) => {
+
+            //object destructuring literals inside an anonymous function, applied immediately.
+            //https://stackoverflow.com/questions/17781472/how-to-get-a-subset-of-a-javascript-objects-properties?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
+            let newNode = ( ({ name, class: objclass, children, data }) => ( {name, class: objclass, children, data}))(node);
+            if (newNode.data) {
+                newNode.data = newNode.data.serializeToJSON();
+            }
+
+            if (newNode.children) {
+                for (let i = 0; i < newNode.children.length; i++) {
+                    newNode.children[i] = sanitizeNode(newNode.children[i]);
+                }
+            }
+
+            return newNode;
+        };
+
+        for (let tree of this.network) {
+
+            let newRoot = ( ({ name, class : objclass, networkName, children, data }) => ({ name, class: objclass, networkName, children, data }) )(tree);
+            if (newRoot.children) {
+                for (let i = 0; i < newRoot.children.length; i++) {
+                    newRoot.children[i] = sanitizeNode(newRoot.children[i]);
+                }
+            }
+
+            saveNetwork.push(newRoot);
+        }
+
+        let saveObj = { 'network' : saveNetwork};
+        let outstring = JSON.stringify(saveObj);
+        
+        let currentTime = new Date().toJSON().slice(0,10);
+        io.write('Tree saved on ' + currentTime, outstring);
     }
 }
 
