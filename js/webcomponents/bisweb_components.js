@@ -137,7 +137,6 @@ class ViewerWidgetElement extends HTMLElement {
     // Fires when an instance of the element is created.
     connectedCallback() {
 				let margin=this.getAttribute('bis-margin') || '65px';
-				console.log('here');
 				$(this).css({
 						'position' : 'relative',
 						'width' : '800px',
