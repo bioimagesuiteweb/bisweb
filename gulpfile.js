@@ -98,7 +98,7 @@ if (options.debug!==0) {
 // -----------------------------------------------------------------------------------------
 
 let internal = {
-    tooldescriptionfile : './web/images/tools.json',
+    tooldescriptionfile : './web/bislist.txt',
     dependcss : [ 
         "./lib/css/bootstrap_dark_edited.css", 
         "./lib/css/bootstrap-colorselector.css",
@@ -290,6 +290,7 @@ gulp.task('commonfiles', function() {
     gulp.src([ 'web/pwa/*.json']).pipe(gulp.dest(options.outdir));
     gulp.src('./web/bispreload.js').pipe(gulp.dest(options.outdir));
     gulp.src('./web/biselectron.js').pipe(gulp.dest(options.outdir));
+    gulp.src('./web/bislist.txt').pipe(gulp.dest(options.outdir));
     gulp.src('./web/package.json').pipe(gulp.dest(options.outdir));
     gulp.src('./web/biscommon.css').pipe(gulp.dest(options.outdir));
     gulp.src('./lib/js/webcomponents-lite.js').pipe(gulp.dest(options.outdir));

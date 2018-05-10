@@ -355,7 +355,7 @@ app.on('window-all-closed', function() {
 // initialization and is ready to create browser windows.
 app.on('ready', function() {
 
-    var tooldescriptionfile=path.resolve(__dirname + '/images/tools.json');
+    var tooldescriptionfile=path.resolve(__dirname + '/bislist.txt');
     var tlines=fs.readFileSync(tooldescriptionfile);
     var setup=JSON.parse(tlines);
     var keys=Object.keys(setup.tools);

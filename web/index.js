@@ -158,7 +158,7 @@ class ApplicationSelectorElement extends HTMLElement {
 
     
     connectedCallback() {
-        readtextdata('images/tools.json',parsejson,console.log);
+        readtextdata('./bislist.txt',parsejson,console.log);
     }
 }
 
