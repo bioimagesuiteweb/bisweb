@@ -159,6 +159,7 @@ var createHTML=function(toolname,outdir,libjs,commoncss) {
 
     <script type="text/javascript">
     // is service worker supported?
+if (typeof (window.BISELECTRON) === "undefined") {
     if('serviceWorker' in navigator) {
         // service worker registered
         navigator.serviceWorker.register('/webapp/service-worker.js', { scope: '/webapp/' })
@@ -172,6 +173,7 @@ var createHTML=function(toolname,outdir,libjs,commoncss) {
             // console.log('service worker ready');
         });
     }
+}
     </script>`
 
 	}))
