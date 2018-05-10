@@ -1,10 +1,5 @@
 #form {
     margin-top: 10px;
-    margin-left: 5vw;
-}
-
-.toph4 {
-    margin-left: 5vw;
 }
 
 .testhead {
@@ -48,13 +43,14 @@
     margin-left : 20px;
     margin-right : 20px;
     margin-bottom: 100px;
+    font-size : 14px;
 }
 
 #results {
     margin-top : 15px;
     margin-left : 5vw;
     font-family: monospace;
-    font-size: 18px;
+    font-size: 14px;
     color : yellow
 }
 
@@ -68,6 +64,7 @@ pre {
     margin-left : 20px;
     margin-right : 20px;
     background-color : #000000;
+    font-size : 12px;
 }
 
 .passed {

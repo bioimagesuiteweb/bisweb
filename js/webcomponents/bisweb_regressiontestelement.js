@@ -27,7 +27,9 @@ const webutil=require('bis_webutil');
 const systemprint=console.log;
 const bis_genericio=require('bis_genericio');
 const userPreferences = require('bisweb_userpreferences.js');
+const bisdate=require('bisdate.js').date;
 
+import module_testlist from '../../test/module_tests.json';
 let replacing=false;
 let logtext="";
 let extradir="";
@@ -223,7 +225,7 @@ const execute_compare=function(module,test) {
 
         console.log('====\n============================================================\n');
         console.log(`==== C o m p a r i n g  ${test_type}  u s i n g  ${comparison} and  t h r e s h o l d=${threshold}.\n====`);
-        let c=`<H4>Comparing   ${test_type} using ${comparison} and threshold=${threshold}</H4>`;
+        let c=`<B>Comparing   ${test_type} using ${comparison} and threshold=${threshold}</B>`;
 
         const orig_test_type=test_type;
         
@@ -280,12 +282,12 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') { 
     const main=$('#main');
     main.empty();
     if (testname!=="None") {
-        main.append('<H2>Running Tests</H2>');
+        main.append('<H3>Running Tests</H3>');
         main.append(`Executing tests ${firsttest}:${lasttest} (Max index=${testlist.length-1}).`);
         if (testname!=="All")
             main.append(`Only runnng tests with name=${testname}<HR>`);
     } else {
-        main.append('<H2>Listing Tests</H2><HR>');
+        main.append('<H3>Listing Tests</H3><HR>');
     }
 
 
@@ -301,7 +303,7 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') { 
         if (testname==='All' || testname.toLowerCase()===name.toLowerCase()) {
 
             run=run+1;
-            main.append(`<H3 class="testhead">Running Test ${i}: ${name}</H3><p><UL><LI> Command: ${v.command}</LI><LI> Test details: ${v.test}</LI><LI> Should pass: ${v.result}</LI>`);
+            main.append(`<H4 class="testhead">Test ${i}: ${name}</H4><p><UL><LI> Command: ${v.command}</LI><LI> Test details: ${v.test}</LI><LI> Should pass: ${v.result}</LI>`);
             console.log(`-------------------------------`);
             console.log(`-------------------------------\nRunning test ${i}: ${v.command}, ${v.test},${v.result}\n------------------------`);
             replacesystemprint(true);
@@ -345,7 +347,7 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') { 
         const webconsole=$('#results');
         webconsole.empty();
         let numtests=lasttest-firsttest+1;
-        webconsole.append(`Tests completed=${run}/${numtests}, passed=${good}/${numtests}, failed=${bad}/${numtests}, skipped=${skipped}/${numtests}`);
+        webconsole.append(`Tests for version=${bisdate}: completed=${run}/${numtests}, passed=${good}/${numtests}, failed=${bad}/${numtests}, skipped=${skipped}/${numtests}`);
     }
 
     if (testname!=="None") {
@@ -361,48 +363,18 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') { 
 
 };  // jshint ignore:line
 
-let initialize=function(txt) {
+let initialize=function(data) {
 
-    const topform=$(`
-<H4 class="toph4">BioImage Suite Web Regression Test Runner v0.9.1</H4>
-    <div id="top">
-      
-      <form class="form-inline" id="form">
-        <label for="weight">First:</label>
-        <input type="number" step="1"  id="first" placeholder="0">
-        <label for="height">Last:</label>
-        <input type="number" step="1"  id="last" placeholder="5">
-        <label for="">Testname:</label>
-        <select id="testselect">
-          <option value="None" style="color:#dddddd">List (but not run) tests</option>
-          <option value="All"  style="color:red">Test all modules</option>
-        </select>
+    
 
-        <button class="btn-small btn-primary" type="submit" id="compute">Run Tests</button>
-      </form>
-    </div>
-`);
 
-    let menubar = document.querySelector("#topmenubar").getMenuBar();
-    let parent=menubar.parent();
-    parent.prepend(topform);
-    menubar.remove();
-
+    
     if (typeof window.BIS ==='undefined') {
         let logo=$('#bislogo').parent();
         logo.attr('href','../index.html');
     }
 
-    
-    
     biswrap.initialize();
-    console.log('Read file:', extradir+'module_tests.json');
-    let data=null;
-    try {
-        data=JSON.parse(txt);
-    } catch(e) {
-        throw new Error('Failed to parse ',extradir+'module_tests.json');
-    }
     
     let testlist=data.testlist;
     console.log('There are ',testlist.length,' tests');
@@ -436,8 +408,6 @@ let initialize=function(txt) {
     var fixRange=function(targetname) {
 
         let target=$(targetname);
-
-        console.log('targ=',target);
         let val=target.val();
         if (val<0)
             val=0;
@@ -475,51 +445,28 @@ let initialize=function(txt) {
 
 var startFunction = (() => {
 
+    let inelectron=false;
     if (webutil.inElectronApp()) {
         $('#cnote').remove();
+        inelectron=true;
     }
     
     userPreferences.setImageOrientationOnLoad('None');
     console.log('Mode=',bis_genericio.getmode());
+
+    let devel=false;
     
-    bis_genericio.read(extradir+'module_tests.json').then( (obj) => {
-        console.log('++++ Read',obj.filename);
-        try {
-            initialize(obj.data);
-        } catch(e) {
-            console.log(e);
-        }
-        console.log('Done Initializing');
-        return;
-    }).catch( () => {
+    if (typeof window.BIS !=='undefined') {
+        devel=true;
+    }
+
+    if (devel)
         extradir="../test/";
-        console.log('\n\n\n Failed to read ',extradir+'module_tests.json, trying again with extradir='+extradir);
-        
-        bis_genericio.read(extradir+'module_tests.json').then( (obj) => {
-            console.log('++++ Read',obj.filename);
-            try {
-                initialize(obj.data);
-            } catch(e) {
-                console.log(e);
-            }
-        }).catch( () => {
-            extradir="./test/";
-            console.log('\n\n\n Failed to read ',extradir+'module_tests.json, trying again with extradir='+extradir);
-            
-            bis_genericio.read(extradir+'module_tests.json').then( (obj) => {
-                console.log('++++ Read',obj.filename);
-                try {
-                    initialize(obj.data);
-                } catch(e) {
-                    console.log(e);
-                }
-            }).catch((e) => {
-                console.log('Failed to read ',extradir+'module_tests.json.'+'\n'+e);
-            });
-        });
-    });
-    
-        
+    else if (inelectron)
+        extradir="./test/";
+    console.log(module_testlist);
+    console.log(`extradir=${extradir}, inelectron=${inelectron}, devel=${devel}`);
+    initialize(module_testlist);
 });
 
 
@@ -531,7 +478,6 @@ class RegressionTestElement extends HTMLElement {
     
     // Fires when an instance of the element is created.
     connectedCallback() {
-        console.log('RegressionTestElement Connected');
 	webutil.runAfterAllLoaded(startFunction);
     }
 }
