@@ -497,8 +497,8 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
 	    return;
 
 
-	event.preventDefault();
-	event.stopPropagation();
+	//event.preventDefault();
+	//event.stopPropagation();
 	
 	if ( _state === STATE.NONE ) {
 	    _state = event.button;
@@ -735,18 +735,20 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
     /** add event listeners */ 
     function addeventlisteners() {
 
-	_this.domElement.addEventListener( 'contextmenu', contextmenulistener,false);
-	_this.domElement.addEventListener( 'mousedown', mousedown, false );
+	_this.domElement.addEventListener( 'contextmenu', contextmenulistener, false);
+	_this.domElement.addEventListener( 'mousedown', mousedown,
+                                           { 'capture' : false, 'passive' : true }
+                                         );
 
-	_this.domElement.addEventListener( 'mousewheel', mousewheel, false );
-	_this.domElement.addEventListener( 'DOMMouseScroll', mousewheel, false ); // firefox
+	_this.domElement.addEventListener( 'mousewheel', mousewheel, { 'capture' : false, 'passive' : true } );
+	_this.domElement.addEventListener( 'DOMMouseScroll', mousewheel, { 'capture' : false, 'passive' : true } ); // firefox
 	
-	_this.domElement.addEventListener( 'touchstart', touchstart, false );
-	_this.domElement.addEventListener( 'touchend', touchend, false );
-	_this.domElement.addEventListener( 'touchmove', touchmove, false );
+	_this.domElement.addEventListener( 'touchstart', touchstart, { 'capture' : false, 'passive' : true } );
+	_this.domElement.addEventListener( 'touchend', touchend, { 'capture' : false, 'passive' : true } );
+	_this.domElement.addEventListener( 'touchmove', touchmove, { 'capture' : false, 'passive' : true } );
 	
-	window.addEventListener( 'keydown', keydown, false );
-	window.addEventListener( 'keyup', keyup, false );
+	window.addEventListener( 'keydown', keydown, { 'capture' : false, 'passive' : true } );
+	window.addEventListener( 'keyup', keyup, { 'capture' : false, 'passive' : true } );
     }
 
     /** This is a key function called before removing the controllers as otherwise
