@@ -197,7 +197,7 @@ class ConnectivityApplicationElement extends HTMLElement {
 				var helpmenu=webutil.createTopMenuBarMenu("Help",menubar);
 				webutil.createMenuItem(helpmenu,'About this application',function() {  control.about(); });
 				webutil.createMenuItem(helpmenu,''); // separator
-				helpmenu.append($("<li><a href=\"https://www.nitrc.org/frs/?group_id=51\" target=\"_blank\"\">Download Parcellation</a></li>"));
+				helpmenu.append($("<li><a href=\"https://www.nitrc.org/frs/?group_id=51\" target=\"_blank\" rel=\"noopener\" \">Download Parcellation</a></li>"));
 				webutil.createMenuItem(helpmenu,''); // separator
 				webutil.createMenuItem(helpmenu,'Load Sample Matrices',function() {
 						control.loadsamplematrices(['images/pos_mat.txt','images/neg_mat.txt']);
