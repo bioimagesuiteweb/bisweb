@@ -47,14 +47,11 @@
     <!-- external css files -->
     <!-- build:css -->
     <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_dark.css">
-    <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap-colorselector.css">
-    <link rel="stylesheet" type="text/css" href="biscommon.css">
     <!-- endbuild -->
 
     <!-- all javascript files -->
     <!-- build:js -->
     <script src="bis.js"></script>
-    <script src="../build/web/webcomponents-lite.js"></script>
     <script src="../build/web/jquery.min.js"></script>
     <script src="../build/web/bootstrap.min.js"></script>
     <script src="../build/web/index.js"></script>
@@ -93,7 +90,18 @@
             <a href='#' class='dropdown-toggle'  data-toggle='dropdown'
                role='button' aria-expanded='false'>Applications<span class='caret'></span></a>
             <ul class='dropdown-menu' role='menu' id='topappmenu'>
-              <li><a  href="./viewer.html" target="_blank" role="button">Orthogonal Viewer Tool</a></li><li><a  href="./connviewer.html" target="_blank" role="button">Connectivity Viewer</a></li><li><a  href="./mni2tal.html" target="_blank" role="button">MNI2TAL</a></li><li><a  href="./editor.html" target="_blank" role="button">Image Editor</a></li><li><a  href="./overlayviewer.html" target="_blank" role="button">Overlay Viewer</a></li><li><a  href="./dualviewer.html" target="_blank" role="button">Dual Viewer Tool</a></li>
+              <li><a  href="./viewer.html" target="_blank"
+                      role="button">Orthogonal Viewer Tool</a></li>
+              <li><a  href="./connviewer.html" target="_blank"
+                      role="button">Connectivity Viewer</a></li>
+              <li><a  href="./mni2tal.html" target="_blank"
+                      role="button">MNI2TAL</a></li>
+              <li><a  href="./editor.html" target="_blank" role="button">Image
+                  Editor</a></li>
+              <li><a  href="./overlayviewer.html" target="_blank"
+                      role="button">Overlay Viewer</a></li>
+              <li><a  href="./dualviewer.html" target="_blank"
+                      role="button">Dual Viewer Tool</a></li>
 
             </ul>
           </li>
@@ -146,17 +154,48 @@
   <div id="main">
     <div id="mycarousel" class="carousel slide" data-ride="carousel">
       
-      <!-- Indicators -->
       <ol class="carousel-indicators">
       </ol>
       
       <!-- Wrapper for slides -->
-      <div class="carousel-inner" role="listbox" align="center"
+      <div class="carousel-inner" align="center"
            id="bisslides">
-        <div class="item active"><a href="./viewer.html" target="_blank"><img src="images/viewer.png" alt="Orthogonal Viewer Tool"><div class="carousel-caption">The orthogonal viewer + image processing tool.</div></div><div class="item"><a href="./connviewer.html" target="_blank"><img src="images/connviewer.png" alt="Connectivity Viewer"><div class="carousel-caption">The fMRI connectivity display tool.</div></div><div class="item"><a href="./mni2tal.html" target="_blank"><img src="images/mni2tal.png" alt="MNI2TAL"><div class="carousel-caption">The MNI 2 Talairach Converter program.</div></div><div class="item"><a href="./editor.html" target="_blank"><img src="images/editor.png" alt="Image Editor"><div class="carousel-caption">The orthogonal viewer and editor.</div></div><div class="item"><a href="./overlayviewer.html" target="_blank"><img src="images/overlayviewer.png" alt="Overlay Viewer"><div class="carousel-caption">The orthogonal and mosaic functional overlay viewer.</div></div><div class="item"><a href="./dualviewer.html" target="_blank"><img src="images/dualviewer.png" alt="Dual Viewer Tool"><div class="carousel-caption">A dual registration viewer with linked cursors.</div></div>
-index.js:87 
+        <div class="item active"><a href="./viewer.html"
+                                    target="_blank"><img src="images/viewer.png" alt="Orthogonal Viewer Tool">
+            <div class="carousel-caption">The orthogonal viewer + image processing tool.</div>
+        </div>
 
+        <div class="item"><a href="./connviewer.html"
+                             target="_blank"><img src="images/connviewer.png"
+                                                  alt="Connectivity Viewer">
+            <div class="carousel-caption">The fMRI connectivity display
+              tool.</div>
+        </div>
 
+        <div class="item"><a href="./mni2tal.html"
+                             target="_blank"><img src="images/mni2tal.png"
+                                                  alt="MNI2TAL"><div class="carousel-caption">The MNI 2 Talairach
+              Converter program.</div></div>
+
+        <div class="item"><a href="./editor.html"
+                             target="_blank"><img src="images/editor.png"
+                                                  alt="Image Editor"><div class="carousel-caption">The orthogonal viewer and
+              editor.</div>
+        </div>
+
+        <div class="item"><a href="./overlayviewer.html"
+                             target="_blank"><img src="images/overlayviewer.png"
+                                                  alt="Overlay Viewer"><div class="carousel-caption">The orthogonal and mosaic
+              functional overlay viewer.</div>
+        </div>
+        
+        <div class="item"><a href="./dualviewer.html"
+                             target="_blank"><img src="images/dualviewer.png"
+                                                  alt="Dual Viewer
+                             Tool"><div class="carousel-caption">A dual
+              registration viewer with linked cursors.</div>
+        </div>
+        
       </div>
     </div>
   </div>
@@ -175,7 +214,7 @@ index.js:87
     <H4>Welcome to BioImage Suite <EM>Web</EM>.</h4>
 
     <UL>
-      <LI>Select any tool from the <span style="color:red">Applications</span> menu above, or simply click on the
+      <LI>Select any tool from the <span style="color:#ffff88">Applications</span> menu above, or simply click on the
 	    application picture, to open the application. Please visit 
         <a href="http://bisweb.yale.edu/binaries/binaries.html"
            target="_blank" rel="noopener">our download site</a> for commandline and
@@ -183,25 +222,24 @@ index.js:87
       
       <LI><B>This software is not approved for clinical use.  Use at your own risk.</B></LI>
       
-      <LI>We gratefully acknowledge
-        support from the <a href="https://www.braininitiative.nih.gov/"
-                            target="_blank" rel="noopener">NIH Brain Initiative</a> under grant R24 MH114805
-        (<EM>Papademetris X. and Scheinost D. PIs, Dept. of Radiology and
-        Biomedical Imaging, Yale School of Medicine.</EM>)</LI>
-      
       <LI>  BioImage
 	    Suite <EM>Web</EM> is written in Javascript and has been mostly
-	    tested on Google Chrome. All applications are running on your local
+	tested on Google Chrome. All applications are running on your local
 	      machine. <B>No data</B> is ever uploaded to any server.</LI>
-          
+
+      <LI> We gratefully acknowledge support from
+    the <a href="https://www.braininitiative.nih.gov/"
+           target="_blank">NIH Brain Initiative</a> under grant R24
+        MH114805 (<EM>Papademetris X. and Scheinost D. PIs, Dept. of
+          Radiology and Biomedical Imaging, Yale School of
+          Medicine.</EM>)</LI>
     </UL>
     <HR>
-    <p> If you are looking for the old desktop based BioImage Suite software you may download it from the <a href="https://medicine.yale.edu/bioimaging/suite/">
-        <span style="color: #ff8800;">Legacy BioImage Suite
-          Webpage<span></a>.
+    <p> If you are looking for the old desktop based BioImage Suite software you may download it from the <a href="https://medicine.yale.edu/bioimaging/suite/">Legacy BioImage Suite
+          Webpage</a>.
+
+
   </div>
-  <bisweb-applicationselector> </bisweb-applicationselector>
-  
   <!-- build:serviceworker-->
   <!-- endbuild-->
 
