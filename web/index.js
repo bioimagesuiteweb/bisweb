@@ -24,6 +24,7 @@ const $=require('jquery');
 const bisdate=require('bisdate.js').date;
 import tools from './images/tools.json';
 
+let serviceWorker=null;
 
 let inelectron=false;
 if (typeof (window.BISELECTRON) !== "undefined") {
@@ -88,6 +89,23 @@ let createIndex=function(obj) {
     else
         $("#devmenu").append(`<li><a href="./test/biswebtest.html" target="_blank">Run Regression Tests</a></li>`);
 
+    let newitem = $(`<li><a href="#">Update Application (Cache)</a></li>`);
+    $("#othermenu").append(newitem);
+    
+    newitem.click( (e) => {
+        setTimeout( () => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (serviceWorker)
+                serviceWorker.postMessage(JSON.stringify( {name : 'updateCache',
+                                                           data : 'userInput'
+                                                          }));
+        },10);
+    });
+        
+
+    
+
     let bb=$(`<div align="center" style="padding:15px;  right:5.5vw; top:570px; border-radius:30px;background-color:#221100; z-index:5000; position: absolute; color:#ffffff">
              Version: ${bisdate}</div>`);
     $('body').append(bb);
@@ -120,10 +138,46 @@ let initialize=function() {
 
 };
 
+var createserviceworker=function() {
+
+    return new Promise( (resolve,reject) => {
+        
+        let scope='/webapp/';
+        if (typeof window.BIS !=='undefined')
+            scope="/web/";
+        
+        // service worker registered
+        navigator.serviceWorker.register(`${scope}bisweb-sw.js`, { scope: scope })
+            .then(function(registration) {
+                serviceWorker = registration.active;
+                console.log(`____ bisweb -- service worker registered ${scope}`);
+            });
+
+        navigator.serviceWorker.addEventListener('message', function(event) {
+            console.log('Service worker says:',event.data);
+        });
+        
+        // service worker ready
+        navigator.serviceWorker.ready.then(function(registration) {
+            serviceWorker = registration.active;
+            console.log(`____ bisweb -- service worker ready, ${serviceWorker}`);
+            resolve();
+        }).catch( (e) => { reject(e) ; });
+    });
+}
 
 window.onload = (() => {
     $('body').css({"background-color":"rgb(28,45,64)"});
     initialize();
+    if (typeof (window.BISELECTRON) === "undefined" && ('serviceWorker' in navigator)) {
+        createserviceworker().then( () => {
+            console.log('Sending message');
+            serviceWorker.postMessage( JSON.stringify({
+                'name' : 'hello',
+                'data' : 'xenios',
+            }));
+        });
+    }
 });
 
 
