@@ -1,3 +1,7 @@
+This document contains [developer documentation](README.md) for
+[BioImage Suite Web](https://bioimagesuiteweb.github.io/webapp/). 
+
+---
 # Creating New BisWeb Modules in JS
 
 ## Introduction

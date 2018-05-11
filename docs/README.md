@@ -1,3 +1,12 @@
+This document contains developer documentation for
+[BioImage Suite Web](https://bioimagesuiteweb.github.io/webapp/). Follow this
+link
+[for the end-user documentation/manual](https://bioimagesuiteweb.github.io/bisweb-manual/).
+
+A web page version (as opposed to browsing the source) of this page can be found [at this link](https://bioimagesuiteweb.github.io/bisweb/).
+
+---
+
 # Introduction
 
 [NODE.JS]: https://nodejs.org/en/
@@ -18,13 +27,12 @@
 [EMSCRIPTEN]:http://kripken.github.io/emscripten-site/
 [EIGEN]:http://eigen.tuxfamily.org/index.php?title=Main_Page
 
-This document contains instructions for configuring BioImage Suite Web as well as some information on its background and motivation.
 
 BioImage Suite Web (BisWeb) is a web-based medical image analysis tool 
 geared towards processing neural images. We gratefully acknowledge support from
 the [NIH Brain Initiative](https://www.braininitiative.nih.gov/) under grant R24 MH114805 (Papademetris X. and Scheinost D. PIs).
 A good overview of the software can be found
-[in slides from a presentation at the 2018 NIH Brain Initiative Meeting](web/images/BioImageSuiteWeb_NIHBrainInitiativeMeeting_April2018.pdf),
+[in slides from a presentation at the 2018 NIH Brain Initiative Meeting](https://bioimagesuiteweb.github.io/webapp/images/BioImageSuiteWeb_NIHBrainInitiativeMeeting_April2018.pdf),
 which was the first public introduction of the software.
 
 The architecture of BioImage Suite Web is shown below:
@@ -37,7 +45,7 @@ The architecture of BioImage Suite Web is shown below:
 * Some background material on why JavaScript is the primary language for Biomage Suite Web in [WhyJS.md](WhyJS.md).
 * Aspects of JavaScript that are particularly relevant to the project in [AspectsofJS.md](AspectsOfJS.md).
 * How to program using the base BioImage Suite Web Libraries in JS in [BisWebJS.md](BisWebJS.md).
-* The interface from JavaScript to WebAssembly in [FromJStoWASMAndBack.md](FromJStoWASMAndBack.md).
+* The interface from JavaScript to WebAssembly in [JStoWASM.md](JStoWASM.md).
 * Using the base BioImage Suite Web libraries from Python in [BisWebPython.md](BisWebPython.md).
 * Using the base BioImage Suite Web libraries from Matlab in[BisWebMatlab.md](BisWebMatlab.md). This code is primitive compared to the rest of the code base and more importantly is __unsupported__. Use at your own risk!
 * Descriptions of the module architecture in two separate documents 
@@ -169,7 +177,7 @@ The source code for the project may be found on [Github](https://github.com/bioi
 
 ## Building the JS Code
 
-Assuming the steps above, the BioImageSuite Web code should be inside a folder named ``bisweb``. This will be used as the name of the root directory for the project, but the user may safely name this directory whatever he or she wants. 
+Assuming the steps above, the BioImageSuite Web code should be inside a folder named ``bisweb``. This will be used as the name of the root directory for the project, but you can name it whatever you'd like so long as you're consistent. 
 
     cd bisweb
 
@@ -253,6 +261,8 @@ Ubuntu and Debian support CMake through their built-in package manager, [``apt``
 On MacOS install CMake from [their website](https://cmake.org/download/) and then from the GUI follow the instructions under Tools | How to Install for CommandLine Use to install it for command line use. The easiest option is propabably to create symbolic links in ``/usr/local`` as follows:
 
     sudo "/Applications/CMake.app/Contents/bin/cmake-gui" --install
+    
+
 
 ### Installing Python v3.5 or later
 
@@ -288,7 +298,7 @@ First go to your source directory
 
     cd SOURCE_DIR
 
-Ensure createbuild.sh is executable (it should be!)
+Ensure createbuild.sh is executable
 
     chmod +x config/createbuild.sh  
 
@@ -556,3 +566,35 @@ Under WSL (Ubuntu) in CMake set the two variables (under advanced)
 This will instruct CMake to copy the output of the WebAssembly compilation (the three files `libbiswasm.js`, `libbiswasm_wasm.js` and `libbiswasm_wrapper.js` to 'c:\users\user\bisweb\build\wasm' each time they are regenerated. This is done automatically as a post-build rule within CMake. __This takes advantage of the fact that WASM results in completely platform-independent bytecode__, hence we can compile it one one platform and use it everywhere. The advent of WSL means that one does not need to fight with Windows tools and paths anymore. (Though it has been done, but the WSL solution is so much nicer!) Much of the initial testing of the Electron version of BioImage Suite Web was performed in exactly this dual platform setup.
 
 If you are not planning to modify the C++ code then you can simply build this once under WSL and just copy the three files above manually.
+
+---
+
+### Web-based Tests (_experimental_)
+
+__Browser__:
+
+To run tests in the browser (this applies only to the module tests) type
+
+      gulp serve
+
+Then navigate to:
+
+      http://localhost:8080/web/biswebtest.html
+
+Then select the tests to run and click `Run Tests` to execute.
+
+
+__Electron__:
+
+
+To run tests in Electron (this applies only to the module tests) type
+
+      gulp build 
+
+Then (assuming you are in the `src` directory) type:
+
+      electron web biswebtest
+
+Then select the tests to run and click `Run Tests` to execute.
+
+

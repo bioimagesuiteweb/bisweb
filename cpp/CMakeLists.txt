@@ -19,7 +19,7 @@ cmake_minimum_required(VERSION 3.5)
 
 PROJECT(BISWEB)
 
-SET (BISWEB_VERSION "0.9")
+SET (BISWEB_VERSION "0.9.1")
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Core Project
@@ -284,8 +284,10 @@ IF (BIS_A_EMSCRIPTEN)
       COMMAND webpack-cli --entry ${INSCRIPT} --config ${WEBPCONFIG} --output-path ${LIBRARY_OUTPUT_PATH} --output-filename ${item}
       )
     add_custom_target(${item} ALL DEPENDS ${OUTSCRIPT})
-    install (FILES ${OUTSCRIPT} DESTINATION bisweb/lib
-      PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
+    if (${item} MATCHES "bisweb.js")
+        install (FILES ${OUTSCRIPT} DESTINATION bisweb/lib
+          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
+    endif (${item} MATCHES "bisweb.js")
   ENDFOREACH(item ${WNAMELIST})
 
 

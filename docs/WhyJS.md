@@ -1,3 +1,8 @@
+This document contains [developer documentation](README.md) for
+[BioImage Suite Web](https://bioimagesuiteweb.github.io/webapp/). 
+
+---
+
 ## Why JavaScript ?
 
 ### A quick history

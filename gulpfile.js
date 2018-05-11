@@ -48,7 +48,9 @@ program
     .option('-p, --dopack <s>','dopackage 0=no, 1=electron-packager, 2=run inno or zip in addition')
     .option('-z, --dozip <s>','dozip')
     .option('--internal <n>','if 1 serve the internal directory as well',parseInt)
-
+    .option('--production <n>','if 1 serve the build directory as root',parseInt)
+    .option('--webworker <n>','if 1 build the webworker as well',parseInt)
+    .option('--light <n>','if 1 only build the main bislib.js library',parseInt)
     .parse(process.argv);
 
 
@@ -64,15 +66,22 @@ let options = {
     zip : program.dozip || 0,
     webworker : program.webworker || false,
     internal : parseInt(program.internal || 0) || 0,
+    production : parseInt(program.production ||0) ||0,
+    light : parseInt(program.light ||0) ||0,
 };
 
 
+// -----------------------------------------------------------------------------------------
+// Install and Zip Issues
 // Second pass to help with gulp zip and gulp package
+// -----------------------------------------------------------------------------------------
 const mainoption=program.rawArgs[2];
 if (mainoption=="zip")
     options.zip=1;
 if (mainoption=="package" && options.package===0)
     options.package=2;
+
+
 
 options.baseoutput=".";
 options.outdir+="/";
@@ -93,11 +102,10 @@ if (options.debug!==0) {
 }
 
 // -----------------------------------------------------------------------------------------
-// M A I N  P R O G R A M
+// M A I N  P R O G R A M Set internal structure with all parameters
 // -----------------------------------------------------------------------------------------
 
 let internal = {
-    tooldescriptionfile : './web/images/tools.json',
     dependcss : [ 
         "./lib/css/bootstrap_dark_edited.css", 
         "./lib/css/bootstrap-colorselector.css",
@@ -122,10 +130,13 @@ let internal = {
     bislib     : 'bislib.js',
     biscss     : 'bislib.css',
     indexlib   : 'index.js',
+    serviceworkerlib : 'bisweb-sw.js',
     webworkerlib  : 'webworkermain.js',
     serveroptions : { }
 };
 
+
+// Define server options
 internal.serveroptions = {
     "root" : path.normalize(__dirname)
 };
@@ -140,13 +151,21 @@ if (options.internal) {
     internal.myscripts.push('../internal/js/*/*.js');
     internal.myscripts.push('../internal/js/*.js');
     
-} 
+}
 
+if (options.production) {
+    internal.serveroptions = {
+        "root" : path.normalize(path.resolve(__dirname,'build/'))
+    };
+}
 
-let tlines=fs.readFileSync(internal.tooldescriptionfile);
-internal.setup=JSON.parse(tlines);
+// ---------------------------
+// Get Tool List
+// ---------------------------
+
+internal.setup=require('./web/images/tools.json');
 let keys=Object.keys(internal.setup.tools);
-console.log(bis_gutil.getTime()+colors.cyan(' Read '+internal.tooldescriptionfile+' versiontag='+bis_gutil.getVersionTag(internal.setup.version)+' tools='+keys));
+console.log(bis_gutil.getTime()+colors.cyan(' Config versiontag='+bis_gutil.getVersionTag(internal.setup.version)+' tools='+keys));
 
 if (options.inpfilename === "" || options.inpfilename === "all") {
     let obj=internal.setup.tools;
@@ -154,11 +173,44 @@ if (options.inpfilename === "" || options.inpfilename === "all") {
     options.inpfilename ='index,'+keys.join(",");
 } 
 
+// ------------------------
+// Define webpack jobs
+// ------------------------
+
+internal.webpackjobs = [ { path: './js/webcomponents/' , name: internal.bislib } ];
+if (options.inpfilename === 'index') {
+    internal.webpackjobs=[];
+    options.light=false;
+}
+
+if (!options.light) {
+    internal.webpackjobs.push({ path: './web/' ,  name : internal.indexlib });
+    internal.webpackjobs.push({ path: './web/' ,  name : internal.serviceworkerlib });
+
+    if (options.webworker) {
+        internal.webpackjobs.push(
+            { path : path.resolve(__dirname,'../internal/js/')+'/',
+              name : internal.webworkerlib,
+            });
+    }
+}
+
+// -------------------------------
+// Debug Info
+// -------------------------------
 
 if (options.debug!==0) {
     console.log(bis_gutil().getTime()+' read tool descriptions from '+colors.cyan(internal.tooldescriptionfile));
     console.log(bis_gutil().getTime()+' Scripts to process are '+colors.cyan(options.inpfilename));
 }
+
+// ------------------------------- ------------------------------- -------------------------------
+//
+// Preliminaries Over
+//
+// Define Tasks
+//
+// ------------------------------- ------------------------------- -------------------------------
 
 // ------------------ JSHint ------------------
 gulp.task('jshint', function() {
@@ -188,7 +240,6 @@ gulp.task('singleHTML', function() {
 });
 
 
-
 gulp.task('singleCSS', function() {
     let toolname=internal.toolarray[internal.csscounter];
     let maincss    = './web/'+toolname+'.css';
@@ -196,28 +247,41 @@ gulp.task('singleCSS', function() {
     bis_gutil.createCSSCommon([maincss],toolname+'.css',options.outdir);
 });
 
+gulp.task('date', function() {
+    bis_gutil.createDateFile(path.resolve(options.outdir,'bisdate.json'));
+});
+
+gulp.task('date2', function() {
+    bis_gutil.createDateFile(path.resolve(options.outdir,'../wasm/bisdate.js'));
+});
+
 gulp.task('webpack', function(done) {
 
-    bis_gutil.createDateFile(path.resolve(options.outdir,'../wasm/bisdate.js'));
-    bis_gutil.runWebpackCore('./js/webcomponents/'+internal.bislib,options.internal,
-                             internal.bislib,__dirname,
-                             options.minify,options.outdir,function() {
-
-                                 bis_gutil.runWebpackCore('./web/'+internal.indexlib,options.internal,
-                                                          internal.indexlib,__dirname,
-                                                          options.minify,options.outdir,function() {
-                                                              
-                                                              if (options.webworker)
-                                                                  bis_gutil.runWebpackCore('./js/modules/'+internal.webworkerlib,options.internal,
-                                                                                           internal.webworkerlib,__dirname,
-                                                                                           options.minify,options.outdir,function() {
-                                                                                               done();
-                                                                                           });
-                                                              else
-                                                                  done();
-                                                          });
+    runSequence('date', 'date2', ( () => { 
+        bis_gutil.runWebpack(internal.webpackjobs,
+                             options.internal,
+                             __dirname,
+                             options.minify,
+                             options.outdir,0).then( () => {
+                                 console.log(bis_gutil.getTime()+' webpack done num jobs=',internal.webpackjobs.length);
+                                 done();
                              });
+    }));
 });
+
+
+gulp.task('buildtest',function() {
+
+    let testoutdir=path.resolve(path.join(options.outdir,'test'));
+    console.log('Test output dir=',testoutdir);
+    gulp.src(['./test/testdata/**/*']).pipe(gulp.dest(testoutdir+'/testdata'));
+    gulp.src('./web/images/bioimagesuite.png').pipe(gulp.dest(testoutdir+'/images'));
+    gulp.src('./test/module_tests.json').pipe(gulp.dest(testoutdir));
+    bis_gutil.createTestHTML('biswebtest',testoutdir,'../bislib.js',internal.biscss);
+    bis_gutil.createCSSCommon([ './web/biswebtest.css'] ,'biswebtest.css',testoutdir);
+
+});
+
 
 gulp.task('css', function() {
     bis_gutil.createCSSCommon(internal.dependcss,internal.biscss,options.outdir);
@@ -230,22 +294,17 @@ gulp.task('serve', function() {
     for (let i=0;i<internal.myscripts.length;i++) {
         gulp.watch(internal.myscripts[i], ['jshint']);
     }
-    let mydone=function() {
-        console.log('webpack killed');
-    };
 
     bis_gutil.createDateFile(path.resolve(options.outdir,'../wasm/bisdate.js'));
+//    bis_gutil.createDateFile(path.resolve(options.outdir,'../web/bisdate.json',1));
 
-    
-    bis_gutil.runWebpackCore('./js/webcomponents/'+internal.bislib,options.internal,
-                             internal.bislib,__dirname,
-                             options.minify,options.outdir,mydone,1);
-
-/*    if (options.webworker!==false)
-        bis_gutil.runWebpackCore('./js/modules/'+internal.webworkerlib,
-                                 internal.webworkerlib,__dirname,
-                                 options.minify,options.outdir,mydone,1);*/
-
+    bis_gutil.runWebpack(internal.webpackjobs,
+                         options.internal,
+                         __dirname,
+                         options.minify,
+                         options.outdir,1).then( () => {
+                             console.log('webpack killed');
+                         });
 });
 
 
@@ -262,10 +321,13 @@ gulp.task('commonfiles', function() {
     gulp.src([ 'web/images/**/*']).pipe(gulp.dest(options.outdir+'/images/'));
     gulp.src('./web/biswebdropbox.html').pipe(gulp.dest(options.outdir));
     gulp.src([ 'lib/fonts/*']).pipe(gulp.dest(options.outdir+'/fonts/'));
+    gulp.src([ 'web/manifest.json']).pipe(gulp.dest(options.outdir));
     gulp.src('./web/bispreload.js').pipe(gulp.dest(options.outdir));
     gulp.src('./web/biselectron.js').pipe(gulp.dest(options.outdir));
+    gulp.src('./web/bislist.txt').pipe(gulp.dest(options.outdir));
     gulp.src('./web/package.json').pipe(gulp.dest(options.outdir));
     gulp.src('./web/biscommon.css').pipe(gulp.dest(options.outdir));
+    gulp.src('./lib/css/bootstrap_dark_edited.css').pipe(gulp.dest(options.outdir));
     gulp.src('./lib/js/webcomponents-lite.js').pipe(gulp.dest(options.outdir));
     gulp.src('./node_modules/jquery/dist/jquery.min.js').pipe(gulp.dest(options.outdir));
     gulp.src('./node_modules/bootstrap/dist/js/bootstrap.min.js').pipe(gulp.dest(options.outdir));
@@ -293,6 +355,7 @@ gulp.task('build', function(callback) {
 
     runSequence('commonfiles',
                 'tools',
+                'buildtest',
                 callback);
 });
 
@@ -316,27 +379,29 @@ gulp.task('package', function(done) {
                 done);
 });
 
-let cleanfiles = function() {
-    let arr = [options.outdir+'#*',
-               options.outdir+'*~',
-               options.outdir+'*.js*',
-               options.outdir+'*.wasm',
-               options.outdir+'*.png',
-               options.outdir+'*.html*',
-               options.outdir+'*.css*',
-               options.outdir+'css/*',
-               options.outdir+'fonts/*',
-               options.outdir+'images/*',
-               options.outdir+'doc/*',
-               options.outdir+'node_modules',
-               options.distdir+"/*",
-              ];
-
-    console.log(bis_gutil.getTime()+' Cleaning files ***** .');
-    return del(arr);
-};
 
 gulp.task('clean', function() {
+
+    let cleanfiles = function() {
+        let arr = [options.outdir+'#*',
+                   options.outdir+'*~',
+                   options.outdir+'*.js*',
+                   options.outdir+'*.wasm',
+                   options.outdir+'*.png',
+                   options.outdir+'*.html*',
+                   options.outdir+'*.css*',
+                   options.outdir+'css/*',
+                   options.outdir+'fonts/*',
+                   options.outdir+'images/*',
+                   options.outdir+'doc/*',
+                   options.outdir+'node_modules',
+                   options.outdir+'test',
+                   options.distdir+"/*",
+                  ];
+        
+        console.log(bis_gutil.getTime()+' Cleaning files ***** .');
+        return del(arr);
+    };
     return cleanfiles();
 });
 
@@ -352,8 +417,6 @@ gulp.task('doc', function(done) {
     runSequence('jsdoc','cdoc',done);
 
 });
-
-// -----------------------------------------------------------------------------------------------------
 
 gulp.task('default', function(callback) {
     runSequence('build',callback);

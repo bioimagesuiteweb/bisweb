@@ -6,7 +6,7 @@ support from the [NIH Brain Initiative](https://www.braininitiative.nih.gov/)
 under grant R24 MH114805 (Papademetris X. and Scheinost D. PIs).
 
 A good overview of the software can be found
-[in slides from a presentation at the 2018 NIH Brain Initiative Meeting](web/images/BioImageSuiteWeb_NIHBrainInitiativeMeeting_April2018.pdf),
+[in slides from a presentation at the 2018 NIH Brain Initiative Meeting](https://bioimagesuiteweb.github.io/webapp/images/BioImageSuiteWeb_NIHBrainInitiativeMeeting_April2018.pdf),
 which was the first public introduction of the software.
 
 BioimageSuite Web is a hybrid application and toolkit. It contains a set of
@@ -19,11 +19,10 @@ can be found
 at [https://bioimagesuiteweb.github.io/webapp/](https://bioimagesuiteweb.github.io/webapp/).
 You may also download desktop and command line versions from [our download side](http://bisweb.yale.edu/binaries).
 
-The current _draft_ user documentation can be found
-[in the manual repository](https://github.com/bioimagesuiteweb/manual).
+For end-user documentation please see the [User Manual (_Draft_)](https://bioimagesuiteweb.github.io/bisweb-manual/). (The sources for this are also on github at [the manual repository](https://github.com/bioimagesuiteweb/bisweb-manual).)
 
-For developer documentation please look in the [doc](doc) directory of this
-repository, starting with [doc/README.md](doc/README.md).
+For developer documentation please look in the [docs](docs) directory of this
+repository, starting with [docs/README.md](docs/README.md).
 
 __Licensing__: The source code of the core BioImage Suite Web (as found in
 this repository) is made available freely under the terms of the

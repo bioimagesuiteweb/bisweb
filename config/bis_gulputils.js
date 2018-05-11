@@ -28,10 +28,13 @@ let colors=require('colors/safe'),
     gulpzip = require('gulp-zip'),
     template=require('gulp-template'),
     del = require('del'),
-    gulp=require("gulp");
+    gulp=require("gulp"),
+    pwaconfig=require('../web/pwa/pwa_config.js');
+
+//console.log(pwaconfig);
 
 
-var getTime=function() {
+var getTime=function(nobracket=0) {
     //    http://stackoverflow.com/questions/7357734/how-do-i-get-the-time-of-day-in-javascript-node-js
 
     var date = new Date();
@@ -45,10 +48,12 @@ var getTime=function() {
     var sec  = date.getSeconds();
     sec = (sec < 10 ? "0" : "") + sec;
 
-    return  "[" + hour + ":" + min + ":" + sec +"]";
+    if (nobracket===0)
+        return  "[" + hour + ":" + min + ":" + sec +"]";
+    return  hour + ":" + min + ":" + sec;
 };
 
-var getDate=function() {
+var getDate=function(sep="_") {
     //    http://stackoverflow.com/questions/7357734/how-do-i-get-the-time-of-day-in-javascript-node-js
 
     var date = new Date();
@@ -57,7 +62,7 @@ var getDate=function() {
     month = (month < 10 ? "0" : "") + month;
     var day  = date.getDate();
     day = (day < 10 ? "0" : "") + day;
-    return  year+"_"+month+"_"+day;
+    return  year+sep+month+sep+day;
 };
 
 var getDate2=function() {
@@ -86,9 +91,9 @@ var getVersionTag=function(version) {
     return version+"_"+getDate();
 };
 
-var executeCommand=function(command,dir,done=0) {
+var executeCommand=function(command,dir,done=0,error=0,extra=0) {
     dir = dir || __dirname;
-    console.log(getTime()+" "+colors.green(dir+">")+colors.red(command+'\n'));
+    console.log(getTime()+" "+colors.green(dir+">")+colors.cyan(command+'\n'));
 
     if (done===0) {
 	let out="";
@@ -99,24 +104,53 @@ var executeCommand=function(command,dir,done=0) {
 	}
 	return out;
     }
+
+    while (extra>3)
+        extra=extra-4;
+        
+    let colorfn=colors.yellow;
+    if (extra===1)
+        colorfn=colors.magenta;
+    if (extra===2)
+        colorfn=colors.gray;
+    if (extra===3)
+        colorfn=colors.green;
     
     try { 
 	let proc=child_process.exec(command, { cwd : dir });
-	proc.stdout.on('data', function(data) { process.stdout.write(colors.yellow(data.trim()+'\n'));});
+	proc.stdout.on('data', function(data) { process.stdout.write(colorfn(data.trim()+'\n'));});
 	proc.stderr.on('data', function(data) { process.stdout.write(colors.red(data+'\n'));});
 	proc.on('exit', function() { console.log(''); done();});
     } catch(e) {
 	console.log(' error '+e);
+        if (error)
+            error(e);
     }
 };
 
+
+var executeCommandPromise=function(command,dir,extra="") {
+
+    return new Promise( (resolve,reject) => {
+        let done=function() {
+            resolve();
+        }
+        let error=function(e) {
+            reject(e);
+        }
+
+        executeCommand(command,dir,done,error,extra);
+    });
+}
+
+// -------------------------------------------------------------
 
 var executeCommandList=function(cmdlist,indir,done=0) {
 
     if (done===0) {
 	console.log('here ...');
 	for (let i=0;i<cmdlist.length;i++) {
-	    executeCommand(cmdlist[i],indir,0);
+	    executeCommand(cmdlist[i],indir,0,0,i);
 	}
 	return;
     }
@@ -126,7 +160,7 @@ var executeCommandList=function(cmdlist,indir,done=0) {
 	if (i==cmdlist.length) {
 	    done();
 	} else {
-	    executeCommand(cmdlist[i],indir,execlist);
+	    executeCommand(cmdlist[i],indir,execlist,0,i);
 	    ++i;
 	}
     }
@@ -144,16 +178,42 @@ var createHTML=function(toolname,outdir,libjs,commoncss) {
 
     console.log(getTime()+colors.green(' Building HTML '+mainhtml));
     var alljs;
-    if (libjs!=='')
-	alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'bootstrap.min.js', 'libbiswasm_wasm.js', libjs  ];
-    else
+    if (libjs!=='') {
+        if (toolname!=="index") {
+	    alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'bootstrap.min.js', 'libbiswasm_wasm.js', libjs  ];
+        } else {
+	    alljs=[ 'jquery.min.js', 'bootstrap.min.js', libjs  ];
+            bundlecss=[ "./bootstrap_dark_edited.css" ];
+        }
+    } else {
 	alljs = [ 'jquery.min.js', 'bootstrap.min.js' ];
+    }
 
+    return gulp.src([ mainhtml ])
+    	.pipe(htmlreplace({
+	    'js': alljs,
+	    'css': bundlecss,
+            'manifest' : pwaconfig.manifest,
+            'serviceworker' : pwaconfig.serviceworker
+	})).pipe(gulp.dest(outdir));
+};
+
+var createTestHTML=function(toolname,outdir,libjs,commoncss) {
+
+    if (toolname==="bisjs")
+	return;
+    
+    var mainhtml   = path.normalize(path.join(__dirname,'../web/'+toolname+'.html'));
+    var bundlecss  = '../'+commoncss;
+
+    console.log(getTime()+colors.green(' Building HTML '+mainhtml));
+    let alljs=[ '../webcomponents-lite.js', '../jquery.min.js', '../bootstrap.min.js', '../libbiswasm_wasm.js', libjs  ];
     
     return gulp.src([ mainhtml ])
     	.pipe(htmlreplace({
 	    'js': alljs,
 	    'css': bundlecss,
+            'icon' : `<link rel="icon" href="../images/favicon.ico">`
 	}))
 	.pipe(gulp.dest(outdir));
 };
@@ -181,19 +241,28 @@ var createCSSCommon=function(dependcss,out,outdir) {
     gulp.src(dependcss)
 	.pipe(concatCss(bundlecss))
 	.pipe(gulp.dest(outdir));
-}
+};
 
 var createDateFile=function(datefile) {
 
-    let a=getDate();
-    let output_text=`module.exports = { date : "${a}"};\n`;
-    console.log(`++++ Creating ${datefile} : ${a}`);
-    fs.writeFileSync(datefile,output_text);
-}
+    let a=getDate("/");
+    let b=getTime(1);
+    let t= new Date().getTime()
+    let output_text=` { "date" : "${a}", "time" : "${b}", "absolutetime" : ${t} }`;
+    if (datefile.indexOf('json')<0) {
+        output_text=`module.exports = ${output_text};`;
+    }
+    console.log(getTime()+" "+colors.cyan(`++++ Creating ${datefile} : ${output_text}`));
+    fs.writeFileSync(datefile,output_text+'\n');
+};
 
-var runWebpackCore=function(source,internal,out,indir,minify,outdir,done=0,watch=0) {
 
-    let extracmd=""
+// ------------------------------------------------
+// Webpack
+// ------------------------------------------------
+var getWebpackCommand=function(source,internal,out,indir,minify,outdir,watch) {
+
+   let extracmd=""
     if (internal) {
         if (os.platform()==='win32')
             extracmd=`SET BISWEB_INTERNAL=${internal}&`;
@@ -214,8 +283,21 @@ var runWebpackCore=function(source,internal,out,indir,minify,outdir,done=0,watch
 	    cmd+=" --watch";
     }
 
-    executeCommand(cmd,indir,done);
-    return out;
+    return cmd;
+};
+
+
+var runWebpack=function(joblist,internal,
+                        indir,minify,outdir,watch=0) {
+
+    let p = [ ];
+    for (let i=0;i<joblist.length;i++) {
+        let s=joblist[i];
+        console.log('Starting webpack job=',i,s.name);
+        let cmd=getWebpackCommand(s.path+s.name,internal,s.name,indir,minify,outdir,watch);
+        p.push(executeCommandPromise(cmd,indir,i));
+    }
+    return Promise.all(p);
 };
 
 
@@ -257,11 +339,7 @@ var createZIPFile = function(dozip,baseoutput,outdir,version,distdir) {
                      outdir+"css/*",
                      outdir+"fonts/*",
                      outdir+"images/*",
-                     outdir+"doc/*",
-                     outdir+"doxygen/html/*",
-                     outdir+"doc/*/*",
-                     outdir+"doc/*/*/*",
-                     outdir+"doxygen/html/*/*",
+                     outdir+"test/**/*",
                      outdir+"var/*"],
                     {base:outdir}).pipe(gulpzip(outfile)).pipe(gulp.dest('.'));
 
@@ -347,7 +425,7 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
 
 
     let cmdlist = [];
-    let eversion ="1.8.4";
+    let eversion ="2.0.0";
     let cmdline='electron-packager '+outdir+' BioImageSuiteWeb --arch=x64 --electron-version '+eversion+' --out '+distdir+' --overwrite '+
         '--app-version '+version;
     let zipopts='-ry';
@@ -439,11 +517,13 @@ module.exports = {
     getData: getDate,
     getVersionTag : getVersionTag,
     executeCommand : executeCommand,
+    executeCommandPromise : executeCommandPromise,
     executeCommandList : executeCommandList,
     createHTML : createHTML,
+    createTestHTML : createTestHTML,
     createDateFile : createDateFile,
     createCSSCommon  : createCSSCommon,
-    runWebpackCore : runWebpackCore,
+    runWebpack : runWebpack,
     jsHint : jsHint,
     jsDOC : jsDOC,
     doxygen : doxygen,

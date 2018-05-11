@@ -46,7 +46,7 @@ const app=electron.app;  // Module to control application life.
 const BrowserWindow = electron.BrowserWindow;  // Module to create native browser window.
 const ipcMain = electron.ipcMain;
 const shell=electron.shell;
-
+const toolfile=require('./images/tools.json');
 
 const state = {
     winlist : [null],
@@ -58,6 +58,23 @@ const state = {
     consolehandler : null,
     indev : process.defaultApp || /[\\/]electron-prebuilt[\\/]/.test(process.execPath) || /[\\/]electron[\\/]/.test(process.execPath)
 };
+
+
+let v=process.versions.node;
+let s=v.split(".");
+let major=parseInt(s[0]);
+let minor=parseInt(s[1]);
+
+if (major<8 || (major===8 && minor<9)) {
+    console.log(`----\n---- You are using a version of node older than 8.9 (actual version=${v}). You need to update to electron v2.0.\n`);
+    process.exit(1);
+}
+
+if (major>=9) {
+    console.log(`----\n---- You are using a version of node that is 9.0 or newer (actual version=${v})\n`);
+    process.exit(1);
+}
+
 
 if (state.indev) {
     state.commandargs= process.argv.slice(3) || [];
@@ -111,6 +128,8 @@ var createWindow=function(index,fullURL) {
     if (opts.width>state.screensize.width-100)
 	opts.width=state.screensize.width-100;
 
+    //    console.log('Dimensions=',opts.width,opts.height,state.screensize.width);
+    
 
     if (index!==0) {
 	xval+=Math.round(Math.random()*50);
@@ -121,9 +140,20 @@ var createWindow=function(index,fullURL) {
 	    yval=undefined;
     }
 
+    let i=fullURL.indexOf('biswebtest');
+    if (i>=0) {
+        xval=0;
+        yval=0;
+        opts.width=state.screensize.width;
+        opts.height=state.screensize.height;
+    }
+        
+    
+
+    
     var preload=  path.resolve(__dirname, 'bispreload.js');
     console.log(getTime()+' Creating new window '+fullURL + ', index='+index);
-    console.log(getTime()+' Screen size = '+[state.screensize.width,state.screensize.height]+' size='+[opts.width,opts.height]);
+//    console.log(getTime()+' Screen size = '+[state.screensize.width,state.screensize.height]+' size='+[opts.width,opts.height]);
     state.winlist[index]=new BrowserWindow({width: opts.width,
 					    height: opts.height,
 					    show: true,
@@ -325,11 +355,8 @@ app.on('window-all-closed', function() {
 // initialization and is ready to create browser windows.
 app.on('ready', function() {
 
-    var tooldescriptionfile=path.resolve(__dirname + '/images/tools.json');
-    var tlines=fs.readFileSync(tooldescriptionfile);
-    var setup=JSON.parse(tlines);
+    var setup=toolfile;
     var keys=Object.keys(setup.tools);
-    
     let fullURL='';
     if (state.mainfilename.length>1) {
 	console.log(getTime()+' Testing starting file=',state.mainfilename);
@@ -431,7 +458,7 @@ ipcMain.on('showconsole',function() {
 
 ipcMain.on('bisconsoleinit',function(event) {
     state.consolehandler=event.sender;
-    console.log(getTime()+' console initialized');
+    //    console.log(getTime()+' console initialized');
 });
 
 ipcMain.on('bisconsole', function (event,arg) {

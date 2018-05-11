@@ -1,3 +1,7 @@
+This document contains [developer documentation](README.md) for
+[BioImage Suite Web](https://bioimagesuiteweb.github.io/webapp/). 
+
+---
 # Creating New BisWeb Modules in Python
 
 Please read the [JavaScript version of this document](ModulesInJS.md) before reading this one. The JS description is more detailed and the description here simply focuses on the differences between the JS and the Python versions. Please also look at the core document [BisWebPython.md](BisWebPython.md) for an introduction to the use of Python in the BioImage Suite Web environment.

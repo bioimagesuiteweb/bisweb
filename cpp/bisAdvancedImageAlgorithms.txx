@@ -450,18 +450,20 @@ namespace bisAdvancedImageAlgorithms {
           {
             odim[ia]=idim[outaxis[ia]];
             ospa[ia]=ispa[outaxis[ia]];
-            if (odim[ia]!=twodim[ia])
+            if (odim[ia]!=twodim[ia]) {
+              same=0; 
+              std::cout << "Odim[" << ia << "]=" << odim[ia] << " vs" << twodim[ia] << "\n";
+            }  else if (fabs(ospa[ia]-twospa[ia])>0.01) {
+              std::cout << "ospa[" << ia << "]=" << twospa[ia] << " vs" << twodim[ia] << "\n";
               same=0;
+            }
           }
-        else if (fabs(ospa[ia]-twospa[ia])>0.01) {
-          same=0;
-        }
       }
 
     std::unique_ptr<bisSimpleImage<T> > output(new bisSimpleImage<T>());
     
     if (same==0) {
-      std::cerr << "Mismatched dimensions";
+      std::cerr << "\n\n\n Mismatched dimensions" << std::endl;
       return std::move(output);
     }
 
