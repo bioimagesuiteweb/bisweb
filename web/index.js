@@ -21,15 +21,96 @@
 /*jshint undef: true, unused: true */
 
 const $=require('jquery');
-const bisdate=require('bisdate.js').date;
+const bisdate=require('bisdate.js');
 import tools from './images/tools.json';
 
+const modal_text=`
+       <div class="modal fade">
+         <div class="modal-dialog">
+           <div class="modal-content">
+             <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Modal title</h4>
+             </div>
+             <div class="modal-body">
+             </div>
+             <div class="modal-footer">
+               <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+             </div>
+           </div><!-- /.modal-content -->
+         </div><!-- /.modal-dialog -->
+       </div><!-- /.modal -->
+    `;
+
+
+
 let serviceWorker=null;
+
+let receivedMessage = function(msg) {
+    console.log('Worker says',msg);
+    if (msg.indexOf("Cache Updated")>=0) {
+        console.log('here');
+        let w = $(`<div class="alert alert-success alert-dismissible" role="alert" 
+		  style="position:absolute; top:80px; left:20px; z-index: 100">
+		  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>The application has been updated. Reload this webpage to use the new version<div>`);
+	$('body').append(w);
+	w.alert();
+    }
+};
+
+let updateApplication=function() {
+    serviceWorker.postMessage(JSON.stringify( {name : 'updateCache',
+                                               data : 'userInput'
+                                              }));
+}
+
+let getLatestVersion=async function() { 
+
+    try  {
+        const fetchResult=await fetch('./bisdate.json');
+        const response=await fetchResult;
+        const latestVersion= await response.json();
+
+        console.log('latest Version=',latestVersion);
+        let onlinetime=latestVersion['absolutetime'];
+        let mytime=bisdate['absolutetime'];
+        console.log('mytime=',mytime,typeof mytime);
+        console.log('onlinetime=',onlinetime,typeof onlinetime);
+        
+        if (mytime<onlinetime) {
+            console.log('There is a newer version online');
+            let m=$(modal_text);
+            m.find('.modal-title').text('There is an updated version online');
+            let s=`<p> BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which downloads itself into the cache of your Broswer for offline use.</p>
+                <UL><LI>The version you are using is dated : ${bisdate.date}, ${bisdate.time}</LI>
+                <LI> The latest version is dated ${bisdate.date}, ${bisdate.time}.</LI></UL>
+                <p> If you would like to update, press <EM>Update</EM> below.</p>`;
+            m.find('.modal-body').append($(s));
+
+            let bt=$(`<button class="btn btn-danger" type="submit" id="compute">Update</button>`);
+            m.find('.modal-footer').append(bt)
+            m.modal('show');
+            bt.click( (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                m.modal('hide');
+                setTimeout( () => {
+                    updateApplication();
+                },2);
+            });
+
+        }
+    } catch(e) {
+        console.log('Must be offline, failed to get latest version',e);
+    }
+};
+
 
 let inelectron=false;
 if (typeof (window.BISELECTRON) !== "undefined") {
     inelectron=true;
 }
+
 
 
 let createIndex=function(obj) {
@@ -103,12 +184,45 @@ let createIndex=function(obj) {
         },10);
     });
         
+    let newitem2 = $(`<li><a href="#">About Application</a></li>`);
+    $("#othermenu").append(newitem2);
+    newitem2.click( (e) => {
+        console.log('In About');
+        setTimeout( () => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            let fn=async function() { 
+
+                let response=null;
+                try  {
+                    const fetchResult=await fetch('./bisdate.json');
+                    console.log(fetchResult);
+                    const r=await fetchResult;
+                    response= await r.json();
+                    console.log(response.date);
+                } catch(e) {
+                    console.log(e);
+                    response='none';
+                }
+                console.log('Response=',response);
+                let m=$(modal_text);
+                m.find('.modal-title').text('About this Application');
+                let s=`<p>This is the main page of BioImage Suite Web ( current build= ${bisdate.date}, ${bisdate.time}).</p> <p> BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which downloads itself into the cache of your Broswer for offline use.</p> The latest version =${response}`;
+                m.find('.modal-body').append($(s));
+                m.modal('show');
+            }
+            fn();
+        },10);
+    });
+        
 
     
 
     let bb=$(`<div align="center" style="padding:15px;  right:5.5vw; top:570px; border-radius:30px;background-color:#221100; z-index:5000; position: absolute; color:#ffffff">
-             Version: ${bisdate}</div>`);
+             Version: ${bisdate.date}</div>`);
     $('body').append(bb);
+    console.log('bisdate=',JSON.stringify(bisdate));
 
 };
 
@@ -143,8 +257,6 @@ var createserviceworker=function() {
     return new Promise( (resolve,reject) => {
         
         let scope='/webapp/';
-        if (typeof window.BIS !=='undefined')
-            scope="/web/";
         
         // service worker registered
         navigator.serviceWorker.register(`${scope}bisweb-sw.js`, { scope: scope })
@@ -152,9 +264,9 @@ var createserviceworker=function() {
                 serviceWorker = registration.active;
                 console.log(`____ bisweb -- service worker registered ${scope}`);
             });
-
+        
         navigator.serviceWorker.addEventListener('message', function(event) {
-            console.log('Service worker says:',event.data);
+            receivedMessage(event.data);
         });
         
         // service worker ready
@@ -176,8 +288,10 @@ window.onload = (() => {
                 'name' : 'hello',
                 'data' : 'xenios',
             }));
+            getLatestVersion();
         });
     }
+
 });
 
 
