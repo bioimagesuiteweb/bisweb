@@ -377,7 +377,6 @@ let initialize=function(data) {
     biswrap.initialize();
     
     let testlist=data.testlist;
-    console.log('There are ',testlist.length,' tests');
     let names=[];
     for (let i=0;i<testlist.length;i++) {
         let cmd=testlist[i].command.replace(/\t/g,' ').replace(/ +/g,' ');
@@ -419,7 +418,6 @@ let initialize=function(data) {
     
     $('#first').change( (e) => {
         e.preventDefault();
-        console.log('Here ',e);
         fixRange("#first");
     });
 
@@ -452,20 +450,12 @@ var startFunction = (() => {
     }
     
     userPreferences.setImageOrientationOnLoad('None');
-    console.log('Mode=',bis_genericio.getmode());
-
     let devel=false;
     
-    if (typeof window.BIS !=='undefined') {
-        devel=true;
-    }
-
-    if (devel)
+    if (typeof window.BIS !=='undefined') 
         extradir="../test/";
     else if (inelectron)
         extradir="./test/";
-    console.log(module_testlist);
-    console.log(`extradir=${extradir}, inelectron=${inelectron}, devel=${devel}`);
     initialize(module_testlist);
 });
 
