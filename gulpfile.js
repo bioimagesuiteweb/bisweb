@@ -211,14 +211,13 @@ gulp.task('webpack', function(done) {
                                                           internal.indexlib,__dirname,
                                                           options.minify,options.outdir,function() {
 
-                                                              if (options.webworker)
-                                                                  bis_gutil.runWebpackCore('./js/modules/'+internal.webworkerlib,options.internal,
-                                                                                           internal.webworkerlib,__dirname,
-                                                                                           options.minify,options.outdir,function() {
-                                                                                               done();
-                                                                                           });
-                                                              else
-                                                                  done();
+                                                              bis_gutil.runWebpackCore('./web/bisweb-sw.js',
+                                                                                       options.internal,
+                                                                                       'bisweb-sw.js'
+                                                                                       ,__dirname,
+                                                                                       options.minify,options.outdir,function() {
+                                                                                           done();
+                                                                                       });
                                                           });
                              });
 });
@@ -259,6 +258,14 @@ gulp.task('serve', function() {
                              internal.bislib,__dirname,
                              options.minify,options.outdir,mydone,1);
 
+    bis_gutil.runWebpackCore('./web/'+internal.indexlib,options.internal,
+                             internal.indexlib,__dirname,
+                             options.minify,options.outdir,mydone,1);
+
+    bis_gutil.runWebpackCore('./web/bisweb-sw.js',options.internal,
+                             'bisweb-sw.js',__dirname,
+                             options.minify,options.outdir,mydone,1);
+
 /*    if (options.webworker!==false)
         bis_gutil.runWebpackCore('./js/modules/'+internal.webworkerlib,
                                  internal.webworkerlib,__dirname,
@@ -280,9 +287,7 @@ gulp.task('commonfiles', function() {
     gulp.src([ 'web/images/**/*']).pipe(gulp.dest(options.outdir+'/images/'));
     gulp.src('./web/biswebdropbox.html').pipe(gulp.dest(options.outdir));
     gulp.src([ 'lib/fonts/*']).pipe(gulp.dest(options.outdir+'/fonts/'));
-    gulp.src([ 'web/pwa/*.png']).pipe(gulp.dest(options.outdir));
-    gulp.src([ 'web/pwa/bisweb-sw.js']).pipe(gulp.dest(options.outdir));
-    gulp.src([ 'web/pwa/manifest.json']).pipe(gulp.dest(options.outdir));
+    gulp.src([ 'web/manifest.json']).pipe(gulp.dest(options.outdir));
     gulp.src('./web/bispreload.js').pipe(gulp.dest(options.outdir));
     gulp.src('./web/biselectron.js').pipe(gulp.dest(options.outdir));
     gulp.src('./web/bislist.txt').pipe(gulp.dest(options.outdir));
