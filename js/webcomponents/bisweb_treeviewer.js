@@ -716,10 +716,10 @@ class TreeViewer extends HTMLElement {
     loadNetworkFromFile() {
         let existingNetwork = this.network;
         let hiddenFileButton = webutil.createhiddeninputfile('.json, .JSON', (file) => {
-            let reader = new FileReader();
-            reader.onload = () => {
+            io.read(file).then( (text) => {
+                console.log('text', text);
                 try {
-                    let newNetwork = JSON.parse(reader.result).network;
+                    let newNetwork = JSON.parse(text.data).network;
 
                     //recursive function that will replace the id of a given node then call itself on all the node's children
                     let parseNode = (node) => {
@@ -730,9 +730,9 @@ class TreeViewer extends HTMLElement {
                             node.data = newData;
                         }
                         if (node.children) {
-                            for (let child of node.children) 
+                            for (let child of node.children)
                                 parseNode(child);
-                        }     
+                        }
                     }
 
                     for (let tree of newNetwork) {
@@ -746,10 +746,7 @@ class TreeViewer extends HTMLElement {
                 } catch (err) {
                     console.log('an error occured when parsing the file', err);
                 }
-            }
-
-            reader.readAsText(file);
-           
+            }); 
         }, false);
 
         hiddenFileButton.click();
