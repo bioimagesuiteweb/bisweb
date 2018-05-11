@@ -89,7 +89,7 @@ var getVersionTag=function(version) {
     return version+"_"+getDate();
 };
 
-var executeCommand=function(command,dir,done=0,error=0) {
+var executeCommand=function(command,dir,done=0,error=0,extra=0) {
     dir = dir || __dirname;
     console.log(getTime()+" "+colors.green(dir+">")+colors.cyan(command+'\n'));
 
@@ -102,10 +102,21 @@ var executeCommand=function(command,dir,done=0,error=0) {
 	}
 	return out;
     }
+
+    while (extra>3)
+        extra=extra-4;
+        
+    let colorfn=colors.yellow;
+    if (extra===1)
+        colorfn=colors.magenta;
+    if (extra===2)
+        colorfn=colors.gray;
+    if (extra===3)
+        colorfn=colors.green;
     
     try { 
 	let proc=child_process.exec(command, { cwd : dir });
-	proc.stdout.on('data', function(data) { process.stdout.write(colors.yellow(data.trim()+'\n'));});
+	proc.stdout.on('data', function(data) { process.stdout.write(colorfn(data.trim()+'\n'));});
 	proc.stderr.on('data', function(data) { process.stdout.write(colors.red(data+'\n'));});
 	proc.on('exit', function() { console.log(''); done();});
     } catch(e) {
@@ -116,7 +127,7 @@ var executeCommand=function(command,dir,done=0,error=0) {
 };
 
 
-var executeCommandPromise=function(command,dir) {
+var executeCommandPromise=function(command,dir,extra="") {
 
     return new Promise( (resolve,reject) => {
         let done=function() {
@@ -126,7 +137,7 @@ var executeCommandPromise=function(command,dir) {
             reject(e);
         }
 
-        executeCommand(command,dir,done,error);
+        executeCommand(command,dir,done,error,extra);
     });
 }
 
@@ -137,7 +148,7 @@ var executeCommandList=function(cmdlist,indir,done=0) {
     if (done===0) {
 	console.log('here ...');
 	for (let i=0;i<cmdlist.length;i++) {
-	    executeCommand(cmdlist[i],indir,0);
+	    executeCommand(cmdlist[i],indir,0,0,i);
 	}
 	return;
     }
@@ -147,7 +158,7 @@ var executeCommandList=function(cmdlist,indir,done=0) {
 	if (i==cmdlist.length) {
 	    done();
 	} else {
-	    executeCommand(cmdlist[i],indir,execlist);
+	    executeCommand(cmdlist[i],indir,execlist,0,i);
 	    ++i;
 	}
     }
@@ -228,15 +239,19 @@ var createCSSCommon=function(dependcss,out,outdir) {
     gulp.src(dependcss)
 	.pipe(concatCss(bundlecss))
 	.pipe(gulp.dest(outdir));
-}
+};
 
 var createDateFile=function(datefile) {
 
-    let a=getDate();
-    let output_text=`module.exports = { date : "${a}"};\n`;
-    console.log(`++++ Creating ${datefile} : ${a}`);
-    fs.writeFileSync(datefile,output_text);
-}
+    let a=getDate2();
+    let t= new Date().getTime()
+    let output_text=` { date : "${a}", time : "${t}" }`;
+    if (datefile.indexOf('json')<0) {
+        output_text=`module.exports = ${output_text};`;
+    }
+    console.log(getTime()+" "+colors.cyan(`++++ Creating ${datefile} : ${output_text}`));
+    fs.writeFileSync(datefile,output_text+'\n');
+};
 
 
 // ------------------------------------------------
@@ -277,7 +292,7 @@ var runWebpack=function(joblist,internal,
         let s=joblist[i];
         console.log('Starting webpack job=',i,s.name);
         let cmd=getWebpackCommand(s.path+s.name,internal,s.name,indir,minify,outdir,watch);
-        p.push(executeCommandPromise(cmd,indir));
+        p.push(executeCommandPromise(cmd,indir,i));
     }
     return Promise.all(p);
 };
