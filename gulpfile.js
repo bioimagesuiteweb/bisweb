@@ -49,9 +49,9 @@ program
     .option('-z, --dozip <s>','dozip')
     .option('--internal <n>','if 1 serve the internal directory as well',parseInt)
     .option('--production <n>','if 1 serve the build directory as root',parseInt)
+    .option('--webworker <n>','if 1 build the webworker as well',parseInt)
+    .option('--light <n>','if 1 only build the main bislib.js library',parseInt)
     .parse(process.argv);
-
-
 
 let options = {
     inpfilename : program.input || "all",
@@ -65,6 +65,7 @@ let options = {
     webworker : program.webworker || false,
     internal : parseInt(program.internal || 0) || 0,
     production : parseInt(program.production ||0) ||0,
+    light : parseInt(program.light ||0) ||0,
 };
 
 
@@ -128,11 +129,19 @@ let internal = {
 };
 
 internal.webpackjobs = [
-    { path: './js/webcomponents/' , name: internal.bislib },
-    { path: './web/' ,  name : internal.indexlib },
-    { path: './web/' ,  name : internal.serviceworkerlib },
+    { path: './js/webcomponents/' , name: internal.bislib }
 ];
-    
+if (!options.light) {
+    internal.webpackjobs.push({ path: './web/' ,  name : internal.indexlib });
+    internal.webpackjobs.push({ path: './web/' ,  name : internal.serviceworkerlib });
+
+    if (options.webworker) {
+        internal.webpackjobs.push(
+            { path : path.resolve(__dirname,'../internal/js/')+'/',
+              name : internal.webworkerlib,
+            });
+    }
+}
 
 internal.serveroptions = {
     "root" : path.normalize(__dirname)
