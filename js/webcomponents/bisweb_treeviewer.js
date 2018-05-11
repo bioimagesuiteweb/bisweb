@@ -22,6 +22,7 @@ const $ = require('jquery');
 const webutil = require('bis_webutil.js');
 const d3 = require('d3'); // jshint ignore:line
 const io = require('bis_genericio.js');
+const BiswebImage = require('bisweb_image.js');
 
 /**
  * Tree viewer is an HTML Element designed to display inputs in a hierarchical fashion based on their relationship to each other.
@@ -717,24 +718,27 @@ class TreeViewer extends HTMLElement {
         let hiddenFileButton = webutil.createhiddeninputfile('.json, .JSON', (file) => {
             let reader = new FileReader();
             reader.onload = () => {
-                console.log('read file', reader.result);
                 try {
                     let newNetwork = JSON.parse(reader.result).network;
 
                     //recursive function that will replace the id of a given node then call itself on all the node's children
-                    let replaceID = (node) => {
+                    let parseNode = (node) => {
                         node.id = webutil.getuniqueid();
+                        if (node.data) {
+                            let newData = new BiswebImage();
+                            newData.parseFromJSON(node.data);
+                            node.data = newData;
+                        }
                         if (node.children) {
                             for (let child of node.children) 
-                                replaceID(child);
+                                parseNode(child);
                         }     
                     }
 
                     for (let tree of newNetwork) {
                         //replace 'id' field with a new value to ensure internal consistency.
-                        replaceID(tree);
-                        tree.networkName = 'New Tree';
-                        console.log('tree', tree);
+                        parseNode(tree);
+                        tree.networkName = tree.networkName ? tree.networkName : 'New Tree';
                         existingNetwork.push(tree);
                     }
 
@@ -749,6 +753,14 @@ class TreeViewer extends HTMLElement {
         }, false);
 
         hiddenFileButton.click();
+
+        //BiswebDataObjects are loaded in a slightly nonstandard way here -- the dictionary is parsed by JSON.parse immediately after reader.onload,
+        //so all you have to do is assign the keys of the object to properties of a new BiswebDataObject
+        function assignDictionaryToObject(dict, obj) {
+            for (let key of Object.keys(dict)) {
+                obj[key] = dict[key];
+            }
+        }
     }
 
     writeNetworkToFile() {
@@ -761,6 +773,7 @@ class TreeViewer extends HTMLElement {
             //object destructuring literals inside an anonymous function, applied immediately.
             //https://stackoverflow.com/questions/17781472/how-to-get-a-subset-of-a-javascript-objects-properties?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
             let newNode = ( ({ name, class: objclass, children, data }) => ( {name, class: objclass, children, data}))(node);
+            console.log('newNode', newNode);
             if (newNode.data) {
                 newNode.data = newNode.data.serializeToJSON();
             }
@@ -775,13 +788,8 @@ class TreeViewer extends HTMLElement {
         };
 
         for (let tree of this.network) {
-
-            let newRoot = ( ({ name, class : objclass, networkName, children, data }) => ({ name, class: objclass, networkName, children, data }) )(tree);
-            if (newRoot.children) {
-                for (let i = 0; i < newRoot.children.length; i++) {
-                    newRoot.children[i] = sanitizeNode(newRoot.children[i]);
-                }
-            }
+            let newRoot = sanitizeNode(tree);
+            newRoot.networkName = tree.networkName;
 
             saveNetwork.push(newRoot);
         }
