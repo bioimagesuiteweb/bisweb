@@ -89,9 +89,9 @@ var getVersionTag=function(version) {
     return version+"_"+getDate();
 };
 
-var executeCommand=function(command,dir,done=0) {
+var executeCommand=function(command,dir,done=0,error=0) {
     dir = dir || __dirname;
-    console.log(getTime()+" "+colors.green(dir+">")+colors.red(command+'\n'));
+    console.log(getTime()+" "+colors.green(dir+">")+colors.cyan(command+'\n'));
 
     if (done===0) {
 	let out="";
@@ -110,9 +110,27 @@ var executeCommand=function(command,dir,done=0) {
 	proc.on('exit', function() { console.log(''); done();});
     } catch(e) {
 	console.log(' error '+e);
+        if (error)
+            error(e);
     }
 };
 
+
+var executeCommandPromise=function(command,dir) {
+
+    return new Promise( (resolve,reject) => {
+        let done=function() {
+            resolve();
+        }
+        let error=function(e) {
+            reject(e);
+        }
+
+        executeCommand(command,dir,done,error);
+    });
+}
+
+// -------------------------------------------------------------
 
 var executeCommandList=function(cmdlist,indir,done=0) {
 
@@ -220,9 +238,13 @@ var createDateFile=function(datefile) {
     fs.writeFileSync(datefile,output_text);
 }
 
-var runWebpackCore=function(source,internal,out,indir,minify,outdir,done=0,watch=0) {
 
-    let extracmd=""
+// ------------------------------------------------
+// Webpack
+// ------------------------------------------------
+var getWebpackCommand=function(source,internal,out,indir,minify,outdir,watch) {
+
+   let extracmd=""
     if (internal) {
         if (os.platform()==='win32')
             extracmd=`SET BISWEB_INTERNAL=${internal}&`;
@@ -243,8 +265,21 @@ var runWebpackCore=function(source,internal,out,indir,minify,outdir,done=0,watch
 	    cmd+=" --watch";
     }
 
-    executeCommand(cmd,indir,done);
-    return out;
+    return cmd;
+};
+
+
+var runWebpack=function(joblist,internal,
+                        indir,minify,outdir,watch=0) {
+
+    let p = [ ];
+    for (let i=0;i<joblist.length;i++) {
+        let s=joblist[i];
+        console.log('Starting webpack job=',i,s.name);
+        let cmd=getWebpackCommand(s.path+s.name,internal,s.name,indir,minify,outdir,watch);
+        p.push(executeCommandPromise(cmd,indir));
+    }
+    return Promise.all(p);
 };
 
 
@@ -464,12 +499,13 @@ module.exports = {
     getData: getDate,
     getVersionTag : getVersionTag,
     executeCommand : executeCommand,
+    executeCommandPromise : executeCommandPromise,
     executeCommandList : executeCommandList,
     createHTML : createHTML,
     createTestHTML : createTestHTML,
     createDateFile : createDateFile,
     createCSSCommon  : createCSSCommon,
-    runWebpackCore : runWebpackCore,
+    runWebpack : runWebpack,
     jsHint : jsHint,
     jsDOC : jsDOC,
     doxygen : doxygen,

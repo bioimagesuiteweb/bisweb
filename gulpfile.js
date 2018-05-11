@@ -122,9 +122,17 @@ let internal = {
     bislib     : 'bislib.js',
     biscss     : 'bislib.css',
     indexlib   : 'index.js',
+    serviceworkerlib : 'bisweb-sw.js',
     webworkerlib  : 'webworkermain.js',
     serveroptions : { }
 };
+
+internal.webpackjobs = [
+    { path: './js/webcomponents/' , name: internal.bislib },
+    { path: './web/' ,  name : internal.indexlib },
+    { path: './web/' ,  name : internal.serviceworkerlib },
+];
+    
 
 internal.serveroptions = {
     "root" : path.normalize(__dirname)
@@ -150,7 +158,7 @@ if (options.production) {
 
 internal.setup=require('./web/images/tools.json');
 let keys=Object.keys(internal.setup.tools);
-console.log(bis_gutil.getTime()+colors.cyan(' Read '+internal.tooldescriptionfile+' versiontag='+bis_gutil.getVersionTag(internal.setup.version)+' tools='+keys));
+console.log(bis_gutil.getTime()+colors.cyan(' Config versiontag='+bis_gutil.getVersionTag(internal.setup.version)+' tools='+keys));
 
 if (options.inpfilename === "" || options.inpfilename === "all") {
     let obj=internal.setup.tools;
@@ -203,23 +211,15 @@ gulp.task('singleCSS', function() {
 gulp.task('webpack', function(done) {
 
     bis_gutil.createDateFile(path.resolve(options.outdir,'../wasm/bisdate.js'));
-    bis_gutil.runWebpackCore('./js/webcomponents/'+internal.bislib,options.internal,
-                             internal.bislib,__dirname,
-                             options.minify,options.outdir,function() {
 
-                                 bis_gutil.runWebpackCore('./web/'+internal.indexlib,options.internal,
-                                                          internal.indexlib,__dirname,
-                                                          options.minify,options.outdir,function() {
-
-                                                              bis_gutil.runWebpackCore('./web/bisweb-sw.js',
-                                                                                       options.internal,
-                                                                                       'bisweb-sw.js'
-                                                                                       ,__dirname,
-                                                                                       options.minify,options.outdir,function() {
-                                                                                           done();
-                                                                                       });
-                                                          });
-                             });
+    bis_gutil.runWebpack(internal.webpackjobs,
+                         options.internal,
+                         __dirname,
+                         options.minify,
+                         options.outdir,0).then( () => {
+                             console.log(bis_gutil.getTime()+' webpack done num jobs=',internal.webpackjobs.length);
+                             done();
+                         });
 });
 
 
@@ -247,30 +247,17 @@ gulp.task('serve', function() {
     for (let i=0;i<internal.myscripts.length;i++) {
         gulp.watch(internal.myscripts[i], ['jshint']);
     }
-    let mydone=function() {
-        console.log('webpack killed');
-    };
 
     bis_gutil.createDateFile(path.resolve(options.outdir,'../wasm/bisdate.js'));
+//    bis_gutil.createDateFile(path.resolve(options.outdir,'../web/bisdate.json',1));
 
-    
-    bis_gutil.runWebpackCore('./js/webcomponents/'+internal.bislib,options.internal,
-                             internal.bislib,__dirname,
-                             options.minify,options.outdir,mydone,1);
-
-    bis_gutil.runWebpackCore('./web/'+internal.indexlib,options.internal,
-                             internal.indexlib,__dirname,
-                             options.minify,options.outdir,mydone,1);
-
-    bis_gutil.runWebpackCore('./web/bisweb-sw.js',options.internal,
-                             'bisweb-sw.js',__dirname,
-                             options.minify,options.outdir,mydone,1);
-
-/*    if (options.webworker!==false)
-        bis_gutil.runWebpackCore('./js/modules/'+internal.webworkerlib,
-                                 internal.webworkerlib,__dirname,
-                                 options.minify,options.outdir,mydone,1);*/
-
+    bis_gutil.runWebpack(internal.webpackjobs,
+                         options.internal,
+                         __dirname,
+                         options.minify,
+                         options.outdir,1).then( () => {
+                             console.log('webpack killed');
+                         });
 });
 
 
@@ -319,7 +306,8 @@ gulp.task('tools', function(done) {
 
 gulp.task('build', function(callback) {
 
-    runSequence('commonfiles',
+    runSequence('clean',
+                'commonfiles',
                 'tools',
                 'buildtest',
                 callback);
@@ -358,6 +346,7 @@ let cleanfiles = function() {
                options.outdir+'images/*',
                options.outdir+'doc/*',
                options.outdir+'node_modules',
+               options.outdir+'test',
                options.distdir+"/*",
               ];
 
