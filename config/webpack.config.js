@@ -37,10 +37,9 @@ console.log('--------------------------- Running Webpack -----------------------
 if (fs.existsSync(extrafile) && internal) {
     console.log(`++++ Using Extra Internal Files from ${extrapath}.`);
 } else {
-    console.log('---- Directory ',extrapath,' does not exist.');
+    //    console.log('---- Directory ',extrapath,' does not exist.');
     extrapath=path.normalize(path.resolve(__dirname,'../js/nointernal'));
     exptrapath2=null;
-    console.log('---- Using internal ',extrapath);
     internal=0;
 }
 
