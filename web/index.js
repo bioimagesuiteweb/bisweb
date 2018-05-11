@@ -182,24 +182,35 @@ let createIndex=function(obj) {
     else
         $("#devmenu").append(`<li><a href="./test/biswebtest.html" target="_blank">Run Regression Tests</a></li>`);
 
-    if (typeof (window.BISELECTRON) === "undefined") {
-        
-        let newitem2 = $(`<li><a href="#">About Application</a></li>`);
-        $("#othermenu").append(newitem2);
-        newitem2.click( (e) => {
-            setTimeout( () => {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                let m=$(modal_text);
-                m.find('.modal-title').text('About this Application');
-                let s=`<p>This is the main page of BioImage Suite Web ( current build= ${bisdate.date}, ${bisdate.time}).</p> <p> BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which downloads itself into the cache of your Broswer for offline use.</p>`;
-                m.find('.modal-body').append($(s));
-                m.modal('show');
-            },10);
-        });
 
-            <li class="divider"></li>
+    let othermenu=$(`<li class='dropdown'>
+            <a href='#' class='dropdown-toggle'  data-toggle='dropdown'
+               role='button' aria-expanded='false'>Help<span class='caret'></span></a>
+            <ul class='dropdown-menu' role='menu' id="othermenu">
+            </ul>
+          </li>`);
+    $('#bismenuparent0').append(othermenu);
+    
+    let newitem2 = $(`<li><a href="#">About Application</a></li>`);
+    $("#othermenu").append(newitem2);
+    newitem2.click( (e) => {
+        setTimeout( () => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            let m=$(modal_text);
+            m.find('.modal-title').text('About this Application');
+            let s=`<p>This is the main page of BioImage Suite Web ( current build= ${bisdate.date}, ${bisdate.time}).</p>`;
+            if (typeof (window.BISELECTRON) === "undefined") {
+                s+=`<p>BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which downloads itself into the cache of your Browser for offline use.</p>`;
+            }
+            m.find('.modal-body').append($(s));
+            m.modal('show');
+        },10);
+    });
+
+    if (typeof (window.BISELECTRON) === "undefined") {
+        $("#othermenu").append($(`<li class="divider"></li>`));
         let newitem = $(`<li><a href="#">Update Application (Cache)</a></li>`);
         $("#othermenu").append(newitem);
         
