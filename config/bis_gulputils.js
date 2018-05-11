@@ -53,7 +53,7 @@ var getTime=function(nobracket=0) {
     return  hour + ":" + min + ":" + sec;
 };
 
-var getDate=function() {
+var getDate=function(sep="_") {
     //    http://stackoverflow.com/questions/7357734/how-do-i-get-the-time-of-day-in-javascript-node-js
 
     var date = new Date();
@@ -62,7 +62,7 @@ var getDate=function() {
     month = (month < 10 ? "0" : "") + month;
     var day  = date.getDate();
     day = (day < 10 ? "0" : "") + day;
-    return  year+"/"+month+"/"+day;
+    return  year+sep+month+sep+day;
 };
 
 var getDate2=function() {
@@ -245,7 +245,7 @@ var createCSSCommon=function(dependcss,out,outdir) {
 
 var createDateFile=function(datefile) {
 
-    let a=getDate();
+    let a=getDate("/");
     let b=getTime(1);
     let t= new Date().getTime()
     let output_text=` { "date" : "${a}", "time" : "${b}", "absolutetime" : ${t} }`;

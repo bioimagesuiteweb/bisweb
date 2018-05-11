@@ -180,13 +180,11 @@ We will move this repository to github _very soon_.
 
 ## Building the JS Code
 
-First go to the biscpplib directory inside the source tree. If you installed
+First go to the src directory inside the source tree. If you installed
 BioImage Suite Web in the default location (i.e. ~/javascript) then simply
 first
 
-    cd ~/bisweb/biscpplib
-
-__Note:__ Once we move to github the `biscpp` directory will be eliminated and the source will sit directly inside the root `bisweb` directory.
+    cd ~/bisweb/
 
 Then download all dependencies using npm (the node package manager as):
 

@@ -47,43 +47,48 @@ const modal_text=`
 let serviceWorker=null;
 
 let receivedMessage = function(msg) {
-    console.log('Worker says',msg);
     if (msg.indexOf("Cache Updated")>=0) {
-        console.log('here');
         let w = $(`<div class="alert alert-success alert-dismissible" role="alert" 
 		  style="position:absolute; top:80px; left:20px; z-index: 100">
-		  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>The application has been updated. Reload this webpage to use the new version<div>`);
+		  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>The application has been updated. Reload this webpage to use the new version.<\div>`);
 	$('body').append(w);
 	w.alert();
+    } else {
+        console.log('Worker says',msg);
     }
 };
 
 let updateApplication=function() {
-    serviceWorker.postMessage(JSON.stringify( {name : 'updateCache',
-                                               data : 'userInput'
-                                              }));
+    try { 
+        serviceWorker.postMessage(JSON.stringify( {name : 'updateCache',
+                                                   data : 'userInput'
+                                                  }));
+    } catch(e) {
+        console.log('We must have a new service worker ...');
+        receivedMessage('Cache Updated');
+    }
 }
 
-let getLatestVersion=async function() { 
+
+let getLatestVersion=async function(force) { 
 
     try  {
         const fetchResult=await fetch('./bisdate.json');
         const response=await fetchResult;
         const latestVersion= await response.json();
 
-        console.log('latest Version=',latestVersion);
         let onlinetime=latestVersion['absolutetime'];
         let mytime=bisdate['absolutetime'];
-        console.log('mytime=',mytime,typeof mytime);
-        console.log('onlinetime=',onlinetime,typeof onlinetime);
         
-        if (mytime<onlinetime) {
-            console.log('There is a newer version online');
+        let diff=onlinetime-mytime;
+        
+        if (diff>10000) {
+            console.log('There is a newer version online',diff/1000);
             let m=$(modal_text);
             m.find('.modal-title').text('There is an updated version online');
             let s=`<p> BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which downloads itself into the cache of your Broswer for offline use.</p>
                 <UL><LI>The version you are using is dated : ${bisdate.date}, ${bisdate.time}</LI>
-                <LI> The latest version is dated ${bisdate.date}, ${bisdate.time}.</LI></UL>
+                <LI> The latest version is dated ${latestVersion.date}, ${latestVersion.time}.</LI></UL>
                 <p> If you would like to update, press <EM>Update</EM> below.</p>`;
             m.find('.modal-body').append($(s));
 
@@ -98,10 +103,18 @@ let getLatestVersion=async function() {
                     updateApplication();
                 },2);
             });
-
+        } else if (force) {
+            updateApplication();
         }
     } catch(e) {
         console.log('Must be offline, failed to get latest version',e);
+        if (force)  {
+            let w = $(`<div class="alert alert-danger alert-dismissible" role="alert" 
+		      style="position:absolute; top:80px; left:20px; z-index: 100">
+		      <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>We can not connect to the server right now. Please try again later.</div>`);
+	    $('body').append(w);
+	    w.alert();
+        }
     }
 };
 
@@ -164,11 +177,25 @@ let createIndex=function(obj) {
     indicators.empty();
     indicators.append($(indstring));
 
-
     if (typeof window.BIS !=='undefined')
         $("#devmenu").append(`<li><a href="./biswebtest.html" target="_blank">Run Regression Tests</a></li>`);
     else
         $("#devmenu").append(`<li><a href="./test/biswebtest.html" target="_blank">Run Regression Tests</a></li>`);
+
+    let newitem2 = $(`<li><a href="#">About Application</a></li>`);
+    $("#othermenu").append(newitem2);
+    newitem2.click( (e) => {
+        setTimeout( () => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            let m=$(modal_text);
+            m.find('.modal-title').text('About this Application');
+            let s=`<p>This is the main page of BioImage Suite Web ( current build= ${bisdate.date}, ${bisdate.time}).</p> <p> BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which downloads itself into the cache of your Broswer for offline use.</p>`;
+            m.find('.modal-body').append($(s));
+            m.modal('show');
+        },10);
+    });
 
     let newitem = $(`<li><a href="#">Update Application (Cache)</a></li>`);
     $("#othermenu").append(newitem);
@@ -177,47 +204,10 @@ let createIndex=function(obj) {
         setTimeout( () => {
             e.preventDefault();
             e.stopPropagation();
-            if (serviceWorker)
-                serviceWorker.postMessage(JSON.stringify( {name : 'updateCache',
-                                                           data : 'userInput'
-                                                          }));
+            getLatestVersion(true);
         },10);
     });
         
-    let newitem2 = $(`<li><a href="#">About Application</a></li>`);
-    $("#othermenu").append(newitem2);
-    newitem2.click( (e) => {
-        console.log('In About');
-        setTimeout( () => {
-            e.preventDefault();
-            e.stopPropagation();
-
-            let fn=async function() { 
-
-                let response=null;
-                try  {
-                    const fetchResult=await fetch('./bisdate.json');
-                    console.log(fetchResult);
-                    const r=await fetchResult;
-                    response= await r.json();
-                    console.log(response.date);
-                } catch(e) {
-                    console.log(e);
-                    response='none';
-                }
-                console.log('Response=',response);
-                let m=$(modal_text);
-                m.find('.modal-title').text('About this Application');
-                let s=`<p>This is the main page of BioImage Suite Web ( current build= ${bisdate.date}, ${bisdate.time}).</p> <p> BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which downloads itself into the cache of your Broswer for offline use.</p> The latest version =${response}`;
-                m.find('.modal-body').append($(s));
-                m.modal('show');
-            }
-            fn();
-        },10);
-    });
-        
-
-    
 
     let bb=$(`<div align="center" style="padding:15px;  right:5.5vw; top:570px; border-radius:30px;background-color:#221100; z-index:5000; position: absolute; color:#ffffff">
              Version: ${bisdate.date}</div>`);
@@ -272,7 +262,6 @@ var createserviceworker=function() {
         // service worker ready
         navigator.serviceWorker.ready.then(function(registration) {
             serviceWorker = registration.active;
-            console.log(`____ bisweb -- service worker ready, ${serviceWorker}`);
             resolve();
         }).catch( (e) => { reject(e) ; });
     });
@@ -283,12 +272,7 @@ window.onload = (() => {
     initialize();
     if (typeof (window.BISELECTRON) === "undefined" && ('serviceWorker' in navigator)) {
         createserviceworker().then( () => {
-            console.log('Sending message');
-            serviceWorker.postMessage( JSON.stringify({
-                'name' : 'hello',
-                'data' : 'xenios',
-            }));
-            getLatestVersion();
+            getLatestVersion(false);
         });
     }
 

@@ -1,14 +1,19 @@
 const cachelist=require('./pwa/pwacache.js');
 
-let offline=false;
-let count=0;
+console.log('BioImage Suite Web Service Worker starting');
 
-let installFiles=function() {
+
+let installFiles=function(msg="Cache Updated") {
     console.log('Installing ', cachelist['production'].length,' files');
     return caches.open('bisweb').then(cache => {
-        return cache.addAll(cachelist['production']).then(() => self.skipWaiting());
+        return cache.addAll(cachelist['production']).then(
+            () => {
+                send_message_to_all_clients(msg);
+                self.skipWaiting()
+            });
     });
 };
+
 
 let send_message_to_client=function(client, msg){
     return new Promise(function(resolve, reject){
@@ -21,8 +26,7 @@ let send_message_to_client=function(client, msg){
                 resolve(event.data);
             }
         };
-
-        client.postMessage("SW Says: '"+msg+"'", [msg_chan.port2]);
+        client.postMessage(msg, [msg_chan.port2]);
     });
 };
 
@@ -45,9 +49,7 @@ self.addEventListener('message', (msg) => {
         let data=obj.data;
         console.log(`Received ${name}:${data}`);
         if (name==="updateCache") {
-            installFiles();
-            console.log(msg);
-            send_message_to_all_clients("Cache Updated");
+            installFiles('Cache Updated');
         }
     } catch(e) {
         console.log(`Bad Message ${e} received`);
@@ -56,7 +58,7 @@ self.addEventListener('message', (msg) => {
 });
 
 self.addEventListener('install', e => {
-    e.waitUntil( installFiles() )
+    e.waitUntil( installFiles("Cache Updated -- installed new service worker") )
 });
 
 self.addEventListener('activate',  event => {
@@ -64,8 +66,29 @@ self.addEventListener('activate',  event => {
 });
 
 
-self.addEventListener('fetch', function(event) {
 
+// From https://developers.google.com/web/fundamentals/instant-and-offline/offline-cookbook/#network-falling-back-to-cache
+self.addEventListener('fetch', event => {
+    event.respondWith(
+        caches.match(
+            event.request, {
+                ignoreSearch : true
+            }
+        ).then(response => {
+            
+            return response || fetch(event.request);
+        }).catch(function(error) {
+            console.log('Fetch failed; returning online page instead.', error);
+        }));
+});
+
+/*
+
+
+let offline=false;
+let count=0;
+
+self.addEventListener('fetch', function(event) {
     //    count=count+1;
     //    let i=count;
     //    console.log(i,'Looking for ',event.request.url);
@@ -103,4 +126,5 @@ self.addEventListener('fetch', function(event) {
             console.log(e);
         }
     }
-});
+});*/
+
