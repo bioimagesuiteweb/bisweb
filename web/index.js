@@ -182,33 +182,36 @@ let createIndex=function(obj) {
     else
         $("#devmenu").append(`<li><a href="./test/biswebtest.html" target="_blank">Run Regression Tests</a></li>`);
 
-    let newitem2 = $(`<li><a href="#">About Application</a></li>`);
-    $("#othermenu").append(newitem2);
-    newitem2.click( (e) => {
-        setTimeout( () => {
-            e.preventDefault();
-            e.stopPropagation();
-
-            let m=$(modal_text);
-            m.find('.modal-title').text('About this Application');
-            let s=`<p>This is the main page of BioImage Suite Web ( current build= ${bisdate.date}, ${bisdate.time}).</p> <p> BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which downloads itself into the cache of your Broswer for offline use.</p>`;
-            m.find('.modal-body').append($(s));
-            m.modal('show');
-        },10);
-    });
-
-    let newitem = $(`<li><a href="#">Update Application (Cache)</a></li>`);
-    $("#othermenu").append(newitem);
-    
-    newitem.click( (e) => {
-        setTimeout( () => {
-            e.preventDefault();
-            e.stopPropagation();
-            getLatestVersion(true);
-        },10);
-    });
+    if (typeof (window.BISELECTRON) === "undefined") {
         
+        let newitem2 = $(`<li><a href="#">About Application</a></li>`);
+        $("#othermenu").append(newitem2);
+        newitem2.click( (e) => {
+            setTimeout( () => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                let m=$(modal_text);
+                m.find('.modal-title').text('About this Application');
+                let s=`<p>This is the main page of BioImage Suite Web ( current build= ${bisdate.date}, ${bisdate.time}).</p> <p> BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which downloads itself into the cache of your Broswer for offline use.</p>`;
+                m.find('.modal-body').append($(s));
+                m.modal('show');
+            },10);
+        });
 
+            <li class="divider"></li>
+        let newitem = $(`<li><a href="#">Update Application (Cache)</a></li>`);
+        $("#othermenu").append(newitem);
+        
+        newitem.click( (e) => {
+            setTimeout( () => {
+                e.preventDefault();
+                e.stopPropagation();
+                getLatestVersion(true);
+            },10);
+        });
+    }
+        
     let bb=$(`<div align="center" style="padding:15px;  right:5.5vw; top:570px; border-radius:30px;background-color:#221100; z-index:5000; position: absolute; color:#ffffff">
              Version: ${bisdate.date}</div>`);
     $('body').append(bb);
