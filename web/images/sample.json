@@ -1,0 +1,6 @@
+{
+    "image" : "sampleanat.nii.gz",
+    "overlay": "samplefunc.nii.gz",
+    "image2" : "MNI_T1_1mm_stripped_ras.nii.gz",
+    "overlay2" : "yale_broadmann_ras.nii.gz"
+}
