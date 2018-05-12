@@ -55,7 +55,11 @@ class WebWorkerController extends HTMLElement {
                 console.log("WebWorker: Received module done command "+obj.modulename+" "+obj.id,Object.keys(obj));
                 bis_webworker.inMainThreadModuleDone(obj);
             }  else {
-                console.log("WebWorker: Not a module command");
+                console.log("WebWorker: error",e.data);
+                bis_webworker.inMainThreadModuleDone( {
+                    error : "Failed to execute",
+                    detail : e.data,
+                });
             }
         };
     }
