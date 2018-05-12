@@ -18,12 +18,11 @@
 const webpack = require('webpack'); //to access built-in plugins
 const base=require('./webpack.config.js');
 
-/* Remove this for now as it does not work
-   base.mode='production';
-   base.performance = { 'hints' :  false };
-   const ugl = require('uglifyjs-webpack-plugin');
-   const ugly=new ugl();
-  base.plugins.push(ugly);
-  console.log('++++ Adding uglify plugin');
-*/
+base.mode='production';
+base.performance = { 'hints' :  false };
+const ugl = require('uglifyjs-webpack-plugin');
+const ugly=new ugl();
+base.plugins.push(ugly);
+console.log('++++ Adding uglify plugin');
+
 module.exports = base;
