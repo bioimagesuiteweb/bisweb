@@ -33,6 +33,7 @@ import module_testlist from '../../test/module_tests.json';
 let replacing=false;
 let logtext="";
 let extradir="";
+let threadController=null;
 
 var replacesystemprint=function(doreplace=true) {
 
@@ -102,7 +103,7 @@ var loadparamfile=function(paramfile,modulename,params) {
     });
 };
 
-var execute_test=function(test) {
+var execute_test=function(test,thread=false) {
 
     return new Promise( (resolve,reject) => {
 
@@ -170,16 +171,35 @@ var execute_test=function(test) {
                 console.log('oooo Loaded.');
                 console.log('oooo Invoking Module with params=',JSON.stringify(params));
                 let newParams = module.parseValuesAndAddDefaults(params);
-                module.directInvokeAlgorithm(newParams).then(() => {
-                    console.log('oooo -------------------------------------------------------');
-                    resolve( {
-                        result : ' Test completed, now checking results.',
-                        module : module,
+
+                if (!thread) {
+                    module.directInvokeAlgorithm(newParams).then(() => {
+                        console.log('oooo -------------------------------------------------------');
+                        resolve( {
+                            result : ' Test completed, now checking results.',
+                            module : module,
+                        });
+                    }).catch((e) => {
+                        reject('---- Failed to invoke algorithm '+e);
                     });
-                    
-                }).catch((e) => {
-                    reject('---- Failed to invoke algorithm '+e);
-                });
+                } else {
+                    console.log('oooo ..........---Calling Web Worker ..............................-');
+                    threadController.executeModule(module.name, module.inputs,newParams).then((outputs) => {
+
+                        if (Object.keys(outputs).length<1)
+                            reject('---- Failed to execute in thread manager ');
+
+                        
+                        module.outputs=outputs;
+                        console.log('oooo ..........---Back from Web Worker ..............................-');
+                        resolve( {
+                            result : ' Test completed, now checking results.',
+                            module : module,
+                        });
+                    }).catch((e) => {
+                        reject('---- Failed to invoke algorithm via thread manager '+e);
+                    });
+                }
             }).catch((e) => {
                 reject('----- Bad input filenames in test '+e);
             });
@@ -266,12 +286,12 @@ const execute_compare=function(module,test) {
     });
 };
 
-var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') { // jshint ignore:line
+var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',usethread=false) { // jshint ignore:line
 
     if (webutil.inElectronApp()) {
         window.BISELECTRON.remote.getCurrentWindow().openDevTools();
     }
-//    console.clear();
+    console.clear();
     
     if (firsttest<0)
         firsttest=0;
@@ -297,6 +317,8 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') { 
     let bad=0;
     let skipped=0;
     
+    let t00 = performance.now();
+    
     for (let i=firsttest;i<=lasttest;i++) {
         let v=testlist[i];
         let name=testlist[i].command.split(' ')[0].trim();
@@ -304,11 +326,17 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') { 
 
             run=run+1;
             main.append(`<H4 class="testhead">Test ${i}: ${name}</H4><p><UL><LI> Command: ${v.command}</LI><LI> Test details: ${v.test}</LI><LI> Should pass: ${v.result}</LI>`);
+            if (usethread)
+                main.append(`<P> Running in WebWorker </P>`);
             console.log(`-------------------------------`);
             console.log(`-------------------------------\nRunning test ${i}: ${v.command}, ${v.test},${v.result}\n------------------------`);
             replacesystemprint(true);
             try {
-                let obj=await execute_test(v,i); // jshint ignore:line
+                let t0 = performance.now();
+                let obj=await execute_test(v,i,usethread); // jshint ignore:line
+                var t1 = performance.now();
+                main.append(`.... test execution time=${(0.001*(t1 - t0)).toFixed(2)}s`);
+
                 main.append(`<p>${obj.result}</p>`);
                 let obj2=await execute_compare(obj.module,v); // jshint ignore:line
                 let result=obj2.result;
@@ -349,9 +377,14 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') { 
         let numtests=lasttest-firsttest+1;
         webconsole.append(`Tests for version=${bisdate}: completed=${run}/${numtests}, passed=${good}/${numtests}, failed=${bad}/${numtests}, skipped=${skipped}/${numtests}`);
     }
+    
+    let t11 = performance.now();
 
+
+    
     if (testname!=="None") {
         main.append('<BR><BR><H3>All Tests Finished</H3>');
+        main.append(`.... total test execution time=${(0.001*(t11 - t00)).toFixed(2)}s`);
         window.scrollTo(0,document.body.scrollHeight-100);
         
         biswrap.get_module()._print_memory();
@@ -431,9 +464,12 @@ let initialize=function(data) {
         let first=parseInt($("#first").val())||0;
         let last=parseInt($("#last").val());
         let testname=$('#testselect').val() || 'All';
+
+        let usethread= $('#usethread').is(":checked") || false;
+        
         if (last===undefined)
             last=testlist.length-1;
-        run_tests(testlist,first,last,testname);
+        run_tests(testlist,first,last,testname,usethread);
     });
     
     
@@ -448,6 +484,11 @@ var startFunction = (() => {
         $('#cnote').remove();
         inelectron=true;
     }
+
+    threadController=document.createElement('bisweb-webworkercontroller');
+    $('body').append($(threadController));
+    console.log('Thread Controller=',threadController);
+    
     
     userPreferences.setImageOrientationOnLoad('None');
     let devel=false;
@@ -457,6 +498,7 @@ var startFunction = (() => {
     else if (inelectron)
         extradir="./test/";
     initialize(module_testlist);
+
 });
 
 
