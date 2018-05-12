@@ -215,7 +215,19 @@ let createIndex=function(obj) {
                 getLatestVersion(true);
             },10);
         });
+
+
+        let s=window.document.URL;
+        let index=s.lastIndexOf("/");
+        let urlbase=s.substr(0,index);
+        let url=`${urlbase}/overlayviewer.html?load=${urlbase}/images/sample.json`;
+        console.log(url);
+        $("#othermenu").append($(`<li class="divider"></li>`));
+        $("#othermenu").append($(`<li><a href="${url}" target="_blank">Example Image Overlay</a></li>`));
     }
+
+    
+    
         
     let bb=$(`<div align="center" style="padding:15px;  right:5.5vw; top:570px; border-radius:30px;background-color:#221100; z-index:5000; position: absolute; color:#ffffff">
              Version: ${bisdate.date}</div>`);
@@ -253,11 +265,27 @@ let initialize=function() {
 var createserviceworker=function() {
 
     return new Promise( (resolve,reject) => {
+
+        let scope=window.document.URL;
+        let index=scope.indexOf(".html");
+        if (index>0) {
+            index=scope.lastIndexOf("/");
+            scope=scope.substr(0,index+1);
+        }
+        console.log('Scope = ',scope);
+
+        let path=scope;
         
-        let scope='/webapp/';
+        if (typeof (window.BIS) !== "undefined") {
+            scope='/';
+            path="/build/web/"
+        }
+
+        console.log(' path=',path,'scope=',scope);
         
         // service worker registered
-        navigator.serviceWorker.register(`${scope}bisweb-sw.js`, { scope: scope })
+        navigator.serviceWorker.register(`${path}bisweb-sw.js`, { scope: scope })
+  
             .then(function(registration) {
                 serviceWorker = registration.active;
                 console.log(`____ bisweb -- service worker registered ${scope}`);
@@ -281,15 +309,9 @@ window.onload = (() => {
     if (typeof (window.BISELECTRON) === "undefined") {
         if ('serviceWorker' in navigator) {
 
-            let s=window.document.URL.split('/');
-            let l=s.length;
-            if ( s[l-2]==='webapp') {
-                createserviceworker().then( () => {
-                    getLatestVersion(false);
-                });
-            } else {
-                console.log(`---- No service worker starterd ${s[l-2]} != webapp`);
-            }
+            createserviceworker().then( () => {
+                getLatestVersion(false);
+            });
         }
     }
 });
