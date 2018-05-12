@@ -291,7 +291,7 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
         window.BISELECTRON.remote.getCurrentWindow().openDevTools();
     }
 
-//    console.clear();
+    console.clear();
     
     if (firsttest<0)
         firsttest=0;
@@ -387,17 +387,19 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
         main.append('<BR><BR><H3>All Tests Finished</H3>');
         main.append(`.... total test execution time=${(0.001*(t11 - t00)).toFixed(2)}s`);
 
-        let t=0;
-        if (usethread)
-            t=1;
-        
-        let url=window.document.URL;
-        let index=url.indexOf('.html');
-        if (index>=0)
-            url=url.substr(0,index+5);
-        
-        let link=`${url}?first=${firsttest}&last=${lasttest}&testname=${testname}&webworker=${t}&run=1`;
-        main.append(`<BR><p>To run this specific test directly click:<BR> <a href="${link}" target="_blank">${link}</a></p>`);
+        if (!webutil.inElectronApp()) {
+            let t=0;
+            if (usethread)
+                t=1;
+            
+            let url=window.document.URL;
+            let index=url.indexOf('.html');
+            if (index>=0)
+                url=url.substr(0,index+5);
+            
+            let link=`${url}?first=${firsttest}&last=${lasttest}&testname=${testname}&webworker=${t}&run=1`;
+            main.append(`<BR><p>To run this specific test directly click:<BR> <a href="${link}" target="_blank">${link}</a></p>`);
+        }
 
         window.scrollTo(0,document.body.scrollHeight-100);
 
@@ -440,7 +442,6 @@ let initialize=function(data) {
         firsttest=0;
     else if (firsttest>testlist.length-1)
         firsttest=testlist.length-1;
-    console.log('Firsttest=',firsttest);
     
     let lasttest=parseInt(webutil.getQueryParameter('last') || 0);
     if (lasttest === undefined || lasttest<=0 || lasttest>=testlist.length)
