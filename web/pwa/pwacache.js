@@ -8,7 +8,6 @@ module.exports = {
         'bislib.css',
         'bislib.js',
         'biswebdropbox.html',
-        'bisweb-sw.js',
         'bootstrap.min.js',
         'bootstrap_dark_edited.css',
         'connviewer.css',
