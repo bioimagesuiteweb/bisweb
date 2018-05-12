@@ -291,7 +291,7 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
         window.BISELECTRON.remote.getCurrentWindow().openDevTools();
     }
 
-    console.clear();
+//    console.clear();
     
     if (firsttest<0)
         firsttest=0;
@@ -306,10 +306,11 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
         main.append(`Executing tests ${firsttest}:${lasttest} (Max index=${testlist.length-1}).`);
         if (testname!=="All")
             main.append(`Only runnng tests with name=${testname}<HR>`);
+
     } else {
         main.append('<H3>Listing Tests</H3><HR>');
     }
-
+    
 
     
     let run=0;
@@ -385,12 +386,28 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
     if (testname!=="None") {
         main.append('<BR><BR><H3>All Tests Finished</H3>');
         main.append(`.... total test execution time=${(0.001*(t11 - t00)).toFixed(2)}s`);
+
+        let t=0;
+        if (usethread)
+            t=1;
+        
+        let url=window.document.URL;
+        let index=url.indexOf('.html');
+        if (index>=0)
+            url=url.substr(0,index+5);
+        
+        let link=`${url}?first=${firsttest}&last=${lasttest}&testname=${testname}&webworker=${t}&run=1`;
+        main.append(`<BR><p>To run this specific test directly click:<BR> <a href="${link}" target="_blank">${link}</a></p>`);
+
         window.scrollTo(0,document.body.scrollHeight-100);
 
         if (!usethread) {
-            biswrap.get_module()._print_memory();
+            try {
+                biswrap.get_module()._print_memory();
+            } catch(e) {
+                // sometimes we have pure js modules, no wasm
+            }
         }
-        
     } else {
         main.append(`<BR> <BR> <BR>`);
         window.scrollTo(0,0);
@@ -425,18 +442,40 @@ let initialize=function(data) {
     for (let i=0;i<names.length;i++) {
         select.append($(`<option value="${names[i]}">${names[i]}</option>`));
     }
+
+    // http://localhost:8080/web/biswebtest.html?last=77&testname=cropImage&webworker=0
     
     let firsttest=parseInt(webutil.getQueryParameter('first')) || 0;
     if (firsttest<0)
         firsttest=0;
+    else if (firsttest>testlist.length-1)
+        firsttest=testlist.length-1;
+    console.log('Firsttest=',firsttest);
     
     let lasttest=parseInt(webutil.getQueryParameter('last') || 0);
     if (lasttest === undefined || lasttest<=0 || lasttest>=testlist.length)
         lasttest=testlist.length-1;
+
+    let testname=webutil.getQueryParameter('testname') || 'None';
+    if (testname !== 'None' && testname !=='All') {
+        if (names.indexOf(testname)<0)
+            testname='None';
+    }
+    
+    let usethread=parseInt(webutil.getQueryParameter('webworker') || 0);
+    let dorun=parseInt(webutil.getQueryParameter('run') || 0);
+    
+    if (usethread)
+        usethread=true;
+    else
+        usethread=false;
+
+
     
     $('#first').val(firsttest);
     $('#last').val(lasttest);
-    $('#testselect').val('None');
+    $('#testselect').val(testname);
+    $('#usethread').prop("checked", usethread);
 
     var fixRange=function(targetname) {
 
@@ -467,13 +506,22 @@ let initialize=function(data) {
         let testname=$('#testselect').val() || 'All';
 
         let usethread= $('#usethread').is(":checked") || false;
+
+        
         if (last===undefined)
             last=testlist.length-1;
+
+
+        
         run_tests(testlist,first,last,testname,usethread);
     });
     
     
     $('#compute').click(fn);
+
+    if (dorun) {
+        run_tests(testlist,firsttest,lasttest,testname,usethread);
+    }
 
 };
 
