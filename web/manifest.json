@@ -2,11 +2,11 @@
   "name": "BioImage Suite Web",
   "description": "This is the BioImage Suite Web Medical Image Analysis Suite -- see bisweb.yale.edu",
   "short_name": "bisweb",
-  "theme_color": "#24292e",
-  "background_color": "#24292e",
+  "theme_color": "#375a7f",
+  "background_color": "#375a7f",
   "display": "standalone",
-  "scope": "/webapp/",
-  "start_url": "/webapp/index.html",
+  "scope": "./",
+  "start_url": "index.html",
   "splash_pages": null,
   "icons": [
     {

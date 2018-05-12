@@ -48,7 +48,6 @@ program
     .option('-p, --dopack <s>','dopackage 0=no, 1=electron-packager, 2=run inno or zip in addition')
     .option('-z, --dozip <s>','dozip')
     .option('--internal <n>','if 1 serve the internal directory as well',parseInt)
-    .option('--production <n>','if 1 serve the build directory as root',parseInt)
     .option('--webworker <n>','if 1 build the webworker as well',parseInt)
     .option('--light <n>','if 1 only build the main bislib.js library',parseInt)
     .parse(process.argv);
@@ -66,7 +65,6 @@ let options = {
     zip : program.dozip || 0,
     webworker : program.webworker || false,
     internal : parseInt(program.internal || 0) || 0,
-    production : parseInt(program.production ||0) ||0,
     light : parseInt(program.light ||0) ||0,
 };
 
@@ -152,11 +150,6 @@ if (options.internal) {
     
 }
 
-if (options.production) {
-    internal.serveroptions = {
-        "root" : path.normalize(path.resolve(__dirname,'build/'))
-    };
-}
 
 // ---------------------------
 // Get Tool List
