@@ -282,14 +282,22 @@ var createserviceworker=function() {
 }
 
 window.onload = (() => {
-    $('body').css({"background-color":"rgb(28,45,64)"});
     initialize();
-    if (typeof (window.BISELECTRON) === "undefined" && ('serviceWorker' in navigator)) {
-        createserviceworker().then( () => {
-            getLatestVersion(false);
-        });
-    }
+    // Only launch a web app if this is a /webapp and service
+    if (typeof (window.BISELECTRON) === "undefined") {
+        if ('serviceWorker' in navigator) {
 
+            let s=window.document.URL.split('/');
+            let l=s.length;
+            if ( s[l-2]==='webapp') {
+                createserviceworker().then( () => {
+                    getLatestVersion(false);
+                });
+            } else {
+                console.log(`---- No service worker starterd ${s[l-2]} != webapp`);
+            }
+        }
+    }
 });
 
 
