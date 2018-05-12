@@ -141,6 +141,8 @@ class ViewerApplicationElement extends HTMLElement {
 
         let loadobjectmap = function (fname, viewer, loadobj = null) {
 
+            
+            console.log('In Load Objectmap',fname,viewer);
             return new Promise( (resolve,reject) => {
                 let img = new bisweb_image();
                 img.load(fname)
@@ -234,7 +236,7 @@ class ViewerApplicationElement extends HTMLElement {
                     painttool.loadobjectmap(f);
                 };
             } else {
-                loaded_obj = function (vol) { self.VIEWERS[viewerno].setobjectmap(vol, false); };
+                loaded_obj = function (vol,v) { self.VIEWERS[v].setobjectmap(vol, false); };
                 webutil.createMenuItem(objmenu[viewerno], 'Load Overlay',
                                        function (f) {
                                            loadobjectmap(f, viewerno, loaded_obj);
@@ -258,7 +260,8 @@ class ViewerApplicationElement extends HTMLElement {
                 if (!webutil.inElectronApp()) {
                     bisweb_apputil.createCloudLoadMenuItems(objmenu[viewerno], 'Overlay', my_load_obj, viewerno);
                 }
-                exportobj=my_load_obj;
+                if (viewerno===0)
+                    exportobj=my_load_obj;
 
                 webutil.createMenuItem(objmenu[viewerno], 'Clear Overlay',
                                        function () {
@@ -428,19 +431,12 @@ class ViewerApplicationElement extends HTMLElement {
     
     parseQueryParameters(loadimage,loadobjectmap) {
 
-        console.log(loadimage);
-        console.log(loadobjectmap);
-        
         // Here we check if there is any info we need on the query string
         let load=webutil.getQueryParameter('load') || '';
-        console.log('load=',load);
         if (load.length<2)
             return 0;
 
         genericio.read(load).then( (obj) => {
-            console.log('Read ',obj.filename);
-            console.log(' Data=',obj.data);
-
             try {
                 obj.data=JSON.parse(obj.data);
             } catch(e) {
@@ -451,29 +447,32 @@ class ViewerApplicationElement extends HTMLElement {
             let index=obj.filename.lastIndexOf("/");
             if (index<0)
                 return;
+
+            let imagenames = [];
+            let overlaynames=[];
             
             let baseurl=obj.filename.substr(0,index+1);
-            console.log('baseurl=',baseurl);
-            
-            let imagename=obj.data['image'] || "";
-            let overlayname=obj.data['overlay'] || "";
+            imagenames[0]=obj.data['image'] || "";
+            overlaynames[0]=obj.data['overlay'] || "";
+            imagenames[1]=obj.data['image2'] || "";
+            overlaynames[1]=obj.data['overlay2'] || "";
 
-            console.log('image=',imagename,overlayname);
-            
-            if (imagename.length>0) {
-                imagename=baseurl+imagename;
-                console.log('loading ',imagename);
-                loadimage(imagename,0).then( () => {
-                    if (overlayname.length>0 && loadobjectmap!==null) {
-                        overlayname=baseurl+overlayname;
-                        loadobjectmap(overlayname,0);
-                    }
-                }).catch( (e) => {
-                    console.log(e);
-                    webutil.createAlert('Failed to read image from '+imagename, true);
-                });
-            } else {
-                console.log('imagename is empty');
+            for (let viewer=0;viewer<this.num_independent_viewers;viewer++) {
+                if (imagenames[viewer].length>0) {
+                    let imagename=baseurl+imagenames[viewer];
+                    let vr=viewer;
+                    loadimage(imagename,vr).then( () => {
+                        if (overlaynames[vr].length>0 && loadobjectmap!==null) {
+                            let overlayname=baseurl+overlaynames[vr];
+                            loadobjectmap(overlayname,vr);
+                        }
+                    }).catch( (e) => {
+                        console.log(e, e.stack);
+                        webutil.createAlert('Failed to read image from '+imagename, true);
+                    });
+                } else {
+                    console.log('imagename is empty');
+                }
             }
         }).catch( (e) => {
             console.log(e);
@@ -599,7 +598,9 @@ class ViewerApplicationElement extends HTMLElement {
         let mainViewerDoneEvent = new CustomEvent('mainViewerDone');
         document.dispatchEvent(mainViewerDoneEvent);
 
-        this.parseQueryParameters(loadimage,loadobjectmap);
+        webutil.runAfterAllLoaded( () => {
+            this.parseQueryParameters(loadimage,loadobjectmap);
+        });
 
     }
 }
