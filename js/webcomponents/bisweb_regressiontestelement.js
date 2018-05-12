@@ -36,7 +36,6 @@ let extradir="";
 let threadController=null;
 
 var replacesystemprint=function(doreplace=true) {
-
     if (doreplace===true && replacing===false) {
         const oldLog = console.log;
         replacing=true;
@@ -103,7 +102,7 @@ var loadparamfile=function(paramfile,modulename,params) {
     });
 };
 
-var execute_test=function(test,thread=false) {
+var execute_test=function(test,i,usethread=false) {
 
     return new Promise( (resolve,reject) => {
 
@@ -164,7 +163,7 @@ var execute_test=function(test,thread=false) {
 
         loadparamfile(paramfile,module.name,params).then( () => {
 
-            console.log(' ');
+            console.log('oooo usethread=',usethread);
             console.log('oooo Loading Inputs ',JSON.stringify(inputs));
             
             module.loadInputs(inputs).then( () => {
@@ -172,7 +171,7 @@ var execute_test=function(test,thread=false) {
                 console.log('oooo Invoking Module with params=',JSON.stringify(params));
                 let newParams = module.parseValuesAndAddDefaults(params);
 
-                if (!thread) {
+                if (!usethread) {
                     module.directInvokeAlgorithm(newParams).then(() => {
                         console.log('oooo -------------------------------------------------------');
                         resolve( {
@@ -291,6 +290,7 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
     if (webutil.inElectronApp()) {
         window.BISELECTRON.remote.getCurrentWindow().openDevTools();
     }
+
     console.clear();
     
     if (firsttest<0)
@@ -386,8 +386,10 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
         main.append('<BR><BR><H3>All Tests Finished</H3>');
         main.append(`.... total test execution time=${(0.001*(t11 - t00)).toFixed(2)}s`);
         window.scrollTo(0,document.body.scrollHeight-100);
-        
-        biswrap.get_module()._print_memory();
+
+        if (!usethread) {
+            biswrap.get_module()._print_memory();
+        }
         
     } else {
         main.append(`<BR> <BR> <BR>`);
@@ -407,7 +409,6 @@ let initialize=function(data) {
         logo.attr('href','../index.html');
     }
 
-    biswrap.initialize();
     
     let testlist=data.testlist;
     let names=[];
@@ -466,7 +467,6 @@ let initialize=function(data) {
         let testname=$('#testselect').val() || 'All';
 
         let usethread= $('#usethread').is(":checked") || false;
-        
         if (last===undefined)
             last=testlist.length-1;
         run_tests(testlist,first,last,testname,usethread);
@@ -485,10 +485,10 @@ var startFunction = (() => {
         inelectron=true;
     }
 
-    threadController=document.createElement('bisweb-webworkercontroller');
-    $('body').append($(threadController));
-    console.log('Thread Controller=',threadController);
-    
+    setTimeout( () => {
+        threadController=document.createElement('bisweb-webworkercontroller');
+        $('body').append($(threadController));
+    },10);
     
     userPreferences.setImageOrientationOnLoad('None');
     let devel=false;
