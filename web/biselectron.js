@@ -128,8 +128,6 @@ var createWindow=function(index,fullURL) {
     if (opts.width>state.screensize.width-100)
 	opts.width=state.screensize.width-100;
 
-    //    console.log('Dimensions=',opts.width,opts.height,state.screensize.width);
-    
 
     if (index!==0) {
 	xval+=Math.round(Math.random()*50);
@@ -152,8 +150,8 @@ var createWindow=function(index,fullURL) {
 
     
     var preload=  path.resolve(__dirname, 'bispreload.js');
-    console.log(getTime()+' Creating new window '+fullURL + ', index='+index);
-//    console.log(getTime()+' Screen size = '+[state.screensize.width,state.screensize.height]+' size='+[opts.width,opts.height]);
+    //console.log(getTime()+' Creating new window '+fullURL + ', index='+index);
+    //console.log(getTime()+' Screen size = '+[state.screensize.width,state.screensize.height]+' size='+[opts.width,opts.height]);
     state.winlist[index]=new BrowserWindow({width: opts.width,
 					    height: opts.height,
 					    show: true,
@@ -184,8 +182,11 @@ var createWindow=function(index,fullURL) {
 		anyalive=true;
 	});
 	
-	if (process.platform === 'darwin') 
+	if (process.platform === 'darwin')  {
+            if (!anyalive)
+                macExit(true);
 	    return;
+        }
 
 	if (anyalive===false) {
 	    state.console.hide();
@@ -197,7 +198,7 @@ var createWindow=function(index,fullURL) {
     return index;
 };
 
-var macExit=function() {
+var macExit=function(ask=false) {
 
     let anyalive=false;
     state.winlist.forEach(function(e) {
@@ -205,7 +206,7 @@ var macExit=function() {
 	    anyalive=true;
     });
 
-    if (anyalive===false)
+    if (anyalive===false && ask===false)
 	process.exit();
 
     const dialog = electron.dialog;
@@ -238,7 +239,7 @@ var attachWindow=function(index) {
         if (url.indexOf('http://')===0 ||
 	    url.indexOf('https://')===0 
 	   ) {
-	    console.log(getTime()+' Electron opening ' + url + ' in browser.');
+            //	    console.log(getTime()+' Electron opening ' + url + ' in browser.');
 	    shell.openExternal(url);
 	    return;
 	}
@@ -304,7 +305,7 @@ var attachWindow=function(index) {
         if (url.indexOf('http://')===0 ||
 	    url.indexOf('https://')===0 
 	   ) {
-	    console.log(getTime()+' Electron opening ' + url + ' in browser.');
+            //	    console.log(getTime()+' Electron opening ' + url + ' in browser.');
 	    shell.openExternal(url);
 	    return;
 	}
@@ -407,13 +408,15 @@ app.on('ready', function() {
 	}
 	
 	var menu=Menu.buildFromTemplate([
-	    {  label: "Main Menu Page", click: () => { createOrShowMainWindow(); }},
+	    {  label: "Application Selector", click: () => { createOrShowMainWindow(); }},
 	    {  label: 'Tools', submenu : mitems }
 	]);
 
 	var menu2=Menu.buildFromTemplate([
 	    {  label: 'Main',  
 	       submenu : [
+                   {  label: "Application Selector", click: () => { createOrShowMainWindow(); }},
+                   {   type: 'separator'},
 		   { 
 		       label : 'Exit', 
 		       click: () => { 
