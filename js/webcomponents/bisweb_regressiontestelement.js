@@ -271,7 +271,7 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') { 
     if (webutil.inElectronApp()) {
         window.BISELECTRON.remote.getCurrentWindow().openDevTools();
     }
-    console.clear();
+//    console.clear();
     
     if (firsttest<0)
         firsttest=0;
@@ -468,7 +468,7 @@ class RegressionTestElement extends HTMLElement {
     
     // Fires when an instance of the element is created.
     connectedCallback() {
-	webutil.runAfterAllLoaded(startFunction);
+	window.onload=startFunction;
     }
 }
 
