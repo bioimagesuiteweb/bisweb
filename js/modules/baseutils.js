@@ -470,9 +470,9 @@ module.exports = {
     getExecutableArguments(name) {
         if (genericio.getmode()==='node') 
             return [ 'node'];
-        
+        if (typeof window === "undefined")
+            return [ 'browser worker' ];
         let s=window.location.href+" "+name;
-        //        console.log(s);
         return s;
     }
 
