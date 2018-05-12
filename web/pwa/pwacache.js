@@ -35,6 +35,7 @@ module.exports = {
         'images/mni2tal.png',
         'images/overlayviewer.png',
         'images/paravision.png',
+        'images/sample.json',
         'images/sampleanat.nii.gz',
         'images/samplefunc.nii.gz',
         'images/tal2mni_lookup_xy.png',
