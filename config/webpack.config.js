@@ -21,6 +21,7 @@ const fs=require('fs');
 
 
 let orig_internal = (process.env.BISWEB_INTERNAL) || 0;
+let output = (process.env.BISWEB_OUT) || "";
 let internal = parseInt(orig_internal) || 0 ;
 if (internal<0)
     internal=0;
@@ -31,7 +32,7 @@ let extrapath=path.normalize(path.resolve(__dirname,'../../internal/js'));
 let extrapath2=path.normalize(path.resolve(__dirname,'../../internal/node_modules'));
 let extrafile = path.resolve(extrapath,'bisextra.js');
 
-console.log('--------------------------- Running Webpack -------------------------');
+console.log(`--------------------------- Running Webpack --> ${output} -------------------------`);
 
 
 if (fs.existsSync(extrafile) && internal) {
@@ -52,44 +53,70 @@ if (parseInt(internal)===2) {
     console.log(`++++ Using custom extra require file=${bisWebCustom}`);
 }
 
-module.exports = {
-    resolve: {
-	extensions: [ '.js'],
-	modules : [ path.resolve(mypath,'node_modules'),
-                    path.resolve(mypath,'lib/js'),
-                    path.resolve(mypath,'js'),
-                    path.resolve(mypath,'js/core'),
-                    path.resolve(mypath,'js/dataobjects'),
-                    path.resolve(mypath,'js/cloud'),
-                    path.resolve(mypath,'js/webcomponents'),
-                    path.resolve(mypath,'js/coreweb'),
-                    path.resolve(mypath,'js/legacy'),
-                    path.resolve(mypath,'js/modules'),
-                    path.resolve(mypath,'build/wasm') ]
-    },
-    mode : 'development',
-    target : "web",
-    externals: {
-        // require("jquery") is external and available on the global var jQuery
-	"jquery": "jQuery",
-    },
-    watchOptions: {
-	aggregateTimeout: 300,
-	poll: 1000
-    },
-    plugins : [
-	new webpack.NormalModuleReplacementPlugin(/(.*)__BISWEB_CUSTOM(\.*)/, function(resource) {
-            resource.request = resource.request.replace(/__BISWEB_CUSTOM/, `${bisWebCustom}`);
-	})
-    ]
-}
+if (output !== "webworkermain.js") {
+    module.exports = {
+        resolve: {
+	    extensions: [ '.js'],
+	    modules : [ path.resolve(mypath,'node_modules'),
+                        path.resolve(mypath,'lib/js'),
+                        path.resolve(mypath,'js'),
+                        path.resolve(mypath,'js/core'),
+                        path.resolve(mypath,'js/dataobjects'),
+                        path.resolve(mypath,'js/cloud'),
+                        path.resolve(mypath,'js/webcomponents'),
+                        path.resolve(mypath,'js/coreweb'),
+                        path.resolve(mypath,'js/legacy'),
+                        path.resolve(mypath,'js/modules'),
+                        path.resolve(mypath,'build/wasm') ]
+        },
+        mode : 'development',
+        target : "web",
+        externals: {
+            // require("jquery") is external and available on the global var jQuery
+	    "jquery": "jQuery",
+        },
+        watchOptions: {
+	    aggregateTimeout: 300,
+	    poll: 1000
+        },
+        plugins : [
+	    new webpack.NormalModuleReplacementPlugin(/(.*)__BISWEB_CUSTOM(\.*)/, function(resource) {
+                resource.request = resource.request.replace(/__BISWEB_CUSTOM/, `${bisWebCustom}`);
+	    })
+        ]
+    };
 
-module.exports.resolve.modules.push(extrapath);
-console.log('++++ Appending',extrapath,' to module path');
-if (extrapath2) {
-    if (fs.existsSync(extrapath2) ) {
-        module.exports.resolve.modules.push(extrapath2);
-        console.log('++++ Appending',extrapath2,' to module path');
+    module.exports.resolve.modules.push(extrapath);
+    console.log('++++ Appending',extrapath,' to module path');
+    if (extrapath2) {
+        if (fs.existsSync(extrapath2) ) {
+            module.exports.resolve.modules.push(extrapath2);
+            console.log('++++ Appending',extrapath2,' to module path');
+        }
     }
+
+} else {
+    module.exports = {
+        resolve: {
+	    extensions: [ '.js'],
+	    modules : [ path.resolve(mypath,'node_modules'),
+                        path.resolve(mypath,'lib/js'),
+                        path.resolve(mypath,'js'),
+                        path.resolve(mypath,'js/core'),
+                        path.resolve(mypath,'js/dataobjects'),
+                        path.resolve(mypath,'js/legacy'),
+                        path.resolve(mypath,'js/modules'),
+                        path.resolve(mypath,'build/wasm'),
+                        path.resolve(mypath,'build/web')]
+        },
+        mode : 'development',
+        target : "web",
+        watchOptions: {
+	    aggregateTimeout: 300,
+	    poll: 1000
+        }
+    };
 }
+    
+
       

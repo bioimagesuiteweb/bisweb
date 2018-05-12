@@ -265,10 +265,17 @@ var getWebpackCommand=function(source,internal,out,indir,minify,outdir,watch) {
    let extracmd=""
     if (internal) {
         if (os.platform()==='win32')
-            extracmd=`SET BISWEB_INTERNAL=${internal}&`;
+            extracmd=`SET BISWEB_INTERNAL=${internal}& `;
         else
             extracmd=`export BISWEB_INTERNAL=${internal}; `;
     }
+
+    if (os.platform()==='win32')
+        extracmd+=`SET BISWEB_OUT=${out}&`;
+    else
+        extracmd+=`export BISWEB_OUT=${out}; `;
+    
+    
     
     let cmd=extracmd+' webpack-cli --entry '+source+' --output-filename '+out+' --output-path '+outdir+' ';
 
