@@ -3,7 +3,6 @@
 
 "use strict";
 
-console.log('wwww  I n    W e b    W o r k e r\n\n');
 // Inject this into generic_io
 let genericio=require('bis_genericio');
 genericio.setWebWorkerScope( { atob : atob.bind(self),
@@ -13,14 +12,27 @@ genericio.setWebWorkerScope( { atob : atob.bind(self),
 const biswrap = require('libbiswasm_wrapper');
 const wasmlib = require('../../build/web/libbiswasm_wasm.js');
 
-
-let binary=genericio.fromzbase64(wasmlib);
-biswrap.initialize(binary).then( () => { console.log('++++ Webworker WASM Result =',biswrap.test_wasm());});
-
+let initialized=false;
 let bis_webworker=require("webworkermoduleutil.js");
 
 self.onmessage = function(e) {
 
+    if (e.data==='initialize') {
+        if (!initialized) {
+            console.log('++++ Webworker Initializing Web Assembly');
+            let binary=genericio.fromzbase64(wasmlib);
+            biswrap.initialize(binary).then( () => {
+                initialized=true;
+                console.log('++++ Webworker WASM Result =',biswrap.test_wasm());
+                postMessage('initialized');
+            });
+        } else {
+            console.log('++++ Webworker Already Initialized WASM Result =',biswrap.test_wasm());
+            postMessage('initialized');
+        }
+        return;
+    }
+    
     let obj=null;
     try {
         obj=JSON.parse(e.data);
@@ -37,7 +49,7 @@ self.onmessage = function(e) {
     }
 };
 
-console.log('++++ BIS Web Worker Initialized');
 
+console.log('++++ BIS Web Worker Created');
 
 
