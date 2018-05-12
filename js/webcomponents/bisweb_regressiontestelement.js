@@ -416,16 +416,6 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
 };  // jshint ignore:line
 
 let initialize=function(data) {
-
-    
-
-
-    
-    if (typeof window.BIS ==='undefined') {
-        let logo=$('#bislogo').parent();
-        logo.attr('href','../index.html');
-    }
-
     
     let testlist=data.testlist;
     let names=[];
@@ -530,7 +520,6 @@ var startFunction = (() => {
     let inelectron=false;
     if (webutil.inElectronApp()) {
         $('#cnote').remove();
-        inelectron=true;
     }
 
     setTimeout( () => {
@@ -539,11 +528,11 @@ var startFunction = (() => {
     },10);
     
     userPreferences.setImageOrientationOnLoad('None');
-    let devel=false;
+
     
     if (typeof window.BIS !=='undefined') 
         extradir="../test/";
-    else if (inelectron)
+    else 
         extradir="./test/";
     initialize(module_testlist);
 
