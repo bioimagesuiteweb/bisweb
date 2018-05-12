@@ -16,16 +16,24 @@ const bis_webworker=require("webworkermoduleutil.js");
  *
  */
 
+
 class WebWorkerController extends HTMLElement {
 
     constructor() {
         super();
         /** A pointer to the global WebWorker element*/
         this.WebWorker=null;
+
+        this.outsideResolve=null;
+        this.outsideReject=null;
+        const self=this;
+        this.promise=new Promise( (resolve, reject) => { 
+            self.outsideResolve = resolve; 
+            self.outsideReject = reject; 
+        })
+        this.workerInitialized=false;
     }
-    // ----------------------------------------------------------
-    // Initialize Web Worker
-    // ----------------------------------------------------------
+
     /**
      * Worker is initialize via the connected callback
      */
@@ -38,12 +46,20 @@ class WebWorkerController extends HTMLElement {
         
         try { 
             this.WebWorker=new Worker(newname);
-            console.log('++++ WebWorker created');
         } catch(e) {
             console.log(e);
+            return;
         }
-        
+
+        const self=this;
         this.WebWorker.onmessage = function(e) {
+
+            if (e.data==='initialized') {
+                self.workerInitialized=true;
+                self.outsideResolve();
+                return;
+            }
+            
             let obj=null;
             try {
                 obj=JSON.parse(e.data);
@@ -62,6 +78,8 @@ class WebWorkerController extends HTMLElement {
                 });
             }
         };
+
+
     }
 
     /**
@@ -81,15 +99,26 @@ class WebWorkerController extends HTMLElement {
      */
     executeModule(modulename,inputs,params) {
 
+        const self=this;
+        
         return new Promise( (resolve, reject) => {
             let clb=function(o) {
                 resolve(o);
             };
-            try {
-                bis_webworker.inMainThreadExecuteModule(this.WebWorker,modulename,inputs,params,clb);
-            } catch(e) {
+            
+            if (!self.workerInitialized) 
+                self.WebWorker.postMessage('initialize');
+            
+            self.promise.then( (e) => {
+                try {
+                    bis_webworker.inMainThreadExecuteModule(this.WebWorker,modulename,inputs,params,clb);
+                } catch(e) {
+                    reject(e);
+                }
+            }).catch( (e) => {
+                console.log('Error = ',e,e.stack);
                 reject(e);
-            }
+            });
         });
     }
 }
