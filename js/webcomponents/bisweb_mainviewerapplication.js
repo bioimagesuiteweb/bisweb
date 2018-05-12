@@ -26,7 +26,7 @@ const FastClick = require('fastclick');
 const userPreferences = require('bisweb_userpreferences.js');
 const $ = require('jquery');
 const bisdbase = require('bisweb_dbase');
-
+const genericio=require('bis_genericio');
 
 /**
  * A Application Level Element that creates a Viewer Application using an underlying viewer element.
@@ -140,14 +140,19 @@ class ViewerApplicationElement extends HTMLElement {
         };
 
         let loadobjectmap = function (fname, viewer, loadobj = null) {
-            let img = new bisweb_image();
-            img.load(fname)
-                .then(function () {
-                    loadobj(img, viewer);
-                })
-                .catch((e) => { webutil.createAlert(e, true); });
-        };
 
+            return new Promise( (resolve,reject) => {
+                let img = new bisweb_image();
+                img.load(fname)
+                    .then(function () {
+                        loadobj(img, viewer);
+                        resolve();
+                    }).catch((e) => {
+                        webutil.createAlert(e, true);
+                        reject();
+                    });
+            });
+        };
 
         let exportobj=null;
         
@@ -224,6 +229,10 @@ class ViewerApplicationElement extends HTMLElement {
                                        function () {
                                            graphtool.parsePaintedAreaAverageTimeSeries(self.VIEWERS[paintviewerno]);
                                        });
+
+                exportobj=function(f) {
+                    painttool.loadobjectmap(f);
+                };
             } else {
                 loaded_obj = function (vol) { self.VIEWERS[viewerno].setobjectmap(vol, false); };
                 webutil.createMenuItem(objmenu[viewerno], 'Load Overlay',
@@ -243,7 +252,7 @@ class ViewerApplicationElement extends HTMLElement {
                 webutil.createMenuItem(objmenu[viewerno], ''); // separator
 
                 let my_load_obj = function (f, v) {
-                    loadobjectmap(f, v, loaded_obj);
+                    return loadobjectmap(f, v, loaded_obj);
                 };
 
                 if (!webutil.inElectronApp()) {
@@ -416,6 +425,63 @@ class ViewerApplicationElement extends HTMLElement {
     }
 
     //  ---------------------------------------------------------------------------
+    
+    parseQueryParameters(loadimage,loadobjectmap) {
+
+        console.log(loadimage);
+        console.log(loadobjectmap);
+        
+        // Here we check if there is any info we need on the query string
+        let load=webutil.getQueryParameter('load') || '';
+        console.log('load=',load);
+        if (load.length<2)
+            return 0;
+
+        genericio.read(load).then( (obj) => {
+            console.log('Read ',obj.filename);
+            console.log(' Data=',obj.data);
+
+            try {
+                obj.data=JSON.parse(obj.data);
+            } catch(e) {
+                webutil.createAlert('Bad load file '+obj.filename);
+                return;
+            }
+
+            let index=obj.filename.lastIndexOf("/");
+            if (index<0)
+                return;
+            
+            let baseurl=obj.filename.substr(0,index+1);
+            console.log('baseurl=',baseurl);
+            
+            let imagename=obj.data['image'] || "";
+            let overlayname=obj.data['overlay'] || "";
+
+            console.log('image=',imagename,overlayname);
+            
+            if (imagename.length>0) {
+                imagename=baseurl+imagename;
+                console.log('loading ',imagename);
+                loadimage(imagename,0).then( () => {
+                    if (overlayname.length>0 && loadobjectmap!==null) {
+                        overlayname=baseurl+overlayname;
+                        loadobjectmap(overlayname,0);
+                    }
+                }).catch( (e) => {
+                    console.log(e);
+                    webutil.createAlert('Failed to read image from '+imagename, true);
+                });
+            } else {
+                console.log('imagename is empty');
+            }
+        }).catch( (e) => {
+            console.log(e);
+            webutil.createAlert('Failed to read load file '+load, true);
+        });
+    }
+    
+    //  ---------------------------------------------------------------------------
     // Essentially the main function, called when element is attached to the page
     //  ---------------------------------------------------------------------------
     connectedCallback() {
@@ -495,12 +561,15 @@ class ViewerApplicationElement extends HTMLElement {
         if (mode!=='overlay') {
             if (modulemanager) {
                 userPreferencesLoaded.then(() => {
-                    
-                    let imagepath="";
-                    if (typeof window.BIS !=='undefined') {
-                        imagepath=window.BIS.imagepath;
+
+                    let load=webutil.getQueryParameter('load') || '';
+                    if (load.length<1) {
+                        let imagepath="";
+                        if (typeof window.BIS !=='undefined') {
+                            imagepath=window.BIS.imagepath;
+                        }
+                        loadimage(`${imagepath}images/MNI_T1_2mm_stripped_ras.nii.gz`, 0);
                     }
-                    loadimage(`${imagepath}images/MNI_T1_2mm_stripped_ras.nii.gz`, 0);
                 });
             }
         } else {
@@ -529,6 +598,9 @@ class ViewerApplicationElement extends HTMLElement {
         //signal other modules waiting for top bar to render
         let mainViewerDoneEvent = new CustomEvent('mainViewerDone');
         document.dispatchEvent(mainViewerDoneEvent);
+
+        this.parseQueryParameters(loadimage,loadobjectmap);
+
     }
 }
 
