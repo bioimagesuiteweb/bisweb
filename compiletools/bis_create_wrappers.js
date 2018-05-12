@@ -140,11 +140,11 @@ const wrapperutil=require('bis_wrapperutils');
 let Module=0;
 let ModulePromise=0;
 
-var initialize=function() {
+var initialize=function(binary=null) {
 
     if (ModulePromise===0) {
         // this calls set_module ...
-        ModulePromise=wrapperutil.initialize_wasm();
+        ModulePromise=wrapperutil.initialize_wasm(binary);
         ModulePromise.then( (mod) => {
             Module=mod;
             if (Module._uses_gpl())
