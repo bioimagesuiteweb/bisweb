@@ -187,9 +187,18 @@ var createHTML=function(toolname,outdir,libjs,commoncss) {
 	alljs = [ 'jquery.min.js', 'bootstrap.min.js' ];
     }
 
+    let repljs=alljs;
+
+    /*  
+        Cache busting one day
+        let t= new Date().getTime()
+        
+        for (let i=0;i<alljs.length;i++)
+        repljs.push(`${alljs[i]}?v=${t}`);*/
+    
     return gulp.src([ mainhtml ])
     	.pipe(htmlreplace({
-	    'js': alljs,
+	    'js': repljs,
 	    'css': bundlecss,
             'manifest' : '<link rel="manifest" href="./manifest.json">',
 	})).pipe(gulp.dest(outdir));

@@ -78,7 +78,7 @@ self.addEventListener('fetch', event => {
             
             return response || fetch(event.request);
         }).catch(function(error) {
-            console.log('Fetch failed; returning online page instead.', error);
+            console.log('Fetch failed; returning online page instead for', event.request.url);
         }));
 });
 
