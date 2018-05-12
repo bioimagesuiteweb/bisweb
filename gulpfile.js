@@ -189,7 +189,7 @@ if (!options.light) {
 
     if (options.webworker) {
         internal.webpackjobs.push(
-            { path : path.resolve(__dirname,'../internal/js/')+'/',
+            { path : "./js/webworker/",
               name : internal.webworkerlib,
             });
     }
