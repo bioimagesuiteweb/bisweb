@@ -177,12 +177,6 @@ let createIndex=function(obj) {
     indicators.empty();
     indicators.append($(indstring));
 
-    if (typeof window.BIS !=='undefined')
-        $("#devmenu").append(`<li><a href="./biswebtest.html" target="_blank">Run Regression Tests</a></li>`);
-    else
-        $("#devmenu").append(`<li><a href="./test/biswebtest.html" target="_blank">Run Regression Tests</a></li>`);
-
-
     let othermenu=$(`<li class='dropdown'>
             <a href='#' class='dropdown-toggle'  data-toggle='dropdown'
                role='button' aria-expanded='false'>Help<span class='caret'></span></a>
