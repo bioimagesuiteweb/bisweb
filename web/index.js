@@ -221,7 +221,7 @@ let createIndex=function(obj) {
         let index=s.lastIndexOf("/");
         let urlbase=s.substr(0,index);
         let url=`${urlbase}/overlayviewer.html?load=${urlbase}/images/sample.json`;
-        console.log(url);
+
         $("#othermenu").append($(`<li class="divider"></li>`));
         $("#othermenu").append($(`<li><a href="${url}" target="_blank">Example Image Overlay</a></li>`));
     }
@@ -273,18 +273,9 @@ var createserviceworker=function() {
             scope=scope.substr(0,index+1);
         }
         console.log('Scope = ',scope);
-
-        let path=scope;
-        
-        if (typeof (window.BIS) !== "undefined") {
-            scope='/';
-            path="/build/web/"
-        }
-
-        console.log(' path=',path,'scope=',scope);
         
         // service worker registered
-        navigator.serviceWorker.register(`${path}bisweb-sw.js`, { scope: scope })
+        navigator.serviceWorker.register(`${scope}bisweb-sw.js`, { scope: scope })
   
             .then(function(registration) {
                 serviceWorker = registration.active;
@@ -309,9 +300,11 @@ window.onload = (() => {
     if (typeof (window.BISELECTRON) === "undefined") {
         if ('serviceWorker' in navigator) {
 
-            createserviceworker().then( () => {
-                getLatestVersion(false);
-            });
+            if (typeof (window.BIS) === "undefined") {
+                createserviceworker().then( () => {
+                    getLatestVersion(false);
+                });
+            }
         }
     }
 });
