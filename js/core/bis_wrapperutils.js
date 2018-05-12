@@ -123,7 +123,7 @@ var initialize_wasm=function(obj=null) {
 
     let dname="js_module (libbiswasm_wasm.js)";
     let binary=null;
-    
+
     return new Promise( (resolve,reject) => {
 
         let done=function(m) {
@@ -161,9 +161,10 @@ var initialize_wasm=function(obj=null) {
                 }
             }
         } else {
-            binary=obj.biswebpack;
+            binary=obj.biswebpack || obj;
             if (!binary)
                 reject('No binary in obj.biswebpack');
+            console.log('+++ Initializing with given binary length=',binary.length);
             libbiswasm_raw(done,dname,binary);
         }
 
