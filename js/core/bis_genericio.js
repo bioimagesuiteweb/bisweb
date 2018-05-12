@@ -55,9 +55,9 @@ if (!webpack) {
         console.log("++++ In Browser");
     }
     catch(e)  {
-        if (typeof ( WorkerGlobalScope ) !== "undefined") {
+/*        if (typeof ( WorkerGlobalScope ) !== "undefined") {
             console.log("++++ In WebWorker");
-        }
+        }*/
     }
     environment = 'browser';
 }
