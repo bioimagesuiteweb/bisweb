@@ -87,11 +87,13 @@ let inWorkerExecuteModule=function(obj,messageCommand) {
         messageCommand(JSON.stringify(output));
 
     }).catch( (e) =>  {
-        console.log('Something went wrong',e,e.stack);
-        messageCommand(JSON.stringify({ "error" : e,
-                                     "id" : id,
-                                     "details" : "Failed to execute module"+ modulename
-                                   }));
+        let a=JSON.stringify({ "modulename" : modulename,
+                               "id" : id,
+                               "parameters" : parameters,
+                               "outputs" : [],
+                               "details" : "Failed to execute module"+ modulename
+                             });
+        messageCommand(a);
     });
 };
 
@@ -167,7 +169,7 @@ let inMainThreadExecuteModule=function(worker,modulename,inputs,params,callback=
 let inMainThreadModuleDone=function(obj) {
 
     if (wwdebug) console.log('\n-------------------------------------------\nwwww In inMainThreadModuleDone\n');
-    
+
     let modulename=obj.modulename;
     let id=obj.id;
     //let parameters=obj.parameters;
