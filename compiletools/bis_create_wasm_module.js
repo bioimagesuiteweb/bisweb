@@ -69,12 +69,14 @@ let arr=new Uint8Array(d);
 //console.log("++++ RAW Binary WASM Array length=",arr.length);
 let str=genericio.tozbase64(arr);
 
+//    console.log('++++ BisWASM loaded as zbase-64 string, length=',biswebpack.length);
+
 let output_text=`
 
 (function () {
 
     const biswebpack="${str}";
-    console.log('++++ BisWASM loaded as zbase-64 string, length=',biswebpack.length);
+
 
     if (typeof module !== "undefined" && module.exports) {
         module.exports = biswebpack
