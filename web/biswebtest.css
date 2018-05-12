@@ -10,13 +10,23 @@
 #first,#last, #testname, #testselect {
     background-color: #183748;
     color : #ffffff;
-    width : 60px;
+    width : 40px;
     margin-left: 5px;
     margin-right: 10px;
 }
 
 #testname,#testselect {
     width: 200px;
+    margin-right: 0px;
+}
+
+#threaddiv {
+    margin-right : 10px;
+}
+
+#usethread {
+    background-color: #183748;
+
 }
 
 
