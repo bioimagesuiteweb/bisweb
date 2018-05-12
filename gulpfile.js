@@ -275,10 +275,10 @@ gulp.task('buildtest',function() {
     let testoutdir=path.resolve(path.join(options.outdir,'test'));
     console.log('Test output dir=',testoutdir);
     gulp.src(['./test/testdata/**/*']).pipe(gulp.dest(testoutdir+'/testdata'));
-    gulp.src('./web/images/bioimagesuite.png').pipe(gulp.dest(testoutdir+'/images'));
     gulp.src('./test/module_tests.json').pipe(gulp.dest(testoutdir));
-    bis_gutil.createTestHTML('biswebtest',testoutdir,'../bislib.js',internal.biscss);
-    bis_gutil.createCSSCommon([ './web/biswebtest.css'] ,'biswebtest.css',testoutdir);
+    bis_gutil.createHTML('biswebtest',options.outdir,'bislib.js',internal.biscss);
+    let maincss    = './web/biswebtest.css';
+    bis_gutil.createCSSCommon([maincss],'biswebtest.css',options.outdir);
 
 });
 

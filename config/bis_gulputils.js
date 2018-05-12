@@ -198,41 +198,6 @@ var createHTML=function(toolname,outdir,libjs,commoncss) {
 	})).pipe(gulp.dest(outdir));
 };
 
-var createTestHTML=function(toolname,outdir,libjs,commoncss) {
-
-    if (toolname==="bisjs")
-	return;
-    
-    var mainhtml   = path.normalize(path.join(__dirname,'../web/'+toolname+'.html'));
-    var bundlecss  = '../'+commoncss;
-
-    console.log(getTime()+colors.green(' Building HTML '+mainhtml));
-    let alljs=[ '../webcomponents-lite.js', '../jquery.min.js', '../bootstrap.min.js', '../libbiswasm_wasm.js', libjs  ];
-    
-    return gulp.src([ mainhtml ])
-    	.pipe(htmlreplace({
-	    'js': alljs,
-	    'css': bundlecss,
-            'icon' : `<link rel="icon" href="../images/favicon.ico">`
-	}))
-	.pipe(gulp.dest(outdir));
-};
-
-/*var createCSS=function(toolname,dependcss,outdir) {
-
-  if (toolname==="bisjs")
-  return;
-
-  console.log(dependcss);
-  var maincss    = './web/'+toolname+'.css';
-  var bundlecss  = toolname+'_bundle.css';
-
-  console.log(getTime()+' Building CSS '+maincss+' to '+bundlecss);
-  gulp.src(dependcss)
-  .pipe(concatCss(bundlecss))
-  .pipe(gulp.dest(outdir));
-  return gulp.src([ maincss ]).pipe(gulp.dest(outdir)); 
-  };*/
 
 var createCSSCommon=function(dependcss,out,outdir) {
 
@@ -527,7 +492,6 @@ module.exports = {
     executeCommandPromise : executeCommandPromise,
     executeCommandList : executeCommandList,
     createHTML : createHTML,
-    createTestHTML : createTestHTML,
     createDateFile : createDateFile,
     createCSSCommon  : createCSSCommon,
     runWebpack : runWebpack,
