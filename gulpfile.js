@@ -70,17 +70,16 @@ let options = {
     light : parseInt(program.light ||0) ||0,
 };
 
+const mainoption=program.rawArgs[2];
 
 // -----------------------------------------------------------------------------------------
 // Install and Zip Issues
 // Second pass to help with gulp zip and gulp package
 // -----------------------------------------------------------------------------------------
-const mainoption=program.rawArgs[2];
 if (mainoption=="zip")
     options.zip=1;
 if (mainoption=="package" && options.package===0)
     options.package=2;
-
 
 
 options.baseoutput=".";
@@ -176,6 +175,9 @@ if (options.inpfilename === "" || options.inpfilename === "all") {
 // ------------------------
 // Define webpack jobs
 // ------------------------
+
+if (mainoption==="build")
+    options.webworker=1;
 
 internal.webpackjobs = [ { path: './js/webcomponents/' , name: internal.bislib } ];
 if (options.inpfilename === 'index') {
