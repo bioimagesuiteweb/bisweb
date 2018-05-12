@@ -28,10 +28,8 @@ let colors=require('colors/safe'),
     gulpzip = require('gulp-zip'),
     template=require('gulp-template'),
     del = require('del'),
-    gulp=require("gulp"),
-    pwaconfig=require('../web/pwa/pwa_config.js');
+    gulp=require("gulp");
 
-//console.log(pwaconfig);
 
 
 var getTime=function(nobracket=0) {
@@ -193,8 +191,7 @@ var createHTML=function(toolname,outdir,libjs,commoncss) {
     	.pipe(htmlreplace({
 	    'js': alljs,
 	    'css': bundlecss,
-            'manifest' : pwaconfig.manifest,
-            'serviceworker' : pwaconfig.serviceworker
+            'manifest' : '<link rel="manifest" href="./manifest.json">',
 	})).pipe(gulp.dest(outdir));
 };
 
