@@ -21,7 +21,7 @@ self.onmessage = function(e) {
         if (!initialized) {
             console.log('++++ Webworker Initializing Web Assembly');
             let binary=genericio.fromzbase64(wasmlib.binary);
-            biswrap.initialize(binary).then( () => {
+            biswrap.initialize({ binary : binary, date : wasmlib.date}).then( () => {
                 initialized=true;
                 console.log('++++ Webworker WASM Result =',biswrap.test_wasm(), 'build date=',wasmlib.date);
                 postMessage('initialized');
