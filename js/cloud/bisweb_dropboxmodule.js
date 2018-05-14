@@ -43,6 +43,7 @@ let init = function() {
         apiTag.setAttribute('id', 'dropboxjs');
         apiTag.setAttribute('data-app-key', keys.DropboxAppKey);
         
+        window.addEventListener('storage', function(){ console.log('heard storage event'); });
         document.head.appendChild(apiTag);
         apiTag.onload = ( () => {
             console.log('loaded dropbox dropins');
@@ -60,7 +61,13 @@ let init = function() {
  */
 let auth = function() {
     let box = new dbox({ clientId : keys.DropboxAppKey });
-    let url = 'https://bioimagesuiteweb.github.io/webapp/biswebdropbox.html'; 
+    let parsedURL = window.location.href.split('/');
+    
+    //small hack to make it so local builds don't violate same-origin policy for the window that dropboxmodule spawns.
+    //this is necessary to ensure that the windows share the same localStorage.
+    let url = parsedURL[2] === 'localhost:8080' ? 'http://localhost:8080/bisweb/web/biswebdropbox.html' : 'https://bioimagesuiteweb.github.io/webapp/biswebdropbox.html';
+
+    console.log('url', url)
     let authUrl = box.getAuthenticationUrl(url);
     console.log(authUrl);   
     window.open(authUrl, '', 'width=500, height=500');
@@ -256,7 +263,7 @@ let createPicker = function(responseFunction, action, allowMultiselect = false) 
  */
 let queryLocalToken = function() {
     return new Promise( (resolve, reject) => {
-        let dropboxDB = localforage.createInstance({ name : 'dropbox' });
+        /*let dropboxDB = localforage.createInstance({ name : 'dropbox' });
         dropboxDB.getItem('auth_session_token', (err, value) => {
             if (err || !value) {
                 auth();
@@ -264,7 +271,15 @@ let queryLocalToken = function() {
             } else {
                 resolve({ token : value });
             }
-        });
+        });*/
+
+        let token = localStorage.getItem('auth_session_token') || null;
+        if (!token) { 
+            auth();
+            reject({ 'error' : 'user must authenticate first' });
+        } else {
+            resolve({ 'token' : token });
+        }
     });
 };
 
