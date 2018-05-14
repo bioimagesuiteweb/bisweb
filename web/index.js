@@ -15,6 +15,7 @@
     
     ENDLICENSE */
 
+
 "use strict";
 
 /*jshint browser: true*/
@@ -43,19 +44,57 @@ const modal_text=`
     `;
 
 
-
+// Create a dialog box for later
+let modal=null;
 let serviceWorker=null;
+
+let getModal=function() {
+
+    if (modal===null) {
+        let m = $(modal_text);
+        modal= {
+            dlg : m,
+            title : m.find('.modal-title'),
+            body  : m.find('.modal-body'),
+            footer : m.find('.modal-footer'),
+            show : ( () => { m.modal('show'); }),
+            hide : ( () => { m.modal('hide'); }),
+        };
+        modal.addButton = function(name,type,clb=null) {
+            let tp=`type="submit"`;
+            if (type==='Close')
+                tp="";
+                
+            let bt=$(`<button class="btn btn-${type}" ${tp}>${name}</button>`);
+            this.footer.append(bt);
+            bt.click( (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.hide();
+                if (clb) {
+                    setTimeout( () => {
+                        clb();
+                    },2);
+                }
+            });
+        };
+    };
+
+    modal.title.empty();
+    modal.body.empty();
+    modal.footer.empty();
+    return modal;
+}
+
 
 let receivedMessage = function(msg) {
 
     console.log('here we go',msg);
     
     if (msg.indexOf("Cache Updated")>=0) {
-        let t= new Date().getTime()
-        
         let w = $(`<div class="alert alert-info alert-dismissible" role="alert" 
 		  style="position:absolute; top:80px; left:20px; z-index: 100">
-		  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>The application has been updated. <a href="./index.html?times=${t}">Reload this webpage to use the new version.</a><\div>`);
+		  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>The application has been updated. <a href="./index.html">Reload this webpage to use the new version.</a><\div>`);
 	$('body').append(w);
 	w.alert();
 
@@ -77,16 +116,17 @@ let updateApplication=function() {
 
 let simpleAbout=function(offline) {
 
-    let m=$(modal_text);
-    m.find('.modal-title').text('About this Application');
+    let m=getModal();
+    m.title.text('About this Application');
     let s=`<p>This is the main page of BioImage Suite Web ( current build= ${bisdate.date}, ${bisdate.time}).</p>`;
     if (typeof (window.BISELECTRON) === "undefined") {
         if (offline)
             s+=`<p>This application is running in offline mode.</p>`;
         s+=`<p>BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which downloads itself into the cache of your Browser for offline use.</p>`;
     }
-    m.find('.modal-body').append($(s));
-    m.modal('show');
+    m.body.append($(s));
+    m.addButton('Close','default');
+    m.show();
 };
 
 let getLatestVersion=async function(mode='normal') { 
@@ -110,28 +150,31 @@ let getLatestVersion=async function(mode='normal') {
         let mytime=bisdate['absolutetime'];
         
         let diff=onlinetime-mytime;
+        let newversion=(diff>1000);
         
-        if (diff>10000 && !quiet) {
-            console.log('There is a newer version online',diff/1000);
-            let m=$(modal_text);
-            m.find('.modal-title').text('There is an updated version online');
+        if (newversion || force == true) {
+            let m=getModal();
+            if (newversion) 
+                m.title.text('There is an updated version online');
+            else
+                m.title.text('This is the latest version');
             let s=`<p> BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which downloads itself into the cache of your Broswer for offline use.</p>
                 <UL><LI>The version you are using is: ${bisdate.date}, ${bisdate.time}</LI>
-                <LI> The latest version is: ${latestVersion.date}, ${latestVersion.time}.</LI></UL>
-                <p> If you would like to update, press <EM>Update</EM> below.</p>`;
-            m.find('.modal-body').append($(s));
+                <LI> The latest version is: ${latestVersion.date}, ${latestVersion.time}.</LI></UL>`;
+            if (newversion) 
+                s+=`<p> If you would like to update (recommended), press <EM>Update</EM> below.</p>`;
+            else
+                s+=`<p> If you would like to reload all files, press <EM>Reinstall</EM> below.</p>`;
+            m.body.append($(s));
 
-            let bt=$(`<button class="btn btn-danger" type="submit" id="compute">Update</button>`);
-            m.find('.modal-footer').append(bt)
-            m.modal('show');
-            bt.click( (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                m.modal('hide');
-                setTimeout( () => {
-                    updateApplication();
-                },2);
-            });
+            let fn = ( () => { updateApplication(newversion); });
+            if (newversion) 
+                m.addButton('Update','danger',fn)
+            else
+                m.addButton('Reinstall','info',fn)
+            m.addButton('Close','default');
+
+            m.show();
         } else if (force) {
             updateApplication();
         } else if (!quiet) {
@@ -279,26 +322,16 @@ let createIndex=function(obj) {
 
 let initialize=function() {
 
-    setTimeout( () => {
-        createIndex(tools.tools);
-        $('.carousel').carousel({   interval : 1000,    wrap : true  });
-    }, 10);
-
-    // Remove all previous alerts -- only one is needed
+    createIndex(tools.tools);
+    $('.carousel').carousel({   interval : 1000,    wrap : true  });
     
     let parent = $("#bisslides");
     let msg=`These applications are still in 'beta' (development) stage. Use with care.`;
-    
-    let w = $(`<div class="alert alert-info alert-dismissible" role="alert"  style="position:absolute; top:30px; left:20px; z-index:100">
+    let w = $(`<div class="alert alert-warning alert-dismissible" role="alert"  style="position:absolute; top:80px; left:20px; z-index:100">
           <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${msg}
           </div>`);
     parent.append(w);
     w.alert();
-    setTimeout(function () {
-        $('.alert-info').remove();
-    }, 20000);
-    
-    
 
 };
 
