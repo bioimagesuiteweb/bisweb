@@ -47,8 +47,9 @@ program
     .option('-d, --debug <s>','debug')
     .option('-p, --dopack <s>','dopackage 0=no, 1=electron-packager, 2=run inno or zip in addition')
     .option('-z, --dozip <s>','dozip')
-    .option('--internal <n>','if 1 serve the internal directory as well',parseInt)
-    .option('--webworker <n>','if 1 build the webworker as well',parseInt)
+    .option('-n, --internal <n>','if 1 serve the internal directory as well',parseInt)
+    .option('-w, --worker <n>','if 1 build the webworker as well',parseInt)
+    .option('-s, --sworker <n>','if 1 build the service worker and index.js as well',parseInt)
     .option('--light <n>','if 1 only build the main bislib.js library',parseInt)
     .parse(process.argv);
 
@@ -63,9 +64,9 @@ let options = {
     platform : program.platform || os.platform(),
     package : program.dopack || 0,
     zip : program.dozip || 0,
-    webworker : program.webworker || false,
+    webworker : program.worker || false,
+    sworker : program.sworker || false,
     internal : parseInt(program.internal || 0) || 0,
-    light : parseInt(program.light ||0) ||0,
 };
 
 const mainoption=program.rawArgs[2];
@@ -169,8 +170,11 @@ if (options.inpfilename === "" || options.inpfilename === "all") {
 // Define webpack jobs
 // ------------------------
 
-if (mainoption==="build")
+if (mainoption==="build") {
+    options.sworker=1;
     options.webworker=1;
+}
+
 
 internal.webpackjobs = [ { path: './js/webcomponents/' , name: internal.bislib } ];
 if (options.inpfilename === 'index') {
@@ -178,16 +182,16 @@ if (options.inpfilename === 'index') {
     options.light=false;
 }
 
-if (!options.light) {
+if (options.sworker) {
     internal.webpackjobs.push({ path: './web/' ,  name : internal.indexlib });
     internal.webpackjobs.push({ path: './web/' ,  name : internal.serviceworkerlib });
+}
 
-    if (options.webworker) {
-        internal.webpackjobs.push(
-            { path : "./js/webworker/",
-              name : internal.webworkerlib,
-            });
-    }
+if (options.webworker) {
+    internal.webpackjobs.push(
+        { path : "./js/webworker/",
+          name : internal.webworkerlib,
+        });
 }
 
 // -------------------------------
