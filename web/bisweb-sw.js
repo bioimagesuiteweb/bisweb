@@ -12,7 +12,7 @@ internal.pathlength=internal.path.length;
 // ------------------- Utility Functions -----------------
 
 let cleanCache=function() {
-    console.log('bisweb-sw: cleaning cache',internal.name);
+    console.log('bisweb-sw: Cleaning cache',internal.name);
     caches.delete(internal.name);
 
 };
@@ -20,7 +20,7 @@ let cleanCache=function() {
 let populateCache=function(msg="Cache Updated") {
 
     let lst=internal.cachelist['web'].concat(internal.cachelist['cache']);
-    console.log(`bisweb-sw: Installing ${lst.length} files`);
+    console.log(`bisweb-sw: Beginning to  install (cache) ${lst.length} files`);
 
     let newlst = [ internal.path ];
     for (let i=0;i<lst.length;i++) {
@@ -29,11 +29,36 @@ let populateCache=function(msg="Cache Updated") {
     }
     
     return caches.open(internal.name).then(cache => {
-        return cache.addAll(newlst).then(
+
+        let t= new Date().getTime()
+        let p=[];
+        
+        for (let i=0;i<newlst.length;i++) {
+            let url=newlst[i];
+            let url2=`${url}?t=${t}`;
+            p.push(new Promise( (resolve,reject) => {
+                fetch(url2).then(function(response) {
+                    if (!response.ok) {
+                        throw new TypeError('bad response status');
+                    }
+                    cache.put(url, response).then( () => {
+                        resolve();
+                    }).catch( (e) => { reject(e); });
+                });
+            }));
+        }
+
+        Promise.all(p).then( () => {
+            console.log('bisweb-sw: Installation (caching) successful');
+            send_message_to_all_clients(msg);
+            self.skipWaiting()
+        });
+        
+        /*return cache.addAll(newlst).then(
             () => {
                 send_message_to_all_clients(msg);
                 self.skipWaiting()
-            });
+            });*/
     });
 };
 
@@ -116,7 +141,7 @@ self.addEventListener('fetch', event => {
     // Check for css,js html
     let webfirst=false;
 
-    let x=event.request.url.split('/').pop();
+/*    let x=event.request.url.split('/').pop();
     if (x.length<2) {
         webfirst=true;
     } else {
@@ -131,8 +156,10 @@ self.addEventListener('fetch', event => {
             webfirst=true;
         else if (url.indexOf('bisdate.json')>=0)
             webfirst=true;
-    }
-
+    }*/
+    let url=event.request.url;
+    if (url.indexOf('bisdate.json')>=0)
+        webfirst=true;
 
 
     if (webfirst) {
@@ -158,51 +185,6 @@ self.addEventListener('fetch', event => {
     }
 });
 
-/*
-
-
-let offline=false;
-let count=0;
-
-self.addEventListener('fetch', function(event) {
-    //    count=count+1;
-    //    let i=count;
-    //    console.log(i,'Looking for ',event.request.url);
-
-    let debug=false;
-
-    
-    if (offline)  {
-        let t=event.request.url.split('.').pop();
-        let x=event.request.url.split('/').pop();
-        if (t==='html' || x.length<1 ) {
-            offline=false;
-            console.log('bisweb-sw: We are looking for an HTML file',event.request.url);
-            debug=true;
-        }
-    }
-    
-    if (offline) {
-        count=count+1;
-        if (count===1)
-            console.log('bisweb-sw: returning cached version',event.request.url);
-        let res=caches.match(event.request);
-        event.respondWith(res);
-    } else {
-        count=0;
-        if (debug)
-            console.log('bisweb-sw: Testing to see if we have a network connection first ',event.request.url);
-        try {
-            event.respondWith(fetch(event.request).catch( (e) => {
-                console.log('bisweb-sw: Tried but no network ... returning cached version',event.request.url);
-                offline=true;
-                return caches.match(event.request);
-            }));
-        } catch(e) {
-            console.log(e);
-        }
-    }
-});*/
 
 console.clear();
 console.log(`BioImage Suite Web Service Worker starting name=${internal.name} path=${internal.path}`);                       
