@@ -436,6 +436,24 @@ class ViewerApplicationElement extends HTMLElement {
         if (load.length<2)
             return 0;
 
+        let load_viewer=function(vr,imagenames,overlaynames,baseurl) {
+
+            if (imagenames[vr].length>0) {
+                let imagename=baseurl+imagenames[vr];
+                loadimage(imagename,vr).then( () => {
+                    if (overlaynames[vr].length>0 && loadobjectmap!==null) {
+                        let overlayname=baseurl+overlaynames[vr];
+                        loadobjectmap(overlayname,vr);
+                    }
+                }).catch( (e) => {
+                    console.log(e, e.stack);
+                    webutil.createAlert('Failed to read image from '+imagename, true);
+                });
+            } else {
+                console.log('imagename is empty');
+            }
+        };
+        
         genericio.read(load).then( (obj) => {
             try {
                 obj.data=JSON.parse(obj.data);
@@ -451,29 +469,17 @@ class ViewerApplicationElement extends HTMLElement {
             let imagenames = [];
             let overlaynames=[];
             
-            let baseurl=obj.filename.substr(0,index+1);
+
             imagenames[0]=obj.data['image'] || "";
             overlaynames[0]=obj.data['overlay'] || "";
             imagenames[1]=obj.data['image2'] || "";
             overlaynames[1]=obj.data['overlay2'] || "";
 
-            for (let viewer=0;viewer<this.num_independent_viewers;viewer++) {
-                if (imagenames[viewer].length>0) {
-                    let imagename=baseurl+imagenames[viewer];
-                    let vr=viewer;
-                    loadimage(imagename,vr).then( () => {
-                        if (overlaynames[vr].length>0 && loadobjectmap!==null) {
-                            let overlayname=baseurl+overlaynames[vr];
-                            loadobjectmap(overlayname,vr);
-                        }
-                    }).catch( (e) => {
-                        console.log(e, e.stack);
-                        webutil.createAlert('Failed to read image from '+imagename, true);
-                    });
-                } else {
-                    console.log('imagename is empty');
-                }
-            }
+            let baseurl=obj.filename.substr(0,index+1);
+            
+            for (let viewer=0;viewer<this.num_independent_viewers;viewer++) 
+                load_viewer(viewer,imagenames,overlaynames,baseurl);
+            
         }).catch( (e) => {
             console.log(e);
             webutil.createAlert('Failed to read load file '+load, true);
