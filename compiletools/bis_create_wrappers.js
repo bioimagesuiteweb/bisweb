@@ -147,8 +147,11 @@ var initialize=function(binary=null) {
         ModulePromise=wrapperutil.initialize_wasm(binary);
         ModulePromise.then( (mod) => {
             Module=mod;
+            let d="";
+            if (mod.bisdate)
+                d="(" + mod.bisdate +")";
             if (Module._uses_gpl())
-                console.log('++++ Web Assembly code loaded (has GPL plugin. See https://github.com/bioimagesuiteweb/gplcppcode)');
+                console.log('++++ Web Assembly code '+d+' loaded (has GPL plugin. See https://github.com/bioimagesuiteweb/gplcppcode)');
         });
     }
     return ModulePromise;
