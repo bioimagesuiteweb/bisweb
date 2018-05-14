@@ -62,7 +62,7 @@ let init = function() {
 let auth = function() {
     let box = new dbox({ clientId : keys.DropboxAppKey });
     let parsedURL = window.location.href.split('/');
-    
+
     //small hack to make it so local builds don't violate same-origin policy for the window that dropboxmodule spawns.
     //this is necessary to ensure that the windows share the same localStorage.
     let url = parsedURL[2] === 'localhost:8080' ? 'http://localhost:8080/bisweb/web/biswebdropbox.html' : 'https://bioimagesuiteweb.github.io/webapp/biswebdropbox.html';
@@ -258,7 +258,9 @@ let createPicker = function(responseFunction, action, allowMultiselect = false) 
 /**
  * Queries the user's in-browser databases for auth tokens using localforage. 
  * 
- * NOTE: Saving auth tokens in a local database is technically not very secure. This solution should by no means be considered permanent. 
+ * NOTE: localStorage is visible only to windows of the same origin. 
+ * Though this solution does technically expose the user's token to any user who has access to the window, this is information that propagates through window anyway.
+ * See https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API for more details.
  * @alias bisDropbox.queryLocalToken
  */
 let queryLocalToken = function() {

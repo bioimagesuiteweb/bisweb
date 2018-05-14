@@ -715,7 +715,7 @@ class TreeViewer extends HTMLElement {
 
     loadNetworkFromFile() {
         let existingNetwork = this.network;
-        let hiddenFileButton = webutil.createhiddeninputfile('.json, .JSON', (file) => {
+        let hiddenFileButton = webutil.createhiddeninputfile('.txt', (file) => {
             io.read(file).then( (text) => {
                 console.log('text', text);
                 try {
