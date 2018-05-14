@@ -21,7 +21,6 @@ module.exports = {
         'overlayviewer.html',
         'viewer.css',
         'viewer.html',
-        'webworkermain.js',
     ],
 
     'cache' : [
