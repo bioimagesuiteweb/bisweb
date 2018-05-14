@@ -23,7 +23,6 @@ self.onmessage = function(e) {
             let binary=genericio.fromzbase64(wasmlib.binary);
             biswrap.initialize({ binary : binary, date : wasmlib.date}).then( () => {
                 initialized=true;
-                console.log('++++ Webworker WASM Result =',biswrap.test_wasm(), 'build date=',wasmlib.date);
                 postMessage('initialized');
             });
         } else {
@@ -40,9 +39,8 @@ self.onmessage = function(e) {
         console.log("Unknown message received",err,err.stack,e.data);
     }
         
-    console.log('Keys=',Object.keys(obj));
     if (obj.modulename) {
-        console.log("WebWorker: Received command to execute module "+obj.modulename+' id='+obj.id);
+            //        console.log("WebWorker: Received command to execute module "+obj.modulename+' id='+obj.id);
         bis_webworker.inWorkerExecuteModule(obj,postMessage);
     }  else {
         console.log("WebWorker: Not a module command");
