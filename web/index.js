@@ -25,7 +25,17 @@ const $=require('jquery');
 const bisdate=require('bisdate.js');
 import tools from './images/tools.json';
 
-const modal_text=`
+// ----------------------------------- Global Variables ----------------------------------
+let modal=null;
+let alertDiv=null;
+let serviceWorker=null;
+
+// ----------------------------------- GUI Functions -------------------------------------
+
+let getModal=function() {
+
+    if (modal===null) {
+        let m =$(`
        <div class="modal fade">
          <div class="modal-dialog">
            <div class="modal-content">
@@ -41,18 +51,7 @@ const modal_text=`
            </div><!-- /.modal-content -->
          </div><!-- /.modal-dialog -->
        </div><!-- /.modal -->
-    `;
-
-
-// Create a dialog box for later
-let modal=null;
-let serviceWorker=null;
-let alertDiv=null;
-
-let getModal=function() {
-
-    if (modal===null) {
-        let m = $(modal_text);
+    `);
         modal= {
             dlg : m,
             title : m.find('.modal-title'),
@@ -107,24 +106,42 @@ let receivedMessage = function(msg) {
 
     } else if (msg.indexOf('Downloaded')>=0) {
         showAlert(msg);
+    } else if (msg.indexOf('Activate')>=0) {
+        console.log('msg=',msg);
+        setTimeout( () => {
+
+            navigator.serviceWorker.ready.then(function(registration) {
+                serviceWorker = registration.active;
+                navigator.serviceWorker.addEventListener('message', function(event) {
+                    receivedMessage(event.data);
+                });
+            });
+        },100);
+        showAlert(`The application has been updated (activated). <a href="./index.html">Reload this webpage to use the new version.</a>`);
     } else {
-        console.log('Worker says',msg);
+        console.log('other=',msg);
     }
 };
 
 let updateApplication=function() {
 
     // Find worker
-    navigator.serviceWorker.ready.then(function(registration) {
-        serviceWorker = registration.active;
-        navigator.serviceWorker.addEventListener('message', function(event) {
-            receivedMessage(event.data);
-        });
-        console.log('Re found this ... service worker');
+    try {
+        
         serviceWorker.postMessage(JSON.stringify( {name : 'updateCache',
                                                    data : 'userInput'
                                                   }));
-    });
+    } catch(e) {
+       showAlert('We must be in the process of updating','warning');
+        
+
+        navigator.serviceWorker.ready.then(function(registration) {
+            serviceWorker = registration.active;
+            navigator.serviceWorker.addEventListener('message', function(event) {
+                receivedMessage(event.data);
+            });
+        });
+    }
 }
 
 let simpleAbout=function(offline) {
@@ -355,17 +372,16 @@ var createserviceworker=function() {
             scope=scope.substr(0,index+1);
         }
     }
-    console.log('Scope for registering = ',scope);
     
-    // service worker registered
-    
+    // register service worker if needed
     navigator.serviceWorker.register(`${scope}bisweb-sw.js`, { scope: scope }).then(function(registration) {
-            serviceWorker = registration.active;
-            console.log(`____ bisweb -- service worker registered ${scope}`);
-        });
+        serviceWorker = registration.active;
+        console.log(`____ bisweb -- service worker registered ${scope}`);
+    });
     
     
     // service worker ready
+    // Find this and add event listener
     navigator.serviceWorker.ready.then(function(registration) {
         serviceWorker = registration.active;
         navigator.serviceWorker.addEventListener('message', function(event) {
@@ -375,9 +391,11 @@ var createserviceworker=function() {
     });
 }
 
+
 window.onload = (() => {
     initialize();
-    // Only launch a web app if this is a /webapp and service
+
+    // Only register if not in electron and not in development mode
     if (typeof (window.BISELECTRON) === "undefined") {
         if ('serviceWorker' in navigator) {
 
