@@ -244,15 +244,12 @@ gulp.task('singleCSS', function() {
 
 gulp.task('date', function() {
     bis_gutil.createDateFile(path.resolve(options.outdir,'bisdate.json'));
-});
-
-gulp.task('date2', function() {
     bis_gutil.createDateFile(path.resolve(options.outdir,'../wasm/bisdate.js'));
 });
 
 gulp.task('webpack', function(done) {
 
-    runSequence('date', 'date2', ( () => { 
+    runSequence('date', ( () => { 
         bis_gutil.runWebpack(internal.webpackjobs,
                              options.internal,
                              __dirname,
@@ -321,7 +318,6 @@ gulp.task('commonfiles', function() {
     gulp.src('./web/biselectron.js').pipe(gulp.dest(options.outdir));
     gulp.src('./web/bislist.txt').pipe(gulp.dest(options.outdir));
     gulp.src('./web/package.json').pipe(gulp.dest(options.outdir));
-    gulp.src('./web/biscommon.css').pipe(gulp.dest(options.outdir));
     gulp.src('./lib/css/bootstrap_dark_edited.css').pipe(gulp.dest(options.outdir));
     gulp.src('./lib/js/webcomponents-lite.js').pipe(gulp.dest(options.outdir));
     gulp.src('./node_modules/jquery/dist/jquery.min.js').pipe(gulp.dest(options.outdir));

@@ -1,12 +1,35 @@
-const cachelist=require('./pwa/pwacache.js');
-
-console.log('BioImage Suite Web Service Worker starting');
+// --------- First Configuration Info --------------------
 
 
-let installFiles=function(msg="Cache Updated") {
-    console.log('Installing ', cachelist['production'].length,' files');
-    return caches.open('bisweb').then(cache => {
-        return cache.addAll(cachelist['production']).then(
+const internal =  {
+    cachelist : require('./pwa/pwacache.js'),
+    name : 'bisweb',
+    path : self.location.href.substr(0,self.location.href.lastIndexOf('/'))
+};
+
+internal.pathlength=internal.path.length;
+
+// ------------------- Utility Functions -----------------
+
+let cleanCache=function() {
+    console.log('bisweb-sw: cleaning cache',internal.name);
+    caches.delete(internal.name);
+
+};
+
+let populateCache=function(msg="Cache Updated") {
+
+    let lst=internal.cachelist['web'].concat(internal.cachelist['cache']);
+    console.log(`bisweb-sw: Installing ${lst.length} files`);
+
+    let newlst = [ internal.path ];
+    for (let i=0;i<lst.length;i++) {
+        let item=lst[i];
+        newlst.push(item);
+    }
+    
+    return caches.open(internal.name).then(cache => {
+        return cache.addAll(newlst).then(
             () => {
                 send_message_to_all_clients(msg);
                 self.skipWaiting()
@@ -14,6 +37,7 @@ let installFiles=function(msg="Cache Updated") {
     });
 };
 
+// ----------------- Messaging Functions -----------------
 
 let send_message_to_client=function(client, msg){
     return new Promise(function(resolve, reject){
@@ -39,47 +63,99 @@ let send_message_to_all_clients=function(msg){
 };
 
 
+// ----------------- Event Handling ----------------------
+
+
+// -------------------------
+// Message from Client
+// -------------------------
 self.addEventListener('message', (msg) => {
 
-    console.log('Received message=',msg.data);
+    console.log('bisweb-sw: Received message=',msg.data);
     
     try {
         let obj=JSON.parse(msg.data);
         let name=obj.name;
         let data=obj.data;
-        console.log(`Received ${name}:${data}`);
+        console.log(`bisweb-sw: Received ${name}:${data}`);
         if (name==="updateCache") {
-            installFiles('Cache Updated');
+            cleanCache();
+            populateCache('Cache Updated');
         }
     } catch(e) {
-        console.log(`Bad Message ${e} received`);
+        console.log(`bisweb-sw: Bad Message ${e} received`);
     }
     
 });
 
+// -------------------------
+// Install Event
+// -------------------------
 self.addEventListener('install', e => {
-    e.waitUntil( installFiles("Cache Updated -- installed new service worker") )
+
+    cleanCache();
+    e.waitUntil( populateCache("Cache Updated -- installed new service worker"));
+        
 });
 
+// -------------------------
+// Activate Event
+// -------------------------
 self.addEventListener('activate',  event => {
     event.waitUntil(self.clients.claim());
 });
 
+// -------------------------
+// The Critical Fetch Event
+// -------------------------
 
-
-// From https://developers.google.com/web/fundamentals/instant-and-offline/offline-cookbook/#network-falling-back-to-cache
 self.addEventListener('fetch', event => {
-    event.respondWith(
-        caches.match(
-            event.request, {
-                ignoreSearch : true
-            }
-        ).then(response => {
-            
-            return response || fetch(event.request);
-        }).catch(function(error) {
-            console.log('Fetch failed; returning online page instead for', event.request.url);
-        }));
+
+
+
+    // Check for css,js html
+    let webfirst=false;
+
+    let x=event.request.url.split('/').pop();
+    if (x.length<2) {
+        webfirst=true;
+    } else {
+        let url=event.request.url;
+        if (url.indexOf(internal.path)===0)
+            url=url.substr(internal.pathlength+1,url.length-internal.pathlength);
+        let index=url.lastIndexOf('?');
+        if (index>0) {
+            url=event.request.url.substr(0,index-1);
+        }
+        if (internal.cachelist['web'].indexOf(url)>=0)
+            webfirst=true;
+        else if (url.indexOf('bisdate.json')>=0)
+            webfirst=true;
+    }
+
+
+
+    if (webfirst) {
+        // Web then Cache
+        //        console.log('bisweb-sw Fetch: requested:'+event.request.url+' webfirst='+webfirst);
+        event.respondWith(fetch(event.request).catch( (e) => {
+            console.log('bisweb-sw: Tried but no network ... returning cached version',event.request.url);
+            return caches.match(event.request);
+        }))
+    } else {
+        // Cache then Web
+        event.respondWith(
+            caches.match(
+                event.request, {
+                    ignoreSearch : true
+                }
+            ).then(response => {
+                
+                return response || fetch(event.request);
+            }).catch(function(error) {
+                console.log('bisweb-sw: Cache fetch failed; returning online version for', event.request.url);
+            }));
+    }
 });
 
 /*
@@ -101,7 +177,7 @@ self.addEventListener('fetch', function(event) {
         let x=event.request.url.split('/').pop();
         if (t==='html' || x.length<1 ) {
             offline=false;
-            console.log('swsw We are looking for an HTML file',event.request.url);
+            console.log('bisweb-sw: We are looking for an HTML file',event.request.url);
             debug=true;
         }
     }
@@ -109,16 +185,16 @@ self.addEventListener('fetch', function(event) {
     if (offline) {
         count=count+1;
         if (count===1)
-            console.log('swsw returning cached version',event.request.url);
+            console.log('bisweb-sw: returning cached version',event.request.url);
         let res=caches.match(event.request);
         event.respondWith(res);
     } else {
         count=0;
         if (debug)
-            console.log('swsw Testing to see if we have a network connection first ',event.request.url);
+            console.log('bisweb-sw: Testing to see if we have a network connection first ',event.request.url);
         try {
             event.respondWith(fetch(event.request).catch( (e) => {
-                console.log('swsw Tried but no network ... returning cached version',event.request.url);
+                console.log('bisweb-sw: Tried but no network ... returning cached version',event.request.url);
                 offline=true;
                 return caches.match(event.request);
             }));
@@ -128,3 +204,5 @@ self.addEventListener('fetch', function(event) {
     }
 });*/
 
+console.clear();
+console.log(`BioImage Suite Web Service Worker starting name=${internal.name} path=${internal.path}`);                       

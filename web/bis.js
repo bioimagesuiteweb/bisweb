@@ -115,3 +115,5 @@ window.BIS={
  * @name BisF.ImageSetCallback
  * @param {BisWebImage} image - the image that is read
  */
+
+console.log('.... Loaded bis.js -- operating in developement mode ');

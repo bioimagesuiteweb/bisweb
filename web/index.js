@@ -47,12 +47,18 @@ const modal_text=`
 let serviceWorker=null;
 
 let receivedMessage = function(msg) {
+
+    console.log('here we go',msg);
+    
     if (msg.indexOf("Cache Updated")>=0) {
-        let w = $(`<div class="alert alert-success alert-dismissible" role="alert" 
+        let t= new Date().getTime()
+        
+        let w = $(`<div class="alert alert-info alert-dismissible" role="alert" 
 		  style="position:absolute; top:80px; left:20px; z-index: 100">
-		  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>The application has been updated. Reload this webpage to use the new version.<\div>`);
+		  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>The application has been updated. <a href="./index.html?times=${t}">Reload this webpage to use the new version.</a><\div>`);
 	$('body').append(w);
 	w.alert();
+
     } else {
         console.log('Worker says',msg);
     }
@@ -69,11 +75,34 @@ let updateApplication=function() {
     }
 }
 
+let simpleAbout=function(offline) {
 
-let getLatestVersion=async function(force) { 
+    let m=$(modal_text);
+    m.find('.modal-title').text('About this Application');
+    let s=`<p>This is the main page of BioImage Suite Web ( current build= ${bisdate.date}, ${bisdate.time}).</p>`;
+    if (typeof (window.BISELECTRON) === "undefined") {
+        if (offline)
+            s+=`<p>This application is running in offline mode.</p>`;
+        s+=`<p>BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which downloads itself into the cache of your Browser for offline use.</p>`;
+    }
+    m.find('.modal-body').append($(s));
+    m.modal('show');
+};
+
+let getLatestVersion=async function(mode='normal') { 
+
+    // mode is 'force' (force update), 'silent' (if nothing new keep quiet), 'normal' (bring about box);
+
+    let force=false;
+    if (mode==='force')
+        force=true;
+    let quiet=false;
+    if (mode==='quiet')
+        quiet=true;
 
     try  {
-        const fetchResult=await fetch('./bisdate.json');
+        let t= new Date().getTime()
+        const fetchResult=await fetch(`./bisdate.json?time=${t}`);
         const response=await fetchResult;
         const latestVersion= await response.json();
 
@@ -82,13 +111,13 @@ let getLatestVersion=async function(force) {
         
         let diff=onlinetime-mytime;
         
-        if (diff>10000) {
+        if (diff>10000 && !quiet) {
             console.log('There is a newer version online',diff/1000);
             let m=$(modal_text);
             m.find('.modal-title').text('There is an updated version online');
             let s=`<p> BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which downloads itself into the cache of your Broswer for offline use.</p>
-                <UL><LI>The version you are using is dated : ${bisdate.date}, ${bisdate.time}</LI>
-                <LI> The latest version is dated ${latestVersion.date}, ${latestVersion.time}.</LI></UL>
+                <UL><LI>The version you are using is: ${bisdate.date}, ${bisdate.time}</LI>
+                <LI> The latest version is: ${latestVersion.date}, ${latestVersion.time}.</LI></UL>
                 <p> If you would like to update, press <EM>Update</EM> below.</p>`;
             m.find('.modal-body').append($(s));
 
@@ -105,6 +134,8 @@ let getLatestVersion=async function(force) {
             });
         } else if (force) {
             updateApplication();
+        } else if (!quiet) {
+            simpleAbout(false);
         }
     } catch(e) {
         console.log('Must be offline, failed to get latest version',e);
@@ -114,6 +145,14 @@ let getLatestVersion=async function(force) {
 		      <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>We can not connect to the server right now. Please try again later.</div>`);
 	    $('body').append(w);
 	    w.alert();
+        } else if (quiet) {
+            let w = $(`<div class="alert alert-info alert-dismissible" role="alert" 
+		      style="position:absolute; top:80px; left:20px; z-index: 100">
+		      <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>In offline mode. Everything should still work (other than regression testing.)</div>`);
+	    $('body').append(w);
+	    w.alert();
+        } else {
+            simpleAbout(true);
         }
     }
 };
@@ -184,6 +223,15 @@ let createIndex=function(obj) {
             </ul>
           </li>`);
     $('#bismenuparent0').append(othermenu);
+
+    let extra="main page ";
+    let extra2="";
+    let url=window.document.URL;
+    if  (url.indexOf('/unstable')>0) {
+        extra="testing page (unstable version)"
+        extra2="Unstable";
+    }
+
     
     let newitem2 = $(`<li><a href="#">About Application</a></li>`);
     $("#othermenu").append(newitem2);
@@ -191,15 +239,7 @@ let createIndex=function(obj) {
         setTimeout( () => {
             e.preventDefault();
             e.stopPropagation();
-            
-            let m=$(modal_text);
-            m.find('.modal-title').text('About this Application');
-            let s=`<p>This is the main page of BioImage Suite Web ( current build= ${bisdate.date}, ${bisdate.time}).</p>`;
-            if (typeof (window.BISELECTRON) === "undefined") {
-                s+=`<p>BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which downloads itself into the cache of your Browser for offline use.</p>`;
-            }
-            m.find('.modal-body').append($(s));
-            m.modal('show');
+            getLatestVersion();
         },10);
     });
 
@@ -212,7 +252,7 @@ let createIndex=function(obj) {
             setTimeout( () => {
                 e.preventDefault();
                 e.stopPropagation();
-                getLatestVersion(true);
+                getLatestVersion('force');
             },10);
         });
 
@@ -230,7 +270,7 @@ let createIndex=function(obj) {
     
         
     let bb=$(`<div align="center" style="padding:15px;  right:5.5vw; top:570px; border-radius:30px;background-color:#221100; z-index:5000; position: absolute; color:#ffffff">
-             Version: ${bisdate.date}</div>`);
+             Version: ${extra2} ${bisdate.date}</div>`);
     $('body').append(bb);
     console.log('bisdate=',JSON.stringify(bisdate));
 
@@ -267,12 +307,19 @@ var createserviceworker=function() {
     return new Promise( (resolve,reject) => {
 
         let scope=window.document.URL;
+        console.log('scope=',scope);
         let index=scope.indexOf(".html");
         if (index>0) {
             index=scope.lastIndexOf("/");
             scope=scope.substr(0,index+1);
+        } else {
+            let index=scope.indexOf("#");
+            if (index>0) {
+                index=scope.lastIndexOf("/");
+                scope=scope.substr(0,index+1);
+            }
         }
-        console.log('Scope = ',scope);
+        console.log('Scope for registering = ',scope);
         
         // service worker registered
         navigator.serviceWorker.register(`${scope}bisweb-sw.js`, { scope: scope })
@@ -302,8 +349,10 @@ window.onload = (() => {
 
             if (typeof (window.BIS) === "undefined") {
                 createserviceworker().then( () => {
-                    getLatestVersion(false);
+                    getLatestVersion('quiet');
                 });
+            } else {
+                console.log('---- not creating service worker ... in development mode');
             }
         }
     }
