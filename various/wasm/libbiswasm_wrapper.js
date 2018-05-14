@@ -9,13 +9,15 @@ const wrapperutil=require('bis_wrapperutils');
 let Module=0;
 let ModulePromise=0;
 
-var initialize=function() {
+var initialize=function(binary=null) {
 
     if (ModulePromise===0) {
         // this calls set_module ...
-        ModulePromise=wrapperutil.initialize_wasm();
+        ModulePromise=wrapperutil.initialize_wasm(binary);
         ModulePromise.then( (mod) => {
             Module=mod;
+            if (Module._uses_gpl())
+                console.log('++++ Web Assembly code loaded (has GPL plugin. See https://github.com/bioimagesuiteweb/gplcppcode)');
         });
     }
     return ModulePromise;
@@ -28,7 +30,7 @@ var get_module=function() {
 
 
 var get_date=function() {
-    return "04/18/2018";     
+    return "05/14/2018";     
 };
         
 
@@ -733,179 +735,6 @@ var get_date=function() {
 
   //--------------------------------------------------------------
   // C++:
-  /** run Linear Image Registration using \link bisLinearImageRegistration  \endlink
-  * @param reference serialized reference image as unsigned char array
-  * @param target    serialized target image as unsigned char array
-  * @param initial_xform serialized initial transformation as unsigned char array
-  * @param jsonstring the parameter string for the algorithm including return_vector which if true returns a length-28 vector
-  * containing the 4x4 matrix and the 12 transformation parameters
-  * @param debug if > 0 print debug messages
-  * @returns a pointer to a serialized vector or matrix depending on the value of return_vector
-  */
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // JS: {'runLinearRegistrationWASM', 'bisLinearTransformation', [ 'bisImage', 'bisImage', 'bisLinearTransformation_opt', 'ParamObj', 'debug' ]}
-  //      returns a bisLinearTransformation
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  var runLinearRegistrationWASM = function(image1,image2,linearxform3,paramobj,debug) { 
-
-    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
-    const jsonstring=JSON.stringify(paramobj || { } );
-
-    // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
-    let image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage')
-    let linearxform3_ptr=0
-    if (linearxform3!==0) 
-      linearxform3_ptr=wrapperutil.serializeObject(Module,linearxform3,'bisLinearTransformation')
-
-    // Call WASM
-    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:runLinearRegistrationWASM with '+jsonstring+'\n++++');
-    const wasm_output=Module.ccall('runLinearRegistrationWASM','number',
-       ['number', 'number', 'number', 'string', 'number'],
-       [ image1_ptr, image2_ptr, linearxform3_ptr, jsonstring, debug]);
-
-    // Deserialize Output
-    const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisLinearTransformation');
-
-    // Cleanup
-    if (image1_ptr !== image1)
-      wasmutil.release_memory(Module,image1_ptr);
-    if (image2_ptr !== image2)
-      wasmutil.release_memory(Module,image2_ptr);
-    if (linearxform3_ptr !==0  && linearxform3_ptr !== linearxform3)
-      wasmutil.release_memory(Module,linearxform3_ptr);
-
-    // Return
-    return output;
-  }
-
-  //--------------------------------------------------------------
-  // C++:
-  /** run Non Linear Image Registration using \link bisNonLinearImageRegistration  \endlink
-  * @param reference serialized reference image as unsigned char array
-  * @param target    serialized target image as unsigned char array
-  * @param initial_xform serialized initial transformation as unsigned char array
-  * @param jsonstring the parameter string for the algorithm
-  * @param debug if > 0 print debug messages
-  * @returns a pointer to a serialized combo transformation (bisComboTransformation)
-  */
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // JS: {'runNonLinearRegistrationWASM', 'bisComboTransformation', [ 'bisImage', 'bisImage', 'bisLinearTransformation_opt', 'ParamObj', 'debug' ]}
-  //      returns a bisComboTransformation
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  var runNonLinearRegistrationWASM = function(image1,image2,linearxform3,paramobj,debug) { 
-
-    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
-    const jsonstring=JSON.stringify(paramobj || { } );
-
-    // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
-    let image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage')
-    let linearxform3_ptr=0
-    if (linearxform3!==0) 
-      linearxform3_ptr=wrapperutil.serializeObject(Module,linearxform3,'bisLinearTransformation')
-
-    // Call WASM
-    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:runNonLinearRegistrationWASM with '+jsonstring+'\n++++');
-    const wasm_output=Module.ccall('runNonLinearRegistrationWASM','number',
-       ['number', 'number', 'number', 'string', 'number'],
-       [ image1_ptr, image2_ptr, linearxform3_ptr, jsonstring, debug]);
-
-    // Deserialize Output
-    const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisComboTransformation');
-
-    // Cleanup
-    if (image1_ptr !== image1)
-      wasmutil.release_memory(Module,image1_ptr);
-    if (image2_ptr !== image2)
-      wasmutil.release_memory(Module,image2_ptr);
-    if (linearxform3_ptr !==0  && linearxform3_ptr !== linearxform3)
-      wasmutil.release_memory(Module,linearxform3_ptr);
-
-    // Return
-    return output;
-  }
-
-  //--------------------------------------------------------------
-  // C++:
-  /** Approximate Displacement Field with Grid Transformation (pre initialized)
-  * @param dispfield serialized target displacement field
-  * @param initial_grid serialized grid transformation as unsigned char array
-  * @param jsonstring the parameter string for the algorithm
-  * @param debug if > 0 print debug messages
-  * @returns a pointer to the updated grid (bisGridTransformation)
-  */
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // JS: {'approximateDisplacementFieldWASM', 'bisGridTransformation', [ 'bisImage', 'bisGridTransformation', 'ParamObj', 'debug' ]}
-  //      returns a bisGridTransformation
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  var approximateDisplacementFieldWASM = function(image1,gridxform2,paramobj,debug) { 
-
-    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
-    const jsonstring=JSON.stringify(paramobj || { } );
-
-    // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
-    let gridxform2_ptr=wrapperutil.serializeObject(Module,gridxform2,'bisGridTransformation')
-
-    // Call WASM
-    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:approximateDisplacementFieldWASM with '+jsonstring+'\n++++');
-    const wasm_output=Module.ccall('approximateDisplacementFieldWASM','number',
-       ['number', 'number', 'string', 'number'],
-       [ image1_ptr, gridxform2_ptr, jsonstring, debug]);
-
-    // Deserialize Output
-    const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisGridTransformation');
-
-    // Cleanup
-    if (image1_ptr !== image1)
-      wasmutil.release_memory(Module,image1_ptr);
-    if (gridxform2_ptr !== gridxform2)
-      wasmutil.release_memory(Module,gridxform2_ptr);
-
-    // Return
-    return output;
-  }
-
-  //--------------------------------------------------------------
-  // C++:
-  /** Approximate Displacement Field with Grid Transformation -- initialized using the sapcing parameter
-  * @param dispfield serialized target displacement field
-  * @param jsonstring the parameter string for the algorithm  -- key is spacing : --> this defines the spacing for the grid transformation
-  * @param debug if > 0 print debug messages
-  * @returns a pointer to the updated grid (bisGridTransformation)
-  */
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // JS: {'approximateDisplacementFieldWASM2', 'bisGridTransformation', [ 'bisImage', 'ParamObj', 'debug' ]}
-  //      returns a bisGridTransformation
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  var approximateDisplacementFieldWASM2 = function(image1,paramobj,debug) { 
-
-    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
-    const jsonstring=JSON.stringify(paramobj || { } );
-
-    // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
-
-    // Call WASM
-    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:approximateDisplacementFieldWASM2 with '+jsonstring+'\n++++');
-    const wasm_output=Module.ccall('approximateDisplacementFieldWASM2','number',
-       ['number', 'string', 'number'],
-       [ image1_ptr, jsonstring, debug]);
-
-    // Deserialize Output
-    const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisGridTransformation');
-
-    // Cleanup
-    if (image1_ptr !== image1)
-      wasmutil.release_memory(Module,image1_ptr);
-
-    // Return
-    return output;
-  }
-
-  //--------------------------------------------------------------
-  // C++:
   /** Compute Displacement Field
   * @param transformation the transformation to use to compute a displacement field
   * @param jsonstring the parameter string for the algorithm
@@ -965,82 +794,6 @@ var get_date=function() {
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:sliceBiasFieldCorrectImageWASM with '+jsonstring+'\n++++');
     const wasm_output=Module.ccall('sliceBiasFieldCorrectImageWASM','number',
-       ['number', 'string', 'number'],
-       [ image1_ptr, jsonstring, debug]);
-
-    // Deserialize Output
-    const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisImage',image1);
-    
-
-    // Cleanup
-    if (image1_ptr !== image1)
-      wasmutil.release_memory(Module,image1_ptr);
-
-    // Return
-    return output;
-  }
-
-  //--------------------------------------------------------------
-  // C++:
-  /** Perform image segmentation either histogram based or plus mrf segmentation if smoothness > 0.0
-  * @param input serialized input as unsigned char array
-  * @param jsonstring the parameter string for the algorithm { "numclasses" : 3, "maxsigmaratio":0.2, "robust" : true, "numbins": 256, "smoothhisto": true, "smoothness" : 0.0, "mrfconvergence" : 0.2, "mrfiterations" : 8, "noisesigma2" : 0.0 }
-  * @param debug if > 0 print debug messages
-  * @returns a pointer to a serialized segmented image
-  */
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // JS: {'segmentImageWASM', 'bisImage', [ 'bisImage', 'ParamObj', 'debug' ]}
-  //      returns a bisImage
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  var segmentImageWASM = function(image1,paramobj,debug) { 
-
-    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
-    const jsonstring=JSON.stringify(paramobj || { } );
-
-    // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
-
-    // Call WASM
-    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:segmentImageWASM with '+jsonstring+'\n++++');
-    const wasm_output=Module.ccall('segmentImageWASM','number',
-       ['number', 'string', 'number'],
-       [ image1_ptr, jsonstring, debug]);
-
-    // Deserialize Output
-    const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisImage',image1);
-    
-
-    // Cleanup
-    if (image1_ptr !== image1)
-      wasmutil.release_memory(Module,image1_ptr);
-
-    // Return
-    return output;
-  }
-
-  //--------------------------------------------------------------
-  // C++:
-  /** Perform objectmap regularization
-  * @param input serialized input as unsigned char array
-  * @param jsonstring the parameter string for the algorithm { "smoothness" : 2.0, "convergence" : 0.2, "terations" : 8, "internaliterations" : 4 }
-  * @param debug if > 0 print debug messages
-  * @returns a pointer to a (short) serialized segmented image
-  */
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // JS: {'regularizeObjectmapWASM', 'bisImage', [ 'bisImage', 'ParamObj', 'debug' ]}
-  //      returns a bisImage
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  var regularizeObjectmapWASM = function(image1,paramobj,debug) { 
-
-    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
-    const jsonstring=JSON.stringify(paramobj || { } );
-
-    // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
-
-    // Call WASM
-    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:regularizeObjectmapWASM with '+jsonstring+'\n++++');
-    const wasm_output=Module.ccall('regularizeObjectmapWASM','number',
        ['number', 'string', 'number'],
        [ image1_ptr, jsonstring, debug]);
 
@@ -1425,190 +1178,6 @@ var get_date=function() {
 
   //--------------------------------------------------------------
   // C++:
-  /** Compute DTI Tensor
-  * @param input_ptr the images as a serialized array
-  * @param baseline_ptr the "Baseline" T2 Image as a serialized array
-  * @param mask_ptr the Mask Image (optional, set this to 0) as a serialized array
-  * @param directions_ptr the directions matrix
-  * @param jsonstring { "bvalue": 1000, "numbaseline:" 1 }
-  * @param debug if > 0 print debug messages
-  * @returns a pointer to the tensor image */
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // JS: {'computeDTITensorFitWASM', 'bisImage', [ 'bisImage', 'bisImage',  'bisImage_opt' ,'Matrix', 'ParamObj', 'debug']}
-  //      returns a bisImage
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  var computeDTITensorFitWASM = function(image1,image2,image3,matrix4,paramobj,debug) { 
-
-    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
-    const jsonstring=JSON.stringify(paramobj || { } );
-
-    // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
-    let image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage')
-    let image3_ptr=0
-    if (image3!==0) 
-      image3_ptr=wrapperutil.serializeObject(Module,image3,'bisImage')
-    let matrix4_ptr=wrapperutil.serializeObject(Module,matrix4,'Matrix')
-
-    // Call WASM
-    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:computeDTITensorFitWASM with '+jsonstring+'\n++++');
-    const wasm_output=Module.ccall('computeDTITensorFitWASM','number',
-       ['number', 'number', 'number', 'number', 'string', 'number'],
-       [ image1_ptr, image2_ptr, image3_ptr, matrix4_ptr, jsonstring, debug]);
-
-    // Deserialize Output
-    const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisImage',image1);
-    
-
-    // Cleanup
-    if (image1_ptr !== image1)
-      wasmutil.release_memory(Module,image1_ptr);
-    if (image2_ptr !== image2)
-      wasmutil.release_memory(Module,image2_ptr);
-    if (image3_ptr !==0  && image3_ptr !== image3)
-      wasmutil.release_memory(Module,image3_ptr);
-    if (matrix4_ptr !== matrix4)
-      wasmutil.release_memory(Module,matrix4_ptr);
-
-    // Return
-    return output;
-  }
-
-  //--------------------------------------------------------------
-  // C++:
-  /** Compute DTI Tensor EigenSystem
-  * @param input_ptr the image tensor as a serialized array
-  * @param mask_ptr the Mask Image (optional, set this to 0) as a serialized array
-  * @param debug if > 0 print debug messages
-  * @returns a pointer to the eigensystem image */
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // JS: {'computeTensorEigenSystemWASM', 'bisImage', [ 'bisImage', 'bisImage_opt' , 'debug']}
-  //      returns a bisImage
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  var computeTensorEigenSystemWASM = function(image1,image2,debug) { 
-
-    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
-
-    // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
-    let image2_ptr=0
-    if (image2!==0) 
-      image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage')
-
-    // Call WASM
-    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:computeTensorEigenSystemWASM\n++++');
-    const wasm_output=Module.ccall('computeTensorEigenSystemWASM','number',
-       ['number', 'number', 'number'],
-       [ image1_ptr, image2_ptr, debug]);
-
-    // Deserialize Output
-    const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisImage',image1);
-    
-
-    // Cleanup
-    if (image1_ptr !== image1)
-      wasmutil.release_memory(Module,image1_ptr);
-    if (image2_ptr !==0  && image2_ptr !== image2)
-      wasmutil.release_memory(Module,image2_ptr);
-
-    // Return
-    return output;
-  }
-
-  //--------------------------------------------------------------
-  // C++:
-  /** Compute DTI Tensor Invariants
-  * @param input_ptr the image tensor eigensystem as a serialized array
-  * @param mask_ptr the Mask Image (optional, set this to 0) as a serialized array
-  * @param jsonstring { "mode": 0 } // mode 0=FA, 1=RA etc. -- see bisDTIAlgorithms::computeTensorInvariants
-  * @param debug if > 0 print debug messages
-  * @returns a pointer to the invarient image */
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // JS: {'computeDTITensorInvariantsWASM', 'bisImage', [ 'bisImage', 'bisImage_opt' , 'ParamObj', 'debug']}
-  //      returns a bisImage
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  var computeDTITensorInvariantsWASM = function(image1,image2,paramobj,debug) { 
-
-    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
-    const jsonstring=JSON.stringify(paramobj || { } );
-
-    // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
-    let image2_ptr=0
-    if (image2!==0) 
-      image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage')
-
-    // Call WASM
-    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:computeDTITensorInvariantsWASM with '+jsonstring+'\n++++');
-    const wasm_output=Module.ccall('computeDTITensorInvariantsWASM','number',
-       ['number', 'number', 'string', 'number'],
-       [ image1_ptr, image2_ptr, jsonstring, debug]);
-
-    // Deserialize Output
-    const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisImage',image1);
-    
-
-    // Cleanup
-    if (image1_ptr !== image1)
-      wasmutil.release_memory(Module,image1_ptr);
-    if (image2_ptr !==0  && image2_ptr !== image2)
-      wasmutil.release_memory(Module,image2_ptr);
-
-    // Return
-    return output;
-  }
-
-  //--------------------------------------------------------------
-  // C++:
-  /** Compute DTI Orientation Map
-  * @param input_ptr the image tensor eigensystem as a serialized array
-  * @param mask_ptr the Mask Image (optional, set this to 0) as a serialized array
-  * @param magnitude_ptr the Magnitude Image (e.g. FA map) (optional, set this to 0) as a serialized array
-  * @param jsonstring { "scaling": 1.0 } Optional extra scaling
-  * @param debug if > 0 print debug messages
-  * @returns a pointer to the colormap image */
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // JS: {'computeDTIColorMapImageWASM', 'bisImage', [ 'bisImage', 'bisImage_opt' ,'bisImage_opt', 'ParamObj', 'debug']}
-  //      returns a bisImage
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  var computeDTIColorMapImageWASM = function(image1,image2,image3,paramobj,debug) { 
-
-    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
-    const jsonstring=JSON.stringify(paramobj || { } );
-
-    // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
-    let image2_ptr=0
-    if (image2!==0) 
-      image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage')
-    let image3_ptr=0
-    if (image3!==0) 
-      image3_ptr=wrapperutil.serializeObject(Module,image3,'bisImage')
-
-    // Call WASM
-    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:computeDTIColorMapImageWASM with '+jsonstring+'\n++++');
-    const wasm_output=Module.ccall('computeDTIColorMapImageWASM','number',
-       ['number', 'number', 'number', 'string', 'number'],
-       [ image1_ptr, image2_ptr, image3_ptr, jsonstring, debug]);
-
-    // Deserialize Output
-    const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisImage',image1);
-    
-
-    // Cleanup
-    if (image1_ptr !== image1)
-      wasmutil.release_memory(Module,image1_ptr);
-    if (image2_ptr !==0  && image2_ptr !== image2)
-      wasmutil.release_memory(Module,image2_ptr);
-    if (image3_ptr !==0  && image3_ptr !== image3)
-      wasmutil.release_memory(Module,image3_ptr);
-
-    // Return
-    return output;
-  }
-
-  //--------------------------------------------------------------
-  // C++:
   /** AddGridTo an image using \link bisAdvancedImageAlgorithms::addGridToImage \endlink
   * @param input serialized input as unsigned char array
   * @param jsonstring the parameter string for the algorithm
@@ -1781,30 +1350,6 @@ var get_date=function() {
 
   //--------------------------------------------------------------
   // C++:
-  /** Tests Optimizer with numdof = 1 or 2 and all three modes
-  * @param numdof number of degrees of freedom for simple quadratic function (1 or 2)
-  * @returns number of failed tests
-  */
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // JS: {'test_optimizer', 'Int', [ 'Int']}
-  //      returns a Int
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  var test_optimizer = function(intval1,debug=false) { 
-
-    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
-
-    // Call WASM
-    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:test_optimizer\n++++');
-    const output=Module.ccall('test_optimizer','number',
-       ['number'],
-       [ intval1]);
-
-    // Return
-    return output;
-  }
-
-  //--------------------------------------------------------------
-  // C++:
   /** Tests serialization of 4x4 matrix in and out
   * Expects  matrix[row][col] = (1+row)*10.0+col*col*5.0
   * @param ptr serialized 4x4 transformation as unsigned char array
@@ -1831,62 +1376,6 @@ var get_date=function() {
     // Cleanup
     if (linearxform1_ptr !== linearxform1)
       wasmutil.release_memory(Module,linearxform1_ptr);
-
-    // Return
-    return output;
-  }
-
-  //--------------------------------------------------------------
-  // C++:
-  /** Compute Joint Histogram Metrics
-  * @param image1_ptr serialized  image1 as unsigned char array
-  * @param image2_ptr serialized  image2 as unsigned char array
-  * @param weight1_ptr serialized  weight 1 as unsigned char array
-  * @param weight2_ptr serialized  weight 2 as unsigned char array
-  * @param num_weights number of weights to use (0=none, 1=only weight1_ptr, 2=both)
-  * @param jsonstring algorithm parameters  { numbinsx: 64, numbinst: 64, intscale:1 }
-  * @param return_histogram if 1 return the actual histogram else the metrics
-  * @param debug if > 0 print debug messages
-  * @returns if return_histogram =1 the histogram as a matrix, else a single row matrix consisting of
-  *  [ SSD, CC, NMI, MI, EntropyX, Entropy, jointEntropy, numSamples ] both as serialized arrays
-  */
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // JS: {'test_compute_histo_metric', 'Matrix', [ 'bisImage', 'bisImage','bisImage_opt', 'bisImage_opt', 'Int', 'ParamObj','Int','debug'}
-  //      returns a Matrix
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  var test_compute_histo_metric = function(image1,image2,image3,image4,intval5,paramobj,intval7,debug) { 
-
-    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
-    const jsonstring=JSON.stringify(paramobj || { } );
-
-    // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
-    let image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage')
-    let image3_ptr=0
-    if (image3!==0) 
-      image3_ptr=wrapperutil.serializeObject(Module,image3,'bisImage')
-    let image4_ptr=0
-    if (image4!==0) 
-      image4_ptr=wrapperutil.serializeObject(Module,image4,'bisImage')
-
-    // Call WASM
-    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:test_compute_histo_metric with '+jsonstring+'\n++++');
-    const wasm_output=Module.ccall('test_compute_histo_metric','number',
-       ['number', 'number', 'number', 'number', 'number', 'string', 'number', 'number'],
-       [ image1_ptr, image2_ptr, image3_ptr, image4_ptr, intval5, jsonstring, intval7, debug]);
-
-    // Deserialize Output
-    const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'Matrix');
-
-    // Cleanup
-    if (image1_ptr !== image1)
-      wasmutil.release_memory(Module,image1_ptr);
-    if (image2_ptr !== image2)
-      wasmutil.release_memory(Module,image2_ptr);
-    if (image3_ptr !==0  && image3_ptr !== image3)
-      wasmutil.release_memory(Module,image3_ptr);
-    if (image4_ptr !==0  && image4_ptr !== image4)
-      wasmutil.release_memory(Module,image4_ptr);
 
     // Return
     return output;
@@ -2119,6 +1608,540 @@ var get_date=function() {
     return output;
   }
 
+  //--------------------------------------------------------------
+  // C++:
+  /** Compute Joint Histogram Metrics
+  * @param image1_ptr serialized  image1 as unsigned char array
+  * @param image2_ptr serialized  image2 as unsigned char array
+  * @param weight1_ptr serialized  weight 1 as unsigned char array
+  * @param weight2_ptr serialized  weight 2 as unsigned char array
+  * @param num_weights number of weights to use (0=none, 1=only weight1_ptr, 2=both)
+  * @param jsonstring algorithm parameters  { numbinsx: 64, numbinst: 64, intscale:1 }
+  * @param return_histogram if 1 return the actual histogram else the metrics
+  * @param debug if > 0 print debug messages
+  * @returns if return_histogram =1 the histogram as a matrix, else a single row matrix consisting of
+  *  [ SSD, CC, NMI, MI, EntropyX, Entropy, jointEntropy, numSamples ] both as serialized arrays
+  */
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // JS: {'test_compute_histo_metric', 'Matrix', [ 'bisImage', 'bisImage','bisImage_opt', 'bisImage_opt', 'Int', 'ParamObj','Int','debug'}
+  //      returns a Matrix
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  var test_compute_histo_metric = function(image1,image2,image3,image4,intval5,paramobj,intval7,debug) { 
+
+    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
+    const jsonstring=JSON.stringify(paramobj || { } );
+
+    // Serialize objects
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+    let image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage')
+    let image3_ptr=0
+    if (image3!==0) 
+      image3_ptr=wrapperutil.serializeObject(Module,image3,'bisImage')
+    let image4_ptr=0
+    if (image4!==0) 
+      image4_ptr=wrapperutil.serializeObject(Module,image4,'bisImage')
+
+    // Call WASM
+    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:test_compute_histo_metric with '+jsonstring+'\n++++');
+    const wasm_output=Module.ccall('test_compute_histo_metric','number',
+       ['number', 'number', 'number', 'number', 'number', 'string', 'number', 'number'],
+       [ image1_ptr, image2_ptr, image3_ptr, image4_ptr, intval5, jsonstring, intval7, debug]);
+
+    // Deserialize Output
+    const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'Matrix');
+
+    // Cleanup
+    if (image1_ptr !== image1)
+      wasmutil.release_memory(Module,image1_ptr);
+    if (image2_ptr !== image2)
+      wasmutil.release_memory(Module,image2_ptr);
+    if (image3_ptr !==0  && image3_ptr !== image3)
+      wasmutil.release_memory(Module,image3_ptr);
+    if (image4_ptr !==0  && image4_ptr !== image4)
+      wasmutil.release_memory(Module,image4_ptr);
+
+    // Return
+    return output;
+  }
+
+  //--------------------------------------------------------------
+  // C++:
+  /** Returns 1*/
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // JS: {'uses_gpl', 'Int'}
+  //      returns a Int
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  var uses_gpl = function(debug=false) { 
+
+    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
+
+    // Call WASM
+    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:uses_gpl\n++++');
+    const output=Module.ccall('uses_gpl','number',
+       [],
+       [ ]);
+
+    // Return
+    return output;
+  }
+
+  //--------------------------------------------------------------
+  // C++:
+  /** run Linear Image Registration using \link bisLinearImageRegistration  \endlink
+  * @param reference serialized reference image as unsigned char array
+  * @param target    serialized target image as unsigned char array
+  * @param initial_xform serialized initial transformation as unsigned char array
+  * @param jsonstring the parameter string for the algorithm including return_vector which if true returns a length-28 vector
+  * containing the 4x4 matrix and the 12 transformation parameters
+  * @param debug if > 0 print debug messages
+  * @returns a pointer to a serialized vector or matrix depending on the value of return_vector
+  */
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // JS: {'runLinearRegistrationWASM', 'bisLinearTransformation', [ 'bisImage', 'bisImage', 'bisLinearTransformation_opt', 'ParamObj', 'debug' ]}
+  //      returns a bisLinearTransformation
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  var runLinearRegistrationWASM = function(image1,image2,linearxform3,paramobj,debug) { 
+
+    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
+    const jsonstring=JSON.stringify(paramobj || { } );
+
+    // Serialize objects
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+    let image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage')
+    let linearxform3_ptr=0
+    if (linearxform3!==0) 
+      linearxform3_ptr=wrapperutil.serializeObject(Module,linearxform3,'bisLinearTransformation')
+
+    // Call WASM
+    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:runLinearRegistrationWASM with '+jsonstring+'\n++++');
+    const wasm_output=Module.ccall('runLinearRegistrationWASM','number',
+       ['number', 'number', 'number', 'string', 'number'],
+       [ image1_ptr, image2_ptr, linearxform3_ptr, jsonstring, debug]);
+
+    // Deserialize Output
+    const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisLinearTransformation');
+
+    // Cleanup
+    if (image1_ptr !== image1)
+      wasmutil.release_memory(Module,image1_ptr);
+    if (image2_ptr !== image2)
+      wasmutil.release_memory(Module,image2_ptr);
+    if (linearxform3_ptr !==0  && linearxform3_ptr !== linearxform3)
+      wasmutil.release_memory(Module,linearxform3_ptr);
+
+    // Return
+    return output;
+  }
+
+  //--------------------------------------------------------------
+  // C++:
+  /** run Non Linear Image Registration using \link bisNonLinearImageRegistration  \endlink
+  * @param reference serialized reference image as unsigned char array
+  * @param target    serialized target image as unsigned char array
+  * @param initial_xform serialized initial transformation as unsigned char array
+  * @param jsonstring the parameter string for the algorithm
+  * @param debug if > 0 print debug messages
+  * @returns a pointer to a serialized combo transformation (bisComboTransformation)
+  */
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // JS: {'runNonLinearRegistrationWASM', 'bisComboTransformation', [ 'bisImage', 'bisImage', 'bisLinearTransformation_opt', 'ParamObj', 'debug' ]}
+  //      returns a bisComboTransformation
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  var runNonLinearRegistrationWASM = function(image1,image2,linearxform3,paramobj,debug) { 
+
+    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
+    const jsonstring=JSON.stringify(paramobj || { } );
+
+    // Serialize objects
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+    let image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage')
+    let linearxform3_ptr=0
+    if (linearxform3!==0) 
+      linearxform3_ptr=wrapperutil.serializeObject(Module,linearxform3,'bisLinearTransformation')
+
+    // Call WASM
+    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:runNonLinearRegistrationWASM with '+jsonstring+'\n++++');
+    const wasm_output=Module.ccall('runNonLinearRegistrationWASM','number',
+       ['number', 'number', 'number', 'string', 'number'],
+       [ image1_ptr, image2_ptr, linearxform3_ptr, jsonstring, debug]);
+
+    // Deserialize Output
+    const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisComboTransformation');
+
+    // Cleanup
+    if (image1_ptr !== image1)
+      wasmutil.release_memory(Module,image1_ptr);
+    if (image2_ptr !== image2)
+      wasmutil.release_memory(Module,image2_ptr);
+    if (linearxform3_ptr !==0  && linearxform3_ptr !== linearxform3)
+      wasmutil.release_memory(Module,linearxform3_ptr);
+
+    // Return
+    return output;
+  }
+
+  //--------------------------------------------------------------
+  // C++:
+  /** Approximate Displacement Field with Grid Transformation (pre initialized)
+  * @param dispfield serialized target displacement field
+  * @param initial_grid serialized grid transformation as unsigned char array
+  * @param jsonstring the parameter string for the algorithm
+  * @param debug if > 0 print debug messages
+  * @returns a pointer to the updated grid (bisGridTransformation)
+  */
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // JS: {'approximateDisplacementFieldWASM', 'bisGridTransformation', [ 'bisImage', 'bisGridTransformation', 'ParamObj', 'debug' ]}
+  //      returns a bisGridTransformation
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  var approximateDisplacementFieldWASM = function(image1,gridxform2,paramobj,debug) { 
+
+    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
+    const jsonstring=JSON.stringify(paramobj || { } );
+
+    // Serialize objects
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+    let gridxform2_ptr=wrapperutil.serializeObject(Module,gridxform2,'bisGridTransformation')
+
+    // Call WASM
+    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:approximateDisplacementFieldWASM with '+jsonstring+'\n++++');
+    const wasm_output=Module.ccall('approximateDisplacementFieldWASM','number',
+       ['number', 'number', 'string', 'number'],
+       [ image1_ptr, gridxform2_ptr, jsonstring, debug]);
+
+    // Deserialize Output
+    const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisGridTransformation');
+
+    // Cleanup
+    if (image1_ptr !== image1)
+      wasmutil.release_memory(Module,image1_ptr);
+    if (gridxform2_ptr !== gridxform2)
+      wasmutil.release_memory(Module,gridxform2_ptr);
+
+    // Return
+    return output;
+  }
+
+  //--------------------------------------------------------------
+  // C++:
+  /** Approximate Displacement Field with Grid Transformation -- initialized using the sapcing parameter
+  * @param dispfield serialized target displacement field
+  * @param jsonstring the parameter string for the algorithm  -- key is spacing : --> this defines the spacing for the grid transformation
+  * @param debug if > 0 print debug messages
+  * @returns a pointer to the updated grid (bisGridTransformation)
+  */
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // JS: {'approximateDisplacementFieldWASM2', 'bisGridTransformation', [ 'bisImage', 'ParamObj', 'debug' ]}
+  //      returns a bisGridTransformation
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  var approximateDisplacementFieldWASM2 = function(image1,paramobj,debug) { 
+
+    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
+    const jsonstring=JSON.stringify(paramobj || { } );
+
+    // Serialize objects
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+
+    // Call WASM
+    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:approximateDisplacementFieldWASM2 with '+jsonstring+'\n++++');
+    const wasm_output=Module.ccall('approximateDisplacementFieldWASM2','number',
+       ['number', 'string', 'number'],
+       [ image1_ptr, jsonstring, debug]);
+
+    // Deserialize Output
+    const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisGridTransformation');
+
+    // Cleanup
+    if (image1_ptr !== image1)
+      wasmutil.release_memory(Module,image1_ptr);
+
+    // Return
+    return output;
+  }
+
+  //--------------------------------------------------------------
+  // C++:
+  /** Perform image segmentation either histogram based or plus mrf segmentation if smoothness > 0.0
+  * @param input serialized input as unsigned char array
+  * @param jsonstring the parameter string for the algorithm { "numclasses" : 3, "maxsigmaratio":0.2, "robust" : true, "numbins": 256, "smoothhisto": true, "smoothness" : 0.0, "mrfconvergence" : 0.2, "mrfiterations" : 8, "noisesigma2" : 0.0 }
+  * @param debug if > 0 print debug messages
+  * @returns a pointer to a serialized segmented image
+  */
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // JS: {'segmentImageWASM', 'bisImage', [ 'bisImage', 'ParamObj', 'debug' ]}
+  //      returns a bisImage
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  var segmentImageWASM = function(image1,paramobj,debug) { 
+
+    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
+    const jsonstring=JSON.stringify(paramobj || { } );
+
+    // Serialize objects
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+
+    // Call WASM
+    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:segmentImageWASM with '+jsonstring+'\n++++');
+    const wasm_output=Module.ccall('segmentImageWASM','number',
+       ['number', 'string', 'number'],
+       [ image1_ptr, jsonstring, debug]);
+
+    // Deserialize Output
+    const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisImage',image1);
+    
+
+    // Cleanup
+    if (image1_ptr !== image1)
+      wasmutil.release_memory(Module,image1_ptr);
+
+    // Return
+    return output;
+  }
+
+  //--------------------------------------------------------------
+  // C++:
+  /** Perform objectmap regularization
+  * @param input serialized input as unsigned char array
+  * @param jsonstring the parameter string for the algorithm { "smoothness" : 2.0, "convergence" : 0.2, "terations" : 8, "internaliterations" : 4 }
+  * @param debug if > 0 print debug messages
+  * @returns a pointer to a (short) serialized segmented image
+  */
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // JS: {'regularizeObjectmapWASM', 'bisImage', [ 'bisImage', 'ParamObj', 'debug' ]}
+  //      returns a bisImage
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  var regularizeObjectmapWASM = function(image1,paramobj,debug) { 
+
+    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
+    const jsonstring=JSON.stringify(paramobj || { } );
+
+    // Serialize objects
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+
+    // Call WASM
+    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:regularizeObjectmapWASM with '+jsonstring+'\n++++');
+    const wasm_output=Module.ccall('regularizeObjectmapWASM','number',
+       ['number', 'string', 'number'],
+       [ image1_ptr, jsonstring, debug]);
+
+    // Deserialize Output
+    const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisImage',image1);
+    
+
+    // Cleanup
+    if (image1_ptr !== image1)
+      wasmutil.release_memory(Module,image1_ptr);
+
+    // Return
+    return output;
+  }
+
+  //--------------------------------------------------------------
+  // C++:
+  /** Tests Optimizer with numdof = 1 or 2 and all three modes
+  * @param numdof number of degrees of freedom for simple quadratic function (1 or 2)
+  * @returns number of failed tests
+  */
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // JS: {'test_optimizer', 'Int', [ 'Int']}
+  //      returns a Int
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  var test_optimizer = function(intval1,debug=false) { 
+
+    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
+
+    // Call WASM
+    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:test_optimizer\n++++');
+    const output=Module.ccall('test_optimizer','number',
+       ['number'],
+       [ intval1]);
+
+    // Return
+    return output;
+  }
+
+  //--------------------------------------------------------------
+  // C++:
+  /** Compute DTI Tensor
+  * @param input_ptr the images as a serialized array
+  * @param baseline_ptr the "Baseline" T2 Image as a serialized array
+  * @param mask_ptr the Mask Image (optional, set this to 0) as a serialized array
+  * @param directions_ptr the directions matrix
+  * @param jsonstring { "bvalue": 1000, "numbaseline:" 1 }
+  * @param debug if > 0 print debug messages
+  * @returns a pointer to the tensor image */
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // JS: {'computeDTITensorFitWASM', 'bisImage', [ 'bisImage', 'bisImage',  'bisImage_opt' ,'Matrix', 'ParamObj', 'debug']}
+  //      returns a bisImage
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  var computeDTITensorFitWASM = function(image1,image2,image3,matrix4,paramobj,debug) { 
+
+    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
+    const jsonstring=JSON.stringify(paramobj || { } );
+
+    // Serialize objects
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+    let image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage')
+    let image3_ptr=0
+    if (image3!==0) 
+      image3_ptr=wrapperutil.serializeObject(Module,image3,'bisImage')
+    let matrix4_ptr=wrapperutil.serializeObject(Module,matrix4,'Matrix')
+
+    // Call WASM
+    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:computeDTITensorFitWASM with '+jsonstring+'\n++++');
+    const wasm_output=Module.ccall('computeDTITensorFitWASM','number',
+       ['number', 'number', 'number', 'number', 'string', 'number'],
+       [ image1_ptr, image2_ptr, image3_ptr, matrix4_ptr, jsonstring, debug]);
+
+    // Deserialize Output
+    const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisImage',image1);
+    
+
+    // Cleanup
+    if (image1_ptr !== image1)
+      wasmutil.release_memory(Module,image1_ptr);
+    if (image2_ptr !== image2)
+      wasmutil.release_memory(Module,image2_ptr);
+    if (image3_ptr !==0  && image3_ptr !== image3)
+      wasmutil.release_memory(Module,image3_ptr);
+    if (matrix4_ptr !== matrix4)
+      wasmutil.release_memory(Module,matrix4_ptr);
+
+    // Return
+    return output;
+  }
+
+  //--------------------------------------------------------------
+  // C++:
+  /** Compute DTI Tensor EigenSystem
+  * @param input_ptr the image tensor as a serialized array
+  * @param mask_ptr the Mask Image (optional, set this to 0) as a serialized array
+  * @param debug if > 0 print debug messages
+  * @returns a pointer to the eigensystem image */
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // JS: {'computeTensorEigenSystemWASM', 'bisImage', [ 'bisImage', 'bisImage_opt' , 'debug']}
+  //      returns a bisImage
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  var computeTensorEigenSystemWASM = function(image1,image2,debug) { 
+
+    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
+
+    // Serialize objects
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+    let image2_ptr=0
+    if (image2!==0) 
+      image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage')
+
+    // Call WASM
+    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:computeTensorEigenSystemWASM\n++++');
+    const wasm_output=Module.ccall('computeTensorEigenSystemWASM','number',
+       ['number', 'number', 'number'],
+       [ image1_ptr, image2_ptr, debug]);
+
+    // Deserialize Output
+    const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisImage',image1);
+    
+
+    // Cleanup
+    if (image1_ptr !== image1)
+      wasmutil.release_memory(Module,image1_ptr);
+    if (image2_ptr !==0  && image2_ptr !== image2)
+      wasmutil.release_memory(Module,image2_ptr);
+
+    // Return
+    return output;
+  }
+
+  //--------------------------------------------------------------
+  // C++:
+  /** Compute DTI Tensor Invariants
+  * @param input_ptr the image tensor eigensystem as a serialized array
+  * @param mask_ptr the Mask Image (optional, set this to 0) as a serialized array
+  * @param jsonstring { "mode": 0 } // mode 0=FA, 1=RA etc. -- see bisDTIAlgorithms::computeTensorInvariants
+  * @param debug if > 0 print debug messages
+  * @returns a pointer to the invarient image */
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // JS: {'computeDTITensorInvariantsWASM', 'bisImage', [ 'bisImage', 'bisImage_opt' , 'ParamObj', 'debug']}
+  //      returns a bisImage
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  var computeDTITensorInvariantsWASM = function(image1,image2,paramobj,debug) { 
+
+    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
+    const jsonstring=JSON.stringify(paramobj || { } );
+
+    // Serialize objects
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+    let image2_ptr=0
+    if (image2!==0) 
+      image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage')
+
+    // Call WASM
+    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:computeDTITensorInvariantsWASM with '+jsonstring+'\n++++');
+    const wasm_output=Module.ccall('computeDTITensorInvariantsWASM','number',
+       ['number', 'number', 'string', 'number'],
+       [ image1_ptr, image2_ptr, jsonstring, debug]);
+
+    // Deserialize Output
+    const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisImage',image1);
+    
+
+    // Cleanup
+    if (image1_ptr !== image1)
+      wasmutil.release_memory(Module,image1_ptr);
+    if (image2_ptr !==0  && image2_ptr !== image2)
+      wasmutil.release_memory(Module,image2_ptr);
+
+    // Return
+    return output;
+  }
+
+  //--------------------------------------------------------------
+  // C++:
+  /** Compute DTI Orientation Map
+  * @param input_ptr the image tensor eigensystem as a serialized array
+  * @param mask_ptr the Mask Image (optional, set this to 0) as a serialized array
+  * @param magnitude_ptr the Magnitude Image (e.g. FA map) (optional, set this to 0) as a serialized array
+  * @param jsonstring { "scaling": 1.0 } Optional extra scaling
+  * @param debug if > 0 print debug messages
+  * @returns a pointer to the colormap image */
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // JS: {'computeDTIColorMapImageWASM', 'bisImage', [ 'bisImage', 'bisImage_opt' ,'bisImage_opt', 'ParamObj', 'debug']}
+  //      returns a bisImage
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  var computeDTIColorMapImageWASM = function(image1,image2,image3,paramobj,debug) { 
+
+    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
+    const jsonstring=JSON.stringify(paramobj || { } );
+
+    // Serialize objects
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+    let image2_ptr=0
+    if (image2!==0) 
+      image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage')
+    let image3_ptr=0
+    if (image3!==0) 
+      image3_ptr=wrapperutil.serializeObject(Module,image3,'bisImage')
+
+    // Call WASM
+    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:computeDTIColorMapImageWASM with '+jsonstring+'\n++++');
+    const wasm_output=Module.ccall('computeDTIColorMapImageWASM','number',
+       ['number', 'number', 'number', 'string', 'number'],
+       [ image1_ptr, image2_ptr, image3_ptr, jsonstring, debug]);
+
+    // Deserialize Output
+    const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisImage',image1);
+    
+
+    // Cleanup
+    if (image1_ptr !== image1)
+      wasmutil.release_memory(Module,image1_ptr);
+    if (image2_ptr !==0  && image2_ptr !== image2)
+      wasmutil.release_memory(Module,image2_ptr);
+    if (image3_ptr !==0  && image3_ptr !== image3)
+      wasmutil.release_memory(Module,image3_ptr);
+
+    // Return
+    return output;
+  }
+
   //-------------------------------------------------------------
 
   const outputobj = { 
@@ -2144,14 +2167,8 @@ var get_date=function() {
     blankImageWASM : blankImageWASM,
     resampleImageWASM : resampleImageWASM,
     prepareImageForRegistrationWASM : prepareImageForRegistrationWASM,
-    runLinearRegistrationWASM : runLinearRegistrationWASM,
-    runNonLinearRegistrationWASM : runNonLinearRegistrationWASM,
-    approximateDisplacementFieldWASM : approximateDisplacementFieldWASM,
-    approximateDisplacementFieldWASM2 : approximateDisplacementFieldWASM2,
     computeDisplacementFieldWASM : computeDisplacementFieldWASM,
     sliceBiasFieldCorrectImageWASM : sliceBiasFieldCorrectImageWASM,
-    segmentImageWASM : segmentImageWASM,
-    regularizeObjectmapWASM : regularizeObjectmapWASM,
     morphologyOperationWASM : morphologyOperationWASM,
     seedConnectivityWASM : seedConnectivityWASM,
     computeGLMWASM : computeGLMWASM,
@@ -2161,25 +2178,32 @@ var get_date=function() {
     computeCorrelationMatrixWASM : computeCorrelationMatrixWASM,
     weightedRegressOutWASM : weightedRegressOutWASM,
     weightedRegressGlobalSignalWASM : weightedRegressGlobalSignalWASM,
-    computeDTITensorFitWASM : computeDTITensorFitWASM,
-    computeTensorEigenSystemWASM : computeTensorEigenSystemWASM,
-    computeDTITensorInvariantsWASM : computeDTITensorInvariantsWASM,
-    computeDTIColorMapImageWASM : computeDTIColorMapImageWASM,
     addGridToImageWASM : addGridToImageWASM,
     projectImageWASM : projectImageWASM,
     backProjectImageWASM : backProjectImageWASM,
     test_wasm : test_wasm,
     redirect_stdout : redirect_stdout,
-    test_optimizer : test_optimizer,
     test_matrix4x4 : test_matrix4x4,
-    test_compute_histo_metric : test_compute_histo_metric,
     test_create_4x4matrix : test_create_4x4matrix,
     test_eigenUtils : test_eigenUtils,
     test_matlabParse : test_matlabParse,
     test_bendingEnergy : test_bendingEnergy,
     test_PTZConversions : test_PTZConversions,
     test_eigenUtilOperations : test_eigenUtilOperations,
-    test_mirrorComboTransformTextFileWASM : test_mirrorComboTransformTextFileWASM
+    test_mirrorComboTransformTextFileWASM : test_mirrorComboTransformTextFileWASM,
+    test_compute_histo_metric : test_compute_histo_metric,
+    uses_gpl : uses_gpl,
+    runLinearRegistrationWASM : runLinearRegistrationWASM,
+    runNonLinearRegistrationWASM : runNonLinearRegistrationWASM,
+    approximateDisplacementFieldWASM : approximateDisplacementFieldWASM,
+    approximateDisplacementFieldWASM2 : approximateDisplacementFieldWASM2,
+    segmentImageWASM : segmentImageWASM,
+    regularizeObjectmapWASM : regularizeObjectmapWASM,
+    test_optimizer : test_optimizer,
+    computeDTITensorFitWASM : computeDTITensorFitWASM,
+    computeTensorEigenSystemWASM : computeTensorEigenSystemWASM,
+    computeDTITensorInvariantsWASM : computeDTITensorInvariantsWASM,
+    computeDTIColorMapImageWASM : computeDTIColorMapImageWASM
   };
 
 module.exports=outputobj;
