@@ -1,4 +1,3 @@
-
 // --------- First Configuration Info --------------------
 const internal =  {
     cachelist : require('./pwa/pwacache.js'),
@@ -10,8 +9,6 @@ const internal =  {
 };
 
 internal.pathlength=internal.path.length;
-
-
 // ------------------- Utility Functions -----------------
 
 let cleanCache=function() {
@@ -145,7 +142,10 @@ self.addEventListener('install', e => {
 // -------------------------
 self.addEventListener('activate',  event => {
     event.waitUntil(self.clients.claim());
+    send_message_to_all_clients(`Activate`);
 });
+
+
 
 // -------------------------
 // The Critical Fetch Event
