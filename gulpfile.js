@@ -64,8 +64,8 @@ let options = {
     platform : program.platform || os.platform(),
     package : program.dopack || 0,
     zip : program.dozip || 0,
-    webworker : program.worker || false,
-    sworker : program.sworker || false,
+    webworker : program.worker || 0,
+    sworker : program.sworker || 0,
     internal : parseInt(program.internal || 0) || 0,
 };
 
@@ -179,8 +179,9 @@ if (mainoption==="build") {
 internal.webpackjobs = [ { path: './js/webcomponents/' , name: internal.bislib } ];
 if (options.inpfilename === 'index') {
     internal.webpackjobs=[];
-    options.light=false;
 }
+
+console.log(colors.red('Sworker='+options.sworker));
 
 if (options.sworker) {
     internal.webpackjobs.push({ path: './web/' ,  name : internal.indexlib });

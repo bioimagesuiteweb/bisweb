@@ -1,24 +1,28 @@
+
 // --------- First Configuration Info --------------------
-
-
 const internal =  {
     cachelist : require('./pwa/pwacache.js'),
     name : 'bisweb',
-    path : self.location.href.substr(0,self.location.href.lastIndexOf('/'))
+    path : self.location.href.substr(0,self.location.href.lastIndexOf('/')),
+    updating : false,
+    count : 0,
+    maxcount : 0,
 };
 
 internal.pathlength=internal.path.length;
 
+
 // ------------------- Utility Functions -----------------
 
 let cleanCache=function() {
+    console.log(' ---------------- Clear -------------------------');
     console.log('bisweb-sw: Cleaning cache',internal.name);
     caches.delete(internal.name);
-
 };
 
 let populateCache=function(msg="Cache Updated") {
 
+    console.log(' ---------------- Populate -------------------------');
     let lst=internal.cachelist['web'].concat(internal.cachelist['cache']);
     console.log(`bisweb-sw: Beginning to  install (cache) ${lst.length} files`);
 
@@ -29,6 +33,9 @@ let populateCache=function(msg="Cache Updated") {
     }
     
     return caches.open(internal.name).then(cache => {
+
+        internal.count=0;
+        internal.maxcount=newlst.length;
 
         let t= new Date().getTime()
         let p=[];
@@ -42,13 +49,19 @@ let populateCache=function(msg="Cache Updated") {
                         throw new TypeError('bad response status');
                     }
                     cache.put(url, response).then( () => {
+                        internal.count=internal.count+1;
                         resolve();
-                    }).catch( (e) => { reject(e); });
+                        send_message_to_all_clients(`Updating Cache: Downloaded file ${internal.count}/${internal.maxcount}`);
+                    }).catch( (e) => {
+                        internal.updating=false;
+                        reject(e); });
                 });
             }));
         }
+        
 
         Promise.all(p).then( () => {
+            internal.updating=false;
             console.log('bisweb-sw: Installation (caching) successful');
             send_message_to_all_clients(msg);
             self.skipWaiting()
@@ -61,6 +74,7 @@ let populateCache=function(msg="Cache Updated") {
             });*/
     });
 };
+
 
 // ----------------- Messaging Functions -----------------
 
@@ -103,9 +117,12 @@ self.addEventListener('message', (msg) => {
         let name=obj.name;
         let data=obj.data;
         console.log(`bisweb-sw: Received ${name}:${data}`);
-        if (name==="updateCache") {
+        if (name==="updateCache" && internal.updating===false) {
+            internal.updating=true;
             cleanCache();
             populateCache('Cache Updated');
+        } else {
+            console.log('bisweb-sw: Already updating cache');
         }
     } catch(e) {
         console.log(`bisweb-sw: Bad Message ${e} received`);
@@ -117,7 +134,7 @@ self.addEventListener('message', (msg) => {
 // Install Event
 // -------------------------
 self.addEventListener('install', e => {
-
+    internal.updating=true;
     cleanCache();
     e.waitUntil( populateCache("Cache Updated -- installed new service worker"));
         
@@ -162,6 +179,9 @@ self.addEventListener('fetch', event => {
         webfirst=true;
 
 
+    if (internal.updating)
+        webfirst=true;
+    
     if (webfirst) {
         // Web then Cache
         //        console.log('bisweb-sw Fetch: requested:'+event.request.url+' webfirst='+webfirst);
@@ -185,6 +205,4 @@ self.addEventListener('fetch', event => {
     }
 });
 
-
-console.clear();
 console.log(`BioImage Suite Web Service Worker starting name=${internal.name} path=${internal.path}`);                       

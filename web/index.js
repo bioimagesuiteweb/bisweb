@@ -47,6 +47,7 @@ const modal_text=`
 // Create a dialog box for later
 let modal=null;
 let serviceWorker=null;
+let alertDiv=null;
 
 let getModal=function() {
 
@@ -87,31 +88,43 @@ let getModal=function() {
 }
 
 
-let receivedMessage = function(msg) {
+let showAlert=function(message,type='info') {
 
-    console.log('here we go',msg);
+    if (alertDiv)
+        alertDiv.remove();
+
+    alertDiv = $(`<div class="alert alert-${type} alert-dismissible" role="alert" 
+		  style="position:absolute; top:80px; left:20px; z-index: 100">
+		  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${message}</a><\div>`);
+	$('body').append(alertDiv);
+    alertDiv.alert();
+};
+
+let receivedMessage = function(msg) {
     
     if (msg.indexOf("Cache Updated")>=0) {
-        let w = $(`<div class="alert alert-info alert-dismissible" role="alert" 
-		  style="position:absolute; top:80px; left:20px; z-index: 100">
-		  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>The application has been updated. <a href="./index.html">Reload this webpage to use the new version.</a><\div>`);
-	$('body').append(w);
-	w.alert();
+        showAlert(`The application has been updated. <a href="./index.html">Reload this webpage to use the new version.</a>`);
 
+    } else if (msg.indexOf('Downloaded')>=0) {
+        showAlert(msg);
     } else {
         console.log('Worker says',msg);
     }
 };
 
 let updateApplication=function() {
-    try { 
+
+    // Find worker
+    navigator.serviceWorker.ready.then(function(registration) {
+        serviceWorker = registration.active;
+        navigator.serviceWorker.addEventListener('message', function(event) {
+            receivedMessage(event.data);
+        });
+        console.log('Re found this ... service worker');
         serviceWorker.postMessage(JSON.stringify( {name : 'updateCache',
                                                    data : 'userInput'
                                                   }));
-    } catch(e) {
-        console.log('We must have a new service worker ...');
-        receivedMessage('Cache Updated');
-    }
+    });
 }
 
 let simpleAbout=function(offline) {
@@ -183,17 +196,9 @@ let getLatestVersion=async function(mode='normal') {
     } catch(e) {
         console.log('Must be offline, failed to get latest version',e);
         if (force)  {
-            let w = $(`<div class="alert alert-danger alert-dismissible" role="alert" 
-		      style="position:absolute; top:80px; left:20px; z-index: 100">
-		      <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>We can not connect to the server right now. Please try again later.</div>`);
-	    $('body').append(w);
-	    w.alert();
+            showAlert(`We can not connect to the server right now. Please try again later.`,'danger');
         } else if (quiet) {
-            let w = $(`<div class="alert alert-info alert-dismissible" role="alert" 
-		      style="position:absolute; top:80px; left:20px; z-index: 100">
-		      <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>In offline mode. Everything should still work (other than regression testing.)</div>`);
-	    $('body').append(w);
-	    w.alert();
+            showAlert(`In offline mode. Everything should still work (other than regression testing.)`);
         } else {
             simpleAbout(true);
         }
@@ -337,40 +342,36 @@ let initialize=function() {
 
 var createserviceworker=function() {
 
-    return new Promise( (resolve,reject) => {
-
-        let scope=window.document.URL;
-        console.log('scope=',scope);
-        let index=scope.indexOf(".html");
+    let scope=window.document.URL;
+    console.log('scope=',scope);
+    let index=scope.indexOf(".html");
+    if (index>0) {
+        index=scope.lastIndexOf("/");
+        scope=scope.substr(0,index+1);
+    } else {
+        let index=scope.indexOf("#");
         if (index>0) {
             index=scope.lastIndexOf("/");
             scope=scope.substr(0,index+1);
-        } else {
-            let index=scope.indexOf("#");
-            if (index>0) {
-                index=scope.lastIndexOf("/");
-                scope=scope.substr(0,index+1);
-            }
         }
-        console.log('Scope for registering = ',scope);
-        
-        // service worker registered
-        navigator.serviceWorker.register(`${scope}bisweb-sw.js`, { scope: scope })
-  
-            .then(function(registration) {
-                serviceWorker = registration.active;
-                console.log(`____ bisweb -- service worker registered ${scope}`);
-            });
-        
+    }
+    console.log('Scope for registering = ',scope);
+    
+    // service worker registered
+    
+    navigator.serviceWorker.register(`${scope}bisweb-sw.js`, { scope: scope }).then(function(registration) {
+            serviceWorker = registration.active;
+            console.log(`____ bisweb -- service worker registered ${scope}`);
+        });
+    
+    
+    // service worker ready
+    navigator.serviceWorker.ready.then(function(registration) {
+        serviceWorker = registration.active;
         navigator.serviceWorker.addEventListener('message', function(event) {
             receivedMessage(event.data);
         });
-        
-        // service worker ready
-        navigator.serviceWorker.ready.then(function(registration) {
-            serviceWorker = registration.active;
-            resolve();
-        }).catch( (e) => { reject(e) ; });
+        getLatestVersion('quiet');
     });
 }
 
@@ -381,9 +382,7 @@ window.onload = (() => {
         if ('serviceWorker' in navigator) {
 
             if (typeof (window.BIS) === "undefined") {
-                createserviceworker().then( () => {
-                    getLatestVersion('quiet');
-                });
+                createserviceworker();
             } else {
                 console.log('---- not creating service worker ... in development mode');
             }
