@@ -32,7 +32,7 @@ const path=require('path');
 const os = require('os');
 const genericio=require('../js/core/bis_genericio.js');
 const fs=require('fs');
-
+const bisdate=require('../build/wasm/bisdate.js');
 
 
 
@@ -73,10 +73,10 @@ let str=genericio.tozbase64(arr);
 
 let output_text=`
 
+
 (function () {
 
-    const biswebpack="${str}";
-
+    const biswebpack= { binary: "${str}", date : "${bisdate.date}, ${bisdate.time}" };
 
     if (typeof module !== "undefined" && module.exports) {
         module.exports = biswebpack
