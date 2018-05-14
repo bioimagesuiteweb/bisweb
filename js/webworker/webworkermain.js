@@ -20,10 +20,10 @@ self.onmessage = function(e) {
     if (e.data==='initialize') {
         if (!initialized) {
             console.log('++++ Webworker Initializing Web Assembly');
-            let binary=genericio.fromzbase64(wasmlib);
+            let binary=genericio.fromzbase64(wasmlib.binary);
             biswrap.initialize(binary).then( () => {
                 initialized=true;
-                console.log('++++ Webworker WASM Result =',biswrap.test_wasm());
+                console.log('++++ Webworker WASM Result =',biswrap.test_wasm(), 'build date=',wasmlib.date);
                 postMessage('initialized');
             });
         } else {
