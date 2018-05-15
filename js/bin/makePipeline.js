@@ -15,7 +15,6 @@ let out = program.out ? program.out : __dirname + '/Makefile';
 pipeline.makePipeline(program.file, out);
 
 
-
 //read param file from disk 
 /*if (program.file) {
     pipeline.makePipline(program.file);

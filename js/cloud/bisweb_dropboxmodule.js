@@ -20,7 +20,6 @@
 /* global Dropbox */
 
 const dbox = require('dropbox');
-const localforage = require('localforage');
 const keys = require('bis_keystore.js');
 const genericio = require('bis_genericio.js');
 
@@ -69,7 +68,7 @@ let auth = function() {
     parsedURL[parsedURL.length - 1] = 'biswebdropbox.html';
     let url = parsedURL.join('/');
 
-    console.log('url', url)
+    console.log('url', url);
     let authUrl = box.getAuthenticationUrl(url);
     console.log(authUrl);   
     window.open(authUrl, '', 'width=500, height=500');
