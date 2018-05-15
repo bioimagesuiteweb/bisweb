@@ -63,9 +63,11 @@ let auth = function() {
     let box = new dbox({ clientId : keys.DropboxAppKey });
     let parsedURL = window.location.href.split('/');
 
-    //small hack to make it so local builds don't violate same-origin policy for the window that dropboxmodule spawns.
+
+    //small hack to make it so bisweb's various endpoints use a same-origin biswebdropbox.html.
     //this is necessary to ensure that the windows share the same localStorage.
-    let url = parsedURL[2] === 'localhost:8080' ? 'http://localhost:8080/bisweb/web/biswebdropbox.html' : 'https://bioimagesuiteweb.github.io/webapp/biswebdropbox.html';
+    parsedURL[parsedURL.length - 1] = 'biswebdropbox.html';
+    let url = parsedURL.join('/');
 
     console.log('url', url)
     let authUrl = box.getAuthenticationUrl(url);
