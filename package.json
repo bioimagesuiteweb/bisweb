@@ -22,6 +22,7 @@
         "electron-debug": "1.4.0",
         "fastclick": "1.0.6",
         "graphs": "2.0.0",
+        "idb-keyval": "3.0.4",
         "iobuffer": "3.2.0",
         "jquery": "2.2.4",
         "localforage": "1.5.5",

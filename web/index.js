@@ -21,20 +21,38 @@
 /*jshint browser: true*/
 /*jshint undef: true, unused: true */
 
+
+// ----------------------------------- Imports and Global Variables -------------------------------------
 const $=require('jquery');
 const bisdate=require('bisdate.js');
+const idb=require('idb-keyval');
 import tools from './images/tools.json';
 
-// ----------------------------------- Global Variables ----------------------------------
-let modal=null;
-let alertDiv=null;
-let serviceWorker=null;
+let inelectron=false;
+if (typeof (window.BISELECTRON) !== "undefined") {
+    inelectron=true;
+}
 
-// ----------------------------------- GUI Functions -------------------------------------
+// idb-store has a key 'mode' with three values
+// online  -- no cache
+// offline -- can download
+// offline-complete -- has downloaded
+const internal = { 
+    hasServiceWorker : false,
+    modal : null,
+    alertDiv : null,
+    serviceWorker : null,
+    latestVersion : null,
+}
+
+// ----------------------------------- GUI Utility Functions -------------------------------------
+//
+// Modal Dialog
+// -------------------------------------
 
 let getModal=function() {
 
-    if (modal===null) {
+    if (internal.modal===null) {
         let m =$(`
        <div class="modal fade">
          <div class="modal-dialog">
@@ -52,7 +70,7 @@ let getModal=function() {
          </div><!-- /.modal-dialog -->
        </div><!-- /.modal -->
     `);
-        modal= {
+        internal.modal= {
             dlg : m,
             title : m.find('.modal-title'),
             body  : m.find('.modal-body'),
@@ -60,7 +78,7 @@ let getModal=function() {
             show : ( () => { m.modal('show'); }),
             hide : ( () => { m.modal('hide'); }),
         };
-        modal.addButton = function(name,type,clb=null) {
+        internal.modal.addButton = function(name,type,clb=null) {
             let tp=`type="submit"`;
             if (type==='Close')
                 tp="";
@@ -80,26 +98,33 @@ let getModal=function() {
         };
     };
 
-    modal.title.empty();
-    modal.body.empty();
-    modal.footer.empty();
-    return modal;
+    internal.modal.title.empty();
+    internal.modal.body.empty();
+    internal.modal.footer.empty();
+    return internal.modal;
 }
 
+// -------------------------------------
+// Alert Pill
+// -------------------------------------
 
 let showAlert=function(message,type='info') {
 
-    if (alertDiv)
-        alertDiv.remove();
+    if (internal.alertDiv)
+        internal.alertDiv.remove();
 
-    alertDiv = $(`<div class="alert alert-${type} alert-dismissible" role="alert" 
+    internal.alertDiv = $(`<div class="alert alert-${type} alert-dismissible" role="alert" 
 		  style="position:absolute; top:80px; left:20px; z-index: 100">
 		  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${message}</a><\div>`);
-	$('body').append(alertDiv);
-    alertDiv.alert();
+    $('body').append(internal.alertDiv);
+    internal.alertDiv.alert();
 };
 
-let receivedMessage = function(msg) {
+// ------------------------------------------------------------------------------
+// Communication with Service Worker
+// ------------------------------------------------------------------------------
+
+let receivedMessageFromServiceWorker = function(msg) {
     
     if (msg.indexOf("Cache Updated")>=0) {
         showAlert(`The application has been updated. <a href="./index.html">Reload this webpage to use the new version.</a>`);
@@ -107,130 +132,228 @@ let receivedMessage = function(msg) {
     } else if (msg.indexOf('Downloaded')>=0) {
         showAlert(msg);
     } else if (msg.indexOf('Activate')>=0) {
-        console.log('msg=',msg);
         setTimeout( () => {
 
             navigator.serviceWorker.ready.then(function(registration) {
-                serviceWorker = registration.active;
+                internal.serviceWorker = registration.active;
                 navigator.serviceWorker.addEventListener('message', function(event) {
-                    receivedMessage(event.data);
+                    receivedMessageFromServiceWorker(event.data);
                 });
             });
         },100);
-        showAlert(`The application has been updated (activated). <a href="./index.html">Reload this webpage to use the new version.</a>`);
+        checkForLatestVersion();
+        /*        idb.get('mode').then( (mode) => {
+                  console.log('Mode=',mode);
+                  if (mode!=='online') {
+                  showAlert(`The application has been automatically updated (as current version is invalid). <a href="./index.html">Reload this webpage to use the new version.</a>`);
+                  }*/
+    } else if (msg.indexOf('Cleaned')>=0) {
+        showAlert('All offline capabilities have been remove. The application will still happily run if you have a network connection.','info');
+        
     } else {
         console.log('other=',msg);
     }
 };
 
-let updateApplication=function() {
+let sendCommandToServiceWorker=function(cmd='updateCache') {
+    
 
     // Find worker
     try {
         
-        serviceWorker.postMessage(JSON.stringify( {name : 'updateCache',
-                                                   data : 'userInput'
-                                                  }));
+        internal.serviceWorker.postMessage(JSON.stringify( {name : cmd,
+                                                            data : 'userInput'
+                                                           }));
     } catch(e) {
-       showAlert('We must be in the process of updating','warning');
-        
-
+        showAlert('We must be in the process of updating','warning');
         navigator.serviceWorker.ready.then(function(registration) {
-            serviceWorker = registration.active;
+            internal.serviceWorker = registration.active;
             navigator.serviceWorker.addEventListener('message', function(event) {
-                receivedMessage(event.data);
+                receivedMessageFromServiceWorker(event.data);
             });
         });
     }
 }
 
-let simpleAbout=function(offline) {
+// ------------------------------------------------------------------------------
+//
+// Inform the User about Offline/Online Status
+//
+// Scenaria
+//
+//  start application -- if offline enabled check for new version and prompt for download
+//
+//  user selects 'Help|About' -- if offline not enabled simple call simpleAbout, else check for new version and it is new offer to download
+//  user selects 'Help Install' -- if no
+//
+//
+// ------------------------------------------------------------------------------
 
+
+// ---------------------
+// Initial Check
+// ---------------------
+let getLatestVersion=async function() {
+    
+    try {
+        let t= new Date().getTime()
+        const fetchResult=await fetch(`./bisdate.json?time=${t}`);
+        const response=await fetchResult;
+        internal.latestVersion= await response.json();
+        return internal.latestVersion['absolutetime'];
+    } catch(e) {
+        console.log(e);
+        // We must be offline
+        internal.latestVersion=null;
+        return -1;
+    }
+
+};
+
+let getMode=async function() {
+
+    let mode='online';
+    try {
+        mode=idb.get('mode');
+    } catch(e) {
+        mode='online';
+    }
+    return mode;
+};
+
+let doesNewVersionExist=async function() {
+    
+    // Check if we are in offline mode else return;
+    let mode=await getMode();
+    if (mode!=='offline-complete') {
+        return false;
+    }
+
+    let latest=await getLatestVersion();
+    if (latest<0) {
+        console.log('latest=',latest);
+        // we are offline (in the network sense)
+        return false;
+    }
+
+    internal.onlinetime=latest;
+    
+    let mytime=bisdate['absolutetime'];
+    let diff=internal.onlinetime-mytime;
+    let newversion=(diff>1000);
+    return newversion;
+};
+
+let downloadLatestVersion=async function(hasnewversion) {
+
+    let idbmode=await getMode();
+    let situation=0;
+    let latestVersion=internal.latestVersion;
+
+    let s=`<p> BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which can download itself into the cache of your Broswer for offline use.</p>`;
+    let dates=`<UL>
+<LI>The version you are using is: ${bisdate.date}, ${bisdate.time}</LI>
+<LI> The latest version is: ${latestVersion.date}, ${latestVersion.time}.</LI></UL>`;
+
+    let fn = ( () => { sendCommandToServiceWorker('updateCache'); });
+    
     let m=getModal();
-    m.title.text('About this Application');
-    let s=`<p>This is the main page of BioImage Suite Web ( current build= ${bisdate.date}, ${bisdate.time}).</p>`;
-    if (typeof (window.BISELECTRON) === "undefined") {
-        if (offline)
-            s+=`<p>This application is running in offline mode.</p>`;
-        s+=`<p>BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which downloads itself into the cache of your Browser for offline use.</p>`;
+    if (hasnewversion) {
+        m.title.text('There is an updated version online');
+        s+=dates+`<p> If you would like to update (recommended), press <EM>Update</EM> below.</p>`;
+        m.addButton('Update','danger',fn)
+    }  else if (idbmode==='online') {
+        m.title.text('You can install this application offline');
+        s+=`<p> If you would like to download all files in the browser cache to enable offline mode (recommended), press <EM>Install</EM> below.</p>`;
+        m.addButton('Install','default',fn)
+    } else {
+        m.title.text('This is the latest version (and is already stored offline)');
+        s+=dates+`<p> If you would like to reload all files, press <EM>Reinstall</EM> below.</p>`;
+        m.addButton('Reinstall','info',fn)
     }
     m.body.append($(s));
     m.addButton('Close','default');
     m.show();
 };
 
-let getLatestVersion=async function(mode='normal') { 
+// ---------------------------------------------
+// Called on start
+// ---------------------------------------------
 
-    // mode is 'force' (force update), 'silent' (if nothing new keep quiet), 'normal' (bring about box);
+var checkForLatestVersion=async function() {
 
-    let force=false;
-    if (mode==='force')
-        force=true;
-    let quiet=false;
-    if (mode==='quiet')
-        quiet=true;
-
-    try  {
-        let t= new Date().getTime()
-        const fetchResult=await fetch(`./bisdate.json?time=${t}`);
-        const response=await fetchResult;
-        const latestVersion= await response.json();
-
-        let onlinetime=latestVersion['absolutetime'];
-        let mytime=bisdate['absolutetime'];
-        
-        let diff=onlinetime-mytime;
-        let newversion=(diff>1000);
-        
-        if (newversion || force == true) {
-            let m=getModal();
-            if (newversion) 
-                m.title.text('There is an updated version online');
-            else
-                m.title.text('This is the latest version');
-            let s=`<p> BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which downloads itself into the cache of your Broswer for offline use.</p>
-                <UL><LI>The version you are using is: ${bisdate.date}, ${bisdate.time}</LI>
-                <LI> The latest version is: ${latestVersion.date}, ${latestVersion.time}.</LI></UL>`;
-            if (newversion) 
-                s+=`<p> If you would like to update (recommended), press <EM>Update</EM> below.</p>`;
-            else
-                s+=`<p> If you would like to reload all files, press <EM>Reinstall</EM> below.</p>`;
-            m.body.append($(s));
-
-            let fn = ( () => { updateApplication(newversion); });
-            if (newversion) 
-                m.addButton('Update','danger',fn)
-            else
-                m.addButton('Reinstall','info',fn)
-            m.addButton('Close','default');
-
-            m.show();
-        } else if (force) {
-            updateApplication();
-        } else if (!quiet) {
-            simpleAbout(false);
-        }
-    } catch(e) {
-        console.log('Must be offline, failed to get latest version',e);
-        if (force)  {
-            showAlert(`We can not connect to the server right now. Please try again later.`,'danger');
-        } else if (quiet) {
-            showAlert(`In offline mode. Everything should still work (other than regression testing.)`);
-        } else {
-            simpleAbout(true);
-        }
-    }
+    let m =await doesNewVersionExist();
+    if (m)
+        downloadLatestVersion(true);
 };
 
+// ---------------------------------------------
+// Called Help|About
+// ---------------------------------------------
+let aboutApplication=async function() {
 
-let inelectron=false;
-if (typeof (window.BISELECTRON) !== "undefined") {
-    inelectron=true;
+    let offline=false;
+    let latest=await getLatestVersion();
+    if (latest<0) {
+        offline=true;
+        showAlert(`In offline mode. Everything should still work (other than regression testing.)`);
+        return;
+    }
+
+    let mode= await getMode();
+    let dosimple=true;
+    
+    if (mode!=='online') {
+        let m=await doesNewVersionExist();
+        if (m)
+            dosimple=false;
+    }
+
+    if (dosimple)  {
+        let m=getModal();
+        m.title.text('About this Application');
+        let s=`<p>This is the main page of BioImage Suite Web ( current build= ${bisdate.date}, ${bisdate.time}).</p>`;
+        if (typeof (window.BISELECTRON) === "undefined") {
+            if (offline)
+                s+=`<p>This application is running in offline mode.</p>`;
+            s+=`<p>BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which can download itself into the cache of your Browser for offline use.</p>`;
+        }
+        m.body.append($(s));
+        m.addButton('Close','default');
+        m.show();
+    } else {
+        downloadLatestVersion(true);
+    }
+
 }
 
+// ---------------------------------------------
+// Called under Help | Install
+// ---------------------------------------------
+let installLatestVersion=async function() {
 
+    let latest=await getLatestVersion();
+    if (latest<0) {
+        showAlert(`We can not connect to the server right now. Please try again later.`,'danger');
+        return false;
+    } 
+    
+    console.log('bisdate=',bisdate,'latest=',internal.latestVersion);
+    
+    let mytime=bisdate['absolutetime'];
+    let diff=internal.latestVersion['absolutetime']-mytime;
+    let newversion=(diff>1000);
+    downloadLatestVersion(newversion);
+    
+};
 
-let createIndex=function(obj) {
+// ------------------------------------------------------------------------------
+//
+// Create the Main GUI
+//
+// ------------------------------------------------------------------------------
+
+let createApplicationSelector=function(obj) {
     
     let menu=$("#bismenuparent");
     let container=$("#bisslides");
@@ -304,20 +427,31 @@ let createIndex=function(obj) {
         setTimeout( () => {
             e.preventDefault();
             e.stopPropagation();
-            getLatestVersion();
+            aboutApplication();
         },10);
     });
 
     if (typeof (window.BISELECTRON) === "undefined") {
         $("#othermenu").append($(`<li class="divider"></li>`));
-        let newitem = $(`<li><a href="#">Update Application (Cache)</a></li>`);
+        let newitem0 = $(`<li><a href="#">Remove Application (from Cache)</a></li>`);
+        $("#othermenu").append(newitem0);
+        newitem0.click( (e) => {
+            setTimeout( () => {
+                e.preventDefault();
+                e.stopPropagation();
+                sendCommandToServiceWorker('clearCache');
+            },10);
+        });
+
+        
+        let newitem = $(`<li><a href="#">Install/Update Application Offline (Cache)</a></li>`);
         $("#othermenu").append(newitem);
         
         newitem.click( (e) => {
             setTimeout( () => {
                 e.preventDefault();
                 e.stopPropagation();
-                getLatestVersion('force');
+                installLatestVersion();
             },10);
         });
 
@@ -341,24 +475,14 @@ let createIndex=function(obj) {
 
 };
 
+// ------------------------------------------------------------------------------
+//
+// Create the service worker
+//
+// ------------------------------------------------------------------------------
+var createServiceWorker=function() {
 
-let initialize=function() {
-
-    createIndex(tools.tools);
-    $('.carousel').carousel({   interval : 1000,    wrap : true  });
-    
-    let parent = $("#bisslides");
-    let msg=`These applications are still in 'beta' (development) stage. Use with care.`;
-    let w = $(`<div class="alert alert-warning alert-dismissible" role="alert"  style="position:absolute; top:80px; left:20px; z-index:100">
-          <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${msg}
-          </div>`);
-    parent.append(w);
-    w.alert();
-
-};
-
-var createserviceworker=function() {
-
+    internal.hasServiceWorker=true;
     let scope=window.document.URL;
     console.log('scope=',scope);
     let index=scope.indexOf(".html");
@@ -375,7 +499,7 @@ var createserviceworker=function() {
     
     // register service worker if needed
     navigator.serviceWorker.register(`${scope}bisweb-sw.js`, { scope: scope }).then(function(registration) {
-        serviceWorker = registration.active;
+        internal.serviceWorker = registration.active;
         console.log(`____ bisweb -- service worker registered ${scope}`);
     });
     
@@ -383,24 +507,45 @@ var createserviceworker=function() {
     // service worker ready
     // Find this and add event listener
     navigator.serviceWorker.ready.then(function(registration) {
-        serviceWorker = registration.active;
+        internal.serviceWorker = registration.active;
         navigator.serviceWorker.addEventListener('message', function(event) {
-            receivedMessage(event.data);
+            receivedMessageFromServiceWorker(event.data);
         });
-        getLatestVersion('quiet');
+        idb.get('mode').then( (m) => {
+            if (m===('offline-complete')) {
+                checkForLatestVersion();
+            } 
+        });
     });
 }
 
 
+// ------------------------------------------------------------------------------
+//
+// M a i n  F u n c t i o n
+//
+// ------------------------------------------------------------------------------
+
 window.onload = (() => {
-    initialize();
+
+    createApplicationSelector(tools.tools);
+    $('.carousel').carousel({   interval : 1000,    wrap : true  });
+    
+    let parent = $("#bisslides");
+    let msg=`These applications are still in 'beta' (development) stage. Use with care.`;
+    let w = $(`<div class="alert alert-warning alert-dismissible" role="alert"  style="position:absolute; top:80px; left:20px; z-index:100">
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${msg}
+          </div>`);
+    parent.append(w);
+    w.alert();
+
 
     // Only register if not in electron and not in development mode
-    if (typeof (window.BISELECTRON) === "undefined") {
+    if (!inelectron) {
         if ('serviceWorker' in navigator) {
-
+            
             if (typeof (window.BIS) === "undefined") {
-                createserviceworker();
+                createServiceWorker();
             } else {
                 console.log('---- not creating service worker ... in development mode');
             }

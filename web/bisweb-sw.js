@@ -1,3 +1,10 @@
+const idb=require('idb-keyval');
+
+// idb-store has a key 'mode' with three values
+// online  -- no cache
+// offline -- can download
+// offline-complete -- has downloaded
+
 // --------- First Configuration Info --------------------
 const internal =  {
     cachelist : require('./pwa/pwacache.js'),
@@ -6,20 +13,41 @@ const internal =  {
     updating : false,
     count : 0,
     maxcount : 0,
+    webfirst : true,
 };
+
 
 internal.pathlength=internal.path.length;
 // ------------------- Utility Functions -----------------
 
 let cleanCache=function() {
-    console.log(' ---------------- Clear -------------------------');
     console.log('bisweb-sw: Cleaning cache',internal.name);
-    caches.delete(internal.name);
+    let p=[];
+    internal.webfirst=true;
+    return new Promise( (resolve,reject) => {
+        idb.set('mode','online').then( () => {
+            caches.open(internal.name).then(cache => {
+                cache.keys().then( (keys) => {
+                    console.log('bisweb-sw: Removing',keys.length,'files');
+                    for (let i=0;i<keys.length;i++) {
+                        p.push(cache.delete(keys[i]));
+                    }
+                });
+                Promise.all(p).then( ()=> {
+                    cache.keys().then( (keys) => {
+                        console.log('bisweb-sw: Cache deleted files left=', keys.length);
+                        resolve();
+                    });
+                });
+            });
+        }).catch( (e) => {
+            reject(e);
+        });
+    });
 };
 
 let populateCache=function(msg="Cache Updated") {
 
-    console.log(' ---------------- Populate -------------------------');
     let lst=internal.cachelist['web'].concat(internal.cachelist['cache']);
     console.log(`bisweb-sw: Beginning to  install (cache) ${lst.length} files`);
 
@@ -60,15 +88,12 @@ let populateCache=function(msg="Cache Updated") {
         Promise.all(p).then( () => {
             internal.updating=false;
             console.log('bisweb-sw: Installation (caching) successful');
-            send_message_to_all_clients(msg);
-            self.skipWaiting()
-        });
-        
-        /*return cache.addAll(newlst).then(
-            () => {
+            idb.set('mode','offline-complete').then( () => {
+                internal.webfirst=false;
                 send_message_to_all_clients(msg);
                 self.skipWaiting()
-            });*/
+            });
+        });
     });
 };
 
@@ -93,7 +118,7 @@ let send_message_to_client=function(client, msg){
 let send_message_to_all_clients=function(msg){
     clients.matchAll().then(clients => {
         clients.forEach(client => {
-            send_message_to_client(client, msg).then(m => console.log("SW Received Message: "+m));
+            send_message_to_client(client, msg).then(m => console.log("bisweb-sw: Received Message: "+m));
         })
     })
 };
@@ -106,20 +131,23 @@ let send_message_to_all_clients=function(msg){
 // Message from Client
 // -------------------------
 self.addEventListener('message', (msg) => {
-
-    console.log('bisweb-sw: Received message=',msg.data);
+    
+    console.log('bisweb-sw: Received message=',msg.data, ' webfirst=',internal.webfirst);
     
     try {
         let obj=JSON.parse(msg.data);
         let name=obj.name;
         let data=obj.data;
         console.log(`bisweb-sw: Received ${name}:${data}`);
-        if (name==="updateCache" && internal.updating===false) {
-            internal.updating=true;
-            cleanCache();
-            populateCache('Cache Updated');
-        } else {
-            console.log('bisweb-sw: Already updating cache');
+        if (name==="updateCache") {
+            if (internal.updating===false) {
+                internal.updating=true;
+                populateCache('Cache Updated');
+            } else {
+                console.log('bisweb-sw: Already updating cache');
+            }
+        } else if (name==="clearCache") {
+            cleanCache().then( () => { send_message_to_all_clients(`Cleaned Cache. Disabled offline capabilities`); });
         }
     } catch(e) {
         console.log(`bisweb-sw: Bad Message ${e} received`);
@@ -131,21 +159,33 @@ self.addEventListener('message', (msg) => {
 // Install Event
 // -------------------------
 self.addEventListener('install', e => {
-    internal.updating=true;
-    cleanCache();
-    e.waitUntil( populateCache("Cache Updated -- installed new service worker"));
-        
+
+    internal.webfirst=true;
+    idb.get('mode').then( (m) => {
+        m=m || '';
+        cleanCache().then( () => {
+            internal.updating=false;
+            if (m.indexOf('offline')>=0) {
+                internal.updating=true;
+                idb.set('mode','offline').then( () => { 
+                    populateCache("Cache Updated -- installed new service worker");
+                });
+            } else {
+                idb.set('mode','online');
+            }
+        });
+    });
+    self.skipWaiting()
 });
 
 // -------------------------
 // Activate Event
 // -------------------------
 self.addEventListener('activate',  event => {
+    console.log("bisweb-sw: Service Worker Activated.");
     event.waitUntil(self.clients.claim());
     send_message_to_all_clients(`Activate`);
 });
-
-
 
 // -------------------------
 // The Critical Fetch Event
@@ -153,38 +193,21 @@ self.addEventListener('activate',  event => {
 
 self.addEventListener('fetch', event => {
 
+    let webfirst=internal.webfirst;
 
-
-    // Check for css,js html
-    let webfirst=false;
-
-/*    let x=event.request.url.split('/').pop();
-    if (x.length<2) {
-        webfirst=true;
-    } else {
-        let url=event.request.url;
-        if (url.indexOf(internal.path)===0)
-            url=url.substr(internal.pathlength+1,url.length-internal.pathlength);
-        let index=url.lastIndexOf('?');
-        if (index>0) {
-            url=event.request.url.substr(0,index-1);
-        }
-        if (internal.cachelist['web'].indexOf(url)>=0)
-            webfirst=true;
-        else if (url.indexOf('bisdate.json')>=0)
-            webfirst=true;
-    }*/
-    let url=event.request.url;
-    if (url.indexOf('bisdate.json')>=0)
-        webfirst=true;
-
-
-    if (internal.updating)
-        webfirst=true;
+    if (!webfirst) {
     
+        let url=event.request.url;
+        if (url.indexOf('bisdate.json')>=0)
+            webfirst=true;
+        
+        
+        if (internal.updating)
+            webfirst=true;
+    }
+
+    //    console.log('Requesting',event.request.url,' webfirst=',webfirst);
     if (webfirst) {
-        // Web then Cache
-        //        console.log('bisweb-sw Fetch: requested:'+event.request.url+' webfirst='+webfirst);
         event.respondWith(fetch(event.request).catch( (e) => {
             console.log('bisweb-sw: Tried but no network ... returning cached version',event.request.url);
             return caches.match(event.request);
@@ -205,4 +228,4 @@ self.addEventListener('fetch', event => {
     }
 });
 
-console.log(`BioImage Suite Web Service Worker starting name=${internal.name} path=${internal.path}`);                       
+console.log(`bisweb-sw: BioImage Suite Web Service Worker starting name=${internal.name} path=${internal.path}`);                       
