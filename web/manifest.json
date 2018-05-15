@@ -1,14 +1,15 @@
 {
-  "name": "BioImage Suite Web",
-  "description": "This is the BioImage Suite Web Medical Image Analysis Suite -- see bisweb.yale.edu",
-  "short_name": "bisweb",
-  "theme_color": "#375a7f",
-  "background_color": "#375a7f",
-  "display": "standalone",
-  "scope": "./",
-  "start_url": "index.html",
-  "splash_pages": null,
-  "icons": [
+    "name": "Yale BioImage Suite Web",
+    "description": "This is the BioImage Suite Web Medical Image Analysis Suite -- see bisweb.yale.edu",
+    "short_name": "BioImage Suite Web",
+    "theme_color": "#375a7f",
+    "background_color": "#375a7f",
+    "display": "standalone",
+    "lang" : "English",
+    "orientation" : "any",
+    "start_url": "index.html",
+    "splash_pages": null,
+    "icons": [
     {
       "src": "images/bisweb-32.png",
       "sizes": "32x32",
