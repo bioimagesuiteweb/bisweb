@@ -66,8 +66,9 @@ class DriveModule {
                         }).then(function () {
                             console.log('drive initialized successfully');
                             resolve(self);
-                        }, function () {
-                            reject('drive client failed to initialize');
+                        }, function (e) {
+                            console.log('an error occured', e);
+                            reject('drive client failed to initialize ' + e);
                         });
                     },
                     onerror: () => {

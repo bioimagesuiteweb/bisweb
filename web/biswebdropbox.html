@@ -29,25 +29,6 @@
                     } catch (e) {
                         document.getElementById('workingmessage').innerText = 'An error occured while trying to save your credentials. Please disable private browsing and clear your local storage.';
                     }
-
-
-                    /*biswebstorage.setItem('auth_session_token', access_token, (err) => {
-                        if(err) { alert('An error occured during authentication. Please try again.') }
-                        else {
-                            biswebstorage.setItem('authed_user', user_id, (err) => {
-                                if (err) { alert('An error occured during authentication. Please try again'); }
-                                else {
-                                    //window.close();
-                                    document.getElementById('workingmessage').innerText = 'Process complete, you may now close the window';
-                                    biswebstorage.getItem('auth_session_token', (err, value) => {
-
-                                        console.log('session token: ', value);
-                                    });
-                                }
-                            });
-                        }
-                    });
-                    */
                     
                 }
             </script>
