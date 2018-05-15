@@ -148,8 +148,9 @@ let receivedMessageFromServiceWorker = function(msg) {
                   showAlert(`The application has been automatically updated (as current version is invalid). <a href="./index.html">Reload this webpage to use the new version.</a>`);
                   }*/
     } else if (msg.indexOf('Cleaned')>=0) {
-        showAlert('All offline capabilities have been remove. The application will still happily run if you have a network connection.','info');
-        
+        showAlert('All offline capabilities have been removed. The application will still happily run if you have a network connection.','info');
+    } else if (msg.indexOf('NewSW')>=0 ) {
+        showAlert('All offline capabilities have been removed (due to major update). You may re-cache the  application for offline use using Help|Install.','info');
     } else {
         console.log('other=',msg);
     }
@@ -265,7 +266,7 @@ let downloadLatestVersion=async function(hasnewversion) {
     }  else if (idbmode==='online') {
         m.title.text('You can install this application offline');
         s+=`<p> If you would like to download all files in the browser cache to enable offline mode (recommended), press <EM>Install</EM> below.</p>`;
-        m.addButton('Install','default',fn)
+        m.addButton('Install','success',fn)
     } else {
         m.title.text('This is the latest version (and is already stored offline)');
         s+=dates+`<p> If you would like to reload all files, press <EM>Reinstall</EM> below.</p>`;
@@ -444,7 +445,7 @@ let createApplicationSelector=function(obj) {
         });
 
         
-        let newitem = $(`<li><a href="#">Install/Update Application Offline (Cache)</a></li>`);
+        let newitem = $(`<li><a href="#">Install (Cache) Application for Offline Use</a></li>`);
         $("#othermenu").append(newitem);
         
         newitem.click( (e) => {

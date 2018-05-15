@@ -1,6 +1,6 @@
 module.exports = {
-
-    'web' : [
+    
+    'internal' : [
         'bislib.css',
         'bislib.js',
         'connviewer.css',
@@ -21,9 +21,6 @@ module.exports = {
         'overlayviewer.html',
         'viewer.css',
         'viewer.html',
-    ],
-
-    'cache' : [
         'biswebdropbox.html',
         'bootstrap.min.js',
         'bootstrap_dark_edited.css',
@@ -64,6 +61,8 @@ module.exports = {
         'images/yale_brod_xy.png',
         'jquery.min.js',
         'webcomponents-lite.js',
+    ],
+    external : [ 
         'https://fonts.googleapis.com/css?family=Lato:400,700,400italic',
         'https://fonts.gstatic.com/s/lato/v14/S6u9w4BMUTPHh6UVSwiPGQ.woff2',
         'https://fonts.gstatic.com/s/lato/v14/S6uyw4BMUTPHjx4wXg.woff2',
