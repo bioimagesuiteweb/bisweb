@@ -18,7 +18,7 @@
 /* global window */
 
 const util=require('bis_util');
-const bisweb_image = require('bisweb_image');
+const BisWebImage = require('bisweb_image');
 const bisbruker=require('bis_readbruker');
 const webutil=require('bis_webutil');
 const bisgenericio=require('bis_genericio');
@@ -234,7 +234,7 @@ class ParavisionImportElement extends HTMLElement {
             
             let ext=fname.split('.').pop();
             if (ext==="gz") {
-                const img=new bisweb_image();
+                const img=new BisWebImage();
                 img.load(fname,false)
                     .then(function() {
                         webutil.createAlert('Image loaded from '+img.getDescription());
