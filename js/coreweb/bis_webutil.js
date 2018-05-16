@@ -146,11 +146,20 @@ const internal = {
     templates: null,
     alertcount: 0,
     alerttimeout: 8000,
+    alerttop: 70,
 };
 
 
 const webutil = {
 
+    /** set alert top 
+     * @alias WebUtil.setAlertTop
+     * @param {number} offset -- value in pixels
+     */
+    setAlertTop : function(v) {
+        internal.alerttop=v;
+    },
+    
     /** if this flag is true, then loadelement is simply input type="file", else more complex
      * @alias WebUtil.simpleloadmode
      */
@@ -1200,10 +1209,13 @@ const webutil = {
 			b = 'danger';
 		parent = parent || $('body');
 
-		var w = $('<div class="alert alert-' + b + ' alert-dismissible" role="alert" ' +
-				  '     style="position:absolute; top:70px; left:10px; z-index:' + 100 + internal.alertcount + '">' +
-				  '   <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' + text +
-				  '</div>');
+//	var w = $(`<div class="alert alert-${b} alert-dismissible" role="alert" style="position:absolute; top:${internal.alerttop}px; left:10px; z-index:' + 100 + ${internal.alertcount}  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${text}</div>`);
+
+        let w = $(`<div class="alert alert-${b} alert-dismissible" role="alert"  
+style="position:absolute; top:${internal.alerttop}px; left:10px; z-index:${100+internal.alertcount}">
+ <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${text}
+          </div>`);
+
 		parent.append(w);
 		internal.alertcount += 1;
 		w.alert();
