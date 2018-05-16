@@ -11,8 +11,8 @@ const internal =  {
     name : 'bisweb',
     path : self.location.href.substr(0,self.location.href.lastIndexOf('/')+1),
     updating : false,
-    count : 0,
-    maxcount : 0,
+    count : {},
+    maxcount : {},
     webfirst : true,
 };
 
@@ -69,8 +69,10 @@ let populateCache=function(msg="Cache Updated",mode='internal') {
     internal.webfirst=true;
 
     return caches.open(internal.name).then(cache => {
-        internal.count=0;
-        internal.maxcount=newlst.length;
+
+        internal.count[mode]=0;
+        internal.maxcount[mode]=newlst.length;
+        internal.name[mode]=mode;
         let t= new Date().getTime()
         let p=[];
         
@@ -78,14 +80,16 @@ let populateCache=function(msg="Cache Updated",mode='internal') {
             let url=newlst[i];
             let url2=`${url}?t=${t}`;
             p.push(new Promise( (resolve,reject) => {
+                
                 fetch(url2).then(function(response) {
                     if (!response.ok) {
                         throw new TypeError('bad response status');
                     }
                     cache.put(url, response).then( () => {
-                        internal.count=internal.count+1;
+                        internal.count[mode]=internal.count[mode]+1;
+                        if (mode==='internal')
+                            send_message_to_all_clients(`Updating Cache. Downloaded file ${internal.count[mode]}/${internal.maxcount[mode]}`);
                         resolve();
-                        send_message_to_all_clients(`Updating Cache: Downloaded file ${internal.count}/${internal.maxcount}`);
                     }).catch( (e) => {
                         internal.updating=false;
                         reject(e); });
@@ -93,7 +97,6 @@ let populateCache=function(msg="Cache Updated",mode='internal') {
             }));
         }
         
-
         Promise.all(p).then( () => {
             internal.updating=false;
             if (mode==='internal') {

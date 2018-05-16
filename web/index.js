@@ -43,6 +43,8 @@ const internal = {
     alertDiv : null,
     serviceWorker : null,
     latestVersion : null,
+    scope : '',
+    disableServiceWorker : false,
 }
 
 // ----------------------------------- GUI Utility Functions -------------------------------------
@@ -145,10 +147,16 @@ let receivedMessageFromServiceWorker = function(msg) {
         /*        idb.get('mode').then( (mode) => {
                   console.log('Mode=',mode);
                   if (mode!=='online') {
-                  showAlert(`The application has been automatically updated (as current version is invalid). <a href="./index.html">Reload this webpage to use the new version.</a>`);
+                  showAlert(`The application has been automatically updated (as current version is invalid). <a href="./index.html">Reload this page to use the new version.</a>`);
                   }*/
     } else if (msg.indexOf('Cleaned')>=0) {
-        showAlert('All offline capabilities have been removed. The application will still happily run if you have a network connection.','info');
+        showAlert('All offline capabilities have been removed. The application will still happily run if you have a network connection. <a href="./index.html">Please restart this page to complete the process.</a>','info');
+        navigator.serviceWorker.register(`${internal.scope}bisweb-sw.js`, { scope: internal.scope }).then(function(registration) {
+            registration.unregister().then( (m) => {
+                console.log('service worker unregistered for good measure ',m);
+                internal.disableServiceWorker=true;
+            });
+        });
     } else if (msg.indexOf('NewSW')>=0 ) {
         showAlert('All offline capabilities have been removed (due to major update). You may re-cache the  application for offline use using Help|Install.','info');
     } else {
@@ -166,7 +174,7 @@ let sendCommandToServiceWorker=function(cmd='updateCache') {
                                                             data : 'userInput'
                                                            }));
     } catch(e) {
-        showAlert('We must be in the process of updating','warning');
+        showAlert('You got the application mid-update. Please <a href="./index.html">reload this webpage and try again.</a>','warning');
         navigator.serviceWorker.ready.then(function(registration) {
             internal.serviceWorker = registration.active;
             navigator.serviceWorker.addEventListener('message', function(event) {
@@ -267,10 +275,12 @@ let downloadLatestVersion=async function(hasnewversion) {
         m.title.text('You can install this application offline');
         s+=`<p> If you would like to download all files in the browser cache to enable offline mode (recommended), press <EM>Install</EM> below.</p>`;
         m.addButton('Install','success',fn)
-    } else {
+    } else if (internal.disableServiceWorker==false) {
         m.title.text('This is the latest version (and is already stored offline)');
         s+=dates+`<p> If you would like to reload all files, press <EM>Reinstall</EM> below.</p>`;
         m.addButton('Reinstall','info',fn)
+    } else {
+        s+=dates;
     }
     m.body.append($(s));
     m.addButton('Close','default');
@@ -303,8 +313,10 @@ let aboutApplication=async function() {
 
     let mode= await getMode();
     let dosimple=true;
-    
-    if (mode!=='online') {
+
+    if (internal.disableServiceWorker===true) {
+        dosimple=true;
+    } else if (mode!=='online') {
         let m=await doesNewVersionExist();
         if (m)
             dosimple=false;
@@ -333,9 +345,14 @@ let aboutApplication=async function() {
 // ---------------------------------------------
 let installLatestVersion=async function() {
 
+    if (internal.disableServiceWorker===true) {
+        showAlert('Please reload <a href="./index.html">this page</a> and try again.','info');
+        return;
+    }
+    
     let latest=await getLatestVersion();
     if (latest<0) {
-        showAlert(`We can not connect to the server right now. Please try again later.`,'danger');
+        showAlert(`We can not connect to the server right now. Please try again later.`,'info');
         return false;
     } 
     
@@ -497,6 +514,8 @@ var createServiceWorker=function() {
             scope=scope.substr(0,index+1);
         }
     }
+
+    internal.scope=scope;
     
     // register service worker if needed
     navigator.serviceWorker.register(`${scope}bisweb-sw.js`, { scope: scope }).then(function(registration) {
