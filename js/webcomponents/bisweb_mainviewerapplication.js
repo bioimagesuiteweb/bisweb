@@ -20,7 +20,7 @@
 "use strict";
 
 const bisweb_apputil = require("bisweb_apputilities.js");
-const bisweb_image = require('bisweb_image');
+const BisWebImage = require('bisweb_image');
 const webutil = require('bis_webutil');
 const FastClick = require('fastclick');
 const userPreferences = require('bisweb_userpreferences.js');
@@ -84,6 +84,66 @@ class ViewerApplicationElement extends HTMLElement {
 
     }
 
+
+    // ---------------------------------------------------------------------------
+    // I/O Code
+    // ---------------------------------------------------------------------------
+    loadImage(fname, viewer = 0) {
+        const self=this;
+        
+        const img = new BisWebImage();
+        return new Promise( (resolve,reject) => { 
+            img.load(fname)
+                .then(function () {
+                    webutil.createAlert('Image loaded from ' + img.getDescription());
+                    self.VIEWERS[viewer].setimage(img);
+                    resolve();
+                }).catch( (e) => { reject(e); });
+        });
+    }
+
+    loadOverlay(fname, viewer=0) {
+
+        const self=this;
+        return new Promise( (resolve,reject) => {
+            let img = new BisWebImage();
+            img.load(fname)
+                .then(function () {
+                    self.VIEWERS[viewer].setobjectmap(img, false);
+                    resolve();
+                }).catch((e) => {
+                    webutil.createAlert(e, true);
+                    console.log(e.stack);
+                    reject(e);
+                });
+        });
+    }
+
+    
+    // Save Image
+    // --------------------------------------------------------------------------------
+    /** Save image from viewer to a file */
+    saveImage(fname, viewerno = 0) {
+
+        const self=this;
+        let index = viewerno + 1;
+        let img = self.VIEWERS[viewerno].getimage();
+        let name = "image " + index;
+        bisweb_apputil.saveImage(img, fname, name);
+    }
+
+    /** Save image from viewer to a file */
+    saveOverlay(fname, viewerno = 0) {
+
+        let self=this;
+        console.log('In Save Objectmap',viewerno);
+        let index = viewerno + 1;
+        let img = self.VIEWERS[viewerno].getobjectmap();
+        let name = "objectmap " + index;
+        bisweb_apputil.saveImage(img, fname, name);
+    }
+
+    
     // ---------------------------------------------------------------------------
     // Create the default File and Overlay Menus
     //  ---------------------------------------------------------------------------
@@ -96,68 +156,9 @@ class ViewerApplicationElement extends HTMLElement {
         // --------------------------------------------------------------------------
         // Callbacks for load image
         // -----------------------------------------------------------------------
-        let loadimage = function (fname, viewer = 0) {
-            const img = new bisweb_image();
-            return new Promise( (resolve,reject) => { 
-                img.load(fname)
-                    .then(function () {
-                        webutil.createAlert('Image loaded from ' + img.getDescription());
-                        self.VIEWERS[viewer].setimage(img);
-                        resolve();
-                    }).catch( (e) => { reject(e); });
-            });
-            //.catch((e) => { webutil.createAlert(e, true); });
-        };
-        // --------------------------------------------------------------------------------
-        // Save Image
-        // --------------------------------------------------------------------------------
-        /** Save image from viewer to a file */
-        let saveimage = function (fname, viewerno = 0) {
-
-            let index = viewerno + 1;
-            let img = self.VIEWERS[viewerno].getimage();
-            let name = "image " + index;
-            bisweb_apputil.saveImage(img, fname, name);
-        };
-
-        /** Save image from viewer to a file */
-        let saveobjectmap = function (fname, viewerno = 0) {
-
-            console.log('In Save Objectmap',viewerno);
-            let index = viewerno + 1;
-            let img = self.VIEWERS[viewerno].getobjectmap();
-            let name = "objectmap " + index;
-            bisweb_apputil.saveImage(img, fname, name);
-        };
-
         /** Callback to load the overlay image -- this is called from bisweb_painttol (if it exists)
-         * @param {bisweb_image} vol - the objectmap to load
+         * @param {BisWebImage} vol - the objectmap to load
          */
-        let painttool_cb_objectmapread = function (vol, plainmode, alert) {
-            if (alert !== false)
-                webutil.createAlert('Objectmap loaded from ' + vol.getDescription());
-            plainmode = plainmode || false;
-            self.VIEWERS[paintviewerno].setobjectmap(vol, plainmode);
-        };
-
-        let loadobjectmap = function (fname, viewer, loadobj = null) {
-
-            
-            console.log('In Load Objectmap',fname,viewer);
-            return new Promise( (resolve,reject) => {
-                let img = new bisweb_image();
-                img.load(fname)
-                    .then(function () {
-                        loadobj(img, viewer);
-                        resolve();
-                    }).catch((e) => {
-                        webutil.createAlert(e, true);
-                        reject();
-                    });
-            });
-        };
-
-        let exportobj=null;
         
         // -----------------------------------------------------------------------
         // Menus
@@ -168,7 +169,9 @@ class ViewerApplicationElement extends HTMLElement {
         let fmenuname = "Image", objmenuname = 'Overlay';
 
 
-
+        // Essentially bind self here
+        let load_image=function(f,v) { return self.loadImage(f,v); };        
+        let load_objectmap=function(f,v) { return self.loadOverlay(f,v); };
 
         //  ---------------------------------------------------------------------------
         // Internal Function to eliminate having a loop variable inside callbacks
@@ -193,12 +196,12 @@ class ViewerApplicationElement extends HTMLElement {
             
             webutil.createMenuItem(fmenu[viewerno], 'Load Image',
                                    function (f) {
-                                       loadimage(f, viewerno);
+                                       self.loadImage(f, viewerno);
                                    }, 'NII',
                                    { title: 'Load image', save: false });
 
             webutil.createMenuItem(fmenu[viewerno], 'Save Image',
-                                   function (f) { saveimage(f, viewerno); },
+                                   function (f) { self.saveImage(f, viewerno); },
                                    '',
                                    {
                                        title: 'Save Image',
@@ -207,10 +210,13 @@ class ViewerApplicationElement extends HTMLElement {
 
             
             webutil.createMenuItem(fmenu[viewerno], ''); // separator
+
+
+
             if (!webutil.inElectronApp()) {
-                bisweb_apputil.createCloudLoadMenuItems(fmenu[viewerno], 'Image', loadimage, viewerno);
+                bisweb_apputil.createCloudLoadMenuItems(fmenu[viewerno], 'Image', load_image, viewerno);
             }
-            bisweb_apputil.createMNIImageLoadMenuEntries(fmenu[viewerno], loadimage, viewerno);
+            bisweb_apputil.createMNIImageLoadMenuEntries(fmenu[viewerno], load_image, viewerno);
 
 
             // ----------------------------------------------------------
@@ -218,14 +224,12 @@ class ViewerApplicationElement extends HTMLElement {
             // ----------------------------------------------------------
             objmenu[viewerno] = webutil.createTopMenuBarMenu(objmenuname, menubar);
 
-            let painttool = null, loaded_obj = null;
+            let painttool = null;
 
             if (painttoolid !== null && viewerno === paintviewerno) {
                 painttool = document.querySelector(painttoolid);
-                painttool.setobjectmapcallback(painttool_cb_objectmapread);
+                
                 painttool.createMenu(objmenu[viewerno]);
-
-                loaded_obj = function (f) { painttool.setobjectmapimage(f); };
 
                 const graphtool = document.createElement('bisweb-graphelement');
                 webutil.createMenuItem(objmenu[viewerno], 'VOI Analysis',
@@ -233,36 +237,31 @@ class ViewerApplicationElement extends HTMLElement {
                                            graphtool.parsePaintedAreaAverageTimeSeries(self.VIEWERS[paintviewerno]);
                                        });
 
-                exportobj=function(f) {
-                    painttool.loadobjectmap(f);
-                };
             } else {
-                loaded_obj = function (vol,v) { self.VIEWERS[v].setobjectmap(vol, false); };
+                
                 webutil.createMenuItem(objmenu[viewerno], 'Load Overlay',
                                        function (f) {
-                                           loadobjectmap(f, viewerno, loaded_obj);
+                                           self.loadOverlay(f, viewerno);
                                        }, 'NII',
                                        { title: 'Load overlay', save: false });
                 
                 webutil.createMenuItem(objmenu[viewerno], 'Save Overlay',
-                                   function (f) { saveobjectmap(f, viewerno); },
-                                   '',
-                                   {
-                                       title: 'Save Overlay',
-                                       save: true, filters: "NII",
-                                   });
+                                       function (f) { self.saveOverlay(f, viewerno); },
+                                       '',
+                                       {
+                                           title: 'Save Overlay',
+                                           save: true, filters: "NII",
+                                       });
 
                 webutil.createMenuItem(objmenu[viewerno], ''); // separator
 
-                let my_load_obj = function (f, v) {
-                    return loadobjectmap(f, v, loaded_obj);
-                };
-
+                
                 if (!webutil.inElectronApp()) {
-                    bisweb_apputil.createCloudLoadMenuItems(objmenu[viewerno], 'Overlay', my_load_obj, viewerno);
+
+                    bisweb_apputil.createCloudLoadMenuItems(objmenu[viewerno], 'Overlay',
+                                                            load_objectmap,
+                                                            viewerno);
                 }
-                if (viewerno===0)
-                    exportobj=my_load_obj;
 
                 webutil.createMenuItem(objmenu[viewerno], 'Clear Overlay',
                                        function () {
@@ -270,7 +269,8 @@ class ViewerApplicationElement extends HTMLElement {
                                        });
             }
             webutil.createMenuItem(objmenu[viewerno], ''); // separator
-            bisweb_apputil.createBroadmannAtlasLoadMenuEntries(objmenu[viewerno], loadobjectmap, viewerno, loaded_obj);
+
+            bisweb_apputil.createBroadmannAtlasLoadMenuEntries(objmenu[viewerno], load_objectmap, viewerno);
         };
 
         // ---------------------------------------------------------------------
@@ -281,10 +281,6 @@ class ViewerApplicationElement extends HTMLElement {
             internal_create_menu(viewerno);
         }
 
-        return {
-            loadimage : loadimage,
-            loadobjectmap : exportobj,
-        };
     }
 
     // ---------------------------------------------------------------------
@@ -379,7 +375,7 @@ class ViewerApplicationElement extends HTMLElement {
     // create and attach drag and drop controller
     // ---------------------------------------------------------------------------
 
-    attachDragAndDrop(loadimage) {
+    attachDragAndDrop() {
 
         const self=this;
         
@@ -391,7 +387,7 @@ class ViewerApplicationElement extends HTMLElement {
                 else
                     count = 1;
             }
-            loadimage(files[0], count, false);
+            self.loadImage(files[0], count, false);
         };
         webutil.createDragAndCropController(HandleFiles);
     }
@@ -465,7 +461,7 @@ class ViewerApplicationElement extends HTMLElement {
      */
     storeState(filename=null) {
         if (filename===null) {
-            this.saveState=this.getElementState();
+            this.saveState=this.getElementState(true);
             return;
         }
     }
@@ -493,21 +489,22 @@ class ViewerApplicationElement extends HTMLElement {
 
     //  ---------------------------------------------------------------------------
     
-    parseQueryParameters(loadimage,loadobjectmap) {
+    parseQueryParameters() {
 
         // Here we check if there is any info we need on the query string
         let load=webutil.getQueryParameter('load') || '';
         if (load.length<2)
             return 0;
+        const self=this;
 
         let load_viewer=function(vr,imagenames,overlaynames,baseurl) {
 
             if (imagenames[vr].length>0) {
                 let imagename=baseurl+imagenames[vr];
-                loadimage(imagename,vr).then( () => {
-                    if (overlaynames[vr].length>0 && loadobjectmap!==null) {
+                self.loadImage(imagename,vr).then( () => {
+                    if (overlaynames[vr].length>0) {
                         let overlayname=baseurl+overlaynames[vr];
-                        loadobjectmap(overlayname,vr);
+                        self.loadOverlay(overlayname,vr);
                     }
                 }).catch( (e) => {
                     console.log(e, e.stack);
@@ -582,9 +579,7 @@ class ViewerApplicationElement extends HTMLElement {
         // ----------------------------------------------------------
         // Create the File and Overlay Menus
         // ----------------------------------------------------------
-        const loadfuncts=this.createFileAndOverlayMenus(menubar,painttoolid);
-        const loadimage=loadfuncts.loadimage;
-        const loadobjectmap=loadfuncts.loadobjectmap;
+        this.createFileAndOverlayMenus(menubar,painttoolid);
 
         // ----------------------------------------------------------
         // Module Manager
@@ -611,7 +606,7 @@ class ViewerApplicationElement extends HTMLElement {
         // Electron Arguments
         // ----------------------------------------------------------
         if (webutil.inElectronApp() && modulemanager === null) {
-            this.createElectronArgumentCallbacK(loadimage);
+            this.createElectronArgumentCallbacK(function(f,v) { self.loadimage(f,v);});
         }
 
         // ----------------------------------------------------------
@@ -622,7 +617,7 @@ class ViewerApplicationElement extends HTMLElement {
         // ----------------------------------------------------------
         // Drag and Drop
         // ----------------------------------------------------------
-        this.attachDragAndDrop(loadimage);
+        this.attachDragAndDrop();
 
         // ----------------------------------------------------------
         // Console
@@ -645,7 +640,7 @@ class ViewerApplicationElement extends HTMLElement {
                         if (typeof window.BIS !=='undefined') {
                             imagepath=window.BIS.imagepath;
                         }
-                        loadimage(`${imagepath}images/MNI_T1_2mm_stripped_ras.nii.gz`, 0);
+                        self.loadImage(`${imagepath}images/MNI_T1_2mm_stripped_ras.nii.gz`, 0);
                     }
                 });
             }
@@ -657,8 +652,8 @@ class ViewerApplicationElement extends HTMLElement {
                                        if (typeof window.BIS !=='undefined') {
                                            imagepath=window.BIS.imagepath;
                                        }
-                                       loadimage(`${imagepath}images/sampleanat.nii.gz`).then( () => { 
-                                           loadobjectmap(`${imagepath}images/samplefunc.nii.gz`);
+                                       self.loadImage(`${imagepath}images/sampleanat.nii.gz`).then( () => { 
+                                           self.loadOverlay(`${imagepath}images/samplefunc.nii.gz`);
                                        });
                                    });
         }
@@ -677,7 +672,7 @@ class ViewerApplicationElement extends HTMLElement {
         document.dispatchEvent(mainViewerDoneEvent);
 
         webutil.runAfterAllLoaded( () => {
-            this.parseQueryParameters(loadimage,loadobjectmap);
+            this.parseQueryParameters();
         });
 
     }
