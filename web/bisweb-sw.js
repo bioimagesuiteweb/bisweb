@@ -243,11 +243,11 @@ self.addEventListener('fetch', event => {
             if (response) {
                 return response;
             }
-            return fetch(event.request).then( (response) => {
+            return fetch(event.request);/*.then( (response) => {
                 caches.open(internal.name).then( (cache) => { 
                     cache.put(event.request, response);
                 });
-            });
+                }*/
         }).catch( (e) => {
             console.log('bisweb-sw: Cache fetch failed; returning online version for', event.request.url,e);
         })
