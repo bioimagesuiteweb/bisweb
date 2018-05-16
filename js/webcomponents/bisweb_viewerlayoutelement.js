@@ -273,7 +273,8 @@ class ViewerLayoutElement extends HTMLElement {
         
         if (this.defaulttext === "") {
             this.context.fillText('Load (or Drag) an Image (.nii.gz or .nii)',100,100);
-            this.context.fillText('and it will appear here!',120,180);
+            this.context.fillText(' or an application viewer file (.biswebstate)',100,180);
+            this.context.fillText('and it will appear here!',120,260);
         } else {
             let ch=this.context.canvas.height;
             let cw=this.context.canvas.width;
