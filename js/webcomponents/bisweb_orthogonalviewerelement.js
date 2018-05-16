@@ -93,6 +93,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         this.internal.overlayslices=[ null,null,null,null ];
         this.internal.moviefolder=null;
         this.internal.displaymodes=null;
+        this.setObjectMapFunction=null;
     }
     
     /** get the coordinates of the overlay given current image coordinates.
@@ -706,6 +707,14 @@ class OrthogonalViewerElement extends BaseViewerElement {
      * @param {colormapmode} colormap type - "Overlay","Overlay2","Red","Green","Blue" 
      */
     setobjectmap(ovolume,plainmode,colormapmode,doupdate=true) {
+        if (this.setObjectMapFunction===null)
+            this.setobjectmap_internal(ovolume,plainmode,colormapmode,doupdate);
+        else
+            this.setObjectMapFunction(ovolume,plainmode,colormapmode,doupdate);
+    }
+
+    /** Same as above but allows rerouting */
+    setobjectmap_internal(ovolume,plainmode,colormapmode,doupdate=true) {
 
         colormapmode=colormapmode || "Auto";
 
