@@ -110,16 +110,16 @@ module.exports = {
                                });
     },
     
-    createBroadmannAtlasLoadMenuEntries : function(fmenu,callback,viewerno=0,second_callback=null) {
+    createBroadmannAtlasLoadMenuEntries : function(fmenu,callback,viewerno=0) {
 
         webutil.createMenuItem(fmenu, 'Load Yale Brodmann Atlas (1mm)',
                                function () {
-                                   callback(`${imagepath}images/yale_broadmann_ras.nii.gz`, viewerno, second_callback);
+                                   callback(`${imagepath}images/yale_broadmann_ras.nii.gz`, viewerno);
                                });
         
         webutil.createMenuItem(fmenu, 'Load Yale Brodmann Atlas (2mm)',
                                function () {
-                                   callback(`${imagepath}images/yale_broadmann_2mm_ras.nii.gz`, viewerno, second_callback);
+                                   callback(`${imagepath}images/yale_broadmann_2mm_ras.nii.gz`, viewerno);
                                });
 
     },
