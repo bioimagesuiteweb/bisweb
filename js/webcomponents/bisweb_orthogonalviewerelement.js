@@ -92,7 +92,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         this.internal.slices=[ null,null,null,null ];
         this.internal.overlayslices=[ null,null,null,null ];
         this.internal.moviefolder=null;
-        
+        this.internal.displaymodes=null;
     }
     
     /** get the coordinates of the overlay given current image coordinates.
@@ -801,7 +801,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
      * @param {number} plane - 0,1,2 to signify whether click was on YZ,XZ or XY image plane (-1,3 mean 3D click)
      */
     setcoordinates(coords,plane) {
-        
+
         var c = coords || [ this.internal.slicecoord[0], this.internal.slicecoord[1], this.internal.slicecoord[2],this.internal.slicecoord[3] ];
         for (var i=0;i<=2;i++)
             c[i]=c[i]*this.internal.imagespa[i];
@@ -878,7 +878,6 @@ class OrthogonalViewerElement extends BaseViewerElement {
         let dpname = [ 'Slices', 'Sagittal', 'Coronal', 'Axial' ];//, '3D Only','3D On Top' ];
         let data = this.internal.datgui.data;
         
-        data.this=this;
         data.displaymode = dpname[0];
         if (this.internal.imagedim[2]<2) {
             this.internal.rendermode=3;
@@ -890,7 +889,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         data.ycoord = this.internal.slicecoord[1];
         data.zcoord = this.internal.slicecoord[2];
         data.tcoord = this.internal.slicecoord[3] || 0;
-
+        
         let creatingnew=false;
         let createmovie = false;
 
@@ -931,6 +930,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 }
             }
             let dmode=this.internal.datgui.coords.add(data,'displaymode', dpname).name("Mode");
+            this.internal.displaymodes=dpname;
+
             
             dmode.onChange(function(val) {
                 let ind=dpname.indexOf(val);
@@ -999,7 +1000,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
         let bbar=$("<div></div>");
         bbar.css({'margin': '10px'});
         base_widget.append(bbar);
-        
+
+
         let s="Reset Slices";
         if (this.internal.simplemode) {
             s="Reset 2D/3D Views";
@@ -1039,6 +1041,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                                css : { 'margin-left' : '8px' },
                                position : "left",
                                parent : bbar }).click( function() { self.viewerInformation();});
+
         bbar.tooltip();
     } 
     
@@ -1100,6 +1103,68 @@ class OrthogonalViewerElement extends BaseViewerElement {
     connectedCallback() {
         super.connectedCallbackBase();
     }
+
+    
+    /** Get State as Object 
+        @returns {object} -- the state of the element as a dictionary*/
+    getElementState(storeImages=false) {
+
+        let obj=super.getElementState(storeImages);
+        obj.data=JSON.parse( JSON.stringify( this.internal.datgui.data ) );
+        return obj;
+        
+    }
+
+    /** Set the element state from a dictionary object 
+        @param {object} state -- the state of the element */
+    setElementState(dt=null) {
+
+        if (dt===null)
+            return;
+
+        super.setElementState(dt);
+
+        let sanedata=JSON.parse(JSON.stringify(this.internal.datgui.data));
+        for (let attr in dt.data) {
+            if (sanedata.hasOwnProperty(attr)) {
+                sanedata[attr] = dt.data[attr];
+            } 
+        }
+
+
+        // The middle -- set the parameters
+        try {
+            let ind=this.internal.displaymodes.indexOf(sanedata['displaymode']);
+            this.setrendermode(ind);
+            
+            
+            this.internal.showdecorations=sanedata['decorations'];
+            this.internal.lockcursor=sanedata['lockcustor'];
+            this.internal.datgui.data.decorations=this.internal.showdecorations;
+            this.internal.datgui.data.lockcursor=this.internal.lockcursor=sanedata['lockcustor'];
+            
+            
+            
+            this.setcoordinates([ parseInt(sanedata['xcoord']),
+                                  parseInt(sanedata['ycoord']),
+                                  parseInt(sanedata['zcoord']),
+                                  parseInt(sanedata['tcoord'])]);
+            
+        } catch(e) {
+            console.log(e.stack,e);
+        }
+        
+        // The end update the controllers
+        setTimeout( () => {
+            let gui=this.internal.datgui.coords;
+            if (gui!==null) {
+                for (let ia=0;ia<gui.__controllers.length;ia++) {
+                    gui.__controllers[ia].updateDisplay();
+                }
+            }
+        },100);
+    }
+    
 }
 
 webutil.defineElement('bisweb-orthogonalviewer', OrthogonalViewerElement);

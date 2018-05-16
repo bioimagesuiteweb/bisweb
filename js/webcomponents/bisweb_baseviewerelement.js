@@ -96,7 +96,9 @@ class BaseViewerElement extends HTMLElement {
         this.slave_viewer=null;
         this.master_viewer=null;
         this.cleararea=[ 0.0,1.0];
-
+        // save state stuff
+        this.internal.saveState=null;
+        this.internal.viewerleft=null;
     }
 
 
@@ -178,7 +180,7 @@ class BaseViewerElement extends HTMLElement {
         data.playing=false;
 
         moviefolder.add(data,'rate',1,40).name("Frames/s");
-
+        
         this.internal.play_movie_controller=moviefolder.add(data, 'playing').name("Play Movie");
 
         this.internal.play_movie_controller.onChange( (val) => {
@@ -593,7 +595,7 @@ class BaseViewerElement extends HTMLElement {
             return;
         
         if (this.internal.cmapcontroller!==null && this.internal.volume!==null) {
-            this.internal.cmapcontroller.copyparameters(other);
+            this.internal.cmapcontroller.setElementState(other.getElementState());
             this.updatetransferfunctions(input);
         }
     }
@@ -807,10 +809,12 @@ class BaseViewerElement extends HTMLElement {
     }
 
     setDualViewerMode(left=0.5) {
-        
+
         if (this.is_slave_mode)
             return;
 
+        this.internal.viewerleft=left;
+        
         if (left>0.9) {
             this.setViewerMode('right',0.0);
             this.master_viewer.setViewerMode('full',1.0);
@@ -843,8 +847,10 @@ class BaseViewerElement extends HTMLElement {
             }
             this.cleararea=[ shift,size];
         }
+
         return mode;
     }
+
 
     /** info box */
     viewerInformation() {
@@ -870,6 +876,53 @@ class BaseViewerElement extends HTMLElement {
             title: 'Viewer Information',
             message: output,
         });
+    }
+
+
+    /** Get State as Object 
+        @returns {object} -- the state of the element as a dictionary*/
+    getElementState(storeImages=false) {
+
+        let obj= { };
+        if (this.internal.cmapcontroller)
+            obj['colormap']=this.internal.cmapcontroller.getElementState();
+        if (this.internal.viewerleft)
+            obj['viewerleft'] = this.internal.viewerleft;
+
+
+        if (storeImages)
+            console.log('We will serialize the images here');
+        
+        return obj;
+    }
+
+    /** Set the element state from a dictionary object 
+        @param {object} state -- the state of the element */
+    setElementState(dt=null) {
+        if (dt===null)
+            return;
+
+        if (dt['viewerleft'])
+            this.internal.viewerleft= dt['viewerleft'];
+        
+        if (this.internal.cmapcontroller) {
+            this.internal.cmapcontroller.setElementState(dt['colormap']);
+            this.internal.cmapcontroller.updateTransferFunctions(true);
+        }
+
+        return;
+    }
+
+    /** store State in this.internal.saveState */
+    storeState() {
+        this.internal.saveState=this.getElementState();
+    }
+
+    /** restore State from this.internal.saveState */
+    restoreState() {
+        if (this.internal.saveState) {
+            this.setElementState(this.internal.saveState);
+        }
     }
 
 }

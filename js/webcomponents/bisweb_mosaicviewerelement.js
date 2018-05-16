@@ -72,6 +72,8 @@ class MosaicViewerElement extends BaseViewerElement {
         this.internal.ismosaic=true;
         this.internal.lastzoom=null;
         this.internal.slices=[null];
+        this.internal.displaymodes=null;
+        this.internal.corefolder=null;
     }
 
     // ------------------------------------------------------------------------------------
@@ -398,6 +400,11 @@ class MosaicViewerElement extends BaseViewerElement {
                 this.internal.subviewers[index].controls.reset();
             }
         }
+
+        // GUI Update
+        let data = this.internal.datgui.data;
+        data.numrows=this.internal.numrows;
+        data.numcols=this.internal.numcols;
         
         this.updatescene();
     }
@@ -680,10 +687,16 @@ class MosaicViewerElement extends BaseViewerElement {
         beginslice= Math.floor(beginslice || 0);
         increment = Math.floor(increment || 1);
         frame = Math.floor(frame || 0);
-        
         this.internal.firstslice=util.range(beginslice,0,this.internal.imagedim[this.internal.plane]-1);
         this.internal.increment=util.range(increment,-10,10);
         this.internal.frame= frame;
+
+        // GUI Update
+        let data = this.internal.datgui.data;
+        data.first=this.internal.firstslice;
+        data.increment=this.internal.increment;
+        data.tcoord=this.internal.frame;
+        
         this.updatescene();
     }
 
@@ -737,7 +750,6 @@ class MosaicViewerElement extends BaseViewerElement {
         }
         
         var data = this.internal.datgui.data;
-        data.this=this;
         data.displaymode = dpname[this.internal.plane];
         data.first = this.internal.firstslice;
         data.numrows = this.internal.numrows;
@@ -745,19 +757,21 @@ class MosaicViewerElement extends BaseViewerElement {
         data.increment = this.internal.increment;
         data.tcoord = this.internal.frame;
         data.decorations = true;
+
+        this.internal.displaymodes=dpname;
         
         var gui = new dat.GUI({autoPlace: false, width:this.internal.domextra});
         base_widget.append(gui.domElement);
         
         
         var f1 = gui.addFolder('Core');
+        this.internal.corefolder=f1;
         var dmode=f1.add(data,'displaymode',dpname).name("Plane");
         dmode.onChange(function(val) {
             var ind=dpname.indexOf(val);
             self.setimageplane(ind,false);
         });
-        
-        
+
         var vpchange = function() {
             self.updateviewports(data.numrows,data.numcols);
         };
@@ -776,11 +790,11 @@ class MosaicViewerElement extends BaseViewerElement {
         var ycoord=f1.add(data,'increment',-10,10).name("Increment").step(1);
         xcoord.onChange(coordchange);
         ycoord.onChange(coordchange);
-        
+
         if (this.internal.imagedim[3]>1) {
             this.internal.framecontroller=f1.add(data,'tcoord',0,this.internal.imagedim[3]-1).name("Frame");
             this.internal.framecontroller.onChange(coordchange);
-            moviefolder = gui.addFolder('Movie');    
+            moviefolder = gui.addFolder('Movie');
         }
 
         data.decorations=self.internal.showdecorations;
@@ -838,6 +852,69 @@ class MosaicViewerElement extends BaseViewerElement {
 
     /** dummy function */
     updatemousecoordinates() { }
+
+        /** Get State as Object 
+        @returns {object} -- the state of the element as a dictionary*/
+    getElementState(storeImages=false) {
+        
+        let obj=super.getElementState(storeImages);
+        obj.data=JSON.parse( JSON.stringify( this.internal.datgui.data ) );
+        return obj;
+        
+    }
+
+    /** Set the element state from a dictionary object 
+        @param {object} state -- the state of the element */
+    setElementState(dt=null) {
+
+        if (dt===null)
+            return;
+
+        super.setElementState(dt);
+
+        let sanedata=JSON.parse(JSON.stringify(this.internal.datgui.data));
+        for (let attr in dt.data) {
+            if (sanedata.hasOwnProperty(attr)) {
+                sanedata[attr] = dt.data[attr];
+            } 
+        }
+
+
+                    
+        // The middle -- set the parameters
+        try {
+            let ind=this.internal.displaymodes.indexOf(sanedata['displaymode']);
+            this.setimageplane(ind,false);
+            
+            
+            this.internal.showdecorations=sanedata['decorations'];
+            this.internal.datgui.data.decorations=this.internal.showdecorations;
+            
+            this.updateviewports(parseInt(sanedata['numrows']),
+                                 parseInt(sanedata['numcols']));
+            
+            this.setslices( parseInt(sanedata['first']),
+                            parseInt(sanedata['increment']),
+                            parseInt(sanedata['tcoord']));
+
+
+            
+            
+        } catch(e) {
+            console.log(e.stack,e);
+        }
+        
+        // The end update the controllers
+        setTimeout( () => {
+            let gui=this.internal.corefolder || null;
+            if (gui!==null) {
+                for (let ia=0;ia<gui.__controllers.length;ia++) {
+                    gui.__controllers[ia].updateDisplay();
+                }
+            }
+        },100);
+    }
+
 }
 
 

@@ -54,8 +54,9 @@ class ViewerApplicationElement extends HTMLElement {
     constructor() {
         super();
         this.syncmode = false;
-        this.viewers=[];
+        this.VIEWERS=[];
         this.num_independent_viewers = 0;
+        this.saveState=null;
     }
 
 
@@ -428,6 +429,69 @@ class ViewerApplicationElement extends HTMLElement {
     }
 
     //  ---------------------------------------------------------------------------
+
+    /** Get State as Object 
+        @returns {object} -- the state of the element as a dictionary*/
+    getElementState(storeImages=false) {
+
+        let obj = {};
+        for (let i=0;i<this.VIEWERS.length;i++) {
+            let name=`viewer${i+1}`;
+            obj[name]=this.VIEWERS[i].getElementState(storeImages);
+        }
+        return obj;
+    }
+        
+    /** Set the element state from a dictionary object 
+        @param {object} state -- the state of the element */
+    setElementState(dt=null) {
+
+        if (dt===null)
+            return;
+        
+        for (let i=0;i<this.VIEWERS.length;i++) {
+            let name=`viewer${i+1}`;
+            let elem=dt[name] || null;
+            this.VIEWERS[i].setElementState(elem);
+        }
+        if (this.num_independent_viewers > 1) {
+            this.VIEWERS[1].setDualViewerMode(this.VIEWERS[1].internal.viewerleft);
+        }
+    }
+
+    
+    /** store State in this.saveState , unless filename is not null, in which case save
+     * @param {String} filename - if set then this goes to a file
+     */
+    storeState(filename=null) {
+        if (filename===null) {
+            this.saveState=this.getElementState();
+            return;
+        }
+    }
+
+    /** restore State from this.internal.saveState unless obj is not null
+     * @param {Object} obj - if set then restore from this else from this.saveState
+     */
+    restoreState(obj=null) {
+
+        let inp=obj || this.saveState;
+        
+        if (inp) {
+            this.setElementState(inp);
+        }
+    }
+
+    
+    //  ---------------------------------------------------------------------------
+    createBookmarkMenu(menubar) {
+        const self=this;
+        let bmenu=webutil.createTopMenuBarMenu("Bookmark", menubar);
+        webutil.createMenuItem(bmenu, 'Store State', function() { self.storeState(); });
+        webutil.createMenuItem(bmenu, 'Retrieve State',function() { self.restoreState(); });
+    }
+
+    //  ---------------------------------------------------------------------------
     
     parseQueryParameters(loadimage,loadobjectmap) {
 
@@ -533,6 +597,14 @@ class ViewerApplicationElement extends HTMLElement {
         // Display Menu
         // ----------------------------------------------------------
         this.createDisplayMenu(menubar,editmenu);
+
+        // ----------------------------------------------------------
+        // Bookmark Menu
+        // ----------------------------------------------------------
+        
+        this.createBookmarkMenu(menubar);
+
+        
 
         
         // ----------------------------------------------------------
