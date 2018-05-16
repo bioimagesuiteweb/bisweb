@@ -88,7 +88,6 @@ class PaintToolElement extends HTMLElement {
 
             // Viewer to update
             orthoviewer : null,
-            setobjectmap : null,
             settingviewer : false,
 
             // landmarks and index to current one
@@ -159,6 +158,13 @@ class PaintToolElement extends HTMLElement {
         this.internal.parentDomElement.append(basediv);
         this.internal.orthoviewer=in_orthoviewer;
         this.internal.orthoviewer.addMouseObserver(this);
+
+        // Trap set objectmap function and redirect this here ...
+        const self=this;
+        this.internal.orthoviewer.setObjectMapFunction = function (f) {
+            self.setobjectmapimage(f);
+        };
+
 
         if (this.internal.algocontroller) {
             
@@ -569,7 +575,7 @@ class PaintToolElement extends HTMLElement {
                 self.internal.objectmapdata=self.internal.objectmap.getImageData();
                 self.internal.settingviewer=true;
                 console.log('objectmap loaded',self.internal.objectmap.getDescription());
-                self.internal.setobjectmap(in_objmap,true,"Objectmap");
+                self.setViewerObjectmap(in_objmap,true,"Objectmap");
                 self.internal.settingviewer=false;
                 self.resetundo();
                 self.updategui();
@@ -645,7 +651,7 @@ class PaintToolElement extends HTMLElement {
 
         const self=this;
         const fn=function() {
-            self.internal.setobjectmap(self.internal.objectmap,true,false);
+            self.setViewerObjectmap(self.internal.objectmap,true,false);
             self.updategui();
         };
 
@@ -1062,8 +1068,11 @@ class PaintToolElement extends HTMLElement {
         webutil.createMenuItem(parent,''); // separator
     }
 
-    setobjectmapcallback(f) {
-        this.internal.setobjectmap=f;
+    setViewerObjectmap(vol,plainmode,alert) {
+        if (alert !== false)
+            webutil.createAlert('Objectmap loaded from ' + vol.getDescription());
+        plainmode = plainmode || false;
+        this.internal.orthoviewer.setobjectmap_internal(vol, plainmode);
     }
 
     setobjectmapimage(img) {
