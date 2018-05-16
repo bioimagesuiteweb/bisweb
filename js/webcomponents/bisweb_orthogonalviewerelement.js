@@ -889,6 +889,9 @@ class OrthogonalViewerElement extends BaseViewerElement {
         data.ycoord = this.internal.slicecoord[1];
         data.zcoord = this.internal.slicecoord[2];
         data.tcoord = this.internal.slicecoord[3] || 0;
+        data.decorations=this.internal.showdecorations;
+        data.lockcursor=this.internal.lockcursor;
+        
         
         let creatingnew=false;
         let createmovie = false;
@@ -967,7 +970,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 createmovie = true;
             }
             
-            data.decorations=self.internal.showdecorations;
+
             let deco=this.internal.datgui.coords.add(data, 'decorations').name("Labels");
             deco.onChange(function(val) {
                 self.internal.showdecorations=val;
@@ -976,7 +979,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 self.setcoordinates();
             });
 
-            data.lockcursor=self.internal.lockcursor;
+
             let lock=this.internal.datgui.coords.add(data, 'lockcursor').name("Disable Mouse");
             lock.onChange(function(val) {
                 self.internal.lockcursor=val;
