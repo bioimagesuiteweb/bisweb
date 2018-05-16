@@ -33,21 +33,21 @@
 	"jobs": [
 		{
 			"name": "Smooth",
-			"command": "smoothImage",
+			"subcommand": "smoothImage",
 			"rule": "append",
 			"appendText": "smoothed",
 			"options": "--debug true --input %input% --output %out1%" 
 		},
 		{
 			"name": "Threshold",
-			"command": "thresholdImage",
+			"subcommand": "thresholdImage",
 			"rule": "append",
 			"appendText": "thresholded",
 			"options": "--debug true --input %out1% --output %out2% --low 50 --high 100"
 		},
 		{
 			"name": "Linear",
-			"command": "linearRegistration",
+			"subcommand": "linearRegistration",
 			"rule": "append",
 			"appendText": "registered",
 			"options": "--debug true --reference %input% --target %out2% --output %out3%"

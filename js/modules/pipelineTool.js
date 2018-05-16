@@ -38,20 +38,38 @@ let makePipeline = function(filename, location) {
             return null;
         }
 
+        let defaultCommand = parsedFile.command ? parsedFile.command : "node bisweb.js";
 
         //--------------------------------------------------------------------------------------------------------
         // Scan input file for proper formatting
         //--------------------------------------------------------------------------------------------------------
         
-        //check to see if appendText for each job is unique
-        let appendTexts = {};
+        //check to see if appendText and name for each job are unique
+        let appendTexts = {}, names = {};
         for (let job of parsedFile.jobs) {
-            let appendText = job.appendText;
+            let appendText = job.appendText, name = job.name;
 
-            if (!appendTexts[appendText]) { 
-                appendTexts[appendText] = { 'text' : appendText, 'job' : job.command };
+            if (!name) {
+                if (appendText) {
+                    console.log('Error: job with appendText', appendText, 'does not have a name');
+                } else {
+                    console.log('Error: job', job, 'does not have a name or appendText');
+                }
+               
+                return false;
+            } 
+            
+            if (!appendText) {
+                console.log('Error: job with name', name, 'does not have an appendText');
+                return false;
+            }
+
+            if (!appendTexts[appendText] && !names[name]) { 
+                appendTexts[appendText] = { 'text' : appendText, 'subcommand' : job.subcommand, 'name' : name};
+                names[name] = name;
             } else {
-                console.log('Error: appendTexts of jobs must be unique. Jobs', appendTexts[appendText].job, 'and', job.command, 'have same appendText.');
+                let duplicate = appendTexts[appendText] ? appendTexts[appendText].name : names[name];
+                console.log('Error: appendTexts and names of jobs must be unique. Jobs', duplicate, 'and', job.name, 'have same appendText or name.');
                 return false;
             }
         }
@@ -196,7 +214,11 @@ let makePipeline = function(filename, location) {
                     jobWithOutputs.outputs.push(output);
                 });
 
-                formattedJobOutput.command = 'node bisweb.js ' + job.command + ' ' + commandArray.join(' ');
+                //command can either be the default command, the command specified for the set of jobs, or the command specified for an individual job.
+                //the command for an individual job takes highest precedence, then the command for the set, then the default.
+                let command = job.command ? job.command : defaultCommand;
+
+                formattedJobOutput.command = command + ' ' + job.subcommand + ' ' + commandArray.join(' ');
                 allJobOutputs.push(formattedJobOutput);
             }
 
@@ -219,7 +241,6 @@ let makePipeline = function(filename, location) {
             let name = job.name.toLowerCase();
             makefile += '.PHONY: ' + name + '\n' + name + ' : ';
 
-            console.log('outputs', job.outputs);
             for (let output of job.outputs) {
                 makefile += output + ' ';
             }
@@ -229,7 +250,7 @@ let makePipeline = function(filename, location) {
         //make the rest of the commands with job names set to the name of outputs
         for (let o of allJobOutputs) {
             for (let output of o.outputs) {
-                makefile = makefile + output + ' : ' + o.inputs.join(' ') + '\n\t' + o.command + '\n\n';
+                makefile += output + ' : ' + o.inputs.join(' ') + '\n\t' + o.command + '\n\n';
             }
         }
 
