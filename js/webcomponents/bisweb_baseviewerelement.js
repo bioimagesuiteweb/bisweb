@@ -24,6 +24,7 @@ const util=require('bis_util');
 const webutil=require('bis_webutil');
 const $=require('jquery');
 const bootbox=require('bootbox');
+const BisWebImage = require('bisweb_image');
 
 /**
  *
@@ -883,16 +884,25 @@ class BaseViewerElement extends HTMLElement {
         @returns {object} -- the state of the element as a dictionary*/
     getElementState(storeImages=false) {
 
-        let obj= { };
+        let obj= { image: '',
+                   overlay: '',
+                   colortype: '' };
         if (this.internal.cmapcontroller)
             obj['colormap']=this.internal.cmapcontroller.getElementState();
         if (this.internal.viewerleft)
             obj['viewerleft'] = this.internal.viewerleft;
-
-
-        if (storeImages)
-            console.log('We will serialize the images here');
         
+        if (storeImages) {
+            let img=this.getimage();
+            if (img) {
+                obj['image']=img.serializeToJSON(false);
+                let objmap=this.getobjectmap();
+                if (objmap) {
+                    obj['overlay']=objmap.serializeToJSON(false);
+                    obj['colortype']=this.getcolortype();
+                }
+            }
+        }
         return obj;
     }
 
@@ -904,6 +914,26 @@ class BaseViewerElement extends HTMLElement {
 
         if (dt['viewerleft'])
             this.internal.viewerleft= dt['viewerleft'];
+
+        let img=dt['image'] || '';
+        if (img.length>1) {
+            let newimg=new BisWebImage();
+            newimg.parseFromJSON(dt['image']);
+            console.log('has image',newimg.getDescription());
+                                    
+            this.setimage(newimg);
+            
+            let ovr=dt['overlay'] || '';
+            if (ovr.length >1) {
+                let newobj=new BisWebImage();
+                newobj.parseFromJSON(dt['overlay']);
+                console.log('has overlay',newobj.getDescription());
+                let colortype=dt['colortype'] || 'Overlay';
+                let plainmode= (colortype === "Objectmap");
+                this.setobjectmap(newobj,plainmode,colortype);
+            }
+        }
+
         
         if (this.internal.cmapcontroller) {
             this.internal.cmapcontroller.setElementState(dt['colormap']);
