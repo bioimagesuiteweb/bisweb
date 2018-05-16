@@ -234,7 +234,7 @@ let makePipeline = function(filename, location) {
         }
 
         //add 'make clean'
-        makefile = makefile + '\n\n.PHONY: clean\nclean:\n\trm -rf *.o.*\n\n';
+        makefile = makefile + '\n\n.PHONY: clean\nclean:\n\trm -f *.o.*\n\n';
 
         //add 'make [job]' for each job
         for (let job of jobsWithOutputs) {
