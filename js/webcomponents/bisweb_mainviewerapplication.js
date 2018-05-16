@@ -57,6 +57,17 @@ class ViewerApplicationElement extends HTMLElement {
         this.VIEWERS=[];
         this.num_independent_viewers = 0;
         this.saveState=null;
+        
+
+        let scope=window.document.URL.split("?")[0];
+        console.log('scope=',scope);
+        scope=scope.split("/").pop();
+        console.log('scope=',scope);
+        let index=scope.indexOf(".html");
+        scope=scope.substr(0,index);
+
+        this.applicationName=scope;
+        console.log("App name=",this.applicationName);
     }
 
 
@@ -78,8 +89,10 @@ class ViewerApplicationElement extends HTMLElement {
         }
 
         this.num_independent_viewers = this.VIEWERS.length;
-        if (this.syncmode)
+        if (this.syncmode) {
             this.num_independent_viewers = 1;
+            webutil.setAlertTop(130);
+        }
 
 
     }
@@ -90,6 +103,7 @@ class ViewerApplicationElement extends HTMLElement {
     // ---------------------------------------------------------------------------
     loadImage(fname, viewer = 0) {
         const self=this;
+
         
         const img = new BisWebImage();
         return new Promise( (resolve,reject) => { 
@@ -287,8 +301,25 @@ class ViewerApplicationElement extends HTMLElement {
     // Electron default callbacks (load image from arguments) 
     // ---------------------------------------------------------------------
     
-    createElectronArgumentCallbacK(loadimage) {
+    parseElectronArguments() {
+
+        const self=this;
         
+        let load=function(fname,v,a) {
+            
+            let n= fname.name || fname;
+            let ext=n.split(".").pop();
+            if (ext==="biswebstate") {
+                self.loadApplicationState(fname);
+                return 1;
+            } else {
+                self.loadImage(fname,v,a);
+                return 0;
+            }
+        };
+
+        
+        console.log('Here');
         
         if (webutil.inElectronApp()) {
             let title = $(document).find("title").text();
@@ -298,11 +329,12 @@ class ViewerApplicationElement extends HTMLElement {
             
             window.BISELECTRON.ipc.on('arguments-reply', function (evt, args) {
                 window.BISELECTRON.ipc.send('ping', 'Arguments received: ' + args);
+                let a=-1;
                 if (args.length > 0) {
-                    loadimage(args[0], 0, false);
+                    a=load(args[0], 0, false);
                 }
-                if (args.length > 1 && this.num_independent_viewers > 1) {
-                    loadimage(args[1], 1, false);
+                if (args.length > 1 && this.num_independent_viewers > 1 && a===0) {
+                    load(args[1], 1, false);
                 }
             });
         }
@@ -387,7 +419,12 @@ class ViewerApplicationElement extends HTMLElement {
                 else
                     count = 1;
             }
-            self.loadImage(files[0], count, false);
+
+            let ext=files[0].name.split(".").pop();
+            if (ext==="biswebstate")
+                self.loadApplicationState(files[0]);
+            else
+                self.loadImage(files[0], count, false);
         };
         webutil.createDragAndCropController(HandleFiles);
     }
@@ -456,14 +493,10 @@ class ViewerApplicationElement extends HTMLElement {
     }
 
     
-    /** store State in this.saveState , unless filename is not null, in which case save
-     * @param {String} filename - if set then this goes to a file
-     */
-    storeState(filename=null) {
-        if (filename===null) {
-            this.saveState=this.getElementState(true);
-            return;
-        }
+    /** store State in this.saveState , unless filename is not null, in which case save */
+    storeState(saveImages=false) {
+        this.saveState=this.getElementState(saveImages);
+        return;
     }
 
     /** restore State from this.internal.saveState unless obj is not null
@@ -479,12 +512,91 @@ class ViewerApplicationElement extends HTMLElement {
     }
 
     
+    loadApplicationState(fobj) {
+
+        const self=this;
+        return new Promise((resolve, reject) => {
+            console.log(fobj);
+            genericio.read(fobj, false).then((contents) => {
+                let obj = null;
+                try {
+                    obj=JSON.parse(contents.data);
+                } catch(e) {
+                    reject(e);
+                }
+
+                if (!obj.app) {
+                    reject('Application name does not match in '+contents.filename);
+                }
+
+                try {
+                    self.restoreState(obj.params);
+                    webutil.createAlert('Viewer State loaded from ' + contents.filename);
+                    resolve("Done");
+                } catch(e) {
+                    console.log(e.stack,e);
+                    reject(e);
+                }
+            }).catch((e) => { reject(e); });
+        });
+    }
+
+    /** save parameters to a file
+     */
+    saveApplicationState(fobj) {
+
+        console.log(fobj);
+        
+        const self=this;
+        
+        this.storeState(true);
+        
+        let output= JSON.stringify({
+            "app" : self.applicationName,
+            "params" : this.saveState,
+        },null,4);
+
+        if (typeof fobj === "object")
+            fobj=self.applicationName+".biswebstate";
+        
+        return new Promise(function (resolve, reject) {
+            genericio.write(fobj, output).then((f) => {
+                if (fobj.name)
+                    fobj=fobj.name;
+                resolve(f);
+            }).catch((e) => { reject(e); });
+        });
+    }
+
     //  ---------------------------------------------------------------------------
     createBookmarkMenu(menubar) {
+
+
         const self=this;
         let bmenu=webutil.createTopMenuBarMenu("Bookmark", menubar);
         webutil.createMenuItem(bmenu, 'Store State', function() { self.storeState(); });
         webutil.createMenuItem(bmenu, 'Retrieve State',function() { self.restoreState(); });
+        webutil.createMenuItem(bmenu,'');
+        webutil.createMenuItem(bmenu,'Load State', function(f) {
+                                   self.loadApplicationState(f);
+                               },
+                               "biswebstate",
+                               { title: 'Load State', save: false }
+                              );
+        
+
+
+        webutil.createMenuItem(bmenu, 'Save State',
+                               function (f) {
+                                   self.saveApplicationState(f);
+                               },
+                               '',
+                               {
+                                   title: 'Save Application State',
+                                   save: true,
+                                   filters : [ { name: 'Application State File', extensions: ['biswebstate']}],
+                               });
+        
     }
 
     //  ---------------------------------------------------------------------------
@@ -523,6 +635,19 @@ class ViewerApplicationElement extends HTMLElement {
                 return;
             }
 
+            if (obj.data.app) {
+                console.log('We are a state file');
+                try {
+                    self.restoreState(obj.data.params);
+                    webutil.createAlert('Viewer State loaded from ' + obj.filename);
+                } catch(e) {
+                    webutil.createAlert('Failed to load Viewer State from ' + obj.filename,true);
+                    console.log(e.stack,e);
+                }
+                return;
+            }
+            
+
             let index=obj.filename.lastIndexOf("/");
             if (index<0)
                 return;
@@ -542,7 +667,7 @@ class ViewerApplicationElement extends HTMLElement {
                 load_viewer(viewer,imagenames,overlaynames,baseurl);
             
         }).catch( (e) => {
-            console.log(e);
+            console.log(e,e.stack);
             webutil.createAlert('Failed to read load file '+load, true);
         });
     }
@@ -605,8 +730,8 @@ class ViewerApplicationElement extends HTMLElement {
         // ----------------------------------------------------------
         // Electron Arguments
         // ----------------------------------------------------------
-        if (webutil.inElectronApp() && modulemanager === null) {
-            this.createElectronArgumentCallbacK(function(f,v) { self.loadimage(f,v);});
+        if (webutil.inElectronApp()) {
+            this.parseElectronArguments();
         }
 
         // ----------------------------------------------------------
