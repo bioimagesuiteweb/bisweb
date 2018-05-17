@@ -544,6 +544,7 @@ class ViewerApplicationElement extends HTMLElement {
                 webutil.createAlert('Application state loaded from ' + contents.filename);
                 resolve("Done");
             }).catch((e) => {
+                console.log(e.stack,e);
                 webutil.createAlert(`${e}`,true);});
         });
     }
@@ -577,6 +578,7 @@ class ViewerApplicationElement extends HTMLElement {
 
     //  ---------------------------------------------------------------------------
     createEditMenu(menubar) {
+        const self=this;
         let editmenu=webutil.createTopMenuBarMenu("Edit", menubar);
         webutil.createMenuItem(editmenu, 'Store Application State', function() { self.storeState(); });
         webutil.createMenuItem(editmenu, 'Retrieve Application State',function() { self.restoreState(); });
@@ -683,7 +685,6 @@ class ViewerApplicationElement extends HTMLElement {
             modulemanager.initializeElements(menubar, self.VIEWERS,editmenu);
 
         if (this.num_independent_viewers <2 ) {
-            console.log('Num v=',this.num_independent_viewers)
             this.createDisplayMenu(menubar, editmenu);
         }
 
