@@ -519,29 +519,27 @@ class ViewerApplicationElement extends HTMLElement {
     loadApplicationState(fobj) {
 
         const self=this;
+        let fname=fobj.name || fobj;
         return new Promise((resolve, reject) => {
-            console.log(fobj);
             genericio.read(fobj, false).then((contents) => {
                 let obj = null;
                 try {
                     obj=JSON.parse(contents.data);
                 } catch(e) {
+                    webutil.createAlert('Bad viewer state file '+contents.filename+' probably not a viewer state file ',true);
                     reject(e);
                 }
 
                 if (!obj.app) {
-                    reject('Application name does not match in '+contents.filename);
+                    webutil.createAlert('Bad viewer state file '+contents.filename+' probably not a viewer state file ',true);
+                    return;
                 }
 
-                try {
-                    self.restoreState(obj.params);
-                    webutil.createAlert('Viewer State loaded from ' + contents.filename);
-                    resolve("Done");
-                } catch(e) {
-                    console.log(e.stack,e);
-                    reject(e);
-                }
-            }).catch((e) => { reject(e); });
+                self.restoreState(obj.params);
+                webutil.createAlert('Viewer State loaded from ' + contents.filename);
+                resolve("Done");
+            }).catch((e) => {
+                webutil.createAlert(`${e}`,true);});
         });
     }
 
@@ -611,24 +609,7 @@ class ViewerApplicationElement extends HTMLElement {
         let load=webutil.getQueryParameter('load') || '';
         if (load.length<2)
             return 0;
-        const self=this;
-
-        genericio.read(load).then( (obj) => {
-            try {
-                obj.data=JSON.parse(obj.data);
-            } catch(e) {
-                webutil.createAlert('Bad load file '+obj.filename);
-                return;
-            }
-
-            if (obj.data.app) {
-                self.restoreState(obj.data.params);
-                webutil.createAlert('Viewer State loaded from ' + obj.filename);
-            } else {
-                webutil.createAlert('Failed to load Viewer State from ' + obj.filename,true);
-            }
-            return;
-        });
+        this.loadApplicationState(load);
     }
                                 
     
