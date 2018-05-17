@@ -1,4 +1,8 @@
 
+#applicationstext {
+    padding : 0 0 0 0;
+}
+
 #main {
     left : 5vw;
     top: 75px;
@@ -51,7 +55,7 @@
 }
 
 li {
-    margin: 0 0 2px 0;
+    margin: 0px 0px 8px 0px;
     font-size : 16px
 }
 
@@ -60,9 +64,71 @@ p {
 }
 
 
-h4 {
-    margin: 0px 0 10px 0;
+h2 {
+    margin: 20px 0 20px 0;
 }
+
+body {
+    background-color :   rgb(28,45,64);
+}
+
+    
+#main {
+    left : 5vw;
+    top: 75px;
+    width : 90vw;
+    height : 525px;
+    position: absolute;
+    background-color : #000011
+}
+
+#bottom {
+    left : 5vw;
+    width : 90vw;
+    position: absolute;
+    top: 625px;
+
+}
+
+
+.carousel-inner {
+    margin-top : 2vw;
+    margin-bottom : 2vw;
+    height: 500px;
+    min-height: 500px;
+}
+
+.item {
+    height : 500px;
+}
+
+.carousel-control {
+    z-index : 1000;
+    position : absolute;
+    height : 200px;
+    min-height: 200px;
+    top: 100px;
+}
+
+#leftarrow,#rightarrow {
+    width : 5vw;
+    position : absolute;
+    top : 200px;
+}
+
+#leftarrow {
+    left: 5vw;
+}
+
+#rightarrow {
+    right: 5vw;
+}
+
+
+p {
+    font-size : 16px;
+}
+
 
 body {
     background-color :   rgb(28,45,64);

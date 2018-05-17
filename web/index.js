@@ -484,7 +484,15 @@ let createApplicationSelector=function(obj) {
     }
 
     
-    
+    $("#applicationstext").click( (e) => {
+        setTimeout( () => {
+            e.preventDefault();
+            e.stopPropagation();
+            $(".dropdown").removeClass("open");//this will remove the active class from  
+            $('#appmenu').addClass('open');
+            $('#appmenu').css({ 'color': '#fffff' });
+        },10);
+    });
         
     let bb=$(`<div align="center" style="padding:15px;  right:5.5vw; top:570px; border-radius:30px;background-color:#221100; z-index:5000; position: absolute; color:#ffffff">
              Version: ${extra2} ${bisdate.date}</div>`);
@@ -549,14 +557,12 @@ var createServiceWorker=function() {
 window.onload = (() => {
 
     createApplicationSelector(tools.tools);
-    $('.carousel').carousel({   interval : 1000,    wrap : true  });
-    
-    let parent = $("#bisslides");
+
     let msg=`These applications are still in 'beta' (development) stage. Use with care.`;
-    let w = $(`<div class="alert alert-warning alert-dismissible" role="alert"  style="position:absolute; top:80px; left:20px; z-index:100">
+    let w = $(`<div class="alert alert-warning alert-dismissible" role="alert"  style="position:absolute; top:570px; left:5.5vw; z-index:5000">
           <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${msg}
           </div>`);
-    parent.append(w);
+    $('body').append(w);
     w.alert();
 
 
@@ -571,6 +577,14 @@ window.onload = (() => {
             }
         }
     }
+
+    $('#mycarousel').carousel(
+        {
+            interval: 2000,
+            wrap : true,
+        });
+    $('#mycarousel').carousel('cycle');
+    
 });
 
 

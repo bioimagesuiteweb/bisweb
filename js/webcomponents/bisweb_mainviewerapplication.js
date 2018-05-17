@@ -61,6 +61,7 @@ class ViewerApplicationElement extends HTMLElement {
         
 
         let scope=window.document.URL.split("?")[0];
+        this.applicationURL=scope;
         console.log('scope=',scope);
         scope=scope.split("/").pop();
         console.log('scope=',scope);
@@ -68,7 +69,7 @@ class ViewerApplicationElement extends HTMLElement {
         scope=scope.substr(0,index);
 
         this.applicationName=scope;
-        console.log("App name=",this.applicationName);
+        console.log("App name=",this.applicationName,this.applicationURL);
     }
 
 
@@ -482,12 +483,16 @@ class ViewerApplicationElement extends HTMLElement {
         
     /** Set the element state from a dictionary object 
         @param {object} state -- the state of the element */
-    setElementState(dt=null) {
+    setElementState(dt=null,name="") {
 
         if (dt===null)
             return;
-        
-        for (let i=0;i<this.VIEWERS.length;i++) {
+
+        let numviewers=this.VIEWERS.length;
+        if (name==="overlayviewer" && this.applicationName!=="overlayviewer")
+            numviewers=1;
+            
+        for (let i=0;i<numviewers;i++) {
             let name=`viewer${i+1}`;
             let elem=dt[name] || null;
             this.VIEWERS[i].setElementState(elem);
@@ -507,12 +512,12 @@ class ViewerApplicationElement extends HTMLElement {
     /** restore State from this.internal.saveState unless obj is not null
      * @param {Object} obj - if set then restore from this else from this.saveState
      */
-    restoreState(obj=null) {
+    restoreState(obj=null,name="") {
 
         let inp=obj || this.saveState;
         
         if (inp) {
-            return this.setElementState(inp);
+            return this.setElementState(inp,name);
         }
     }
 
@@ -535,7 +540,7 @@ class ViewerApplicationElement extends HTMLElement {
                     return;
                 }
 
-                self.restoreState(obj.params);
+                self.restoreState(obj.params,obj.app);
                 webutil.createAlert('Application state loaded from ' + contents.filename);
                 resolve("Done");
             }).catch((e) => {
@@ -576,16 +581,16 @@ class ViewerApplicationElement extends HTMLElement {
 
         const self=this;
         let bmenu=webutil.createTopMenuBarMenu("App", menubar);
-        webutil.createMenuItem(bmenu,'Load State', function(f) {
+        webutil.createMenuItem(bmenu,'Load Application State', function(f) {
                                    self.loadApplicationState(f);
                                },
                                "biswebstate",
-                               { title: 'Load State', save: false }
+                               { title: 'Load Application State', save: false }
                               );
         
 
 
-        webutil.createMenuItem(bmenu, 'Save State',
+        webutil.createMenuItem(bmenu, 'Save Application State',
                                function (f) {
                                    self.saveApplicationState(f);
                                },
@@ -600,7 +605,7 @@ class ViewerApplicationElement extends HTMLElement {
                                function () {
                                    bootbox.confirm("Are you sure? You will loose all unsaved data.",
                                                    function() {
-                                                       window.open(window.document.URL,'_self');
+                                                       window.open(self.applicationURL,'_self');
                                                    }
                                                   );
                                });
@@ -666,8 +671,8 @@ class ViewerApplicationElement extends HTMLElement {
         // Module Manager
         // ----------------------------------------------------------
         let editmenu=webutil.createTopMenuBarMenu("Edit", menubar);
-        webutil.createMenuItem(editmenu, 'Store State', function() { self.storeState(); });
-        webutil.createMenuItem(editmenu, 'Retrieve State',function() { self.restoreState(); });
+        webutil.createMenuItem(editmenu, 'Store Application State', function() { self.storeState(); });
+        webutil.createMenuItem(editmenu, 'Retrieve Application State',function() { self.restoreState(); });
         webutil.createMenuItem(editmenu,'');
         if (modulemanager)
             modulemanager.initializeElements(menubar, self.VIEWERS,editmenu);
@@ -675,7 +680,8 @@ class ViewerApplicationElement extends HTMLElement {
         // ----------------------------------------------------------
         // Display Menu
         // ----------------------------------------------------------
-        this.createDisplayMenu(menubar,editmenu);
+        let vmenu=webutil.createTopMenuBarMenu("Display", menubar);
+        this.createDisplayMenu(menubar,vmenu);
 
 
         
