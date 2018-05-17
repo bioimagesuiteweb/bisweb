@@ -903,6 +903,21 @@ class BaseViewerElement extends HTMLElement {
                 }
             }
         }
+
+        let n=this.internal.subviewers.length;
+        if (n>0) {
+            obj.subviewers = [];
+            for (let i=0;i<n;i++) {
+                if (this.internal.subviewers[i]) {
+                    let controls=this.internal.subviewers[i].controls;
+                    let p=controls.serializeCamera();
+                    obj.subviewers.push(p);
+                } else {
+                    i=n; // let's get out of here
+                }
+            }
+        }
+
         return obj;
     }
 
@@ -943,6 +958,24 @@ class BaseViewerElement extends HTMLElement {
         return;
     }
 
+    /**  this does the final part of setElement State
+     * by updating the subviewer cameras */
+    setElementStateCameras(dt=null) {
+
+        if (dt.subviewers) {
+            let subviewers=this.internal.subviewers;
+            let num=subviewers.length;
+            if (dt.subviewers.length<num)
+                num=dt.subviewers.length;
+            let renderer=this.internal.layoutcontroller.renderer;
+            for (let i=0;i<num;i++) {
+                subviewers[i].controls.parseCamera(dt.subviewers[i]);
+                renderer.render( subviewers[i].scene, subviewers[i].camera);
+            }
+        } 
+
+    }
+    
     /** store State in this.internal.saveState */
     storeState() {
         this.internal.saveState=this.getElementState();
