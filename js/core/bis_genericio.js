@@ -437,7 +437,7 @@ var readtextdatafromurl = function (url, loadedcallback, errorcallback, requesth
         if (this.status == 200) {
             loadedcallback(xhr.response, actualname);
         } else {
-            errorcallback('failed toread ' + url);
+            errorcallback('failed to read ' + url);
         }
         return false;
     };
