@@ -580,7 +580,7 @@ class ViewerApplicationElement extends HTMLElement {
 
 
         const self=this;
-        let bmenu=webutil.createTopMenuBarMenu("App", menubar);
+        let bmenu=webutil.createTopMenuBarMenu("File", menubar);
         webutil.createMenuItem(bmenu,'Load Application State', function(f) {
                                    self.loadApplicationState(f);
                                },
@@ -659,6 +659,14 @@ class ViewerApplicationElement extends HTMLElement {
         
         this.createApplicationMenu(menubar);
 
+        let editmenu=webutil.createTopMenuBarMenu("Edit", menubar);
+        webutil.createMenuItem(editmenu, 'Store Application State', function() { self.storeState(); });
+        webutil.createMenuItem(editmenu, 'Retrieve Application State',function() { self.restoreState(); });
+
+
+        if (this.num_independent_viewers >1)
+            this.createDisplayMenu(menubar,null);
+
         
 
         
@@ -670,18 +678,13 @@ class ViewerApplicationElement extends HTMLElement {
         // ----------------------------------------------------------
         // Module Manager
         // ----------------------------------------------------------
-        let editmenu=webutil.createTopMenuBarMenu("Edit", menubar);
-        webutil.createMenuItem(editmenu, 'Store Application State', function() { self.storeState(); });
-        webutil.createMenuItem(editmenu, 'Retrieve Application State',function() { self.restoreState(); });
-        webutil.createMenuItem(editmenu,'');
         if (modulemanager)
             modulemanager.initializeElements(menubar, self.VIEWERS,editmenu);
 
-        // ----------------------------------------------------------
-        // Display Menu
-        // ----------------------------------------------------------
-        let vmenu=webutil.createTopMenuBarMenu("Display", menubar);
-        this.createDisplayMenu(menubar,vmenu);
+        if (this.num_independent_viewers <2 ) {
+            console.log('Num v=',this.num_independent_viewers)
+            this.createDisplayMenu(menubar, editmenu);
+        }
 
 
         

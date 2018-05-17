@@ -143,10 +143,12 @@ class ModuleManagerElement extends HTMLElement {
             this.viewers[i].addImageChangedObserver(this);
 
         let moduleoptions = { 'numViewers': numviewers };
-        if (editmenu===null)
+        if (editmenu===null) {
             this.moduleMenu[0] = webutil.createTopMenuBarMenu('Edit', menubar);
-        else
+        } else {
             this.moduleMenu[0]=editmenu;
+            webutil.createMenuItem(editmenu,'');
+        }
         this.algorithmController.createMenuItems(this.moduleMenu[0]);
         webutil.createMenuItem(this.moduleMenu[0], '');
         
@@ -196,6 +198,8 @@ class ModuleManagerElement extends HTMLElement {
         biswrap.initialize().then( () => {
             this.initializeElementsInternal(menubar,viewers,moduleoptions);
         });
+        
+        return null;
     }
 
     
