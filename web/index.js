@@ -477,7 +477,7 @@ let createApplicationSelector=function(obj) {
         let s=window.document.URL;
         let index=s.lastIndexOf("/");
         let urlbase=s.substr(0,index);
-        let url=`${urlbase}/overlayviewer.html?load=${urlbase}/images/sample.json`;
+        let url=`${urlbase}/overlayviewer.html?load=${urlbase}/images/viewer.biswebstate`;
 
         $("#othermenu").append($(`<li class="divider"></li>`));
         $("#othermenu").append($(`<li><a href="${url}" target="_blank">Example Image Overlay</a></li>`));
