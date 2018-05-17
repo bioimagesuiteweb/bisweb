@@ -470,7 +470,11 @@ class ViewerApplicationElement extends HTMLElement {
         let obj = {};
         for (let i=0;i<this.VIEWERS.length;i++) {
             let name=`viewer${i+1}`;
-            obj[name]=this.VIEWERS[i].getElementState(storeImages);
+            let getimg=storeImages;
+            if (i>=this.num_independent_viewers) {
+                getimg=false;
+            }
+            obj[name]=this.VIEWERS[i].getElementState(getimg);
         }
         return obj;
     }
@@ -507,7 +511,7 @@ class ViewerApplicationElement extends HTMLElement {
         let inp=obj || this.saveState;
         
         if (inp) {
-            this.setElementState(inp);
+            return this.setElementState(inp);
         }
     }
 
@@ -609,24 +613,6 @@ class ViewerApplicationElement extends HTMLElement {
             return 0;
         const self=this;
 
-        let load_viewer=function(vr,imagenames,overlaynames,baseurl) {
-
-            if (imagenames[vr].length>0) {
-                let imagename=baseurl+imagenames[vr];
-                self.loadImage(imagename,vr).then( () => {
-                    if (overlaynames[vr].length>0) {
-                        let overlayname=baseurl+overlaynames[vr];
-                        self.loadOverlay(overlayname,vr);
-                    }
-                }).catch( (e) => {
-                    console.log(e, e.stack);
-                    webutil.createAlert('Failed to read image from '+imagename, true);
-                });
-            } else {
-                console.log('imagename is empty');
-            }
-        };
-        
         genericio.read(load).then( (obj) => {
             try {
                 obj.data=JSON.parse(obj.data);
@@ -636,41 +622,15 @@ class ViewerApplicationElement extends HTMLElement {
             }
 
             if (obj.data.app) {
-                console.log('We are a state file');
-                try {
-                    self.restoreState(obj.data.params);
-                    webutil.createAlert('Viewer State loaded from ' + obj.filename);
-                } catch(e) {
-                    webutil.createAlert('Failed to load Viewer State from ' + obj.filename,true);
-                    console.log(e.stack,e);
-                }
-                return;
+                self.restoreState(obj.data.params);
+                webutil.createAlert('Viewer State loaded from ' + obj.filename);
+            } else {
+                webutil.createAlert('Failed to load Viewer State from ' + obj.filename,true);
             }
-            
-
-            let index=obj.filename.lastIndexOf("/");
-            if (index<0)
-                return;
-
-            let imagenames = [];
-            let overlaynames=[];
-            
-
-            imagenames[0]=obj.data['image'] || "";
-            overlaynames[0]=obj.data['overlay'] || "";
-            imagenames[1]=obj.data['image2'] || "";
-            overlaynames[1]=obj.data['overlay2'] || "";
-
-            let baseurl=obj.filename.substr(0,index+1);
-            
-            for (let viewer=0;viewer<this.num_independent_viewers;viewer++) 
-                load_viewer(viewer,imagenames,overlaynames,baseurl);
-            
-        }).catch( (e) => {
-            console.log(e,e.stack);
-            webutil.createAlert('Failed to read load file '+load, true);
+            return;
         });
     }
+                                
     
     //  ---------------------------------------------------------------------------
     // Essentially the main function, called when element is attached to the page
@@ -777,9 +737,8 @@ class ViewerApplicationElement extends HTMLElement {
                                        if (typeof window.BIS !=='undefined') {
                                            imagepath=window.BIS.imagepath;
                                        }
-                                       self.loadImage(`${imagepath}images/sampleanat.nii.gz`).then( () => { 
-                                           self.loadOverlay(`${imagepath}images/samplefunc.nii.gz`);
-                                       });
+                                       let f=`${imagepath}images/viewer.biswebstate`;
+                                       self.loadApplicationState(f);
                                    });
         }
 
