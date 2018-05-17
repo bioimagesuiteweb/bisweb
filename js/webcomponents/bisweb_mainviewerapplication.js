@@ -576,6 +576,13 @@ class ViewerApplicationElement extends HTMLElement {
     }
 
     //  ---------------------------------------------------------------------------
+    createEditMenu(menubar) {
+        let editmenu=webutil.createTopMenuBarMenu("Edit", menubar);
+        webutil.createMenuItem(editmenu, 'Store Application State', function() { self.storeState(); });
+        webutil.createMenuItem(editmenu, 'Retrieve Application State',function() { self.restoreState(); });
+        return editmenu;
+    }
+    
     createApplicationMenu(menubar) {
 
 
@@ -658,16 +665,10 @@ class ViewerApplicationElement extends HTMLElement {
         // ----------------------------------------------------------
         
         this.createApplicationMenu(menubar);
-
-        let editmenu=webutil.createTopMenuBarMenu("Edit", menubar);
-        webutil.createMenuItem(editmenu, 'Store Application State', function() { self.storeState(); });
-        webutil.createMenuItem(editmenu, 'Retrieve Application State',function() { self.restoreState(); });
-
-
+        let editmenu=this.createEditMenu(menubar);
+        
         if (this.num_independent_viewers >1)
             this.createDisplayMenu(menubar,null);
-
-        
 
         
         // ----------------------------------------------------------
