@@ -519,24 +519,23 @@ class ViewerApplicationElement extends HTMLElement {
     loadApplicationState(fobj) {
 
         const self=this;
-        let fname=fobj.name || fobj;
         return new Promise((resolve, reject) => {
             genericio.read(fobj, false).then((contents) => {
                 let obj = null;
                 try {
                     obj=JSON.parse(contents.data);
                 } catch(e) {
-                    webutil.createAlert('Bad viewer state file '+contents.filename+' probably not a viewer state file ',true);
+                    webutil.createAlert('Bad application state file '+contents.filename+' probably not a application state file ',true);
                     reject(e);
                 }
 
                 if (!obj.app) {
-                    webutil.createAlert('Bad viewer state file '+contents.filename+' probably not a viewer state file ',true);
+                    webutil.createAlert('Bad application state file '+contents.filename+' probably not a application state file ',true);
                     return;
                 }
 
                 self.restoreState(obj.params);
-                webutil.createAlert('Viewer State loaded from ' + contents.filename);
+                webutil.createAlert('Application state loaded from ' + contents.filename);
                 resolve("Done");
             }).catch((e) => {
                 webutil.createAlert(`${e}`,true);});
