@@ -903,6 +903,8 @@ class MosaicViewerElement extends BaseViewerElement {
         } catch(e) {
             console.log(e.stack,e);
         }
+
+        this.setElementStateCameras(dt);
         
         // The end update the controllers
         setTimeout( () => {
