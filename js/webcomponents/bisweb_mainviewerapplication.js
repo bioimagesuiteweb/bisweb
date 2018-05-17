@@ -27,6 +27,7 @@ const userPreferences = require('bisweb_userpreferences.js');
 const $ = require('jquery');
 const bisdbase = require('bisweb_dbase');
 const genericio=require('bis_genericio');
+const bootbox=require('bootbox');
 
 /**
  * A Application Level Element that creates a Viewer Application using an underlying viewer element.
@@ -570,14 +571,11 @@ class ViewerApplicationElement extends HTMLElement {
     }
 
     //  ---------------------------------------------------------------------------
-    createBookmarkMenu(menubar) {
+    createApplicationMenu(menubar) {
 
 
         const self=this;
-        let bmenu=webutil.createTopMenuBarMenu("Bookmark", menubar);
-        webutil.createMenuItem(bmenu, 'Store State', function() { self.storeState(); });
-        webutil.createMenuItem(bmenu, 'Retrieve State',function() { self.restoreState(); });
-        webutil.createMenuItem(bmenu,'');
+        let bmenu=webutil.createTopMenuBarMenu("App", menubar);
         webutil.createMenuItem(bmenu,'Load State', function(f) {
                                    self.loadApplicationState(f);
                                },
@@ -597,7 +595,16 @@ class ViewerApplicationElement extends HTMLElement {
                                    save: true,
                                    filters : [ { name: 'Application State File', extensions: ['biswebstate']}],
                                });
-        
+        webutil.createMenuItem(bmenu,'');
+        webutil.createMenuItem(bmenu, 'Restart Application',
+                               function () {
+                                   bootbox.confirm("Are you sure? You will loose all unsaved data.",
+                                                   function() {
+                                                       window.open(window.document.URL,'_self');
+                                                   }
+                                                  );
+                               });
+        return bmenu;
     }
 
     //  ---------------------------------------------------------------------------
@@ -640,6 +647,15 @@ class ViewerApplicationElement extends HTMLElement {
         if (managerid !== null) 
             modulemanager = document.querySelector(managerid) || null;
 
+
+        // ----------------------------------------------------------
+        // Application Menu
+        // ----------------------------------------------------------
+        
+        this.createApplicationMenu(menubar);
+
+        
+
         
         // ----------------------------------------------------------
         // Create the File and Overlay Menus
@@ -649,22 +665,18 @@ class ViewerApplicationElement extends HTMLElement {
         // ----------------------------------------------------------
         // Module Manager
         // ----------------------------------------------------------
-        let editmenu=null;
+        let editmenu=webutil.createTopMenuBarMenu("Edit", menubar);
+        webutil.createMenuItem(editmenu, 'Store State', function() { self.storeState(); });
+        webutil.createMenuItem(editmenu, 'Retrieve State',function() { self.restoreState(); });
+        webutil.createMenuItem(editmenu,'');
         if (modulemanager)
-            editmenu=modulemanager.initializeElements(menubar, self.VIEWERS);
+            modulemanager.initializeElements(menubar, self.VIEWERS,editmenu);
 
         // ----------------------------------------------------------
         // Display Menu
         // ----------------------------------------------------------
         this.createDisplayMenu(menubar,editmenu);
 
-        // ----------------------------------------------------------
-        // Bookmark Menu
-        // ----------------------------------------------------------
-        
-        this.createBookmarkMenu(menubar);
-
-        
 
         
         // ----------------------------------------------------------
@@ -691,25 +703,11 @@ class ViewerApplicationElement extends HTMLElement {
 
 
         // ----------------------------------------------------------------
-        // If we have Module Manager  load an image to make everybody happy
+        // Add help sample data option
         // ----------------------------------------------------------------
         const mode = this.getAttribute('bis-mode');
 
-        if (mode!=='overlay') {
-            if (modulemanager) {
-                userPreferencesLoaded.then(() => {
-
-                    let load=webutil.getQueryParameter('load') || '';
-                    if (load.length<1) {
-                        let imagepath="";
-                        if (typeof window.BIS !=='undefined') {
-                            imagepath=window.BIS.imagepath;
-                        }
-                        self.loadImage(`${imagepath}images/MNI_T1_2mm_stripped_ras.nii.gz`, 0);
-                    }
-                });
-            }
-        } else {
+        if (mode==='overlay') {
             webutil.createMenuItem(hmenu, ''); // separator
             webutil.createMenuItem(hmenu, 'Load Sample Data',
                                    function () {

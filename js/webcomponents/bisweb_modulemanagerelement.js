@@ -132,7 +132,7 @@ class ModuleManagerElement extends HTMLElement {
         }
     }
 
-    initializeElements(menubar, viewers = []) {
+    initializeElements(menubar, viewers = [],editmenu=null) {
         if (!this.algorithmController) {
             return;
         }
@@ -143,7 +143,10 @@ class ModuleManagerElement extends HTMLElement {
             this.viewers[i].addImageChangedObserver(this);
 
         let moduleoptions = { 'numViewers': numviewers };
-        this.moduleMenu[0] = webutil.createTopMenuBarMenu('Edit', menubar);
+        if (editmenu===null)
+            this.moduleMenu[0] = webutil.createTopMenuBarMenu('Edit', menubar);
+        else
+            this.moduleMenu[0]=editmenu;
         this.algorithmController.createMenuItems(this.moduleMenu[0]);
         webutil.createMenuItem(this.moduleMenu[0], '');
         

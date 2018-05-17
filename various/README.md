@@ -1,4 +1,4 @@
-This directory contains the following:
+lThis directory contains the following:
 
 * `config` -- configuration files for bash, vscode and emacs
 * `download` -- this has downloaded versions of emscripten (skeleton) and Eigen
@@ -7,3 +7,5 @@ This directory contains the following:
     compilation to help a new user get started quickly. We update these
     periodically. (Look at the function get_date inside
     wasm/libbiswasm_wrapper.js to find out when these were compiled.)
+* `other` -- files used for the bisweb.yale.edu server (downloads mostly)
+* `txt` -- various license files (used when building)
