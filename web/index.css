@@ -54,10 +54,6 @@
     right: 5vw;
 }
 
-li {
-    margin: 0px 0px 8px 0px;
-    font-size : 16px
-}
 
 p {
     font-size : 16px;
@@ -132,4 +128,9 @@ p {
 
 body {
     background-color :   rgb(28,45,64);
+}
+
+.bisli {
+    margin: 0px 0px 8px 0px;
+    font-size : 18px
 }
