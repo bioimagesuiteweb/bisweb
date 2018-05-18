@@ -113,25 +113,25 @@ var createWindow=function(index,fullURL) {
 
     
     if (index===0) {
-	opts= {width: 1024, height: 900};
+	opts= {width: 1024, height: 1100,maxwidth:1024 ,maxheight: 1050};
 	fullURL='file://' + path.resolve(__dirname , 'index.html');
 	hidden='hidden';
 	xval=undefined;
 	yval=undefined;
     }  else {
-	opts= { width: 1200,height:1100};
+	opts= { width: 1200,height:1100, maxwidth: state.screensize.width, maxheight: state.screensize.height};
     }
 
     
-    if (opts.height>state.screensize.height-100)
-	opts.height=state.screensize.height-100;
-    if (opts.width>state.screensize.width-100)
-	opts.width=state.screensize.width-100;
+    if (opts.height>state.screensize.height-10)
+	opts.height=state.screensize.height-10;
+    if (opts.width>state.screensize.width-10)
+	opts.width=state.screensize.width-10;
 
 
     if (index!==0) {
-	xval+=Math.round(Math.random()*50);
-	yval+=Math.round(Math.random()*50);
+	xval+=Math.round(Math.random()*10);
+	yval+=Math.round(Math.random()*10);
 	if (xval+opts.width>state.screensize.width)
 	    xval=undefined;
 	if (yval+opts.height>state.screensize.height)
@@ -154,6 +154,8 @@ var createWindow=function(index,fullURL) {
     //console.log(getTime()+' Screen size = '+[state.screensize.width,state.screensize.height]+' size='+[opts.width,opts.height]);
     state.winlist[index]=new BrowserWindow({width: opts.width,
 					    height: opts.height,
+                                            maxWidth: opts.maxwidth,
+                                            maxHeight : opts.maxheight,
 					    show: true,
 					    x : xval,
 					    y : yval,

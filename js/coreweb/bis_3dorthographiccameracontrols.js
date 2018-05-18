@@ -154,6 +154,49 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
     this.getZoomFactor = function() {
 	return _zoomFactor;
     };
+
+    this.serializeCamera = function() {
+        
+        let p = { };
+        p.position = this.camera.position.clone();
+        p.up=this.camera.up.clone();
+        p.target=this.target.clone();
+        p.zoomFactor=this.getZoomFactor();
+        
+        let keys = [ 'bottom','top','left','right' ];
+        for (let i=0;i<keys.length;i++) {
+            let k=keys[i];
+            p[k]=this.camera[k];
+        }
+        return p;
+    };
+
+    this.parseCamera = function(obj,debug=0) {
+
+        if (debug)
+            console.log('Input=',JSON.stringify(obj,null,2));
+        
+        _this.target.copy( obj.target );
+	_this.camera.position.copy( obj.position );
+	_this.camera.up.copy( obj.up );
+	
+	_eye.subVectors( _this.camera.position, _this.target );
+	
+	_this.camera.left = obj.left;
+	_this.camera.right = obj.right;
+	_this.camera.top =  obj.top;
+	_this.camera.bottom = obj.bottom;
+	_this.camera.lookAt( _this.target );
+	_this.dispatchEvent( changeEvent );
+	lastPosition.copy( _this.camera.position );
+	_this.zoomCamera(obj.zoomFactor);
+
+        let p=this.serializeCamera();
+        if (debug)
+            console.log('Output=',JSON.stringify(p,null,2));
+        
+    };
+    
     
     // methods
     /** handles resizing of dom

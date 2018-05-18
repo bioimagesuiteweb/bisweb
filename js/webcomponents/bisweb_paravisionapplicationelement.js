@@ -91,15 +91,14 @@ class ParavisionApplicationElement extends ViewerApplicationElement {
         
         
         let menubar=document.querySelector(menubarid).getMenuBar();
-        const loadimage=this.createFileAndOverlayMenus(menubar,null);
 
+        this.createApplicationMenu(menubar);
+        let editmenu=this.createEditMenu(menubar);
+        this.createDisplayMenu(menubar,null);
+        this.createFileAndOverlayMenus(menubar,null);
         
-
-        let editmenu=null;
         if (modulemanager!==null) 
-            editmenu=modulemanager.initializeElements(menubar,self.VIEWERS);
-
-        this.createDisplayMenu(menubar,editmenu);
+            modulemanager.initializeElements(menubar,self.VIEWERS,editmenu);
 
         if (misactool)
             misactool.addtomenubar(menubar);

@@ -27,6 +27,7 @@ const userPreferences = require('bisweb_userpreferences.js');
 const $ = require('jquery');
 const bisdbase = require('bisweb_dbase');
 const genericio=require('bis_genericio');
+const bootbox=require('bootbox');
 
 /**
  * A Application Level Element that creates a Viewer Application using an underlying viewer element.
@@ -60,6 +61,7 @@ class ViewerApplicationElement extends HTMLElement {
         
 
         let scope=window.document.URL.split("?")[0];
+        this.applicationURL=scope;
         console.log('scope=',scope);
         scope=scope.split("/").pop();
         console.log('scope=',scope);
@@ -67,7 +69,7 @@ class ViewerApplicationElement extends HTMLElement {
         scope=scope.substr(0,index);
 
         this.applicationName=scope;
-        console.log("App name=",this.applicationName);
+        console.log("App name=",this.applicationName,this.applicationURL);
     }
 
 
@@ -481,12 +483,16 @@ class ViewerApplicationElement extends HTMLElement {
         
     /** Set the element state from a dictionary object 
         @param {object} state -- the state of the element */
-    setElementState(dt=null) {
+    setElementState(dt=null,name="") {
 
         if (dt===null)
             return;
-        
-        for (let i=0;i<this.VIEWERS.length;i++) {
+
+        let numviewers=this.VIEWERS.length;
+        if (name==="overlayviewer" && this.applicationName!=="overlayviewer")
+            numviewers=1;
+            
+        for (let i=0;i<numviewers;i++) {
             let name=`viewer${i+1}`;
             let elem=dt[name] || null;
             this.VIEWERS[i].setElementState(elem);
@@ -506,12 +512,12 @@ class ViewerApplicationElement extends HTMLElement {
     /** restore State from this.internal.saveState unless obj is not null
      * @param {Object} obj - if set then restore from this else from this.saveState
      */
-    restoreState(obj=null) {
+    restoreState(obj=null,name="") {
 
         let inp=obj || this.saveState;
         
         if (inp) {
-            return this.setElementState(inp);
+            return this.setElementState(inp,name);
         }
     }
 
@@ -534,10 +540,11 @@ class ViewerApplicationElement extends HTMLElement {
                     return;
                 }
 
-                self.restoreState(obj.params);
+                self.restoreState(obj.params,obj.app);
                 webutil.createAlert('Application state loaded from ' + contents.filename);
                 resolve("Done");
             }).catch((e) => {
+                console.log(e.stack,e);
                 webutil.createAlert(`${e}`,true);});
         });
     }
@@ -570,24 +577,29 @@ class ViewerApplicationElement extends HTMLElement {
     }
 
     //  ---------------------------------------------------------------------------
-    createBookmarkMenu(menubar) {
+    createEditMenu(menubar) {
+        const self=this;
+        let editmenu=webutil.createTopMenuBarMenu("Edit", menubar);
+        webutil.createMenuItem(editmenu, 'Store Application State', function() { self.storeState(); });
+        webutil.createMenuItem(editmenu, 'Retrieve Application State',function() { self.restoreState(); });
+        return editmenu;
+    }
+    
+    createApplicationMenu(menubar) {
 
 
         const self=this;
-        let bmenu=webutil.createTopMenuBarMenu("Bookmark", menubar);
-        webutil.createMenuItem(bmenu, 'Store State', function() { self.storeState(); });
-        webutil.createMenuItem(bmenu, 'Retrieve State',function() { self.restoreState(); });
-        webutil.createMenuItem(bmenu,'');
-        webutil.createMenuItem(bmenu,'Load State', function(f) {
+        let bmenu=webutil.createTopMenuBarMenu("File", menubar);
+        webutil.createMenuItem(bmenu,'Load Application State', function(f) {
                                    self.loadApplicationState(f);
                                },
                                "biswebstate",
-                               { title: 'Load State', save: false }
+                               { title: 'Load Application State', save: false }
                               );
         
 
 
-        webutil.createMenuItem(bmenu, 'Save State',
+        webutil.createMenuItem(bmenu, 'Save Application State',
                                function (f) {
                                    self.saveApplicationState(f);
                                },
@@ -597,7 +609,16 @@ class ViewerApplicationElement extends HTMLElement {
                                    save: true,
                                    filters : [ { name: 'Application State File', extensions: ['biswebstate']}],
                                });
-        
+        webutil.createMenuItem(bmenu,'');
+        webutil.createMenuItem(bmenu, 'Restart Application',
+                               function () {
+                                   bootbox.confirm("Are you sure? You will loose all unsaved data.",
+                                                   function() {
+                                                       window.open(self.applicationURL,'_self');
+                                                   }
+                                                  );
+                               });
+        return bmenu;
     }
 
     //  ---------------------------------------------------------------------------
@@ -640,6 +661,17 @@ class ViewerApplicationElement extends HTMLElement {
         if (managerid !== null) 
             modulemanager = document.querySelector(managerid) || null;
 
+
+        // ----------------------------------------------------------
+        // Application Menu
+        // ----------------------------------------------------------
+        
+        this.createApplicationMenu(menubar);
+        let editmenu=this.createEditMenu(menubar);
+        
+        if (this.num_independent_viewers >1)
+            this.createDisplayMenu(menubar,null);
+
         
         // ----------------------------------------------------------
         // Create the File and Overlay Menus
@@ -649,22 +681,13 @@ class ViewerApplicationElement extends HTMLElement {
         // ----------------------------------------------------------
         // Module Manager
         // ----------------------------------------------------------
-        let editmenu=null;
         if (modulemanager)
-            editmenu=modulemanager.initializeElements(menubar, self.VIEWERS);
+            modulemanager.initializeElements(menubar, self.VIEWERS,editmenu);
 
-        // ----------------------------------------------------------
-        // Display Menu
-        // ----------------------------------------------------------
-        this.createDisplayMenu(menubar,editmenu);
+        if (this.num_independent_viewers <2 ) {
+            this.createDisplayMenu(menubar, editmenu);
+        }
 
-        // ----------------------------------------------------------
-        // Bookmark Menu
-        // ----------------------------------------------------------
-        
-        this.createBookmarkMenu(menubar);
-
-        
 
         
         // ----------------------------------------------------------
@@ -691,25 +714,11 @@ class ViewerApplicationElement extends HTMLElement {
 
 
         // ----------------------------------------------------------------
-        // If we have Module Manager  load an image to make everybody happy
+        // Add help sample data option
         // ----------------------------------------------------------------
         const mode = this.getAttribute('bis-mode');
 
-        if (mode!=='overlay') {
-            if (modulemanager) {
-                userPreferencesLoaded.then(() => {
-
-                    let load=webutil.getQueryParameter('load') || '';
-                    if (load.length<1) {
-                        let imagepath="";
-                        if (typeof window.BIS !=='undefined') {
-                            imagepath=window.BIS.imagepath;
-                        }
-                        self.loadImage(`${imagepath}images/MNI_T1_2mm_stripped_ras.nii.gz`, 0);
-                    }
-                });
-            }
-        } else {
+        if (mode==='overlay') {
             webutil.createMenuItem(hmenu, ''); // separator
             webutil.createMenuItem(hmenu, 'Load Sample Data',
                                    function () {
