@@ -151,6 +151,7 @@ class ConnectivityApplicationElement extends HTMLElement {
         webutil.createMenuItem(fmenu,''); // separator
         
         webutil.createMenuItem(fmenu,'Clear Matrices',function() { control.clearmatrices(); });
+        webfileutil.createFileSourceSelector(fmenu);
         
         
         // ------------------------------------ Edit Menu ----------------------------
