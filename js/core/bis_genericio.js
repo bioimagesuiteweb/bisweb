@@ -1003,6 +1003,21 @@ let getFixedLoadFileName = function(fobj) {
         if (fobj.name) 
             return fobj.name;
     }
+
+    if (fobj.indexOf("http")===0) {
+        // Url -- try to get the last parts
+
+        if (fobj.indexOf("dl.dropbox")>0) {
+            let s=fobj.split("/");
+            let f="dropbox/";
+            for (let i=6;i<s.length;i++) {
+                f=f+"/"+s[i];
+            }
+            return f;
+        }
+    }
+
+    
     return fobj;
 
 };
