@@ -30,13 +30,43 @@ const webutil=require('bis_webutil');
 
 
 module.exports = {
+
+    /** function to create a hidden input type="file" button and add it to body
+     * @alias WebFileUtil.createHiddenInputFile
+     * @param {function} callback - callback to call
+     * @param {string} accept - List of file types to accept as a comma-separated string e.g. ".ljson,.land"
+     * @param {Boolean} attach - if true attach to body, else leave transient
+     * @returns {JQueryElement} 
+     */
+    createHiddenInputFile: function (accept, callback,attach=true) {
+
+        /*if { simpemode === false } {
+          return dosomethingelse(accept,callback);*/
+        
+        accept = accept || "";
+        if (accept === "NII")
+            accept = '.nii,.nii.gz,.gz,.tiff';
+
+        var loadelement = $('<input type="file" style="visibility: hidden;" accept="' + accept + '"/>');
+        if (attach)
+            $('body').append(loadelement);
+        
+        loadelement[0].addEventListener('change', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            callback(e.target.files[0]);
+        });
+        return loadelement;
+    },
+    
     /** electron file callback function
-     * @alias WebFileUtil.electronfilecallbackoptions
-     * @param {object} opts - the electron options object -- used if in electron
-     * @param {string} opts.title - if in file mode and electron set the title of the file dialog
-     * @param {boolean} opts.save - if in file mode and electron determine load or save
-     * @param {string} opts.defaultpath - if in file mode and electron use this as original filename
-     * @param {string} opts.filter - if in file mode and electron use this to filter electron style
+     * @alias WebFileUtil.electronFileCallback
+     * @param {object} opts - the file options object 
+     * @param {string} opts.title - if in file mode and file set the title of the file dialog
+     * @param {boolean} opts.save - if in file mode and file determine load or save
+     * @param {string} opts.defaultpath - if in file mode and file use this as original filename
+     * @param {string} opts.filter - if in file mode and file use this to filter file style
+     * @param {string} opts.suffix - used to create filter if present (simplified version)
      * @param {function} callback - callback to call when done
      */
     electronFileCallback: function (fileopts, callback) {
@@ -44,6 +74,22 @@ module.exports = {
         fileopts.save = fileopts.save || false;
         fileopts.title = fileopts.title || 'Specify filename';
         fileopts.defaultpath = fileopts.defaultpath || '';
+
+        let suffix = fileopts.suffix || '';
+        if (suffix === "NII" || fileopts.filters === "NII")
+            fileopts.filters = [
+                { name: 'NIFTI Images', extensions: ['nii.gz', 'nii'] },
+                { name: 'All Files', extensions: [ "*"]},
+            ];
+        if (suffix === "DIRECTORY")
+            fileopts.filters = "DIRECTORY";
+        
+        if (fileopts.defaultpath==='') {
+            if (fileopts.initialCallback)
+                fileopts.defaultpath=fileopts.initialCallback() || '';
+        }
+            
+        
         fileopts.filters = fileopts.filters ||
             [{ name: 'All Files', extensions: ['*'] }];
 
@@ -81,102 +127,72 @@ module.exports = {
     },
 
 
-    /** function to create a hidden input type="file" button and add it to body
-     * @alias WebFileUtil.createHiddenInputFile
-     * @param {function} callback - callback to call
-     * @param {string} accept - List of file types to accept as a comma-separated string e.g. ".ljson,.land"
-     * @param {Boolean} attach - if true attach to body, else leave transient
-     * @returns {JQueryElement} 
+
+
+    /** web file callback function
+     * @alias WebFileUtil.webFileCallback
+     * @param {object} opts - the callback options object
+     * @param {string} opts.title - if in file mode and web set the title of the file dialog
+     * @param {boolean} opts.save - if in file mode and web determine load or save
+     * @param {string} opts.defaultpath - if in file mode and web use this as original filename
+     * @param {string} opts.suffix - if in file mode and web use this to filter web style
+     * @param {function} callback - callback to call when done
      */
-    createHiddenInputFile: function (accept, callback,attach=true) {
+    webFileCallback: function (fileopts, callback) {
 
-        /*if { simpemode === false } {
-          return dosomethingelse(accept,callback);*/
-        
-        accept = accept || "";
-        if (accept === "NII")
-            accept = '.nii,.nii.gz,.gz,.tiff';
+        let suffix = fileopts.suffix || '';
+        if (suffix === "NII")
+            suffix = '.nii,.nii.gz,.gz,.tiff';
 
-        var loadelement = $('<input type="file" style="visibility: hidden;" accept="' + accept + '"/>');
-        if (attach)
-            $('body').append(loadelement);
+        if (fileopts.save) {
+            callback({});
+            return;
+        } 
         
-        loadelement[0].addEventListener('change', function (e) {
-            e.stopPropagation();
-            e.preventDefault();
-            callback(e.target.files[0]);
+        let loadelement = $('<input type=\"file\" style=\"visibility: hidden;\" accept=\"' + suffix + '\" />');
+        loadelement[0].addEventListener('change', function (f) {
+            f.stopPropagation();
+            f.preventDefault();
+            callback(f.target.files[0]);
         });
-        return loadelement;
     },
+
 
     /** Create File Callback 
      * @alias WebFileUtil.attachFileCallback
      * @param {JQueryElement} button -- the element to attach the callback to
-     * @param {object} fileopts - the file dialog options object (in electron style)
-     * @param {string}  fileopts.title  - in electron: dialog title
-     * @param {boolean} fileopts.save -  in electron determine load or save
-     * @param {string}  fileopts.defaultpath -  in electron use this as original filename
-     * @param {string}  fileopts.filter - if in electron use this as filter
+     * @param {object} fileopts - the file dialog options object (in file style)
+     * @param {string}  fileopts.title  - in file: dialog title
+     * @param {boolean} fileopts.save -  in file determine load or save
+     * @param {string}  fileopts.defaultpath -  use this as original filename
+     * @param {string}  fileopts.filter - use this as filter (if in electron)
      * @param {string}  fileopts.suffix - List of file types to accept as a comma-separated string e.g. ".ljson,.land" (simplified version filter)
      */
     attachFileCallback : function(button,callback,fileopts={}) {
 
         fileopts = fileopts || {};
         fileopts.save = fileopts.save || false;
-
-        let suffix = fileopts.suffix || '';
-        if (suffix === "NII" && !webutil.inElectronApp())
-            suffix = '.nii,.nii.gz,.gz,.tiff';
-
-        // Three cases
-        // Electron -- File Dialog First then do
-        // Browser  -- If Save, first do, then it will create download event and file dialog
-        // Broswer  -- If not save, hiddeninputfile activate (file dialog) then do
-
+        
+        const that = this;
         
         if (webutil.inElectronApp()) {
-            // Electron
-            if (suffix === "NII" || fileopts.filters === "NII")
-                fileopts.filters = [
-                    { name: 'NIFTI Images', extensions: ['nii.gz', 'nii'] },
-                    { name: 'All Files', extensions: [ "*"]},
-                ];
-            if (suffix === "DIRECTORY")
-                fileopts.filters = "DIRECTORY";
             
-            var that = this;
-            button.click(function() {
+            button.click(function(e) {
                 setTimeout( () => {
+                    e.stopPropagation();
+                    e.preventDefault();  
                     that.electronFileCallback(fileopts, callback);
                 },1);
             });
-        }  else if (fileopts.save) {
-            // Web Save
-            button.click(function (e) {
-                setTimeout( () => { 
-                    e.preventDefault();
-                    e.stopPropagation();
-                    callback(e);
-                },1);
-            });
         } else {
-            // Web Load
-            button.click(function (e) {
+            button.click(function(e) {
                 setTimeout( () => {
-                    e.preventDefault();
                     e.stopPropagation();
-                    let loadelement = $('<input type=\"file\" style=\"visibility: hidden;\" accept=\"' + suffix + '\" />');
-                    loadelement[0].addEventListener('change', function (f) {
-                        f.stopPropagation();
-                        f.preventDefault();
-                        callback(f.target.files[0]);
-                    },1);
-                    loadelement.click();
+                    e.preventDefault();
+                    that.webFileCallback(fileopts, callback);
                 },1);
             });
         }
-
-
     },
 
     

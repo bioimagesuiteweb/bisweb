@@ -615,6 +615,9 @@ class ViewerApplicationElement extends HTMLElement {
                                            save: true,
                                            filters : [ { name: 'Application State File', extensions: ['biswebstate']}],
                                            suffix : "biswebstate",
+                                           initialCallback : () => {
+                                               return self.applicationName+".biswebstate";
+                                           }
                                        });
         webutil.createMenuItem(bmenu,'');
         webutil.createMenuItem(bmenu, 'Restart Application',
