@@ -56,7 +56,9 @@ class BisWebDataObject {
      */
     setFilename(s)  {
         if (typeof s==='object')
-            s=s.name;
+            s=s.name || '';
+        else
+            s=s || '';
         this.filename=s;
     }
 
