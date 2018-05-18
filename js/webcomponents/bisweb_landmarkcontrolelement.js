@@ -15,7 +15,7 @@
  
  ENDLICENSE */
 
-/* global setTimeout,HTMLElement,document */
+/* global setTimeout,HTMLElement */
 
 
 "use strict";
@@ -28,7 +28,7 @@ const webutil=require('bis_webutil');
 const bisgenericio=require('bis_genericio');
 const $=require('jquery');
 const bootbox=require('bootbox');
-
+const webfileutil = require('bis_webfileutil');
 
 import dat from 'dat.gui';
 
@@ -854,19 +854,19 @@ class LandmarkControlElement extends HTMLElement {
 			     });
 
 	let load_cb=function(f) { self.loadlandmarks(f); };
-	webutil.createfilebutton({ type : "warning",
-				   name : "Load",
-				   position : "bottom",
-				   tooltip : "Click this to load points from either a .land or a .ljson file",
-				   parent : bbar1,
-				   callback : load_cb,
-				   accept : ".ljson,.land",
-				 },{
-				     filename : '',
-				     title    : 'Select file to load current landmark set from',
-				     filters  : [ { name: 'Landmark Files', extensions: ['ljson','land' ]}],
-				     save : false,
-				 });
+	webfileutil.createFileButton({ type : "warning",
+				       name : "Load",
+				       position : "bottom",
+				       tooltip : "Click this to load points from either a .land or a .ljson file",
+				       parent : bbar1,
+				       callback : load_cb,
+				     },{
+				         filename : '',
+				         title    : 'Select file to load current landmark set from',
+				         filters  : [ { name: 'Landmark Files', extensions: ['ljson','land' ]}],
+				         save : false,
+                                         suffix : ".ljson,.land",
+                                     });
 
 	let save_cb=function() { self.savelandmarks();};
 	

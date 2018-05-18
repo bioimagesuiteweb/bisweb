@@ -1,19 +1,19 @@
 /*  LICENSE
- 
- _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
- 
- BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
- 
- - you may not use this software except in compliance with the License.
- - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
- 
- __Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.__
- 
- ENDLICENSE */
+    
+    _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+    
+    BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+    
+    - you may not use this software except in compliance with the License.
+    - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+    
+    __Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.__
+    
+    ENDLICENSE */
 
 /* global window */
 
@@ -28,6 +28,7 @@ const userPreferences = require('bisweb_userpreferences.js');
 const path=bisgenericio.getpathmodule();
 const fs=bisgenericio.getfsmodule();
 const misac=require('../node/misac_util');
+const webfileutil = require('bis_webfileutil');
 
 // -------------------------------------------------------------------------
 
@@ -80,7 +81,7 @@ class ParavisionImportElement extends HTMLElement {
 
     }
 
-        /** actual GUI creation when main class is ready
+    /** actual GUI creation when main class is ready
      * The parent element is internal.parentDomElement
      * @alias ParavisionImportElementInternal~onDemandCreateGUI
      */
@@ -167,49 +168,49 @@ class ParavisionImportElement extends HTMLElement {
                              });
         
 
-	    webutil.createfilebutton({ type : "danger",
-		                           name : 'Import Images from Paravision Study',
-				                   parent : basediv0,
-                                   css : { 'width' : '90%' , 'margin' : '3px' },
-				                   callback : function(f) {
-                                       self.importfiles(f);
-                                   },
-				                   accept : ".json",
-				                 },{
-                                     title: 'Directory to import study from',
-                                     filters:  'DIRECTORY',
-		                             save : false,
-                                 });
+        webfileutil.createFileButton({ type : "danger",
+                                       name : 'Import Images from Paravision Study',
+                                       parent : basediv0,
+                                       css : { 'width' : '90%' , 'margin' : '3px' },
+                                       callback : function(f) {
+                                           self.importfiles(f);
+                                       },
+                                     },{
+                                         title: 'Directory to import study from',
+                                         filters:  'DIRECTORY',
+                                         save : false,
+                                     });
         
-        webutil.createfilebutton({ type : "default",
-		                           name : 'Load Existing Job',
-				                   parent : basediv0,
-                                   css : { 'width' : '90%' , 'margin' : '3px' },
-				                   callback : function(f) {
-                                       self.importjob(f);
-                                   },
-				                   accept : "",
-				                 },{
-                                     title: 'Json formatted file',
-                                     filters:  [ { name: 'JSON Files', extensions: ['json' ]}],
-		                             title    : 'Select the file to load from',
-		                             save : false,
-                                 });
+        webfileutil.createFileButton({ type : "default",
+                                       name : 'Load Existing Job',
+                                       parent : basediv0,
+                                       css : { 'width' : '90%' , 'margin' : '3px' },
+                                       callback : function(f) {
+                                           self.importjob(f);
+                                       },
+                                     },{
+                                         title: 'Json formatted file',
+                                         filters:  [ { name: 'JSON Files', extensions: ['json' ]}],
+                                         title    : 'Select the file to load from',
+                                         save : false,
+                                         suffix : "",
+                                     });
         
         
-        webutil.createfilebutton({ type : "primary",
-			                       name : "Save",
-			                       parent : basediv0,
-                                   css : { 'width' : '90%' , 'margin' : '3px' },
-			                       callback : function(f) {
-                                       self.savejob(f);
-                                   }
-                                 },{
-                                     title: 'Json formatted file',
-                                     filters:  [ { name: 'JSON Files', extensions: ['json' ]}],
-		                             title    : 'Select the file to save to',
-		                             save : true,
-                                 });
+        webfileutil.createFileButton({ type : "primary",
+                                       name : "Save",
+                                       parent : basediv0,
+                                       css : { 'width' : '90%' , 'margin' : '3px' },
+                                       callback : function(f) {
+                                           self.savejob(f);
+                                       }
+                                     },{
+                                         title: 'Json formatted file',
+                                         filters:  [ { name: 'JSON Files', extensions: ['json' ]}],
+                                         title    : 'Select the file to save to',
+                                         save : true,
+                                         suffix : "json",
+                                     });
         
     }
 
@@ -265,7 +266,7 @@ class ParavisionImportElement extends HTMLElement {
             }
             return [0,0,0];
         }
-            
+        
         
         //const imagelabels=['None','3DAnatomical','2DAnatomical','EPI','FieldMap','Angio','AngioAnatomical','DTI','DTIResult'  ];
         if (!tagvalue) {
@@ -412,9 +413,10 @@ class ParavisionImportElement extends HTMLElement {
             internal.this.internalimportfiles2(f,fout);
         };
         
-        webutil.electronFileCallback({filters : "DIRECTORY",
-                                      title : "Select Directory to store output files",
-                                     },clb);
+        webfileutil.electronFileCallback({filters : "DIRECTORY",
+                                          title : "Select Directory to store output files",
+                                          save : false,
+                                         },clb);
         
     }
     
@@ -426,13 +428,13 @@ class ParavisionImportElement extends HTMLElement {
         const self=this;
         const internal=this.internal;
         let dirname=path.resolve(path.dirname(f));
-            
+        
         
         let loaderror = function(e) {
             webutil.createAlert('Failed to read job from' +f + " ("+e+")");
             return;
         };
-            
+        
         bisgenericio.readJSON(f,"ParavisionJob").then( (obj) => {
             obj=obj.data;
             let data=obj.job;
