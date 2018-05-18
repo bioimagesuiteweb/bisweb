@@ -27,13 +27,15 @@
 const $=require('jquery');
 const webutil=require('bis_webutil');
 const bisweb_dropbox=require('bisweb_simpledropbox');
-
+const bisweb_onedrive=require('bisweb_simpleonedrive');
+const bisweb_googledrive=require('bisweb_drivemodule');
 
 const userPreferences = require('bisweb_userpreferences.js');
 const bisdbase = require('bisweb_dbase');
 const keystore=require('bis_keystore');
 const dkey=keystore.DropboxAppKey || "";
-const gkey="";//keystore.GoogleDriveKey || "";
+const gkey=keystore.GoogleDriveKey || "";
+const mkey=keystore.OneDriveKey || "";
 const userPreferencesLoaded = userPreferences.webLoadUserPreferences(bisdbase);
 
 
@@ -45,7 +47,7 @@ let fileMode='local';
 const webfileutils = {
 
     needModes : function() {
-        if (dkey.length>0 || gkey.length>0)
+        if (dkey.length>0 || gkey.length>0 || mkey.length>0)
             return true;
         return false;
     },
@@ -60,7 +62,9 @@ const webfileutils = {
         if (dkey.length>1)
             s.push({ value: "dropbox", text: "Dropbox" });
         if (gkey.length>1) 
-            s.push({ value: "google", text: "Google Drive" });
+            s.push({ value: "googledrive", text: "Google Drive" });
+        if (mkey.length>1) 
+            s.push({ value: "onedrive", text: "Microsoft OneDrive" });
 
         console.log('dkey=',dkey,'gkey=',gkey,'modes=',s.join(","));
         return s;
@@ -71,12 +75,16 @@ const webfileutils = {
         m=m || 'local';
         if (m==="dropbox" && dkey!=="")
             fileMode="dropbox";
-        else if (m==="google" && gkey!=="")
+        else if (m==="googledrive" && gkey!=="")
             fileMode="googledrive";
+        else if (m==="onedrive" && mkey!=="")
+            fileMode="onedrive";
         else
             fileMode="local";
 
         console.log(`fileMode=${fileMode}`);
+        userPreferences.setItem('filesource',fileMode);
+        userPreferences.storeUserPreferences();
     },
 
     
@@ -203,6 +211,26 @@ const webfileutils = {
             fileopts.suffix=suffix;
             return bisweb_dropbox.pickReadFile(fileopts,callback);
         }
+
+        if (fileMode==='onedrive') { 
+            fileopts.suffix=suffix;
+            return bisweb_onedrive.pickReadFile(fileopts,callback);
+        }
+
+        
+        if (fileMode==="googledrive") {
+            bisweb_googledrive.create().then( () => {
+                bisweb_googledrive.pickReadFile("").then(
+                    (obj) => {
+                        callback(obj[0]);
+                    }
+                ).catch((e) => { console.log('Error in Google drive', e); });
+            }).catch( (e) => { console.log(e);
+                               webutil.createAlert("Failed to intitialize google drive connection", true);
+                             });
+            return;
+        }
+        
         console.log('Here',fileMode);
         
         let loadelement = $('<input type=\"file\" style=\"visibility: hidden;\" accept=\"' + suffix + '\" />');
@@ -339,9 +367,7 @@ const webfileutils = {
                                                       initial,
                                                       self.getModeList()
                                                      ).then( (m) => {
-                                                         userPreferences.setItem('filesource',m);
                                                          self.setMode(m);
-                                                         userPreferences.storeUserPreferences();
                                                      }).catch((e) => {
                                                          console.log('Error ', e);
                                                      });
