@@ -141,23 +141,31 @@ class ViewerApplicationElement extends HTMLElement {
     // --------------------------------------------------------------------------------
     /** Save image from viewer to a file */
     saveImage(fname, viewerno = 0) {
-
-        const self=this;
         let index = viewerno + 1;
-        let img = self.VIEWERS[viewerno].getimage();
+        let img = this.VIEWERS[viewerno].getimage();
         let name = "image " + index;
         bisweb_apputil.saveImage(img, fname, name);
     }
 
+    getSaveImageInitialFilename(viewerno = 0) {
+        let img = this.VIEWERS[viewerno].getimage();
+        return img.getFilename();
+    }
+
+    
     /** Save image from viewer to a file */
     saveOverlay(fname, viewerno = 0) {
 
-        let self=this;
-        console.log('In Save Objectmap',viewerno);
         let index = viewerno + 1;
-        let img = self.VIEWERS[viewerno].getobjectmap();
+        let img = this.VIEWERS[viewerno].getobjectmap();
         let name = "objectmap " + index;
         bisweb_apputil.saveImage(img, fname, name);
+    }
+
+    getSaveOverlayInitialFilename(viewerno = 0) {
+
+        let img = this.VIEWERS[viewerno].getobjectmap();
+        return img.getFilename();
     }
 
     
@@ -223,13 +231,15 @@ class ViewerApplicationElement extends HTMLElement {
 
             webfileutil.createFileMenuItem(fmenu[viewerno], 'Save Image',
                                            function (f) {
-                                               console.log(f);
                                                self.saveImage(f, viewerno); },
                                            {
                                                title: 'Save Image',
                                                save: true,
                                                filters: "NII",
                                                suffix : "NII",
+                                               initialCallback : () => {
+                                                   return self.getSaveImageInitialFilename(viewerno);
+                                               }
                                            });
             
             
@@ -237,9 +247,9 @@ class ViewerApplicationElement extends HTMLElement {
 
 
 
-            if (!webutil.inElectronApp()) {
-                bisweb_apputil.createCloudLoadMenuItems(fmenu[viewerno], 'Image', load_image, viewerno);
-            }
+            //            if (!webutil.inElectronApp()) {
+            //              bisweb_apputil.createCloudLoadMenuItems(fmenu[viewerno], 'Image', load_image, viewerno);
+            //        }
             bisweb_apputil.createMNIImageLoadMenuEntries(fmenu[viewerno], load_image, viewerno);
 
 
@@ -278,6 +288,9 @@ class ViewerApplicationElement extends HTMLElement {
                                                    save: true,
                                                    filters: "NII",
                                                    suffix : "NII",
+                                                   initialCallback : () => {
+                                                       return self.getSaveOverlayInitialFilename(viewerno);
+                                                   }
                                                });
 
                 webutil.createMenuItem(objmenu[viewerno], ''); // separator
@@ -572,6 +585,9 @@ class ViewerApplicationElement extends HTMLElement {
 
         fobj=genericio.getFixedSaveFileName(fobj,self.applicationName+".biswebstate");
         
+        
+        console.log('fobj=',fobj);
+        
         return new Promise(function (resolve, reject) {
             genericio.write(fobj, output).then((f) => {
                 resolve(f);
@@ -619,6 +635,10 @@ class ViewerApplicationElement extends HTMLElement {
                                                return self.applicationName+".biswebstate";
                                            }
                                        });
+
+        
+        webfileutil.createFileSourceSelector(bmenu);
+        
         webutil.createMenuItem(bmenu,'');
         webutil.createMenuItem(bmenu, 'Restart Application',
                                function () {
