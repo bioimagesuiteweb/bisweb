@@ -26,11 +26,60 @@
 
 const $=require('jquery');
 const webutil=require('bis_webutil');
+const bisweb_dropbox=require('bisweb_simpledropbox');
+
+
+const userPreferences = require('bisweb_userpreferences.js');
+const bisdbase = require('bisweb_dbase');
+const keystore=require('bis_keystore');
+const dkey=keystore.DropboxAppKey || "";
+const gkey="";//keystore.GoogleDriveKey || "";
+const userPreferencesLoaded = userPreferences.webLoadUserPreferences(bisdbase);
 
 
 
-module.exports = {
+// Initial mode
+let fileMode='local';
 
+
+const webfileutils = {
+
+    needModes : function() {
+        if (dkey.length>0 || gkey.length>0)
+            return true;
+        return false;
+    },
+
+    getMode: function() {
+        return fileMode;
+    },
+    
+    getModeList : function() {
+        let s=[ { value: "local", text: "Local FileSystem" }];
+
+        if (dkey.length>1)
+            s.push({ value: "dropbox", text: "Dropbox" });
+        if (gkey.length>1) 
+            s.push({ value: "google", text: "Google Drive" });
+
+        console.log('dkey=',dkey,'gkey=',gkey,'modes=',s.join(","));
+        return s;
+    },
+    
+    setMode : function(m='') {
+
+        m=m || 'local';
+        if (m==="dropbox" && dkey!=="")
+            fileMode="dropbox";
+        else if (m==="google" && gkey!=="")
+            fileMode="googledrive";
+        else
+            fileMode="local";
+
+        console.log(`fileMode=${fileMode}`);
+    },
+
+    
     /** function to create a hidden input type="file" button and add it to body
      * @alias WebFileUtil.createHiddenInputFile
      * @param {function} callback - callback to call
@@ -143,11 +192,18 @@ module.exports = {
         let suffix = fileopts.suffix || '';
         if (suffix === "NII")
             suffix = '.nii,.nii.gz,.gz,.tiff';
+        
 
         if (fileopts.save) {
             callback({});
             return;
-        } 
+        }
+        
+        if (fileMode==='dropbox') { 
+            fileopts.suffix=suffix;
+            return bisweb_dropbox.pickReadFile(fileopts,callback);
+        }
+        console.log('Here',fileMode);
         
         let loadelement = $('<input type=\"file\" style=\"visibility: hidden;\" accept=\"' + suffix + '\" />');
         loadelement[0].addEventListener('change', function (f) {
@@ -155,6 +211,7 @@ module.exports = {
             f.preventDefault();
             callback(f.target.files[0]);
         });
+        loadelement[0].click();
     },
 
 
@@ -269,4 +326,44 @@ module.exports = {
                                        "background-color: #303030; color: #ffffff; font-size:13px; margin-bottom: 2px");
     },
 
+    // -------------------------------------------------------------------------
+    createFileSourceSelector : function(bmenu,name="Set File Source",separator=true) {
+
+        const self=this;
+        
+        let fn=function() {
+            userPreferencesLoaded.then(() => {
+                let initial=userPreferences.getItem('filesource') || 'local';
+                webutil.createRadioSelectModalPromise(`<H4>Select file source</H4><HR>`,
+                                                      "Close",
+                                                      initial,
+                                                      self.getModeList()
+                                                     ).then( (m) => {
+                                                         userPreferences.setItem('filesource',m);
+                                                         self.setMode(m);
+                                                         userPreferences.storeUserPreferences();
+                                                     }).catch((e) => {
+                                                         console.log('Error ', e);
+                                                     });
+            });
+        };
+        
+        if (!webutil.inElectronApp() && this.needModes()) {
+            if (separator)
+                webutil.createMenuItem(bmenu,'');
+            webutil.createMenuItem(bmenu, "Set File Source", fn);
+        }
+    },
+
 };
+
+
+userPreferencesLoaded.then(() => {
+    let f=userPreferences.getItem('filesource') || 'local';
+    console.log('Initial File Source=',f);
+    webfileutils.setMode(f);
+});
+
+module.exports=webfileutils;
+
+                          
