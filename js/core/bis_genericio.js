@@ -1004,6 +1004,12 @@ let getFixedLoadFileName = function(fobj) {
             return fobj.name;
     }
 
+    if (fobj.indexOf("?=realname=")>0) {
+        let a=fobj.indexOf("?=realname=");
+        let n=fobj.length;
+        return fobj.substr(a+11,n-a);
+    }
+
     if (fobj.indexOf("http")===0) {
         // Url -- try to get the last parts
 
