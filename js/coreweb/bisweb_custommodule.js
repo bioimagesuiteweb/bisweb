@@ -19,10 +19,11 @@
 
 const parser = require('bisweb_webparser.js');
 const webutil = require('bis_webutil.js');
+const webfileutil = require('bis_webfileutil');
 const BiswebImage = require('bisweb_image.js');
 const $ = require('jquery');
 const bootbox = require('bootbox');
-
+const bisgenericio=require("bis_genericio");
 
 /**
  * @namespace bisWebCustomModule
@@ -300,13 +301,10 @@ class CustomModule {
     }
 
     /** load parameters from file
-     * @param{FileObject} f - the file object to load from
+     * @param{FileObject} fobj - the file object to load from
      */
-    loadParameters(f) {
-        let fname=f;
-        if (f.name)
-            fname=f.name;
-        this.module.loadParameters(f).then( (obj) => {
+    loadParameters(fobj) {
+        this.module.loadParameters(fobj).then( (obj) => {
             this.description.params.forEach((param) => {
                 let varname=param.varname;
                 if (obj[varname]) {
@@ -316,22 +314,29 @@ class CustomModule {
             });
             this.updateModuleGUIFromInputObjects();
         }).catch( (e) => {
+            let fname=bisgenericio.getFixedLoadFileName(fobj);
             webutil.createAlert(`Failed to load parameters from ${fname} (${e})`,true);
         });
     }
 
     /** save parameters to a file
+     * @param{FileObject} fobj - the file object to save to (this might be a mouse event)
      */
-    saveParameters() {
-        let date = new Date();
-        let year = date.getFullYear();
-        let month = date.getMonth() + 1;
-        month = (month < 10 ? "0" : "") + month;
-        let day  = date.getDate();
-        day = (day < 10 ? "0" : "") + day;
-        let extra=year+"_"+month+"_"+day;
+    saveParameters(fobj=null) {
 
-        this.module.saveParameters(this.module.name+'_'+extra+'.param',this.guiVars);
+        fobj=bisgenericio.getFixedSaveFileName(fobj,"None");
+        
+        if (fobj === "None") {
+            let date = new Date();
+            let year = date.getFullYear();
+            let month = date.getMonth() + 1;
+            month = (month < 10 ? "0" : "") + month;
+            let day  = date.getDate();
+            day = (day < 10 ? "0" : "") + day;
+            let extra=year+"_"+month+"_"+day;
+            fobj=this.module.name+'_'+extra+'.param';
+        }
+        this.module.saveParameters(fobj,this.guiVars);
     }
 
     
@@ -423,22 +428,29 @@ class CustomModule {
                 });
                 
                 
-                webutil.createDropdownItem(
+                webfileutil.createDropdownFileItem(
                     dropmenu,'Load Parameters', function(f) {
                         self.loadParameters(f);
                     },
-                    [{ name: 'Parameter Files', extensions: ['param',] }],
-                    { title : 'Load Parameters',  save : false}
+                    { filters: [ { name: 'Parameter Files', extensions: ['param'] } ],
+                      title : 'Load Parameters',
+                      save : false,
+                      suffix : "param"
+                    }
                 );
                 
                 
-                webutil.createDropdownItem(dropmenu,'Save Parameters',
-                                           function(f) {  self.saveParameters(f);  },
-                                           '',
-                                           { title : 'Save Parameters',
-                                             save : true,
-                                             filters : [{ name: 'Parameter Files', extensions: ['param',] }]
-                                           });
+                webfileutil.createDropdownFileItem(dropmenu,'Save Parameters',
+                                                   function(f) {
+                                                       self.saveParameters(f);
+                                                   },
+                                                   {
+                                                       title : 'Save Parameters',
+                                                       save : true,
+                                                       filters : [{ name: 'Parameter Files', extensions: ['param']}],
+                                                       suffix: "param",
+                                                   }
+                                                  );
 
 
                 if (this.description.url) {

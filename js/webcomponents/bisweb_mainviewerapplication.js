@@ -22,6 +22,7 @@
 const bisweb_apputil = require("bisweb_apputilities.js");
 const BisWebImage = require('bisweb_image');
 const webutil = require('bis_webutil');
+const webfileutil = require('bis_webfileutil');
 const FastClick = require('fastclick');
 const userPreferences = require('bisweb_userpreferences.js');
 const $ = require('jquery');
@@ -210,20 +211,27 @@ class ViewerApplicationElement extends HTMLElement {
             // ----------------------------------------------------------
             fmenu[viewerno] = webutil.createTopMenuBarMenu(fmenuname, menubar);
             
-            webutil.createMenuItem(fmenu[viewerno], 'Load Image',
-                                   function (f) {
-                                       self.loadImage(f, viewerno);
-                                   }, 'NII',
-                                   { title: 'Load image', save: false });
+            webfileutil.createFileMenuItem(fmenu[viewerno], 'Load Image',
+                                           function (f) {
+                                               self.loadImage(f, viewerno);
+                                           },
+                                           { title: 'Load image',
+                                             save: false,
+                                             suffix: 'NII',
 
-            webutil.createMenuItem(fmenu[viewerno], 'Save Image',
-                                   function (f) { self.saveImage(f, viewerno); },
-                                   '',
-                                   {
-                                       title: 'Save Image',
-                                       save: true, filters: "NII",
-                                   });
+                                           });
 
+            webfileutil.createFileMenuItem(fmenu[viewerno], 'Save Image',
+                                           function (f) {
+                                               console.log(f);
+                                               self.saveImage(f, viewerno); },
+                                           {
+                                               title: 'Save Image',
+                                               save: true,
+                                               filters: "NII",
+                                               suffix : "NII",
+                                           });
+            
             
             webutil.createMenuItem(fmenu[viewerno], ''); // separator
 
@@ -255,19 +263,22 @@ class ViewerApplicationElement extends HTMLElement {
 
             } else {
                 
-                webutil.createMenuItem(objmenu[viewerno], 'Load Overlay',
-                                       function (f) {
-                                           self.loadOverlay(f, viewerno);
-                                       }, 'NII',
-                                       { title: 'Load overlay', save: false });
+                webfileutil.createFileMenuItem(objmenu[viewerno], 'Load Overlay',
+                                               function (f) {
+                                                   self.loadOverlay(f, viewerno);
+                                               }, 
+                                               { title: 'Load overlay', save: false, suffix: "NII" });
                 
-                webutil.createMenuItem(objmenu[viewerno], 'Save Overlay',
-                                       function (f) { self.saveOverlay(f, viewerno); },
-                                       '',
-                                       {
-                                           title: 'Save Overlay',
-                                           save: true, filters: "NII",
-                                       });
+                webfileutil.createFileMenuItem(objmenu[viewerno], 'Save Overlay',
+                                               function (f) {
+                                                   self.saveOverlay(f, viewerno);
+                                               },
+                                               {
+                                                   title: 'Save Overlay',
+                                                   save: true,
+                                                   filters: "NII",
+                                                   suffix : "NII",
+                                               });
 
                 webutil.createMenuItem(objmenu[viewerno], ''); // separator
 
@@ -308,8 +319,8 @@ class ViewerApplicationElement extends HTMLElement {
         const self=this;
         
         let load=function(fname,v,a) {
-            
-            let n= fname.name || fname;
+
+            let n=genericio.getFixedLoadFileName(fname);
             let ext=n.split(".").pop();
             if (ext==="biswebstate") {
                 self.loadApplicationState(fname);
@@ -320,9 +331,6 @@ class ViewerApplicationElement extends HTMLElement {
             }
         };
 
-        
-        console.log('Here');
-        
         if (webutil.inElectronApp()) {
             let title = $(document).find("title").text();
             setTimeout(function () {
@@ -372,11 +380,11 @@ class ViewerApplicationElement extends HTMLElement {
         webutil.createMenuItem(hmenu,'About this application',function() {  webutil.aboutDialog(); });
         
         /*        let helpdialog = document.createElement('bisweb-helpvideoelement');
-        webutil.createMenuItem(hmenu, 'About Video',
-                               function () {
-                                   helpdialog.displayVideo();
-                               });
-        webutil.createMenuItem(hmenu, ''); // separator*/
+                  webutil.createMenuItem(hmenu, 'About Video',
+                  function () {
+                  helpdialog.displayVideo();
+                  });
+                  webutil.createMenuItem(hmenu, ''); // separator*/
 
         
         this.addOrientationSelectToMenu(hmenu,userPreferencesLoaded);
@@ -460,7 +468,7 @@ class ViewerApplicationElement extends HTMLElement {
         } else {
             webutil.createMenuItem(gmenu, 'Viewer Info', function () { self.VIEWERS[0].viewerInformation(); });
         }
-            
+        
     }
 
     //  ---------------------------------------------------------------------------
@@ -480,7 +488,7 @@ class ViewerApplicationElement extends HTMLElement {
         }
         return obj;
     }
-        
+    
     /** Set the element state from a dictionary object 
         @param {object} state -- the state of the element */
     setElementState(dt=null,name="") {
@@ -491,7 +499,7 @@ class ViewerApplicationElement extends HTMLElement {
         let numviewers=this.VIEWERS.length;
         if (name==="overlayviewer" && this.applicationName!=="overlayviewer")
             numviewers=1;
-            
+        
         for (let i=0;i<numviewers;i++) {
             let name=`viewer${i+1}`;
             let elem=dt[name] || null;
@@ -553,8 +561,6 @@ class ViewerApplicationElement extends HTMLElement {
      */
     saveApplicationState(fobj) {
 
-        console.log(fobj);
-        
         const self=this;
         
         this.storeState(true);
@@ -564,13 +570,10 @@ class ViewerApplicationElement extends HTMLElement {
             "params" : this.saveState,
         },null,4);
 
-        if (typeof fobj === "object")
-            fobj=self.applicationName+".biswebstate";
+        fobj=genericio.getFixedSaveFileName(fobj,self.applicationName+".biswebstate");
         
         return new Promise(function (resolve, reject) {
             genericio.write(fobj, output).then((f) => {
-                if (fobj.name)
-                    fobj=fobj.name;
                 resolve(f);
             }).catch((e) => { reject(e); });
         });
@@ -590,25 +593,29 @@ class ViewerApplicationElement extends HTMLElement {
 
         const self=this;
         let bmenu=webutil.createTopMenuBarMenu("File", menubar);
-        webutil.createMenuItem(bmenu,'Load Application State', function(f) {
-                                   self.loadApplicationState(f);
-                               },
-                               "biswebstate",
-                               { title: 'Load Application State', save: false }
-                              );
+        webfileutil.createFileMenuItem(bmenu,'Load Application State',
+                                       function(f) {
+                                           self.loadApplicationState(f);
+                                       },
+                                       { title: 'Load Application State',
+                                         save: false,
+                                         filters : [ { name: 'Application State File', extensions: ['biswebstate']}],
+                                         suffix : "biswebstate",
+                                       }
+                                      );
         
 
 
-        webutil.createMenuItem(bmenu, 'Save Application State',
-                               function (f) {
-                                   self.saveApplicationState(f);
-                               },
-                               '',
-                               {
-                                   title: 'Save Application State',
-                                   save: true,
-                                   filters : [ { name: 'Application State File', extensions: ['biswebstate']}],
-                               });
+        webfileutil.createFileMenuItem(bmenu, 'Save Application State',
+                                       function (f) {
+                                           self.saveApplicationState(f);
+                                       },
+                                       {
+                                           title: 'Save Application State',
+                                           save: true,
+                                           filters : [ { name: 'Application State File', extensions: ['biswebstate']}],
+                                           suffix : "biswebstate",
+                                       });
         webutil.createMenuItem(bmenu,'');
         webutil.createMenuItem(bmenu, 'Restart Application',
                                function () {

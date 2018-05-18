@@ -20,13 +20,14 @@
 /*global document,HTMLElement */
 
 
-const bisweb_image = require('bisweb_image');
+const BisWebImage = require('bisweb_image');
 const webutil=require('bis_webutil');
 const FastClick=require('fastclick');
 const $=require('jquery'); 	
 const bootbox=require('bootbox');
 const numeric=require('numeric');
 const util=require('bis_util');
+const webfileutil = require('bis_webfileutil');
 
 /**
  * A Application Level Element that creates a Connectivity Application
@@ -57,8 +58,8 @@ class ConnectivityApplicationElement extends HTMLElement {
         };
         
         /** Callback to load an image
-         * @alias BisMain_ConnectivityViewer~imageread
-         * @param {bis_image} vol - the image to load
+         * @alias BisMain_ConnectivityViewer~objectmapread
+         * @param {BisWebImage} vol - the image to load
          */
         var objectmapread = function ( vol ) {
             console.log('+++++ Objectmap :',vol.getDescription());
@@ -80,15 +81,23 @@ class ConnectivityApplicationElement extends HTMLElement {
             VIEWER.viewer.setobjectmap(vol,true);
         };
         
-        var imageread = function ( vol ) {
-            VIEWER.viewer.setimage(vol);
-            VIEWER.viewer.setcoordinates([90,126,72]);
-            let image1 = new bisweb_image();
-            image1.load('images/gray_highres_groupncut150_right5_left1_emily_reord_new.nii.gz',true)
+
+        var loadatlas=function(fname) {
+
+            let image0 = new BisWebImage();
+            image0.load('images/MNI_T1_1mm_stripped_ras.nii.gz',"RAS")
                 .then(function() {
-                    objectmapread(image1);
-                })
-                .catch( (e) => { myerror(e); });
+                    VIEWER.viewer.setimage(image0);
+                    VIEWER.viewer.setcoordinates([90,126,72]);
+                    let image1 = new BisWebImage();
+                    image1.load(fname,"RAS").then(function() {
+                        objectmapread(image1);
+                    }).catch( (e) => {
+                        myerror(e);
+                    });
+                }).catch( (e) => {
+                    myerror(e);
+                });
         };
         
         var myerror =function(e) {
@@ -113,36 +122,35 @@ class ConnectivityApplicationElement extends HTMLElement {
         let menubar=document.querySelector(menubarid).getMenuBar();
 
         var fmenu=webutil.createTopMenuBarMenu("File",menubar).attr('id','bisfilemenu');
-        webutil.createMenuItem(fmenu,'Load Node Definition File',
-                               function(e) {  control.loadparcellationfile(e);},
-                               '.parc',
-                               { title : 'Node Definition File',
-                                 save : false,
-                                 filters : [ { name: 'JSON formatted Node definition file', extensions: ['parc']}],
-                               });
+        webfileutil.createFileMenuItem(fmenu,'Load Node Definition File',
+                                       function(e) {  control.loadparcellationfile(e);},
+                                       { title : 'Node Definition File',
+                                         save : false,
+                                         filters : [ { name: 'JSON formatted Node definition file', extensions: ['parc']}],
+                                         suffix : '.parc',
+                                       });
         webutil.createMenuItem(fmenu,''); // separator
         
-        webutil.createMenuItem(fmenu,'Load Positive Matrix',
-                               function(f) {  control.loadmatrix(0,f);},
-                               '.csv,.txt',
-                               { title : 'Postive Connectivity Matrix',
-                                 save : false,
-                                 filters : [ { name: 'Text or CSV formatted matrix file', extensions: ['txt', 'csv']}],
-                               });
+        webfileutil.createFileMenuItem(fmenu,'Load Positive Matrix',
+                                       function(f) {  control.loadmatrix(0,f);},
+                                       { title : 'Postive Connectivity Matrix',
+                                         save : false,
+                                         filters : [ { name: 'Text or CSV formatted matrix file', extensions: ['txt', 'csv']}],
+                                         suffix : '.csv,.txt',
+                                       });
         
         
-        webutil.createMenuItem(fmenu,'Load Negative Matrix',
-                               function(f) {  control.loadmatrix(1,f);},
-                               '.csv,.txt',
-                               { title : 'Negative Connectivity Matrix',
-                                 save : false,
-                                 filters : [ { name: 'Text or CSV formatted matrix file', extensions: ['txt', 'csv']}],
-                               });
+        webfileutil.createFileMenuItem(fmenu,'Load Negative Matrix',
+                                       function(f) {  control.loadmatrix(1,f);},
+                                       { title : 'Negative Connectivity Matrix',
+                                         save : false,
+                                         filters : [ { name: 'Text or CSV formatted matrix file', extensions: ['txt', 'csv']}],
+                                         suffix : '.csv,.txt',
+                                       });
         
         webutil.createMenuItem(fmenu,''); // separator
         
-        webutil.createMenuItem(fmenu,'Clear Matrices',function() { control.clearmatrices() ; 
-                                                                 });
+        webutil.createMenuItem(fmenu,'Clear Matrices',function() { control.clearmatrices(); });
         
         
         // ------------------------------------ Edit Menu ----------------------------
@@ -169,27 +177,45 @@ class ConnectivityApplicationElement extends HTMLElement {
         webutil.createMenuItem(viewmenu,'Set 3D View To Left',function() { viewer.set3dview(0,false); });
         webutil.createMenuItem(viewmenu,'Set 3D View To Right',function() { viewer.set3dview(0,true); });
         
+
+        // ------------------------------------ Parcellations Menu ----------------------------
+        
+        var imenu=webutil.createTopMenuBarMenu("Parcellations",menubar);
+        webutil.createMenuItem(imenu,'Use the Shen Atlas',
+                               function() {
+                                   loadatlas('images/gray_highres_groupncut150_right5_left1_emily_reord_new.nii.gz');
+                               });
+        webutil.createMenuItem(imenu,'Use the AAL Atlas',
+                               function() {
+                                   let img=new BisWebImage();
+                                   img.load('images/AAL_1mm_ras.nii.gz','RAS').then( () => {
+                                       control.importparcellation(img,'AAL Atlas');
+                                   });
+                               });
         // ------------------------------------ Advanced Menu ----------------------------
         
         var advmenu=webutil.createTopMenuBarMenu("Advanced",menubar);
-        webutil.createMenuItem(advmenu,'Import Node Positions Text File (in MNI coordinates)',
-                               function(f) {  control.importparcellationtext(f);},
-                               '.txt,.csv',
-                               { title : 'Node definitions file',
-                                 save : false,
-                                 filters : [ { name: 'Text or CSV formatted file', extensions: ['txt', 'csv']}],
-                               });
+        webfileutil.createFileMenuItem(advmenu,'Import Node Positions Text File (in MNI coordinates)',
+                                       function(f) {  control.importparcellationtext(f);},
+                                       { title : 'Node definitions file',
+                                         save : false,
+                                         filters : [ { name: 'Text or CSV formatted file', extensions: ['txt', 'csv']}],
+                                         suffix : '.txt,.csv',
+                                       });
         
-        webutil.createMenuItem(advmenu,'Import Node Definition (Parcellation) Image',
-                               function(f) {
-                                   let img=new bisweb_image();
-                                   img.load(f,false)
-                                       .then(function() {
-                                           control.importparcellation(img);
-                                       })
-                                       .catch( (e) => { myerror(e); });
-                               },'NII',
-                               { title : 'Node definitions image',  save : false});
+        webfileutil.createFileMenuItem(advmenu,'Import Node Definition (Parcellation) Image',
+                                       function(f) {
+                                           let img=new BisWebImage();
+                                           img.load(f,"RAS")
+                                               .then(function() {
+                                                   control.importparcellation(img);
+                                               })
+                                               .catch( (e) => { myerror(e); });
+                                       },
+                                       { title : 'Node definitions image',
+                                         suffix : 'NII',
+                                         save : false
+                                       });
         
         
         // ------------------------------------ Help Menu ----------------------------
@@ -211,10 +237,6 @@ class ConnectivityApplicationElement extends HTMLElement {
         
         // ------------------------------------ Initialize ---------------------------
         
-        let image0 = new bisweb_image();
-        image0.load('images/MNI_T1_1mm_stripped_ras.nii.gz',false)
-            .then(function() { imageread(image0); })
-            .catch( (e) => { myerror(e); });
         new FastClick(document.body);
         
         var HandleFiles = function(files) {
@@ -228,6 +250,9 @@ class ConnectivityApplicationElement extends HTMLElement {
             }
         };
         webutil.createDragAndCropController(HandleFiles);
+
+
+        loadatlas('images/gray_highres_groupncut150_right5_left1_emily_reord_new.nii.gz');
         
         
         //      window.onbeforeunload = function() {

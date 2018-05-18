@@ -903,7 +903,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         if (!silent) {
             webutil.createAlert('Connectivity Viewer initialized. The node definition loaded is from '+internal.parcellation.description+'.',
                                 false);
-            //bootbox.alert('Connectivity Viewer initialized. The node definition loaded is from '+internal.parcellation.description+'.');
         }
         internal.orthoviewer.clearobjectmap();
         cleanmatrixdata();
@@ -1015,7 +1014,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
     // Reads BioImage Suite atlas file gets a description and off to callback
     // @param {callback} callback function with (atlasimage,description)
-    var readatlas = function(callback) {
+    var readatlas = function(callback,save=true,description=null) {
 
         var atlasimage=null;
 
@@ -1024,24 +1023,27 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             return 0;
         };
         
-        var internalreadatlas = function(atlas) {
-            console.log('atlas read ='+atlas.getDimensions());
+        var internalreadatlas = function(atlas,save=true) {
             atlasimage=atlas;
-            bootbox.prompt({
-                title: "Please enter a description of the node definition file",
-                value: "Unknown",
-                callback: function(result) {
-                    if (result !== null) {
-                        setTimeout(function() {
-                            callback(atlasimage,result);
-                        },100);
-                    }
-                },
-            });
+            if (save) {
+                bootbox.prompt({
+                    title: "Please enter a description of the node definition file",
+                    value: "Unknown",
+                    callback: function(result) {
+                        if (result !== null) {
+                            setTimeout(function() {
+                                callback(atlasimage,result);
+                            },100);
+                        }
+                    },
+                });
+            } else {
+                callback(atlasimage,description);
+            }
         };
         const img=new bisweb_image();
         img.load('images/Reorder_Atlas.nii.gz',false)
-            .then(function() { internalreadatlas(img); })
+            .then(function() { internalreadatlas(img,save); })
             .catch( (e) => { myerror(e) ; });
     };
 
@@ -1103,9 +1105,13 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
     // Imports Parcellation Image and outputs text file in json format
     // @param {BisWebImage} image - image to create from
-    var importParcellationImage = function(vol) {
+    var importParcellationImage = function(vol,atlasdesc=null) {
         
-        
+
+        let save=true;
+        if (atlasdesc)
+            save=false;
+
         var createparcellationfromimage = function(atlasimage,description) {
             
             var fname=vol.getFilename();
@@ -1119,13 +1125,19 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 bootbox.alert(e);
                 return;
             }
-            parseparcellation(out,fname,true);
+            if (save)
+                parseparcellation(out,fname,true);
+            else
+                parseparcellation(out,fname,false);
             internal.orthoviewer.setobjectmap(vol,true);
-            bisgenericio.write({
-                filename : fname,
-                title : 'File to save node definition in',
-                filters : [ { name: 'JSON formatted Node definition file', extensions: [ 'parc']}],
-            },out);
+
+            if (save) {
+                bisgenericio.write({
+                    filename : fname,
+                    title : 'File to save node definition in',
+                    filters : [ { name: 'JSON formatted Node definition file', extensions: [ 'parc']}],
+                },out);
+            }
         };
 
         var d=vol.getDimensions();
@@ -1153,7 +1165,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             return 0;
         }
 
-        readatlas(createparcellationfromimage);
+        readatlas(createparcellationfromimage,save,atlasdesc);
     };
 
     // -------------------------------------------------------------------------------------------
@@ -1677,8 +1689,9 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             webutil.aboutDialog(' If you use this for a publication please cite Finn et. al Nature Neuro 2015.');
         },
 
-        importparcellation : function(image) {
-            importParcellationImage(image);
+        importparcellation : function(image,atlasdesc=null) {
+            console.log('at=',atlasdesc);
+            importParcellationImage(image,atlasdesc);
         },
 
         importparcellationtext : function(filename) {
@@ -1890,7 +1903,7 @@ class ConnectivityControl extends HTMLElement {
     /** Imports a parcellation as json file 
      * @param {array} fnames - an array of (the url or filename or file object or an electron object with members)
      */
-    importparcellation(f) { this.innercontrol.importparcellation(f); }
+    importparcellation(f,desc) { this.innercontrol.importparcellation(f,desc); }
 
     /** popups a dialog showing info about this control */
     about() { this.innercontrol.about(); }

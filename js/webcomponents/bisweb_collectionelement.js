@@ -28,6 +28,7 @@ const $=require('jquery');
 const bootbox=require('bootbox');
 const util = require('bis_util.js');
 const numeric=require('numeric');
+const webfileutil = require('bis_webfileutil');
 
 /** 
  * A web element to create and manage a GUI for an Object Collection
@@ -244,7 +245,7 @@ class CollectionElement extends HTMLElement {
             if (obj) {
                 self.addItem(obj, `${self.counter}.${obj.getFilename()}`);
             } else {
-                let fname = file.name || file;
+                let fname=bisgenericio.getFixedLoadFileName(file);
                 webutil.createAlert('Failed to load '+self.specific.type+' from '+fname+' ',true);
             } 
         }).catch( (e) => {
@@ -358,19 +359,19 @@ class CollectionElement extends HTMLElement {
         let itembar=webutil.createbuttonbar({ parent :basediv,  css : {"margin-top":"10px"}});
 
 
-        webutil.createfilebutton({ type : "warning",
-                                   name : "Add",
-                                   position : "bottom",
-                                   tooltip : "Click this to add a new "+self.specific.name,
-                                   parent : itembar,
-                                   callback : function(f) { self.addItemFromFile(f); },
-                                   accept : self.specific.extensions,
-                                 },{
-                                     filename : '',
-                                     title    : 'Select file to add a new '+self.specific.name+' from',
-                                     filters  : [ { name: self.specific.name+' Files', extensions: self.specific.extensions }],
-                                     save : false,
-                                 });
+        webfileutil.createFileButton({ type : "warning",
+                                       name : "Add",
+                                       position : "bottom",
+                                       tooltip : "Click this to add a new "+self.specific.name,
+                                       parent : itembar,
+                                       callback : function(f) { self.addItemFromFile(f); },
+                                     },{
+                                         filename : '',
+                                         title    : 'Select file to add a new '+self.specific.name+' from',
+                                         filters  : [ { name: self.specific.name+' Files', extensions: self.specific.extensions }],
+                                         save : false,
+                                         suffix : self.specific.extensions,
+                                     });
 
 
         

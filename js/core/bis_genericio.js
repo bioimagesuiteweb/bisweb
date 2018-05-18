@@ -606,7 +606,6 @@ var writebinarydatabrowser = function (filename, data, donecallback, errorcallba
     errorcallback = errorcallback || console.log;
 
     var blob = null;
-    console.log(filename);
     var iscomp = iscompressed(filename);
     if (iscomp) {
         var compressed = pako.gzip(data);
@@ -974,6 +973,41 @@ let write = function (url, data,isbinary=false) {
     });
 };
 
+/** Fixes the save filename depending on whether we have a string, a mouse event, or a FILE 
+ * Essentially if this is an object only use it if has a .name member, else replace it
+ * @alias BisGenericIO.fixSaveFilename
+ * @param {Object} url - abstract file handle object
+ * @param {String} replacement 
+ * @returns {Object} - a string or the file object as needed
+ */
+let getFixedSaveFileName = function(fobj,replacement) {
+
+    if (typeof fobj === "object") {
+        if (!fobj.name) {
+            fobj=replacement;
+        }
+    }
+    return fobj;
+};
+
+/** Get the load filename
+ * Essentially if input is an object check if it has a .name variable and return it instead
+ * @alias BisGenericIO.getLoadFilename
+ * @param {Object} url - abstract file handle object
+ * @param {String} replacement 
+ * @returns {Object} - a string or the file object as needed
+ */
+let getFixedLoadFileName = function(fobj) {
+    
+    if (typeof fobj === "object") {
+        if (fobj.name) 
+            return fobj.name;
+    }
+    return fobj;
+
+};
+
+
 // -------------------------------------------------------------------------------------------------------
 /*
 Legacy exports -- removed
@@ -1003,7 +1037,9 @@ const bisgenericio = {
     readbinarydatafromurl : readbinarydatafromurl, // read from url
     readJSON : readJSON, // Gloabl ReadJSON
     read  : read, // Global Read data
-    write : write // Global Write data
+    write : write, // Global Write data
+    getFixedSaveFileName : getFixedSaveFileName,
+    getFixedLoadFileName : getFixedLoadFileName,
 };
 
 

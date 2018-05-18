@@ -34,7 +34,7 @@ const bisweb_apputil=require("bisweb_apputilities.js");
 const biscustom = require('bisweb_custommodule.js');
 const modules = require('moduleindex.js');
 const biswrap = require('libbiswasm_wrapper');
-
+const webfileutil = require('bis_webfileutil');
 
 // -------------------------------------------------------------------------
 // Keep warnings quiet
@@ -1052,18 +1052,21 @@ class PaintToolElement extends HTMLElement {
         let load_clb=function(f) {  self.loadobjectmap(f);};
 
         webutil.createMenuItem(parent,''); // separator
-        webutil.createMenuItem(parent,'Load Objectmap',
-                               load_clb,
-                               'NII',
-                               { title : 'Load Objectmap Image',  save : false});
+        webfileutil.createFileMenuItem(parent,'Load Objectmap',
+                                       load_clb,
+                                       { title : 'Load Objectmap Image',  save : false,
+                                         suffix : 'NII',
+                                       });
 
         let save_clb=function(f) { console.log(f); self.saveobjectmap(f);};
 
-        webutil.createMenuItem(parent,'Save Objectmap',
-                               function(f) {  save_clb(f);},
-                               '',
-                               { title : 'Save Objectmap',
-                                 save : true, filters : "NII",});
+        webfileutil.createFileMenuItem(parent,'Save Objectmap',
+                                       function(f) {  save_clb(f);},
+                                       { title : 'Save Objectmap',
+                                         save : true,
+                                         filters : "NII",
+                                         suffix : "NII",
+                                       });
 
         webutil.createMenuItem(parent,''); // separator
     }
