@@ -511,35 +511,33 @@ class LandmarkControlElement extends HTMLElement {
     // ------------------------------------------------------------------------
     // GUI Options for whole set
     // ------------------------------------------------------------------------
-    /** Export landmarks to a .land file.  */
-    exportlandmarks() {
-	this.picklandmark(false);
-	var outstring=this.internal.landmarkset[this.internal.currentsetindex].legacyserialize();
-	var fname=this.internal.landmarkset[this.internal.currentsetindex].filename;
-	var ext=fname.split('.');
-	var newname=ext[0]+".land";
-	bisgenericio.write({
-	    filename : newname,
-	    title    : 'Select file to export landmark set ' +(1+this.internal.currentsetindex) +' in',
-	    filters  : [ { name: 'Legacy Landmark Files', extensions: ['land' ]}],
-	},outstring);
 
-	return false;
+    getInitialSaveFilename() {
+        return this.internal.landmarkset[this.internal.currentsetindex].filename;
     }
     
+    /** Export landmarks to a .land file.  */
+    exportlandmarks(fobj) {
+	this.picklandmark(false);
+	var outstring=this.internal.landmarkset[this.internal.currentsetindex].legacyserialize();
+
+        let fname=bisgenericio.getFixedSaveFileName(fobj,this.internal.landmarkset[this.internal.currentsetindex].filename);
+	let index=fname.lastIndexOf('.');
+        let newname=fname.substr(0,index-1)+".land";
+	bisgenericio.write(newname,outstring);
+	return false;
+    }
+
+    
     /** Save landmarks to a .ljson file. */
-    savelandmarks() {
+    savelandmarks(fobj) {
 	// rework this!!!
 	// webutil.createAlert('Landmarks loaded from ' +filename+' numpoints='+pset.getnumpoints());
 	
 	this.picklandmark(false);
 	var a=this.internal.landmarkset[this.internal.currentsetindex].serialize();
-
-	bisgenericio.write({
-	    filename : this.internal.landmarkset[this.internal.currentsetindex].filename,
-	    title    : 'Select file to save landmark set ' +(1+this.internal.currentsetindex) +' in',
-	    filters  : [ { name: 'Landmark Files', extensions: ['ljson' ]}],
-	},a);
+        fobj=bisgenericio.getFixedSaveFileName(fobj,this.internal.landmarkset[this.internal.currentsetindex].filename);
+	bisgenericio.write(fobj,a);
 	return false;
     }
 
@@ -572,10 +570,11 @@ class LandmarkControlElement extends HTMLElement {
             let pset=this.internal.landmarkset[this.internal.currentsetindex];
 	    var ok=pset.deserialize(obj.data,obj.filename,loaderror);
 	    if (ok) {
+                pset.filename=obj.filename;
 		self.updatedisplay(true);
 		self.updategui();
 		self.picklandmark(false);
-		webutil.createAlert('Landmarks loaded from' +obj.filename+' numpoints='+pset.getnumpoints());
+		webutil.createAlert('Landmarks loaded from' +pset.filename+' numpoints='+pset.getnumpoints());
 	    }
         }).catch( (e) => { loaderror(e) ; });
 	return false;
@@ -868,24 +867,32 @@ class LandmarkControlElement extends HTMLElement {
                                          suffix : ".ljson,.land",
                                      });
 
-	let save_cb=function() { self.savelandmarks();};
-	
-	webutil.createbutton({ type : "primary",
-			       name : "Save",
-			       position : "bottom",
-			       tooltip : "Click this to save points to a .ljson file",
-			       parent : bbar1,
-			       callback : save_cb,
-			     });
+	let save_cb=function(f) {
+            let suffix=f.split(".").pop();
+            if (suffix==="land")
+                return self.exportlandmarks(f);
+            else
+                return self.savelandmarks(f);
+        };
 
-	let export_cb=function() { self.exportlandmarks();};
-	webutil.createbutton({ type : "info",
-			       name : "Export to .land",
-			       position : "bottom",
-			       tooltip : "Click this to save points to a .land file",
-			       parent : bbar1,
-			       callback :  export_cb,
-			     });
+
+	
+	webfileutil.createFileButton({ type : "primary",
+			               name : "Save",
+			               position : "bottom",
+			               tooltip : "Click this to save points to a .ljson or .land file",
+			               parent : bbar1,
+                                       callback : save_cb,
+			             },
+                                     {
+				         filename : '',
+				         title    : 'Select file to load current landmark set from',
+				         filters  : [ { name: 'Landmark Files', extensions: ['ljson','land' ]}],
+				         save : true,
+                                         suffix : ".ljson,.land",
+                                         initialCallback : () => { return self.getInitialSaveFilename(); },
+                                     });
+        
 	webutil.tooltip(this.internal.parentDomElement);
 	
 	// ----------------------------------------

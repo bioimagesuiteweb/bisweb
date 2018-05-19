@@ -206,20 +206,27 @@ class CollectionElement extends HTMLElement {
         
         return false;
     }
+
+    /** Get the initial filename to save to (for use in the File|Save dialog)
+        @return {string} - the initial filename
+    */
+    getInitialFilename()  {
+        let obj=this.getCurrentObject();
+        return obj.getFilename();
+    }
     
     /** Save Item. */
-    saveCurrentItem() {
+    saveCurrentItem(fobj) {
 
         let obj=this.getCurrentObject();
         if (!obj)
             return;
+
+        fobj=bisgenericio.getFixedSaveFileName(fobj,obj.getFilename());
+        obj.setFilename(fobj);
         
         let txt=obj.serializeToText(obj.getFilename());
-        bisgenericio.write({
-            filename : obj.getFilename(),
-            title    : `Select file to save ${this.specific.name} in`,
-            filters  : [ { name: 'Object Files', extensions: [`${obj.getExtension()}` ]} ],
-        },txt);
+        bisgenericio.write(fobj,txt);
         return false;
     }
 
@@ -373,15 +380,26 @@ class CollectionElement extends HTMLElement {
                                          suffix : self.specific.extensions,
                                      });
 
-
         
-        webutil.createbutton({ type : "primary",
-                               name : "Save",
-                               position : "bottom",
-                               tooltip : "Click this to save points to a .ljson file",
-                               parent : itembar,
-                               callback : function(f) { self.saveCurrentItem(f);},
-                             });
+        
+        webfileutil.createFileButton({ type : "primary",
+                                       name : "Save",
+                                       position : "bottom",
+                                       parent : itembar,
+                                       callback : function(f) {
+                                           self.saveCurrentItem(f);
+                                       },
+                                     },{
+                                         filename : '',
+                                         title    : 'Select file to add a new '+self.specific.name+' from',
+                                         filters  : [ { name: self.specific.name+' Files', extensions: self.specific.extensions }],
+                                         save : true,
+                                         suffix : self.specific.extensions,
+                                         initialCallback : () => {
+                                             return self.getInitialFilename();
+                                         }
+                                     });
+        
 
         
         webutil.createbutton({ type : "danger",

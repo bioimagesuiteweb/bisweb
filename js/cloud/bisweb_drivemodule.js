@@ -155,16 +155,15 @@ class DriveModule {
             setOAuthToken(gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().access_token).
             setDeveloperKey(this.apikey).
             setCallback(pickerCallback).
-            setOrigin(window.location.protocol + '//' + window.location.host).
-            build();
+            setOrigin(window.location.protocol + '//' + window.location.host).build();
 
         let filePicker = new google.picker.PickerBuilder().
             addView(google.picker.ViewId.DOCS).
             setOAuthToken(gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().access_token).
             setDeveloperKey(this.apikey).
             setCallback(pickerCallback).
-            setOrigin(window.location.protocol + '//' + window.location.host).
-            build();
+            //;window.location.protocol + '//' + window.location.host).
+            setOrigin(window.document.URL).build();
 
         if (showFolders) {
             folderPicker.setVisible(true);

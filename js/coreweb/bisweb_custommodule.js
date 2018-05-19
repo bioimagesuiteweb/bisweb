@@ -319,22 +319,26 @@ class CustomModule {
         });
     }
 
+
+    getInitialFilename() {
+        let date = new Date();
+        let year = date.getFullYear();
+        let month = date.getMonth() + 1;
+        month = (month < 10 ? "0" : "") + month;
+        let day  = date.getDate();
+        day = (day < 10 ? "0" : "") + day;
+        let extra=year+"_"+month+"_"+day;
+        return this.module.name+'_'+extra+'.param';
+    }
+    
     /** save parameters to a file
      * @param{FileObject} fobj - the file object to save to (this might be a mouse event)
      */
     saveParameters(fobj=null) {
 
         fobj=bisgenericio.getFixedSaveFileName(fobj,"None");
-        
         if (fobj === "None") {
-            let date = new Date();
-            let year = date.getFullYear();
-            let month = date.getMonth() + 1;
-            month = (month < 10 ? "0" : "") + month;
-            let day  = date.getDate();
-            day = (day < 10 ? "0" : "") + day;
-            let extra=year+"_"+month+"_"+day;
-            fobj=this.module.name+'_'+extra+'.param';
+            fobj=this.getInitialFilename();
         }
         this.module.saveParameters(fobj,this.guiVars);
     }
@@ -449,6 +453,7 @@ class CustomModule {
                                                        save : true,
                                                        filters : [{ name: 'Parameter Files', extensions: ['param']}],
                                                        suffix: "param",
+                                                       initialCallback : () => { return self.getInitialFilename() ;}
                                                    }
                                                   );
 
