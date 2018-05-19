@@ -21,6 +21,14 @@
 
 const keys = require('bis_keystore.js');
 
+let url=window.document.URL;
+let index=url.indexOf(".html");
+let url2=url.substr(0,index)
+let index2=url2.lastIndexOf("/");
+const redirectURL=url2.substr(0,index2+1)+'onedriveredirect.html';
+console.log('redirect=',redirectURL);
+
+
 
 /**
  * bisOneDrive namespace. Utility code to read/write to OneDrive
@@ -90,6 +98,7 @@ let pickReadFile = function(fileopts,callback) {
             action: "download",
             multiSelect: false,
             advanced : {
+//                redirectUri : redirectURL,
             },
             success: function(fobj) {
                 let obj=fobj.value[0];
