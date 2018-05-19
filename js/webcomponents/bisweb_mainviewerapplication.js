@@ -62,6 +62,8 @@ class ViewerApplicationElement extends HTMLElement {
         
 
         let scope=window.document.URL.split("?")[0];
+        scope=scope.split("#")[0];
+        
         this.applicationURL=scope;
         console.log('scope=',scope);
         scope=scope.split("/").pop();
