@@ -490,7 +490,6 @@ let createApplicationSelector=function(obj) {
             e.stopPropagation();
             $(".dropdown").removeClass("open");//this will remove the active class from  
             $('#appmenu').addClass('open');
-            $('#appmenu').css({ 'color': '#fffff' });
         },10);
     });
         
@@ -584,7 +583,11 @@ window.onload = (() => {
             wrap : true,
         });
     $('#mycarousel').carousel('cycle');
-    
+    setTimeout( ()=> {
+        $(".dropdown").removeClass("open");//this will remove the active class from  
+        $('#appmenu').addClass('open');
+    },2000);
+
 });
 
 
