@@ -30,6 +30,7 @@ let environment = '';
 let inelectron = false;
 
 let webWorkerScope;
+let cloudSaveFunction=function() { return false; };
 
 if (typeof (window) !== "undefined") {
     if (typeof (window.BISELECTRON) !== "undefined") {
@@ -88,6 +89,11 @@ if (inelectron) {
 const setWebWorkerScope=function(w) {
     webWorkerScope=w;
 };
+
+const setCloudSaveFunction=function(u) {
+    cloudSaveFunction=u;
+};
+    
 
 /**
  * converts dataURL to a blob for saving
@@ -588,7 +594,14 @@ var writetextdatabrowser = function (filename, data, donecallback, errorcallback
 
     donecallback = donecallback || console.log;
     errorcallback = errorcallback || console.log;
+
     var blob = new Blob([data], { type: "text/plain" });
+
+    if (cloudSaveFunction(data,filename,donecallback))
+        return;
+
+
+
     filesaver(blob, filename);
     donecallback('');
 };
@@ -613,6 +626,10 @@ var writebinarydatabrowser = function (filename, data, donecallback, errorcallba
     } else {
         blob = new Blob([data]);
     }
+
+    if (cloudSaveFunction(blob,filename,donecallback))
+        return;
+    
     filesaver(blob, filename);
     donecallback('');
 };
@@ -1054,6 +1071,7 @@ const bisgenericio = {
     binary2string :     binary2string ,
     dataURLToBlob : dataURLToBlob,
     setWebWorkerScope :     setWebWorkerScope,
+    setCloudSaveFunction : setCloudSaveFunction, // needed for write to dropbox etc.
     readtextdatafromurl : readtextdatafromurl, // read from url
     readbinarydatafromurl : readbinarydatafromurl, // read from url
     readJSON : readJSON, // Gloabl ReadJSON
