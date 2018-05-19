@@ -298,12 +298,12 @@ class ViewerApplicationElement extends HTMLElement {
                 webutil.createMenuItem(objmenu[viewerno], ''); // separator
 
                 
-                if (!webutil.inElectronApp()) {
+/*                if (!webutil.inElectronApp()) {
 
                     bisweb_apputil.createCloudLoadMenuItems(objmenu[viewerno], 'Overlay',
                                                             load_objectmap,
                                                             viewerno);
-                }
+                }*/
 
                 webutil.createMenuItem(objmenu[viewerno], 'Clear Overlay',
                                        function () {
