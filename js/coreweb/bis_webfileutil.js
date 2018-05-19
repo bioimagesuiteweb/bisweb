@@ -66,7 +66,6 @@ const webfileutils = {
         if (mkey.length>1) 
             s.push({ value: "onedrive", text: "Microsoft OneDrive" });
 
-        console.log('dkey=',dkey,'gkey=',gkey,'modes=',s.join(","));
         return s;
     },
     
@@ -82,7 +81,6 @@ const webfileutils = {
         else
             fileMode="local";
 
-        console.log(`fileMode=${fileMode}`);
         userPreferences.setItem('filesource',fileMode);
         userPreferences.storeUserPreferences();
     },
@@ -231,7 +229,6 @@ const webfileutils = {
             return;
         }
         
-        console.log('Here',fileMode);
         
         let loadelement = $('<input type=\"file\" style=\"visibility: hidden;\" accept=\"' + suffix + '\" />');
         loadelement[0].addEventListener('change', function (f) {
@@ -327,14 +324,6 @@ const webfileutils = {
      * @returns {JQueryElement} -- the  element
      */
     createFileMenuItem: function (parent, name="", callback=null, fileopts={},css='') {
-
-        /*        console.log(JSON.stringify({
-                  parent : parent,
-                  name : name,
-                  callback :callback,
-                  fileopts : fileopts,
-                  css : css}));*/
-        
 
         let style='';
         if (css.length>1)
