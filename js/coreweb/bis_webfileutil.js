@@ -29,7 +29,7 @@ const webutil=require('bis_webutil');
 const bisweb_dropbox=require('bisweb_simpledropbox');
 const bisweb_onedrive=require('bisweb_simpleonedrive');
 const bisweb_googledrive=require('bisweb_drivemodule');
-
+const genericio=require('bis_genericio');
 const userPreferences = require('bisweb_userpreferences.js');
 const bisdbase = require('bisweb_dbase');
 const keystore=require('bis_keystore');
@@ -204,17 +204,20 @@ const webfileutils = {
             callback({});
             return;
         }
+
+
+        // -------- load -----------
         
         if (fileMode==='dropbox') { 
             fileopts.suffix=suffix;
             return bisweb_dropbox.pickReadFile(fileopts,callback);
         }
-
+        
         if (fileMode==='onedrive') { 
             fileopts.suffix=suffix;
             return bisweb_onedrive.pickReadFile(fileopts,callback);
         }
-
+        
         
         if (fileMode==="googledrive") {
             bisweb_googledrive.create().then( () => {
@@ -370,7 +373,24 @@ const webfileutils = {
         }
     },
 
+    // ------------------
+
+    cloudSave : function(blob,filename,callback=null) {
+
+        if (fileMode==='onedrive') {
+            let objectURL = URL.createObjectURL(blob);
+            bisweb_onedrive.pickWriteFile(objectURL,filename,callback);
+            return true;
+        }
+        
+        return false;
+    },
+    
 };
+
+
+// Link into genericio -- once it works
+// genericio.setCloudSaveFunction(webfileutils.cloudSave);
 
 
 userPreferencesLoaded.then(() => {
