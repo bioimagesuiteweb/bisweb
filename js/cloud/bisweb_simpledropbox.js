@@ -86,9 +86,6 @@ let pickReadFile = function(fileopts,callback) {
             s.push(s2[i]);
     }
 
-    console.log('extensions=',s.join(' '));
-    
-    
     init().then( () => {
 
 	var doptions = {
