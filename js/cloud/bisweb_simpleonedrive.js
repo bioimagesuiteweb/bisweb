@@ -83,9 +83,6 @@ let pickReadFile = function(fileopts,callback) {
             s.push(s2[i]);
     }
 
-    console.log('extensions=',s.join(' '));
-    
-    
     init().then( () => {
 
         var odOptions = {
@@ -96,9 +93,9 @@ let pickReadFile = function(fileopts,callback) {
             },
             success: function(fobj) {
                 let obj=fobj.value[0];
-                console.log(JSON.stringify(obj,null,2));
+                //                console.log(JSON.stringify(obj,null,2));
                 let fname=obj['@microsoft.graph.downloadUrl']+'?=realname='+obj.name;
-                console.log('fname=',fname);
+                //                console.log('fname=',fname);
                 callback(fname);
             },
             cancel: function() {
