@@ -115,8 +115,36 @@ let pickReadFile = function(fileopts,callback) {
 };
 
 
+let pickWriteFile=function(url,filename,callback) {
+
+    init().then( () => {
+
+        filename='a.nii.gz';
+        console.log('url=',url,filename);
+        
+        let options = {
+            clientId: keys.OneDriveKey,
+            action: "save",
+            file: url,
+            fileName: filename,
+            openInNewWindow: false,
+            advanced: {},
+            success: function(files) { callback('done',files); },
+            progress: function(p) { console.log(p); },
+            cancel: function() { /* cancel handler */ },
+            error: function(e) { console.log('error',e); }
+        };
+        
+        
+        
+        OneDrive.save(options);
+    });
+
+};
+
 module.exports = {
     pickReadFile : pickReadFile,
+    pickWriteFile : pickWriteFile,
 };
 
 init();
