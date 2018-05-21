@@ -95,7 +95,7 @@ let populateCache=function(msg="Cache Updated",mode='internal') {
 
         internal.count[mode]=0;
         internal.maxcount[mode]=newlst.length;
-        internal.name[mode]=mode;
+
         let t= new Date().getTime();
         let p=[];
         
