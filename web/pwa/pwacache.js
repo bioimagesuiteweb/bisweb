@@ -23,7 +23,6 @@ module.exports = {
         'overlayviewer.html',
         'viewer.css',
         'viewer.html',
-        'biswebdropbox.html',
         'bootstrap.min.js',
         'bootstrap_dark_edited.css',
         'fonts/glyphicons-halflings-regular.eot',
