@@ -261,8 +261,8 @@ let downloadLatestVersion=async function(hasnewversion) {
 
     let s=`<p> BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which can download itself into the cache of your Broswer for offline use.</p>`;
     let dates=`<UL>
-<LI>The version you are using is: ${bisdate.date}, ${bisdate.time}</LI>
-<LI> The latest version is: ${latestVersion.date}, ${latestVersion.time}.</LI></UL>`;
+<LI>The version you are using is: ${bisdate.date} (${bisdate.time})</LI>
+<LI> The latest version is: ${latestVersion.date} (${latestVersion.time})</LI></UL>`;
 
     let fn = ( () => { sendCommandToServiceWorker('updateCache'); });
     
@@ -325,7 +325,7 @@ let aboutApplication=async function() {
     if (dosimple)  {
         let m=getModal();
         m.title.text('About this Application');
-        let s=`<p>This is the main page of BioImage Suite Web ( current build= ${bisdate.date}, ${bisdate.time}).</p>`;
+        let s=`<p>This is the main page of BioImage Suite Web ${tools.version} ( current build= ${bisdate.date}, ${bisdate.time}).</p>`;
         if (typeof (window.BISELECTRON) === "undefined") {
             if (offline)
                 s+=`<p>This application is running in offline mode.</p>`;
@@ -435,7 +435,7 @@ let createApplicationSelector=function(obj) {
     let url=window.document.URL;
     if  (url.indexOf('/unstable')>0) {
         extra="testing page (unstable version)"
-        extra2="Unstable";
+        extra2="Unstable ";
     }
 
     
@@ -494,7 +494,7 @@ let createApplicationSelector=function(obj) {
     });
         
     let bb=$(`<div align="center" style="padding:15px;  right:5.5vw; top:570px; border-radius:30px;background-color:#221100; z-index:5000; position: absolute; color:#ffffff">
-             Version: ${extra2} ${bisdate.date}</div>`);
+             Version:  ${tools.version} (${extra2}${bisdate.date})</div>`);
     $('body').append(bb);
     console.log('bisdate=',JSON.stringify(bisdate));
 
