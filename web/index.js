@@ -26,7 +26,7 @@
 const $=require('jquery');
 const bisdate=require('bisdate.js');
 const idb=require('idb-keyval');
-import tools from './images/tools.json';
+import tools from '../../web/images/tools.json';
 
 let inelectron=false;
 if (typeof (window.BISELECTRON) !== "undefined") {
