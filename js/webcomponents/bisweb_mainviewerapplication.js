@@ -247,11 +247,6 @@ class ViewerApplicationElement extends HTMLElement {
             
             webutil.createMenuItem(fmenu[viewerno], ''); // separator
 
-
-
-            //            if (!webutil.inElectronApp()) {
-            //              bisweb_apputil.createCloudLoadMenuItems(fmenu[viewerno], 'Image', load_image, viewerno);
-            //        }
             bisweb_apputil.createMNIImageLoadMenuEntries(fmenu[viewerno], load_image, viewerno);
 
 
@@ -298,13 +293,6 @@ class ViewerApplicationElement extends HTMLElement {
                 webutil.createMenuItem(objmenu[viewerno], ''); // separator
 
                 
-/*                if (!webutil.inElectronApp()) {
-
-                    bisweb_apputil.createCloudLoadMenuItems(objmenu[viewerno], 'Overlay',
-                                                            load_objectmap,
-                                                            viewerno);
-                }*/
-
                 webutil.createMenuItem(objmenu[viewerno], 'Clear Overlay',
                                        function () {
                                            self.VIEWERS[viewerno].clearobjectmap();
