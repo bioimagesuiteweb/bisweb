@@ -71,8 +71,11 @@ let options = {
     webworker : program.worker || 0,
     eslint : program.eslint || 0,
     sworker : program.sworker || 0,
-    internal : parseInt(program.internal || 0) || 0,
+    internal : program.internal,
 };
+
+if (program.internal === undefined)
+    options.internal=1;
 
 const mainoption=program.rawArgs[2];
 
@@ -358,8 +361,8 @@ gulp.task('commonfiles', function() {
     gulp.src([ 'node_modules/bootstrap/dist/css/*']).pipe(gulp.dest(options.outdir+'css/'));
     gulp.src([ 'node_modules/bootstrap/dist/fonts/*']).pipe(gulp.dest(options.outdir+'fonts/'));
     gulp.src([ 'web/images/**/*']).pipe(gulp.dest(options.outdir+'/images/'));
-    gulp.src('./web/biswebdropbox.html').pipe(gulp.dest(options.outdir));
-    gulp.src('./web/onedriveredirect.html').pipe(gulp.dest(options.outdir));
+//    gulp.src('./web/biswebdropbox.html').pipe(gulp.dest(options.outdir));
+//    gulp.src('./web/onedriveredirect.html').pipe(gulp.dest(options.outdir));
     gulp.src([ 'lib/fonts/*']).pipe(gulp.dest(options.outdir+'/fonts/'));
     gulp.src([ 'web/manifest.json']).pipe(gulp.dest(options.outdir));
     gulp.src('./web/bispreload.js').pipe(gulp.dest(options.outdir));
