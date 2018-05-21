@@ -21,12 +21,12 @@
 
 const keys = require('bis_keystore.js');
 
-let url=window.document.URL;
+/*let url=window.document.URL;
 let index=url.indexOf(".html");
 let url2=url.substr(0,index);
 let index2=url2.lastIndexOf("/");
 const redirectURL=url2.substr(0,index2+1)+'onedriveredirect.html';
-console.log('redirect=',redirectURL);
+console.log('redirect=',redirectURL);*/
 
 
 
@@ -97,9 +97,6 @@ let pickReadFile = function(fileopts,callback) {
             clientId: keys.OneDriveKey,
             action: "download",
             multiSelect: false,
-            advanced : {
-                //                redirectUri : redirectURL,
-            },
             success: function(fobj) {
                 let obj=fobj.value[0];
                 //                console.log(JSON.stringify(obj,null,2));
