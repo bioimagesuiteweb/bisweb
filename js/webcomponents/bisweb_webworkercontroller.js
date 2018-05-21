@@ -30,7 +30,7 @@ class WebWorkerController extends HTMLElement {
         this.promise=new Promise( (resolve, reject) => { 
             self.outsideResolve = resolve; 
             self.outsideReject = reject; 
-        })
+        });
         this.workerInitialized=false;
     }
 
@@ -109,7 +109,7 @@ class WebWorkerController extends HTMLElement {
             if (!self.workerInitialized) 
                 self.WebWorker.postMessage('initialize');
             
-            self.promise.then( (e) => {
+            self.promise.then( () => {
                 try {
                     bis_webworker.inMainThreadExecuteModule(this.WebWorker,modulename,inputs,params,clb);
                 } catch(e) {

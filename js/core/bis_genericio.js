@@ -588,12 +588,10 @@ var writebinarydatanode = function (filename, data, donecallback, errorcallback)
  * @param {string} filename - the filename
  * @param {string} data - the data to write
  * @param {BisGenericIO.MessageCallback} donecallback - callback function if done
- * @param {BisGenericIO.MessageCallback} errror - error callback function
  */
-var writetextdatabrowser = function (filename, data, donecallback, errorcallback) {
+var writetextdatabrowser = function (filename, data, donecallback) {
 
     donecallback = donecallback || console.log;
-    errorcallback = errorcallback || console.log;
 
     var blob = new Blob([data], { type: "text/plain" });
 
@@ -612,11 +610,10 @@ var writetextdatabrowser = function (filename, data, donecallback, errorcallback
  * @param {string} filename - the filename
  * @param {Uint8Array} data - the data to write (or optionally array)
  * @param {BisGenericIO.MessageCallback} donecallback - callback function if done
- * @param {BisGenericIO.MessageCallback} error - error callback function
  */
-var writebinarydatabrowser = function (filename, data, donecallback, errorcallback) {
+var writebinarydatabrowser = function (filename, data, donecallback) {
     donecallback = donecallback || console.log;
-    errorcallback = errorcallback || console.log;
+
 
     var blob = null;
     var iscomp = iscompressed(filename);

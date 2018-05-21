@@ -26,8 +26,6 @@
 // Create command line
 // -----------------------------------------------------------------
 const program=require('commander');
-const path=require('path');
-const os = require('os');
 require('../config/bis_checknodeversion');
 const fs=require('fs');
 
@@ -39,11 +37,10 @@ var help = function() {
 program.version('1.0.0')
     .option('-o, --output  <s>','output js date file')
     .on('--help',function() {
-	    help();
+            help();
     })
     .parse(process.argv);
 
-let outputname = program.output || null;
 if (program.output===null) {
     help();
     process.exit();

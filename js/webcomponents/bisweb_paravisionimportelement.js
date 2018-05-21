@@ -17,13 +17,13 @@
 
 /* global window */
 
-const util=require('bis_util');
+//const util=require('bis_util');
 const BisWebImage = require('bisweb_image');
 const bisbruker=require('bis_readbruker');
 const webutil=require('bis_webutil');
 const bisgenericio=require('bis_genericio');
 const $=require('jquery');
-const bootbox=require('bootbox');
+//const bootbox=require('bootbox');
 const userPreferences = require('bisweb_userpreferences.js');
 const path=bisgenericio.getpathmodule();
 const fs=bisgenericio.getfsmodule();
@@ -189,7 +189,6 @@ class ParavisionImportElement extends HTMLElement {
                                            self.importjob(f);
                                        },
                                      },{
-                                         title: 'Json formatted file',
                                          filters:  [ { name: 'JSON Files', extensions: ['json' ]}],
                                          title    : 'Select the file to load from',
                                          save : false,
@@ -205,7 +204,6 @@ class ParavisionImportElement extends HTMLElement {
                                            self.savejob(f);
                                        }
                                      },{
-                                         title: 'Json formatted file',
                                          filters:  [ { name: 'JSON Files', extensions: ['json' ]}],
                                          title    : 'Select the file to save to',
                                          save : true,
@@ -265,7 +263,7 @@ class ParavisionImportElement extends HTMLElement {
                 return dim;
             }
             return [0,0,0];
-        }
+        };
         
         
         //const imagelabels=['None','3DAnatomical','2DAnatomical','EPI','FieldMap','Angio','AngioAnatomical','DTI','DTIResult'  ];
@@ -296,14 +294,14 @@ class ParavisionImportElement extends HTMLElement {
                       filename : path.basename(fname),
                       details : path.basename(infoname),
                       tag : tagvalue,
-                    }
+                    };
         
         internal.joblist.push(details);
         
-        let keys=Object.keys(internal.buttonpairs);
+        //        let keys=Object.keys(internal.buttonpairs);
         
         let counter=internal.joblist.length+1;
-        let s1=(name);
+        /*        let s1=(name);
         s1=s1.substr(0,5)+"...";
         let s2="|";
         try { 
@@ -311,7 +309,7 @@ class ParavisionImportElement extends HTMLElement {
             s2 = stats["size"];
         } catch(e) {
             
-        }
+        }*/
         let nid0=webutil.getuniqueid();
         let nid1=webutil.getuniqueid();
         let nid2=webutil.getuniqueid();
@@ -332,7 +330,7 @@ class ParavisionImportElement extends HTMLElement {
         if (index<0)
             index=0;
         
-        let a=webutil.createselect(
+        webutil.createselect(
             {
                 parent : $('#'+nid3),
                 values : imagelabels,

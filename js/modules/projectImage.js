@@ -20,7 +20,6 @@
 const biswrap = require('libbiswasm_wrapper');
 const baseutils=require("baseutils");
 const BaseModule = require('basemodule.js');
-const BisWebLinearTransformation = require('bisweb_lineartransformation.js');
 
 /**
  * 3D->2D Projection in various ways
@@ -195,7 +194,7 @@ class ProjectImageModule extends BaseModule {
 
                 let domip= (vals.mode === 'mip');
 
-                let gradsigma=parseFloat(vals.gradsigma)
+                let gradsigma=parseFloat(vals.gradsigma);
                 if (vals.mode==='average')
                     gradsigma=0.0;
 

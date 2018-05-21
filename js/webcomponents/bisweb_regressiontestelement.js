@@ -518,7 +518,6 @@ let initialize=function(data) {
 
 var startFunction = (() => {
 
-    let inelectron=false;
     if (webutil.inElectronApp()) {
         $('#cnote').remove();
     }

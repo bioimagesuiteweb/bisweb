@@ -191,6 +191,7 @@ class CustomModule {
             if (vars[contkey].indexOf("2") >= 0)
                 viewer = 'viewer2';
         } catch (e) {
+            //
         }
         return viewer;
     }

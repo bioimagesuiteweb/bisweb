@@ -15,7 +15,6 @@
  
  ENDLICENSE */
 
-const modules = require('moduleindex');
 const io = require('bis_genericio');
 
 let endASCII = 'z'.charCodeAt(0);
@@ -93,7 +92,7 @@ let makePipeline = function (filename) {
 
                     if (parsedFile.variables[j].name === variableName) {
                         let variable = parsedFile.variables[j];
-
+                        
                         //a variable with its files specified should be added to the dictionary of expanded variables
                         //the fact that its files are present already also indicates that it is an input 
                         if (parsedFile.variables[j].files && expandedVariables[variableName].length === 0) {
@@ -247,7 +246,7 @@ let makeNetwork = function(obj) {
 */
 let stripVariable = function (variable) {
     return variable.slice(1, variable.length - 1);
-}
+};
 
 let getNextASCIIChar = function (a) {
     let ASCIICode = a.charCodeAt(a.length - 1);

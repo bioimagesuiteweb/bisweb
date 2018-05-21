@@ -1,19 +1,19 @@
 /*  LICENSE
- 
- _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
- 
- BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
- 
- - you may not use this software except in compliance with the License.
- - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
- 
- __Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.__
- 
- ENDLICENSE */
+    
+    _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+    
+    BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+    
+    - you may not use this software except in compliance with the License.
+    - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+    
+    __Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.__
+    
+    ENDLICENSE */
 
 "use strict";
 
@@ -23,7 +23,7 @@ const keys = require('bis_keystore.js');
 
 let url=window.document.URL;
 let index=url.indexOf(".html");
-let url2=url.substr(0,index)
+let url2=url.substr(0,index);
 let index2=url2.lastIndexOf("/");
 const redirectURL=url2.substr(0,index2+1)+'onedriveredirect.html';
 console.log('redirect=',redirectURL);
@@ -98,7 +98,7 @@ let pickReadFile = function(fileopts,callback) {
             action: "download",
             multiSelect: false,
             advanced : {
-//                redirectUri : redirectURL,
+                //                redirectUri : redirectURL,
             },
             success: function(fobj) {
                 let obj=fobj.value[0];
@@ -112,11 +112,11 @@ let pickReadFile = function(fileopts,callback) {
             error: function(e) {
                 console.log(e);
             },
-	    
-	    linkType: "direct", 
-	    multiselect: false, 
-	    filter: s,
-	};
+            
+            linkType: "direct", 
+            multiselect: false, 
+            filter: s,
+        };
 
         OneDrive.open(odOptions);
     });

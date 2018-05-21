@@ -1,19 +1,19 @@
 /*  LICENSE
- 
- _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
- 
- BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
- 
- - you may not use this software except in compliance with the License.
- - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
- 
- __Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.__
- 
- ENDLICENSE */
+    
+    _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+    
+    BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+    
+    - you may not use this software except in compliance with the License.
+    - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+    
+    __Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.__
+    
+    ENDLICENSE */
 
 'use strict';
 
@@ -65,7 +65,7 @@ let dirname = tmpDirectory.name;
 let test_type="image";
 for (let i=0;i<args.length;i++) {
     if (args[i]==="--test_type")
-	test_type=args[i+1];
+        test_type=args[i+1];
 }
 
 let tempName="";
@@ -93,18 +93,10 @@ userPreferences.setImageOrientationOnLoad('None');
 
 commandline.loadParse(args, bisModule).then(() => {
     commandline.processTestResult(toolname,tempName,
-				  program.test_target,test_type,program.test_threshold,
-				  program.test_comparison,
-				  cleanupAndExit);
+                                  program.test_target,test_type,program.test_threshold,
+                                  program.test_comparison,
+                                  cleanupAndExit);
 }).catch((e) => {
     console.log(e);
     cleanupAndExit(1);
 });
-
-
-
-
-
-
-
-

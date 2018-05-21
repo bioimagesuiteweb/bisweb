@@ -874,7 +874,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
     createdatgui(samesize=false) {
 
         if (samesize) {
-            let gui=this.internal.datgui.gui;
+            //let gui=this.internal.datgui.gui;
             let cmapfolder=this.internal.cmapcontroller.creategui(null);
             if (this.internal.simplemode) {
                 cmapfolder.open();
@@ -927,7 +927,9 @@ class OrthogonalViewerElement extends BaseViewerElement {
                     let elem=this.internal.datgui.coords.__controllers[c];
                     try {
                         this.internal.datgui.coords.remove(elem);
-                    } catch(e) { }
+                    } catch(e) {
+                        // nothing to do
+                    }
                 }
 
                 if (this.internal.moviefolder!==null) {
@@ -935,7 +937,9 @@ class OrthogonalViewerElement extends BaseViewerElement {
                         let elem=this.internal.moviefolder.__controllers[c];
                         try {
                             this.internal.moviefolder.remove(elem);
-                        } catch(e) { }
+                        } catch(e) {
+                            // nothing to do
+                        }
                     }
                     this.internal.play_movie_controller=null;
                 }

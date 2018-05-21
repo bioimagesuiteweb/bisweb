@@ -20,7 +20,7 @@
 "use strict";
 
 const webutil = require('bis_webutil');
-const $ = require('jquery');
+
 const biscustom = require('bisweb_custommodule.js');
 const modules = require('moduleindex.js');
 const biswrap = require('libbiswasm_wrapper');
@@ -154,22 +154,22 @@ class ModuleManagerElement extends HTMLElement {
         
         const self=this;
         if (this.mode==='dual' || this.mode==='paravision') {
-            webutil.createMenuItem(this.moduleMenu[0],"Transfer Viewer 1 &rarr; 2",function(e) {
+            webutil.createMenuItem(this.moduleMenu[0],"Transfer Viewer 1 &rarr; 2",function() {
                 self.transferImages(0,1);
             });
-            webutil.createMenuItem(this.moduleMenu[0],"Transfer Viewer 2 &rarr; 1",function(e) {
+            webutil.createMenuItem(this.moduleMenu[0],"Transfer Viewer 2 &rarr; 1",function() {
                 self.transferImages(1,0);
             });
-            webutil.createMenuItem(this.moduleMenu[0],"Swap Images 1 &harr; 2 ",function(e) {
+            webutil.createMenuItem(this.moduleMenu[0],"Swap Images 1 &harr; 2 ",function() {
                 self.swapImages();
             });
-            webutil.createMenuItem(this.moduleMenu[0],"Transfer Viewer 2 Image &rarr; Viewer 1 Overlay ",function(e) {
+            webutil.createMenuItem(this.moduleMenu[0],"Transfer Viewer 2 Image &rarr; Viewer 1 Overlay ",function() {
                 self.transferImageToOverlay(1,0);
             });
             this.createModule('Custom Transfer', 0,false , new copyModule, moduleoptions);
 
         } else {
-            webutil.createMenuItem(this.moduleMenu[0],"Copy Overlay &rarr; Image",function(e) {
+            webutil.createMenuItem(this.moduleMenu[0],"Copy Overlay &rarr; Image",function() {
                 let obj=self.viewers[0].getobjectmap();
                 if (obj) {
                     self.viewers[0].setimage(obj);
@@ -254,7 +254,7 @@ class ModuleManagerElement extends HTMLElement {
             
     }
 
-    handleViewerImageChanged(viewer, source, colortype) {
+    handleViewerImageChanged() { //viewer, source, colortype) 
 
         // This is mostly for drag and drop but who knows
         let openmod=biscustom.getOpenModule();

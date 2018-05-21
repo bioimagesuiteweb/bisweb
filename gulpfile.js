@@ -1,19 +1,19 @@
 /*  LICENSE
- 
- _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
- 
- BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
- 
- - you may not use this software except in compliance with the License.
- - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
- 
- __Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.__
- 
- ENDLICENSE */
+    
+    _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+    
+    BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+    
+    - you may not use this software except in compliance with the License.
+    - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+    
+    __Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.__
+    
+    ENDLICENSE */
 
 /* jshint node:true */
 
@@ -26,13 +26,12 @@ const gulp = require('gulp'),
       connect = require('gulp-connect'),
       os = require('os'),
       path=require('path'),
-      fs = require('fs'),
       del = require('del'),
       colors=require('colors/safe'),
       runSequence = require('run-sequence'),
       bis_gutil=require('./config/bis_gulputils'),
       eslint = require('gulp-eslint');
- 
+
 
 
 // ------------------------------------ Utility Functions ---------------------------------------------
@@ -226,20 +225,20 @@ gulp.task('eslint', () => {
     // So, it's best to have gulp ignore the directory as well.
     // Also, Be sure to return the stream from the task;
     // Otherwise, the task may end before the stream has finished.
-    return gulp.src(['js/**/*.js','config/*.js','compiletools/*.js','!node_modules/**'])
-        // eslint() attaches the lint output to the "eslint" property
-        // of the file object so it can be used by other modules.
+    return gulp.src(['js/**/*.js','config/*.js','compiletools/*.js','*.js','!node_modules/**'])
+    // eslint() attaches the lint output to the "eslint" property
+    // of the file object so it can be used by other modules.
         .pipe(eslint({
-	    globals: [
-		'jQuery',
-		'$'
-	    ],
-	}))
-        // eslint.format() outputs the lint results to the console.
-        // Alternatively use eslint.formatEach() (see Docs).
-        .pipe(eslint.format())
-        // To have the process exit with an error code (1) on
-        // lint error, return the stream and pipe to failAfterError last.
+            globals: [
+                'jQuery',
+                '$'
+            ],
+        }))
+    // eslint.format() outputs the lint results to the console.
+    // Alternatively use eslint.formatEach() (see Docs).
+        .pipe(eslint.format());
+    // To have the process exit with an error code (1) on
+    // lint error, return the stream and pipe to failAfterError last.
 
 });
 
@@ -327,7 +326,7 @@ gulp.task('serve', function() {
     }
 
     bis_gutil.createDateFile(path.resolve(options.outdir,'../wasm/bisdate.js'));
-//    bis_gutil.createDateFile(path.resolve(options.outdir,'../web/bisdate.json',1));
+    //    bis_gutil.createDateFile(path.resolve(options.outdir,'../web/bisdate.json',1));
 
     bis_gutil.runWebpack(internal.webpackjobs,
                          options.internal,

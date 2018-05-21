@@ -21,10 +21,8 @@
 
 import dat from 'dat.gui';
 
-const THREE = require('three');
 const util=require('bis_util');
 const bisweb_image = require('bisweb_image');
-const bisCrossHair=require('bis_3dcrosshairgeometry');
 const UndoStack=require('bis_undostack');
 const imagealgo=require('bis_imagealgorithms');
 const webutil=require('bis_webutil');
@@ -150,7 +148,7 @@ class PaintToolElement extends HTMLElement {
         
         let in_orthoviewer=document.querySelector(viewerid);
 
-        this.internal.layoutcontroller=document.querySelector(layoutid)
+        this.internal.layoutcontroller=document.querySelector(layoutid);
         let in_parent=this.internal.layoutcontroller.createToolWidget('Paint Tool',true);
 
         this.internal.parentDomElement=in_parent;
@@ -920,7 +918,7 @@ class PaintToolElement extends HTMLElement {
             position : 'top',
             tooltip : 'Click here to select more colors',
             css : { 'margin-left': '0px'},
-            callback : ( () => { this.internal.selectcolormodal.modal('show') })
+            callback : ( () => { this.internal.selectcolormodal.modal('show'); })
         });
 
         var bbar0=webutil.createbuttonbar({ parent: basediv,

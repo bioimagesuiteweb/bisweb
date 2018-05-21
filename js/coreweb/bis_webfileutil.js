@@ -233,7 +233,7 @@ const webfileutils = {
         }
         
         
-        let loadelement = $('<input type=\"file\" style=\"visibility: hidden;\" accept=\"' + suffix + '\" />');
+        let loadelement = $('<input type="file" style="visibility: hidden;" accept="' + suffix + '" />');
         loadelement[0].addEventListener('change', function (f) {
             f.stopPropagation();
             f.preventDefault();
@@ -369,7 +369,7 @@ const webfileutils = {
         if (!webutil.inElectronApp() && this.needModes()) {
             if (separator)
                 webutil.createMenuItem(bmenu,'');
-            webutil.createMenuItem(bmenu, "Set File Source", fn);
+            webutil.createMenuItem(bmenu, name, fn);
         }
     },
 

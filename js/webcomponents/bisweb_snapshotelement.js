@@ -15,7 +15,7 @@
  
  ENDLICENSE */
 
-/* global window,document,Blob,saveAs,FileReader,setTimeout,HTMLElement */
+/* global window,document,Blob,dataURLToBlob,FileReader,setTimeout,HTMLElement */
 
 /**
  * @file A Broswer module. Contains {@link BisWEB_ViewerElements}.
@@ -68,7 +68,7 @@ class SnapshotElement extends HTMLElement {
             badsum = 765;
 
         let rows = new Int16Array(ht);
-        let goodrows = 0, goodcols = 0;
+        let goodrows = 0;
 
         for (let j = 0; j < ht; j++) {
             let found = false;
@@ -127,7 +127,7 @@ class SnapshotElement extends HTMLElement {
             badsum = 765;
 
         let columns = new Int16Array(wd);
-        let goodcolumns = 0, goodcols = 0;
+        let goodcolumns = 0;
 
         for (let i = 0; i < wd; i++) {
             let found = false;

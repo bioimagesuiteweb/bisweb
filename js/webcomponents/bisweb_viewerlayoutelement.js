@@ -15,7 +15,7 @@
  
  ENDLICENSE */
 
-/* global window,document,Blob,saveAs,FileReader,setTimeout,HTMLElement,Event */
+/* global window,document,Blob,FileReader,setTimeout,HTMLElement,Event */
 
 
 "use strict";
@@ -30,7 +30,6 @@ var detectWebGL = function() {
         return !! ( window.WebGLRenderingContext && ( canvas.getContext( 'webgl' ) || canvas.getContext( 'experimental-webgl' ) ) ); 
     } catch( e ) { 
         console.log("WEB GL is not available");
-        return false; 
     }
     return false;
 };

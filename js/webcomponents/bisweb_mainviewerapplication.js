@@ -424,8 +424,7 @@ class ViewerApplicationElement extends HTMLElement {
     // ---------------------------------------------------------------------------
     // Extra Menu -- use this to attach functionality in derived classes
     // ---------------------------------------------------------------------------
-    createExtraMenu(menubar) {
-        menubar=0;
+    createExtraMenu(/*menubar*/) {
         return;
     }
     // ---------------------------------------------------------------------------

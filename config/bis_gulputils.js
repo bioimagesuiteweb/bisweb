@@ -1,19 +1,21 @@
 /*  LICENSE
- 
- _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
- 
- BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
- 
- - you may not use this software except in compliance with the License.
- - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
- 
- __Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.__
- 
- ENDLICENSE */
+    
+    _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+    
+    BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+    
+    - you may not use this software except in compliance with the License.
+    - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+    
+    __Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.__
+    
+    ENDLICENSE */
+
+/* global _dirname */
 
 "use strict";
 
@@ -63,28 +65,6 @@ var getDate=function(sep="_") {
     return  year+sep+month+sep+day;
 };
 
-var getDate2=function() {
-    let date = new Date();
-    let year = date.getFullYear();
-    let month = date.getMonth() + 1;
-    month = (month < 10 ? "0" : "") + month;
-    let day  = date.getDate();
-    day = (day < 10 ? "0" : "") + day;
-
-    let hour= date.getHours();
-    let min=date.getMinutes();
-    if (min < 10) {
-        min = "0" + min;
-    }
-    if (hour < 10) {
-        hour = "0" + hour;
-    }
-    
-    let dt=month+"/"+day+"/"+year+" "+hour+":"+min;
-
-    return dt;
-}
-
 var getVersionTag=function(version) {
     return version+"_"+getDate();
 };
@@ -94,18 +74,18 @@ var executeCommand=function(command,dir,done=0,error=0,extra=0) {
     console.log(getTime()+" "+colors.green(dir+">")+colors.cyan(command+'\n'));
 
     if (done===0) {
-	let out="";
-	try {
-	    out=child_process.execSync(command, { cwd : dir });
-	} catch(e) {
-	    out='error '+e;
-	}
-	return out;
+        let out="";
+        try {
+            out=child_process.execSync(command, { cwd : dir });
+        } catch(e) {
+            out='error '+e;
+        }
+        return out;
     }
 
     while (extra>3)
         extra=extra-4;
-        
+    
     let colorfn=colors.yellow;
     if (extra===1)
         colorfn=colors.magenta;
@@ -115,12 +95,12 @@ var executeCommand=function(command,dir,done=0,error=0,extra=0) {
         colorfn=colors.green;
     
     try { 
-	let proc=child_process.exec(command, { cwd : dir });
-	proc.stdout.on('data', function(data) { process.stdout.write(colorfn(data.trim()+'\n'));});
-	proc.stderr.on('data', function(data) { process.stdout.write(colors.red(data+'\n'));});
-	proc.on('exit', function() { console.log(''); done();});
+        let proc=child_process.exec(command, { cwd : dir });
+        proc.stdout.on('data', function(data) { process.stdout.write(colorfn(data.trim()+'\n'));});
+        proc.stderr.on('data', function(data) { process.stdout.write(colors.red(data+'\n'));});
+        proc.on('exit', function() { console.log(''); done();});
     } catch(e) {
-	console.log(' error '+e);
+        console.log(' error '+e);
         if (error)
             error(e);
     }
@@ -132,44 +112,44 @@ var executeCommandPromise=function(command,dir,extra="") {
     return new Promise( (resolve,reject) => {
         let done=function() {
             resolve();
-        }
+        };
         let error=function(e) {
             reject(e);
-        }
+        };
 
         executeCommand(command,dir,done,error,extra);
     });
-}
+};
 
 // -------------------------------------------------------------
 
 var executeCommandList=function(cmdlist,indir,done=0) {
 
     if (done===0) {
-	console.log('here ...');
-	for (let i=0;i<cmdlist.length;i++) {
-	    executeCommand(cmdlist[i],indir,0,0,i);
-	}
-	return;
+        console.log('here ...');
+        for (let i=0;i<cmdlist.length;i++) {
+            executeCommand(cmdlist[i],indir,0,0,i);
+        }
+        return;
     }
 
     let i=0;
     var execlist=function() {
-	if (i==cmdlist.length) {
-	    done();
-	} else {
-	    executeCommand(cmdlist[i],indir,execlist,0,i);
-	    ++i;
-	}
-    }
+        if (i==cmdlist.length) {
+            done();
+        } else {
+            executeCommand(cmdlist[i],indir,execlist,0,i);
+            ++i;
+        }
+    };
     execlist();
-}
+};
 
 
 var createHTML=function(toolname,outdir,libjs,commoncss) {
 
     if (toolname==="bisjs")
-	return;
+        return;
     
     var mainhtml   = path.normalize(path.join(__dirname,'../web/'+toolname+'.html'));
     var bundlecss  = commoncss;
@@ -178,13 +158,13 @@ var createHTML=function(toolname,outdir,libjs,commoncss) {
     var alljs;
     if (libjs!=='') {
         if (toolname!=="index") {
-	    alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'bootstrap.min.js', 'libbiswasm_wasm.js', libjs  ];
+            alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'bootstrap.min.js', 'libbiswasm_wasm.js', libjs  ];
         } else {
-	    alljs=[ 'jquery.min.js', 'bootstrap.min.js', libjs  ];
+            alljs=[ 'jquery.min.js', 'bootstrap.min.js', libjs  ];
             bundlecss=[ "./bootstrap_dark_edited.css" ];
         }
     } else {
-	alljs = [ 'jquery.min.js', 'bootstrap.min.js' ];
+        alljs = [ 'jquery.min.js', 'bootstrap.min.js' ];
     }
 
     let repljs=alljs;
@@ -197,11 +177,11 @@ var createHTML=function(toolname,outdir,libjs,commoncss) {
         repljs.push(`${alljs[i]}?v=${t}`);*/
     
     return gulp.src([ mainhtml ])
-    	.pipe(htmlreplace({
-	    'js': repljs,
-	    'css': bundlecss,
+        .pipe(htmlreplace({
+            'js': repljs,
+            'css': bundlecss,
             'manifest' : '<link rel="manifest" href="./manifest.json">',
-	})).pipe(gulp.dest(outdir));
+        })).pipe(gulp.dest(outdir));
 };
 
 
@@ -210,15 +190,15 @@ var createCSSCommon=function(dependcss,out,outdir) {
     var bundlecss  = out;
     console.log(getTime(),colors.green('Concatenating ',dependcss.join(),' to ',out));
     gulp.src(dependcss)
-	.pipe(concatCss(bundlecss))
-	.pipe(gulp.dest(outdir));
+        .pipe(concatCss(bundlecss))
+        .pipe(gulp.dest(outdir));
 };
 
 var createDateFile=function(datefile) {
 
     let a=getDate("/");
     let b=getTime(1);
-    let t= new Date().getTime()
+    let t= new Date().getTime();
     let output_text=` { "date" : "${a}", "time" : "${b}", "absolutetime" : ${t} }`;
     if (datefile.indexOf('json')<0) {
         output_text=`module.exports = ${output_text};`;
@@ -233,7 +213,7 @@ var createDateFile=function(datefile) {
 // ------------------------------------------------
 var getWebpackCommand=function(source,internal,out,indir,minify,outdir,watch) {
 
-   let extracmd=""
+    let extracmd="";
     if (internal) {
         if (os.platform()==='win32')
             extracmd=`SET BISWEB_INTERNAL=${internal}& `;
@@ -252,14 +232,14 @@ var getWebpackCommand=function(source,internal,out,indir,minify,outdir,watch) {
     let cmd=extracmd+' webpack-cli --entry '+source+' --output-filename '+out+' --output-path '+outdir+' ';
 
     if (minify>0) {
-	cmd=cmd+'--config config/webpack.config_uglify.js';
+        cmd=cmd+'--config config/webpack.config_uglify.js';
     } else {
-	if (minify<0)
-	    cmd=cmd+'--config config/webpack.config.js';
-	else
-	    cmd=cmd+'--config config/webpack.config_devel.js';
-	if (watch!==0)
-	    cmd+=" --watch";
+        if (minify<0)
+            cmd=cmd+'--config config/webpack.config.js';
+        else
+            cmd=cmd+'--config config/webpack.config_devel.js';
+        if (watch!==0)
+            cmd+=" --watch";
     }
 
     return cmd;
@@ -363,42 +343,6 @@ var inno=function(tools, version, indir , distdir ) {
         .pipe(gulp.dest(distdir));
 };
 
-var appdmg=function(indir,distdir,version) {
-
-    var oname=distdir+'/biselectron.json';
-    console.log(colors.yellow(getTime()+ ' Creating mac installer input '+oname));
-
-    var obj= {
-        title : "BioImageSuiteWeb",
-        icon  : path.resolve(indir , 'web/images/bioimagesuite.icns'),
-        "background-color" : "#dddddd",
-        window : {
-            position : {
-                x : 200,
-                y : 200,
-            },
-            size : {
-                width : 600,
-                height : 300
-            }
-        },
-        contents : [ {
-            x: 448,
-            y: 100,
-            type: "link",
-            path: "/Applications"
-        },  {
-            x: 192,
-            y: 100,
-            type: "file",
-            path: path.resolve(indir,distdir+'/BioImageSuiteWeb-darwin-x64/BioImageSuiteWeb.app'),
-        }]
-    };
-    var txt=JSON.stringify(obj);
-    fs.writeFileSync(oname,txt);
-};   
-
-
 // -----------------------------------------------------------------------------------------
 var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",outdir="build",version=1.0,platform="linux",distdir="builddist",done=0) {
 
@@ -472,7 +416,7 @@ var createPackage=function(dopackage=1,tools=[],indir=_dirname+"../",outdir="bui
     };
 
     executeCommand("npm update",indir+"/build/web",fn0);
-}
+};
 
 var jsDOC=function(indir,conffile,done) {
 
@@ -509,4 +453,4 @@ module.exports = {
     createPackage : createPackage,
 };
 
-    
+

@@ -15,7 +15,6 @@
  
  ENDLICENSE */
 
-const webpack = require('webpack'); //to access built-in plugins
 const base=require('./webpack.config.js');
 
 base.mode='production';

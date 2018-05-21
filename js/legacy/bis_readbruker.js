@@ -1,19 +1,19 @@
 /*  LICENSE
- 
- _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
- 
- BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
- 
- - you may not use this software except in compliance with the License.
- - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
- 
- __Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.__
- 
- ENDLICENSE */
+    
+    _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+    
+    BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+    
+    - you may not use this software except in compliance with the License.
+    - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+    
+    __Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.__
+    
+    ENDLICENSE */
 
 "use strict";
 
@@ -89,22 +89,22 @@ let getMatchingFilenames=function(f) {
     var p2=path.normalize(pname+'/*/pdata/*/2dseq');
     var n1=getmatchingfiles(p2);
     if (n1.length<1) {
-		p2=path.normalize(pname+'/pdata/*/2dseq');
-		n1=getmatchingfiles(p2);
+        p2=path.normalize(pname+'/pdata/*/2dseq');
+        n1=getmatchingfiles(p2);
     }
     if (n1.length<1) {
-		p2=path.normalize(pname+'/*/2dseq');
-		n1=getmatchingfiles(p2);
+        p2=path.normalize(pname+'/*/2dseq');
+        n1=getmatchingfiles(p2);
     }
     if (n1.length<1) {
-		p2=path.normalize(pname+'/2dseq');
-		n1=getmatchingfiles(p2);
+        p2=path.normalize(pname+'/2dseq');
+        n1=getmatchingfiles(p2);
     }
     
     
     return { names : n1,
-			 len   : l
-		   };
+             len   : l
+           };
 };
 
 
@@ -343,6 +343,8 @@ let parseTextFiles = function(filename,outprefix,debug,forceorient) {
 let createHeader = function(data,debug) {
 
     debug=debug || false;
+    if (debug)
+        console.log('In Create Header');
     
     let header=new bisheader();
     header.initializenifti();
@@ -517,7 +519,7 @@ let saveRegularImage = function (data,debug) {
     rawdata=null;
     raw_file_data=null;
 
-        
+    
     
     let img=new BisWebImage();
     img.initialize();
@@ -741,12 +743,12 @@ let saveMultiPartDTIFile = function(data,debug) {
     let dt = new Uint8Array(raw_file_data).buffer;
     
     let castarray=null;
-    let numbytes=2;
+    //let numbytes=2;
     if (data.wordtype!=="_32BIT_SGN_INT")  {
         castarray=new Int16Array(dt);
     } else {
         castarray=new Int32Array(dt);
-        numbytes=4;
+      //  numbytes=4;
     }
     
     //  let headerbin=header.createHeaderRawData(false);
@@ -860,6 +862,9 @@ let readFile = function (filename,outprefix,forceorient,debug) {
  */
 let readMultiple = function (filename,outprefix,forceorient,addcallback,debug) {
 
+    if (debug)
+        console.log('In Read Multiple');
+    
     try {
         if (!fs.lstatSync(outprefix).isDirectory()) 
             return [ false, ' cannot write to '+outprefix+'. It is not a directory\n'];

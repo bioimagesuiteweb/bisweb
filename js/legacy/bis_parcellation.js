@@ -563,10 +563,10 @@ class BisParcellation {
         var nextlobe;
         for (nextlobe=2;nextlobe<maxlb;nextlobe++) { 
             var s="rgb(255,0,0)";
-            var thick=1.0;
+            //            var thick=1.0;
             if (nextlobe%2===1) {
                 s="rgb(0,0,255)";
-                thick=2.0;
+                //              thick=2.0;
             }
             
             var othernode=this.lobeStats[nextlobe][0];

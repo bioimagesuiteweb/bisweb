@@ -89,6 +89,7 @@ let inWorkerExecuteModule=function(obj,messageCommand) {
     }).catch( (e) =>  {
         let a=JSON.stringify({ "modulename" : modulename,
                                "id" : id,
+                               "error" : e,
                                "parameters" : parameters,
                                "outputs" : [],
                                "details" : "Failed to execute module"+ modulename

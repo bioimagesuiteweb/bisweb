@@ -28,10 +28,10 @@
 "use strict";
 
 
-const bisweb_image = require('bisweb_image');
+
 const webutil=require('bis_webutil');
 const FastClick=require('fastclick');
-const $=require('jquery');      
+
 const ViewerApplicationElement = require('bisweb_mainviewerapplication');
 const userPreferences = require('bisweb_userpreferences.js');
 const bisgenericio=require('bis_genericio');
@@ -126,7 +126,7 @@ class ParavisionApplicationElement extends ViewerApplicationElement {
             if (ext=="json") {
                 PARATOOL.importjob(f);
             } else if (ext==="gz") {
-                loadimage(f,false);
+                this.loadImage(f,0);
             } else if (fs.lstatSync(f).isDirectory()) {
                 PARATOOL.importfiles(f);
             } else if ( path.basename(f)==="2dseq") {

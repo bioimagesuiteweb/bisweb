@@ -7,7 +7,8 @@ module.exports = {
     },
     "extends": "eslint:recommended",
     "parserOptions": {
-        "sourceType": "module"
+        "sourceType": "module",
+        "ecmaVersion": 2017
     },
     "rules": {
         "indent": [
@@ -19,6 +20,7 @@ module.exports = {
             "unix"
         ],
         'no-console': 'off',
+        'indent' : 'off',
         "semi": [
             "error",
             "always"

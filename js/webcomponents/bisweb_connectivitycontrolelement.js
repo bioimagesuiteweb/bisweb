@@ -1516,10 +1516,9 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         // initialize (or reinitialize landmark control). Called from viewer when image changes. This actually creates (or recreates the GUI) as well.(This implements a function from the {@link BisMouseObserver} interface.)
         // @memberof BisGUIConnectivityControl.prototype
         // @param {Bis_SubViewer} subviewers - subviewers to place info in
-        // @param {BisWebImage} volume - new image
-        initialize : function(subviewers,volume) {
+        // @param {BisWebImage} volume - new image (not used)
+        initialize : function(subviewers) { 
 
-            volume = volume || null; // Just to eliminate the warning as we don't use this
             internal.subviewers=subviewers;
             onDemandCreateGUI();
             loadparcellation('images/shen.json');
@@ -1675,11 +1674,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 internal.datgui_controllers[ia].updateDisplay();
         },
         
-        downloadAsCSV : function() {
-            if (internal.conndata.flagMatrix===null) {
-            }
-        },
-
         showmatrices : function() {
             drawMatricesInWindow();
         },

@@ -858,6 +858,7 @@ const webutil = {
             if (elem.parent().hasClass('in'))
                 return true;
         } catch (e) {
+            // do nothing
         }
         return false;
     },
