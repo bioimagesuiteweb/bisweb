@@ -58,11 +58,9 @@ const objlist = [
     
 ];
 
-let inputs = [];
-
-const tempfs = require('temp').track();
-let tmpDirPath=tempfs.mkdirSync('test_image');
-let tmpFname=path.resolve(tmpDirPath,'save2.nii.gz');
+require('temp').track();
+//let tmpDirPath=tempfs.mkdirSync('test_image');
+//let tmpFname=path.resolve(tmpDirPath,'save2.nii.gz');
 //let tmpFname='save2.nii.gz';
 
 
@@ -150,7 +148,7 @@ describe('Testing Serialize and Serialize\n', function() {
 		
 		let txt=tb.serializeToJSON(true);
 		let newtb=new BisWebDataObjectCollection();
-		let ok=newtb.parseFromJSON(txt);
+		newtb.parseFromJSON(txt);
 		
 		let comp=tb.compareWithOther(newtb);
 		console.log('Comparison=',comp);

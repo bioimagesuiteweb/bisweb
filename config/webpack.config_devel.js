@@ -15,6 +15,8 @@
  
  ENDLICENSE */
 
+"use strict";
+
 const base=require('./webpack.config.js');
 console.log('++++ Adding sourcemap generation');
 base.devtool="source-map";

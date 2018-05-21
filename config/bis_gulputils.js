@@ -26,7 +26,6 @@ let colors=require('colors/safe'),
     fs=require("fs"),
     os=require("os"),
     path=require('path'),
-    jshint = require('gulp-jshint'),
     gulpzip = require('gulp-zip'),
     template=require('gulp-template'),
     del = require('del'),
@@ -259,27 +258,6 @@ var runWebpack=function(joblist,internal,
     return Promise.all(p);
 };
 
-
-var jsHint = function(scripts) {
-    
-    for (let i=0;i<scripts.length;i++) {
-        gulp.src(scripts[i])
-            .pipe(jshint({ sub:true, 
-                           node:true,
-                           unused:true,
-                           undef:true,
-                           globalstrict:true,
-                           esversion:6,
-                           "globals": {
-                               "console": true,
-                               "require": true,
-                               "module" : true,
-                           },
-                         }))
-            .pipe(jshint.reporter('default'));
-    }
-};
-
 var createZIPFile = function(dozip,baseoutput,outdir,version,distdir) {
 
     console.log('dozip=',dozip);
@@ -402,7 +380,7 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
 };
 
 
-var createPackage=function(dopackage=1,tools=[],indir=_dirname+"../",outdir="build",version=1.0,platform="linux",distdir="builddist",done) {
+var createPackage=function(dopackage=1,tools=[],indir=_dirname+"../",outdir="build",version=1.0,platform="linux",distdir="builddist",done=null) {
     
     console.log('dopack=',dopackage,'indir=',indir,' outdir=',outdir,' version=',version,' platform=',platform,' distdir=',distdir);
 
@@ -446,7 +424,6 @@ module.exports = {
     createDateFile : createDateFile,
     createCSSCommon  : createCSSCommon,
     runWebpack : runWebpack,
-    jsHint : jsHint,
     jsDOC : jsDOC,
     doxygen : doxygen,
     createZIPFile : createZIPFile,

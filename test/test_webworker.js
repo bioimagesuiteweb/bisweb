@@ -16,7 +16,7 @@
  ENDLICENSE */
 
 /* jshint node:true */
-/*global describe, it, before */
+/*global describe, it */
 "use strict";
 
 

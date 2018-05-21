@@ -30,7 +30,9 @@ const gulp = require('gulp'),
       colors=require('colors/safe'),
       runSequence = require('run-sequence'),
       bis_gutil=require('./config/bis_gulputils'),
+      jshint = require('gulp-jshint'),
       eslint = require('gulp-eslint');
+
 
 
 
@@ -112,18 +114,7 @@ let internal = {
         "./lib/css/bootstrap-colorselector.css",
         "./web/biscommon.css"
     ],
-    myscripts : [ 'js/*.js',
-                  'js/bin/*.js',
-                  'js/cloud/*.js' ,
-                  'js/core/*.js',
-                  'js/dataobjects/*.js',
-                  'js/legacy/*.js',
-                  'js/modules/*.js',
-                  'js/node/*.js' ,
-                  'js/scripts/*.js' ,
-                  'js/webcomponents/*js',
-                  'js/coreweb/*.js',
-                  'test/*.js' ],
+    lintscripts : ['js/**/*.js','config/*.js','compiletools/*.js','*.js','web/**/*.js','test/**/*.js'],
     toolarray : [ 'index'],
     htmlcounter : 0,
     csscounter  : 0,
@@ -149,8 +140,8 @@ if (options.internal) {
             "root" : path.normalize(path.resolve(__dirname,'..'))
         };
     }
-    internal.myscripts.push('../internal/js/*/*.js');
-    internal.myscripts.push('../internal/js/*.js');
+    internal.lintscripts.push('../internal/js/*/*.js');
+    internal.lintscripts.push('../internal/js/*.js');
     
 }
 
@@ -216,16 +207,38 @@ if (options.debug!==0) {
 // ------------------------------- ------------------------------- -------------------------------
 
 // ------------------ JSHint ------------------
+
+var jsHint = function() {
+
+    for (let i=0;i<internal.lintscripts.length;i++) {
+        
+        gulp.src(internal.lintscripts[i])
+            .pipe(jshint({ sub:true, 
+                           node:true,
+                           unused:true,
+                           undef:true,
+                           globalstrict:true,
+                           esversion:6,
+                           "globals": {
+                               "console": true,
+                               "require": true,
+                               "module" : true,
+                       },
+                         }))
+            .pipe(jshint.reporter('default'));
+    }
+};
+
 gulp.task('jshint', function() {
-    bis_gutil.jsHint(internal.myscripts);
+    return jsHint();
 });
 
-gulp.task('eslint', () => {
+var esLint=function() {
     // ESLint ignores files with "node_modules" paths.
     // So, it's best to have gulp ignore the directory as well.
     // Also, Be sure to return the stream from the task;
     // Otherwise, the task may end before the stream has finished.
-    return gulp.src(['js/**/*.js','config/*.js','compiletools/*.js','*.js','!node_modules/**'])
+    return gulp.src(internal.lintscripts)
     // eslint() attaches the lint output to the "eslint" property
     // of the file object so it can be used by other modules.
         .pipe(eslint({
@@ -239,21 +252,18 @@ gulp.task('eslint', () => {
         .pipe(eslint.format());
     // To have the process exit with an error code (1) on
     // lint error, return the stream and pipe to failAfterError last.
+};
 
+gulp.task('eslint', () => {
+    return esLint();
 });
-
-gulp.task('linter', function(callback) {
-    if (options.eslint)
-        runSequence('eslint',callback);
-    else
-        runSequence('jshint',callback);
-});
-
 
 gulp.task('watch',function() {
-    gulp.watch(internal.watchscripts, ['linter']);
+    if (options.eslint)
+        gulp.watch(internal.lintscripts, ['eslint']);
+    else
+        gulp.watch(internal.lintscripts, ['jshint']);
 });
-
 
 gulp.task('make', function(done) {
     bis_gutil.executeCommand("make ",__dirname+"/build/wasm",done);
@@ -321,13 +331,12 @@ gulp.task('serve', function() {
     connect.server(internal.serveroptions);
     console.log('++++ Server root directory=',internal.serveroptions.root);
 
-    for (let i=0;i<internal.myscripts.length;i++) {
-        gulp.watch(internal.myscripts[i], ['linter']);
-    }
-
+    if (options.eslint)
+        gulp.watch(internal.lintscripts, ['eslint']);
+    else
+        gulp.watch(internal.lintscripts, ['jshint']);
+    
     bis_gutil.createDateFile(path.resolve(options.outdir,'../wasm/bisdate.js'));
-    //    bis_gutil.createDateFile(path.resolve(options.outdir,'../web/bisdate.json',1));
-
     bis_gutil.runWebpack(internal.webpackjobs,
                          options.internal,
                          __dirname,

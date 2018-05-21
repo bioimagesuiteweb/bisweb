@@ -22,7 +22,6 @@
 require('../config/bisweb_pathconfig.js');
 
 const path=require('path');
-const bisimagesmoothreslice=require('bis_imagesmoothreslice');
 const assert = require("assert");
 const BisWebImage=require('bisweb_image');
 const numeric=require('numeric');
@@ -31,19 +30,6 @@ const libbiswasm=require('libbiswasm_wrapper');
 
 numeric.precision = 2;
 
-let showvalues = function(hist,name,printm) {
-
-    let mat=numeric.transpose(hist.getHistogramAsMatrix());
-    
-    
-    printm=printm|| false;
-    if (printm)
-        console.log('computed histogram= ',name,'\n',numeric.prettyPrint(mat),'\n sum=',numeric.sum(mat));
-    
-    console.log('Results '+name+':\n\t SSD=',hist.computeSSD().toFixed(3),' CC=',hist.computeCC().toFixed(3),' NMI=',hist.computeNMI().toFixed(3),' MI=',hist.computeMI().toFixed(3));
-    console.log('\tPartials: e1=',hist.entropyX().toFixed(3),' e2=',hist.entropyY().toFixed(3),' joint=',hist.jointEntropy().toFixed(3));
-
-};
 
 let showvalueswasm = function(name,v) {
 
@@ -110,17 +96,6 @@ let computeWASMHistogram=function(imagedata1,imagedata2,weightdata1,weightdata2,
     let weight1=create_image(weightdata1);
     let weight2=create_image(weightdata2);
 
-    returnmatrix = returnmatrix || 0;
-    debug=debug || 0;
-    console.log('debug=',debug);
-
-    return internal_computeJointHistogramWASM(image1,image2,weight1,weight2,
-                                              binsx,binsy,intscale,returnmatrix,debug);
-};
-
-let computeWASMHistogramImages=function(image1,image2,weight1,weight2,
-                                        binsx,binsy,intscale,returnmatrix,debug) {
-    console.log('Images ... ')
     returnmatrix = returnmatrix || 0;
     debug=debug || 0;
     console.log('debug=',debug);

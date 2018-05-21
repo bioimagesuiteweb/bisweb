@@ -17,9 +17,6 @@
 
 "use strict";
 
-const keystore=require('bis_keystore');
-const bis_dropbox = require('bisweb_dropboxmodule');
-const bis_googledrive = require('bisweb_drivemodule');
 const webutil = require('bis_webutil');
 let imagepath="";
 if (typeof window.BIS !=='undefined') {

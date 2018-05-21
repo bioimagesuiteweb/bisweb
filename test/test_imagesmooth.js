@@ -45,7 +45,6 @@ describe('Testing image smoothing code (from bis_imagesmoothreslice.js)\n', func
     for (let i=0;i<=3;i++)
         fullnames[i]=path.resolve(__dirname, 'testdata/'+imgnames[i]);
     
-    let counter=0;
     before(function(done){
         let p=[ libbiswasm.initialize() ];
         for (let i=0;i<images.length;i++) {

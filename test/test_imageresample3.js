@@ -32,9 +32,9 @@ const libbiswasm=require('libbiswasm_wrapper');
 numeric.precision=3;
 
 const reslice_matr = [ [  0.866,  -0.525  , 0.000,  68.758 ],
-		     [  0.500,   0.909 ,  0.000 ,  9.793 ],
-		     [ 0.000,   0.000 ,  1.000 ,  2.250 ],
-		     [ 0.000,   0.000,   0.000 ,  1.000  ]];
+                     [  0.500,   0.909 ,  0.000 ,  9.793 ],
+                     [ 0.000,   0.000 ,  1.000 ,  2.250 ],
+                     [ 0.000,   0.000,   0.000 ,  1.000  ]];
 
 let reslice_transform=bistransforms.createLinearTransformation();
 reslice_transform.setMatrix(reslice_matr);
@@ -45,52 +45,52 @@ describe('Testing linear transformation (bis_transformationutil.js) and image re
     this.timeout(50000);
     let images = [ new BisWebImage(),new BisWebImage(),new BisWebImage() ];
     let imgnames = [ 'avg152T1_LR_nifti.nii.gz', // 0
-		     'avg152T1_LR_nifti_resampled.nii.gz', //1
-		     'avg152T1_LR_nifti_resampled_resliced.nii.gz', //2
-		   ];
+                     'avg152T1_LR_nifti_resampled.nii.gz', //1
+                     'avg152T1_LR_nifti_resampled_resliced.nii.gz', //2
+                   ];
     
     let fullnames = [ '','',''];
     for (let i=0;i<=2;i++)
-	fullnames[i]=path.resolve(__dirname, 'testdata/'+imgnames[i]);
+        fullnames[i]=path.resolve(__dirname, 'testdata/'+imgnames[i]);
 
     before(function(done){
 
-	let all_done=function() {
-	    done();
-	};
-	
-	let p=[ libbiswasm.initialize() ];
-	for (let i=0;i<=2;i++)
-	    p.push(images[i].load(fullnames[i],false));
-    	Promise.all(p)
-	    .then(all_done)
-	    .catch( (e) => { console.log('Failed '+e); process.exit(1); });
+        let all_done=function() {
+            done();
+        };
+        
+        let p=[ libbiswasm.initialize() ];
+        for (let i=0;i<=2;i++)
+            p.push(images[i].load(fullnames[i],false));
+        Promise.all(p)
+            .then(all_done)
+            .catch( (e) => { console.log('Failed '+e); process.exit(1); });
     });
     
     it('test image reslice linear js v wasm',function() {
-	console.log('\n\n');
-	this.slow(10);
-	let ref_image=images[1], targ_image=images[0], true_image=images[2];
-	let resliced=new BisWebImage(); resliced.cloneImage(ref_image, { type : 'float' });
-	
-	bisimagesmoothreslice.resliceImage(targ_image,resliced,reslice_transform,1);
+        console.log('\n\n');
+        this.slow(10);
+        let ref_image=images[1], targ_image=images[0], true_image=images[2];
+        let resliced=new BisWebImage(); resliced.cloneImage(ref_image, { type : 'float' });
+        
+        bisimagesmoothreslice.resliceImage(targ_image,resliced,reslice_transform,1);
 
-	let dimensions= ref_image.getDimensions();
-	let spacing=ref_image.getSpacing();
+        let dimensions= ref_image.getDimensions();
+        let spacing=ref_image.getSpacing();
 
-	let resliceW=libbiswasm.resliceImageWASM(targ_image,reslice_transform,{ "interpolation" : 1,
-										"dimensions" : dimensions,
-										"spacing": spacing},2);
-	console.log('resliceW=',resliceW.getDescription());
-	console.log('resliced=',resliced.getDescription());
+        let resliceW=libbiswasm.resliceImageWASM(targ_image,reslice_transform,{ "interpolation" : 1,
+                                                                                "dimensions" : dimensions,
+                                                                                "spacing": spacing},2);
+        console.log('resliceW=',resliceW.getDescription());
+        console.log('resliced=',resliced.getDescription());
 
-	console.log('\n');
-	let CC=bisimagesmoothreslice.computeCC(true_image.getImageData(),resliced.getImageData());
-	let CCWJ=bisimagesmoothreslice.computeCC(resliceW.getImageData(),resliced.getImageData());
-	let CCW=bisimagesmoothreslice.computeCC(true_image.getImageData(),resliceW.getImageData());
-	assert.equal(true,(CC>0.999 && CCWJ>0.999));
+        console.log('\n');
+        let CC=bisimagesmoothreslice.computeCC(true_image.getImageData(),resliced.getImageData());
+        let CCWJ=bisimagesmoothreslice.computeCC(resliceW.getImageData(),resliced.getImageData());
+        let CCW=bisimagesmoothreslice.computeCC(true_image.getImageData(),resliceW.getImageData());
+        assert.equal(true,(CC>0.999 && CCWJ>0.999));
 
-	console.log('++++ Correlation (linear interpolation) JS=',CC.toFixed(4),' WASM=',CCW.toFixed(4),", ( JS vs Wasm = ", CCWJ.toFixed(4),  ")\n");
+        console.log('++++ Correlation (linear interpolation) JS=',CC.toFixed(4),' WASM=',CCW.toFixed(4),", ( JS vs Wasm = ", CCWJ.toFixed(4),  ")\n");
     });
 
 

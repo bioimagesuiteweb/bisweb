@@ -45,7 +45,7 @@ const internal = {
     latestVersion : null,
     scope : '',
     disableServiceWorker : false,
-}
+};
 
 // ----------------------------------- GUI Utility Functions -------------------------------------
 //
@@ -98,13 +98,13 @@ let getModal=function() {
                 }
             });
         };
-    };
+    }
 
     internal.modal.title.empty();
     internal.modal.body.empty();
     internal.modal.footer.empty();
     return internal.modal;
-}
+};
 
 // -------------------------------------
 // Alert Pill
@@ -117,7 +117,7 @@ let showAlert=function(message,type='info') {
 
     internal.alertDiv = $(`<div class="alert alert-${type} alert-dismissible" role="alert" 
 		  style="position:absolute; top:80px; left:20px; z-index: 100">
-		  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${message}</a><\div>`);
+		  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${message}</a></div>`);
     $('body').append(internal.alertDiv);
     internal.alertDiv.alert();
 };
@@ -182,7 +182,7 @@ let sendCommandToServiceWorker=function(cmd='updateCache') {
             });
         });
     }
-}
+};
 
 // ------------------------------------------------------------------------------
 //
@@ -198,17 +198,16 @@ let sendCommandToServiceWorker=function(cmd='updateCache') {
 //
 // ------------------------------------------------------------------------------
 
-
 // ---------------------
 // Initial Check
 // ---------------------
-let getLatestVersion=async function() {
+let getLatestVersion=async function() { // jshint ignore:line
     
     try {
-        let t= new Date().getTime()
-        const fetchResult=await fetch(`./bisdate.json?time=${t}`);
-        const response=await fetchResult;
-        internal.latestVersion= await response.json();
+        let t= new Date().getTime();
+        const fetchResult=await fetch(`./bisdate.json?time=${t}`); // jshint ignore:line
+        const response=await fetchResult;  // jshint ignore:line
+        internal.latestVersion= await response.json(); // jshint ignore:line
         return internal.latestVersion['absolutetime'];
     } catch(e) {
         console.log(e);
@@ -217,9 +216,9 @@ let getLatestVersion=async function() {
         return -1;
     }
 
-};
+}; // jshint ignore:line
 
-let getMode=async function() {
+let getMode=async function() { // jshint ignore:line
 
     let mode='online';
     try {
@@ -228,17 +227,17 @@ let getMode=async function() {
         mode='online';
     }
     return mode;
-};
+};// jshint ignore:line
 
-let doesNewVersionExist=async function() {
+let doesNewVersionExist=async function() { // jshint ignore:line
     
     // Check if we are in offline mode else return;
-    let mode=await getMode();
+    let mode=await getMode();  // jshint ignore:line
     if (mode!=='offline-complete') {
         return false;
     }
 
-    let latest=await getLatestVersion();
+    let latest=await getLatestVersion();  // jshint ignore:line
     if (latest<0) {
         console.log('latest=',latest);
         // we are offline (in the network sense)
@@ -251,12 +250,11 @@ let doesNewVersionExist=async function() {
     let diff=internal.onlinetime-mytime;
     let newversion=(diff>1000);
     return newversion;
-};
+}; // jshint ignore:line
 
-let downloadLatestVersion=async function(hasnewversion) {
+let downloadLatestVersion=async function(hasnewversion) { // jshint ignore:line
 
-    let idbmode=await getMode();
-    let situation=0;
+    let idbmode=await getMode();  // jshint ignore:line
     let latestVersion=internal.latestVersion;
 
     let s=`<p> BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which can download itself into the cache of your Broswer for offline use.</p>`;
@@ -270,54 +268,54 @@ let downloadLatestVersion=async function(hasnewversion) {
     if (hasnewversion) {
         m.title.text('There is an updated version online');
         s+=dates+`<p> If you would like to update (recommended), press <EM>Update</EM> below.</p>`;
-        m.addButton('Update','danger',fn)
+        m.addButton('Update','danger',fn);
     }  else if (idbmode==='online') {
         m.title.text('You can install this application offline');
         s+=`<p> If you would like to download all files in the browser cache to enable offline mode (recommended), press <EM>Install</EM> below.</p>`;
-        m.addButton('Install','success',fn)
+        m.addButton('Install','success',fn);
     } else if (internal.disableServiceWorker==false) {
         m.title.text('This is the latest version (and is already stored offline)');
         s+=dates+`<p> If you would like to reload all files, press <EM>Reinstall</EM> below.</p>`;
-        m.addButton('Reinstall','info',fn)
+        m.addButton('Reinstall','info',fn);
     } else {
         s+=dates;
     }
     m.body.append($(s));
     m.addButton('Close','default');
     m.show();
-};
+}; // jshint ignore:line
 
 // ---------------------------------------------
 // Called on start
 // ---------------------------------------------
 
-var checkForLatestVersion=async function() {
+var checkForLatestVersion=async function() {// jshint ignore:line
 
-    let m =await doesNewVersionExist();
+    let m =await doesNewVersionExist();  // jshint ignore:line
     if (m)
         downloadLatestVersion(true);
-};
+};// jshint ignore:line
 
 // ---------------------------------------------
 // Called Help|About
 // ---------------------------------------------
-let aboutApplication=async function() {
+let aboutApplication=async function() {// jshint ignore:line
 
     let offline=false;
-    let latest=await getLatestVersion();
+    let latest=await getLatestVersion(); // jshint ignore:line
     if (latest<0) {
         offline=true;
         showAlert(`In offline mode. Everything should still work (other than regression testing.)`);
         return;
     }
 
-    let mode= await getMode();
+    let mode= await getMode(); // jshint ignore:line
     let dosimple=true;
 
     if (internal.disableServiceWorker===true) {
         dosimple=true;
     } else if (mode!=='online') {
-        let m=await doesNewVersionExist();
+        let m=await doesNewVersionExist(); // jshint ignore:line
         if (m)
             dosimple=false;
     }
@@ -338,19 +336,19 @@ let aboutApplication=async function() {
         downloadLatestVersion(true);
     }
 
-}
+}; // jshint ignore:line
 
 // ---------------------------------------------
 // Called under Help | Install
 // ---------------------------------------------
-let installLatestVersion=async function() {
+let installLatestVersion=async function() {// jshint ignore:line
 
     if (internal.disableServiceWorker===true) {
         showAlert('Please reload <a href="./index.html">this page</a> and try again.','info');
         return;
     }
     
-    let latest=await getLatestVersion();
+    let latest=await getLatestVersion(); // jshint ignore:line
     if (latest<0) {
         showAlert(`We can not connect to the server right now. Please try again later.`,'info');
         return false;
@@ -363,7 +361,7 @@ let installLatestVersion=async function() {
     let newversion=(diff>1000);
     downloadLatestVersion(newversion);
     
-};
+};// jshint ignore:line
 
 // ------------------------------------------------------------------------------
 //
@@ -373,7 +371,6 @@ let installLatestVersion=async function() {
 
 let createApplicationSelector=function(obj) {
     
-    let menu=$("#bismenuparent");
     let container=$("#bisslides");
     let indicators=$(".carousel-indicators");
     let topmenu=$("#topappmenu");
@@ -430,11 +427,9 @@ let createApplicationSelector=function(obj) {
           </li>`);
     $('#bismenuparent0').append(othermenu);
 
-    let extra="main page ";
     let extra2="";
     let url=window.document.URL;
     if  (url.indexOf('/unstable')>0) {
-        extra="testing page (unstable version)"
         extra2="Unstable ";
     }
 
@@ -544,7 +539,7 @@ var createServiceWorker=function() {
             } 
         });
     });
-}
+};
 
 
 // ------------------------------------------------------------------------------

@@ -29,7 +29,7 @@ const webutil=require('bis_webutil');
 const bisweb_dropbox=require('bisweb_simpledropbox');
 const bisweb_onedrive=require('bisweb_simpleonedrive');
 const bisweb_googledrive=require('bisweb_drivemodule');
-const genericio=require('bis_genericio');
+//const genericio=require('bis_genericio');
 const userPreferences = require('bisweb_userpreferences.js');
 const bisdbase = require('bisweb_dbase');
 const keystore=require('bis_keystore');
@@ -38,11 +38,8 @@ const gkey=keystore.GoogleDriveKey || "";
 const mkey=keystore.OneDriveKey || "";
 const userPreferencesLoaded = userPreferences.webLoadUserPreferences(bisdbase);
 
-
-
 // Initial mode
 let fileMode='local';
-
 
 const webfileutils = {
 

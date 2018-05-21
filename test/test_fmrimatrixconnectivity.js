@@ -1,19 +1,19 @@
 /*  LICENSE
- 
- _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
- 
- BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
- 
- - you may not use this software except in compliance with the License.
- - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
- 
- __Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.__
- 
- ENDLICENSE */
+    
+    _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+    
+    BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+    
+    - you may not use this software except in compliance with the License.
+    - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+    
+    __Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.__
+    
+    ENDLICENSE */
 
 /* jshint node:true */
 /*global describe, it, before */
@@ -42,12 +42,12 @@ const buterworth_outname = path.resolve(__dirname, 'testdata/ButterWorthOutput.c
 
 let gold=null, gold_regress=null, FILT_INP=null, FILT_OUT=null,CORR_INP=null;
 
-const gold_correlation = [ [ 1,	-0.154144869,	0.643850872 ],
-						   [ -0.154144869,	1,	0.174130224 ],
-						   [ 0.643850872,	0.174130224,	1   ]];
+const gold_correlation = [ [ 1, -0.154144869,   0.643850872 ],
+                           [ -0.154144869,      1,      0.174130224 ],
+                           [ 0.643850872,       0.174130224,    1   ]];
 const gold_zscore = [ [ 6.1 , -0.155, 0.773 ],
-					  [ -0.155, 6.1 , 0.176 ],
-					  [ 0.773, 0.176, 6.1 ] ];
+                      [ -0.155, 6.1 , 0.176 ],
+                      [ 0.773, 0.176, 6.1 ] ];
 
 describe('Testing Matrix Connectivity (from bis_fmrimatrixconnectivity.js). Code used for  functional connectivity fMRI analysis\n', function() {
 

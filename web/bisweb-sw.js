@@ -1,4 +1,8 @@
+"use strict";
+
 const idb=require('idb-keyval');
+
+/*global self, caches,fetch, MessageChannel, clients */
 
 // idb-store has a key 'mode' with three values
 // online  -- no cache
@@ -52,6 +56,25 @@ let cleanCache=function(keepmode=false) {
     });
 };
 
+let getSingleItem=function(cache,mode,url,url2) {
+
+    return new Promise( (resolve,reject) => {
+                fetch(url2).then(function(response) {
+                    if (!response.ok) {
+                        throw new TypeError('bad response status');
+                    }
+                    cache.put(url, response).then( () => {
+                        internal.count[mode]=internal.count[mode]+1;
+                        if (mode==='internal')
+                            send_message_to_all_clients(`Updating Cache. Downloaded file ${internal.count[mode]}/${internal.maxcount[mode]}`);
+                        resolve();
+                    }).catch( (e) => {
+                        internal.updating=false;
+                        reject(e);
+                    });
+                });
+    });
+};
 
 let populateCache=function(msg="Cache Updated",mode='internal') {
 
@@ -73,28 +96,13 @@ let populateCache=function(msg="Cache Updated",mode='internal') {
         internal.count[mode]=0;
         internal.maxcount[mode]=newlst.length;
         internal.name[mode]=mode;
-        let t= new Date().getTime()
+        let t= new Date().getTime();
         let p=[];
         
         for (let i=0;i<newlst.length;i++) {
             let url=newlst[i];
             let url2=`${url}?t=${t}`;
-            p.push(new Promise( (resolve,reject) => {
-                
-                fetch(url2).then(function(response) {
-                    if (!response.ok) {
-                        throw new TypeError('bad response status');
-                    }
-                    cache.put(url, response).then( () => {
-                        internal.count[mode]=internal.count[mode]+1;
-                        if (mode==='internal')
-                            send_message_to_all_clients(`Updating Cache. Downloaded file ${internal.count[mode]}/${internal.maxcount[mode]}`);
-                        resolve();
-                    }).catch( (e) => {
-                        internal.updating=false;
-                        reject(e); });
-                });
-            }));
+            p.push(getSingleItem(cache,mode,url,url2));
         }
         
         Promise.all(p).then( () => {
@@ -104,7 +112,7 @@ let populateCache=function(msg="Cache Updated",mode='internal') {
                 idb.set('mode','offline-complete').then( () => {
                     internal.webfirst=false;
                     send_message_to_all_clients(msg);
-                    self.skipWaiting()
+                    self.skipWaiting();
                 });
             }
         });
@@ -133,8 +141,8 @@ let send_message_to_all_clients=function(msg){
     clients.matchAll().then(clients => {
         clients.forEach(client => {
             send_message_to_client(client, msg).then(m => console.log("bisweb-sw: Received Message: "+m));
-        })
-    })
+        });
+    });
 };
 
 
@@ -173,7 +181,7 @@ self.addEventListener('message', (msg) => {
 // -------------------------
 // Install Event
 // -------------------------
-self.addEventListener('install', e => {
+self.addEventListener('install', () => {
 
     internal.webfirst=true;
     idb.get('mode').then( (m) => {
@@ -181,7 +189,7 @@ self.addEventListener('install', e => {
         if (m!=='online') {
             cleanCache(true).then( () => {
                 send_message_to_all_clients(`NewSW -- Due to Major Updatehe Cache was emptied.`);
-                self.skipWaiting()
+                self.skipWaiting();
             });
         } 
     });
@@ -193,7 +201,7 @@ self.addEventListener('install', e => {
 self.addEventListener('activate',  event => {
 
     event.waitUntil(self.clients.claim());
-    self.skipWaiting()
+    self.skipWaiting();
     idb.get('mode').then( (m) => {
         console.log('in activate mode=',m);
         if (m!=='online')
@@ -225,7 +233,7 @@ self.addEventListener('fetch', event => {
     
 
     if (webfirst) {
-        event.respondWith(fetch(event.request).catch( (e) => {
+        event.respondWith(fetch(event.request).catch( () => {
             console.log('bisweb-sw: Tried but no network ... returning cached version',event.request.url);
             return caches.match(event.request);
         }));

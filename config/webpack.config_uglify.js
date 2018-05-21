@@ -15,6 +15,8 @@
  
  ENDLICENSE */
 
+"use strict";
+
 const base=require('./webpack.config.js');
 
 base.mode='production';
