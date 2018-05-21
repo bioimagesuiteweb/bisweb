@@ -30,7 +30,9 @@ const gulp = require('gulp'),
       del = require('del'),
       colors=require('colors/safe'),
       runSequence = require('run-sequence'),
-      bis_gutil=require('./config/bis_gulputils');
+      bis_gutil=require('./config/bis_gulputils'),
+      eslint = require('gulp-eslint');
+ 
 
 
 // ------------------------------------ Utility Functions ---------------------------------------------
@@ -47,7 +49,8 @@ program
     .option('-d, --debug <s>','debug')
     .option('-p, --dopack <s>','dopackage 0=no, 1=electron-packager, 2=run inno or zip in addition')
     .option('-z, --dozip <s>','dozip')
-    .option('-n, --internal <n>','if 1 serve the internal directory as well',parseInt)
+    .option('-n, --internal <n>','if 1 use internal code, if 2 serve the internal directory as well',parseInt)
+    .option('-e, --eslint <n>','if 1 use eslint instead of jshint',parseInt)
     .option('-w, --worker <n>','if 1 build the webworker as well',parseInt)
     .option('-s, --sworker <n>','if 1 build the service worker and index.js as well',parseInt)
     .option('--light <n>','if 1 only build the main bislib.js library',parseInt)
@@ -65,6 +68,7 @@ let options = {
     package : program.dopack || 0,
     zip : program.dozip || 0,
     webworker : program.worker || 0,
+    eslint : program.eslint || 0,
     sworker : program.sworker || 0,
     internal : parseInt(program.internal || 0) || 0,
 };
@@ -141,7 +145,7 @@ internal.serveroptions = {
 
 if (options.internal) {
 
-    if (options.internal===1) {
+    if (options.internal>2) {
         internal.serveroptions = {
             "root" : path.normalize(path.resolve(__dirname,'..'))
         };
@@ -217,8 +221,38 @@ gulp.task('jshint', function() {
     bis_gutil.jsHint(internal.myscripts);
 });
 
+gulp.task('eslint', () => {
+    // ESLint ignores files with "node_modules" paths.
+    // So, it's best to have gulp ignore the directory as well.
+    // Also, Be sure to return the stream from the task;
+    // Otherwise, the task may end before the stream has finished.
+    return gulp.src(['js/**/*.js','config/*.js','compiletools/*.js','!node_modules/**'])
+        // eslint() attaches the lint output to the "eslint" property
+        // of the file object so it can be used by other modules.
+        .pipe(eslint({
+	    globals: [
+		'jQuery',
+		'$'
+	    ],
+	}))
+        // eslint.format() outputs the lint results to the console.
+        // Alternatively use eslint.formatEach() (see Docs).
+        .pipe(eslint.format())
+        // To have the process exit with an error code (1) on
+        // lint error, return the stream and pipe to failAfterError last.
+
+});
+
+gulp.task('linter', function(callback) {
+    if (options.eslint)
+        runSequence('eslint',callback);
+    else
+        runSequence('jshint',callback);
+});
+
+
 gulp.task('watch',function() {
-    gulp.watch(internal.watchscripts, ['jshint']);
+    gulp.watch(internal.watchscripts, ['linter']);
 });
 
 
@@ -289,7 +323,7 @@ gulp.task('serve', function() {
     console.log('++++ Server root directory=',internal.serveroptions.root);
 
     for (let i=0;i<internal.myscripts.length;i++) {
-        gulp.watch(internal.myscripts[i], ['jshint']);
+        gulp.watch(internal.myscripts[i], ['linter']);
     }
 
     bis_gutil.createDateFile(path.resolve(options.outdir,'../wasm/bisdate.js'));

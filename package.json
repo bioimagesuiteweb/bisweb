@@ -35,9 +35,11 @@
     "devDependencies": {
         "colors": "1.1.2",
         "del": "3.0.0",
+        "eslint": "^4.19.1",
         "gulp": "3.9.1",
         "gulp-concat-css": "2.3.0",
         "gulp-connect": "5.0.0",
+        "gulp-eslint": "^4.0.2",
         "gulp-html-replace": "1.6.2",
         "gulp-jshint": "2.0.4",
         "gulp-template": "4.0.0",

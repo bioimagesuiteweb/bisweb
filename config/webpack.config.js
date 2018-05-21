@@ -46,7 +46,7 @@ if (fs.existsSync(extrafile) && internal) {
 
 
 let bisWebCustom=path.join(extrapath,"bisextra.js");
-if (parseInt(internal)===2) {
+if (internal<2) {
     bisWebCustom="bis_util";
     console.log(`++++ Not using custom extra require file.`);
 } else {
