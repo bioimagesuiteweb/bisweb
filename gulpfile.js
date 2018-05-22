@@ -28,6 +28,7 @@ const gulp = require('gulp'),
       path=require('path'),
       del = require('del'),
       colors=require('colors/safe'),
+      git = require('git-rev'),
       runSequence = require('run-sequence'),
       bis_gutil=require('./config/bis_gulputils'),
       jshint = require('gulp-jshint'),
@@ -293,9 +294,16 @@ gulp.task('singleCSS', function() {
     bis_gutil.createCSSCommon([maincss],toolname+'.css',options.outdir);
 });
 
-gulp.task('date', function() {
-    bis_gutil.createDateFile(path.resolve(options.outdir,'bisdate.json'));
-    bis_gutil.createDateFile(path.resolve(options.outdir,'../wasm/bisdate.js'));
+gulp.task('date', function(done) {
+    
+    git.long(function (str) {
+        console.log('long', str);
+
+        bis_gutil.createDateFile(path.resolve(options.outdir,'bisdate.json'),str,internal.setup.version);
+        bis_gutil.createDateFile(path.resolve(options.outdir,'../wasm/bisdate.js'),str,internal.setup.version);
+        done();
+    });
+
 });
 
 gulp.task('webpack', function(done) {
