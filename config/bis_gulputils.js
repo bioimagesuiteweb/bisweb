@@ -193,12 +193,12 @@ var createCSSCommon=function(dependcss,out,outdir) {
         .pipe(gulp.dest(outdir));
 };
 
-var createDateFile=function(datefile) {
+var createDateFile=function(datefile,hash='',version='') {
 
     let a=getDate("/");
     let b=getTime(1);
     let t= new Date().getTime();
-    let output_text=` { "date" : "${a}", "time" : "${b}", "absolutetime" : ${t} }`;
+    let output_text=` { "date" : "${a}", "time" : "${b}", "absolutetime" : ${t} , "hash" : "${hash}", "version": "${version}" }`;
     if (datefile.indexOf('json')<0) {
         output_text=`module.exports = ${output_text};`;
     }
