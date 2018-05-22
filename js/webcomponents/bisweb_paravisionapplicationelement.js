@@ -28,10 +28,10 @@
 "use strict";
 
 
-const bisweb_image = require('bisweb_image');
+
 const webutil=require('bis_webutil');
 const FastClick=require('fastclick');
-const $=require('jquery');      
+
 const ViewerApplicationElement = require('bisweb_mainviewerapplication');
 const userPreferences = require('bisweb_userpreferences.js');
 const bisgenericio=require('bis_genericio');
@@ -91,15 +91,14 @@ class ParavisionApplicationElement extends ViewerApplicationElement {
         
         
         let menubar=document.querySelector(menubarid).getMenuBar();
-        const loadimage=this.createFileAndOverlayMenus(menubar,null);
 
+        this.createApplicationMenu(menubar);
+        let editmenu=this.createEditMenu(menubar);
+        this.createDisplayMenu(menubar,null);
+        this.createFileAndOverlayMenus(menubar,null);
         
-
-        let editmenu=null;
         if (modulemanager!==null) 
-            editmenu=modulemanager.initializeElements(menubar,self.VIEWERS);
-
-        this.createDisplayMenu(menubar,editmenu);
+            modulemanager.initializeElements(menubar,self.VIEWERS,editmenu);
 
         if (misactool)
             misactool.addtomenubar(menubar);
@@ -127,7 +126,7 @@ class ParavisionApplicationElement extends ViewerApplicationElement {
             if (ext=="json") {
                 PARATOOL.importjob(f);
             } else if (ext==="gz") {
-                loadimage(f,false);
+                this.loadImage(f,0);
             } else if (fs.lstatSync(f).isDirectory()) {
                 PARATOOL.importfiles(f);
             } else if ( path.basename(f)==="2dseq") {

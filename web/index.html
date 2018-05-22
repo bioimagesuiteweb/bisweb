@@ -17,25 +17,41 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
 
 <head>
     <title>BioImage Suite Web</title>
     <meta name="viewport" content="width=device-width, user-scalable=no">
+    <meta name="theme-color" content="rgb(28,45,64)">
+    <meta name="description" content="Yale BioImage Suite Medical Image
+                                      Analysis Software">
+    <meta name="keywords" content="Image Segmentation, Registration,
+                                   Visualization, fMRI, Connectivity, JS,
+                                   WebAssembly, NIH Brain Inititative">
+    <meta name="author" content="Xenophon Papademetris and Dustin Scheinost,
+                                 Dept of Radiology and Biomedical Imaging,
+                                 Yale School of Medicine">
+
+    <meta name="theme-color" content="rgb(28,45,64)">
+    <meta name="description" content="Yale BioImage Suite Medical Image
+                                      Analysis Software">
+    <meta name="keywords" content="Image Segmentation, Registration,
+                                   Visualization, fMRI, Connectivity, JS,
+                                   WebAssembly, NIH Brain Inititative">
+    <meta name="author" content="Xenophon Papademetris and Dustin Scheinost,
+                                 Dept of Radiology and Biomedical Imaging,
+                                 Yale School of Medicine">
     <link rel="icon" href="images/favicon.ico">
 
     <!-- begin webpack/gulp modifications -->
     <!-- external css files -->
     <!-- build:css -->
     <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_dark.css">
-    <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap-colorselector.css">
-    <link rel="stylesheet" type="text/css" href="biscommon.css">
     <!-- endbuild -->
 
     <!-- all javascript files -->
     <!-- build:js -->
     <script src="bis.js"></script>
-    <script src="../build/web/webcomponents-lite.js"></script>
     <script src="../build/web/jquery.min.js"></script>
     <script src="../build/web/bootstrap.min.js"></script>
     <script src="../build/web/index.js"></script>
@@ -46,102 +62,187 @@
     <link rel="stylesheet" type="text/css" href="index.css">
     <!-- end of stay as is -->
 
+    <!-- build:manifest-->
+    <!-- endbuild-->
+
+
 </head>
 <body oncontextmenu="return false;" ondragstart="return false;" ondrop="return false;">
 
-<!--  <div id="bis_loading_overlay" align="center" style="padding:5px; width:50vw; left:25vw; top:10vh;
-			     height:50vh;
-			     padding:10vh;
-			     font-size: 10vh;
-			     border-radius:50px;background-color:#884400;
-			     z-index:5000; position: absolute;
-			     color:#ffffff;  opacity: 0.8;">Loading Components</div>
-  <script> window.onload=function() {
-  $("#bis_loading_overlay").css({'visibility' :'hidden'});} </script> -->
-  
-  <div style="padding-bottom:10px; padding-top:20px; margin-top:0px">
-    <div style="margin-left:10px; margin-right:50px; margin-bottom:10px;margin-top:0px; padding-top:0px">
-      <H4 id="biswarningparent">Welcome to BioImage Suite <EM>Web</EM>.</H4>
-
-      <P>Select any tool from the taskbar below, or simply click on the
-	application picture below, to open the application.  BioImage
-	Suite <EM>Web</EM> is written in Javascript and has been mostly
-	tested on Google Chrome. All applications are running on your local
-	machine. <B>No data</B> is ever uploaded to any server. </P>
-      
-      <p>This set of tools is part of
-      the <a href="http://www.bioimagesuite.org" target="_blank">Yale BioImage
-          Suite</a> software package.</p>
-
-      <p> Code documentation for <a href="./doxygen/html">C++</a>
-        and <a href="./doc">JS</a> code is available.</p>
-
-    </div>
-  </div>
-
-  <div class="container" style="margin-top:5px" id="biscontainer">
-    <div id="mycarousel" class="carousel slide" data-ride="carousel">
-      
-      <!-- Indicators -->
-      <ol class="carousel-indicators">
-	<li data-target="#mycarousel" data-slide-to="0" class="active"></li>
-	<li data-target="#mycarousel" data-slide-to="1"></li>
-      </ol>
-      
-      <!-- Wrapper for slides -->
-      <div class="carousel-inner" role="listbox" align="center" id="bisslides">
-	<div class="item active">
-	  <a href="./connviewer.html" target="_blank"><img src="images/connviewer.png">
-	    <div class="carousel-caption">
-	      The fMRI connectivity display tool.
-	    </div>
-	  </a>
-	</div>
-	<div class="item">
-	  <a href="./mni2tal.html" target="_blank"><img src="images/mni2tal.png" alt="">
-	    <div class="carousel-caption">
-	      The MNI 2 Talairach Converter program.
-	    </div>
-	  </a>
-	</div>
-      </div>
-      <div id="carouselcontrols">
-	<!-- Controls -->
-	<a class="left carousel-control" href="#mycarousel" role="button" data-slide="prev">
-	  <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
-	  <span class="sr-only">Previous</span>
-	</a>
-	<a class="right carousel-control" href="#mycarousel" role="button" data-slide="next">
-	  <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
-	  <span class="sr-only">Next</span>
-	</a>
-      </div>
-    </div>
-  </div>
-  
-  <nav class="navbar navbar-default navbar-fixed-bottom">
-    <div class="container-fluid" id="bismenucontainer">
+  <nav class="navbar navbar-default navbar-fixed-top">
+    <div class="container-fluid" id="bismenucontainer0">
       <!-- Brand and toggle get grouped for better mobile display -->
-      <div class="navbar-header" id="bismenuheader" >
-	<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bismenu">
-	  <span class="sr-only">Toggle navigation</span>
-	  <span class="icon-bar"></span>
+      <div class="navbar-header" id="bismenuheader0" >
+	    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#topmenu">
+	      <span class="sr-only">Toggle navigation</span>
+	      <span class="icon-bar"></span>
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
-	</button>
-      </div>  <!-- Collect the nav links, forms, and other content for toggling -->
-      <div class="collapse navbar-collapse" id="bismenu">
-	<ul class="nav navbar-nav" id="bismenuparent">
-	  <li><a  href="./connviewer.html" target="_blank" role="button">Connectivity Viewer</a></li>
-	  <li><a  href="./mni2tal.html" target="_blank" role="button">MNI2TAL Tool</a></li>
+	    </button>
+        <img src="images/bioimagesuite.png" height="50px" id="bislogo"
+             alt="logo" style="margin-top:5px">
+      </div>      
+      
+      <div class="collapse navbar-collapse" id="topmenu">
+	<ul class="nav navbar-nav" id="bismenuparent0">
+
+          <li class='dropdown' id="appmenu">
+            <a href='#' class='dropdown-toggle'  data-toggle='dropdown'
+               role='button' aria-expanded="true">Applications<span class='caret'></span></a>
+            <ul class='dropdown-menu' role='menu' id='topappmenu'>
+              <li><a  href="./viewer.html" target="_blank"
+                      role="button">Orthogonal Viewer Tool</a></li>
+              <li><a  href="./connviewer.html" target="_blank"
+                      role="button">Connectivity Viewer</a></li>
+              <li><a  href="./mni2tal.html" target="_blank"
+                      role="button">MNI2TAL</a></li>
+              <li><a  href="./editor.html" target="_blank" role="button">Image
+                  Editor</a></li>
+              <li><a  href="./overlayviewer.html" target="_blank"
+                      role="button">Overlay Viewer</a></li>
+              <li><a  href="./dualviewer.html" target="_blank"
+                      role="button">Dual Viewer Tool</a></li>
+
+            </ul>
+          </li>
+          
+          <li class='dropdown'>
+            <a href='#' class='dropdown-toggle'  data-toggle='dropdown'
+               role='button' aria-expanded='false'>Download<span class='caret'></span></a>
+            
+            <ul class='dropdown-menu' role='menu'>
+              <li><a href="http://bisweb.yale.edu/binaries/binaries.html"
+	             target="_blank" rel="noopener">Download Desktop Apps</a></li>
+              <li class="divider"></li>
+              <li><a href="https://medicine.yale.edu/bioimaging/suite/"
+                     target="_blank" rel="noopener">Legacy BioImage Suite
+                    Webpage<span></a></li>
+            </ul>
+            
+          <li class='dropdown'>
+            <a href='#' class='dropdown-toggle'  data-toggle='dropdown'
+               role='button' aria-expanded='false'>Documentation <span class='caret'></span></a>
+            <ul class='dropdown-menu' role='menu'>
+              <li><a href="https://bioimagesuiteweb.github.io/webapp/images/BioImageSuiteWeb_NIHBrainInitiativeMeeting_April2018.pdf"
+                     target="_blank" rel="noopener">Overview Presentation</a></LI>
+              <li><a href="https://bioimagesuiteweb.github.io/bisweb-manual/"
+                     target="_blank" rel="noopener"><EM>Draft</EM> User Manual</a></li>
+              <li class="divider"></li>
+              <li><a href="https://github.com/bioimagesuiteweb/bisweb/blob/master/docs/README.md"
+                     target="_blank" rel="noopener">Developer Documentation</a></li>
+            </ul>
+          </li>
+          
+          <li class='dropdown'>
+            <a href='#' class='dropdown-toggle'  data-toggle='dropdown'
+               role='button' aria-expanded='false'>Developer Info <span class='caret'></span></a>
+            <ul class='dropdown-menu' role='menu' id="devmenu">
+              <li><a href="https://github.com/bioimagesuiteweb/bisweb"
+                     target="_blank" rel="noopener">Main Repository</a></LI>
+              <li><a href="https://github.com/bioimagesuiteweb/gplcppcode"
+                     target="_blank" rel="noopener">Plugin Repository</a></li>
+              <li class="divider"></li>
+              <li><a href="./biswebtest.html"
+                     target="_blank">Run Regression Tests</a></li>
+            </ul>
+          </li>
+
 	</ul>
       </div>
     </div><!-- /.container-fluid -->
   </nav>
-
-  <bisweb-applicationselector> </bisweb-applicationselector>
-
   
+  <div id="main">
+    <div id="mycarousel" class="carousel slide">
+      
+      <ol class="carousel-indicators">
+      </ol>
+      
+      <!-- Wrapper for slides -->
+      <div class="carousel-inner" align="center"
+           id="bisslides">
+        <div class="item active"><a href="./viewer.html"
+                                    target="_blank"><img src="images/viewer.png" alt="Orthogonal Viewer Tool">
+            <div class="carousel-caption">The orthogonal viewer + image processing tool.</div>
+        </div>
+
+        <div class="item"><a href="./connviewer.html"
+                             target="_blank"><img src="images/connviewer.png"
+                                                  alt="Connectivity Viewer">
+            <div class="carousel-caption">The fMRI connectivity display
+              tool.</div>
+        </div>
+
+        <div class="item"><a href="./mni2tal.html"
+                             target="_blank"><img src="images/mni2tal.png"
+                                                  alt="MNI2TAL"><div class="carousel-caption">The MNI 2 Talairach
+              Converter program.</div></div>
+
+        <div class="item"><a href="./editor.html"
+                             target="_blank"><img src="images/editor.png"
+                                                  alt="Image Editor"><div class="carousel-caption">The orthogonal viewer and
+              editor.</div>
+        </div>
+
+        <div class="item"><a href="./overlayviewer.html"
+                             target="_blank"><img src="images/overlayviewer.png"
+                                                  alt="Overlay Viewer"><div class="carousel-caption">The orthogonal and mosaic
+              functional overlay viewer.</div>
+        </div>
+        
+        <div class="item"><a href="./dualviewer.html"
+                             target="_blank"><img src="images/dualviewer.png"
+                                                  alt="Dual Viewer
+                             Tool"><div class="carousel-caption">A dual
+              registration viewer with linked cursors.</div>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+    
+  <a class="left carousel-control" id="leftarrow" href="#mycarousel" role="button" data-slide="prev">
+    <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+    <span class="sr-only">Previous</span>
+  </a>
+  <a class="right carousel-control" id="rightarrow" href="#mycarousel" role="button" data-slide="next">
+    <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+    <span class="sr-only">Next</span>
+  </a>
   
+  <div id="bottom">
+
+    <H2>Welcome to BioImage Suite <EM>Web</EM>.</h2>
+
+    <UL>
+      <LI class="bisli">Select any tool from the <button class="btn btn-link btn-small"
+	    id="applicationstext">Applications menu</button> above, or simply click on the
+	    application picture, to open the application. Please visit 
+        <a href="http://bisweb.yale.edu/binaries/binaries.html"
+           target="_blank" rel="noopener">our download site</a> for commandline and
+        desktop versions of the software.</LI>
+      
+      <LI class="bisli"><B>This software is not approved for clinical use.  Use at your own risk.</B></LI>
+      
+      <LI class="bisli">  BioImage
+	    Suite <EM>Web</EM> is written in Javascript and has been mostly
+	tested on Google Chrome. All applications are running on your local
+	      machine. <B>No data</B> is ever uploaded to any server.</LI>
+
+      <LI class="bisli"> We gratefully acknowledge support from
+    the <a href="https://www.braininitiative.nih.gov/"
+           target="_blank" rel="noopener">NIH Brain Initiative</a> under grant R24
+        MH114805 (<EM>Papademetris X. and Scheinost D. PIs, Dept. of
+          Radiology and Biomedical Imaging, Yale School of
+          Medicine.</EM>)</LI>
+    </UL>
+    <HR>
+    <p> If you are looking for the old desktop based BioImage Suite software you may download it from the
+      <a href="https://medicine.yale.edu/bioimaging/suite/"  target="_blank" rel="noopener">Legacy BioImage Suite
+        Webpage</a>.
+
+      
+  </div>
+
 </body>
 </html>

@@ -15,26 +15,28 @@
  
  ENDLICENSE */
 
+"use strict";
+
 const os = require('os');
 
 let path=require('path');
 let v=process.versions.node;
-let n=parseFloat(v);
+let s=v.split(".");
+let major=parseInt(s[0]);
+let minor=parseInt(s[1]);
 
-if (n<4.2) {
-    console.log(`----\n---- You are probably using the emscripten version of node (version ${v}). Open a new console and try again.\n----`);
+if (major<8 || (major===8 && minor<9)) {
+    console.log(`----\n---- You are using a version of node older than 8.9 (actual version=${v})\n`);
     process.exit(1);
 }
 
-if (n<7.9) {
-    console.log(`----\n---- You are using a version of node older than 7.9 (actual version=${v}). Open a new console and try again.\n----`);
+if (major>=9) {
+    console.log(`----\n---- You are using a version of node that is 9.0 or newer (actual version=${v})\n`);
     process.exit(1);
 }
 
 console.log(`....\n.... Using node.js version ${v} (OK)`);
 console.log('.... This program is part of the commandline suite of tools from BioImage Suite Web.\n.... See https://github.com/bioimagesuiteweb/bisweb for more information.\n....');
-
-module.exports=n;
 
 let d=path.dirname(__dirname);
 
@@ -69,5 +71,5 @@ else
 require("module").Module._initPaths();
 
 
-module.exports=a;
+module.exports=v;
 

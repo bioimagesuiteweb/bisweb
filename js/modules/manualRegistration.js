@@ -156,7 +156,6 @@ class ManualRegistrationModule extends BaseModule {
         let sc=parseFloat(vals.scale);
         
         let linear=new BisWebLinearTransformation(1); 
-        let input=this.outputs['output'];
         let dim2=target.getDimensions();
         let spa2=target.getSpacing();
         

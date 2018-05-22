@@ -38,7 +38,7 @@ program.version('1.0.0')
     .option('-i, --input <s>','filename of the file to compute hash for')
     .option('-o, --output <s>','filename to store the hash in (if specified)')
     .on('--help',function() {
-	help();
+        help();
     })
     .parse(process.argv);
 
@@ -50,13 +50,13 @@ let img=new bisweb_image();
 
 img.load(inpfilename).then(
     () => {
-	img.save(outfilename).then( () => {
-	    console.log('Saved image in ',outfilename);
-	    process.exit(0);
-	});
+        img.save(outfilename).then( () => {
+            console.log('Saved image in ',outfilename);
+            process.exit(0);
+        });
     }).catch( (e) => {
-	console.log(e);
-	process.exit(1);
+        console.log(e);
+        process.exit(1);
     });
 
 

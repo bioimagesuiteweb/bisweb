@@ -15,7 +15,7 @@
  
  ENDLICENSE */
 
-/* global window,document,Blob,saveAs,FileReader,setTimeout,HTMLElement,Event */
+/* global window,document,Blob,FileReader,setTimeout,HTMLElement,Event */
 
 
 "use strict";
@@ -30,7 +30,6 @@ var detectWebGL = function() {
         return !! ( window.WebGLRenderingContext && ( canvas.getContext( 'webgl' ) || canvas.getContext( 'experimental-webgl' ) ) ); 
     } catch( e ) { 
         console.log("WEB GL is not available");
-        return false; 
     }
     return false;
 };
@@ -273,7 +272,8 @@ class ViewerLayoutElement extends HTMLElement {
         
         if (this.defaulttext === "") {
             this.context.fillText('Load (or Drag) an Image (.nii.gz or .nii)',100,100);
-            this.context.fillText('and it will appear here!',120,180);
+            this.context.fillText(' or an application viewer file (.biswebstate)',100,180);
+            this.context.fillText('and it will appear here!',120,260);
         } else {
             let ch=this.context.canvas.height;
             let cw=this.context.canvas.width;

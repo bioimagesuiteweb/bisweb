@@ -121,20 +121,43 @@ var deserializeAndDeleteObject=function(Module,ptr,datatype,first_input=0) {
 
 var initialize_wasm=function(obj=null) {
 
-    let dname="js_module (libbiswasm_wasm.js)";
-    let binary=null;
-    
-    return new Promise( (resolve,reject) => {
-        
-        if (!obj) {
-            if (typeof window !== 'undefined') {
-                obj=window;
-                binary=genericio.fromzbase64(window.biswebpack);
-                //                console.log('In initialize wasm read binary from window.biswebpack len=',binary.length);
+    let dname="external js_module (libbiswasm_wasm.js)";
 
-                let clb=function() {
-                    libbiswasm_raw(resolve,dname,binary);
-                };
+    return new Promise( (resolve,reject) => {
+
+
+        if (obj!==null) {
+            // Web worker for now ...
+            if (!obj.binary)
+                reject('No binary in obj');
+            let done=function(m) {
+                m.bisdate=obj.date;
+                resolve(m);
+            };
+
+            dname="internal js module (webworker)";
+            libbiswasm_raw(done,dname,obj.binary);
+            return;
+        }
+        
+        
+        if (typeof window !== 'undefined') {
+            let binary=genericio.fromzbase64(window.biswebpack.binary);
+
+            let done=function(m) {
+                m.bisdate=window.biswebpack.date;
+                resolve(m);
+            };
+
+
+            
+            let clb=function() {
+                libbiswasm_raw(done,dname,binary);
+            };
+            
+            if (document.readyState == 'complete') {
+                clb();
+            } else {
                 
                 if (window.attachEvent) {
                     window.attachEvent('onload', clb);
@@ -152,17 +175,10 @@ var initialize_wasm=function(obj=null) {
                     }
                 }
             }
-        } else {
-            binary=obj.biswebpack;
-            if (!binary)
-                reject('No binary in obj.biswebpack');
-            libbiswasm_raw(resolve,dname,binary);
-        }
-
-        if (binary) {
             return;
         }
-        
+
+        // Node.js, read .wasm file directly here
         const fs=genericio.getfsmodule();
         const path=genericio.getpathmodule();
         
@@ -184,7 +200,8 @@ var initialize_wasm=function(obj=null) {
         if (!fs.existsSync(dname)) {
             reject('Can not find libbiswasm.wasm in '+dname);
         } 
-        
+
+        let binary=null;
         try {
             console.log('.... Reading wasm binary from dname=',dname);
             let d1=fs.readFileSync(dname);

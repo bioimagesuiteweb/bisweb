@@ -20,7 +20,7 @@
 const biswrap = require('libbiswasm_wrapper');
 const baseutils=require("baseutils");
 const BaseModule = require('basemodule.js');
-
+const BisWebMatrix = require('bisweb_matrix.js');
 
 /**
  * Computes functional Connectivity Preprocessing
@@ -68,7 +68,6 @@ class functionalConnectivityPreprocessingModule extends BaseModule {
                     'description': 'The nuisance mask',
                     'varname': 'nuisance',
                     'shortname': 'n',
-                    'required': true,
                     'guiviewertype' : 'overlay',
                     'guiviewer'  : 'viewer1',
                     'colortype'  : 'Red',
@@ -166,7 +165,7 @@ class functionalConnectivityPreprocessingModule extends BaseModule {
         let weightVector = this.inputs['weight'] || 0;
         let nuisance=this.inputs['nuisance'] || 0;
         let motion=this.inputs['motion'] || 0;
-        let debug=super.parseBoolean(vals.debug)
+        let debug=super.parseBoolean(vals.debug);
 
         return new Promise((resolve, reject) => {
             
@@ -273,7 +272,10 @@ class functionalConnectivityPreprocessingModule extends BaseModule {
                 dimensions[1]=dimensions[1]+d[1];
             }
         }
-        console.log('oooo combined dimensions=', name,' = ',d.join(','));
+
+        let cols=dimensions[1];
+        
+        console.log('oooo combined dimensions=', name,' = ',dimensions.join(','));
         let regressor=new BisWebMatrix();
         regressor.allocate(dimensions[0],dimensions[1],0.0);
         let data=regressor.getDataArray();

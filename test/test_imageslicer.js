@@ -173,7 +173,7 @@ describe('Testing Image Slice Extraction (BisImageSlicerr from BisImageSlicerr.j
     });
 
     describe('\n\n      +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n      ++++ check loading and slicing\n',
-             function(done) {       // jshint ignore:line
+             function() {       // jshint ignore:line
 
                  this.timeout(50000);
                  
@@ -223,8 +223,6 @@ describe('Testing Image Slice Extraction (BisImageSlicerr from BisImageSlicerr.j
                      }
                      let error0=numeric.norm2(numeric.sub(sl_00,sl_01));
                      console.log('----- error_norm=',error0);
-                     if (error0>0) {
-                     }
                      return error0;
                  };
                  

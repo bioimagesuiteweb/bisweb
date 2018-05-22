@@ -21,13 +21,12 @@ const BaseModule = require('basemodule.js');
 const baseutils=require("baseutils");
 const BisWebImage = require('bisweb_image.js');
 /**
- * Computes morphologic filtering (erode,dilate,multiply) on an image
+ * Combines images
  */
-class MorphologyFilterModule extends BaseModule {
+class CombineImageModule extends BaseModule {
     constructor() {
         super();
-        this.name = 'morphologyFilter';
-        this.mouseobserver=true;
+        this.name = 'combineImages';
     }
 
 
@@ -106,7 +105,7 @@ class MorphologyFilterModule extends BaseModule {
     }
 
     directInvokeAlgorithm(vals) {
-        console.log('oooo invoking: morphologyFilter with vals', JSON.stringify(vals));
+        console.log('oooo invoking: combineImages with vals', JSON.stringify(vals));
 
         let first = this.inputs['input'];
         let second = this.inputs['second'];
@@ -176,4 +175,4 @@ class MorphologyFilterModule extends BaseModule {
     }
 }
 
-module.exports = MorphologyFilterModule;
+module.exports = CombineImageModule;

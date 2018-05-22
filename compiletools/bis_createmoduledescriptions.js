@@ -28,7 +28,7 @@
 require('../config/bisweb_pathconfig.js');
 const program=require('commander');
 const path=require('path');
-const os = require('os');
+
 const fs=require('fs');
 const modules=require('moduleindex');
 
@@ -40,8 +40,8 @@ var help = function() {
 program.version('1.0.0')
     .option('-i, --input  <s>','module list file')
     .option('-o, --output  <s>','output python module')
-	.on('--help',function() {
-	    help();
+    .on('--help',function() {
+        help();
     })
     .parse(process.argv);
 
@@ -56,7 +56,7 @@ console.log('++++ Reading module list from',inputname,'\n++++');
 let mtext = fs.readFileSync(inputname, 'utf-8').trim();
 let modulelist = "";
 mtext = mtext.replace(/\r/g, '');
-modulelist=mtext.split('\n')
+modulelist=mtext.split('\n');
 
 
 

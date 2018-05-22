@@ -32,8 +32,8 @@ const bottommenubartext=`
 			<div style="margin-top:2px; margin-left:5px; 
 'padding-right:10px, margin-bot:1px; height:10px; font-size:12px" align="right">
       <img src="${iconpath}images/bislogo.png" id="bislogobottom" height="20px"/>
-      This application <span style="color:#ff8888"><B>(still in beta!)</B></span> is part of the <a href="http://www.bioimagesuite.org" target="_blank">Yale
-BioImage Suite</a> package. (${bisdate})&nbsp;&nbsp; 
+      This application <span style="color:#ff8888"><B>(still in beta!)</B></span> is part of the Yale
+BioImage Suite Web package. (${bisdate})&nbsp;&nbsp; 
 </div>
 		</nav>`;
 
@@ -137,7 +137,6 @@ class ViewerWidgetElement extends HTMLElement {
     // Fires when an instance of the element is created.
     connectedCallback() {
 				let margin=this.getAttribute('bis-margin') || '65px';
-				console.log('here');
 				$(this).css({
 						'position' : 'relative',
 						'width' : '800px',

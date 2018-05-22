@@ -70,7 +70,6 @@ let auth = function() {
 
     console.log('url', url);
     let authUrl = box.getAuthenticationUrl(url);
-    console.log(authUrl);   
     window.open(authUrl, '', 'width=500, height=500');
 };
 

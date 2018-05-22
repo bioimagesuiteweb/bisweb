@@ -28,11 +28,9 @@
 // Create command line
 // -----------------------------------------------------------------
 const program=require('commander');
-const path=require('path');
-const os = require('os');
 const genericio=require('../js/core/bis_genericio.js');
 const fs=require('fs');
-
+const bisdate=require('../build/wasm/bisdate.js');
 
 
 
@@ -44,12 +42,9 @@ program.version('1.0.0')
     .option('-i, --input  <s>','input .wasm file')
     .option('-o, --output  <s>','output js file wrapper for wasm')
     .on('--help',function() {
-	    help();
+            help();
     })
     .parse(process.argv);
-
-let outputname = program.output || null;
-let inputname = program.input || null;
 
 if (program.output===null || program.input===null) {
     help();
@@ -69,15 +64,17 @@ let arr=new Uint8Array(d);
 //console.log("++++ RAW Binary WASM Array length=",arr.length);
 let str=genericio.tozbase64(arr);
 
+//    console.log('++++ BisWASM loaded as zbase-64 string, length=',biswebpack.length);
+
 let output_text=`
+
 
 (function () {
 
-    const biswebpack="${str}";
-    console.log('++++ BisWASM loaded as zbase-64 string, length=',biswebpack.length);
+    const biswebpack= { binary: "${str}", date : "${bisdate.date}, ${bisdate.time}" };
 
     if (typeof module !== "undefined" && module.exports) {
-        module.exports = biswebpack
+        module.exports = biswebpack;
     } else {
         window.biswebpack=biswebpack;
     }

@@ -15,6 +15,8 @@
  
  ENDLICENSE */
 
+"use strict";
+
 const webpack = require('webpack'); //to access built-in plugins
 const path = require('path');
 const fs=require('fs');
@@ -54,6 +56,12 @@ module.exports = {
                     path.resolve(mypath,'build/wasm') ]
     },
     target : "node",
+    plugins: [
+        new webpack.BannerPlugin( {
+            banner : '#!/usr/bin/env node\n',
+            raw : true
+        }),
+    ]
 };
 
 module.exports.resolve.modules.push(extrapath);

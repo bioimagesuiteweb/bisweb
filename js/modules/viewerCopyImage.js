@@ -16,11 +16,8 @@
  ENDLICENSE */
 
 'use strict';
-
-const biswrap = require('libbiswasm_wrapper');
 const baseutils=require("baseutils");
 const BaseModule = require('basemodule.js');
-const BisWebLinearTransformation = require('bisweb_lineartransformation.js');
 
 /**
  * 3D->2D Projection in various ways
@@ -49,11 +46,12 @@ class ViewerCopyModule extends BaseModule {
     directInvokeAlgorithm(vals) {
         console.log('oooo invoking: projectImage with vals', JSON.stringify(vals));
         return new Promise( (resolve, reject) => {
-            this.outputs['output']= this.inputs['input'];
-            resolve();
-        }).catch( (e) => {
-            console.log(e.stack);
-            reject(e);
+            try {
+                this.outputs['output']= this.inputs['input'];
+                resolve();
+            } catch(e) {
+                reject(e);
+            }
         });
     }
 

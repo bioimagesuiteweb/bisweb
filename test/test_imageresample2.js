@@ -32,9 +32,9 @@ const libbiswasm=require('libbiswasm_wrapper');
 numeric.precision=3;
 
 let reslice_matr = [ [  0.866,  -0.525  , 0.000,  68.758 ],
-		     [  0.500,   0.909 ,  0.000 ,  9.793 ],
-		     [ 0.000,   0.000 ,  1.000 ,  2.250 ],
-		     [ 0.000,   0.000,   0.000 ,  1.000  ]];
+                     [  0.500,   0.909 ,  0.000 ,  9.793 ],
+                     [ 0.000,   0.000 ,  1.000 ,  2.250 ],
+                     [ 0.000,   0.000,   0.000 ,  1.000  ]];
 
 let reslice_transform=bistransforms.createLinearTransformation();
 reslice_transform.setMatrix(reslice_matr);

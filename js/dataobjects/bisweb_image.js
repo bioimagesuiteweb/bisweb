@@ -160,10 +160,7 @@ class BisWebImage extends BisWebDataObject {
                     }
                 }
 
-                if (typeof fobj==='object')
-                    fobj=fobj.name;
-                
-                self.setFilename(fobj);
+                self.setFilename(bisgenericio.getFixedLoadFileName(fobj));
                 
                 console.log('++++\t loaded image from '+fobj+'. Dim=',self.getDimensions(),self.getOrientationName()+' spa='+self.getSpacing() + ' type='+self.getDataType());
                 if (self.internal.forcedorientationchange) {
@@ -182,11 +179,12 @@ class BisWebImage extends BisWebDataObject {
      * @param {string} filename - the filename to save to. If in broswer it will pop up a FileDialog
      * @return {Promise} a promise that is fuilfilled when the image is saved
      */
-    save(filename) {
+    save(fobj) {
 
         const self=this;
         let c=self.serializeToNII();
-        return bisgenericio.write(filename,c,true);
+        fobj=bisgenericio.getFixedSaveFileName(fobj,this.filename);
+        return bisgenericio.write(fobj,c,true);
     }
 
     /** serializes image to a javascript dictionary object
@@ -472,7 +470,8 @@ class BisWebImage extends BisWebDataObject {
             if (newnumcomponents!==0) {
                 newnumcomponents=util.range(newnumcomponents,1,9999);
                 internal.header.struct.dim[5]=newnumcomponents;
-                internal.dimensions[4]=newnumframes;
+                internal.dimensions[4]=newnumcomponents;
+                
             }
             internal.volsize=internal.dimensions[0]*internal.dimensions[1]*
                 internal.dimensions[2]*internal.dimensions[3]*internal.dimensions[4];

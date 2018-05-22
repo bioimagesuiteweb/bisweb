@@ -18,8 +18,8 @@ On MS-Windows type
 
    setpaths.bat
 
-2. Then execute the tool of your choice -- see the bin (or winbin if on
-MS-WINDOWS) for the list of scripts. As an example to run the smooth image
+2. Then execute the tool of your choice. (The scripts are in the bin, or
+winbin if on MS-WINDOWS, directory.) As an example to run the smooth image
 script (and get its help page) type:
 
    bw_smoothImage -h

@@ -335,7 +335,7 @@ let parseParam = function(gui, param, guiParams) {
     //add a UI element appropriate to the type specified in param
     //names of parameters are taken from param.name (specified by 'name' in call to base.add)
     switch(param.gui) {
-    case 'slider':
+    case 'slider': {
         let step=param.step || 0.1;
         let low=(param.lowbound || param.low || 0);
         let high=(param.high || param.highbound);
@@ -361,6 +361,7 @@ let parseParam = function(gui, param, guiParams) {
         }
         controller = base.add(guiParams, param.varname,low, high).step(step);
         break;
+    }
     case 'check':
     case 'checkbox': 
         controller = base.add(guiParams, param.varname);

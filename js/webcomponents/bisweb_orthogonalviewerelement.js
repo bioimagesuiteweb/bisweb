@@ -92,7 +92,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
         this.internal.slices=[ null,null,null,null ];
         this.internal.overlayslices=[ null,null,null,null ];
         this.internal.moviefolder=null;
-        
+        this.internal.displaymodes=null;
+        this.setObjectMapFunction=null;
     }
     
     /** get the coordinates of the overlay given current image coordinates.
@@ -706,6 +707,14 @@ class OrthogonalViewerElement extends BaseViewerElement {
      * @param {colormapmode} colormap type - "Overlay","Overlay2","Red","Green","Blue" 
      */
     setobjectmap(ovolume,plainmode,colormapmode,doupdate=true) {
+        if (this.setObjectMapFunction===null)
+            this.setobjectmap_internal(ovolume,plainmode,colormapmode,doupdate);
+        else
+            this.setObjectMapFunction(ovolume,plainmode,colormapmode,doupdate);
+    }
+
+    /** Same as above but allows rerouting */
+    setobjectmap_internal(ovolume,plainmode,colormapmode,doupdate=true) {
 
         colormapmode=colormapmode || "Auto";
 
@@ -801,7 +810,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
      * @param {number} plane - 0,1,2 to signify whether click was on YZ,XZ or XY image plane (-1,3 mean 3D click)
      */
     setcoordinates(coords,plane) {
-        
+
         var c = coords || [ this.internal.slicecoord[0], this.internal.slicecoord[1], this.internal.slicecoord[2],this.internal.slicecoord[3] ];
         for (var i=0;i<=2;i++)
             c[i]=c[i]*this.internal.imagespa[i];
@@ -865,7 +874,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
     createdatgui(samesize=false) {
 
         if (samesize) {
-            let gui=this.internal.datgui.gui;
+            //let gui=this.internal.datgui.gui;
             let cmapfolder=this.internal.cmapcontroller.creategui(null);
             if (this.internal.simplemode) {
                 cmapfolder.open();
@@ -878,7 +887,6 @@ class OrthogonalViewerElement extends BaseViewerElement {
         let dpname = [ 'Slices', 'Sagittal', 'Coronal', 'Axial' ];//, '3D Only','3D On Top' ];
         let data = this.internal.datgui.data;
         
-        data.this=this;
         data.displaymode = dpname[0];
         if (this.internal.imagedim[2]<2) {
             this.internal.rendermode=3;
@@ -890,7 +898,9 @@ class OrthogonalViewerElement extends BaseViewerElement {
         data.ycoord = this.internal.slicecoord[1];
         data.zcoord = this.internal.slicecoord[2];
         data.tcoord = this.internal.slicecoord[3] || 0;
-
+        data.decorations=this.internal.showdecorations || true;
+        data.lockcursor=this.internal.lockcursor || false;
+        
         let creatingnew=false;
         let createmovie = false;
 
@@ -917,7 +927,9 @@ class OrthogonalViewerElement extends BaseViewerElement {
                     let elem=this.internal.datgui.coords.__controllers[c];
                     try {
                         this.internal.datgui.coords.remove(elem);
-                    } catch(e) { }
+                    } catch(e) {
+                        // nothing to do
+                    }
                 }
 
                 if (this.internal.moviefolder!==null) {
@@ -925,12 +937,16 @@ class OrthogonalViewerElement extends BaseViewerElement {
                         let elem=this.internal.moviefolder.__controllers[c];
                         try {
                             this.internal.moviefolder.remove(elem);
-                        } catch(e) { }
+                        } catch(e) {
+                            // nothing to do
+                        }
                     }
                     this.internal.play_movie_controller=null;
                 }
             }
             let dmode=this.internal.datgui.coords.add(data,'displaymode', dpname).name("Mode");
+            this.internal.displaymodes=dpname;
+
             
             dmode.onChange(function(val) {
                 let ind=dpname.indexOf(val);
@@ -966,7 +982,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 createmovie = true;
             }
             
-            data.decorations=self.internal.showdecorations;
+
             let deco=this.internal.datgui.coords.add(data, 'decorations').name("Labels");
             deco.onChange(function(val) {
                 self.internal.showdecorations=val;
@@ -975,7 +991,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 self.setcoordinates();
             });
 
-            data.lockcursor=self.internal.lockcursor;
+
+
             let lock=this.internal.datgui.coords.add(data, 'lockcursor').name("Disable Mouse");
             lock.onChange(function(val) {
                 self.internal.lockcursor=val;
@@ -999,7 +1016,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
         let bbar=$("<div></div>");
         bbar.css({'margin': '10px'});
         base_widget.append(bbar);
-        
+
+
         let s="Reset Slices";
         if (this.internal.simplemode) {
             s="Reset 2D/3D Views";
@@ -1039,6 +1057,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                                css : { 'margin-left' : '8px' },
                                position : "left",
                                parent : bbar }).click( function() { self.viewerInformation();});
+
         bbar.tooltip();
     } 
     
@@ -1100,6 +1119,70 @@ class OrthogonalViewerElement extends BaseViewerElement {
     connectedCallback() {
         super.connectedCallbackBase();
     }
+
+    
+    /** Get State as Object 
+        @returns {object} -- the state of the element as a dictionary*/
+    getElementState(storeImages=false) {
+
+        let obj=super.getElementState(storeImages);
+        obj.data=JSON.parse( JSON.stringify( this.internal.datgui.data ) );
+        return obj;
+        
+    }
+
+    /** Set the element state from a dictionary object 
+        @param {object} state -- the state of the element */
+    setElementState(dt=null) {
+
+        if (dt===null)
+            return;
+
+        super.setElementState(dt);
+
+        let sanedata=JSON.parse(JSON.stringify(this.internal.datgui.data));
+        for (let attr in dt.data) {
+            if (sanedata.hasOwnProperty(attr)) {
+                sanedata[attr] = dt.data[attr];
+            } 
+        }
+
+
+        // The middle -- set the parameters
+        try {
+            let ind=this.internal.displaymodes.indexOf(sanedata['displaymode']);
+            this.setrendermode(ind);
+            
+            
+            this.internal.showdecorations=sanedata['decorations'];
+            this.internal.lockcursor=sanedata['lockcustor'];
+            this.internal.datgui.data.decorations=this.internal.showdecorations;
+            this.internal.datgui.data.lockcursor=this.internal.lockcursor=sanedata['lockcustor'];
+            
+            
+            
+            this.setcoordinates([ parseInt(sanedata['xcoord']),
+                                  parseInt(sanedata['ycoord']),
+                                  parseInt(sanedata['zcoord']),
+                                  parseInt(sanedata['tcoord'])]);
+            
+        } catch(e) {
+            console.log(e.stack,e);
+        }
+        
+        this.setElementStateCameras(dt);
+        
+        // The end update the controllers
+        setTimeout( () => {
+            let gui=this.internal.datgui.coords;
+            if (gui!==null) {
+                for (let ia=0;ia<gui.__controllers.length;ia++) {
+                    gui.__controllers[ia].updateDisplay();
+                }
+            }
+        },100);
+    }
+    
 }
 
 webutil.defineElement('bisweb-orthogonalviewer', OrthogonalViewerElement);

@@ -24,6 +24,7 @@ const util=require('bis_util');
 const webutil=require('bis_webutil');
 const $=require('jquery');
 const bootbox=require('bootbox');
+const BisWebImage = require('bisweb_image');
 
 /**
  *
@@ -96,7 +97,9 @@ class BaseViewerElement extends HTMLElement {
         this.slave_viewer=null;
         this.master_viewer=null;
         this.cleararea=[ 0.0,1.0];
-
+        // save state stuff
+        this.internal.saveState=null;
+        this.internal.viewerleft=null;
     }
 
 
@@ -178,7 +181,7 @@ class BaseViewerElement extends HTMLElement {
         data.playing=false;
 
         moviefolder.add(data,'rate',1,40).name("Frames/s");
-
+        
         this.internal.play_movie_controller=moviefolder.add(data, 'playing').name("Play Movie");
 
         this.internal.play_movie_controller.onChange( (val) => {
@@ -593,7 +596,7 @@ class BaseViewerElement extends HTMLElement {
             return;
         
         if (this.internal.cmapcontroller!==null && this.internal.volume!==null) {
-            this.internal.cmapcontroller.copyparameters(other);
+            this.internal.cmapcontroller.setElementState(other.getElementState());
             this.updatetransferfunctions(input);
         }
     }
@@ -807,10 +810,12 @@ class BaseViewerElement extends HTMLElement {
     }
 
     setDualViewerMode(left=0.5) {
-        
+
         if (this.is_slave_mode)
             return;
 
+        this.internal.viewerleft=left;
+        
         if (left>0.9) {
             this.setViewerMode('right',0.0);
             this.master_viewer.setViewerMode('full',1.0);
@@ -843,8 +848,10 @@ class BaseViewerElement extends HTMLElement {
             }
             this.cleararea=[ shift,size];
         }
+
         return mode;
     }
+
 
     /** info box */
     viewerInformation() {
@@ -870,6 +877,115 @@ class BaseViewerElement extends HTMLElement {
             title: 'Viewer Information',
             message: output,
         });
+    }
+
+
+    /** Get State as Object 
+        @returns {object} -- the state of the element as a dictionary*/
+    getElementState(storeImages=false) {
+
+        let obj= { image: '',
+                   overlay: '',
+                   colortype: '' };
+        if (this.internal.cmapcontroller)
+            obj['colormap']=this.internal.cmapcontroller.getElementState();
+        if (this.internal.viewerleft)
+            obj['viewerleft'] = this.internal.viewerleft;
+        
+        if (storeImages) {
+            let img=this.getimage();
+            if (img) {
+                obj['image']=img.serializeToJSON(false);
+                let objmap=this.getobjectmap();
+                if (objmap) {
+                    obj['overlay']=objmap.serializeToJSON(false);
+                    obj['colortype']=this.getcolortype();
+                }
+            }
+        }
+
+        let n=this.internal.subviewers.length;
+        if (n>0) {
+            obj.subviewers = [];
+            for (let i=0;i<n;i++) {
+                if (this.internal.subviewers[i]) {
+                    let controls=this.internal.subviewers[i].controls;
+                    let p=controls.serializeCamera();
+                    obj.subviewers.push(p);
+                } else {
+                    i=n; // let's get out of here
+                }
+            }
+        }
+
+        return obj;
+    }
+
+    /** Set the element state from a dictionary object 
+        @param {object} state -- the state of the element */
+    setElementState(dt=null) {
+        if (dt===null)
+            return;
+
+        if (dt['viewerleft'])
+            this.internal.viewerleft= dt['viewerleft'];
+
+        let img=dt['image'] || '';
+        if (img.length>1) {
+            let newimg=new BisWebImage();
+            newimg.parseFromJSON(dt['image']);
+            console.log('has image',newimg.getDescription());
+                                    
+            this.setimage(newimg);
+            
+            let ovr=dt['overlay'] || '';
+            if (ovr.length >1) {
+                let newobj=new BisWebImage();
+                newobj.parseFromJSON(dt['overlay']);
+                console.log('has overlay',newobj.getDescription());
+                let colortype=dt['colortype'] || 'Overlay';
+                let plainmode= (colortype === "Objectmap");
+                this.setobjectmap(newobj,plainmode,colortype);
+            }
+        }
+
+        
+        if (this.internal.cmapcontroller) {
+            this.internal.cmapcontroller.setElementState(dt['colormap']);
+            this.internal.cmapcontroller.updateTransferFunctions(true);
+        }
+
+        return;
+    }
+
+    /**  this does the final part of setElement State
+     * by updating the subviewer cameras */
+    setElementStateCameras(dt=null) {
+
+        if (dt.subviewers) {
+            let subviewers=this.internal.subviewers;
+            let num=subviewers.length;
+            if (dt.subviewers.length<num)
+                num=dt.subviewers.length;
+            let renderer=this.internal.layoutcontroller.renderer;
+            for (let i=0;i<num;i++) {
+                subviewers[i].controls.parseCamera(dt.subviewers[i]);
+                renderer.render( subviewers[i].scene, subviewers[i].camera);
+            }
+        } 
+
+    }
+    
+    /** store State in this.internal.saveState */
+    storeState() {
+        this.internal.saveState=this.getElementState();
+    }
+
+    /** restore State from this.internal.saveState */
+    restoreState() {
+        if (this.internal.saveState) {
+            this.setElementState(this.internal.saveState);
+        }
     }
 
 }

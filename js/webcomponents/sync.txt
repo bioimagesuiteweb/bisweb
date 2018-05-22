@@ -1,0 +1,5 @@
+
+Look at orthogonalviewer draw crosshairs
+Look at colormapcontroller copyparameters
+        mosaiccontroller setslices, setimageplane ...
+       

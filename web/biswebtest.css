@@ -1,0 +1,86 @@
+#form {
+    margin-top: 10px;
+}
+
+.testhead {
+    color : yellow;
+}
+
+
+#first,#last, #testname, #testselect {
+    background-color: #183748;
+    color : #ffffff;
+    width : 40px;
+    margin-left: 5px;
+    margin-right: 10px;
+}
+
+#testname,#testselect {
+    width: 200px;
+    margin-right: 0px;
+}
+
+#threaddiv {
+    margin-right : 10px;
+}
+
+#usethread {
+    background-color: #183748;
+
+}
+
+
+
+
+#top {
+    left : 2vw;
+    width : 98vw;
+}
+
+#help {
+    background-color : #222222;
+}
+
+#helptext {
+    margin-top: 40px;
+    margin-left : 20px;
+    margin-right : 20px;
+    margin-bottom: 10px;
+}
+
+#main {
+    margin-top: 10px;
+    margin-left : 20px;
+    margin-right : 20px;
+    margin-bottom: 100px;
+    font-size : 14px;
+}
+
+#results {
+    margin-top : 15px;
+    margin-left : 5vw;
+    font-family: monospace;
+    font-size: 14px;
+    color : yellow
+}
+
+details {
+    border : 0px;
+}
+
+pre {
+    border: 0px;
+    color : #ff8800;
+    margin-left : 20px;
+    margin-right : 20px;
+    background-color : #000000;
+    font-size : 12px;
+}
+
+.passed {
+    color: lightgreen
+}
+
+.failed {
+    color : red
+}

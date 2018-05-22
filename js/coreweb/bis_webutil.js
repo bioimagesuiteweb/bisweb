@@ -1,19 +1,19 @@
 /*  LICENSE
- 
- _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
- 
- BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
- 
- - you may not use this software except in compliance with the License.
- - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
- 
- __Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.__
- 
- ENDLICENSE */
+    
+    _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+    
+    BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+    
+    - you may not use this software except in compliance with the License.
+    - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+    
+    __Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.__
+    
+    ENDLICENSE */
 
 /* global window,document,setTimeout */
 "use strict";
@@ -128,12 +128,11 @@ const bisweb_templates = `
 
 const $ = require('jquery');
 const bootbox=require('bootbox');
-const bisdate=require('bisdate.js').date;
 const biswrap = require('libbiswasm_wrapper');
 const names = ["default", "primary", "success", "info", "warning", "danger", "link"];
 const directions = ["top", "bottom", "left", "right"];
 
-
+let tools=require('../../web/images/tools.json');
 
 /** A JQuery object that is a wrapper around the DOM objects. 
  * See: {@link http://learn.jquery.com/using-jquery-core/jquery-object/}.
@@ -146,11 +145,29 @@ const internal = {
     templates: null,
     alertcount: 0,
     alerttimeout: 8000,
+    alerttop: 70,
 };
 
 
+/**
+ * Deletes a modal dialog by removing it from the DOM.
+ * @param {HTMLElement} modal - The modal dialog to remove 
+ */
+let deleteModal = (modal) => {
+    let modalDiv = modal.dialog[0].parentNode;
+    modalDiv.parentNode.removeChild(modalDiv);
+};
+
 const webutil = {
 
+    /** set alert top 
+     * @alias WebUtil.setAlertTop
+     * @param {number} offset -- value in pixels
+     */
+    setAlertTop : function(v) {
+        internal.alerttop=v;
+    },
+    
     /** if this flag is true, then loadelement is simply input type="file", else more complex
      * @alias WebUtil.simpleloadmode
      */
@@ -342,7 +359,7 @@ const webutil = {
         if (css !== null)
             bt.css(css);
 
-        if (callback !== undefined) {
+        if (callback !== undefined && callback!==null) {
             if (typeof callback !== "function")
                 throw (new Error(callback + ' is not a function in creating button' + name));
 
@@ -360,152 +377,6 @@ const webutil = {
         if ((opts.tooltip || null) === null)
             return bt;
         return this.addtooltip(bt, opts);
-    },
-
-
-    /** electron file callback function
-     * @alias WebUtil.electronfilecallbackoptions
-     * @param {object} opts - the electron options object -- used if in electron
-     * @param {string} opts.title - if in file mode and electron set the title of the file dialog
-     * @param {boolean} opts.save - if in file mode and electron determine load or save
-     * @param {string} opts.defaultpath - if in file mode and electron use this as original filename
-     * @param {string} opts.filter - if in file mode and electron use this to filter electron style
-     * @param {function} callback - callback to call when done
-     */
-    electronFileCallback: function (electronopts, callback) {
-        electronopts = electronopts || {};
-        electronopts.save = electronopts.save || false;
-        electronopts.title = electronopts.title || 'Specify filename';
-        electronopts.defaultpath = electronopts.defaultpath || '';
-        electronopts.filters = electronopts.filters ||
-            [{ name: 'All Files', extensions: ['*'] }];
-
-        if (electronopts.filters === "NII")
-            electronopts.filters = [
-                { name: 'NIFTI Images', extensions: ['nii.gz', 'nii'] },
-                { name: 'All Files', extensions: ['*'] },
-            ];
-
-        var cmd = window.BISELECTRON.dialog.showSaveDialog;
-        if (!electronopts.save)
-            cmd = window.BISELECTRON.dialog.showOpenDialog;
-
-        if (electronopts.filters === "DIRECTORY") {
-            cmd(null, {
-                title: electronopts.title,
-                defaultPath: electronopts.defaultpath,
-                properties: ["openDirectory"],
-            }, function (filename) {
-                if (filename) {
-                    return callback(filename + '');
-                }
-            });
-        } else {
-            cmd(null, {
-                title: electronopts.title,
-                defaultPath: electronopts.defaultpath,
-                filters: electronopts.filters,
-            }, function (filename) {
-                if (filename) {
-                    return callback(filename + '');
-                }
-            });
-        }
-    },
-
-
-    /** function to create a hidden input type="file" button and add it to body
-     * @alias WebUtil.createhiddeninputfile
-     * @param {function} callback - callback to call
-     * @param {string} accept - List of file types to accept as a comma-separated string e.g. ".ljson,.land"
-     * @param {Boolean} attach - if true attach to body, else leave transient
-     * @returns {JQueryElement} 
-     */
-    createhiddeninputfile: function (accept, callback,attach=true) {
-
-        /*if { simpemode === false } {
-          return dosomethingelse(accept,callback);*/
-        
-        accept = accept || "";
-        if (accept === "NII")
-            accept = '.nii,.nii.gz,.gz,.tiff';
-
-        var loadelement = $('<input type="file" style="visibility: hidden;" accept="' + accept + '"/>');
-        if (attach)
-            $('body').append(loadelement);
-        
-        loadelement[0].addEventListener('change', function (e) {
-            e.stopPropagation();
-            e.preventDefault();
-            callback(e.target.files[0]);
-        });
-        return loadelement;
-    },
-
-    /** 
-     * function that creates button using Jquery/Bootstrap (for styling) & a hidden
-     * input type="file" element to load a file. Calls WebUtil.createbutton for most things
-     * @alias WebUtil.createfilebutton
-     * @param {object} opts - the options object.
-     * @param {string} opts.name - the name of the button.
-     * @param {string} opts.parent - the parent element. If specified the new button will be appended to it.
-     * @param {object} opts.css - if specified set additional css styling info (Jquery .css command, object)
-     * @param {string} opts.type - type of button (for bootstrap styling). One of "default", "primary", "success", "info", "warning", "danger", "link"
-     * @param {function} opts.callback - if specified adds this is a callback ``on click''. The event (e) is passed as argument.
-     * @param {string} opts.accept - List of file types to accept as a comma-separated string e.g. ".ljson,.land"
-     * @param {string} opts.tooltip - string to use for tooltip
-     * @param {string} opts.position - position of tooltip (one of top,bottom,left,right)
-     * @param {object} electronopts - the electron options object (if not in electron then ignore)
-     * @param {string} electronopts.title  - in electron: dialog title
-     * @param {boolean} electronopts.save -  in electron determine load or save
-     * @param {string}  electronopts.defaultpath -  in electron use this as original filename
-     * @param {string}  electronopts.filter - if in electron use this as filter
-     * @returns {JQueryElement} 
-     */
-    createfilebutton: function (opts, electronopts) {
-        
-        var finalcallback = opts.callback || null;
-        if (finalcallback !== null && typeof finalcallback === "function") {
-            opts.callback = finalcallback;
-        } else {
-            throw (new Error('create file button needs a non-null callback'));
-        }
-        
-        var but = null;
-        
-        if (!this.inElectronApp()) {
-            // Define load element and filecallback up-front
-            opts.callback = ( (e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                setTimeout( () => { 
-                    let accept = opts.accept || "";
-                    let loadelement = webutil.createhiddeninputfile(accept, finalcallback,false);
-                    loadelement.click();
-                },1);
-            });
-            but = webutil.createbutton(opts);
-
-        } else {
-            electronopts = electronopts || {};
-            electronopts.filters = electronopts.filters || null;
-            
-            if (opts.accept === "NII" || electronopts.filters === "NII") {
-                electronopts.filters = [
-                    { name: 'NIFTI Images', extensions: ['nii.gz', 'nii'] },
-                    { name: 'All Files', extensions: ['*'] }
-                ];
-            }
-            
-            var that = this;
-            var electroncallback = function () {
-                setTimeout( () => { that.electronFileCallback(electronopts, finalcallback); },1000);
-            };
-            
-            opts.callback = electroncallback;
-            but = webutil.createbutton(opts);
-        }
-        return but;
     },
 
     /**
@@ -986,6 +857,7 @@ const webutil = {
             if (elem.parent().hasClass('in'))
                 return true;
         } catch (e) {
+            // do nothing
         }
         return false;
     },
@@ -1003,19 +875,13 @@ const webutil = {
 
 
     /** create  drop down menu item (i.e. a single button)
-     * @param {JQueryElement} parent - the parent to add this to
-     * @param {string} suffix - if not empty then this creates a hidden file menu that is
-     * @param {object} opts - the electron options object -- used if in electron
-     * @param {string} opts.title - if in file mode and electron set the title of the file dialog
-     * @param {boolean} opts.save - if in file mode and electron determine load or save
-     * @param {string} opts.defaultpath - if in file mode and electron use this as original filename
-     * @param {string} opts.filter - if in file mode and electron use this to filter electron style
+     * @param {JQueryElement} dropdown - the parent to add this to
+     * @param {string} name - the menu name (if '') adds separator
+     * @param {function} callback - the callback for item
+     * @param {string} css - extra css attributes (as string)
      */
-
-    createDropdownItem : function (dropdown,name,callback,suffix,electronopts) {
-
-        let css="background-color: #303030; color: #ffffff; font-size:13px; margin-bottom: 2px";
-        return this.createMenuItem(dropdown,name,callback,suffix,electronopts,css);
+    createDropdownItem : function (dropdown,name,callback,css='') {
+        return this.createMenuItem(dropdown,name,callback,css);
     },
 
     createDropdownMenu : function (name,parent) {
@@ -1031,11 +897,11 @@ const webutil = {
         parent.append(txt);
         return txt.find('.dropdown-menu');
     },
-        
+    
     /** Create dropdown button
      * @param{
-    
-    /** hack to remove the ``close'' button from a dat.gui folder.
+     
+     /** hack to remove the ``close'' button from a dat.gui folder.
      * see {@link http://workshop.chromeexperiments.com/examples/gui/#1--Basic-Usage} for dat.gui info.
      * @alias WebUtil.removedatclose
      * @param {object} folder - the dat.gui folder to remove the close-button from.
@@ -1094,23 +960,12 @@ const webutil = {
      * @param {JQueryElement} parent - the parent to add this to
      * @param {string} name - the menu name (if '') adds separator
      * @param {function} callback - the callback for item
-     * @param {string} suffix - if not empty then this creates a hidden file menu that is
-     * @param {object} opts - the electron options object -- used if in electron
-     * @param {string} opts.title - if in file mode and electron set the title of the file dialog
-     * @param {boolean} opts.save - if in file mode and electron determine load or save
-     * @param {string} opts.defaultpath - if in file mode and electron use this as original filename
-     * @param {string} opts.filter - if in file mode and electron use this to filter electron style
      * @param {string} css - styling info for link element
      * activated by pressing this menu
      * @alias WebUtil.createMenuItem
      * @returns {JQueryElement} -- the  element
      */
-    createMenuItem: function (parent, name, callback, suffix, electronopts,css='') {
-
-        electronopts = electronopts || {};
-        electronopts.save = electronopts.save || false;
-        if (!this.inElectronApp())
-            electronopts.save = false;
+    createMenuItem: function (parent, name, callback,css='') {
 
         var menuitem;
         name = name || '';
@@ -1132,55 +987,12 @@ const webutil = {
         this.disableDrag(menuitem,true);
 
         
-        if (callback === null)
-            return menuitem;
-
-        suffix = suffix || '';
-        if (suffix === "NII" && !this.inElectronApp())
-            suffix = '.nii,.nii.gz,.gz,.tiff';
-
-        if (suffix === '' && electronopts.save === false) {
+        if (callback) {
             menuitem.click(function (e) {
                 e.preventDefault();
                 callback(e);
             });
-            return menuitem;
         }
-
-        if (this.inElectronApp()) {
-            if (suffix === "NII" || electronopts.filters === "NII")
-                electronopts.filters = [
-                    { name: 'NIFTI Images', extensions: ['nii.gz', 'nii'] },
-                    { name: 'All Files', extensions: [ "*"]},
-                ];
-            if (suffix === "DIRECTORY")
-                electronopts.filters = "DIRECTORY";
-
-            var that = this;
-            menuitem.click(function() {
-                setTimeout( () => {
-                    that.electronFileCallback(electronopts, callback);
-                });
-            });
-            
-
-            return menuitem;
-        }
-
-        
-        menuitem.click(function (e) {
-            setTimeout( () => {
-                e.preventDefault();
-                e.stopPropagation();
-                let loadelement = $('<input type=\"file\" style=\"visibility: hidden;\" accept=\"' + suffix + '\" />');
-                loadelement[0].addEventListener('change', function (f) {
-                    f.stopPropagation();
-                    f.preventDefault();
-                    callback(f.target.files[0]);
-                });
-                loadelement.click();
-            },1);
-        });
         return menuitem;
     },
     // ------------------------------------------------------------------------
@@ -1192,26 +1004,29 @@ const webutil = {
      */
     createAlert: function (text, error, parent) {
 
-		// Remove all previous alerts -- only one is needed
-		$('.alert-info').remove();
+        // Remove all previous alerts -- only one is needed
+        $('.alert-info').remove();
 
-		var b = 'info';
-		if (error === true)
-			b = 'danger';
-		parent = parent || $('body');
+        var b = 'info';
+        if (error === true)
+            b = 'danger';
+        parent = parent || $('body');
 
-		var w = $('<div class="alert alert-' + b + ' alert-dismissible" role="alert" ' +
-				  '     style="position:absolute; top:70px; left:10px; z-index:' + 100 + internal.alertcount + '">' +
-				  '   <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' + text +
-				  '</div>');
-		parent.append(w);
-		internal.alertcount += 1;
-		w.alert();
+        //      var w = $(`<div class="alert alert-${b} alert-dismissible" role="alert" style="position:absolute; top:${internal.alerttop}px; left:10px; z-index:' + 100 + ${internal.alertcount}  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${text}</div>`);
 
-		setTimeout(function () {
-			$('.alert-info').remove();
-		}, internal.alerttimeout);
-	},
+        let w = $(`<div class="alert alert-${b} alert-dismissible" role="alert"  
+style="position:absolute; top:${internal.alerttop}px; left:10px; z-index:${100+internal.alertcount}">
+ <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${text}
+          </div>`);
+
+        parent.append(w);
+        internal.alertcount += 1;
+        w.alert();
+
+        setTimeout(function () {
+            $('.alert-info').remove();
+        }, internal.alerttimeout);
+    },
 
     // ---------------- drag and drop controller ----------------
     /** 
@@ -1258,93 +1073,52 @@ const webutil = {
      * Searches query string of URL for a value given by 'name'.
      * Taken from https://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript/901144#901144
      * @alias WebUtil.getQueryParameter
-	 * @param {String} name Name of the parameter to search the query string for. 
-	 * @param {String} url URL with query string parameters. Optional -- if not specified the function will use the URL of the current page. 
-	 */
-	getQueryParameter: function (name, url) {
-		if (!url) url = window.location.href;
-		name = name.replace(/[\[\]]/g, "\\$&");
-		var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
-			results = regex.exec(url);
-		if (!results) return null;
-		if (!results[2]) return '';
-		return decodeURIComponent(results[2].replace(/\+/g, " "));
-	},
-	
-	createTimestamp :function () {
-		let current = new Date();
-		let month = current.getMonth() + 1;
-		let day = current.getDate();
-		let year = current.getFullYear(); //last two digits
-		let hour = current.getHours();
-		let minute = current.getMinutes() < 10 ? '0' + current.getMinutes() : current.getMinutes();
-		let seconds = current.getSeconds() < 10 ? '0' + current.getSeconds() : current.getSeconds();
-	
-		return month + '/' + day + '/' + year % 100 + ' ' + hour + ':' + minute + ':' + seconds;
-	},
-	
-    getTemplates: function () {
-        return internal.templates;
-    },
-
-
-    /** executes code once the window is loaded
-     * @alias WebUtil.runAfrerAllLoaded
-     * @param {function} clb - the function to call once the page is loaded
+     * @param {String} name Name of the parameter to search the query string for. 
+     * @param {String} url URL with query string parameters. Optional -- if not specified the function will use the URL of the current page. 
      */
-    runAfterAllLoaded : function(clb) {
-
-        //need to execute attachViewers after all the elements have been loaded, attach it to page load event
-        //https://stackoverflow.com/questions/807878/javascript-that-executes-after-page-load
-
-        if (window.attachEvent) {
-            window.attachEvent('onload', clb);
-        } else {
-            if (window.onload) {
-                let currentOnLoad = window.onload;
-                let newOnload = (event) => {
-                    currentOnLoad(event);
-                    clb();
-                };
-                window.onload = newOnload;
-            } else {
-                //window invokes attachViewers so have to bind algorithm controller explicitly
-                window.onload = clb;
-            }
-        }
+    getQueryParameter: function (name, url) {
+        if (!url) url = window.location.href;
+        name = name.replace(/[\[\]]/g, "\\$&");
+        var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+            results = regex.exec(url);
+        if (!results) return null;
+        if (!results[2]) return '';
+        return decodeURIComponent(results[2].replace(/\+/g, " "));
     },
     
-    defineElement: function (name, classtype) {
-        try {
-            window.customElements.define(name, classtype);
-            /*          if ( typeof(BIS) !== "undefined") {
-                        console.log('defining ',name);
-                        }*/
-        } catch (e) {
-            console.log('error defining ', name, ' error=', e);
-        }
+    createTimestamp :function () {
+        let current = new Date();
+        let month = current.getMonth() + 1;
+        let day = current.getDate();
+        let year = current.getFullYear(); //last two digits
+        let hour = current.getHours();
+        let minute = current.getMinutes() < 10 ? '0' + current.getMinutes() : current.getMinutes();
+        let seconds = current.getSeconds() < 10 ? '0' + current.getSeconds() : current.getSeconds();
+        
+        return month + '/' + day + '/' + year % 100 + ' ' + hour + ':' + minute + ':' + seconds;
     },
+    
 
     showErrorModal: (title = 'An error occured', errorMessage = 'Click close or anywhere outside the modal to continue') => {
         let modal = webutil.createmodal(title);
         let confirmButton = webutil.createbutton({ 'name': 'Continue', 'type': 'success' });
-    
+        
         modal.dialog.on('hidden.bs.modal', (e) => {
             e.preventDefault();
             deleteModal(modal);
         });
-    
+        
         confirmButton.on('click', (e) => {
             e.preventDefault();
             modal.dialog.modal('hide');
         });
-    
+        
         let messageBody = $(`<p>${errorMessage}</p>`);
         modal.body.append(messageBody);
         //remove close button
         modal.footer.find('.btn')[0].remove();
         modal.footer.append(confirmButton);
-    
+        
         modal.dialog.modal('show');
         return {
             modal: modal,
@@ -1399,10 +1173,10 @@ const webutil = {
 
             let textbox =
                 `<div class = 'form-group'> 
-					<label for='saveNameBox'>Enter a name</label>
-					<input type='text' id='saveNameBox' class='form-control'>
-				</div>`
-                ;
+                    <label for='saveNameBox'>Enter your filename</label>
+                    <input type='text' id='saveNameBox' class='form-control'>
+                </div>`
+            ;
 
             modalObj.confirmButton.on('click', (e) => {
                 e.preventDefault();
@@ -1437,22 +1211,68 @@ const webutil = {
                 gplextra=` (See also <a href="https://github.com/bioimagesuiteweb/gplcppcode" target="_blank">the plugin repository.</a>)`;
             
             
-            bootbox.alert(`<p>This application is part of BioImage Suite Web (${bisdate}).</p><p>BioImage Suite Web is an <a href="https://github.com/bioimagesuiteweb/bisweb" target="_blank">open source</a> software package.${gplextra}</p><p>We gratefully acknowledge
+            bootbox.alert(`<p>This application is part of BioImage Suite Web ${tools.version}.</p><p>BioImage Suite Web is an <a href="https://github.com/bioimagesuiteweb/bisweb" target="_blank">open source</a> software package.${gplextra}</p><p>We gratefully acknowledge
                           support from the <a href="https://www.braininitiative.nih.gov/" target="_blank">NIH Brain Initiative</a> under grant R24 MH114805 (Papademetris X. and Scheinost D. PIs).</p><p>${extra}</p>`);
         });
-    }                      
+    },
 
 
+    /** returns the templates stored in this file */
+    getTemplates: function () {
+        return internal.templates;
+    },
+
+
+    /** executes code once the window is loaded
+     * @alias WebUtil.runAfrerAllLoaded
+     * @param {function} clb - the function to call once the page is loaded
+     */
+    runAfterAllLoaded : function(clb) {
+
+        // https://stackoverflow.com/questions/13364613/how-to-know-if-window-load-event-was-fired-already?noredirect=1&lq=1
+        if (document.readyState == 'complete') {
+            clb();
+            return;
+        }
+        
+        //need to execute attachViewers after all the elements have been loaded, attach it to page load event
+        //https://stackoverflow.com/questions/807878/javascript-that-executes-after-page-load
+
+        if (window.attachEvent) {
+            window.attachEvent('onload', clb);
+        } else {
+            if (window.onload) {
+                let currentOnLoad = window.onload;
+                let newOnload = (event) => {
+                    currentOnLoad(event);
+                    clb();
+                };
+                window.onload = newOnload;
+            } else {
+                //window invokes attachViewers so have to bind algorithm controller explicitly
+                window.onload = clb;
+            }
+        }
+    },
+
+
+    /** A simple wrapper around window.customElements -- used for debugging
+     * @param {string} name -- the name of the element on the html side
+     * @param {string} classtype -- the name of the class
+     */
+    defineElement: function (name, classtype) {
+        try {
+            window.customElements.define(name, classtype);
+            /*          if ( typeof(BIS) !== "undefined") {
+                        console.log('defining ',name);
+                        }*/
+        } catch (e) {
+            console.log('error defining ', name, ' error=', e);
+        }
+    },
+    
 };
 
-/**
- * Deletes a modal dialog by removing it from the DOM.
- * @param {HTMLElement} modal - The modal dialog to remove 
- */
-let deleteModal = (modal) => {
-    let modalDiv = modal.dialog[0].parentNode;
-    modalDiv.parentNode.removeChild(modalDiv);
-};
 
 // ------------------------------------------------------------------------
 /** initialize templates before using */

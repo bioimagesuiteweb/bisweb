@@ -22,15 +22,13 @@
 require('../config/bisweb_pathconfig.js');
 
 const assert = require("assert");
-const bisimageslice=require('bis_imageslicer');
-const util=require('bis_util');
 const path=require('path');
 const numeric = require('numeric');
 const libbiswasm=require('libbiswasm_wrapper');
 const BisWebImage=require('bisweb_image');
 
 describe('\n\n      +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n      ++++ check loading and slicing\n',
-         function(done) {       // jshint ignore:line
+         function() {       // jshint ignore:line
              this.timeout(50000);            
              let images = [ new BisWebImage(),new BisWebImage(), new BisWebImage(),new BisWebImage(),new BisWebImage(), new BisWebImage(),new BisWebImage()];
              

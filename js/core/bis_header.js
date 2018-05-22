@@ -190,6 +190,7 @@ class BisHeader {
         }
         // Add two semiprivate things to show size and store definitions
         this.internal.typedefs = typedefs;
+        return total;
     }
     
     /** 

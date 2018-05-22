@@ -45,16 +45,16 @@ describe('Testing Serialize and Serialize\n', function() {
     it('check execute module',function(done) {
 
         let smooth=new SmoothImage();
-        let ok=smooth.execute({ 'input' : input },
-                              { 'sigma' : 3.0 ,
-                                'debug' : true }).then( () => {
-                                    assert.equal(true,true);
-                                    done();
-                                }).catch( (e) => {
-                                    console.log('Test Failed',e);
-                                    assert.equal(true,false);
-                                    done();
-                                });
+        smooth.execute({ 'input' : input },
+                       { 'sigma' : 3.0 ,
+                         'debug' : true }).then( () => {
+                             assert.equal(true,true);
+                             done();
+                         }).catch( (e) => {
+                             console.log('Test Failed',e);
+                             assert.equal(true,false);
+                             done();
+                         });
         
         
     });

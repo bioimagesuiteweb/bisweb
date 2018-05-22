@@ -1,19 +1,19 @@
 /*  LICENSE
- 
- _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
- 
- BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
- 
- - you may not use this software except in compliance with the License.
- - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
- 
- __Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.__
- 
- ENDLICENSE */
+    
+    _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+    
+    BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+    
+    - you may not use this software except in compliance with the License.
+    - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+    
+    __Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.__
+    
+    ENDLICENSE */
 
 /* jshint node:true */
 /*global describe, it,before */
@@ -40,12 +40,12 @@ describe('Testing parcellation (bis_parcellation.js) class that describes parcel
     let parcnames = [ pnamejson,brodjson,alljson ];
     
     let imagenames = [ path.resolve(__dirname,"../web/images/gray_highres_groupncut150_right5_left1_emily_reord_new.nii.gz"),
-					   path.resolve(__dirname,"../web/images/yale_broadmann_ras.nii.gz"),
-					   path.resolve(__dirname,"../web/images/AAL_1mm_ras.nii.gz"),
-					   path.resolve(__dirname,"../web/images/Reorder_Atlas.nii.gz") ];
+                       path.resolve(__dirname,"../web/images/yale_broadmann_ras.nii.gz"),
+                       path.resolve(__dirname,"../web/images/AAL_1mm_ras.nii.gz"),
+                       path.resolve(__dirname,"../web/images/Reorder_Atlas.nii.gz") ];
     let lobenames = [ path.resolve(__dirname,'../test/testdata/shen_lobes.csv' ),
-					  path.resolve(__dirname,'../test/testdata/brod_lobes.csv' ),
-    				  path.resolve(__dirname,'../test/testdata/AAL_lobes.csv' )];
+                      path.resolve(__dirname,'../test/testdata/brod_lobes.csv' ),
+                      path.resolve(__dirname,'../test/testdata/AAL_lobes.csv' )];
     let images = [ new BisWebImage(),new BisWebImage(),new BisWebImage() ,new BisWebImage()];
 
     let nodename =  path.resolve(__dirname , '../test/testdata/nodes.txt' );
@@ -92,7 +92,7 @@ describe('Testing parcellation (bis_parcellation.js) class that describes parcel
         });
     });
 
-    describe('\n\n++++++ Parcellation creation from image/textfile vs original' , function(done) {    // jshint ignore:line
+    describe('\n\n++++++ Parcellation creation from image/textfile vs original' , function() {    // jshint ignore:lineb
         before(function(done){
             let p=[];
             for (let i=0;i<images.length;i++) {
@@ -141,7 +141,7 @@ describe('Testing parcellation (bis_parcellation.js) class that describes parcel
                 console.log('lobe2='+lobe2matrix);
 
                 lobeerror[j]=numeric.norminf(numeric.sub(lobe1matrix,lobe2matrix));
-            }
+            };
 
             let j=-1;
             
@@ -160,7 +160,7 @@ describe('Testing parcellation (bis_parcellation.js) class that describes parcel
                         donext();
                     }).catch( (e) => { console.log(e);});
                 }
-            }
+            };
 
             donext();
 
