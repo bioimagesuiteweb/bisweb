@@ -266,16 +266,6 @@ let createPicker = function(responseFunction, action, allowMultiselect = false) 
  */
 let queryLocalToken = function() {
     return new Promise( (resolve, reject) => {
-        /*let dropboxDB = localforage.createInstance({ name : 'dropbox' });
-        dropboxDB.getItem('auth_session_token', (err, value) => {
-            if (err || !value) {
-                auth();
-                reject({ error : 'user must authenticate first' });
-            } else {
-                resolve({ token : value });
-            }
-        });*/
-
         let token = localStorage.getItem('auth_session_token') || null;
         if (!token) { 
             auth();
@@ -289,6 +279,7 @@ let queryLocalToken = function() {
 /**
  * Handles attaching a token to a Dropbox API request either by checking that a token is contained in params or by querying localforage for a user token.
  * Will not launch auth flow if no token is found. 
+ * 
  * @alias bisDropbox.tokenWrap
  * @param {Object} params Parameters to the function (may or may not contain a token)
  * @param {Function} fun Function to call after querying a token
@@ -401,18 +392,3 @@ module.exports = {
     uploadFilePost : uploadFilePost,
     listFiles : listFiles
 };
-
-/*let get = function(url, callback = function() {} ) {
-  let xmlHttp = new XMLHttpRequest();
-  xmlHttp.onreadystatechange = () => {
-  if (xmlHttp.readyState == XMLHttpRequest.DONE) {
-  //console.log(xmlHttp.response);
-  console.log(xmlHttp);
-  console.log(window.location);
-  callback();
-  }
-  };
-
-  xmlHttp.open("GET", url, true);
-  xmlHttp.send(null);
-  };*/
