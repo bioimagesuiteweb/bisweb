@@ -434,12 +434,12 @@ var create_pointers_js = function(names) {
             let ptrname=elem.argname;
             found=true;
             if (elem.optional===true) {
-                outtext+=`    let ${ptrname}=0\n`;
+                outtext+=`    let ${ptrname}=0;\n`;
                 outtext+=`    if (${elem.variablename}!==0) \n      `;
             } else {
                 outtext+='    let ';
             }
-            outtext+=`${ptrname}=wrapperutil.serializeObject(Module,${elem.variablename},'${elem.bistype}')\n`;
+            outtext+=`${ptrname}=wrapperutil.serializeObject(Module,${elem.variablename},'${elem.bistype}');\n`;
         }
     }
     if (found)
@@ -723,7 +723,7 @@ var create_function=function(descline,outcmt,orig,funlist,wrapper_mode) {
             outtext+=handle_output_pointer_js(output_type,names[0]);
         }           
         outtext+=cleanup_pointers_js(names);
-        outtext+='\n    // Return\n    return output;\n  }\n';
+        outtext+='\n    // Return\n    return output;\n  };\n';
     }  else if (wrapper_mode==='python') {
         outtext+='    if debug!=True and debug!=1 and debug!=2:\n        debug=0;\n    elif debug!=2:\n        debug=1;\n\n';
         if (params.hasparam==true) {

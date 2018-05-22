@@ -74,7 +74,7 @@ let output_text=`
     const biswebpack= { binary: "${str}", date : "${bisdate.date}, ${bisdate.time}" };
 
     if (typeof module !== "undefined" && module.exports) {
-        module.exports = biswebpack
+        module.exports = biswebpack;
     } else {
         window.biswebpack=biswebpack;
     }
