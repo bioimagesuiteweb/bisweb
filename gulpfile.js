@@ -297,8 +297,6 @@ gulp.task('singleCSS', function() {
 gulp.task('date', function(done) {
     
     git.long(function (str) {
-        console.log('long', str);
-
         bis_gutil.createDateFile(path.resolve(options.outdir,'bisdate.json'),str,internal.setup.version);
         bis_gutil.createDateFile(path.resolve(options.outdir,'../wasm/bisdate.js'),str,internal.setup.version);
         done();
