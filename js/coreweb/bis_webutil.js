@@ -1235,9 +1235,7 @@ style="position:absolute; top:${internal.alerttop}px; left:10px; z-index:${100+i
             return;
         }
         
-        //need to execute attachViewers after all the elements have been loaded, attach it to page load event
         //https://stackoverflow.com/questions/807878/javascript-that-executes-after-page-load
-
         if (window.attachEvent) {
             window.attachEvent('onload', clb);
         } else {
@@ -1249,7 +1247,6 @@ style="position:absolute; top:${internal.alerttop}px; left:10px; z-index:${100+i
                 };
                 window.onload = newOnload;
             } else {
-                //window invokes attachViewers so have to bind algorithm controller explicitly
                 window.onload = clb;
             }
         }

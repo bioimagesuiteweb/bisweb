@@ -39,7 +39,7 @@ The pipeline tool takes a JSON file specifying a set of files, rules, and jobs a
 
 The pipeline tool can be thought of as a sophisticated macro expander: given a set of input files, jobs, and relationships between inputs and outputs of jobs, it will expand these into a hierarchical series of commands (see sections below for examples of input and output files). The tool itself only creates the relationships. The behavior for running the jobs on the user's machine is provided by [make](https://en.wikipedia.org/wiki/Make_(software)), a build automation tool that has existed since the early days of Unix. 
 
-The following sections will list in detail how to format an input file, how to use the command line tools, and how to understand the output file. 
+The following sections will go into detail on how to format an input file, how to use the command line tools, and how to understand the output file. 
 
 ### The Input File
 
@@ -190,7 +190,7 @@ The command line tools may be invoked as follows (assuming that makePipeline.js 
 
 ### Using make
 
-A properly formatted input file will produce a [Makefile](https://en.wikipedia.org/wiki/Makefile). This can be intimidating to look at for an unfamiliar user, but is actually fairly simple once explained.
+A properly formatted input file will produce a [Makefile](https://en.wikipedia.org/wiki/Makefile). This can be intimidating to look at for an unfamiliar user, but it is actually fairly simple.
 
 A standard operation (or 'rule' in formal parliance) in a Makefile takes the following form 
 

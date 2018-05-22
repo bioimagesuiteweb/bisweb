@@ -23,6 +23,7 @@ const webutil = require('bis_webutil.js');
 const d3 = require('d3'); // jshint ignore:line
 const io = require('bis_genericio.js');
 const BiswebImage = require('bisweb_image.js');
+const jstree = require('jstree');
 
 /**
  * Tree viewer is an HTML Element designed to display inputs in a hierarchical fashion based on their relationship to each other.
@@ -148,6 +149,8 @@ class TreeViewer extends HTMLElement {
             this.undoNode();
         });
 
+        console.log('jstree', jstree);
+
     }
 
     /**
@@ -158,8 +161,7 @@ class TreeViewer extends HTMLElement {
         let algorithmControllerID = this.getAttribute('bis-algorithmcontrollerid');
         this.algorithmcontroller = document.querySelector(algorithmControllerID);
 
-        //'mainViewerDone' event fired by bisweb_mainviewerapplication
-        document.addEventListener('mainViewerDone', () => {
+        webutil.runAfterAllLoaded( () => {
             let menuBarID = this.getAttribute('bis-menubarid');
             let menuBar = document.querySelector(menuBarID).getMenuBar();
 
@@ -170,7 +172,6 @@ class TreeViewer extends HTMLElement {
                 });
             }
         });
-
     }
 
     /**
@@ -238,6 +239,17 @@ class TreeViewer extends HTMLElement {
         let modal = this.modalFrame.body.find('.container, .container-fluid');
         if (this.modalFrame.body.find('.container, .container-fluid').length === 0)
             modal = $(modalHTML);
+
+        /*modal.jstree({
+            'core' : {
+                'data' : [ 
+                    { "text" : "Root", "children": [
+                        { "text" : "Child 1"},
+                        { "text" : "Child 2"}
+                    ]}
+                ]
+            }
+        });*/
 
         for (let tree of this.flattenedNetwork) {
             let contentPanes = this.modalFrame.body.find('.tab-pane');
