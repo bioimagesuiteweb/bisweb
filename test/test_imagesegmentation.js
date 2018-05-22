@@ -27,7 +27,7 @@ const bisimagesmoothreslice=require('bis_imagesmoothreslice');
 const path=require('path');
 const libbiswasm=require('libbiswasm_wrapper');
 
-describe('++++ check bias field correction\n',function(done) {       // jshint ignore:line
+describe('++++ check bias field correction\n',function() {       // jshint ignore:line
 
     this.timeout(50000);
     let images = [ new BisWebImage(),new BisWebImage(), new BisWebImage(),new BisWebImage(),new BisWebImage(),new BisWebImage(),new BisWebImage(),new BisWebImage() ];

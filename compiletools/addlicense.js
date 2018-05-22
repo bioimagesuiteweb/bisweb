@@ -1,21 +1,21 @@
 #!/usr/bin/env node
 
 /*  LICENSE
- 
- _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
- 
- BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
- 
- - you may not use this software except in compliance with the License.
- - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
- 
- __Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.__
- 
- ENDLICENSE */
+    
+    _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+    
+    BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+    
+    - you may not use this software except in compliance with the License.
+    - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+    
+    __Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.__
+    
+    ENDLICENSE */
 
 // -----------------------------------------------------------------
 // Header and requirements for node.js
@@ -24,9 +24,6 @@
 // -----------------------------------------------------------------
 // Create command line
 // -----------------------------------------------------------------
-const program=require('commander');
-const path=require('path');
-const os = require('os');
 const fs=require('fs');
 
 let createLicense=function(delimiter='#',before="",after="") {
@@ -63,7 +60,7 @@ ENDLICENSE`;
     else
         out+="\n";
     return out;
-}
+};
 
 let license = {
     "python" : createLicense("#"),
@@ -72,7 +69,7 @@ let license = {
     "matlab" :  createLicense("%"),
     "script":  createLicense("#"),
     "html"  : createLicense("","<!---"," -->"),
-}
+};
 
 let suffixmap = {
 
@@ -88,13 +85,9 @@ let suffixmap = {
     "cmake" : "script",
     "md" : "html",
     "html" : "html",
-}
+};
 
 let keys=Object.keys(suffixmap);
-
-
-
-
 let fnames=process.argv;
 
 for (let i=2;i<fnames.length;i++) {
@@ -106,7 +99,7 @@ for (let i=2;i<fnames.length;i++) {
     let comment="Added license to";
     if ( keys.indexOf(ext)>=0) {
         let text = fs.readFileSync(fname,'utf-8');
-	    const lines=text.split("\n");
+        const lines=text.split("\n");
         let index=lines[0].indexOf("LICENSE");
         if (index>=0) {
 

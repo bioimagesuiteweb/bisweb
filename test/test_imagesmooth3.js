@@ -26,7 +26,6 @@ const assert = require("assert");
 const bisimagesmooth=require('bis_imagesmoothreslice');
 const BisWebImage=require('bisweb_image');
 const path=require('path');
-const os=require('os');
 const libbiswasm=require('libbiswasm_wrapper');
 const wrapperutil=require('bis_wrapperutils');
 const wasmutil=require('bis_wasmutils');
@@ -45,13 +44,12 @@ describe('Testing image smoothing code (from bis_imagesmoothreslice.js)\n', func
     for (let i=0;i<=1;i++)
         fullnames[i]=path.resolve(__dirname, 'testdata/'+imgnames[i]);
     
-    let counter=0;
     before(function(done){
 
         let all_done=function() {
             console.log('_____ all images loaded');
             done();
-        }
+        };
         
         let p=[ libbiswasm.initialize() ];
         for (let i=0;i<=1;i++)
@@ -98,7 +96,7 @@ describe('Testing image smoothing code (from bis_imagesmoothreslice.js)\n', func
         let c=5.0*0.4247;
         
         let Module=libbiswasm.get_module();
-        let image1_ptr=wrapperutil.serializeObject(Module,images[0],'bisImage')
+        let image1_ptr=wrapperutil.serializeObject(Module,images[0],'bisImage');
         
         let out=libbiswasm.gaussianSmoothImageWASM(image1_ptr,{
             "sigmas" : [c,c,c],

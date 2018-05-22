@@ -142,7 +142,7 @@ class MorphologyFilterModule extends BaseModule {
                 if (input.getImageType()!=="uchar") {
                     console.log('oooo thresholding and casting to uchar as input type is not uchar');
                     tmp=new BisWebImage();
-	            tmp.cloneImage(input,{ type : 'uchar'});
+                    tmp.cloneImage(input,{ type : 'uchar'});
                     let odata=tmp.getImageData();
                     let idata=input.getImageData();
                     for (let i=0;i<idata.length;i++) {

@@ -88,7 +88,7 @@
 
           <li class='dropdown' id="appmenu">
             <a href='#' class='dropdown-toggle'  data-toggle='dropdown'
-               role='button' aria-expanded='false'>Applications<span class='caret'></span></a>
+               role='button' aria-expanded="true">Applications<span class='caret'></span></a>
             <ul class='dropdown-menu' role='menu' id='topappmenu'>
               <li><a  href="./viewer.html" target="_blank"
                       role="button">Orthogonal Viewer Tool</a></li>
@@ -114,7 +114,8 @@
               <li><a href="http://bisweb.yale.edu/binaries/binaries.html"
 	             target="_blank" rel="noopener">Download Desktop Apps</a></li>
               <li class="divider"></li>
-              <li><a href="https://medicine.yale.edu/bioimaging/suite/">Legacy BioImage Suite
+              <li><a href="https://medicine.yale.edu/bioimaging/suite/"
+                     target="_blank" rel="noopener">Legacy BioImage Suite
                     Webpage<span></a></li>
             </ul>
             
@@ -125,9 +126,10 @@
               <li><a href="https://bioimagesuiteweb.github.io/webapp/images/BioImageSuiteWeb_NIHBrainInitiativeMeeting_April2018.pdf"
                      target="_blank" rel="noopener">Overview Presentation</a></LI>
               <li><a href="https://bioimagesuiteweb.github.io/bisweb-manual/"
-              target="_blank" rel="noopener"><EM>Draft</EM> User Manual</a></li>
+                     target="_blank" rel="noopener"><EM>Draft</EM> User Manual</a></li>
               <li class="divider"></li>
-              <li><a href="https://github.com/bioimagesuiteweb/bisweb/blob/master/docs/README.md" target="_blank" rel="noopener">Developer Documentation</a></li>
+              <li><a href="https://github.com/bioimagesuiteweb/bisweb/blob/master/docs/README.md"
+                     target="_blank" rel="noopener">Developer Documentation</a></li>
             </ul>
           </li>
           
@@ -135,25 +137,23 @@
             <a href='#' class='dropdown-toggle'  data-toggle='dropdown'
                role='button' aria-expanded='false'>Developer Info <span class='caret'></span></a>
             <ul class='dropdown-menu' role='menu' id="devmenu">
-              <li><a href="https://github.com/bioimagesuiteweb/bisweb">Main Repository</a></LI>
+              <li><a href="https://github.com/bioimagesuiteweb/bisweb"
+                     target="_blank" rel="noopener">Main Repository</a></LI>
               <li><a href="https://github.com/bioimagesuiteweb/gplcppcode"
                      target="_blank" rel="noopener">Plugin Repository</a></li>
               <li class="divider"></li>
-
+              <li><a href="./biswebtest.html"
+                     target="_blank">Run Regression Tests</a></li>
             </ul>
           </li>
 
-
-          
-
-          
 	</ul>
       </div>
     </div><!-- /.container-fluid -->
   </nav>
   
   <div id="main">
-    <div id="mycarousel" class="carousel slide" data-ride="carousel">
+    <div id="mycarousel" class="carousel slide">
       
       <ol class="carousel-indicators">
       </ol>
@@ -211,36 +211,38 @@
   </a>
   
   <div id="bottom">
-  
-    <H4>Welcome to BioImage Suite <EM>Web</EM>.</h4>
+
+    <H2>Welcome to BioImage Suite <EM>Web</EM>.</h2>
 
     <UL>
-      <LI>Select any tool from the <span style="color:#ffff88">Applications</span> menu above, or simply click on the
+      <LI class="bisli">Select any tool from the <button class="btn btn-link btn-small"
+	    id="applicationstext">Applications menu</button> above, or simply click on the
 	    application picture, to open the application. Please visit 
         <a href="http://bisweb.yale.edu/binaries/binaries.html"
            target="_blank" rel="noopener">our download site</a> for commandline and
         desktop versions of the software.</LI>
       
-      <LI><B>This software is not approved for clinical use.  Use at your own risk.</B></LI>
+      <LI class="bisli"><B>This software is not approved for clinical use.  Use at your own risk.</B></LI>
       
-      <LI>  BioImage
+      <LI class="bisli">  BioImage
 	    Suite <EM>Web</EM> is written in Javascript and has been mostly
 	tested on Google Chrome. All applications are running on your local
 	      machine. <B>No data</B> is ever uploaded to any server.</LI>
 
-      <LI> We gratefully acknowledge support from
+      <LI class="bisli"> We gratefully acknowledge support from
     the <a href="https://www.braininitiative.nih.gov/"
-           target="_blank">NIH Brain Initiative</a> under grant R24
+           target="_blank" rel="noopener">NIH Brain Initiative</a> under grant R24
         MH114805 (<EM>Papademetris X. and Scheinost D. PIs, Dept. of
           Radiology and Biomedical Imaging, Yale School of
           Medicine.</EM>)</LI>
     </UL>
     <HR>
-    <p> If you are looking for the old desktop based BioImage Suite software you may download it from the <a href="https://medicine.yale.edu/bioimaging/suite/">Legacy BioImage Suite
-          Webpage</a>.
+    <p> If you are looking for the old desktop based BioImage Suite software you may download it from the
+      <a href="https://medicine.yale.edu/bioimaging/suite/"  target="_blank" rel="noopener">Legacy BioImage Suite
+        Webpage</a>.
 
-
+      
   </div>
-  
+
 </body>
 </html>

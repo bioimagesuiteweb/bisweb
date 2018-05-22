@@ -17,7 +17,7 @@
 
 'use strict';
 
-const biswrap = require('libbiswasm_wrapper');
+
 const baseutils=require("baseutils");
 const BaseModule = require('basemodule.js');
 const BisWebImage = require('bisweb_image.js');
@@ -87,7 +87,7 @@ class process4DImageModule extends BaseModule {
         
         if (operation === 'mean' || operation === 'rms' || operation==='meansigma' ) {
             for (let i=0;i<numvoxels;i++) {
-                let sum=0.0,sum2=0.0;;
+                let sum=0.0,sum2=0.0;
                 for (let f=0;f<numframes;f++) {
                     let v=idata[i+f*numvoxels];
                     sum+=v;
@@ -96,7 +96,7 @@ class process4DImageModule extends BaseModule {
                 if (operation==='mean' || operation==='meansigma') {
                     odata[i]=sum/numframes;
                     if (operation==='meansigma') {
-                        odata[i+numvoxels]=Math.sqrt(sum2/numframes-odata[i]*odata[i])*correction
+                        odata[i+numvoxels]=Math.sqrt(sum2/numframes-odata[i]*odata[i])*correction;
                     }
                 } else {
                     odata[i]=Math.sqrt(sum2/numframes);

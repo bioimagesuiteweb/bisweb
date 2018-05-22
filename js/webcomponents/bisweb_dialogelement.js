@@ -127,8 +127,6 @@ class BisWebDialogElement extends HTMLElement {
 
         
         if (state == 1) {
-            
-	    
             let posx = e.screenX - this.mousedata.leftoffset;
             let posy = e.screenY - this.mousedata.topoffset;
             let oldposx=posx,oldposy=posy;

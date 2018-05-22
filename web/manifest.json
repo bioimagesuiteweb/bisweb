@@ -1,22 +1,43 @@
 {
-  "name": "BioImage Suite Web",
-  "description": "This is the BioImage Suite Web Medical Image Analysis Suite -- see bisweb.yale.edu",
-  "short_name": "bisweb",
-  "theme_color": "#24292e",
-  "background_color": "#24292e",
-  "display": "standalone",
-  "scope": "/webapp/",
-  "start_url": "/webapp/index.html",
-  "splash_pages": null,
-  "icons": [
+    "name": "Yale BioImage Suite Web",
+    "description": "This is the BioImage Suite Web Medical Image Analysis Suite -- see bisweb.yale.edu",
+    "short_name": "BioImage Suite Web",
+    "theme_color": "#375a7f",
+    "background_color": "#375a7f",
+    "display": "standalone",
+    "lang" : "English",
+    "orientation" : "any",
+    "start_url": "index.html",
+    "splash_pages": null,
+    "icons": [
+    {
+      "src": "images/bisweb-32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
     {
       "src": "images/bisweb-72.png",
       "sizes": "72x72",
       "type": "image/png"
     },
     {
+      "src": "images/bisweb-128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "images/bisweb-256.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    },
+    {
       "src": "images/bisweb-512.png",
       "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "images/bisweb-1024.png",
+      "sizes": "1024x1024",
       "type": "image/png"
     }
   ]

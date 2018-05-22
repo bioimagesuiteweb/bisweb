@@ -58,53 +58,53 @@ describe('Testing b-spline (from spline.js) class that describes a closed cubic 
     // Now test results and add to mocha
 
     describe('Create spline n=8',function() {
-	it ('(should pass) test node points err='+points_error,function() { 
-	    assert.equal(true,(points_error<gold_epsilon));
-	});
+        it ('(should pass) test node points err='+points_error,function() { 
+            assert.equal(true,(points_error<gold_epsilon));
+        });
     });
 
     describe('Test circmference',function() {
-	it ('(should pass) (len='+len+', theoretical='+gold_circum+')',function() { 
-	    assert.equal(true,((len-gold_circum)<gold_epsilon));
-	});
+        it ('(should pass) (len='+len+', theoretical='+gold_circum+')',function() { 
+            assert.equal(true,((len-gold_circum)<gold_epsilon));
+        });
     });
 
     describe('Create curve ds=0.2',function() {
-	it ('(should pass) sampling err='+sample_error,function() { 
-	    assert.equal(true,(sample_error<gold_epsilon));
-	});
+        it ('(should pass) sampling err='+sample_error,function() { 
+            assert.equal(true,(sample_error<gold_epsilon));
+        });
     });
 
     describe('Test derivative at s=0.0',function() {
-	it ('(should pass) sampling err='+derivative_error,function() {  
-	    assert.equal(true,(derivative_error<gold_epsilon));
-	});
+        it ('(should pass) sampling err='+derivative_error,function() {  
+            assert.equal(true,(derivative_error<gold_epsilon));
+        });
     });
 
     describe('Test spline incl matrix inverse',function() {
-	it ('(should pass)',function() {  
-	    assert.equal(true,spl.test(true));
-	});
+        it ('(should pass)',function() {  
+            assert.equal(true,spl.test(true));
+        });
     });
 
     
     describe('Create spline n=16',function() {
-	it ('(should pass)',function() { 
-	    assert.equal(16,spl2.getnumpoints());
-	});
+        it ('(should pass)',function() { 
+            assert.equal(16,spl2.getnumpoints());
+        });
     });
 
 
     describe('Use resampled spline (n=16) to create curve ds=0.2',function() {
-	it ('(should pass) err='+refit_error,function() { 
-	    assert.equal(true,(refit_error<gold_epsilon));
-	});
+        it ('(should pass) err='+refit_error,function() { 
+            assert.equal(true,(refit_error<gold_epsilon));
+        });
     });
 
     describe('Direct test of resample function (n=16) ',function() {
-	it ('(should pass) err='+resample_error,function() {  
-	    assert.equal(true,(resample_error<gold_epsilon));
-	});
+        it ('(should pass) err='+resample_error,function() {  
+            assert.equal(true,(resample_error<gold_epsilon));
+        });
     });
 
     

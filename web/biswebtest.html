@@ -32,9 +32,7 @@
                                  Dept of Radiology and Biomedical Imaging,
                                  Yale School of Medicine">
 
-    <!-- build:icon -->
     <link rel="icon" href="images/favicon.ico">
-    <!-- endbuild -->
     
     <!-- begin webpack/gulp modifications -->
     <!-- external css files -->
@@ -89,6 +87,11 @@
               <option value="All"  style="color:red">Test all modules</option>
             </select>
             
+            <div id="threaddiv" class="checkbox abc-checkbox info" style="display: inline-block">
+              <input id="usethread" class="styled" type="checkbox">
+              <label for="usethread"> WebWorker</label>
+            </div>
+
             <button class="btn-small btn-danger" type="submit" id="compute">Run Tests</button>
           </form>
         </div>
@@ -130,7 +133,7 @@
       <p id='cnote'>
         <B>Note:</B> You may, before running tests, like to open
         the JavaScript console under Developer Tools (on Chrome simply press
-        'Control-Shift-J') to observe the print outs from the algorithms.</p>
+        'Control-Shift-I' or 'Apple-Shift-I') to observe the print outs from the algorithms.</p>
 
       <BR> 
       

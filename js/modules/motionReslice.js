@@ -22,7 +22,6 @@ const BaseModule = require('basemodule.js');
 const baseutils = require('baseutils.js');
 const smoothreslice = require("bis_imagesmoothreslice.js");
 const BisWebImage = require("bisweb_image.js");
-const BisWebDataObjectCollection = require('bisweb_dataobjectcollection.js');
 const BisWebTransformCollection = require('bisweb_transformationcollection');
 const BisWebLinearTransformation = require('bisweb_lineartransformation');
 

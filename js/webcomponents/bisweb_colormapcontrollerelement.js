@@ -738,21 +738,20 @@ class ColormapControllerElement extends HTMLElement {
         return false;
     }
     
-    /** Get the this.internal state of the controller. Needed for sync'ing accross viewers
-     * @returns {object} -- object literal with this.internal this.data. This is a pointer not a copy!
-     */
-    getdata() { 
-        return this.data;
+    /** Get State as Object 
+        @returns {object} -- the state of the element as a dictionary*/
+    getElementState() {
+        return JSON.parse( JSON.stringify( this.data ) );
     }
-    
-    /** Copy parameters from other controller
-     * @param {BisGUIColormapController} othercontroller -- controller to copy stuff from
-     */
-    copyparameters(othercmapcontroller) {
+
+    /** Set the element state from a dictionary object 
+        @param {object} state -- the state of the element */
+    setElementState(dt=null) {
+        
+        if (dt===null)
+            return 0;
 
         let old_mode=this.data.funcmode;
-        
-        let dt=othercmapcontroller.getdata();
         for (let attr in dt) {
             if (this.data.hasOwnProperty(attr)) {
                 this.data[attr] = dt[attr];
@@ -766,17 +765,19 @@ class ColormapControllerElement extends HTMLElement {
                 }
             }
         }
-
+        
         if (this.internal.functionalcontrollers===null)
             return;
-
+        
         let new_mode=this.data.funcmode;
         if (new_mode !== old_mode)  {
             this.updateFunctionalGUI(new_mode);
             this.updateFunctionalSliders();
         }
-    }
 
+        return 1;
+    }
+       
 }
 
 

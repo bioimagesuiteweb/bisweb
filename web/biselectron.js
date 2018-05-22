@@ -1,19 +1,19 @@
 /*  LICENSE
- 
- _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
- 
- BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
- 
- - you may not use this software except in compliance with the License.
- - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
- 
- __Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.__
- 
- ENDLICENSE */
+    
+    _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+    
+    BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+    
+    - you may not use this software except in compliance with the License.
+    - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+    
+    __Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.__
+    
+    ENDLICENSE */
 
 /* jshint node:true */
 
@@ -38,7 +38,7 @@ let getTime = function() {
 
 const electron = require('electron');
 require('electron-debug')({showDevTools: false,
-			   enabled : true});
+                           enabled : true});
 
 const path=require('path');
 const fs=require('fs');
@@ -51,8 +51,8 @@ const toolfile=require('./images/tools.json');
 const state = {
     winlist : [null],
     screensize : {
-	width : 100,
-	height:100
+        width : 100,
+        height:100
     },
     console : null,
     consolehandler : null,
@@ -91,53 +91,49 @@ state.mainfilename=state.mainfilename || "";
 if (state.mainfilename!=='') {
     let ext=state.mainfilename.split('.').pop();
     if (ext!=='html')
-	state.mainfilename+='.html';
+        state.mainfilename+='.html';
 }
 
 // ----------------------------------------------------------------------------------------
 
 var createWindow=function(index,fullURL) {
 
-    var hidden='shown';
     var opts= {width: 1024, height: 900};
     var xval=100;
     var yval=100;
-   
+    
     if (index==-2) {
-	index=state.winlist.length;
+        index=state.winlist.length;
     } else {
         if (index===-1) {
-	    index=state.winlist.length;
-	}
+            index=state.winlist.length;
+        }
     }
 
     
     if (index===0) {
-	opts= {width: 1024, height: 900};
-	fullURL='file://' + path.resolve(__dirname , 'index.html');
-	hidden='hidden';
-	xval=undefined;
-	yval=undefined;
+        opts= {width: 1024, height: 1100,maxwidth:1024 ,maxheight: 1050};
+        fullURL='file://' + path.resolve(__dirname , 'index.html');
+        xval=undefined;
+        yval=undefined;
     }  else {
-	opts= { width: 1200,height:1100};
+        opts= { width: 1200,height:1100, maxwidth: state.screensize.width, maxheight: state.screensize.height};
     }
 
     
-    if (opts.height>state.screensize.height-100)
-	opts.height=state.screensize.height-100;
-    if (opts.width>state.screensize.width-100)
-	opts.width=state.screensize.width-100;
+    if (opts.height>state.screensize.height-10)
+        opts.height=state.screensize.height-10;
+    if (opts.width>state.screensize.width-10)
+        opts.width=state.screensize.width-10;
 
-    //    console.log('Dimensions=',opts.width,opts.height,state.screensize.width);
-    
 
     if (index!==0) {
-	xval+=Math.round(Math.random()*50);
-	yval+=Math.round(Math.random()*50);
-	if (xval+opts.width>state.screensize.width)
-	    xval=undefined;
-	if (yval+opts.height>state.screensize.height)
-	    yval=undefined;
+        xval+=Math.round(Math.random()*10);
+        yval+=Math.round(Math.random()*10);
+        if (xval+opts.width>state.screensize.width)
+            xval=undefined;
+        if (yval+opts.height>state.screensize.height)
+            yval=undefined;
     }
 
     let i=fullURL.indexOf('biswebtest');
@@ -147,109 +143,81 @@ var createWindow=function(index,fullURL) {
         opts.width=state.screensize.width;
         opts.height=state.screensize.height;
     }
-        
+    
     
 
     
     var preload=  path.resolve(__dirname, 'bispreload.js');
-    console.log(getTime()+' Creating new window '+fullURL + ', index='+index);
-//    console.log(getTime()+' Screen size = '+[state.screensize.width,state.screensize.height]+' size='+[opts.width,opts.height]);
+    //console.log(getTime()+' Creating new window '+fullURL + ', index='+index);
+    //console.log(getTime()+' Screen size = '+[state.screensize.width,state.screensize.height]+' size='+[opts.width,opts.height]);
     state.winlist[index]=new BrowserWindow({width: opts.width,
-					    height: opts.height,
-					    show: true,
-					    x : xval,
-					    y : yval,
-					    //					  titleBarStyle : hidden,
-					    webPreferences: {
-						nodeIntegration: false,
-						preload: preload,
-					    },
-					    icon: __dirname+'/images/favicon.ico'});
+                                            height: opts.height,
+                                            maxWidth: opts.maxwidth,
+                                            maxHeight : opts.maxheight,
+                                            show: true,
+                                            x : xval,
+                                            y : yval,
+                                            webPreferences: {
+                                                nodeIntegration: false,
+                                                preload: preload,
+                                            },
+                                            icon: __dirname+'/images/favicon.ico'});
     
     state.winlist[index].setAutoHideMenuBar(true);
     state.winlist[index].setMenuBarVisibility(false);
     if (process.platform === 'darwin') 
-	state.winlist[index].setMenu(null);
+        state.winlist[index].setMenu(null);
 
     state.winlist[index].once('ready-to-show', () => {
-	state.winlist[index].show();
+        state.winlist[index].show();
     });
     
     state.winlist[index].on('closed', function() {
         state.winlist[index] = null;
-	
-	var anyalive=false;
-	state.winlist.forEach(function(e) {
-	    if (e!==null)
-		anyalive=true;
-	});
-	
-	if (process.platform === 'darwin') 
-	    return;
+        
+        var anyalive=false;
+        state.winlist.forEach(function(e) {
+            if (e!==null)
+                anyalive=true;
+        });
+        
+        if (process.platform === 'darwin')  {
+            if (!anyalive)
+                macExit(true);
+            return;
+        }
 
-	if (anyalive===false) {
-	    state.console.hide();
-	    state.console=null;
-	    process.exit(0);
-	}
+        if (anyalive===false) {
+            state.console.hide();
+            state.console=null;
+            process.exit(0);
+        }
     });
     state.winlist[index].loadURL(fullURL);
     return index;
 };
 
-var macExit=function() {
+var macExit=function(ask=false) {
 
     let anyalive=false;
     state.winlist.forEach(function(e) {
-	if (e!==null)
-	    anyalive=true;
+        if (e!==null)
+            anyalive=true;
     });
 
-    if (anyalive===false)
-	process.exit();
+    if (anyalive===false && ask===false)
+        process.exit();
 
     const dialog = electron.dialog;
     dialog.showMessageBox({
-	title : "Are you sure?",
-	type  : "question",
-	buttons : [ "Cancel", "Quit" ],
-	defaultId : 0,
-	message : "This will close all open BioImage Suite Web Applications",
+        title : "Are you sure?",
+        type  : "question",
+        buttons : [ "Cancel", "Quit" ],
+        defaultId : 0,
+        message : "This will close all open BioImage Suite Web Applications",
     }, (f) => { 
-	if (f===1)
-	    process.exit();
-    });
-};
-    
-var attachWindow=function(index) {
-
-    state.winlist[index].webContents.on('new-window',function(event,url/*,frameName,disposition,options*/) {
-
-	event.preventDefault();	
-	var lm=url.split("/"), fname=lm[lm.length-1], domain=false;
-	if (fname==="index.html") {
-	    domain=true;
-	    if (state.winlist[0]!==null) {
-		state.winlist[0].show();
-		return;
-	    }
-	}
-
-        if (url.indexOf('http://')===0 ||
-	    url.indexOf('https://')===0 
-	   ) {
-	    console.log(getTime()+' Electron opening ' + url + ' in browser.');
-	    shell.openExternal(url);
-	    return;
-	}
-
-	
-	var index=state.winlist.length;
-	if (domain===true)
-	    index=0;
-	
-	createWindow(index,url);
-	attachWindow(index);
+        if (f===1)
+            process.exit();
     });
 };
 
@@ -260,62 +228,62 @@ var createConsole=function() {
 
     var preload=  path.resolve(__dirname, 'bispreload.js');
     state.console=new BrowserWindow({width: opts.width,
-				     height: opts.height,
-				     webPreferences: {
-					 nodeIntegration: false,
-					 preload: preload,
-				     },
-				     icon: __dirname+'/images/favicon.ico'});
+                                     height: opts.height,
+                                     webPreferences: {
+                                         nodeIntegration: false,
+                                         preload: preload,
+                                     },
+                                     icon: __dirname+'/images/favicon.ico'});
     
     state.console.setAutoHideMenuBar(true);
     state.console.setMenuBarVisibility(false);
     if (process.platform === 'darwin') 
-	state.console.setMenu(null);
+        state.console.setMenu(null);
 
     
     state.console.hide();
     state.console.loadURL(fullURL);
     
     state.console.on('close',  function (e) {
-	e.preventDefault();
-	e.returnValue=false;
-	state.console.hide();
-	return false;
+        e.preventDefault();
+        e.returnValue=false;
+        state.console.hide();
+        return false;
     });
 
 
 
 };
-    
+
 var attachWindow=function(index) {
 
     state.winlist[index].webContents.on('new-window',function(event,url/*,frameName,disposition,options*/) {
 
-	event.preventDefault();	
-	var lm=url.split("/"), fname=lm[lm.length-1], domain=false;
-	if (fname==="index.html") {
-	    domain=true;
-	    if (state.winlist[0]!==null) {
-		state.winlist[0].show();
-		return;
-	    }
-	}
+        event.preventDefault(); 
+        var lm=url.split("/"), fname=lm[lm.length-1], domain=false;
+        if (fname==="index.html") {
+            domain=true;
+            if (state.winlist[0]!==null) {
+                state.winlist[0].show();
+                return;
+            }
+        }
 
         if (url.indexOf('http://')===0 ||
-	    url.indexOf('https://')===0 
-	   ) {
-	    console.log(getTime()+' Electron opening ' + url + ' in browser.');
-	    shell.openExternal(url);
-	    return;
-	}
+            url.indexOf('https://')===0 
+           ) {
+            //      console.log(getTime()+' Electron opening ' + url + ' in browser.');
+            shell.openExternal(url);
+            return;
+        }
 
-	
-	var index=state.winlist.length;
-	if (domain===true)
-	    index=0;
-	
-	createWindow(index,url);
-	attachWindow(index);
+        
+        var index=state.winlist.length;
+        if (domain===true)
+            index=0;
+        
+        createWindow(index,url);
+        attachWindow(index);
     });
 };
 
@@ -328,8 +296,8 @@ var createNewWindow = function(url) {
 
 var createOrShowMainWindow = function() {
     if (state.winlist[0]!==null) {
-	state.winlist[0].show();
-	return;
+        state.winlist[0].show();
+        return;
     }
     createWindow(0);
     attachWindow(0);
@@ -341,11 +309,11 @@ var createOrShowMainWindow = function() {
 // Quit when all windows are closed.
 app.on('window-all-closed', function() {
     // On OS X it is common for applications and their menu bar
-	// to stay active until the user quits explicitly with Cmd + Q
+    // to stay active until the user quits explicitly with Cmd + Q
     if (process.platform !== 'darwin') {
         app.quit();
     }
-	
+    
 });
 
 
@@ -359,33 +327,32 @@ app.on('ready', function() {
     var keys=Object.keys(setup.tools);
     let fullURL='';
     if (state.mainfilename.length>1) {
-	console.log(getTime()+' Testing starting file=',state.mainfilename);
-	fullURL=path.resolve(__dirname , state.mainfilename);
-	if (!fs.existsSync(fullURL))
-	    fullURL=path.resolve(__dirname , '../'+state.mainfilename);
-	if (!fs.existsSync(fullURL)) {
-	    console.log(getTime()+' The starting file=',state.mainfilename,' does not exist.');
-	    state.mainfilename='';
-	}
+        console.log(getTime()+' Testing starting file=',state.mainfilename);
+        fullURL=path.resolve(__dirname , state.mainfilename);
+        if (!fs.existsSync(fullURL))
+            fullURL=path.resolve(__dirname , '../'+state.mainfilename);
+        if (!fs.existsSync(fullURL)) {
+            console.log(getTime()+' The starting file=',state.mainfilename,' does not exist.');
+            state.mainfilename='';
+        }
     }
     console.log(getTime()+' Electron ready ' + state.mainfilename + ' indev='+state.indev);
     if (state.commandargs.length>0) {
-	console.log(getTime()+' Command args='+state.commandargs);
+        console.log(getTime()+' Command args='+state.commandargs);
     }
-		    
+    
     state.screensize.width=electron.screen.getPrimaryDisplay().workAreaSize.width;
     if (state.screensize.width<900)
         state.screensize.width=900;
-        
+    
     state.screensize.height=electron.screen.getPrimaryDisplay().workAreaSize.height;
     if (state.screensize.height<700)
         state.screensize.height=700;
 
     if (state.mainfilename === '') {
-	createOrShowMainWindow();
+        createOrShowMainWindow();
     } else {
-	createNewWindow("file://"+fullURL);
-
+        createNewWindow("file://"+fullURL);
     }
 
     var tools=setup.tools;
@@ -394,43 +361,45 @@ app.on('ready', function() {
     var i=0;
     
     if (process.platform === 'darwin') {
-	for (i=0;i<keys.length;i++)  {
-	    var key=keys[i];
-	    var a='file://'+path.resolve(__dirname , tools[key].url+'.html');
-	    /* jshint ignore:start */
-	    (function outer(a){
-		mitems.push({ label: tools[key].title, click: () =>{
-		    createNewWindow(a);
-		}});
-	    }(a));
-	    /* jshint ignore:end */
-	}
-	
-	var menu=Menu.buildFromTemplate([
-	    {  label: "Main Menu Page", click: () => { createOrShowMainWindow(); }},
-	    {  label: 'Tools', submenu : mitems }
-	]);
+        for (i=0;i<keys.length;i++)  {
+            var key=keys[i]; 
+            var a='file://'+path.resolve(__dirname , tools[key].url+'.html'); // jshint ignore:line
+            /* jshint ignore:start */
+            (function outer(a){
+                mitems.push({ label: tools[key].title, click: () =>{
+                    createNewWindow(a);
+                }});
+            }(a));
+            /* jshint ignore:end */
+        }
+        
+        var menu=Menu.buildFromTemplate([
+            {  label: "Application Selector", click: () => { createOrShowMainWindow(); }},
+            {  label: 'Tools', submenu : mitems }
+        ]);
 
-	var menu2=Menu.buildFromTemplate([
-	    {  label: 'Main',  
-	       submenu : [
-		   { 
-		       label : 'Exit', 
-		       click: () => { 
-			   macExit();
-		       }
-		   }
-	       ]
-	    },
-	    {  label: 'Tools', 
-	       submenu : mitems 
-	    }
-	]);
-	app.dock.setMenu(menu);
-	Menu.setApplicationMenu(menu2);
+        var menu2=Menu.buildFromTemplate([
+            {  label: 'Main',  
+               submenu : [
+                   {  label: "Application Selector", click: () => { createOrShowMainWindow(); }},
+                   {   type: 'separator'},
+                   { 
+                       label : 'Exit', 
+                       click: () => { 
+                           macExit();
+                       }
+                   }
+               ]
+            },
+            {  label: 'Tools', 
+               submenu : mitems 
+            }
+        ]);
+        app.dock.setMenu(menu);
+        Menu.setApplicationMenu(menu2);
 
-	
-	
+        
+        
     }
 
     createConsole();
@@ -446,13 +415,13 @@ ipcMain.on('ping', function (event, arg) {
 ipcMain.on('showdevtools', function () {
     var win = BrowserWindow.getFocusedWindow();
     if (win) {
-	win.webContents.openDevTools();
+        win.webContents.openDevTools();
     }
 });
 
 ipcMain.on('showconsole',function() {
     if (state.console===null)
-	createConsole();
+        createConsole();
     state.console.show();
 });
 
@@ -463,9 +432,9 @@ ipcMain.on('bisconsoleinit',function(event) {
 
 ipcMain.on('bisconsole', function (event,arg) {
     if (state.consolehandler===null)
-	console.log(arg);
+        console.log(arg);
     else
-	state.consolehandler.send('add-text',arg);
+        state.consolehandler.send('add-text',arg);
 });
 
 ipcMain.on('clearconsole', function (event,arg) {
@@ -474,16 +443,16 @@ ipcMain.on('clearconsole', function (event,arg) {
 
 ipcMain.on('arguments', function (event,arg) {
     if (state.winlist.length>2 || state.commandargs.length<1) {
-	return;
+        return;
     }
-/*    var l=state.commandargs.length;
-    for (var i=0;i<l;i++) {
-//	var fname=state.commandargs[i];
-//	if (fname!=="true" && fname!=="false") {
-//	    if (path.resolve( fname ) !== path.normalize( fname )) 
-//		state.commandargs[i]=path.resolve(__dirname , fname);
-	}
-    }*/
+    /*    var l=state.commandargs.length;
+          for (var i=0;i<l;i++) {
+          //      var fname=state.commandargs[i];
+          //      if (fname!=="true" && fname!=="false") {
+          //          if (path.resolve( fname ) !== path.normalize( fname )) 
+          //              state.commandargs[i]=path.resolve(__dirname , fname);
+          }
+          }*/
     console.log(getTime()+ ' Sending arguments to ' +arg);
     event.sender.send('arguments-reply',state.commandargs);
 

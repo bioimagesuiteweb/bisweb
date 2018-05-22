@@ -21,10 +21,8 @@
 
 import dat from 'dat.gui';
 
-const THREE = require('three');
 const util=require('bis_util');
 const bisweb_image = require('bisweb_image');
-const bisCrossHair=require('bis_3dcrosshairgeometry');
 const UndoStack=require('bis_undostack');
 const imagealgo=require('bis_imagealgorithms');
 const webutil=require('bis_webutil');
@@ -34,7 +32,7 @@ const bisweb_apputil=require("bisweb_apputilities.js");
 const biscustom = require('bisweb_custommodule.js');
 const modules = require('moduleindex.js');
 const biswrap = require('libbiswasm_wrapper');
-
+const webfileutil = require('bis_webfileutil');
 
 // -------------------------------------------------------------------------
 // Keep warnings quiet
@@ -88,7 +86,6 @@ class PaintToolElement extends HTMLElement {
 
             // Viewer to update
             orthoviewer : null,
-            setobjectmap : null,
             settingviewer : false,
 
             // landmarks and index to current one
@@ -151,7 +148,7 @@ class PaintToolElement extends HTMLElement {
         
         let in_orthoviewer=document.querySelector(viewerid);
 
-        this.internal.layoutcontroller=document.querySelector(layoutid)
+        this.internal.layoutcontroller=document.querySelector(layoutid);
         let in_parent=this.internal.layoutcontroller.createToolWidget('Paint Tool',true);
 
         this.internal.parentDomElement=in_parent;
@@ -159,6 +156,13 @@ class PaintToolElement extends HTMLElement {
         this.internal.parentDomElement.append(basediv);
         this.internal.orthoviewer=in_orthoviewer;
         this.internal.orthoviewer.addMouseObserver(this);
+
+        // Trap set objectmap function and redirect this here ...
+        const self=this;
+        this.internal.orthoviewer.setObjectMapFunction = function (f) {
+            self.setobjectmapimage(f);
+        };
+
 
         if (this.internal.algocontroller) {
             
@@ -569,7 +573,7 @@ class PaintToolElement extends HTMLElement {
                 self.internal.objectmapdata=self.internal.objectmap.getImageData();
                 self.internal.settingviewer=true;
                 console.log('objectmap loaded',self.internal.objectmap.getDescription());
-                self.internal.setobjectmap(in_objmap,true,"Objectmap");
+                self.setViewerObjectmap(in_objmap,true,"Objectmap");
                 self.internal.settingviewer=false;
                 self.resetundo();
                 self.updategui();
@@ -645,7 +649,7 @@ class PaintToolElement extends HTMLElement {
 
         const self=this;
         const fn=function() {
-            self.internal.setobjectmap(self.internal.objectmap,true,false);
+            self.setViewerObjectmap(self.internal.objectmap,true,false);
             self.updategui();
         };
 
@@ -914,7 +918,7 @@ class PaintToolElement extends HTMLElement {
             position : 'top',
             tooltip : 'Click here to select more colors',
             css : { 'margin-left': '0px'},
-            callback : ( () => { this.internal.selectcolormodal.modal('show') })
+            callback : ( () => { this.internal.selectcolormodal.modal('show'); })
         });
 
         var bbar0=webutil.createbuttonbar({ parent: basediv,
@@ -1046,24 +1050,30 @@ class PaintToolElement extends HTMLElement {
         let load_clb=function(f) {  self.loadobjectmap(f);};
 
         webutil.createMenuItem(parent,''); // separator
-        webutil.createMenuItem(parent,'Load Objectmap',
-                               load_clb,
-                               'NII',
-                               { title : 'Load Objectmap Image',  save : false});
+        webfileutil.createFileMenuItem(parent,'Load Objectmap',
+                                       load_clb,
+                                       { title : 'Load Objectmap Image',  save : false,
+                                         suffix : 'NII',
+                                       });
 
         let save_clb=function(f) { console.log(f); self.saveobjectmap(f);};
 
-        webutil.createMenuItem(parent,'Save Objectmap',
-                               function(f) {  save_clb(f);},
-                               '',
-                               { title : 'Save Objectmap',
-                                 save : true, filters : "NII",});
+        webfileutil.createFileMenuItem(parent,'Save Objectmap',
+                                       function(f) {  save_clb(f);},
+                                       { title : 'Save Objectmap',
+                                         save : true,
+                                         filters : "NII",
+                                         suffix : "NII",
+                                       });
 
         webutil.createMenuItem(parent,''); // separator
     }
 
-    setobjectmapcallback(f) {
-        this.internal.setobjectmap=f;
+    setViewerObjectmap(vol,plainmode,alert) {
+        if (alert !== false)
+            webutil.createAlert('Objectmap loaded from ' + vol.getDescription());
+        plainmode = plainmode || false;
+        this.internal.orthoviewer.setobjectmap_internal(vol, plainmode);
     }
 
     setobjectmapimage(img) {

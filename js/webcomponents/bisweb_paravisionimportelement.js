@@ -1,33 +1,34 @@
 /*  LICENSE
- 
- _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
- 
- BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
- 
- - you may not use this software except in compliance with the License.
- - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
- 
- __Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.__
- 
- ENDLICENSE */
+    
+    _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+    
+    BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+    
+    - you may not use this software except in compliance with the License.
+    - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+    
+    __Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.__
+    
+    ENDLICENSE */
 
 /* global window */
 
-const util=require('bis_util');
-const bisweb_image = require('bisweb_image');
+//const util=require('bis_util');
+const BisWebImage = require('bisweb_image');
 const bisbruker=require('bis_readbruker');
 const webutil=require('bis_webutil');
 const bisgenericio=require('bis_genericio');
 const $=require('jquery');
-const bootbox=require('bootbox');
+//const bootbox=require('bootbox');
 const userPreferences = require('bisweb_userpreferences.js');
 const path=bisgenericio.getpathmodule();
 const fs=bisgenericio.getfsmodule();
 const misac=require('../node/misac_util');
+const webfileutil = require('bis_webfileutil');
 
 // -------------------------------------------------------------------------
 
@@ -80,7 +81,7 @@ class ParavisionImportElement extends HTMLElement {
 
     }
 
-        /** actual GUI creation when main class is ready
+    /** actual GUI creation when main class is ready
      * The parent element is internal.parentDomElement
      * @alias ParavisionImportElementInternal~onDemandCreateGUI
      */
@@ -167,49 +168,47 @@ class ParavisionImportElement extends HTMLElement {
                              });
         
 
-	    webutil.createfilebutton({ type : "danger",
-		                           name : 'Import Images from Paravision Study',
-				                   parent : basediv0,
-                                   css : { 'width' : '90%' , 'margin' : '3px' },
-				                   callback : function(f) {
-                                       self.importfiles(f);
-                                   },
-				                   accept : ".json",
-				                 },{
-                                     title: 'Directory to import study from',
-                                     filters:  'DIRECTORY',
-		                             save : false,
-                                 });
+        webfileutil.createFileButton({ type : "danger",
+                                       name : 'Import Images from Paravision Study',
+                                       parent : basediv0,
+                                       css : { 'width' : '90%' , 'margin' : '3px' },
+                                       callback : function(f) {
+                                           self.importfiles(f);
+                                       },
+                                     },{
+                                         title: 'Directory to import study from',
+                                         filters:  'DIRECTORY',
+                                         save : false,
+                                     });
         
-        webutil.createfilebutton({ type : "default",
-		                           name : 'Load Existing Job',
-				                   parent : basediv0,
-                                   css : { 'width' : '90%' , 'margin' : '3px' },
-				                   callback : function(f) {
-                                       self.importjob(f);
-                                   },
-				                   accept : "",
-				                 },{
-                                     title: 'Json formatted file',
-                                     filters:  [ { name: 'JSON Files', extensions: ['json' ]}],
-		                             title    : 'Select the file to load from',
-		                             save : false,
-                                 });
+        webfileutil.createFileButton({ type : "default",
+                                       name : 'Load Existing Job',
+                                       parent : basediv0,
+                                       css : { 'width' : '90%' , 'margin' : '3px' },
+                                       callback : function(f) {
+                                           self.importjob(f);
+                                       },
+                                     },{
+                                         filters:  [ { name: 'JSON Files', extensions: ['json' ]}],
+                                         title    : 'Select the file to load from',
+                                         save : false,
+                                         suffix : "",
+                                     });
         
         
-        webutil.createfilebutton({ type : "primary",
-			                       name : "Save",
-			                       parent : basediv0,
-                                   css : { 'width' : '90%' , 'margin' : '3px' },
-			                       callback : function(f) {
-                                       self.savejob(f);
-                                   }
-                                 },{
-                                     title: 'Json formatted file',
-                                     filters:  [ { name: 'JSON Files', extensions: ['json' ]}],
-		                             title    : 'Select the file to save to',
-		                             save : true,
-                                 });
+        webfileutil.createFileButton({ type : "primary",
+                                       name : "Save",
+                                       parent : basediv0,
+                                       css : { 'width' : '90%' , 'margin' : '3px' },
+                                       callback : function(f) {
+                                           self.savejob(f);
+                                       }
+                                     },{
+                                         filters:  [ { name: 'JSON Files', extensions: ['json' ]}],
+                                         title    : 'Select the file to save to',
+                                         save : true,
+                                         suffix : "json",
+                                     });
         
     }
 
@@ -234,7 +233,7 @@ class ParavisionImportElement extends HTMLElement {
             
             let ext=fname.split('.').pop();
             if (ext==="gz") {
-                const img=new bisweb_image();
+                const img=new BisWebImage();
                 img.load(fname,false)
                     .then(function() {
                         webutil.createAlert('Image loaded from '+img.getDescription());
@@ -264,8 +263,8 @@ class ParavisionImportElement extends HTMLElement {
                 return dim;
             }
             return [0,0,0];
-        }
-            
+        };
+        
         
         //const imagelabels=['None','3DAnatomical','2DAnatomical','EPI','FieldMap','Angio','AngioAnatomical','DTI','DTIResult'  ];
         if (!tagvalue) {
@@ -295,14 +294,14 @@ class ParavisionImportElement extends HTMLElement {
                       filename : path.basename(fname),
                       details : path.basename(infoname),
                       tag : tagvalue,
-                    }
+                    };
         
         internal.joblist.push(details);
         
-        let keys=Object.keys(internal.buttonpairs);
+        //        let keys=Object.keys(internal.buttonpairs);
         
         let counter=internal.joblist.length+1;
-        let s1=(name);
+        /*        let s1=(name);
         s1=s1.substr(0,5)+"...";
         let s2="|";
         try { 
@@ -310,7 +309,7 @@ class ParavisionImportElement extends HTMLElement {
             s2 = stats["size"];
         } catch(e) {
             
-        }
+        }*/
         let nid0=webutil.getuniqueid();
         let nid1=webutil.getuniqueid();
         let nid2=webutil.getuniqueid();
@@ -331,7 +330,7 @@ class ParavisionImportElement extends HTMLElement {
         if (index<0)
             index=0;
         
-        let a=webutil.createselect(
+        webutil.createselect(
             {
                 parent : $('#'+nid3),
                 values : imagelabels,
@@ -412,9 +411,10 @@ class ParavisionImportElement extends HTMLElement {
             internal.this.internalimportfiles2(f,fout);
         };
         
-        webutil.electronFileCallback({filters : "DIRECTORY",
-                                      title : "Select Directory to store output files",
-                                     },clb);
+        webfileutil.electronFileCallback({filters : "DIRECTORY",
+                                          title : "Select Directory to store output files",
+                                          save : false,
+                                         },clb);
         
     }
     
@@ -426,13 +426,13 @@ class ParavisionImportElement extends HTMLElement {
         const self=this;
         const internal=this.internal;
         let dirname=path.resolve(path.dirname(f));
-            
+        
         
         let loaderror = function(e) {
             webutil.createAlert('Failed to read job from' +f + " ("+e+")");
             return;
         };
-            
+        
         bisgenericio.readJSON(f,"ParavisionJob").then( (obj) => {
             obj=obj.data;
             let data=obj.job;

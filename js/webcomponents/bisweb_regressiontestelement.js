@@ -33,9 +33,9 @@ import module_testlist from '../../test/module_tests.json';
 let replacing=false;
 let logtext="";
 let extradir="";
+let threadController=null;
 
 var replacesystemprint=function(doreplace=true) {
-
     if (doreplace===true && replacing===false) {
         const oldLog = console.log;
         replacing=true;
@@ -102,7 +102,7 @@ var loadparamfile=function(paramfile,modulename,params) {
     });
 };
 
-var execute_test=function(test) {
+var execute_test=function(test,i,usethread=false) {
 
     return new Promise( (resolve,reject) => {
 
@@ -163,23 +163,42 @@ var execute_test=function(test) {
 
         loadparamfile(paramfile,module.name,params).then( () => {
 
-            console.log(' ');
+            console.log('oooo usethread=',usethread);
             console.log('oooo Loading Inputs ',JSON.stringify(inputs));
             
             module.loadInputs(inputs).then( () => {
                 console.log('oooo Loaded.');
                 console.log('oooo Invoking Module with params=',JSON.stringify(params));
                 let newParams = module.parseValuesAndAddDefaults(params);
-                module.directInvokeAlgorithm(newParams).then(() => {
-                    console.log('oooo -------------------------------------------------------');
-                    resolve( {
-                        result : ' Test completed, now checking results.',
-                        module : module,
+
+                if (!usethread) {
+                    module.directInvokeAlgorithm(newParams).then(() => {
+                        console.log('oooo -------------------------------------------------------');
+                        resolve( {
+                            result : ' Test completed, now checking results.',
+                            module : module,
+                        });
+                    }).catch((e) => {
+                        reject('---- Failed to invoke algorithm '+e);
                     });
-                    
-                }).catch((e) => {
-                    reject('---- Failed to invoke algorithm '+e);
-                });
+                } else {
+                    console.log('oooo ..........---Calling Web Worker ..............................-');
+                    threadController.executeModule(module.name, module.inputs,newParams).then((outputs) => {
+
+                        if (Object.keys(outputs).length<1)
+                            reject('---- Failed to execute in thread manager ');
+
+                        
+                        module.outputs=outputs;
+                        console.log('oooo ..........---Back from Web Worker ..............................-');
+                        resolve( {
+                            result : ' Test completed, now checking results.',
+                            module : module,
+                        });
+                    }).catch((e) => {
+                        reject('---- Failed to invoke algorithm via thread manager '+e);
+                    });
+                }
             }).catch((e) => {
                 reject('----- Bad input filenames in test '+e);
             });
@@ -266,11 +285,12 @@ const execute_compare=function(module,test) {
     });
 };
 
-var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') { // jshint ignore:line
+var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',usethread=false) { // jshint ignore:line
 
     if (webutil.inElectronApp()) {
         window.BISELECTRON.remote.getCurrentWindow().openDevTools();
     }
+
     console.clear();
     
     if (firsttest<0)
@@ -286,16 +306,19 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') { 
         main.append(`Executing tests ${firsttest}:${lasttest} (Max index=${testlist.length-1}).`);
         if (testname!=="All")
             main.append(`Only runnng tests with name=${testname}<HR>`);
+
     } else {
         main.append('<H3>Listing Tests</H3><HR>');
     }
-
+    
 
     
     let run=0;
     let good=0;
     let bad=0;
     let skipped=0;
+    
+    let t00 = performance.now();
     
     for (let i=firsttest;i<=lasttest;i++) {
         let v=testlist[i];
@@ -304,11 +327,17 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') { 
 
             run=run+1;
             main.append(`<H4 class="testhead">Test ${i}: ${name}</H4><p><UL><LI> Command: ${v.command}</LI><LI> Test details: ${v.test}</LI><LI> Should pass: ${v.result}</LI>`);
+            if (usethread)
+                main.append(`<P> Running in WebWorker </P>`);
             console.log(`-------------------------------`);
             console.log(`-------------------------------\nRunning test ${i}: ${v.command}, ${v.test},${v.result}\n------------------------`);
             replacesystemprint(true);
             try {
-                let obj=await execute_test(v,i); // jshint ignore:line
+                let t0 = performance.now();
+                let obj=await execute_test(v,i,usethread); // jshint ignore:line
+                var t1 = performance.now();
+                main.append(`.... test execution time=${(0.001*(t1 - t0)).toFixed(2)}s`);
+
                 main.append(`<p>${obj.result}</p>`);
                 let obj2=await execute_compare(obj.module,v); // jshint ignore:line
                 let result=obj2.result;
@@ -349,13 +378,38 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') { 
         let numtests=lasttest-firsttest+1;
         webconsole.append(`Tests for version=${bisdate}: completed=${run}/${numtests}, passed=${good}/${numtests}, failed=${bad}/${numtests}, skipped=${skipped}/${numtests}`);
     }
+    
+    let t11 = performance.now();
 
+
+    
     if (testname!=="None") {
         main.append('<BR><BR><H3>All Tests Finished</H3>');
+        main.append(`.... total test execution time=${(0.001*(t11 - t00)).toFixed(2)}s`);
+
+        if (!webutil.inElectronApp()) {
+            let t=0;
+            if (usethread)
+                t=1;
+            
+            let url=window.document.URL;
+            let index=url.indexOf('.html');
+            if (index>=0)
+                url=url.substr(0,index+5);
+            
+            let link=`${url}?first=${firsttest}&last=${lasttest}&testname=${testname}&webworker=${t}&run=1`;
+            main.append(`<BR><p>To run this specific test directly click:<BR> <a href="${link}" target="_blank">${link}</a></p>`);
+        }
+
         window.scrollTo(0,document.body.scrollHeight-100);
-        
-        biswrap.get_module()._print_memory();
-        
+
+        if (!usethread) {
+            try {
+                biswrap.get_module()._print_memory();
+            } catch(e) {
+                // sometimes we have pure js modules, no wasm
+            }
+        }
     } else {
         main.append(`<BR> <BR> <BR>`);
         window.scrollTo(0,0);
@@ -364,17 +418,6 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All') { 
 };  // jshint ignore:line
 
 let initialize=function(data) {
-
-    
-
-
-    
-    if (typeof window.BIS ==='undefined') {
-        let logo=$('#bislogo').parent();
-        logo.attr('href','../index.html');
-    }
-
-    biswrap.initialize();
     
     let testlist=data.testlist;
     let names=[];
@@ -391,18 +434,39 @@ let initialize=function(data) {
     for (let i=0;i<names.length;i++) {
         select.append($(`<option value="${names[i]}">${names[i]}</option>`));
     }
+
+    // http://localhost:8080/web/biswebtest.html?last=77&testname=cropImage&webworker=0
     
     let firsttest=parseInt(webutil.getQueryParameter('first')) || 0;
     if (firsttest<0)
         firsttest=0;
+    else if (firsttest>testlist.length-1)
+        firsttest=testlist.length-1;
     
     let lasttest=parseInt(webutil.getQueryParameter('last') || 0);
     if (lasttest === undefined || lasttest<=0 || lasttest>=testlist.length)
         lasttest=testlist.length-1;
+
+    let testname=webutil.getQueryParameter('testname') || 'None';
+    if (testname !== 'None' && testname !=='All') {
+        if (names.indexOf(testname)<0)
+            testname='None';
+    }
+    
+    let usethread=parseInt(webutil.getQueryParameter('webworker') || 0);
+    let dorun=parseInt(webutil.getQueryParameter('run') || 0);
+    
+    if (usethread)
+        usethread=true;
+    else
+        usethread=false;
+
+
     
     $('#first').val(firsttest);
     $('#last').val(lasttest);
-    $('#testselect').val('None');
+    $('#testselect').val(testname);
+    $('#usethread').prop("checked", usethread);
 
     var fixRange=function(targetname) {
 
@@ -431,32 +495,47 @@ let initialize=function(data) {
         let first=parseInt($("#first").val())||0;
         let last=parseInt($("#last").val());
         let testname=$('#testselect').val() || 'All';
+
+        let usethread= $('#usethread').is(":checked") || false;
+
+        
         if (last===undefined)
             last=testlist.length-1;
-        run_tests(testlist,first,last,testname);
+
+
+        
+        run_tests(testlist,first,last,testname,usethread);
     });
     
     
     $('#compute').click(fn);
 
+    if (dorun) {
+        run_tests(testlist,firsttest,lasttest,testname,usethread);
+    }
+
 };
 
 var startFunction = (() => {
 
-    let inelectron=false;
     if (webutil.inElectronApp()) {
         $('#cnote').remove();
-        inelectron=true;
     }
+
+    setTimeout( () => {
+        threadController=document.createElement('bisweb-webworkercontroller');
+        $('body').append($(threadController));
+    },10);
     
     userPreferences.setImageOrientationOnLoad('None');
-    let devel=false;
+
     
     if (typeof window.BIS !=='undefined') 
         extradir="../test/";
-    else if (inelectron)
+    else 
         extradir="./test/";
     initialize(module_testlist);
+
 });
 
 
@@ -468,7 +547,7 @@ class RegressionTestElement extends HTMLElement {
     
     // Fires when an instance of the element is created.
     connectedCallback() {
-	webutil.runAfterAllLoaded(startFunction);
+	window.onload=startFunction;
     }
 }
 

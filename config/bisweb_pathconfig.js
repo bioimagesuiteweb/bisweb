@@ -15,6 +15,8 @@
  
  ENDLICENSE */
 
+"use strict";
+
 const os = require('os');
 
 let path=require('path');

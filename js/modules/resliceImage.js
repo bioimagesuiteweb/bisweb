@@ -107,7 +107,6 @@ class ResliceImageModule extends BaseModule {
                 'guiviewer'  : 'viewer1',
                 'colortype'  : 'Orange'
             }],
-            "buttonName": "Reslice",
             "params": [
                 {
                     "name": "Interpolation",

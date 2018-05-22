@@ -30,6 +30,7 @@ let environment = '';
 let inelectron = false;
 
 let webWorkerScope;
+let cloudSaveFunction=function() { return false; };
 
 if (typeof (window) !== "undefined") {
     if (typeof (window.BISELECTRON) !== "undefined") {
@@ -55,9 +56,9 @@ if (!webpack) {
         console.log("++++ In Browser");
     }
     catch(e)  {
-        if (typeof ( WorkerGlobalScope ) !== "undefined") {
+/*        if (typeof ( WorkerGlobalScope ) !== "undefined") {
             console.log("++++ In WebWorker");
-        }
+        }*/
     }
     environment = 'browser';
 }
@@ -88,6 +89,11 @@ if (inelectron) {
 const setWebWorkerScope=function(w) {
     webWorkerScope=w;
 };
+
+const setCloudSaveFunction=function(u) {
+    cloudSaveFunction=u;
+};
+    
 
 /**
  * converts dataURL to a blob for saving
@@ -437,7 +443,7 @@ var readtextdatafromurl = function (url, loadedcallback, errorcallback, requesth
         if (this.status == 200) {
             loadedcallback(xhr.response, actualname);
         } else {
-            errorcallback('failed toread ' + url);
+            errorcallback('failed to read ' + url);
         }
         return false;
     };
@@ -582,13 +588,18 @@ var writebinarydatanode = function (filename, data, donecallback, errorcallback)
  * @param {string} filename - the filename
  * @param {string} data - the data to write
  * @param {BisGenericIO.MessageCallback} donecallback - callback function if done
- * @param {BisGenericIO.MessageCallback} errror - error callback function
  */
-var writetextdatabrowser = function (filename, data, donecallback, errorcallback) {
+var writetextdatabrowser = function (filename, data, donecallback) {
 
     donecallback = donecallback || console.log;
-    errorcallback = errorcallback || console.log;
+
     var blob = new Blob([data], { type: "text/plain" });
+
+    if (cloudSaveFunction(data,filename,donecallback))
+        return;
+
+
+
     filesaver(blob, filename);
     donecallback('');
 };
@@ -599,14 +610,12 @@ var writetextdatabrowser = function (filename, data, donecallback, errorcallback
  * @param {string} filename - the filename
  * @param {Uint8Array} data - the data to write (or optionally array)
  * @param {BisGenericIO.MessageCallback} donecallback - callback function if done
- * @param {BisGenericIO.MessageCallback} error - error callback function
  */
-var writebinarydatabrowser = function (filename, data, donecallback, errorcallback) {
+var writebinarydatabrowser = function (filename, data, donecallback) {
     donecallback = donecallback || console.log;
-    errorcallback = errorcallback || console.log;
+
 
     var blob = null;
-    console.log(filename);
     var iscomp = iscompressed(filename);
     if (iscomp) {
         var compressed = pako.gzip(data);
@@ -614,6 +623,10 @@ var writebinarydatabrowser = function (filename, data, donecallback, errorcallba
     } else {
         blob = new Blob([data]);
     }
+
+    if (cloudSaveFunction(blob,filename,donecallback))
+        return;
+    
     filesaver(blob, filename);
     donecallback('');
 };
@@ -974,6 +987,62 @@ let write = function (url, data,isbinary=false) {
     });
 };
 
+/** Fixes the save filename depending on whether we have a string, a mouse event, or a FILE 
+ * Essentially if this is an object only use it if has a .name member, else replace it
+ * @alias BisGenericIO.fixSaveFilename
+ * @param {Object} url - abstract file handle object
+ * @param {String} replacement 
+ * @returns {Object} - a string or the file object as needed
+ */
+let getFixedSaveFileName = function(fobj,replacement) {
+
+    if (typeof fobj === "object") {
+        if (!fobj.name) {
+            fobj=replacement;
+        }
+    }
+    return fobj;
+};
+
+/** Get the load filename
+ * Essentially if input is an object check if it has a .name variable and return it instead
+ * @alias BisGenericIO.getLoadFilename
+ * @param {Object} url - abstract file handle object
+ * @param {String} replacement 
+ * @returns {Object} - a string or the file object as needed
+ */
+let getFixedLoadFileName = function(fobj) {
+    
+    if (typeof fobj === "object") {
+        if (fobj.name) 
+            return fobj.name;
+    }
+
+    if (fobj.indexOf("?=realname=")>0) {
+        let a=fobj.indexOf("?=realname=");
+        let n=fobj.length;
+        return fobj.substr(a+11,n-a);
+    }
+
+    if (fobj.indexOf("http")===0) {
+        // Url -- try to get the last parts
+
+        if (fobj.indexOf("dl.dropbox")>0) {
+            let s=fobj.split("/");
+            let f="dropbox/";
+            for (let i=6;i<s.length;i++) {
+                f=f+"/"+s[i];
+            }
+            return f;
+        }
+    }
+
+    
+    return fobj;
+
+};
+
+
 // -------------------------------------------------------------------------------------------------------
 /*
 Legacy exports -- removed
@@ -999,11 +1068,14 @@ const bisgenericio = {
     binary2string :     binary2string ,
     dataURLToBlob : dataURLToBlob,
     setWebWorkerScope :     setWebWorkerScope,
+    setCloudSaveFunction : setCloudSaveFunction, // needed for write to dropbox etc.
     readtextdatafromurl : readtextdatafromurl, // read from url
     readbinarydatafromurl : readbinarydatafromurl, // read from url
     readJSON : readJSON, // Gloabl ReadJSON
     read  : read, // Global Read data
-    write : write // Global Write data
+    write : write, // Global Write data
+    getFixedSaveFileName : getFixedSaveFileName,
+    getFixedLoadFileName : getFixedLoadFileName,
 };
 
 

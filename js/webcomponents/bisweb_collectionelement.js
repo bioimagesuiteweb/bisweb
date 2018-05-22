@@ -28,6 +28,7 @@ const $=require('jquery');
 const bootbox=require('bootbox');
 const util = require('bis_util.js');
 const numeric=require('numeric');
+const webfileutil = require('bis_webfileutil');
 
 /** 
  * A web element to create and manage a GUI for an Object Collection
@@ -205,20 +206,27 @@ class CollectionElement extends HTMLElement {
         
         return false;
     }
+
+    /** Get the initial filename to save to (for use in the File|Save dialog)
+        @return {string} - the initial filename
+    */
+    getInitialFilename()  {
+        let obj=this.getCurrentObject();
+        return obj.getFilename();
+    }
     
     /** Save Item. */
-    saveCurrentItem() {
+    saveCurrentItem(fobj) {
 
         let obj=this.getCurrentObject();
         if (!obj)
             return;
+
+        fobj=bisgenericio.getFixedSaveFileName(fobj,obj.getFilename());
+        obj.setFilename(fobj);
         
         let txt=obj.serializeToText(obj.getFilename());
-        bisgenericio.write({
-            filename : obj.getFilename(),
-            title    : `Select file to save ${this.specific.name} in`,
-            filters  : [ { name: 'Object Files', extensions: [`${obj.getExtension()}` ]} ],
-        },txt);
+        bisgenericio.write(fobj,txt);
         return false;
     }
 
@@ -244,7 +252,7 @@ class CollectionElement extends HTMLElement {
             if (obj) {
                 self.addItem(obj, `${self.counter}.${obj.getFilename()}`);
             } else {
-                let fname = file.name || file;
+                let fname=bisgenericio.getFixedLoadFileName(file);
                 webutil.createAlert('Failed to load '+self.specific.type+' from '+fname+' ',true);
             } 
         }).catch( (e) => {
@@ -358,29 +366,40 @@ class CollectionElement extends HTMLElement {
         let itembar=webutil.createbuttonbar({ parent :basediv,  css : {"margin-top":"10px"}});
 
 
-        webutil.createfilebutton({ type : "warning",
-                                   name : "Add",
-                                   position : "bottom",
-                                   tooltip : "Click this to add a new "+self.specific.name,
-                                   parent : itembar,
-                                   callback : function(f) { self.addItemFromFile(f); },
-                                   accept : self.specific.extensions,
-                                 },{
-                                     filename : '',
-                                     title    : 'Select file to add a new '+self.specific.name+' from',
-                                     filters  : [ { name: self.specific.name+' Files', extensions: self.specific.extensions }],
-                                     save : false,
-                                 });
-
+        webfileutil.createFileButton({ type : "warning",
+                                       name : "Add",
+                                       position : "bottom",
+                                       tooltip : "Click this to add a new "+self.specific.name,
+                                       parent : itembar,
+                                       callback : function(f) { self.addItemFromFile(f); },
+                                     },{
+                                         filename : '',
+                                         title    : 'Select file to add a new '+self.specific.name+' from',
+                                         filters  : [ { name: self.specific.name+' Files', extensions: self.specific.extensions }],
+                                         save : false,
+                                         suffix : self.specific.extensions,
+                                     });
 
         
-        webutil.createbutton({ type : "primary",
-                               name : "Save",
-                               position : "bottom",
-                               tooltip : "Click this to save points to a .ljson file",
-                               parent : itembar,
-                               callback : function(f) { self.saveCurrentItem(f);},
-                             });
+        
+        webfileutil.createFileButton({ type : "primary",
+                                       name : "Save",
+                                       position : "bottom",
+                                       parent : itembar,
+                                       callback : function(f) {
+                                           self.saveCurrentItem(f);
+                                       },
+                                     },{
+                                         filename : '',
+                                         title    : 'Select file to add a new '+self.specific.name+' from',
+                                         filters  : [ { name: self.specific.name+' Files', extensions: self.specific.extensions }],
+                                         save : true,
+                                         suffix : self.specific.extensions,
+                                         initialCallback : () => {
+                                             return self.getInitialFilename();
+                                         }
+                                     });
+        
 
         
         webutil.createbutton({ type : "danger",

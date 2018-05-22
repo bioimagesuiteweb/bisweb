@@ -26,10 +26,7 @@ const bisimagesmoothreslice=require('bis_imagesmoothreslice');
 const BisWebImage=require('bisweb_image');
 const bistransforms=require('bis_transformationutil');
 const path=require('path');
-const util   =require('bis_util');
-const wasmutil=require('bis_wasmutils');
 const libbiswasm=require('libbiswasm_wrapper');
-const numeric=require('numeric');
 
 
 const images = [ new BisWebImage(),new BisWebImage(),new BisWebImage(),new BisWebImage() ];

@@ -28,7 +28,7 @@ const genericio = require('bis_genericio');
  * @alias biswebUserPreferences.dbasepointer
  */
 let dbasepointer=null;
-
+let count=0;
 /** 
  * The internal user preferences Object
  * @alias biswebUserPreferences.userPreferences
@@ -37,7 +37,8 @@ let dbasepointer=null;
 const userPreferences = {
     orientationOnLoad : 'None',
     snapshotscale : 2,
-    snapshotdowhite : true
+    snapshotdowhite : true,
+    filesource : 'local',
 };
 
 /** 
@@ -75,7 +76,8 @@ let sanitizeOrientationOnLoad=function(name) {
 let setImageOrientationOnLoad=function(name='',comment='') {
 
     userPreferences['orientationOnLoad']=sanitizeOrientationOnLoad(name);
-    if (comment!==null)
+    count=count+1;
+    if (comment!==null && count===1)
         console.log(',,,, Setting forcing orientationOnLoad to: '+userPreferences['orientationOnLoad']+' (from '+name+'), '+comment);
 };
 

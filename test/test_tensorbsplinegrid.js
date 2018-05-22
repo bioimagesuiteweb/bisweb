@@ -26,9 +26,6 @@ const bisimagesmoothreslice=require('bis_imagesmoothreslice');
 const BisWebImage=require('bisweb_image');
 const bistransforms=require('bis_transformationutil');
 const path=require('path');
-const util   =require('bis_util');
-const bisgenericio=require('bis_genericio');
-const wasmutil=require('bis_wasmutils');
 const libbiswasm=require('libbiswasm_wrapper');
 const numeric=require('numeric');
 
@@ -55,7 +52,7 @@ describe('Testing New Style Bspline Grid Code\n', function() {
 
     this.timeout(50000);
     
-    let counter=0;
+
     before(function(done){
 
         let p = [ libbiswasm.initialize() ];
@@ -78,9 +75,6 @@ describe('Testing New Style Bspline Grid Code\n', function() {
                 lines=bsplinecombo_inp.serializeToText();
             else
                 lines=bsplinecombo_inp.legacySerialize();
-            let s=lines.split("\n");
-            
-
             bsplinecombo.parseFromText(lines,fnames[mode]);
             
             let pt370=[ -1.5743, -0.0616, -1.1677 ];
@@ -291,7 +285,6 @@ describe('Testing New Style Bspline Grid Code\n', function() {
             
             let error=0.0;
             let num=0.0;
-            let spa =[ 30,30,30 ];
             for (let x=30;x<=90;x+=30) {
                 for (let y=30;y<=90;y+=30) {
                     for (let z=30;z<=90;z+=30) {
