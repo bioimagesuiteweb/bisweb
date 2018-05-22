@@ -1,0 +1,77 @@
+<!---  LICENSE
+ 
+ _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+ 
+ BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+ 
+ - you may not use this software except in compliance with the License.
+ - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+ 
+ __Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.__
+ 
+ ENDLICENSE -->
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <title>BioImageSuite File Server</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no">
+    <meta name="theme-color" content="rgb(28,45,64)">
+    <meta name="description" content="Yale BioImage Suite Medical Image
+                                      Analysis Software">
+    <meta name="keywords" content="Image Segmentation, Registration,
+                                   Visualization, fMRI, Connectivity, JS,
+                                   WebAssembly, NIH Brain Inititative">
+    <meta name="author" content="Xenophon Papademetris and Dustin Scheinost,
+                                 Dept of Radiology and Biomedical Imaging,
+                                 Yale School of Medicine">
+
+    <link rel="icon" href="images/favicon.ico">
+
+    <!-- begin webpack/gulp modifications -->
+    <!-- external css files -->
+    <!-- build:css -->
+    <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_dark.css">
+    <link rel="stylesheet" type="text/css"  href="../lib/css/bootstrap-colorselector.css">
+    <!-- endbuild -->
+
+    <!-- all javascript files -->
+    <!-- build:js -->
+    <script>
+        //https://stackoverflow.com/questions/22658015/bootstrap-wont-detect-jquery-1-11-0-uncaught-error-bootstraps-javascript-re?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
+        window.jQuery = window.$ = require('jquery');
+    </script>
+    <script src="../build/web/bootstrap.min.js"></script>
+    <script src="../build/web/bislib.js"></script>
+    <script src="server.js"></script>
+    <!-- endbuild -->
+    <!-- end webpack/gulp modifications -->
+
+    <script> 
+        window.onload = () => {
+            console.log('hello from onload');
+            loadMenuBarItems();
+        }
+    </script>
+</head>
+<body oncontextmenu="return false;" ondragstart="return false;" ondrop="return false;">
+    
+    
+      <bisweb-topmenubar id="viewer_menubar"></bisweb-topmenubar> 
+    
+      <div id="viewerwidget">  
+        <bisweb-viewinputsmodal
+            id="viewinputsmodal"
+            bis-menubarid="#viewer_menubar">
+        </bisweb-viewinputsmodal>  
+      </div>
+    
+      
+      <bisweb-botmenubar></bisweb-botmenubar>
+    </body>
+</html>
