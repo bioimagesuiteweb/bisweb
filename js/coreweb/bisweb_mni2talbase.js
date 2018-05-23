@@ -18,7 +18,11 @@
 /* global document,Image */
 "use strict";
 
-
+const genericio=require('bis_genericio');
+const webfileutil=require('bis_webfileutil');
+const webutil=require('bis_webutil');
+const BisWebMatrix=require('bisweb_matrix.js');
+const $=require('jquery');
 // ---------------------------------------------------------------------------------
 //  GLOBAL UTILITIES
 // ---------------------------------------------------------------------------------
@@ -366,6 +370,7 @@ class OrthoViewer {
         this.allLoaded=false;
         this.previousmouseevent=-1;
         this.enableTalairachLabelsUpdate=true;
+        this.brodlist=[];
     }
     
     createViewers() {
@@ -423,6 +428,7 @@ class OrthoViewer {
         this.createMNITextLabels();
         this.createTalTextLabels();
         this.createMiscElements();
+        this.createBatchCallback();
     }
     
     createSliders() {
@@ -462,6 +468,104 @@ class OrthoViewer {
         let b1=this.ShadowDOM.querySelector("#talgo");
         b1.addEventListener('click', ()=> this.setTalairach());
     }
+
+    createBatchCallback() {
+
+        const self=this;
+
+        
+        let show=async function(matrix,row)  {
+            let x=parseInt(matrix[row][0]);
+            let y=parseInt(matrix[row][1]);
+            let z=parseInt(matrix[row][2]);
+
+            self.setMNICoordinates(x,y,z);
+            return new Promise( (resolve,reject) => {
+                setTimeout( () => { 
+                    let v= parseInt(self.BrodmanElement.value);
+                    let found=0;
+                    let k=1;
+                    while (k<self.brodlist.length && found<1) {
+                        if (v===self.brodlist[k][0]) {
+                            found=k;
+                        }
+                        k=k+1;
+                    }
+                    
+                    let s= self.brodlist[found][1];
+                    let tal = [
+                        Math.round(self.TalSliderLabels[0].value),
+                        Math.round(self.TalSliderLabels[1].value),
+                        Math.round(self.TalSliderLabels[2].value)
+                    ];
+                    
+                    let out=`${x},${y},${z},${s},${tal[0]},${tal[1]},${tal[2]}\n`;
+                    resolve(out);
+                },1000);
+            });
+        };
+
+        let save=async function(matrix,sz) {
+            
+            let output="MNIX,MNIY,MNIZ,BA,TALX,TALY,TALZ\n";
+            
+            for (let i=0;i<sz[0];i++) {
+                let out=await show(matrix,i);
+                output+=out;
+            }
+            console.log(output);
+            if (webutil.inElectronApp()) {
+                webfileutil.electronFileCallback(
+                    {
+                        filename : 'converted.csv',
+                        title    : 'Select file to save output to',
+                        filters  : [ { name: 'CSV Files', extensions: ['csv' ]}],
+                        save : true,
+                        suffix : ".csv",
+                        force : 'local',
+                    },function(f) {
+                        genericio.write(f,output);
+                    });
+            } else {
+                genericio.write('converted.csv',output);
+            }
+        };
+
+        
+        let batch =function(f) {
+            let newmat=new BisWebMatrix();
+            newmat.load(f).then( () => {
+                let f2=genericio.getFixedLoadFileName(f);
+                let sz=newmat.getDimensions();
+                if (sz[1]!==3) {
+                    webutil.createAlert('Bad CSV file'+f2+' number of columns is not 3',true);
+                    return;
+                }
+
+                webutil.createAlert('Loaded '+sz[0]+' points. Converting ...');
+
+                let overlaybox=self.ShadowDOM.querySelector("#showoverlaybutton");
+                overlaybox.checked=true;
+                self.setOverlayOpacity(true);
+
+                
+                let m=newmat.getNumericMatrix();
+                save(m,sz);
+            });
+        };
+
+
+        let b1=this.ShadowDOM.querySelector("#batch");
+        
+        webfileutil.attachFileCallback($(b1),batch,{
+            filename : '',
+            title    : 'Select file to load MNI coordinates from',
+            filters  : [ { name: 'CSV File', extensions: ['csv' ]}],
+            save : false,
+            suffix : ".csv",
+            force : 'local',
+        });
+    }
     
     createMiscElements() {
         
@@ -485,6 +589,8 @@ class OrthoViewer {
         opt.value = "-1";
         opt.innerHTML = "Outside defined BAs";
         this.BrodmanElement.appendChild(opt);
+        this.brodlist=[];
+        this.brodlist.push([ -1,"Outside defined BAs"]);
         //  this.BrodmanElement.children.add(new OptionElement(data: "Outside defined BAs", value: "-1",selected:false));
         for (let i=0;i<n;i++) {
             let opt = document.createElement('option');
@@ -493,8 +599,10 @@ class OrthoViewer {
             let s=bisweb_mni2tal.BRODMANNLABELS[ind];
             opt.value=i;
             opt.innerHTML = 'Right-'+s;
+            this.brodlist.push([i,"Right-"+s]);
             opt2.value=i+100;
             opt2.innerHTML = 'Left-'+s;
+            this.brodlist.push([i+100,"Left-"+s]);
             this.BrodmanElement.appendChild(opt);
             this.BrodmanElement.appendChild(opt2);
         }
