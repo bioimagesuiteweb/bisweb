@@ -188,6 +188,7 @@ const webfileutils = {
      * @param {boolean} opts.save - if in file mode and web determine load or save
      * @param {string} opts.defaultpath - if in file mode and web use this as original filename
      * @param {string} opts.suffix - if in file mode and web use this to filter web style
+     * @param {string} opts.force - force file selection mode (e.g. 'local');
      * @param {function} callback - callback to call when done
      */
     webFileCallback: function (fileopts, callback) {
@@ -202,21 +203,24 @@ const webfileutils = {
             return;
         }
 
-
+        let fmode=fileMode;
+        if (fileopts.force)
+            fmode=fileopts.force;
+        
         // -------- load -----------
         
-        if (fileMode==='dropbox') { 
+        if (fmode==='dropbox') { 
             fileopts.suffix=suffix;
             return bisweb_dropbox.pickReadFile(fileopts,callback);
         }
         
-        if (fileMode==='onedrive') { 
+        if (fmode==='onedrive') { 
             fileopts.suffix=suffix;
             return bisweb_onedrive.pickReadFile(fileopts,callback);
         }
         
         
-        if (fileMode==="googledrive") {
+        if (fmode==="googledrive") {
             bisweb_googledrive.create().then( () => {
                 bisweb_googledrive.pickReadFile("").then(
                     (obj) => {
@@ -256,7 +260,7 @@ const webfileutils = {
         fileopts.save = fileopts.save || false;
         
         const that = this;
-        
+
         if (webutil.inElectronApp()) {
             
             button.click(function(e) {
@@ -267,6 +271,7 @@ const webfileutils = {
                 },1);
             });
         } else {
+
             button.click(function(e) {
                 setTimeout( () => {
                     e.stopPropagation();
