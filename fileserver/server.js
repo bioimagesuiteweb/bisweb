@@ -2,6 +2,7 @@ const $ = require('jquery');
 const fs = require('fs');
 const net = require('net');
 const crypto = require('crypto'), shasum = crypto.createHash('sha1');
+const wsutil = require('./wsutil.js');
 
 const SHAstring = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 
@@ -55,7 +56,7 @@ let startServer = () => {
         
         //parse websocket key out of response
         let websocketKey;
-        socket.on('data', (chunk) => {
+        let handshake = (chunk) => {
             let decodedChunk = new TextDecoder('utf-8').decode(chunk);
             console.log('chunk', decodedChunk);
             let headers = decodedChunk.split('\n');
@@ -82,8 +83,15 @@ let startServer = () => {
             response = response + acceptKey + '\r\n\r\n';
 
             console.log('response', response);
+
+            //unbind the handshake protocol and listen for data frames
+            socket.removeAllListeners();
+            prepareForDataFrames(socket);
+
             socket.write(response, 'utf-8');
-        });
+        };
+        
+        socket.on('data', handshake);
 
     });
 
@@ -91,6 +99,23 @@ let startServer = () => {
 
     console.log('listening for incoming connections...');
 };
+
+prepareForDataFrames = (socket) => {
+    socket.on('data', (chunk) => {
+        console.log('type of data', typeof(chunk));
+        let controlFrame = chunk.slice(0, 14);
+        let parsedControl = wsutil.parseControlFrame(controlFrame);
+        console.log('parsedControl', parsedControl);
+        console.log('chunk', chunk);
+
+        let decoded = new Uint8Array(parsedControl.payloadLength);
+        console.log('decoded', decoded);
+        //decode the raw data (undo the XOR)
+        for (let i = 0; i < parsedControl.payloadLength; i++) {
+            decoded[i] = chunk[i + parsedControl.datastart] ^ parsedControl.mask[i % 4];
+        }
+    });
+}
 
 module.exports = {
     loadMenuBarItems : loadMenuBarItems,

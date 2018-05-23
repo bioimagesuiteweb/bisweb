@@ -180,7 +180,8 @@ class TreeViewer extends HTMLElement {
         };
 
         socket.addEventListener('open', (event) => {
-            socket.send('helloooo');
+            console.log('socket opened successfully');
+            socket.send('helloooo0');
         });
         
 
