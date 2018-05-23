@@ -81,52 +81,6 @@ var getDirectoryInfo = function(basedir,childdir,done) {
     */
 };
 
-/** Function to create a Google Authentication mechanism for express (and hopefully socket io)
-    @alias Serverutil.createGooglePassport
-    @param {object} app - Express server app
-    @param {string} servername - the server name e.g. http://localhost:8080
-    @param {array} allowedusers - an array of strings containing allowed gmail addresses
-    @param {string} doneurl - tail url to redirect to when login is successful (e.g. "/login/callback"). The redirection is to servername+doneurl
-    @return {object} Passport object
-*/
-var createGooglePassport = function(app,servername,allowedusers,doneurl) {
-    
-    var passport = require('passport'), GoogleStrategy = require('passport-google').Strategy;
-    var session  = require('express-session');
-
-    app.use(session({ secret: 'xppx' })); // session secret
-    app.use(passport.initialize());
-    app.use(passport.session());
-
-
-    var testuser=function( identifier, profile,callback) {
-	var user= profile.emails[0].value;
-	if (allowedusers.indexOf(user)>=0)
-	    callback(null,user);
-	else
-	    callback("User not allowed",null);
-    };
-    
-    passport.use(new GoogleStrategy({
-	returnURL: servername+doneurl, 
-	realm: servername,
-    },function(identifier, profile, done) {
-	testuser(identifier,profile, function(err, user) {
-	    return done(null, user);
-	});
-    }));
-    
-    passport.serializeUser(function(user, done) {
-	done(null, user);
-    });
-    
-    passport.deserializeUser(function(user, done) {
-	done(null, user);
-    });
-
-    return passport;
-};
-
 /** Function to create a Basic Authentication mechanism for express (and hopefully socket io)
     @alias Serverutil.getBasicPassport
     @param {object} app - Express server app
