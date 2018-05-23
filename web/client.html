@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <title>BioImage Suite Web Helper</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no">
+    <meta name="theme-color" content="rgb(28,45,64)">
+    <meta name="description" content="Yale BioImage Suite Medical Image
+                                      Analysis Software">
+    <meta name="keywords" content="Image Segmentation, Registration,
+                                   Visualization, fMRI, Connectivity, JS,
+                                   WebAssembly, NIH Brain Inititative">
+    <meta name="author" content="Xenophon Papademetris and Dustin Scheinost,
+                                 Dept of Radiology and Biomedical Imaging,
+                                 Yale School of Medicine">
+
+    <link rel="icon" href="images/favicon.ico">
+
+    <!-- begin webpack/gulp modifications -->
+    <!-- external css files -->
+    <!-- build:css -->
+    <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_dark.css">
+    <link rel="stylesheet" type="text/css"  href="../lib/css/bootstrap-colorselector.css">
+    <link rel="stylesheet" type="text/css" href="biscommon.css">
+    <!-- endbuild -->
+
+    <!-- all javascript files -->
+    <!-- build:js -->
+    <script src="bis.js"></script>
+    <script src="../build/web/webcomponents-lite.js"></script>
+    <script src="../build/web/jquery.min.js"></script>
+    <script src="../build/web/bootstrap.min.js"></script>
+    <script src="../build/web/client.js"></script>
+    <!-- endbuild -->
+    <!-- end webpack/gulp modifications -->
+
+
+</head>
+
+<body>
+  <div id="result"></div>
+
+</body>
+</html>
