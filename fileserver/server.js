@@ -109,11 +109,16 @@ prepareForDataFrames = (socket) => {
         console.log('chunk', chunk);
 
         let decoded = new Uint8Array(parsedControl.payloadLength);
+        let text = "";
         console.log('decoded', decoded);
         //decode the raw data (undo the XOR)
         for (let i = 0; i < parsedControl.payloadLength; i++) {
             decoded[i] = chunk[i + parsedControl.datastart] ^ parsedControl.mask[i % 4];
+            text = text + String.fromCharCode(decoded[i]);
         }
+
+        console.log('text', text);
+
     });
 }
 
