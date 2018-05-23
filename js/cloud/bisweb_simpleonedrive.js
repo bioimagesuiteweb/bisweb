@@ -153,4 +153,4 @@ module.exports = {
     pickWriteFile : pickWriteFile,
 };
 
-init();
+
