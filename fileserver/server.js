@@ -66,7 +66,8 @@ let startServer = () => {
 
             for (let header of headers) {
                 if (header[0] === 'Sec-WebSocket-Key') {
-                    websocketKey = header[1];
+                    //remove leading space from key
+                    websocketKey = header[1].slice(1, -1);
                 }
             }
 
@@ -78,10 +79,10 @@ let startServer = () => {
             let acceptKey = shasum.digest('base64');
             console.log('acceptKey', acceptKey);
 
-            response = response + acceptKey + '\r\n';
+            response = response + acceptKey + '\r\n\r\n';
 
             console.log('response', response);
-            socket.write(response);
+            socket.write(response, 'utf-8');
         });
 
     });

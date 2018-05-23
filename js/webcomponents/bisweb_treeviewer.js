@@ -175,6 +175,10 @@ class TreeViewer extends HTMLElement {
 
         //need 'ws://' prefix if using localhost
         let socket = new WebSocket('ws://localhost:8081');
+        socket.onmessage = (event) => {
+            console.log('onmessage', event);
+        };
+
         socket.addEventListener('open', (event) => {
             socket.send('helloooo');
         });
