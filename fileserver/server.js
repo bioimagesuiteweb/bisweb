@@ -1,5 +1,10 @@
 const $ = require('jquery');
 const fs = require('fs');
+const net = require('net');
+const crypto = require('crypto'), shasum = crypto.createHash('sha1');
+
+const SHAstring = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
+
 
 let loadMenuBarItems = () => {
     let menubar = document.getElementById('viewer_menubar');
@@ -38,6 +43,52 @@ let loadLocalFiles = (filename) => {
     fs.readFile(filename, 'utf-8', (err, data) => {
         console.log('file', data);
     });
+};
+
+let startServer = () => {
+    let server = net.createServer( (socket) => {
+        console.log('got connection', socket);
+        
+        //construct the handshake response
+        //https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers
+        let response = "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ";
+        
+        //parse websocket key out of response
+        let websocketKey;
+        socket.on('data', (chunk) => {
+            let decodedChunk = new TextDecoder('utf-8').decode(chunk);
+            console.log('chunk', decodedChunk);
+            let headers = decodedChunk.split('\n');
+            
+            for (let i = 0; i < headers.length; i++) {
+                headers[i] = headers[i].split(':');
+            }
+
+            for (let header of headers) {
+                if (header[0] === 'Sec-WebSocket-Key') {
+                    websocketKey = header[1];
+                }
+            }
+
+            console.log('headers', headers);
+
+            websocketKey = websocketKey + SHAstring;
+            shasum.update(websocketKey);
+
+            let acceptKey = shasum.digest('base64');
+            console.log('acceptKey', acceptKey);
+
+            response = response + acceptKey + '\r\n';
+
+            console.log('response', response);
+            socket.write(response);
+        });
+
+    });
+
+    server.listen(8081);
+
+    console.log('listening for incoming connections...');
 };
 
 module.exports = {
