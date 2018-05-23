@@ -303,6 +303,17 @@ class BisWebMatrix extends BisWebDataObject{
     setFromNumericMatrix(mat) {
         let sz=numeric.dim(mat);
         if (sz.length===2) {
+            let rows=0;
+            for (let i=0;i<sz[0];i++) {
+                if (!isNaN(mat[i][0]))
+                    rows+=1;
+                else
+                    i=sz[0];
+            }
+            console.log('Input rows=',sz[0],'output=',rows);
+            sz[0]=rows;
+
+            
             this.dimensions=[sz[0],sz[1]];
             this.data=new Float32Array(sz[0]*sz[1]);
             let index=0;
