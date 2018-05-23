@@ -103,7 +103,7 @@ const template_css=`
   height: 43.0vh;
 }
 
-#mniframe, #talframe, #overlayframe,  #baframe, #aboutframe,#navframe {
+#mniframe, #talframe, #overlayframe,  #baframe, #aboutframe,#navframe,#batchframe {
   z-index:1;
   left: 39.5vh;
   width: 43.5vh;
@@ -137,9 +137,13 @@ const template_css=`
   
 }
 
+#batchframe {
+top : 61vh;
+}
+
 #aboutframe {
   font-size: 90%;
-  top: 61.0vh;
+  top: 66.0vh;
   height: 27vh;
 }
 
@@ -190,6 +194,10 @@ const template_css=`
     background-color: #000000;
     color : #ffffff;
 }
+
+#batch { 
+   width : 200px;
+}
 </style>`;
 
 const template_text=`
@@ -238,6 +246,11 @@ const template_text=`
           <button type="button" class="buttonid" id="resetbutton">Reset</button>
           
         </div>
+
+        <div id="batchframe">
+             <button type="button" class="buttonid" id="batch">Batch Convert </button>
+        </div>
+
         
         <div id="aboutframe">
           
@@ -253,6 +266,7 @@ const template_text=`
               (c) Xenios Papademetris, Yale University, 2014-7. </details>
           
         </div>
+
 </div>`;
 
 
