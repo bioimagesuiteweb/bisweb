@@ -605,7 +605,6 @@ class ViewerApplicationElement extends HTMLElement {
                                        { title: 'Load Application State',
                                          save: false,
                                          filters : [ { name: 'Application State File', extensions: ['biswebstate']}],
-                                         suffix : "biswebstate",
                                        }
                                       );
         
