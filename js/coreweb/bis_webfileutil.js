@@ -107,6 +107,9 @@ const webfileutils = {
             ];
         if (suffix === "DIRECTORY")
             fileopts.filters = "DIRECTORY";
+
+
+        
         
         if (fileopts.defaultpath==='') {
             if (fileopts.initialCallback)
@@ -168,6 +171,30 @@ const webfileutils = {
         let suffix = fileopts.suffix || '';
         if (suffix === "NII")
             suffix = '.nii,.nii.gz,.gz,.tiff';
+
+        if (suffix!=='') {
+            let s=suffix.split(",");
+            for (let i=0;i<s.length;i++) {
+                let a=s[i];
+                if (a.indexOf(".")!==0)
+                    s[i]="."+s[i];
+            }
+            suffix=s.join(",");
+        } else {
+            let flt=fileopts.filters || [];
+            if (flt.length>0) {
+                let extensions=[];
+                for (let i=0;i<flt.length;i++) {
+                    let s=flt[i].extensions;
+                    for (let j=0;j<s.length;j++)
+                        extensions.push("."+s[j]);
+                }
+                suffix=extensions.join(',');
+            }
+        }
+
+        console.log('suffix=',suffix);
+               
         
 
         if (fileopts.save) {
@@ -204,12 +231,14 @@ const webfileutils = {
                              });
             return;
         }
-        
+
         
         let loadelement = $('<input type="file" style="visibility: hidden;" accept="' + suffix + '" />');
         loadelement[0].addEventListener('change', function (f) {
             callback(f.target.files[0]);
+            loadelement.remove();
         });
+        $('body').append(loadelement);
         loadelement[0].click();
     },
 
