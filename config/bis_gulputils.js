@@ -213,11 +213,16 @@ var createDateFile=function(datefile,hash='',version='') {
 var getWebpackCommand=function(source,internal,out,indir,minify,outdir,watch) {
 
     let extracmd="";
+    let join="/";
     if (internal) {
-        if (os.platform()==='win32')
+        if (os.platform()==='win32') {
             extracmd=`SET BISWEB_INTERNAL=${internal}& `;
-        else
+            outdir=outdir.replace(/\//g,'\\');
+            source=source.replace(/\//g,'\\');
+            join="\\";
+        } else {
             extracmd=`export BISWEB_INTERNAL=${internal}; `;
+        }
     }
 
     if (watch || out==='bisweb-sw.js' )
@@ -232,16 +237,25 @@ var getWebpackCommand=function(source,internal,out,indir,minify,outdir,watch) {
     else
         extracmd+=`export BISWEB_OUT=${out}; `;
     
-    let cmd=extracmd+' webpack-cli --entry '+source+' --output-filename '+tmpout+' --output-path '+outdir+' --config config/webpack.config_devel.js';
+    
+    
+    let cmd=extracmd+' webpack-cli --entry '+source+' --output-filename '+tmpout+' --output-path '+outdir+' --config config'+join+'webpack.config_devel.js';
     
     if (watch!==0)
         cmd+=" --watch";
     
     if (minify) {
-        if (os.platform()==='win32')
-            cmd = cmd + `& uglifyjs ${outdir}${tmpout} -c --verbose -o ${outdir}${out}`;
-        else
-            cmd = cmd + `; uglifyjs ${outdir}${tmpout} -c  -o ${outdir}${out}; ls -lrth ${outdir}${tmpout} ${outdir}${out}`;
+        let ijob=outdir+tmpout;
+        let ojob=outdir+out;
+
+        if (os.platform()==='win32') {
+
+            //ijob=ijob.replace(/\//g,'\\');
+            //ojob=ojob.replace(/\//g,'\\');
+            cmd = cmd + ` & uglifyjs ${ijob} -c  -o ${ojob} & dir -p ${ijob} ${ojob}`;
+        } else {
+            cmd = cmd + ` ; uglifyjs ${ijob} -c  -o ${ojob} ; ls -lrth ${ijob} ${ojob}`;
+        }
     }
     
 
