@@ -1,9 +1,14 @@
+require('../config/bisweb_pathconfig.js');
+
 const $ = require('jquery');
 const fs = require('fs');
 const net = require('net');
-const crypto = require('crypto'), shasum = crypto.createHash('sha1');
+const crypto = require('crypto');
 const wsutil = require('./wsutil.js');
+const genericio = require('bis_genericio.js');
 
+//'magic' string for WebSockets
+//https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers
 const SHAstring = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 
 
@@ -72,26 +77,24 @@ let startServer = () => {
                 }
             }
 
-            console.log('headers', headers);
+            //console.log('headers', headers);
 
+            //create Sec-WebSocket-Accept hash (see documentation)
+            let shasum = crypto.createHash('sha1');
             websocketKey = websocketKey + SHAstring;
             shasum.update(websocketKey);
-
             let acceptKey = shasum.digest('base64');
-            console.log('acceptKey', acceptKey);
-
             response = response + acceptKey + '\r\n\r\n';
 
-            console.log('response', response);
-
             //unbind the handshake protocol and listen for data frames
-            socket.removeAllListeners();
+            socket.removeListener('data', handshake);
             prepareForDataFrames(socket);
 
             socket.write(response, 'utf-8');
         };
         
         socket.on('data', handshake);
+        socket.on('close', (e) => { console.log('connection terminated', e); });
 
     });
 
@@ -100,26 +103,68 @@ let startServer = () => {
     console.log('listening for incoming connections...');
 };
 
+/**
+ * Prepares the socket to receive chunks of data from the client. 
+ * This involves XORing the payload and decoding it to UTF-8, then performing file I/O based on the contents.
+ * @param {Socket} socket - Node.js net socket between the client and server for the transmission.
+ */
 prepareForDataFrames = (socket) => {
+    //add an error listener for the transmission
+    socket.on('error', (error) => {
+        console.log('an error occured', error);
+    });
+
     socket.on('data', (chunk) => {
         console.log('type of data', typeof(chunk));
         let controlFrame = chunk.slice(0, 14);
         let parsedControl = wsutil.parseControlFrame(controlFrame);
         console.log('parsedControl', parsedControl);
-        console.log('chunk', chunk);
 
         let decoded = new Uint8Array(parsedControl.payloadLength);
-        let text = "";
         console.log('decoded', decoded);
+
         //decode the raw data (undo the XOR)
         for (let i = 0; i < parsedControl.payloadLength; i++) {
             decoded[i] = chunk[i + parsedControl.datastart] ^ parsedControl.mask[i % 4];
-            text = text + String.fromCharCode(decoded[i]);
         }
 
-        console.log('text', text);
+        //text from the server means a file request
+        switch (parsedControl.opcode) {
+            case 1 : handleFileRequestFromClient(decoded, parsedControl, socket); break;
+            case 8 : handleCloseFromClient(decoded, parsedControl, socket);
+        }
 
     });
+}
+
+handleFileRequestFromClient = (rawText, control, socket) => {
+    let text = wsutil.decodeUTF8(rawText, control);
+    console.log('text', text);
+
+    let parsedText;
+    try {
+        parsedText = JSON.parse(text);
+    } catch(e) {
+        console.log('an error occured while parsing the data from the client', e);
+    }
+
+    let files = parsedText.files;
+    for (let file of files) {
+        fs.readFile(file, (err, data) => {
+            console.log('data', data);
+            socket.write('hello!', () => { console.log('wrote file', file, 'to socket'); });
+        });
+    }
+}
+
+handleCloseFromClient = (rawText, control, socket) => {
+    let text = wsutil.decodeUTF8(rawText, control);
+    console.log('received CLOSE frame from client');
+    console.log('reason:', text);
+
+    //TODO: send a close frame in response
+    socket.end();
+    console.log('closed connection');
 }
 
 module.exports = {

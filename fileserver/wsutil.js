@@ -35,6 +35,32 @@ let parseControlFrame = (frame) => {
     };
 }
 
+/**
+ * Takes an opcode and a payload length and makes a WebSocket control frame. 
+ * @param {Number} opcode - Opcode for the data transmission (see documentation for more details)
+ * @param {Number} payloadLength - Size of the payload, excluding the size of the control frame
+ */
+let formatControlFrame = (opcode, payload) => {
+    
+}
+/**
+ * Decodes series of raw UTF-8 characters, i.e. numbers, into something human readable.
+ * @param {Uint8Array} rawText - Series of raw UTF-8 characters
+ * @param {Object} control - Parsed control frame (see parseControlFrame)
+ * @return Decoded string
+ */
+let decodeUTF8 = (rawText, control) => {
+    let text = "";
+    //decode from raw UTF-8 values to characters
+    for (let i = 0; i < control.payloadLength; i++) {
+        text = text + String.fromCharCode(rawText[i]);
+    }
+
+    return text;
+};
+
 module.exports = {
-    parseControlFrame : parseControlFrame
+    parseControlFrame : parseControlFrame,
+    formatControlFrame : formatControlFrame,
+    decodeUTF8 : decodeUTF8
 }

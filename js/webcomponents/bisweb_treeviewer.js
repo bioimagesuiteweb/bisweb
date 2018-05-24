@@ -175,13 +175,21 @@ class TreeViewer extends HTMLElement {
 
         //need 'ws://' prefix if using localhost
         let socket = new WebSocket('ws://localhost:8081');
-        socket.onmessage = (event) => {
-            console.log('onmessage', event);
-        };
+
+        socket.addEventListener('message', (event) => {
+            console.log('received', Object.keys(event).length, 'of data');
+        });
 
         socket.addEventListener('open', (event) => {
             console.log('socket opened successfully');
-            socket.send('helloooo0');
+            let files = { 
+                files : [
+                    '/home/zach/javascript/bisweb/data/MNI_2mm_resliced.nii.gz'
+                ]
+            };
+
+            let filesdata = JSON.stringify(files);
+            socket.send(filesdata);
         });
         
 
