@@ -18,7 +18,9 @@
 "use strict";
 
 const base=require('./webpack.config.js');
-console.log('++++ Adding sourcemap generation');
+let output = (process.env.BISWEB_OUT) || "";
+console.log('++++ Adding uglify plugin ',output);
+
 base.devtool="source-map";
 
 module.exports = base;

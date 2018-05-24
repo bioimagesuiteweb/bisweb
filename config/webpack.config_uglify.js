@@ -24,6 +24,7 @@ base.performance = { 'hints' :  false };
 const ugl = require('uglifyjs-webpack-plugin');
 const ugly=new ugl();
 base.plugins.push(ugly);
-console.log('++++ Adding uglify plugin');
+let output = (process.env.BISWEB_OUT) || "";
+console.log('++++ Adding uglify plugin ',output);
 
 module.exports = base;

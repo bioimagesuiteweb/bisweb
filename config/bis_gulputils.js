@@ -225,8 +225,8 @@ var getWebpackCommand=function(source,internal,out,indir,minify,outdir,watch) {
     else
         extracmd+=`export BISWEB_OUT=${out}; `;
     
-    if (out !== 'index.js')
-        minify=0;
+//    if (out !== 'index.js')
+//        minify=0;
     
     let cmd=extracmd+' webpack-cli --entry '+source+' --output-filename '+out+' --output-path '+outdir+' ';
 
