@@ -469,17 +469,26 @@ class OrthoViewer {
         b1.addEventListener('click', ()=> this.setTalairach());
     }
 
-    createBatchCallback() {
+
+    computeBatchConversion(fname,mni2tal=true) {
 
         const self=this;
-
         
-        let show=async function(matrix,row)  {
+        let show=async function(matrix,row,delay=1000)  {
+            
             let x=parseInt(matrix[row][0]);
             let y=parseInt(matrix[row][1]);
             let z=parseInt(matrix[row][2]);
 
-            self.setMNICoordinates(x,y,z);
+            if (mni2tal) {
+                self.setMNICoordinates(x,y,z);
+            } else {
+                self.TalSliderLabels[0].value=x;
+                self.TalSliderLabels[1].value=x;
+                self.TalSliderLabels[2].value=x;
+                self.setTalairach();
+            }
+            
             return new Promise( (resolve,reject) => {
                 setTimeout( () => { 
                     let v= parseInt(self.BrodmanElement.value);
@@ -493,27 +502,45 @@ class OrthoViewer {
                     }
                     
                     let s= self.brodlist[found][1];
-                    let tal = [
-                        Math.round(self.TalSliderLabels[0].value),
-                        Math.round(self.TalSliderLabels[1].value),
-                        Math.round(self.TalSliderLabels[2].value)
-                    ];
+                    let out=null;
+                    if (mni2tal) {
+                        out = [
+                            Math.round(self.TalSliderLabels[0].value),
+                            Math.round(self.TalSliderLabels[1].value),
+                            Math.round(self.TalSliderLabels[2].value)
+                        ];
+                    } else {
+                        out = [
+                            Math.round(self.SliderLabels[0].value),
+                            Math.round(self.SliderLabels[1].value),
+                            Math.round(self.SliderLabels[2].value)
+                        ];
+                    }
                     
-                    let out=`${x},${y},${z},${s},${tal[0]},${tal[1]},${tal[2]}\n`;
-                    resolve(out);
-                },1000);
+                    let outstr=`${x},${y},${z},${s},${out[0]},${out[1]},${out[2]}\n`;
+                    resolve(outstr);
+                },delay);
             });
         };
 
         let save=async function(matrix,sz) {
+
+            if (sz[0]<1)
+                return;
             
-            let output="MNIX,MNIY,MNIZ,BA,TALX,TALY,TALZ\n";
+            let delay=Math.round(5000/sz[0]);
+            if (delay>1000)
+                delay=1000;
+            
+            let output="#MNIX,MNIY,MNIZ,BA,TALX,TALY,TALZ\n";
+            if (!mni2tal)
+                output="#TALX,TALY,TALZ,BA,MNIX,MNIY,MNIZ\n";
             
             for (let i=0;i<sz[0];i++) {
-                let out=await show(matrix,i);
+                let out=await show(matrix,i,delay);
                 output+=out;
             }
-            console.log(output);
+
             if (webutil.inElectronApp()) {
                 webfileutil.electronFileCallback(
                     {
@@ -531,38 +558,57 @@ class OrthoViewer {
             }
         };
 
-        
-        let batch =function(f) {
-            let newmat=new BisWebMatrix();
-            newmat.load(f).then( () => {
-                let f2=genericio.getFixedLoadFileName(f);
-                let sz=newmat.getDimensions();
-                if (sz[1]!==3) {
-                    webutil.createAlert('Bad CSV file'+f2+' number of columns is not 3',true);
-                    return;
-                }
+        let newmat=new BisWebMatrix();
+        newmat.load(fname).then( () => {
+            let f2=genericio.getFixedLoadFileName(fname);
+            let sz=newmat.getDimensions();
+            
+            if (sz[1]!==3 || sz[0]<1) {
+                webutil.createAlert('Bad Matrix Coordinates file'+f2+' number of columns is not 3 or no rows. Actual dims=('+sz.join(',')+')',true);
+                return;
+            }
 
-                webutil.createAlert('Loaded '+sz[0]+' points. Converting ...');
+            if (mni2tal) 
+                webutil.createAlert('Loaded '+sz[0]+' points. Converting MNI &rarr; TAL ...');
+            else
+                webutil.createAlert('Loaded '+sz[0]+' points. Converting TAL &rarr; MNI...');
+            let m=newmat.getNumericMatrix();
+            let overlaybox=self.ShadowDOM.querySelector("#showoverlaybutton");
+            overlaybox.checked=true;
+            self.setOverlayOpacity(true);
+            save(m,sz);
+        });
+    }
+    
+    createBatchCallback() {
 
-                let overlaybox=self.ShadowDOM.querySelector("#showoverlaybutton");
-                overlaybox.checked=true;
-                self.setOverlayOpacity(true);
+        const self=this;
 
-                
-                let m=newmat.getNumericMatrix();
-                save(m,sz);
-            });
-        };
+        let batch2mni=function(f) {
+            self.computeBatchConversion(f,true);
+        }
 
+        let batch2tal=function(f) {
+            self.computeBatchConversion(f,false);
+        }
 
         let b1=this.ShadowDOM.querySelector("#batch");
-        
-        webfileutil.attachFileCallback($(b1),batch,{
+        webfileutil.attachFileCallback($(b1),batch2mni,{
             filename : '',
             title    : 'Select file to load MNI coordinates from',
-            filters  : [ { name: 'CSV File', extensions: ['csv' ]}],
+            filters  : [ { name: 'CSV/Text File', extensions: ['csv','txt' ]}],
             save : false,
-            suffix : ".csv",
+            suffix : ".csv,.txt",
+            force : 'local',
+        });
+        let b2=this.ShadowDOM.querySelector("#batch2");
+        
+        webfileutil.attachFileCallback($(b2),batch2tal,{
+            filename : '',
+            title    : 'Select file to load Talairach coordinates from',
+            filters  : [ { name: 'CSV/Text File', extensions: ['csv','txt' ]}],
+            save : false,
+            suffix : ".csv,.txt",
             force : 'local',
         });
     }
