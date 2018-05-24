@@ -83,34 +83,6 @@ const webfileutils = {
     },
 
     
-    /** function to create a hidden input type="file" button and add it to body
-     * @alias WebFileUtil.createHiddenInputFile
-     * @param {function} callback - callback to call
-     * @param {string} accept - List of file types to accept as a comma-separated string e.g. ".ljson,.land"
-     * @param {Boolean} attach - if true attach to body, else leave transient
-     * @returns {JQueryElement} 
-     */
-    createHiddenInputFile: function (accept, callback,attach=true) {
-
-        /*if { simpemode === false } {
-          return dosomethingelse(accept,callback);*/
-        
-        accept = accept || "";
-        if (accept === "NII")
-            accept = '.nii,.nii.gz,.gz,.tiff';
-
-        var loadelement = $('<input type="file" style="visibility: hidden;" accept="' + accept + '"/>');
-        if (attach)
-            $('body').append(loadelement);
-        
-        loadelement[0].addEventListener('change', function (e) {
-            e.stopPropagation();
-            e.preventDefault();
-            callback(e.target.files[0]);
-        });
-        return loadelement;
-    },
-    
     /** electron file callback function
      * @alias WebFileUtil.electronFileCallback
      * @param {object} opts - the file options object 
@@ -236,8 +208,6 @@ const webfileutils = {
         
         let loadelement = $('<input type="file" style="visibility: hidden;" accept="' + suffix + '" />');
         loadelement[0].addEventListener('change', function (f) {
-            f.stopPropagation();
-            f.preventDefault();
             callback(f.target.files[0]);
         });
         loadelement[0].click();
