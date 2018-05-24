@@ -115,7 +115,7 @@ const webfileutils = {
             if (fileopts.initialCallback)
                 fileopts.defaultpath=fileopts.initialCallback() || '';
         }
-            
+        
         
         fileopts.filters = fileopts.filters ||
             [{ name: 'All Files', extensions: ['*'] }];
@@ -193,9 +193,6 @@ const webfileutils = {
             }
         }
 
-        console.log('suffix=',suffix);
-               
-        
 
         if (fileopts.save) {
             callback({});
