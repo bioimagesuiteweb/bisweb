@@ -1151,7 +1151,10 @@ class OrthogonalViewerElement extends BaseViewerElement {
         // The middle -- set the parameters
         try {
             let ind=this.internal.displaymodes.indexOf(sanedata['displaymode']);
-            this.setrendermode(ind);
+            if (ind>=0) {
+                this.internal.datgui.data.displaymode=this.internal.displaymodes[ind];
+                this.setrendermode(ind);
+            }
             
             
             this.internal.showdecorations=sanedata['decorations'];
