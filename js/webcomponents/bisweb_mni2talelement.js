@@ -116,7 +116,7 @@ const template_css=`
 }
 
 #navframe {
-  top: 44.5vh;
+  top: 43.5vh;
   left: 40.0vh;
   width: 45.1vh;
   height:16.5vh;
@@ -124,26 +124,26 @@ const template_css=`
 }
 
 #mniframe {
-   top: 46vh;
+   top: 45vh;
  }
 
 #talframe {
-  top: 51vh;
+  top: 49vh;
 }
   
 #baframe {
-  top: 56vh;
+  top: 53vh;
     
   
 }
 
 #batchframe {
-top : 61vh;
+top : 57vh;
 }
 
 #aboutframe {
   font-size: 90%;
-  top: 66.0vh;
+  top: 64.0vh;
   height: 27vh;
 }
 
@@ -166,8 +166,8 @@ top : 61vh;
 
 .numberid {
   padding-top: 0vh;
-  padding-left: 0vh;
-  padding-right: 0.2vh;
+  padding-left: 0.0vh;
+  padding-right: 0.4vh;
   vertical-align: text-bottom;
   position: relative;
   font-size: 100%;
@@ -195,9 +195,16 @@ top : 61vh;
     color : #ffffff;
 }
 
-#batch { 
-   width : 200px;
+#batch,#batch2 { 
+   width : 20vh;
 }
+
+#batch {
+   float:left;
+   margin-right: 20px;
+   margin-left: 0vh;
+}
+
 </style>`;
 
 const template_text=`
@@ -248,7 +255,9 @@ const template_text=`
         </div>
 
         <div id="batchframe">
-             <button type="button" class="buttonid" id="batch">Batch Convert </button>
+             <button type="button" class="buttonid" id="batch2">TAL&rarr;MNI Batch Convert</button>
+             <button type="button" class="buttonid" id="batch">MNI&rarr;TAL Batch Convert</button>
+
         </div>
 
         
