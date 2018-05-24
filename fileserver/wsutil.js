@@ -41,8 +41,34 @@ let parseControlFrame = (frame) => {
  * @param {Number} payloadLength - Size of the payload, excluding the size of the control frame
  */
 let formatControlFrame = (opcode, payload) => {
-    
+    let controlFrame;
+    if (payload < 126) {
+        controlFrame = new Uint8Array(2);
+        controlFrame[1] = payload;
+    } else if (payload < 65536) {
+        controlFrame = new Uint8Array(4);
+        controlFrame[1] = 126;
+        controlFrame[2] = payload / 256;
+        controlFrame[3] = payload % 256;
+    } else {
+        controlFrame = new Uint8Array(10);
+        let remainingPayload = payload;
+        controlFrame[1] = 127;
+        controlFrame[2] = floor(payload / pow(256, 7)); remainingPayload = payload - controlFrame[2] * pow(256, 7);
+        controlFrame[3] = floor(remainingPayload / pow(256, 6)); remainingPayload = payload - controlFrame[3] * pow(256, 6);
+        controlFrame[4] = floor(remainingPayload / pow(256, 5)); remainingPayload = payload - controlFrame[4] * pow(256, 5);
+        controlFrame[5] = floor(remainingPayload / pow(256, 4)); remainingPayload = payload - controlFrame[5] * pow(256, 4);
+        controlFrame[6] = floor(remainingPayload / pow(256, 3)); remainingPayload = payload - controlFrame[6] * pow(256, 3);
+        controlFrame[7] = floor(remainingPayload / pow(256, 2)); remainingPayload = payload - controlFrame[7] * pow(256, 2);
+        controlFrame[8] = floor(remainingPayload / pow(256, 1)); remainingPayload = payload - controlFrame[8] * pow(256, 1);
+        controlFrame[9] = remainingPayload;
+    }
+
+    //TODO: implement logic for setting fin bit
+    controlFrame[0] = opcode;
+    controlFrame[0] = controlFrame[0] & 0b1000000;
 }
+
 /**
  * Decodes series of raw UTF-8 characters, i.e. numbers, into something human readable.
  * @param {Uint8Array} rawText - Series of raw UTF-8 characters
