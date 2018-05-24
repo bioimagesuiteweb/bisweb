@@ -340,22 +340,39 @@ class BisWebMatrix extends BisWebDataObject{
     }
 
     /** parseFromTexts the matrix from a string consistent 
-     * with the legacy BioImage Suite .matr or .csv formats or .json
+     * with the legacy BioImage Suite .matr or .csv or .txt  formats or .json
      * @param {string} inpstring - input string
      * @param {string} filename -  filename of original file
      * @return {boolean} val - true or false
      */
     parseFromText(text,filename) {
         
-        let ext = filename.name ? filename.name.split('.').pop() : filename.split('.').pop();
+        let fixed = genericio.getFixedLoadFileName(filename);
+        let ext=  fixed.split('.').pop();
         
-        if (ext === 'csv' || ext==='matr') {
+        if (ext === 'csv' || ext==='matr' || ext==="txt") {
 
+            if (ext==="txt") {
+                // Make this into CSV file
+                console.log(text);
+                let s=text.split('\n');
+                text="";
+                for (let i=0;i<s.length;i++) {
+                    if (s[i].indexOf("#")!==0) {
+                        let v=s[i].trim().replace(/ /g,',').replace(/\t/g,',').replace(/,+/g,',');
+                        if (v.length>0)
+                            text=text+v+'\n';
+                    }
+                }
+                ext='csv';
+            }
+            
             let output=null;
             if (ext==='csv')
                 output = numeric.parseCSV(text);
             else
                 output=BisWebMatrix.parseMatrFile(text);
+
             this.setFromNumericMatrix(output);
             return 1;
         }
