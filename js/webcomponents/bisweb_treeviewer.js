@@ -24,6 +24,7 @@ const d3 = require('d3'); // jshint ignore:line
 const io = require('bis_genericio.js');
 const BiswebImage = require('bisweb_image.js');
 const jstree = require('jstree');
+const wsutil = require('../../fileserver/wsutil.js');
 
 /**
  * Tree viewer is an HTML Element designed to display inputs in a hierarchical fashion based on their relationship to each other.
@@ -178,6 +179,15 @@ class TreeViewer extends HTMLElement {
 
         socket.addEventListener('message', (event) => {
             console.log('received', Object.keys(event).length, 'of data');
+            console.log('data', event);
+
+            let reader = new FileReader();
+            reader.addEventListener('loadend', () => {
+                let rawData = new Uint8Array(reader.result);
+                let data = wsutil.decodeUTF8(rawData, rawData.length);
+                console.log('data', data, rawData.length);
+            });
+            reader.readAsArrayBuffer(event.data);
         });
 
         socket.addEventListener('open', (event) => {

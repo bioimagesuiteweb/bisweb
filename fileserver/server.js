@@ -148,11 +148,23 @@ handleFileRequestFromClient = (rawText, control, socket) => {
         console.log('an error occured while parsing the data from the client', e);
     }
 
+    //TODO: Make this less grossly memory inefficient
     let files = parsedText.files;
     for (let file of files) {
         fs.readFile(file, (err, data) => {
             console.log('data', data);
-            socket.write('hello!', () => { console.log('wrote file', file, 'to socket'); });
+            let controlFrame = wsutil.formatControlFrame(2, 6);
+            let encodedPayload = new TextEncoder('utf-8').encode('hello!');
+            let packet = new Uint8Array(controlFrame.length + encodedPayload.length);
+            packet.set(controlFrame), packet.set(encodedPayload, controlFrame.length);
+
+            //share memory to avoid wasteful allocation of memory
+            //https://nodejs.org/api/buffer.html#buffer_buffers_and_typedarray
+            let bufferedPacket = Buffer.from(packet.buffer);
+
+            console.log('control frame', controlFrame);
+
+            socket.write(bufferedPacket, () => { console.log('wrote file', file, 'to socket'); });
         });
     }
 }

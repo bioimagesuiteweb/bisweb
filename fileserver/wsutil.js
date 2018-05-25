@@ -40,19 +40,19 @@ let parseControlFrame = (frame) => {
  * @param {Number} opcode - Opcode for the data transmission (see documentation for more details)
  * @param {Number} payloadLength - Size of the payload, excluding the size of the control frame
  */
-let formatControlFrame = (opcode, payload) => {
+let formatControlFrame = (opcode, payloadLength) => {
     let controlFrame;
-    if (payload < 126) {
+    if (payloadLength < 126) {
         controlFrame = new Uint8Array(2);
-        controlFrame[1] = payload;
-    } else if (payload < 65536) {
+        controlFrame[1] = payloadLength;
+    } else if (payloadLength < 65536) {
         controlFrame = new Uint8Array(4);
         controlFrame[1] = 126;
-        controlFrame[2] = payload / 256;
-        controlFrame[3] = payload % 256;
+        controlFrame[2] = payloadLength / 256;
+        controlFrame[3] = payloadLength % 256;
     } else {
         controlFrame = new Uint8Array(10);
-        let remainingPayload = payload;
+        let remainingPayload = payloadLength;
         controlFrame[1] = 127;
         controlFrame[2] = floor(payload / pow(256, 7)); remainingPayload = payload - controlFrame[2] * pow(256, 7);
         controlFrame[3] = floor(remainingPayload / pow(256, 6)); remainingPayload = payload - controlFrame[3] * pow(256, 6);
@@ -66,19 +66,22 @@ let formatControlFrame = (opcode, payload) => {
 
     //TODO: implement logic for setting fin bit
     controlFrame[0] = opcode;
-    controlFrame[0] = controlFrame[0] & 0b1000000;
+    controlFrame[0] = controlFrame[0] | 0b10000000;
+
+    return controlFrame;
 }
 
 /**
  * Decodes series of raw UTF-8 characters, i.e. numbers, into something human readable.
  * @param {Uint8Array} rawText - Series of raw UTF-8 characters
- * @param {Object} control - Parsed control frame (see parseControlFrame)
+ * @param {Object|Number} control - Parsed control frame (see parseControlFrame), or length of payload.
  * @return Decoded string
  */
 let decodeUTF8 = (rawText, control) => {
+    let payloadLength = typeof(control) === 'Object' ? control.payloadLength : control;
     let text = "";
     //decode from raw UTF-8 values to characters
-    for (let i = 0; i < control.payloadLength; i++) {
+    for (let i = 0; i < payloadLength; i++) {
         text = text + String.fromCharCode(rawText[i]);
     }
 
