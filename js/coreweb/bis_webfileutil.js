@@ -40,6 +40,7 @@ const userPreferencesLoaded = userPreferences.webLoadUserPreferences(bisdbase);
 
 // Initial mode
 let fileMode='local';
+let fileInputElements= [];
 
 const webfileutils = {
 
@@ -229,11 +230,15 @@ const webfileutils = {
             return;
         }
 
+
+        let nid=webutil.getuniqueid();
+        let loadelement = $(`<input type="file" style="visibility: hidden;" id="${nid}" accept="${suffix}"/>`);
+        for (let i=0;i<fileInputElements.length;i++)
+            fileInputElements[i].remove();
+        fileInputElements.push(loadelement);
         
-        let loadelement = $('<input type="file" style="visibility: hidden;" accept="' + suffix + '" />');
         loadelement[0].addEventListener('change', function (f) {
             callback(f.target.files[0]);
-            loadelement.remove();
         });
         $('body').append(loadelement);
         loadelement[0].click();
