@@ -489,7 +489,7 @@ class OrthoViewer {
                 self.setTalairach();
             }
             
-            return new Promise( (resolve,reject) => {
+            return new Promise( (resolve) => {
                 setTimeout( () => { 
                     let v= parseInt(self.BrodmanElement.value);
                     let found=0;
@@ -586,11 +586,11 @@ class OrthoViewer {
 
         let batch2mni=function(f) {
             self.computeBatchConversion(f,true);
-        }
+        };
 
         let batch2tal=function(f) {
             self.computeBatchConversion(f,false);
-        }
+        };
 
         let b1=this.ShadowDOM.querySelector("#batch");
         webfileutil.attachFileCallback($(b1),batch2mni,{
@@ -972,18 +972,19 @@ class OrthoViewer {
         
         let imgdata=this.InternalContext.getImageData(0, 0, 2, 1);    
         let brod = imgdata.data[4];
-        let s="(Outside defined Brodmann Areas)";
+        //        let s="(Outside defined Brodmann Area)";
         let origbrod=brod;
         if (brod>0) {
             if (brod<100) {
-                s="BA=Left ";
+                //                s="BA=Left ";
             } else if (brod>100) {
                 brod=brod-100;
-                s="BA=Right ";
+                //                s="BA=Right ";
             }
-            s+=bisweb_mni2tal.BRODMANNLABELS[brod];
+            //            s+=bisweb_mni2tal.BRODMANNLABELS[brod];
         } else {
             origbrod=-1;
+
         }
         
         if (origbrod==-1)
