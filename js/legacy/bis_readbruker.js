@@ -217,10 +217,10 @@ let parseTextFiles = function(filename,outprefix,debug,forceorient) {
     
     data.havereco=false;
     
-    let reco=null;
+    //    let reco=null;
     if (printFileStats(reconame)===1) {
         data.havereco=true;
-        reco=readParameterFile(reconame);
+        //reco=readParameterFile(reconame);
     }
 
     
