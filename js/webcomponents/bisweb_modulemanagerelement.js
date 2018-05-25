@@ -196,14 +196,14 @@ class ModuleManagerElement extends HTMLElement {
         }
 
         biswrap.initialize().then( () => {
-            this.initializeElementsInternal(menubar,viewers,moduleoptions);
+            this.initializeElementsInternal(menubar,moduleoptions);
         });
         
         return null;
     }
 
     
-    initializeElementsInternal(menubar, viewers = [],moduleoptions) {
+    initializeElementsInternal(menubar,moduleoptions) {
 
         let usesgpl=biswrap.uses_gpl();
         if (usesgpl)
