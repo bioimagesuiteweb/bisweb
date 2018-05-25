@@ -168,10 +168,6 @@ const webutil = {
         internal.alerttop=v;
     },
     
-    /** if this flag is true, then loadelement is simply input type="file", else more complex
-     * @alias WebUtil.simpleloadmode
-     */
-    simpleloadmode: true,
 
     /** getfont size
      * alias WebUtil.getfontsize
@@ -1078,7 +1074,7 @@ style="position:absolute; top:${internal.alerttop}px; left:10px; z-index:${100+i
      */
     getQueryParameter: function (name, url) {
         if (!url) url = window.location.href;
-        name = name.replace(/[\[\]]/g, "\\$&");
+        name = name.replace(/[[\]]/g, "\\$&");
         var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
             results = regex.exec(url);
         if (!results) return null;
