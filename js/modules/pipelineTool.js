@@ -91,7 +91,7 @@ let makePipeline = function (filename) {
                     }
 
                     if (parsedFile.variables[j].name === variableName) {
-                        let variable = parsedFile.variables[j];
+                        //let variable = parsedFile.variables[j];
                         
                         //a variable with its files specified should be added to the dictionary of expanded variables
                         //the fact that its files are present already also indicates that it is an input 
@@ -118,7 +118,7 @@ let makePipeline = function (filename) {
                 //if names have already been generated then the output is produced by a node upstream, so don't overwrite the names
                 if (expandedVariables[variable.name].length === 0) {
                     let dependencies = parsedFile.variables[variable.index].depends;
-                    let fileExtension = parsedFile.variables[variable.index].extension;
+                    //let fileExtension = parsedFile.variables[variable.index].extension;
                     for (let dependency of dependencies) {
                         dependency = stripVariable(dependency);
 
@@ -255,14 +255,14 @@ let getNextASCIIChar = function (a) {
     return String.fromCharCode(ASCIICode + 1);
 };
 
-let getFileExtension = function (type) {
+/*let getFileExtension = function (type) {
     switch (type) {
         case 'image': return '.nii.gz';
         case 'matrix': return '.matr';
         case 'transform':
         case 'transformation': return '.grd';
     }
-};
+};*/
 
 
 module.exports = {
