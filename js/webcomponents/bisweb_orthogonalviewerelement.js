@@ -706,15 +706,15 @@ class OrthogonalViewerElement extends BaseViewerElement {
      * @param {boolean} plainmode - if true this is an objectmap so only create opacity controls as opposed to full functional colormapping
      * @param {colormapmode} colormap type - "Overlay","Overlay2","Red","Green","Blue" 
      */
-    setobjectmap(ovolume,plainmode,colormapmode,doupdate=true) {
+    setobjectmap(ovolume,plainmode,colormapmode) {
         if (this.setObjectMapFunction===null)
-            this.setobjectmap_internal(ovolume,plainmode,colormapmode,doupdate);
+            this.setobjectmap_internal(ovolume,plainmode,colormapmode);
         else
-            this.setObjectMapFunction(ovolume,plainmode,colormapmode,doupdate);
+            this.setObjectMapFunction(ovolume,plainmode,colormapmode);
     }
 
     /** Same as above but allows rerouting */
-    setobjectmap_internal(ovolume,plainmode,colormapmode,doupdate=true) {
+    setobjectmap_internal(ovolume,plainmode,colormapmode) {
 
         colormapmode=colormapmode || "Auto";
 
