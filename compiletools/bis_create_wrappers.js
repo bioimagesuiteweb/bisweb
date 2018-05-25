@@ -81,7 +81,7 @@ var scan_header_file = function(onames) {
                 let end=line.indexOf("}");
                 let str=line.substr(begin+1,end-begin-2).trim();
                 outorig.push(str);
-                let out=str.trim().replace(/ /g,'').replace(/\[/g,'').replace(/]/g,'').replace(/\'/g,'');
+                let out=str.trim().replace(/ /g,'').replace(/\[/g,'').replace(/]/g,'').replace(/'/g,'');
                 outdefs.push(out);
 
                 let ip=i;
