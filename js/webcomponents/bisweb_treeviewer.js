@@ -178,16 +178,15 @@ class TreeViewer extends HTMLElement {
         let socket = new WebSocket('ws://localhost:8081');
 
         socket.addEventListener('message', (event) => {
-            console.log('received', Object.keys(event).length, 'of data');
-            console.log('data', event);
+            console.log('received data', event);
 
-            let reader = new FileReader();
+            /*let reader = new FileReader();
             reader.addEventListener('loadend', () => {
                 let rawData = new Uint8Array(reader.result);
                 let data = wsutil.decodeUTF8(rawData, rawData.length);
-                console.log('data', data, rawData.length);
             });
             reader.readAsArrayBuffer(event.data);
+            */
         });
 
         socket.addEventListener('open', (event) => {
@@ -202,6 +201,9 @@ class TreeViewer extends HTMLElement {
             socket.send(filesdata);
         });
         
+        socket.addEventListener('error', (event) => {
+            console.log('an error occured', event);
+        });
 
     }
 

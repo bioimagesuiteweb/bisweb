@@ -4,6 +4,7 @@ const $ = require('jquery');
 const fs = require('fs');
 const net = require('net');
 const crypto = require('crypto');
+const zlib = require('zlib');
 const wsutil = require('./wsutil.js');
 const genericio = require('bis_genericio.js');
 
@@ -98,7 +99,7 @@ let startServer = () => {
 
     });
 
-    server.listen(8081);
+    server.listen(8081, 'localhost');
 
     console.log('listening for incoming connections...');
 };
@@ -115,10 +116,9 @@ prepareForDataFrames = (socket) => {
     });
 
     socket.on('data', (chunk) => {
-        console.log('type of data', typeof(chunk));
         let controlFrame = chunk.slice(0, 14);
         let parsedControl = wsutil.parseControlFrame(controlFrame);
-        console.log('parsedControl', parsedControl);
+        console.log('parsed control frame', parsedControl, 'raw control frame', controlFrame);
 
         let decoded = new Uint8Array(parsedControl.payloadLength);
         console.log('decoded', decoded);
@@ -149,22 +149,19 @@ handleFileRequestFromClient = (rawText, control, socket) => {
     }
 
     //TODO: Make this less grossly memory inefficient
+    //https://nodejs.org/api/buffer.html#buffer_buffers_and_typedarray
     let files = parsedText.files;
     for (let file of files) {
         fs.readFile(file, (err, data) => {
-            console.log('data', data);
-            let controlFrame = wsutil.formatControlFrame(2, 6);
-            let encodedPayload = new TextEncoder('utf-8').encode('hello!');
-            let packet = new Uint8Array(controlFrame.length + encodedPayload.length);
-            packet.set(controlFrame), packet.set(encodedPayload, controlFrame.length);
+            zlib.gzip(data, (err, result) => {
+                let controlFrame = wsutil.formatControlFrame(2, result.length);
+                let packetHeader = Buffer.from(controlFrame.buffer);
+                let packet = Buffer.concat([packetHeader, result]);
 
-            //share memory to avoid wasteful allocation of memory
-            //https://nodejs.org/api/buffer.html#buffer_buffers_and_typedarray
-            let bufferedPacket = Buffer.from(packet.buffer);
-
-            console.log('control frame', controlFrame);
-
-            socket.write(bufferedPacket, () => { console.log('wrote file', file, 'to socket'); });
+                console.log('sending control frame', wsutil.parseControlFrame(packetHeader), 'raw frame', packetHeader);
+                console.log('packet', packet);
+                socket.write(packet, () => { console.log('write done.'); });
+            });
         });
     }
 }
