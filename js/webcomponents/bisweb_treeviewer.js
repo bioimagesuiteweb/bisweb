@@ -192,7 +192,7 @@ class TreeViewer extends HTMLElement {
             console.log('socket opened successfully');
             let files = { 
                 files : [
-                    'totallyinnocentfile.js/bin'
+                    'javascript/bisweb/data/notmine.txt'
                 ]
             };
 

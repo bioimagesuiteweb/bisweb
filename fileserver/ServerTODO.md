@@ -2,8 +2,8 @@
 * ~~Be able to filter requests by hostname~~ (resolved by server.listen?)
     * test this with a packet spoofer
 
-* Maintain a list of allowed directories (no access above ~/)
-    * No symlinks allowed
+* ~~Maintain a list of allowed directories (no access above ~/)~~ (workaround -- can only access files that belong to you)
+    * ~~No symlinks allowed~~
 
 (also important functionality)
 

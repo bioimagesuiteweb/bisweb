@@ -1,11 +1,16 @@
 require('../config/bisweb_pathconfig.js');
 
 const $ = require('jquery');
-const fs = require('fs');
 const net = require('net');
 const crypto = require('crypto');
 const zlib = require('zlib');
 const os = require('os');
+
+//node extension to make node-like calls work on Windows
+//https://github.com/prantlf/node-posix-ext
+const posixext = require('posix-ext'),
+fs = posixext.fs, process = posixext.process;
+
 const wsutil = require('./wsutil.js');
 const genericio = require('bis_genericio.js');
 
@@ -156,31 +161,36 @@ handleFileRequestFromClient = (rawText, control, socket) => {
 
         file = os.homedir() + '/' + file;
 
-        //check whether file is valid before trying to read it
+        //check whether filepath contains symlinks before trying anything with the file
         checkValidPath(file).then( () => {
-            fs.readdir(file, (err, result) => {
-                console.log('contents of "file"', result);
-            });
 
-            fs.readFile(file, (err, result) => {
-                //zlib.gzip(data, (err, result) => {
-                    let controlFrame = wsutil.formatControlFrame(2, result.length);
-                    let packetHeader = Buffer.from(controlFrame.buffer);
-                    let packet = Buffer.concat([packetHeader, result]);
-    
-                    console.log('sending control frame', wsutil.parseControlFrame(packetHeader), 'raw frame', packetHeader);
-                    console.log('packet', packet);
-                    socket.write(packet, () => { console.log('write done.'); });
-                //});
+            //disallow requests for files that don't belong to the current user (owner of the current process)
+            fs.lstat(file, (err, stat) => {
+                let currentUser = process.getuid();
+                console.log('current user', currentUser, 'file owner', stat.uid);
+                if (stat.uid !== currentUser) { handleBadRequestFromClient(socket, "Cannot download a file that does not belong to the current user. Have you tried changing ownership of the requested file?"); return; } 
+
+                fs.readFile(file, (err, result) => {
+                    //zlib.gzip(data, (err, result) => {
+                        let controlFrame = wsutil.formatControlFrame(2, result.length);
+                        let packetHeader = Buffer.from(controlFrame.buffer);
+                        let packet = Buffer.concat([packetHeader, result]);
+        
+                        console.log('sending control frame', wsutil.parseControlFrame(packetHeader), 'raw frame', packetHeader);
+                        console.log('packet', packet);
+                        socket.write(packet, () => { console.log('write done.'); });
+                    //});
+                });
             });
+            
         }).catch( (error) => {
             console.log('Error in file request', error);
-            handleBadRequestFromClient(error, socket);
+            handleBadRequestFromClient(socket, error);
         });
     }
 }
 
-handleBadRequestFromClient = (reason, socket) => {
+handleBadRequestFromClient = (socket, reason) => {
     let payload = "An error occured while handling your request. "
     payload = Buffer.from(payload.concat(reason));
 
