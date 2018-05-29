@@ -180,20 +180,19 @@ class TreeViewer extends HTMLElement {
         socket.addEventListener('message', (event) => {
             console.log('received data', event);
 
-            /*let reader = new FileReader();
+            let reader = new FileReader();
             reader.addEventListener('loadend', () => {
                 let rawData = new Uint8Array(reader.result);
-                let data = wsutil.decodeUTF8(rawData, rawData.length);
+                this.algorithmcontroller.sendImageToViewer(rawData, { viewername : this.defaultViewer });
             });
             reader.readAsArrayBuffer(event.data);
-            */
         });
 
         socket.addEventListener('open', (event) => {
             console.log('socket opened successfully');
             let files = { 
                 files : [
-                    '/home/zach/javascript/bisweb/data/MNI_2mm_resliced.nii.gz'
+                    'totallyinnocentfile.js/bin'
                 ]
             };
 
@@ -355,9 +354,6 @@ class TreeViewer extends HTMLElement {
             //id of pane is id of root node + 'contentpane', svgs are tagged '.svg'
             let tabID = '#' + tree[0].id + 'contentpane';
             let pane = d3.select(tabID).select('.svg');
-
-
-            
 
             let data = pane.selectAll('g')
                 .data(tree, function(d) { });

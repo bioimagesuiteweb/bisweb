@@ -5,6 +5,7 @@ const fs = require('fs');
 const net = require('net');
 const crypto = require('crypto');
 const zlib = require('zlib');
+const os = require('os');
 const wsutil = require('./wsutil.js');
 const genericio = require('bis_genericio.js');
 
@@ -152,19 +153,42 @@ handleFileRequestFromClient = (rawText, control, socket) => {
     //https://nodejs.org/api/buffer.html#buffer_buffers_and_typedarray
     let files = parsedText.files;
     for (let file of files) {
-        fs.readFile(file, (err, data) => {
-            zlib.gzip(data, (err, result) => {
-                let controlFrame = wsutil.formatControlFrame(2, result.length);
-                let packetHeader = Buffer.from(controlFrame.buffer);
-                let packet = Buffer.concat([packetHeader, result]);
 
-                console.log('sending control frame', wsutil.parseControlFrame(packetHeader), 'raw frame', packetHeader);
-                console.log('packet', packet);
-                socket.write(packet, () => { console.log('write done.'); });
+        file = os.homedir() + '/' + file;
+
+        //check whether file is valid before trying to read it
+        checkValidPath(file).then( () => {
+            fs.readdir(file, (err, result) => {
+                console.log('contents of "file"', result);
             });
+
+            fs.readFile(file, (err, result) => {
+                //zlib.gzip(data, (err, result) => {
+                    let controlFrame = wsutil.formatControlFrame(2, result.length);
+                    let packetHeader = Buffer.from(controlFrame.buffer);
+                    let packet = Buffer.concat([packetHeader, result]);
+    
+                    console.log('sending control frame', wsutil.parseControlFrame(packetHeader), 'raw frame', packetHeader);
+                    console.log('packet', packet);
+                    socket.write(packet, () => { console.log('write done.'); });
+                //});
+            });
+        }).catch( (error) => {
+            console.log('Error in file request', error);
+            handleBadRequestFromClient(error, socket);
         });
     }
 }
+
+handleBadRequestFromClient = (reason, socket) => {
+    let payload = "An error occured while handling your request. "
+    payload = Buffer.from(payload.concat(reason));
+
+    let controlFrame = wsutil.formatControlFrame(1, payload.length);
+    let packetHeader = Buffer.from(controlFrame.buffer);
+    let packet = Buffer.concat([packetHeader, payload]);
+    socket.write(packet, () => { console.log('request returned an error', reason, '\nsent error to client'); });
+};
 
 handleCloseFromClient = (rawText, control, socket) => {
     let text = wsutil.decodeUTF8(rawText, control);
@@ -175,6 +199,28 @@ handleCloseFromClient = (rawText, control, socket) => {
     socket.end();
     console.log('closed connection');
 }
+
+checkValidPath = (filepath) => {
+    return new Promise( (resolve, reject) => {
+        let pathCheck = (path) => {
+            if (path === '') { resolve(); return; }
+            
+            //console.log('checking path', path);
+            fs.lstat(path, (err, stats) => {
+                if (err) { console.log('err', err); reject('An error occured while statting filepath. Is there something on the path that would cause issues?'); return; }
+                if (stats.isSymbolicLink()) { reject('Symbolic link in path of file request.'); return; }
+
+                //look one directory up
+                let newPath = path.split('/');
+                newPath.splice(newPath.length - 1, 1);
+                pathCheck(newPath.join('/'));
+            });
+        }
+        
+        pathCheck(filepath);
+    });
+
+};
 
 module.exports = {
     loadMenuBarItems : loadMenuBarItems,
