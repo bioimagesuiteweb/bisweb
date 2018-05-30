@@ -338,6 +338,14 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
                 var t1 = performance.now();
                 main.append(`.... test execution time=${(0.001*(t1 - t0)).toFixed(2)}s`);
 
+                try {
+                    let a='<P>.... WASM memory size=' +biswrap.get_module()['wasmMemory'].buffer.byteLength/(1024*1024)+' MB.</P>';
+                    main.append(a);
+                } catch(e) {
+                    console.log(e);
+                    // sometimes we have pure js modules, no wasm
+                }
+
                 main.append(`<p>${obj.result}</p>`);
                 let obj2=await execute_compare(obj.module,v); // jshint ignore:line
                 let result=obj2.result;
@@ -406,6 +414,7 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
         if (!usethread) {
             try {
                 biswrap.get_module()._print_memory();
+                console.log('Memory size=',biswrap.get_module()['wasmMemory'].buffer.byteLength/(1024*1024),' MB');
             } catch(e) {
                 // sometimes we have pure js modules, no wasm
             }
