@@ -150,8 +150,11 @@ var initialize=function(binary=null) {
             let d="";
             if (mod.bisdate)
                 d="(" + mod.bisdate +")";
+            d=d+" (memory size="+Module['wasmMemory'].buffer.byteLength/(1024*1024)+" MB)";
             if (Module._uses_gpl())
-                console.log('++++ Web Assembly code '+d+' loaded (has GPL plugin. See https://github.com/bioimagesuiteweb/gplcppcode)');
+                console.log('++++ Web Assembly code loaded '+d+', (has GPL plugin. See https://github.com/bioimagesuiteweb/gplcppcode)');
+            else
+                console.log('++++ Web Assembly code '+d);
         });
     }
     return ModulePromise;
