@@ -8,9 +8,9 @@
 	var Module = { };
 
         // Memory can be allocated here if we prefer
-        let psize = 64*1024;
-        let tm = 16*1024*1024;
-        let fm = 2048*1024*1024;
+        var psize = 64*1024;
+        var tm = 16*1024*1024;
+        var fm = 2048*1024*1024;
         Module['wasmMemory'] = new WebAssembly.Memory({ 'initial': tm / psize, 'maximum': fm / psize });
         
 	Module['onRuntimeInitialized'] = function() {
