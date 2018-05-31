@@ -7,11 +7,7 @@
 	binary = binary || false;
 	var Module = { };
 
-        // Memory can be allocated here if we prefer
-        var psize = 64*1024;
-        var tm = 16*1024*1024;
-        var fm = 2048*1024*1024;
-        Module['wasmMemory'] = new WebAssembly.Memory({ 'initial': tm / psize, 'maximum': fm / psize });
+        Module['wasmMemory'] = new WebAssembly.Memory({ 'initial': 256});
         
 	Module['onRuntimeInitialized'] = function() {
 	    const usingWasm =  Module["usingWasm"] || false;
