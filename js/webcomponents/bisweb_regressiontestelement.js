@@ -28,6 +28,9 @@ const systemprint=console.log;
 const bis_genericio=require('bis_genericio');
 const userPreferences = require('bisweb_userpreferences.js');
 const bisdate=require('bisdate.js').date;
+const wrapperutil=require('bis_wrapperutils');
+const BisWebImage=require('bisweb_image');
+
 
 import module_testlist from '../../test/module_tests.json';
 let replacing=false;
@@ -285,6 +288,114 @@ const execute_compare=function(module,test) {
     });
 };
 
+var run_memory_test=function() {
+
+
+    let images = [ new BisWebImage(),new BisWebImage() ];
+    let imgnames = [ 'thr.nii.gz',
+                     'thr_sm.nii.gz',
+                   ];
+    
+    let fullnames = [ '','','','' ];
+    for (let i=0;i<=1;i++)
+        fullnames[i]=extradir+'testdata/'+imgnames[i];
+    
+    let p=[ biswrap.initialize() ];
+    for (let i=0;i<images.length;i++) {
+        p.push(images[i].load(fullnames[i]));
+    }
+
+    console.log(p);
+
+    const main=$('#main');
+    main.empty();
+    main.append('<H3>Running WASM Memory Torture Test</H3><P>');
+    main.append('<p> This will run the web assembly memory test to try to get to just shy of 2GB. It purposely allocates lots of memory without releasing any.</p>');
+    
+    Promise.all(p).then( async function() { 
+
+        main.append('<p>Images Loaded</p>');
+        
+        const c=5.0*0.4247;
+        const paramobj={
+            "sigmas" : [c,c,c],
+            "inmm" : false,
+            "radiusfactor" : 1.5
+        };
+        const debug=0;
+        const jsonstring=JSON.stringify(paramobj);
+        let Module=biswrap.get_module();
+        let image1_ptr=0;
+
+        let alloc=async function(delay=500) {
+            
+            return new Promise( (resolve) => {
+                setTimeout( () => {
+                    for (let j=0;j<=99;j++) {
+                        if (j===0)
+                            image1_ptr=wrapperutil.serializeObject(Module,images[0],'bisImage');
+                        else
+                            wrapperutil.serializeObject(Module,images[0],'bisImage');
+                    }
+                    let m=Module['wasmMemory'].buffer.byteLength/(1024*1024);
+                    resolve(m);
+                },delay);
+            });
+        };
+
+        let max=10;
+        for (let i=1;i<=3;i++) {
+            main.append(`<HR><H4>Test ${i}</H4><OL>`);
+            for (let k=1;k<=max;k++) {
+                let delay=10;
+                let m=await alloc(delay);
+                main.append(`<LI>${i}.${k}. Memory size =  ${m} MB. Last pointer=${image1_ptr}.</LI>`);
+            }
+            
+            main.append('</OL><BR>');
+            let m=Module['wasmMemory'].buffer.byteLength/(1024*1024);
+            main.append(`<p>Memory size (end) =${m} MB</p>`);   
+            const wasm_output=Module.ccall('gaussianSmoothImageWASM','number',
+                                           ['number', 'string', 'number'],
+                                           [ image1_ptr, jsonstring, debug]);
+            
+            m=Module['wasmMemory'].buffer.byteLength/(1024*1024);
+            main.append(`<p>Memory size=${m} MB, wasm_output=${wasm_output}</p>`);   
+            const out=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisImage',images[0]);
+            let error=out.maxabsdiff(images[1]);
+            main.append(`<p>Final error < 2.0 = ${error}</p>`);
+            console.log(`Final error < 2.0 = ${error}`);
+
+            console.log('Cleaning up =',Module['wasmMemory']);
+            //            Module._delete_all_memory();
+            try {
+                await biswrap.reinitialize();
+                Module=biswrap.get_module();
+                console.log('Cleaning up =',Module['wasmMemory'].buffer);
+                let m=Module['wasmMemory'].buffer.byteLength/(1024*1024);
+                main.append(`<p>Reinitialized Module Memory size=${m} MB, wasm_output=${wasm_output}</p>`);   
+                window.scrollTo(0,document.body.scrollHeight-100);
+            } catch(e) {
+                console.log(e);
+            }
+        }
+        
+        
+        let url=window.document.URL;
+        let index=url.indexOf('.html');
+        if (index>=0)
+            url=url.substr(0,index+5);
+        
+        main.append(`<B><a href="${url}">Reload this page</a> before running any other tests.</B>`);
+        let m=Module['wasmMemory'].buffer.byteLength/(1024*1024);
+        main.append(`<p>Reset memory size=${m} MB</p>`);
+        window.scrollTo(0,document.body.scrollHeight-100);
+    });
+};
+
+
+    
+
 var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',usethread=false) { // jshint ignore:line
 
     if (webutil.inElectronApp()) {
@@ -424,6 +535,9 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
         window.scrollTo(0,0);
     }
 
+
+    
+
 };  // jshint ignore:line
 
 let initialize=function(data) {
@@ -522,6 +636,14 @@ let initialize=function(data) {
     if (dorun) {
         run_tests(testlist,firsttest,lasttest,testname,usethread);
     }
+
+
+    $('#computemem').click(function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Starting');
+        run_memory_test();
+    });
 
 };
 

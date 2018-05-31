@@ -84,3 +84,7 @@ pre {
 .failed {
     color : red
 }
+
+#computemem {
+    margin-left: 50px;
+}

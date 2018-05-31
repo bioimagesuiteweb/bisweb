@@ -160,6 +160,15 @@ var initialize=function(binary=null) {
     return ModulePromise;
 };
 
+var reinitialize=function() {
+
+    if (Module!==0) {
+        Module._delete_all_memory();
+        Module=0;
+        ModulePromise=0;
+    }
+    return initialize();
+}
 
 var get_module=function() {
     return Module;
@@ -223,6 +232,7 @@ var create_export_object = function(funlist,mode) {
         outtext+='\n  //-------------------------------------------------------------\n';
         outtext+='\n  const outputobj = { \n';
         outtext+="    initialize : initialize,\n";
+        outtext+="    reinitialize : reinitialize,\n";
         outtext+="    get_module : get_module,\n";
         outtext+="    get_date   : get_date,\n";
         for (let i=0;i<funlist.length;i++) {

@@ -45,6 +45,12 @@ void print_memory()
 {
   bisMemoryManagement::print_map();
 }
+
+void delete_all_memory()
+{
+  bisMemoryManagement::delete_all();
+}
+
 int jsdel_array(unsigned char* ptr) {
   bisMemoryManagement::release_memory(ptr,"js_del");
   return 1;
