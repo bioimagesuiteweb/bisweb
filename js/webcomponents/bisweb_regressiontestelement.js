@@ -300,7 +300,7 @@ var run_memory_test=function() {
     for (let i=0;i<=1;i++)
         fullnames[i]=extradir+'testdata/'+imgnames[i];
     
-    let p=[ biswrap.initialize() ];
+    let p=[ biswrap.reinitialize() ];
     for (let i=0;i<images.length;i++) {
         p.push(images[i].load(fullnames[i]));
     }
@@ -343,43 +343,27 @@ var run_memory_test=function() {
             });
         };
 
-        let max=10;
-        for (let i=1;i<=3;i++) {
-            main.append(`<HR><H4>Test ${i}</H4><OL>`);
-            for (let k=1;k<=max;k++) {
-                let delay=10;
-                let m=await alloc(delay);
-                main.append(`<LI>${i}.${k}. Memory size =  ${m} MB. Last pointer=${image1_ptr}.</LI>`);
-            }
-            
-            main.append('</OL><BR>');
-            let m=Module['wasmMemory'].buffer.byteLength/(1024*1024);
-            main.append(`<p>Memory size (end) =${m} MB</p>`);   
-            const wasm_output=Module.ccall('gaussianSmoothImageWASM','number',
-                                           ['number', 'string', 'number'],
-                                           [ image1_ptr, jsonstring, debug]);
-            
-            m=Module['wasmMemory'].buffer.byteLength/(1024*1024);
-            main.append(`<p>Memory size=${m} MB, wasm_output=${wasm_output}</p>`);   
-            const out=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisImage',images[0]);
-            let error=out.maxabsdiff(images[1]);
-            main.append(`<p>Final error < 2.0 = ${error}</p>`);
-            console.log(`Final error < 2.0 = ${error}`);
-
-            console.log('Cleaning up =',Module['wasmMemory']);
-            //            Module._delete_all_memory();
-            try {
-                await biswrap.reinitialize();
-                Module=biswrap.get_module();
-                console.log('Cleaning up =',Module['wasmMemory'].buffer);
-                let m=Module['wasmMemory'].buffer.byteLength/(1024*1024);
-                main.append(`<p>Reinitialized Module Memory size=${m} MB, wasm_output=${wasm_output}</p>`);   
-                window.scrollTo(0,document.body.scrollHeight-100);
-            } catch(e) {
-                console.log(e);
-            }
+        let max=22;
+        main.append(`<HR><H4>Running Test</H4><OL>`);
+        for (let k=1;k<=max;k++) {
+            let delay=10;
+            let m=await alloc(delay);
+            main.append(`<LI>${k}. Memory size =  ${m} MB. Last pointer=${image1_ptr}.</LI>`);
         }
         
+        main.append('</OL><BR>');
+        let m=Module['wasmMemory'].buffer.byteLength/(1024*1024);
+        main.append(`<p>Memory size (end) =${m} MB</p>`);   
+        const wasm_output=Module.ccall('gaussianSmoothImageWASM','number',
+                                       ['number', 'string', 'number'],
+                                       [ image1_ptr, jsonstring, debug]);
+        
+        m=Module['wasmMemory'].buffer.byteLength/(1024*1024);
+        main.append(`<p>Memory size=${m} MB, wasm_output=${wasm_output}</p>`);   
+        const out=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisImage',images[0]);
+        let error=out.maxabsdiff(images[1]);
+        main.append(`<p>Final error < 2.0 = ${error}</p>`);
+        console.log(`Final error < 2.0 = ${error}`);
         
         let url=window.document.URL;
         let index=url.indexOf('.html');
@@ -387,8 +371,6 @@ var run_memory_test=function() {
             url=url.substr(0,index+5);
         
         main.append(`<B><a href="${url}">Reload this page</a> before running any other tests.</B>`);
-        let m=Module['wasmMemory'].buffer.byteLength/(1024*1024);
-        main.append(`<p>Reset memory size=${m} MB</p>`);
         window.scrollTo(0,document.body.scrollHeight-100);
     });
 };
