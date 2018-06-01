@@ -202,15 +202,22 @@ let sendCommandToServiceWorker=function(cmd='updateCache') {
 // Initial Check
 // ---------------------
 let getLatestVersion=async function() { // jshint ignore:line
-    
+
+    let extra=".";
+    if (typeof (window.BIS) !== "undefined") {
+        extra="/build/web";
+    }
+        
     try {
         let t= new Date().getTime();
-        const fetchResult=await fetch(`./bisdate.json?time=${t}`); // jshint ignore:line
+        let a=`${extra}/bisdate.json?time=${t}`;
+        console.log(a);
+        const fetchResult=await fetch(a); // jshint ignore:line
         const response=await fetchResult;  // jshint ignore:line
         internal.latestVersion= await response.json(); // jshint ignore:line
         return internal.latestVersion['absolutetime'];
     } catch(e) {
-        console.log(e);
+        console.log(e,e.stack);
         // We must be offline
         internal.latestVersion=null;
         return -1;
@@ -302,6 +309,7 @@ var checkForLatestVersion=async function() {// jshint ignore:line
 let aboutApplication=async function() {// jshint ignore:line
 
     let offline=false;
+
     let latest=await getLatestVersion(); // jshint ignore:line
     if (latest<0) {
         offline=true;
