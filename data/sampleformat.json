@@ -40,24 +40,30 @@
 	"jobs": [
 		{
 			"name" : "mask",
-			"command": "maskImage",
+			"command": "node bisweb.js",
+			"subcommand" : "maskImage",
 			"rule": "append",
 			"appendText": "masked",
 			"options": "--debug true --input %input% --mask %mask% --output %out1%"
 		},
 		{
-			"name" : "register",
-			"command": "registerImage",
+			"name" : "smooth",
+			"subcommand": "smoothImage",
 			"rule": "append",
-			"appendText": "registered",
+			"appendText": "smoothed",
 			"options": "--debug true --input %out1% --output %out2%"
 		},
 		{
 			"name" : "threshold",
-			"command": "thresholdImage",
+			"subcommand": "thresholdImage",
 			"rule": "append",
 			"appendText": "thresholded",
 			"options": "--debug true --input %out2% --output %out3%"
+		},
+		{
+			"name" : "hello",
+			"command" : "echo",
+			"options" : "%out3%"
 		}
 	]
 }
