@@ -143,6 +143,12 @@ prepareForDataFrames = (socket) => {
     });
 }
 
+/**
+ * Takes a request from the client and returns the requested file or series of files. 
+ * @param {String} rawText - Unparsed JSON denoting the file or series of files to read. 
+ * @param {Object} control - Parsed WebSocket header for the file request.
+ * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
+ */
 handleFileRequestFromClient = (rawText, control, socket) => {
     let text = wsutil.decodeUTF8(rawText, control);
     console.log('text', text);
@@ -171,15 +177,18 @@ handleFileRequestFromClient = (rawText, control, socket) => {
                 if (stat.uid !== currentUser) { handleBadRequestFromClient(socket, "Cannot download a file that does not belong to the current user. Have you tried changing ownership of the requested file?"); return; } 
 
                 fs.readFile(file, (err, result) => {
+                    //compress data before sending? doesn't seem to reduce size by very much
                     //zlib.gzip(data, (err, result) => {
+
                         let controlFrame = wsutil.formatControlFrame(2, result.length);
                         let packetHeader = Buffer.from(controlFrame.buffer);
                         let packet = Buffer.concat([packetHeader, result]);
         
                         console.log('sending control frame', wsutil.parseControlFrame(packetHeader), 'raw frame', packetHeader);
                         console.log('packet', packet);
+
                         socket.write(packet, () => { console.log('write done.'); });
-                    //});
+                    
                 });
             });
             
@@ -189,10 +198,16 @@ handleFileRequestFromClient = (rawText, control, socket) => {
         });
     }
 }
-
+/**
+ * Sends a message to the client describing the server error that occured during their request. 
+ * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
+ * @param {String} reason - Text describing the error.
+ */
 handleBadRequestFromClient = (socket, reason) => {
-    let payload = "An error occured while handling your request. "
-    payload = Buffer.from(payload.concat(reason));
+    let error = "An error occured while handling your request. "
+    error = error.concat(reason);
+
+    let payload = wsutil.formatPayload('error', error);
 
     let controlFrame = wsutil.formatControlFrame(1, payload.length);
     let packetHeader = Buffer.from(controlFrame.buffer);
@@ -200,6 +215,12 @@ handleBadRequestFromClient = (socket, reason) => {
     socket.write(packet, () => { console.log('request returned an error', reason, '\nsent error to client'); });
 };
 
+/**
+ * Closes the server side of the socket gracefully. Meant to be called upon receipt of a 'connection close' packet from the client, i.e. a packet with opcode 8.
+ * @param {String} rawText - Unparsed JSON denoting the file or series of files to read. 
+ * @param {Object} control - Parsed WebSocket header for the file request.
+ * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
+ */
 handleCloseFromClient = (rawText, control, socket) => {
     let text = wsutil.decodeUTF8(rawText, control);
     console.log('received CLOSE frame from client');
@@ -210,6 +231,11 @@ handleCloseFromClient = (rawText, control, socket) => {
     console.log('closed connection');
 }
 
+/**
+ * Takes a path specifying a file to load on the server machine and determines whether the path is clean, i.e. specifies a file that exists, does not contain symbolic links.
+ * Recursively checks every file and directory on the path.
+ * @param {String} filepath - Path to check.
+ */
 checkValidPath = (filepath) => {
     return new Promise( (resolve, reject) => {
         let pathCheck = (path) => {

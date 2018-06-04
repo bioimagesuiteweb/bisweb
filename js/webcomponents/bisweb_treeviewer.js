@@ -173,37 +173,6 @@ class TreeViewer extends HTMLElement {
                 });
             }
         });
-
-        //need 'ws://' prefix if using localhost
-        let socket = new WebSocket('ws://localhost:8081');
-
-        socket.addEventListener('message', (event) => {
-            console.log('received data', event);
-
-            let reader = new FileReader();
-            reader.addEventListener('loadend', () => {
-                let rawData = new Uint8Array(reader.result);
-                this.algorithmcontroller.sendImageToViewer(rawData, { viewername : this.defaultViewer });
-            });
-            reader.readAsArrayBuffer(event.data);
-        });
-
-        socket.addEventListener('open', (event) => {
-            console.log('socket opened successfully');
-            let files = { 
-                files : [
-                    'javascript/bisweb/data/notmine.txt'
-                ]
-            };
-
-            let filesdata = JSON.stringify(files);
-            socket.send(filesdata);
-        });
-        
-        socket.addEventListener('error', (event) => {
-            console.log('an error occured', event);
-        });
-
     }
 
     /**

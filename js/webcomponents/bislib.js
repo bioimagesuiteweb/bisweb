@@ -46,6 +46,7 @@ require("bisweb_mainviewerapplication.js");
 require("bisweb_dualviewerapplication.js");
 require("bisweb_webworkercontroller.js");
 require("bisweb_treeviewer.js");
+require("bisweb_fileserver.js");
 
 
 
