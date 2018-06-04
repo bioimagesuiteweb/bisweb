@@ -63,7 +63,7 @@
 		{
 			"name" : "hello",
 			"command" : "echo",
-			"options" : "%out3%"
+			"options" : "--input %out3%"
 		}
 	]
 }

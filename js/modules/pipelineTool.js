@@ -146,7 +146,14 @@ let makePipeline = function(filename, location) {
 
             //expand dependencies into lists of files if necessary and parse variables used by the job into input and output
             //note that an input is any variable that has its file list available to the job (this relies on jobs being specified in the order in which they run in the JSON file)
-            let numOutputs;
+
+            //determine the number of commands to produce for the job based on the variables, e.g. if a variable contains five names five commands should be produced
+            //note that a variable that does not contain one name will contain exactly the same number of names as any other variable that does not specify one name
+            let numOutputs = 0;
+            for (let key of Object.keys(expandedVariables)) {
+                if (expandedVariables[key].length > numOutputs) numOutputs = expandedVariables[key].length;
+            }
+
             for (let variable of variablesWithDependencies) {
                 //if names have already been generated then the output is produced by a node upstream, so don't overwrite the names
                 if (expandedVariables[variable.name].length === 0) {
@@ -159,13 +166,6 @@ let makePipeline = function(filename, location) {
                             console.log("Error: dependency", dependency, "cannot be resolved by job", job.command);
                             return false;
                         }
-
-                        //a variable will either contain one reference or many. 
-                        //if multiple are specified then exactly that many outputs will be produced -- it is expected that variables are specified in only one amount different than 1 
-                        if (expandedVariables[dependency].length > 1) {
-                            numOutputs = expandedVariables[dependency].length;
-                        }
-
                     }
 
                     //generate output names
@@ -183,7 +183,6 @@ let makePipeline = function(filename, location) {
                 }
             }
 
-
             //replace entry in optionsArray with appropriate expanded variable
             for (let i = 0; i < optionsArray.length; i++) {
                 let option = optionsArray[i];
@@ -194,7 +193,6 @@ let makePipeline = function(filename, location) {
                 }
 
             }
-
 
             //construct the inputs, outputs, and command in the way that 'make' expects
             for (let i = 0; i < numOutputs; i++) {
@@ -241,6 +239,7 @@ let makePipeline = function(filename, location) {
 
         //add 'make [job]' for each job
         for (let job of jobsWithOutputs) {
+            console.log('job', job);
             let name = job.name.toLowerCase();
             makefile += '.PHONY: ' + name + '\n' + name + ' : ';
 
