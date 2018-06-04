@@ -13,15 +13,16 @@ step2 : a_thre b_thre c_thr
 
 TODO: 
 
-add unique names for each job (other than just the name of the command)
-    - step1 for example should be the job name
+~~add unique names for each job (other than just the name of the command)~~
 
 visualize pipeline on tree viewer? 
 
-make job running command (e.g. node bisweb.js ... ) a parameter with reasonable defaults. 
-    - this will let you run it on a server, in background, etc. 
+~~make job running command (e.g. node bisweb.js ... ) a parameter with reasonable defaults.~~
+
+ * Currently does not support jobs that don't generate outputs (think about changing this or maybe making other commands that run through a .PHONY?)
+    - ~~this will let you run it on a server, in background, etc.~~ 
     - make it blankable so that people can specify Unix scripts
-    - right now job smoothImage results in command node bisweb.js smoothImage --> runnable smoothImage and if runnable is blank dont' add space --> "smoothImage" then it could be gulp build, cp , tar ,zip 
+    - ~~right now job smoothImage results in command node bisweb.js smoothImage --> runnable smoothImage and if runnable is blank dont' add space --> "smoothImage" then it could be gulp build, cp , tar ,zip~~ 
 
 
     output directory

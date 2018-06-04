@@ -115,7 +115,7 @@ let startServer = () => {
  * This involves XORing the payload and decoding it to UTF-8, then performing file I/O based on the contents.
  * @param {Socket} socket - Node.js net socket between the client and server for the transmission.
  */
-prepareForDataFrames = (socket) => {
+let prepareForDataFrames = (socket) => {
     //add an error listener for the transmission
     socket.on('error', (error) => {
         console.log('an error occured', error);
@@ -134,9 +134,8 @@ prepareForDataFrames = (socket) => {
             decoded[i] = chunk[i + parsedControl.datastart] ^ parsedControl.mask[i % 4];
         }
 
-        //text from the server means a file request
         switch (parsedControl.opcode) {
-            case 1 : handleFileRequestFromClient(decoded, parsedControl, socket); break;
+            case 1 : handleTextRequest(decoded, parsedControl, socket); break;
             case 8 : handleCloseFromClient(decoded, parsedControl, socket);
         }
 
@@ -144,21 +143,34 @@ prepareForDataFrames = (socket) => {
 }
 
 /**
+ * Parses a textual request from the client and serves accordingly. 
+ * 
+ * @param {String} rawText - Unparsed JSON denoting the file or series of files to read. 
+ * @param {Object} control - Parsed WebSocket header for the file request.
+ * @param {Socket} socket - WebSocket over which the communication is currently taking place.
+ */ 
+let handleTextRequest = (rawText, control, socket) => {
+    let parsedText = parseClientJSON(rawText);
+    
+    switch (parsedText.command) {
+        case 'show':
+        case 'showfiles' : serveFileList(socket); break;
+        case 'getfile':
+        case 'getfiles':
+        case 'file': 
+        case 'files': serveFileRequest(rawText, control, socket); break;
+        default : console.log('Cannot interpret request with unknown command', parsedText.command);
+    }
+};
+
+/**
  * Takes a request from the client and returns the requested file or series of files. 
  * @param {String} rawText - Unparsed JSON denoting the file or series of files to read. 
  * @param {Object} control - Parsed WebSocket header for the file request.
  * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
  */
-handleFileRequestFromClient = (rawText, control, socket) => {
-    let text = wsutil.decodeUTF8(rawText, control);
-    console.log('text', text);
-
-    let parsedText;
-    try {
-        parsedText = JSON.parse(text);
-    } catch(e) {
-        console.log('an error occured while parsing the data from the client', e);
-    }
+let serveFileRequest = (rawText, control, socket) => {
+    let parsedText = parseClientJSON(rawText);
 
     //TODO: Make this less grossly memory inefficient
     //https://nodejs.org/api/buffer.html#buffer_buffers_and_typedarray
@@ -197,13 +209,22 @@ handleFileRequestFromClient = (rawText, control, socket) => {
             handleBadRequestFromClient(socket, error);
         });
     }
-}
+};
+
+/**
+ * Sends the list of available files to the user, hiding files above the ~/ directory.
+ * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
+ */
+let serveFileList = (socket) => {
+
+};
+
 /**
  * Sends a message to the client describing the server error that occured during their request. 
  * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
  * @param {String} reason - Text describing the error.
  */
-handleBadRequestFromClient = (socket, reason) => {
+let handleBadRequestFromClient = (socket, reason) => {
     let error = "An error occured while handling your request. "
     error = error.concat(reason);
 
@@ -221,7 +242,7 @@ handleBadRequestFromClient = (socket, reason) => {
  * @param {Object} control - Parsed WebSocket header for the file request.
  * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
  */
-handleCloseFromClient = (rawText, control, socket) => {
+let handleCloseFromClient = (rawText, control, socket) => {
     let text = wsutil.decodeUTF8(rawText, control);
     console.log('received CLOSE frame from client');
     console.log('reason:', text);
@@ -236,7 +257,7 @@ handleCloseFromClient = (rawText, control, socket) => {
  * Recursively checks every file and directory on the path.
  * @param {String} filepath - Path to check.
  */
-checkValidPath = (filepath) => {
+let checkValidPath = (filepath) => {
     return new Promise( (resolve, reject) => {
         let pathCheck = (path) => {
             if (path === '') { resolve(); return; }
@@ -257,6 +278,21 @@ checkValidPath = (filepath) => {
     });
 
 };
+
+let parseClientJSON = (unparsedJSON) => {
+    let text = wsutil.decodeUTF8(rawText, control);
+    console.log('text', text);
+
+    let parsedText;
+    try {
+        parsedText = JSON.parse(text);
+    } catch(e) {
+        console.log('an error occured while parsing the data from the client', e);
+    }
+
+    return parsedText;
+};
+
 
 module.exports = {
     loadMenuBarItems : loadMenuBarItems,

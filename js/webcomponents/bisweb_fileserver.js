@@ -30,8 +30,9 @@ class FileServer extends HTMLElement {
                         console.log('received data', event);
                         
                         switch (event.data.type) {
-                            case 'image' : this.handleImageTransmission(event.data.data); break;
-                            default : console.log('Received transmission with unknown type', event.data.type);
+                            case 'filelist' : this.displayFileList(event.data.data);
+                            case 'error' : console.log('Error from client:', event.data.data);
+                            default : console.log('received a binary transmission -- interpreting as an image'); this.handleImageTransmission(event.data);
                         }
                         
                     });
@@ -40,7 +41,7 @@ class FileServer extends HTMLElement {
                 webutil.createMenuItem(serverMenu, 'Request Files', () => {
                     let files = {
                         files: [
-                            'javascript/bisweb/data/notmine.txt'
+                            'javascript/bisweb/data/MNI_2mm_resliced.nii.gz'
                         ]
                     };
                     this.sendFileRequest(socket, files);
@@ -58,6 +59,15 @@ class FileServer extends HTMLElement {
         });
 
         return socket;
+    }
+
+    requestFileList(socket) {
+        
+    }
+
+    //TODO: Implement display with JSTree
+    displayFileList(list) {
+
     }
 
     sendFileRequest(socket, files = null) {
