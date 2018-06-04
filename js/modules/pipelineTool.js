@@ -262,54 +262,6 @@ let makePipeline = function(filename, location) {
 
 };
 
-/*
-let makeNetwork = function(obj) {
-    let pipeline = [], lastPipelineNode;
-    let currentOutputName = 'z';
-
-    //create the node in the pipeline corresponding to the current module or collection of modules
-    for (let mod of mods) {
-
-        let pipelineNode = {
-            'inputs' : [],
-            'dependencies': [],
-            'outputs': []
-        };
-
-        if (pipeline.length === 0) {
-
-            //parse firstInputs and create the first node
-            if (!(firstInputs instanceof Array)) {
-                firstInputs = [firstInputs];
-            }
-
-            pipelineNode.inputs = firstInputs;
-
-        } else {
-
-            pipelineNode.dependencies = lastPipelineNode.outputs;
-            pipelineNode.inputs = lastPipelineNode.outputs;
-        }
-
-        //parse each module specified in mod and feed their outputs as dependencies for the next module
-        if (!(mod instanceof Array)) mod = [mod];
-        for (let m of mod) {
-            let parsedModule = modules.getModule(m)
-            let desc = parsedModule.createDescription();
-            for (let output of desc.outputs) {
-                currentOutputName = getNextASCIIChar(currentOutputName);
-                let outname = currentOutputName + getFileExtension(output.type);
-                pipelineNode.outputs.push(outname);
-            }
-        }
-
-        lastPipelineNode = pipelineNode;
-        pipeline.push(pipelineNode);
-    }
-
-    return pipeline;
-}
-*/
 let stripVariable = function (variable) {
     return variable.slice(1, variable.length - 1);
 };
