@@ -216,7 +216,51 @@ let serveFileRequest = (rawText, control, socket) => {
  * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
  */
 let serveFileList = (socket) => {
+    let basedir = os.homedir();
+    let fileTree = [];
 
+    let expandDirectory = (path, fileTreeIndex) => {
+        return new Promise( (resolve, reject) => {
+            fs.readdir(path, (err, files) => {
+                if (err) { reject(err); }
+                console.log('files', files);
+    
+                //remove hidden files/folders from results
+                let validFiles = files.filter( (unfilteredFile) => { return unfilteredFile.charAt(0) !== '.'; });
+                console.log('valid files', validFiles);
+
+                //expand a directory inside the current directory -- resolve promise when all contents examined.
+                let expandInnerDirectory = (path, treeEntry) => {
+                    return new Promise( (resolve, reject) => {
+                        fs.lstat(path, (err, stat) => {
+                            if (err) { reject(err); }
+
+                            //expand directories contained in the current directory
+                            if (stat.isDirectory()) {
+                                treeEntry.children = [];
+                                expandDirectory(path, treeEntry.children).then( () => { resolve(fileTreeIndex); });
+                            } else {
+                                resolve(fileTreeIndex);
+                            }
+
+                            fileTreeIndex.push(treeEntry);
+                        });
+                    });
+                }
+
+                let promisesInsideDirectory = [];
+                for (let file of validFiles) {
+                    let newTreeEntry = { 'text' : file };
+                    let newPath = path + '/' + file;
+                    promisesInsideDirectory.push(expandInnerDirectory(newPath, newTreeEntry));
+                }
+
+                Promise.all(promisesInsideDirectory).then( () => { resolve(fileTreeIndex); });
+            });
+        });    
+    };
+
+    expandDirectory(basedir, fileTree).then( (tree) => { console.log('tree', tree); });
 };
 
 /**
@@ -279,8 +323,8 @@ let checkValidPath = (filepath) => {
 
 };
 
-let parseClientJSON = (unparsedJSON) => {
-    let text = wsutil.decodeUTF8(rawText, control);
+let parseClientJSON = (rawText) => {
+    let text = wsutil.decodeUTF8(rawText, rawText.length);
     console.log('text', text);
 
     let parsedText;

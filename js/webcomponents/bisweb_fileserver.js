@@ -25,17 +25,6 @@ class FileServer extends HTMLElement {
                 let serverMenu = webutil.createTopMenuBarMenu('Server', menuBar);
                 webutil.createMenuItem(serverMenu, 'Connect to File Server', () => {
                     socket = this.connectToServer();
-
-                    socket.addEventListener('message', (event) => {
-                        console.log('received data', event);
-                        
-                        switch (event.data.type) {
-                            case 'filelist' : this.displayFileList(event.data.data);
-                            case 'error' : console.log('Error from client:', event.data.data);
-                            default : console.log('received a binary transmission -- interpreting as an image'); this.handleImageTransmission(event.data);
-                        }
-                        
-                    });
                 });
 
                 webutil.createMenuItem(serverMenu, 'Request Files', () => {
@@ -46,7 +35,13 @@ class FileServer extends HTMLElement {
                     };
                     this.sendFileRequest(socket, files);
                 });
+
+                webutil.createMenuItem(serverMenu, 'Show Server Files', () => {
+                    this.requestFileList(socket);
+                });
             }
+
+            socket = this.connectToServer();
         });
 
     }
@@ -58,11 +53,22 @@ class FileServer extends HTMLElement {
             console.log('An error occured', event);
         });
 
+        socket.addEventListener('message', (event) => {
+            console.log('received data', event);
+            
+            switch (event.data.type) {
+                case 'filelist' : this.displayFileList(event.data.data);
+                case 'error' : console.log('Error from client:', event.data.data);
+                default : console.log('received a binary transmission -- interpreting as an image'); this.handleImageTransmission(event.data);
+            }    
+        });
+
         return socket;
     }
 
     requestFileList(socket) {
-        
+        let command = JSON.stringify({ 'command' : 'show' }); 
+        socket.send(command);
     }
 
     //TODO: Implement display with JSTree
