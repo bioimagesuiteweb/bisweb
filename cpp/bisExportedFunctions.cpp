@@ -553,29 +553,13 @@ unsigned char* normalizeImageWASM(unsigned char* input,const char* jsonstring,in
 // --------------------------------------------------------------------------------------------------------------------------------------------------------
 // Prepare Image  for Registration
 // --------------------------------------------------------------------------------------------------------------------------------------------------------
-template <class BIS_TT> unsigned char* prepareImageForRegistrationTemplate(unsigned char* input,unsigned char* initial_xform_ptr,bisJSONParameterList* params,int debug,BIS_TT*)
+template <class BIS_TT> unsigned char* prepareImageForRegistrationTemplate(unsigned char* input,bisJSONParameterList* params,int debug,BIS_TT*)
 {
 
   std::unique_ptr<bisSimpleImage<BIS_TT> > inp_image(new bisSimpleImage<BIS_TT>("inp_image"));
   if (!inp_image->linkIntoPointer(input))
     return 0;
 
-  std::unique_ptr<bisMatrixTransformation> initial_transformation(new bisMatrixTransformation("initial"));
-  initial_transformation->identity();
-  
-  std::unique_ptr<bisSimpleMatrix<float> > initial_matrix(new bisSimpleMatrix<float>("initial_matrix_json"));
-  if (initial_xform_ptr!=0)
-    {
-      if (!initial_matrix->linkIntoPointer(initial_xform_ptr))
-	return 0;
-      if (!initial_transformation->setSimpleMatrix(initial_matrix.get()))
-	return 0;
-    }
-  else 
-    {
-      std::cout << "No initial transformation" << std::endl;
-    }
-      
   int numbins=params->getIntValue("numbins",64);
   int normalize=params->getBooleanValue("normalize",1);
   float res=params->getFloatValue("resolution",1.5);
@@ -588,14 +572,13 @@ template <class BIS_TT> unsigned char* prepareImageForRegistrationTemplate(unsig
 												    numbins,normalize,
 												    res,sigma,intscale,frame,
                                                                                                     name,
-                                                                                                    initial_transformation.get(),
                                                                                                     debug);
   
 
   return out_image->releaseAndReturnRawArray();
 }
 
-unsigned char* prepareImageForRegistrationWASM(unsigned char* input,unsigned char* initial_xform,const char* jsonstring,int debug) {
+unsigned char* prepareImageForRegistrationWASM(unsigned char* input,const char* jsonstring,int debug) {
   int* header=(int*)input;
   int target_type=header[1];
 
@@ -609,7 +592,7 @@ unsigned char* prepareImageForRegistrationWASM(unsigned char* input,unsigned cha
   
   switch (target_type)
     {
-      bisvtkTemplateMacro( return prepareImageForRegistrationTemplate(input,initial_xform,params.get(),debug, static_cast<BIS_TT*>(0)));
+      bisvtkTemplateMacro( return prepareImageForRegistrationTemplate(input,params.get(),debug, static_cast<BIS_TT*>(0)));
     }
   return 0;
 

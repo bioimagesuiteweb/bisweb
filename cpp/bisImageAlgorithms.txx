@@ -1006,7 +1006,7 @@ namespace bisImageAlgorithms {
 											 int numbins,int normalize,
 											 float resolution_factor,float smoothing,int intscale,
 											 int frame,std::string name,
-											 bisAbstractTransformation* initial_xform,int debug)
+											 int debug)
   {
     float in_spa[5]; input->getSpacing(in_spa);
     float r=in_spa[0];
@@ -1066,15 +1066,9 @@ namespace bisImageAlgorithms {
     }
 
     if (doprint)
-      {
-	std::cout << "+ +  \t Reslicing (" << resolution[0] << "," << resolution[1] << "," << resolution[2] << ") ->";
-	if (initial_xform!=0)
-	  std::cout << "( using initial xform) ";
-	else
-	  std::cout << "(identity) ";
-	  
-      }
-    std::unique_ptr<bisSimpleImage<T> > resliced=resampleImage(smoothed.get(),resolution,1,0.0,initial_xform);
+      std::cout << "+ +  \t Reslicing (" << resolution[0] << "," << resolution[1] << "," << resolution[2] << ") ->";
+
+    std::unique_ptr<bisSimpleImage<T> > resliced=resampleImage(smoothed.get(),resolution,1,0.0,0);
 
     if (doprint) {
       resliced->getImageDimensions(i_dim); resliced->getImageSpacing(i_spa); resliced->getRange(range);
