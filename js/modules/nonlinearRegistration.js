@@ -47,7 +47,7 @@ class NonLinearRegistrationModule extends BaseModule {
             "params": baseutils.getRegistrationParams(),
         };
 
-        des.params.push(baseutils.getLinearMode("linearmode"));
+        des.params.push(baseutils.getLinearMode("linearmode","","Affine"));
 
         des.params.push({
             "name": "CP Spacing",
@@ -63,7 +63,7 @@ class NonLinearRegistrationModule extends BaseModule {
         });
 
         des.params.push({
-            "name": "CP Sp-Rate",
+            "name": "CPS Rate",
             "description": "Control Point spacing rate of the underlying Bspline-FFD Registration",
             "priority": 100,
             "advanced": false,
@@ -88,7 +88,7 @@ class NonLinearRegistrationModule extends BaseModule {
             "high" : 1.0,
         });
 
-        baseutils.setParamDefaultValue(des.params,'debug','true');
+        baseutils.setParamDefaultValue(des.params,'debug',true);
         
         return des;
     }
