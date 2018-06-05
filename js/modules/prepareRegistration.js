@@ -28,6 +28,8 @@ class PrepareRegistrationModule extends BaseModule {
     constructor() {
         super();
         this.name = 'prepareRegistration';
+        this.targetGUIInput = 'image';
+        this.targetGUIViewer = 'viewer2';
     }
 
 
@@ -38,8 +40,50 @@ class PrepareRegistrationModule extends BaseModule {
             "description": "Prepares an image for registration by extracting a frame from the image then smoothing, resampling, and normalizing it.",
             "author": "Zach Saltzman",
             "version": "1.0",
-            "inputs": baseutils.getImageToImageInputs(),
-            "outputs": baseutils.getImageToImageOutputs(),
+            "inputs":   [
+                {
+                    'type': 'image',
+                    'name': 'Image to Reslice',
+                    'description': 'Load the image to reslice',
+                    'varname': 'input',
+                    'shortname' : 'i',
+                    'required' : true,
+                    'guiviewertype' : this.targetGUIInput,
+                    'guiviewer'  : this.targetGUIViewer,
+                    'colortype'  : 'Orange'
+                },
+                {
+                    'type' : 'image',
+                    'name' : 'Reference Image',
+                    'description' : 'The reference image (if not specified use input)',
+                    'varname' : 'reference',
+                    'shortname' : 'r',
+                    'required' : false,
+                    'guiviewertype' : 'image',
+                    'guiviewer'  : 'viewer1',
+                },
+                {
+                    'type': 'transformation',
+                    'name': 'Reslice Transform',
+                    'description': 'Load the transformation used to reslice the image',
+                    'varname': 'xform',
+                    'shortname' : 'x',
+                    'required' : false,
+                    'guiviewer' : 'current',
+                },
+            ],
+            "outputs":[{
+                'type': 'image',
+                'name': 'Output Image',
+                'description': 'Save the resliced image',
+                'varname': 'output',
+                'shortname' : 'o',
+                'required': false,
+                'extension' : '.nii.gz',
+                'guiviewertype' : 'overlay',
+                'guiviewer'  : 'viewer1',
+                'colortype'  : 'Orange'
+            }],
             "buttonName": "Execute",
             "shortname" : "prp",
             "params": [
@@ -116,28 +160,19 @@ class PrepareRegistrationModule extends BaseModule {
             ]
         };
 
-        desc["inputs"].push({
-            'type': 'transformation',
-            'name': 'Reslice Transform',
-            'description': 'Load the transformation used to reslice the image',
-            'varname': 'xform',
-            'shortname' : 'x',
-            'required' : false,
-            'guiviewer' : 'current',
-        });
         return desc;
-                            
     }
 
     directInvokeAlgorithm(vals) {
         console.log('oooo invoking: prepareRegistration with vals', JSON.stringify(vals));
 
         let xform=this.inputs['xform'] || 0;
+        let ref=this.inputs['reference'] || 0;
         
         return new Promise((resolve, reject) => {
             biswrap.initialize().then(() => {
                 let input = this.inputs['input'];
-                this.outputs['output'] = biswrap.prepareImageForRegistrationWASM(input,xform, {
+                this.outputs['output'] = biswrap.prepareImageForRegistrationWASM(input,ref,xform, {
                     "numbins" : parseInt(vals.numbins),
                     "normalize" : super.parseBoolean(vals.normal),
                     "resolution" : parseFloat(vals.resolution),
