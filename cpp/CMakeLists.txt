@@ -204,6 +204,7 @@ IF (BIS_A_EMSCRIPTEN)
 
   SET(FVAR "${EXECUTABLE_OUTPUT_PATH}/${LIBNAME}.js")
   SET(FVAR2 "${EXECUTABLE_OUTPUT_PATH}/${LIBNAME}.wasm")
+  install (FILES ${FVAR2} DESTINATION bisweb/lib)
 
   SET(WEBPACK_WASM_MODULE "${EXECUTABLE_OUTPUT_PATH}/../web/${LIBNAME}_wasm.js")
   # ------------------ create webpack wasm module ---------------
@@ -218,6 +219,7 @@ IF (BIS_A_EMSCRIPTEN)
 
   SET (README_FILE "${PROJECT_SOURCE_DIR}/../various/txt/README_js.txt")
   install (FILES ${README_FILE} DESTINATION bisweb/)
+  
   
   configure_file( ${LICENSE_FILE} "${EXECUTABLE_OUTPUT_PATH}/../web/LICENSE" @ONLY )
 
