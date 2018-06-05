@@ -72,20 +72,6 @@ let formatControlFrame = (opcode, payloadLength) => {
 };
 
 /**
- * Formats transmissions from the server to the structure the client expects. 
- * @param {String} type - The type of the transmission, which will determine how it is processed by the client.
- * @param {String|Binary} data - The payload for the transmission.
- */
-let formatPayload = (type, data) => {
-    let payload = { 
-        'type' : type,
-        'data' : data
-    };
-
-    return JSON.stringify(payload);
-};
-
-/**
  * Decodes series of raw UTF-8 characters, i.e. numbers, into something human readable.
  * @param {Uint8Array} rawText - Series of raw UTF-8 characters
  * @param {Object|Number} control - Parsed control frame (see parseControlFrame), or length of payload.
@@ -105,6 +91,5 @@ let decodeUTF8 = (rawText, control) => {
 module.exports = {
     parseControlFrame : parseControlFrame,
     formatControlFrame : formatControlFrame,
-    formatPayload : formatPayload,
     decodeUTF8 : decodeUTF8
 };

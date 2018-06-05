@@ -28,12 +28,13 @@ class FileServer extends HTMLElement {
                 });
 
                 webutil.createMenuItem(serverMenu, 'Request Files', () => {
-                    let files = {
-                        files: [
-                            'javascript/bisweb/data/MNI_2mm_resliced.nii.gz'
-                        ]
-                    };
-                    this.sendFileRequest(socket, files);
+                    let files = [
+                        'javascript/bisweb/data/a1.nii.gz'
+                    ];
+                    this.sendFileRequest(socket, {
+                        command : 'getfile',
+                        files : files
+                    });
                 });
 
                 webutil.createMenuItem(serverMenu, 'Show Server Files', () => {
@@ -55,10 +56,23 @@ class FileServer extends HTMLElement {
 
         socket.addEventListener('message', (event) => {
             console.log('received data', event);
-            
-            switch (event.data.type) {
-                case 'filelist' : this.displayFileList(event.data.data);
-                case 'error' : console.log('Error from client:', event.data.data);
+            let data;
+
+            //parse stringified JSON if the transmission is text
+            if (typeof(event.data) === "string") {
+                try {
+                    data = JSON.parse(event.data);
+                } catch(e) {
+                    console.log('an error occured while parsing event.data', e);
+                    return;
+                }
+            } else {
+                data = event.data;
+            }
+
+            switch (data.type) {
+                case 'filelist' : this.displayFileList(data.payload);
+                case 'error' : console.log('Error from client:', data.payload);
                 default : console.log('received a binary transmission -- interpreting as an image'); this.handleImageTransmission(event.data);
             }    
         });

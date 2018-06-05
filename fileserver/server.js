@@ -9,7 +9,7 @@ const os = require('os');
 //node extension to make node-like calls work on Windows
 //https://github.com/prantlf/node-posix-ext
 const posixext = require('posix-ext'),
-fs = posixext.fs, process = posixext.process;
+    fs = posixext.fs, process = posixext.process;
 
 const wsutil = require('./wsutil.js');
 const genericio = require('bis_genericio.js');
@@ -22,12 +22,12 @@ const SHAstring = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 let loadMenuBarItems = () => {
     let menubar = document.getElementById('viewer_menubar');
     let tabContainer = $(menubar).find('.nav.navbar-nav');
-    let createMenuBarTab = function(name, parent) {
+    let createMenuBarTab = function (name, parent) {
         let tab = $("<li class='dropdown'>" +
-        "<a href='#' class='dropdown-toggle'  data-toggle='dropdown' role='button' aria-expanded='false'>" + name + "<span class='caret'></span></a>" +
-        "<ul class='dropdown-menu' role='menu'>" +
-        "</ul>" +
-        "</li>");
+            "<a href='#' class='dropdown-toggle'  data-toggle='dropdown' role='button' aria-expanded='false'>" + name + "<span class='caret'></span></a>" +
+            "<ul class='dropdown-menu' role='menu'>" +
+            "</ul>" +
+            "</li>");
 
         $(parent).append(tab);
 
@@ -35,7 +35,7 @@ let loadMenuBarItems = () => {
         return tab.find('.dropdown-menu');
     };
 
-    let createMenuBarItem = function(name, tab) {
+    let createMenuBarItem = function (name, tab) {
         let item = $(`<li>  <a href="#">${name}</a> </li>`)
         tab.append(item);
         return item;
@@ -43,7 +43,7 @@ let loadMenuBarItems = () => {
 
     let fileTab = createMenuBarTab('Files', tabContainer);
     let fileItem = createMenuBarItem('Load Local Files', fileTab);
-    
+
     fileItem.on('click', () => {
         loadLocalFiles('hello.txt');
     });
@@ -59,20 +59,20 @@ let loadLocalFiles = (filename) => {
 };
 
 let startServer = () => {
-    let server = net.createServer( (socket) => {
+    let server = net.createServer((socket) => {
         console.log('got connection', socket);
-        
+
         //construct the handshake response
         //https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers
         let response = "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ";
-        
+
         //parse websocket key out of response
         let websocketKey;
         let handshake = (chunk) => {
             let decodedChunk = new TextDecoder('utf-8').decode(chunk);
             console.log('chunk', decodedChunk);
             let headers = decodedChunk.split('\n');
-            
+
             for (let i = 0; i < headers.length; i++) {
                 headers[i] = headers[i].split(':');
             }
@@ -83,8 +83,6 @@ let startServer = () => {
                     websocketKey = header[1].slice(1, -1);
                 }
             }
-
-            //console.log('headers', headers);
 
             //create Sec-WebSocket-Accept hash (see documentation)
             let shasum = crypto.createHash('sha1');
@@ -99,7 +97,7 @@ let startServer = () => {
 
             socket.write(response, 'utf-8');
         };
-        
+
         socket.on('data', handshake);
         socket.on('close', (e) => { console.log('connection terminated', e); });
 
@@ -135,8 +133,8 @@ let prepareForDataFrames = (socket) => {
         }
 
         switch (parsedControl.opcode) {
-            case 1 : handleTextRequest(decoded, parsedControl, socket); break;
-            case 8 : handleCloseFromClient(decoded, parsedControl, socket);
+            case 1: handleTextRequest(decoded, parsedControl, socket); break;
+            case 8: handleCloseFromClient(decoded, parsedControl, socket);
         }
 
     });
@@ -148,18 +146,18 @@ let prepareForDataFrames = (socket) => {
  * @param {String} rawText - Unparsed JSON denoting the file or series of files to read. 
  * @param {Object} control - Parsed WebSocket header for the file request.
  * @param {Socket} socket - WebSocket over which the communication is currently taking place.
- */ 
+ */
 let handleTextRequest = (rawText, control, socket) => {
     let parsedText = parseClientJSON(rawText);
-    
+
     switch (parsedText.command) {
+        //get file list
         case 'show':
-        case 'showfiles' : serveFileList(socket); break;
+        case 'showfiles': serveFileList(socket); break;
+        //get a file from the server
         case 'getfile':
-        case 'getfiles':
-        case 'file': 
-        case 'files': serveFileRequest(rawText, control, socket); break;
-        default : console.log('Cannot interpret request with unknown command', parsedText.command);
+        case 'getfiles': serveFileRequest(parsedText, control, socket); break;
+        default: console.log('Cannot interpret request with unknown command', parsedText.command);
     }
 };
 
@@ -169,9 +167,8 @@ let handleTextRequest = (rawText, control, socket) => {
  * @param {Object} control - Parsed WebSocket header for the file request.
  * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
  */
-let serveFileRequest = (rawText, control, socket) => {
-    let parsedText = parseClientJSON(rawText);
-
+let serveFileRequest = (parsedText, control, socket) => {
+    console.log('parsed text', parsedText);
     //TODO: Make this less grossly memory inefficient
     //https://nodejs.org/api/buffer.html#buffer_buffers_and_typedarray
     let files = parsedText.files;
@@ -186,26 +183,17 @@ let serveFileRequest = (rawText, control, socket) => {
             fs.lstat(file, (err, stat) => {
                 let currentUser = process.getuid();
                 console.log('current user', currentUser, 'file owner', stat.uid);
-                if (stat.uid !== currentUser) { handleBadRequestFromClient(socket, "Cannot download a file that does not belong to the current user. Have you tried changing ownership of the requested file?"); return; } 
+                if (stat.uid !== currentUser) { handleBadRequestFromClient(socket, "Cannot download a file that does not belong to the current user. Have you tried changing ownership of the requested file?"); return; }
 
                 fs.readFile(file, (err, result) => {
                     //compress data before sending? doesn't seem to reduce size by very much
                     //zlib.gzip(data, (err, result) => {
 
-                        let controlFrame = wsutil.formatControlFrame(2, result.length);
-                        let packetHeader = Buffer.from(controlFrame.buffer);
-                        let packet = Buffer.concat([packetHeader, result]);
-        
-                        console.log('sending control frame', wsutil.parseControlFrame(packetHeader), 'raw frame', packetHeader);
-                        console.log('packet', packet);
-
-                        socket.write(packet, () => { console.log('write done.'); });
-                    
+                    socket.write(formatPacket('image', result), () => { console.log('write done.'); });
                 });
             });
-            
-        }).catch( (error) => {
-            console.log('Error in file request', error);
+
+        }).catch((error) => {
             handleBadRequestFromClient(socket, error);
         });
     }
@@ -223,48 +211,50 @@ let serveFileList = (socket) => {
         return new Promise( (resolve, reject) => {
             fs.readdir(path, (err, files) => {
                 if (err) { reject(err); }
-                console.log('files', files);
-    
-                //remove hidden files/folders from results
-                let validFiles = files.filter( (unfilteredFile) => { return unfilteredFile.charAt(0) !== '.'; });
-                console.log('valid files', validFiles);
 
-                //expand a directory inside the current directory -- resolve promise when all contents examined.
+                //remove hidden files/folders from results
+                let validFiles = files.filter((unfilteredFile) => { return unfilteredFile.charAt(0) !== '.'; });
+
                 let expandInnerDirectory = (path, treeEntry) => {
-                    return new Promise( (resolve, reject) => {
+                    return new Promise((resolve, reject) => {
+                        //if file is a directory, expand it and add its children to fileTree recursively
+                        //otherwise just add the entry and resolve
                         fs.lstat(path, (err, stat) => {
                             if (err) { reject(err); }
+                            fileTreeIndex.push(treeEntry);
 
-                            //expand directories contained in the current directory
                             if (stat.isDirectory()) {
                                 treeEntry.children = [];
                                 expandDirectory(path, treeEntry.children).then( () => { resolve(fileTreeIndex); });
                             } else {
                                 resolve(fileTreeIndex);
                             }
-
-                            fileTreeIndex.push(treeEntry);
                         });
                     });
                 }
 
+                //expand a directory inside the current directory -- resolve promise when all contents examined.
                 let promisesInsideDirectory = [];
                 for (let file of validFiles) {
-                    let newTreeEntry = { 'text' : file };
+                    let newTreeEntry = { 'text': file };
                     let newPath = path + '/' + file;
                     promisesInsideDirectory.push(expandInnerDirectory(newPath, newTreeEntry));
                 }
 
-                Promise.all(promisesInsideDirectory).then( () => { resolve(fileTreeIndex); });
+                Promise.all(promisesInsideDirectory).then(() => { resolve(fileTreeIndex); });
             });
-        });    
+        });
     };
 
-    expandDirectory(basedir, fileTree).then( (tree) => { console.log('tree', tree); });
+    expandDirectory(basedir, fileTree).then( (tree) => {
+        console.log('tree', tree);
+        socket.write(formatPacket('filelist', tree));
+    });
 };
 
 /**
  * Sends a message to the client describing the server error that occured during their request. 
+ * 
  * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
  * @param {String} reason - Text describing the error.
  */
@@ -272,16 +262,12 @@ let handleBadRequestFromClient = (socket, reason) => {
     let error = "An error occured while handling your request. "
     error = error.concat(reason);
 
-    let payload = wsutil.formatPayload('error', error);
-
-    let controlFrame = wsutil.formatControlFrame(1, payload.length);
-    let packetHeader = Buffer.from(controlFrame.buffer);
-    let packet = Buffer.concat([packetHeader, payload]);
-    socket.write(packet, () => { console.log('request returned an error', reason, '\nsent error to client'); });
+    socket.write(formatPacket('error', error), () => { console.log('request returned an error', reason, '\nsent error to client'); });
 };
 
 /**
  * Closes the server side of the socket gracefully. Meant to be called upon receipt of a 'connection close' packet from the client, i.e. a packet with opcode 8.
+ * 
  * @param {String} rawText - Unparsed JSON denoting the file or series of files to read. 
  * @param {Object} control - Parsed WebSocket header for the file request.
  * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
@@ -299,13 +285,14 @@ let handleCloseFromClient = (rawText, control, socket) => {
 /**
  * Takes a path specifying a file to load on the server machine and determines whether the path is clean, i.e. specifies a file that exists, does not contain symbolic links.
  * Recursively checks every file and directory on the path.
+ * 
  * @param {String} filepath - Path to check.
  */
 let checkValidPath = (filepath) => {
     return new Promise( (resolve, reject) => {
         let pathCheck = (path) => {
             if (path === '') { resolve(); return; }
-            
+
             //console.log('checking path', path);
             fs.lstat(path, (err, stats) => {
                 if (err) { console.log('err', err); reject('An error occured while statting filepath. Is there something on the path that would cause issues?'); return; }
@@ -317,20 +304,48 @@ let checkValidPath = (filepath) => {
                 pathCheck(newPath.join('/'));
             });
         }
-        
+
         pathCheck(filepath);
     });
 
 };
 
+/**
+ * Takes a payload and a description of the payload type and formats the packet for transmission. 
+ * 
+ * @param {String} payloadType - A word describing the nature of the payload.
+ * @param {String|Binary} data - The payload for the packet.
+ */
+let formatPacket = (payloadType, data) => {
+    let payload, opcode;
+    //transmissions are either text (JSON) or a raw image
+    if (payloadType !== 'image') {
+        payload = JSON.stringify({
+            'type' : payloadType,
+            'payload' : data
+        });
+        opcode = 1;
+    } else {
+        payload = data;
+        opcode = 2;
+    }
+
+    console.log('sending payload', payload);
+
+    let controlFrame = wsutil.formatControlFrame(opcode, payload.length);
+    let packetHeader = Buffer.from(controlFrame.buffer), packetBody = Buffer.from(payload);
+    let packet = Buffer.concat([packetHeader, packetBody]);
+
+    return packet;
+};
+
 let parseClientJSON = (rawText) => {
     let text = wsutil.decodeUTF8(rawText, rawText.length);
-    console.log('text', text);
 
     let parsedText;
     try {
         parsedText = JSON.parse(text);
-    } catch(e) {
+    } catch (e) {
         console.log('an error occured while parsing the data from the client', e);
     }
 
@@ -339,6 +354,6 @@ let parseClientJSON = (rawText) => {
 
 
 module.exports = {
-    loadMenuBarItems : loadMenuBarItems,
-    loadLocalFiles : loadLocalFiles
+    loadMenuBarItems: loadMenuBarItems,
+    loadLocalFiles: loadLocalFiles
 }
