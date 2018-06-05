@@ -32,7 +32,8 @@ class PrepareRegistrationModule extends BaseModule {
 
 
     createDescription() {
-        return {
+
+        let desc= {
             "name": "Prepare Registration",
             "description": "Prepares an image for registration by extracting a frame from the image then smoothing, resampling, and normalizing it.",
             "author": "Zach Saltzman",
@@ -114,14 +115,29 @@ class PrepareRegistrationModule extends BaseModule {
                 baseutils.getDebugParam(),
             ]
         };
+
+        desc["inputs"].push({
+            'type': 'transformation',
+            'name': 'Reslice Transform',
+            'description': 'Load the transformation used to reslice the image',
+            'varname': 'xform',
+            'shortname' : 'x',
+            'required' : false,
+            'guiviewer' : 'current',
+        });
+        return desc;
+                            
     }
 
     directInvokeAlgorithm(vals) {
         console.log('oooo invoking: prepareRegistration with vals', JSON.stringify(vals));
+
+        let xform=this.inputs['xform'] || 0;
+        
         return new Promise((resolve, reject) => {
             biswrap.initialize().then(() => {
                 let input = this.inputs['input'];
-                this.outputs['output'] = biswrap.prepareImageForRegistrationWASM(input, {
+                this.outputs['output'] = biswrap.prepareImageForRegistrationWASM(input,xform, {
                     "numbins" : parseInt(vals.numbins),
                     "normalize" : super.parseBoolean(vals.normal),
                     "resolution" : parseFloat(vals.resolution),

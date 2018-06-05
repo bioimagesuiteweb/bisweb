@@ -266,11 +266,12 @@ extern "C" {
   
   /** Prepare Image for Registration using \link bisImageAlgorithms::prepareImageForRegistration \endlink
    * @param input serialized input as unsigned char array 
+   * @param transformation serialized transformation as unsigned char array 
    * @param jsonstring the parameter string for the algorithm 
    * @returns a pointer to a serialized image
    */
-  // BIS: { 'prepareImageForRegistrationWASM', 'bisImage', [ 'bisImage', 'ParamObj' ] } 
-  BISEXPORT unsigned char*  prepareImageForRegistrationWASM(unsigned char* input,const char* jsonstring);
+  // BIS: { 'prepareImageForRegistrationWASM', 'bisImage', [ 'bisImage', 'bisLinearTransformation_opt', 'ParamObj','debug' ] } 
+  BISEXPORT unsigned char*  prepareImageForRegistrationWASM(unsigned char* input,unsigned char* xform,const char* jsonstring,int debug);
   
   
   /** Compute Displacement Field 

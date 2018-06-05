@@ -50,7 +50,7 @@ class NonLinearRegistrationModule extends BaseModule {
         des.params.push(baseutils.getLinearMode("linearmode"));
 
         des.params.push({
-            "name": "Control Point Spacing",
+            "name": "CP Spacing",
             "description": "Control Point spacing of the underlying Bspline-FFD Registration",
             "priority": 10,
             "advanced": false,
@@ -60,6 +60,19 @@ class NonLinearRegistrationModule extends BaseModule {
             "default" : 20.0,
             "low": 1.0,
             "high": 60.0,
+        });
+
+        des.params.push({
+            "name": "CP Sp-Rate",
+            "description": "Control Point spacing rate of the underlying Bspline-FFD Registration",
+            "priority": 100,
+            "advanced": false,
+            "gui": "slider",
+            "type": "float",
+            "varname": "cpsrate",
+            "default" : 2.0,
+            "low": 1.0,
+            "high": 3.0,
         });
 
         des.params.push({
@@ -116,6 +129,7 @@ class NonLinearRegistrationModule extends BaseModule {
                 
                 this.outputs['output'] = biswrap.runNonLinearRegistrationWASM(reference, target, initial,{
                     'cps' : parseFloat(vals.cps),
+                    'cpsrate' : parseFloat(vals.cpsrate),
                     'lambda' : parseFloat(vals.lambda),
                     'intscale' : parseInt(vals.intscale),
                     'numbins' : parseInt(vals.numbins),
