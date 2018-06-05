@@ -236,13 +236,13 @@
 	},
 	{
 	    "command" : "nonlinearRegistration -r testdata/MNI_2mm_orig.nii.gz -t testdata/MNI_2mm_scaled.nii.gz --intscale 1 --numbins  64 --levels  2  --optimization ConjugateGradient --stepsize 1.0 --metric NMI --steps 1 --iterations 5 --cps  40.0 --resolution 2.0 --lambda  0.1",
-	    "test"    : "--test_target testdata/MNI_2mm_orig.nii.gz --test_type registration --test_comparison cc --test_threshold 0.83",
+	    "test"    : "--test_target testdata/MNI_2mm_orig.nii.gz --test_type registration --test_comparison cc --test_threshold 0.86",
 	    "result"  : true,
 	    "dopython": true
 	},
 	{
 	    "command" : "nonlinearRegistration -r testdata/MNI_2mm_orig.nii.gz -t testdata/MNI_2mm_scaled.nii.gz --intscale 1 --numbins  64 --levels  1 --optimization ConjugateGradient --stepsize 1.0 --metric NMI --steps 1 --iterations 1 --cps  40.0 --resolution  3.0 --lambda  0.1 --linearmode None --debug false",
-	    "test"    : "--test_target testdata/MNI_2mm_orig.nii.gz --test_type registration --test_comparison cc --test_threshold 0.77",
+	    "test"    : "--test_target testdata/MNI_2mm_orig.nii.gz --test_type registration --test_comparison cc --test_threshold 0.78",
 	    "result"  : false,
 	    "dopython": true
 	},
