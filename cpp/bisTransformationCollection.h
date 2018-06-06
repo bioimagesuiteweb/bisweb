@@ -78,6 +78,8 @@ class bisTransformationCollection : public bisAbstractTransformation {
   /** returns size needed to serialize this object in bytes */
   virtual int getRawSize();
 
+  // No
+  virtual  int isLinear() { return 0;}
 
 
 protected:

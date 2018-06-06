@@ -67,6 +67,11 @@ void bisComboTransformation::setInitialTransformation(bisMatrixTransformation *p
 }
 
 
+void bisComboTransformation::getInitialTransformation(bisUtil::mat44 m)
+{
+  this->initialLinearTransformation->getMatrix(m);
+}
+
 
 int bisComboTransformation::getNumberOfGridTransformations()
 {

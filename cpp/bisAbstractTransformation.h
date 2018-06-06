@@ -103,7 +103,10 @@ public:
   /** Prints info about this object for debugging, mostly used to print 4x4 matrices
       in linear transformations */
   virtual void printSelf() { }
-  
+
+  /** Test if this transformation is a linear one (i.e. derives from bisMatrixTransformation) */
+  virtual  int isLinear() = 0;
+
 
 private:
   /** Copy constructor disabled to maintain shared/unique ptr safety */

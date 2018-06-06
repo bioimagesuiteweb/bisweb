@@ -58,6 +58,8 @@ class bisIdentityTransformation : public bisMatrixTransformation {
   virtual void computeDisplacement(float x[3],float disp[3]);
 
 
+  // No
+  virtual  int isLinear() { return 0;}
 
 protected:
 
