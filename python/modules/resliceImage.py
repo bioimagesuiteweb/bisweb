@@ -44,7 +44,7 @@ class resliceImage(bis_basemodule.baseModule):
         reference = self.inputs['reference'];
         if (reference==None):
             reference=input;
-        xform = self.inputs['transform'];
+        xform = self.inputs['xform'];
             
         spa=reference.spacing;
         dim=reference.dimensions

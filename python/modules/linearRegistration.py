@@ -51,7 +51,7 @@ class linearRegistration(bis_basemodule.baseModule):
                 'intscale' : vals['intscale'],
                 'numbins' : vals['numbins'],
                 'levels' : vals['levels'],
-                'smoothing' : vals['extrasmoothing'],
+                'smoothing' : vals['imagesmoothing'],
                 'optimization' : bis_baseutils.getOptimizationCode(vals['optimization']),
                 'stepsize' : vals['stepsize'],
                 'metric' : bis_baseutils.getMetricCode(vals['metric']),
