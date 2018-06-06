@@ -211,7 +211,7 @@ module.exports = {
                 "gui": "slider",
                 "varname": "stepsize",
                 "default": obj.stepsize,
-                "low": 0.5,
+                "low": 0.125,
                 "high": 4.0,
             },
             {

@@ -217,7 +217,7 @@
 	    "dopython": false
 	},
 	{
-	    "command" : "approximateField -i testdata/MNI_6mm_scaleddispfield.nii.gz --spacing 30.0 --debug false",
+	    "command" : "approximateField -i testdata/MNI_6mm_scaleddispfield.nii.gz --spacing 30.0 --debug false --stepsize 0.25",
 	    "test"    : "--test_target testdata/newtests/fitgrid.grd --test_type gridtransform",
 	    "result"  : true,
 	    "dopython": true
