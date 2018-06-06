@@ -240,6 +240,11 @@
 	    "result"  : true,
 	    "dopython": true
 	},
+	{   "command" : "nonlinearRegistration -r testdata/MNI_2mm_orig.nii.gz -t testdata/MNI_2mm_scaled.nii.gz --intscale 1 --numbins  64 --levels  2  --optimization ConjugateGradient --stepsize 1.0 --metric NMI --steps 1 --iterations 5 --cps  30.0 --linearmode None --resolution 2.0 --lambda  0.2 --append 0",
+	    "test"    : "--test_target testdata/MNI_2mm_orig.nii.gz --test_type registration --test_comparison cc --test_threshold 0.92",
+	    "result"  : true,
+	    "dopython": true
+	},
 	{
 	    "command" : "nonlinearRegistration -r testdata/MNI_2mm_orig.nii.gz -t testdata/MNI_2mm_scaled.nii.gz --intscale 1 --numbins  64 --levels  1 --optimization ConjugateGradient --stepsize 1.0 --metric NMI --steps 1 --iterations 2 --cps  40.0 --resolution  3.0 --linearmode None --lambda  0.1 --linearmode None --debug false",
 	    "test"    : "--test_target testdata/MNI_2mm_orig.nii.gz --test_type registration --test_comparison cc --test_threshold 0.95",

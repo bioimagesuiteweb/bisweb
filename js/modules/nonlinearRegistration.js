@@ -63,6 +63,18 @@ class NonLinearRegistrationModule extends BaseModule {
         });
 
         des.params.push({
+            "name": "Append Mode",
+            "description": "If true (default), grids are chained",
+            "priority": 10,
+            "advanced": false,
+            "gui": "check",
+            "varname": "append",
+            "type": 'boolean',
+            "default": true,
+        });
+ 
+        
+        des.params.push({
             "name": "CPS Rate",
             "description": "Control Point spacing rate of the underlying Bspline-FFD Registration",
             "priority": 100,
@@ -126,9 +138,10 @@ class NonLinearRegistrationModule extends BaseModule {
                         'return_vector' : false},
                                                                 this.parseBoolean(vals.debug));
                 }
-                
+
                 this.outputs['output'] = biswrap.runNonLinearRegistrationWASM(reference, target, initial,{
                     'cps' : parseFloat(vals.cps),
+                    'appendmode': this.parseBoolean(vals.append),
                     'cpsrate' : parseFloat(vals.cpsrate),
                     'lambda' : parseFloat(vals.lambda),
                     'intscale' : parseInt(vals.intscale),
