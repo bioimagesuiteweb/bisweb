@@ -236,7 +236,6 @@ class ModuleManagerElement extends HTMLElement {
 
         if (this.mode!=='single') {
             this.createModule('Reslice Image',3, true, modules.resliceImage, moduleoptions);
-            this.createModule('Prepare Image',3, true, modules.prepareRegistration, moduleoptions);
             
             this.createModule('Manual Registration',3, true, modules.manualRegistration, moduleoptions);
             if (usesgpl) {

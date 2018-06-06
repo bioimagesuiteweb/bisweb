@@ -78,7 +78,7 @@ class NonLinearRegistrationModule extends BaseModule {
             "name": "CPS Rate",
             "description": "Control Point spacing rate of the underlying Bspline-FFD Registration",
             "priority": 100,
-            "advanced": false,
+            "advanced": true,
             "gui": "slider",
             "type": "float",
             "varname": "cpsrate",

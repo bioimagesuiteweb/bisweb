@@ -239,7 +239,7 @@ module.exports = {
                 "default": obj.iterations
             },
             {
-                "name": "Resln Factor",
+                "name": "Resolution",
                 "description": "Factor to reduce the resolution prior to registration",
                 "priority": 11,
                 "advanced": false,
