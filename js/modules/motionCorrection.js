@@ -116,7 +116,7 @@ class MotionCorrectionModule extends BaseModule {
                 'intscale' : parseInt(vals.intscale),
                 'numbins' : parseInt(vals.numbins),
                 'levels' : parseInt(vals.levels),
-                'smoothing' : parseFloat(vals.smoothing),
+                'smoothing' : parseFloat(vals.imagesmoothing),
                 'optimization' : baseutils.getOptimizationCode(vals.optimization),
                 'stepsize' : parseFloat(vals.stepsize),
                 'metric' : baseutils.getMetricCode(vals.metric),
