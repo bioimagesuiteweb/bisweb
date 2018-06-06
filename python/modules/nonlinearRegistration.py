@@ -74,7 +74,7 @@ class nonlinearRegistration(bis_basemodule.baseModule):
         try:
             self.outputs['output']=libbis.runNonLinearRegistrationWASM(reference, target, initial, {
 		'cps' : vals['cps'],
-                'appendmode', self.parseBoolean(vals['append']),
+                'appendmode': self.parseBoolean(vals['append']),
                 'lambda' : vals['lambda'],
                 'intscale' : vals['intscale'],
                 'numbins' : vals['numbins'],

@@ -1815,9 +1815,9 @@ namespace bisImageAlgorithms {
   
   
   template<class T> std::unique_ptr<bisSimpleImage<T> >  prepareImageForRegistrationExtractFrameAndSmooth(bisSimpleImage<T>* input,
-                                                                                          float sigmas[3],float smoothing,
-                                                                                          int frame,std::string name,
-                                                                                          int debug)
+                                                                                                          float sigmas[3],
+                                                                                                          int frame,std::string name,
+                                                                                                          int debug)
   {
     float outsigmas[3];
 
@@ -1881,7 +1881,7 @@ namespace bisImageAlgorithms {
 
 
     int i_dim[5]; float i_spa[5]; double range[2];
-    std::unique_ptr<bisSimpleImage<T> > smoothed=prepareImageForRegistrationExtractFrameAndSmooth(input,sigmas,smoothing,frame,name,debug);
+    std::unique_ptr<bisSimpleImage<T> > smoothed=prepareImageForRegistrationExtractFrameAndSmooth(input,sigmas,frame,name,debug);
 
     if (debug)
       std::cout << "+ +  \t Resampling (" << resolution[0] << "," << resolution[1] << "," << resolution[2] << ") ->";
@@ -1939,7 +1939,7 @@ namespace bisImageAlgorithms {
     } 
     
     int i_dim[5]; float i_spa[5]; double range[2];
-    std::unique_ptr<bisSimpleImage<T> > smoothed=prepareImageForRegistrationExtractFrameAndSmooth(input,sigmas,smoothing,frame,name,debug);
+    std::unique_ptr<bisSimpleImage<T> > smoothed=prepareImageForRegistrationExtractFrameAndSmooth(input,sigmas,frame,name,debug);
 
     if (debug)
       std::cout << "+ +  \t Reslicing :";
