@@ -18,19 +18,7 @@ class FileServer extends HTMLElement {
         //File tree requests display the contents of the disk on the server machine in a modal
         this.fileTreeDisplayModal = webutil.createmodal('File Tree', 'modal-lg');
         this.fileTreeDisplayModal.dialog.find('.modal-footer').remove();
-
-        $(this.fileTreeDisplayModal.dialog).on('hidden.bs.modal', () => {
-            this.fileTreeDisplayModal.body.empty();
-        });
-
-        //configure jstree will set the icons based on the 'types' of the data initially, but changing them dynamically requires setting the icon using events
-        $(this.fileTreeDisplayModal.body).on('open_node.jstree', (event, data) => {
-            data.instance.set_icon(data.node, 'glyphicon glyphicon-folder-open');
-        });
-
-        $(this.fileTreeDisplayModal.body).on('close_node.jstree', (event, data) => {
-            data.instance.set_icon(data.node, 'glyphicon glyphicon-folder-close');
-        });
+        this.treeModalConfigured = false;
 
         webutil.runAfterAllLoaded(() => {
             let menuBarID = this.getAttribute('bis-menubarid');
@@ -106,6 +94,28 @@ class FileServer extends HTMLElement {
         let loadMessage = $('<div>Loading files from server...</div>')
         this.fileTreeDisplayModal.body.append(loadMessage);
         this.fileTreeDisplayModal.dialog.modal('show');
+
+        //configure modal jstree events, if they have not been configured already
+        if (!this.treeModalConfigured) {
+            $(this.fileTreeDisplayModal.body).on('open_node.jstree', (event, data) => {
+                data.instance.set_icon(data.node, 'glyphicon glyphicon-folder-open');
+            });
+
+            $(this.fileTreeDisplayModal.body).on('close_node.jstree', (event, data) => {
+                data.instance.set_icon(data.node, 'glyphicon glyphicon-folder-close');
+            });
+
+            $(this.fileTreeDisplayModal.dialog).on('hidden.bs.modal', () => {
+                this.fileTreeDisplayModal.body.remove();
+                
+                let newBody = $('<div class="modal-body"</div>');
+                console.log('fileTreeDisplayModal', this.fileTreeDisplayModal);
+                this.fileTreeDisplayModal.dialog.find('.modal-content').append(newBody);
+                this.fileTreeDisplayModal.body = newBody;
+            });
+
+            this.treeModalConfigured = true;
+        }
     }
 
     displayFileList(list) {
