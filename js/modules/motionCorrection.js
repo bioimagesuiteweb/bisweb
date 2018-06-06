@@ -66,7 +66,7 @@ class MotionCorrectionModule extends BaseModule {
         baseutils.setParamDefaultValue(des.params,'resolution',1.01);
         baseutils.setParamDefaultValue(des.params,'iterations',32);
         baseutils.setParamDefaultValue(des.params,'levels',3);
-        baseutils.setParamDefaultValue(des.params,'stepsize',0.25);
+        baseutils.setParamDefaultValue(des.params,'stepsize',0.125);
         baseutils.setParamDefaultValue(des.params,'optimization',"HillClimb");
         des.outputs[0].type="collection";
         des.outputs[1].required=true;
