@@ -241,17 +241,6 @@ class TreeViewer extends HTMLElement {
         if (this.modalFrame.body.find('.container, .container-fluid').length === 0)
             modal = $(modalHTML);
 
-        /*modal.jstree({
-            'core' : {
-                'data' : [ 
-                    { "text" : "Root", "children": [
-                        { "text" : "Child 1"},
-                        { "text" : "Child 2"}
-                    ]}
-                ]
-            }
-        });*/
-
         for (let tree of this.flattenedNetwork) {
             let contentPanes = this.modalFrame.body.find('.tab-pane');
             let tabExists = false;

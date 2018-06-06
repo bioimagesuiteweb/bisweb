@@ -14,6 +14,15 @@ class FileServer extends HTMLElement {
     connectedCallback() {
         let socket;
 
+        //File tree requests display the contents of the disk on the server machine in a modal
+        this.fileTreeDisplayModal = webutil.createmodal('File Tree', 'modal-lg');
+        this.fileTreeDisplayModal.dialog.find('.modal-footer').remove();
+
+        $(this.fileTreeDisplayModal.dialog).on('hidden.bs.modal', () => {
+            this.fileTreeDisplayModal.body.empty();
+        });
+
+
         webutil.runAfterAllLoaded(() => {
             let menuBarID = this.getAttribute('bis-menubarid');
             let menuBar = document.querySelector(menuBarID).getMenuBar();
@@ -31,6 +40,7 @@ class FileServer extends HTMLElement {
                     let files = [
                         'javascript/bisweb/data/a1.nii.gz'
                     ];
+
                     this.sendFileRequest(socket, {
                         command : 'getfile',
                         files : files
@@ -71,8 +81,8 @@ class FileServer extends HTMLElement {
             }
 
             switch (data.type) {
-                case 'filelist' : this.displayFileList(data.payload);
-                case 'error' : console.log('Error from client:', data.payload);
+                case 'filelist' : this.displayFileList(data.payload); break;
+                case 'error' : console.log('Error from client:', data.payload); break;
                 default : console.log('received a binary transmission -- interpreting as an image'); this.handleImageTransmission(event.data);
             }    
         });
@@ -83,11 +93,21 @@ class FileServer extends HTMLElement {
     requestFileList(socket) {
         let command = JSON.stringify({ 'command' : 'show' }); 
         socket.send(command);
+
+        let loadMessage = $('<div>Loading files from server...</div>')
+        this.fileTreeDisplayModal.body.append(loadMessage);
+        this.fileTreeDisplayModal.dialog.modal('show');
     }
 
-    //TODO: Implement display with JSTree
     displayFileList(list) {
+        this.fileTreeDisplayModal.body.empty();
 
+        console.log('list', list);
+        this.fileTreeDisplayModal.body.jstree({
+            'core' : {
+                'data' : list
+            }
+        });
     }
 
     sendFileRequest(socket, files = null) {
