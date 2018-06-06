@@ -225,6 +225,7 @@ let serveFileList = (socket) => {
 
                             if (stat.isDirectory()) {
                                 treeEntry.children = [];
+                                treeEntry.type = 'directory';
                                 expandDirectory(path, treeEntry.children).then( () => { resolve(fileTreeIndex); });
                             } else {
                                 resolve(fileTreeIndex);

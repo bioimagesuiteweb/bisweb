@@ -106,7 +106,19 @@ class FileServer extends HTMLElement {
         this.fileTreeDisplayModal.body.jstree({
             'core' : {
                 'data' : list
-            }
+            },
+            'types' : {
+                'default' : {
+                    'icon' : 'glyphicon glyphicon-file'
+                },
+                'root' : {
+                    'icon' : 'glyphicon glyphicon-home'
+                },
+                'directory' : {
+                    'icon' : 'glyphicon glyphicon-folder-close'
+                }
+            },
+            'plugins' : ["types"]
         });
     }
 
