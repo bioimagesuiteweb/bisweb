@@ -18,7 +18,6 @@ class FileServer extends HTMLElement {
         //File tree requests display the contents of the disk on the server machine in a modal
         this.fileTreeDisplayModal = webutil.createmodal('File Tree', 'modal-lg');
         this.fileTreeDisplayModal.dialog.find('.modal-footer').remove();
-        this.treeModalConfigured = false;
 
         webutil.runAfterAllLoaded(() => {
             let menuBarID = this.getAttribute('bis-menubarid');
@@ -95,39 +94,51 @@ class FileServer extends HTMLElement {
         this.fileTreeDisplayModal.body.append(loadMessage);
         this.fileTreeDisplayModal.dialog.modal('show');
 
-        //configure modal jstree events, if they have not been configured already
-        if (!this.treeModalConfigured) {
-            $(this.fileTreeDisplayModal.body).on('open_node.jstree', (event, data) => {
-                data.instance.set_icon(data.node, 'glyphicon glyphicon-folder-open');
-            });
+        //set up file tree events while data is loading
+        $(this.fileTreeDisplayModal.body).on('open_node.jstree', (event, data) => {
+            data.instance.set_icon(data.node, 'glyphicon glyphicon-folder-open');
+        });
 
-            $(this.fileTreeDisplayModal.body).on('close_node.jstree', (event, data) => {
-                data.instance.set_icon(data.node, 'glyphicon glyphicon-folder-close');
-            });
+        $(this.fileTreeDisplayModal.body).on('close_node.jstree', (event, data) => {
+            data.instance.set_icon(data.node, 'glyphicon glyphicon-folder-close');
+        });
 
-            $(this.fileTreeDisplayModal.dialog).on('hidden.bs.modal', () => {
-                this.fileTreeDisplayModal.body.remove();
-                
-                let newBody = $('<div class="modal-body"</div>');
-                console.log('fileTreeDisplayModal', this.fileTreeDisplayModal);
-                this.fileTreeDisplayModal.dialog.find('.modal-content').append(newBody);
-                this.fileTreeDisplayModal.body = newBody;
-            });
+        $(this.fileTreeDisplayModal.body).on('select_node.jstree', (event, data) => {
+            console.log('data', data);
+            if (data.node.type === 'file') {
+                this.sendFileRequest(socket, { 'command' : 'getfile', 'files' : [data.node.original.path] });
+            }
+        });
 
-            this.treeModalConfigured = true;
-        }
+        $(this.fileTreeDisplayModal.dialog).on('hidden.bs.modal', () => {
+            this.fileTreeDisplayModal.body.remove();
+
+            //jstree changes structure of modal-body after it runs, so modal-body needs to be replaced before reloading the file tree
+            let newBody = $('<div class="modal-body"></div>');
+            this.fileTreeDisplayModal.dialog.find('.modal-content').append(newBody);
+            this.fileTreeDisplayModal.body = newBody;
+        });
+
+        //nodes open on double click by default, but you can set them to open on single-click
+        //https://github.com/vakata/jstree/issues/953
+        $(this.fileTreeDisplayModal.body).on('click', '.jstree-anchor', (e) => {
+            $(this.fileTreeDisplayModal.body).jstree(true).toggle_node(e.target);
+        });
     }
 
     displayFileList(list) {
         this.fileTreeDisplayModal.body.empty();
-
         console.log('list', list);
         this.fileTreeDisplayModal.body.jstree({
             'core' : {
-                'data' : list
+                'data' : list,
+                'dblclick_toggle' : false
             },
             'types' : {
                 'default' : {
+                    'icon' : 'glyphicon glyphicon-file'
+                },
+                'file' : {
                     'icon' : 'glyphicon glyphicon-file'
                 },
                 'root' : {

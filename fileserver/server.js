@@ -173,9 +173,6 @@ let serveFileRequest = (parsedText, control, socket) => {
     //https://nodejs.org/api/buffer.html#buffer_buffers_and_typedarray
     let files = parsedText.files;
     for (let file of files) {
-
-        file = os.homedir() + '/' + file;
-
         //check whether filepath contains symlinks before trying anything with the file
         checkValidPath(file).then( () => {
 
@@ -228,8 +225,11 @@ let serveFileList = (socket) => {
                                 treeEntry.type = 'directory';
                                 expandDirectory(path, treeEntry.children).then( () => { resolve(fileTreeIndex); });
                             } else {
+                                treeEntry.type = 'file';
                                 resolve(fileTreeIndex);
                             }
+
+                            treeEntry.path = path;
                         });
                     });
                 }
