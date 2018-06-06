@@ -111,7 +111,6 @@ int bisMatrixTransformation::setSimpleMatrix(bisSimpleMatrix<float>* simple)
 
 void bisMatrixTransformation::printSelf()
 {
-  std::cout << "I am linear" << std::endl;
   bisUtil::printMatrix(this->matrix,this->name);
 }
 
