@@ -163,7 +163,7 @@ let handleTextRequest = (rawText, control, socket) => {
 };
 
 let handleImageFromClient = (image, control, socket) => {
-    console.log('got an image', image);
+    
 }
 
 /**

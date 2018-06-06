@@ -59,6 +59,12 @@ class FileServer extends HTMLElement {
 
     }
 
+    /**
+     * Initiates a connection to the fileserver on port 8081 and adds an event handler to socket.message to interpret transmissions from the server. 
+     * Note that the handshaking protocol is handled entirely by the native Javascript WebSocket API.
+     * 
+     * @returns A socket representing a successful connection, null otherwise.
+     */
     connectToServer() {
         let socket = new WebSocket('ws://localhost:8081');
 
@@ -76,7 +82,7 @@ class FileServer extends HTMLElement {
                     data = JSON.parse(event.data);
                 } catch(e) {
                     console.log('an error occured while parsing event.data', e);
-                    return;
+                    return null;
                 }
             } else {
                 data = event.data;
@@ -92,6 +98,12 @@ class FileServer extends HTMLElement {
         return socket;
     }
 
+    /**
+     * Sends a request for a list of the files on the server machine and prepares the display modal for the server's reply. 
+     * Once the list of files arrives it is rendered using jstree. The user may request individual files from the server using this list. 
+     * 
+     * @param {Socket} socket - A socket representing the connection between client and server (see connectToServer).
+     */
     requestFileList(socket) {
         let command = JSON.stringify({ 'command' : 'show' }); 
         socket.send(command);
@@ -132,6 +144,11 @@ class FileServer extends HTMLElement {
         });
     }
 
+    /**
+     * Renders a file list fetched by requestFileList in the file tree modal using jstree.
+     * 
+     * @param {Object} list - List of files on the server machine.
+     */
     displayFileList(list) {
         this.fileTreeDisplayModal.body.empty();
         console.log('list', list);
@@ -158,11 +175,22 @@ class FileServer extends HTMLElement {
         });
     }
 
+    /**
+     * Sends a list of files for the server to upload to the client machine. 
+     * 
+     * @param {Socket} socket - A socket representing the connection between client and server (see connectToServer).
+     * @param {Array} filelist - An array of files to fetch from the server. 
+     */
     sendFileRequest(socket, filelist = null) {
         let filesdata = JSON.stringify(filelist);
         socket.send(filesdata);
     }
-
+    /**
+     * Sends a file from the client to the server to be saved on the server machine. Large files are sliced and transmitted in chunks. 
+     * 
+     * @param {Socket} socket - A socket representing the connection between client and server (see connectToServer).
+     * @param {BisImage|BisMatrix|BisTransform} file - The file to save to the server. 
+     */
     uploadFileToServer(socket, file) {
         switch (file.jsonformatname) {
             case 'BisImage' : socket.send(file.internal.imgdata); break;
@@ -173,6 +201,12 @@ class FileServer extends HTMLElement {
         }
     }
 
+    /**
+     * Takes raw input from the server, formats it as a proper BisImage and displays it. 
+     * Note that the server transfers images in binary form to avoid wasting space converting it to UTF-8 or a similar encoding. 
+     *  
+     * @param {Uint8Array} data - Image transferred by the server. 
+     */
     handleImageTransmission(data) {
         let reader = new FileReader();
         reader.addEventListener('loadend', () => {
