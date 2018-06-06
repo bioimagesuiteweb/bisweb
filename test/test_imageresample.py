@@ -116,7 +116,7 @@ class TestResample(unittest.TestCase):
         module.execute({
             'input': target_image,
             'reference' : reference_image,
-            'transform' : xform
+            'xform' : xform
         },{
             'debug' : True
         });
