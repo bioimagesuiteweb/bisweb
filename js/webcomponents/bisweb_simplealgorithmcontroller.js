@@ -97,8 +97,8 @@ class SimpleAlgorithmControllerElement extends HTMLElement {
 
 
     /** Get the Current Image
-     * @param{String} viewer - the name of the viewer "viewer" or "viewer2"
-     * @param{String} itype - the type of the image "image" or "overlay" 
+     * @param {String} viewer - the name of the viewer "viewer" or "viewer2"
+     * @param {String} itype - the type of the image "image" or "overlay" 
      * @returns{BisWebImage} - the image 
      */
     getImage(viewer,itype) {

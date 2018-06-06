@@ -46,6 +46,12 @@ class FileServer extends HTMLElement {
                 webutil.createMenuItem(serverMenu, 'Show Server Files', () => {
                     this.requestFileList(socket);
                 });
+
+                webutil.createMenuItem(serverMenu, 'Upload File to Server', () => {
+                    let image = this.algorithmcontroller.getImage('viewer', 'image');
+                    console.log('image', image);
+                    this.uploadFileToServer(socket, image);
+                });
             }
 
             socket = this.connectToServer();
@@ -152,9 +158,19 @@ class FileServer extends HTMLElement {
         });
     }
 
-    sendFileRequest(socket, files = null) {
-        let filesdata = JSON.stringify(files);
+    sendFileRequest(socket, filelist = null) {
+        let filesdata = JSON.stringify(filelist);
         socket.send(filesdata);
+    }
+
+    uploadFileToServer(socket, file) {
+        switch (file.jsonformatname) {
+            case 'BisImage' : socket.send(file.internal.imgdata); break;
+            default : console.log('unrecognized jsonformatname', file.jsonformatname, 'cannot send');
+        }
+
+        function doImageTransfer(image) {
+        }
     }
 
     handleImageTransmission(data) {

@@ -122,7 +122,7 @@ let prepareForDataFrames = (socket) => {
     socket.on('data', (chunk) => {
         let controlFrame = chunk.slice(0, 14);
         let parsedControl = wsutil.parseControlFrame(controlFrame);
-        console.log('parsed control frame', parsedControl, 'raw control frame', controlFrame);
+        console.log('parsed control frame', parsedControl);
 
         let decoded = new Uint8Array(parsedControl.payloadLength);
         console.log('decoded', decoded);
@@ -134,7 +134,8 @@ let prepareForDataFrames = (socket) => {
 
         switch (parsedControl.opcode) {
             case 1: handleTextRequest(decoded, parsedControl, socket); break;
-            case 8: handleCloseFromClient(decoded, parsedControl, socket);
+            case 2: handleImageFromClient(decoded, parsedControl, socket); break;
+            case 8: handleCloseFromClient(decoded, parsedControl, socket); break;
         }
 
     });
@@ -160,6 +161,10 @@ let handleTextRequest = (rawText, control, socket) => {
         default: console.log('Cannot interpret request with unknown command', parsedText.command);
     }
 };
+
+let handleImageFromClient = (image, control, socket) => {
+    console.log('got an image', image);
+}
 
 /**
  * Takes a request from the client and returns the requested file or series of files. 
