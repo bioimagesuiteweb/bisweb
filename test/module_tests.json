@@ -223,26 +223,26 @@
 	    "dopython": true
 	},
 	{
-	    "command" : "linearRegistration -t testdata/MNI_2mm_orig.nii.gz -r testdata/newtests/reg_input.nii.gz --intscale 2 --numbins  64 --levels  3 --extrasmoothing -1.0 --optimization ConjugateGradient --stepsize 0.5 --metric NMI --steps 1 --iterations 20 --mode Affine --resolution 1.1 --debug true",
+	    "command" : "linearRegistration -t testdata/MNI_2mm_orig.nii.gz -r testdata/newtests/reg_input.nii.gz --intscale 2 --numbins  64 --levels  3 --imagesmoothing 1.0 --optimization ConjugateGradient --stepsize 0.5 --metric NMI --steps 1 --iterations 20 --mode Affine --resolution 1.1 --debug true",
 	    "test"    : "--test_target testdata/newtests/linear.matr --test_type matrixtransform ",
 	    "result"  : true,
 	    "dopython": true
 	},
 	{
-	    "command" : "linearRegistration -t testdata/MNI_2mm_orig.nii.gz -r testdata/newtests/reg_input.nii.gz --intscale 2 --numbins  64 --levels  3 --extrasmoothing -1.0 --optimization ConjugateGradient --stepsize 0.5 --metric NMI --steps 1 --iterations 20 --mode Affine --resolution 1.1 --debug true",
+	    "command" : "linearRegistration -t testdata/MNI_2mm_orig.nii.gz -r testdata/newtests/reg_input.nii.gz --intscale 2 --numbins  64 --levels  3 --imagesmoothing 1.0 --optimization ConjugateGradient --stepsize 0.5 --metric NMI --steps 1 --iterations 20 --mode Affine --resolution 1.1 --debug true",
 	    "test"    : "--test_target testdata/newtests/reg_input.nii.gz --test_type registration --test_comparison cc --test_threshold 0.99",
 	    "result"  : true,
 	    "dopython": true
 	},
 	{
-	    "command" : "nonlinearRegistration -r testdata/MNI_2mm_orig.nii.gz -t testdata/MNI_2mm_scaled.nii.gz --intscale 1 --numbins  64 --levels  2  --optimization ConjugateGradient --stepsize 1.0 --metric NMI --steps 1 --iterations 5 --cps  40.0 --resolution 2.0 --lambda  0.1",
-	    "test"    : "--test_target testdata/MNI_2mm_orig.nii.gz --test_type registration --test_comparison cc --test_threshold 0.86",
+	    "command" : "nonlinearRegistration -r testdata/MNI_2mm_orig.nii.gz -t testdata/MNI_2mm_scaled.nii.gz --intscale 1 --numbins  64 --levels  2  --optimization ConjugateGradient --stepsize 1.0 --metric NMI --steps 1 --iterations 5 --cps  40.0 --linearmode None --resolution 2.0 --lambda  0.1",
+	    "test"    : "--test_target testdata/MNI_2mm_orig.nii.gz --test_type registration --test_comparison cc --test_threshold 0.95",
 	    "result"  : true,
 	    "dopython": true
 	},
 	{
-	    "command" : "nonlinearRegistration -r testdata/MNI_2mm_orig.nii.gz -t testdata/MNI_2mm_scaled.nii.gz --intscale 1 --numbins  64 --levels  1 --optimization ConjugateGradient --stepsize 1.0 --metric NMI --steps 1 --iterations 1 --cps  40.0 --resolution  3.0 --lambda  0.1 --linearmode None --debug false",
-	    "test"    : "--test_target testdata/MNI_2mm_orig.nii.gz --test_type registration --test_comparison cc --test_threshold 0.78",
+	    "command" : "nonlinearRegistration -r testdata/MNI_2mm_orig.nii.gz -t testdata/MNI_2mm_scaled.nii.gz --intscale 1 --numbins  64 --levels  1 --optimization ConjugateGradient --stepsize 1.0 --metric NMI --steps 1 --iterations 2 --cps  40.0 --resolution  3.0 --linearmode None --lambda  0.1 --linearmode None --debug false",
+	    "test"    : "--test_target testdata/MNI_2mm_orig.nii.gz --test_type registration --test_comparison cc --test_threshold 0.95",
 	    "result"  : false,
 	    "dopython": true
 	},
