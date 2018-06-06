@@ -269,17 +269,24 @@ const execute_compare=function(module,test) {
 
             
             let result=resultObject.compareWithOther(obj,comparison,threshold);
+            let good="<";
+            let bad=">";
+            if (result.metric==="cc") {
+                bad=good;
+                good=">";
+            }
 
+            
             if (result.testresult) {
-                console.log(`++++ Module ${module.name} test passed.\n++++  deviation (${result.metric}) from expected: ${result.value} < ${threshold}`);
+                console.log(`++++ Module ${module.name} test passed.\n++++  deviation (${result.metric}) from expected: ${result.value} ${good} ${threshold}`);
                 resolve({ result : result.testresult,
-                          text   : c+` Module ${module.name} test <span class="passed">passed</span>.<BR>  deviation (${result.metric}) from expected: ${result.value} < ${threshold}`
+                          text   : c+` Module ${module.name} test <span class="passed">passed</span>.<BR>  deviation (${result.metric}) from expected: ${result.value} ${good} ${threshold}`
                         });
             } else {
-                console.log(`---- Module ${module.name} test failed.\n---- Module produced output significantly different from expected.\n----  deviation (${result.metric}) from expected: ${result.value} > ${threshold}`);
+                console.log(`---- Module ${module.name} test failed.\n---- Module produced output significantly different from expected.\n----  deviation (${result.metric}) from expected: ${result.value} ${bad} ${threshold}`);
                 resolve({
                     result : result.testresult,
-                    text : c+` Module ${module.name} test <span class="failed">failed</span>. Module produced output significantly different from expected.<BR>  deviation (${result.metric}) from expected: ${result.value} > ${threshold}`
+                    text : c+` Module ${module.name} test <span class="failed">failed</span>. Module produced output significantly different from expected.<BR>  deviation (${result.metric}) from expected: ${result.value} ${bad} ${threshold}`
                 });
             }
         }).catch((e) => {
