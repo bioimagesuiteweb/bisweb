@@ -23,7 +23,6 @@ const webutil = require('bis_webutil.js');
 const d3 = require('d3'); // jshint ignore:line
 const io = require('bis_genericio.js');
 const BiswebImage = require('bisweb_image.js');
-const jstree = require('jstree');
 const wsutil = require('../../fileserver/wsutil.js');
 
 /**
@@ -149,8 +148,6 @@ class TreeViewer extends HTMLElement {
         document.addEventListener('undoTree', () => {
             this.undoNode();
         });
-
-        console.log('jstree', jstree);
 
     }
 

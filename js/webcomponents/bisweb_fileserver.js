@@ -1,6 +1,7 @@
 const $ = require('jquery');
 const webutil = require('bis_webutil.js');
 const wsutil = require('../../fileserver/wsutil.js');
+const jstree = require('jstree');
 
 class FileServer extends HTMLElement {
 
@@ -22,6 +23,14 @@ class FileServer extends HTMLElement {
             this.fileTreeDisplayModal.body.empty();
         });
 
+        //configure jstree will set the icons based on the 'types' of the data initially, but changing them dynamically requires setting the icon using events
+        $(this.fileTreeDisplayModal.body).on('open_node.jstree', (event, data) => {
+            data.instance.set_icon(data.node, 'glyphicon glyphicon-folder-open');
+        });
+
+        $(this.fileTreeDisplayModal.body).on('close_node.jstree', (event, data) => {
+            data.instance.set_icon(data.node, 'glyphicon glyphicon-folder-close');
+        });
 
         webutil.runAfterAllLoaded(() => {
             let menuBarID = this.getAttribute('bis-menubarid');
