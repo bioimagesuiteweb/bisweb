@@ -390,6 +390,14 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
     if (webutil.inElectronApp()) {
         window.BISELECTRON.remote.getCurrentWindow().openDevTools();
     }
+    let url=window.document.URL;
+    let index=url.indexOf('.html');
+    if (index>=0)
+        url=url.substr(0,index+5);
+    let thread=0;
+    if (usethread)
+        thread=1;
+            
 
     console.clear();
     
@@ -419,14 +427,20 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
     let skipped=0;
     
     let t00 = performance.now();
+
+    let goodlist=[];
+    let intentionalfail=[];
+    let badlist=[];
     
     for (let i=firsttest;i<=lasttest;i++) {
         let v=testlist[i];
         let name=testlist[i].command.split(' ')[0].trim();
+        let tname="Test_"+i;
+        
         if (testname==='All' || testname.toLowerCase()===name.toLowerCase()) {
 
             run=run+1;
-            main.append(`<H4 class="testhead">Test ${i}: ${name}</H4><p><UL><LI> Command: ${v.command}</LI><LI> Test details: ${v.test}</LI><LI> Should pass: ${v.result}</LI>`);
+            main.append(`<a name="${tname}"></a><H4 class="testhead">Test ${i}: ${name}</H4><p><UL><LI> Command: ${v.command}</LI><LI> Test details: ${v.test}</LI><LI> Should pass: ${v.result}</LI>`);
             if (usethread)
                 main.append(`<P> Running in WebWorker </P>`);
             console.log(`-------------------------------`);
@@ -456,27 +470,37 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
                 if (result && v.result)  {
                     main.append(`<p>${text}</p>`);
                     good+=1;
+                    goodlist.push(tname);
                 } else if (!result && !v.result) {
                     main.append(`<p>${text} <BR> <B>This is OK as this test WAS EXPECTED to fail!</B></p>`);
                     good+=1;
+                    intentionalfail.push(tname);
                 }  else {
                     main.append(`<p><span style="color:red">${text}</span> </p>`);
                     main.append('<BR><H4 style="color:red"> T E S T  F A I L E D</H4><BR>');
                     bad+=1;
+                    badlist.push(tname);
                     
                 }
             } catch(e) {
                 main.append(`<p><span style="color:red">Test Failed ${e}</span></p>`);
                 bad+=1;
+                badlist.push(tname);
             }
             replacesystemprint(false);
+
             main.append(`<details><summary><B>Details</B></summary><PRE>${logtext}</PRE></details><HR>`);
             window.scrollTo(0,document.body.scrollHeight-100);
 
             
         } else {
             if (testname==="None") {
-                main.append(`<P>Test ${i}: ${v.command}</p>`);
+                if (!webutil.inElectronApp()) {
+                    let link=`${url}?first=${i}&last=${i}&testname=All&webworker=${thread}&run=1`;
+                    main.append(`<p><a href="${link}">Test ${i}:</a> ${v.command}</p>`);
+                } else {
+                    main.append(`<p>Test ${i}: ${v.command}</p>`);
+                }
                 window.scrollTo(0,document.body.scrollHeight-100);
             }
             skipped+=1;
@@ -496,17 +520,8 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
         main.append(`.... total test execution time=${(0.001*(t11 - t00)).toFixed(2)}s`);
 
         if (!webutil.inElectronApp()) {
-            let t=0;
-            if (usethread)
-                t=1;
-            
-            let url=window.document.URL;
-            let index=url.indexOf('.html');
-            if (index>=0)
-                url=url.substr(0,index+5);
-            
-            let link=`${url}?first=${firsttest}&last=${lasttest}&testname=${testname}&webworker=${t}&run=1`;
-            main.append(`<BR><p>To run this specific test directly click:<BR> <a href="${link}" target="_blank">${link}</a></p>`);
+            let link=`${url}?first=${firsttest}&last=${lasttest}&testname=${testname}&webworker=${thread}&run=1`;
+            main.append(`<BR><p>To run this specific test directly click:<BR> <a href="${link}" target="_blank">${link}</a></p><HR><p></p>`);
         }
 
         window.scrollTo(0,document.body.scrollHeight-100);
@@ -524,8 +539,29 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
         window.scrollTo(0,0);
     }
 
-
-    
+    if (goodlist.length>0 || badlist.length>0 || intentionalfail.length>0) {
+        let names= [ 'Passed','Intentionally Failed (which means passed)','Actual Failed'];
+        for (let i=0;i<=2;i++) {
+            let lst=goodlist;
+            if (i==1)
+                lst=intentionalfail;
+            else if (i==2)
+                lst=badlist;
+            main.append(`<H4>${names[i]}</H4>`);
+            main.append(`<P>`);
+            for (let j=0;j<lst.length;j++) {
+                let n=lst[j];
+            main.append(`<a href="#${n}">${n}</a>`);
+                if (j<lst.length-1)
+                    main.append(', ');
+            }
+            if (lst.length===0)
+                main.append('None');
+            main.append('</P><HR>');
+        }
+        main.append(`<BR> <BR> <BR>`); 
+        window.scrollTo(0,document.body.scrollHeight-100);
+    }
 
 };  // jshint ignore:line
 
