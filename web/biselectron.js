@@ -241,9 +241,10 @@ var createConsole=function() {
         state.console.setMenu(null);
 
     
-    state.console.hide();
     state.console.loadURL(fullURL);
-    
+    state.console.minimize();
+    state.console.hide();
+
     state.console.on('close',  function (e) {
         e.preventDefault();
         e.returnValue=false;

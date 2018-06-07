@@ -5,6 +5,7 @@ const net = require('net');
 const crypto = require('crypto');
 const zlib = require('zlib');
 const os = require('os');
+const BisImage = require('bisweb_image.js');
 
 //node extension to make node-like calls work on Windows
 //https://github.com/prantlf/node-posix-ext
@@ -20,6 +21,7 @@ const SHAstring = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 
 //file transfer may occur in chunks, which requires storing the chunks as they arrive
 let fileInProgress = null;
+let serverSocketListener = undefined;
 
 let loadMenuBarItems = () => {
     let menubar = document.getElementById('viewer_menubar');
@@ -121,7 +123,8 @@ let prepareForDataFrames = (socket) => {
         console.log('an error occured', error);
     });
 
-    socket.on('data', (chunk) => {
+    //socket listener is stored here because it gets replaced during file transfer
+    serverSocketListener = (chunk) => {
         let controlFrame = chunk.slice(0, 14);
         let parsedControl = wsutil.parseControlFrame(controlFrame);
         console.log('parsed control frame', parsedControl);
@@ -143,8 +146,9 @@ let prepareForDataFrames = (socket) => {
             case 2: handleImageFromClient(decoded, parsedControl, socket); break;
             case 8: handleCloseFromClient(decoded, parsedControl, socket); break;
         }
+    };
 
-    });
+    socket.on('data', serverSocketListener);
 }
 
 /**
@@ -180,7 +184,32 @@ let handleTextRequest = (rawText, control, socket) => {
 let handleImageFromClient = (upload, control, socket) => {
     console.log('message from client', upload);
 
-    //initial transmission will be JSON, then binary arrays
+    //server can send mangled packets during transfer that may parse as commands that shouldn't occur at that time, 
+    //e.g. a mangled packet that parses to have an opcode of 8, closing the connection. so unbind the default listener and replace it after transmission.
+    let transferSocketListener = (chunk) => {
+        let controlFrame = chunk.slice(0, 14);
+        let parsedControl = wsutil.parseControlFrame(controlFrame);
+        console.log('parsed control frame', parsedControl);
+
+        if (!parsedControl.mask) {
+            console.log('Received a transmission with no mask from client, dropping packet.');
+            return;
+        }
+
+        let decoded = new Uint8Array(parsedControl.payloadLength);
+
+        //decode the raw data (undo the XOR)
+        for (let i = 0; i < parsedControl.payloadLength; i++) {
+            decoded[i] = chunk[i + parsedControl.datastart] ^ parsedControl.mask[i % 4];
+        }
+
+        switch (parsedControl.opcode) {
+            case 2: handleImageFromClient(decoded, parsedControl, socket); break;
+            default: console.log('dropping packet with control', parsedControl);
+        }
+    };
+
+    //initial transmission will be JSON, then further ones will be binary arrays
     if (upload.constructor === {}.constructor) {
         fileInProgress = {
             'totalSize' : upload.totalSize,
@@ -206,6 +235,9 @@ let handleImageFromClient = (upload, control, socket) => {
                 break;
             default : console.log('Received unknown storage size', upload.storageSize, 'cannot interpret.'); 
         }
+
+        socket.removeListener('data', serverSocketListener);
+        socket.on('data', transferSocketListener);
     } else {
         //add the transfer in progress to what we've received so far.
         let newChunk = new fileInProgress.storageType(upload.length + fileInProgress.receivedFile.length);
@@ -215,10 +247,13 @@ let handleImageFromClient = (upload, control, socket) => {
 
         //check to see if what we've received is complete 
         if (newChunk.length * fileInProgress.storageType.BYTES_PER_ELEMENT >= fileInProgress.totalSize) {
-            //TODO: save file
             console.log('upload done', fileInProgress);
-            console.log('data received', fileInProgress.receivedFile);
             socket.write(formatPacket('uploadcomplete', ''), () => { console.log('message sent'); });
+
+            socket.removeListener('data', transferSocketListener);
+            socket.on('data', serverSocketListener);
+            //save serialized NIFTI image
+            genericio.write('/home/zach/tempname.nii.gz', fileInProgress.receivedFile, true);
         } else {
             console.log('received chunk,', fileInProgress.receivedFile.length * fileInProgress.receivedFile.BYTES_PER_ELEMENT, 'received so far.');
             socket.write(formatPacket('nextpacket', ''));

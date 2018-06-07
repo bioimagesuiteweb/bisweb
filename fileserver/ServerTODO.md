@@ -5,15 +5,17 @@
 * ~~Maintain a list of allowed directories (no access above ~/)~~ (workaround -- can only access files that belong to you)
     * ~~No symlinks allowed~~
 
+* Authenticate users when connecting 
+
 (also important functionality)
 
 * Be asked for directory listing 
-	* Return .JSON file with dictionary structure (nested?). Tree rooted at current directory? Limited tree depth? 
+	* ~~Return .JSON file with dictionary structure (nested?). Tree rooted at current directory? Limited tree depth? ~~
 	* getFileOpen
 	* getFileSave
 	* getDirectory
 
-* Be asked for a specific file or set of files
+* ~~Be asked for a specific file or set of files~~
 
 * Be asked to save data in a specific location (on the server machine)
 

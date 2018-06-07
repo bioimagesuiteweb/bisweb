@@ -200,13 +200,17 @@ class FileServer extends HTMLElement {
         let packetSize = 100000, transferSize = undefined;
         let clientSocketListener = this.clientSocketListener;
 
+        //serialize the BisImage to a purely binary format
+        let serializedImage = file.serializeToNII();
+
         switch (file.jsonformatname) {
             case 'BisImage' : 
                 socket.send(JSON.stringify({
                     'command' : 'uploadimage', 
-                    'totalSize' : file.internal.imgdata.length * file.internal.imgdata.BYTES_PER_ELEMENT, 
+                    'totalSize' : serializedImage.length * file.internal.imgdata.BYTES_PER_ELEMENT, 
                     'packetSize' : packetSize,
-                    'storageSize' : file.internal.imgdata.BYTES_PER_ELEMENT
+                    'storageSize' : file.internal.imgdata.BYTES_PER_ELEMENT,
+                    'header' : file.header
                 }));
 
                 transferSize = packetSize / file.internal.imgdata.BYTES_PER_ELEMENT; 
@@ -217,8 +221,7 @@ class FileServer extends HTMLElement {
 
         //transfer image in 100KB chunks, wait for acknowledge from server
         function doImageTransfer(image) {
-            let remainingTransfer = file.internal.imgdata, currentTransferIndex = 0;
-
+            let remainingTransfer = serializedImage, currentTransferIndex = 0;
             let transferListener = (event) => {
                 let data;
                 if (typeof (event.data) === "string") {
