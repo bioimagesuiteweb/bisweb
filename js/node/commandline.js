@@ -208,7 +208,7 @@ let processTestResult = function (toolname, resultFile, test_target, test_type, 
     let threshold = test_threshold || 0.01;
     let comparison = test_comparison || "maxabs";
     if (test_type === 'image') {
-        if (comparison !== "maxabs") {
+        if (comparison !== "maxabs" && comparison!=="ssd") {
             comparison = "cc";
         }
     }

@@ -234,7 +234,7 @@ const execute_compare=function(module,test) {
         let test_type = tobj['test_type'] || 'image';
         let test_target = tobj['test_target'];
         if (test_type === 'image') {
-            if (comparison !== "maxabs") {
+            if (comparison !== "maxabs" && comparison!=="ssd") {
                 comparison = "cc";
             }
         }

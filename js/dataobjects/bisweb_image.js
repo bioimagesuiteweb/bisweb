@@ -297,8 +297,26 @@ class BisWebImage extends BisWebDataObject {
                 out.testresult=true;
             }
         } else {
-            out.value=this.maxabsdiff(other);
-            out.metric='maxabs';
+            if (method==='ssd') {
+                let odata=other.getImageData();
+                let idata=this.getImageData();
+                let l=idata.length, l2=odata.length;
+                out.metric='ssd';
+                
+                if (l===l2 && l>1) {
+                    let sum=0.0;
+                    for (let i=0;i<l;i++) {
+                        let v=(idata[i]-odata[i]);
+                        sum+=v*v;
+                    }
+                    out.value=Math.sqrt(sum);
+                } else {
+                    out.value=threshold+1.0;
+                }
+            }  else {
+                out.value=this.maxabsdiff(other);
+                out.metric='maxabs';
+            }
             if (out.value < threshold)
                 out.testresult=true;
         }
