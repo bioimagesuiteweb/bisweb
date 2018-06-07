@@ -126,8 +126,12 @@ let prepareForDataFrames = (socket) => {
         let parsedControl = wsutil.parseControlFrame(controlFrame);
         console.log('parsed control frame', parsedControl);
 
+        if (!parsedControl.mask) {
+            console.log('Received a transmission with no mask from client, dropping packet.'); 
+            return;
+        }
+
         let decoded = new Uint8Array(parsedControl.payloadLength);
-        console.log('decoded', decoded);
 
         //decode the raw data (undo the XOR)
         for (let i = 0; i < parsedControl.payloadLength; i++) {
@@ -174,15 +178,51 @@ let handleTextRequest = (rawText, control, socket) => {
  * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
  */
 let handleImageFromClient = (upload, control, socket) => {
-    //initial transmission
-    if (typeof(upload) === 'object') {
+    console.log('message from client', upload);
+
+    //initial transmission will be JSON, then binary arrays
+    if (upload.constructor === {}.constructor) {
         fileInProgress = {
             'totalSize' : upload.totalSize,
-            'packetSize' : upload.packetSize,
-            'receivedFile' : null
+            'packetSize' : upload.packetSize
+        };
+
+        //images can always be stored as unsigned integers -- therefore the byte length storage of the underlying image can tell us which TypedArray to use
+        switch (upload.storageSize) {
+            case 1 : 
+                fileInProgress.receivedFile = new Uint8Array(0); 
+                fileInProgress.storageType = Uint8Array; 
+                socket.write(formatPacket('nextpacket', '')); 
+                break;
+            case 2 : 
+                fileInProgress.receivedFile = new Uint16Array(0); 
+                fileInProgress.storageType = Uint16Array; 
+                socket.write(formatPacket('nextpacket', '')); 
+                break;
+            case 4 : 
+                fileInProgress.receivedFile = new Uint32Array(0); 
+                fileInProgress.storageType = Uint32Array; 
+                socket.write(formatPacket('nextpacket', '')); 
+                break;
+            default : console.log('Received unknown storage size', upload.storageSize, 'cannot interpret.'); 
         }
     } else {
+        //add the transfer in progress to what we've received so far.
+        let newChunk = new fileInProgress.storageType(upload.length + fileInProgress.receivedFile.length);
+        newChunk.set(fileInProgress.receivedFile);
+        newChunk.set(upload, fileInProgress.receivedFile.length);
+        fileInProgress.receivedFile = newChunk;
 
+        //check to see if what we've received is complete 
+        if (newChunk.length * fileInProgress.storageType.BYTES_PER_ELEMENT >= fileInProgress.totalSize) {
+            //TODO: save file
+            console.log('upload done', fileInProgress);
+            console.log('data received', fileInProgress.receivedFile);
+            socket.write(formatPacket('uploadcomplete', ''), () => { console.log('message sent'); });
+        } else {
+            console.log('received chunk,', fileInProgress.receivedFile.length * fileInProgress.receivedFile.BYTES_PER_ELEMENT, 'received so far.');
+            socket.write(formatPacket('nextpacket', ''));
+        }
     }
 };
 

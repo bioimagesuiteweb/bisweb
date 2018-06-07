@@ -15,6 +15,9 @@ class FileServer extends HTMLElement {
     connectedCallback() {
         let socket;
 
+        //standard event listener attached to the socket needs to be switched out sometimes so need to keep track of it
+        this.clientSocketListener = undefined;
+
         //File tree requests display the contents of the disk on the server machine in a modal
         this.fileTreeDisplayModal = webutil.createmodal('File Tree', 'modal-lg');
         this.fileTreeDisplayModal.dialog.find('.modal-footer').remove();
@@ -72,7 +75,7 @@ class FileServer extends HTMLElement {
             console.log('An error occured', event);
         });
 
-        socket.addEventListener('message', (event) => {
+        this.clientSocketListener = (event) => {
             console.log('received data', event);
             let data;
 
@@ -92,9 +95,10 @@ class FileServer extends HTMLElement {
                 case 'filelist' : this.displayFileList(data.payload); break;
                 case 'error' : console.log('Error from client:', data.payload); break;
                 default : console.log('received a binary transmission -- interpreting as an image'); this.handleImageTransmission(event.data);
-            }    
-        });
+            } 
+        };
 
+        socket.addEventListener('message', this.clientSocketListener);
         return socket;
     }
 
@@ -185,6 +189,7 @@ class FileServer extends HTMLElement {
         let filesdata = JSON.stringify(filelist);
         socket.send(filesdata);
     }
+
     /**
      * Sends a file from the client to the server to be saved on the server machine. Large files are sliced and transmitted in chunks. 
      * 
@@ -192,23 +197,57 @@ class FileServer extends HTMLElement {
      * @param {BisImage|BisMatrix|BisTransform} file - The file to save to the server. 
      */
     uploadFileToServer(socket, file) {
-        let packetSize = 100000;
-        console.log('')
+        let packetSize = 100000, transferSize = undefined;
+        let clientSocketListener = this.clientSocketListener;
+
         switch (file.jsonformatname) {
             case 'BisImage' : 
-                socket.send({
+                socket.send(JSON.stringify({
                     'command' : 'uploadimage', 
                     'totalSize' : file.internal.imgdata.length * file.internal.imgdata.BYTES_PER_ELEMENT, 
                     'packetSize' : packetSize,
                     'storageSize' : file.internal.imgdata.BYTES_PER_ELEMENT
-                }); 
-                doImageTransfer(file.internal.imgdata); break;
+                }));
+
+                transferSize = packetSize / file.internal.imgdata.BYTES_PER_ELEMENT; 
+                doImageTransfer(file.internal.imgdata); 
+                break;
             default : console.log('unrecognized jsonformatname', file.jsonformatname, 'cannot send');
         }
 
         //transfer image in 100KB chunks, wait for acknowledge from server
         function doImageTransfer(image) {
+            let remainingTransfer = file.internal.imgdata, currentTransferIndex = 0;
 
+            let transferListener = (event) => {
+                let data;
+                if (typeof (event.data) === "string") {
+                    try {
+                        data = JSON.parse(event.data);
+                    } catch (e) {
+                        console.log('an error occured while parsing event.data', e);
+                        return null;
+                    }
+                } else {
+                    data = event.data;
+                }
+
+                console.log('data', data);
+                switch (data.type) {
+                    case 'nextpacket' : 
+                        let slice = remainingTransfer.slice(currentTransferIndex, currentTransferIndex + transferSize);
+                        socket.send(slice);
+                        break;
+                    case 'uploadcomplete' :
+                        socket.removeEventListener('message', transferListener);
+                        socket.addEventListener('message', clientSocketListener);
+                        break;
+                    default : console.log('received unexpected message', event, 'while listening for server responses');
+                }
+            };
+
+            socket.removeEventListener('message', clientSocketListener);
+            socket.addEventListener('message', transferListener);
         }
     }
 
