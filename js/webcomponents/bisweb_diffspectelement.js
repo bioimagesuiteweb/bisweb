@@ -12,7 +12,8 @@ const bisgenericio = require('bis_genericio');
 const $ = require('jquery');
 const numeric = require('numeric');
 const bootbox = require('bootbox');
-
+const LinearRegistration = require('linearRegistration');
+const NonlinearRegistration = require('nonlinearRegistration');
 const biswrap = require('libbiswasm_wrapper');
 
 
@@ -252,7 +253,7 @@ class DiffSpectElement extends HTMLElement {
 			iter = 15;
 		}
 
-		var areg = bisregister.createLinearRegistration(reference, target, initial, {
+		let lin_opts = {
 			intscale: params.intscale,
 			numbins: params.numbins,
 			levels: lv,
@@ -264,8 +265,12 @@ class DiffSpectElement extends HTMLElement {
 			mode: md,
 			resolution: params.resolution,
 			iterations: iter,
-		});
-		var linear = areg.run();
+		};
+		let input = {'reference': reference
+			     'target'   : target}; 
+		var linear = new LinearRegistration();
+			
+		
 
 		if (params.mode < 2)
 			return linear;
