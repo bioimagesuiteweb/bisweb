@@ -192,12 +192,23 @@ class FileServer extends HTMLElement {
      * @param {BisImage|BisMatrix|BisTransform} file - The file to save to the server. 
      */
     uploadFileToServer(socket, file) {
+        let packetSize = 100000;
+        console.log('')
         switch (file.jsonformatname) {
-            case 'BisImage' : socket.send(file.internal.imgdata); break;
+            case 'BisImage' : 
+                socket.send({
+                    'command' : 'uploadimage', 
+                    'totalSize' : file.internal.imgdata.length * file.internal.imgdata.BYTES_PER_ELEMENT, 
+                    'packetSize' : packetSize,
+                    'storageSize' : file.internal.imgdata.BYTES_PER_ELEMENT
+                }); 
+                doImageTransfer(file.internal.imgdata); break;
             default : console.log('unrecognized jsonformatname', file.jsonformatname, 'cannot send');
         }
 
+        //transfer image in 100KB chunks, wait for acknowledge from server
         function doImageTransfer(image) {
+
         }
     }
 

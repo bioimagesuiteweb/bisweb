@@ -18,6 +18,8 @@ const genericio = require('bis_genericio.js');
 //https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers
 const SHAstring = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 
+//file transfer may occur in chunks, which requires storing the chunks as they arrive
+let fileInProgress = null;
 
 let loadMenuBarItems = () => {
     let menubar = document.getElementById('viewer_menubar');
@@ -158,13 +160,31 @@ let handleTextRequest = (rawText, control, socket) => {
         //get a file from the server
         case 'getfile':
         case 'getfiles': serveFileRequest(parsedText, control, socket); break;
+        case 'uploadimage' : handleImageFromClient(parsedText, control, socket); break;
         default: console.log('Cannot interpret request with unknown command', parsedText.command);
     }
 };
 
-let handleImageFromClient = (image, control, socket) => {
-    
-}
+/**
+ * Handles an image upload from the client and saves the file to the server machine once the transfer is complete. Image transfer occurs in chunks to avoid overloading the network.
+ * The first transmission will indicate the total size of the transmission and what size the packets are so the server machine will know when transfer is complete. 
+ * 
+ * @param {Object|Uint8Array} upload - Either the first transmission initiating the transfer loop or a chunk.
+ * @param {Object} control - Parsed WebSocket header for the file request. 
+ * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
+ */
+let handleImageFromClient = (upload, control, socket) => {
+    //initial transmission
+    if (typeof(upload) === 'object') {
+        fileInProgress = {
+            'totalSize' : upload.totalSize,
+            'packetSize' : upload.packetSize,
+            'receivedFile' : null
+        }
+    } else {
+
+    }
+};
 
 /**
  * Takes a request from the client and returns the requested file or series of files. 
