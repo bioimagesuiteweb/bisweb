@@ -235,8 +235,11 @@ class FileServer extends HTMLElement {
                 console.log('data', data);
                 switch (data.type) {
                     case 'nextpacket' : 
-                        let slice = remainingTransfer.slice(currentTransferIndex, currentTransferIndex + transferSize);
+                        let slice = (currentTransferIndex + transferSize >= remainingTransfer.size) ? 
+                                    remainingTransfer.slice(currentTransferIndex) :
+                                    remainingTransfer.slice(currentTransferIndex, currentTransferIndex + transferSize);
                         socket.send(slice);
+                        currentTransferIndex = currentTransferIndex + slice.length;
                         break;
                     case 'uploadcomplete' :
                         socket.removeEventListener('message', transferListener);
