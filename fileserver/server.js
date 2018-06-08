@@ -266,6 +266,7 @@ let handleImageFromClient = (upload, control, socket) => {
 
 /**
  * Takes a request from the client and returns the requested file or series of files. 
+ * 
  * @param {String} rawText - Unparsed JSON denoting the file or series of files to read. 
  * @param {Object} control - Parsed WebSocket header for the file request.
  * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
@@ -288,7 +289,7 @@ let serveFileRequest = (parsedText, control, socket) => {
                 fs.readFile(file, (err, result) => {
                     //compress data before sending? doesn't seem to reduce size by very much
                     //zlib.gzip(data, (err, result) => {
-
+                    console.log('file', file);
                     socket.write(formatPacket('image', result), () => { console.log('write done.'); });
                 });
             });

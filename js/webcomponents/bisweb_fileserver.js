@@ -2,6 +2,8 @@ const $ = require('jquery');
 const webutil = require('bis_webutil.js');
 const wsutil = require('../../fileserver/wsutil.js');
 const jstree = require('jstree');
+const BisImage = require('bisweb_image.js');
+const zlib = require('zlib');
 
 class FileServer extends HTMLElement {
 
@@ -37,7 +39,7 @@ class FileServer extends HTMLElement {
 
                 webutil.createMenuItem(serverMenu, 'Request Files', () => {
                     let files = [
-                        'javascript/bisweb/data/a1.nii.gz'
+                        '/home/zach/MNI_2mm_buggy.nii.gz'
                     ];
 
                     this.sendFileRequest(socket, {
@@ -264,13 +266,23 @@ class FileServer extends HTMLElement {
      * @param {Uint8Array} data - Image transferred by the server. 
      */
     handleImageTransmission(data) {
+        
         let reader = new FileReader();
+
+        //image is sent compressed for portability reasons, then decompressed here
         reader.addEventListener('loadend', () => {
-            let rawData = new Uint8Array(reader.result);
-            this.algorithmcontroller.sendImageToViewer(rawData, { viewername: this.defaultViewer });
+            console.log('reader.result', reader.result);
+
+            wsutil.unzipFile(reader.result).then( (unzippedFile) => {
+                let loadedImg = new BisImage();
+                loadedImg.parseNII(reader.result);
+                console.log('loadedImage', loadedImg);
+                this.algorithmcontroller.sendImageToViewer(loadedImg, { viewername: this.defaultViewer });
+            });
         });
 
         reader.readAsArrayBuffer(data);
+    
     }
 }
 

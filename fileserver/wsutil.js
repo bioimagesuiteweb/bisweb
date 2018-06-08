@@ -1,3 +1,4 @@
+const zlib = require('zlib');
 /**
  * Parses the first 112 bits of a WebSocket dataframe, i.e. the control portion of the frame.
  * https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers#Exchanging_Data_frames
@@ -88,8 +89,23 @@ let decodeUTF8 = (rawText, control) => {
     return text;
 };
 
+let unzipFile = function(arr) {
+    return new Promise( (resolve, reject) => {
+        zlib.gunzip(arr, function (err, data) {
+            if (err) {
+                console.log(' failed to read binary data error=' + err.toString);
+                reject(err);
+            }
+            let dt = new Uint8Array(data);
+            resolve(dt);
+        });
+    });
+    
+}
+
 module.exports = {
     parseControlFrame : parseControlFrame,
     formatControlFrame : formatControlFrame,
-    decodeUTF8 : decodeUTF8
+    decodeUTF8 : decodeUTF8,
+    unzipFile : unzipFile
 };
