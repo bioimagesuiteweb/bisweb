@@ -197,23 +197,23 @@ class FileServer extends HTMLElement {
      * @param {BisImage|BisMatrix|BisTransform} file - The file to save to the server. 
      */
     uploadFileToServer(socket, file) {
-        let packetSize = 100000, transferSize = undefined;
+        let packetSize = 50000;
         let clientSocketListener = this.clientSocketListener;
 
         //serialize the BisImage to a purely binary format
         let serializedImage = file.serializeToNII();
+        console.log('serializedImage', serializedImage);
 
         switch (file.jsonformatname) {
             case 'BisImage' : 
                 socket.send(JSON.stringify({
                     'command' : 'uploadimage', 
-                    'totalSize' : serializedImage.length * file.internal.imgdata.BYTES_PER_ELEMENT, 
+                    'totalSize' : serializedImage.length, 
                     'packetSize' : packetSize,
                     'storageSize' : file.internal.imgdata.BYTES_PER_ELEMENT,
                     'header' : file.header
                 }));
 
-                transferSize = packetSize / file.internal.imgdata.BYTES_PER_ELEMENT; 
                 doImageTransfer(file.internal.imgdata); 
                 break;
             default : console.log('unrecognized jsonformatname', file.jsonformatname, 'cannot send');
@@ -238,9 +238,9 @@ class FileServer extends HTMLElement {
                 console.log('data', data);
                 switch (data.type) {
                     case 'nextpacket' : 
-                        let slice = (currentTransferIndex + transferSize >= remainingTransfer.size) ? 
+                        let slice = (currentTransferIndex + packetSize >= remainingTransfer.size) ? 
                                     remainingTransfer.slice(currentTransferIndex) :
-                                    remainingTransfer.slice(currentTransferIndex, currentTransferIndex + transferSize);
+                                    remainingTransfer.slice(currentTransferIndex, currentTransferIndex + packetSize);
                         socket.send(slice);
                         currentTransferIndex = currentTransferIndex + slice.length;
                         break;
