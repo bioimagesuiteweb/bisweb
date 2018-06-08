@@ -126,6 +126,27 @@ class ConnMatrix {
         
         return this.createMeasureMatrix();
     }
+
+    /** set actual matrices directly 
+     * @param{NumericJSMatrix} mat1 -- the positive matrix
+     * @param{NumericJSMatrix} mat2 -- the negative matrix
+     */
+    setMatrices(mat1,mat2) {
+
+        this.posMatrix=mat1 || null;
+        this.negMatrix=mat2 || null;
+
+        if (this.negMatrix)
+            this.hasnegMatrix=true;
+        else
+            this.hasnegMatrix=false;
+
+        
+        this.posImagedata = [null,null];
+        this.negImagedata = [null,null];
+        return this.createMeasureMatrix();
+    }
+    
     
     /** Create Measure Matrix
      */
