@@ -1210,7 +1210,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         coords.open();
         var disp = gui.addFolder('Display');
         var clist = [];
-        coords.add(data,'mode',gui_Modes).name("Mode");
+        clist.push(coords.add(data,'mode',gui_Modes).name("Mode"));
         var a1=coords.add(data,'node',1,400).name("Node");
         clist.push(a1);
         a1.onChange(function(val) {
@@ -1814,6 +1814,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             internal.keynodedlg=showdialog;
         },
 
+        // -------------------------------------------------------------------
         /** Set the element state from a dictionary object 
             @param {object} state -- the state of the element */
         setElementState : function (dt=null) {
@@ -1849,17 +1850,21 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 internal.conndata.setMatrices(pos,neg);
             }
 
+            for (let attr in dt.parameters) {
+                if (internal.parameters.hasOwnProperty(attr)) {
+                    internal.parameters[attr] = dt.parameters[attr];
+                } 
+            }
+            console.log('retrieving params(1)=',JSON.stringify(dt.parameters,null,3));
+            console.log('retrieving params(2)=',JSON.stringify(internal.parameters,null,3));
+            for (var ia=0;ia<internal.datgui_controllers.length;ia++) 
+                internal.datgui_controllers[ia].updateDisplay();
+
             if (dt.linestack) {
                 internal.linestack=dt.linestack;
-                let l=internal.linestack.length-1;
-                if (l>=0) {
-                    copyStateFromUndoStateElement(internal.linestack[l]);
-                }
                 update();
             }
-
-
-            internal.parameters.node=dt.lastnode;
+            
             internal.showlegend=!dt.showlegend;
             toggleshowlegend();
             internal.inrestorestate=false;
@@ -1894,6 +1899,9 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 obj.linestack=internal.linestack;
             }
 
+            obj.parameters=JSON.parse(JSON.stringify(internal.parameters));
+            console.log('storing params=',JSON.stringify(obj.parameters,null,2));
+            
             obj.parcellation = internal.parcellationtext;
             obj.lastnode=internal.lastnode;
             obj.showlegend=internal.showlegend;
