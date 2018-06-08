@@ -346,10 +346,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             return;
         }
         var numrows=internal.parcellation.rois.length;
-        var tmpcanvas = internal.tmpcanvas;
-        var tmpcontext = tmpcanvas.getContext("2d");
-        tmpcanvas.width = numrows;
-        tmpcanvas.height = numrows;
         var cw=internal.context.canvas.width*0.9;
         var padding_x=30;
         var padding_y=30;
@@ -369,12 +365,22 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                          padding_y,
                          scalefactor*numrows ] ];
         
-        var names=[ 'Positive','Negative' ];
+        let names=[ 'Positive','Negative' ];
+
+        let cv=$(actualcanvas);
+        let h=Math.round((550/cw)*ch);
+        cv.css({ width : "550px",
+                 height: `${h}px`,
+               });
+        let modal=webutil.createmodal('Connectivity Matrices');
+        modal.body.append(cv);
+        modal.dialog.modal('show');
+        
         for (var im=0;im<=1;im++) {
             var image = internal.conndata.getImageData(1-im,0,
                                                        actualcontext,
                                                        internal.parcellation);
-            var minx=offsets[im][0],miny=offsets[im][1],sz=offsets[im][2];
+            let minx=offsets[im][0],miny=offsets[im][1],sz=offsets[im][2];
             
             if (image!==null) {
                 actualcontext.lineWidth=1;
@@ -394,34 +400,48 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 actualcontext.lineTo(minx-2,   miny-2);
                 actualcontext.stroke();
 
+                internal.tmpcanvas.width = numrows;
+                internal.tmpcanvas.height = numrows;
+                let tmpcontext = internal.tmpcanvas.getContext("2d");
+                tmpcontext.clearRect(0,0,numrows,numrows);
                 tmpcontext.putImageData(image,0,0);
-                var ImageObject = new Image();
-                ImageObject.src = tmpcanvas.toDataURL("image/png");
+                let ImageObject = new Image();
+                ImageObject.src = internal.tmpcanvas.toDataURL("image/png");
                 
-                
-                actualcontext.drawImage(ImageObject,
-                                        0,0,numrows,numrows,
-                                        minx,miny,sz,sz);
-            } 
+                actualcontext.fillStyle="#ff8800";
+                actualcontext.fillRect(minx,miny,sz,sz);
+
+                if (im==0) {
+                    let a=minx,b=miny,c=sz;
+                    new Promise( (resolve) => {
+                        console.log("Promise 1");
+                        ImageObject.onload = function() {
+                            actualcontext.drawImage(ImageObject,
+                                                    0,0,numrows,numrows,
+                                                    a,b,c,c);
+                            console.log("Resolved 1",a,b,c);
+                            resolve();
+                        };
+                    });
+                } else {
+                    let a1=minx,b1=miny,c1=sz;
+                    new Promise( (resolve) => {
+                        console.log("Promise 2");
+                        ImageObject.onload = function() {
+                            actualcontext.drawImage(ImageObject,
+                                                    0,0,numrows,numrows,
+                                                    a1,b1,c1,c1);
+                            console.log("Resolved 2",a1,b1,c1);
+                            resolve();
+                        };
+                    });
+                }          
+            }
         }
         actualcontext.restore();
 
-        var outimg = actualcanvas.toDataURL("image/png");
-        var a=webutil.creatediv();
-        var wd=550;
-        
-        var dispimg = $('<img width="'+wd+'px">');
-        dispimg.attr('src',outimg);
-        a.append(dispimg);
-
-        setTimeout(function() {
-            bootbox.dialog({
-                title: 'Connectivity Matrices',
-                message: a.html(),
-            });
-        },1);
+    
     };
-
     
     var drawMatricesAndLegendsAsImages = function() {
 
@@ -528,7 +548,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             imagewidth=(boxheight-80)/2;
         }
         
-        var offsets = [ [ originx+0.1*leftgap,
+        let offsets = [ [ originx+0.1*leftgap,
                           originy+30,
                           imagewidth ],
                         [ originx+0.1*leftgap,
@@ -536,21 +556,19 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                           imagewidth ]
                       ];
 
-        var numrows=internal.parcellation.rois.length;      
-        var tmpcanvas = internal.tmpcanvas;
-        var tmpcontext = tmpcanvas.getContext("2d");
-        tmpcanvas.width = numrows;
-        tmpcanvas.height = numrows;
-
-        var names=[ 'Positive','Negative' ];
+        let numrows=internal.parcellation.rois.length;      
+        
+        let names=[ 'Positive','Negative' ];
 
         
-        for (var im=0;im<=1;im++) {
+        for (let im=0;im<=1;im++) {
 
-            var image = internal.conndata.getImageData(1-im,0,
+            let image = internal.conndata.getImageData(1-im,0,
                                                        internal.overlaycontext,
                                                        internal.parcellation);
-            var minx=offsets[im][0],miny=offsets[im][1],sz=offsets[im][2];
+            let minx=offsets[im][0],miny=offsets[im][1],sz=offsets[im][2];
+
+            
             
             if (image!==null) {
                 
@@ -573,17 +591,36 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 internal.overlaycontext.lineTo(minx-2,   miny-2);
                 internal.overlaycontext.stroke();
                 
-                tmpcontext.putImageData(image,0,0);
-                var ImageObject = new Image();
-                ImageObject.src = tmpcanvas.toDataURL("image/png");
                 
-                internal.overlaycontext.drawImage(ImageObject,
-                                                  0,0,numrows,numrows,
-                                                  minx,miny,sz,sz);
+                internal.overlaycontext.fillStyle="#ff8800";
+                internal.overlaycontext.fillRect(minx,miny,sz,sz);
                 internal.overlaycontext.restore();
-            } 
-        }
+                
+                internal.tmpcanvas.width = numrows;
+                internal.tmpcanvas.height = numrows;
+                let tmpcontext = internal.tmpcanvas.getContext("2d");
+                tmpcontext.putImageData(image,0,0);
+                let ImageObject = new Image();
+                ImageObject.src = internal.tmpcanvas.toDataURL("image/png");
 
+                
+                if (im==0) {
+                    let a=minx,b=miny,c=sz;
+                    ImageObject.onload = function() {
+                        internal.overlaycontext.drawImage(ImageObject,
+                                                          0,0,numrows,numrows,
+                                                          a,b,c,c);
+                    };
+                } else {
+                    let a1=minx,b1=miny,c1=sz;
+                    ImageObject.onload = function() {
+                        internal.overlaycontext.drawImage(ImageObject,
+                                                          0,0,numrows,numrows,
+                                                          a1,b1,c1,c1);
+                    };
+                }
+            }
+        }
     };
 
     
@@ -1610,7 +1647,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             var loadnext = function() {
                 loadmatrix(1,filenames[1],null,true);
                 webutil.createAlert('Sample connectivity matrices loaded.');
-                window.dispatchEvent(new Event('resize'));
+                //window.dispatchEvent(new Event('resize'));
             };
             loadmatrix(0,filenames[0],loadnext,true);
 
@@ -1736,9 +1773,10 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             var width  = 0.7*cw;
             if (width>500)
                 width=500;
-            var height = 600;
+            var height = 700;
             console.log('vp='+[vp.x0,vp.x1,vp.y0,vp.y1]+' w*h'+[cw,ch]);
-            var showdialog=webutil.createdialog("Top "+maxnodes+" Nodes (sorted by degree)",width,height,cw+300-width,100 );
+            var showdialog=webutil.createdialog("Top "+maxnodes+" Nodes (sorted by degree)",width,
+                                                -800,cw+300-width,100 );
 
             var widget=showdialog.widget;
             var templates=webutil.getTemplates();

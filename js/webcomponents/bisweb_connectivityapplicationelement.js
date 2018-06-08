@@ -53,9 +53,11 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         @returns {object} -- the state of the element as a dictionary*/
     getElementState(storeImages=false) {
 
-        let obj= super.getElementState(false);//storeImages);
+        let obj= super.getElementState(storeImages);
         // Add stuff
         obj['connectivity']=this.connectivitycontrol.getElementState();
+        
+        
         
         return obj;
     }

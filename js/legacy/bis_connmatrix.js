@@ -659,9 +659,8 @@ class ConnMatrix {
 
         var numrows=numeric.dim(matrix)[0];
         var imgData=context.createImageData(numrows,numrows);
-        var px=0;
-
         var yesc=[255,0,0,255],noc=[192,224,224,224];
+        let px=0;
         
         for (var j=0;j<numrows;j++) {
             var ja=j;
@@ -685,7 +684,7 @@ class ConnMatrix {
                     imgData.data[px+2]=noc[2];
                     imgData.data[px+3]=noc[3];
                 }
-                px+=4;
+                px=px+4;
             }
         }
 
