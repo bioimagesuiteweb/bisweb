@@ -5,6 +5,7 @@ const net = require('net');
 const crypto = require('crypto');
 const zlib = require('zlib');
 const os = require('os');
+const timers = require('timers');
 const BisImage = require('bisweb_image.js');
 
 //node extension to make node-like calls work on Windows
@@ -21,7 +22,10 @@ const SHAstring = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 
 //file transfer may occur in chunks, which requires storing the chunks as they arrive
 let fileInProgress = null;
+
+//image transfer requires switching a few variables that need to be global in scope
 let serverSocketListener = undefined;
+let timeout = undefined;
 
 let loadMenuBarItems = () => {
     let menubar = document.getElementById('viewer_menubar');
@@ -204,8 +208,23 @@ let handleImageFromClient = (upload, control, socket) => {
         }
 
         switch (parsedControl.opcode) {
-            case 2: handleImageFromClient(decoded, parsedControl, socket); break;
-            default: console.log('dropping packet with control', parsedControl);
+            case 2: 
+                handleImageFromClient(decoded, parsedControl, socket);
+                if (timeout) {
+                    timers.clearTimeout(timeout);
+                    timeout = null;
+                }
+                break;
+            default: 
+                console.log('dropping packet with control', parsedControl);
+                if (!timeout) {
+                    timeout = setServerTimeout(socket, () => {
+                        console.log('timed out waiting for client');
+                        socket.removeListener('data', transferSocketListener);
+                        socket.on('data', serverSocketListener);
+                    });
+                    console.log('creating timeout', timeout);
+                }
         }
     };
 
@@ -252,6 +271,7 @@ let handleImageFromClient = (upload, control, socket) => {
 
             socket.removeListener('data', transferSocketListener);
             socket.on('data', serverSocketListener);
+
             //save serialized NIFTI image
             genericio.write('/home/zach/tempname.nii.gz', fileInProgress.receivedFile, true);
         } else {
@@ -410,6 +430,12 @@ let checkValidPath = (filepath) => {
     });
 
 };
+
+let setServerTimeout = (socket, fn, delay = 2000) => {
+    let timer = timers.setTimeout(fn, delay);
+    console.log('timer', timer);
+    return timer;
+}
 
 /**
  * Takes a payload and a description of the payload type and formats the packet for transmission. 
