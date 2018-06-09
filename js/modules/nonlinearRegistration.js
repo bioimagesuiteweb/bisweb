@@ -20,6 +20,7 @@
 const biswrap = require('libbiswasm_wrapper');
 const BaseModule = require('basemodule.js');
 const baseutils = require('baseutils.js');
+const genericio = require('bis_genericio.js');
 
 /**
  * Aligns a set of images to a reference image using nonlinear registration and returns the set of transformations
@@ -113,7 +114,12 @@ class NonLinearRegistrationModule extends BaseModule {
         let reference = this.inputs['reference'];
         let transform = this.inputs['initial'] || 0;
         let linearmode = baseutils.getLinearModeCode(vals.linearmode);
-        
+
+        if (genericio.getenvironment()!=='node') {
+            vals.doreslice=true;
+            vals.debug=true;
+        }
+
         return new Promise( (resolve, reject) => {
             biswrap.initialize().then( () => {
 
@@ -158,10 +164,12 @@ class NonLinearRegistrationModule extends BaseModule {
                     'debug' : this.parseBoolean(vals.debug),
                 },this.parseBoolean(vals.debug));
                 
-                if (vals.doreslice) 
+                if (vals.doreslice)  {
+                    console.log('Reslicing');
                     this.outputs['resliced']=baseutils.resliceRegistrationOutput(biswrap,reference,target,this.outputs['output']);
-                else
+                } else {
                     this.outputs['resliced']=null;
+                }
                 
                 resolve();
             }).catch( (e) => {
