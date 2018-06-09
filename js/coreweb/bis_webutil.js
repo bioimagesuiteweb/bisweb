@@ -839,6 +839,7 @@ const webutil = {
             body.parent().addClass('in');
         // Eliminate div as it is a problem in this case
         $(div).children().appendTo(parent); div.remove();
+
         return body;
     },
 
@@ -847,9 +848,22 @@ const webutil = {
      */
     activateCollapseElement : function(elem) {
 
-        let lit=elem.parent().parent();
-        lit=lit.find('.panel-title').children()[0];
-        $(lit).trigger("click");
+        let top=elem.parent().parent();
+        let p=top.find('.in');
+        if (p.length<1) {
+            let link=top.find('.panel-title').children()[0];
+            $(link).trigger("click");
+        }
+
+        setTimeout( () => {
+            let scr=top.parent().parent();
+            let h=Math.round(scr.height());
+            let m=Math.round(elem.height());
+            let t=(h-(m+100));
+            if (t<0)
+                t=0;
+            scr.scrollTop(t);
+        },200);
     },
 
 
