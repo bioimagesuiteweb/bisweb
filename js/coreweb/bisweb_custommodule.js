@@ -29,22 +29,41 @@ const bisgenericio=require("bis_genericio");
  * @namespace bisWebCustomModule
  */
 
-/** only one module may be open at a time. When a new one is opened, the current one is closed
- * This is stored in globalOpenModule 
+/** Only one modules can be open at a time. This is stored in globalOpenModule
  */
 let globalOpenModule=null;
 
 
+/** Modules that are open are stored in the dock
+ * If docked then the module is in the dock (for update purposes)
+ */
+let globalDockedModules=[];
+const maxGlobalDockedModules=3;
+
 /**
  * Creates a custom module and adds it to the frame as a child of parent. 
- * Custom Module Class. 
+ *
+ * If baseframe is null then this is created as a dialog and that is the end
+ * If baseframe is not null and opts.dockable is false then just stick this in the dock area
+ *
+ * If baseframe is not null and opts.dockable is true then create multifunctional dialog that sits in the dock. 
+ *    In this case baseframe is realy the layoutcontroller (i.e. it has layoutcontroller.createToolWidget)
+ * 
+ *
+ *
+
  * @alias bisWebCustomModule.createCustom
  * @param {Node} parent - DOM Node to append the custom module frame to
  * @param {bisweb_algorithm} algorithmcontroller-  Algorithm controller associated with the viewers on the page
  * @param {Object} mod - Object containing a module that specifies how it should be displayed and run.
  * @param {object} opts - the options object 
  * @param {Number} opts.numViewers - Number of Image Viewers attached
+ * @param {String} opts.name - Name of the dialog / panel (if set)
+
+ * @param {Boolean} opts.dockable - If true and baseframe is not null allow the widget to dock!
+ * @param {Boolean} opts.forcedock - If true and baseframe is not null force the widget to dock!
  */
+
 class CustomModule {
 
     constructor(baseframe, mod, algocontroller, opts = {}) {
@@ -58,7 +77,18 @@ class CustomModule {
         this.algocontroller = algocontroller;
         this.moduleOptions = opts;
         this.description = this.module.getDescription();
-        
+
+        // Docking Options
+        this.dockWidget = null;
+        this.dockable = opts.dockable || false;
+        if (this.dockable)
+            this.forcedock = opts.forcedock || false;
+        else
+            this.forcedock=false;
+
+        this.docked = false;
+        this.layoutcontroller=null;
+
         // Parameters
         this.dirtyInputs = true;
 
@@ -73,25 +103,46 @@ class CustomModule {
         this.parameterControllers = null;
         this.inputControllers = {};
 
-        let name = this.description.dialogname || this.description.name;
+        this.name = opts.name || this.description.dialogname || this.description.name;
 
         const self=this;
-        if (baseframe===null) {
-            this.dialog=webutil.createdialog(name,300,-500,100,100,500);
-            this.dialog.removeCloseButton();
-            this.dialog.setCloseCallback(function() { self.hideDialog(); });
-            this.basewidget=this.dialog.widget;
-            this.footer=this.dialog.footer;
-            this.basewidget.css({ "background-color" : "#333333" });
 
-        } else {
+        // Three states
+
+        if (baseframe !== null && this.dockable===false) {
             baseframe=$(baseframe);
             this.basewidget = webutil.creatediv({ parent: baseframe });
             this.dialog=null;
             this.footer=this.basewidget;
             let placeholder = webutil.creatediv({ parent: this.basewidget });
-            placeholder[0].innerHTML = `this element ${name} will load once data is available`;
-        }
+            placeholder[0].innerHTML = `this element ${this.name} will load once data is available`;
+        } else {
+            this.dialog=webutil.createdialog(this.name,300,-500,100,100,500);
+            this.dialog.removeCloseButton();
+            this.dialog.setCloseCallback(function() { self.hideDialog(); });
+
+            this.basewidget = webutil.creatediv({ parent: this.dialog.widget });
+            this.footer=webutil.creatediv({ parent: this.dialog.footer });
+            
+            //            this.basewidget=this.dialog.widget;
+            //          this.footer=this.dialog.footer;
+            this.basewidget.css({ "background-color" : "#333333" });
+            if (baseframe!==null) {
+                this.layoutcontroller=baseframe;
+                // Need to add a button here
+                let but2=this.dialog.header.find('.close');
+                let but=$(`<button type="button" class="close"><span aria-hidden="true">&rarr;</span></button>`);
+                but.css({ 'margin-right' : '10px'});
+                but2.after(but);
+                but.click( (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    self.dockModule();
+                });
+
+
+            }
+        } 
 
         this.threadmanager = $("bisweb-webworkercontroller")[0] || null;
     }
@@ -106,6 +157,16 @@ class CustomModule {
     /** shows the current dialog */
     showDialog() {
 
+        if (this.docked === true) {
+            return this.showDockedModule();
+        }
+
+        if (this.forcedock === true) {
+            this.dirtyInputs = true;
+            this.createOrUpdateGUI();
+            return this.dockModule();
+        }
+        
         if (!this.dialog)
             return;
 
@@ -154,6 +215,9 @@ class CustomModule {
     /** hides the current dialog */
     hideDialog() {
 
+        if (this.docked)
+            return;
+        
         if (!this.dialog)
             return;
 
@@ -165,7 +229,43 @@ class CustomModule {
         if (globalOpenModule===this)
             globalOpenModule=null;
     }
+    
+    /** Call to remove module GUI to dock from dialog */
+    dockModule() {
 
+        if (this.docked) {
+            return this.showDockedModule();
+        }
+        
+        if (globalDockedModules.length===maxGlobalDockedModules) {
+            let toremove=globalDockedModules.shift();
+            toremove.unDockModule();
+        }
+
+        this.hideDialog();
+        this.dockWidget=this.layoutcontroller.createToolWidget(`Tool: ${this.name}`);
+        this.dockWidget.append(this.basewidget);
+        this.dockWidget.append('<HR>');
+        this.dockWidget.append(this.footer);
+        this.docked=true;
+        this.showDockedModule();
+        globalDockedModules.push(this);
+    }
+
+    /** Call to show docked dialog, i.e. make the panel visible and open */
+    showDockedModule() {
+        if (this.docked)
+            webutil.activateCollapseElement(this.dockWidget);
+    }
+
+    /** Call to move dialog GUI from dock back to dialog */
+    unDockModule() {
+        this.dialog.widget.append(this.basewidget);
+        this.dialog.footer.append(this.footer);
+        this.dockWidget.parent().parent().remove();
+        this.docked=false;
+    }
+    
     /** returns the current module description 
      * @returns {Dictionary} - the current module description with low/high ranges updated
      */
@@ -602,13 +702,17 @@ let createCustom = function (parent, algorithmcontroller, mod, opts = {}) {
     return new CustomModule(parent, mod, algorithmcontroller, opts);
 };
 
-let getOpenModule=function() {
-    return globalOpenModule;
+/** Return all modules that are visible, either docked or open 
+ * @returns {array} list of modules that need to be updated
+ */
+
+let getModulesToUpdate=function() {
+    return [ globalOpenModule].concat(globalDockedModules);
 };
 
 module.exports = {
     createCustom: createCustom,
-    getOpenModule: getOpenModule,
+    getModulesToUpdate: getModulesToUpdate,
 };
 
 

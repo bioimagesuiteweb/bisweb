@@ -483,6 +483,7 @@ const webutil = {
         return panel;
     },
 
+    
     /** 
      * function that creates a checkbox using Jquery/Bootstrap (for styling)
      * @alias WebUtil.createcheckbox
@@ -841,6 +842,16 @@ const webutil = {
         return body;
     },
 
+    /** activates Collapse Element 
+     * @param {JQueryElement} - the output of createCollapseElement
+     */
+    activateCollapseElement : function(elem) {
+
+        let lit=elem.parent().parent();
+        lit=lit.find('.panel-title').children()[0];
+        $(lit).trigger("click");
+    },
+
 
     /** checks if collapse element is open or not 
      * @alias WebUtil.isCollapseElementOpen
@@ -857,6 +868,8 @@ const webutil = {
         }
         return false;
     },
+
+    
 
     /** create hacky non-modal dialog.
      * @alias WebUtil.createdialog

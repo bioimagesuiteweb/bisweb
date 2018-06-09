@@ -62,10 +62,14 @@ class ModuleManagerElement extends HTMLElement {
 
 
     createModuleOnDemandAndShow(name, module, moduleoptions = {}) {
+        moduleoptions.dockable=true;
+
+        
         if (this.modules[name] === null) {
             if (typeof module === "function")
                 module = new module(this.mode);
-            this.modules[name] = biscustom.createCustom(null,
+            moduleoptions.name=name;
+            this.modules[name] = biscustom.createCustom(this.layoutcontroller,
                                                         this.algorithmController,
                                                         module, moduleoptions);
             this.customs.push(this.modules[name]);
@@ -78,7 +82,7 @@ class ModuleManagerElement extends HTMLElement {
     createModule(name, index,dosep , module, moduleoptions = {}) {
 
         const self = this;
-        if (this.layoutcontroller !== null) {
+        if (this.layoutcontroller !== null && moduleoptions.dockable!==true) {
             if (typeof module === "function") 
                 module = new module(this.mode);
 
@@ -142,7 +146,7 @@ class ModuleManagerElement extends HTMLElement {
         for (let i = 0; i < numviewers; i++)
             this.viewers[i].addImageChangedObserver(this);
 
-        let moduleoptions = { 'numViewers': numviewers };
+        let moduleoptions = { 'numViewers': numviewers, 'dockable' : true , 'forcedock' : true};
         if (editmenu===null) {
             this.moduleMenu[0] = webutil.createTopMenuBarMenu('Edit', menubar);
         } else {
@@ -258,11 +262,11 @@ class ModuleManagerElement extends HTMLElement {
     handleViewerImageChanged() { //viewer, source, colortype) 
 
         // This is mostly for drag and drop but who knows
-        let openmod=biscustom.getOpenModule();
-        if (openmod!==null) {
-            openmod.createOrUpdateGUI();
+        let modsToUpdate=biscustom.getModulesToUpdate();
+        for (let i=0;i<modsToUpdate.length;i++) {
+            if (modsToUpdate[i])
+                modsToUpdate[i].createOrUpdateGUI();
         }
-       
     }
 }
 
