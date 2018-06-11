@@ -193,7 +193,7 @@ class ViewerApplicationElement extends HTMLElement {
 
 
         let fmenu = [0, 0], objmenu = [0, 0];
-        let fmenuname = "Image", objmenuname = 'Overlay';
+        let fmenuname = "File", objmenuname = 'Overlay';
 
 
         // Essentially bind self here
@@ -210,6 +210,8 @@ class ViewerApplicationElement extends HTMLElement {
                 fmenuname = 'Image2';
                 objmenuname = 'Overlay2';
             }
+
+            
             if (painttoolid !== null && viewerno === paintviewerno) {
                 objmenuname = "Objectmap";
                 if (viewerno === 1)
@@ -311,6 +313,7 @@ class ViewerApplicationElement extends HTMLElement {
             internal_create_menu(viewerno);
         }
 
+        return fmenu[0];
     }
 
     // ---------------------------------------------------------------------
@@ -594,11 +597,10 @@ class ViewerApplicationElement extends HTMLElement {
         return editmenu;
     }
     
-    createApplicationMenu(menubar) {
-
+    createApplicationMenu(bmenu) {
 
         const self=this;
-        let bmenu=webutil.createTopMenuBarMenu("File", menubar);
+        webutil.createMenuItem(bmenu,'');
         webfileutil.createFileMenuItem(bmenu,'Load Application State',
                                        function(f) {
                                            self.loadApplicationState(f);
@@ -685,17 +687,18 @@ class ViewerApplicationElement extends HTMLElement {
         // Application Menu
         // ----------------------------------------------------------
         
-        this.createApplicationMenu(menubar);
+        
+        // ----------------------------------------------------------
+        // Create the File and Overlay Menus
+        // ----------------------------------------------------------
+        let fmenu=this.createFileAndOverlayMenus(menubar,painttoolid);
+
+        this.createApplicationMenu(fmenu);
         let editmenu=this.createEditMenu(menubar);
         
         if (this.num_independent_viewers >1)
             this.createDisplayMenu(menubar,null);
 
-        
-        // ----------------------------------------------------------
-        // Create the File and Overlay Menus
-        // ----------------------------------------------------------
-        this.createFileAndOverlayMenus(menubar,painttoolid);
 
         // ----------------------------------------------------------
         // Module Manager
