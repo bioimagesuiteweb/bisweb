@@ -1,0 +1,71 @@
+#viewerwidget {
+    top: 65px;
+    left: 0px;
+    width: 500px;
+    height: 500px;
+    position: relative;
+}
+
+.greyPre {
+    background-color: #808080;	
+}
+
+.whitePre {
+	background-color: #FFFFFF;
+}
+
+.chart {
+    text-align: left;
+}
+
+
+
+#Tools {
+    margin-top : 5px;
+    padding-left:5px;
+}
+
+
+
+.sidd-item {
+	background-color: #E3E3E3;
+	width: 530px;
+	height: 335px;
+	text-align:center;
+}
+
+#smitem1 {
+	text-align: center;
+}
+.siddtextFieldLabel {
+	color: #3C3C3C;
+}
+
+#patientName {
+    width: 150px;
+    margin-left: 60px;
+}
+
+#smitem3 {
+	text-align: center;
+}
+
+.btn-sidd {
+	width: 275px;
+
+}
+#smitem5{
+	text-align:center;
+}
+
+.carousel-indicators {
+	position: relative;
+}
+
+#smitem6 {
+	text-align: center;
+}
+
+
+
+
