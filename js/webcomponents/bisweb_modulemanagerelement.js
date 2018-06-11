@@ -76,6 +76,7 @@ class ModuleManagerElement extends HTMLElement {
         }
 
         this.modules[name].showDialog();
+        return this.modules[name];
     }
 
 
@@ -147,6 +148,8 @@ class ModuleManagerElement extends HTMLElement {
             this.viewers[i].addImageChangedObserver(this);
 
         let moduleoptions = { 'numViewers': numviewers, 'dockable' : true , 'forcedock' : true};
+
+    console.log(moduleoptions);
         if (editmenu===null) {
             this.moduleMenu[0] = webutil.createTopMenuBarMenu('Edit', menubar);
         } else {
@@ -182,8 +185,13 @@ class ModuleManagerElement extends HTMLElement {
         }
 
         if (this.mode==='overlay') {
+            console.log('This far ...');
             webutil.createMenuItem(this.moduleMenu[0], '');
-            this.createModule('Reslice Image',0, false, modules.resliceImage, {'numViewers' : 1 });
+            moduleoptions.numViewers=1;
+            moduleoptions.showfirsttime=false;
+            this.createModule('Reslice Image',0, false, modules.resliceImage, moduleoptions);
+
+            this.createModuleOnDemandAndShow('Reslice Image',modules.resliceImage,moduleoptions);
             return this.moduleMenu[0];
         } 
 

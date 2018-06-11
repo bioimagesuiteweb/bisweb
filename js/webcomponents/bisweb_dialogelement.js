@@ -404,18 +404,23 @@ class BisWebDialogElement extends HTMLElement {
             e.preventDefault();
             e.stopPropagation();
             self.dockDialog();
+            return false;
         });
 
     }
 
-    /** dock the dialog inside the this.layoutController */
-        /** Call to remove module GUI to dock from dialog */
-    dockDialog() {
+    /** dock the dialog inside the this.layoutController 
+     * @param {Boolean} show - if true then show
+     */
+    dockDialog(show=true) {
 
+        if (!this.layoutController)
+            return false;
+        
         if (this.docked) {
             console.log('Showing dock dialog',this.docked);
             this.showDockedDialog();
-            return false;
+            return true;
         }
 
         if (globalDockedDialogs.length===maxGlobalDockedDialogs) {
@@ -430,13 +435,13 @@ class BisWebDialogElement extends HTMLElement {
         this.dockWidget.append(this.footer);
         this.docked=true;
         globalDockedDialogs.push(this);
-        this.showDockedDialog();
+        if (show)
+            this.showDockedDialog();
         return true;
     }
     
     /** Call to show docked dialog, i.e. make the panel visible and open */
     showDockedDialog() {
-        console.log('This ... show docked');
         if (this.docked)
             webutil.activateCollapseElement(this.dockWidget);
     }

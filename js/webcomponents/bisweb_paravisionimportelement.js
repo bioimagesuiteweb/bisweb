@@ -92,7 +92,7 @@ class ParavisionImportElement extends HTMLElement {
         if (internal.parentDomElement===null)
             return;
         
-        internal.showdialog=webutil.createdialog("Converted Images",600,500,100,50 );
+        internal.showdialog=webutil.createdialog("Converted Images",600,-500,100,50 );
         let widget=internal.showdialog.widget;
         widget.css({ "overflow-y" : "hidden"});
         let templates=webutil.getTemplates();
@@ -113,7 +113,7 @@ class ParavisionImportElement extends HTMLElement {
         let dim=internal.showdialog.getdimensions();
         console.log('dim=',dim);
         $(t1).css({
-            height: `${dim.height-150}px`
+            height: `${dim.height-100}px`
         });
         
         

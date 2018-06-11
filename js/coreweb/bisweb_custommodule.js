@@ -54,6 +54,7 @@ let ModuleList={};
 
  * @param {Boolean} opts.dockable - If true and baseframe is not null allow the widget to dock!
  * @param {Boolean} opts.forcedock - If true and baseframe is not null force the widget to dock!
+ * @param {Boolean} opts.showfirsttime - If true and docked, whether to show first time it is created
  */
 
 class CustomModule {
@@ -64,6 +65,9 @@ class CustomModule {
         if (opts.numViewers !== 0)
             opts.numViewers = opts.numViewers || 1;
 
+        if (opts.showfirsttime!==false)
+            opts.showfirsttime=true;
+        
         // Initialize
         this.module = mod;
         this.algocontroller = algocontroller;
@@ -101,8 +105,6 @@ class CustomModule {
 
         // Three states
 
-
-
         if (baseframe !== null && this.dockable===false) {
             baseframe=$(baseframe);
             this.basewidget = webutil.creatediv({ parent: baseframe });
@@ -121,6 +123,8 @@ class CustomModule {
             this.basewidget.css({ "background-color" : "#333333" });
             if (baseframe!==null) {
                 this.dialog.makeDockable(baseframe);
+            } else {
+                console.log('baseframe is null');
             }
         }
         ModuleList[this.dialog]=this;
@@ -153,8 +157,8 @@ class CustomModule {
         }
 
         if (this.forcedock === true) {
-            console.log('Force dock module');
-            return this.dialog.dockDialog();
+            if (this.dialog.dockDialog(this.moduleOptions.showfirsttime))
+                return;
         }
 
         // ------ From Here dialog related ------------------
