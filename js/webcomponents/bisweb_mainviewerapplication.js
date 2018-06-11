@@ -397,10 +397,11 @@ class ViewerApplicationElement extends HTMLElement {
 
         const consoleid = this.getAttribute('bis-consoleid') || null;
         if (consoleid !== null) {
-            webutil.createMenuItem(hmenu, ''); // separator
             let console = document.querySelector(consoleid);
-            console.addtomenu(hmenu);
-
+            if (console) {
+                webutil.createMenuItem(hmenu, ''); // separator
+                console.addtomenu(hmenu);
+            }
             if (webutil.inElectronApp()) {
                 webutil.createMenuItem(hmenu, ''); // separator
                 webutil.createMenuItem(hmenu, 'Show JavaScript Console',
