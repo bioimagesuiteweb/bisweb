@@ -14,8 +14,7 @@ const numeric = require('numeric');
 const bootbox = require('bootbox');
 const LinearRegistration = require('linearRegistration');
 const NonlinearRegistration = require('nonlinearRegistration');
-const biswrap = require('libbiswasm_wrapper');
-
+const baseutils = require('baseutils');
 
 const spect_template = `
 						
@@ -82,6 +81,7 @@ let resultsmessagebox = function (results) {
 };
 
 
+
 /** 
  * A web element to create and manage a GUI for a Diff Spect Tool (for differential spect processing for epilepsy).
  *
@@ -126,9 +126,16 @@ class DiffSpectElement extends HTMLElement {
 			ATLAS_mask: null,
 			tmap: null,
 			nonlinear: false,
-			intertoictal: null,
-			atlastointer: null,
-			atlastoictal: null,
+
+			intertoictal_xform: null,
+			intertoictal_reslice: null,
+						
+			atlastointer_xform: null,
+			atlastointer_reslice: null,
+
+			atlastoictal_xform: null,
+			atlastoictal_reslice: null,
+						
 			hyper: null
 		};
 
@@ -222,7 +229,7 @@ class DiffSpectElement extends HTMLElement {
 	 * @param {object} params - options for the registration 
 	 * @returns {BISTransformation} - the output of the registration
 	 */
-	computeRegistration(reference, target, initial, params) {
+    computeRegistration(reference, target, initial, params) {
 
 		initial = initial || null;
 		params = params || {
@@ -254,42 +261,45 @@ class DiffSpectElement extends HTMLElement {
 		}
 
 		let lin_opts = {
-			intscale: params.intscale,
-			numbins: params.numbins,
-			levels: lv,
-			smoothing: params.smoothing,
-			optimization: 3,
-			stepsize: params.stepsize,
-			metric: params.metric,
-			steps: 1,
-			mode: md,
-			resolution: params.resolution,
-			iterations: iter,
+		    "intscale": 1,
+		    "numbins": 64,
+		    "levels": 3,
+		    "imagesmoothing": 1,
+		    "optimization": "ConjugateGradient",
+		    "stepsize": 1,
+		    "metric": "NMI",
+		    "steps": 1,
+		    "iterations": 10,
+		    "mode": "Rigid",
+		    "resolution": 1.5,
+		    "doreslice": true,
+		    "norm": true,
+		    "debug": false
 		};
 		let input = {'reference': reference,
 			     'target'   : target}; 
 		var linear = new LinearRegistration();
-			
-		
+		let output = {
+			transformation: null,
+			reslice: null
+		};
 
-		if (params.mode < 2)
-			return linear;
-
-		var nreg = bisregister.createNonLinearRegistration(reference, target, linear, {
-			intscale: params.intscale,
-			numbins: params.numbins,
-			levels: params.levels,
-			smoothing: params.smoothing,
-			optimization: 3,
-			stepsize: params.stepsize,
-			metric: params.metric,
-			steps: 1,
-			iterations: params.iterations,
-			cps: params.cps,
-			resolution: params.resolution,
+		return new Promise( (resolve,reject) => {
+			linear.execute(input, lin_opts).then( () => {
+				output.transformation = linear.getOutputObject('output'); 
+				output.reslice = linear.getOutputObject('resliced');
+				if (baseutils.getLinearMode(lin_opts["mode"])) {
+					console.log(output);
+				    resolve(output);
+				}
+					resolve();
+			    }).catch( (e) => {
+				    console.log('This did not run');
+				    console.log('error',e,e.stack);
+				    reject(e);
+				});
 		});
-		return nreg.run();
-	}
+    }
 
 	// --------------------------------------------------------------------------------
 	// Custom Registration Methods
@@ -317,14 +327,13 @@ class DiffSpectElement extends HTMLElement {
 			resolution: 1.5
 		};
 
-		this.app_state.intertoictal = this.computeRegistration(this.app_state.interictal, this.app_state.ictal, null, opts);
-		var reslice_transform = this.app_state.intertoictal;
-		console.log('Interictal To Ictal Original :' + this.app_state.intertoictal.getMatrix());
-		var resliced = new bisweb_image();
-		resliced.cloneImage(this.app_state.interictal);
-		bisimagesmoothreslice.resliceImage(this.app_state.ictal, resliced, reslice_transform, 1);
-		resliced.computeIntensityRange();
-
+		this.computeRegistration(this.app_state.interictal, this.app_state.ictal, null, opts).then( (output) => {
+			console.log(output);
+			console.log(this.app_state.intertoictal);
+			this.app_state.intertoictal_xform = output.transformation;
+			this.app_state.intertoictal_reslice = output.reslice;
+			var reslice_transform = this.app_state.intertoictal;
+			});
 	}
 
 	registerAtlasToInterictal(fast = false) {
@@ -354,22 +363,65 @@ class DiffSpectElement extends HTMLElement {
 			opts.mode = 2;
 
 
-		this.app_state.atlastointer = this.computeRegistration(this.app_state.ATLAS_spect, this.app_state.interictal, null, opts);
-		console.log(this.app_state.atlastointer);
+
+		this.computeRegistration(this.app_state.ATLAS_spect, this.app_state.interictal, null, opts).then( (output) => {
+			console.log(this.app_state.atlastointer);
+			this.app_state.atlastointer = output;
+		    });
+
 	}
 
 
 	computeRegistrationOfImages() {
 		if (!this.app_state.does_have_mri) {
 			if (!this.app_state.nonlinear) {
-				this.registerAtlasToInterictal(true);
-				this.registerInterictalToIctal();
-				var mat1 = this.app_state.atlastointer.getMatrix();
-				var mat2 = this.app_state.intertoictal.getMatrix();
-				var combo = numeric.dot(mat1, mat2);
-				var combinedTransformation = bistransformations.createLinearTransformation(0);
-				combinedTransformation.setMatrix(combo);
-				this.app_state.atlastoictal = combinedTransformation;
+				let mat1;
+				let mat2;
+
+				// asynchronous definition for registerAtlasToInterictal 
+				let reg1_promise = new Promise((resolve, reject) => {
+					try {
+						this.registerAtlasToInterictal(true);
+					} catch(e) {
+						reject(e);
+					}
+				});
+
+
+				// asynchronous definition for registerInterictalToIctal
+				let reg2_promise = new Promise((resolve, reject) => {
+					try {
+						this.registerInterictalToIctal();
+					} catch(e) {
+						reject(e);
+					}
+				});
+				
+
+				let multiply_promise = new Promise((resolve, reject) => {
+				  try{
+					reg1_promise.then(() => {
+						mat1 = this.app_state.atlastointer.getMatrix();	
+					});
+					reg2_promise.then(() => {
+						mat2 = this.app_state.atlastointer.getMatrix();	
+					});
+					let output ={ matrix1:mat1, matrix2:mat2};
+					resolve(output);
+				  } catch(e) {reject(e);}
+					
+				//	combo_xform.setMatrix(combo);
+				//	this.app_state.atlastoictal = combo_xform;
+				});
+
+				multiply_promise.then((output) => {
+					console.log(output);
+					let combomat = numeric.dot(output.matrix1, output.matrix2);
+					let combo_xform = bistransformations.createLinearTransformation(0);
+					combo_xform.setMatrix(combomat);
+					this.app_state.atlastoictal = combo_xform;
+				});
+				
 			}
 			else {
 				var params = {
@@ -725,10 +777,10 @@ class DiffSpectElement extends HTMLElement {
 			webutil.createAlert('The SPECT Tool is now ready. The core data has been loaded.<BR> Click either "Create New Patient" or "Load Existing Patient" to begin.');
 		});
 
-		this.loadimagearray(['images/ISAS_SPECT_Template.nii.gz',
+		this.loadimagearray(['../../images/ISAS_SPECT_Template.nii.gz',
 			'images/MNI_T1_2mm_stripped_ras.nii.gz',
-			'images/ISASHN_Standard_Deviation.nii.gz',
-			'images/ISAS_SPECT_Mask.nii.gz'
+			'../../images/ISASHN_Standard_Deviation.nii.gz',
+			'../../images/ISAS_SPECT_Mask.nii.gz'
 		], alldone);
 
 	}
@@ -860,6 +912,7 @@ class DiffSpectElement extends HTMLElement {
 			self.state_machine.interictal_loaded = true;
 			self.app_state.viewer.setimage(self.app_state.interictal);
 			webutil.enablebutton(showInterictal, true);
+			console.log(self.app_state.interictal);
 		});
 
 		var handleInterictalFileSelect = ((evt) => {
@@ -870,7 +923,7 @@ class DiffSpectElement extends HTMLElement {
 				interictalLoaded); // function to call when successful
 		});
 
-	webfileutil.attachFileCallback(
+		webfileutil.attachFileCallback(
 			webutil.createbutton({
 			type: 'primary',
 			name: 'Load Interictal',
@@ -896,6 +949,7 @@ class DiffSpectElement extends HTMLElement {
 			self.state_machine.ictal_loaded = true;
 			self.app_state.viewer.setimage(self.app_state.ictal);
 			webutil.enablebutton(showIctal, true);
+			console.log(self.app_state.ictal);
 		};
 		var handleIctalFileSelect = function (evt) {
 			self.handleGenericFileSelect(evt,
@@ -1162,11 +1216,8 @@ class DiffSpectElement extends HTMLElement {
 
 
 	showAtlasToInterictalRegistration() {
-		var resliced_inter = new bisweb_image();
-		resliced_inter.cloneImage(self.app_state.ATLAS_spect, { type: 'float' });
-		bisimagesmoothreslice.resliceImage(self.app_state.interictal, resliced_inter, self.app_state.atlastointer, 1);
-		self.app_state.viewer.setimage(self.app_state.ATLAS_spect);
-		self.app_state.viewer.setobjectmap(resliced_inter);
+		this.app_state.viewer.setimage(this.app_state.ATLAS_spect);
+		this.app_state.viewer.setobjectmap(this.app_state.atlastointer_reslice);
 	}
 
 	showInterictalToIctalRegistration() {
