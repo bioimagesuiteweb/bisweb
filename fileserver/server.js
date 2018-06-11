@@ -168,7 +168,7 @@ let handleTextRequest = (rawText, control, socket) => {
     switch (parsedText.command) {
         //get file list
         case 'show':
-        case 'showfiles': serveFileList(socket); break;
+        case 'showfiles': serveFileList(socket, os.homedir(), 4); break;
         //get a file from the server
         case 'getfile':
         case 'getfiles': serveFileRequest(parsedText, control, socket); break;
@@ -288,7 +288,7 @@ let serveFileRequest = (parsedText, control, socket) => {
 
                 fs.readFile(file, (err, data) => {
                     console.log('file', file);
-                    
+
                     //send data compressed and uncompress on the other side
                     //zlib.gunzip(data, (err, result) => {
                     
@@ -306,12 +306,14 @@ let serveFileRequest = (parsedText, control, socket) => {
 /**
  * Sends the list of available files to the user, hiding files above the ~/ directory.
  * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
+ * @param {String} basedir - Directory on the server machine to display files starting from.
+ * @param {Number} depth - Number of directories under basedir to expand. Optional, depth will be infinite if not specified.
+ * @returns A file tree rooted at basedir.
  */
-let serveFileList = (socket) => {
-    let basedir = os.homedir();
+let serveFileList = (socket, basedir = os.homedir(), depth = null) => {
     let fileTree = [];
 
-    let expandDirectory = (path, fileTreeIndex) => {
+    let expandDirectory = (path, fileTreeIndex, directoriesExpanded) => {
         return new Promise( (resolve, reject) => {
             fs.readdir(path, (err, files) => {
                 if (err) { reject(err); }
@@ -330,7 +332,12 @@ let serveFileList = (socket) => {
                             if (stat.isDirectory()) {
                                 treeEntry.children = [];
                                 treeEntry.type = 'directory';
-                                expandDirectory(path, treeEntry.children).then( () => { resolve(fileTreeIndex); });
+
+                                if (!depth || directoriesExpanded < depth) {
+                                    expandDirectory(path, treeEntry.children, directoriesExpanded + 1).then( () => { resolve(fileTreeIndex); });
+                                } else {
+                                    resolve(fileTreeIndex);
+                                }
                             } else {
                                 treeEntry.type = 'file';
                                 resolve(fileTreeIndex);
@@ -339,7 +346,7 @@ let serveFileList = (socket) => {
                             treeEntry.path = path;
                         });
                     });
-                }
+                };
 
                 //expand a directory inside the current directory -- resolve promise when all contents examined.
                 let promisesInsideDirectory = [];
@@ -354,7 +361,7 @@ let serveFileList = (socket) => {
         });
     };
 
-    expandDirectory(basedir, fileTree).then( (tree) => {
+    expandDirectory(basedir, fileTree, 0).then( (tree) => {
         console.log('tree', tree);
         socket.write(formatPacket('filelist', tree));
     });
