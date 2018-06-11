@@ -266,7 +266,7 @@ class DiffSpectElement extends HTMLElement {
 			resolution: params.resolution,
 			iterations: iter,
 		};
-		let input = {'reference': reference
+		let input = {'reference': reference,
 			     'target'   : target}; 
 		var linear = new LinearRegistration();
 			
@@ -622,7 +622,7 @@ class DiffSpectElement extends HTMLElement {
 
 		let newimage = new bisweb_image();
 		newimage.load(imgfile, false).then(
-			function () { imageread(newimage); })
+			function () { imageread(newimage); });
 		//						.catch( (e) => { errormessage(e); });
 	}
 
@@ -704,7 +704,7 @@ class DiffSpectElement extends HTMLElement {
 		$('#sm_patientName').val(input.name);
 		$('#sm_patientNumber').val(input.number);
 
-	};
+	}
 	// --------------------------------------------------------------------------------
 
 
