@@ -146,7 +146,9 @@ class bisGridTransformation : public bisAbstractTransformation {
    */
   virtual int textParse(std::vector<std::string>& lines,int& offset,int debug=0);
 
-  
+  // No
+  virtual  int isLinear() { return 0;}
+
 protected:
 
   /** Object to store displacements in */

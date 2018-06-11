@@ -67,6 +67,11 @@ void bisComboTransformation::setInitialTransformation(bisMatrixTransformation *p
 }
 
 
+void bisComboTransformation::getInitialTransformation(bisUtil::mat44 m)
+{
+  this->initialLinearTransformation->getMatrix(m);
+}
+
 
 int bisComboTransformation::getNumberOfGridTransformations()
 {
@@ -76,11 +81,19 @@ int bisComboTransformation::getNumberOfGridTransformations()
 
 void bisComboTransformation::transformPoint(float x[3],float y[3])
 {
+
+  int sz=this->gridTransformationList.size();
+  if (sz<1) {
+    this->initialLinearTransformation->transformPoint(x,y);
+    return;
+  }
+  
+  
   float temp[3]= { x[0],x[1],x[2] };
   /*  int debug=0;
   if (fabs(x[0]-20.0)+fabs(x[1]-20.0)+fabs(x[2]-20.0)<0.0001)
   debug=1;*/
-  int sz=this->gridTransformationList.size();
+
   /*  if (debug)
       std::cout << "Beginning " << x[0] << "," << x[1] << "," << x[2] << std::endl;*/
   

@@ -553,13 +553,13 @@ unsigned char* normalizeImageWASM(unsigned char* input,const char* jsonstring,in
 // --------------------------------------------------------------------------------------------------------------------------------------------------------
 // Prepare Image  for Registration
 // --------------------------------------------------------------------------------------------------------------------------------------------------------
-template <class BIS_TT> unsigned char* prepareImageForRegistrationTemplate(unsigned char* input,bisJSONParameterList* params,BIS_TT*)
+template <class BIS_TT> unsigned char* prepareImageForRegistrationTemplate(unsigned char* input,bisJSONParameterList* params,int debug,BIS_TT*)
 {
 
   std::unique_ptr<bisSimpleImage<BIS_TT> > inp_image(new bisSimpleImage<BIS_TT>("inp_image"));
   if (!inp_image->linkIntoPointer(input))
     return 0;
-  
+
   int numbins=params->getIntValue("numbins",64);
   int normalize=params->getBooleanValue("normalize",1);
   float res=params->getFloatValue("resolution",1.5);
@@ -570,13 +570,15 @@ template <class BIS_TT> unsigned char* prepareImageForRegistrationTemplate(unsig
   std::string name="external";
   std::unique_ptr<bisSimpleImage<short> > out_image=bisImageAlgorithms::prepareImageForRegistration(inp_image.get(),
 												    numbins,normalize,
-												    res,sigma,intscale,frame,name);
+												    res,sigma,intscale,frame,
+                                                                                                    name,
+                                                                                                    debug);
   
 
   return out_image->releaseAndReturnRawArray();
 }
 
-unsigned char* prepareImageForRegistrationWASM(unsigned char* input,const char* jsonstring) {
+unsigned char* prepareImageForRegistrationWASM(unsigned char* input,const char* jsonstring,int debug) {
   int* header=(int*)input;
   int target_type=header[1];
 
@@ -590,7 +592,7 @@ unsigned char* prepareImageForRegistrationWASM(unsigned char* input,const char* 
   
   switch (target_type)
     {
-	bisvtkTemplateMacro( return prepareImageForRegistrationTemplate(input,params.get(), static_cast<BIS_TT*>(0)));
+      bisvtkTemplateMacro( return prepareImageForRegistrationTemplate(input,params.get(),debug, static_cast<BIS_TT*>(0)));
     }
   return 0;
 

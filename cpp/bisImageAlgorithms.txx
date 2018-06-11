@@ -994,110 +994,6 @@ namespace bisImageAlgorithms {
     return std::move(output);
   }
 
-  static inline void print_image(int dim[3],float spa[3],double range[2]) {
-
-    std::cout.precision(3);
-    std::cout << " dim=(" << dim[0] << "," << dim[1] << "," << dim[2] << ") spa=(" << std::fixed << spa[0] << "," << spa[1] << "," << spa[2] << ")";
-    std::cout << " rng=(" << range[0] << ":" << range[1] << ") ";
-  }
-  
-  
-  template<class T> std::unique_ptr<bisSimpleImage<short> >  prepareImageForRegistration(bisSimpleImage<T>* input,
-											 int numbins,int normalize,
-											 float resolution_factor,float smoothing,int intscale,
-											 int frame,std::string name,
-											 bisAbstractTransformation* initial_xform,int debug)
-  {
-    float in_spa[5]; input->getSpacing(in_spa);
-    float r=in_spa[0];
-    for (int i=1;i<=2;i++) {
-      if (in_spa[i]<r)
-	r=in_spa[i];
-    }
-
-    r=r*resolution_factor;
-
-    float resolution[3] = { r,r,r };
-
-    float sigmas[3]={0,0,0};
-    //    int dosmooth=1;
-
-    if (smoothing>0.02) {
-      for (int ia=0;ia<=2;ia++)
-	sigmas[ia]=r*0.4247f*smoothing;
-    } else if (smoothing<-0.02)  {
-      for (int ia=0;ia<=2;ia++)
-	sigmas[ia]=r*0.4247f;
-    }
-    float perlow=0.01f,perhigh=0.99f;
-    if (normalize==0) {
-      perlow=0.0;
-      perhigh=1.0;
-    }
-
-    float outsigmas[3];
-    double odata[2];
-
-    int i_dim[3]; float i_spa[3];
-    double range[2];
-
-    int doprint=debug;
-
-    if (doprint) {
-      std::cout << "+ +  Preprocessing " << name << ":" << std::endl;
-      std::cout << "+ +  \t Extracting frame =" << frame << " ";
-    }
-
-    std::unique_ptr< bisSimpleImage<T> > singleFrame=imageExtractFrame(input,frame,0);
-    singleFrame->getImageDimensions(i_dim);
-    if (doprint) {
-      singleFrame->getImageDimensions(i_dim);  singleFrame->getImageSpacing(i_spa);     singleFrame->getRange(range);
-      print_image(i_dim,i_spa,range);
-      std::cout << std::endl;
-    }
-
-    if (doprint)
-      std::cout << "+ +  \t Smoothing (" << sigmas[0] << "," << sigmas[1] << "," << sigmas[2] << ") -->";
-    std::unique_ptr<bisSimpleImage<T> > smoothed=gaussianSmoothImage(singleFrame.get(),sigmas,outsigmas,1);
-    if (doprint) {
-          smoothed->getImageDimensions(i_dim);  smoothed->getImageSpacing(i_spa);     smoothed->getRange(range);
-	  print_image(i_dim,i_spa,range);
-	  std::cout << " sigmas=(" << outsigmas[0] << "," << outsigmas[1] << "," << outsigmas[2] << ")" << std::endl;
-    }
-
-    if (doprint)
-      {
-	std::cout << "+ +  \t Reslicing (" << resolution[0] << "," << resolution[1] << "," << resolution[2] << ") ->";
-	if (initial_xform!=0)
-	  std::cout << "( using initial xform) ";
-	else
-	  std::cout << "(identity) ";
-	  
-      }
-    std::unique_ptr<bisSimpleImage<T> > resliced=resampleImage(smoothed.get(),resolution,1,0.0,initial_xform);
-
-    if (doprint) {
-      resliced->getImageDimensions(i_dim); resliced->getImageSpacing(i_spa); resliced->getRange(range);
-      print_image(i_dim,i_spa,range);
-      std::cout << std::endl;
-    }
-    
-    int outmaxvalue=numbins*intscale-1;
-    if (doprint) {
-      std::cout << "+ +  \t Normalizing (" << perlow << ":" << perhigh << ") " << outmaxvalue << " -->";
-    }
-    std::unique_ptr<bisSimpleImage<short> > out=imageNormalize(resliced.get(),perlow,perhigh,outmaxvalue,odata,name);
-    if (doprint) {
-      out->getImageDimensions(i_dim); out->getImageSpacing(i_spa);
-      out->getRange(range);
-      print_image(i_dim,i_spa,range);
-      
-      std::cout  << " robust 1:99 %, info=" << odata[0] << "," << odata[1] << " numbins=" << numbins << std::endl;
-    }
-    return std::move(out);
-  }
-
-
   // ------------------------------------------------------------------------------------------------------------------------------
   template<class T> int imageExtractSlice(bisSimpleImage<T>* input,bisSimpleImage<T>* output,int in_plane,int in_slice,int in_frame,int in_component)
   {
@@ -1910,6 +1806,182 @@ namespace bisImageAlgorithms {
   }
 
   // ---------------------- -------------------
+  static inline void print_image(int dim[3],float spa[3],double range[2]) {
+    
+    std::cout.precision(3);
+    std::cout << " dim=(" << dim[0] << "," << dim[1] << "," << dim[2] << ") spa=(" << std::fixed << spa[0] << "," << spa[1] << "," << spa[2] << ")";
+    std::cout << " rng=(" << range[0] << ":" << range[1] << ") ";
+  }
+  
+  
+  template<class T> std::unique_ptr<bisSimpleImage<T> >  prepareImageForRegistrationExtractFrameAndSmooth(bisSimpleImage<T>* input,
+                                                                                                          float sigmas[3],
+                                                                                                          int frame,std::string name,
+                                                                                                          int debug)
+  {
+    float outsigmas[3];
+
+    int i_dim[3]; float i_spa[3];
+    double range[2];
+
+    int doprint=debug;
+
+    if (doprint) {
+      std::cout << "+ +\n+ +  Preprocessing Step1 " << name << ":" << std::endl;
+      std::cout << "+ +  \t Extracting frame =" << frame << " ";
+    }
+
+    std::unique_ptr< bisSimpleImage<T> > singleFrame=imageExtractFrame(input,frame,0);
+    singleFrame->getImageDimensions(i_dim);
+    if (doprint) {
+      singleFrame->getImageDimensions(i_dim);  singleFrame->getImageSpacing(i_spa);     singleFrame->getRange(range);
+      print_image(i_dim,i_spa,range);
+      std::cout << std::endl;
+    }
+
+    if (doprint)
+      std::cout << "+ +  \t Smoothing (" << sigmas[0] << "," << sigmas[1] << "," << sigmas[2] << ") -->";
+    std::unique_ptr<bisSimpleImage<T> > smoothed=gaussianSmoothImage(singleFrame.get(),sigmas,outsigmas,1);
+    if (doprint) {
+          smoothed->getImageDimensions(i_dim);  smoothed->getImageSpacing(i_spa);     smoothed->getRange(range);
+	  print_image(i_dim,i_spa,range);
+	  std::cout << " vx-sigmas=(" << outsigmas[0] << "," << outsigmas[1] << "," << outsigmas[2] << ")" << std::endl;
+    }
+
+    return std::move(smoothed);
+  }
+  
+  template<class T> std::unique_ptr<bisSimpleImage<short> >  prepareImageForRegistration(bisSimpleImage<T>* input,
+											 int numbins,int normalize,
+											 float resolution_factor,float smoothing,int intscale,
+											 int frame,std::string name,
+											 int debug)
+  {
+
+    float in_spa[5]; input->getSpacing(in_spa);
+    float r=in_spa[0];
+    for (int i=1;i<=2;i++) {
+      if (in_spa[i]<r)
+	r=in_spa[i];
+    }
+
+    r=r*resolution_factor;
+
+    float resolution[3];
+    for (int ia=0;ia<=2;ia++)
+      resolution[ia] = r;
+
+    float sigmas[3]={0,0,0};
+    //    int dosmooth=1;
+
+    if (smoothing>0.02) {
+      for (int ia=0;ia<=2;ia++)
+	sigmas[ia]=r*0.4247f*smoothing;
+    } 
+
+
+    int i_dim[5]; float i_spa[5]; double range[2];
+    std::unique_ptr<bisSimpleImage<T> > smoothed=prepareImageForRegistrationExtractFrameAndSmooth(input,sigmas,frame,name,debug);
+
+    if (debug)
+      std::cout << "+ +  \t Resampling (" << resolution[0] << "," << resolution[1] << "," << resolution[2] << ") ->";
+    
+    std::unique_ptr<bisSimpleImage<T> > resliced=resampleImage(smoothed.get(),resolution,1,0.0,0);
+
+
+    
+    if (debug) {
+      resliced->getImageDimensions(i_dim); resliced->getImageSpacing(i_spa); resliced->getRange(range);
+      print_image(i_dim,i_spa,range);
+      std::cout << std::endl;
+    }
+
+    float perlow=0.01f,perhigh=0.99f;
+    if (normalize==0) {
+      perlow=0.0;
+      perhigh=1.0;
+    }
+    int outmaxvalue=numbins*intscale-1;
+    if (debug) {
+      std::cout << "+ +  \t Normalizing (" << perlow << ":" << perhigh << ") " << outmaxvalue << " -->";
+    }
+
+    double odata[2];
+    std::unique_ptr<bisSimpleImage<short> > out=imageNormalize(resliced.get(),perlow,perhigh,outmaxvalue,odata,name);
+
+
+    
+    if (debug) {
+      out->getImageDimensions(i_dim); out->getImageSpacing(i_spa);
+      out->getRange(range);
+      print_image(i_dim,i_spa,range);
+      
+      std::cout  << " robust 1:99 %, info=" << odata[0] << "," << odata[1] << " numbins=" << numbins << std::endl;
+    }
+    return std::move(out);
+  }
+
+  // ---------------------- -------------------
+  template<class T> std::unique_ptr<bisSimpleImage<short> >  prepareAndResliceImageForRegistration(bisSimpleImage<T>* input,
+                                                                                                   bisAbstractTransformation* reslicexform,
+                                                                                                   int refdim[5],
+                                                                                                   float refspa[5],
+                                                                                                   int numbins=64,int normalize=1,
+                                                                                                   float smoothing=0.0,int intscale=10,
+                                                                                                   int frame=0,std::string name="",
+                                                                                                   int debug=1)  {
+
+
+    float sigmas[3]={0,0,0};
+    if (smoothing>0.02) {
+      for (int ia=0;ia<=2;ia++)
+	sigmas[ia]=refspa[ia]*0.4247f*smoothing;
+    } 
+    
+    int i_dim[5]; float i_spa[5]; double range[2];
+    std::unique_ptr<bisSimpleImage<T> > smoothed=prepareImageForRegistrationExtractFrameAndSmooth(input,sigmas,frame,name,debug);
+
+    if (debug)
+      std::cout << "+ +  \t Reslicing :";
+
+    std::unique_ptr<bisSimpleImage<T> > resliced(new bisSimpleImage<T>("reslicedImage"));
+    resliced->allocate(refdim,refspa);
+    resliceImage(input,resliced.get(),reslicexform,1,0.0);
+ 
+    if (debug) {
+      resliced->getImageDimensions(i_dim); resliced->getImageSpacing(i_spa); resliced->getRange(range);
+      print_image(i_dim,i_spa,range);
+      std::cout << std::endl;
+    }
+    
+    int outmaxvalue=numbins*intscale-1;
+    float perlow=0.01f,perhigh=0.99f;
+    if (normalize==0) {
+      perlow=0.0;
+      perhigh=1.0;
+    }
+
+    if (debug) {
+      std::cout << "+ +  \t Normalizing (" << perlow << ":" << perhigh << ") " << outmaxvalue << " -->";
+    }
+
+    double odata[2];
+    std::unique_ptr<bisSimpleImage<short> > out=imageNormalize(resliced.get(),perlow,perhigh,outmaxvalue,odata,name);
+
+    if (debug) {
+      out->getImageDimensions(i_dim); out->getImageSpacing(i_spa);
+      out->getRange(range);
+      print_image(i_dim,i_spa,range);
+      
+      std::cout  << " robust 1:99 %, info=" << odata[0] << "," << odata[1] << " numbins=" << numbins << std::endl;
+    }
+    return std::move(out);
+  }
+
+  
+
+    // ---------------------- -------------------
+
   // namespace end
 }
 #endif

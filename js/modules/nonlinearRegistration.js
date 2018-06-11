@@ -20,6 +20,7 @@
 const biswrap = require('libbiswasm_wrapper');
 const BaseModule = require('basemodule.js');
 const baseutils = require('baseutils.js');
+const genericio = require('bis_genericio.js');
 
 /**
  * Aligns a set of images to a reference image using nonlinear registration and returns the set of transformations
@@ -47,10 +48,10 @@ class NonLinearRegistrationModule extends BaseModule {
             "params": baseutils.getRegistrationParams(),
         };
 
-        des.params.push(baseutils.getLinearMode("linearmode"));
+        des.params.push(baseutils.getLinearMode("linearmode","","Affine"));
 
         des.params.push({
-            "name": "Control Point Spacing",
+            "name": "CP Spacing",
             "description": "Control Point spacing of the underlying Bspline-FFD Registration",
             "priority": 10,
             "advanced": false,
@@ -60,6 +61,31 @@ class NonLinearRegistrationModule extends BaseModule {
             "default" : 20.0,
             "low": 1.0,
             "high": 60.0,
+        });
+
+        des.params.push({
+            "name": "Append Mode",
+            "description": "If true (default), grids are chained",
+            "priority": 10,
+            "advanced": false,
+            "gui": "check",
+            "varname": "append",
+            "type": 'boolean',
+            "default": true,
+        });
+ 
+        
+        des.params.push({
+            "name": "CPS Rate",
+            "description": "Control Point spacing rate of the underlying Bspline-FFD Registration",
+            "priority": 100,
+            "advanced": true,
+            "gui": "slider",
+            "type": "float",
+            "varname": "cpsrate",
+            "default" : 2.0,
+            "low": 1.0,
+            "high": 3.0,
         });
 
         des.params.push({
@@ -75,7 +101,7 @@ class NonLinearRegistrationModule extends BaseModule {
             "high" : 1.0,
         });
 
-        baseutils.setParamDefaultValue(des.params,'debug','true');
+        baseutils.setParamDefaultValue(des.params,'debug',true);
         
         return des;
     }
@@ -88,7 +114,12 @@ class NonLinearRegistrationModule extends BaseModule {
         let reference = this.inputs['reference'];
         let transform = this.inputs['initial'] || 0;
         let linearmode = baseutils.getLinearModeCode(vals.linearmode);
-        
+
+        if (genericio.getenvironment()!=='node') {
+            vals.doreslice=true;
+            vals.debug=true;
+        }
+
         return new Promise( (resolve, reject) => {
             biswrap.initialize().then( () => {
 
@@ -102,7 +133,7 @@ class NonLinearRegistrationModule extends BaseModule {
                         'levels' : parseInt(vals.levels),
                         'steps' : parseInt(vals.steps),
                         'stepsize' : parseFloat(vals.stepsize),
-                        'smoothing' : parseFloat(vals.extrasmoothing),
+                        'smoothing' : parseFloat(vals.imagesmoothing),
                         'optimization' : baseutils.getOptimizationCode(vals.optimization),
                         'metric' : baseutils.getMetricCode(vals.metric),
                         'iterations' : parseInt(vals.iterations),
@@ -113,16 +144,18 @@ class NonLinearRegistrationModule extends BaseModule {
                         'return_vector' : false},
                                                                 this.parseBoolean(vals.debug));
                 }
-                
+
                 this.outputs['output'] = biswrap.runNonLinearRegistrationWASM(reference, target, initial,{
                     'cps' : parseFloat(vals.cps),
+                    'appendmode': this.parseBoolean(vals.append),
+                    'cpsrate' : parseFloat(vals.cpsrate),
                     'lambda' : parseFloat(vals.lambda),
                     'intscale' : parseInt(vals.intscale),
                     'numbins' : parseInt(vals.numbins),
                     'levels' : parseInt(vals.levels),
                     'steps' : parseInt(vals.steps),
                     'stepsize' : parseFloat(vals.stepsize),
-                    'smoothing' : parseFloat(vals.extrasmoothing),
+                    'smoothing' : parseFloat(vals.imagesmoothing),
                     'optimization' : baseutils.getOptimizationCode(vals.optimization),
                     'normalize' : this.parseBoolean(vals.norm),
                     'metric' : baseutils.getMetricCode(vals.metric),
@@ -131,10 +164,12 @@ class NonLinearRegistrationModule extends BaseModule {
                     'debug' : this.parseBoolean(vals.debug),
                 },this.parseBoolean(vals.debug));
                 
-                if (vals.doreslice) 
+                if (vals.doreslice)  {
+                    console.log('Reslicing');
                     this.outputs['resliced']=baseutils.resliceRegistrationOutput(biswrap,reference,target,this.outputs['output']);
-                else
+                } else {
                     this.outputs['resliced']=null;
+                }
                 
                 resolve();
             }).catch( (e) => {

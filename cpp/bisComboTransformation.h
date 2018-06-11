@@ -53,6 +53,11 @@ class bisComboTransformation : public bisAbstractTransformation {
    */
   void   setInitialTransformation(bisUtil::mat44 m);
 
+  /** Gets the linear initial transformation as a 4x4 matrix
+   * @returns a 4x4 matrix 
+   */
+  void   getInitialTransformation(bisUtil::mat44 m);
+
   /** Get Number Of Grid Transformations */
   int getNumberOfGridTransformations();
 
@@ -104,6 +109,9 @@ class bisComboTransformation : public bisAbstractTransformation {
    */
   virtual int textParse(std::vector<std::string>& lines,int& offset,int debug=0);
 
+
+  // Return -1 : I am partly linear
+  virtual  int isLinear() { return -1;}
 
 protected:
 

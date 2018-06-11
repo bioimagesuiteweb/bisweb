@@ -34,7 +34,6 @@ class ResliceImageModule extends BaseModule {
             this.targetGUIInput = 'overlay';
             this.targetGUIViewer = 'viewer1';
         }
-        console.log('Target Input=',this.targetGUIInput);
     }
 
     createDescription() {

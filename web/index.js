@@ -308,26 +308,30 @@ var checkForLatestVersion=async function() {// jshint ignore:line
 // ---------------------------------------------
 let aboutApplication=async function() {// jshint ignore:line
 
-    let offline=false;
-
-    let latest=await getLatestVersion(); // jshint ignore:line
-    if (latest<0) {
-        offline=true;
-        showAlert(`In offline mode. Everything should still work (other than regression testing.)`);
-        return;
-    }
-
-    let mode= await getMode(); // jshint ignore:line
     let dosimple=true;
+    let offline=false;
+    
+    if (typeof (window.BISELECTRON) === "undefined") {
+    
+        
+        let latest=await getLatestVersion(); // jshint ignore:line
+        if (latest<0) {
+            offline=true;
+            showAlert(`In offline mode. Everything should still work (other than regression testing.)`);
+            return;
+        }
+        
+        let mode= await getMode(); // jshint ignore:line
 
-    if (internal.disableServiceWorker===true) {
-        dosimple=true;
-    } else if (mode!=='online') {
-        let m=await doesNewVersionExist(); // jshint ignore:line
-        if (m)
-            dosimple=false;
+        if (internal.disableServiceWorker===true) {
+            dosimple=true;
+        } else if (mode!=='online') {
+            let m=await doesNewVersionExist(); // jshint ignore:line
+            if (m)
+                dosimple=false;
+        }
     }
-
+    
     if (dosimple)  {
         let m=getModal();
         m.title.text('About this Application');

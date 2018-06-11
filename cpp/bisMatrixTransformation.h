@@ -98,7 +98,11 @@ class bisMatrixTransformation : public bisAbstractTransformation {
 
   /** returns size needed to serialize this object in bytes */
   virtual int getRawSize();
-  
+
+
+  // No
+  virtual  int isLinear() { return 1;}
+
   
 protected:
 

@@ -240,9 +240,10 @@ var createConsole=function() {
     if (process.platform === 'darwin') 
         state.console.setMenu(null);
 
-    
+    state.console.loadURL(fullURL);    
+    state.console.minimize();
     state.console.hide();
-    state.console.loadURL(fullURL);
+
     
     state.console.on('close',  function (e) {
         e.preventDefault();

@@ -522,9 +522,10 @@ class ViewerApplicationElement extends HTMLElement {
     /** restore State from this.internal.saveState unless obj is not null
      * @param {Object} obj - if set then restore from this else from this.saveState
      */
-    restoreState(obj=null,name="") {
+    restoreState(obj=null,name=null) {
 
         let inp=obj || this.saveState;
+        name = name || this.applicationName;
         
         if (inp) {
             return this.setElementState(inp,name);

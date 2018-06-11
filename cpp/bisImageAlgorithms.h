@@ -267,14 +267,13 @@ namespace bisImageAlgorithms {
    * @param intscale used to compute the maximum value of the normalized image
    * @param frame used to specify the frame to extract for 4D input images
    * @param name is the name of the output image
-   * @param xform used as an initial transformation for the resampling operation
    * @param debug if > 0 print debug statements
    * @returns the single frame, smoothed, resampled and normalized image
    */
   template<class T> std::unique_ptr<bisSimpleImage<short> >  prepareImageForRegistration(bisSimpleImage<T>* input,
 											 int numbins=64,int normalize=1,
 											 float resolution_factor=1.0,float smoothing=0.0,int intscale=10,
-											 int frame=0,std::string name="",bisAbstractTransformation* xform=0,
+											 int frame=0,std::string name="",
 											 int debug=1);
 
 
