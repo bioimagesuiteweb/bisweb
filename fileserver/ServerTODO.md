@@ -19,7 +19,7 @@
     * ~~Fix issue with Uint8Arrays~~ (Resolved by sending less per packet)
 
 * ~~Be asked to save data in a specific location (on the server machine)~~
-    * ~~Solve the compression issue~~
+    * ~~gSolve the compression issue~~
 
 * Be able to handle module invocations remotely (like WebWorkers), remote command execution, i.e. not modules just regular jobs
 
@@ -28,7 +28,8 @@
 * Use HTTP for file transfer? WebSocket is a little slow, ~20Mbps on local network
     * Not clear though that it'll get any faster...
 
-* Achieve some level of data compression (currently gzipping the image files barely reduces the size)
+* ~~Achieve some level of data compression (currently gzipping the image files barely reduces the size)~~
+    * The files were already zipped (duh)
 
 client library external API
 

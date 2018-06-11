@@ -7,6 +7,7 @@ const zlib = require('zlib');
 const os = require('os');
 const timers = require('timers');
 const BisImage = require('bisweb_image.js');
+const modules = require('moduleindex.js');
 
 //node extension to make node-like calls work on Windows
 //https://github.com/prantlf/node-posix-ext
@@ -173,6 +174,8 @@ let handleTextRequest = (rawText, control, socket) => {
         case 'getfile':
         case 'getfiles': serveFileRequest(parsedText, control, socket); break;
         case 'uploadimage' : handleImageFromClient(parsedText, control, socket); break;
+        case 'run':
+        case 'runmodule': serveModuleInvocationRequest(parsedText, control, socket); break;
         default: console.log('Cannot interpret request with unknown command', parsedText.command);
     }
 };
@@ -218,7 +221,7 @@ let handleImageFromClient = (upload, control, socket) => {
             default: 
                 console.log('dropping packet with control', parsedControl);
                 if (!timeout) {
-                    timeout = setServerTimeout(socket, () => {
+                    timeout = setServerTimeout( () => {
                         console.log('timed out waiting for client');
                         socket.removeListener('data', transferSocketListener);
                         socket.on('data', serverSocketListener);
@@ -273,31 +276,14 @@ let handleImageFromClient = (upload, control, socket) => {
  */
 let serveFileRequest = (parsedText, control, socket) => {
     console.log('parsed text', parsedText);
+
     //TODO: Make this less grossly memory inefficient
     //https://nodejs.org/api/buffer.html#buffer_buffers_and_typedarray
     let files = parsedText.files;
     for (let file of files) {
-        //check whether filepath contains symlinks before trying anything with the file
-        checkValidPath(file).then( () => {
-
-            //disallow requests for files that don't belong to the current user (owner of the current process)
-            fs.lstat(file, (err, stat) => {
-                let currentUser = process.getuid();
-                console.log('current user', currentUser, 'file owner', stat.uid);
-                if (stat.uid !== currentUser) { handleBadRequestFromClient(socket, "Cannot download a file that does not belong to the current user. Have you tried changing ownership of the requested file?"); return; }
-
-                fs.readFile(file, (err, data) => {
-                    console.log('file', file);
-
-                    //send data compressed and uncompress on the other side
-                    //zlib.gunzip(data, (err, result) => {
-                    
-                    socket.write(formatPacket('image', data), () => { console.log('write done.'); });
-
-                });
-            });
-
-        }).catch((error) => {
+        readFileFromDisk(file).then( (data) => {
+            socket.write(formatPacket('image', data), () => { console.log('write done.'); });
+        }).catch( (error) => {
             handleBadRequestFromClient(socket, error);
         });
     }
@@ -367,6 +353,28 @@ let serveFileList = (socket, basedir = os.homedir(), depth = null) => {
     });
 };
 
+let serveModuleInvocationRequest = (parsedText, control, socket) => {
+    let args = parsedText.params.args, modulename = parsedText.params.modulename;
+
+    let inputName = parsedText.params.inputs[0];
+    genericio.read(inputName, true).then( (f) => {
+        let module = modules.getModule(modulename);
+        let data = f.data;
+        console.log('invoking module', module, 'with args', args, 'and input', data);
+        let img = new BisImage();
+
+        img.initialize();
+        img.parseNII(data.buffer, true);
+        img.filename = f.filename;
+
+        console.log('img', img);
+
+        module.execute({ 'input' : img }, args).then( () => {
+            console.log('module', module);
+        });
+    }).catch( (e) => { console.log('could not read image', inputName, e); })
+};
+
 /**
  * Sends a message to the client describing the server error that occured during their request. 
  * 
@@ -425,11 +433,40 @@ let checkValidPath = (filepath) => {
 
 };
 
-let setServerTimeout = (socket, fn, delay = 2000) => {
+/**
+ * Sets a function to execute after a given delay. Uses Node Timers class.
+ * 
+ * @param {Function} fn - Function to call at the end of the timer period. 
+ * @param {Number} delay - Approximate amount of time before end of timeout period (see reference for Node Timers class).
+ */
+let setServerTimeout = (fn, delay = 2000) => {
     let timer = timers.setTimeout(fn, delay);
-    console.log('timer', timer);
     return timer;
-}
+};
+
+let readFileFromDisk = (file) => {
+    //check whether filepath contains symlinks before trying anything with the file
+    return new Promise((resolve, reject) => {
+        checkValidPath(file).then(() => {
+
+            //disallow requests for files that don't belong to the current user (owner of the current process)
+            fs.lstat(file, (err, stat) => {
+                let currentUser = process.getuid();
+                console.log('current user', currentUser, 'file owner', stat.uid);
+                if (stat.uid !== currentUser) { reject("Cannot download a file that does not belong to the current user. Have you tried changing ownership of the requested file?"); return; }
+
+                fs.readFile(file, (err, data) => {
+                    console.log('file', file, 'data', data);
+                    resolve(data);
+                });
+            });
+
+        }).catch((error) => {
+            reject(error);
+        });
+    });
+
+};
 
 /**
  * Takes a payload and a description of the payload type and formats the packet for transmission. 

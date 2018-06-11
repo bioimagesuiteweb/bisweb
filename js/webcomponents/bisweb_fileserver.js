@@ -43,8 +43,8 @@ class FileServer extends HTMLElement {
                     ];
 
                     this.sendFileRequest(socket, {
-                        command : 'getfile',
-                        files : files
+                        'command' : 'getfile',
+                        'files' : files
                     });
                 });
 
@@ -56,6 +56,17 @@ class FileServer extends HTMLElement {
                     let image = this.algorithmcontroller.getImage('viewer', 'image');
                     console.log('image', image);
                     this.uploadFileToServer(socket, image);
+                });
+
+                webutil.createMenuItem(serverMenu, 'Invoke Module on Server', () => {
+                    this.sendInvocationRequest(socket, {
+                        'command' : 'runmodule',
+                        'params' : {
+                            'modulename' : 'smoothImage',
+                            'inputs' : [ '/home/zach/MNI_2mm_buggy.nii.gz' ],
+                            'args' : {}
+                        }
+                    });
                 });
             }
 
@@ -190,6 +201,11 @@ class FileServer extends HTMLElement {
     sendFileRequest(socket, filelist = null) {
         let filesdata = JSON.stringify(filelist);
         socket.send(filesdata);
+    }
+
+    sendInvocationRequest(socket, parameters) {
+        let params = JSON.stringify(parameters);
+        socket.send(params);
     }
 
     /**
