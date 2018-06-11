@@ -24,6 +24,8 @@ const $=require('jquery');
 const webutil=require('bis_webutil');
 const THREE = require('three');
 
+require('inobounce.min.js');
+
 var detectWebGL = function() {
     try { 
         var canvas = document.createElement( 'canvas' ); 
@@ -292,7 +294,8 @@ class ViewerLayoutElement extends HTMLElement {
             
             window.dispatchEvent(new Event('resize'));
         });
-        
+
+
     }
     
     /** returns the main renderer 
