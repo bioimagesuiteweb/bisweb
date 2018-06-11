@@ -165,34 +165,6 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         const self=this;
         console.log('self=',self);
         
-        webfileutil.createFileMenuItem(fmenu,'Load Application State',
-                                       function(f) {
-                                           self.loadApplicationState(f);
-                                       },
-                                       { title: 'Load Application State',
-                                         save: false,
-                                         filters : [ { name: 'Application State File', extensions: ['biswebstate']}],
-                                       }
-                                      );
-        
-
-
-        webfileutil.createFileMenuItem(fmenu, 'Save Application State',
-                                       function (f) {
-                                           self.saveApplicationState(f);
-                                       },
-                                       {
-                                           title: 'Save Application State',
-                                           save: true,
-                                           filters : [ { name: 'Application State File', extensions: ['biswebstate']}],
-                                           suffix : "biswebstate",
-                                           initialCallback : () => {
-                                               return self.applicationName+".biswebstate";
-                                           }
-                                       });
-
-        webutil.createMenuItem(fmenu,'');
-
         
         webfileutil.createFileMenuItem(fmenu,'Load Node Definition File',
                                        function(e) {  control.loadparcellationfile(e);},
@@ -223,7 +195,10 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         webutil.createMenuItem(fmenu,''); // separator
         
         webutil.createMenuItem(fmenu,'Clear Matrices',function() { control.clearmatrices(); });
-        webfileutil.createFileSourceSelector(fmenu);
+
+        this.createApplicationMenu(fmenu);
+
+
         
         
         // ------------------------------------ Edit Menu ----------------------------
