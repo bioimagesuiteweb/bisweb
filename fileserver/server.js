@@ -286,11 +286,12 @@ let serveFileRequest = (parsedText, control, socket) => {
                 console.log('current user', currentUser, 'file owner', stat.uid);
                 if (stat.uid !== currentUser) { handleBadRequestFromClient(socket, "Cannot download a file that does not belong to the current user. Have you tried changing ownership of the requested file?"); return; }
 
-                fs.readFile(file, (err, result) => {
+                fs.readFile(file, (err, data) => {
                     //compress data before sending? doesn't seem to reduce size by very much
-                    //zlib.gzip(data, (err, result) => {
-                    console.log('file', file);
-                    socket.write(formatPacket('image', result), () => { console.log('write done.'); });
+                    zlib.gunzip(data, (err, result) => {
+                        console.log('result', result);
+                        socket.write(formatPacket('image', result), () => { console.log('write done.'); });
+                    });
                 });
             });
 

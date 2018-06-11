@@ -272,13 +272,14 @@ class FileServer extends HTMLElement {
         //image is sent compressed for portability reasons, then decompressed here
         reader.addEventListener('loadend', () => {
             console.log('reader.result', reader.result);
-
-            wsutil.unzipFile(reader.result).then( (unzippedFile) => {
+    
+            //wsutil.unzipFile(reader.result).then( (unzippedFile) => {
                 let loadedImg = new BisImage();
-                loadedImg.parseNII(reader.result);
+                loadedImg.initialize();
+                loadedImg.parseNII(reader.result, true);
                 console.log('loadedImage', loadedImg);
                 this.algorithmcontroller.sendImageToViewer(loadedImg, { viewername: this.defaultViewer });
-            });
+            //});
         });
 
         reader.readAsArrayBuffer(data);

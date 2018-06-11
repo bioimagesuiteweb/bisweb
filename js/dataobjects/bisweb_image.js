@@ -830,7 +830,7 @@ class BisWebImage extends BisWebDataObject {
     
     /** parses a binary buffer (nifti image) to create the image
      * @param {ArrayBuffer} _inputbuffer - the raw array buffer that is read using some File I/O operation
-     * @param {String} forceorient in - if set to "RAS" or true the image will be repermuted to be RAS (axial) oriented. If set to LPS it will be mapped to LPS. 
+     * @param {String} forceorient_in - if set to "RAS" or true the image will be repermuted to be RAS (axial) oriented. If set to LPS it will be mapped to LPS. 
      * @param {boolean} forcecopy -- if false then potential store image in existing inputbuffer (use this for large images)
      */
     parseNII(_inputbuffer,forceorient_in,forcecopy=false) {

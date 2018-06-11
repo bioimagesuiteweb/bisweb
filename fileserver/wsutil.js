@@ -89,18 +89,24 @@ let decodeUTF8 = (rawText, control) => {
     return text;
 };
 
-let unzipFile = function(arr) {
-    return new Promise( (resolve, reject) => {
+let unzipFile = function (arr) {
+    return new Promise((resolve, reject) => {
+
+        //convert ArrayBuffer to a string
+        /*if (arr instanceof ArrayBuffer) {
+            arr = String.fromCharCode.apply(null, new Uint8Array(arr));
+        }*/
+
         zlib.gunzip(arr, function (err, data) {
             if (err) {
-                console.log(' failed to read binary data error=' + err.toString);
+                console.log('failed to read binary data error=', err);
                 reject(err);
             }
             let dt = new Uint8Array(data);
             resolve(dt);
         });
     });
-    
+
 }
 
 module.exports = {
