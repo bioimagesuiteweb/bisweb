@@ -24,21 +24,13 @@ const BiswebImage = require('bisweb_image.js');
 const $ = require('jquery');
 const bootbox = require('bootbox');
 const bisgenericio=require("bis_genericio");
+const BisWebDialogElement = require('bisweb_dialogelement.js');
+
 
 /**
  * @namespace bisWebCustomModule
  */
-
-/** Only one modules can be open at a time. This is stored in globalOpenModule
- */
-let globalOpenModule=null;
-
-
-/** Modules that are open are stored in the dock
- * If docked then the module is in the dock (for update purposes)
- */
-let globalDockedModules=[];
-const maxGlobalDockedModules=3;
+let ModuleList={};
 
 /**
  * Creates a custom module and adds it to the frame as a child of parent. 
@@ -109,6 +101,8 @@ class CustomModule {
 
         // Three states
 
+
+
         if (baseframe !== null && this.dockable===false) {
             baseframe=$(baseframe);
             this.basewidget = webutil.creatediv({ parent: baseframe });
@@ -117,33 +111,20 @@ class CustomModule {
             let placeholder = webutil.creatediv({ parent: this.basewidget });
             placeholder[0].innerHTML = `this element ${this.name} will load once data is available`;
         } else {
-            this.dialog=webutil.createdialog(this.name,300,-500,100,100,500);
+            this.dialog=new BisWebDialogElement();
+            this.dialog.create(this.name,300,-500,100,100,500);
             this.dialog.removeCloseButton();
             this.dialog.setCloseCallback(function() { self.hideDialog(); });
 
-            this.basewidget = webutil.creatediv({ parent: this.dialog.widget });
-            this.footer=webutil.creatediv({ parent: this.dialog.footer });
-            
-            //            this.basewidget=this.dialog.widget;
-            //          this.footer=this.dialog.footer;
+            this.basewidget = this.dialog.widget;
+            this.footer= this.dialog.footer;
             this.basewidget.css({ "background-color" : "#333333" });
             if (baseframe!==null) {
-                this.layoutcontroller=baseframe;
-                // Need to add a button here
-                let but2=this.dialog.header.find('.close');
-                let but=$(`<button type="button" class="close"><span aria-hidden="true">&rarr;</span></button>`);
-                but.css({ 'margin-right' : '10px'});
-                but2.after(but);
-                but.click( (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    self.dockModule();
-                });
-
-
+                this.dialog.makeDockable(baseframe);
             }
-        } 
-
+        }
+        ModuleList[this.dialog]=this;
+        
         this.threadmanager = $("bisweb-webworkercontroller")[0] || null;
     }
 
@@ -157,113 +138,33 @@ class CustomModule {
     /** shows the current dialog */
     showDialog() {
 
+        if (!this.dialog) {
+            console.log('No dialog');
+            return;
+        }
+
+        this.dirtyInputs = true;
+        this.createOrUpdateGUI();
+        
+        // ---- Docked Stuff ---------------------------------
         if (this.docked === true) {
-            return this.showDockedModule();
+            console.log('Show docked module');
+            return this.dialog.showDockedDialog();
         }
 
         if (this.forcedock === true) {
-            this.dirtyInputs = true;
-            this.createOrUpdateGUI();
-            return this.dockModule();
-        }
-        
-        if (!this.dialog)
-            return;
-
-        let previous=null;
-        
-        if (globalOpenModule!==null)  {
-            previous=globalOpenModule.dialog.dialog.css(['left','top']);
-            globalOpenModule.hideDialog();
+            console.log('Force dock module');
+            return this.dialog.dockDialog();
         }
 
-            
-        
-        this.dirtyInputs = true;
-        this.createOrUpdateGUI();
-
-        if (this.dialog.modal) {
-            this.dialog.modal('show');
-        } else {
-            this.dialog.show();
-            if (previous!==null) {
-                this.dialog.dialog.css({'left' : previous.left,
-                                        'top'  : previous.top
-                                       });
-            } else {
-                
-                let w=window.innerWidth;
-                //let h=window.innerHeight;
-                
-                let arr=this.dialog.dialog.css(['width','height' ]);
-                Object.keys(arr).forEach((key) => {
-                    arr[key]=parseFloat(arr[key].replace(/px/g,''));
-                });
-                
-                let left=w-arr['width']-320;
-                if (left<10)
-                    left=10;
-                let l=`${left}px`;
-                let top=60;
-                let t=`${top}px`;
-                this.dialog.dialog.css({ "left" : l, "top" : t});
-            }
-        }
-        globalOpenModule=this;
+        // ------ From Here dialog related ------------------
+        this.dialog.show();
     }
-
+    
     /** hides the current dialog */
     hideDialog() {
 
-        if (this.docked)
-            return;
-        
-        if (!this.dialog)
-            return;
-
-        if (this.dialog.modal)
-            this.dialog.modal('hide');
-        else
-            this.dialog.hide();
-
-        if (globalOpenModule===this)
-            globalOpenModule=null;
-    }
-    
-    /** Call to remove module GUI to dock from dialog */
-    dockModule() {
-
-        if (this.docked) {
-            return this.showDockedModule();
-        }
-        
-        if (globalDockedModules.length===maxGlobalDockedModules) {
-            let toremove=globalDockedModules.shift();
-            toremove.unDockModule();
-        }
-
-        this.hideDialog();
-        this.dockWidget=this.layoutcontroller.createToolWidget(`Tool: ${this.name}`);
-        this.dockWidget.append(this.basewidget);
-        this.dockWidget.append('<HR>');
-        this.dockWidget.append(this.footer);
-        this.docked=true;
-        this.showDockedModule();
-        globalDockedModules.push(this);
-    }
-
-    /** Call to show docked dialog, i.e. make the panel visible and open */
-    showDockedModule() {
-        if (this.docked)
-            webutil.activateCollapseElement(this.dockWidget);
-    }
-
-    /** Call to move dialog GUI from dock back to dialog */
-    unDockModule() {
-        this.dialog.widget.append(this.basewidget);
-        this.dialog.footer.append(this.footer);
-        this.dockWidget.parent().parent().remove();
-        this.docked=false;
+        this.dialog.hide();
     }
     
     /** returns the current module description 
@@ -702,17 +603,23 @@ let createCustom = function (parent, algorithmcontroller, mod, opts = {}) {
     return new CustomModule(parent, mod, algorithmcontroller, opts);
 };
 
-/** Return all modules that are visible, either docked or open 
- * @returns {array} list of modules that need to be updated
- */
+/** Update open Modules */
+let updateModules = function() {
 
-let getModulesToUpdate=function() {
-    return [ globalOpenModule].concat(globalDockedModules);
+    let dialogs=BisWebDialogElement.getOpenDialogs();
+    console.log(dialogs);
+    for (let i=0;i<dialogs.length;i++) {
+        if (dialogs[i]) {
+            if (ModuleList[dialogs[i]])
+                ModuleList[dialogs[i]].createOrUpdateGUI();
+        }
+    }
 };
+
 
 module.exports = {
     createCustom: createCustom,
-    getModulesToUpdate: getModulesToUpdate,
+    updateModules : updateModules
 };
 
 

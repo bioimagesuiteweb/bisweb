@@ -260,13 +260,7 @@ class ModuleManagerElement extends HTMLElement {
     }
 
     handleViewerImageChanged() { //viewer, source, colortype) 
-
-        // This is mostly for drag and drop but who knows
-        let modsToUpdate=biscustom.getModulesToUpdate();
-        for (let i=0;i<modsToUpdate.length;i++) {
-            if (modsToUpdate[i])
-                modsToUpdate[i].createOrUpdateGUI();
-        }
+        biscustom.updateModules();
     }
 }
 
