@@ -611,7 +611,6 @@ let createCustom = function (parent, algorithmcontroller, mod, opts = {}) {
 let updateModules = function() {
 
     let dialogs=BisWebDialogElement.getOpenDialogs();
-    console.log(dialogs);
     for (let i=0;i<dialogs.length;i++) {
         if (dialogs[i]) {
             if (ModuleList[dialogs[i]])
