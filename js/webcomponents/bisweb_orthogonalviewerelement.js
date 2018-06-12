@@ -454,7 +454,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 symindex=ind-6;
             }
             let a=`<span index="${ind}" class="${symbols[symindex]}"></span>`;
-            console.log(a);
+
             this.internal.arrowbuttons[ind]=$(a);
             this.internal.arrowbuttons[ind].css({'font-size': '30px',
                                                  'left': '100px',
@@ -468,7 +468,6 @@ class OrthogonalViewerElement extends BaseViewerElement {
             
             this.internal.arrowbuttons[ind].click( (e) => {
                 e.preventDefault(); // cancel default behavior
-                console.log('calling arrow',e);
                 arrowcallback(e);
             });
         }
@@ -518,13 +517,14 @@ class OrthogonalViewerElement extends BaseViewerElement {
             fnsize=Math.round(2*webutil.getfontsize(context.canvas)/3);
         else
             fnsize=Math.round(webutil.getfontsize(context.canvas));
-        if (fnsize>14)
-            fnsize=14;
+        if (fnsize>16)
+            fnsize=16;
         context.font=fnsize+"px Arial";
         if (this.internal.simplemode)
             context.fillStyle = "#884400";
         else
             context.fillStyle = "#cc6600";
+
         
         var invorientaxis = this.internal.volume.getOrientation().invaxis;
         var orientaxis = this.internal.volume.getOrientation().axis;
@@ -535,33 +535,46 @@ class OrthogonalViewerElement extends BaseViewerElement {
             var vp  =this.internal.subviewers[pl].controls.normViewport;
             if ((vp.x1-vp.x0)*dw>200) {
                 if (pl<=2) {
-                    let xshift=[2,-32];
-                    let yshift=[fnsize,-2];
-                    if ((vp.x1-vp.x0)>0.6) 
-                        xshift=[-60,30];
-                    
-                    
-                    var ymid=Math.round( dh*(1.0-0.5*(vp.y0+vp.y1))+6);
-                    context.textAlign="start";
-                    context.fillText(lab[0],vp.x0*dw+xshift[0],ymid);
-                    context.textAlign="end";
-                    context.fillText(lab[1],vp.x1*dw+xshift[1],ymid);
-                    
-                    
-                    var ymin=Math.round((1.0-vp.y1)*dh);
-                    var ymax=Math.round((1.0-vp.y0)*dh);
-                    var xmid=Math.round( dw*0.5*(0.5*vp.x0+1.5*vp.x1)-6);
-                    context.textAlign="end";
 
-                    if (vp.y1-vp.y0>0.6)
-                        yshift=[fnsize-ymin+10,50];
+                    let dx=0.25*vp.shiftx*dw;
+                    if (dx>120)
+                        dx=120;
+                    let dy=0.25*vp.shifty*dh;
+                    if (dy>50)
+                        dy=50;
                     
-                    context.fillText(lab[2],xmid,ymin+yshift[0]);
-                    context.fillText(lab[3],xmid,ymax+yshift[1]);
+                    let xshift=[ -(2+dx),(dx+2-18)];
+                    let xshift0=[-(2+dx),(dx+2)];
+
+                    let ymid=Math.round( dh*(1.0-0.5*(vp.y0+vp.y1))+6);
+                    let xmin=vp.x0*dw+xshift0[0];
+                    if (xmin<2)
+                        xmin=2;
+                    let xmax=vp.x1*dw+xshift0[1];
+                    if (xmax>(dw-2))
+                        xmax=dw-2;
+
+                    context.textBaseline="middle";
+                    context.textAlign="start";   context.fillText(lab[0],xmin,ymid);
+                    context.textAlign="end";     context.fillText(lab[1],xmax,ymid);
                     
-                    var name=names[trueplane]+axes[orientaxis[trueplane]];
+                    let xmid=Math.round( dw*0.5*(0.5*vp.x0+1.5*vp.x1)-6);
+                    let ymin=Math.round((1.0-vp.y1)*dh)-dy;
+                    if (ymin<(fnsize+2))
+                        ymin=(fnsize+2);
+                    let ymax=Math.round((1.0-vp.y0)*dh)+dy;
+                    if (ymax>0.9*dh)
+                        ymax=0.9*dh;
+                    
+                    context.textAlign="center";
+                    context.textBaseline="top";
+                    context.fillText(lab[2],xmid,ymin);
+                    context.textBaseline="alphabetic";
+                    context.fillText(lab[3],xmid,ymax);
+                    
+                    let name=names[trueplane]+axes[orientaxis[trueplane]];
                     context.textAlign="start";
-                    context.fillText(name,vp.x0*dw,ymin+fnsize+1);
+                    context.fillText(name,xmin,ymin);
 
                     let l= [ Math.round((vp.x0)*parseInt(cdim['width']))+parseInt(cdim['left'])+xshift[0],
                          Math.round((vp.x1)*parseInt(cdim['width']))+parseInt(cdim['left'])+xshift[1] ];
@@ -613,7 +626,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         let lh=this.internal.layoutcontroller.getviewerheight();
         let y0=0.92*lh+parseInt(cdim['top']);
         for (let k=0;k<=3;k++) {
-            this.internal.arrowbuttons[6+k].css({ 'left' :  `${20+40*k}px`,
+            this.internal.arrowbuttons[6+k].css({ 'left' :  `${50+40*k}px`,
                                                   'top'  :  `${y0}px`,
                                                   'visibility' : 'visible'});
         }
@@ -689,12 +702,16 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 var scalemidx=midx*ratio;
                 vp.x0=ratio*vp.x0+(midx-scalemidx);
                 vp.x1=ratio*vp.x1+(midx-scalemidx);
+                vp.shiftx=(midx-scalemidx);
+                vp.shifty=0;
             } else if (fullh>fullw) {
                 ratio=fullw/fullh;
                 var midy=0.5*(vp.y0+vp.y1);
                 var scalemidy=midy*ratio;
                 vp.y0=ratio*vp.y0+(midy-scalemidy);
                 vp.y1=ratio*vp.y1+(midy-scalemidy);
+                vp.shifty=(midy-scalemidy);
+                vp.shiftx=0;
                 
             }
             this.internal.subviewers[pl].controls.normViewport=vp;
