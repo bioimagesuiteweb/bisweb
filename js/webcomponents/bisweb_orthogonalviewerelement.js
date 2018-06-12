@@ -410,6 +410,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
 
         let arrowcallback=function(e) {
             let elem=$(e.target);
+            elem.css({'background-color':'#000000'});
+
             let index=parseInt(elem.attr('index')) || 0;
             if (index<=6 || index===9) {
                 
@@ -419,8 +421,6 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 let md=3;
                 if (index<6) 
                     md=Math.floor(index/2);
-                
-                
                 
                 const data = self.internal.datgui.data;
                 if (md===0) {
@@ -441,7 +441,9 @@ class OrthogonalViewerElement extends BaseViewerElement {
             } else  {
                 self.playStopMovie(index===8);
             }
-            
+
+            setTimeout( ()=> { elem.css({'background-color':'#444444'}); },100);
+
         };
     
         
@@ -459,17 +461,23 @@ class OrthogonalViewerElement extends BaseViewerElement {
             this.internal.arrowbuttons[ind].css({'font-size': '30px',
                                                  'left': '100px',
                                                  'top' : '0px',
-                                                 'color' : '#884400',
+                                                 'padding' : '3px',
+                                                 'border-radius' : '10px',
+                                                 'background-color' : '#444444',
+                                                 'color' : '#cc6600',
                                                  'position' : 'absolute',
                                                  'z-index' : 500,
                                                  'visibility' : 'hidden'});
 
             base.append(this.internal.arrowbuttons[ind]);
-            
+
             this.internal.arrowbuttons[ind].click( (e) => {
                 e.preventDefault(); // cancel default behavior
                 arrowcallback(e);
             });
+                
+
+
         }
     }
 
@@ -525,7 +533,6 @@ class OrthogonalViewerElement extends BaseViewerElement {
         else
             context.fillStyle = "#cc6600";
 
-        
         var invorientaxis = this.internal.volume.getOrientation().invaxis;
         var orientaxis = this.internal.volume.getOrientation().axis;
         
@@ -539,11 +546,12 @@ class OrthogonalViewerElement extends BaseViewerElement {
                     let dx=0.25*vp.shiftx*dw;
                     if (dx>120)
                         dx=120;
+
                     let dy=0.25*vp.shifty*dh;
                     if (dy>50)
                         dy=50;
                     
-                    let xshift=[ -(2+dx),(dx+2-18)];
+                    let xshift=[ -(2+dx),dx-33];
                     let xshift0=[-(2+dx),(dx+2)];
 
                     let ymid=Math.round( dh*(1.0-0.5*(vp.y0+vp.y1))+6);
@@ -577,7 +585,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                     context.fillText(name,xmin,ymin);
 
                     let l= [ Math.round((vp.x0)*parseInt(cdim['width']))+parseInt(cdim['left'])+xshift[0],
-                         Math.round((vp.x1)*parseInt(cdim['width']))+parseInt(cdim['left'])+xshift[1] ];
+                             Math.round((vp.x1)*parseInt(cdim['width']))+parseInt(cdim['left'])+xshift[1] ];
                     if (l[0]<0)
                         l[0]=0;
                     
