@@ -80,6 +80,37 @@ let resultsmessagebox = function (results) {
 	bootbox.alert("<DIV>Hyperactivity Stats <PRE>" + results + "</PRE></DIV>").find('div.modal-dialog').addClass(".largeWidth");
 };
 
+//------------------------------------------------------------------
+//Global Variables
+//------------------------------------------------------------------
+
+var app_state = {
+			sm_carousel: null,
+			viewer: null,
+			patient_name: null,
+			patient_number: null,
+			does_have_mri: false,
+			ictal: null,
+			interictal: null,
+			mri: null,
+			ATLAS_spect: null,
+			ATLAS_mri: null,
+			ATLAS_stdspect: null,
+			ATLAS_mask: null,
+			tmap: null,
+			nonlinear: false,
+
+			intertoictal_xform: null,
+			intertoictal_reslice: null,
+						
+			atlastointer_xform: null,
+			atlastointer_reslice: null,
+
+			atlastoictal_xform: null,
+			atlastoictal_reslice: null,
+						
+			hyper: null
+};
 
 
 /** 
@@ -108,37 +139,7 @@ class DiffSpectElement extends HTMLElement {
 
 		super();
 
-		//---------------------------------------------------------------
-		//Global Variables
-		//---------------------------------------------------------------
-		this.app_state = {
-			sm_carousel: null,
-			viewer: null,
-			patient_name: null,
-			patient_number: null,
-			does_have_mri: false,
-			ictal: null,
-			interictal: null,
-			mri: null,
-			ATLAS_spect: null,
-			ATLAS_mri: null,
-			ATLAS_stdspect: null,
-			ATLAS_mask: null,
-			tmap: null,
-			nonlinear: false,
-
-			intertoictal_xform: null,
-			intertoictal_reslice: null,
-						
-			atlastointer_xform: null,
-			atlastointer_reslice: null,
-
-			atlastoictal_xform: null,
-			atlastoictal_reslice: null,
-						
-			hyper: null
-		};
-
+		
 		this.state_machine = {
 			images_processed: false,
 			images_registered: false,
@@ -160,41 +161,41 @@ class DiffSpectElement extends HTMLElement {
 		var strReg_AT_IN = "", strReg_IN_IC = "", strReg_AT_IC = "";
 
 		//serializing transformations
-		if (null !== this.app_state.atlastointer)
-			strReg_AT_IN = window.btoa(this.app_state.atlastointer.serializeToJSON());
+		if (null !== app_state.atlastointer)
+			strReg_AT_IN = window.btoa(app_state.atlastointer.serializeToJSON());
 
-		if (null !== this.app_state.intertoictal)
-			strReg_IN_IC = window.btoa(this.app_state.intertoictal.serializeToJSON());
+		if (null !== app_state.intertoictal)
+			strReg_IN_IC = window.btoa(app_state.intertoictal.serializeToJSON());
 
-		if (null !== this.app_state.atlastoictal)
-			strReg_AT_IC = window.btoa(this.app_state.atlastoictal.serializeToJSON());
+		if (null !== app_state.atlastoictal)
+			strReg_AT_IC = window.btoa(app_state.atlastoictal.serializeToJSON());
 
 		console.log('here 1');
 		//serializing images 
 
-		if (null !== this.app_state.interictal)
-			strInterictal = this.app_state.interictal.serializeToJSON();
+		if (null !== app_state.interictal)
+			strInterictal = app_state.interictal.serializeToJSON();
 
 		console.log('here 2');
 
-		if (null !== this.app_state.ictal)
-			strIctal = this.app_state.ictal.serializeToJSON();
+		if (null !== app_state.ictal)
+			strIctal = app_state.ictal.serializeToJSON();
 
-		if (null !== this.app_state.tmap)
-			strTmap = this.app_state.tmap.serializeToJSON();
+		if (null !== app_state.tmap)
+			strTmap = app_state.tmap.serializeToJSON();
 
 
 		var output = {
 			bisformat: "diffspect",
-			name: this.app_state.patient_name,
-			number: this.app_state.patient_number,
+			name: app_state.patient_name,
+			number: app_state.patient_number,
 			inter: strInterictal,
 			ictal: strIctal,
 			tmap: strTmap,
 			atlastointer: strReg_AT_IN,
 			intertoictal: strReg_IN_IC,
 			atlastoictal: strReg_AT_IC,
-			hyper: this.app_state.hyper
+			hyper: app_state.hyper
 		};
 
 		var savesuccess = function (msg) {
@@ -306,10 +307,10 @@ class DiffSpectElement extends HTMLElement {
 	// --------------------------------------------------------------------------------
 	registerInterictalToIctal() {
 
-		this.app_state.intertoictal = null;
+		app_state.intertoictal = null;
 
-		if (this.app_state.interictal === null ||
-			this.app_state.ictal === null) {
+		if (app_state.interictal === null ||
+			app_state.ictal === null) {
 			errormessage('Bad spect Images can not register');
 			return;
 		}
@@ -327,21 +328,21 @@ class DiffSpectElement extends HTMLElement {
 			resolution: 1.5
 		};
 
-		this.computeRegistration(this.app_state.interictal, this.app_state.ictal, null, opts).then( (output) => {
+		this.computeRegistration(app_state.interictal, app_state.ictal, null, opts).then( (output) => {
 			console.log(output);
-			console.log(this.app_state.intertoictal);
-			this.app_state.intertoictal_xform = output.transformation;
-			this.app_state.intertoictal_reslice = output.reslice;
-			var reslice_transform = this.app_state.intertoictal;
+			app_state.intertoictal_xform = output.transformation;
+			app_state.intertoictal_reslice = output.reslice;
+			console.log(app_state.intertoictal_xform);
+			console.log(app_state.intertoictal_reslice);
 			});
 	}
 
 	registerAtlasToInterictal(fast = false) {
 
-		this.app_state.atlastointer = null;
+		app_state.atlastointer = null;
 
-		if (this.app_state.interictal === null ||
-			this.app_state.ATLAS_spect === null) {
+		if (app_state.interictal === null ||
+			app_state.ATLAS_spect === null) {
 			errormessage('Bad Atlas and/or interictal spect, can not register');
 			return;
 		}
@@ -364,17 +365,20 @@ class DiffSpectElement extends HTMLElement {
 
 
 
-		this.computeRegistration(this.app_state.ATLAS_spect, this.app_state.interictal, null, opts).then( (output) => {
-			console.log(this.app_state.atlastointer);
-			this.app_state.atlastointer = output;
+		this.computeRegistration(app_state.ATLAS_spect, app_state.interictal, null, opts).then( (output) => {
+			console.log(output);
+			app_state.atlastointer_xform = output.transformation;
+			app_state.atlastointer_reslice = output.reslice;
+			console.log(app_state.atlastointer_xform);
+			console.log(app_state.atlastointer_reslice);
 		    });
 
 	}
 
 
 	computeRegistrationOfImages() {
-		if (!this.app_state.does_have_mri) {
-			if (!this.app_state.nonlinear) {
+		if (!app_state.does_have_mri) {
+			if (!app_state.nonlinear) {
 				let mat1;
 				let mat2;
 
@@ -401,17 +405,17 @@ class DiffSpectElement extends HTMLElement {
 				let multiply_promise = new Promise((resolve, reject) => {
 				  try{
 					reg1_promise.then(() => {
-						mat1 = this.app_state.atlastointer.getMatrix();	
+						mat1 = app_state.atlastointer.getMatrix();	
 					});
 					reg2_promise.then(() => {
-						mat2 = this.app_state.atlastointer.getMatrix();	
+						mat2 = app_state.atlastointer.getMatrix();	
 					});
 					let output ={ matrix1:mat1, matrix2:mat2};
 					resolve(output);
 				  } catch(e) {reject(e);}
 					
 				//	combo_xform.setMatrix(combo);
-				//	this.app_state.atlastoictal = combo_xform;
+				//	app_state.atlastoictal = combo_xform;
 				});
 
 				multiply_promise.then((output) => {
@@ -419,7 +423,7 @@ class DiffSpectElement extends HTMLElement {
 					let combomat = numeric.dot(output.matrix1, output.matrix2);
 					let combo_xform = bistransformations.createLinearTransformation(0);
 					combo_xform.setMatrix(combomat);
-					this.app_state.atlastoictal = combo_xform;
+					app_state.atlastoictal = combo_xform;
 				});
 				
 			}
@@ -438,11 +442,11 @@ class DiffSpectElement extends HTMLElement {
 				};
 				this.registerAtlasToInterictal(false);
 				var resliced_interictal = new bisweb_image();
-				resliced_interictal.cloneImage(this.app_state.ATLAS_spect);
-				bisimagesmoothreslice.resliceImage(this.app_state.interictal, resliced_interictal, this.app_state.atlastointer, 1);
-				var reg = bisregister.createLinearRegistration(this.app_state.ictal, resliced_interictal, null, params);
+				resliced_interictal.cloneImage(app_state.ATLAS_spect);
+				bisimagesmoothreslice.resliceImage(app_state.interictal, resliced_interictal, app_state.atlastointer, 1);
+				var reg = bisregister.createLinearRegistration(app_state.ictal, resliced_interictal, null, params);
 				reg.run();
-				this.app_state.atlastoictal = reg.getTransformation();
+				app_state.atlastoictal = reg.getTransformation();
 			}
 		}
 
@@ -527,29 +531,29 @@ class DiffSpectElement extends HTMLElement {
 		var resliced_inter;
 		this.registerAtlasToInterictal(true);
 		resliced_inter = new bisweb_image();
-		resliced_inter.cloneImage(this.app_state.ATLAS_spect);
-		console.log(this.app_state.interictal);
-		console.log(this.app_state.atlastointer);
+		resliced_inter.cloneImage(app_state.ATLAS_spect);
+		console.log(app_state.interictal);
+		console.log(app_state.atlastointer);
 
-		bisimagesmoothreslice.resliceImage(this.app_state.interictal, resliced_inter, this.app_state.atlastointer, 1);
+		bisimagesmoothreslice.resliceImage(app_state.interictal, resliced_inter, app_state.atlastointer, 1);
 		console.log('Interictal to atlas: ' + resliced_inter.getDimensions());
 		return resliced_inter;
 	}
 
 	createAtlasToIctal() {
 
-		if (!this.app_state.nonlinear) {
+		if (!app_state.nonlinear) {
 			var resliced_ictal;
-			var mat1 = this.app_state.atlastointer.getMatrix();
-			var mat2 = this.app_state.intertoictal.getMatrix();
-			console.log('Interictal to ictal new: ' + this.app_state.intertoictal.getMatrix());
+			var mat1 = app_state.atlastointer.getMatrix();
+			var mat2 = app_state.intertoictal.getMatrix();
+			console.log('Interictal to ictal new: ' + app_state.intertoictal.getMatrix());
 			var combined = numeric.dot(mat1, mat2);
 			var combo = bistransformations.createLinearTransformation(0);
 			combo.setMatrix(combined);
-			this.app_state.atlastoictal = combo;
+			app_state.atlastoictal = combo;
 			resliced_ictal = new bisweb_image();
-			resliced_ictal.cloneImage(this.app_state.ATLAS_spect);
-			bisimagesmoothreslice.resliceImage(this.app_state.ictal, resliced_ictal, combo, 1);
+			resliced_ictal.cloneImage(app_state.ATLAS_spect);
+			bisimagesmoothreslice.resliceImage(app_state.ictal, resliced_ictal, combo, 1);
 			console.log('Ictal to atlas: ' + resliced_ictal.getDimensions());
 			return resliced_ictal;
 		}
@@ -568,15 +572,15 @@ class DiffSpectElement extends HTMLElement {
 
 
 		var resliced_inter = new bisweb_image();
-		resliced_inter.cloneImage(this.app_state.ATLAS_spect);
+		resliced_inter.cloneImage(app_state.ATLAS_spect);
 
-		bisimagesmoothreslice.resliceimage(this.app_state.interictal, resliced_inter, this.app_state.atlastointer, 1);
+		bisimagesmoothreslice.resliceimage(app_state.interictal, resliced_inter, app_state.atlastointer, 1);
 		var resliced_ictal2 = new bisweb_image();
 		resliced_ictal2.cloneImage(resliced_inter);
-		var reg = bisregister.createLinearRegistration(resliced_inter, this.app_state.ictal, null, params);
+		var reg = bisregister.createLinearRegistration(resliced_inter, app_state.ictal, null, params);
 		var out = reg.run();
 
-		bisimagesmoothreslice.resliceimage(this.app_state.ictal, resliced_ictal2, out, 1);
+		bisimagesmoothreslice.resliceimage(app_state.ictal, resliced_ictal2, out, 1);
 		return resliced_ictal2;
 	}
 
@@ -587,7 +591,7 @@ class DiffSpectElement extends HTMLElement {
 		var resliced_inter = this.createAtlasToInterictal();
 		var resliced_ictal = this.createAtlasToIctal();
 
-		var results = this.processSpect(resliced_inter, resliced_ictal, this.app_state.ATLAS_stdspect, this.app_state.ATLAS_mask);
+		var results = this.processSpect(resliced_inter, resliced_ictal, app_state.ATLAS_stdspect, app_state.ATLAS_mask);
 
 		console.log(results);
 		//	console.log('Hyperactivity :'+results.hyper[0].string + results.hyper[1].string + results.hyper[2].string + results.hyper[3].string);
@@ -601,7 +605,7 @@ class DiffSpectElement extends HTMLElement {
 		for (var i = 0; i < results.hyper.length; i++) {
 			hyper_str += results.hyper[i].string + '\n';
 		}
-		this.app_state.hyper = hyper_str;
+		app_state.hyper = hyper_str;
 
 		var hypo_str = 'hypo cluster statistics \n';
 		hypo_str += '#\tx\ty\tz\tsize\tmaxT\tclusterP\tactualP\n';
@@ -614,7 +618,7 @@ class DiffSpectElement extends HTMLElement {
 		console.log();
 		console.log(hypo_str);
 		this.displayData(hyper_str);
-		this.app_state.tmap = results.tmap;
+		app_state.tmap = results.tmap;
 	}
 
 
@@ -625,7 +629,7 @@ class DiffSpectElement extends HTMLElement {
 	}
 
 	computeSpect() {
-		if (!this.app_state.does_have_mri)
+		if (!app_state.does_have_mri)
 			this.computeSpectNoMRI();
 		else
 			this.computeSpectWithMRI();
@@ -665,9 +669,9 @@ class DiffSpectElement extends HTMLElement {
 
 		var imageread = ((vol) => {
 			console.log('Image read :' + vol.getDescription(''));
-			this.app_state[img] = vol;
+			app_state[img] = vol;
 			if (show) {
-				console.log('loaded ' + img + '--> (' + comment + ') ' + self.app_state[img].getDescription());
+				console.log('loaded ' + img + '--> (' + comment + ') ' + app_state[img].getDescription());
 				nextfunction();
 			}
 		});
@@ -681,7 +685,7 @@ class DiffSpectElement extends HTMLElement {
 	handlePatientFileSelect(file) {
 		const self = this;
 		console.log('this', this, file);
-		this.app_state.sm_carousel.carousel('next');
+		app_state.sm_carousel.carousel('next');
 		bisgenericio.read(file).then((contents) => {
 			let a = contents.data;
 			try {
@@ -737,20 +741,20 @@ class DiffSpectElement extends HTMLElement {
 		if (null !== input.hyper)
 			hyper = input.hyper;
 
-		this.app_state.patient_name = input.name;
-		this.app_state.patient_number = input.number;
-		this.app_state.interictal = interictal;
-		this.app_state.ictal = ictal;
-		this.app_state.tmap = tmap;
-		this.app_state.intertoictal = intertoictal;
-		this.app_state.atlastointer = atlastointer;
-		this.app_state.atlastoictal = atlastoictal;
-		this.app_state.hyper = hyper;
-		if (null !== this.app_state.hyper)
+		app_state.patient_name = input.name;
+		app_state.patient_number = input.number;
+		app_state.interictal = interictal;
+		app_state.ictal = ictal;
+		app_state.tmap = tmap;
+		app_state.intertoictal = intertoictal;
+		app_state.atlastointer = atlastointer;
+		app_state.atlastoictal = atlastoictal;
+		app_state.hyper = hyper;
+		if (null !== app_state.hyper)
 			createChart();
-		if (null !== this.app_state.tmap) {
-			this.app_state.viewer.setimage(this.app_state.ATLAS_mri);
-			this.app_state.viewer.setobjectmap(this.app_state.tmap, false, 'overlay');
+		if (null !== app_state.tmap) {
+			app_state.viewer.setimage(app_state.ATLAS_mri);
+			app_state.viewer.setobjectmap(app_state.tmap, false, 'overlay');
 		}
 
 		$('#sm_patientName').val(input.name);
@@ -768,11 +772,11 @@ class DiffSpectElement extends HTMLElement {
 
 
 		var alldone = ((images) => {
-			this.app_state.ATLAS_spect = images[0];
-			this.app_state.ATLAS_mri = images[1];
-			this.app_state.ATLAS_stdspect = images[2];
-			this.app_state.ATLAS_mask = images[3];
-			this.app_state.viewer.setimage(this.app_state.ATLAS_mri);
+			app_state.ATLAS_spect = images[0];
+			app_state.ATLAS_mri = images[1];
+			app_state.ATLAS_stdspect = images[2];
+			app_state.ATLAS_mask = images[3];
+			app_state.viewer.setimage(app_state.ATLAS_mri);
 			console.log('ATLAS images loaded');
 			webutil.createAlert('The SPECT Tool is now ready. The core data has been loaded.<BR> Click either "Create New Patient" or "Load Existing Patient" to begin.');
 		});
@@ -797,8 +801,8 @@ class DiffSpectElement extends HTMLElement {
 			return false;
 		}
 
-		this.app_state.patient_name = patientname;
-		this.app_state.patient_number = patientnumber;
+		app_state.patient_name = patientname;
+		app_state.patient_number = patientnumber;
 		return true;
 
 	}
@@ -813,7 +817,7 @@ class DiffSpectElement extends HTMLElement {
 		self.loadAtlas();
 
 		var sm_carousel = $('#myCarousel');
-		self.app_state.sm_carousel = sm_carousel;
+		app_state.sm_carousel = sm_carousel;
 
 		// TABS Carousel
 		// New Or Existing, Patient Setup, Load InterIctal, Load ICTAL, MRI?, Process
@@ -910,9 +914,9 @@ class DiffSpectElement extends HTMLElement {
 
 		var interictalLoaded = (() => {
 			self.state_machine.interictal_loaded = true;
-			self.app_state.viewer.setimage(self.app_state.interictal);
+			app_state.viewer.setimage(app_state.interictal);
 			webutil.enablebutton(showInterictal, true);
-			console.log(self.app_state.interictal);
+			console.log(app_state.interictal);
 		});
 
 		var handleInterictalFileSelect = ((evt) => {
@@ -947,9 +951,9 @@ class DiffSpectElement extends HTMLElement {
 
 		var ictalLoaded = function () {
 			self.state_machine.ictal_loaded = true;
-			self.app_state.viewer.setimage(self.app_state.ictal);
+			app_state.viewer.setimage(app_state.ictal);
 			webutil.enablebutton(showIctal, true);
-			console.log(self.app_state.ictal);
+			console.log(app_state.ictal);
 		};
 		var handleIctalFileSelect = function (evt) {
 			self.handleGenericFileSelect(evt,
@@ -988,8 +992,8 @@ class DiffSpectElement extends HTMLElement {
 ------------------------------------------------------------------------------------------------
  */
 		var MRILoaded = function () {
-			self.app_state.does_have_mri = true;
-			self.app_state.viewer.setimage(self.app_state.mri);
+			app_state.does_have_mri = true;
+			app_state.viewer.setimage(app_state.mri);
 			self.state_machine.mri_loaded = true;
 			webutil.enablebutton(showMRI, true);
 		};
@@ -1022,7 +1026,7 @@ class DiffSpectElement extends HTMLElement {
 			css: { 'width': '150px' },
 			parent: $('#btn1'),
 			callback: function () {
-				self.app_state.viewer.setimage(self.app_state.interictal);
+				app_state.viewer.setimage(app_state.interictal);
 			}
 		});
 		webutil.enablebutton(showInterictal, false);
@@ -1033,7 +1037,7 @@ class DiffSpectElement extends HTMLElement {
 			css: { 'width': '150px' },
 			parent: $('#btn2'),
 			callback: function () {
-				self.app_state.viewer.setimage(self.app_state.ictal);
+				app_state.viewer.setimage(app_state.ictal);
 			}
 		});
 		webutil.enablebutton(showIctal, false);
@@ -1044,7 +1048,7 @@ class DiffSpectElement extends HTMLElement {
 			css: { 'width': '150px' },
 			parent: $('#btn3'),
 			callback: function () {
-				self.app_state.viewer.setimage(self.app_state.mri);
+				app_state.viewer.setimage(app_state.mri);
 			}
 		});
 		webutil.enablebutton(showMRI, false);
@@ -1072,10 +1076,10 @@ class DiffSpectElement extends HTMLElement {
 			parent: $('#div1_5'),
 			css: { 'margin-left': '15px' },
 			callback: function () {
-				if (!self.app_state.nonlinear)
-					self.app_state.nonlinear = true;
+				if (!app_state.nonlinear)
+					app_state.nonlinear = true;
 				else
-					self.app_state.nonlinear = false;
+					app_state.nonlinear = false;
 			}
 		});
 
@@ -1141,8 +1145,8 @@ class DiffSpectElement extends HTMLElement {
 			webutil.enablebutton(sm_showInterictalToIctal, self.state_machine.images_registered);
 			webutil.enablebutton(sm_showAtlasToIctal, self.state_machine.images_registered);
 			webutil.enablebutton(sm_showTmapButton, self.state_machine.images_processed);
-			self.app_state.patient_name = $('#sm_patientName').val();
-			self.app_state.patient_number = $('#sm_patientNumber').val();
+			app_state.patient_name = $('#sm_patientName').val();
+			app_state.patient_number = $('#sm_patientNumber').val();
 		});
 
 		webutil.addtooltip(sm_showTmapButton);
@@ -1161,8 +1165,8 @@ class DiffSpectElement extends HTMLElement {
 	createChart() {
 		const self = this;
 
-		var coordinates = self.parseCoordinates(self.app_state.hyper);
-		var substrs = self.parseNewLine(self.app_state.hyper);
+		var coordinates = self.parseCoordinates(app_state.hyper);
+		var substrs = self.parseNewLine(app_state.hyper);
 		for (var i = 0; i < substrs.length; i++)
 			substrs[i] = substrs[i].fontsize(0.001);
 
@@ -1179,7 +1183,7 @@ class DiffSpectElement extends HTMLElement {
 
 		one.click(function () {
 			var coordinate = coordinates[0];
-			self.app_state.viewer.setcoordinates([coordinate.I, coordinate.J, coordinate.K]);
+			app_state.viewer.setcoordinates([coordinate.I, coordinate.J, coordinate.K]);
 			one.css('border', '2px solid #246BB2');
 			two.css("border", "0px");
 			three.css("border", "0px");
@@ -1188,7 +1192,7 @@ class DiffSpectElement extends HTMLElement {
 
 		two.click(function () {
 			var coordinate = coordinates[1];
-			self.app_state.viewer.setcoordinates([coordinate.I, coordinate.J, coordinate.K]);
+			app_state.viewer.setcoordinates([coordinate.I, coordinate.J, coordinate.K]);
 			one.css("border", "0px");
 			two.css("border", "2px solid #246BB2");
 			three.css("border", "0px");
@@ -1197,7 +1201,7 @@ class DiffSpectElement extends HTMLElement {
 
 		three.click(function () {
 			var coordinate = coordinates[2];
-			self.app_state.viewer.setcoordinates([coordinate.I, coordinate.J, coordinate.K]);
+			app_state.viewer.setcoordinates([coordinate.I, coordinate.J, coordinate.K]);
 			one.css("border", "0px");
 			two.css("border", "0px");
 			three.css("border", "2px solid #246BB2");
@@ -1206,7 +1210,7 @@ class DiffSpectElement extends HTMLElement {
 
 		four.click(function () {
 			var coordinate = coordinates[3];
-			self.app_state.viewer.setcoordinates([coordinate.I, coordinate.J, coordinate.K]);
+			app_state.viewer.setcoordinates([coordinate.I, coordinate.J, coordinate.K]);
 			one.css("border", "0px");
 			two.css("border", "0px");
 			three.css("border", "0px");
@@ -1216,41 +1220,27 @@ class DiffSpectElement extends HTMLElement {
 
 
 	showAtlasToInterictalRegistration() {
-		this.app_state.viewer.setimage(this.app_state.ATLAS_spect);
-		this.app_state.viewer.setobjectmap(this.app_state.atlastointer_reslice);
+		
+		console.log(app_state.ATLAS_spect);
+		app_state.viewer.setimage(app_state.ATLAS_spect);
+		app_state.viewer.setobjectmap(app_state.atlastointer_reslice);
 	}
 
 	showInterictalToIctalRegistration() {
 		console.log(this);
-		var resliced_inter = new bisweb_image();
-		resliced_inter.cloneImage(this.app_state.ATLAS_spect, { type: 'float' });
-		bisimagesmoothreslice.resliceImage(this.app_state.interictal, resliced_inter, this.app_state.atlastointer, 1);
-
-		var resliced_ictal = new bisweb_image();
-		resliced_ictal.cloneImage(this.app_state.ATLAS_spect, { type: 'float' });
-		bisimagesmoothreslice.resliceImage(this.app_state.ictal, resliced_ictal, this.app_state.atlastoictal, 1);
-		this.app_state.viewer.setimage(resliced_inter);
-		this.app_state.viewer.setobjectmap(resliced_ictal);
+		console.log(app_state);
+		app_state.viewer.setimage(app_state.interictal);
+		app_state.viewer.setobjectmap(app_state.intertoictal_reslice);
 	}
 
 	showAtlasToIctalRegistration() {
-		if (!this.app_state.nonlinear) {
-			var resliced_ictal = new bisweb_image();
-			resliced_ictal.cloneImage(this.app_state.ATLAS_spect, { type: 'float' });
-			bisimagesmoothreslice.resliceImage(this.app_state.ictal, resliced_ictal, this.app_state.atlastoictal, 1);
-			this.app_state.viewer.setimage(this.app_state.ATLAS_spect);
-			this.app_state.viewer.setobjectmap(resliced_ictal);
-		}
-
-		else {
-
-
-		}
+			app_state.viewer.setimage(app_state.ATLAS_spect);
+			app_state.viewer.setobjectmap(app_state.atlastoictal_reslice);
 	}
 
 	showTmapImage() {
-		this.app_state.viewer.setimage(this.app_state.ATLAS_mri);
-		this.app_state.viewer.setobjectmap(this.app_state.tmap, true);
+		app_state.viewer.setimage(app_state.ATLAS_mri);
+		app_state.viewer.setobjectmap(app_state.tmap, true);
 	}
 
 	parseNewLine(str) {
@@ -1318,13 +1308,12 @@ class DiffSpectElement extends HTMLElement {
 			' </ul>' +
 			'</li>');
 
-		let viewerid = this.getAttribute('bis-viewerid');
 		let layoutid = this.getAttribute('bis-layoutwidgetid');
 		let layoutcontroller = document.querySelector(layoutid);
-		this.app_state.viewer = document.querySelector(viewerid);
+		app_state.viewer = document.querySelector(this.getAttribute('bis-viewerid'));
 
 		let spectToolsDiv = layoutcontroller.createToolWidget('Diff Spect Tool', true);
-		this.app_state.viewer.collapseCore();
+		app_state.viewer.collapseCore();
 
 		$('#loadpatient').click(function () {
 			self.elements.continuePatientButton.click();
@@ -1344,7 +1333,7 @@ class DiffSpectElement extends HTMLElement {
 		$('#newpatient').click(function () {
 			var pn = spectToolsDiv.parent();
 			pn.collapse('show');
-			self.app_state.sm_carousel.carousel(0);
+			app_state.sm_carousel.carousel(0);
 			$('#newPatientButton').click();
 
 		});
