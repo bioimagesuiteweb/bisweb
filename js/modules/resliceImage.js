@@ -38,7 +38,6 @@ class ResliceImageModule extends BaseModule {
 
     createDescription() {
 
-        console.log('Target Input=',this.targetGUIInput);
         return {
             "name": "Reslice Image",
             "description": "Reslices an existing image to match a reference and a transformation",
