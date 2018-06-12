@@ -396,6 +396,9 @@ class OrthogonalViewerElement extends BaseViewerElement {
      */
     createarrowbuttons(base) {
 
+        if (this.internal.simplemode)
+            return;
+        
         if (this.internal.arrowbuttons[0]!==null)
             return;
         
@@ -584,17 +587,22 @@ class OrthogonalViewerElement extends BaseViewerElement {
                     context.textAlign="start";
                     context.fillText(name,xmin,ymin);
 
-                    let l= [ Math.round((vp.x0)*parseInt(cdim['width']))+parseInt(cdim['left'])+xshift[0],
-                             Math.round((vp.x1)*parseInt(cdim['width']))+parseInt(cdim['left'])+xshift[1] ];
-                    if (l[0]<0)
-                        l[0]=0;
+
                     
-                    let h=Math.round((1-(0.75*vp.y1+0.25*vp.y0))*parseInt(cdim['height']))+parseInt(cdim['top']);
-                    
-                    for (let k=0;k<=1;k++) {
-                        this.internal.arrowbuttons[pl*2+k].css({ 'left' :  `${l[k]}px`,
-                                                                 'top'  :  `${h}px`,
-                                                                 'visibility' : 'visible'});
+
+                    if (!this.internal.simplemode) {
+                        let l= [ Math.round((vp.x0)*parseInt(cdim['width']))+parseInt(cdim['left'])+xshift[0],
+                                 Math.round((vp.x1)*parseInt(cdim['width']))+parseInt(cdim['left'])+xshift[1] ];
+                        if (l[0]<0)
+                            l[0]=0;
+                        
+                        let h=Math.round((1-(0.75*vp.y1+0.25*vp.y0))*parseInt(cdim['height']))+parseInt(cdim['top']);
+                        
+                        for (let k=0;k<=1;k++) {
+                            this.internal.arrowbuttons[pl*2+k].css({ 'left' :  `${l[k]}px`,
+                                                                     'top'  :  `${h}px`,
+                                                                     'visibility' : 'visible'});
+                        }
                     }
                 }
                 if (this.internal.simplemode)
@@ -622,25 +630,25 @@ class OrthogonalViewerElement extends BaseViewerElement {
 
 
         // Movie Stuff
-        if (this.internal.imagedim[3]<2 || dw<500) {
+        if (!this.internal.simplemode) {
 
-            for (let ia=6;ia<=9;ia++)
-                if (this.internal.arrowbuttons[ia])
-                    this.internal.arrowbuttons[ia].css({'visibility':'hidden'});
-            
-            return;
-        }
+            if (this.internal.imagedim[3]<2 || dw<500) {
+                
+                for (let ia=6;ia<=9;ia++)
+                    if (this.internal.arrowbuttons[ia])
+                        this.internal.arrowbuttons[ia].css({'visibility':'hidden'});
+                
+            } else {
         
-        let lh=this.internal.layoutcontroller.getviewerheight();
-        let y0=0.92*lh+parseInt(cdim['top']);
-        for (let k=0;k<=3;k++) {
-            this.internal.arrowbuttons[6+k].css({ 'left' :  `${50+40*k}px`,
-                                                  'top'  :  `${y0}px`,
-                                                  'visibility' : 'visible'});
+                let lh=this.internal.layoutcontroller.getviewerheight();
+                let y0=0.92*lh+parseInt(cdim['top']);
+                for (let k=0;k<=3;k++) {
+                    this.internal.arrowbuttons[6+k].css({ 'left' :  `${50+40*k}px`,
+                                                          'top'  :  `${y0}px`,
+                                                          'visibility' : 'visible'});
+                }
+            }
         }
-
-        
-
         
     }
     
