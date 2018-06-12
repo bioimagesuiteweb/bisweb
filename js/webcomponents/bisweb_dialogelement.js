@@ -355,9 +355,9 @@ class BisWebDialogElement extends HTMLElement {
         if (!grow) {
             this.dialog.css({ "height": `${this.dimensions.height}px` });
             this.content.css({ "height" : "100%" });
-            this.widget.css({ "height" : `${this.dimensions.height-120}px`, "overflow-y": "auto"  });
+            this.widgetbase.css({ "height" : `${this.dimensions.height-120}px`, "overflow-y": "auto"  });
         } else {
-            this.widget.css({ "max-height" : `${this.dimensions.height}px`, "overflow-y": "auto"  });
+            this.widgetbase.css({ "max-height" : `${this.dimensions.height}px`, "overflow-y": "auto"  });
         }
         
         this.footer.css({
