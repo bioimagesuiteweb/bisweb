@@ -222,7 +222,7 @@ class BisWebTransformationCollection extends BisWebBaseTransformation {
         
         let tmp = [X[0], X[1], X[2]];
         for (let i = 0; i<this.transformationList.length;i++) {
-            this.transformationList.transformPoint(tmp, TX);
+            this.transformationList[i].transformPoint(tmp, TX);
             tmp[0] = TX[0];
             tmp[1] = TX[1];
             tmp[2] = TX[2];

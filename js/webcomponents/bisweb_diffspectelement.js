@@ -4,7 +4,8 @@
 
 const bisimagesmoothreslice = require('bis_imagesmoothreslice');
 const bistransformations = require('bis_transformationutil');
-const bisweb_image = require('bisweb_image');
+const BisWebTransformationCollection=require('bisweb_transformationcollection');
+const BisWebImage = require('bisweb_image');
 const webutil = require('bis_webutil');
 const webfileutil = require('bis_webfileutil');
 const bisimagealgo = require('bis_imagealgorithms');
@@ -13,6 +14,7 @@ const $ = require('jquery');
 const numeric = require('numeric');
 const bootbox = require('bootbox');
 const LinearRegistration = require('linearRegistration');
+const ResliceImage = require('resliceImage');
 const NonlinearRegistration = require('nonlinearRegistration');
 const baseutils = require('baseutils');
 
@@ -328,7 +330,7 @@ class DiffSpectElement extends HTMLElement {
 			resolution: 1.5
 		};
 
-		this.computeRegistration(app_state.interictal, app_state.ictal, null, opts).then( (output) => {
+		return this.computeRegistration(app_state.interictal, app_state.ictal, null, opts).then( (output) => {
 			console.log(output);
 			app_state.intertoictal_xform = output.transformation;
 			app_state.intertoictal_reslice = output.reslice;
@@ -365,7 +367,7 @@ class DiffSpectElement extends HTMLElement {
 
 
 
-		this.computeRegistration(app_state.ATLAS_spect, app_state.interictal, null, opts).then( (output) => {
+		return this.computeRegistration(app_state.ATLAS_spect, app_state.interictal, null, opts).then( (output) => {
 			console.log(output);
 			app_state.atlastointer_xform = output.transformation;
 			app_state.atlastointer_reslice = output.reslice;
@@ -379,55 +381,28 @@ class DiffSpectElement extends HTMLElement {
 	computeRegistrationOfImages() {
 		if (!app_state.does_have_mri) {
 			if (!app_state.nonlinear) {
-				let mat1;
-				let mat2;
-
-				// asynchronous definition for registerAtlasToInterictal 
-				let reg1_promise = new Promise((resolve, reject) => {
-					try {
-						this.registerAtlasToInterictal(true);
-					} catch(e) {
-						reject(e);
-					}
-				});
-
-
-				// asynchronous definition for registerInterictalToIctal
-				let reg2_promise = new Promise((resolve, reject) => {
-					try {
-						this.registerInterictalToIctal();
-					} catch(e) {
-						reject(e);
-					}
-				});
+			    
+			    let p= [ this.registerAtlasToInterictal(true),
+				     this.registerInterictalToIctal() ];
 				
+			    Promise.all(p).then( () => {
+					//let combo_xform=new BisWebTransformationCollection();
+					//combo_xform.addTransformation(app_state.atlastointer);
+					//combo_xform.addTransformation(app_state.intertoictal);
+					//app_state.atlastoictal_xform = combo_xform;
 
-				let multiply_promise = new Promise((resolve, reject) => {
-				  try{
-					reg1_promise.then(() => {
-						mat1 = app_state.atlastointer.getMatrix();	
+					let input = {
+						'input': app_state.ictal,
+						'xform': app_state.atlastointer_xform,
+						'xform2':app_state.intertoictal_xform
+					};
+					let reslicer = new ResliceImage();
+					reslicer.execute(input).then( () => {
+						app_state.atlastoictal_reslice = reslicer.getOutputObject('output');
 					});
-					reg2_promise.then(() => {
-						mat2 = app_state.atlastointer.getMatrix();	
-					});
-					let output ={ matrix1:mat1, matrix2:mat2};
-					resolve(output);
-				  } catch(e) {reject(e);}
-					
-				//	combo_xform.setMatrix(combo);
-				//	app_state.atlastoictal = combo_xform;
 				});
-
-				multiply_promise.then((output) => {
-					console.log(output);
-					let combomat = numeric.dot(output.matrix1, output.matrix2);
-					let combo_xform = bistransformations.createLinearTransformation(0);
-					combo_xform.setMatrix(combomat);
-					app_state.atlastoictal = combo_xform;
-				});
-				
-			}
-			else {
+			    
+			} else {
 				var params = {
 					intscale: 2,
 					numbins: 64,
@@ -441,7 +416,7 @@ class DiffSpectElement extends HTMLElement {
 					resolution: 1.5
 				};
 				this.registerAtlasToInterictal(false);
-				var resliced_interictal = new bisweb_image();
+				var resliced_interictal = new BisWebImage();
 				resliced_interictal.cloneImage(app_state.ATLAS_spect);
 				bisimagesmoothreslice.resliceImage(app_state.interictal, resliced_interictal, app_state.atlastointer, 1);
 				var reg = bisregister.createLinearRegistration(app_state.ictal, resliced_interictal, null, params);
@@ -527,69 +502,14 @@ class DiffSpectElement extends HTMLElement {
 		};
 	}
 
-	createAtlasToInterictal() {
-		var resliced_inter;
-		this.registerAtlasToInterictal(true);
-		resliced_inter = new bisweb_image();
-		resliced_inter.cloneImage(app_state.ATLAS_spect);
-		console.log(app_state.interictal);
-		console.log(app_state.atlastointer);
 
-		bisimagesmoothreslice.resliceImage(app_state.interictal, resliced_inter, app_state.atlastointer, 1);
-		console.log('Interictal to atlas: ' + resliced_inter.getDimensions());
-		return resliced_inter;
-	}
-
-	createAtlasToIctal() {
-
-		if (!app_state.nonlinear) {
-			var resliced_ictal;
-			var mat1 = app_state.atlastointer.getMatrix();
-			var mat2 = app_state.intertoictal.getMatrix();
-			console.log('Interictal to ictal new: ' + app_state.intertoictal.getMatrix());
-			var combined = numeric.dot(mat1, mat2);
-			var combo = bistransformations.createLinearTransformation(0);
-			combo.setMatrix(combined);
-			app_state.atlastoictal = combo;
-			resliced_ictal = new bisweb_image();
-			resliced_ictal.cloneImage(app_state.ATLAS_spect);
-			bisimagesmoothreslice.resliceImage(app_state.ictal, resliced_ictal, combo, 1);
-			console.log('Ictal to atlas: ' + resliced_ictal.getDimensions());
-			return resliced_ictal;
-		}
-		var params = {
-			intscale: 2,
-			numbins: 64,
-			levels: 3,
-			smoothing: 0.5,
-			optimization: 3,
-			stepsize: 2.0,
-			metric: 3,
-			steps: 1,
-			mode: 0,
-			resolution: 1.5
-		};
-
-
-		var resliced_inter = new bisweb_image();
-		resliced_inter.cloneImage(app_state.ATLAS_spect);
-
-		bisimagesmoothreslice.resliceimage(app_state.interictal, resliced_inter, app_state.atlastointer, 1);
-		var resliced_ictal2 = new bisweb_image();
-		resliced_ictal2.cloneImage(resliced_inter);
-		var reg = bisregister.createLinearRegistration(resliced_inter, app_state.ictal, null, params);
-		var out = reg.run();
-
-		bisimagesmoothreslice.resliceimage(app_state.ictal, resliced_ictal2, out, 1);
-		return resliced_ictal2;
-	}
-
+	
 
 
 	computeSpectNoMRI() {
-
-		var resliced_inter = this.createAtlasToInterictal();
-		var resliced_ictal = this.createAtlasToIctal();
+		console.log("compute spect no MRI");
+		var resliced_inter = app_state.atlastointer_reslice;
+		var resliced_ictal = app_state.atlastoictal_reslice;
 
 		var results = this.processSpect(resliced_inter, resliced_ictal, app_state.ATLAS_stdspect, app_state.ATLAS_mask);
 
@@ -629,6 +549,7 @@ class DiffSpectElement extends HTMLElement {
 	}
 
 	computeSpect() {
+		console.log("compute spect callback");
 		if (!app_state.does_have_mri)
 			this.computeSpectNoMRI();
 		else
@@ -650,7 +571,7 @@ class DiffSpectElement extends HTMLElement {
 		var images = new Array(numimages);
 
 		for (let i = 0; i < numimages; i++)
-			images[i] = new bisweb_image();
+			images[i] = new BisWebImage();
 
 		let p = [];
 		for (let i = 0; i < numimages; i++)
@@ -676,7 +597,7 @@ class DiffSpectElement extends HTMLElement {
 			}
 		});
 
-		let newimage = new bisweb_image();
+		let newimage = new BisWebImage();
 		newimage.load(imgfile, false).then(
 			function () { imageread(newimage); });
 		//						.catch( (e) => { errormessage(e); });
@@ -705,19 +626,19 @@ class DiffSpectElement extends HTMLElement {
 		var interictal = null, ictal = null, tmap = null, hyper = null, intertoictal = null, atlastointer = null, atlastoictal = null;
 
 		if (input.inter !== "") {
-			interictal = new bisweb_image();
+			interictal = new BisWebImage();
 			interictal.parseFromJSON(input.inter);
 			this.state_machine.interictal_loaded = true;
 		}
 
 		if (input.ictal !== "") {
-			ictal = new bisweb_image();
+			ictal = new BisWebImage();
 			ictal.parseFromJSON(input.ictal);
 			this.state_machine.ictal_loaded = true;
 		}
 
 		if (input.tmap !== "") {
-			tmap = new bisweb_image();
+			tmap = new BisWebImage();
 			tmap.parseFromJSON(input.tmap);
 			this.state_machine.images_processed = true;
 		}
@@ -772,6 +693,13 @@ class DiffSpectElement extends HTMLElement {
 
 
 		var alldone = ((images) => {
+
+			console.log("~~~~~~~~~~~~~~~~~~~~~~~");
+			for (var i =0; i < 4; i++) {
+				console.log(images[i]);
+			}
+			console.log("~~~~~~~~~~~~~~~~~~~~~~~");
+
 			app_state.ATLAS_spect = images[0];
 			app_state.ATLAS_mri = images[1];
 			app_state.ATLAS_stdspect = images[2];
@@ -1119,10 +1047,12 @@ class DiffSpectElement extends HTMLElement {
 			css: { 'width': '275px' },
 			position: 'left',
 			callback: function () {
+				console.log("started spect processing");
 				self.computeSpect();
 				self.state_machine.images_processed = true;
 				webutil.enablebutton(sm_showTmapButton, self.state_machine.images_processed);
-				self.createChart();
+				//self.createChart();
+				//console.log("finished spect processing");
 			}
 		});
 
@@ -1227,8 +1157,6 @@ class DiffSpectElement extends HTMLElement {
 	}
 
 	showInterictalToIctalRegistration() {
-		console.log(this);
-		console.log(app_state);
 		app_state.viewer.setimage(app_state.interictal);
 		app_state.viewer.setobjectmap(app_state.intertoictal_reslice);
 	}
