@@ -80,7 +80,7 @@ class PaintToolElement extends HTMLElement {
             objectmap : null,
             objectmapdata : null,
             undostack : new UndoStack(100,10),
-            currentundoarray : null,
+            currentundoarray : [],
             parentDomElement : null,
             domElement : null,
 
@@ -262,6 +262,10 @@ class PaintToolElement extends HTMLElement {
 
     /** GUI Callback for undo  */
     undooperation() {
+        if (this.internal.currentundoarray.length>0) {
+            this.internal.undostack.addOperation(this.internal.currentundoarray);
+            this.internal.currentundoarray=[];
+        }
         var arr=this.internal.undostack.getUndo();
         if (arr===null) {
             return false;
@@ -272,6 +276,11 @@ class PaintToolElement extends HTMLElement {
 
     /** GUI Callback for redo */
     redooperation() {
+        if (this.internal.currentundoarray.length>0) {
+            this.internal.undostack.addOperation(this.internal.currentundoarray);
+            this.internal.currentundoarray=[];
+        }
+
         var arr=this.internal.undostack.getRedo();
         if (arr===null) {
             return false;
@@ -925,7 +934,10 @@ class PaintToolElement extends HTMLElement {
                                             css : {'margin-top': '20px','margin-bottom': '10px'}});
 
 
-        const undo_clb=function() { self.undooperation();};
+        const undo_clb=function() {
+            self.undooperation();
+
+        };
         const redo_clb=function() { self.redooperation();};
 
         webutil.createbutton({ type : "warning",
@@ -1003,26 +1015,30 @@ class PaintToolElement extends HTMLElement {
             }
         }
 
-        
         if (this.internal.morphologyModule && good)
             this.internal.morphologyModule.updateCrossHairs(x);
-
-        if (mousestate<0 || mousestate === undefined || this.internal.objectmap===null || this.internal.data.enabled===false) {
-            return;
-        }
 
         if (!webutil.isCollapseElementOpen(this.internal.parentDomElement)) {
             return;
         }
-
+        
+        if (mousestate === undefined || this.internal.objectmap===null || this.internal.data.enabled===false) {
+            return;
+        }
 
         if (mousestate===2) {
+            console.log('Adding ',this.internal.currentundoarray.join(','));
             this.internal.undostack.addOperation(this.internal.currentundoarray);
-            return;
+            this.internal.currentundoarray=[];
+            if (mousestate===2)
+                return;
         }
 
         if (mousestate===0)  {
             // Initialize undo array
+            if (this.internal.currentundoarray.length>0) {
+                this.internal.undostack.addOperation(this.internal.currentundoarray);
+            }
             this.internal.currentundoarray = [] ;
         }
 
