@@ -6,3 +6,185 @@
     max-width: 100vw;
 }
 
+body {
+    background-color : #111111;
+}
+
+#viewer {
+  position: absolute;
+  top: 70px;
+  width: 86.4vmin;
+  min-width: 86.4vmin;
+  height: 88vmin;
+  min-height: 88vmin;
+  margin: 2px;
+  background-color: #000000;
+  left: 5vmin;
+}
+
+#xviewer,#yviewer,#zviewer {
+  position: absolute;
+  z-index:1;
+}
+
+#tempviewer {
+  position: absolute;
+  z-index:4;
+  top:5vmin;
+  left:12.5vmin;
+  font-size: 16vmin;
+  width:50vmin;
+  line-height: 18vmin;
+  text-align: center;
+}
+
+#xlines,#ylines,#zlines {
+  position: absolute;
+  z-index:3;
+}
+
+
+#xcontrols,#ycontrols,#zcontrols {
+  position: absolute;
+  z-index:2;
+  width: 32.9vmin;
+}
+
+#xcontrols {
+  left:41.6vmin;
+  top:0vmin;
+  width:40.0vmin;
+}
+
+#ycontrols {
+  left:2.5vmin;
+  top:0.0vmin;
+}
+
+#ylines, #yviewer {
+  top: 1.5vmin;
+  left: 1vmin;
+  width:35.9vmin;
+  height: 35.9vmin;
+}
+
+#xlines, #xviewer {
+  top:1.5vmin;
+  left: 40.1vmin;
+  width:43.0vmin;
+  height:35.9vmin;
+}
+
+#zcontrols {
+  left:2.5vmin;
+  top:82.0vmin;
+}
+
+#zlines, #zviewer {
+  left: 1.0vmin;
+  top: 39.4vmin;
+  width: 35.9vmin;
+  height: 43.0vmin;
+}
+
+#mniframe, #talframe, #overlayframe,  #baframe, #aboutframe,#navframe,#batchframe {
+  z-index:1;
+  left: 39.5vmin;
+  width: 43.5vmin;
+  position: absolute;
+  height: 5vmin;
+}
+
+#overlayframe {
+  top: 40.5vmin;
+}
+
+#navframe {
+  top: 43.5vmin;
+  left: 40.0vmin;
+  width: 45.1vmin;
+  height:16.5vmin;
+  
+}
+
+#mniframe {
+   top: 45vmin;
+ }
+
+#talframe {
+  top: 49vmin;
+}
+  
+#baframe {
+  top: 53vmin;
+    
+  
+}
+
+#batchframe {
+top : 57vmin;
+}
+
+#aboutframe {
+  font-size: 90%;
+  top: 64.0vmin;
+  height: 27vmin;
+}
+
+#sumlabel {
+}
+
+.labelid, .labelid2 {
+  padding-top: 0.75vmin;
+  float: left;
+  position: relative;
+}
+
+.labelid2 {
+  left: 8.5vmin;
+}
+
+#mnilabel,#talabel,#balabel {
+  width: 8.5vmin;
+}
+
+.numberid {
+  padding-top: 0vmin;
+  padding-left: 0.0vmin;
+  padding-right: 0.4vmin;
+  vertical-align: text-bottom;
+  position: relative;
+  font-size: 100%;
+  width: 7.5vmin;
+  background-color: #000000;
+  color: #ffffff;
+}
+
+.buttonid {
+   float:right;
+   padding-right:0.5vmin;
+   font-size: 100%;
+   vertical-align: text-top;
+   display: inline-block;
+   position: relative;  
+   width: 8vmin;
+   background-color : #444444;
+   color : #ffffff;
+}
+
+#baselectbox {
+  font-size:100%;
+  width: 25.5vmin;
+    background-color: #000000;
+    color : #ffffff;
+}
+
+#batch,#batch2 { 
+   width : 20vmin;
+}
+
+#batch {
+   float:left;
+   margin-right: 20px;
+   margin-left: 0vmin;
+}

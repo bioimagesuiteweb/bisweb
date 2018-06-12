@@ -127,9 +127,9 @@ bisweb_mni2tal.BRODLOCATIONS = [
 
 bisweb_mni2tal.SliceViewer=class {
 
-    constructor (shadowdom,name,width,height,plane) { 
+    constructor (parent,name,width,height,plane) { 
 
-        this.ShadowDOM=shadowdom;
+        this.parentWidget=parent;
         this.myCanvas=null;
         this.lineCanvas=null;
         this.myCanvasContext=null;
@@ -157,7 +157,7 @@ bisweb_mni2tal.SliceViewer=class {
         this.width=width;
         this.height=height;
         this.myplane=plane;
-        this.myCanvas = this.ShadowDOM.querySelector(name);
+        this.myCanvas = this.parentWidget.querySelector(name);
         this.myCanvas.width=width;
         this.myCanvas.height=height;
         this.myCanvasContext=this.myCanvas.getContext("2d");
@@ -167,7 +167,7 @@ bisweb_mni2tal.SliceViewer=class {
     
     CreateLineCanvas(name) {
 
-        this.lineCanvas=this.ShadowDOM.querySelector(name);
+        this.lineCanvas=this.parentWidget.querySelector(name);
         this.lineCanvas.width=this.width;
         this.lineCanvas.height=this.height;
         this.lineCanvasContext=this.lineCanvas.getContext("2d");
@@ -349,9 +349,9 @@ bisweb_mni2tal.SliceViewer=class {
 
 class OrthoViewer {
 
-    constructor(shadowdom) {
+    constructor(parentwidget) {
 
-        this.ShadowDOM=shadowdom;
+        this.parentWidget=parentwidget;
         this.Viewers=null;
         this.Sliders=null;
         this.SliderLabels=null;
@@ -375,9 +375,9 @@ class OrthoViewer {
     
     createViewers() {
 
-        let v1=new bisweb_mni2tal.SliceViewer(this.ShadowDOM,"#zviewer",bisweb_mni2tal.DIMENSIONS[0],bisweb_mni2tal.DIMENSIONS[1],2);
-        let v2=new bisweb_mni2tal.SliceViewer(this.ShadowDOM,"#yviewer",bisweb_mni2tal.DIMENSIONS[0],bisweb_mni2tal.DIMENSIONS[2],1);
-        let v3=new bisweb_mni2tal.SliceViewer(this.ShadowDOM,"#xviewer",bisweb_mni2tal.DIMENSIONS[1],bisweb_mni2tal.DIMENSIONS[2],0);
+        let v1=new bisweb_mni2tal.SliceViewer(this.parentWidget,"#zviewer",bisweb_mni2tal.DIMENSIONS[0],bisweb_mni2tal.DIMENSIONS[1],2);
+        let v2=new bisweb_mni2tal.SliceViewer(this.parentWidget,"#yviewer",bisweb_mni2tal.DIMENSIONS[0],bisweb_mni2tal.DIMENSIONS[2],1);
+        let v3=new bisweb_mni2tal.SliceViewer(this.parentWidget,"#xviewer",bisweb_mni2tal.DIMENSIONS[1],bisweb_mni2tal.DIMENSIONS[2],0);
         
         v1.CreateLineCanvas("#zlines");
         v2.CreateLineCanvas("#ylines");
@@ -433,9 +433,9 @@ class OrthoViewer {
     
     createSliders() {
         
-        let axialslider=this.ShadowDOM.querySelector("#zcontrols");
-        let coronalslider=this.ShadowDOM.querySelector("#ycontrols");
-        let sagslider=this.ShadowDOM.querySelector("#xcontrols");
+        let axialslider=this.parentWidget.querySelector("#zcontrols");
+        let coronalslider=this.parentWidget.querySelector("#ycontrols");
+        let sagslider=this.parentWidget.querySelector("#xcontrols");
         this.Sliders = [ sagslider,coronalslider,axialslider ];
         this.Sliders[0].addEventListener('change', () => this.setSliderCrossHairs(0));
         this.Sliders[1].addEventListener('change', () => this.setSliderCrossHairs(1));
@@ -444,28 +444,28 @@ class OrthoViewer {
     }
     
     createMNITextLabels() {
-        let sagnumber=this.ShadowDOM.querySelector("#mnix");
-        let cornumber=this.ShadowDOM.querySelector("#mniy");
-        let axnumber=this.ShadowDOM.querySelector("#mniz");
+        let sagnumber=this.parentWidget.querySelector("#mnix");
+        let cornumber=this.parentWidget.querySelector("#mniy");
+        let axnumber=this.parentWidget.querySelector("#mniz");
         this.SliderLabels = [ sagnumber, cornumber, axnumber ];
         this.SliderLabels[0].addEventListener('change', () => this.setTextCrossHairs(0));
         this.SliderLabels[1].addEventListener('change', () => this.setTextCrossHairs(1));
         this.SliderLabels[2].addEventListener('change', () => this.setTextCrossHairs(2));
         
-        let b1=this.ShadowDOM.querySelector("#mnigo");
+        let b1=this.parentWidget.querySelector("#mnigo");
         b1.addEventListener('click', () => this.setAllMNICoordinates());
     }
     
     createTalTextLabels() {
-        let tal0=this.ShadowDOM.querySelector("#talx");
-        let tal1=this.ShadowDOM.querySelector("#taly");
-        let tal2=this.ShadowDOM.querySelector("#talz");
+        let tal0=this.parentWidget.querySelector("#talx");
+        let tal1=this.parentWidget.querySelector("#taly");
+        let tal2=this.parentWidget.querySelector("#talz");
         this.TalSliderLabels = [ tal0, tal1, tal2];
 
         for (let i=0;i<=2;i++)
             this.TalSliderLabels[i].addEventListener('change', () => this.setTalairach());
         
-        let b1=this.ShadowDOM.querySelector("#talgo");
+        let b1=this.parentWidget.querySelector("#talgo");
         b1.addEventListener('click', ()=> this.setTalairach());
     }
 
@@ -573,7 +573,7 @@ class OrthoViewer {
             else
                 webutil.createAlert('Loaded '+sz[0]+' points. Converting TAL &rarr; MNI...');
             let m=newmat.getNumericMatrix();
-            let overlaybox=self.ShadowDOM.querySelector("#showoverlaybutton");
+            let overlaybox=self.parentWidget.querySelector("#showoverlaybutton");
             overlaybox.checked=true;
             self.setOverlayOpacity(true);
             save(m,sz);
@@ -592,7 +592,7 @@ class OrthoViewer {
             self.computeBatchConversion(f,false);
         };
 
-        let b1=this.ShadowDOM.querySelector("#batch");
+        let b1=this.parentWidget.querySelector("#batch");
         webfileutil.attachFileCallback($(b1),batch2mni,{
             filename : '',
             title    : 'Select file to load MNI coordinates from',
@@ -601,7 +601,7 @@ class OrthoViewer {
             suffix : ".csv,.txt",
             force : 'local',
         });
-        let b2=this.ShadowDOM.querySelector("#batch2");
+        let b2=this.parentWidget.querySelector("#batch2");
         
         webfileutil.attachFileCallback($(b2),batch2tal,{
             filename : '',
@@ -615,11 +615,11 @@ class OrthoViewer {
     
     createMiscElements() {
         
-        let overlaybox=this.ShadowDOM.querySelector("#showoverlaybutton");
+        let overlaybox=this.parentWidget.querySelector("#showoverlaybutton");
         overlaybox.checked=false;
         overlaybox.addEventListener('change',() => this.setOverlayOpacity(overlaybox.checked));
         
-        let b1=this.ShadowDOM.querySelector("#resetbutton");
+        let b1=this.parentWidget.querySelector("#resetbutton");
         b1.addEventListener('click', () => {
             this.setMNICoordinates(0,0,0); 
             overlaybox.checked=false; 
@@ -628,7 +628,7 @@ class OrthoViewer {
         
         //      let mp = { "1" : 'Left',   "2" : 'Right' };
         
-        this.BrodmanElement=this.ShadowDOM.querySelector("#baselectbox");
+        this.BrodmanElement=this.parentWidget.querySelector("#baselectbox");
         
         let n=bisweb_mni2tal.BRODMANINDICES.length;
         let opt = document.createElement('option');
@@ -731,7 +731,7 @@ class OrthoViewer {
     
     finalizeInitialization() {
         this.allLoaded=true;
-        let s=this.ShadowDOM.querySelector("#tempviewer");
+        let s=this.parentWidget.querySelector("#tempviewer");
         while (s.firstChild) s.removeChild(s.firstChild);
         
         
