@@ -92,6 +92,10 @@ class OrthogonalViewerElement extends BaseViewerElement {
         this.internal.slices=[ null,null,null,null ];
         this.internal.overlayslices=[ null,null,null,null ];
         this.internal.moviefolder=null;
+        this.internal.arrowbuttons=[null,null,
+                                    null,null,
+                                    null,null,
+                                    null,null,null,null];
         this.internal.displaymodes=null;
         this.setObjectMapFunction=null;
     }
@@ -386,6 +390,97 @@ class OrthogonalViewerElement extends BaseViewerElement {
         var mm=this.getmmcoordinates();
         this.updateMouseObservers(mm,plane,mousestate);
     }
+
+    /** create arrow buttons
+     * @param {JQueryWidget} base - the widget to add these too 
+     */
+    createarrowbuttons(base) {
+
+        if (this.internal.arrowbuttons[0]!==null)
+            return;
+        
+        const self=this;
+        
+        let symbols=[ 'glyphicon glyphicon-chevron-left',
+                      'glyphicon glyphicon-pause',
+                      'glyphicon glyphicon-play',
+                      'glyphicon glyphicon-chevron-right'
+                    ];
+        
+
+        let arrowcallback=function(e) {
+            let elem=$(e.target);
+            let index=parseInt(elem.attr('index')) || 0;
+            if (index<=6 || index===9) {
+                
+                let increase=1;
+                if (index%2===0)
+                    increase=-1;
+                let md=3;
+                if (index<6) 
+                    md=Math.floor(index/2);
+                
+                
+                
+                const data = self.internal.datgui.data;
+                if (md===0) {
+                    data.xcoord+=increase;
+                } else if (md===1) {
+                    data.ycoord+=increase;
+                } else if (md===2) {
+                    data.zcoord+=increase;
+                } else if (md===3) { 
+                    data.tcoord+=increase;
+                    if (data.tcoord<0)
+                        data.tcoord=self.internal.imagedim[3]-1;
+                    else if (data.tcoord>=self.internal.imagedim[3])
+                        data.tcoord=0;
+                }
+                let c = [ data.xcoord, data.ycoord, data.zcoord,data.tcoord ];
+                self.setcoordinates(c);
+            } else  {
+                self.playStopMovie(index===8);
+            }
+            
+        };
+    
+        
+        for (let ind=0;ind<=9;ind++) {
+            let symindex=0;
+            if (ind<6) {
+                if (ind%2===1)
+                    symindex=3;
+            } else {
+                symindex=ind-6;
+            }
+            let a=`<span index="${ind}" class="${symbols[symindex]}"></span>`;
+            console.log(a);
+            this.internal.arrowbuttons[ind]=$(a);
+            this.internal.arrowbuttons[ind].css({'font-size': '30px',
+                                                 'left': '100px',
+                                                 'top' : '0px',
+                                                 'color' : '#884400',
+                                                 'position' : 'absolute',
+                                                 'z-index' : 500,
+                                                 'visibility' : 'hidden'});
+
+            base.append(this.internal.arrowbuttons[ind]);
+            
+            this.internal.arrowbuttons[ind].click( (e) => {
+                e.preventDefault(); // cancel default behavior
+                console.log('calling arrow',e);
+                arrowcallback(e);
+            });
+        }
+    }
+
+    hidearrowbuttons() {
+        for (let i=0;i<=9;i++) {
+            if (this.internal.arrowbuttons[i])
+                this.internal.arrowbuttons[i].css({'visibility':'hidden'});
+            }
+    }
+    
     
     /** draw the labels (e.g. L,R, Axial/Coronal etc). Called when changing viewer size or layout */
     drawlabels() {
@@ -397,12 +492,16 @@ class OrthogonalViewerElement extends BaseViewerElement {
         var dw=context.canvas.width;
         var dh=context.canvas.height;
         context.clearRect(Math.floor(this.cleararea[0]*dw),0,Math.floor(this.cleararea[1]*dw),dh);
+        let cdim=$(context.canvas).css(['width','height','left','top' ]);
         
-
         if (this.internal.showdecorations===false) {
+            this.hidearrowbuttons();
             return;
         }
 
+        this.createarrowbuttons($(context.canvas).parent().parent());
+        
+        
         if (this.is_slave_viewer && this.cleararea[1] < 0.95 && this.cleararea[1]>0.05) {
             context.fillStyle="#dddddd";
             context.fillRect(this.cleararea[0]*dw,0,1,dh);
@@ -434,25 +533,48 @@ class OrthogonalViewerElement extends BaseViewerElement {
             var trueplane=invorientaxis[pl];
             var lab=labels[trueplane];
             var vp  =this.internal.subviewers[pl].controls.normViewport;
-            if ((vp.x1-vp.x0)*dw>100) {
+            if ((vp.x1-vp.x0)*dw>200) {
                 if (pl<=2) {
+                    let xshift=[2,-32];
+                    let yshift=[fnsize,-2];
+                    if ((vp.x1-vp.x0)>0.6) 
+                        xshift=[-60,30];
+                    
+                    
                     var ymid=Math.round( dh*(1.0-0.5*(vp.y0+vp.y1))+6);
                     context.textAlign="start";
-                    context.fillText(lab[0],vp.x0*dw+2,ymid);
+                    context.fillText(lab[0],vp.x0*dw+xshift[0],ymid);
                     context.textAlign="end";
-                    context.fillText(lab[1],vp.x1*dw-2,ymid);
+                    context.fillText(lab[1],vp.x1*dw+xshift[1],ymid);
                     
                     
                     var ymin=Math.round((1.0-vp.y1)*dh);
                     var ymax=Math.round((1.0-vp.y0)*dh);
                     var xmid=Math.round( dw*0.5*(0.5*vp.x0+1.5*vp.x1)-6);
                     context.textAlign="end";
-                    context.fillText(lab[2],xmid,ymin+fnsize);
-                    context.fillText(lab[3],xmid,ymax-2);
+
+                    if (vp.y1-vp.y0>0.6)
+                        yshift=[fnsize-ymin+10,50];
+                    
+                    context.fillText(lab[2],xmid,ymin+yshift[0]);
+                    context.fillText(lab[3],xmid,ymax+yshift[1]);
                     
                     var name=names[trueplane]+axes[orientaxis[trueplane]];
                     context.textAlign="start";
                     context.fillText(name,vp.x0*dw,ymin+fnsize+1);
+
+                    let l= [ Math.round((vp.x0)*parseInt(cdim['width']))+parseInt(cdim['left'])+xshift[0],
+                         Math.round((vp.x1)*parseInt(cdim['width']))+parseInt(cdim['left'])+xshift[1] ];
+                    if (l[0]<0)
+                        l[0]=0;
+                    
+                    let h=Math.round((1-(0.75*vp.y1+0.25*vp.y0))*parseInt(cdim['height']))+parseInt(cdim['top']);
+                    
+                    for (let k=0;k<=1;k++) {
+                        this.internal.arrowbuttons[pl*2+k].css({ 'left' :  `${l[k]}px`,
+                                                                 'top'  :  `${h}px`,
+                                                                 'visibility' : 'visible'});
+                    }
                 }
                 if (this.internal.simplemode)
                     context.strokeStyle = "#dddddd";
@@ -470,10 +592,35 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 context.lineTo(vp.x1*dw,(1-vp.y0)*dh);
                 context.lineTo(vp.x0*dw,(1-vp.y0)*dh);
                 context.stroke();
-                
+            }  else if (pl<3) {
+                for (let ia=0;ia<=1;ia++)
+                    if (this.internal.arrowbuttons[pl*2+ia])
+                        this.internal.arrowbuttons[pl*2+ia].css({'visibility':'hidden'});
             }
         }
 
+
+        // Movie Stuff
+        if (this.internal.imagedim[3]<2 || dw<500) {
+
+            for (let ia=6;ia<=9;ia++)
+                if (this.internal.arrowbuttons[ia])
+                    this.internal.arrowbuttons[ia].css({'visibility':'hidden'});
+            
+            return;
+        }
+        
+        let lh=this.internal.layoutcontroller.getviewerheight();
+        let y0=0.92*lh+parseInt(cdim['top']);
+        for (let k=0;k<=3;k++) {
+            this.internal.arrowbuttons[6+k].css({ 'left' :  `${20+40*k}px`,
+                                                  'top'  :  `${y0}px`,
+                                                  'visibility' : 'visible'});
+        }
+
+        
+
+        
     }
     
     // ------------------------------------------------------------------------------------
@@ -522,7 +669,6 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 trueplane=invorientaxis[pl];
             }
             
-            
             var vp0=this.internal.viewports[this.internal.rendermode][trueplane];
             var vp= { 
                 x0 : vp0.x0,
@@ -555,6 +701,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         }
         
         this.drawlabels();
+        this.drawcolorscale();
     }
     
     
@@ -805,6 +952,9 @@ class OrthogonalViewerElement extends BaseViewerElement {
     // ------------------------------------------------------------------------
     // Main outside update
     // ------------------------------------------------------------------------
+
+                
+                
     /** set the coordinates of the viewer 
      * @param {array} coords - [ x,y,z ] array with current position in mm
      * @param {number} plane - 0,1,2 to signify whether click was on YZ,XZ or XY image plane (-1,3 mean 3D click)
