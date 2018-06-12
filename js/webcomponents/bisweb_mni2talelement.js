@@ -63,8 +63,8 @@ class Mni2TalElement extends HTMLElement {
             
         };
         
-        window.addEventListener( 'resize', rs);
-        rs();
+        //        window.addEventListener( 'resize', rs);
+        //      rs();
         
     }
     

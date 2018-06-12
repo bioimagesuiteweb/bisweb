@@ -731,7 +731,7 @@ class OrthoViewer {
     
     finalizeInitialization() {
         this.allLoaded=true;
-        let s=this.parentWidget.querySelector("#tempviewer");
+        let s=document.querySelector("#tempviewer");
         while (s.firstChild) s.removeChild(s.firstChild);
         
         

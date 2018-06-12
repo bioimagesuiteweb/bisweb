@@ -88,7 +88,7 @@ class ViewerLayoutElement extends HTMLElement {
             sidewidth=40;
         let topheight=this.topheight;
         let fullwidth=0;
-        
+
         if (window.innerWidth<2*sidewidth)
             sidewidth=Math.round(0.5*window.innerWidth);
         
@@ -106,13 +106,12 @@ class ViewerLayoutElement extends HTMLElement {
         }
         
         let sidetop=0,sideleft=0;
-        
         this.viewerwidth= fullwidth-sidewidth;
-        if (this.viewerwidth<400 && this.minimizesidepanel===false) {
+        if (this.viewerwidth<400 && this.minimizesidepanel===0) {
             this.viewerwidth=fullwidth;
+            this.viewerheight=this.viewerheight-100;
             sidetop=this.viewerheight;
             sidewidth=fullwidth;
-            
         } else {
             sideleft=this.viewerwidth;
         }
@@ -287,13 +286,16 @@ class ViewerLayoutElement extends HTMLElement {
         minimizebutton.click(function(e) {
             e.preventDefault(); // cancel default behavior
             if (self.minimizesidepanel) {
-                self.minimizesidepanel=false;
+                self.minimizesidepanel=0;
             } else {
-                self.minimizesidepanel=true;
+                self.minimizesidepanel=1;
             }
             
             window.dispatchEvent(new Event('resize'));
         });
+
+
+        
 
 
     }
