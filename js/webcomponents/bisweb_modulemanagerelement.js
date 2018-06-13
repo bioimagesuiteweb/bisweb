@@ -102,7 +102,17 @@ class ModuleManagerElement extends HTMLElement {
             webutil.createMenuItem(this.moduleMenu[index], '');
     }
 
-
+    attachTransformationController(index) {
+        if (this.algorithmController.getTransformController()) {
+            const self=this;
+            webutil.createMenuItem(this.moduleMenu[index],'Transformation Manager',
+                                   function() {
+                                       self.algorithmController.getTransformController().dockDialog(true,false);
+                                   });
+            webutil.createMenuItem(this.moduleMenu[index],'');
+        }
+    }
+    
     transferImages(v1,v2) {
 
         let img=this.viewers[v1].getimage();
@@ -209,6 +219,7 @@ class ModuleManagerElement extends HTMLElement {
         this.createModule('Mask Image', 2, false, modules.maskImage, moduleoptions);
 
         if (this.mode!=='single') {
+            this.attachTransformationController(3);
             this.createModule('Reslice Image',3, true, modules.resliceImage, moduleoptions);
             
             this.createModule('Manual Registration',3, true, modules.manualRegistration, moduleoptions);
@@ -221,10 +232,7 @@ class ModuleManagerElement extends HTMLElement {
             if (usesgpl) {
                 this.createModule('Motion Correction',3, false, modules.motionCorrection, moduleoptions);
             }
-        } else {
-            webutil.createMenuItem(this.moduleMenu[1], '');
-            this.createModule('Reslice Image',1, false, modules.resliceImage, moduleoptions);
-        }
+        } 
         return this.moduleMenu[0];
             
     }
