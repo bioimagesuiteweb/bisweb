@@ -992,6 +992,14 @@ class BaseViewerElement extends HTMLElement {
         }
     }
 
+    /** getlayoutcontroller 
+        @returns {Object} the layout controller
+    */
+    getLayoutController() {
+        return this.internal.layoutcontroller;
+    }
+    
+
 }
 
 

@@ -30,7 +30,7 @@ let globalOpenDialog=null;
  * If docked then the module is in the dock (for update purposes)
  */
 let globalDockedDialogs=[];
-const maxGlobalDockedDialogs=3;
+let maxGlobalDockedDialogs=3;
 
 
 /**
@@ -412,7 +412,7 @@ class BisWebDialogElement extends HTMLElement {
     /** dock the dialog inside the this.layoutController 
      * @param {Boolean} show - if true then show
      */
-    dockDialog(show=true) {
+    dockDialog(show=true,footer=true) {
 
         if (!this.layoutController)
             return false;
@@ -431,8 +431,10 @@ class BisWebDialogElement extends HTMLElement {
         this.hide();
         this.dockWidget=this.layoutController.createToolWidget(`${this.name}`);
         this.dockWidget.append(this.widget);
-        this.dockWidget.append('<HR>');
-        this.dockWidget.append(this.footer);
+        if (footer) {
+            this.dockWidget.append('<HR>');
+            this.dockWidget.append(this.footer);
+        }
         this.docked=true;
         globalDockedDialogs.push(this);
         if (show)
@@ -456,6 +458,10 @@ class BisWebDialogElement extends HTMLElement {
 
     static getOpenDialogs() {
         return [ globalOpenDialog].concat(globalDockedDialogs);
+    }
+
+    static setMaxDockedDialogs(n) {
+        maxGlobalDockedDialogs=n;
     }
     
 }

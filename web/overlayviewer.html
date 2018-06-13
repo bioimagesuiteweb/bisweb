@@ -86,26 +86,6 @@
 	       bis-colormapeditorid="#viewer_cmap1">
 	    </bisweb-orthogonalviewer>
 
-            <bisweb-collectionelement
-               id="transformelement"
-               bis-elementtype="transform"
-               bis-layoutwidgetid="#viewer_layout1">
-            </bisweb-collectionelement>
-    
-            <bisweb-simplealgorithmcontrollerelement
-               id="algoelement"
-               bis-transformelementid="#transformelement"
-               bis-viewerid="#viewer1">
-            </bisweb-simplealgorithmcontrollerelement>
-
-            <bisweb-modulemanager
-              id="modulemanager"
-              bis-mode="overlay"
-	      bis-layoutwidgetid="#viewer_layout1"
-              bis-algorithmcontrollerid="#algoelement">
-            </bisweb-modulemanager>
-    
-
 	    <bisweb-snapshotelement
 	       bis-layoutwidgetid="#viewer_layout1"
 	       bis-dowhite="false"
@@ -145,7 +125,6 @@
        bis-tab1="#ortho"
        bis-tab2="#mosaic"
        bis-menubarid="#viewer_menubar"
-       bis-modulemanagerid="#modulemanager"
        bis-viewerid="#viewer1"
        bis-viewerid2="#viewer2">
     </bisweb-dualviewerapplication>
