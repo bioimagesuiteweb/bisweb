@@ -392,9 +392,10 @@ class DiffSpectElement extends HTMLElement {
 					//app_state.atlastoictal_xform = combo_xform;
 
 					let input = {
-						'input': app_state.ictal,
-						'xform': app_state.atlastointer_xform,
-						'xform2':app_state.intertoictal_xform
+						'input'    : app_state.ictal,
+						'xform'    : app_state.atlastointer_xform,
+						'xform2'   : app_state.intertoictal_xform,
+						'reference': app_state.ATLAS_spect
 					};
 					let reslicer = new ResliceImage();
 					reslicer.execute(input).then( () => {
@@ -715,6 +716,7 @@ class DiffSpectElement extends HTMLElement {
 			'../../images/ISAS_SPECT_Mask.nii.gz'
 		], alldone);
 
+
 	}
 
 	// --------------------------------------------------------------------------------
@@ -995,7 +997,15 @@ class DiffSpectElement extends HTMLElement {
 				webutil.enablebutton(sm_showAtlasToIctal, true);
 				webutil.enablebutton(sm_showInterictalToIctal, true);
 				self.state_machine.images_registered = true;
-				self.showInterictalToIctalRegistration();
+
+				console.log(app_state.ATLAS_spect.getDimensions());
+				console.log(app_state.ATLAS_mri.getDimensions());
+				console.log(app_state.ATLAS_stdspect.getDimensions());
+				console.log(app_state.ATLAS_mask.getDimensions());
+				
+				console.log(app_state.intertoictal_reslice.getDimensions());
+				console.log(app_state.atlastoictal_reslice.getDimensions());
+				console.log(app_state.atlastointer_reslice.getDimensions());
 			}
 		});
 		webutil.createcheckbox({
