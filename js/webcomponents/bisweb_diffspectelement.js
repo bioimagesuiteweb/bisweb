@@ -1178,7 +1178,7 @@ class DiffSpectElement extends HTMLElement {
 
 	showTmapImage() {
 		app_state.viewer.setimage(app_state.ATLAS_mri);
-		app_state.viewer.setobjectmap(app_state.tmap, true);
+		app_state.viewer.setobjectmap(app_state.tmap, false);
 	}
 
 	parseNewLine(str) {

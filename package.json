@@ -25,6 +25,7 @@
         "idb-keyval": "3.0.4",
         "iobuffer": "3.2.0",
         "jquery": "^2.2.4",
+        "jstree": "^3.3.5",
         "localforage": "1.5.5",
         "moment": "2.22.1",
         "numeric": "1.2.6",
