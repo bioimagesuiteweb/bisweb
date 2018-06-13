@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const zlib = require('zlib');
 const os = require('os');
 const timers = require('timers');
-const BisImage = require('bisweb_image.js');
+const BisWebImage = require('bisweb_image.js');
 const modules = require('moduleindex.js');
 
 //node extension to make node-like calls work on Windows
@@ -357,17 +357,12 @@ let serveModuleInvocationRequest = (parsedText, control, socket) => {
     let args = parsedText.params.args, modulename = parsedText.params.modulename;
 
     let inputName = parsedText.params.inputs[0];
-    genericio.read(inputName, true).then( (f) => {
+    let img = new BisWebImage();
+    img.load(inputName).then( () => {
         let module = modules.getModule(modulename);
-        let data = f.data;
         console.log('invoking module', module, 'with args', args, 'and input', data);
-        let img = new BisImage();
 
-        img.initialize();
-        img.parseNII(data.buffer, true);
-        img.filename = f.filename;
-
-        console.log('img', img);
+        console.log('img', img.getDescription());
 
         module.execute({ 'input' : img }, args).then( () => {
             console.log('module', module);
@@ -444,6 +439,12 @@ let setServerTimeout = (fn, delay = 2000) => {
     return timer;
 };
 
+/**
+ * Reads a file on the server machine's hard drive. Will not allow requests for files that either contain symbolic links or files that the owner of the server process does not have access to. 
+ *
+ * @param {String} file - The name of the file.
+ * @returns A Promise resolving a buffer containing the data of the specified file, or rejecting with an error message.
+ */
 let readFileFromDisk = (file) => {
     //check whether filepath contains symlinks before trying anything with the file
     return new Promise((resolve, reject) => {
@@ -473,6 +474,7 @@ let readFileFromDisk = (file) => {
  * 
  * @param {String} payloadType - A word describing the nature of the payload.
  * @param {String|Binary} data - The payload for the packet.
+ * @returns A raw bytestream that can be sent over the socket.
  */
 let formatPacket = (payloadType, data) => {
     let payload, opcode;
@@ -497,6 +499,12 @@ let formatPacket = (payloadType, data) => {
     return packet;
 };
 
+/**
+ * Parses JSON sent by the client from a raw bytestream to a JavaScript Object.
+ * 
+ * @param {Uint8Array} rawText - The bytestream sent by the client.
+ * @returns The JSON object corresponding to the raw bytestream.
+ */
 let parseClientJSON = (rawText) => {
     let text = wsutil.decodeUTF8(rawText, rawText.length);
 
@@ -509,7 +517,6 @@ let parseClientJSON = (rawText) => {
 
     return parsedText;
 };
-
 
 module.exports = {
     loadMenuBarItems: loadMenuBarItems,

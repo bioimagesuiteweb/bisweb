@@ -24,6 +24,9 @@ class FileServer extends HTMLElement {
         this.fileTreeDisplayModal = webutil.createmodal('File Tree', 'modal-lg');
         this.fileTreeDisplayModal.dialog.find('.modal-footer').remove();
 
+        //Save image requests pop up a modal dialog with a text entry field
+        this.saveImageModal = null;
+
         webutil.runAfterAllLoaded(() => {
             let menuBarID = this.getAttribute('bis-menubarid');
             let menuBar = document.querySelector(menuBarID).getMenuBar();
@@ -53,9 +56,12 @@ class FileServer extends HTMLElement {
                 });
 
                 webutil.createMenuItem(serverMenu, 'Upload File to Server', () => {
+                    /*
                     let image = this.algorithmcontroller.getImage('viewer', 'image');
                     console.log('image', image);
                     this.uploadFileToServer(socket, image);
+                    */
+                    this.createSaveImageDialog();
                 });
 
                 webutil.createMenuItem(serverMenu, 'Invoke Module on Server', () => {
@@ -297,6 +303,38 @@ class FileServer extends HTMLElement {
         });
 
         reader.readAsArrayBuffer(data);
+    }
+
+    createSaveImageDialog() {
+        if (!this.saveImageModal) {
+            this.saveImageModal = webutil.createmodal('Save Current Image?', 'modal-sm');
+            this.saveImageModal.dialog.find('.modal-footer').find('.btn').remove();
+
+            let saveDialog = $(`<p>Please enter a name for the current image on the viewer.</p>`);
+            let nameEntryBox = $(`
+                <div class='form-group'>
+                    <label for='filename'>Filename:</label>
+                    <input type='text' class = 'form-control'>
+                </div>
+            `);
+
+            let confirmButton = webutil.createbutton({ 'name' : 'Confirm', 'type' : 'btn-success' });
+            let cancelButton = webutil.createbutton({ 'name' : 'Cancel', 'type' : 'btn-warning' });
+
+            this.saveImageModal.body.append(saveDialog);
+            this.saveImageModal.body.append(nameEntryBox);
+
+            this.saveImageModal.footer.append(confirmButton);
+            this.saveImageModal.footer.append(cancelButton);
+
+            //clear name entry input when modal is closed
+            $(this.saveImageModal.dialog).on('hidden.bs.modal', () => {
+                let textbox = nameEntryBox.find('.form-control');
+                textbox[0].value = '';
+            });
+        }
+
+        this.saveImageModal.dialog.modal('show');
     }
 }
 

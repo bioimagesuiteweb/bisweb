@@ -75,6 +75,7 @@ let formatControlFrame = (opcode, payloadLength) => {
 
 /**
  * Decodes series of raw UTF-8 characters, i.e. numbers, into something human readable.
+ * 
  * @param {Uint8Array} rawText - Series of raw UTF-8 characters
  * @param {Object|Number} control - Parsed control frame (see parseControlFrame), or length of payload.
  * @return Decoded string
