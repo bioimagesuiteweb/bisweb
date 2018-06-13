@@ -154,7 +154,7 @@ class PaintToolElement extends HTMLElement {
         let in_parent=this.internal.layoutcontroller.createToolWidget('Paint Tool',true);
 
         this.internal.parentDomElement=in_parent;
-        var basediv=$("<div>Paint tool to appear...</div>");
+        var basediv=$("<div>Paint tool will appear once an image is loaded.</div>");
         this.internal.parentDomElement.append(basediv);
         this.internal.orthoviewer=in_orthoviewer;
         this.internal.orthoviewer.addMouseObserver(this);
@@ -988,7 +988,6 @@ class PaintToolElement extends HTMLElement {
         }
 
         if (mousestate===2) {
-            console.log('Adding ',this.internal.currentundoarray.join(','));
             this.internal.undostack.addOperation(this.internal.currentundoarray);
             this.internal.currentundoarray=[];
             if (mousestate===2)
@@ -1058,68 +1057,74 @@ class PaintToolElement extends HTMLElement {
             webutil.activateCollapseElement(self.internal.parentDomElement);
         });
         webutil.createMenuItem(tmenu,''); // separator
-        
-        if (this.internal.algocontroller) {
-            
-            const self=this;
-            this.internal.algocontroller.sendImageToViewer=function(input,options) {
-                let type = options.viewersource || 'image';
-                if (type==='overlay') {
-                    self.safeSetNewObjectmap(input).catch( (e) => {
-                        webutil.createAlert(e,true);
-                    });
-                } else {
-                    console.log('Setting image ... ');
-                    self.internal.orthoviewer.setimage(input);
-                }
-            };
 
-            let moduleoptions = { 'numViewers' : 0,
-                                  'dockable' : true ,
-                                  'forcedock' : true
-                                };
+        return new Promise( (resolve) => {
 
-            moduleoptions.name='Create Objectmap';
-            this.internal.thresholdModule=biscustom.createCustom(this.internal.layoutcontroller,
-                                                                 this.internal.algocontroller,
-                                                                 new modules.binaryThresholdImage(),
-                                                                 moduleoptions);
-            webutil.createMenuItem(tmenu, moduleoptions.name,function() {
-                self.internal.thresholdModule.showDialog();
-            });
+            if (this.internal.algocontroller) {
+                
+                const self=this;
+                this.internal.algocontroller.sendImageToViewer=function(input,options) {
+                    let type = options.viewersource || 'image';
+                    if (type==='overlay') {
+                        self.safeSetNewObjectmap(input).catch( (e) => {
+                            webutil.createAlert(e,true);
+                        });
+                    } else {
+                        console.log('Setting image ... ');
+                        self.internal.orthoviewer.setimage(input);
+                    }
+                };
 
-                                                  
-            moduleoptions.name='Morphology Operations';
-            this.internal.morphologyModule=biscustom.createCustom(this.internal.layoutcontroller,
-                                                                  this.internal.algocontroller,
-                                                                  new modules.morphologyFilter(),
-                                                                  moduleoptions);
-            webutil.createMenuItem(tmenu, moduleoptions.name,function() {
-                self.internal.morphologyModule.showDialog();
-            });
+                let moduleoptions = { 'numViewers' : 0,
+                                      'dockable' : true ,
+                                      'forcedock' : true
+                                    };
 
-            biswrap.initialize().then( () => {
-                if (biswrap.uses_gpl()) {
-                    moduleoptions.name='Regularize Objectmap';
-                    this.internal.regularizeModule=biscustom.createCustom(this.internal.layoutcontroller,
-                                                                          this.internal.algocontroller,
-                                                                          new modules.regularizeObjectmap(),
-                                                                          moduleoptions);
-                    webutil.createMenuItem(tmenu, moduleoptions.name,function() {
-                        self.internal.regularizeModule.showDialog();
-                    });
+                moduleoptions.name='Create Objectmap';
+                this.internal.thresholdModule=biscustom.createCustom(this.internal.layoutcontroller,
+                                                                     this.internal.algocontroller,
+                                                                     new modules.binaryThresholdImage(),
+                                                                     moduleoptions);
+                webutil.createMenuItem(tmenu, moduleoptions.name,function() {
+                    self.internal.thresholdModule.showDialog();
+                });
 
-                    moduleoptions.name='Mask Image';
-                    this.internal.maskModule=biscustom.createCustom(this.internal.layoutcontroller,
-                                                                    this.internal.algocontroller,
-                                                                    new modules.maskImage(),
-                                                                    moduleoptions);
-                    webutil.createMenuItem(tmenu, moduleoptions.name,function() {
-                        self.internal.maskModule.showDialog();
-                    });
-                }
-            });
-        }
+                
+                moduleoptions.name='Morphology Operations';
+                this.internal.morphologyModule=biscustom.createCustom(this.internal.layoutcontroller,
+                                                                      this.internal.algocontroller,
+                                                                      new modules.morphologyFilter(),
+                                                                      moduleoptions);
+                webutil.createMenuItem(tmenu, moduleoptions.name,function() {
+                    self.internal.morphologyModule.showDialog();
+                });
+
+                biswrap.initialize().then( () => {
+                    if (biswrap.uses_gpl()) {
+                        moduleoptions.name='Regularize Objectmap';
+                        this.internal.regularizeModule=biscustom.createCustom(this.internal.layoutcontroller,
+                                                                              this.internal.algocontroller,
+                                                                              new modules.regularizeObjectmap(),
+                                                                              moduleoptions);
+                        webutil.createMenuItem(tmenu, moduleoptions.name,function() {
+                            self.internal.regularizeModule.showDialog();
+                        });
+
+                        moduleoptions.name='Mask Image';
+                        this.internal.maskModule=biscustom.createCustom(this.internal.layoutcontroller,
+                                                                        this.internal.algocontroller,
+                                                                        new modules.maskImage(),
+                                                                        moduleoptions);
+                        webutil.createMenuItem(tmenu, moduleoptions.name,function() {
+                            self.internal.maskModule.showDialog();
+                        });
+                    }
+                    resolve();
+                });
+            } else {
+                resolve();
+            }
+        });
     }
 
     setViewerObjectmap(vol,plainmode,alert) {
