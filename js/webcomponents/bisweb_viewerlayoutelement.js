@@ -105,11 +105,22 @@ class ViewerLayoutElement extends HTMLElement {
         
         let sidetop=0,sideleft=0;
         this.viewerwidth= fullwidth-sidewidth;
-        if (this.viewerwidth<400 && this.minimizesidepanel===0) {
+        this.sidebarheight=this.viewerheight;
+
+        if ((this.viewerwidth<400 && this.minimizesidepanel===0) || (fullwidth<770)) {
             this.viewerwidth=fullwidth;
-            this.viewerheight=this.viewerheight-100;
-            sidetop=this.viewerheight;
-            sidewidth=fullwidth;
+            if (this.viewerheight<600) {
+                this.viewerheight=this.viewerheight-100;
+                sidetop=this.viewerheight;
+                this.viewerwidth=this.viewerwidth-10;
+                sidewidth=this.viewerwidth;
+            } else {
+                this.viewerheight=600;
+                this.viewerwidth=this.viewerwidth-10;
+                sidetop=this.viewerheight;
+                sidewidth=this.viewerwidth;
+            }
+
         } else {
             sideleft=this.viewerwidth;
         }
@@ -119,7 +130,7 @@ class ViewerLayoutElement extends HTMLElement {
         let w_h  = `${this.viewerheight}px`;
         let w_e  = `${sidewidth}px`;
         let s_t  = `${sidetop-5}px`;
-        let s_h  = `${this.viewerheight+13}px`;
+        let s_h  = `${this.sidebarheight+13}px`;
         let s_l  = `${sideleft}px`;
         
         
