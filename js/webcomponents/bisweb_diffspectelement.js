@@ -232,7 +232,7 @@ class DiffSpectElement extends HTMLElement {
 	 * @param {object} params - options for the registration 
 	 * @returns {BISTransformation} - the output of the registration
 	 */
-    computeRegistration(reference, target, initial, params) {
+    computeLinearRegistration(reference, target, initial, params) {
 
 		initial = initial || null;
 		params = params || {
@@ -304,6 +304,51 @@ class DiffSpectElement extends HTMLElement {
 		});
     }
 
+	computeNonlinearRegistration(reference, target) {
+		
+		let nonlinearRegModule = new NonlinearRegistration();	
+		let input = { 'reference': reference,
+					  'target'   : target};
+		
+		let nonlin_opts = 
+			{
+       			 "intscale": 1,
+       			 "numbins": 64,
+       			 "levels": 3,
+		         "imagesmoothing": 1,
+       			 "optimization": "ConjugateGradient",
+		         "stepsize": 1,
+   			     "metric": "NMI",
+		         "steps": 1,
+		         "iterations": 1,
+		         "cps": 20,
+		         "append": true,
+       			 "linearmode": "Affine",
+		         "resolution": 1.5,
+		         "lambda": 0.001,
+		         "cpsrate": 2,
+		         "doreslice": true,
+		         "norm": true,
+       			 "debug": true
+			};
+		let output = { 
+			transformation: null,
+			reslice: null
+		};
+		
+		return new Promise((resolve, reject) => {
+			nonlinearRegModule.execute(input, nonlin_opts).then(() => {
+				output.transformation = nonlinearRegModule.getOutputObject('output');
+				output.reslice = nonlinearRegModule.getOutputObject('resliced');
+				resolve(output);
+			}).catch( (e) =>  {
+				console.log("ERROR:", e, e.stack);
+				reject(e);
+			});
+
+		});
+	}
+
 	// --------------------------------------------------------------------------------
 	// Custom Registration Methods
 	// --------------------------------------------------------------------------------
@@ -330,13 +375,13 @@ class DiffSpectElement extends HTMLElement {
 			resolution: 1.5
 		};
 
-		return this.computeRegistration(app_state.interictal, app_state.ictal, null, opts).then( (output) => {
+		return this.computeLinearRegistration(app_state.interictal, app_state.ictal, null, opts).then( (output) => {
 			console.log(output);
 			app_state.intertoictal_xform = output.transformation;
 			app_state.intertoictal_reslice = output.reslice;
 			console.log(app_state.intertoictal_xform);
 			console.log(app_state.intertoictal_reslice);
-			});
+		});
 	}
 
 	registerAtlasToInterictal(fast = false) {
@@ -366,30 +411,34 @@ class DiffSpectElement extends HTMLElement {
 			opts.mode = 2;
 
 
+		if (app_state.nonlinear) {
+			return this.computeNonlinearRegistration(app_state.ATLAS_spect, app_state.interictal).then( (output) => {
+				console.log(output);
+				app_state.atlastointer_xform = output.transformation;
+				app_state.atlastointer_reslice = output.reslice;
+				console.log(app_state.atlastointer_xform);
+				console.log(app_state.atlastointer_reslice);	
+			});
+		}
 
-		return this.computeRegistration(app_state.ATLAS_spect, app_state.interictal, null, opts).then( (output) => {
+		return this.computeLinearRegistration(app_state.ATLAS_spect, app_state.interictal, null, opts).then( (output) => {
 			console.log(output);
 			app_state.atlastointer_xform = output.transformation;
 			app_state.atlastointer_reslice = output.reslice;
 			console.log(app_state.atlastointer_xform);
 			console.log(app_state.atlastointer_reslice);
-		    });
+		});
 
 	}
 
 
 	computeRegistrationOfImages() {
 		if (!app_state.does_have_mri) {
-			if (!app_state.nonlinear) {
 			    
 			    let p= [ this.registerAtlasToInterictal(true),
 				     this.registerInterictalToIctal() ];
 				
 			    Promise.all(p).then( () => {
-					//let combo_xform=new BisWebTransformationCollection();
-					//combo_xform.addTransformation(app_state.atlastointer);
-					//combo_xform.addTransformation(app_state.intertoictal);
-					//app_state.atlastoictal_xform = combo_xform;
 
 					let input = {
 						'input'    : app_state.ictal,
@@ -403,27 +452,6 @@ class DiffSpectElement extends HTMLElement {
 					});
 				});
 			    
-			} else {
-				var params = {
-					intscale: 2,
-					numbins: 64,
-					levels: 3,
-					smoothing: 0.5,
-					optimization: 3,
-					stepsize: 2.0,
-					metric: 3,
-					steps: 1,
-					mode: 0,
-					resolution: 1.5
-				};
-				this.registerAtlasToInterictal(false);
-				var resliced_interictal = new BisWebImage();
-				resliced_interictal.cloneImage(app_state.ATLAS_spect);
-				bisimagesmoothreslice.resliceImage(app_state.interictal, resliced_interictal, app_state.atlastointer, 1);
-				var reg = bisregister.createLinearRegistration(app_state.ictal, resliced_interictal, null, params);
-				reg.run();
-				app_state.atlastoictal = reg.getTransformation();
-			}
 		}
 
 
@@ -992,24 +1020,18 @@ class DiffSpectElement extends HTMLElement {
 			parent: $('#div1'),
 			css: { 'width': '275px' },
 			callback: function () {
+				console.log('call back reached');
 				self.computeRegistrationOfImages();
+				console.log('registering');
 				webutil.enablebutton(sm_showAtlasToInter, true);
 				webutil.enablebutton(sm_showAtlasToIctal, true);
 				webutil.enablebutton(sm_showInterictalToIctal, true);
+				console.log('buttons shown');
 				self.state_machine.images_registered = true;
-
-				console.log(app_state.ATLAS_spect.getDimensions());
-				console.log(app_state.ATLAS_mri.getDimensions());
-				console.log(app_state.ATLAS_stdspect.getDimensions());
-				console.log(app_state.ATLAS_mask.getDimensions());
-				
-				console.log(app_state.intertoictal_reslice.getDimensions());
-				console.log(app_state.atlastoictal_reslice.getDimensions());
-				console.log(app_state.atlastointer_reslice.getDimensions());
 			}
 		});
 		webutil.createcheckbox({
-			name: 'Nonlinear for ATLAS to Interictal?',
+			name: 'Nonlinear for ATLAS to Interictal',
 			type: 'warning',
 			parent: $('#div1_5'),
 			css: { 'margin-left': '15px' },
@@ -1018,6 +1040,8 @@ class DiffSpectElement extends HTMLElement {
 					app_state.nonlinear = true;
 				else
 					app_state.nonlinear = false;
+
+				console.log(app_state.nonlinear);
 			}
 		});
 
