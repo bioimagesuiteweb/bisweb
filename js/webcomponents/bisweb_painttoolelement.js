@@ -33,6 +33,7 @@ const biscustom = require('bisweb_custommodule.js');
 const modules = require('moduleindex.js');
 const biswrap = require('libbiswasm_wrapper');
 const webfileutil = require('bis_webfileutil');
+const inobounce=require('inobounce.js');
 
 // -------------------------------------------------------------------------
 // Keep warnings quiet
@@ -226,9 +227,11 @@ class PaintToolElement extends HTMLElement {
 
         if (this.internal.data.enabled) {
             this.internal.domElement.css({'background-color': webutil.getactivecolor()});
+            inobounce.enable();
         } else {
             var x = this.internal.domElement.parent().css('backgroundColor');
             this.internal.domElement.css({'background-color':x});
+            inobounce.disable();
         }
     }
 

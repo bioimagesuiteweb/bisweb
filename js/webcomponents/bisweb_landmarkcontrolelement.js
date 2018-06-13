@@ -29,6 +29,7 @@ const bisgenericio=require('bis_genericio');
 const $=require('jquery');
 const bootbox=require('bootbox');
 const webfileutil = require('bis_webfileutil');
+const inobounce=require('inobounce.js');
 
 import dat from 'dat.gui';
 
@@ -648,13 +649,15 @@ class LandmarkControlElement extends HTMLElement {
             this.internal.domElement.css({'background-color': webutil.getactivecolor()});
             this.internal.landlabelelement.removeClass('label-success');
             this.internal.landlabelelement.addClass('label-danger');
+            inobounce.enable();
         } else {
             var x = this.internal.domElement.parent().css('backgroundColor');
             this.internal.domElement.css({'background-color':x});
             this.internal.landlabelelement.removeClass('label-danger');
             this.internal.landlabelelement.addClass('label-success');
             this.picklandmark(false);
-        } 
+            inobounce.disable();
+        }
     }
     
 
