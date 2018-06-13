@@ -7,23 +7,29 @@
 }
 
 body {
-    background-color : #111111;
+    background-color : #010101;
+}
+
+.btop {
+    background-color : #375a7f;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 100vw;
+    padding-top: 0px;
+    padding-left: 1vmin;
+    height:50px;
+    font-size:16px;
+    min-height:50px;
 }
 
 #viewer {
-  margin-top: 70px;
-  background-color: #000000;
-}
-
-#row1,#row2 {
-    height :40vmin;
-    min-height :40vmin
-}
-
-#xviewer,#yviewer,#zviewer {
-  position: absolute;
-  z-index:1;
-  display: inline-block;
+    top: 55px;
+    margin-left: 5vmin;
+    background-color: #000000;
+    height : 90vmin;
+    width: 90vmin;
+    position:absolute;
 }
 
 #tempviewer {
@@ -37,30 +43,61 @@ body {
   text-align: center;
 }
 
+#topleft {
+    height :40vmin;
+    top:0vmin;
+    left:0vmin;
+    position:absolute;
+}
+
+#topright {
+    height: 40vmin;
+    top:0vmin;
+    left: 42vmin;
+    position:relative;
+}
+
+#bottomleft {
+    top:40vmin;
+    left:0vmin;
+    width:44vmin;
+    position:absolute;
+}
+
+#bottomright {
+    top:43vmin;
+    left:40vmin;
+    width:50vmin;
+    position:absolute;
+    margin-bottom: 50px;
+}
+
 .celement {
     position: absolute;
+}
+
+
+#xviewer,#yviewer,#zviewer {
+  z-index:1;
+  display: inline-block;
 }
 
 #xlines,#ylines,#zlines {
   z-index:3;
   display: inline-block;
+  
 }
-
 
 #xcontrols,#ycontrols,#zcontrols {
-  z-index:2;
-  width: 32.9vmin;
-  display: inline-block;
+    z-index:2;
+    display: inline-block;
+    left:3.0vmin;
+    top: 1.0vmin;
+    width:31.9vmin;
 }
 
-#xcontrols {
-  left:3.0vmin;
-  width:40.0vmin;
-}
 
-#ycontrols {
-  left:2.5vmin;
-}
+
 
 #ylines, #yviewer {
   top: 2.5vmin;
@@ -71,14 +108,13 @@ body {
 
 #xlines, #xviewer {
   top:2.5vmin;
-  left: 1.5vmin;
+  left: 1.0vmin;
   width:43.0vmin;
   height:35.9vmin;
 }
 
-#zcontrols {
-  left:2.5vmin;
-  top:43.6vmin;
+#xcontrols {
+    width:39.0vmin;
 }
 
 
@@ -89,37 +125,89 @@ body {
     height: 43.0vmin;
 }
 
+#zcontrols {
+    top:45vmin;
+}
+
 .dataframe {
-    margin-bottom: 1.5vmin;
-    width: 43.0vmin;
+    margin-bottom: 10px;
     left: 1.5vmin;
     z-index: 4;
  }
 
 #aboutframe {
-  font-size: 90%;
+    margin-top: 20px;
+    font-size: 85%;
+    margin-left: 2.5%;
+    margin-right: 2.5%;
 }
 
 .numberid {
     background-color: #444444;
     color: #ffffff;
-    width:100%;
+    padding-right:2px;
     text-align: center;
+    width:30%;
 }
 
 .buttonid {
     background-color : #444444;
     color : #ffffff;
-    width : 100%;
+    width:100%;
 }
 
+
+
 #baselectbox {
-    width:100%;
+    width:92%;
     background-color: #444444;
     color : #ffffff;
+    margin-right:3px;
 }
 
 #batch,#batch2 {
-    width:100%
+    width:100%;
+    font-size:85%
 }
 
+.xcol-sm-2 {
+    width:16%;
+    display: inline-block;
+    margin: 0 0 0 0;
+}
+
+.xcol-sm-1 {
+    width:2%;
+    display: inline-block;
+    margin: 0 0 0 0;
+}
+
+.xcol-sm-7 {
+    width:56%;
+    display: inline-block;
+    margin: 0 0 0 0;
+}
+
+.xcol-sm-10 {
+    width:80%;
+    display: inline-block;
+    margin: 0 0 0 0;
+}
+
+.xcol-sm-3 {
+    width:20%;
+    display: inline-block;
+    margin: 0 0 0 0;
+}
+
+.xcol-sm-6 {
+    width:48%;
+    display: inline-block;
+    margin: 0 0 0 0;
+}
+
+.xcol-sm-5 {
+    width:40%;
+    display: inline-block;
+    margin: 0 0 0 0;
+}

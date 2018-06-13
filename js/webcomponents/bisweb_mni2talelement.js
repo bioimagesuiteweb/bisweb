@@ -47,24 +47,32 @@ class Mni2TalElement extends HTMLElement {
             
             let width=window.innerWidth;
             let height=window.innerHeight;
-            let vr=$("#viewer");
-            
-            let wd=parseInt(vr.width());
-            let ht=parseInt(vr.height());
-            let extra=120;
-            let pady=Math.round(0.125*((height-extra)-ht));
-            if (pady<0)
-                pady=0;
-            let pad=Math.round(0.25*(width-wd));
-            if (pad<0)
-                pad=0;
-            vr.css({ 'left' : `${pad}px`,
-                     'top' : `${pady+70}px`});
-            
+            console.log('Width=',width);
+            if (width<600) {
+                $("#bottomright").css( { 'top' : '88vmin',
+                                         'width':'80vmin',
+                                         'left': '2vmin'});
+            } else if (height<600) {
+                $("#bottomright").css( { 'top' : '2vmin',
+                                         'width':'80vmin',
+                                         'left': '95vmin'});
+            } else {
+                $("#bottomright").css( { 'top' :  '43vmin',
+                                         'width': '50vmin',
+                                         'left':  '40vmin'});
+            }
         };
+
+        let iconpath="";
+        if (typeof window.BIS !=='undefined') {
+            iconpath=window.BIS.iconpath;
+        }
+
+        $('#blogo').append(`<a href="./index.html" target="_blank"><img src="${iconpath}images/bioimagesuite.png" height="45px" id="bislogo" style="margin-top:5px;margin-right:20px"></a>`);
         
-        //        window.addEventListener( 'resize', rs);
-        //      rs();
+        
+        window.addEventListener( 'resize', rs);
+        webutil.runAfterAllLoaded(rs);
         
     }
     
