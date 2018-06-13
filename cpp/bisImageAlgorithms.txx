@@ -1372,6 +1372,7 @@ namespace bisImageAlgorithms {
   };
   
   template<class T> int createClusterNumberImage(bisSimpleImage<T>* input,float threshold,int oneconnected,
+                                                 int clustersizethreshold,
 						 bisSimpleImage<short>* cluster_number_output,
 						 std::vector<int>& clusters,int frame,int component)
   {
@@ -1521,29 +1522,63 @@ namespace bisImageAlgorithms {
 	  maxsize=clusters[i];
 	sumc+=clusters[i];
       }
-    std::cout << "+ +  clustering at threshold " << threshold <<" numvoxels that pass=" << sumc << ", maxsize=" << maxsize << ", numclusters=" << clusters.size() << std::endl;
-    return maxsize;
+
+    if (clustersizethreshold<1)
+      {
+        std::cout << "+ +  clustering at threshold " << threshold <<" numvoxels that pass=" << sumc << ", maxsize=" << maxsize << ", numclusters=" << clusters.size() << std::endl;
+        return maxsize;
+      }
+
+    std::vector<int> mapv(clusters.size());
+    int good=0;
+    for (unsigned int i=0;i<clusters.size();i++)
+      {
+        if (clusters[i]>=clustersizethreshold) {
+          good+=1;
+          mapv[i]=good;
+        } else {
+          mapv[i]=0;
+        }
+      }
+    
+    for (unsigned int i=0;i<volsize;i++)
+      {
+        int clusterno=clustdata[i];
+        if (clusterno>0) {
+          clustdata[i]=mapv[clusterno];
+        }
+      }
+
+    std::cout << "+ +  clustering at threshold " << threshold <<" numclusters that pass=" << good << ", maxsize=" << maxsize << std::endl;
+    return good;
+
+    
+
   }
 
   /** 
    * This function performs masking using as input the results of {@link BisImageAlgorithms.createClusterNumberImage} and a cluster threshold size. Clusters smaller than this are eliminated.
-   * @alias BisImageAlgorithms.clusterFilter
-   * @param {BisImage} volume - the input image
-   * @param {object} clusterOutput - the results of {@link BisImageAlgorithms.createClusterNumberImage}. 
-   * @param {number} clustersizethreshold - the size of cluster below which we filter out
+   * @param  volume - the input image
+   * @param  clusterOutput - the results of {@link BisImageAlgorithms.createClusterNumberImage}. 
+   * @param  clustersizethreshold - the size of cluster below which we filter out
    the value (absolute value thresholding) above which a voxel is counted as good.
-   * @returns {BisImage}
+   * @returns image
    */
-  template<class T> std::unique_ptr<bisSimpleImage<T> > clusterFilter(bisSimpleImage<T>* input,int clustersizethreshold,float threshold,int oneconnected,int frame,int component)
+  template<class T> std::unique_ptr<bisSimpleImage<T> > clusterFilter(bisSimpleImage<T>* input,
+                                                                      int clustersizethreshold,
+                                                                      float threshold,
+                                                                      int oneconnected,
+                                                                      int frame,int component)
   {
 
     std::unique_ptr<bisSimpleImage<short> > clusterImage(new bisSimpleImage<short>("clusterno_image"));
     std::unique_ptr<bisSimpleImage<T> > output(new bisSimpleImage<T>("cluster_filtered_image"));
+
     output->copyStructure(input);
     output->fill(0.0);
     
     std::vector<int> clusters;
-    int maxsize=createClusterNumberImage(input,threshold,oneconnected,
+    int maxsize=createClusterNumberImage(input,threshold,oneconnected,0,
 					 clusterImage.get(),clusters,frame,component);
 
 
@@ -1572,9 +1607,9 @@ namespace bisImageAlgorithms {
 	  if (clusters[clusterno]>=clustersizethreshold)
 	    {
 	      numpass=numpass+1;
-	      for (int c=0;c<numcomp;c++)
-		odata[i+c*volsize]=idata[i+c*volsize];
-	    }
+              for (int c=0;c<numcomp;c++)
+                odata[i+c*volsize]=idata[i+c*volsize];
+            }
 	}
       }
 

@@ -1154,6 +1154,7 @@ template <class BIS_TT> unsigned char* clusterThresholdImageTemplate(unsigned ch
       std::unique_ptr<bisSimpleImage<short> > output_image(new bisSimpleImage<short>());
       std::vector<int> clusters;
       int maxsize=bisImageAlgorithms::createClusterNumberImage(inp_image.get(),threshold,oneconnected,
+                                                               clustersize,
 							       output_image.get(),
 							       clusters,frame,component);
 

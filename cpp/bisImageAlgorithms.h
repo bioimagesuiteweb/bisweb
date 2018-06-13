@@ -301,12 +301,15 @@ namespace bisImageAlgorithms {
    * @param input the input image
    * @param threshold the absolute value threshold at which to threshold
    * @param oneconnected if true use 6 neighbors else 26
+   * @param clustersizethreshold the minimum cluster size (if 0 return all clusters)
    * @param cluster_number_output the output image with values equal to the cluster number of zero
    * @param clusters a vector storing the size of each cluster
    * @param frame the frame to use in 4D images
    * @param component the component to use in 4D/5D images
    * @returns the maximum cluster size*/
-  template<class T> int createClusterNumberImage(bisSimpleImage<T>* input,float threshold,int oneconnected,
+  template<class T> int createClusterNumberImage(bisSimpleImage<T>* input,
+                                                 float threshold,int oneconnected,
+                                                 int clustersizethreshold,
 						 bisSimpleImage<short>* cluster_number_output,
 						 std::vector<int>& clusters,int frame,int component);
 
@@ -320,7 +323,9 @@ namespace bisImageAlgorithms {
    * @param frame the frame to use in 4D images
    * @param component the component to use in 4D/5D images
    * @returns the thresholded and clustered image*/
-  template<class T> std::unique_ptr<bisSimpleImage<T> > clusterFilter(bisSimpleImage<T>* input,int clustersizethreshold,float threshold,
+  template<class T> std::unique_ptr<bisSimpleImage<T> > clusterFilter(bisSimpleImage<T>* input,
+                                                                      int clustersizethreshold,
+                                                                      float threshold,
 								      int oneconnected,
 								      int frame,int component);
     
