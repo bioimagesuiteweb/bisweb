@@ -108,6 +108,9 @@ class LandmarkControlElement extends HTMLElement {
                 color : "#ff0000",
                 dummy : false,
             },
+            mousestate : -2,
+            lastpoint : null,
+            lastplane : null,
         };
 
     }
@@ -1014,7 +1017,7 @@ class LandmarkControlElement extends HTMLElement {
      * @param {number} mousestate - 0=click 1=move 2=release
      */
     updatemousecoordinates(mm,plane,mousestate) {
-        if (mousestate<0 || mousestate === undefined || this.internal.landmarkset===null)
+        if ( mousestate === undefined || this.internal.landmarkset===null)
             return;
         
         if (this.internal.data.enabled===false)
@@ -1024,15 +1027,27 @@ class LandmarkControlElement extends HTMLElement {
             return;
         
         if (mousestate===0) {
+            if (this.internal.lastpoint!==null)
+                this.updatemousecoordinates(this.internal.lastpoint,this.internal.lastplane,2);
             this.setcursor(mm,true); 
-        } else if (mousestate===1) {
+        } else if (mousestate===1 || mousestate===-1) {
             this.setcursor(mm,true);
         } else if (mousestate===2) {
             this.updatepoint(mm);
             this.setcursor(mm,false);
             if (this.internal.pickmode)
                 this.picklandmark(false);
+            this.internal.lastpoint=null;
         }
+
+        if (mousestate!==2) {
+            this.internal.lastpoint=mm.slice(0);
+            this.internal.mousestate=mousestate;
+            this.internal.lastplane=plane;
+        } else {
+            this.internal.lastpoint=null;
+        }
+        
     }
 }
 
