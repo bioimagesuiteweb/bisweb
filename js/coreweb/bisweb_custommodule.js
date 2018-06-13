@@ -405,8 +405,10 @@ class CustomModule {
             generatedContent.runbutton[0].addEventListener("click", (e) => {
                 e.preventDefault();
                 enableUI(false);
+                webutil.createAlert('Invoking Module '+self.module.name,'progress',10,100000);
                 setTimeout(() => {
                     this.executeModule().then(() => {
+                        $('.alert-success').remove();
                         enableUI(true);
                     }).catch((e) => {
                         if (e.stack)

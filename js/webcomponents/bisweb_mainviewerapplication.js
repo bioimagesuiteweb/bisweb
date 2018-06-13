@@ -65,9 +65,7 @@ class ViewerApplicationElement extends HTMLElement {
         scope=scope.split("#")[0];
         
         this.applicationURL=scope;
-        console.log('scope=',scope);
         scope=scope.split("/").pop();
-        console.log('scope=',scope);
         let index=scope.indexOf(".html");
         scope=scope.substr(0,index);
 
@@ -111,13 +109,17 @@ class ViewerApplicationElement extends HTMLElement {
 
         
         const img = new BisWebImage();
-        return new Promise( (resolve,reject) => { 
-            img.load(fname)
-                .then(function () {
-                    webutil.createAlert('Image loaded from ' + img.getDescription());
-                    self.VIEWERS[viewer].setimage(img);
-                    resolve();
-                }).catch( (e) => { reject(e); });
+        return new Promise( (resolve,reject) => {
+
+            webutil.createAlert('Loading image from ' + genericio.getFixedLoadFileName(fname),'progress',30);
+            setTimeout( () => {
+                img.load(fname)
+                    .then(function () {
+                        webutil.createAlert('Image loaded from ' + img.getDescription());
+                        self.VIEWERS[viewer].setimage(img);
+                        resolve();
+                    }).catch( (e) => { reject(e); });
+            },10);
         });
     }
 
@@ -126,15 +128,19 @@ class ViewerApplicationElement extends HTMLElement {
         const self=this;
         return new Promise( (resolve,reject) => {
             let img = new BisWebImage();
-            img.load(fname)
-                .then(function () {
-                    self.VIEWERS[viewer].setobjectmap(img, false);
-                    resolve();
-                }).catch((e) => {
-                    webutil.createAlert(e, true);
-                    console.log(e.stack);
-                    reject(e);
-                });
+            webutil.createAlert('Loading image from ' + genericio.getFixedLoadFileName(fname),'progress',30);
+            setTimeout( () => {
+                img.load(fname)
+                    .then(function () {
+                        webutil.createAlert('Objectmap loaded from ' + img.getDescription());
+                        self.VIEWERS[viewer].setobjectmap(img, false);
+                        resolve();
+                    }).catch((e) => {
+                        webutil.createAlert(e, true);
+                        console.log(e.stack);
+                        reject(e);
+                    });
+            },10);
         });
     }
 

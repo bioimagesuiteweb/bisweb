@@ -167,7 +167,7 @@ const webutil = {
     setAlertTop : function(v) {
         internal.alerttop=v;
     },
-    
+
 
     /** getfont size
      * alias WebUtil.getfontsize
@@ -1023,32 +1023,41 @@ const webutil = {
      * @param {string} text - 
      * @param {boolean} error  - if true this is an error else info;
      * @param {JQueryElement} parent - the parent to add this to. Uses $('body') if not specified.
-     * @alias WebUtil.createMenuCheckItem
+     * @alias WebUtil.createAlert
      */
-    createAlert: function (text, error, parent) {
+    createAlert: function (text, error, top=0,timeout=0) {
 
         // Remove all previous alerts -- only one is needed
+        $('.alert-success').remove();
         $('.alert-info').remove();
 
-        var b = 'info';
+
+        timeout = timeout+internal.alerttimeout;
+        top     = top + internal.alerttop;
+        
+        let b = 'info';
         if (error === true)
             b = 'danger';
-        parent = parent || $('body');
-
-        //      var w = $(`<div class="alert alert-${b} alert-dismissible" role="alert" style="position:absolute; top:${internal.alerttop}px; left:10px; z-index:' + 100 + ${internal.alertcount}  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${text}</div>`);
+        else if (error==="progress")
+            b='success';
 
         let w = $(`<div class="alert alert-${b} alert-dismissible" role="alert"  
-style="position:absolute; top:${internal.alerttop}px; left:10px; z-index:${100+internal.alertcount}">
- <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${text}
-          </div>`);
-
-        parent.append(w);
+style="position:absolute; top:${top}px; left:10px; z-index:${100+internal.alertcount}">
+ <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${text}</div>`);
+        
+        $('body').append(w);
         internal.alertcount += 1;
         w.alert();
 
-        setTimeout(function () {
-            $('.alert-info').remove();
-        }, internal.alerttimeout);
+        if (b==='info') {
+            setTimeout(function () {
+                try {
+                    w.remove();
+                } catch(e) {
+                    console.log(w,'is no more');
+                }
+            }, timeout );
+        }
     },
 
     // ---------------- drag and drop controller ----------------
