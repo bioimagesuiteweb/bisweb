@@ -56,12 +56,7 @@ class FileServer extends HTMLElement {
                 });
 
                 webutil.createMenuItem(serverMenu, 'Upload File to Server', () => {
-                    /*
-                    let image = this.algorithmcontroller.getImage('viewer', 'image');
-                    console.log('image', image);
-                    this.uploadFileToServer(socket, image);
-                    */
-                    this.createSaveImageDialog();
+                    this.createSaveImageDialog(socket);
                 });
 
                 webutil.createMenuItem(serverMenu, 'Invoke Module on Server', () => {
@@ -219,8 +214,9 @@ class FileServer extends HTMLElement {
      * 
      * @param {Socket} socket - A socket representing the connection between client and server (see connectToServer).
      * @param {BisImage|BisMatrix|BisTransform} file - The file to save to the server. 
+     * @param {String} name - What the filed should be named once it is saved to the server. 
      */
-    uploadFileToServer(socket, file) {
+    uploadFileToServer(socket, file, name) {
         let packetSize = 50000;
         let clientSocketListener = this.clientSocketListener;
 
@@ -235,7 +231,8 @@ class FileServer extends HTMLElement {
                     'totalSize' : serializedImage.length, 
                     'packetSize' : packetSize,
                     'storageSize' : file.internal.imgdata.BYTES_PER_ELEMENT,
-                    'header' : file.header
+                    'header' : file.header,
+                    'filename' : name
                 }));
 
                 doImageTransfer(file.internal.imgdata); 
@@ -305,34 +302,60 @@ class FileServer extends HTMLElement {
         reader.readAsArrayBuffer(data);
     }
 
-    createSaveImageDialog() {
-        if (!this.saveImageModal) {
-            this.saveImageModal = webutil.createmodal('Save Current Image?', 'modal-sm');
-            this.saveImageModal.dialog.find('.modal-footer').find('.btn').remove();
-
-            let saveDialog = $(`<p>Please enter a name for the current image on the viewer.</p>`);
-            let nameEntryBox = $(`
+    createSaveImageDialog(socket) {
+        let saveDialog = $(`<p>Please enter a name for the current image on the viewer. Do not include a file extension.</p>`);
+        let nameEntryBox = $(`
                 <div class='form-group'>
                     <label for='filename'>Filename:</label>
                     <input type='text' class = 'form-control'>
                 </div>
             `);
 
-            let confirmButton = webutil.createbutton({ 'name' : 'Confirm', 'type' : 'btn-success' });
-            let cancelButton = webutil.createbutton({ 'name' : 'Cancel', 'type' : 'btn-warning' });
+        if (!this.saveImageModal) {
+            this.saveImageModal = webutil.createmodal('Save Current Image?', 'modal-sm');
+            this.saveImageModal.dialog.find('.modal-footer').find('.btn').remove();
 
-            this.saveImageModal.body.append(saveDialog);
-            this.saveImageModal.body.append(nameEntryBox);
+            let confirmButton = webutil.createbutton({ 'name': 'Confirm', 'type': 'btn-success' });
+            let cancelButton = webutil.createbutton({ 'name': 'Cancel', 'type': 'btn-danger' });
 
             this.saveImageModal.footer.append(confirmButton);
             this.saveImageModal.footer.append(cancelButton);
 
+            $(confirmButton).on('click', () => {
+                let image = this.algorithmcontroller.getImage('viewer', 'image');
+                let name = nameEntryBox.find('.form-control')[0].value;
+                this.uploadFileToServer(socket, image, name);
+
+                let imageSavingDialog = $(`<p>Uploading image to file server...</p>`);
+                this.saveImageModal.body.empty();
+                this.saveImageModal.body.append(imageSavingDialog);
+
+                //listen for end of transmission
+                let endOfTransmissionListener = (e) => {
+                    let message = wsutil.parseJSON(e.data);
+                    if (message.type === 'uploadcomplete') {
+                        socket.removeEventListener(socket, endOfTransmissionListener);
+                        let transmissionCompleteMessage = $(`<p>Upload completed successfully.</p>`);
+                        this.saveImageModal.body.empty();
+                        this.saveImageModal.body.append(transmissionCompleteMessage);
+                        setTimeout(() => { this.saveImageModal.dialog.modal('hide'); }, 1500);
+                    }
+                }
+                socket.addEventListener('message', endOfTransmissionListener);
+            });
+
+            $(cancelButton).on('click', () => {
+                this.saveImageModal.dialog.modal('hide');
+            });
+
             //clear name entry input when modal is closed
             $(this.saveImageModal.dialog).on('hidden.bs.modal', () => {
-                let textbox = nameEntryBox.find('.form-control');
-                textbox[0].value = '';
+                this.saveImageModal.body.empty();
             });
         }
+
+        this.saveImageModal.body.append(saveDialog);
+        this.saveImageModal.body.append(nameEntryBox);
 
         this.saveImageModal.dialog.modal('show');
     }

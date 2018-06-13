@@ -96,9 +96,20 @@ let unzipFile = (arr) => {
     return pako.ungzip(parsedArr);
 };
 
+let parseJSON = (rawJSON) => {
+    try {
+        data = JSON.parse(rawJSON);
+        return data;
+    } catch (e) {
+        console.log('an error occured while parsing event.data', e);
+        return null;
+    }
+}
+
 module.exports = {
     parseControlFrame : parseControlFrame,
     formatControlFrame : formatControlFrame,
     decodeUTF8 : decodeUTF8,
-    unzipFile : unzipFile
+    unzipFile : unzipFile,
+    parseJSON : parseJSON
 };

@@ -235,7 +235,8 @@ let handleImageFromClient = (upload, control, socket) => {
     if (upload.constructor === {}.constructor) {
         fileInProgress = {
             'totalSize' : upload.totalSize,
-            'packetSize' : upload.packetSize
+            'packetSize' : upload.packetSize,
+            'name' : upload.filename
         };
 
         fileInProgress.receivedFile = new Uint8Array(0);
@@ -259,7 +260,7 @@ let handleImageFromClient = (upload, control, socket) => {
             socket.on('data', serverSocketListener);
 
             //save serialized NIFTI image
-            genericio.write('/home/zach/tempname.nii.gz', fileInProgress.receivedFile, true);
+            genericio.write('/home/zach/' + fileInProgress.name + '.nii.gz', fileInProgress.receivedFile, true);
         } else {
             console.log('received chunk,', fileInProgress.receivedFile.length, 'received so far.');
             socket.write(formatPacket('nextpacket', ''));
