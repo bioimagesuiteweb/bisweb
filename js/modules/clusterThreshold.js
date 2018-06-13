@@ -42,7 +42,7 @@ class ClusterThresholdModule extends BaseModule {
             "author": "Zach Saltzman",
             "version": "1.0", 
             "inputs": baseutils.getImageToImageInputs(),
-            "outputs": baseutils.getImageToImageOutputs(),
+            "outputs": baseutils.getImageToImageOutputs('The output image','viewer1','overlay'),
             "buttonName": "Threshold",
             "shortname" : "thr",
             "params": [
@@ -101,8 +101,8 @@ class ClusterThresholdModule extends BaseModule {
                 {
                     "name": "OutputClusterNo",
                     "description": "It true output cluster number instead of image",
-                    "priority": 1000,
-                    "advanced": true,
+                    "priority": 20,
+                    "advanced": false,
                     "gui": "check",
                     "varname": "outclustno",
                     "type": 'boolean',

@@ -223,6 +223,7 @@ class ModuleManagerElement extends HTMLElement {
         this.createModule('Smooth Image',1, false, modules.smoothImage, moduleoptions);
         this.createModule('Normalize Image',1, false, modules.normalizeImage, moduleoptions);
         this.createModule('Threshold Image',1, false, modules.thresholdImage, moduleoptions);
+        this.createModule('Cluster Threshold',1, false, modules.clusterThreshold, moduleoptions);
         this.createModule('Correct Bias Field',1, true, modules.sliceBiasFieldCorrect, moduleoptions);
         this.createModule('Change Spacing',1, true, modules.changeImageSpacing, moduleoptions);
         this.createModule('Resample Image',1, false, modules.resampleImage, moduleoptions);
