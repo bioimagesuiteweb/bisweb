@@ -21,11 +21,13 @@ const genericio = require('bis_genericio.js');
 //https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers
 const SHAstring = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 
+//the server instance shared amongst all the functions
+let server = null;
+
 //file transfer may occur in chunks, which requires storing the chunks as they arrive
 let fileInProgress = null;
 
 //image transfer requires switching a few variables that need to be global in scope
-let serverSocketListener = undefined;
 let timeout = undefined;
 
 let loadMenuBarItems = () => {
@@ -67,69 +69,93 @@ let loadLocalFiles = (filename) => {
     });
 };
 
-let startServer = () => {
-    let server = net.createServer((socket) => {
-        console.log('got connection', socket);
+let handleConnectionRequest = (socket) => {
+    console.log('got connection', socket);
 
-        //construct the handshake response
-        //https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers
-        let response = "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ";
+    //construct the handshake response
+    //https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers
+    let response = "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ";
 
-        //parse websocket key out of response
-        let websocketKey;
-        let handshake = (chunk) => {
-            let decodedChunk = new TextDecoder('utf-8').decode(chunk);
-            console.log('chunk', decodedChunk);
-            let headers = decodedChunk.split('\n');
+    //parse websocket key out of response
+    let websocketKey;
+    let handshake = (chunk) => {
+        let decodedChunk = new TextDecoder('utf-8').decode(chunk);
+        console.log('chunk', decodedChunk);
+        let headers = decodedChunk.split('\n');
 
-            for (let i = 0; i < headers.length; i++) {
-                headers[i] = headers[i].split(':');
+        for (let i = 0; i < headers.length; i++) {
+            headers[i] = headers[i].split(':');
+        }
+
+        for (let header of headers) {
+            if (header[0] === 'Sec-WebSocket-Key') {
+                //remove leading space from key
+                websocketKey = header[1].slice(1, -1);
             }
+        }
 
-            for (let header of headers) {
-                if (header[0] === 'Sec-WebSocket-Key') {
-                    //remove leading space from key
-                    websocketKey = header[1].slice(1, -1);
-                }
-            }
+        //create Sec-WebSocket-Accept hash (see documentation)
+        let shasum = crypto.createHash('sha1');
+        websocketKey = websocketKey + SHAstring;
+        shasum.update(websocketKey);
+        let acceptKey = shasum.digest('base64');
+        response = response + acceptKey + '\r\n\r\n';
 
-            //create Sec-WebSocket-Accept hash (see documentation)
-            let shasum = crypto.createHash('sha1');
-            websocketKey = websocketKey + SHAstring;
-            shasum.update(websocketKey);
-            let acceptKey = shasum.digest('base64');
-            response = response + acceptKey + '\r\n\r\n';
+        //connectors on 8081 are negotiating a control port, connectors on 8082 are negotiating a transfer port
+        switch (socket.localPort) {
+            case 8081 : 
+                prepareForControlFrames(socket); 
+                break;
+            case 8082 : 
+                prepareForDataFrames(socket); 
+                break;
+            default : 
+                console.log('Client attempting to connect on unexpected port', socket.localPort, 'rejecting connection.'); 
+                return;
+        } 
+        socket.write(response, 'utf-8');
+    };
 
-            //unbind the handshake protocol and listen for data frames
-            socket.removeListener('data', handshake);
-            prepareForDataFrames(socket);
+    socket.once('data', handshake);
+    socket.on('close', (e) => { console.log('connection terminated', e); });
+}
 
-            socket.write(response, 'utf-8');
-        };
+/**
+ * Creates the server instance, binds the handshake protocol to its 'connection' event, and begins listening on port 8081 (control port for the transfer).
+ * Future sockets may be opened after this method has been called if the server is made to listen for the eonnection. 
+ * 
+ * Client and server *must* open a socket on a control port in order to communicate -- the control port will listen for commands from the server, interpret them, then serve the results.
+ * Client and server may also open a transfer port in the case that the client requests to transfer data to the server. 
+ * 
+ * @param {String} hostname - The name of the domain that will be attempting to connect to the server, i.e. the client address. 
+ * @param {Number} port - The control port for the exchanges between the client and server. 
+ * @returns The server instance.  
+ */
+let startServer = (hostname, port) => {
+    let newServer = net.createServer(handleConnectionRequest);
 
-        socket.on('data', handshake);
-        socket.on('close', (e) => { console.log('connection terminated', e); });
+    newServer.listen(port, hostname);
+    console.log('listening for incoming connections from host', hostname, 'on port', port, '...');
 
-    });
-
-    server.listen(8081, 'localhost');
-
-    console.log('listening for incoming connections...');
+    newServer.on('connection', (e) => { console.log('connection', e); });
+    //set the global server object to the newly created server.
+    server = newServer;
 };
 
 /**
- * Prepares the socket to receive chunks of data from the client. 
+ * Prepares the control socket to receive chunks of data from the client. 
  * This involves XORing the payload and decoding it to UTF-8, then performing file I/O based on the contents.
+ * 
  * @param {Socket} socket - Node.js net socket between the client and server for the transmission.
  */
-let prepareForDataFrames = (socket) => {
+let prepareForControlFrames = (socket) => {
     //add an error listener for the transmission
     socket.on('error', (error) => {
         console.log('an error occured', error);
     });
 
     //socket listener is stored here because it gets replaced during file transfer
-    serverSocketListener = (chunk) => {
+    socket.on('data', (chunk) => {
         let controlFrame = chunk.slice(0, 14);
         let parsedControl = wsutil.parseControlFrame(controlFrame);
         console.log('parsed control frame', parsedControl);
@@ -151,9 +177,69 @@ let prepareForDataFrames = (socket) => {
             case 2: handleImageFromClient(decoded, parsedControl, socket); break;
             case 8: handleCloseFromClient(decoded, parsedControl, socket); break;
         }
-    };
+    });
+};
 
-    socket.on('data', serverSocketListener);
+let prepareForDataFrames = (socket) => {
+    //server can send mangled packets during transfer that may parse as commands that shouldn't occur at that time, 
+    //e.g. a mangled packet that parses to have an opcode of 8, closing the connection. so unbind the default listener and replace it after transmission.
+    socket.on('data', (chunk) => {
+        let controlFrame = chunk.slice(0, 14);
+        let parsedControl = wsutil.parseControlFrame(controlFrame);
+        console.log('parsed control frame', parsedControl);
+
+        if (!parsedControl.mask) {
+            console.log('Received a transmission with no mask from client, dropping packet.');
+            return;
+        }
+
+        let decoded = new Uint8Array(parsedControl.payloadLength);
+
+        //decode the raw data (undo the XOR)
+        for (let i = 0; i < parsedControl.payloadLength; i++) {
+            decoded[i] = chunk[i + parsedControl.datastart] ^ parsedControl.mask[i % 4];
+        }
+
+        switch (parsedControl.opcode) {
+            case 2: 
+                addToCurrentTransfer(decoded, parsedControl, socket);
+                if (timeout) {
+                    timers.clearTimeout(timeout);
+                    timeout = null;
+                }
+                break;
+            default: 
+                console.log('dropping packet with control', parsedControl);
+                if (!timeout) {
+                    timeout = setServerTimeout( () => {
+                        console.log('timed out waiting for client');
+                        socket.close();
+                    });
+                    console.log('creating timeout', timeout);
+                }
+        }
+    });
+
+    function addToCurrentTransfer(upload, control, socket) {
+        //add the transfer in progress to what we've received so far.
+        //note that serialized NIFTI images are always transmitted byte-wise, i.e. they can be read as elements of a Uint8Array
+        let newChunk = new Uint8Array(upload.length + fileInProgress.receivedFile.length);
+        newChunk.set(fileInProgress.receivedFile);
+        newChunk.set(upload, fileInProgress.receivedFile.length);
+        fileInProgress.receivedFile = newChunk;
+
+        //check to see if what we've received is complete 
+        if (newChunk.length >= fileInProgress.totalSize) {
+            console.log('upload done', fileInProgress);
+            socket.write(formatPacket('uploadcomplete', ''), () => { console.log('message sent'); });
+
+            //save serialized NIFTI image
+            genericio.write('/home/zach/' + fileInProgress.name + '.nii.gz', fileInProgress.receivedFile, true);
+        } else {
+            console.log('received chunk,', fileInProgress.receivedFile.length, 'received so far.');
+            socket.write(formatPacket('nextpacket', ''));
+        }
+    }  
 }
 
 /**
@@ -184,88 +270,28 @@ let handleTextRequest = (rawText, control, socket) => {
  * Handles an image upload from the client and saves the file to the server machine once the transfer is complete. Image transfer occurs in chunks to avoid overloading the network.
  * The first transmission will indicate the total size of the transmission and what size the packets are so the server machine will know when transfer is complete. 
  * 
+ * Client transmissions are handled by prepareForDataFrames.
+ * 
  * @param {Object|Uint8Array} upload - Either the first transmission initiating the transfer loop or a chunk.
  * @param {Object} control - Parsed WebSocket header for the file request. 
- * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
+ * @param {Socket} socket - The control socket that will negotiate the opening of the data socket and send various communications about the transfer. 
  */
 let handleImageFromClient = (upload, control, socket) => {
     console.log('message from client', upload);
 
-    //server can send mangled packets during transfer that may parse as commands that shouldn't occur at that time, 
-    //e.g. a mangled packet that parses to have an opcode of 8, closing the connection. so unbind the default listener and replace it after transmission.
-    let transferSocketListener = (chunk) => {
-        let controlFrame = chunk.slice(0, 14);
-        let parsedControl = wsutil.parseControlFrame(controlFrame);
-        console.log('parsed control frame', parsedControl);
-
-        if (!parsedControl.mask) {
-            console.log('Received a transmission with no mask from client, dropping packet.');
-            return;
-        }
-
-        let decoded = new Uint8Array(parsedControl.payloadLength);
-
-        //decode the raw data (undo the XOR)
-        for (let i = 0; i < parsedControl.payloadLength; i++) {
-            decoded[i] = chunk[i + parsedControl.datastart] ^ parsedControl.mask[i % 4];
-        }
-
-        switch (parsedControl.opcode) {
-            case 2: 
-                handleImageFromClient(decoded, parsedControl, socket);
-                if (timeout) {
-                    timers.clearTimeout(timeout);
-                    timeout = null;
-                }
-                break;
-            default: 
-                console.log('dropping packet with control', parsedControl);
-                if (!timeout) {
-                    timeout = setServerTimeout( () => {
-                        console.log('timed out waiting for client');
-                        socket.removeListener('data', transferSocketListener);
-                        socket.on('data', serverSocketListener);
-                    });
-                    console.log('creating timeout', timeout);
-                }
-        }
+    fileInProgress = {
+        'totalSize': upload.totalSize,
+        'packetSize': upload.packetSize,
+        'name': upload.filename
     };
 
-    //initial transmission will be JSON, then further ones will be binary arrays
-    if (upload.constructor === {}.constructor) {
-        fileInProgress = {
-            'totalSize' : upload.totalSize,
-            'packetSize' : upload.packetSize,
-            'name' : upload.filename
-        };
+    console.log('server', server);
+    fileInProgress.receivedFile = new Uint8Array(0);
 
-        fileInProgress.receivedFile = new Uint8Array(0);
-        socket.write(formatPacket('nextpacket', ''));
-        socket.removeListener('data', serverSocketListener);
-        socket.on('data', transferSocketListener);
-    } else {
-        //add the transfer in progress to what we've received so far.
-        //note that serialized NIFTI images are always transmitted byte-wise, i.e. they can be read as elements of a Uint8Array
-        let newChunk = new Uint8Array(upload.length + fileInProgress.receivedFile.length);
-        newChunk.set(fileInProgress.receivedFile);
-        newChunk.set(upload, fileInProgress.receivedFile.length);
-        fileInProgress.receivedFile = newChunk;
-
-        //check to see if what we've received is complete 
-        if (newChunk.length >= fileInProgress.totalSize) {
-            console.log('upload done', fileInProgress);
-            socket.write(formatPacket('uploadcomplete', ''), () => { console.log('message sent'); });
-
-            socket.removeListener('data', transferSocketListener);
-            socket.on('data', serverSocketListener);
-
-            //save serialized NIFTI image
-            genericio.write('/home/zach/' + fileInProgress.name + '.nii.gz', fileInProgress.receivedFile, true);
-        } else {
-            console.log('received chunk,', fileInProgress.receivedFile.length, 'received so far.');
-            socket.write(formatPacket('nextpacket', ''));
-        }
-    }
+    //once image transfer has been declared the client will want to connect on 8082
+    //ready the port and tell client to connect once the server is listening
+    server.once('listening', () => { socket.write(formatPacket('datasocketready', '')) });    
+    //server.listen(8082, 'localhost');
 };
 
 /**

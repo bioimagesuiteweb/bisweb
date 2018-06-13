@@ -17,9 +17,6 @@ class FileServer extends HTMLElement {
     connectedCallback() {
         let socket;
 
-        //standard event listener attached to the socket needs to be switched out sometimes so need to keep track of it
-        this.clientSocketListener = undefined;
-
         //File tree requests display the contents of the disk on the server machine in a modal
         this.fileTreeDisplayModal = webutil.createmodal('File Tree', 'modal-lg');
         this.fileTreeDisplayModal.dialog.find('.modal-footer').remove();
@@ -72,47 +69,47 @@ class FileServer extends HTMLElement {
             }
 
             socket = this.connectToServer();
-        });
 
+            //add the event listeners for the control port
+            socket.addEventListener('error', (event) => {
+                console.log('An error occured', event);
+            });
+    
+            socket.addEventListener('message', (event) => {
+                console.log('received data', event);
+                let data;
+    
+                //parse stringified JSON if the transmission is text
+                if (typeof(event.data) === "string") {
+                    try {
+                        data = JSON.parse(event.data);
+                    } catch(e) {
+                        console.log('an error occured while parsing event.data', e);
+                        return null;
+                    }
+                } else {
+                    console.log('received a binary transmission -- interpreting as an image'); 
+                    this.handleImageTransmission(event.data);
+                    return;
+                }
+    
+                switch (data.type) {
+                    case 'filelist' : this.displayFileList(data.payload); break;
+                    case 'error' : console.log('Error from client:', data.payload); break;
+                    case 'datasocketready' : break; //this control phrase is handled elsewhere and should be ignored by this listener.
+                    default : console.log('received a transmission with unknown type', data.type, 'cannot interpret');
+                } 
+            });
+        });
     }
 
     /**
-     * Initiates a connection to the fileserver on port 8081 and adds an event handler to socket.message to interpret transmissions from the server. 
-     * Note that the handshaking protocol is handled entirely by the native Javascript WebSocket API.
+     * Initiates a connection to the fileserver at the specified address. Note that the handshaking protocol is handled entirely by the native Javascript WebSocket API.
      * 
      * @returns A socket representing a successful connection, null otherwise.
      */
-    connectToServer() {
-        let socket = new WebSocket('ws://localhost:8081');
-
-        socket.addEventListener('error', (event) => {
-            console.log('An error occured', event);
-        });
-
-        this.clientSocketListener = (event) => {
-            console.log('received data', event);
-            let data;
-
-            //parse stringified JSON if the transmission is text
-            if (typeof(event.data) === "string") {
-                try {
-                    data = JSON.parse(event.data);
-                } catch(e) {
-                    console.log('an error occured while parsing event.data', e);
-                    return null;
-                }
-            } else {
-                data = event.data;
-            }
-
-            switch (data.type) {
-                case 'filelist' : this.displayFileList(data.payload); break;
-                case 'error' : console.log('Error from client:', data.payload); break;
-                default : console.log('received a binary transmission -- interpreting as an image'); this.handleImageTransmission(event.data);
-            } 
-        };
-
-        socket.addEventListener('message', this.clientSocketListener);
+    connectToServer(address = 'ws://localhost:8081') {
+        let socket = new WebSocket(address);
         return socket;
     }
 
@@ -211,70 +208,83 @@ class FileServer extends HTMLElement {
 
     /**
      * Sends a file from the client to the server to be saved on the server machine. Large files are sliced and transmitted in chunks. 
+     * Creates its own socket to do the transfer over (doing transfer on control socket seems to make that socket unstable).
      * 
-     * @param {Socket} socket - A socket representing the connection between client and server (see connectToServer).
-     * @param {BisImage|BisMatrix|BisTransform} file - The file to save to the server. 
+     * TODO: Extend this function to support matrices and transformations.
+     * @param {Socket} controlSocket - The socket over which the client and server exchange metadata about the transfer.
+     * @param {BisImage} file - The file to save to the server. 
      * @param {String} name - What the filed should be named once it is saved to the server. 
      */
-    uploadFileToServer(socket, file, name) {
-        let packetSize = 50000;
-        let clientSocketListener = this.clientSocketListener;
+    uploadFileToServer(controlSocket, file, name) {
 
-        //serialize the BisImage to a purely binary format
+        //serialize the BisImage to a purely binary format.
         let serializedImage = file.serializeToNII();
-        console.log('serializedImage', serializedImage);
+        let packetSize = 50000;
 
-        switch (file.jsonformatname) {
-            case 'BisImage' : 
-                socket.send(JSON.stringify({
-                    'command' : 'uploadimage', 
-                    'totalSize' : serializedImage.length, 
-                    'packetSize' : packetSize,
-                    'storageSize' : file.internal.imgdata.BYTES_PER_ELEMENT,
-                    'header' : file.header,
-                    'filename' : name
-                }));
-
-                doImageTransfer(file.internal.imgdata); 
-                break;
-            default : console.log('unrecognized jsonformatname', file.jsonformatname, 'cannot send');
-        }
-
-        //transfer image in 100KB chunks, wait for acknowledge from server
-        function doImageTransfer(image) {
-            let remainingTransfer = serializedImage, currentTransferIndex = 0;
-            let transferListener = (event) => {
-                let data;
-                if (typeof (event.data) === "string") {
-                    try {
-                        data = JSON.parse(event.data);
-                    } catch (e) {
-                        console.log('an error occured while parsing event.data', e);
-                        return null;
-                    }
+        //negotiate opening of the data port
+        controlSocket.addEventListener('message', (e) => {
+            let message;
+            try {
+                message = JSON.parse(e.data);
+                console.log('control socket heard', e);
+                if (message.type === 'datasocketready') {
+                    let fileTransferSocket = this.connectToServer('ws://localhost:8082');
+                    fileTransferSocket.addEventListener('open', () => {
+                        console.log('serializedImage', serializedImage);
+                        doImageTransfer(serializedImage);
+                    });
                 } else {
-                    data = event.data;
+                    console.log('heard unexpected message', message, 'not opening data socket');
+                }
+            } catch(e) {
+                console.log('failed to parse response to data socket request from server', e);
+            }
+        }, { once : true });
+
+
+        controlSocket.send(JSON.stringify({
+            'command': 'uploadimage',
+            'totalSize': serializedImage.length,
+            'packetSize': packetSize,
+            'storageSize': file.internal.imgdata.BYTES_PER_ELEMENT,
+            'header': file.header,
+            'filename': name
+        }));
+
+
+        //transfer image in 50KB chunks, wait for acknowledge from server
+        function doImageTransfer(image) {
+            let remainingTransfer = image, currentTransferIndex = 0;
+           
+            fileTransferSocket.addEventListener('message', (event) => {
+                let data;
+                try {
+                    data = JSON.parse(event.data);
+                } catch (e) {
+                    console.log('an error occured while parsing event.data', e);
+                    return null;
+                }
+
+                //send data in chunks
+                let sendDataSlice = () => {
+                    let slice = (currentTransferIndex + packetSize >= remainingTransfer.size) ?
+                    remainingTransfer.slice(currentTransferIndex) :
+                    remainingTransfer.slice(currentTransferIndex, currentTransferIndex + packetSize);
+                    fileTransferSocket.send(slice);
+                    currentTransferIndex = currentTransferIndex + slice.length;
                 }
 
                 console.log('data', data);
                 switch (data.type) {
-                    case 'nextpacket' : 
-                        let slice = (currentTransferIndex + packetSize >= remainingTransfer.size) ? 
-                                    remainingTransfer.slice(currentTransferIndex) :
-                                    remainingTransfer.slice(currentTransferIndex, currentTransferIndex + packetSize);
-                        socket.send(slice);
-                        currentTransferIndex = currentTransferIndex + slice.length;
+                    case 'nextpacket':
+                        sendDataSlice();
                         break;
-                    case 'uploadcomplete' :
-                        socket.removeEventListener('message', transferListener);
-                        socket.addEventListener('message', clientSocketListener);
+                    case 'uploadcomplete':
+                        fileTransferSocket.close();
                         break;
-                    default : console.log('received unexpected message', event, 'while listening for server responses');
+                    default: console.log('received unexpected message', event, 'while listening for server responses');
                 }
-            };
-
-            socket.removeEventListener('message', clientSocketListener);
-            socket.addEventListener('message', transferListener);
+            });
         }
     }
 
@@ -336,11 +346,14 @@ class FileServer extends HTMLElement {
                     if (message.type === 'uploadcomplete') {
                         socket.removeEventListener(socket, endOfTransmissionListener);
                         let transmissionCompleteMessage = $(`<p>Upload completed successfully.</p>`);
+
                         this.saveImageModal.body.empty();
                         this.saveImageModal.body.append(transmissionCompleteMessage);
+
                         setTimeout(() => { this.saveImageModal.dialog.modal('hide'); }, 1500);
                     }
-                }
+                };
+
                 socket.addEventListener('message', endOfTransmissionListener);
             });
 
