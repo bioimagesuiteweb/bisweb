@@ -15,7 +15,7 @@
  
  ENDLICENSE */
 
-/* global HTMLElement,document */
+/* global document */
 
 
 "use strict";
@@ -29,7 +29,7 @@ const bootbox=require('bootbox');
 const util = require('bis_util.js');
 const numeric=require('numeric');
 const webfileutil = require('bis_webfileutil');
-
+const BisWebDialogElement= require('bisweb_dialogelement');
 /** 
  * A web element to create and manage a GUI for an Object Collection
  *
@@ -43,7 +43,7 @@ const webfileutil = require('bis_webfileutil');
  *      bis-viewerid : the orthogonal viewer to draw in 
  *      bis-layoutwidgetid :  the layout widget to create the GUI in
  */
-class CollectionElement extends HTMLElement {
+class CollectionElement extends BisWebDialogElement {
 
 
     constructor() {
@@ -452,12 +452,15 @@ class CollectionElement extends HTMLElement {
 
         let fn2= (() => {
             this.createObjectTypeSpecificInfo(elementtype);
-            this.internal.parentDomElement=layoutcontroller.createToolWidget(this.specific.title);
+            
+            this.create(this.specific.title);
+            this.makeDockable(layoutcontroller);
+            this.internal.parentDomElement=this.widget;
             this.createGUI(elementtype);
             if (this.dataCollection.getNumberOfItems()>0)
                 this.updateGUI(true);
         });
-
+        
         webutil.runAfterAllLoaded(fn2);
     }
 
