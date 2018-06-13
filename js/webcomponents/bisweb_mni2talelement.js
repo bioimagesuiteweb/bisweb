@@ -39,7 +39,6 @@ class Mni2TalElement extends HTMLElement {
     connectedCallback() {
         
         let main=document.querySelector("#viewer");
-        console.log(main);
         this.viewer=new bisweb_mni2talbase.OrthoViewer(main);
         this.viewer.initialize();
 
@@ -47,7 +46,6 @@ class Mni2TalElement extends HTMLElement {
             
             let width=window.innerWidth;
             let height=window.innerHeight;
-            console.log('Width=',width);
             if (width<600) {
                 $("#bottomright").css( { 'top' : '88vmin',
                                          'width':'80vmin',
