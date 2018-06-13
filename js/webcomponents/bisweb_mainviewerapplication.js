@@ -424,7 +424,7 @@ class ViewerApplicationElement extends HTMLElement {
 
             } else {
                 webutil.createbutton({ type : "info",
-                                       name : "Copy Image &rarr; 1 Overlay",
+                                       name : "Copy Image &rarr; Overlay",
                                        parent : bbar,
                                        css : { 'width' : '260px', 'margin-bottom': '10px' },
                                        callback : function() {
@@ -433,7 +433,7 @@ class ViewerApplicationElement extends HTMLElement {
                                      });
 
                 webutil.createbutton({ type : "info",
-                                       name : "Copy Overlay &rarr; 1 Image",
+                                       name : "Copy Overlay &rarr; Image",
                                        parent : bbar,
                                        css : { 'width' : '260px', 'margin-bottom': '10px' },
                                        callback : function() {
@@ -823,9 +823,6 @@ class ViewerApplicationElement extends HTMLElement {
 
         fobj=genericio.getFixedSaveFileName(fobj,self.applicationName+".biswebstate");
         
-        
-        console.log('fobj=',fobj);
-        
         return new Promise(function (resolve, reject) {
             genericio.write(fobj, output).then((f) => {
                 resolve(f);
@@ -922,6 +919,7 @@ class ViewerApplicationElement extends HTMLElement {
         const self = this;
         const menubarid = this.getAttribute('bis-menubarid');
         const painttoolid = this.getAttribute('bis-painttoolid') || null;
+        const landmarkcontrolid=this.getAttribute('bis-landmarkcontrolid') || null;
         const managerid = this.getAttribute('bis-modulemanagerid') || null;
 
         this.findViewers();
@@ -970,10 +968,25 @@ class ViewerApplicationElement extends HTMLElement {
             this.createDisplayMenu(menubar, editmenu);
         }
 
-        if (painttoolid !== null) {
-            let painttool = document.querySelector(painttoolid);
+        if (painttoolid !== null || landmarkcontrolid !==null) {
+
             let toolmenu = webutil.createTopMenuBarMenu('Tools', menubar);
-            painttool.addTools(toolmenu);
+            let p=Promise.resolve();
+            if (painttoolid) {
+                let painttool = document.querySelector(painttoolid);
+                p=painttool.addTools(toolmenu);
+            }
+            if (landmarkcontrolid) {
+                let landmarkcontrol=document.querySelector(landmarkcontrolid);
+                p.then( () => {
+                    if (painttoolid)
+                        webutil.createMenuItem(toolmenu,'');
+                    
+                    webutil.createMenuItem(toolmenu,'Landmark Editor',function() {
+                        landmarkcontrol.show();
+                    });
+                });
+            }   
         }
         
 
