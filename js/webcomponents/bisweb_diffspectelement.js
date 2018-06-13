@@ -1020,6 +1020,7 @@ class DiffSpectElement extends HTMLElement {
 			parent: $('#div1'),
 			css: { 'width': '275px' },
 			callback: function () {
+				bootbox.alert("Please wait while your images are registered");
 				console.log('call back reached');
 				self.computeRegistrationOfImages();
 				console.log('registering');
@@ -1081,6 +1082,7 @@ class DiffSpectElement extends HTMLElement {
 			css: { 'width': '275px' },
 			position: 'left',
 			callback: function () {
+				bootbox.alert("Please wait while the images are processes");
 				console.log("started spect processing");
 				self.computeSpect();
 				self.state_machine.images_processed = true;
@@ -1187,17 +1189,17 @@ class DiffSpectElement extends HTMLElement {
 		
 		console.log(app_state.ATLAS_spect);
 		app_state.viewer.setimage(app_state.ATLAS_spect);
-		app_state.viewer.setobjectmap(app_state.atlastointer_reslice);
+		app_state.viewer.setobjectmap(app_state.atlastointer_reslice,false,'overlay');
 	}
 
 	showInterictalToIctalRegistration() {
 		app_state.viewer.setimage(app_state.interictal);
-		app_state.viewer.setobjectmap(app_state.intertoictal_reslice);
+		app_state.viewer.setobjectmap(app_state.intertoictal_reslice,false,'overlay');
 	}
 
 	showAtlasToIctalRegistration() {
 			app_state.viewer.setimage(app_state.ATLAS_spect);
-			app_state.viewer.setobjectmap(app_state.atlastoictal_reslice);
+			app_state.viewer.setobjectmap(app_state.atlastoictal_reslice,false,'overlay');
 	}
 
 	showTmapImage() {
