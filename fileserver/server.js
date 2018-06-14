@@ -381,6 +381,19 @@ let serveFileList = (socket, basedir = os.homedir(), depth = null) => {
                                 //console.log('endFile', endFile, 'filetype', filetype);
                                 switch (filetype) {
                                     case 'gz' : treeEntry.type = 'picture'; break;
+                                    case 'css' : 
+                                    case 'html' : treeEntry.type = 'html'; break;
+                                    case 'js' : treeEntry.type = 'js'; break;
+                                    case 'txt':
+                                    case 'md' : treeEntry.type = 'text'; break;
+                                    case 'mp4' :
+                                    case 'avi' :
+                                    case 'mkv' : treeEntry.type = 'video'; break;
+                                    case 'mp3' :
+                                    case 'flac' :
+                                    case 'FLAC' :
+                                    case 'wav' : 
+                                    case 'WAV' : treeEntry.type = 'audio'; break;
                                     default : treeEntry.type = 'file'; 
                                 }
                                 resolve(fileTreeIndex);

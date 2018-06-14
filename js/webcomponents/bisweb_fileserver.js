@@ -129,11 +129,11 @@ class FileServer extends HTMLElement {
 
         //set up file tree events while data is loading
         $(this.fileTreeDisplayModal.body).on('open_node.jstree', (event, data) => {
-            data.instance.set_icon(data.node, 'glyphicon glyphicon-folder-open');
+            data.instance.set_icon(data.node, '../../fileserver/glyphicons/glyphicons-145-folder-open.png');
         });
 
         $(this.fileTreeDisplayModal.body).on('close_node.jstree', (event, data) => {
-            data.instance.set_icon(data.node, 'glyphicon glyphicon-folder-close');
+            data.instance.set_icon(data.node, '../../fileserver/glyphicons/glyphicons-441-folder-closed.png');
         });
 
         $(this.fileTreeDisplayModal.body).on('select_node.jstree', (event, data) => {
@@ -180,16 +180,25 @@ class FileServer extends HTMLElement {
                     'icon' : 'glyphicon glyphicon-file'
                 },
                 'root' : {
-                    'icon' : 'glyphicon glyphicon-home'
+                    'icon' : '../../fileserver/glyphicons/glyphicons-21-home.png'
                 },
                 'directory' : {
-                    'icon' : 'glyphicon glyphicon-folder-close'
+                    'icon' : '../../fileserver/glyphicons/glyphicons-441-folder-closed.png'
                 },
                 'picture' : {
-                    'icon' : 'glyphicon glyphicon-picture'
+                    'icon' : '../../fileserver/glyphicons/glyphicons-139-picture.png'
                 },
-                'javascript' : {
-                    'icon' : 'filetypes filetypes-js'
+                'js' : {
+                    'icon' : '../../fileserver/glyphicons/glyphicons-295-coffee-cup.png'
+                },
+                'html' : {
+                    'icon' : '../../fileserver/glyphicons/glyphicons-119-embed-close.png'
+                },
+                'video' : {
+                    'icon' : '../../fileserver/glyphicons/glyphicons-9-film.png'
+                }, 
+                'text' : {
+                    'icon' : '../../fileserver/glyphicons/glyphicons-709-paragraph.png'
                 }
             },
             'plugins' : ["types"]
