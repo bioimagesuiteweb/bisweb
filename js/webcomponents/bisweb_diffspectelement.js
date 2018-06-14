@@ -2,6 +2,7 @@
 
 "use strict";
 
+// imported modules from open source and bisweb repo
 const bisimagesmoothreslice = require('bis_imagesmoothreslice');
 const bistransformations = require('bis_transformationutil');
 const BisWebTransformationCollection=require('bisweb_transformationcollection');
@@ -19,6 +20,7 @@ const NonlinearRegistration = require('nonlinearRegistration');
 const baseutils = require('baseutils');
 const BisDataObject = require('bisweb_dataobject');
 
+// carousel initialization
 const spect_template = `
 						
 			<template id='carousel_template'>
@@ -148,7 +150,7 @@ class DiffSpectElement extends HTMLElement {
 
 		super();
 
-		
+		// boolean values 
 		this.state_machine = {
 			images_processed: false,
 			images_registered: false,
@@ -162,7 +164,7 @@ class DiffSpectElement extends HTMLElement {
 		};
 	}
 
-	// --------------------------------------------------------------------------------
+	// function to serialize diffspect data to json and save to a file
 	saveData() {
 
 		var strIctal = "", strInterictal = "", strTmap = "";
@@ -193,7 +195,7 @@ class DiffSpectElement extends HTMLElement {
 		if (null !== app_state.tmap)
 			strTmap = app_state.tmap.serializeToJSON();
 
-
+		// json objewct to save
 		var output = {
 			bisformat: "diffspect",
 			name: app_state.patient_name,
@@ -232,7 +234,7 @@ class DiffSpectElement extends HTMLElement {
 	// params.mode = 0 = rigid, 1=affine, >=2= affine+nl
 
 	/* 
-	 * computes a registration 
+	 * computes a linear registration 
 	 * @param {BISImage} reference- the reference image
 	 * @param {BISImage} target - the target image
 	 * @param {array} initial - initial params for the registration
@@ -310,7 +312,8 @@ class DiffSpectElement extends HTMLElement {
 				});
 		});
     }
-
+	
+	// computes a non-linear registration
 	computeNonlinearRegistration(reference, target) {
 		
 		let nonlinearRegModule = new NonlinearRegistration();	
@@ -359,6 +362,8 @@ class DiffSpectElement extends HTMLElement {
 	// --------------------------------------------------------------------------------
 	// Custom Registration Methods
 	// --------------------------------------------------------------------------------
+	
+	// calls computeLinearRegistration to register interictal image to ictal image.
 	registerInterictalToIctal() {
 
 		app_state.intertoictal = null;
@@ -391,6 +396,8 @@ class DiffSpectElement extends HTMLElement {
 		});
 	}
 	
+
+	// calls either computeNonlinearRegistration or computeLinearRegistration to register ATLAS image to MRI image
 	registerAtlasToMRI() {
 		if (app_state.mri===null ||
 			app_state.ATLAS_spect === null) {
@@ -415,6 +422,7 @@ class DiffSpectElement extends HTMLElement {
 		});
 	}
 
+	// calls computeLinearRegistration to register MRI to interictal image
 	registerMRIToInterictal() {
 		if (app_state.mri === null ||
 			app_state.interictal === null) {
@@ -430,6 +438,7 @@ class DiffSpectElement extends HTMLElement {
 
 	}
 
+	// calls computeLinearRegistration of computeNonlinearRegistration to register ATLAS image to interictal image
 	registerAtlasToInterictal(fast = false) {
 
 		app_state.atlastointer = null;
@@ -477,7 +486,7 @@ class DiffSpectElement extends HTMLElement {
 
 	}
 
-
+	// calls all of the above custom registration methods in correct order and reslices images as necessary
 	computeRegistrationOfImages() {
 		if (!app_state.does_have_mri) {
 			    
@@ -615,7 +624,7 @@ class DiffSpectElement extends HTMLElement {
 
 	
 
-
+	// processes registered SPECT images and generates hyperperfusion and hypoperfusion stats
 	computeSpectNoMRI() {
 		console.log("compute spect no MRI");
 		var resliced_inter = app_state.atlastointer_reslice;
@@ -651,23 +660,15 @@ class DiffSpectElement extends HTMLElement {
 		app_state.tmap = results.tmap;
 	}
 
-
-	computeSpectWithMRI() {
-
-
-
-	}
-
+	// button callback for computing diff spect data
 	computeSpect() {
 		console.log("compute spect callback");
-		if (!app_state.does_have_mri)
-			this.computeSpectNoMRI();
-		else
-			this.computeSpectWithMRI();
+		this.computeSpectNoMRI();
 
 		this.showTmapImage();
 	}
 
+	// shows diff spect output data table
 	displayData(hyper) {
 		resultsmessagebox(hyper);
 	}
