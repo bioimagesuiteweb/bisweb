@@ -96,6 +96,13 @@ class OrthogonalViewerElement extends BaseViewerElement {
                                     null,null,
                                     null,null,
                                     null,null,null,null];
+
+        this.internal.midlinecanvas=null;
+        this.internal.midlinepresent=false;
+        this.internal.midlinedata = {
+            left : -1,
+            origx: -1,
+        };
         this.internal.displaymodes=null;
         this.setObjectMapFunction=null;
     }
@@ -469,7 +476,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                                                  'background-color' : '#444444',
                                                  'color' : '#cc6600',
                                                  'position' : 'absolute',
-                                                 'z-index' : 500,
+                                                 'z-index' : '504',
                                                  'visibility' : 'hidden'});
 
             base.append(this.internal.arrowbuttons[ind]);
@@ -489,6 +496,125 @@ class OrthogonalViewerElement extends BaseViewerElement {
             if (this.internal.arrowbuttons[i])
                 this.internal.arrowbuttons[i].css({'visibility':'hidden'});
             }
+    }
+
+    // ---------- Draggable Separator -------------- -------------- --------------
+
+    handleSeparator(e,mode,modifyCallbacks) {
+
+        if (!this.internal.midlinepresent)
+            return false;
+
+        let data=this.internal.midlinedata;
+        
+        if (mode>=1 && data.origx<0)
+            return false;
+        
+        e.preventDefault();
+        
+        let x=e.pageX;
+        let cnv=this.internal.midlinecanvas;
+        
+
+        
+        if (mode===0) {
+            
+            cnv.css({'left' : `${data.left-3}px`,
+                     'background-color' : '#dddddd',
+                     'width' : '7px'});
+            data.origx=x;
+            modifyCallbacks(1);
+            return true;
+        }
+        
+        if (mode===1 && data.origx>=0) {
+            let shift=x-data.origx;
+            let l=data.left+shift;
+            cnv.css({ 'left' : `${l-3}px`,});
+            return true;
+        }
+        
+        if (mode===2) {
+            cnv.css({'width' : '1px' ,
+                     'background-color' : 'rgb(255,255,255,0.5)',
+                    });
+            let shiftx=x-data.origx;
+            let newleft=data.left+shiftx;
+            let newclear=(newleft/data.left)*this.cleararea[0];
+            data.left=newleft;
+            data.origx=-1;
+            modifyCallbacks(2);
+            setTimeout( () => {
+                this.setDualViewerMode(newclear);
+            },10);
+            return true;
+        }
+        
+    }
+
+    createmidlinecanvas(parentcanvas,dw,dh) {
+ 
+        if (!(this.is_slave_viewer && this.cleararea[1] < 0.95 && this.cleararea[1]>0.05)) {
+            if (this.internal.midlinepresent) {
+                this.internal.midlinecanvas.remove();
+                this.internal.midlinepresent=false;
+            }
+            return;
+        }
+
+        const self=this;
+
+        let modifyCallbacks=null;
+        let downC=function(e) {  self.handleSeparator(e,0,modifyCallbacks);  };
+        let moveC=function(e) {  self.handleSeparator(e,1,modifyCallbacks);  };
+        let upC=function(e) {  self.handleSeparator(e,2,modifyCallbacks);  };
+
+        modifyCallbacks=function(add=0) {
+
+            let cnv=self.internal.midlinecanvas;
+            let par=$(parentcanvas).parent().parent();
+
+            
+            if (add===0) {
+                cnv[0].addEventListener('mousedown',downC);
+            } else if (add===1)  {
+                par[0].addEventListener('mousemove',moveC);
+                par[0].addEventListener('mouseup',  upC);
+                par[0].addEventListener('mouseleave',upC);
+            } else if (add===2) {
+                par[0].removeEventListener('mousemove',moveC);
+                par[0].removeEventListener('mouseup',  upC);
+                par[0].removeEventListener('mouseleave',upC);
+            }
+        };
+        
+
+        if (!this.internal.midlinecanvas) {
+            let cnv=$(`<div></div>`);
+            this.internal.midlinecanvas=cnv;
+            cnv.css({ 'position' : 'absolute',
+                         'top' : '2px' ,
+                         'z-index' : 510,
+                       });
+            modifyCallbacks(0);
+        }
+        
+        this.internal.midlinedata.origx=-1;
+        this.internal.midlinedata.left=this.cleararea[0]*dw;
+        this.internal.midlinedata.height=dh-2;
+        
+        if (!this.internal.midlinepresent) {
+            let par=$(parentcanvas).parent().parent();
+            par.append(this.internal.midlinecanvas);
+            this.internal.midlinepresent=true;
+        }
+
+        this.internal.midlinecanvas.css({
+            'height' : `${dh-2}px`,
+            'width'  : '3px',
+            'left'   : `${this.internal.midlinedata.left-1}px`,
+            'background-color' : 'rgb(255,255,255,0.5)',
+        });
     }
     
     
@@ -510,12 +636,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
         }
 
         this.createarrowbuttons($(context.canvas).parent().parent());
-        
-        
-        if (this.is_slave_viewer && this.cleararea[1] < 0.95 && this.cleararea[1]>0.05) {
-            context.fillStyle="#dddddd";
-            context.fillRect(this.cleararea[0]*dw,0,1,dh);
-        }
+        this.createmidlinecanvas(context.canvas,dw,dh);
+
         // Add R&L s
         var labels = [ [ 'A','P', 'S','I' ] ,
                        [ 'R','L', 'S','I' ] ,
@@ -1250,6 +1372,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
      * @param {number} mousestate - 0=click 1=move 2=release
      */
     updatemousecoordinates(mm,plane,mousestate) {
+
         if (this.internal.ignoremouseobservers === true)
             return;
 
