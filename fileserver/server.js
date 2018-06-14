@@ -6,6 +6,9 @@ const crypto = require('crypto');
 const zlib = require('zlib');
 const os = require('os');
 const timers = require('timers');
+const EventEmitter = require('events');
+const emitter = new EventEmitter();
+
 const BisWebImage = require('bisweb_image.js');
 const modules = require('moduleindex.js');
 
@@ -20,9 +23,6 @@ const genericio = require('bis_genericio.js');
 //'magic' string for WebSockets
 //https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers
 const SHAstring = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
-
-//the server instance shared amongst all the functions
-let server = null;
 
 //file transfer may occur in chunks, which requires storing the chunks as they arrive
 let fileInProgress = null;
@@ -117,7 +117,10 @@ let handleConnectionRequest = (socket) => {
     };
 
     socket.once('data', handshake);
-    socket.on('close', (e) => { console.log('closing socket', e); });
+
+    //server should close once all its sockets have closed
+    //so have sockets notify the server on close so that it can check its internal status
+    socket.on('close', (e) => { emitter.emit('serverpollconnections'); });
 }
 
 /**
@@ -134,12 +137,26 @@ let handleConnectionRequest = (socket) => {
  */
 let startServer = (hostname, port, readycb = () => {}) => {
     let newServer = net.createServer(handleConnectionRequest);
+    newServer.listen(port, hostname, readycb);
 
-    newServer.on('listening', readycb);
-    newServer.listen(port, hostname);
     console.log('listening for incoming connections from host', hostname, 'on port', port, '...');
-
     newServer.on('connection', (e) => { console.log('connection', e); });
+
+    //listen for closing sockets, take action appropriate to the server
+    emitter.on('serverpollconnections', () => {
+        newServer.getConnections( (err, count) => {
+            if (err) { 
+                console.log('Server encountered an error getting its active connections, shutting down server'); 
+                newServer.close(); 
+                return; 
+            }
+
+            if (count === 0) { 
+                console.log('all connections done, shutting down server', newServer);
+                newServer.close();
+            }
+        });
+    });
 };
 
 /**
@@ -178,6 +195,7 @@ let prepareForControlFrames = (socket) => {
             case 8: handleCloseFromClient(decoded, parsedControl, socket); break;
         }
     });
+
 };
 
 let prepareForDataFrames = (socket) => {
@@ -208,14 +226,17 @@ let prepareForDataFrames = (socket) => {
                     timeout = null;
                 }
                 break;
+            case 8: 
+                console.log('received close from client, ending connection.');
+                socket.end();
+                break;
             default: 
                 console.log('dropping packet with control', parsedControl);
                 if (!timeout) {
-                    timeout = setServerTimeout( () => {
+                    timeout = setSocketTimeout( () => {
                         console.log('timed out waiting for client');
                         socket.end();
                     });
-                    console.log('creating timeout', timeout);
                 }
         }
     });
@@ -233,7 +254,7 @@ let prepareForDataFrames = (socket) => {
             console.log('upload done', fileInProgress);
             socket.write(formatPacket('uploadcomplete', ''), () => { console.log('message sent'); });
 
-            socket.close();
+            socket.end();
             //save serialized NIFTI image
             genericio.write('/home/zach/' + fileInProgress.name + '.nii.gz', fileInProgress.receivedFile, true);
         } else {
@@ -289,7 +310,7 @@ let handleImageFromClient = (upload, control, socket) => {
     fileInProgress.receivedFile = new Uint8Array(0);
 
     //spawn a new server to handle the data transfer
-    transferServer = startServer('localhost', 8082, () => { socket.write(formatPacket('datasocketready', '')); });
+    startServer('localhost', 8082, () => { socket.write(formatPacket('datasocketready', '')); });
 };
 
 /**
@@ -459,7 +480,7 @@ let checkValidPath = (filepath) => {
  * @param {Function} fn - Function to call at the end of the timer period. 
  * @param {Number} delay - Approximate amount of time before end of timeout period (see reference for Node Timers class).
  */
-let setServerTimeout = (fn, delay = 2000) => {
+let setSocketTimeout = (fn, delay = 2000) => {
     let timer = timers.setTimeout(fn, delay);
     return timer;
 };
