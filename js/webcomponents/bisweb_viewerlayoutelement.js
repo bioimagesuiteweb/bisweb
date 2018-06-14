@@ -95,7 +95,7 @@ class ViewerLayoutElement extends HTMLElement {
         let sidetop=0,sideleft=0;
         let extrawidth=this.extrabarwidth;
         if (extrawidth<10) {
-            extrawidth=0;
+            extrawidth=1;
         }
 
         this.viewerwidth= fullwidth-sidewidth-extrawidth;
@@ -141,12 +141,16 @@ class ViewerLayoutElement extends HTMLElement {
             'left'  : `${sideleft}px`
         };
 
+        if (extrawidth<1)
+            extrawidth=1;
         let extrabarcss = { 
             'left' : `${extraleft}px`,
             'top'  : `${extratop-4}px`,
             'width': `${extrawidth}px`,
             'height':`${this.viewerheight+12}px`,
-            'visibility' :'visible',
+            'opacity' :'1.0',
+            'border-width'  : '0px 2px 0px 2px',
+            'border-color'  : 'rgba(128,64,0,1.0)',
         };
         
         
@@ -164,8 +168,10 @@ class ViewerLayoutElement extends HTMLElement {
         this.elements.canvasbase.css(canvascss);
         this.elements.sidebar.css(sidebarcss);
         
-        if (extrawidth<1) {
-            this.elements.extrabar.css({ 'visibility' :'hidden'});
+        if (extrawidth<10) {
+            this.elements.extrabar.css({ 'opacity' :'0.00',
+                                         'border-width'  : '0px 0px 0px 0px',
+                                       });
         } else {
             this.elements.extrabar.css(extrabarcss);
         }
@@ -244,6 +250,7 @@ class ViewerLayoutElement extends HTMLElement {
             sidebar      :   webutil.creatediv({ parent : this.domElement,
                                                  css : {'position':'absolute',
                                                         'overflow-y': 'auto',
+                                                        'border-width'  : '0px 0px 0px 0px',
                                                         'background-color': webutil.getpassivecolor()
                                                        }
                                                }),
@@ -252,11 +259,13 @@ class ViewerLayoutElement extends HTMLElement {
                                                         'top' : '0px',
                                                         'z-index' : '4',
                                                         'margin-top' : '0px',
+                                                        'margin-right' : '2px',
                                                         'margin-bottom' : '0px',
+                                                        'border-width'  : '0px 0px 0px 0px',
                                                         'overflow-y': 'auto',
-                                                        'border-width'  : '0px 2px 0px 2px',
+                                                        'opacity' : '0.0',
                                                         'border-style'  : 'solid',
-                                                        'border-color'  : '#888888',
+                                                        'border-color'  : 'rgba(128,64,0,0.0)',
                                                         'width' : `${this.extrabarwidth}px`,
                                                         'background-color':  webutil.getpassivecolor2()
                                                        }

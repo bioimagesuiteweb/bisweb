@@ -652,13 +652,13 @@ class OrthogonalViewerElement extends BaseViewerElement {
             'height' : `${dh-2}px`,
             'width'  : '3px',
             'left'   : `${this.internal.midlinedata.left-1}px`,
-            'background-color' : 'rgb(128,128,128,1.0)',
+            'background-color' : 'rgba(128,128,128,1.0)',
         });
         this.internal.midline2.css({
             'height' : `${dh-2}px`,
             'width'  : '11px',
             'left'   : `${this.internal.midlinedata.left-5}px`,
-            'background-color' : 'rgb(10,10,10,0.1)',
+            'background-color' : 'rgba(10,10,10,0.1)',
         });
     }
     
