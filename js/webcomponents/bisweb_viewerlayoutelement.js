@@ -257,7 +257,7 @@ class ViewerLayoutElement extends HTMLElement {
         
         this.context=this.canvas.getContext("2d");
         this.overlaycanvas = document.createElement('canvas');
-        $(this.overlaycanvas).css({'z-index': '1000',
+        $(this.overlaycanvas).css({'z-index': '502',
                                    'position':'absolute',
                                    'top': '0px',
                                    'left': '0px'});
