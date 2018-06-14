@@ -117,7 +117,7 @@ let handleConnectionRequest = (socket) => {
     };
 
     socket.once('data', handshake);
-    socket.on('close', (e) => { console.log('connection terminated', e); });
+    socket.on('close', (e) => { console.log('closing socket', e); });
 }
 
 /**
@@ -129,17 +129,17 @@ let handleConnectionRequest = (socket) => {
  * 
  * @param {String} hostname - The name of the domain that will be attempting to connect to the server, i.e. the client address. 
  * @param {Number} port - The control port for the exchanges between the client and server. 
+ * @param {Function} readycb - A callback to invoke when the server emits its 'listening' event. Optional.
  * @returns The server instance.  
  */
-let startServer = (hostname, port) => {
+let startServer = (hostname, port, readycb = () => {}) => {
     let newServer = net.createServer(handleConnectionRequest);
 
+    newServer.on('listening', readycb);
     newServer.listen(port, hostname);
     console.log('listening for incoming connections from host', hostname, 'on port', port, '...');
 
     newServer.on('connection', (e) => { console.log('connection', e); });
-    //set the global server object to the newly created server.
-    server = newServer;
 };
 
 /**
@@ -213,7 +213,7 @@ let prepareForDataFrames = (socket) => {
                 if (!timeout) {
                     timeout = setServerTimeout( () => {
                         console.log('timed out waiting for client');
-                        socket.close();
+                        socket.end();
                     });
                     console.log('creating timeout', timeout);
                 }
@@ -233,6 +233,7 @@ let prepareForDataFrames = (socket) => {
             console.log('upload done', fileInProgress);
             socket.write(formatPacket('uploadcomplete', ''), () => { console.log('message sent'); });
 
+            socket.close();
             //save serialized NIFTI image
             genericio.write('/home/zach/' + fileInProgress.name + '.nii.gz', fileInProgress.receivedFile, true);
         } else {
@@ -285,13 +286,10 @@ let handleImageFromClient = (upload, control, socket) => {
         'name': upload.filename
     };
 
-    console.log('server', server);
     fileInProgress.receivedFile = new Uint8Array(0);
 
-    //once image transfer has been declared the client will want to connect on 8082
-    //ready the port and tell client to connect once the server is listening
-    server.once('listening', () => { socket.write(formatPacket('datasocketready', '')) });    
-    //server.listen(8082, 'localhost');
+    //spawn a new server to handle the data transfer
+    transferServer = startServer('localhost', 8082, () => { socket.write(formatPacket('datasocketready', '')); });
 };
 
 /**

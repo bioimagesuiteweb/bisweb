@@ -220,6 +220,7 @@ class FileServer extends HTMLElement {
         //serialize the BisImage to a purely binary format.
         let serializedImage = file.serializeToNII();
         let packetSize = 50000;
+        let fileTransferSocket;
 
         //negotiate opening of the data port
         controlSocket.addEventListener('message', (e) => {
@@ -228,7 +229,7 @@ class FileServer extends HTMLElement {
                 message = JSON.parse(e.data);
                 console.log('control socket heard', e);
                 if (message.type === 'datasocketready') {
-                    let fileTransferSocket = this.connectToServer('ws://localhost:8082');
+                    fileTransferSocket = this.connectToServer('ws://localhost:8082');
                     fileTransferSocket.addEventListener('open', () => {
                         console.log('serializedImage', serializedImage);
                         doImageTransfer(serializedImage);
@@ -256,6 +257,15 @@ class FileServer extends HTMLElement {
         function doImageTransfer(image) {
             let remainingTransfer = image, currentTransferIndex = 0;
            
+            //send data in chunks
+            let sendDataSlice = () => {
+                let slice = (currentTransferIndex + packetSize >= remainingTransfer.size) ?
+                    remainingTransfer.slice(currentTransferIndex) :
+                    remainingTransfer.slice(currentTransferIndex, currentTransferIndex + packetSize);
+                fileTransferSocket.send(slice);
+                currentTransferIndex = currentTransferIndex + slice.length;
+            }
+
             fileTransferSocket.addEventListener('message', (event) => {
                 let data;
                 try {
@@ -265,14 +275,6 @@ class FileServer extends HTMLElement {
                     return null;
                 }
 
-                //send data in chunks
-                let sendDataSlice = () => {
-                    let slice = (currentTransferIndex + packetSize >= remainingTransfer.size) ?
-                    remainingTransfer.slice(currentTransferIndex) :
-                    remainingTransfer.slice(currentTransferIndex, currentTransferIndex + packetSize);
-                    fileTransferSocket.send(slice);
-                    currentTransferIndex = currentTransferIndex + slice.length;
-                }
 
                 console.log('data', data);
                 switch (data.type) {
@@ -285,6 +287,8 @@ class FileServer extends HTMLElement {
                     default: console.log('received unexpected message', event, 'while listening for server responses');
                 }
             });
+
+            sendDataSlice();
         }
     }
 
