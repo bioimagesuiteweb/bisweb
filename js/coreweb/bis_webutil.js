@@ -99,7 +99,7 @@ const bisweb_templates = `
     </thead>
     </table>
     </div>
-    <div class="table-responsive bistscroll" style="padding: 0px;height: 100px; margin:0 px">
+    <div class="table-responsive bistscroll" style="padding: 0px; margin:0 px">
     <table class="table table-hover table-striped table-condensed table-scrollable">
     <tbody class="bistbody">
     <tr>
