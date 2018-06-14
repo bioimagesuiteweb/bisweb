@@ -77,6 +77,7 @@ class ParavisionImportElement extends HTMLElement {
             lastfilename : '',
         };
 
+        this.layoutcontroller=null;
         
 
     }
@@ -92,7 +93,9 @@ class ParavisionImportElement extends HTMLElement {
         if (internal.parentDomElement===null)
             return;
         
-        internal.showdialog=webutil.createdialog("Converted Images",600,-500,100,50 );
+        internal.showdialog=webutil.createdialog("Converted Images",400,-1000,100,50 );
+        internal.showdialog.makeDockable(this.layoutcontroller,false);
+        internal.showdialog.placeDialog(false,false);
         let widget=internal.showdialog.widget;
         widget.css({ "overflow-y" : "hidden"});
         let templates=webutil.getTemplates();
@@ -109,14 +112,6 @@ class ParavisionImportElement extends HTMLElement {
         let newid=webutil.createWithTemplate(templates.bisscrolltable,
                                              widget);
         let stable=$('#'+newid);
-        let t1 = $(".bistscroll",stable);
-        let dim=internal.showdialog.getdimensions();
-        console.log('dim=',dim);
-        $(t1).css({
-            height: `${dim.height-100}px`
-        });
-        
-        
         let thead = $(".bisthead",stable);
         let tbody = $(".bistbody",stable);
         thead.empty();
@@ -127,9 +122,8 @@ class ParavisionImportElement extends HTMLElement {
                    'user-select': 'none'});
         
         let hd=$('<tr>'+
-                 ' <td width="9%">#</th>'+
-                 ' <td width="70%">Image</th>'+
-                 ' <td width="10%"></th>'+
+                 ' <td width="10%">#</th>'+
+                 ' <td width="80%">Image</th>'+
                  ' <td width="10%"></th>'+
                  '</tr>');
         thead.append(hd);
@@ -137,9 +131,8 @@ class ParavisionImportElement extends HTMLElement {
         internal.table=tbody;
         
         let hd2=$('<tr>'+
-                  ' <td width="9%"></th>'+
-                  ' <td width="70%">Nothing imported yet!</th>'+
                   ' <td width="10%"></th>'+
+                  ' <td width="80%">Nothing imported yet!</th>'+
                   ' <td width="10%"></th>'+
                   '</tr>');
         tbody.append(hd2);
@@ -225,7 +218,6 @@ class ParavisionImportElement extends HTMLElement {
         const buttonCallback=function(e) {
 
 
-            console.log('Viewers = ',internal.viewers);
             let id=e.target.id;
             let arr=internal.buttonpairs[id];
             let fname=arr[0];
@@ -315,14 +307,19 @@ class ParavisionImportElement extends HTMLElement {
         let nid2=webutil.getuniqueid();
         let nid3=webutil.getuniqueid();
         let w0=`<tr>
-                <td width="5%">${counter}</td>
-                <td width="70%">${name}</td>
-                <td width="10%" id="${nid3}"></td>
-                <td width="4%"><button type="button" class="btn-info btn-sm" style="padding: 0px, font-size: 10px"
-                id="${nid0}">Show1</button></td>
-                <td width="4%"><button type="button" class="btn-info btn-sm" style="padding: 0px, font-size: 10px"
-                id="${nid1}">Show2</button></td>
-                 <td width="6%"><button type="button" class="btn-success  btn-sm" style="padding: 1px, font-size: 10px" id="${nid2}">Info</button></td>
+                   <td width="10%">${counter}</td>
+                   <td width="75%">${name}</td>
+                   <td width="15%" id="${nid3}"></td>
+                </tr>
+                <tr>
+                   <td width="15%"></td>
+                   <td width="80%">
+                        <button type="button" class="btn-info btn-sm" style="padding: 0px, font-size: 10px"
+                              id="${nid0}">Show1</button>
+                        <button type="button" class="btn-info btn-sm" style="padding: 0px, font-size: 10px"
+                              id="${nid1}">Show2</button>
+                        <button type="button" class="btn-success  btn-sm" style="padding: 1px, font-size: 10px" id="${nid2}">Info</button>
+                   </td>
                 </tr>`;
 
         internal.table.append($(w0));        
@@ -465,7 +462,6 @@ class ParavisionImportElement extends HTMLElement {
 
     savejob(f) {
 
-        console.log('f=',f);
         let obj = {
             "bisformat" : 'ParavisionJob',
             "job" : this.internal.joblist
@@ -523,8 +519,8 @@ class ParavisionImportElement extends HTMLElement {
         ];
 
         
-        let layoutcontroller=document.querySelector(layoutid);
-        let basegui=layoutcontroller.createToolWidget('Paravision Import',true);
+        this.layoutcontroller=document.querySelector(layoutid);
+        let basegui=this.layoutcontroller.createToolWidget('Paravision Import',true);
 
         const self=this;
         

@@ -45,6 +45,8 @@ class BisWebDialogElement extends HTMLElement {
         this.closecallback=null;
         this.dialog=null;
         this.docked=false;
+        this.placed=false;
+        this.placedparent=null;
         this.widget=null;
         this.header=null;
         this.footer=null;
@@ -206,11 +208,11 @@ class BisWebDialogElement extends HTMLElement {
         if (this.dialog===null)
             return;
         
-        if (this.docked === true) {
+        if (this.docked === true || this.placed===true) {
             return this.showDockedDialog();
         }
 
-
+        
         let previous=null;
         if (globalOpenDialog!==null)  {
             previous=globalOpenDialog.dialog.dialog.css(['left','top']);
@@ -259,6 +261,11 @@ class BisWebDialogElement extends HTMLElement {
     /** Hides the dialog and renables any drag and drop elements present */
     hide() {
 
+        if (this.placed) {
+            this.layoutController.setextrabarwidth(0);
+            return;
+        }
+        
         if (this.docked)
             return;
 
@@ -331,6 +338,7 @@ class BisWebDialogElement extends HTMLElement {
         this.widgetbase=div.find('.modal-body');
         this.footerbase=div.find('.modal-footer');
         this.header=div.find('.modal-header');
+        this.headerbase=this.header.parent();
         this.close=div.find('.btn-default');
         this.secondclose=div.find('.close');
 
@@ -389,12 +397,21 @@ class BisWebDialogElement extends HTMLElement {
             this.bindMouseEvents();
     }
 
-    /** add dock abilities 
-     * param {JQueryElement} parentWidget the widget to put the dialog in
-     */
-    makeDockable(lcontroller) {
 
+    
+    /** add dock abilities 
+     * @param {LayoutController} layout controller to put the dialog in (in sidebar)
+     * @param {Boolean} createarrowbutton -- if true create extra button for docking on the fly
+     */
+    makeDockable(lcontroller,extrabutton=true) {
+
+        if (this.layoutController!==null)
+            return;
+        
         this.layoutController=lcontroller;
+        if (!extrabutton)
+            return;
+        
         let but2=this.header.find('.close');
         let but=$(`<button type="button" class="close"><span aria-hidden="true">&rarr;</span></button>`);
         but.css({ 'margin-right' : '10px'});
@@ -409,16 +426,44 @@ class BisWebDialogElement extends HTMLElement {
 
     }
 
+    /** place the dialog inside the this.layoutController's extrabar
+     * @param {Boolean} show - if true then show
+     */
+    placeDialog(show=true,footer=true) {
+
+        if (!this.layoutController || this.docked)
+            return false;
+        
+        if (this.placed) {
+            this.showDockedDialog();
+            return true;
+        }
+        
+        this.hide();
+        this.dockWidget=this.layoutController.getextrabar();
+        this.dockWidget.append(this.header);
+        this.dockWidget.append(this.widget);
+
+        if (footer) {
+            this.dockWidget.append('<HR>');
+            this.dockWidget.append(this.footer);
+        } else {
+            this.widget.css({ 'max-height ':'2000px'});
+        }
+        this.placed=true;
+        if (show)
+            this.showDockedDialog();
+        return true;
+    }
     /** dock the dialog inside the this.layoutController 
      * @param {Boolean} show - if true then show
      */
     dockDialog(show=true,footer=true) {
 
-        if (!this.layoutController)
+        if (!this.layoutController || this.placed)
             return false;
         
         if (this.docked) {
-            console.log('Showing dock dialog',this.docked);
             this.showDockedDialog();
             return true;
         }
@@ -446,13 +491,25 @@ class BisWebDialogElement extends HTMLElement {
     showDockedDialog() {
         if (this.docked)
             webutil.activateCollapseElement(this.dockWidget);
+        else if (this.placed) 
+            this.layoutController.setextrabarwidth(this.dimensions.width+5);
+        
     }
 
     /** Call to move dialog GUI from dock back to dialog */
     unDockDialog() {
+        if (!this.placed && !this.docked)
+            return;
+
+        this.headerbase.append(this.header);
         this.widgetbase.append(this.widget);
         this.footerbase.append(this.footer);
+        this.widgetbase.css({ "max-height" : `${this.dimensions.height}px`});
+        
         this.dockWidget.parent().parent().remove();
+        if (this.placed) 
+            this.layoutController.setextrabarwidth(0);
+        this.placed=false;
         this.docked=false;
     }
 
