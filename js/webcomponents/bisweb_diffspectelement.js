@@ -165,27 +165,27 @@ class DiffSpectElement extends HTMLElement {
 	// --------------------------------------------------------------------------------
 	saveData() {
 
-		console.log('this =', this);
 		var strIctal = "", strInterictal = "", strTmap = "";
 		var strReg_AT_IN = "", strReg_IN_IC = "", strReg_AT_IC = "";
 
 		//serializing transformations
-		if (null !== app_state.atlastointer)
-			strReg_AT_IN = window.btoa(app_state.atlastointer.serializeToJSON());
 
-		if (null !== app_state.intertoictal)
-			strReg_IN_IC = window.btoa(app_state.intertoictal.serializeToJSON());
+		if (null !== app_state.atlastointer_xform)
+			strReg_AT_IN = app_state.atlastointer_xform.serializeToJSON();
 
-		if (null !== app_state.atlastoictal)
-			strReg_AT_IC = window.btoa(app_state.atlastoictal.serializeToJSON());
+		if (null !== app_state.intertoictal_xform)
+			strReg_IN_IC = app_state.intertoictal_xform.serializeToJSON();
 
-		console.log('here 1');
+		if (null !== app_state.atlastoictal_xform)
+			strReg_AT_IC = app_state.atlastoictal_xform.serializeToJSON();
+
+
+
 		//serializing images 
 
 		if (null !== app_state.interictal)
 			strInterictal = app_state.interictal.serializeToJSON();
 
-		console.log('here 2');
 
 		if (null !== app_state.ictal)
 			strIctal = app_state.ictal.serializeToJSON();
@@ -752,12 +752,12 @@ class DiffSpectElement extends HTMLElement {
 			tmap.parseFromJSON(input.tmap);
 			this.state_machine.images_processed = true;
 		}
-		console.log(input.intertoictal);
+
 		if (input.intertoictal !== "") {
 			intertoictal = bistransformations.createLinearTransformation();
 			intertoictal.parseFromJSON(input.intertoictal);
-			this.state_machine.images_registered = true;
 		}
+
 		console.log(input.atlastointer);
 		if (input.atlastointer !== "") {
 			atlastointer = bistransformations.createLinearTransformation();
@@ -766,8 +766,13 @@ class DiffSpectElement extends HTMLElement {
 
 		if (input.atlastoictal !== "") {
 			atlastoictal = bistransformations.createLinearTransformation();
-			atlastoictal.parseFromJSON(input.atlastointer);
+			atlastoictal.parseFromJSON(input.atlastoictal);
 		}
+
+		if (null !== intertoictal &&
+			null !== atlastointer &&
+			null !== atlastoictal)
+			this.state_machine.images_registered = true;
 
 		if (null !== input.hyper)
 			hyper = input.hyper;
@@ -777,9 +782,9 @@ class DiffSpectElement extends HTMLElement {
 		app_state.interictal = interictal;
 		app_state.ictal = ictal;
 		app_state.tmap = tmap;
-		app_state.intertoictal = intertoictal;
-		app_state.atlastointer = atlastointer;
-		app_state.atlastoictal = atlastoictal;
+		app_state.intertoictal_xform = intertoictal;
+		app_state.atlastointer_xform = atlastointer;
+		app_state.atlastoictal_xform = atlastoictal;
 		app_state.hyper = hyper;
 		if (null !== app_state.hyper)
 			createChart();
