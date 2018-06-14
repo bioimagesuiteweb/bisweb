@@ -21,6 +21,19 @@
 const $=require('jquery');
 const webutil=require('bis_webutil');
 
+/** Only one modules can be open at a time. This is stored in globalOpenDialog
+ */
+let globalOpenDialog=null;
+let globalPlacedDialog=null;
+
+
+/** Dialogs that are open are stored in the dock
+ * If docked then the module is in the dock (for update purposes)
+ */
+let globalDockedDialogs=[];
+let maxGlobalDockedDialogs=3;
+
+
 /**
  * Non-Modal Dialog Class
  */
@@ -29,8 +42,14 @@ class BisWebDialogElement extends HTMLElement {
 
     constructor() {
         super();
+        this.name="";
         this.closecallback=null;
         this.dialog=null;
+        this.docked=false;
+        this.placed=false;
+        this.placeable=true;
+        this.placefooter=false;
+        this.placedparent=null;
         this.widget=null;
         this.header=null;
         this.footer=null;
@@ -52,6 +71,10 @@ class BisWebDialogElement extends HTMLElement {
             topoffset : 0,
             firstmove : false,
         };
+
+        this.docked=false;
+        this.layoutController=null;
+        this.dockWidget=null;
     }
 
     /** is dialog visible 
@@ -184,15 +207,50 @@ class BisWebDialogElement extends HTMLElement {
 
     /** Shows the dialog and disables any drag and drop elements while it is open */
     show() {
+
         if (this.dialog===null)
             return;
+        
+        if (this.docked === true || this.placed===true || this.placeable===true) {
+            return this.showDockedDialog();
+        }
 
-        let a={ visibility: "visible" ,
+        
+        let previous=null;
+        if (globalOpenDialog!==null)  {
+            previous=globalOpenDialog.dialog.dialog.css(['left','top']);
+            globalOpenDialog.hideDialog();
+        }
+
+        if (previous!==null) {
+            this.dialog.css({'left' : previous.left,
+                             'top'  : previous.top
+                            });
+        } else {
+            let w=window.innerWidth;
+            let arr=this.dialog.css(['width','height' ]);
+            Object.keys(arr).forEach((key) => {
+                arr[key]=parseFloat(arr[key].replace(/px/g,''));
+            });
+            
+            let left=w-arr['width']-320;
+            if (left<10)
+                left=10;
+            let l=`${left}px`;
+            let top=60;
+            let t=`${top}px`;
+            this.dialog.css({ "left" : l, "top" : t});
+            
+            let a={ 
                 "top": `${this.dimensions.top}px`,
                 "left": `${this.dimensions.left}px`,
-              };
+            };
+            
+            this.dialog.css(a);
+        }
         
-        this.dialog.css(a);
+
+        globalOpenDialog=this;
         this.visible=true;
         let drag=$("bisweb-draganddropelement") || null;
         if (drag!==null)   {
@@ -200,10 +258,20 @@ class BisWebDialogElement extends HTMLElement {
                 drag[0].addBlock();
             }
         }
+        this.dialog.css({ "visibility": "visible" });
     }
 
     /** Hides the dialog and renables any drag and drop elements present */
     hide() {
+
+        if (this.placed) {
+            this.setPlacedWidth(0);
+            return;
+        }
+        
+        if (this.docked)
+            return;
+
         if (this.dialog===null)
             return;
         this.dialog.css({ "visibility": "hidden" });
@@ -214,6 +282,10 @@ class BisWebDialogElement extends HTMLElement {
                 drag[0].removeBlock();
             }
         }
+
+        if (globalOpenDialog===this)
+            globalOpenDialog=null;
+
     }
 
     /** Removes mouse events and hides */
@@ -251,6 +323,8 @@ class BisWebDialogElement extends HTMLElement {
             h=-h;
             grow=true;
         }
+
+        this.name=name;
         
         const self=this;
         this.dimensions.left = x || 100;
@@ -260,16 +334,21 @@ class BisWebDialogElement extends HTMLElement {
 
         var newid = webutil.createWithTemplate(webutil.getTemplates().bisdialog, $('body'));
         var div = $('#' + newid);
-        div.find('.modal-title').text(name);
 
+        this.headertext=div.find('.modal-title');
+        this.headertext.text(name);
         this.dialog=div.find('.modal-dialog');
         this.content=div.find('.modal-content');
-        this.widget=div.find('.modal-body');
-        this.footer=div.find('.modal-footer');
+        this.widgetbase=div.find('.modal-body');
+        this.footerbase=div.find('.modal-footer');
         this.header=div.find('.modal-header');
+        this.headerbase=this.header.parent();
         this.close=div.find('.btn-default');
-        this.secondclose=div.find('.close');
+        this.secondclose=div.find('.bistoggle');
 
+        this.widget = webutil.creatediv({ parent: this.widgetbase });
+        this.footer = webutil.creatediv({ parent: this.footerbase });
+        
         webutil.disableDrag(this.header,true);
         webutil.disableDrag(this.footer,true);
         webutil.disableDrag(this.widget,true);
@@ -288,9 +367,9 @@ class BisWebDialogElement extends HTMLElement {
         if (!grow) {
             this.dialog.css({ "height": `${this.dimensions.height}px` });
             this.content.css({ "height" : "100%" });
-            this.widget.css({ "height" : `${this.dimensions.height-120}px`, "overflow-y": "auto"  });
+            this.widgetbase.css({ "height" : `${this.dimensions.height-120}px`, "overflow-y": "auto"  });
         } else {
-            this.widget.css({ "max-height" : `${this.dimensions.height}px`, "overflow-y": "auto"  });
+            this.widgetbase.css({ "max-height" : `${this.dimensions.height}px`, "overflow-y": "auto"  });
         }
         
         this.footer.css({
@@ -321,6 +400,185 @@ class BisWebDialogElement extends HTMLElement {
         if (motion)
             this.bindMouseEvents();
     }
+
+    /** add dock abilities 
+     * @param {LayoutController} layout controller to put the dialog in (in sidebar)
+     * @param {Boolean} createarrowbutton -- if true create extra button for docking on the fly
+     */
+    makeDockable(lcontroller,extrabutton=true) {
+
+        if (this.layoutController!==null)
+            return;
+
+        
+        this.layoutController=lcontroller;
+
+        if (!extrabutton)
+            return;
+        
+
+        let but=$(`<button type="button" class="bistoggle">&harr;</button>`);
+
+
+        this.secondclose.after(but);
+        const self=this;
+
+        but.click( (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (self.placeable===false) {
+                self.dockDialog();
+            } else {
+                if (self.placed) {
+                    if (this.layoutController.getextrabarwidth()<=100) {
+                        this.setPlacedWidth(this.dimensions.width+5);
+                    } else {
+                        this.setPlacedWidth(99);
+                    }
+                     
+                }
+            }
+            return false;
+        });
+    }
+
+    /** hidePlaced dialog */
+    setPlacedWidth(wd) {
+
+        this.layoutController.setextrabarwidth(wd);
+        
+        if (wd<100) {
+            this.widget.css({'opacity' : '0.05' });
+            this.headertext.text('');
+            this.header.css({'border-bottom' : '0px','background-color' : webutil.getpassivecolor()});
+            this.headertext.css({'opacity' : '0.05' });
+            this.secondclose.css({'opacity' : '005', 'font-size' : '1px' });
+        } else {
+            this.widget.css({'opacity' : '1.0'});
+            this.headertext.text(this.name);
+            this.header.css({'border-bottom' : '1px','background-color' : webutil.getpassivecolor()});
+            this.headertext.css({'opacity' : '1.0' });
+            this.secondclose.css({'opacity' : '1.0', 'font-size' : '19px'  });
+        }
+    }
+    
+    /** place the dialog inside the this.layoutController's extrabar
+     * @param {Boolean} show - if true then show
+     */
+    placeDialog(show=true,footer=false) {
+
+        if (!this.layoutController || this.docked)
+            return false;
+
+        if (globalPlacedDialog!==null) {
+            globalPlacedDialog.unDockDialog();
+            globalPlacedDialog=null;
+        }
+        
+        this.placeable=true;
+        this.placefooter=footer;
+        
+        if (this.placed) {
+            console.log('Showing');
+            this.showDockedDialog();
+            return true;
+        }
+        
+        this.hide();
+        this.dockWidget=this.layoutController.getextrabar();
+        this.dockWidget.empty();
+        this.dockWidget.append(this.header);
+        this.dockWidget.append(this.widget);
+
+        
+        if (footer) {
+            this.dockWidget.append('<HR>');
+            this.dockWidget.append(this.footer);
+        } else {
+            this.widget.css({ 'max-height ':'2000px'});
+        }
+        this.placed=true;
+        globalPlacedDialog=this;
+
+        if (show) {
+            console.log('Showing ...');
+            this.showDockedDialog();
+        }
+        return true;
+    }
+    /** dock the dialog inside the this.layoutController 
+     * @param {Boolean} show - if true then show
+     */
+    dockDialog(show=true,footer=true) {
+
+        if (!this.layoutController || this.placed)
+            return false;
+
+        this.placeable=false;
+        
+        if (this.docked) {
+            this.showDockedDialog();
+            return true;
+        }
+
+        if (globalDockedDialogs.length===maxGlobalDockedDialogs) {
+            let toremove=globalDockedDialogs.shift();
+            toremove.unDockDialog();
+        }
+
+        this.hide();
+        this.dockWidget=this.layoutController.createToolWidget(`${this.name}`);
+        this.dockWidget.append(this.widget);
+        if (footer) {
+            this.dockWidget.append('<HR>');
+            this.dockWidget.append(this.footer);
+        }
+        this.docked=true;
+        globalDockedDialogs.push(this);
+        if (show)
+            this.showDockedDialog();
+        return true;
+    }
+    
+    /** Call to show docked dialog, i.e. make the panel visible and open */
+    showDockedDialog() {
+        if (this.docked) {
+            webutil.activateCollapseElement(this.dockWidget);
+        } else if (this.placeable) {
+            if (globalPlacedDialog!==this) 
+                this.placeDialog(true,this.placefooter);
+            this.setPlacedWidth(this.dimensions.width+5);
+        }
+    }
+
+    /** Call to move dialog GUI from dock back to dialog */
+    unDockDialog() {
+        if (!this.placed && !this.docked)
+            return;
+
+        this.headerbase.prepend(this.header);
+        this.widgetbase.append(this.widget);
+        this.footerbase.append(this.footer);
+        this.widgetbase.css({ "max-height" : `${this.dimensions.height}px`});
+
+        if (!this.placed) {
+            console.log('Removing dockwidget');
+            this.dockWidget.parent().parent().remove();
+        } else  {
+            this.layoutController.setextrabarwidth(0);
+        }
+        this.placed=false;
+        this.docked=false;
+    }
+
+    static getOpenDialogs() {
+        return [ globalOpenDialog].concat(globalDockedDialogs);
+    }
+
+    static setMaxDockedDialogs(n) {
+        maxGlobalDockedDialogs=n;
+    }
+    
 }
 
 

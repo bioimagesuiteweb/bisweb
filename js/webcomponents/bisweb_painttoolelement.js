@@ -33,7 +33,8 @@ const biscustom = require('bisweb_custommodule.js');
 const modules = require('moduleindex.js');
 const biswrap = require('libbiswasm_wrapper');
 const webfileutil = require('bis_webfileutil');
-
+const inobounce=require('inobounce.js');
+const BisWebDialogElement=require('bisweb_dialogelement');
 // -------------------------------------------------------------------------
 // Keep warnings quiet
 //    var a=[ new Blob() ]; a=null;
@@ -80,7 +81,7 @@ class PaintToolElement extends HTMLElement {
             objectmap : null,
             objectmapdata : null,
             undostack : new UndoStack(100,10),
-            currentundoarray : null,
+            currentundoarray : [],
             parentDomElement : null,
             domElement : null,
 
@@ -149,57 +150,15 @@ class PaintToolElement extends HTMLElement {
         let in_orthoviewer=document.querySelector(viewerid);
 
         this.internal.layoutcontroller=document.querySelector(layoutid);
+
         let in_parent=this.internal.layoutcontroller.createToolWidget('Paint Tool',true);
 
         this.internal.parentDomElement=in_parent;
-        var basediv=$("<div>Paint tool to appear...</div>");
+        var basediv=$("<div>Paint tool will appear once an image is loaded.</div>");
         this.internal.parentDomElement.append(basediv);
         this.internal.orthoviewer=in_orthoviewer;
         this.internal.orthoviewer.addMouseObserver(this);
-
-        // Trap set objectmap function and redirect this here ...
-        const self=this;
-        this.internal.orthoviewer.setObjectMapFunction = function (f) {
-            self.setobjectmapimage(f);
-        };
-
-
-        if (this.internal.algocontroller) {
-            
-            const self=this;
-            this.internal.algocontroller.sendImageToViewer=function(input,options) {
-                let type = options.viewersource || 'image';
-                if (type==='overlay') {
-                    self.safeSetNewObjectmap(input).catch( (e) => {
-                        webutil.createAlert(e,true);
-                    });
-                } else {
-                    console.log('Setting image ... ');
-                    self.internal.orthoviewer.setimage(input);
-                }
-            };
-
-            this.internal.thresholdModule=biscustom.createCustom(this.internal.layoutcontroller.createToolWidget('Create Objectmap'),
-                                                                 this.internal.algocontroller,
-                                                                 new modules.binaryThresholdImage(),
-                                                                 {'numViewers' : 0 });
-            this.internal.morphologyModule=biscustom.createCustom(this.internal.layoutcontroller.createToolWidget('Morphology Operations'),
-                                                                  this.internal.algocontroller,
-                                                                  new modules.morphologyFilter(),
-                                                                  {'numViewers' : 0 });
-            biswrap.initialize().then( () => {
-                if (biswrap.uses_gpl())
-                    this.internal.regularizeModule=biscustom.createCustom(this.internal.layoutcontroller.createToolWidget('Regularize Objectmap'),
-                                                                          this.internal.algocontroller,
-                                                                          new modules.regularizeObjectmap(),
-                                                                          {'numViewers' : 0 });
-                this.internal.maskModule=biscustom.createCustom(this.internal.layoutcontroller.createToolWidget('Mask Image'),
-                                                                this.internal.algocontroller,
-                                                                new modules.maskImage(),
-                                                                {'numViewers' : 0 });
-            });
-
-        }
+        BisWebDialogElement.setMaxDockedDialogs(1);
     }
 
     // --------------------------------------------------------------------------------
@@ -226,9 +185,11 @@ class PaintToolElement extends HTMLElement {
 
         if (this.internal.data.enabled) {
             this.internal.domElement.css({'background-color': webutil.getactivecolor()});
+            inobounce.enable();
         } else {
             var x = this.internal.domElement.parent().css('backgroundColor');
             this.internal.domElement.css({'background-color':x});
+            inobounce.disable();
         }
     }
 
@@ -262,6 +223,10 @@ class PaintToolElement extends HTMLElement {
 
     /** GUI Callback for undo  */
     undooperation() {
+        if (this.internal.currentundoarray.length>0) {
+            this.internal.undostack.addOperation(this.internal.currentundoarray);
+            this.internal.currentundoarray=[];
+        }
         var arr=this.internal.undostack.getUndo();
         if (arr===null) {
             return false;
@@ -272,6 +237,11 @@ class PaintToolElement extends HTMLElement {
 
     /** GUI Callback for redo */
     redooperation() {
+        if (this.internal.currentundoarray.length>0) {
+            this.internal.undostack.addOperation(this.internal.currentundoarray);
+            this.internal.currentundoarray=[];
+        }
+
         var arr=this.internal.undostack.getRedo();
         if (arr===null) {
             return false;
@@ -925,7 +895,10 @@ class PaintToolElement extends HTMLElement {
                                             css : {'margin-top': '20px','margin-bottom': '10px'}});
 
 
-        const undo_clb=function() { self.undooperation();};
+        const undo_clb=function() {
+            self.undooperation();
+
+        };
         const redo_clb=function() { self.redooperation();};
 
         webutil.createbutton({ type : "warning",
@@ -1003,26 +976,29 @@ class PaintToolElement extends HTMLElement {
             }
         }
 
-        
         if (this.internal.morphologyModule && good)
             this.internal.morphologyModule.updateCrossHairs(x);
-
-        if (mousestate<0 || mousestate === undefined || this.internal.objectmap===null || this.internal.data.enabled===false) {
-            return;
-        }
 
         if (!webutil.isCollapseElementOpen(this.internal.parentDomElement)) {
             return;
         }
-
+        
+        if (mousestate === undefined || this.internal.objectmap===null || this.internal.data.enabled===false) {
+            return;
+        }
 
         if (mousestate===2) {
             this.internal.undostack.addOperation(this.internal.currentundoarray);
-            return;
+            this.internal.currentundoarray=[];
+            if (mousestate===2)
+                return;
         }
 
         if (mousestate===0)  {
             // Initialize undo array
+            if (this.internal.currentundoarray.length>0) {
+                this.internal.undostack.addOperation(this.internal.currentundoarray);
+            }
             this.internal.currentundoarray = [] ;
         }
 
@@ -1043,7 +1019,7 @@ class PaintToolElement extends HTMLElement {
 
         const self=this;
         let new_clb=function() { self.createnewobjectmapyesno(); };
-
+        
         webutil.createMenuItem(parent,'Clear Objectmap',
                                new_clb);
 
@@ -1067,6 +1043,88 @@ class PaintToolElement extends HTMLElement {
                                        });
 
         webutil.createMenuItem(parent,''); // separator
+    }
+
+    addTools(tmenu)  {
+        // Trap set objectmap function and redirect this here ...
+        const self=this;
+        this.internal.orthoviewer.setObjectMapFunction = function (f) {
+            self.setobjectmapimage(f);
+        };
+
+
+        webutil.createMenuItem(tmenu,'Paint Tool',function() {
+            webutil.activateCollapseElement(self.internal.parentDomElement);
+        });
+        webutil.createMenuItem(tmenu,''); // separator
+
+        return new Promise( (resolve) => {
+
+            if (this.internal.algocontroller) {
+                
+                const self=this;
+                this.internal.algocontroller.sendImageToViewer=function(input,options) {
+                    let type = options.viewersource || 'image';
+                    if (type==='overlay') {
+                        self.safeSetNewObjectmap(input).catch( (e) => {
+                            webutil.createAlert(e,true);
+                        });
+                    } else {
+                        console.log('Setting image ... ');
+                        self.internal.orthoviewer.setimage(input);
+                    }
+                };
+
+                let moduleoptions = { 'numViewers' : 0,
+                                      'dockable' : true ,
+                                      'forcedock' : true
+                                    };
+
+                moduleoptions.name='Create Objectmap';
+                this.internal.thresholdModule=biscustom.createCustom(this.internal.layoutcontroller,
+                                                                     this.internal.algocontroller,
+                                                                     new modules.binaryThresholdImage(),
+                                                                     moduleoptions);
+                webutil.createMenuItem(tmenu, moduleoptions.name,function() {
+                    self.internal.thresholdModule.showDialog();
+                });
+
+                
+                moduleoptions.name='Morphology Operations';
+                this.internal.morphologyModule=biscustom.createCustom(this.internal.layoutcontroller,
+                                                                      this.internal.algocontroller,
+                                                                      new modules.morphologyFilter(),
+                                                                      moduleoptions);
+                webutil.createMenuItem(tmenu, moduleoptions.name,function() {
+                    self.internal.morphologyModule.showDialog();
+                });
+
+                biswrap.initialize().then( () => {
+                    if (biswrap.uses_gpl()) {
+                        moduleoptions.name='Regularize Objectmap';
+                        this.internal.regularizeModule=biscustom.createCustom(this.internal.layoutcontroller,
+                                                                              this.internal.algocontroller,
+                                                                              new modules.regularizeObjectmap(),
+                                                                              moduleoptions);
+                        webutil.createMenuItem(tmenu, moduleoptions.name,function() {
+                            self.internal.regularizeModule.showDialog();
+                        });
+
+                        moduleoptions.name='Mask Image';
+                        this.internal.maskModule=biscustom.createCustom(this.internal.layoutcontroller,
+                                                                        this.internal.algocontroller,
+                                                                        new modules.maskImage(),
+                                                                        moduleoptions);
+                        webutil.createMenuItem(tmenu, moduleoptions.name,function() {
+                            self.internal.maskModule.showDialog();
+                        });
+                    }
+                    resolve();
+                });
+            } else {
+                resolve();
+            }
+        });
     }
 
     setViewerObjectmap(vol,plainmode,alert) {

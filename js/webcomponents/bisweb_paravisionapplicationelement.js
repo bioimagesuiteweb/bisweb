@@ -92,10 +92,11 @@ class ParavisionApplicationElement extends ViewerApplicationElement {
         
         let menubar=document.querySelector(menubarid).getMenuBar();
 
-        this.createApplicationMenu(menubar);
+        let fmenu=this.createFileAndOverlayMenus(menubar,null);
+        this.createApplicationMenu(fmenu);
         let editmenu=this.createEditMenu(menubar);
         this.createDisplayMenu(menubar,null);
-        this.createFileAndOverlayMenus(menubar,null);
+
         
         if (modulemanager!==null) 
             modulemanager.initializeElements(menubar,self.VIEWERS,editmenu);

@@ -154,6 +154,8 @@ class BaseViewerElement extends HTMLElement {
 
         if (val!==undefined) {
             data.playing=val;
+        } else {
+            this.internal.play_movie_controller.updateDisplay();
         }
 
         
@@ -165,6 +167,8 @@ class BaseViewerElement extends HTMLElement {
         let delay=1000.0/data.rate;
         this.setframe(this.getframe()+1);
 
+
+        
         const self=this;
         setTimeout(function() { self.playStopMovie();},delay);
     }
@@ -987,6 +991,14 @@ class BaseViewerElement extends HTMLElement {
             this.setElementState(this.internal.saveState);
         }
     }
+
+    /** getlayoutcontroller 
+        @returns {Object} the layout controller
+    */
+    getLayoutController() {
+        return this.internal.layoutcontroller;
+    }
+    
 
 }
 

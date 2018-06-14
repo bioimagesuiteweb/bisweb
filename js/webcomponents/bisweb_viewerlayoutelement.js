@@ -49,7 +49,6 @@ var detectWebGL = function() {
  *    id="viewer_layout"
  *    bis-sidewidth="400"
  *    bis-coreopen="true"
- *    bis-wholescreen="1"
  *    bis-minimizesidepanel="0"
  *    bis-defaulttext="">
  * </bisweb-viewerlayoutelement>
@@ -65,7 +64,6 @@ var detectWebGL = function() {
  * Attributes
  *     bis-sidewidth : width of the side panel in pixels
  *     bis-coreopen  : if true the core (top side panel) is open else closed
- *     bis-wholescreen : if 1 the viewer uses the whole screen else fits in a div element
  *     bis-minimizesidepanel : if 1 the side panel is minimized to a narrow column
  *     bis-defaulttext : text to draw in. If length > 10 and first character is not space then sets "simple mode"
  *     bis-dualmode : if 1 then operates in dual mode
@@ -76,6 +74,8 @@ class ViewerLayoutElement extends HTMLElement {
         super();
         this.minimizesidepanel=false;
         this.panelgroup=null;
+        this.extrabarwidth=0;
+        this.viewerleft=0;
     }
     
     /** call when the window is resized to adjust the proportions */
@@ -86,42 +86,77 @@ class ViewerLayoutElement extends HTMLElement {
             sidewidth=40;
         let topheight=this.topheight;
         let fullwidth=0;
-        
+
         if (window.innerWidth<2*sidewidth)
             sidewidth=Math.round(0.5*window.innerWidth);
         
-        if (this.wholescreen) {
-            this.viewerheight=window.innerHeight-topheight-100;
-            fullwidth=window.innerWidth;
-        } else {
-            if (this.clientHeight>1) {
-                this.viewerheight=this.clientHeight;
-                fullwidth=this.clientWidth;
-            } else {
-                this.viewerheight=this.parentNode.clientHeight-topheight;
-                fullwidth=this.parentNode.clientWidth;
-            }
-        }
+        this.viewerheight=window.innerHeight-topheight-100;
+        fullwidth=window.innerWidth;
         
         let sidetop=0,sideleft=0;
-        
-        this.viewerwidth= fullwidth-sidewidth;
-        if (this.viewerwidth<400 && this.minimizesidepanel===false) {
-            this.viewerwidth=fullwidth;
-            sidetop=this.viewerheight;
-            sidewidth=fullwidth;
-            
-        } else {
-            sideleft=this.viewerwidth;
+        let extrawidth=this.extrabarwidth;
+        if (extrawidth<10) {
+            extrawidth=1;
         }
+
+        this.viewerwidth= fullwidth-sidewidth-extrawidth;
+        this.sidebarheight=this.viewerheight;
+        let extratop=0;
+
+        let extraleft=0;
+            
+        if ( (extrawidth< 10) && ((this.viewerwidth<400 && this.minimizesidepanel===0) || (fullwidth<770))) {
+            this.viewerwidth=fullwidth;
+            if (this.viewerheight<600) {
+                this.viewerheight=this.viewerheight-100;
+                sidetop=this.viewerheight;
+                extratop=this.viewerheight*2;
+                extrawidth=this.viewerwidth;
+                this.viewerwidth=this.viewerwidth-10;
+                sidewidth=this.viewerwidth;
+            } else {
+                this.viewerheight=600;
+                this.viewerwidth=this.viewerwidth-10;
+                sidetop=this.viewerheight;
+                sidewidth=this.viewerwidth;
+            }
+
+        } else {
+            extraleft=this.viewerwidth;
+            sideleft=this.viewerwidth+this.extrabarwidth;
+        }
+
+        let vleft=extrawidth;
+        extraleft=0;
+        this.viewerleft=vleft;
         
-        
-        let w_v  = `${this.viewerwidth}px`;
-        let w_h  = `${this.viewerheight}px`;
-        let w_e  = `${sidewidth}px`;
-        let s_t  = `${sidetop-5}px`;
-        let s_h  = `${this.viewerheight+13}px`;
-        let s_l  = `${sideleft}px`;
+        // Viewer
+        let canvascss={
+            'left' : `${vleft}px`,
+            'top'  : '0px',
+            'width': `${this.viewerwidth}px`,
+            'height':`${this.viewerheight}px`,
+        };
+
+        // Sidebar
+        let sidebarcss = {
+            'width' : `${sidewidth}px`,
+            'top'   : `${sidetop-4}px`,
+            'height': `${this.sidebarheight+12}px`,
+            'left'  : `${sideleft}px`
+        };
+
+        if (extrawidth<1)
+            extrawidth=1;
+        let extrabarcss = { 
+            'left' : `${extraleft}px`,
+            'top'  : `${extratop-4}px`,
+            'width': `${extrawidth}px`,
+            'height':`${this.viewerheight+12}px`,
+            'opacity' :'1.0',
+            'border-width'  : '0px 2px 0px 2px',
+            'border-color'  : 'rgba(128,64,0,1.0)',
+        };
         
         
         if (this.minimizesidepanel) {
@@ -133,10 +168,18 @@ class ViewerLayoutElement extends HTMLElement {
             this.elements.newpanel.css({ 'opacity' : '1.0' });
             this.elements.sidebar.css({ 'overflow-x' : 'auto'});
         }
-        this.elements.rendererbase.css({'left' : '0px', 'top'  : '0px', 'width': w_v,   'height': w_h});
-        this.elements.canvasbase.css({'left' : '0px', 'top'  : '0px', 'width': w_v,    'height': w_h});
-        this.elements.sidebar.css({ 'width': w_e, 'top': s_t, 'left': s_l,  'height':s_h});
+
+        this.elements.rendererbase.css(canvascss);
+        this.elements.canvasbase.css(canvascss);
+        this.elements.sidebar.css(sidebarcss);
         
+        if (extrawidth<10) {
+            this.elements.extrabar.css({ 'opacity' :'0.00',
+                                         'border-width'  : '0px 0px 0px 0px',
+                                       });
+        } else {
+            this.elements.extrabar.css(extrabarcss);
+        }
         
         this.renderer.setSize(this.viewerwidth,this.viewerheight);
         this.canvas.width=this.viewerwidth;
@@ -172,9 +215,6 @@ class ViewerLayoutElement extends HTMLElement {
         // Query Properties
         this.sidepanelwidth=parseInt(this.getAttribute('bis-sidewidth')) || 150;
         this.topheight=parseInt(this.getAttribute('bis-topheight')) || 0;
-        this.wholescreen=parseInt(this.getAttribute('bis-wholescreen'));
-        if (this.wholescreen!==0)
-            this.wholescreen=1;
         this.dualmode=parseInt(this.getAttribute('bis-dualmode')) || 0;
         
         this.minimizesidepanel=parseInt(this.getAttribute('bis-minimizesidepanel') || 0 );
@@ -201,13 +241,40 @@ class ViewerLayoutElement extends HTMLElement {
         
         this.elements = {
             rendererbase :   webutil.creatediv({ parent : this.domElement ,
-                                                 css: { 'position' : 'absolute','z-index': '2' }}),
+                                                 css: { 'position' : 'absolute',
+                                                        'z-index': '2'
+                                                      }
+                                               }),
             canvasbase   :   webutil.creatediv({ parent : this.domElement,
-                                                 css: { 'position' : 'absolute','top':'0px','background-color': '#000000', 'z-index': '1' }}),
+                                                 css: { 'position' : 'absolute',
+                                                        'top':'0px',
+                                                        'background-color':
+                                                        '#000000', 'z-index': '1'
+                                                      }
+                                               }),
             sidebar      :   webutil.creatediv({ parent : this.domElement,
                                                  css : {'position':'absolute',
                                                         'overflow-y': 'auto',
-                                                        'background-color': webutil.getpassivecolor()}}),
+                                                        'border-width'  : '0px 0px 0px 0px',
+                                                        'background-color': webutil.getpassivecolor()
+                                                       }
+                                               }),
+            extrabar     :   webutil.creatediv({ parent : this.domElement,
+                                                 css : {'position':'absolute',
+                                                        'top' : '0px',
+                                                        'z-index' : '4',
+                                                        'margin-top' : '0px',
+                                                        'margin-right' : '2px',
+                                                        'margin-bottom' : '0px',
+                                                        'border-width'  : '0px 0px 0px 0px',
+                                                        'overflow-y': 'auto',
+                                                        'opacity' : '0.0',
+                                                        'border-style'  : 'solid',
+                                                        'border-color'  : 'rgba(128,64,0,0.0)',
+                                                        'width' : `${this.extrabarwidth}px`,
+                                                        'background-color':  webutil.getpassivecolor()
+                                                       }
+                                               }),
         };
         
         let b1=this.defaulttext.substr(0,1) || "";
@@ -218,15 +285,20 @@ class ViewerLayoutElement extends HTMLElement {
                                    css : { 'height' : '40px' }});
         
         let top=webutil.creatediv({ parent : zt,
-                                    css : { 'height' : '40px', 'float' :'right', 'fontsize' : '12', 'z-index' : 4000, 'margin-right' : '10px' }
+                                    css : {
+                                        'z-index' : 4000,
+                                        'width' : '100%',
+                                    }
                                   });
         
-        
-        let minimizebutton=$('<button type="button" class="close>  <span class="glyphicon glyphicon-align-left" aria-hidden="true"></span> </button>');
+
+        let minimizebutton=$(`<button type="button" class="bistoggle">&harr;</button>`);
+        minimizebutton.css({'margin' : '2px'});
         top.append(minimizebutton);
         
         
         let newpanel=webutil.createpanelgroup(this.elements.sidebar);
+        newpanel.css({ 'margin-top' : '10px'});
         this.elements.newpanel=newpanel;
         if (this.dualmode > 0) {
             this.elements.corecontrols=webutil.createCollapseElement(newpanel,'Viewer 1 Controls',coreopen);
@@ -247,7 +319,7 @@ class ViewerLayoutElement extends HTMLElement {
         
         this.context=this.canvas.getContext("2d");
         this.overlaycanvas = document.createElement('canvas');
-        $(this.overlaycanvas).css({'z-index': '1000',
+        $(this.overlaycanvas).css({'z-index': '502',
                                    'position':'absolute',
                                    'top': '0px',
                                    'left': '0px'});
@@ -285,14 +357,18 @@ class ViewerLayoutElement extends HTMLElement {
         minimizebutton.click(function(e) {
             e.preventDefault(); // cancel default behavior
             if (self.minimizesidepanel) {
-                self.minimizesidepanel=false;
+                self.minimizesidepanel=0;
             } else {
-                self.minimizesidepanel=true;
+                self.minimizesidepanel=1;
             }
             
             window.dispatchEvent(new Event('resize'));
         });
+
+
         
+
+
     }
     
     /** returns the main renderer 
@@ -327,13 +403,35 @@ class ViewerLayoutElement extends HTMLElement {
     getsidebar() {
         return this.elements.toolbase;
     }
-    
+
+    getextrabar() {
+        return this.elements.extrabar;
+    }
+
+    setextrabarwidth(n) {
+        if (n<10)
+            n=0;
+        if (n>500)
+            n=500;
+        this.extrabarwidth=n;
+        window.dispatchEvent(new Event('resize'));
+    }
+
+    getextrabarwidth() {
+        return this.extrabarwidth;
+    }
+                                               
     getviewerwidth() { 
         return this.viewerwidth;
     }
 
     getviewerheight() { 
         return this.viewerheight;
+    }
+
+
+    getviewerleft() { 
+        return this.viewerleft;
     }
 
     

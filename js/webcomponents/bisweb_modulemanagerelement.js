@@ -24,7 +24,7 @@ const webutil = require('bis_webutil');
 const biscustom = require('bisweb_custommodule.js');
 const modules = require('moduleindex.js');
 const biswrap = require('libbiswasm_wrapper');
-const copyModule = require('viewerCopyImage');
+
 /**
  * A Module Manager Element that manages processing algorithm elements
  *
@@ -76,6 +76,7 @@ class ModuleManagerElement extends HTMLElement {
         }
 
         this.modules[name].showDialog();
+        return this.modules[name];
     }
 
 
@@ -101,7 +102,17 @@ class ModuleManagerElement extends HTMLElement {
             webutil.createMenuItem(this.moduleMenu[index], '');
     }
 
-
+    attachTransformationController(index) {
+        if (this.algorithmController.getTransformController()) {
+            const self=this;
+            webutil.createMenuItem(this.moduleMenu[index],'Transformation Manager',
+                                   function() {
+                                       self.algorithmController.getTransformController().dockDialog(true,false);
+                                   });
+            webutil.createMenuItem(this.moduleMenu[index],'');
+        }
+    }
+    
     transferImages(v1,v2) {
 
         let img=this.viewers[v1].getimage();
@@ -123,6 +134,14 @@ class ModuleManagerElement extends HTMLElement {
         }
     }
 
+    transferOverlayToImage(v1,v2) {
+
+        let img=this.viewers[v1].getobjectmap();
+        if (img) {
+            this.viewers[v2].setimage(img);
+        }
+    }
+
     swapImages() {
 
         let img=this.viewers[0].getimage();
@@ -136,7 +155,7 @@ class ModuleManagerElement extends HTMLElement {
         }
     }
 
-    initializeElements(menubar, viewers = [],editmenu=null) {
+    initializeElements(menubar, viewers = []) {
         if (!this.algorithmController) {
             return;
         }
@@ -147,47 +166,7 @@ class ModuleManagerElement extends HTMLElement {
             this.viewers[i].addImageChangedObserver(this);
 
         let moduleoptions = { 'numViewers': numviewers, 'dockable' : true , 'forcedock' : true};
-        if (editmenu===null) {
-            this.moduleMenu[0] = webutil.createTopMenuBarMenu('Edit', menubar);
-        } else {
-            this.moduleMenu[0]=editmenu;
-            webutil.createMenuItem(editmenu,'');
-        }
-        this.algorithmController.createMenuItems(this.moduleMenu[0]);
-        webutil.createMenuItem(this.moduleMenu[0], '');
-        
-        const self=this;
-        if (this.mode==='dual' || this.mode==='paravision') {
-            webutil.createMenuItem(this.moduleMenu[0],"Transfer Viewer 1 &rarr; 2",function() {
-                self.transferImages(0,1);
-            });
-            webutil.createMenuItem(this.moduleMenu[0],"Transfer Viewer 2 &rarr; 1",function() {
-                self.transferImages(1,0);
-            });
-            webutil.createMenuItem(this.moduleMenu[0],"Swap Images 1 &harr; 2 ",function() {
-                self.swapImages();
-            });
-            webutil.createMenuItem(this.moduleMenu[0],"Transfer Viewer 2 Image &rarr; Viewer 1 Overlay ",function() {
-                self.transferImageToOverlay(1,0);
-            });
-            this.createModule('Custom Transfer', 0,false , new copyModule, moduleoptions);
 
-        } else {
-            webutil.createMenuItem(this.moduleMenu[0],"Copy Overlay &rarr; Image",function() {
-                let obj=self.viewers[0].getobjectmap();
-                if (obj) {
-                    self.viewers[0].setimage(obj);
-                }
-            });
-        }
-
-        if (this.mode==='overlay') {
-            webutil.createMenuItem(this.moduleMenu[0], '');
-            this.createModule('Reslice Image',0, false, modules.resliceImage, {'numViewers' : 1 });
-            return this.moduleMenu[0];
-        } 
-
-        
         this.moduleMenu[1] = webutil.createTopMenuBarMenu('Image Processing', menubar);
 
         if (this.mode !== 'paravision')
@@ -218,6 +197,7 @@ class ModuleManagerElement extends HTMLElement {
         this.createModule('Smooth Image',1, false, modules.smoothImage, moduleoptions);
         this.createModule('Normalize Image',1, false, modules.normalizeImage, moduleoptions);
         this.createModule('Threshold Image',1, false, modules.thresholdImage, moduleoptions);
+        this.createModule('Cluster Threshold',1, false, modules.clusterThreshold, moduleoptions);
         this.createModule('Correct Bias Field',1, true, modules.sliceBiasFieldCorrect, moduleoptions);
         this.createModule('Change Spacing',1, true, modules.changeImageSpacing, moduleoptions);
         this.createModule('Resample Image',1, false, modules.resampleImage, moduleoptions);
@@ -239,6 +219,7 @@ class ModuleManagerElement extends HTMLElement {
         this.createModule('Mask Image', 2, false, modules.maskImage, moduleoptions);
 
         if (this.mode!=='single') {
+            this.attachTransformationController(3);
             this.createModule('Reslice Image',3, true, modules.resliceImage, moduleoptions);
             
             this.createModule('Manual Registration',3, true, modules.manualRegistration, moduleoptions);
@@ -251,22 +232,17 @@ class ModuleManagerElement extends HTMLElement {
             if (usesgpl) {
                 this.createModule('Motion Correction',3, false, modules.motionCorrection, moduleoptions);
             }
-        } else {
-            webutil.createMenuItem(this.moduleMenu[1], '');
-            this.createModule('Reslice Image',1, false, modules.resliceImage, moduleoptions);
-        }
+        } 
         return this.moduleMenu[0];
             
     }
 
     handleViewerImageChanged() { //viewer, source, colortype) 
+        biscustom.updateModules();
+    }
 
-        // This is mostly for drag and drop but who knows
-        let modsToUpdate=biscustom.getModulesToUpdate();
-        for (let i=0;i<modsToUpdate.length;i++) {
-            if (modsToUpdate[i])
-                modsToUpdate[i].createOrUpdateGUI();
-        }
+    getAlgorithmController() {
+        return this.algorithmController;
     }
 }
 
