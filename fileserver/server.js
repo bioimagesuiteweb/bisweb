@@ -6,8 +6,6 @@ const crypto = require('crypto');
 const zlib = require('zlib');
 const os = require('os');
 const timers = require('timers');
-const EventEmitter = require('events');
-const emitter = new EventEmitter();
 
 const BisWebImage = require('bisweb_image.js');
 const modules = require('moduleindex.js');
@@ -69,59 +67,6 @@ let loadLocalFiles = (filename) => {
     });
 };
 
-let handleConnectionRequest = (socket) => {
-    console.log('got connection', socket);
-
-    //construct the handshake response
-    //https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers
-    let response = "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ";
-
-    //parse websocket key out of response
-    let websocketKey;
-    let handshake = (chunk) => {
-        let decodedChunk = new TextDecoder('utf-8').decode(chunk);
-        console.log('chunk', decodedChunk);
-        let headers = decodedChunk.split('\n');
-
-        for (let i = 0; i < headers.length; i++) {
-            headers[i] = headers[i].split(':');
-        }
-
-        for (let header of headers) {
-            if (header[0] === 'Sec-WebSocket-Key') {
-                //remove leading space from key
-                websocketKey = header[1].slice(1, -1);
-            }
-        }
-
-        //create Sec-WebSocket-Accept hash (see documentation)
-        let shasum = crypto.createHash('sha1');
-        websocketKey = websocketKey + SHAstring;
-        shasum.update(websocketKey);
-        let acceptKey = shasum.digest('base64');
-        response = response + acceptKey + '\r\n\r\n';
-
-        //connectors on 8081 are negotiating a control port, connectors on 8082 are negotiating a transfer port
-        switch (socket.localPort) {
-            case 8081 : 
-                prepareForControlFrames(socket); 
-                break;
-            case 8082 : 
-                prepareForDataFrames(socket); 
-                break;
-            default : 
-                console.log('Client attempting to connect on unexpected port', socket.localPort, 'rejecting connection.'); 
-                return;
-        } 
-        socket.write(response, 'utf-8');
-    };
-
-    socket.once('data', handshake);
-
-    //server should close once all its sockets have closed
-    //so have sockets notify the server on close so that it can check its internal status
-    socket.on('close', (e) => { emitter.emit('serverpollconnections'); });
-}
 
 /**
  * Creates the server instance, binds the handshake protocol to its 'connection' event, and begins listening on port 8081 (control port for the transfer).
@@ -140,23 +85,76 @@ let startServer = (hostname, port, readycb = () => {}) => {
     newServer.listen(port, hostname, readycb);
 
     console.log('listening for incoming connections from host', hostname, 'on port', port, '...');
-    newServer.on('connection', (e) => { console.log('connection', e); });
 
-    //listen for closing sockets, take action appropriate to the server
-    emitter.on('serverpollconnections', () => {
-        newServer.getConnections( (err, count) => {
-            if (err) { 
-                console.log('Server encountered an error getting its active connections, shutting down server'); 
-                newServer.close(); 
-                return; 
+    //handleConnectionRequest is called when a connection is successfuly made between the client and the server and a socket is prepared
+    //it performs the WebSocket handshake (see https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers#The_WebSocket_Handshake)
+    //as well it attaches protocols to handle when the socket is ended or closed
+    function handleConnectionRequest(socket) {
+        console.log('got connection', socket);
+    
+        //construct the handshake response
+        //https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers
+        let response = "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ";
+    
+        //parse websocket key out of response
+        let websocketKey;
+        let handshake = (chunk) => {
+            let decodedChunk = new TextDecoder('utf-8').decode(chunk);
+            console.log('chunk', decodedChunk);
+            let headers = decodedChunk.split('\n');
+    
+            for (let i = 0; i < headers.length; i++) {
+                headers[i] = headers[i].split(':');
             }
+    
+            for (let header of headers) {
+                if (header[0] === 'Sec-WebSocket-Key') {
+                    //remove leading space from key
+                    websocketKey = header[1].slice(1, -1);
+                }
+            }
+    
+            //create Sec-WebSocket-Accept hash (see documentation)
+            let shasum = crypto.createHash('sha1');
+            websocketKey = websocketKey + SHAstring;
+            shasum.update(websocketKey);
+            let acceptKey = shasum.digest('base64');
+            response = response + acceptKey + '\r\n\r\n';
+    
+            //connectors on 8081 are negotiating a control port, connectors on 8082 are negotiating a transfer port
+            switch (socket.localPort) {
+                case 8081 : 
+                    prepareForControlFrames(socket); 
+                    break;
+                case 8082 : 
+                    prepareForDataFrames(socket); 
+                    break;
+                default : 
+                    console.log('Client attempting to connect on unexpected port', socket.localPort, 'rejecting connection.'); 
+                    return;
+            } 
+            socket.write(response, 'utf-8');
+        };
+    
+        socket.once('data', handshake);
 
-            if (count === 0) { 
-                console.log('all connections done, shutting down server', newServer);
-                newServer.close();
-            }
+        //server should close when all sockets are fully closed
+        //note that the socket does not listen for 'end' because WebSockets do not cause those events to emit.
+        socket.on('close', () => {
+            newServer.getConnections( (err, count) => {
+                if (err) { 
+                    console.log('Server encountered an error getting its active connections, shutting down server'); 
+                    newServer.close(); 
+                    return; 
+                }
+    
+                if (count === 0) { 
+                    console.log('all connections done, shutting down server', newServer);
+                    newServer.close();
+                }
+            });
         });
-    });
+    }
 };
 
 /**
@@ -254,7 +252,10 @@ let prepareForDataFrames = (socket) => {
             console.log('upload done', fileInProgress);
             socket.write(formatPacket('uploadcomplete', ''), () => { console.log('message sent'); });
 
+            //if for some reason the client doesn't send a FIN we know the socket should close here anyway.
             socket.end();
+
+
             //save serialized NIFTI image
             genericio.write('/home/zach/' + fileInProgress.name + '.nii.gz', fileInProgress.receivedFile, true);
         } else {

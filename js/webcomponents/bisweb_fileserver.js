@@ -214,8 +214,10 @@ class FileServer extends HTMLElement {
      * @param {Socket} controlSocket - The socket over which the client and server exchange metadata about the transfer.
      * @param {BisImage} file - The file to save to the server. 
      * @param {String} name - What the filed should be named once it is saved to the server. 
+     * @param {Function} cb - A callback for if the transfer is successful. Optional.
+     * @param {Function} eb - A callback for if the transfer is a failure (errorback). Optional.
      */
-    uploadFileToServer(controlSocket, file, name) {
+    uploadFileToServer(controlSocket, file, name, cb = () => {}, eb = () => {}) {
 
         //serialize the BisImage to a purely binary format.
         let serializedImage = file.serializeToNII();
@@ -227,18 +229,21 @@ class FileServer extends HTMLElement {
             let message;
             try {
                 message = JSON.parse(e.data);
-                console.log('control socket heard', e);
                 if (message.type === 'datasocketready') {
+
                     fileTransferSocket = this.connectToServer('ws://localhost:8082');
                     fileTransferSocket.addEventListener('open', () => {
                         console.log('serializedImage', serializedImage);
                         doImageTransfer(serializedImage);
                     });
+
                 } else {
                     console.log('heard unexpected message', message, 'not opening data socket');
+                    eb();
                 }
             } catch(e) {
                 console.log('failed to parse response to data socket request from server', e);
+                eb();
             }
         }, { once : true });
 
@@ -272,17 +277,17 @@ class FileServer extends HTMLElement {
                     data = JSON.parse(event.data);
                 } catch (e) {
                     console.log('an error occured while parsing event.data', e);
+                    eb();
                     return null;
                 }
 
-
-                console.log('data', data);
                 switch (data.type) {
                     case 'nextpacket':
                         sendDataSlice();
                         break;
                     case 'uploadcomplete':
                         fileTransferSocket.close();
+                        cb();
                         break;
                     default: console.log('received unexpected message', event, 'while listening for server responses');
                 }
@@ -337,28 +342,39 @@ class FileServer extends HTMLElement {
 
             $(confirmButton).on('click', () => {
                 let image = this.algorithmcontroller.getImage('viewer', 'image');
-                let name = nameEntryBox.find('.form-control')[0].value;
-                this.uploadFileToServer(socket, image, name);
+                let name = this.saveImageModal.body.find('.form-control')[0].value;
+
+
+                 //update the modal with a success message after successful transmission.
+                 let cb = () => {
+                     let transmissionCompleteMessage = $(`<p>Upload completed successfully.</p>`);
+
+                     this.saveImageModal.body.empty();
+                     this.saveImageModal.body.append(transmissionCompleteMessage);
+
+                     setTimeout(() => { this.saveImageModal.dialog.modal('hide'); }, 1500);
+                };
+
+                //update modal with an error message if things went wrong
+                let eb = () => {
+                    let errorMessage = $(`<p>An error occured during transmission. File not uploaded.</p>`)
+
+                    this.saveImageModal.body.empty();
+                    this.saveImageModal.body.append(transmissionCompleteMessage);
+
+                    setTimeout(() => { this.saveImageModal.dialog.modal('hide'); }, 1500);
+                }
+
+
+                console.log('name read off entry widget', name);
+                this.uploadFileToServer(socket, image, name, cb, eb);
 
                 let imageSavingDialog = $(`<p>Uploading image to file server...</p>`);
                 this.saveImageModal.body.empty();
                 this.saveImageModal.body.append(imageSavingDialog);
 
-                //listen for end of transmission
-                let endOfTransmissionListener = (e) => {
-                    let message = wsutil.parseJSON(e.data);
-                    if (message.type === 'uploadcomplete') {
-                        socket.removeEventListener(socket, endOfTransmissionListener);
-                        let transmissionCompleteMessage = $(`<p>Upload completed successfully.</p>`);
+               
 
-                        this.saveImageModal.body.empty();
-                        this.saveImageModal.body.append(transmissionCompleteMessage);
-
-                        setTimeout(() => { this.saveImageModal.dialog.modal('hide'); }, 1500);
-                    }
-                };
-
-                socket.addEventListener('message', endOfTransmissionListener);
             });
 
             $(cancelButton).on('click', () => {
