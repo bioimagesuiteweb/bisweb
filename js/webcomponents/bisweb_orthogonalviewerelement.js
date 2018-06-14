@@ -98,6 +98,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                                     null,null,null,null];
 
         this.internal.midline=null;
+        this.internal.midline2=null;
         this.internal.midlinemessage=null;
         this.internal.midlinepresent=false;
         this.internal.midlinedata = {
@@ -525,14 +526,15 @@ class OrthogonalViewerElement extends BaseViewerElement {
         
         let x=e.pageX;
         let cnv=this.internal.midline;
+        let cnv2=this.internal.midline2;
         
 
         
         if (mode===0) {
             
             cnv.css({'left' : `${data.left-3}px`,
-                     'background-color' : '#dddddd',
-                     'width' : '7px'});
+                     'width' : '9px'});
+            cnv2.css({'left' : `${data.left-4}px`});
             data.origx=x;
             $('body').append(this.internal.midlinemessage);
             setTimeout( () => {
@@ -547,13 +549,13 @@ class OrthogonalViewerElement extends BaseViewerElement {
             let shift=x-data.origx;
             let l=data.left+shift;
             cnv.css({ 'left' : `${l-3}px`,});
+            cnv2.css({'left' : `${l-5}px`});
             return true;
         }
         
         if (mode===2) {
-            cnv.css({'width' : '1px' ,
-                     'background-color' : 'rgb(255,255,255,0.5)',
-                    });
+            cnv.css({'width' : '1px'  });
+            
             let shiftx=x-data.origx;
             let newleft=data.left+shiftx;
             let newclear=(newleft/data.left)*this.cleararea[0];
@@ -580,6 +582,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         if (!(this.is_slave_viewer && this.cleararea[1] < 0.95 && this.cleararea[1]>0.05)) {
             if (this.internal.midlinepresent) {
                 this.internal.midline.remove();
+                this.internal.midline2.remove();
                 this.internal.midlinepresent=false;
             }
             return;
@@ -594,12 +597,12 @@ class OrthogonalViewerElement extends BaseViewerElement {
 
         modifyCallbacks=function(add=0) {
 
-            let cnv=self.internal.midline;
+            let cnv2=self.internal.midline2;
             let par=$(parentcanvas).parent().parent();
 
             
             if (add===0) {
-                cnv[0].addEventListener('mousedown',downC);
+                cnv2[0].addEventListener('mousedown',downC);
             } else if (add===1)  {
                 par[0].addEventListener('mousemove',moveC);
                 par[0].addEventListener('mouseup',  upC);
@@ -613,12 +616,18 @@ class OrthogonalViewerElement extends BaseViewerElement {
         
 
         if (!this.internal.midline) {
-            let cnv=$(`<div style="cursor:ew-resize"></div>`);
+            let cnv=$(`<div></div>`);
             this.internal.midline=cnv;
             cnv.css({ 'position' : 'absolute',
                          'top' : '2px' ,
-                         'z-index' : 510,
+                         'z-index' : 600,
                     });
+
+            this.internal.midline2=$(`<div style="cursor:ew-resize"></div>`);
+            this.internal.midline2.css({ 'position' : 'absolute',
+                                         'top' : '2px' ,
+                                         'z-index' : 601,
+                                       });
 
             this.internal.midlinemessage = $('<div align="center" style="padding:2px; width:50vw; left:25vw; top:0vh; height:40px;' +
                                              'border-radius:30px;background-color:#884400; z-index:5000; position: absolute; color:#ffffff">' +
@@ -635,6 +644,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         if (!this.internal.midlinepresent) {
             let par=$(parentcanvas).parent().parent();
             par.append(this.internal.midline);
+            par.append(this.internal.midline2);
             this.internal.midlinepresent=true;
         }
 
@@ -642,7 +652,13 @@ class OrthogonalViewerElement extends BaseViewerElement {
             'height' : `${dh-2}px`,
             'width'  : '3px',
             'left'   : `${this.internal.midlinedata.left-1}px`,
-            'background-color' : 'rgb(255,255,255,0.5)',
+            'background-color' : 'rgb(128,128,128,1.0)',
+        });
+        this.internal.midline2.css({
+            'height' : `${dh-2}px`,
+            'width'  : '11px',
+            'left'   : `${this.internal.midlinedata.left-5}px`,
+            'background-color' : 'rgb(10,10,10,0.1)',
         });
     }
     
