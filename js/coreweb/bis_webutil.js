@@ -74,7 +74,7 @@ const bisweb_templates = `
     <div class="modal-content">
        <div class="modal-header">
 
-          <button type="button" class="bistoggle">&times;</button>
+          <button type="button" class="bistoggle"><span class="glyphicon glyphicon-remove"></span></button>
               <h4 class="modal-title">Modal title</h4>
        </div>
        <div class="modal-body">

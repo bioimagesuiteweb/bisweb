@@ -289,12 +289,13 @@ class ViewerApplicationElement extends HTMLElement {
         }
         
         let newdlg=new BisWebDialogElement();
-        newdlg.create(name,400,400);
+        newdlg.create(name,300,400);
         newdlg.makeDockable(this.VIEWERS[0].getLayoutController());
 
 
         var bbar=webutil.createbuttonbar({ parent: newdlg.widget,
-
+                                           css : { 'margin-top' : '10px' ,
+                                                   'margin-left' : '2px' }
                                          });
         
         var bbar1=webutil.createbuttonbar({ parent: bbar,

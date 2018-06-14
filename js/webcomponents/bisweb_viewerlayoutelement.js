@@ -153,7 +153,7 @@ class ViewerLayoutElement extends HTMLElement {
         let extrabarcss = { 
             'left' : `${extraleft}px`,
             'top'  : `${extratop-4}px`,
-            'width': `${extrawidth}px`,
+            'width': `${extrawidth-10}px`,
         //    'height':`${this.viewerheight+12}px`,
             'opacity' :'1.0',
         };
@@ -181,11 +181,11 @@ class ViewerLayoutElement extends HTMLElement {
             let a=parseInt(this.extraelements.widget.attr('nofooter'));
             console.log('attribute=',a);
             if (a) {
-                this.extraelements.header.css( { 'height' : `60px`});
-                this.extraelements.widget.css( { 'height' : `${this.viewerheight-62+12}px`});
+                this.extraelements.header.css( { 'height' : `100px`});
+                this.extraelements.widget.css( { 'height' : `${this.viewerheight-102+12}px`});
                 this.extraelements.footer.css( { 'height' : `2px`});
             } else {
-                this.extraelements.header.css( { 'height' : `60px`});
+                this.extraelements.header.css( { 'height' : `100px`});
                 this.extraelements.widget.css( { 'height' : `${this.viewerheight-160+12}px`});
                 this.extraelements.footer.css( { 'height' : `100px`});
             }
@@ -265,6 +265,9 @@ class ViewerLayoutElement extends HTMLElement {
             sidebar      :   webutil.creatediv({ parent : this.domElement,
                                                  css : {'position':'absolute',
                                                         'overflow-y': 'auto',
+                                                        'border-width' : '0px 0px 0px 2px',
+                                                        'border-color' : '#888888',
+                                                        'border-style' : 'solid',
                                                         'background-color': webutil.getpassivecolor()
                                                        }
                                                }),
@@ -276,6 +279,9 @@ class ViewerLayoutElement extends HTMLElement {
                                                         'margin-right' : '2px',
                                                         'margin-bottom' : '0px',
                                                         'opacity' : '0.0',
+                                                        'border-width' : '0px 2px 0px 0px',
+                                                        'border-color' : '#888888',
+                                                        'border-style' : 'solid',
                                                         'width' : `${this.extrabarwidth}px`,
                                                         'background-color':  webutil.getpassivecolor()
                                                        }
@@ -297,7 +303,7 @@ class ViewerLayoutElement extends HTMLElement {
                                   });
         
 
-        let minimizebutton=$(`<button type="button" class="bistoggle">&harr;</button>`);
+        let minimizebutton=$(`<button type="button" class="bistoggle"><span class="glyphicon glyphicon-resize-small"></span></button>`);
         minimizebutton.css({'margin' : '2px'});
         top.append(minimizebutton);
         
@@ -361,11 +367,13 @@ class ViewerLayoutElement extends HTMLElement {
         const self=this;
         minimizebutton.click(function(e) {
             e.preventDefault(); // cancel default behavior
+            minimizebutton.empty();
             if (self.minimizesidepanel) {
                 self.minimizesidepanel=0;
+                minimizebutton.append(`<span class="glyphicon glyphicon-resize-small"></span>`);
             } else {
                 self.minimizesidepanel=1;
-            }
+                minimizebutton.append(`<span class="glyphicon glyphicon-resize-full"></span>`);            }
             
             window.dispatchEvent(new Event('resize'));
         });

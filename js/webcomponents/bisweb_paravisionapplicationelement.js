@@ -95,11 +95,13 @@ class ParavisionApplicationElement extends ViewerApplicationElement {
         let fmenu=this.createFileAndOverlayMenus(menubar,null);
         this.createApplicationMenu(fmenu);
         let editmenu=this.createEditMenu(menubar);
+        this.createAdvancedTransferTool(modulemanager,editmenu);
+        
         this.createDisplayMenu(menubar,null);
 
         
         if (modulemanager!==null) 
-            modulemanager.initializeElements(menubar,self.VIEWERS,editmenu);
+            modulemanager.initializeElements(menubar,self.VIEWERS);
 
         if (misactool)
             misactool.addtomenubar(menubar);

@@ -25,6 +25,7 @@ const webutil=require('bis_webutil');
  */
 let globalOpenDialog=null;
 let globalPlacedDialog=null;
+let previousPlacedDialog=null;
 
 
 /** Dialogs that are open are stored in the dock
@@ -47,8 +48,8 @@ class BisWebDialogElement extends HTMLElement {
         this.dialog=null;
         this.docked=false;
         this.placed=false;
-        this.placeable=true;
-        this.placefooter=false;
+        this.placeable=false;
+        this.dockfooter=true;
         this.placedparent=null;
         this.widget=null;
         this.header=null;
@@ -75,6 +76,8 @@ class BisWebDialogElement extends HTMLElement {
         this.docked=false;
         this.layoutController=null;
         this.dockWidget=null;
+        this.togglebutton=null;
+        this.minimizebutton=null;
     }
 
     /** is dialog visible 
@@ -415,30 +418,54 @@ class BisWebDialogElement extends HTMLElement {
 
         if (!extrabutton)
             return;
-        
 
-        let but=$(`<button type="button" class="bistoggle">&harr;</button>`);
+        //glyphicon glyphicon-resize-small
 
+        let but=$(`<button type="button" class="bistoggle"><span class="glyphicon glyphicon-pushpin"></span></button>`);
+        this.minimizebutton=but;
+        this.togglebutton=$(`<button type="button" class="bistoggle"><span class="glyphicon glyphicon-triangle-left"></span></button>`);
 
         this.secondclose.after(but);
+        but.after(this.togglebutton);
         const self=this;
 
         but.click( (e) => {
+
             e.preventDefault();
             e.stopPropagation();
-            if (self.placeable===false) {
+
+            if (self.docked) {
+                this.unDockDialog();
+                this.placeDialog(true,'previous');
+                this.setPlacedWidth(this.dimensions.width+10);
+                but.empty();
+                but.append(`<span class="glyphicon glyphicon-resize-small"></span>`);
+            } else if (self.placeable===false) {
                 self.dockDialog();
             } else {
                 if (self.placed) {
                     if (this.layoutController.getextrabarwidth()<=100) {
-                        this.setPlacedWidth(this.dimensions.width+5);
+                        this.setPlacedWidth(this.dimensions.width+10);
+                        but.empty();
+                        but.append(`<span class="glyphicon glyphicon-resize-small"></span>`);
                     } else {
                         this.setPlacedWidth(99);
+                        but.empty();
+                        but.append(`<span class="glyphicon glyphicon-resize-full"></span>`);
                     }
                      
                 }
             }
             return false;
+        });
+
+
+        this.togglebutton.click( (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (previousPlacedDialog!==null) {
+                previousPlacedDialog.placeDialog(true,'previous');
+            }
         });
     }
 
@@ -453,12 +480,14 @@ class BisWebDialogElement extends HTMLElement {
             this.header.css({'border-bottom' : '0px','background-color' : webutil.getpassivecolor()});
             this.headertext.css({'opacity' : '0.05' });
             this.secondclose.css({'opacity' : '005', 'font-size' : '1px' });
+            this.togglebutton.css({'opacity' : '005', 'font-size' : '1px' });
         } else {
             this.widget.css({'opacity' : '1.0'});
             this.headertext.text(this.name);
             this.header.css({'border-bottom' : '1px','background-color' : webutil.getpassivecolor()});
             this.headertext.css({'opacity' : '1.0' });
             this.secondclose.css({'opacity' : '1.0', 'font-size' : '19px'  });
+            this.togglebutton.css({'opacity' : '1.0', 'font-size' : '19px'  });
         }
     }
     
@@ -467,16 +496,21 @@ class BisWebDialogElement extends HTMLElement {
      */
     placeDialog(show=true,footer=false) {
 
+        if (footer==='previous')
+            footer=this.dockfooter || false;
+        
         if (!this.layoutController || this.docked)
             return false;
 
         if (globalPlacedDialog!==null) {
             globalPlacedDialog.unDockDialog();
+            previousPlacedDialog=globalPlacedDialog;
             globalPlacedDialog=null;
+
         }
         
         this.placeable=true;
-        this.placefooter=footer;
+        this.dockfooter=footer;
         
         if (this.placed) {
             console.log('Showing');
@@ -503,6 +537,10 @@ class BisWebDialogElement extends HTMLElement {
         this.placed=true;
         globalPlacedDialog=this;
 
+        let but=this.minimizebutton;
+        but.empty();
+        but.append(`<span class="glyphicon glyphicon-resize-small"></span>`);
+        
         if (show) {
             window.dispatchEvent(new Event('resize'));
             this.showDockedDialog();
@@ -514,10 +552,19 @@ class BisWebDialogElement extends HTMLElement {
      */
     dockDialog(show=true,footer=true) {
 
+        if (this.placed) {
+            return this.placeDialog(show,footer);
+        }
+        
+        if (footer==='previous')
+            footer=this.dockfooter || false;
+
+        
         if (!this.layoutController || this.placed)
             return false;
 
         this.placeable=false;
+        this.dockfooter=footer;
         
         if (this.docked) {
             this.showDockedDialog();
@@ -530,7 +577,21 @@ class BisWebDialogElement extends HTMLElement {
         }
 
         this.hide();
+
         this.dockWidget=this.layoutController.createToolWidget(`${this.name}`);
+
+        if (this.minimizebutton) {
+            let t = webutil.creatediv({ parent: this.dockWidget,
+                                        css : { 'margin-bottom' : '5px',
+                                                'width' : '100%'
+                                              }
+                                      });
+            let but=this.minimizebutton;
+            but.empty();
+            but.append(`<span class="glyphicon glyphicon-pushpin"></span>`);
+            t.append(but);
+        }
+        this.widget.css({'opacity' : '1.0'});
         this.dockWidget.append(this.widget);
         if (footer) {
             this.dockWidget.append('<HR>');
@@ -544,13 +605,13 @@ class BisWebDialogElement extends HTMLElement {
     }
     
     /** Call to show docked dialog, i.e. make the panel visible and open */
-    showDockedDialog() {
+    showDockedDialog(showfooter='previous') {
         if (this.docked) {
             webutil.activateCollapseElement(this.dockWidget);
         } else if (this.placeable) {
             if (globalPlacedDialog!==this) 
-                this.placeDialog(true,this.placefooter);
-            this.setPlacedWidth(this.dimensions.width+5);
+                this.placeDialog(true,showfooter);
+            this.setPlacedWidth(this.dimensions.width+10);
         }
     }
 
@@ -563,7 +624,10 @@ class BisWebDialogElement extends HTMLElement {
         this.widgetbase.append(this.widget);
         this.footerbase.append(this.footer);
         this.widgetbase.css({ "max-height" : `${this.dimensions.height}px`});
-
+        if (this.minimizebutton) {
+            this.secondclose.after(this.minimizebutton);
+        }
+        
         if (!this.placed) {
             console.log('Removing dockwidget');
             this.dockWidget.parent().parent().remove();

@@ -351,7 +351,11 @@ class CollectionElement extends BisWebDialogElement {
 
         const self=this;
         this.internal.parentDomElement.empty();
-        let basediv=webutil.creatediv({ parent : this.internal.parentDomElement});
+        let basediv=webutil.creatediv({ parent : this.internal.parentDomElement,
+                                        css : {
+                                            'width' : '100%'
+                                        }
+                                      });
         this.internal.domElement=basediv;
         
         // --------------------------------------------
@@ -453,8 +457,8 @@ class CollectionElement extends BisWebDialogElement {
         let fn2= (() => {
             this.createObjectTypeSpecificInfo(elementtype);
             
-            this.create(this.specific.title);
-            this.makeDockable(layoutcontroller);
+            this.create(this.specific.title,500);
+            this.makeDockable(layoutcontroller,true);
             this.internal.parentDomElement=this.widget;
             this.createGUI(elementtype);
             if (this.dataCollection.getNumberOfItems()>0)

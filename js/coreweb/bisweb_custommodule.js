@@ -122,7 +122,7 @@ class CustomModule {
             this.footer= this.dialog.footer;
             this.basewidget.css({ "background-color" : "#333333" });
             if (baseframe!==null) {
-                this.dialog.makeDockable(baseframe);
+                this.dialog.makeDockable(baseframe,false);
             } else {
                 console.log('baseframe is null');
             }
