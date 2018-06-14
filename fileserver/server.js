@@ -372,7 +372,17 @@ let serveFileList = (socket, basedir = os.homedir(), depth = null) => {
                                     resolve(fileTreeIndex);
                                 }
                             } else {
-                                treeEntry.type = 'file';
+                                //if not a directory determine the filetype 
+                                //get the file extension by taking the file at the end of the path and looking after the last '.'
+                                let endFile = path.split('/');
+                                let splitEndFile = endFile[endFile.length-1].split('.');
+                                let filetype = splitEndFile[splitEndFile.length - 1];
+
+                                //console.log('endFile', endFile, 'filetype', filetype);
+                                switch (filetype) {
+                                    case 'gz' : treeEntry.type = 'picture'; break;
+                                    default : treeEntry.type = 'file'; 
+                                }
                                 resolve(fileTreeIndex);
                             }
 
@@ -395,7 +405,6 @@ let serveFileList = (socket, basedir = os.homedir(), depth = null) => {
     };
 
     expandDirectory(basedir, fileTree, 0).then( (tree) => {
-        console.log('tree', tree);
         socket.write(formatPacket('filelist', tree));
     });
 };

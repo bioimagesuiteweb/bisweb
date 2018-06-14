@@ -19,7 +19,7 @@
     * ~~Fix issue with Uint8Arrays~~ (Resolved by sending less per packet)
 
 * ~~Be asked to save data in a specific location (on the server machine)~~
-    * ~~gSolve the compression issue~~
+    * ~~Solve the compression issue~~
 
 * Be able to handle module invocations remotely (like WebWorkers), remote command execution, i.e. not modules just regular jobs
 

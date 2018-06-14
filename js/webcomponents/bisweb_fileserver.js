@@ -184,6 +184,12 @@ class FileServer extends HTMLElement {
                 },
                 'directory' : {
                     'icon' : 'glyphicon glyphicon-folder-close'
+                },
+                'picture' : {
+                    'icon' : 'glyphicon glyphicon-picture'
+                },
+                'javascript' : {
+                    'icon' : 'filetypes filetypes-js'
                 }
             },
             'plugins' : ["types"]
@@ -365,8 +371,6 @@ class FileServer extends HTMLElement {
                     setTimeout(() => { this.saveImageModal.dialog.modal('hide'); }, 1500);
                 }
 
-
-                console.log('name read off entry widget', name);
                 this.uploadFileToServer(socket, image, name, cb, eb);
 
                 let imageSavingDialog = $(`<p>Uploading image to file server...</p>`);
