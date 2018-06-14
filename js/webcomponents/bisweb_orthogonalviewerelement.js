@@ -97,7 +97,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
                                     null,null,
                                     null,null,null,null];
 
-        this.internal.midlinecanvas=null;
+        this.internal.midline=null;
+        this.internal.midlinemessage=null;
         this.internal.midlinepresent=false;
         this.internal.midlinedata = {
             left : -1,
@@ -401,16 +402,25 @@ class OrthogonalViewerElement extends BaseViewerElement {
     /** create arrow buttons
      * @param {JQueryWidget} base - the widget to add these too 
      */
-    createarrowbuttons(base) {
+    createarrowbuttons(base,fontsize) {
 
         if (this.internal.simplemode)
-            return;
-        
-        if (this.internal.arrowbuttons[0]!==null)
-            return;
-        
+            return fontsize;
+
+        let fn=Math.round(fontsize*2);
+        if (fn>30)
+            fn=30;
+        else if (fn<20)
+            fn=20;
+
+        if (this.internal.arrowbuttons[0]!==null) {
+            for (let ind=0;ind<=9;ind++) {
+                this.internal.arrowbuttons[ind].css({'font-size': `${fn}px`});
+            }
+            return fn;
+        }
         const self=this;
-        
+
         let symbols=[ 'glyphicon glyphicon-chevron-left',
                       'glyphicon glyphicon-pause',
                       'glyphicon glyphicon-play',
@@ -468,7 +478,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
             let a=`<span index="${ind}" class="${symbols[symindex]}"></span>`;
 
             this.internal.arrowbuttons[ind]=$(a);
-            this.internal.arrowbuttons[ind].css({'font-size': '30px',
+            this.internal.arrowbuttons[ind].css({'font-size': `${fn}px`,
                                                  'left': '100px',
                                                  'top' : '0px',
                                                  'padding' : '3px',
@@ -489,6 +499,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
 
 
         }
+        return fn;
     }
 
     hidearrowbuttons() {
@@ -513,7 +524,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         e.preventDefault();
         
         let x=e.pageX;
-        let cnv=this.internal.midlinecanvas;
+        let cnv=this.internal.midline;
         
 
         
@@ -523,6 +534,11 @@ class OrthogonalViewerElement extends BaseViewerElement {
                      'background-color' : '#dddddd',
                      'width' : '7px'});
             data.origx=x;
+            $('body').append(this.internal.midlinemessage);
+            setTimeout( () => {
+                this.internal.midlinemessage.remove();
+            },2000);
+
             modifyCallbacks(1);
             return true;
         }
@@ -541,7 +557,14 @@ class OrthogonalViewerElement extends BaseViewerElement {
             let shiftx=x-data.origx;
             let newleft=data.left+shiftx;
             let newclear=(newleft/data.left)*this.cleararea[0];
-            data.left=newleft;
+            if (newclear>0.45 && newclear<0.55) {
+                newclear=0.5;
+            } else if (newclear<0.1) {
+                newclear=0.1;
+            } else if (newclear>0.9) {
+                newclear=0.9;
+            }
+            data.left=data.left*(newclear/this.cleararea[0]);
             data.origx=-1;
             modifyCallbacks(2);
             setTimeout( () => {
@@ -552,11 +575,11 @@ class OrthogonalViewerElement extends BaseViewerElement {
         
     }
 
-    createmidlinecanvas(parentcanvas,dw,dh) {
+    createmidline(parentcanvas,dw,dh) {
  
         if (!(this.is_slave_viewer && this.cleararea[1] < 0.95 && this.cleararea[1]>0.05)) {
             if (this.internal.midlinepresent) {
-                this.internal.midlinecanvas.remove();
+                this.internal.midline.remove();
                 this.internal.midlinepresent=false;
             }
             return;
@@ -571,7 +594,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
 
         modifyCallbacks=function(add=0) {
 
-            let cnv=self.internal.midlinecanvas;
+            let cnv=self.internal.midline;
             let par=$(parentcanvas).parent().parent();
 
             
@@ -589,13 +612,19 @@ class OrthogonalViewerElement extends BaseViewerElement {
         };
         
 
-        if (!this.internal.midlinecanvas) {
-            let cnv=$(`<div></div>`);
-            this.internal.midlinecanvas=cnv;
+        if (!this.internal.midline) {
+            let cnv=$(`<div style="cursor:ew-resize"></div>`);
+            this.internal.midline=cnv;
             cnv.css({ 'position' : 'absolute',
                          'top' : '2px' ,
                          'z-index' : 510,
-                       });
+                    });
+
+            this.internal.midlinemessage = $('<div align="center" style="padding:2px; width:50vw; left:25vw; top:0vh; height:40px;' +
+                                             'border-radius:30px;background-color:#884400; z-index:5000; position: absolute; color:#ffffff">' +
+                                             '<H4>Drag the line to adjust the relative width of the two viewers</H4></div>');
+
+            
             modifyCallbacks(0);
         }
         
@@ -605,11 +634,11 @@ class OrthogonalViewerElement extends BaseViewerElement {
         
         if (!this.internal.midlinepresent) {
             let par=$(parentcanvas).parent().parent();
-            par.append(this.internal.midlinecanvas);
+            par.append(this.internal.midline);
             this.internal.midlinepresent=true;
         }
 
-        this.internal.midlinecanvas.css({
+        this.internal.midline.css({
             'height' : `${dh-2}px`,
             'width'  : '3px',
             'left'   : `${this.internal.midlinedata.left-1}px`,
@@ -635,9 +664,6 @@ class OrthogonalViewerElement extends BaseViewerElement {
             return;
         }
 
-        this.createarrowbuttons($(context.canvas).parent().parent());
-        this.createmidlinecanvas(context.canvas,dw,dh);
-
         // Add R&L s
         var labels = [ [ 'A','P', 'S','I' ] ,
                        [ 'R','L', 'S','I' ] ,
@@ -649,15 +675,20 @@ class OrthogonalViewerElement extends BaseViewerElement {
         if (this.internal.simplemode)
             fnsize=Math.round(2*webutil.getfontsize(context.canvas)/3);
         else
-            fnsize=Math.round(webutil.getfontsize(context.canvas));
-        if (fnsize>16)
-            fnsize=16;
+            fnsize=Math.round(webutil.getfontsize(context.canvas)*this.cleararea[1]);
+
         context.font=fnsize+"px Arial";
         if (this.internal.simplemode)
             context.fillStyle = "#884400";
         else
             context.fillStyle = "#cc6600";
 
+
+        let arrowsize=this.createarrowbuttons($(context.canvas).parent().parent(),fnsize);
+        this.createmidline(context.canvas,dw,dh);
+
+
+        
         var invorientaxis = this.internal.volume.getOrientation().invaxis;
         var orientaxis = this.internal.volume.getOrientation().axis;
         
@@ -676,7 +707,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                     if (dy>50)
                         dy=50;
                     
-                    let xshift=[ -(2+dx),dx-33];
+                    let xshift=[ -(2+dx),dx-(arrowsize+1)];
                     let xshift0=[-(2+dx),(dx+2)];
 
                     let ymid=Math.round( dh*(1.0-0.5*(vp.y0+vp.y1))+6);
@@ -708,15 +739,15 @@ class OrthogonalViewerElement extends BaseViewerElement {
                     let name=names[trueplane]+axes[orientaxis[trueplane]];
                     context.textAlign="start";
                     context.fillText(name,xmin,ymin);
-
-
                     
-
                     if (!this.internal.simplemode) {
-                        let l= [ Math.round((vp.x0)*parseInt(cdim['width']))+parseInt(cdim['left'])+xshift[0],
-                                 Math.round((vp.x1)*parseInt(cdim['width']))+parseInt(cdim['left'])+xshift[1] ];
+                        let wd=Math.round(parseInt(cdim['width']));
+                        let lf=Math.round(parseInt(cdim['left']));
+                        let l= [ Math.round(vp.x0*wd+lf+xshift[0]),
+                                 Math.round(vp.x1*wd+lf+xshift[1])];
                         if (l[0]<0)
                             l[0]=0;
+
                         
                         let h=Math.round((1-(0.75*vp.y1+0.25*vp.y0))*parseInt(cdim['height']))+parseInt(cdim['top']);
                         

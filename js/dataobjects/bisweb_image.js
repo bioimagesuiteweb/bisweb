@@ -1420,6 +1420,7 @@ class BisWebImage extends BisWebDataObject {
         for (let ia=0;ia<=2;ia++) {
             for (let ib=0;ib<=2;ib++) {
                 if (axis[ia]!=ib) {
+                    // probably spacing[ib] should be spacing[ia] !!!
                     if (Math.abs(combo[ia][ib]*internal.spacing[ib])>Math.abs(combo[ia][axis[ia]]*internal.spacing[axis[ia]])) {
                         axis[ia]=ib;
                     }
