@@ -73,7 +73,8 @@ const bisweb_templates = `
   <div class="modal-dialog">
     <div class="modal-content">
        <div class="modal-header">
-          <button type="button" class="close"><span aria-hidden="true">&times;</span></button>
+
+          <button type="button" class="bistoggle">&times;</button>
               <h4 class="modal-title">Modal title</h4>
        </div>
        <div class="modal-body">
@@ -947,6 +948,10 @@ const webutil = {
      */
     getpassivecolor: function () {
         return "#303030";
+    },
+
+    getpassivecolor2: function () {
+        return "#383838";
     },
 
     // ------------------------------------------------------------------------

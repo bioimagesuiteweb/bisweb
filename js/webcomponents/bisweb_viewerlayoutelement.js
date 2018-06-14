@@ -136,16 +136,16 @@ class ViewerLayoutElement extends HTMLElement {
         // Sidebar
         let sidebarcss = {
             'width' : `${sidewidth}px`,
-            'top'   : `${sidetop-5}px`,
-            'height': `${this.sidebarheight+13}px`,
+            'top'   : `${sidetop-4}px`,
+            'height': `${this.sidebarheight+12}px`,
             'left'  : `${sideleft}px`
         };
 
         let extrabarcss = { 
             'left' : `${extraleft}px`,
-            'top'  : `${extratop-5}px`,
-            'width': `${extrawidth-5}px`,
-            'height':`${this.viewerheight+13}px`,
+            'top'  : `${extratop-4}px`,
+            'width': `${extrawidth}px`,
+            'height':`${this.viewerheight+12}px`,
             'visibility' :'visible',
         };
         
@@ -254,8 +254,11 @@ class ViewerLayoutElement extends HTMLElement {
                                                         'margin-top' : '0px',
                                                         'margin-bottom' : '0px',
                                                         'overflow-y': 'auto',
+                                                        'border-width'  : '0px 2px 0px 2px',
+                                                        'border-style'  : 'solid',
+                                                        'border-color'  : '#888888',
                                                         'width' : `${this.extrabarwidth}px`,
-                                                        'background-color':  webutil.getpassivecolor()
+                                                        'background-color':  webutil.getpassivecolor2()
                                                        }
                                                }),
         };
@@ -268,15 +271,20 @@ class ViewerLayoutElement extends HTMLElement {
                                    css : { 'height' : '40px' }});
         
         let top=webutil.creatediv({ parent : zt,
-                                    css : { 'height' : '40px', 'float' :'right', 'fontsize' : '12', 'z-index' : 4000, 'margin-right' : '10px' }
+                                    css : {
+                                        'z-index' : 4000,
+                                        'width' : '100%',
+                                    }
                                   });
         
-        
-        let minimizebutton=$('<button type="button" class="close>  <span class="glyphicon glyphicon-align-left" aria-hidden="true"></span> </button>');
+
+        let minimizebutton=$(`<button type="button" class="bistoggle">&harr;</button>`);
+        minimizebutton.css({'margin' : '2px'});
         top.append(minimizebutton);
         
         
         let newpanel=webutil.createpanelgroup(this.elements.sidebar);
+        newpanel.css({ 'margin-top' : '10px'});
         this.elements.newpanel=newpanel;
         if (this.dualmode > 0) {
             this.elements.corecontrols=webutil.createCollapseElement(newpanel,'Viewer 1 Controls',coreopen);
@@ -387,12 +395,16 @@ class ViewerLayoutElement extends HTMLElement {
     }
 
     setextrabarwidth(n) {
-        if (n<0)
+        if (n<10)
             n=0;
         if (n>500)
             n=500;
         this.extrabarwidth=n;
         window.dispatchEvent(new Event('resize'));
+    }
+
+    getextrabarwidth() {
+        return this.extrabarwidth;
     }
                                                
     getviewerwidth() { 

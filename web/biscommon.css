@@ -306,3 +306,16 @@ body {
 }
 
 
+.bistoggle {
+    background-color : rgb(72,72,72);
+    float : right;
+    border : 2px;
+    border-color : rgb(24,24,24);
+    border-style : solid;
+    color : rgb(255,255,255);
+    position : relative;
+    font-size : 19px;
+    margin-left : 5px;
+}
+
+

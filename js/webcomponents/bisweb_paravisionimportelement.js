@@ -94,7 +94,7 @@ class ParavisionImportElement extends HTMLElement {
             return;
         
         internal.showdialog=webutil.createdialog("Converted Images",400,-1000,100,50 );
-        internal.showdialog.makeDockable(this.layoutcontroller,false);
+        internal.showdialog.makeDockable(this.layoutcontroller,true);
         internal.showdialog.placeDialog(false,false);
         let widget=internal.showdialog.widget;
         widget.css({ "overflow-y" : "hidden"});

@@ -24,6 +24,7 @@ const webutil=require('bis_webutil');
 /** Only one modules can be open at a time. This is stored in globalOpenDialog
  */
 let globalOpenDialog=null;
+let globalPlacedDialog=null;
 
 
 /** Dialogs that are open are stored in the dock
@@ -46,6 +47,8 @@ class BisWebDialogElement extends HTMLElement {
         this.dialog=null;
         this.docked=false;
         this.placed=false;
+        this.placeable=true;
+        this.placefooter=false;
         this.placedparent=null;
         this.widget=null;
         this.header=null;
@@ -208,7 +211,7 @@ class BisWebDialogElement extends HTMLElement {
         if (this.dialog===null)
             return;
         
-        if (this.docked === true || this.placed===true) {
+        if (this.docked === true || this.placed===true || this.placeable===true) {
             return this.showDockedDialog();
         }
 
@@ -262,7 +265,7 @@ class BisWebDialogElement extends HTMLElement {
     hide() {
 
         if (this.placed) {
-            this.layoutController.setextrabarwidth(0);
+            this.setPlacedWidth(0);
             return;
         }
         
@@ -331,8 +334,9 @@ class BisWebDialogElement extends HTMLElement {
 
         var newid = webutil.createWithTemplate(webutil.getTemplates().bisdialog, $('body'));
         var div = $('#' + newid);
-        div.find('.modal-title').text(name);
 
+        this.headertext=div.find('.modal-title');
+        this.headertext.text(name);
         this.dialog=div.find('.modal-dialog');
         this.content=div.find('.modal-content');
         this.widgetbase=div.find('.modal-body');
@@ -340,7 +344,7 @@ class BisWebDialogElement extends HTMLElement {
         this.header=div.find('.modal-header');
         this.headerbase=this.header.parent();
         this.close=div.find('.btn-default');
-        this.secondclose=div.find('.close');
+        this.secondclose=div.find('.bistoggle');
 
         this.widget = webutil.creatediv({ parent: this.widgetbase });
         this.footer = webutil.creatediv({ parent: this.footerbase });
@@ -397,8 +401,6 @@ class BisWebDialogElement extends HTMLElement {
             this.bindMouseEvents();
     }
 
-
-    
     /** add dock abilities 
      * @param {LayoutController} layout controller to put the dialog in (in sidebar)
      * @param {Boolean} createarrowbutton -- if true create extra button for docking on the fly
@@ -407,43 +409,88 @@ class BisWebDialogElement extends HTMLElement {
 
         if (this.layoutController!==null)
             return;
+
         
         this.layoutController=lcontroller;
+
         if (!extrabutton)
             return;
         
-        let but2=this.header.find('.close');
-        let but=$(`<button type="button" class="close"><span aria-hidden="true">&rarr;</span></button>`);
-        but.css({ 'margin-right' : '10px'});
-        but2.after(but);
+
+        let but=$(`<button type="button" class="bistoggle">&harr;</button>`);
+
+
+        this.secondclose.after(but);
         const self=this;
+
         but.click( (e) => {
             e.preventDefault();
             e.stopPropagation();
-            self.dockDialog();
+            if (self.placeable===false) {
+                self.dockDialog();
+            } else {
+                if (self.placed) {
+                    if (this.layoutController.getextrabarwidth()<=100) {
+                        this.setPlacedWidth(this.dimensions.width+5);
+                    } else {
+                        this.setPlacedWidth(99);
+                    }
+                     
+                }
+            }
             return false;
         });
-
     }
 
+    /** hidePlaced dialog */
+    setPlacedWidth(wd) {
+
+        this.layoutController.setextrabarwidth(wd);
+        
+        if (wd<100) {
+            this.widget.css({'opacity' : '0.05' });
+            this.headertext.text('');
+            this.header.css({'border-bottom' : '0px','background-color' : webutil.getpassivecolor2()});
+            this.headertext.css({'opacity' : '0.05' });
+            this.secondclose.css({'opacity' : '005', 'font-size' : '1px' });
+        } else {
+            this.widget.css({'opacity' : '1.0'});
+            this.headertext.text(this.name);
+            this.header.css({'border-bottom' : '1px','background-color' : webutil.getpassivecolor()});
+            this.headertext.css({'opacity' : '1.0' });
+            this.secondclose.css({'opacity' : '1.0', 'font-size' : '19px'  });
+        }
+    }
+    
     /** place the dialog inside the this.layoutController's extrabar
      * @param {Boolean} show - if true then show
      */
-    placeDialog(show=true,footer=true) {
+    placeDialog(show=true,footer=false) {
 
         if (!this.layoutController || this.docked)
             return false;
+
+        if (globalPlacedDialog!==null) {
+            globalPlacedDialog.unDockDialog();
+            globalPlacedDialog=null;
+        }
+        
+        this.placeable=true;
+        this.placefooter=footer;
         
         if (this.placed) {
+            console.log('Showing');
             this.showDockedDialog();
             return true;
         }
         
         this.hide();
         this.dockWidget=this.layoutController.getextrabar();
+        this.dockWidget.empty();
         this.dockWidget.append(this.header);
         this.dockWidget.append(this.widget);
 
+        
         if (footer) {
             this.dockWidget.append('<HR>');
             this.dockWidget.append(this.footer);
@@ -451,8 +498,12 @@ class BisWebDialogElement extends HTMLElement {
             this.widget.css({ 'max-height ':'2000px'});
         }
         this.placed=true;
-        if (show)
+        globalPlacedDialog=this;
+
+        if (show) {
+            console.log('Showing ...');
             this.showDockedDialog();
+        }
         return true;
     }
     /** dock the dialog inside the this.layoutController 
@@ -462,6 +513,8 @@ class BisWebDialogElement extends HTMLElement {
 
         if (!this.layoutController || this.placed)
             return false;
+
+        this.placeable=false;
         
         if (this.docked) {
             this.showDockedDialog();
@@ -489,11 +542,13 @@ class BisWebDialogElement extends HTMLElement {
     
     /** Call to show docked dialog, i.e. make the panel visible and open */
     showDockedDialog() {
-        if (this.docked)
+        if (this.docked) {
             webutil.activateCollapseElement(this.dockWidget);
-        else if (this.placed) 
-            this.layoutController.setextrabarwidth(this.dimensions.width+5);
-        
+        } else if (this.placeable) {
+            if (globalPlacedDialog!==this) 
+                this.placeDialog(true,this.placefooter);
+            this.setPlacedWidth(this.dimensions.width+5);
+        }
     }
 
     /** Call to move dialog GUI from dock back to dialog */
@@ -501,14 +556,17 @@ class BisWebDialogElement extends HTMLElement {
         if (!this.placed && !this.docked)
             return;
 
-        this.headerbase.append(this.header);
+        this.headerbase.prepend(this.header);
         this.widgetbase.append(this.widget);
         this.footerbase.append(this.footer);
         this.widgetbase.css({ "max-height" : `${this.dimensions.height}px`});
-        
-        this.dockWidget.parent().parent().remove();
-        if (this.placed) 
+
+        if (!this.placed) {
+            console.log('Removing dockwidget');
+            this.dockWidget.parent().parent().remove();
+        } else  {
             this.layoutController.setextrabarwidth(0);
+        }
         this.placed=false;
         this.docked=false;
     }
