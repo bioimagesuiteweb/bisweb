@@ -49,7 +49,6 @@ var detectWebGL = function() {
  *    id="viewer_layout"
  *    bis-sidewidth="400"
  *    bis-coreopen="true"
- *    bis-wholescreen="1"
  *    bis-minimizesidepanel="0"
  *    bis-defaulttext="">
  * </bisweb-viewerlayoutelement>
@@ -65,7 +64,6 @@ var detectWebGL = function() {
  * Attributes
  *     bis-sidewidth : width of the side panel in pixels
  *     bis-coreopen  : if true the core (top side panel) is open else closed
- *     bis-wholescreen : if 1 the viewer uses the whole screen else fits in a div element
  *     bis-minimizesidepanel : if 1 the side panel is minimized to a narrow column
  *     bis-defaulttext : text to draw in. If length > 10 and first character is not space then sets "simple mode"
  *     bis-dualmode : if 1 then operates in dual mode
@@ -76,6 +74,7 @@ class ViewerLayoutElement extends HTMLElement {
         super();
         this.minimizesidepanel=false;
         this.panelgroup=null;
+        this.extrabarwidth=0;
     }
     
     /** call when the window is resized to adjust the proportions */
@@ -90,28 +89,28 @@ class ViewerLayoutElement extends HTMLElement {
         if (window.innerWidth<2*sidewidth)
             sidewidth=Math.round(0.5*window.innerWidth);
         
-        if (this.wholescreen) {
-            this.viewerheight=window.innerHeight-topheight-100;
-            fullwidth=window.innerWidth;
-        } else {
-            if (this.clientHeight>1) {
-                this.viewerheight=this.clientHeight;
-                fullwidth=this.clientWidth;
-            } else {
-                this.viewerheight=this.parentNode.clientHeight-topheight;
-                fullwidth=this.parentNode.clientWidth;
-            }
-        }
+        this.viewerheight=window.innerHeight-topheight-100;
+        fullwidth=window.innerWidth;
         
         let sidetop=0,sideleft=0;
-        this.viewerwidth= fullwidth-sidewidth;
-        this.sidebarheight=this.viewerheight;
+        let extrawidth=this.extrabarwidth;
+        if (extrawidth<10) {
+            extrawidth=0;
+        }
 
+        this.viewerwidth= fullwidth-sidewidth-extrawidth;
+        this.sidebarheight=this.viewerheight;
+        let extratop=0;
+
+        let extraleft=0;
+            
         if ((this.viewerwidth<400 && this.minimizesidepanel===0) || (fullwidth<770)) {
             this.viewerwidth=fullwidth;
             if (this.viewerheight<600) {
                 this.viewerheight=this.viewerheight-100;
                 sidetop=this.viewerheight;
+                extratop=this.viewerheight*2;
+                extrawidth=this.viewerwidth;
                 this.viewerwidth=this.viewerwidth-10;
                 sidewidth=this.viewerwidth;
             } else {
@@ -122,16 +121,33 @@ class ViewerLayoutElement extends HTMLElement {
             }
 
         } else {
-            sideleft=this.viewerwidth;
+            extraleft=this.viewerwidth;
+            sideleft=this.viewerwidth+this.extrabarwidth;
         }
         
-        
-        let w_v  = `${this.viewerwidth}px`;
-        let w_h  = `${this.viewerheight}px`;
-        let w_e  = `${sidewidth}px`;
-        let s_t  = `${sidetop-5}px`;
-        let s_h  = `${this.sidebarheight+13}px`;
-        let s_l  = `${sideleft}px`;
+        // Viewer
+        let canvascss={
+            'left' : '0px',
+            'top'  : '0px',
+            'width': `${this.viewerwidth}px`,
+            'height':`${this.viewerheight}px`,
+        };
+
+        // Sidebar
+        let sidebarcss = {
+            'width' : `${sidewidth}px`,
+            'top'   : `${sidetop-5}px`,
+            'height': `${this.sidebarheight+13}px`,
+            'left'  : `${sideleft}px`
+        };
+
+        let extrabarcss = { 
+            'left' : `${extraleft}px`,
+            'top'  : `${extratop-5}px`,
+            'width': `${extrawidth-5}px`,
+            'height':`${this.viewerheight+13}px`,
+            'visibility' :'visible',
+        };
         
         
         if (this.minimizesidepanel) {
@@ -143,10 +159,16 @@ class ViewerLayoutElement extends HTMLElement {
             this.elements.newpanel.css({ 'opacity' : '1.0' });
             this.elements.sidebar.css({ 'overflow-x' : 'auto'});
         }
-        this.elements.rendererbase.css({'left' : '0px', 'top'  : '0px', 'width': w_v,   'height': w_h});
-        this.elements.canvasbase.css({'left' : '0px', 'top'  : '0px', 'width': w_v,    'height': w_h});
-        this.elements.sidebar.css({ 'width': w_e, 'top': s_t, 'left': s_l,  'height':s_h});
+
+        this.elements.rendererbase.css(canvascss);
+        this.elements.canvasbase.css(canvascss);
+        this.elements.sidebar.css(sidebarcss);
         
+        if (extrawidth<1) {
+            this.elements.extrabar.css({ 'visibility' :'hidden'});
+        } else {
+            this.elements.extrabar.css(extrabarcss);
+        }
         
         this.renderer.setSize(this.viewerwidth,this.viewerheight);
         this.canvas.width=this.viewerwidth;
@@ -182,9 +204,6 @@ class ViewerLayoutElement extends HTMLElement {
         // Query Properties
         this.sidepanelwidth=parseInt(this.getAttribute('bis-sidewidth')) || 150;
         this.topheight=parseInt(this.getAttribute('bis-topheight')) || 0;
-        this.wholescreen=parseInt(this.getAttribute('bis-wholescreen'));
-        if (this.wholescreen!==0)
-            this.wholescreen=1;
         this.dualmode=parseInt(this.getAttribute('bis-dualmode')) || 0;
         
         this.minimizesidepanel=parseInt(this.getAttribute('bis-minimizesidepanel') || 0 );
@@ -211,13 +230,34 @@ class ViewerLayoutElement extends HTMLElement {
         
         this.elements = {
             rendererbase :   webutil.creatediv({ parent : this.domElement ,
-                                                 css: { 'position' : 'absolute','z-index': '2' }}),
+                                                 css: { 'position' : 'absolute',
+                                                        'z-index': '2'
+                                                      }
+                                               }),
             canvasbase   :   webutil.creatediv({ parent : this.domElement,
-                                                 css: { 'position' : 'absolute','top':'0px','background-color': '#000000', 'z-index': '1' }}),
+                                                 css: { 'position' : 'absolute',
+                                                        'top':'0px',
+                                                        'background-color':
+                                                        '#000000', 'z-index': '1'
+                                                      }
+                                               }),
             sidebar      :   webutil.creatediv({ parent : this.domElement,
                                                  css : {'position':'absolute',
                                                         'overflow-y': 'auto',
-                                                        'background-color': webutil.getpassivecolor()}}),
+                                                        'background-color': webutil.getpassivecolor()
+                                                       }
+                                               }),
+            extrabar     :   webutil.creatediv({ parent : this.domElement,
+                                                 css : {'position':'absolute',
+                                                        'top' : '0px',
+                                                        'z-index' : '4',
+                                                        'margin-top' : '0px',
+                                                        'margin-bottom' : '0px',
+                                                        'overflow-y': 'auto',
+                                                        'width' : `${this.extrabarwidth}px`,
+                                                        'background-color':  webutil.getpassivecolor()
+                                                       }
+                                               }),
         };
         
         let b1=this.defaulttext.substr(0,1) || "";
@@ -341,7 +381,20 @@ class ViewerLayoutElement extends HTMLElement {
     getsidebar() {
         return this.elements.toolbase;
     }
-    
+
+    getextrabar() {
+        return this.elements.extrabar;
+    }
+
+    setextrabarwidth(n) {
+        if (n<0)
+            n=0;
+        if (n>500)
+            n=500;
+        this.extrabarwidth=n;
+        window.dispatchEvent(new Event('resize'));
+    }
+                                               
     getviewerwidth() { 
         return this.viewerwidth;
     }
