@@ -485,23 +485,26 @@ class BisWebDialogElement extends HTMLElement {
         }
         
         this.hide();
-        this.dockWidget=this.layoutController.getextrabar();
-        this.dockWidget.empty();
-        this.dockWidget.append(this.header);
-        this.dockWidget.append(this.widget);
 
+        let elements=this.layoutController.getextraelements();
+        console.log(elements);
+        elements.header.empty();
+        elements.header.append(this.header);
+        elements.widget.empty();
+        elements.widget.append(this.widget);
+        elements.footer.empty();
         
         if (footer) {
-            this.dockWidget.append('<HR>');
-            this.dockWidget.append(this.footer);
+            elements.footer.append(this.footer);
+            elements.widget.attr('nofooter','0');
         } else {
-            this.widget.css({ 'max-height ':'2000px'});
+            elements.widget.attr('nofooter','1');
         }
         this.placed=true;
         globalPlacedDialog=this;
 
         if (show) {
-            console.log('Showing ...');
+            window.dispatchEvent(new Event('resize'));
             this.showDockedDialog();
         }
         return true;
