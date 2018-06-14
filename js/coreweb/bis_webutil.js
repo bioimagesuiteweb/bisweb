@@ -1042,7 +1042,7 @@ const webutil = {
             b='success';
 
         let w = $(`<div class="alert alert-${b} alert-dismissible" role="alert"  
-style="position:absolute; top:${top}px; left:10px; z-index:${100+internal.alertcount}">
+style="position:absolute; top:${top}px; left:10px; z-index:${1000+internal.alertcount}">
  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${text}</div>`);
         
         $('body').append(w);
