@@ -451,7 +451,7 @@ class ViewerApplicationElement extends HTMLElement {
                                    parent : bottom,
                                    css : { 'width' : '120px' },
                                    callback : function() {
-                                       modulemanager.getAlgorithmController().undoImage();
+                                       modulemanager.getAlgorithmController().undoImage(true);
                                    }
                                  });
             
@@ -460,7 +460,7 @@ class ViewerApplicationElement extends HTMLElement {
                                    parent : bottom,
                                    css : { 'width' : '120px', 'left': '140px', 'position' : 'absolute' },
                                    callback : function() {
-                                       modulemanager.getAlgorithmController().redoImage();
+                                       modulemanager.getAlgorithmController().undoImage(false);
                                    }
                                  });
         }
@@ -763,11 +763,9 @@ class ViewerApplicationElement extends HTMLElement {
         
  
         if (this.num_independent_viewers > 1) {
-            webutil.createMenuItem(gmenu, extra+'Both Viewers 50/50', function () { self.VIEWERS[1].setDualViewerMode(0.5); });
-            webutil.createMenuItem(gmenu, extra+'Big Viewer 1 ', function () { self.VIEWERS[1].setDualViewerMode(0.75); });
-            webutil.createMenuItem(gmenu, extra+'Big Viewer 2 ', function () { self.VIEWERS[1].setDualViewerMode(0.25); });
-            webutil.createMenuItem(gmenu, extra+'Only Viewer 1', function () { self.VIEWERS[1].setDualViewerMode(1.0); });
-            webutil.createMenuItem(gmenu, extra+'Only Viewer 2', function () { self.VIEWERS[1].setDualViewerMode(0.0); });
+            webutil.createMenuItem(gmenu, extra+'Both Viewers', function () { self.VIEWERS[1].setDualViewerMode(0.5); });
+            webutil.createMenuItem(gmenu, extra+'Viewer 1 Only', function () { self.VIEWERS[1].setDualViewerMode(1.0); });
+            webutil.createMenuItem(gmenu, extra+'Viewer 2 Only', function () { self.VIEWERS[1].setDualViewerMode(0.0); });
             webutil.createMenuItem(gmenu,'');
             self.VIEWERS[0].setViewerMode('left', 0.5);
             self.VIEWERS[1].setViewerMode('right', 0.5);
