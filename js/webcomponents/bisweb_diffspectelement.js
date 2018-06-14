@@ -17,6 +17,7 @@ const LinearRegistration = require('linearRegistration');
 const ResliceImage = require('resliceImage');
 const NonlinearRegistration = require('nonlinearRegistration');
 const baseutils = require('baseutils');
+const BisDataObject = require('bisweb_dataobject');
 
 const spect_template = `
 						
@@ -416,9 +417,9 @@ class DiffSpectElement extends HTMLElement {
 
 	registerMRIToInterictal() {
 		if (app_state.mri === null ||
-			app_state.interictal === null||) {
+			app_state.interictal === null) {
 
-			error message("bad images");
+			errormessage("bad images");
 			return;
 		}
 
@@ -500,9 +501,11 @@ class DiffSpectElement extends HTMLElement {
 			});
 		} else {
 			
-			let p = [this.registerAtlasToMRI(), this.registerMRIToInterictal(), this.registerInterictalToIctal()];
+			let p1 = [this.registerAtlasToMRI(), this.registerMRIToInterictal(), this.registerInterictalToIctal()];
 
-			Promise.all(p).then( () => {
+			let reslicer = new ResliceImage();
+
+			Promise.all(p1).then( () => {
 				let input = {
 					'input' : app_state.ictal,
 					'xform' : app_state.atlastomri_xform,
@@ -511,10 +514,26 @@ class DiffSpectElement extends HTMLElement {
 					'reference': app_state.ATLAS_spect
 				};
 
-				let reslicer = new ResliceImage();
 				reslicer.execute(input).then( () => {
 					app_state.atlastoictal_reslice =reslicer.getOutputObject('output');
-				}
+				});
+			});
+
+			let p2 = [this.registerAtlasToMRI(), this.registerMRIToInterictal()];
+			
+			Promise.all(p2).then( () => {
+
+				let input = {
+					'input' : app_state.interictal,
+					'xform' : app_state.atlastomri_xform,
+					'xform2': app_state.mritointer_xform,
+					'reference': app_state.ATLAS_spect
+				};
+
+				reslicer.execute(input).then( () => {
+					app_state.atlastointer_reslice = reslicer.getOutputObject('output');
+				});
+
 			});
 		}
 	}
