@@ -450,7 +450,7 @@ class BisWebDialogElement extends HTMLElement {
         if (wd<100) {
             this.widget.css({'opacity' : '0.05' });
             this.headertext.text('');
-            this.header.css({'border-bottom' : '0px','background-color' : webutil.getpassivecolor2()});
+            this.header.css({'border-bottom' : '0px','background-color' : webutil.getpassivecolor()});
             this.headertext.css({'opacity' : '0.05' });
             this.secondclose.css({'opacity' : '005', 'font-size' : '1px' });
         } else {

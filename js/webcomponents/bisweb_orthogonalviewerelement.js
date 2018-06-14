@@ -557,8 +557,9 @@ class OrthogonalViewerElement extends BaseViewerElement {
             cnv.css({'width' : '1px'  });
             
             let shiftx=x-data.origx;
+            let offset=this.internal.layoutcontroller.getviewerleft();
             let newleft=data.left+shiftx;
-            let newclear=(newleft/data.left)*this.cleararea[0];
+            let newclear=((newleft-offset)/(data.left-offset))*this.cleararea[0];
             if (newclear>0.45 && newclear<0.55) {
                 newclear=0.5;
             } else if (newclear<0.1) {
@@ -566,7 +567,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
             } else if (newclear>0.9) {
                 newclear=0.9;
             }
-            data.left=data.left*(newclear/this.cleararea[0]);
+            data.left=(data.left-offset)*(newclear/this.cleararea[0])+offset;
             data.origx=-1;
             modifyCallbacks(2);
             setTimeout( () => {
@@ -638,7 +639,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
         }
         
         this.internal.midlinedata.origx=-1;
-        this.internal.midlinedata.left=this.cleararea[0]*dw;
+        let left=this.internal.layoutcontroller.getviewerleft();
+        this.internal.midlinedata.left=this.cleararea[0]*dw+left;
         this.internal.midlinedata.height=dh-2;
         
         if (!this.internal.midlinepresent) {
@@ -759,10 +761,12 @@ class OrthogonalViewerElement extends BaseViewerElement {
                     if (!this.internal.simplemode) {
                         let wd=Math.round(parseInt(cdim['width']));
                         let lf=Math.round(parseInt(cdim['left']));
-                        let l= [ Math.round(vp.x0*wd+lf+xshift[0]),
-                                 Math.round(vp.x1*wd+lf+xshift[1])];
+                        let left=this.internal.layoutcontroller.getviewerleft();
+                        let l= [ Math.round(vp.x0*wd+lf+xshift[0]+left),
+                                 Math.round(vp.x1*wd+lf+xshift[1])+left];
                         if (l[0]<0)
                             l[0]=0;
+                        
 
                         
                         let h=Math.round((1-(0.75*vp.y1+0.25*vp.y0))*parseInt(cdim['height']))+parseInt(cdim['top']);
@@ -810,9 +814,10 @@ class OrthogonalViewerElement extends BaseViewerElement {
             } else {
         
                 let lh=this.internal.layoutcontroller.getviewerheight();
+                let left=this.internal.layoutcontroller.getviewerleft();
                 let y0=0.92*lh+parseInt(cdim['top']);
                 for (let k=0;k<=3;k++) {
-                    this.internal.arrowbuttons[6+k].css({ 'left' :  `${50+40*k}px`,
+                    this.internal.arrowbuttons[6+k].css({ 'left' :  `${50+40*k+left}px`,
                                                           'top'  :  `${y0}px`,
                                                           'visibility' : 'visible'});
                 }

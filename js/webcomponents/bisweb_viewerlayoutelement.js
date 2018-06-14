@@ -75,6 +75,7 @@ class ViewerLayoutElement extends HTMLElement {
         this.minimizesidepanel=false;
         this.panelgroup=null;
         this.extrabarwidth=0;
+        this.viewerleft=0;
     }
     
     /** call when the window is resized to adjust the proportions */
@@ -104,7 +105,7 @@ class ViewerLayoutElement extends HTMLElement {
 
         let extraleft=0;
             
-        if ((this.viewerwidth<400 && this.minimizesidepanel===0) || (fullwidth<770)) {
+        if ( (extrawidth< 10) && ((this.viewerwidth<400 && this.minimizesidepanel===0) || (fullwidth<770))) {
             this.viewerwidth=fullwidth;
             if (this.viewerheight<600) {
                 this.viewerheight=this.viewerheight-100;
@@ -124,10 +125,14 @@ class ViewerLayoutElement extends HTMLElement {
             extraleft=this.viewerwidth;
             sideleft=this.viewerwidth+this.extrabarwidth;
         }
+
+        let vleft=extrawidth;
+        extraleft=0;
+        this.viewerleft=vleft;
         
         // Viewer
         let canvascss={
-            'left' : '0px',
+            'left' : `${vleft}px`,
             'top'  : '0px',
             'width': `${this.viewerwidth}px`,
             'height':`${this.viewerheight}px`,
@@ -267,7 +272,7 @@ class ViewerLayoutElement extends HTMLElement {
                                                         'border-style'  : 'solid',
                                                         'border-color'  : 'rgba(128,64,0,0.0)',
                                                         'width' : `${this.extrabarwidth}px`,
-                                                        'background-color':  webutil.getpassivecolor2()
+                                                        'background-color':  webutil.getpassivecolor()
                                                        }
                                                }),
         };
@@ -422,6 +427,11 @@ class ViewerLayoutElement extends HTMLElement {
 
     getviewerheight() { 
         return this.viewerheight;
+    }
+
+
+    getviewerleft() { 
+        return this.viewerleft;
     }
 
     
