@@ -43,7 +43,7 @@ let ModuleList={};
  * @param {object} opts - the options object 
  * @param {Number} opts.numViewers - Number of Image Viewers attached
  * @param {String} opts.name - Name of the panel / panel (if set)
- * @param {Boolean} opts.showfirsttime - If true and docked, whether to show first time it is created
+ * @param {Boolean} opts.dual - If true allow dock and side bar (default false)
  */
 
 class CustomModule {
@@ -82,18 +82,29 @@ class CustomModule {
         this.inputControllers = {};
 
         this.name = opts.name || this.description.dialogname || this.description.name;
-
+        this.dual = opts.dual || false;
+        
         // Three states
 
         this.panel=new BisWebPanel(layoutcontroller,{
             name : this.name,
-            width : 300,
-            hasfooter : true,
+            width : 250,
+            hasfooter : false,
+            dual : this.dual,
         });
-        
-        this.basewidget = this.panel.getWidget();
-        this.footer= this.panel.getFooter();
-        this.basewidget.css({ "background-color" : "#333333" });
+
+        this.basewidget=webutil.creatediv({  parent: this.panel.getWidget(),
+                                             css : {
+                                                 'padding-top' : '10px',
+                                                 'padding-left' : '2px'
+                                             }
+                                          });
+        this.footer=webutil.creatediv({  parent: this.panel.getWidget(),
+                                         css : {
+                                             'padding-top' : '20px',
+                                             'padding-left' : '2px'
+                                         }
+                                      });
         ModuleList[this.name]=this;
         this.threadmanager = $("bisweb-webworkercontroller")[0] || null;
     }
@@ -333,28 +344,23 @@ class CustomModule {
             this.guiVars = generatedContent.guiVars;
             this.parameterControllers = generatedContent.controllers;
             
-            let frame = $(this.basewidget);
-            let oldcolor = frame.css('backgroundColor');
             
             let enableUI = ((status = false) => {
 
                 webutil.enablebutton(generatedContent.runbutton, status);
                 webutil.enablebutton(generatedContent.undobutton, status);
                 webutil.enablebutton(generatedContent.redobutton, status);
-                
-                if (status)
-                    frame.css({ 'background-color': oldcolor });
-                else
-                    frame.css({ 'background-color': webutil.getactivecolor() });
             });
 
 
             generatedContent.runbutton[0].addEventListener("click", (e) => {
                 e.preventDefault();
                 enableUI(false);
+                this.panel.makeActive(true);
                 webutil.createAlert('Invoking Module '+self.module.name,'progress',10,100000);
                 setTimeout(() => {
                     this.executeModule().then(() => {
+                        this.panel.makeActive(false);
                         $('.alert-success').remove();
                         enableUI(true);
                     }).catch((e) => {

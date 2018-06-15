@@ -70,20 +70,24 @@ class BisWebPanel {
             'width' : '100%',
             'background-color' : webutil.getpassivecolor(),
         }});
-        
-        this.widget=webutil.creatediv({
+
+        this.widgetbase=webutil.creatediv({
             css  : {
                 'width' : '99%',
                 'padding-top' : '5px',
                 'margin-left' : '2px',
                 'margin-right' : '2px',
                 'margin-bottom' : '0px'
-                
             }});
+        this.widget=webutil.creatediv({
+            parent : this.widgetbase,
+        });
+        
         this.header=null;
         this.minimalHeader=null;
         this.titleNameBar=null;
         this.state="empty";
+        this.minimized=false;
         this.dockWidget=null;
         this.dockWidgetHeader=null;
         this.backButton=null;
@@ -142,7 +146,39 @@ class BisWebPanel {
         }
     }
 
+    /** Check if it is visible 
+     * @returns true or false
+     */
+    isOpen() {
+        
+        if (this.state==="docked") {
+            if (webutil.isCollapseElementOpen(this.dockWidget))
+                return true;
+        }
+        
+        if (this.state==="sidebar" && !this.minimized)
+            return true;
 
+        return false;
+    }
+
+    /** Demonstrate that the widget in in use (active)
+     * @param {Boolean} flag -- if true make background active else passive 
+     */
+    
+    makeActive(flag=true) {
+
+        let w=this.widget.parent();
+        
+        if (flag) {
+            w.css({'background-color': webutil.getactivecolor()});
+        } else {
+            let x = w.parent().css('backgroundColor');
+            w.css({'background-color':x});
+        }
+    }
+
+    
     createHeader() {
 
         if (this.closeButton!==null)
@@ -246,10 +282,6 @@ class BisWebPanel {
         buttonbar.append(this.backButton);
         this.minimalHeader.append(this.sidebarMaximizeButton);
 
-        console.log('max=',this.sidebarMaximizeButton);
-
-
-        
         this.titleNameBar.append(`<H4 style="margin-top:0px;margin-left:5px;line-height:1.5">${this.options.name}</H4>`);
 
     }
@@ -266,23 +298,25 @@ class BisWebPanel {
 
         if (this.state==="sidebar") {
             this.remove();
-        } else if (this.options.permanent===false && globalDockedPanels.length===maxGlobalDockedPanels) {
-            let toremove=globalDockedPanels.shift();
-            toremove.remove();
+        }
+
+        if (this.options.permanent===false) {
+            while (globalDockedPanels.length>=maxGlobalDockedPanels) {
+                let toremove=globalDockedPanels.shift();
+                toremove.remove();
+            }
         }
 
         if (this.dockWidget===null) {
             this.dockWidget=this.layoutController.createToolWidget(`${this.options.name}`);
-            
-            
             if (this.dockToggleButton) {
                 let t=this.dockWidget.parent().parent().find('.panel-heading');
                 this.dockToggleButton.css({'border' : '0px', 'font-size' : '17px'});
                 t.prepend(this.dockToggleButton);
             }
         }
-        this.widget.css({'opacity' : '1.0'});
-        this.dockWidget.append(this.widget);
+        this.widgetbase.css({'opacity' : '1.0'});
+        this.dockWidget.append(this.widgetbase);
         if (this.options.hasfooter) {
             this.dockWidget.append('<HR>');
             this.footer.css({'opacity' : '1.0'});
@@ -306,13 +340,15 @@ class BisWebPanel {
         let elements=this.layoutController.getextraelements();
         
         if (wd<100) {
-            this.widget.css({'opacity' : '0.05' });
+            this.minimized=true;
+            this.widgetbase.css({'opacity' : '0.05' });
             this.dummyWidget.append(this.header);
             this.dummyWidget.append(this.footer);
             elements.header.append(this.minimalHeader);
             this.footer.css({'opacity' : '0.05'});
         } else {
-            this.widget.css({'opacity' : '1.0'});
+            this.minimized=false;
+            this.widgetbase.css({'opacity' : '1.0'});
             this.footer.css({'opacity' : '1.0'});
             this.dummyWidget.append(this.minimalHeader);
             elements.header.append(this.header);
@@ -343,7 +379,7 @@ class BisWebPanel {
 
         elements.header.append(this.header);
         elements.widget.empty();
-        elements.widget.append(this.widget);
+        elements.widget.append(this.widgetbase);
         elements.footer.empty();
         
         if (this.options.hasfooter) {
@@ -364,6 +400,10 @@ class BisWebPanel {
     /** Call to move dialog GUI from dock back to dialog */
     remove() {
 
+        this.dummyWidget.append(this.widgetbase);
+        this.dummyWidget.append(this.footer);
+
+        
         if (this.state==="docked") {
             if (this.dockToggleButton)
                 this.dummyWidget.append(this.dockToggleButton);
@@ -372,11 +412,15 @@ class BisWebPanel {
             this.options.initialstate="docked";
         } else if (this.state==="sidebar") {
             this.dummyWidget.append(this.header);
-            this.dummyWidget.append(this.widget);
-            this.dummyWidget.append(this.footer);
             this.layoutController.setextrabarwidth(0);
             this.options.initialstate="sidebar";
         }
+
+        let index=globalDockedPanels.indexOf(this);
+
+        if (index>=0)
+            globalDockedPanels.splice(index,1);
+
         this.state="empty";
         return true;
     }

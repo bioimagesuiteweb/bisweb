@@ -1772,27 +1772,20 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             let cw=internal.context.canvas.width;
             let vp=internal.parcellation.viewport;
             let width  = 350;
-            let height = 1500;
             console.log('vp='+[vp.x0,vp.x1,vp.y0,vp.y1]+' w*h'+[cw,ch]);
 
             let showdialog=new BisWebPanel(internal.layoutmanager,
                                            {
                                                name :"Top "+maxnodes+" Nodes<BR>(sorted by degree)",
                                                width : width,
-                                               height : height,
                                                mode : 'sidebar',
-                                               dual : false
+                                               dual : false,
                                            });
 
 
             let templates=webutil.getTemplates();
             let newid=webutil.createWithTemplate(templates.bisscrolltable,$('body'));
             let stable=$('#'+newid);
-            let t1 = stable.find(".bistscroll");
-            let hgt=height-100;
-            $(t1).css({
-                height: hgt+"px",
-            });
             
             let buttonnodepairs = [];
             let callback = function(e) {
@@ -2022,7 +2015,7 @@ class ConnectivityControl extends HTMLElement {
 
         let panel=new BisWebPanel(layoutcontroller,
                                   { name : "Connectivity Control",
-                                    permanent : "true"
+                                    permanent : "true",
                                   });
         panel.show();
         this.innercontrol=bisGUIConnectivityControl(panel.getWidget(),viewer,layoutcontroller);

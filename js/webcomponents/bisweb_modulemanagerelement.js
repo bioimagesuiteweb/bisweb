@@ -153,7 +153,7 @@ class ModuleManagerElement extends HTMLElement {
         for (let i = 0; i < numviewers; i++)
             this.viewers[i].addImageChangedObserver(this);
 
-        let moduleoptions = { 'numViewers': numviewers };
+        let moduleoptions = { 'numViewers': numviewers, 'dual' : true };
 
         this.moduleMenu[1] = webutil.createTopMenuBarMenu('Image Processing', menubar);
 

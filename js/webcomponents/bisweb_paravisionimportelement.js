@@ -73,7 +73,7 @@ class ParavisionImportElement extends HTMLElement {
             viewers  : [],
             table : null,
             buttonpairs : {},
-            showdialog : null,
+            showpanel : null,
             joblist : [],
             lastfilename : '',
         };
@@ -94,13 +94,12 @@ class ParavisionImportElement extends HTMLElement {
         if (internal.parentDomElement===null)
             return;
         
-        internal.showdialog=new BisWebPanel(this.layoutcontroller,
+        internal.showpanel=new BisWebPanel(this.layoutcontroller,
                                             {
                                                 name : "Converted Images",
                                                 width : 350,
-                                                height : 1000,
                                                 mode : 'sidebar',
-                                                dual : false,
+                                                dual : true,
                                             });
         let templates=webutil.getTemplates();
         internal.parentDomElement.empty();
@@ -115,7 +114,7 @@ class ParavisionImportElement extends HTMLElement {
         let tbody = stable.find(".bistbody");
         thead.empty();
         tbody.empty();
-        internal.showdialog.getWidget().append(stable);
+        internal.showpanel.getWidget().append(stable);
         
         tbody.css({'font-size':'12px',
                    'user-select': 'none'});
@@ -148,7 +147,7 @@ class ParavisionImportElement extends HTMLElement {
                                parent : basediv1,
                                css : { 'width' : '90%' , 'margin' : '3px' },
                                callback : function() {
-                                   internal.showdialog.show();},
+                                   internal.showpanel.show();},
                              });
         
         webutil.createbutton({ type : "info",
@@ -368,7 +367,7 @@ class ParavisionImportElement extends HTMLElement {
         window.BISELECTRON.ipc.send('showconsole','');
         window.BISELECTRON.ipc.send('clearconsole','');
         internal.table.empty();
-        internal.showdialog.show();
+        internal.showpanel.show();
         internal.buttonpairs={};
         internal.joblist=[];
 
@@ -439,7 +438,7 @@ class ParavisionImportElement extends HTMLElement {
             internal.buttonpairs=[];
             internal.joblist=[];
             let n=data.length;
-            internal.showdialog.show();
+            internal.showpanel.show();
             internal.table.empty();
             for (let ic=0;ic<n;ic++) {
                 if (path.isAbsolute(data[ic].filename)) {

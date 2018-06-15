@@ -76,7 +76,6 @@ class LandmarkControlElement extends HTMLElement {
             volume : null,
             parentDomElement : null,
             domElement : null,
-            dockWidget : null,
             orthoviewer : null,
             
             // landmarks and index to current one
@@ -115,6 +114,8 @@ class LandmarkControlElement extends HTMLElement {
             lastpoint : null,
             lastplane : null,
         };
+
+        this.panel=null;
 
     }
 
@@ -648,13 +649,12 @@ class LandmarkControlElement extends HTMLElement {
 
         if (this.internal.data.enabled===true) {
             this.updatecolors();
-            this.internal.domElement.css({'background-color': webutil.getactivecolor()});
+            this.panel.makeActive(true);
             this.internal.landlabelelement.removeClass('label-success');
             this.internal.landlabelelement.addClass('label-danger');
             inobounce.enable();
         } else {
-            var x = this.internal.domElement.parent().css('backgroundColor');
-            this.internal.domElement.css({'background-color':x});
+            this.panel.makeActive(false);
             this.internal.landlabelelement.removeClass('label-danger');
             this.internal.landlabelelement.addClass('label-success');
             this.picklandmark(false);
@@ -959,28 +959,27 @@ class LandmarkControlElement extends HTMLElement {
     connectedCallback() {
 
         
-        this.internal.dockWidget=null;
         let viewerid=this.getAttribute('bis-viewerid');
         let layoutid=this.getAttribute('bis-layoutwidgetid');
         this.internal.orthoviewer=document.querySelector(viewerid);
         this.internal.orthoviewer.addMouseObserver(this);
         
         let layoutcontroller=document.querySelector(layoutid);
-        this.dialog=new BisWebPanel(layoutcontroller,
+        this.panel=new BisWebPanel(layoutcontroller,
                                     {  name  : 'Landmark Editor',
                                        permanent : true,
                                        width : '290',
-                                       dual : true,
+                                       dual : false,
                                     });
-        this.internal.parentDomElement=this.dialog.getWidget();
+        this.internal.parentDomElement=this.panel.getWidget();
         var basediv=$("<div>This will appear once an image is loaded.</div>");
         this.internal.parentDomElement.append(basediv);
     }
 
     show() {
-        this.dialog.show();
-        this.internal.dockWidget=this.dialog.getDockWidget();
+        this.panel.show();
     }
+
     
     /** Called by OrthoViewer */
     initialize(subviewers,volume,samesize=false) {
@@ -1040,11 +1039,8 @@ class LandmarkControlElement extends HTMLElement {
         
         if (this.internal.data.enabled===false)
             return;
-
-        if (!this.internal.dockWidget)
-            return;
         
-        if (!webutil.isCollapseElementOpen(this.internal.dockWidget)) 
+        if (!this.panel.isOpen())
             return;
 
         if (mousestate===0) {

@@ -83,7 +83,6 @@ class PaintToolElement extends HTMLElement {
             undostack : new UndoStack(100,10),
             currentundoarray : [],
             parentDomElement : null,
-            domElement : null,
 
             // Viewer to update
             orthoviewer : null,
@@ -151,16 +150,16 @@ class PaintToolElement extends HTMLElement {
 
         this.internal.layoutcontroller=document.querySelector(layoutid);
 
-        let panel=new BisWebPanel(this.internal.layoutcontroller,
-                                  {
-                                      'name' : 'Paint Tool',
-                                      'dual' : true,
-                                      'permanent' : true,
-                                      'width' : '300px'
-                                  });
+        this.panel=new BisWebPanel(this.internal.layoutcontroller,
+                                   {
+                                       'name' : 'Paint Tool',
+                                       'dual' : false,
+                                       'permanent' : true,
+                                       'width' : '300px'
+                                   });
        
-        panel.show();
-        this.internal.parentDomElement=panel.getWidget();
+        this.panel.show();
+        this.internal.parentDomElement=this.panel.getWidget();
         var basediv=$("<div>Paint tool will appear once an image is loaded.</div>");
         this.internal.parentDomElement.append(basediv);
         this.internal.orthoviewer=in_orthoviewer;
@@ -191,11 +190,10 @@ class PaintToolElement extends HTMLElement {
         this.internal.data.enabled=doenable;
 
         if (this.internal.data.enabled) {
-            this.internal.domElement.css({'background-color': webutil.getactivecolor()});
+            this.panel.makeActive(true);
             inobounce.enable();
         } else {
-            var x = this.internal.domElement.parent().css('backgroundColor');
-            this.internal.domElement.css({'background-color':x});
+            this.panel.makeActive(false);
             inobounce.disable();
         }
     }
@@ -741,14 +739,12 @@ class PaintToolElement extends HTMLElement {
         if (this.internal.parentDomElement===null)
             return;
 
-
         this.internal.parentDomElement.empty();
-        var basediv=webutil.creatediv({ parent : this.internal.parentDomElement});
-        this.internal.domElement=basediv;
+        let basediv=webutil.creatediv({ parent : this.internal.parentDomElement});
 
-        var sbar=webutil.createbuttonbar({ parent: basediv});
-        var sbar2=webutil.createbuttonbar({ parent: basediv});
-
+        let sbar=webutil.createbuttonbar({ parent: basediv});
+        let sbar2=webutil.createbuttonbar({ parent: basediv});
+        
         const self=this;
         const en_clb=function(sel) { self.enableEdit(sel); };
 
@@ -986,9 +982,10 @@ class PaintToolElement extends HTMLElement {
         if (this.internal.morphologyModule && good)
             this.internal.morphologyModule.updateCrossHairs(x);
 
-        if (!webutil.isCollapseElementOpen(this.internal.parentDomElement)) {
+
+        if (!this.panel.isOpen())
             return;
-        }
+    
         
         if (mousestate === undefined || this.internal.objectmap===null || this.internal.data.enabled===false) {
             return;
@@ -1083,8 +1080,7 @@ class PaintToolElement extends HTMLElement {
                 };
 
                 let moduleoptions = { 'numViewers' : 0,
-                                      'dockable' : true ,
-                                      'forcedock' : true
+                                      'dual' : false ,
                                     };
 
                 moduleoptions.name='Create Objectmap';
