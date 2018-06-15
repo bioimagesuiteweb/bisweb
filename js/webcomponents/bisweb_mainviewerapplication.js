@@ -287,13 +287,17 @@ class ViewerApplicationElement extends HTMLElement {
         if (!modulemanager) {
             name='App State Manager';
         }
+
+        let dual=false;
+        if (this.num_independent_viewers >1) {
+            dual=true;
+        }
         
         let newdlg=new BisWebPanel(this.VIEWERS[0].getLayoutController(),
                                    {
                                        name : name,
                                        width :300,
-                                       height : 400,
-                                       dual : true,
+                                       dual : dual,
                                    });
 
         var bbar=webutil.createbuttonbar({ parent: newdlg.getWidget(),

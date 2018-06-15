@@ -60,6 +60,9 @@ class BisWebPanel {
         this.options.hasfooter=options.hasfooter || false;
         this.options.permanent=options.permanent || false;
 
+        if (this.options.permanent)
+            this.options.dual=false;
+        
         this.footer=webutil.creatediv({ css  : {
             'padding-bottom' : '5px',
             'padding-top' : '5px',
@@ -186,9 +189,7 @@ class BisWebPanel {
             return;
         }
         
-        this.dockToggleButton=$(`<button type="button" class="bistoggle"><span class="glyphicon glyphicon-pushpin"></span></button>`);
-        
-
+        this.dockToggleButton=$(`<button type="button" class="bistoggle bisflip"><span class="glyphicon glyphicon-log-out"></span></button>`);
         
         this.dockToggleButton.click( (e) => {
             e.preventDefault();
@@ -291,8 +292,10 @@ class BisWebPanel {
 
         if (this.dockWidget===null) {
             this.dockWidget=this.layoutController.createToolWidget(`${this.options.name}`);
+            let t=this.dockWidget.parent().parent().find('.panel-heading');
+            if (this.options.permanent) 
+                t.prepend(`<span style="float:right" class="glyphicon glyphicon-pushpin"></span>`);
             if (this.dockToggleButton) {
-                let t=this.dockWidget.parent().parent().find('.panel-heading');
                 this.dockToggleButton.css({'border' : '0px', 'font-size' : '17px'});
                 t.prepend(this.dockToggleButton);
             }
