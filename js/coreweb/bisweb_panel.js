@@ -27,7 +27,7 @@ const webutil=require('bis_webutil');
 
 let globalDockedPanels=[];
 let permanentPanels=[];
-let maxGlobalDockedPanels=3;
+let maxGlobalDockedPanels=4;
 let globalSidebarPanel=null;
 
 /**
@@ -60,8 +60,10 @@ class BisWebPanel {
         this.options.hasfooter=options.hasfooter || false;
         this.options.permanent=options.permanent || false;
 
-        if (this.options.permanent)
+        if (this.options.permanent) {
             this.options.dual=false;
+            this.options.initialstate="docked";
+        }
         
         this.footer=webutil.creatediv({ css  : {
             'padding-bottom' : '5px',
@@ -89,15 +91,16 @@ class BisWebPanel {
         this.minimalHeader=null;
         this.titleNameBar=null;
         this.state="empty";
-        this.minimized=false;
         this.dockWidget=null;
         this.dockWidgetHeader=null;
 
         this.dockToggleButton=null;
+        this.dockCloseButton=null;
+        
         this.sidebarToggleButton=null;
         this.sidebarMinimizeButton=null;
         this.sidebarMaximizeButton=null;
-        this.closeButton=null;
+        this.sidebarCloseButton=null;
         this.dummyWidget=$('<div></div>');
         this.createHeader();
     }
@@ -120,20 +123,20 @@ class BisWebPanel {
             if (this.options.initialstate!=="sidebar") {
                 this.addToDock();
             } else {
-                this.addToSidebar(true);
+                this.addToSidebar();
             }
         } else {
             if (this.state!=="sidebar")
                 this.addToDock();
             else
-                this.addToSidebar(true);
+                this.addToSidebar();
         }
     }
     /** Hides the dialog and renables any drag and drop elements present */
     hide() {
 
         if (this.state==="sidebar") {
-            this.setSidebarWidth(0);
+            this.drawInSidebarWithWidth(0);
             return;
         }
     }
@@ -149,7 +152,7 @@ class BisWebPanel {
                 return true;
         }
         
-        if (this.state==="sidebar" && !this.minimized)
+        if (this.state==="sidebar")
             return true;
 
         return false;
@@ -174,16 +177,29 @@ class BisWebPanel {
     
     createHeader() {
 
-        if (this.closeButton!==null)
+        if (this.sidebarCloseButton!==null)
             return;
 
         const self=this;
-        this.closeButton=$(`<button type="button" class="bistoggle">&times;</button>`);
-        this.closeButton.click( (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            self.hide();
-        });
+
+        if (this.options.initialstate==="sidebar" || this.options.dual) {
+            this.sidebarCloseButton=$(`<button type="button" class="bistoggle"><span class="glyphicon glyphicon-remove-circle"></span></button>`);
+            this.sidebarCloseButton.click( (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                self.hide();
+            });
+        }
+
+        if ( (this.options.initialstate==="docked" && !this.options.permanent) || (this.options.dual)) {
+            this.dockCloseButton=$(`<button type="button" class="bistoggle"><span class="glyphicon glyphicon-remove-circle"></span></button>`);
+            this.dockCloseButton.click( (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                self.remove();
+            });
+        }
+
 
         if (this.options.initialstate === "docked" && this.options.dual===false) {
             return;
@@ -196,7 +212,7 @@ class BisWebPanel {
             e.stopPropagation();
             self.remove();
             self.addToSidebar();
-            self.setSidebarWidth(this.options.width+15);
+            self.drawInSidebarWithWidth(this.options.width+15);
             return false;
         });
 
@@ -205,6 +221,7 @@ class BisWebPanel {
             this.sidebarToggleButton.click( (e) => {
                 e.preventDefault();
                 e.stopPropagation();
+                console.log('This far and no further');
                 self.addToDock();
                 return false;
             });
@@ -215,7 +232,7 @@ class BisWebPanel {
         this.sidebarMinimizeButton.click( (e) => {
             e.preventDefault();
             e.stopPropagation();
-            self.setSidebarWidth(55);
+            self.drawInSidebarWithWidth(60);
             return false;
         });
 
@@ -223,10 +240,9 @@ class BisWebPanel {
         this.sidebarMaximizeButton.click( (e) => {
             e.preventDefault();
             e.stopPropagation();
-            self.setSidebarWidth(self.options.width+15);
+            self.drawInSidebarWithWidth(self.options.width+15);
             return false;
         });
-
 
         this.header=$('<div></div>');
         if (this.options.name.length>10)
@@ -257,7 +273,7 @@ class BisWebPanel {
             }});
         
 
-        buttonbar.append(this.closeButton);
+        buttonbar.append(this.sidebarCloseButton);
         buttonbar.append(this.sidebarMinimizeButton);
         if (this.options.dual) {
             buttonbar.append(this.sidebarToggleButton);
@@ -273,7 +289,7 @@ class BisWebPanel {
      * @param {LayoutController} layout controller to put the dialog in (in sidebar)
      * @param {Boolean} createarrowbutton -- if true create extra button for docking on the fly
      */
-    addToDock(show=true) {
+    addToDock() {
 
         if (this.state==="docked") {
             return webutil.activateCollapseElement(this.dockWidget);
@@ -299,6 +315,11 @@ class BisWebPanel {
                 this.dockToggleButton.css({'border' : '0px', 'font-size' : '17px'});
                 t.prepend(this.dockToggleButton);
             }
+            if (this.dockCloseButton) {
+                this.dockCloseButton.css({'border' : '0px', 'font-size' : '17px'});
+                t.prepend(this.dockCloseButton);
+            }
+         
         }
         this.widgetbase.css({'opacity' : '1.0'});
         this.dockWidget.append(this.widgetbase);
@@ -313,43 +334,55 @@ class BisWebPanel {
         else
             permanentPanels.push(this);
         
-        if (show)
-            webutil.activateCollapseElement(this.dockWidget);
+        webutil.activateCollapseElement(this.dockWidget);
         return true;
     }
 
     /** hidePlaced dialog */
-    setSidebarWidth(wd) {
+    drawInSidebarWithWidth(wd) {
 
         this.layoutController.setextrabarwidth(wd);
         let elements=this.layoutController.getextraelements();
-
-        if (this.state!=="sidebar")
-            return;
         
-        if (wd<100) {
-            this.minimized=true;
-            this.widgetbase.css({'opacity' : '0.05' });
+        if (wd<100 && this.state!=="empty") {
+
             this.dummyWidget.append(this.header);
             this.dummyWidget.append(this.footer);
-            elements.header.append(this.minimalHeader);
-            this.footer.css({'opacity' : '0.05'});
-        } else {
-            this.minimized=false;
-            this.widgetbase.css({'opacity' : '1.0'});
-            this.footer.css({'opacity' : '1.0'});
-            this.dummyWidget.append(this.minimalHeader);
-            elements.header.append(this.header);
+            this.dummyWidget.append(this.widgetbase);
+            if (wd>10)
+                elements.header.append(this.minimalHeader);
+            else
+                this.dummyWidget.append(this.minimalHeader);
+            this.state="empty";
+            return;
         }
+
+        if (this.state==="sidebar")
+            return;
+        
+        this.dummyWidget.append(this.minimalHeader);
+
+        elements.header.empty();
+        elements.header.append(this.header);
+        elements.widget.empty();
+        elements.widget.append(this.widgetbase);
+        elements.footer.empty();
+        if (this.options.hasfooter) {
+            elements.footer.append(this.footer);
+            elements.widget.attr('nofooter','0');
+        } else {
+            elements.widget.attr('nofooter','1');
+        }
+        this.state="sidebar";
     }
     
     /** place the dialog inside the this.layoutController's extrabar
      * @param {Boolean} show - if true then show
      */
-    addToSidebar(show=true) {
+    addToSidebar() {
 
         if (this.state==="sidebar") {
-            this.setSidebarWidth(this.options.width+15);
+            this.drawInSidebarWithWidth(this.options.width+15);
             return;
         }
 
@@ -359,49 +392,26 @@ class BisWebPanel {
         if (globalSidebarPanel)
             globalSidebarPanel.remove();
         
-
-        let elements=this.layoutController.getextraelements();
-        elements.header.empty();
-
-        elements.header.append(this.header);
-        elements.widget.empty();
-        elements.widget.append(this.widgetbase);
-        elements.footer.empty();
-        
-        if (this.options.hasfooter) {
-            elements.footer.append(this.footer);
-            elements.widget.attr('nofooter','0');
-        } else {
-            elements.widget.attr('nofooter','1');
-        }
-        this.state="sidebar";
-
         globalSidebarPanel=this;
-        
-        if (show) {
-            this.setSidebarWidth(this.options.width+15);
-        }
+        this.drawInSidebarWithWidth(this.options.width+15);
         return true;
     }
     
     /** Call to move dialog GUI from dock back to dialog */
     remove() {
 
-        this.dummyWidget.append(this.widgetbase);
-        this.dummyWidget.append(this.footer);
-        
-        
         if (this.state==="docked") {
             if (this.dockToggleButton)
                 this.dummyWidget.append(this.dockToggleButton);
-            
+            if (this.dockCloseButton)
+                this.dummyWidget.append(this.dockCloseButton);
+
+            this.dummyWidget.append(this.widgetbase);
+            this.dummyWidget.append(this.footer);
             this.dockWidget.parent().parent().remove();
             this.dockWidget=null;
-            this.options.initialstate="docked";
         } else if (this.state==="sidebar") {
-            this.dummyWidget.append(this.header);
-            this.options.initialstate="sidebar";
-            this.layoutController.setextrabarwidth(0);
+            this.drawInSidebarWithWidth(0);
             globalSidebarPanel=null;
         }
 

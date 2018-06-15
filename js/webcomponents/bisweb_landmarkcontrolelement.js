@@ -967,7 +967,7 @@ class LandmarkControlElement extends HTMLElement {
         let layoutcontroller=document.querySelector(layoutid);
         this.panel=new BisWebPanel(layoutcontroller,
                                     {  name  : 'Landmark Editor',
-                                       permanent : true,
+                                       permanent : false,
                                        width : '290',
                                        dual : false,
                                     });

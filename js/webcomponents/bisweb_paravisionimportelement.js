@@ -521,7 +521,9 @@ class ParavisionImportElement extends HTMLElement {
         
         this.layoutcontroller=document.querySelector(layoutid);
         let panel=new BisWebPanel(this.layoutcontroller,
-                                  { name : "Paravision Import"});
+                                  { name : "Paravision Import",
+                                    permanent : true,
+                                  });
         panel.show();
         const self=this;
         this.internal.this=self;

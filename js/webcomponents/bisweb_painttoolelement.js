@@ -164,7 +164,7 @@ class PaintToolElement extends HTMLElement {
         this.internal.parentDomElement.append(basediv);
         this.internal.orthoviewer=in_orthoviewer;
         this.internal.orthoviewer.addMouseObserver(this);
-        BisWebPanel.setMaxDockedPanels(1);
+        BisWebPanel.setMaxDockedPanels(2);
     }
 
     // --------------------------------------------------------------------------------

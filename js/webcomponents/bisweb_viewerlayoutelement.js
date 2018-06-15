@@ -85,7 +85,7 @@ class ViewerLayoutElement extends HTMLElement {
         
         let sidewidth=this.sidepanelwidth;
         if (this.minimizesidepanel)
-            sidewidth=40;
+            sidewidth=50;
         let topheight=this.topheight;
         let fullwidth=0;
 
