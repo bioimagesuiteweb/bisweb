@@ -727,18 +727,6 @@ class BaseViewerElement extends HTMLElement {
     }
 
     // -----------------------------------------------------------------------------
-    //  Create Tool Holder
-    // -----------------------------------------------------------------------------
-    /** create a tool widget and add it to right pane
-     * @param {string} name - title of tool
-     * @param {boolean} open - if true panel is created open
-     * @returns {JQueryElement} element to create new tool in
-     */
-    createToolWidget(name,open) {
-        return this.internal.layoutcontroller.createToolWidget(name,open);
-    }
-    
-    // -----------------------------------------------------------------------------
     //  finalize tools
     // -----------------------------------------------------------------------------
     /** finalizes the tool layout

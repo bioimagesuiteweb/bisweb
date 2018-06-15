@@ -26,6 +26,7 @@ const webutil=require('bis_webutil');
  */
 let globalSidebarPanel=null;
 let globalDockedPanels=[];
+let permanentPanels=[];
 let maxGlobalDockedPanels=3;
 
 
@@ -41,9 +42,9 @@ class BisWebPanel {
         * @param {Object} options - the options object
         * @param {String} options.name - the title string
         * @param {number} options.width - the width of the panel
-        * @param {number} options.height - the height of the panel
         * @param {number} options.mode - the mode of the panel (one of "docked", "sidebar" )
         * @param {number} options.dual - if true , enable hopping from docked to sidebar
+        * @param {number} options.permanent - if true and in docked, this does not get count towards globalDockedPanels max limits
         */
        
     
@@ -55,12 +56,17 @@ class BisWebPanel {
         this.options = { };
         this.options.name =options.name || 'Tool';
 
-        this.options.width= parseInt(options.width) || 400;
-        this.options.height=parseInt(options.height) || 400;
-        this.initialstate = options.mode || 'docked';
+        this.options.width= parseInt(options.width) || 300;
+        this.options.initialstate = options.mode || 'docked';
         this.options.dual = options.dual || false;
         this.options.hasfooter=options.hasfooter || false;
+        this.options.permanent=options.permanent || false;
 
+        /*        if (this.options.permanent) {
+                  this.options.initialstate='docked';
+                  this.options.dual=false;
+                  }*/
+        
         this.footer=webutil.creatediv({ css  : {
             'margin-bottom' : '5px',
             'margin-top' : '5px',
@@ -79,6 +85,7 @@ class BisWebPanel {
                                             
                                         }});
         this.header=null;
+        this.minimalHeader=null;
         this.titleNameBar=null;
         this.state="empty";
         this.dockWidget=null;
@@ -86,6 +93,8 @@ class BisWebPanel {
         this.backButton=null;
         this.dockToggleButton=null;
         this.sidebarToggleButton=null;
+        this.sidebarMinimizeButton=null;
+        this.sidebarMaximizeButton=null;
         this.closeButton=null;
         this.dummyWidget=$('<div></div>');
         this.createHeader();
@@ -116,7 +125,7 @@ class BisWebPanel {
     show() {
 
         if (this.state==="empty") {
-            if (this.initialstate!=="sidebar") {
+            if (this.options.initialstate!=="sidebar") {
                 this.addToDock();
             } else {
                 this.addToSidebar(true);
@@ -137,10 +146,6 @@ class BisWebPanel {
         }
     }
 
-    getDimensions() {
-            return [ this.width, this.height];
-    }
-
 
     createHeader() {
 
@@ -155,12 +160,12 @@ class BisWebPanel {
             self.hide();
         });
 
-        if (this.initialstate === "docked" && this.options.dual===false) {
+        if (this.options.initialstate === "docked" && this.options.dual===false) {
             return;
         }
         
         this.dockToggleButton=$(`<button type="button" class="bistoggle"><span class="glyphicon glyphicon-pushpin"></span></button>`);
-
+        
 
         
         this.dockToggleButton.click( (e) => {
@@ -169,24 +174,31 @@ class BisWebPanel {
             self.remove();
             self.addToSidebar();
             self.setSidebarWidth(this.options.width+15);
+            return false;
         });
 
-        this.sidebarToggleButton=$(`<button type="button" class="bistoggle"><span class="glyphicon glyphicon-resize-small"></span></button>`);
+        this.sidebarToggleButton=$(`<button type="button" class="bistoggle"><span class="glyphicon glyphicon-log-out"></span></button>`);
         this.sidebarToggleButton.click( (e) => {
             e.preventDefault();
             e.stopPropagation();
-            let w=self.layoutController.getextrabarwidth();
-                
-            if (w<100) {
-                self.setSidebarWidth(self.options.width+15);
-                self.sidebarToggleButton.empty();
-                self.sidebarToggleButton.append(`<span class="glyphicon glyphicon-resize-small"></span>`);
-            } else {
-                self.setSidebarWidth(99);
-                self.sidebarToggleButton.empty();
-                self.sidebarToggleButton.append(`<span class="glyphicon glyphicon-resize-full"></span>`);
-            }
-            
+            self.addToDock();
+            return false;
+        });
+
+
+        this.sidebarMinimizeButton=$(`<button type="button" class="bistoggle"><span class="glyphicon glyphicon-resize-small"></span></button>`);
+        this.sidebarMinimizeButton.click( (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            self.setSidebarWidth(55);
+            return false;
+        });
+
+        this.sidebarMaximizeButton=$(`<button type="button" class="bistoggle"><span class="glyphicon glyphicon-resize-full"></span></button>`);
+        this.sidebarMaximizeButton.click( (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            self.setSidebarWidth(self.options.width+15);
             return false;
         });
 
@@ -200,6 +212,7 @@ class BisWebPanel {
         });
 
         this.header=$('<div></div>');
+        this.minimalHeader=$('<div></div>');
         this.header.css({
             'background-color' : webutil.getactivecolor(),
         });
@@ -227,8 +240,15 @@ class BisWebPanel {
     
 
         buttonbar.append(this.closeButton);
+        buttonbar.append(this.sidebarMinimizeButton);
         buttonbar.append(this.sidebarToggleButton);
         buttonbar.append(this.backButton);
+        this.minimalHeader.append(this.sidebarMaximizeButton);
+
+        console.log('max=',this.sidebarMaximizeButton);
+
+
+        
         this.titleNameBar.append(`<H5>${this.options.name}</H5>`);
 
     }
@@ -245,20 +265,19 @@ class BisWebPanel {
 
         if (this.state==="sidebar") {
             this.remove();
-        } else if (globalDockedPanels.length===maxGlobalDockedPanels) {
+        } else if (this.options.permanent===false && globalDockedPanels.length===maxGlobalDockedPanels) {
             let toremove=globalDockedPanels.shift();
             toremove.remove();
         }
 
         if (this.dockWidget===null) {
             this.dockWidget=this.layoutController.createToolWidget(`${this.options.name}`);
+            
+            
             if (this.dockToggleButton) {
-                let t = webutil.creatediv({ parent: this.dockWidget,
-                                            css : { 'margin-bottom' : '5px',
-                                                    'width' : '100%'
-                                                  }
-                                          });
-                t.append(this.dockToggleButton);
+                let t=this.dockWidget.parent().parent().find('.panel-heading');
+                this.dockToggleButton.css({'border' : '0px', 'font-size' : '17px'});
+                t.prepend(this.dockToggleButton);
             }
         }
         this.widget.css({'opacity' : '1.0'});
@@ -269,7 +288,11 @@ class BisWebPanel {
             this.dockWidget.append(this.footer);
         }
         this.state="docked";
-        globalDockedPanels.push(this);
+        if (!this.options.permanent)
+            globalDockedPanels.push(this);
+        else
+            permanentPanels.push(this);
+        
         if (show)
             webutil.activateCollapseElement(this.dockWidget);
         return true;
@@ -281,19 +304,19 @@ class BisWebPanel {
         this.layoutController.setextrabarwidth(wd);
         this.titleNameBar.empty();
 
+        let elements=this.layoutController.getextraelements();
+        
         if (wd<100) {
             this.widget.css({'opacity' : '0.05' });
-            this.header.css({'border-bottom' : '0px','background-color' : webutil.getpassivecolor()});
-            this.closeButton.css({'opacity' : '005', 'font-size' : '1px' });
-            this.backButton.css({'opacity' : '005', 'font-size' : '1px' });
+            this.dummyWidget.append(this.header);
+            this.dummyWidget.append(this.footer);
+            elements.header.append(this.minimalHeader);
             this.footer.css({'opacity' : '0.05'});
         } else {
             this.widget.css({'opacity' : '1.0'});
-            this.titleNameBar.append(`<H5>${this.options.name}</H5>`);
-            this.header.css({'border-bottom' : '1px','background-color' : webutil.getpassivecolor()});
-            this.closeButton.css({'opacity' : '1.0', 'font-size' : '19px'  });
-            this.backButton.css({'opacity' : '1.0', 'font-size' : '19px'  });
             this.footer.css({'opacity' : '1.0'});
+            this.dummyWidget.append(this.minimalHeader);
+            elements.header.append(this.header);
         }
     }
     
@@ -319,7 +342,6 @@ class BisWebPanel {
         let elements=this.layoutController.getextraelements();
         elements.header.empty();
 
-        
         elements.header.append(this.header);
         elements.widget.empty();
         elements.widget.append(this.widget);
@@ -348,11 +370,13 @@ class BisWebPanel {
                 this.dummyWidget.append(this.dockToggleButton);
             this.dockWidget.parent().parent().remove();
             this.dockWidget=null;
+            this.options.initialstate="docked";
         } else if (this.state==="sidebar") {
             this.dummyWidget.append(this.header);
             this.dummyWidget.append(this.widget);
             this.dummyWidget.append(this.footer);
             this.layoutController.setextrabarwidth(0);
+            this.options.initialstate="sidebar";
         }
         this.state="empty";
         return true;
@@ -363,7 +387,7 @@ class BisWebPanel {
     }
 
     static getActivePanels() {
-        return globalDockedPanels;
+        return globalDockedPanels.concat(permanentPanels);
     }
 
     

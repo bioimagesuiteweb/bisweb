@@ -967,7 +967,10 @@ class LandmarkControlElement extends HTMLElement {
         
         let layoutcontroller=document.querySelector(layoutid);
         this.dialog=new BisWebPanel(layoutcontroller,
-                                    {  name  : 'Landmark Editor'});
+                                    {  name  : 'Landmark Editor',
+                                       permanent : true,
+                                       dual : true,
+                                    });
         this.internal.parentDomElement=this.dialog.getWidget();
         var basediv=$("<div>This will appear once an image is loaded.</div>");
         this.internal.parentDomElement.append(basediv);

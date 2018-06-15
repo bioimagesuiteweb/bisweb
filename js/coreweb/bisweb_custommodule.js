@@ -88,7 +88,6 @@ class CustomModule {
         this.panel=new BisWebPanel(layoutcontroller,{
             name : this.name,
             width : 300,
-            height : 500,
             hasfooter : true,
         });
         
@@ -219,8 +218,6 @@ class CustomModule {
      */
     updateModuleGUIFromInputObjects() {
 
-        console.log('Updating module gui',this.name);
-        
         let inputelements = this.getCurrentInputObjects();
         this.description = this.module.updateOnChangedInput(inputelements, this.parameterControllers, this.guiVars);
 
@@ -564,12 +561,9 @@ let updateModules = function() {
 
     let panels=BisWebPanel.getActivePanels();
     for (let i=0;i<panels.length;i++) {
-        console.log('In Step ',i,panels.length,' panel=',panels[i]);
         if (panels[i]) {
             let mod=ModuleList[panels[i].options.name];
-            console.log('Panels=',i,panels[i].options.name,' mod=',mod);
             if (mod) {
-                console.log('Panels=',i,mod.name);
                 mod.createOrUpdateGUI();
             }
         }
