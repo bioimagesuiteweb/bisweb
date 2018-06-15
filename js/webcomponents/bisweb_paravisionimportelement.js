@@ -97,8 +97,8 @@ class ParavisionImportElement extends HTMLElement {
         internal.showdialog=new BisWebPanel(this.layoutcontroller,
                                             {
                                                 name : "Converted Images",
-                                                width : '400',
-                                                height : '1000',
+                                                width : 350,
+                                                height : 1000,
                                                 mode : 'sidebar',
                                                 dual : true
                                             });

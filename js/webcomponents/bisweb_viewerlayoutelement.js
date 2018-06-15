@@ -453,6 +453,7 @@ class ViewerLayoutElement extends HTMLElement {
             n=0;
         if (n>500)
             n=500;
+        console.log('New extrabar=',this.extrabarwidth);
         this.extrabarwidth=n;
         window.dispatchEvent(new Event('resize'));
     }

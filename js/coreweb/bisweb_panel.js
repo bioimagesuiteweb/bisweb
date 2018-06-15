@@ -55,8 +55,8 @@ class BisWebPanel {
         this.options = { };
         this.options.name =options.name || 'Tool';
 
-        this.options.width=options.width || 400;
-        this.options.height=options.height || 400;
+        this.options.width= parseInt(options.width) || 400;
+        this.options.height=parseInt(options.height) || 400;
         this.initialstate = options.mode || 'docked';
         this.options.dual = options.dual || false;
         this.options.hasfooter=options.hasfooter || false;
@@ -349,8 +349,6 @@ class BisWebPanel {
             this.dockWidget.parent().parent().remove();
             this.dockWidget=null;
         } else if (this.state==="sidebar") {
-            let elements=this.layoutController.getextraelements();
-
             this.dummyWidget.append(this.header);
             this.dummyWidget.append(this.widget);
             this.dummyWidget.append(this.footer);
@@ -365,7 +363,6 @@ class BisWebPanel {
     }
 
     static getActivePanels() {
-        console.log('globalDocked=',globalDockedPanels.join(' '));
         return globalDockedPanels;
     }
 
