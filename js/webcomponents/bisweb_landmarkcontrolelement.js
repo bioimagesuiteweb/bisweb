@@ -969,6 +969,7 @@ class LandmarkControlElement extends HTMLElement {
         this.dialog=new BisWebPanel(layoutcontroller,
                                     {  name  : 'Landmark Editor',
                                        permanent : true,
+                                       width : '290',
                                        dual : true,
                                     });
         this.internal.parentDomElement=this.dialog.getWidget();

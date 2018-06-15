@@ -2019,9 +2019,13 @@ class ConnectivityControl extends HTMLElement {
         let layoutid=this.getAttribute('bis-layoutwidgetid');
         let viewer=document.querySelector(viewerid);
         let layoutcontroller=document.querySelector(layoutid);
-        let basegui=layoutcontroller.createToolWidget('Connectivity Control',true);
 
-        this.innercontrol=bisGUIConnectivityControl(basegui,viewer,layoutcontroller);
+        let panel=new BisWebPanel(layoutcontroller,
+                                  { name : "Connectivity Control",
+                                    permanent : "true"
+                                  });
+        panel.show();
+        this.innercontrol=bisGUIConnectivityControl(panel.getWidget(),viewer,layoutcontroller);
     }
 
     /** load parcellation file 

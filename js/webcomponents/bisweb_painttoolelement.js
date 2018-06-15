@@ -151,9 +151,16 @@ class PaintToolElement extends HTMLElement {
 
         this.internal.layoutcontroller=document.querySelector(layoutid);
 
-        let in_parent=this.internal.layoutcontroller.createToolWidget('Paint Tool',true);
-
-        this.internal.parentDomElement=in_parent;
+        let panel=new BisWebPanel(this.internal.layoutcontroller,
+                                  {
+                                      'name' : 'Paint Tool',
+                                      'dual' : true,
+                                      'permanent' : true,
+                                      'width' : '300px'
+                                  });
+       
+        panel.show();
+        this.internal.parentDomElement=panel.getWidget();
         var basediv=$("<div>Paint tool will appear once an image is loaded.</div>");
         this.internal.parentDomElement.append(basediv);
         this.internal.orthoviewer=in_orthoviewer;

@@ -100,7 +100,7 @@ class ParavisionImportElement extends HTMLElement {
                                                 width : 350,
                                                 height : 1000,
                                                 mode : 'sidebar',
-                                                dual : true
+                                                dual : false,
                                             });
         let templates=webutil.getTemplates();
         internal.parentDomElement.empty();
@@ -521,12 +521,12 @@ class ParavisionImportElement extends HTMLElement {
 
         
         this.layoutcontroller=document.querySelector(layoutid);
-        let basegui=this.layoutcontroller.createToolWidget('Paravision Import',true);
-
+        let panel=new BisWebPanel(this.layoutcontroller,
+                                  { name : "Paravision Import"});
+        panel.show();
         const self=this;
-        
         this.internal.this=self;
-        this.internal.parentDomElement=basegui;
+        this.internal.parentDomElement=panel.getWidget();
         let basediv=$("<div>To appear...</div>");
         this.internal.parentDomElement.append(basediv);
 

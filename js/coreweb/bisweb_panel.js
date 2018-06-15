@@ -62,28 +62,24 @@ class BisWebPanel {
         this.options.hasfooter=options.hasfooter || false;
         this.options.permanent=options.permanent || false;
 
-        /*        if (this.options.permanent) {
-                  this.options.initialstate='docked';
-                  this.options.dual=false;
-                  }*/
-        
         this.footer=webutil.creatediv({ css  : {
-            'margin-bottom' : '5px',
-            'margin-top' : '5px',
+            'padding-bottom' : '5px',
+            'padding-top' : '5px',
             'margin-left' : '2px',
             'margin-right' : '2px',
             'width' : '100%',
+            'background-color' : webutil.getpassivecolor(),
         }});
         
         this.widget=webutil.creatediv({
-                                        css  : {
-                                            'width' : '99%',
-                                            'margin-top' : '0px',
-                                            'margin-left' : '2px',
-                                            'margin-right' : '2px',
-                                            'margin-bottom' : '0px'
-                                            
-                                        }});
+            css  : {
+                'width' : '99%',
+                'padding-top' : '5px',
+                'margin-left' : '2px',
+                'margin-right' : '2px',
+                'margin-bottom' : '0px'
+                
+            }});
         this.header=null;
         this.minimalHeader=null;
         this.titleNameBar=null;
@@ -177,13 +173,15 @@ class BisWebPanel {
             return false;
         });
 
-        this.sidebarToggleButton=$(`<button type="button" class="bistoggle"><span class="glyphicon glyphicon-log-out"></span></button>`);
-        this.sidebarToggleButton.click( (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            self.addToDock();
-            return false;
-        });
+        if (this.options.dual) {
+            this.sidebarToggleButton=$(`<button type="button" class="bistoggle"><span class="glyphicon glyphicon-log-out"></span></button>`);
+            this.sidebarToggleButton.click( (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                self.addToDock();
+                return false;
+            });
+        }
 
 
         this.sidebarMinimizeButton=$(`<button type="button" class="bistoggle"><span class="glyphicon glyphicon-resize-small"></span></button>`);
@@ -212,36 +210,39 @@ class BisWebPanel {
         });
 
         this.header=$('<div></div>');
+        if (this.options.name.length>10)
+            this.header.css({'height' : '80px'});
+        else
+            this.header.css({'height' : '50px'});
+
         this.minimalHeader=$('<div></div>');
         this.header.css({
-            'background-color' : webutil.getactivecolor(),
+            'background-color' : webutil.getpassivecolor(),
         });
 
         let buttonbar=webutil.creatediv({
             parent : this.header,
             css  : {
                 'margin-bottom' : '5px',
-                'margin-top' : '5px',
+                'padding-top' : '5px',
                 'margin-left' : '2px',
-                'margin-right' : '10px',
+                'padding-right' : '2px',
             }});
 
         this.titleNameBar=webutil.creatediv({
             parent : this.header,
             css  : {
-                'margin-bottom' : '5px',
-                'margin-top' : '2px',
-                'margin-left' :'5px',
-                'font-size' : '17px',
-                'font-weight' : '400',
-                'margin-right' : '5px',
-               // 'width' : `${wd}px`,
+                'padding-bottom' : '5px',
+                'padding-top' : '0px',
+                'padding-left' :'5px',
             }});
-    
+        
 
         buttonbar.append(this.closeButton);
         buttonbar.append(this.sidebarMinimizeButton);
-        buttonbar.append(this.sidebarToggleButton);
+        if (this.options.dual) {
+            buttonbar.append(this.sidebarToggleButton);
+        }
         buttonbar.append(this.backButton);
         this.minimalHeader.append(this.sidebarMaximizeButton);
 
@@ -249,7 +250,7 @@ class BisWebPanel {
 
 
         
-        this.titleNameBar.append(`<H5>${this.options.name}</H5>`);
+        this.titleNameBar.append(`<H4 style="margin-top:0px;margin-left:5px;line-height:1.5">${this.options.name}</H4>`);
 
     }
 
@@ -302,8 +303,6 @@ class BisWebPanel {
     setSidebarWidth(wd) {
 
         this.layoutController.setextrabarwidth(wd);
-        this.titleNameBar.empty();
-
         let elements=this.layoutController.getextraelements();
         
         if (wd<100) {

@@ -180,12 +180,12 @@ class ViewerLayoutElement extends HTMLElement {
             this.elements.extrabar.css(extrabarcss);
             let a=parseInt(this.extraelements.widget.attr('nofooter'));
             if (a) {
-                this.extraelements.header.css( { 'height' : `60px`,'max-height' : '60px'});
-                this.extraelements.widget.css( { 'height' : `${this.viewerheight-62+12}px`});
+                this.extraelements.header.css( { 'height' : `70px`,'max-height' : '70px'});
+                this.extraelements.widget.css( { 'height' : `${this.viewerheight-72+12}px`});
                 this.extraelements.footer.css( { 'height' : `2px`});
             } else {
-                this.extraelements.header.css( { 'height' : `60px`,'max-height' : '60px'});
-                this.extraelements.widget.css( { 'height' : `${this.viewerheight-160+12}px`});
+                this.extraelements.header.css( { 'height' : `70px`,'max-height' : '70px'});
+                this.extraelements.widget.css( { 'height' : `${this.viewerheight-170+12}px`});
                 this.extraelements.footer.css( { 'height' : `100px`,'max-height' : '100px'});
             }
         }
