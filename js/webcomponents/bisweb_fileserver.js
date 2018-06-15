@@ -129,11 +129,11 @@ class FileServer extends HTMLElement {
 
         //set up file tree events while data is loading
         $(this.fileTreeDisplayModal.body).on('open_node.jstree', (event, data) => {
-            data.instance.set_icon(data.node, '../../fileserver/glyphicons/glyphicons-145-folder-open.png');
+            data.instance.set_icon(data.node, 'glyphicon glyphicon-folder-open');
         });
 
         $(this.fileTreeDisplayModal.body).on('close_node.jstree', (event, data) => {
-            data.instance.set_icon(data.node, '../../fileserver/glyphicons/glyphicons-441-folder-closed.png');
+            data.instance.set_icon(data.node, 'glyphicon glyphicon-folder-close');
         });
 
         $(this.fileTreeDisplayModal.body).on('select_node.jstree', (event, data) => {
@@ -180,25 +180,25 @@ class FileServer extends HTMLElement {
                     'icon' : 'glyphicon glyphicon-file'
                 },
                 'root' : {
-                    'icon' : '../../fileserver/glyphicons/glyphicons-21-home.png'
+                    'icon' : 'glyphicon glyphicon-home'
                 },
                 'directory' : {
-                    'icon' : '../../fileserver/glyphicons/glyphicons-441-folder-closed.png'
+                    'icon' : 'glyphicon glyphicon-folder-close'
                 },
                 'picture' : {
-                    'icon' : '../../fileserver/glyphicons/glyphicons-139-picture.png'
+                    'icon' : 'glyphicon glyphicon-picture'
                 },
                 'js' : {
-                    'icon' : '../../fileserver/glyphicons/glyphicons-295-coffee-cup.png'
+                    'icon' : 'glyphicon glyphicon-file'
                 },
                 'html' : {
-                    'icon' : '../../fileserver/glyphicons/glyphicons-119-embed-close.png'
+                    'icon' : 'glyphicon glyphicon-tasks'
                 },
                 'video' : {
-                    'icon' : '../../fileserver/glyphicons/glyphicons-9-film.png'
+                    'icon' : 'glyphicon glyphicon-film'
                 }, 
                 'text' : {
-                    'icon' : '../../fileserver/glyphicons/glyphicons-709-paragraph.png'
+                    'icon' : 'glyphicon glyphicon-list-alt'
                 }
             },
             'plugins' : ["types"]
