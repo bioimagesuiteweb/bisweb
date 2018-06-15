@@ -30,7 +30,7 @@ const $=require('jquery');
 const bootbox=require('bootbox');
 const webfileutil = require('bis_webfileutil');
 const inobounce=require('inobounce.js');
-const BisWebDialogElement=require('bisweb_dialogelement');
+const BisWebPanel = require('bisweb_panel.js');
 
 import dat from 'dat.gui';
 
@@ -966,17 +966,16 @@ class LandmarkControlElement extends HTMLElement {
         this.internal.orthoviewer.addMouseObserver(this);
         
         let layoutcontroller=document.querySelector(layoutid);
-        this.dialog=new BisWebDialogElement();
-        this.dialog.create('Landmark Editor');
-        this.dialog.makeDockable(layoutcontroller);
+        this.dialog=new BisWebPanel(layoutcontroller,
+                                    {  name  : 'Landmark Editor'});
         this.internal.parentDomElement=this.dialog.getWidget();
         var basediv=$("<div>This will appear once an image is loaded.</div>");
         this.internal.parentDomElement.append(basediv);
     }
 
     show() {
-        this.dialog.dockDialog(true,false);
-        this.internal.dockWidget=this.dialog.dockWidget;
+        this.dialog.show();
+        this.internal.dockWidget=this.dialog.getDockWidget();
     }
     
     /** Called by OrthoViewer */
@@ -1038,16 +1037,12 @@ class LandmarkControlElement extends HTMLElement {
         if (this.internal.data.enabled===false)
             return;
 
-        console.log('Here 1',mm,plane,mousestate);
-
         if (!this.internal.dockWidget)
             return;
         
         if (!webutil.isCollapseElementOpen(this.internal.dockWidget)) 
             return;
 
-        console.log('Here 1',mm,plane,mousestate);
-        
         if (mousestate===0) {
             if (this.internal.lastpoint!==null)
                 this.updatemousecoordinates(this.internal.lastpoint,this.internal.lastplane,2);

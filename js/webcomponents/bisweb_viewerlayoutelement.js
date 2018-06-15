@@ -180,13 +180,13 @@ class ViewerLayoutElement extends HTMLElement {
             this.elements.extrabar.css(extrabarcss);
             let a=parseInt(this.extraelements.widget.attr('nofooter'));
             if (a) {
-                this.extraelements.header.css( { 'height' : `100px`});
-                this.extraelements.widget.css( { 'height' : `${this.viewerheight-102+12}px`});
+                this.extraelements.header.css( { 'height' : `60px`,'max-height' : '60px'});
+                this.extraelements.widget.css( { 'height' : `${this.viewerheight-62+12}px`});
                 this.extraelements.footer.css( { 'height' : `2px`});
             } else {
-                this.extraelements.header.css( { 'height' : `100px`});
+                this.extraelements.header.css( { 'height' : `60px`,'max-height' : '60px'});
                 this.extraelements.widget.css( { 'height' : `${this.viewerheight-160+12}px`});
-                this.extraelements.footer.css( { 'height' : `100px`});
+                this.extraelements.footer.css( { 'height' : `100px`,'max-height' : '100px'});
             }
         }
         
@@ -380,7 +380,7 @@ class ViewerLayoutElement extends HTMLElement {
 
         // Create extrabar elements
         this.extraelements.header=webutil.creatediv({ parent : this.elements.extrabar,
-                                                      css : { 'width' : '100%',
+                                                      css : { 'width' : '99%',
                                                               'padding-bottom' : '10px',
                                                               'height' : '5px',
                                                               'background-color': webutil.getpassivecolor()
@@ -389,7 +389,7 @@ class ViewerLayoutElement extends HTMLElement {
         
         this.extraelements.widget=webutil.creatediv({ parent : this.elements.extrabar,
                                                       css : {
-                                                          'width' : '100%',
+                                                          'width' : '99%',
                                                           'height' : '5px',
                                                           "max-height" : "2000px",
                                                           "overflow-y": "auto",
@@ -398,7 +398,7 @@ class ViewerLayoutElement extends HTMLElement {
                                                     });
         
         this.extraelements.footer=webutil.creatediv({ parent : this.elements.extrabar,
-                                                      css : { 'width' : '100%',
+                                                      css : { 'width' : '99%',
                                                               'height' : '5px',
                                                               'background-color': webutil.getpassivecolor(),
                                                               'padding-top' : '10px',
@@ -453,7 +453,6 @@ class ViewerLayoutElement extends HTMLElement {
             n=0;
         if (n>500)
             n=500;
-        console.log('New extrabar=',this.extrabarwidth);
         this.extrabarwidth=n;
         window.dispatchEvent(new Event('resize'));
     }

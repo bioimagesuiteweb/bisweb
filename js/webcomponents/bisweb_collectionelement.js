@@ -364,7 +364,7 @@ class CollectionElement extends HTMLElement {
         let sbar=webutil.creatediv({ parent: basediv});
         this.internal.inlineForm=webutil.creatediv({ parent: sbar});
         
-        const console_html=`<div style="margin:5px; margin-top:10px; overflow: auto; position:relative; color:#fefefe; width:99%; height:99%; background-color:#101010; font-size:11px;"></div>`;
+        const console_html=`<div style="margin:5px; margin-top:10px; overflow: auto; position:relative; color:#fefefe; width:99%; height:97%; background-color:#101010; font-size:11px;"></div>`;
         this.internal.currentInfo=$(console_html);
         sbar.append(this.internal.currentInfo);
         this.internal.currentInfo.append("No "+this.specific.name+" in memory.");
@@ -469,7 +469,7 @@ class CollectionElement extends HTMLElement {
             let layoutcontroller=document.querySelector(layoutid);
             this.panel=new BisWebPanel(layoutcontroller,{
                 name : this.specific.title,
-                width : 300,
+                width : 320,
                 height : 400,
                 hasfooter : false,
                 mode : 'docked',

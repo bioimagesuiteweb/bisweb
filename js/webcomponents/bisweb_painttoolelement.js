@@ -34,7 +34,7 @@ const modules = require('moduleindex.js');
 const biswrap = require('libbiswasm_wrapper');
 const webfileutil = require('bis_webfileutil');
 const inobounce=require('inobounce.js');
-const BisWebDialogElement=require('bisweb_dialogelement');
+const BisWebPanel = require('bisweb_panel.js');
 // -------------------------------------------------------------------------
 // Keep warnings quiet
 //    var a=[ new Blob() ]; a=null;
@@ -158,7 +158,7 @@ class PaintToolElement extends HTMLElement {
         this.internal.parentDomElement.append(basediv);
         this.internal.orthoviewer=in_orthoviewer;
         this.internal.orthoviewer.addMouseObserver(this);
-        BisWebDialogElement.setMaxDockedDialogs(1);
+        BisWebPanel.setMaxDockedPanels(1);
     }
 
     // --------------------------------------------------------------------------------
@@ -1086,7 +1086,7 @@ class PaintToolElement extends HTMLElement {
                                                                      new modules.binaryThresholdImage(),
                                                                      moduleoptions);
                 webutil.createMenuItem(tmenu, moduleoptions.name,function() {
-                    self.internal.thresholdModule.showDialog();
+                    self.internal.thresholdModule.show();
                 });
 
                 
@@ -1096,7 +1096,7 @@ class PaintToolElement extends HTMLElement {
                                                                       new modules.morphologyFilter(),
                                                                       moduleoptions);
                 webutil.createMenuItem(tmenu, moduleoptions.name,function() {
-                    self.internal.morphologyModule.showDialog();
+                    self.internal.morphologyModule.show();
                 });
 
                 biswrap.initialize().then( () => {
@@ -1107,7 +1107,7 @@ class PaintToolElement extends HTMLElement {
                                                                               new modules.regularizeObjectmap(),
                                                                               moduleoptions);
                         webutil.createMenuItem(tmenu, moduleoptions.name,function() {
-                            self.internal.regularizeModule.showDialog();
+                            self.internal.regularizeModule.show();
                         });
 
                         moduleoptions.name='Mask Image';
@@ -1116,7 +1116,7 @@ class PaintToolElement extends HTMLElement {
                                                                         new modules.maskImage(),
                                                                         moduleoptions);
                         webutil.createMenuItem(tmenu, moduleoptions.name,function() {
-                            self.internal.maskModule.showDialog();
+                            self.internal.maskModule.show();
                         });
                     }
                     resolve();

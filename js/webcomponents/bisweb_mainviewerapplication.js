@@ -29,7 +29,7 @@ const $ = require('jquery');
 const bisdbase = require('bisweb_dbase');
 const genericio=require('bis_genericio');
 const bootbox=require('bootbox');
-const BisWebDialogElement=require('bisweb_dialogelement');
+const BisWebPanel = require('bisweb_panel.js');
 
 
 const localforage=require('localforage');
@@ -282,20 +282,23 @@ class ViewerApplicationElement extends HTMLElement {
     // ---------------------------------------------------------------------------
     createAdvancedTransferTool(modulemanager,editmenu) {
 
-
+        const self=this;
         let name='Advanced Transfer Tool';
         if (!modulemanager) {
             name='App State Manager';
         }
         
-        let newdlg=new BisWebDialogElement();
-        newdlg.create(name,300,400);
-        newdlg.makeDockable(this.VIEWERS[0].getLayoutController());
+        let newdlg=new BisWebPanel(this.VIEWERS[0].getLayoutController(),
+                                   {
+                                       name : name,
+                                       width :300,
+                                       height : 400,
+                                       dual : true,
+                                   });
 
-
-        var bbar=webutil.createbuttonbar({ parent: newdlg.widget,
+        var bbar=webutil.createbuttonbar({ parent: newdlg.getWidget(),
                                            css : { 'margin-top' : '10px' ,
-                                                   'margin-left' : '2px' }
+                                                   'margin-left' : '4px' }
                                          });
         
         var bbar1=webutil.createbuttonbar({ parent: bbar,
@@ -467,7 +470,7 @@ class ViewerApplicationElement extends HTMLElement {
         }
         webutil.createMenuItem(editmenu,'');
         webutil.createMenuItem(editmenu,name,function() {
-            newdlg.dockDialog(true,false);
+            newdlg.show();
         });
     }
     

@@ -24,16 +24,6 @@ const webutil=require('bis_webutil');
 /** Only one modules can be open at a time. This is stored in globalOpenDialog
  */
 let globalOpenDialog=null;
-let globalPlacedDialog=null;
-let previousPlacedDialog=null;
-
-
-/** Dialogs that are open are stored in the dock
- * If docked then the module is in the dock (for update purposes)
- */
-let globalDockedDialogs=[];
-let maxGlobalDockedDialogs=3;
-
 
 /**
  * Non-Modal Dialog Class
@@ -46,11 +36,7 @@ class BisWebDialogElement extends HTMLElement {
         this.name="";
         this.closecallback=null;
         this.dialog=null;
-        this.docked=false;
-        this.placed=false;
-        this.placeable=false;
-        this.dockfooter=true;
-        this.placedparent=null;
+
         this.widget=null;
         this.header=null;
         this.footer=null;
@@ -73,11 +59,6 @@ class BisWebDialogElement extends HTMLElement {
             firstmove : false,
         };
 
-        this.docked=false;
-        this.layoutController=null;
-        this.dockWidget=null;
-        this.togglebutton=null;
-        this.minimizebutton=null;
     }
 
     /** is dialog visible 
@@ -214,11 +195,6 @@ class BisWebDialogElement extends HTMLElement {
         if (this.dialog===null)
             return;
         
-        if (this.docked === true || this.placed===true || this.placeable===true) {
-            return this.showDockedDialog();
-        }
-
-        
         let previous=null;
         if (globalOpenDialog!==null)  {
             previous=globalOpenDialog.dialog.dialog.css(['left','top']);
@@ -267,13 +243,7 @@ class BisWebDialogElement extends HTMLElement {
     /** Hides the dialog and renables any drag and drop elements present */
     hide() {
 
-        if (this.placed) {
-            this.setPlacedWidth(0);
-            return;
-        }
-        
-        if (this.docked)
-            return;
+
 
         if (this.dialog===null)
             return;
@@ -402,248 +372,6 @@ class BisWebDialogElement extends HTMLElement {
 
         if (motion)
             this.bindMouseEvents();
-    }
-
-    /** add dock abilities 
-     * @param {LayoutController} layout controller to put the dialog in (in sidebar)
-     * @param {Boolean} createarrowbutton -- if true create extra button for docking on the fly
-     */
-    makeDockable(lcontroller,extrabutton=true) {
-
-        if (this.layoutController!==null)
-            return;
-
-        
-        this.layoutController=lcontroller;
-
-        if (!extrabutton)
-            return;
-
-        //glyphicon glyphicon-resize-small
-
-        let but=$(`<button type="button" class="bistoggle"><span class="glyphicon glyphicon-pushpin"></span></button>`);
-        this.minimizebutton=but;
-        this.togglebutton=$(`<button type="button" class="bistoggle"><span class="glyphicon glyphicon-triangle-left"></span></button>`);
-
-        this.secondclose.after(but);
-        but.after(this.togglebutton);
-        const self=this;
-
-        but.click( (e) => {
-
-            e.preventDefault();
-            e.stopPropagation();
-
-            if (self.docked) {
-                this.unDockDialog();
-                this.placeDialog(true,'previous');
-                this.setPlacedWidth(this.dimensions.width+10);
-                but.empty();
-                but.append(`<span class="glyphicon glyphicon-resize-small"></span>`);
-            } else if (self.placeable===false) {
-                self.dockDialog();
-            } else {
-                if (self.placed) {
-                    if (this.layoutController.getextrabarwidth()<=100) {
-                        this.setPlacedWidth(this.dimensions.width+10);
-                        but.empty();
-                        but.append(`<span class="glyphicon glyphicon-resize-small"></span>`);
-                    } else {
-                        this.setPlacedWidth(99);
-                        but.empty();
-                        but.append(`<span class="glyphicon glyphicon-resize-full"></span>`);
-                    }
-                     
-                }
-            }
-            return false;
-        });
-
-
-        this.togglebutton.click( (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (previousPlacedDialog!==null) {
-                previousPlacedDialog.placeDialog(true,'previous');
-            }
-        });
-    }
-
-    /** hidePlaced dialog */
-    setPlacedWidth(wd) {
-
-        this.layoutController.setextrabarwidth(wd);
-        
-        if (wd<100) {
-            this.widget.css({'opacity' : '0.05' });
-            this.headertext.text('');
-            this.header.css({'border-bottom' : '0px','background-color' : webutil.getpassivecolor()});
-            this.headertext.css({'opacity' : '0.05' });
-            this.secondclose.css({'opacity' : '005', 'font-size' : '1px' });
-            this.togglebutton.css({'opacity' : '005', 'font-size' : '1px' });
-        } else {
-            this.widget.css({'opacity' : '1.0'});
-            this.headertext.text(this.name);
-            this.header.css({'border-bottom' : '1px','background-color' : webutil.getpassivecolor()});
-            this.headertext.css({'opacity' : '1.0' });
-            this.secondclose.css({'opacity' : '1.0', 'font-size' : '19px'  });
-            this.togglebutton.css({'opacity' : '1.0', 'font-size' : '19px'  });
-        }
-    }
-    
-    /** place the dialog inside the this.layoutController's extrabar
-     * @param {Boolean} show - if true then show
-     */
-    placeDialog(show=true,footer=false) {
-
-        if (footer==='previous')
-            footer=this.dockfooter || false;
-        
-        if (!this.layoutController || this.docked)
-            return false;
-
-        if (globalPlacedDialog!==null) {
-            globalPlacedDialog.unDockDialog();
-            previousPlacedDialog=globalPlacedDialog;
-            globalPlacedDialog=null;
-
-        }
-        
-        this.placeable=true;
-        this.dockfooter=footer;
-        
-        if (this.placed) {
-            console.log('Showing');
-            this.showDockedDialog();
-            return true;
-        }
-        
-        this.hide();
-
-        let elements=this.layoutController.getextraelements();
-        console.log(elements);
-        elements.header.empty();
-        elements.header.append(this.header);
-        elements.widget.empty();
-        elements.widget.append(this.widget);
-        elements.footer.empty();
-        
-        if (footer) {
-            elements.footer.append(this.footer);
-            elements.widget.attr('nofooter','0');
-        } else {
-            elements.widget.attr('nofooter','1');
-        }
-        this.placed=true;
-        globalPlacedDialog=this;
-
-        let but=this.minimizebutton;
-        but.empty();
-        but.append(`<span class="glyphicon glyphicon-resize-small"></span>`);
-        
-        if (show) {
-            window.dispatchEvent(new Event('resize'));
-            this.showDockedDialog();
-        }
-        return true;
-    }
-    /** dock the dialog inside the this.layoutController 
-     * @param {Boolean} show - if true then show
-     */
-    dockDialog(show=true,footer=true) {
-
-        if (this.placed) {
-            return this.placeDialog(show,footer);
-        }
-        
-        if (footer==='previous')
-            footer=this.dockfooter || false;
-
-        
-        if (!this.layoutController || this.placed)
-            return false;
-
-        this.placeable=false;
-        this.dockfooter=footer;
-        
-        if (this.docked) {
-            this.showDockedDialog();
-            return true;
-        }
-
-        if (globalDockedDialogs.length===maxGlobalDockedDialogs) {
-            let toremove=globalDockedDialogs.shift();
-            toremove.unDockDialog();
-        }
-
-        this.hide();
-
-        this.dockWidget=this.layoutController.createToolWidget(`${this.name}`);
-
-        if (this.minimizebutton) {
-            let t = webutil.creatediv({ parent: this.dockWidget,
-                                        css : { 'margin-bottom' : '5px',
-                                                'width' : '100%'
-                                              }
-                                      });
-            let but=this.minimizebutton;
-            but.empty();
-            but.append(`<span class="glyphicon glyphicon-pushpin"></span>`);
-            t.append(but);
-        }
-        this.widget.css({'opacity' : '1.0'});
-        this.dockWidget.append(this.widget);
-        if (footer) {
-            this.dockWidget.append('<HR>');
-            this.dockWidget.append(this.footer);
-        }
-        this.docked=true;
-        globalDockedDialogs.push(this);
-        if (show)
-            this.showDockedDialog();
-        return true;
-    }
-    
-    /** Call to show docked dialog, i.e. make the panel visible and open */
-    showDockedDialog(showfooter='previous') {
-        if (this.docked) {
-            webutil.activateCollapseElement(this.dockWidget);
-        } else if (this.placeable) {
-            if (globalPlacedDialog!==this) 
-                this.placeDialog(true,showfooter);
-            this.setPlacedWidth(this.dimensions.width+10);
-        }
-    }
-
-    /** Call to move dialog GUI from dock back to dialog */
-    unDockDialog() {
-        if (!this.placed && !this.docked)
-            return;
-
-        this.headerbase.prepend(this.header);
-        this.widgetbase.append(this.widget);
-        this.footerbase.append(this.footer);
-        this.widgetbase.css({ "max-height" : `${this.dimensions.height}px`});
-        if (this.minimizebutton) {
-            this.secondclose.after(this.minimizebutton);
-        }
-        
-        if (!this.placed) {
-            console.log('Removing dockwidget');
-            this.dockWidget.parent().parent().remove();
-        } else  {
-            this.layoutController.setextrabarwidth(0);
-        }
-        this.placed=false;
-        this.docked=false;
-    }
-
-    static getOpenDialogs() {
-        return [ globalOpenDialog].concat(globalDockedDialogs);
-    }
-
-    static setMaxDockedDialogs(n) {
-        maxGlobalDockedDialogs=n;
     }
     
 }

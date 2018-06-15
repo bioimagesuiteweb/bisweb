@@ -182,8 +182,6 @@ class ModuleManagerElement extends HTMLElement {
         else
             usesgpl=false;
 
-        console.log('moduleoptions',moduleoptions);
-        
         this.createModule('Smooth Image',1, false, modules.smoothImage, moduleoptions);
         this.createModule('Normalize Image',1, false, modules.normalizeImage, moduleoptions);
         this.createModule('Threshold Image',1, false, modules.thresholdImage, moduleoptions);
