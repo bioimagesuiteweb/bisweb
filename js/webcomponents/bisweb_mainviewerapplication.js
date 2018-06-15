@@ -766,8 +766,7 @@ class ViewerApplicationElement extends HTMLElement {
             gmenu=editmenu;
             webutil.createMenuItem(gmenu,'');
         }
-        
- 
+
         if (this.num_independent_viewers > 1) {
             webutil.createMenuItem(gmenu, extra+'Both Viewers', function () { self.VIEWERS[1].setDualViewerMode(0.5); });
             webutil.createMenuItem(gmenu, extra+'Viewer 1 Only', function () { self.VIEWERS[1].setDualViewerMode(1.0); });
@@ -1051,6 +1050,7 @@ class ViewerApplicationElement extends HTMLElement {
 
         webutil.runAfterAllLoaded( () => {
             this.parseQueryParameters();
+            document.body.style.zoom =  1.0;
         });
 
     }
