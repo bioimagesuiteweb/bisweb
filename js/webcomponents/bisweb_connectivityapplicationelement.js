@@ -280,11 +280,8 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
             control.loadsamplematrices(['images/pos_mat.txt','images/neg_mat.txt']);
         });
         
-        webutil.createMenuItem(helpmenu,''); // separator
 
-        let bisconsole=document.createElement('bisweb-console');
-        bisconsole.addtomenu(helpmenu);
-        
+
         
         // ------------------------------------ Initialize ---------------------------
         

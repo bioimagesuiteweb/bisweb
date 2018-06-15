@@ -30,7 +30,7 @@ const bisdbase = require('bisweb_dbase');
 const genericio=require('bis_genericio');
 const bootbox=require('bootbox');
 const BisWebPanel = require('bisweb_panel.js');
-
+//const BisWebHelpVideoPanel = require('bisweb_helpvideopanel');
 
 const localforage=require('localforage');
 
@@ -688,12 +688,14 @@ class ViewerApplicationElement extends HTMLElement {
 
         webutil.createMenuItem(hmenu,'About this application',function() {  webutil.aboutDialog(); });
         
-        /*        let helpdialog = document.createElement('bisweb-helpvideoelement');
-                  webutil.createMenuItem(hmenu, 'About Video',
-                  function () {
-                  helpdialog.displayVideo();
-                  });
-                  webutil.createMenuItem(hmenu, ''); // separator*/
+/*        let helpdialog = new BisWebHelpVideoPanel();
+        const self=this;
+        webutil.createMenuItem(hmenu, 'About Video',
+                               function () {
+                                   helpdialog.setLayoutController(self.VIEWERS[0].getLayoutController());
+                                   helpdialog.displayVideo();
+                               });*/
+        webutil.createMenuItem(hmenu, ''); // separator
 
         
         this.addOrientationSelectToMenu(hmenu,userPreferencesLoaded);

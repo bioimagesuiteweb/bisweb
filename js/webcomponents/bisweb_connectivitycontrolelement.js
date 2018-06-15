@@ -34,7 +34,7 @@ const bootbox=require('bootbox');
 const bismni2tal=require('bis_mni2tal');
 const BisWebMatrix=require('bisweb_matrix');
 const THREE=require('three');
-
+const BisWebPanel = require('bisweb_panel.js');
 import dat from 'dat.gui';
 
 // -------------------------------------------------------------------------
@@ -1771,19 +1771,24 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             let ch=internal.context.canvas.height;
             let cw=internal.context.canvas.width;
             let vp=internal.parcellation.viewport;
-            let width  = 0.7*cw;
-            if (width>500)
-                width=500;
-            let height = 400;
+            let width  = 350;
+            let height = 1500;
             console.log('vp='+[vp.x0,vp.x1,vp.y0,vp.y1]+' w*h'+[cw,ch]);
-            let showdialog=webutil.createdialog("Top "+maxnodes+" Nodes (sorted by degree)",width,
-                                                -height,cw+300-width,100 );
 
-            let widget=showdialog.widget;
+            let showdialog=new BisWebPanel(internal.layoutmanager,
+                                           {
+                                               name :"Top "+maxnodes+" Nodes<BR>(sorted by degree)",
+                                               width : width,
+                                               height : height,
+                                               mode : 'sidebar',
+                                               dual : false
+                                           });
+
+
             let templates=webutil.getTemplates();
-            let newid=webutil.createWithTemplate(templates.bisscrolltable,widget);
+            let newid=webutil.createWithTemplate(templates.bisscrolltable,$('body'));
             let stable=$('#'+newid);
-            let t1 = $(".bistscroll",stable);
+            let t1 = stable.find(".bistscroll");
             let hgt=height-100;
             $(t1).css({
                 height: hgt+"px",
@@ -1794,11 +1799,13 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 let id=e.target.id;
                 let node=buttonnodepairs[id];
                 internal.parameters.mode="Single Node";
+                console.log('Node=',node);
                 setnode(node);
             };
 
-            let thead = $(".bisthead",stable);
-            let tbody = $(".bistbody",stable);
+            let thead = stable.find(".bisthead");
+            let tbody = stable.find(".bistbody",stable);
+
             thead.empty();
             tbody.empty();
             tbody.css({'font-size':'12px',
@@ -1809,8 +1816,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             let hd=$('<tr>'+
                      ' <td width="5%">#</th>'+
                      ' <td width="15%">Node</th>'+
-                     ' <td width="70%">Details</th>'+
-                     ' <td width="10%"></th>'+
+                     ' <td width="80%">Details</th>'+
                      '</tr>');
             thead.append(hd);
             thead.css({ font: "Arial 12px"});
@@ -1833,23 +1839,26 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                     let nid=webutil.getuniqueid();
                     
                     let w=$('<tr>'+
-                            ' <td width="5%">'+s0+'</th>'+
-                            ' <td width="15%">'+s1+'</th>'+
-                            ' <td width="70%">'+s2+'</th>'+
+                            ' <td width="5%">'+s0+'</td>'+
+                            ' <td width="15%">'+s1+'</td>'+
+                            ' <td width="80%">'+s2+'</td>'+
                             ' <td width="10%"><button type="button" class="btn-info btn-sm" style="padding: 2px, font-size: 10px"'+
-                            ' id="'+nid+'">Go</button></th>'+
+                            ' id="'+nid+'">Go</button></td>'+
                             '</tr>');
                     tbody.append(w);
                     let btn=$('#'+nid);
-                    btn.css({ 'height' : '25px',
+                    btn.css({ 'height' : '20px',
                               'padding-top' : '1px',
-                              'margin' : '0 0 0 0',
+                              'margin' : '0 2 0 0',
                               'font' : 'Arial 10px'});
                     btn.click(callback);
                     buttonnodepairs[nid]=(node);
                 }
             }
+
+            showdialog.getWidget().append(stable);
             showdialog.show();
+            window.dispatchEvent(new Event('resize'));
             internal.keynodedlg=showdialog;
         },
 

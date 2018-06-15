@@ -89,7 +89,7 @@ class CustomModule {
             name : this.name,
             width : 300,
             height : 500,
-            hasfooter : true
+            hasfooter : true,
         });
         
         this.basewidget = this.panel.getWidget();
@@ -116,7 +116,6 @@ class CustomModule {
 
         this.dirtyInputs = true;
         this.createOrUpdateGUI();
-        console.log('show panel');
         this.panel.show();
     }
     
