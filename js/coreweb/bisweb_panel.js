@@ -24,11 +24,11 @@ const webutil=require('bis_webutil');
 /** Panels that are open are stored in the dock
  * If docked then the module is in the dock (for update purposes)
  */
-let globalSidebarPanel=null;
+
 let globalDockedPanels=[];
 let permanentPanels=[];
 let maxGlobalDockedPanels=3;
-
+let globalSidebarPanel=null;
 
 /**
  * Non-Modal Panel Class
@@ -49,8 +49,6 @@ class BisWebPanel {
        
     
     constructor(layoutcontroller=null,options={}) {
-
-        this.previousPanel=null;
 
         this.layoutController=layoutcontroller;
         this.options = { };
@@ -79,6 +77,7 @@ class BisWebPanel {
                 'margin-right' : '2px',
                 'margin-bottom' : '0px'
             }});
+        
         this.widget=webutil.creatediv({
             parent : this.widgetbase,
         });
@@ -90,7 +89,7 @@ class BisWebPanel {
         this.minimized=false;
         this.dockWidget=null;
         this.dockWidgetHeader=null;
-        this.backButton=null;
+
         this.dockToggleButton=null;
         this.sidebarToggleButton=null;
         this.sidebarMinimizeButton=null;
@@ -100,20 +99,10 @@ class BisWebPanel {
         this.createHeader();
     }
 
-    /** is dialog visible 
-     * @returns {Boolean} - true if visible (open)
-     */
-    isVisible() { return this.state !== "empty";}
-
     /** returns the main body of the dialog
      * @returns {JQueryElement} 
      */
     getWidget() { return this.widget; }
-
-    /** returns the dock panel element
-     * @returns {JQueryElement} 
-     */
-    getDockWidget() { return this.dockWidget; }
 
     /** returns the footer of the dialog
      * @returns {JQueryElement} 
@@ -146,7 +135,8 @@ class BisWebPanel {
         }
     }
 
-    /** Check if it is visible 
+
+    /** Check if it is open 
      * @returns true or false
      */
     isOpen() {
@@ -168,7 +158,7 @@ class BisWebPanel {
     
     makeActive(flag=true) {
 
-        let w=this.widget.parent();
+        let w=this.widgetbase;
         
         if (flag) {
             w.css({'background-color': webutil.getactivecolor()});
@@ -236,14 +226,6 @@ class BisWebPanel {
             return false;
         });
 
-        this.backButton=$(`<button type="button" class="bistoggle"><span class="glyphicon glyphicon-triangle-left"></span></button>`);
-        this.backButton.click( (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (self.previousPanel) {
-                self.previousPanel.addToSidebar();
-            }
-        });
 
         this.header=$('<div></div>');
         if (this.options.name.length>10)
@@ -279,7 +261,7 @@ class BisWebPanel {
         if (this.options.dual) {
             buttonbar.append(this.sidebarToggleButton);
         }
-        buttonbar.append(this.backButton);
+
         this.minimalHeader.append(this.sidebarMaximizeButton);
 
         this.titleNameBar.append(`<H4 style="margin-top:0px;margin-left:5px;line-height:1.5">${this.options.name}</H4>`);
@@ -338,6 +320,9 @@ class BisWebPanel {
 
         this.layoutController.setextrabarwidth(wd);
         let elements=this.layoutController.getextraelements();
+
+        if (this.state!=="sidebar")
+            return;
         
         if (wd<100) {
             this.minimized=true;
@@ -368,11 +353,9 @@ class BisWebPanel {
         if (this.state==="docked")
             this.remove();
 
-
-        if (globalSidebarPanel!==null) {
-            this.previousPanel=globalSidebarPanel;
+        if (globalSidebarPanel)
             globalSidebarPanel.remove();
-        }
+        
 
         let elements=this.layoutController.getextraelements();
         elements.header.empty();
@@ -389,8 +372,9 @@ class BisWebPanel {
             elements.widget.attr('nofooter','1');
         }
         this.state="sidebar";
-        globalSidebarPanel=this;
 
+        globalSidebarPanel=this;
+        
         if (show) {
             this.setSidebarWidth(this.options.width+15);
         }
@@ -402,18 +386,20 @@ class BisWebPanel {
 
         this.dummyWidget.append(this.widgetbase);
         this.dummyWidget.append(this.footer);
-
+        
         
         if (this.state==="docked") {
             if (this.dockToggleButton)
                 this.dummyWidget.append(this.dockToggleButton);
+            
             this.dockWidget.parent().parent().remove();
             this.dockWidget=null;
             this.options.initialstate="docked";
         } else if (this.state==="sidebar") {
             this.dummyWidget.append(this.header);
-            this.layoutController.setextrabarwidth(0);
             this.options.initialstate="sidebar";
+            this.layoutController.setextrabarwidth(0);
+            globalSidebarPanel=null;
         }
 
         let index=globalDockedPanels.indexOf(this);
