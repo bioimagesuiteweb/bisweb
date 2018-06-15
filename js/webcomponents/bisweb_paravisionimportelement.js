@@ -29,6 +29,7 @@ const path=bisgenericio.getpathmodule();
 const fs=bisgenericio.getfsmodule();
 const misac=require('../node/misac_util');
 const webfileutil = require('bis_webfileutil');
+const BisWebPanel = require('bisweb_panel.js');
 
 // -------------------------------------------------------------------------
 
@@ -93,29 +94,30 @@ class ParavisionImportElement extends HTMLElement {
         if (internal.parentDomElement===null)
             return;
         
-        internal.showdialog=webutil.createdialog("Converted Images",400,-1000,100,50 );
-        internal.showdialog.makeDockable(this.layoutcontroller,true);
-        internal.showdialog.placeDialog(false,false);
-        let widget=internal.showdialog.widget;
-        widget.css({ "overflow-y" : "hidden"});
+        internal.showdialog=new BisWebPanel(this.layoutcontroller,
+                                            {
+                                                name : "Converted Images",
+                                                width : '400',
+                                                height : '1000',
+                                                mode : 'sidebar',
+                                                dual : true
+                                            });
         let templates=webutil.getTemplates();
-
-        
-        
-        
         internal.parentDomElement.empty();
         let basediv0=webutil.creatediv({ parent : internal.parentDomElement});
         let basediv1=webutil.creatediv({ parent : internal.parentDomElement});
         internal.domElement=basediv1;
         
         
-        let newid=webutil.createWithTemplate(templates.bisscrolltable,
-                                             widget);
-        let stable=$('#'+newid);
-        let thead = $(".bisthead",stable);
-        let tbody = $(".bistbody",stable);
+        let newid=webutil.createWithTemplate(templates.bisscrolltable,$('body'));
+        let stable = $('#' + newid);
+        let thead = stable.find(".bisthead");
+        let tbody = stable.find(".bistbody");
+        console.log('thead=',thead,tbody);
         thead.empty();
         tbody.empty();
+        internal.showdialog.getWidget().append(stable);
+        
         tbody.css({'font-size':'12px',
                    'user-select': 'none'});
         thead.css({'font-size':'12px',
@@ -528,6 +530,7 @@ class ParavisionImportElement extends HTMLElement {
         this.internal.parentDomElement=basegui;
         let basediv=$("<div>To appear...</div>");
         this.internal.parentDomElement.append(basediv);
+
         this.onDemandCreateGUI();
     }
 

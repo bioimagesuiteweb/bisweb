@@ -42,20 +42,23 @@ class BisWebPanel {
         * @param {String} options.name - the title string
         * @param {number} options.width - the width of the panel
         * @param {number} options.height - the height of the panel
-        * @param {number} options.mode - the mode of the panel (one of "docked", "sidebar", "docksidebar"  )
+        * @param {number} options.mode - the mode of the panel (one of "docked", "sidebar" )
+        * @param {number} options.dual - if true , enable hopping from docked to sidebar
         */
        
     
     constructor(layoutcontroller=null,options={}) {
 
-        this.previousSidebarPanel=null;
+        this.previousPanel=null;
 
         this.layoutController=layoutcontroller;
         this.options = { };
         this.options.name =options.name || 'Tool';
+
         this.options.width=options.width || 400;
         this.options.height=options.height || 400;
-        this.mode = options.mode || 'docked';
+        this.initialstate = options.mode || 'docked';
+        this.options.dual = options.dual || false;
         this.options.hasfooter=options.hasfooter || false;
 
         this.widgetbase=webutil.creatediv({ css : { 
@@ -64,14 +67,6 @@ class BisWebPanel {
             'overflow-y': "auto"
         }});
                                               
-        this.header=webutil.creatediv({ css  : {
-            'width' : '100%',
-            'height' : '80px',
-            'margin-bottom' : '10px',
-            'margin-top' : '0px',
-            'margin-left' : '2px',
-            'margin-right' : '2px',
-        }});
         this.footer=webutil.creatediv({ css  : {
             'margin-bottom' : '5px',
             'margin-top' : '5px',
@@ -89,13 +84,14 @@ class BisWebPanel {
                                             'margin-bottom' : '0px'
                                             
                                         }});
-
-        this.headerTitle=$(`<H4>${this.options.name}</H4>`);
-        this.state="hidden";
+        this.header=null;
+        this.titleNameBar=null;
+        this.state="empty";
         this.dockWidget=null;
         this.dockWidgetHeader=null;
         this.backButton=null;
-        this.minimizeButton=null;
+        this.dockToggleButton=null;
+        this.sidebarToggleButton=null;
         this.closeButton=null;
 
         this.createElements();
@@ -104,17 +100,12 @@ class BisWebPanel {
     /** is dialog visible 
      * @returns {Boolean} - true if visible (open)
      */
-    isVisible() { return this.state !== "hidden";}
+    isVisible() { return this.state !== "empty";}
 
     /** returns the main body of the dialog
      * @returns {JQueryElement} 
      */
     getWidget() { return this.widget; }
-
-    /** returns the header of the dialog
-     * @returns {JQueryElement} 
-     */
-    getHeader() { return this.header; }
 
     /** returns the footer of the dialog
      * @returns {JQueryElement} 
@@ -125,19 +116,24 @@ class BisWebPanel {
     /** Shows the dialog and disables any drag and drop elements while it is open */
     show() {
 
-        if (this.mode==="docked") {
-            this.addToDock();
-        }
-
-        if (this.mode==="sidebar") {
-            this.addToSidebar(true);
+        if (this.state==="empty") {
+            if (this.initialstate!=="sidebar") {
+                this.addToDock();
+            } else {
+                console.log('adding to sidebar');
+                this.addToSidebar(true);
+            }
+        } else {
+            if (this.state!=="sidebar")
+                this.addToDock();
+            else
+                this.addToSidebar(true);
         }
     }
-
     /** Hides the dialog and renables any drag and drop elements present */
     hide() {
 
-        if (this.mode==="sidebar") {
+        if (this.state==="sidebar") {
             this.setSidebarWidth(0);
             return;
         }
@@ -158,49 +154,92 @@ class BisWebPanel {
         this.closeButton.click( (e) => {
             e.preventDefault();
             e.stopPropagation();
+            console.log('Hiding',self.state);
             self.hide();
         });
 
-        if (this.mode === "docked") {
+        if (this.initialstate === "docked" && this.options.dual===false) {
+            console.log('No extra buttons');
             return;
         }
         
-        this.minimizeButton=$(`<button type="button" class="bistoggle"><span class="glyphicon glyphicon-pushpin"></span></button>`);
-        this.backButton=$(`<button type="button" class="bistoggle"><span class="glyphicon glyphicon-triangle-left"></span></button>`);
+        this.dockToggleButton=$(`<button type="button" class="bistoggle"><span class="glyphicon glyphicon-pushpin"></span></button>`);
+
+
         
-        this.minimizeButton.click( (e) => {
+        this.dockToggleButton.click( (e) => {
             e.preventDefault();
             e.stopPropagation();
+            self.remove();
+            self.addToSidebar();
+            self.setSidebarWidth(this.options.width+10);
+        });
 
-            if (self.state==="docked") {
-                this.remove();
-                this.addToSidebar();
-                this.setSidebarWidth(this.dimensions.width+10);
-                self.minimizeButton.empty();
-                self.minimizeButton.append(`<span class="glyphicon glyphicon-resize-small"></span>`);
-            } else if (self.state==="sidebar") {
-                if (this.layoutController.getextrabarwidth()<=100) {
-                    this.setSidebarWidth(this.dimensions.width+10);
-                    self.minimizeButton.empty();
-                    self.minimizeButton.append(`<span class="glyphicon glyphicon-resize-small"></span>`);
-                } else {
-                    this.setSidebarWidth(99);
-                    self.minimizeButton.empty();
-                    self.minimizeButton.append(`<span class="glyphicon glyphicon-resize-full"></span>`);
-                }
+        this.sidebarToggleButton=$(`<button type="button" class="bistoggle"><span class="glyphicon glyphicon-resize-small"></span></button>`);
+        this.sidebarToggleButton.click( (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Toggle callback',e,self.state);
+            let w=self.layoutController.getextrabarwidth();
+            console.log('In Side bar',w);
                 
+            if (w<100) {
+                self.setSidebarWidth(self.options.width+10);
+                self.sidebarToggleButton.empty();
+                self.sidebarToggleButton.append(`<span class="glyphicon glyphicon-resize-small"></span>`);
+            } else {
+                self.setSidebarWidth(99);
+                self.sidebarToggleButton.empty();
+                self.sidebarToggleButton.append(`<span class="glyphicon glyphicon-resize-full"></span>`);
             }
+            
             return false;
         });
 
-
+        this.backButton=$(`<button type="button" class="bistoggle"><span class="glyphicon glyphicon-triangle-left"></span></button>`);
         this.backButton.click( (e) => {
             e.preventDefault();
             e.stopPropagation();
-            if (this.previousSidebarPanel!==null) {
-                this.previousPlacedPanel.addToSidebar();
+            console.log('previous=',self.previousPanel);
+            if (self.previousPanel) {
+                self.previousPanel.addToSidebar();
+                self.previousPanel.previousPanel=self;
             }
         });
+
+        this.header=$('<div></div>');
+        this.header.css({
+            'background-color' : webutil.getactivecolor(),
+        });
+        let buttonbar=webutil.creatediv({
+            parent : this.header,
+            css  : {
+                'margin-bottom' : '5px',
+                'margin-top' : '5px',
+                'margin-left' : '2px',
+                'margin-right' : '10px',
+                'height' : '30px',
+                'width' : '${this.options.width-20}px',
+            }});
+
+        this.titleNameBar=webutil.creatediv({
+            parent : this.header,
+            css  : {
+                'margin-bottom' : '5px',
+                'margin-top' : '2px',
+                'margin-left' :'5px',
+                'font-size' : '17px',
+                'font-weight' : '400',
+                'margin-right' : '5px',
+                'width' : '${this.options.width-20}px',
+            }});
+    
+
+        buttonbar.append(this.closeButton);
+        buttonbar.append(this.sidebarToggleButton);
+        buttonbar.append(this.backButton);
+        this.titleNameBar.append(`<H4>${this.options.name}</H4>`);
+
     }
 
     /** add dock abilities 
@@ -214,7 +253,7 @@ class BisWebPanel {
         }
 
         if (this.state==="sidebar") {
-            this.removeFromSidebar();
+            this.remove();
         } else if (globalDockedPanels.length===maxGlobalDockedPanels) {
             let toremove=globalDockedPanels.shift();
             toremove.remove();
@@ -222,16 +261,13 @@ class BisWebPanel {
 
         if (this.dockWidget===null) {
             this.dockWidget=this.layoutController.createToolWidget(`${this.options.name}`);
-            if (this.minimizeButton) {
+            if (this.dockToggleButton) {
                 let t = webutil.creatediv({ parent: this.dockWidget,
                                             css : { 'margin-bottom' : '5px',
                                                     'width' : '100%'
                                                   }
                                           });
-                let but=this.minimizeButton;
-                but.empty();
-                but.append(`<span class="glyphicon glyphicon-pushpin"></span>`);
-                t.append(but);
+                t.append(this.dockToggleButton);
             }
         }
         this.widget.css({'opacity' : '1.0'});
@@ -252,20 +288,18 @@ class BisWebPanel {
     setSidebarWidth(wd) {
 
         this.layoutController.setextrabarwidth(wd);
-        
+        this.titleNameBar.empty();
+
         if (wd<100) {
             this.widget.css({'opacity' : '0.05' });
-            this.headerTitle.text('');
             this.header.css({'border-bottom' : '0px','background-color' : webutil.getpassivecolor()});
-            this.headerTitle.css({'opacity' : '0.05' });
             this.closeButton.css({'opacity' : '005', 'font-size' : '1px' });
             this.backButton.css({'opacity' : '005', 'font-size' : '1px' });
             this.footer.css({'opacity' : '0.05'});
         } else {
             this.widget.css({'opacity' : '1.0'});
-            this.headerTitle.text(this.options.name);
+            this.titleNameBar.append(`<H4>${this.options.name}</H4>`);
             this.header.css({'border-bottom' : '1px','background-color' : webutil.getpassivecolor()});
-            this.headerTitle.css({'opacity' : '1.0' });
             this.closeButton.css({'opacity' : '1.0', 'font-size' : '19px'  });
             this.backButton.css({'opacity' : '1.0', 'font-size' : '19px'  });
             this.footer.css({'opacity' : '1.0'});
@@ -276,31 +310,27 @@ class BisWebPanel {
      * @param {Boolean} show - if true then show
      */
     addToSidebar(show=true) {
-        
-        if (this.mode==="sidebar") {
-            this.setSidebarWidth(this.dimensions.width+10);
+
+        if (this.state==="sidebar") {
+            this.setSidebarWidth(this.options.width+10);
             return;
         }
 
-        if (this.mode==="docked")
+        if (this.state==="docked")
             this.remove();
 
 
         if (globalSidebarPanel!==null) {
+            console.log('In add to sidebar removing global');
             globalSidebarPanel.remove();
-            this.previousPlacedPanel=globalSidebarPanel;
+            this.previousPanel=globalSidebarPanel;
             globalSidebarPanel=null;
 
         }
-        
+
         let elements=this.layoutController.getextraelements();
         elements.header.empty();
 
-        this.header.empty();
-        this.header.append(this.closeButton);
-        this.header.append(this.minimizeButton);
-        this.header.append(this.backButton);
-        this.header.append(this.headerTitle);
         
         elements.header.append(this.header);
         elements.widget.empty();
@@ -316,12 +346,10 @@ class BisWebPanel {
         this.state="sidebar";
         globalSidebarPanel=this;
 
-        let but=this.minimizeButton;
-        but.empty();
-        but.append(`<span class="glyphicon glyphicon-resize-small"></span>`);
+        console.log('Global=',this.options.name,'global=',globalSidebarPanel,' prev=',this.previousPanel);
         
         if (show) {
-            window.dispatchEvent(new Event('resize'));
+            this.setSidebarWidth(this.options.width+10);
         }
         return true;
     }
@@ -338,7 +366,7 @@ class BisWebPanel {
             this.footer.remove();
             this.layoutController.setextrabarwidth(0);
         }
-        this.state="hidden";
+        this.state="empty";
         return true;
     }
 

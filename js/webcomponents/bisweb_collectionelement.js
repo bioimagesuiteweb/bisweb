@@ -29,7 +29,8 @@ const bootbox=require('bootbox');
 const util = require('bis_util.js');
 const numeric=require('numeric');
 const webfileutil = require('bis_webfileutil');
-const BisWebDialogElement= require('bisweb_dialogelement');
+const BisWebPanel = require('bisweb_panel.js');
+
 /** 
  * A web element to create and manage a GUI for an Object Collection
  *
@@ -43,13 +44,14 @@ const BisWebDialogElement= require('bisweb_dialogelement');
  *      bis-viewerid : the orthogonal viewer to draw in 
  *      bis-layoutwidgetid :  the layout widget to create the GUI in
  */
-class CollectionElement extends BisWebDialogElement {
+class CollectionElement extends HTMLElement {
 
 
     constructor() {
 
         super();
         this.dataCollection=new BisWebDataObjectCollection();
+        this.panel=null;
         this.internal = { 
             initialized : false,
             parentDomElement : null,
@@ -450,22 +452,33 @@ class CollectionElement extends BisWebDialogElement {
      */
     connectedCallback() {
 
-        let layoutid=this.getAttribute('bis-layoutwidgetid');
-        let layoutcontroller=document.querySelector(layoutid);
         let elementtype=this.getAttribute('bis-elementtype') || 'matrix';
 
-        let fn2= (() => {
-            this.createObjectTypeSpecificInfo(elementtype);
-            
-            this.create(this.specific.title,500);
-            this.makeDockable(layoutcontroller,true);
-            this.internal.parentDomElement=this.widget;
-            this.createGUI(elementtype);
-            if (this.dataCollection.getNumberOfItems()>0)
-                this.updateGUI(true);
-        });
-        
-        webutil.runAfterAllLoaded(fn2);
+        this.createObjectTypeSpecificInfo(elementtype);
+        this.internal.parentDomElement=$('<div></div>');
+        this.createGUI(elementtype);
+        if (this.dataCollection.getNumberOfItems()>0)
+            this.updateGUI(true);
+
+    }
+
+    show() {
+
+        if (!this.panel) {
+            let layoutid=this.getAttribute('bis-layoutwidgetid');
+            let layoutcontroller=document.querySelector(layoutid);
+            this.panel=new BisWebPanel(layoutcontroller,{
+                name : this.specific.title,
+                width : 300,
+                height : 400,
+                hasfooter : false,
+                mode : 'docked',
+                dual : 'true',
+            });
+            this.panel.getWidget().append(this.internal.parentDomElement);
+        }
+
+        this.panel.show();
     }
 
         

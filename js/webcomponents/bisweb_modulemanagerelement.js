@@ -62,8 +62,6 @@ class ModuleManagerElement extends HTMLElement {
 
 
     createModuleOnDemandAndShow(name, module, moduleoptions = {}) {
-        moduleoptions.dockable=true;
-
         
         if (this.modules[name] === null) {
             if (typeof module === "function")
@@ -74,7 +72,7 @@ class ModuleManagerElement extends HTMLElement {
                                                         module, moduleoptions);
             this.customs.push(this.modules[name]);
         }
-
+        
         this.modules[name].show();
         return this.modules[name];
     }
@@ -82,18 +80,8 @@ class ModuleManagerElement extends HTMLElement {
 
     createModule(name, index,dosep , module, moduleoptions = {}) {
 
-        const self = this;
-        if (this.layoutcontroller !== null && moduleoptions.dockable!==true) {
-            if (typeof module === "function") 
-                module = new module(this.mode);
-
-            this.customs.push(biscustom.createCustom(this.layoutcontroller.createToolWidget(name),
-                                                     this.algorithmController,
-                                                     module, moduleoptions));
-            return;
-        }
-
         this.modules[name] = null;
+        const self=this;
         webutil.createMenuItem(this.moduleMenu[index], name,
                                function () {
                                    self.createModuleOnDemandAndShow(name, module, moduleoptions);
@@ -107,7 +95,7 @@ class ModuleManagerElement extends HTMLElement {
             const self=this;
             webutil.createMenuItem(this.moduleMenu[index],'Transformation Manager',
                                    function() {
-                                       self.algorithmController.getTransformController().dockDialog(true,false);
+                                       self.algorithmController.getTransformController().show();
                                    });
             webutil.createMenuItem(this.moduleMenu[index],'');
         }
@@ -165,7 +153,7 @@ class ModuleManagerElement extends HTMLElement {
         for (let i = 0; i < numviewers; i++)
             this.viewers[i].addImageChangedObserver(this);
 
-        let moduleoptions = { 'numViewers': numviewers, 'dockable' : true , 'forcedock' : true};
+        let moduleoptions = { 'numViewers': numviewers };
 
         this.moduleMenu[1] = webutil.createTopMenuBarMenu('Image Processing', menubar);
 
@@ -193,7 +181,9 @@ class ModuleManagerElement extends HTMLElement {
             usesgpl=true;
         else
             usesgpl=false;
-    
+
+        console.log('moduleoptions',moduleoptions);
+        
         this.createModule('Smooth Image',1, false, modules.smoothImage, moduleoptions);
         this.createModule('Normalize Image',1, false, modules.normalizeImage, moduleoptions);
         this.createModule('Threshold Image',1, false, modules.thresholdImage, moduleoptions);
