@@ -99,16 +99,6 @@ class BisWebPanel {
         this.closeButton=null;
 
         this.createElements();
-
-        console.log('this.mode=',this.mode);
-        
-        if (this.mode === "sidebar" ) {
-            console.log('adding sidebar=',this.mode);
-            this.addToSidebar();
-        } else {
-            console.log('adding dock=',this.mode);
-            this.addToDock();
-        }
     }
 
     /** is dialog visible 
@@ -135,16 +125,12 @@ class BisWebPanel {
     /** Shows the dialog and disables any drag and drop elements while it is open */
     show() {
 
-        console.log('this.mode=',this.mode);
-        
-        if (this.mode==="docked") {            
-            return webutil.activateCollapseElement(this.dockWidget);
+        if (this.mode==="docked") {
+            this.addToDock();
         }
 
         if (this.mode==="sidebar") {
-            if (globalSidebarPanel!==this) 
-                this.addPanelToSidebar(true);
-            this.setSidebarWidth(this.dimensions.width+10);
+            this.addToSidebar(true);
         }
     }
 
@@ -223,21 +209,16 @@ class BisWebPanel {
      */
     addToDock(show=true) {
 
-        console.log('adding to dock state=',this.state);
-        
         if (this.state==="docked") {
-            this.show();
-            return;
+            return webutil.activateCollapseElement(this.dockWidget);
         }
 
-        if (this.state==="sidebar")
+        if (this.state==="sidebar") {
             this.removeFromSidebar();
-
-        if (globalDockedPanels.length===maxGlobalDockedPanels) {
+        } else if (globalDockedPanels.length===maxGlobalDockedPanels) {
             let toremove=globalDockedPanels.shift();
             toremove.remove();
         }
-
 
         if (this.dockWidget===null) {
             this.dockWidget=this.layoutController.createToolWidget(`${this.options.name}`);
@@ -260,11 +241,10 @@ class BisWebPanel {
             this.footer.css({'opacity' : '1.0'});
             this.dockWidget.append(this.footer);
         }
-        this.docked=true;
-        console.log('Adding',this.options.name,'to globalDockedPanels');
+        this.state="docked";
         globalDockedPanels.push(this);
         if (show)
-            this.show();
+            webutil.activateCollapseElement(this.dockWidget);
         return true;
     }
 
@@ -298,7 +278,7 @@ class BisWebPanel {
     addToSidebar(show=true) {
         
         if (this.mode==="sidebar") {
-            this.show();
+            this.setSidebarWidth(this.dimensions.width+10);
             return;
         }
 
@@ -342,13 +322,13 @@ class BisWebPanel {
         
         if (show) {
             window.dispatchEvent(new Event('resize'));
-            this.show();
         }
         return true;
     }
     
     /** Call to move dialog GUI from dock back to dialog */
     remove() {
+
         if (this.state==="docked") {
             this.dockWidget.parent().parent().remove();
             this.dockWidget=null;
@@ -359,7 +339,7 @@ class BisWebPanel {
             this.layoutController.setextrabarwidth(0);
         }
         this.state="hidden";
-        return;
+        return true;
     }
 
     static setMaxDockedPanels(n) {
@@ -367,7 +347,8 @@ class BisWebPanel {
     }
 
     static getActivePanels() {
-        return [ globalSidebarPanel].concat(globalDockedPanels);
+        console.log('globalDocked=',globalDockedPanels.join(' '));
+        return globalDockedPanels;
     }
 
     

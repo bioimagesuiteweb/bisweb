@@ -195,7 +195,7 @@ class ViewerApplicationElement extends HTMLElement {
             console.log('Read state',st.length);
             this.VIEWERS[index].setElementState(st);
         }).catch( (e) => {
-            console.log('paste error',e);
+            console.log('paste error',e,e.stack);
         });
     }
     

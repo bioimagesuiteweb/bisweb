@@ -24,7 +24,7 @@ const BiswebImage = require('bisweb_image.js');
 const $ = require('jquery');
 const bootbox = require('bootbox');
 const bisgenericio=require("bis_genericio");
-const BisWebDialogElement = require('bisweb_dialogelement.js');
+const BisWebPanel = require('bisweb_panel.js');
 
 
 /**
@@ -35,31 +35,20 @@ let ModuleList={};
 /**
  * Creates a custom module and adds it to the frame as a child of parent. 
  *
- * If baseframe is null then this is created as a dialog and that is the end
- * If baseframe is not null and opts.dockable is false then just stick this in the dock area
- *
- * If baseframe is not null and opts.dockable is true then create multifunctional dialog that sits in the dock. 
- *    In this case baseframe is realy the layoutcontroller (i.e. it has layoutcontroller.createToolWidget)
- * 
- *
  *
 
  * @alias bisWebCustomModule.createCustom
- * @param {Node} parent - DOM Node to append the custom module frame to
- * @param {bisweb_algorithm} algorithmcontroller-  Algorithm controller associated with the viewers on the page
+ * @param {LayoutController} layoutcontroller - Master Controller
  * @param {Object} mod - Object containing a module that specifies how it should be displayed and run.
  * @param {object} opts - the options object 
  * @param {Number} opts.numViewers - Number of Image Viewers attached
- * @param {String} opts.name - Name of the dialog / panel (if set)
-
- * @param {Boolean} opts.dockable - If true and baseframe is not null allow the widget to dock!
- * @param {Boolean} opts.forcedock - If true and baseframe is not null force the widget to dock!
+ * @param {String} opts.name - Name of the panel / panel (if set)
  * @param {Boolean} opts.showfirsttime - If true and docked, whether to show first time it is created
  */
 
 class CustomModule {
 
-    constructor(baseframe, mod, algocontroller, opts = {}) {
+    constructor(layoutcontroller, mod, algocontroller, opts = {}) {
 
         // Check Input Params
         if (opts.numViewers !== 0)
@@ -76,13 +65,6 @@ class CustomModule {
 
         // Docking Options
         this.dockWidget = null;
-        this.dockable = opts.dockable || false;
-        if (this.dockable)
-            this.forcedock = opts.forcedock || false;
-        else
-            this.forcedock=false;
-
-        this.docked = false;
         this.layoutcontroller=null;
 
         // Parameters
@@ -101,74 +83,41 @@ class CustomModule {
 
         this.name = opts.name || this.description.dialogname || this.description.name;
 
-        const self=this;
-
         // Three states
 
-        if (baseframe !== null && this.dockable===false) {
-            baseframe=$(baseframe);
-            this.basewidget = webutil.creatediv({ parent: baseframe });
-            this.dialog=null;
-            this.footer=this.basewidget;
-            let placeholder = webutil.creatediv({ parent: this.basewidget });
-            placeholder[0].innerHTML = `this element ${this.name} will load once data is available`;
-        } else {
-            this.dialog=new BisWebDialogElement();
-            this.dialog.create(this.name,300,-500,100,100,500);
-            this.dialog.removeCloseButton();
-            this.dialog.setCloseCallback(function() { self.hideDialog(); });
-
-            this.basewidget = this.dialog.widget;
-            this.footer= this.dialog.footer;
-            this.basewidget.css({ "background-color" : "#333333" });
-            if (baseframe!==null) {
-                this.dialog.makeDockable(baseframe,false);
-            } else {
-                console.log('baseframe is null');
-            }
-        }
-        ModuleList[this.dialog]=this;
+        this.panel=new BisWebPanel(layoutcontroller,{
+            name : this.name,
+            width : 300,
+            height : 500,
+            hasfooter : true
+        });
         
+        this.basewidget = this.panel.getWidget();
+        this.footer= this.panel.getFooter();
+        this.basewidget.css({ "background-color" : "#333333" });
+        ModuleList[this.name]=this;
         this.threadmanager = $("bisweb-webworkercontroller")[0] || null;
     }
 
-    /** Returns the current dialog object
-     * @returns {JQueryElement} - the current dialog
+    /** Returns the current panel object
+     * @returns {JQueryElement} - the current panel
      */
-    getDialog() {
-        return this.dialog;
+    getPanel() {
+        return this.panel;
     }
 
-    /** shows the current dialog */
-    showDialog() {
+    /** shows the current panel */
+    show() {
 
-        if (!this.dialog) {
-            console.log('No dialog');
+        if (!this.panel) {
+            console.log('No panel');
             return;
         }
 
         this.dirtyInputs = true;
         this.createOrUpdateGUI();
-        
-        // ---- Docked Stuff ---------------------------------
-        if (this.docked === true) {
-            console.log('Show docked module');
-            return this.dialog.showDockedDialog();
-        }
-
-        if (this.forcedock === true) {
-            if (this.dialog.dockDialog(this.moduleOptions.showfirsttime))
-                return;
-        }
-
-        // ------ From Here dialog related ------------------
-        this.dialog.show();
-    }
-    
-    /** hides the current dialog */
-    hideDialog() {
-
-        this.dialog.hide();
+        console.log('show panel');
+        this.panel.show();
     }
     
     /** returns the current module description 
@@ -270,6 +219,8 @@ class CustomModule {
      * This updates the module GUI given the current set of Input Objects
      */
     updateModuleGUIFromInputObjects() {
+
+        console.log('Updating module gui',this.name);
         
         let inputelements = this.getCurrentInputObjects();
         this.description = this.module.updateOnChangedInput(inputelements, this.parameterControllers, this.guiVars);
@@ -612,11 +563,16 @@ let createCustom = function (parent, algorithmcontroller, mod, opts = {}) {
 /** Update open Modules */
 let updateModules = function() {
 
-    let dialogs=BisWebDialogElement.getOpenDialogs();
-    for (let i=0;i<dialogs.length;i++) {
-        if (dialogs[i]) {
-            if (ModuleList[dialogs[i]])
-                ModuleList[dialogs[i]].createOrUpdateGUI();
+    let panels=BisWebPanel.getActivePanels();
+    for (let i=0;i<panels.length;i++) {
+        console.log('In Step ',i,panels.length,' panel=',panels[i]);
+        if (panels[i]) {
+            let mod=ModuleList[panels[i].options.name];
+            console.log('Panels=',i,panels[i].options.name,' mod=',mod);
+            if (mod) {
+                console.log('Panels=',i,mod.name);
+                mod.createOrUpdateGUI();
+            }
         }
     }
 };

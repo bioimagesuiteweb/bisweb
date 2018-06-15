@@ -75,7 +75,7 @@ class ModuleManagerElement extends HTMLElement {
             this.customs.push(this.modules[name]);
         }
 
-        this.modules[name].showDialog();
+        this.modules[name].show();
         return this.modules[name];
     }
 
