@@ -313,8 +313,12 @@ class ViewerLayoutElement extends HTMLElement {
         if (this.dualmode > 0) {
             this.elements.corecontrols=webutil.createCollapseElement(newpanel,'Viewer 1 Controls',coreopen);
             this.elements.secondviewercontrols=webutil.createCollapseElement(newpanel,'Viewer 2 Controls',false);
+
+            this.elements.corecontrols.parent().parent().find('.panel-heading').prepend(`<span style="float:right" class="glyphicon glyphicon-pushpin"></span>`);
+            this.elements.secondviewercontrols.parent().parent().find('.panel-heading').prepend(`<span style="float:right" class="glyphicon glyphicon-pushpin"></span>`);
         } else {
             this.elements.corecontrols=webutil.createCollapseElement(newpanel,'Viewer Controls',coreopen);
+            this.elements.corecontrols.parent().parent().find('.panel-heading').prepend(`<span style="float:right" class="glyphicon glyphicon-pushpin"></span>`);
         }
         
         this.elements.toolbase=webutil.createpanelgroup(this.elements.sidebar);

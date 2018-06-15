@@ -1828,23 +1828,16 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                     let s1= node+1;
                     let lobe=gui_Lobes[internal.parcellation.rois[node].attr[0]];
                     
-                    let s2= 'degree='+degree+'\t(MNI='+c+', Lobe='+lobe+')';
+                    let s2= 'Degree='+degree+'\t(MNI='+c+', Lobe='+lobe+')';
                     let nid=webutil.getuniqueid();
                     
-                    let w=$('<tr>'+
-                            ' <td width="5%">'+s0+'</td>'+
-                            ' <td width="15%">'+s1+'</td>'+
-                            ' <td width="80%">'+s2+'</td>'+
-                            ' <td width="10%"><button type="button" class="btn-info btn-sm" style="padding: 2px, font-size: 10px"'+
-                            ' id="'+nid+'">Go</button></td>'+
-                            '</tr>');
+                    let w=$(`<tr>
+                              <td width="5%">${s0}</td>
+                              <td width="15%">${s1}</td>
+                              <td width="80%" id="${nid}" class="btn-link">${s2}</td>
+                            </tr>`);
                     tbody.append(w);
-                    let btn=$('#'+nid);
-                    btn.css({ 'height' : '20px',
-                              'padding-top' : '1px',
-                              'margin' : '0 2 0 0',
-                              'font' : 'Arial 10px'});
-                    btn.click(callback);
+                    $('#'+nid).click(callback);
                     buttonnodepairs[nid]=(node);
                 }
             }
