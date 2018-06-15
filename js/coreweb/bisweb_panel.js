@@ -153,12 +153,10 @@ class BisWebPanel {
         this.closeButton.click( (e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('Hiding',self.state);
             self.hide();
         });
 
         if (this.initialstate === "docked" && this.options.dual===false) {
-            console.log('No extra buttons');
             return;
         }
         
@@ -178,9 +176,7 @@ class BisWebPanel {
         this.sidebarToggleButton.click( (e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('Toggle callback',e,self.state);
             let w=self.layoutController.getextrabarwidth();
-            console.log('In Side bar',w);
                 
             if (w<100) {
                 self.setSidebarWidth(self.options.width+10);
@@ -199,7 +195,6 @@ class BisWebPanel {
         this.backButton.click( (e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('previous=',self.previousPanel);
             if (self.previousPanel) {
                 self.previousPanel.addToSidebar();
             }
@@ -319,7 +314,6 @@ class BisWebPanel {
 
 
         if (globalSidebarPanel!==null) {
-            console.log('In add to sidebar removing global',globalSidebarPanel.options.name);
             this.previousPanel=globalSidebarPanel;
             globalSidebarPanel.remove();
         }
@@ -342,12 +336,6 @@ class BisWebPanel {
         this.state="sidebar";
         globalSidebarPanel=this;
 
-        console.log('Adding=',this.options.name,'global=',globalSidebarPanel.options.name)
-        if (this.previousPanel)
-            console.log(' prev=',this.previousPanel.options.name);
-        else
-            console.log('No previous');
-        
         if (show) {
             this.setSidebarWidth(this.options.width+10);
         }
@@ -367,7 +355,6 @@ class BisWebPanel {
             this.dummyWidget.append(this.widget);
             this.dummyWidget.append(this.footer);
             this.layoutController.setextrabarwidth(0);
-            console.log('sidebar removed');
         }
         this.state="empty";
         return true;
