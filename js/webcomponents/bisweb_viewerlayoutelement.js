@@ -179,7 +179,6 @@ class ViewerLayoutElement extends HTMLElement {
         } else {
             this.elements.extrabar.css(extrabarcss);
             let a=parseInt(this.extraelements.widget.attr('nofooter'));
-            console.log('attribute=',a);
             if (a) {
                 this.extraelements.header.css( { 'height' : `100px`});
                 this.extraelements.widget.css( { 'height' : `${this.viewerheight-102+12}px`});

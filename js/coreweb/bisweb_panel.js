@@ -93,8 +93,8 @@ class BisWebPanel {
         this.dockToggleButton=null;
         this.sidebarToggleButton=null;
         this.closeButton=null;
-
-        this.createElements();
+        this.dummyWidget=$('<div></div>');
+        this.createHeader();
     }
 
     /** is dialog visible 
@@ -120,7 +120,6 @@ class BisWebPanel {
             if (this.initialstate!=="sidebar") {
                 this.addToDock();
             } else {
-                console.log('adding to sidebar');
                 this.addToSidebar(true);
             }
         } else {
@@ -144,7 +143,7 @@ class BisWebPanel {
     }
 
 
-    createElements() {
+    createHeader() {
 
         if (this.closeButton!==null)
             return;
@@ -203,7 +202,6 @@ class BisWebPanel {
             console.log('previous=',self.previousPanel);
             if (self.previousPanel) {
                 self.previousPanel.addToSidebar();
-                self.previousPanel.previousPanel=self;
             }
         });
 
@@ -321,11 +319,9 @@ class BisWebPanel {
 
 
         if (globalSidebarPanel!==null) {
-            console.log('In add to sidebar removing global');
-            globalSidebarPanel.remove();
+            console.log('In add to sidebar removing global',globalSidebarPanel.options.name);
             this.previousPanel=globalSidebarPanel;
-            globalSidebarPanel=null;
-
+            globalSidebarPanel.remove();
         }
 
         let elements=this.layoutController.getextraelements();
@@ -346,7 +342,11 @@ class BisWebPanel {
         this.state="sidebar";
         globalSidebarPanel=this;
 
-        console.log('Global=',this.options.name,'global=',globalSidebarPanel,' prev=',this.previousPanel);
+        console.log('Adding=',this.options.name,'global=',globalSidebarPanel.options.name)
+        if (this.previousPanel)
+            console.log(' prev=',this.previousPanel.options.name);
+        else
+            console.log('No previous');
         
         if (show) {
             this.setSidebarWidth(this.options.width+10);
@@ -361,10 +361,13 @@ class BisWebPanel {
             this.dockWidget.parent().parent().remove();
             this.dockWidget=null;
         } else if (this.state==="sidebar") {
-            this.header.remove();
-            this.widget.remove();
-            this.footer.remove();
+            let elements=this.layoutController.getextraelements();
+
+            this.dummyWidget.append(this.header);
+            this.dummyWidget.append(this.widget);
+            this.dummyWidget.append(this.footer);
             this.layoutController.setextrabarwidth(0);
+            console.log('sidebar removed');
         }
         this.state="empty";
         return true;

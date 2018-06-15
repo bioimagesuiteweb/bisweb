@@ -113,7 +113,6 @@ class ParavisionImportElement extends HTMLElement {
         let stable = $('#' + newid);
         let thead = stable.find(".bisthead");
         let tbody = stable.find(".bistbody");
-        console.log('thead=',thead,tbody);
         thead.empty();
         tbody.empty();
         internal.showdialog.getWidget().append(stable);
