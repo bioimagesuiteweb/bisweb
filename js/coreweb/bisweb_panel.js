@@ -309,8 +309,6 @@ class BisWebPanel {
         if (this.dockWidget===null) {
             this.dockWidget=this.layoutController.createToolWidget(`${this.options.name}`);
             let t=this.dockWidget.parent().parent().find('.panel-heading');
-            if (this.options.permanent) 
-                t.prepend(`<span style="float:right" class="glyphicon glyphicon-pushpin"></span>`);
             if (this.dockToggleButton) {
                 this.dockToggleButton.css({'border' : '0px', 'font-size' : '17px'});
                 t.prepend(this.dockToggleButton);

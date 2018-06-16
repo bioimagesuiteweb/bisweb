@@ -40,11 +40,15 @@ window.BISELECTRON = {
     dialog : remote.require('electron').dialog,
     remote : remote,
     Buffer : Buffer,
+    electron : electron,
 };
 
-process.once('loaded', () => {
+/*process.once('loaded', () => {
     global.electron = require('electron');
-    electron.webFrame.setZoomFactor(1.0);
-});
+    if (process.platform === 'darwin')  
+        electron.webFrame.setZoomFactor(1.0);
+    else
+        electron.webFrame.setZoomFactor(1.0);
+});*/
 
 

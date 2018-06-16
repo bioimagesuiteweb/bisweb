@@ -270,11 +270,15 @@ let getItem=function(item) {
  * @returns {String} key - the current key
  * @returns {String} value - the current value
  */
-let setItem=function(key,value) {
+let setItem=function(key,value,save=false) {
     if (key==="orientationOnLoad")
         this.setImageOrientationOnLoad(value);
     else
         userPreferences[key]=value;
+
+    if (save) {
+        saveUserPreferences();
+    }
 };
 
 // -------------------------------- On Load if in browser -----------------------

@@ -685,6 +685,7 @@ class ViewerApplicationElement extends HTMLElement {
         };
 
         webutil.createMenuItem(hmenu, "Set Image Orientation On Load", orientSelect);
+
     }
     
     createHelpMenu(menubar,userPreferencesLoaded) {
@@ -711,13 +712,18 @@ class ViewerApplicationElement extends HTMLElement {
                 webutil.createMenuItem(hmenu, ''); // separator
                 console.addtomenu(hmenu);
             }
-            if (webutil.inElectronApp()) {
-                webutil.createMenuItem(hmenu, ''); // separator
-                webutil.createMenuItem(hmenu, 'Show JavaScript Console',
-                                       function () {
-                                           window.BISELECTRON.remote.getCurrentWindow().toggleDevTools();
-                                       });
-            }
+        }
+
+        if (webutil.inElectronApp()) {
+            webutil.createMenuItem(hmenu, ''); // separator
+            webutil.createMenuItem(hmenu, 'Show JavaScript Console',
+                                   function () {
+                                       window.BISELECTRON.remote.getCurrentWindow().toggleDevTools();
+                                   });
+                userPreferencesLoaded.then( () => {
+                    let z=parseFloat(userPreferences.getItem('electronzoom'));
+                    window.BISELECTRON.electron.webFrame.setZoomFactor(z);
+                });
         }
 
         webfileutil.createFileSourceSelector(hmenu);
@@ -768,6 +774,26 @@ class ViewerApplicationElement extends HTMLElement {
             extra='';
         }  else {
             gmenu=editmenu;
+            webutil.createMenuItem(gmenu,'');
+        }
+
+        if (webutil.inElectronApp()) {
+            webutil.createMenuItem(gmenu, 'Zoom 80%',
+                                   function () {
+                                       window.BISELECTRON.electron.webFrame.setZoomFactor(0.8);
+                                       userPreferences.setItem('electronzoom',0.8,true);
+                                   });
+            webutil.createMenuItem(gmenu, 'Zoom 100%',
+                                   function () {
+                                       window.BISELECTRON.electron.webFrame.setZoomFactor(1.0);
+                                       userPreferences.setItem('electronzoom',1.0,true);
+                                   });
+            webutil.createMenuItem(gmenu, 'Zoom 125%',
+                                   function () {
+                                       window.BISELECTRON.electron.webFrame.setZoomFactor(1.25);
+                                       userPreferences.setItem('electronzoom',1.2,true); 
+                                       
+                                   });
             webutil.createMenuItem(gmenu,'');
         }
 
