@@ -20,6 +20,7 @@ class FileServer extends HTMLElement {
         //File tree requests display the contents of the disk on the server machine in a modal
         this.fileTreeDisplayModal = webutil.createmodal('File Tree', 'modal-lg');
         this.fileTreeDisplayModal.dialog.find('.modal-footer').remove();
+        this.fileTreeData = null;
 
         //Save image requests pop up a modal dialog with a text entry field
         this.saveImageModal = null;
@@ -95,6 +96,7 @@ class FileServer extends HTMLElement {
     
                 switch (data.type) {
                     case 'filelist' : this.displayFileList(data.payload); break;
+                    case 'supplementalfiles' : this.handleSupplementalFileRequest(data.payload.path, data.payload.list); break;
                     case 'error' : console.log('Error from client:', data.payload); break;
                     case 'datasocketready' : break; //this control phrase is handled elsewhere and should be ignored by this listener.
                     default : console.log('received a transmission with unknown type', data.type, 'cannot interpret');
@@ -117,10 +119,14 @@ class FileServer extends HTMLElement {
      * Sends a request for a list of the files on the server machine and prepares the display modal for the server's reply. 
      * Once the list of files arrives it is rendered using jstree. The user may request individual files from the server using this list. 
      * 
+     * requestFileList doesn't expand the contents of the entire server file system; just the first four levels of directories. 
+     * When the user clicks on an unexpanded node the node will request four levels of directories below it. 
+     * 
      * @param {Socket} socket - A socket representing the connection between client and server (see connectToServer).
+     * @param {String} directory - The directory to expand the files under. Optional -- if unspecified the server will return the directories under ~/.
      */
-    requestFileList(socket) {
-        let command = JSON.stringify({ 'command' : 'show' }); 
+    requestFileList(socket, directory = null) {
+        let command = JSON.stringify({ 'command' : 'show', 'directory' : directory }); 
         socket.send(command);
 
         let loadMessage = $('<div>Loading files from server...</div>')
@@ -130,6 +136,7 @@ class FileServer extends HTMLElement {
         //set up file tree events while data is loading
         $(this.fileTreeDisplayModal.body).on('open_node.jstree', (event, data) => {
             data.instance.set_icon(data.node, 'glyphicon glyphicon-folder-open');
+            console.log('data', data);
         });
 
         $(this.fileTreeDisplayModal.body).on('close_node.jstree', (event, data) => {
@@ -138,7 +145,11 @@ class FileServer extends HTMLElement {
 
         $(this.fileTreeDisplayModal.body).on('select_node.jstree', (event, data) => {
             console.log('data', data);
-            if (data.node.type === 'file') {
+
+            //check whether node should expand directories beneath it.
+            if (data.node.original.expand) {
+                this.requestFileList(socket, data.node.original.path);
+            } else if (data.node.type === 'file') {
                 this.sendFileRequest(socket, { 'command' : 'getfile', 'files' : [data.node.original.path] });
             }
         });
@@ -159,18 +170,23 @@ class FileServer extends HTMLElement {
         });
     }
 
+    handleSupplementalFileRequest(path, list) {
+        console.log('handleSupplementalFileRequest', path, list);
+    }
+
     /**
-     * Renders a file list fetched by requestFileList in the file tree modal using jstree.
+     * Renders a file list fetched by requestFileList in the file tree modal using jstree. 
+     * Called in response to a file list returned by the server (itself in response to requestFileList) or by the fileTreeDisplayModal trying to fetch more nodes.
      * 
      * @param {Object} list - List of files on the server machine.
      */
     displayFileList(list) {
-        this.fileTreeDisplayModal.body.empty();
         console.log('list', list);
         this.fileTreeDisplayModal.body.jstree({
             'core' : {
-                'data' : list,
-                'dblclick_toggle' : false
+                'data' : function(node, cb) { cb(list) },
+                'dblclick_toggle' : false,
+                'expand_selected_onload' : true
             },
             'types' : {
                 'default' : {

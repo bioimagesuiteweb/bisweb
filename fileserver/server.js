@@ -281,11 +281,11 @@ let prepareForDataFrames = (socket) => {
  */
 let handleTextRequest = (rawText, control, socket) => {
     let parsedText = parseClientJSON(rawText);
-
+    console.log('text request', parsedText);
     switch (parsedText.command) {
         //get file list
         case 'show':
-        case 'showfiles': serveFileList(socket, os.homedir(), 4); break;
+        case 'showfiles': serveFileList(socket, parsedText.directory, 4); break;
         //get a file from the server
         case 'getfile':
         case 'getfiles': serveFileRequest(parsedText, control, socket); break;
@@ -346,13 +346,17 @@ let serveFileRequest = (parsedText, control, socket) => {
 /**
  * Sends the list of available files to the user, hiding files above the ~/ directory.
  * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
- * @param {String} basedir - Directory on the server machine to display files starting from.
+ * @param {String} basedir - Directory on the server machine to display files starting from, null indicates '~/'. Writes different responses to the socket if basedir is null or not ('filelist' vs 'supplementalfiles').
  * @param {Number} depth - Number of directories under basedir to expand. Optional, depth will be infinite if not specified.
  * @returns A file tree rooted at basedir.
  */
-let serveFileList = (socket, basedir = os.homedir(), depth = null) => {
+let serveFileList = (socket, basedir, depth = null) => {
     let fileTree = [];
+    if (basedir === null) { basedir = os.homedir(); }
 
+    //path = full filepath
+    //fileTreeIndex = the the children of the current tree entry
+    //directoriesExpanded = the number of file tree entries expanded so far
     let expandDirectory = (path, fileTreeIndex, directoriesExpanded) => {
         return new Promise( (resolve, reject) => {
             fs.readdir(path, (err, files) => {
@@ -376,6 +380,7 @@ let serveFileList = (socket, basedir = os.homedir(), depth = null) => {
                                 if (!depth || directoriesExpanded < depth) {
                                     expandDirectory(path, treeEntry.children, directoriesExpanded + 1).then( () => { resolve(fileTreeIndex); });
                                 } else {
+                                    treeEntry.expand = true;
                                     resolve(fileTreeIndex);
                                 }
                             } else {
@@ -425,7 +430,13 @@ let serveFileList = (socket, basedir = os.homedir(), depth = null) => {
     };
 
     expandDirectory(basedir, fileTree, 0).then( (tree) => {
-        socket.write(formatPacket('filelist', tree));
+        console.log('basedir', basedir);
+        //bisweb_fileserver handles the base file request differently than the supplemental ones, so we want to ship them to different endpoints
+        if (basedir === os.homedir()) {
+            socket.write(formatPacket('filelist', tree));
+        } else {
+            socket.write(formatPacket('supplementalfiles',  { 'path' : basedir, 'list' : tree }));
+        }
     });
 };
 
