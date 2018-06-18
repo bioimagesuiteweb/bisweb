@@ -544,10 +544,26 @@ class OrthogonalViewerElement extends BaseViewerElement {
             modifyCallbacks(1);
             return true;
         }
+
+        let offset=this.internal.layoutcontroller.getviewerleft();
+        let vw=this.internal.layoutcontroller.getviewerwidth();
+        let minl=0.1*vw;
+        let maxl=0.9*vw;
         
         if (mode===1 && data.origx>=0) {
+
+            x=x-offset;
+            if (x<minl)
+                x=minl;
+            else if (x>=maxl)
+                x=maxl;
+            x=x+offset;
+
+            
             let shift=x-data.origx;
+
             let l=data.left+shift;
+            
             cnv.css({ 'left' : `${l-3}px`,});
             cnv2.css({'left' : `${l-5}px`});
             return true;
@@ -557,7 +573,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
             cnv.css({'width' : '1px'  });
             
             let shiftx=x-data.origx;
-            let offset=this.internal.layoutcontroller.getviewerleft();
+
             let newleft=data.left+shiftx;
             let newclear=((newleft-offset)/(data.left-offset))*this.cleararea[0];
             if (newclear>0.45 && newclear<0.55) {
