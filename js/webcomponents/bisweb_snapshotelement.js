@@ -35,6 +35,7 @@ const dropbox = require('bisweb_dropboxmodule');
 const drive = require('bisweb_drivemodule');
 const io = require('bis_genericio');
 const userPreferences = require('bisweb_userpreferences.js');
+const BisWebPanel = require('bisweb_panel.js');
 
 require('bootstrap-colorselector.js');
 
@@ -403,7 +404,16 @@ class SnapshotElement extends HTMLElement {
 
         const self = this;
 
-        let basegui = layoutcontroller.createToolWidget('Viewer Snapshot');
+        let panel=new BisWebPanel(layoutcontroller,
+                                  {
+                                      'name' : 'Viewer Snapshot',
+                                      'dual' : false,
+                                      'permanent' : true,
+                                      'width' : '300px'
+                                  });
+        panel.show();
+
+        let basegui=panel.getWidget();
         let base = webutil.creatediv({ parent: basegui });
 
         let inlineform = $("<form class=\"form-inline\"></form>");

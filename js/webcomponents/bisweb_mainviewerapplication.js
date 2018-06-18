@@ -29,8 +29,8 @@ const $ = require('jquery');
 const bisdbase = require('bisweb_dbase');
 const genericio=require('bis_genericio');
 const bootbox=require('bootbox');
-const BisWebDialogElement=require('bisweb_dialogelement');
-
+const BisWebPanel = require('bisweb_panel.js');
+//const BisWebHelpVideoPanel = require('bisweb_helpvideopanel');
 
 const localforage=require('localforage');
 
@@ -195,7 +195,7 @@ class ViewerApplicationElement extends HTMLElement {
             console.log('Read state',st.length);
             this.VIEWERS[index].setElementState(st);
         }).catch( (e) => {
-            console.log('paste error',e);
+            console.log('paste error',e,e.stack);
         });
     }
     
@@ -282,19 +282,27 @@ class ViewerApplicationElement extends HTMLElement {
     // ---------------------------------------------------------------------------
     createAdvancedTransferTool(modulemanager,editmenu) {
 
-
+        const self=this;
         let name='Advanced Transfer Tool';
         if (!modulemanager) {
             name='App State Manager';
         }
+
+        let dual=false;
+        if (this.num_independent_viewers >1) {
+            dual=true;
+        }
         
-        let newdlg=new BisWebDialogElement();
-        newdlg.create(name,400,400);
-        newdlg.makeDockable(this.VIEWERS[0].getLayoutController());
+        let newdlg=new BisWebPanel(this.VIEWERS[0].getLayoutController(),
+                                   {
+                                       name : name,
+                                       width :300,
+                                       dual : dual,
+                                   });
 
-
-        var bbar=webutil.createbuttonbar({ parent: newdlg.widget,
-
+        var bbar=webutil.createbuttonbar({ parent: newdlg.getWidget(),
+                                           css : { 'margin-top' : '10px' ,
+                                                   'margin-left' : '4px' }
                                          });
         
         var bbar1=webutil.createbuttonbar({ parent: bbar,
@@ -466,7 +474,7 @@ class ViewerApplicationElement extends HTMLElement {
         }
         webutil.createMenuItem(editmenu,'');
         webutil.createMenuItem(editmenu,name,function() {
-            newdlg.dockDialog(true,false);
+            newdlg.show();
         });
     }
     
@@ -677,6 +685,7 @@ class ViewerApplicationElement extends HTMLElement {
         };
 
         webutil.createMenuItem(hmenu, "Set Image Orientation On Load", orientSelect);
+
     }
     
     createHelpMenu(menubar,userPreferencesLoaded) {
@@ -684,12 +693,14 @@ class ViewerApplicationElement extends HTMLElement {
 
         webutil.createMenuItem(hmenu,'About this application',function() {  webutil.aboutDialog(); });
         
-        /*        let helpdialog = document.createElement('bisweb-helpvideoelement');
-                  webutil.createMenuItem(hmenu, 'About Video',
-                  function () {
-                  helpdialog.displayVideo();
-                  });
-                  webutil.createMenuItem(hmenu, ''); // separator*/
+/*        let helpdialog = new BisWebHelpVideoPanel();
+        const self=this;
+        webutil.createMenuItem(hmenu, 'About Video',
+                               function () {
+                                   helpdialog.setLayoutController(self.VIEWERS[0].getLayoutController());
+                                   helpdialog.displayVideo();
+                               });*/
+        webutil.createMenuItem(hmenu, ''); // separator
 
         
         this.addOrientationSelectToMenu(hmenu,userPreferencesLoaded);
@@ -701,13 +712,18 @@ class ViewerApplicationElement extends HTMLElement {
                 webutil.createMenuItem(hmenu, ''); // separator
                 console.addtomenu(hmenu);
             }
-            if (webutil.inElectronApp()) {
-                webutil.createMenuItem(hmenu, ''); // separator
-                webutil.createMenuItem(hmenu, 'Show JavaScript Console',
-                                       function () {
-                                           window.BISELECTRON.remote.getCurrentWindow().toggleDevTools();
-                                       });
-            }
+        }
+
+        if (webutil.inElectronApp()) {
+            webutil.createMenuItem(hmenu, ''); // separator
+            webutil.createMenuItem(hmenu, 'Show JavaScript Console',
+                                   function () {
+                                       window.BISELECTRON.remote.getCurrentWindow().toggleDevTools();
+                                   });
+                userPreferencesLoaded.then( () => {
+                    let z=parseFloat(userPreferences.getItem('electronzoom'));
+                    window.BISELECTRON.electron.webFrame.setZoomFactor(z);
+                });
         }
 
         webfileutil.createFileSourceSelector(hmenu);
@@ -760,8 +776,27 @@ class ViewerApplicationElement extends HTMLElement {
             gmenu=editmenu;
             webutil.createMenuItem(gmenu,'');
         }
-        
- 
+
+        if (webutil.inElectronApp()) {
+            webutil.createMenuItem(gmenu, 'Zoom 80%',
+                                   function () {
+                                       window.BISELECTRON.electron.webFrame.setZoomFactor(0.8);
+                                       userPreferences.setItem('electronzoom',0.8,true);
+                                   });
+            webutil.createMenuItem(gmenu, 'Zoom 100%',
+                                   function () {
+                                       window.BISELECTRON.electron.webFrame.setZoomFactor(1.0);
+                                       userPreferences.setItem('electronzoom',1.0,true);
+                                   });
+            webutil.createMenuItem(gmenu, 'Zoom 125%',
+                                   function () {
+                                       window.BISELECTRON.electron.webFrame.setZoomFactor(1.25);
+                                       userPreferences.setItem('electronzoom',1.2,true); 
+                                       
+                                   });
+            webutil.createMenuItem(gmenu,'');
+        }
+
         if (this.num_independent_viewers > 1) {
             webutil.createMenuItem(gmenu, extra+'Both Viewers', function () { self.VIEWERS[1].setDualViewerMode(0.5); });
             webutil.createMenuItem(gmenu, extra+'Viewer 1 Only', function () { self.VIEWERS[1].setDualViewerMode(1.0); });
@@ -1045,6 +1080,7 @@ class ViewerApplicationElement extends HTMLElement {
 
         webutil.runAfterAllLoaded( () => {
             this.parseQueryParameters();
+            document.body.style.zoom =  1.0;
         });
 
     }

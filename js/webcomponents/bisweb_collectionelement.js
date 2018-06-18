@@ -29,7 +29,8 @@ const bootbox=require('bootbox');
 const util = require('bis_util.js');
 const numeric=require('numeric');
 const webfileutil = require('bis_webfileutil');
-const BisWebDialogElement= require('bisweb_dialogelement');
+const BisWebPanel = require('bisweb_panel.js');
+
 /** 
  * A web element to create and manage a GUI for an Object Collection
  *
@@ -43,13 +44,14 @@ const BisWebDialogElement= require('bisweb_dialogelement');
  *      bis-viewerid : the orthogonal viewer to draw in 
  *      bis-layoutwidgetid :  the layout widget to create the GUI in
  */
-class CollectionElement extends BisWebDialogElement {
+class CollectionElement extends HTMLElement {
 
 
     constructor() {
 
         super();
         this.dataCollection=new BisWebDataObjectCollection();
+        this.panel=null;
         this.internal = { 
             initialized : false,
             parentDomElement : null,
@@ -351,14 +353,18 @@ class CollectionElement extends BisWebDialogElement {
 
         const self=this;
         this.internal.parentDomElement.empty();
-        let basediv=webutil.creatediv({ parent : this.internal.parentDomElement});
+        let basediv=webutil.creatediv({ parent : this.internal.parentDomElement,
+                                        css : {
+                                            'width' : '100%'
+                                        }
+                                      });
         this.internal.domElement=basediv;
         
         // --------------------------------------------
         let sbar=webutil.creatediv({ parent: basediv});
         this.internal.inlineForm=webutil.creatediv({ parent: sbar});
         
-        const console_html=`<div style="margin:5px; margin-top:10px; overflow: auto; position:relative; color:#fefefe; width:99%; height:99%; background-color:#101010; font-size:11px;"></div>`;
+        const console_html=`<div style="margin:5px; margin-top:10px; overflow: auto; position:relative; color:#fefefe; width:99%; height:97%; background-color:#101010; font-size:11px;"></div>`;
         this.internal.currentInfo=$(console_html);
         sbar.append(this.internal.currentInfo);
         this.internal.currentInfo.append("No "+this.specific.name+" in memory.");
@@ -446,22 +452,33 @@ class CollectionElement extends BisWebDialogElement {
      */
     connectedCallback() {
 
-        let layoutid=this.getAttribute('bis-layoutwidgetid');
-        let layoutcontroller=document.querySelector(layoutid);
         let elementtype=this.getAttribute('bis-elementtype') || 'matrix';
 
-        let fn2= (() => {
-            this.createObjectTypeSpecificInfo(elementtype);
-            
-            this.create(this.specific.title);
-            this.makeDockable(layoutcontroller);
-            this.internal.parentDomElement=this.widget;
-            this.createGUI(elementtype);
-            if (this.dataCollection.getNumberOfItems()>0)
-                this.updateGUI(true);
-        });
-        
-        webutil.runAfterAllLoaded(fn2);
+        this.createObjectTypeSpecificInfo(elementtype);
+        this.internal.parentDomElement=$('<div></div>');
+        this.createGUI(elementtype);
+        if (this.dataCollection.getNumberOfItems()>0)
+            this.updateGUI(true);
+
+    }
+
+    show() {
+
+        if (!this.panel) {
+            let layoutid=this.getAttribute('bis-layoutwidgetid');
+            let layoutcontroller=document.querySelector(layoutid);
+            this.panel=new BisWebPanel(layoutcontroller,{
+                name : this.specific.title,
+                width : 320,
+                height : 400,
+                hasfooter : false,
+                mode : 'docked',
+                dual : 'true',
+            });
+            this.panel.getWidget().append(this.internal.parentDomElement);
+        }
+
+        this.panel.show();
     }
 
         

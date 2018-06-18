@@ -34,7 +34,7 @@ const modules = require('moduleindex.js');
 const biswrap = require('libbiswasm_wrapper');
 const webfileutil = require('bis_webfileutil');
 const inobounce=require('inobounce.js');
-const BisWebDialogElement=require('bisweb_dialogelement');
+const BisWebPanel = require('bisweb_panel.js');
 // -------------------------------------------------------------------------
 // Keep warnings quiet
 //    var a=[ new Blob() ]; a=null;
@@ -83,7 +83,6 @@ class PaintToolElement extends HTMLElement {
             undostack : new UndoStack(100,10),
             currentundoarray : [],
             parentDomElement : null,
-            domElement : null,
 
             // Viewer to update
             orthoviewer : null,
@@ -151,14 +150,21 @@ class PaintToolElement extends HTMLElement {
 
         this.internal.layoutcontroller=document.querySelector(layoutid);
 
-        let in_parent=this.internal.layoutcontroller.createToolWidget('Paint Tool',true);
-
-        this.internal.parentDomElement=in_parent;
+        this.panel=new BisWebPanel(this.internal.layoutcontroller,
+                                   {
+                                       'name' : 'Paint Tool',
+                                       'dual' : false,
+                                       'permanent' : true,
+                                       'width' : '300px'
+                                   });
+       
+        this.panel.show();
+        this.internal.parentDomElement=this.panel.getWidget();
         var basediv=$("<div>Paint tool will appear once an image is loaded.</div>");
         this.internal.parentDomElement.append(basediv);
         this.internal.orthoviewer=in_orthoviewer;
         this.internal.orthoviewer.addMouseObserver(this);
-        BisWebDialogElement.setMaxDockedDialogs(1);
+        BisWebPanel.setMaxDockedPanels(2);
     }
 
     // --------------------------------------------------------------------------------
@@ -184,11 +190,10 @@ class PaintToolElement extends HTMLElement {
         this.internal.data.enabled=doenable;
 
         if (this.internal.data.enabled) {
-            this.internal.domElement.css({'background-color': webutil.getactivecolor()});
+            this.panel.makeActive(true);
             inobounce.enable();
         } else {
-            var x = this.internal.domElement.parent().css('backgroundColor');
-            this.internal.domElement.css({'background-color':x});
+            this.panel.makeActive(false);
             inobounce.disable();
         }
     }
@@ -734,14 +739,12 @@ class PaintToolElement extends HTMLElement {
         if (this.internal.parentDomElement===null)
             return;
 
-
         this.internal.parentDomElement.empty();
-        var basediv=webutil.creatediv({ parent : this.internal.parentDomElement});
-        this.internal.domElement=basediv;
+        let basediv=webutil.creatediv({ parent : this.internal.parentDomElement});
 
-        var sbar=webutil.createbuttonbar({ parent: basediv});
-        var sbar2=webutil.createbuttonbar({ parent: basediv});
-
+        let sbar=webutil.createbuttonbar({ parent: basediv});
+        let sbar2=webutil.createbuttonbar({ parent: basediv});
+        
         const self=this;
         const en_clb=function(sel) { self.enableEdit(sel); };
 
@@ -979,9 +982,10 @@ class PaintToolElement extends HTMLElement {
         if (this.internal.morphologyModule && good)
             this.internal.morphologyModule.updateCrossHairs(x);
 
-        if (!webutil.isCollapseElementOpen(this.internal.parentDomElement)) {
+
+        if (!this.panel.isOpen())
             return;
-        }
+    
         
         if (mousestate === undefined || this.internal.objectmap===null || this.internal.data.enabled===false) {
             return;
@@ -1076,8 +1080,7 @@ class PaintToolElement extends HTMLElement {
                 };
 
                 let moduleoptions = { 'numViewers' : 0,
-                                      'dockable' : true ,
-                                      'forcedock' : true
+                                      'dual' : false ,
                                     };
 
                 moduleoptions.name='Create Objectmap';
@@ -1086,7 +1089,7 @@ class PaintToolElement extends HTMLElement {
                                                                      new modules.binaryThresholdImage(),
                                                                      moduleoptions);
                 webutil.createMenuItem(tmenu, moduleoptions.name,function() {
-                    self.internal.thresholdModule.showDialog();
+                    self.internal.thresholdModule.show();
                 });
 
                 
@@ -1096,7 +1099,7 @@ class PaintToolElement extends HTMLElement {
                                                                       new modules.morphologyFilter(),
                                                                       moduleoptions);
                 webutil.createMenuItem(tmenu, moduleoptions.name,function() {
-                    self.internal.morphologyModule.showDialog();
+                    self.internal.morphologyModule.show();
                 });
 
                 biswrap.initialize().then( () => {
@@ -1107,7 +1110,7 @@ class PaintToolElement extends HTMLElement {
                                                                               new modules.regularizeObjectmap(),
                                                                               moduleoptions);
                         webutil.createMenuItem(tmenu, moduleoptions.name,function() {
-                            self.internal.regularizeModule.showDialog();
+                            self.internal.regularizeModule.show();
                         });
 
                         moduleoptions.name='Mask Image';
@@ -1116,7 +1119,7 @@ class PaintToolElement extends HTMLElement {
                                                                         new modules.maskImage(),
                                                                         moduleoptions);
                         webutil.createMenuItem(tmenu, moduleoptions.name,function() {
-                            self.internal.maskModule.showDialog();
+                            self.internal.maskModule.show();
                         });
                     }
                     resolve();
