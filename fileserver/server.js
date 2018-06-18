@@ -121,8 +121,9 @@ let startServer = (hostname, port, readycb = () => {}) => {
             let acceptKey = shasum.digest('base64');
             response = response + acceptKey + '\r\n\r\n';
     
+            let port = socket.localPort;
             //connectors on 8081 are negotiating a control port, connectors on 8082 are negotiating a transfer port
-            switch (socket.localPort) {
+            switch (port) {
                 case 8081 : 
                     prepareForControlFrames(socket); 
                     break;
@@ -151,6 +152,12 @@ let startServer = (hostname, port, readycb = () => {}) => {
                 if (count === 0) { 
                     console.log('all connections done, shutting down server', newServer);
                     newServer.close();
+
+                    //start the server listening for new connections if it's on the control port
+                    if (port === 8081) {
+                        newServer.listen(8081, 'localhost');
+                        console.log('listening for new connectors on port 8081');
+                    }
                 }
             });
         });
