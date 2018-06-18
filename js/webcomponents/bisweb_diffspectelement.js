@@ -5,72 +5,89 @@
 // imported modules from open source and bisweb repo
 const bisimagesmoothreslice = require('bis_imagesmoothreslice');
 const bistransformations = require('bis_transformationutil');
-const BisWebTransformationCollection=require('bisweb_transformationcollection');
 const BisWebImage = require('bisweb_image');
 const webutil = require('bis_webutil');
 const webfileutil = require('bis_webfileutil');
 const bisimagealgo = require('bis_imagealgorithms');
 const bisgenericio = require('bis_genericio');
 const $ = require('jquery');
-const numeric = require('numeric');
 const bootbox = require('bootbox');
 const LinearRegistration = require('linearRegistration');
 const ResliceImage = require('resliceImage');
 const NonlinearRegistration = require('nonlinearRegistration');
 const baseutils = require('baseutils');
 const BisDataObject = require('bisweb_dataobject');
+const BisWebPanel = require('bisweb_panel.js');
+const jstree = require('jstree');
 
 // carousel initialization
-const spect_template = `
+/*
+const spect_template_string = `
 						
-			<template id='carousel_template'>
-			<div class="container" style="width:570px">		
+		
+		<div class="container" style="width:300px">		
 			<div class='carousel' data-ride = 'carousel' id='myCarousel' data-interval = 'false'>
 			
-			<div class='carousel-inner' role = 'listbox'>
-			<div class='active item sidd-item' id='smitem1'>
-			<br><br><br>
-			<button type = 'button' class='btn btn-info btn-sidd'  id='newPatientButton'> Create New Patient </button>
-			<br><br>
-			<button type = 'button' class='btn btn-primary btn-sidd' id='continuePatientButton'> Load Existing Patient </button>
+				<div class='carousel-inner' role = 'listbox'>
+					<div class='active item sidd-item' id='smitem1'>
+					<br><br><br>
+					<button type = 'button' class='btn btn-info btn-sidd'  id='newPatientButton'> Create New Patient </button>
+					<br><br>
+					<button type = 'button' class='btn btn-primary btn-sidd' id='continuePatientButton'> Load Existing Patient </button>
+				</div>
+
+				<div class='item sidd-item' id='smitem2'>
+					<label class='siddtextFieldLabel'>Patient ID Number-| </label><input id='sm_patientNumber' value='0000'></input> <br><br><br>
+					<label class='siddtextFieldLabel'>Patient Name-------| </label><input id='sm_patientName' value='0000'></input>
+					<br><br>
+				</div>
+
+				<div class='item sidd-item' id='smitem3'>
+					<br>
+					<div id='btn1'></div><br>	
+					<div id='btn2'></div><br>
+					<div id='btn3'></div><br>
+				</div>
+
+				<div class='item sidd-item' id='smitem5'>
+					<div id='div1'></div>
+					<div id='div1_5'></div><br>	
+					<div id='div2'></div><br>
+					<div id='div3'></div><br>
+					<div id='div4'></div><br>
+				</div>
+		
+				<div class='item sidd-item' id='smitem4'>
+					<div id='processSpectDiv'></div>
+					<div id='showTmapDiv'></div>
+					<div id='hyperchartdiv'>
+						<div class='chart' id='headLab'></div>
+						<div class='chart' id='lab1'></div>
+						<div class='chart' id='lab2'></div>
+						<div class='chart' id='lab3'></div>
+						<div class='chart' id='lab4'></div>
+					</div>
+				</div>
 			</div>
-		<div class='item sidd-item' id='smitem2'>
-		<label class='siddtextFieldLabel'>Patient ID Number-| </label><input id='sm_patientNumber' value='0000'></input> <br><br><br>
-		<label class='siddtextFieldLabel'>Patient Name-------| </label><input id='sm_patientName' value='0000'></input>
-		<br><br>
-		
-</div>
-		<div class='item sidd-item' id='smitem3'>
-		<br>
-		<div id='btn1'></div><br>	
-		<div id='btn2'></div><br>
-		<div id='btn3'></div><br>
+			<div id='navigationButtons'> </div>
 		</div>
-		<div class='item sidd-item' id='smitem5'>
-		<div id='div1'></div>
-		<div id='div1_5'></div><br>	
-		<div id='div2'></div><br>
-		<div id='div3'></div><br>
-		<div id='div4'></div><br>
-		</div>
-		
-		<div class='item sidd-item' id='smitem4'>
-		<div id='processSpectDiv'></div>
-		<div id='showTmapDiv'></div>
-		<div id='hyperchartdiv'>
-		<div class='chart' id='headLab'></div>
-		<div class='chart' id='lab1'></div>
-		<div class='chart' id='lab2'></div>
-		<div class='chart' id='lab3'></div>
-		<div class='chart' id='lab4'></div>
-		</div>
-		</div>
-		</div>
-		<div id='navigationButtons'> </div>
-		</div>
-		</div>
-		</template>
+	</div>
+
 		`;
+
+
+*/
+const tree_template_string = `
+		<div class="container" style="width:300px">
+			<div id="treeDiv">
+			</div>
+		</div>
+	
+		`;
+
+
+
+
 
 // ---------------------------------------------------------------
 // Messages to user
@@ -162,6 +179,7 @@ class DiffSpectElement extends HTMLElement {
 		this.elements = {
 			continuePatientFile: null,
 		};
+		this.panel=null;
 	}
 
 	// function to serialize diffspect data to json and save to a file
@@ -859,10 +877,10 @@ class DiffSpectElement extends HTMLElement {
 	initializeSpectTool() {
 
 		const self = this;
-		self.loadAtlas();
-
+		self.loadAtlas()
 		var sm_carousel = $('#myCarousel');
 		app_state.sm_carousel = sm_carousel;
+		console.log(app_state.sm_carousel);
 
 		// TABS Carousel
 		// New Or Existing, Patient Setup, Load InterIctal, Load ICTAL, MRI?, Process
@@ -897,6 +915,7 @@ class DiffSpectElement extends HTMLElement {
 
 
 		var newPatientButton = $('#newPatientButton');
+		console.log(newPatientButton);
 		self.elements.continuePatientButton = $('#continuePatientButton');
 		self.elements.continuePatientButton.click(function () {
 			sm_carousel.carousel(1);
@@ -923,15 +942,19 @@ class DiffSpectElement extends HTMLElement {
 		});
 		
 
-		/*
-		 * spins the carousel to the next slide
-		 */
-		newPatientButton.click(function () {
+		
+		 /* spins the carousel to the next slide*/
+		 
+		newPatientButton.click(() =>  {
 			console.log('newPatientButton was clicked');
 			sm_carousel.carousel('next');
 		});
 
+		console.log(newPatientButton);
+
 		// -------------------------------------------------
+
+		console.log(newPatientButton);
 		// Tab 2/6 New Patient Info
 		// -------------------------------------------------
 		var sm_patientname = $('sm_patientName'), sm_patientnumber = $('sm_patientNumber');
@@ -948,6 +971,8 @@ class DiffSpectElement extends HTMLElement {
 			callback: function () {
 				if (self.createNewPatient(sm_patientname.val(), sm_patientnumber.val()))
 					sm_carousel.carousel('next');
+
+				console.log('button pressed');
 			}
 		}
 		);
@@ -1213,6 +1238,36 @@ class DiffSpectElement extends HTMLElement {
 		};
 		webutil.createDragAndCropController(HandleFiles);
 
+
+		$('#treeDiv').jstree(
+			{
+				"json_data": 
+				{
+					"data": [
+						{
+							"data": "Images",
+							"children": []
+						},
+						{
+							"data": "Registrations",
+							"children": []
+						},
+						{
+							"data": "Diff SPECT",
+							"children": []
+						}
+								
+					],
+				},
+				"plugins": ["themes", "json_data", "ui"]
+
+			}
+		).bind("select_node.jstree", (e,data) => {
+
+		});
+
+
+		
 	}
 
 	createChart() {
@@ -1336,7 +1391,7 @@ class DiffSpectElement extends HTMLElement {
 		}
 		return coordinates;
 
-	};
+	}
 
 
 	connectedCallback() {
@@ -1356,14 +1411,26 @@ class DiffSpectElement extends HTMLElement {
 			'  <li class="divider"></li>' +
 			'   <li><a href="#" id="loadpatient">Load Patient</a></li>' +
 			'   <li><a href="#" id="savepatient">Save Patient</a></li>' +
+			'   <li><a href="#" id="showpanel">Show Spect Tool</a></li>' +
 			' </ul>' +
 			'</li>');
 
 		let layoutid = this.getAttribute('bis-layoutwidgetid');
 		let layoutcontroller = document.querySelector(layoutid);
+		
 		app_state.viewer = document.querySelector(this.getAttribute('bis-viewerid'));
 
-		let spectToolsDiv = layoutcontroller.createToolWidget('Diff Spect Tool', true);
+
+		
+		this.panel=new BisWebPanel(layoutcontroller,
+					  {  name  : 'Diff Spect Tool',
+					     permanent : false,
+					     width : '300',
+					     dual : false,
+					     mode : 'sidebar'
+					  });
+		let spectToolsDiv = this.panel.getWidget();
+		console.log(this.panel);
 		app_state.viewer.collapseCore();
 
 		$('#loadpatient').click(function () {
@@ -1392,16 +1459,22 @@ class DiffSpectElement extends HTMLElement {
 
 
 
-		// stamp template
-		let newDiv = document.createElement("div");
-		newDiv.innerHTML = spect_template;
-		var sm_template = newDiv.querySelector('#carousel_template');
 
-		var clone = document.importNode(sm_template.content, true);
-		var div = webutil.creatediv({ parent: spectToolsDiv });
-		div[0].appendChild(clone);
+
+		// stamp template
+
+		//let sm_div=$(spect_template_string);
+		let tree_div=$(tree_template_string)
+		//spectToolsDiv.append(sm_div);
+		spectToolsDiv.append(tree_div);
 
 		this.initializeSpectTool();	
+		this.panel.show();
+
+		$('#showpanel').click( () => {
+			this.panel.show();
+		    });
+
 	}
 }
 
