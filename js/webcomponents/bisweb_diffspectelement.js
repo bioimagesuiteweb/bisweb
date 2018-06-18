@@ -18,10 +18,10 @@ const NonlinearRegistration = require('nonlinearRegistration');
 const baseutils = require('baseutils');
 //const BisDataObject = require('bisweb_dataobject');
 const BisWebPanel = require('bisweb_panel.js');
-//const jstree = require('jstree');
+const jstree = require('jstree');
 
 // carousel initialization
-/*
+
   const spect_template_string = `
   
   
@@ -76,7 +76,7 @@ const BisWebPanel = require('bisweb_panel.js');
   `;
 
 
-*/
+
 const tree_template_string = `
                 <div class="container" style="width:300px">
                         <div id="treeDiv">
@@ -246,34 +246,7 @@ class DiffSpectElement extends HTMLElement {
      */
     computeLinearRegistration(reference, target, initial, params) {
 
-        initial = initial || null;
-        params = params || {
-            intscale: 2,
-            numbins: 64,
-            levels: 3,
-            smoothing: 0.5,
-            optimization: 3,
-            stepsize: 2.0,
-            metric: 3,
-            steps: 1,
-            mode: 0,
-            resolution: 1.5
-        };
-
-        if (params.mode < 0)
-            params.mode = 0;
-
-        if (params.mode >= 2)
-            params.mode = 4;
-
-
-        //        var md = 0, lv = params.levels, iter = params.iterations;
-        if (params.mode !== 0)
-            md = 3;
-        if (params.mode > 1) {
-            lv = 3;
-            iter = 15;
-        }
+        
 
         let lin_opts = {
             "intscale": 1,
@@ -862,7 +835,7 @@ class DiffSpectElement extends HTMLElement {
     initializeSpectTool() {
 
         const self = this;
-        self.loadAtlas()
+        self.loadAtlas();
         var sm_carousel = $('#myCarousel');
         app_state.sm_carousel = sm_carousel;
         console.log(app_state.sm_carousel);
@@ -877,7 +850,7 @@ class DiffSpectElement extends HTMLElement {
         var prevButton = webutil.createbutton({
             name: 'Prev',
             type: 'danger',
-            css: { 'width': '265px' },
+            css: { 'width': '132px' },
             parent: $('#navigationButtons'),
             callback: function () { sm_carousel.carousel('prev'); }
         });
@@ -887,7 +860,7 @@ class DiffSpectElement extends HTMLElement {
         var nextButton = webutil.createbutton({
             name: 'Next',
             type: 'success',
-            css: { 'width': '265px' },
+            css: { 'width': '132px' },
             parent: $('#navigationButtons'),
             callback: function () { sm_carousel.carousel('next'); }
         });
@@ -1224,8 +1197,9 @@ class DiffSpectElement extends HTMLElement {
 
 
         let tree=this.tree_div.find('#treeDiv');
-        console.log(tree[0]);
-        $(tree).jstree(
+        tree.on('ready.jstree', function (e, data) {
+            data.instance.redraw(true);
+        }).jstree(
             {
                 "json_data": 
                 {
@@ -1248,10 +1222,8 @@ class DiffSpectElement extends HTMLElement {
                 "plugins": ["themes", "json_data", "ui"]
 
             }
-        ).bind("select_node.jstree", (e,data) => {
-
-        });
-
+        ).bind();
+        console.log(tree[0]);
 
         
     }
@@ -1401,7 +1373,7 @@ class DiffSpectElement extends HTMLElement {
         webutil.createMenuItem(fmenu,'');
         webfileutil.createFileMenuItem(fmenu,'Load Patient State',
                                        function(f) {
-                                           self.handlePatientFileSelect(f);
+                                           self.loadPatient(f);
                                        },
                                        { title: 'Load Patient',
                                          save: false,
@@ -1452,12 +1424,12 @@ class DiffSpectElement extends HTMLElement {
 
         // stamp template
 
-        //let sm_div=$(spect_template_string);
+        let sm_div=$(spect_template_string);
         this.tree_div=$(tree_template_string);
-        //spectToolsDiv.append(sm_div);
+        spectToolsDiv.append(sm_div);
         spectToolsDiv.append(this.tree_div);
         this.panel.show();
-
+        console.log(this.tree_div);
         this.initializeSpectTool();     
 
     }
