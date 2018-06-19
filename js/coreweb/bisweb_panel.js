@@ -307,7 +307,7 @@ class BisWebPanel {
         }
 
         if (this.dockWidget===null) {
-            this.dockWidget=this.layoutController.createToolWidget(`${this.options.name}`);
+            this.dockWidget=this.layoutController.createDockWidget(`${this.options.name}`);
             let t=this.dockWidget.parent().parent().find('.panel-heading');
             if (this.dockToggleButton) {
                 this.dockToggleButton.css({'border' : '0px', 'font-size' : '17px'});
@@ -339,8 +339,8 @@ class BisWebPanel {
     /** hidePlaced dialog */
     drawInSidebarWithWidth(wd) {
 
-        this.layoutController.setextrabarwidth(wd);
-        let elements=this.layoutController.getextraelements();
+        this.layoutController.setsidebarwidth(wd);
+        let elements=this.layoutController.getsideelements();
         
         if (wd<100 && this.state!=="empty") {
 
@@ -374,7 +374,7 @@ class BisWebPanel {
         this.state="sidebar";
     }
     
-    /** place the dialog inside the this.layoutController's extrabar
+    /** place the dialog inside the this.layoutController's sidebar
      * @param {Boolean} show - if true then show
      */
     addToSidebar() {
