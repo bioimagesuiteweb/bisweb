@@ -16,7 +16,6 @@ const LinearRegistration = require('linearRegistration');
 const ResliceImage = require('resliceImage');
 const NonlinearRegistration = require('nonlinearRegistration');
 const baseutils = require('baseutils');
-//const BisDataObject = require('bisweb_dataobject');
 const BisWebPanel = require('bisweb_panel.js');
 const jstree = require('jstree');
 
@@ -70,7 +69,7 @@ const jstree = require('jstree');
   `;
 
 
-
+// initialization of jstree formatting
 const tree_template_string = `
     
     <div class="container" style="width:300px">
@@ -151,6 +150,9 @@ var app_state = {
  *      bis-layoutwidgetid :  the layout widget to create the GUI in
  *      bis-menubarid : the menubar to insert menu items in
  */
+
+
+
 class DiffSpectElement extends HTMLElement {
 
 
@@ -234,8 +236,6 @@ class DiffSpectElement extends HTMLElement {
      * computes a linear registration 
      * @param {BISImage} reference- the reference image
      * @param {BISImage} target - the target image
-     * @param {array} initial - initial params for the registration
-     * @param {object} params - options for the registration 
      * @returns {BISTransformation} - the output of the registration
      */
     computeLinearRegistration(reference, target) {
@@ -282,8 +282,14 @@ class DiffSpectElement extends HTMLElement {
             });
         });
     }
-    
-    // computes a non-linear registration
+
+    /* 
+     * computes a nonlinear registration 
+     * @param {BISImage} reference- the reference image
+     * @param {BISImage} target - the target image
+     * @returns {BISTransformation} - the output of the registration
+     */
+
     computeNonlinearRegistration(reference, target) {
         
         let nonlinearRegModule = new NonlinearRegistration();   
@@ -338,26 +344,15 @@ class DiffSpectElement extends HTMLElement {
 
         app_state.intertoictal = null;
 
+        // check that the images exist
         if (app_state.interictal === null ||
             app_state.ictal === null) {
             errormessage('Bad spect Images can not register');
             return;
         }
 
-        var opts = {
-            intscale: 1,
-            numbins: 64,
-            levels: 3,
-            smoothing: 0.5,
-            optimization: 3,
-            stepsize: 2.0,
-            metric: 3,
-            steps: 1,
-            mode: 0,
-            resolution: 1.5
-        };
-
-        return this.computeLinearRegistration(app_state.interictal, app_state.ictal, null, opts).then( (output) => {
+           // wait for registration to compute, then store registration output in global object
+        return this.computeLinearRegistration(app_state.interictal, app_state.ictal).then( (output) => {
             console.log(output);
             app_state.intertoictal_xform = output.transformation;
             app_state.intertoictal_reslice = output.reslice;
@@ -369,6 +364,8 @@ class DiffSpectElement extends HTMLElement {
 
     // calls either computeNonlinearRegistration or computeLinearRegistration to register ATLAS image to MRI image
     registerAtlasToMRI() {
+
+        // make sure that images exist
         if (app_state.mri===null ||
             app_state.ATLAS_spect === null) {
             
@@ -376,6 +373,7 @@ class DiffSpectElement extends HTMLElement {
             return;
         }
 
+        // compute nonlinear registration and store output, if nonlinear is selected
         if (app_state.nonlinear) {
             return this.computeNonlinearRegistration(app_state.ATLAS_spect, app_state.mri).then( (output) => {
                 console.log(output);
@@ -385,7 +383,7 @@ class DiffSpectElement extends HTMLElement {
         }
 
 
-
+        // default is to compute linear registration
         return this.computeLinearRegistration(app_state.ATLAS_spect, app_state.mri, null, null).then( (output) => {
             app_state.atlastomri_xform = output.transformation;
             app_state.atlastomri_reslice = output.reslice;
@@ -408,34 +406,20 @@ class DiffSpectElement extends HTMLElement {
 
     }
 
-    // calls computeLinearRegistration of computeNonlinearRegistration to register ATLAS image to interictal image
+    // calls computeLinearRegistration or computeNonlinearRegistration to register ATLAS image to interictal image
     registerAtlasToInterictal(fast = false) {
 
         app_state.atlastointer = null;
 
+        // check to see if images exist
         if (app_state.interictal === null ||
             app_state.ATLAS_spect === null) {
             errormessage('Bad Atlas and/or interictal spect, can not register');
             return;
         }
 
-        var opts = {
-            intscale: 1,
-            numbins: 64,
-            levels: 3,
-            smoothing: 0.5,
-            optimization: 3,
-            stepsize: 2.0,
-            metric: 3,
-            steps: 1,
-            mode: 1,
-            resolution: 1.5
-        };
-
-        if (!fast)
-            opts.mode = 2;
-
-
+       
+        // computes nonlinear registration and stores output if nonlinear is selected
         if (app_state.nonlinear) {
             return this.computeNonlinearRegistration(app_state.ATLAS_spect, app_state.interictal).then( (output) => {
                 console.log(output);
@@ -446,7 +430,9 @@ class DiffSpectElement extends HTMLElement {
             });
         }
 
-        return this.computeLinearRegistration(app_state.ATLAS_spect, app_state.interictal, null, opts).then( (output) => {
+
+        // defaults to linear registration
+        return this.computeLinearRegistration(app_state.ATLAS_spect, app_state.interictal).then( (output) => {
             console.log(output);
             app_state.atlastointer_xform = output.transformation;
             app_state.atlastointer_reslice = output.reslice;
@@ -458,11 +444,20 @@ class DiffSpectElement extends HTMLElement {
 
     // calls all of the above custom registration methods in correct order and reslices images as necessary
     computeRegistrationOfImages() {
+
+        // execute registration order if MRI is not uploaded by user
         if (!app_state.does_have_mri) {
             
+
+            /*
+                computes each 'adjacent' registration and combines registration transformation for reslicing according to 'nonadjacent' registrations
+             */
+
+            // array of promise methods
             let p= [ this.registerAtlasToInterictal(true),
                      this.registerInterictalToIctal() ];
             
+            // executes all promises in order
             Promise.all(p).then( () => {
 
                 let input = {
@@ -471,6 +466,8 @@ class DiffSpectElement extends HTMLElement {
                     'xform2'   : app_state.intertoictal_xform,
                     'reference': app_state.ATLAS_spect
                 };
+                
+                // instance of image reslicer module
                 let reslicer = new ResliceImage();
 
                 reslicer.execute(input).then( () => {
@@ -478,7 +475,7 @@ class DiffSpectElement extends HTMLElement {
                 });
 
             });
-        } else {
+        } else {             // execute order of registration when MRI image is uploaded
             
             let p1 = [this.registerAtlasToMRI(), this.registerMRIToInterictal(), this.registerInterictalToIctal()];
 
@@ -547,6 +544,8 @@ class DiffSpectElement extends HTMLElement {
         var showerror = false;
 
         var dim0 = images[0].getDimensions();
+        
+        // check that dimensions match
         for (var m = 1; m < images.length; m++) {
             var dim1 = images[m].getDimensions();
             var q = Math.abs(dim0[0] - dim1[0]) + Math.abs(dim0[1] - dim1[1]) + Math.abs(dim0[2] - dim1[2]);
@@ -562,6 +561,7 @@ class DiffSpectElement extends HTMLElement {
 
 
 
+        // execute Diff SPECT algorithm
         for (var i = 0; i <= 1; i++) {
             var masked = bisimagealgo.multiplyImages(images[i], images[3]);
             var smoothed = bisimagesmoothreslice.smoothImage(masked, [sigma, sigma, sigma], true, 6.0, d);
@@ -570,10 +570,12 @@ class DiffSpectElement extends HTMLElement {
             final[i] = normalized;
         }
 
+        // display results
         var tmapimage = bisimagealgo.spectTmap(final[0], final[1], images[2], null);
         var outspect = [0, 0];
         var sname = ['hyper', 'hypo'];
 
+        // format results
         for (i = 0; i <= 1; i++) {
             outspect[i] = bisimagealgo.processDiffSPECTImageTmap(tmapimage, params.pvalue, params.clustersize, (i === 0));
             var stats = outspect[i].stats;
@@ -603,8 +605,6 @@ class DiffSpectElement extends HTMLElement {
         var results = this.processSpect(resliced_inter, resliced_ictal, app_state.ATLAS_stdspect, app_state.ATLAS_mask);
 
         console.log(results);
-        //      console.log('Hyperactivity :'+results.hyper[0].string + results.hyper[1].string + results.hyper[2].string + results.hyper[3].string);
-        //      console.log('Hypoactivity :'+results.hypo[0].string + results.hypo[1].string + results.hypo[2].string + results.hypo[3].string);
 
         console.log();
         console.log();
@@ -614,6 +614,8 @@ class DiffSpectElement extends HTMLElement {
         for (var i = 0; i < results.hyper.length; i++) {
             hyper_str += results.hyper[i].string + '\n';
         }
+        
+        // format string for displaying as table
         app_state.hyper = hyper_str;
 
         var hypo_str = 'hypo cluster statistics \n';
@@ -683,6 +685,7 @@ class DiffSpectElement extends HTMLElement {
         //                                              .catch( (e) => { errormessage(e); });
     }
 
+    // load .spect file
     loadPatient(file) {
         const self = this;
         console.log('this', this, file);
@@ -692,12 +695,14 @@ class DiffSpectElement extends HTMLElement {
             try {
                 let obj = JSON.parse(a);
             } catch (e) {
+                console.log(e);
                 errormessage(e);
             }
             self.fillFields(a);
         }).catch((e) => { errormessage(e); });
     }
 
+    // parse fill variable values from file
     fillFields(b, url) {
 
         var input = b;
