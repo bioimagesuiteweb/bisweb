@@ -50,6 +50,7 @@ var detectWebGL = function() {
  *    bis-dockwidth="400"
  *    bis-coreopen="true"
  *    bis-minimizedockpanel="0"
+ *    bis-fixed="1"
  *    bis-defaulttext="">
  * </bisweb-viewerlayoutelement>
  *
@@ -79,65 +80,67 @@ class ViewerLayoutElement extends HTMLElement {
         this.verticalLines=[ null, null];
         this.verticalLines2=[ null, null];
         this.verticalLinesX=[null,null];
-
+        this.fixed=0;
     }
     
     /** call when the window is resized to adjust the proportions */
     handleresize() {
-        
+
+        // Width of dock and sidebar
         let dockwidth=this.dockpanelwidth;
-        if (this.minimizedockpanel)
-            dockwidth=50;
-        let topheight=this.topheight;
-        let fullwidth=0;
-
-        if (window.innerWidth<2*dockwidth)
-            dockwidth=Math.round(0.5*window.innerWidth);
-
-        this.viewerheight=window.innerHeight-topheight-87;
-        fullwidth=window.innerWidth;
-        
-        let docktop=0,dockleft=0;
         let sidewidth=this.sidebarwidth || 1;
         if (sidewidth<10) {
             sidewidth=1;
         }
 
-        this.viewerwidth= fullwidth-dockwidth-sidewidth;
-        this.dockbarheight=this.viewerheight;
-        let sidetop=0;
+        if (this.minimizedockpanel)
+            dockwidth=50;
 
-        let sideleft=0;
-            
-        if ( (sidewidth< 10) && ((this.viewerwidth<400 && this.minimizedockpanel===0) || (fullwidth<770))) {
-            this.viewerwidth=fullwidth;
-            if (this.viewerheight<600) {
-                this.viewerheight=this.viewerheight-100;
-                docktop=this.viewerheight;
-                sidetop=this.viewerheight*2;
-                sidewidth=this.viewerwidth;
-                this.viewerwidth=this.viewerwidth-10;
-                dockwidth=this.viewerwidth;
-            } else {
-                this.viewerheight=600;
-                this.viewerwidth=this.viewerwidth-10;
-                docktop=this.viewerheight;
-                dockwidth=this.viewerwidth;
+        let maxw=Math.round(0.4*window.innerWidth);
+        if (dockwidth>maxw)
+            dockwidth=maxw;
+        if (sidewidth>maxw)
+            sidewidth=maxw;
+
+        // Check if we have an extra tall menubar
+        let offset=87;
+        this.viewertop=0;
+        if (window.innerWidth>767) {
+            let tm=$("#bismenu");
+            let h=parseInt(tm.height());
+            if (h>65) {
+                offset+=(h-62);
+                this.viewertop=h-60;
             }
-
-        } else {
-            sideleft=this.viewerwidth;
-            dockleft=this.viewerwidth+this.sidebarwidth;
         }
 
-        let vleft=sidewidth;
-        sideleft=0;
-        this.viewerleft=vleft;
+        // Set the height of the viewer
+        this.viewerheight=window.innerHeight-this.topheight-offset;
+        this.viewerwidth= window.innerWidth-dockwidth-sidewidth;
+        let docktop=0,dockleft=0,dockbarheight=this.viewerheight,sidetop=0,wide=1;
+        
+        if ( window.innerWidth<768 || this.viewerwidth<380) {
+            // Responsive fix, stack elements
+            this.viewerwidth=window.innerWidth;
+            this.viewerheight=this.viewerheight-100;
+            dockbarheight=1.5*this.viewerheight;
+            dockwidth=this.viewerwidth;
+            docktop=this.viewerheight+10;
+            sidetop=docktop+dockbarheight+10;
+            if (sidewidth>10)
+                sidewidth=this.viewerwidth;
+            wide=0;
+        } else {
+            dockleft=this.viewerwidth+this.sidebarwidth;
+            docktop=this.viewertop;
+            sidetop=this.viewertop;
+            this.viewerleft=sidewidth;
+        }
 
         // Viewer
         let canvascss={
-            'left' : `${vleft}px`,
-            'top'  : '0px',
+            'left' : `${this.viewerleft}px`,
+            'top'  : '${this.viewertop}px',
             'width': `${this.viewerwidth}px`,
             'height':`${this.viewerheight}px`,
         };
@@ -146,17 +149,17 @@ class ViewerLayoutElement extends HTMLElement {
         let dockbarcss = {
             'width' : `${dockwidth}px`,
             'top'   : `${docktop}px`,
-            'height': `${this.dockbarheight}px`,
+            'height': `${dockbarheight}px`,
             'left'  : `${dockleft}px`
         };
 
         if (sidewidth<2)
             sidewidth=2;
         let sidebarcss = { 
-            'left' : `${sideleft}px`,
+            'left' : `0px`,
             'top'  : `${sidetop}px`,
             'width': `${sidewidth-1}px`,
-            'height':`${this.viewerheight}px`,
+            'height':`${dockbarheight}px`,
             'opacity' :'1.0',
         };
         
@@ -191,11 +194,15 @@ class ViewerLayoutElement extends HTMLElement {
         this.overlaycanvas.height=this.viewerheight;
         this.context.clearRect(0,0,this.viewerwidth,this.viewerheight);
         this.overlaycontext.clearRect(0,0,this.viewerwidth,this.viewerheight);
-        this.createOrShowLines(sidewidth,dockwidth);
+
+
+        if (!this.fixed)
+            this.createOrShowLines(wide*sidewidth,wide*dockwidth);
     }
     
     
     connectedCallback() {
+        this.viewertop=0;
         this.viewerwidth=800;
         this.viewerheight=800;
         this.elements= null;
@@ -220,6 +227,8 @@ class ViewerLayoutElement extends HTMLElement {
         this.dockpanelwidth=parseInt(this.getAttribute('bis-dockwidth')) || 300;
         this.topheight=parseInt(this.getAttribute('bis-topheight')) || 0;
         this.dualmode=parseInt(this.getAttribute('bis-dualmode')) || 0;
+
+        this.fixed=parseInt(this.getAttribute('bis-fixed') || 0 );
         
         this.minimizedockpanel=parseInt(this.getAttribute('bis-minimizedockpanel') || 0 );
         if (this.minimizedockpanel!==0)
@@ -270,6 +279,7 @@ class ViewerLayoutElement extends HTMLElement {
                                                         'border-color' : '#888888',
                                                         'border-style' : 'solid',
                                                         'padding-left' : '2px',
+                                                        'z-index' : '4',
                                                         'background-color': webutil.getpassivecolor()
                                                        }
                                                }),
@@ -352,7 +362,6 @@ class ViewerLayoutElement extends HTMLElement {
         this.elements.rendererbase.append(this.renderer.domElement);
 
         const self=this;
-        this.handleresize();
         this.context.font="28px Arial";
         this.context.fillStyle = "#888888";
         this.context.clearRect(0,0,this.viewerwidth,this.viewerheight);
@@ -392,6 +401,8 @@ class ViewerLayoutElement extends HTMLElement {
                                                           'background-color': webutil.getpassivecolor()
                                                       }
                                                       });
+
+        this.handleresize();
 
         webutil.runAfterAllLoaded( () => {
             if (this.defaulttext.length<4) {
@@ -450,7 +461,7 @@ class ViewerLayoutElement extends HTMLElement {
     setsidebarwidth(n) {
         if (n<10)
             n=0;
-        let maxl=Math.round(0.5*this.viewerwidth);
+        let maxl=Math.round(0.5*window.innerWidth);
         if (n>maxl)
             n=maxl;
         this.sidebarwidth=n;
@@ -467,6 +478,10 @@ class ViewerLayoutElement extends HTMLElement {
 
     getviewerheight() { 
         return this.viewerheight;
+    }
+
+    getviewertop() { 
+        return this.viewertop;
     }
 
 
@@ -511,9 +526,9 @@ class ViewerLayoutElement extends HTMLElement {
         let minl=0,maxl=0;
         if (index===0) {
             minl=151;
-            maxl=Math.round(0.5*this.viewerwidth);
+            maxl=Math.round(0.4*window.innerWidth);
         } else {
-            minl=Math.round(0.5*this.viewerwidth+this.sidebarwidth);
+            minl=Math.round(0.4*window.innerWidth+this.sidebarwidth);
             maxl=window.innerWidth-151;
         }
         
@@ -603,7 +618,7 @@ class ViewerLayoutElement extends HTMLElement {
                     this.domElement.append(this.verticalLines2[ia]);
                 }
                 this.verticalLines2[ia].css({ 'position' : 'absolute',
-                                              'top' : '0px' ,
+                                              'top' : `${this.viewertop}px` ,
                                               'z-index' : 601,
                                               'height' : `${dh}px`,
                                               'width'  : '11px',
@@ -611,7 +626,7 @@ class ViewerLayoutElement extends HTMLElement {
                                               'background-color' : 'rgba(10,10,10,0.1)',
                                             });
                 this.verticalLines[ia].css({ 'position' : 'absolute',
-                                             'top' : '0px' ,
+                                             'top' : `${this.viewertop}px` ,
                                              'z-index' : 600,
                                              'height' : `${dh}px`,
                                              'width'  : '3px',

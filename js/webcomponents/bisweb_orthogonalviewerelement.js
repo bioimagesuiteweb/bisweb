@@ -632,21 +632,23 @@ class OrthogonalViewerElement extends BaseViewerElement {
         };
         
 
+        let top=this.internal.layoutcontroller.getviewertop();
+        
         if (!this.internal.midline) {
             let cnv=$(`<div></div>`);
             this.internal.midline=cnv;
             cnv.css({ 'position' : 'absolute',
-                         'top' : '0px' ,
-                         'z-index' : 600,
+                         'top' : `${top}px` ,
+                         'z-index' : 650,
                     });
 
             this.internal.midline2=$(`<div style="cursor:ew-resize"></div>`);
             this.internal.midline2.css({ 'position' : 'absolute',
-                                         'top' : '0px' ,
-                                         'z-index' : 601,
+                                         'top' : `${top}px` ,
+                                         'z-index' : 641,
                                        });
 
-            this.internal.midlinemessage = $('<div align="center" style="padding:2px; width:50vw; left:25vw; top:0vh; height:40px;' +
+            this.internal.midlinemessage = $(`<div align="center" style="padding:2px; width:50vw; left:25vw; top:${top}px; height:40px;` +
                                              'border-radius:30px;background-color:#884400; z-index:5000; position: absolute; color:#ffffff">' +
                                              '<H4>Drag the line to adjust the relative width of the two viewers</H4></div>');
 
@@ -661,6 +663,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         
         if (!this.internal.midlinepresent) {
             let par=$(parentcanvas).parent().parent();
+            console.log(par[0]);
             par.append(this.internal.midline);
             par.append(this.internal.midline2);
             this.internal.midlinepresent=true;
