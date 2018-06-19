@@ -40,16 +40,16 @@ var detectWebGL = function() {
 // -----------------------------------------------------------------
 /**
  *
- * A web element that creates a viewer layout set up (a main widget on the left with two canvases and a sidebar on the right)
+ * A web element that creates a viewer layout set up (a main widget on the left with two canvases, a dockbar on the right and a sidebar on the left)
  *
  * to access simply include this file into your code and then add this as an element to your html page
  *
  * @example
  * <bisweb-viewerlayoutelement
  *    id="viewer_layout"
- *    bis-sidewidth="400"
+ *    bis-dockwidth="400"
  *    bis-coreopen="true"
- *    bis-minimizesidepanel="0"
+ *    bis-minimizedockpanel="0"
  *    bis-defaulttext="">
  * </bisweb-viewerlayoutelement>
  *
@@ -62,9 +62,9 @@ var detectWebGL = function() {
  * </bisweb-orthogonalviewer>
  *
  * Attributes
- *     bis-sidewidth : width of the side panel in pixels
- *     bis-coreopen  : if true the core (top side panel) is open else closed
- *     bis-minimizesidepanel : if 1 the side panel is minimized to a narrow column
+ *     bis-dockwidth : width of the dock panel in pixels
+ *     bis-coreopen  : if true the core (top dock panel) is open else closed
+ *     bis-minimizedockpanel : if 1 the dock panel is minimized to a narrow column
  *     bis-defaulttext : text to draw in. If length > 10 and first character is not space then sets "simple mode"
  *     bis-dualmode : if 1 then operates in dual mode
  */
@@ -72,64 +72,64 @@ class ViewerLayoutElement extends HTMLElement {
 
     constructor() {
         super();
-        this.minimizesidepanel=false;
+        this.minimizedockpanel=false;
         this.panelgroup=null;
-        this.extrabarwidth=0;
+        this.sidebarwidth=0;
         this.viewerleft=0;
         this.elements={};
-        this.extraelements={};
+        this.sideelements={};
     }
     
     /** call when the window is resized to adjust the proportions */
     handleresize() {
         
-        let sidewidth=this.sidepanelwidth;
-        if (this.minimizesidepanel)
-            sidewidth=50;
+        let dockwidth=this.dockpanelwidth;
+        if (this.minimizedockpanel)
+            dockwidth=50;
         let topheight=this.topheight;
         let fullwidth=0;
 
-        if (window.innerWidth<2*sidewidth)
-            sidewidth=Math.round(0.5*window.innerWidth);
+        if (window.innerWidth<2*dockwidth)
+            dockwidth=Math.round(0.5*window.innerWidth);
         
         this.viewerheight=window.innerHeight-topheight-100;
         fullwidth=window.innerWidth;
         
-        let sidetop=0,sideleft=0;
-        let extrawidth=this.extrabarwidth;
-        if (extrawidth<10) {
-            extrawidth=1;
+        let docktop=0,dockleft=0;
+        let sidewidth=this.sidebarwidth;
+        if (sidewidth<10) {
+            sidewidth=1;
         }
 
-        this.viewerwidth= fullwidth-sidewidth-extrawidth;
-        this.sidebarheight=this.viewerheight;
-        let extratop=0;
+        this.viewerwidth= fullwidth-dockwidth-sidewidth;
+        this.dockbarheight=this.viewerheight;
+        let sidetop=0;
 
-        let extraleft=0;
+        let sideleft=0;
             
-        if ( (extrawidth< 10) && ((this.viewerwidth<400 && this.minimizesidepanel===0) || (fullwidth<770))) {
+        if ( (sidewidth< 10) && ((this.viewerwidth<400 && this.minimizedockpanel===0) || (fullwidth<770))) {
             this.viewerwidth=fullwidth;
             if (this.viewerheight<600) {
                 this.viewerheight=this.viewerheight-100;
-                sidetop=this.viewerheight;
-                extratop=this.viewerheight*2;
-                extrawidth=this.viewerwidth;
-                this.viewerwidth=this.viewerwidth-10;
+                docktop=this.viewerheight;
+                sidetop=this.viewerheight*2;
                 sidewidth=this.viewerwidth;
+                this.viewerwidth=this.viewerwidth-10;
+                dockwidth=this.viewerwidth;
             } else {
                 this.viewerheight=600;
                 this.viewerwidth=this.viewerwidth-10;
-                sidetop=this.viewerheight;
-                sidewidth=this.viewerwidth;
+                docktop=this.viewerheight;
+                dockwidth=this.viewerwidth;
             }
 
         } else {
-            extraleft=this.viewerwidth;
-            sideleft=this.viewerwidth+this.extrabarwidth;
+            sideleft=this.viewerwidth;
+            dockleft=this.viewerwidth+this.sidebarwidth;
         }
 
-        let vleft=extrawidth;
-        extraleft=0;
+        let vleft=sidewidth;
+        sideleft=0;
         this.viewerleft=vleft;
         
         // Viewer
@@ -140,53 +140,53 @@ class ViewerLayoutElement extends HTMLElement {
             'height':`${this.viewerheight}px`,
         };
 
-        // Sidebar
-        let sidebarcss = {
-            'width' : `${sidewidth}px`,
-            'top'   : `${sidetop-4}px`,
-            'height': `${this.sidebarheight+12}px`,
-            'left'  : `${sideleft}px`
+        // Dockbar
+        let dockbarcss = {
+            'width' : `${dockwidth}px`,
+            'top'   : `${docktop-4}px`,
+            'height': `${this.dockbarheight+12}px`,
+            'left'  : `${dockleft}px`
         };
 
-        if (extrawidth<1)
-            extrawidth=1;
-        let extrabarcss = { 
-            'left' : `${extraleft}px`,
-            'top'  : `${extratop-4}px`,
-            'width': `${extrawidth-10}px`,
+        if (sidewidth<2)
+            sidewidth=2;
+        let sidebarcss = { 
+            'left' : `${sideleft}px`,
+            'top'  : `${sidetop-4}px`,
+            'width': `${sidewidth-10}px`,
         //    'height':`${this.viewerheight+12}px`,
             'opacity' :'1.0',
         };
         
         
-        if (this.minimizesidepanel) {
+        if (this.minimizedockpanel) {
             this.elements.toolbase.css({ 'opacity' : '0.05' });
             this.elements.newpanel.css({ 'opacity' : '0.05' });
-            this.elements.sidebar.css({ 'overflow-x' : 'hidden'});
+            this.elements.dockbar.css({ 'overflow-x' : 'hidden'});
         } else {
             this.elements.toolbase.css({ 'opacity' : '1.0' });
             this.elements.newpanel.css({ 'opacity' : '1.0' });
-            this.elements.sidebar.css({ 'overflow-x' : 'auto'});
+            this.elements.dockbar.css({ 'overflow-x' : 'auto'});
         }
 
         this.elements.rendererbase.css(canvascss);
         this.elements.canvasbase.css(canvascss);
-        this.elements.sidebar.css(sidebarcss);
+        this.elements.dockbar.css(dockbarcss);
         
-        if (extrawidth<10) {
-            this.elements.extrabar.css({ 'opacity' :'0.00',
+        if (sidewidth<10) {
+            this.elements.sidebar.css({ 'opacity' :'0.01',
                                        });
         } else {
-            this.elements.extrabar.css(extrabarcss);
-            let a=parseInt(this.extraelements.widget.attr('nofooter'));
+            this.elements.sidebar.css(sidebarcss);
+            let a=parseInt(this.sideelements.widget.attr('nofooter'));
             if (a) {
-                this.extraelements.header.css( { 'height' : `70px`,'max-height' : '70px'});
-                this.extraelements.widget.css( { 'height' : `${this.viewerheight-72+12}px`});
-                this.extraelements.footer.css( { 'height' : `2px`});
+                this.sideelements.header.css( { 'height' : `70px`,'max-height' : '70px'});
+                this.sideelements.widget.css( { 'height' : `${this.viewerheight-72+12}px`});
+                this.sideelements.footer.css( { 'height' : `2px`});
             } else {
-                this.extraelements.header.css( { 'height' : `70px`,'max-height' : '70px'});
-                this.extraelements.widget.css( { 'height' : `${this.viewerheight-170+12}px`});
-                this.extraelements.footer.css( { 'height' : `100px`,'max-height' : '100px'});
+                this.sideelements.header.css( { 'height' : `70px`,'max-height' : '70px'});
+                this.sideelements.widget.css( { 'height' : `${this.viewerheight-170+12}px`});
+                this.sideelements.footer.css( { 'height' : `100px`,'max-height' : '100px'});
             }
         }
         
@@ -222,13 +222,14 @@ class ViewerLayoutElement extends HTMLElement {
         
         // Initialize defaults
         // Query Properties
-        this.sidepanelwidth=parseInt(this.getAttribute('bis-sidewidth')) || 150;
+        this.dockpanelwidth=parseInt(this.getAttribute('bis-dockwidth')) ||
+            parseInt(this.getAttribute('bis-sidewidth')) || 300;
         this.topheight=parseInt(this.getAttribute('bis-topheight')) || 0;
         this.dualmode=parseInt(this.getAttribute('bis-dualmode')) || 0;
         
-        this.minimizesidepanel=parseInt(this.getAttribute('bis-minimizesidepanel') || 0 );
-        if (this.minimizesidepanel!==0)
-            this.minimizesidepanel=1;
+        this.minimizedockpanel=parseInt(this.getAttribute('bis-minimizedockpanel') || 0 );
+        if (this.minimizedockpanel!==0)
+            this.minimizedockpanel=1;
         
         this.defaulttext = this.getAttribute('bis-defaulttext') || '';
         if (this.defaulttext===" ")
@@ -251,37 +252,43 @@ class ViewerLayoutElement extends HTMLElement {
         this.elements = {
             rendererbase :   webutil.creatediv({ parent : this.domElement ,
                                                  css: { 'position' : 'absolute',
-                                                        'z-index': '2'
+                                                        'z-index': '2',
+                                                        'margin' : '0 0 0 0',
+                                                        'padding' : '0 0 0 0',
                                                       }
                                                }),
             canvasbase   :   webutil.creatediv({ parent : this.domElement,
                                                  css: { 'position' : 'absolute',
                                                         'top':'0px',
-                                                        'background-color':
-                                                        '#000000', 'z-index': '1'
+                                                        'background-color': '#000000',
+                                                        'z-index': '1',
+                                                        'margin' : '0 0 0 0',
+                                                        'padding' : '0 0 0 0',
                                                       }
                                                }),
-            sidebar      :   webutil.creatediv({ parent : this.domElement,
+            dockbar      :   webutil.creatediv({ parent : this.domElement,
                                                  css : {'position':'absolute',
                                                         'overflow-y': 'auto',
-                                                        'border-width' : '0px 0px 0px 2px',
+                                                        'border-width' : '0px 0px 0px 0px',
                                                         'border-color' : '#888888',
                                                         'border-style' : 'solid',
+                                                        'padding-left' : '2px',
                                                         'background-color': webutil.getpassivecolor()
                                                        }
                                                }),
-            extrabar     :   webutil.creatediv({ parent : this.domElement,
+            sidebar     :   webutil.creatediv({ parent : this.domElement,
                                                  css : {'position':'absolute',
                                                         'top' : '0px',
+                                                        'left' : '0px',
                                                         'z-index' : '4',
                                                         'margin-top' : '0px',
-                                                        'margin-right' : '2px',
+                                                        'padding-right' : '2px',
                                                         'margin-bottom' : '0px',
-                                                        'opacity' : '0.0',
-                                                        'border-width' : '0px 2px 0px 0px',
+                                                        'opacity' : '0.01',
+                                                        'border-width' : '0px 0px 0px 0px',
                                                         'border-color' : '#888888',
                                                         'border-style' : 'solid',
-                                                        'width' : `${this.extrabarwidth}px`,
+                                                        'width' : `${this.sidebarwidth}px`,
                                                         'background-color':  webutil.getpassivecolor()
                                                        }
                                                }),
@@ -291,7 +298,7 @@ class ViewerLayoutElement extends HTMLElement {
         if (this.defaulttext.length>10 && b1!=" ")
             this.elements.canvasbase.css({'background-color' : "#fefefe"});
         
-        let zt=webutil.creatediv({ parent : this.elements.sidebar,
+        let zt=webutil.creatediv({ parent : this.elements.dockbar,
                                    css : { 'height' : '40px' }});
         
         let top=webutil.creatediv({ parent : zt,
@@ -307,7 +314,7 @@ class ViewerLayoutElement extends HTMLElement {
         top.append(minimizebutton);
         
         
-        let newpanel=webutil.createpanelgroup(this.elements.sidebar);
+        let newpanel=webutil.createpanelgroup(this.elements.dockbar);
         newpanel.css({ 'margin-top' : '10px'});
         this.elements.newpanel=newpanel;
         if (this.dualmode > 0) {
@@ -318,7 +325,7 @@ class ViewerLayoutElement extends HTMLElement {
 
         }
         
-        this.elements.toolbase=webutil.createpanelgroup(this.elements.sidebar);
+        this.elements.toolbase=webutil.createpanelgroup(this.elements.dockbar);
         
         // canvas then renderer
         //  create 2d canvas
@@ -368,19 +375,19 @@ class ViewerLayoutElement extends HTMLElement {
         minimizebutton.click(function(e) {
             e.preventDefault(); // cancel default behavior
             minimizebutton.empty();
-            if (self.minimizesidepanel) {
-                self.minimizesidepanel=0;
+            if (self.minimizedockpanel) {
+                self.minimizedockpanel=0;
                 minimizebutton.append(`<span class="glyphicon glyphicon-resize-small"></span>`);
             } else {
-                self.minimizesidepanel=1;
+                self.minimizedockpanel=1;
                 minimizebutton.append(`<span class="glyphicon glyphicon-resize-full"></span>`);            }
             
             window.dispatchEvent(new Event('resize'));
         });
 
 
-        // Create extrabar elements
-        this.extraelements.header=webutil.creatediv({ parent : this.elements.extrabar,
+        // Create sidebar elements
+        this.sideelements.header=webutil.creatediv({ parent : this.elements.sidebar,
                                                       css : { 'width' : '99%',
                                                               'padding-bottom' : '10px',
                                                               'height' : '5px',
@@ -388,7 +395,7 @@ class ViewerLayoutElement extends HTMLElement {
                                                             }
                                                     });
         
-        this.extraelements.widget=webutil.creatediv({ parent : this.elements.extrabar,
+        this.sideelements.widget=webutil.creatediv({ parent : this.elements.sidebar,
                                                       css : {
                                                           'width' : '99%',
                                                           'height' : '5px',
@@ -398,7 +405,7 @@ class ViewerLayoutElement extends HTMLElement {
                                                       }
                                                     });
         
-        this.extraelements.footer=webutil.creatediv({ parent : this.elements.extrabar,
+        this.sideelements.footer=webutil.creatediv({ parent : this.elements.sidebar,
                                                       css : { 'width' : '99%',
                                                               'height' : '5px',
                                                               'background-color': webutil.getpassivecolor(),
@@ -434,32 +441,32 @@ class ViewerLayoutElement extends HTMLElement {
         return this.elements.corecontrols;
     }
     
-    /** Return the side bar where new tools can be added
+    /** Return the dock bar where new tools can be added
      * @returns {JQueryElement} div to draw additional tools (e.g. snapshot, paint, landmark etc.)
      */
-    getsidebar() {
+    getdockbar() {
         return this.elements.toolbase;
     }
 
-    getextrabar() {
-        return this.elements.extrabar;
+    getsidebar() {
+        return this.elements.sidebar;
     }
 
-    getextraelements() {
-        return this.extraelements;
+    getsideelements() {
+        return this.sideelements;
     }
 
-    setextrabarwidth(n) {
+    setsidebarwidth(n) {
         if (n<10)
             n=0;
         if (n>500)
             n=500;
-        this.extrabarwidth=n;
+        this.sidebarwidth=n;
         window.dispatchEvent(new Event('resize'));
     }
 
-    getextrabarwidth() {
-        return this.extrabarwidth;
+    getsidebarwidth() {
+        return this.sidebarwidth;
     }
                                                
     getviewerwidth() { 
@@ -479,7 +486,7 @@ class ViewerLayoutElement extends HTMLElement {
     /** create Tool Widget 
      * @returns {JQueryElement} div to draw additional tools (e.g. snapshot, paint, landmark etc.)
      */
-    createToolWidget(name,open=false) {
+    createDockWidget(name,open=false) {
         return webutil.createCollapseElement(this.elements.toolbase,name,open);
     }
 }
