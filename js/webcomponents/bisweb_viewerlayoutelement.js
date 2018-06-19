@@ -76,6 +76,10 @@ class ViewerLayoutElement extends HTMLElement {
         this.sidebarwidth=1;
         this.sidebarElements={};
         this.renderer=null;
+        this.verticalLines=[ null, null];
+        this.verticalLines2=[ null, null];
+        this.verticalLinesX=[null,null];
+
     }
     
     /** call when the window is resized to adjust the proportions */
@@ -136,11 +140,7 @@ class ViewerLayoutElement extends HTMLElement {
             'top'  : '0px',
             'width': `${this.viewerwidth}px`,
             'height':`${this.viewerheight}px`,
-            'border-width' : '0px 2px 0px 2px'
         };
-
-        if (sidewidth<10)
-            canvascss['border-width']= '0px 2px 0px 0px';
 
         // Dockbar
         let dockbarcss = {
@@ -191,6 +191,7 @@ class ViewerLayoutElement extends HTMLElement {
         this.overlaycanvas.height=this.viewerheight;
         this.context.clearRect(0,0,this.viewerwidth,this.viewerheight);
         this.overlaycontext.clearRect(0,0,this.viewerwidth,this.viewerheight);
+        this.createOrShowLines(sidewidth,dockwidth);
     }
     
     
@@ -250,7 +251,7 @@ class ViewerLayoutElement extends HTMLElement {
                                                         'padding' : '0 0 0 0',
                                                         'border-color' : '#888888',
                                                         'border-style' : 'solid',
-                                                        'border-width' : '0px 2px 0px 2px'
+                                                        'border-width' : '0px 0px 0px 0px'
                                                       }
                                                }),
             canvasbase   :   webutil.creatediv({ parent : this.domElement,
@@ -349,8 +350,6 @@ class ViewerLayoutElement extends HTMLElement {
         
         this.renderer.autoClear = false;
         this.elements.rendererbase.append(this.renderer.domElement);
-        
-
 
         const self=this;
         this.handleresize();
@@ -359,11 +358,14 @@ class ViewerLayoutElement extends HTMLElement {
         this.context.clearRect(0,0,this.viewerwidth,this.viewerheight);
         
 
+        this.originaldockwidth=this.dockpanelwidth;
+        
         minimizebutton.click(function(e) {
             e.preventDefault(); // cancel default behavior
             minimizebutton.empty();
             if (self.minimizedockpanel) {
                 self.minimizedockpanel=0;
+                self.dockpanelwidth=self.originaldockwidth;
                 minimizebutton.append(`<span class="glyphicon glyphicon-resize-small"></span>`);
             } else {
                 self.minimizedockpanel=1;
@@ -392,7 +394,6 @@ class ViewerLayoutElement extends HTMLElement {
                                                       });
 
         webutil.runAfterAllLoaded( () => {
-            console.log('Text=',this.defaulttext);
             if (this.defaulttext.length<4) {
                 this.context.fillText('Load (or Drag) an Image (.nii.gz or .nii)',100,100);
                 this.context.fillText(' or an application viewer file (.biswebstate)',100,180);
@@ -449,8 +450,9 @@ class ViewerLayoutElement extends HTMLElement {
     setsidebarwidth(n) {
         if (n<10)
             n=0;
-        if (n>500)
-            n=500;
+        let maxl=Math.round(0.5*this.viewerwidth);
+        if (n>maxl)
+            n=maxl;
         this.sidebarwidth=n;
         window.dispatchEvent(new Event('resize'));
     }
@@ -479,6 +481,150 @@ class ViewerLayoutElement extends HTMLElement {
     createDockWidget(name,open=false) {
         return webutil.createCollapseElement(this.elements.toolbase,name,open);
     }
+
+
+        // ---------- Draggable Separator -------------- -------------- --------------
+
+    handleVerticalLines(e,index,mode,modifyCallbacks) {
+
+        if (mode>=1 && this.verticalLinesX[index]<0)
+            return false;
+
+        
+        e.preventDefault();
+        
+        let x=Math.round(e.pageX);
+        let cnv=this.verticalLines[index];
+        let cnv2=this.verticalLines2[index];
+        
+        
+        if (mode===0) {
+            
+            cnv.css({'left' : `${x-3}px`,
+                     'width' : '9px'});
+            cnv2.css({'left' : `${x-4}px`});
+            modifyCallbacks(1);
+            this.verticalLinesX[index]=x;
+            return true;
+        }
+
+        let minl=0,maxl=0;
+        if (index===0) {
+            minl=151;
+            maxl=Math.round(0.5*this.viewerwidth);
+        } else {
+            minl=Math.round(0.5*this.viewerwidth+this.sidebarwidth);
+            maxl=window.innerWidth-151;
+        }
+        
+        if (x<minl)
+            x=minl;
+        else if (x>maxl)
+            x=maxl;
+        
+        if (mode===1 && this.verticalLinesX[index]>0) {
+
+            cnv.css({ 'left' : `${x-3}px`,});
+            cnv2.css({'left' : `${x-5}px`});
+            return true;
+        }
+        
+        if (mode===2) {
+            cnv.css({'width' : '1px'  });
+            this.verticalLinesX[index]=-1;
+            this.midlineCallbacks(2,index);
+            setTimeout( () => {
+                if (index===0) {
+                    this.setsidebarwidth(x);
+                } else {
+                    this.dockpanelwidth=window.innerWidth-x;
+                    if (this.dockpanelwidth<150)
+                        this.dockpanelwidth=150;
+                    window.dispatchEvent(new Event('resize'));
+                }
+            },10);
+
+            return true;
+        }
+        
+    }
+
+    midlineCallbacks(add=0,index=0) {
+
+        let modifyCallbacks=null;
+        let downC=function(e) {  self.handleVerticalLines(e,index,0,modifyCallbacks);  };
+        let moveC=function(e) {  self.handleVerticalLines(e,index,1,modifyCallbacks);  };
+        let upC=function(e) {  self.handleVerticalLines(e,index,2,modifyCallbacks);  };
+        const self=this;
+
+        modifyCallbacks=function(add=0) {
+
+            let cnv2=self.verticalLines2[index];
+            let par=self.domElement;
+            
+            if (add===0) {
+                cnv2[0].addEventListener('mousedown',downC);
+            } else if (add===1)  {
+                par[0].addEventListener('mousemove',moveC);
+                par[0].addEventListener('mouseup',  upC);
+                par[0].addEventListener('mouseleave',upC);
+            } else if (add===2) {
+                par[0].removeEventListener('mousemove',moveC);
+                par[0].removeEventListener('mouseup',  upC);
+                par[0].removeEventListener('mouseleave',upC);
+            }
+        };
+
+        return modifyCallbacks(add);
+    }
+
+    
+    createOrShowLines(sidewidth=10,dockwidth=300) {
+
+        let w=[sidewidth,dockwidth ];
+        let left=[sidewidth,window.innerWidth-dockwidth];
+        let dh=this.viewerheight;
+
+        for (let ia=0;ia<=1;ia++) {
+            if (w[ia]<100) {
+                if (this.verticalLines[ia]) {
+                    this.midlineCallbacks(2,ia);
+                    this.verticalLines[ia].remove();
+                    this.verticalLines2[ia].remove();
+                    this.verticalLines[ia]=null;
+                    this.verticalLines2[ia]=null;
+                }
+            } else {
+
+                if (!this.verticalLines[ia]) {
+                    this.verticalLines[ia]=$(`<div></div>`);
+                    this.domElement.append(this.verticalLines[ia]);
+                    this.verticalLines2[ia]=$(`<div style="cursor:ew-resize"></div>`);
+                    this.domElement.append(this.verticalLines2[ia]);
+                }
+                this.verticalLines2[ia].css({ 'position' : 'absolute',
+                                              'top' : '0px' ,
+                                              'z-index' : 601,
+                                              'height' : `${dh}px`,
+                                              'width'  : '11px',
+                                              'left'   : `${left[ia]-5}px`,
+                                              'background-color' : 'rgba(10,10,10,0.1)',
+                                            });
+                this.verticalLines[ia].css({ 'position' : 'absolute',
+                                             'top' : '0px' ,
+                                             'z-index' : 600,
+                                             'height' : `${dh}px`,
+                                             'width'  : '3px',
+                                             'left'   : `${left[ia]-1}px`,
+                                             'background-color' : 'rgba(128,128,128,1.0)',
+                                             
+                                           });
+                
+                this.midlineCallbacks(0,ia);
+            }
+        }
+    }
+
 }
 
 
