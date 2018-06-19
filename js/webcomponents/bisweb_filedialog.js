@@ -7,7 +7,7 @@ class FileDialogElement {
         this.modal.dialog.find('.modal-footer').remove();
 
         //make the skeleton for the box
-        let container = $(
+        this.container = $(
                         `<div class='container-fluid'>
                             <div class='row justify-content-start'>
                                 <div class='col-12'>
@@ -23,13 +23,54 @@ class FileDialogElement {
                                     </ul>
                                 </div>
 
-                                <div class='col-sm-9'>
+                                <div class='col-sm-9 file-display'>
                                     <div><p>Content goes here...</p></div>
                                 </div>
                         </div>`
                         );
 
-        this.modal.body.append(container);
+        this.contentDisplay = this.container.find('.file-display');
+        this.modal.body.append(this.container);
+    }
+
+    createFileList(list) {
+        this.contentDisplay.jstree({
+            'core' : {
+                'data' : function(node, cb) { cb(list) },
+                'dblclick_toggle' : false,
+                'expand_selected_onload' : true
+            },
+            'types' : {
+                'default' : {
+                    'icon' : 'glyphicon glyphicon-file'
+                },
+                'file' : {
+                    'icon' : 'glyphicon glyphicon-file'
+                },
+                'root' : {
+                    'icon' : 'glyphicon glyphicon-home'
+                },
+                'directory' : {
+                    'icon' : 'glyphicon glyphicon-folder-close'
+                },
+                'picture' : {
+                    'icon' : 'glyphicon glyphicon-picture'
+                },
+                'js' : {
+                    'icon' : 'glyphicon glyphicon-file'
+                },
+                'html' : {
+                    'icon' : 'glyphicon glyphicon-tasks'
+                },
+                'video' : {
+                    'icon' : 'glyphicon glyphicon-film'
+                }, 
+                'text' : {
+                    'icon' : 'glyphicon glyphicon-list-alt'
+                }
+            },
+            'plugins' : ["types"]
+        });
     }
 
     showDialog() {

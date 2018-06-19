@@ -19,8 +19,8 @@ class FileServer extends HTMLElement {
         let socket;
 
         //File tree requests display the contents of the disk on the server machine in a modal
-        this.fileTreeDisplayModal = new FileDialog();
-        this.fileTreeDisplayModal.showDialog();
+        this.fileTreeDialog = new FileDialog();
+        this.fileTreeDialog.showDialog();
         console.log('file tree modal', this.fileTreeDisplayModal);
 
         //Save image requests pop up a modal dialog with a text entry field
@@ -130,7 +130,7 @@ class FileServer extends HTMLElement {
     requestFileList(socket, directory = null) {
         let command = JSON.stringify({ 'command' : 'show', 'directory' : directory }); 
         socket.send(command);
-
+        this.fileTreeDialog.showDialog();
     }
 
     handleSupplementalFileRequest(path, list) {
@@ -179,6 +179,8 @@ class FileServer extends HTMLElement {
      */
     displayFileList(list) {
         console.log('list', list);
+        this.fileTreeDialog.createFileList(list);
+        /*
         this.fileTreeData = list;
         this.fileTreeDisplayModal.body.jstree({
             'core' : {
@@ -217,6 +219,7 @@ class FileServer extends HTMLElement {
             },
             'plugins' : ["types"]
         });
+        */
     }
 
     /**
@@ -228,6 +231,8 @@ class FileServer extends HTMLElement {
     sendFileRequest(socket, filelist = null) {
         let filesdata = JSON.stringify(filelist);
         socket.send(filesdata);
+
+        this.fileTreeDialog.showDialog();
     }
 
     sendInvocationRequest(socket, parameters) {
