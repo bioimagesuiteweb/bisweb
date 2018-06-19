@@ -29,14 +29,8 @@ const jstree = require('jstree');
   <div class='carousel' data-ride = 'carousel' id='myCarousel' data-interval = 'false'>
   
   <div class='carousel-inner' role = 'listbox'>
-  <div class='active item sidd-item' id='smitem1'>
-  <br><br><br>
-  <button type = 'button' class='btn btn-info btn-sidd'  id='newPatientButton'> Create New Patient </button>
-  <br><br>
-  <button type = 'button' class='btn btn-primary btn-sidd' id='continuePatientButton'> Load Existing Patient </button>
-  </div>
 
-  <div class='item sidd-item' id='smitem2'>
+  <div class='active item sidd-item' id='smitem2'>
   <label class='siddtextFieldLabel'>Patient ID Number-| </label><input id='sm_patientNumber' value='0000'></input> <br><br><br>
   <label class='siddtextFieldLabel'>Patient Name-------| </label><input id='sm_patientName' value='0000'></input>
   <br><br>
@@ -78,11 +72,11 @@ const jstree = require('jstree');
 
 
 const tree_template_string = `
-                <div class="container" style="width:300px">
-                        <div id="treeDiv">
-                        </div>
-                </div>
-                `;
+    
+    <div class="container" style="width:300px">
+    <div id="treeDiv">
+    </div>
+    </div>       `;
 
 
 
@@ -244,7 +238,7 @@ class DiffSpectElement extends HTMLElement {
      * @param {object} params - options for the registration 
      * @returns {BISTransformation} - the output of the registration
      */
-    computeLinearRegistration(reference, target, initial, params) {
+    computeLinearRegistration(reference, target) {
 
         
 
@@ -673,7 +667,6 @@ class DiffSpectElement extends HTMLElement {
     // --------------------------------------------------------------------------------
     handleGenericFileSelect(imgfile, img, show, comment, nextfunction) {
 
-        const self = this;
 
         var imageread = ((vol) => {
             console.log('Image read :' + vol.getDescription(''));
@@ -707,8 +700,6 @@ class DiffSpectElement extends HTMLElement {
 
     fillFields(b, url) {
 
-        var file;
-        file = url;
         var input = b;
         var interictal = null, ictal = null, tmap = null, hyper = null, intertoictal = null, atlastointer = null, atlastoictal = null;
 
@@ -764,7 +755,7 @@ class DiffSpectElement extends HTMLElement {
         app_state.atlastoictal_xform = atlastoictal;
         app_state.hyper = hyper;
         if (null !== app_state.hyper)
-            createChart();
+            console.log(app_state.hyper);
         if (null !== app_state.tmap) {
             app_state.viewer.setimage(app_state.ATLAS_mri);
             app_state.viewer.setobjectmap(app_state.tmap, false, 'overlay');
@@ -850,7 +841,7 @@ class DiffSpectElement extends HTMLElement {
         var prevButton = webutil.createbutton({
             name: 'Prev',
             type: 'danger',
-            css: { 'width': '132px' },
+            css: { 'width': '132.75px' },
             parent: $('#navigationButtons'),
             callback: function () { sm_carousel.carousel('prev'); }
         });
@@ -860,7 +851,7 @@ class DiffSpectElement extends HTMLElement {
         var nextButton = webutil.createbutton({
             name: 'Next',
             type: 'success',
-            css: { 'width': '132px' },
+            css: { 'width': '132.75px' },
             parent: $('#navigationButtons'),
             callback: function () { sm_carousel.carousel('next'); }
         });
@@ -1197,20 +1188,18 @@ class DiffSpectElement extends HTMLElement {
 
 
         let tree=this.tree_div.find('#treeDiv');
-        tree.on('ready.jstree', function (e, data) {
-            data.instance.redraw(true);
-        }).jstree(
+        tree.jstree(
             {
                 "json_data": 
                 {
                     "data": [
                         {
                             "data": "Images",
-                            "children": []
+                            "children": [{"data": "Interictal"},{"data":"Ictal"},{"data": "MRI"}]
                         },
                         {
                             "data": "Registrations",
-                            "children": []
+                            "children": [{"data":"ATLAS to Interictal"},{"data":"ATLAS to Ictal"},{"data": "Interictal to Ictal"}]
                         },
                         {
                             "data": "Diff SPECT",
@@ -1219,10 +1208,10 @@ class DiffSpectElement extends HTMLElement {
                         
                     ],
                 },
-                "plugins": ["themes", "json_data", "ui"]
+                "plugins": ["checkbox","themes", "html_data", "ui"]
 
             }
-        ).bind();
+        ).bind("select_node.jstree", function(e, data){});
         console.log(tree[0]);
 
         
