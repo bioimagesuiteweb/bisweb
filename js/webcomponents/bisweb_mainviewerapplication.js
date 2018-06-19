@@ -721,7 +721,10 @@ class ViewerApplicationElement extends HTMLElement {
                                        window.BISELECTRON.remote.getCurrentWindow().toggleDevTools();
                                    });
                 userPreferencesLoaded.then( () => {
-                    let z=parseFloat(userPreferences.getItem('electronzoom'));
+                    let z=parseFloat(userPreferences.getItem('electronzoom')) || 1.0;
+                    console.log('zoom=',z);
+                    if (z<0.8 || z>1.25)
+                        z=1.0;
                     window.BISELECTRON.electron.webFrame.setZoomFactor(z);
                 });
         }

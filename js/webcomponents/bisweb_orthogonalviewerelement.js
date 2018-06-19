@@ -636,13 +636,13 @@ class OrthogonalViewerElement extends BaseViewerElement {
             let cnv=$(`<div></div>`);
             this.internal.midline=cnv;
             cnv.css({ 'position' : 'absolute',
-                         'top' : '2px' ,
+                         'top' : '0px' ,
                          'z-index' : 600,
                     });
 
             this.internal.midline2=$(`<div style="cursor:ew-resize"></div>`);
             this.internal.midline2.css({ 'position' : 'absolute',
-                                         'top' : '2px' ,
+                                         'top' : '0px' ,
                                          'z-index' : 601,
                                        });
 
@@ -657,7 +657,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         this.internal.midlinedata.origx=-1;
         let left=this.internal.layoutcontroller.getviewerleft();
         this.internal.midlinedata.left=this.cleararea[0]*dw+left;
-        this.internal.midlinedata.height=dh-2;
+        this.internal.midlinedata.height=dh;
         
         if (!this.internal.midlinepresent) {
             let par=$(parentcanvas).parent().parent();
@@ -667,13 +667,13 @@ class OrthogonalViewerElement extends BaseViewerElement {
         }
 
         this.internal.midline.css({
-            'height' : `${dh-2}px`,
+            'height' : `${dh}px`,
             'width'  : '3px',
             'left'   : `${this.internal.midlinedata.left-1}px`,
             'background-color' : 'rgba(128,128,128,1.0)',
         });
         this.internal.midline2.css({
-            'height' : `${dh-2}px`,
+            'height' : `${dh}px`,
             'width'  : '11px',
             'left'   : `${this.internal.midlinedata.left-5}px`,
             'background-color' : 'rgba(10,10,10,0.1)',

@@ -298,10 +298,10 @@ body {
 }
 
 #viewerwidget {
-    top: 65px;
+    top: 61px;
     left: 0px;
     width: 100vw;
-    height: calc(100%-100px);
+    height: calc(100%-93px);
     position: relative;
 }
 

@@ -67,9 +67,12 @@ class BisWebPanel {
         
         this.footer=webutil.creatediv({ css  : {
             'padding-bottom' : '5px',
-            'padding-top' : '5px',
+            'margin-top' : '20px',
+            'margin-bottom' : '5px',
             'margin-left' : '2px',
             'margin-right' : '2px',
+            'border-width' : '2 0 0 0',
+            'padding-top'  : '10px',
             'width' : '100%',
             'background-color' : webutil.getpassivecolor(),
         }});
@@ -80,7 +83,8 @@ class BisWebPanel {
                 'padding-top' : '5px',
                 'margin-left' : '2px',
                 'margin-right' : '2px',
-                'margin-bottom' : '0px'
+                'margin-bottom' : '5px',
+                'background-color' : webutil.getpassivecolor(),
             }});
         
         this.widget=webutil.creatediv({
@@ -221,7 +225,6 @@ class BisWebPanel {
             this.sidebarToggleButton.click( (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('This far and no further');
                 self.addToDock();
                 return false;
             });
@@ -252,7 +255,7 @@ class BisWebPanel {
 
         this.minimalHeader=$('<div></div>');
         this.header.css({
-            'background-color' : webutil.getpassivecolor(),
+            'background-color' : webutil.getpassivecolor2(),
         });
 
         let buttonbar=webutil.creatediv({
@@ -340,7 +343,7 @@ class BisWebPanel {
     drawInSidebarWithWidth(wd) {
 
         this.layoutController.setsidebarwidth(wd);
-        let elements=this.layoutController.getsideelements();
+        let elements=this.layoutController.getSidebarElements();
         
         if (wd<100 && this.state!=="empty") {
 
@@ -364,12 +367,9 @@ class BisWebPanel {
         elements.header.append(this.header);
         elements.widget.empty();
         elements.widget.append(this.widgetbase);
-        elements.footer.empty();
         if (this.options.hasfooter) {
-            elements.footer.append(this.footer);
-            elements.widget.attr('nofooter','0');
-        } else {
-            elements.widget.attr('nofooter','1');
+            elements.widget.append('<HR>');
+            elements.widget.append(this.footer);
         }
         this.state="sidebar";
     }

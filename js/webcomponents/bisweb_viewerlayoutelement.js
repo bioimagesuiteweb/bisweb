@@ -73,11 +73,9 @@ class ViewerLayoutElement extends HTMLElement {
     constructor() {
         super();
         this.minimizedockpanel=false;
-        this.panelgroup=null;
-        this.sidebarwidth=0;
-        this.viewerleft=0;
-        this.elements={};
-        this.sideelements={};
+        this.sidebarwidth=1;
+        this.sidebarElements={};
+        this.renderer=null;
     }
     
     /** call when the window is resized to adjust the proportions */
@@ -91,12 +89,12 @@ class ViewerLayoutElement extends HTMLElement {
 
         if (window.innerWidth<2*dockwidth)
             dockwidth=Math.round(0.5*window.innerWidth);
-        
-        this.viewerheight=window.innerHeight-topheight-100;
+
+        this.viewerheight=window.innerHeight-topheight-87;
         fullwidth=window.innerWidth;
         
         let docktop=0,dockleft=0;
-        let sidewidth=this.sidebarwidth;
+        let sidewidth=this.sidebarwidth || 1;
         if (sidewidth<10) {
             sidewidth=1;
         }
@@ -131,20 +129,24 @@ class ViewerLayoutElement extends HTMLElement {
         let vleft=sidewidth;
         sideleft=0;
         this.viewerleft=vleft;
-        
+
         // Viewer
         let canvascss={
             'left' : `${vleft}px`,
             'top'  : '0px',
             'width': `${this.viewerwidth}px`,
             'height':`${this.viewerheight}px`,
+            'border-width' : '0px 2px 0px 2px'
         };
+
+        if (sidewidth<10)
+            canvascss['border-width']= '0px 2px 0px 0px';
 
         // Dockbar
         let dockbarcss = {
             'width' : `${dockwidth}px`,
-            'top'   : `${docktop-4}px`,
-            'height': `${this.dockbarheight+12}px`,
+            'top'   : `${docktop}px`,
+            'height': `${this.dockbarheight}px`,
             'left'  : `${dockleft}px`
         };
 
@@ -152,9 +154,9 @@ class ViewerLayoutElement extends HTMLElement {
             sidewidth=2;
         let sidebarcss = { 
             'left' : `${sideleft}px`,
-            'top'  : `${sidetop-4}px`,
-            'width': `${sidewidth-10}px`,
-        //    'height':`${this.viewerheight+12}px`,
+            'top'  : `${sidetop}px`,
+            'width': `${sidewidth-1}px`,
+            'height':`${this.viewerheight}px`,
             'opacity' :'1.0',
         };
         
@@ -178,16 +180,8 @@ class ViewerLayoutElement extends HTMLElement {
                                        });
         } else {
             this.elements.sidebar.css(sidebarcss);
-            let a=parseInt(this.sideelements.widget.attr('nofooter'));
-            if (a) {
-                this.sideelements.header.css( { 'height' : `70px`,'max-height' : '70px'});
-                this.sideelements.widget.css( { 'height' : `${this.viewerheight-72+12}px`});
-                this.sideelements.footer.css( { 'height' : `2px`});
-            } else {
-                this.sideelements.header.css( { 'height' : `70px`,'max-height' : '70px'});
-                this.sideelements.widget.css( { 'height' : `${this.viewerheight-170+12}px`});
-                this.sideelements.footer.css( { 'height' : `100px`,'max-height' : '100px'});
-            }
+            this.sidebarElements.header.css( { 'height' : `70px`,'max-height' : '70px'});
+            this.sidebarElements.widget.css( { 'height' : `${this.viewerheight-70}px`});
         }
         
         this.renderer.setSize(this.viewerwidth,this.viewerheight);
@@ -222,8 +216,7 @@ class ViewerLayoutElement extends HTMLElement {
         
         // Initialize defaults
         // Query Properties
-        this.dockpanelwidth=parseInt(this.getAttribute('bis-dockwidth')) ||
-            parseInt(this.getAttribute('bis-sidewidth')) || 300;
+        this.dockpanelwidth=parseInt(this.getAttribute('bis-dockwidth')) || 300;
         this.topheight=parseInt(this.getAttribute('bis-topheight')) || 0;
         this.dualmode=parseInt(this.getAttribute('bis-dualmode')) || 0;
         
@@ -232,7 +225,7 @@ class ViewerLayoutElement extends HTMLElement {
             this.minimizedockpanel=1;
         
         this.defaulttext = this.getAttribute('bis-defaulttext') || '';
-        if (this.defaulttext===" ")
+        if (this.defaulttext.length<5)
             this.defaulttext="";
         
         let coreopen=this.getAttribute('bis-coreopen');
@@ -255,6 +248,9 @@ class ViewerLayoutElement extends HTMLElement {
                                                         'z-index': '2',
                                                         'margin' : '0 0 0 0',
                                                         'padding' : '0 0 0 0',
+                                                        'border-color' : '#888888',
+                                                        'border-style' : 'solid',
+                                                        'border-width' : '0px 2px 0px 2px'
                                                       }
                                                }),
             canvasbase   :   webutil.creatediv({ parent : this.domElement,
@@ -315,7 +311,7 @@ class ViewerLayoutElement extends HTMLElement {
         
         
         let newpanel=webutil.createpanelgroup(this.elements.dockbar);
-        newpanel.css({ 'margin-top' : '10px'});
+        newpanel.css({ 'margin-top' : '8px'});
         this.elements.newpanel=newpanel;
         if (this.dualmode > 0) {
             this.elements.corecontrols=webutil.createCollapseElement(newpanel,'Viewer 1 Controls',coreopen);
@@ -354,24 +350,15 @@ class ViewerLayoutElement extends HTMLElement {
         this.renderer.autoClear = false;
         this.elements.rendererbase.append(this.renderer.domElement);
         
-        
+
+
+        const self=this;
         this.handleresize();
         this.context.font="28px Arial";
         this.context.fillStyle = "#888888";
         this.context.clearRect(0,0,this.viewerwidth,this.viewerheight);
         
-        if (this.defaulttext === "") {
-            this.context.fillText('Load (or Drag) an Image (.nii.gz or .nii)',100,100);
-            this.context.fillText(' or an application viewer file (.biswebstate)',100,180);
-            this.context.fillText('and it will appear here!',120,260);
-        } else {
-            let ch=this.context.canvas.height;
-            let cw=this.context.canvas.width;
-            this.context.textAlign="center";
-            this.context.fillText(this.defaulttext,cw/2,ch/2);
-        }
-        
-        const self=this;
+
         minimizebutton.click(function(e) {
             e.preventDefault(); // cancel default behavior
             minimizebutton.empty();
@@ -387,31 +374,37 @@ class ViewerLayoutElement extends HTMLElement {
 
 
         // Create sidebar elements
-        this.sideelements.header=webutil.creatediv({ parent : this.elements.sidebar,
+        this.sidebarElements.header=webutil.creatediv({ parent : this.elements.sidebar,
                                                       css : { 'width' : '99%',
                                                               'padding-bottom' : '10px',
                                                               'height' : '5px',
-                                                              'background-color': webutil.getpassivecolor()
+                                                              'background-color': webutil.getpassivecolor2()
                                                             }
                                                     });
         
-        this.sideelements.widget=webutil.creatediv({ parent : this.elements.sidebar,
+        this.sidebarElements.widget=webutil.creatediv({ parent : this.elements.sidebar,
                                                       css : {
                                                           'width' : '99%',
                                                           'height' : '5px',
-                                                          "max-height" : "2000px",
                                                           "overflow-y": "auto",
-                                                          'background-color': webutil.getpassivecolor2()
+                                                          'background-color': webutil.getpassivecolor()
                                                       }
-                                                    });
-        
-        this.sideelements.footer=webutil.creatediv({ parent : this.elements.sidebar,
-                                                      css : { 'width' : '99%',
-                                                              'height' : '5px',
-                                                              'background-color': webutil.getpassivecolor(),
-                                                              'padding-top' : '10px',
-                                                            }
-                                                    });
+                                                      });
+
+        webutil.runAfterAllLoaded( () => {
+            console.log('Text=',this.defaulttext);
+            if (this.defaulttext.length<4) {
+                this.context.fillText('Load (or Drag) an Image (.nii.gz or .nii)',100,100);
+                this.context.fillText(' or an application viewer file (.biswebstate)',100,180);
+                this.context.fillText('and it will appear here!',120,260);
+            } else {
+                let ch=this.context.canvas.height;
+                let cw=this.context.canvas.width;
+                this.context.textAlign="center";
+                this.context.fillText(this.defaulttext,cw/2,ch/2);
+            }
+        });
+
         
     }
     
@@ -441,9 +434,6 @@ class ViewerLayoutElement extends HTMLElement {
         return this.elements.corecontrols;
     }
     
-    /** Return the dock bar where new tools can be added
-     * @returns {JQueryElement} div to draw additional tools (e.g. snapshot, paint, landmark etc.)
-     */
     getdockbar() {
         return this.elements.toolbase;
     }
@@ -452,8 +442,8 @@ class ViewerLayoutElement extends HTMLElement {
         return this.elements.sidebar;
     }
 
-    getsideelements() {
-        return this.sideelements;
+    getSidebarElements() {
+        return this.sidebarElements;
     }
 
     setsidebarwidth(n) {
