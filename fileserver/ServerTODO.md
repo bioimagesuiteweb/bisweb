@@ -23,6 +23,7 @@
 
 * Be able to handle module invocations remotely (like WebWorkers), remote command execution, i.e. not modules just regular jobs
 
+* Fix bug on clicking image in jstree interface...
 (improvements for future versions)
 
 * Use HTTP for file transfer? WebSocket is a little slow, ~20Mbps on local network
@@ -42,3 +43,11 @@ client library external API
 	* runJob  (json file)
 
 Look at bis_webfileutil -- electronFileCallback for getFileOpengetFileSave,getDirectory
+
+
+
+MORE TODOS:
+ 
+* Amazon S3 integration (load, save, etc)
+* XNAT integration (load, save, etc) https://wiki.xnat.org/display/XAPI/XNAT+API+Documentation
+* Look into changing specific interfaces to Kloudless interface? https://kloudless.com/

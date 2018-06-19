@@ -1,0 +1,13 @@
+.filedialog-content {
+    position : absolute;
+    left : 40%;
+    width : 55%;
+    height : 100%;
+}
+
+.filedialog-sidebar {
+    position : absolute;
+    left : 5%; 
+    width : 30%;
+    height :100%;
+}
