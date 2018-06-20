@@ -24,7 +24,7 @@ const jstree = require('jstree');
   const spect_template_string = `
   
   
-  <div class="container" style="width:300px">           
+  <div class="container" style="width:400px">           
   <div class='carousel' data-ride = 'carousel' id='myCarousel' data-interval = 'false'>
   
   <div class='carousel-inner' role = 'listbox'>
@@ -54,11 +54,6 @@ const jstree = require('jstree');
   <div id='processSpectDiv'></div>
   <div id='showTmapDiv'></div>
   <div id='hyperchartdiv'>
-  <div class='chart' id='headLab'></div>
-  <div class='chart' id='lab1'></div>
-  <div class='chart' id='lab2'></div>
-  <div class='chart' id='lab3'></div>
-  <div class='chart' id='lab4'></div>
   </div>
   </div>
   </div>
@@ -79,7 +74,15 @@ const tree_template_string = `
 
 
 
+const chart_string = `
 
+	<div class="container" style="width:400px">
+	<div><label id="head"></label></div>
+	<div><label id="lab1"></label></div>
+	<div><label id="lab2"></label></div>
+	<div><label id="lab3"></label></div>
+	<div><label id="lab4"></label></div>
+	</div> `;
 
 // ---------------------------------------------------------------
 // Messages to user
@@ -643,6 +646,7 @@ class DiffSpectElement extends HTMLElement {
     // shows diff spect output data table
     displayData(hyper) {
         resultsmessagebox(hyper);
+		this.generateChart();
     }
 
     // --------------------------------------------------------------------------------
@@ -846,7 +850,7 @@ class DiffSpectElement extends HTMLElement {
         var prevButton = webutil.createbutton({
             name: 'Prev',
             type: 'danger',
-            css: { 'width': '132.75px' },
+            css: { 'width': '200px' },
             parent: $('#navigationButtons'),
             callback: function () { sm_carousel.carousel('prev'); }
         });
@@ -856,7 +860,7 @@ class DiffSpectElement extends HTMLElement {
         var nextButton = webutil.createbutton({
             name: 'Next',
             type: 'success',
-            css: { 'width': '132.75px' },
+            css: { 'width': '200px' },
             parent: $('#navigationButtons'),
             callback: function () { sm_carousel.carousel('next'); }
         });
@@ -1222,28 +1226,30 @@ class DiffSpectElement extends HTMLElement {
         
     }
 
-    createChart() {
-        const self = this;
+	generateChart() {
+		console.log(app_state.hyper);
+		let lines = this.parseNewLines(app_state.hyper);
+		let coordinates = [];
+		
+		for (let i=1;i<lines.length;i++) 
+			coordinates.push(this.parseCoordinates(lines[i]));
 
-        var coordinates = self.parseCoordinates(app_state.hyper);
-        var substrs = self.parseNewLine(app_state.hyper);
-        for (var i = 0; i < substrs.length; i++)
-            substrs[i] = substrs[i].fontsize(0.001);
+		console.log(coordinates);
+		let one=$('#lab1'), two=$('#lab2'), three=$('#lab3'), four=$('#lab4');
+		let head=$('#head');
+		
+		console.log(lines[0] + '\n' + lines[1] + '\n' + lines[2] + '\n' + lines[3] + '\n' + lines[4] + '\n');
 
-        var heading = '#\tI\tJ\tK\tsize\tmaxT\tclusterP\tactualP';
-        heading = heading.fontsize(0.0001);
+		head.html('<PRE>' + lines[0] + '</PRE>');
 
-        var head = $('#headLab'), one = $('#lab1'), two = $('#lab2'), three = $('#lab3'), four = $('#lab4');
-        head.html('<PRE>' + heading + '</PRE>');
-        one.html('<PRE>' + substrs[0] + '</PRE>');
-        two.html('<PRE>' + substrs[1] + '</PRE>');
-        three.html('<PRE>' + substrs[2] + '</PRE>');
-        four.html('<PRE>' + substrs[3] + '</PRE>');
+		one.html('<PRE>' + lines[1] + '</PRE>');
+		two.html('<PRE>' + lines[2] + '</PRE>');
+		three.html('<PRE>' + lines[3] + '</PRE>');
+		four.html('<PRE>' + lines[4] + '</PRE>');
 
-
-        one.click(function () {
+		one.click(function () {
             var coordinate = coordinates[0];
-            app_state.viewer.setcoordinates([coordinate.I, coordinate.J, coordinate.K]);
+            app_state.viewer.setcoordinates([coordinate[0], coordinate[1], coordinate[2]]);
             one.css('border', '2px solid #246BB2');
             two.css("border", "0px");
             three.css("border", "0px");
@@ -1252,7 +1258,7 @@ class DiffSpectElement extends HTMLElement {
 
         two.click(function () {
             var coordinate = coordinates[1];
-            app_state.viewer.setcoordinates([coordinate.I, coordinate.J, coordinate.K]);
+            app_state.viewer.setcoordinates([coordinate[0], coordinate[1], coordinate[2]]);
             one.css("border", "0px");
             two.css("border", "2px solid #246BB2");
             three.css("border", "0px");
@@ -1261,7 +1267,7 @@ class DiffSpectElement extends HTMLElement {
 
         three.click(function () {
             var coordinate = coordinates[2];
-            app_state.viewer.setcoordinates([coordinate.I, coordinate.J, coordinate.K]);
+            app_state.viewer.setcoordinates([coordinate[0], coordinate[1], coordinate[2]]);
             one.css("border", "0px");
             two.css("border", "0px");
             three.css("border", "2px solid #246BB2");
@@ -1270,13 +1276,52 @@ class DiffSpectElement extends HTMLElement {
 
         four.click(function () {
             var coordinate = coordinates[3];
-            app_state.viewer.setcoordinates([coordinate.I, coordinate.J, coordinate.K]);
+            app_state.viewer.setcoordinates([coordinate[0], coordinate[1], coordinate[2]]);
             one.css("border", "0px");
             two.css("border", "0px");
             three.css("border", "0px");
             four.css("border", "2px solid #246BB2");
         });
-    }
+	}
+
+	parseNewLines(str) {
+
+		let lines = [];
+		let prevLine = 0;
+
+		for (let i=0;i<str.length;i++) {
+			let currentCharacter = str.charAt(i);
+
+			if (currentCharacter === '\n') {
+				let newLine = str.substring(prevLine, i);
+				lines.push(newLine);
+				prevLine = i+1;
+			}
+		}
+
+		return lines;
+
+	}
+
+	parseCoordinates(str) {
+		
+		let coordinate = [];
+		let previousChar = 2;
+		let k = 0;
+		for (let i=2;i<str.length;i++) {
+			let currentCharacter = str.charAt(i);
+			if (currentCharacter === '\t' ) {
+				coordinate.push(parseInt(str.substring(previousChar, i)));
+				previousChar=i+1;
+				k++;
+			}
+			
+			if (k > 2)
+				break;
+		}
+
+		return coordinate;
+	}
 
 
     showAtlasToInterictalRegistration() {
@@ -1301,50 +1346,7 @@ class DiffSpectElement extends HTMLElement {
         app_state.viewer.setobjectmap(app_state.tmap, false);
     }
 
-    parseNewLine(str) {
-        var indeciesOfNewLine = [];
-        var substrs = [];
-        for (var i = 0; i < str.length; i++)
-            if (str.charAt(i) === "\n")
-                indeciesOfNewLine.push(i);
-
-        for (var j = 0; j < indeciesOfNewLine.length; j++)
-            substrs.push(str.substring(indeciesOfNewLine[j] + 1, indeciesOfNewLine[j + 1]));
-
-        return substrs;
-    }
-
-    parseCoordinates(str) {
-
-        var substrs = parseNewLine(str);
-        console.log(substrs[0]);
-        var coordinates = [];
-        for (var q = 0; q < substrs.length; q++) {
-            var newstr = substrs[q];
-
-            var indeciesOfTab = [];
-            var k = 0;
-            for (var s = 0; s < newstr.length; s++) {
-                if (newstr.charAt(s) === "\t") {
-                    indeciesOfTab.push(s);
-                    k++;
-                }
-                if (k > 3)
-                    break;
-
-
-            }
-
-            coordinates.push({
-                I: newstr.substring(indeciesOfTab[0] + 1, indeciesOfTab[1]),
-                J: newstr.substring(indeciesOfTab[1] + 1, indeciesOfTab[2]),
-                K: newstr.substring(indeciesOfTab[2] + 1, indeciesOfTab[3])
-            });
-        }
-        return coordinates;
-
-    }
-
+    
 
     connectedCallback() {
         // --------------------------------------------------------------------------------
@@ -1407,7 +1409,7 @@ class DiffSpectElement extends HTMLElement {
         this.panel=new BisWebPanel(layoutcontroller,
                                    {  name  : 'Diff Spect Tool',
                                       permanent : false,
-                                      width : '300',
+                                      width : '400',
                                       dual : false,
                                       mode : 'sidebar'
                                    });
@@ -1419,8 +1421,10 @@ class DiffSpectElement extends HTMLElement {
         // stamp template
 
         let sm_div=$(spect_template_string);
-        this.tree_div=$(tree_template_string);
+        let tree_div=$(tree_template_string);
+		let chart_div=$(chart_string);
         spectToolsDiv.append(sm_div);
+		spectToolsDiv.append(chart_div);
         spectToolsDiv.append(this.tree_div);
         this.panel.show();
         console.log(this.tree_div);

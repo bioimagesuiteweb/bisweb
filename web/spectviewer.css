@@ -18,7 +18,9 @@
     text-align: left;
 }
 
-
+pre {
+	font-size:9px;
+}
 
 #Tools {
     margin-top : 5px;
@@ -29,7 +31,7 @@
 
 .sidd-item {
 	background-color: #666666;
-	width: 300px;
+	width: 400px;
 	height: 335px;
 	text-align:center;
 }
@@ -67,5 +69,7 @@
 }
 
 
-
+#navigationButtons {
+	width: 400px;
+}
 
