@@ -106,16 +106,13 @@ class ViewerLayoutElement extends HTMLElement {
         let offset=87;
         this.viewertop=0;
         if (window.innerWidth>767) {
-            /*            let tm=$("#bismenu");
-            let h=parseInt(tm.height());
-            if (h>65) {
-                offset+=(h-62);
-                this.viewertop=h-60;
-            }*/
+            let tm=$("#bismenuparent");
             let w=window.innerWidth-90;
-            $('#bismenuparent').css({'width' : `${w}px`});
+            $('#bismenuparent').css({'width' : `${w}px`,
+                                     'overflow' : 'hidden',
+                                     'max-width': `${2*w}px`});
         } else {
-            $('#bismenuparent').css({'width' : `100%`});
+            $('#bismenuparent').css({'max-width' : `100%`});
         }
         // Set the height of the viewer
         this.viewerheight=window.innerHeight-this.topheight-offset;
@@ -218,7 +215,7 @@ class ViewerLayoutElement extends HTMLElement {
         this.overlaycanvas=null;
         this.overlaycontext=null;
         this.domElement=$(this);
-        
+
         
         $(this).css({
             '-webkit-user-select': 'none',
