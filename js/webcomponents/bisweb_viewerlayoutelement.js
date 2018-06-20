@@ -109,7 +109,6 @@ class ViewerLayoutElement extends HTMLElement {
             let tm=$("#bismenuparent");
             let w=window.innerWidth-90;
             $('#bismenuparent').css({'width' : `${w}px`,
-                                     'overflow' : 'hidden',
                                      'max-width': `${2*w}px`});
         } else {
             $('#bismenuparent').css({'max-width' : `100%`});

@@ -47,7 +47,7 @@ class Mni2TalElement extends HTMLElement {
             let width=window.innerWidth;
             let height=window.innerHeight;
             if (width<600) {
-                $("#bottomright").css( { 'top' : '88vmin',
+                $("#bottomright").css( { 'top' : '95vmin',
                                          'width':'80vmin',
                                          'left': '2vmin'});
             } else if (height<600) {
