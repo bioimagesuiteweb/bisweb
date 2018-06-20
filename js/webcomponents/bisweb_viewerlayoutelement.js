@@ -106,14 +106,17 @@ class ViewerLayoutElement extends HTMLElement {
         let offset=87;
         this.viewertop=0;
         if (window.innerWidth>767) {
-            let tm=$("#bismenu");
+            /*            let tm=$("#bismenu");
             let h=parseInt(tm.height());
             if (h>65) {
                 offset+=(h-62);
                 this.viewertop=h-60;
-            }
+            }*/
+            let w=window.innerWidth-90;
+            $('#bismenuparent').css({'width' : `${w}px`});
+        } else {
+            $('#bismenuparent').css({'width' : `100%`});
         }
-
         // Set the height of the viewer
         this.viewerheight=window.innerHeight-this.topheight-offset;
         this.viewerwidth= window.innerWidth-dockwidth-sidewidth;
@@ -140,7 +143,7 @@ class ViewerLayoutElement extends HTMLElement {
         // Viewer
         let canvascss={
             'left' : `${this.viewerleft}px`,
-            'top'  : '${this.viewertop}px',
+            'top'  : `${this.viewertop}px`,
             'width': `${this.viewerwidth}px`,
             'height':`${this.viewerheight}px`,
         };
@@ -163,20 +166,24 @@ class ViewerLayoutElement extends HTMLElement {
             'opacity' :'1.0',
         };
         
-        
-        if (this.minimizedockpanel) {
-            this.elements.toolbase.css({ 'opacity' : '0.05' });
-            this.elements.newpanel.css({ 'opacity' : '0.05' });
-            this.elements.dockbar.css({ 'overflow-x' : 'hidden'});
-        } else {
-            this.elements.toolbase.css({ 'opacity' : '1.0' });
-            this.elements.newpanel.css({ 'opacity' : '1.0' });
-            this.elements.dockbar.css({ 'overflow-x' : 'auto'});
-        }
-
         this.elements.rendererbase.css(canvascss);
         this.elements.canvasbase.css(canvascss);
         this.elements.dockbar.css(dockbarcss);
+        
+        if (this.minimizedockpanel) {
+            this.elements.dockbarcontent.css({ 'opacity' : '0.05',
+                                               'overflow': 'hidden',
+                                               'height': `${dockbarheight-40}px`,
+                                             });
+        } else {
+            this.elements.dockbarcontent.css({ 'opacity' : '1.0',
+                                               'overflow': 'auto',
+                                               'height': `${dockbarheight-40}px`,
+                                             });
+
+        }
+
+
         
         if (sidewidth<10) {
             this.elements.sidebar.css({ 'opacity' :'0.01',
@@ -274,7 +281,6 @@ class ViewerLayoutElement extends HTMLElement {
                                                }),
             dockbar      :   webutil.creatediv({ parent : this.domElement,
                                                  css : {'position':'absolute',
-                                                        'overflow-y': 'auto',
                                                         'border-width' : '0px 0px 0px 0px',
                                                         'border-color' : '#888888',
                                                         'border-style' : 'solid',
@@ -306,24 +312,24 @@ class ViewerLayoutElement extends HTMLElement {
             this.elements.canvasbase.css({'background-color' : "#fefefe"});
         
         let zt=webutil.creatediv({ parent : this.elements.dockbar,
-                                   css : { 'height' : '40px' }});
+                                   css : {
+                                       'height' : '40px',
+                                       'width' : '100%'
+                                   }
+                                 });
+        this.elements.dockbarcontent=webutil.creatediv({ parent : this.elements.dockbar,
+                                                css : {
+                                                    'width' : '100%',
+                                                    'padding-top' : '5px',
+                                                }
+                                              });
         
-        let top=webutil.creatediv({ parent : zt,
-                                    css : {
-                                        'z-index' : 4000,
-                                        'width' : '100%',
-                                    }
-                                  });
-        
-
         let minimizebutton=$(`<button type="button" class="bistoggle"><span class="glyphicon glyphicon-resize-small"></span></button>`);
         minimizebutton.css({'margin' : '2px'});
-        top.append(minimizebutton);
+        zt.append(minimizebutton);
         
         
-        let newpanel=webutil.createpanelgroup(this.elements.dockbar);
-        newpanel.css({ 'margin-top' : '8px'});
-        this.elements.newpanel=newpanel;
+        let newpanel=webutil.createpanelgroup(this.elements.dockbarcontent);
         if (this.dualmode > 0) {
             this.elements.corecontrols=webutil.createCollapseElement(newpanel,'Viewer 1 Controls',coreopen);
             this.elements.secondviewercontrols=webutil.createCollapseElement(newpanel,'Viewer 2 Controls',false);
@@ -332,7 +338,7 @@ class ViewerLayoutElement extends HTMLElement {
 
         }
         
-        this.elements.toolbase=webutil.createpanelgroup(this.elements.dockbar);
+        this.elements.toolbase=webutil.createpanelgroup(this.elements.dockbarcontent);
         
         // canvas then renderer
         //  create 2d canvas
