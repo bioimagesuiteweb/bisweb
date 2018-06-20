@@ -632,19 +632,17 @@ class OrthogonalViewerElement extends BaseViewerElement {
         };
         
 
-        let top=this.internal.layoutcontroller.getviewertop();
-        
         if (!this.internal.midline) {
             let cnv=$(`<div></div>`);
             this.internal.midline=cnv;
             cnv.css({ 'position' : 'absolute',
-                         'top' : `${top}px` ,
+                         'top' : `0px` ,
                          'z-index' : 650,
                     });
 
             this.internal.midline2=$(`<div style="cursor:ew-resize"></div>`);
             this.internal.midline2.css({ 'position' : 'absolute',
-                                         'top' : `${top}px` ,
+                                         'top' : `0px` ,
                                          'z-index' : 641,
                                        });
 
@@ -669,14 +667,18 @@ class OrthogonalViewerElement extends BaseViewerElement {
             this.internal.midlinepresent=true;
         }
 
+        //        let tp=$(parentcanvas).parent().parent().parent().css(['top']);
+        let tp=this.internal.layoutcontroller.getviewertop();
         this.internal.midline.css({
             'height' : `${dh}px`,
+            'top' : `${tp}px`,
             'width'  : '3px',
             'left'   : `${this.internal.midlinedata.left-1}px`,
             'background-color' : 'rgba(128,128,128,1.0)',
         });
         this.internal.midline2.css({
             'height' : `${dh}px`,
+            'top' : `${tp}px`,
             'width'  : '11px',
             'left'   : `${this.internal.midlinedata.left-5}px`,
             'background-color' : 'rgba(10,10,10,0.1)',
