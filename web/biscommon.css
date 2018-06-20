@@ -305,6 +305,13 @@ body {
     position: relative;
 }
 
+@media (min-width: 768px) {
+    #bismenuparent {
+        height : 60px;
+        max-height : 60px;
+    }
+}
+
 
 .bistoggle {
     background-color : rgb(72,72,72);
