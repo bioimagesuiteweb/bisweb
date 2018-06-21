@@ -1197,33 +1197,87 @@ class DiffSpectElement extends HTMLElement {
 
 
         let tree=this.tree_div.find('#treeDiv');
-        tree.jstree(
-            {
-                "json_data": 
-                {
-                    "data": [
-                        {
-                            "data": "Images",
-                            "children": [{"data": "Interictal"},{"data":"Ictal"},{"data": "MRI"}]
-                        },
-                        {
-                            "data": "Registrations",
-                            "children": [{"data":"ATLAS to Interictal"},{"data":"ATLAS to Ictal"},{"data": "Interictal to Ictal"}]
-                        },
-                        {
-                            "data": "Diff SPECT",
-                            "children": []
-                        }
-                        
-                    ],
-                },
-                "plugins": ["checkbox","themes", "html_data", "ui"]
 
+        let json_data = {
+            'core': {
+                'data': [
+                    {
+                        'text': 'Images',
+                        'state': {
+                            'opened': false,
+                            'selected': false
+                        },
+                        'children': [
+                            {
+                                'text': 'Interictal'
+                            },
+                            {
+                                'text': 'Ictal'
+                            },
+                            {
+                                'text': 'MRI'
+                            }
+                        ]
+                    },
+                    {
+                        'text': 'Registrations',
+                        'state': {
+                            'opened': false,
+                            'selected': false
+                        },
+                        'children': [
+                            {
+                                'text': 'ATLAS to Interictal'
+                            },
+                            {
+                                'text': 'ATLAS to Ictal'
+                            },
+                            {
+                                'text': 'Interictal to Ictal'
+                            }
+                        ]
+                    },
+                    {
+                        'text': 'Diff SPECT',
+                        'state': {
+                            'opened': false,
+                            'selected': false
+                        },
+                        'children': [
+                            {
+                                'text': 'Tmap Image'
+                            },
+                            
+                        ]
+                    }
+                ]
+
+
+            },
+            'plugins': ['contextmenu'],
+            'contextmenu' : {
+                'items': this.customMenuOptions
             }
-        ).bind("select_node.jstree", function(e, data){});
+ 
+        };
+        tree.jstree(json_data).bind("select_node.jstree", function(e, data){});
         console.log(tree[0]);
+    }
 
-        
+    customMenuOptions(node) {
+        console.log(node);
+        let items = {
+            'item1': {
+                'label': 'item1',
+            },
+            'item2': {
+                'label': 'item2',
+                'action': function(){}
+            }
+        };
+
+        return items;
+
     }
 
 	generateChart() {
@@ -1421,10 +1475,10 @@ class DiffSpectElement extends HTMLElement {
         // stamp template
 
         let sm_div=$(spect_template_string);
-        let tree_div=$(tree_template_string);
+        this.tree_div=$(tree_template_string);
 		let chart_div=$(chart_string);
-        spectToolsDiv.append(sm_div);
-		spectToolsDiv.append(chart_div);
+       // spectToolsDiv.append(sm_div);
+		//spectToolsDiv.append(chart_div);
         spectToolsDiv.append(this.tree_div);
         this.panel.show();
         console.log(this.tree_div);
