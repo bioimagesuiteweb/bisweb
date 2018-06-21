@@ -20,8 +20,6 @@ class FileServer extends HTMLElement {
 
         //File tree requests display the contents of the disk on the server machine in a modal
         this.fileTreeDialog = new FileDialog();
-        this.fileTreeDialog.showDialog();
-        console.log('file tree modal', this.fileTreeDisplayModal);
 
         //Save image requests pop up a modal dialog with a text entry field
         this.saveImageModal = null;

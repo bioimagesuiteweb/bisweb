@@ -30,6 +30,7 @@ class FileDialogElement {
                         );
 
         this.contentDisplay = this.container.find('.file-display');
+
         this.modal.body.append(this.container);
     }
 
@@ -71,6 +72,18 @@ class FileDialogElement {
             },
             'plugins' : ["types"]
         });
+
+        //TODO: fetch the list of the users' favorite folders from localforage or wherever they end up being...
+        let pills = this.container.find('.nav.nav-pills').find('li');
+        for (let pill of pills) {
+            console.log('pill', pill);
+            $(pill).on('click', () => {
+                for (let otherPill of pills) {
+                    $(otherPill).removeClass('active');
+                };
+                $(pill).addClass('active');
+            });
+        }
     }
 
     showDialog() {
