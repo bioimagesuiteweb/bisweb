@@ -24,7 +24,6 @@ class FileServer extends HTMLElement {
         //Save image requests pop up a modal dialog with a text entry field
         this.saveImageModal = null;
 
-
         webutil.runAfterAllLoaded(() => {
             let menuBarID = this.getAttribute('bis-menubarid');
             let menuBar = document.querySelector(menuBarID).getMenuBar();
@@ -112,6 +111,12 @@ class FileServer extends HTMLElement {
      */
     connectToServer(address = 'ws://localhost:8081') {
         let socket = new WebSocket(address);
+
+        //file tree dialog needs to be able to call some of file server's code 
+        //they are separated for modularity reasons, so to enforce the hierarchical relationship between the two fileserver provides the function at its discretion.
+        this.fileTreeDialog.fileListFn = this.requestFileList.bind(this, socket);
+        this.fileTreeDialog.fileRequestFn = this.sendFileRequest.bind(this, socket);
+
         return socket;
     }
 
@@ -133,12 +138,16 @@ class FileServer extends HTMLElement {
 
     handleSupplementalFileRequest(path, list) {
         console.log('handleSupplementalFileRequest', path, list);
-        let splitPaths = path.split('/'), currentDirectory = this.fileTreeData;
+
+        //file tree dialog keeps track of the data stored within it -- however the since the file server retrieves the new data it is responsible for adding it
+        let splitPaths = path.split('/'), currentDirectory = this.fileTreeDialog.fileList;
+        console.log('file tree list', this.fileTreeDialog.fileList);
+
         //first two entries in split paths will be '' 'home' and '[user]' and since the file tree starts below those we can safely remove them.
         console.log('splitPaths', splitPaths);
         splitPaths.splice(0,3);
 
-        //find where to add the supplemental files in this.fileTreeData
+        //find where to add the supplemental files
         let foundDirectory = false;
         while (splitPaths.length > 0) {
             console.log('looking for a match with', splitPaths[0]);
@@ -148,7 +157,8 @@ class FileServer extends HTMLElement {
                     //if there's only one entry in splitPaths then this is the index at which we want to add the supplemental files
                     if (splitPaths.length === 1) {
                         entry.children = list;
-                        console.log('fileTreeData', this.fileTreeData);
+                        entry.expand = false;
+                        this.fileTreeDialog.createFileList(list, { 'path' : entry.path, 'list' : entry.children });
                         return;
                     } else {
                         console.log('entering directory', entry.children);
