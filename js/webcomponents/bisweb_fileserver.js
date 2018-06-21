@@ -178,46 +178,6 @@ class FileServer extends HTMLElement {
     displayFileList(list) {
         console.log('list', list);
         this.fileTreeDialog.createFileList(list);
-        /*
-        this.fileTreeData = list;
-        this.fileTreeDisplayModal.body.jstree({
-            'core' : {
-                'data' : function(node, cb) { cb(list) },
-                'dblclick_toggle' : false,
-                'expand_selected_onload' : true
-            },
-            'types' : {
-                'default' : {
-                    'icon' : 'glyphicon glyphicon-file'
-                },
-                'file' : {
-                    'icon' : 'glyphicon glyphicon-file'
-                },
-                'root' : {
-                    'icon' : 'glyphicon glyphicon-home'
-                },
-                'directory' : {
-                    'icon' : 'glyphicon glyphicon-folder-close'
-                },
-                'picture' : {
-                    'icon' : 'glyphicon glyphicon-picture'
-                },
-                'js' : {
-                    'icon' : 'glyphicon glyphicon-file'
-                },
-                'html' : {
-                    'icon' : 'glyphicon glyphicon-tasks'
-                },
-                'video' : {
-                    'icon' : 'glyphicon glyphicon-film'
-                }, 
-                'text' : {
-                    'icon' : 'glyphicon glyphicon-list-alt'
-                }
-            },
-            'plugins' : ["types"]
-        });
-        */
     }
 
     /**
