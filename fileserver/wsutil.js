@@ -11,29 +11,29 @@ let parseControlFrame = (frame) => {
     let opcode = frame[0] % 16;
     let maskbit = frame[1] >> 7;
     let payload = frame[1] % 128;
-    let maskkey = maskbit ? frame.slice(2,6) : null;
+    let maskkey = maskbit ? frame.slice(2, 6) : null;
     let datastart = maskbit ? 6 : 2;
 
     if (payload === 126) {
-        payload = frame[2] * 256 + frame[3]; 
-        maskkey = maskbit ? frame.slice(4,8) : null;
+        payload = frame[2] * 256 + frame[3];
+        maskkey = maskbit ? frame.slice(4, 8) : null;
         datastart = maskbit ? 8 : 4;
     }
 
     if (payload === 127) {
-        payload = frame[2] * Math.pow(256, 7) + frame[3] * Math.pow(256, 6) + frame[4] * Math.pow(256, 5) + frame[5] * Math.pow(256, 4) 
-                + frame[6] * Math.pow(256, 3) + frame[7] * Math.pow(256, 2) + frame[8] * Math.pow(256, 1) + frame[9] * Math.pow(256, 0);
-        maskkey = maskbit ? frame.slice(10,14) : null;
+        payload = frame[2] * Math.pow(256, 7) + frame[3] * Math.pow(256, 6) + frame[4] * Math.pow(256, 5) + frame[5] * Math.pow(256, 4)
+            + frame[6] * Math.pow(256, 3) + frame[7] * Math.pow(256, 2) + frame[8] * Math.pow(256, 1) + frame[9] * Math.pow(256, 0);
+        maskkey = maskbit ? frame.slice(10, 14) : null;
         datastart = maskbit ? 14 : 10;
     }
 
-    return { 
-        'fin' : fin,
-        'opcode' : opcode,
-        'maskbit' : maskbit,
-        'payloadLength' : payload,
-        'mask' : maskkey,
-        'datastart' : datastart
+    return {
+        'fin': fin,
+        'opcode': opcode,
+        'maskbit': maskbit,
+        'payloadLength': payload,
+        'mask': maskkey,
+        'datastart': datastart
     };
 };
 
@@ -81,7 +81,7 @@ let formatControlFrame = (opcode, payloadLength) => {
  * @return Decoded string
  */
 let decodeUTF8 = (rawText, control) => {
-    let payloadLength = typeof(control) === 'object' ? control.payloadLength : control;
+    let payloadLength = typeof (control) === 'object' ? control.payloadLength : control;
     let text = "";
     //decode from raw UTF-8 values to characters
     for (let i = 0; i < payloadLength; i++) {
@@ -106,10 +106,40 @@ let parseJSON = (rawJSON) => {
     }
 }
 
+let searchTree = (path, list) => {
+    let foundDirectory = false, splitPaths = path.split('/'), currentDirectory = list;
+    while (splitPaths.length > 0) {
+        console.log('looking for a match with', splitPaths[0]);
+        for (let entry of currentDirectory) {
+            if (entry.text === splitPaths[0]) {
+
+                //if there's only one entry in splitPaths then this is the index at which we want to add the supplemental files
+                if (splitPaths.length === 1) {
+                    return entry;
+                } else {
+                    console.log('entering directory', entry.children);
+                    foundDirectory = true;
+                    currentDirectory = entry.children;
+                }
+
+                splitPaths.splice(0, 1);
+            }
+        }
+
+        if (!foundDirectory) {
+            console.log('could not find directory.');
+            return null;
+        } else {
+            foundDirectory = false;
+        }
+    }
+}
+
 module.exports = {
-    parseControlFrame : parseControlFrame,
-    formatControlFrame : formatControlFrame,
-    decodeUTF8 : decodeUTF8,
-    unzipFile : unzipFile,
-    parseJSON : parseJSON
+    parseControlFrame: parseControlFrame,
+    formatControlFrame: formatControlFrame,
+    decodeUTF8: decodeUTF8,
+    unzipFile: unzipFile,
+    parseJSON: parseJSON,
+    searchTree: searchTree
 };

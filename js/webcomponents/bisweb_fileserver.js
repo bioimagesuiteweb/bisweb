@@ -140,42 +140,22 @@ class FileServer extends HTMLElement {
         console.log('handleSupplementalFileRequest', path, list);
 
         //file tree dialog keeps track of the data stored within it -- however the since the file server retrieves the new data it is responsible for adding it
-        let splitPaths = path.split('/'), currentDirectory = this.fileTreeDialog.fileList;
         console.log('file tree list', this.fileTreeDialog.fileList);
 
         //first two entries in split paths will be '' 'home' and '[user]' and since the file tree starts below those we can safely remove them.
-        console.log('splitPaths', splitPaths);
+
+        let splitPaths = path.split('/');
         splitPaths.splice(0,3);
-
-        //find where to add the supplemental files
-        let foundDirectory = false;
-        while (splitPaths.length > 0) {
-            console.log('looking for a match with', splitPaths[0]);
-            for (let entry of currentDirectory) {
-                if (entry.text === splitPaths[0]) {
-
-                    //if there's only one entry in splitPaths then this is the index at which we want to add the supplemental files
-                    if (splitPaths.length === 1) {
-                        entry.children = list;
-                        entry.expand = false;
-                        this.fileTreeDialog.createFileList(list, { 'path' : entry.path, 'list' : entry.children });
-                        return;
-                    } else {
-                        console.log('entering directory', entry.children);
-                        foundDirectory = true;
-                        currentDirectory = entry.children;
-                    }
-                   
-                    splitPaths.splice(0,1);
-                }
-            }
-
-            if (!foundDirectory) {
-                console.log('could not find directory.');
-                return;
-            } else {
-                foundDirectory = false;
-            }
+        let formattedPath = splitPaths.join('/');
+        console.log('splitPaths', splitPaths);
+        
+        let entry = wsutil.searchTree(formattedPath, this.fileTreeDialog.fileList);
+        if (entry) {
+            entry.children = list;
+            entry.expand = false;
+            this.fileTreeDialog.createFileList(list, { 'path': entry.path, 'list': entry.children });
+        } else {
+            console.log('could not find', path, 'in the list of files');
         }
     }
 

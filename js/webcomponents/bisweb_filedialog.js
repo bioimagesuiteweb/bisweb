@@ -52,92 +52,16 @@ class FileDialogElement {
 
         let contentDisplay = this.container.find('.file-display');
         let contentBox = this.container.find('.content-box');
-        let currentDirectory = list;
+        this.currentDirectory = list;
 
         //keep track of the current directory for the navbar
-        let currentPath = startDirectory ? startDirectory.path : '';
+        this.currentPath = startDirectory ? startDirectory.path.split('/') : [];
         this.container.find('.file-navbar').empty();
 
-        //locally scoped function that will fill the content box with the JSON specified in 'list'
-        let expandDirectory = (list) => {
-            contentDisplay.remove();
-            contentDisplay = $(this.contentDisplayTemplate);
-
-            contentDisplay.jstree({
-                'core': {
-                    'data': list,
-                    'dblclick_toggle': false
-                },
-                'types': {
-                    'default': {
-                        'icon': 'glyphicon glyphicon-file'
-                    },
-                    'file': {
-                        'icon': 'glyphicon glyphicon-file'
-                    },
-                    'root': {
-                        'icon': 'glyphicon glyphicon-home'
-                    },
-                    'directory': {
-                        'icon': 'glyphicon glyphicon-folder-close'
-                    },
-                    'picture': {
-                        'icon': 'glyphicon glyphicon-picture'
-                    },
-                    'js': {
-                        'icon': 'glyphicon glyphicon-file'
-                    },
-                    'html': {
-                        'icon': 'glyphicon glyphicon-tasks'
-                    },
-                    'video': {
-                        'icon': 'glyphicon glyphicon-film'
-                    },
-                    'text': {
-                        'icon': 'glyphicon glyphicon-list-alt'
-                    }
-                },
-                'plugins': ["types"]
-            });
-
-            //determine based on the type of the node what should happen when the user clicks on it
-            $(contentDisplay).on('select_node.jstree', (event, data) => {
-                console.log('data', data);
-
-                //check whether node should expand directories beneath it.
-                if (data.node.original.expand) {
-                    this.fileListFn(data.node.original.path);
-                    return;
-                }
-
-                switch (data.node.type) {
-                    case 'file':
-                    case 'picture': this.fileRequestFn({ 'command' : 'getfile', 'files' : [data.node.original.path] }); break;
-                    case 'directory':
-                        let name = data.node.original.text;
-                        let node = currentDirectory.find((element) => { return element.text === name; });
-                        if (node) {
-                            console.log('node', node);
-                            currentPath = currentPath + '/' + node.text;
-                            currentDirectory = node.children;
-                            expandDirectory(node.children);
-                        } else {
-                            console.log('Error, could not find element with name', data.node.original.text, 'in directory', currentDirectory);
-                        }
-                        break;
-                    default: console.log('clicked on node', data.node.type, 'that performs no action');
-                }
-
-            });
-            
-            this.updateFileNavbar(currentPath);
-            contentBox.append(contentDisplay);
-        };
-
         if (startDirectory) {
-            expandDirectory(startDirectory.list);
+            this.expandDirectory(startDirectory.list);
         } else {
-            expandDirectory(list);
+            this.expandDirectory(list);
         }
 
         //TODO: fetch the list of the users' favorite folders from localforage or wherever they end up being...
@@ -153,19 +77,103 @@ class FileDialogElement {
             });
         }
     }
+    
+    expandDirectory(list) {
+        let contentDisplay = this.container.find('.file-display');
+        let contentBox = this.container.find('.content-box');
 
-    updateFileNavbar(path) {
+        contentDisplay.remove();
+        contentDisplay = $(this.contentDisplayTemplate);
+
+        contentDisplay.jstree({
+            'core': {
+                'data': list,
+                'dblclick_toggle': false
+            },
+            'types': {
+                'default': {
+                    'icon': 'glyphicon glyphicon-file'
+                },
+                'file': {
+                    'icon': 'glyphicon glyphicon-file'
+                },
+                'root': {
+                    'icon': 'glyphicon glyphicon-home'
+                },
+                'directory': {
+                    'icon': 'glyphicon glyphicon-folder-close'
+                },
+                'picture': {
+                    'icon': 'glyphicon glyphicon-picture'
+                },
+                'js': {
+                    'icon': 'glyphicon glyphicon-file'
+                },
+                'html': {
+                    'icon': 'glyphicon glyphicon-tasks'
+                },
+                'video': {
+                    'icon': 'glyphicon glyphicon-film'
+                },
+                'text': {
+                    'icon': 'glyphicon glyphicon-list-alt'
+                }
+            },
+            'plugins': ["types"]
+        });
+
+        //determine based on the type of the node what should happen when the user clicks on it
+        $(contentDisplay).on('select_node.jstree', (event, data) => {
+            console.log('data', data);
+
+            //check whether node should expand directories beneath it.
+            if (data.node.original.expand) {
+                this.fileListFn(data.node.original.path);
+                return;
+            }
+
+            switch (data.node.type) {
+                case 'file':
+                case 'picture': this.fileRequestFn({ 'command' : 'getfile', 'files' : [data.node.original.path] }); break;
+                case 'directory':
+                    let name = data.node.original.text;
+                    let node = this.currentDirectory.find((element) => { return element.text === name; });
+                    if (node) {
+                        console.log('node', node);
+                        this.currentPath.push(node.text);
+                        this.currentDirectory = node.children;
+                        this.expandDirectory(node.children);
+                    } else {
+                        console.log('Error, could not find element with name', data.node.original.text, 'in directory', this.currentDirectory);
+                    }
+                    break;
+                default: console.log('clicked on node', data.node.type, 'that performs no action');
+            }
+
+        });
+
+        this.updateFileNavbar();
+        contentBox.append(contentDisplay);
+    }
+
+    updateFileNavbar() {
         let navbar = this.modal.body.find('.file-navbar');
-        let folders = path.split('/');
 
         //leading character may be a '/', in this case just strip it out and start from the first folder name
-        if (folders[0] === '') { folders.splice(0,1); }
+        if (this.currentPath[0] === '') { this.currentPath.splice(0,1); }
 
-        console.log('path', path);
+        console.log('path', this.currentPath);
         navbar.empty();
 
-        for (let folder of folders) {
+        for (let folder of this.currentPath) {
             let button = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-folder-close'></span> ${folder}</button>`);
+            button.on('click', () => {
+
+                //find the list by following the current path in the amalgamated file list
+                
+
+            });
+
             navbar.append(button);
         }
     }
