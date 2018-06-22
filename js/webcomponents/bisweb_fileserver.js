@@ -148,12 +148,12 @@ class FileServer extends HTMLElement {
         splitPaths.splice(0,3);
         let formattedPath = splitPaths.join('/');
         console.log('splitPaths', splitPaths);
-        
+
         let entry = wsutil.searchTree(formattedPath, this.fileTreeDialog.fileList);
         if (entry) {
             entry.children = list;
             entry.expand = false;
-            this.fileTreeDialog.createFileList(list, { 'path': entry.path, 'list': entry.children });
+            this.fileTreeDialog.createFileList(list, { 'path': formattedPath, 'list': entry.children });
         } else {
             console.log('could not find', path, 'in the list of files');
         }

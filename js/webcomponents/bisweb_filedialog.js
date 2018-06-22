@@ -170,7 +170,12 @@ class FileDialogElement {
             button.on('click', () => {
 
                 //find the list by following the current path in the amalgamated file list
-                
+                //search tree for the path up to the clicked button (e.g. if it's javascript/bisweb/node_modules and bisweb is clicked go to javascript/bisweb) and navigate there
+                for (let file of this.currentPath) {
+                    if (file === folder) {
+
+                    }
+                }
 
             });
 
