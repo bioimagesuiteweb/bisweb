@@ -2,10 +2,7 @@ const webutil = require('bis_webutil.js');
 
 class FileDialogElement {
 
-    constructor(fileserver, socket) {
-
-        this.fileserver = fileserver;
-        this.socket = socket;
+    constructor() {
 
         this.modal = webutil.createmodal('File Tree', 'modal-lg');
         this.modal.dialog.find('.modal-footer').remove();
@@ -22,7 +19,6 @@ class FileDialogElement {
                         `<div class='container-fluid'>
                             <div class='row justify-content-start'>
                                 <div class='col-12 file-navbar'>
-                                    <p>File bar goes here...</p>
                                 </div>
                             </div>
                             <div class='row justify-content-start content-box'>
@@ -55,9 +51,12 @@ class FileDialogElement {
         this.fileList = this.fileList ? this.fileList : list;
 
         let contentDisplay = this.container.find('.file-display');
-        let currentDirectory = list;
         let contentBox = this.container.find('.content-box');
-        console.log('contentBox', contentBox);
+        let currentDirectory = list;
+
+        //keep track of the current directory for the navbar
+        let currentPath = startDirectory ? startDirectory.path : '';
+        this.container.find('.file-navbar').empty();
 
         //locally scoped function that will fill the content box with the JSON specified in 'list'
         let expandDirectory = (list) => {
@@ -119,8 +118,9 @@ class FileDialogElement {
                         let node = currentDirectory.find((element) => { return element.text === name; });
                         if (node) {
                             console.log('node', node);
-                            expandDirectory(node.children);
+                            currentPath = currentPath + '/' + node.text;
                             currentDirectory = node.children;
+                            expandDirectory(node.children);
                         } else {
                             console.log('Error, could not find element with name', data.node.original.text, 'in directory', currentDirectory);
                         }
@@ -129,18 +129,16 @@ class FileDialogElement {
                 }
 
             });
-
+            
+            this.updateFileNavbar(currentPath);
             contentBox.append(contentDisplay);
         };
 
         if (startDirectory) {
             expandDirectory(startDirectory.list);
-             
-            //TODO: populate file bar with relevant path
         } else {
             expandDirectory(list);
         }
-        
 
         //TODO: fetch the list of the users' favorite folders from localforage or wherever they end up being...
 
@@ -156,9 +154,20 @@ class FileDialogElement {
         }
     }
 
-    updateFileNavbar() {
+    updateFileNavbar(path) {
         let navbar = this.modal.body.find('.file-navbar');
+        let folders = path.split('/');
 
+        //leading character may be a '/', in this case just strip it out and start from the first folder name
+        if (folders[0] === '') { folders.splice(0,1); }
+
+        console.log('path', path);
+        navbar.empty();
+
+        for (let folder of folders) {
+            let button = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-folder-close'></span> ${folder}</button>`);
+            navbar.append(button);
+        }
     }
 
     /**
