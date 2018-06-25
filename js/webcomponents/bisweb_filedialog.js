@@ -13,6 +13,8 @@ class FileDialogElement {
         </div>`;
 
         this.fileList = null;
+        this.lastDirectories = [];
+        this.lastPaths = [];
 
         //make the skeleton for the box
         this.container = $(
@@ -53,6 +55,9 @@ class FileDialogElement {
         let contentDisplay = this.container.find('.file-display');
         let contentBox = this.container.find('.content-box');
         this.currentDirectory = list;
+
+        this.lastDirectories = [];
+        this.lastPaths = [];
 
         //keep track of the current directory for the navbar
         this.currentPath = startDirectory ? startDirectory.path.split('/') : [];
@@ -138,9 +143,7 @@ class FileDialogElement {
                     let node = this.currentDirectory.find((element) => { return element.text === name; });
                     if (node) {
                         console.log('node', node);
-                        this.currentPath.push(node.text);
-                        this.currentDirectory = node.children;
-                        this.expandDirectory(node.children);
+                        this.changeDirectory(node.text, node.children);
                     } else {
                         console.log('Error, could not find element with name', data.node.original.text, 'in directory', this.currentDirectory);
                     }
@@ -158,13 +161,24 @@ class FileDialogElement {
         let navbar = this.modal.body.find('.file-navbar');
 
         //leading character may be a '/', in this case just strip it out and start from the first folder name
-        if (this.currentPath[0] === '') { this.currentPath.splice(0,1); }
+        if (this.currentPath[0] && this.currentPath[0] === '') { this.currentPath.splice(0,1); }
         navbar.empty();
         
+        let backButton = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-chevron-left'></span> back</button>`);
+        backButton.on('click', () => {
+
+        });
+
         //create 'home' button that will bring user back to ~/
-        let homeButton = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-folder-close'></span>home</button>`);
+        let homeButton = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-folder-close'></span> home</button>`);
+        homeButton.on('click', () => {
+            this.changeDirectory(null, this.fileList);
+        });
+
         navbar.append(homeButton);
 
+        console.log('current path', this.currentPath);
+        //create navbar buttons for each folder in the current path
         for (let folder of this.currentPath) {
             let button = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-folder-close'></span> ${folder}</button>`);
             button.on('click', () => {
@@ -201,8 +215,7 @@ class FileDialogElement {
                 }
 
                 console.log('new path contents', newPathContents);
-                this.expandDirectory(newPathContents);
-                this.currentDirectory = newPathContents;
+                this.changeDirectory(this.currentPath, newPathContents);
             });
 
             navbar.append(button);
@@ -214,6 +227,34 @@ class FileDialogElement {
      */
     showDialog() {
         this.modal.dialog.modal('show');
+    }
+
+    /**
+     * Opens the contents of a directory into the file dialog and updates internal structures to reflect the change. 
+     * 
+     * @param {String|Object|null} name - The name of the folder being opened, a full path for a folder, or null. If null it sets the current path to ~/
+     * @param {Array} contents - The contents of the folder being opened. 
+     */
+    changeDirectory(name, contents) {
+        this.lastDirectories.push(this.currentDirectory);
+
+        this.currentDirectory = contents;
+        console.log('typeof name', typeof(name));
+        if (name === null) {
+            this.lastPaths.push([]);
+            this.currentPath = [];
+        } else if (typeof(name) === 'string') { 
+            this.lastPaths.push(this.currentPath);
+            this.currentPath.push(name);
+        } else if (typeof(name) === 'object') {
+            this.lastPaths.push(this.currentPath);
+            this.currentPath = name;
+        } else {
+            console.log('received unexpected name', name);
+            return;
+        }
+
+        this.expandDirectory(contents);
     }
 }
 
