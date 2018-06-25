@@ -1318,7 +1318,12 @@ class DiffSpectElement extends HTMLElement {
 			loadictal: {
 				'label': 'Load Ictal',
 				'action': function(){}
-			},
+            },
+            
+            loadmri: {
+                'label': 'Load MRI',
+                'action': function() {}
+            },
 
             showimage: {
                 'label': 'Show Image',
@@ -1343,6 +1348,7 @@ class DiffSpectElement extends HTMLElement {
 
 		if (node.text !== 'Interictal') delete items.loadinter;
         if (node.text !== 'Ictal')		delete items.loadictal;
+        if (node.text !== 'Load MRI')   delete items.loadmri;
         if (node.text !== 'ATLAS to Interictal' ||
             node.text !== 'ATLAS to Ictal'      ||
             node.text !== 'Interictal to Ictal') {delete items.showregistration; delete items.register;}
