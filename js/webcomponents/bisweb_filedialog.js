@@ -27,12 +27,7 @@ class FileDialogElement {
                                 </div>
                             </div>
                             <div class='row justify-content-start content-box'>
-                                <div class='col-sm-3'>
-                                    <ul class='nav nav-pills nav-stacked'>
-                                        <li class='active'><a href='#'>A file</a></li>
-                                        <li><a href='#'>Another file</a></li>
-                                        <li><a href='#'>One more file</a></li>
-                                    </ul>
+                                <div class='col-sm-3 favorite-bar'>
                                 </div>
 
                                 <div class='col-sm-9 file-display'>
@@ -41,9 +36,41 @@ class FileDialogElement {
                         </div>`
                         );
 
+        this.createStaticElements();
         this.modal.body.append(this.container);
     }
 
+    /**
+     * Creates the elements of the file dialog that don't need to be redrawn regularly. 
+     */
+    createStaticElements() {
+        let favoriteBar = this.container.find('.favorite-bar');
+        let favoriteButton = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-star-empty'></span> Mark folder as favorite</button>`);
+        favoriteBar.append(favoriteButton);
+
+        let pillsHTML = $(
+            `<ul class='nav nav-pills nav-stacked'>
+                <li class='active'><a href='#'>A file</a></li>
+                <li><a href='#'>Another file</a></li>
+            </ul>`);
+        favoriteBar.append(pillsHTML);
+
+        let pills = favoriteBar.find('.nav.nav-pills').find('li');
+        for (let pill of pills) {
+            $(pill).on('click', () => {
+                for (let otherPill of pills) {
+                    $(otherPill).removeClass('active');
+                }
+                $(pill).addClass('active');
+            });
+        }
+
+        //TODO: add folder to localforage ...
+        favoriteButton.on('click', () => {
+            console.log('you clicked the add to favorites button');
+        });
+
+    }
     /**
      * 
      * NOTE: The file server that creates the file dialog will provide a few of its functions with the socket bound, e.g. fileListFn, to avoid sharing too many of its internal structures.
@@ -73,16 +100,7 @@ class FileDialogElement {
         }
 
         //TODO: fetch the list of the users' favorite folders from localforage or wherever they end up being...
-
-        let pills = this.container.find('.nav.nav-pills').find('li');
-        for (let pill of pills) {
-            $(pill).on('click', () => {
-                for (let otherPill of pills) {
-                    $(otherPill).removeClass('active');
-                };
-                $(pill).addClass('active');
-            });
-        }
+        
     }
     
     expandDirectory(list, updateNavbar = true) {
@@ -272,7 +290,6 @@ class FileDialogElement {
             this.currentPath = lastPath;
             this.currentDirectory = lastDirectory;
 
-            console.log('going back a directory, current path', this.currentPath, 'last paths', this.lastPaths, 'last directories', this.lastDirectories);
             this.expandDirectory(lastDirectory);
         }
     }
