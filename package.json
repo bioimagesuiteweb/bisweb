@@ -37,7 +37,7 @@
         "del": "3.0.0",
         "eslint": "4.19.1",
         "git-rev": "^0.2.1",
-        "gulp": "3.9.1",
+        "gulp": "^3.9.1",
         "gulp-concat-css": "2.3.0",
         "gulp-connect": "5.0.0",
         "gulp-eslint": "4.0.2",
@@ -55,6 +55,6 @@
         "temp": "^0.8.3",
         "tmp": "0.0.33",
         "webpack": "4.8.3",
-        "webpack-cli": "^2.1.4"
+        "webpack-cli": "^2.1.5"
     }
 }
