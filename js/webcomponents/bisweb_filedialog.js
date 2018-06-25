@@ -160,6 +160,10 @@ class FileDialogElement {
         //leading character may be a '/', in this case just strip it out and start from the first folder name
         if (this.currentPath[0] === '') { this.currentPath.splice(0,1); }
         navbar.empty();
+        
+        //create 'home' button that will bring user back to ~/
+        let homeButton = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-folder-close'></span>home</button>`);
+        navbar.append(homeButton);
 
         for (let folder of this.currentPath) {
             let button = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-folder-close'></span> ${folder}</button>`);
@@ -169,7 +173,7 @@ class FileDialogElement {
                 //e.g. if the path is javascript/bisweb/node_modules and bisweb is clicked, set currentPath to javascript/bisweb
                 for (let i = 0; i < this.currentPath.length; i++) { 
                     if (this.currentPath[i] === folder) { 
-                        this.currentPath.splice(i, this.currentPath.length);
+                        this.currentPath = this.currentPath.slice(0, i + 1);
                         console.log('new path', this.currentPath);
                         break;
                     }
@@ -180,7 +184,7 @@ class FileDialogElement {
                 console.log('newPathContents', newPathContents);
                 for (let entry of this.currentPath) {
                     for (let file of newPathContents) {
-                        if (file.text = entry) { 
+                        if (file.text === entry) { 
                             console.log('matched', file, 'with name', entry);
                             newPathContents = file.children; 
                             foundEntry = true;
