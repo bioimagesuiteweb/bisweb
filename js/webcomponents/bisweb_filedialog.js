@@ -13,6 +13,9 @@ class FileDialogElement {
         </div>`;
 
         this.fileList = null;
+        this.currentPath = null;
+        this.currentDirectory = null;
+
         this.lastDirectories = [];
         this.lastPaths = [];
 
@@ -82,7 +85,7 @@ class FileDialogElement {
         }
     }
     
-    expandDirectory(list) {
+    expandDirectory(list, updateNavbar = true) {
         let contentDisplay = this.container.find('.file-display');
         let contentBox = this.container.find('.content-box');
 
@@ -166,7 +169,7 @@ class FileDialogElement {
         
         let backButton = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-chevron-left'></span> back</button>`);
         backButton.on('click', () => {
-
+            this.backOneDirectory();
         });
 
         //create 'home' button that will bring user back to ~/
@@ -175,31 +178,29 @@ class FileDialogElement {
             this.changeDirectory(null, this.fileList);
         });
 
+        navbar.append(backButton);
         navbar.append(homeButton);
 
-        console.log('current path', this.currentPath);
         //create navbar buttons for each folder in the current path
         for (let folder of this.currentPath) {
             let button = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-folder-close'></span> ${folder}</button>`);
             button.on('click', () => {
-
+                
+                let newPath = Array.from(this.currentPath);
                 //set the current path to the path up to the button that was clicked. 
                 //e.g. if the path is javascript/bisweb/node_modules and bisweb is clicked, set currentPath to javascript/bisweb
-                for (let i = 0; i < this.currentPath.length; i++) { 
-                    if (this.currentPath[i] === folder) { 
-                        this.currentPath = this.currentPath.slice(0, i + 1);
-                        console.log('new path', this.currentPath);
+                for (let i = 0; i < newPath.length; i++) { 
+                    if (newPath[i] === folder) { 
+                        newPath = newPath.slice(0, i + 1);
                         break;
                     }
                 }
 
                 //find the contents of the new path
                 let newPathContents = this.fileList, foundEntry = false;
-                console.log('newPathContents', newPathContents);
-                for (let entry of this.currentPath) {
+                for (let entry of newPath) {
                     for (let file of newPathContents) {
                         if (file.text === entry) { 
-                            console.log('matched', file, 'with name', entry);
                             newPathContents = file.children; 
                             foundEntry = true;
                             break;
@@ -207,15 +208,15 @@ class FileDialogElement {
                     }
 
                     if (!foundEntry) { 
-                        console.log('Error trying to traverse new file path', this.currentPath, ', could not find entry', entry, 'in folder', newPathContents);
+                        console.log('Error trying to traverse new file path', newPath, ', could not find entry', entry, 'in folder', newPathContents);
                         return;
                     }
 
                     foundEntry = false;
                 }
 
-                console.log('new path contents', newPathContents);
-                this.changeDirectory(this.currentPath, newPathContents);
+                console.log('newPath', newPath);
+                this.changeDirectory(newPath, newPathContents);
             });
 
             navbar.append(button);
@@ -237,24 +238,43 @@ class FileDialogElement {
      */
     changeDirectory(name, contents) {
         this.lastDirectories.push(this.currentDirectory);
-
         this.currentDirectory = contents;
-        console.log('typeof name', typeof(name));
+
+        //deep copy to avoid referencing issues
+        let lastPath = Array.from(this.currentPath);
+
         if (name === null) {
-            this.lastPaths.push([]);
+            this.lastPaths.push(lastPath);
             this.currentPath = [];
         } else if (typeof(name) === 'string') { 
-            this.lastPaths.push(this.currentPath);
+            this.lastPaths.push(lastPath);
             this.currentPath.push(name);
         } else if (typeof(name) === 'object') {
-            this.lastPaths.push(this.currentPath);
+            this.lastPaths.push(lastPath);
             this.currentPath = name;
         } else {
             console.log('received unexpected name', name);
             return;
         }
 
+        console.log('paths', this.lastPaths);
         this.expandDirectory(contents);
+    }
+
+    /**
+     * Goes 'back' one directory, showing the last filepath and file contents that were displayed in the file dialog. Does nothing if lastPaths or lastDirectories is empty.
+     */
+    backOneDirectory() {
+        if (this.lastPaths.length > 0 && this.lastDirectories.length > 0) {
+            let lastPath = this.lastPaths.pop();
+            let lastDirectory = this.lastDirectories.pop();
+
+            this.currentPath = lastPath;
+            this.currentDirectory = lastDirectory;
+
+            console.log('going back a directory, current path', this.currentPath, 'last paths', this.lastPaths, 'last directories', this.lastDirectories);
+            this.expandDirectory(lastDirectory);
+        }
     }
 }
 
