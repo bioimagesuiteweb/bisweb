@@ -68,7 +68,6 @@ class FileDialogElement {
 
         let pills = this.container.find('.nav.nav-pills').find('li');
         for (let pill of pills) {
-            console.log('pill', pill);
             $(pill).on('click', () => {
                 for (let otherPill of pills) {
                     $(otherPill).removeClass('active');
@@ -124,7 +123,6 @@ class FileDialogElement {
 
         //determine based on the type of the node what should happen when the user clicks on it
         $(contentDisplay).on('select_node.jstree', (event, data) => {
-            console.log('data', data);
 
             //check whether node should expand directories beneath it.
             if (data.node.original.expand) {
@@ -161,22 +159,46 @@ class FileDialogElement {
 
         //leading character may be a '/', in this case just strip it out and start from the first folder name
         if (this.currentPath[0] === '') { this.currentPath.splice(0,1); }
-
-        console.log('path', this.currentPath);
         navbar.empty();
 
         for (let folder of this.currentPath) {
             let button = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-folder-close'></span> ${folder}</button>`);
             button.on('click', () => {
 
-                //find the list by following the current path in the amalgamated file list
-                //search tree for the path up to the clicked button (e.g. if it's javascript/bisweb/node_modules and bisweb is clicked go to javascript/bisweb) and navigate there
-                for (let file of this.currentPath) {
-                    if (file === folder) {
-
+                //set the current path to the path up to the button that was clicked. 
+                //e.g. if the path is javascript/bisweb/node_modules and bisweb is clicked, set currentPath to javascript/bisweb
+                for (let i = 0; i < this.currentPath.length; i++) { 
+                    if (this.currentPath[i] === folder) { 
+                        this.currentPath.splice(i, this.currentPath.length);
+                        console.log('new path', this.currentPath);
+                        break;
                     }
                 }
 
+                //find the contents of the new path
+                let newPathContents = this.fileList, foundEntry = false;
+                console.log('newPathContents', newPathContents);
+                for (let entry of this.currentPath) {
+                    for (let file of newPathContents) {
+                        if (file.text = entry) { 
+                            console.log('matched', file, 'with name', entry);
+                            newPathContents = file.children; 
+                            foundEntry = true;
+                            break;
+                        }
+                    }
+
+                    if (!foundEntry) { 
+                        console.log('Error trying to traverse new file path', this.currentPath, ', could not find entry', entry, 'in folder', newPathContents);
+                        return;
+                    }
+
+                    foundEntry = false;
+                }
+
+                console.log('new path contents', newPathContents);
+                this.expandDirectory(newPathContents);
+                this.currentDirectory = newPathContents;
             });
 
             navbar.append(button);
