@@ -5,7 +5,9 @@
     height: 500px;
     position: relative;
 }
-
+.vakata-context {
+	z-index: 10000000;
+}
 .greyPre {
     background-color: #808080;	
 }

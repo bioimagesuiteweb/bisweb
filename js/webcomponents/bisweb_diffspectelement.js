@@ -671,7 +671,7 @@ class DiffSpectElement extends HTMLElement {
     // --------------------------------------------------------------------------------
     // Read Interictal
     // --------------------------------------------------------------------------------
-    handleGenericFileSelect(imgfile, img, show, comment, nextfunction) {
+   /* handleGenericFileSelect(imgfile, img, show, comment, nextfunction) {
 
 
         var imageread = ((vol) => {
@@ -687,7 +687,10 @@ class DiffSpectElement extends HTMLElement {
         newimage.load(imgfile, false).then(
             function () { imageread(newimage); });
         //                                              .catch( (e) => { errormessage(e); });
-    }
+    }*/
+
+    
+
 
     // load .spect file
     loadPatient(file) {
@@ -1204,7 +1207,7 @@ class DiffSpectElement extends HTMLElement {
                     {
                         'text': 'Images',
                         'state': {
-                            'opened': false,
+                            'opened': true,
                             'selected': false
                         },
                         'children': [
@@ -1264,22 +1267,94 @@ class DiffSpectElement extends HTMLElement {
         console.log(tree[0]);
     }
 
+    handleGenericFileSelect(imgfile, img, show, comment, nextfunction) {
+
+
+        var imageread = ((vol) => {
+            console.log('Image read :' + vol.getDescription(''));
+            app_state[img] = vol;
+            if (show) {
+                console.log('loaded ' + img + '--> (' + comment + ') ' + app_state[img].getDescription());
+                nextfunction();
+            }
+        });
+
+        let newimage = new BisWebImage();
+        newimage.load(imgfile, false).then(
+            function () { imageread(newimage); });
+    }
+
+
     customMenuOptions(node) {
+        let self = this;
+
+        var interictalLoaded = (() => {
+            self.state_machine.interictal_loaded = true;
+            app_state.viewer.setimage(app_state.interictal);
+            webutil.enablebutton(showInterictal, true);
+            console.log(app_state.interictal);
+        });
+
+        var handleInterictalFileSelect = ((evt) => {
+            console.log('Custom method reached');
+            self.handleGenericFileSelect(evt,
+                                         'interictal',
+                                         true, // Whether to show to viewer
+                                         'Inter-Ictal', // Name
+                                         interictalLoaded); // function to call when successful
+            
+        });
+
+
+
         console.log(node);
         let items = {
-            'item1': {
-                'label': 'item1',
+            loadinter: {
+                'label': 'Load Interictal',
+                'action': handleInterictalFileSelect
+                
             },
-            'item2': {
-                'label': 'item2',
+		
+			loadictal: {
+				'label': 'Load Ictal',
+				'action': function(){}
+			},
+
+            showimage: {
+                'label': 'Show Image',
                 'action': function(){}
-            }
+            },
+
+			register: {
+				'label': 'Register Images',
+				'action': function() {}
+			},
+
+			showregistration: {
+				'label': 'Show Registration',
+				'action': function() {}
+			}
         };
+
+        if (node.text === "Images")
+        {
+            items = null;
+        }
+
+		if (node.text !== 'Interictal') delete items.loadinter;
+        if (node.text !== 'Ictal')		delete items.loadictal;
+        if (node.text !== 'ATLAS to Interictal' ||
+            node.text !== 'ATLAS to Ictal'      ||
+            node.text !== 'Interictal to Ictal') {delete items.showregistration; delete items.register;}
+
+        
 
         return items;
 
     }
-
+	
+	
+	
 	generateChart() {
 		console.log(app_state.hyper);
 		let lines = this.parseNewLines(app_state.hyper);
