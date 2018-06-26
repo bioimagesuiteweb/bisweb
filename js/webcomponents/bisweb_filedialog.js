@@ -1,4 +1,5 @@
 const webutil = require('bis_webutil.js');
+const localforage = require('localforage');
 
 class FileDialogElement {
 
@@ -48,28 +49,63 @@ class FileDialogElement {
         let favoriteButton = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-star-empty'></span> Mark folder as favorite</button>`);
         favoriteBar.append(favoriteButton);
 
-        let pillsHTML = $(
-            `<ul class='nav nav-pills nav-stacked'>
-                <li class='active'><a href='#'>A file</a></li>
-                <li><a href='#'>Another file</a></li>
-            </ul>`);
+        let pillsHTML = $(`<ul class='nav nav-pills nav-stacked'></ul>`);
         favoriteBar.append(pillsHTML);
+
+        let selectPillFromPills = (pill, pills) => {
+            for (let otherPill of pills) {
+                $(otherPill).removeClass('active');
+            }
+            $(pill).addClass('active');
+        };
 
         let pills = favoriteBar.find('.nav.nav-pills').find('li');
         for (let pill of pills) {
             $(pill).on('click', () => {
-                for (let otherPill of pills) {
-                    $(otherPill).removeClass('active');
-                }
-                $(pill).addClass('active');
+                deselectOtherPills(pill, pills);
             });
         }
 
         //TODO: add folder to localforage ...
         favoriteButton.on('click', () => {
-            console.log('you clicked the add to favorites button');
+            let key = webutil.getuniqueid(), name = this.currentPath[this.currentPath.length - 1];
+            let contents = Object.assign([], this.currentDirectory);
+            console.log('contents', contents);
+            let favorite = {
+                'name' : name,
+                'path' : Array.from(this.currentPath),
+                'contents' : contents,
+                'key' : key
+            };
+
+            localforage.setItem(key, JSON.stringify(favorite));
+
+            //create the pill
+            let pillsBar = favoriteBar.find('.nav.nav-pills');
+            let newPill = $(`<li><a href='#'>${name}</a></li>`);
+            newPill.on('click', () => {
+                selectPillFromPills(newPill, pillsBar.find('li'));
+                localforage.getItem(key, (err, value) => {
+                    let favoriteFolder;
+                    try {
+                        favoriteFolder = JSON.parse(value);
+                        console.log('folder', favoriteFolder);
+                        this.changeDirectory(favoriteFolder.path, favoriteFolder.contents);
+                    } catch(e) {
+                        console.log('error parsing JSON', value);
+                    }
+
+                });
+            });
+
+            pillsBar.append(newPill);
         });
 
+        //erase the file list on modal close
+        this.modal.dialog.on('hidden.bs.modal', () => {
+            let contentDisplay = this.container.find('.file-display');
+            contentDisplay.remove();
+        });
     }
     /**
      * 
@@ -98,12 +134,11 @@ class FileDialogElement {
         } else {
             this.expandDirectory(list);
         }
-
-        //TODO: fetch the list of the users' favorite folders from localforage or wherever they end up being...
         
     }
     
-    expandDirectory(list, updateNavbar = true) {
+    expandDirectory(list) {
+        console.log('list expanded in expandDirectory', list);
         let contentDisplay = this.container.find('.file-display');
         let contentBox = this.container.find('.content-box');
 
