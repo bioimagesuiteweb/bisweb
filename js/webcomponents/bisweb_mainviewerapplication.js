@@ -720,10 +720,12 @@ class ViewerApplicationElement extends HTMLElement {
                                    function () {
                                        window.BISELECTRON.remote.getCurrentWindow().toggleDevTools();
                                    });
-                userPreferencesLoaded.then( () => {
-                    let z=parseFloat(userPreferences.getItem('electronzoom'));
-                    window.BISELECTRON.electron.webFrame.setZoomFactor(z);
-                });
+            userPreferencesLoaded.then( () => {
+                let z=parseFloat(userPreferences.getItem('electronzoom')) || 1.0;
+                if (z<0.8 || z>1.25)
+                    z=1.0;
+                window.BISELECTRON.electron.webFrame.setZoomFactor(z);
+            });
         }
 
         webfileutil.createFileSourceSelector(hmenu);

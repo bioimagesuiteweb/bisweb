@@ -733,7 +733,7 @@ class BaseViewerElement extends HTMLElement {
      * @returns {number} -- result of collapse operation
      */
     finalizeTools() {
-        return this.internal.layoutcontroller.getsidebar().collapse();
+        return this.internal.layoutcontroller.getdockbar().collapse();
     }
     
     /** collapses the viewer controls tab

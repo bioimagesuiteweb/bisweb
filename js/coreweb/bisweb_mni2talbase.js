@@ -280,7 +280,7 @@ bisweb_mni2tal.SliceViewer=class {
             this.myCanvasContext.textAlign="left";
             this.myCanvasContext.fillText("R", 1,this.height/2);
         }
-        this.myCanvasContext.fillText('MNI '+axisname[this.myplane]+'='+mni,5,15);
+        this.myCanvasContext.fillText('MNI '+axisname[this.myplane]+'='+mni,5,25);
         
     }
     

@@ -43,12 +43,9 @@ window.BISELECTRON = {
     electron : electron,
 };
 
-/*process.once('loaded', () => {
+process.once('loaded', () => {
     global.electron = require('electron');
-    if (process.platform === 'darwin')  
-        electron.webFrame.setZoomFactor(1.0);
-    else
-        electron.webFrame.setZoomFactor(1.0);
-});*/
+    electron.webFrame.setZoomFactor(1.0);
+});
 
 

@@ -45,7 +45,7 @@ var get_module=function() {
 
 
 var get_date=function() {
-    return "06/07/2018";     
+    return "06/13/2018";     
 };
         
 
