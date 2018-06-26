@@ -1259,7 +1259,7 @@ class DiffSpectElement extends HTMLElement {
             },
             'plugins': ['contextmenu'],
             'contextmenu' : {
-                'items': this.customMenuOptions
+                'items': self.customMenuOptions
             }
  
         };
@@ -1267,67 +1267,143 @@ class DiffSpectElement extends HTMLElement {
         console.log(tree[0]);
     }
 
-    handleGenericFileSelect(imgfile, img, show, comment, nextfunction) {
-
-
-        var imageread = ((vol) => {
-            console.log('Image read :' + vol.getDescription(''));
-            app_state[img] = vol;
-            if (show) {
-                console.log('loaded ' + img + '--> (' + comment + ') ' + app_state[img].getDescription());
-                nextfunction();
-            }
-        });
-
-        let newimage = new BisWebImage();
-        newimage.load(imgfile, false).then(
-            function () { imageread(newimage); });
-    }
-
-
     customMenuOptions(node) {
-        let self = this;
 
-        var interictalLoaded = (() => {
-            self.state_machine.interictal_loaded = true;
+        const self=this;
+        console.log(self);
+
+        let handleGenericFileSelect = function(imgfile, imgname, show, comment, nextfunction) {
+            
+            let newimage = new BisWebImage();
+            newimage.load(imgfile, false).then( () =>  { 
+                console.log('Image read :' + newimage.getDescription(''));
+                    app_state[imgname] = newimage;
+                    if (show) {
+                        console.log('loaded ' + imgname + '--> (' + comment + ') ' + app_state[imgname].getDescription());
+                        nextfunction();
+                    }
+                });
+        };
+            
+        
+        let interictalLoaded = (() => {
             app_state.viewer.setimage(app_state.interictal);
-            webutil.enablebutton(showInterictal, true);
             console.log(app_state.interictal);
         });
 
-        var handleInterictalFileSelect = ((evt) => {
-            console.log('Custom method reached');
-            self.handleGenericFileSelect(evt,
-                                         'interictal',
-                                         true, // Whether to show to viewer
-                                         'Inter-Ictal', // Name
-                                         interictalLoaded); // function to call when successful
-            
+        let handleInterictalFileSelect = function() {
+
+            webfileutil.genericFileCallback(null,
+                    function(fname) {
+                        console.log('Custom method reached');
+                        handleGenericFileSelect(fname,
+                                            'interictal',
+                                            true, // Whether to show to viewer
+                                            'Inter-Ictal', // Name
+                                            interictalLoaded); // function to call when successful
+                    }, 
+                    { 
+                        "title"  : `Load interictal image`,
+                        "suffix" : "NII" 
+                    }
+                );
+        };
+
+        let ictalLoaded = (() => {
+            app_state.viewer.setimage(app_state.ictal);
         });
 
+        let handleIctalFileSelect = (() => {
+            webfileutil.genericFileCallback(null,
+                function(fname) {
+                    console.log('Custom method reached');
+                    handleGenericFileSelect(fname,
+                                        'ictal',
+                                        true, // Whether to show to viewer
+                                        'Ictal', // Name
+                                        ictalLoaded); // function to call when successful
+                }, 
+                { 
+                    "title"  : `Load Ictal image`,
+                    "suffix" : "NII" 
+                }
+            );
+        });
+
+        let mriLoaded = (() => {
+            app_state.viewer.setimage(app_state.mri);
+        });
+
+        let handleMRIFileSelect = (() => {
+            webfileutil.genericFileCallback(null,
+                function(fname) {
+                    console.log('Custom method reached');
+                    handleGenericFileSelect(fname,
+                                        'mri',
+                                        true, // Whether to show to viewer
+                                        'Ictal', // Name
+                                        mriLoaded); // function to call when successful
+                }, 
+                { 
+                    "title"  : `Load MR image`,
+                    "suffix" : "NII" 
+                }
+            );
+        });
+            
+        
+    
 
 
         console.log(node);
         let items = {
             loadinter: {
                 'label': 'Load Interictal',
-                'action': handleInterictalFileSelect
+                'action': function() {
+                    console.log('In action');
+                    handleInterictalFileSelect();
+                },
                 
             },
 		
 			loadictal: {
 				'label': 'Load Ictal',
-				'action': function(){}
+				'action': function(){
+                    handleIctalFileSelect();
+                }
             },
             
             loadmri: {
                 'label': 'Load MRI',
-                'action': function() {}
+                'action': function() {
+                    handleMRIFileSelect();
+                }
             },
 
             showimage: {
                 'label': 'Show Image',
-                'action': function(){}
+                'action': function(){
+                    if (node.text === "Interictal") {
+                        if (app_state.interictal !== null)
+                            app_state.viewer.setimage(app_state.interictal);
+                        else 
+                            bootbox.alert('NO INTERICTAL IMAGE LOADED')
+                    }
+
+                    if (node.text === "Ictal") {
+                        if (app_state.ictal !== null)
+                            app_state.viewer.setimage(app_state.ictal);
+                        else 
+                            bootbox.alert('NO ICTAL IMAGE LOADED')
+                    }
+
+                    if (node.text === "MRI") {
+                        if (app_state.mri !== null)
+                            app_state.viewer.setimage(app_state.mri);
+                        else 
+                            bootbox.alert('NO MR IMAGE LOADED')
+                    }
+                }
             },
 
 			register: {
@@ -1348,7 +1424,7 @@ class DiffSpectElement extends HTMLElement {
 
 		if (node.text !== 'Interictal') delete items.loadinter;
         if (node.text !== 'Ictal')		delete items.loadictal;
-        if (node.text !== 'Load MRI')   delete items.loadmri;
+        if (node.text !== 'MRI')        delete items.loadmri;
         if (node.text !== 'ATLAS to Interictal' ||
             node.text !== 'ATLAS to Ictal'      ||
             node.text !== 'Interictal to Ictal') {delete items.showregistration; delete items.register;}

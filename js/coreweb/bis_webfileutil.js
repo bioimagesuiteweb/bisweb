@@ -247,6 +247,38 @@ const webfileutils = {
 
     /** Create File Callback 
      * @alias WebFileUtil.attachFileCallback
+     * @param {Event} e -- the element to attach the callback to
+     * @param {Function} callback -- functiont to call when done
+     * @param {object} fileopts - the file dialog options object (in file style)
+     * @param {string}  fileopts.title  - in file: dialog title
+     * @param {boolean} fileopts.save -  in file determine load or save
+     * @param {string}  fileopts.defaultpath -  use this as original filename
+     * @param {string}  fileopts.filter - use this as filter (if in electron)
+     * @param {string}  fileopts.suffix - List of file types to accept as a comma-separated string e.g. ".ljson,.land" (simplified version filter)
+     */
+    genericFileCallback : function(e,callback,fileopts={}) {
+
+        fileopts = fileopts || {};
+        fileopts.save = fileopts.save || false;
+
+        if (e) {
+            e.stopPropagation();
+            e.preventDefault();
+        }
+                    
+        const that = this;
+
+        if (webutil.inElectronApp()) {
+            that.electronFileCallback(fileopts, callback);
+        } else {
+            setTimeout( () => {
+                that.webFileCallback(fileopts, callback);
+            },1);
+        }
+    },
+
+    /** Create File Callback 
+     * @alias WebFileUtil.attachFileCallback
      * @param {JQueryElement} button -- the element to attach the callback to
      * @param {object} fileopts - the file dialog options object (in file style)
      * @param {string}  fileopts.title  - in file: dialog title
@@ -283,7 +315,8 @@ const webfileutils = {
         }
     },
 
-    
+
+
     /** 
      * function that creates button using Jquery/Bootstrap (for styling) & a hidden
      * input type="file" element to load a file. Calls WebFileUtil.createbutton for most things
