@@ -69,12 +69,9 @@ class FileDialogElement {
         //TODO: add folder to localforage ...
         favoriteButton.on('click', () => {
             let key = webutil.getuniqueid(), name = this.currentPath[this.currentPath.length - 1];
-            let contents = Object.assign([], this.currentDirectory);
-            console.log('contents', contents);
             let favorite = {
                 'name' : name,
                 'path' : Array.from(this.currentPath),
-                'contents' : contents,
                 'key' : key
             };
 
@@ -89,8 +86,7 @@ class FileDialogElement {
                     let favoriteFolder;
                     try {
                         favoriteFolder = JSON.parse(value);
-                        console.log('folder', favoriteFolder);
-                        this.changeDirectory(favoriteFolder.path, favoriteFolder.contents);
+                        this.changeDirectory(favoriteFolder.path, this.traversePath(favoriteFolder.path));
                     } catch(e) {
                         console.log('error parsing JSON', value);
                     }
@@ -327,6 +323,24 @@ class FileDialogElement {
 
             this.expandDirectory(lastDirectory);
         }
+    }
+
+    traversePath(path) {
+        let list = this.fileList;
+        let foundFolder = false;
+
+        for (let folder of path) {
+            for (let item of list) {
+                if (item.text === folder) {
+                    list = item.children;
+                    foundFolder = true;
+                }
+            }
+            if (!foundFolder) { console.log('could not find folder with path', path); return null; }
+            foundFolder = false;
+        }
+
+        return list;
     }
 }
 
