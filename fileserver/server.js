@@ -129,19 +129,20 @@ let startServer = (hostname, port, readycb = () => {}) => {
             response = response + acceptKey + '\r\n\r\n';
     
             let port = socket.localPort;
-            //connectors on 8081 are negotiating a control port, connectors on 8082 are negotiating a transfer port
-            switch (port) {
-                case 8081 : 
-                    authenticate(socket); 
-                    break;
-                case 8082 : 
-                    prepareForDataFrames(socket); 
-                    break;
-                default : 
-                    console.log('Client attempting to connect on unexpected port', socket.localPort, 'rejecting connection.'); 
-                    return;
-            } 
-            socket.write(response, 'utf-8');
+            socket.write(response, 'utf-8', () => {
+                //connectors on 8081 are negotiating a control port, connectors on 8082 are negotiating a transfer port
+                switch (port) {
+                    case 8081:
+                        authenticate(socket);
+                        break;
+                    case 8082:
+                        prepareForDataFrames(socket);
+                        break;
+                    default:
+                        console.log('Client attempting to connect on unexpected port', socket.localPort, 'rejecting connection.');
+                        return;
+                } 
+            });    
         };
     
         socket.once('data', handshake);
@@ -198,7 +199,7 @@ let authenticate = (socket) => {
     let token = authenticator.generate(secret);
     console.log('Your session code is', token, '\nPlease enter this code from the client.');
     console.log('time remaining', authenticator.timeRemaining());
-    timers.setTimeout(() => {
+    let timeout = timers.setTimeout(() => {
         console.log('timeout reached, aborting connection');
         socket.end();
         return;
@@ -206,17 +207,21 @@ let authenticate = (socket) => {
 
     let readOTP = (chunk) => {
         let frame = readFrame(chunk);
-        let decoded = frame.decoded;
+        let decoded = frame.decoded, password;
+        password = wsutil.decodeUTF8(decoded, frame.parsedControl);
 
-        if (authenticator.check(decoded, secret)) {
+        console.log('pass', authenticator.check(parseInt(password), secret));
+        if (authenticator.check(parseInt(password), secret)) {
             console.log('Starting server');
             socket.removeListener('data', readOTP);
+            timers.clearTimeout(timeout);
+            
             prepareForControlFrames(socket);
         }
     }
 
     socket.on('data', readOTP);
-
+    socket.write(formatPacket('authenticate', ''));
 };
 
 /**

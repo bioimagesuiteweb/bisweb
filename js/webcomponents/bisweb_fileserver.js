@@ -24,6 +24,9 @@ class FileServer extends HTMLElement {
         //Save image requests pop up a modal dialog with a text entry field
         this.saveImageModal = null;
 
+        //When connecting to the server, it may sometimes request that the user authenticates
+        this.authenticateModal = null;
+
         webutil.runAfterAllLoaded(() => {
             let menuBarID = this.getAttribute('bis-menubarid');
             let menuBar = document.querySelector(menuBarID).getMenuBar();
@@ -94,6 +97,7 @@ class FileServer extends HTMLElement {
                 }
     
                 switch (data.type) {
+                    case 'authenticate' : this.createAuthenticationDialog(socket); break;
                     case 'filelist' : this.displayFileList(data.payload); break;
                     case 'supplementalfiles' : this.handleSupplementalFileRequest(data.payload.path, data.payload.list); break;
                     case 'error' : console.log('Error from client:', data.payload); break;
@@ -301,6 +305,47 @@ class FileServer extends HTMLElement {
         });
 
         reader.readAsArrayBuffer(data);
+    }
+
+    createAuthenticationDialog(socket) {
+        let saveDialog = $(`<p>Please enter the password printed to the console window.</p>`);
+        let passwordEntryBox = $(`
+                <div class='form-group'>
+                    <label for='filename'>Password:</label>
+                    <input type='text' class = 'form-control'>
+                </div>
+            `);
+
+        if (!this.authenticateModal) {
+            this.authenticateModal = webutil.createmodal('Enter the Session Password', 'modal-sm');
+            this.authenticateModal.dialog.find('.modal-footer').find('.btn').remove();
+
+            let confirmButton = webutil.createbutton({ 'name': 'Confirm', 'type': 'btn-success' });
+            let cancelButton = webutil.createbutton({ 'name': 'Cancel', 'type': 'btn-danger' });
+
+            this.authenticateModal.footer.append(confirmButton);
+            this.authenticateModal.footer.append(cancelButton);
+
+            $(confirmButton).on('click', () => {
+                let password = this.authenticateModal.body.find('.form-control')[0].value;
+                socket.send(password);
+            });
+
+            $(cancelButton).on('click', () => {
+                this.authenticateModal.dialog.modal('hide');
+            });
+
+            //clear name entry input when modal is closed
+            $(this.authenticateModal.dialog).on('hidden.bs.modal', () => {
+                this.authenticateModal.body.empty();
+            });
+        }
+
+
+        this.authenticateModal.body.append(saveDialog);
+        this.authenticateModal.body.append(passwordEntryBox);
+
+        this.authenticateModal.dialog.modal('show');
     }
 
     createSaveImageDialog(socket) {
