@@ -183,8 +183,6 @@ class FileServer extends HTMLElement {
     sendFileRequest(filelist = null) {
         let filesdata = JSON.stringify(filelist);
         this.socket.send(filesdata);
-
-        this.fileTreeDialog.showDialog();
     }
 
     sendInvocationRequest(parameters) {
