@@ -30,6 +30,7 @@
         "localforage": "^1.7.1",
         "moment": "2.22.1",
         "numeric": "1.2.6",
+        "otplib": "^10.0.0",
         "pako": "0.2.9",
         "platform": "1.3.5",
         "posix-ext": "^0.4.5",

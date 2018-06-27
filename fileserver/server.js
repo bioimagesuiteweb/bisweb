@@ -7,6 +7,8 @@ const zlib = require('zlib');
 const os = require('os');
 const timers = require('timers');
 const { StringDecoder } = require('string_decoder');
+const otplib = require('otplib');
+const authenticator = otplib.authenticator;
 
 const BisWebImage = require('bisweb_image.js');
 const modules = require('moduleindex.js');
@@ -28,6 +30,11 @@ let fileInProgress = null;
 
 //image transfer requires switching a few variables that need to be global in scope
 let timeout = undefined;
+
+
+//variables related to generating one-time passwords (OTP)
+authenticator.step = 120 //120 second period for otp
+const secret = authenticator.generateSecret();
 
 let loadMenuBarItems = () => {
     let menubar = document.getElementById('viewer_menubar');
@@ -67,7 +74,6 @@ let loadLocalFiles = (filename) => {
         console.log('file', data);
     });
 };
-
 
 /**
  * Creates the server instance, binds the handshake protocol to its 'connection' event, and begins listening on port 8081 (control port for the transfer).
@@ -126,7 +132,7 @@ let startServer = (hostname, port, readycb = () => {}) => {
             //connectors on 8081 are negotiating a control port, connectors on 8082 are negotiating a transfer port
             switch (port) {
                 case 8081 : 
-                    prepareForControlFrames(socket); 
+                    authenticate(socket); 
                     break;
                 case 8082 : 
                     prepareForDataFrames(socket); 
@@ -165,6 +171,54 @@ let startServer = (hostname, port, readycb = () => {}) => {
     }
 };
 
+let readFrame = (chunk) => {
+    let controlFrame = chunk.slice(0, 14);
+    let parsedControl = wsutil.parseControlFrame(controlFrame);
+    console.log('parsed control frame', parsedControl);
+
+    if (!parsedControl.mask) {
+        console.log('Received a transmission with no mask from client, dropping packet.'); 
+        return;
+    }
+
+    let decoded = new Uint8Array(parsedControl.payloadLength);
+
+    //decode the raw data (undo the XOR)
+    for (let i = 0; i < parsedControl.payloadLength; i++) {
+        decoded[i] = chunk[i + parsedControl.datastart] ^ parsedControl.mask[i % 4];
+    }
+
+    return { 
+        'parsedControl' : parsedControl,
+        'decoded' : decoded
+    }
+};
+
+let authenticate = (socket) => {
+    let token = authenticator.generate(secret);
+    console.log('Your session code is', token, '\nPlease enter this code from the client.');
+    console.log('time remaining', authenticator.timeRemaining());
+    timers.setTimeout(() => {
+        console.log('timeout reached, aborting connection');
+        socket.end();
+        return;
+    }, authenticator.timeRemaining() * 1000);
+
+    let readOTP = (chunk) => {
+        let frame = readFrame(chunk);
+        let decoded = frame.decoded;
+
+        if (authenticator.check(decoded, secret)) {
+            console.log('Starting server');
+            socket.removeListener('data', readOTP);
+            prepareForControlFrames(socket);
+        }
+    }
+
+    socket.on('data', readOTP);
+
+};
+
 /**
  * Prepares the control socket to receive chunks of data from the client. 
  * This involves XORing the payload and decoding it to UTF-8, then performing file I/O based on the contents.
@@ -179,21 +233,8 @@ let prepareForControlFrames = (socket) => {
 
     //socket listener is stored here because it gets replaced during file transfer
     socket.on('data', (chunk) => {
-        let controlFrame = chunk.slice(0, 14);
-        let parsedControl = wsutil.parseControlFrame(controlFrame);
-        console.log('parsed control frame', parsedControl);
-
-        if (!parsedControl.mask) {
-            console.log('Received a transmission with no mask from client, dropping packet.'); 
-            return;
-        }
-
-        let decoded = new Uint8Array(parsedControl.payloadLength);
-
-        //decode the raw data (undo the XOR)
-        for (let i = 0; i < parsedControl.payloadLength; i++) {
-            decoded[i] = chunk[i + parsedControl.datastart] ^ parsedControl.mask[i % 4];
-        }
+        let frame = readFrame(chunk);
+        let parsedControl = frame.parsedControl, decoded = frame.decoded;
 
         switch (parsedControl.opcode) {
             case 1: handleTextRequest(decoded, parsedControl, socket); break;
