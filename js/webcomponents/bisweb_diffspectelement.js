@@ -214,7 +214,6 @@ class DiffSpectElement extends HTMLElement {
     loadPatient(file) {
         const self = this;
         console.log('this', this, file);
-        app_state.sm_carousel.carousel('next');
         bisgenericio.read(file).then((contents) => {
             let a = contents.data;
             try {
