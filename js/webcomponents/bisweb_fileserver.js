@@ -16,7 +16,9 @@ class FileServer extends HTMLElement {
      * Attaches the algorithm controller to the tree viewer and attaches the event to place the tree viewer's menu in the shared menubar once the main viewer renders.
      */
     connectedCallback() {
-        let socket;
+
+        //connection over which all communication takes place
+        this.socket = null;
 
         //File tree requests display the contents of the disk on the server machine in a modal
         this.fileTreeDialog = new FileDialog();
@@ -36,8 +38,9 @@ class FileServer extends HTMLElement {
 
             if (menuBar) {
                 let serverMenu = webutil.createTopMenuBarMenu('Server', menuBar);
+
                 webutil.createMenuItem(serverMenu, 'Connect to File Server', () => {
-                    socket = this.connectToServer();
+                    this.connectToServer();
                 });
 
                 webutil.createMenuItem(serverMenu, 'Request Files', () => {
@@ -45,22 +48,22 @@ class FileServer extends HTMLElement {
                         '/home/zach/MNI_2mm_buggy.nii.gz'
                     ];
 
-                    this.sendFileRequest(socket, {
+                    this.sendFileRequest({
                         'command' : 'getfile',
                         'files' : files
                     });
                 });
 
                 webutil.createMenuItem(serverMenu, 'Show Server Files', () => {
-                    this.requestFileList(socket);
+                    this.requestFileList();
                 });
 
                 webutil.createMenuItem(serverMenu, 'Upload File to Server', () => {
-                    this.createSaveImageDialog(socket);
+                    this.createSaveImageDialog();
                 });
 
                 webutil.createMenuItem(serverMenu, 'Invoke Module on Server', () => {
-                    this.sendInvocationRequest(socket, {
+                    this.sendInvocationRequest({
                         'command' : 'runmodule',
                         'params' : {
                             'modulename' : 'smoothImage',
@@ -70,58 +73,57 @@ class FileServer extends HTMLElement {
                     });
                 });
             }
-
-            socket = this.connectToServer();
-
-            //add the event listeners for the control port
-            socket.addEventListener('error', (event) => {
-                console.log('An error occured', event);
-            });
-    
-            socket.addEventListener('message', (event) => {
-                console.log('received data', event);
-                let data;
-    
-                //parse stringified JSON if the transmission is text
-                if (typeof(event.data) === "string") {
-                    try {
-                        data = JSON.parse(event.data);
-                    } catch(e) {
-                        console.log('an error occured while parsing event.data', e);
-                        return null;
-                    }
-                } else {
-                    console.log('received a binary transmission -- interpreting as an image'); 
-                    this.handleImageTransmission(event.data);
-                    return;
-                }
-    
-                switch (data.type) {
-                    case 'authenticate' : this.createAuthenticationDialog(socket); break;
-                    case 'filelist' : this.displayFileList(data.payload); break;
-                    case 'supplementalfiles' : this.handleSupplementalFileRequest(data.payload.path, data.payload.list); break;
-                    case 'error' : console.log('Error from client:', data.payload); break;
-                    case 'datasocketready' : break; //this control phrase is handled elsewhere and should be ignored by this listener.
-                    default : console.log('received a transmission with unknown type', data.type, 'cannot interpret');
-                } 
-            });
         });
     }
 
     /**
      * Initiates a connection to the fileserver at the specified address. Note that the handshaking protocol is handled entirely by the native Javascript WebSocket API.
+     * Sets this.socket internally, the structure representing the control socket between client and server.
      * 
-     * @returns A socket representing a successful connection, null otherwise.
      */
     connectToServer(address = 'ws://localhost:8081') {
-        let socket = new WebSocket(address);
+        if (this.socket) { this.socket.close(1000, 'Restarting connection'); }
+
+        this.socket = new WebSocket(address);
 
         //file tree dialog needs to be able to call some of file server's code 
         //they are separated for modularity reasons, so to enforce the hierarchical relationship between the two fileserver provides the function at its discretion.
-        this.fileTreeDialog.fileListFn = this.requestFileList.bind(this, socket);
-        this.fileTreeDialog.fileRequestFn = this.sendFileRequest.bind(this, socket);
+        this.fileTreeDialog.fileListFn = this.requestFileList.bind(this, this.socket);
+        this.fileTreeDialog.fileRequestFn = this.sendFileRequest.bind(this, this.socket);
 
-        return socket;
+        //add the event listeners for the control port
+        this.socket.addEventListener('error', (event) => {
+            console.log('An error occured', event);
+        });
+
+        this.socket.addEventListener('message', (event) => {
+            console.log('received data', event);
+            let data;
+
+            //parse stringified JSON if the transmission is text
+            if (typeof (event.data) === "string") {
+                try {
+                    data = JSON.parse(event.data);
+                } catch (e) {
+                    console.log('an error occured while parsing event.data', e);
+                    return null;
+                }
+            } else {
+                console.log('received a binary transmission -- interpreting as an image');
+                this.handleImageTransmission(event.data);
+                return;
+            }
+
+            console.log('data type', data.type);
+            switch (data.type) {
+                case 'authenticate': this.createAuthenticationDialog(); break;
+                case 'filelist': this.displayFileList(data.payload); break;
+                case 'supplementalfiles': this.handleSupplementalFileRequest(data.payload.path, data.payload.list); break;
+                case 'error': console.log('Error from client:', data.payload); break;
+                case 'datasocketready': break; //this control phrase is handled elsewhere and should be ignored by this listener.
+                default: console.log('received a transmission with unknown type', data.type, 'cannot interpret');
+            }
+        });
     }
 
     /**
@@ -131,12 +133,11 @@ class FileServer extends HTMLElement {
      * requestFileList doesn't expand the contents of the entire server file system; just the first four levels of directories. 
      * When the user clicks on an unexpanded node the node will request four levels of directories below it. 
      * 
-     * @param {Socket} socket - A socket representing the connection between client and server (see connectToServer).
      * @param {String} directory - The directory to expand the files under. Optional -- if unspecified the server will return the directories under ~/.
      */
-    requestFileList(socket, directory = null) {
+    requestFileList(directory = null) {
         let command = JSON.stringify({ 'command' : 'show', 'directory' : directory }); 
-        socket.send(command);
+        this.socket.send(command);
         this.fileTreeDialog.showDialog();
     }
 
@@ -177,19 +178,18 @@ class FileServer extends HTMLElement {
     /**
      * Sends a list of files for the server to upload to the client machine. 
      * 
-     * @param {Socket} socket - A socket representing the connection between client and server (see connectToServer).
      * @param {Array} filelist - An array of files to fetch from the server. 
      */
-    sendFileRequest(socket, filelist = null) {
+    sendFileRequest(filelist = null) {
         let filesdata = JSON.stringify(filelist);
-        socket.send(filesdata);
+        this.socket.send(filesdata);
 
         this.fileTreeDialog.showDialog();
     }
 
-    sendInvocationRequest(socket, parameters) {
+    sendInvocationRequest(parameters) {
         let params = JSON.stringify(parameters);
-        socket.send(params);
+        this.socket.send(params);
     }
 
     /**
@@ -197,13 +197,12 @@ class FileServer extends HTMLElement {
      * Creates its own socket to do the transfer over (doing transfer on control socket seems to make that socket unstable).
      * 
      * TODO: Extend this function to support matrices and transformations.
-     * @param {Socket} controlSocket - The socket over which the client and server exchange metadata about the transfer.
      * @param {BisImage} file - The file to save to the server. 
      * @param {String} name - What the filed should be named once it is saved to the server. 
      * @param {Function} cb - A callback for if the transfer is successful. Optional.
      * @param {Function} eb - A callback for if the transfer is a failure (errorback). Optional.
      */
-    uploadFileToServer(controlSocket, file, name, cb = () => {}, eb = () => {}) {
+    uploadFileToServer(file, name, cb = () => {}, eb = () => {}) {
 
         //serialize the BisImage to a purely binary format.
         let serializedImage = file.serializeToNII();
@@ -211,13 +210,13 @@ class FileServer extends HTMLElement {
         let fileTransferSocket;
 
         //negotiate opening of the data port
-        controlSocket.addEventListener('message', (e) => {
+        this.socket.addEventListener('message', (e) => {
             let message;
             try {
                 message = JSON.parse(e.data);
                 if (message.type === 'datasocketready') {
 
-                    fileTransferSocket = this.connectToServer('ws://localhost:8082');
+                    fileTransferSocket = new WebSocket('ws://localhost:8082');
                     fileTransferSocket.addEventListener('open', () => {
                         console.log('serializedImage', serializedImage);
                         doImageTransfer(serializedImage);
@@ -234,7 +233,7 @@ class FileServer extends HTMLElement {
         }, { once : true });
 
 
-        controlSocket.send(JSON.stringify({
+        this.socket.send(JSON.stringify({
             'command': 'uploadimage',
             'totalSize': serializedImage.length,
             'packetSize': packetSize,
@@ -307,7 +306,7 @@ class FileServer extends HTMLElement {
         reader.readAsArrayBuffer(data);
     }
 
-    createAuthenticationDialog(socket) {
+    createAuthenticationDialog() {
         let saveDialog = $(`<p>Please enter the password printed to the console window.</p>`);
         let passwordEntryBox = $(`
                 <div class='form-group'>
@@ -328,7 +327,7 @@ class FileServer extends HTMLElement {
 
             $(confirmButton).on('click', () => {
                 let password = this.authenticateModal.body.find('.form-control')[0].value;
-                socket.send(password);
+                this.socket.send(password);
             });
 
             $(cancelButton).on('click', () => {
@@ -348,7 +347,7 @@ class FileServer extends HTMLElement {
         this.authenticateModal.dialog.modal('show');
     }
 
-    createSaveImageDialog(socket) {
+    createSaveImageDialog() {
         let saveDialog = $(`<p>Please enter a name for the current image on the viewer. Do not include a file extension.</p>`);
         let nameEntryBox = $(`
                 <div class='form-group'>
@@ -392,14 +391,11 @@ class FileServer extends HTMLElement {
                     setTimeout(() => { this.saveImageModal.dialog.modal('hide'); }, 1500);
                 }
 
-                this.uploadFileToServer(socket, image, name, cb, eb);
+                this.uploadFileToServer(image, name, cb, eb);
 
                 let imageSavingDialog = $(`<p>Uploading image to file server...</p>`);
                 this.saveImageModal.body.empty();
                 this.saveImageModal.body.append(imageSavingDialog);
-
-               
-
             });
 
             $(cancelButton).on('click', () => {
