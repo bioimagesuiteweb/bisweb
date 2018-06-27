@@ -103,6 +103,7 @@ class FileDialogElement {
             contentDisplay.remove();
         });
     }
+    
     /**
      * 
      * NOTE: The file server that creates the file dialog will provide a few of its functions with the socket bound, e.g. fileListFn, to avoid sharing too many of its internal structures.

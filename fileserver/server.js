@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const zlib = require('zlib');
 const os = require('os');
 const timers = require('timers');
+const { StringDecoder } = require('string_decoder');
 
 const BisWebImage = require('bisweb_image.js');
 const modules = require('moduleindex.js');
@@ -33,7 +34,7 @@ let loadMenuBarItems = () => {
     let tabContainer = $(menubar).find('.nav.navbar-nav');
     let createMenuBarTab = function (name, parent) {
         let tab = $("<li class='dropdown'>" +
-            "<a href='#' class='dropdown-toggle'  data-toggle='dropdown' role='button' aria-expanded='false'>" + name + "<span class='caret'></span></a>" +
+            "<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-expanded='false'>" + name + "<span class='caret'></span></a>" +
             "<ul class='dropdown-menu' role='menu'>" +
             "</ul>" +
             "</li>");
@@ -99,7 +100,7 @@ let startServer = (hostname, port, readycb = () => {}) => {
         //parse websocket key out of response
         let websocketKey;
         let handshake = (chunk) => {
-            let decodedChunk = new TextDecoder('utf-8').decode(chunk);
+            let decodedChunk = new StringDecoder('utf-8').write(chunk);
             console.log('chunk', decodedChunk);
             let headers = decodedChunk.split('\n');
     
@@ -203,6 +204,14 @@ let prepareForControlFrames = (socket) => {
 
 };
 
+
+/**
+ * Prepares the transfer socket to receive from the client. 
+ * Client and server engage in chunked transfer, meaning that the client will send a chunk of data, the server will acknowledge, and then the client will transfer the next chunk.
+ * They will exchange messages in this way until the transfer is complete, or an unrecoverable error occurs.
+ * 
+ * @param {Socket} socket - Node.js net socket between the client and the server for transmission.
+ */
 let prepareForDataFrames = (socket) => {
     //server can send mangled packets during transfer that may parse as commands that shouldn't occur at that time, 
     //e.g. a mangled packet that parses to have an opcode of 8, closing the connection. so unbind the default listener and replace it after transmission.
@@ -606,6 +615,7 @@ let parseClientJSON = (rawText) => {
 };
 
 module.exports = {
+    startServer: startServer,
     loadMenuBarItems: loadMenuBarItems,
     loadLocalFiles: loadLocalFiles
 }
