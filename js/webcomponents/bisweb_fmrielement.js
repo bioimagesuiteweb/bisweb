@@ -30,7 +30,12 @@ const tree_template_string =
 // ---------------------------------------------------
 let app_state = 
 {
-    viewer: null
+    viewer: null,
+    images: {
+        anat: [],
+        func:[],
+        dwi: []
+    }
 };
 
 
@@ -51,18 +56,102 @@ class FMRIElement extends HTMLElement {
 
     }
 
+    createNewStudy() {
+
+        const self = this;
+        let tree=this.tree_div.find('#treeDiv');
+
+        // initialize jstree with new study
+        let json_data = {
+
+            'core': {
+                'data': [
+                    {
+                        'text': 'New Study',
+                        'children': [
+                            {
+                                'text': 'anat'
+                            },
+                            {
+                                'text': 'func'
+                            },
+                            {
+                                'text': 'dwi'
+                            }
+                        ] 
+                    },
+                ]
+            },
+            'plugins': ['contextmenu'],
+            'contextmenu': {
+                'items': self.customMenu
+            }
+        };
+
+        tree.jstree(json_data);
+    }
+
+    customMenu(node) {
+       
+        let imageFileSelect = function() {
+            
+            webfileutil.genericFileCallback(null, 
+                
+                function(filename) {
+                    let newimg = new BisWebImage();
+                    
+                    newimg.load(filename, false).then(() => {
+                        if (node.text === 'anat')
+                            app_state.images.anat.push(newimg);
+                        else if (node.text === "func")
+                            app_state.images.func.push(newimg);
+                        else if (node.text === "dwi")
+                            app_state.images.dwi.push(newimg);
+
+                        app_state.viewer.setimage(newimg);
+                    });
+                }, 
+                
+                {
+                    'title': 'Load Image',
+                    'suffix': 'NII'
+                });
+        };
+
+           
+       
+        console.log(this);
+        let items = {
+            addImage: {
+                'label': 'Load Dataset',
+                'action': function() {
+                    imageFileSelect();
+                    console.log(app_state.images);
+                }
+            }
+        };
+        return items;
+    }
+
     // -------------------------------------------------
     // 'main' function
     // -------------------------------------------------
     connectedCallback() {
 
-        console.log('connected callback executing');
 
         const self = this;
         const menubarid = this.getAttribute('bis-menubarid');
         let menubar = document.querySelector(menubarid).getMenuBar();
 
         let fmenu = webutil.createTopMenuBarMenu("File", menubar);
+
+        webutil.createMenuItem(fmenu, 'New Study',
+        function () {
+            self.createNewStudy();
+        });
+
+
+
 
         webutil.createMenuItem(fmenu,'');
         webutil.createMenuItem(fmenu,'Show fMRI Tool',function() {
