@@ -1352,7 +1352,7 @@ class DiffSpectElement extends HTMLElement {
         this.panel=new BisWebPanel(layoutcontroller,
                                    {  name  : 'Diff Spect Tool',
                                       permanent : false,
-                                      width : '400',
+                                      width : '300',
                                       dual : false,
                                       mode : 'sidebar'
                                    });
