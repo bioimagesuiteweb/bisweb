@@ -120,7 +120,8 @@ class FileServer extends HTMLElement {
                 case 'filelist': this.displayFileList(data.payload); break;
                 case 'supplementalfiles': this.handleSupplementalFileRequest(data.payload.path, data.payload.list); break;
                 case 'error': console.log('Error from client:', data.payload); break;
-                case 'datasocketready': break; //this control phrase is handled elsewhere and should be ignored by this listener.
+                case 'datasocketready': break; //some control phrases are handled elsewhere, so the main listener should ignore them
+                case 'badauth': break;
                 default: console.log('received a transmission with unknown type', data.type, 'cannot interpret');
             }
         });

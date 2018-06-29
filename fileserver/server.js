@@ -8,6 +8,8 @@ const os = require('os');
 const timers = require('timers');
 const { StringDecoder } = require('string_decoder');
 const otplib = require('otplib');
+const hotp = otplib.hotp;
+hotp.options  = { crypto };
 const authenticator = otplib.authenticator;
 
 const BisWebImage = require('bisweb_image.js');
@@ -35,6 +37,7 @@ let timeout = undefined;
 //variables related to generating one-time passwords (OTP)
 authenticator.step = 120 //120 second period for otp
 const secret = authenticator.generateSecret();
+let hotpCounter = 0;
 
 let loadMenuBarItems = () => {
     let menubar = document.getElementById('viewer_menubar');
@@ -196,27 +199,30 @@ let readFrame = (chunk) => {
 };
 
 let authenticate = (socket) => {
-    let token = authenticator.generate(secret);
+    let token = hotp.generate(secret, hotpCounter);
     console.log('Your session code is', token, '\nPlease enter this code from the client.');
-    console.log('time remaining', authenticator.timeRemaining());
-    let timeout = timers.setTimeout(() => {
+
+    /*let timeout = timers.setTimeout(() => {
         console.log('timeout reached, aborting connection');
         socket.end();
         return;
-    }, authenticator.timeRemaining() * 1000);
+    }, authenticator.timeRemaining() * 1000);*/
 
     let readOTP = (chunk) => {
         let frame = readFrame(chunk);
         let decoded = frame.decoded, password;
         password = wsutil.decodeUTF8(decoded, frame.parsedControl);
 
-        console.log('pass', authenticator.check(parseInt(password), secret));
-        if (authenticator.check(parseInt(password), secret)) {
+        console.log('pass', hotp.check(parseInt(password), secret, hotpCounter));
+        console.log('counter', hotpCounter);
+        if (hotp.check(parseInt(password), secret, hotpCounter)) {
             console.log('Starting server');
             socket.removeListener('data', readOTP);
-            timers.clearTimeout(timeout);
-            
+
             prepareForControlFrames(socket);
+        } else {
+            console.log('The token you entered is incorrect. Please enter the new token\n' + hotp.generate(secret, ++hotpCounter));
+            socket.write(formatPacket('badauth', ''));
         }
     }
 
