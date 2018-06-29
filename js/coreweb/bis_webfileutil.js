@@ -89,6 +89,14 @@ const webfileutils = {
         userPreferences.storeUserPreferences();
     },
 
+    setFileServer : function(fileserverid) {
+        let id = fileserverid.substring(1);
+        let server = document.getElementById(id);
+        if (server) {
+            bisweb_fileserver = server;
+        }
+    },
+
     
     /** function to create a hidden input type="file" button and add it to body
      * @alias WebFileUtil.createHiddenInputFile
@@ -238,6 +246,7 @@ const webfileutils = {
 
         if (fileMode==="server") {
             bisweb_fileserver.wrapInAuth('showfiles');
+            return;
         }
         
         

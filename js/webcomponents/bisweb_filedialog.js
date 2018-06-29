@@ -1,5 +1,6 @@
 const webutil = require('bis_webutil.js');
 const localforage = require('localforage');
+const jstree = require('jstree');
 
 class FileDialogElement {
 

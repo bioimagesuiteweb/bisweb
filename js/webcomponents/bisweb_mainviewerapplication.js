@@ -181,6 +181,9 @@ class ViewerApplicationElement extends HTMLElement {
         const self=this;
         let paintviewerno = self.VIEWERS.length - 1;
 
+        //register a fileserver to webfileutil for later...
+        let fileserverid = this.getAttribute('bis-fileserver');
+        webfileutil.setFileServer(fileserverid);
         
         // --------------------------------------------------------------------------
         // Callbacks for load image

@@ -2,9 +2,7 @@ const $ = require('jquery');
 const webutil = require('bis_webutil.js');
 const wsutil = require('../../fileserver/wsutil.js');
 const FileDialog = require('bisweb_filedialog.js');
-const jstree = require('jstree');
 const BisImage = require('bisweb_image.js');
-const zlib = require('zlib');
 
 class FileServer extends HTMLElement {
 
@@ -28,6 +26,7 @@ class FileServer extends HTMLElement {
 
         //When connecting to the server, it may sometimes request that the user authenticates
         this.authenticateModal = null;
+        this.authenticated = false;
 
         webutil.runAfterAllLoaded(() => {
             let menuBarID = this.getAttribute('bis-menubarid');
@@ -432,13 +431,15 @@ class FileServer extends HTMLElement {
     }
 
     wrapInAuth(command) {
+        console.log('authenticated', this.authenticated);
         if (this.authenticated) {
             switch(command) {
                 case 'showfiles' : this.requestFileList(); break;
                 default : console.log('unrecognized command', command);
             }
         } else {
-            this.createAuthenticationDialog();
+            this.connectToServer();
+            //this.createAuthenticationDialog();
         }
     }
 }
