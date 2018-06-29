@@ -29,6 +29,8 @@ const webutil=require('bis_webutil');
 const bisweb_dropbox=require('bisweb_simpledropbox');
 const bisweb_onedrive=require('bisweb_simpleonedrive');
 const bisweb_googledrive=require('bisweb_drivemodule');
+let bisweb_fileserver;
+
 //const genericio=require('bis_genericio');
 const userPreferences = require('bisweb_userpreferences.js');
 const bisdbase = require('bisweb_dbase');
@@ -54,7 +56,10 @@ const webfileutils = {
     },
     
     getModeList : function() {
-        let s=[ { value: "local", text: "Local FileSystem" }];
+        let s=[ 
+            { value: "local", text: "Local FileSystem" },
+            { value: "server", text: "File Server"}
+        ];
 
         if (dkey.length>1)
             s.push({ value: "dropbox", text: "Dropbox" });
@@ -75,6 +80,8 @@ const webfileutils = {
             fileMode="googledrive";
         else if (m==="onedrive" && mkey!=="")
             fileMode="onedrive";
+        else if (m==="server")
+            fileMode="server";
         else
             fileMode="local";
 
@@ -227,6 +234,10 @@ const webfileutils = {
                                webutil.createAlert("Failed to intitialize google drive connection", true);
                              });
             return;
+        }
+
+        if (fileMode==="server") {
+            bisweb_fileserver.wrapInAuth('showfiles');
         }
         
         

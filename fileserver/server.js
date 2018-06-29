@@ -35,7 +35,6 @@ let timeout = undefined;
 
 
 //variables related to generating one-time passwords (OTP)
-authenticator.step = 120 //120 second period for otp
 const secret = authenticator.generateSecret();
 let hotpCounter = 0;
 
@@ -201,12 +200,6 @@ let readFrame = (chunk) => {
 let authenticate = (socket) => {
     let token = hotp.generate(secret, hotpCounter);
     console.log('Your session code is', token, '\nPlease enter this code from the client.');
-
-    /*let timeout = timers.setTimeout(() => {
-        console.log('timeout reached, aborting connection');
-        socket.end();
-        return;
-    }, authenticator.timeRemaining() * 1000);*/
 
     let readOTP = (chunk) => {
         let frame = readFrame(chunk);

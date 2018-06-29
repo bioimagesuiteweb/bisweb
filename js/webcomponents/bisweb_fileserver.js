@@ -325,6 +325,7 @@ class FileServer extends HTMLElement {
                     this.authenticateModal.body.prepend(successMessage);
                     setTimeout(() => { this.authenticateModal.dialog.modal('hide'); }, 1500);
                     this.socket.removeEventListener('message', authListener);
+                    this.authenticated = true;
                     break;
                 default:  
                     console.log('heard unknown data type', data.type);
@@ -429,7 +430,20 @@ class FileServer extends HTMLElement {
 
         this.saveImageModal.dialog.modal('show');
     }
+
+    wrapInAuth(command) {
+        if (this.authenticated) {
+            switch(command) {
+                case 'showfiles' : this.requestFileList(); break;
+                default : console.log('unrecognized command', command);
+            }
+        } else {
+            this.createAuthenticationDialog();
+        }
+    }
 }
+
+module.exports = FileServer;
 
 webutil.defineElement('bisweb-fileserver', FileServer);
 
