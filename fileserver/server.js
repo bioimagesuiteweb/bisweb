@@ -213,15 +213,15 @@ let authenticate = (socket) => {
         let decoded = frame.decoded, password;
         password = wsutil.decodeUTF8(decoded, frame.parsedControl);
 
-        console.log('pass', hotp.check(parseInt(password), secret, hotpCounter));
-        console.log('counter', hotpCounter);
-        if (hotp.check(parseInt(password), secret, hotpCounter)) {
+        hotpCounter++;
+        if (hotp.check(parseInt(password), secret, hotpCounter - 1)) {
             console.log('Starting server');
             socket.removeListener('data', readOTP);
 
             prepareForControlFrames(socket);
+            socket.write(formatPacket('goodauth', ''))
         } else {
-            console.log('The token you entered is incorrect. Please enter the new token\n' + hotp.generate(secret, ++hotpCounter));
+            console.log('The token you entered is incorrect. Please enter the new token\n' + hotp.generate(secret, hotpCounter));
             socket.write(formatPacket('badauth', ''));
         }
     }

@@ -102,12 +102,7 @@ class FileServer extends HTMLElement {
 
             //parse stringified JSON if the transmission is text
             if (typeof (event.data) === "string") {
-                try {
-                    data = JSON.parse(event.data);
-                } catch (e) {
-                    console.log('an error occured while parsing event.data', e);
-                    return null;
-                }
+                data = wsutil.parseJSON(event.data);
             } else {
                 console.log('received a binary transmission -- interpreting as an image');
                 this.handleImageTransmission(event.data);
@@ -120,7 +115,8 @@ class FileServer extends HTMLElement {
                 case 'filelist': this.displayFileList(data.payload); break;
                 case 'supplementalfiles': this.handleSupplementalFileRequest(data.payload.path, data.payload.list); break;
                 case 'error': console.log('Error from client:', data.payload); break;
-                case 'datasocketready': break; //some control phrases are handled elsewhere, so the main listener should ignore them
+                case 'datasocketready': //some control phrases are handled elsewhere, so the main listener should ignore them
+                case 'goodauth':
                 case 'badauth': break;
                 default: console.log('received a transmission with unknown type', data.type, 'cannot interpret');
             }
@@ -314,6 +310,26 @@ class FileServer extends HTMLElement {
                 </div>
             `);
 
+        let authListener = (message) => {
+            let data = wsutil.parseJSON(message.data);
+            
+            switch(data.type) {
+                case 'badauth':
+                    let errorMessage = $(`<p>The server rejected the password. Please enter the new password in the server window</p>`);
+                    this.authenticateModal.body.find('p').remove();
+                    this.authenticateModal.body.prepend(errorMessage);
+                    break;
+                case 'goodauth': 
+                    let successMessage = $(`<p>Login successful!</p>`);
+                    this.authenticateModal.body.find('p').remove();
+                    this.authenticateModal.body.prepend(successMessage);
+                    setTimeout(() => { this.authenticateModal.dialog.modal('hide'); }, 1500);
+                    this.socket.removeEventListener('message', authListener);
+                    break;
+                default:  
+                    console.log('heard unknown data type', data.type);
+            }
+        };
         if (!this.authenticateModal) {
             this.authenticateModal = webutil.createmodal('Enter the Session Password', 'modal-sm');
             this.authenticateModal.dialog.find('.modal-footer').find('.btn').remove();
@@ -339,6 +355,7 @@ class FileServer extends HTMLElement {
             });
         }
 
+        this.socket.addEventListener('message', authListener);
 
         this.authenticateModal.body.append(saveDialog);
         this.authenticateModal.body.append(passwordEntryBox);
