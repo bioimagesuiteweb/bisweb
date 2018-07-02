@@ -57,7 +57,7 @@ const webfileutils = {
     
     getModeList : function() {
         let s=[ 
-            { value: "local", text: "Local FileSystem" },
+            { value: "local", text: "Local File System" },
             { value: "server", text: "File Server"}
         ];
 
@@ -201,11 +201,12 @@ const webfileutils = {
      * @param {object} opts - the callback options object
      * @param {string} opts.title - if in file mode and web set the title of the file dialog
      * @param {boolean} opts.save - if in file mode and web determine load or save
+     * @param {BisImage} opts.saveImage - the image to save. (Optional)
      * @param {string} opts.defaultpath - if in file mode and web use this as original filename
      * @param {string} opts.suffix - if in file mode and web use this to filter web style
      * @param {function} callback - callback to call when done
      */
-    webFileCallback: function (fileopts, callback) {
+    webFileCallback: function (fileopts, callback = null) {
 
         let suffix = fileopts.suffix || '';
         if (suffix === "NII")
@@ -213,7 +214,21 @@ const webfileutils = {
         
 
         if (fileopts.save) {
-            callback({});
+            //if the callback is specified presumably that's what should be called
+            if (callback) {
+                callback({});
+                return;
+            }
+
+            //otherwise try some default behaviors
+            if (fileMode==='dropbox') {
+                return bisweb_dropbox.pickWriteFile(suffix, fileopts.saveImage);
+            } 
+
+            if (fileMode === 'server') {
+                bisweb_fileserver.wrapInAuth('uploadfile');
+                return;
+            }
             return;
         }
 
@@ -259,13 +274,13 @@ const webfileutils = {
         loadelement[0].click();
     },
 
-
     /** Create File Callback 
      * @alias WebFileUtil.attachFileCallback
      * @param {JQueryElement} button -- the element to attach the callback to
      * @param {object} fileopts - the file dialog options object (in file style)
      * @param {string}  fileopts.title  - in file: dialog title
      * @param {boolean} fileopts.save -  in file determine load or save
+     * @param {BisImage} fileopts.saveImage - the file to save (Optional)
      * @param {string}  fileopts.defaultpath -  use this as original filename
      * @param {string}  fileopts.filter - use this as filter (if in electron)
      * @param {string}  fileopts.suffix - List of file types to accept as a comma-separated string e.g. ".ljson,.land" (simplified version filter)
@@ -336,6 +351,7 @@ const webfileutils = {
      * @param {object} opts - the electron options object -- used if in electron
      * @param {string} opts.title - if in file mode and electron set the title of the file dialog
      * @param {boolean} opts.save - if in file mode and electron determine load or save
+     * @param {BisImage} opts.saveFile - file to save. 
      * @param {string} opts.defaultpath - if in file mode and electron use this as original filename
      * @param {string} opts.filter - if in file mode and electron use this to filter electron style
      * @param {string} css - styling info for link element
@@ -398,6 +414,13 @@ const webfileutils = {
             let objectURL = URL.createObjectURL(blob);
             bisweb_onedrive.pickWriteFile(objectURL,filename,callback);
             return true;
+        }
+
+        if (fileMode==='server') {
+            bisweb_fileserver.uploadFileToServer(blob, filename, 
+                () => { console.log('upload to fileserver successful.')}, 
+                () => { console.log('upload to fileserver failed.')}
+            );
         }
         
         return false;

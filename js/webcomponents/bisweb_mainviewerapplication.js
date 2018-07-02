@@ -236,18 +236,20 @@ class ViewerApplicationElement extends HTMLElement {
 
                                            });
 
-            webfileutil.createFileMenuItem(fmenu[viewerno], 'Save Image',
-                                           function (f) {
-                                               self.saveImage(f, viewerno); },
-                                           {
-                                               title: 'Save Image',
-                                               save: true,
-                                               filters: "NII",
-                                               suffix : "NII",
-                                               initialCallback : () => {
-                                                   return self.getSaveImageInitialFilename(viewerno);
-                                               }
-                                           });
+            /*function (f) {
+                self.saveImage(f, viewerno); 
+            }*/
+            webfileutil.createFileMenuItem(fmenu[viewerno], 'Save Image', null,
+                                            {
+                                                title: 'Save Image',
+                                                save: true,
+                                                saveFile : self.VIEWERS[viewerno].getimage(),
+                                                filters: "NII",
+                                                suffix : "NII",
+                                                initialCallback : () => {
+                                                    return self.getSaveImageInitialFilename(viewerno);
+                                                }
+                                            });
             
             
             webutil.createMenuItem(fmenu[viewerno], ''); // separator

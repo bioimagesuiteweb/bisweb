@@ -432,10 +432,11 @@ class FileServer extends HTMLElement {
         this.saveImageModal.dialog.modal('show');
     }
 
-    wrapInAuth(command) {
+    wrapInAuth(command, ...args) {
         if (this.authenticated) {
             switch(command) {
                 case 'showfiles' : this.requestFileList(); break;
+                case 'uploadfile' : this.createSaveImageDialog(); break;
                 default : console.log('unrecognized command', command);
             }
         } else {
