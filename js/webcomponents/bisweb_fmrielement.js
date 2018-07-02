@@ -39,6 +39,7 @@ let app_state =
 };
 
 
+
 /*
  * FMRI tool element 
  * BIDS data structure implemented w/ jsTree
@@ -91,6 +92,7 @@ class FMRIElement extends HTMLElement {
             }
         };
 
+        // select loaded image for viewer
         tree.jstree(json_data).bind('select_node.jstree', function (e, node) {
             let parentID = node.node.parent;
     
@@ -99,7 +101,7 @@ class FMRIElement extends HTMLElement {
                 console.log(imagearray);
                
                 for (let i=0;i<imagearray.length;i++) {
-                    if (node.node.text === imagearray[i].name){
+                    if (node.node.text === imagearray[i].name) {
                         app_state.viewer.setimage(imagearray[i].image);
                         break;
                     }
@@ -108,9 +110,10 @@ class FMRIElement extends HTMLElement {
 
             else if (parentID === 'j1_3') {
                 let imagearray = app_state.images.func;
+                console.log(imagearray);
 
                 for (let i=0;i<imagearray.length;i++) {
-                    if (node.node.text === imagearray[i].name){
+                    if (node.node.text === imagearray[i].name) {
                         app_state.viewer.setimage(imagearray[i].image);
                         break;
                     }
@@ -119,9 +122,10 @@ class FMRIElement extends HTMLElement {
 
             else if (parentID === 'j1_4') {
                 let imagearray = app_state.images.dwi;
+                console.log(imagearray);
 
                 for (let i=0;i<imagearray.length;i++) {
-                    if (node.node.text === imagearray[i].name){
+                    if (node.node.text === imagearray[i].name) {
                         app_state.viewer.setimage(imagearray[i].image);
                         break;
                     }
@@ -130,11 +134,15 @@ class FMRIElement extends HTMLElement {
         });
     }
 
+
+    // right click options on jstree nodes
     customMenu(node) {
         console.log(this);
         console.log($('#treeDiv'));
         let tree = $('#treeDiv');
 
+
+        // load image from file and sort based on user selection
         let imageFileSelect = function() {
             
             webfileutil.genericFileCallback(null, 
@@ -169,16 +177,20 @@ class FMRIElement extends HTMLElement {
            
        
         console.log(node);
+
+        // initialize right click context menu
         let items = {
             addImage: {
-                'label': 'Load Dataset',
+                'label': 'Load Data',
                 'action': function() {
                     imageFileSelect();
                     console.log(app_state.images);
                 }
             }
+            
         };
 
+        // delete context menu items based on which node was selected
         if (node.text !== 'anat' &&
             node.text !== 'func' &&
             node.text !== 'dwi') delete items.addImage;
