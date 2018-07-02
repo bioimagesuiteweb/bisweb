@@ -91,7 +91,43 @@ class FMRIElement extends HTMLElement {
             }
         };
 
-        tree.jstree(json_data);
+        tree.jstree(json_data).bind('select_node.jstree', function (e, node) {
+            let parentID = node.node.parent;
+    
+            if (parentID === 'j1_2') {
+                let imagearray = app_state.images.anat;
+                console.log(imagearray);
+               
+                for (let i=0;i<imagearray.length;i++) {
+                    if (node.node.text === imagearray[i].name){
+                        app_state.viewer.setimage(imagearray[i].image);
+                        break;
+                    }
+                }
+            }
+
+            else if (parentID === 'j1_3') {
+                let imagearray = app_state.images.func;
+
+                for (let i=0;i<imagearray.length;i++) {
+                    if (node.node.text === imagearray[i].name){
+                        app_state.viewer.setimage(imagearray[i].image);
+                        break;
+                    }
+                }
+            }
+
+            else if (parentID === 'j1_4') {
+                let imagearray = app_state.images.dwi;
+
+                for (let i=0;i<imagearray.length;i++) {
+                    if (node.node.text === imagearray[i].name){
+                        app_state.viewer.setimage(imagearray[i].image);
+                        break;
+                    }
+                }
+            }
+        });
     }
 
     customMenu(node) {
@@ -108,15 +144,16 @@ class FMRIElement extends HTMLElement {
                     
                     newimg.load(filename, false).then(() => {
                         if (node.text === 'anat') {
-                            app_state.images.anat.push(newimg);
+                            app_state.images.anat.push({image: newimg, name: filename.name});
+                            console.log(newimg);
                             tree.jstree().create_node("j1_2",{text: filename.name});
                         }
                         else if (node.text === "func") {
-                            app_state.images.func.push(newimg);
+                            app_state.images.func.push({image: newimg, name: filename.name});
                             tree.jstree().create_node("j1_3",{text: filename.name});
                         }
                         else if (node.text === "dwi") {
-                            app_state.images.dwi.push(newimg);
+                            app_state.images.dwi.push({image: newimg, name: filename.name});
                             tree.jstree().create_node("j1_4",{text: filename.name});
                         }
                         app_state.viewer.setimage(newimg);
@@ -159,12 +196,20 @@ class FMRIElement extends HTMLElement {
         const menubarid = this.getAttribute('bis-menubarid');
         let menubar = document.querySelector(menubarid).getMenuBar();
 
-        let fmenu = webutil.createTopMenuBarMenu("File", menubar);
-
+        let fmenu = webutil.createTopMenuBarMenu('File', menubar);
+        let regmenu = webutil.createTopMenuBarMenu('Image Registration', menubar);
         webutil.createMenuItem(fmenu, 'New Study',
-        function () {
-            self.createNewStudy();
-        });
+            function () {
+                self.createNewStudy();
+            }
+        );
+
+        webutil.createMenuItem(regmenu, 'Register',
+            function() {
+                if (app_state.images.anat.length === 0 || app_state.images.func.length === 0)
+                    bootbox.alert('No valid images loaded!');
+            }
+        )
 
 
 
