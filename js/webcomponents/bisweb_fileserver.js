@@ -86,9 +86,10 @@ class FileServer extends HTMLElement {
         this.socket = new WebSocket(address);
 
         //file tree dialog needs to be able to call some of file server's code 
-        //they are separated for modularity reasons, so to enforce the hierarchical relationship between the two fileserver provides the function at its discretion.
-        this.fileTreeDialog.fileListFn = this.requestFileList.bind(this, this.socket);
-        this.fileTreeDialog.fileRequestFn = this.sendFileRequest.bind(this, this.socket);
+        //they are separated for modularity reasons, so to enforce the hierarchical relationship between the two fileserver provides the functions and the socket
+        this.fileTreeDialog.fileListFn = this.requestFileList;
+        this.fileTreeDialog.fileRequestFn = this.sendFileRequest;
+        this.fileTreeDialog.socket = this.socket;
 
         //add the event listeners for the control port
         this.socket.addEventListener('error', (event) => {
@@ -330,6 +331,7 @@ class FileServer extends HTMLElement {
                     console.log('heard unknown data type', data.type);
             }
         };
+
         if (!this.authenticateModal) {
             this.authenticateModal = webutil.createmodal('Enter the Session Password', 'modal-sm');
             this.authenticateModal.dialog.find('.modal-footer').find('.btn').remove();
@@ -431,7 +433,6 @@ class FileServer extends HTMLElement {
     }
 
     wrapInAuth(command) {
-        console.log('authenticated', this.authenticated);
         if (this.authenticated) {
             switch(command) {
                 case 'showfiles' : this.requestFileList(); break;

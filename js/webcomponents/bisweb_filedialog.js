@@ -182,7 +182,7 @@ class FileDialogElement {
 
         //determine based on the type of the node what should happen when the user clicks on it
         $(contentDisplay).on('select_node.jstree', (event, data) => {
-
+            console.log('jstree select_node', data);
             //check whether node should expand directories beneath it.
             if (data.node.original.expand) {
                 this.fileListFn(data.node.original.path);
@@ -190,7 +190,7 @@ class FileDialogElement {
             }
 
             switch (data.node.type) {
-                case 'file':
+                case 'file': break;
                 case 'picture': this.fileRequestFn({ 'command' : 'getfile', 'files' : [data.node.original.path] }); break;
                 case 'directory':
                     let name = data.node.original.text;
