@@ -61,6 +61,8 @@ class FMRIElement extends HTMLElement {
         const self = this;
         let tree=this.tree_div.find('#treeDiv');
 
+        console.log(tree);
+
         // initialize jstree with new study
         let json_data = {
 
@@ -80,7 +82,8 @@ class FMRIElement extends HTMLElement {
                             }
                         ] 
                     },
-                ]
+                ],
+                'check_callback': true
             },
             'plugins': ['contextmenu'],
             'contextmenu': {
@@ -92,7 +95,10 @@ class FMRIElement extends HTMLElement {
     }
 
     customMenu(node) {
-       
+        console.log(this);
+        console.log($('#treeDiv'));
+        let tree = $('#treeDiv');
+
         let imageFileSelect = function() {
             
             webfileutil.genericFileCallback(null, 
@@ -101,13 +107,18 @@ class FMRIElement extends HTMLElement {
                     let newimg = new BisWebImage();
                     
                     newimg.load(filename, false).then(() => {
-                        if (node.text === 'anat')
+                        if (node.text === 'anat') {
                             app_state.images.anat.push(newimg);
-                        else if (node.text === "func")
+                            tree.jstree().create_node("j1_2",{text: filename.name});
+                        }
+                        else if (node.text === "func") {
                             app_state.images.func.push(newimg);
-                        else if (node.text === "dwi")
+                            tree.jstree().create_node("j1_3",{text: filename.name});
+                        }
+                        else if (node.text === "dwi") {
                             app_state.images.dwi.push(newimg);
-
+                            tree.jstree().create_node("j1_4",{text: filename.name});
+                        }
                         app_state.viewer.setimage(newimg);
                     });
                 }, 
@@ -120,7 +131,7 @@ class FMRIElement extends HTMLElement {
 
            
        
-        console.log(this);
+        console.log(node);
         let items = {
             addImage: {
                 'label': 'Load Dataset',
@@ -130,6 +141,11 @@ class FMRIElement extends HTMLElement {
                 }
             }
         };
+
+        if (node.text !== 'anat' &&
+            node.text !== 'func' &&
+            node.text !== 'dwi') delete items.addImage;
+
         return items;
     }
 
