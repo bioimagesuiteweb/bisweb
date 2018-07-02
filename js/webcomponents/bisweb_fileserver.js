@@ -30,12 +30,13 @@ class FileServer extends HTMLElement {
 
         webutil.runAfterAllLoaded(() => {
             let menuBarID = this.getAttribute('bis-menubarid');
-            let menuBar = document.querySelector(menuBarID).getMenuBar();
+            let menuBar = document.querySelector(menuBarID);
 
             let algorithmControllerID = this.getAttribute('bis-algorithmcontrollerid');
             this.algorithmcontroller = document.querySelector(algorithmControllerID);
 
             if (menuBar) {
+                menuBar = menuBar.getMenuBar();
                 let serverMenu = webutil.createTopMenuBarMenu('Server', menuBar);
 
                 webutil.createMenuItem(serverMenu, 'Connect to File Server', () => {
@@ -404,7 +405,7 @@ class FileServer extends HTMLElement {
                     let errorMessage = $(`<p>An error occured during transmission. File not uploaded.</p>`)
 
                     this.saveImageModal.body.empty();
-                    this.saveImageModal.body.append(transmissionCompleteMessage);
+                    this.saveImageModal.body.append(errorMessage);
 
                     setTimeout(() => { this.saveImageModal.dialog.modal('hide'); }, 1500);
                 }
@@ -441,7 +442,6 @@ class FileServer extends HTMLElement {
             }
         } else {
             this.connectToServer();
-            //this.createAuthenticationDialog();
         }
     }
 }
