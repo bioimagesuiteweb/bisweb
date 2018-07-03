@@ -117,19 +117,12 @@ const fullScreenRenderer = vtkFullScreenRenderWindow.newInstance({
     
 var dropZone = document.getElementsByTagName('body')[0];
 
-dropZone.addEventListener('dragstart', function(e) {
-    $('.overlay').show()
+dropZone.addEventListener('dragover', function(e) {
     e.stopPropagation();
     e.preventDefault();
     e.dataTransfer.dropEffect = 'copy';
 });
 
-dropZone.addEventListener('dragend', function(e) {
-  $('.overlay').hide()
-  e.stopPropagation();
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'copy';
-});
 
 
 dropZone.addEventListener('drop', function(e) {
