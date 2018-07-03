@@ -210,6 +210,7 @@ class FMRIElement extends HTMLElement {
 
         let fmenu = webutil.createTopMenuBarMenu('File', menubar);
         let regmenu = webutil.createTopMenuBarMenu('Image Registration', menubar);
+        
         webutil.createMenuItem(fmenu, 'New Study',
             function () {
                 self.createNewStudy();
