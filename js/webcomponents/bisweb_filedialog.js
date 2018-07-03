@@ -2,6 +2,13 @@ const webutil = require('bis_webutil.js');
 const localforage = require('localforage');
 const jstree = require('jstree');
 
+
+/**
+ * When loading a file from the server, the user must be able to browse the files. 
+ * This class will render a list of files in a window similar to the file system dialog that opens when a user clicks on an <input type='file'> button.
+ * 
+ * The dialog will contact the server to request image files that the user selects or to request information about the filesystem that the browser does not currently have (the server does not send info about the whole filesystem on the initial request).
+ */
 class FileDialogElement {
 
     constructor() {
@@ -106,18 +113,22 @@ class FileDialogElement {
     }
     
     /**
+     * Adds the files specified by list to the file dialog. If the dialog is empty this effectively creates the dialog.
+     * The list may also specify extra files fetched by the server, in which case startDirectory will designate the path at which they should be added.
      * 
      * NOTE: The file server that creates the file dialog will provide a few of its functions with the socket bound, e.g. fileListFn, to avoid sharing too many of its internal structures.
-     * @param {*} list 
+     * @param {Array} list - An array of file entries. May contain children that are themselves file entries. A list entry may contain the following fields:
+     * @param {String} list.text - The name of the file or folder.
+     * @param {String} list.type - What type of file or folder the entry represents. One of 'picture', 'html', 'js', 'text', 'video', 'audio', 'file', or 'directory'.
+     * @param {String} list.path - The full path indicating where the file is located on the server machine.
+     * @param {Array} list.children - File entries for each file contained in the list entry. Only for list entries of type 'directory'.
+     * @param {Object} startDirectory - File entry representing the directory at which the files in list should be added. Undefined means the files represent the files in the user's home directory (~/).
      */
     createFileList(list, startDirectory = null) {
 
         //file list is constructed as more files are fetched -- the first request will provide a certain number of files then supplemental requests will build it up.
         //createFileList will be called to make the list from scratch, but should not alter the list after that.
         this.fileList = this.fileList ? this.fileList : list;
-
-        let contentDisplay = this.container.find('.file-display');
-        let contentBox = this.container.find('.content-box');
         this.currentDirectory = list;
 
         this.lastDirectories = [];
@@ -131,12 +142,16 @@ class FileDialogElement {
             this.expandDirectory(startDirectory.list);
         } else {
             this.expandDirectory(list);
-        }
-        
+        }   
     }
-    
+
+    /**
+     * Creates the visual representation of the files specified by list. Called from createFileList (see notes there for format of file entries).
+     * Uses jstree to render the list.
+     * 
+     * @param {Array} list - An array of file entries. 
+     */
     expandDirectory(list) {
-        console.log('list expanded in expandDirectory', list);
         let contentDisplay = this.container.find('.file-display');
         let contentBox = this.container.find('.content-box');
 
@@ -211,10 +226,13 @@ class FileDialogElement {
         contentBox.append(contentDisplay);
     }
 
+    /**
+     * Updates the list of folders at the top of the file dialog to reflect the folders in the current path.
+     */
     updateFileNavbar() {
         let navbar = this.modal.body.find('.file-navbar');
 
-        //leading character may be a '/', in this case just strip it out and start from the first folder name
+        //leading character may be a '/', in this case just strip out the empty entry it creates and start from the first folder name
         if (this.currentPath[0] && this.currentPath[0] === '') { this.currentPath.splice(0,1); }
         navbar.empty();
         
@@ -327,6 +345,11 @@ class FileDialogElement {
         }
     }
 
+    /** 
+     * Tries to expand a filepath using files contained by the file dialog.
+     * 
+     * @returns The file entry representing the folder specified by path. 
+     */
     traversePath(path) {
         let list = this.fileList;
         let foundFolder = false;

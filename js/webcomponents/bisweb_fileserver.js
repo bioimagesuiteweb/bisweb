@@ -80,6 +80,7 @@ class FileServer extends HTMLElement {
      * Initiates a connection to the fileserver at the specified address. Note that the handshaking protocol is handled entirely by the native Javascript WebSocket API.
      * Sets this.socket internally, the structure representing the control socket between client and server.
      * 
+     * @param {String} address - The hostname and port to try to connect to, e.g. 'ws://localhost:8080'. These addresses must be prefixed with 'ws://' 
      */
     connectToServer(address = 'ws://localhost:8081') {
         if (this.socket) { this.socket.close(1000, 'Restarting connection'); }
@@ -93,8 +94,8 @@ class FileServer extends HTMLElement {
         this.fileTreeDialog.socket = this.socket;
 
         //add the event listeners for the control port
-        this.socket.addEventListener('error', (event) => {
-            console.log('An error occured', event);
+        this.socket.addEventListener('close', (event) => {
+            console.log('Socket closing', event);
         });
 
         this.socket.addEventListener('message', (event) => {
@@ -139,8 +140,14 @@ class FileServer extends HTMLElement {
         this.fileTreeDialog.showDialog();
     }
 
+    /**
+     * The file dialog will request additional files from the server if the user selects a folder that the dialog does not have the children for. 
+     * This function adds the new files sent by the server to the existing file tree in the appropriate place.
+     * 
+     * @param {String} path - The file path at which the new files should be added. 
+     * @param {Array} list - The children of the file specified by path, including their children to a depth of the server's discretion.
+     */
     handleSupplementalFileRequest(path, list) {
-        console.log('handleSupplementalFileRequest', path, list);
 
         //file tree dialog keeps track of the data stored within it -- however the since the file server retrieves the new data it is responsible for adding it
         console.log('file tree list', this.fileTreeDialog.fileList);
@@ -183,6 +190,13 @@ class FileServer extends HTMLElement {
         this.socket.send(filesdata);
     }
 
+    /**
+     * Sends a request to the server to run a given module on a given input.
+     * Sends the name of a module and the module's parameters to the server.
+     * 
+     * TODO: Implement this function!
+     * @param parameters - The list of parameters for the module, including the module's name. See module documentation for more details. 
+     */
     sendInvocationRequest(parameters) {
         let params = JSON.stringify(parameters);
         this.socket.send(params);
@@ -302,6 +316,10 @@ class FileServer extends HTMLElement {
         reader.readAsArrayBuffer(data);
     }
 
+    /**
+     * Creates a small modal dialog to allow the user to enter the session password used to authenticate access to the local fileserver. 
+     * Also displays whether authentication succeeded or failed. 
+     */
     createAuthenticationDialog() {
         let saveDialog = $(`<p>Please enter the password printed to the console window.</p>`);
         let passwordEntryBox = $(`
@@ -366,6 +384,9 @@ class FileServer extends HTMLElement {
         this.authenticateModal.dialog.modal('show');
     }
 
+    /**
+     * Creates a small modal dialog to allow the user to enter the name for a file they are attempting to save to the fileserver. 
+     */
     createSaveImageDialog() {
         let saveDialog = $(`<p>Please enter a name for the current image on the viewer. Do not include a file extension.</p>`);
         let nameEntryBox = $(`
@@ -433,7 +454,12 @@ class FileServer extends HTMLElement {
         this.saveImageModal.dialog.modal('show');
     }
 
-    wrapInAuth(command, ...args) {
+    /**
+     * Checks whether the user has authenticated with the fileserver. Performs the command if they have, otherwise prompts the user to login.
+     * 
+     * @param {String} command - A word representing the command to execute on the server. 
+     */
+    wrapInAuth(command) {
         if (this.authenticated) {
             switch(command) {
                 case 'showfiles' : this.requestFileList(); break;
@@ -447,7 +473,6 @@ class FileServer extends HTMLElement {
 }
 
 module.exports = FileServer;
-
 webutil.defineElement('bisweb-fileserver', FileServer);
 
 //Moving away from JSTree, but code left here because it might be useful

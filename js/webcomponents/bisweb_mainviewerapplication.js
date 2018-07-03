@@ -140,9 +140,6 @@ class ViewerApplicationElement extends HTMLElement {
         });
     }
 
-    
-    // Save Image
-    // --------------------------------------------------------------------------------
     /** Save image from viewer to a file */
     saveImage(fname, viewerno = 0) {
         let index = viewerno + 1;
