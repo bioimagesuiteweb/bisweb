@@ -198,6 +198,58 @@ class FMRIElement extends HTMLElement {
         return items;
     }
 
+
+    /*
+     * function to compute a linear registration using the linearRegistration module
+     */
+    computeLinearRegistration(refImage, targImage) {
+        let opts = {
+            "intscale"      : 1,
+            "numbins"       : 64,
+            "levels"        : 3,
+            "imagesmoothing": 1,
+            "optimization"  : "ConjugateGradient",
+            "stepsize"      : 1,
+            "metric"        : "NMI",
+            "steps"         : 1,
+            "iterations"    : 10,
+            "mode"          : "Rigid"
+            "resolution"    : 1.5
+            "doreslice"     : true,
+            "norm"          : true,
+            "debug"         : false
+        };
+
+		let input = {
+			'reference': refImage,
+			'target'   : targImage
+		};
+
+		let regModule = new LinearRegistration();
+
+		let output = {
+			xform  : null,
+			reslice: null
+		};
+
+		return new Promise( (resolve, reject) => {
+
+			regModule.execute(input, opts).then( () => {
+				output.xform = linear.getOutputObject('output');
+				output.reslice = llinear.getOutputObject('resliced');
+			
+				try {
+					resolve(output);
+				} catch(e) {
+					console.log("Caught in Promise: ",e,e.stack);
+					reject(e);
+				}
+			});
+
+		});
+		
+    }
+
     // -------------------------------------------------
     // 'main' function
     // -------------------------------------------------
@@ -256,8 +308,8 @@ class FMRIElement extends HTMLElement {
     
 
         this.tree_div=$(tree_template_string);
-		
-		
+        
+        
         fmriToolsDiv.append(this.tree_div);
 
         this.panel.show();
