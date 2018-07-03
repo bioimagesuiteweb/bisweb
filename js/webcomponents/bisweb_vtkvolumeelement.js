@@ -19,32 +19,22 @@
 
     /*global document,HTMLElement */
     
-    
-    const BisWebImage = require('bisweb_image');
     const webutil=require('bis_webutil');
     const FastClick=require('fastclick');
     const $=require('jquery'); 	
-    const bootbox=require('bootbox');
-    const numeric=require('numeric');
-    const util=require('bis_util');
-    const webfileutil = require('bis_webfileutil');
-    const ViewerApplicationElement = require('bisweb_mainviewerapplication');
+
     /**
      * A Application Level Element that creates a Connectivity Application
      * 
      * @example
-     *   <bisweb-connectivityapplication
-     *      bis-menubarid="#viewer_menubar"
-     *      bis-connectivitycontrolid="#conncontrol"
-     *      bis-viewerid="#viewer">
-     *   </bisweb-connectivityapplication>
+     *   <bisweb-vtkvolume
+     *      bis-menubarid="#viewer_menubar">
+     *   </bisweb-vtkvolume>
      *
      * Attributes
      *     bis-menubarid : theid a <bisweb-topmenubar> element
-     *     bis-connectivitycontrolid : the id of an optional  <bisweb-connectivitycontrolelement>
-     *     bis-viewerid : the id of the underlying <bisweb-orthogonalviewer>  element
      */
-    class VTKTestElement extends HTMLElement {
+    class VTKVolumeElement extends HTMLElement {
     
 
         connectedCallback() {
@@ -93,7 +83,7 @@
         }
     }
     
-    webutil.defineElement('bisweb-vtktest', VTKTestElement);
+    webutil.defineElement('bisweb-vtkvolume', VTKVolumeElement);
     
     
     
