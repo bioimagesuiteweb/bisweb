@@ -44,6 +44,7 @@ require("bisweb_connectivityapplicationelement.js");
 require("bisweb_mainviewerapplication.js");
 require("bisweb_dualviewerapplication.js");
 require("bisweb_webworkercontroller.js");
+require("bisweb_vtktestelement.js")
 
 
 

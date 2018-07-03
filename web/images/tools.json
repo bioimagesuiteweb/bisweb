@@ -43,6 +43,11 @@
 	    "description" : "The paravision import tool.",
 	    "picture" : "images/paravision.png",
 	    "electrononly": true
+	},
+	"VTK" : {
+		"title" : "VTK Viewer",
+		"url"   : "VTKVolume",
+	    "description" : "VTK test."
 	}
     },
     "version" : "0.9.5"

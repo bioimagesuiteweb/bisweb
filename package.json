@@ -30,7 +30,8 @@
         "numeric": "1.2.6",
         "pako": "0.2.9",
         "platform": "1.3.5",
-        "three": "0.72.0"
+        "three": "0.72.0",
+        "vtk.js": "^7.3.2"
     },
     "devDependencies": {
         "colors": "1.1.2",

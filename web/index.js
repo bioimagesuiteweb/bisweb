@@ -382,11 +382,9 @@ let installLatestVersion=async function() {// jshint ignore:line
 // ------------------------------------------------------------------------------
 
 let createApplicationSelector=function(obj) {
-    
     let container=$("#bisslides");
     let indicators=$(".carousel-indicators");
     let topmenu=$("#topappmenu");
-
     
     let keys=Object.keys(obj);
     let max=keys.length;
@@ -394,6 +392,8 @@ let createApplicationSelector=function(obj) {
     let imagestring="";
     let menustring="";
     let indstring="";
+    
+    console.log('application selector', obj);
     
     for (let i=0;i<max;i++) {
         let elem=obj[keys[i]];
@@ -556,7 +556,7 @@ var createServiceWorker=function() {
 
 // ------------------------------------------------------------------------------
 //
-// M a i n  F u n c t i o n
+// Main Function
 //
 // ------------------------------------------------------------------------------
 
