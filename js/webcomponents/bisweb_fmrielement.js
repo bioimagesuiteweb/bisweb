@@ -213,41 +213,92 @@ class FMRIElement extends HTMLElement {
             "metric"        : "NMI",
             "steps"         : 1,
             "iterations"    : 10,
-            "mode"          : "Rigid"
-            "resolution"    : 1.5
+            "mode"          : "Rigid",
+            "resolution"    : 1.5,
             "doreslice"     : true,
             "norm"          : true,
             "debug"         : false
         };
 
-		let input = {
-			'reference': refImage,
-			'target'   : targImage
-		};
+        let input = {
+            'reference': refImage,
+            'target'   : targImage
+        };
 
-		let regModule = new LinearRegistration();
+        let regModule = new LinearRegistration();
 
-		let output = {
-			xform  : null,
-			reslice: null
-		};
+        let output = {
+            xform  : null,
+            reslice: null
+        };
 
-		return new Promise( (resolve, reject) => {
+        return new Promise( (resolve, reject) => {
 
-			regModule.execute(input, opts).then( () => {
-				output.xform = linear.getOutputObject('output');
-				output.reslice = llinear.getOutputObject('resliced');
-			
-				try {
-					resolve(output);
-				} catch(e) {
-					console.log("Caught in Promise: ",e,e.stack);
-					reject(e);
-				}
-			});
+            regModule.execute(input, opts).then( () => {
+                output.xform = regModule.getOutputObject('output');
+                output.reslice = regModule.getOutputObject('resliced');
+            
+                try {
+                    resolve(output);
+                } catch(e) {
+                    console.log("Caught in Promise: ",e,e.stack);
+                    reject(e);
+                }
+            });
 
-		});
-		
+        });
+        
+    }
+
+    computeNonlinearRegistration(refImage, targImage) {
+        
+        let regModule = new NonlinearRegistration();
+        let input = 
+                {
+                    'reference': refImage,
+                    'target'   : targImage
+                };
+
+        let opts = 
+            {
+                'intscale'      : 1,
+                'numbins'       : 64,
+                'levels'        : 3,
+                'imagesmoothing': 1,
+                'optimization'  : 'ConjugateGradient',
+                'stepsize'      : 1,
+                'metric'        : 'NMI',
+                'steps'         : 1,
+                'iterations'    : 1,
+                'cps'           : 20,
+                'append'        : true,
+                'linearmode'    : 'Affine',
+                'resolution'    : 1.5,
+                'lambda'        : 0.001,
+                'cpsrate'       : 2,
+                'doreslice'     : true,
+                'norm'          : true,
+                'debug'         : true
+            };
+
+            let output = {
+                    transformation: null,
+                    reslice: null
+            };
+
+            return new Promise( (resolve, reject) => {
+
+                regModule.execute(input, opts).then( () => {
+                    output.transformation = regModule.getOutputObject('output');
+                    output.reslice = regModule.getOutputObject('resliced');
+                    try {
+                        resolve(output);
+                    } catch(e) {
+                        console.log('Error: ', e, e.stack);
+                        reject(e);
+                    }
+                });
+            });
     }
 
     // -------------------------------------------------
@@ -274,7 +325,7 @@ class FMRIElement extends HTMLElement {
                 if (app_state.images.anat.length === 0 || app_state.images.func.length === 0)
                     bootbox.alert('No valid images loaded!');
             }
-        )
+        );
 
 
 
