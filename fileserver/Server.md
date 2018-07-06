@@ -12,9 +12,15 @@ As well, some machines don't have the storage space or computational power that 
 
 The server currently runs in an Electron window on the user's current machine. To launch, navigate to `bisweb/fileserver` and type: 
 
-    electron index.html
+    node run.js -v 
 
-The server should now be running.
+The server should now be running. The -v flag enables verbose output, which will list details about what is happening during the connection process and about exchanges between the client and server. This flag may be omitted to run the server in silent mode. 
+
+## Connecting to the File Server
+
+The file server is an endpoint for file I/O in the same way that the user's machine would be, or a cloud service like Dropbox or Google Drive. You can set the endpoint by selecting 'local server' from the 'Set File Source' menu found under the 'File' tab. Now all save and load operations will use the server machine. 
+
+For security reasons the server may ask you to authenticate upon connection. The file server uses [Hashed One-Time Passwords (HOTP)](https://en.wikipedia.org/wiki/One-time_password#Methods_of_generating_the_OTP). 
 
 ## Performing Tasks with the File Server
 
