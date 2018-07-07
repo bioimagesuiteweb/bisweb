@@ -302,6 +302,11 @@ class FileServer extends HTMLElement {
 
         let reader = new FileReader();
 
+        //filedialog does actions when an image is loaded (dismisses loading messages, etc.)
+        //so notify once the image is loaded
+        let imageLoadEvent = new CustomEvent('imagetransmission');
+        document.dispatchEvent(imageLoadEvent);
+
         //image is sent compressed for portability reasons, then decompressed here
         reader.addEventListener('loadend', () => {
             let unzippedFile = wsutil.unzipFile(reader.result);

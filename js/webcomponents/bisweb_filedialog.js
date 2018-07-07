@@ -206,7 +206,7 @@ class FileDialogElement {
 
             switch (data.node.type) {
                 case 'file': break;
-                case 'picture': this.fileRequestFn({ 'command' : 'getfile', 'files' : [data.node.original.path] }); break;
+                case 'picture': this.fetch(data.node.original.path); break;
                 case 'directory':
                     let name = data.node.original.text;
                     let node = this.currentDirectory.find((element) => { return element.text === name; });
@@ -366,6 +366,21 @@ class FileDialogElement {
         }
 
         return list;
+    }
+
+    /**
+     * Requests a file from the server and notifies the user with a message once the file has loaded.
+     * @param {String} path - Path of the file on the server machine.
+     */
+    fetch(path) {
+        let header = this.modal.header;
+        let loadingMessage = $(`<p class='loadMessage'>Loading...</p>`);
+        header.append(loadingMessage);
+        this.fileRequestFn({ 'command' : 'getfile', 'files' : [path] });
+
+        document.addEventListener('imagetransmission', () => {
+            header.find('.loadMessage').remove();
+        }, { 'once' : true});
     }
 }
 
