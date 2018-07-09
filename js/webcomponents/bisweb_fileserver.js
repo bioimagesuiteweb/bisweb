@@ -3,6 +3,7 @@ const webutil = require('bis_webutil.js');
 const wsutil = require('../../fileserver/wsutil.js');
 const FileDialog = require('bisweb_filedialog.js');
 const BisImage = require('bisweb_image.js');
+const bisweb_awsmodule = require('bisweb_awsmodule.js');
 
 class FileServer extends HTMLElement {
 
@@ -74,6 +75,13 @@ class FileServer extends HTMLElement {
                 });
             }
         });
+
+
+        //AMAZON STUFF HERE JUST FOR DURATION OF TESTING
+        let aws = new bisweb_awsmodule();
+        aws.makeRequest('get', 'MNI_1mm_notbuggy.nii.gz');
+
+
     }
 
     /**
