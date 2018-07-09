@@ -93,7 +93,14 @@ let decodeUTF8 = (rawText, control) => {
 
 let unzipFile = (arr) => {
     let parsedArr = new Uint8Array(arr);
-    return pako.ungzip(parsedArr);
+    let unzippedArr;
+    try {
+        unzippedArr = pako.ungzip(parsedArr);
+        return unzippedArr;
+    } catch (e) {
+        console.log('an error occured while unzipping the file', e);
+        return;
+    }
 };
 
 let parseJSON = (rawJSON) => {

@@ -846,6 +846,7 @@ class BisWebImage extends BisWebDataObject {
         
         // First do header stuff
         let tmpfloat=new Float32Array(_inputbuffer,108,1);
+        console.log('tmpfloat', tmpfloat);
         let len=Math.floor(tmpfloat[0]);
         if (len<1 || len >300000) {
             throw new Error('BAD BAD BAD ..... in PARSENII BUFFER len='+len);

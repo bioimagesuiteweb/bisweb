@@ -1,4 +1,8 @@
-let AWS = require('aws-sdk');
+const AWS = require('aws-sdk');
+const bis_genericio = require('bis_genericio.js');
+const bisweb_image = require('bisweb_image.js');
+const wsutil = require('../../fileserver/wsutil.js');
+
 
 class AWSModule {
 
@@ -47,11 +51,28 @@ class AWSModule {
 
         let xmlRequest = new XMLHttpRequest();
         xmlRequest.onreadystatechange = () => {
-            if (xmlRequest.readyState === 4) {
-                console.log('xmlRequest', xmlRequest);
+            if (xmlRequest.readyState === 4 && xmlRequest.status === 200) {
+                console.log('xmlRequest', xmlRequest, 'type of response', xmlRequest.responseText.length);
+    
+                if(typeof(xmlRequest.response) === 'string') {
+                    let buffer = new ArrayBuffer(xmlRequest.responseText.length);
+                    let bufferView = new Uint8Array(buffer);
+                    for (let i = 0; i < xmlRequest.response.length; i++) {
+                        bufferView[i] = xmlRequest.response.charCodeAt(i);
+                    }
+
+                    let unzippedFile = wsutil.unzipFile(bufferView);
+                    console.log('bufferView', bufferView, 'buffer', buffer, 'unzipped file', unzippedFile);
+
+                    let parsedImage = new bisweb_image();
+                    parsedImage.parseNII(unzippedFile);
+                    console.log('parsedImage', parsedImage);
+                }
             }
         }
-        xmlRequest.open('get', `http://${this.bucketName}.s3.amazonaws.com`, true);
+        xmlRequest.open(parsedType, `http://${this.bucketName}.s3.amazonaws.com/${object}`, true);
+        //xmlRequest.setRequestHeader('Content-Type', 'application/json');
+        xmlRequest.setRequestHeader('response-content-type', 'application/octet-stream');
         xmlRequest.send(null);
         
         
