@@ -16,6 +16,8 @@ const NonlinearRegistration = require('nonlinearRegistration');
 const baseutils = require('baseutils');
 const BisWebPanel = require('bisweb_panel.js');
 const jstree = require('jstree');
+const MotionCorrection = require('motionCorrection');
+
 
 const tree_template_string = 
 `
@@ -70,7 +72,7 @@ class FMRIElement extends HTMLElement {
             'core': {
                 'data': [
                     {
-                        'text': 'New Study',
+                        'text': 'New Subject',
                         'children': [
                             {
                                 'text': 'anat'
@@ -199,55 +201,59 @@ class FMRIElement extends HTMLElement {
     }
 
 
-    /*
-     * function to compute a linear registration using the linearRegistration module
-     */
-    computeLinearRegistration(refImage, targImage) {
-        let opts = {
-            "intscale"      : 1,
-            "numbins"       : 64,
-            "levels"        : 3,
-            "imagesmoothing": 1,
-            "optimization"  : "ConjugateGradient",
-            "stepsize"      : 1,
-            "metric"        : "NMI",
-            "steps"         : 1,
-            "iterations"    : 10,
-            "mode"          : "Rigid"
-            "resolution"    : 1.5
-            "doreslice"     : true,
-            "norm"          : true,
-            "debug"         : false
+    computeMotionCorrection(imageArray) {
+        
+        let self = this;
+        let numImages = imageArray.length;
+
+        let middleImage;
+
+		console.log(imageArray);
+
+        middleImage = imageArray[Math.round((numImages-1)/2)];
+
+		console.log(middleImage);
+
+        let MotionCorrectionModule = new MotionCorrection();
+        let input = {
+            'target'    : null,
+            'reference' : middleImage,
+        };
+        
+        input['reference'] = middleImage;
+
+
+           let parameters = {
+                    "doreslice": true,
+                    "norm": true,
+                    "intscale": 1,
+                    "numbins": 1024,
+                    "extrasmoothing": 0,
+                    "metric": "CC",
+                    "optimization": "HillClimb",
+                    "stepsize": 0.25,
+                    "levels": 3,
+                    "iterations": 1,
+                    "resolution": 1.01,
+                    "debug": false,
+                    "steps": 4,
+                    "refno": 0
         };
 
-		let input = {
-			'reference': refImage,
-			'target'   : targImage
-		};
+        let promises = [];
+        let outputs = [];
 
-		let regModule = new LinearRegistration();
+        for (let i=0;i<numImages;i++) {
+            input['target'] = imageArray[i];
+            promises.push(MotionCorrectionModule.execute(input, parameters));
+        }
+        
+        Promise.all(promises).then( () => {
+            let outputObj = { 'xform': this.getOutputObject('output'), 'reslice': this.getOutputObject('reslice') };
+            outputs.push(outputObj);
+        });
 
-		let output = {
-			xform  : null,
-			reslice: null
-		};
-
-		return new Promise( (resolve, reject) => {
-
-			regModule.execute(input, opts).then( () => {
-				output.xform = linear.getOutputObject('output');
-				output.reslice = llinear.getOutputObject('resliced');
-			
-				try {
-					resolve(output);
-				} catch(e) {
-					console.log("Caught in Promise: ",e,e.stack);
-					reject(e);
-				}
-			});
-
-		});
-		
+		return outputs;
     }
 
     // -------------------------------------------------
@@ -261,23 +267,24 @@ class FMRIElement extends HTMLElement {
         let menubar = document.querySelector(menubarid).getMenuBar();
 
         let fmenu = webutil.createTopMenuBarMenu('File', menubar);
-        let regmenu = webutil.createTopMenuBarMenu('Image Registration', menubar);
+        let motionmenu = webutil.createTopMenuBarMenu('Motion', menubar);
         
-        webutil.createMenuItem(fmenu, 'New Study',
+        webutil.createMenuItem(fmenu, 'New Subject',
             function () {
                 self.createNewStudy();
             }
         );
 
-        webutil.createMenuItem(regmenu, 'Register',
-            function() {
-                if (app_state.images.anat.length === 0 || app_state.images.func.length === 0)
-                    bootbox.alert('No valid images loaded!');
-            }
-        )
+		webutil.createMenuItem(motionmenu, 'Correct Motion',
+			function() {
+				let func_array = [];
+				for (let i=0;i<app_state.images.func.length;i++) {
+					func_array.push(app_state.images.func[i].image);
+				}
 
-
-
+				self.computeMotionCorrection(func_array);
+			}
+		);
 
         webutil.createMenuItem(fmenu,'');
         webutil.createMenuItem(fmenu,'Show fMRI Tool',function() {
