@@ -1,4 +1,8 @@
+'use strict';
+
 const AWS = require('aws-sdk');
+const AWSCognitoIdentity = require('amazon-cognito-identity-js');
+const AWSCognitoAuth = require('amazon-cognito-auth-js');
 const bis_genericio = require('bis_genericio.js');
 const bisweb_image = require('bisweb_image.js');
 const wsutil = require('../../fileserver/wsutil.js');
@@ -10,7 +14,7 @@ class AWSModule {
 
         this.bucketName = 'bisweb-test';
         this.regionName = 'us-east-1'; //N. Virginia
-        const identityPool = 'us-east-1:13a0bffd-384b-43d8-83c3-050815009aa6'
+        const identityPool = 'us-east-1:13a0bffd-384b-43d8-83c3-050815009aa6';
         AWS.config.update({
             'region' : this.regionName,
             'credentials' : new AWS.CognitoIdentityCredentials({
@@ -18,8 +22,24 @@ class AWSModule {
             })
         });
 
+        //AWSCognitoIdentity.config.region = this.regionName;
+
+        const userPoolData = {
+            'UserPoolId' : 'us-east-1_WEqzyyjCH',
+            'ClientId' : '2hneaff827ri9theo97e2k931u'
+        };
+
+        console.log('cognito identity', AWSCognitoIdentity);
+        this.userPool = new AWSCognitoIdentity.CognitoUserPool(userPoolData);
+        this.userData = {
+            'username' : null,
+            'pool' : null
+        };
+
         this.s3 = this.createS3(this.bucketName);
         this.listObjectsInBucket();
+
+        this.createUser('asdf', '12345678', 'zasaltzman@gmail.com');
     }
 
     createS3(bucketName) {
@@ -69,7 +89,8 @@ class AWSModule {
                     console.log('parsedImage', parsedImage);
                 }
             }
-        }
+        };
+
         xmlRequest.open(parsedType, `http://${this.bucketName}.s3.amazonaws.com/${object}`, true);
         //xmlRequest.setRequestHeader('Content-Type', 'application/json');
         xmlRequest.setRequestHeader('response-content-type', 'application/octet-stream');
@@ -84,6 +105,34 @@ class AWSModule {
         
         console.log('request', request);
         */
+    }
+
+    createUser(username, password, email, phoneNumber = null) {
+        let dataEmail = {
+            'Name' : 'email', 
+            'Value' : email 
+        };
+        let dataPhoneNumber = { 
+            'Name' : 'phone_number', 
+            'Value' : phoneNumber 
+        };
+
+        let attributeEmail = new AWSCognitoIdentity.CognitoUserAttribute(dataEmail);
+        let attributeList = [attributeEmail];
+
+        if (phoneNumber) {
+            let attributePhoneNumber = new AWSCognitoIdentity.CognitoUserAttribute(dataPhoneNumber);
+            attributeList.push(attributePhoneNumber);
+        }
+
+        this.userPool.signUp(username, password, attributeList, null, (err, result) => {
+            if (err) {
+                console.log('Error in user pool signup', err);
+                return;
+            }
+            this.cognitoUser = result.user;
+            console.log('user returned by cognito', this.cognitoUser);
+        });
     }
 }
 
