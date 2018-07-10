@@ -5,6 +5,7 @@ const AWSCognitoIdentity = require('amazon-cognito-identity-js');
 const AWSCognitoAuth = require('amazon-cognito-auth-js');
 const bis_genericio = require('bis_genericio.js');
 const bisweb_image = require('bisweb_image.js');
+const bis_webutil = require('bis_webutil.js');
 const wsutil = require('../../fileserver/wsutil.js');
 
 
@@ -12,6 +13,7 @@ class AWSModule {
 
     constructor() {
 
+        //data related to Amazon AWS services
         this.bucketName = 'bisweb-test';
         this.regionName = 'us-east-1'; //N. Virginia
         const identityPool = 'us-east-1:13a0bffd-384b-43d8-83c3-050815009aa6';
@@ -25,8 +27,8 @@ class AWSModule {
         //AWSCognitoIdentity.config.region = this.regionName;
 
         const userPoolData = {
-            'UserPoolId' : 'us-east-1_WEqzyyjCH',
-            'ClientId' : '2hneaff827ri9theo97e2k931u'
+            'UserPoolId' : 'us-east-1_BAOsizFzq',
+            'ClientId' : '5edh465pitl9rb04qbi37csv8e'
         };
 
         console.log('cognito identity', AWSCognitoIdentity);
@@ -39,7 +41,10 @@ class AWSModule {
         this.s3 = this.createS3(this.bucketName);
         this.listObjectsInBucket();
 
-        this.createUser('asdf', '12345678', 'zasaltzman@gmail.com');
+        //UI features
+        this.createUserModal = null;
+        this.authUserModal = null;
+
     }
 
     createS3(bucketName) {
@@ -133,6 +138,69 @@ class AWSModule {
             this.cognitoUser = result.user;
             console.log('user returned by cognito', this.cognitoUser);
         });
+    }
+
+    confirmRegistration(code) {
+        if (!this.cognitoUser) {
+            console.log('No user, cannot confirm');
+            return;
+        }
+
+        this.cognitoUser.confirmRegistration(code, true, (err, result) => {
+            if (err) {
+                console.log('Error confirming user registration', err);
+                return;
+            }
+
+            console.log('Registration confirmed!');
+        });
+    }
+
+    displayCreateUserModal() {
+        if (!this.createUserModal) {
+            this.createUserModal = bis_webutil.createmodal('Enter User Details', 'modal-lg');
+            this.createUserModal.dialog.find('.modal-footer').find('.btn').remove();
+
+            let confirmButton = bis_webutil.createbutton({ 'name': 'Confirm', 'type': 'btn-success' });
+            let cancelButton = bis_webutil.createbutton({ 'name': 'Cancel', 'type': 'btn-danger' });
+
+            this.createUserModal.footer.append(confirmButton);
+            this.createUserModal.footer.append(cancelButton);
+
+            let userTextPrompt = $(`<p>Enter the details to associate to your Amazon AWS profile</p>`);
+            let entryBoxes = $(`
+                    <div class='form-group'>
+                        <label for='username'>Username:</label>
+                        <input type='text' class = 'name-field form-control'>
+                        <label for='email'>Email:</label>
+                        <input type='text' class = 'email-field form-control'>
+                        <label for='password'>Password:</label>
+                        <input type='password' class = 'password-field form-control'>
+                    </div>
+                `);
+
+            $(confirmButton).on('click', () => {
+                let password = this.authenticateModal.body.find('.form-control')[0].value;
+
+            });
+
+            $(cancelButton).on('click', () => {
+                this.authenticateModal.dialog.modal('hide');
+            });
+
+            //clear entry fields when modal is closed
+            $(this.createUserModal.dialog).on('hidden.bs.modal', () => {
+                this.authenticateModal.body.empty();
+            });
+
+            this.createUserModal.body.append(userTextPrompt);
+            this.createUserModal.body.append(entryBoxes);
+        }
+    }
+
+    wrapInAuth(command, parameters = null) {
+        console.log('TODO: implement wrap in auth....');
+        console.log('called command', command, 'with parameters', parameters);
     }
 }
 

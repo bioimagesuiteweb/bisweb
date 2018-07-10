@@ -75,13 +75,6 @@ class FileServer extends HTMLElement {
                 });
             }
         });
-
-
-        //AMAZON STUFF HERE JUST FOR DURATION OF TESTING
-        let aws = new bisweb_awsmodule();
-        aws.makeRequest('get', 'MNI_1mm_notbuggy.nii.gz');
-
-
     }
 
     /**

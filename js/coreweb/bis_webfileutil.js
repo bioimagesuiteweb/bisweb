@@ -29,6 +29,9 @@ const webutil=require('bis_webutil');
 const bisweb_dropbox=require('bisweb_simpledropbox');
 const bisweb_onedrive=require('bisweb_simpleonedrive');
 const bisweb_googledrive=require('bisweb_drivemodule');
+const amazonaws=require('bisweb_awsmodule.js');
+const bisweb_awsmodule = new amazonaws();
+
 let bisweb_fileserver;
 
 //const genericio=require('bis_genericio');
@@ -67,23 +70,23 @@ const webfileutils = {
             s.push({ value: "googledrive", text: "Google Drive" });
         if (mkey.length>1) 
             s.push({ value: "onedrive", text: "Microsoft OneDrive" });
+        
+        //TODO: Does this need a key or something? I don't think so but would be nice if there was some comparable flag...
+        s.push({ value : 'amazonaws', text: 'Amazon S3'});
 
         return s;
     },
     
     setMode : function(m='') {
 
-        m=m || 'local';
-        if (m==="dropbox" && dkey!=="")
-            fileMode="dropbox";
-        else if (m==="googledrive" && gkey!=="")
-            fileMode="googledrive";
-        else if (m==="onedrive" && mkey!=="")
-            fileMode="onedrive";
-        else if (m==="server")
-            fileMode="server";
-        else
-            fileMode="local";
+        switch(m) {
+            case 'dropbox' : if(dkey) { fileMode = 'dropbox'; } break;
+            case 'googledrive' : if (gkey) { fileMode = 'googledrive'; } break;
+            case 'onedrive' : if (mkey) { fileMode = 'onedrive'; } break;
+            case 'amazonaws' : fileMode = 'amazonaws'; break;
+            case 'server' : fileMode = 'server'; break;
+            default : fileMode = 'local';
+        }
 
         userPreferences.setItem('filesource',fileMode);
         userPreferences.storeUserPreferences();
@@ -259,10 +262,16 @@ const webfileutils = {
             return;
         }
 
+        if (fileMode==="amazonaws") {
+            bisweb_awsmodule.wrapInAuth('showfiles');
+            return;
+        }
+
         if (fileMode==="server") {
             bisweb_fileserver.wrapInAuth('showfiles');
             return;
         }
+
         
         
         let loadelement = $('<input type="file" style="visibility: hidden;" accept="' + suffix + '" />');
@@ -421,6 +430,10 @@ const webfileutils = {
                 () => { console.log('upload to fileserver successful.')}, 
                 () => { console.log('upload to fileserver failed.')}
             );
+        }
+
+        if (fileMode==='amazonaws') {
+            bisweb_awsmodule.wrapInAuth('uploadfile', { 'file' : blob, 'name' : filename });
         }
         
         return false;
