@@ -21,22 +21,14 @@
      <head> 
          <title id='pagetitle'>Working...</title>
          <script src='../node_modules/amazon-cognito-auth-js/dist/amazon-cognito-auth.min.js'></script> 
+         <script src='./awsparameters.js'></script>
          <script>
                 function handleIncoming() {
                     let params = window.location.hash.split('&');
                     if (params.length <= 1) {
                         console.log('document', document);
-                        let authData = {
-                            'ClientId': '5edh465pitl9rb04qbi37csv8e',
-                            'AppWebDomain': 'bisweb-test.auth.us-east-1.amazoncognito.com',
-                            'TokenScopesArray': ['email', 'openid'],
-                            'RedirectUriSignIn': 'http://localhost:8080/web/biswebaws.html',
-                            'RedirectUriSignOut': 'http://localhost:8080/web/biswebaws.html',
-                            'IdentityProvider': 'COGNITO',
-                            'UserPoolId': 'us-east-1_BAOsizFzq'
-                        };
 
-                        let auth = new AmazonCognitoIdentity.CognitoAuth(authData);
+                        let auth = new AmazonCognitoIdentity.CognitoAuth(awsparams);
                         auth.userhandler = {
                             onSuccess: () => { console.log('logged in successfully!') },
                             onFailure: () => { console.log('failed to login'); }
@@ -57,7 +49,10 @@
 
                         console.log(access_token);
                         localStorage.setItem('aws_token', access_token);
-                        localStorage.setItem('aws_token_type', token_type)
+                        localStorage.setItem('aws_token_type', token_type);
+
+                        document.getElementById('pagetitle').innerHTML = 'Done';
+                        document.getElementById('workingmessage').innerHTML = 'Login complete, you may now close this window';
                     }
                     
                 }
