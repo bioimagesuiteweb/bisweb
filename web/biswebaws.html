@@ -30,25 +30,28 @@
 
                         let auth = new AmazonCognitoIdentity.CognitoAuth(awsparams);
                         auth.userhandler = {
-                            onSuccess: () => { console.log('logged in successfully!') },
+                            onSuccess: () => { console.log('logged in successfully!'); },
                             onFailure: () => { console.log('failed to login'); }
                         }
                         auth.getSession();
                     } else {
                         console.log('params', params);
-                        let access_token, token_type;
+                        let access_token, id_token, token_type;
                         for (let param of params) {
                             let pair = param.split('=');
                             console.log('param', param, 'pair', pair);
                             if (decodeURIComponent(pair[0]) == 'access_token' || decodeURIComponent(pair[0]) == '#access_token') {
                                 access_token = pair[1];
+                            } else if (decodeURIComponent(pair[0]) == 'id_token' || decodeURIComponent(pair[0]) == '#id_token') {
+                                id_token = pair[1];
                             } else if (decodeURIComponent(pair[0]) == 'token_type' || decodeURIComponent(pair[0]) == '#token_type') {
                                 token_type = pair[1];
                             }
                         }
 
                         console.log(access_token);
-                        localStorage.setItem('aws_token', access_token);
+                        localStorage.setItem('aws_access_token', access_token);
+                        localStorage.setItem('aws_id_token', id_token);
                         localStorage.setItem('aws_token_type', token_type);
 
                         document.getElementById('pagetitle').innerHTML = 'Done';

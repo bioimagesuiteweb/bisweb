@@ -1,3 +1,4 @@
+'use strict';
 
 let awsparams = {
     'ClientId': '5edh465pitl9rb04qbi37csv8e',
@@ -8,3 +9,5 @@ let awsparams = {
     'IdentityProvider': 'COGNITO',
     'UserPoolId': 'us-east-1_BAOsizFzq'
 };
+
+module.exports = awsparams;

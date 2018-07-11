@@ -2,12 +2,14 @@
 
 const AWS = require('aws-sdk');
 const AWSCognitoIdentity = require('amazon-cognito-identity-js');
+const AWSParameters = require('../../web/awsparameters.js');
 const AWSCognitoAuth = require('amazon-cognito-auth-js');
 const bis_genericio = require('bis_genericio.js');
+
 const bisweb_image = require('bisweb_image.js');
 const bis_webutil = require('bis_webutil.js');
 const wsutil = require('../../fileserver/wsutil.js');
-
+const $ = require('jquery');
 
 class AWSModule {
 
@@ -42,17 +44,10 @@ class AWSModule {
             'pool' : null
         };
 
-        this.authData = {
-            'ClientId' : clientId,
-            'AppWebDomain' : 'bisweb-test.auth.us-east-1.amazoncognito.com',
-            'TokenScopesArray' : [ 'email', 'openid' ],
-            'RedirectUriSignIn' : redirectURI,
-            'RedirectUriSignOut' : redirectURI,
-            'IdentityProvider' : 'COGNITO', 
-            'UserPoolId' : userPool
-        };
+        this.authData = AWSParameters;
+        console.log('auth parameters', AWSParameters);
 
-        this.awsAuth = null
+        this.awsAuth = null;
         this.s3 = this.createS3(this.bucketName);
         this.listObjectsInBucket();
 
@@ -102,9 +97,9 @@ class AWSModule {
                     for (let i = 0; i < xmlRequest.response.length; i++) {
                         bufferView[i] = xmlRequest.response.charCodeAt(i);
                     }
-                    
-                    let unzippedFile = wsutil.unzipFile(bufferView);awsAuth
-                    console.log('bufferView', bufferView, 'buffer', buffer, 'unzipped file', unawsAuthzippedFile);
+
+                    let unzippedFile = wsutil.unzipFile(bufferView);
+                    console.log('bufferView', bufferView, 'buffer', buffer, 'unzipped file', unzippedFile);
 
                     let parsedImage = new bisweb_image();
                     parsedImage.parseNII(unzippedFile);
@@ -231,8 +226,8 @@ class AWSModule {
     }
 
     awsAuthUser() {
-        let authPage = window.open('../web/biswebaws.html', '_blank', 'width=400, height=400');
-        let authData = this.authData;
+        window.open('../web/biswebaws.html', '_blank', 'width=400, height=400');
+
         /*$(authPage).ready( function() {
             let auth = new AWSCognitoAuth.CognitoAuth(authData);
             auth.userhandler = {
