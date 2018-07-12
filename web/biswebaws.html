@@ -46,6 +46,8 @@
                         auth.getSession();
                     } else {
                         console.log('params', params);
+
+                        //parse tokens out of URL
                         let access_token, id_token, token_type;
                         for (let param of params) {
                             let pair = param.split('=');
@@ -58,10 +60,12 @@
                                 token_type = pair[1];
                             }
                         }
-
-                        console.log(id_token);
                         
                         let login = {}, cognitoUserPoolKey = `cognito-idp.${RegionName}.amazonaws.com/${awsparams.UserPoolId}`;
+                        let access_key = null;
+
+                        //construct credentials request from id token fetched from user pool, and the id of the identity pool
+                        //https://docs.aws.amazon.com/cognitoidentity/latest/APIReference/API_GetId.html#API_GetId_ResponseSyntax
                         login[cognitoUserPoolKey] = id_token;
                         AWS.config.credentials = new AWS.CognitoIdentityCredentials({
                             'IdentityPoolId' : IdentityPoolId,
@@ -71,7 +75,9 @@
 
                         AWS.config.credentials.get( (err) => {
                             if (err) { console.log(err); }
-                            else { console.log('login successful!'); }
+                            else { 
+                                console.log('Exchanged access token for access key'); 
+                            }
                         });
 
                         //Amazon Role ARN format — 'arn:aws:iam::account-id:role/role-name
@@ -83,8 +89,8 @@
                         });
                         AWS.config.credentials.refresh();
                         */
-                        console.log('credentials', AWS.config.credentials);
                         
+                        localStorage.setItem('AWS_credentials')
                         document.getElementById('pagetitle').innerHTML = 'Done';
                         document.getElementById('workingmessage').innerHTML = 'Login complete, you may now close this window';
                     }
