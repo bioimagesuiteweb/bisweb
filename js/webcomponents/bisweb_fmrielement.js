@@ -1,17 +1,22 @@
 "use strict";
 
 // imported modules from open source and bisweb repo
+const bisimagesmoothreslice = require('bis_imagesmoothreslice');
+const bistransformations = require('bis_transformationutil');
 const BisWebImage = require('bisweb_image');
 const webutil = require('bis_webutil');
 const webfileutil = require('bis_webfileutil');
 const bisimagealgo = require('bis_imagealgorithms');
+const bisgenericio = require('bis_genericio');
 const $ = require('jquery');
 const bootbox = require('bootbox');
+const LinearRegistration = require('linearRegistration');
+const ResliceImage = require('resliceImage');
+const NonlinearRegistration = require('nonlinearRegistration');
 const baseutils = require('baseutils');
 const BisWebPanel = require('bisweb_panel.js');
 const jstree = require('jstree');
-const MotionCorrection = require('motionCorrection');
-
+const MotionCorrection = require(bis)
 
 const tree_template_string = 
 `
@@ -30,8 +35,7 @@ let app_state =
     images: {
         anat: [],
         func:[],
-        dwi: [],
-        derivatives: []
+        dwi: []
     }
 };
 
@@ -77,9 +81,6 @@ class FMRIElement extends HTMLElement {
                             },
                             {
                                 'text': 'dwi'
-                            },
-                            {
-                                'text': 'derivatives'
                             }
                         ] 
                     },
@@ -131,20 +132,6 @@ class FMRIElement extends HTMLElement {
                     }
                 }
             }
-
-            else if (parentID === 'j1_5') {
-                let imagearray = app_state.images.derivatives;
-                console.log(imagearray);
-
-                for (let i=0;i<imagearray.length;i++) {
-                    if (node.node.text === imagearray[i].name) {
-                        console.log("Image Found");
-                        app_state.viewer.setimage(imagearray[i].image);
-                        break;
-                    }
-                }
-            }
-
         });
     }
 
@@ -213,70 +200,9 @@ class FMRIElement extends HTMLElement {
     }
 
 
-    computeMotionCorrection(array) {
-        let imageArray = [];
-        console.log(array);
+    
 
-        for (let i=0;i<array.length;i++) {
-            imageArray.push(array[i].image);
-        }
-
-        let self = this;
-        let numImages = imageArray.length;
-
-        let middleImage;
-
-        console.log(imageArray);
-
-        middleImage = imageArray[Math.round((numImages-1)/2)];
-
-        console.log(middleImage);
-
-        let motionCorrection = new MotionCorrection();
-        let input = {
-            'target'    : null,
-            'reference' : middleImage,
-        };
-        
-        input['reference'] = middleImage;
-        let dims = middleImage.getDimensions();
-        
-
-           let parameters = {
-                    "doreslice": true,
-                    "norm": true,
-                    "intscale": 1,
-                    "numbins": 64,
-                    "extrasmoothing": 0,
-                    "metric": "CC",
-                    "optimization": "HillClimb",
-                    "stepsize": 0.25,
-                    "levels": 3,
-                    "iterations": 1,
-                    "resolution": 1.01,
-                    "debug": false,
-                    "steps": 4,
-                    "refno": Math.round((dims[3]-1)/2)
-        };
-
-        let finalOutputs = [];
-
-        return new Promise( (resolve, reject) => {
-            let outputs = [];
-
-            for (let i=0;i<imageArray.length;i++) {
-                input['target'] = imageArray[i];
-                motionCorrection.execute(input, parameters).then( () => {
-                    outputs.push( {xform: motionCorrection.getOutputObject('output'), image: motionCorrection.getOutputObject('resliced'), name: "CORRECTED_"+array[i].name } );
-                    let tree = $('#treeDiv');
-                    tree.jstree().create_node("j1_5", {text: outputs[i].name});
-                });
-            } 
-            
-            resolve(outputs);
-        });
-
-    }
+    
 
     // -------------------------------------------------
     // 'main' function
@@ -289,7 +215,7 @@ class FMRIElement extends HTMLElement {
         let menubar = document.querySelector(menubarid).getMenuBar();
 
         let fmenu = webutil.createTopMenuBarMenu('File', menubar);
-        let motionmenu = webutil.createTopMenuBarMenu('Motion', menubar);
+        let regmenu = webutil.createTopMenuBarMenu('Motion Correction', menubar);
         
         webutil.createMenuItem(fmenu, 'New Subject',
             function () {
@@ -297,12 +223,9 @@ class FMRIElement extends HTMLElement {
             }
         );
 
-        webutil.createMenuItem(motionmenu, 'Correct Motion',
+       webutil.createMenuItem(regmenu, 'Motion Correction',
             function() {
-                self.computeMotionCorrection(app_state.images.func).then( (resolvedObject) => {
-					app_state.images.derivatives = resolvedObject;
-				});
-                
+                // call motion correction code
             }
         );
 
