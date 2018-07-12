@@ -1,18 +1,12 @@
 "use strict";
 
 // imported modules from open source and bisweb repo
-const bisimagesmoothreslice = require('bis_imagesmoothreslice');
-const bistransformations = require('bis_transformationutil');
 const BisWebImage = require('bisweb_image');
 const webutil = require('bis_webutil');
 const webfileutil = require('bis_webfileutil');
 const bisimagealgo = require('bis_imagealgorithms');
-const bisgenericio = require('bis_genericio');
 const $ = require('jquery');
 const bootbox = require('bootbox');
-const LinearRegistration = require('linearRegistration');
-const ResliceImage = require('resliceImage');
-const NonlinearRegistration = require('nonlinearRegistration');
 const baseutils = require('baseutils');
 const BisWebPanel = require('bisweb_panel.js');
 const jstree = require('jstree');
@@ -36,7 +30,8 @@ let app_state =
     images: {
         anat: [],
         func:[],
-        dwi: []
+        dwi: [],
+        derivatives: []
     }
 };
 
@@ -82,6 +77,9 @@ class FMRIElement extends HTMLElement {
                             },
                             {
                                 'text': 'dwi'
+                            },
+                            {
+                                'text': 'derivatives'
                             }
                         ] 
                     },
@@ -133,6 +131,20 @@ class FMRIElement extends HTMLElement {
                     }
                 }
             }
+
+            else if (parentID === 'j1_5') {
+                let imagearray = app_state.images.derivatives;
+                console.log(imagearray);
+
+                for (let i=0;i<imagearray.length;i++) {
+                    if (node.node.text === imagearray[i].name) {
+                        console.log("Image Found");
+                        app_state.viewer.setimage(imagearray[i].image);
+                        break;
+                    }
+                }
+            }
+
         });
     }
 
@@ -201,33 +213,40 @@ class FMRIElement extends HTMLElement {
     }
 
 
-    computeMotionCorrection(imageArray) {
-        
+    computeMotionCorrection(array) {
+        let imageArray = [];
+        console.log(array);
+
+        for (let i=0;i<array.length;i++) {
+            imageArray.push(array[i].image);
+        }
+
         let self = this;
         let numImages = imageArray.length;
 
         let middleImage;
 
-		console.log(imageArray);
+        console.log(imageArray);
 
         middleImage = imageArray[Math.round((numImages-1)/2)];
 
-		console.log(middleImage);
+        console.log(middleImage);
 
-        let MotionCorrectionModule = new MotionCorrection();
+        let motionCorrection = new MotionCorrection();
         let input = {
             'target'    : null,
             'reference' : middleImage,
         };
         
         input['reference'] = middleImage;
-
+        let dims = middleImage.getDimensions();
+        
 
            let parameters = {
                     "doreslice": true,
                     "norm": true,
                     "intscale": 1,
-                    "numbins": 1024,
+                    "numbins": 64,
                     "extrasmoothing": 0,
                     "metric": "CC",
                     "optimization": "HillClimb",
@@ -237,23 +256,26 @@ class FMRIElement extends HTMLElement {
                     "resolution": 1.01,
                     "debug": false,
                     "steps": 4,
-                    "refno": 0
+                    "refno": Math.round((dims[3]-1)/2)
         };
 
-        let promises = [];
-        let outputs = [];
+        let finalOutputs = [];
 
-        for (let i=0;i<numImages;i++) {
-            input['target'] = imageArray[i];
-            promises.push(MotionCorrectionModule.execute(input, parameters));
-        }
-        
-        Promise.all(promises).then( () => {
-            let outputObj = { 'xform': this.getOutputObject('output'), 'reslice': this.getOutputObject('reslice') };
-            outputs.push(outputObj);
+        return new Promise( (resolve, reject) => {
+            let outputs = [];
+
+            for (let i=0;i<imageArray.length;i++) {
+                input['target'] = imageArray[i];
+                motionCorrection.execute(input, parameters).then( () => {
+                    outputs.push( {xform: motionCorrection.getOutputObject('output'), image: motionCorrection.getOutputObject('resliced'), name: "CORRECTED_"+array[i].name } );
+                    let tree = $('#treeDiv');
+                    tree.jstree().create_node("j1_5", {text: outputs[i].name});
+                });
+            } 
+            
+            resolve(outputs);
         });
 
-		return outputs;
     }
 
     // -------------------------------------------------
@@ -275,16 +297,14 @@ class FMRIElement extends HTMLElement {
             }
         );
 
-		webutil.createMenuItem(motionmenu, 'Correct Motion',
-			function() {
-				let func_array = [];
-				for (let i=0;i<app_state.images.func.length;i++) {
-					func_array.push(app_state.images.func[i].image);
-				}
-
-				self.computeMotionCorrection(func_array);
-			}
-		);
+        webutil.createMenuItem(motionmenu, 'Correct Motion',
+            function() {
+                self.computeMotionCorrection(app_state.images.func).then( (resolvedObject) => {
+					app_state.images.derivatives = resolvedObject;
+				});
+                
+            }
+        );
 
         webutil.createMenuItem(fmenu,'');
         webutil.createMenuItem(fmenu,'Show fMRI Tool',function() {
