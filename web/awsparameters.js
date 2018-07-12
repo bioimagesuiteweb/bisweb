@@ -10,4 +10,9 @@ let awsparams = {
     'UserPoolId': 'us-east-1_BAOsizFzq'
 };
 
-module.exports = awsparams;
+let IdentityPoolId = 'us-east-1:13a0bffd-384b-43d8-83c3-050815009aa6';
+
+module.exports = {
+    'authParams' : awsparams,
+    'identityPool' : IdentityPoolId
+};

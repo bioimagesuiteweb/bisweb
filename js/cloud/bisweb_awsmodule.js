@@ -20,14 +20,12 @@ class AWSModule {
         this.regionName = 'us-east-1'; //N. Virginia
 
         const userPool = 'us-east-1_BAOsizFzq';
-        const identityPool = 'us-east-1:13a0bffd-384b-43d8-83c3-050815009aa6';
         const clientId = '5edh465pitl9rb04qbi37csv8e';
-        const redirectURI = 'http://localhost:8080/web/biswebaws.html';
 
         AWS.config.update({
             'region' : this.regionName,
             'credentials' : new AWS.CognitoIdentityCredentials({
-                'IdentityPoolId' : identityPool
+                'IdentityPoolId' : AWSParameters.identityPool
             })
         });
 
