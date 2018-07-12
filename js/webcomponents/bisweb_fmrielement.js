@@ -1,12 +1,9 @@
 "use strict";
 
 // imported modules from open source and bisweb repo
-const bisimagesmoothreslice = require('bis_imagesmoothreslice');
-const bistransformations = require('bis_transformationutil');
 const BisWebImage = require('bisweb_image');
 const webutil = require('bis_webutil');
 const webfileutil = require('bis_webfileutil');
-const bisimagealgo = require('bis_imagealgorithms');
 const bisgenericio = require('bis_genericio');
 const $ = require('jquery');
 const bootbox = require('bootbox');
