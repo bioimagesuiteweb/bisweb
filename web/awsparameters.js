@@ -11,8 +11,14 @@ let awsparams = {
 };
 
 let IdentityPoolId = 'us-east-1:13a0bffd-384b-43d8-83c3-050815009aa6';
+let BucketName = 'bisweb-test';
+let RegionName = 'us-east-1'; //N. Virginia
+let AccountId = '687575629668'; //My (Zach's) Amazon AWS account
 
 module.exports = {
     'authParams' : awsparams,
-    'identityPool' : IdentityPoolId
+    'IdentityPoolId' : IdentityPoolId,
+    'RegionName' : RegionName,
+    'BucketName' : BucketName,
+    'AccountId' : AccountId
 };

@@ -14,26 +14,18 @@ const $ = require('jquery');
 class AWSModule {
 
     constructor() {
-
-        //data related to Amazon AWS services
-        this.bucketName = 'bisweb-test';
-        this.regionName = 'us-east-1'; //N. Virginia
-
-        const userPool = 'us-east-1_BAOsizFzq';
-        const clientId = '5edh465pitl9rb04qbi37csv8e';
-
         AWS.config.update({
-            'region' : this.regionName,
+            'region' : AWSParameters.RegionName,
             'credentials' : new AWS.CognitoIdentityCredentials({
-                'IdentityPoolId' : AWSParameters.identityPool
+                'IdentityPoolId' : AWSParameters.IdentityPoolId
             })
         });
 
         //AWSCognitoIdentity.config.region = this.regionName;
 
         const userPoolData = {
-            'UserPoolId' : userPool,
-            'ClientId' : clientId
+            'UserPoolId' : AWSParameters.authParams.UserPoolId,
+            'ClientId' : AWSParameters.authParams.ClientId
         };
 
         this.userPool = new AWSCognitoIdentity.CognitoUserPool(userPoolData);
@@ -42,11 +34,11 @@ class AWSModule {
             'pool' : null
         };
 
-        this.authData = AWSParameters;
+        this.authData = AWSParameters.authParams;
         console.log('auth parameters', AWSParameters);
 
         this.awsAuth = null;
-        this.s3 = this.createS3(this.bucketName);
+        this.s3 = this.createS3(AWSParameters.BucketName);
         this.listObjectsInBucket();
 
         //set to the values provided by Cognito when the user signs in
@@ -225,7 +217,6 @@ class AWSModule {
 
     awsAuthUser() {
         window.open('../web/biswebaws.html', '_blank', 'width=400, height=400');
-
         /*$(authPage).ready( function() {
             let auth = new AWSCognitoAuth.CognitoAuth(authData);
             auth.userhandler = {
