@@ -213,6 +213,7 @@ class FMRIElement extends HTMLElement {
     }
 
 
+<<<<<<< HEAD
     computeMotionCorrection(array) {
         let imageArray = [];
         console.log(array);
@@ -236,6 +237,27 @@ class FMRIElement extends HTMLElement {
         let input = {
             'target'    : null,
             'reference' : middleImage,
+=======
+    /*
+     * function to compute a linear registration using the linearRegistration module
+     */
+    computeLinearRegistration(refImage, targImage) {
+        let opts = {
+            "intscale"      : 1,
+            "numbins"       : 64,
+            "levels"        : 3,
+            "imagesmoothing": 1,
+            "optimization"  : "ConjugateGradient",
+            "stepsize"      : 1,
+            "metric"        : "NMI",
+            "steps"         : 1,
+            "iterations"    : 10,
+            "mode"          : "Rigid",
+            "resolution"    : 1.5,
+            "doreslice"     : true,
+            "norm"          : true,
+            "debug"         : false
+>>>>>>> fe31264dc53dc5e260c6584f3a5361d79ef39c15
         };
         
         input['reference'] = middleImage;
@@ -276,6 +298,88 @@ class FMRIElement extends HTMLElement {
             resolve(outputs);
         });
 
+<<<<<<< HEAD
+=======
+        let input = {
+            'reference': refImage,
+            'target'   : targImage
+        };
+
+        let regModule = new LinearRegistration();
+
+        let output = {
+            xform  : null,
+            reslice: null
+        };
+
+        return new Promise( (resolve, reject) => {
+
+            regModule.execute(input, opts).then( () => {
+                output.xform = regModule.getOutputObject('output');
+                output.reslice = regModule.getOutputObject('resliced');
+            
+                try {
+                    resolve(output);
+                } catch(e) {
+                    console.log("Caught in Promise: ",e,e.stack);
+                    reject(e);
+                }
+            });
+
+        });
+        
+    }
+
+    computeNonlinearRegistration(refImage, targImage) {
+        
+        let regModule = new NonlinearRegistration();
+        let input = 
+                {
+                    'reference': refImage,
+                    'target'   : targImage
+                };
+
+        let opts = 
+            {
+                'intscale'      : 1,
+                'numbins'       : 64,
+                'levels'        : 3,
+                'imagesmoothing': 1,
+                'optimization'  : 'ConjugateGradient',
+                'stepsize'      : 1,
+                'metric'        : 'NMI',
+                'steps'         : 1,
+                'iterations'    : 1,
+                'cps'           : 20,
+                'append'        : true,
+                'linearmode'    : 'Affine',
+                'resolution'    : 1.5,
+                'lambda'        : 0.001,
+                'cpsrate'       : 2,
+                'doreslice'     : true,
+                'norm'          : true,
+                'debug'         : true
+            };
+
+            let output = {
+                    transformation: null,
+                    reslice: null
+            };
+
+            return new Promise( (resolve, reject) => {
+
+                regModule.execute(input, opts).then( () => {
+                    output.transformation = regModule.getOutputObject('output');
+                    output.reslice = regModule.getOutputObject('resliced');
+                    try {
+                        resolve(output);
+                    } catch(e) {
+                        console.log('Error: ', e, e.stack);
+                        reject(e);
+                    }
+                });
+            });
+>>>>>>> fe31264dc53dc5e260c6584f3a5361d79ef39c15
     }
 
     // -------------------------------------------------
@@ -305,6 +409,12 @@ class FMRIElement extends HTMLElement {
                 
             }
         );
+<<<<<<< HEAD
+=======
+
+
+
+>>>>>>> fe31264dc53dc5e260c6584f3a5361d79ef39c15
 
         webutil.createMenuItem(fmenu,'');
         webutil.createMenuItem(fmenu,'Show fMRI Tool',function() {
