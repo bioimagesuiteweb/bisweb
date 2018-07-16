@@ -36,8 +36,10 @@
                     let params = window.location.hash.split('&');
                     if (params.length <= 1) {
 
-                        //get id and access token using amazon-cognito-auth-js
-                        console.log('Amazon Cognito Identity', AmazonCognitoIdentity);
+                        //-------------------------------------------------------------------
+                        // 1.) log into user pool
+                        //-------------------------------------------------------------------
+
                         let auth = new AmazonCognitoIdentity.CognitoAuth(awsparams);
                         auth.userhandler = {
                             onSuccess: () => { console.log('logged in successfully!'); },
@@ -61,25 +63,8 @@
                             }
                         }
                         
-                        let login = {}, cognitoUserPoolKey = `cognito-idp.${RegionName}.amazonaws.com/${awsparams.UserPoolId}`;
-                        let access_key = null;
-
-                        //construct credentials request from id token fetched from user pool, and the id of the identity pool
-                        //https://docs.aws.amazon.com/cognitoidentity/latest/APIReference/API_GetId.html#API_GetId_ResponseSyntax
-                        login[cognitoUserPoolKey] = id_token;
-                        AWS.config.credentials = new AWS.CognitoIdentityCredentials({
-                            'IdentityPoolId' : IdentityPoolId,
-                            'Logins' : login,
-                            'RoleSessionName' : 'web'
-                        });
-
-                        AWS.config.credentials.get( (err) => {
-                            if (err) { console.log(err); }
-                            else { 
-                                console.log('Exchanged access token for access key'); 
-                            }
-                        });
-
+                        localStorage.setItem('aws_id_token', id_token);
+                        
                         //Amazon Role ARN format — 'arn:aws:iam::account-id:role/role-name
                         //https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html#Identifiers_ARNs
                         /*AWS.config.credentials = new AWS.WebIdentityCredentials({
@@ -90,9 +75,6 @@
                         AWS.config.credentials.refresh();
                         */
                         
-                        localStorage.setItem('AWS_credentials')
-                        document.getElementById('pagetitle').innerHTML = 'Done';
-                        document.getElementById('workingmessage').innerHTML = 'Login complete, you may now close this window';
                     }
                     
                 }

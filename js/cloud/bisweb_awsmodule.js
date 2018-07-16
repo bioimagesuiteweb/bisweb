@@ -35,11 +35,10 @@ class AWSModule {
         };
 
         this.authData = AWSParameters.authParams;
-        console.log('auth parameters', AWSParameters);
 
         this.awsAuth = null;
         this.s3 = this.createS3(AWSParameters.BucketName);
-        this.listObjectsInBucket();
+        //this.listObjectsInBucket();
 
         //set to the values provided by Cognito when the user signs in
         this.cognitoUser = null;
@@ -47,6 +46,10 @@ class AWSModule {
         //UI features
         this.createUserModal = null;
         this.authUserModal = null;
+
+        window.addEventListener('message', (data) => {
+            console.log('got a message', data); 
+        });
     }
 
     createS3(bucketName) {
@@ -217,16 +220,38 @@ class AWSModule {
 
     awsAuthUser() {
         window.open('../web/biswebaws.html', '_blank', 'width=400, height=400');
-        /*$(authPage).ready( function() {
-            let auth = new AWSCognitoAuth.CognitoAuth(authData);
-            auth.userhandler = {
-                onSuccess: () => { console.log('logged in successfully!') },
-                onFailure: () => { console.log('failed to login'); }
+        let idTokenEvent = window.addEventListener('storage', (data) => {
+            console.log('storage event', data);
+            if (data.key === 'aws_id_token') {
+                window.removeEventListener('storage', idTokenEvent);
+                //---------------------------------------------------------------
+                // 2.) log into identity pool
+                //---------------------------------------------------------------
+
+                let login = {}, cognitoUserPoolKey = `cognito-idp.${AWSParameters.RegionName}.amazonaws.com/${AWSParameters.authParams.UserPoolId}`;
+
+                //construct credentials request from id token fetched from user pool, and the id of the identity pool
+                //https://docs.aws.amazon.com/cognitoidentity/latest/APIReference/API_GetId.html#API_GetId_ResponseSyntax
+                login[cognitoUserPoolKey] = data.newValue;
+                AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+                    'IdentityPoolId': AWSParameters.IdentityPoolId,
+                    'Logins': login,
+                    'RoleSessionName': 'web'
+                });
+
+                AWS.config.credentials.get((err) => {
+                    if (err) {
+                        console.log(err);
+
+                    } else {
+                        console.log('Exchanged access token for access key');
+
+                        //document.getElementById('pagetitle').innerHTML = 'Done';
+                        //document.getElementById('workingmessage').innerHTML = 'Login complete, you may now close this window';
+                    }
+                });
             }
-            console.log('window', window);
-            console.log('auth', auth);
-            //auth.getSession();
-        });*/
+        });
     }
 }
 
