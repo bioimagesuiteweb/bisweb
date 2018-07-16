@@ -57,6 +57,7 @@ class FMRIElement extends HTMLElement {
 
     }
 
+    // initializes jstree when new subject is selected
     createNewStudy() {
 
         const self = this;
@@ -216,7 +217,7 @@ class FMRIElement extends HTMLElement {
 
 
     
-        
+    // a function that computes motion correction and reslices an array of images (according to computed motion parameters)
     computeMotionCorrection(array) {
         let imageArray = [];
         console.log(array);
@@ -230,12 +231,12 @@ class FMRIElement extends HTMLElement {
 
         let middleImage;
 
-		console.log(imageArray);
+        console.log(imageArray);
 
         middleImage = imageArray[Math.round((numImages-1)/2)];
         let dims = middleImage.getDimensions();
 
-		console.log(middleImage);
+        console.log(middleImage);
 
         let motionCorrection = new MotionCorrection();
         let input = {
@@ -260,7 +261,6 @@ class FMRIElement extends HTMLElement {
             "refno": Math.round((dims[3]-1)/2)
         };
 
-        let finalOutputs = [];
 
         return new Promise( (resolve, reject) => {
             let outputs = [];
@@ -278,7 +278,53 @@ class FMRIElement extends HTMLElement {
         });
     }
 
+    // A function that extracts motion corrected images from an array of images
+    getMotionCorrectedImages(array) {
+        
+        let correctedImages = [];
+
+        for (let i=0;i<array.length;i++) 
+            if (array[i].name.substring(0,10) === "CORRECTED_") 
+                correctedImages.push(array[i]);
+
+        return correctedImages;
+
+    }    
+
+    // A function that averages images
+    computeAverageImage(array) {
+
+        let imageArray = [];
     
+        for (let i=0;i<array.length;i++) 
+            imageArray.push(array[i].image);
+
+        let dims=imageArray[0].getDimensions();
+        let pitch=[1,dims[0],dims[0]*dims[1],dims[0]*dims[1]*dims[2],dims[0]*dims[1]*dims[2]*dims[3]];
+        
+        let averageImage = new BisWebImage();
+        averageImage.cloneImage(imageArray[0]);
+
+        for (let i=0;i<dims[0];i++) {
+            for (let j=0;j<dims[1];j++) {
+                for (let k=0;k<dims[2];k++) {
+                    for (let t=0;t<dims[3];t++) {
+                        let averageVoxelIntensity=0;
+                        let sumVoxelIntensity=0;
+
+                        for (let currentImage=0;currentImage<imageArray.length;currentImage++) 
+                            sumVoxelIntensity += imageArray[currentImage].getVoxel(i,j,k);
+
+                        averageVoxelIntensity = sumVoxelIntensity/imageArray.length;
+
+                        averageImage.getImageData()[i*pitch[0] + j*pitch[1] + k*pitch[2] + t*pitch[3]] = averageVoxelIntensity;
+                    }
+                }
+            }
+        }
+
+        return averageImage;    
+    }
 
 
     // -------------------------------------------------
@@ -292,7 +338,7 @@ class FMRIElement extends HTMLElement {
         let menubar = document.querySelector(menubarid).getMenuBar();
 
         let fmenu = webutil.createTopMenuBarMenu('File', menubar);
-        let motionmenu = webutil.createTopMenuBarMenu('Motion', menubar);
+        let processingmenu = webutil.createTopMenuBarMenu('Image Processing', menubar);
         
         webutil.createMenuItem(fmenu, 'New Subject',
             function () {
@@ -301,12 +347,31 @@ class FMRIElement extends HTMLElement {
         );
 
 
-        webutil.createMenuItem(motionmenu, 'Correct Motion',
+        webutil.createMenuItem(processingmenu, 'Correct Motion',
             function() {
-                self.computeMotionCorrection(app_state.images.func).then( (resolvedObject) => {
-					app_state.images.derivatives = resolvedObject;
-				});
-                
+                if (app_state.images.func.length > 0) {
+                       self.computeMotionCorrection(app_state.images.func).then( (resolvedObject) => {
+                        app_state.images.derivatives = resolvedObject;
+                    });
+                   } 
+
+                else
+                    bootbox.alert("No Functional Images Found");
+            }
+        );
+
+        webutil.createMenuItem(processingmenu, 'Compute Average Functional Image',
+            function() {
+                let correctedImages = self.getMotionCorrectedImages(app_state.images.derivatives);
+                if (correctedImages.length > 0) {
+                    let averageImage = self.computeAverageImage(correctedImages);
+                    app_state.images.derivatives.push({image: averageImage, reslice: null, name: "AVERAGE_fmri.nii.gz"});
+                    let tree = $("#treeDiv");
+                    tree.jstree().create_node("j1_5", {text:"AVERAGE_fmri.nii.gz"});
+                }
+
+                else
+                    bootbox.alert("No Motion Corrected Images Found");
             }
         );
 
