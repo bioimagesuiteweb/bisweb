@@ -213,7 +213,7 @@ class AWSModule {
         }
 
         switch(command) {
-            case 'showfiles' : this.listFilesInBucket(); break;
+            case 'showfiles' : this.listObjectsInBucket(); break;
             case 'uploadfile' : this.uploadFileToBucket(parameters); break;
             default : console.log('Unrecognized aws command', command, 'cannot complete request.');
         }
@@ -241,7 +241,7 @@ class AWSModule {
                     'RoleSessionName': 'web'
                 });
 
-                AWS.config.credentials.get((err) => {
+                AWS.config.credentials.get( (err) => {
                     if (err) {
                         console.log(err);
                         authWindow.postMessage({ 'failure': 'auth failed' });
@@ -250,6 +250,12 @@ class AWSModule {
                         authWindow.postMessage({ 'success': 'auth complete' }, window.location);
 
                         console.log('credentials', AWS.config.credentials);
+
+                        //TODO: determine whether refresh is necessary
+                        AWS.config.credentials.refresh( (err) => {
+                            if (err) { console.log('an error occured refreshing', err); }
+                            else { console.log('refresh successful.'); }
+                        });
                     }
                 });
             }
