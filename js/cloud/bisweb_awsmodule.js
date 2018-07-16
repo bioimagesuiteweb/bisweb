@@ -151,7 +151,7 @@ class AWSModule {
             return;
         }
 
-        this.cognitoUser.confirmRegistration(code, true, (err, result) => {
+        this.cognitoUser.confirmRegistration(code, true, (err) => {
             if (err) {
                 console.log('Error confirming user registration', err);
                 return;
@@ -204,8 +204,10 @@ class AWSModule {
     }
 
     wrapInAuth(command, parameters = null) {
+        let expireTime = AWS.config.credentials.expireTime ? Date.parse(AWS.config.credentials.expireTime) : -1;
+        console.log('expire time', expireTime);
 
-        if (!this.cognitoUser) {
+        if (expireTime < Date.now()) {
             this.awsAuthUser();
             return;
         }
@@ -219,9 +221,9 @@ class AWSModule {
     }
 
     awsAuthUser() {
-        window.open('../web/biswebaws.html', '_blank', 'width=400, height=400');
-        let idTokenEvent = window.addEventListener('storage', (data) => {
-            console.log('storage event', data);
+        let authWindow = window.open('../web/biswebaws.html', '_blank', 'width=400, height=400');
+        let idTokenEvent = (data) => {
+            //console.log('storage event', data);
             if (data.key === 'aws_id_token') {
                 window.removeEventListener('storage', idTokenEvent);
                 //---------------------------------------------------------------
@@ -242,16 +244,18 @@ class AWSModule {
                 AWS.config.credentials.get((err) => {
                     if (err) {
                         console.log(err);
-
+                        authWindow.postMessage({ 'failure': 'auth failed' });
                     } else {
                         console.log('Exchanged access token for access key');
+                        authWindow.postMessage({ 'success': 'auth complete' }, window.location);
 
-                        //document.getElementById('pagetitle').innerHTML = 'Done';
-                        //document.getElementById('workingmessage').innerHTML = 'Login complete, you may now close this window';
+                        console.log('credentials', AWS.config.credentials);
                     }
                 });
             }
-        });
+        };
+
+        window.addEventListener('storage', idTokenEvent);
     }
 }
 

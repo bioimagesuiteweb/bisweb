@@ -47,6 +47,17 @@
                         }
                         auth.getSession();
                     } else {
+                        window.addEventListener('message', (message) => {
+                            console.log('data', message);
+
+                            if (message.data.success) {
+                                document.getElementById('pagetitle').innerHTML = 'Done';
+                                document.getElementById('workingmessage').innerHTML = 'Login complete, you may now close this window';
+                            } else {
+                                document.getElementById('pagetitle').innerHTML = 'Error';
+                                document.getElementById('workingmessage').innerHTML = 'An error occured during login, please try again';       
+                            }
+                        }, { 'once' : true});
                         console.log('params', params);
 
                         //parse tokens out of URL
