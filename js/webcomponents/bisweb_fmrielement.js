@@ -147,7 +147,20 @@ class FMRIElement extends HTMLElement {
                         break;
                     }
                 }
+
+                if (node.node.text === "AVERAGE_fmri_T1space.nii.gz") {
+                    let t1 = self.getT1Image(app_state.images.anat).image;
+                    app_state.viewer.setimage(t1);
+                    for (let i=0;i<imagearray.length;i++) {
+                        if (node.node.text === imagearray[i].name) {
+                            console.log('image found');
+                            app_state.viewer.setobjectmap(imagearray[i].image);
+                            break;
+                        }
+                    }
+                }
             }
+
         });
     }
 
@@ -214,8 +227,98 @@ class FMRIElement extends HTMLElement {
 
         return items;
     }
+    
+    // a function that computes a nonlinear image registration, given a reference image and a target image
+    computeNonlinearRegistration(reference, target) {
 
+        let nonlinearReg = new NonlinearRegistration();
+        let input = { 'reference': reference,
+                      'target'   : target};
 
+        let opts =  {
+                "intscale": 1,
+                "numbins": 64,
+                "levels": 3,
+                "imagesmoothing": 1,
+                "optimization": "ConjugateGradient",
+                "stepsize": 1,
+                "metric": "NMI",
+                "steps": 1,
+                "iterations": 1,
+                "cps": 20,
+                "append": true,
+                "linearmode": "Affine",
+                "resolution": 1.5,
+                "lambda": 0.001,
+                "cpsrate": 2,
+                "doreslice": true,
+                "norm": true,
+                "debug": true
+                    };
+
+        let output = {
+            xform: null,
+            reslice: null
+        };
+
+        return new Promise( (resolve, reject) => {
+
+            nonlinearReg.execute(input, opts).then( () => {
+                output.xform = nonlinearReg.getOutputObject('output');
+                output.reslice = nonlinearReg.getOutputObject('resliced');
+                resolve(output);
+            }).catch( (e) => {
+                console.log("Error:", e, e.stack);
+                bootbox.alert("ERROR:", e, e.stack);
+                reject(e);
+            });
+        });
+    }
+
+    // a function that computes a linear registration given a reference image and a target image
+    computeLinearRegistration(reference, target) {
+
+        let input = {
+            'reference': reference,
+            'target'   : target
+        };
+
+        let opts = {
+            "intscale": 1,
+            "numbins": 64,
+            "levels": 3,
+            "imagesmoothing": 1,
+            "optimization": "ConjugateGradient",
+            "stepsize": 1,
+            "metric": "NMI",
+            "steps": 1,
+            "iterations": 10,
+            "mode": "Rigid",
+            "resolution": 1.5,
+            "doreslice": true,
+            "norm": true,
+            "debug": false
+        };
+
+        let linearReg = new LinearRegistration();
+
+        let output = {
+            transformation: null,
+            reslice: null
+        };
+
+        return new Promise( (resolve, reject) => {
+            linearReg.execute(input, opts).then( () => {
+                output.xform = linearReg.getOutputObject('output');
+                output.reslice = linearReg.getOutputObject('resliced');
+                resolve(output);
+            }).catch( (e) => {
+                console.log('ERROR:',e,e.stack);
+                bootbox.alert('ERROR');
+                reject(e);
+            });
+        });
+    }
     
     // a function that computes motion correction and reslices an array of images (according to computed motion parameters)
     computeMotionCorrection(array) {
@@ -271,6 +374,10 @@ class FMRIElement extends HTMLElement {
                     outputs.push( {xform: motionCorrection.getOutputObject('output'), image: motionCorrection.getOutputObject('resliced'), name: "CORRECTED_"+array[i].name } );
                     let tree = $('#treeDiv');
                     tree.jstree().create_node("j1_5", {text: outputs[i].name});
+                }).catch( (e) => {
+                    console.log("Error:",e,e.stack);
+                    bootbox.alert('ERROR');
+                    reject(e);
                 });
             } 
             
@@ -313,9 +420,12 @@ class FMRIElement extends HTMLElement {
                         let sumVoxelIntensity=0;
 
                         for (let currentImage=0;currentImage<imageArray.length;currentImage++) 
-                            sumVoxelIntensity += imageArray[currentImage].getVoxel(i,j,k);
+                            sumVoxelIntensity += imageArray[currentImage].getVoxel([i,j,k,t]);
 
                         averageVoxelIntensity = sumVoxelIntensity/imageArray.length;
+
+                        if (t%50===0)
+                            console.log('Average Voxel Intensity:', averageVoxelIntensity);
 
                         averageImage.getImageData()[i*pitch[0] + j*pitch[1] + k*pitch[2] + t*pitch[3]] = averageVoxelIntensity;
                     }
@@ -326,6 +436,33 @@ class FMRIElement extends HTMLElement {
         return averageImage;    
     }
 
+    // a function to extract the average fmri image from an array of images (if it exists)
+    getAverageFMRI(array) {
+
+        let averageImage = null;
+
+        for (let i=0;i<array.length;i++) 
+            if (array[i].name === "AVERAGE_fmri.nii.gz") {
+                averageImage = array[i];
+                console.log("Average Image Found");
+                break;
+            }
+
+        return averageImage;
+    }
+
+    // a function to extract the T1 weighted image from an array of anatomical data
+    getT1Image(array) {
+
+        let t1 = null;
+        for (let i=0;i<array.length;i++) 
+            if (array[i].name.indexOf("T1") >= 0 ||
+                array[i].name.indexOf("t1") >= 0) {
+                    t1 = array[i];
+                }
+
+        return t1;
+    }
 
     // -------------------------------------------------
     // 'main' function
@@ -339,6 +476,7 @@ class FMRIElement extends HTMLElement {
 
         let fmenu = webutil.createTopMenuBarMenu('File', menubar);
         let processingmenu = webutil.createTopMenuBarMenu('Image Processing', menubar);
+        let registrationmenu = webutil.createTopMenuBarMenu('Image Registration', menubar);
         
         webutil.createMenuItem(fmenu, 'New Subject',
             function () {
@@ -351,9 +489,9 @@ class FMRIElement extends HTMLElement {
             function() {
                 if (app_state.images.func.length > 0) {
                        self.computeMotionCorrection(app_state.images.func).then( (resolvedObject) => {
-                        app_state.images.derivatives = resolvedObject;
+                       app_state.images.derivatives = resolvedObject;
                     });
-                   } 
+                } 
 
                 else
                     bootbox.alert("No Functional Images Found");
@@ -365,7 +503,7 @@ class FMRIElement extends HTMLElement {
                 let correctedImages = self.getMotionCorrectedImages(app_state.images.derivatives);
                 if (correctedImages.length > 0) {
                     let averageImage = self.computeAverageImage(correctedImages);
-                    app_state.images.derivatives.push({image: averageImage, reslice: null, name: "AVERAGE_fmri.nii.gz"});
+                    app_state.images.derivatives.push({image: averageImage, xform: null, name: "AVERAGE_fmri.nii.gz"});
                     let tree = $("#treeDiv");
                     tree.jstree().create_node("j1_5", {text:"AVERAGE_fmri.nii.gz"});
                 }
@@ -375,6 +513,25 @@ class FMRIElement extends HTMLElement {
             }
         );
 
+        webutil.createMenuItem(registrationmenu, 'Register Functional to T1', 
+            function() {
+                let averageImage = self.getAverageFMRI(app_state.images.derivatives).image;
+                let t1 = self.getT1Image(app_state.images.anat).image;
+
+                if (averageImage !== null && t1 !== null) {
+                    let registerFunctionalToT1 = self.computeLinearRegistration(t1, averageImage);
+                    registerFunctionalToT1.then( (output) => {
+                        let newObject = {image: output.reslice, xform: output.xform, name: "AVERAGE_fmri_T1space.nii.gz"};
+                        app_state.images.derivatives.push(newObject);
+                        let tree = $("#treeDiv");
+                        tree.jstree().create_node("j1_5", {text:"AVERAGE_fmri_T1space.nii.gz"});
+                    });
+                }
+            
+                else
+                    bootbox.alert('Invalid Images');
+            }
+        );
 
         webutil.createMenuItem(fmenu,'');
         webutil.createMenuItem(fmenu,'Show fMRI Tool',function() {
