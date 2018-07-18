@@ -417,7 +417,7 @@ namespace bisLegacyFileSupport {
     return ;
   }
 
-  int convertMat44ToQuatern(Eigen::MatrixXf& input,Eigen::MatrixXf& output,int debug) {
+  int convertMat44ToQuatern(Eigen::MatrixXf& input,Eigen::MatrixXf& output,int) {
 
     float qb,qc,qd,qx,qy,qz,dx,dy,dz,qfac;
     mat44 M;

@@ -45,6 +45,7 @@ const userPreferencesLoaded = userPreferences.webLoadUserPreferences(bisdbase);
 
 // Initial mode
 let fileMode='local';
+let fileInputElements= [];
 
 const webfileutils = {
 
@@ -101,34 +102,6 @@ const webfileutils = {
     },
 
     
-    /** function to create a hidden input type="file" button and add it to body
-     * @alias WebFileUtil.createHiddenInputFile
-     * @param {function} callback - callback to call
-     * @param {string} accept - List of file types to accept as a comma-separated string e.g. ".ljson,.land"
-     * @param {Boolean} attach - if true attach to body, else leave transient
-     * @returns {JQueryElement} 
-     */
-    createHiddenInputFile: function (accept, callback,attach=true) {
-
-        /*if { simpemode === false } {
-          return dosomethingelse(accept,callback);*/
-        
-        accept = accept || "";
-        if (accept === "NII")
-            accept = '.nii,.nii.gz,.gz,.tiff';
-
-        var loadelement = $('<input type="file" style="visibility: hidden;" accept="' + accept + '"/>');
-        if (attach)
-            $('body').append(loadelement);
-        
-        loadelement[0].addEventListener('change', function (e) {
-            e.stopPropagation();
-            e.preventDefault();
-            callback(e.target.files[0]);
-        });
-        return loadelement;
-    },
-    
     /** electron file callback function
      * @alias WebFileUtil.electronFileCallback
      * @param {object} opts - the file options object 
@@ -153,12 +126,15 @@ const webfileutils = {
             ];
         if (suffix === "DIRECTORY")
             fileopts.filters = "DIRECTORY";
+
+
+        
         
         if (fileopts.defaultpath==='') {
             if (fileopts.initialCallback)
                 fileopts.defaultpath=fileopts.initialCallback() || '';
         }
-            
+        
         
         fileopts.filters = fileopts.filters ||
             [{ name: 'All Files', extensions: ['*'] }];
@@ -207,6 +183,7 @@ const webfileutils = {
      * @param {BisImage} opts.saveImage - the image to save. (Optional)
      * @param {string} opts.defaultpath - if in file mode and web use this as original filename
      * @param {string} opts.suffix - if in file mode and web use this to filter web style
+     * @param {string} opts.force - force file selection mode (e.g. 'local');
      * @param {function} callback - callback to call when done
      */
     webFileCallback: function (fileopts, callback = null) {
@@ -214,7 +191,28 @@ const webfileutils = {
         let suffix = fileopts.suffix || '';
         if (suffix === "NII")
             suffix = '.nii,.nii.gz,.gz,.tiff';
-        
+
+        if (suffix!=='') {
+            let s=suffix.split(",");
+            for (let i=0;i<s.length;i++) {
+                let a=s[i];
+                if (a.indexOf(".")!==0)
+                    s[i]="."+s[i];
+            }
+            suffix=s.join(",");
+        } else {
+            let flt=fileopts.filters || [];
+            if (flt.length>0) {
+                let extensions=[];
+                for (let i=0;i<flt.length;i++) {
+                    let s=flt[i].extensions;
+                    for (let j=0;j<s.length;j++)
+                        extensions.push("."+s[j]);
+                }
+                suffix=extensions.join(',');
+            }
+        }
+
 
         if (fileopts.save) {
             //if the callback is specified presumably that's what should be called
@@ -235,21 +233,24 @@ const webfileutils = {
             return;
         }
 
-
+        let fmode=fileMode;
+        if (fileopts.force)
+            fmode=fileopts.force;
+        
         // -------- load -----------
         
-        if (fileMode==='dropbox') { 
+        if (fmode==='dropbox') { 
             fileopts.suffix=suffix;
             return bisweb_dropbox.pickReadFile(fileopts,callback);
         }
         
-        if (fileMode==='onedrive') { 
+        if (fmode==='onedrive') { 
             fileopts.suffix=suffix;
             return bisweb_onedrive.pickReadFile(fileopts,callback);
         }
         
         
-        if (fileMode==="googledrive") {
+        if (fmode==="googledrive") {
             bisweb_googledrive.create().then( () => {
                 bisweb_googledrive.pickReadFile("").then(
                     (obj) => {
@@ -272,14 +273,17 @@ const webfileutils = {
             return;
         }
 
+
+        let nid=webutil.getuniqueid();
+        let loadelement = $(`<input type="file" style="visibility: hidden;" id="${nid}" accept="${suffix}"/>`);
+        for (let i=0;i<fileInputElements.length;i++)
+            fileInputElements[i].remove();
+        fileInputElements.push(loadelement);
         
-        
-        let loadelement = $('<input type="file" style="visibility: hidden;" accept="' + suffix + '" />');
         loadelement[0].addEventListener('change', function (f) {
-            f.stopPropagation();
-            f.preventDefault();
             callback(f.target.files[0]);
         });
+        $('body').append(loadelement);
         loadelement[0].click();
     },
 
@@ -300,7 +304,7 @@ const webfileutils = {
         fileopts.save = fileopts.save || false;
         
         const that = this;
-        
+
         if (webutil.inElectronApp()) {
             
             button.click(function(e) {
@@ -311,6 +315,7 @@ const webfileutils = {
                 },1);
             });
         } else {
+
             button.click(function(e) {
                 setTimeout( () => {
                     e.stopPropagation();

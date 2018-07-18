@@ -31,6 +31,20 @@ const pipeline = require('pipelineTool');
 
 const genericio=require('bis_genericio');
 const bootbox=require('bootbox');
+const BisWebPanel = require('bisweb_panel.js');
+//const BisWebHelpVideoPanel = require('bisweb_helpvideopanel');
+
+const localforage=require('localforage');
+
+
+const clipboard=localforage.createInstance({
+    driver : localforage.INDEXEDDB,
+    name : "BioImageSuiteWebClipboard",
+    version : 1.0,
+    storeName : "biswebclipboard",
+    description : "BioImageSuite Web Clipboard",
+});
+
 
 /**
  * A Application Level Element that creates a Viewer Application using an underlying viewer element.
@@ -67,14 +81,13 @@ class ViewerApplicationElement extends HTMLElement {
         scope=scope.split("#")[0];
         
         this.applicationURL=scope;
-        console.log('scope=',scope);
         scope=scope.split("/").pop();
-        console.log('scope=',scope);
         let index=scope.indexOf(".html");
         scope=scope.substr(0,index);
 
         this.applicationName=scope;
         console.log("App name=",this.applicationName,this.applicationURL);
+        clipboard.setItem('appname',this.applicationName);
     }
 
 
@@ -104,6 +117,90 @@ class ViewerApplicationElement extends HTMLElement {
 
     }
 
+    // ---------------------------------------------------------------------------
+    // Copy & Paste
+    
+    /** Get State as Object 
+        @returns {object} -- the state of the element as a dictionary*/
+    getElementState(storeImages=false) {
+
+        let obj = {};
+        for (let i=0;i<this.VIEWERS.length;i++) {
+            let name=`viewer${i+1}`;
+            let getimg=storeImages;
+            if (i>=this.num_independent_viewers) {
+                getimg=false;
+            }
+            obj[name]=this.VIEWERS[i].getElementState(getimg);
+        }
+        return obj;
+    }
+    
+    /** Set the element state from a dictionary object 
+        @param {object} state -- the state of the element */
+    setElementState(dt=null,name="") {
+
+        if (dt===null)
+            return;
+
+        let numviewers=this.VIEWERS.length;
+        if (name==="overlayviewer" && this.applicationName!=="overlayviewer")
+            numviewers=1;
+        
+        for (let i=0;i<numviewers;i++) {
+            let name=`viewer${i+1}`;
+            let elem=dt[name] || null;
+            this.VIEWERS[i].setElementState(elem);
+        }
+        if (this.num_independent_viewers > 1) {
+            this.VIEWERS[1].setDualViewerMode(this.VIEWERS[1].internal.viewerleft);
+        }
+    }
+
+    
+    /** store State in this.saveState , unless filename is not null, in which case save */
+    storeState(saveImages=false) {
+        this.saveState=this.getElementState(saveImages);
+        return;
+    }
+
+    /** restore State from this.internal.saveState unless obj is not null
+     * @param {Object} obj - if set then restore from this else from this.saveState
+     */
+    restoreState(obj=null,name=null) {
+
+        let inp=obj || this.saveState;
+        name = name || this.applicationName;
+        
+        if (inp) {
+            return this.setElementState(inp,name);
+        }
+    }
+
+    /** copy Viewer State to clipboard 
+     * @param{number}  index - the viewer index (0 or 1)
+     */
+    copyViewer(index=0) {
+        let st=this.VIEWERS[index].getElementState(true);
+        clipboard.setItem('viewer',st).then( () => {
+            console.log('copied viewer',index,'to clipboard');
+        }).catch( (e) => {
+            console.log(e);
+        });
+    }
+
+    /** paste Viewer State from clipboard 
+     * @param{number}  index - the viewer index (0 or 1)
+     */
+    pasteViewer(index=0) {
+        clipboard.getItem('viewer').then( (st) => {
+            console.log('Read state',st.length);
+            this.VIEWERS[index].setElementState(st);
+        }).catch( (e) => {
+            console.log('paste error',e,e.stack);
+        });
+    }
+    
 
     // ---------------------------------------------------------------------------
     // I/O Code
@@ -113,13 +210,17 @@ class ViewerApplicationElement extends HTMLElement {
 
         
         const img = new BisWebImage();
-        return new Promise( (resolve,reject) => { 
-            img.load(fname)
-                .then(function () {
-                    webutil.createAlert('Image loaded from ' + img.getDescription());
-                    self.VIEWERS[viewer].setimage(img);
-                    resolve();
-                }).catch( (e) => { reject(e); });
+        return new Promise( (resolve,reject) => {
+
+            webutil.createAlert('Loading image from ' + genericio.getFixedLoadFileName(fname),'progress',30);
+            setTimeout( () => {
+                img.load(fname)
+                    .then(function () {
+                        webutil.createAlert('Image loaded from ' + img.getDescription());
+                        self.VIEWERS[viewer].setimage(img);
+                        resolve();
+                    }).catch( (e) => { reject(e); });
+            },10);
         });
     }
 
@@ -128,15 +229,19 @@ class ViewerApplicationElement extends HTMLElement {
         const self=this;
         return new Promise( (resolve,reject) => {
             let img = new BisWebImage();
-            img.load(fname)
-                .then(function () {
-                    self.VIEWERS[viewer].setobjectmap(img, false);
-                    resolve();
-                }).catch((e) => {
-                    webutil.createAlert(e, true);
-                    console.log(e.stack);
-                    reject(e);
-                });
+            webutil.createAlert('Loading image from ' + genericio.getFixedLoadFileName(fname),'progress',30);
+            setTimeout( () => {
+                img.load(fname)
+                    .then(function () {
+                        webutil.createAlert('Objectmap loaded from ' + img.getDescription());
+                        self.VIEWERS[viewer].setobjectmap(img, false);
+                        resolve();
+                    }).catch((e) => {
+                        webutil.createAlert(e, true);
+                        console.log(e.stack);
+                        reject(e);
+                    });
+            },10);
         });
     }
 
@@ -169,6 +274,208 @@ class ViewerApplicationElement extends HTMLElement {
         return img.getFilename();
     }
 
+
+
+    // ---------------------------------------------------------------------------
+    // Advanced Transfer Tool
+    // ---------------------------------------------------------------------------
+    createAdvancedTransferTool(modulemanager,editmenu) {
+
+        const self=this;
+        let name='Advanced Transfer Tool';
+        if (!modulemanager) {
+            name='App State Manager';
+        }
+
+        let dual=false;
+        if (this.num_independent_viewers >1) {
+            dual=true;
+        }
+        
+        let newdlg=new BisWebPanel(this.VIEWERS[0].getLayoutController(),
+                                   {
+                                       name : name,
+                                       width :300,
+                                       dual : dual,
+                                   });
+
+        var bbar=webutil.createbuttonbar({ parent: newdlg.getWidget(),
+                                           css : { 'margin-top' : '10px' ,
+                                                   'margin-left' : '4px' }
+                                         });
+        
+        var bbar1=webutil.createbuttonbar({ parent: bbar,
+                                            css : { 'margin-bottom' : '20px','width' : '100%'}
+                                          });
+
+
+        webutil.createbutton({ type : "default",
+                               name : "Store State",
+                               parent : bbar1,
+                               css : { 'width' : '120px' },
+                               callback : function() {
+                                   self.storeState();
+                               }
+                             });
+        
+        webutil.createbutton({ type : "default",
+                               name : "Retrieve State",
+                               parent : bbar1,
+                               css : { 'left': '140px',
+                                       'width':'120px',
+                                       'position':'absolute'
+                                     },
+                               callback : function() {
+                                   self.restoreState();
+                               }
+                             });
+
+        if (modulemanager) {
+            if (this.num_independent_viewers >1) {
+
+                var bbar0=webutil.createbuttonbar({ parent: bbar,
+                                                    css : {
+                                                        'margin-bottom' : '10px',
+                                                        'width' : '100%',
+                                                    }
+                                                  });
+                
+                webutil.createbutton({ type : "success",
+                                       name : "V1 &rarr; V2",
+                                       parent : bbar0,
+                                       css : { 'width' : '80px' },
+                                       callback : function() {
+                                           modulemanager.transferImages(0,1);
+                                       }
+                                     });
+                
+                webutil.createbutton({ type : "success",
+                                       name : "V2 &rarr; V1",
+                                       parent : bbar0,
+                                       css : { 'position': 'absolute',
+                                               'width' : '80px',
+                                               'left': '90px'
+                                             },
+                                       callback : function() {
+                                           modulemanager.transferImages(1,0);
+                                       }
+                                     });
+                
+
+                webutil.createbutton({ type : "success",
+                                       name : "V1 &harr; V2",
+                                       parent : bbar0,
+                                       css : { 'position': 'absolute',
+                                               'width' : '80px',
+                                               'left': '180px'
+                                             },
+                                       callback : function() {
+                                           modulemanager.swapImages();
+                                       }
+                                     });
+
+
+                var bbar2=webutil.createbuttonbar({ parent: bbar,
+                                                    css : { 'margin-bottom' : '10px',
+                                                            'width' : '100%' }
+                                                  });
+
+                
+                webutil.createbutton({ type : "info",
+                                       name : "V2 Im &rarr; V1 Ov",
+                                       parent : bbar2,
+                                       css : { 'width' : '120px' },
+                                       callback : function() {
+                                           modulemanager.transferImageToOverlay(1,0);
+                                       }
+                                     });
+
+                webutil.createbutton({ type : "info",
+                                       name : "V1 Im &rarr; V2 Ov",
+                                       parent : bbar2,
+                                       css : { 'width' : '120px',
+                                               'left'  : '140px',
+                                               'position' : 'absolute',
+                                             },
+                                       callback : function() {
+                                           modulemanager.transferImageToOverlay(0,1);
+                                       }
+                                     });
+
+                var bbar3=webutil.createbuttonbar({ parent: bbar,
+                                                    css : { 'margin-bottom' : '10px',
+                                                            'width' : '100%' }
+                                                  });
+
+                
+                webutil.createbutton({ type : "info",
+                                       name : "V2 Ov &rarr; V1 Im",
+                                       parent : bbar3,
+                                       css : { 'width' : '120px' },
+                                       callback : function() {
+                                           modulemanager.transferOverlayToImage(1,0);
+                                       }
+                                     });
+
+                webutil.createbutton({ type : "info",
+                                       name : "V1 Ov &rarr; V2 Im",
+                                       parent : bbar3,
+                                       css : { 'width' : '120px',
+                                               'left'  : '140px',
+                                               'position' : 'absolute',
+                                             },
+                                       callback : function() {
+                                           modulemanager.transferOverlayToImage(0,1);
+                                       }
+                                     });
+
+            } else {
+                webutil.createbutton({ type : "info",
+                                       name : "Copy Image &rarr; Overlay",
+                                       parent : bbar,
+                                       css : { 'width' : '260px', 'margin-bottom': '10px' },
+                                       callback : function() {
+                                           modulemanager.transferImageToOverlay(0,0);
+                                       }
+                                     });
+
+                webutil.createbutton({ type : "info",
+                                       name : "Copy Overlay &rarr; Image",
+                                       parent : bbar,
+                                       css : { 'width' : '260px', 'margin-bottom': '10px' },
+                                       callback : function() {
+                                           modulemanager.transferOverlayToImage(0,0);
+                                       }
+                                     });
+            }
+
+            let bottom=webutil.createbuttonbar({ parent: bbar,
+                                                 css : {'margin-top' : '20px',
+                                                        'width' : '100%' }
+                                               });
+            webutil.createbutton({ type : "danger",
+                                   name : "Undo Image",
+                                   parent : bottom,
+                                   css : { 'width' : '120px' },
+                                   callback : function() {
+                                       modulemanager.getAlgorithmController().undoImage(true);
+                                   }
+                                 });
+            
+            webutil.createbutton({ type : "warning",
+                                   name : "Redo Image",
+                                   parent : bottom,
+                                   css : { 'width' : '120px', 'left': '140px', 'position' : 'absolute' },
+                                   callback : function() {
+                                       modulemanager.getAlgorithmController().undoImage(false);
+                                   }
+                                 });
+        }
+        webutil.createMenuItem(editmenu,'');
+        webutil.createMenuItem(editmenu,name,function() {
+            newdlg.show();
+        });
+    }
     
     // ---------------------------------------------------------------------------
     // Create the default File and Overlay Menus
@@ -195,7 +502,7 @@ class ViewerApplicationElement extends HTMLElement {
 
 
         let fmenu = [0, 0], objmenu = [0, 0];
-        let fmenuname = "Image", objmenuname = 'Overlay';
+        let fmenuname = "File", objmenuname = 'Overlay';
 
 
         // Essentially bind self here
@@ -212,6 +519,8 @@ class ViewerApplicationElement extends HTMLElement {
                 fmenuname = 'Image2';
                 objmenuname = 'Overlay2';
             }
+
+            
             if (painttoolid !== null && viewerno === paintviewerno) {
                 objmenuname = "Objectmap";
                 if (viewerno === 1)
@@ -315,6 +624,7 @@ class ViewerApplicationElement extends HTMLElement {
             internal_create_menu(viewerno);
         }
 
+        return fmenu[0];
     }
 
     // ---------------------------------------------------------------------
@@ -379,6 +689,7 @@ class ViewerApplicationElement extends HTMLElement {
         };
 
         webutil.createMenuItem(hmenu, "Set Image Orientation On Load", orientSelect);
+
     }
     
     createHelpMenu(menubar,userPreferencesLoaded) {
@@ -386,30 +697,42 @@ class ViewerApplicationElement extends HTMLElement {
 
         webutil.createMenuItem(hmenu,'About this application',function() {  webutil.aboutDialog(); });
         
-        /*        let helpdialog = document.createElement('bisweb-helpvideoelement');
-                  webutil.createMenuItem(hmenu, 'About Video',
-                  function () {
-                  helpdialog.displayVideo();
-                  });
-                  webutil.createMenuItem(hmenu, ''); // separator*/
+/*        let helpdialog = new BisWebHelpVideoPanel();
+        const self=this;
+        webutil.createMenuItem(hmenu, 'About Video',
+                               function () {
+                                   helpdialog.setLayoutController(self.VIEWERS[0].getLayoutController());
+                                   helpdialog.displayVideo();
+                               });*/
+        webutil.createMenuItem(hmenu, ''); // separator
 
         
         this.addOrientationSelectToMenu(hmenu,userPreferencesLoaded);
 
         const consoleid = this.getAttribute('bis-consoleid') || null;
         if (consoleid !== null) {
-            webutil.createMenuItem(hmenu, ''); // separator
             let console = document.querySelector(consoleid);
-            console.addtomenu(hmenu);
-
-            if (webutil.inElectronApp()) {
+            if (console) {
                 webutil.createMenuItem(hmenu, ''); // separator
-                webutil.createMenuItem(hmenu, 'Show JavaScript Console',
-                                       function () {
-                                           window.BISELECTRON.remote.getCurrentWindow().toggleDevTools();
-                                       });
+                console.addtomenu(hmenu);
             }
         }
+
+        if (webutil.inElectronApp()) {
+            webutil.createMenuItem(hmenu, ''); // separator
+            webutil.createMenuItem(hmenu, 'Show JavaScript Console',
+                                   function () {
+                                       window.BISELECTRON.remote.getCurrentWindow().toggleDevTools();
+                                   });
+            userPreferencesLoaded.then( () => {
+                let z=parseFloat(userPreferences.getItem('electronzoom')) || 1.0;
+                if (z<0.8 || z>1.25)
+                    z=1.0;
+                window.BISELECTRON.electron.webFrame.setZoomFactor(z);
+            });
+        }
+
+        webfileutil.createFileSourceSelector(hmenu);
         return hmenu;
     }
 
@@ -459,13 +782,31 @@ class ViewerApplicationElement extends HTMLElement {
             gmenu=editmenu;
             webutil.createMenuItem(gmenu,'');
         }
-        
+
+        if (webutil.inElectronApp()) {
+            webutil.createMenuItem(gmenu, 'Zoom 80%',
+                                   function () {
+                                       window.BISELECTRON.electron.webFrame.setZoomFactor(0.8);
+                                       userPreferences.setItem('electronzoom',0.8,true);
+                                   });
+            webutil.createMenuItem(gmenu, 'Zoom 100%',
+                                   function () {
+                                       window.BISELECTRON.electron.webFrame.setZoomFactor(1.0);
+                                       userPreferences.setItem('electronzoom',1.0,true);
+                                   });
+            webutil.createMenuItem(gmenu, 'Zoom 125%',
+                                   function () {
+                                       window.BISELECTRON.electron.webFrame.setZoomFactor(1.25);
+                                       userPreferences.setItem('electronzoom',1.2,true); 
+                                       
+                                   });
+            webutil.createMenuItem(gmenu,'');
+        }
+
         if (this.num_independent_viewers > 1) {
-            webutil.createMenuItem(gmenu, extra+'Both Viewers 50/50', function () { self.VIEWERS[1].setDualViewerMode(0.5); });
-            webutil.createMenuItem(gmenu, extra+'Big Viewer 1 ', function () { self.VIEWERS[1].setDualViewerMode(0.75); });
-            webutil.createMenuItem(gmenu, extra+'Big Viewer 2 ', function () { self.VIEWERS[1].setDualViewerMode(0.25); });
-            webutil.createMenuItem(gmenu, extra+'Only Viewer 1', function () { self.VIEWERS[1].setDualViewerMode(1.0); });
-            webutil.createMenuItem(gmenu, extra+'Only Viewer 2', function () { self.VIEWERS[1].setDualViewerMode(0.0); });
+            webutil.createMenuItem(gmenu, extra+'Both Viewers', function () { self.VIEWERS[1].setDualViewerMode(0.5); });
+            webutil.createMenuItem(gmenu, extra+'Viewer 1 Only', function () { self.VIEWERS[1].setDualViewerMode(1.0); });
+            webutil.createMenuItem(gmenu, extra+'Viewer 2 Only', function () { self.VIEWERS[1].setDualViewerMode(0.0); });
             webutil.createMenuItem(gmenu,'');
             self.VIEWERS[0].setViewerMode('left', 0.5);
             self.VIEWERS[1].setViewerMode('right', 0.5);
@@ -478,63 +819,6 @@ class ViewerApplicationElement extends HTMLElement {
     }
 
     //  ---------------------------------------------------------------------------
-
-    /** Get State as Object 
-        @returns {object} -- the state of the element as a dictionary*/
-    getElementState(storeImages=false) {
-
-        let obj = {};
-        for (let i=0;i<this.VIEWERS.length;i++) {
-            let name=`viewer${i+1}`;
-            let getimg=storeImages;
-            if (i>=this.num_independent_viewers) {
-                getimg=false;
-            }
-            obj[name]=this.VIEWERS[i].getElementState(getimg);
-        }
-        return obj;
-    }
-    
-    /** Set the element state from a dictionary object 
-        @param {object} state -- the state of the element */
-    setElementState(dt=null,name="") {
-
-        if (dt===null)
-            return;
-
-        let numviewers=this.VIEWERS.length;
-        if (name==="overlayviewer" && this.applicationName!=="overlayviewer")
-            numviewers=1;
-        
-        for (let i=0;i<numviewers;i++) {
-            let name=`viewer${i+1}`;
-            let elem=dt[name] || null;
-            this.VIEWERS[i].setElementState(elem);
-        }
-        if (this.num_independent_viewers > 1) {
-            this.VIEWERS[1].setDualViewerMode(this.VIEWERS[1].internal.viewerleft);
-        }
-    }
-
-    
-    /** store State in this.saveState , unless filename is not null, in which case save */
-    storeState(saveImages=false) {
-        this.saveState=this.getElementState(saveImages);
-        return;
-    }
-
-    /** restore State from this.internal.saveState unless obj is not null
-     * @param {Object} obj - if set then restore from this else from this.saveState
-     */
-    restoreState(obj=null,name="") {
-
-        let inp=obj || this.saveState;
-        
-        if (inp) {
-            return this.setElementState(inp,name);
-        }
-    }
-
     
     loadApplicationState(fobj) {
 
@@ -578,9 +862,6 @@ class ViewerApplicationElement extends HTMLElement {
 
         fobj=genericio.getFixedSaveFileName(fobj,self.applicationName+".biswebstate");
         
-        
-        console.log('fobj=',fobj);
-        
         return new Promise(function (resolve, reject) {
             genericio.write(fobj, output).then((f) => {
                 resolve(f);
@@ -592,16 +873,26 @@ class ViewerApplicationElement extends HTMLElement {
     createEditMenu(menubar) {
         const self=this;
         let editmenu=webutil.createTopMenuBarMenu("Edit", menubar);
-        webutil.createMenuItem(editmenu, 'Store Application State', function() { self.storeState(); });
-        webutil.createMenuItem(editmenu, 'Retrieve Application State',function() { self.restoreState(); });
+        if (this.num_independent_viewers > 1) {
+            webutil.createMenuItem(editmenu, 'Copy Viewer 1', function () { self.copyViewer(0); });
+            webutil.createMenuItem(editmenu, 'Paste Viewer 1', function () { self.pasteViewer(0); });
+            webutil.createMenuItem(editmenu,'');
+            webutil.createMenuItem(editmenu, 'Copy Viewer 2', function () { self.copyViewer(1); });
+            webutil.createMenuItem(editmenu, 'Paste Viewer 2', function () { self.pasteViewer(1); });
+
+        } else {
+            webutil.createMenuItem(editmenu, 'Copy Viewer', function () { self.copyViewer(0); });
+            webutil.createMenuItem(editmenu, 'Paste Viewer', function () { self.pasteViewer(0); });
+        }
+
+
         return editmenu;
     }
     
-    createApplicationMenu(menubar) {
-
+    createApplicationMenu(bmenu) {
 
         const self=this;
-        let bmenu=webutil.createTopMenuBarMenu("File", menubar);
+        webutil.createMenuItem(bmenu,'');
         webfileutil.createFileMenuItem(bmenu,'Load Application State',
                                        function(f) {
                                            self.loadApplicationState(f);
@@ -609,7 +900,6 @@ class ViewerApplicationElement extends HTMLElement {
                                        { title: 'Load Application State',
                                          save: false,
                                          filters : [ { name: 'Application State File', extensions: ['biswebstate']}],
-                                         suffix : "biswebstate",
                                        }
                                       );
         
@@ -630,7 +920,7 @@ class ViewerApplicationElement extends HTMLElement {
                                        });
 
         
-        webfileutil.createFileSourceSelector(bmenu);
+
         
         webutil.createMenuItem(bmenu,'');
         webutil.createMenuItem(bmenu, 'Restart Application',
@@ -668,6 +958,7 @@ class ViewerApplicationElement extends HTMLElement {
         const self = this;
         const menubarid = this.getAttribute('bis-menubarid');
         const painttoolid = this.getAttribute('bis-painttoolid') || null;
+        const landmarkcontrolid=this.getAttribute('bis-landmarkcontrolid') || null;
         const managerid = this.getAttribute('bis-modulemanagerid') || null;
 
         this.findViewers();
@@ -681,36 +972,62 @@ class ViewerApplicationElement extends HTMLElement {
         let menubar = document.querySelector(menubarid).getMenuBar();
         
         let modulemanager = null;
-        if (managerid !== null) 
+        if (managerid !== null)  {
             modulemanager = document.querySelector(managerid) || null;
-
+        }
 
         // ----------------------------------------------------------
         // Application Menu
         // ----------------------------------------------------------
         
-        this.createApplicationMenu(menubar);
-        let editmenu=this.createEditMenu(menubar);
-        
-        if (this.num_independent_viewers >1)
-            this.createDisplayMenu(menubar,null);
-
         
         // ----------------------------------------------------------
         // Create the File and Overlay Menus
         // ----------------------------------------------------------
-        this.createFileAndOverlayMenus(menubar,painttoolid);
+        let fmenu=this.createFileAndOverlayMenus(menubar,painttoolid);
+
+        this.createApplicationMenu(fmenu);
+
+        let editmenu=this.createEditMenu(menubar);
+        this.createAdvancedTransferTool(modulemanager,editmenu);
+        
+        
+        
+        if (this.num_independent_viewers >1)
+            this.createDisplayMenu(menubar,null);
+
 
         // ----------------------------------------------------------
         // Module Manager
         // ----------------------------------------------------------
         if (modulemanager)
-            modulemanager.initializeElements(menubar, self.VIEWERS,editmenu);
+            modulemanager.initializeElements(menubar, self.VIEWERS);
 
         if (this.num_independent_viewers <2 ) {
             this.createDisplayMenu(menubar, editmenu);
         }
 
+        if (painttoolid !== null || landmarkcontrolid !==null) {
+
+            let toolmenu = webutil.createTopMenuBarMenu('Tools', menubar);
+            let p=Promise.resolve();
+            if (painttoolid) {
+                let painttool = document.querySelector(painttoolid);
+                p=painttool.addTools(toolmenu);
+            }
+            if (landmarkcontrolid) {
+                let landmarkcontrol=document.querySelector(landmarkcontrolid);
+                p.then( () => {
+                    if (painttoolid)
+                        webutil.createMenuItem(toolmenu,'');
+                    
+                    webutil.createMenuItem(toolmenu,'Landmark Editor',function() {
+                        landmarkcontrol.show();
+                    });
+                });
+            }   
+        }
+        
 
         
         // ----------------------------------------------------------
@@ -765,6 +1082,7 @@ class ViewerApplicationElement extends HTMLElement {
 
         webutil.runAfterAllLoaded( () => {
             this.parseQueryParameters();
+            document.body.style.zoom =  1.0;
         });
 
     }

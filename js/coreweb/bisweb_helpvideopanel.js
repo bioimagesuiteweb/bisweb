@@ -24,26 +24,39 @@
 
 "use strict";
 
-const webutil = require('bis_webutil');
 const $=require('jquery');
+const BisWebPanel = require('bisweb_panel.js');
+
+
 
 let singleton=null;
 
-class HelpVideoElement extends HTMLElement {
+class BisWebHelpVideoPanel {
 
 
     displayVideo(embed_link) {
 
         if (singleton===null)
-            singleton=webutil.createdialog("Help", 800, 600,100, 100,500);
+            singleton=new BisWebPanel(this.layoutcontroller,{
+                name : "Help",
+                width : 425,
+                height : 2000,
+                hasfooter : false,
+                mode : 'sidebar',
+                dual : 'false',
+            });
         
         if (!embed_link)
-            embed_link=`<iframe width="560" height="315" src="https://www.youtube.com/embed/aFDMQV3nC0A?rel=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+            embed_link=`<iframe width="420" height="236" src="https://www.youtube.com/embed/aFDMQV3nC0A?rel=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
         
-        singleton.widget.empty();
-        singleton.widget.append($(embed_link));
+        singleton.getWidget().empty();
+        singleton.getWidget().append($(embed_link));
         singleton.show();
+    }
+
+    setLayoutController(lc) {
+        this.layoutcontroller=lc;
     }
 }
 
-webutil.defineElement('bisweb-helpvideoelement', HelpVideoElement);
+module.exports=BisWebHelpVideoPanel;

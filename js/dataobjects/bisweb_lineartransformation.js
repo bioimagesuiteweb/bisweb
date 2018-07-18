@@ -613,17 +613,12 @@ class BisWebLinearTransformation extends BisWebBaseTransformation {
      */
     getParameterVector(opts) {
         opts= opts || {};
-        opts.scale = opts.scale || false;
         opts.rigidOnly = opts.rigidOnly || false;
-        
-        var scalefactor=1.0;
-        if (opts.scale)
-            scalefactor=100.0;
+        opts.scale = opts.scale || false;
         
         var l=getOutputLength(this.getNumberOfDOF(),12,opts.rigidOnly);
         var p=new Array(l);
-        for (var i=0;i<l;i++)
-            p[i]=this.internal.parameters[i];
+        this.storeParameterVector(p,opts);
         return p;
     }
     

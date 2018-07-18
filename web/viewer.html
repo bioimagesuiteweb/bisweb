@@ -65,10 +65,11 @@
 
   <div id="viewerwidget">
     <bisweb-viewerlayoutelement
-       id="viewer_layout"
-       bis-sidewidth="300"
-       bis-coreopen="true"
-       bis-defaulttext="">
+      id="viewer_layout"
+      bis-dockwidth="300"
+      bis-coreopen="true"
+      bis-fixed="1"
+      bis-defaulttext="">
     </bisweb-viewerlayoutelement>
     
     <bisweb-colormapcontrollerelement id="viewer_cmap"></bisweb-colormapcontrollerelement>
@@ -86,12 +87,10 @@
        bis-viewerid="#viewer">
     </bisweb-snapshotelement>
     
-    <bisweb-console id="bisconsole"></bisweb-console>
-
     <bisweb-collectionelement
-       id="transformelement"
-       bis-elementtype="transform"
-       bis-layoutwidgetid="#viewer_layout">
+      id="transformelement"
+      bis-elementtype="transform"
+      bis-layoutwidgetid="#viewer_layout">
     </bisweb-collectionelement>
 
     
@@ -102,23 +101,16 @@
     </bisweb-simplealgorithmcontrollerelement>
 
     <bisweb-modulemanager
-       id="modulemanager"
-       bis-mode="single"
-       bis-algorithmcontrollerid="#algoelement">
+      id="modulemanager"
+      bis-mode="single"
+      bis-layoutwidgetid="#viewer_layout"
+      bis-algorithmcontrollerid="#algoelement">
     </bisweb-modulemanager>
 
 
-    <bisweb-landmarkcontrolelement
-      id="landmarkcontrol"
-      bis-layoutwidgetid="#viewer_layout"
-      bis-viewerid="#viewer">
-    </bisweb-landmarkcontrolelement>
-      
-    
     <bisweb-viewerapplication
        bis-menubarid="#viewer_menubar"
        bis-modulemanagerid="#modulemanager"
-       bis-consoleid="#bisconsole"
        bis-viewerid="#viewer">
     </bisweb-viewerapplication>
     

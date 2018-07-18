@@ -29,6 +29,7 @@ const path=bisgenericio.getpathmodule();
 const fs=bisgenericio.getfsmodule();
 const misac=require('../node/misac_util');
 const webfileutil = require('bis_webfileutil');
+const BisWebPanel = require('bisweb_panel.js');
 
 // -------------------------------------------------------------------------
 
@@ -72,11 +73,12 @@ class ParavisionImportElement extends HTMLElement {
             viewers  : [],
             table : null,
             buttonpairs : {},
-            showdialog : null,
+            showpanel : null,
             joblist : [],
             lastfilename : '',
         };
 
+        this.layoutcontroller=null;
         
 
     }
@@ -92,44 +94,36 @@ class ParavisionImportElement extends HTMLElement {
         if (internal.parentDomElement===null)
             return;
         
-        internal.showdialog=webutil.createdialog("Converted Images",600,500,100,50 );
-        let widget=internal.showdialog.widget;
-        widget.css({ "overflow-y" : "hidden"});
+        internal.showpanel=new BisWebPanel(this.layoutcontroller,
+                                            {
+                                                name : "Converted Images",
+                                                width : 370,
+                                                mode : 'sidebar',
+                                                dual : true,
+                                            });
         let templates=webutil.getTemplates();
-
-        
-        
-        
         internal.parentDomElement.empty();
         let basediv0=webutil.creatediv({ parent : internal.parentDomElement});
         let basediv1=webutil.creatediv({ parent : internal.parentDomElement});
         internal.domElement=basediv1;
         
         
-        let newid=webutil.createWithTemplate(templates.bisscrolltable,
-                                             widget);
-        let stable=$('#'+newid);
-        let t1 = $(".bistscroll",stable);
-        let dim=internal.showdialog.getdimensions();
-        console.log('dim=',dim);
-        $(t1).css({
-            height: `${dim.height-150}px`
-        });
-        
-        
-        let thead = $(".bisthead",stable);
-        let tbody = $(".bistbody",stable);
+        let newid=webutil.createWithTemplate(templates.bisscrolltable,$('body'));
+        let stable = $('#' + newid);
+        let thead = stable.find(".bisthead");
+        let tbody = stable.find(".bistbody");
         thead.empty();
         tbody.empty();
+        internal.showpanel.getWidget().append(stable);
+        
         tbody.css({'font-size':'12px',
                    'user-select': 'none'});
         thead.css({'font-size':'12px',
                    'user-select': 'none'});
         
         let hd=$('<tr>'+
-                 ' <td width="9%">#</th>'+
-                 ' <td width="70%">Image</th>'+
-                 ' <td width="10%"></th>'+
+                 ' <td width="10%">#</th>'+
+                 ' <td width="80%">Image</th>'+
                  ' <td width="10%"></th>'+
                  '</tr>');
         thead.append(hd);
@@ -137,9 +131,8 @@ class ParavisionImportElement extends HTMLElement {
         internal.table=tbody;
         
         let hd2=$('<tr>'+
-                  ' <td width="9%"></th>'+
-                  ' <td width="70%">Nothing imported yet!</th>'+
                   ' <td width="10%"></th>'+
+                  ' <td width="80%">Nothing imported yet!</th>'+
                   ' <td width="10%"></th>'+
                   '</tr>');
         tbody.append(hd2);
@@ -154,7 +147,7 @@ class ParavisionImportElement extends HTMLElement {
                                parent : basediv1,
                                css : { 'width' : '90%' , 'margin' : '3px' },
                                callback : function() {
-                                   internal.showdialog.show();},
+                                   internal.showpanel.show();},
                              });
         
         webutil.createbutton({ type : "info",
@@ -225,7 +218,6 @@ class ParavisionImportElement extends HTMLElement {
         const buttonCallback=function(e) {
 
 
-            console.log('Viewers = ',internal.viewers);
             let id=e.target.id;
             let arr=internal.buttonpairs[id];
             let fname=arr[0];
@@ -315,14 +307,19 @@ class ParavisionImportElement extends HTMLElement {
         let nid2=webutil.getuniqueid();
         let nid3=webutil.getuniqueid();
         let w0=`<tr>
-                <td width="5%">${counter}</td>
-                <td width="70%">${name}</td>
-                <td width="10%" id="${nid3}"></td>
-                <td width="4%"><button type="button" class="btn-info btn-sm" style="padding: 0px, font-size: 10px"
-                id="${nid0}">Show1</button></td>
-                <td width="4%"><button type="button" class="btn-info btn-sm" style="padding: 0px, font-size: 10px"
-                id="${nid1}">Show2</button></td>
-                 <td width="6%"><button type="button" class="btn-success  btn-sm" style="padding: 1px, font-size: 10px" id="${nid2}">Info</button></td>
+                   <td width="10%">${counter}</td>
+                   <td width="75%">${name}</td>
+                   <td width="15%" id="${nid3}"></td>
+                </tr>
+                <tr>
+                   <td width="15%"></td>
+                   <td width="80%">
+                        <button type="button" class="btn-info btn-sm" style="padding: 0px, font-size: 10px"
+                              id="${nid0}">Show1</button>
+                        <button type="button" class="btn-info btn-sm" style="padding: 0px, font-size: 10px"
+                              id="${nid1}">Show2</button>
+                        <button type="button" class="btn-success  btn-sm" style="padding: 1px, font-size: 10px" id="${nid2}">Info</button>
+                   </td>
                 </tr>`;
 
         internal.table.append($(w0));        
@@ -370,7 +367,7 @@ class ParavisionImportElement extends HTMLElement {
         window.BISELECTRON.ipc.send('showconsole','');
         window.BISELECTRON.ipc.send('clearconsole','');
         internal.table.empty();
-        internal.showdialog.show();
+        internal.showpanel.show();
         internal.buttonpairs={};
         internal.joblist=[];
 
@@ -441,7 +438,7 @@ class ParavisionImportElement extends HTMLElement {
             internal.buttonpairs=[];
             internal.joblist=[];
             let n=data.length;
-            internal.showdialog.show();
+            internal.showpanel.show();
             internal.table.empty();
             for (let ic=0;ic<n;ic++) {
                 if (path.isAbsolute(data[ic].filename)) {
@@ -465,7 +462,6 @@ class ParavisionImportElement extends HTMLElement {
 
     savejob(f) {
 
-        console.log('f=',f);
         let obj = {
             "bisformat" : 'ParavisionJob',
             "job" : this.internal.joblist
@@ -523,15 +519,18 @@ class ParavisionImportElement extends HTMLElement {
         ];
 
         
-        let layoutcontroller=document.querySelector(layoutid);
-        let basegui=layoutcontroller.createToolWidget('Paravision Import',true);
-
+        this.layoutcontroller=document.querySelector(layoutid);
+        let panel=new BisWebPanel(this.layoutcontroller,
+                                  { name : "Paravision Import",
+                                    permanent : true,
+                                  });
+        panel.show();
         const self=this;
-        
         this.internal.this=self;
-        this.internal.parentDomElement=basegui;
+        this.internal.parentDomElement=panel.getWidget();
         let basediv=$("<div>To appear...</div>");
         this.internal.parentDomElement.append(basediv);
+
         this.onDemandCreateGUI();
     }
 

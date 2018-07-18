@@ -126,7 +126,7 @@ void bisTransformationCollection::transformPoint(float x[3],float y[3])
   for (int ia=0;ia<=2;ia++) 
     y[ia]=x[ia];
   
-  for (int ia=0;ia<this->transformations.size();ia++)
+  for (unsigned int ia=0;ia<this->transformations.size();ia++)
     {
       for (int ib=0;ib<=2;ib++)
 	temp[ib]=y[ib];

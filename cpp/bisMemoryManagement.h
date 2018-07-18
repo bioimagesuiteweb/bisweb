@@ -89,6 +89,11 @@ namespace bisMemoryManagement {
   void print_map();
 
   /** 
+   * Delete all allocated pointers and BisObjects
+   */
+  void delete_all();
+
+  /** 
    * A wrapper around memcpy
    * copies length bytes from input to output
    * @param output location of output data

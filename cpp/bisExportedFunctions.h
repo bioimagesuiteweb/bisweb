@@ -48,7 +48,10 @@ extern "C" {
   
   /** print current state of allocated objects */
   BISEXPORT void print_memory();
-  
+
+  /** delete all allocated objects (allocate via bisMemoryManagement) */
+  BISEXPORT void delete_all_memory();
+
   /** Called from JS code to del_ete a pointer 
    * @param ptr the pointer to del_ete
    */
@@ -266,8 +269,8 @@ extern "C" {
    * @param jsonstring the parameter string for the algorithm 
    * @returns a pointer to a serialized image
    */
-  // BIS: { 'prepareImageForRegistrationWASM', 'bisImage', [ 'bisImage', 'ParamObj' ] } 
-  BISEXPORT unsigned char*  prepareImageForRegistrationWASM(unsigned char* input,const char* jsonstring);
+  // BIS: { 'prepareImageForRegistrationWASM', 'bisImage', [ 'bisImage',  'ParamObj','debug' ] } 
+  BISEXPORT unsigned char*  prepareImageForRegistrationWASM(unsigned char* input,const char* jsonstring,int debug);
   
   
   /** Compute Displacement Field 

@@ -116,7 +116,7 @@ class TestResample(unittest.TestCase):
         module.execute({
             'input': target_image,
             'reference' : reference_image,
-            'transform' : xform
+            'xform' : xform
         },{
             'debug' : True
         });
@@ -131,6 +131,8 @@ class TestResample(unittest.TestCase):
         print('----------------------------------------------------------------------')
         print('__ post module reslicing correlation out v true=',cc, 'pass=',testpass);
         print('----------------------------------------------------------------------')
+
+        
         
         self.assertEqual(testpass,True);
         

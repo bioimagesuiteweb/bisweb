@@ -19,7 +19,7 @@ cmake_minimum_required(VERSION 3.5)
 
 PROJECT(BISWEB)
 
-SET (BISWEB_VERSION "0.9.2")
+SET (BISWEB_VERSION "0.9.5")
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Core Project
@@ -180,13 +180,13 @@ IF (BIS_A_EMSCRIPTEN)
   
   OPTION(BIS_WEB_WASM "Build webassembly instead of asm.js" ON)
   SET (BIS_WEB_OPT "-O2" CACHE STRING "BIS Compiler Optimization")
-  SET (BIS_WEB_MEMORY "1024" CACHE STRING "BIS Initial Memory in MB")
+  #  SET (BIS_WEB_MEMORY "1024" CACHE STRING "BIS Initial Memory in MB")
 
   
   # SET VARIABLES
  
   IF (BIS_WEB_WASM)
-    SET(WASM_STRING "-s WASM=1")
+    SET(WASM_STRING "-s WASM=1 -s ALLOW_MEMORY_GROWTH=1")
   ELSE(BIS_WEB_WASM)
     SET(WASM_STRING "")
   ENDIF(BIS_WEB_WASM)
@@ -194,7 +194,7 @@ IF (BIS_A_EMSCRIPTEN)
   SET( COMPILE_FLAGS "-Wall -DBISWASM ${BIS_WEB_OPT} ${WASM_STRING} -I ${EIGEN3_INCLUDE_DIRS} -I ${PROJECT_SOURCE_DIR}")
   SET (CMAKE_CXX_FLAGS ${COMPILE_FLAGS} CACHE STRING "" FORCE)
   SET (CMAKE_C_FLAGS ${COMPILE_FLAGS} CACHE STRING "" FORCE)
-  SET (CMAKE_EXE_LINKER_FLAGS "-s TOTAL_MEMORY=${BIS_WEB_MEMORY}MB --pre-js ${PRE_JS} --post-js ${POST_JS}" CACHE STRING "" FORCE)
+  SET (CMAKE_EXE_LINKER_FLAGS "--pre-js ${PRE_JS} --post-js ${POST_JS}" CACHE STRING "" FORCE)
   
   SET (EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR} CACHE PATH "Single output directory for building all libraries.")
   SET (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib CACHE PATH "Single output directory for building command line libraries.")
@@ -204,6 +204,7 @@ IF (BIS_A_EMSCRIPTEN)
 
   SET(FVAR "${EXECUTABLE_OUTPUT_PATH}/${LIBNAME}.js")
   SET(FVAR2 "${EXECUTABLE_OUTPUT_PATH}/${LIBNAME}.wasm")
+  install (FILES ${FVAR2} DESTINATION bisweb/lib)
 
   SET(WEBPACK_WASM_MODULE "${EXECUTABLE_OUTPUT_PATH}/../web/${LIBNAME}_wasm.js")
   # ------------------ create webpack wasm module ---------------
@@ -218,6 +219,7 @@ IF (BIS_A_EMSCRIPTEN)
 
   SET (README_FILE "${PROJECT_SOURCE_DIR}/../various/txt/README_js.txt")
   install (FILES ${README_FILE} DESTINATION bisweb/)
+  
   
   configure_file( ${LICENSE_FILE} "${EXECUTABLE_OUTPUT_PATH}/../web/LICENSE" @ONLY )
 

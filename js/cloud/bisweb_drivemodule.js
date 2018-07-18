@@ -512,10 +512,13 @@ function getContentLength(content, contentType) {
         //https://stackoverflow.com/questions/25994001/how-to-calculate-byte-length-containing-utf8-characters-using-javascript
 
         /* jshint ignore:start */
+        /* eslint-disable no-cond-assign */
+
         let b = 0, i = 0, c;
-        for (; c = content.charCodeAt(i++); b += c >> 11 ? 3 : c >> 7 ? 2 : 1);
+        for (; c = content.charCodeAt(i++); b += c >> 11 ? 3 : c >> 7 ? 2 : 1); 
         return b;
         /* jshint ignore:end */
+        /* eslint-enable no-cond-assign */
     }
 
 }

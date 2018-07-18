@@ -34,12 +34,10 @@ class ResliceImageModule extends BaseModule {
             this.targetGUIInput = 'overlay';
             this.targetGUIViewer = 'viewer1';
         }
-        console.log('Target Input=',this.targetGUIInput);
     }
 
     createDescription() {
 
-        console.log('Target Input=',this.targetGUIInput);
         return {
             "name": "Reslice Image",
             "description": "Reslices an existing image to match a reference and a transformation",

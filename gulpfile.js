@@ -52,7 +52,7 @@ program
     .option('-p, --dopack <s>','dopackage 0=no, 1=electron-packager, 2=run inno or zip in addition')
     .option('-z, --dozip <s>','dozip')
     .option('-n, --internal <n>','if 1 use internal code, if 2 serve the internal directory as well',parseInt)
-    .option('-e, --eslint <n>','if 1 use eslint instead of jshint',parseInt)
+    .option('-e, --eslint <n>','if 0 use jshint instead of eslint',parseInt)
     .option('-w, --worker <n>','if 1 build the webworker as well',parseInt)
     .option('-s, --sworker <n>','if 1 build the service worker and index.js as well',parseInt)
     .option('--light <n>','if 1 only build the main bislib.js library',parseInt)
@@ -70,13 +70,18 @@ let options = {
     package : program.dopack || 0,
     zip : program.dozip || 0,
     webworker : program.worker || 0,
-    eslint : program.eslint || 0,
+    eslint : program.eslint,
     sworker : program.sworker || 0,
     internal : program.internal,
 };
 
 if (program.internal === undefined)
     options.internal=1;
+
+if (program.eslint === undefined)
+    options.eslint=1;
+
+
 
 const mainoption=program.rawArgs[2];
 

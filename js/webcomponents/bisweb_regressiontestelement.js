@@ -28,6 +28,9 @@ const systemprint=console.log;
 const bis_genericio=require('bis_genericio');
 const userPreferences = require('bisweb_userpreferences.js');
 const bisdate=require('bisdate.js').date;
+const wrapperutil=require('bis_wrapperutils');
+const BisWebImage=require('bisweb_image');
+
 
 import module_testlist from '../../test/module_tests.json';
 let replacing=false;
@@ -231,7 +234,7 @@ const execute_compare=function(module,test) {
         let test_type = tobj['test_type'] || 'image';
         let test_target = tobj['test_target'];
         if (test_type === 'image') {
-            if (comparison !== "maxabs") {
+            if (comparison !== "maxabs" && comparison!=="ssd") {
                 comparison = "cc";
             }
         }
@@ -266,17 +269,24 @@ const execute_compare=function(module,test) {
 
             
             let result=resultObject.compareWithOther(obj,comparison,threshold);
+            let good="<";
+            let bad=">";
+            if (result.metric==="cc") {
+                bad=good;
+                good=">";
+            }
 
+            
             if (result.testresult) {
-                console.log(`++++ Module ${module.name} test passed.\n++++  deviation (${result.metric}) from expected: ${result.value} < ${threshold}`);
+                console.log(`++++ Module ${module.name} test passed.\n++++  deviation (${result.metric}) from expected: ${result.value} ${good} ${threshold}`);
                 resolve({ result : result.testresult,
-                          text   : c+` Module ${module.name} test <span class="passed">passed</span>.<BR>  deviation (${result.metric}) from expected: ${result.value} < ${threshold}`
+                          text   : c+` Module ${module.name} test <span class="passed">passed</span>.<BR>  deviation (${result.metric}) from expected: ${result.value} ${good} ${threshold}`
                         });
             } else {
-                console.log(`---- Module ${module.name} test failed.\n---- Module produced output significantly different from expected.\n----  deviation (${result.metric}) from expected: ${result.value} > ${threshold}`);
+                console.log(`---- Module ${module.name} test failed.\n---- Module produced output significantly different from expected.\n----  deviation (${result.metric}) from expected: ${result.value} ${bad} ${threshold}`);
                 resolve({
                     result : result.testresult,
-                    text : c+` Module ${module.name} test <span class="failed">failed</span>. Module produced output significantly different from expected.<BR>  deviation (${result.metric}) from expected: ${result.value} > ${threshold}`
+                    text : c+` Module ${module.name} test <span class="failed">failed</span>. Module produced output significantly different from expected.<BR>  deviation (${result.metric}) from expected: ${result.value} ${bad} ${threshold}`
                 });
             }
         }).catch((e) => {
@@ -285,11 +295,109 @@ const execute_compare=function(module,test) {
     });
 };
 
+var run_memory_test=function() {
+
+
+    let images = [ new BisWebImage(),new BisWebImage() ];
+    let imgnames = [ 'thr.nii.gz',
+                     'thr_sm.nii.gz',
+                   ];
+    
+    let fullnames = [ '','','','' ];
+    for (let i=0;i<=1;i++)
+        fullnames[i]=extradir+'testdata/'+imgnames[i];
+    
+    let p=[ biswrap.reinitialize() ];
+    for (let i=0;i<images.length;i++) {
+        p.push(images[i].load(fullnames[i]));
+    }
+
+    console.log(p);
+
+    const main=$('#main');
+    main.empty();
+    main.append('<H3>Running WASM Memory Torture Test</H3><P>');
+    main.append('<p> This will run the web assembly memory test to try to get to just shy of 2GB. It purposely allocates lots of memory without releasing any.</p>');
+    
+    Promise.all(p).then( async function() { 
+
+        main.append('<p>Images Loaded</p>');
+        
+        const c=5.0*0.4247;
+        const paramobj={
+            "sigmas" : [c,c,c],
+            "inmm" : false,
+            "radiusfactor" : 1.5
+        };
+        const debug=0;
+        const jsonstring=JSON.stringify(paramobj);
+        let Module=biswrap.get_module();
+        let image1_ptr=0;
+
+        let alloc=async function(delay=500) {
+            
+            return new Promise( (resolve) => {
+                setTimeout( () => {
+                    for (let j=0;j<=99;j++) {
+                        if (j===0)
+                            image1_ptr=wrapperutil.serializeObject(Module,images[0],'bisImage');
+                        else
+                            wrapperutil.serializeObject(Module,images[0],'bisImage');
+                    }
+                    let m=Module['wasmMemory'].buffer.byteLength/(1024*1024);
+                    resolve(m);
+                },delay);
+            });
+        };
+
+        let max=22;
+        main.append(`<HR><H4>Running Test</H4><OL>`);
+        for (let k=1;k<=max;k++) {
+            let delay=10;
+            let m=await alloc(delay);
+            main.append(`<LI>${k}. Memory size =  ${m} MB. Last pointer=${image1_ptr}.</LI>`);
+        }
+        
+        main.append('</OL><BR>');
+        let m=Module['wasmMemory'].buffer.byteLength/(1024*1024);
+        main.append(`<p>Memory size (end) =${m} MB</p>`);   
+        const wasm_output=Module.ccall('gaussianSmoothImageWASM','number',
+                                       ['number', 'string', 'number'],
+                                       [ image1_ptr, jsonstring, debug]);
+        
+        m=Module['wasmMemory'].buffer.byteLength/(1024*1024);
+        main.append(`<p>Memory size=${m} MB, wasm_output=${wasm_output}</p>`);   
+        const out=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisImage',images[0]);
+        let error=out.maxabsdiff(images[1]);
+        main.append(`<p>Final error < 2.0 = ${error}</p>`);
+        console.log(`Final error < 2.0 = ${error}`);
+        
+        let url=window.document.URL;
+        let index=url.indexOf('.html');
+        if (index>=0)
+            url=url.substr(0,index+5);
+        
+        main.append(`<B><a href="${url}">Reload this page</a> before running any other tests.</B>`);
+        window.scrollTo(0,document.body.scrollHeight-100);
+    });
+};
+
+
+    
+
 var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',usethread=false) { // jshint ignore:line
 
     if (webutil.inElectronApp()) {
         window.BISELECTRON.remote.getCurrentWindow().openDevTools();
     }
+    let url=window.document.URL;
+    let index=url.indexOf('.html');
+    if (index>=0)
+        url=url.substr(0,index+5);
+    let thread=0;
+    if (usethread)
+        thread=1;
+            
 
     console.clear();
     
@@ -319,14 +427,20 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
     let skipped=0;
     
     let t00 = performance.now();
+
+    let goodlist=[];
+    let intentionalfail=[];
+    let badlist=[];
     
     for (let i=firsttest;i<=lasttest;i++) {
         let v=testlist[i];
         let name=testlist[i].command.split(' ')[0].trim();
+        let tname="Test_"+i;
+        
         if (testname==='All' || testname.toLowerCase()===name.toLowerCase()) {
 
             run=run+1;
-            main.append(`<H4 class="testhead">Test ${i}: ${name}</H4><p><UL><LI> Command: ${v.command}</LI><LI> Test details: ${v.test}</LI><LI> Should pass: ${v.result}</LI>`);
+            main.append(`<a name="${tname}"></a><H4 class="testhead">Test ${i}: ${name}</H4><p><UL><LI> Command: ${v.command}</LI><LI> Test details: ${v.test}</LI><LI> Should pass: ${v.result}</LI>`);
             if (usethread)
                 main.append(`<P> Running in WebWorker </P>`);
             console.log(`-------------------------------`);
@@ -338,6 +452,14 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
                 var t1 = performance.now();
                 main.append(`.... test execution time=${(0.001*(t1 - t0)).toFixed(2)}s`);
 
+                try {
+                    let a='<P>.... WASM memory size=' +biswrap.get_module()['wasmMemory'].buffer.byteLength/(1024*1024)+' MB.</P>';
+                    main.append(a);
+                } catch(e) {
+                    console.log(e);
+                    // sometimes we have pure js modules, no wasm
+                }
+
                 main.append(`<p>${obj.result}</p>`);
                 let obj2=await execute_compare(obj.module,v); // jshint ignore:line
                 let result=obj2.result;
@@ -348,27 +470,37 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
                 if (result && v.result)  {
                     main.append(`<p>${text}</p>`);
                     good+=1;
+                    goodlist.push(tname);
                 } else if (!result && !v.result) {
                     main.append(`<p>${text} <BR> <B>This is OK as this test WAS EXPECTED to fail!</B></p>`);
                     good+=1;
+                    intentionalfail.push(tname);
                 }  else {
                     main.append(`<p><span style="color:red">${text}</span> </p>`);
                     main.append('<BR><H4 style="color:red"> T E S T  F A I L E D</H4><BR>');
                     bad+=1;
+                    badlist.push(tname);
                     
                 }
             } catch(e) {
                 main.append(`<p><span style="color:red">Test Failed ${e}</span></p>`);
                 bad+=1;
+                badlist.push(tname);
             }
             replacesystemprint(false);
+
             main.append(`<details><summary><B>Details</B></summary><PRE>${logtext}</PRE></details><HR>`);
             window.scrollTo(0,document.body.scrollHeight-100);
 
             
         } else {
             if (testname==="None") {
-                main.append(`<P>Test ${i}: ${v.command}</p>`);
+                if (!webutil.inElectronApp()) {
+                    let link=`${url}?first=${i}&last=${i}&testname=All&webworker=${thread}&run=1`;
+                    main.append(`<p><a href="${link}">Test ${i}:</a> ${v.command}</p>`);
+                } else {
+                    main.append(`<p>Test ${i}: ${v.command}</p>`);
+                }
                 window.scrollTo(0,document.body.scrollHeight-100);
             }
             skipped+=1;
@@ -388,17 +520,8 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
         main.append(`.... total test execution time=${(0.001*(t11 - t00)).toFixed(2)}s`);
 
         if (!webutil.inElectronApp()) {
-            let t=0;
-            if (usethread)
-                t=1;
-            
-            let url=window.document.URL;
-            let index=url.indexOf('.html');
-            if (index>=0)
-                url=url.substr(0,index+5);
-            
-            let link=`${url}?first=${firsttest}&last=${lasttest}&testname=${testname}&webworker=${t}&run=1`;
-            main.append(`<BR><p>To run this specific test directly click:<BR> <a href="${link}" target="_blank">${link}</a></p>`);
+            let link=`${url}?first=${firsttest}&last=${lasttest}&testname=${testname}&webworker=${thread}&run=1`;
+            main.append(`<BR><p>To run this specific test directly click:<BR> <a href="${link}" target="_blank">${link}</a></p><HR><p></p>`);
         }
 
         window.scrollTo(0,document.body.scrollHeight-100);
@@ -406,6 +529,7 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
         if (!usethread) {
             try {
                 biswrap.get_module()._print_memory();
+                console.log('Memory size=',biswrap.get_module()['wasmMemory'].buffer.byteLength/(1024*1024),' MB');
             } catch(e) {
                 // sometimes we have pure js modules, no wasm
             }
@@ -413,6 +537,30 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
     } else {
         main.append(`<BR> <BR> <BR>`);
         window.scrollTo(0,0);
+    }
+
+    if (goodlist.length>0 || badlist.length>0 || intentionalfail.length>0) {
+        let names= [ 'Passed','Intentionally Failed (which means passed)','Actual Failed'];
+        for (let i=0;i<=2;i++) {
+            let lst=goodlist;
+            if (i==1)
+                lst=intentionalfail;
+            else if (i==2)
+                lst=badlist;
+            main.append(`<H4>${names[i]}</H4>`);
+            main.append(`<P>`);
+            for (let j=0;j<lst.length;j++) {
+                let n=lst[j];
+            main.append(`<a href="#${n}">${n}</a>`);
+                if (j<lst.length-1)
+                    main.append(', ');
+            }
+            if (lst.length===0)
+                main.append('None');
+            main.append('</P><HR>');
+        }
+        main.append(`<BR> <BR> <BR>`); 
+        window.scrollTo(0,document.body.scrollHeight-100);
     }
 
 };  // jshint ignore:line
@@ -513,6 +661,14 @@ let initialize=function(data) {
     if (dorun) {
         run_tests(testlist,firsttest,lasttest,testname,usethread);
     }
+
+
+    $('#computemem').click(function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Starting');
+        run_memory_test();
+    });
 
 };
 

@@ -209,7 +209,7 @@ let processTestResult = function (toolname, resultFile, test_target, test_type, 
     let threshold = test_threshold || 0.01;
     let comparison = test_comparison || "maxabs";
     if (test_type === 'image') {
-        if (comparison !== "maxabs") {
+        if (comparison !== "maxabs" && comparison!=="ssd") {
             comparison = "cc";
         }
     }
@@ -232,14 +232,24 @@ let processTestResult = function (toolname, resultFile, test_target, test_type, 
         BisWebDataObjectCollection.loadObject(resultFile,test_type),
         BisWebDataObjectCollection.loadObject(test_target,test_type)]
                ).then( (objs) => {
+
+                   let good="<";
+                   let bad=">";
                    let result=objs[0].compareWithOther(objs[1],comparison,threshold);
+                   
+                   if (result.metric==="cc") {
+                       bad=good;
+                       good=">";
+                   }
+                   
+
                    if (result.testresult) {
                        console.log(`++++\n${boldon}++++  Module ${toolname} test pass.`);
-                       console.log(`${boldon}++++    deviation (${result.metric}) from expected: ${result.value} < ${threshold} ${boldoff}`);
+                       console.log(`${boldon}++++    deviation (${result.metric}) from expected: ${result.value} ${good} ${threshold} ${boldoff}`);
                        cleanupAndExit(0);
                    } else {
                        console.log(`-----\n${boldon}---- Module ${toolname} test failed. Module produced output significantly different from expected.`);
-                       console.log(`${boldon}----    deviation (${result.metric}) from expected: ${result.value} > ${threshold} ${boldoff}`);
+                       console.log(`${boldon}----    deviation (${result.metric}) from expected: ${result.value} ${bad} ${threshold} ${boldoff}`);
                        cleanupAndExit(1);
                    }
                }).catch((e) => {

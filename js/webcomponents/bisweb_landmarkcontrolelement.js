@@ -29,6 +29,8 @@ const bisgenericio=require('bis_genericio');
 const $=require('jquery');
 const bootbox=require('bootbox');
 const webfileutil = require('bis_webfileutil');
+const inobounce=require('inobounce.js');
+const BisWebPanel = require('bisweb_panel.js');
 
 import dat from 'dat.gui';
 
@@ -108,7 +110,12 @@ class LandmarkControlElement extends HTMLElement {
                 color : "#ff0000",
                 dummy : false,
             },
+            mousestate : -2,
+            lastpoint : null,
+            lastplane : null,
         };
+
+        this.panel=null;
 
     }
 
@@ -642,16 +649,17 @@ class LandmarkControlElement extends HTMLElement {
 
         if (this.internal.data.enabled===true) {
             this.updatecolors();
-            this.internal.domElement.css({'background-color': webutil.getactivecolor()});
+            this.panel.makeActive(true);
             this.internal.landlabelelement.removeClass('label-success');
             this.internal.landlabelelement.addClass('label-danger');
+            inobounce.enable();
         } else {
-            var x = this.internal.domElement.parent().css('backgroundColor');
-            this.internal.domElement.css({'background-color':x});
+            this.panel.makeActive(false);
             this.internal.landlabelelement.removeClass('label-danger');
             this.internal.landlabelelement.addClass('label-success');
             this.picklandmark(false);
-        } 
+            inobounce.disable();
+        }
     }
     
 
@@ -950,17 +958,29 @@ class LandmarkControlElement extends HTMLElement {
      */
     connectedCallback() {
 
+        
         let viewerid=this.getAttribute('bis-viewerid');
         let layoutid=this.getAttribute('bis-layoutwidgetid');
         this.internal.orthoviewer=document.querySelector(viewerid);
         this.internal.orthoviewer.addMouseObserver(this);
         
         let layoutcontroller=document.querySelector(layoutid);
-        this.internal.parentDomElement=layoutcontroller.createToolWidget('Landmark Control');
-        var basediv=$("<div>To appear...</div>");
+        this.panel=new BisWebPanel(layoutcontroller,
+                                    {  name  : 'Landmark Editor',
+                                       permanent : false,
+                                       width : '290',
+                                       dual : false,
+                                    });
+        this.internal.parentDomElement=this.panel.getWidget();
+        var basediv=$("<div>This will appear once an image is loaded.</div>");
         this.internal.parentDomElement.append(basediv);
     }
 
+    show() {
+        this.panel.show();
+    }
+
+    
     /** Called by OrthoViewer */
     initialize(subviewers,volume,samesize=false) {
 
@@ -1014,25 +1034,37 @@ class LandmarkControlElement extends HTMLElement {
      * @param {number} mousestate - 0=click 1=move 2=release
      */
     updatemousecoordinates(mm,plane,mousestate) {
-        if (mousestate<0 || mousestate === undefined || this.internal.landmarkset===null)
+        if ( mousestate === undefined || this.internal.landmarkset===null)
             return;
         
         if (this.internal.data.enabled===false)
             return;
-
-        if (!webutil.isCollapseElementOpen(this.internal.parentDomElement)) 
-            return;
         
+        if (!this.panel.isOpen())
+            return;
+
         if (mousestate===0) {
+            if (this.internal.lastpoint!==null)
+                this.updatemousecoordinates(this.internal.lastpoint,this.internal.lastplane,2);
             this.setcursor(mm,true); 
-        } else if (mousestate===1) {
+        } else if (mousestate===1 || mousestate===-1) {
             this.setcursor(mm,true);
         } else if (mousestate===2) {
             this.updatepoint(mm);
             this.setcursor(mm,false);
             if (this.internal.pickmode)
                 this.picklandmark(false);
+            this.internal.lastpoint=null;
         }
+
+        if (mousestate!==2) {
+            this.internal.lastpoint=mm.slice(0);
+            this.internal.mousestate=mousestate;
+            this.internal.lastplane=plane;
+        } else {
+            this.internal.lastpoint=null;
+        }
+        
     }
 }
 

@@ -1,5 +1,5 @@
 
-	      
+              
 "use strict";
 
 const wasmutil=require('bis_wasmutils');
@@ -16,13 +16,28 @@ var initialize=function(binary=null) {
         ModulePromise=wrapperutil.initialize_wasm(binary);
         ModulePromise.then( (mod) => {
             Module=mod;
+            let d="";
+            if (mod.bisdate)
+                d="(" + mod.bisdate +")";
+            d=d+" (memory size="+Module['wasmMemory'].buffer.byteLength/(1024*1024)+" MB)";
             if (Module._uses_gpl())
-                console.log('++++ Web Assembly code loaded (has GPL plugin. See https://github.com/bioimagesuiteweb/gplcppcode)');
+                console.log('++++ Web Assembly code loaded '+d+', (has GPL plugin. See https://github.com/bioimagesuiteweb/gplcppcode)');
+            else
+                console.log('++++ Web Assembly code '+d);
         });
     }
     return ModulePromise;
 };
 
+var reinitialize=function() {
+
+    if (Module!==0) {
+        Module._delete_all_memory();
+        Module=0;
+        ModulePromise=0;
+    }
+    return initialize();
+}
 
 var get_module=function() {
     return Module;
@@ -30,7 +45,7 @@ var get_module=function() {
 
 
 var get_date=function() {
-    return "05/14/2018";     
+    return "06/13/2018";     
 };
         
 
@@ -52,7 +67,7 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let vector1_ptr=wrapperutil.serializeObject(Module,vector1,'Vector')
+    let vector1_ptr=wrapperutil.serializeObject(Module,vector1,'Vector');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:parseMatlabV6WASM with '+jsonstring+'\n++++');
@@ -69,7 +84,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -97,7 +112,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -117,7 +132,7 @@ var get_date=function() {
     if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
 
     // Serialize objects
-    let matrix1_ptr=wrapperutil.serializeObject(Module,matrix1,'Matrix')
+    let matrix1_ptr=wrapperutil.serializeObject(Module,matrix1,'Matrix');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:createMatrixTextFileWASM\n++++');
@@ -134,7 +149,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -162,7 +177,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -180,7 +195,7 @@ var get_date=function() {
     if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
 
     // Serialize objects
-    let comboxform1_ptr=wrapperutil.serializeObject(Module,comboxform1,'bisComboTransformation')
+    let comboxform1_ptr=wrapperutil.serializeObject(Module,comboxform1,'bisComboTransformation');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:createComboTransformationTextFileWASM\n++++');
@@ -197,7 +212,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -215,7 +230,7 @@ var get_date=function() {
     if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
 
     // Serialize objects
-    let matrix1_ptr=wrapperutil.serializeObject(Module,matrix1,'Matrix')
+    let matrix1_ptr=wrapperutil.serializeObject(Module,matrix1,'Matrix');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:niftiMat44ToQuaternionWASM\n++++');
@@ -232,7 +247,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -252,7 +267,7 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:extractImageFrameWASM with '+jsonstring+'\n++++');
@@ -270,7 +285,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -290,7 +305,7 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:extractImageSliceWASM with '+jsonstring+'\n++++');
@@ -308,7 +323,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -328,7 +343,7 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:normalizeImageWASM with '+jsonstring+'\n++++');
@@ -346,7 +361,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -366,7 +381,7 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:thresholdImageWASM with '+jsonstring+'\n++++');
@@ -384,7 +399,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -404,7 +419,7 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:clusterThresholdImageWASM with '+jsonstring+'\n++++');
@@ -422,7 +437,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -442,7 +457,7 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:gaussianSmoothImageWASM with '+jsonstring+'\n++++');
@@ -460,7 +475,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -480,7 +495,7 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:gradientImageWASM with '+jsonstring+'\n++++');
@@ -498,7 +513,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -519,8 +534,8 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
-    let transformation2_ptr=wrapperutil.serializeObject(Module,transformation2,'bisTransformation')
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
+    let transformation2_ptr=wrapperutil.serializeObject(Module,transformation2,'bisTransformation');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:resliceImageWASM with '+jsonstring+'\n++++');
@@ -540,7 +555,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -561,7 +576,7 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:cropImageWASM with '+jsonstring+'\n++++');
@@ -579,7 +594,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -599,7 +614,7 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:flipImageWASM with '+jsonstring+'\n++++');
@@ -617,7 +632,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -638,7 +653,7 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:blankImageWASM with '+jsonstring+'\n++++');
@@ -656,7 +671,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -676,7 +691,7 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:resampleImageWASM with '+jsonstring+'\n++++');
@@ -694,7 +709,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -704,22 +719,22 @@ var get_date=function() {
   * @returns a pointer to a serialized image
   */
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // JS: {'prepareImageForRegistrationWASM', 'bisImage', [ 'bisImage', 'ParamObj' ]}
+  // JS: {'prepareImageForRegistrationWASM', 'bisImage', [ 'bisImage',  'ParamObj','debug' ]}
   //      returns a bisImage
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  var prepareImageForRegistrationWASM = function(image1,paramobj,debug=false) { 
+  var prepareImageForRegistrationWASM = function(image1,paramobj,debug) { 
 
     if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:prepareImageForRegistrationWASM with '+jsonstring+'\n++++');
     const wasm_output=Module.ccall('prepareImageForRegistrationWASM','number',
-       ['number', 'string'],
-       [ image1_ptr, jsonstring]);
+       ['number', 'string', 'number'],
+       [ image1_ptr, jsonstring, debug]);
 
     // Deserialize Output
     const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisImage',image1);
@@ -731,7 +746,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -752,7 +767,7 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let transformation1_ptr=wrapperutil.serializeObject(Module,transformation1,'bisTransformation')
+    let transformation1_ptr=wrapperutil.serializeObject(Module,transformation1,'bisTransformation');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:computeDisplacementFieldWASM with '+jsonstring+'\n++++');
@@ -769,7 +784,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -789,7 +804,7 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:sliceBiasFieldCorrectImageWASM with '+jsonstring+'\n++++');
@@ -807,7 +822,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -827,7 +842,7 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:morphologyOperationWASM with '+jsonstring+'\n++++');
@@ -845,7 +860,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -865,7 +880,7 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:seedConnectivityWASM with '+jsonstring+'\n++++');
@@ -883,7 +898,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -905,11 +920,11 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
-    let image2_ptr=0
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
+    let image2_ptr=0;
     if (image2!==0) 
-      image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage')
-    let matrix3_ptr=wrapperutil.serializeObject(Module,matrix3,'Matrix')
+      image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage');
+    let matrix3_ptr=wrapperutil.serializeObject(Module,matrix3,'Matrix');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:computeGLMWASM with '+jsonstring+'\n++++');
@@ -931,7 +946,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -950,8 +965,8 @@ var get_date=function() {
     if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
-    let image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage')
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
+    let image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:computeROIWASM\n++++');
@@ -970,7 +985,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -990,7 +1005,7 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let matrix1_ptr=wrapperutil.serializeObject(Module,matrix1,'Matrix')
+    let matrix1_ptr=wrapperutil.serializeObject(Module,matrix1,'Matrix');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:butterworthFilterWASM with '+jsonstring+'\n++++');
@@ -1007,7 +1022,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -1027,7 +1042,7 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:butterworthFilterImageWASM with '+jsonstring+'\n++++');
@@ -1045,7 +1060,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -1066,10 +1081,10 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let matrix1_ptr=wrapperutil.serializeObject(Module,matrix1,'Matrix')
-    let vector2_ptr=0
+    let matrix1_ptr=wrapperutil.serializeObject(Module,matrix1,'Matrix');
+    let vector2_ptr=0;
     if (vector2!==0) 
-      vector2_ptr=wrapperutil.serializeObject(Module,vector2,'Vector')
+      vector2_ptr=wrapperutil.serializeObject(Module,vector2,'Vector');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:computeCorrelationMatrixWASM with '+jsonstring+'\n++++');
@@ -1088,7 +1103,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -1108,11 +1123,11 @@ var get_date=function() {
     if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
 
     // Serialize objects
-    let matrix1_ptr=wrapperutil.serializeObject(Module,matrix1,'Matrix')
-    let matrix2_ptr=wrapperutil.serializeObject(Module,matrix2,'Matrix')
-    let vector3_ptr=0
+    let matrix1_ptr=wrapperutil.serializeObject(Module,matrix1,'Matrix');
+    let matrix2_ptr=wrapperutil.serializeObject(Module,matrix2,'Matrix');
+    let vector3_ptr=0;
     if (vector3!==0) 
-      vector3_ptr=wrapperutil.serializeObject(Module,vector3,'Vector')
+      vector3_ptr=wrapperutil.serializeObject(Module,vector3,'Vector');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:weightedRegressOutWASM\n++++');
@@ -1133,7 +1148,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -1152,10 +1167,10 @@ var get_date=function() {
     if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
 
     // Serialize objects
-    let matrix1_ptr=wrapperutil.serializeObject(Module,matrix1,'Matrix')
-    let vector2_ptr=0
+    let matrix1_ptr=wrapperutil.serializeObject(Module,matrix1,'Matrix');
+    let vector2_ptr=0;
     if (vector2!==0) 
-      vector2_ptr=wrapperutil.serializeObject(Module,vector2,'Vector')
+      vector2_ptr=wrapperutil.serializeObject(Module,vector2,'Vector');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:weightedRegressGlobalSignalWASM\n++++');
@@ -1174,7 +1189,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -1195,7 +1210,7 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:addGridToImageWASM with '+jsonstring+'\n++++');
@@ -1213,7 +1228,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -1235,10 +1250,10 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
-    let image2_ptr=0
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
+    let image2_ptr=0;
     if (image2!==0) 
-      image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage')
+      image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:projectImageWASM with '+jsonstring+'\n++++');
@@ -1258,7 +1273,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -1280,8 +1295,8 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
-    let image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage')
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
+    let image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:backProjectImageWASM with '+jsonstring+'\n++++');
@@ -1301,7 +1316,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -1322,7 +1337,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -1346,7 +1361,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -1365,7 +1380,7 @@ var get_date=function() {
     if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
 
     // Serialize objects
-    let linearxform1_ptr=wrapperutil.serializeObject(Module,linearxform1,'bisLinearTransformation')
+    let linearxform1_ptr=wrapperutil.serializeObject(Module,linearxform1,'bisLinearTransformation');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:test_matrix4x4\n++++');
@@ -1379,7 +1394,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -1401,9 +1416,9 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
-    let image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage')
-    let vector3_ptr=wrapperutil.serializeObject(Module,vector3,'Vector')
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
+    let image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage');
+    let vector3_ptr=wrapperutil.serializeObject(Module,vector3,'Vector');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:test_create_4x4matrix with '+jsonstring+'\n++++');
@@ -1424,7 +1439,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -1444,8 +1459,8 @@ var get_date=function() {
     if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
 
     // Serialize objects
-    let linearxform1_ptr=wrapperutil.serializeObject(Module,linearxform1,'bisLinearTransformation')
-    let vector2_ptr=wrapperutil.serializeObject(Module,vector2,'Vector')
+    let linearxform1_ptr=wrapperutil.serializeObject(Module,linearxform1,'bisLinearTransformation');
+    let vector2_ptr=wrapperutil.serializeObject(Module,vector2,'Vector');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:test_eigenUtils\n++++');
@@ -1461,7 +1476,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -1481,8 +1496,8 @@ var get_date=function() {
     if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
 
     // Serialize objects
-    let vector1_ptr=wrapperutil.serializeObject(Module,vector1,'Vector')
-    let matrix2_ptr=wrapperutil.serializeObject(Module,matrix2,'Matrix')
+    let vector1_ptr=wrapperutil.serializeObject(Module,vector1,'Vector');
+    let matrix2_ptr=wrapperutil.serializeObject(Module,matrix2,'Matrix');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:test_matlabParse\n++++');
@@ -1498,7 +1513,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -1516,7 +1531,7 @@ var get_date=function() {
     if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
 
     // Serialize objects
-    let comboxform1_ptr=wrapperutil.serializeObject(Module,comboxform1,'bisComboTransformation')
+    let comboxform1_ptr=wrapperutil.serializeObject(Module,comboxform1,'bisComboTransformation');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:test_bendingEnergy\n++++');
@@ -1530,7 +1545,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -1554,7 +1569,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -1578,7 +1593,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -1606,7 +1621,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -1632,14 +1647,14 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
-    let image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage')
-    let image3_ptr=0
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
+    let image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage');
+    let image3_ptr=0;
     if (image3!==0) 
-      image3_ptr=wrapperutil.serializeObject(Module,image3,'bisImage')
-    let image4_ptr=0
+      image3_ptr=wrapperutil.serializeObject(Module,image3,'bisImage');
+    let image4_ptr=0;
     if (image4!==0) 
-      image4_ptr=wrapperutil.serializeObject(Module,image4,'bisImage')
+      image4_ptr=wrapperutil.serializeObject(Module,image4,'bisImage');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:test_compute_histo_metric with '+jsonstring+'\n++++');
@@ -1662,7 +1677,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -1683,7 +1698,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -1706,11 +1721,11 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
-    let image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage')
-    let linearxform3_ptr=0
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
+    let image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage');
+    let linearxform3_ptr=0;
     if (linearxform3!==0) 
-      linearxform3_ptr=wrapperutil.serializeObject(Module,linearxform3,'bisLinearTransformation')
+      linearxform3_ptr=wrapperutil.serializeObject(Module,linearxform3,'bisLinearTransformation');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:runLinearRegistrationWASM with '+jsonstring+'\n++++');
@@ -1731,7 +1746,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -1753,11 +1768,11 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
-    let image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage')
-    let linearxform3_ptr=0
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
+    let image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage');
+    let linearxform3_ptr=0;
     if (linearxform3!==0) 
-      linearxform3_ptr=wrapperutil.serializeObject(Module,linearxform3,'bisLinearTransformation')
+      linearxform3_ptr=wrapperutil.serializeObject(Module,linearxform3,'bisLinearTransformation');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:runNonLinearRegistrationWASM with '+jsonstring+'\n++++');
@@ -1778,7 +1793,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -1799,8 +1814,8 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
-    let gridxform2_ptr=wrapperutil.serializeObject(Module,gridxform2,'bisGridTransformation')
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
+    let gridxform2_ptr=wrapperutil.serializeObject(Module,gridxform2,'bisGridTransformation');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:approximateDisplacementFieldWASM with '+jsonstring+'\n++++');
@@ -1819,7 +1834,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -1839,7 +1854,7 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:approximateDisplacementFieldWASM2 with '+jsonstring+'\n++++');
@@ -1856,7 +1871,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -1876,7 +1891,7 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:segmentImageWASM with '+jsonstring+'\n++++');
@@ -1894,7 +1909,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -1914,7 +1929,7 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:regularizeObjectmapWASM with '+jsonstring+'\n++++');
@@ -1932,7 +1947,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -1956,7 +1971,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -1978,12 +1993,12 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
-    let image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage')
-    let image3_ptr=0
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
+    let image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage');
+    let image3_ptr=0;
     if (image3!==0) 
-      image3_ptr=wrapperutil.serializeObject(Module,image3,'bisImage')
-    let matrix4_ptr=wrapperutil.serializeObject(Module,matrix4,'Matrix')
+      image3_ptr=wrapperutil.serializeObject(Module,image3,'bisImage');
+    let matrix4_ptr=wrapperutil.serializeObject(Module,matrix4,'Matrix');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:computeDTITensorFitWASM with '+jsonstring+'\n++++');
@@ -2007,7 +2022,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -2025,10 +2040,10 @@ var get_date=function() {
     if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
-    let image2_ptr=0
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
+    let image2_ptr=0;
     if (image2!==0) 
-      image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage')
+      image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:computeTensorEigenSystemWASM\n++++');
@@ -2048,7 +2063,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -2068,10 +2083,10 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
-    let image2_ptr=0
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
+    let image2_ptr=0;
     if (image2!==0) 
-      image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage')
+      image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:computeDTITensorInvariantsWASM with '+jsonstring+'\n++++');
@@ -2091,7 +2106,7 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //--------------------------------------------------------------
   // C++:
@@ -2112,13 +2127,13 @@ var get_date=function() {
     const jsonstring=JSON.stringify(paramobj || { } );
 
     // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage')
-    let image2_ptr=0
+    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
+    let image2_ptr=0;
     if (image2!==0) 
-      image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage')
-    let image3_ptr=0
+      image2_ptr=wrapperutil.serializeObject(Module,image2,'bisImage');
+    let image3_ptr=0;
     if (image3!==0) 
-      image3_ptr=wrapperutil.serializeObject(Module,image3,'bisImage')
+      image3_ptr=wrapperutil.serializeObject(Module,image3,'bisImage');
 
     // Call WASM
     if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:computeDTIColorMapImageWASM with '+jsonstring+'\n++++');
@@ -2140,12 +2155,13 @@ var get_date=function() {
 
     // Return
     return output;
-  }
+  };
 
   //-------------------------------------------------------------
 
   const outputobj = { 
     initialize : initialize,
+    reinitialize : reinitialize,
     get_module : get_module,
     get_date   : get_date,
     parseMatlabV6WASM : parseMatlabV6WASM,

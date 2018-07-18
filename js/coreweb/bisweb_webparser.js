@@ -279,9 +279,9 @@ let parseDescriptionAndCreateGUI = function(frame, buttonFrame,description, numV
     
     // Finalize dat.gui 
     webutil.removedatclose(gui);
-    $(gui.domElement).css({ "margin-left" : "8px",
-                            "margin-top" : "5px",
-                            "margin-bottom" : "5px",
+    $(gui.domElement).css({ "margin-left" : "0px",
+                            "margin-top" : "0px",
+                            "margin-bottom" : "2px",
                           });
     frame.append(gui.domElement);
 
@@ -292,7 +292,7 @@ let parseDescriptionAndCreateGUI = function(frame, buttonFrame,description, numV
         'name': runButtonName,
         'type': 'success',
         'parent' :  buttonFrame,
-        'css' : { 'margin-right' : '10px' },
+        'css' : { 'margin-right' : '5px' },
     });
     dict.runbutton[0].setAttribute('data-toggle', 'tooltip');
     dict.runbutton[0].setAttribute('title', 'Execute the algorithm');

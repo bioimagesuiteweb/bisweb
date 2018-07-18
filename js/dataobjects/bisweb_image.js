@@ -297,8 +297,26 @@ class BisWebImage extends BisWebDataObject {
                 out.testresult=true;
             }
         } else {
-            out.value=this.maxabsdiff(other);
-            out.metric='maxabs';
+            if (method==='ssd') {
+                let odata=other.getImageData();
+                let idata=this.getImageData();
+                let l=idata.length, l2=odata.length;
+                out.metric='ssd';
+                
+                if (l===l2 && l>1) {
+                    let sum=0.0;
+                    for (let i=0;i<l;i++) {
+                        let v=(idata[i]-odata[i]);
+                        sum+=v*v;
+                    }
+                    out.value=Math.sqrt(sum);
+                } else {
+                    out.value=threshold+1.0;
+                }
+            }  else {
+                out.value=this.maxabsdiff(other);
+                out.metric='maxabs';
+            }
             if (out.value < threshold)
                 out.testresult=true;
         }
@@ -1346,6 +1364,8 @@ class BisWebImage extends BisWebDataObject {
             simplemat.GMMat4.setRowValues(IJKToRAS,  1,  2*(b*c+a*d)*xd,  (a*a+c*c-b*b-d*d)*yd,  2*(c*d-a*b)*zd,  qy );
             simplemat.GMMat4.setRowValues(IJKToRAS,  2,  2*(b*d-a*c )*xd,  2*(c*d+a*b)*yd,  (a*a+d*d-c*c-b*b)*zd,  qz );
 
+
+
         } else if(internal.header.struct.sform_code > 0) {
 
             //      console.log('using s_form');
@@ -1396,17 +1416,56 @@ class BisWebImage extends BisWebDataObject {
         //console.log('combo=[ ',combo[0][0],combo[0][1],combo[0][2],']\n[',combo[1][0],combo[1][1],combo[1][2],']\n[', combo[2][0],combo[2][1],combo[2][2],']\n');
         // Fix * spacing instead of /spacing as dealing with inverse
         let axis=[ 0 ,1, 2 ], flip=[ 0 ,0, 0 ];
+        // Find Max Value
+
         for (let ia=0;ia<=2;ia++) {
             for (let ib=0;ib<=2;ib++) {
                 if (axis[ia]!=ib) {
+                    // probably spacing[ib] should be spacing[ia] !!!
                     if (Math.abs(combo[ia][ib]*internal.spacing[ib])>Math.abs(combo[ia][axis[ia]]*internal.spacing[axis[ia]])) {
                         axis[ia]=ib;
                     }
                 }
+                
             }
             if (combo[ia][axis[ia]]<0)
                 flip[ia]=1;
         }
+        
+        let votes=[0,0,0];
+        for (let ia=0;ia<=2;ia++) {
+            votes[axis[ia]]+=1;
+        }
+        
+        if (votes[0]===0 || votes[1]===0 || votes[2]===0) {
+            
+            let first=0,second=1;
+            if (axis[0]===axis[2]) {
+                second=2;
+            } else if (axis[1]===axis[2]) {
+                first=2;
+            }
+            
+            
+            let tochange=first;
+            let v1=Math.abs(combo[first][axis[first]]*internal.spacing[axis[first]]);
+            let v2=Math.abs(combo[second][axis[second]]*internal.spacing[axis[second]]);
+            if (v2<v1)
+                tochange=second;
+            console.log("Axis",tochange,"needs to change",first,v1,second,v2,'votes=',votes);
+            
+            let k=votes.indexOf(0);
+            console.log('k=',k);
+            if (k>=0 && k<=2) {
+                axis[tochange]=k;
+                if (combo[tochange][k]<0)
+                    flip[tochange]=1;
+                console.log('new axis=',axis,flip);
+            } else {
+                console.log('Something is seriously wrong');
+            }
+        }
+               
         internal.orient.axis=axis;
         for (let k=0;k<=2;k++) {
             let cj=0,truej=0;

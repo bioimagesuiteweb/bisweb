@@ -211,7 +211,7 @@ module.exports = {
                 "gui": "slider",
                 "varname": "stepsize",
                 "default": obj.stepsize,
-                "low": 0.5,
+                "low": 0.125,
                 "high": 4.0,
             },
             {
@@ -239,7 +239,7 @@ module.exports = {
                 "default": obj.iterations
             },
             {
-                "name": "Resln Factor",
+                "name": "Resolution",
                 "description": "Factor to reduce the resolution prior to registration",
                 "priority": 11,
                 "advanced": false,
@@ -316,14 +316,14 @@ module.exports = {
             },
             {
                 "name": "Smoothing",
-                "description": "Amount of extra smoothing to perform (values of 0 or less will perform no smoothing)",
+                "description": "Amount of image smoothing to perform",
                 "priority": 4,
                 "advanced": true,
                 "type": "float",
                 "gui": "slider",
-                "varname": "extrasmoothing",
-                "default": 0.0,
-                "low": -1.0,
+                "varname": "imagesmoothing",
+                "default": 1.0,
+                "low":  0.0,
                 "high": 4.0,
             },
             {
