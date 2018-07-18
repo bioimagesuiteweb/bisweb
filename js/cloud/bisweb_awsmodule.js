@@ -5,7 +5,6 @@ const AWSCognitoIdentity = require('amazon-cognito-identity-js');
 const AWSParameters = require('../../web/awsparameters.js');
 const AWSCognitoAuth = require('amazon-cognito-auth-js');
 const bis_genericio = require('bis_genericio.js');
-
 const bisweb_image = require('bisweb_image.js');
 const bis_webutil = require('bis_webutil.js');
 const wsutil = require('../../fileserver/wsutil.js');
@@ -52,9 +51,11 @@ class AWSModule {
         });
     }
 
-    createS3(bucketName) {
+    createS3(bucketName, credentials = null, session_token = null) {
         let s3 = new AWS.S3({
             'apiVersion' : '2006-03-01',
+            'credentials' : credentials,
+            'sessionToken' : session_token,
             'params' : { Bucket : bucketName}
         });
 
@@ -254,7 +255,10 @@ class AWSModule {
                         //TODO: determine whether refresh is necessary
                         AWS.config.credentials.refresh( (err) => {
                             if (err) { console.log('an error occured refreshing', err); }
-                            else { console.log('refresh successful.'); }
+                            else { 
+                                console.log('refresh successful.'); 
+                                this.s3 = this.createS3(AWSParameters.BucketName, AWS.config.credentials);
+                            }
                         });
                     }
                 });

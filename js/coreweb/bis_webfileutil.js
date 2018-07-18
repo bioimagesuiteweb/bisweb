@@ -399,6 +399,7 @@ const webfileutils = {
         const self=this;
         
         let fn=function() {
+            console.log('hello from createFileSourceSelector');
             userPreferencesLoaded.then(() => {
                 let initial=userPreferences.getItem('filesource') || 'local';
                 webutil.createRadioSelectModalPromise(`<H4>Select file source</H4><HR>`,
@@ -432,8 +433,8 @@ const webfileutils = {
 
         if (fileMode==='server') {
             bisweb_fileserver.uploadFileToServer(blob, filename, 
-                () => { console.log('upload to fileserver successful.')}, 
-                () => { console.log('upload to fileserver failed.')}
+                () => { console.log('upload to fileserver successful.'); }, 
+                () => { console.log('upload to fileserver failed.'); }
             );
         }
 
@@ -452,7 +453,8 @@ const webfileutils = {
 
 
 userPreferencesLoaded.then(() => {
-    let f=userPreferences.getItem('filesource') || 'local';
+    //TODO: change this back to 'local' once i figure out the buggy filebar thing
+    let f=userPreferences.getItem('filesource') || 'amazonaws';
     console.log('Initial File Source=',f);
     webfileutils.setMode(f);
 });
