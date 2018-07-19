@@ -53,10 +53,6 @@ class FMRIElement extends HTMLElement {
 
     
 
-    initializeFMRITool() {
-
-    }
-
     // initializes jstree when new subject is selected
     createNewStudy() {
 
@@ -292,7 +288,7 @@ class FMRIElement extends HTMLElement {
             "stepsize": 1,
             "metric": "NMI",
             "steps": 1,
-            "iterations": 10,
+            "iterations": 1,
             "mode": "Rigid",
             "resolution": 1.5,
             "doreslice": true,
@@ -568,7 +564,6 @@ class FMRIElement extends HTMLElement {
 
         this.panel.show();
         console.log(this.tree_div);
-        this.initializeFMRITool();     
 
     }
 
