@@ -8,6 +8,7 @@ const bis_genericio = require('bis_genericio.js');
 const bisweb_image = require('bisweb_image.js');
 const bis_webutil = require('bis_webutil.js');
 const wsutil = require('../../fileserver/wsutil.js');
+const bisweb_filedialog = require('bisweb_filedialog.js');
 const $ = require('jquery');
 
 class AWSModule {
@@ -49,6 +50,15 @@ class AWSModule {
         window.addEventListener('message', (data) => {
             console.log('got a message', data); 
         });
+
+        //file display modal gets deleted if you try to load it too soon
+        //not completely sure why -Zach
+        bis_webutil.runAfterAllLoaded( () => {   
+            this.fileDisplayModal = new bisweb_filedialog('Bucket Contents');
+            //fileListFn won't get called from wihin filedialog because the bucket is a flat storage structure
+            this.fileDisplayModal.fileRequestFn = this.makeRequest.bind(this);
+        });
+
     }
 
     createS3(bucketName, credentials = null, session_token = null) {
@@ -66,20 +76,60 @@ class AWSModule {
         this.s3.listObjects({ 'Delimiter' : '/'}, (err, data) => {
             if (err) { console.log('an error occured', err); return; }
             console.log('got objects', data);
+
+            //format list data to a format that file display modal can understand...
+            let list = [];
+            for (let entry of data.Contents) {
+                let newEntry = {};
+                newEntry.text = entry.Key;
+                newEntry.path = entry.Key;
+
+                let fileType = newEntry.text.split('.');
+                switch(fileType[fileType.length - 1]){
+                    case 'gz' : (fileType[fileType.length - 2] === 'nii') ? newEntry.type = 'picture' : newEntry.type = 'file'; break;
+                    case 'md' : newEntry.type = 'text'; break;
+                    case 'mkv' : 
+                    case 'avi' : 
+                    case 'mp4' : newEntry.type = 'video'; break;
+                    case 'mp3' :
+                    case 'flac' :
+                    case 'FLAC' :
+                    case 'wav' : 
+                    case 'WAV' : newEntry.type = 'audio'; break;
+                    default : newEntry.type = 'file';
+                }
+
+                list.push(newEntry);
+            }
+
+            console.log('list', list);
+            this.fileDisplayModal.createFileList(list);
+            this.fileDisplayModal.showDialog();
         });
     }
 
-    makeRequest(type, object = null) {
-        type = type.toLowerCase();
-        let parsedType;
-        switch (type) {
-            case 'get' :  parsedType = 'GET'; break;
-            case 'put' :  parsedType = 'PUT'; break;
-            case 'select' : parsedType = 'SELECT'; break;
-            case 'delete' : parsedType = 'DELETE'; break;
-            default : console.log('trying to make request for unknown type', type, 'aborting request'); return;
+    //expected to be called from bisweb_fileserver (see 'fileRequestFn') 
+    makeRequest(params) {
+        let command = params.command;
+        let files = params.files;
+        console.log('this', this);
+        switch (params.command) {
+            case 'getfile' : 
+            case 'getfiles' : this.requestFile(files); break;
+            default : console.log('Cannot execute unknown command', command);
         }
 
+        /*let request = `
+        ${parsedType} /${object} HTTP/1.1\n
+        Host: ${this.bucketName}.s3.amazonaws.com\n
+        Date: ${new Date()}
+        `;
+        
+        console.log('request', request);
+        */
+    }
+
+    requestFile(name) {
         let xmlRequest = new XMLHttpRequest();
         xmlRequest.onreadystatechange = () => {
             if (xmlRequest.readyState === 4 && xmlRequest.status === 200) {
@@ -102,20 +152,11 @@ class AWSModule {
             }
         };
 
-        xmlRequest.open(parsedType, `http://${this.bucketName}.s3.amazonaws.com/${object}`, true);
-        //xmlRequest.setRequestHeader('Content-Type', 'application/json');
+        xmlRequest.open('GET', `http://${AWSParameters.BucketName}.s3.amazonaws.com/${name}`, true);
+        xmlRequest.setRequestHeader('Content-Type', 'application/json');
         xmlRequest.setRequestHeader('response-content-type', 'application/octet-stream');
         xmlRequest.send(null);
         
-        
-        /*let request = `
-        ${parsedType} /${object} HTTP/1.1\n
-        Host: ${this.bucketName}.s3.amazonaws.com\n
-        Date: ${new Date()}
-        `;
-        
-        console.log('request', request);
-        */
     }
 
     createUser(username, password, email, phoneNumber = null) {

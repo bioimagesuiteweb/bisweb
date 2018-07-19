@@ -11,9 +11,9 @@ const jstree = require('jstree');
  */
 class FileDialogElement {
 
-    constructor() {
+    constructor(modalName = 'File Tree') {
 
-        this.modal = webutil.createmodal('File Tree', 'modal-lg');
+        this.modal = webutil.createmodal(modalName, 'modal-lg');
         this.modal.dialog.find('.modal-footer').remove();
 
         this.contentDisplayTemplate = 
@@ -296,6 +296,8 @@ class FileDialogElement {
      * Displays the file dialog to the user. 
      */
     showDialog() {
+        console.log('hello from show dialog');
+        console.log('modal', this.modal);
         this.modal.dialog.modal('show');
     }
 

@@ -1,7 +1,7 @@
 const $ = require('jquery');
 const webutil = require('bis_webutil.js');
 const wsutil = require('../../fileserver/wsutil.js');
-const FileDialog = require('bisweb_filedialog.js');
+const bisweb_filedialog = require('bisweb_filedialog.js');
 const BisImage = require('bisweb_image.js');
 const bisweb_awsmodule = require('bisweb_awsmodule.js');
 
@@ -20,7 +20,7 @@ class FileServer extends HTMLElement {
         this.socket = null;
 
         //File tree requests display the contents of the disk on the server machine in a modal
-        this.fileTreeDialog = new FileDialog();
+        this.fileTreeDialog = new bisweb_filedialog();
 
         //Save image requests pop up a modal dialog with a text entry field
         this.saveImageModal = null;

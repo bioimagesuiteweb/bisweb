@@ -44,7 +44,7 @@ const mkey=keystore.OneDriveKey || "";
 const userPreferencesLoaded = userPreferences.webLoadUserPreferences(bisdbase);
 
 // Initial mode
-let fileMode='local';
+let fileMode='amazonaws';
 let fileInputElements= [];
 
 const webfileutils = {
@@ -453,8 +453,7 @@ const webfileutils = {
 
 
 userPreferencesLoaded.then(() => {
-    //TODO: change this back to 'local' once i figure out the buggy filebar thing
-    let f=userPreferences.getItem('filesource') || 'amazonaws';
+    let f=userPreferences.getItem('filesource') || fileMode;
     console.log('Initial File Source=',f);
     webfileutils.setMode(f);
 });
