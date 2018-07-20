@@ -130,32 +130,29 @@ class AWSModule {
     }
 
     requestFile(name) {
-        let xmlRequest = new XMLHttpRequest();
-        xmlRequest.onreadystatechange = () => {
-            if (xmlRequest.readyState === 4 && xmlRequest.status === 200) {
-                console.log('xmlRequest', xmlRequest, 'type of response', xmlRequest.responseText.length);
-    
-                if(typeof(xmlRequest.response) === 'string') {
-                    let buffer = new ArrayBuffer(xmlRequest.responseText.length);
-                    let bufferView = new Uint8Array(buffer);
-                    for (let i = 0; i < xmlRequest.response.length; i++) {
-                        bufferView[i] = xmlRequest.response.charCodeAt(i);
-                    }
 
-                    let unzippedFile = wsutil.unzipFile(bufferView);
-                    console.log('bufferView', bufferView, 'buffer', buffer, 'unzipped file', unzippedFile);
 
-                    let parsedImage = new bisweb_image();
-                    parsedImage.parseNII(unzippedFile);
-                    console.log('parsedImage', parsedImage);
-                }
-            }
+        console.log('Key', name);
+
+        let params = {
+            'Bucket' : AWSParameters.BucketName,
+            'Key' : name[0]            
         };
 
-        xmlRequest.open('GET', `http://${AWSParameters.BucketName}.s3.amazonaws.com/${name}`, true);
-        xmlRequest.setRequestHeader('Content-Type', 'application/json');
-        xmlRequest.setRequestHeader('response-content-type', 'application/octet-stream');
-        xmlRequest.send(null);
+        this.s3.getObject(params, (err, data) => {
+            if (err) { console.log('an error occured', err); }
+            else {
+                console.log('data', data);
+                let unzippedFile = wsutil.unzipFile(data.Body);
+                console.log('unzipped file', unzippedFile);
+
+                let parsedImage = new bisweb_image();
+                parsedImage.initialize();
+                parsedImage.parseNII(unzippedFile.buffer);
+                console.log('parsedImage', parsedImage);
+
+            }
+        });
         
     }
 
@@ -311,3 +308,34 @@ class AWSModule {
 }
 
 module.exports = AWSModule;
+
+//Manual XML request stuff I mistakenly wrote instead of using the S3 API
+//Left here in case I need it -Zach
+        /*let xmlRequest = new XMLHttpRequest();
+        xmlRequest.onreadystatechange = () => {
+            if (xmlRequest.readyState === 4 && xmlRequest.status === 200) {
+                console.log('xmlRequest', xmlRequest, 'type of response', xmlRequest.response.length);
+    
+                if(typeof(xmlRequest.response) === 'string') {
+                    let buffer = new ArrayBuffer(xmlRequest.responseText.length);
+                    let bufferView = new Uint8Array(buffer);
+                    for (let i = 0; i < xmlRequest.response.length; i++) {
+                        bufferView[i] = xmlRequest.response.charCodeAt(i);
+                    }
+
+                    let unzippedFile = wsutil.unzipFile(bufferView);
+                    console.log('bufferView', bufferView, 'buffer', buffer, 'unzipped file', unzippedFile);
+
+                    let parsedImage = new bisweb_image();
+                    parsedImage.initialize();
+                    parsedImage.parseNII(bufferView);
+                    console.log('parsedImage', parsedImage);
+                }
+            }
+        };
+
+        xmlRequest.open('GET', `http://${AWSParameters.BucketName}.s3.amazonaws.com/${name}`, true);
+        xmlRequest.setRequestHeader('Content-Type', 'application/json');
+        xmlRequest.setRequestHeader('response-content-type', 'application/octet-stream');
+        xmlRequest.send(null);
+        */
