@@ -485,9 +485,12 @@ class ViewerApplicationElement extends HTMLElement {
         const self=this;
         let paintviewerno = self.VIEWERS.length - 1;
 
-        //register a fileserver to webfileutil for later...
+        //give webfileutil acccess to the fileserver and algorithmcontroller
         let fileserverid = this.getAttribute('bis-fileserver');
         webfileutil.setFileServer(fileserverid);
+
+        console.log('setting algorithm controller', modulemanager.getAlgorithmController());
+        webfileutil.setAlgorithmController(modulemanager.getAlgorithmController(), 'viewer1');
         
         // --------------------------------------------------------------------------
         // Callbacks for load image

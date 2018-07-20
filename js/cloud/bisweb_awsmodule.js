@@ -146,11 +146,16 @@ class AWSModule {
                 let unzippedFile = wsutil.unzipFile(data.Body);
                 console.log('unzipped file', unzippedFile);
 
-                let parsedImage = new bisweb_image();
-                parsedImage.initialize();
-                parsedImage.parseNII(unzippedFile.buffer);
-                console.log('parsedImage', parsedImage);
+                let loadedImage = new bisweb_image();
+                loadedImage.initialize();
+                loadedImage.parseNII(unzippedFile.buffer);
+                console.log('loadedImage', loadedImage);
 
+                //dismiss loading message
+                let imageLoadEvent = new CustomEvent('imagetransmission');
+                document.dispatchEvent(imageLoadEvent);
+
+                this.algorithmController.sendImageToViewer(loadedImage, { 'viewername' : this.defaultViewer})
             }
         });
         

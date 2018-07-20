@@ -101,6 +101,12 @@ const webfileutils = {
         }
     },
 
+    setAlgorithmController : function(algorithmController, defaultViewer) {
+        console.log('amazonaws', amazonaws);
+        //only sets algorithm controller for Amazon AWS for now (add other later?)
+        bisweb_awsmodule.algorithmController = algorithmController; 
+        bisweb_awsmodule.defaultViewer = defaultViewer;
+    },
     
     /** electron file callback function
      * @alias WebFileUtil.electronFileCallback
