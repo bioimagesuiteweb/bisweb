@@ -103,6 +103,7 @@ const webfileutils = {
 
     setAlgorithmController : function(algorithmController, defaultViewer) {
         console.log('amazonaws', amazonaws);
+
         //only sets algorithm controller for Amazon AWS for now (add other later?)
         bisweb_awsmodule.algorithmController = algorithmController; 
         bisweb_awsmodule.defaultViewer = defaultViewer;
@@ -236,7 +237,12 @@ const webfileutils = {
                 bisweb_fileserver.wrapInAuth('uploadfile');
                 return;
             }
-            return;
+
+            if (fileMode==='amazonaws') {
+                bisweb_awsmodule.wrapInAuth('uploadfile');
+                return;
+            }
+
         }
 
         let fmode=fileMode;
@@ -429,8 +435,11 @@ const webfileutils = {
 
     // ------------------
 
+    // TODO : CURRENTLY UNUSED -- DELETE? 
+    //-Zach
     cloudSave : function(blob,filename,callback=null) {
 
+        console.log('hello from cloud save');
         if (fileMode==='onedrive') {
             let objectURL = URL.createObjectURL(blob);
             bisweb_onedrive.pickWriteFile(objectURL,filename,callback);
@@ -444,9 +453,7 @@ const webfileutils = {
             );
         }
 
-        if (fileMode==='amazonaws') {
-            bisweb_awsmodule.wrapInAuth('uploadfile', { 'file' : blob, 'name' : filename });
-        }
+       
         
         return false;
     },

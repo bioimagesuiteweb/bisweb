@@ -38,7 +38,8 @@ class AWSModule {
 
         this.awsAuth = null;
         this.s3 = this.createS3(AWSParameters.BucketName);
-        //this.listObjectsInBucket();
+
+        this.saveImageModal = null;
 
         //set to the values provided by Cognito when the user signs in
         this.cognitoUser = null;
@@ -109,30 +110,20 @@ class AWSModule {
     }
 
     //expected to be called from bisweb_fileserver (see 'fileRequestFn') 
-    makeRequest(params) {
+    makeRequest(params, cb = null, eb = null) {
         let command = params.command;
-        let files = params.files;
+        let files = params.files || params.file;
         console.log('this', this);
         switch (params.command) {
             case 'getfile' : 
             case 'getfiles' : this.requestFile(files); break;
+            case 'uploadfile' : 
+            case 'uploadfiles' : this.uploadFile(params.name, files, cb, eb); break;
             default : console.log('Cannot execute unknown command', command);
         }
-
-        /*let request = `
-        ${parsedType} /${object} HTTP/1.1\n
-        Host: ${this.bucketName}.s3.amazonaws.com\n
-        Date: ${new Date()}
-        `;
-        
-        console.log('request', request);
-        */
     }
 
     requestFile(name) {
-
-
-        console.log('Key', name);
 
         let params = {
             'Bucket' : AWSParameters.BucketName,
@@ -142,7 +133,6 @@ class AWSModule {
         this.s3.getObject(params, (err, data) => {
             if (err) { console.log('an error occured', err); }
             else {
-                console.log('data', data);
                 let unzippedFile = wsutil.unzipFile(data.Body);
                 console.log('unzipped file', unzippedFile);
 
@@ -159,6 +149,29 @@ class AWSModule {
             }
         });
         
+    }
+
+    uploadFile(name, body, cb = null, eb = null) {
+
+        console.log('image', body);
+        let rawData = body.internal.imgdata; 
+        let zippedData = wsutil.zipFile(rawData);
+        console.log('zipped data', zippedData);
+        let filename = name + '.nii.gz';
+
+        let params = {
+            'Bucket' : AWSParameters.BucketName,
+            'Key' : filename,
+            'Body' : zippedData
+        };
+
+        this.s3.upload(params, (err, data) => {
+            if (err) { console.log(err); eb(); }
+            else {
+                console.log('uploaded file', name, 'with data', data);
+                cb();
+            }
+        });
     }
 
     createUser(username, password, email, phoneNumber = null) {
@@ -247,6 +260,77 @@ class AWSModule {
         }
     }
 
+    /**
+     * Creates a small modal dialog to allow the user to enter the name for a file they are attempting to save to the fileserver. 
+     */
+    createSaveImageDialog() {
+        let saveDialog = $(`<p>Please enter a name for the current image on the viewer. Do not include a file extension.</p>`);
+        let nameEntryBox = $(`
+                <div class='form-group'>
+                    <label for='filename'>Filename:</label>
+                    <input type='text' class = 'form-control'>
+                </div>
+            `);
+
+        if (!this.saveImageModal) {
+            this.saveImageModal = bis_webutil.createmodal('Save Current Image?', 'modal-sm');
+            this.saveImageModal.dialog.find('.modal-footer').find('.btn').remove();
+
+            let confirmButton = bis_webutil.createbutton({ 'name': 'Confirm', 'type': 'btn-success' });
+            let cancelButton = bis_webutil.createbutton({ 'name': 'Cancel', 'type': 'btn-danger' });
+
+            this.saveImageModal.footer.append(confirmButton);
+            this.saveImageModal.footer.append(cancelButton);
+
+            $(confirmButton).on('click', () => {
+                let image = this.algorithmController.getImage(this.defaultViewer, 'image');
+                let name = this.saveImageModal.body.find('.form-control')[0].value;
+
+
+                 //update the modal with a success message after successful transmission.
+                 let cb = () => {
+                     let transmissionCompleteMessage = $(`<p>Upload completed successfully.</p>`);
+
+                     this.saveImageModal.body.empty();
+                     this.saveImageModal.body.append(transmissionCompleteMessage);
+
+                     setTimeout(() => { this.saveImageModal.dialog.modal('hide'); }, 1500);
+                };
+
+                //update modal with an error message if things went wrong
+                let eb = () => {
+                    let errorMessage = $(`<p>An error occured during transmission. File not uploaded.</p>`)
+
+                    this.saveImageModal.body.empty();
+                    this.saveImageModal.body.append(errorMessage);
+
+                    setTimeout(() => { this.saveImageModal.dialog.modal('hide'); }, 1500);
+                }
+
+                this.makeRequest( { 'command' : 'uploadfile' , 'file' : image, 'name' : name }, cb, eb);
+
+                let imageSavingDialog = $(`<p>Uploading image to Amazon S3...</p>`);
+                this.saveImageModal.body.empty();
+                this.saveImageModal.body.append(imageSavingDialog);
+            });
+
+            $(cancelButton).on('click', () => {
+                this.saveImageModal.dialog.modal('hide');
+            });
+
+            //clear name entry input when modal is closed
+            $(this.saveImageModal.dialog).on('hidden.bs.modal', () => {
+                this.saveImageModal.body.empty();
+            });
+        }
+
+        this.saveImageModal.body.append(saveDialog);
+        this.saveImageModal.body.append(nameEntryBox);
+
+        this.saveImageModal.dialog.modal('show');
+    }
+
+
     wrapInAuth(command, parameters = null) {
         let expireTime = AWS.config.credentials.expireTime ? Date.parse(AWS.config.credentials.expireTime) : -1;
         console.log('expire time', expireTime);
@@ -258,7 +342,7 @@ class AWSModule {
 
         switch(command) {
             case 'showfiles' : this.listObjectsInBucket(); break;
-            case 'uploadfile' : this.uploadFileToBucket(parameters); break;
+            case 'uploadfile' : this.createSaveImageDialog(); break;
             default : console.log('Unrecognized aws command', command, 'cannot complete request.');
         }
         console.log('called command', command, 'with parameters', parameters);
@@ -270,6 +354,7 @@ class AWSModule {
             //console.log('storage event', data);
             if (data.key === 'aws_id_token') {
                 window.removeEventListener('storage', idTokenEvent);
+
                 //---------------------------------------------------------------
                 // 2.) log into identity pool
                 //---------------------------------------------------------------
@@ -292,8 +377,6 @@ class AWSModule {
                     } else {
                         console.log('Exchanged access token for access key');
                         authWindow.postMessage({ 'success': 'auth complete' }, window.location);
-
-                        console.log('credentials', AWS.config.credentials);
 
                         //TODO: determine whether refresh is necessary
                         AWS.config.credentials.refresh( (err) => {

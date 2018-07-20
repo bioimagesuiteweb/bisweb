@@ -103,6 +103,19 @@ let unzipFile = (arr) => {
     }
 };
 
+let zipFile = (arr) => {
+    let parsedArr = new Uint8Array(arr);
+    let zippedArr;
+    try {
+        zippedArr = pako.gzip(parsedArr);
+        console.log('compressed array' , zippedArr);
+        return zippedArr;
+    } catch (e) {
+        console.log('an error occured while zipping the file', e);
+        return;
+    }
+};
+
 let parseJSON = (rawJSON) => {
     try {
         data = JSON.parse(rawJSON);
@@ -147,6 +160,7 @@ module.exports = {
     formatControlFrame: formatControlFrame,
     decodeUTF8: decodeUTF8,
     unzipFile: unzipFile,
+    zipFile : zipFile,
     parseJSON: parseJSON,
     searchTree: searchTree
 };
