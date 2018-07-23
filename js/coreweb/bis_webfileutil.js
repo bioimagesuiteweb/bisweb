@@ -44,7 +44,7 @@ const mkey=keystore.OneDriveKey || "";
 const userPreferencesLoaded = userPreferences.webLoadUserPreferences(bisdbase);
 
 // Initial mode
-let fileMode='amazonaws';
+let fileMode='local';
 let fileInputElements= [];
 
 const webfileutils = {
@@ -411,7 +411,6 @@ const webfileutils = {
         const self=this;
         
         let fn=function() {
-            console.log('hello from createFileSourceSelector');
             userPreferencesLoaded.then(() => {
                 let initial=userPreferences.getItem('filesource') || 'local';
                 webutil.createRadioSelectModalPromise(`<H4>Select file source</H4><HR>`,

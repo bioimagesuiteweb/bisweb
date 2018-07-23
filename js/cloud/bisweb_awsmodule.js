@@ -3,14 +3,16 @@
 const AWS = require('aws-sdk');
 const AWSCognitoIdentity = require('amazon-cognito-identity-js');
 const AWSParameters = require('../../web/awsparameters.js');
-const AWSCognitoAuth = require('amazon-cognito-auth-js');
-const bis_genericio = require('bis_genericio.js');
 const bisweb_image = require('bisweb_image.js');
 const bis_webutil = require('bis_webutil.js');
 const wsutil = require('../../fileserver/wsutil.js');
 const bisweb_filedialog = require('bisweb_filedialog.js');
 const $ = require('jquery');
 
+/**
+ * Class designed to save and load files from Amazon S3, using Amazon Cognito for authentication. 
+ * Does not require the use of an app key like Dropbox and Google Drive. 
+ */
 class AWSModule {
 
     constructor() {
@@ -87,7 +89,7 @@ class AWSModule {
 
                 let fileType = newEntry.text.split('.');
                 switch(fileType[fileType.length - 1]){
-                    case 'gz' : (fileType[fileType.length - 2] === 'nii') ? newEntry.type = 'picture' : newEntry.type = 'file'; break;
+                    case 'gz' : newEntry.type = (fileType[fileType.length - 2] === 'nii') ? 'picture' : 'file'; break;
                     case 'md' : newEntry.type = 'text'; break;
                     case 'mkv' : 
                     case 'avi' : 
@@ -145,7 +147,7 @@ class AWSModule {
                 let imageLoadEvent = new CustomEvent('imagetransmission');
                 document.dispatchEvent(imageLoadEvent);
 
-                this.algorithmController.sendImageToViewer(loadedImage, { 'viewername' : this.defaultViewer})
+                this.algorithmController.sendImageToViewer(loadedImage, { 'viewername' : this.defaultViewer}); 
             }
         });
         
@@ -242,7 +244,7 @@ class AWSModule {
                 `);
 
             $(confirmButton).on('click', () => {
-                let password = this.authenticateModal.body.find('.form-control')[0].value;
+                //let password = this.authenticateModal.body.find('.form-control')[0].value;
 
             });
 
@@ -299,13 +301,13 @@ class AWSModule {
 
                 //update modal with an error message if things went wrong
                 let eb = () => {
-                    let errorMessage = $(`<p>An error occured during transmission. File not uploaded.</p>`)
+                    let errorMessage = $(`<p>An error occured during transmission. File not uploaded.</p>`);
 
                     this.saveImageModal.body.empty();
                     this.saveImageModal.body.append(errorMessage);
 
                     setTimeout(() => { this.saveImageModal.dialog.modal('hide'); }, 1500);
-                }
+                };
 
                 this.makeRequest( { 'command' : 'uploadfile' , 'file' : image, 'name' : name }, cb, eb);
 
