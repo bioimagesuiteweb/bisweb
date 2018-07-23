@@ -23,28 +23,16 @@ class AWSModule {
             })
         });
 
-        //AWSCognitoIdentity.config.region = this.regionName;
-
         const userPoolData = {
             'UserPoolId' : AWSParameters.authParams.UserPoolId,
             'ClientId' : AWSParameters.authParams.ClientId
         };
 
         this.userPool = new AWSCognitoIdentity.CognitoUserPool(userPoolData);
-        this.userData = {
-            'username' : null,
-            'pool' : null
-        };
 
-        this.authData = AWSParameters.authParams;
-
-        this.awsAuth = null;
         this.s3 = this.createS3(AWSParameters.BucketName);
 
         this.saveImageModal = null;
-
-        //set to the values provided by Cognito when the user signs in
-        this.cognitoUser = null;
 
         //UI features
         this.createUserModal = null;
@@ -64,6 +52,12 @@ class AWSModule {
 
     }
 
+    /**
+     * Creates an instance of the S3 API that points to a given bucket with a given set of credentials. 
+     * @param {String} bucketName - The name of the bucket
+     * @param {AWS.Credentials} credentials - Amazon provided credentials to sign S3 requests with. Retrived through awsAuthUser
+     * @param {AWS.Credentials} session_token - Amazon provided session_token to sign S3 requests with. Retrieved through awsAuthUser
+     */
     createS3(bucketName, credentials = null, session_token = null) {
         let s3 = new AWS.S3({
             'apiVersion' : '2006-03-01',
@@ -75,6 +69,11 @@ class AWSModule {
         return s3;
     }
 
+    /**
+     * Lists the objects in the bucket referred to by the current S3 instance (this.S3). Note that S3 is a flat storage structure in which everything is stored in the same place.
+     * Any semblance of a file structure (e.g. indexed locations like 'Pictures/7-23-2018') are artificial. 
+     * Creates a file browsing dialog using bisweb_filedialog (see the documentation in that file for more details).
+     */
     listObjectsInBucket() {
         this.s3.listObjects({ 'Delimiter' : '/'}, (err, data) => {
             if (err) { console.log('an error occured', err); return; }
@@ -111,6 +110,16 @@ class AWSModule {
         });
     }
 
+    /**
+     * Wrapper function for AWS functionality (as of 7-23-18 requestFile and uploadFile). 
+     * Can be called from bisweb_filedialog (this function is attached to the FileDialog object and invoked from within when a user selects a file).
+     * @param {Object} params - Parameters object containing the following
+     * @param {String} params.command - String name for the command to execute. One of 'getfiles' or 'uploadfiles' as of 7-23-18.
+     * @param {String} params.name - Name of the file to fetch from the server, or what to name the file being saved to the server.
+     * @param {bisweb_image} params.files - List of files to upload to the server. May be aliased as 'params.file' in the case of a single file.
+     * @param {Function} cb - Function to call after successful execution of an upload. Optional.
+     * @param {Function} eb - Function to call after unsuccessful execution of an upload. Optional.
+     */
     //expected to be called from bisweb_fileserver (see 'fileRequestFn') 
     makeRequest(params, cb = null, eb = null) {
         let command = params.command;
@@ -118,13 +127,18 @@ class AWSModule {
         console.log('this', this);
         switch (params.command) {
             case 'getfile' : 
-            case 'getfiles' : this.requestFile(files); break;
+            case 'getfiles' : this.requestFile(params.name); break;
             case 'uploadfile' : 
             case 'uploadfiles' : this.uploadFile(params.name, files, cb, eb); break;
             default : console.log('Cannot execute unknown command', command);
         }
     }
 
+    /**
+     * Makes a RESTful request for a file from the S3 bucket referenced by the current instance of this.S3 and attempts to put it on the default viewer (this.defaultViewer.
+     * Generally called from bisweb_filedialog.
+     * @param {String} name - Name of the file to request from the S3 bucket. 
+     */
     requestFile(name) {
 
         let params = {
@@ -153,6 +167,13 @@ class AWSModule {
         
     }
 
+    /**
+     * Uploads a file to the bucket referred to by this.S3. May call back when finished. 
+     * @param {String} name - What to name the file being uploaded to the bucket. 
+     * @param {bisweb_image} body - The bisweb_image meant to be attached as the body of the request. It is serialized and zipped before being sent. 
+     * @param {Function} cb - The function to call after a successful upload. Optional.
+     * @param {Function} eb - The function to call after an unsuccessful upload. Optional.
+     */
     uploadFile(name, body, cb = null, eb = null) {
 
         console.log('image', body);
@@ -176,6 +197,7 @@ class AWSModule {
         });
     }
 
+    //TODO: Remove unnecessary function? 
     createUser(username, password, email, phoneNumber = null) {
         let dataEmail = {
             'Name' : 'email', 
@@ -204,6 +226,7 @@ class AWSModule {
         });
     }
 
+    //TODO: Remove unnecessary function? 
     confirmRegistration(code) {
         if (!this.cognitoUser) {
             console.log('No user, cannot confirm');
@@ -220,6 +243,7 @@ class AWSModule {
         });
     }
 
+    //TODO: Remove unnecessary function? 
     displayCreateUserModal() {
         if (!this.createUserModal) {
             this.createUserModal = bis_webutil.createmodal('Enter User Details', 'modal-lg');
@@ -333,6 +357,13 @@ class AWSModule {
     }
 
 
+    /**
+     * Attempts to authenticate the current user before executing a given S3 command (one of either 'showfiles' or 'uploadfiles' as of 7-23-18, which respectively call listObjectsInBucket and createImageSaveDialog).
+     * If the user is not authenticated, a popup will appear that will prompt the user to enter their AWS credentials, or if the credentials are already cached, it will begin the authentication process.
+     * If the user is authenticated, wrapInAuth will call the appropriate command. 
+     * @param {String} command - A string indicating the command to execute. 
+     * @param {Object} parameters - Object containing parameters to pass to the function that corresponds to command. Currently unused. 
+     */
     wrapInAuth(command, parameters = null) {
         let expireTime = AWS.config.credentials.expireTime ? Date.parse(AWS.config.credentials.expireTime) : -1;
         console.log('expire time', expireTime);
@@ -350,6 +381,11 @@ class AWSModule {
         console.log('called command', command, 'with parameters', parameters);
     }
 
+    /**
+     * Begins the AWS authentication process by opening a new winbow with the URL specified as 'biswebaws.html'. This performs the following steps:
+     * 1.) Attempts to log in to the Amazon Cognito User Pool associated with BisWeb, which will prompt the user for their Amazon Cognito credentials. The user may create an account at this time.
+     * 2.) Attempts to register the user with an Amazon Cognito Identity pool authorized to access the relevant bucket. If successful, the user will be returned a set of credentials that expire in a short period of tiem (about an hour).
+     */ 
     awsAuthUser() {
         let authWindow = window.open('../web/biswebaws.html', '_blank', 'width=400, height=400');
         let idTokenEvent = (data) => {

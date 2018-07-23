@@ -378,7 +378,9 @@ class FileDialogElement {
         let header = this.modal.header;
         let loadingMessage = $(`<p class='loadMessage'>Loading...</p>`);
         header.append(loadingMessage);
-        this.fileRequestFn({ 'command' : 'getfile', 'files' : [path] });
+
+        //'path' duplicated because different fileRequestFns may reference the filename differently, e.g. Amazon AWS provides one fileRequestFn, bisweb_fileserver provides another...
+        this.fileRequestFn({ 'command' : 'getfile', 'files' : [path], 'name' : path });
 
         document.addEventListener('imagetransmission', () => {
             header.find('.loadMessage').remove();
