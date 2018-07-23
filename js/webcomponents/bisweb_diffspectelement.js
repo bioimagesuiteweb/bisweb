@@ -512,6 +512,278 @@ class DiffSpectElement extends HTMLElement {
             );
         });
 
+        console.log(node);
+        let items = {
+            loadinter: {
+                'label': 'Load Interictal',
+                'action': function() {
+                    console.log('In action');
+                    handleInterictalFileSelect();
+                },
+                
+            },
+		
+			loadictal: {
+				'label': 'Load Ictal',
+				'action': function(){
+                    handleIctalFileSelect();
+                }
+            },
+            
+            loadmri: {
+                'label': 'Load MRI',
+                'action': function() {
+                    handleMRIFileSelect();
+                }
+            },
+
+            showimage: {
+                'label': 'Show Image',
+                'action': function(){
+                    if (node.text === "Interictal") {
+                        if (app_state.interictal !== null)
+                            app_state.viewer.setimage(app_state.interictal);
+                        else 
+                            bootbox.alert('NO INTERICTAL IMAGE LOADED');
+                    }
+
+                    if (node.text === "Ictal") {
+                        if (app_state.ictal !== null)
+                            app_state.viewer.setimage(app_state.ictal);
+                        else 
+                            bootbox.alert('NO ICTAL IMAGE LOADED');
+                    }
+
+                    if (node.text === "MRI") {
+                        if (app_state.mri !== null)
+                            app_state.viewer.setimage(app_state.mri);
+                        else 
+                            bootbox.alert('NO MR IMAGE LOADED');
+                    }
+                }
+            },
+
+			register: {
+				'label': 'Register Images',
+				'action': function() {
+                    if (app_state.interictal !== null && app_state.interictal !== null)
+                        computeRegistrationOfImages();
+                    else
+                        bootbox.alert('INVALID IMAGE(S)');
+                }
+			},
+
+			showregistration: {
+				'label': 'Show Registration',
+				'action': function() {
+                    if (node.text === "ATLAS to Interictal") {
+                        if (app_state.atlastointer_reslice !== null) {
+                            app_state.viewer.setimage(app_state.ATLAS_spect);
+                            app_state.viewer.setobjectmap(app_state.atlastointer_reslice);
+                        }
+                        else
+                            bootbox.alert("IMAGES NOT REGISTERED");
+                    }
+                    else if (node.text === "ATLAS to Ictal") {
+                        if (app_state.atlastointer_reslice !== null) {
+                            app_state.viewer.setimage(app_state.ATLAS_spect);
+                            app_state.viewer.setobjectmap(app_state.atlastoictal_reslice);
+                        }
+                        else
+                            bootbox.alert("IMAGES NOT REGISTERED");
+                    }
+                    else if (node.text === "Interictal to Ictal") {
+                        if (app_state.atlastointer_reslice !== null) {
+                            app_state.viewer.setimage(app_state.interictal);
+                            app_state.viewer.setobjectmap(app_state.intertoictal_reslice);
+                        }
+                        else
+                            bootbox.alert("IMAGES NOT REGISTERED");
+                    }
+                }
+            },
+            
+            processdiffspect: {
+                'label': 'Compute Diff SPECT',
+                'action': function() {
+                    if (app_state.atlastoictal_reslice !== null && app_state.atlastointer_reslice !== null && app_state.intertoictal_reslice !== null)
+                        computeSpect(); 
+                    else
+                        bootbox.alert('IMAGES NOT REGISTERED/RESLICED');
+                }
+            },
+
+            showtmap: {
+                'label': "Show Tmap",
+                'action': function() { 
+                if (app_state.tmap !== null)
+                    showTmapImage(); 
+                else 
+                    bootbox.alert("SPECT NOT PROCESSED");
+                }
+            }
+        };
+
+        if (node.text === "Images")
+        {
+            items = null;
+        }
+
+		if (node.text !== 'Interictal') delete items.loadinter;
+        
+        if (node.text !== 'Ictal')		delete items.loadictal;
+        
+        if (node.text !== 'MRI')        delete items.loadmri;
+        
+        if (node.text !== 'Interictal'  &&
+            node.text !== 'Ictal'       &&
+            node.text !== 'MRI')        delete items.showimage;
+        
+        if (node.text !== 'ATLAS to Interictal' &&
+            node.text !== 'ATLAS to Ictal'      &&
+            node.text !== 'Interictal to Ictal') delete items.showregistration;
+
+        if (node.text !== 'ATLAS to Interictal' &&
+            node.text !== 'ATLAS to Ictal'      &&
+            node.text !== 'Interictal to Ictal' &&
+            node.text !== 'Registrations') delete items.register;
+
+        if (node.text !== 'Diff SPECT' &&
+            node.text !== 'Tmap Image') {delete items.processdiffspect; delete items.showtmap;}
+        
+
+        return items;
+
+    }
+	
+	
+	
+	generateChart() {
+		console.log(app_state.hyper);
+		let lines = this.parseNewLines(app_state.hyper);
+		let coordinates = [];
+		
+		for (let i=1;i<lines.length;i++) 
+			coordinates.push(this.parseCoordinates(lines[i]));
+
+		console.log(coordinates);
+		let one=$('#lab1'), two=$('#lab2'), three=$('#lab3'), four=$('#lab4');
+		let head=$('#head');
+		
+		console.log(lines[0] + '\n' + lines[1] + '\n' + lines[2] + '\n' + lines[3] + '\n' + lines[4] + '\n');
+
+		head.html('<PRE>' + lines[0] + '</PRE>');
+
+		one.html('<PRE>' + lines[1] + '</PRE>');
+		two.html('<PRE>' + lines[2] + '</PRE>');
+		three.html('<PRE>' + lines[3] + '</PRE>');
+		four.html('<PRE>' + lines[4] + '</PRE>');
+
+		one.click(function () {
+            var coordinate = coordinates[0];
+            app_state.viewer.setcoordinates([coordinate[0], coordinate[1], coordinate[2]]);
+            one.css('border', '2px solid #246BB2');
+            two.css("border", "0px");
+            three.css("border", "0px");
+            four.css("border", "0px");
+        });
+
+        two.click(function () {
+            var coordinate = coordinates[1];
+            app_state.viewer.setcoordinates([coordinate[0], coordinate[1], coordinate[2]]);
+            one.css("border", "0px");
+            two.css("border", "2px solid #246BB2");
+            three.css("border", "0px");
+            four.css("border", "0px");
+        });
+
+        three.click(function () {
+            var coordinate = coordinates[2];
+            app_state.viewer.setcoordinates([coordinate[0], coordinate[1], coordinate[2]]);
+            one.css("border", "0px");
+            two.css("border", "0px");
+            three.css("border", "2px solid #246BB2");
+            four.css("border", "0px");
+        });
+
+        four.click(function () {
+            var coordinate = coordinates[3];
+            app_state.viewer.setcoordinates([coordinate[0], coordinate[1], coordinate[2]]);
+            one.css("border", "0px");
+            two.css("border", "0px");
+            three.css("border", "0px");
+            four.css("border", "2px solid #246BB2");
+        });
+	}
+
+	parseNewLines(str) {
+
+		let lines = [];
+		let prevLine = 0;
+
+		for (let i=0;i<str.length;i++) {
+			let currentCharacter = str.charAt(i);
+
+			if (currentCharacter === '\n') {
+				let newLine = str.substring(prevLine, i);
+				lines.push(newLine);
+				prevLine = i+1;
+			}
+		}
+
+		return lines;
+
+	}
+
+	parseCoordinates(str) {
+		
+		let coordinate = [];
+		let previousChar = 2;
+		let k = 0;
+		for (let i=2;i<str.length;i++) {
+			let currentCharacter = str.charAt(i);
+			if (currentCharacter === '\t' ) {
+				coordinate.push(parseInt(str.substring(previousChar, i)));
+				previousChar=i+1;
+				k++;
+			}
+			
+			if (k > 2)
+				break;
+		}
+
+		return coordinate;
+	}
+
+
+    showAtlasToInterictalRegistration() {
+        
+        console.log(app_state.ATLAS_spect);
+        app_state.viewer.setimage(app_state.ATLAS_spect);
+        app_state.viewer.setobjectmap(app_state.atlastointer_reslice,false,'overlay');
+    }
+
+    showInterictalToIctalRegistration() {
+        app_state.viewer.setimage(app_state.interictal);
+        app_state.viewer.setobjectmap(app_state.intertoictal_reslice,false,'overlay');
+    }
+
+    showAtlasToIctalRegistration() {
+        app_state.viewer.setimage(app_state.ATLAS_spect);
+        app_state.viewer.setobjectmap(app_state.atlastoictal_reslice,false,'overlay');
+    }
+
+    showTmapImage() {
+        app_state.viewer.setimage(app_state.ATLAS_mri);
+        app_state.viewer.setobjectmap(app_state.tmap, false);
+    }
+
+    
+
+    connectedCallback() {
+        // --------------------------------------------------------------------------------
+        // Finally the actual function
+        // --------------------------------------------------------------------------------
         let computeLinearRegistration = function (reference, target) {
 
         
@@ -1018,283 +1290,6 @@ class DiffSpectElement extends HTMLElement {
     
             return coordinate;
         };
-                
-            
-        
-
-
-        console.log(node);
-        let items = {
-            loadinter: {
-                'label': 'Load Interictal',
-                'action': function() {
-                    console.log('In action');
-                    handleInterictalFileSelect();
-                },
-                
-            },
-		
-			loadictal: {
-				'label': 'Load Ictal',
-				'action': function(){
-                    handleIctalFileSelect();
-                }
-            },
-            
-            loadmri: {
-                'label': 'Load MRI',
-                'action': function() {
-                    handleMRIFileSelect();
-                }
-            },
-
-            showimage: {
-                'label': 'Show Image',
-                'action': function(){
-                    if (node.text === "Interictal") {
-                        if (app_state.interictal !== null)
-                            app_state.viewer.setimage(app_state.interictal);
-                        else 
-                            bootbox.alert('NO INTERICTAL IMAGE LOADED');
-                    }
-
-                    if (node.text === "Ictal") {
-                        if (app_state.ictal !== null)
-                            app_state.viewer.setimage(app_state.ictal);
-                        else 
-                            bootbox.alert('NO ICTAL IMAGE LOADED');
-                    }
-
-                    if (node.text === "MRI") {
-                        if (app_state.mri !== null)
-                            app_state.viewer.setimage(app_state.mri);
-                        else 
-                            bootbox.alert('NO MR IMAGE LOADED');
-                    }
-                }
-            },
-
-			register: {
-				'label': 'Register Images',
-				'action': function() {
-                    if (app_state.interictal !== null && app_state.interictal !== null)
-                        computeRegistrationOfImages();
-                    else
-                        bootbox.alert('INVALID IMAGE(S)');
-                }
-			},
-
-			showregistration: {
-				'label': 'Show Registration',
-				'action': function() {
-                    if (node.text === "ATLAS to Interictal") {
-                        if (app_state.atlastointer_reslice !== null) {
-                            app_state.viewer.setimage(app_state.ATLAS_spect);
-                            app_state.viewer.setobjectmap(app_state.atlastointer_reslice);
-                        }
-                        else
-                            bootbox.alert("IMAGES NOT REGISTERED");
-                    }
-                    else if (node.text === "ATLAS to Ictal") {
-                        if (app_state.atlastointer_reslice !== null) {
-                            app_state.viewer.setimage(app_state.ATLAS_spect);
-                            app_state.viewer.setobjectmap(app_state.atlastoictal_reslice);
-                        }
-                        else
-                            bootbox.alert("IMAGES NOT REGISTERED");
-                    }
-                    else if (node.text === "Interictal to Ictal") {
-                        if (app_state.atlastointer_reslice !== null) {
-                            app_state.viewer.setimage(app_state.interictal);
-                            app_state.viewer.setobjectmap(app_state.intertoictal_reslice);
-                        }
-                        else
-                            bootbox.alert("IMAGES NOT REGISTERED");
-                    }
-                }
-            },
-            
-            processdiffspect: {
-                'label': 'Compute Diff SPECT',
-                'action': function() {
-                    if (app_state.atlastoictal_reslice !== null && app_state.atlastointer_reslice !== null && app_state.intertoictal_reslice !== null)
-                        computeSpect(); 
-                    else
-                        bootbox.alert('IMAGES NOT REGISTERED/RESLICED');
-                }
-            },
-
-            showtmap: {
-                'label': "Show Tmap",
-                'action': function() { 
-                if (app_state.tmap !== null)
-                    showTmapImage(); 
-                else 
-                    bootbox.alert("SPECT NOT PROCESSED");
-                }
-            }
-        };
-
-        if (node.text === "Images")
-        {
-            items = null;
-        }
-
-		if (node.text !== 'Interictal') delete items.loadinter;
-        
-        if (node.text !== 'Ictal')		delete items.loadictal;
-        
-        if (node.text !== 'MRI')        delete items.loadmri;
-        
-        if (node.text !== 'Interictal'  &&
-            node.text !== 'Ictal'       &&
-            node.text !== 'MRI')        delete items.showimage;
-        
-        if (node.text !== 'ATLAS to Interictal' &&
-            node.text !== 'ATLAS to Ictal'      &&
-            node.text !== 'Interictal to Ictal') delete items.showregistration;
-
-        if (node.text !== 'ATLAS to Interictal' &&
-            node.text !== 'ATLAS to Ictal'      &&
-            node.text !== 'Interictal to Ictal' &&
-            node.text !== 'Registrations') delete items.register;
-
-        if (node.text !== 'Diff SPECT' &&
-            node.text !== 'Tmap Image') {delete items.processdiffspect; delete items.showtmap;}
-        
-
-        return items;
-
-    }
-	
-	
-	
-	generateChart() {
-		console.log(app_state.hyper);
-		let lines = this.parseNewLines(app_state.hyper);
-		let coordinates = [];
-		
-		for (let i=1;i<lines.length;i++) 
-			coordinates.push(this.parseCoordinates(lines[i]));
-
-		console.log(coordinates);
-		let one=$('#lab1'), two=$('#lab2'), three=$('#lab3'), four=$('#lab4');
-		let head=$('#head');
-		
-		console.log(lines[0] + '\n' + lines[1] + '\n' + lines[2] + '\n' + lines[3] + '\n' + lines[4] + '\n');
-
-		head.html('<PRE>' + lines[0] + '</PRE>');
-
-		one.html('<PRE>' + lines[1] + '</PRE>');
-		two.html('<PRE>' + lines[2] + '</PRE>');
-		three.html('<PRE>' + lines[3] + '</PRE>');
-		four.html('<PRE>' + lines[4] + '</PRE>');
-
-		one.click(function () {
-            var coordinate = coordinates[0];
-            app_state.viewer.setcoordinates([coordinate[0], coordinate[1], coordinate[2]]);
-            one.css('border', '2px solid #246BB2');
-            two.css("border", "0px");
-            three.css("border", "0px");
-            four.css("border", "0px");
-        });
-
-        two.click(function () {
-            var coordinate = coordinates[1];
-            app_state.viewer.setcoordinates([coordinate[0], coordinate[1], coordinate[2]]);
-            one.css("border", "0px");
-            two.css("border", "2px solid #246BB2");
-            three.css("border", "0px");
-            four.css("border", "0px");
-        });
-
-        three.click(function () {
-            var coordinate = coordinates[2];
-            app_state.viewer.setcoordinates([coordinate[0], coordinate[1], coordinate[2]]);
-            one.css("border", "0px");
-            two.css("border", "0px");
-            three.css("border", "2px solid #246BB2");
-            four.css("border", "0px");
-        });
-
-        four.click(function () {
-            var coordinate = coordinates[3];
-            app_state.viewer.setcoordinates([coordinate[0], coordinate[1], coordinate[2]]);
-            one.css("border", "0px");
-            two.css("border", "0px");
-            three.css("border", "0px");
-            four.css("border", "2px solid #246BB2");
-        });
-	}
-
-	parseNewLines(str) {
-
-		let lines = [];
-		let prevLine = 0;
-
-		for (let i=0;i<str.length;i++) {
-			let currentCharacter = str.charAt(i);
-
-			if (currentCharacter === '\n') {
-				let newLine = str.substring(prevLine, i);
-				lines.push(newLine);
-				prevLine = i+1;
-			}
-		}
-
-		return lines;
-
-	}
-
-	parseCoordinates(str) {
-		
-		let coordinate = [];
-		let previousChar = 2;
-		let k = 0;
-		for (let i=2;i<str.length;i++) {
-			let currentCharacter = str.charAt(i);
-			if (currentCharacter === '\t' ) {
-				coordinate.push(parseInt(str.substring(previousChar, i)));
-				previousChar=i+1;
-				k++;
-			}
-			
-			if (k > 2)
-				break;
-		}
-
-		return coordinate;
-	}
-
-
-    showAtlasToInterictalRegistration() {
-        
-        console.log(app_state.ATLAS_spect);
-        app_state.viewer.setimage(app_state.ATLAS_spect);
-        app_state.viewer.setobjectmap(app_state.atlastointer_reslice,false,'overlay');
-    }
-
-    showInterictalToIctalRegistration() {
-        app_state.viewer.setimage(app_state.interictal);
-        app_state.viewer.setobjectmap(app_state.intertoictal_reslice,false,'overlay');
-    }
-
-    showAtlasToIctalRegistration() {
-        app_state.viewer.setimage(app_state.ATLAS_spect);
-        app_state.viewer.setobjectmap(app_state.atlastoictal_reslice,false,'overlay');
-    }
-
-    showTmapImage() {
-        app_state.viewer.setimage(app_state.ATLAS_mri);
-        app_state.viewer.setobjectmap(app_state.tmap, false);
-    }
-
-    
-
-    connectedCallback() {
-        // --------------------------------------------------------------------------------
-        // Finally the actual function
-        // --------------------------------------------------------------------------------
 
         const self = this;
         const menubarid = this.getAttribute('bis-menubarid');
@@ -1302,6 +1297,36 @@ class DiffSpectElement extends HTMLElement {
 
 
         let fmenu = webutil.createTopMenuBarMenu("File", menubar);
+        let processingMenu = webutil.createTopMenuBarMenu("Image Processing", menubar);
+
+        webutil.createMenuItem(processingMenu, 'Register Images With Linear Registration', function () {
+            if (app_state.interictal !== null && app_state.interictal !== null)
+                computeRegistrationOfImages();
+            else
+                bootbox.alert('INVALID IMAGE(S)');
+                
+        });
+
+        webutil.createMenuItem(processingMenu, 'Register Images With Nonlinear Registration', function () {
+            if (app_state.interictal !== null && app_state.interictal !== null) {
+                app_state.nonlinear = true;
+                computeRegistrationOfImages();
+            }
+            else
+                bootbox.alert('INVALID IMAGE(S)');
+                
+        });
+
+        
+
+        webutil.createMenuItem(processingMenu, 'Process Diff Spect', function () {
+            if (app_state.atlastoictal_reslice !== null && app_state.atlastointer_reslice !== null && app_state.intertoictal_reslice !== null)
+                computeSpect(); 
+            else
+                bootbox.alert('IMAGES NOT REGISTERED/RESLICED');
+        });
+
+
         webutil.createMenuItem(fmenu, 'New Patient',
                                function () {
                                    let pn = spectToolsDiv.parent();
