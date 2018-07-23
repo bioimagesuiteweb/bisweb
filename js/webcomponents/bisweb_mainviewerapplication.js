@@ -555,17 +555,14 @@ class ViewerApplicationElement extends HTMLElement {
                 //genericio.write(name, self.VIEWERS[viewerno].getimage().internal.imgdata, true);
                 return;
             },
-                                            {
-                                                title: 'Save Image',
-                                                save: true,
-                                                saveFile : self.VIEWERS[viewerno].getimage(),
-                                                filters: "NII",
-                                                suffix : "NII",
-                                                initialCallback : () => {
-                                                    return self.getSaveImageInitialFilename(viewerno);
-                                                }
-                                            });
-            
+            {
+                title: 'Save Image',
+                save: true,
+                saveFile: self.VIEWERS[viewerno].getimage(),
+                filters: "NII",
+                suffix: "NII"
+            });
+
             
             webutil.createMenuItem(fmenu[viewerno], ''); // separator
 

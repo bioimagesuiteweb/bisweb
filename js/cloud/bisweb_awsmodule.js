@@ -156,7 +156,7 @@ class AWSModule {
     uploadFile(name, body, cb = null, eb = null) {
 
         console.log('image', body);
-        let rawData = body.internal.imgdata; 
+        let rawData = body.serializeToNII();
         let zippedData = wsutil.zipFile(rawData);
         console.log('zipped data', zippedData);
         let filename = name + '.nii.gz';

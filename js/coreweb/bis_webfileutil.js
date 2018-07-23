@@ -225,10 +225,6 @@ const webfileutils = {
         if (fileopts.save) {
             //if the callback is specified presumably that's what should be called
             console.log('opts', fileopts);
-            if (callback) {
-                callback({});
-                return;
-            }
 
             //otherwise try some default behaviors
             if (fileMode==='dropbox') {
@@ -242,6 +238,11 @@ const webfileutils = {
 
             if (fileMode==='amazonaws') {
                 bisweb_awsmodule.wrapInAuth('uploadfile');
+                return;
+            }
+
+            if (fileMode==='local') {
+                callback({});
                 return;
             }
 
