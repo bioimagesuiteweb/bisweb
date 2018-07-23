@@ -31,6 +31,7 @@ const bisweb_onedrive=require('bisweb_simpleonedrive');
 const bisweb_googledrive=require('bisweb_drivemodule');
 const amazonaws=require('bisweb_awsmodule.js');
 const bisweb_awsmodule = new amazonaws();
+const bis_genericio = require('bis_genericio.js');
 
 let bisweb_fileserver;
 
@@ -184,13 +185,13 @@ const webfileutils = {
 
     /** web file callback function
      * @alias WebFileUtil.webFileCallback
-     * @param {object} opts - the callback options object
-     * @param {string} opts.title - if in file mode and web set the title of the file dialog
-     * @param {boolean} opts.save - if in file mode and web determine load or save
-     * @param {BisImage} opts.saveImage - the image to save. (Optional)
-     * @param {string} opts.defaultpath - if in file mode and web use this as original filename
-     * @param {string} opts.suffix - if in file mode and web use this to filter web style
-     * @param {string} opts.force - force file selection mode (e.g. 'local');
+     * @param {object} fileopts - the callback options object
+     * @param {string} fileopts.title - if in file mode and web set the title of the file dialog
+     * @param {boolean} fileopts.save - if in file mode and web determine load or save
+     * @param {BisImage} fileopts.saveImage - the image to save. (Optional)
+     * @param {string} fileopts.defaultpath - if in file mode and web use this as original filename
+     * @param {string} fileopts.suffix - if in file mode and web use this to filter web style
+     * @param {string} fileopts.force - force file selection mode (e.g. 'local');
      * @param {function} callback - callback to call when done
      */
     webFileCallback: function (fileopts, callback = null) {
@@ -223,6 +224,7 @@ const webfileutils = {
 
         if (fileopts.save) {
             //if the callback is specified presumably that's what should be called
+            console.log('opts', fileopts);
             if (callback) {
                 callback({});
                 return;
@@ -243,6 +245,7 @@ const webfileutils = {
                 return;
             }
 
+            console.log('could not find appropriate save function for file mode', fileMode);
         }
 
         let fmode=fileMode;
