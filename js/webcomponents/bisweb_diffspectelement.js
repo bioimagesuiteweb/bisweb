@@ -563,16 +563,7 @@ class DiffSpectElement extends HTMLElement {
                 }
             },
 
-			register: {
-				'label': 'Register Images',
-				'action': function() {
-                    if (app_state.interictal !== null && app_state.interictal !== null)
-                        computeRegistrationOfImages();
-                    else
-                        bootbox.alert('INVALID IMAGE(S)');
-                }
-			},
-
+			
 			showregistration: {
 				'label': 'Show Registration',
 				'action': function() {
@@ -603,26 +594,7 @@ class DiffSpectElement extends HTMLElement {
                 }
             },
             
-            processdiffspect: {
-                'label': 'Compute Diff SPECT',
-                'action': function() {
-                    if (app_state.atlastoictal_reslice !== null && app_state.atlastointer_reslice !== null && app_state.intertoictal_reslice !== null)
-                        computeSpect(); 
-                    else
-                        bootbox.alert('IMAGES NOT REGISTERED/RESLICED');
-                }
-            },
-
-            showtmap: {
-                'label': "Show Tmap",
-                'action': function() { 
-                if (app_state.tmap !== null)
-                    showTmapImage(); 
-                else 
-                    bootbox.alert("SPECT NOT PROCESSED");
-                }
-            }
-        };
+                   };
 
         if (node.text === "Images")
         {
@@ -643,14 +615,7 @@ class DiffSpectElement extends HTMLElement {
             node.text !== 'ATLAS to Ictal'      &&
             node.text !== 'Interictal to Ictal') delete items.showregistration;
 
-        if (node.text !== 'ATLAS to Interictal' &&
-            node.text !== 'ATLAS to Ictal'      &&
-            node.text !== 'Interictal to Ictal' &&
-            node.text !== 'Registrations') delete items.register;
-
-        if (node.text !== 'Diff SPECT' &&
-            node.text !== 'Tmap Image') {delete items.processdiffspect; delete items.showtmap;}
-        
+               
 
         return items;
 
