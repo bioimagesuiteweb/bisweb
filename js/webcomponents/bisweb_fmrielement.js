@@ -14,7 +14,7 @@ const baseutils = require('baseutils');
 const BisWebPanel = require('bisweb_panel.js');
 const jstree = require('jstree');
 const MotionCorrection = require('motionCorrection');
-
+const fs = require('fs');
 
 const tree_template_string = 
 `
@@ -223,6 +223,19 @@ class FMRIElement extends HTMLElement {
 
         return items;
     }
+
+	loadDataFromJSON() {
+
+		var input = document.createElement('input');
+		input.type = 'file';
+		input.click();
+		let selectedFile = document.getElementById('input').files[0];
+
+		filename = selectedFile.value;
+		var text = fs.readFileSync(filename).toString('utf-8');
+		
+		app_state.images = JSON.parse(text);
+	}
     
     // a function that computes a nonlinear image registration, given a reference image and a target image
     computeNonlinearRegistration(reference, target) {
@@ -479,6 +492,10 @@ class FMRIElement extends HTMLElement {
                 self.createNewStudy();
             }
         );
+
+		webutil.createMenuItem(fmenu, 'Load Study Data', function() {
+			self.loadDataFromJSON();
+		});
 
 
         webutil.createMenuItem(processingmenu, 'Correct Motion',
