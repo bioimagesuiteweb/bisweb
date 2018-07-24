@@ -45,7 +45,7 @@ class AWSModule {
         //file display modal gets deleted if you try to load it too soon
         //not completely sure why -Zach
         bis_webutil.runAfterAllLoaded( () => {   
-            this.fileDisplayModal = new bisweb_filedialog('Bucket Contents');
+            this.fileDisplayModal = new bisweb_filedialog('Bucket Contents', { 'makeFavoriteButton' : false });
             //fileListFn won't get called from wihin filedialog because the bucket is a flat storage structure
             this.fileDisplayModal.fileRequestFn = this.makeRequest.bind(this);
         });
@@ -113,6 +113,7 @@ class AWSModule {
     /**
      * Wrapper function for AWS functionality (as of 7-23-18 requestFile and uploadFile). 
      * Can be called from bisweb_filedialog (this function is attached to the FileDialog object and invoked from within when a user selects a file).
+     *
      * @param {Object} params - Parameters object containing the following
      * @param {String} params.command - String name for the command to execute. One of 'getfiles' or 'uploadfiles' as of 7-23-18.
      * @param {String} params.name - Name of the file to fetch from the server, or what to name the file being saved to the server.
@@ -127,7 +128,7 @@ class AWSModule {
         console.log('this', this);
         switch (params.command) {
             case 'getfile' : 
-            case 'getfiles' : this.requestFile(params.name); break;
+            case 'getfiles' : this.requestFile(params.name, cb, eb); break;
             case 'uploadfile' : 
             case 'uploadfiles' : this.uploadFile(params.name, files, cb, eb); break;
             default : console.log('Cannot execute unknown command', command);
@@ -137,17 +138,18 @@ class AWSModule {
     /**
      * Makes a RESTful request for a file from the S3 bucket referenced by the current instance of this.S3 and attempts to put it on the default viewer (this.defaultViewer.
      * Generally called from bisweb_filedialog.
+     *
      * @param {String} name - Name of the file to request from the S3 bucket. 
      */
-    requestFile(name) {
+    requestFile(name, cb, eb) {
 
         let params = {
             'Bucket' : AWSParameters.BucketName,
-            'Key' : name[0]            
+            'Key' : name            
         };
 
         this.s3.getObject(params, (err, data) => {
-            if (err) { console.log('an error occured', err); }
+            if (err) { console.log('an error occured', err); eb(); }
             else {
                 let unzippedFile = wsutil.unzipFile(data.Body);
                 console.log('unzipped file', unzippedFile);
@@ -162,6 +164,7 @@ class AWSModule {
                 document.dispatchEvent(imageLoadEvent);
 
                 this.algorithmController.sendImageToViewer(loadedImage, { 'viewername' : this.defaultViewer}); 
+                cb();
             }
         });
         
@@ -169,6 +172,7 @@ class AWSModule {
 
     /**
      * Uploads a file to the bucket referred to by this.S3. May call back when finished. 
+     * 
      * @param {String} name - What to name the file being uploaded to the bucket. 
      * @param {bisweb_image} body - The bisweb_image meant to be attached as the body of the request. It is serialized and zipped before being sent. 
      * @param {Function} cb - The function to call after a successful upload. Optional.

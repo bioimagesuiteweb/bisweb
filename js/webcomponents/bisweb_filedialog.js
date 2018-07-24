@@ -11,7 +11,9 @@ const jstree = require('jstree');
  */
 class FileDialogElement {
 
-    constructor(modalName = 'File Tree') {
+    constructor(modalName = 'File Tree', options = {}) {
+
+        this.addDefaultOptions(options);
 
         this.modal = webutil.createmodal(modalName, 'modal-lg');
         this.modal.dialog.find('.modal-footer').remove();
@@ -45,65 +47,68 @@ class FileDialogElement {
                         </div>`
                         );
 
-        this.createStaticElements();
+        this.createStaticElements(options);
         this.modal.body.append(this.container);
     }
 
     /**
      * Creates the elements of the file dialog that don't need to be redrawn regularly. 
      */
-    createStaticElements() {
-        let favoriteBar = this.container.find('.favorite-bar');
-        let favoriteButton = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-star-empty'></span> Mark folder as favorite</button>`);
-        favoriteBar.append(favoriteButton);
+    createStaticElements(options) {
+        if (options.makeFavoriteButton) {
+            let favoriteBar = this.container.find('.favorite-bar');
+            let favoriteButton = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-star-empty'></span> Mark folder as favorite</button>`);
+            favoriteBar.append(favoriteButton);
+        
 
-        let pillsHTML = $(`<ul class='nav nav-pills nav-stacked'></ul>`);
-        favoriteBar.append(pillsHTML);
+            let pillsHTML = $(`<ul class='nav nav-pills nav-stacked'></ul>`);
+            favoriteBar.append(pillsHTML);
 
-        let selectPillFromPills = (pill, pills) => {
-            for (let otherPill of pills) {
-                $(otherPill).removeClass('active');
-            }
-            $(pill).addClass('active');
-        };
-
-        let pills = favoriteBar.find('.nav.nav-pills').find('li');
-        for (let pill of pills) {
-            $(pill).on('click', () => {
-                deselectOtherPills(pill, pills);
-            });
-        }
-
-        //TODO: add folder to localforage ...
-        favoriteButton.on('click', () => {
-            let key = webutil.getuniqueid(), name = this.currentPath[this.currentPath.length - 1];
-            let favorite = {
-                'name' : name,
-                'path' : Array.from(this.currentPath),
-                'key' : key
+            let selectPillFromPills = (pill, pills) => {
+                for (let otherPill of pills) {
+                    $(otherPill).removeClass('active');
+                }
+                $(pill).addClass('active');
             };
 
-            localforage.setItem(key, JSON.stringify(favorite));
-
-            //create the pill
-            let pillsBar = favoriteBar.find('.nav.nav-pills');
-            let newPill = $(`<li><a href='#'>${name}</a></li>`);
-            newPill.on('click', () => {
-                selectPillFromPills(newPill, pillsBar.find('li'));
-                localforage.getItem(key, (err, value) => {
-                    let favoriteFolder;
-                    try {
-                        favoriteFolder = JSON.parse(value);
-                        this.changeDirectory(favoriteFolder.path, this.traversePath(favoriteFolder.path));
-                    } catch(e) {
-                        console.log('error parsing JSON', value);
-                    }
-
+            let pills = favoriteBar.find('.nav.nav-pills').find('li');
+            for (let pill of pills) {
+                $(pill).on('click', () => {
+                    deselectOtherPills(pill, pills);
                 });
-            });
+            }
 
-            pillsBar.append(newPill);
-        });
+            //TODO: add folder to localforage ...
+            favoriteButton.on('click', () => {
+                let key = webutil.getuniqueid(), name = this.currentPath[this.currentPath.length - 1];
+                let favorite = {
+                    'name' : name,
+                    'path' : Array.from(this.currentPath),
+                    'key' : key
+                };
+
+                localforage.setItem(key, JSON.stringify(favorite));
+
+                //create the pill
+                let pillsBar = favoriteBar.find('.nav.nav-pills');
+                let newPill = $(`<li><a href='#'>${name}</a></li>`);
+                newPill.on('click', () => {
+                    selectPillFromPills(newPill, pillsBar.find('li'));
+                    localforage.getItem(key, (err, value) => {
+                        let favoriteFolder;
+                        try {
+                            favoriteFolder = JSON.parse(value);
+                            this.changeDirectory(favoriteFolder.path, this.traversePath(favoriteFolder.path));
+                        } catch(e) {
+                            console.log('error parsing JSON', value);
+                        }
+
+                    });
+                });
+
+                pillsBar.append(newPill);
+            });
+        }
 
         //erase the file list on modal close
         this.modal.dialog.on('hidden.bs.modal', () => {
@@ -372,6 +377,7 @@ class FileDialogElement {
 
     /**
      * Requests a file from the server and notifies the user with a message once the file has loaded.
+     *
      * @param {String} path - Path of the file on the server machine.
      */
     fetch(path) {
@@ -379,12 +385,30 @@ class FileDialogElement {
         let loadingMessage = $(`<p class='loadMessage'>Loading...</p>`);
         header.append(loadingMessage);
 
-        //'path' duplicated because different fileRequestFns may reference the filename differently, e.g. Amazon AWS provides one fileRequestFn, bisweb_fileserver provides another...
-        this.fileRequestFn({ 'command' : 'getfile', 'files' : [path], 'name' : path });
+        let cb = () => {
+            header.find('.loadMessage').remove();
+        };
 
-        document.addEventListener('imagetransmission', () => {
+        let eb = () => {
+            header.find('.loadMessage').remove();
+            let errorMessage = $(`<p class='errorMessage'>An error occured while loading the image. Please ensure the chosen file exists in the chosen bucket.</p>`);
+            header.append(errorMessage);
+
+            setTimeout( () => { 
+                header.find('.errorMessage').remove(); 
+            }, 5000);
+        };
+        //'path' duplicated because different fileRequestFns may reference the filename differently, e.g. Amazon AWS provides one fileRequestFn, bisweb_fileserver provides another...
+        this.fileRequestFn({ 'command' : 'getfile', 'files' : [path], 'name' : path }, cb, eb);
+
+        /*document.addEventListener('imagetransmission', () => {
             header.find('.loadMessage').remove();
         }, { 'once' : true});
+        */
+    }
+
+    addDefaultOptions(options) {
+        options.makeFavoriteButton = options.makeFavoriteButton ? options.makeFavoriteButton : false;
     }
 }
 
