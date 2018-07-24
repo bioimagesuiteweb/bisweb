@@ -223,19 +223,58 @@ class FMRIElement extends HTMLElement {
 
         return items;
     }
+    saveDataToJSON() {
+        let input = document.createElement('input');
+        input.type = 'file';
+        input.click();
 
-	loadDataFromJSON() {
+        
 
-		var input = document.createElement('input');
-		input.type = 'file';
-		input.click();
-		let selectedFile = document.getElementById('input').files[0];
+    }
 
-		filename = selectedFile.value;
-		var text = fs.readFileSync(filename).toString('utf-8');
-		
-		app_state.images = JSON.parse(text);
-	}
+    loadDataFromJSON() {
+
+        return new Promise( (resolve, reject) => {
+            let input = document.createElement('input');
+            input.type = 'file';
+            input.click();
+            let selectedFile = document.getElementById('input').files[0];
+
+            let filename = selectedFile.value;
+            let text = fs.readFileSync(filename).toString('utf-8');
+
+            let jsonobj;
+            try {
+                jsonobj = JSON.parse(text);
+            } catch(e) {
+                bootbox.alert('Invalid File Type');
+                reject(e);
+            }
+
+            resolve(jsonobj);
+            
+        });
+    }
+
+    populateTree(jsonobj) {
+
+        let images = jsonobj.images;
+        let anat = images.anat;
+        let func = images.func;
+        let dwi = images.dwi;
+        let deriv = images.derivatives;
+
+        let tree = $('#treeDiv');
+
+        for (let i=0;i<anat.length;i++)
+            tree.jstree().create_node('j1_2', {text: anat[i].name});
+        for (let i=0;i<func.length;i++)
+            tree.jstree().create_node('j1_3', {text: func[i].name});
+        for (let i=0;i<dwi.length;i++)
+            tree.jstree().create_node('j1_4', {text: dwi[i].name});
+        for (let i=0;i<deriv.length;i++)
+            tree.jstree().create_node('j1_5', {text: deriv[i].name});
+    }
     
     // a function that computes a nonlinear image registration, given a reference image and a target image
     computeNonlinearRegistration(reference, target) {
@@ -493,10 +532,29 @@ class FMRIElement extends HTMLElement {
             }
         );
 
-		webutil.createMenuItem(fmenu, 'Load Study Data', function() {
-			self.loadDataFromJSON();
-		});
+        webutil.createMenuItem(fmenu, 'Load Study Data', function() {
+            self.loadDataFromJSON().then( (resolvedObj) => {
+                let header = resolvedObj.header;
+                if (header !== "bisweb-fmritool") {
+                    bootbox.alert("Not a valid JSON file");
+                    return;
+                }
 
+                app_state.images = resolvedObj.images;
+                self.createNewStudy();
+                self.populateTree();
+            });
+        });
+
+        webutil.createMenuItem(fmenu, 'Save Study Data', function() {
+            let outputObject = { "header": "bisweb-fmritool",
+                                 "images": app_state.images};
+            let outputString = JSON.stringify(outputObject);
+
+            fs.writeFile("study.JSON", outputString, function(err) { 
+                console.log(err);    
+            });
+        });
 
         webutil.createMenuItem(processingmenu, 'Correct Motion',
             function() {
