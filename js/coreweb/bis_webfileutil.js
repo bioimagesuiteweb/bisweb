@@ -62,10 +62,13 @@ const webfileutils = {
     
     getModeList : function() {
         let s=[ 
-            { value: "local", text: "Local File System" },
-            { value: "server", text: "File Server"}
+            { value: "local", text: "Local File System" }
         ];
 
+        //localserver requires its HTML element to be present in the document
+        let localserver = $(document).find('bisweb-fileserver');
+        if (localserver[0])
+            s.push({ value : "server", text: "File Server"});
         if (dkey.length>1)
             s.push({ value: "dropbox", text: "Dropbox" });
         if (gkey.length>1) 
