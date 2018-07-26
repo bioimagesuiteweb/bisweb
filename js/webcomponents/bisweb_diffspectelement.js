@@ -211,6 +211,7 @@ class DiffSpectElement extends HTMLElement {
 
 
     // load .spect file
+	// TODO: fix parsing bug
     loadPatient(file) {
         const self = this;
         console.log('this', this, file);
@@ -352,14 +353,12 @@ class DiffSpectElement extends HTMLElement {
     // Create the SPECT Tool GUI
     // --------------------------------------------------------------------------------
 
+	// TODO: add mosaic viewer
     initializeSpectTool() {
 
         const self = this;
         self.loadAtlas();
   
-        
-
-
         let tree=this.tree_div.find('#treeDiv');
 
         let json_data = {

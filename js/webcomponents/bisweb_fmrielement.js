@@ -15,6 +15,7 @@ const BisWebPanel = require('bisweb_panel.js');
 const jstree = require('jstree');
 const MotionCorrection = require('motionCorrection');
 const fs = require('fs');
+const TransformationCollection = require('bisweb_transformationcollection');
 
 const tree_template_string = 
 `
@@ -31,6 +32,7 @@ let app_state =
 {
     viewer: null,
     images: {
+        mni: null,
         anat: [],
         func:[],
         dwi: [],
@@ -49,6 +51,10 @@ class FMRIElement extends HTMLElement {
     constructor() {
         super();
         this.panel = null;
+        app_state.images.mni = new BisWebImage();
+        app_state.images.mni.load('../../web/images/MNI_T1_2mm_stripped_ras.nii.gz', false).then( () => {
+            console.log('MNI Loaded');
+        });
     }
 
     
@@ -65,7 +71,7 @@ class FMRIElement extends HTMLElement {
         let json_data = {
 
             'core': {
-                'data': [
+                'data':[
                     {
                         'text': 'New Subject',
                         'children': [
@@ -223,15 +229,23 @@ class FMRIElement extends HTMLElement {
 
         return items;
     }
-    saveDataToJSON() {
-        let input = document.createElement('input');
-        input.type = 'file';
-        input.click();
 
-        
+	// TODO: add electron check and saving tree structure.
+    saveDataToJSON(fobj) {
+
+        console.log(fobj);
+        let imgStr = JSON.stringify(app_state.images, null, 2);
+        console.log("serialized");        
+        let output = {
+            bisformat: "bisweb-fmritool",
+            images: imgStr
+        };
+
+        bisgenericio.write(fobj, JSON.stringify(output,null,2));
 
     }
 
+	// TODO: add electron check and directory loading
     loadDataFromJSON() {
 
         return new Promise( (resolve, reject) => {
@@ -446,6 +460,7 @@ class FMRIElement extends HTMLElement {
 
     }    
 
+
     // A function that averages images
     computeAverageImage(array) {
 
@@ -534,8 +549,8 @@ class FMRIElement extends HTMLElement {
 
         webutil.createMenuItem(fmenu, 'Load Study Data', function() {
             self.loadDataFromJSON().then( (resolvedObj) => {
-                let header = resolvedObj.header;
-                if (header !== "bisweb-fmritool") {
+                let bisformat = resolvedObj.bisformat;
+                if (bisformat !== "bisweb-fmritool") {
                     bootbox.alert("Not a valid JSON file");
                     return;
                 }
@@ -546,15 +561,18 @@ class FMRIElement extends HTMLElement {
             });
         });
 
-        webutil.createMenuItem(fmenu, 'Save Study Data', function() {
-            let outputObject = { "header": "bisweb-fmritool",
-                                 "images": app_state.images};
-            let outputString = JSON.stringify(outputObject);
-
-            fs.writeFile("study.JSON", outputString, function(err) { 
-                console.log(err);    
-            });
-        });
+        webfileutil.createFileMenuItem(fmenu, 'Save Study Data', function(fileobj) {
+                                         self.saveDataToJSON(fileobj);
+                                    },
+                                    {
+                                        title: "Save Data",
+                                        save: true,
+										filters:[ { name: 'Patient File', extensions: ['fmri']}],
+										suffix : "biswebstate",
+                                           initialCallback : () => {
+                                               return 'new_study.fmri';
+                                           }
+                                    });
 
         webutil.createMenuItem(processingmenu, 'Correct Motion',
             function() {
@@ -590,6 +608,8 @@ class FMRIElement extends HTMLElement {
                 let t1 = self.getT1Image(app_state.images.anat).image;
 
                 if (averageImage !== null && t1 !== null) {
+
+					// TODO: fix memory leak in reslice
                     let registerFunctionalToT1 = self.computeLinearRegistration(t1, averageImage);
                     registerFunctionalToT1.then( (output) => {
                         let newObject = {image: output.reslice, xform: output.xform, name: "AVERAGE_fmri_T1space.nii.gz"};
@@ -601,6 +621,43 @@ class FMRIElement extends HTMLElement {
             
                 else
                     bootbox.alert('Invalid Images');
+            }
+        );
+
+        webutil.createMenuItem(registrationmenu, 'Register T1 to MNI',
+            function() {
+                let t1 = self.getT1Image(app_state.images.anat).image;
+                let average = self.getAverageFMRI(app_state.images.derivatives);
+
+                if (t1 !== null) {
+                    let registerT1ToMNI = self.computeLinearRegistration(app_state.mni, t1);
+                    registerT1ToMNI.then( (output) => {
+                        let newObject = {image: output.reslice, xform: output.xform, name: "T1_MNIspace.nii.gz"};
+                        app_state.images.derivatives.push(newObject);
+                        let tree = $("#treeDiv");
+                        tree.jstree().create_node("j1_5", {text: "T1_MNIspace.nii.gz"});
+
+                        let input = {
+                            'input' : average,
+                            'xform' : average.xform,
+                            'xform2': newObject.xform,
+                            'reference' : app_state.mni
+                        };
+
+                        let reslicer = new ResliceImage();
+                        reslicer.execute(input).then( () => {
+                            let average_mni = reslicer.getOutputObject('output');
+                            let name = "AVERAGE_fmri_MNIspace.nii.gz";
+                            let xform = new TransformationCollection();
+                            xform.addTransformation(average.xform);
+                            xform.addTransformation(newObject.xform);
+                            app_state.images.derivatives.push({images: average_mni, name: name, xform: xform });
+                            
+                            let tree = $("#treeDiv");
+                            tree.jstree().create_node("j1_5", {name: name});
+                        });
+                    });
+                }
             }
         );
 
@@ -640,8 +697,14 @@ class FMRIElement extends HTMLElement {
         this.panel.show();
         console.log(this.tree_div);
 
+        if (webutil.inElectronApp()) {
+	    let hmenu = webutil.createTopMenuBarMenu("Help", menubar);
+            webutil.createMenuItem(hmenu, 'Show JavaScript Console',
+                                   function () {
+                                       window.BISELECTRON.remote.getCurrentWindow().toggleDevTools();
+                                   });
+		}
     }
-
 }
 
 webutil.defineElement('bisweb-fmrielement', FMRIElement);
