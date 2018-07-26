@@ -40,7 +40,7 @@ class FileDialogElement {
                                 </div>
 
                                 <div class='col-sm-9 file-display'>
-                                    <div><p>Content goes here...</p></div>
+                                    <div class='file-list'><p>Content goes here...</p></div>
                                 </div>
                         </div>`
                         );
@@ -54,6 +54,15 @@ class FileDialogElement {
      */
     createStaticElements() {
         let favoriteBar = this.container.find('.favorite-bar');
+
+        let viewerSwitch = $(`<div class='viewertoggle checkbox-slider--b checkbox-slider-sm'><label><input type='checkbox'><span>Use Viewer 2?</span></label></div>`);
+        let viewerSpan = viewerSwitch.find('span');
+        viewerSpan.css('color', 'rgb(12, 227, 172)');
+        viewerSpan.css('font-weight', '250');
+        viewerSpan.css('font-size', '13px');
+        console.log('viewerSpan', viewerSpan);
+        favoriteBar.append(viewerSwitch);
+
         let favoriteButton = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-star-empty'></span> Mark folder as favorite</button>`);
         favoriteBar.append(favoriteButton);
 
@@ -105,9 +114,10 @@ class FileDialogElement {
             pillsBar.append(newPill);
         });
 
+
         //erase the file list on modal close
         this.modal.dialog.on('hidden.bs.modal', () => {
-            let contentDisplay = this.container.find('.file-display');
+            let contentDisplay = this.container.find('.file-list');
             contentDisplay.remove();
         });
     }
@@ -152,13 +162,13 @@ class FileDialogElement {
      * @param {Array} list - An array of file entries. 
      */
     expandDirectory(list) {
-        let contentDisplay = this.container.find('.file-display');
-        let contentBox = this.container.find('.content-box');
+        let fileList = this.container.find('.file-list');
+        let fileDisplay = this.container.find('.file-display');
 
-        contentDisplay.remove();
-        contentDisplay = $(this.contentDisplayTemplate);
+        fileList.remove();
+        let newList = $(`<div class='file-list'></div>`);
 
-        contentDisplay.jstree({
+        newList.jstree({
             'core': {
                 'data': list,
                 'dblclick_toggle': false
@@ -196,7 +206,7 @@ class FileDialogElement {
         });
 
         //determine based on the type of the node what should happen when the user clicks on it
-        $(contentDisplay).on('select_node.jstree', (event, data) => {
+        $(newList).on('select_node.jstree', (event, data) => {
             console.log('jstree select_node', data);
             //check whether node should expand directories beneath it.
             if (data.node.original.expand) {
@@ -223,7 +233,7 @@ class FileDialogElement {
         });
 
         this.updateFileNavbar();
-        contentBox.append(contentDisplay);
+        fileDisplay.append(newList);
     }
 
     /**
@@ -378,7 +388,12 @@ class FileDialogElement {
         let header = this.modal.header;
         let loadingMessage = $(`<p class='loadMessage'>Loading...</p>`);
         header.append(loadingMessage);
-        this.fileRequestFn({ 'command' : 'getfile', 'files' : [path] });
+        //check value of viewer slider
+        let viewerToggle = $(this.container).find('.viewertoggle').find('input');
+        console.log('viewer slider', viewerToggle);
+
+        let viewer = (viewerToggle[0] && viewerToggle[0].checked) ? 'viewer2' : 'viewer1';
+        this.fileRequestFn({ 'command' : 'getfile', 'files' : [path],  'viewer' : viewer });
 
         document.addEventListener('imagetransmission', () => {
             header.find('.loadMessage').remove();

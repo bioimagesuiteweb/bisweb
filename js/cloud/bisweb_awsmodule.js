@@ -115,17 +115,18 @@ class AWSModule {
     makeRequest(params, cb = null, eb = null) {
         let command = params.command;
         let files = params.files || params.file;
+        let viewer = params.viewer;
         console.log('this', this);
         switch (params.command) {
             case 'getfile' : 
-            case 'getfiles' : this.requestFile(files); break;
+            case 'getfiles' : this.requestFile(files, viewer); break;
             case 'uploadfile' : 
             case 'uploadfiles' : this.uploadFile(params.name, files, cb, eb); break;
             default : console.log('Cannot execute unknown command', command);
         }
     }
 
-    requestFile(name) {
+    requestFile(name, viewer = this.defaultViewer) {
 
         let params = {
             'Bucket' : AWSParameters.BucketName,
@@ -147,7 +148,7 @@ class AWSModule {
                 let imageLoadEvent = new CustomEvent('imagetransmission');
                 document.dispatchEvent(imageLoadEvent);
 
-                this.algorithmController.sendImageToViewer(loadedImage, { 'viewername' : this.defaultViewer}); 
+                this.algorithmController.sendImageToViewer(loadedImage, { 'viewername' : viewer}); 
             }
         });
         
