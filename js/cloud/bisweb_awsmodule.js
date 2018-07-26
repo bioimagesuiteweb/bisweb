@@ -76,7 +76,7 @@ class AWSModule {
     }
 
     listObjectsInBucket() {
-        this.s3.listObjects({ 'Delimiter' : '/'}, (err, data) => {
+        this.s3.listObjectsV2( {}, (err, data) => {
             if (err) { console.log('an error occured', err); return; }
             console.log('got objects', data);
 
