@@ -75,34 +75,13 @@ class AWSModule {
      * Creates a file browsing dialog using bisweb_filedialog (see the documentation in that file for more details).
      */
     listObjectsInBucket() {
-        this.s3.listObjects({ 'Delimiter' : '/'}, (err, data) => {
+        this.s3.listObjectsV2( {}, (err, data) => {
             if (err) { console.log('an error occured', err); return; }
             console.log('got objects', data);
 
-            //format list data to a format that file display modal can understand...
-            let list = [];
-            for (let entry of data.Contents) {
-                let newEntry = {};
-                newEntry.text = entry.Key;
-                newEntry.path = entry.Key;
 
-                let fileType = newEntry.text.split('.');
-                switch(fileType[fileType.length - 1]){
-                    case 'gz' : newEntry.type = (fileType[fileType.length - 2] === 'nii') ? 'picture' : 'file'; break;
-                    case 'md' : newEntry.type = 'text'; break;
-                    case 'mkv' : 
-                    case 'avi' : 
-                    case 'mp4' : newEntry.type = 'video'; break;
-                    case 'mp3' :
-                    case 'flac' :
-                    case 'FLAC' :
-                    case 'wav' : 
-                    case 'WAV' : newEntry.type = 'audio'; break;
-                    default : newEntry.type = 'file';
-                }
 
-                list.push(newEntry);
-            }
+            let formattedFiles = formatRawS3Files(data.Content);
 
             console.log('list', list);
             this.fileDisplayModal.createFileList(list);
@@ -125,10 +104,11 @@ class AWSModule {
     makeRequest(params, cb = null, eb = null) {
         let command = params.command;
         let files = params.files || params.file;
+        let viewer = params.viewer;
         console.log('this', this);
         switch (params.command) {
             case 'getfile' : 
-            case 'getfiles' : this.requestFile(params.name, cb, eb); break;
+            case 'getfiles' : this.requestFile(params.name, viewer, cb, eb); break;
             case 'uploadfile' : 
             case 'uploadfiles' : this.uploadFile(params.name, files, cb, eb); break;
             default : console.log('Cannot execute unknown command', command);
@@ -141,7 +121,7 @@ class AWSModule {
      *
      * @param {String} name - Name of the file to request from the S3 bucket. 
      */
-    requestFile(name, cb, eb) {
+    requestFile(name, viewer = this.defaultViewer, cb = () => {}, eb = () => {}) {
 
         let params = {
             'Bucket' : AWSParameters.BucketName,
@@ -435,6 +415,93 @@ class AWSModule {
 
         window.addEventListener('storage', idTokenEvent);
     }
+
+    let formatRawS3Files = (files) => {
+        //split filenames and strip out all the folders (filepaths that end with '/')
+        let paths = [];
+        for (let file of files) {
+            let splitFile = file.split('/');
+            if (splitFile[splitFile.length - 1] !== '') {
+                paths.push(splitFile);
+            }
+        }
+
+        //sort files by hierarchical order (root folders first, then folders one level deep, and so on)
+        paths.sort( (a,b) => { 
+            return (a.length - b.length);
+        });
+
+        let formattedFiles = {};
+
+        for (let path of paths) {
+            let currentLocation = formattedFiles;
+            for (let folder of path) {
+                if (!currentLocation[folder]) {
+
+                    let makeFolderPath = (fullPath, folderName) {
+                        let path = '';
+
+                        for (let i = 0; i < fullPath.length; i++) {
+                            if (path[i] === folder) {
+                                return path.concat(folderName);
+                            }
+
+                            path = path.concat(fullPath[i]);
+                        }
+                    };
+
+                    //files should end in a filetype, i.e. a '.' and some extension
+                    //otherwise it's a folder
+                    if(folder.split('.').length === 1) {
+
+                        let folderPath = makeFolderPath(path, folder);
+                        let newEntry { 
+                            'text' : folderPath,
+                            'path' : folderPath,
+                            'type' : 'folder',
+                            'children' : {}
+                        };
+
+                        //top level folders should be appended directly to formattedFiles
+                        //otherwise the new entry should be added as a child of the current location
+                        if (currentLocation.children) {
+                            currentLocation.children.push(newEntry);
+                        } else {
+                            currentLocation.push(newEntry);
+                        }
+
+                    } else {
+
+                        let folderPath = path.join('/');
+                        let fileType = folder.split('.');
+
+                        let newEntry = {
+                            'text' : folderPath,
+                            'path' : folderPath
+                        };
+
+                        switch(fileType[fileType.length - 1]){
+                            case 'gz' : newEntry.type = (fileType[fileType.length - 2] === 'nii') ? 'picture' : 'file'; break;
+                            case 'md' : newEntry.type = 'text'; break;
+                            case 'mkv' : 
+                            case 'avi' : 
+                            case 'mp4' : newEntry.type = 'video'; break;
+                            case 'mp3' :
+                            case 'flac' :
+                            case 'FLAC' :
+                            case 'wav' : 
+                            case 'WAV' : newEntry.type = 'audio'; break;
+                            default : newEntry.type = 'file';
+                        }
+
+                        list.push(newEntry);
+                    }
+                }
+            }
+        }
+
+        return formattedFiles;
+    };
 }
 
 module.exports = AWSModule;

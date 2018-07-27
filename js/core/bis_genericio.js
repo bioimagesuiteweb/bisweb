@@ -700,15 +700,15 @@ var readbinarydata = function (url, loadedcallback, errorcallback) {
     if (environment === 'electron') {
         return readdataelectron(url, true, loadedcallback, errorcallback);
     }
-
-    if (url.name !== undefined) {
-        // We are in browser and have received a Files[] array
-        //          console.log('Now reading binary data in browser',url);
-        return readbinarydatabrowser(url, loadedcallback, errorcallback);
-    }
-
-
-
+a
+a
+a
+a
+a
+a
+a
+a
+a
     return readbinarydatafromurl(url, loadedcallback, errorcallback);
 };
 

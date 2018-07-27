@@ -486,7 +486,9 @@ class ViewerApplicationElement extends HTMLElement {
 
         //give webfileutil acccess to the fileserver and algorithmcontroller
         let fileserverid = this.getAttribute('bis-fileserver');
-        webfileutil.setFileServer(fileserverid);
+        if (fileserverid) {
+            webfileutil.setFileServer(fileserverid);
+        }
 
         if (modulemanager) {
           console.log('setting algorithm controller', modulemanager.getAlgorithmController());

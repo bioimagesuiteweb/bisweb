@@ -42,7 +42,7 @@ class FileDialogElement {
                                 </div>
 
                                 <div class='col-sm-9 file-display'>
-                                    <div><p>Content goes here...</p></div>
+                                    <div class='file-list'><p>Content goes here...</p></div>
                                 </div>
                         </div>`
                         );
@@ -52,67 +52,75 @@ class FileDialogElement {
     }
 
     /**
-     * Creates the elements of the file dialog that don't need to be redrawn regularly. 
+     * Creates the elements of the file dialog that don't need to be redrawn regularly.
+     * 
+     * @param {Object} options - Options to specify which elements should be drawn to the dialog 
      */
+
     createStaticElements(options) {
+
+        let favoriteBar = this.container.find('.favorite-bar');
+
         if (options.makeFavoriteButton) {
-            let favoriteBar = this.container.find('.favorite-bar');
             let favoriteButton = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-star-empty'></span> Mark folder as favorite</button>`);
             favoriteBar.append(favoriteButton);
-        
+        }
 
-            let pillsHTML = $(`<ul class='nav nav-pills nav-stacked'></ul>`);
-            favoriteBar.append(pillsHTML);
+        let viewerSwitch = $(`<div class='viewertoggle checkbox-slider--b checkbox-slider-sm'><label><input type='checkbox'><span>Use Viewer 2?</span></label></div>`);
+        let viewerSpan = viewerSwitch.find('span');
+        viewerSpan.css('color', 'rgb(12, 227, 172)');
+        viewerSpan.css('font-weight', '250');
+        viewerSpan.css('font-size', '13px');
+        console.log('viewerSpan', viewerSpan);
+        favoriteBar.append(viewerSwitch);
 
-            let selectPillFromPills = (pill, pills) => {
-                for (let otherPill of pills) {
-                    $(otherPill).removeClass('active');
-                }
-                $(pill).addClass('active');
+        let favoriteButton = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-star-empty'></span> Mark folder as favorite</button>`);
+        favoriteBar.append(favoriteButton);
+
+        let pillsHTML = $(`<ul class='nav nav-pills nav-stacked'></ul>`);
+        favoriteBar.append(pillsHTML);
+
+        let selectPillFromPills = (pill, pills) => {
+            for (let otherPill of pills) {
+                $(otherPill).removeClass('active');
+            }
+            $(pill).addClass('active');
+        };
+
+        //TODO: add folder to localforage ...
+        favoriteButton.on('click', () => {
+            let key = webutil.getuniqueid(), name = this.currentPath[this.currentPath.length - 1];
+            let favorite = {
+                'name' : name,
+                'path' : Array.from(this.currentPath),
+                'key' : key
             };
 
-            let pills = favoriteBar.find('.nav.nav-pills').find('li');
-            for (let pill of pills) {
-                $(pill).on('click', () => {
-                    selectPillFromPills(pill, pills);
+            localforage.setItem(key, JSON.stringify(favorite));
+
+            //create the pill
+            let pillsBar = favoriteBar.find('.nav.nav-pills');
+            let newPill = $(`<li><a href='#'>${name}</a></li>`);
+            newPill.on('click', () => {
+                selectPillFromPills(newPill, pillsBar.find('li'));
+                localforage.getItem(key, (err, value) => {
+                    let favoriteFolder;
+                    try {
+                        favoriteFolder = JSON.parse(value);
+                        this.changeDirectory(favoriteFolder.path, this.traversePath(favoriteFolder.path));
+                    } catch(e) {
+                        console.log('error parsing JSON', value);
+                    }
+
                 });
-            }
-
-            //TODO: add folder to localforage ...
-            favoriteButton.on('click', () => {
-                let key = webutil.getuniqueid(), name = this.currentPath[this.currentPath.length - 1];
-                let favorite = {
-                    'name' : name,
-                    'path' : Array.from(this.currentPath),
-                    'key' : key
-                };
-
-                localforage.setItem(key, JSON.stringify(favorite));
-
-                //create the pill
-                let pillsBar = favoriteBar.find('.nav.nav-pills');
-                let newPill = $(`<li><a href='#'>${name}</a></li>`);
-                newPill.on('click', () => {
-                    selectPillFromPills(newPill, pillsBar.find('li'));
-                    localforage.getItem(key, (err, value) => {
-                        let favoriteFolder;
-                        try {
-                            favoriteFolder = JSON.parse(value);
-                            this.changeDirectory(favoriteFolder.path, this.traversePath(favoriteFolder.path));
-                        } catch(e) {
-                            console.log('error parsing JSON', value);
-                        }
-
-                    });
-                });
-
-                pillsBar.append(newPill);
             });
-        }
+
+            pillsBar.append(newPill);
+        });
 
         //erase the file list on modal close
         this.modal.dialog.on('hidden.bs.modal', () => {
-            let contentDisplay = this.container.find('.file-display');
+            let contentDisplay = this.container.find('.file-list');
             contentDisplay.remove();
         });
     }
@@ -157,13 +165,13 @@ class FileDialogElement {
      * @param {Array} list - An array of file entries. 
      */
     expandDirectory(list) {
-        let contentDisplay = this.container.find('.file-display');
-        let contentBox = this.container.find('.content-box');
+        let fileList = this.container.find('.file-list');
+        let fileDisplay = this.container.find('.file-display');
 
-        contentDisplay.remove();
-        contentDisplay = $(this.contentDisplayTemplate);
+        fileList.remove();
+        let newList = $(`<div class='file-list'></div>`);
 
-        contentDisplay.jstree({
+        newList.jstree({
             'core': {
                 'data': list,
                 'dblclick_toggle': false
@@ -201,7 +209,7 @@ class FileDialogElement {
         });
 
         //determine based on the type of the node what should happen when the user clicks on it
-        $(contentDisplay).on('select_node.jstree', (event, data) => {
+        $(newList).on('select_node.jstree', (event, data) => {
             console.log('jstree select_node', data);
             //check whether node should expand directories beneath it.
             if (data.node.original.expand) {
@@ -229,7 +237,7 @@ class FileDialogElement {
         });
 
         this.updateFileNavbar();
-        contentBox.append(contentDisplay);
+        fileDisplay.append(newList);
     }
 
     /**
@@ -385,6 +393,11 @@ class FileDialogElement {
         let header = this.modal.header;
         let loadingMessage = $(`<p class='loadMessage'>Loading...</p>`);
         header.append(loadingMessage);
+        //check value of viewer slider
+        let viewerToggle = $(this.container).find('.viewertoggle').find('input');
+        console.log('viewer slider', viewerToggle);
+
+        let viewer = (viewerToggle[0] && viewerToggle[0].checked) ? 'viewer2' : 'viewer1';
 
         let cb = () => {
             header.find('.loadMessage').remove();
