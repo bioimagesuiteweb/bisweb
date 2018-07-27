@@ -23,7 +23,6 @@ const webutil = require('bis_webutil.js');
 const d3 = require('d3'); // jshint ignore:line
 const io = require('bis_genericio.js');
 const BiswebImage = require('bisweb_image.js');
-const wsutil = require('../../fileserver/wsutil.js');
 
 /**
  * Tree viewer is an HTML Element designed to display inputs in a hierarchical fashion based on their relationship to each other.
@@ -311,7 +310,7 @@ class TreeViewer extends HTMLElement {
             let pane = d3.select(tabID).select('.svg');
 
             let data = pane.selectAll('g')
-                .data(tree, function(d) { });
+                .data(tree, function() { });
 
             data.exit().remove();
             let graphic = data.enter().append('g');
@@ -625,7 +624,7 @@ class TreeViewer extends HTMLElement {
                     deleteList.push(child.id);
                     findChildren(child.children);
                 }
-            }
+            };
 
             findChildren(foundNode.node.children);
         }
@@ -729,7 +728,7 @@ class TreeViewer extends HTMLElement {
                             for (let child of node.children)
                                 parseNode(child);
                         }
-                    }
+                    };
 
                     for (let tree of newNetwork) {
                         //replace 'id' field with a new value to ensure internal consistency.
@@ -749,11 +748,11 @@ class TreeViewer extends HTMLElement {
 
         //BiswebDataObjects are loaded in a slightly nonstandard way here -- the dictionary is parsed by JSON.parse immediately after reader.onload,
         //so all you have to do is assign the keys of the object to properties of a new BiswebDataObject
-        function assignDictionaryToObject(dict, obj) {
+        /*function assignDictionaryToObject(dict, obj) {
             for (let key of Object.keys(dict)) {
                 obj[key] = dict[key];
             }
-        }
+        }*/
     }
 
     writeNetworkToFile() {

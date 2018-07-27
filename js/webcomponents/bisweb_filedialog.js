@@ -1,7 +1,7 @@
-const webutil = require('bis_webutil.js');
+const $ = require('jquery');
 const localforage = require('localforage');
 const jstree = require('jstree');
-
+const webutil = require('bis_webutil.js');
 
 /**
  * When loading a file from the server, the user must be able to browse the files. 
@@ -74,7 +74,7 @@ class FileDialogElement {
             let pills = favoriteBar.find('.nav.nav-pills').find('li');
             for (let pill of pills) {
                 $(pill).on('click', () => {
-                    deselectOtherPills(pill, pills);
+                    selectPillFromPills(pill, pills);
                 });
             }
 
@@ -212,7 +212,7 @@ class FileDialogElement {
             switch (data.node.type) {
                 case 'file': break;
                 case 'picture': this.fetch(data.node.original.path); break;
-                case 'directory':
+                case 'directory': {
                     let name = data.node.original.text;
                     let node = this.currentDirectory.find((element) => { return element.text === name; });
                     if (node) {
@@ -222,6 +222,7 @@ class FileDialogElement {
                         console.log('Error, could not find element with name', data.node.original.text, 'in directory', this.currentDirectory);
                     }
                     break;
+                }
                 default: console.log('clicked on node', data.node.type, 'that performs no action');
             }
 

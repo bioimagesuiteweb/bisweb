@@ -21,47 +21,52 @@ var fs=require('fs');
 var getDirectoryInfo = function(basedir,childdir,done) {
     var data = [];
     fs.readdir(basedir, function (err, files) {
-	if (err) {
-	    throw err;
-	}
-
-	data.push({ Name : "..", IsDirectory: true, Path : path.join(childdir,"..")  });
-
-	files.filter(function () {
-	    return true;
-	}).forEach(function (file) {
-	    try {
-		var isDirectory = fs.statSync(path.join(basedir,file)).isDirectory();
-		if (isDirectory) {
-		    data.push({ Name : file, IsDirectory: true, Path : path.join(childdir, file)  });
-		} else {
-		    var lst=file.split('.');
-		    var ext=lst.pop();
-		    if (ext==="gz")
-			ext=lst.pop()+".gz";
-		    var last=file.slice(-1),first=file.slice(0,1);
-		    if (first === "#" || last ==="#" || last==="~" || first===".")
-			return;
-		    
-		    var stats = fs.statSync(path.join(basedir,file));
-		    var fileSizeInBytes = stats["size"];
-		    
-		    data.push({ Name : file, Ext : ext, IsDirectory: false, Path : path.join(childdir, file), size : fileSizeInBytes});
+		if (err) {
+			throw err;
 		}
-	    } catch(e) {
-		console.log(e); 
-	    }
-	});
-	data = _.sortBy(data, function(f) { return f.Name; });
 
-	var obj = {
-	    basedir : basedir,
-	    childdir : childdir,
-	    data : data
-	};
-	
-	done(obj);
+		data.push({ Name : "..", IsDirectory: true, Path : path.join(childdir,"..")  });
+
+		files.filter(function () {
+			return true;
+		}).forEach(function (file) {
+			try {
+				var isDirectory = fs.statSync(path.join(basedir,file)).isDirectory();
+				if (isDirectory) {
+					data.push({ Name : file, IsDirectory: true, Path : path.join(childdir, file)  });
+				} else {
+					var lst=file.split('.');
+					var ext=lst.pop();	
+
+					if (ext==="gz")
+						ext=lst.pop()+".gz";
+
+					var last=file.slice(-1),first=file.slice(0,1);
+
+					if (first === "#" || last ==="#" || last==="~" || first===".")
+						return;
+
+					var stats = fs.statSync(path.join(basedir,file));
+					var fileSizeInBytes = stats["size"];
+
+					data.push({ Name : file, Ext : ext, IsDirectory: false, Path : path.join(childdir, file), size : fileSizeInBytes});
+				}
+			} catch(e) {
+				console.log(e); 
+			}
+		});
+
+		data = _.sortBy(data, function(f) { return f.Name; });
+
+		var obj = {
+			basedir : basedir,
+			childdir : childdir,
+			data : data
+		};
+		
+		done(obj);
     });
+
     return false;
 
     /*
@@ -89,31 +94,31 @@ var getDirectoryInfo = function(basedir,childdir,done) {
 */
 var createBasicPassport = function(app,validate) {
     
-    var passport = require('passport'), BasicStrategy = require('passport-http').BasicStrategy;
-    var session  = require('express-session');
+	var passport = require('passport'), BasicStrategy = require('passport-http').BasicStrategy;
+	var session  = require('express-session');
 
-    app.use(session({ secret: 'xppx' })); // session secret
-    app.use(passport.initialize());
-    app.use(passport.session());
+	app.use(session({ secret: 'xppx' })); // session secret
+	app.use(passport.initialize());
+	app.use(passport.session());
 
-    passport.use(new BasicStrategy(
-	function(username,password,done) {
+	passport.use(
+		new BasicStrategy(function(username,password,done) {
 //	    console.log('in Basic,',username,password,done);
-	    
-	    if (validate(username,password)) {
-		done(null,username);
-	    } else {
-		done(null,false);
-	    }
+
+		if (validate(username,password)) {
+			done(null,username);
+		} else {
+	    	done(null,false);
+		}
 	}));
 
 
     passport.serializeUser(function(user, done) {
-	done(null, user);
+		done(null, user);
     });
     
     passport.deserializeUser(function(user, done) {
-	done(null, user);
+		done(null, user);
     });
 
     return passport;
@@ -125,7 +130,7 @@ var createBasicPassport = function(app,validate) {
 
 var serverutil = { 
     getDirectoryInfo : getDirectoryInfo,
-    createGooglePassport : createGooglePassport,
+    //createGooglePassport : createGooglePassport,
     createBasicPassport : createBasicPassport,
 };
 

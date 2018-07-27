@@ -3,7 +3,6 @@ const webutil = require('bis_webutil.js');
 const wsutil = require('../../fileserver/wsutil.js');
 const bisweb_filedialog = require('bisweb_filedialog.js');
 const BisImage = require('bisweb_image.js');
-const bisweb_awsmodule = require('bisweb_awsmodule.js');
 
 class FileServer extends HTMLElement {
 
@@ -265,7 +264,7 @@ class FileServer extends HTMLElement {
                     remainingTransfer.slice(currentTransferIndex, currentTransferIndex + packetSize);
                 fileTransferSocket.send(slice);
                 currentTransferIndex = currentTransferIndex + slice.length;
-            }
+            };
 
             fileTransferSocket.addEventListener('message', (event) => {
                 let data;
@@ -339,12 +338,13 @@ class FileServer extends HTMLElement {
             let data = wsutil.parseJSON(message.data);
             
             switch(data.type) {
-                case 'badauth':
+                case 'badauth': {
                     let errorMessage = $(`<p>The server rejected the password. Please enter the new password in the server window</p>`);
                     this.authenticateModal.body.find('p').remove();
                     this.authenticateModal.body.prepend(errorMessage);
                     break;
-                case 'goodauth': 
+                }
+                case 'goodauth': { 
                     let successMessage = $(`<p>Login successful!</p>`);
                     this.authenticateModal.body.find('p').remove();
                     this.authenticateModal.body.prepend(successMessage);
@@ -352,6 +352,7 @@ class FileServer extends HTMLElement {
                     this.socket.removeEventListener('message', authListener);
                     this.authenticated = true;
                     break;
+                }
                 default:  
                     console.log('heard unknown data type', data.type);
             }
@@ -429,13 +430,13 @@ class FileServer extends HTMLElement {
 
                 //update modal with an error message if things went wrong
                 let eb = () => {
-                    let errorMessage = $(`<p>An error occured during transmission. File not uploaded.</p>`)
+                    let errorMessage = $(`<p>An error occured during transmission. File not uploaded.</p>`);
 
                     this.saveImageModal.body.empty();
                     this.saveImageModal.body.append(errorMessage);
 
                     setTimeout(() => { this.saveImageModal.dialog.modal('hide'); }, 1500);
-                }
+                };
 
                 this.uploadFileToServer(image, name, cb, eb);
 

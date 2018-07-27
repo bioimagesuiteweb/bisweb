@@ -148,7 +148,7 @@ let makePipeline = function(filename, location) {
                 //if names have already been generated then the output is produced by a node upstream, so don't overwrite the names
                 if (expandedVariables[variable.name].length === 0) {
                     let dependencies = parsedFile.variables[variable.index].depends;
-                    //let fileExtension = parsedFile.variables[variable.index].extension;
+                    let fileExtension = parsedFile.variables[variable.index].extension;
                     for (let dependency of dependencies) {
                         dependency = stripVariable(dependency);
 

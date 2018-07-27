@@ -27,7 +27,6 @@ const FastClick = require('fastclick');
 const userPreferences = require('bisweb_userpreferences.js');
 const $ = require('jquery');
 const bisdbase = require('bisweb_dbase');
-const pipeline = require('pipelineTool');
 
 const genericio=require('bis_genericio');
 const bootbox=require('bootbox');
@@ -480,7 +479,7 @@ class ViewerApplicationElement extends HTMLElement {
     // ---------------------------------------------------------------------------
     // Create the default File and Overlay Menus
     //  ---------------------------------------------------------------------------
-    createFileAndOverlayMenus(menubar,painttoolid) {
+    createFileAndOverlayMenus(menubar,painttoolid, modulemanager = null) {
 
         const self=this;
         let paintviewerno = self.VIEWERS.length - 1;
@@ -489,8 +488,10 @@ class ViewerApplicationElement extends HTMLElement {
         let fileserverid = this.getAttribute('bis-fileserver');
         webfileutil.setFileServer(fileserverid);
 
-        console.log('setting algorithm controller', modulemanager.getAlgorithmController());
-        webfileutil.setAlgorithmController(modulemanager.getAlgorithmController(), 'viewer1');
+        if (modulemanager) {
+          console.log('setting algorithm controller', modulemanager.getAlgorithmController());
+          webfileutil.setAlgorithmController(modulemanager.getAlgorithmController(), 'viewer1');
+        }
         
         // --------------------------------------------------------------------------
         // Callbacks for load image
@@ -990,7 +991,7 @@ class ViewerApplicationElement extends HTMLElement {
         // ----------------------------------------------------------
         // Create the File and Overlay Menus
         // ----------------------------------------------------------
-        let fmenu=this.createFileAndOverlayMenus(menubar,painttoolid);
+        let fmenu=this.createFileAndOverlayMenus(menubar,painttoolid, modulemanager);
 
         this.createApplicationMenu(fmenu);
 

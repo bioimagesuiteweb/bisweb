@@ -31,7 +31,6 @@ const bisweb_onedrive=require('bisweb_simpleonedrive');
 const bisweb_googledrive=require('bisweb_drivemodule');
 const amazonaws=require('bisweb_awsmodule.js');
 const bisweb_awsmodule = new amazonaws();
-const bis_genericio = require('bis_genericio.js');
 
 let bisweb_fileserver;
 
