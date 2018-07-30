@@ -81,10 +81,10 @@ class AWSModule {
 
 
 
-            let formattedFiles = formatRawS3Files(data.Content);
+            let formattedFiles = this.formatRawS3Files(data.Contents);
 
-            console.log('list', list);
-            this.fileDisplayModal.createFileList(list);
+            console.log('files', formattedFiles);
+            this.fileDisplayModal.createFileList(formattedFiles);
             this.fileDisplayModal.showDialog();
         });
     }
@@ -416,11 +416,17 @@ class AWSModule {
         window.addEventListener('storage', idTokenEvent);
     }
 
-    let formatRawS3Files = (files) => {
+    /**
+     * Takes the raw data returned by S3.listObjectsV2 and turns it into a nested file tree that bisweb_filedialog can render.
+     *
+     * @param {Object} files - The 'Contents' field of the data returned by S3.listObjects.
+     */
+    formatRawS3Files(files) {
+
         //split filenames and strip out all the folders (filepaths that end with '/')
-        let paths = [];
+        let paths = [], list = [];
         for (let file of files) {
-            let splitFile = file.split('/');
+            let splitFile = file.Key.split('/');
             if (splitFile[splitFile.length - 1] !== '') {
                 paths.push(splitFile);
             }
@@ -431,52 +437,40 @@ class AWSModule {
             return (a.length - b.length);
         });
 
-        let formattedFiles = {};
+        let formattedFiles = [];
 
         for (let path of paths) {
+            console.log('path', path);
             let currentLocation = formattedFiles;
+
             for (let folder of path) {
-                if (!currentLocation[folder]) {
-
-                    let makeFolderPath = (fullPath, folderName) {
-                        let path = '';
-
-                        for (let i = 0; i < fullPath.length; i++) {
-                            if (path[i] === folder) {
-                                return path.concat(folderName);
-                            }
-
-                            path = path.concat(fullPath[i]);
-                        }
-                    };
+                console.log('current location', currentLocation);
+                let enclosingFolder = findFileWithKey(folder, currentLocation);
+                if (!enclosingFolder) {
 
                     //files should end in a filetype, i.e. a '.' and some extension
                     //otherwise it's a folder
                     if(folder.split('.').length === 1) {
 
                         let folderPath = makeFolderPath(path, folder);
-                        let newEntry { 
-                            'text' : folderPath,
+                        let newEntry = { 
+                            'text' : folder,
                             'path' : folderPath,
-                            'type' : 'folder',
-                            'children' : {}
+                            'type' : 'directory',
+                            'children' : []
                         };
 
-                        //top level folders should be appended directly to formattedFiles
-                        //otherwise the new entry should be added as a child of the current location
-                        if (currentLocation.children) {
-                            currentLocation.children.push(newEntry);
-                        } else {
-                            currentLocation.push(newEntry);
-                        }
+                        currentLocation.push(newEntry);
 
+                        //we created the new file in the process of determining where to add the new file, so set the new folder to be the enclosing folder for files farther down the path
+                        enclosingFolder = newEntry;
                     } else {
 
                         let folderPath = path.join('/');
                         let fileType = folder.split('.');
 
                         let newEntry = {
-                            'text' : folderPath,
+                            'text' : folder,
                             'path' : folderPath
                         };
 
@@ -494,14 +488,41 @@ class AWSModule {
                             default : newEntry.type = 'file';
                         }
 
-                        list.push(newEntry);
+
+                        currentLocation.push(newEntry);
                     }
-                }
+                } 
+                
+                currentLocation = enclosingFolder.children;
             }
         }
-
         return formattedFiles;
-    };
+
+        //helper function to find whether a folder or a file with the given name already exists in currentDirectory
+        function findFileWithKey(key, currentDirectory) {
+            for (let file of currentDirectory) {
+                if (file.text === key) {
+                    return file;
+                }
+            }
+
+            return false;
+        }
+
+        function makeFolderPath(fullPath, folderName) {
+            let newPath = '';
+
+            for (let i = 0; i < fullPath.length; i++) {
+                if (fullPath[i] === folderName) {
+                    return newPath.concat(folderName);
+                }
+
+                newPath = newPath.concat(fullPath[i]);
+            }
+
+            return -1; //should be unreachable
+        };
+    }
 }
 
 module.exports = AWSModule;
