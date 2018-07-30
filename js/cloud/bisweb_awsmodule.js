@@ -46,8 +46,10 @@ class AWSModule {
         //not completely sure why -Zach
         bis_webutil.runAfterAllLoaded( () => {   
             this.fileDisplayModal = new bisweb_filedialog('Bucket Contents', { 'makeFavoriteButton' : false });
-            //fileListFn won't get called from wihin filedialog because the bucket is a flat storage structure
             this.fileDisplayModal.fileRequestFn = this.makeRequest.bind(this);
+
+            this.fileSaveModal = new bisweb_filedialog('Choose Folder to Save In', { 'makeFavoriteButton' : false, 'modalType' : 'save'});
+            this.fileSaveModal.fileRequestFn = this.makeRequest.bind(this);
         });
 
     }
@@ -78,8 +80,6 @@ class AWSModule {
         this.s3.listObjectsV2( {}, (err, data) => {
             if (err) { console.log('an error occured', err); return; }
             console.log('got objects', data);
-
-
 
             let formattedFiles = this.formatRawS3Files(data.Contents);
 
@@ -181,6 +181,19 @@ class AWSModule {
         });
     }
 
+    createSaveImageModal() {
+        this.s3.listObjectsV2( {}, (err, data) => {
+            if (err) { console.log('an error occured', err); return; }
+            console.log('got objects', data);
+
+            let formattedFiles = this.formatRawS3Files(data.Contents, true);
+
+            console.log('files', formattedFiles);
+            this.fileSaveModal.createFileList(formattedFiles);
+            this.fileSaveModal.showDialog();
+        });
+    }
+
     //TODO: Remove unnecessary function? 
     createUser(username, password, email, phoneNumber = null) {
         let dataEmail = {
@@ -271,77 +284,6 @@ class AWSModule {
     }
 
     /**
-     * Creates a small modal dialog to allow the user to enter the name for a file they are attempting to save to the fileserver. 
-     */
-    createSaveImageDialog() {
-        let saveDialog = $(`<p>Please enter a name for the current image on the viewer. Do not include a file extension.</p>`);
-        let nameEntryBox = $(`
-                <div class='form-group'>
-                    <label for='filename'>Filename:</label>
-                    <input type='text' class = 'form-control'>
-                </div>
-            `);
-
-        if (!this.saveImageModal) {
-            this.saveImageModal = bis_webutil.createmodal('Save Current Image?', 'modal-sm');
-            this.saveImageModal.dialog.find('.modal-footer').find('.btn').remove();
-
-            let confirmButton = bis_webutil.createbutton({ 'name': 'Confirm', 'type': 'btn-success' });
-            let cancelButton = bis_webutil.createbutton({ 'name': 'Cancel', 'type': 'btn-danger' });
-
-            this.saveImageModal.footer.append(confirmButton);
-            this.saveImageModal.footer.append(cancelButton);
-
-            $(confirmButton).on('click', () => {
-                let image = this.algorithmController.getImage(this.defaultViewer, 'image');
-                let name = this.saveImageModal.body.find('.form-control')[0].value;
-
-
-                 //update the modal with a success message after successful transmission.
-                 let cb = () => {
-                     let transmissionCompleteMessage = $(`<p>Upload completed successfully.</p>`);
-
-                     this.saveImageModal.body.empty();
-                     this.saveImageModal.body.append(transmissionCompleteMessage);
-
-                     setTimeout(() => { this.saveImageModal.dialog.modal('hide'); }, 1500);
-                };
-
-                //update modal with an error message if things went wrong
-                let eb = () => {
-                    let errorMessage = $(`<p>An error occured during transmission. File not uploaded.</p>`);
-
-                    this.saveImageModal.body.empty();
-                    this.saveImageModal.body.append(errorMessage);
-
-                    setTimeout(() => { this.saveImageModal.dialog.modal('hide'); }, 1500);
-                };
-
-                this.makeRequest( { 'command' : 'uploadfile' , 'file' : image, 'name' : name }, cb, eb);
-
-                let imageSavingDialog = $(`<p>Uploading image to Amazon S3...</p>`);
-                this.saveImageModal.body.empty();
-                this.saveImageModal.body.append(imageSavingDialog);
-            });
-
-            $(cancelButton).on('click', () => {
-                this.saveImageModal.dialog.modal('hide');
-            });
-
-            //clear name entry input when modal is closed
-            $(this.saveImageModal.dialog).on('hidden.bs.modal', () => {
-                this.saveImageModal.body.empty();
-            });
-        }
-
-        this.saveImageModal.body.append(saveDialog);
-        this.saveImageModal.body.append(nameEntryBox);
-
-        this.saveImageModal.dialog.modal('show');
-    }
-
-
-    /**
      * Attempts to authenticate the current user before executing a given S3 command (one of either 'showfiles' or 'uploadfiles' as of 7-23-18, which respectively call listObjectsInBucket and createImageSaveDialog).
      * If the user is not authenticated, a popup will appear that will prompt the user to enter their AWS credentials, or if the credentials are already cached, it will begin the authentication process.
      * If the user is authenticated, wrapInAuth will call the appropriate command. 
@@ -359,7 +301,7 @@ class AWSModule {
 
         switch(command) {
             case 'showfiles' : this.listObjectsInBucket(); break;
-            case 'uploadfile' : this.createSaveImageDialog(); break;
+            case 'uploadfile' : this.createSaveImageModal(); break;
             default : console.log('Unrecognized aws command', command, 'cannot complete request.');
         }
         console.log('called command', command, 'with parameters', parameters);
@@ -420,8 +362,9 @@ class AWSModule {
      * Takes the raw data returned by S3.listObjectsV2 and turns it into a nested file tree that bisweb_filedialog can render.
      *
      * @param {Object} files - The 'Contents' field of the data returned by S3.listObjects.
+     * @param {Boolean} formatForSaveModal - Whether or not to format the file display to list files in addition to folders -- a modal meant to display the file structure in order to choose a folder to save in should not display files.
      */
-    formatRawS3Files(files) {
+    formatRawS3Files(files, formatForSaveModal = false) {
 
         //split filenames and strip out all the folders (filepaths that end with '/')
         let paths = [];
@@ -464,7 +407,7 @@ class AWSModule {
 
                         //we created the new file in the process of determining where to add the new file, so set the new folder to be the enclosing folder for files farther down the path
                         enclosingFolder = newEntry;
-                    } else {
+                    } else if (!formatForSaveModal) {
 
                         let folderPath = path.join('/');
                         let fileType = folder.split('.');

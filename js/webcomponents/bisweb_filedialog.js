@@ -17,7 +17,6 @@ class FileDialogElement {
         this.modalType = options.modalType;
 
         this.modal = webutil.createmodal(modalName, 'modal-lg');
-        this.modal.dialog.find('.modal-footer').remove();
 
         this.contentDisplayTemplate = 
         `<div class='col-sm-9 file-display'>
@@ -65,6 +64,18 @@ class FileDialogElement {
         if (options.makeFavoriteButton) {
             let favoriteButton = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-star-empty'></span> Mark folder as favorite</button>`);
             favoriteBar.append(favoriteButton);
+        }
+
+        if (options.modalType === 'save') {
+            let saveButton = $(`<button type='button' class='btn btn-success'>Save</button>`);
+            saveButton.on('click', () => {
+                this.createSaveImageDialog();
+            });
+
+            this.modal.footer.append(saveButton);
+            this.modal.footer.find('.btn-default').remove();
+        } else {
+            this.modal.dialog.find('.modal-footer').remove();
         }
 
         let viewerSwitch = $(`<div class='viewertoggle checkbox-slider--b checkbox-slider-sm'><label><input type='checkbox'><span>Use Viewer 2?</span></label></div>`);
@@ -421,9 +432,82 @@ class FileDialogElement {
             }, 5000);
         };
         //'path' duplicated because different fileRequestFns may reference the filename differently, e.g. Amazon AWS provides one fileRequestFn, bisweb_fileserver provides another...
-        this.fileRequestFn({ 'command' : command, 'files' : [params.path], 'name' : params.path, 'data' : params.data }, cb, eb);
+        this.fileRequestFn({ 'command' : command, 'files' : [params.path], 'name' : params.path }, cb, eb);
     }
 
+    /**
+     * Creates a small modal dialog to allow the user to enter the name for a file they are attempting to save.
+     *
+     * NOTE: This function is meant to be called exclusively by the Save button created by the file save modal. It will not work as intended anywhere else!  
+     */
+    createSaveImageDialog() {
+        let saveDialog = $(`<p>Please enter a name for the current image on the viewer. Do not include a file extension.</p>`);
+        let nameEntryBox = $(`
+                <div class='form-group'>
+                    <label for='filename'>Filename:</label>
+                    <input type='text' class = 'form-control'>
+                </div>
+            `);
+
+        if (!this.saveImageModal) {
+            this.saveImageModal = webutil.createmodal('Save Current Image?', 'modal-sm');
+            this.saveImageModal.dialog.find('.modal-footer').find('.btn').remove();
+
+            let confirmButton = webutil.createbutton({ 'name': 'Confirm', 'type': 'btn-success' });
+            let cancelButton = webutil.createbutton({ 'name': 'Cancel', 'type': 'btn-danger' });
+
+            this.saveImageModal.footer.append(confirmButton);
+            this.saveImageModal.footer.append(cancelButton);
+
+            $(confirmButton).on('click', () => {
+                let name = this.saveImageModal.body.find('.form-control')[0].value;
+
+
+                 //update the modal with a success message after successful transmission.
+                 let cb = () => {
+                     let transmissionCompleteMessage = $(`<p>Upload completed successfully.</p>`);
+
+                     this.saveImageModal.body.empty();
+                     this.saveImageModal.body.append(transmissionCompleteMessage);
+
+                     setTimeout(() => { this.saveImageModal.dialog.modal('hide'); }, 1500);
+                };
+
+                //update modal with an error message if things went wrong
+                let eb = () => {
+                    let errorMessage = $(`<p>An error occured during transmission. File not uploaded.</p>`);
+
+                    this.saveImageModal.body.empty();
+                    this.saveImageModal.body.append(errorMessage);
+
+                    setTimeout(() => { this.saveImageModal.dialog.modal('hide'); }, 1500);
+                };
+
+                console.log('current path', this.currentPath);
+                let currentPath = this.currentPath.join('/');
+                let newFilename = currentPath + '/' + name;
+                this.fileRequestFn( { 'command' : 'uploadfile', 'name' : newFilename }, cb, eb);
+
+                let imageSavingDialog = $(`<p>Uploading image...</p>`);
+                this.saveImageModal.body.empty();
+                this.saveImageModal.body.append(imageSavingDialog);
+            });
+
+            $(cancelButton).on('click', () => {
+                this.saveImageModal.dialog.modal('hide');
+            });
+
+            //clear name entry input when modal is closed
+            $(this.saveImageModal.dialog).on('hidden.bs.modal', () => {
+                this.saveImageModal.body.empty();
+            });
+        }
+
+        this.saveImageModal.body.append(saveDialog);
+        this.saveImageModal.body.append(nameEntryBox);
+
+        this.saveImageModal.dialog.modal('show');
+    }
 
     
     //REPLACED BY makeFileRequest
