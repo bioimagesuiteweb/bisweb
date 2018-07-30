@@ -14,6 +14,7 @@ class FileDialogElement {
     constructor(modalName = 'File Tree', options = {}) {
 
         this.addDefaultOptions(options);
+        this.modalType = options.modalType;
 
         this.modal = webutil.createmodal(modalName, 'modal-lg');
         this.modal.dialog.find('.modal-footer').remove();
@@ -217,9 +218,11 @@ class FileDialogElement {
                 return;
             }
 
+            //NOTE: Actual image data is attached later in the case of a save request. Only the file location is provided here.
+            let command = this.modalType === 'save' ? 'uploadfile' : 'getfile';
             switch (data.node.type) {
                 case 'file': break;
-                case 'picture': this.fetch(data.node.original.path); break;
+                case 'picture': this.makeFileRequest(command, { 'path' : data.node.original.path }); break;
                 case 'directory': {
                     let name = data.node.original.text;
                     let node = this.currentDirectory.find((element) => { return element.text === name; });
@@ -384,11 +387,52 @@ class FileDialogElement {
         return list;
     }
 
+    makeFileRequest(command, params) {
+        let header = this.modal.header;
+
+        let messageText;
+        switch (command) {
+            case 'getfile' : 
+            case 'getfiles' : messageText = 'Loading file, please wait...'; break;
+            case 'uploadfile' : 
+            case 'uploadfiles' : messageText = 'Saving file, please wait...'; break;
+        }
+
+        let loadingMessage = $(`<p class='message'>${messageText}</p>`);
+        header.append(loadingMessage);
+
+        //check value of viewer slider
+        let viewerToggle = $(this.container).find('.viewertoggle').find('input');
+        console.log('viewer slider', viewerToggle);
+
+        let viewer = (viewerToggle[0] && viewerToggle[0].checked) ? 'viewer2' : 'viewer1';
+
+        let cb = () => {
+            header.find('.message').remove();
+        };
+
+        let eb = () => {
+            header.find('.loadMessage').remove();
+            let errorMessage = $(`<p class='errorMessage'>An error occured while loading the image. Please ensure the chosen file exists in the chosen bucket.</p>`);
+            header.append(errorMessage);
+
+            setTimeout( () => { 
+                header.find('.errorMessage').remove(); 
+            }, 5000);
+        };
+        //'path' duplicated because different fileRequestFns may reference the filename differently, e.g. Amazon AWS provides one fileRequestFn, bisweb_fileserver provides another...
+        this.fileRequestFn({ 'command' : command, 'files' : [params.path], 'name' : params.path, 'data' : params.data }, cb, eb);
+    }
+
+
+    
+    //REPLACED BY makeFileRequest
     /**
      * Requests a file from the server and notifies the user with a message once the file has loaded.
      *
      * @param {String} path - Path of the file on the server machine.
      */
+     /*
     fetch(path) {
         let header = this.modal.header;
         let loadingMessage = $(`<p class='loadMessage'>Loading...</p>`);
@@ -414,15 +458,44 @@ class FileDialogElement {
         };
         //'path' duplicated because different fileRequestFns may reference the filename differently, e.g. Amazon AWS provides one fileRequestFn, bisweb_fileserver provides another...
         this.fileRequestFn({ 'command' : 'getfile', 'files' : [path], 'name' : path }, cb, eb);
-
-        /*document.addEventListener('imagetransmission', () => {
-            header.find('.loadMessage').remove();
-        }, { 'once' : true});
-        */
     }
+    */
+
+    /**
+     * Saves a file to a cloud service or local fileserver using a function specified externally by the module (fileSaveFn).
+     * 
+     * @param {String} path - The path to save the file to on the cloud service. 
+     * @param {Uint8Array} data - The file to upload to the cloud service 
+     */
+    /*
+    put(path, data) {
+        let header = this.modal.header;
+        let loadingMessage = $(`<p class='loadMessage'>Loading...</p>`);
+        header.append(loadingMessage);
+
+        let cb = () => {
+            header.find('.loadMessage').remove();
+        };
+
+        let eb = () => {
+            header.find('.loadmessage').remove();
+            let errorMessage = $(`<p class='errorMessage'>An error occured while loading the image. Please ensure the chosen file exists in the chosen bucket.</p>`);
+            header.append(errorMessage);
+
+            setTimeout( () => { 
+                header.find('.errorMessage').remove(); 
+            }, 5000);
+        };
+
+        this.fileRequestFn
+    }
+    */
+
+
 
     addDefaultOptions(options) {
         options.makeFavoriteButton = options.makeFavoriteButton ? options.makeFavoriteButton : false;
+        options.modalType = options.modalType ? options.modalType : 'load';
     }
 }
 

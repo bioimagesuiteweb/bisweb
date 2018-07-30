@@ -103,7 +103,7 @@ class AWSModule {
     //expected to be called from bisweb_fileserver (see 'fileRequestFn') 
     makeRequest(params, cb = null, eb = null) {
         let command = params.command;
-        let files = params.files || params.file;
+        let files = this.algorithmController.getImage(this.defaultViewer, 'image');
         let viewer = params.viewer;
         console.log('this', this);
         switch (params.command) {
@@ -424,7 +424,7 @@ class AWSModule {
     formatRawS3Files(files) {
 
         //split filenames and strip out all the folders (filepaths that end with '/')
-        let paths = [], list = [];
+        let paths = [];
         for (let file of files) {
             let splitFile = file.Key.split('/');
             if (splitFile[splitFile.length - 1] !== '') {
@@ -521,7 +521,7 @@ class AWSModule {
             }
 
             return -1; //should be unreachable
-        };
+        }
     }
 }
 
