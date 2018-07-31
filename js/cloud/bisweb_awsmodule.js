@@ -160,10 +160,8 @@ class AWSModule {
      */
     uploadFile(name, body, cb = null, eb = null) {
 
-        console.log('image', body);
         let rawData = body.serializeToNII();
         let zippedData = wsutil.zipFile(rawData);
-        console.log('zipped data', zippedData);
         let filename = name + '.nii.gz';
 
         let params = {
@@ -292,7 +290,6 @@ class AWSModule {
      */
     wrapInAuth(command, parameters = null) {
         let expireTime = AWS.config.credentials.expireTime ? Date.parse(AWS.config.credentials.expireTime) : -1;
-        console.log('expire time', expireTime);
 
         if (expireTime < Date.now()) {
             this.awsAuthUser();
@@ -383,11 +380,9 @@ class AWSModule {
         let formattedFiles = [];
 
         for (let path of paths) {
-            console.log('path', path);
             let currentLocation = formattedFiles;
 
             for (let folder of path) {
-                console.log('current location', currentLocation);
                 let enclosingFolder = findFileWithKey(folder, currentLocation);
                 if (!enclosingFolder) {
 

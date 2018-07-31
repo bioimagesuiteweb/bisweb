@@ -324,7 +324,6 @@ class FileDialogElement {
      * Displays the file dialog to the user. 
      */
     showDialog() {
-        console.log('hello from show dialog');
         console.log('modal', this.modal);
         this.modal.dialog.modal('show');
     }
@@ -462,15 +461,21 @@ class FileDialogElement {
             $(confirmButton).on('click', () => {
                 let name = this.saveImageModal.body.find('.form-control')[0].value;
 
+               
 
-                 //update the modal with a success message after successful transmission.
-                 let cb = () => {
-                     let transmissionCompleteMessage = $(`<p>Upload completed successfully.</p>`);
+                //update the modal with a success message after successful transmission.
+                let cb = () => {
+                    let transmissionCompleteMessage = $(`<p>Upload completed successfully.</p>`);
 
-                     this.saveImageModal.body.empty();
-                     this.saveImageModal.body.append(transmissionCompleteMessage);
+                    this.saveImageModal.body.empty();
+                    this.saveImageModal.body.append(transmissionCompleteMessage);
 
-                     setTimeout(() => { this.saveImageModal.dialog.modal('hide'); }, 1500);
+                    //save modal should close once upload is complete
+                    this.saveImageModal.dialog.one('hidden.bs.modal', () => {
+                        this.modal.dialog.modal('hide');
+                    });
+
+                    setTimeout(() => { this.saveImageModal.dialog.modal('hide'); }, 1500);
                 };
 
                 //update modal with an error message if things went wrong

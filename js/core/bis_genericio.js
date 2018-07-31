@@ -700,15 +700,7 @@ var readbinarydata = function (url, loadedcallback, errorcallback) {
     if (environment === 'electron') {
         return readdataelectron(url, true, loadedcallback, errorcallback);
     }
-a
-a
-a
-a
-a
-a
-a
-a
-a
+    
     return readbinarydatafromurl(url, loadedcallback, errorcallback);
 };
 
