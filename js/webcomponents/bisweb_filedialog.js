@@ -14,7 +14,6 @@ class FileDialogElement {
     constructor(modalName = 'File Tree', options = {}) {
 
         this.addDefaultOptions(options);
-        console.log('file dialog options', options);
         this.modalType = options.modalType;
         this.displayFiles = options.displayFiles;
 
@@ -76,7 +75,7 @@ class FileDialogElement {
                 }
                 $(pill).addClass('active');
             };
-            
+
             //TODO: add folder to localforage ...
             favoriteButton.on('click', () => {
                 let key = webutil.getuniqueid(), name = this.currentPath[this.currentPath.length - 1];
@@ -483,8 +482,6 @@ class FileDialogElement {
 
             $(confirmButton).on('click', () => {
                 let name = this.saveImageModal.body.find('.form-control')[0].value;
-
-               
 
                 //update the modal with a success message after successful transmission.
                 let cb = () => {

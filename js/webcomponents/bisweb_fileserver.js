@@ -19,8 +19,8 @@ class FileServer extends HTMLElement {
         this.socket = null;
 
         //File tree requests display the contents of the disk on the server machine in a modal
-        this.fileTreeDialog = new bisweb_filedialog();
-        this.fileSaveDialog = new bisweb_filedialog({ 'makeFavoriteButton' : false, 'modalType' : 'save', 'displayFiles' : false  });
+        this.fileTreeDialog = new bisweb_filedialog('Local File System');
+        this.fileSaveDialog = new bisweb_filedialog('Choose a save location', { 'makeFavoriteButton' : false, 'modalType' : 'save', 'displayFiles' : false  });
 
         //Save image requests pop up a modal dialog with a text entry field
         this.saveImageModal = null;
@@ -94,6 +94,9 @@ class FileServer extends HTMLElement {
         this.fileTreeDialog.fileRequestFn = this.sendFileRequest;
         this.fileTreeDialog.socket = this.socket;
 
+        this.fileSaveDialog.fileRequestFn = this.uploadFileToServer;
+        this.fileSaveDialog.socket = this.socket;
+
         //add the event listeners for the control port
         this.socket.addEventListener('close', (event) => {
             console.log('Socket closing', event);
@@ -126,6 +129,11 @@ class FileServer extends HTMLElement {
         });
     }
 
+    //this.fileRequestFn( { 'command' : 'uploadfile', 'name' : newFilename }, cb, eb);
+    makeRequest(params, cb, eb) {
+        
+    }
+
     /**
      * Sends a request for a list of the files on the server machine and prepares the display modal for the server's reply. 
      * Once the list of files arrives it is rendered using jstree. The user may request individual files from the server using this list. 
@@ -133,12 +141,12 @@ class FileServer extends HTMLElement {
      * requestFileList doesn't expand the contents of the entire server file system; just the first four levels of directories. 
      * When the user clicks on an unexpanded node the node will request four levels of directories below it. 
      * 
+     * @param {String} type - Which type of modal is requesting the list. One of either 'load' or 'save'.
      * @param {String} directory - The directory to expand the files under. Optional -- if unspecified the server will return the directories under ~/.
      */
-    requestFileList(directory = null) {
-        let command = JSON.stringify({ 'command' : 'show', 'directory' : directory }); 
+    requestFileList(type, directory = null) {
+        let command = JSON.stringify({ 'command' : 'show', 'directory' : directory, 'type' : type }); 
         this.socket.send(command);
-        this.fileTreeDialog.showDialog();
     }
 
     /**
@@ -174,11 +182,17 @@ class FileServer extends HTMLElement {
      * Renders a file list fetched by requestFileList in the file tree modal using jstree. 
      * Called in response to a file list returned by the server (itself in response to requestFileList) or by the fileTreeDisplayModal trying to fetch more nodes.
      * 
-     * @param {Object} list - List of files on the server machine.
+     * @param {Object} response - Object specifying the list of files on the server machine and which modal it corresponds to.
      */
-    displayFileList(list) {
-        console.log('list', list);
-        this.fileTreeDialog.createFileList(list);
+    displayFileList(response) {
+        console.log('response', response);
+        if (response.type === 'load') {
+            this.fileTreeDialog.createFileList(response.data);
+            this.fileTreeDialog.showDialog();
+        } else if (response.type === 'save') {
+            this.fileSaveDialog.createFileList(response.data);
+            this.fileSaveDialog.showDialog();
+        }
     }
 
     /**
@@ -470,8 +484,8 @@ class FileServer extends HTMLElement {
     wrapInAuth(command) {
         if (this.authenticated) {
             switch(command) {
-                case 'showfiles' : this.requestFileList(); break;
-                case 'uploadfile' : this.createSaveImageDialog(); break;
+                case 'showfiles' : this.requestFileList('load'); break;
+                case 'uploadfile' : this.requestFileList('save'); break;
                 default : console.log('unrecognized command', command);
             }
         } else {

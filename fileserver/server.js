@@ -339,7 +339,7 @@ let handleTextRequest = (rawText, control, socket) => {
     switch (parsedText.command) {
         //get file list
         case 'show':
-        case 'showfiles': serveFileList(socket, parsedText.directory, 4); break;
+        case 'showfiles': serveFileList(socket, parsedText.directory, parsedText.type, 4); break;
         //get a file from the server
         case 'getfile':
         case 'getfiles': serveFileRequest(parsedText, control, socket); break;
@@ -399,12 +399,14 @@ let serveFileRequest = (parsedText, control, socket) => {
 
 /**
  * Sends the list of available files to the user, hiding files above the ~/ directory.
+ * 
  * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
  * @param {String} basedir - Directory on the server machine to display files starting from, null indicates '~/'. Writes different responses to the socket if basedir is null or not ('filelist' vs 'supplementalfiles').
+ * @param {String} type - The type of modal that will be served the file list. Either 'load' or 'save'. 
  * @param {Number} depth - Number of directories under basedir to expand. Optional, depth will be infinite if not specified.
  * @returns A file tree rooted at basedir.
  */
-let serveFileList = (socket, basedir, depth = null) => {
+let serveFileList = (socket, basedir, type, depth = null) => {
     let fileTree = [];
     if (basedir === null) { basedir = os.homedir(); }
 
@@ -487,7 +489,7 @@ let serveFileList = (socket, basedir, depth = null) => {
         console.log('basedir', basedir);
         //bisweb_fileserver handles the base file request differently than the supplemental ones, so we want to ship them to different endpoints
         if (basedir === os.homedir()) {
-            socket.write(formatPacket('filelist', tree));
+            socket.write(formatPacket('filelist', { 'type' : type, 'data' : tree }));
         } else {
             socket.write(formatPacket('supplementalfiles',  { 'path' : basedir, 'list' : tree }));
         }
