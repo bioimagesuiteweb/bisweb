@@ -53,10 +53,29 @@ const fullScreenRenderer = vtkFullScreenRenderWindow.newInstance({
   actor.getProperty().setDiffuse(0.7);
   actor.getProperty().setSpecular(0.3);
   actor.getProperty().setSpecularPower(8.0);
-  
+  fullScreenRenderer.addController(`
+  <table>
+  <tr>
+    <td style="color: black;">Diffuse</td>
+    <td colspan="3">
+      <input style="width: 100%" class='color' type="range" min="0" max="1" step="0.05" value="0.7" />
+    </td>
+  </tr>
+</table>
+`);
+$(fullScreenRenderer.getControlContainer()).css('top','100px')
 
   //readTextFile(`./images/test.vti`);
   const vtiReader = vtkXMLImageDataReader.newInstance();
+
+
+  ['color'].forEach((propertyName) => {
+    document.querySelector(`.${propertyName}`).addEventListener('input', (e) => {
+      const value = Number(e.target.value);
+      actor.getProperty().setDiffuse(value)
+      renderWindow.render();
+    });
+  });
 
   async function load(rawText){
 
