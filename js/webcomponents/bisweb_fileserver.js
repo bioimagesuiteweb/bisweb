@@ -20,6 +20,7 @@ class FileServer extends HTMLElement {
 
         //File tree requests display the contents of the disk on the server machine in a modal
         this.fileTreeDialog = new bisweb_filedialog();
+        this.fileSaveDialog = new bisweb_filedialog({ 'makeFavoriteButton' : false, 'modalType' : 'save', 'displayFiles' : false  });
 
         //Save image requests pop up a modal dialog with a text entry field
         this.saveImageModal = null;

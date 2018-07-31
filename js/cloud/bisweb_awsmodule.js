@@ -48,7 +48,7 @@ class AWSModule {
             this.fileDisplayModal = new bisweb_filedialog('Bucket Contents', { 'makeFavoriteButton' : false });
             this.fileDisplayModal.fileRequestFn = this.makeRequest.bind(this);
 
-            this.fileSaveModal = new bisweb_filedialog('Choose Folder to Save In', { 'makeFavoriteButton' : false, 'modalType' : 'save'});
+            this.fileSaveModal = new bisweb_filedialog('Choose Folder to Save In', { 'makeFavoriteButton' : false, 'modalType' : 'save', 'displayFiles' : false });
             this.fileSaveModal.fileRequestFn = this.makeRequest.bind(this);
         });
 
@@ -184,7 +184,7 @@ class AWSModule {
             if (err) { console.log('an error occured', err); return; }
             console.log('got objects', data);
 
-            let formattedFiles = this.formatRawS3Files(data.Contents, true);
+            let formattedFiles = this.formatRawS3Files(data.Contents);
 
             console.log('files', formattedFiles);
             this.fileSaveModal.createFileList(formattedFiles);
@@ -359,9 +359,8 @@ class AWSModule {
      * Takes the raw data returned by S3.listObjectsV2 and turns it into a nested file tree that bisweb_filedialog can render.
      *
      * @param {Object} files - The 'Contents' field of the data returned by S3.listObjects.
-     * @param {Boolean} formatForSaveModal - Whether or not to format the file display to list files in addition to folders -- a modal meant to display the file structure in order to choose a folder to save in should not display files.
      */
-    formatRawS3Files(files, formatForSaveModal = false) {
+    formatRawS3Files(files) {
 
         //split filenames and strip out all the folders (filepaths that end with '/')
         let paths = [];
@@ -402,7 +401,7 @@ class AWSModule {
 
                         //we created the new file in the process of determining where to add the new file, so set the new folder to be the enclosing folder for files farther down the path
                         enclosingFolder = newEntry;
-                    } else if (!formatForSaveModal) {
+                    } else {
 
                         let folderPath = path.join('/');
                         let fileType = folder.split('.');

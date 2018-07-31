@@ -14,7 +14,9 @@ class FileDialogElement {
     constructor(modalName = 'File Tree', options = {}) {
 
         this.addDefaultOptions(options);
+        console.log('file dialog options', options);
         this.modalType = options.modalType;
+        this.displayFiles = options.displayFiles;
 
         this.modal = webutil.createmodal(modalName, 'modal-lg');
 
@@ -64,6 +66,47 @@ class FileDialogElement {
         if (options.makeFavoriteButton) {
             let favoriteButton = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-star-empty'></span> Mark folder as favorite</button>`);
             favoriteBar.append(favoriteButton);
+
+            let pillsHTML = $(`<ul class='nav nav-pills nav-stacked'></ul>`);
+            favoriteBar.append(pillsHTML);
+    
+            let selectPillFromPills = (pill, pills) => {
+                for (let otherPill of pills) {
+                    $(otherPill).removeClass('active');
+                }
+                $(pill).addClass('active');
+            };
+            
+            //TODO: add folder to localforage ...
+            favoriteButton.on('click', () => {
+                let key = webutil.getuniqueid(), name = this.currentPath[this.currentPath.length - 1];
+                let favorite = {
+                    'name' : name,
+                    'path' : Array.from(this.currentPath),
+                    'key' : key
+                };
+
+                localforage.setItem(key, JSON.stringify(favorite));
+
+                //create the pill
+                let pillsBar = favoriteBar.find('.nav.nav-pills');
+                let newPill = $(`<li><a href='#'>${name}</a></li>`);
+                newPill.on('click', () => {
+                    selectPillFromPills(newPill, pillsBar.find('li'));
+                    localforage.getItem(key, (err, value) => {
+                        let favoriteFolder;
+                        try {
+                            favoriteFolder = JSON.parse(value);
+                            this.changeDirectory(favoriteFolder.path, this.traversePath(favoriteFolder.path));
+                        } catch(e) {
+                            console.log('error parsing JSON', value);
+                        }
+
+                    });
+                });
+
+                pillsBar.append(newPill);
+            });
         }
 
         if (options.modalType === 'save') {
@@ -85,50 +128,6 @@ class FileDialogElement {
         viewerSpan.css('font-size', '13px');
         console.log('viewerSpan', viewerSpan);
         favoriteBar.append(viewerSwitch);
-
-        let favoriteButton = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-star-empty'></span> Mark folder as favorite</button>`);
-        favoriteBar.append(favoriteButton);
-
-        let pillsHTML = $(`<ul class='nav nav-pills nav-stacked'></ul>`);
-        favoriteBar.append(pillsHTML);
-
-        let selectPillFromPills = (pill, pills) => {
-            for (let otherPill of pills) {
-                $(otherPill).removeClass('active');
-            }
-            $(pill).addClass('active');
-        };
-
-        //TODO: add folder to localforage ...
-        favoriteButton.on('click', () => {
-            let key = webutil.getuniqueid(), name = this.currentPath[this.currentPath.length - 1];
-            let favorite = {
-                'name' : name,
-                'path' : Array.from(this.currentPath),
-                'key' : key
-            };
-
-            localforage.setItem(key, JSON.stringify(favorite));
-
-            //create the pill
-            let pillsBar = favoriteBar.find('.nav.nav-pills');
-            let newPill = $(`<li><a href='#'>${name}</a></li>`);
-            newPill.on('click', () => {
-                selectPillFromPills(newPill, pillsBar.find('li'));
-                localforage.getItem(key, (err, value) => {
-                    let favoriteFolder;
-                    try {
-                        favoriteFolder = JSON.parse(value);
-                        this.changeDirectory(favoriteFolder.path, this.traversePath(favoriteFolder.path));
-                    } catch(e) {
-                        console.log('error parsing JSON', value);
-                    }
-
-                });
-            });
-
-            pillsBar.append(newPill);
-        });
 
         //erase the file list on modal close
         this.modal.dialog.on('hidden.bs.modal', () => {
@@ -174,6 +173,7 @@ class FileDialogElement {
      * Creates the visual representation of the files specified by list. Called from createFileList (see notes there for format of file entries).
      * Uses jstree to render the list.
      * 
+     * Sorts contents before display so that folders are shown first.
      * @param {Array} list - An array of file entries. 
      */
     expandDirectory(list) {
@@ -182,6 +182,29 @@ class FileDialogElement {
 
         fileList.remove();
         let newList = $(`<div class='file-list'></div>`);
+
+        //sort folders ahead of files
+        list.sort( (a, b) => {
+            if (a.type === 'directory') {
+                if (b.type === 'directory')
+                    return 0;
+                else return -1;
+            } else if (b.type === 'directory') {
+                return 1;
+            } else {
+                return 0;
+            }
+        });
+
+        console.log('display files', this.displayFiles);
+        if (!this.displayFiles) {
+            for (let i = 0; i < list.length; i++) {
+                if (list[i].type !== 'directory') {
+                    list.splice(i, 1);
+                    i--;
+                } 
+            }
+        }
 
         newList.jstree({
             'core': {
@@ -583,8 +606,9 @@ class FileDialogElement {
 
 
     addDefaultOptions(options) {
-        options.makeFavoriteButton = options.makeFavoriteButton ? options.makeFavoriteButton : false;
-        options.modalType = options.modalType ? options.modalType : 'load';
+        if (!options.hasOwnProperty('makeFavoriteButton')) options.makeFavoriteButton = true;
+        if (!options.hasOwnProperty('modalType')) options.modalType = 'load';
+        if (!options.hasOwnProperty('displayFiles')) options.displayFiles = true;
     }
 }
 
