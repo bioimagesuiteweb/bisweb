@@ -49,7 +49,8 @@
     <script src="../build/web/bootstrap.min.js"></script>
     <script src="../build/web/libbiswasm_wasm.js"></script>
     <script src="../build/web/bislib.js"></script>
-    <script src="https://unpkg.com/vtk.js"></script>
+    <!-- <script src='VTKVolume.js' id='VTK script'></script> -->
+    <!-- <script src="https://unpkg.com/vtk.js"></script> -->
 
     <!-- endbuild -->
     <!-- end webpack/gulp modifications -->
@@ -62,13 +63,11 @@
 <body oncontextmenu="return false;" ondragstart="return false;" ondrop="return false;">
 
     <bisweb-topmenubar   id="viewer_menubar"></bisweb-topmenubar> 
-    <script src='VTKVolume.js' id='VTK script'></script>
     <div id="viewerwidget">
     <bisweb-vtkvolume
     bis-menubarid="#viewer_menubar">
     </bisweb-vtkvolume>
     </div>
-    <bisweb-botmenubar></bisweb-botmenubar>
   </body>
   <style>
 

@@ -22,6 +22,7 @@
     const webutil=require('bis_webutil');
     const FastClick=require('fastclick');
     const $=require('jquery'); 	
+    let readTextFile=require("vtkModule.js").readTextFile;
 
     /**
      * A Application Level Element that creates a Connectivity Application
@@ -45,8 +46,8 @@
             
             const menubarid=this.getAttribute('bis-menubarid');
             let menubar=document.querySelector(menubarid).getMenuBar();
-    
-    
+            
+            
             // ------------------------------------ VTK Menu ----------------------------
             
             var VTKMenu=webutil.createTopMenuBarMenu("VTK",menubar);
