@@ -1,6 +1,6 @@
 let vtk = require('vtk.js')
 const webutil = require('bis_webutil');
-  
+let createImage = require('vtkCreateImage.js')
 
   let vtkObjects = {
       vtkColorTransferFunction: null,
@@ -26,7 +26,10 @@ const webutil = require('bis_webutil');
     vtkObjects.vtiReader.parseAsArrayBuffer(rawText);
     // Pipeline handling
     vtkObjects.actor.setMapper(vtkObjects.mapper);
-    vtkObjects.mapper.setInputConnection(vtkObjects.vtiReader.getOutputPort());
+    console.log(vtkObjects.vtiReader.getOutputData())
+    vtkObjects.mapper.setInputConnection(vtkObjects.grid.getOutputPort());
+        
+        //vtiReader.getOutputPort());
     vtkObjects.renderer.addActor(vtkObjects.actor);
 
     vtkObjects.renderer.resetCamera();
@@ -77,6 +80,11 @@ const webutil = require('bis_webutil');
         vtkObjects.vtkVolume = vtk.Rendering.Core.vtkVolume;
         vtkObjects.vtkVolumeMapper = vtk.Rendering.Core.vtkVolumeMapper;
         vtkObjects.vtkXMLImageDataReader = vtk.IO.XML.vtkXMLImageDataReader;
+
+        vtkObjects.grid = createImage.newInstance({
+            gridSpacing : [ 10,10,10],
+            dataExtent : [ 0,255,0,255,0,255]
+        });
        
     //readTextFile(`./images/test.vti`);
     vtkObjects.vtiReader = vtkObjects.vtkXMLImageDataReader.newInstance();
