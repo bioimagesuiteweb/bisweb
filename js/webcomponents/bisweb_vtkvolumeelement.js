@@ -22,7 +22,7 @@
     const webutil=require('bis_webutil');
     const FastClick=require('fastclick');
     const $=require('jquery'); 	
-    let readTextFile=require("vtkModule.js").readTextFile;
+    let load=require("vtkModule.js").load;
 
     /**
      * A Application Level Element that creates a Connectivity Application
@@ -55,26 +55,15 @@
                 $(location).attr('href', './VTKVolume.html');
             });
 
-            webutil.createMenuItem(VTKMenu,'View Plane Example',function() { 
-                $(location).attr('href', './VTKPlane.html');
-            });
+            // webutil.createMenuItem(VTKMenu,'View Plane Example',function() { 
+            //     $(location).attr('href', './VTKPlane.html');
+            // });
             
             // ------------------------------------ Load File Menu ----------------------------
             
-            var VTKMenu=webutil.createTopMenuBarMenu("Load Sample",menubar);
-            webutil.createMenuItem(VTKMenu,'VTK to VTI Test',function() { 
-                readTextFile('./images/test.vti')
+            webutil.createMenuItem(VTKMenu,'VTK Create Image',function() { 
+                load()
             });
-            webutil.createMenuItem(VTKMenu,'VTK Head ACII',function() { 
-                readTextFile('https://data.kitware.com/api/v1/item/59de9d418d777f31ac641dbe/download')
-            });
-            webutil.createMenuItem(VTKMenu,'VTK Head Binary',function() { 
-                readTextFile('https://data.kitware.com/api/v1/item/59de9dc98d777f31ac641dc1/download')
-            });
-            webutil.createMenuItem(VTKMenu,'VTK Head Binary Zip',function() { 
-                readTextFile('https://data.kitware.com/api/v1/item/59e12e988d777f31ac6455c5/download')
-            });
-
     
             
             // ------------------------------------ Initialize ---------------------------

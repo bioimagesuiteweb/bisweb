@@ -22,11 +22,9 @@ let createImage = require('vtkCreateImage.js')
 
 
 
-  async function load(rawText){
-    vtkObjects.vtiReader.parseAsArrayBuffer(rawText);
+    let load = function(){
     // Pipeline handling
     vtkObjects.actor.setMapper(vtkObjects.mapper);
-    console.log(vtkObjects.vtiReader.getOutputData())
     vtkObjects.mapper.setInputConnection(vtkObjects.grid.getOutputPort());
         
         //vtiReader.getOutputPort());
@@ -36,14 +34,6 @@ let createImage = require('vtkCreateImage.js')
     vtkObjects.renderWindow.render();
   }
 
-  let readTextFile = function(file)
-    {
-      fetchBinary(file).then((binary) => {
-        load(binary);
-      }).catch((e) => {
-        console.log(e)
-      });
-    }
 
     function fetchBinary(url, options = {}) {
       return new Promise((resolve, reject) => {
@@ -111,16 +101,16 @@ let createImage = require('vtkCreateImage.js')
         ofun.addPoint(1200.0, 0.5);
         ofun.addPoint(3000.0, 0.8);
         vtkObjects.actor.getProperty().setRGBTransferFunction(0, ctfun);
-        vtkObjects.actor.getProperty().setScalarOpacity(0, ofun);
-        vtkObjects.actor.getProperty().setScalarOpacityUnitDistance(0, 4.5);
-        vtkObjects.actor.getProperty().setInterpolationTypeToLinear();
-        vtkObjects.actor.getProperty().setUseGradientOpacity(0, true);
-        vtkObjects.actor.getProperty().setGradientOpacityMinimumValue(0, 15);
-        vtkObjects.actor.getProperty().setGradientOpacityMinimumOpacity(0, 0.0);
-        vtkObjects.actor.getProperty().setGradientOpacityMaximumValue(0, 100);
-        vtkObjects.actor.getProperty().setGradientOpacityMaximumOpacity(0, 1.0);
+        // vtkObjects.actor.getProperty().setScalarOpacity(0, ofun);
+        // vtkObjects.actor.getProperty().setScalarOpacityUnitDistance(0, 4.5);
+        // vtkObjects.actor.getProperty().setInterpolationTypeToLinear();
+        // vtkObjects.actor.getProperty().setUseGradientOpacity(0, true);
+        // vtkObjects.actor.getProperty().setGradientOpacityMinimumValue(0, 15);
+        // vtkObjects.actor.getProperty().setGradientOpacityMinimumOpacity(0, 0.0);
+        // vtkObjects.actor.getProperty().setGradientOpacityMaximumValue(0, 100);
+        // vtkObjects.actor.getProperty().setGradientOpacityMaximumOpacity(0, 1.0);
         vtkObjects.actor.getProperty().setShade(true);
-        vtkObjects.actor.getProperty().setAmbient(0.2);
+        vtkObjects.actor.getProperty().setAmbient(1);
         vtkObjects.actor.getProperty().setDiffuse(0.7);
         vtkObjects.actor.getProperty().setSpecular(0.3);
         vtkObjects.actor.getProperty().setSpecularPower(8.0);
@@ -130,7 +120,7 @@ let createImage = require('vtkCreateImage.js')
 
 
     module.exports = {
-        readTextFile: readTextFile
+        load: load
     }
 
     webutil.runAfterAllLoaded( () => { 
