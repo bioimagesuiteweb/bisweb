@@ -98,6 +98,26 @@ class AWSModule {
      */
     //expected to be called from bisweb_fileserver (see 'fileRequestFn') 
     makeRequest(params, cb = null, eb = null) {
+
+        /*
+          params.name = filename
+
+          const self=this;
+
+          let obj = {
+              name : params.name
+              awsinfo : awsinfo
+              responseFunction : function(f) {
+                  self.requestFile(this);   // this here is obj
+              };
+              
+
+          }
+          return obj;
+          */
+
+
+        
         let command = params.command;
         let files = this.algorithmController.getImage(this.defaultViewer, 'image');
         let viewer = params.viewer;
@@ -111,6 +131,31 @@ class AWSModule {
         }
     }
 
+
+    makeRequestNew(params,callback) {
+
+        const self=this;
+        
+        let obj= {
+            name : params.name,
+            params : params,
+            awsinfo : AWSParameters,
+            responseFunction : funtion () {
+                return new Promise( (resolve,reject) => {
+                    self.s3.getObject(this.params, (err, data) => {
+                        resolve({  data : data.Body
+                                   filename : filehandle
+                                );
+                               }.catch(e) {
+                                   resject(err);
+                               }
+                    });
+                });
+            }
+        };
+        callback(obj);
+    }
+    
     /**
      * Makes a RESTful request for a file from the S3 bucket referenced by the current instance of this.S3 and attempts to put it on the default viewer (this.defaultViewer.
      * Generally called from bisweb_filedialog.
@@ -127,6 +172,8 @@ class AWSModule {
         this.s3.getObject(params, (err, data) => {
             if (err) { console.log('an error occured', err); eb(); }
             else {
+                 let unzippedFile = wsutil.unzipFile(data.Body);
+
                 let unzippedFile = wsutil.unzipFile(data.Body);
                 console.log('unzipped file', unzippedFile);
 
@@ -154,6 +201,8 @@ class AWSModule {
      * @param {Function} cb - The function to call after a successful upload. Optional.
      * @param {Function} eb - The function to call after an unsuccessful upload. Optional.
      */
+            // replace body with rawData
+            
     uploadFile(name, body, cb = null, eb = null) {
 
         let rawData = body.serializeToNII();

@@ -280,6 +280,7 @@ const webfileutils = {
         }
 
         if (fileMode==="amazonaws") {
+            // Replace fileopts.viewer with callback and remember makeRequestNew!!!
             bisweb_awsmodule.wrapInAuth('showfiles', fileopts.viewer);
             return;
         }
