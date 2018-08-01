@@ -444,8 +444,8 @@ class FileDialogElement {
         };
 
         let eb = () => {
-            header.find('.loadMessage').remove();
-            let errorMessage = $(`<p class='errorMessage'>An error occured while loading the image. Please ensure the chosen file exists in the chosen bucket.</p>`);
+            header.find('.message').remove();
+            let errorMessage = $(`<p class='errorMessage'>An error occured while loading the image. Please ensure the chosen file exists in the chosen location.</p>`);
             header.append(errorMessage);
 
             setTimeout( () => { 

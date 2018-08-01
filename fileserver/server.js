@@ -384,9 +384,6 @@ let handleImageFromClient = (upload, control, socket) => {
  */
 let serveFileRequest = (parsedText, control, socket) => {
     console.log('parsed text', parsedText);
-
-    //TODO: Make this less grossly memory inefficient
-    //https://nodejs.org/api/buffer.html#buffer_buffers_and_typedarray
     let files = parsedText.files;
     for (let file of files) {
         readFileFromDisk(file).then( (data) => {

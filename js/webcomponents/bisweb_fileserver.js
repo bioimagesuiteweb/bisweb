@@ -29,6 +29,8 @@ class FileServer extends HTMLElement {
         this.authenticateModal = null;
         this.authenticated = false;
 
+        this.defaultViewer = 'viewer1';
+
         webutil.runAfterAllLoaded(() => {
             let menuBarID = this.getAttribute('bis-menubarid');
             let menuBar = document.querySelector(menuBarID);
@@ -49,10 +51,7 @@ class FileServer extends HTMLElement {
                         '/home/zach/MNI_2mm_buggy.nii.gz'
                     ];
 
-                    this.sendFileRequest({
-                        'command' : 'getfile',
-                        'files' : files
-                    });
+                    this.sendFileRequest(files);
                 });
 
                 webutil.createMenuItem(serverMenu, 'Show Server Files', () => {
@@ -60,7 +59,8 @@ class FileServer extends HTMLElement {
                 });
 
                 webutil.createMenuItem(serverMenu, 'Upload File to Server', () => {
-                    this.createSaveImageDialog();
+                    //REPLACED BY CREATESAVEMODAL
+                    //this.createSaveImageDialog();
                 });
 
                 webutil.createMenuItem(serverMenu, 'Invoke Module on Server', () => {
@@ -91,10 +91,10 @@ class FileServer extends HTMLElement {
         //file tree dialog needs to be able to call some of file server's code 
         //they are separated for modularity reasons, so to enforce the hierarchical relationship between the two fileserver provides the functions and the socket
         this.fileTreeDialog.fileListFn = this.requestFileList;
-        this.fileTreeDialog.fileRequestFn = this.sendFileRequest;
+        this.fileTreeDialog.fileRequestFn = this.makeRequest.bind(this);
         this.fileTreeDialog.socket = this.socket;
 
-        this.fileSaveDialog.fileRequestFn = this.uploadFileToServer;
+        this.fileSaveDialog.fileRequestFn = this.makeRequest.bind(this);
         this.fileSaveDialog.socket = this.socket;
 
         //add the event listeners for the control port
@@ -120,7 +120,12 @@ class FileServer extends HTMLElement {
                 case 'authenticate': this.createAuthenticationDialog(); break;
                 case 'filelist': this.displayFileList(data.payload); break;
                 case 'supplementalfiles': this.handleSupplementalFileRequest(data.payload.path, data.payload.list); break;
-                case 'error': console.log('Error from client:', data.payload); break;
+                case 'error': {
+                    console.log('Error from client:', data.payload); 
+                    let errorEvent = new CustomEvent('servererror', { 'detail' : data.payload });
+                    document.dispatchEvent(errorEvent);
+                    break;
+                }
                 case 'datasocketready': //some control phrases are handled elsewhere, so the main listener should ignore them
                 case 'goodauth':
                 case 'badauth': break;
@@ -131,7 +136,19 @@ class FileServer extends HTMLElement {
 
     //this.fileRequestFn( { 'command' : 'uploadfile', 'name' : newFilename }, cb, eb);
     makeRequest(params, cb, eb) {
-        
+        let command = params.command;
+        let viewer = params.viewer || this.defaultViewer;
+
+        console.log('viewer', viewer);
+        let files = this.algorithmcontroller.getImage(viewer, 'image');
+
+        switch (params.command) {
+            case 'getfile' : 
+            case 'getfiles' :  this.sendFileRequest([params.name], cb, eb); break;
+            case 'uploadfile' : 
+            case 'uploadfiles' : this.uploadFile(params.name, files, cb, eb); break;
+            default : console.log('Cannot execute unknown command', command);
+        }
     }
 
     /**
@@ -196,12 +213,24 @@ class FileServer extends HTMLElement {
     }
 
     /**
-     * Sends a list of files for the server to upload to the client machine. 
+     * Sends a list of files for the server to send to the client machine. 
      * 
      * @param {Array} filelist - An array of files to fetch from the server. 
      */
-    sendFileRequest(filelist = null) {
-        let filesdata = JSON.stringify(filelist);
+    sendFileRequest(filelist, cb, eb) {
+        let command = { 'command' : 'getfile', 'files' : filelist };
+        let filesdata = JSON.stringify(command);
+
+        let cblistener = document.addEventListener('imagetransmission' , () => { 
+            document.removeEventListener('errorevent', eblistener);
+            cb(); 
+        }, { 'once' : true });
+
+        let eblistener = document.addEventListener('servererror', () => { 
+            document.removeEventListener('imagetransmission', cblistener); 
+            eb(); 
+        }, { 'once' : true });
+
         this.socket.send(filesdata);
     }
 
