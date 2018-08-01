@@ -433,19 +433,13 @@ class FileDialogElement {
         let loadingMessage = $(`<p class='message'>${messageText}</p>`);
         header.append(loadingMessage);
 
-        //check value of viewer slider
-        let viewerToggle = $(this.container).find('.viewertoggle').find('input');
-        console.log('viewer slider', viewerToggle);
-
-        let viewer = (viewerToggle[0] && viewerToggle[0].checked) ? 'viewer2' : 'viewer1';
-
         let cb = () => {
             header.find('.message').remove();
         };
 
         let eb = () => {
             header.find('.message').remove();
-            let errorMessage = $(`<p class='errorMessage'>An error occured while loading the image. Please ensure the chosen file exists in the chosen location.</p>`);
+            let errorMessage = $(`<p class='errorMessage'>An error occured. Please ensure the chosen file exists in the chosen location.</p>`);
             header.append(errorMessage);
 
             setTimeout( () => { 

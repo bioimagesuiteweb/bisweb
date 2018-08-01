@@ -146,7 +146,7 @@ class FileServer extends HTMLElement {
             case 'getfile' : 
             case 'getfiles' :  this.sendFileRequest([params.name], cb, eb); break;
             case 'uploadfile' : 
-            case 'uploadfiles' : this.uploadFile(params.name, files, cb, eb); break;
+            case 'uploadfiles' : this.uploadFileToServer(params.name, cb, eb); break;
             default : console.log('Cannot execute unknown command', command);
         }
     }
@@ -251,14 +251,15 @@ class FileServer extends HTMLElement {
      * Creates its own socket to do the transfer over (doing transfer on control socket seems to make that socket unstable).
      * 
      * TODO: Extend this function to support matrices and transformations.
-     * @param {BisImage} file - The file to save to the server. 
      * @param {String} name - What the filed should be named once it is saved to the server. 
      * @param {Function} cb - A callback for if the transfer is successful. Optional.
      * @param {Function} eb - A callback for if the transfer is a failure (errorback). Optional.
      */
-    uploadFileToServer(file, name, cb = () => {}, eb = () => {}) {
+    uploadFileToServer(name, cb = () => {}, eb = () => {}) {
 
-        //serialize the BisImage to a purely binary format.
+        console.log('cb', cb, 'eb', eb);
+
+        let file = this.algorithmcontroller.getImage(this.viewer, 'image');
         let serializedImage = file.serializeToNII();
         let packetSize = 50000;
         let fileTransferSocket;
@@ -359,7 +360,7 @@ class FileServer extends HTMLElement {
             loadedImg.initialize();
             loadedImg.parseNII(unzippedFile.buffer, true);
 
-            this.algorithmcontroller.sendImageToViewer(loadedImg, { viewername: this.defaultViewer });
+            this.algorithmcontroller.sendImageToViewer(loadedImg, { viewername: this.viewer });
         });
 
         reader.readAsArrayBuffer(data);
@@ -438,7 +439,7 @@ class FileServer extends HTMLElement {
     /**
      * Creates a small modal dialog to allow the user to enter the name for a file they are attempting to save to the fileserver. 
      */
-    createSaveImageDialog() {
+    /*createSaveImageDialog() {
         let saveDialog = $(`<p>Please enter a name for the current image on the viewer. Do not include a file extension.</p>`);
         let nameEntryBox = $(`
                 <div class='form-group'>
@@ -503,7 +504,7 @@ class FileServer extends HTMLElement {
         this.saveImageModal.body.append(nameEntryBox);
 
         this.saveImageModal.dialog.modal('show');
-    }
+    }*/
 
     /**
      * Checks whether the user has authenticated with the fileserver. Performs the command if they have, otherwise prompts the user to login.
