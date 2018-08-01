@@ -42,10 +42,10 @@ class AWSModule {
         //not completely sure why -Zach
         bis_webutil.runAfterAllLoaded( () => {   
             this.fileDisplayModal = new bisweb_filedialog('Bucket Contents', { 'makeFavoriteButton' : false });
-            this.fileDisplayModal.fileRequestFn = this.makeRequest.bind(this);
+            this.fileDisplayModal.fileRequestFn = this.createFileRequest.bind(this);
 
             this.fileSaveModal = new bisweb_filedialog('Choose Folder to Save In', { 'makeFavoriteButton' : false, 'modalType' : 'save', 'displayFiles' : false });
-            this.fileSaveModal.fileRequestFn = this.makeRequest.bind(this);
+            this.fileSaveModal.fileRequestFn = this.createFileRequest.bind(this);
         });
 
     }
@@ -97,27 +97,8 @@ class AWSModule {
      * @param {Function} eb - Function to call after unsuccessful execution of an upload. Optional.
      */
     //expected to be called from bisweb_fileserver (see 'fileRequestFn') 
-    makeRequest(params, cb = null, eb = null) {
+    /*makeRequest(params, cb = null, eb = null) {
 
-        /*
-          params.name = filename
-
-          const self=this;
-
-          let obj = {
-              name : params.name
-              awsinfo : awsinfo
-              responseFunction : function(f) {
-                  self.requestFile(this);   // this here is obj
-              };
-              
-
-          }
-          return obj;
-          */
-
-
-        
         let command = params.command;
         let files = this.algorithmController.getImage(this.defaultViewer, 'image');
         let viewer = params.viewer;
@@ -129,31 +110,41 @@ class AWSModule {
             case 'uploadfiles' : this.uploadFile(params.name, files, cb, eb); break;
             default : console.log('Cannot execute unknown command', command);
         }
-    }
+}*/
 
 
-    makeRequestNew(params,callback) {
-
-        const self=this;
-        
-        let obj= {
-            name : params.name,
-            params : params,
-            awsinfo : AWSParameters,
-            responseFunction : funtion () {
-                return new Promise( (resolve,reject) => {
+    /**
+     * Packages the relevant parameters and functionality for downloading an image from the cloud into an object to be invoked by bis_genericio.
+     * 
+     * @param {Object} params - Parameters object containing the following
+     * @param {String} params.command - String name for the command to execute. One of 'getfiles' or 'uploadfiles' as of 7-23-18.
+     * @param {String} params.name - Name of the file to fetch from the server, or what to name the file being saved to the server.
+     * @param {bisweb_image} params.files - List of files to upload to the server. May be aliased as 'params.file' in the case of a single file.
+     */
+    createFileRequest(params) {
+        let obj = {
+            name: params.name,
+            params: params,
+            awsinfo: AWSParameters,
+            responseFunction: () => {
+                return new Promise( (resolve, reject) => {
                     self.s3.getObject(this.params, (err, data) => {
-                        resolve({  data : data.Body
-                                   filename : filehandle
-                                );
-                               }.catch(e) {
-                                   resject(err);
-                               }
+                        if (err) { 
+                            reject(err); 
+                            return;
+                        }
+
+                        resolve({ 
+                            data: data.Body, 
+                            filename: filehandle 
+                        });
                     });
                 });
             }
         };
-        callback(obj);
+
+        //this.callback is set when a modal is opened.
+        this.callback(obj);
     }
     
     /**
@@ -162,7 +153,7 @@ class AWSModule {
      *
      * @param {String} name - Name of the file to request from the S3 bucket. 
      */
-    requestFile(name, viewer = this.defaultViewer, cb = () => {}, eb = () => {}) {
+    requestFile(name, cb = () => {}, eb = () => {}) {
 
         let params = {
             'Bucket' : AWSParameters.BucketName,
@@ -172,8 +163,6 @@ class AWSModule {
         this.s3.getObject(params, (err, data) => {
             if (err) { console.log('an error occured', err); eb(); }
             else {
-                 let unzippedFile = wsutil.unzipFile(data.Body);
-
                 let unzippedFile = wsutil.unzipFile(data.Body);
                 console.log('unzipped file', unzippedFile);
 
@@ -237,103 +226,14 @@ class AWSModule {
         });
     }
 
-    //TODO: Remove unnecessary function? 
-    createUser(username, password, email, phoneNumber = null) {
-        let dataEmail = {
-            'Name' : 'email', 
-            'Value' : email 
-        };
-        let dataPhoneNumber = { 
-            'Name' : 'phone_number', 
-            'Value' : phoneNumber 
-        };
-
-        let attributeEmail = new AWSCognitoIdentity.CognitoUserAttribute(dataEmail);
-        let attributeList = [attributeEmail];
-
-        if (phoneNumber) {
-            let attributePhoneNumber = new AWSCognitoIdentity.CognitoUserAttribute(dataPhoneNumber);
-            attributeList.push(attributePhoneNumber);
-        }
-
-        this.userPool.signUp(username, password, attributeList, null, (err, result) => {
-            if (err) {
-                console.log('Error in user pool signup', err);
-                return;
-            }
-            this.cognitoUser = result.user;
-            console.log('user returned by cognito', this.cognitoUser);
-        });
-    }
-
-    //TODO: Remove unnecessary function? 
-    confirmRegistration(code) {
-        if (!this.cognitoUser) {
-            console.log('No user, cannot confirm');
-            return;
-        }
-
-        this.cognitoUser.confirmRegistration(code, true, (err) => {
-            if (err) {
-                console.log('Error confirming user registration', err);
-                return;
-            }
-
-            console.log('Registration confirmed!');
-        });
-    }
-
-    //TODO: Remove unnecessary function? 
-    displayCreateUserModal() {
-        if (!this.createUserModal) {
-            this.createUserModal = bis_webutil.createmodal('Enter User Details', 'modal-lg');
-            this.createUserModal.dialog.find('.modal-footer').find('.btn').remove();
-
-            let confirmButton = bis_webutil.createbutton({ 'name': 'Confirm', 'type': 'btn-success' });
-            let cancelButton = bis_webutil.createbutton({ 'name': 'Cancel', 'type': 'btn-danger' });
-
-            this.createUserModal.footer.append(confirmButton);
-            this.createUserModal.footer.append(cancelButton);
-
-            let userTextPrompt = $(`<p>Enter the details to associate to your Amazon AWS profile</p>`);
-            let entryBoxes = $(`
-                    <div class='form-group'>
-                        <label for='username'>Username:</label>
-                        <input type='text' class = 'name-field form-control'>
-                        <label for='email'>Email:</label>
-                        <input type='text' class = 'email-field form-control'>
-                        <label for='password'>Password:</label>
-                        <input type='password' class = 'password-field form-control'>
-                    </div>
-                `);
-
-            $(confirmButton).on('click', () => {
-                //let password = this.authenticateModal.body.find('.form-control')[0].value;
-
-            });
-
-            $(cancelButton).on('click', () => {
-                this.authenticateModal.dialog.modal('hide');
-            });
-
-            //clear entry fields when modal is closed
-            $(this.createUserModal.dialog).on('hidden.bs.modal', () => {
-                this.authenticateModal.body.empty();
-            });
-
-            this.createUserModal.body.append(userTextPrompt);
-            this.createUserModal.body.append(entryBoxes);
-        }
-    }
-
     /**
      * Attempts to authenticate the current user before executing a given S3 command (one of either 'showfiles' or 'uploadfiles' as of 7-23-18, which respectively call listObjectsInBucket and createImageSaveDialog).
      * If the user is not authenticated, a popup will appear that will prompt the user to enter their AWS credentials, or if the credentials are already cached, it will begin the authentication process.
      * If the user is authenticated, wrapInAuth will call the appropriate command. 
      * @param {String} command - A string indicating the command to execute. 
-     * @param {Object} parameters - Object containing parameters to pass to the function that corresponds to command. Currently unused. 
+     * @param {Function} callback - A function propagated from bis_webfileutil that will handle the non-AWS I/O for the retrieved data. 
      */
-    wrapInAuth(command, parameters = null) {
+    wrapInAuth(command, callback) {
         let expireTime = AWS.config.credentials.expireTime ? Date.parse(AWS.config.credentials.expireTime) : -1;
 
         if (expireTime < Date.now()) {
@@ -341,6 +241,7 @@ class AWSModule {
             return;
         }
 
+        this.callback = callback;
         switch(command) {
             case 'showfiles' : this.listObjectsInBucket(); break;
             case 'uploadfile' : this.createSaveImageModal(); break;

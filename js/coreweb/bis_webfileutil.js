@@ -232,12 +232,12 @@ const webfileutils = {
             } 
 
             if (fileMode === 'server') {
-                bisweb_fileserver.wrapInAuth('uploadfile', fileopts.viewer);
+                bisweb_fileserver.wrapInAuth('uploadfile', callback);
                 return;
             }
 
             if (fileMode==='amazonaws') {
-                bisweb_awsmodule.wrapInAuth('uploadfile', fileopts.viewer);
+                bisweb_awsmodule.wrapInAuth('uploadfile', callback);
                 return;
             }
 
