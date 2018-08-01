@@ -491,7 +491,6 @@ class ViewerApplicationElement extends HTMLElement {
         }
 
         if (modulemanager) {
-          console.log('setting algorithm controller', modulemanager.getAlgorithmController());
           webfileutil.setAlgorithmController(modulemanager.getAlgorithmController(), 'viewer1');
         }
         
@@ -537,7 +536,8 @@ class ViewerApplicationElement extends HTMLElement {
             // File Menu
             // ----------------------------------------------------------
             fmenu[viewerno] = webutil.createTopMenuBarMenu(fmenuname, menubar);
-            
+            console.log('viewers[viewerno]', self.VIEWERS[viewerno]);
+
             webfileutil.createFileMenuItem(fmenu[viewerno], 'Load Image',
                                            function (f) {
                                                self.loadImage(f, viewerno);
@@ -545,7 +545,7 @@ class ViewerApplicationElement extends HTMLElement {
                                            { title: 'Load image',
                                              save: false,
                                              suffix: 'NII',
-
+                                             viewer: self.VIEWERS[viewerno].name
                                            });
 
             /*function (f) {
@@ -563,7 +563,8 @@ class ViewerApplicationElement extends HTMLElement {
                 save: true,
                 saveFile: self.VIEWERS[viewerno].getimage(),
                 filters: "NII",
-                suffix: "NII"
+                suffix: "NII",
+                viewer : self.VIEWERS[viewerno].name
             });
 
             

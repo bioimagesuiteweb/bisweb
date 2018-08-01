@@ -29,7 +29,8 @@ class FileServer extends HTMLElement {
         this.authenticateModal = null;
         this.authenticated = false;
 
-        this.defaultViewer = 'viewer1';
+        //server will set this value when opening a bisweb_filedialog
+        this.viewer = undefined; 
 
         webutil.runAfterAllLoaded(() => {
             let menuBarID = this.getAttribute('bis-menubarid');
@@ -137,10 +138,9 @@ class FileServer extends HTMLElement {
     //this.fileRequestFn( { 'command' : 'uploadfile', 'name' : newFilename }, cb, eb);
     makeRequest(params, cb, eb) {
         let command = params.command;
-        let viewer = params.viewer || this.defaultViewer;
 
-        console.log('viewer', viewer);
-        let files = this.algorithmcontroller.getImage(viewer, 'image');
+        console.log('viewer', this.viewer);
+        let files = this.algorithmcontroller.getImage(this.viewer, 'image');
 
         switch (params.command) {
             case 'getfile' : 
@@ -509,9 +509,12 @@ class FileServer extends HTMLElement {
      * Checks whether the user has authenticated with the fileserver. Performs the command if they have, otherwise prompts the user to login.
      * 
      * @param {String} command - A word representing the command to execute on the server. 
+     * @param {String} viewer - A string representing the key for a viewer in the algorithm controller. Defaults to 'viewer1'
      */
-    wrapInAuth(command) {
+    wrapInAuth(command, viewer = 'viewer1') {
         if (this.authenticated) {
+            this.viewer = viewer;
+            console.log('viewer', viewer);
             switch(command) {
                 case 'showfiles' : this.requestFileList('load'); break;
                 case 'uploadfile' : this.requestFileList('save'); break;

@@ -232,12 +232,12 @@ const webfileutils = {
             } 
 
             if (fileMode === 'server') {
-                bisweb_fileserver.wrapInAuth('uploadfile');
+                bisweb_fileserver.wrapInAuth('uploadfile', fileopts.viewer);
                 return;
             }
 
             if (fileMode==='amazonaws') {
-                bisweb_awsmodule.wrapInAuth('uploadfile');
+                bisweb_awsmodule.wrapInAuth('uploadfile', fileopts.viewer);
                 return;
             }
 
@@ -280,12 +280,12 @@ const webfileutils = {
         }
 
         if (fileMode==="amazonaws") {
-            bisweb_awsmodule.wrapInAuth('showfiles');
+            bisweb_awsmodule.wrapInAuth('showfiles', fileopts.viewer);
             return;
         }
 
         if (fileMode==="server") {
-            bisweb_fileserver.wrapInAuth('showfiles');
+            bisweb_fileserver.wrapInAuth('showfiles', fileopts.viewer);
             return;
         }
 
