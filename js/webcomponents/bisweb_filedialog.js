@@ -125,7 +125,6 @@ class FileDialogElement {
         viewerSpan.css('color', 'rgb(12, 227, 172)');
         viewerSpan.css('font-weight', '250');
         viewerSpan.css('font-size', '13px');
-        console.log('viewerSpan', viewerSpan);
         favoriteBar.append(viewerSwitch);
 
         //erase the file list on modal close
@@ -195,7 +194,6 @@ class FileDialogElement {
             }
         });
 
-        console.log('display files', this.displayFiles);
         if (!this.displayFiles) {
             for (let i = 0; i < list.length; i++) {
                 if (list[i].type !== 'directory') {
@@ -244,7 +242,6 @@ class FileDialogElement {
 
         //determine based on the type of the node what should happen when the user clicks on it
         $(newList).on('select_node.jstree', (event, data) => {
-            console.log('jstree select_node', data);
             //check whether node should expand directories beneath it.
             if (data.node.original.expand) {
                 this.fileListFn(data.node.original.path);
@@ -260,7 +257,6 @@ class FileDialogElement {
                     let name = data.node.original.text;
                     let node = this.currentDirectory.find((element) => { return element.text === name; });
                     if (node) {
-                        console.log('node', node);
                         this.changeDirectory(node.text, node.children);
                     } else {
                         console.log('Error, could not find element with name', data.node.original.text, 'in directory', this.currentDirectory);
@@ -346,7 +342,6 @@ class FileDialogElement {
      * Displays the file dialog to the user. 
      */
     showDialog() {
-        console.log('modal', this.modal);
         this.modal.dialog.modal('show');
     }
 
@@ -377,7 +372,6 @@ class FileDialogElement {
             return;
         }
 
-        console.log('paths', this.lastPaths);
         this.expandDirectory(contents);
     }
 

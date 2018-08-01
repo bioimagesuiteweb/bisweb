@@ -116,7 +116,6 @@ class FileServer extends HTMLElement {
                 return;
             }
 
-            console.log('data type', data.type);
             switch (data.type) {
                 case 'authenticate': this.createAuthenticationDialog(); break;
                 case 'filelist': this.displayFileList(data.payload); break;
@@ -515,7 +514,6 @@ class FileServer extends HTMLElement {
     wrapInAuth(command, viewer = 'viewer1') {
         if (this.authenticated) {
             this.viewer = viewer;
-            console.log('viewer', viewer);
             switch(command) {
                 case 'showfiles' : this.requestFileList('load'); break;
                 case 'uploadfile' : this.requestFileList('save'); break;

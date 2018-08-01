@@ -38,10 +38,6 @@ class AWSModule {
         this.createUserModal = null;
         this.authUserModal = null;
 
-        window.addEventListener('message', (data) => {
-            console.log('got a message', data); 
-        });
-
         //file display modal gets deleted if you try to load it too soon
         //not completely sure why -Zach
         bis_webutil.runAfterAllLoaded( () => {   

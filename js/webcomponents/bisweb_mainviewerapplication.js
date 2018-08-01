@@ -536,7 +536,6 @@ class ViewerApplicationElement extends HTMLElement {
             // File Menu
             // ----------------------------------------------------------
             fmenu[viewerno] = webutil.createTopMenuBarMenu(fmenuname, menubar);
-            console.log('viewers[viewerno]', self.VIEWERS[viewerno]);
 
             webfileutil.createFileMenuItem(fmenu[viewerno], 'Load Image',
                                            function (f) {
