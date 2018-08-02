@@ -42,10 +42,10 @@ class AWSModule {
         //not completely sure why -Zach
         bis_webutil.runAfterAllLoaded( () => {   
             this.fileDisplayModal = new bisweb_filedialog('Bucket Contents', { 'makeFavoriteButton' : false });
-            this.fileDisplayModal.fileRequestFn = this.createFileRequest.bind(this);
+            this.fileDisplayModal.fileRequestFn = this.createFileDownloadRequest.bind(this);
 
             this.fileSaveModal = new bisweb_filedialog('Choose Folder to Save In', { 'makeFavoriteButton' : false, 'modalType' : 'save', 'displayFiles' : false });
-            this.fileSaveModal.fileRequestFn = this.createFileRequest.bind(this);
+            this.fileSaveModal.fileRequestFn = this.createFileUploadRequest.bind(this);
         });
 
     }
@@ -123,27 +123,27 @@ class AWSModule {
      * @param {Function} cb - Callback on success.
      * @param {Function} eb - Callback on failure.
      */
-    createFileRequest(params, cb, eb) {
+    createFileDownloadRequest(params, cb, eb) {
         let obj = {
             name: params.name,
             params: params,
             awsinfo: AWSParameters,
             responseFunction: () => {
                 return new Promise( (resolve, reject) => {
-                    this.s3.getObject({
+                    let getParams = { 
                         'Key' : params.name,
-                        'Bucket' : obj.awsinfo.bucketName
-                    }, (err, data) => {
+                        'Bucket' : obj.awsinfo.BucketName
+                    };
+
+                    this.s3.getObject(getParams, (err, data) => {
                         if (err) { 
                             reject(err); 
                             eb();
                             return;
                         }
 
-                        let unzippedFile;
-                        if (params.command === 'getfile' || params.command === 'getfiles') 
-                            unzippedFile = wsutil.unzipFile(data.Body);
-
+                        //S3 sends the data zipped
+                        let unzippedFile = wsutil.unzipFile(data.Body);
                         cb();
 
                         resolve({ 
@@ -156,6 +156,37 @@ class AWSModule {
         };
 
         //this.callback is set when a modal is opened.
+        this.callback(obj);
+    }
+
+    createFileUploadRequest(params, cb, eb){
+        let obj = {
+            'name': params.name,
+            'params': params,
+            'awsinfo': AWSParameters,
+            'responseFunction': (url, body) => {
+                return new Promise( (resolve, reject) => {
+                    let zippedData = wsutil.zipFile(body);
+                    let filename = params.name + '.nii.gz';
+
+                    let uploadParams = {
+                        'Key' : filename,
+                        'Bucket' : obj.awsinfo.BucketName,
+                        'Body' : zippedData
+                    };
+
+                    this.s3.upload(uploadParams, (err, data) => {
+                        if (err) { console.log(err); eb(); }
+                        else {
+                            console.log('uploaded file', name, 'with data', data);
+                            cb();
+                        }
+                    });
+                });
+            }
+        }
+
+        console.log('callback', this.callback);
         this.callback(obj);
     }
     

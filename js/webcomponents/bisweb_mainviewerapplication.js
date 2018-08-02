@@ -550,11 +550,11 @@ class ViewerApplicationElement extends HTMLElement {
             /*function (f) {
                 self.saveImage(f, viewerno); 
             }*/
-            webfileutil.createFileMenuItem(fmenu[viewerno], 'Save Image', () => {
+            webfileutil.createFileMenuItem(fmenu[viewerno], 'Save Image', (f) => {
                 let date = new Date();
-                let name = 'Image Created on ' + date.toDateString() + '.nii.gz';
-                self.VIEWERS[viewerno].getimage().save(name);
-                //genericio.write(name, self.VIEWERS[viewerno].getimage().internal.imgdata, true);
+                //let name = 'Image Created on ' + date.toDateString() + '.nii.gz';
+                //self.VIEWERS[viewerno].getimage().save(name);
+                genericio.write(f, self.VIEWERS[viewerno].getimage().internal.imgdata, true);
                 return;
             },
             {
