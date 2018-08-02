@@ -209,10 +209,10 @@ class FileServer extends HTMLElement {
     }
 
     /**
-     * Packages the relevant parameters and functionality for downloading an image from the cloud into an object to be invoked by bis_genericio.
+     * Packages the relevant parameters and functionality for downloading an image from the local filesystem into an object that can be invoked by bis_genericio.
      * 
      * @param {Object} params - Parameters object containing the following
-     * @param {String} params.command - String name for the command to execute. One of 'getfiles' or 'uploadfiles' as of 7-23-18.
+     * @param {Array} params.files - List of filenames
      * @param {String} params.name - Name of the file to fetch from the server, or what to name the file being saved to the server.
      * @param {Function} cb - Callback on success.
      * @param {Function} eb - Callback on failure.
@@ -250,35 +250,38 @@ class FileServer extends HTMLElement {
         this.callback(obj);
     }
 
+    /**
+     * Packages the relevant parameters and functionality for uploading an image to the local filesystem into an object that can be invoked by bis_genericio.
+     * 
+     * @param {Object} params - Parameters object containing the following
+     * @param {Array} params.files - List of filenames
+     * @param {String} params.name - Name of the file to fetch from the server, or what to name the file being saved to the server.
+     * @param {Function} cb - Callback on success.
+     * @param {Function} eb - Callback on failure.
+     * @param {Object} callback.url - The object passed to the callback initially (in this case the object created by createFileUploadRequest). Unused in this function.
+     * @param {Uint8Array} callback.body - The image body provided by bis_genericio through the callback function template.
+     */
     createFileUploadRequest(params, cb, eb) {
         let obj = {
             name: params.name,
             params: params,
-            responseFunction: () => {
+            responseFunction: (url, body) => {
                 return new Promise( (resolve, reject) => {
-                    let command = { 'command' : 'getfile', 'files' : filelist };
-                    let filesdata = JSON.stringify(command);
+                    let promiseCb = () => {
+                        cb();
+                        resolve('Upload successful');
+                    };
 
-                    let cblistener = document.addEventListener('imagetransmission' , (e) => { 
-                        document.removeEventListener('errorevent', eblistener);
-                        cb(); 
-                        resolve({
-                            'data' : e.detail,
-                            'filename' : params.name
-                        });
+                    let promiseEb = () => {
+                        eb();
+                        reject('Upload failed');
+                    };
 
-                    }, { 'once' : true });
-
-                    let eblistener = document.addEventListener('servererror', () => { 
-                        document.removeEventListener('imagetransmission', cblistener);
-                        reject('An error occured during transmission') 
-                        eb(); 
-                    }, { 'once' : true });
-
-                    this.socket.send(filesdata);
+                    this.uploadFileToServer(name, body, promiseCb, promiseEb);
                 });
             }
         };
+
         //this.callback is set when a modal is opened.
         this.callback(obj);
     }
@@ -328,12 +331,9 @@ class FileServer extends HTMLElement {
      * @param {Function} cb - A callback for if the transfer is successful. Optional.
      * @param {Function} eb - A callback for if the transfer is a failure (errorback). Optional.
      */
-    uploadFileToServer(name, cb = () => {}, eb = () => {}) {
+    uploadFileToServer(name, body, cb = () => {}, eb = () => {}) {
 
         console.log('cb', cb, 'eb', eb);
-
-        let file = this.algorithmcontroller.getImage(this.viewer, 'image');
-        let serializedImage = file.serializeToNII();
         let packetSize = 50000;
         let fileTransferSocket;
 
@@ -346,8 +346,7 @@ class FileServer extends HTMLElement {
 
                     fileTransferSocket = new WebSocket('ws://localhost:8082');
                     fileTransferSocket.addEventListener('open', () => {
-                        console.log('serializedImage', serializedImage);
-                        doImageTransfer(serializedImage);
+                        doImageTransfer(body);
                     });
 
                 } else {
@@ -363,7 +362,7 @@ class FileServer extends HTMLElement {
 
         this.socket.send(JSON.stringify({
             'command': 'uploadimage',
-            'totalSize': serializedImage.length,
+            'totalSize': body.length,
             'packetSize': packetSize,
             'storageSize': file.internal.imgdata.BYTES_PER_ELEMENT,
             'header': file.header,
