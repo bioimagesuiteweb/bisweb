@@ -44,7 +44,7 @@ const mkey=keystore.OneDriveKey || "";
 const userPreferencesLoaded = userPreferences.webLoadUserPreferences(bisdbase);
 
 // Initial mode
-let fileMode='amazonaws';
+let fileMode='server';
 let fileInputElements= [];
 
 const webfileutils = {

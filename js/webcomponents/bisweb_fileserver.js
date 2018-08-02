@@ -92,10 +92,10 @@ class FileServer extends HTMLElement {
         //file tree dialog needs to be able to call some of file server's code 
         //they are separated for modularity reasons, so to enforce the hierarchical relationship between the two fileserver provides the functions and the socket
         this.fileTreeDialog.fileListFn = this.requestFileList;
-        this.fileTreeDialog.fileRequestFn = this.makeRequest.bind(this);
+        this.fileTreeDialog.fileRequestFn = this.createFileDownloadRequest.bind(this);
         this.fileTreeDialog.socket = this.socket;
 
-        this.fileSaveDialog.fileRequestFn = this.makeRequest.bind(this);
+        this.fileSaveDialog.fileRequestFn = this.createFileUploadRequest.bind(this);
         this.fileSaveDialog.socket = this.socket;
 
         //add the event listeners for the control port
@@ -134,11 +134,8 @@ class FileServer extends HTMLElement {
         });
     }
 
-    //this.fileRequestFn( { 'command' : 'uploadfile', 'name' : newFilename }, cb, eb);
     makeRequest(params, cb, eb) {
         let command = params.command;
-
-        console.log('viewer', this.viewer);
         let files = this.algorithmcontroller.getImage(this.viewer, 'image');
 
         switch (params.command) {
@@ -210,6 +207,83 @@ class FileServer extends HTMLElement {
             this.fileSaveDialog.showDialog();
         }
     }
+
+    /**
+     * Packages the relevant parameters and functionality for downloading an image from the cloud into an object to be invoked by bis_genericio.
+     * 
+     * @param {Object} params - Parameters object containing the following
+     * @param {String} params.command - String name for the command to execute. One of 'getfiles' or 'uploadfiles' as of 7-23-18.
+     * @param {String} params.name - Name of the file to fetch from the server, or what to name the file being saved to the server.
+     * @param {Function} cb - Callback on success.
+     * @param {Function} eb - Callback on failure.
+     */
+    createFileDownloadRequest(params, cb, eb) {
+        let obj = {
+            name: params.name,
+            params: params,
+            responseFunction: () => {
+                return new Promise( (resolve, reject) => {
+                    let command = { 'command' : 'getfile', 'files' : params.files };
+                    let filesdata = JSON.stringify(command);
+
+                    let cblistener = document.addEventListener('imagetransmission' , (e) => { 
+                        document.removeEventListener('errorevent', eblistener);
+                        cb(); 
+                        resolve({
+                            'data' : e.detail,
+                            'filename' : params.name
+                        });
+
+                    }, { 'once' : true });
+
+                    let eblistener = document.addEventListener('servererror', () => { 
+                        document.removeEventListener('imagetransmission', cblistener);
+                        reject('An error occured during transmission') 
+                        eb(); 
+                    }, { 'once' : true });
+
+                    this.socket.send(filesdata);
+                });
+            }
+        };
+        //this.callback is set when a modal is opened.
+        this.callback(obj);
+    }
+
+    createFileUploadRequest(params, cb, eb) {
+        let obj = {
+            name: params.name,
+            params: params,
+            responseFunction: () => {
+                return new Promise( (resolve, reject) => {
+                    let command = { 'command' : 'getfile', 'files' : filelist };
+                    let filesdata = JSON.stringify(command);
+
+                    let cblistener = document.addEventListener('imagetransmission' , (e) => { 
+                        document.removeEventListener('errorevent', eblistener);
+                        cb(); 
+                        resolve({
+                            'data' : e.detail,
+                            'filename' : params.name
+                        });
+
+                    }, { 'once' : true });
+
+                    let eblistener = document.addEventListener('servererror', () => { 
+                        document.removeEventListener('imagetransmission', cblistener);
+                        reject('An error occured during transmission') 
+                        eb(); 
+                    }, { 'once' : true });
+
+                    this.socket.send(filesdata);
+                });
+            }
+        };
+        //this.callback is set when a modal is opened.
+        this.callback(obj);
+    }
+
+
 
     /**
      * Sends a list of files for the server to send to the client machine. 
@@ -340,6 +414,8 @@ class FileServer extends HTMLElement {
      * Takes raw input from the server, formats it as a proper BisImage and displays it. 
      * Note that the server transfers images in binary form to avoid wasting space converting it to UTF-8 or a similar encoding. 
      *  
+     * this.callback is attached to bisweb_fileserver when a bisweb_filedialog modal is opened. 
+     * Given that modals are opened one at a time and all user-driven file I/O happens through one of these, the callback should be a
      * @param {Uint8Array} data - Image transferred by the server. 
      */
     handleImageTransmission(data) {
@@ -348,18 +424,15 @@ class FileServer extends HTMLElement {
 
         //filedialog does actions when an image is loaded (dismisses loading messages, etc.)
         //so notify once the image is loaded
-        let imageLoadEvent = new CustomEvent('imagetransmission');
-        document.dispatchEvent(imageLoadEvent);
+
 
         //image is sent compressed for portability reasons, then decompressed here
         reader.addEventListener('loadend', () => {
             let unzippedFile = wsutil.unzipFile(reader.result);
 
-            let loadedImg = new BisImage();
-            loadedImg.initialize();
-            loadedImg.parseNII(unzippedFile.buffer, true);
-
-            this.algorithmcontroller.sendImageToViewer(loadedImg, { viewername: this.viewer });
+            //notify the Promise created by createFileDownloadRequest 
+            let imageLoadEvent = new CustomEvent('imagetransmission', { detail : unzippedFile });
+            document.dispatchEvent(imageLoadEvent);
         });
 
         reader.readAsArrayBuffer(data);
@@ -439,14 +512,20 @@ class FileServer extends HTMLElement {
      * Checks whether the user has authenticated with the fileserver. Performs the command if they have, otherwise prompts the user to login.
      * 
      * @param {String} command - A word representing the command to execute on the server. 
-     * @param {String} viewer - A string representing the key for a viewer in the algorithm controller. Defaults to 'viewer1'
+     * @param {Function} callback - A function that will invoke the file upload/download function created by createFileDownloadRequest and createFileUploadRequest.
      */
-    wrapInAuth(command, viewer = 'viewer1') {
+    wrapInAuth(command, callback) {
         if (this.authenticated) {
             this.viewer = viewer;
             switch(command) {
-                case 'showfiles' : this.requestFileList('load'); break;
-                case 'uploadfile' : this.requestFileList('save'); break;
+                case 'showfiles' : 
+                    this.requestFileList('load'); 
+                    this.callback = callback; 
+                    break;
+                case 'uploadfile' : 
+                    this.requestFileList('save'); 
+                    this.callback = callback; 
+                    break;
                 default : console.log('unrecognized command', command);
             }
         } else {
