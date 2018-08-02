@@ -44,7 +44,7 @@ const mkey=keystore.OneDriveKey || "";
 const userPreferencesLoaded = userPreferences.webLoadUserPreferences(bisdbase);
 
 // Initial mode
-let fileMode='local';
+let fileMode='amazonaws';
 let fileInputElements= [];
 
 const webfileutils = {
@@ -281,12 +281,12 @@ const webfileutils = {
 
         if (fileMode==="amazonaws") {
             // Replace fileopts.viewer with callback and remember makeRequestNew!!!
-            bisweb_awsmodule.wrapInAuth('showfiles', fileopts.viewer);
+            bisweb_awsmodule.wrapInAuth('showfiles', callback);
             return;
         }
 
         if (fileMode==="server") {
-            bisweb_fileserver.wrapInAuth('showfiles', fileopts.viewer);
+            bisweb_fileserver.wrapInAuth('showfiles', callback);
             return;
         }
 

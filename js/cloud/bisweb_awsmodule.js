@@ -120,23 +120,35 @@ class AWSModule {
      * @param {String} params.command - String name for the command to execute. One of 'getfiles' or 'uploadfiles' as of 7-23-18.
      * @param {String} params.name - Name of the file to fetch from the server, or what to name the file being saved to the server.
      * @param {bisweb_image} params.files - List of files to upload to the server. May be aliased as 'params.file' in the case of a single file.
+     * @param {Function} cb - Callback on success.
+     * @param {Function} eb - Callback on failure.
      */
-    createFileRequest(params) {
+    createFileRequest(params, cb, eb) {
         let obj = {
             name: params.name,
             params: params,
             awsinfo: AWSParameters,
             responseFunction: () => {
                 return new Promise( (resolve, reject) => {
-                    self.s3.getObject(this.params, (err, data) => {
+                    this.s3.getObject({
+                        'Key' : params.name,
+                        'Bucket' : obj.awsinfo.bucketName
+                    }, (err, data) => {
                         if (err) { 
                             reject(err); 
+                            eb();
                             return;
                         }
 
+                        let unzippedFile;
+                        if (params.command === 'getfile' || params.command === 'getfiles') 
+                            unzippedFile = wsutil.unzipFile(data.Body);
+
+                        cb();
+
                         resolve({ 
-                            data: data.Body, 
-                            filename: filehandle 
+                            data: unzippedFile, 
+                            filename: params.name 
                         });
                     });
                 });
@@ -247,7 +259,6 @@ class AWSModule {
             case 'uploadfile' : this.createSaveImageModal(); break;
             default : console.log('Unrecognized aws command', command, 'cannot complete request.');
         }
-        console.log('called command', command, 'with parameters', parameters);
     }
 
     /**
