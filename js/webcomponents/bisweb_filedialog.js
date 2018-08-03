@@ -440,8 +440,13 @@ class FileDialogElement {
                 header.find('.errorMessage').remove(); 
             }, 5000);
         };
-        //'path' duplicated because different fileRequestFns may reference the filename differently, e.g. Amazon AWS provides one fileRequestFn, bisweb_fileserver provides another...
-        this.fileRequestFn({ 'command' : command, 'files' : [params.path], 'name' : params.path }, cb, eb);
+
+        //strip out leading '/' if necessary 
+        let name = params.path.charAt(0) === '/' ? params.path.substring(1) : params.path;
+        console.log('params.path', params.path, 'name', name);
+
+        //params.path duplicated because different fileRequestFns may reference the filename differently, e.g. Amazon AWS provides one fileRequestFn, bisweb_fileserver provides another...
+        this.fileRequestFn({ 'command' : command, 'files' : [name], 'name' : name }, cb, eb);
     }
 
     /**
@@ -498,7 +503,8 @@ class FileDialogElement {
 
                 console.log('current path', this.currentPath);
                 let currentPath = this.currentPath.join('/');
-                let newFilename = currentPath + '/' + name;
+                let newFilename = currentPath.length > 1 ? currentPath + '/' + name : name;
+  
                 this.fileRequestFn( { 'command' : 'uploadfile', 'name' : newFilename }, cb, eb);
 
                 let imageSavingDialog = $(`<p>Uploading image...</p>`);

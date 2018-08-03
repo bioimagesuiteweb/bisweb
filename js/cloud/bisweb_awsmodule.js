@@ -125,10 +125,10 @@ class AWSModule {
      */
     createFileDownloadRequest(params, cb, eb) {
         let obj = {
-            name: params.name,
-            params: params,
-            awsinfo: AWSParameters,
-            responseFunction: () => {
+            'name': params.name,
+            'params': params,
+            'awsinfo': AWSParameters,
+            'responseFunction': () => {
                 return new Promise( (resolve, reject) => {
                     let getParams = { 
                         'Key' : params.name,
@@ -145,6 +145,8 @@ class AWSModule {
                         //S3 sends the data zipped
                         let unzippedFile = wsutil.unzipFile(data.Body);
                         cb();
+
+                        console.log('data', unzippedFile);
 
                         resolve({ 
                             data: unzippedFile, 
@@ -166,6 +168,7 @@ class AWSModule {
             'awsinfo': AWSParameters,
             'responseFunction': (url, body) => {
                 return new Promise( (resolve, reject) => {
+
                     let zippedData = wsutil.zipFile(body);
                     let filename = params.name + '.nii.gz';
 
@@ -176,10 +179,11 @@ class AWSModule {
                     };
 
                     this.s3.upload(uploadParams, (err, data) => {
-                        if (err) { console.log(err); eb(); }
+                        if (err) { console.log(err); eb(); reject(err); }
                         else {
-                            console.log('uploaded file', name, 'with data', data);
+                            console.log('uploaded file', filename, 'with data', data);
                             cb();
+                            resolve('Upload successful');
                         }
                     });
                 });
@@ -233,8 +237,6 @@ class AWSModule {
      * @param {Function} cb - The function to call after a successful upload. Optional.
      * @param {Function} eb - The function to call after an unsuccessful upload. Optional.
      */
-            // replace body with rawData
-            
     uploadFile(name, body, cb = null, eb = null) {
 
         let rawData = body.serializeToNII();
@@ -256,6 +258,9 @@ class AWSModule {
         });
     }
 
+    /**
+     * Creates the file list to allow a user to choose where to save an image on one of the viewers  
+     */
     createSaveImageModal() {
         this.s3.listObjectsV2( {}, (err, data) => {
             if (err) { console.log('an error occured', err); return; }

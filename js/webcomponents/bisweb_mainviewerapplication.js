@@ -554,7 +554,7 @@ class ViewerApplicationElement extends HTMLElement {
                 let date = new Date();
                 //let name = 'Image Created on ' + date.toDateString() + '.nii.gz';
                 //self.VIEWERS[viewerno].getimage().save(name);
-                genericio.write(f, self.VIEWERS[viewerno].getimage().internal.imgdata, true);
+                genericio.write(f, self.VIEWERS[viewerno].getimage().serializeToNII(), true);
                 return;
             },
             {
