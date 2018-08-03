@@ -86,34 +86,6 @@ class AWSModule {
     }
 
     /**
-     * Wrapper function for AWS functionality (as of 7-23-18 requestFile and uploadFile). 
-     * Can be called from bisweb_filedialog (this function is attached to the FileDialog object and invoked from within when a user selects a file).
-     *
-     * @param {Object} params - Parameters object containing the following
-     * @param {String} params.command - String name for the command to execute. One of 'getfiles' or 'uploadfiles' as of 7-23-18.
-     * @param {String} params.name - Name of the file to fetch from the server, or what to name the file being saved to the server.
-     * @param {bisweb_image} params.files - List of files to upload to the server. May be aliased as 'params.file' in the case of a single file.
-     * @param {Function} cb - Function to call after successful execution of an upload. Optional.
-     * @param {Function} eb - Function to call after unsuccessful execution of an upload. Optional.
-     */
-    //expected to be called from bisweb_fileserver (see 'fileRequestFn') 
-    /*makeRequest(params, cb = null, eb = null) {
-
-        let command = params.command;
-        let files = this.algorithmController.getImage(this.defaultViewer, 'image');
-        let viewer = params.viewer;
-        console.log('this', this);
-        switch (params.command) {
-            case 'getfile' : 
-            case 'getfiles' : this.requestFile(params.name, viewer, cb, eb); break;
-            case 'uploadfile' : 
-            case 'uploadfiles' : this.uploadFile(params.name, files, cb, eb); break;
-            default : console.log('Cannot execute unknown command', command);
-        }
-}*/
-
-
-    /**
      * Packages the relevant parameters and functionality for downloading an image from the cloud into an object to be invoked by bis_genericio.
      * 
      * @param {Object} params - Parameters object containing the following
@@ -192,70 +164,6 @@ class AWSModule {
 
         console.log('callback', this.callback);
         this.callback(obj);
-    }
-    
-    /**
-     * Makes a RESTful request for a file from the S3 bucket referenced by the current instance of this.S3 and attempts to put it on the default viewer (this.defaultViewer.
-     * Generally called from bisweb_filedialog.
-     *
-     * @param {String} name - Name of the file to request from the S3 bucket. 
-     */
-    requestFile(name, cb = () => {}, eb = () => {}) {
-
-        let params = {
-            'Bucket' : AWSParameters.BucketName,
-            'Key' : name            
-        };
-
-        this.s3.getObject(params, (err, data) => {
-            if (err) { console.log('an error occured', err); eb(); }
-            else {
-                let unzippedFile = wsutil.unzipFile(data.Body);
-                console.log('unzipped file', unzippedFile);
-
-                let loadedImage = new bisweb_image();
-                loadedImage.initialize();
-                loadedImage.parseNII(unzippedFile.buffer);
-                console.log('loadedImage', loadedImage);
-
-                //dismiss loading message
-                let imageLoadEvent = new CustomEvent('imagetransmission');
-                document.dispatchEvent(imageLoadEvent);
-
-                this.algorithmController.sendImageToViewer(loadedImage, { 'viewername' : this.defaultViewer}); 
-                cb();
-            }
-        });
-        
-    }
-
-    /**
-     * Uploads a file to the bucket referred to by this.S3. May call back when finished. 
-     * 
-     * @param {String} name - What to name the file being uploaded to the bucket. 
-     * @param {bisweb_image} body - The bisweb_image meant to be attached as the body of the request. It is serialized and zipped before being sent. 
-     * @param {Function} cb - The function to call after a successful upload. Optional.
-     * @param {Function} eb - The function to call after an unsuccessful upload. Optional.
-     */
-    uploadFile(name, body, cb = null, eb = null) {
-
-        let rawData = body.serializeToNII();
-        let zippedData = wsutil.zipFile(rawData);
-        let filename = name + '.nii.gz';
-
-        let params = {
-            'Bucket' : AWSParameters.BucketName,
-            'Key' : filename,
-            'Body' : zippedData
-        };
-
-        this.s3.upload(params, (err, data) => {
-            if (err) { console.log(err); eb(); }
-            else {
-                console.log('uploaded file', name, 'with data', data);
-                cb();
-            }
-        });
     }
 
     /**
@@ -450,40 +358,9 @@ class AWSModule {
                 newPath = newPath.concat(fullPath[i]);
             }
 
-            return -1; //should be unreachable
+            return -1;
         }
     }
 }
 
 module.exports = AWSModule;
-
-//Manual XML request stuff I mistakenly wrote instead of using the S3 API
-//Left here in case I need it -Zach
-        /*let xmlRequest = new XMLHttpRequest();
-        xmlRequest.onreadystatechange = () => {
-            if (xmlRequest.readyState === 4 && xmlRequest.status === 200) {
-                console.log('xmlRequest', xmlRequest, 'type of response', xmlRequest.response.length);
-    
-                if(typeof(xmlRequest.response) === 'string') {
-                    let buffer = new ArrayBuffer(xmlRequest.responseText.length);
-                    let bufferView = new Uint8Array(buffer);
-                    for (let i = 0; i < xmlRequest.response.length; i++) {
-                        bufferView[i] = xmlRequest.response.charCodeAt(i);
-                    }
-
-                    let unzippedFile = wsutil.unzipFile(bufferView);
-                    console.log('bufferView', bufferView, 'buffer', buffer, 'unzipped file', unzippedFile);
-
-                    let parsedImage = new bisweb_image();
-                    parsedImage.initialize();
-                    parsedImage.parseNII(bufferView);
-                    console.log('parsedImage', parsedImage);
-                }
-            }
-        };
-
-        xmlRequest.open('GET', `http://${AWSParameters.BucketName}.s3.amazonaws.com/${name}`, true);
-        xmlRequest.setRequestHeader('Content-Type', 'application/json');
-        xmlRequest.setRequestHeader('response-content-type', 'application/octet-stream');
-        xmlRequest.send(null);
-        */
