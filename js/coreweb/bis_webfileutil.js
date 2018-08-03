@@ -65,9 +65,10 @@ const webfileutils = {
         ];
 
         //localserver requires its HTML element to be present in the document
-        let localserver = $(document).find('bisweb-fileserver');
+        /*let localserver = $(document).find('bisweb-fileserver');
         if (localserver[0])
             s.push({ value : "server", text: "File Server"});
+        */
         if (dkey.length>1)
             s.push({ value: "dropbox", text: "Dropbox" });
         if (gkey.length>1) 
@@ -88,7 +89,7 @@ const webfileutils = {
             case 'googledrive' : if (gkey) { fileMode = 'googledrive'; } break;
             case 'onedrive' : if (mkey) { fileMode = 'onedrive'; } break;
             case 'amazonaws' : fileMode = 'amazonaws'; break;
-            case 'server' : fileMode = 'server'; break;
+            //case 'server' : fileMode = 'server'; break;
             default : fileMode = 'local';
         }
 
@@ -102,12 +103,6 @@ const webfileutils = {
         if (server) {
             bisweb_fileserver = server;
         }
-    },
-
-    setAlgorithmController : function(algorithmController, defaultViewer) {
-        //only sets algorithm controller for Amazon AWS for now (add other later?)
-        bisweb_awsmodule.algorithmController = algorithmController; 
-        bisweb_awsmodule.defaultViewer = defaultViewer;
     },
     
     /** electron file callback function
@@ -280,7 +275,6 @@ const webfileutils = {
         }
 
         if (fileMode==="amazonaws") {
-            // Replace fileopts.viewer with callback and remember makeRequestNew!!!
             bisweb_awsmodule.wrapInAuth('showfiles', callback);
             return;
         }
