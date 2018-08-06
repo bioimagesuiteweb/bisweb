@@ -2,12 +2,15 @@
 
 const AWS = require('aws-sdk');
 const AWSCognitoIdentity = require('amazon-cognito-identity-js');
-const AWSParameters = require('../../web/awsparameters.js');
+const AWSParameters = require('../../web/aws/awsparameters.js');
 const bisweb_image = require('bisweb_image.js');
 const bis_webutil = require('bis_webutil.js');
 const wsutil = require('../../fileserver/wsutil.js');
 const bisweb_filedialog = require('bisweb_filedialog.js');
 const $ = require('jquery');
+
+
+
 
 /**
  * Class designed to save and load files from Amazon S3, using Amazon Cognito for authentication. 
@@ -211,7 +214,13 @@ class AWSModule {
      * 2.) Attempts to register the user with an Amazon Cognito Identity pool authorized to access the relevant bucket. If successful, the user will be returned a set of credentials that expire in a short period of tiem (about an hour).
      */ 
     awsAuthUser() {
-        let authWindow = window.open('../web/biswebaws.html', '_blank', 'width=400, height=400');
+
+        let returnf="./biswebaws.html";
+        if (typeof window.BIS !=='undefined') {
+            returnf="../build/web/biswebaws.html"
+        }
+        console.log('returnf', returnf);
+        let authWindow = window.open('../../build/web/biswebaws.html', '_blank', 'width=400, height=400');
         let idTokenEvent = (data) => {
             //console.log('storage event', data);
             if (data.key === 'aws_id_token') {
