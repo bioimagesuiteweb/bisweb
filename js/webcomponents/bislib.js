@@ -37,7 +37,7 @@ require("bisweb_grapherelement.js");
 require('bisweb_simplealgorithmcontroller.js');
 require("bisweb_modulemanagerelement.js");
 require("bisweb_connectivitycontrolelement.js");
-//require("bisweb_paravisionimportelement.js");
+require("bisweb_paravisionimportelement.js");
 require("bisweb_mni2talelement.js");
 require("bisweb_paravisionapplicationelement.js");
 require("bisweb_connectivityapplicationelement.js");

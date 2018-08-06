@@ -81,9 +81,6 @@ class LinearRegistrationModule extends  BaseModule {
                     'return_vector' : true}, this.parseBoolean(vals.debug));
                 
                 this.outputs['output'] = matr;
-				console.log('matr', matr);
-				
-				console.log('aaaaaaaaaaaaaaaaaaaaaa');                
                 if (vals.doreslice)
                     this.outputs['resliced']=baseutils.resliceRegistrationOutput(biswrap,reference,target,this.outputs['output']);
                 else
