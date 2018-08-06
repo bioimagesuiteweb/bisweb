@@ -137,6 +137,7 @@ class FileServer extends HTMLElement {
     makeRequest(params, cb, eb) {
         let command = params.command;
         let files = this.algorithmcontroller.getImage(this.viewer, 'image');
+        console.log('make request params', params);
 
         switch (params.command) {
             case 'getfile' : 
@@ -223,7 +224,7 @@ class FileServer extends HTMLElement {
             params: params,
             responseFunction: () => {
                 return new Promise( (resolve, reject) => {
-                    let command = { 'command' : 'getfile', 'files' : params.files };
+                    let command = { 'command' : 'getfile', 'files' : params.paths };
                     let filesdata = JSON.stringify(command);
 
                     let cblistener = document.addEventListener('imagetransmission' , (e) => { 
@@ -277,7 +278,7 @@ class FileServer extends HTMLElement {
                         reject('Upload failed');
                     };
 
-                    this.uploadFileToServer(name, body, promiseCb, promiseEb);
+                    this.uploadFileToServer(obj.name, body, promiseCb, promiseEb);
                 });
             }
         };
@@ -327,7 +328,8 @@ class FileServer extends HTMLElement {
      * Creates its own socket to do the transfer over (doing transfer on control socket seems to make that socket unstable).
      * 
      * TODO: Extend this function to support matrices and transformations.
-     * @param {String} name - What the filed should be named once it is saved to the server. 
+     * @param {String} name - What the file should be named once it is saved to the server. 
+     * @param {TypedArray} body - 
      * @param {Function} cb - A callback for if the transfer is successful. Optional.
      * @param {Function} eb - A callback for if the transfer is a failure (errorback). Optional.
      */
@@ -359,15 +361,16 @@ class FileServer extends HTMLElement {
             }
         }, { once : true });
 
-
-        this.socket.send(JSON.stringify({
+        let metadata = {
             'command': 'uploadimage',
             'totalSize': body.length,
             'packetSize': packetSize,
-            'storageSize': file.internal.imgdata.BYTES_PER_ELEMENT,
-            'header': file.header,
+            'storageSize': body.byteLength,
             'filename': name
-        }));
+        };
+
+        console.log('sending metadata to server', metadata);
+        this.socket.send(JSON.stringify(metadata));
 
 
         //transfer image in 50KB chunks, wait for acknowledge from server

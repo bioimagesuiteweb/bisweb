@@ -93,13 +93,12 @@ let startServer = (hostname, port, readycb = () => {}) => {
     let newServer = net.createServer(handleConnectionRequest);
     newServer.listen(port, hostname, readycb);
 
-    console.log('listening for incoming connections from host', hostname, 'on port', port, '...');
+    console.log('listening for incoming connections from host', hostname, 'on port', port, '...\n\n');
 
     //handleConnectionRequest is called when a connection is successfuly made between the client and the server and a socket is prepared
     //it performs the WebSocket handshake (see https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers#The_WebSocket_Handshake)
     //as well it attaches protocols to handle when the socket is ended or closed
     function handleConnectionRequest(socket) {
-        console.log('got connection', socket);
     
         //construct the handshake response
         //https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers
@@ -109,7 +108,6 @@ let startServer = (hostname, port, readycb = () => {}) => {
         let websocketKey;
         let handshake = (chunk) => {
             let decodedChunk = new StringDecoder('utf-8').write(chunk);
-            console.log('chunk', decodedChunk);
             let headers = decodedChunk.split('\n');
     
             for (let i = 0; i < headers.length; i++) {
@@ -160,7 +158,7 @@ let startServer = (hostname, port, readycb = () => {}) => {
                 }
     
                 if (count === 0) { 
-                    console.log('all connections done, shutting down server', newServer);
+                    //console.log('all connections done, shutting down server');
                     newServer.close();
 
                     //start the server listening for new connections if it's on the control port
@@ -177,10 +175,11 @@ let startServer = (hostname, port, readycb = () => {}) => {
 let readFrame = (chunk) => {
     let controlFrame = chunk.slice(0, 14);
     let parsedControl = wsutil.parseControlFrame(controlFrame);
-    console.log('parsed control frame', parsedControl);
+    //console.log('parsed control frame', parsedControl);
 
+    //drop unmasked packets
     if (!parsedControl.mask) {
-        console.log('Received a transmission with no mask from client, dropping packet.'); 
+        //console.log('Received a transmission with no mask from client, dropping packet.'); 
         return;
     }
 
@@ -263,7 +262,7 @@ let prepareForDataFrames = (socket) => {
     socket.on('data', (chunk) => {
         let controlFrame = chunk.slice(0, 14);
         let parsedControl = wsutil.parseControlFrame(controlFrame);
-        console.log('parsed control frame', parsedControl);
+        //console.log('parsed control frame', parsedControl);
 
         if (!parsedControl.mask) {
             console.log('Received a transmission with no mask from client, dropping packet.');
@@ -310,17 +309,23 @@ let prepareForDataFrames = (socket) => {
 
         //check to see if what we've received is complete 
         if (newChunk.length >= fileInProgress.totalSize) {
-            console.log('upload done', fileInProgress);
-            socket.write(formatPacket('uploadcomplete', ''), () => { console.log('message sent'); });
-
-            //if for some reason the client doesn't send a FIN we know the socket should close here anyway.
-            socket.end();
-
+            let baseDirectory = os.homedir();
 
             //save serialized NIFTI image
-            genericio.write('/home/zach/' + fileInProgress.name + '.nii.gz', fileInProgress.receivedFile, true);
+            let writeLocation = baseDirectory + '/' + fileInProgress.name + '.nii.gz';
+            console.log('writing to directory', writeLocation);
+
+            genericio.write(writeLocation, fileInProgress.receivedFile, true).then( () => {
+                socket.write(formatPacket('uploadcomplete', ''), () => { console.log('message sent'); });
+                socket.end(); //if for some reason the client doesn't send a FIN we know the socket should close here anyway.
+            }).catch( (e) => {
+                console.log('an error occured', e);
+                socket.write(formatPacket('error', e));
+                socket.end();
+            });
+
         } else {
-            console.log('received chunk,', fileInProgress.receivedFile.length, 'received so far.');
+            //console.log('received chunk,', fileInProgress.receivedFile.length, 'received so far.');
             socket.write(formatPacket('nextpacket', ''));
         }
     }  
@@ -361,7 +366,6 @@ let handleTextRequest = (rawText, control, socket) => {
  * @param {Socket} socket - The control socket that will negotiate the opening of the data socket and send various communications about the transfer. 
  */
 let handleImageFromClient = (upload, control, socket) => {
-    console.log('message from client', upload);
 
     fileInProgress = {
         'totalSize': upload.totalSize,
@@ -383,11 +387,10 @@ let handleImageFromClient = (upload, control, socket) => {
  * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
  */
 let serveFileRequest = (parsedText, control, socket) => {
-    console.log('parsed text', parsedText);
     let files = parsedText.files;
     for (let file of files) {
         readFileFromDisk(file).then( (data) => {
-            socket.write(formatPacket('image', data), () => { console.log('write done.'); });
+            socket.write(formatPacket('image', data), () => { console.log('upload successful'); });
         }).catch( (error) => {
             handleBadRequestFromClient(socket, error);
         });
@@ -483,7 +486,7 @@ let serveFileList = (socket, basedir, type, depth = null) => {
     };
 
     expandDirectory(basedir, fileTree, 0).then( (tree) => {
-        console.log('basedir', basedir);
+
         //bisweb_fileserver handles the base file request differently than the supplemental ones, so we want to ship them to different endpoints
         if (basedir === os.homedir()) {
             socket.write(formatPacket('filelist', { 'type' : type, 'data' : tree }));
@@ -533,7 +536,6 @@ let handleBadRequestFromClient = (socket, reason) => {
 let handleCloseFromClient = (rawText, control, socket) => {
     let text = wsutil.decodeUTF8(rawText, control);
     console.log('received CLOSE frame from client');
-    console.log('reason:', text);
 
     //TODO: send a close frame in response
     socket.end();
@@ -593,11 +595,10 @@ let readFileFromDisk = (file) => {
             //disallow requests for files that don't belong to the current user (owner of the current process)
             fs.lstat(file, (err, stat) => {
                 let currentUser = process.getuid();
-                console.log('current user', currentUser, 'file owner', stat.uid);
+                //console.log('current user', currentUser, 'file owner', stat.uid);
                 if (stat.uid !== currentUser) { reject("Cannot download a file that does not belong to the current user. Have you tried changing ownership of the requested file?"); return; }
 
                 fs.readFile(file, (err, data) => {
-                    console.log('file', file, 'data', data);
                     resolve(data);
                 });
             });
@@ -629,8 +630,6 @@ let formatPacket = (payloadType, data) => {
         payload = data;
         opcode = 2;
     }
-
-    console.log('sending payload', payload);
 
     let controlFrame = wsutil.formatControlFrame(opcode, payload.length);
     let packetHeader = Buffer.from(controlFrame.buffer), packetBody = Buffer.from(payload);

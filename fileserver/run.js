@@ -9,5 +9,5 @@ program.parse(process.argv);
 
 
 server.startServer('localhost', 8081, () => {
-    if (!program.verbose) { console.log('Server started in silent mode'); console.log = () => {};}
+    //if (!program.verbose) { console.log('Server started in silent mode'); console.log = () => {};}
 });

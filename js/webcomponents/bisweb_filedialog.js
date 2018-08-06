@@ -439,7 +439,7 @@ class FileDialogElement {
         console.log('params.path', params.path, 'name', name);
 
         //params.path duplicated because different fileRequestFns may reference the filename differently, e.g. Amazon AWS provides one fileRequestFn, bisweb_fileserver provides another...
-        this.fileRequestFn({ 'command' : command, 'files' : [name], 'name' : name }, cb, eb);
+        this.fileRequestFn({ 'command' : command, 'files' : [name], 'name' : name, 'paths' : [params.path] }, cb, eb);
     }
 
     /**
