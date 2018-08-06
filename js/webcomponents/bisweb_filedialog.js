@@ -120,13 +120,6 @@ class FileDialogElement {
             this.modal.dialog.find('.modal-footer').remove();
         }
 
-        let viewerSwitch = $(`<div class='viewertoggle checkbox-slider--b checkbox-slider-sm'><label><input type='checkbox'><span>Use Viewer 2?</span></label></div>`);
-        let viewerSpan = viewerSwitch.find('span');
-        viewerSpan.css('color', 'rgb(12, 227, 172)');
-        viewerSpan.css('font-weight', '250');
-        viewerSpan.css('font-size', '13px');
-        favoriteBar.append(viewerSwitch);
-
         //erase the file list on modal close
         this.modal.dialog.on('hidden.bs.modal', () => {
             let contentDisplay = this.container.find('.file-list');
