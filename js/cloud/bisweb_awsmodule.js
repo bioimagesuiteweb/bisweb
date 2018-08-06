@@ -187,33 +187,43 @@ class AWSModule {
 
     /**
      * Attempts to authenticate the current user before executing a given S3 command (one of either 'showfiles' or 'uploadfiles' as of 7-23-18, which respectively call listObjectsInBucket and createImageSaveDialog).
-     * If the user is not authenticated, a popup will appear that will prompt the user to enter their AWS credentials, or if the credentials are already cached, it will begin the authentication process.
+     * If the user is not authenticated, a popup will appear that will prompt the user to enter their AWS credentials, or if the credentials are already cached, it will begin the authentication process. It will execute the command once the user has been successfully authenticated.
      * If the user is authenticated, wrapInAuth will call the appropriate command. 
+     * 
      * @param {String} command - A string indicating the command to execute. 
      * @param {Function} callback - A function propagated from bis_webfileutil that will handle the non-AWS I/O for the retrieved data. 
      */
     wrapInAuth(command, callback) {
+
+        let parseCommand = () => {
+            this.callback = callback;
+            switch(command) {
+                case 'showfiles' : this.listObjectsInBucket(); break;
+                case 'uploadfile' : this.createSaveImageModal(); break;
+                default : console.log('Unrecognized aws command', command, 'cannot complete request.');
+            }
+        }
+
         let expireTime = AWS.config.credentials.expireTime ? Date.parse(AWS.config.credentials.expireTime) : -1;
 
         if (expireTime < Date.now()) {
-            this.awsAuthUser();
+            this.awsAuthUser(parseCommand);
             return;
+        } else {
+            parseCommand();
         }
 
-        this.callback = callback;
-        switch(command) {
-            case 'showfiles' : this.listObjectsInBucket(); break;
-            case 'uploadfile' : this.createSaveImageModal(); break;
-            default : console.log('Unrecognized aws command', command, 'cannot complete request.');
-        }
+       
     }
 
     /**
      * Begins the AWS authentication process by opening a new winbow with the URL specified as 'biswebaws.html'. This performs the following steps:
      * 1.) Attempts to log in to the Amazon Cognito User Pool associated with BisWeb, which will prompt the user for their Amazon Cognito credentials. The user may create an account at this time.
      * 2.) Attempts to register the user with an Amazon Cognito Identity pool authorized to access the relevant bucket. If successful, the user will be returned a set of credentials that expire in a short period of tiem (about an hour).
+     * 
+     * @param {Function} cb - Function to call after successful authentication
      */ 
-    awsAuthUser() {
+    awsAuthUser(cb) {
 
         let returnf="./biswebaws.html";
         if (typeof window.BIS !=='undefined') {
@@ -255,6 +265,7 @@ class AWSModule {
                             else { 
                                 console.log('refresh successful.'); 
                                 this.s3 = this.createS3(AWSParameters.BucketName, AWS.config.credentials);
+                                cb();
                             }
                         });
                     }

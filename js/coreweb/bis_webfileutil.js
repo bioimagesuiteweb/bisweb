@@ -226,7 +226,6 @@ const webfileutils = {
             } 
 
             if (fileMode === 'server') {
-                console.log('fileserver', bisweb_fileserver);
                 bisweb_fileserver.wrapInAuth('uploadfile', callback);
                 return;
             }
