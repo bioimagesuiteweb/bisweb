@@ -97,8 +97,8 @@ class SimpleAlgorithmControllerElement extends HTMLElement {
 
 
     /** Get the Current Image
-     * @param{String} viewer - the name of the viewer "viewer" or "viewer2"
-     * @param{String} itype - the type of the image "image" or "overlay" 
+     * @param {String} viewer - the name of the viewer "viewer" or "viewer2"
+     * @param {String} itype - the type of the image "image" or "overlay" 
      * @returns{BisWebImage} - the image 
      */
     getImage(viewer,itype) {
@@ -230,6 +230,11 @@ class SimpleAlgorithmControllerElement extends HTMLElement {
             return;
 
         this.sendImageToViewer(image,undoelement.options);
+
+        //notify tree viewer
+        let undoTreeEvent = new CustomEvent('undoTree');
+        document.dispatchEvent(undoTreeEvent);
+        
         return true;
     }
 
@@ -280,7 +285,7 @@ class SimpleAlgorithmControllerElement extends HTMLElement {
 
     /**
      * Takes data and updates the appropriate viewer. 
-     * @param {BisWebDataObject} inpobj -- Data to place on a viewer appropriate to its data type. Note that this is not a dictionary entry but raw data.
+     * @param {BisWebDataObject} inpobj - Data to place on a viewer appropriate to its data type.
      * @param {Object} options - dictionary of options
      * @param {String} options.viewername - Name of viewer ('image' or 'image2')
      * @param {String} options.viewersource - Image in viewer ('image' or 'overlay')
@@ -304,6 +309,13 @@ class SimpleAlgorithmControllerElement extends HTMLElement {
                 this.handleImageUpdate(inpobj,options);
             else if (objtype === 'transform') 
                 this.handleTransformUpdate(inpobj,options);
+
+            console.log('inpobj', inpobj);
+            //notify treeViewer
+            if (document) {
+                let updateTreeEvent = new CustomEvent('updateTree', { 'detail' : inpobj });
+                document.dispatchEvent(updateTreeEvent);
+            }
             
             resolve('Added object');
         });

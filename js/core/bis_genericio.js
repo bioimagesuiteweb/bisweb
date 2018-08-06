@@ -700,15 +700,7 @@ var readbinarydata = function (url, loadedcallback, errorcallback) {
     if (environment === 'electron') {
         return readdataelectron(url, true, loadedcallback, errorcallback);
     }
-
-    if (url.name !== undefined) {
-        // We are in browser and have received a Files[] array
-        //          console.log('Now reading binary data in browser',url);
-        return readbinarydatabrowser(url, loadedcallback, errorcallback);
-    }
-
-
-
+    
     return readbinarydatafromurl(url, loadedcallback, errorcallback);
 };
 
@@ -966,9 +958,9 @@ let write = function (url, data,isbinary=false) {
 
     //if (data instanceof Uint8Array || data instanceof ArrayBuffer)
     //  isbinary = true;
-
-    if (url.responseFunction !== undefined)
+    if (url.responseFunction !== undefined) {
         return url.responseFunction(url, data, isbinary);
+    }
 
 
     return new Promise(function (resolve, reject) {

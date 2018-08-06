@@ -20,7 +20,6 @@
 /* global Dropbox */
 
 const dbox = require('dropbox');
-const localforage = require('localforage');
 const keys = require('bis_keystore.js');
 const genericio = require('bis_genericio.js');
 
@@ -43,6 +42,7 @@ let init = function() {
         apiTag.setAttribute('id', 'dropboxjs');
         apiTag.setAttribute('data-app-key', keys.DropboxAppKey);
         
+        window.addEventListener('storage', function(){ console.log('heard storage event'); });
         document.head.appendChild(apiTag);
         apiTag.onload = ( () => {
             console.log('loaded dropbox dropins');
@@ -60,7 +60,15 @@ let init = function() {
  */
 let auth = function() {
     let box = new dbox({ clientId : keys.DropboxAppKey });
-    let url = 'https://bioimagesuiteweb.github.io/webapp/biswebdropbox.html'; 
+    let parsedURL = window.location.href.split('/');
+
+
+    //small hack to make it so bisweb's various endpoints use a same-origin biswebdropbox.html.
+    //this is necessary to ensure that the windows share the same localStorage.
+    parsedURL[parsedURL.length - 1] = 'biswebdropbox.html';
+    let url = parsedURL.join('/');
+
+    console.log('url', url);
     let authUrl = box.getAuthenticationUrl(url);
     window.open(authUrl, '', 'width=500, height=500');
 };
@@ -250,26 +258,27 @@ let createPicker = function(responseFunction, action, allowMultiselect = false) 
 /**
  * Queries the user's in-browser databases for auth tokens using localforage. 
  * 
- * NOTE: Saving auth tokens in a local database is technically not very secure. This solution should by no means be considered permanent. 
+ * NOTE: localStorage is visible only to windows of the same origin. 
+ * Though this solution does technically expose the user's token to any user who has access to the window, this is information that propagates through window anyway.
+ * See https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API for more details.
  * @alias bisDropbox.queryLocalToken
  */
 let queryLocalToken = function() {
     return new Promise( (resolve, reject) => {
-        let dropboxDB = localforage.createInstance({ name : 'dropbox' });
-        dropboxDB.getItem('auth_session_token', (err, value) => {
-            if (err || !value) {
-                auth();
-                reject({ error : 'user must authenticate first' });
-            } else {
-                resolve({ token : value });
-            }
-        });
+        let token = localStorage.getItem('auth_session_token') || null;
+        if (!token) { 
+            auth();
+            reject({ 'error' : 'user must authenticate first' });
+        } else {
+            resolve({ 'token' : token });
+        }
     });
 };
 
 /**
  * Handles attaching a token to a Dropbox API request either by checking that a token is contained in params or by querying localforage for a user token.
  * Will not launch auth flow if no token is found. 
+ * 
  * @alias bisDropbox.tokenWrap
  * @param {Object} params Parameters to the function (may or may not contain a token)
  * @param {Function} fun Function to call after querying a token
@@ -382,18 +391,3 @@ module.exports = {
     uploadFilePost : uploadFilePost,
     listFiles : listFiles
 };
-
-/*let get = function(url, callback = function() {} ) {
-  let xmlHttp = new XMLHttpRequest();
-  xmlHttp.onreadystatechange = () => {
-  if (xmlHttp.readyState == XMLHttpRequest.DONE) {
-  //console.log(xmlHttp.response);
-  console.log(xmlHttp);
-  console.log(window.location);
-  callback();
-  }
-  };
-
-  xmlHttp.open("GET", url, true);
-  xmlHttp.send(null);
-  };*/

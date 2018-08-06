@@ -189,6 +189,7 @@ console.log(colors.red('Sworker='+options.sworker));
 if (options.sworker) {
     internal.webpackjobs.push({ path: './web/' ,  name : internal.indexlib });
     internal.webpackjobs.push({ path: './web/' ,  name : internal.serviceworkerlib });
+    internal.webpackjobs.push({ path: './web/' ,  name : 'client.js' });
 }
 
 if (options.webworker) {
@@ -387,7 +388,10 @@ gulp.task('commonfiles', function() {
     gulp.src([ 'node_modules/bootstrap/dist/css/*']).pipe(gulp.dest(options.outdir+'css/'));
     gulp.src([ 'node_modules/bootstrap/dist/fonts/*']).pipe(gulp.dest(options.outdir+'fonts/'));
     gulp.src([ 'web/images/**/*']).pipe(gulp.dest(options.outdir+'/images/'));
-//    gulp.src('./web/biswebdropbox.html').pipe(gulp.dest(options.outdir));
+    gulp.src('./web/aws/biswebaws.html').pipe(gulp.dest(options.outdir));
+    gulp.src('./node_modules/aws-sdk/dist/aws-sdk.min.js').pipe(gulp.dest(options.outdir));
+    gulp.src('./node_modules/amazon-cognito-auth-js/dist/amazon-cognito-auth.min.js').pipe(gulp.dest(options.outdir));
+    gulp.src('./web/aws/awsparameters.js').pipe(gulp.dest(options.outdir));
 //    gulp.src('./web/onedriveredirect.html').pipe(gulp.dest(options.outdir));
     gulp.src([ 'lib/fonts/*']).pipe(gulp.dest(options.outdir+'/fonts/'));
     gulp.src([ 'web/manifest.json']).pipe(gulp.dest(options.outdir));
