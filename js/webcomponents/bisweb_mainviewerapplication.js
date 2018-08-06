@@ -1083,6 +1083,12 @@ class ViewerApplicationElement extends HTMLElement {
         webutil.runAfterAllLoaded( () => {
             this.parseQueryParameters();
             document.body.style.zoom =  1.0;
+
+            //give webfileutil acccess to the fileserver and algorithmcontroller
+            let fileserverid = this.getAttribute('bis-fileserver');
+            if (fileserverid) {
+                webfileutil.setFileServer(fileserverid);
+            }
         });
 
     }
