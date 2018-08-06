@@ -27,7 +27,6 @@ const FastClick = require('fastclick');
 const userPreferences = require('bisweb_userpreferences.js');
 const $ = require('jquery');
 const bisdbase = require('bisweb_dbase');
-
 const genericio=require('bis_genericio');
 const bootbox=require('bootbox');
 const BisWebPanel = require('bisweb_panel.js');
@@ -244,6 +243,9 @@ class ViewerApplicationElement extends HTMLElement {
         });
     }
 
+    
+    // Save Image
+    // --------------------------------------------------------------------------------
     /** Save image from viewer to a file */
     saveImage(fname, viewerno = 0) {
         let index = viewerno + 1;
@@ -479,16 +481,11 @@ class ViewerApplicationElement extends HTMLElement {
     // ---------------------------------------------------------------------------
     // Create the default File and Overlay Menus
     //  ---------------------------------------------------------------------------
-    createFileAndOverlayMenus(menubar,painttoolid, modulemanager = null) {
+    createFileAndOverlayMenus(menubar,painttoolid) {
 
         const self=this;
         let paintviewerno = self.VIEWERS.length - 1;
 
-        //give webfileutil acccess to the fileserver and algorithmcontroller
-        let fileserverid = this.getAttribute('bis-fileserver');
-        if (fileserverid) {
-            webfileutil.setFileServer(fileserverid);
-        }
         
         // --------------------------------------------------------------------------
         // Callbacks for load image
@@ -532,7 +529,7 @@ class ViewerApplicationElement extends HTMLElement {
             // File Menu
             // ----------------------------------------------------------
             fmenu[viewerno] = webutil.createTopMenuBarMenu(fmenuname, menubar);
-
+            
             webfileutil.createFileMenuItem(fmenu[viewerno], 'Load Image',
                                            function (f) {
                                                self.loadImage(f, viewerno);
@@ -540,28 +537,22 @@ class ViewerApplicationElement extends HTMLElement {
                                            { title: 'Load image',
                                              save: false,
                                              suffix: 'NII',
-                                             viewer: self.VIEWERS[viewerno].name
+
                                            });
 
-            /*function (f) {
-                self.saveImage(f, viewerno); 
-            }*/
-            webfileutil.createFileMenuItem(fmenu[viewerno], 'Save Image', (f) => {
-                let date = new Date();
-                //let name = 'Image Created on ' + date.toDateString() + '.nii.gz';
-                //self.VIEWERS[viewerno].getimage().save(name);
-                genericio.write(f, self.VIEWERS[viewerno].getimage().serializeToNII(), true);
-                return;
-            },
-            {
-                title: 'Save Image',
-                save: true,
-                saveFile: self.VIEWERS[viewerno].getimage(),
-                filters: "NII",
-                suffix: "NII",
-                viewer : self.VIEWERS[viewerno].name
-            });
-
+            webfileutil.createFileMenuItem(fmenu[viewerno], 'Save Image',
+                                           function (f) {
+                                               self.saveImage(f, viewerno); },
+                                           {
+                                               title: 'Save Image',
+                                               save: true,
+                                               filters: "NII",
+                                               suffix : "NII",
+                                               initialCallback : () => {
+                                                   return self.getSaveImageInitialFilename(viewerno);
+                                               }
+                                           });
+            
             
             webutil.createMenuItem(fmenu[viewerno], ''); // separator
 
@@ -930,7 +921,7 @@ class ViewerApplicationElement extends HTMLElement {
         webutil.createMenuItem(bmenu,'');
         webutil.createMenuItem(bmenu, 'Restart Application',
                                function () {
-                                   bootbox.confirm("Are you sure? You will lose all unsaved data.",
+                                   bootbox.confirm("Are you sure? You will loose all unsaved data.",
                                                    function() {
                                                        window.open(self.applicationURL,'_self');
                                                    }
@@ -989,7 +980,7 @@ class ViewerApplicationElement extends HTMLElement {
         // ----------------------------------------------------------
         // Create the File and Overlay Menus
         // ----------------------------------------------------------
-        let fmenu=this.createFileAndOverlayMenus(menubar,painttoolid, modulemanager);
+        let fmenu=this.createFileAndOverlayMenus(menubar,painttoolid);
 
         this.createApplicationMenu(fmenu);
 
@@ -1084,6 +1075,10 @@ class ViewerApplicationElement extends HTMLElement {
         
         if (this.num_independent_viewers > 1)
             self.VIEWERS[1].setDualViewerMode(0.5);
+
+        //signal other modules waiting for top bar to render
+        let mainViewerDoneEvent = new CustomEvent('mainViewerDone');
+        document.dispatchEvent(mainViewerDoneEvent);
 
         webutil.runAfterAllLoaded( () => {
             this.parseQueryParameters();
