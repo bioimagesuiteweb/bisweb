@@ -1,5 +1,6 @@
 'use strict';
 
+// https://git.yale.edu/pages/zls5/webapp/
 
 let IdentityPoolId = 'us-east-1:13a0bffd-384b-43d8-83c3-050815009aa6';
 let BucketName = 'bisweb-test';
