@@ -2,7 +2,6 @@ const $ = require('jquery');
 const webutil = require('bis_webutil.js');
 const wsutil = require('../../fileserver/wsutil.js');
 const bisweb_filedialog = require('bisweb_filedialog.js');
-const BisImage = require('bisweb_image.js');
 
 class FileServer extends HTMLElement {
 

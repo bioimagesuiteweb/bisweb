@@ -44,7 +44,7 @@ const mkey=keystore.OneDriveKey || "";
 const userPreferencesLoaded = userPreferences.webLoadUserPreferences(bisdbase);
 
 // Initial mode
-let fileMode='server';
+let fileMode='local';
 let fileInputElements= [];
 
 const webfileutils = {
@@ -65,10 +65,9 @@ const webfileutils = {
         ];
 
         //localserver requires its HTML element to be present in the document
-        /*let localserver = $(document).find('bisweb-fileserver');
+        let localserver = $(document).find('bisweb-fileserver');
         if (localserver[0])
             s.push({ value : "server", text: "File Server"});
-        */
         if (dkey.length>1)
             s.push({ value: "dropbox", text: "Dropbox" });
         if (gkey.length>1) 
@@ -89,7 +88,7 @@ const webfileutils = {
             case 'googledrive' : if (gkey) { fileMode = 'googledrive'; } break;
             case 'onedrive' : if (mkey) { fileMode = 'onedrive'; } break;
             case 'amazonaws' : fileMode = 'amazonaws'; break;
-            //case 'server' : fileMode = 'server'; break;
+            case 'server' : fileMode = 'server'; break;
             default : fileMode = 'local';
         }
 
@@ -227,6 +226,7 @@ const webfileutils = {
             } 
 
             if (fileMode === 'server') {
+                console.log('fileserver', bisweb_fileserver);
                 bisweb_fileserver.wrapInAuth('uploadfile', callback);
                 return;
             }
