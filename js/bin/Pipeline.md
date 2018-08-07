@@ -13,15 +13,16 @@ step2 : a_thre b_thre c_thr
 
 TODO: 
 
-add unique names for each job (other than just the name of the command)
-    - step1 for example should be the job name
+~~add unique names for each job (other than just the name of the command)~~
 
 visualize pipeline on tree viewer? 
 
-make job running command (e.g. node bisweb.js ... ) a parameter with reasonable defaults. 
-    - this will let you run it on a server, in background, etc. 
+~~make job running command (e.g. node bisweb.js ... ) a parameter with reasonable defaults.~~
+
+ * Currently does not support jobs that don't generate outputs (think about changing this or maybe making other commands that run through a .PHONY?)
+    - ~~this will let you run it on a server, in background, etc.~~ 
     - make it blankable so that people can specify Unix scripts
-    - right now job smoothImage results in command node bisweb.js smoothImage --> runnable smoothImage and if runnable is blank dont' add space --> "smoothImage" then it could be gulp build, cp , tar ,zip 
+    - ~~right now job smoothImage results in command node bisweb.js smoothImage --> runnable smoothImage and if runnable is blank dont' add space --> "smoothImage" then it could be gulp build, cp , tar ,zip~~ 
 
 
     output directory
@@ -39,7 +40,7 @@ The pipeline tool takes a JSON file specifying a set of files, rules, and jobs a
 
 The pipeline tool can be thought of as a sophisticated macro expander: given a set of input files, jobs, and relationships between inputs and outputs of jobs, it will expand these into a hierarchical series of commands (see sections below for examples of input and output files). The tool itself only creates the relationships. The behavior for running the jobs on the user's machine is provided by [make](https://en.wikipedia.org/wiki/Make_(software)), a build automation tool that has existed since the early days of Unix. 
 
-The following sections will list in detail how to format an input file, how to use the command line tools, and how to understand the output file. 
+The following sections will go into detail on how to format an input file, how to use the command line tools, and how to understand the output file. 
 
 ### The Input File
 
@@ -192,7 +193,7 @@ The command line tools may be invoked as follows (assuming that makePipeline.js 
 
 ### Using make
 
-A properly formatted input file will produce a [Makefile](https://en.wikipedia.org/wiki/Makefile). This can be intimidating to look at for an unfamiliar user, but is actually fairly simple once explained.
+A properly formatted input file will produce a [Makefile](https://en.wikipedia.org/wiki/Makefile). This can be intimidating to look at for an unfamiliar user, but it is actually fairly simple.
 
 A standard operation (or 'rule' in formal parliance) in a Makefile takes the following form 
 

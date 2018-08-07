@@ -28,7 +28,7 @@ const bootbox=require('bootbox');
 const numeric=require('numeric');
 const util=require('bis_util');
 const webfileutil = require('bis_webfileutil');
-
+const ViewerApplicationElement = require('bisweb_mainviewerapplication');
 /**
  * A Application Level Element that creates a Connectivity Application
  * 
@@ -44,8 +44,42 @@ const webfileutil = require('bis_webfileutil');
  *     bis-connectivitycontrolid : the id of an optional  <bisweb-connectivitycontrolelement>
  *     bis-viewerid : the id of the underlying <bisweb-orthogonalviewer>  element
  */
-class ConnectivityApplicationElement extends HTMLElement {
+class ConnectivityApplicationElement extends ViewerApplicationElement {
+
+
+    //  ---------------------------------------------------------------------------
+
+    /** Get State as Object 
+        @returns {object} -- the state of the element as a dictionary*/
+    getElementState(storeImages=false) {
+
+        let obj= super.getElementState(storeImages);
+        // Add stuff
+        obj['connectivity']=this.connectivitycontrol.getElementState();
+        
+        
+        
+        return obj;
+    }
     
+    /** Set the element state from a dictionary object 
+        @param {object} state -- the state of the element */
+    setElementState(dt=null,name=null) {
+
+        name = name || this.applicationName;
+        if (name!=="connviewer") {
+            bootbox.alert("Viewer State is not from a connectivity viewer (it is from"+name+")");
+            return;
+        }
+
+        this.connectivitycontrol.disableMouseUpdates();
+        super.setElementState(dt);
+        this.connectivitycontrol.setElementState(dt['connectivity']);
+        return;
+    }
+
+    
+
     connectedCallback() {
 
         
@@ -118,10 +152,20 @@ class ConnectivityApplicationElement extends HTMLElement {
         VIEWER.viewer.finalizeTools();
 
         var viewer=VIEWER.viewer;
+
+        this.VIEWERS=[ viewer ];
+        this.num_independent_viewers = 1;
+        
         let control=document.querySelector(controlid);
         let menubar=document.querySelector(menubarid).getMenuBar();
 
+        this.connectivitycontrol=control;
+        
         var fmenu=webutil.createTopMenuBarMenu("File",menubar).attr('id','bisfilemenu');
+        const self=this;
+        console.log('self=',self);
+        
+        
         webfileutil.createFileMenuItem(fmenu,'Load Node Definition File',
                                        function(e) {  control.loadparcellationfile(e);},
                                        { title : 'Node Definition File',
@@ -151,7 +195,10 @@ class ConnectivityApplicationElement extends HTMLElement {
         webutil.createMenuItem(fmenu,''); // separator
         
         webutil.createMenuItem(fmenu,'Clear Matrices',function() { control.clearmatrices(); });
-        webfileutil.createFileSourceSelector(fmenu);
+
+        this.createApplicationMenu(fmenu);
+
+
         
         
         // ------------------------------------ Edit Menu ----------------------------
@@ -160,7 +207,10 @@ class ConnectivityApplicationElement extends HTMLElement {
         webutil.createMenuItem(editmenu,'Redo',function() {  control.redo(); });
         webutil.createMenuItem(editmenu,''); // separator
         webutil.createMenuItem(editmenu,'Reset Display Parameters',function(){ control.resetdefault();});
-        
+        webutil.createMenuItem(editmenu,''); // separator
+        webutil.createMenuItem(editmenu, 'Store Application State', function() { self.storeState(); });
+        webutil.createMenuItem(editmenu, 'Retrieve Application State',function() { self.restoreState(); });
+
         
         // ------------------------------------ View Menu ----------------------------
         var viewmenu=webutil.createTopMenuBarMenu("View",menubar);
@@ -230,11 +280,8 @@ class ConnectivityApplicationElement extends HTMLElement {
             control.loadsamplematrices(['images/pos_mat.txt','images/neg_mat.txt']);
         });
         
-        webutil.createMenuItem(helpmenu,''); // separator
 
-        let bisconsole=document.createElement('bisweb-console');
-        bisconsole.addtomenu(helpmenu);
-        
+
         
         // ------------------------------------ Initialize ---------------------------
         

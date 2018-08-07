@@ -46,7 +46,8 @@ class displacementField(bis_basemodule.baseModule):
         spacing = image.spacing;
 
 
-        self.outputs['output'] = libbis.computeDisplacementFieldWASM(self.inputs['transform'], {
+        self.outputs['output'] = libbis.computeDisplacementFieldWASM(
+            self.inputs['xform'], {
             "dimensions" : [ dimension[0], dimension[1], dimension[2] ],
             "spacing" : [ spacing[0], spacing[1], spacing[2] ]
         }, self.parseBoolean(vals['debug']));

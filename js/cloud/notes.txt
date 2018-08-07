@@ -1,0 +1,61 @@
+e I/O
+
+Wednesday, August 1, 2018
+3:03 PM
+
+ GUI  (BISWEB_FILEUTIL) returns a HANDLE
+ Object uses the handle and bis_genericio code to get the data
+ Other complexity is as follows
+	 In Desktop mode/Command Line Mode/Cloud Mode/Local Fileserver
+		○ Get Filename
+		○ Perform save/load
+	 In Browser Mode
+		○ In Load -- 
+			§ Get Filename
+			§ Perform load
+		○ In Save
+			§ Create downloadable object
+			§ Get filename to download it to (at which point program loses control)
+
+
+ Bis_genericio ---  reads files from filename (node,electron), FileHandle (browser), URL (browser) -- TAKES INPUT a FILE HANDLE
+	 All I/O  -- call bis_genericio  read() and write() -- all user code that performs I/O should go through this calls
+	 
+
+	 Bis_GenericIO::Read
+		○ Checks if (url.responseFunction exists) -- if it does call this to do the work
+		○ Check if in node or electron read this as a file and assume you have a filename
+		○ Else (in Browser)
+			§ If (url.name exists) -- this is a fileobject, read it as such (from local disk)
+			§ Else treat this as a URL and essentially download it
+ Bisweb_dataobject
+	 Objects images,matrices,transformations   load and save functions which call bis_genericio read and write 
+	 Take FileHANDLE as parameter
+
+ Bisweb_fileutil (GUI) -- Create GUI Elements that create file dialogs and ultimately read/write files and returns a filename/file handle
+	 createFileMenuItem -- button in a menu
+	 createFileButton  -- button straight up
+	 Both of these have callbacks added using attachFileCallback
+	 attachFileCallback uses either electonFileCallback (ElectronMode) or webFileCallback (webMode)
+	 Electron File Callback is straight local file -- no cloud
+	 Complexity is in webFileCallback
+	
+	 ElectronFileCallback -- fileopts, callback
+		○ Request a file -- and then callback(filename)
+		○ Complication is fileopts.initialCallback which is called to set the initial filename
+	 webFileCallback
+		○ For Read 
+			§ Browser read returns a FileHandle
+			§ Dropbox,Google,OneDrive -- return a URL
+			§ For Server and AwsServer story is complicated (bis_genericio does not know how to handle these)
+				
+
+
+
+AWS
+WebFileCallback calls wrapInAuth('showFiles', callback)
+At the end of the wrote … callback(filehandle)
+
+Filehandle.responseFunction=function() {
+  Do loading and return a promise;
+}

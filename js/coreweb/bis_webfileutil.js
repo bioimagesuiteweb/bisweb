@@ -29,6 +29,11 @@ const webutil=require('bis_webutil');
 const bisweb_dropbox=require('bisweb_simpledropbox');
 const bisweb_onedrive=require('bisweb_simpleonedrive');
 const bisweb_googledrive=require('bisweb_drivemodule');
+const amazonaws=require('bisweb_awsmodule.js');
+const bisweb_awsmodule = new amazonaws();
+
+let bisweb_fileserver;
+
 //const genericio=require('bis_genericio');
 const userPreferences = require('bisweb_userpreferences.js');
 const bisdbase = require('bisweb_dbase');
@@ -40,6 +45,7 @@ const userPreferencesLoaded = userPreferences.webLoadUserPreferences(bisdbase);
 
 // Initial mode
 let fileMode='local';
+let fileInputElements= [];
 
 const webfileutils = {
 
@@ -54,61 +60,48 @@ const webfileutils = {
     },
     
     getModeList : function() {
-        let s=[ { value: "local", text: "Local FileSystem" }];
+        let s=[ 
+            { value: "local", text: "Local File System" }
+        ];
 
+        //localserver requires its HTML element to be present in the document
+        let localserver = $(document).find('bisweb-fileserver');
+        if (localserver[0])
+            s.push({ value : "server", text: "File Server"});
         if (dkey.length>1)
             s.push({ value: "dropbox", text: "Dropbox" });
         if (gkey.length>1) 
             s.push({ value: "googledrive", text: "Google Drive" });
         if (mkey.length>1) 
             s.push({ value: "onedrive", text: "Microsoft OneDrive" });
+        
+        //TODO: Does this need a key or something? I don't think so but would be nice if there was some comparable flag...
+        s.push({ value : 'amazonaws', text: 'Amazon S3'});
 
         return s;
     },
     
     setMode : function(m='') {
 
-        m=m || 'local';
-        if (m==="dropbox" && dkey!=="")
-            fileMode="dropbox";
-        else if (m==="googledrive" && gkey!=="")
-            fileMode="googledrive";
-        else if (m==="onedrive" && mkey!=="")
-            fileMode="onedrive";
-        else
-            fileMode="local";
+        switch(m) {
+            case 'dropbox' : if(dkey) { fileMode = 'dropbox'; } break;
+            case 'googledrive' : if (gkey) { fileMode = 'googledrive'; } break;
+            case 'onedrive' : if (mkey) { fileMode = 'onedrive'; } break;
+            case 'amazonaws' : fileMode = 'amazonaws'; break;
+            case 'server' : fileMode = 'server'; break;
+            default : fileMode = 'local';
+        }
 
         userPreferences.setItem('filesource',fileMode);
         userPreferences.storeUserPreferences();
     },
 
-    
-    /** function to create a hidden input type="file" button and add it to body
-     * @alias WebFileUtil.createHiddenInputFile
-     * @param {function} callback - callback to call
-     * @param {string} accept - List of file types to accept as a comma-separated string e.g. ".ljson,.land"
-     * @param {Boolean} attach - if true attach to body, else leave transient
-     * @returns {JQueryElement} 
-     */
-    createHiddenInputFile: function (accept, callback,attach=true) {
-
-        /*if { simpemode === false } {
-          return dosomethingelse(accept,callback);*/
-        
-        accept = accept || "";
-        if (accept === "NII")
-            accept = '.nii,.nii.gz,.gz,.tiff';
-
-        var loadelement = $('<input type="file" style="visibility: hidden;" accept="' + accept + '"/>');
-        if (attach)
-            $('body').append(loadelement);
-        
-        loadelement[0].addEventListener('change', function (e) {
-            e.stopPropagation();
-            e.preventDefault();
-            callback(e.target.files[0]);
-        });
-        return loadelement;
+    setFileServer : function(fileserverid) {
+        let id = fileserverid.substring(1);
+        let server = document.getElementById(id);
+        if (server) {
+            bisweb_fileserver = server;
+        }
     },
     
     /** electron file callback function
@@ -135,12 +128,15 @@ const webfileutils = {
             ];
         if (suffix === "DIRECTORY")
             fileopts.filters = "DIRECTORY";
+
+
+        
         
         if (fileopts.defaultpath==='') {
             if (fileopts.initialCallback)
                 fileopts.defaultpath=fileopts.initialCallback() || '';
         }
-            
+        
         
         fileopts.filters = fileopts.filters ||
             [{ name: 'All Files', extensions: ['*'] }];
@@ -183,40 +179,88 @@ const webfileutils = {
 
     /** web file callback function
      * @alias WebFileUtil.webFileCallback
-     * @param {object} opts - the callback options object
-     * @param {string} opts.title - if in file mode and web set the title of the file dialog
-     * @param {boolean} opts.save - if in file mode and web determine load or save
-     * @param {string} opts.defaultpath - if in file mode and web use this as original filename
-     * @param {string} opts.suffix - if in file mode and web use this to filter web style
+     * @param {object} fileopts - the callback options object
+     * @param {string} fileopts.title - if in file mode and web set the title of the file dialog
+     * @param {boolean} fileopts.save - if in file mode and web determine load or save
+     * @param {BisImage} fileopts.saveImage - the image to save. (Optional)
+     * @param {string} fileopts.defaultpath - if in file mode and web use this as original filename
+     * @param {string} fileopts.suffix - if in file mode and web use this to filter web style
+     * @param {string} fileopts.force - force file selection mode (e.g. 'local');
      * @param {function} callback - callback to call when done
      */
-    webFileCallback: function (fileopts, callback) {
+    webFileCallback: function (fileopts, callback = null) {
 
         let suffix = fileopts.suffix || '';
         if (suffix === "NII")
             suffix = '.nii,.nii.gz,.gz,.tiff';
-        
 
-        if (fileopts.save) {
-            callback({});
-            return;
+        if (suffix!=='') {
+            let s=suffix.split(",");
+            for (let i=0;i<s.length;i++) {
+                let a=s[i];
+                if (a.indexOf(".")!==0)
+                    s[i]="."+s[i];
+            }
+            suffix=s.join(",");
+        } else {
+            let flt=fileopts.filters || [];
+            if (flt.length>0) {
+                let extensions=[];
+                for (let i=0;i<flt.length;i++) {
+                    let s=flt[i].extensions;
+                    for (let j=0;j<s.length;j++)
+                        extensions.push("."+s[j]);
+                }
+                suffix=extensions.join(',');
+            }
         }
 
 
+        if (fileopts.save) {
+            //if the callback is specified presumably that's what should be called
+            console.log('opts', fileopts);
+
+            //otherwise try some default behaviors
+            if (fileMode==='dropbox') {
+                return bisweb_dropbox.pickWriteFile(suffix, fileopts.saveImage);
+            } 
+
+            if (fileMode === 'server') {
+                bisweb_fileserver.wrapInAuth('uploadfile', callback);
+                return;
+            }
+
+            if (fileMode==='amazonaws') {
+                bisweb_awsmodule.wrapInAuth('uploadfile', callback);
+                return;
+            }
+
+            if (fileMode==='local') {
+                callback({});
+                return;
+            }
+
+            console.log('could not find appropriate save function for file mode', fileMode);
+        }
+
+        let fmode=fileMode;
+        if (fileopts.force)
+            fmode=fileopts.force;
+        
         // -------- load -----------
         
-        if (fileMode==='dropbox') { 
+        if (fmode==='dropbox') { 
             fileopts.suffix=suffix;
             return bisweb_dropbox.pickReadFile(fileopts,callback);
         }
         
-        if (fileMode==='onedrive') { 
+        if (fmode==='onedrive') { 
             fileopts.suffix=suffix;
             return bisweb_onedrive.pickReadFile(fileopts,callback);
         }
         
         
-        if (fileMode==="googledrive") {
+        if (fmode==="googledrive") {
             bisweb_googledrive.create().then( () => {
                 bisweb_googledrive.pickReadFile("").then(
                     (obj) => {
@@ -228,17 +272,62 @@ const webfileutils = {
                              });
             return;
         }
+
+        if (fileMode==="amazonaws") {
+            bisweb_awsmodule.wrapInAuth('showfiles', callback);
+            return;
+        }
+
+        if (fileMode==="server") {
+            bisweb_fileserver.wrapInAuth('showfiles', callback);
+            return;
+        }
+
+
+        let nid=webutil.getuniqueid();
+        let loadelement = $(`<input type="file" style="visibility: hidden;" id="${nid}" accept="${suffix}"/>`);
+        for (let i=0;i<fileInputElements.length;i++)
+            fileInputElements[i].remove();
+        fileInputElements.push(loadelement);
         
-        
-        let loadelement = $('<input type="file" style="visibility: hidden;" accept="' + suffix + '" />');
         loadelement[0].addEventListener('change', function (f) {
-            f.stopPropagation();
-            f.preventDefault();
             callback(f.target.files[0]);
         });
+        $('body').append(loadelement);
         loadelement[0].click();
     },
 
+    /** Create File Callback 
+     * @alias WebFileUtil.attachFileCallback
+     * @param {Event} e -- the element to attach the callback to
+     * @param {Function} callback -- functiont to call when done
+     * @param {object} fileopts - the file dialog options object (in file style)
+     * @param {string}  fileopts.title  - in file: dialog title
+     * @param {boolean} fileopts.save -  in file determine load or save
+     * @param {string}  fileopts.defaultpath -  use this as original filename
+     * @param {string}  fileopts.filter - use this as filter (if in electron)
+     * @param {string}  fileopts.suffix - List of file types to accept as a comma-separated string e.g. ".ljson,.land" (simplified version filter)
+     */
+    genericFileCallback : function(e,callback,fileopts={}) {
+
+        fileopts = fileopts || {};
+        fileopts.save = fileopts.save || false;
+
+        if (e) {
+            e.stopPropagation();
+            e.preventDefault();
+        }
+                    
+        const that = this;
+
+        if (webutil.inElectronApp()) {
+            that.electronFileCallback(fileopts, callback);
+        } else {
+            setTimeout( () => {
+                that.webFileCallback(fileopts, callback);
+            },1);
+        }
+    },
 
     /** Create File Callback 
      * @alias WebFileUtil.attachFileCallback
@@ -246,6 +335,7 @@ const webfileutils = {
      * @param {object} fileopts - the file dialog options object (in file style)
      * @param {string}  fileopts.title  - in file: dialog title
      * @param {boolean} fileopts.save -  in file determine load or save
+     * @param {BisImage} fileopts.saveImage - the file to save (Optional)
      * @param {string}  fileopts.defaultpath -  use this as original filename
      * @param {string}  fileopts.filter - use this as filter (if in electron)
      * @param {string}  fileopts.suffix - List of file types to accept as a comma-separated string e.g. ".ljson,.land" (simplified version filter)
@@ -256,7 +346,7 @@ const webfileutils = {
         fileopts.save = fileopts.save || false;
         
         const that = this;
-        
+
         if (webutil.inElectronApp()) {
             
             button.click(function(e) {
@@ -267,6 +357,7 @@ const webfileutils = {
                 },1);
             });
         } else {
+
             button.click(function(e) {
                 setTimeout( () => {
                     e.stopPropagation();
@@ -277,7 +368,8 @@ const webfileutils = {
         }
     },
 
-    
+
+
     /** 
      * function that creates button using Jquery/Bootstrap (for styling) & a hidden
      * input type="file" element to load a file. Calls WebFileUtil.createbutton for most things
@@ -316,6 +408,7 @@ const webfileutils = {
      * @param {object} opts - the electron options object -- used if in electron
      * @param {string} opts.title - if in file mode and electron set the title of the file dialog
      * @param {boolean} opts.save - if in file mode and electron determine load or save
+     * @param {BisImage} opts.saveFile - file to save. 
      * @param {string} opts.defaultpath - if in file mode and electron use this as original filename
      * @param {string} opts.filter - if in file mode and electron use this to filter electron style
      * @param {string} css - styling info for link element
@@ -372,13 +465,25 @@ const webfileutils = {
 
     // ------------------
 
+    // TODO : CURRENTLY UNUSED -- DELETE? 
+    //-Zach
     cloudSave : function(blob,filename,callback=null) {
 
+        console.log('hello from cloud save');
         if (fileMode==='onedrive') {
             let objectURL = URL.createObjectURL(blob);
             bisweb_onedrive.pickWriteFile(objectURL,filename,callback);
             return true;
         }
+
+        if (fileMode==='server') {
+            bisweb_fileserver.uploadFileToServer(blob, filename, 
+                () => { console.log('upload to fileserver successful.'); }, 
+                () => { console.log('upload to fileserver failed.'); }
+            );
+        }
+
+       
         
         return false;
     },
@@ -391,7 +496,7 @@ const webfileutils = {
 
 
 userPreferencesLoaded.then(() => {
-    let f=userPreferences.getItem('filesource') || 'local';
+    let f=userPreferences.getItem('filesource') || fileMode;
     console.log('Initial File Source=',f);
     webfileutils.setMode(f);
 });

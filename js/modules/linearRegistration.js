@@ -68,7 +68,7 @@ class LinearRegistrationModule extends  BaseModule {
                     'intscale' : parseInt(vals.intscale),
                     'numbins' : parseInt(vals.numbins),
                     'levels' : parseInt(vals.levels),
-                    'smoothing' : parseFloat(vals.extrasmoothing),
+                    'smoothing' : parseFloat(vals.imagesmoothing),
                     'optimization' : baseutils.getOptimizationCode(vals.optimization),
                     'stepsize' : parseFloat(vals.stepsize),
                     'metric' : baseutils.getMetricCode(vals.metric),
@@ -81,7 +81,6 @@ class LinearRegistrationModule extends  BaseModule {
                     'return_vector' : true}, this.parseBoolean(vals.debug));
                 
                 this.outputs['output'] = matr;
-                
                 if (vals.doreslice)
                     this.outputs['resliced']=baseutils.resliceRegistrationOutput(biswrap,reference,target,this.outputs['output']);
                 else
@@ -91,9 +90,7 @@ class LinearRegistrationModule extends  BaseModule {
                 reject(e.stack);
             });
         });
-    }
 
-
-}
+}}
 
 module.exports = LinearRegistrationModule;

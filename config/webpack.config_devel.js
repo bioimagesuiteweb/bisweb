@@ -18,7 +18,9 @@
 "use strict";
 
 const base=require('./webpack.config.js');
-console.log('++++ Adding sourcemap generation');
 base.devtool="source-map";
+
+let output = (process.env.BISWEB_OUT) || "";
+console.log('++++ Adding source-maps',output);
 
 module.exports = base;

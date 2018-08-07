@@ -239,10 +239,10 @@ var createConsole=function() {
     state.console.setMenuBarVisibility(false);
     if (process.platform === 'darwin') 
         state.console.setMenu(null);
-
     
-    state.console.hide();
     state.console.loadURL(fullURL);
+    state.console.minimize();
+    state.console.hide();
     
     state.console.on('close',  function (e) {
         e.preventDefault();
@@ -458,5 +458,6 @@ ipcMain.on('arguments', function (event,arg) {
 
 });
 
+    
 
 

@@ -14,15 +14,24 @@
  limitations under the License.__
  
  ENDLICENSE -->
- 
+
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
 
-  <head>
-    
-    <title>BioImage Suite Orthogonal Viewer/Editor</title>
+<head>
+    <title>BioImage Suite SPECT Viewer Tool</title>
     <meta name="viewport" content="width=device-width, user-scalable=no">
+    <meta name="theme-color" content="rgb(28,45,64)">
+    <meta name="description" content="Yale BioImage Suite Medical Image
+                                      Analysis Software">
+    <meta name="keywords" content="Image Segmentation, Registration,
+                                   Visualization, fMRI, Connectivity, JS,
+                                   WebAssembly, NIH Brain Inititative">
+    <meta name="author" content="Xenophon Papademetris and Dustin Scheinost,
+                                 Dept of Radiology and Biomedical Imaging,
+                                 Yale School of Medicine">
+
     <link rel="icon" href="images/favicon.ico">
 
     <!-- begin webpack/gulp modifications -->
@@ -31,40 +40,41 @@
     <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_dark.css">
     <link rel="stylesheet" type="text/css"  href="../lib/css/bootstrap-colorselector.css">
     <link rel="stylesheet" type="text/css" href="biscommon.css">
+	  <link rel="stylesheet" href="../node_modules/jstree/dist/themes/default/style.min.css">
     <!-- endbuild -->
 
     <!-- all javascript files -->
     <!-- build:js -->
+    <script src="bis.js"></script>
     <script src="../build/web/webcomponents-lite.js"></script>
     <script src="../build/web/jquery.min.js"></script>
     <script src="../build/web/bootstrap.min.js"></script>
     <script src="../build/web/libbiswasm_wasm.js"></script>
     <script src="../build/web/bislib.js"></script>
+    
+    
     <!-- endbuild -->
     <!-- end webpack/gulp modifications -->
 
+
     <!-- begin stay as is -->
-    <link rel="stylesheet" type="text/css" href="treeview.css">
+    <link rel="stylesheet" type="text/css" href="spectviewer.css">
     <!-- end of stay as is -->
-
 </head>
-<body oncontextmenu="return false;" ondragstart="return false;" ondrop="return false;">
-
+<body>
 
   <bisweb-topmenubar   id="viewer_menubar"></bisweb-topmenubar> 
 
   <div id="viewerwidget">
-    
-    <bisweb-console id="bisconsole"></bisweb-console>
-    
+
     <bisweb-viewerlayoutelement
        id="viewer_layout"
        bis-sidewidth="300"
-       bis-coreopen="true"
-       bis-dualmode="1"
-       bis-defaulttext="">
+       bis-coreopen="false"
+       bis-wholescreen="1"
+       bis-defaulttext="  ">
     </bisweb-viewerlayoutelement>
-    
+
     <bisweb-colormapcontrollerelement id="viewer_cmap"></bisweb-colormapcontrollerelement>
     
     <bisweb-orthogonalviewer
@@ -72,56 +82,23 @@
        bis-layoutwidgetid="#viewer_layout"
        bis-colormapeditorid="#viewer_cmap">
     </bisweb-orthogonalviewer>
-
-    <bisweb-colormapcontrollerelement id="viewer_cmap2"></bisweb-colormapcontrollerelement>
-    
-    <bisweb-orthogonalviewer
-       id="viewer2"
-       bis-layoutwidgetid="#viewer_layout"
-       bis-colormapeditorid="#viewer_cmap2"
-       bis-otherviewer="#viewer">
-    </bisweb-orthogonalviewer>
-
-    <bisweb-simplealgorithmcontrollerelement
-        id="algoelement"
-        bis-matrixelementid="#matrixelement"
-        bis-transformelementid="#transformelement"
-        bis-viewerid="#viewer"
-        bis-viewerid2="#viewer2">
-    </bisweb-simplealgorithmcontrollerelement>
-
+      
     <bisweb-snapshotelement
-       bis-layoutwidgetid="#viewer_layout"
-       bis-dowhite="false"
-       bis-viewerid="#viewer2">
+      bis-layoutwidgetid="#viewer_layout"
+      bis-dowhite="false"
+      bis-viewerid="#viewer">
     </bisweb-snapshotelement>
 
-    <bisweb-modulemanager
-       id="modulemanager"
-       bis-mode="dual"
-       bis-algorithmcontrollerid="#algoelement">
-    </bisweb-modulemanager>
-    
-    <bisweb-viewinputsmodal
-        id="viewinputsmodal"
-        bis-algorithmcontrollerid="#algoelement"
-        bis-menubarid="#viewer_menubar">
-    </bisweb-viewinputsmodal>
+    <bisweb-console id="bisconsole"></bisweb-console>
 
-    <bisweb-treeviewer 
-        id="treeviewer"
-        bis-algorithmcontrollerid="#algoelement"
-        bis-menubarid="#viewer_menubar">
-    </bisweb-treeviewer>
-
-    <bisweb-viewerapplication
+    <bisweb-diffspectelement
        bis-menubarid="#viewer_menubar"
-       bis-modulemanagerid="#modulemanager"
+       bis-layoutwidgetid="#viewer_layout"
        bis-consoleid="#bisconsole"
-       bis-viewerid="#viewer"
-       bis-viewerid2="#viewer2">
-    </bisweb-viewerapplication>
-    
+       bis-viewerid="#viewer">
+    </bisweb-diffspectelement>
+
+
   </div>
 
   

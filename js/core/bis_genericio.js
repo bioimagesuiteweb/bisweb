@@ -712,6 +712,9 @@ var readbinarydata = function (url, loadedcallback, errorcallback) {
     return readbinarydatafromurl(url, loadedcallback, errorcallback);
 };
 
+/*
+
+
 // -------------------------------------------------------------------------------------------------
 
 /** Write data for electron Depending on environment

@@ -53,7 +53,7 @@ class nonlinearRegistration(bis_basemodule.baseModule):
                     'intscale' : vals['intscale'],
                     'numbins' : vals['numbins'],
                     'levels' : vals['levels'],
-                    'smoothing' : vals['extrasmoothing'],
+                    'smoothing' : vals['imagesmoothing'],
                     'optimization' : bis_baseutils.getOptimizationCode(vals['optimization']),
                     'stepsize' : vals['stepsize'],
                     'metric' : bis_baseutils.getMetricCode(vals['metric']),
@@ -73,20 +73,21 @@ class nonlinearRegistration(bis_basemodule.baseModule):
 
         try:
             self.outputs['output']=libbis.runNonLinearRegistrationWASM(reference, target, initial, {
-		    'cps' : vals['cps'],
-                    'lambda' : vals['lambda'],
-                    'intscale' : vals['intscale'],
-                    'numbins' : vals['numbins'],
-                    'levels' : vals['levels'],
-                    'smoothing' : vals['extrasmoothing'],
-                    'optimization' : bis_baseutils.getOptimizationCode(vals['optimization']),
-                    'stepsize' : vals['stepsize'],
-                    'debug' : self.parseBoolean(vals['debug']),
-                    'normalize' : self.parseBoolean(vals['norm']),
-                    'metric' : bis_baseutils.getMetricCode(vals['metric']),
-	            'steps' : vals['steps'],
-                    'iterations' : vals['iterations'],
-                    'resolution' : vals['resolution']}, self.parseBoolean(vals['debug']));
+		'cps' : vals['cps'],
+                'appendmode': self.parseBoolean(vals['append']),
+                'lambda' : vals['lambda'],
+                'intscale' : vals['intscale'],
+                'numbins' : vals['numbins'],
+                'levels' : vals['levels'],
+                'smoothing' : vals['imagesmoothing'],
+                'optimization' : bis_baseutils.getOptimizationCode(vals['optimization']),
+                'stepsize' : vals['stepsize'],
+                'debug' : self.parseBoolean(vals['debug']),
+                'normalize' : self.parseBoolean(vals['norm']),
+                'metric' : bis_baseutils.getMetricCode(vals['metric']),
+	        'steps' : vals['steps'],
+                'iterations' : vals['iterations'],
+                'resolution' : vals['resolution']}, self.parseBoolean(vals['debug']));
             
             if (self.parseBoolean(vals['doreslice'])==True):
                 self.outputs['resliced']=bis_baseutils.resliceRegistrationOutput(libbis,reference,

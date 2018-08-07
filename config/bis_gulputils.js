@@ -213,33 +213,51 @@ var createDateFile=function(datefile,hash='',version='') {
 var getWebpackCommand=function(source,internal,out,indir,minify,outdir,watch) {
 
     let extracmd="";
+    let join="/";
     if (internal) {
-        if (os.platform()==='win32')
+        if (os.platform()==='win32') {
             extracmd=`SET BISWEB_INTERNAL=${internal}& `;
-        else
+            outdir=outdir.replace(/\//g,'\\');
+            source=source.replace(/\//g,'\\');
+            join="\\";
+        } else {
             extracmd=`export BISWEB_INTERNAL=${internal}; `;
+        }
     }
 
+    if (watch || out==='bisweb-sw.js' )
+        minify=0;
+
+    let tmpout=out;
+    if (minify)
+        tmpout=tmpout+'_full.js';
+    
     if (os.platform()==='win32')
         extracmd+=`SET BISWEB_OUT=${out}&`;
     else
         extracmd+=`export BISWEB_OUT=${out}; `;
     
-    if (out !== 'index.js')
-        minify=0;
     
-    let cmd=extracmd+' webpack-cli --entry '+source+' --output-filename '+out+' --output-path '+outdir+' ';
+    
+    let cmd=extracmd+' webpack-cli --entry '+source+' --output-filename '+tmpout+' --output-path '+outdir+' --config config'+join+'webpack.config_devel.js';
+    
+    if (watch!==0)
+        cmd+=" --watch";
+    
+    if (minify) {
+        let ijob=outdir+tmpout;
+        let ojob=outdir+out;
 
-    if (minify>0) {
-        cmd=cmd+'--config config/webpack.config_uglify.js';
-    } else {
-        if (minify<0)
-            cmd=cmd+'--config config/webpack.config.js';
-        else
-            cmd=cmd+'--config config/webpack.config_devel.js';
-        if (watch!==0)
-            cmd+=" --watch";
+        if (os.platform()==='win32') {
+
+            //ijob=ijob.replace(/\//g,'\\');
+            //ojob=ojob.replace(/\//g,'\\');
+            cmd = cmd + ` & uglifyjs ${ijob} -c  -o ${ojob} & dir -p ${ijob} ${ojob}`;
+        } else {
+            cmd = cmd + ` ; uglifyjs ${ijob} -c  -o ${ojob} ; ls -lrth ${ijob} ${ojob}`;
+        }
     }
+    
 
     return cmd;
 };
@@ -326,7 +344,7 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
 
 
     let cmdlist = [];
-    let eversion ="2.0.0";
+    let eversion ="2.0.2";
     let cmdline='electron-packager '+outdir+' BioImageSuiteWeb --arch=x64 --electron-version '+eversion+' --out '+distdir+' --overwrite '+
         '--app-version '+version;
     let zipopts='-ry';

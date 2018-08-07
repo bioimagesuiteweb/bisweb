@@ -21,6 +21,10 @@
 const $=require('jquery');
 const webutil=require('bis_webutil');
 
+/** Only one modules can be open at a time. This is stored in globalOpenDialog
+ */
+let globalOpenDialog=null;
+
 /**
  * Non-Modal Dialog Class
  */
@@ -29,8 +33,10 @@ class BisWebDialogElement extends HTMLElement {
 
     constructor() {
         super();
+        this.name="";
         this.closecallback=null;
         this.dialog=null;
+
         this.widget=null;
         this.header=null;
         this.footer=null;
@@ -52,6 +58,7 @@ class BisWebDialogElement extends HTMLElement {
             topoffset : 0,
             firstmove : false,
         };
+
     }
 
     /** is dialog visible 
@@ -184,15 +191,45 @@ class BisWebDialogElement extends HTMLElement {
 
     /** Shows the dialog and disables any drag and drop elements while it is open */
     show() {
+
         if (this.dialog===null)
             return;
+        
+        let previous=null;
+        if (globalOpenDialog!==null)  {
+            previous=globalOpenDialog.dialog.dialog.css(['left','top']);
+            globalOpenDialog.hideDialog();
+        }
 
-        let a={ visibility: "visible" ,
+        if (previous!==null) {
+            this.dialog.css({'left' : previous.left,
+                             'top'  : previous.top
+                            });
+        } else {
+            let w=window.innerWidth;
+            let arr=this.dialog.css(['width','height' ]);
+            Object.keys(arr).forEach((key) => {
+                arr[key]=parseFloat(arr[key].replace(/px/g,''));
+            });
+            
+            let left=w-arr['width']-320;
+            if (left<10)
+                left=10;
+            let l=`${left}px`;
+            let top=60;
+            let t=`${top}px`;
+            this.dialog.css({ "left" : l, "top" : t});
+            
+            let a={ 
                 "top": `${this.dimensions.top}px`,
                 "left": `${this.dimensions.left}px`,
-              };
+            };
+            
+            this.dialog.css(a);
+        }
         
-        this.dialog.css(a);
+
+        globalOpenDialog=this;
         this.visible=true;
         let drag=$("bisweb-draganddropelement") || null;
         if (drag!==null)   {
@@ -200,10 +237,14 @@ class BisWebDialogElement extends HTMLElement {
                 drag[0].addBlock();
             }
         }
+        this.dialog.css({ "visibility": "visible" });
     }
 
     /** Hides the dialog and renables any drag and drop elements present */
     hide() {
+
+
+
         if (this.dialog===null)
             return;
         this.dialog.css({ "visibility": "hidden" });
@@ -214,6 +255,10 @@ class BisWebDialogElement extends HTMLElement {
                 drag[0].removeBlock();
             }
         }
+
+        if (globalOpenDialog===this)
+            globalOpenDialog=null;
+
     }
 
     /** Removes mouse events and hides */
@@ -251,6 +296,8 @@ class BisWebDialogElement extends HTMLElement {
             h=-h;
             grow=true;
         }
+
+        this.name=name;
         
         const self=this;
         this.dimensions.left = x || 100;
@@ -260,16 +307,21 @@ class BisWebDialogElement extends HTMLElement {
 
         var newid = webutil.createWithTemplate(webutil.getTemplates().bisdialog, $('body'));
         var div = $('#' + newid);
-        div.find('.modal-title').text(name);
 
+        this.headertext=div.find('.modal-title');
+        this.headertext.text(name);
         this.dialog=div.find('.modal-dialog');
         this.content=div.find('.modal-content');
-        this.widget=div.find('.modal-body');
-        this.footer=div.find('.modal-footer');
+        this.widgetbase=div.find('.modal-body');
+        this.footerbase=div.find('.modal-footer');
         this.header=div.find('.modal-header');
+        this.headerbase=this.header.parent();
         this.close=div.find('.btn-default');
-        this.secondclose=div.find('.close');
+        this.secondclose=div.find('.bistoggle');
 
+        this.widget = webutil.creatediv({ parent: this.widgetbase });
+        this.footer = webutil.creatediv({ parent: this.footerbase });
+        
         webutil.disableDrag(this.header,true);
         webutil.disableDrag(this.footer,true);
         webutil.disableDrag(this.widget,true);
@@ -288,9 +340,9 @@ class BisWebDialogElement extends HTMLElement {
         if (!grow) {
             this.dialog.css({ "height": `${this.dimensions.height}px` });
             this.content.css({ "height" : "100%" });
-            this.widget.css({ "height" : `${this.dimensions.height-120}px`, "overflow-y": "auto"  });
+            this.widgetbase.css({ "height" : `${this.dimensions.height-120}px`, "overflow-y": "auto"  });
         } else {
-            this.widget.css({ "max-height" : `${this.dimensions.height}px`, "overflow-y": "auto"  });
+            this.widgetbase.css({ "max-height" : `${this.dimensions.height}px`, "overflow-y": "auto"  });
         }
         
         this.footer.css({
@@ -321,6 +373,7 @@ class BisWebDialogElement extends HTMLElement {
         if (motion)
             this.bindMouseEvents();
     }
+    
 }
 
 

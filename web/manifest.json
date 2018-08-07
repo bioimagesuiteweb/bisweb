@@ -1,7 +1,7 @@
 {
     "name": "Yale BioImage Suite Web",
     "description": "This is the BioImage Suite Web Medical Image Analysis Suite -- see bisweb.yale.edu",
-    "short_name": "BioImage Suite Web",
+    "short_name": "BIS Web",
     "theme_color": "#375a7f",
     "background_color": "#375a7f",
     "display": "standalone",

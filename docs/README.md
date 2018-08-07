@@ -110,11 +110,11 @@ If it returns a descriptive answer, e.g. ``v8.9.0``, then Node is correctly inst
 
 Once both Git and Node are set up, install the rest of the tools as follows: on MacOS or Linux open a terminal and type
 
-    sudo npm install -g gulp mocha jsdoc jshint webpack webpack-cli
+    sudo npm install -g gulp mocha jsdoc jshint webpack webpack-cli uglify-es eslint
 
 or on Windows type
 
-    npm install -g gulp mocha jsdoc jshint webpack webpack-cli
+    npm install -g gulp mocha jsdoc jshint webpack webpack-cli uglify-es
 
 This will install the core
 tools. Please note that the '-g' flag stands for 'global', which means these

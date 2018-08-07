@@ -116,7 +116,8 @@ if (output !== "webworkermain.js") {
         watchOptions: {
             aggregateTimeout: 300,
             poll: 1000
-        }
+        }, plugins : [
+        ]
     };
 }
 

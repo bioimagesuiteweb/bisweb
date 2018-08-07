@@ -193,7 +193,7 @@ def processTestResult(toolname,resultFile,test_target,test_type,test_threshold,t
         comparison="maxabs";
 
     if (test_type=='image'):
-        if (comparison != "maxabs"):
+        if (comparison != "maxabs" and comparison!= "ssd"):
             comparison="cc";
 
     if (test_type=='matrix' or test_type=="matrixtransform" or test_type=="gridtransform"):
@@ -215,6 +215,8 @@ def processTestResult(toolname,resultFile,test_target,test_type,test_threshold,t
                 if (comparison=='cc'):
                     diff=-computeCC(out.get_data(),gold.get_data());
                     threshold=-threshold;
+                elif comparison=='ssd':
+                    diff=computeNorm2(out.get_data(),gold.get_data());
                 else:
                     diff=maxabsdiff(gold.get_data(),out.get_data());
                 return printResult(diff,threshold,toolname,test_type);

@@ -81,7 +81,7 @@ var scan_header_file = function(onames) {
                 let end=line.indexOf("}");
                 let str=line.substr(begin+1,end-begin-2).trim();
                 outorig.push(str);
-                let out=str.trim().replace(/ /g,'').replace(/\[/g,'').replace(/]/g,'').replace(/\'/g,'');
+                let out=str.trim().replace(/ /g,'').replace(/\[/g,'').replace(/]/g,'').replace(/'/g,'');
                 outdefs.push(out);
 
                 let ip=i;
@@ -150,13 +150,25 @@ var initialize=function(binary=null) {
             let d="";
             if (mod.bisdate)
                 d="(" + mod.bisdate +")";
+            d=d+" (memory size="+Module['wasmMemory'].buffer.byteLength/(1024*1024)+" MB)";
             if (Module._uses_gpl())
-                console.log('++++ Web Assembly code '+d+' loaded (has GPL plugin. See https://github.com/bioimagesuiteweb/gplcppcode)');
+                console.log('++++ Web Assembly code loaded '+d+', (has GPL plugin. See https://github.com/bioimagesuiteweb/gplcppcode)');
+            else
+                console.log('++++ Web Assembly code '+d);
         });
     }
     return ModulePromise;
 };
 
+var reinitialize=function() {
+
+    if (Module!==0) {
+        Module._delete_all_memory();
+        Module=0;
+        ModulePromise=0;
+    }
+    return initialize();
+}
 
 var get_module=function() {
     return Module;
@@ -220,6 +232,7 @@ var create_export_object = function(funlist,mode) {
         outtext+='\n  //-------------------------------------------------------------\n';
         outtext+='\n  const outputobj = { \n';
         outtext+="    initialize : initialize,\n";
+        outtext+="    reinitialize : reinitialize,\n";
         outtext+="    get_module : get_module,\n";
         outtext+="    get_date   : get_date,\n";
         for (let i=0;i<funlist.length;i++) {

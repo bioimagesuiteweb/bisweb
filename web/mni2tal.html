@@ -1,24 +1,24 @@
 <!---  LICENSE
- 
- _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
- 
- BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
- 
- - you may not use this software except in compliance with the License.
- - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
- 
- __Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.__
- 
- ENDLICENSE -->
+    
+    _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+    
+    BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+    
+    - you may not use this software except in compliance with the License.
+    - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+    
+    __Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.__
+    
+    ENDLICENSE -->
 
 <!DOCTYPE html>
 
 <html lang="en">
-<head>
+  <head>
     <meta charset="utf-8">
     <title>BioImage Suite MNI<->TAL</title>
     <meta name="viewport" content="width=device-width, user-scalable=no">
@@ -54,19 +54,119 @@
     <!-- begin stay as is -->
     <link rel="stylesheet" href="mni2tal.css">
     <!-- end stay as is -->
-</head>
-<body oncontextmenu="return false;" ondragstart="return false;" ondrop="return false;">
-  
-  <bisweb-topmenubar
-     bis-content="<H3 style='margin-left:20px'>MNI<->Talairach with Brodmann Areas (1.1)</H3>">
-  </bisweb-topmenubar>
-  
-  <bisweb-viewerwidget bis-margin="60px">
-    <bisweb-mni2tal></bisweb-mni2tal>
-  </bisweb-viewerwidget>
+  </head>
+  <body oncontextmenu="return false;" ondragstart="return false;" ondrop="return false;">
 
+    <div class="btop"><span id="blogo"></span><b>MNI &larr;&rarr; Talairach Converter with Brodmann Areas (1.3)</B></div>
 
+    <div id="tempviewer"> Loading Data</div>
+    
+    <div id="viewer">
+      <div id="topleft">
+        <input type="range" id="ycontrols" min="0" max="216" class="celement">
+        <canvas id="yviewer" class="celement"></canvas>
+        <canvas id="ylines" class="celement"></canvas>
+      </div>
+      <div id="topright">
+        <input type="range" id="xcontrols" min="0" max="180" class="celement">
+        <canvas id="xviewer" class="celement"></canvas>
+        <canvas id="xlines" class="celement"></canvas>
+      </div>
+      
+      <div id="bottomleft">
+        <input type="range" id="zcontrols" min="0" max="180" class="celement">
+        <canvas id="zviewer" class="celement"></canvas>
+        <canvas id="zlines" class="celement"></canvas>
+      </div>
+        
+      <div id="bottomright">
 
-  <bisweb-botmenubar></bisweb-botmenubar>
-</body>
+        <div class="dataframe" >
+          <div class="xcol-sm-2"></div>
+          <div class="xcol-sm-10" id="showlabel" class="labelid2">
+            <input type="checkbox" id="showoverlaybutton" value=false>
+            <label>Show Brodmann areas overlay</label>
+          </div>
+        </div>
+        
+        <div class="dataframe">
+          <div class="xcol-sm-2">
+            <label class="labelid" id="mnilabel">MNI:</label>
+          </div>
+          <div class="xcol-sm-7">
+            <input type="number" class="numberid" id="mnix" value="0"
+                   min="-90" max="90" step="1">
+            <input type="number" class="numberid" id="mniy" value="0"
+                   min="-90" max="90" step="1">
+            <input type="number" class="numberid" id="mniz" value="0"
+                   min="-72" max="108" step="1">
+          </div>
+          <div class="xcol-sm-1"></div>
+          <div class="xcol-sm-3">
+            <button type="button" class="buttonid" id="mnigo">Go</button>
+          </div>
+        </div>
+        
+        <div class="dataframe">
+          <div class="xcol-sm-2">
+            <label  class="labelid" id="talabel">TAL:</label>
+          </div>
+          <div class="xcol-sm-7">
+            <input type="number" class="numberid" id="talx" value="0" min="-90" max="90" step="1">
+            <input type="number" class="numberid" id="taly" value="0" min="-90" max="126" step="1">
+            <input type="number" class="numberid" id="talz" value="0" min="-72" max="108" step="1">
+          </div>
+          <div class="xcol-sm-1"></div>
+          <div class="xcol-sm-3">
+            <button type="button" class="buttonid" id="talgo">Go</button>
+          </div>
+        </div>
+        
+        <div id="baframe" class="dataframe">
+          <div class="xcol-sm-2">Area:</div>
+          <div class="xcol-sm-7">
+            <select  id="baselectbox"></select>
+          </div>
+          <div class="xcol-sm-1"></div>
+          <div class="xcol-sm-3">
+            <button type="button" class="buttonid" id="resetbutton">Reset</button>
+          </div>
+        </div>
+        
+        <div id="batchframe" class="dataframe">
+          <div class="xcol-sm-1"></div>
+          <div class="xcol-sm-1"></div>
+          <div class="xcol-sm-5">
+            <button type="button" class="buttonid" id="batch2">TAL&rarr;MNI
+              Batch Convert</button>
+          </div>
+          <div class="xcol-sm-1"></div>
+          <div class="xcol-sm-1"></div>
+          <div class="xcol-sm-5">
+            <button type="button" class="buttonid" id="batch">MNI&rarr;TAL Batch Convert</button>
+          </div>
+        </div>
+        
+        
+        <div id="aboutframe" class="dataframe>
+          <div class="xcol-sm-12">
+            <details id="detailsframe"><summary id="sumlabel"><B>About this application</B></summary>
+              <p>This application consists of components of the 
+                <a href="http://www.bioimagesuite.org" target="_newwindow">Yale BioImage Suite Package</a>. The MNI to Talairach mapping is from 
+                <a href="http://www.ncbi.nlm.nih.gov/pmc/articles/PMC2603575/" target="_newwindow">Lacadie et al. NeuroImage 2008</a>.
+                The Brodmann area definitions are from the following abstract: C.M. Lacadie, R. K. Fulbright, J. Arora, 
+                R.T.Constable, and X. Papademetris. <EM>Brodmann Areas defined in MNI space using a new Tracing Tool in BioImage Suite</EM>.
+                Human Brain Mapping, 2008.
+                
+              <p>This application works best in <a href="http://www.google.com/chrome" target="_newwindow">Chrome</a> or Safari. 
+                (c) Xenios Papademetris, Yale University, 2014-8. </details>
+            
+          </div>
+        </div>
+      </div>
+    </div>
+    <bisweb-mni2tal>    </bisweb-mni2tal>
+    <bisweb-botmenubar></bisweb-botmenubar>
+
+  </body>
 </html>

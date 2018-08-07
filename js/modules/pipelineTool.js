@@ -125,7 +125,7 @@ let makePipeline = function(filename, location) {
                     }
 
                     if (parsedFile.variables[j].name === variableName) {
-                        let variable = parsedFile.variables[j];
+                        //let variable = parsedFile.variables[j];
                         
                         //a variable with its files specified should be added to the dictionary of expanded variables
                         //the fact that its files are present already also indicates that it is an input 
@@ -276,14 +276,14 @@ let getNextASCIIChar = function (a) {
     return String.fromCharCode(ASCIICode + 1);
 };
 
-let getFileExtension = function (type) {
+/*let getFileExtension = function (type) {
     switch (type) {
         case 'image': return '.nii.gz';
         case 'matrix': return '.matr';
         case 'transform':
         case 'transformation': return '.grd';
     }
-};
+};*/
 
 
 module.exports = {

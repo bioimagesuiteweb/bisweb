@@ -154,6 +154,8 @@ class BaseViewerElement extends HTMLElement {
 
         if (val!==undefined) {
             data.playing=val;
+        } else {
+            this.internal.play_movie_controller.updateDisplay();
         }
 
         
@@ -165,6 +167,8 @@ class BaseViewerElement extends HTMLElement {
         let delay=1000.0/data.rate;
         this.setframe(this.getframe()+1);
 
+
+        
         const self=this;
         setTimeout(function() { self.playStopMovie();},delay);
     }
@@ -723,25 +727,13 @@ class BaseViewerElement extends HTMLElement {
     }
 
     // -----------------------------------------------------------------------------
-    //  Create Tool Holder
-    // -----------------------------------------------------------------------------
-    /** create a tool widget and add it to right pane
-     * @param {string} name - title of tool
-     * @param {boolean} open - if true panel is created open
-     * @returns {JQueryElement} element to create new tool in
-     */
-    createToolWidget(name,open) {
-        return this.internal.layoutcontroller.createToolWidget(name,open);
-    }
-    
-    // -----------------------------------------------------------------------------
     //  finalize tools
     // -----------------------------------------------------------------------------
     /** finalizes the tool layout
      * @returns {number} -- result of collapse operation
      */
     finalizeTools() {
-        return this.internal.layoutcontroller.getsidebar().collapse();
+        return this.internal.layoutcontroller.getdockbar().collapse();
     }
     
     /** collapses the viewer controls tab
@@ -987,6 +979,14 @@ class BaseViewerElement extends HTMLElement {
             this.setElementState(this.internal.saveState);
         }
     }
+
+    /** getlayoutcontroller 
+        @returns {Object} the layout controller
+    */
+    getLayoutController() {
+        return this.internal.layoutcontroller;
+    }
+    
 
 }
 

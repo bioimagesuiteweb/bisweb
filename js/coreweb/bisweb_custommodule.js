@@ -24,41 +24,49 @@ const BiswebImage = require('bisweb_image.js');
 const $ = require('jquery');
 const bootbox = require('bootbox');
 const bisgenericio=require("bis_genericio");
+const BisWebPanel = require('bisweb_panel.js');
+
 
 /**
  * @namespace bisWebCustomModule
  */
-
-/** only one module may be open at a time. When a new one is opened, the current one is closed
- * This is stored in globalOpenModule 
- */
-let globalOpenModule=null;
-
+let ModuleList={};
 
 /**
  * Creates a custom module and adds it to the frame as a child of parent. 
- * Custom Module Class. 
+ *
+ *
+
  * @alias bisWebCustomModule.createCustom
- * @param {Node} parent - DOM Node to append the custom module frame to
- * @param {bisweb_algorithm} algorithmcontroller-  Algorithm controller associated with the viewers on the page
+ * @param {LayoutController} layoutcontroller - Master Controller
  * @param {Object} mod - Object containing a module that specifies how it should be displayed and run.
  * @param {object} opts - the options object 
  * @param {Number} opts.numViewers - Number of Image Viewers attached
+ * @param {String} opts.name - Name of the panel / panel (if set)
+ * @param {Boolean} opts.dual - If true allow dock and side bar (default false)
  */
+
 class CustomModule {
 
-    constructor(baseframe, mod, algocontroller, opts = {}) {
+    constructor(layoutcontroller, mod, algocontroller, opts = {}) {
 
         // Check Input Params
         if (opts.numViewers !== 0)
             opts.numViewers = opts.numViewers || 1;
 
+        if (opts.showfirsttime!==false)
+            opts.showfirsttime=true;
+        
         // Initialize
         this.module = mod;
         this.algocontroller = algocontroller;
         this.moduleOptions = opts;
         this.description = this.module.getDescription();
-        
+
+        // Docking Options
+        this.dockWidget = null;
+        this.layoutcontroller=null;
+
         // Parameters
         this.dirtyInputs = true;
 
@@ -73,99 +81,54 @@ class CustomModule {
         this.parameterControllers = null;
         this.inputControllers = {};
 
-        let name = this.description.dialogname || this.description.name;
+        this.name = opts.name || this.description.dialogname || this.description.name;
+        this.dual = opts.dual || false;
+        
+        // Three states
 
-        const self=this;
-        if (baseframe===null) {
-            this.dialog=webutil.createdialog(name,300,-500,100,100,500);
-            this.dialog.removeCloseButton();
-            this.dialog.setCloseCallback(function() { self.hideDialog(); });
-            this.basewidget=this.dialog.widget;
-            this.footer=this.dialog.footer;
-            this.basewidget.css({ "background-color" : "#333333" });
+        this.panel=new BisWebPanel(layoutcontroller,{
+            name : this.name,
+            width : 250,
+            hasfooter : false,
+            dual : this.dual,
+        });
 
-        } else {
-            baseframe=$(baseframe);
-            this.basewidget = webutil.creatediv({ parent: baseframe });
-            this.dialog=null;
-            this.footer=this.basewidget;
-            let placeholder = webutil.creatediv({ parent: this.basewidget });
-            placeholder[0].innerHTML = `this element ${name} will load once data is available`;
-        }
-
+        this.basewidget=webutil.creatediv({  parent: this.panel.getWidget(),
+                                             css : {
+                                                 'padding-top' : '10px',
+                                                 'padding-left' : '2px'
+                                             }
+                                          });
+        this.footer=webutil.creatediv({  parent: this.panel.getWidget(),
+                                         css : {
+                                             'padding-top' : '20px',
+                                             'padding-left' : '2px'
+                                         }
+                                      });
+        ModuleList[this.name]=this;
         this.threadmanager = $("bisweb-webworkercontroller")[0] || null;
     }
 
-    /** Returns the current dialog object
-     * @returns {JQueryElement} - the current dialog
+    /** Returns the current panel object
+     * @returns {JQueryElement} - the current panel
      */
-    getDialog() {
-        return this.dialog;
+    getPanel() {
+        return this.panel;
     }
 
-    /** shows the current dialog */
-    showDialog() {
+    /** shows the current panel */
+    show() {
 
-        if (!this.dialog)
+        if (!this.panel) {
+            console.log('No panel');
             return;
-
-        let previous=null;
-        
-        if (globalOpenModule!==null)  {
-            previous=globalOpenModule.dialog.dialog.css(['left','top']);
-            globalOpenModule.hideDialog();
         }
 
-            
-        
         this.dirtyInputs = true;
         this.createOrUpdateGUI();
-
-        if (this.dialog.modal) {
-            this.dialog.modal('show');
-        } else {
-            this.dialog.show();
-            if (previous!==null) {
-                this.dialog.dialog.css({'left' : previous.left,
-                                        'top'  : previous.top
-                                       });
-            } else {
-                
-                let w=window.innerWidth;
-                //let h=window.innerHeight;
-                
-                let arr=this.dialog.dialog.css(['width','height' ]);
-                Object.keys(arr).forEach((key) => {
-                    arr[key]=parseFloat(arr[key].replace(/px/g,''));
-                });
-                
-                let left=w-arr['width']-320;
-                if (left<10)
-                    left=10;
-                let l=`${left}px`;
-                let top=60;
-                let t=`${top}px`;
-                this.dialog.dialog.css({ "left" : l, "top" : t});
-            }
-        }
-        globalOpenModule=this;
+        this.panel.show();
     }
-
-    /** hides the current dialog */
-    hideDialog() {
-
-        if (!this.dialog)
-            return;
-
-        if (this.dialog.modal)
-            this.dialog.modal('hide');
-        else
-            this.dialog.hide();
-
-        if (globalOpenModule===this)
-            globalOpenModule=null;
-    }
-
+    
     /** returns the current module description 
      * @returns {Dictionary} - the current module description with low/high ranges updated
      */
@@ -265,7 +228,7 @@ class CustomModule {
      * This updates the module GUI given the current set of Input Objects
      */
     updateModuleGUIFromInputObjects() {
-        
+
         let inputelements = this.getCurrentInputObjects();
         this.description = this.module.updateOnChangedInput(inputelements, this.parameterControllers, this.guiVars);
 
@@ -381,27 +344,24 @@ class CustomModule {
             this.guiVars = generatedContent.guiVars;
             this.parameterControllers = generatedContent.controllers;
             
-            let frame = $(this.basewidget);
-            let oldcolor = frame.css('backgroundColor');
             
             let enableUI = ((status = false) => {
 
                 webutil.enablebutton(generatedContent.runbutton, status);
                 webutil.enablebutton(generatedContent.undobutton, status);
                 webutil.enablebutton(generatedContent.redobutton, status);
-                
-                if (status)
-                    frame.css({ 'background-color': oldcolor });
-                else
-                    frame.css({ 'background-color': webutil.getactivecolor() });
             });
 
 
             generatedContent.runbutton[0].addEventListener("click", (e) => {
                 e.preventDefault();
                 enableUI(false);
+                this.panel.makeActive(true);
+                webutil.createAlert('Invoking Module '+self.module.name,'progress',10,100000);
                 setTimeout(() => {
                     this.executeModule().then(() => {
+                        this.panel.makeActive(false);
+                        $('.alert-success').remove();
                         enableUI(true);
                     }).catch((e) => {
                         if (e.stack)
@@ -600,13 +560,24 @@ let createCustom = function (parent, algorithmcontroller, mod, opts = {}) {
     return new CustomModule(parent, mod, algorithmcontroller, opts);
 };
 
-let getOpenModule=function() {
-    return globalOpenModule;
+/** Update open Modules */
+let updateModules = function() {
+
+    let panels=BisWebPanel.getActivePanels();
+    for (let i=0;i<panels.length;i++) {
+        if (panels[i]) {
+            let mod=ModuleList[panels[i].options.name];
+            if (mod) {
+                mod.createOrUpdateGUI();
+            }
+        }
+    }
 };
+
 
 module.exports = {
     createCustom: createCustom,
-    getOpenModule: getOpenModule,
+    updateModules : updateModules
 };
 
 

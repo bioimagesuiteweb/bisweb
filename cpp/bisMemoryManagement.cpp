@@ -177,7 +177,30 @@ namespace bisMemoryManagement {
 
     bisObject::print_memory_map();
   }
-  
+
+  void delete_all() {
+    std::map<long, long>::iterator it;
+
+    if (memory_map.size()==0)
+      {
+        return;
+      }
+
+    for (int pass=0;pass<=1;pass++) {
+      
+      for ( it = memory_map.begin(); it != memory_map.end(); it++ )
+        {
+          unsigned char* pointer=(unsigned char*)it->first;
+          delete [] pointer;
+        }
+
+      memory_map.clear();
+      memory_map_name.clear();
+      memory_map_owner.clear();
+    }
+    return;
+  }
+
 
   void copy_memory(unsigned char* output,unsigned char* input,int length) {
 

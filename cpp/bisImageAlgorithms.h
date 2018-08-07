@@ -267,14 +267,13 @@ namespace bisImageAlgorithms {
    * @param intscale used to compute the maximum value of the normalized image
    * @param frame used to specify the frame to extract for 4D input images
    * @param name is the name of the output image
-   * @param xform used as an initial transformation for the resampling operation
    * @param debug if > 0 print debug statements
    * @returns the single frame, smoothed, resampled and normalized image
    */
   template<class T> std::unique_ptr<bisSimpleImage<short> >  prepareImageForRegistration(bisSimpleImage<T>* input,
 											 int numbins=64,int normalize=1,
 											 float resolution_factor=1.0,float smoothing=0.0,int intscale=10,
-											 int frame=0,std::string name="",bisAbstractTransformation* xform=0,
+											 int frame=0,std::string name="",
 											 int debug=1);
 
 
@@ -302,12 +301,15 @@ namespace bisImageAlgorithms {
    * @param input the input image
    * @param threshold the absolute value threshold at which to threshold
    * @param oneconnected if true use 6 neighbors else 26
+   * @param clustersizethreshold the minimum cluster size (if 0 return all clusters)
    * @param cluster_number_output the output image with values equal to the cluster number of zero
    * @param clusters a vector storing the size of each cluster
    * @param frame the frame to use in 4D images
    * @param component the component to use in 4D/5D images
    * @returns the maximum cluster size*/
-  template<class T> int createClusterNumberImage(bisSimpleImage<T>* input,float threshold,int oneconnected,
+  template<class T> int createClusterNumberImage(bisSimpleImage<T>* input,
+                                                 float threshold,int oneconnected,
+                                                 int clustersizethreshold,
 						 bisSimpleImage<short>* cluster_number_output,
 						 std::vector<int>& clusters,int frame,int component);
 
@@ -321,7 +323,9 @@ namespace bisImageAlgorithms {
    * @param frame the frame to use in 4D images
    * @param component the component to use in 4D/5D images
    * @returns the thresholded and clustered image*/
-  template<class T> std::unique_ptr<bisSimpleImage<T> > clusterFilter(bisSimpleImage<T>* input,int clustersizethreshold,float threshold,
+  template<class T> std::unique_ptr<bisSimpleImage<T> > clusterFilter(bisSimpleImage<T>* input,
+                                                                      int clustersizethreshold,
+                                                                      float threshold,
 								      int oneconnected,
 								      int frame,int component);
     

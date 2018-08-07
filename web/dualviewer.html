@@ -66,7 +66,7 @@
     
     <bisweb-viewerlayoutelement
        id="viewer_layout"
-       bis-sidewidth="300"
+       bis-dockwidth="300"
        bis-coreopen="true"
        bis-dualmode="1"
        bis-defaulttext="">
@@ -113,13 +113,14 @@
     </bisweb-simplealgorithmcontrollerelement>
 
     <bisweb-modulemanager
-       id="modulemanager"
-       bis-mode="dual"
-       bis-algorithmcontrollerid="#algoelement">
+      id="modulemanager"
+      bis-mode="dual"
+      bis-layoutwidgetid="#viewer_layout"
+      bis-algorithmcontrollerid="#algoelement">
     </bisweb-modulemanager>
     
 
-    <bisweb-console id="bisconsole"></bisweb-console>
+<!--    <bisweb-console id="bisconsole"></bisweb-console> -->
 
     <bisweb-viewerapplication
        bis-menubarid="#viewer_menubar"

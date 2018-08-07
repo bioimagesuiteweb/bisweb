@@ -30,8 +30,6 @@
 const program=require('commander');
 const genericio=require('../js/core/bis_genericio.js');
 const fs=require('fs');
-const bisdate=require('../build/wasm/bisdate.js');
-
 
 
 var help = function() {
@@ -51,6 +49,38 @@ if (program.output===null || program.input===null) {
     process.exit();
 }
 
+var getTime=function(nobracket=0) {
+    //    http://stackoverflow.com/questions/7357734/how-do-i-get-the-time-of-day-in-javascript-node-js
+
+    var date = new Date();
+
+    var hour = date.getHours();
+    hour = (hour < 10 ? "0" : "") + hour;
+
+    var min  = date.getMinutes();
+    min = (min < 10 ? "0" : "") + min;
+
+    var sec  = date.getSeconds();
+    sec = (sec < 10 ? "0" : "") + sec;
+
+    if (nobracket===0)
+        return  "[" + hour + ":" + min + ":" + sec +"]";
+    return  hour + ":" + min + ":" + sec;
+};
+
+var getDate=function(sep="_") {
+    //    http://stackoverflow.com/questions/7357734/how-do-i-get-the-time-of-day-in-javascript-node-js
+
+    var date = new Date();
+    var year = date.getFullYear();
+    var month = date.getMonth() + 1;
+    month = (month < 10 ? "0" : "") + month;
+    var day  = date.getDate();
+    day = (day < 10 ? "0" : "") + day;
+    return  year+sep+month+sep+day;
+};
+
+
 console.log('++++ Raw Binary WASM Filename=',program.input);
 let d=null;
 try {
@@ -66,12 +96,15 @@ let str=genericio.tozbase64(arr);
 
 //    console.log('++++ BisWASM loaded as zbase-64 string, length=',biswebpack.length);
 
+let a=getDate("/");
+let b=getTime(1);
+
 let output_text=`
 
 
 (function () {
 
-    const biswebpack= { binary: "${str}", date : "${bisdate.date}, ${bisdate.time}" };
+    const biswebpack= { binary: "${str}", date : "${a}, ${b}" };
 
     if (typeof module !== "undefined" && module.exports) {
         module.exports = biswebpack;

@@ -92,6 +92,19 @@ class OrthogonalViewerElement extends BaseViewerElement {
         this.internal.slices=[ null,null,null,null ];
         this.internal.overlayslices=[ null,null,null,null ];
         this.internal.moviefolder=null;
+        this.internal.arrowbuttons=[null,null,
+                                    null,null,
+                                    null,null,
+                                    null,null,null,null];
+
+        this.internal.midline=null;
+        this.internal.midline2=null;
+        this.internal.midlinemessage=null;
+        this.internal.midlinepresent=false;
+        this.internal.midlinedata = {
+            left : -1,
+            origx: -1,
+        };
         this.internal.displaymodes=null;
         this.setObjectMapFunction=null;
     }
@@ -386,6 +399,292 @@ class OrthogonalViewerElement extends BaseViewerElement {
         var mm=this.getmmcoordinates();
         this.updateMouseObservers(mm,plane,mousestate);
     }
+
+    /** create arrow buttons
+     * @param {JQueryWidget} base - the widget to add these too 
+     */
+    createarrowbuttons(base,fontsize) {
+
+        if (this.internal.simplemode)
+            return fontsize;
+
+        let fn=Math.round(fontsize*2);
+        if (fn>30)
+            fn=30;
+        else if (fn<20)
+            fn=20;
+
+        if (this.internal.arrowbuttons[0]!==null) {
+            for (let ind=0;ind<=9;ind++) {
+                this.internal.arrowbuttons[ind].css({'font-size': `${fn}px`});
+            }
+            return fn;
+        }
+        const self=this;
+
+        let symbols=[ 'glyphicon glyphicon-chevron-left',
+                      'glyphicon glyphicon-pause',
+                      'glyphicon glyphicon-play',
+                      'glyphicon glyphicon-chevron-right'
+                    ];
+        
+
+        let arrowcallback=function(e) {
+            let elem=$(e.target);
+            elem.css({'background-color':'#000000'});
+
+            let index=parseInt(elem.attr('index')) || 0;
+            if (index<=6 || index===9) {
+                
+                let increase=1;
+                if (index%2===0)
+                    increase=-1;
+                let md=3;
+                if (index<6) 
+                    md=Math.floor(index/2);
+                
+                const data = self.internal.datgui.data;
+                if (md===0) {
+                    data.xcoord+=increase;
+                } else if (md===1) {
+                    data.ycoord+=increase;
+                } else if (md===2) {
+                    data.zcoord+=increase;
+                } else if (md===3) { 
+                    data.tcoord+=increase;
+                    if (data.tcoord<0)
+                        data.tcoord=self.internal.imagedim[3]-1;
+                    else if (data.tcoord>=self.internal.imagedim[3])
+                        data.tcoord=0;
+                }
+                let c = [ data.xcoord, data.ycoord, data.zcoord,data.tcoord ];
+                self.setcoordinates(c);
+            } else  {
+                self.playStopMovie(index===8);
+            }
+
+            setTimeout( ()=> { elem.css({'background-color':'#444444'}); },100);
+
+        };
+    
+        
+        for (let ind=0;ind<=9;ind++) {
+            let symindex=0;
+            if (ind<6) {
+                if (ind%2===1)
+                    symindex=3;
+            } else {
+                symindex=ind-6;
+            }
+            let a=`<span index="${ind}" class="${symbols[symindex]}"></span>`;
+
+            this.internal.arrowbuttons[ind]=$(a);
+            this.internal.arrowbuttons[ind].css({'font-size': `${fn}px`,
+                                                 'left': '100px',
+                                                 'top' : '0px',
+                                                 'padding' : '3px',
+                                                 'border-radius' : '10px',
+                                                 'background-color' : '#444444',
+                                                 'color' : '#cc6600',
+                                                 'position' : 'absolute',
+                                                 'z-index' : '504',
+                                                 'visibility' : 'hidden'});
+
+            base.append(this.internal.arrowbuttons[ind]);
+
+            this.internal.arrowbuttons[ind].click( (e) => {
+                e.preventDefault(); // cancel default behavior
+                arrowcallback(e);
+            });
+                
+
+
+        }
+        return fn;
+    }
+
+    hidearrowbuttons() {
+        for (let i=0;i<=9;i++) {
+            if (this.internal.arrowbuttons[i])
+                this.internal.arrowbuttons[i].css({'visibility':'hidden'});
+            }
+    }
+
+    // ---------- Draggable Separator -------------- -------------- --------------
+
+    handleSeparator(e,mode,modifyCallbacks) {
+
+        if (!this.internal.midlinepresent)
+            return false;
+
+        let data=this.internal.midlinedata;
+        
+        if (mode>=1 && data.origx<0)
+            return false;
+        
+        e.preventDefault();
+        
+        let x=e.pageX;
+        let cnv=this.internal.midline;
+        let cnv2=this.internal.midline2;
+        
+
+        
+        if (mode===0) {
+            
+            cnv.css({'left' : `${data.left-3}px`,
+                     'width' : '9px'});
+            cnv2.css({'left' : `${data.left-4}px`});
+            data.origx=x;
+            $('body').append(this.internal.midlinemessage);
+            setTimeout( () => {
+                this.internal.midlinemessage.remove();
+            },2000);
+
+            modifyCallbacks(1);
+            return true;
+        }
+
+        let offset=this.internal.layoutcontroller.getviewerleft();
+        let vw=this.internal.layoutcontroller.getviewerwidth();
+        let minl=0.1*vw;
+        let maxl=0.9*vw;
+        
+        if (mode===1 && data.origx>=0) {
+
+            x=x-offset;
+            if (x<minl)
+                x=minl;
+            else if (x>=maxl)
+                x=maxl;
+            x=x+offset;
+
+            
+            let shift=x-data.origx;
+
+            let l=data.left+shift;
+            
+            cnv.css({ 'left' : `${l-3}px`,});
+            cnv2.css({'left' : `${l-5}px`});
+            return true;
+        }
+        
+        if (mode===2) {
+            cnv.css({'width' : '1px'  });
+            
+            let shiftx=x-data.origx;
+
+            let newleft=data.left+shiftx;
+            let newclear=((newleft-offset)/(data.left-offset))*this.cleararea[0];
+            if (newclear>0.45 && newclear<0.55) {
+                newclear=0.5;
+            } else if (newclear<0.1) {
+                newclear=0.1;
+            } else if (newclear>0.9) {
+                newclear=0.9;
+            }
+            data.left=(data.left-offset)*(newclear/this.cleararea[0])+offset;
+            data.origx=-1;
+            modifyCallbacks(2);
+            setTimeout( () => {
+                this.setDualViewerMode(newclear);
+            },10);
+            return true;
+        }
+        
+    }
+
+    createmidline(parentcanvas,dw,dh) {
+ 
+        if (!(this.is_slave_viewer && this.cleararea[1] < 0.95 && this.cleararea[1]>0.05)) {
+            if (this.internal.midlinepresent) {
+                this.internal.midline.remove();
+                this.internal.midline2.remove();
+                this.internal.midlinepresent=false;
+            }
+            return;
+        }
+
+        const self=this;
+
+        let modifyCallbacks=null;
+        let downC=function(e) {  self.handleSeparator(e,0,modifyCallbacks);  };
+        let moveC=function(e) {  self.handleSeparator(e,1,modifyCallbacks);  };
+        let upC=function(e) {  self.handleSeparator(e,2,modifyCallbacks);  };
+
+        modifyCallbacks=function(add=0) {
+
+            let cnv2=self.internal.midline2;
+            let par=$(parentcanvas).parent().parent();
+
+            
+            if (add===0) {
+                cnv2[0].addEventListener('mousedown',downC);
+            } else if (add===1)  {
+                par[0].addEventListener('mousemove',moveC);
+                par[0].addEventListener('mouseup',  upC);
+                par[0].addEventListener('mouseleave',upC);
+            } else if (add===2) {
+                par[0].removeEventListener('mousemove',moveC);
+                par[0].removeEventListener('mouseup',  upC);
+                par[0].removeEventListener('mouseleave',upC);
+            }
+        };
+        
+
+        if (!this.internal.midline) {
+            let cnv=$(`<div></div>`);
+            this.internal.midline=cnv;
+            cnv.css({ 'position' : 'absolute',
+                         'top' : `0px` ,
+                         'z-index' : 650,
+                    });
+
+            this.internal.midline2=$(`<div style="cursor:ew-resize"></div>`);
+            this.internal.midline2.css({ 'position' : 'absolute',
+                                         'top' : `0px` ,
+                                         'z-index' : 641,
+                                       });
+
+            this.internal.midlinemessage = $(`<div align="center" style="padding:2px; width:50vw; left:25vw; top:${top}px; height:40px;` +
+                                             'border-radius:30px;background-color:#884400; z-index:5000; position: absolute; color:#ffffff">' +
+                                             '<H4>Drag the line to adjust the relative width of the two viewers</H4></div>');
+
+            
+            modifyCallbacks(0);
+        }
+        
+        this.internal.midlinedata.origx=-1;
+        let left=this.internal.layoutcontroller.getviewerleft();
+        this.internal.midlinedata.left=this.cleararea[0]*dw+left;
+        this.internal.midlinedata.height=dh;
+        
+        if (!this.internal.midlinepresent) {
+            let par=$(parentcanvas).parent().parent();
+            console.log(par[0]);
+            par.append(this.internal.midline);
+            par.append(this.internal.midline2);
+            this.internal.midlinepresent=true;
+        }
+
+        //        let tp=$(parentcanvas).parent().parent().parent().css(['top']);
+        let tp=this.internal.layoutcontroller.getviewertop();
+        this.internal.midline.css({
+            'height' : `${dh}px`,
+            'top' : `${tp}px`,
+            'width'  : '3px',
+            'left'   : `${this.internal.midlinedata.left-1}px`,
+            'background-color' : 'rgba(128,128,128,1.0)',
+        });
+        this.internal.midline2.css({
+            'height' : `${dh}px`,
+            'top' : `${tp}px`,
+            'width'  : '11px',
+            'left'   : `${this.internal.midlinedata.left-5}px`,
+            'background-color' : 'rgba(10,10,10,0.1)',
+        });
+    }
+    
     
     /** draw the labels (e.g. L,R, Axial/Coronal etc). Called when changing viewer size or layout */
     drawlabels() {
@@ -397,16 +696,13 @@ class OrthogonalViewerElement extends BaseViewerElement {
         var dw=context.canvas.width;
         var dh=context.canvas.height;
         context.clearRect(Math.floor(this.cleararea[0]*dw),0,Math.floor(this.cleararea[1]*dw),dh);
+        let cdim=$(context.canvas).css(['width','height','left','top' ]);
         
-
         if (this.internal.showdecorations===false) {
+            this.hidearrowbuttons();
             return;
         }
 
-        if (this.is_slave_viewer && this.cleararea[1] < 0.95 && this.cleararea[1]>0.05) {
-            context.fillStyle="#dddddd";
-            context.fillRect(this.cleararea[0]*dw,0,1,dh);
-        }
         // Add R&L s
         var labels = [ [ 'A','P', 'S','I' ] ,
                        [ 'R','L', 'S','I' ] ,
@@ -418,14 +714,19 @@ class OrthogonalViewerElement extends BaseViewerElement {
         if (this.internal.simplemode)
             fnsize=Math.round(2*webutil.getfontsize(context.canvas)/3);
         else
-            fnsize=Math.round(webutil.getfontsize(context.canvas));
-        if (fnsize>14)
-            fnsize=14;
+            fnsize=Math.round(webutil.getfontsize(context.canvas)*this.cleararea[1]);
+
         context.font=fnsize+"px Arial";
         if (this.internal.simplemode)
             context.fillStyle = "#884400";
         else
             context.fillStyle = "#cc6600";
+
+
+        let arrowsize=this.createarrowbuttons($(context.canvas).parent().parent(),fnsize);
+        this.createmidline(context.canvas,dw,dh);
+
+
         
         var invorientaxis = this.internal.volume.getOrientation().invaxis;
         var orientaxis = this.internal.volume.getOrientation().axis;
@@ -434,25 +735,69 @@ class OrthogonalViewerElement extends BaseViewerElement {
             var trueplane=invorientaxis[pl];
             var lab=labels[trueplane];
             var vp  =this.internal.subviewers[pl].controls.normViewport;
-            if ((vp.x1-vp.x0)*dw>100) {
+            if ((vp.x1-vp.x0)*dw>200) {
                 if (pl<=2) {
-                    var ymid=Math.round( dh*(1.0-0.5*(vp.y0+vp.y1))+6);
+
+                    let dx=0.25*vp.shiftx*dw;
+                    if (dx>120)
+                        dx=120;
+
+                    let dy=0.25*vp.shifty*dh;
+                    if (dy>50)
+                        dy=50;
+                    
+                    let xshift=[ -(2+dx),dx-(arrowsize+1)];
+                    let xshift0=[-(2+dx),(dx+2)];
+
+                    let ymid=Math.round( dh*(1.0-0.5*(vp.y0+vp.y1))+6);
+                    let xmin=vp.x0*dw+xshift0[0];
+                    if (xmin<2)
+                        xmin=2;
+                    let xmax=vp.x1*dw+xshift0[1];
+                    if (xmax>(dw-2))
+                        xmax=dw-2;
+
+                    context.textBaseline="middle";
+                    context.textAlign="start";   context.fillText(lab[0],xmin,ymid);
+                    context.textAlign="end";     context.fillText(lab[1],xmax,ymid);
+                    
+                    let xmid=Math.round( dw*0.5*(0.5*vp.x0+1.5*vp.x1)-6);
+                    let ymin=Math.round((1.0-vp.y1)*dh)-dy;
+                    if (ymin<(fnsize+2))
+                        ymin=(fnsize+2);
+                    let ymax=Math.round((1.0-vp.y0)*dh)+dy;
+                    if (ymax>0.9*dh)
+                        ymax=0.9*dh;
+                    
+                    context.textAlign="center";
+                    context.textBaseline="top";
+                    context.fillText(lab[2],xmid,ymin);
+                    context.textBaseline="alphabetic";
+                    context.fillText(lab[3],xmid,ymax);
+                    
+                    let name=names[trueplane]+axes[orientaxis[trueplane]];
                     context.textAlign="start";
-                    context.fillText(lab[0],vp.x0*dw+2,ymid);
-                    context.textAlign="end";
-                    context.fillText(lab[1],vp.x1*dw-2,ymid);
+                    context.fillText(name,xmin,ymin);
                     
-                    
-                    var ymin=Math.round((1.0-vp.y1)*dh);
-                    var ymax=Math.round((1.0-vp.y0)*dh);
-                    var xmid=Math.round( dw*0.5*(0.5*vp.x0+1.5*vp.x1)-6);
-                    context.textAlign="end";
-                    context.fillText(lab[2],xmid,ymin+fnsize);
-                    context.fillText(lab[3],xmid,ymax-2);
-                    
-                    var name=names[trueplane]+axes[orientaxis[trueplane]];
-                    context.textAlign="start";
-                    context.fillText(name,vp.x0*dw,ymin+fnsize+1);
+                    if (!this.internal.simplemode) {
+                        let wd=Math.round(parseInt(cdim['width']));
+                        let lf=Math.round(parseInt(cdim['left']));
+                        let left=this.internal.layoutcontroller.getviewerleft();
+                        let l= [ Math.round(vp.x0*wd+lf+xshift[0]+left),
+                                 Math.round(vp.x1*wd+lf+xshift[1])+left];
+                        if (l[0]<0)
+                            l[0]=0;
+                        
+
+                        
+                        let h=Math.round((1-(0.75*vp.y1+0.25*vp.y0))*parseInt(cdim['height']))+parseInt(cdim['top']);
+                        
+                        for (let k=0;k<=1;k++) {
+                            this.internal.arrowbuttons[pl*2+k].css({ 'left' :  `${l[k]}px`,
+                                                                     'top'  :  `${h}px`,
+                                                                     'visibility' : 'visible'});
+                        }
+                    }
                 }
                 if (this.internal.simplemode)
                     context.strokeStyle = "#dddddd";
@@ -470,10 +815,36 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 context.lineTo(vp.x1*dw,(1-vp.y0)*dh);
                 context.lineTo(vp.x0*dw,(1-vp.y0)*dh);
                 context.stroke();
-                
+            }  else if (pl<3) {
+                for (let ia=0;ia<=1;ia++)
+                    if (this.internal.arrowbuttons[pl*2+ia])
+                        this.internal.arrowbuttons[pl*2+ia].css({'visibility':'hidden'});
             }
         }
 
+
+        // Movie Stuff
+        if (!this.internal.simplemode) {
+
+            if (this.internal.imagedim[3]<2 || dw<500) {
+                
+                for (let ia=6;ia<=9;ia++)
+                    if (this.internal.arrowbuttons[ia])
+                        this.internal.arrowbuttons[ia].css({'visibility':'hidden'});
+                
+            } else {
+        
+                let lh=this.internal.layoutcontroller.getviewerheight();
+                let left=this.internal.layoutcontroller.getviewerleft();
+                let y0=0.92*lh+parseInt(cdim['top']);
+                for (let k=0;k<=3;k++) {
+                    this.internal.arrowbuttons[6+k].css({ 'left' :  `${50+40*k+left}px`,
+                                                          'top'  :  `${y0}px`,
+                                                          'visibility' : 'visible'});
+                }
+            }
+        }
+        
     }
     
     // ------------------------------------------------------------------------------------
@@ -522,7 +893,6 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 trueplane=invorientaxis[pl];
             }
             
-            
             var vp0=this.internal.viewports[this.internal.rendermode][trueplane];
             var vp= { 
                 x0 : vp0.x0,
@@ -543,18 +913,23 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 var scalemidx=midx*ratio;
                 vp.x0=ratio*vp.x0+(midx-scalemidx);
                 vp.x1=ratio*vp.x1+(midx-scalemidx);
+                vp.shiftx=(midx-scalemidx);
+                vp.shifty=0;
             } else if (fullh>fullw) {
                 ratio=fullw/fullh;
                 var midy=0.5*(vp.y0+vp.y1);
                 var scalemidy=midy*ratio;
                 vp.y0=ratio*vp.y0+(midy-scalemidy);
                 vp.y1=ratio*vp.y1+(midy-scalemidy);
+                vp.shifty=(midy-scalemidy);
+                vp.shiftx=0;
                 
             }
             this.internal.subviewers[pl].controls.normViewport=vp;
         }
         
         this.drawlabels();
+        this.drawcolorscale();
     }
     
     
@@ -706,15 +1081,15 @@ class OrthogonalViewerElement extends BaseViewerElement {
      * @param {boolean} plainmode - if true this is an objectmap so only create opacity controls as opposed to full functional colormapping
      * @param {colormapmode} colormap type - "Overlay","Overlay2","Red","Green","Blue" 
      */
-    setobjectmap(ovolume,plainmode,colormapmode,doupdate=true) {
+    setobjectmap(ovolume,plainmode,colormapmode) {
         if (this.setObjectMapFunction===null)
-            this.setobjectmap_internal(ovolume,plainmode,colormapmode,doupdate);
+            this.setobjectmap_internal(ovolume,plainmode,colormapmode);
         else
-            this.setObjectMapFunction(ovolume,plainmode,colormapmode,doupdate);
+            this.setObjectMapFunction(ovolume,plainmode,colormapmode);
     }
 
     /** Same as above but allows rerouting */
-    setobjectmap_internal(ovolume,plainmode,colormapmode,doupdate=true) {
+    setobjectmap_internal(ovolume,plainmode,colormapmode) {
 
         colormapmode=colormapmode || "Auto";
 
@@ -805,6 +1180,9 @@ class OrthogonalViewerElement extends BaseViewerElement {
     // ------------------------------------------------------------------------
     // Main outside update
     // ------------------------------------------------------------------------
+
+                
+                
     /** set the coordinates of the viewer 
      * @param {array} coords - [ x,y,z ] array with current position in mm
      * @param {number} plane - 0,1,2 to signify whether click was on YZ,XZ or XY image plane (-1,3 mean 3D click)
@@ -1067,6 +1445,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
      * @param {number} mousestate - 0=click 1=move 2=release
      */
     updatemousecoordinates(mm,plane,mousestate) {
+
         if (this.internal.ignoremouseobservers === true)
             return;
 
@@ -1150,8 +1529,13 @@ class OrthogonalViewerElement extends BaseViewerElement {
 
         // The middle -- set the parameters
         try {
-            let ind=this.internal.displaymodes.indexOf(sanedata['displaymode']);
-            this.setrendermode(ind);
+            if (this.internal.displaymodes) {
+                let ind=this.internal.displaymodes.indexOf(sanedata['displaymode']);
+                if (ind>=0) {
+                    this.internal.datgui.data.displaymode=this.internal.displaymodes[ind];
+                    this.setrendermode(ind);
+                }
+            }
             
             
             this.internal.showdecorations=sanedata['decorations'];

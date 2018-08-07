@@ -21,7 +21,6 @@
 require("__BISWEB_CUSTOM");
 
 require("bisweb_regressiontestelement.js");
-require("bisweb_helpvideoelement.js");
 require("bisweb_dialogelement.js");
 require("bisweb_collectionelement.js");
 require("bisweb_draganddropelement.js");
@@ -45,6 +44,12 @@ require("bisweb_connectivityapplicationelement.js");
 require("bisweb_mainviewerapplication.js");
 require("bisweb_dualviewerapplication.js");
 require("bisweb_webworkercontroller.js");
+require("bisweb_diffspectelement.js");
+require("bisweb_fmrielement.js");
+require("bisweb_fileserver.js");
+require("bisweb_filedialog.js");
+require("bisweb_awsmodule.js");
+
 
 
 

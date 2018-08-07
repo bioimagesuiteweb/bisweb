@@ -18,7 +18,11 @@
 /* global document,Image */
 "use strict";
 
-
+const genericio=require('bis_genericio');
+const webfileutil=require('bis_webfileutil');
+const webutil=require('bis_webutil');
+const BisWebMatrix=require('bisweb_matrix.js');
+const $=require('jquery');
 // ---------------------------------------------------------------------------------
 //  GLOBAL UTILITIES
 // ---------------------------------------------------------------------------------
@@ -123,9 +127,9 @@ bisweb_mni2tal.BRODLOCATIONS = [
 
 bisweb_mni2tal.SliceViewer=class {
 
-    constructor (shadowdom,name,width,height,plane) { 
+    constructor (parent,name,width,height,plane) { 
 
-        this.ShadowDOM=shadowdom;
+        this.parentWidget=parent;
         this.myCanvas=null;
         this.lineCanvas=null;
         this.myCanvasContext=null;
@@ -153,7 +157,7 @@ bisweb_mni2tal.SliceViewer=class {
         this.width=width;
         this.height=height;
         this.myplane=plane;
-        this.myCanvas = this.ShadowDOM.querySelector(name);
+        this.myCanvas = this.parentWidget.querySelector(name);
         this.myCanvas.width=width;
         this.myCanvas.height=height;
         this.myCanvasContext=this.myCanvas.getContext("2d");
@@ -163,7 +167,7 @@ bisweb_mni2tal.SliceViewer=class {
     
     CreateLineCanvas(name) {
 
-        this.lineCanvas=this.ShadowDOM.querySelector(name);
+        this.lineCanvas=this.parentWidget.querySelector(name);
         this.lineCanvas.width=this.width;
         this.lineCanvas.height=this.height;
         this.lineCanvasContext=this.lineCanvas.getContext("2d");
@@ -276,7 +280,7 @@ bisweb_mni2tal.SliceViewer=class {
             this.myCanvasContext.textAlign="left";
             this.myCanvasContext.fillText("R", 1,this.height/2);
         }
-        this.myCanvasContext.fillText('MNI '+axisname[this.myplane]+'='+mni,5,15);
+        this.myCanvasContext.fillText('MNI '+axisname[this.myplane]+'='+mni,5,25);
         
     }
     
@@ -345,9 +349,9 @@ bisweb_mni2tal.SliceViewer=class {
 
 class OrthoViewer {
 
-    constructor(shadowdom) {
+    constructor(parentwidget) {
 
-        this.ShadowDOM=shadowdom;
+        this.parentWidget=parentwidget;
         this.Viewers=null;
         this.Sliders=null;
         this.SliderLabels=null;
@@ -366,13 +370,14 @@ class OrthoViewer {
         this.allLoaded=false;
         this.previousmouseevent=-1;
         this.enableTalairachLabelsUpdate=true;
+        this.brodlist=[];
     }
     
     createViewers() {
 
-        let v1=new bisweb_mni2tal.SliceViewer(this.ShadowDOM,"#zviewer",bisweb_mni2tal.DIMENSIONS[0],bisweb_mni2tal.DIMENSIONS[1],2);
-        let v2=new bisweb_mni2tal.SliceViewer(this.ShadowDOM,"#yviewer",bisweb_mni2tal.DIMENSIONS[0],bisweb_mni2tal.DIMENSIONS[2],1);
-        let v3=new bisweb_mni2tal.SliceViewer(this.ShadowDOM,"#xviewer",bisweb_mni2tal.DIMENSIONS[1],bisweb_mni2tal.DIMENSIONS[2],0);
+        let v1=new bisweb_mni2tal.SliceViewer(this.parentWidget,"#zviewer",bisweb_mni2tal.DIMENSIONS[0],bisweb_mni2tal.DIMENSIONS[1],2);
+        let v2=new bisweb_mni2tal.SliceViewer(this.parentWidget,"#yviewer",bisweb_mni2tal.DIMENSIONS[0],bisweb_mni2tal.DIMENSIONS[2],1);
+        let v3=new bisweb_mni2tal.SliceViewer(this.parentWidget,"#xviewer",bisweb_mni2tal.DIMENSIONS[1],bisweb_mni2tal.DIMENSIONS[2],0);
         
         v1.CreateLineCanvas("#zlines");
         v2.CreateLineCanvas("#ylines");
@@ -423,13 +428,14 @@ class OrthoViewer {
         this.createMNITextLabels();
         this.createTalTextLabels();
         this.createMiscElements();
+        this.createBatchCallback();
     }
     
     createSliders() {
         
-        let axialslider=this.ShadowDOM.querySelector("#zcontrols");
-        let coronalslider=this.ShadowDOM.querySelector("#ycontrols");
-        let sagslider=this.ShadowDOM.querySelector("#xcontrols");
+        let axialslider=this.parentWidget.querySelector("#zcontrols");
+        let coronalslider=this.parentWidget.querySelector("#ycontrols");
+        let sagslider=this.parentWidget.querySelector("#xcontrols");
         this.Sliders = [ sagslider,coronalslider,axialslider ];
         this.Sliders[0].addEventListener('change', () => this.setSliderCrossHairs(0));
         this.Sliders[1].addEventListener('change', () => this.setSliderCrossHairs(1));
@@ -438,38 +444,182 @@ class OrthoViewer {
     }
     
     createMNITextLabels() {
-        let sagnumber=this.ShadowDOM.querySelector("#mnix");
-        let cornumber=this.ShadowDOM.querySelector("#mniy");
-        let axnumber=this.ShadowDOM.querySelector("#mniz");
+        let sagnumber=this.parentWidget.querySelector("#mnix");
+        let cornumber=this.parentWidget.querySelector("#mniy");
+        let axnumber=this.parentWidget.querySelector("#mniz");
         this.SliderLabels = [ sagnumber, cornumber, axnumber ];
         this.SliderLabels[0].addEventListener('change', () => this.setTextCrossHairs(0));
         this.SliderLabels[1].addEventListener('change', () => this.setTextCrossHairs(1));
         this.SliderLabels[2].addEventListener('change', () => this.setTextCrossHairs(2));
         
-        let b1=this.ShadowDOM.querySelector("#mnigo");
+        let b1=this.parentWidget.querySelector("#mnigo");
         b1.addEventListener('click', () => this.setAllMNICoordinates());
     }
     
     createTalTextLabels() {
-        let tal0=this.ShadowDOM.querySelector("#talx");
-        let tal1=this.ShadowDOM.querySelector("#taly");
-        let tal2=this.ShadowDOM.querySelector("#talz");
+        let tal0=this.parentWidget.querySelector("#talx");
+        let tal1=this.parentWidget.querySelector("#taly");
+        let tal2=this.parentWidget.querySelector("#talz");
         this.TalSliderLabels = [ tal0, tal1, tal2];
 
         for (let i=0;i<=2;i++)
             this.TalSliderLabels[i].addEventListener('change', () => this.setTalairach());
         
-        let b1=this.ShadowDOM.querySelector("#talgo");
+        let b1=this.parentWidget.querySelector("#talgo");
         b1.addEventListener('click', ()=> this.setTalairach());
+    }
+
+
+    computeBatchConversion(fname,mni2tal=true) {
+
+        const self=this;
+        
+        let show=async function(matrix,row,delay=1000)  {
+            
+            let x=parseInt(matrix[row][0]);
+            let y=parseInt(matrix[row][1]);
+            let z=parseInt(matrix[row][2]);
+
+            if (mni2tal) {
+                self.setMNICoordinates(x,y,z);
+            } else {
+                self.TalSliderLabels[0].value=x;
+                self.TalSliderLabels[1].value=x;
+                self.TalSliderLabels[2].value=x;
+                self.setTalairach();
+            }
+            
+            return new Promise( (resolve) => {
+                setTimeout( () => { 
+                    let v= parseInt(self.BrodmanElement.value);
+                    let found=0;
+                    let k=1;
+                    while (k<self.brodlist.length && found<1) {
+                        if (v===self.brodlist[k][0]) {
+                            found=k;
+                        }
+                        k=k+1;
+                    }
+                    
+                    let s= self.brodlist[found][1];
+                    let out=null;
+                    if (mni2tal) {
+                        out = [
+                            Math.round(self.TalSliderLabels[0].value),
+                            Math.round(self.TalSliderLabels[1].value),
+                            Math.round(self.TalSliderLabels[2].value)
+                        ];
+                    } else {
+                        out = [
+                            Math.round(self.SliderLabels[0].value),
+                            Math.round(self.SliderLabels[1].value),
+                            Math.round(self.SliderLabels[2].value)
+                        ];
+                    }
+                    
+                    let outstr=`${x},${y},${z},${s},${out[0]},${out[1]},${out[2]}\n`;
+                    resolve(outstr);
+                },delay);
+            });
+        };
+
+        let save=async function(matrix,sz) {
+
+            if (sz[0]<1)
+                return;
+            
+            let delay=Math.round(5000/sz[0]);
+            if (delay>1000)
+                delay=1000;
+            
+            let output="#MNIX,MNIY,MNIZ,BA,TALX,TALY,TALZ\n";
+            if (!mni2tal)
+                output="#TALX,TALY,TALZ,BA,MNIX,MNIY,MNIZ\n";
+            
+            for (let i=0;i<sz[0];i++) {
+                let out=await show(matrix,i,delay);
+                output+=out;
+            }
+
+            if (webutil.inElectronApp()) {
+                webfileutil.electronFileCallback(
+                    {
+                        filename : 'converted.csv',
+                        title    : 'Select file to save output to',
+                        filters  : [ { name: 'CSV Files', extensions: ['csv' ]}],
+                        save : true,
+                        suffix : ".csv",
+                        force : 'local',
+                    },function(f) {
+                        genericio.write(f,output);
+                    });
+            } else {
+                genericio.write('converted.csv',output);
+            }
+        };
+
+        let newmat=new BisWebMatrix();
+        newmat.load(fname).then( () => {
+            let f2=genericio.getFixedLoadFileName(fname);
+            let sz=newmat.getDimensions();
+            
+            if (sz[1]!==3 || sz[0]<1) {
+                webutil.createAlert('Bad Matrix Coordinates file'+f2+' number of columns is not 3 or no rows. Actual dims=('+sz.join(',')+')',true);
+                return;
+            }
+
+            if (mni2tal) 
+                webutil.createAlert('Loaded '+sz[0]+' points. Converting MNI &rarr; TAL ...');
+            else
+                webutil.createAlert('Loaded '+sz[0]+' points. Converting TAL &rarr; MNI...');
+            let m=newmat.getNumericMatrix();
+            let overlaybox=self.parentWidget.querySelector("#showoverlaybutton");
+            overlaybox.checked=true;
+            self.setOverlayOpacity(true);
+            save(m,sz);
+        });
+    }
+    
+    createBatchCallback() {
+
+        const self=this;
+
+        let batch2mni=function(f) {
+            self.computeBatchConversion(f,true);
+        };
+
+        let batch2tal=function(f) {
+            self.computeBatchConversion(f,false);
+        };
+
+        let b1=this.parentWidget.querySelector("#batch");
+        webfileutil.attachFileCallback($(b1),batch2mni,{
+            filename : '',
+            title    : 'Select file to load MNI coordinates from',
+            filters  : [ { name: 'CSV/Text File', extensions: ['csv','txt' ]}],
+            save : false,
+            suffix : ".csv,.txt",
+            force : 'local',
+        });
+        let b2=this.parentWidget.querySelector("#batch2");
+        
+        webfileutil.attachFileCallback($(b2),batch2tal,{
+            filename : '',
+            title    : 'Select file to load Talairach coordinates from',
+            filters  : [ { name: 'CSV/Text File', extensions: ['csv','txt' ]}],
+            save : false,
+            suffix : ".csv,.txt",
+            force : 'local',
+        });
     }
     
     createMiscElements() {
         
-        let overlaybox=this.ShadowDOM.querySelector("#showoverlaybutton");
+        let overlaybox=this.parentWidget.querySelector("#showoverlaybutton");
         overlaybox.checked=false;
         overlaybox.addEventListener('change',() => this.setOverlayOpacity(overlaybox.checked));
         
-        let b1=this.ShadowDOM.querySelector("#resetbutton");
+        let b1=this.parentWidget.querySelector("#resetbutton");
         b1.addEventListener('click', () => {
             this.setMNICoordinates(0,0,0); 
             overlaybox.checked=false; 
@@ -478,13 +628,15 @@ class OrthoViewer {
         
         //      let mp = { "1" : 'Left',   "2" : 'Right' };
         
-        this.BrodmanElement=this.ShadowDOM.querySelector("#baselectbox");
+        this.BrodmanElement=this.parentWidget.querySelector("#baselectbox");
         
         let n=bisweb_mni2tal.BRODMANINDICES.length;
         let opt = document.createElement('option');
         opt.value = "-1";
         opt.innerHTML = "Outside defined BAs";
         this.BrodmanElement.appendChild(opt);
+        this.brodlist=[];
+        this.brodlist.push([ -1,"Outside defined BAs"]);
         //  this.BrodmanElement.children.add(new OptionElement(data: "Outside defined BAs", value: "-1",selected:false));
         for (let i=0;i<n;i++) {
             let opt = document.createElement('option');
@@ -493,8 +645,10 @@ class OrthoViewer {
             let s=bisweb_mni2tal.BRODMANNLABELS[ind];
             opt.value=i;
             opt.innerHTML = 'Right-'+s;
+            this.brodlist.push([i,"Right-"+s]);
             opt2.value=i+100;
             opt2.innerHTML = 'Left-'+s;
+            this.brodlist.push([i+100,"Left-"+s]);
             this.BrodmanElement.appendChild(opt);
             this.BrodmanElement.appendChild(opt2);
         }
@@ -577,7 +731,7 @@ class OrthoViewer {
     
     finalizeInitialization() {
         this.allLoaded=true;
-        let s=this.ShadowDOM.querySelector("#tempviewer");
+        let s=document.querySelector("#tempviewer");
         while (s.firstChild) s.removeChild(s.firstChild);
         
         
@@ -818,18 +972,19 @@ class OrthoViewer {
         
         let imgdata=this.InternalContext.getImageData(0, 0, 2, 1);    
         let brod = imgdata.data[4];
-        let s="(Outside defined Brodmann Areas)";
+        //        let s="(Outside defined Brodmann Area)";
         let origbrod=brod;
         if (brod>0) {
             if (brod<100) {
-                s="BA=Left ";
+                //                s="BA=Left ";
             } else if (brod>100) {
                 brod=brod-100;
-                s="BA=Right ";
+                //                s="BA=Right ";
             }
-            s+=bisweb_mni2tal.BRODMANNLABELS[brod];
+            //            s+=bisweb_mni2tal.BRODMANNLABELS[brod];
         } else {
             origbrod=-1;
+
         }
         
         if (origbrod==-1)
