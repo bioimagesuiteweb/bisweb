@@ -111,8 +111,6 @@ class LandmarkControlElement extends HTMLElement {
                 dummy : false,
             },
             mousestate : -2,
-            lastpoint : null,
-            lastplane : null,
         };
 
         this.panel=null;
@@ -742,7 +740,7 @@ class LandmarkControlElement extends HTMLElement {
         this.internal.currentpointselect=webutil.createselect({parent : elem1,
                                                                values : [ 'none' ],
                                                                tooltip :
-                                                               "Select the current point. If the mouse is enabled this will also ``pick'' the point, else it will place the cross hairs on it.",
+                                                               "Select the current point.",
                                                                callback : function(e) {
                                                                    self.selectlandmark(e.target.value,true);
                                                                    self.picklandmark(true);
@@ -938,7 +936,7 @@ class LandmarkControlElement extends HTMLElement {
         
         var pset=this.internal.landmarkset[this.internal.currentsetindex];
         var doselect = false;
-        
+
         if (!this.internal.pickmode) {
             pset.addpoint(mm);
             doselect=true;
@@ -1044,8 +1042,6 @@ class LandmarkControlElement extends HTMLElement {
             return;
 
         if (mousestate===0) {
-            if (this.internal.lastpoint!==null)
-                this.updatemousecoordinates(this.internal.lastpoint,this.internal.lastplane,2);
             this.setcursor(mm,true); 
         } else if (mousestate===1 || mousestate===-1) {
             this.setcursor(mm,true);
@@ -1054,17 +1050,11 @@ class LandmarkControlElement extends HTMLElement {
             this.setcursor(mm,false);
             if (this.internal.pickmode)
                 this.picklandmark(false);
-            this.internal.lastpoint=null;
         }
 
         if (mousestate!==2) {
-            this.internal.lastpoint=mm.slice(0);
             this.internal.mousestate=mousestate;
-            this.internal.lastplane=plane;
-        } else {
-            this.internal.lastpoint=null;
-        }
-        
+        }         
     }
 }
 

@@ -135,7 +135,7 @@ class FileServer extends HTMLElement {
 
     makeRequest(params, cb, eb) {
         let command = params.command;
-        let files = this.algorithmcontroller.getImage(this.viewer, 'image');
+        //let files = this.algorithmcontroller.getImage(this.viewer, 'image');
         console.log('make request params', params);
 
         switch (params.command) {
@@ -238,7 +238,7 @@ class FileServer extends HTMLElement {
 
                     let eblistener = document.addEventListener('servererror', () => { 
                         document.removeEventListener('imagetransmission', cblistener);
-                        reject('An error occured during transmission') 
+                        reject('An error occured during transmission');
                         eb(); 
                     }, { 'once' : true });
 
@@ -517,7 +517,7 @@ class FileServer extends HTMLElement {
      */
     wrapInAuth(command, callback) {
         if (this.authenticated) {
-            this.viewer = viewer;
+            
             switch(command) {
                 case 'showfiles' : 
                     this.requestFileList('load'); 

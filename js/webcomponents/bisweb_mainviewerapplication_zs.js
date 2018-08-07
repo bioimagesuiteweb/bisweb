@@ -479,7 +479,7 @@ class ViewerApplicationElement extends HTMLElement {
     // ---------------------------------------------------------------------------
     // Create the default File and Overlay Menus
     //  ---------------------------------------------------------------------------
-    createFileAndOverlayMenus(menubar,painttoolid, modulemanager = null) {
+    createFileAndOverlayMenus(menubar,painttoolid) {
 
         const self=this;
         let paintviewerno = self.VIEWERS.length - 1;
@@ -547,7 +547,7 @@ class ViewerApplicationElement extends HTMLElement {
                 self.saveImage(f, viewerno); 
             }*/
             webfileutil.createFileMenuItem(fmenu[viewerno], 'Save Image', (f) => {
-                let date = new Date();
+                //let date = new Date();
                 //let name = 'Image Created on ' + date.toDateString() + '.nii.gz';
                 //self.VIEWERS[viewerno].getimage().save(name);
                 genericio.write(f, self.VIEWERS[viewerno].getimage().serializeToNII(), true);

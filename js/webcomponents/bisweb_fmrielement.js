@@ -10,9 +10,7 @@ const bootbox = require('bootbox');
 const LinearRegistration = require('linearRegistration');
 const ResliceImage = require('resliceImage');
 const NonlinearRegistration = require('nonlinearRegistration');
-const baseutils = require('baseutils');
 const BisWebPanel = require('bisweb_panel.js');
-const jstree = require('jstree');
 const MotionCorrection = require('motionCorrection');
 const fs = require('fs');
 const TransformationCollection = require('bisweb_transformationcollection');
@@ -391,7 +389,6 @@ class FMRIElement extends HTMLElement {
             imageArray.push(array[i].image);
         }
 
-        let self = this;
         let numImages = imageArray.length;
 
         let middleImage;
@@ -567,8 +564,8 @@ class FMRIElement extends HTMLElement {
                                     {
                                         title: "Save Data",
                                         save: true,
-										filters:[ { name: 'Patient File', extensions: ['fmri']}],
-										suffix : "biswebstate",
+                                                                                filters:[ { name: 'Patient File', extensions: ['fmri']}],
+                                                                                suffix : "biswebstate",
                                            initialCallback : () => {
                                                return 'new_study.fmri';
                                            }
@@ -609,7 +606,7 @@ class FMRIElement extends HTMLElement {
 
                 if (averageImage !== null && t1 !== null) {
 
-					// TODO: fix memory leak in reslice
+                                        // TODO: fix memory leak in reslice
                     let registerFunctionalToT1 = self.computeLinearRegistration(t1, averageImage);
                     registerFunctionalToT1.then( (output) => {
                         let newObject = {image: output.reslice, xform: output.xform, name: "AVERAGE_fmri_T1space.nii.gz"};
@@ -698,7 +695,7 @@ class FMRIElement extends HTMLElement {
         console.log(this.tree_div);
 
         if (webutil.inElectronApp()) {
-	    let hmenu = webutil.createTopMenuBarMenu("Help", menubar);
+            let hmenu = webutil.createTopMenuBarMenu("Help", menubar);
             webutil.createMenuItem(hmenu, 'Show JavaScript Console',
                                    function () {
                                        window.BISELECTRON.remote.getCurrentWindow().toggleDevTools();

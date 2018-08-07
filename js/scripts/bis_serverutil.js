@@ -123,7 +123,6 @@ var createBasicPassport = function (app, validate) {
 // ------------------------------------------ login ------------------------------------------
 var serverutil = {
     getDirectoryInfo: getDirectoryInfo,
-    createGooglePassport: createGooglePassport,
     createBasicPassport: createBasicPassport
 };
 

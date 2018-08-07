@@ -1,6 +1,6 @@
 const $ = require('jquery');
 const localforage = require('localforage');
-const jstree = require('jstree');
+//const jstree = require('jstree');
 const webutil = require('bis_webutil.js');
 
 /**

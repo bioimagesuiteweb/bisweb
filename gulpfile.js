@@ -264,10 +264,6 @@ var esLint=function() {
                 "ecmaVersion": 2017
             },
             "rules": {
-                "linebreak-style": [
-                    "error",
-                    "unix"
-                ],
                 'no-console': 'off',
                 'indent' : 'off',
                 "semi": [
