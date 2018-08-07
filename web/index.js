@@ -402,9 +402,10 @@ let createApplicationSelector=function(obj) {
         let description=elem.description;
         let picture=elem.picture;
         let electrononly=elem.electrononly || false;
+        let hide=elem.hide || false;
         
-        if ( inelectron === true ||
-             (inelectron === false && electrononly===false)) {
+        if ( hide===false && (inelectron === true || 
+                              (inelectron === false && electrononly===false))) {
             
             let cname="";
             if (i===0)
