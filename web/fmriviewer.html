@@ -39,8 +39,8 @@
      <!-- build:css -->
      <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_dark.css">
      <link rel="stylesheet" type="text/css"  href="../lib/css/bootstrap-colorselector.css">
+     <link rel="stylesheet" href="../node_modules/jstree/dist/themes/default/style.min.css">
      <link rel="stylesheet" type="text/css" href="biscommon.css">
-       <link rel="stylesheet" href="../node_modules/jstree/dist/themes/default/style.min.css">
      <!-- endbuild -->
  
      <!-- all javascript files -->
@@ -51,19 +51,17 @@
      <script src="../build/web/bootstrap.min.js"></script>
      <script src="../build/web/libbiswasm_wasm.js"></script>
      <script src="../build/web/bislib.js"></script>
-     
-     
      <!-- endbuild -->
      <!-- end webpack/gulp modifications -->
  
  
      <!-- begin stay as is -->
-     <link rel="stylesheet" type="text/css" href="spectviewer.css">
+     <link rel="stylesheet" type="text/css" href="fmriviewer.css">
      <!-- end of stay as is -->
  </head>
- <body>
+<body oncontextmenu="return false;" ondragstart="return false;" ondrop="return false;">
  
-   <bisweb-topmenubar   id="viewer_menubar"></bisweb-topmenubar> 
+  <bisweb-topmenubar   id="viewer_menubar"></bisweb-topmenubar> 
  
    <div id="viewerwidget">
  

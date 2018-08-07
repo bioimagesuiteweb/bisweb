@@ -20,6 +20,9 @@ const BisWebPanel = require('bisweb_panel.js');
 
 require('jstree');
 
+//TODO: Add 32px and throbber from jstree
+//TODO: Add ISAS images back in images directory
+
 // initialization of jstree formatting
 const tree_template_string = `
     
@@ -324,10 +327,16 @@ class DiffSpectElement extends HTMLElement {
             webutil.createAlert('The SPECT Tool is now ready. The core data has been loaded.<BR> Click either "Create New Patient" or "Load Existing Patient" to begin.');
         });
 
-        this.loadimagearray(['../../images/ISAS_SPECT_Template.nii.gz',
-                             'images/MNI_T1_2mm_stripped_ras.nii.gz',
-                             '../../images/ISASHN_Standard_Deviation.nii.gz',
-                             '../../images/ISAS_SPECT_Mask.nii.gz'
+        let imagepath="";
+        if (typeof window.BIS !=='undefined') {
+            imagepath=window.BIS.imagepath;
+        }
+
+        
+        this.loadimagearray([`${imagepath}images/ISAS_SPECT_Template.nii.gz`,
+                             `${imagepath}images/MNI_T1_2mm_stripped_ras.nii.gz`,
+                             `${imagepath}images/ISASHN_Standard_Deviation.nii.gz`,
+                             `${imagepath}images/ISAS_SPECT_Mask.nii.gz`
                             ], alldone);
 
 

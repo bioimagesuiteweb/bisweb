@@ -39,6 +39,7 @@ let app_state =
     }
 };
 
+//TODO: Add 32px and throbber from jstree
 
 
 /*
@@ -51,7 +52,13 @@ class FMRIElement extends HTMLElement {
         super();
         this.panel = null;
         app_state.images.mni = new BisWebImage();
-        app_state.images.mni.load('../../web/images/MNI_T1_2mm_stripped_ras.nii.gz', false).then( () => {
+        
+        let imagepath="";
+        if (typeof window.BIS !=='undefined') {
+            imagepath=window.BIS.imagepath;
+        }
+
+        app_state.images.mni.load(`${imagepath}images/MNI_T1_2mm_stripped_ras.nii.gz`, false).then( () => {
             console.log('MNI Loaded');
         });
     }

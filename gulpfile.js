@@ -121,6 +121,7 @@ let internal = {
     dependcss : [ 
         "./lib/css/bootstrap_dark_edited.css", 
         "./lib/css/bootstrap-colorselector.css",
+        "./node_modules/jstree/dist/themes/default/style.min.css",
         "./web/biscommon.css"
     ],
     lintscripts : ['js/**/*.js','config/*.js','compiletools/*.js','*.js','web/**/*.js','test/**/*.js'],
