@@ -10,7 +10,7 @@ class FileServer extends HTMLElement {
     }
 
     /**
-     * Attaches the algorithm controller to the tree viewer and attaches the event to place the tree viewer's menu in the shared menubar once the main viewer renders.
+     * Attaches the event to place the tree viewer's menu in the shared menubar once the main viewer renders.
      */
     connectedCallback() {
 
@@ -27,54 +27,6 @@ class FileServer extends HTMLElement {
         //When connecting to the server, it may sometimes request that the user authenticates
         this.authenticateModal = null;
         this.authenticated = false;
-
-        //server will set this value when opening a bisweb_filedialog
-        this.viewer = undefined; 
-
-        webutil.runAfterAllLoaded(() => {
-            let menuBarID = this.getAttribute('bis-menubarid');
-            let menuBar = document.querySelector(menuBarID);
-
-            let algorithmControllerID = this.getAttribute('bis-algorithmcontrollerid');
-            this.algorithmcontroller = document.querySelector(algorithmControllerID);
-
-            if (menuBar) {
-                menuBar = menuBar.getMenuBar();
-                let serverMenu = webutil.createTopMenuBarMenu('Server', menuBar);
-
-                webutil.createMenuItem(serverMenu, 'Connect to File Server', () => {
-                    this.connectToServer();
-                });
-
-                webutil.createMenuItem(serverMenu, 'Request Files', () => {
-                    let files = [
-                        '/home/zach/MNI_2mm_buggy.nii.gz'
-                    ];
-
-                    this.sendFileRequest(files);
-                });
-
-                webutil.createMenuItem(serverMenu, 'Show Server Files', () => {
-                    this.requestFileList();
-                });
-
-                webutil.createMenuItem(serverMenu, 'Upload File to Server', () => {
-                    //REPLACED BY CREATESAVEMODAL
-                    //this.createSaveImageDialog();
-                });
-
-                webutil.createMenuItem(serverMenu, 'Invoke Module on Server', () => {
-                    this.sendInvocationRequest({
-                        'command' : 'runmodule',
-                        'params' : {
-                            'modulename' : 'smoothImage',
-                            'inputs' : [ '/home/zach/MNI_2mm_buggy.nii.gz' ],
-                            'args' : {}
-                        }
-                    });
-                });
-            }
-        });
     }
 
     /**
@@ -145,7 +97,6 @@ class FileServer extends HTMLElement {
 
     makeRequest(params, cb, eb) {
         let command = params.command;
-        let files = this.algorithmcontroller.getImage(this.viewer, 'image');
         console.log('make request params', params);
 
         switch (params.command) {
@@ -248,7 +199,7 @@ class FileServer extends HTMLElement {
 
                     let eblistener = document.addEventListener('servererror', () => { 
                         document.removeEventListener('imagetransmission', cblistener);
-                        reject('An error occured during transmission') 
+                        reject('An error occured during transmission'); 
                         eb(); 
                     }, { 'once' : true });
 
@@ -295,8 +246,6 @@ class FileServer extends HTMLElement {
         //this.callback is set when a modal is opened.
         this.callback(obj);
     }
-
-
 
     /**
      * Sends a list of files for the server to send to the client machine. 
@@ -527,7 +476,6 @@ class FileServer extends HTMLElement {
      */
     wrapInAuth(command, callback) {
         if (this.authenticated) {
-            this.viewer = viewer;
             switch(command) {
                 case 'showfiles' : 
                     this.requestFileList('load'); 

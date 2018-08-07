@@ -3,13 +3,9 @@
 const AWS = require('aws-sdk');
 const AWSCognitoIdentity = require('amazon-cognito-identity-js');
 const AWSParameters = require('../../web/aws/awsparameters.js');
-const bisweb_image = require('bisweb_image.js');
 const bis_webutil = require('bis_webutil.js');
 const wsutil = require('../../fileserver/wsutil.js');
 const bisweb_filedialog = require('bisweb_filedialog.js');
-const $ = require('jquery');
-
-
 
 
 /**
@@ -163,7 +159,7 @@ class AWSModule {
                     });
                 });
             }
-        }
+        };
 
         console.log('callback', this.callback);
         this.callback(obj);
@@ -202,7 +198,7 @@ class AWSModule {
                 case 'uploadfile' : this.createSaveImageModal(); break;
                 default : console.log('Unrecognized aws command', command, 'cannot complete request.');
             }
-        }
+        };
 
         let expireTime = AWS.config.credentials.expireTime ? Date.parse(AWS.config.credentials.expireTime) : -1;
 
@@ -227,10 +223,11 @@ class AWSModule {
 
         let returnf="./biswebaws.html";
         if (typeof window.BIS !=='undefined') {
-            returnf="../build/web/biswebaws.html"
+            returnf="../build/web/biswebaws.html";
         }
+
         console.log('returnf', returnf);
-        let authWindow = window.open('../../build/web/biswebaws.html', '_blank', 'width=400, height=400');
+        let authWindow = window.open(returnf, '_blank', 'width=400, height=400');
         let idTokenEvent = (data) => {
             //console.log('storage event', data);
             if (data.key === 'aws_id_token') {

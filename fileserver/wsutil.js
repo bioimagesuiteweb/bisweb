@@ -126,6 +126,7 @@ let parseJSON = (rawJSON) => {
     }
 }
 
+//TODO: incorporate this into bisweb_filedialog
 let searchTree = (path, list) => {
     let foundDirectory = false, splitPaths = path.split('/'), currentDirectory = list;
     while (splitPaths.length > 0) {

@@ -10,12 +10,11 @@ const bootbox = require('bootbox');
 const LinearRegistration = require('linearRegistration');
 const ResliceImage = require('resliceImage');
 const NonlinearRegistration = require('nonlinearRegistration');
-const baseutils = require('baseutils');
 const BisWebPanel = require('bisweb_panel.js');
-const jstree = require('jstree');
 const MotionCorrection = require('motionCorrection');
 const fs = require('fs');
 const TransformationCollection = require('bisweb_transformationcollection');
+require('jstree');
 
 const tree_template_string = 
 `
@@ -391,7 +390,6 @@ class FMRIElement extends HTMLElement {
             imageArray.push(array[i].image);
         }
 
-        let self = this;
         let numImages = imageArray.length;
 
         let middleImage;
@@ -698,11 +696,10 @@ class FMRIElement extends HTMLElement {
         console.log(this.tree_div);
 
         if (webutil.inElectronApp()) {
-	    let hmenu = webutil.createTopMenuBarMenu("Help", menubar);
-            webutil.createMenuItem(hmenu, 'Show JavaScript Console',
-                                   function () {
-                                       window.BISELECTRON.remote.getCurrentWindow().toggleDevTools();
-                                   });
+        let hmenu = webutil.createTopMenuBarMenu("Help", menubar);
+            webutil.createMenuItem(hmenu, 'Show JavaScript Console', () => {
+                window.BISELECTRON.remote.getCurrentWindow().toggleDevTools();
+            });
 		}
     }
 }
