@@ -86,8 +86,13 @@ class FileServer extends HTMLElement {
     connectToServer(address = 'ws://localhost:8081') {
         if (this.socket) { this.socket.close(1000, 'Restarting connection'); }
 
-        this.socket = new WebSocket(address);
+        try {
+            this.socket = new WebSocket(address);
+        } catch(e) {
+            console.log('error', e);
+        }
 
+        console.log('socket', this.socket);
         //file tree dialog needs to be able to call some of file server's code 
         //they are separated for modularity reasons, so to enforce the hierarchical relationship between the two fileserver provides the functions and the socket
         this.fileTreeDialog.fileListFn = this.requestFileList;
@@ -100,6 +105,11 @@ class FileServer extends HTMLElement {
         //add the event listeners for the control port
         this.socket.addEventListener('close', (event) => {
             console.log('Socket closing', event);
+        });
+
+        this.socket.addEventListener('error', (event) => {
+            console.log('error event', event);
+            webutil.createAlert('An error occured trying to communicate with the server. Please ensure that the process is running, refresh the browser, and retry the connection.', true);
         });
 
         this.socket.addEventListener('message', (event) => {
