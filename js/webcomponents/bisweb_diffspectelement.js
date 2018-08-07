@@ -18,6 +18,8 @@ const NonlinearRegistration = require('nonlinearRegistration');
 const baseutils = require('baseutils');
 const BisWebPanel = require('bisweb_panel.js');
 
+require('jstree');
+
 // initialization of jstree formatting
 const tree_template_string = `
     
@@ -216,9 +218,8 @@ class DiffSpectElement extends HTMLElement {
         bisgenericio.read(file).then((contents) => {
             let a = contents.data;
             try {
-        
-                //let obj = JSON.parse(a);
                 // TODO
+                //let obj = JSON.parse(a);
             } catch (e) {
                 console.log(e);
                 errormessage(e);
@@ -229,6 +230,7 @@ class DiffSpectElement extends HTMLElement {
 
     // parse fill variable values from file
     fillFields(b) { // url as argument somehow
+
 
         var input = b;
         var interictal = null, ictal = null, tmap = null, hyper = null, intertoictal = null, atlastointer = null, atlastoictal = null;

@@ -269,8 +269,7 @@ var esLint=function() {
                 "semi": [
                     "error",
                     "always"
-                ],
-                'linebreak-style' : 'off',
+                ]
             }
         })).pipe(eslint.format());
 };
