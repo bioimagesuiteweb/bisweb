@@ -236,7 +236,7 @@ const webfileutils = {
             }
 
             if (fileMode==='local') {
-                callback({});
+                callback();
                 return;
             }
 
