@@ -121,7 +121,7 @@ let internal = {
     dependcss : [ 
         "./lib/css/bootstrap_dark_edited.css", 
         "./lib/css/bootstrap-colorselector.css",
-        "./node_modules/jstree/dist/themes/default/style.min.css",
+        "./node_modules/jstree/dist/themes/default/style.css",
         "./web/biscommon.css"
     ],
     lintscripts : ['js/**/*.js','config/*.js','compiletools/*.js','*.js','web/**/*.js','test/**/*.js'],
@@ -384,11 +384,6 @@ gulp.task('commonfiles', function() {
     gulp.src([ 'node_modules/bootstrap/dist/css/*']).pipe(gulp.dest(options.outdir+'css/'));
     gulp.src([ 'node_modules/bootstrap/dist/fonts/*']).pipe(gulp.dest(options.outdir+'fonts/'));
     gulp.src([ 'web/images/**/*']).pipe(gulp.dest(options.outdir+'/images/'));
-    gulp.src('./web/aws/biswebaws.html').pipe(gulp.dest(options.outdir));
-    gulp.src('./node_modules/aws-sdk/dist/aws-sdk.min.js').pipe(gulp.dest(options.outdir));
-    gulp.src('./node_modules/amazon-cognito-auth-js/dist/amazon-cognito-auth.min.js').pipe(gulp.dest(options.outdir));
-    gulp.src('./web/aws/awsparameters.js').pipe(gulp.dest(options.outdir));
-//    gulp.src('./web/onedriveredirect.html').pipe(gulp.dest(options.outdir));
     gulp.src([ 'lib/fonts/*']).pipe(gulp.dest(options.outdir+'/fonts/'));
     gulp.src([ 'web/manifest.json']).pipe(gulp.dest(options.outdir));
     gulp.src('./web/bispreload.js').pipe(gulp.dest(options.outdir));
@@ -398,6 +393,10 @@ gulp.task('commonfiles', function() {
     gulp.src('./lib/css/bootstrap_dark_edited.css').pipe(gulp.dest(options.outdir));
     gulp.src('./lib/js/webcomponents-lite.js').pipe(gulp.dest(options.outdir));
     gulp.src('./node_modules/jquery/dist/jquery.min.js').pipe(gulp.dest(options.outdir));
+    gulp.src('./web/aws/biswebaws.html').pipe(gulp.dest(options.outdir));
+    gulp.src('./node_modules/aws-sdk/dist/aws-sdk.min.js').pipe(gulp.dest(options.outdir));
+    gulp.src('./node_modules/amazon-cognito-auth-js/dist/amazon-cognito-auth.min.js').pipe(gulp.dest(options.outdir));
+    gulp.src('./web/aws/awsparameters.js').pipe(gulp.dest(options.outdir));
     gulp.src('./node_modules/bootstrap/dist/js/bootstrap.min.js').pipe(gulp.dest(options.outdir));
     bis_gutil.createHTML('console',options.outdir,'',internal.biscss);
 });

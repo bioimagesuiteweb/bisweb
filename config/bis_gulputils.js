@@ -29,6 +29,7 @@ let colors=require('colors/safe'),
     gulpzip = require('gulp-zip'),
     template=require('gulp-template'),
     del = require('del'),
+    replace = require('gulp-replace'),
     gulp=require("gulp");
 
 
@@ -187,11 +188,16 @@ var createHTML=function(toolname,outdir,libjs,commoncss) {
 var createCSSCommon=function(dependcss,out,outdir) {
 
     var bundlecss  = out;
+
     console.log(getTime(),colors.green('Concatenating ',dependcss.join(),' to ',out));
     gulp.src(dependcss)
         .pipe(concatCss(bundlecss))
+        .pipe(replace('../../node_modules/jstree/dist/themes/default', 'images')) // jstree css fix
         .pipe(gulp.dest(outdir));
 };
+
+
+
 
 var createDateFile=function(datefile,hash='',version='') {
 
