@@ -60,8 +60,14 @@ module.exports = {
             return;
         }
 
-        if (typeof fname === "object")
-            fname =  img.getFilename() ||  "outputimage.nii.gz";
+        console.log('fname', fname);
+        //fname may be an object 
+        fname = fname || 'outputimage.nii.gz';
+        if (typeof fname === "object") {
+            if (!fname.responseFunction) {
+                fname =  img.getFilename() ||  "outputimage.nii.gz";
+            }
+        }
 
         img.save(fname).then( (f) => {
             if (webutil.inElectronApp())  {

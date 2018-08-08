@@ -211,8 +211,10 @@ const webfileutils = {
     webFileCallback: function (fileopts, callback) {
 
         let suffix = fileopts.suffix || '';
+        let title = fileopts.title || '';
+        
         if (suffix === "NII")
-            suffix = '.nii,.nii.gz,.gz,.tiff';
+            suffix = '.nii.gz,.nii,.gz,.tiff';
 
         if (suffix!=='') {
             let s=suffix.split(",");
@@ -239,6 +241,7 @@ const webfileutils = {
         if (fileopts.force)
             fmode=fileopts.force;
 
+        let cbopts = { 'callback' : callback, 'title' : title, 'suffix' : suffix };
         if (fileopts.save) {
             //if the callback is specified presumably that's what should be called
             console.log('opts', fileopts);
@@ -249,17 +252,17 @@ const webfileutils = {
             } 
 
             if (fileMode === 'server') {
-                bisweb_fileserver.wrapInAuth('uploadfile', callback);
+                bisweb_fileserver.wrapInAuth('uploadfile', cbopts);
                 return;
             }
 
             if (fileMode==='amazonaws') {
-                bisweb_awsmodule.wrapInAuth('uploadfile', callback);
+                bisweb_awsmodule.wrapInAuth('uploadfile', cbopts);
                 return;
             }
 
             if (fileMode==='local') {
-                callback({});
+                callback();
                 return;
             }
 
@@ -270,12 +273,12 @@ const webfileutils = {
         
         if (fmode==='dropbox') { 
             fileopts.suffix=suffix;
-            return bisweb_dropbox.pickReadFile(fileopts,callback);
+            return bisweb_dropbox.pickReadFile(fileopts, cbopts);
         }
         
         if (fmode==='onedrive') { 
             fileopts.suffix=suffix;
-            return bisweb_onedrive.pickReadFile(fileopts,callback);
+            return bisweb_onedrive.pickReadFile(fileopts, cbopts);
         }
         
         
@@ -293,12 +296,12 @@ const webfileutils = {
         }
 
         if (fileMode==="amazonaws") {
-            bisweb_awsmodule.wrapInAuth('showfiles', callback);
+            bisweb_awsmodule.wrapInAuth('showfiles', cbopts);
             return;
         }
 
         if (fileMode==="server") {
-            bisweb_fileserver.wrapInAuth('showfiles', callback);
+            bisweb_fileserver.wrapInAuth('showfiles', cbopts);
             return;
         }
 

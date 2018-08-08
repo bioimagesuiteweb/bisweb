@@ -969,7 +969,7 @@ let write = function (url, data,isbinary=false) {
 
     //if (data instanceof Uint8Array || data instanceof ArrayBuffer)
     //  isbinary = true;
-
+    console.log('hello from write', url);
     if (url.responseFunction !== undefined)
         return url.responseFunction(url, data, isbinary);
 

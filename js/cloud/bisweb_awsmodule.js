@@ -187,12 +187,14 @@ class AWSModule {
      * If the user is authenticated, wrapInAuth will call the appropriate command. 
      * 
      * @param {String} command - A string indicating the command to execute. 
-     * @param {Function} callback - A function propagated from bis_webfileutil that will handle the non-AWS I/O for the retrieved data. 
+     * @param {Object} opts - An options object
+     * @param {Function} opts.callback - A callback function propagated from bis_webfileutil that will handle the non-AWS I/O for the retrieved data, , and a list of acceptable file suffixes.
+     * @param {String} opts.title - The title to display on the load/save modal
      */
-    wrapInAuth(command, callback) {
-
+    wrapInAuth(command, opts) {
+        console.log('opts', opts);
         let parseCommand = () => {
-            this.callback = callback;
+            this.callback = opts.callback;
             switch(command) {
                 case 'showfiles' : this.listObjectsInBucket(); break;
                 case 'uploadfile' : this.createSaveImageModal(); break;
