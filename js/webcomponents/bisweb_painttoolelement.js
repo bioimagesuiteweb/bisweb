@@ -991,6 +991,10 @@ class PaintToolElement extends HTMLElement {
             return;
         }
 
+
+        if (mousestate===-1)
+            return;
+
         if (mousestate===2) {
             this.internal.undostack.addOperation(this.internal.currentundoarray);
             this.internal.currentundoarray=[];

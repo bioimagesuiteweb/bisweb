@@ -857,8 +857,10 @@ class ViewerApplicationElement extends HTMLElement {
         },null,4);
 
         fobj=genericio.getFixedSaveFileName(fobj,self.applicationName+".biswebstate");
+        //        console.log('Fobj=',fobj);
         
         return new Promise(function (resolve, reject) {
+            //            console.log('fobj=',fobj);
             genericio.write(fobj, output).then((f) => {
                 resolve(f);
             }).catch((e) => { reject(e); });

@@ -60,7 +60,7 @@ module.exports = {
             return;
         }
 
-        console.log('fname', fname);
+        //console.log('fname', fname);
         //fname may be an object 
         fname = fname || 'outputimage.nii.gz';
         if (typeof fname === "object") {

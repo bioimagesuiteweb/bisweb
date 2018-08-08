@@ -899,8 +899,10 @@ var getglobmodule = function () {
 
 let read = function (url, isbinary = false) {
 
-    if (url.responseFunction!==undefined) {
-        return url.responseFunction(url,isbinary);
+    if (url) {
+        if (url.responseFunction!==undefined) {
+            return url.responseFunction(url,isbinary);
+        }
     }
 
 
@@ -969,9 +971,11 @@ let write = function (url, data,isbinary=false) {
 
     //if (data instanceof Uint8Array || data instanceof ArrayBuffer)
     //  isbinary = true;
-    console.log('hello from write', url);
-    if (url.responseFunction !== undefined)
-        return url.responseFunction(url, data, isbinary);
+    //    console.log('hello from write', url);
+    if (url) {
+        if (url.responseFunction !== undefined)
+            return url.responseFunction(url, data, isbinary);
+    }
 
 
     return new Promise(function (resolve, reject) {
@@ -999,6 +1003,9 @@ let write = function (url, data,isbinary=false) {
  */
 let getFixedSaveFileName = function(fobj,replacement) {
 
+    if (fobj=== undefined || fobj===null)
+        return replacement;
+    
     if (typeof fobj === "object") {
         if (!fobj.name) {
             fobj=replacement;
@@ -1015,6 +1022,8 @@ let getFixedSaveFileName = function(fobj,replacement) {
  * @returns {Object} - a string or the file object as needed
  */
 let getFixedLoadFileName = function(fobj) {
+
+    fobj = fobj || '';
     
     if (typeof fobj === "object") {
         if (fobj.name) 

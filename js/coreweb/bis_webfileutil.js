@@ -244,7 +244,7 @@ const webfileutils = {
         let cbopts = { 'callback' : callback, 'title' : title, 'suffix' : suffix };
         if (fileopts.save) {
             //if the callback is specified presumably that's what should be called
-            console.log('opts', fileopts);
+            //            console.log('opts', fileopts);
 
             //otherwise try some default behaviors
             if (fileMode==='dropbox') {
