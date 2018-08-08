@@ -255,6 +255,7 @@ class AWSModule {
                             else { 
                                 console.log('refresh successful.'); 
                                 this.s3 = this.createS3(AWSParameters.BucketName, AWS.config.credentials);
+                                authWindow.close();
                             }
                         });
                     }
