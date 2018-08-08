@@ -91,6 +91,12 @@ let decodeUTF8 = (rawText, control) => {
     return text;
 };
 
+/**
+ * Unzips gzipped data using pako. Attempts to convert the data to a TypedArray before unzipping.
+ * 
+ * @param {TypedArray|ArrayBuffer} arr - Raw gzipped image data.
+ * @returns Unzipped data or an error message. 
+ */
 let unzipFile = (arr) => {
     let parsedArr = new Uint8Array(arr);
     let unzippedArr;
@@ -103,6 +109,12 @@ let unzipFile = (arr) => {
     }
 };
 
+/**
+ * Gzips raw image data using pako. Attempts to convert data to a TypedArray before zipping.
+ * 
+ * @param {TypedArray|ArrayBuffer} arr - Raw unzipped image data. 
+ * @returns Zipped data or an error message.
+ */
 let zipFile = (arr) => {
     let parsedArr = new Uint8Array(arr);
     let zippedArr;
@@ -116,6 +128,12 @@ let zipFile = (arr) => {
     }
 };
 
+/**
+ * Attempts to read raw, stringified JSON and return a parsed JSON object.
+ * 
+ * @param {String} rawJSON - Stringified JSON object as might be provided by the fileserver, AWS, etc.
+ * @returns Parsed JSON object, or null if JSON.parse fails.
+ */
 let parseJSON = (rawJSON) => {
     try {
         data = JSON.parse(rawJSON);
@@ -126,6 +144,14 @@ let parseJSON = (rawJSON) => {
     }
 }
 
+/**
+ * Traverses a nested file structure for the file specified in 'path'. 
+ * For example, if the path is 'a/b/c', this will attempt to find an entry named 'a', look within its children for 'b', then look within its children for 'c'.
+ * 
+ * @param {String} path - A filepath separated by slashes. 
+ * @param {Array} list - Nested file structure. Typically contains a set of entries with 'children' that contain more entries, which in turn may contain more entries, etc.
+ * @returns The corresponding entry in the file structure, or null.
+ */
 let searchTree = (path, list) => {
     let foundDirectory = false, splitPaths = path.split('/'), currentDirectory = list;
     while (splitPaths.length > 0) {
