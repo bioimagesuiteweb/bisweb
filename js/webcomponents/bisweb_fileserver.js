@@ -252,7 +252,7 @@ class FileServer extends HTMLElement {
                         reject('Upload failed');
                     };
 
-                    this.uploadFileToServer(obj.name, body, promiseCb, promiseEb);
+                    this.uploadFileToServer(obj.filename, body, promiseCb, promiseEb);
                 });
             }
         };
@@ -490,19 +490,21 @@ class FileServer extends HTMLElement {
      * //TODO: Add dialog title in gui:
      * //TODO: Add list of allowed suffixes:
      *
-     * @param {String} command - A word representing the command to execute on the server. 
-     * @param {Function} callback - A function that will invoke the file upload/download function created by createFileDownloadRequest and createFileUploadRequest.
+     * @param {String} command - A string indicating the command to execute. 
+     * @param {Object} opts - An options object
+     * @param {Function} opts.callback - A callback function propagated from bis_webfileutil that will handle the non-AWS I/O for the retrieved data, , and a list of acceptable file suffixes.
+     * @param {String} opts.title - The title to display on the load/save modal
      */
-    wrapInAuth(command, callback) {
+    wrapInAuth(command, opts) {
         if (this.authenticated) {
             switch(command) {
                 case 'showfiles' : 
                     this.requestFileList('load'); 
-                    this.callback = callback; 
+                    this.callback = opts.callback; 
                     break;
                 case 'uploadfile' : 
                     this.requestFileList('save'); 
-                    this.callback = callback; 
+                    this.callback = opts.callback; 
                     break;
                 default : console.log('unrecognized command', command);
             }

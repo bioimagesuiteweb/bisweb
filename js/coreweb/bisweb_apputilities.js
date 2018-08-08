@@ -64,7 +64,7 @@ module.exports = {
         //fname may be an object 
         fname = fname || 'outputimage.nii.gz';
         if (typeof fname === "object") {
-            if (!fname.responseFunction) {
+            if (fname.hasOwnProperty('responseFunction') === false) {
                 fname =  img.getFilename() ||  "outputimage.nii.gz";
             }
         }

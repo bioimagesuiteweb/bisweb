@@ -1007,7 +1007,7 @@ let getFixedSaveFileName = function(fobj,replacement) {
         return replacement;
     
     if (typeof fobj === "object") {
-        if (!fobj.name) {
+        if (!fobj.name && !fobj.filename) {
             fobj=replacement;
         }
     }
@@ -1026,8 +1026,8 @@ let getFixedLoadFileName = function(fobj) {
     fobj = fobj || '';
     
     if (typeof fobj === "object") {
-        if (fobj.name) 
-            return fobj.name;
+        if (fobj.filename) 
+            return fobj.filename;
     }
 
     if (fobj.indexOf("?=realname=")>0) {

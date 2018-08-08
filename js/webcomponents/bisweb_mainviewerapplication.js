@@ -536,8 +536,7 @@ class ViewerApplicationElement extends HTMLElement {
                                            },
                                            { title: 'Load image',
                                              save: false,
-                                             suffix: 'NII',
-
+                                             suffix: 'NII'
                                            });
 
             webfileutil.createFileMenuItem(fmenu[viewerno], 'Save Image',
