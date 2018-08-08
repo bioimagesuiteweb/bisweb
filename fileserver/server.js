@@ -1,22 +1,21 @@
 require('../config/bisweb_pathconfig.js');
 
-const $ = require('jquery');
 const net = require('net');
 const crypto = require('crypto');
-const zlib = require('zlib');
 const os = require('os');
 const timers = require('timers');
 const { StringDecoder } = require('string_decoder');
+
+// One time password library
 const otplib = require('otplib');
 const hotp = otplib.hotp;
 hotp.options  = { crypto };
 const authenticator = otplib.authenticator;
 
-const BisWebImage = require('bisweb_image.js');
-const modules = require('moduleindex.js');
+// TODO:
+// this extension should be used make node-like calls work on Windows
+// https://github.com/prantlf/node-posix-ext
 
-//node extension to make node-like calls work on Windows
-//https://github.com/prantlf/node-posix-ext
 const fs = require('fs');
 const wsutil = require('./wsutil.js');
 const genericio = require('bis_genericio.js');
@@ -29,7 +28,7 @@ const SHAstring = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 //file transfer may occur in chunks, which requires storing the chunks as they arrive
 let fileInProgress = null;
 
-//image transfer requires switching a few variables that need to be global in scope
+//data transfer requires switching a few variables that need to be global in scope
 let timeout = undefined;
 
 
@@ -37,44 +36,6 @@ let timeout = undefined;
 const secret = authenticator.generateSecret();
 let hotpCounter = 0;
 
-let loadMenuBarItems = () => {
-    let menubar = document.getElementById('viewer_menubar');
-    let tabContainer = $(menubar).find('.nav.navbar-nav');
-    let createMenuBarTab = function (name, parent) {
-        let tab = $("<li class='dropdown'>" +
-            "<a href='#' class='dropdown-toggle' data-toggle='dropdown' role='button' aria-expanded='false'>" + name + "<span class='caret'></span></a>" +
-            "<ul class='dropdown-menu' role='menu'>" +
-            "</ul>" +
-            "</li>");
-
-        $(parent).append(tab);
-
-        //usually want the tab so you can add items to the dropdown menu, so return that
-        return tab.find('.dropdown-menu');
-    };
-
-    let createMenuBarItem = function (name, tab) {
-        let item = $(`<li>  <a href="#">${name}</a> </li>`)
-        tab.append(item);
-        return item;
-    };
-
-    let fileTab = createMenuBarTab('Files', tabContainer);
-    let fileItem = createMenuBarItem('Load Local Files', fileTab);
-
-    fileItem.on('click', () => {
-        loadLocalFiles('hello.txt');
-    });
-
-
-    let viewTab = createMenuBarTab('View', tabContainer);
-};
-
-let loadLocalFiles = (filename) => {
-    fs.readFile(filename, 'utf-8', (err, data) => {
-        console.log('file', data);
-    });
-};
 
 /**
  * Creates the server instance, binds the handshake protocol to its 'connection' event, and begins listening on port 8081 (control port for the transfer).
@@ -495,7 +456,7 @@ let serveFileList = (socket, basedir, type, depth = null) => {
     });
 };
 
-let serveModuleInvocationRequest = (parsedText, control, socket) => {
+/*let serveModuleInvocationRequest = (parsedText, control, socket) => {
     let args = parsedText.params.args, modulename = parsedText.params.modulename;
 
     let inputName = parsedText.params.inputs[0];
@@ -510,7 +471,7 @@ let serveModuleInvocationRequest = (parsedText, control, socket) => {
             console.log('module', module);
         });
     }).catch( (e) => { console.log('could not read image', inputName, e); })
-};
+};*/
 
 /**
  * Sends a message to the client describing the server error that occured during their request. 
@@ -656,8 +617,7 @@ let parseClientJSON = (rawText) => {
     return parsedText;
 };
 
-module.exports = {
-    startServer: startServer,
-    loadMenuBarItems: loadMenuBarItems,
-    loadLocalFiles: loadLocalFiles
-}
+// This is the main function
+
+module.exports = startServer;
+

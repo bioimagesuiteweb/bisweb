@@ -21,9 +21,6 @@ class FileServer extends HTMLElement {
         this.fileTreeDialog = new bisweb_filedialog('Local File System');
         this.fileSaveDialog = new bisweb_filedialog('Choose a save location', { 'makeFavoriteButton' : false, 'modalType' : 'save', 'displayFiles' : false  });
 
-        //Save image requests pop up a modal dialog with a text entry field
-        this.saveImageModal = null;
-
         //When connecting to the server, it may sometimes request that the user authenticates
         this.authenticateModal = null;
         this.authenticated = false;
@@ -64,38 +61,50 @@ class FileServer extends HTMLElement {
             webutil.createAlert('An error occured trying to communicate with the server. Please ensure that the process is running, refresh the browser, and retry the connection.', true);
         });
 
+
+        // Handle Data From Server
         this.socket.addEventListener('message', (event) => {
-            console.log('received data', event);
-            let data;
-
-            //parse stringified JSON if the transmission is text
-            if (typeof (event.data) === "string") {
-                data = wsutil.parseJSON(event.data);
-            } else {
-                console.log('received a binary transmission -- interpreting as an image');
-                this.handleImageTransmission(event.data);
-                return;
-            }
-
-            switch (data.type) {
-                case 'authenticate': this.createAuthenticationDialog(); break;
-                case 'filelist': this.displayFileList(data.payload); break;
-                case 'supplementalfiles': this.handleSupplementalFileRequest(data.payload.path, data.payload.list); break;
-                case 'error': {
-                    console.log('Error from client:', data.payload); 
-                    let errorEvent = new CustomEvent('servererror', { 'detail' : data.payload });
-                    document.dispatchEvent(errorEvent);
-                    break;
-                }
-                case 'datasocketready': //some control phrases are handled elsewhere, so the main listener should ignore them
-                case 'goodauth':
-                case 'badauth': break;
-                default: console.log('received a transmission with unknown type', data.type, 'cannot interpret');
-            }
+            this.handleServerResponse(event);
         });
     }
 
-    makeRequest(params, cb, eb) {
+    /** Handles response from server
+     * @param {Object} event - an object containing info from server
+     */
+    handleServerResponse(event) {
+        
+        console.log('received data', event);
+        let data;
+        
+        //parse stringified JSON if the transmission is text
+        if (typeof (event.data) === "string") {
+            data = wsutil.parseJSON(event.data);
+        } else {
+            console.log('received a binary transmission');
+            this.handleDataTransmission(event.data);
+            return;
+        }
+        
+        switch (data.type)
+        {
+            case 'authenticate': this.createAuthenticationDialog(); break;
+            case 'filelist': this.displayFileList(data.payload); break;
+            case 'supplementalfiles': this.handleSupplementalFileRequest(data.payload.path, data.payload.list); break;
+            case 'error': {
+                console.log('Error from client:', data.payload); 
+                let errorEvent = new CustomEvent('servererror', { 'detail' : data.payload });
+                document.dispatchEvent(errorEvent);
+                break;
+            }
+            case 'datasocketready': //some control phrases are handled elsewhere, so the main listener should ignore them
+            case 'goodauth':
+            case 'badauth': break;
+            default: console.log('received a transmission with unknown type', data.type, 'cannot interpret');
+        }
+    }
+
+    /* This is probaly not used anymore
+       makeRequest(params, cb, eb) {
         let command = params.command;
         //let files = this.algorithmcontroller.getImage(this.viewer, 'image');
         console.log('make request params', params);
@@ -107,7 +116,7 @@ class FileServer extends HTMLElement {
             case 'uploadfiles' : this.uploadFileToServer(params.name, cb, eb); break;
             default : console.log('Cannot execute unknown command', command);
         }
-    }
+    }*/
 
     /**
      * Sends a request for a list of the files on the server machine and prepares the display modal for the server's reply. 
@@ -115,13 +124,15 @@ class FileServer extends HTMLElement {
      * 
      * requestFileList doesn't expand the contents of the entire server file system; just the first four levels of directories. 
      * When the user clicks on an unexpanded node the node will request four levels of directories below it. 
+     * This will eventually end up calling this.handleServerRequest (via nested callbacks)
      * 
-     * @param {String} type - Which type of modal is requesting the list. One of either 'load' or 'save'.
+     * @param {String} type - Which type of modal is requesting the list. One of either 'load' or 'save'. // TODO: add directory as type
      * @param {String} directory - The directory to expand the files under. Optional -- if unspecified the server will return the directories under ~/.
      */
     requestFileList(type, directory = null) {
         let command = JSON.stringify({ 'command' : 'show', 'directory' : directory, 'type' : type }); 
         this.socket.send(command);
+        // When this replies we will end up in this.handleServerRequest
     }
 
     /**
@@ -158,6 +169,8 @@ class FileServer extends HTMLElement {
      * Called in response to a file list returned by the server (itself in response to requestFileList) or by the fileTreeDisplayModal trying to fetch more nodes.
      * 
      * @param {Object} response - Object specifying the list of files on the server machine and which modal it corresponds to.
+     *
+     * // TODO: some how have a title here ... and suffix list
      */
     displayFileList(response) {
         console.log('response', response);
@@ -171,7 +184,7 @@ class FileServer extends HTMLElement {
     }
 
     /**
-     * Packages the relevant parameters and functionality for downloading an image from the local filesystem into an object that can be invoked by bis_genericio.
+     * Packages the relevant parameters and functionality for downloading data from the local filesystem into an object that can be invoked by bis_genericio.
      * 
      * @param {Object} params - Parameters object containing the following
      * @param {Array} params.files - List of filenames
@@ -181,14 +194,14 @@ class FileServer extends HTMLElement {
      */
     createFileDownloadRequest(params, cb, eb) {
         let obj = {
-            name: params.name,
+            filename: params.name,
             params: params,
-            responseFunction: () => {
+            responseFunction: () => { //TODO: strictly speaking this should have signature (url,isbinary=false)
                 return new Promise( (resolve, reject) => {
                     let command = { 'command' : 'getfile', 'files' : params.paths };
                     let filesdata = JSON.stringify(command);
 
-                    let cblistener = document.addEventListener('imagetransmission' , (e) => { 
+                    let cblistener = document.addEventListener('bisweb_fileserver_transmission' , (e) => { 
                         document.removeEventListener('errorevent', eblistener);
                         cb(); 
                         resolve({
@@ -199,7 +212,7 @@ class FileServer extends HTMLElement {
                     }, { 'once' : true });
 
                     let eblistener = document.addEventListener('servererror', () => { 
-                        document.removeEventListener('imagetransmission', cblistener);
+                        document.removeEventListener('bisweb_fileserver_transmission', cblistener);
                         reject('An error occured during transmission'); 
                         eb(); 
                     }, { 'once' : true });
@@ -213,7 +226,7 @@ class FileServer extends HTMLElement {
     }
 
     /**
-     * Packages the relevant parameters and functionality for uploading an image to the local filesystem into an object that can be invoked by bis_genericio.
+     * Packages the relevant parameters and functionality for uploading data to the local filesystem into an object that can be invoked by bis_genericio.
      * 
      * @param {Object} params - Parameters object containing the following
      * @param {Array} params.files - List of filenames
@@ -221,13 +234,13 @@ class FileServer extends HTMLElement {
      * @param {Function} cb - Callback on success.
      * @param {Function} eb - Callback on failure.
      * @param {Object} callback.url - The object passed to the callback initially (in this case the object created by createFileUploadRequest). Unused in this function.
-     * @param {Uint8Array} callback.body - The image body provided by bis_genericio through the callback function template.
+     * @param {Uint8Array} callback.body - The data to save
      */
     createFileUploadRequest(params, cb, eb) {
         let obj = {
-            name: params.name,
+            filename: params.name,
             params: params,
-            responseFunction: (url, body) => {
+            responseFunction: (url, body) => { //TODO : isbinary too
                 return new Promise( (resolve, reject) => {
                     let promiseCb = () => {
                         cb();
@@ -257,13 +270,13 @@ class FileServer extends HTMLElement {
         let command = { 'command' : 'getfile', 'files' : filelist };
         let filesdata = JSON.stringify(command);
 
-        let cblistener = document.addEventListener('imagetransmission' , () => { 
+        let cblistener = document.addEventListener('bisweb_fileserver_transmission' , () => { 
             document.removeEventListener('errorevent', eblistener);
             cb(); 
         }, { 'once' : true });
 
         let eblistener = document.addEventListener('servererror', () => { 
-            document.removeEventListener('imagetransmission', cblistener); 
+            document.removeEventListener('bisweb_fileserver_transmission', cblistener); 
             eb(); 
         }, { 'once' : true });
 
@@ -294,8 +307,10 @@ class FileServer extends HTMLElement {
      */
     uploadFileToServer(name, body, cb = () => {}, eb = () => {}) {
 
+        // TODO: is the size of body < packetsize upload in one shot
+        
         console.log('cb', cb, 'eb', eb);
-        let packetSize = 50000;
+        const packetSize = 50000;
         let fileTransferSocket;
 
         //negotiate opening of the data port
@@ -307,7 +322,7 @@ class FileServer extends HTMLElement {
 
                     fileTransferSocket = new WebSocket('ws://localhost:8082');
                     fileTransferSocket.addEventListener('open', () => {
-                        doImageTransfer(body);
+                        doDataTransfer(body);
                     });
 
                 } else {
@@ -333,7 +348,7 @@ class FileServer extends HTMLElement {
 
 
         //transfer image in 50KB chunks, wait for acknowledge from server
-        function doImageTransfer(image) {
+        function doDataTransfer(image) {
             let remainingTransfer = image, currentTransferIndex = 0;
            
             //send data in chunks
@@ -377,9 +392,9 @@ class FileServer extends HTMLElement {
      *  
      * this.callback is attached to bisweb_fileserver when a bisweb_filedialog modal is opened. 
      * Given that modals are opened one at a time and all user-driven file I/O happens through one of these, the callback should be a
-     * @param {Uint8Array} data - Image transferred by the server. 
+     * @param {Uint8Array} data - data transferred by the server. 
      */
-    handleImageTransmission(data) {
+    handleDataTransmission(data) {
 
         let reader = new FileReader();
 
@@ -392,7 +407,7 @@ class FileServer extends HTMLElement {
             let unzippedFile = wsutil.unzipFile(reader.result);
 
             //notify the Promise created by createFileDownloadRequest 
-            let imageLoadEvent = new CustomEvent('imagetransmission', { detail : unzippedFile });
+            let imageLoadEvent = new CustomEvent('bisweb_fileserver_transmission', { detail : unzippedFile });
             document.dispatchEvent(imageLoadEvent);
         });
 
@@ -472,6 +487,9 @@ class FileServer extends HTMLElement {
     /**
      * Checks whether the user has authenticated with the fileserver. Performs the command if they have, otherwise prompts the user to login.
      * 
+     * //TODO: Add dialog title in gui:
+     * //TODO: Add list of allowed suffixes:
+     *
      * @param {String} command - A word representing the command to execute on the server. 
      * @param {Function} callback - A function that will invoke the file upload/download function created by createFileDownloadRequest and createFileUploadRequest.
      */
