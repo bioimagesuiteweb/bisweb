@@ -14,12 +14,13 @@
  limitations under the License.__
  
  ENDLICENSE -->
+
 <!DOCTYPE html>
 
 <html lang="en">
 
 <head>
-    <title>BioImageSuite File Server</title>
+    <title>BioImage Suite SPECT Viewer Tool</title>
     <meta name="viewport" content="width=device-width, user-scalable=no">
     <meta name="theme-color" content="rgb(28,45,64)">
     <meta name="description" content="Yale BioImage Suite Medical Image
@@ -38,41 +39,69 @@
     <!-- build:css -->
     <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_dark.css">
     <link rel="stylesheet" type="text/css"  href="../lib/css/bootstrap-colorselector.css">
+    <link rel="stylesheet" type="text/css" href="biscommon.css">
+     <link rel="stylesheet" href="../node_modules/jstree/dist/themes/default/style.css">
     <!-- endbuild -->
 
     <!-- all javascript files -->
     <!-- build:js -->
-    <script>
-        //https://stackoverflow.com/questions/22658015/bootstrap-wont-detect-jquery-1-11-0-uncaught-error-bootstraps-javascript-re?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
-        window.jQuery = window.$ = require('jquery');
-    </script>
+    <script src="bis.js"></script>
+    <script src="../build/web/webcomponents-lite.js"></script>
+    <script src="../build/web/jquery.min.js"></script>
     <script src="../build/web/bootstrap.min.js"></script>
-    <script src="../build/web/bislib.js"></script>
     <script src="../build/web/libbiswasm_wasm.js"></script>
-    <script src="server.js"></script>
+    <script src="../build/web/bislib.js"></script>
+    
+    
     <!-- endbuild -->
     <!-- end webpack/gulp modifications -->
 
-    <script> 
-        window.onload = () => {
-            loadMenuBarItems();
-            startServer('localhost', 8081);
-        }
-    </script>
+
+    <!-- begin stay as is -->
+    <link rel="stylesheet" type="text/css" href="spectviewer.css">
+    <!-- end of stay as is -->
 </head>
-<body oncontextmenu="return false;" ondragstart="return false;" ondrop="return false;">
+<body>
+
+  <bisweb-topmenubar   id="viewer_menubar"></bisweb-topmenubar> 
+
+  <div id="viewerwidget">
+
+    <bisweb-viewerlayoutelement
+       id="viewer_layout"
+       bis-sidewidth="300"
+       bis-coreopen="false"
+       bis-wholescreen="1"
+       bis-defaulttext="  ">
+    </bisweb-viewerlayoutelement>
+
+    <bisweb-colormapcontrollerelement id="viewer_cmap"></bisweb-colormapcontrollerelement>
     
-    
-      <bisweb-topmenubar id="viewer_menubar"></bisweb-topmenubar> 
-    
-      <div id="viewerwidget">  
-        <bisweb-viewinputsmodal
-            id="viewinputsmodal"
-            bis-menubarid="#viewer_menubar">
-        </bisweb-viewinputsmodal>  
-      </div>
-    
+    <bisweb-orthogonalviewer
+       id="viewer"
+       bis-layoutwidgetid="#viewer_layout"
+       bis-colormapeditorid="#viewer_cmap">
+    </bisweb-orthogonalviewer>
       
-      <bisweb-botmenubar></bisweb-botmenubar>
-    </body>
+    <bisweb-snapshotelement
+      bis-layoutwidgetid="#viewer_layout"
+      bis-dowhite="false"
+      bis-viewerid="#viewer">
+    </bisweb-snapshotelement>
+
+    <bisweb-console id="bisconsole"></bisweb-console>
+
+    <bisweb-diffspectelement
+       bis-menubarid="#viewer_menubar"
+       bis-layoutwidgetid="#viewer_layout"
+       bis-consoleid="#bisconsole"
+       bis-viewerid="#viewer">
+    </bisweb-diffspectelement>
+
+
+  </div>
+
+  
+  <bisweb-botmenubar></bisweb-botmenubar>
+</body>
 </html>

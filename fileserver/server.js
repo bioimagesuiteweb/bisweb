@@ -17,11 +17,10 @@ const modules = require('moduleindex.js');
 
 //node extension to make node-like calls work on Windows
 //https://github.com/prantlf/node-posix-ext
-const posixext = require('posix-ext'),
-    fs = posixext.fs, process = posixext.process;
-
+const fs = require('fs');
 const wsutil = require('./wsutil.js');
 const genericio = require('bis_genericio.js');
+const process = require('process');
 
 //'magic' string for WebSockets
 //https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers

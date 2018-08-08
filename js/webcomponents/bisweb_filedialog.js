@@ -1,7 +1,8 @@
 const $ = require('jquery');
 const localforage = require('localforage');
-const jstree = require('jstree');
+//const jstree = require('jstree');
 const webutil = require('bis_webutil.js');
+require('jstree');
 
 /**
  * When loading a file from the server, the user must be able to browse the files. 

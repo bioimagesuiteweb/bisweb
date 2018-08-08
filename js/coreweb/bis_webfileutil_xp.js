@@ -29,11 +29,6 @@ const webutil=require('bis_webutil');
 const bisweb_dropbox=require('bisweb_simpledropbox');
 const bisweb_onedrive=require('bisweb_simpleonedrive');
 const bisweb_googledrive=require('bisweb_drivemodule');
-const amazonaws=require('bisweb_awsmodule.js');
-const bisweb_awsmodule = new amazonaws();
-
-let bisweb_fileserver;
-
 //const genericio=require('bis_genericio');
 const userPreferences = require('bisweb_userpreferences.js');
 const bisdbase = require('bisweb_dbase');
@@ -49,89 +44,55 @@ let fileInputElements= [];
 
 const webfileutils = {
 
-    /**
-     * Checks whether one of Google Drive, Dropbox, or OneDrive has usable keys in the current configuration.
-     * These keys live in the 'internal' directory outside of the rest of the codebase. 
-     */
     needModes : function() {
         if (dkey.length>0 || gkey.length>0 || mkey.length>0)
             return true;
         return false;
     },
 
-    /**
-     * Returns the current file mode of the application. May be one of Google Drive, Dropbox, OneDrive, Amazon AWS, Local Server, or standard File I/O (<input type='file'>)
-     */
     getMode: function() {
         return fileMode;
     },
     
-    /**
-     * Creates a list containing the file sources that are available to the application. This is based on the keys that are present in 'internal', and whether or not the document supports a local fileserver. 
-     */
     getModeList : function() {
-        let s=[ 
-            { value: "local", text: "Local File System" }
-        ];
+        let s=[ { value: "local", text: "Local FileSystem" }];
 
-        //localserver requires its HTML element to be present in the document
-        let localserver = $(document).find('bisweb-fileserver');
-        if (localserver[0])
-            s.push({ value : "server", text: "File Server"});
         if (dkey.length>1)
             s.push({ value: "dropbox", text: "Dropbox" });
         if (gkey.length>1) 
             s.push({ value: "googledrive", text: "Google Drive" });
         if (mkey.length>1) 
             s.push({ value: "onedrive", text: "Microsoft OneDrive" });
-        
-        //TODO: Does this need a key or something? I don't think so but would be nice if there was some comparable flag...
-        s.push({ value : 'amazonaws', text: 'Amazon S3'});
 
         return s;
     },
     
-    /**
-     * Changes the file source of the application. 
-     * @param {String} m - The source to change to. One of 'dropbox', 'googledrive', 'onedrive', 'amazonaws', 'server', or 'local'
-     */
     setMode : function(m='') {
 
-        switch(m) {
-            case 'dropbox' : if(dkey) { fileMode = 'dropbox'; } break;
-            case 'googledrive' : if (gkey) { fileMode = 'googledrive'; } break;
-            case 'onedrive' : if (mkey) { fileMode = 'onedrive'; } break;
-            case 'amazonaws' : fileMode = 'amazonaws'; break;
-            case 'server' : fileMode = 'server'; break;
-            default : fileMode = 'local';
-        }
+        m=m || 'local';
+        if (m==="dropbox" && dkey!=="")
+            fileMode="dropbox";
+        else if (m==="googledrive" && gkey!=="")
+            fileMode="googledrive";
+        else if (m==="onedrive" && mkey!=="")
+            fileMode="onedrive";
+        else
+            fileMode="local";
 
         userPreferences.setItem('filesource',fileMode);
         userPreferences.storeUserPreferences();
     },
 
-    /**
-     * Attempts to read a <bisweb-fileserver> element from within the document to use for future file system related operations.
-     * MUST be called before attempting to use 'server' based operations.
-     */
-    setFileServer : function(fileserverid) {
-        let id = fileserverid.substring(1);
-        let server = document.getElementById(id);
-        if (server) {
-            bisweb_fileserver = server;
-        }
-    },
     
-    /** 
-     * Electron file callback function -- invoked instead of webFileCallback if the application is running in Electron. 
+    /** electron file callback function
      * @alias WebFileUtil.electronFileCallback
-     * @param {Object} fileopts - the file options object 
-     * @param {String} fileopts.title - if in file mode and file set the title of the file dialog
-     * @param {Boolean} fileopts.save - if in file mode and file determine load or save
-     * @param {String} fileopts.defaultpath - if in file mode and file use this as original filename
-     * @param {String} fileopts.filter - if in file mode and file use this to filter file style
-     * @param {String} fileopts.suffix - used to create filter if present (simplified version)
-     * @param {Function} callback - callback to call when done
+     * @param {object} opts - the file options object 
+     * @param {string} opts.title - if in file mode and file set the title of the file dialog
+     * @param {boolean} opts.save - if in file mode and file determine load or save
+     * @param {string} opts.defaultpath - if in file mode and file use this as original filename
+     * @param {string} opts.filter - if in file mode and file use this to filter file style
+     * @param {string} opts.suffix - used to create filter if present (simplified version)
+     * @param {function} callback - callback to call when done
      */
     electronFileCallback: function (fileopts, callback) {
         fileopts = fileopts || {};
@@ -196,17 +157,15 @@ const webfileutils = {
 
 
 
-    /** 
-     * Web file callback function. This function will be invoked by any buttons that load or save if the application has been launched from a browser. 
-     * This function will call the load and save functions of whichever file source is specified (see setFileSource or another similar function). 
+    /** web file callback function
      * @alias WebFileUtil.webFileCallback
-     * @param {Object} fileopts - the callback options object
-     * @param {String} fileopts.title - if in file mode and web set the title of the file dialog
-     * @param {Boolean} fileopts.save - if in file mode and web determine load or save
-     * @param {String} fileopts.defaultpath - if in file mode and web use this as original filename
-     * @param {String} fileopts.suffix - if in file mode and web use this to filter web style
-     * @param {String} fileopts.force - force file selection mode (e.g. 'local');
-     * @param {Function} callback - Callback to call when done. Typically this is provided by bis_genericio and will put the loaded image onto the viewer or perform any necessary actions after saving an image. 
+     * @param {object} opts - the callback options object
+     * @param {string} opts.title - if in file mode and web set the title of the file dialog
+     * @param {boolean} opts.save - if in file mode and web determine load or save
+     * @param {string} opts.defaultpath - if in file mode and web use this as original filename
+     * @param {string} opts.suffix - if in file mode and web use this to filter web style
+     * @param {string} opts.force - force file selection mode (e.g. 'local');
+     * @param {function} callback - callback to call when done
      */
     webFileCallback: function (fileopts, callback) {
 
@@ -235,37 +194,16 @@ const webfileutils = {
             }
         }
 
+
+        if (fileopts.save) {
+            callback({});
+            return;
+        }
+
         let fmode=fileMode;
         if (fileopts.force)
             fmode=fileopts.force;
-
-        if (fileopts.save) {
-            //if the callback is specified presumably that's what should be called
-            console.log('opts', fileopts);
-
-            //otherwise try some default behaviors
-            if (fileMode==='dropbox') {
-                return bisweb_dropbox.pickWriteFile(suffix, fileopts.saveImage);
-            } 
-
-            if (fileMode === 'server') {
-                bisweb_fileserver.wrapInAuth('uploadfile', callback);
-                return;
-            }
-
-            if (fileMode==='amazonaws') {
-                bisweb_awsmodule.wrapInAuth('uploadfile', callback);
-                return;
-            }
-
-            if (fileMode==='local') {
-                callback({});
-                return;
-            }
-
-            console.log('could not find appropriate save function for file mode', fileMode);
-        }
- 
+        
         // -------- load -----------
         
         if (fmode==='dropbox') { 
@@ -292,16 +230,6 @@ const webfileutils = {
             return;
         }
 
-        if (fileMode==="amazonaws") {
-            bisweb_awsmodule.wrapInAuth('showfiles', callback);
-            return;
-        }
-
-        if (fileMode==="server") {
-            bisweb_fileserver.wrapInAuth('showfiles', callback);
-            return;
-        }
-
 
         let nid=webutil.getuniqueid();
         let loadelement = $(`<input type="file" style="visibility: hidden;" id="${nid}" accept="${suffix}"/>`);
@@ -316,8 +244,8 @@ const webfileutils = {
         loadelement[0].click();
     },
 
-    /** 
-     * Create File Callback. Attaches either webFileCallback or electronFileCallback to a button. 
+
+    /** Create File Callback 
      * @alias WebFileUtil.attachFileCallback
      * @param {Event} e -- the element to attach the callback to
      * @param {Function} callback -- functiont to call when done
@@ -355,7 +283,6 @@ const webfileutils = {
      * @param {object} fileopts - the file dialog options object (in file style)
      * @param {string}  fileopts.title  - in file: dialog title
      * @param {boolean} fileopts.save -  in file determine load or save
-     * @param {BisImage} fileopts.saveImage - the file to save (Optional)
      * @param {string}  fileopts.defaultpath -  use this as original filename
      * @param {string}  fileopts.filter - use this as filter (if in electron)
      * @param {string}  fileopts.suffix - List of file types to accept as a comma-separated string e.g. ".ljson,.land" (simplified version filter)
@@ -391,7 +318,7 @@ const webfileutils = {
 
 
     /** 
-     * Function that creates button using Jquery/Bootstrap (for styling) & a hidden
+     * function that creates button using Jquery/Bootstrap (for styling) & a hidden
      * input type="file" element to load a file. Calls WebFileUtil.createbutton for most things
      * @alias WebFileUtil.createFileButton
      * @param {object} opts - the options object.
@@ -420,22 +347,20 @@ const webfileutils = {
     },
 
 
-    /** 
-     * Create drop down menu item (i.e. a single button) with the appropriate file callback.
+    /** create  drop down menu item (i.e. a single button)
      * @param {JQueryElement} parent - the parent to add this to
-     * @param {String} name - the menu name (if '') adds separator
-     * @param {Function} callback - the callback for item
-     * @param {String} suffix - if not empty then this creates a hidden file menu that is
-     * @param {Object} opts - the electron options object -- used if in electron
-     * @param {String} opts.title - if in file mode and electron set the title of the file dialog
-     * @param {Boolean} opts.save - if in file mode and electron determine load or save
-     * @param {BisImage} opts.saveFile - file to save. 
-     * @param {String} opts.defaultpath - if in file mode and electron use this as original filename
-     * @param {String} opts.filter - if in file mode and electron use this to filter electron style
-     * @param {String} css - styling info for link element
+     * @param {string} name - the menu name (if '') adds separator
+     * @param {function} callback - the callback for item
+     * @param {string} suffix - if not empty then this creates a hidden file menu that is
+     * @param {object} opts - the electron options object -- used if in electron
+     * @param {string} opts.title - if in file mode and electron set the title of the file dialog
+     * @param {boolean} opts.save - if in file mode and electron determine load or save
+     * @param {string} opts.defaultpath - if in file mode and electron use this as original filename
+     * @param {string} opts.filter - if in file mode and electron use this to filter electron style
+     * @param {string} css - styling info for link element
      * activated by pressing this menu
      * @alias WebFileUtil.createMenuItem
-     * @returns {JQueryElement} - The element created by the function.
+     * @returns {JQueryElement} -- the  element
      */
     createFileMenuItem: function (parent, name="", callback=null, fileopts={},css='') {
 
@@ -451,22 +376,13 @@ const webfileutils = {
     },
     // ------------------------------------------------------------------------
 
-    /**
-     * Creates a file menu item with standard BioImageSuite styling. 
-     * See parameters for createFileMenuItem.
-     */
     createDropdownFileItem : function (dropdown,name,callback,fileopts) {
 
         return this.createFileMenuItem(dropdown,name,callback,fileopts,
                                        "background-color: #303030; color: #ffffff; font-size:13px; margin-bottom: 2px");
     },
 
-    /**
-     * Creates a modal with radio buttons to allow a user to change the file source for the application and a dropdown button in the navbar to open the modal.
-     * @param {JQueryElement} bmenu - The navbar menu to attach the dropdown button to. 
-     * @param {String} name - The name for the dropdown button. 
-     * @param {Boolean} separator - Whether or not the dropdown should be followed by a separator line in the menu. True by default.
-     */
+    // -------------------------------------------------------------------------
     createFileSourceSelector : function(bmenu,name="Set File Source",separator=true) {
 
         const self=this;
@@ -492,6 +408,19 @@ const webfileutils = {
             webutil.createMenuItem(bmenu, name, fn);
         }
     },
+
+    // ------------------
+
+    cloudSave : function(blob,filename,callback=null) {
+
+        if (fileMode==='onedrive') {
+            let objectURL = URL.createObjectURL(blob);
+            bisweb_onedrive.pickWriteFile(objectURL,filename,callback);
+            return true;
+        }
+        
+        return false;
+    },
     
 };
 
@@ -501,7 +430,7 @@ const webfileutils = {
 
 
 userPreferencesLoaded.then(() => {
-    let f=userPreferences.getItem('filesource') || fileMode;
+    let f=userPreferences.getItem('filesource') || 'local';
     console.log('Initial File Source=',f);
     webfileutils.setMode(f);
 });

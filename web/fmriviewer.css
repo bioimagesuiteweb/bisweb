@@ -1,0 +1,71 @@
+
+.vakata-context {
+	z-index: 10000000;
+}
+.greyPre {
+    background-color: #808080;	
+}
+
+.whitePre {
+	background-color: #FFFFFF;
+}
+
+.chart {
+    text-align: left;
+}
+
+pre {
+	font-size:9px;
+}
+
+#Tools {
+    margin-top : 5px;
+    padding-left:5px;
+}
+
+
+
+.sidd-item {
+	background-color: #666666;
+	width: 400px;
+	height: 335px;
+	text-align:center;
+}
+
+#smitem1 {
+	text-align: center;
+}
+.siddtextFieldLabel {
+	color: #3C3C3C;
+}
+
+#patientName {
+    width: 150px;
+    margin-left: 60px;
+}
+
+#smitem3 {
+	text-align: center;
+}
+
+.btn-sidd {
+	width: 150px;
+
+}
+#smitem5{
+	text-align:center;
+}
+
+.carousel-indicators {
+	position: relative;
+}
+
+#smitem6 {
+	text-align: center;
+}
+
+
+#navigationButtons {
+	width: 400px;
+}
+

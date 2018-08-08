@@ -43,8 +43,24 @@
 	    "description" : "The paravision import tool.",
 	    "picture" : "images/paravision.png",
 	    "electrononly": true
+	},
+        "spectviewer" : {
+	    "title" : "Diff Spect Application",
+	    "url"   : "spectviewer",
+	    "description" : "The diff-spect tool",
+	    "picture" : "",
+	    "electrononly": false,
+            "hide" : true
+	},
+        "fmriviewer" : {
+	    "title" : "The fMRITool Application",
+	    "url"   : "fmriviewer",
+	    "description" : "The fMRI Tool",
+	    "picture" : "",
+	    "electrononly": false,
+            "hide" : true
 	}
     },
-    "version" : "0.9.5"
+    "version" : "0.9.6"
 }
 
