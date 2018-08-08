@@ -1,5 +1,5 @@
 "use strict";
-const server = require('./server.js');
+const startserver = require('./server.js');
 const program = require('commander');
 
 program
@@ -8,6 +8,6 @@ program
 program.parse(process.argv);
 
 
-server.startServer('localhost', 8081, () => {
+startserver('localhost', 8081, () => {
     //if (!program.verbose) { console.log('Server started in silent mode'); console.log = () => {};}
 });
