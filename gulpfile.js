@@ -190,7 +190,7 @@ console.log(colors.red('Sworker='+options.sworker));
 if (options.sworker) {
     internal.webpackjobs.push({ path: './web/' ,  name : internal.indexlib });
     internal.webpackjobs.push({ path: './web/' ,  name : internal.serviceworkerlib });
-    internal.webpackjobs.push({ path: './web/' ,  name : 'client.js' });
+
 }
 
 if (options.webworker) {
