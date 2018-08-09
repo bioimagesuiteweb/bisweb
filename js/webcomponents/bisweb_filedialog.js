@@ -8,6 +8,8 @@ require('jstree');
  * This class will render a list of files in a window similar to the file system dialog that opens when a user clicks on an <input type='file'> button.
  * 
  * The dialog will contact the server to request image files that the user selects or to request information about the filesystem that the browser does not currently have (the server does not send info about the whole filesystem on the initial request).
+ * 
+ * TODO: Back button breaks after adding supplemental files
  */
 class FileDialogElement {
 
@@ -241,7 +243,7 @@ class FileDialogElement {
         $(newList).on('select_node.jstree', (event, data) => {
             //check whether node should expand directories beneath it.
             if (data.node.original.expand) {
-                this.fileListFn(data.node.original.path);
+                this.fileListFn(this.modalType, data.node.original.path);
                 return;
             }
 

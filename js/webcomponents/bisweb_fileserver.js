@@ -40,7 +40,7 @@ class FileServer extends HTMLElement {
         console.log('socket', this.socket);
         //file tree dialog needs to be able to call some of file server's code 
         //they are separated for modularity reasons, so to enforce the hierarchical relationship between the two fileserver provides the functions and the socket
-        this.fileTreeDialog.fileListFn = this.requestFileList;
+        this.fileTreeDialog.fileListFn = this.requestFileList.bind(this);
         this.fileTreeDialog.fileRequestFn = this.createFileDownloadRequest.bind(this);
         this.fileTreeDialog.socket = this.socket;
 
@@ -126,7 +126,7 @@ class FileServer extends HTMLElement {
     handleSupplementalFileRequest(path, list) {
 
         //file tree dialog keeps track of the data stored within it -- however the since the file server retrieves the new data it is responsible for adding it
-        console.log('file tree list', this.fileTreeDialog.fileList);
+        console.log('handle supplemental file request', this.fileTreeDialog.fileList);
 
         //first two entries in split paths will be '' 'home' and '[user]' and since the file tree starts below those we can safely remove them.
 

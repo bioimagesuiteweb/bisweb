@@ -49,7 +49,9 @@ let hotpCounter = 0;
  * @param {Function} readycb - A callback to invoke when the server emits its 'listening' event. Optional.
  * @returns The server instance.  
  */
-let startServer = (hostname, port, readycb = () => {}) => {
+let startServer = (hostname, readycb = () => {}) => {
+
+    
     let newServer = net.createServer(handleConnectionRequest);
     newServer.listen(port, hostname, readycb);
 
@@ -304,7 +306,7 @@ let handleTextRequest = (rawText, control, socket) => {
     switch (parsedText.command) {
         //get file list
         case 'show':
-        case 'showfiles': serveFileList(socket, parsedText.directory, parsedText.type, 4); break;
+        case 'showfiles': serveFileList(socket, parsedText.directory, parsedText.type, 1); break;
         //get a file from the server
         case 'getfile':
         case 'getfiles': serveFileRequest(parsedText, control, socket); break;
@@ -363,10 +365,10 @@ let serveFileRequest = (parsedText, control, socket) => {
  * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
  * @param {String} basedir - Directory on the server machine to display files starting from, null indicates '~/'. Writes different responses to the socket if basedir is null or not ('filelist' vs 'supplementalfiles').
  * @param {String} type - The type of modal that will be served the file list. Either 'load' or 'save'. 
- * @param {Number} depth - Number of directories under basedir to expand. Optional, depth will be infinite if not specified.
+ * @param {Number} depth - Number of directories under basedir to expand. Optional, depth will be 2 if not specified.
  * @returns A file tree rooted at basedir.
  */
-let serveFileList = (socket, basedir, type, depth = null) => {
+let serveFileList = (socket, basedir, type, depth = 2) => {
     let fileTree = [];
     if (basedir === null) { basedir = os.homedir(); }
 
