@@ -66,6 +66,8 @@ const $=require('jquery');
  * @param {Element} domElement - DomElement of underlying ThreeJs renderer (typically renderer.domElement)
  */
 
+const THREEJSREVISION=parseInt(THREE.REVISION);
+
 var bisOrthographicCameraControls = function ( camera, plane, target, domElement ) {
     
     var _this = this;
@@ -412,7 +414,12 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
                       (v.x1-v.x0)*this.screen.width,
                       (v.y1-v.y0)*this.screen.height];
             if (vp[0]>0 && vp[1]>0 && vp[2] >0 && vp[3] > 0) {
-                renderer.setViewport(vp[0],vp[1],vp[2],vp[3]);
+                let top=vp[1];
+                if (THREEJSREVISION>90) {
+                    // Fix for three.js change of how this is specified
+                    top=this.screen.height-vp[1]-vp[3];
+                }
+                renderer.setViewport(vp[0],top,vp[2],vp[3]);
                 return true;
             }
             return false;
