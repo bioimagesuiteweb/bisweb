@@ -20,6 +20,7 @@ const fs = require('fs');
 const wsutil = require('./wsutil.js');
 const genericio = require('bis_genericio.js');
 const process = require('process');
+const tcpPortUsed = require('tcp-port-used');
 
 //'magic' string for WebSockets
 //https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers
@@ -49,9 +50,9 @@ let hotpCounter = 0;
  * @param {Function} readycb - A callback to invoke when the server emits its 'listening' event. Optional.
  * @returns The server instance.  
  */
-let startServer = (hostname, readycb = () => {}) => {
+let startServer = (hostname, port, readycb = () => {}) => {
 
-    
+
     let newServer = net.createServer(handleConnectionRequest);
     newServer.listen(port, hostname, readycb);
 
@@ -618,6 +619,25 @@ let parseClientJSON = (rawText) => {
 
     return parsedText;
 };
+
+/**
+ * Finds a free port on the user's computer.
+ */
+let findFreePort = () => {
+    let base = 8081;
+    checkInUse(base);
+
+    function checkInUse(port) {
+        tcpPortUsed.check(port, '127.0.0.1').then( (used) => {
+            if (used) {
+                base = base + 1;
+                checkInUse(base);
+            } else {
+                return port;
+            }
+        })
+    }
+}
 
 // This is the main function
 

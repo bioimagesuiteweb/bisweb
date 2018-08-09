@@ -3,7 +3,8 @@ const startserver = require('./server.js');
 const program = require('commander');
 
 program
-    .option('-v, --verbose', 'Whether or not to display messages written by the server');
+    .option('-v, --verbose', 'Whether or not to display messages written by the server')
+    .option('-p, --port', 'Which port to start the server on');
 
 program.parse(process.argv);
 
