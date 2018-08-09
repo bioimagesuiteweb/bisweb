@@ -204,7 +204,7 @@ let prepareForControlFrames = (socket) => {
 
         switch (parsedControl.opcode) {
             case 1: handleTextRequest(decoded, parsedControl, socket); break;
-            case 2: handleImageFromClient(decoded, parsedControl, socket); break;
+            case 2: handleFileFromClient(decoded, parsedControl, socket); break;
             case 8: handleCloseFromClient(decoded, parsedControl, socket); break;
         }
     });
@@ -311,7 +311,7 @@ let handleTextRequest = (rawText, control, socket) => {
         //get a file from the server
         case 'getfile':
         case 'getfiles': serveFileRequest(parsedText, control, socket); break;
-        case 'uploadimage' : handleImageFromClient(parsedText, control, socket); break;
+        case 'uploadfile' : handleFileFromClient(parsedText, control, socket); break;
         case 'run':
         case 'runmodule': serveModuleInvocationRequest(parsedText, control, socket); break;
         default: console.log('Cannot interpret request with unknown command', parsedText.command);
@@ -319,7 +319,7 @@ let handleTextRequest = (rawText, control, socket) => {
 };
 
 /**
- * Handles an image upload from the client and saves the file to the server machine once the transfer is complete. Image transfer occurs in chunks to avoid overloading the network.
+ * Handles an file upload from the client and saves the file to the server machine once the transfer is complete. File transfer occurs in chunks to avoid overloading the network.
  * The first transmission will indicate the total size of the transmission and what size the packets are so the server machine will know when transfer is complete. 
  * 
  * Client transmissions are handled by prepareForDataFrames.
@@ -328,7 +328,7 @@ let handleTextRequest = (rawText, control, socket) => {
  * @param {Object} control - Parsed WebSocket header for the file request. 
  * @param {Socket} socket - The control socket that will negotiate the opening of the data socket and send various communications about the transfer. 
  */
-let handleImageFromClient = (upload, control, socket) => {
+let handleFileFromClient = (upload, control, socket) => {
 
     fileInProgress = {
         'totalSize': upload.totalSize,
@@ -353,7 +353,7 @@ let serveFileRequest = (parsedText, control, socket) => {
     let files = parsedText.files;
     for (let file of files) {
         readFileFromDisk(file).then( (data) => {
-            socket.write(formatPacket('image', data), () => { console.log('upload successful'); });
+            socket.write(formatPacket('binary', data), () => { console.log('upload successful'); });
         }).catch( (error) => {
             handleBadRequestFromClient(socket, error);
         });
@@ -583,7 +583,7 @@ let readFileFromDisk = (file) => {
 let formatPacket = (payloadType, data) => {
     let payload, opcode;
     //transmissions are either text (JSON) or a raw image
-    if (payloadType !== 'image') {
+    if (payloadType !== 'binary') {
         payload = JSON.stringify({
             'type' : payloadType,
             'payload' : data

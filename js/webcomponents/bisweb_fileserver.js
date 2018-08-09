@@ -7,6 +7,8 @@ class FileServer extends HTMLElement {
 
     constructor() {
         super();
+        this.lastCommand=null;
+        this.lastOpts=null;
     }
 
     /**
@@ -156,10 +158,10 @@ class FileServer extends HTMLElement {
     displayFileList(response) {
         console.log('response', response);
         if (response.type === 'load') {
-            this.fileTreeDialog.createFileList(response.data);
+            this.fileTreeDialog.createFileList(response.data,null,this.lastOpts);
             this.fileTreeDialog.showDialog();
         } else if (response.type === 'save') {
-            this.fileSaveDialog.createFileList(response.data);
+            this.fileSaveDialog.createFileList(response.data,null,this.lastOpts);
             this.fileSaveDialog.showDialog();
         }
     }
@@ -317,7 +319,7 @@ class FileServer extends HTMLElement {
         }, { once : true });
 
         let metadata = {
-            'command': 'uploadimage',
+            'command': 'uploadfile',
             'totalSize': body.length,
             'packetSize': packetSize,
             'storageSize': body.byteLength,
@@ -328,9 +330,9 @@ class FileServer extends HTMLElement {
         this.socket.send(JSON.stringify(metadata));
 
 
-        //transfer image in 50KB chunks, wait for acknowledge from server
-        function doDataTransfer(image) {
-            let remainingTransfer = image, currentTransferIndex = 0;
+        //transfer file in 50KB chunks, wait for acknowledge from server
+        function doDataTransfer(data) {
+            let remainingTransfer = data, currentTransferIndex = 0;
            
             //send data in chunks
             let sendDataSlice = () => {
@@ -380,16 +382,16 @@ class FileServer extends HTMLElement {
         let reader = new FileReader();
 
         //filedialog does actions when an image is loaded (dismisses loading messages, etc.)
-        //so notify once the image is loaded
+        //so notify once the data is loaded
 
 
-        //image is sent compressed for portability reasons, then decompressed here
+        //data is sent compressed for portability reasons, then decompressed here
         reader.addEventListener('loadend', () => {
             let unzippedFile = wsutil.unzipFile(reader.result);
 
             //notify the Promise created by createFileDownloadRequest 
-            let imageLoadEvent = new CustomEvent('bisweb_fileserver_transmission', { detail : unzippedFile });
-            document.dispatchEvent(imageLoadEvent);
+            let dataLoadEvent = new CustomEvent('bisweb_fileserver_transmission', { detail : unzippedFile });
+            document.dispatchEvent(dataLoadEvent);
         });
 
         reader.readAsArrayBuffer(data);
@@ -400,8 +402,13 @@ class FileServer extends HTMLElement {
      * Also displays whether authentication succeeded or failed. 
      */
     createAuthenticationDialog() {
+
         let saveDialog = $(`<p>Please enter the password printed to the console window.</p>`);
         let passwordEntryBox = $(`
+                <div class='form-group'>
+                    <label for='server'>Host:</label>
+                                 <input type='text' class = 'form-control' value="localhost:8081">
+                </div>
                 <div class='form-group'>
                     <label for='filename'>Password:</label>
                     <input type='text' class = 'form-control'>
@@ -422,9 +429,13 @@ class FileServer extends HTMLElement {
                     let successMessage = $(`<p>Login successful!</p>`);
                     this.authenticateModal.body.find('p').remove();
                     this.authenticateModal.body.prepend(successMessage);
-                    setTimeout(() => { this.authenticateModal.dialog.modal('hide'); }, 1500);
+                    setTimeout(() => { this.authenticateModal.dialog.modal('hide'); }, 100);
                     this.socket.removeEventListener('message', authListener);
                     this.authenticated = true;
+                    if (this.lastCommand) {
+                        this.wrapInAuth(this.lastCommand,this.lastOpts);
+                        this.lastCommand=null;
+                    }
                     break;
                 }
                 default:  
@@ -443,7 +454,8 @@ class FileServer extends HTMLElement {
             this.authenticateModal.footer.append(cancelButton);
 
             $(confirmButton).on('click', () => {
-                let password = this.authenticateModal.body.find('.form-control')[0].value;
+                let hostname = this.authenticateModal.body.find('.form-control')[0].value;
+                let password = this.authenticateModal.body.find('.form-control')[1].value;
                 this.socket.send(password);
             });
 
@@ -477,20 +489,23 @@ class FileServer extends HTMLElement {
      * @param {String} opts.title - The title to display on the load/save modal
      */
     wrapInAuth(command, opts) {
+
+        this.lastCommand=command;
+        this.lastOpts=opts;
+        
         if (this.authenticated) {
-            switch(command) {
-                case 'showfiles' : 
-                    this.requestFileList('load'); 
-                    this.callback = opts.callback; 
-                    break;
-                case 'uploadfile' : 
-                    this.requestFileList('save'); 
-                    this.callback = opts.callback; 
-                    break;
-                default : console.log('unrecognized command', command);
+            if (command==='showfiles') {
+                this.requestFileList('load',null); 
+                this.callback = opts.callback; 
+            } else if (command==='uploadfile') {
+                this.requestFileList('save',null); 
+                this.callback = opts.callback; 
+            } else {
+                console.log('unrecognized command', command);
             }
         } else {
             this.connectToServer();
+            // make this call us back ...
         }
     }
 }

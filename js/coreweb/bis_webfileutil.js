@@ -77,7 +77,7 @@ const webfileutils = {
         //localserver requires its HTML element to be present in the document
         let localserver = $(document).find('bisweb-fileserver');
         if (localserver[0])
-            s.push({ value : "server", text: "File Server"});
+            s.push({ value : "server", text: "BioImage Suite Web File Server Helper"});
         if (dkey.length>1)
             s.push({ value: "dropbox", text: "Dropbox" });
         if (gkey.length>1) 

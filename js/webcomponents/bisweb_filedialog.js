@@ -29,7 +29,7 @@ class FileDialogElement {
         this.fileList = null;
         this.currentPath = null;
         this.currentDirectory = null;
-
+        this.filters='';
         this.lastDirectories = [];
         this.lastPaths = [];
 
@@ -50,6 +50,10 @@ class FileDialogElement {
                         </div>`
                         );
 
+/*        this.container.css({ 'max-height' : '200px',
+          "overflow-y": "auto",
+          });*/
+        
         this.createStaticElements(options);
         this.modal.body.append(this.container);
     }
@@ -145,8 +149,19 @@ class FileDialogElement {
      * @param {Array} list.children - File entries for each file contained in the list entry. Only for list entries of type 'directory'.
      * @param {Object} startDirectory - File entry representing the directory at which the files in list should be added. Undefined means the files represent the files in the user's home directory (~/).
      */
-    createFileList(list, startDirectory = null) {
+    createFileList(list, startDirectory = null,opts=null) {
 
+        if (opts!==null) {
+            this.filters=opts.suffix || '';
+            let newtitle=opts.title || null;
+            console.log('filters=',this.filters,this.title);
+
+            if (newtitle) {
+                let title = this.modal.header.find('.modal-title');
+                title.text(newtitle+ ' (using bisweb fileserver)');
+            }
+        }
+        
         //file list is constructed as more files are fetched -- the first request will provide a certain number of files then supplemental requests will build it up.
         //createFileList will be called to make the list from scratch, but should not alter the list after that.
         this.fileList = this.fileList ? this.fileList : list;
@@ -180,6 +195,15 @@ class FileDialogElement {
         fileList.remove();
         let newList = $(`<div class='file-list'></div>`);
 
+        newList.css({ 'max-height' : '200px',
+                      'max-width'  : '600px',
+                      "overflow-y": "auto",
+                      "overflow-x": "auto",
+                      "color" : "#0ce3ac",
+                      "background-color": "#444444"
+                    });
+
+
         //sort folders ahead of files
         list.sort( (a, b) => {
             if (a.type === 'directory') {
@@ -202,6 +226,8 @@ class FileDialogElement {
             }
         }
 
+
+        
         newList.jstree({
             'core': {
                 'data': list,
@@ -547,7 +573,8 @@ class FileDialogElement {
      * @param {String} filters - A set of file extensions separated by commas.
      * @returns A properly formatted filename
      */
-    fixFilename(name, filters) {
+    fixFilename(name, filters='') {
+
         let splitFilters = filters.split(',');
         let splitName = name.split('.');
         
