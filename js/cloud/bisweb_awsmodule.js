@@ -68,19 +68,18 @@ class AWSModule {
 
     /**
      * Lists the objects in the bucket referred to by the current S3 instance (this.S3). Note that S3 is a flat storage structure in which everything is stored in the same place.
-     * Any semblance of a file structure (e.g. indexed locations like 'Pictures/7-23-2018') are artificial. 
      * Creates a file browsing dialog using bisweb_filedialog (see the documentation in that file for more details).
+     * 
      */
-    listObjectsInBucket() {
+    listObjectsInBucket(filters, modalTitle) {
         this.s3.listObjectsV2( {}, (err, data) => {
             if (err) { console.log('an error occured', err); return; }
             console.log('got objects', data);
 
-            let formattedFiles = this.formatRawS3Files(data.Contents);
+            let formattedFiles = this.formatRawS3Files(data.Contents, filters);
 
-            console.log('files', formattedFiles);
             this.fileDisplayModal.createFileList(formattedFiles);
-            this.fileDisplayModal.showDialog();
+            this.fileDisplayModal.showDialog(modalTitle);
         });
     }
 
@@ -196,8 +195,8 @@ class AWSModule {
         let parseCommand = () => {
             this.callback = opts.callback;
             switch(command) {
-                case 'showfiles' : this.listObjectsInBucket(); break;
-                case 'uploadfile' : this.createSaveImageModal(); break;
+                case 'showfiles' : this.listObjectsInBucket(opts.suffix, opts.title); break;
+                case 'uploadfile' : this.createSaveImageModal(opts.filters, opts.title); break;
                 default : console.log('Unrecognized aws command', command, 'cannot complete request.');
             }
         };
@@ -279,15 +278,35 @@ class AWSModule {
      * Takes the raw data returned by S3.listObjectsV2 and turns it into a nested file tree that bisweb_filedialog can render.
      *
      * @param {Object} files - The 'Contents' field of the data returned by S3.listObjects.
+     * @param {String} filters - A comma separated string of acceptable file types -- files with an extension not in filters are excluded. 
+     * @returns An array of files parseable by bisweb_filedialog
      */
-    formatRawS3Files(files) {
+    formatRawS3Files(files, filters) {
+
+        let filtersArray = filters.split(',');
+        //filters start with a '.' which we strip out here for compatibility with String.split()
+        for (let i = 0; i < filtersArray.length; i++) {
+            filtersArray[i] = filtersArray[i].substring(1);
+        }
+
+        console.log('filters after fixing', filtersArray);
 
         //split filenames and strip out all the folders (filepaths that end with '/')
         let paths = [];
         for (let file of files) {
+
             let splitFile = file.Key.split('/');
+
+            //folders have an empty string after the last '/'
             if (splitFile[splitFile.length - 1] !== '') {
-                paths.push(splitFile);
+                let fileExtension = splitFile[splitFile.length - 1].split('.');
+
+                for (let filter of filtersArray) {
+                    if (fileExtension[fileExtension.length - 1] === filter) {
+                        paths.push(splitFile);
+                    }
+                }
+
             }
         }
 
