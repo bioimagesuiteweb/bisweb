@@ -79,7 +79,7 @@ class AWSModule {
             let formattedFiles = this.formatRawS3Files(data.Contents, filters);
 
             this.fileDisplayModal.createFileList(formattedFiles);
-            this.fileDisplayModal.showDialog(modalTitle);
+            this.fileDisplayModal.showDialog(filters, modalTitle);
         });
     }
 
@@ -95,7 +95,7 @@ class AWSModule {
      */
     createFileDownloadRequest(params, cb, eb) {
         let obj = {
-            'name': params.name,
+            'filename': params.name,
             'params': params,
             'awsinfo': AWSParameters,
             'responseFunction': () => {
@@ -133,14 +133,14 @@ class AWSModule {
 
     createFileUploadRequest(params, cb, eb){
         let obj = {
-            'name': params.name,
+            'filename': params.name,
             'params': params,
             'awsinfo': AWSParameters,
             'responseFunction': (url, body) => {
                 return new Promise( (resolve, reject) => {
 
                     let zippedData = wsutil.zipFile(body);
-                    let filename = params.name + '.nii.gz';
+                    let filename = params.name;
 
                     let uploadParams = {
                         'Key' : filename,
@@ -167,7 +167,7 @@ class AWSModule {
     /**
      * Creates the file list to allow a user to choose where to save an image on one of the viewers  
      */
-    createSaveImageModal() {
+    createSaveImageModal(filters, modalTitle) {
         this.s3.listObjectsV2( {}, (err, data) => {
             if (err) { console.log('an error occured', err); return; }
             console.log('got objects', data);
@@ -176,7 +176,7 @@ class AWSModule {
 
             console.log('files', formattedFiles);
             this.fileSaveModal.createFileList(formattedFiles);
-            this.fileSaveModal.showDialog();
+            this.fileSaveModal.showDialog(filters, modalTitle);
         });
     }
 
@@ -196,7 +196,7 @@ class AWSModule {
             this.callback = opts.callback;
             switch(command) {
                 case 'showfiles' : this.listObjectsInBucket(opts.suffix, opts.title); break;
-                case 'uploadfile' : this.createSaveImageModal(opts.filters, opts.title); break;
+                case 'uploadfile' : this.createSaveImageModal(opts.suffix, opts.title); break;
                 default : console.log('Unrecognized aws command', command, 'cannot complete request.');
             }
         };

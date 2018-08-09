@@ -126,6 +126,8 @@ class FileDialogElement {
             contentDisplay.remove();
 
             this.modal.header.find('.message').empty();
+
+            this.filters = null;
         });
     }
     
@@ -336,9 +338,10 @@ class FileDialogElement {
     /**
      * Displays the file dialog to the user. 
      * 
+     * @param {String} filters - The list of acceptable file types to use with this modal, separated by commas.
      * @param {String} modalTitle - The title to display in the header of the modal. 
      */
-    showDialog(modalTitle = null) {
+    showDialog(filters, modalTitle = null) {
         if (modalTitle) {
             let title = this.modal.header.find('.modal-title');
             title.remove();
@@ -346,6 +349,7 @@ class FileDialogElement {
             this.modal.header.append(newTitle);
         }
 
+        this.filters = filters;
         this.modal.dialog.modal('show');
     }
 
@@ -455,11 +459,11 @@ class FileDialogElement {
 
     /**
      * Creates a small modal dialog to allow the user to enter the name for a file they are attempting to save.
-     *
-     * NOTE: This function is meant to be called exclusively by the Save button created by the file save modal. It will not work as intended anywhere else!  
+     * 
+     * NOTE: This function is meant to be called exclusively by the Save button created by the file save modal. It will not work as intended anywhere else! 
      */
     createSaveImageDialog() {
-        let saveDialog = $(`<p>Please enter a name for the current image on the viewer. Do not include a file extension.</p>`);
+        let saveDialog = $(`<p>Please enter a name for the current image on the viewer.</p>`);
         let nameEntryBox = $(`
                 <div class='form-group'>
                     <label for='filename'>Filename:</label>
@@ -505,10 +509,12 @@ class FileDialogElement {
                     setTimeout(() => { this.saveImageModal.dialog.modal('hide'); }, 1500);
                 };
 
-                console.log('current path', this.currentPath);
+                name = this.fixFilename(name, this.filters);
+
+                //turn the filename into the full filepath
                 let currentPath = this.currentPath.join('/');
                 let newFilename = currentPath.length > 1 ? currentPath + '/' + name : name;
-  
+
                 this.fileRequestFn( { 'command' : 'uploadfile', 'name' : newFilename }, cb, eb);
 
                 let imageSavingDialog = $(`<p>Uploading image...</p>`);
@@ -532,7 +538,39 @@ class FileDialogElement {
         this.saveImageModal.dialog.modal('show');
     }
 
-    
+    /**
+     * Checks a proposed filename against a set of file extension filters to determine whether name should have another kind of filetype applied to it.
+     * 
+     * @param {String} name - A tentative filename
+     * @param {String} filters - A set of file extensions separated by commas.
+     * @returns A properly formatted filename
+     */
+    fixFilename(name, filters) {
+        let splitFilters = filters.split(',');
+        let splitName = name.split('.');
+        
+        console.log('name', splitName, 'filters', splitFilters);
+        if (splitName.length < 1)
+            return name + splitFilters[0];
+        
+        //check specifically for .nii.gz
+        if (splitName.length > 2 && splitName[splitName.length - 2] === 'nii' && splitName[splitName.length -1] === 'gz'){
+            for (let filter of filters) {
+                if (filter === '.nii.gz') {
+                    return name;
+                }
+            }
+        }
+
+        //check if extension matches one of the filters
+        for (let filter of filters) {
+            if (splitName[splitName.length - 1] === filter) {
+                return name;
+            }
+        }
+        
+        return splitName[0] + splitFilters[0];
+    }
     //REPLACED BY makeFileRequest
     /**
      * Requests a file from the server and notifies the user with a message once the file has loaded.
