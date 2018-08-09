@@ -26,6 +26,8 @@ let orig_internal = (process.env.BISWEB_INTERNAL) || 0;
 let orig_external = (process.env.BISWEB_EXTERNAL) || 0;
 let output = (process.env.BISWEB_OUT) || "";
 let internal = parseInt(orig_internal) || 0 ;
+
+
 if (internal<0)
     internal=0;
 else if (internal>2)
@@ -48,7 +50,7 @@ console.log(`--------------------------- Running Webpack --> ${output} ---------
 
 
 if (fs.existsSync(extrafile) && internal) {
-    console.log(`++++ Using Extra Internal Files from ${extrapath}.`);
+    console.log(`${output}:++++ Using Extra Internal Files from ${extrapath}.`);
 } else {
     extrapath=path.normalize(path.resolve(__dirname,'../js/nointernal'));
     extrapath2=null;
@@ -57,7 +59,7 @@ if (fs.existsSync(extrafile) && internal) {
 
 
 if (fs.existsSync(externalfile) && external>0) {
-    console.log(`++++ Using Extra External Files from ${externalpath}.`);
+    console.log(`${output}:++++ Using Extra External Files from ${externalpath}.`);
 } else {
     externalpath=null;
     externalpath2=null;
@@ -68,9 +70,9 @@ if (fs.existsSync(externalfile) && external>0) {
 let bisWebCustom=path.join(extrapath,"bisextra.js");
 if (internal<2) {
     bisWebCustom="bis_util";
-    console.log(`++++ Not using custom extra require file.`);
+    console.log(`${output}:++++ Not using custom extra require file.`);
 } else {
-    console.log(`++++ Using custom extra require file=${bisWebCustom}`);
+    console.log(`${output}:++++ Using custom extra require file=${bisWebCustom}`);
 }
 
 if (output !== "webworkermain.js") {
@@ -107,21 +109,21 @@ if (output !== "webworkermain.js") {
     };
 
     module.exports.resolve.modules.push(extrapath);
-    console.log('++++ Appending',extrapath,' to module path');
+    console.log(`${output}:++++ Appending ${extrapath} to module path`);
     if (extrapath2) {
         if (fs.existsSync(extrapath2) ) {
             module.exports.resolve.modules.push(extrapath2);
-            console.log('++++ Appending',extrapath2,' to module path');
+            console.log(`${output}:++++ Appending extrapath2 to module path`);
         }
     }
 
     if (external) {
         module.exports.resolve.modules.push(externalpath);
-        console.log('++++ Appending',externalpath,' to module path');
+        console.log(`${output}:++++ Appending ${externalpath} to module path`);
         if (externalpath2) {
             if (fs.existsSync(externalpath2) ) {
                 module.exports.resolve.modules.push(externalpath2);
-                console.log('++++ Appending',externalpath2,' to module path');
+                console.log(`${output}:++++ Appending ${externalpath2} to module path`);
             }
         }
     }
