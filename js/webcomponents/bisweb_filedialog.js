@@ -333,8 +333,17 @@ class FileDialogElement {
 
     /**
      * Displays the file dialog to the user. 
+     * 
+     * @param {String} modalTitle - The title to display in the header of the modal. 
      */
-    showDialog() {
+    showDialog(modalTitle = null) {
+        if (modalTitle) {
+            let title = this.modal.header.find('.modal-title');
+            title.remove();
+            let newTitle = $(`<h4 class='modal-title'>${modalTitle}</h4>`);
+            this.modal.header.append(newTitle);
+        }
+        
         this.modal.dialog.modal('show');
     }
 

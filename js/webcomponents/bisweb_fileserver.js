@@ -103,21 +103,6 @@ class FileServer extends HTMLElement {
         }
     }
 
-    /* This is probaly not used anymore
-       makeRequest(params, cb, eb) {
-        let command = params.command;
-        //let files = this.algorithmcontroller.getImage(this.viewer, 'image');
-        console.log('make request params', params);
-
-        switch (params.command) {
-            case 'getfile' : 
-            case 'getfiles' :  this.sendFileRequest([params.name], cb, eb); break;
-            case 'uploadfile' : 
-            case 'uploadfiles' : this.uploadFileToServer(params.name, cb, eb); break;
-            default : console.log('Cannot execute unknown command', command);
-        }
-    }*/
-
     /**
      * Sends a request for a list of the files on the server machine and prepares the display modal for the server's reply. 
      * Once the list of files arrives it is rendered using jstree. The user may request individual files from the server using this list. 
