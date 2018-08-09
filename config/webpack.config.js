@@ -69,11 +69,21 @@ if (fs.existsSync(externalfile) && external>0) {
 
 let bisWebCustom=path.join(extrapath,"bisextra.js");
 if (internal<2) {
-    bisWebCustom="bis_util";
+    bisWebCustom="bis_util"; // dummy file
     console.log(`${output}:++++ Not using custom extra require file.`);
 } else {
     console.log(`${output}:++++ Using custom extra require file=${bisWebCustom}`);
 }
+
+let bisWebExternalFile="";
+if (!external) {
+    bisWebExternalFile="bis_simplemat"; // dummy file
+    console.log(`${output}:++++ Not using custom extra require file from external, using ${bisWebExternalFile} as placeholder.`);
+} else {
+    bisWebExternalFile=path.join(externalpath,"bisextra.js");
+    console.log(`${output}:++++ Using custom extra require file=${bisWebExternalFile}`);
+}
+
 
 if (output !== "webworkermain.js") {
     module.exports = {
@@ -104,7 +114,10 @@ if (output !== "webworkermain.js") {
         plugins : [
             new webpack.NormalModuleReplacementPlugin(/(.*)__BISWEB_CUSTOM(\.*)/, function(resource) {
                 resource.request = resource.request.replace(/__BISWEB_CUSTOM/, `${bisWebCustom}`);
-            })
+            }),
+            new webpack.NormalModuleReplacementPlugin(/(.*)__BISWEB_EXTERNAL(\.*)/, function(resource) {
+                resource.request = resource.request.replace(/__BISWEB_EXTERNAL/, `${bisWebExternalFile}`);
+            }),
         ]
     };
 

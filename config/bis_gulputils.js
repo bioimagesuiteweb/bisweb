@@ -207,7 +207,7 @@ var createDateFile=function(datefile,hash='',version='') {
     if (datefile.indexOf('json')<0) {
         output_text=`module.exports = ${output_text};`;
     }
-    console.log(getTime()+" "+colors.cyan(`++++ Creating ${datefile} : ${output_text}`));
+    console.log(getTime()+" "+colors.cyan(`++++ Creating ${datefile} : ${output_text}\n+++++`));
     fs.writeFileSync(datefile,output_text+'\n');
 };
 
@@ -285,7 +285,7 @@ var runWebpack=function(joblist,internal,external,
     let p = [ ];
     for (let i=0;i<joblist.length;i++) {
         let s=joblist[i];
-        console.log('Starting webpack job=',i,s.name);
+        console.log('++++\nStarting webpack job=',i,s.name);
         let cmd=getWebpackCommand(s.path+s.name,internal,external,s.name,indir,minify,outdir,watch);
         p.push(executeCommandPromise(cmd,indir,i));
     }

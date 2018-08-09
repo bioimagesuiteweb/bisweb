@@ -367,7 +367,7 @@ gulp.task('css', function() {
 
 gulp.task('serve', function() {
     connect.server(internal.serveroptions);
-    console.log('++++ Server root directory=',internal.serveroptions.root);
+    console.log(colors.red('++++\n+++++ Server root directory=',internal.serveroptions.root,'\n++++'));
 
     if (options.eslint)
         gulp.watch(internal.lintscripts, ['eslint']);
