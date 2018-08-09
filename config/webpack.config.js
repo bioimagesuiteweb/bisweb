@@ -23,37 +23,67 @@ const fs=require('fs');
 
 
 let orig_internal = (process.env.BISWEB_INTERNAL) || 0;
+let orig_external = (process.env.BISWEB_EXTERNAL) || 0;
 let output = (process.env.BISWEB_OUT) || "";
 let internal = parseInt(orig_internal) || 0 ;
+
+
 if (internal<0)
     internal=0;
 else if (internal>2)
     internal=2;
+
+let external = parseInt(orig_external) || 0;
+if (external>0)
+    external=1;
+
 let mypath=path.normalize(path.resolve(__dirname,'..'));
 let extrapath=path.normalize(path.resolve(__dirname,'../../internal/js'));
 let extrapath2=path.normalize(path.resolve(__dirname,'../../internal/node_modules'));
 let extrafile = path.resolve(extrapath,'bisextra.js');
 
+let externalpath=path.normalize(path.resolve(__dirname,'../../external/js'));
+let externalpath2=path.normalize(path.resolve(__dirname,'../../external/node_modules'));
+let externalfile= path.resolve(externalpath,'bisextra.js');
+
 console.log(`--------------------------- Running Webpack --> ${output} -------------------------`);
 
 
 if (fs.existsSync(extrafile) && internal) {
-    console.log(`++++ Using Extra Internal Files from ${extrapath}.`);
+    console.log(`${output}:++++ Using Extra Internal Files from ${extrapath}.`);
 } else {
-    //    console.log('---- Directory ',extrapath,' does not exist.');
     extrapath=path.normalize(path.resolve(__dirname,'../js/nointernal'));
     extrapath2=null;
     internal=0;
 }
 
 
+if (fs.existsSync(externalfile) && external>0) {
+    console.log(`${output}:++++ Using Extra External Files from ${externalpath}.`);
+} else {
+    externalpath=null;
+    externalpath2=null;
+    external=0;
+}
+
+
 let bisWebCustom=path.join(extrapath,"bisextra.js");
 if (internal<2) {
-    bisWebCustom="bis_util";
-    console.log(`++++ Not using custom extra require file.`);
+    bisWebCustom="bis_util"; // dummy file
+    console.log(`${output}:++++ Not using custom extra require file.`);
 } else {
-    console.log(`++++ Using custom extra require file=${bisWebCustom}`);
+    console.log(`${output}:++++ Using custom extra require file=${bisWebCustom}`);
 }
+
+let bisWebExternalFile="";
+if (!external) {
+    bisWebExternalFile="bis_simplemat"; // dummy file
+    console.log(`${output}:++++ Not using custom extra require file from external, using ${bisWebExternalFile} as placeholder.`);
+} else {
+    bisWebExternalFile=path.join(externalpath,"bisextra.js");
+    console.log(`${output}:++++ Using custom extra require file=${bisWebExternalFile}`);
+}
+
 
 if (output !== "webworkermain.js") {
     module.exports = {
@@ -84,19 +114,34 @@ if (output !== "webworkermain.js") {
         plugins : [
             new webpack.NormalModuleReplacementPlugin(/(.*)__BISWEB_CUSTOM(\.*)/, function(resource) {
                 resource.request = resource.request.replace(/__BISWEB_CUSTOM/, `${bisWebCustom}`);
-            })
+            }),
+            new webpack.NormalModuleReplacementPlugin(/(.*)__BISWEB_EXTERNAL(\.*)/, function(resource) {
+                resource.request = resource.request.replace(/__BISWEB_EXTERNAL/, `${bisWebExternalFile}`);
+            }),
         ]
     };
 
     module.exports.resolve.modules.push(extrapath);
-    console.log('++++ Appending',extrapath,' to module path');
+    console.log(`${output}:++++ Appending ${extrapath} to module path`);
     if (extrapath2) {
         if (fs.existsSync(extrapath2) ) {
             module.exports.resolve.modules.push(extrapath2);
-            console.log('++++ Appending',extrapath2,' to module path');
+            console.log(`${output}:++++ Appending extrapath2 to module path`);
         }
     }
 
+    if (external) {
+        module.exports.resolve.modules.push(externalpath);
+        console.log(`${output}:++++ Appending ${externalpath} to module path`);
+        if (externalpath2) {
+            if (fs.existsSync(externalpath2) ) {
+                module.exports.resolve.modules.push(externalpath2);
+                console.log(`${output}:++++ Appending ${externalpath2} to module path`);
+            }
+        }
+    }
+
+    
 } else {
     module.exports = {
         resolve: {

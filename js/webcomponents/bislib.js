@@ -19,6 +19,7 @@
 
 
 require("__BISWEB_CUSTOM");
+require("__BISWEB_EXTERNAL");
 
 require("bisweb_regressiontestelement.js");
 require("bisweb_dialogelement.js");
@@ -49,7 +50,6 @@ require("bisweb_fmrielement.js");
 require("bisweb_fileserver.js");
 require("bisweb_filedialog.js");
 require("bisweb_awsmodule.js");
-
 
 
 

@@ -379,7 +379,7 @@ class BisImageSlicer {
         
         if (this.internal.plane==1)
             return [ cnt[0], pos, cnt[1] ];
-        
+
         return [ pos, cnt[0], cnt[1] ];
     }
 
@@ -497,6 +497,7 @@ class BisImageSlicer {
             cnt[this.internal.plane]=-0.5*this.internal.cameradepth;
         else
             cnt[this.internal.plane]=this.internal.imagedim[this.internal.plane]*this.internal.imagespa[this.internal.plane]+0.5*this.internal.cameradepth;
+
         return cnt;
     }
     

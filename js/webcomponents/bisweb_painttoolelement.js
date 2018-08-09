@@ -807,7 +807,7 @@ class PaintToolElement extends HTMLElement {
         var f1 = new dat.GUI({autoPlace: false});
         basediv.append(f1.domElement);
         var c1=f1.addFolder('Brush Parameters');
-        c1.add(this.internal.data,'brushsize',1,20).name("Brush Size").step(1);
+        c1.add(this.internal.data,'brushsize',1,25).name("Brush Size").step(1);
 
 
         var r=this.internal.volume.getIntensityRange();
