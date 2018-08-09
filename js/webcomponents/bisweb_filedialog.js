@@ -124,6 +124,8 @@ class FileDialogElement {
         this.modal.dialog.on('hidden.bs.modal', () => {
             let contentDisplay = this.container.find('.file-list');
             contentDisplay.remove();
+
+            this.modal.header.find('.message').empty();
         });
     }
     
@@ -343,7 +345,7 @@ class FileDialogElement {
             let newTitle = $(`<h4 class='modal-title'>${modalTitle}</h4>`);
             this.modal.header.append(newTitle);
         }
-        
+
         this.modal.dialog.modal('show');
     }
 

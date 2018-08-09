@@ -35,11 +35,7 @@ class FileServer extends HTMLElement {
     connectToServer(address = 'ws://localhost:8081') {
         if (this.socket) { this.socket.close(1000, 'Restarting connection'); }
 
-        try {
-            this.socket = new WebSocket(address);
-        } catch(e) {
-            console.log('error', e);
-        }
+        this.socket = new WebSocket(address);
 
         console.log('socket', this.socket);
         //file tree dialog needs to be able to call some of file server's code 

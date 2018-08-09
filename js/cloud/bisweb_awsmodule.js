@@ -281,15 +281,16 @@ class AWSModule {
      * @param {String} filters - A comma separated string of acceptable file types -- files with an extension not in filters are excluded. 
      * @returns An array of files parseable by bisweb_filedialog
      */
-    formatRawS3Files(files, filters) {
+    formatRawS3Files(files, filters = null) {
 
-        let filtersArray = filters.split(',');
+        let filtersArray = filters ? filters.split(',') : null;
+
         //filters start with a '.' which we strip out here for compatibility with String.split()
-        for (let i = 0; i < filtersArray.length; i++) {
-            filtersArray[i] = filtersArray[i].substring(1);
+        if (filters) {
+            for (let i = 0; i < filtersArray.length; i++) {
+                filtersArray[i] = filtersArray[i].substring(1);
+            }
         }
-
-        console.log('filters after fixing', filtersArray);
 
         //split filenames and strip out all the folders (filepaths that end with '/')
         let paths = [];
@@ -301,10 +302,14 @@ class AWSModule {
             if (splitFile[splitFile.length - 1] !== '') {
                 let fileExtension = splitFile[splitFile.length - 1].split('.');
 
-                for (let filter of filtersArray) {
-                    if (fileExtension[fileExtension.length - 1] === filter) {
-                        paths.push(splitFile);
+                if (filters) {
+                    for (let filter of filtersArray) {
+                        if (fileExtension[fileExtension.length - 1] === filter) {
+                            paths.push(splitFile);
+                        }
                     }
+                } else {
+                    paths.push(splitFile);
                 }
 
             }
