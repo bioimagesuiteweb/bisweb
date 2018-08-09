@@ -126,7 +126,6 @@ var executeCommandPromise=function(command,dir,extra="") {
 var executeCommandList=function(cmdlist,indir,done=0) {
 
     if (done===0) {
-        console.log('here ...');
         for (let i=0;i<cmdlist.length;i++) {
             executeCommand(cmdlist[i],indir,0,0,i);
         }
@@ -216,18 +215,29 @@ var createDateFile=function(datefile,hash='',version='') {
 // ------------------------------------------------
 // Webpack
 // ------------------------------------------------
-var getWebpackCommand=function(source,internal,out,indir,minify,outdir,watch) {
+var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,watch) {
 
     let extracmd="";
     let join="/";
+    if (os.platform()==='win32') {
+        outdir=outdir.replace(/\//g,'\\');
+        source=source.replace(/\//g,'\\');
+        join="\\";
+    }
+
     if (internal) {
         if (os.platform()==='win32') {
             extracmd=`SET BISWEB_INTERNAL=${internal}& `;
-            outdir=outdir.replace(/\//g,'\\');
-            source=source.replace(/\//g,'\\');
-            join="\\";
         } else {
             extracmd=`export BISWEB_INTERNAL=${internal}; `;
+        }
+    }
+
+    if (external) {
+        if (os.platform()==='win32') {
+            extracmd+=`SET BISWEB_EXTERNAL=${external}& `;
+        } else {
+            extracmd+=`export BISWEB_EXTERNAL=${external}; `;
         }
     }
 
@@ -246,7 +256,7 @@ var getWebpackCommand=function(source,internal,out,indir,minify,outdir,watch) {
     
     
     let cmd=extracmd+' webpack-cli --entry '+source+' --output-filename '+tmpout+' --output-path '+outdir+' --config config'+join+'webpack.config_devel.js';
-    
+
     if (watch!==0)
         cmd+=" --watch";
     
@@ -269,14 +279,14 @@ var getWebpackCommand=function(source,internal,out,indir,minify,outdir,watch) {
 };
 
 
-var runWebpack=function(joblist,internal,
+var runWebpack=function(joblist,internal,external,
                         indir,minify,outdir,watch=0) {
 
     let p = [ ];
     for (let i=0;i<joblist.length;i++) {
         let s=joblist[i];
         console.log('Starting webpack job=',i,s.name);
-        let cmd=getWebpackCommand(s.path+s.name,internal,s.name,indir,minify,outdir,watch);
+        let cmd=getWebpackCommand(s.path+s.name,internal,external,s.name,indir,minify,outdir,watch);
         p.push(executeCommandPromise(cmd,indir,i));
     }
     return Promise.all(p);

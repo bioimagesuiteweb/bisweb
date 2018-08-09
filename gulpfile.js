@@ -52,6 +52,7 @@ program
     .option('-p, --dopack <s>','dopackage 0=no, 1=electron-packager, 2=run inno or zip in addition')
     .option('-z, --dozip <s>','dozip')
     .option('-n, --internal <n>','if 1 use internal code, if 2 serve the internal directory as well',parseInt)
+    .option('-x, --external <n>','if 1 use extra external code (in ../external)',parseInt)
     .option('-e, --eslint <n>','if 0 use jshint instead of eslint',parseInt)
     .option('-w, --worker <n>','if 1 build the webworker as well',parseInt)
     .option('-s, --sworker <n>','if 1 build the service worker and index.js as well',parseInt)
@@ -73,6 +74,7 @@ let options = {
     eslint : program.eslint,
     sworker : program.sworker || 0,
     internal : program.internal,
+    external : program.external || 0 ,
 };
 
 if (program.internal === undefined)
@@ -80,7 +82,6 @@ if (program.internal === undefined)
 
 if (program.eslint === undefined)
     options.eslint=1;
-
 
 
 const mainoption=program.rawArgs[2];
@@ -143,16 +144,25 @@ internal.serveroptions = {
     "root" : path.normalize(__dirname)
 };
 
-if (options.internal) {
+if (options.external>0) {
+    options.external=1;
+}
 
-    if (options.internal>2) {
-        internal.serveroptions = {
-            "root" : path.normalize(path.resolve(__dirname,'..'))
-        };
-    }
+if (options.internal>=2 || options.external>0)  {
+    internal.serveroptions = {
+        "root" : path.normalize(path.resolve(__dirname,'..'))
+    };
+}
+
+
+if (options.internal) {
     internal.lintscripts.push('../internal/js/*/*.js');
     internal.lintscripts.push('../internal/js/*.js');
-    
+}
+
+if (options.external) {
+    internal.lintscripts.push('../external/js/*/*.js');
+    internal.lintscripts.push('../external/js/*.js');
 }
 
 
@@ -276,6 +286,7 @@ var esLint=function() {
 };
 
 gulp.task('eslint', () => {
+    console.log("Scannng scripts ",internal.lintscripts.join(','));
     return esLint();
 });
 
@@ -326,6 +337,7 @@ gulp.task('webpack', function(done) {
     runSequence('date', ( () => { 
         bis_gutil.runWebpack(internal.webpackjobs,
                              options.internal,
+                             options.external,
                              __dirname,
                              options.minify,
                              options.outdir,0).then( () => {
@@ -365,6 +377,7 @@ gulp.task('serve', function() {
     bis_gutil.createDateFile(path.resolve(options.outdir,'../wasm/bisdate.js'));
     bis_gutil.runWebpack(internal.webpackjobs,
                          options.internal,
+                         options.external,
                          __dirname,
                          options.minify,
                          options.outdir,1).then( () => {
