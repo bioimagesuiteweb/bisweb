@@ -299,6 +299,8 @@ const bis3dOrthogonalSlice = {
                     var f =internal.imageslicer.getsliceframecoords();
                     internal.slicecoord=f[0];
                     internal.frame=f[1];
+
+                    //console.log('Offset=',offset[0],offset[1],offset[2]);
                     internal.imageplane.position.set(offset[0],offset[1],offset[2]);
 
                     if (internal.outline !==null)  {
@@ -596,13 +598,11 @@ const bis3dOrthogonalSlice = {
         if (imageplane!==false)
             imageplane=true;
 
-
-        
-        var dim=vol.getDimensions();
-        var spa=vol.getSpacing();
+        let dim=vol.getDimensions();
+        let spa=vol.getSpacing();
         
 
-        var internal = {
+        let internal = {
             slices : in_slices,
             imageplane : [ null,null,null ],
             outlineplane : [ null,null,null ],
@@ -614,24 +614,29 @@ const bis3dOrthogonalSlice = {
         };
 
         
-        var output = {
+        let output = {
 
             initialize : function() {
                 
-                var wire=[null,null,null],offset;
-                var flipx= [[ false,false],[true,false],[true,false] ];
-                for (var i=0;i<=2;i++) {
-                    var points =  internal.slices[i].getplanepoints().slice(0);
-                    
+                let wire=[null,null,null],offset;
+                let flipx= [[ false,false],[false,false],[false,false] ];
+                for (let i=0;i<=2;i++) {
+                    console.log('--------------------\nCreating Slice ',i);
+                    let points =  internal.slices[i].getplanepoints().slice(0);
                     if (internal.hasimageplane) {
+                        console.log('points=',i,points[0],points[1],points[2]);
+
                         internal.imageplane[i]=new THREE.Mesh(new BIS3dImageSliceGeometry(points[0],points[1],points[2],false,flipx[i]),
                                                               new THREE.MeshLambertMaterial({map: internal.slices[i].gettexture(),
                                                                                              transparent:internal.istransparent}));
                         
                         if (internal.hasdecorations) {
-                            wire[i]=new BIS3dImageSliceGeometry(points[0],points[1],points[2],true);
+                            console.log('Now decorations',flipx[i]);
+                            wire[i]=new BIS3dImageSliceGeometry(points[0],points[1],points[2],true,flipx[i]);
+
+                            let cl = [ 0xffffff,0x00ff00,0x0000ff ];
                             internal.outlineplane[i]=new THREE.Mesh(wire[i],
-                                                                    new THREE.MeshBasicMaterial( {color: 0xff0000, wireframe:true}));
+                                                                    new THREE.MeshBasicMaterial( {color: cl[i], wireframe:true}));
                             
                             offset=internal.slices[i].getsliceoffset();
                             if (internal.imageplane[i]!==null)
@@ -646,14 +651,14 @@ const bis3dOrthogonalSlice = {
                 }
 
                 if (internal.hasdecorations) {
-                    var sz = internal.slices[0].getimagesize();
-                    var boxmat= [ new THREE.MeshBasicMaterial( {color: 0x444444, wireframe:true}),
+                    let sz = internal.slices[0].getimagesize();
+                    let boxmat= [ new THREE.MeshBasicMaterial( {color: 0x444444, wireframe:true}),
                                   new THREE.MeshBasicMaterial( {color: 0xff8800, wireframe:true})];
-                    for (var pl=0;pl<=2;pl++) {
+                    for (let pl=0;pl<=2;pl++) {
                         offset=internal.slices[pl].getsliceoffset();
-                        for (var fr=0;fr<=1;fr++) {
+                        for (let fr=0;fr<=1;fr++) {
                             offset[pl]=sz[pl]*fr;
-                            var index=pl*2+fr;
+                            let index=pl*2+fr;
                             internal.box[index]=new THREE.Mesh(wire[pl],boxmat[fr]);
                             internal.box[index].position.set(offset[0],offset[1],offset[2]);
                         }
@@ -665,7 +670,7 @@ const bis3dOrthogonalSlice = {
              * @memberof Bis_3DOrthogonalSlice.Bis3DCardSlice
              */
             cleanup : function() {
-                for (var i=0;i<=2;i++) {
+                for (let i=0;i<=2;i++) {
                     internal.imageplane[i]=null;
                     internal.outlineplane[i]=null;
                     internal.box[2*i]=null;
@@ -679,7 +684,7 @@ const bis3dOrthogonalSlice = {
              * @param {ThreeJS-Scene} scene - ThreeJS-Scene object
              */
             addtoscene : function(scene) {
-                for (var i=0;i<=2;i++) {
+                for (let i=0;i<=2;i++) {
                     if (internal.imageplane[i]!==null)
                         scene.add(internal.imageplane[i]);
                     if (internal.hasdecorations) {
@@ -696,7 +701,7 @@ const bis3dOrthogonalSlice = {
              * @param {ThreeJS-Scene} scene - ThreeJS-Scene object
              */
             removefromscene : function(scene) {
-                for (var i=0;i<=2;i++) {
+                for (let i=0;i<=2;i++) {
                     if (internal.imageplane[i]!==null)
                         scene.remove(internal.imageplane[i]);
                     if (internal.hasdecorations) {
@@ -714,7 +719,7 @@ const bis3dOrthogonalSlice = {
              * @param {number} pl - The plane 0,1 or 2
              */
             updatecoordinates : function (pl) {
-                var offset=internal.slices[pl].getsliceoffset().slice(0);
+                let offset=internal.slices[pl].getsliceoffset().slice(0);
 
                 
 
@@ -735,7 +740,7 @@ const bis3dOrthogonalSlice = {
              * @param {number} pl - The plane 0,1 or 2
              */
             updatecoordinatesinmm : function (masterslice,pl) {
-                var offset=masterslice.getsliceoffset().slice(0);
+                let offset=masterslice.getsliceoffset().slice(0);
                 if (pl===0)
                     offset[0]=180-offset[0];
                 if (internal.imageplane[pl]!==null)
