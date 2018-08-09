@@ -300,7 +300,6 @@ const bis3dOrthogonalSlice = {
                     internal.slicecoord=f[0];
                     internal.frame=f[1];
 
-                    //console.log('Offset=',offset[0],offset[1],offset[2]);
                     internal.imageplane.position.set(offset[0],offset[1],offset[2]);
 
                     if (internal.outline !==null)  {
@@ -621,22 +620,17 @@ const bis3dOrthogonalSlice = {
                 let wire=[null,null,null],offset;
                 let flipx= [[ false,false],[false,false],[false,false] ];
                 for (let i=0;i<=2;i++) {
-                    console.log('--------------------\nCreating Slice ',i);
                     let points =  internal.slices[i].getplanepoints().slice(0);
                     if (internal.hasimageplane) {
-                        console.log('points=',i,points[0],points[1],points[2]);
-
                         internal.imageplane[i]=new THREE.Mesh(new BIS3dImageSliceGeometry(points[0],points[1],points[2],false,flipx[i]),
                                                               new THREE.MeshLambertMaterial({map: internal.slices[i].gettexture(),
                                                                                              transparent:internal.istransparent}));
                         
                         if (internal.hasdecorations) {
-                            console.log('Now decorations',flipx[i]);
                             wire[i]=new BIS3dImageSliceGeometry(points[0],points[1],points[2],true,flipx[i]);
 
-                            let cl = [ 0xffffff,0x00ff00,0x0000ff ];
                             internal.outlineplane[i]=new THREE.Mesh(wire[i],
-                                                                    new THREE.MeshBasicMaterial( {color: cl[i], wireframe:true}));
+                                                                    new THREE.MeshBasicMaterial( {color: 0xaa6622, wireframe:true}));
                             
                             offset=internal.slices[i].getsliceoffset();
                             if (internal.imageplane[i]!==null)
@@ -721,10 +715,8 @@ const bis3dOrthogonalSlice = {
             updatecoordinates : function (pl) {
                 let offset=internal.slices[pl].getsliceoffset().slice(0);
 
-                
-
-                if (pl===0)
-                    offset[0]=internal.sizex-offset[0];
+                // if (pl===0)
+                //  offset[0]=internal.sizex-offset[0];
 
                 if (internal.imageplane[pl]!==null)
                     internal.imageplane[pl].position.set(offset[0],offset[1],offset[2]);
@@ -741,8 +733,8 @@ const bis3dOrthogonalSlice = {
              */
             updatecoordinatesinmm : function (masterslice,pl) {
                 let offset=masterslice.getsliceoffset().slice(0);
-                if (pl===0)
-                    offset[0]=180-offset[0];
+                //if (pl===0)
+                // offset[0]=180-offset[0];
                 if (internal.imageplane[pl]!==null)
                     internal.imageplane[pl].position.set(offset[0],offset[1],offset[2]);
                 if (internal.hasdecorations) {
