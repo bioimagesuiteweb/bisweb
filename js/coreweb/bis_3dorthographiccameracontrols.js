@@ -415,8 +415,12 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
                       (v.y1-v.y0)*this.screen.height];
             if (vp[0]>0 && vp[1]>0 && vp[2] >0 && vp[3] > 0) {
                 let top=vp[1];
-                if (THREEJSREVISION>90) {
-                    // Fix for three.js change of how this is specified
+                if (THREEJSREVISION>86) {
+                    // Swapped y in setViewport() and setScissor(). 43ae8e4 277c706 (@mrdoob)
+                    // In Three.js code
+		    // -- _viewport.set( x, y, width, height )
+		    // ++ _viewport.set( x, _height - y - height, width, height )
+                    // Our fix to map this 
                     top=this.screen.height-vp[1]-vp[3];
                 }
                 renderer.setViewport(vp[0],top,vp[2],vp[3]);
