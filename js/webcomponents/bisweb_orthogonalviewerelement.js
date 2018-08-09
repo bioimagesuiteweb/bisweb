@@ -1260,7 +1260,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         
         //this.internal.layoutcontroller.getcorecontrols().empty();
         
-        let dpname = [ 'Slices', 'Sagittal', 'Coronal', 'Axial' ];//, '3D Only','3D On Top' ];
+        let dpname = [ 'Slices', 'Sagittal', 'Coronal', 'Axial' , 'Slices+3D','3D Only' ];
         let data = this.internal.datgui.data;
         
         data.displaymode = dpname[0];
