@@ -75,9 +75,7 @@ const webfileutils = {
         ];
 
         //localserver requires its HTML element to be present in the document
-        let localserver = $(document).find('bisweb-fileserver');
-        if (localserver[0])
-            s.push({ value : "server", text: "BioImage Suite Web File Server Helper"});
+        s.push({ value : "server", text: "BioImage Suite Web File Server Helper"});
         if (dkey.length>1)
             s.push({ value: "dropbox", text: "Dropbox" });
         if (gkey.length>1) 
@@ -115,10 +113,18 @@ const webfileutils = {
      * MUST be called before attempting to use 'server' based operations.
      */
     setFileServer : function(fileserverid) {
-        let id = fileserverid.substring(1);
-        let server = document.getElementById(id);
-        if (server) {
-            bisweb_fileserver = server;
+
+        if (!fileserverid) {
+            let localserver=$('<bisweb-fileserver></bisweb-fileserver>');
+            $('body').append(localserver);
+            bisweb_fileserver = localserver[0];
+            console.log('Create fileserver client element');
+        } else {
+            let id = fileserverid.substring(1);
+            let server = document.getElementById(id);
+            if (server) {
+                bisweb_fileserver = server;
+            }
         }
     },
     

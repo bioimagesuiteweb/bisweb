@@ -210,6 +210,8 @@ class ViewerApplicationElement extends HTMLElement {
         const img = new BisWebImage();
         return new Promise( (resolve,reject) => {
 
+            console.log('fname=',fname);
+            
             webutil.createAlert('Loading image from ' + genericio.getFixedLoadFileName(fname),'progress',30);
             setTimeout( () => {
                 img.load(fname)
@@ -1089,7 +1091,11 @@ class ViewerApplicationElement extends HTMLElement {
             let fileserverid = this.getAttribute('bis-fileserver');
             if (fileserverid) {
                 webfileutil.setFileServer(fileserverid);
+            } else {
+                // create it
+                webfileutil.setFileServer(null);
             }
+                
         });
 
     }

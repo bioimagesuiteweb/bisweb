@@ -13,6 +13,6 @@ let portno=8081;
 if (program.port)
     portno=parseInt(program.port)
 
-startserver('localhost', portno, () => {
+startserver('localhost', portno, true, () => {
     //if (!program.verbose) { console.log('Server started in silent mode'); console.log = () => {};}
 });

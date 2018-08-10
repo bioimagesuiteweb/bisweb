@@ -973,8 +973,11 @@ let write = function (url, data,isbinary=false) {
     //  isbinary = true;
     //    console.log('hello from write', url);
     if (url) {
-        if (url.responseFunction !== undefined)
-            return url.responseFunction(url, data, isbinary);
+        if (url.responseFunction !== undefined) {
+            let p=url.responseFunction(url, data, isbinary);
+            console.log(p);
+            return p;
+        }
     }
 
 
@@ -1024,10 +1027,12 @@ let getFixedSaveFileName = function(fobj,replacement) {
 let getFixedLoadFileName = function(fobj) {
 
     fobj = fobj || '';
-    
+
     if (typeof fobj === "object") {
         if (fobj.filename) 
             return fobj.filename;
+        if (fobj.name)
+            return fobj.name;
     }
 
     if (fobj.indexOf("?=realname=")>0) {

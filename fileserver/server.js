@@ -43,6 +43,7 @@ let timeout = undefined;
 
 let onetimePasswordCounter = 0;
 let globalPortNumber=-1;
+let globalDataPortNumber=-2;
 let globalHostname="";
 
 // password token
@@ -76,15 +77,21 @@ let createPassword=function(abbrv=0) {
  * @param {Function} readycb - A callback to invoke when the server emits its 'listening' event. Optional.
  * @returns The server instance.  
  */
-let startServer = (hostname, port, readycb = () => {}) => {
+let startServer = (hostname, port, newport=true,readycb = () => {}) => {
 
 
     let newServer = net.createServer(handleConnectionRequest);
     newServer.listen(port, hostname, readycb);
+    
+    if (newport) {
+        globalPortNumber=port;
+        globalDataPortNumber=port+1;
+        globalHostname=hostname;
+        createPassword();
+    } else {
+        console.log('____ Starting transfer data server on ',port);
+    }
 
-    globalPortNumber=port;
-    globalHostname=hostname;
-    createPassword();
     
     //handleConnectionRequest is called when a connection is successfuly made between the client and the server and a socket is prepared
     //it performs the WebSocket handshake (see https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers#The_WebSocket_Handshake)
@@ -121,12 +128,13 @@ let startServer = (hostname, port, readycb = () => {}) => {
     
             let port = socket.localPort;
             socket.write(response, 'utf-8', () => {
-                //connectors on 8081 are negotiating a control port, connectors on 8082 are negotiating a transfer port
+                //connectors on globalPortNumber are negotiating a control port, connectors on globalDataPortNumber are negotiating a transfer port
+                console.log('We are ready to respond',port,globalPortNumber,globalDataPortNumber);
                 switch (port) {
-                    case 8081:
+                    case globalPortNumber:
                         authenticate(socket);
                         break;
-                    case 8082:
+                    case globalDataPortNumber:
                         prepareForDataFrames(socket);
                         break;
                     default:
@@ -161,8 +169,10 @@ let startServer = (hostname, port, readycb = () => {}) => {
             });
         });
     }
-};
+}
 
+// ------------------------------------------------------------------------------------
+    
 let readFrame = (chunk) => {
     let controlFrame = chunk.slice(0, 14);
     let parsedControl = wsutil.parseControlFrame(controlFrame);
@@ -241,6 +251,32 @@ let prepareForControlFrames = (socket) => {
 
 
 /**
+ * Parses a textual request from the client and serves accordingly. 
+ * 
+ * @param {String} rawText - Unparsed JSON denoting the file or series of files to read. 
+ * @param {Object} control - Parsed WebSocket header for the file request.
+ * @param {Socket} socket - WebSocket over which the communication is currently taking place.
+ */
+let handleTextRequest = (rawText, control, socket) => {
+    let parsedText = parseClientJSON(rawText);
+    console.log('____ text request', parsedText);
+    switch (parsedText.command) {
+        //get file list
+        case 'show':
+        case 'showfiles': serveFileList(socket, parsedText.directory, parsedText.type, 1); break;
+        //get a file from the server
+        case 'readfile': readFileAndSendToClient(parsedText, control, socket); break;
+        case 'uploadfile' : getFileFromClientAndSave(parsedText, control, socket); break;
+        case 'run':
+        case 'runmodule': serveModuleInvocationRequest(parsedText, control, socket); break;
+        default: console.log('---- Cannot interpret request with unknown command', parsedText.command);
+    }
+};
+// ------------------------------------------------------------------------------------------------------------------------------------
+// ----------------------------------------- Receive File From Client -----------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------
+
+/**
  * Prepares the transfer socket to receive from the client. 
  * Client and server engage in chunked transfer, meaning that the client will send a chunk of data, the server will acknowledge, and then the client will transfer the next chunk.
  * They will exchange messages in this way until the transfer is complete, or an unrecoverable error occurs.
@@ -248,9 +284,11 @@ let prepareForControlFrames = (socket) => {
  * @param {Socket} socket - Node.js net socket between the client and the server for transmission.
  */
 let prepareForDataFrames = (socket) => {
+
     //server can send mangled packets during transfer that may parse as commands that shouldn't occur at that time, 
     //e.g. a mangled packet that parses to have an opcode of 8, closing the connection. so unbind the default listener and replace it after transmission.
     socket.on('data', (chunk) => {
+
         let controlFrame = chunk.slice(0, 14);
         let parsedControl = wsutil.parseControlFrame(controlFrame);
         //console.log('parsed control frame', parsedControl);
@@ -261,7 +299,6 @@ let prepareForDataFrames = (socket) => {
         }
 
         let decoded = new Uint8Array(parsedControl.payloadLength);
-
         //decode the raw data (undo the XOR)
         for (let i = 0; i < parsedControl.payloadLength; i++) {
             decoded[i] = chunk[i + parsedControl.datastart] ^ parsedControl.mask[i % 4];
@@ -291,30 +328,32 @@ let prepareForDataFrames = (socket) => {
     });
 
     function addToCurrentTransfer(upload, control, socket) {
-        //add the transfer in progress to what we've received so far.
-        //note that serialized NIFTI images are always transmitted byte-wise, i.e. they can be read as elements of a Uint8Array
-        let newChunk = new Uint8Array(upload.length + fileInProgress.receivedFile.length);
-        newChunk.set(fileInProgress.receivedFile);
-        newChunk.set(upload, fileInProgress.receivedFile.length);
-        fileInProgress.receivedFile = newChunk;
+
+        fileInProgress.data.set(fileInProgress.receivedFile,fileInProgress.offset);
+        fileInProgress.offset+=fileInProgress.receivedFile.length;
 
         //check to see if what we've received is complete 
-        if (newChunk.length >= fileInProgress.totalSize) {
+        if (fileInProgress.offset >= fileInProgress.totalSize) {
             let baseDirectory = os.homedir();
 
+            if (!fileInProgress.isbinary) {
+                fileInProgress.data=genericio.binary2string(fileInProgress.data);
+            }
             //save serialized NIFTI image
-            let writeLocation = baseDirectory + '/' + fileInProgress.name + '.nii.gz';
-            console.log('____ writing to directory', writeLocation);
-
-            genericio.write(writeLocation, fileInProgress.receivedFile, true).then( () => {
-                socket.write(formatPacket('uploadcomplete', ''), () => { console.log('____ message sent'); });
+            let writeLocation = baseDirectory + '/' + fileInProgress.name;
+            console.log('____ writing to file', writeLocation,'size=',fileInProgress.data.length);
+            
+            genericio.write(writeLocation, fileInProgress.data, fileInProgress.isbinary).then( () => {
+                socket.write(formatPacket('uploadcomplete', ''), () => {
+                    fileInProgress.data=null;
+                    console.log('____ message sent -- file saved in ',writeLocation,' binary=',fileInProgress.isbinary);
+                });
                 socket.end(); //if for some reason the client doesn't send a FIN we know the socket should close here anyway.
             }).catch( (e) => {
                 console.log('---- an error occured', e);
                 socket.write(formatPacket('error', e));
                 socket.end();
             });
-
         } else {
             //console.log('____ received chunk,', fileInProgress.receivedFile.length, 'received so far.');
             socket.write(formatPacket('nextpacket', ''));
@@ -322,28 +361,6 @@ let prepareForDataFrames = (socket) => {
     }  
 }
 
-/**
- * Parses a textual request from the client and serves accordingly. 
- * 
- * @param {String} rawText - Unparsed JSON denoting the file or series of files to read. 
- * @param {Object} control - Parsed WebSocket header for the file request.
- * @param {Socket} socket - WebSocket over which the communication is currently taking place.
- */
-let handleTextRequest = (rawText, control, socket) => {
-    let parsedText = parseClientJSON(rawText);
-    console.log('____ text request', parsedText);
-    switch (parsedText.command) {
-        //get file list
-        case 'show':
-        case 'showfiles': serveFileList(socket, parsedText.directory, parsedText.type, 1); break;
-        //get a file from the server
-        case 'readfile': serveFileRequest(parsedText, control, socket); break;
-        case 'uploadfile' : handleFileFromClient(parsedText, control, socket); break;
-        case 'run':
-        case 'runmodule': serveModuleInvocationRequest(parsedText, control, socket); break;
-        default: console.log('---- Cannot interpret request with unknown command', parsedText.command);
-    }
-};
 
 /**
  * Handles an file upload from the client and saves the file to the server machine once the transfer is complete. File transfer occurs in chunks to avoid overloading the network.
@@ -355,20 +372,30 @@ let handleTextRequest = (rawText, control, socket) => {
  * @param {Object} control - Parsed WebSocket header for the file request. 
  * @param {Socket} socket - The control socket that will negotiate the opening of the data socket and send various communications about the transfer. 
  */
-let handleFileFromClient = (upload, control, socket) => {
+let getFileFromClientAndSave = (upload, control, socket) => {
 
     fileInProgress = {
         'totalSize': upload.totalSize,
         'packetSize': upload.packetSize,
+        'isbinary' : upload.isbinary,
         'name': upload.filename
+        'storageSize' : upload.storageSize,
+        'offset' : 0,
     };
 
-    fileInProgress.receivedFile = new Uint8Array(0);
+    if (upload.isbinary)
+        fileInProgress.data = new Uint8Array(upload.storageSize);
+    else
+        fileInProgress.data = '';
 
     //spawn a new server to handle the data transfer
-    startServer('localhost', 8082, () => { socket.write(formatPacket('datasocketready', '')); });
+    startServer('localhost', globalDataPortNumber,false, () => { socket.write(formatPacket('datasocketready', '')); });
 };
 
+// ---------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------ Send File To Client ------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------------------------
+    
 /**
  * Takes a request from the client and returns the requested file or series of files. 
  * 
@@ -376,7 +403,7 @@ let handleFileFromClient = (upload, control, socket) => {
  * @param {Object} control - Parsed WebSocket header for the file request.
  * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
  */
-let serveFileRequest = (parsedText, control, socket) => {
+let readFileAndSendToClient = (parsedText, control, socket) => {
     let filename = parsedText.filename;
     let isbinary = parsedText.isbinary
     let pkgformat='binary';
@@ -405,6 +432,10 @@ let serveFileRequest = (parsedText, control, socket) => {
         });
     }        
 };
+
+// ------------------------------------------------------------------------------------------------------------------------------------
+//  ---------- Directory and File List Operations
+// ------------------------------------------------------------------------------------------------------------------------------------    
 
 /**
  * Sends the list of available files to the user, hiding files above the ~/ directory.
@@ -647,7 +678,7 @@ let findFreePort = () => {
     function checkInUse(port) {
         tcpPortUsed.check(port, '127.0.0.1').then( (used) => {
             if (used) {
-                base = base + 1;
+                base = base + 2;
                 checkInUse(base);
             } else {
                 return port;

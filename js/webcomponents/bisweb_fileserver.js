@@ -16,6 +16,7 @@ class FileServer extends HTMLElement {
         super();
         this.lastCommand=null;
         this.lastOpts=null;
+        this.portNumber=8081;
     }
 
     /**
@@ -48,15 +49,19 @@ class FileServer extends HTMLElement {
 
         if (this.socket) { this.socket.close(1000, 'Restarting connection'); this.hostname=null; }
 
+        let arr=address.split(':');
+        let prt=arr[arr.length-1];
+        this.portNumber=parseInt(prt);
+                
         this.socket = new WebSocket(address);
 
         //file tree dialog needs to be able to call some of file server's code 
         //they are separated for modularity reasons, so to enforce the hierarchical relationship between the two fileserver provides the functions and the socket
         this.fileTreeDialog.fileListFn = this.requestFileList.bind(this);
-        this.fileTreeDialog.fileRequestFn = this.invokeFilenameCallbackFunction.bind(this);
+        this.fileTreeDialog.fileRequestFn = this.invokeReadFilenameCallbackFunction.bind(this);
         this.fileTreeDialog.socket = this.socket;
 
-        this.fileSaveDialog.fileRequestFn = this.createFileUploadRequest.bind(this);
+        this.fileSaveDialog.fileRequestFn = this.invokeWriteFilenameCallbackFunction.bind(this);
         this.fileSaveDialog.socket = this.socket;
 
         //add the event listeners for the control port
@@ -219,8 +224,6 @@ class FileServer extends HTMLElement {
      * @returns a Promise with payload { obj.name obj.data } much like bis_genericio.read (from where it will be called indirectly)
      */
     downloadFile(url,isbinary) {
-        console.log('Received download file request',url,isbinary);
-        
         return new Promise( (resolve, reject) => {
             let command = JSON.stringify({ 'command' : 'readfile',
                                            'filename' : url,
@@ -262,6 +265,31 @@ class FileServer extends HTMLElement {
             this.socket.send(command);
         });
     }
+
+    /** upload file 
+     * @param {String} url -- abstact file handle object
+     * @param {Data} data -- the data to save, either a sting or a Uint8Array
+     * @param {Boolean} isbinary -- is data binary
+     * @returns {Promise} 
+     */
+    uploadFile(url,data,isbinary=false) {
+
+        console.log('Received upload file request',url,isbinary);
+        
+        let p=new Promise( (resolve, reject) => {
+            let promiseCb = () => {
+                resolve('Upload successful');
+            };
+            
+            let promiseEb = () => {
+                reject('Upload failed');
+            };
+            
+            this.uploadFileToServer(url, data,isbinary, promiseCb, promiseEb);
+        });
+        console.log(p);
+        return p;
+    }
     
     /**
      * Packages the relevant parameters and functionality for downloading data from the local filesystem into an object that can be invoked by bis_genericio.
@@ -269,13 +297,13 @@ class FileServer extends HTMLElement {
      * @param {Array} params.files - List of filenames
      * @param {String} params.name - Name of the file to fetch from the server, or what to name the file being saved to the server.
      */
-    invokeFilenameCallbackFunction(params) {
+    invokeReadFilenameCallbackFunction(params) {
 
         const self=this;
         
         let obj = {
             filename: params.paths[0],
-            responseFunction: function(url,isbinary) { 
+            responseFunction: function(url,isbinary) {
                 return self.downloadFile(url.filename,isbinary);
             }
         };
@@ -292,31 +320,18 @@ class FileServer extends HTMLElement {
      * @param {String} params.name - Name of the file to fetch from the server, or what to name the file being saved to the server.
      * @param {Function} cb - Callback on success.
      * @param {Function} eb - Callback on failure.
-     * @param {Object} callback.url - The object passed to the callback initially (in this case the object created by createFileUploadRequest). Unused in this function.
+     * @param {Object} callback.url - The object passed to the callback initially (in this case the object created by invokeWriteFilenameCallbackFunction). Unused in this function.
      * @param {Uint8Array} callback.body - The data to save
      */
-    createFileUploadRequest(params, cb, eb) {
+    invokeWriteFilenameCallbackFunction(params) {
+
+        const self=this;
         let obj = {
             filename: params.name,
-            params: params,
-            responseFunction: (url, body) => { //TODO : isbinary too
-                return new Promise( (resolve, reject) => {
-                    let promiseCb = () => {
-                        cb();
-                        resolve('Upload successful');
-                    };
-
-                    let promiseEb = () => {
-                        eb();
-                        reject('Upload failed');
-                    };
-
-                    this.uploadFileToServer(obj.filename, body, promiseCb, promiseEb);
-                });
+            responseFunction: (url, data,isbinary) => { //TODO : isbinary too
+                return self.uploadFile(url.filename,data,isbinary);
             }
         };
-
-        //this.callback is set when a modal is opened.
         this.callback(obj);
     }
 
@@ -360,30 +375,38 @@ class FileServer extends HTMLElement {
      * 
      * TODO: Extend this function to support matrices and transformations.
      * @param {String} name - What the file should be named once it is saved to the server. 
-     * @param {TypedArray} body - 
+     * @param {variable} data - TypedArray or text string
+     * @param {Boolean} isbinary - if true data is binary
      * @param {Function} cb - A callback for if the transfer is successful. Optional.
      * @param {Function} eb - A callback for if the transfer is a failure (errorback). Optional.
      */
-    uploadFileToServer(name, body, cb = () => {}, eb = () => {}) {
+    uploadFileToServer(name, data, isbinary=false, cb = () => {}, eb = () => {}) {
 
         // TODO: is the size of body < packetsize upload in one shot
+        let body=null;
+        if (!isbinary) 
+            body=bisgenericio.string2binary(data);
+        else
+            body=new Uint8Array(data.buffer);
+            
         
-        console.log('cb', cb, 'eb', eb);
         const packetSize = 50000;
         let fileTransferSocket;
-
+        
         //negotiate opening of the data port
         this.socket.addEventListener('message', (e) => {
             let message;
             try {
                 message = JSON.parse(e.data);
                 if (message.type === 'datasocketready') {
-
-                    fileTransferSocket = new WebSocket('ws://localhost:8082');
+                    
+                    let port=this.portNumber+1;
+                    console.log('Second port=',port);
+                    let server=`ws://localhost:${port}`;
+                    fileTransferSocket = new WebSocket(server);
                     fileTransferSocket.addEventListener('open', () => {
                         doDataTransfer(body);
                     });
-
                 } else {
                     console.log('heard unexpected message', message, 'not opening data socket');
                     eb();
@@ -394,29 +417,46 @@ class FileServer extends HTMLElement {
             }
         }, { once : true });
 
+
+        
         let metadata = {
             'command': 'uploadfile',
             'totalSize': body.length,
+            'storageSize': body.length,
             'packetSize': packetSize,
-            'storageSize': body.byteLength,
-            'filename': name
+            'filename': name,
+            'isbinary' : isbinary,
         };
 
+        
         console.log('sending metadata to server', metadata);
         this.socket.send(JSON.stringify(metadata));
-
-
+        
+        
         //transfer file in 50KB chunks, wait for acknowledge from server
         function doDataTransfer(data) {
-            let remainingTransfer = data, currentTransferIndex = 0;
-           
+
+            let currentIndex = 0;
+            let done=false;
+
             //send data in chunks
             let sendDataSlice = () => {
-                let slice = (currentTransferIndex + packetSize >= remainingTransfer.size) ?
-                    remainingTransfer.slice(currentTransferIndex) :
-                    remainingTransfer.slice(currentTransferIndex, currentTransferIndex + packetSize);
-                fileTransferSocket.send(slice);
-                currentTransferIndex = currentTransferIndex + slice.length;
+
+                if (done===false) {
+                    let begin=currentIndex;
+                    let end=currentIndex+packetSize;
+                    if (end>data.length) {
+                        end=data.length;
+                        done=true;
+                    }
+                    
+                    let slice=new Uint8Array(data.buffer,begin,end-begin);
+                    fileTransferSocket.send(slice);
+                    currentIndex+=(end-begin);
+                } else {
+                    // We are done!
+                    fileTransferSocket.close();
+                }
             };
 
             fileTransferSocket.addEventListener('message', (event) => {
@@ -465,7 +505,7 @@ class FileServer extends HTMLElement {
             //filedialog does actions when an image is loaded (dismisses loading messages, etc.)
             //so notify once the data is loaded
             reader.addEventListener('loadend', () => {
-                //notify the Promise created by invokeFilenameCallbackFunction 
+                //notify the Promise created by invokeReadFilenameCallbackFunction 
                 let dataLoadEvent = new CustomEvent(TRANSMISSION_EVENT, { detail : reader.result });
                 document.dispatchEvent(dataLoadEvent);
             });

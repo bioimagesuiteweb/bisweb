@@ -7,8 +7,6 @@ require('jstree');
  * When loading a file from the server, the user must be able to browse the files. 
  * This class will render a list of files in a window similar to the file system dialog that opens when a user clicks on an <input type='file'> button.
  * 
- * The dialog will contact the server to request image files that the user selects or to request information about the filesystem that the browser does not currently have (the server does not send info about the whole filesystem on the initial request).
- * 
  * TODO: Back button breaks after adding supplemental files
  */
 class FileDialogElement {
@@ -117,7 +115,7 @@ class FileDialogElement {
         if (options.modalType === 'save') {
             let saveButton = $(`<button type='button' class='btn btn-success'>Save</button>`);
             saveButton.on('click', () => {
-                this.createSaveImageDialog();
+                this.createGetFilenamePromptDialog();
             });
 
             this.modal.footer.append(saveButton);
@@ -125,16 +123,6 @@ class FileDialogElement {
         } else {
             this.modal.dialog.find('.modal-footer').remove();
         }
-
-        //erase the file list on modal close
-        this.modal.dialog.on('hidden.bs.modal', () => {
-            let contentDisplay = this.container.find('.file-list');
-            contentDisplay.remove();
-
-            this.modal.header.find('.message').empty();
-
-            this.filters = null;
-        });
     }
     
     /**
@@ -154,8 +142,6 @@ class FileDialogElement {
         if (opts!==null) {
             this.filters=opts.suffix || '';
             let newtitle=opts.title || null;
-            console.log('filters=',this.filters,this.title);
-
             if (newtitle) {
                 let title = this.modal.header.find('.modal-title');
                 title.text(newtitle+ ' (using bisweb fileserver)');
@@ -205,27 +191,50 @@ class FileDialogElement {
 
 
         //sort folders ahead of files
-        list.sort( (a, b) => {
-            if (a.type === 'directory') {
-                if (b.type === 'directory')
-                    return 0;
-                else return -1;
-            } else if (b.type === 'directory') {
-                return 1;
-            } else {
-                return 0;
-            }
-        });
 
         if (!this.displayFiles) {
-            for (let i = 0; i < list.length; i++) {
+            let len=list.length-1;
+            for (let i = len; i >=0; i=i-1) {
                 if (list[i].type !== 'directory') {
                     list.splice(i, 1);
                     i--;
                 } 
             }
+        } else if (this.filters) {
+            
+            let splitFilters = this.filters.split(',');
+            if (splitFilters.length>0) {
+                let len=list.length-1;
+                for (let i = len; i >=0; i=i-1) {
+                    if (list[i].type !== 'directory') {
+                        let ok=this.checkFilenameForFilter(list[i].text,splitFilters);
+                        if (!ok) {
+                            list.splice(i,1);
+                        }
+                    }
+                }
+            }
         }
 
+        list.sort( (a, b) => {
+
+            let isadir=(a.type === 'directory');
+            let isbdir=(b.type === 'directory');
+
+            if (isadir && !isbdir)
+                return -1;
+            if (isbdir && !isadir)
+                return 1;
+
+            let at=a.text.toLowerCase();
+            let bt=b.text.toLowerCase();
+            
+            if (at>bt)
+                return 1;
+            if (at<bt)
+                return -1;
+            return 0;
+        });
 
         
         newList.jstree({
@@ -386,7 +395,8 @@ class FileDialogElement {
             this.modal.header.append(newTitle);
         }
 
-        this.filters = filters;
+        if (filters)
+            this.filters = filters;
         this.modal.dialog.modal('show');
     }
 
@@ -459,7 +469,7 @@ class FileDialogElement {
     }
 
     makeFileRequest(command, params) {
-        let header = this.modal.header;
+
 
         let messageText;
         switch (command) {
@@ -469,21 +479,22 @@ class FileDialogElement {
             case 'uploadfiles' : messageText = 'Saving file, please wait...'; break;
         }
 
-        let loadingMessage = $(`<p class='message'>${messageText}</p>`);
-        header.append(loadingMessage);
+        webutil.createAlert(messageText);
+        
+        //        let loadingMessage = $(`<p class='message'>${messageText}</p>`);
+        //header.append(loadingMessage);
 
         let cb = () => {
-            header.find('.message').remove();
+            //header.find('.message').remove();
         };
 
         let eb = () => {
-            header.find('.message').remove();
+            //            header.find('.message').remove();
             let errorMessage = $(`<p class='errorMessage'>An error occured. Please ensure the chosen file exists in the chosen location.</p>`);
-            header.append(errorMessage);
+            webutil.createAlert(errorMessage,true);
+            //            header.append(errorMessage);
 
-            setTimeout( () => { 
-                header.find('.errorMessage').remove(); 
-            }, 5000);
+            
         };
 
         //strip out leading '/' if necessary 
@@ -503,17 +514,20 @@ class FileDialogElement {
      * 
      * NOTE: This function is meant to be called exclusively by the Save button created by the file save modal. It will not work as intended anywhere else! 
      */
-    createSaveImageDialog() {
-        let saveDialog = $(`<p>Please enter a name for the current image on the viewer.</p>`);
+    createGetFilenamePromptDialog() {
+        let saveDialog = $(`<p>Please enter the filename:</p>`);
+
+        let tid=webutil.getuniqueid();
+        
         let nameEntryBox = $(`
                 <div class='form-group'>
                     <label for='filename'>Filename:</label>
-                    <input type='text' class = 'form-control'>
+                    <input type='text' class = 'form-control' id='${tid}'>
                 </div>
             `);
 
         if (!this.saveImageModal) {
-            this.saveImageModal = webutil.createmodal('Save Current Image?', 'modal-sm');
+            this.saveImageModal = webutil.createmodal('Specify Filename', 'modal-sm');
             this.saveImageModal.dialog.find('.modal-footer').find('.btn').remove();
 
             let confirmButton = webutil.createbutton({ 'name': 'Confirm', 'type': 'btn-success' });
@@ -523,7 +537,7 @@ class FileDialogElement {
             this.saveImageModal.footer.append(cancelButton);
 
             $(confirmButton).on('click', () => {
-                let name = this.saveImageModal.body.find('.form-control')[0].value;
+                let name = $('#'+tid).val();
 
                 //update the modal with a success message after successful transmission.
                 let cb = () => {
@@ -550,15 +564,21 @@ class FileDialogElement {
                     setTimeout(() => { this.saveImageModal.dialog.modal('hide'); }, 1500);
                 };
 
+                console.log('Filters=',this.filters);
                 name = this.fixFilename(name, this.filters);
+                console.log('Filename=',name);
 
                 //turn the filename into the full filepath
                 let currentPath = this.currentPath.join('/');
                 let newFilename = currentPath.length > 1 ? currentPath + '/' + name : name;
 
-                this.fileRequestFn( { 'command' : 'uploadfile', 'name' : newFilename }, cb, eb);
+                this.saveImageModal.dialog.modal('hide');
+                this.modal.dialog.modal('hide');
+                setTimeout( () => {
+                    this.fileRequestFn( { 'command' : 'uploadfile', 'name' : newFilename }, cb, eb);
+                },10);
 
-                let imageSavingDialog = $(`<p>Uploading image...</p>`);
+                let imageSavingDialog = $(`<p>Uploading data</p>`);
                 this.saveImageModal.body.empty();
                 this.saveImageModal.body.append(imageSavingDialog);
             });
@@ -588,97 +608,52 @@ class FileDialogElement {
      */
     fixFilename(name, filters='') {
 
+        console.log('name=',name,filters);
+        
         let splitFilters = filters.split(',');
-        let splitName = name.split('.');
+        if (splitFilters.length < 1) {
+            console.log('No filters returning',name);
+            return name;
+        }
         
-        console.log('name', splitName, 'filters', splitFilters);
-        if (splitName.length < 1)
-            return name + splitFilters[0];
-        
-        //check specifically for .nii.gz
-        if (splitName.length > 2 && splitName[splitName.length - 2] === 'nii' && splitName[splitName.length -1] === 'gz'){
-            for (let filter of filters) {
-                if (filter === '.nii.gz') {
+        for (let i=0;i<splitFilters.length;i++) {
+            let filter=splitFilters[i];
+            console.log('Testing filter',filter); 
+            let nl=name.length;
+            let fl=filter.length;
+            if (nl>fl) {
+                let subname=name.substr(nl-fl,fl);
+                if (subname===filter) {
+                    console.log('Matched filter',filter,subname,' returning',name);
                     return name;
                 }
             }
         }
 
-        //check if extension matches one of the filters
-        for (let filter of filters) {
-            if (splitName[splitName.length - 1] === filter) {
-                return name;
+        console.log('Adding ',splitFilters[0]);
+        return name + splitFilters[0];
+    }
+
+    checkFilenameForFilter(name,filterList) {
+
+        if (filterList.length<1)
+            return true;
+        
+        for (let i=0;i<filterList.length;i++) {
+            let filter=filterList[i];
+            let nl=name.length;
+            let fl=filter.length;
+            if (nl>fl) {
+                let subname=name.substr(nl-fl,fl);
+                if (subname===filter) {
+                    return true;
+                }
             }
         }
+        return false;
         
-        return splitName[0] + splitFilters[0];
     }
-    //REPLACED BY makeFileRequest
-    /**
-     * Requests a file from the server and notifies the user with a message once the file has loaded.
-     *
-     * @param {String} path - Path of the file on the server machine.
-     */
-     /*
-    fetch(path) {
-        let header = this.modal.header;
-        let loadingMessage = $(`<p class='loadMessage'>Loading...</p>`);
-        header.append(loadingMessage);
-        //check value of viewer slider
-        let viewerToggle = $(this.container).find('.viewertoggle').find('input');
-        console.log('viewer slider', viewerToggle);
-
-        let viewer = (viewerToggle[0] && viewerToggle[0].checked) ? 'viewer2' : 'viewer1';
-
-        let cb = () => {
-            header.find('.loadMessage').remove();
-        };
-
-        let eb = () => {
-            header.find('.loadMessage').remove();
-            let errorMessage = $(`<p class='errorMessage'>An error occured while loading the image. Please ensure the chosen file exists in the chosen bucket.</p>`);
-            header.append(errorMessage);
-
-            setTimeout( () => { 
-                header.find('.errorMessage').remove(); 
-            }, 5000);
-        };
-        //'path' duplicated because different fileRequestFns may reference the filename differently, e.g. Amazon AWS provides one fileRequestFn, bisweb_fileserver provides another...
-        this.fileRequestFn({ 'command' : 'getfile', 'files' : [path], 'name' : path }, cb, eb);
-    }
-    */
-
-    /**
-     * Saves a file to a cloud service or local fileserver using a function specified externally by the module (fileSaveFn).
-     * 
-     * @param {String} path - The path to save the file to on the cloud service. 
-     * @param {Uint8Array} data - The file to upload to the cloud service 
-     */
-    /*
-    put(path, data) {
-        let header = this.modal.header;
-        let loadingMessage = $(`<p class='loadMessage'>Loading...</p>`);
-        header.append(loadingMessage);
-
-        let cb = () => {
-            header.find('.loadMessage').remove();
-        };
-
-        let eb = () => {
-            header.find('.loadmessage').remove();
-            let errorMessage = $(`<p class='errorMessage'>An error occured while loading the image. Please ensure the chosen file exists in the chosen bucket.</p>`);
-            header.append(errorMessage);
-
-            setTimeout( () => { 
-                header.find('.errorMessage').remove(); 
-            }, 5000);
-        };
-
-        this.fileRequestFn
-    }
-    */
-
-
+    
 
     addDefaultOptions(options) {
         if (!options.hasOwnProperty('makeFavoriteButton')) options.makeFavoriteButton = true;
