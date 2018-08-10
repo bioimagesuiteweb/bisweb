@@ -10,7 +10,7 @@ const { StringDecoder } = require('string_decoder');
 const otplib = require('otplib');
 const hotp = otplib.hotp;
 hotp.options  = { crypto };
-const authenticator = otplib.authenticator;
+const secret = otplib.authenticator.generateSecret();
 
 // TODO:
 // this extension should be used make node-like calls work on Windows
@@ -34,8 +34,28 @@ let timeout = undefined;
 
 
 //variables related to generating one-time passwords (OTP)
-const secret = authenticator.generateSecret();
-let hotpCounter = 0;
+
+let onetimePasswordCounter = 0;
+let globalPortNumber=-1;
+let globalHostname="";
+
+// password token
+// create function and global variable
+let createPassword=function(abbrv=0) {
+    onetimePasswordCounter+=1;
+    let token = hotp.generate(secret, onetimePasswordCounter);
+    if (abbrv===0) {
+        console.log('++++ BioImage Suite Web FileServer Initialized');
+        console.log('++++ \t I am listening for incoming connections, using the following one time info.');
+        console.log(`++++ \t\t hostname: ${globalHostname}:${globalPortNumber}`);
+    }  else if (abbrv===1) {
+        console.log('++++\n++++ Create New Password ... try again.');
+    } else {
+        console.log('++++\n++++ Create New Password as this one is now used successfully.');
+    }
+    console.log(`++++ \t\t password: ${token}\n++++`);
+
+}
 
 
 /**
@@ -56,8 +76,10 @@ let startServer = (hostname, port, readycb = () => {}) => {
     let newServer = net.createServer(handleConnectionRequest);
     newServer.listen(port, hostname, readycb);
 
-    console.log('listening for incoming connections from host', hostname, 'on port', port, '...\n\n');
-
+    globalPortNumber=port;
+    globalHostname=hostname;
+    createPassword();
+    
     //handleConnectionRequest is called when a connection is successfuly made between the client and the server and a socket is prepared
     //it performs the WebSocket handshake (see https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers#The_WebSocket_Handshake)
     //as well it attaches protocols to handle when the socket is ended or closed
@@ -102,7 +124,7 @@ let startServer = (hostname, port, readycb = () => {}) => {
                         prepareForDataFrames(socket);
                         break;
                     default:
-                        console.log('Client attempting to connect on unexpected port', socket.localPort, 'rejecting connection.');
+                        console.log('---- Client attempting to connect on unexpected port', socket.localPort, 'rejecting connection.');
                         return;
                 } 
             });    
@@ -115,7 +137,7 @@ let startServer = (hostname, port, readycb = () => {}) => {
         socket.on('close', () => {
             newServer.getConnections( (err, count) => {
                 if (err) { 
-                    console.log('Server encountered an error getting its active connections, shutting down server'); 
+                    console.log('---- Server encountered an error getting its active connections, shutting down server'); 
                     newServer.close(); 
                     return; 
                 }
@@ -125,9 +147,9 @@ let startServer = (hostname, port, readycb = () => {}) => {
                     newServer.close();
 
                     //start the server listening for new connections if it's on the control port
-                    if (port === 8081) {
-                        newServer.listen(8081, 'localhost');
-                        console.log('listening for new connectors on port 8081');
+                    if (port === globalPortNumber) {
+                        newServer.listen(globalPortNumber, 'localhost');
+                        createPassword();
                     }
                 }
             });
@@ -160,23 +182,23 @@ let readFrame = (chunk) => {
 };
 
 let authenticate = (socket) => {
-    let token = hotp.generate(secret, hotpCounter);
-    console.log('Your session code is', token, '\nPlease enter this code from the client.');
-
     let readOTP = (chunk) => {
         let frame = readFrame(chunk);
-        let decoded = frame.decoded, password;
-        password = wsutil.decodeUTF8(decoded, frame.parsedControl);
+        let decoded = frame.decoded;
+        let password = wsutil.decodeUTF8(decoded, frame.parsedControl);
 
-        hotpCounter++;
-        if (hotp.check(parseInt(password), secret, hotpCounter - 1)) {
-            console.log('Starting server');
+        console.log('---- entered password')
+
+        if (hotp.check(parseInt(password), secret, onetimePasswordCounter)) {
+                    console.log('++++ Starting helper server');
             socket.removeListener('data', readOTP);
 
             prepareForControlFrames(socket);
             socket.write(formatPacket('goodauth', ''))
+            createPassword(2);
         } else {
-            console.log('The token you entered is incorrect. Please enter the new token\n' + hotp.generate(secret, hotpCounter));
+            console.log('---- The token you entered is incorrect.');
+            createPassword(1);
             socket.write(formatPacket('badauth', ''));
         }
     }
@@ -194,7 +216,7 @@ let authenticate = (socket) => {
 let prepareForControlFrames = (socket) => {
     //add an error listener for the transmission
     socket.on('error', (error) => {
-        console.log('an error occured', error);
+        console.log('---- an error occured', error);
     });
 
     //socket listener is stored here because it gets replaced during file transfer
@@ -228,7 +250,7 @@ let prepareForDataFrames = (socket) => {
         //console.log('parsed control frame', parsedControl);
 
         if (!parsedControl.mask) {
-            console.log('Received a transmission with no mask from client, dropping packet.');
+            console.log('---- Received a transmission with no mask from client, dropping packet.');
             return;
         }
 
@@ -248,14 +270,14 @@ let prepareForDataFrames = (socket) => {
                 }
                 break;
             case 8: 
-                console.log('received close from client, ending connection.');
+                console.log('---- received close from client, ending connection.');
                 socket.end();
                 break;
             default: 
-                console.log('dropping packet with control', parsedControl);
+                console.log('---- dropping packet with control', parsedControl);
                 if (!timeout) {
                     timeout = setSocketTimeout( () => {
-                        console.log('timed out waiting for client');
+                        console.log('---- timed out waiting for client');
                         socket.end();
                     });
                 }
@@ -276,19 +298,19 @@ let prepareForDataFrames = (socket) => {
 
             //save serialized NIFTI image
             let writeLocation = baseDirectory + '/' + fileInProgress.name + '.nii.gz';
-            console.log('writing to directory', writeLocation);
+            console.log('____ writing to directory', writeLocation);
 
             genericio.write(writeLocation, fileInProgress.receivedFile, true).then( () => {
-                socket.write(formatPacket('uploadcomplete', ''), () => { console.log('message sent'); });
+                socket.write(formatPacket('uploadcomplete', ''), () => { console.log('____ message sent'); });
                 socket.end(); //if for some reason the client doesn't send a FIN we know the socket should close here anyway.
             }).catch( (e) => {
-                console.log('an error occured', e);
+                console.log('---- an error occured', e);
                 socket.write(formatPacket('error', e));
                 socket.end();
             });
 
         } else {
-            //console.log('received chunk,', fileInProgress.receivedFile.length, 'received so far.');
+            //console.log('____ received chunk,', fileInProgress.receivedFile.length, 'received so far.');
             socket.write(formatPacket('nextpacket', ''));
         }
     }  
@@ -303,7 +325,7 @@ let prepareForDataFrames = (socket) => {
  */
 let handleTextRequest = (rawText, control, socket) => {
     let parsedText = parseClientJSON(rawText);
-    console.log('text request', parsedText);
+    console.log('____ text request', parsedText);
     switch (parsedText.command) {
         //get file list
         case 'show':
@@ -314,7 +336,7 @@ let handleTextRequest = (rawText, control, socket) => {
         case 'uploadfile' : handleFileFromClient(parsedText, control, socket); break;
         case 'run':
         case 'runmodule': serveModuleInvocationRequest(parsedText, control, socket); break;
-        default: console.log('Cannot interpret request with unknown command', parsedText.command);
+        default: console.log('---- Cannot interpret request with unknown command', parsedText.command);
     }
 };
 
@@ -353,7 +375,7 @@ let serveFileRequest = (parsedText, control, socket) => {
     let files = parsedText.files;
     for (let file of files) {
         readFileFromDisk(file).then( (data) => {
-            socket.write(formatPacket('binary', data), () => { console.log('upload successful'); });
+            socket.write(formatPacket('binary', data), () => { console.log('____ download successful'); });
         }).catch( (error) => {
             handleBadRequestFromClient(socket, error);
         });
@@ -486,7 +508,7 @@ let handleBadRequestFromClient = (socket, reason) => {
     let error = "An error occured while handling your request. "
     error = error.concat(reason);
 
-    socket.write(formatPacket('error', error), () => { console.log('request returned an error', reason, '\nsent error to client'); });
+    socket.write(formatPacket('error', error), () => { console.log('---- request returned an error', reason, '\nsent error to client'); });
 };
 
 /**
@@ -498,11 +520,11 @@ let handleBadRequestFromClient = (socket, reason) => {
  */
 let handleCloseFromClient = (rawText, control, socket) => {
     let text = wsutil.decodeUTF8(rawText, control);
-    console.log('received CLOSE frame from client');
+    console.log('____ received CLOSE frame from client');
 
     //TODO: send a close frame in response
     socket.end();
-    console.log('closed connection');
+    console.log('____ closed connection');
 }
 
 /**
@@ -516,9 +538,9 @@ let checkValidPath = (filepath) => {
         let pathCheck = (path) => {
             if (path === '') { resolve(); return; }
 
-            //console.log('checking path', path);
+            //console.log('____ checking path', path);
             fs.lstat(path, (err, stats) => {
-                if (err) { console.log('err', err); reject('An error occured while statting filepath. Is there something on the path that would cause issues?'); return; }
+                if (err) { console.log('---- err', err); reject('An error occured while statting filepath. Is there something on the path that would cause issues?'); return; }
                 if (stats.isSymbolicLink()) { reject('Symbolic link in path of file request.'); return; }
 
                 //look one directory up
@@ -614,7 +636,7 @@ let parseClientJSON = (rawText) => {
     try {
         parsedText = JSON.parse(text);
     } catch (e) {
-        console.log('an error occured while parsing the data from the client', e);
+        console.log('---- an error occured while parsing the data from the client', e);
     }
 
     return parsedText;
