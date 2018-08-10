@@ -2,37 +2,12 @@ const $ = require('jquery');
 const webutil = require('bis_webutil.js');
 const wsutil = require('../../fileserver/wsutil.js');
 const bisweb_filedialog = require('bisweb_filedialog.js');
-
-/* 
- *
- *  First step is  wrapInAuth 'showfiles', or 'uploadfile'
- *
- *       --> calls connectToServer (if not authenticated, else , requestFileList to populate dialog box etc.)
- *
- *       --> connectToServer
- *              closes socket if live
- *              creates socket to server -- this too early
- *              initializes this.fileTreeDialog and this.fileSaveDialog (this should become part of fileTree)
- *              adds 'close','error' and 'message' events to the server and waits
- *        
- *       --> on event : 'message' call handleServerResponse
- *
- *       --> handleServer Response
- *                --> string or binary
- *                --> if string
- *                       'authenticate' -- this.showAuthenticationDialog
- *                       'filelist'    -- displayFileList
- *                       'supplementalfiles' -- more files to display
- *                       'error' -- something happened
- *                       'datasocketready', 'goodauth', 'badauth -- ignored for now
- *
- *       ---> showAuthenticationDialog -- this creates popup and authenticates ...
- 
- 
+const bisgenericio=require('bis_genericio.js');
+const pako=require('pako');
 
 
-*/
-
+const ERROR_EVENT='server_error_evt_'+webutil.getuniqueid();
+const TRANSMISSION_EVENT='transmission_evt_'+webutil.getuniqueid();
 
 
 class FileServer extends HTMLElement {
@@ -78,7 +53,7 @@ class FileServer extends HTMLElement {
         //file tree dialog needs to be able to call some of file server's code 
         //they are separated for modularity reasons, so to enforce the hierarchical relationship between the two fileserver provides the functions and the socket
         this.fileTreeDialog.fileListFn = this.requestFileList.bind(this);
-        this.fileTreeDialog.fileRequestFn = this.createFileDownloadRequest.bind(this);
+        this.fileTreeDialog.fileRequestFn = this.invokeFilenameCallbackFunction.bind(this);
         this.fileTreeDialog.socket = this.socket;
 
         this.fileSaveDialog.fileRequestFn = this.createFileUploadRequest.bind(this);
@@ -113,14 +88,20 @@ class FileServer extends HTMLElement {
         if (typeof (event.data) === "string") {
             data = wsutil.parseJSON(event.data);
         } else {
-            console.log('received a binary transmission');
-            this.handleDataTransmission(event.data);
+            console.log('received a binary transmission',event.data);
+            this.handleDataReceivedFromServer(event.data,true);
             return;
         }
 
         
         switch (data.type)
         {
+            case 'text' : {
+                // this is a text file
+                this.handleDataReceivedFromServer(data.payload,false);
+                break;
+            }
+            
             case 'filelist':  {
                 this.displayFileList(data.payload);
                 break;
@@ -131,7 +112,7 @@ class FileServer extends HTMLElement {
             }
             case 'error': {
                 console.log('Error from client:', data.payload); 
-                let errorEvent = new CustomEvent('servererror', { 'detail' : data.payload });
+                let errorEvent = new CustomEvent(ERROR_EVENT, { 'detail' : data.payload });
                 document.dispatchEvent(errorEvent);
                 break;
             }
@@ -232,43 +213,73 @@ class FileServer extends HTMLElement {
     }
 
     /**
+     * downloads a file from the server 
+     * @param{String} url - the filename
+     * @param{Boolean} isbinary - if true file is binary
+     * @returns a Promise with payload { obj.name obj.data } much like bis_genericio.read (from where it will be called indirectly)
+     */
+    downloadFile(url,isbinary) {
+        console.log('Received download file request',url,isbinary);
+        
+        return new Promise( (resolve, reject) => {
+            let command = JSON.stringify({ 'command' : 'readfile',
+                                           'filename' : url,
+                                           'isbinary' : isbinary });
+            
+            var cblistener = document.addEventListener(TRANSMISSION_EVENT , (e) => { 
+                document.removeEventListener(ERROR_EVENT, eblistener);
+
+                if (!isbinary) {
+                    resolve({
+                        'data' : e.detail,
+                        'filename' : url,
+                    });
+                } else {
+                    let dat = new Uint8Array(e.detail);
+                    let comp=bisgenericio.iscompressed(url);
+                    if (!comp) {
+                        resolve({
+                            'data' : dat,
+                            'filename' : url
+                        });
+                    } else {
+                        let a = pako.ungzip(dat);
+                        resolve({
+                            'data' : a,
+                            'filename' : url
+                        });
+                        a=null;
+                    }
+                    dat=null;
+                }
+            }, { 'once' : true });
+            
+            var eblistener = document.addEventListener(ERROR_EVENT, () => { 
+                document.removeEventListener(TRANSMISSION_EVENT, cblistener);
+                reject('An error occured during transmission'); 
+            }, { 'once' : true });
+            
+            this.socket.send(command);
+        });
+    }
+    
+    /**
      * Packages the relevant parameters and functionality for downloading data from the local filesystem into an object that can be invoked by bis_genericio.
-     * 
      * @param {Object} params - Parameters object containing the following
      * @param {Array} params.files - List of filenames
      * @param {String} params.name - Name of the file to fetch from the server, or what to name the file being saved to the server.
-     * @param {Function} cb - Callback on success.
-     * @param {Function} eb - Callback on failure.
      */
-    createFileDownloadRequest(params, cb, eb) {
+    invokeFilenameCallbackFunction(params) {
+
+        const self=this;
+        
         let obj = {
-            filename: params.name,
-            params: params,
-            responseFunction: () => { //TODO: strictly speaking this should have signature (url,isbinary=false)
-                return new Promise( (resolve, reject) => {
-                    let command = { 'command' : 'getfile', 'files' : params.paths };
-                    let filesdata = JSON.stringify(command);
-
-                    let cblistener = document.addEventListener('bisweb_fileserver_transmission' , (e) => { 
-                        document.removeEventListener('errorevent', eblistener);
-                        cb(); 
-                        resolve({
-                            'data' : e.detail,
-                            'filename' : params.name
-                        });
-
-                    }, { 'once' : true });
-
-                    let eblistener = document.addEventListener('servererror', () => { 
-                        document.removeEventListener('bisweb_fileserver_transmission', cblistener);
-                        reject('An error occured during transmission'); 
-                        eb(); 
-                    }, { 'once' : true });
-
-                    this.socket.send(filesdata);
-                });
+            filename: params.paths[0],
+            responseFunction: function(url,isbinary) { 
+                return self.downloadFile(url.filename,isbinary);
             }
         };
+
         //this.callback is set when a modal is opened.
         this.callback(obj);
     }
@@ -318,13 +329,13 @@ class FileServer extends HTMLElement {
         let command = { 'command' : 'getfile', 'files' : filelist };
         let filesdata = JSON.stringify(command);
 
-        let cblistener = document.addEventListener('bisweb_fileserver_transmission' , () => { 
+        let cblistener = document.addEventListener(TRANSMISSION_EVENT , () => { 
             document.removeEventListener('errorevent', eblistener);
             cb(); 
         }, { 'once' : true });
 
-        let eblistener = document.addEventListener('servererror', () => { 
-            document.removeEventListener('bisweb_fileserver_transmission', cblistener); 
+        let eblistener = document.addEventListener(ERROR_EVENT, () => { 
+            document.removeEventListener(TRANSMISSION_EVENT, cblistener); 
             eb(); 
         }, { 'once' : true });
 
@@ -440,26 +451,29 @@ class FileServer extends HTMLElement {
      *  
      * this.callback is attached to bisweb_fileserver when a bisweb_filedialog modal is opened. 
      * Given that modals are opened one at a time and all user-driven file I/O happens through one of these, the callback should be a
-     * @param {Uint8Array} data - data transferred by the server. 
+     * @param {variable} data - data transferred by the server either uint8array or text (depending on isbinary)
+     * @param {Boolean} isbinary - if true data is binary
      */
-    handleDataTransmission(data) {
+    handleDataReceivedFromServer(data,isbinary=true) {
 
-        let reader = new FileReader();
+        if (isbinary) {
 
-        //filedialog does actions when an image is loaded (dismisses loading messages, etc.)
-        //so notify once the data is loaded
-
-
-        //data is sent compressed for portability reasons, then decompressed here
-        reader.addEventListener('loadend', () => {
-            let unzippedFile = wsutil.unzipFile(reader.result);
-
-            //notify the Promise created by createFileDownloadRequest 
-            let dataLoadEvent = new CustomEvent('bisweb_fileserver_transmission', { detail : unzippedFile });
+            console.log('Data is binary blob');
+            
+            let reader = new FileReader();
+            
+            //filedialog does actions when an image is loaded (dismisses loading messages, etc.)
+            //so notify once the data is loaded
+            reader.addEventListener('loadend', () => {
+                //notify the Promise created by invokeFilenameCallbackFunction 
+                let dataLoadEvent = new CustomEvent(TRANSMISSION_EVENT, { detail : reader.result });
+                document.dispatchEvent(dataLoadEvent);
+            });
+            reader.readAsArrayBuffer(data);
+        } else {
+            let dataLoadEvent = new CustomEvent(TRANSMISSION_EVENT, { detail : data });
             document.dispatchEvent(dataLoadEvent);
-        });
-
-        reader.readAsArrayBuffer(data);
+        }
     }
 
     /**
@@ -515,7 +529,7 @@ class FileServer extends HTMLElement {
             this.passwordid=pid;
         }
 
-        $('#'+this.passwordid).val('');
+        $('#'+this.passwordid).val('0');
         
         if (title!==null)
             this.authenticateModal.header.find('.modal-title').text(title);
