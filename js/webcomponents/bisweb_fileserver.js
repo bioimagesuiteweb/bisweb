@@ -3,6 +3,38 @@ const webutil = require('bis_webutil.js');
 const wsutil = require('../../fileserver/wsutil.js');
 const bisweb_filedialog = require('bisweb_filedialog.js');
 
+/* 
+ *
+ *  First step is  wrapInAuth 'showfiles', or 'uploadfile'
+ *
+ *       --> calls connectToServer (if not authenticated, else , requestFileList to populate dialog box etc.)
+ *
+ *       --> connectToServer
+ *              closes socket if live
+ *              creates socket to server -- this too early
+ *              initializes this.fileTreeDialog and this.fileSaveDialog (this should become part of fileTree)
+ *              adds 'close','error' and 'message' events to the server and waits
+ *        
+ *       --> on event : 'message' call handleServerResponse
+ *
+ *       --> handleServer Response
+ *                --> string or binary
+ *                --> if string
+ *                       'authenticate' -- this.createAuthenticationDialog
+ *                       'filelist'    -- displayFileList
+ *                       'supplementalfiles' -- more files to display
+ *                       'error' -- something happened
+ *                       'datasocketready', 'goodauth', 'badauth -- ignored for now
+ *
+ *       ---> createAuthenticationDialog -- this creates popup and authenticates ...
+ 
+ 
+
+
+*/
+
+
+
 class FileServer extends HTMLElement {
 
     constructor() {
@@ -20,12 +52,14 @@ class FileServer extends HTMLElement {
         this.socket = null;
 
         //File tree requests display the contents of the disk on the server machine in a modal
-        this.fileTreeDialog = new bisweb_filedialog('Local File System');
+        this.fileTreeDialog = new bisweb_filedialog('BisWeb File Server Connector');
         this.fileSaveDialog = new bisweb_filedialog('Choose a save location', { 'makeFavoriteButton' : false, 'modalType' : 'save', 'displayFiles' : false  });
 
         //When connecting to the server, it may sometimes request that the user authenticates
         this.authenticateModal = null;
         this.authenticated = false;
+        this.hostname=null;
+        this.password=null;
     }
 
     /**
@@ -35,11 +69,12 @@ class FileServer extends HTMLElement {
      * @param {String} address - The hostname and port to try to connect to, e.g. 'ws://localhost:8080'. These addresses must be prefixed with 'ws://' 
      */
     connectToServer(address = 'ws://localhost:8081') {
-        if (this.socket) { this.socket.close(1000, 'Restarting connection'); }
+
+        console.log('Connecting to server',address);
+        if (this.socket) { this.socket.close(1000, 'Restarting connection'); this.hostname=null; }
 
         this.socket = new WebSocket(address);
 
-        console.log('socket', this.socket);
         //file tree dialog needs to be able to call some of file server's code 
         //they are separated for modularity reasons, so to enforce the hierarchical relationship between the two fileserver provides the functions and the socket
         this.fileTreeDialog.fileListFn = this.requestFileList.bind(this);
@@ -82,22 +117,50 @@ class FileServer extends HTMLElement {
             this.handleDataTransmission(event.data);
             return;
         }
+
+        console.log('Received ',data.type);
         
         switch (data.type)
         {
-            case 'authenticate': this.createAuthenticationDialog(); break;
-            case 'filelist': this.displayFileList(data.payload); break;
-            case 'supplementalfiles': this.handleSupplementalFileRequest(data.payload.path, data.payload.list); break;
+            case 'filelist':  {
+                this.displayFileList(data.payload);
+                break;
+            }
+            case 'supplementalfiles': {
+                this.handleSupplementalFileRequest(data.payload.path, data.payload.list);
+                break;
+            }
             case 'error': {
                 console.log('Error from client:', data.payload); 
                 let errorEvent = new CustomEvent('servererror', { 'detail' : data.payload });
                 document.dispatchEvent(errorEvent);
                 break;
             }
-            case 'datasocketready': //some control phrases are handled elsewhere, so the main listener should ignore them
-            case 'goodauth':
-            case 'badauth': break;
-            default: console.log('received a transmission with unknown type', data.type, 'cannot interpret');
+            case 'datasocketready': {
+                //some control phrases are handled elsewhere, so the main listener should ignore them
+                break;
+            }
+            case 'authenticate': {
+                this.socket.send(this.password);
+                break;
+            }
+            case 'badauth':  {
+                this.createAuthenticationDialog('Please try again');
+                break;
+            }
+            case 'goodauth': { 
+                webutil.createAlert('Login to BisWeb FileServer Successful');
+                this.authenticated = true;
+                console.log('lastcommand=',this.lastCommand);
+                if (this.lastCommand) {
+                    this.wrapInAuth(this.lastCommand,this.lastOpts);
+                    this.lastCommand=null;
+                }
+                break;
+            }
+            default: {
+                console.log('received a transmission with unknown type', data.type, 'cannot interpret');
+            }
         }
     }
 
@@ -401,78 +464,65 @@ class FileServer extends HTMLElement {
      * Creates a small modal dialog to allow the user to enter the session password used to authenticate access to the local fileserver. 
      * Also displays whether authentication succeeded or failed. 
      */
-    createAuthenticationDialog() {
+    createAuthenticationDialog(title='Connect To BisWeb Server') {
 
-        let saveDialog = $(`<p>Please enter the password printed to the console window.</p>`);
-        let passwordEntryBox = $(`
+        if (!this.authenticateModal) {
+
+            let hid=webutil.getuniqueid();
+            let pid=webutil.getuniqueid();
+            
+            let tmp = `
                 <div class='form-group'>
                     <label for='server'>Host:</label>
-                                 <input type='text' class = 'form-control' value="localhost:8081">
+                                 <input type='text' class = 'form-control' id='${hid}' value="localhost:8081">
                 </div>
                 <div class='form-group'>
                     <label for='filename'>Password:</label>
-                    <input type='text' class = 'form-control'>
+                    <input type='text' class = 'form-control' id='${pid}'>
                 </div>
-            `);
+            `;
+            console.log(tmp);
+            let passwordEntryBox=$(tmp);
 
-        let authListener = (message) => {
-            let data = wsutil.parseJSON(message.data);
-            
-            switch(data.type) {
-                case 'badauth': {
-                    let errorMessage = $(`<p>The server rejected the password. Please enter the new password in the server window</p>`);
-                    this.authenticateModal.body.find('p').remove();
-                    this.authenticateModal.body.prepend(errorMessage);
-                    break;
-                }
-                case 'goodauth': { 
-                    let successMessage = $(`<p>Login successful!</p>`);
-                    this.authenticateModal.body.find('p').remove();
-                    this.authenticateModal.body.prepend(successMessage);
-                    setTimeout(() => { this.authenticateModal.dialog.modal('hide'); }, 100);
-                    this.socket.removeEventListener('message', authListener);
-                    this.authenticated = true;
-                    if (this.lastCommand) {
-                        this.wrapInAuth(this.lastCommand,this.lastOpts);
-                        this.lastCommand=null;
-                    }
-                    break;
-                }
-                default:  
-                    console.log('heard unknown data type', data.type);
-            }
-        };
-
-        if (!this.authenticateModal) {
-            this.authenticateModal = webutil.createmodal('Enter the Session Password', 'modal-sm');
+            this.authenticateModal = webutil.createmodal('Connect To BisWeb Server', 'modal-sm');
             this.authenticateModal.dialog.find('.modal-footer').find('.btn').remove();
-
-            let confirmButton = webutil.createbutton({ 'name': 'Confirm', 'type': 'btn-success' });
+            this.authenticateModal.body.append(passwordEntryBox);
+            
+            let confirmButton = webutil.createbutton({ 'name': 'Connnect', 'type': 'btn-success' });
             let cancelButton = webutil.createbutton({ 'name': 'Cancel', 'type': 'btn-danger' });
-
+            
             this.authenticateModal.footer.append(confirmButton);
             this.authenticateModal.footer.append(cancelButton);
-
-            $(confirmButton).on('click', () => {
-                let hostname = this.authenticateModal.body.find('.form-control')[0].value;
-                let password = this.authenticateModal.body.find('.form-control')[1].value;
-                this.socket.send(password);
-            });
 
             $(cancelButton).on('click', () => {
                 this.authenticateModal.dialog.modal('hide');
             });
 
-            //clear name entry input when modal is closed
-            $(this.authenticateModal.dialog).on('hidden.bs.modal', () => {
-                this.authenticateModal.body.empty();
+            $(confirmButton).on('click', () => {
+
+                let hst=$('#'+hid).val();
+                this.password = $('#'+pid).val();
+                console.log('pass=',this.password);
+                console.log('hst=',hst,this.hostname);
+                if (this.hostname!==hst) {
+                    console.log('Full Connection');
+                    this.hostname = hst;
+                    this.authenticateModal.dialog.modal('hide');
+                    setTimeout( () => {
+                        this.connectToServer('ws://'+this.hostname);
+                    },100);
+                } else {
+                    this.authenticateModal.dialog.modal('hide');
+                    setTimeout( () => {
+                        this.socket.send(this.password);
+                    },100);
+                }
             });
+
+
         }
-
-        this.socket.addEventListener('message', authListener);
-
-        this.authenticateModal.body.append(saveDialog);
-        this.authenticateModal.body.append(passwordEntryBox);
+        if (title!==null)
+            this.authenticateModal.header.find('.modal-title').text(title);
 
         this.authenticateModal.dialog.modal('show');
     }
@@ -504,7 +554,7 @@ class FileServer extends HTMLElement {
                 console.log('unrecognized command', command);
             }
         } else {
-            this.connectToServer();
+            this.createAuthenticationDialog();
             // make this call us back ...
         }
     }
