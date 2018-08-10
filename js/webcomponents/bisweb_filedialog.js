@@ -275,9 +275,16 @@ class FileDialogElement {
 
             //NOTE: Actual image data is attached later in the case of a save request. Only the file location is provided here.
             let command = this.modalType === 'save' ? 'uploadfile' : 'getfile';
-            switch (data.node.type) {
-                case 'file': break;
-                case 'picture': this.makeFileRequest(command, { 'path' : data.node.original.path }); break;
+            switch (data.node.type)
+            {
+                case 'file': {
+                    this.makeFileRequest(command, { 'path' : data.node.original.path });
+                    break;
+                }
+                case 'picture': {
+                    this.makeFileRequest(command, { 'path' : data.node.original.path });
+                    break;
+                }
                 case 'directory': {
                     let name = data.node.original.text;
                     let node = this.currentDirectory.find((element) => { return element.text === name; });
@@ -288,7 +295,9 @@ class FileDialogElement {
                     }
                     break;
                 }
-                default: console.log('clicked on node', data.node.type, 'that performs no action');
+                default: {
+                    console.log('clicked on node', data.node.type, 'that performs no action');
+                }
             }
 
         });
@@ -318,7 +327,7 @@ class FileDialogElement {
             this.changeDirectory(null, this.fileList);
         });
 
-        navbar.append(backButton);
+        //        navbar.append(backButton);
         navbar.append(homeButton);
 
         //create navbar buttons for each folder in the current path
@@ -482,7 +491,11 @@ class FileDialogElement {
         console.log('params.path', params.path, 'name', name);
 
         //params.path duplicated because different fileRequestFns may reference the filename differently, e.g. Amazon AWS provides one fileRequestFn, bisweb_fileserver provides another...
-        this.fileRequestFn({ 'command' : command, 'files' : [name], 'name' : name, 'paths' : [params.path] }, cb, eb);
+        this.modal.dialog.modal('hide');
+        setTimeout( () => {
+            this.fileRequestFn({ 'command' : command, 'files' : [name], 'name' : name, 'paths' : [params.path] }, cb, eb);
+        },10);
+
     }
 
     /**
