@@ -12,6 +12,12 @@ const hotp = otplib.hotp;
 hotp.options  = { crypto };
 const secret = otplib.authenticator.generateSecret();
 
+const insecure=true;
+
+if (insecure) {
+    console.log('\n\n\n\n In INSECURE MODE');
+}
+
 // TODO:
 // this extension should be used make node-like calls work on Windows
 // https://github.com/prantlf/node-posix-ext
@@ -189,7 +195,7 @@ let authenticate = (socket) => {
 
         console.log('---- entered password')
 
-        if (hotp.check(parseInt(password), secret, onetimePasswordCounter)) {
+        if (hotp.check(parseInt(password), secret, onetimePasswordCounter) || (insecure && password==="0")) {
                     console.log('++++ Starting helper server');
             socket.removeListener('data', readOTP);
 
@@ -331,8 +337,7 @@ let handleTextRequest = (rawText, control, socket) => {
         case 'show':
         case 'showfiles': serveFileList(socket, parsedText.directory, parsedText.type, 1); break;
         //get a file from the server
-        case 'getfile':
-        case 'getfiles': serveFileRequest(parsedText, control, socket); break;
+        case 'readfile': serveFileRequest(parsedText, control, socket); break;
         case 'uploadfile' : handleFileFromClient(parsedText, control, socket); break;
         case 'run':
         case 'runmodule': serveModuleInvocationRequest(parsedText, control, socket); break;
@@ -372,14 +377,33 @@ let handleFileFromClient = (upload, control, socket) => {
  * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
  */
 let serveFileRequest = (parsedText, control, socket) => {
-    let files = parsedText.files;
-    for (let file of files) {
-        readFileFromDisk(file).then( (data) => {
-            socket.write(formatPacket('binary', data), () => { console.log('____ download successful'); });
-        }).catch( (error) => {
-            handleBadRequestFromClient(socket, error);
+    let filename = parsedText.filename;
+    let isbinary = parsedText.isbinary
+    let pkgformat='binary';
+    if (!isbinary)
+        pkgformat='text';
+
+    if (isbinary) {
+        fs.readFile(filename,  (err, d1) => {
+            if (err) {
+                handleBadRequestFromClient(socket, err);
+            } else {
+                socket.write(formatPacket('binary',d1), () => {
+                    console.log(`____ load binary file ${filename} successful`);
+                });
+            }
         });
-    }
+    } else {
+        fs.readFile(filename, 'utf-8', (err, d1) => {
+            if (err) {
+                handleBadRequestFromClient(socket, err);
+            } else {
+                socket.write(formatPacket('text',d1), () => {
+                    console.log(`____ load text file ${filename} successful`);
+                });
+            }
+        });
+    }        
 };
 
 /**
@@ -567,35 +591,6 @@ let setSocketTimeout = (fn, delay = 2000) => {
 };
 
 /**
- * Reads a file on the server machine's hard drive. Will not allow requests for files that either contain symbolic links or files that the owner of the server process does not have access to. 
- *
- * @param {String} file - The name of the file.
- * @returns A Promise resolving a buffer containing the data of the specified file, or rejecting with an error message.
- */
-let readFileFromDisk = (file) => {
-    //check whether filepath contains symlinks before trying anything with the file
-    return new Promise((resolve, reject) => {
-        checkValidPath(file).then(() => {
-
-            //disallow requests for files that don't belong to the current user (owner of the current process)
-            fs.lstat(file, (err, stat) => {
-                let currentUser = process.getuid();
-                //console.log('current user', currentUser, 'file owner', stat.uid);
-                if (stat.uid !== currentUser) { reject("Cannot download a file that does not belong to the current user. Have you tried changing ownership of the requested file?"); return; }
-
-                fs.readFile(file, (err, data) => {
-                    resolve(data);
-                });
-            });
-
-        }).catch((error) => {
-            reject(error);
-        });
-    });
-
-};
-
-/**
  * Takes a payload and a description of the payload type and formats the packet for transmission. 
  * 
  * @param {String} payloadType - A word describing the nature of the payload.
@@ -604,16 +599,16 @@ let readFileFromDisk = (file) => {
  */
 let formatPacket = (payloadType, data) => {
     let payload, opcode;
-    //transmissions are either text (JSON) or a raw image
-    if (payloadType !== 'binary') {
+    //transmissions are either text (JSON) or a raw image 
+    if (payloadType === 'binary') {
+        payload = data;
+        opcode = 2;
+    } else {
         payload = JSON.stringify({
             'type' : payloadType,
             'payload' : data
         });
         opcode = 1;
-    } else {
-        payload = data;
-        opcode = 2;
     }
 
     let controlFrame = wsutil.formatControlFrame(opcode, payload.length);
