@@ -1079,6 +1079,7 @@ const bisgenericio = {
     string2binary :     string2binary ,
     binary2string :     binary2string ,
     dataURLToBlob : dataURLToBlob,
+    iscompressed :      iscompressed, // ends in .gz
     setWebWorkerScope :     setWebWorkerScope,
     setCloudSaveFunction : setCloudSaveFunction, // needed for write to dropbox etc.
     readtextdatafromurl : readtextdatafromurl, // read from url
