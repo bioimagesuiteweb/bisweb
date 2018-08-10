@@ -495,6 +495,50 @@ const webfileutils = {
             webutil.createMenuItem(bmenu, name, fn);
         }
     },
+
+
+    createAWSBucketSelector : function(bmenu) {
+        let createModal = () => {
+            let modal = webutil.createmodal('Enter AWS Bucket Details', 'modal-sm');
+            let credentialsEntryBox = $(`
+                    <div class='form-group'>
+                        <label for='bucket'>Bucket Name:</label>
+                        <input name='bucket' class='bucket-input' type='text' class='form-control'>
+                        <label for='username'>Username:</label>
+                        <input name='username' class='username-input' type='text' class='form-control'>
+                        <label for='access-key'>Access Key Id:</label>
+                        <input name='access-key' class = 'access-key-input' type='text' class='form-control'>
+                        <label for='secret-key'>Secret Key Id:</label>
+                        <input name='secret-key' class = 'secret-key-input' type='text' class='form-control'>
+                    </div>
+                `);
+            
+            modal.body.append(credentialsEntryBox);
+    
+            let confirmButton = webutil.createbutton({ 'name': 'Confirm', 'type': 'btn-success' });
+            let cancelButton = webutil.createbutton({ 'name': 'Cancel', 'type': 'btn-danger' });
+            
+            confirmButton.on('click', () => {
+                let bucketName = credentialsEntryBox.find()
+            });
+
+            cancelButton.on('click', () => {
+                modal.dialog.modal('hide');
+            });
+
+            //remove 'close' button in modal footer
+            modal.footer.find('.btn').remove();
+
+            modal.footer.append(confirmButton);
+            modal.footer.append(cancelButton);
+
+            modal.dialog.modal('show');
+        };
+       
+        webutil.createMenuItem(bmenu, 'Select AWS Bucket', createModal);
+    }
+
+
     
 };
 

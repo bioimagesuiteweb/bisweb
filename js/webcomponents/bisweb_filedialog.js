@@ -226,7 +226,6 @@ class FileDialogElement {
             }
         }
 
-
         
         newList.jstree({
             'core': {
@@ -371,10 +370,10 @@ class FileDialogElement {
      */
     showDialog(filters, modalTitle = null) {
         if (modalTitle) {
-            let title = this.modal.header.find('.modal-title');
+            let title = this.modal.header.find('.modal-title').text(modalTitle);
             title.remove();
-            let newTitle = $(`<h4 class='modal-title'>${modalTitle}</h4>`);
-            this.modal.header.append(newTitle);
+            //let newTitle = $(`<h4 class='modal-title'>${modalTitle}</h4>`);
+            //this.modal.header.append(newTitle);
         }
 
         this.filters = filters;
