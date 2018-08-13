@@ -58,6 +58,8 @@ let awsbucketstorage = localforage.createInstance({
     'description' : 'A database of AWS buckets that the user has attempted to connect to'
 });
 
+let awsmodal = null;
+
 const webfileutils = {
 
     /**
@@ -507,58 +509,106 @@ const webfileutils = {
         }
     },
 
-
-    createAWSBucketSelector : function(bmenu) {
+    createAWSBucketMenu : function(bmenu) {
         let createModal = () => {
-            let modal = webutil.createmodal('Enter AWS Bucket Details', 'modal-sm');
-            let credentialsEntryBox = $(`
-                    <div class='form-group'>
-                        <label for='bucket'>Bucket Name:</label><br>
-                        <input name='bucket' class='bucket-input' type='text' class='form-control'><br>
-                        <label for='username'>Username:</label><br>
-                        <input name='username' class='username-input' type='text' class='form-control'><br>
-                        <label for='access-key'>Access Key Id:</label><br>
-                        <input name='access-key' class = 'access-key-input' type='text' class='form-control'><br>
-                        <label for='secret-key'>Secret Key Id:</label><br>
-                        <input name='secret-key' class = 'secret-key-input' type='text' class='form-control'><br>
+            if (!awsmodal) {
+                awsmodal = webutil.createmodal('AWS Buckets');
+                let tabView =$( `
+                <ul class="nav nav-tabs" id="aws-tab-menu" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="selector-tab" data-toggle="tab" href="#aws-selector-tab" role="tab" aria-controls="home" aria-selected="true">Select AWS Bucket</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="entry-tab" data-toggle="tab" href="#aws-entry-tab" role="tab" aria-controls="entry" aria-selected="false">Enter New Bucket</a>
+                    </li>
+                </ul>
+                <div class="tab-content" id="aws-tab-content">
+                    <div class="tab-pane fade show active" id="aws-selector-tab" role="tabpanel" aria-labelledby="selector-tab">
+                        <div id="aws-bucket-selector-pane"></div>
                     </div>
+                    <div class="tab-pane fade" id="aws-entry-tab" role="tabpanel" aria-labelledby="profile-tab">
+                        <div id="aws-bucket-entry-pane"></div>
+                    </div>
+                </div>
                 `);
-            
-            modal.body.append(credentialsEntryBox);
-    
-            let confirmButton = webutil.createbutton({ 'name': 'Confirm', 'type': 'btn-success' });
-            let cancelButton = webutil.createbutton({ 'name': 'Cancel', 'type': 'btn-danger' });
-            
-            confirmButton.on('click', () => {
-                let paramsObj = {
-                    'bucketName' : credentialsEntryBox.find('.bucket-input')[0].value,
-                    'userName' : credentialsEntryBox.find('.username-input')[0].value,
-                    'accessKey' : credentialsEntryBox.find('.access-key-input')[0].value,
-                    'secretKey' : credentialsEntryBox.find('.secret-key-input')[0].value
-                };
 
-                //index contains the number of keys in the database
-                awsbucketstorage.length().then( (length) => {
-                    console.log('database length', length);
-                    let key = 'awsbucket' + length;
-                    awsbucketstorage.setItem(key, JSON.stringify(paramsObj));
-                })
-            });
+                let selectPane = this.createAWSBucketSelector();
+                tabView.find('#aws-bucket-selector-pane').append(selectPane);
 
-            cancelButton.on('click', () => {
-                modal.dialog.modal('hide');
-            });
+                let entryPane = this.createAWSBucketEntry();
+                tabView.find('#aws-bucket-entry-pane').append(entryPane);
 
-            //remove 'close' button in modal footer
-            modal.footer.find('.btn').remove();
-
-            modal.footer.append(confirmButton);
-            modal.footer.append(cancelButton);
-
-            modal.dialog.modal('show');
+                awsmodal.body.append(tabView);
+                awsmodal.dialog.find('.modal-footer').remove();
+            }
+            console.log('awsmodal', awsmodal);
+            awsmodal.dialog.modal('show');
         };
-       
-        webutil.createMenuItem(bmenu, 'Select AWS Bucket', createModal);
+
+        webutil.createMenuItem(bmenu, 'AWS Selector', createModal);
+
+    },
+
+    createAWSBucketSelector : function() {
+        let selectContainer = $(`
+            <div class='container-fluid form-group'>
+                <label for='bucket-selector'>Select a Bucket:</label>
+                <select class='form-control' id='bucket-selector'>
+                    <option>AAAAAAAAAAAAAAAAAAAAAAAAAAAAA</option>
+                    <option>Hi</option>
+                    <option>Bootstrap</option>
+                </select>   
+            </div>
+        `);
+
+        return selectContainer;
+    },
+
+    createAWSBucketEntry : function() {
+        let entryContainer = $(`
+            <div class='container-fluid'>
+                <div class='form-group'>
+                    <label for='bucket'>Bucket Name:</label><br>
+                    <input name='bucket' class='bucket-input' type='text' class='form-control'><br>
+                    <label for='username'>Username:</label><br>
+                    <input name='username' class='username-input' type='text' class='form-control'><br>
+                    <label for='access-key'>Access Key Id:</label><br>
+                    <input name='access-key' class = 'access-key-input' type='text' class='form-control'><br>
+                    <label for='secret-key'>Secret Key Id:</label><br>
+                    <input name='secret-key' class = 'secret-key-input' type='text' class='form-control'><br>
+                </div>
+                <div class='btn-group' role=group' aria-label='Viewer Buttons' style='float: left'></div>
+            </div>
+        `);
+
+        let confirmButton = webutil.createbutton({ 'name': 'Confirm', 'type': 'btn-success' });
+        let cancelButton = webutil.createbutton({ 'name': 'Cancel', 'type': 'btn-danger' });
+
+        confirmButton.on('click', () => {
+            let paramsObj = {
+                'bucketName': entryContainer.find('.bucket-input')[0].value,
+                'userName': entryContainer.find('.username-input')[0].value,
+                'accessKey': entryContainer.find('.access-key-input')[0].value,
+                'secretKey': entryContainer.find('.secret-key-input')[0].value
+            };
+
+            //index contains the number of keys in the database
+            awsbucketstorage.length().then((length) => {
+                console.log('database length', length);
+                let key = 'awsbucket' + length;
+                awsbucketstorage.setItem(key, JSON.stringify(paramsObj));
+            });
+        });
+
+        cancelButton.on('click', () => {
+            awsmodal.dialog.modal('hide');
+        });
+        
+        let buttonBar = entryContainer.find('.btn-group');
+        buttonBar.append(confirmButton);
+        buttonBar.append(cancelButton);
+
+        return entryContainer;
     }
 
 
