@@ -2,6 +2,7 @@ require('../config/bisweb_pathconfig.js');
 
 const net = require('net');
 const crypto = require('crypto');
+const path=require('path');
 const os = require('os');
 const timers = require('timers');
 const { StringDecoder } = require('string_decoder');
@@ -205,13 +206,14 @@ let authenticate = (socket) => {
 
         console.log('---- entered password')
 
-        if (hotp.check(parseInt(password), secret, onetimePasswordCounter) || (insecure && password==="0")) {
+        if (hotp.check(parseInt(password), secret, onetimePasswordCounter) || (insecure && password.length<1)) {
                     console.log('++++ Starting helper server');
             socket.removeListener('data', readOTP);
 
             prepareForControlFrames(socket);
             socket.write(formatPacket('goodauth', ''))
             createPassword(2);
+            console.log('Authenticated OK');
         } else {
             console.log('---- The token you entered is incorrect.');
             createPassword(1);
@@ -260,16 +262,24 @@ let prepareForControlFrames = (socket) => {
 let handleTextRequest = (rawText, control, socket) => {
     let parsedText = parseClientJSON(rawText);
     console.log('____ text request', parsedText);
-    switch (parsedText.command) {
+    switch (parsedText.command)
+    {
         //get file list
-        case 'show':
-        case 'showfiles': serveFileList(socket, parsedText.directory, parsedText.type, 1); break;
-        //get a file from the server
-        case 'readfile': readFileAndSendToClient(parsedText, control, socket); break;
-        case 'uploadfile' : getFileFromClientAndSave(parsedText, control, socket); break;
-        case 'run':
-        case 'runmodule': serveModuleInvocationRequest(parsedText, control, socket); break;
-        default: console.log('---- Cannot interpret request with unknown command', parsedText.command);
+        case 'getfilelist': {
+            serveFileList(socket, parsedText.directory, parsedText.type, parsedText.depth);
+            break;
+        }
+        case 'readfile': {
+            readFileAndSendToClient(parsedText, control, socket);
+            break;
+        }
+        case 'uploadfile' : {
+            getFileFromClientAndSave(parsedText, control, socket);
+            break;
+        }
+        default: {
+            console.log('---- Cannot interpret request with unknown command', parsedText.command);
+        }
     }
 };
 // ------------------------------------------------------------------------------------------------------------------------------------
@@ -340,7 +350,7 @@ let prepareForDataFrames = (socket) => {
                 fileInProgress.data=genericio.binary2string(fileInProgress.data);
             }
             //save serialized NIFTI image
-            let writeLocation = baseDirectory + '/' + fileInProgress.name;
+            let writeLocation = path.join(baseDirectory,fileInProgress.name);
             console.log('____ writing to file', writeLocation,'size=',fileInProgress.data.length);
             
             genericio.write(writeLocation, fileInProgress.data, fileInProgress.isbinary).then( () => {
@@ -378,7 +388,7 @@ let getFileFromClientAndSave = (upload, control, socket) => {
         'totalSize': upload.totalSize,
         'packetSize': upload.packetSize,
         'isbinary' : upload.isbinary,
-        'name': upload.filename
+        'name': upload.filename,
         'storageSize' : upload.storageSize,
         'offset' : 0,
     };
@@ -453,61 +463,57 @@ let serveFileList = (socket, basedir, type, depth = 2) => {
     //path = full filepath
     //fileTreeIndex = the the children of the current tree entry
     //directoriesExpanded = the number of file tree entries expanded so far
-    let expandDirectory = (path, fileTreeIndex, directoriesExpanded) => {
+    let expandDirectory = (pathname, fileTreeIndex, directoriesExpanded) => {
         return new Promise( (resolve, reject) => {
-            fs.readdir(path, (err, files) => {
+            fs.readdir(pathname, (err, files) => {
                 if (err) { reject(err); }
 
                 //remove hidden files/folders from results
                 let validFiles = files.filter((unfilteredFile) => { return unfilteredFile.charAt(0) !== '.'; });
+                console.log('valid files=',JSON.stringify(validFiles,null,2));
 
-                let expandInnerDirectory = (path, treeEntry) => {
+                let expandInnerDirectory = (pathname, treeEntry) => {
                     return new Promise((resolve, reject) => {
                         //if file is a directory, expand it and add its children to fileTree recursively
                         //otherwise just add the entry and resolve
-                        fs.lstat(path, (err, stat) => {
+                        fs.lstat(pathname, (err, stat) => {
                             if (err) { reject(err); }
+
                             fileTreeIndex.push(treeEntry);
 
                             if (stat.isDirectory()) {
                                 treeEntry.children = [];
                                 treeEntry.type = 'directory';
-
-                                if (!depth || directoriesExpanded < depth) {
-                                    expandDirectory(path, treeEntry.children, directoriesExpanded + 1).then( () => { resolve(fileTreeIndex); });
+                                
+                                if (!directoriesExpanded < depth) {
+                                    expandDirectory(pathname, treeEntry.children, directoriesExpanded + 1).then( () => { resolve(fileTreeIndex); });
                                 } else {
                                     treeEntry.expand = true;
                                     resolve(fileTreeIndex);
                                 }
                             } else {
                                 //if not a directory determine the filetype 
-                                //get the file extension by taking the file at the end of the path and looking after the last '.'
-                                let endFile = path.split('/');
-                                let splitEndFile = endFile[endFile.length-1].split('.');
-                                let filetype = splitEndFile[splitEndFile.length - 1];
-
-                                //console.log('endFile', endFile, 'filetype', filetype);
-                                switch (filetype) {
-                                    case 'gz' : treeEntry.type = 'picture'; break;
-                                    case 'css' : 
-                                    case 'html' : treeEntry.type = 'html'; break;
-                                    case 'js' : treeEntry.type = 'js'; break;
-                                    case 'txt':
-                                    case 'md' : treeEntry.type = 'text'; break;
-                                    case 'mp4' :
-                                    case 'avi' :
-                                    case 'mkv' : treeEntry.type = 'video'; break;
-                                    case 'mp3' :
-                                    case 'flac' :
-                                    case 'FLAC' :
-                                    case 'wav' : 
-                                    case 'WAV' : treeEntry.type = 'audio'; break;
-                                    default : treeEntry.type = 'file'; 
+                                //get the file extension by taking the file at the end of the pathname and looking after the last '.'
+                                let extension = path.parse(pathname).ext;
+                                switch (extension)
+                                {
+                                    case 'gz' : {
+                                        treeEntry.type = 'picture'; break;
+                                    }
+                                    case 'html' : {
+                                        treeEntry.type = 'html'; break;
+                                    }
+                                    case 'js' : {
+                                        treeEntry.type = 'js'; break;
+                                    }
+                                    default : {
+                                        treeEntry.type = 'file';
+                                    }
                                 }
                                 resolve(fileTreeIndex);
                             }
 
-                            treeEntry.path = path;
+                            treeEntry.path = pathname;
                         });
                     });
                 };
@@ -516,8 +522,8 @@ let serveFileList = (socket, basedir, type, depth = 2) => {
                 let promisesInsideDirectory = [];
                 for (let file of validFiles) {
                     let newTreeEntry = { 'text': file };
-                    let newPath = path + '/' + file;
-                    promisesInsideDirectory.push(expandInnerDirectory(newPath, newTreeEntry));
+                    let newPathname = pathname + '/' + file;
+                    promisesInsideDirectory.push(expandInnerDirectory(newPathname, newTreeEntry));
                 }
 
                 Promise.all(promisesInsideDirectory).then(() => { resolve(fileTreeIndex); });
@@ -590,16 +596,16 @@ let handleCloseFromClient = (rawText, control, socket) => {
  */
 let checkValidPath = (filepath) => {
     return new Promise( (resolve, reject) => {
-        let pathCheck = (path) => {
-            if (path === '') { resolve(); return; }
+        let pathCheck = (pathname) => {
+            if (pathname === '') { resolve(); return; }
 
-            //console.log('____ checking path', path);
-            fs.lstat(path, (err, stats) => {
+            //console.log('____ checking path', pathname);
+            fs.lstat(pathname, (err, stats) => {
                 if (err) { console.log('---- err', err); reject('An error occured while statting filepath. Is there something on the path that would cause issues?'); return; }
                 if (stats.isSymbolicLink()) { reject('Symbolic link in path of file request.'); return; }
 
                 //look one directory up
-                let newPath = path.split('/');
+                let newPath = pathname.split('/');
                 newPath.splice(newPath.length - 1, 1);
                 pathCheck(newPath.join('/'));
             });
