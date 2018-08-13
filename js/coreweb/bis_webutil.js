@@ -1254,6 +1254,29 @@ style="position:absolute; top:${top}px; left:10px; z-index:${1000+internal.alert
     },
 
 
+    /** get full path to html file */
+    getWebPagePath() {
+        let scope=window.document.URL.split("?")[0];
+        let index=scope.lastIndexOf("/");
+        scope=scope.substr(0,index);
+        return scope;
+    },
+
+    getWebPageURL() {
+        let scope=window.document.URL.split("?")[0];
+        scope=scope.split("#")[0];
+        return scope;
+    },
+    
+    getWebPageName() {
+
+        let scope=this.getWebPageURL();
+        scope=scope.split("/").pop();
+        let index=scope.indexOf(".html");
+        scope=scope.substr(0,index);
+        return scope;
+    },
+    
     /** returns the templates stored in this file */
     getTemplates: function () {
         return internal.templates;
