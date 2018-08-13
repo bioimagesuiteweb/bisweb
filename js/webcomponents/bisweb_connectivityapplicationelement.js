@@ -276,7 +276,7 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         webutil.createMenuItem(helpmenu,''); // separator
         helpmenu.append($("<li><a href=\"https://www.nitrc.org/frs/?group_id=51\" target=\"_blank\" rel=\"noopener\" \">Download Parcellation</a></li>"));
         webutil.createMenuItem(helpmenu,''); // separator
-        webutil.createMenuItem(helpmenu,'test',function(){console.log('this is a test')})
+        webutil.createMenuItem(helpmenu,'test',function(){console.log('this is a test');});
         webutil.createMenuItem(helpmenu,'Load Sample Matrices',function() {
             control.loadsamplematrices(['images/pos_mat.txt','images/neg_mat.txt']);
         });

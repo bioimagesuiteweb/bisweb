@@ -62,7 +62,7 @@
             // ------------------------------------ Load File Menu ----------------------------
             
             webutil.createMenuItem(VTKMenu,'VTK Create Image',function() { 
-                load()
+                load();
             });
     
             

@@ -1,3 +1,4 @@
+
 var vtkColorTransferFunction = vtk.Rendering.Core.vtkColorTransferFunction;
 var vtkHttpDataSetReader = vtk.IO.Core.vtkHttpDataSetReader;
 var vtkFullScreenRenderWindow  = vtk.Rendering.Misc.vtkFullScreenRenderWindow;
@@ -5,7 +6,6 @@ var vtkPiecewiseFunction = vtk.Common.DataModel.vtkPiecewiseFunction;
 var vtkVolume = vtk.Rendering.Core.vtkVolume;
 var vtkVolumeMapper = vtk.Rendering.Core.vtkVolumeMapper;
 var vtkXMLImageDataReader = vtk.IO.XML.vtkXMLImageDataReader;
-var HttpDataAccessHelper = vtk.IO.Core.BinaryHelper
 
 // ----------------------------------------------------------------------------
 // Standard rendering code setup
@@ -23,9 +23,7 @@ const fullScreenRenderer = vtkFullScreenRenderWindow.newInstance({
   // Server is not sending the .gz and whith the compress header
   // Need to fetch the true file name and uncompress it locally
   // ----------------------------------------------------------------------------
-  
-  const reader = vtkHttpDataSetReader.newInstance();
-  
+    
   const actor = vtkVolume.newInstance();
   const mapper = vtkVolumeMapper.newInstance();
   mapper.setSampleDistance(0.7);
@@ -63,7 +61,7 @@ const fullScreenRenderer = vtkFullScreenRenderWindow.newInstance({
   </tr>
 </table>
 `);
-$(fullScreenRenderer.getControlContainer()).css('top','100px')
+$(fullScreenRenderer.getControlContainer()).css('top','100px');
 
   //readTextFile(`./images/test.vti`);
   const vtiReader = vtkXMLImageDataReader.newInstance();

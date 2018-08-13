@@ -51,28 +51,25 @@ function vtkImageGridSource(publicAPI, model) {
 
     const newArray = new Uint8Array(dims[0] * dims[1] * dims[2]);
 
-    let xval = 0;
-    let yval = 0;
-    let zval = 0;
-    let i = 0;
 
+    let i = 0;
+    
     let middle= [  0.5*(model.dataExtent[1]-model.dataExtent[0]),
         0.5*(model.dataExtent[3]-model.dataExtent[2]),
         0.5*(model.dataExtent[5]-model.dataExtent[4]) ];
-    console.log('middle=',middle)
+    console.log('middle =',middle);
 
     for (let z = model.dataExtent[4]; z <= model.dataExtent[5]; z++) {
-        for (let y = model.dataExtent[2]; y <= model.dataExtent[3]; y++) {
-            for (let x = model.dataExtent[0]; x <= model.dataExtent[1]; x++) {
-                let r2=  Math.pow(x-middle[0],2.0)+Math.pow(y-middle[1],2.0)+Math.pow(z-middle[0],2.0);
-                let r=Math.sqrt(r2);
-                if (z % 77 === 0 && y % 77===0 && x % 63===0)
-                    console.log(x,y,z,r2);
-                
-                if (x<100 && y<100 && ( z>50 && z<100))
-                    newArray[i]=255;
-                else
-                    newArray[i]=0;
+      for (let y = model.dataExtent[2]; y <= model.dataExtent[3]; y++) {
+        for (let x = model.dataExtent[0]; x <= model.dataExtent[1]; x++) {
+          let r2 = Math.pow(x-middle[0],2.0) + Math.pow(y-middle[1],2.0) + Math.pow(z-middle[0],2.0);
+          if (z % 77 === 0 && y % 77===0 && x % 63===0)
+            console.log(x,y,z,r2);
+            
+          if (Math.abs(r2) > 10000)
+            newArray[i] = null;
+          else
+            newArray[i] = 255;
           i++;
         }
       }

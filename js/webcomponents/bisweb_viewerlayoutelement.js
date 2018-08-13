@@ -106,7 +106,6 @@ class ViewerLayoutElement extends HTMLElement {
         let offset=87;
         this.viewertop=0;
         if (window.innerWidth>767) {
-            let tm=$("#bismenuparent");
             let w=window.innerWidth-90;
             $('#bismenuparent').css({'width' : `${w}px`,
                                      'max-width': `${2*w}px`});
