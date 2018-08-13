@@ -53,9 +53,9 @@ class FMRIElement extends HTMLElement {
         this.panel = null;
         app_state.images.mni = new BisWebImage();
         
-        let imagepath=webutil.getWebPagePath();
+        let imagepath=webutil.getWebPageImagePath();
 
-        app_state.images.mni.load(`${imagepath}/images/MNI_T1_2mm_stripped_ras.nii.gz`, false).then( () => {
+        app_state.images.mni.load(`${imagepath}/MNI_T1_2mm_stripped_ras.nii.gz`, false).then( () => {
             console.log('MNI Loaded');
         });
     }

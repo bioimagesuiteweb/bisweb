@@ -1106,22 +1106,6 @@ style="position:absolute; top:${top}px; left:10px; z-index:${1000+internal.alert
     },
 
 
-    /**
-     * Searches query string of URL for a value given by 'name'.
-     * Taken from https://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript/901144#901144
-     * @alias WebUtil.getQueryParameter
-     * @param {String} name Name of the parameter to search the query string for. 
-     * @param {String} url URL with query string parameters. Optional -- if not specified the function will use the URL of the current page. 
-     */
-    getQueryParameter: function (name, url) {
-        if (!url) url = window.location.href;
-        name = name.replace(/[[\]]/g, "\\$&");
-        var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
-            results = regex.exec(url);
-        if (!results) return null;
-        if (!results[2]) return '';
-        return decodeURIComponent(results[2].replace(/\+/g, " "));
-    },
     
     createTimestamp :function () {
         let current = new Date();
@@ -1136,7 +1120,7 @@ style="position:absolute; top:${top}px; left:10px; z-index:${1000+internal.alert
     },
     
 
-    showErrorModal: (title = 'An error occured', errorMessage = 'Click close or anywhere outside the modal to continue') => {
+    showErrorModal: function(title = 'An error occured', errorMessage = 'Click close or anywhere outside the modal to continue') {
         let modal = webutil.createmodal(title);
         let confirmButton = webutil.createbutton({ 'name': 'Continue', 'type': 'success' });
         
@@ -1255,13 +1239,18 @@ style="position:absolute; top:${top}px; left:10px; z-index:${1000+internal.alert
 
 
     /** get full path to html file */
-    getWebPagePath() {
+    getWebPageImagePath() {
         let scope=window.document.URL.split("?")[0];
         let index=scope.lastIndexOf("/");
-        scope=scope.substr(0,index);
+        if (scope.indexOf("external")>0)  {
+            scope=scope.substr(0,index)+"/../src/web/images";
+            console.log('external=',external,scope);
+        } else {
+            scope=scope.substr(0,index)+"/images";
+        }
         return scope;
     },
-
+    
     getWebPageURL() {
         let scope=window.document.URL.split("?")[0];
         scope=scope.split("#")[0];
@@ -1327,7 +1316,25 @@ style="position:absolute; top:${top}px; left:10px; z-index:${1000+internal.alert
             console.log('error defining ', name, ' error=', e);
         }
     },
-    
+
+    /**
+     * Searches query string of URL for a value given by 'name'.
+     * Taken from https://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript/901144#901144
+     * @alias WebUtil.getQueryParameter
+     * @param {String} name Name of the parameter to search the query string for. 
+     * @param {String} url URL with query string parameters. Optional -- if not specified the function will use the URL of the current page. 
+     */
+    getQueryParameter: function (name, url) {
+        if (!url)
+            url = window.location.href; 
+        name = name.replace(/[[\]]/g, "\\$&"); 
+        let regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+            results = regex.exec(url);
+        if (!results) return null;
+        if (!results[2]) return '';
+        return decodeURIComponent(results[2].replace(/\+/g, " "));
+    },
+
 };
 
 

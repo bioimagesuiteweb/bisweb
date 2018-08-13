@@ -37,7 +37,7 @@ const THREE=require('three');
 const BisWebPanel = require('bisweb_panel.js');
 import dat from 'dat.gui';
 
-const imagepath=webutil.getWebPagePath();
+const imagepath=webutil.getWebPageImagePath();
 
 // -------------------------------------------------------------------------
 const brain_vertexshader_text = 
@@ -1098,7 +1098,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             }
         };
         const img=new bisweb_image();
-        img.load(`${imagepath}/images/Reorder_Atlas.nii.gz`,false)
+        img.load(`${imagepath}/Reorder_Atlas.nii.gz`,false)
             .then(function() { internalreadatlas(img,save); })
             .catch( (e) => { myerror(e) ; });
     };
@@ -1580,13 +1580,13 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             
             internal.subviewers=subviewers;
             onDemandCreateGUI();
-            loadparcellation(`${imagepath}/images/shen.json`);
+            loadparcellation(`${imagepath}/shen.json`);
             
-            bisgenericio.read(`${imagepath}/images/lobes_right.json`).then( (obj) => {
+            bisgenericio.read(`${imagepath}/lobes_right.json`).then( (obj) => {
                 parsebrainsurface(obj.data,obj.filename);
             }).catch( (e) => { console.log(e); });
             
-            bisgenericio.read(`${imagepath}/images/lobes_left.json`).then( (obj) => {
+            bisgenericio.read(`${imagepath}/lobes_left.json`).then( (obj) => {
                 parsebrainsurface(obj.data,obj.filename);
             }).catch( (e) => { console.log(e); });
                               

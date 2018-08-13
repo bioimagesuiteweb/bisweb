@@ -23,6 +23,8 @@ const webfileutil=require('bis_webfileutil');
 const webutil=require('bis_webutil');
 const BisWebMatrix=require('bisweb_matrix.js');
 const $=require('jquery');
+
+const imagepath=webutil.getWebPageImagePath();
 // ---------------------------------------------------------------------------------
 //  GLOBAL UTILITIES
 // ---------------------------------------------------------------------------------
@@ -695,19 +697,19 @@ class OrthoViewer {
         };
 
         this.TalairachLookup=new Image();
-        load_image(this.TalairachLookup,"./images/colin_talairach_lookup_xy.png");
+        load_image(this.TalairachLookup,`${imagepath}/colin_talairach_lookup_xy.png`);
 
         this.brodmannLookup=new Image(); 
-        load_image(this.brodmannLookup,"./images/yale_brod_xy.png");
+        load_image(this.brodmannLookup,`${imagepath}/yale_brod_xy.png`);
 
         this.MNILookup=new Image();
-        load_image(this.MNILookup,"./images/tal2mni_lookup_xy.png");
+        load_image(this.MNILookup,`${imagepath}/tal2mni_lookup_xy.png`);
 
         this.Mosaic=new Image(); 
-        load_image(this.Mosaic,"./images/MNI_T1_1mm_stripped_xy.png");
+        load_image(this.Mosaic,`${imagepath}/MNI_T1_1mm_stripped_xy.png`);
 
         this.Overlay=new Image();
-        load_image(this.Overlay,"images/blend_xy.png");
+        load_image(this.Overlay,`${imagepath}/blend_xy.png`);
 
         let images_loaded = function() {
             self.Viewers[2].SetImage(self.Mosaic, bisweb_mni2tal.DIMENSIONS[0],bisweb_mni2tal.DIMENSIONS[1],bisweb_mni2tal.DIMENSIONS[2]);

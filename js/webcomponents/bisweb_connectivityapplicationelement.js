@@ -29,7 +29,7 @@ const numeric=require('numeric');
 const util=require('bis_util');
 const webfileutil = require('bis_webfileutil');
 const ViewerApplicationElement = require('bisweb_mainviewerapplication');
-const imagepath=webutil.getWebPagePath();
+const imagepath=webutil.getWebPageImagePath();
 
 /**
  * A Application Level Element that creates a Connectivity Application
@@ -121,7 +121,7 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         var loadatlas=function(fname) {
 
             let image0 = new BisWebImage();
-            image0.load('images/MNI_T1_1mm_stripped_ras.nii.gz',"RAS")
+            image0.load(`${imagepath}/MNI_T1_1mm_stripped_ras.nii.gz`,"RAS")
                 .then(function() {
                     VIEWER.viewer.setimage(image0);
                     VIEWER.viewer.setcoordinates([90,126,72]);
@@ -236,12 +236,12 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         var imenu=webutil.createTopMenuBarMenu("Parcellations",menubar);
         webutil.createMenuItem(imenu,'Use the Shen Atlas',
                                function() {
-                                   loadatlas(`${imagepath}/images/gray_highres_groupncut150_right5_left1_emily_reord_new.nii.gz`,'RAS');
+                                   loadatlas(`${imagepath}/gray_highres_groupncut150_right5_left1_emily_reord_new.nii.gz`,'RAS');
                                });
         webutil.createMenuItem(imenu,'Use the AAL Atlas',
                                function() {
                                    let img=new BisWebImage();
-                                   img.load(`${imagepath}/images/AAL_1mm_ras.nii.gz`,'RAS').then( () => {
+                                   img.load(`${imagepath}/AAL_1mm_ras.nii.gz`,'RAS').then( () => {
                                        control.importparcellation(img,'AAL Atlas');
                                    });
                                });
@@ -279,7 +279,7 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         helpmenu.append($("<li><a href=\"https://www.nitrc.org/frs/?group_id=51\" target=\"_blank\" rel=\"noopener\" \">Download Parcellation</a></li>"));
         webutil.createMenuItem(helpmenu,''); // separator
         webutil.createMenuItem(helpmenu,'Load Sample Matrices',function() {
-            control.loadsamplematrices([`${imagepath}/images/pos_mat.txt`,`${imagepath}/images/neg_mat.txt`]);
+            control.loadsamplematrices([`${imagepath}/pos_mat.txt`,`${imagepath}/neg_mat.txt`]);
         });
         
 
@@ -302,7 +302,7 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         webutil.createDragAndCropController(HandleFiles);
 
 
-        loadatlas('images/gray_highres_groupncut150_right5_left1_emily_reord_new.nii.gz');
+        loadatlas(`${imagepath}/gray_highres_groupncut150_right5_left1_emily_reord_new.nii.gz`);
         
         
         //      window.onbeforeunload = function() {

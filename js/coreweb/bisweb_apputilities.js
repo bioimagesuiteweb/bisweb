@@ -18,7 +18,7 @@
 "use strict";
 
 const webutil = require('bis_webutil');
-let imagepath=webutil.getWebPagePath();
+let imagepath=webutil.getWebPageImagePath();
 
 module.exports = {
 
@@ -26,11 +26,11 @@ module.exports = {
     createMNIImageLoadMenuEntries : function(fmenu,callback,viewerno=0) {
         webutil.createMenuItem(fmenu,'Load MNI T1 (1mm)',
                                function() {
-                                   callback(`${imagepath}/images/MNI_T1_1mm_stripped_ras.nii.gz`,viewerno);
+                                   callback(`${imagepath}/MNI_T1_1mm_stripped_ras.nii.gz`,viewerno);
                                });
         webutil.createMenuItem(fmenu,'Load MNI T1 (2mm)',
                                function() {
-                                   callback(`${imagepath}/images/MNI_T1_2mm_stripped_ras.nii.gz`,viewerno);
+                                   callback(`${imagepath}/MNI_T1_2mm_stripped_ras.nii.gz`,viewerno);
                                });
     },
     
@@ -38,12 +38,12 @@ module.exports = {
 
         webutil.createMenuItem(fmenu, 'Load Yale Brodmann Atlas (1mm)',
                                function () {
-                                   callback(`${imagepath}/images/yale_broadmann_ras.nii.gz`, viewerno);
+                                   callback(`${imagepath}/yale_broadmann_ras.nii.gz`, viewerno);
                                });
         
         webutil.createMenuItem(fmenu, 'Load Yale Brodmann Atlas (2mm)',
                                function () {
-                                   callback(`${imagepath}/images/yale_broadmann_2mm_ras.nii.gz`, viewerno);
+                                   callback(`${imagepath}/yale_broadmann_2mm_ras.nii.gz`, viewerno);
                                });
 
     },

@@ -1052,11 +1052,8 @@ class ViewerApplicationElement extends HTMLElement {
             webutil.createMenuItem(hmenu, ''); // separator
             webutil.createMenuItem(hmenu, 'Load Sample Data',
                                    function () {
-                                       let imagepath="";
-                                       if (typeof window.BIS !=='undefined') {
-                                           imagepath=window.BIS.imagepath;
-                                       }
-                                       let f=`${imagepath}images/viewer.biswebstate`;
+                                       let imagepath=webutil.getWebPageImagePath();
+                                       let f=`${imagepath}/viewer.biswebstate`;
                                        self.loadApplicationState(f);
                                    });
         }
