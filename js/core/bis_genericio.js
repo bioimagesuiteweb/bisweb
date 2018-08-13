@@ -891,9 +891,9 @@ var getglobmodule = function () {
 
 let read = function (url, isbinary = false) {
 
-    console.log('Reading',url,typeof url,isbinary,fileServerClient);
     if (fileServerClient && typeof url === 'string') {
         if (url.indexOf('http')!==0) {
+            console.log('\n\n Reading from server');
             return fileServerClient.downloadFile(url,isbinary);
         }
     }
@@ -904,7 +904,6 @@ let read = function (url, isbinary = false) {
         }
     }
 
-    
     return new Promise(function (resolve, reject) {
 
         let success = function (data, fname) {

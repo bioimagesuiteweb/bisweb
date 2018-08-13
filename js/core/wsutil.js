@@ -1,3 +1,12 @@
+// Set this to false
+// ---------------------------------
+const insecure=false;
+
+if (insecure) {
+    console.log('\n----\n---- In INSECURE MODE\n----\n----');
+}
+
+
 /**
  * Parses the first 112 bits of a WebSocket dataframe, i.e. the control portion of the frame.
  * https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers#Exchanging_Data_frames
@@ -98,13 +107,13 @@ let decodeUTF8 = (rawText, control) => {
  */
 let parseJSON = (rawJSON) => {
     try {
-        data = JSON.parse(rawJSON);
+        let data = JSON.parse(rawJSON);
         return data;
     } catch (e) {
         console.log('an error occured while parsing event.data', e);
         return null;
     }
-}
+};
 
 //TODO: incorporate this into bisweb_filedialog
 /**
@@ -142,12 +151,13 @@ let searchTree = (path, list) => {
             foundDirectory = false;
         }
     }
-}
+};
 
 module.exports = {
     parseControlFrame: parseControlFrame,
     formatControlFrame: formatControlFrame,
     decodeUTF8: decodeUTF8,
     parseJSON: parseJSON,
-    searchTree: searchTree
+    searchTree: searchTree,
+    insecure : insecure
 };

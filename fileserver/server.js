@@ -1,5 +1,6 @@
 require('../config/bisweb_pathconfig.js');
 
+const program = require('commander');
 const net = require('net');
 const crypto = require('crypto');
 const path=require('path');
@@ -13,21 +14,18 @@ const hotp = otplib.hotp;
 hotp.options  = { crypto };
 const secret = otplib.authenticator.generateSecret();
 
-const insecure=true;
-
-if (insecure) {
-    console.log('\n\n\n\n In INSECURE MODE');
-}
 
 // TODO:
 // this extension should be used make node-like calls work on Windows
 // https://github.com/prantlf/node-posix-ext
 
 const fs = require('fs');
-const wsutil = require('./wsutil.js');
+const wsutil = require('wsutil');
 const genericio = require('bis_genericio.js');
-const process = require('process');
 const tcpPortUsed = require('tcp-port-used');
+
+// In Insecure Mode (if true);
+const insecure=wsutil.insecure;
 
 //'magic' string for WebSockets
 //https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers
@@ -47,6 +45,7 @@ let globalPortNumber=-1;
 let globalDataPortNumber=-2;
 let globalHostname="";
 
+
 // password token
 // create function and global variable
 let createPassword=function(abbrv=0) {
@@ -63,7 +62,7 @@ let createPassword=function(abbrv=0) {
     }
     console.log(`++++ \t\t password: ${token}\n++++`);
 
-}
+};
 
 
 /**
@@ -79,7 +78,6 @@ let createPassword=function(abbrv=0) {
  * @returns The server instance.  
  */
 let startServer = (hostname, port, newport=true,readycb = () => {}) => {
-
 
     let newServer = net.createServer(handleConnectionRequest);
     newServer.listen(port, hostname, readycb);
@@ -170,7 +168,10 @@ let startServer = (hostname, port, newport=true,readycb = () => {}) => {
             });
         });
     }
-}
+};
+
+
+
 
 // ------------------------------------------------------------------------------------
     
@@ -195,7 +196,7 @@ let readFrame = (chunk) => {
     return { 
         'parsedControl' : parsedControl,
         'decoded' : decoded
-    }
+    };
 };
 
 let authenticate = (socket) => {
@@ -204,26 +205,27 @@ let authenticate = (socket) => {
         let decoded = frame.decoded;
         let password = wsutil.decodeUTF8(decoded, frame.parsedControl);
 
-        console.log('---- entered password')
+        console.log('---- entered password');
 
         if (hotp.check(parseInt(password), secret, onetimePasswordCounter) || (insecure && password.length<1)) {
             console.log('++++ Starting helper server');
             socket.removeListener('data', readOTP);
 
             prepareForControlFrames(socket);
-            socket.write(formatPacket('goodauth', ''))
+            socket.write(formatPacket('goodauth', ''));
             createPassword(2);
-            console.log('Authenticated OK');
+            console.log('++++ Authenticated OK');
         } else {
             console.log('---- The token you entered is incorrect.');
             createPassword(1);
             socket.write(formatPacket('badauth', ''));
         }
-    }
+    };
 
     socket.on('data', readOTP);
     socket.write(formatPacket('authenticate', ''));
 };
+
 
 /**
  * Prepares the control socket to receive chunks of data from the client. 
@@ -241,11 +243,19 @@ let prepareForControlFrames = (socket) => {
     socket.on('data', (chunk) => {
         let frame = readFrame(chunk);
         let parsedControl = frame.parsedControl, decoded = frame.decoded;
-
-        switch (parsedControl.opcode) {
-            case 1: handleTextRequest(decoded, parsedControl, socket); break;
-            case 2: handleFileFromClient(decoded, parsedControl, socket); break;
-            case 8: handleCloseFromClient(decoded, parsedControl, socket); break;
+        switch (parsedControl.opcode)
+        {
+            case 1:  {
+                handleTextRequest(decoded, parsedControl, socket);
+                break;
+            }
+            case 2:  {
+                handleFileFromClient(decoded, parsedControl, socket);
+                break;
+            }
+            case 8: { handleCloseFromClient(decoded, parsedControl, socket);
+                      break;
+                    }
         }
     });
 
@@ -261,7 +271,7 @@ let prepareForControlFrames = (socket) => {
  */
 let handleTextRequest = (rawText, control, socket) => {
     let parsedText = parseClientJSON(rawText);
-    console.log('____ text request', parsedText);
+    console.log('____ text request', JSON.stringify(parsedText));
     switch (parsedText.command)
     {
         //get file list
@@ -282,6 +292,7 @@ let handleTextRequest = (rawText, control, socket) => {
         }
     }
 };
+
 // ------------------------------------------------------------------------------------------------------------------------------------
 // ----------------------------------------- Receive File From Client -----------------------------------------------------------------
 // ------------------------------------------------------------------------------------------------------------------------------------
@@ -339,10 +350,10 @@ let prepareForDataFrames = (socket) => {
 
     function addToCurrentTransfer(upload, control, socket) {
 
-        console.log('Data=',typeof fileInProgress.data);
-        
-        fileInProgress.data.set(fileInProgress.receivedFile,fileInProgress.offset);
-        fileInProgress.offset+=fileInProgress.receivedFile.length;
+        console.log('upload=',upload.buffer,typeof upload);
+
+        fileInProgress.data.set(upload,fileInProgress.offset);
+        fileInProgress.offset+=upload.length;
 
         //check to see if what we've received is complete 
         if (fileInProgress.offset >= fileInProgress.totalSize) {
@@ -371,7 +382,7 @@ let prepareForDataFrames = (socket) => {
             socket.write(formatPacket('nextpacket', ''));
         }
     }  
-}
+};
 
 
 /**
@@ -395,14 +406,13 @@ let getFileFromClientAndSave = (upload, control, socket) => {
         'offset' : 0,
     };
 
-    if (upload.isbinary)
-        fileInProgress.data = new Uint8Array(upload.storageSize);
-    else
-        fileInProgress.data = '';
+    fileInProgress.data = new Uint8Array(upload.storageSize);
+    console.log('fileInProgress data created=',fileInProgress.data.length,fileInProgress.data.buffer);
 
     //spawn a new server to handle the data transfer
     startServer('localhost', globalDataPortNumber,false, () => { socket.write(formatPacket('datasocketready', '')); });
 };
+
 
 // ---------------------------------------------------------------------------------------------------------------------------------------
 // ------------------------------------ Send File To Client ------------------------------------------------------------------------------
@@ -417,18 +427,20 @@ let getFileFromClientAndSave = (upload, control, socket) => {
  */
 let readFileAndSendToClient = (parsedText, control, socket) => {
     let filename = parsedText.filename;
-    let isbinary = parsedText.isbinary
-    let pkgformat='binary';
+    let isbinary = parsedText.isbinary;
+
+    /*let pkgformat='binary';
     if (!isbinary)
-        pkgformat='text';
+        pkgformat='text';*/
 
     if (isbinary) {
         fs.readFile(filename,  (err, d1) => {
             if (err) {
                 handleBadRequestFromClient(socket, err);
             } else {
+                console.log(`____ load binary file ${filename} successful, writing to socket.`);
                 socket.write(formatPacket('binary',d1), () => {
-                    console.log(`____ load binary file ${filename} successful`);
+
                 });
             }
         });
@@ -437,13 +449,15 @@ let readFileAndSendToClient = (parsedText, control, socket) => {
             if (err) {
                 handleBadRequestFromClient(socket, err);
             } else {
+                console.log(`____ load text file ${filename} successful, writing to socket.`);
                 socket.write(formatPacket('text',d1), () => {
-                    console.log(`____ load text file ${filename} successful`);
+
                 });
             }
         });
     }        
 };
+
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 //  ---------- Directory and File List Operations
@@ -472,8 +486,6 @@ let serveFileList = (socket, basedir, type, depth = 2) => {
 
                 //remove hidden files/folders from results
                 let validFiles = files.filter((unfilteredFile) => { return unfilteredFile.charAt(0) !== '.'; });
-                console.log('valid files=',JSON.stringify(validFiles,null,2));
-
                 let expandInnerDirectory = (pathname, treeEntry) => {
                     return new Promise((resolve, reject) => {
                         //if file is a directory, expand it and add its children to fileTree recursively
@@ -544,6 +556,8 @@ let serveFileList = (socket, basedir, type, depth = 2) => {
     });
 };
 
+
+
 /*let serveModuleInvocationRequest = (parsedText, control, socket) => {
     let args = parsedText.params.args, modulename = parsedText.params.modulename;
 
@@ -568,7 +582,7 @@ let serveFileList = (socket, basedir, type, depth = 2) => {
  * @param {String} reason - Text describing the error.
  */
 let handleBadRequestFromClient = (socket, reason) => {
-    let error = "An error occured while handling your request. "
+    let error = "An error occured while handling your request. ";
     error = error.concat(reason);
 
     socket.write(formatPacket('error', error), () => { console.log('---- request returned an error', reason, '\nsent error to client'); });
@@ -583,12 +597,13 @@ let handleBadRequestFromClient = (socket, reason) => {
  */
 let handleCloseFromClient = (rawText, control, socket) => {
     let text = wsutil.decodeUTF8(rawText, control);
-    console.log('____ received CLOSE frame from client');
+    console.log('____ received CLOSE frame from client',text);
 
     //TODO: send a close frame in response
     socket.end();
     console.log('____ closed connection');
-}
+};
+
 
 /**
  * Takes a path specifying a file to load on the server machine and determines whether the path is clean, i.e. specifies a file that exists, does not contain symbolic links.
@@ -611,7 +626,7 @@ let checkValidPath = (filepath) => {
                 newPath.splice(newPath.length - 1, 1);
                 pathCheck(newPath.join('/'));
             });
-        }
+        };
 
         pathCheck(filepath);
     });
@@ -628,6 +643,7 @@ let setSocketTimeout = (fn, delay = 2000) => {
     let timer = timers.setTimeout(fn, delay);
     return timer;
 };
+
 
 /**
  * Takes a payload and a description of the payload type and formats the packet for transmission. 
@@ -691,11 +707,27 @@ let findFreePort = () => {
             } else {
                 return port;
             }
-        })
+        });
     }
-}
+};
 
+// ------------------------------------------------------------------------------------
 // This is the main function
+// ------------------------------------------------------------------------------------
+program
+    .option('-v, --verbose', 'Whether or not to display messages written by the server')
+    .option('-p, --port <n>', 'Which port to start the server on')
+    .parse(process.argv);
 
-module.exports = startServer;
+
+
+let portno=8081;
+if (program.port)
+    portno=parseInt(program.port)
+
+startServer('localhost', portno, true, () => {
+    console.log('Server started ',portno)
+})
+
+
 

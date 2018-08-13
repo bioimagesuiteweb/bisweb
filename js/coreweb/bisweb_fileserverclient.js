@@ -1,10 +1,10 @@
 const $ = require('jquery');
 const webutil = require('bis_webutil');
-const wsutil = require('../../fileserver/wsutil');
+const wsutil = require('wsutil');
 const bisweb_filedialog = require('bisweb_filedialog');
 const bisgenericio=require('bis_genericio');
 const pako=require('pako');
-
+const insecure=wsutil.insecure;
 
 const ERROR_EVENT='server_error_evt_'+webutil.getuniqueid();
 const TRANSMISSION_EVENT='transmission_evt_'+webutil.getuniqueid();
@@ -48,9 +48,16 @@ class BisWebFileServerClient {
         let arr=address.split(':');
         let prt=arr[arr.length-1];
         this.portNumber=parseInt(prt);
-                
         this.socket = new WebSocket(address);
 
+
+        console.log(this.socket);
+
+        if (!this.socket) {
+            this.socket=null;
+
+            return;
+        }
         //file tree dialog needs to be able to call some of file server's code 
         //they are separated for modularity reasons, so to enforce the hierarchical relationship between the two fileserver provides the functions and the socket
         this.fileTreeDialog.fileListFn = this.requestFileList.bind(this);
@@ -67,7 +74,11 @@ class BisWebFileServerClient {
 
         this.socket.addEventListener('error', (event) => {
             console.log('error event', event);
-            webutil.createAlert('An error occured trying to communicate with the server. Please ensure that the process is running, refresh the browser, and retry the connection.', true);
+            webutil.createAlert('Failed to connect to server: '+address+'. It may not exist.',true);
+            this.socket=removeEventListener('close');
+            this.socket=removeEventListener('message');
+            this.socket=removeEventListener('error');
+            this.socket=null;
         });
 
 
@@ -133,7 +144,9 @@ class BisWebFileServerClient {
             case 'goodauth': { 
                 webutil.createAlert('Login to BisWeb FileServer Successful');
                 this.authenticated = true;
-                this.authenticateModal.dialog.modal('hide');
+                if (this.authenticateModal)
+                    this.authenticateModal.dialog.modal('hide');
+
                 setTimeout( () => {
                     if (this.lastCommand) {
                         this.wrapInAuth(this.lastCommand,this.lastOpts);
@@ -203,7 +216,6 @@ class BisWebFileServerClient {
      * // TODO: some how have a title here ... and suffix list
      */
     displayFileList(response) {
-        console.log('response', JSON.stringify(response));
         if (response.type === 'load') {
             this.fileTreeDialog.createFileList(response.data,null,this.lastOpts);
             this.fileTreeDialog.showDialog();
@@ -573,6 +585,9 @@ class BisWebFileServerClient {
             } else {
                 console.log('unrecognized command', command);
             }
+        } else if (insecure) {
+            this.password="";
+            this.connectToServer('ws://localhost:8081');
         } else {
             this.showAuthenticationDialog();
             // make this call us back ...

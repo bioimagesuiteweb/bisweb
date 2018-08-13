@@ -4,7 +4,7 @@ const AWS = require('aws-sdk');
 const AWSCognitoIdentity = require('amazon-cognito-identity-js');
 const AWSParameters = require('../../web/aws/awsparameters.js');
 const bis_webutil = require('bis_webutil.js');
-const wsutil = require('../../fileserver/wsutil.js');
+const wsutil = require('wsutil');
 const bisweb_filedialog = require('bisweb_filedialog.js');
 
 
