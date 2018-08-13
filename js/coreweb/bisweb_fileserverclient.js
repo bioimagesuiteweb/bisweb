@@ -1,8 +1,8 @@
 const $ = require('jquery');
-const webutil = require('bis_webutil.js');
-const wsutil = require('../../fileserver/wsutil.js');
-const bisweb_filedialog = require('bisweb_filedialog.js');
-const bisgenericio=require('bis_genericio.js');
+const webutil = require('bis_webutil');
+const wsutil = require('../../fileserver/wsutil');
+const bisweb_filedialog = require('bisweb_filedialog');
+const bisgenericio=require('bis_genericio');
 const pako=require('pako');
 
 
@@ -10,26 +10,22 @@ const ERROR_EVENT='server_error_evt_'+webutil.getuniqueid();
 const TRANSMISSION_EVENT='transmission_evt_'+webutil.getuniqueid();
 
 
-class FileServer extends HTMLElement {
+class BisWebFileServerClient { 
 
     constructor() {
-        super();
         this.lastCommand=null;
         this.lastOpts=null;
         this.portNumber=8081;
-    }
-
-    /**
-     * Attaches the event to place the tree viewer's menu in the shared menubar once the main viewer renders.
-     */
-    connectedCallback() {
 
         //connection over which all communication takes place
         this.socket = null;
 
         //File tree requests display the contents of the disk on the server machine in a modal
-        this.fileTreeDialog = new bisweb_filedialog('BisWeb File Server Connector');
-        this.fileSaveDialog = new bisweb_filedialog('Choose a save location', { 'makeFavoriteButton' : false, 'modalType' : 'save', 'displayFiles' : false  });
+
+        webutil.runAfterAllLoaded( () => {
+            this.fileTreeDialog = new bisweb_filedialog('BisWeb File Server Connector');
+            this.fileSaveDialog = new bisweb_filedialog('Choose a save location', { 'makeFavoriteButton' : false, 'modalType' : 'save', 'displayFiles' : false  });
+        });
 
         //When connecting to the server, it may sometimes request that the user authenticates
         this.authenticateModal = null;
@@ -86,7 +82,7 @@ class FileServer extends HTMLElement {
      */
     handleServerResponse(event) {
         
-        console.log('received data', event);
+        console.log('received data: '+JSON.stringify(event));
         let data;
         
         //parse stringified JSON if the transmission is text
@@ -164,7 +160,7 @@ class FileServer extends HTMLElement {
      * @param {String} directory - The directory to expand the files under. Optional -- if unspecified the server will return the directories under ~/.
      */
     requestFileList(type, directory = null) {
-        let command = JSON.stringify({ 'command' : 'show', 'directory' : directory, 'type' : type }); 
+        let command = JSON.stringify({ 'command' : 'getfilelist', 'directory' : directory, 'type' : type , 'depth' : 0}); 
         this.socket.send(command);
         // When this replies we will end up in this.handleServerRequest
     }
@@ -207,7 +203,7 @@ class FileServer extends HTMLElement {
      * // TODO: some how have a title here ... and suffix list
      */
     displayFileList(response) {
-        console.log('response', response);
+        console.log('response', JSON.stringify(response));
         if (response.type === 'load') {
             this.fileTreeDialog.createFileList(response.data,null,this.lastOpts);
             this.fileTreeDialog.showDialog();
@@ -294,45 +290,19 @@ class FileServer extends HTMLElement {
     /**
      * Packages the relevant parameters and functionality for downloading data from the local filesystem into an object that can be invoked by bis_genericio.
      * @param {Object} params - Parameters object containing the following
-     * @param {Array} params.files - List of filenames
-     * @param {String} params.name - Name of the file to fetch from the server, or what to name the file being saved to the server.
      */
     invokeReadFilenameCallbackFunction(params) {
-
-        const self=this;
-        
-        let obj = {
-            filename: params.paths[0],
-            responseFunction: function(url,isbinary) {
-                return self.downloadFile(url.filename,isbinary);
-            }
-        };
-
-        //this.callback is set when a modal is opened.
-        this.callback(obj);
+        this.callback(params.paths[0]);
     }
 
     /**
      * Packages the relevant parameters and functionality for uploading data to the local filesystem into an object that can be invoked by bis_genericio.
      * 
      * @param {Object} params - Parameters object containing the following
-     * @param {Array} params.files - List of filenames
-     * @param {String} params.name - Name of the file to fetch from the server, or what to name the file being saved to the server.
-     * @param {Function} cb - Callback on success.
-     * @param {Function} eb - Callback on failure.
-     * @param {Object} callback.url - The object passed to the callback initially (in this case the object created by invokeWriteFilenameCallbackFunction). Unused in this function.
-     * @param {Uint8Array} callback.body - The data to save
      */
     invokeWriteFilenameCallbackFunction(params) {
-
-        const self=this;
-        let obj = {
-            filename: params.name,
-            responseFunction: (url, data,isbinary) => { //TODO : isbinary too
-                return self.uploadFile(url.filename,data,isbinary);
-            }
-        };
-        this.callback(obj);
+        console.log(JSON.stringify(params,null,2));
+        this.callback(params.name);
     }
 
     /**
@@ -569,7 +539,7 @@ class FileServer extends HTMLElement {
             this.passwordid=pid;
         }
 
-        $('#'+this.passwordid).val('0');
+        $('#'+this.passwordid).val('');
         
         if (title!==null)
             this.authenticateModal.header.find('.modal-title').text(title);
@@ -610,5 +580,4 @@ class FileServer extends HTMLElement {
     }
 }
 
-module.exports = FileServer;
-webutil.defineElement('bisweb-fileserver', FileServer);
+module.exports = BisWebFileServerClient;

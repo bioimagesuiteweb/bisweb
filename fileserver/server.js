@@ -207,7 +207,7 @@ let authenticate = (socket) => {
         console.log('---- entered password')
 
         if (hotp.check(parseInt(password), secret, onetimePasswordCounter) || (insecure && password.length<1)) {
-                    console.log('++++ Starting helper server');
+            console.log('++++ Starting helper server');
             socket.removeListener('data', readOTP);
 
             prepareForControlFrames(socket);
@@ -339,6 +339,8 @@ let prepareForDataFrames = (socket) => {
 
     function addToCurrentTransfer(upload, control, socket) {
 
+        console.log('Data=',typeof fileInProgress.data);
+        
         fileInProgress.data.set(fileInProgress.receivedFile,fileInProgress.offset);
         fileInProgress.offset+=fileInProgress.receivedFile.length;
 
