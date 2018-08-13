@@ -30,7 +30,7 @@ let environment = '';
 let inelectron = false;
 
 let webWorkerScope;
-let cloudSaveFunction=function() { return false; };
+let fileServerClient=null;
 
 if (typeof (window) !== "undefined") {
     if (typeof (window.BISELECTRON) !== "undefined") {
@@ -90,10 +90,10 @@ const setWebWorkerScope=function(w) {
     webWorkerScope=w;
 };
 
-const setCloudSaveFunction=function(u) {
-    cloudSaveFunction=u;
+const setFileServerObject=function(obj) {
+    fileServerClient=obj;
 };
-    
+
 
 /**
  * converts dataURL to a blob for saving
@@ -595,11 +595,6 @@ var writetextdatabrowser = function (filename, data, donecallback) {
 
     var blob = new Blob([data], { type: "text/plain" });
 
-    if (cloudSaveFunction(data,filename,donecallback))
-        return;
-
-
-
     filesaver(blob, filename);
     donecallback('');
 };
@@ -624,9 +619,6 @@ var writebinarydatabrowser = function (filename, data, donecallback) {
         blob = new Blob([data]);
     }
 
-    if (cloudSaveFunction(blob,filename,donecallback))
-        return;
-    
     filesaver(blob, filename);
     donecallback('');
 };
@@ -899,13 +891,20 @@ var getglobmodule = function () {
 
 let read = function (url, isbinary = false) {
 
+    console.log('Reading',url,typeof url,isbinary,fileServerClient);
+    if (fileServerClient && typeof url === 'string') {
+        if (url.indexOf('http')!==0) {
+            return fileServerClient.downloadFile(url,isbinary);
+        }
+    }
+
     if (url) {
         if (url.responseFunction!==undefined) {
             return url.responseFunction(url,isbinary);
         }
     }
 
-
+    
     return new Promise(function (resolve, reject) {
 
         let success = function (data, fname) {
@@ -969,9 +968,12 @@ let readJSON = function (url, bisformat) {
 
 let write = function (url, data,isbinary=false) {
 
-    //if (data instanceof Uint8Array || data instanceof ArrayBuffer)
-    //  isbinary = true;
-    //    console.log('hello from write', url);
+    if (fileServerClient && typeof url === 'string') {
+        if (url.indexOf('http')!==0) {
+            return fileServerClient.uploadFile(url,data,isbinary);
+        }
+    }
+
     if (url) {
         if (url.responseFunction !== undefined) {
             let p=url.responseFunction(url, data, isbinary);
@@ -980,7 +982,7 @@ let write = function (url, data,isbinary=false) {
         }
     }
 
-
+    
     return new Promise(function (resolve, reject) {
         let success = function (msg) {
             resolve(msg);
@@ -1086,7 +1088,7 @@ const bisgenericio = {
     dataURLToBlob : dataURLToBlob,
     iscompressed :      iscompressed, // ends in .gz
     setWebWorkerScope :     setWebWorkerScope,
-    setCloudSaveFunction : setCloudSaveFunction, // needed for write to dropbox etc.
+    setFileServerObject : setFileServerObject,
     readtextdatafromurl : readtextdatafromurl, // read from url
     readbinarydatafromurl : readbinarydatafromurl, // read from url
     readJSON : readJSON, // Gloabl ReadJSON
