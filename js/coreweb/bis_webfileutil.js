@@ -32,9 +32,8 @@ const bisweb_googledrive=require('bisweb_drivemodule');
 const amazonaws=require('bisweb_awsmodule.js');
 const bisweb_awsmodule = new amazonaws();
 
-let bisweb_fileserver;
 
-//const genericio=require('bis_genericio');
+const genericio=require('bis_genericio');
 const userPreferences = require('bisweb_userpreferences.js');
 const bisdbase = require('bisweb_dbase');
 const keystore=require('bis_keystore');
@@ -42,6 +41,14 @@ const dkey=keystore.DropboxAppKey || "";
 const gkey=keystore.GoogleDriveKey || "";
 const mkey=keystore.OneDriveKey || "";
 const userPreferencesLoaded = userPreferences.webLoadUserPreferences(bisdbase);
+
+// Link File Server if not in Electron
+let bisweb_fileserverclient=null;
+if (!webutil.inElectronApp()) {
+    const BisWebFileServerClient=require('bisweb_fileserverclient');
+    bisweb_fileserverclient=new BisWebFileServerClient();
+    genericio.setFileServerObject(bisweb_fileserverclient);
+}
 
 // Initial mode
 let fileMode='local';
@@ -75,7 +82,8 @@ const webfileutils = {
         ];
 
         //localserver requires its HTML element to be present in the document
-        s.push({ value : "server", text: "BioImage Suite Web File Server Helper"});
+        if (bisweb_fileserverclient)
+            s.push({ value : "server", text: "BioImage Suite Web File Server Helper"});
         if (dkey.length>1)
             s.push({ value: "dropbox", text: "Dropbox" });
         if (gkey.length>1) 
@@ -108,26 +116,6 @@ const webfileutils = {
         userPreferences.storeUserPreferences();
     },
 
-    /**
-     * Attempts to read a <bisweb-fileserver> element from within the document to use for future file system related operations.
-     * MUST be called before attempting to use 'server' based operations.
-     */
-    setFileServer : function(fileserverid) {
-
-        if (!fileserverid) {
-            let localserver=$('<bisweb-fileserver></bisweb-fileserver>');
-            $('body').append(localserver);
-            bisweb_fileserver = localserver[0];
-            console.log('Create fileserver client element');
-        } else {
-            let id = fileserverid.substring(1);
-            let server = document.getElementById(id);
-            if (server) {
-                bisweb_fileserver = server;
-            }
-        }
-    },
-    
     /** 
      * Electron file callback function -- invoked instead of webFileCallback if the application is running in Electron. 
      * @alias WebFileUtil.electronFileCallback
@@ -258,7 +246,7 @@ const webfileutils = {
             } 
 
             if (fileMode === 'server') {
-                bisweb_fileserver.wrapInAuth('uploadfile', cbopts);
+                bisweb_fileserverclient.wrapInAuth('uploadfile', cbopts);
                 return;
             }
 
@@ -307,7 +295,7 @@ const webfileutils = {
         }
 
         if (fileMode==="server") {
-            bisweb_fileserver.wrapInAuth('showfiles', cbopts);
+            bisweb_fileserverclient.wrapInAuth('showfiles', cbopts);
             return;
         }
 
@@ -503,11 +491,6 @@ const webfileutils = {
     },
     
 };
-
-
-// Link into genericio -- once it works
-// genericio.setCloudSaveFunction(webfileutils.cloudSave);
-
 
 userPreferencesLoaded.then(() => {
     let f=userPreferences.getItem('filesource') || fileMode;
