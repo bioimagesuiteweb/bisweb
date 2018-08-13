@@ -23,6 +23,8 @@ class BisWebFileServerClient {
         //File tree requests display the contents of the disk on the server machine in a modal
 
         webutil.runAfterAllLoaded( () => {
+
+            // Because this involves creating webcomponents (deep down, they need to be afterAllLoaded);
             this.fileTreeDialog = new bisweb_filedialog('BisWeb File Server Connector');
             this.fileSaveDialog = new bisweb_filedialog('Choose a save location', { 'makeFavoriteButton' : false, 'modalType' : 'save', 'displayFiles' : false  });
         });

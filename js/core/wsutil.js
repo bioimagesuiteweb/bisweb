@@ -1,6 +1,6 @@
 // Set this to false
 // ---------------------------------
-const insecure=false;
+const insecure=true;
 
 if (insecure) {
     console.log('\n----\n---- In INSECURE MODE\n----\n----');

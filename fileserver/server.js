@@ -19,6 +19,7 @@ const secret = otplib.authenticator.generateSecret();
 // this extension should be used make node-like calls work on Windows
 // https://github.com/prantlf/node-posix-ext
 
+
 const fs = require('fs');
 const wsutil = require('wsutil');
 const genericio = require('bis_genericio.js');
@@ -350,8 +351,7 @@ let prepareForDataFrames = (socket) => {
 
     function addToCurrentTransfer(upload, control, socket) {
 
-        console.log('upload=',upload.buffer,typeof upload);
-
+        //        console.log('upload=',upload.buffer,typeof upload);
         fileInProgress.data.set(upload,fileInProgress.offset);
         fileInProgress.offset+=upload.length;
 

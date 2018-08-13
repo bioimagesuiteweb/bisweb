@@ -8,7 +8,14 @@ require('jstree');
  * This class will render a list of files in a window similar to the file system dialog that opens when a user clicks on an <input type='file'> button.
  * 
  * TODO: Back button breaks after adding supplemental files
- */
+
+ TODO:
+
+ Eventually move save filename inside the dialog box -- one dialog box on save
+ Have option to apply the filter on not 
+ It would be nice to show date and filesize eventually (and sort by size)
+
+*/
 class FileDialogElement {
 
     constructor(modalName = 'File Tree', options = {}) {
