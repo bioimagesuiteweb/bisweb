@@ -43,9 +43,20 @@ const gkey=keystore.GoogleDriveKey || "";
 const mkey=keystore.OneDriveKey || "";
 const userPreferencesLoaded = userPreferences.webLoadUserPreferences(bisdbase);
 
+const localforage = require('localforage');
+
 // Initial mode
 let fileMode='local';
 let fileInputElements= [];
+
+let awsbucketstorage = localforage.createInstance({
+    'driver' : localforage.INDEXEDDB,
+    'name' : 'bis_webfileutil', 
+    'version' : 1.0,
+    'size' : 10000,
+    'storeName' : 'AWSBuckets',
+    'description' : 'A database of AWS buckets that the user has attempted to connect to'
+});
 
 const webfileutils = {
 
@@ -502,14 +513,14 @@ const webfileutils = {
             let modal = webutil.createmodal('Enter AWS Bucket Details', 'modal-sm');
             let credentialsEntryBox = $(`
                     <div class='form-group'>
-                        <label for='bucket'>Bucket Name:</label>
-                        <input name='bucket' class='bucket-input' type='text' class='form-control'>
-                        <label for='username'>Username:</label>
-                        <input name='username' class='username-input' type='text' class='form-control'>
-                        <label for='access-key'>Access Key Id:</label>
-                        <input name='access-key' class = 'access-key-input' type='text' class='form-control'>
-                        <label for='secret-key'>Secret Key Id:</label>
-                        <input name='secret-key' class = 'secret-key-input' type='text' class='form-control'>
+                        <label for='bucket'>Bucket Name:</label><br>
+                        <input name='bucket' class='bucket-input' type='text' class='form-control'><br>
+                        <label for='username'>Username:</label><br>
+                        <input name='username' class='username-input' type='text' class='form-control'><br>
+                        <label for='access-key'>Access Key Id:</label><br>
+                        <input name='access-key' class = 'access-key-input' type='text' class='form-control'><br>
+                        <label for='secret-key'>Secret Key Id:</label><br>
+                        <input name='secret-key' class = 'secret-key-input' type='text' class='form-control'><br>
                     </div>
                 `);
             
@@ -519,7 +530,19 @@ const webfileutils = {
             let cancelButton = webutil.createbutton({ 'name': 'Cancel', 'type': 'btn-danger' });
             
             confirmButton.on('click', () => {
-                let bucketName = credentialsEntryBox.find()
+                let paramsObj = {
+                    'bucketName' : credentialsEntryBox.find('.bucket-input')[0].value,
+                    'userName' : credentialsEntryBox.find('.username-input')[0].value,
+                    'accessKey' : credentialsEntryBox.find('.access-key-input')[0].value,
+                    'secretKey' : credentialsEntryBox.find('.secret-key-input')[0].value
+                };
+
+                //index contains the number of keys in the database
+                awsbucketstorage.length().then( (length) => {
+                    console.log('database length', length);
+                    let key = 'awsbucket' + length;
+                    awsbucketstorage.setItem(key, JSON.stringify(paramsObj));
+                })
             });
 
             cancelButton.on('click', () => {
