@@ -73,17 +73,8 @@ class ViewerApplicationElement extends HTMLElement {
         this.VIEWERS=[];
         this.num_independent_viewers = 0;
         this.saveState=null;
-        
-
-        let scope=window.document.URL.split("?")[0];
-        scope=scope.split("#")[0];
-        
-        this.applicationURL=scope;
-        scope=scope.split("/").pop();
-        let index=scope.indexOf(".html");
-        scope=scope.substr(0,index);
-
-        this.applicationName=scope;
+        this.applicationURL=webutil.getWebPageURL();
+        this.applicationName=webutil.getWebPageName();
         console.log("App name=",this.applicationName,this.applicationURL);
         clipboard.setItem('appname',this.applicationName);
     }
@@ -1086,16 +1077,6 @@ class ViewerApplicationElement extends HTMLElement {
         webutil.runAfterAllLoaded( () => {
             this.parseQueryParameters();
             document.body.style.zoom =  1.0;
-
-            //give webfileutil acccess to the fileserver and algorithmcontroller
-            let fileserverid = this.getAttribute('bis-fileserver');
-            if (fileserverid) {
-                webfileutil.setFileServer(fileserverid);
-            } else {
-                // create it
-                webfileutil.setFileServer(null);
-            }
-                
         });
 
     }
