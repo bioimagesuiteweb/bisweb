@@ -327,16 +327,12 @@ class DiffSpectElement extends HTMLElement {
             webutil.createAlert('The SPECT Tool is now ready. The core data has been loaded.<BR> Click either "Create New Patient" or "Load Existing Patient" to begin.');
         });
 
-        let imagepath="";
-        if (typeof window.BIS !=='undefined') {
-            imagepath=window.BIS.imagepath;
-        }
-
+        let imagepath=webutil.getWebPageImagePath();
         
-        this.loadimagearray([`${imagepath}images/ISAS_SPECT_Template.nii.gz`,
-                             `${imagepath}images/MNI_T1_2mm_stripped_ras.nii.gz`,
-                             `${imagepath}images/ISASHN_Standard_Deviation.nii.gz`,
-                             `${imagepath}images/ISAS_SPECT_Mask.nii.gz`
+        this.loadimagearray([`${imagepath}/ISAS_SPECT_Template.nii.gz`,
+                             `${imagepath}/MNI_T1_2mm_stripped_ras.nii.gz`,
+                             `${imagepath}/ISASHN_Standard_Deviation.nii.gz`,
+                             `${imagepath}/ISAS_SPECT_Mask.nii.gz`
                             ], alldone);
 
 

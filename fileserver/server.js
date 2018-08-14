@@ -1,7 +1,9 @@
 require('../config/bisweb_pathconfig.js');
 
+const program = require('commander');
 const net = require('net');
 const crypto = require('crypto');
+const path=require('path');
 const os = require('os');
 const timers = require('timers');
 const { StringDecoder } = require('string_decoder');
@@ -12,15 +14,19 @@ const hotp = otplib.hotp;
 hotp.options  = { crypto };
 const secret = otplib.authenticator.generateSecret();
 
+
 // TODO:
 // this extension should be used make node-like calls work on Windows
 // https://github.com/prantlf/node-posix-ext
 
+
 const fs = require('fs');
-const wsutil = require('./wsutil.js');
+const wsutil = require('wsutil');
 const genericio = require('bis_genericio.js');
-const process = require('process');
 const tcpPortUsed = require('tcp-port-used');
+
+// In Insecure Mode (if true);
+const insecure=wsutil.insecure;
 
 //'magic' string for WebSockets
 //https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers
@@ -37,7 +43,9 @@ let timeout = undefined;
 
 let onetimePasswordCounter = 0;
 let globalPortNumber=-1;
+let globalDataPortNumber=-2;
 let globalHostname="";
+
 
 // password token
 // create function and global variable
@@ -55,7 +63,7 @@ let createPassword=function(abbrv=0) {
     }
     console.log(`++++ \t\t password: ${token}\n++++`);
 
-}
+};
 
 
 /**
@@ -70,15 +78,20 @@ let createPassword=function(abbrv=0) {
  * @param {Function} readycb - A callback to invoke when the server emits its 'listening' event. Optional.
  * @returns The server instance.  
  */
-let startServer = (hostname, port, readycb = () => {}) => {
-
+let startServer = (hostname, port, newport=true,readycb = () => {}) => {
 
     let newServer = net.createServer(handleConnectionRequest);
     newServer.listen(port, hostname, readycb);
+    
+    if (newport) {
+        globalPortNumber=port;
+        globalDataPortNumber=port+1;
+        globalHostname=hostname;
+        createPassword();
+    } else {
+        console.log('____ Starting transfer data server on ',port);
+    }
 
-    globalPortNumber=port;
-    globalHostname=hostname;
-    createPassword();
     
     //handleConnectionRequest is called when a connection is successfuly made between the client and the server and a socket is prepared
     //it performs the WebSocket handshake (see https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers#The_WebSocket_Handshake)
@@ -115,12 +128,13 @@ let startServer = (hostname, port, readycb = () => {}) => {
     
             let port = socket.localPort;
             socket.write(response, 'utf-8', () => {
-                //connectors on 8081 are negotiating a control port, connectors on 8082 are negotiating a transfer port
+                //connectors on globalPortNumber are negotiating a control port, connectors on globalDataPortNumber are negotiating a transfer port
+                console.log('We are ready to respond',port,globalPortNumber,globalDataPortNumber);
                 switch (port) {
-                    case 8081:
+                    case globalPortNumber:
                         authenticate(socket);
                         break;
-                    case 8082:
+                    case globalDataPortNumber:
                         prepareForDataFrames(socket);
                         break;
                     default:
@@ -157,6 +171,11 @@ let startServer = (hostname, port, readycb = () => {}) => {
     }
 };
 
+
+
+
+// ------------------------------------------------------------------------------------
+    
 let readFrame = (chunk) => {
     let controlFrame = chunk.slice(0, 14);
     let parsedControl = wsutil.parseControlFrame(controlFrame);
@@ -178,7 +197,7 @@ let readFrame = (chunk) => {
     return { 
         'parsedControl' : parsedControl,
         'decoded' : decoded
-    }
+    };
 };
 
 let authenticate = (socket) => {
@@ -187,25 +206,27 @@ let authenticate = (socket) => {
         let decoded = frame.decoded;
         let password = wsutil.decodeUTF8(decoded, frame.parsedControl);
 
-        console.log('---- entered password')
+        console.log('---- entered password');
 
-        if (hotp.check(parseInt(password), secret, onetimePasswordCounter)) {
-                    console.log('++++ Starting helper server');
+        if (hotp.check(parseInt(password), secret, onetimePasswordCounter) || (insecure && password.length<1)) {
+            console.log('++++ Starting helper server');
             socket.removeListener('data', readOTP);
 
             prepareForControlFrames(socket);
-            socket.write(formatPacket('goodauth', ''))
+            socket.write(formatPacket('goodauth', ''));
             createPassword(2);
+            console.log('++++ Authenticated OK');
         } else {
             console.log('---- The token you entered is incorrect.');
             createPassword(1);
             socket.write(formatPacket('badauth', ''));
         }
-    }
+    };
 
     socket.on('data', readOTP);
     socket.write(formatPacket('authenticate', ''));
 };
+
 
 /**
  * Prepares the control socket to receive chunks of data from the client. 
@@ -223,16 +244,59 @@ let prepareForControlFrames = (socket) => {
     socket.on('data', (chunk) => {
         let frame = readFrame(chunk);
         let parsedControl = frame.parsedControl, decoded = frame.decoded;
-
-        switch (parsedControl.opcode) {
-            case 1: handleTextRequest(decoded, parsedControl, socket); break;
-            case 2: handleFileFromClient(decoded, parsedControl, socket); break;
-            case 8: handleCloseFromClient(decoded, parsedControl, socket); break;
+        switch (parsedControl.opcode)
+        {
+            case 1:  {
+                handleTextRequest(decoded, parsedControl, socket);
+                break;
+            }
+            case 2:  {
+                handleFileFromClient(decoded, parsedControl, socket);
+                break;
+            }
+            case 8: { handleCloseFromClient(decoded, parsedControl, socket);
+                      break;
+                    }
         }
     });
 
 };
 
+
+/**
+ * Parses a textual request from the client and serves accordingly. 
+ * 
+ * @param {String} rawText - Unparsed JSON denoting the file or series of files to read. 
+ * @param {Object} control - Parsed WebSocket header for the file request.
+ * @param {Socket} socket - WebSocket over which the communication is currently taking place.
+ */
+let handleTextRequest = (rawText, control, socket) => {
+    let parsedText = parseClientJSON(rawText);
+    console.log('____ text request', JSON.stringify(parsedText));
+    switch (parsedText.command)
+    {
+        //get file list
+        case 'getfilelist': {
+            serveFileList(socket, parsedText.directory, parsedText.type, parsedText.depth);
+            break;
+        }
+        case 'readfile': {
+            readFileAndSendToClient(parsedText, control, socket);
+            break;
+        }
+        case 'uploadfile' : {
+            getFileFromClientAndSave(parsedText, control, socket);
+            break;
+        }
+        default: {
+            console.log('---- Cannot interpret request with unknown command', parsedText.command);
+        }
+    }
+};
+
+// ------------------------------------------------------------------------------------------------------------------------------------
+// ----------------------------------------- Receive File From Client -----------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 /**
  * Prepares the transfer socket to receive from the client. 
@@ -242,9 +306,11 @@ let prepareForControlFrames = (socket) => {
  * @param {Socket} socket - Node.js net socket between the client and the server for transmission.
  */
 let prepareForDataFrames = (socket) => {
+
     //server can send mangled packets during transfer that may parse as commands that shouldn't occur at that time, 
     //e.g. a mangled packet that parses to have an opcode of 8, closing the connection. so unbind the default listener and replace it after transmission.
     socket.on('data', (chunk) => {
+
         let controlFrame = chunk.slice(0, 14);
         let parsedControl = wsutil.parseControlFrame(controlFrame);
         //console.log('parsed control frame', parsedControl);
@@ -255,7 +321,6 @@ let prepareForDataFrames = (socket) => {
         }
 
         let decoded = new Uint8Array(parsedControl.payloadLength);
-
         //decode the raw data (undo the XOR)
         for (let i = 0; i < parsedControl.payloadLength; i++) {
             decoded[i] = chunk[i + parsedControl.datastart] ^ parsedControl.mask[i % 4];
@@ -285,60 +350,40 @@ let prepareForDataFrames = (socket) => {
     });
 
     function addToCurrentTransfer(upload, control, socket) {
-        //add the transfer in progress to what we've received so far.
-        //note that serialized NIFTI images are always transmitted byte-wise, i.e. they can be read as elements of a Uint8Array
-        let newChunk = new Uint8Array(upload.length + fileInProgress.receivedFile.length);
-        newChunk.set(fileInProgress.receivedFile);
-        newChunk.set(upload, fileInProgress.receivedFile.length);
-        fileInProgress.receivedFile = newChunk;
+
+        //        console.log('upload=',upload.buffer,typeof upload);
+        fileInProgress.data.set(upload,fileInProgress.offset);
+        fileInProgress.offset+=upload.length;
 
         //check to see if what we've received is complete 
-        if (newChunk.length >= fileInProgress.totalSize) {
+        if (fileInProgress.offset >= fileInProgress.totalSize) {
             let baseDirectory = os.homedir();
 
+            if (!fileInProgress.isbinary) {
+                fileInProgress.data=genericio.binary2string(fileInProgress.data);
+            }
             //save serialized NIFTI image
-            let writeLocation = baseDirectory + '/' + fileInProgress.name + '.nii.gz';
-            console.log('____ writing to directory', writeLocation);
-
-            genericio.write(writeLocation, fileInProgress.receivedFile, true).then( () => {
-                socket.write(formatPacket('uploadcomplete', ''), () => { console.log('____ message sent'); });
+            let writeLocation = path.join(baseDirectory,fileInProgress.name);
+            console.log('____ writing to file', writeLocation,'size=',fileInProgress.data.length);
+            
+            genericio.write(writeLocation, fileInProgress.data, fileInProgress.isbinary).then( () => {
+                socket.write(formatPacket('uploadcomplete', ''), () => {
+                    fileInProgress.data=null;
+                    console.log('____ message sent -- file saved in ',writeLocation,' binary=',fileInProgress.isbinary);
+                });
                 socket.end(); //if for some reason the client doesn't send a FIN we know the socket should close here anyway.
             }).catch( (e) => {
                 console.log('---- an error occured', e);
                 socket.write(formatPacket('error', e));
                 socket.end();
             });
-
         } else {
             //console.log('____ received chunk,', fileInProgress.receivedFile.length, 'received so far.');
             socket.write(formatPacket('nextpacket', ''));
         }
     }  
-}
-
-/**
- * Parses a textual request from the client and serves accordingly. 
- * 
- * @param {String} rawText - Unparsed JSON denoting the file or series of files to read. 
- * @param {Object} control - Parsed WebSocket header for the file request.
- * @param {Socket} socket - WebSocket over which the communication is currently taking place.
- */
-let handleTextRequest = (rawText, control, socket) => {
-    let parsedText = parseClientJSON(rawText);
-    console.log('____ text request', parsedText);
-    switch (parsedText.command) {
-        //get file list
-        case 'show':
-        case 'showfiles': serveFileList(socket, parsedText.directory, parsedText.type, 1); break;
-        //get a file from the server
-        case 'getfile':
-        case 'getfiles': serveFileRequest(parsedText, control, socket); break;
-        case 'uploadfile' : handleFileFromClient(parsedText, control, socket); break;
-        case 'run':
-        case 'runmodule': serveModuleInvocationRequest(parsedText, control, socket); break;
-        default: console.log('---- Cannot interpret request with unknown command', parsedText.command);
-    }
 };
+
 
 /**
  * Handles an file upload from the client and saves the file to the server machine once the transfer is complete. File transfer occurs in chunks to avoid overloading the network.
@@ -350,20 +395,29 @@ let handleTextRequest = (rawText, control, socket) => {
  * @param {Object} control - Parsed WebSocket header for the file request. 
  * @param {Socket} socket - The control socket that will negotiate the opening of the data socket and send various communications about the transfer. 
  */
-let handleFileFromClient = (upload, control, socket) => {
+let getFileFromClientAndSave = (upload, control, socket) => {
 
     fileInProgress = {
         'totalSize': upload.totalSize,
         'packetSize': upload.packetSize,
-        'name': upload.filename
+        'isbinary' : upload.isbinary,
+        'name': upload.filename,
+        'storageSize' : upload.storageSize,
+        'offset' : 0,
     };
 
-    fileInProgress.receivedFile = new Uint8Array(0);
+    fileInProgress.data = new Uint8Array(upload.storageSize);
+    console.log('fileInProgress data created=',fileInProgress.data.length,fileInProgress.data.buffer);
 
     //spawn a new server to handle the data transfer
-    startServer('localhost', 8082, () => { socket.write(formatPacket('datasocketready', '')); });
+    startServer('localhost', globalDataPortNumber,false, () => { socket.write(formatPacket('datasocketready', '')); });
 };
 
+
+// ---------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------ Send File To Client ------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------------------------
+    
 /**
  * Takes a request from the client and returns the requested file or series of files. 
  * 
@@ -371,16 +425,43 @@ let handleFileFromClient = (upload, control, socket) => {
  * @param {Object} control - Parsed WebSocket header for the file request.
  * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
  */
-let serveFileRequest = (parsedText, control, socket) => {
-    let files = parsedText.files;
-    for (let file of files) {
-        readFileFromDisk(file).then( (data) => {
-            socket.write(formatPacket('binary', data), () => { console.log('____ download successful'); });
-        }).catch( (error) => {
-            handleBadRequestFromClient(socket, error);
+let readFileAndSendToClient = (parsedText, control, socket) => {
+    let filename = parsedText.filename;
+    let isbinary = parsedText.isbinary;
+
+    /*let pkgformat='binary';
+    if (!isbinary)
+        pkgformat='text';*/
+
+    if (isbinary) {
+        fs.readFile(filename,  (err, d1) => {
+            if (err) {
+                handleBadRequestFromClient(socket, err);
+            } else {
+                console.log(`____ load binary file ${filename} successful, writing to socket.`);
+                socket.write(formatPacket('binary',d1), () => {
+
+                });
+            }
         });
-    }
+    } else {
+        fs.readFile(filename, 'utf-8', (err, d1) => {
+            if (err) {
+                handleBadRequestFromClient(socket, err);
+            } else {
+                console.log(`____ load text file ${filename} successful, writing to socket.`);
+                socket.write(formatPacket('text',d1), () => {
+
+                });
+            }
+        });
+    }        
 };
+
+
+// ------------------------------------------------------------------------------------------------------------------------------------
+//  ---------- Directory and File List Operations
+// ------------------------------------------------------------------------------------------------------------------------------------    
 
 /**
  * Sends the list of available files to the user, hiding files above the ~/ directory.
@@ -398,61 +479,55 @@ let serveFileList = (socket, basedir, type, depth = 2) => {
     //path = full filepath
     //fileTreeIndex = the the children of the current tree entry
     //directoriesExpanded = the number of file tree entries expanded so far
-    let expandDirectory = (path, fileTreeIndex, directoriesExpanded) => {
+    let expandDirectory = (pathname, fileTreeIndex, directoriesExpanded) => {
         return new Promise( (resolve, reject) => {
-            fs.readdir(path, (err, files) => {
+            fs.readdir(pathname, (err, files) => {
                 if (err) { reject(err); }
 
                 //remove hidden files/folders from results
                 let validFiles = files.filter((unfilteredFile) => { return unfilteredFile.charAt(0) !== '.'; });
-
-                let expandInnerDirectory = (path, treeEntry) => {
+                let expandInnerDirectory = (pathname, treeEntry) => {
                     return new Promise((resolve, reject) => {
                         //if file is a directory, expand it and add its children to fileTree recursively
                         //otherwise just add the entry and resolve
-                        fs.lstat(path, (err, stat) => {
+                        fs.lstat(pathname, (err, stat) => {
                             if (err) { reject(err); }
+
                             fileTreeIndex.push(treeEntry);
 
                             if (stat.isDirectory()) {
                                 treeEntry.children = [];
                                 treeEntry.type = 'directory';
-
-                                if (!depth || directoriesExpanded < depth) {
-                                    expandDirectory(path, treeEntry.children, directoriesExpanded + 1).then( () => { resolve(fileTreeIndex); });
+                                
+                                if (!directoriesExpanded < depth) {
+                                    expandDirectory(pathname, treeEntry.children, directoriesExpanded + 1).then( () => { resolve(fileTreeIndex); });
                                 } else {
                                     treeEntry.expand = true;
                                     resolve(fileTreeIndex);
                                 }
                             } else {
                                 //if not a directory determine the filetype 
-                                //get the file extension by taking the file at the end of the path and looking after the last '.'
-                                let endFile = path.split('/');
-                                let splitEndFile = endFile[endFile.length-1].split('.');
-                                let filetype = splitEndFile[splitEndFile.length - 1];
-
-                                //console.log('endFile', endFile, 'filetype', filetype);
-                                switch (filetype) {
-                                    case 'gz' : treeEntry.type = 'picture'; break;
-                                    case 'css' : 
-                                    case 'html' : treeEntry.type = 'html'; break;
-                                    case 'js' : treeEntry.type = 'js'; break;
-                                    case 'txt':
-                                    case 'md' : treeEntry.type = 'text'; break;
-                                    case 'mp4' :
-                                    case 'avi' :
-                                    case 'mkv' : treeEntry.type = 'video'; break;
-                                    case 'mp3' :
-                                    case 'flac' :
-                                    case 'FLAC' :
-                                    case 'wav' : 
-                                    case 'WAV' : treeEntry.type = 'audio'; break;
-                                    default : treeEntry.type = 'file'; 
+                                //get the file extension by taking the file at the end of the pathname and looking after the last '.'
+                                let extension = path.parse(pathname).ext;
+                                switch (extension)
+                                {
+                                    case 'gz' : {
+                                        treeEntry.type = 'picture'; break;
+                                    }
+                                    case 'html' : {
+                                        treeEntry.type = 'html'; break;
+                                    }
+                                    case 'js' : {
+                                        treeEntry.type = 'js'; break;
+                                    }
+                                    default : {
+                                        treeEntry.type = 'file';
+                                    }
                                 }
                                 resolve(fileTreeIndex);
                             }
 
-                            treeEntry.path = path;
+                            treeEntry.path = pathname;
                         });
                     });
                 };
@@ -461,8 +536,8 @@ let serveFileList = (socket, basedir, type, depth = 2) => {
                 let promisesInsideDirectory = [];
                 for (let file of validFiles) {
                     let newTreeEntry = { 'text': file };
-                    let newPath = path + '/' + file;
-                    promisesInsideDirectory.push(expandInnerDirectory(newPath, newTreeEntry));
+                    let newPathname = pathname + '/' + file;
+                    promisesInsideDirectory.push(expandInnerDirectory(newPathname, newTreeEntry));
                 }
 
                 Promise.all(promisesInsideDirectory).then(() => { resolve(fileTreeIndex); });
@@ -480,6 +555,8 @@ let serveFileList = (socket, basedir, type, depth = 2) => {
         }
     });
 };
+
+
 
 /*let serveModuleInvocationRequest = (parsedText, control, socket) => {
     let args = parsedText.params.args, modulename = parsedText.params.modulename;
@@ -505,7 +582,7 @@ let serveFileList = (socket, basedir, type, depth = 2) => {
  * @param {String} reason - Text describing the error.
  */
 let handleBadRequestFromClient = (socket, reason) => {
-    let error = "An error occured while handling your request. "
+    let error = "An error occured while handling your request. ";
     error = error.concat(reason);
 
     socket.write(formatPacket('error', error), () => { console.log('---- request returned an error', reason, '\nsent error to client'); });
@@ -520,12 +597,13 @@ let handleBadRequestFromClient = (socket, reason) => {
  */
 let handleCloseFromClient = (rawText, control, socket) => {
     let text = wsutil.decodeUTF8(rawText, control);
-    console.log('____ received CLOSE frame from client');
+    console.log('____ received CLOSE frame from client',text);
 
     //TODO: send a close frame in response
     socket.end();
     console.log('____ closed connection');
-}
+};
+
 
 /**
  * Takes a path specifying a file to load on the server machine and determines whether the path is clean, i.e. specifies a file that exists, does not contain symbolic links.
@@ -535,20 +613,20 @@ let handleCloseFromClient = (rawText, control, socket) => {
  */
 let checkValidPath = (filepath) => {
     return new Promise( (resolve, reject) => {
-        let pathCheck = (path) => {
-            if (path === '') { resolve(); return; }
+        let pathCheck = (pathname) => {
+            if (pathname === '') { resolve(); return; }
 
-            //console.log('____ checking path', path);
-            fs.lstat(path, (err, stats) => {
+            //console.log('____ checking path', pathname);
+            fs.lstat(pathname, (err, stats) => {
                 if (err) { console.log('---- err', err); reject('An error occured while statting filepath. Is there something on the path that would cause issues?'); return; }
                 if (stats.isSymbolicLink()) { reject('Symbolic link in path of file request.'); return; }
 
                 //look one directory up
-                let newPath = path.split('/');
+                let newPath = pathname.split('/');
                 newPath.splice(newPath.length - 1, 1);
                 pathCheck(newPath.join('/'));
             });
-        }
+        };
 
         pathCheck(filepath);
     });
@@ -566,34 +644,6 @@ let setSocketTimeout = (fn, delay = 2000) => {
     return timer;
 };
 
-/**
- * Reads a file on the server machine's hard drive. Will not allow requests for files that either contain symbolic links or files that the owner of the server process does not have access to. 
- *
- * @param {String} file - The name of the file.
- * @returns A Promise resolving a buffer containing the data of the specified file, or rejecting with an error message.
- */
-let readFileFromDisk = (file) => {
-    //check whether filepath contains symlinks before trying anything with the file
-    return new Promise((resolve, reject) => {
-        checkValidPath(file).then(() => {
-
-            //disallow requests for files that don't belong to the current user (owner of the current process)
-            fs.lstat(file, (err, stat) => {
-                let currentUser = process.getuid();
-                //console.log('current user', currentUser, 'file owner', stat.uid);
-                if (stat.uid !== currentUser) { reject("Cannot download a file that does not belong to the current user. Have you tried changing ownership of the requested file?"); return; }
-
-                fs.readFile(file, (err, data) => {
-                    resolve(data);
-                });
-            });
-
-        }).catch((error) => {
-            reject(error);
-        });
-    });
-
-};
 
 /**
  * Takes a payload and a description of the payload type and formats the packet for transmission. 
@@ -604,16 +654,16 @@ let readFileFromDisk = (file) => {
  */
 let formatPacket = (payloadType, data) => {
     let payload, opcode;
-    //transmissions are either text (JSON) or a raw image
-    if (payloadType !== 'binary') {
+    //transmissions are either text (JSON) or a raw image 
+    if (payloadType === 'binary') {
+        payload = data;
+        opcode = 2;
+    } else {
         payload = JSON.stringify({
             'type' : payloadType,
             'payload' : data
         });
         opcode = 1;
-    } else {
-        payload = data;
-        opcode = 2;
     }
 
     let controlFrame = wsutil.formatControlFrame(opcode, payload.length);
@@ -652,16 +702,32 @@ let findFreePort = () => {
     function checkInUse(port) {
         tcpPortUsed.check(port, '127.0.0.1').then( (used) => {
             if (used) {
-                base = base + 1;
+                base = base + 2;
                 checkInUse(base);
             } else {
                 return port;
             }
-        })
+        });
     }
-}
+};
 
+// ------------------------------------------------------------------------------------
 // This is the main function
+// ------------------------------------------------------------------------------------
+program
+    .option('-v, --verbose', 'Whether or not to display messages written by the server')
+    .option('-p, --port <n>', 'Which port to start the server on')
+    .parse(process.argv);
 
-module.exports = startServer;
+
+
+let portno=8081;
+if (program.port)
+    portno=parseInt(program.port)
+
+startServer('localhost', portno, true, () => {
+    console.log('Server started ',portno)
+})
+
+
 

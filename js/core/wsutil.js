@@ -1,4 +1,11 @@
-const pako = require('pako');
+// Set this to false
+// ---------------------------------
+const insecure=true;
+
+if (insecure) {
+    console.log('\n----\n---- In INSECURE MODE\n----\n----');
+}
+
 
 /**
  * Parses the first 112 bits of a WebSocket dataframe, i.e. the control portion of the frame.
@@ -91,42 +98,6 @@ let decodeUTF8 = (rawText, control) => {
     return text;
 };
 
-/**
- * Unzips gzipped data using pako. Attempts to convert the data to a TypedArray before unzipping.
- * 
- * @param {TypedArray|ArrayBuffer} arr - Raw gzipped image data.
- * @returns Unzipped data or an error message. 
- */
-let unzipFile = (arr) => {
-    let parsedArr = new Uint8Array(arr);
-    let unzippedArr;
-    try {
-        unzippedArr = pako.ungzip(parsedArr);
-        return unzippedArr;
-    } catch (e) {
-        console.log('an error occured while unzipping the file', e);
-        return;
-    }
-};
-
-/**
- * Gzips raw image data using pako. Attempts to convert data to a TypedArray before zipping.
- * 
- * @param {TypedArray|ArrayBuffer} arr - Raw unzipped image data. 
- * @returns Zipped data or an error message.
- */
-let zipFile = (arr) => {
-    let parsedArr = new Uint8Array(arr);
-    let zippedArr;
-    try {
-        zippedArr = pako.gzip(parsedArr);
-        console.log('compressed array' , zippedArr);
-        return zippedArr;
-    } catch (e) {
-        console.log('an error occured while zipping the file', e);
-        return;
-    }
-};
 
 /**
  * Attempts to read raw, stringified JSON and return a parsed JSON object.
@@ -136,13 +107,13 @@ let zipFile = (arr) => {
  */
 let parseJSON = (rawJSON) => {
     try {
-        data = JSON.parse(rawJSON);
+        let data = JSON.parse(rawJSON);
         return data;
     } catch (e) {
         console.log('an error occured while parsing event.data', e);
         return null;
     }
-}
+};
 
 //TODO: incorporate this into bisweb_filedialog
 /**
@@ -180,14 +151,13 @@ let searchTree = (path, list) => {
             foundDirectory = false;
         }
     }
-}
+};
 
 module.exports = {
     parseControlFrame: parseControlFrame,
     formatControlFrame: formatControlFrame,
     decodeUTF8: decodeUTF8,
-    unzipFile: unzipFile,
-    zipFile : zipFile,
     parseJSON: parseJSON,
-    searchTree: searchTree
+    searchTree: searchTree,
+    insecure : insecure
 };

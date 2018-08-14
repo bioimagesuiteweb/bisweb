@@ -1,59 +1,33 @@
 const $ = require('jquery');
-const webutil = require('bis_webutil.js');
-const wsutil = require('../../fileserver/wsutil.js');
-const bisweb_filedialog = require('bisweb_filedialog.js');
+const webutil = require('bis_webutil');
+const wsutil = require('wsutil');
+const bisweb_filedialog = require('bisweb_filedialog');
+const bisgenericio=require('bis_genericio');
+const pako=require('pako');
+const insecure=wsutil.insecure;
 
-/* 
- *
- *  First step is  wrapInAuth 'showfiles', or 'uploadfile'
- *
- *       --> calls connectToServer (if not authenticated, else , requestFileList to populate dialog box etc.)
- *
- *       --> connectToServer
- *              closes socket if live
- *              creates socket to server -- this too early
- *              initializes this.fileTreeDialog and this.fileSaveDialog (this should become part of fileTree)
- *              adds 'close','error' and 'message' events to the server and waits
- *        
- *       --> on event : 'message' call handleServerResponse
- *
- *       --> handleServer Response
- *                --> string or binary
- *                --> if string
- *                       'authenticate' -- this.showAuthenticationDialog
- *                       'filelist'    -- displayFileList
- *                       'supplementalfiles' -- more files to display
- *                       'error' -- something happened
- *                       'datasocketready', 'goodauth', 'badauth -- ignored for now
- *
- *       ---> showAuthenticationDialog -- this creates popup and authenticates ...
- 
- 
+const ERROR_EVENT='server_error_evt_'+webutil.getuniqueid();
+const TRANSMISSION_EVENT='transmission_evt_'+webutil.getuniqueid();
 
 
-*/
-
-
-
-class FileServer extends HTMLElement {
+class BisWebFileServerClient { 
 
     constructor() {
-        super();
         this.lastCommand=null;
         this.lastOpts=null;
-    }
-
-    /**
-     * Attaches the event to place the tree viewer's menu in the shared menubar once the main viewer renders.
-     */
-    connectedCallback() {
+        this.portNumber=8081;
 
         //connection over which all communication takes place
         this.socket = null;
 
         //File tree requests display the contents of the disk on the server machine in a modal
-        this.fileTreeDialog = new bisweb_filedialog('BisWeb File Server Connector');
-        this.fileSaveDialog = new bisweb_filedialog('Choose a save location', { 'makeFavoriteButton' : false, 'modalType' : 'save', 'displayFiles' : false  });
+
+        webutil.runAfterAllLoaded( () => {
+
+            // Because this involves creating webcomponents (deep down, they need to be afterAllLoaded);
+            this.fileTreeDialog = new bisweb_filedialog('BisWeb File Server Connector');
+            this.fileSaveDialog = new bisweb_filedialog('Choose a save location', { 'makeFavoriteButton' : false, 'modalType' : 'save', 'displayFiles' : false  });
+        });
 
         //When connecting to the server, it may sometimes request that the user authenticates
         this.authenticateModal = null;
@@ -73,15 +47,26 @@ class FileServer extends HTMLElement {
 
         if (this.socket) { this.socket.close(1000, 'Restarting connection'); this.hostname=null; }
 
+        let arr=address.split(':');
+        let prt=arr[arr.length-1];
+        this.portNumber=parseInt(prt);
         this.socket = new WebSocket(address);
 
+
+        console.log(this.socket);
+
+        if (!this.socket) {
+            this.socket=null;
+
+            return;
+        }
         //file tree dialog needs to be able to call some of file server's code 
         //they are separated for modularity reasons, so to enforce the hierarchical relationship between the two fileserver provides the functions and the socket
         this.fileTreeDialog.fileListFn = this.requestFileList.bind(this);
-        this.fileTreeDialog.fileRequestFn = this.createFileDownloadRequest.bind(this);
+        this.fileTreeDialog.fileRequestFn = this.invokeReadFilenameCallbackFunction.bind(this);
         this.fileTreeDialog.socket = this.socket;
 
-        this.fileSaveDialog.fileRequestFn = this.createFileUploadRequest.bind(this);
+        this.fileSaveDialog.fileRequestFn = this.invokeWriteFilenameCallbackFunction.bind(this);
         this.fileSaveDialog.socket = this.socket;
 
         //add the event listeners for the control port
@@ -91,7 +76,11 @@ class FileServer extends HTMLElement {
 
         this.socket.addEventListener('error', (event) => {
             console.log('error event', event);
-            webutil.createAlert('An error occured trying to communicate with the server. Please ensure that the process is running, refresh the browser, and retry the connection.', true);
+            webutil.createAlert('Failed to connect to server: '+address+'. It may not exist.',true);
+            this.socket=removeEventListener('close');
+            this.socket=removeEventListener('message');
+            this.socket=removeEventListener('error');
+            this.socket=null;
         });
 
 
@@ -106,21 +95,27 @@ class FileServer extends HTMLElement {
      */
     handleServerResponse(event) {
         
-        console.log('received data', event);
+        console.log('received data: '+JSON.stringify(event));
         let data;
         
         //parse stringified JSON if the transmission is text
         if (typeof (event.data) === "string") {
             data = wsutil.parseJSON(event.data);
         } else {
-            console.log('received a binary transmission');
-            this.handleDataTransmission(event.data);
+            console.log('received a binary transmission',event.data);
+            this.handleDataReceivedFromServer(event.data,true);
             return;
         }
 
         
         switch (data.type)
         {
+            case 'text' : {
+                // this is a text file
+                this.handleDataReceivedFromServer(data.payload,false);
+                break;
+            }
+            
             case 'filelist':  {
                 this.displayFileList(data.payload);
                 break;
@@ -131,7 +126,7 @@ class FileServer extends HTMLElement {
             }
             case 'error': {
                 console.log('Error from client:', data.payload); 
-                let errorEvent = new CustomEvent('servererror', { 'detail' : data.payload });
+                let errorEvent = new CustomEvent(ERROR_EVENT, { 'detail' : data.payload });
                 document.dispatchEvent(errorEvent);
                 break;
             }
@@ -151,7 +146,9 @@ class FileServer extends HTMLElement {
             case 'goodauth': { 
                 webutil.createAlert('Login to BisWeb FileServer Successful');
                 this.authenticated = true;
-                this.authenticateModal.dialog.modal('hide');
+                if (this.authenticateModal)
+                    this.authenticateModal.dialog.modal('hide');
+
                 setTimeout( () => {
                     if (this.lastCommand) {
                         this.wrapInAuth(this.lastCommand,this.lastOpts);
@@ -178,7 +175,7 @@ class FileServer extends HTMLElement {
      * @param {String} directory - The directory to expand the files under. Optional -- if unspecified the server will return the directories under ~/.
      */
     requestFileList(type, directory = null) {
-        let command = JSON.stringify({ 'command' : 'show', 'directory' : directory, 'type' : type }); 
+        let command = JSON.stringify({ 'command' : 'getfilelist', 'directory' : directory, 'type' : type , 'depth' : 0}); 
         this.socket.send(command);
         // When this replies we will end up in this.handleServerRequest
     }
@@ -221,7 +218,6 @@ class FileServer extends HTMLElement {
      * // TODO: some how have a title here ... and suffix list
      */
     displayFileList(response) {
-        console.log('response', response);
         if (response.type === 'load') {
             this.fileTreeDialog.createFileList(response.data,null,this.lastOpts);
             this.fileTreeDialog.showDialog();
@@ -232,81 +228,95 @@ class FileServer extends HTMLElement {
     }
 
     /**
-     * Packages the relevant parameters and functionality for downloading data from the local filesystem into an object that can be invoked by bis_genericio.
-     * 
-     * @param {Object} params - Parameters object containing the following
-     * @param {Array} params.files - List of filenames
-     * @param {String} params.name - Name of the file to fetch from the server, or what to name the file being saved to the server.
-     * @param {Function} cb - Callback on success.
-     * @param {Function} eb - Callback on failure.
+     * downloads a file from the server 
+     * @param{String} url - the filename
+     * @param{Boolean} isbinary - if true file is binary
+     * @returns a Promise with payload { obj.name obj.data } much like bis_genericio.read (from where it will be called indirectly)
      */
-    createFileDownloadRequest(params, cb, eb) {
-        let obj = {
-            filename: params.name,
-            params: params,
-            responseFunction: () => { //TODO: strictly speaking this should have signature (url,isbinary=false)
-                return new Promise( (resolve, reject) => {
-                    let command = { 'command' : 'getfile', 'files' : params.paths };
-                    let filesdata = JSON.stringify(command);
+    downloadFile(url,isbinary) {
+        return new Promise( (resolve, reject) => {
+            let command = JSON.stringify({ 'command' : 'readfile',
+                                           'filename' : url,
+                                           'isbinary' : isbinary });
+            
+            var cblistener = document.addEventListener(TRANSMISSION_EVENT , (e) => { 
+                document.removeEventListener(ERROR_EVENT, eblistener);
 
-                    let cblistener = document.addEventListener('bisweb_fileserver_transmission' , (e) => { 
-                        document.removeEventListener('errorevent', eblistener);
-                        cb(); 
+                if (!isbinary) {
+                    resolve({
+                        'data' : e.detail,
+                        'filename' : url,
+                    });
+                } else {
+                    let dat = new Uint8Array(e.detail);
+                    let comp=bisgenericio.iscompressed(url);
+                    if (!comp) {
                         resolve({
-                            'data' : e.detail,
-                            'filename' : params.name
+                            'data' : dat,
+                            'filename' : url
                         });
+                    } else {
+                        let a = pako.ungzip(dat);
+                        resolve({
+                            'data' : a,
+                            'filename' : url
+                        });
+                        a=null;
+                    }
+                    dat=null;
+                }
+            }, { 'once' : true });
+            
+            var eblistener = document.addEventListener(ERROR_EVENT, () => { 
+                document.removeEventListener(TRANSMISSION_EVENT, cblistener);
+                reject('An error occured during transmission'); 
+            }, { 'once' : true });
+            
+            this.socket.send(command);
+        });
+    }
 
-                    }, { 'once' : true });
+    /** upload file 
+     * @param {String} url -- abstact file handle object
+     * @param {Data} data -- the data to save, either a sting or a Uint8Array
+     * @param {Boolean} isbinary -- is data binary
+     * @returns {Promise} 
+     */
+    uploadFile(url,data,isbinary=false) {
 
-                    let eblistener = document.addEventListener('servererror', () => { 
-                        document.removeEventListener('bisweb_fileserver_transmission', cblistener);
-                        reject('An error occured during transmission'); 
-                        eb(); 
-                    }, { 'once' : true });
-
-                    this.socket.send(filesdata);
-                });
-            }
-        };
-        //this.callback is set when a modal is opened.
-        this.callback(obj);
+        console.log('Received upload file request',url,isbinary);
+        
+        let p=new Promise( (resolve, reject) => {
+            let promiseCb = () => {
+                resolve('Upload successful');
+            };
+            
+            let promiseEb = () => {
+                reject('Upload failed');
+            };
+            
+            this.uploadFileToServer(url, data,isbinary, promiseCb, promiseEb);
+        });
+        console.log(p);
+        return p;
+    }
+    
+    /**
+     * Packages the relevant parameters and functionality for downloading data from the local filesystem into an object that can be invoked by bis_genericio.
+     * @param {Object} params - Parameters object containing the following
+     */
+    invokeReadFilenameCallbackFunction(params) {
+        this.callback(params.paths[0]);
     }
 
     /**
      * Packages the relevant parameters and functionality for uploading data to the local filesystem into an object that can be invoked by bis_genericio.
      * 
      * @param {Object} params - Parameters object containing the following
-     * @param {Array} params.files - List of filenames
-     * @param {String} params.name - Name of the file to fetch from the server, or what to name the file being saved to the server.
-     * @param {Function} cb - Callback on success.
-     * @param {Function} eb - Callback on failure.
-     * @param {Object} callback.url - The object passed to the callback initially (in this case the object created by createFileUploadRequest). Unused in this function.
-     * @param {Uint8Array} callback.body - The data to save
      */
-    createFileUploadRequest(params, cb, eb) {
-        let obj = {
-            filename: params.name,
-            params: params,
-            responseFunction: (url, body) => { //TODO : isbinary too
-                return new Promise( (resolve, reject) => {
-                    let promiseCb = () => {
-                        cb();
-                        resolve('Upload successful');
-                    };
-
-                    let promiseEb = () => {
-                        eb();
-                        reject('Upload failed');
-                    };
-
-                    this.uploadFileToServer(obj.filename, body, promiseCb, promiseEb);
-                });
-            }
-        };
-
-        //this.callback is set when a modal is opened.
-        this.callback(obj);
+    invokeWriteFilenameCallbackFunction(params) {
+        console.log(JSON.stringify(params,null,2));
+        this.callback(params.name);
     }
 
     /**
@@ -318,13 +328,13 @@ class FileServer extends HTMLElement {
         let command = { 'command' : 'getfile', 'files' : filelist };
         let filesdata = JSON.stringify(command);
 
-        let cblistener = document.addEventListener('bisweb_fileserver_transmission' , () => { 
+        let cblistener = document.addEventListener(TRANSMISSION_EVENT , () => { 
             document.removeEventListener('errorevent', eblistener);
             cb(); 
         }, { 'once' : true });
 
-        let eblistener = document.addEventListener('servererror', () => { 
-            document.removeEventListener('bisweb_fileserver_transmission', cblistener); 
+        let eblistener = document.addEventListener(ERROR_EVENT, () => { 
+            document.removeEventListener(TRANSMISSION_EVENT, cblistener); 
             eb(); 
         }, { 'once' : true });
 
@@ -349,30 +359,38 @@ class FileServer extends HTMLElement {
      * 
      * TODO: Extend this function to support matrices and transformations.
      * @param {String} name - What the file should be named once it is saved to the server. 
-     * @param {TypedArray} body - 
+     * @param {variable} data - TypedArray or text string
+     * @param {Boolean} isbinary - if true data is binary
      * @param {Function} cb - A callback for if the transfer is successful. Optional.
      * @param {Function} eb - A callback for if the transfer is a failure (errorback). Optional.
      */
-    uploadFileToServer(name, body, cb = () => {}, eb = () => {}) {
+    uploadFileToServer(name, data, isbinary=false, cb = () => {}, eb = () => {}) {
 
         // TODO: is the size of body < packetsize upload in one shot
+        let body=null;
+        if (!isbinary) 
+            body=bisgenericio.string2binary(data);
+        else
+            body=new Uint8Array(data.buffer);
+            
         
-        console.log('cb', cb, 'eb', eb);
         const packetSize = 50000;
         let fileTransferSocket;
-
+        
         //negotiate opening of the data port
         this.socket.addEventListener('message', (e) => {
             let message;
             try {
                 message = JSON.parse(e.data);
                 if (message.type === 'datasocketready') {
-
-                    fileTransferSocket = new WebSocket('ws://localhost:8082');
+                    
+                    let port=this.portNumber+1;
+                    console.log('Second port=',port);
+                    let server=`ws://localhost:${port}`;
+                    fileTransferSocket = new WebSocket(server);
                     fileTransferSocket.addEventListener('open', () => {
                         doDataTransfer(body);
                     });
-
                 } else {
                     console.log('heard unexpected message', message, 'not opening data socket');
                     eb();
@@ -383,29 +401,46 @@ class FileServer extends HTMLElement {
             }
         }, { once : true });
 
+
+        
         let metadata = {
             'command': 'uploadfile',
             'totalSize': body.length,
+            'storageSize': body.length,
             'packetSize': packetSize,
-            'storageSize': body.byteLength,
-            'filename': name
+            'filename': name,
+            'isbinary' : isbinary,
         };
 
+        
         console.log('sending metadata to server', metadata);
         this.socket.send(JSON.stringify(metadata));
-
-
+        
+        
         //transfer file in 50KB chunks, wait for acknowledge from server
         function doDataTransfer(data) {
-            let remainingTransfer = data, currentTransferIndex = 0;
-           
+
+            let currentIndex = 0;
+            let done=false;
+
             //send data in chunks
             let sendDataSlice = () => {
-                let slice = (currentTransferIndex + packetSize >= remainingTransfer.size) ?
-                    remainingTransfer.slice(currentTransferIndex) :
-                    remainingTransfer.slice(currentTransferIndex, currentTransferIndex + packetSize);
-                fileTransferSocket.send(slice);
-                currentTransferIndex = currentTransferIndex + slice.length;
+
+                if (done===false) {
+                    let begin=currentIndex;
+                    let end=currentIndex+packetSize;
+                    if (end>data.length) {
+                        end=data.length;
+                        done=true;
+                    }
+                    
+                    let slice=new Uint8Array(data.buffer,begin,end-begin);
+                    fileTransferSocket.send(slice);
+                    currentIndex+=(end-begin);
+                } else {
+                    // We are done!
+                    fileTransferSocket.close();
+                }
             };
 
             fileTransferSocket.addEventListener('message', (event) => {
@@ -440,26 +475,29 @@ class FileServer extends HTMLElement {
      *  
      * this.callback is attached to bisweb_fileserver when a bisweb_filedialog modal is opened. 
      * Given that modals are opened one at a time and all user-driven file I/O happens through one of these, the callback should be a
-     * @param {Uint8Array} data - data transferred by the server. 
+     * @param {variable} data - data transferred by the server either uint8array or text (depending on isbinary)
+     * @param {Boolean} isbinary - if true data is binary
      */
-    handleDataTransmission(data) {
+    handleDataReceivedFromServer(data,isbinary=true) {
 
-        let reader = new FileReader();
+        if (isbinary) {
 
-        //filedialog does actions when an image is loaded (dismisses loading messages, etc.)
-        //so notify once the data is loaded
-
-
-        //data is sent compressed for portability reasons, then decompressed here
-        reader.addEventListener('loadend', () => {
-            let unzippedFile = wsutil.unzipFile(reader.result);
-
-            //notify the Promise created by createFileDownloadRequest 
-            let dataLoadEvent = new CustomEvent('bisweb_fileserver_transmission', { detail : unzippedFile });
+            console.log('Data is binary blob');
+            
+            let reader = new FileReader();
+            
+            //filedialog does actions when an image is loaded (dismisses loading messages, etc.)
+            //so notify once the data is loaded
+            reader.addEventListener('loadend', () => {
+                //notify the Promise created by invokeReadFilenameCallbackFunction 
+                let dataLoadEvent = new CustomEvent(TRANSMISSION_EVENT, { detail : reader.result });
+                document.dispatchEvent(dataLoadEvent);
+            });
+            reader.readAsArrayBuffer(data);
+        } else {
+            let dataLoadEvent = new CustomEvent(TRANSMISSION_EVENT, { detail : data });
             document.dispatchEvent(dataLoadEvent);
-        });
-
-        reader.readAsArrayBuffer(data);
+        }
     }
 
     /**
@@ -549,6 +587,9 @@ class FileServer extends HTMLElement {
             } else {
                 console.log('unrecognized command', command);
             }
+        } else if (insecure) {
+            this.password="";
+            this.connectToServer('ws://localhost:8081');
         } else {
             this.showAuthenticationDialog();
             // make this call us back ...
@@ -556,5 +597,4 @@ class FileServer extends HTMLElement {
     }
 }
 
-module.exports = FileServer;
-webutil.defineElement('bisweb-fileserver', FileServer);
+module.exports = BisWebFileServerClient;

@@ -22,16 +22,14 @@ const $=require('jquery');
 const webutil=require('bis_webutil');
 const bisdate=require('bisdate.js').date;
 
-let iconpath="";
-if (typeof window.BIS !=='undefined') {
-    iconpath=window.BIS.iconpath;
-}
+let iconpath=webutil.getWebPageImagePath();
+
 
 const bottommenubartext=`
             <nav class="navbar navbar-default navbar-fixed-bottom" style=" min-height:25px; max-height:25px">
             <div style="margin-top:2px; margin-left:5px; 
 'padding-right:10px, margin-bot:1px; height:10px; font-size:12px" align="right">
-      <img src="${iconpath}images/bislogo.png" id="bislogobottom" height="20px"/>
+      <img src="${iconpath}/bislogo.png" id="bislogobottom" height="20px"/>
       This application <span style="color:#ff8888"><B>(still in beta!)</B></span> is part of Yale
 BioImage Suite. (${bisdate})&nbsp;&nbsp; 
 </div>
@@ -49,7 +47,7 @@ const topmenubartext=`
       <span class="icon-bar"></span>
       <span class="icon-bar"></span>
             </button>
-        <a href="./index.html" target="_blank"><img src="${iconpath}images/bioimagesuite.png" height="50px" id="bislogo" style="margin-top:5px"></a>
+        <a href="./index.html" target="_blank"><img src="${iconpath}/bioimagesuite.png" height="50px" id="bislogo" style="margin-top:5px"></a>
     </div>  <!-- Collect the nav links, forms, and other content for toggling -->
     <div class="collapse navbar-collapse" id="bismenu">
         <ul class="nav navbar-nav" id="bismenuparent">
