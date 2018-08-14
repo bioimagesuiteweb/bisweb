@@ -115,49 +115,10 @@ let parseJSON = (rawJSON) => {
     }
 };
 
-//TODO: incorporate this into bisweb_filedialog
-/**
- * Traverses a nested file structure for the file specified in 'path'. 
- * For example, if the path is 'a/b/c', this will attempt to find an entry named 'a', look within its children for 'b', then look within its children for 'c'.
- * 
- * @param {String} path - A filepath separated by slashes. 
- * @param {Array} list - Nested file structure. Typically contains a set of entries with 'children' that contain more entries, which in turn may contain more entries, etc.
- * @returns The corresponding entry in the file structure, or null.
- */
-let searchTree = (path, list) => {
-    let foundDirectory = false, splitPaths = path.split('/'), currentDirectory = list;
-    while (splitPaths.length > 0) {
-        console.log('looking for a match with', splitPaths[0]);
-        for (let entry of currentDirectory) {
-            if (entry.text === splitPaths[0]) {
-
-                //if there's only one entry in splitPaths then this is the index at which we want to add the supplemental files
-                if (splitPaths.length === 1) {
-                    return entry;
-                } else {
-                    console.log('entering directory', entry.children);
-                    foundDirectory = true;
-                    currentDirectory = entry.children;
-                }
-
-                splitPaths.splice(0, 1);
-            }
-        }
-
-        if (!foundDirectory) {
-            console.log('could not find directory.');
-            return null;
-        } else {
-            foundDirectory = false;
-        }
-    }
-};
-
 module.exports = {
     parseControlFrame: parseControlFrame,
     formatControlFrame: formatControlFrame,
     decodeUTF8: decodeUTF8,
     parseJSON: parseJSON,
-    searchTree: searchTree,
     insecure : insecure
 };

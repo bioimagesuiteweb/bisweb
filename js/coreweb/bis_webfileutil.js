@@ -124,6 +124,12 @@ const webfileutils = {
             default : fileMode = 'local';
         }
 
+        if (fileMode === 'server') {
+            genericio.setFileServerObject(bisweb_fileserverclient);
+        } else {
+            genericio.setFileServerObject(null);
+        }
+
         userPreferences.setItem('filesource',fileMode);
         userPreferences.storeUserPreferences();
     },
@@ -247,7 +253,7 @@ const webfileutils = {
         if (fileopts.force)
             fmode=fileopts.force;
 
-        let cbopts = { 'callback' : callback, 'title' : title, 'suffix' : suffix };
+        let cbopts = { 'callback' : callback, 'title' : title, 'suffix' : suffix, 'mode' : fmode };
         if (fileopts.save) {
             //if the callback is specified presumably that's what should be called
             //            console.log('opts', fileopts);
