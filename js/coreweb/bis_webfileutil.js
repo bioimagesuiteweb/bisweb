@@ -65,6 +65,7 @@ let awsbucketstorage = localforage.createInstance({
 });
 
 let awsmodal = null;
+let awsstoredbuckets = null;
 
 const webfileutils = {
 
@@ -509,8 +510,8 @@ const webfileutils = {
     },
 
     createAWSBucketMenu : function(bmenu) {
-        let createModal = () => {
 
+        let createModal = () => {
             if (!awsmodal) {
                 awsmodal = webutil.createmodal('AWS Buckets');
                 let tabView = $( `
@@ -534,7 +535,7 @@ const webfileutils = {
                 </div>
                 `);
 
-                let selectPane = this.createAWSBucketSelector();
+                let selectPane = this.createAWSBucketSelector(awsmodal, tabView);
                 tabView.find('#aws-bucket-selector-pane').append(selectPane);
 
                 let entryPane = this.createAWSBucketEntry();
@@ -542,31 +543,7 @@ const webfileutils = {
 
                 awsmodal.body.append(tabView);
                 awsmodal.dialog.find('.modal-footer').remove();
-
-                console.log('.nav-tabs a', tabView.find('#selector-tab'));
-                tabView.find('#selector-tab').on('show.bs.tab', (e) => {
-
-                    console.log('show tab', e);
-
-                    //clear out old options and read localStorage for new keys. 
-                    let bucketSelectorDropdown = awsmodal.body.find('#bucket-selector-dropdown');
-                    bucketSelectorDropdown.empty();
-        
-                    awsbucketstorage.iterate( (value, key) => {
-                        //data is stored as stringified JSON
-                        try { 
-                            let bucketObj = JSON.parse(value);
-                            let entry = $(`<option>${bucketObj.bucketName}</option>`);
-                            bucketSelectorDropdown.append(entry);
-                        } catch(e) {
-                            console.log('an error occured while parsing the AWS bucket data', e);
-                        }
-                    }).then( () => {
-                        console.log('done iterating over aws bucket objects');
-                    }).catch( (err) => {
-                        console.log('an error occured while fetching values from localstorage', err);
-                    });
-                });
+                
 
                 awsmodal.dialog.on('hidden.bs.modal', () => {
                     let bucketSelectorDropdown = awsmodal.body.find('#bucket-selector-dropdown');
@@ -582,7 +559,8 @@ const webfileutils = {
         webutil.createMenuItem(bmenu, 'AWS Selector', createModal);
     },
 
-    createAWSBucketSelector : function() {
+    createAWSBucketSelector : function(awsmodal, tabView) {
+
         let selectContainer = $(`
             <div class='container-fluid form-group'>
                 <label for='bucket-selector'>Select a Bucket:</label>
@@ -590,6 +568,81 @@ const webfileutils = {
                 </select>   
             </div>
         `);
+
+        
+        //delete the old dropdown list and recreate it using the fresh data from the application cache
+        let refreshDropdown = () => {
+
+            //clear out old options and read localStorage for new keys. 
+            let bucketSelectorDropdown = selectContainer.find('#bucket-selector-dropdown');
+            bucketSelectorDropdown.empty();
+
+            awsstoredbuckets = {};
+            
+            awsbucketstorage.iterate( (value, key) => {
+                //data is stored as stringified JSON
+                try { 
+                    let bucketObj = JSON.parse(value);
+                    let entry = $(`<option id=${key}>${bucketObj.bucketName}</option>`);
+                    bucketSelectorDropdown.append(entry);
+                    awsstoredbuckets[key] = bucketObj;
+                } catch(e) {
+                    console.log('an error occured while parsing the AWS bucket data', e);
+                }
+
+            }).then( () => {
+                console.log('done iterating over aws bucket objects', awsstoredbuckets);
+            }).catch( (err) => {
+                console.log('an error occured while fetching values from localstorage', err);
+            });
+        };
+
+
+        //recreate the info table each time the user selects a different dropdown item
+        let dropdown = selectContainer.find('#bucket-selector-dropdown');
+        dropdown.on('change', (e) => {
+
+            if (!awsmodal.table) {
+                let table = $(`
+                    <table class='table table-sm table-dark'>
+                        <thead> 
+                            <tr>
+                                <th scope="col">Bucket Name</th>
+                                <th scope="col">Username</th>
+                                <th scope="col">Public Access Key</th>
+                                <th scope="col">Secret Access Key</th>
+                            </tr>
+                        </thead>
+                            <tbody id='aws-selector-table-body'>   
+                            </tbody>
+                    </table> 
+                `);
+
+                awsmodal.body.find('#aws-bucket-selector-pane').append(table);
+                awsmodal.table = table;
+            }
+
+            let body = awsmodal.table.find('#aws-selector-table-body');
+            body.empty();
+
+            let selectedItem = dropdown[0][dropdown[0].selectedIndex];
+            let selectedItemId = selectedItem.id;
+            let selectedItemInfo = awsstoredbuckets[selectedItemId];
+
+            let tableRow = $(`
+                <td>${selectedItemInfo.bucketName}</td>
+                <td>${selectedItemInfo.userName}</td>
+                <td>${selectedItemInfo.accessKey}</td>
+                <td>${selectedItemInfo.secretKey}</td>
+            `);
+
+            body.append(tableRow);
+        });
+
+
+        //we want the selector to populate both when the modal is opened and when the selector tab is selected
+        tabView.find('#selector-tab').on('show.bs.tab', refreshDropdown);
+        awsmodal.dialog.on('show.bs.modal', refreshDropdown);
 
         return selectContainer;
     },
@@ -615,6 +668,8 @@ const webfileutils = {
         let cancelButton = webutil.createbutton({ 'name': 'Cancel', 'type': 'btn-danger' });
 
         confirmButton.on('click', () => {
+
+
             let paramsObj = {
                 'bucketName': entryContainer.find('.bucket-input')[0].value,
                 'userName': entryContainer.find('.username-input')[0].value,
@@ -623,11 +678,9 @@ const webfileutils = {
             };
 
             //index contains the number of keys in the database
-            awsbucketstorage.length().then((length) => {
-                console.log('database length', length);
-                let key = 'awsbucket' + length;
-                awsbucketstorage.setItem(key, JSON.stringify(paramsObj));
-            });
+            let key = 'awsbucket' + webutil.getuniqueid();
+            awsbucketstorage.setItem(key, JSON.stringify(paramsObj));
+
         });
 
         cancelButton.on('click', () => {
