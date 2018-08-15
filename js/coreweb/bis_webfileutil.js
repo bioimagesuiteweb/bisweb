@@ -565,7 +565,8 @@ const webfileutils = {
             <div class='container-fluid form-group'>
                 <label for='bucket-selector'>Select a Bucket:</label>
                 <select class='form-control' id='bucket-selector-dropdown'>
-                </select>   
+                </select>
+                <div id='bucket-selector-table-container'></div>   
             </div>
         `);
 
@@ -578,7 +579,7 @@ const webfileutils = {
             bucketSelectorDropdown.empty();
 
             awsstoredbuckets = {};
-            
+            bucketSelectorDropdown.append(`<option id='aws-empty-entry'></option>`);
             awsbucketstorage.iterate( (value, key) => {
                 //data is stored as stringified JSON
                 try { 
@@ -601,13 +602,19 @@ const webfileutils = {
         //recreate the info table each time the user selects a different dropdown item
         let dropdown = selectContainer.find('#bucket-selector-dropdown');
         dropdown.on('change', (e) => {
+            let tableContainer = awsmodal.body.find('#bucket-selector-table-container');
+            tableContainer.empty();
 
-            if (!awsmodal.table) {
-                let table = $(`
+            let selectedItem = dropdown[0][dropdown[0].selectedIndex];
+            let selectedItemId = selectedItem.id;
+
+            if (selectedItemId !== 'aws-empty-entry') {
+                let selectedItemInfo = awsstoredbuckets[selectedItemId];
+                let tableHead = $(`
                     <table class='table table-sm table-dark'>
                         <thead> 
                             <tr>
-                                <th scope="col">Bucket Name</th>
+                            <th scope="col">Bucket Name</th>
                                 <th scope="col">Username</th>
                                 <th scope="col">Public Access Key</th>
                                 <th scope="col">Secret Access Key</th>
@@ -618,25 +625,16 @@ const webfileutils = {
                     </table> 
                 `);
 
-                awsmodal.body.find('#aws-bucket-selector-pane').append(table);
-                awsmodal.table = table;
+                let tableRow = $(`
+                    <td>${selectedItemInfo.bucketName}</td>
+                    <td>${selectedItemInfo.userName}</td>
+                    <td>${selectedItemInfo.accessKey}</td>
+                    <td>${selectedItemInfo.secretKey}</td>
+                `);
+
+                tableHead.find('#aws-selector-table-body').append(tableRow);
+                tableContainer.append(tableHead);
             }
-
-            let body = awsmodal.table.find('#aws-selector-table-body');
-            body.empty();
-
-            let selectedItem = dropdown[0][dropdown[0].selectedIndex];
-            let selectedItemId = selectedItem.id;
-            let selectedItemInfo = awsstoredbuckets[selectedItemId];
-
-            let tableRow = $(`
-                <td>${selectedItemInfo.bucketName}</td>
-                <td>${selectedItemInfo.userName}</td>
-                <td>${selectedItemInfo.accessKey}</td>
-                <td>${selectedItemInfo.secretKey}</td>
-            `);
-
-            body.append(tableRow);
         });
 
 
