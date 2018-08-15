@@ -516,18 +516,18 @@ const webfileutils = {
                 let tabView = $( `
                 <ul class="nav nav-tabs" id="aws-tab-menu" role="tablist">
                     <li class="nav-item active">
-                        <a class="nav-link" id="selector-tab" data-toggle="tab" href="#aws-selector-tab" role="tab" aria-controls="home" aria-selected="true">Select AWS Bucket</a>
+                        <a class="nav-link" id="selector-tab" data-toggle="tab" href="#aws-selector-tab-panel" role="tab" aria-controls="home" aria-selected="true">Select AWS Bucket</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="entry-tab" data-toggle="tab" href="#aws-entry-tab" role="tab" aria-controls="entry" aria-selected="false">Enter New Bucket</a>
+                        <a class="nav-link" id="entry-tab" data-toggle="tab" href="#aws-entry-tab-panel" role="tab" aria-controls="entry" aria-selected="false">Enter New Bucket</a>
                     </li>
                 </ul>
                 <div class="tab-content" id="aws-tab-content">
-                    <div class="tab-pane fade active in" id="aws-selector-tab" role="tabpanel" aria-labelledby="selector-tab">
+                    <div class="tab-pane fade active in" id="aws-selector-tab-panel" role="tabpanel" aria-labelledby="selector-tab">
                         <br>
                         <div id="aws-bucket-selector-pane"></div>
                     </div>
-                    <div class="tab-pane fade" id="aws-entry-tab" role="tabpanel" aria-labelledby="profile-tab">
+                    <div class="tab-pane fade" id="aws-entry-tab-panel" role="tabpanel" aria-labelledby="profile-tab">
                         <br>
                         <div id="aws-bucket-entry-pane"></div>
                     </div>
@@ -542,35 +542,37 @@ const webfileutils = {
 
                 awsmodal.body.append(tabView);
                 awsmodal.dialog.find('.modal-footer').remove();
-            }
 
-            awsmodal.dialog.on('show.bs.modal', () => {
+                console.log('.nav-tabs a', tabView.find('#selector-tab'));
+                tabView.find('#selector-tab').on('show.bs.tab', (e) => {
 
-                //clear out old options and read localStorage for new keys. 
-                let bucketSelectorDropdown = awsmodal.body.find('#bucket-selector-dropdown');
-                bucketSelectorDropdown.empty();
-    
-                awsbucketstorage.iterate( (value, key) => {
-                    //data is stored as stringified JSON
-                    try { 
-                        let bucketObj = JSON.parse(value);
-                        let entry = $(`<option>${bucketObj.bucketName}</option>`);
-                        bucketSelectorDropdown.append(entry);
-                    } catch(e) {
-                        console.log('an error occured while parsing the AWS bucket data', e);
-                    }
-                }).then( () => {
-                    console.log('done iterating over aws bucket objects');
-                }).catch( (err) => {
-                    console.log('an error occured while fetching values from localstorage', err);
+                    console.log('show tab', e);
+
+                    //clear out old options and read localStorage for new keys. 
+                    let bucketSelectorDropdown = awsmodal.body.find('#bucket-selector-dropdown');
+                    bucketSelectorDropdown.empty();
+        
+                    awsbucketstorage.iterate( (value, key) => {
+                        //data is stored as stringified JSON
+                        try { 
+                            let bucketObj = JSON.parse(value);
+                            let entry = $(`<option>${bucketObj.bucketName}</option>`);
+                            bucketSelectorDropdown.append(entry);
+                        } catch(e) {
+                            console.log('an error occured while parsing the AWS bucket data', e);
+                        }
+                    }).then( () => {
+                        console.log('done iterating over aws bucket objects');
+                    }).catch( (err) => {
+                        console.log('an error occured while fetching values from localstorage', err);
+                    });
                 });
-            });
 
-            awsmodal.dialog.on('hidden.bs.modal', () => {
-                let bucketSelectorDropdown = awsmodal.body.find('#bucket-selector-dropdown');
-                bucketSelectorDropdown[0].innerHTML = ""; //remove all option elements from the dropdown
-                console.log('bucket selector dropdown', bucketSelectorDropdown);
-            });
+                awsmodal.dialog.on('hidden.bs.modal', () => {
+                    let bucketSelectorDropdown = awsmodal.body.find('#bucket-selector-dropdown');
+                    bucketSelectorDropdown.empty(); //remove all option elements from the dropdown
+                });
+            }
 
             console.log('awsmodal', awsmodal);
             awsmodal.dialog.modal('show');
@@ -585,9 +587,6 @@ const webfileutils = {
             <div class='container-fluid form-group'>
                 <label for='bucket-selector'>Select a Bucket:</label>
                 <select class='form-control' id='bucket-selector-dropdown'>
-                    <option>AAAAAAAAAAAAAAAAAAAAAAAAAAAAA</option>
-                    <option>Hi</option>
-                    <option>Bootstrap</option>
                 </select>   
             </div>
         `);
