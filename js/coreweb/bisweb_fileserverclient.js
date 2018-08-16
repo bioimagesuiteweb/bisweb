@@ -207,7 +207,7 @@ class BisWebFileServerClient {
             entry.expand = false;
             requestingDialog.createFileList(payload.list, { 'path': formattedPath, 'list': entry.children });
         } else {
-            console.log('could not find', path, 'in the list of files');
+            console.log('could not find', payload.path, 'in the list of files');
         }
     }
 

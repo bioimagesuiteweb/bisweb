@@ -666,35 +666,34 @@ class FileDialogElement {
      * @returns The corresponding entry in the file structure, or null.
      */
     searchTree(path) {
+        let list = this.fileList;
+        let foundDirectory = false, splitPaths = path.split('/'), currentDirectory = list;
+        while (splitPaths.length > 0) {
+            console.log('looking for a match with', splitPaths[0]);
+            for (let entry of currentDirectory) {
+                if (entry.text === splitPaths[0]) {
 
-    let list = this.fileList;
-    let foundDirectory = false, splitPaths = path.split('/'), currentDirectory = list;
-    while (splitPaths.length > 0) {
-        console.log('looking for a match with', splitPaths[0]);
-        for (let entry of currentDirectory) {
-            if (entry.text === splitPaths[0]) {
+                    //if there's only one entry in splitPaths then this is the index at which we want to add the supplemental files
+                    if (splitPaths.length === 1) {
+                        return entry;
+                    } else {
+                        console.log('entering directory', entry.children);
+                        foundDirectory = true;
+                        currentDirectory = entry.children;
+                    }
 
-                //if there's only one entry in splitPaths then this is the index at which we want to add the supplemental files
-                if (splitPaths.length === 1) {
-                    return entry;
-                } else {
-                    console.log('entering directory', entry.children);
-                    foundDirectory = true;
-                    currentDirectory = entry.children;
+                    splitPaths.splice(0, 1);
                 }
+            }
 
-                splitPaths.splice(0, 1);
+            if (!foundDirectory) {
+                console.log('could not find directory.');
+                return null;
+            } else {
+                foundDirectory = false;
             }
         }
-
-        if (!foundDirectory) {
-            console.log('could not find directory.');
-            return null;
-        } else {
-            foundDirectory = false;
-        }
     }
-};
 }
 
 module.exports = FileDialogElement;

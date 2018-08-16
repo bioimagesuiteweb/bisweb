@@ -566,11 +566,18 @@ const webfileutils = {
                 <label for='bucket-selector'>Select a Bucket:</label>
                 <select class='form-control' id='bucket-selector-dropdown'>
                 </select>
-                <div id='bucket-selector-table-container'></div>   
+                <div id='bucket-selector-table-container'></div>
+                <div class='btn-group' role=group' aria-label='Viewer Buttons' style='float : left, visibility : hidden'></div>   
             </div>
         `);
 
-        
+        let confirmButton = webutil.createbutton({ 'name' : 'Confirm', 'type' : 'success', 'css' : { 'visibility' : 'hidden' } });
+        let cancelButton = webutil.createbutton({ 'name' : 'Cancel', 'type' : 'danger', 'css' : { 'visibility' : 'hidden' } });
+
+        let buttonGroup = selectContainer.find('.btn-group');
+        buttonGroup.append(confirmButton);
+        buttonGroup.append(cancelButton);
+
         //delete the old dropdown list and recreate it using the fresh data from the application cache
         let refreshDropdown = () => {
 
@@ -601,7 +608,7 @@ const webfileutils = {
 
         //recreate the info table each time the user selects a different dropdown item
         let dropdown = selectContainer.find('#bucket-selector-dropdown');
-        dropdown.on('change', (e) => {
+        dropdown.on('change', () => {
             let tableContainer = awsmodal.body.find('#bucket-selector-table-container');
             tableContainer.empty();
 
@@ -614,26 +621,41 @@ const webfileutils = {
                     <table class='table table-sm table-dark'>
                         <thead> 
                             <tr>
-                            <th scope="col">Bucket Name</th>
+                                <th scope="col">Bucket Name</th>
                                 <th scope="col">Username</th>
                                 <th scope="col">Public Access Key</th>
                                 <th scope="col">Secret Access Key</th>
                             </tr>
                         </thead>
-                            <tbody id='aws-selector-table-body'>   
+                            <tbody id='aws-selector-table-body' align='justify'>   
                             </tbody>
                     </table> 
                 `);
 
                 let tableRow = $(`
-                    <td>${selectedItemInfo.bucketName}</td>
-                    <td>${selectedItemInfo.userName}</td>
-                    <td>${selectedItemInfo.accessKey}</td>
-                    <td>${selectedItemInfo.secretKey}</td>
+                    <td class='bootstrap-table-entry'>${selectedItemInfo.bucketName}</td>
+                    <td class='bootstrap-table-entry'>${selectedItemInfo.userName}</td>
+                    <td class='bootstrap-table-entry'>${selectedItemInfo.accessKey}</td>
+                    <td class='bootstrap-table-entry'>${selectedItemInfo.secretKey}</td>
                 `);
 
                 tableHead.find('#aws-selector-table-body').append(tableRow);
                 tableContainer.append(tableHead);
+
+                //show confirm and cancel buttons
+                let selectorButtons = selectContainer.find('.btn-group').find('.btn');
+                for (let button of selectorButtons) {
+                    $(button).css('visibility', 'visible');
+                }
+            }
+        });
+
+        awsmodal.dialog.on('hidden.bs.modal', () => {
+            $('#bucket-selector-table-container').empty();
+            //show confirm and cancel buttons
+            let selectorButtons = selectContainer.find('.btn-group').find('.btn');
+            for (let button of selectorButtons) {
+                $(button).css('visibility', 'hidden');
             }
         });
 
@@ -662,8 +684,8 @@ const webfileutils = {
             </div>
         `);
 
-        let confirmButton = webutil.createbutton({ 'name': 'Confirm', 'type': 'btn-success' });
-        let cancelButton = webutil.createbutton({ 'name': 'Cancel', 'type': 'btn-danger' });
+        let confirmButton = webutil.createbutton({ 'name': 'Confirm', 'type': 'success' });
+        let cancelButton = webutil.createbutton({ 'name': 'Cancel', 'type': 'danger' });
 
         confirmButton.on('click', () => {
 
