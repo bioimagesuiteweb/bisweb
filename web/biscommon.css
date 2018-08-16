@@ -335,7 +335,8 @@ body {
 }
 
 .bootstrap-table-entry {
-    padding-left : 8px
+    padding-left : 8px;
+    word-break : break-all;
 }
 
 

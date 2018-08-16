@@ -659,6 +659,9 @@ const webfileutils = {
             }
         });
 
+        confirmButton.on('click', () => {
+            //bisweb_awsmodule.
+        });
 
         //we want the selector to populate both when the modal is opened and when the selector tab is selected
         tabView.find('#selector-tab').on('show.bs.tab', refreshDropdown);
