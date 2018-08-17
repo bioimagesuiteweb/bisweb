@@ -721,6 +721,8 @@ class ViewerApplicationElement extends HTMLElement {
         }
 
         webfileutil.createFileSourceSelector(hmenu);
+        webfileutil.createAWSBucketMenu(hmenu);
+        //webfileutil.createAWSBucketEntry(hmenu);
         return hmenu;
     }
 

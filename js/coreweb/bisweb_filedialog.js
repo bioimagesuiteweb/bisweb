@@ -56,10 +56,6 @@ class FileDialogElement {
                                 </div>
                         </div>`
                         );
-
-/*        this.container.css({ 'max-height' : '200px',
-          "overflow-y": "auto",
-          });*/
         
         this.createStaticElements(options);
         this.modal.body.append(this.container);        
@@ -146,7 +142,7 @@ class FileDialogElement {
      * @param {Array} list.children - File entries for each file contained in the list entry. Only for list entries of type 'directory'.
      * @param {Object} startDirectory - File entry representing the directory at which the files in list should be added. Undefined means the files represent the files in the user's home directory (~/).
      */
-    createFileList(list, startDirectory = null,opts=null) {
+    createFileList(list, startDirectory = null, opts=null) {
 
         if (opts!==null) {
             this.filters=opts.suffix || '';
@@ -519,16 +515,6 @@ class FileDialogElement {
      * NOTE: This function is meant to be called exclusively by the Save button created by the file save modal. It will not work as intended anywhere else! 
      */
     createGetFilenamePromptDialog() {
-        let saveDialog = $(`<p>Please enter the filename:</p>`);
-
-        let tid=webutil.getuniqueid();
-        
-        let nameEntryBox = $(`
-                <div class='form-group'>
-                    <label for='filename'>Filename:</label>
-                    <input type='text' class = 'form-control' id='${tid}'>
-                </div>
-            `);
 
         if (!this.saveImageModal) {
             this.saveImageModal = webutil.createmodal('Specify Filename', 'modal-sm');
@@ -540,8 +526,22 @@ class FileDialogElement {
             this.saveImageModal.footer.append(confirmButton);
             this.saveImageModal.footer.append(cancelButton);
 
+            let saveDialog = $(`<p>Please enter the filename:</p>`);
+        
+            let nameEntryBox = $(`
+                    <div class='form-group'>
+                        <label for='filename'>Filename:</label>
+                        <input type='text' class = 'form-control' id='name-input'>
+                    </div>
+                `);
+
+            this.saveImageModal.body.append(saveDialog);
+            this.saveImageModal.body.append(nameEntryBox);
+
             $(confirmButton).on('click', () => {
-                let name = $('#'+tid).val();
+
+                let name = $(nameEntryBox).find('#name-input').val();
+                console.log('name', name);
 
                 //update the modal with a success message after successful transmission.
                 let cb = () => {
@@ -568,7 +568,6 @@ class FileDialogElement {
                     setTimeout(() => { this.saveImageModal.dialog.modal('hide'); }, 1500);
                 };
 
-                console.log('Filters=',this.filters);
                 name = this.fixFilename(name, this.filters);
                 console.log('Filename=',name);
 
@@ -580,11 +579,8 @@ class FileDialogElement {
                 this.modal.dialog.modal('hide');
                 setTimeout( () => {
                     this.fileRequestFn( { 'command' : 'uploadfile', 'name' : newFilename }, cb, eb);
-                },10);
+                }, 10);
 
-                let imageSavingDialog = $(`<p>Uploading data</p>`);
-                this.saveImageModal.body.empty();
-                this.saveImageModal.body.append(imageSavingDialog);
             });
 
             $(cancelButton).on('click', () => {
@@ -593,12 +589,9 @@ class FileDialogElement {
 
             //clear name entry input when modal is closed
             $(this.saveImageModal.dialog).on('hidden.bs.modal', () => {
-                this.saveImageModal.body.empty();
+                $(nameEntryBox).find('#name-input').val('');
             });
         }
-
-        this.saveImageModal.body.append(saveDialog);
-        this.saveImageModal.body.append(nameEntryBox);
 
         this.saveImageModal.dialog.modal('show');
     }
@@ -663,6 +656,43 @@ class FileDialogElement {
         if (!options.hasOwnProperty('makeFavoriteButton')) options.makeFavoriteButton = true;
         if (!options.hasOwnProperty('modalType')) options.modalType = 'load';
         if (!options.hasOwnProperty('displayFiles')) options.displayFiles = true;
+    }
+
+    /**
+     * Traverses a nested file structure for the file specified in 'path'. 
+     * For example, if the path is 'a/b/c', this will attempt to find an entry named 'a', look within its children for 'b', then look within its children for 'c'.
+     * 
+     * @param {String} path - A filepath separated by slashes. 
+     * @returns The corresponding entry in the file structure, or null.
+     */
+    searchTree(path) {
+        let list = this.fileList;
+        let foundDirectory = false, splitPaths = path.split('/'), currentDirectory = list;
+        while (splitPaths.length > 0) {
+            console.log('looking for a match with', splitPaths[0]);
+            for (let entry of currentDirectory) {
+                if (entry.text === splitPaths[0]) {
+
+                    //if there's only one entry in splitPaths then this is the index at which we want to add the supplemental files
+                    if (splitPaths.length === 1) {
+                        return entry;
+                    } else {
+                        console.log('entering directory', entry.children);
+                        foundDirectory = true;
+                        currentDirectory = entry.children;
+                    }
+
+                    splitPaths.splice(0, 1);
+                }
+            }
+
+            if (!foundDirectory) {
+                console.log('could not find directory.');
+                return null;
+            } else {
+                foundDirectory = false;
+            }
+        }
     }
 }
 

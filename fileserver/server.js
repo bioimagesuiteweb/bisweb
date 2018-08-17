@@ -545,13 +545,14 @@ let serveFileList = (socket, basedir, type, depth = 2) => {
         });
     };
 
+    console.log('type', type);
     expandDirectory(basedir, fileTree, 0).then( (tree) => {
 
         //bisweb_fileserver handles the base file request differently than the supplemental ones, so we want to ship them to different endpoints
         if (basedir === os.homedir()) {
-            socket.write(formatPacket('filelist', { 'type' : type, 'data' : tree }));
+            socket.write(formatPacket('filelist', { 'type' : type, 'data' : tree, 'modalType' : type }));
         } else {
-            socket.write(formatPacket('supplementalfiles',  { 'path' : basedir, 'list' : tree }));
+            socket.write(formatPacket('supplementalfiles',  { 'path' : basedir, 'list' : tree, 'modalType' : type }));
         }
     });
 };

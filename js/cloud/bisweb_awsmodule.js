@@ -47,6 +47,23 @@ class AWSModule {
             this.fileSaveModal.fileRequestFn = this.createFileUploadRequest.bind(this);
         });
 
+        /*let publicS3 = new AWS.S3({
+            'accessKeyId' : 'AKIAI3GWGWL6RONRQZ6Q',
+            'secretAccessKey' : 'OMITTED FOR SECURITY',
+            'params': {
+                Bucket: 'hcp-openaccess-temp',
+            }
+        });
+
+        publicS3.putBucketCors( {}, (err, data) => {
+            if (err) { console.log('err in bucket cors', err); }
+        });
+
+        publicS3.listObjectsV2( {}, (err, data) => {
+            if (err) { console.log('err', err); return; }
+            
+            console.log('got objects', data);
+        });*/
     }
 
     /**
@@ -113,13 +130,13 @@ class AWSModule {
                         }
 
                         //S3 sends the data zipped
-                        let unzippedFile = wsutil.unzipFile(data.Body);
+                        //let unzippedFile = wsutil.unzipFile(data.Body);
                         cb();
 
-                        console.log('data', unzippedFile);
+                        console.log('data', data.Body);
 
                         resolve({ 
-                            data: unzippedFile, 
+                            data: data.Body, 
                             filename: params.name 
                         });
                     });
@@ -138,14 +155,12 @@ class AWSModule {
             'awsinfo': AWSParameters,
             'responseFunction': (url, body) => {
                 return new Promise( (resolve, reject) => {
-
-                    let zippedData = wsutil.zipFile(body);
                     let filename = params.name;
 
                     let uploadParams = {
                         'Key' : filename,
                         'Bucket' : obj.awsinfo.BucketName,
-                        'Body' : zippedData
+                        'Body' : body
                     };
 
                     this.s3.upload(uploadParams, (err, data) => {
@@ -189,6 +204,7 @@ class AWSModule {
      * @param {Object} opts - An options object
      * @param {Function} opts.callback - A callback function propagated from bis_webfileutil that will handle the non-AWS I/O for the retrieved data, , and a list of acceptable file suffixes.
      * @param {String} opts.title - The title to display on the load/save modal
+     * @param {Object} opts.AWSParameters - AWS parameters related to the bucket the user is trying to log in to.
      */
     wrapInAuth(command, opts) {
         console.log('opts', opts);
@@ -203,7 +219,7 @@ class AWSModule {
         let expireTime = AWS.config.credentials.expireTime ? Date.parse(AWS.config.credentials.expireTime) : -1;
 
         if (expireTime < Date.now()) {
-            this.awsAuthUser(parseCommand);
+            this.awsAuthUser(parseCommand, opts.AWSParameters);
             return;
         } else {
             parseCommand();
@@ -218,15 +234,15 @@ class AWSModule {
      * 2.) Attempts to register the user with an Amazon Cognito Identity pool authorized to access the relevant bucket. If successful, the user will be returned a set of credentials that expire in a short period of tiem (about an hour).
      * 
      * @param {Function} cb - Function to call after successful authentication
+     * @param {Object} bucketParams - S3 parameters related to the bucket the user is trying to log in to.
      */ 
-    awsAuthUser(cb) {
+    awsAuthUser(cb, bucketParams = null) {
 
         let returnf="./biswebaws.html";
         if (typeof window.BIS !=='undefined') {
             returnf="../build/web/biswebaws.html";
         }
 
-        console.log('returnf', returnf);
         let authWindow = window.open(returnf, '_blank', 'width=400, height=400');
         let idTokenEvent = (data) => {
             //console.log('storage event', data);

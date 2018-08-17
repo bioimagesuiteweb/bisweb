@@ -42,6 +42,7 @@ const gkey=keystore.GoogleDriveKey || "";
 const mkey=keystore.OneDriveKey || "";
 const userPreferencesLoaded = userPreferences.webLoadUserPreferences(bisdbase);
 
+const localforage = require('localforage');
 // Link File Server if not in Electron
 let bisweb_fileserverclient=null;
 if (!webutil.inElectronApp()) {
@@ -53,6 +54,18 @@ if (!webutil.inElectronApp()) {
 // Initial mode
 let fileMode='local';
 let fileInputElements= [];
+
+let awsbucketstorage = localforage.createInstance({
+    'driver' : localforage.INDEXEDDB,
+    'name' : 'bis_webfileutil', 
+    'version' : 1.0,
+    'size' : 10000,
+    'storeName' : 'AWSBuckets',
+    'description' : 'A database of AWS buckets that the user has attempted to connect to'
+});
+
+let awsmodal = null;
+let awsstoredbuckets = null;
 
 const webfileutils = {
 
@@ -110,6 +123,12 @@ const webfileutils = {
             case 'amazonaws' : fileMode = 'amazonaws'; break;
             case 'server' : fileMode = 'server'; break;
             default : fileMode = 'local';
+        }
+
+        if (fileMode === 'server') {
+            genericio.setFileServerObject(bisweb_fileserverclient);
+        } else {
+            genericio.setFileServerObject(null);
         }
 
         userPreferences.setItem('filesource',fileMode);
@@ -235,7 +254,7 @@ const webfileutils = {
         if (fileopts.force)
             fmode=fileopts.force;
 
-        let cbopts = { 'callback' : callback, 'title' : title, 'suffix' : suffix };
+        let cbopts = { 'callback' : callback, 'title' : title, 'suffix' : suffix, 'mode' : fmode };
         if (fileopts.save) {
             //if the callback is specified presumably that's what should be called
             //            console.log('opts', fileopts);
@@ -489,6 +508,216 @@ const webfileutils = {
             webutil.createMenuItem(bmenu, name, fn);
         }
     },
+
+    createAWSBucketMenu : function(bmenu) {
+
+        let createModal = () => {
+            if (!awsmodal) {
+                awsmodal = webutil.createmodal('AWS Buckets');
+                let tabView = $( `
+                <ul class="nav nav-tabs" id="aws-tab-menu" role="tablist">
+                    <li class="nav-item active">
+                        <a class="nav-link" id="selector-tab" data-toggle="tab" href="#aws-selector-tab-panel" role="tab" aria-controls="home" aria-selected="true">Select AWS Bucket</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="entry-tab" data-toggle="tab" href="#aws-entry-tab-panel" role="tab" aria-controls="entry" aria-selected="false">Enter New Bucket</a>
+                    </li>
+                </ul>
+                <div class="tab-content" id="aws-tab-content">
+                    <div class="tab-pane fade active in" id="aws-selector-tab-panel" role="tabpanel" aria-labelledby="selector-tab">
+                        <br>
+                        <div id="aws-bucket-selector-pane"></div>
+                    </div>
+                    <div class="tab-pane fade" id="aws-entry-tab-panel" role="tabpanel" aria-labelledby="profile-tab">
+                        <br>
+                        <div id="aws-bucket-entry-pane"></div>
+                    </div>
+                </div>
+                `);
+
+                let selectPane = this.createAWSBucketSelector(awsmodal, tabView);
+                tabView.find('#aws-bucket-selector-pane').append(selectPane);
+
+                let entryPane = this.createAWSBucketEntry();
+                tabView.find('#aws-bucket-entry-pane').append(entryPane);
+
+                awsmodal.body.append(tabView);
+                awsmodal.dialog.find('.modal-footer').remove();
+                
+
+                awsmodal.dialog.on('hidden.bs.modal', () => {
+                    let bucketSelectorDropdown = awsmodal.body.find('#bucket-selector-dropdown');
+                    bucketSelectorDropdown.empty(); //remove all option elements from the dropdown
+                });
+            }
+
+            console.log('awsmodal', awsmodal);
+            awsmodal.dialog.modal('show');
+            
+        };
+
+        webutil.createMenuItem(bmenu, 'AWS Selector', createModal);
+    },
+
+    createAWSBucketSelector : function(awsmodal, tabView) {
+
+        let selectContainer = $(`
+            <div class='container-fluid form-group'>
+                <label for='bucket-selector'>Select a Bucket:</label>
+                <select class='form-control' id='bucket-selector-dropdown'>
+                </select>
+                <div id='bucket-selector-table-container'></div>
+                <div class='btn-group' role=group' aria-label='Viewer Buttons' style='float : left, visibility : hidden'></div>   
+            </div>
+        `);
+
+        let confirmButton = webutil.createbutton({ 'name' : 'Confirm', 'type' : 'success', 'css' : { 'visibility' : 'hidden' } });
+        let cancelButton = webutil.createbutton({ 'name' : 'Cancel', 'type' : 'danger', 'css' : { 'visibility' : 'hidden' } });
+
+        let buttonGroup = selectContainer.find('.btn-group');
+        buttonGroup.append(confirmButton);
+        buttonGroup.append(cancelButton);
+
+        //delete the old dropdown list and recreate it using the fresh data from the application cache
+        let refreshDropdown = () => {
+
+            //clear out old options and read localStorage for new keys. 
+            let bucketSelectorDropdown = selectContainer.find('#bucket-selector-dropdown');
+            bucketSelectorDropdown.empty();
+
+            awsstoredbuckets = {};
+            bucketSelectorDropdown.append(`<option id='aws-empty-entry'></option>`);
+            awsbucketstorage.iterate( (value, key) => {
+                //data is stored as stringified JSON
+                try { 
+                    let bucketObj = JSON.parse(value);
+                    let entry = $(`<option id=${key}>${bucketObj.bucketName}</option>`);
+                    bucketSelectorDropdown.append(entry);
+                    awsstoredbuckets[key] = bucketObj;
+                } catch(e) {
+                    console.log('an error occured while parsing the AWS bucket data', e);
+                }
+
+            }).then( () => {
+                console.log('done iterating over aws bucket objects', awsstoredbuckets);
+            }).catch( (err) => {
+                console.log('an error occured while fetching values from localstorage', err);
+            });
+        };
+
+
+        //recreate the info table each time the user selects a different dropdown item
+        let dropdown = selectContainer.find('#bucket-selector-dropdown');
+        dropdown.on('change', () => {
+            let tableContainer = awsmodal.body.find('#bucket-selector-table-container');
+            tableContainer.empty();
+
+            let selectedItem = dropdown[0][dropdown[0].selectedIndex];
+            let selectedItemId = selectedItem.id;
+
+            if (selectedItemId !== 'aws-empty-entry') {
+                let selectedItemInfo = awsstoredbuckets[selectedItemId];
+                let tableHead = $(`
+                    <table class='table table-sm table-dark'>
+                        <thead> 
+                            <tr>
+                                <th scope="col">Bucket Name</th>
+                                <th scope="col">Username</th>
+                                <th scope="col">Public Access Key</th>
+                                <th scope="col">Secret Access Key</th>
+                            </tr>
+                        </thead>
+                            <tbody id='aws-selector-table-body' align='justify'>   
+                            </tbody>
+                    </table> 
+                `);
+
+                let tableRow = $(`
+                    <td class='bootstrap-table-entry'>${selectedItemInfo.bucketName}</td>
+                    <td class='bootstrap-table-entry'>${selectedItemInfo.userName}</td>
+                    <td class='bootstrap-table-entry'>${selectedItemInfo.accessKey}</td>
+                    <td class='bootstrap-table-entry'>${selectedItemInfo.secretKey}</td>
+                `);
+
+                tableHead.find('#aws-selector-table-body').append(tableRow);
+                tableContainer.append(tableHead);
+
+                //show confirm and cancel buttons
+                let selectorButtons = selectContainer.find('.btn-group').find('.btn');
+                for (let button of selectorButtons) {
+                    $(button).css('visibility', 'visible');
+                }
+            }
+        });
+
+        awsmodal.dialog.on('hidden.bs.modal', () => {
+            $('#bucket-selector-table-container').empty();
+            //show confirm and cancel buttons
+            let selectorButtons = selectContainer.find('.btn-group').find('.btn');
+            for (let button of selectorButtons) {
+                $(button).css('visibility', 'hidden');
+            }
+        });
+
+        confirmButton.on('click', () => {
+            //bisweb_awsmodule.
+        });
+
+        //we want the selector to populate both when the modal is opened and when the selector tab is selected
+        tabView.find('#selector-tab').on('show.bs.tab', refreshDropdown);
+        awsmodal.dialog.on('show.bs.modal', refreshDropdown);
+
+        return selectContainer;
+    },
+
+    createAWSBucketEntry : function() {
+        let entryContainer = $(`
+            <div class='container-fluid'>
+                <div class='form-group'>
+                    <label for='bucket'>Bucket Name:</label><br>
+                    <input name='bucket' class='bucket-input' type='text' class='form-control'><br>
+                    <label for='username'>Username:</label><br>
+                    <input name='username' class='username-input' type='text' class='form-control'><br>
+                    <label for='access-key'>Access Key Id:</label><br>
+                    <input name='access-key' class = 'access-key-input' type='text' class='form-control'><br>
+                    <label for='secret-key'>Secret Key Id:</label><br>
+                    <input name='secret-key' class = 'secret-key-input' type='text' class='form-control'><br>
+                </div>
+                <div class='btn-group' role=group' aria-label='Viewer Buttons' style='float: left'></div>
+            </div>
+        `);
+
+        let confirmButton = webutil.createbutton({ 'name': 'Confirm', 'type': 'success' });
+        let cancelButton = webutil.createbutton({ 'name': 'Cancel', 'type': 'danger' });
+
+        confirmButton.on('click', () => {
+
+
+            let paramsObj = {
+                'bucketName': entryContainer.find('.bucket-input')[0].value,
+                'userName': entryContainer.find('.username-input')[0].value,
+                'accessKey': entryContainer.find('.access-key-input')[0].value,
+                'secretKey': entryContainer.find('.secret-key-input')[0].value
+            };
+
+            //index contains the number of keys in the database
+            let key = 'awsbucket' + webutil.getuniqueid();
+            awsbucketstorage.setItem(key, JSON.stringify(paramsObj));
+
+        });
+
+        cancelButton.on('click', () => {
+            awsmodal.dialog.modal('hide');
+        });
+        
+        let buttonBar = entryContainer.find('.btn-group');
+        buttonBar.append(confirmButton);
+        buttonBar.append(cancelButton);
+
+        return entryContainer;
+    }
+
+
     
 };
 

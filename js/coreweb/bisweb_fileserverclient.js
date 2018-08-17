@@ -25,7 +25,7 @@ class BisWebFileServerClient {
         webutil.runAfterAllLoaded( () => {
 
             // Because this involves creating webcomponents (deep down, they need to be afterAllLoaded);
-            this.fileTreeDialog = new bisweb_filedialog('BisWeb File Server Connector');
+            this.fileLoadDialog = new bisweb_filedialog('BisWeb File Server Connector');
             this.fileSaveDialog = new bisweb_filedialog('Choose a save location', { 'makeFavoriteButton' : false, 'modalType' : 'save', 'displayFiles' : false  });
         });
 
@@ -62,32 +62,33 @@ class BisWebFileServerClient {
         }
         //file tree dialog needs to be able to call some of file server's code 
         //they are separated for modularity reasons, so to enforce the hierarchical relationship between the two fileserver provides the functions and the socket
-        this.fileTreeDialog.fileListFn = this.requestFileList.bind(this);
-        this.fileTreeDialog.fileRequestFn = this.invokeReadFilenameCallbackFunction.bind(this);
-        this.fileTreeDialog.socket = this.socket;
+        this.fileLoadDialog.fileListFn = this.requestFileList.bind(this);
+        this.fileLoadDialog.fileRequestFn = this.invokeReadFilenameCallbackFunction.bind(this);
+        this.fileLoadDialog.socket = this.socket;
 
+        this.fileSaveDialog.fileListFn = this.requestFileList.bind(this);
         this.fileSaveDialog.fileRequestFn = this.invokeWriteFilenameCallbackFunction.bind(this);
         this.fileSaveDialog.socket = this.socket;
 
         //add the event listeners for the control port
-        this.socket.addEventListener('close', (event) => {
+        let closeEvent = this.socket.addEventListener('close', (event) => {
             console.log('Socket closing', event);
         });
 
-        this.socket.addEventListener('error', (event) => {
+        // Handle Data From Server
+        let messageEvent = this.socket.addEventListener('message', (event) => {
+            this.handleServerResponse(event);
+        });
+
+        let errorEvent = this.socket.addEventListener('error', (event) => {
             console.log('error event', event);
             webutil.createAlert('Failed to connect to server: '+address+'. It may not exist.',true);
-            this.socket=removeEventListener('close');
-            this.socket=removeEventListener('message');
-            this.socket=removeEventListener('error');
+            this.socket=removeEventListener('close', closeEvent);
+            this.socket=removeEventListener('message', messageEvent);
+            this.socket=removeEventListener('error', errorEvent);
             this.socket=null;
         });
 
-
-        // Handle Data From Server
-        this.socket.addEventListener('message', (event) => {
-            this.handleServerResponse(event);
-        });
     }
 
     /** Handles response from server
@@ -121,7 +122,7 @@ class BisWebFileServerClient {
                 break;
             }
             case 'supplementalfiles': {
-                this.handleSupplementalFileRequest(data.payload.path, data.payload.list);
+                this.handleSupplementalFileRequest(data.payload);
                 break;
             }
             case 'error': {
@@ -184,28 +185,29 @@ class BisWebFileServerClient {
      * The file dialog will request additional files from the server if the user selects a folder that the dialog does not have the children for. 
      * This function adds the new files sent by the server to the existing file tree in the appropriate place.
      * 
-     * @param {String} path - The file path at which the new files should be added. 
-     * @param {Array} list - The children of the file specified by path, including their children to a depth of the server's discretion.
+     * @param {Object} payload - The full data package from the server.
+     * @param {String} payload.path - The file path at which the new files should be added. 
+     * @param {Array} payload.list - The supplemental files retrieved by the server. 
+     * @param {String} payload.modalType - The type of modal that the data should be appended to. Either 'load' or 'save'. 
      */
-    handleSupplementalFileRequest(path, list) {
+    handleSupplementalFileRequest(payload) {
 
         //file tree dialog keeps track of the data stored within it -- however the since the file server retrieves the new data it is responsible for adding it
-        console.log('handle supplemental file request', this.fileTreeDialog.fileList);
+        let requestingDialog = (payload.modalType === 'load') ? this.fileLoadDialog : this.fileSaveDialog;
 
         //first two entries in split paths will be '' 'home' and '[user]' and since the file tree starts below those we can safely remove them.
-
-        let splitPaths = path.split('/');
+        let splitPaths = payload.path.split('/');
         splitPaths.splice(0,3);
         let formattedPath = splitPaths.join('/');
         console.log('splitPaths', splitPaths);
 
-        let entry = wsutil.searchTree(formattedPath, this.fileTreeDialog.fileList);
+        let entry = requestingDialog.searchTree(formattedPath);
         if (entry) {
-            entry.children = list;
+            entry.children = payload.list;
             entry.expand = false;
-            this.fileTreeDialog.createFileList(list, { 'path': formattedPath, 'list': entry.children });
+            requestingDialog.createFileList(payload.list, { 'path': formattedPath, 'list': entry.children });
         } else {
-            console.log('could not find', path, 'in the list of files');
+            console.log('could not find', payload.path, 'in the list of files');
         }
     }
 
@@ -219,8 +221,8 @@ class BisWebFileServerClient {
      */
     displayFileList(response) {
         if (response.type === 'load') {
-            this.fileTreeDialog.createFileList(response.data,null,this.lastOpts);
-            this.fileTreeDialog.showDialog();
+            this.fileLoadDialog.createFileList(response.data,null,this.lastOpts);
+            this.fileLoadDialog.showDialog();
         } else if (response.type === 'save') {
             this.fileSaveDialog.createFileList(response.data,null,this.lastOpts);
             this.fileSaveDialog.showDialog();

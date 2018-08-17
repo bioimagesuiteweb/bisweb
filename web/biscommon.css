@@ -334,4 +334,9 @@ body {
     transform: scale(-1, 1);
 }
 
+.bootstrap-table-entry {
+    padding-left : 8px;
+    word-break : break-all;
+}
+
 
