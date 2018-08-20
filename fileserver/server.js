@@ -46,6 +46,9 @@ let globalPortNumber=-1;
 let globalDataPortNumber=-2;
 let globalHostname="";
 
+//flag denoting whether the server will accept write requests 
+
+let readOnly;
 
 // password token
 // create function and global variable
@@ -78,7 +81,7 @@ let createPassword=function(abbrv=0) {
  * @param {Function} readycb - A callback to invoke when the server emits its 'listening' event. Optional.
  * @returns The server instance.  
  */
-let startServer = (hostname, port, newport=true,readycb = () => {}) => {
+let startServer = (hostname, port, newport = true, readycb = () => {}) => {
 
     let newServer = net.createServer(handleConnectionRequest);
     newServer.listen(port, hostname, readycb);
@@ -254,9 +257,10 @@ let prepareForControlFrames = (socket) => {
                 handleFileFromClient(decoded, parsedControl, socket);
                 break;
             }
-            case 8: { handleCloseFromClient(decoded, parsedControl, socket);
-                      break;
-                    }
+            case 8: { 
+                handleCloseFromClient(decoded, parsedControl, socket);
+                break;
+            }
         }
     });
 
@@ -396,6 +400,12 @@ let prepareForDataFrames = (socket) => {
  * @param {Socket} socket - The control socket that will negotiate the opening of the data socket and send various communications about the transfer. 
  */
 let getFileFromClientAndSave = (upload, control, socket) => {
+
+    if (readOnly) {
+        console.log('Server is in read-only mode and will not accept writes.');
+        socket.write(formatPacket('serverreadonly', ''));
+        return;
+    }
 
     fileInProgress = {
         'totalSize': upload.totalSize,
@@ -718,6 +728,7 @@ let findFreePort = () => {
 program
     .option('-v, --verbose', 'Whether or not to display messages written by the server')
     .option('-p, --port <n>', 'Which port to start the server on')
+    .option('--read-only', 'Whether or not the server should accept requests to write files')
     .parse(process.argv);
 
 
@@ -725,6 +736,9 @@ program
 let portno=8081;
 if (program.port)
     portno=parseInt(program.port)
+
+console.log('program', program);
+readOnly = program.readOnly ? program.readOnly : false;
 
 startServer('localhost', portno, true, () => {
     console.log('Server started ',portno)

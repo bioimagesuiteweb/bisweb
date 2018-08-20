@@ -393,6 +393,8 @@ class BisWebFileServerClient {
                     fileTransferSocket.addEventListener('open', () => {
                         doDataTransfer(body);
                     });
+                } else if (message.type === 'serverreadonly') {
+                    webutil.createAlert('The server is set to read-only mode and will not save files.', true);
                 } else {
                     console.log('heard unexpected message', message, 'not opening data socket');
                     eb();
