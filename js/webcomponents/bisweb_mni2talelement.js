@@ -61,12 +61,8 @@ class Mni2TalElement extends HTMLElement {
             }
         };
 
-        let iconpath="";
-        if (typeof window.BIS !=='undefined') {
-            iconpath=window.BIS.iconpath;
-        }
-
-        $('#blogo').append(`<a href="./index.html" target="_blank"><img src="${iconpath}images/bioimagesuite.png" height="50px" id="bislogo" style="margin-top:0px;margin-right:20px;margin-left:15px"></a>`);
+        let imagepath=webutil.getWebPageImagePath();
+        $('#blogo').append(`<a href="./index.html" target="_blank"><img src="${imagepath}/bioimagesuite.png" height="50px" id="bislogo" style="margin-top:0px;margin-right:20px;margin-left:15px"></a>`);
         
         
         window.addEventListener( 'resize', rs);

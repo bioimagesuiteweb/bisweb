@@ -25,13 +25,14 @@ const baseutils = require('baseutils');
 const biswrap = require('libbiswasm_wrapper');
 const boldon = "";
 const boldoff = "";
+
 //Image processing functions are expected to be templated as Promises.
 let initialError = function (extra) {
     console.log(`${extra}\nUsage: bisweb modulename [ options ].\n`);
     console.log(` Type 'node bisweb [function name] --help' for more information`);
-    let outstring = Object.keys(modules.moduleNamesArray).join(" ");
+    let outstring = Object.keys(modules.moduleNamesArray).join("\n");
 
-    console.log('\tThe list of available modules is :', outstring);
+    console.log('\tThe list of available modules is :\n', outstring);
 };
 
 /**

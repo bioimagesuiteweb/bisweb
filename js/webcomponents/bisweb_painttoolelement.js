@@ -807,7 +807,7 @@ class PaintToolElement extends HTMLElement {
         var f1 = new dat.GUI({autoPlace: false});
         basediv.append(f1.domElement);
         var c1=f1.addFolder('Brush Parameters');
-        c1.add(this.internal.data,'brushsize',1,20).name("Brush Size").step(1);
+        c1.add(this.internal.data,'brushsize',1,25).name("Brush Size").step(1);
 
 
         var r=this.internal.volume.getIntensityRange();
@@ -990,6 +990,10 @@ class PaintToolElement extends HTMLElement {
         if (mousestate === undefined || this.internal.objectmap===null || this.internal.data.enabled===false) {
             return;
         }
+
+
+        if (mousestate===-1)
+            return;
 
         if (mousestate===2) {
             this.internal.undostack.addOperation(this.internal.currentundoarray);

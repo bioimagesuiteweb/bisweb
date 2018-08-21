@@ -1,0 +1,69 @@
+{
+	"variables": [
+	{
+		"name" : "input",
+		"files" : [
+			"a1.nii.gz",
+			"a2.nii.gz", 
+			"a3.nii.gz"
+		]
+	},
+	{
+		"name": "mask",
+		"files": [
+			"mask.nii.gz"
+		]
+	},
+	{
+        "name" : "out1",
+        "extension" : ".nii.gz",
+		"depends": [
+			"%input%",
+			"%mask%"
+		]
+	},
+	{
+        "name": "out2",
+        "extension" : ".nii.gz", 
+		"depends": [
+			"%out1%"
+		]
+	},
+	{
+		"name": "out3",
+		"extension": ".nii.gz",
+		"depends": [
+			"%out2%"
+		]
+	}
+	],
+	"jobs": [
+		{
+			"name" : "mask",
+			"command": "node bisweb.js",
+			"subcommand" : "maskImage",
+			"rule": "append",
+			"appendText": "masked",
+			"options": "--debug true --input %input% --mask %mask% --output %out1%"
+		},
+		{
+			"name" : "smooth",
+			"subcommand": "smoothImage",
+			"rule": "append",
+			"appendText": "smoothed",
+			"options": "--debug true --input %out1% --output %out2%"
+		},
+		{
+			"name" : "threshold",
+			"subcommand": "thresholdImage",
+			"rule": "append",
+			"appendText": "thresholded",
+			"options": "--debug true --input %out2% --output %out3%"
+		},
+		{
+			"name" : "hello",
+			"command" : "echo",
+			"options" : "--input %out3%"
+		}
+	]
+}

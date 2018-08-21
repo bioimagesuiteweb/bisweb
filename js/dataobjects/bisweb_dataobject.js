@@ -143,7 +143,7 @@ class BisWebDataObject {
         try {
             b=JSON.parse(text);
         } catch(e) {
-            console.log('Failed to parse text');
+            console.log('Failed to parse text', e);
             return false;
         }
         if (b.bisformat!==this.jsonformatname)

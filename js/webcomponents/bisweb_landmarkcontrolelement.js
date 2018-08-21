@@ -111,8 +111,6 @@ class LandmarkControlElement extends HTMLElement {
                 dummy : false,
             },
             mousestate : -2,
-            lastpoint : null,
-            lastplane : null,
         };
 
         this.panel=null;
@@ -691,14 +689,14 @@ class LandmarkControlElement extends HTMLElement {
         var sl=f1.add(this.internal.data,'currentname',this.internal.data.allnames).name("CurrentSet");
         sl.onChange(s1_on_cb);
 
-        webutil.addtooltip($(sl.domElement.children[0]),
-                           {  position: "top",
-                              tooltip : "The landmark tool can edit upto "+MAXSETS+" of sets of landmarks at a time. Pick the current one to manipulate"});
+        //        webutil.addtooltip($(sl.domElement.children[0]),
+        //                         {  position: "top",
+        //                          tooltip : "The landmark tool can edit upto "+MAXSETS+" of sets of landmarks at a time. Pick the current one to manipulate"});
         
         var dp=f1.add(this.internal.data,'showmode',this.internal.data.allshowmodes).name("Sets to Display");
-        webutil.addtooltip($(dp.domElement.children[0]),
-                           {  position: "left",
-                              tooltip : "Display Mode. Current = show current set. Custom: Display sets that have their `advanced' property show enabled. All/None = obvious." });
+        //        webutil.addtooltip($(dp.domElement.children[0]),
+        //                         {  position: "left",
+        //                          tooltip : "Display Mode. Current = show current set. Custom: Display sets that have their `advanced' property show enabled. All/None = obvious." });
 
         let dp_on_cb=function() {
             self.showhidemeshes();
@@ -716,8 +714,8 @@ class LandmarkControlElement extends HTMLElement {
         en.onChange(f1_on_cb);
 
         webutil.addtooltip($(en.domElement.children[0]),
-                           { position: "right",
-                             tooltip : "Enable Mouse. If enabled clicking in the viewer will either add a new landmark or move the current one (in ``pick'' mode). If current set is not displayed this control is disabled." });
+                           { position: "top",
+                             tooltip : "Clicking in the viewer will either add a new landmark or move the current one (in pick mode)" });
         this.internal.enableelement=en.domElement.children[0];
 
         webutil.removedatclose(f1);
@@ -742,7 +740,7 @@ class LandmarkControlElement extends HTMLElement {
         this.internal.currentpointselect=webutil.createselect({parent : elem1,
                                                                values : [ 'none' ],
                                                                tooltip :
-                                                               "Select the current point. If the mouse is enabled this will also ``pick'' the point, else it will place the cross hairs on it.",
+                                                               "Select the current point.",
                                                                callback : function(e) {
                                                                    self.selectlandmark(e.target.value,true);
                                                                    self.picklandmark(true);
@@ -774,7 +772,7 @@ class LandmarkControlElement extends HTMLElement {
         
         webutil.createbutton({ type : "warning",
                                name : "Undo",
-                               position : "bottom",
+                               position : "right",
                                tooltip : "Click this to undo the last edit operation.",
                                parent : landmarkbar,
                                callback : undo_cb,
@@ -802,7 +800,7 @@ class LandmarkControlElement extends HTMLElement {
         let rename_cb=function() { self.renamecurrentlandmark();};
         webutil.createbutton({ type : "primary",
                                name : "Rename",
-                               position : "right",
+                               position : "left",
                                tooltip : "Click this to rename the current landmark",
                                parent : landmarkbar,
                                callback : rename_cb,
@@ -845,7 +843,7 @@ class LandmarkControlElement extends HTMLElement {
         
         webutil.createbutton({ type : "danger",
                                name : "Delete All",
-                               position : "left",
+                               position : "right",
                                tooltip : "Click this to delete all landmarks in this set",
                                parent : bbar0,
                                callback : clear_cb,
@@ -854,7 +852,7 @@ class LandmarkControlElement extends HTMLElement {
         let update_cb=function() { self.updatelandmarkproperties();};
         webutil.createbutton({ type : "primary",
                                name : "Display Properties",
-                               position : "right",
+                               position : "bottom",
                                tooltip : "Click this to set advanced display properties for this set (color,size)",
                                parent : bbar0,
                                callback :  update_cb,
@@ -876,6 +874,8 @@ class LandmarkControlElement extends HTMLElement {
                                      });
 
         let save_cb=function(f) {
+            f=f || 'landmarks.ljson';
+            console.log('f=',f);
             let suffix=f.split(".").pop();
             if (suffix==="land")
                 return self.exportlandmarks(f);
@@ -938,7 +938,7 @@ class LandmarkControlElement extends HTMLElement {
         
         var pset=this.internal.landmarkset[this.internal.currentsetindex];
         var doselect = false;
-        
+
         if (!this.internal.pickmode) {
             pset.addpoint(mm);
             doselect=true;
@@ -1044,8 +1044,6 @@ class LandmarkControlElement extends HTMLElement {
             return;
 
         if (mousestate===0) {
-            if (this.internal.lastpoint!==null)
-                this.updatemousecoordinates(this.internal.lastpoint,this.internal.lastplane,2);
             this.setcursor(mm,true); 
         } else if (mousestate===1 || mousestate===-1) {
             this.setcursor(mm,true);
@@ -1054,17 +1052,11 @@ class LandmarkControlElement extends HTMLElement {
             this.setcursor(mm,false);
             if (this.internal.pickmode)
                 this.picklandmark(false);
-            this.internal.lastpoint=null;
         }
 
         if (mousestate!==2) {
-            this.internal.lastpoint=mm.slice(0);
             this.internal.mousestate=mousestate;
-            this.internal.lastplane=plane;
-        } else {
-            this.internal.lastpoint=null;
-        }
-        
+        }         
     }
 }
 

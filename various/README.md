@@ -9,3 +9,5 @@ lThis directory contains the following:
     wasm/libbiswasm_wrapper.js to find out when these were compiled.)
 * `other` -- files used for the bisweb.yale.edu server (downloads mostly)
 * `txt` -- various license files (used when building)
+* `examples` -- contains an example external project that links into
+  bisweb. See the README.md file in this zip file for more info.

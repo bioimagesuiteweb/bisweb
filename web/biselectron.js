@@ -239,11 +239,10 @@ var createConsole=function() {
     state.console.setMenuBarVisibility(false);
     if (process.platform === 'darwin') 
         state.console.setMenu(null);
-
-    state.console.loadURL(fullURL);    
+    
+    state.console.loadURL(fullURL);
     state.console.minimize();
     state.console.hide();
-
     
     state.console.on('close',  function (e) {
         e.preventDefault();

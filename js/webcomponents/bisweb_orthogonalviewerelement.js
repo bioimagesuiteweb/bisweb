@@ -646,9 +646,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                                          'z-index' : 641,
                                        });
 
-            this.internal.midlinemessage = $(`<div align="center" style="padding:2px; width:50vw; left:25vw; top:${top}px; height:40px;` +
-                                             'border-radius:30px;background-color:#884400; z-index:5000; position: absolute; color:#ffffff">' +
-                                             '<H4>Drag the line to adjust the relative width of the two viewers</H4></div>');
+            this.internal.midlinemessage = $(`<div align="center" style="padding:2px; width:50vw; left:25vw; top:${top}px; height:40px;border-radius:30px;background-color:#884400; z-index:5000; position: absolute; color:#ffffff"><H4>Drag the line to adjust the relative width of the two viewers</H4></div>`);
 
             
             modifyCallbacks(0);
@@ -1262,7 +1260,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         
         //this.internal.layoutcontroller.getcorecontrols().empty();
         
-        let dpname = [ 'Slices', 'Sagittal', 'Coronal', 'Axial' ];//, '3D Only','3D On Top' ];
+        let dpname = [ 'Slices', 'Sagittal', 'Coronal', 'Axial' , 'Slices+3D','3D Only' ];
         let data = this.internal.datgui.data;
         
         data.displaymode = dpname[0];
