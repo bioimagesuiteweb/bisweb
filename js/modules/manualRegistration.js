@@ -21,7 +21,7 @@ const biswrap = require('libbiswasm_wrapper');
 const baseutils=require("baseutils");
 const BaseModule = require('basemodule.js');
 const BisWebLinearTransformation = require('bisweb_lineartransformation.js');
-
+const xformutil=require('bis_transformationutil.js');
 /**
  * Applies Gaussian projecting to an image using a given sigma (kernel size and strength) and radius factor. 
  */
@@ -133,6 +133,15 @@ class ManualRegistrationModule extends BaseModule {
                     "high": 133.0,
                     "step" : 1.0,
                 },
+                {
+                    "name": "Use Header",
+                    "description": "use header orientation for initial rotation matrix",
+                    "priority": 9,
+                    "advanced": false,
+                    "type": "boolean",
+                    "default": true,
+                    "varname": "useheader"
+                },
                 baseutils.getDebugParam(),
             ]
         };
@@ -158,15 +167,44 @@ class ManualRegistrationModule extends BaseModule {
         let linear=new BisWebLinearTransformation(1); 
         let dim2=target.getDimensions();
         let spa2=target.getSpacing();
+
+
+        let useheader=this.parseBoolean(vals.useheader);            
+        let o1=reference.getOrientationName();
+        let o2=target.getOrientationName();
+        let headertransform=null;
+        if (o1!==o2 && useheader) {
+            headertransform=xformutil.computeHeaderTransformation(reference,target);
+            // Center about resliced version of image not original
+            dim2=dim;
+            spa2=spa;
+        } else {
+            useheader=false;
+        }
         
         linear.setShifts(dim,spa,dim2,spa2);
         linear.setParameterVector( [ tx,ty,tz,rx,ry,rz,sc], { scale:true, rigidOnly:false });
-        console.log('oooo Reslicing ');
-        this.outputs['output']=linear;
+
+
+        
+        if (useheader) {
+            this.outputs['output']=xformutil.computeCombinedTransformation(linear,headertransform);
+            linear=this.outputs['output'];
+        }  else {
+            this.outputs['output']=linear;
+        }
+
+        
+        console.log('oooo Reslicing ',linear.getDescription());
 
         return new Promise( (resolve, reject) => {
             biswrap.initialize().then(() => {
+                //                console.log('Reference=',reference.getDescription(),reference.getHeader().getDescription());
+                //                console.log('Target=',target.getDescription(),target.getHeader().getDescription());
                 this.outputs['resliced']=baseutils.resliceRegistrationOutput(biswrap,reference,target,linear);
+
+                //                let out=this.outputs['resliced'];
+                //                console.log('Out=',out.getDescription(),out.getHeader().getDescription());
                 resolve();
             }).catch( (e) => {
                 reject(e.stack);
