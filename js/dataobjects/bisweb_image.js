@@ -1518,6 +1518,9 @@ class BisWebImage extends BisWebDataObject {
         @alias BisImageUtilities~permuteDataToMatchDesiredOrientation
     */
     static permuteDataToMatchDesiredOrientation(internal,inarray,inoffset,outarray,forceorient) {
+
+
+        //TODO: properly fix matrices 
         
         let dim = [ internal.dimensions[0],internal.dimensions[1],internal.dimensions[2] ];
         let framesize=dim[0]*dim[1]*dim[2];
