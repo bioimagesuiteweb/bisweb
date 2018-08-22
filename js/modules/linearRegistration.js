@@ -21,10 +21,7 @@ const biswrap = require('libbiswasm_wrapper');
 const BaseModule = require('basemodule.js');
 const baseutils = require('baseutils.js');
 const genericio = require('bis_genericio.js');
-const bisutil=require('bis_util');
-const numeric=require('numeric');
-const BisWebLinearTransformation = require('bisweb_lineartransformation.js');
-
+const xformutil=require('bis_transformationutil.js');
 
 /**
  * Runs linear registration on an image set given a reference image and returns the set of transformations required
@@ -69,7 +66,7 @@ class LinearRegistrationModule extends  BaseModule {
         console.log('oooo invoking: linearRegistration', JSON.stringify(vals),'\noooo'); 
         let target = this.inputs['target'];
         let reference = this.inputs['reference'];
-        let transform = this.inputs['initial'] || 0;
+        let initial = this.inputs['initial'] || 0;
 
         if (genericio.getenvironment()!=='node') {
             vals.doreslice=true;
@@ -77,87 +74,40 @@ class LinearRegistrationModule extends  BaseModule {
         }
 
         let useheader=this.parseBoolean(vals.useheader);
+        let centeronrefonly=false;
+        
+        if (xformutil.isTransformIdentityOrNULL(initial) ) {
 
-        if (useheader) {
-
-            if (transform)
-                console.log('Transform = ',transform.getDescription());
-            
-            // Create transformation
-            //transform=new BisWebLinearTransformation();
-
-            let h = [ reference.getHeader(), target.getHeader() ];
-            let dm = [ reference.getDimensions(), target.getDimensions() ];
-            let sp = [ reference.getSpacing(), target.getSpacing() ];
-            let mat = [ null,null];
-            
-            let names=[ "srow_x", "srow_y", "srow_z" ];
-            for (let i=0;i<h.length;i++) {
-                mat[i]=numeric.identity(4);
-
-                let tm=numeric.identity(4);
+            if (useheader) {
+                let o1=reference.getOrientationName();
+                let o2=target.getOrientationName();
                 
-                for (let j=0;j<names.length;j++) {
-                    let row=h[i].struct[names[j]];
-                    for (let k=0;k<=2;k++)
-                        tm[j][k]= row[k];
+                if (o1!==o2) {
+                    centeronrefonly=true;
+                    initial=xformutil.computeHeaderTransformation(reference,target,false);
+                    console.log('oooo Using header to initialize to first reslicing for orientation centeronrefonly=',centeronrefonly);
                 }
-
-                let s=numeric.identity(4);
-                for (let j=0;j<=2;j++) {
-                    s[j][j]=1.0/sp[i][j];
-                }
-
-                //                console.log('-----\n----- Image ',i,'----------\n-----',dm[i],sp[i]);
-                //              console.log('Orig Matrix',tm,s);
-                mat[i]=numeric.dot(tm,s);
-
-                //                console.log('Orient Matrix=',mat[i]);
             }
-            let comb=numeric.dot(numeric.inv(mat[1]),mat[0]);
-//            console.log('Initial combined=',comb,'\n\n\n');
-            let center=[ bisutil.zero(4,1),bisutil.zero(4,1) ];
-            for (let i=0;i<=1;i++) {
-                for (let j=0;j<=2;j++) { 
-                    center[i][j]=0.5* (dm[i][j]-1)*sp[i][j];
-                }
-  //              console.log('Center=',center[i],'\n\n');
-            }
-            let shift=numeric.dot(comb,center[0]);
-            let newmat=numeric.identity(4);
-            console.log('Shift = ',shift);
-            for (let i=0;i<=2;i++)
-                newmat[i][3]=(center[1][i]-shift[i]);
-
-            let finalcombo=numeric.dot(newmat,comb);
+        } else {
+            centeronrefonly=true;
+            console.log('oooo an actual initial transformation is specified, assume centeronrefonly=',centeronrefonly);
             
-            //        console.log('Combo=',finalcombo);
-
-            let shift2=numeric.dot(finalcombo,center[0]);
-            console.log('Shift2=',shift2, '\ncenter2=',center[1]);
-            transform=new BisWebLinearTransformation();
-            transform.setMatrix(finalcombo);
-            console.log('oooo Using Header, I created an initial transformation = ',transform.getDescription());
-            
-
         }
+
+        if (!centeronrefonly) {
+            console.log('oooo same orientation and no initial transformation therefore center on both ref and target');
+        }
+
         
         return new Promise( (resolve, reject) => {
             biswrap.initialize().then( () => {
 
-                let temptarget=target;
-                let initial=transform;
-                if (useheader) {
-                    temptarget=baseutils.resliceRegistrationOutput(biswrap,reference,target,transform);
-                    initial=0;
-                    
-                    console.log('oooo Using header to initialize to first reslicing for orientation');
-                }
                 
-                let matr = biswrap.runLinearRegistrationWASM(reference, temptarget, initial, {
+                let matr = biswrap.runLinearRegistrationWASM(reference, target, initial, {
                     'intscale' : parseInt(vals.intscale),
                     'numbins' : parseInt(vals.numbins),
                     'levels' : parseInt(vals.levels),
+                    'centeronrefonly' : this.parseBoolean(centeronrefonly),
                     'smoothing' : parseFloat(vals.imagesmoothing),
                     'optimization' : baseutils.getOptimizationCode(vals.optimization),
                     'stepsize' : parseFloat(vals.stepsize),
@@ -170,13 +120,6 @@ class LinearRegistrationModule extends  BaseModule {
                     'debug' : this.parseBoolean(vals.debug),
                     'return_vector' : true}, this.parseBoolean(vals.debug));
 
-                if (initial===0 && useheader) {
-                    let m1=transform.getMatrix();
-                    let m2=matr.getMatrix();
-                    let m3=numeric.dot(m1,m2);
-                    matr.setMatrix(m3);
-                    console.log('oooo Post combining matrix with header adjustment',m2,'--->',m3)
-                } 
                 this.outputs['output'] = matr;
                 
                 if (vals.doreslice) 
