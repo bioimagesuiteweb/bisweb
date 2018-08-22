@@ -17,10 +17,11 @@
 
 'use strict';
 
-const biswrap = require('libbiswasm_wrapper');
+const biswrap = require('libbiswasm_wrapper')
 const BaseModule = require('basemodule.js');
 const baseutils = require('baseutils.js');
 const genericio = require('bis_genericio.js');
+const xformutil=require('bis_transformationutil.js');
 
 /**
  * Aligns a set of images to a reference image using nonlinear registration and returns the set of transformations
@@ -101,6 +102,17 @@ class NonLinearRegistrationModule extends BaseModule {
             "high" : 1.0,
         });
 
+        des.params.push({
+            "name": "Header Orient",
+            "description": "use header orientation for initial matrix",
+            "priority": 10,
+            "advanced": false,
+            "type": "boolean",
+            "default": true,
+            "varname": "useheader"
+        });
+
+
         baseutils.setParamDefaultValue(des.params,'debug',true);
         
         return des;
@@ -127,10 +139,37 @@ class NonLinearRegistrationModule extends BaseModule {
                 
                 if (linearmode>=0) {
 
+                    let useheader=this.parseBoolean(vals.useheader);
+                    let centeronrefonly=false;
+                    if (xformutil.isTransformIdentityOrNULL(initial) ) {
+                        
+                        if (useheader) {
+                            let o1=reference.getOrientationName();
+                            let o2=target.getOrientationName();
+                            
+                            if (o1!==o2) {
+                                centeronrefonly=true;
+                                initial=xformutil.computeHeaderTransformation(reference,target,false);
+                                console.log('oooo Using header to initialize to first reslicing for orientation centeronrefonly=',centeronrefonly);
+                            }
+                        }
+                    } else {
+                        centeronrefonly=true;
+                        console.log('oooo an actual initial transformation is specified, assume centeronrefonly=',centeronrefonly);
+                        
+                    }
+
+                    if (!centeronrefonly) {
+                        console.log('oooo same orientation and/or no initial transformation therefore center on both ref and target');
+                    }
+
+
+
                     initial = biswrap.runLinearRegistrationWASM(reference, target, transform,{
                         'intscale' : parseInt(vals.intscale),
                         'numbins' : parseInt(vals.numbins),
                         'levels' : parseInt(vals.levels),
+                        'centeronrefonly' : this.parseBoolean(centeronrefonly),
                         'steps' : parseInt(vals.steps),
                         'stepsize' : parseFloat(vals.stepsize),
                         'smoothing' : parseFloat(vals.imagesmoothing),

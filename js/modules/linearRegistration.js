@@ -95,7 +95,7 @@ class LinearRegistrationModule extends  BaseModule {
         }
 
         if (!centeronrefonly) {
-            console.log('oooo same orientation and no initial transformation therefore center on both ref and target');
+            console.log('oooo same orientation and/or no initial transformation therefore center on both ref and target');
         }
 
         
