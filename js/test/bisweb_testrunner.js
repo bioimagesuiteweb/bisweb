@@ -76,8 +76,6 @@ class BiswebTestRunner extends HTMLElement {
                 console.log('test failed name', currentTest.name, e);
                 failedTests.push(currentTest.name);
 
-                console.log('failed test', currentTest.name);
-
                 index = index + 1;
                 if (index < this.testList.length) {
                     runTest(this.testList[index]);

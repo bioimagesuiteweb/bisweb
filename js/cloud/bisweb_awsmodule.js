@@ -6,6 +6,7 @@ const AWSParameters = require('../../web/aws/awsparameters.js');
 const bis_webutil = require('bis_webutil.js');
 const wsutil = require('wsutil');
 const bisweb_filedialog = require('bisweb_filedialog.js');
+const bisweb_serverregression = require('../test/bisweb_serverregression');
 
 
 /**
@@ -47,23 +48,11 @@ class AWSModule {
             this.fileSaveModal.fileRequestFn = this.createFileUploadRequest.bind(this);
         });
 
-        /*let publicS3 = new AWS.S3({
-            'accessKeyId' : 'AKIAI3GWGWL6RONRQZ6Q',
-            'secretAccessKey' : 'OMITTED FOR SECURITY',
-            'params': {
-                Bucket: 'hcp-openaccess-temp',
-            }
+        bisweb_serverregression.connectToServer().then( () => {
+            console.log('server test succeeded');
+        }).catch( (e) => {
+            console.log('server test failed', e);
         });
-
-        publicS3.putBucketCors( {}, (err, data) => {
-            if (err) { console.log('err in bucket cors', err); }
-        });
-
-        publicS3.listObjectsV2( {}, (err, data) => {
-            if (err) { console.log('err', err); return; }
-            
-            console.log('got objects', data);
-        });*/
     }
 
     /**

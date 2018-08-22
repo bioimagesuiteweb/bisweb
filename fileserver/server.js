@@ -107,6 +107,7 @@ let startServer = (hostname, port, newport = true, readycb = () => {}) => {
     
         //parse websocket key out of response
         let websocketKey;
+        
         let handshake = (chunk) => {
             let decodedChunk = new StringDecoder('utf-8').write(chunk);
             let headers = decodedChunk.split('\n');
@@ -210,7 +211,8 @@ let authenticate = (socket) => {
         let password = wsutil.decodeUTF8(decoded, frame.parsedControl);
 
         console.log('---- entered password');
-
+        console.log('---- sent by client:', password);
+        
         if (hotp.check(parseInt(password), secret, onetimePasswordCounter) || (insecure && password.length<1)) {
             console.log('++++ Starting helper server');
             socket.removeListener('data', readOTP);
@@ -495,7 +497,7 @@ let serveFileList = (socket, basedir, type, depth = 2) => {
                 if (err) { reject(err); }
 
                 //remove hidden files/folders from results
-                let validFiles = files.filter((unfilteredFile) => { return unfilteredFile.charAt(0) !== '.'; });
+                let validFiles = files.filter( (unfilteredFile) => { return unfilteredFile.charAt(0) !== '.'; });
                 let expandInnerDirectory = (pathname, treeEntry) => {
                     return new Promise((resolve, reject) => {
                         //if file is a directory, expand it and add its children to fileTree recursively
@@ -737,7 +739,6 @@ let portno=8081;
 if (program.port)
     portno=parseInt(program.port)
 
-console.log('program', program);
 readOnly = program.readOnly ? program.readOnly : false;
 
 startServer('localhost', portno, true, () => {

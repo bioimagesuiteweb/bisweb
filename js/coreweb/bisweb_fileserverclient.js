@@ -96,7 +96,7 @@ class BisWebFileServerClient {
      */
     handleServerResponse(event) {
         
-        console.log('received data: '+JSON.stringify(event));
+        console.log('received data: ', event);
         let data;
         
         //parse stringified JSON if the transmission is text
@@ -116,7 +116,6 @@ class BisWebFileServerClient {
                 this.handleDataReceivedFromServer(data.payload,false);
                 break;
             }
-            
             case 'filelist':  {
                 this.displayFileList(data.payload);
                 break;
@@ -136,7 +135,7 @@ class BisWebFileServerClient {
                 break;
             }
             case 'authenticate': {
-                this.socket.send(this.password);
+                this.socket.send(this.password || '');
                 break;
             }
             case 'badauth':  {
@@ -152,7 +151,7 @@ class BisWebFileServerClient {
 
                 setTimeout( () => {
                     if (this.lastCommand) {
-                        this.wrapInAuth(this.lastCommand,this.lastOpts);
+                        this.wrapInAuth(this.lastCommand, this.lastOpts);
                         this.lastCommand=null;
                     }
                 },100);
