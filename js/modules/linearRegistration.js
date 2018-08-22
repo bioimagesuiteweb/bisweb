@@ -94,11 +94,6 @@ class LinearRegistrationModule extends  BaseModule {
             
         }
 
-        if (!centeronrefonly) {
-            console.log('oooo same orientation and/or no initial transformation therefore center on both ref and target');
-        }
-
-        
         return new Promise( (resolve, reject) => {
             biswrap.initialize().then( () => {
 

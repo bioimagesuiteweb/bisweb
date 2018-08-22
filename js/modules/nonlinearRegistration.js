@@ -17,7 +17,7 @@
 
 'use strict';
 
-const biswrap = require('libbiswasm_wrapper')
+const biswrap = require('libbiswasm_wrapper');
 const BaseModule = require('basemodule.js');
 const baseutils = require('baseutils.js');
 const genericio = require('bis_genericio.js');
@@ -136,36 +136,28 @@ class NonLinearRegistrationModule extends BaseModule {
             biswrap.initialize().then( () => {
 
                 let initial=transform;
+
+                let useheader=this.parseBoolean(vals.useheader);
+                let centeronrefonly=false;
+                if (xformutil.isTransformIdentityOrNULL(initial)) {
+                    if (useheader) {
+                        let o1=reference.getOrientationName();
+                        let o2=target.getOrientationName();
+                        if (o1!==o2) {
+                            centeronrefonly=true;
+                            console.log("oooo Creating orientation mapping transformation to initialize either linear or nonlinear mapping");
+                            initial=xformutil.computeHeaderTransformation(reference,target,false);
+                        }
+                    }
+                } else if (linearmode>=0) {
+                    centeronrefonly=true;
+                    console.log('oooo an actual initial transformation is specified, assume centeronrefonly=',centeronrefonly);
+                }
+                
                 
                 if (linearmode>=0) {
 
-                    let useheader=this.parseBoolean(vals.useheader);
-                    let centeronrefonly=false;
-                    if (xformutil.isTransformIdentityOrNULL(initial) ) {
-                        
-                        if (useheader) {
-                            let o1=reference.getOrientationName();
-                            let o2=target.getOrientationName();
-                            
-                            if (o1!==o2) {
-                                centeronrefonly=true;
-                                initial=xformutil.computeHeaderTransformation(reference,target,false);
-                                console.log('oooo Using header to initialize to first reslicing for orientation centeronrefonly=',centeronrefonly);
-                            }
-                        }
-                    } else {
-                        centeronrefonly=true;
-                        console.log('oooo an actual initial transformation is specified, assume centeronrefonly=',centeronrefonly);
-                        
-                    }
-
-                    if (!centeronrefonly) {
-                        console.log('oooo same orientation and/or no initial transformation therefore center on both ref and target');
-                    }
-
-
-
-                    initial = biswrap.runLinearRegistrationWASM(reference, target, transform,{
+                    initial = biswrap.runLinearRegistrationWASM(reference, target, initial,{
                         'intscale' : parseInt(vals.intscale),
                         'numbins' : parseInt(vals.numbins),
                         'levels' : parseInt(vals.levels),
@@ -180,9 +172,10 @@ class NonLinearRegistrationModule extends BaseModule {
                         'mode' : linearmode,
                         'resolution' : parseFloat(vals.resolution),
                         'debug' : this.parseBoolean(vals.debug),
-                        'return_vector' : false},
-                                                                this.parseBoolean(vals.debug));
+                        'return_vector' : false
+                    },this.parseBoolean(vals.debug));
                 }
+                    
 
                 this.outputs['output'] = biswrap.runNonLinearRegistrationWASM(reference, target, initial,{
                     'cps' : parseFloat(vals.cps),
