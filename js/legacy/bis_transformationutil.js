@@ -23,6 +23,8 @@ const BisWebLinearTransformation=require('bisweb_lineartransformation.js');
 let BisWebGridTransformation=require("bisweb_gridtransformation");
 let BisWebComboTransformation=require("bisweb_combotransformation");
 let BisWebTransformationCollection=require("bisweb_transformationcollection");
+const bisutil=require('bis_util');
+const numeric=require('numeric');
 
 
 /**
@@ -210,6 +212,122 @@ let parseTransformationFromJSON=function(text) {
     return null;
 };
 
+/** Create a transformation that maps two images based on their NIFTI headers *
+ * @param{BisWebImage} reference - the image to reslice to
+ * @param{BisWebImage} transform - the image to be resliced
+ * @param{Boolean} usetranslation - if the translation component of the header is to be trusted (default=false)
+ * @returns {BisWebLinearTransformation} - the actual linear transformation
+ */
+
+let computeHeaderTransformation=function(reference,target,usetranslation=false) {
+
+    let h = [ reference.getHeader(), target.getHeader() ];
+    let dm = [ reference.getDimensions(), target.getDimensions() ];
+    let sp = [ reference.getSpacing(), target.getSpacing() ];
+    let mat = [ null,null];
+    
+    let names=[ "srow_x", "srow_y", "srow_z" ];
+    let maxk=2;
+    if (usetranslation)
+        maxk=3;
+
+    
+    for (let i=0;i<h.length;i++) {
+        mat[i]=numeric.identity(4);
+        
+        let tm=numeric.identity(4);
+        
+        for (let j=0;j<names.length;j++) {
+            let row=h[i].struct[names[j]];
+            for (let k=0;k<=maxk;k++)
+                tm[j][k]= row[k];
+        }
+
+        // Remember we need to map mm in image space to x-y-z
+        // NIFTI matrix maps voxels in image space to x-y-z
+        // Scale matric to handle mm to voxels
+        let s=numeric.identity(4);
+        for (let j=0;j<=2;j++) {
+            s[j][j]=1.0/sp[i][j];
+        }
+        
+        mat[i]=numeric.dot(tm,s);
+        
+    }
+
+    let transform=new BisWebLinearTransformation();
+    let comb=numeric.dot(numeric.inv(mat[1]),mat[0]);
+
+    if (usetranslation) {
+        transform.setMatrix(comb);
+        return transform;
+    }
+        
+    // Compute a translation that matches the centers of the images
+    let center=[ bisutil.zero(4,1),bisutil.zero(4,1) ];
+    for (let i=0;i<=1;i++) {
+        for (let j=0;j<=2;j++) { 
+            center[i][j]=0.5* (dm[i][j]-1)*sp[i][j];
+        }
+    }
+    let shift=numeric.dot(comb,center[0]);
+    let newmat=numeric.identity(4);
+    //    console.log('Shift = ',shift);
+    for (let i=0;i<=2;i++)
+        newmat[i][3]=(center[1][i]-shift[i]);
+    
+    let finalcombo=numeric.dot(newmat,comb);
+    
+    transform.setMatrix(finalcombo);
+    console.log('oooo Using Header, I created an initial transformation = ',transform.getDescription());
+    return transform;
+};
+
+
+/** Combine registration and header transformations -- this is used in linear and manual linear registrations
+ * where the orientations are different. The header transform will have been computed using computeHeaderTransformation
+ * @param{BisWebLinearTransformation} regtransform - the regular registration transformation
+ * @param{BisWebLinearTransformation} headertransform - the header based transformation
+ * @returns {BisWebLinearTransformation} - the combined linear transformation
+ */
+
+let computeCombinedTransformation=function(regxform,headerxform) {
+
+    let m1=headerxform.getMatrix();
+    let m2=regxform.getMatrix();
+    let m3=numeric.dot(m1,m2);
+    let output=new BisWebLinearTransformation();
+    output.setMatrix(m3);
+    console.log('oooo Post combining matrix with header adjustment');
+    return output;
+};
+
+/** Check is transformation is identity or null 
+ * if the combinedxform is not null or 0 or if it is identity return true
+ * @param{BisWebLinearTransformation} transform - the transformation to test
+ * @returns {Boolean} - if identity or null
+ */ 
+let isTransformIdentityOrNULL=function(xform) {
+
+    if (!xform) {
+        console.log('oooo no initial transformation');
+        return true;
+    }
+
+    try {
+        let comb=xform.getMatrix();
+        let ident=numeric.identity(4);
+        let e=numeric.norm2(numeric.sub(comb,ident));
+        if (e<0.01) {
+            return true;
+        }
+    } catch(e) {
+        // must not be a matrix
+        console.log('oooo not a linear transformation',e,e.stack);
+    }
+
+    return false;
+};
 
 
 // Export object
@@ -221,7 +339,9 @@ module.exports = {
     parseTransformationFromText: parseTransformationFromText,
     loadTransformation : loadTransformation,
     saveTransformation : saveTransformation,
-
+    computeHeaderTransformation : computeHeaderTransformation,
+    computeCombinedTransformation : computeCombinedTransformation,
+    isTransformIdentityOrNULL : isTransformIdentityOrNULL,
 };
 
 
