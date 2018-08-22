@@ -167,6 +167,8 @@ class BisWebImage extends BisWebDataObject {
                     console.log('++++ \t **** forced image orientation to ',forceorient,' to match user preferences');
                     self.commentlist.push({ "Operation" : "On Load from "+fobj+" reoriented to "+self.internal.orient.name+" to match user preferences."});
                     self.internal.header.setExtensionsFromArray(self.commentlist);
+                } else {
+                    console.log('++++ \t **** maintained original orientation ',forceorient,' ',self.internal.forcedorientationchange);
                 }
                 
                 resolve();
@@ -684,7 +686,10 @@ class BisWebImage extends BisWebDataObject {
      * @param{BisWebImage} otherimage - often the reference in a reslicing operations
      */
     copyOrientationInfo(otherimage) {
+        // Fixed here
         this.getHeader().copyOrientationInfo(otherimage.getHeader(),this.getSpacing());
+        // This should happen so in memory stuff is good
+        BisWebImage.parseHeaderAndComputeOrientation(this.internal);
         this.addComment({ "Operation" : "Copied orientation info from "+otherimage.getFilename() });
     }
     
