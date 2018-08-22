@@ -464,8 +464,11 @@ class BisHeader {
         
         let otherstruct=other.struct;
         let names=[ "quatern_b",        "quatern_c",    "quatern_d", "qoffset_x", "qoffset_y",  "qoffset_z" ,
-                    "srow_x", "srow_y", "srow_z" ];
+                    "srow_x", "srow_y", "srow_z" , "qform_code", "sform_code"];
 
+        
+
+        
         for (let i=0;i<names.length;i++) {
             let item=names[i];
             if (otherstruct[item].length) {
