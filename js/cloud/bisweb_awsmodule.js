@@ -6,7 +6,8 @@ const AWSParameters = require('../../web/aws/awsparameters.js');
 const bis_webutil = require('bis_webutil.js');
 const wsutil = require('wsutil');
 const bisweb_filedialog = require('bisweb_filedialog.js');
-const bisweb_serverregression = require('../test/bisweb_serverregression');
+const bisweb_serverregression = require('../test/bisweb_serverregression.js');
+let bisweb_testrunner;
 
 
 /**
@@ -46,13 +47,13 @@ class AWSModule {
 
             this.fileSaveModal = new bisweb_filedialog('Choose Folder to Save In', { 'makeFavoriteButton' : false, 'modalType' : 'save', 'displayFiles' : false });
             this.fileSaveModal.fileRequestFn = this.createFileUploadRequest.bind(this);
+
+            bisweb_testrunner = document.getElementById('testrunner');
+
+            bisweb_testrunner.setTests(bisweb_serverregression.tests, bisweb_serverregression.pretests);
+            bisweb_testrunner.runPretests();
         });
 
-        bisweb_serverregression.connectToServer().then( () => {
-            console.log('server test succeeded');
-        }).catch( (e) => {
-            console.log('server test failed', e);
-        });
     }
 
     /**

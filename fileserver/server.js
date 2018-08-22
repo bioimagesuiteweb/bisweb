@@ -49,6 +49,7 @@ let globalHostname="";
 //flag denoting whether the server will accept write requests 
 
 let readOnly;
+let controlSocket = null;
 
 // password token
 // create function and global variable
@@ -176,8 +177,6 @@ let startServer = (hostname, port, newport = true, readycb = () => {}) => {
 };
 
 
-
-
 // ------------------------------------------------------------------------------------
     
 let readFrame = (chunk) => {
@@ -212,7 +211,7 @@ let authenticate = (socket) => {
 
         console.log('---- entered password');
         console.log('---- sent by client:', password);
-        
+
         if (hotp.check(parseInt(password), secret, onetimePasswordCounter) || (insecure && password.length<1)) {
             console.log('++++ Starting helper server');
             socket.removeListener('data', readOTP);
@@ -241,6 +240,8 @@ let authenticate = (socket) => {
  */
 let prepareForControlFrames = (socket) => {
     //add an error listener for the transmission
+    controlSocket = socket;
+
     socket.on('error', (error) => {
         console.log('---- an error occured', error);
     });
@@ -377,6 +378,8 @@ let prepareForDataFrames = (socket) => {
                     fileInProgress.data=null;
                     console.log('____ message sent -- file saved in ',writeLocation,' binary=',fileInProgress.isbinary);
                 });
+
+                controlSocket.write(formatPacket('uploadcomplete', ''));
                 socket.end(); //if for some reason the client doesn't send a FIN we know the socket should close here anyway.
             }).catch( (e) => {
                 console.log('---- an error occured', e);
@@ -614,6 +617,8 @@ let handleCloseFromClient = (rawText, control, socket) => {
 
     //TODO: send a close frame in response
     socket.end();
+
+    controlSocket = null;
     console.log('____ closed connection');
 };
 

@@ -17,8 +17,11 @@ class BisWebFileServerClient {
         this.lastOpts=null;
         this.portNumber=8081;
 
-        //connection over which all communication takes place
+        //connection over which all control communication takes place
         this.socket = null;
+
+        //connection over which uploads are exchanged
+        this.dataSocket = null;
 
         //File tree requests display the contents of the disk on the server machine in a modal
 
@@ -296,7 +299,7 @@ class BisWebFileServerClient {
                 reject('Upload failed');
             };
             
-            this.uploadFileToServer(url, data,isbinary, promiseCb, promiseEb);
+            this.uploadFileToServer(url, data, isbinary, promiseCb, promiseEb);
         });
         console.log(p);
         return p;

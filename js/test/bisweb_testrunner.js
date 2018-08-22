@@ -48,8 +48,31 @@ class BiswebTestRunner extends HTMLElement {
         this.runTests();*/
     }
 
-    setTests(tests) {
+    setTests(tests, pretests) {
         this.testList = tests;
+        this.pretests = pretests;
+    }
+
+    runPretests() {
+        let index = 0;
+
+        let runPretest = (currentTest) => {
+            currentTest.test().then( () => {
+                index = index + 1;
+                if (index < this.pretests.length) {
+                    runPretest(this.pretests[index]);
+                } else {
+                    console.log('---------- Pretest tasks complete, starting tests ---------------');
+                    this.runTests();
+                }
+            }).catch( (e) => {
+                console.log('An error occured running pretest', currentTest.name);
+                console.log('Cannot continue with tests, stopping');
+                return;
+            });
+        };
+
+        runPretest(this.pretests[0]);
     }
 
     runTests() {
