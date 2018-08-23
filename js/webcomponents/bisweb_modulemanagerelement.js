@@ -204,6 +204,7 @@ class ModuleManagerElement extends HTMLElement {
         this.createModule('Morphology Filter',2, false, modules.morphologyFilter, moduleoptions);
         if (usesgpl) {
             this.createModule('Segment Image',2, true, modules.segmentImage, moduleoptions);
+            this.createModule('Deface Image',2, true, modules.defaceImage, moduleoptions);
         }
         this.createModule('Regularize Objectmap',2, true, modules.regularizeObjectmap, moduleoptions);
         this.createModule('Mask Image', 2, false, modules.maskImage, moduleoptions);
