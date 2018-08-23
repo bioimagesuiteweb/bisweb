@@ -38,6 +38,8 @@ var help = function() {
 
 program.version('1.0.0')
     .option('-i, --input <s>','filename of the file to print header for')
+    .option('-f, --force <s>','force orientation to RAS or LPS or None')
+    .option('-d, --debug <n>','debug on')
     .on('--help',function() {
 	help();
     })
@@ -45,20 +47,35 @@ program.version('1.0.0')
 
 
 let inpfilename=program.input || null;
+let debug=program.debug || 0;
 
-if (inpfilename===null) {
+if (parseInt(debug) !==0)
+    debug=true;
+else
+    debug=false;
+let slist;
+
+if (inpfilename)
+    slist=[ inpfilename ].concat(program.args);
+else
+    slist=program.args;
+
+let force=program.force || "None";
+
+if (slist.length<1) {
     console.log('No input filename specified');
     process.exit(1);
 }
 
-let slist=[ inpfilename ].concat(program.args);
+
 
 let img=new Array(slist.length);
 let p=[];
 
 for (let i=0;i<slist.length;i++) {
     img[i]=new BisWebImage();
-    p.push(img[i].load(slist[i],"None"));
+    img[i].debug=debug;
+    p.push(img[i].load(slist[i],force));
 }
 
 Promise.all(p).then( () => {
