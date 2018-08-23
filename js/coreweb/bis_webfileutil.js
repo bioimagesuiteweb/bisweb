@@ -43,9 +43,19 @@ const mkey=keystore.OneDriveKey || "";
 const userPreferencesLoaded = userPreferences.webLoadUserPreferences(bisdbase);
 
 const localforage = require('localforage');
+
+// ------------------------
+// Global Flags
+// ------------------------
+
+const enableserver=false;
+const enableaws=false;
+
+// ------------------------
+
 // Link File Server if not in Electron
 let bisweb_fileserverclient=null;
-if (!webutil.inElectronApp()) {
+if (!webutil.inElectronApp() && enableserver===true) {
     const BisWebFileServerClient=require('bisweb_fileserverclient');
     bisweb_fileserverclient=new BisWebFileServerClient();
     genericio.setFileServerObject(bisweb_fileserverclient);
@@ -66,6 +76,8 @@ let awsbucketstorage = localforage.createInstance({
 
 let awsmodal = null;
 let awsstoredbuckets = null;
+
+
 
 const webfileutils = {
 
@@ -97,15 +109,17 @@ const webfileutils = {
         //localserver requires its HTML element to be present in the document
         if (bisweb_fileserverclient)
             s.push({ value : "server", text: "BioImage Suite Web File Server Helper"});
+        if (enableaws)
+            s.push({ value : 'amazonaws', text: 'Amazon S3'});
+
         if (dkey.length>1)
-            s.push({ value: "dropbox", text: "Dropbox" });
+            s.push({ value: "dropbox", text: "Dropbox (Load Only)" });
         if (gkey.length>1) 
-            s.push({ value: "googledrive", text: "Google Drive" });
+            s.push({ value: "googledrive", text: "Google Drive (Load Only)" });
         if (mkey.length>1) 
-            s.push({ value: "onedrive", text: "Microsoft OneDrive" });
+            s.push({ value: "onedrive", text: "Microsoft OneDrive (Load Only)" });
         
         //TODO: Does this need a key or something? I don't think so but would be nice if there was some comparable flag...
-        s.push({ value : 'amazonaws', text: 'Amazon S3'});
 
         return s;
     },
@@ -259,11 +273,7 @@ const webfileutils = {
             //if the callback is specified presumably that's what should be called
             //            console.log('opts', fileopts);
 
-            //otherwise try some default behaviors
-            if (fileMode==='dropbox') {
-                return bisweb_dropbox.pickWriteFile(suffix, fileopts.saveImage);
-            } 
-
+            
             if (fileMode === 'server') {
                 bisweb_fileserverclient.wrapInAuth('uploadfile', cbopts);
                 return;
@@ -274,12 +284,8 @@ const webfileutils = {
                 return;
             }
 
-            if (fileMode==='local') {
-                callback();
-                return;
-            }
-
-            console.log('could not find appropriate save function for file mode', fileMode);
+            callback();
+            return;
         }
  
         // -------- load -----------
@@ -511,6 +517,9 @@ const webfileutils = {
 
     createAWSBucketMenu : function(bmenu) {
 
+        if (!enableaws)
+            return;
+        
         let createModal = () => {
             if (!awsmodal) {
                 awsmodal = webutil.createmodal('AWS Buckets');
