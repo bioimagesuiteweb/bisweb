@@ -1060,6 +1060,31 @@ let getFixedLoadFileName = function(fobj) {
 
 };
 
+let getimagepath=function() {
+
+    let imagepath="";
+    if (typeof window !== "undefined") {
+        let scope=window.document.URL.split("?")[0];
+        let index=scope.lastIndexOf("/");
+        if (scope.indexOf("external")>0)  {
+            scope=scope.substr(0,index)+"/../src/web/images";
+            console.log('external=',external,scope);
+        } else {
+            scope=scope.substr(0,index)+"/images";
+        }
+        imagepath=scope;
+    } else {
+        
+        const path=getpathmodule();
+        console.log('Dirname=',__dirname);
+        imagepath=path.resolve(__dirname, '../../web/images');
+        if (!fs.existsSync(imagepath))
+            imagepath=path.resolve(__dirname, '../images');
+    }
+    console.log('++++ Image path=',imagepath);
+
+    return imagepath;
+}
 
 // -------------------------------------------------------------------------------------------------------
 /*
@@ -1095,6 +1120,7 @@ const bisgenericio = {
     write : write, // Global Write data
     getFixedSaveFileName : getFixedSaveFileName,
     getFixedLoadFileName : getFixedLoadFileName,
+    getimagepath : getimagepath,
 };
 
 
