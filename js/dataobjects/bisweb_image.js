@@ -1570,7 +1570,7 @@ class BisWebImage extends BisWebDataObject {
             oname="LPS";
             max=2;
         } else if (forceorient=="LAS") {
-            oname="LAS"
+            oname="LAS";
             max=1;
 
         }
