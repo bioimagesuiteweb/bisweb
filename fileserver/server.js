@@ -460,6 +460,7 @@ let readFileAndSendToClient = (parsedText, control, socket) => {
             }
         });
     } else {
+    	console.log('filename', filename);
         fs.readFile(filename, 'utf-8', (err, d1) => {
             if (err) {
                 handleBadRequestFromClient(socket, err);

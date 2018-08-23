@@ -56,10 +56,30 @@ let uploadImage = () => {
         }).catch( (e) => {
             reject(e);
         });
-    })
-
-
+    });
 };
+
+let downloadImage = () => {
+    return new Promise( (resolve, reject) => {
+        let timeoutEvent = setTimeout( () => {
+            reject('server timed out waiting for acknowledgment of upload');
+        }, 10000);
+
+        console.log('fileserver socket', FileServer.socket);
+
+        let downloadSuccessListener = (event) => {
+            if (typeof(event.data) !== "string") {
+                FileServer.socket.removeEventListener('message', downloadSuccessListener);
+                clearTimeout(timeoutEvent);
+                resolve();
+            }
+        }
+        FileServer.socket.addEventListener('message', downloadSuccessListener);
+
+        FileServer.sendFileRequest('/home/zach/javascript/bisweb/js/test/regressionImages/MNI_2mm_orig.nii.gz', () => {}, () => {});
+
+    });    
+}
 
 let serverPretests = [
     {
@@ -72,6 +92,10 @@ let serverTests = [
     {
         'name' : 'Upload Image',
         'test' : uploadImage
+    },
+    {
+        'name' : 'Download Image',
+        'test' : downloadImage
     }
 ];
 

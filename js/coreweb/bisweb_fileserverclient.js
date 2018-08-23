@@ -137,6 +137,10 @@ class BisWebFileServerClient {
                 //some control phrases are handled elsewhere, so the main listener should ignore them
                 break;
             }
+            case 'uploadcomplete': {
+                console.log('Upload to server completed successfully');
+                break;
+            }
             case 'authenticate': {
                 this.socket.send(this.password || '');
                 break;
@@ -326,10 +330,10 @@ class BisWebFileServerClient {
     /**
      * Sends a list of files for the server to send to the client machine. 
      * 
-     * @param {Array} filelist - An array of files to fetch from the server. 
+     * @param {String} filelist - The name of a file to fetch from the server. 
      */
-    sendFileRequest(filelist, cb, eb) {
-        let command = { 'command' : 'getfile', 'files' : filelist };
+    sendFileRequest(file, cb, eb) {
+        let command = { 'command' : 'readfile', 'filename' : file };
         let filesdata = JSON.stringify(command);
 
         let cblistener = document.addEventListener(TRANSMISSION_EVENT , () => { 
