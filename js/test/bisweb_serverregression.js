@@ -63,7 +63,7 @@ let downloadImage = () => {
     return new Promise( (resolve, reject) => {
         let timeoutEvent = setTimeout( () => {
             reject('server timed out waiting for acknowledgment of upload');
-        }, 10000);
+        }, 6000);
 
         console.log('fileserver socket', FileServer.socket);
 
@@ -73,10 +73,11 @@ let downloadImage = () => {
                 clearTimeout(timeoutEvent);
                 resolve();
             }
-        }
+        };
+
         FileServer.socket.addEventListener('message', downloadSuccessListener);
 
-        FileServer.sendFileRequest('/home/zach/javascript/bisweb/js/test/regressionImages/MNI_2mm_orig.nii.gz', () => {}, () => {});
+        FileServer.downloadFile('/home/zach/javascript/bisweb/js/test/regressionImages/MNI_2mm_orig.nii.gz', true);
 
     });    
 }
