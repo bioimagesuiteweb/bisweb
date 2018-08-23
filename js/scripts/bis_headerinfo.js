@@ -38,7 +38,7 @@ var help = function() {
 
 program.version('1.0.0')
     .option('-i, --input <s>','filename of the file to print header for')
-    .option('-f, --force <s>','force orientation to RAS or LPS or None')
+    .option('-f, --force <s>','force orientation to RAS or LPS or LAS or None')
     .option('-d, --debug <n>','debug on')
     .on('--help',function() {
 	help();

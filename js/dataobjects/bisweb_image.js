@@ -128,11 +128,12 @@ class BisWebImage extends BisWebDataObject {
     /**
      * Load an image from a filename or file object
      * @param {fobj} - If in browser this is a File object, if in node.js this is the filename!
-     * @param {String} forceorient - if true or "RAS" force input image to be repermuted to Axial RAS. if "LPS" force LPS. Else do nothing
+     * @param {String} forceorient - if true or "RAS" force input image to be repermuted to Axial RAS. if "LPS" force LPS. If "LAS" force to LAS (.nii.gz only).  Else do nothing
      * @return {Promise} a promise that is fuilfilled when the image is loaded
      */
     load(fobj,forceorient) {
 
+        
         forceorient = userPreferences.sanitizeOrientationOnLoad(forceorient ||  userPreferences.getImageOrientationOnLoad());
         if (this.debug) {
             console.log('..... forceorient in readbinary=',forceorient);
@@ -854,7 +855,7 @@ class BisWebImage extends BisWebDataObject {
     
     /** parses a binary buffer (nifti image) to create the image
      * @param {ArrayBuffer} _inputbuffer - the raw array buffer that is read using some File I/O operation
-     * @param {String} forceorient_in - if set to "RAS" or true the image will be repermuted to be RAS (axial) oriented. If set to LPS it will be mapped to LPS. 
+     * @param {String} forceorient_in - if set to "RAS" or true the image will be repermuted to be RAS (axial) oriented. If set to LPS it will be mapped to LPS. If LAS it will be mapped to LAS. 
      * @param {boolean} forcecopy -- if false then potential store image in existing inputbuffer (use this for large images)
      */
     parseNII(_inputbuffer,forceorient_in,forcecopy=false) {
@@ -951,7 +952,7 @@ class BisWebImage extends BisWebDataObject {
             let origdata=new Imginfo(_inputbuffer);
             if (debug)
                 console.log('+++++ permuting data ',forceorient);
-            BisWebImage.permuteDataToMatchDesiredOrientation(internal,origdata,headerlength/internal.imginfo.size,internal.imgdata,forceorient);
+            BisWebImage.permuteDataToMatchDesiredOrientation(internal,origdata,headerlength/internal.imginfo.size,internal.imgdata,forceorient,debug);
             internal.forcedorientationchange=true;
         }
         
@@ -1427,10 +1428,10 @@ class BisWebImage extends BisWebDataObject {
         }
         let OR=numeric.dot(A,S);
 
+        debug=0;
 
         if (debug) {
             console.log('\n A=\n',numeric.prettyPrint(A));
-            console.log('\n S=\n',numeric.prettyPrint(S));
             console.log('\n OR=\n',numeric.prettyPrint(OR));
         }
 
@@ -1544,7 +1545,7 @@ class BisWebImage extends BisWebDataObject {
     /** Function to permute the image data to yield a RAS oriented image. Works but header is incomplete
         @alias BisImageUtilities~permuteDataToMatchDesiredOrientation
     */
-    static permuteDataToMatchDesiredOrientation(internal,inarray,inoffset,outarray,forceorient) {
+    static permuteDataToMatchDesiredOrientation(internal,inarray,inoffset,outarray,forceorient,debug=false) {
 
 
         let dim = [ internal.dimensions[0],internal.dimensions[1],internal.dimensions[2] ];
@@ -1564,15 +1565,26 @@ class BisWebImage extends BisWebDataObject {
 
 
         // Compute Flips
-        let scaleXYaxis=1;
+        let oname="RAS",max=0;
         if (forceorient==="LPS") {
-            scaleXYaxis=-1;
-            for (let ia=0;ia<=1;ia++) {
+            oname="LPS";
+            max=2;
+        } else if (forceorient=="LAS") {
+            oname="LAS"
+            max=1;
+
+        }
+
+        if (max>0)  {
+            for (let ia=0;ia<max;ia++) {
                 flip[ia]=1-flip[ia];
                 internal.orient.flip[ia]=1-internal.orient.flip[ia];
                 internal.orient.invflip[ia]=1-internal.orient.invflip[ia];
             }
         }
+
+        if (debug)
+            console.log('++++ orient=',oname,'flip=',flip,'max=',max);
         
         // Perform Permutation
         for (ia[2]=0;ia[2]<dim[2];ia[2]++) {
@@ -1600,11 +1612,8 @@ class BisWebImage extends BisWebDataObject {
         }
 
         // Fix orientation
-        if (scaleXYaxis<0) {
-            internal.orient.name="LPS";
-        } else {
-            internal.orient.name="RAS";
-        }
+        internal.orient.name=oname;
+
 
         // Reompute matrices
         let A=numeric.identity(4);
@@ -1615,10 +1624,14 @@ class BisWebImage extends BisWebDataObject {
 
         let B=numeric.rep([4,4],0.0);
         B[3][3]=1.0;
+
+//        if (debug)
+            console.log('Axis=',axis,' flip=',flip,' dim=',flipdim);
+        
         for (let i=0;i<=2;i++) {
             let ax=axis[i];
-            if (flip[ax]) {
-                B[ax][3]=flipdim[ax];
+            if (flip[i]) {
+                B[ax][3]=flipdim[i];
                 B[ax][i]=-1.0;
             } else {
                 B[ax][i]=1.0;
@@ -1626,6 +1639,26 @@ class BisWebImage extends BisWebDataObject {
         }
         let C=numeric.dot(A,B);
 
+        let fn=function(A,name) {
+            let s=name+'= [ ';
+            for (let i=0;i<=3;i++) {
+                for(let j=0;j<=3;j++) {
+                    s+=A[i][j]+' ';
+                    if (j==3 && i!==3)
+                        s+=";";
+                }
+            }
+            s+='];';
+            console.log(s);
+        };
+        
+        if (debug) {
+            fn(A,'A');
+            fn(B,'B');
+            fn(C,'C');
+
+        }
+        
         
         // Store header stuff
         for (let row=0;row<=2;row++)

@@ -54,7 +54,7 @@ let sanitizeOrientationOnLoad=function(name) {
     if (name==='Auto')
         return userPreferences['orientationOnLoad'];
     
-    if (['RAS','LPS','None'].indexOf(name)>=0)
+    if (['RAS','LPS','LAS', 'None'].indexOf(name)>=0)
         return name;
 
     if (name === undefined || name === null)
