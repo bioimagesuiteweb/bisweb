@@ -39,7 +39,10 @@ const userPreferences = {
     snapshotscale : 2,
     snapshotdowhite : true,
     filesource : 'local',
+    showwelcome : true,
 };
+
+
 
 /** 
  * Given a string returns one of 'RAS', 'LPS' or 'None'
@@ -119,12 +122,17 @@ let parseUserPreferences=function(obj) {
     Object.keys(obj).forEach((key) => {
         userPreferences[key]=obj[key];
     });
+
     // Make sure this is sane
 
     if (!userPreferences['orientationOnLoad'])
         userPreferences['orientationOnLoad']='None';
     else
         setImageOrientationOnLoad(userPreferences['orientationOnLoad'],'None');
+
+
+    if (userPreferences['showwelcome']!==false)
+        userPreferences['showwelcome']=true;
     
     return true;
 };
@@ -229,6 +237,10 @@ let saveUserPreferences=function(fname=null) {
     return true;
 };
 
+let printUserPreferences=function() {
+    console.log(JSON.stringify(userPreferences,null,2));
+};
+
 /**
  * Stores the user preferences to the web browses datatabse
  * @param{Object} dbase -- a hande to bisweb_preferencedbase or null to use last good pointer (from webLoad)
@@ -277,7 +289,11 @@ let setItem=function(key,value,save=false) {
         userPreferences[key]=value;
 
     if (save) {
-        saveUserPreferences();
+        if (genericio.getmode() === 'browser')  {
+            storeUserPreferences();
+        } else {
+            saveUserPreferences();
+        }
     }
 };
 
@@ -314,6 +330,8 @@ module.exports = {
     //
     storeUserPreferences :  storeUserPreferences,
     saveUserPreferences : saveUserPreferences,
+    //
+    printUserPreferences : printUserPreferences,
     //
     sanitizeOrientationOnLoad : sanitizeOrientationOnLoad,
     setImageOrientationOnLoad : setImageOrientationOnLoad ,
