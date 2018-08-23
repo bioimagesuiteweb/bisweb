@@ -109,6 +109,19 @@ class ThresholdImageModule extends BaseModule {
                     "default" : 0,
                     "varname": "outval",
                 },
+                {
+                    "name": "Output Type",
+                    "description": "Output Type",
+                    "priority": 10,
+                    "advanced": true,
+                    "type": "string",
+                    "gui": "dropdown",
+                    "fields" : [ "Same","UChar","Short" ],
+                    "restrictAnswer" : [ "Same", "UChar", "Short" ],
+                    "default" : "Same",
+                    "varname": "outtype",
+                },
+                    
                 baseutils.getDebugParam()
             ]
         };
@@ -118,6 +131,14 @@ class ThresholdImageModule extends BaseModule {
         console.log('oooo invoking: thresholdImage with vals', JSON.stringify(vals));
         let input = this.inputs['input'];
 
+        let datatype = -1;
+        if (vals.outtype==="UChar")
+            datatype="uchar";
+        else if (vals.outtype === "Short")
+            datatype="short";
+
+        console.log("DataType=",datatype,vals.outtype);
+        
         return new Promise((resolve, reject) => {
             biswrap.initialize().then(() => {
                 this.outputs['output'] = biswrap.thresholdImageWASM(input, {
@@ -127,7 +148,7 @@ class ThresholdImageModule extends BaseModule {
                     "replaceout" : super.parseBoolean(vals.replaceout),
                     "invalue" : parseFloat(vals.inval), 
                     "outvalue" : parseFloat(vals.outval),
-                    "datatype" : -1
+                    "datatype" : datatype,
                 },vals.debug);
 
                 resolve();
