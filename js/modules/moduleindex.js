@@ -58,6 +58,8 @@ exports.linearRegistration = require('linearRegistration.js');
 exports.nonlinearRegistration = require('nonlinearRegistration.js');
 exports.motionCorrection = require('motionCorrection.js');
 
+exports.defaceImage=require('defaceImage.js');
+
 exports.moduleNamesArray = {
     'approximatefield': exports.approximateField,
     'backprojectimage': exports.backProjectImage,
@@ -71,6 +73,7 @@ exports.moduleNamesArray = {
     'computeglm': exports.computeGLM,
     'computeroi': exports.computeROI,
     'cropimage' : exports.cropImage,
+    'defaceimage' : exports.defaceImage,
     'displacementfield': exports.displacementField,
     'extractframe': exports.extractFrame,
     'extractslice': exports.extractSlice,
