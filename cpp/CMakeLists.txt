@@ -19,7 +19,7 @@ cmake_minimum_required(VERSION 3.5)
 
 PROJECT(BISWEB)
 
-SET (BISWEB_VERSION "0.9.5")
+SET (BISWEB_VERSION "0.9.7")
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Core Project
