@@ -748,8 +748,13 @@ class BisWebImage extends BisWebDataObject {
         let same=true;
 
         let maxd=d1.length;
-        if (spaceonly)
+        let maxs=s1.length;
+        if (spaceonly) {
+            maxs=3;
             maxd=3;
+        }
+
+        
         
         for (let i=0;i<maxd;i++) {
             if (d1[i]!==d2[i])
@@ -758,10 +763,9 @@ class BisWebImage extends BisWebDataObject {
 
         if (same) {
 
-            let maxs=s1.length;
-            if (spaceonly)
+            if (d1[3]*d1[4]<=1 && d2[3]* d2[4]<=1)
                 maxs=3;
-
+        
             
             for (let i=0;i<maxs;i++) {
                 let diff=Math.abs(s1[i]-s2[i]);
@@ -774,6 +778,7 @@ class BisWebImage extends BisWebDataObject {
                 let o2=otherimage.getOrientationName();
                 if (o1!==o2)
                     same=false;
+
             }
         }
         return same;
