@@ -137,11 +137,24 @@ class ManualRegistrationModule extends BaseModule {
                     "name": "Use Header",
                     "description": "use header orientation for initial rotation matrix",
                     "priority": 9,
-                    "advanced": false,
+                    "advanced": true,
                     "type": "boolean",
                     "default": true,
                     "varname": "useheader"
                 },
+                {
+                    "name": "Interpolation",
+                    "description": "Which type of interpolation to use (3 = cubic, 1 = linear, 0 = nearest-neighbor)",
+                    "priority": 12,
+                    "advanced": true,
+                    "gui": "dropdown",
+                    "type": "int",
+                    "default" : "1",
+                    "varname": "interpolation",
+                    "fields" : [ 0,1,3 ],
+                    "restrictAnswer" : [ 0,1,3],
+                },
+
                 baseutils.getDebugParam(),
             ]
         };
@@ -168,7 +181,8 @@ class ManualRegistrationModule extends BaseModule {
         let dim2=target.getDimensions();
         let spa2=target.getSpacing();
 
-
+        let interp=parseInt(vals.interpolation);
+        
         let useheader=this.parseBoolean(vals.useheader);            
         let o1=reference.getOrientationName();
         let o2=target.getOrientationName();
@@ -201,7 +215,7 @@ class ManualRegistrationModule extends BaseModule {
             biswrap.initialize().then(() => {
                 //                console.log('Reference=',reference.getDescription(),reference.getHeader().getDescription());
                 //                console.log('Target=',target.getDescription(),target.getHeader().getDescription());
-                this.outputs['resliced']=baseutils.resliceRegistrationOutput(biswrap,reference,target,linear);
+                this.outputs['resliced']=baseutils.resliceRegistrationOutput(biswrap,reference,target,linear,interp);
 
                 //                let out=this.outputs['resliced'];
                 //                console.log('Out=',out.getDescription(),out.getHeader().getDescription());

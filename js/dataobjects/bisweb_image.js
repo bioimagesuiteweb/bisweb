@@ -1428,7 +1428,7 @@ class BisWebImage extends BisWebDataObject {
         }
         let OR=numeric.dot(A,S);
 
-        debug=0;
+//        debug=0;
 
         if (debug) {
             console.log('\n A=\n',numeric.prettyPrint(A));
