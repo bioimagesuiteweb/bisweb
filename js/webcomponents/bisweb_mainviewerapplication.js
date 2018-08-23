@@ -44,6 +44,8 @@ const clipboard=localforage.createInstance({
 });
 
 
+
+
 /**
  * A Application Level Element that creates a Viewer Application using an underlying viewer element.
  *
@@ -683,7 +685,9 @@ class ViewerApplicationElement extends HTMLElement {
     createHelpMenu(menubar,userPreferencesLoaded) {
         let hmenu = webutil.createTopMenuBarMenu("Help", menubar);
 
-        webutil.createMenuItem(hmenu,'About this application',function() {  webutil.aboutDialog(); });
+        let fn = (() => { this.welcomeMessage(userPreferencesLoaded,true) ;});
+        
+        webutil.createMenuItem(hmenu,'About this application',fn);
         
 /*        let helpdialog = new BisWebHelpVideoPanel();
         const self=this;
@@ -693,7 +697,6 @@ class ViewerApplicationElement extends HTMLElement {
                                    helpdialog.displayVideo();
                                });*/
         webutil.createMenuItem(hmenu, ''); // separator
-
         
         this.addOrientationSelectToMenu(hmenu,userPreferencesLoaded);
 
@@ -722,7 +725,7 @@ class ViewerApplicationElement extends HTMLElement {
 
         webfileutil.createFileSourceSelector(hmenu);
         webfileutil.createAWSBucketMenu(hmenu);
-        //webfileutil.createAWSBucketEntry(hmenu);
+
         return hmenu;
     }
 
@@ -937,6 +940,77 @@ class ViewerApplicationElement extends HTMLElement {
         this.loadApplicationState(load);
     }
                                 
+
+    // ---------------------------------------------------------------------------
+    welcomeMessage(userPreferencesLoaded,force=false) {
+
+        let show=force;
+
+        userPreferencesLoaded.then( () => {
+            webutil.aboutText().then( (msg) => {
+
+
+                let forceorient=userPreferences.getImageOrientationOnLoad();
+                let firsttime=userPreferences.getItem('showwelcome');
+                if (firsttime === undefined)
+                    firsttime=true;
+                
+                if (!force) {
+                    if (forceorient !== 'None' || firsttime===true)
+                        show=true;
+                }
+
+                if (!show)
+                    return;
+                
+                let dlg=webutil.createmodal('Welcome to BioImage Suite Web');
+                let body=dlg.body;
+                
+                let txt=msg;
+                
+                if (!webutil.inElectronApp() && firsttime===true) {
+                    txt+=`<HR><H3>Some things you should
+                know ...</H3><H4>File Save</H4> <p>Because this application is
+                running inside a web browser, saving a file is performed by
+                mimicking downloading a file. You should change the options
+                inside your browser to allow you to specify the location of
+                any file saved.</p> <p><EM>Chrome</EM>: See the section titled
+                <B>Change download locations on the <a target="_blank"
+                rel="noopener"
+                href="https://support.google.com/chrome/answer/95759?co=GENIE.Platform%3DDesktop&hl=en&oco=1">following
+                link</a> for instructions as to how to change the default
+                download location. In particular you should <B> check the box
+                next to "Ask where to save each file before
+                downloading."</B></p> <p>For other browsers simply search for
+                the words "Browsername select download location" on
+                Google.</p>`;
+                }
+                
+                if (forceorient!== "None") {
+                    txt+=`<HR><H3>Forcing Image Orientation</H3><p>On load all images are currently <B> automatically reoriented to ${forceorient}</B> based on your user preferences. Select Help|Set Image Orientation On Load to change this.</p>`;
+                }
+                
+                dlg.header.empty();
+                dlg.header.append('<H3>Welcome to BioImage Suite Web</H3>');
+                body.append($(txt));
+
+                if (!force && forceorient==="None") {
+                    let confirmButton = webutil.createbutton({ 'name': 'Do not show this next time', 'type': 'success' });
+                    confirmButton.on('click', (e) => {
+                        e.preventDefault();
+                        dlg.dialog.modal('hide');
+                        userPreferences.setItem('showwelcome',false,true);
+                    });
+                    dlg.footer.append(confirmButton);
+                }
+
+                dlg.dialog.modal('show');
+            });
+        }).catch( (e) => {
+            console.log(e.stack,e);
+        });
+    }
+
     
     //  ---------------------------------------------------------------------------
     // Essentially the main function, called when element is attached to the page
@@ -1076,6 +1150,7 @@ class ViewerApplicationElement extends HTMLElement {
         webutil.runAfterAllLoaded( () => {
             this.parseQueryParameters();
             document.body.style.zoom =  1.0;
+            this.welcomeMessage(userPreferencesLoaded,false);
         });
 
     }
