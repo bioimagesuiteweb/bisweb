@@ -50,7 +50,7 @@ let uploadImage = () => {
 
         //TODO: Find way to code a relative filepath
         let testImage = bis_genericio.read('/home/zach/javascript/bisweb/js/test/regressionImages/MNI_2mm_orig.nii.gz', true).then( (response) => {
-            FileServer.uploadFileToServer('testfile.nii.gz', response.data);
+            
             
             let uploadSuccessListener = (event) => {
                 let data = wsutil.parseJSON(event.data);
@@ -62,6 +62,7 @@ let uploadImage = () => {
             };
 
             FileServer.socket.addEventListener('message', uploadSuccessListener);
+            bis_genericio.write('testfile.nii.gz', response.data, true);
         }).catch( (e) => {
             reject(e);
         });
@@ -97,30 +98,32 @@ let uploadAndCompare = () => {
             reject('server timed out waiting for acknowledgment of upload');
         }, 10000);
 
-        console.log('fileserver socket', FileServer.socket);
-
         //TODO: Find way to code a relative filepath
         let testImage = bis_genericio.read('/home/zach/javascript/bisweb/js/test/regressionImages/MNI_2mm_orig.nii.gz', true).then( (response) => {
 
             let baseData = response.data;
-            let baseImage = new BiswebImage().initialize();
-            baseImage.parseNII(baseData);
 
-            bis_genericio.write('testfile.nii.gz', response.data, true);
-            
-            let uploadSuccessListener = (event) => {
-                let data = wsutil.parseJSON(event.data);
-                if (data.type === 'uploadcomplete') {
-                    FileServer.socket.removeEventListener('message', uploadSuccessListener);
-                    let uploadedImage = new BiswebImage();
-                    uploadedImage.load('/home/zach/testfile.nii.gz', false).then( () => {
-                        uploadedImage.compareWithOther(testImage)
-                    });
-                    resolve();
-                }
-            };
+            console.log('response.data', baseData);
+            let baseImage = new BiswebImage();
+            baseImage.initialize();
+            baseImage.parseNII(baseData.buffer, "RAS");
 
-            FileServer.socket.addEventListener('message', uploadSuccessListener);
+            console.log('testImage', testImage);
+
+            bis_genericio.write('testfile.nii.gz', response.data, true).then( () => {
+                let uploadedImage = new BiswebImage();
+                uploadedImage.load('/home/zach/testfile.nii.gz', false).then( () => {
+
+                    clearTimeout(timeoutEvent);
+                    let comparisonResult = uploadedImage.compareWithOther(testImage);
+                    if (comparisonResult.testresult === true) {
+                        resolve();
+                    } else {
+                        reject('Uploaded image is not the same as base image', comparisonResult);
+                    }
+                });
+            });
+
         }).catch( (e) => {
             reject(e);
         });

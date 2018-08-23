@@ -320,7 +320,7 @@ let prepareForDataFrames = (socket) => {
 
         let controlFrame = chunk.slice(0, 14);
         let parsedControl = wsutil.parseControlFrame(controlFrame);
-        //console.log('parsed control frame', parsedControl);
+        console.log('parsed control frame', parsedControl);
 
         if (!parsedControl.mask) {
             console.log('---- Received a transmission with no mask from client, dropping packet.');
@@ -342,7 +342,7 @@ let prepareForDataFrames = (socket) => {
                 }
                 break;
             case 8: 
-                console.log('---- received close from client, ending connection.');
+                console.log('---- received close from client, ending data connection.');
                 socket.end();
                 break;
             default: 
@@ -376,15 +376,15 @@ let prepareForDataFrames = (socket) => {
             genericio.write(writeLocation, fileInProgress.data, fileInProgress.isbinary).then( () => {
                 socket.write(formatPacket('uploadcomplete', ''), () => {
                     fileInProgress.data=null;
+                    //socket.end(); //if for some reason the client doesn't send a FIN we know the socket should close here anyway.
                     console.log('____ message sent -- file saved in ',writeLocation,' binary=',fileInProgress.isbinary);
                 });
 
                 controlSocket.write(formatPacket('uploadcomplete', ''));
-                socket.end(); //if for some reason the client doesn't send a FIN we know the socket should close here anyway.
             }).catch( (e) => {
                 console.log('---- an error occured', e);
                 socket.write(formatPacket('error', e));
-                socket.end();
+                socket.destroy();
             });
         } else {
             //console.log('____ received chunk,', fileInProgress.receivedFile.length, 'received so far.');

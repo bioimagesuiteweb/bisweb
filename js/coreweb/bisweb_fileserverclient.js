@@ -450,7 +450,9 @@ class BisWebFileServerClient {
                     currentIndex+=(end-begin);
                 } else {
                     // We are done!
-                    fileTransferSocket.close();
+                    console.log('sending close after upload');
+                    fileTransferSocket.close(1000, 'Transfer completed successfully');
+                    cb();
                 }
             };
 
@@ -469,8 +471,8 @@ class BisWebFileServerClient {
                         sendDataSlice();
                         break;
                     case 'uploadcomplete':
-                        fileTransferSocket.close();
-                        cb();
+                        console.log('closing file transfer socket', fileTransferSocket);
+                        fileTransferSocket.close(1000, 'Transfer completed successfully');
                         break;
                     default: console.log('received unexpected message', event, 'while listening for server responses');
                 }
