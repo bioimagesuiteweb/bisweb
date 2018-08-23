@@ -1,10 +1,14 @@
 const webutil = require('bis_webutil');
 
+const bisweb_serverregression=require('bisweb_serverregression');
+
 class BiswebTestRunner extends HTMLElement {
 
     constructor() {
         super();
 
+        console.log("Test runner");
+        
         /*let sampleTests = [
             {
                 'name' : 'Test 1',
@@ -120,6 +124,15 @@ class BiswebTestRunner extends HTMLElement {
     displayResults(successes, failures) {
         console.log('------------ Successful tests ------------', successes);
         console.log('------------ Failed tests ------------', failures);
+    }
+
+    connectedCallback() {
+
+        setTimeout( () => {
+
+            this.setTests(bisweb_serverregression.tests, bisweb_serverregression.pretests);
+            this.runPretests();
+        },1000);
     }
 }
 
