@@ -196,6 +196,9 @@ ENDIF (BIS_USEGPL)
 
 install (FILES ${LICENSE_FILE} DESTINATION bisweb/ RENAME LICENSE)
 
+install (FILES ${PROJECT_SOURCE_DIR}/../web/images/mean_reg2mean.nii.gz DESTINATION bisweb/images)
+install (FILES ${PROJECT_SOURCE_DIR}/../web/images/facemask_char.nii.gz DESTINATION bisweb/images)
+
 
 IF (BIS_A_EMSCRIPTEN)
 

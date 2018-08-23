@@ -35,3 +35,4 @@ segmentImage
 sliceBiasFieldCorrect
 smoothImage
 thresholdImage
+defaceImage
