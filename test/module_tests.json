@@ -466,8 +466,13 @@
             "test"    : "--test_target testdata/thr_obj.nii.gz --test_threshold 30.0 --test_comparison ssd",
             "result"  : false,
             "dopython": true
+        },
+        {
+            "command" : "defaceImage --resolution 2.0 --debug true -i testdata/deface/sag_2mm.nii.gz",
+            "test"    : "--test_target testdata/deface/sag_2mm_defaced.nii.gz --test_threshold 0.9999 --test_comparison cc",
+            "result"  : true,
+            "dopython": false
         }
-
     ]
 }
 
