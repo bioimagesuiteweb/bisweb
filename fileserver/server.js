@@ -182,7 +182,7 @@ let startServer = (hostname, port, newport = true, readycb = () => {}) => {
 let readFrame = (chunk) => {
     let controlFrame = chunk.slice(0, 14);
     let parsedControl = wsutil.parseControlFrame(controlFrame);
-    //console.log('parsed control frame', parsedControl);
+    console.log('parsed control frame', parsedControl);
 
     //drop unmasked packets
     if (!parsedControl.mask) {

@@ -294,7 +294,7 @@ class BisWebFileServerClient {
 
         console.log('Received upload file request',url,isbinary);
         
-        let p=new Promise( (resolve, reject) => {
+        let p = new Promise( (resolve, reject) => {
             let promiseCb = () => {
                 resolve('Upload successful');
             };
@@ -305,12 +305,13 @@ class BisWebFileServerClient {
             
             this.uploadFileToServer(url, data, isbinary, promiseCb, promiseEb);
         });
-        console.log(p);
+
         return p;
     }
     
     /**
      * Packages the relevant parameters and functionality for downloading data from the local filesystem into an object that can be invoked by bis_genericio.
+     * 
      * @param {Object} params - Parameters object containing the following
      */
     invokeReadFilenameCallbackFunction(params) {
@@ -320,10 +321,10 @@ class BisWebFileServerClient {
     /**
      * Packages the relevant parameters and functionality for uploading data to the local filesystem into an object that can be invoked by bis_genericio.
      * 
-     * @param {Object} params - Parameters object containing the following
+     * @param {Object} params - Parameters object c
      */
     invokeWriteFilenameCallbackFunction(params) {
-        console.log(JSON.stringify(params,null,2));
+        console.log('callback in invokeWriteFilename', this.callback);
         this.callback(params.name);
     }
 

@@ -67,7 +67,8 @@ class BiswebTestRunner extends HTMLElement {
                 }
             }).catch( (e) => {
                 console.log('An error occured running pretest', currentTest.name);
-                console.log('Cannot continue with tests, stopping');
+                console.log('---------- Cannot continue with tests, stopping -------------');
+                console.log('Error:', e);
                 return;
             });
         };
@@ -85,7 +86,8 @@ class BiswebTestRunner extends HTMLElement {
             currentTest.test().then( () => {
                 successfulTests.push(currentTest.name);
 
-                console.log('succeded test', currentTest.name);
+                console.log('--------- succeeded test ---------');
+                console.log(currentTest.name);
                 index = index + 1;
 
                 if (index < this.testList.length) {
@@ -96,7 +98,8 @@ class BiswebTestRunner extends HTMLElement {
                 }
     
             }).catch( (e) => {
-                console.log('test failed name', currentTest.name, e);
+                console.log('------------- failed test -------------')
+                console.log(currentTest.name, e);
                 failedTests.push(currentTest.name);
 
                 index = index + 1;

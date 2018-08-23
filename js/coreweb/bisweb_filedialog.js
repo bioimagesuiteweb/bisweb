@@ -1,6 +1,7 @@
 const $ = require('jquery');
 const localforage = require('localforage');
 const webutil = require('bis_webutil.js');
+
 require('jstree');
 
 /**
@@ -472,7 +473,6 @@ class FileDialogElement {
 
     makeFileRequest(command, params) {
 
-
         let messageText;
         switch (command) {
             case 'getfile' : 
@@ -482,21 +482,14 @@ class FileDialogElement {
         }
 
         webutil.createAlert(messageText);
-        
-        //        let loadingMessage = $(`<p class='message'>${messageText}</p>`);
-        //header.append(loadingMessage);
 
         let cb = () => {
             //header.find('.message').remove();
         };
 
         let eb = () => {
-            //            header.find('.message').remove();
             let errorMessage = $(`<p class='errorMessage'>An error occured. Please ensure the chosen file exists in the chosen location.</p>`);
             webutil.createAlert(errorMessage,true);
-            //            header.append(errorMessage);
-
-            
         };
 
         //strip out leading '/' if necessary 
