@@ -1222,18 +1222,28 @@ style="position:absolute; top:${top}px; left:10px; z-index:${1000+internal.alert
         }).catch((e) => { console.log(e); });
     },
 
+
+    aboutText(extra="") {
+        return new Promise( (resolve,reject) => {
+            biswrap.initialize().then(() => {
+                
+                let usesgpl=biswrap.uses_gpl();
+                let gplextra="";
+                if (usesgpl) 
+                    gplextra=` (See also <a href="https://github.com/bioimagesuiteweb/gplcppcode" target="_blank">the plugin repository.</a>)`;
+                
+                
+                resolve(`<p>This application is part of BioImage Suite Web ${tools.version}.</p><p>BioImage Suite Web is an <a href="https://github.com/bioimagesuiteweb/bisweb" target="_blank">open source</a> software package.${gplextra}</p><p>We gratefully acknowledge
+                          support from the <a href="https://www.braininitiative.nih.gov/" target="_blank">NIH Brain Initiative</a> under grant R24 MH114805 (Papademetris X. and Scheinost D. PIs).</p><p>${extra}</p>`);
+            }).catch( (e) => { reject(e); });
+        });
+    },         
+
+    
     aboutDialog(extra="") {
 
-        biswrap.initialize().then(() => {
-
-            let usesgpl=biswrap.uses_gpl();
-            let gplextra="";
-            if (usesgpl) 
-                gplextra=` (See also <a href="https://github.com/bioimagesuiteweb/gplcppcode" target="_blank">the plugin repository.</a>)`;
-            
-            
-            bootbox.alert(`<p>This application is part of BioImage Suite Web ${tools.version}.</p><p>BioImage Suite Web is an <a href="https://github.com/bioimagesuiteweb/bisweb" target="_blank">open source</a> software package.${gplextra}</p><p>We gratefully acknowledge
-                          support from the <a href="https://www.braininitiative.nih.gov/" target="_blank">NIH Brain Initiative</a> under grant R24 MH114805 (Papademetris X. and Scheinost D. PIs).</p><p>${extra}</p>`);
+        this.aboutText(extra).then((m) => {
+            bootbox.alert(m);
         });
     },
 
