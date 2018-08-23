@@ -7,12 +7,12 @@ const BiswebImage = require('bisweb_image.js');
 const FileServer = new bisweb_fileserverclient();
 
 let setFileMode = () => {
-    return new Promise( (resolve, reject) => {
+    return new Promise( (resolve) => {
         console.log('webfileutil', webfileutil);
         webfileutil.setMode('server');
         resolve();
     });
-}
+};
 
 let connectToServer = () => {
     return new Promise( (resolve, reject) => {
@@ -49,7 +49,7 @@ let uploadImage = () => {
         console.log('fileserver socket', FileServer.socket);
 
         //TODO: Find way to code a relative filepath
-        let testImage = bis_genericio.read('/home/zach/javascript/bisweb/js/test/regressionImages/MNI_2mm_orig.nii.gz', true).then( (response) => {
+       bis_genericio.read('/home/zach/javascript/bisweb/js/test/regressionImages/MNI_2mm_orig.nii.gz', true).then( (response) => {
             
             
             let uploadSuccessListener = (event) => {
@@ -90,7 +90,7 @@ let downloadImage = () => {
         FileServer.downloadFile('/home/zach/javascript/bisweb/js/test/regressionImages/MNI_2mm_orig.nii.gz', true);
 
     });    
-}
+};
 
 let uploadAndCompare = () => {
     return new Promise( (resolve, reject) => {
@@ -128,7 +128,7 @@ let uploadAndCompare = () => {
             reject(e);
         });
     });
-}
+};
 
 let serverPretests = [
     {

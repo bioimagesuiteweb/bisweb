@@ -102,7 +102,7 @@ class BiswebTestRunner extends HTMLElement {
                 }
     
             }).catch( (e) => {
-                console.log('------------- failed test -------------')
+                console.log('------------- failed test -------------');
                 console.log(currentTest.name, e);
                 failedTests.push(currentTest.name);
 
@@ -115,7 +115,7 @@ class BiswebTestRunner extends HTMLElement {
                 }
     
             });
-        }
+        };
 
         runTest(this.testList[0]);
 

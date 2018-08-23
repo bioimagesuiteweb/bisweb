@@ -4,7 +4,6 @@ const AWS = require('aws-sdk');
 const AWSCognitoIdentity = require('amazon-cognito-identity-js');
 const AWSParameters = require('../../web/aws/awsparameters.js');
 const bis_webutil = require('bis_webutil.js');
-const wsutil = require('wsutil');
 const bisweb_filedialog = require('bisweb_filedialog.js');
 
 
@@ -221,7 +220,7 @@ class AWSModule {
      * @param {Function} cb - Function to call after successful authentication
      * @param {Object} bucketParams - S3 parameters related to the bucket the user is trying to log in to.
      */ 
-    awsAuthUser(cb, bucketParams = null) {
+    awsAuthUser(cb) {
 
         let returnf="./biswebaws.html";
         if (typeof window.BIS !=='undefined') {
