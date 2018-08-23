@@ -38,6 +38,8 @@ module.exports = {
         'images/MNI_T1_1mm_stripped_xy.png',
         'images/MNI_T1_2mm_stripped_ras.nii.gz',
         'images/ISAS_SPECT_Mask.nii.gz',
+        'images/mean_reg2mean.nii.gz',
+        'images/facemask_char.nii.gz',
         'images/ISAS_SPECT_Template.nii.gz',
         'images/ISASHN_Standard_Deviation.nii.gz',
         'images/Reorder_Atlas.nii.gz',
