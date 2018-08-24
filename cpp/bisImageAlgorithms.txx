@@ -1304,12 +1304,13 @@ namespace bisImageAlgorithms {
   {
 
     std::unique_ptr<bisSimpleImage<OT> >output(new bisSimpleImage<OT>("threshold_result"));
-    int ok=output->copyStructure(input);
-    if (!ok)
-      return std::move(output);
 
-    IT* odata=output->getData();
-    OT* idata=input->getData();
+    int dim[5];    input->getDimensions(dim);
+    float spa[5];    input->getSpacing(spa);
+    output->allocate(dim,spa);
+
+    OT* odata=output->getData();
+    IT* idata=input->getData();
     output->fill(replacevalue[0]);
     for (int i=0;i<input->getLength();i++)
       {
