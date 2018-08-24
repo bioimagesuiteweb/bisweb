@@ -1547,3 +1547,61 @@ unsigned char* niftiMat44ToQuaternionWASM(unsigned char* input_ptr,int debug) {
   bisLegacyFileSupport::convertMat44ToQuatern(input,output,debug);
   return bisEigenUtil::serializeAndReturn(output,"quatern_matrix");
 }
+
+// -------------------------------------------------------------------
+// ShiftScale Image
+// -------------------------------------------------------------------
+template <class BIS_IT,class BIS_OT> unsigned char* shiftScaleImageTemplate(unsigned char* input,bisJSONParameterList* params,int debug,BIS_IT*,BIS_OT*) {
+
+  std::unique_ptr<bisSimpleImage<BIS_IT> > inp_image(new bisSimpleImage<BIS_IT>("inp_image"));
+  if (!inp_image->linkIntoPointer(input))
+    return 0;
+
+  double shift=params->getFloatValue("shift",0.0);
+  double scale=params->getFloatValue("scale",1.0);
+
+  if (debug) {
+    std::cout << "Beginning actual Image Shift+Scale" << std::endl;
+    std::cout << "Shift=" << shift << ", scale=" << scale << std::endl;
+  }
+
+
+  std::unique_ptr<bisSimpleImage<BIS_OT> > out_image=bisImageAlgorithms::shiftScaleImage<BIS_IT,BIS_OT>(inp_image.get(),shift,scale);
+
+  
+  if (debug)
+    std::cout << "Shift+Scale Done" << std::endl;
+  
+  return out_image->releaseAndReturnRawArray();
+}
+
+
+template <class BIS_IT> unsigned char* shiftScaleImageTemplate1(unsigned char* input,bisJSONParameterList* params,int debug,int output_type,BIS_IT*) {
+
+  switch (output_type)
+      {
+	bisvtkTemplateMacro( return shiftScaleImageTemplate(input,params,debug,static_cast<BIS_IT*>(0),static_cast<BIS_TT*>(0)));
+      }
+  return 0;
+}
+
+unsigned char* shiftScaleImageWASM(unsigned char* input,const char* jsonstring,int debug)
+{
+  std::unique_ptr<bisJSONParameterList> params(new bisJSONParameterList());
+  int ok=params->parseJSONString(jsonstring);
+  if (!ok) 
+    return 0;
+
+  if(debug)
+    params->print();
+
+  int* header=(int*)input;
+  int target_type=bisDataTypes::getTypeCodeFromName(params->getValue("datatype"),header[1]);
+
+  switch (header[1])
+      {
+	bisvtkTemplateMacro( return shiftScaleImageTemplate1(input,params.get(),debug,target_type,static_cast<BIS_TT*>(0)));
+      }
+  return 0;
+}
+

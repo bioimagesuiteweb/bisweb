@@ -1348,6 +1348,29 @@ namespace bisImageAlgorithms {
     return std::move(output);
   }
 
+  template<class IT,class OT> std::unique_ptr<bisSimpleImage<OT> >  shiftScaleImage(bisSimpleImage<IT>* input,double shift,double scale)
+  {
+    std::unique_ptr<bisSimpleImage<OT> >output(new bisSimpleImage<OT>("threshold_result"));
+    
+    int dim[5];    input->getDimensions(dim);
+    float spa[5];    input->getSpacing(spa);
+    output->allocate(dim,spa);
+
+    OT* odata=output->getData();
+    IT* idata=input->getData();
+    output->fill(1.0);
+
+    //    std::cout << "Shift=" << shift << ", scale=" << scale << "\t inp=" << bisDataTypes::getTypeCode(IT(0)) << "--> " << bisDataTypes::getTypeCode(OT(0)) << std::endl;
+    
+    for (int i=0;i<input->getLength();i++)
+      {
+	double inp=idata[i];
+        double out=(inp-shift)*scale;
+        odata[i]=(OT)out;
+      }
+    return std::move(output);
+  }
+
 
   
     /** 
