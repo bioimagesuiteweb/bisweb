@@ -191,6 +191,7 @@ class ModuleManagerElement extends HTMLElement {
         this.createModule('Correct Bias Field',1, true, modules.sliceBiasFieldCorrect, moduleoptions);
         this.createModule('Change Spacing',1, true, modules.changeImageSpacing, moduleoptions);
         this.createModule('Resample Image',1, false, modules.resampleImage, moduleoptions);
+        this.createModule('Reorient Image',1, false, modules.reorientImage, moduleoptions);
         this.createModule('Flip Image',1, false, modules.flipImage, moduleoptions);
         this.createModule('Crop Image',1, false, modules.cropImage, moduleoptions);
         this.createModule('Blank Image',1, false, modules.blankImage, moduleoptions);
@@ -204,7 +205,7 @@ class ModuleManagerElement extends HTMLElement {
         this.createModule('Morphology Filter',2, false, modules.morphologyFilter, moduleoptions);
         if (usesgpl) {
             this.createModule('Segment Image',2, true, modules.segmentImage, moduleoptions);
-            this.createModule('Deface Image',2, true, modules.defaceImage, moduleoptions);
+            this.createModule('Deface Head Image',2, true, modules.defaceImage, moduleoptions);
         }
         this.createModule('Regularize Objectmap',2, true, modules.regularizeObjectmap, moduleoptions);
         this.createModule('Mask Image', 2, false, modules.maskImage, moduleoptions);
