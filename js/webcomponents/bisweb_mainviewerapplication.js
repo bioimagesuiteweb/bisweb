@@ -31,7 +31,7 @@ const genericio=require('bis_genericio');
 const bootbox=require('bootbox');
 const BisWebPanel = require('bisweb_panel.js');
 const resliceImage = require('resliceImage');
-const BisWebLinearTransform = require('bisweb_lineartransformation.js');
+const BisWebLinearTransformation = require('bisweb_lineartransformation.js');
 //const BisWebHelpVideoPanel = require('bisweb_helpvideopanel');
 
 const localforage=require('localforage');
@@ -201,16 +201,25 @@ class ViewerApplicationElement extends HTMLElement {
 
         let img=this.VIEWERS[index].getimage();
         let ov =this.VIEWERS[index].getobjectmap();
-        let ident = new BisWebLinearTransform();
+
+
+        let dim=img.getDimensions();
+        let spa=img.getSpacing();
+        let dim2=ov.getDimensions();
+        let spa2=ov.getSpacing();
+
+        let linear=new BisWebLinearTransformation(0); 
+        linear.setShifts(dim,spa,dim2,spa2);
+        linear.setParameterVector([ 0,0,0,0,0,0],{ scale:true, rigidOnly:true });
 
         let mod=new resliceImage();
         mod.execute({
             input : ov,
             reference : img,
-            xform : ident,
+            xform : linear,
         }, {
             addgrid : false,
-            interpolation : 1
+            interpolation : 3
         }).then(() => {
             let temp=mod.getOutputObject('output');
             this.VIEWERS[index].setobjectmap(temp, false);
