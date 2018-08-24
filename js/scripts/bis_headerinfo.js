@@ -40,6 +40,7 @@ program.version('1.0.0')
     .option('-i, --input <s>','filename of the file to print header for')
     .option('-f, --force <s>','force orientation to RAS or LPS or LAS or None')
     .option('-d, --debug <n>','debug on')
+    .option('-s, --save <n>','save on')
     .on('--help',function() {
 	help();
     })
@@ -61,6 +62,10 @@ else
     slist=program.args;
 
 let force=program.force || "None";
+let save= parseInt(program.save || 0);
+
+if (save!==1)
+    save=0;
 
 if (slist.length<1) {
     console.log('No input filename specified');
@@ -83,6 +88,14 @@ Promise.all(p).then( () => {
 	console.log('----------------------------------------------------');
 	console.log('\n', img[i].getDescription(),'\n');
 	console.log(img[i].getHeader().getDescription());
+        if (force !== "None" && save!==0) {
+            let index=slist[i].lastIndexOf(".nii");
+            let outname=slist[i].substr(0,index)+"_"+force.toLowerCase()+".nii.gz"
+            img[i].save(outname).then( (e) => {
+                console.log(e);
+
+            });
+        } 
     }
     console.log('----------------------------------------------------');
 }).catch( (e) => {

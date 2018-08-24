@@ -1638,7 +1638,7 @@ class BisWebImage extends BisWebDataObject {
         let B=numeric.rep([4,4],0.0);
         B[3][3]=1.0;
 
-//        if (debug)
+        if (debug)
             console.log('Axis=',axis,' flip=',flip,' dim=',flipdim);
         
         for (let i=0;i<=2;i++) {
