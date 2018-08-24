@@ -137,7 +137,7 @@ class ThresholdImageModule extends BaseModule {
         else if (vals.outtype === "Short")
             datatype="short";
 
-        console.log("DataType=",datatype,vals.outtype);
+        console.log("DataType=",datatype,vals.outtype,'low=',vals.low,'high=',vals.high);
         
         return new Promise((resolve, reject) => {
             biswrap.initialize().then(() => {
@@ -168,13 +168,13 @@ class ThresholdImageModule extends BaseModule {
             return newDes;
 
         let imagerange = current_input.getIntensityRange();
-
+        
         for (let i = 0; i < newDes.params.length; i++) {
             let name = newDes.params[i].varname;
             if(name === 'low' || name === 'high' ) {
                 newDes.params[i].low = imagerange[0];
                 newDes.params[i].high = imagerange[1];
-
+                
                 if (name === 'low') {
                     newDes.params[i].default = 0.9 * imagerange[0] + 0.1 * imagerange[1]; 
                 } else if (name === 'high') {

@@ -329,6 +329,12 @@
 	    "result"  : true,
 	    "dopython": false
 	},
+        {
+            "command" : "binaryThresholdImage --low 384.5 --high 386 --debug true -i testdata/reorient/avg152T1_LR_PSR_ss.nii.gz",
+            "test"    : "--test_target testdata/reorient/avg152T1_LR_PSR_ss_binary.nii.gz",
+            "result"  : true,
+            "dopython": true
+        },
         { 
 	    "command" : "morphologyFilter --radius 1 --mode median --debug true --input testdata/morphology/mask_128.nii.gz",
 	    "test"    : "--test_target testdata/morphology/median_mask_128.nii.gz --test_comparison cc --test_threshold 0.98",
@@ -475,53 +481,52 @@
         },
         {
             "command" : "reorientImage --orient RAS --debug true -i testdata/reorient/avg152T1_LR_PSR.nii.gz",
-            "test"    : "--test_target testdata/reorient/avg152T1_LR_RAS.nii.gz --test_threshold 0.999999 --test_comparison cc",
+            "test"    : "--test_target testdata/reorient/avg152T1_LR_RAS.nii.gz",
             "result"  : true,
             "dopython": false
         },
         {
             "command" : "reorientImage --orient RAS --debug true -i testdata/reorient/avg152T1_LR_LIP.nii.gz",
-            "test"    : "--test_target testdata/reorient/avg152T1_LR_RAS.nii.gz --test_threshold 0.999999 --test_comparison cc",
+            "test"    : "--test_target testdata/reorient/avg152T1_LR_RAS.nii.gz",
             "result"  : true,
             "dopython": false
         },
         {
             "command" : "reorientImage --orient RAS --debug true -i testdata/reorient/avg152T1_LR_LPS.nii.gz",
-            "test"    : "--test_target testdata/reorient/avg152T1_LR_RAS.nii.gz --test_threshold 0.999999 --test_comparison cc",
+            "test"    : "--test_target testdata/reorient/avg152T1_LR_RAS.nii.gz",
             "result"  : true,
             "dopython": false
         },
         {
             "command" : "reorientImage --orient LPS --debug true -i testdata/reorient/avg152T1_LR_PSR.nii.gz",
-            "test"    : "--test_target testdata/reorient/avg152T1_LR_LPS.nii.gz --test_threshold 0.999999 --test_comparison cc",
+            "test"    : "--test_target testdata/reorient/avg152T1_LR_LPS.nii.gz",
             "result"  : true,
             "dopython": false
         },
         {
             "command" : "reorientImage --orient LPS --debug true -i testdata/reorient/avg152T1_LR_LIP.nii.gz",
-            "test"    : "--test_target testdata/reorient/avg152T1_LR_LPS.nii.gz --test_threshold 0.999999 --test_comparison cc",
+            "test"    : "--test_target testdata/reorient/avg152T1_LR_LPS.nii.gz",
             "result"  : true,
             "dopython": false
         },
         {
             "command" : "reorientImage --orient LPS --debug true -i testdata/reorient/avg152T1_LR_RAS.nii.gz",
-            "test"    : "--test_target testdata/reorient/avg152T1_LR_LPS.nii.gz --test_threshold 0.999999 --test_comparison cc",
+            "test"    : "--test_target testdata/reorient/avg152T1_LR_LPS.nii.gz",
             "result"  : true,
             "dopython": false
         },
         {
             "command" : "reorientImage --orient LAS --debug true -i testdata/reorient/avg152T1_LR_RAS.nii.gz",
-            "test"    : "--test_target testdata/reorient/avg152T1_LR_LPS.nii.gz --test_threshold 0.999999 --test_comparison cc",
+            "test"    : "--test_target testdata/reorient/avg152T1_LR_LPS.nii.gz",
             "result"  : false,
             "dopython": false
         },
         {
             "command" : "shiftScaleImage --shift 2.0 --scale 1.5 --outtype Float --debug true -i testdata/reorient/avg152T1_LR_PSR.nii.gz",
-            "test"    : "--test_target testdata/reorient/avg152T1_LR_PSR_ss.nii.gz --test_threshold 0.999999 --test_comparison cc",
+            "test"    : "--test_target testdata/reorient/avg152T1_LR_PSR_ss.nii.gz",
             "result"  : true,
             "dopython": false
         }
-
     ]
 }
 
