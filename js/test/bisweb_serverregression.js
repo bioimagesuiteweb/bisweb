@@ -41,29 +41,22 @@ let connectToServer = () => {
 };
 
 let uploadImage = () => {
-    return new Promise( (resolve, reject) => {
-        let timeoutEvent = setTimeout( () => {
+    return new Promise((resolve, reject) => {
+        let timeoutEvent = setTimeout(() => {
             reject('server timed out waiting for acknowledgment of upload');
         }, 10000);
 
         console.log('fileserver socket', FileServer.socket);
+        bis_genericio.read('/home/zach/javascript/bisweb/js/test/regressionImages/MNI_2mm_orig.nii.gz', true).then((response) => {
 
-        //TODO: Find way to code a relative filepath
-       bis_genericio.read('/home/zach/javascript/bisweb/js/test/regressionImages/MNI_2mm_orig.nii.gz', true).then( (response) => {
-            
-            
-            let uploadSuccessListener = (event) => {
-                let data = wsutil.parseJSON(event.data);
-                if (data.type === 'uploadcomplete') {
-                    FileServer.socket.removeEventListener('message', uploadSuccessListener);
-                    clearTimeout(timeoutEvent);
-                    resolve();
-                }
-            };
-
-            FileServer.socket.addEventListener('message', uploadSuccessListener);
-            bis_genericio.write('testfile.nii.gz', response.data, true);
-        }).catch( (e) => {
+            bis_genericio.write('testfile.nii.gz', response.data, true).then(() => {
+                clearTimeout(timeoutEvent);
+                resolve();
+            }).catch((e) => {
+                clearTimeout(timeoutEvent);
+                reject(e);
+            });
+        }).catch((e) => {
             reject(e);
         });
     });
@@ -76,18 +69,13 @@ let downloadImage = () => {
         }, 6000);
 
         console.log('fileserver socket', FileServer.socket);
-
-        let downloadSuccessListener = (event) => {
-            if (typeof(event.data) !== "string") {
-                FileServer.socket.removeEventListener('message', downloadSuccessListener);
-                clearTimeout(timeoutEvent);
-                resolve();
-            }
-        };
-
-        FileServer.socket.addEventListener('message', downloadSuccessListener);
-
-        FileServer.downloadFile('/home/zach/javascript/bisweb/js/test/regressionImages/MNI_2mm_orig.nii.gz', true);
+        bis_genericio.read('/home/zach/javascript/bisweb/js/test/regressionImages/MNI_2mm_orig.nii.gz', true).then( () => {
+            clearTimeout(timeoutEvent);
+            resolve('Read completed successfully');
+        }).catch( (e) => {
+            clearTimeout(timeoutEvent);
+            reject(e);
+        });
 
     });    
 };
@@ -110,15 +98,16 @@ let uploadAndCompare = () => {
 
             console.log('testImage', testImage);
 
-            bis_genericio.write('testfile.nii.gz', response.data, true).then( () => {
+            bis_genericio.write('uploadtestfile.nii.gz', response.data, true).then( () => {
                 let uploadedImage = new BiswebImage();
                 uploadedImage.load('/home/zach/testfile.nii.gz', false).then( () => {
 
                     clearTimeout(timeoutEvent);
-                    let comparisonResult = uploadedImage.compareWithOther(testImage);
+                    let comparisonResult = uploadedImage.compareWithOther(baseImage);
                     if (comparisonResult.testresult === true) {
                         resolve();
                     } else {
+                        console.log('comparisonResult', comparisonResult, uploadedImage, baseImage);
                         reject('Uploaded image is not the same as base image', comparisonResult);
                     }
                 });

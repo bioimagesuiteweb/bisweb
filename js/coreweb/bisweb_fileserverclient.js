@@ -290,16 +290,18 @@ class BisWebFileServerClient {
      * @param {Boolean} isbinary -- is data binary
      * @returns {Promise} 
      */
-    uploadFile(url,data,isbinary=false) {
+    uploadFile(url, data, isbinary=false) {
 
         console.log('Received upload file request',url,isbinary);
         
         let p = new Promise( (resolve, reject) => {
             let promiseCb = () => {
+                console.log('resolving promise for file server client')
                 resolve('Upload successful');
             };
             
             let promiseEb = () => {
+                console.log('rejecting promise for file server client');
                 reject('Upload failed');
             };
             
@@ -473,6 +475,7 @@ class BisWebFileServerClient {
                     case 'uploadcomplete':
                         console.log('closing file transfer socket', fileTransferSocket);
                         fileTransferSocket.close(1000, 'Transfer completed successfully');
+                        cb();
                         break;
                     default: console.log('received unexpected message', event, 'while listening for server responses');
                 }

@@ -127,6 +127,8 @@ const webfileutils = {
 
         if (fileMode === 'server') {
             genericio.setFileServerObject(bisweb_fileserverclient);
+        } else if (fileMode === 'amazonaws') {
+            genericio.setFileServerObject(bisweb_awsmodule);
         } else {
             genericio.setFileServerObject(null);
         }
