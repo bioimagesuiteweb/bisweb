@@ -59,6 +59,7 @@ exports.nonlinearRegistration = require('nonlinearRegistration.js');
 exports.motionCorrection = require('motionCorrection.js');
 
 exports.defaceImage=require('defaceImage.js');
+exports.reorientImage=require('reorientImage.js');
 
 exports.moduleNamesArray = {
     'approximatefield': exports.approximateField,
@@ -93,6 +94,7 @@ exports.moduleNamesArray = {
     'projectimage': exports.projectImage,
     'regressglobal': exports.regressGlobal,
     'regressout': exports.regressOut,
+    'reorientimage': exports.reorientImage,
     'resampleimage': exports.resampleImage,
     'resliceimage': exports.resliceImage,
     'segmentimage': exports.segmentImage,

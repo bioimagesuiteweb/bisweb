@@ -33,20 +33,26 @@ const xformutil=require('bis_transformationutil.js');
  * The values to replace 'in' and 'out' with must be specified by the user. 
  */
 class DefaceImageModule extends BaseModule {
-    constructor() {
+    constructor(outputmask=false) {
         super();
         this.name = 'defaceImage';
+        this.outputmask=outputmask;
     }
 
 
     createDescription() {
+
+        let vtype='image';
+        if (this.outputmask)
+            vtype='overlay';
+        
         return {
             "name": "Deface",
             "description": "This module uses data from the openfmri project to deface an image by first affinely registering it to a template",
             "author": "Xenios Papademetris",
             "version": "1.0",
             "inputs": baseutils.getImageToImageInputs(),
-            "outputs": baseutils.getImageToImageOutputs(),
+            "outputs": baseutils.getImageToImageOutputs(null,'viewer1',vtype),
             "buttonName": "Deface",
             "shortname" : "defaced",
             "params": [
@@ -85,6 +91,16 @@ class DefaceImageModule extends BaseModule {
                     "varname": "levels",
                     "low": 1,
                     "high": 4,
+                },
+                {
+                    "name": "Output Mask",
+                    "description": "If true output the mask",
+                    "priority": 5,
+                    "advanced": true,
+                    "gui": "check",
+                    "varname": "outputmask",
+                    "type": 'boolean',
+                    "default": this.outputmask,
                 },
                 baseutils.getDebugParam()
             ]
@@ -134,39 +150,42 @@ class DefaceImageModule extends BaseModule {
                     'return_vector' : false}, this.parseBoolean(vals.debug));
 
                 let temp=baseutils.resliceRegistrationOutput(biswrap,input,images[1],matr,0);
-                let output=new BisWebImage();
-                output.cloneImage(input);
 
-                let idat=input.getImageData();
-                let odat=output.getImageData();
-                let tdat=temp.getImageData();
-                
-                let dm=output.getDimensions();
-                let volumesize=dm[0]*dm[1]*dm[2];
-                let numframes=dm[3]*dm[4];
-
-
-
-                let count=0;
-                
-                for (let i=0;i<volumesize;i++) {
-                    let v=tdat[i];
-                    if (!v) {
-                        count=count+1;
-                        for (let f=0;f<numframes;f++) {
-                            odat[f*volumesize+i]=0;
-                        }
-                    } else {
-                        for (let f=0;f<numframes;f++) {
-                            odat[f*volumesize+i]=idat[f*volumesize+i];
+                if (this.parseBoolean(vals.outputmask)) {
+                    this.outputs['output']=temp;
+                } else {
+                    let output=new BisWebImage();
+                    output.cloneImage(input);
+                    
+                    let idat=input.getImageData();
+                    let odat=output.getImageData();
+                    let tdat=temp.getImageData();
+                    
+                    let dm=output.getDimensions();
+                    let volumesize=dm[0]*dm[1]*dm[2];
+                    let numframes=dm[3]*dm[4];
+                    
+                    
+                    
+                    let count=0;
+                    
+                    for (let i=0;i<volumesize;i++) {
+                        let v=tdat[i];
+                        if (!v) {
+                            count=count+1;
+                            for (let f=0;f<numframes;f++) {
+                                odat[f*volumesize+i]=0;
+                            }
+                        } else {
+                            for (let f=0;f<numframes;f++) {
+                                odat[f*volumesize+i]=idat[f*volumesize+i];
+                            }
                         }
                     }
+                    
+                    console.log('Done masked=',count,'/',volumesize,' voxels');
+                    this.outputs['output']=output;
                 }
-
-                console.log('Done masked=',count,'/',volumesize,' voxels');
-
-                this.outputs['output']=output;
-                
                 resolve();
 
             }).catch( (e) => {
