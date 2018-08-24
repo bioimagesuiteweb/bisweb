@@ -1365,7 +1365,7 @@ namespace bisImageAlgorithms {
     for (int i=0;i<input->getLength();i++)
       {
 	double inp=idata[i];
-        double out=(inp-shift)*scale;
+        double out=(inp+shift)*scale;
         odata[i]=(OT)out;
       }
     return std::move(output);

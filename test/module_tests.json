@@ -514,6 +514,12 @@
             "test"    : "--test_target testdata/reorient/avg152T1_LR_LPS.nii.gz --test_threshold 0.999999 --test_comparison cc",
             "result"  : false,
             "dopython": false
+        },
+        {
+            "command" : "shiftScaleImage --shift 2.0 --scale 1.5 --outtype Float --debug true -i testdata/reorient/avg152T1_LR_PSR.nii.gz",
+            "test"    : "--test_target testdata/reorient/avg152T1_LR_PSR_ss.nii.gz --test_threshold 0.999999 --test_comparison cc",
+            "result"  : true,
+            "dopython": false
         }
 
     ]

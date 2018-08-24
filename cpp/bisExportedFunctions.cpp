@@ -1565,7 +1565,6 @@ template <class BIS_IT,class BIS_OT> unsigned char* shiftScaleImageTemplate(unsi
     std::cout << "Shift=" << shift << ", scale=" << scale << std::endl;
   }
 
-
   std::unique_ptr<bisSimpleImage<BIS_OT> > out_image=bisImageAlgorithms::shiftScaleImage<BIS_IT,BIS_OT>(inp_image.get(),shift,scale);
 
   
