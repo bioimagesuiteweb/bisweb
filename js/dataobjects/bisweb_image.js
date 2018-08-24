@@ -1571,25 +1571,33 @@ class BisWebImage extends BisWebDataObject {
 
         // Compute Flips
         let oname="RAS",max=0;
+        internal.orient.invaxis=[0,1,2];
+
+        
+
         if (forceorient==="LPS") {
             oname="LPS";
             max=2;
+            internal.orient.invflip  = [ 1,1,0 ];
         } else if (forceorient=="LAS") {
             oname="LAS";
             max=1;
-
+            internal.orient.invflip  = [ 1,0,0 ];
+        } else {
+            internal.orient.invflip  = [ 0,0,0 ];
         }
-
+            
         if (max>0)  {
             for (let ia=0;ia<max;ia++) {
                 flip[ia]=1-flip[ia];
                 internal.orient.flip[ia]=1-internal.orient.flip[ia];
-                internal.orient.invflip[ia]=1-internal.orient.invflip[ia];
+                //internal.orient.invflip[ia]=1-internal.orient.invflip[ia];
             }
         }
 
-        if (debug)
+        if (debug) {
             console.log('++++ orient=',oname,'flip=',flip,'max=',max);
+        }
         
         // Perform Permutation
         for (ia[2]=0;ia[2]<dim[2];ia[2]++) {
@@ -1677,7 +1685,10 @@ class BisWebImage extends BisWebDataObject {
             internal.header.struct.srow_y[i]=C[1][i];
             internal.header.struct.srow_z[i]=C[2][i];
         }
-        
+
+
+
+
     }
 
 }
