@@ -130,6 +130,8 @@ const bisweb_templates = `
 const $ = require('jquery');
 const bootbox=require('bootbox');
 const biswrap = require('libbiswasm_wrapper');
+const genericio= require('bis_genericio');
+
 const names = ["default", "primary", "success", "info", "warning", "danger", "link"];
 const directions = ["top", "bottom", "left", "right"];
 
@@ -1250,15 +1252,7 @@ style="position:absolute; top:${top}px; left:10px; z-index:${1000+internal.alert
 
     /** get full path to html file */
     getWebPageImagePath() {
-        let scope=window.document.URL.split("?")[0];
-        let index=scope.lastIndexOf("/");
-        if (scope.indexOf("external")>0)  {
-            scope=scope.substr(0,index)+"/../src/web/images";
-            console.log('external=',external,scope);
-        } else {
-            scope=scope.substr(0,index)+"/images";
-        }
-        return scope;
+        return genericio.getimagepath();
     },
     
     getWebPageURL() {
