@@ -208,9 +208,6 @@ class ManualRegistrationModule extends BaseModule {
             this.outputs['output']=linear;
         }
 
-        
-        console.log('oooo Reslicing ',linear.getDescription());
-
         return new Promise( (resolve, reject) => {
             biswrap.initialize().then(() => {
                 //                console.log('Reference=',reference.getDescription(),reference.getHeader().getDescription());
