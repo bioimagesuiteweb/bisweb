@@ -33,18 +33,13 @@ const xformutil=require('bis_transformationutil.js');
  * The values to replace 'in' and 'out' with must be specified by the user. 
  */
 class DefaceImageModule extends BaseModule {
-    constructor(outputmask=false) {
+    constructor() {
         super();
         this.name = 'defaceImage';
-        this.outputmask=outputmask;
     }
 
 
     createDescription() {
-
-        let vtype='image';
-        if (this.outputmask)
-            vtype='overlay';
         
         return {
             "name": "Deface",
@@ -52,7 +47,7 @@ class DefaceImageModule extends BaseModule {
             "author": "Xenios Papademetris",
             "version": "1.0",
             "inputs": baseutils.getImageToImageInputs(),
-            "outputs": baseutils.getImageToImageOutputs(null,'viewer1',vtype),
+            "outputs": baseutils.getImageToImageOutputs(null,'viewer1','overlay'),
             "buttonName": "Deface",
             "shortname" : "defaced",
             "params": [
