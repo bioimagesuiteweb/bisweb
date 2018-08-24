@@ -292,23 +292,17 @@ class BisWebFileServerClient {
      */
     uploadFile(url, data, isbinary=false) {
 
-        console.log('Received upload file request',url,isbinary);
-        
-        let p = new Promise( (resolve, reject) => {
+        return new Promise( (resolve, reject) => {
             let promiseCb = () => {
-                console.log('resolving promise for file server client')
                 resolve('Upload successful');
             };
             
             let promiseEb = () => {
-                console.log('rejecting promise for file server client');
                 reject('Upload failed');
             };
             
             this.uploadFileToServer(url, data, isbinary, promiseCb, promiseEb);
         });
-
-        return p;
     }
     
     /**

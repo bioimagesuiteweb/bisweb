@@ -43,12 +43,12 @@ const mkey=keystore.OneDriveKey || "";
 const userPreferencesLoaded = userPreferences.webLoadUserPreferences(bisdbase);
 
 const localforage = require('localforage');
+
 // Link File Server if not in Electron
 let bisweb_fileserverclient=null;
 if (!webutil.inElectronApp()) {
     const BisWebFileServerClient=require('bisweb_fileserverclient');
     bisweb_fileserverclient=new BisWebFileServerClient();
-    genericio.setFileServerObject(bisweb_fileserverclient);
 }
 
 // Initial mode

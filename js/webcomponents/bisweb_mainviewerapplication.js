@@ -917,7 +917,7 @@ class ViewerApplicationElement extends HTMLElement {
         webutil.createMenuItem(bmenu,'');
         webutil.createMenuItem(bmenu, 'Restart Application',
                                function () {
-                                   bootbox.confirm("Are you sure? You will loose all unsaved data.",
+                                   bootbox.confirm("Are you sure? You will lose all unsaved data.",
                                                    function() {
                                                        window.open(self.applicationURL,'_self');
                                                    }

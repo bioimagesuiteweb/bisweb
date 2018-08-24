@@ -40,12 +40,7 @@ class AWSModule {
         //not completely sure why -Zach
         bis_webutil.runAfterAllLoaded( () => {   
             this.fileDisplayModal = new bisweb_filedialog('Bucket Contents', { 'makeFavoriteButton' : false });
-            this.fileDisplayModal.fileRequestFn = this.createFileDownloadRequest.bind(this);
-
-            this.fileSaveModal = new bisweb_filedialog('Choose Folder to Save In', { 'makeFavoriteButton' : false, 'modalType' : 'save', 'displayFiles' : false });
-            this.fileSaveModal.fileRequestFn = this.createFileUploadRequest.bind(this);
-
-            
+            this.fileSaveModal = new bisweb_filedialog('Choose Folder to Save In', { 'makeFavoriteButton' : false, 'modalType' : 'save', 'displayFiles' : false });           
         });
 
     }
@@ -85,6 +80,8 @@ class AWSModule {
     }
 
     /**
+     * DEPRECATED AS OF 8-24-18, REPLACED BY downloadFile
+     * 
      * Packages the relevant parameters and functionality for downloading an image from the cloud into an object to be invoked by bis_genericio.
      * 
      * @param {Object} params - Parameters object containing the following
@@ -113,10 +110,7 @@ class AWSModule {
                             return;
                         }
 
-                        //S3 sends the data zipped
-                        //let unzippedFile = wsutil.unzipFile(data.Body);
                         cb();
-
                         console.log('data', data.Body);
 
                         resolve({ 
@@ -132,6 +126,72 @@ class AWSModule {
         this.callback(obj);
     }
 
+    /**
+     * Downloads a file with a given name from the current S3 bucket. 
+     * Called by bis_genericio starting from when a user sends the request by clicking on a file in a file display modal.
+     * 
+     * @param {String} filename - The name of the file 
+     */
+    downloadFile(filename) {
+
+        return new Promise( (resolve, reject) => {
+            let getParams = { 
+                'Key' : filename,
+                'Bucket' : AWSParameters.BucketName
+            };
+
+            this.s3.getObject(getParams, (err, data) => {
+                if (err) { 
+                    reject(err); 
+                    return;
+                }
+
+                console.log('data', data.Body);
+
+                resolve({ 
+                    data: data.Body, 
+                    filename: filename 
+                });
+            });
+        });
+    }
+
+    /**
+     * Uploads a file to the current S3 bucket. 
+     * Called by bis_genericio starting from when a user types a filename into the save filename modal and clicks confirm. 
+     * 
+     * @param {String} filename - The name of the file 
+     * 
+     */
+    uploadFile(filename, data) {
+
+        return new Promise( (resolve, reject) => {
+            let uploadParams = {
+                'Key' : filename,
+                'Bucket' : AWSParameters.BucketName,
+                'Body' : data
+            };
+
+            this.s3.upload(uploadParams, (err) => {
+                if (err) { console.log(err); eb(); reject(err); }
+                else {
+                    console.log('uploaded file', filename, 'successfully');
+                    resolve('Upload successful');
+                }
+            });
+        });
+    }
+
+    /**
+     * Packages the relevant parameters and functionality for uploading an image to the cloud into an object to be invoked by bis_genericio.
+     * 
+     * @param {Object} params - Parameters object containing the following
+     * @param {String} params.command - String name for the command to execute. One of 'getfiles' or 'uploadfiles' as of 7-23-18.
+     * @param {String} params.name - Name of the file to fetch from the server, or what to name the file being saved to the server.
+     * @param {bisweb_image} params.files - List of files to upload to the server. May be aliased as 'params.file' in the case of a single file.
+     * @param {Function} cb - Callback on success.
+     * @param {Function} eb - Callback on failure.
+     */
     createFileUploadRequest(params, cb, eb){
         let obj = {
             'filename': params.name,
@@ -193,10 +253,18 @@ class AWSModule {
     wrapInAuth(command, opts) {
         console.log('opts', opts);
         let parseCommand = () => {
-            this.callback = opts.callback;
+            //this.callback = opts.callback;
             switch(command) {
-                case 'showfiles' : this.listObjectsInBucket(opts.suffix, opts.title); break;
-                case 'uploadfile' : this.createSaveImageModal(opts.suffix, opts.title); break;
+                case 'showfiles' : {
+                    this.fileDisplayModal.fileRequestFn = opts.callback;
+                    this.listObjectsInBucket(opts.suffix, opts.title); 
+                    break;
+                }
+                case 'uploadfile' : {
+                    this.fileSaveModal.fileRequestFn = opts.callback;
+                    this.createSaveImageModal(opts.suffix, opts.title); 
+                    break;
+                }
                 default : console.log('Unrecognized aws command', command, 'cannot complete request.');
             }
         };

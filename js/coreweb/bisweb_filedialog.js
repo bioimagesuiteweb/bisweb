@@ -497,7 +497,8 @@ class FileDialogElement {
 
         this.modal.dialog.modal('hide');
         setTimeout( () => {
-            this.fileRequestFn({ 'command' : command, 'files' : [name], 'name' : name, 'paths' : [params.path] }, cb, eb);
+            this.fileRequestFn(name, true);
+            //this.fileRequestFn({ 'command' : command, 'files' : [name], 'name' : name, 'paths' : [params.path] }, cb, eb);
         },10);
 
     }
@@ -571,7 +572,8 @@ class FileDialogElement {
                 this.saveImageModal.dialog.modal('hide');
                 this.modal.dialog.modal('hide');
                 setTimeout( () => {
-                    this.fileRequestFn( { 'command' : 'uploadfile', 'name' : newFilename }, cb, eb);
+                    console.log('file request fn', this.fileRequestFn);
+                    this.fileRequestFn(name, true);
                 }, 10);
 
             });
