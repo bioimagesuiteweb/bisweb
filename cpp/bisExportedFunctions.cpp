@@ -1063,9 +1063,9 @@ unsigned char* weightedRegressGlobalSignalWASM(unsigned char* input_ptr,unsigned
 // -------------------------------------------------------------------
 // Threshold Image
 // -------------------------------------------------------------------
-template <class BIS_TT> unsigned char* thresholdImageTemplate(unsigned char* input,bisJSONParameterList* params,int debug,BIS_TT*) {
+template <class BIS_IT,class BIS_OT> unsigned char* thresholdImageTemplate(unsigned char* input,bisJSONParameterList* params,int debug,BIS_IT*,BIS_OT*) {
 
-  std::unique_ptr<bisSimpleImage<BIS_TT> > inp_image(new bisSimpleImage<BIS_TT>("inp_image"));
+  std::unique_ptr<bisSimpleImage<BIS_IT> > inp_image(new bisSimpleImage<BIS_IT>("inp_image"));
   if (!inp_image->linkIntoPointer(input))
     return 0;
 
@@ -1076,9 +1076,9 @@ template <class BIS_TT> unsigned char* thresholdImageTemplate(unsigned char* inp
   replace[0]=params->getBooleanValue("replaceout",1);
   replace[1]=params->getBooleanValue("replacein",0);
 
-  BIS_TT replacevalue[2];
-  replacevalue[0]=(BIS_TT) params->getFloatValue("outvalue",0);
-  replacevalue[1]=(BIS_TT) params->getFloatValue("invalue",1);
+  BIS_OT replacevalue[2];
+  replacevalue[0]=(BIS_OT)params->getFloatValue("outvalue",0);
+  replacevalue[1]=(BIS_OT)params->getFloatValue("invalue",1);
   
 
 
@@ -1095,7 +1095,7 @@ template <class BIS_TT> unsigned char* thresholdImageTemplate(unsigned char* inp
 
   }
   
-  std::unique_ptr<bisSimpleImage<BIS_TT> > out_image=bisImageAlgorithms::thresholdImage(inp_image.get(),
+  std::unique_ptr<bisSimpleImage<BIS_OT> > out_image=bisImageAlgorithms::thresholdImage<BIS_IT,BIS_OT>(inp_image.get(),
 											thresholds,replace,replacevalue);
 
   if (debug)
@@ -1104,8 +1104,17 @@ template <class BIS_TT> unsigned char* thresholdImageTemplate(unsigned char* inp
   return out_image->releaseAndReturnRawArray();
 }
 
-unsigned char* thresholdImageWASM(unsigned char* input,
-				 const char* jsonstring,int debug)
+
+template <class BIS_IT> unsigned char* thresholdImageTemplate1(unsigned char* input,bisJSONParameterList* params,int debug,int output_type,BIS_IT*) {
+
+  switch (output_type)
+      {
+	bisvtkTemplateMacro( return thresholdImageTemplate(input,params,debug,static_cast<BIS_IT*>(0),static_cast<BIS_TT*>(0)));
+      }
+  return 0;
+}
+
+unsigned char* thresholdImageWASM(unsigned char* input,const char* jsonstring,int debug)
 {
   std::unique_ptr<bisJSONParameterList> params(new bisJSONParameterList());
   int ok=params->parseJSONString(jsonstring);
@@ -1118,9 +1127,9 @@ unsigned char* thresholdImageWASM(unsigned char* input,
   int* header=(int*)input;
   int target_type=bisDataTypes::getTypeCodeFromName(params->getValue("datatype"),header[1]);
 
-  switch (target_type)
+  switch (header[1])
       {
-	bisvtkTemplateMacro( return thresholdImageTemplate(input,params.get(),debug, static_cast<BIS_TT*>(0)));
+	bisvtkTemplateMacro( return thresholdImageTemplate1(input,params.get(),debug,target_type,static_cast<BIS_TT*>(0)));
       }
   return 0;
 }
