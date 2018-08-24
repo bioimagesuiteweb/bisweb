@@ -1114,7 +1114,7 @@ class PaintToolElement extends HTMLElement {
                         moduleoptions.name='Deface Head Image';
                         this.internal.defaceModule=biscustom.createCustom(this.internal.layoutcontroller,
                                                                           this.internal.algocontroller,
-                                                                          new modules.defaceImage(true),
+                                                                          new modules.defaceImage(),
                                                                           moduleoptions);
                         webutil.createMenuItem(tmenu, moduleoptions.name,function() {
                             self.internal.defaceModule.show();
