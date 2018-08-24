@@ -1007,7 +1007,7 @@ let write = function (url, data,isbinary=false) {
  */
 let getFixedSaveFileName = function(fobj,replacement) {
 
-    if (fobj=== undefined || fobj===null)
+    if (fobj=== undefined || fobj===null || fobj == {} )
         return replacement;
     
     if (typeof fobj === "object") {
@@ -1044,15 +1044,17 @@ let getFixedLoadFileName = function(fobj) {
 
     if (fobj.indexOf("http")===0) {
         // Url -- try to get the last parts
-
+        let s=fobj.split("/");
+        
         if (fobj.indexOf("dl.dropbox")>0) {
-            let s=fobj.split("/");
+
             let f="dropbox/";
             for (let i=6;i<s.length;i++) {
                 f=f+"/"+s[i];
             }
             return f;
         }
+        return s[s.length-1];
     }
 
     
