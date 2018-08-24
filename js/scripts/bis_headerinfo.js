@@ -90,7 +90,7 @@ Promise.all(p).then( () => {
 	console.log(img[i].getHeader().getDescription());
         if (force !== "None" && save!==0) {
             let index=slist[i].lastIndexOf(".nii");
-            let outname=slist[i].substr(0,index)+"_"+force.toLowerCase()+".nii.gz"
+            let outname=slist[i].substr(0,index)+"_"+force.toLowerCase()+".nii.gz";
             img[i].save(outname).then( (e) => {
                 console.log(e);
 
