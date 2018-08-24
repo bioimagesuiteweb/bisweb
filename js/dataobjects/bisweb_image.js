@@ -1687,7 +1687,8 @@ class BisWebImage extends BisWebDataObject {
         }
 
 
-
+        // Finally axis is done
+        internal.orient.axis=[0,1,2];
 
     }
 
