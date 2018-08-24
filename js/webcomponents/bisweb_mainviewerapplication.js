@@ -30,6 +30,8 @@ const bisdbase = require('bisweb_dbase');
 const genericio=require('bis_genericio');
 const bootbox=require('bootbox');
 const BisWebPanel = require('bisweb_panel.js');
+const resliceImage = require('resliceImage');
+const BisWebLinearTransform = require('bisweb_lineartransformation.js');
 //const BisWebHelpVideoPanel = require('bisweb_helpvideopanel');
 
 const localforage=require('localforage');
@@ -192,7 +194,30 @@ class ViewerApplicationElement extends HTMLElement {
         });
     }
     
+    // ---------------------------------------------------------------------------
+    // Reslice Code
+    // ---------------------------------------------------------------------------
+    resliceOverlay(modulemanager,index=0) {
 
+        let img=this.VIEWERS[index].getimage();
+        let ov =this.VIEWERS[index].getobjectmap();
+        let ident = new BisWebLinearTransform();
+
+        let mod=new resliceImage();
+        mod.execute({
+            input : ov,
+            reference : img,
+            xform : ident,
+        }, {
+            addgrid : false,
+            interpolation : 1
+        }).then(() => {
+            let temp=mod.getOutputObject('output');
+            this.VIEWERS[index].setobjectmap(temp, false);
+        });
+    }
+
+    
     // ---------------------------------------------------------------------------
     // I/O Code
     // ---------------------------------------------------------------------------
@@ -600,6 +625,11 @@ class ViewerApplicationElement extends HTMLElement {
                                        function () {
                                            self.VIEWERS[viewerno].clearobjectmap();
                                        });
+                webutil.createMenuItem(objmenu[viewerno], ''); // separator
+                webutil.createMenuItem(objmenu[viewerno], 'Reslice Overlay To Match Image',
+                                       function () {
+                                           self.resliceOverlay(viewerno);
+                                       });
             }
             webutil.createMenuItem(objmenu[viewerno], ''); // separator
 
@@ -935,9 +965,13 @@ class ViewerApplicationElement extends HTMLElement {
 
         // Here we check if there is any info we need on the query string
         let load=webutil.getQueryParameter('load') || '';
-        if (load.length<2)
-            return 0;
-        this.loadApplicationState(load);
+        let imagename=webutil.getQueryParameter('image') || '';
+
+        if (load.length>0) {
+            this.loadApplicationState(load);
+        } else if (imagename.length>0) {
+            this.loadImage(imagename);
+        }
     }
                                 
 

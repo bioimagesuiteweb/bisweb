@@ -1084,7 +1084,7 @@ let getimagepath=function() {
     console.log('++++ Image path=',imagepath);
 
     return imagepath;
-}
+};
 
 // -------------------------------------------------------------------------------------------------------
 /*
