@@ -1083,7 +1083,7 @@ let getimagepath=function() {
         if (!fs.existsSync(imagepath))
             imagepath=path.resolve(__dirname, '../images');
     }
-    console.log('++++ Image path=',imagepath);
+
 
     return imagepath;
 };
