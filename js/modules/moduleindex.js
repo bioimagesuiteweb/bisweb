@@ -20,6 +20,7 @@
 exports.smoothImage = require('smoothImage.js');
 exports.gradientImage = require('gradientImage.js');
 exports.thresholdImage = require('thresholdImage.js');
+exports.shiftScaleImage = require('shiftScaleImage.js');
 exports.changeImageSpacing = require('changeImageSpacing.js');
 exports.binaryThresholdImage = require('binaryThresholdImage.js');
 exports.extractSlice = require('extractSlice.js');
@@ -101,6 +102,7 @@ exports.moduleNamesArray = {
     'regularizeobjectmap': exports.regularizeObjectmap,
     'slicebiascorrect': exports.sliceBiasFieldCorrect,
     'smoothimage': exports.smoothImage,
+    'shiftscaleimage': exports.shiftScaleImage,
     'thresholdimage': exports.thresholdImage,
 };
 

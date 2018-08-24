@@ -191,6 +191,7 @@ class ModuleManagerElement extends HTMLElement {
         this.createModule('Correct Bias Field',1, true, modules.sliceBiasFieldCorrect, moduleoptions);
         this.createModule('Change Spacing',1, true, modules.changeImageSpacing, moduleoptions);
         this.createModule('Resample Image',1, false, modules.resampleImage, moduleoptions);
+        this.createModule('Shift+Scale(+Cast) Image',1, false, modules.shiftScaleImage, moduleoptions);
         this.createModule('Reorient Image',1, false, modules.reorientImage, moduleoptions);
         this.createModule('Flip Image',1, false, modules.flipImage, moduleoptions);
         this.createModule('Crop Image',1, false, modules.cropImage, moduleoptions);
