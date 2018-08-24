@@ -80,53 +80,6 @@ class AWSModule {
     }
 
     /**
-     * DEPRECATED AS OF 8-24-18, REPLACED BY downloadFile
-     * 
-     * Packages the relevant parameters and functionality for downloading an image from the cloud into an object to be invoked by bis_genericio.
-     * 
-     * @param {Object} params - Parameters object containing the following
-     * @param {String} params.command - String name for the command to execute. One of 'getfiles' or 'uploadfiles' as of 7-23-18.
-     * @param {String} params.name - Name of the file to fetch from the server, or what to name the file being saved to the server.
-     * @param {bisweb_image} params.files - List of files to upload to the server. May be aliased as 'params.file' in the case of a single file.
-     * @param {Function} cb - Callback on success.
-     * @param {Function} eb - Callback on failure.
-     */
-    createFileDownloadRequest(params, cb, eb) {
-        let obj = {
-            'filename': params.name,
-            'params': params,
-            'awsinfo': AWSParameters,
-            'responseFunction': () => {
-                return new Promise( (resolve, reject) => {
-                    let getParams = { 
-                        'Key' : params.name,
-                        'Bucket' : obj.awsinfo.BucketName
-                    };
-
-                    this.s3.getObject(getParams, (err, data) => {
-                        if (err) { 
-                            reject(err); 
-                            eb();
-                            return;
-                        }
-
-                        cb();
-                        console.log('data', data.Body);
-
-                        resolve({ 
-                            data: data.Body, 
-                            filename: params.name 
-                        });
-                    });
-                });
-            }
-        };
-
-        //this.callback is set when a modal is opened.
-        this.callback(obj);
-    }
-
-    /**
      * Downloads a file with a given name from the current S3 bucket. 
      * Called by bis_genericio starting from when a user sends the request by clicking on a file in a file display modal.
      * 
@@ -173,54 +126,16 @@ class AWSModule {
             };
 
             this.s3.upload(uploadParams, (err) => {
-                if (err) { console.log(err); eb(); reject(err); }
-                else {
-                    console.log('uploaded file', filename, 'successfully');
+                if (err) { 
+                    bis_webutil.createAlert('Failed to upload ' + filename + ' to S3 bucket', true, 0, 3000);
+                    console.log('S3 error', err);
+                    reject(err); 
+                } else {
+                    bis_webutil.createAlert('Uploaded ' + filename + ' to S3 bucket successfully', false, 0, 3000); 
                     resolve('Upload successful');
                 }
             });
         });
-    }
-
-    /**
-     * Packages the relevant parameters and functionality for uploading an image to the cloud into an object to be invoked by bis_genericio.
-     * 
-     * @param {Object} params - Parameters object containing the following
-     * @param {String} params.command - String name for the command to execute. One of 'getfiles' or 'uploadfiles' as of 7-23-18.
-     * @param {String} params.name - Name of the file to fetch from the server, or what to name the file being saved to the server.
-     * @param {bisweb_image} params.files - List of files to upload to the server. May be aliased as 'params.file' in the case of a single file.
-     * @param {Function} cb - Callback on success.
-     * @param {Function} eb - Callback on failure.
-     */
-    createFileUploadRequest(params, cb, eb){
-        let obj = {
-            'filename': params.name,
-            'params': params,
-            'awsinfo': AWSParameters,
-            'responseFunction': (url, body) => {
-                return new Promise( (resolve, reject) => {
-                    let filename = params.name;
-
-                    let uploadParams = {
-                        'Key' : filename,
-                        'Bucket' : obj.awsinfo.BucketName,
-                        'Body' : body
-                    };
-
-                    this.s3.upload(uploadParams, (err, data) => {
-                        if (err) { console.log(err); eb(); reject(err); }
-                        else {
-                            console.log('uploaded file', filename, 'with data', data);
-                            cb();
-                            resolve('Upload successful');
-                        }
-                    });
-                });
-            }
-        };
-
-        console.log('callback', this.callback);
-        this.callback(obj);
     }
 
     /**

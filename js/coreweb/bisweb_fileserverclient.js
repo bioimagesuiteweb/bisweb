@@ -589,10 +589,10 @@ class BisWebFileServerClient {
         
         if (this.authenticated) {
             if (command==='showfiles') {
-                this.requestFileList('load',null); 
+                this.requestFileList('load', null); 
                 this.callback = opts.callback; 
             } else if (command==='uploadfile') {
-                this.requestFileList('save',null); 
+                this.requestFileList('save', null); 
                 this.callback = opts.callback; 
             } else {
                 console.log('unrecognized command', command);
