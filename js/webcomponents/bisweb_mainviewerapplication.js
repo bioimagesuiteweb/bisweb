@@ -268,10 +268,8 @@ class ViewerApplicationElement extends HTMLElement {
     // --------------------------------------------------------------------------------
     /** Save image from viewer to a file */
     saveImage(fname, viewerno = 0) {
-        let index = viewerno + 1;
         let img = this.VIEWERS[viewerno].getimage();
-        let name = "image " + index;
-        bisweb_apputil.saveImage(img, fname, name);
+        bisweb_apputil.saveImage(img, null, name);
     }
 
     getSaveImageInitialFilename(viewerno = 0) {
