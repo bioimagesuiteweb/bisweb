@@ -1,0 +1,156 @@
+<!---  LICENSE
+ 
+ _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+ 
+ BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+ 
+ - you may not use this software except in compliance with the License.
+ - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+ 
+ __Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.__
+ 
+ ENDLICENSE -->
+
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <title>Regression Tests</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no">
+    <meta name="theme-color" content="rgb(28,45,64)">
+    <meta name="description" content="Yale BioImage Suite Medical Image
+                                      Analysis Software">
+    <meta name="keywords" content="Image Segmentation, Registration,
+                                   Visualization, fMRI, Connectivity, JS,
+                                   WebAssembly, NIH Brain Inititative">
+    <meta name="author" content="Xenophon Papademetris and Dustin Scheinost,
+                                 Dept of Radiology and Biomedical Imaging,
+                                 Yale School of Medicine">
+
+    <link rel="icon" href="images/favicon.ico">
+    
+    <!-- begin webpack/gulp modifications -->
+    <!-- external css files -->
+    <!-- build:css -->
+    <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_dark.css">
+    <link rel="stylesheet" type="text/css" href="./biscommon.css">
+    <!-- endbuild -->
+
+    <!-- all javascript files -->
+    <!-- build:js -->
+    <script src="./bis.js"></script>
+    <script src="../build/web/webcomponents-lite.js"></script>
+    <script src="../build/web/jquery.min.js"></script>
+    <script src="../build/web/bootstrap.min.js"></script>
+    <script src="../build/web/libbiswasm_wasm.js"></script>
+    <script src="../build/web/bislib.js"></script>
+    <!-- endbuild -->
+    <!-- end webpack/gulp modifications -->
+
+    <link rel="stylesheet" type="text/css" href="biswebtest.css">
+    
+</head>
+<body>
+
+  <nav class="navbar navbar-default navbar-fixed-bottom">
+    <div id="results"> A summary of the test results will appear here. </div>
+  </nav>
+
+  <nav class="navbar navbar-default navbar-fixed-top">
+    <div class="container-fluid" id="bismenucontainer">
+      <!-- Brand and toggle get grouped for better mobile display -->
+      <div class="navbar-header" id="bismenuheader" >
+	<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bismenu">
+	  <span class="sr-only">Toggle navigation</span>
+	  <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+	</button>
+	<a href="./index.html" target="_blank"><img src="images/bioimagesuite.png" height="50px" id="bislogo" style="margin-top:5px; margin-right:20px"></a>
+      </div>  <!-- Collect the nav links, forms, and other content for toggling -->
+      <div class="collapse navbar-collapse" id="bismenu">
+        <H4 class="toph4">BioImage Suite Web Regression Test Runner</H4>
+        <div id="top">
+          <form class="form-inline" id="form">
+            <label for="weight">First:</label>
+            <input type="number" step="1"  id="first" placeholder="0">
+            <label for="height">Last:</label>
+            <input type="number" step="1"  id="last" placeholder="5">
+            <label for="">Testname:</label>
+            <select id="testselect">
+              <option value="None" style="color:#dddddd">List (but not run) tests</option>
+              <option value="All"  style="color:red">Test all modules</option>
+            </select>
+            
+            <div id="threaddiv" class="checkbox abc-checkbox info" style="display: inline-block">
+              <input id="usethread" class="styled" type="checkbox">
+              <label for="usethread"> WebWorker</label>
+            </div>
+
+            <button class="btn-small btn-danger" type="submit" id="compute">Run Tests</button>
+            <button class="btn-small btn-info" id="computemem">Run
+              Memory Test</button>
+          </form>
+        </div>
+      </div>
+  </nav>
+  
+  <div id="help">
+    <div id="helptext">
+      <BR> <BR>
+      
+      <H4>Welcome to the BioImage Suite Web Regression Test Runner</H4>
+      
+      <p>Select the tests you would like to run from the controls above and then
+        press `Run Tests` (or Enter) to run the tests.</P>
+      
+      <details><summary><B> Additional Help</B></summary>
+        <p> The options above have the following functionality. </p>
+        
+        <UL>
+          <LI> "First" : This sets the first test (beginning at zero) to run. </LI>
+          <LI> "Last" : This sets the last test (beginning at zero) to run. </LI>
+          <LI> "Testname": This allows you to select an additional filter to only
+            run tests for a single module.</LI>
+          <OL>
+            <LI>If you select <EM>'List (but not run) tests'</EM>, then all tests in the range first:last will be listed but not
+              run.</LI>
+            <LI>If you select <EM>'Test all Modules'</EM>, then all tests in the range
+              first:last will be run.</LI>
+            <LI>If you select an individual module (e.g. blankImage) then only the
+              tests in the range first:last that are for the selected module will be
+              run.
+            </LI>
+          </OL>
+        </UL>
+      </details>
+      
+      <BR>
+      
+      <p id='cnote'>
+        <B>Note:</B> You may, before running tests, like to open
+        the JavaScript console under Developer Tools (on Chrome simply press
+        'Control-Shift-I' or 'Apple-Option-I') to observe the print outs from the algorithms.</p>
+
+      <BR> 
+      
+    </div>
+  </div>
+  
+
+  <div id="main">
+  </div>
+
+
+  <bisweb-regressiontestelement></bisweb-regressiontestelement>
+
+  
+  <bisweb-testrunner></bisweb-testrunner>
+    
+</body>
+</html>

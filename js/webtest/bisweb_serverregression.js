@@ -6,6 +6,10 @@ const wsutil = require('wsutil.js');
 const BiswebImage = require('bisweb_image.js');
 const FileServer = new bisweb_fileserverclient();
 
+const testImagePath = '/home/zach/javascript/bisweb/test/testdata/serverTestData';
+const testOutputPath = '/home/zach';
+
+//TODO: Add support for other user home directories (os.homedir?)
 let setFileMode = () => {
     return new Promise( (resolve) => {
         console.log('webfileutil', webfileutil);
@@ -47,7 +51,7 @@ let uploadImage = () => {
         }, 10000);
 
         console.log('fileserver socket', FileServer.socket);
-        bis_genericio.read('/home/zach/javascript/bisweb/js/test/regressionImages/MNI_2mm_orig.nii.gz', true).then((response) => {
+        bis_genericio.read(`${testImagePath}/MNI_2mm_orig.nii.gz`, true).then((response) => {
 
             bis_genericio.write('testfile.nii.gz', response.data, true).then(() => {
                 clearTimeout(timeoutEvent);
@@ -69,7 +73,7 @@ let downloadImage = () => {
         }, 6000);
 
         console.log('fileserver socket', FileServer.socket);
-        bis_genericio.read('/home/zach/javascript/bisweb/js/test/regressionImages/MNI_2mm_orig.nii.gz', true).then( () => {
+        bis_genericio.read(`${testImagePath}/MNI_2mm_orig.nii.gz`, true).then( () => {
             clearTimeout(timeoutEvent);
             resolve('Read completed successfully');
         }).catch( (e) => {
@@ -87,7 +91,7 @@ let uploadAndCompare = () => {
         }, 10000);
 
         //TODO: Find way to code a relative filepath
-        let testImage = bis_genericio.read('/home/zach/javascript/bisweb/js/test/regressionImages/MNI_2mm_orig.nii.gz', true).then( (response) => {
+        let testImage = bis_genericio.read(`${testImagePath}/MNI_2mm_orig.nii.gz`, true).then( (response) => {
 
             let baseData = response.data;
 
@@ -100,7 +104,7 @@ let uploadAndCompare = () => {
 
             bis_genericio.write('uploadtestfile.nii.gz', response.data, true).then( () => {
                 let uploadedImage = new BiswebImage();
-                uploadedImage.load('/home/zach/testfile.nii.gz', false).then( () => {
+                uploadedImage.load(`${testOutputPath}/testfile.nii.gz`, false).then( () => {
 
                     clearTimeout(timeoutEvent);
                     let comparisonResult = uploadedImage.compareWithOther(baseImage);

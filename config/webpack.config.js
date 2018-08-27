@@ -99,7 +99,7 @@ if (output !== "webworkermain.js") {
                         path.resolve(mypath,'js/coreweb'),
                         path.resolve(mypath,'js/legacy'),
                         path.resolve(mypath,'js/modules'),
-                        path.resolve(mypath,'js/test'),
+                        path.resolve(mypath,'js/webtest'),
                         path.resolve(mypath,'build/wasm') ]
         },
         mode : 'development',

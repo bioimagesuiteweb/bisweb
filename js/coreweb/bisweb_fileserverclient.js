@@ -13,6 +13,8 @@ const TRANSMISSION_EVENT='transmission_evt_'+webutil.getuniqueid();
 class BisWebFileServerClient { 
 
     constructor() {
+
+        console.log('hello from bisweb fileserver constructor');
         this.lastCommand=null;
         this.lastOpts=null;
         this.portNumber=8081;
@@ -23,13 +25,13 @@ class BisWebFileServerClient {
         //connection over which uploads are exchanged
         this.dataSocket = null;
 
-        //File tree requests display the contents of the disk on the server machine in a modal
-
+        //File tree requests display the contents of the disk on the server machine in a moda;
         webutil.runAfterAllLoaded( () => {
-
             // Because this involves creating webcomponents (deep down, they need to be afterAllLoaded);
             this.fileLoadDialog = new bisweb_filedialog('BisWeb File Server Connector');
             this.fileSaveDialog = new bisweb_filedialog('Choose a save location', { 'makeFavoriteButton' : false, 'modalType' : 'save', 'displayFiles' : false  });
+
+            console.log('file load dialog', this.fileLoadDialog, 'file save dialog', this.fileSaveDialog);
         });
 
         //When connecting to the server, it may sometimes request that the user authenticates
@@ -65,13 +67,17 @@ class BisWebFileServerClient {
         }
         //file tree dialog needs to be able to call some of file server's code 
         //they are separated for modularity reasons, so to enforce the hierarchical relationship between the two fileserver provides the functions and the socket
-        this.fileLoadDialog.fileListFn = this.requestFileList.bind(this);
-        this.fileLoadDialog.fileRequestFn = this.invokeReadFilenameCallbackFunction.bind(this);
-        this.fileLoadDialog.socket = this.socket;
+        if (this.fileLoadDialog) {
+            this.fileLoadDialog.fileListFn = this.requestFileList.bind(this);
+            this.fileLoadDialog.fileRequestFn = this.invokeReadFilenameCallbackFunction.bind(this);
+            this.fileLoadDialog.socket = this.socket;
+        }
 
-        this.fileSaveDialog.fileListFn = this.requestFileList.bind(this);
-        this.fileSaveDialog.fileRequestFn = this.invokeWriteFilenameCallbackFunction.bind(this);
-        this.fileSaveDialog.socket = this.socket;
+        if (this.fileSaveDialog) {
+            this.fileSaveDialog.fileListFn = this.requestFileList.bind(this);
+            this.fileSaveDialog.fileRequestFn = this.invokeWriteFilenameCallbackFunction.bind(this);
+            this.fileSaveDialog.socket = this.socket;
+        }
 
         //add the event listeners for the control port
         let closeEvent = this.socket.addEventListener('close', (event) => {
