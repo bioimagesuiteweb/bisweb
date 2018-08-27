@@ -289,8 +289,11 @@ class BisWebImage extends BisWebDataObject {
             metric : "maxabs"
         };
 
-        if (other.constructor.name !== this.constructor.name) 
+        if (other.constructor.name !== this.constructor.name) {
+            console.log('COMPARE WITH OTHER RETURNING FALSE', other.constructor.name, 'NOT EQUAL TO', this.constructor.name);
             return out;
+        }
+            
         
         
         console.log('....\t comparing images:',this.getDimensions(),other.getDimensions());

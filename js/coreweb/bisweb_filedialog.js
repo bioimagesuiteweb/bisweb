@@ -1,6 +1,7 @@
 const $ = require('jquery');
 const localforage = require('localforage');
 const webutil = require('bis_webutil.js');
+
 require('jstree');
 
 /**
@@ -287,16 +288,14 @@ class FileDialogElement {
                 return;
             }
 
-            //NOTE: Actual image data is attached later in the case of a save request. Only the file location is provided here.
-            let command = this.modalType === 'save' ? 'uploadfile' : 'getfile';
             switch (data.node.type)
             {
                 case 'file': {
-                    this.makeFileRequest(command, { 'path' : data.node.original.path });
+                    this.makeFileRequest({ 'path' : data.node.original.path });
                     break;
                 }
                 case 'picture': {
-                    this.makeFileRequest(command, { 'path' : data.node.original.path });
+                    this.makeFileRequest({ 'path' : data.node.original.path });
                     break;
                 }
                 case 'directory': {
@@ -470,41 +469,21 @@ class FileDialogElement {
         return list;
     }
 
-    makeFileRequest(command, params) {
-
-
-        let messageText;
-        switch (command) {
-            case 'getfile' : 
-            case 'getfiles' : messageText = 'Loading file, please wait...'; break;
-            case 'uploadfile' : 
-            case 'uploadfiles' : messageText = 'Saving file, please wait...'; break;
-        }
-
-        webutil.createAlert(messageText);
-        
-        //        let loadingMessage = $(`<p class='message'>${messageText}</p>`);
-        //header.append(loadingMessage);
-
-        let cb = () => {
-            //header.find('.message').remove();
-        };
-
-        let eb = () => {
-            //            header.find('.message').remove();
-            let errorMessage = $(`<p class='errorMessage'>An error occured. Please ensure the chosen file exists in the chosen location.</p>`);
-            webutil.createAlert(errorMessage,true);
-            //            header.append(errorMessage);
-
-            
-        };
+    /**
+     * Initiates a file I/O process using functionality provided by the enclosing scope of the file dialog, 
+     * e.g. the file dialog for bisweb_awsmodule might provide a fileRequestFn that uploads a file to a S3 bucket.
+     * 
+     * @param {Object} params - Parameters provided to the file I/O function.
+     * @param {String} params.path - The full file path for the file to upload/download.
+     */
+    makeFileRequest(params) {
 
         //strip out leading '/' if necessary 
         let name = params.path.charAt(0) === '/' ? params.path.substring(1) : params.path;
 
         this.modal.dialog.modal('hide');
         setTimeout( () => {
-            this.fileRequestFn({ 'command' : command, 'files' : [name], 'name' : name, 'paths' : [params.path] }, cb, eb);
+            this.fileRequestFn(name, true);
         },10);
 
     }
@@ -544,7 +523,7 @@ class FileDialogElement {
                 console.log('name', name);
 
                 //update the modal with a success message after successful transmission.
-                let cb = () => {
+                /*let cb = () => {
                     let transmissionCompleteMessage = $(`<p>Upload completed successfully.</p>`);
 
                     this.saveImageModal.body.empty();
@@ -566,7 +545,7 @@ class FileDialogElement {
                     this.saveImageModal.body.append(errorMessage);
 
                     setTimeout(() => { this.saveImageModal.dialog.modal('hide'); }, 1500);
-                };
+                };*/
 
                 name = this.fixFilename(name, this.filters);
                 console.log('Filename=',name);
@@ -577,8 +556,9 @@ class FileDialogElement {
 
                 this.saveImageModal.dialog.modal('hide');
                 this.modal.dialog.modal('hide');
+
                 setTimeout( () => {
-                    this.fileRequestFn( { 'command' : 'uploadfile', 'name' : newFilename }, cb, eb);
+                    this.fileRequestFn(newFilename, true);
                 }, 10);
 
             });
@@ -615,7 +595,6 @@ class FileDialogElement {
         
         for (let i=0;i<splitFilters.length;i++) {
             let filter=splitFilters[i];
-            console.log('Testing filter',filter); 
             let nl=name.length;
             let fl=filter.length;
             if (nl>fl) {

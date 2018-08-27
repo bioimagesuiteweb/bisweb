@@ -52,13 +52,11 @@ const enableserver=false;
 const enableaws=false;
 
 // ------------------------
-
 // Link File Server if not in Electron
 let bisweb_fileserverclient=null;
 if (!webutil.inElectronApp() && enableserver===true) {
     const BisWebFileServerClient=require('bisweb_fileserverclient');
     bisweb_fileserverclient=new BisWebFileServerClient();
-    genericio.setFileServerObject(bisweb_fileserverclient);
 }
 
 // Initial mode
@@ -130,6 +128,9 @@ const webfileutils = {
      */
     setMode : function(m='') {
 
+      // TODO: Check if fileserver and aws are enabled else disable
+      
+      
         switch(m) {
             case 'dropbox' : if(dkey) { fileMode = 'dropbox'; } break;
             case 'googledrive' : if (gkey) { fileMode = 'googledrive'; } break;
@@ -141,6 +142,8 @@ const webfileutils = {
 
         if (fileMode === 'server') {
             genericio.setFileServerObject(bisweb_fileserverclient);
+        } else if (fileMode === 'amazonaws') {
+            genericio.setFileServerObject(bisweb_awsmodule);
         } else {
             genericio.setFileServerObject(null);
         }

@@ -46,6 +46,10 @@ let globalPortNumber=-1;
 let globalDataPortNumber=-2;
 let globalHostname="";
 
+//flag denoting whether the server will accept write requests 
+
+let readOnly;
+let controlSocket = null;
 
 // password token
 // create function and global variable
@@ -78,7 +82,7 @@ let createPassword=function(abbrv=0) {
  * @param {Function} readycb - A callback to invoke when the server emits its 'listening' event. Optional.
  * @returns The server instance.  
  */
-let startServer = (hostname, port, newport=true,readycb = () => {}) => {
+let startServer = (hostname, port, newport = true, readycb = () => {}) => {
 
     let newServer = net.createServer(handleConnectionRequest);
     newServer.listen(port, hostname, readycb);
@@ -104,6 +108,7 @@ let startServer = (hostname, port, newport=true,readycb = () => {}) => {
     
         //parse websocket key out of response
         let websocketKey;
+        
         let handshake = (chunk) => {
             let decodedChunk = new StringDecoder('utf-8').write(chunk);
             let headers = decodedChunk.split('\n');
@@ -172,14 +177,12 @@ let startServer = (hostname, port, newport=true,readycb = () => {}) => {
 };
 
 
-
-
 // ------------------------------------------------------------------------------------
     
 let readFrame = (chunk) => {
     let controlFrame = chunk.slice(0, 14);
     let parsedControl = wsutil.parseControlFrame(controlFrame);
-    //console.log('parsed control frame', parsedControl);
+    console.log('parsed control frame', parsedControl);
 
     //drop unmasked packets
     if (!parsedControl.mask) {
@@ -207,6 +210,7 @@ let authenticate = (socket) => {
         let password = wsutil.decodeUTF8(decoded, frame.parsedControl);
 
         console.log('---- entered password');
+        console.log('---- sent by client:', password);
 
         if (hotp.check(parseInt(password), secret, onetimePasswordCounter) || (insecure && password.length<1)) {
             console.log('++++ Starting helper server');
@@ -236,6 +240,8 @@ let authenticate = (socket) => {
  */
 let prepareForControlFrames = (socket) => {
     //add an error listener for the transmission
+    controlSocket = socket;
+
     socket.on('error', (error) => {
         console.log('---- an error occured', error);
     });
@@ -254,9 +260,10 @@ let prepareForControlFrames = (socket) => {
                 handleFileFromClient(decoded, parsedControl, socket);
                 break;
             }
-            case 8: { handleCloseFromClient(decoded, parsedControl, socket);
-                      break;
-                    }
+            case 8: { 
+                handleCloseFromClient(decoded, parsedControl, socket);
+                break;
+            }
         }
     });
 
@@ -313,7 +320,7 @@ let prepareForDataFrames = (socket) => {
 
         let controlFrame = chunk.slice(0, 14);
         let parsedControl = wsutil.parseControlFrame(controlFrame);
-        //console.log('parsed control frame', parsedControl);
+        console.log('parsed control frame', parsedControl);
 
         if (!parsedControl.mask) {
             console.log('---- Received a transmission with no mask from client, dropping packet.');
@@ -335,7 +342,7 @@ let prepareForDataFrames = (socket) => {
                 }
                 break;
             case 8: 
-                console.log('---- received close from client, ending connection.');
+                console.log('---- received close from client, ending data connection.');
                 socket.end();
                 break;
             default: 
@@ -369,13 +376,15 @@ let prepareForDataFrames = (socket) => {
             genericio.write(writeLocation, fileInProgress.data, fileInProgress.isbinary).then( () => {
                 socket.write(formatPacket('uploadcomplete', ''), () => {
                     fileInProgress.data=null;
+                    //socket.end(); //if for some reason the client doesn't send a FIN we know the socket should close here anyway.
                     console.log('____ message sent -- file saved in ',writeLocation,' binary=',fileInProgress.isbinary);
                 });
-                socket.end(); //if for some reason the client doesn't send a FIN we know the socket should close here anyway.
+
+                controlSocket.write(formatPacket('uploadcomplete', ''));
             }).catch( (e) => {
                 console.log('---- an error occured', e);
                 socket.write(formatPacket('error', e));
-                socket.end();
+                socket.destroy();
             });
         } else {
             //console.log('____ received chunk,', fileInProgress.receivedFile.length, 'received so far.');
@@ -396,6 +405,12 @@ let prepareForDataFrames = (socket) => {
  * @param {Socket} socket - The control socket that will negotiate the opening of the data socket and send various communications about the transfer. 
  */
 let getFileFromClientAndSave = (upload, control, socket) => {
+
+    if (readOnly) {
+        console.log('Server is in read-only mode and will not accept writes.');
+        socket.write(formatPacket('serverreadonly', ''));
+        return;
+    }
 
     fileInProgress = {
         'totalSize': upload.totalSize,
@@ -445,6 +460,7 @@ let readFileAndSendToClient = (parsedText, control, socket) => {
             }
         });
     } else {
+    	console.log('filename', filename);
         fs.readFile(filename, 'utf-8', (err, d1) => {
             if (err) {
                 handleBadRequestFromClient(socket, err);
@@ -485,7 +501,7 @@ let serveFileList = (socket, basedir, type, depth = 2) => {
                 if (err) { reject(err); }
 
                 //remove hidden files/folders from results
-                let validFiles = files.filter((unfilteredFile) => { return unfilteredFile.charAt(0) !== '.'; });
+                let validFiles = files.filter( (unfilteredFile) => { return unfilteredFile.charAt(0) !== '.'; });
                 let expandInnerDirectory = (pathname, treeEntry) => {
                     return new Promise((resolve, reject) => {
                         //if file is a directory, expand it and add its children to fileTree recursively
@@ -602,6 +618,8 @@ let handleCloseFromClient = (rawText, control, socket) => {
 
     //TODO: send a close frame in response
     socket.end();
+
+    controlSocket = null;
     console.log('____ closed connection');
 };
 
@@ -718,6 +736,7 @@ let findFreePort = () => {
 program
     .option('-v, --verbose', 'Whether or not to display messages written by the server')
     .option('-p, --port <n>', 'Which port to start the server on')
+    .option('--read-only', 'Whether or not the server should accept requests to write files')
     .parse(process.argv);
 
 
@@ -725,6 +744,8 @@ program
 let portno=8081;
 if (program.port)
     portno=parseInt(program.port)
+
+readOnly = program.readOnly ? program.readOnly : false;
 
 startServer('localhost', portno, true, () => {
     console.log('Server started ',portno)

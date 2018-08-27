@@ -13,20 +13,25 @@ const TRANSMISSION_EVENT='transmission_evt_'+webutil.getuniqueid();
 class BisWebFileServerClient { 
 
     constructor() {
+
+        console.log('hello from bisweb fileserver constructor');
         this.lastCommand=null;
         this.lastOpts=null;
         this.portNumber=8081;
 
-        //connection over which all communication takes place
+        //connection over which all control communication takes place
         this.socket = null;
 
-        //File tree requests display the contents of the disk on the server machine in a modal
+        //connection over which uploads are exchanged
+        this.dataSocket = null;
 
+        //File tree requests display the contents of the disk on the server machine in a moda;
         webutil.runAfterAllLoaded( () => {
-
             // Because this involves creating webcomponents (deep down, they need to be afterAllLoaded);
             this.fileLoadDialog = new bisweb_filedialog('BisWeb File Server Connector');
             this.fileSaveDialog = new bisweb_filedialog('Choose a save location', { 'makeFavoriteButton' : false, 'modalType' : 'save', 'displayFiles' : false  });
+
+            console.log('file load dialog', this.fileLoadDialog, 'file save dialog', this.fileSaveDialog);
         });
 
         //When connecting to the server, it may sometimes request that the user authenticates
@@ -62,13 +67,17 @@ class BisWebFileServerClient {
         }
         //file tree dialog needs to be able to call some of file server's code 
         //they are separated for modularity reasons, so to enforce the hierarchical relationship between the two fileserver provides the functions and the socket
-        this.fileLoadDialog.fileListFn = this.requestFileList.bind(this);
-        this.fileLoadDialog.fileRequestFn = this.invokeReadFilenameCallbackFunction.bind(this);
-        this.fileLoadDialog.socket = this.socket;
+        if (this.fileLoadDialog) {
+            this.fileLoadDialog.fileListFn = this.requestFileList.bind(this);
+            this.fileLoadDialog.fileRequestFn = this.invokeReadFilenameCallbackFunction.bind(this);
+            this.fileLoadDialog.socket = this.socket;
+        }
 
-        this.fileSaveDialog.fileListFn = this.requestFileList.bind(this);
-        this.fileSaveDialog.fileRequestFn = this.invokeWriteFilenameCallbackFunction.bind(this);
-        this.fileSaveDialog.socket = this.socket;
+        if (this.fileSaveDialog) {
+            this.fileSaveDialog.fileListFn = this.requestFileList.bind(this);
+            this.fileSaveDialog.fileRequestFn = this.invokeWriteFilenameCallbackFunction.bind(this);
+            this.fileSaveDialog.socket = this.socket;
+        }
 
         //add the event listeners for the control port
         let closeEvent = this.socket.addEventListener('close', (event) => {
@@ -96,7 +105,7 @@ class BisWebFileServerClient {
      */
     handleServerResponse(event) {
         
-        console.log('received data: '+JSON.stringify(event));
+        console.log('received data: ', event);
         let data;
         
         //parse stringified JSON if the transmission is text
@@ -116,7 +125,6 @@ class BisWebFileServerClient {
                 this.handleDataReceivedFromServer(data.payload,false);
                 break;
             }
-            
             case 'filelist':  {
                 this.displayFileList(data.payload);
                 break;
@@ -135,8 +143,12 @@ class BisWebFileServerClient {
                 //some control phrases are handled elsewhere, so the main listener should ignore them
                 break;
             }
+            case 'uploadcomplete': {
+                console.log('Upload to server completed successfully');
+                break;
+            }
             case 'authenticate': {
-                this.socket.send(this.password);
+                this.socket.send(this.password || '');
                 break;
             }
             case 'badauth':  {
@@ -152,7 +164,7 @@ class BisWebFileServerClient {
 
                 setTimeout( () => {
                     if (this.lastCommand) {
-                        this.wrapInAuth(this.lastCommand,this.lastOpts);
+                        this.wrapInAuth(this.lastCommand, this.lastOpts);
                         this.lastCommand=null;
                     }
                 },100);
@@ -284,11 +296,9 @@ class BisWebFileServerClient {
      * @param {Boolean} isbinary -- is data binary
      * @returns {Promise} 
      */
-    uploadFile(url,data,isbinary=false) {
+    uploadFile(url, data, isbinary=false) {
 
-        console.log('Received upload file request',url,isbinary);
-        
-        let p=new Promise( (resolve, reject) => {
+        return new Promise( (resolve, reject) => {
             let promiseCb = () => {
                 resolve('Upload successful');
             };
@@ -297,14 +307,13 @@ class BisWebFileServerClient {
                 reject('Upload failed');
             };
             
-            this.uploadFileToServer(url, data,isbinary, promiseCb, promiseEb);
+            this.uploadFileToServer(url, data, isbinary, promiseCb, promiseEb);
         });
-        console.log(p);
-        return p;
     }
     
     /**
      * Packages the relevant parameters and functionality for downloading data from the local filesystem into an object that can be invoked by bis_genericio.
+     * 
      * @param {Object} params - Parameters object containing the following
      */
     invokeReadFilenameCallbackFunction(params) {
@@ -314,20 +323,20 @@ class BisWebFileServerClient {
     /**
      * Packages the relevant parameters and functionality for uploading data to the local filesystem into an object that can be invoked by bis_genericio.
      * 
-     * @param {Object} params - Parameters object containing the following
+     * @param {Object} params - Parameters object c
      */
     invokeWriteFilenameCallbackFunction(params) {
-        console.log(JSON.stringify(params,null,2));
+        console.log('callback in invokeWriteFilename', this.callback);
         this.callback(params.name);
     }
 
     /**
      * Sends a list of files for the server to send to the client machine. 
      * 
-     * @param {Array} filelist - An array of files to fetch from the server. 
+     * @param {String} filelist - The name of a file to fetch from the server. 
      */
-    sendFileRequest(filelist, cb, eb) {
-        let command = { 'command' : 'getfile', 'files' : filelist };
+    sendFileRequest(file, cb, eb) {
+        let command = { 'command' : 'readfile', 'filename' : file };
         let filesdata = JSON.stringify(command);
 
         let cblistener = document.addEventListener(TRANSMISSION_EVENT , () => { 
@@ -393,6 +402,8 @@ class BisWebFileServerClient {
                     fileTransferSocket.addEventListener('open', () => {
                         doDataTransfer(body);
                     });
+                } else if (message.type === 'serverreadonly') {
+                    webutil.createAlert('The server is set to read-only mode and will not save files.', true);
                 } else {
                     console.log('heard unexpected message', message, 'not opening data socket');
                     eb();
@@ -441,7 +452,9 @@ class BisWebFileServerClient {
                     currentIndex+=(end-begin);
                 } else {
                     // We are done!
-                    fileTransferSocket.close();
+                    console.log('sending close after upload');
+                    fileTransferSocket.close(1000, 'Transfer completed successfully');
+                    cb();
                 }
             };
 
@@ -460,7 +473,8 @@ class BisWebFileServerClient {
                         sendDataSlice();
                         break;
                     case 'uploadcomplete':
-                        fileTransferSocket.close();
+                        console.log('closing file transfer socket', fileTransferSocket);
+                        fileTransferSocket.close(1000, 'Transfer completed successfully');
                         cb();
                         break;
                     default: console.log('received unexpected message', event, 'while listening for server responses');
@@ -581,10 +595,10 @@ class BisWebFileServerClient {
         
         if (this.authenticated) {
             if (command==='showfiles') {
-                this.requestFileList('load',null); 
+                this.requestFileList('load', null); 
                 this.callback = opts.callback; 
             } else if (command==='uploadfile') {
-                this.requestFileList('save',null); 
+                this.requestFileList('save', null); 
                 this.callback = opts.callback; 
             } else {
                 console.log('unrecognized command', command);

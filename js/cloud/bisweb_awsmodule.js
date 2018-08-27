@@ -40,29 +40,9 @@ class AWSModule {
         //not completely sure why -Zach
         bis_webutil.runAfterAllLoaded( () => {   
             this.fileDisplayModal = new bisweb_filedialog('Bucket Contents', { 'makeFavoriteButton' : false });
-            this.fileDisplayModal.fileRequestFn = this.createFileDownloadRequest.bind(this);
-
-            this.fileSaveModal = new bisweb_filedialog('Choose Folder to Save In', { 'makeFavoriteButton' : false, 'modalType' : 'save', 'displayFiles' : false });
-            this.fileSaveModal.fileRequestFn = this.createFileUploadRequest.bind(this);
+            this.fileSaveModal = new bisweb_filedialog('Choose Folder to Save In', { 'makeFavoriteButton' : false, 'modalType' : 'save', 'displayFiles' : false });           
         });
 
-        /*let publicS3 = new AWS.S3({
-            'accessKeyId' : 'AKIAI3GWGWL6RONRQZ6Q',
-            'secretAccessKey' : 'OMITTED FOR SECURITY',
-            'params': {
-                Bucket: 'hcp-openaccess-temp',
-            }
-        });
-
-        publicS3.putBucketCors( {}, (err, data) => {
-            if (err) { console.log('err in bucket cors', err); }
-        });
-
-        publicS3.listObjectsV2( {}, (err, data) => {
-            if (err) { console.log('err', err); return; }
-            
-            console.log('got objects', data);
-        });*/
     }
 
     /**
@@ -100,82 +80,62 @@ class AWSModule {
     }
 
     /**
-     * Packages the relevant parameters and functionality for downloading an image from the cloud into an object to be invoked by bis_genericio.
+     * Downloads a file with a given name from the current S3 bucket. 
+     * Called by bis_genericio starting from when a user sends the request by clicking on a file in a file display modal.
      * 
-     * @param {Object} params - Parameters object containing the following
-     * @param {String} params.command - String name for the command to execute. One of 'getfiles' or 'uploadfiles' as of 7-23-18.
-     * @param {String} params.name - Name of the file to fetch from the server, or what to name the file being saved to the server.
-     * @param {bisweb_image} params.files - List of files to upload to the server. May be aliased as 'params.file' in the case of a single file.
-     * @param {Function} cb - Callback on success.
-     * @param {Function} eb - Callback on failure.
+     * @param {String} filename - The name of the file 
      */
-    createFileDownloadRequest(params, cb, eb) {
-        let obj = {
-            'filename': params.name,
-            'params': params,
-            'awsinfo': AWSParameters,
-            'responseFunction': () => {
-                return new Promise( (resolve, reject) => {
-                    let getParams = { 
-                        'Key' : params.name,
-                        'Bucket' : obj.awsinfo.BucketName
-                    };
+    downloadFile(filename) {
 
-                    this.s3.getObject(getParams, (err, data) => {
-                        if (err) { 
-                            reject(err); 
-                            eb();
-                            return;
-                        }
+        return new Promise( (resolve, reject) => {
+            let getParams = { 
+                'Key' : filename,
+                'Bucket' : AWSParameters.BucketName
+            };
 
-                        //S3 sends the data zipped
-                        //let unzippedFile = wsutil.unzipFile(data.Body);
-                        cb();
+            this.s3.getObject(getParams, (err, data) => {
+                if (err) { 
+                    reject(err); 
+                    return;
+                }
 
-                        console.log('data', data.Body);
+                console.log('data', data.Body);
 
-                        resolve({ 
-                            data: data.Body, 
-                            filename: params.name 
-                        });
-                    });
+                resolve({ 
+                    data: data.Body, 
+                    filename: filename 
                 });
-            }
-        };
-
-        //this.callback is set when a modal is opened.
-        this.callback(obj);
+            });
+        });
     }
 
-    createFileUploadRequest(params, cb, eb){
-        let obj = {
-            'filename': params.name,
-            'params': params,
-            'awsinfo': AWSParameters,
-            'responseFunction': (url, body) => {
-                return new Promise( (resolve, reject) => {
-                    let filename = params.name;
+    /**
+     * Uploads a file to the current S3 bucket. 
+     * Called by bis_genericio starting from when a user types a filename into the save filename modal and clicks confirm. 
+     * 
+     * @param {String} filename - The name of the file 
+     * 
+     */
+    uploadFile(filename, data) {
 
-                    let uploadParams = {
-                        'Key' : filename,
-                        'Bucket' : obj.awsinfo.BucketName,
-                        'Body' : body
-                    };
+        return new Promise( (resolve, reject) => {
+            let uploadParams = {
+                'Key' : filename,
+                'Bucket' : AWSParameters.BucketName,
+                'Body' : data
+            };
 
-                    this.s3.upload(uploadParams, (err, data) => {
-                        if (err) { console.log(err); eb(); reject(err); }
-                        else {
-                            console.log('uploaded file', filename, 'with data', data);
-                            cb();
-                            resolve('Upload successful');
-                        }
-                    });
-                });
-            }
-        };
-
-        console.log('callback', this.callback);
-        this.callback(obj);
+            this.s3.upload(uploadParams, (err) => {
+                if (err) { 
+                    bis_webutil.createAlert('Failed to upload ' + filename + ' to S3 bucket', true, 0, 3000);
+                    console.log('S3 error', err);
+                    reject(err); 
+                } else {
+                    bis_webutil.createAlert('Uploaded ' + filename + ' to S3 bucket successfully', false, 0, 3000); 
+                    resolve('Upload successful');
+                }
+            });
+        });
     }
 
     /**
@@ -208,10 +168,18 @@ class AWSModule {
     wrapInAuth(command, opts) {
         console.log('opts', opts);
         let parseCommand = () => {
-            this.callback = opts.callback;
+            //this.callback = opts.callback;
             switch(command) {
-                case 'showfiles' : this.listObjectsInBucket(opts.suffix, opts.title); break;
-                case 'uploadfile' : this.createSaveImageModal(opts.suffix, opts.title); break;
+                case 'showfiles' : {
+                    this.fileDisplayModal.fileRequestFn = opts.callback;
+                    this.listObjectsInBucket(opts.suffix, opts.title); 
+                    break;
+                }
+                case 'uploadfile' : {
+                    this.fileSaveModal.fileRequestFn = opts.callback;
+                    this.createSaveImageModal(opts.suffix, opts.title); 
+                    break;
+                }
                 default : console.log('Unrecognized aws command', command, 'cannot complete request.');
             }
         };
@@ -233,10 +201,8 @@ class AWSModule {
      * 2.) Attempts to register the user with an Amazon Cognito Identity pool authorized to access the relevant bucket. If successful, the user will be returned a set of credentials that expire in a short period of tiem (about an hour).
      * 
      * @param {Function} cb - Function to call after successful authentication
-     * @param {Object} bucketParams - S3 parameters related to the bucket the user is trying to log in to.
      */ 
-    awsAuthUser(cb, bucketParams = null) {
-        
+    awsAuthUser(cb) {
         let returnf="./biswebaws.html";
         if (typeof window.BIS !=='undefined') {
             returnf="../build/web/biswebaws.html";
