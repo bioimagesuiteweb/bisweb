@@ -133,6 +133,14 @@ class BisWebFileServerClient {
                 this.handleSupplementalFileRequest(data.payload);
                 break;
             }
+            case 'fileloadlocation': {
+                this.setFileLoadLocation(data.payload);
+                break;
+            }
+            case 'filesavelocation': {
+                this.setFileSaveLocation(data.payload);
+                break;
+            }
             case 'error': {
                 console.log('Error from client:', data.payload); 
                 let errorEvent = new CustomEvent(ERROR_EVENT, { 'detail' : data.payload });
@@ -174,6 +182,7 @@ class BisWebFileServerClient {
                 console.log('received a transmission with unknown type', data.type, 'cannot interpret');
             }
         }
+        
     }
 
     /**
@@ -190,6 +199,7 @@ class BisWebFileServerClient {
     requestFileList(type, directory = null) {
         let command = JSON.stringify({ 'command' : 'getfilelist', 'directory' : directory, 'type' : type , 'depth' : 0}); 
         this.socket.send(command);
+
         // When this replies we will end up in this.handleServerRequest
     }
 
@@ -239,6 +249,47 @@ class BisWebFileServerClient {
             this.fileSaveDialog.createFileList(response.data,null,this.lastOpts);
             this.fileSaveDialog.showDialog();
         }
+    }
+
+    getFileLoadLocation() {
+        let command = JSON.stringify({ 'command' : 'getimageloadlocation' }); 
+        this.socket.send(command);
+
+    }
+
+    getFileSaveLocation() {
+        let command = JSON.stringify({ 'command' : 'getimagesavelocation' });
+        this.socket.send(command);
+    }
+
+    /**
+     * Sets the default load location for the server, i.e. the top level path that requests for files should go to if no path is specified by the user. 
+     * Typically this is used during regression testing when many loads and saves will be performed without user interaction.
+     * 
+     * @param {Object} data - Object containing the server's default file load location.
+     */
+    setFileLoadLocation(data) {
+        console.log('data', data);
+        
+        let path = data.path ? data.path : data;
+        console.log('setting file load location to', path);
+
+        this.fileLoadLocation = path;
+    }
+
+    /**
+     * Sets the default save location for the server, i.e. the top level path that save requests should write to if no path is specified by the user. 
+     * Typically this is used during regression testing when many loads and saves will be performed without user interaction.
+     * 
+     * @param {Object} data - Object containing the server's default file load location.
+     */
+    setFileSaveLocation(data) {
+        console.log('data', data);
+        
+        let path = data.path ? data.path : data;
+        console.log('setting file save location to', path);
+
+        this.fileLoadLocation = path;
     }
 
     /**
@@ -370,7 +421,7 @@ class BisWebFileServerClient {
      * 
      * TODO: Extend this function to support matrices and transformations.
      * @param {String} name - What the file should be named once it is saved to the server. 
-     * @param {variable} data - TypedArray or text string
+     * @param {TypedArray|String} data - Data to send to the server. TypedArray if binary and String otherwise.
      * @param {Boolean} isbinary - if true data is binary
      * @param {Function} cb - A callback for if the transfer is successful. Optional.
      * @param {Function} eb - A callback for if the transfer is a failure (errorback). Optional.
@@ -491,7 +542,7 @@ class BisWebFileServerClient {
      *  
      * this.callback is attached to bisweb_fileserver when a bisweb_filedialog modal is opened. 
      * Given that modals are opened one at a time and all user-driven file I/O happens through one of these, the callback should be a
-     * @param {variable} data - data transferred by the server either uint8array or text (depending on isbinary)
+     * @param {TypedArray|String} data - data transferred by the server either uint8array or text (depending on isbinary)
      * @param {Boolean} isbinary - if true data is binary
      */
     handleDataReceivedFromServer(data,isbinary=true) {

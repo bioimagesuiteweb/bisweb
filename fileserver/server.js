@@ -236,7 +236,7 @@ let authenticate = (socket) => {
  * Prepares the control socket to receive chunks of data from the client. 
  * This involves XORing the payload and decoding it to UTF-8, then performing file I/O based on the contents.
  * 
- * @param {Socket} socket - Node.js net socket between the client and server for the transmission.
+ * @param {Net.Socket} socket - Node.js net socket between the client and server for the transmission.
  */
 let prepareForControlFrames = (socket) => {
     //add an error listener for the transmission
@@ -275,7 +275,7 @@ let prepareForControlFrames = (socket) => {
  * 
  * @param {String} rawText - Unparsed JSON denoting the file or series of files to read. 
  * @param {Object} control - Parsed WebSocket header for the file request.
- * @param {Socket} socket - WebSocket over which the communication is currently taking place.
+ * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place.
  */
 let handleTextRequest = (rawText, control, socket) => {
     let parsedText = parseClientJSON(rawText);
@@ -295,6 +295,14 @@ let handleTextRequest = (rawText, control, socket) => {
             getFileFromClientAndSave(parsedText, control, socket);
             break;
         }
+        case 'getimageloadlocation' : {
+            serveImageLoadLocation(socket);
+            break;
+        }
+        case 'getimagesavelocation' : {
+            serveImageSaveLocation(socket);
+            break;
+        }
         default: {
             console.log('---- Cannot interpret request with unknown command', parsedText.command);
         }
@@ -310,7 +318,7 @@ let handleTextRequest = (rawText, control, socket) => {
  * Client and server engage in chunked transfer, meaning that the client will send a chunk of data, the server will acknowledge, and then the client will transfer the next chunk.
  * They will exchange messages in this way until the transfer is complete, or an unrecoverable error occurs.
  * 
- * @param {Socket} socket - Node.js net socket between the client and the server for transmission.
+ * @param {Net.Socket} socket - Node.js net socket between the client and the server for transmission.
  */
 let prepareForDataFrames = (socket) => {
 
@@ -402,7 +410,7 @@ let prepareForDataFrames = (socket) => {
  * 
  * @param {Object|Uint8Array} upload - Either the first transmission initiating the transfer loop or a chunk.
  * @param {Object} control - Parsed WebSocket header for the file request. 
- * @param {Socket} socket - The control socket that will negotiate the opening of the data socket and send various communications about the transfer. 
+ * @param {Net.Socket} socket - The control socket that will negotiate the opening of the data socket and send various communications about the transfer. 
  */
 let getFileFromClientAndSave = (upload, control, socket) => {
 
@@ -438,7 +446,7 @@ let getFileFromClientAndSave = (upload, control, socket) => {
  * 
  * @param {String} rawText - Unparsed JSON denoting the file or series of files to read. 
  * @param {Object} control - Parsed WebSocket header for the file request.
- * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
+ * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
  */
 let readFileAndSendToClient = (parsedText, control, socket) => {
     let filename = parsedText.filename;
@@ -482,7 +490,7 @@ let readFileAndSendToClient = (parsedText, control, socket) => {
 /**
  * Sends the list of available files to the user, hiding files above the ~/ directory.
  * 
- * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
+ * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
  * @param {String} basedir - Directory on the server machine to display files starting from, null indicates '~/'. Writes different responses to the socket if basedir is null or not ('filelist' vs 'supplementalfiles').
  * @param {String} type - The type of modal that will be served the file list. Either 'load' or 'save'. 
  * @param {Number} depth - Number of directories under basedir to expand. Optional, depth will be 2 if not specified.
@@ -573,7 +581,24 @@ let serveFileList = (socket, basedir, type, depth = 2) => {
     });
 };
 
+/**
+ * Sends the default location for the client to load images from. Typically used during regression testing, when many files will be loaded without user interaction.
+ *  
+ * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place.  
+ */
+let serveImageLoadLocation = (socket) => {
+    let homedir = os.homedir();
+    socket.write(formatPacket('fileloadlocation', { 'path' : homedir }));
+};
 
+/**
+ * Sends the default location for the client to save images to. Typically used during regression testing, when many files will be loaded without user interaction.
+ * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
+ */
+let serveImageSaveLocation = (socket) => {
+    let homedir = os.homedir();
+    socket.write(formatPacket('filesavelocation', { 'path' : homedir }));
+};
 
 /*let serveModuleInvocationRequest = (parsedText, control, socket) => {
     let args = parsedText.params.args, modulename = parsedText.params.modulename;
@@ -595,7 +620,7 @@ let serveFileList = (socket, basedir, type, depth = 2) => {
 /**
  * Sends a message to the client describing the server error that occured during their request. 
  * 
- * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
+ * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
  * @param {String} reason - Text describing the error.
  */
 let handleBadRequestFromClient = (socket, reason) => {
@@ -610,7 +635,7 @@ let handleBadRequestFromClient = (socket, reason) => {
  * 
  * @param {String} rawText - Unparsed JSON denoting the file or series of files to read. 
  * @param {Object} control - Parsed WebSocket header for the file request.
- * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
+ * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
  */
 let handleCloseFromClient = (rawText, control, socket) => {
     let text = wsutil.decodeUTF8(rawText, control);

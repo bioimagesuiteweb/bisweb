@@ -6,10 +6,9 @@ const wsutil = require('wsutil.js');
 const BiswebImage = require('bisweb_image.js');
 const FileServer = new bisweb_fileserverclient();
 
-const testImagePath = '/home/zach/javascript/bisweb/test/testdata/serverTestData';
-const testOutputPath = '/home/zach';
+//const testImagePath = '/home/zach/javascript/bisweb/test/testdata/serverTestData';
+//const testOutputPath = '/home/zach';
 
-//TODO: Add support for other user home directories (os.homedir?)
 let setFileMode = () => {
     return new Promise( (resolve) => {
         console.log('webfileutil', webfileutil);
@@ -43,6 +42,37 @@ let connectToServer = () => {
         });
     });
 };
+
+let setDefaultPaths = () => {
+    return new Promise( (resolve, reject) => {
+
+        let timeoutEvent = setTimeout( () => {
+            reject('server timed out waiting for default paths');
+        }, 8000);
+
+        let fileSaveLocationListener = (event) => {
+            let data = wsutil.parseJSON(event.data);
+            if (data.type === 'filesavelocation') {
+                console.log('hello from file save location listener');
+                FileServer.socket.removeEventListener('message', fileSaveLocationListener);
+                clearTimeout(timeoutEvent);
+                resolve();
+            }
+        };
+
+        let fileLoadLocationListener = (event) => {
+            let data = wsutil.parseJSON(event.data);
+            if (data.type === 'fileloadlocation') {
+                FileServer.socket.removeEventListener('message', fileLoadLocationListener);
+                FileServer.getFileSaveLocation();
+            }
+        };
+        
+        FileServer.socket.addEventListener('message', fileLoadLocationListener);
+        FileServer.socket.addEventListener('message', fileSaveLocationListener);
+        FileServer.getFileLoadLocation();
+    });
+}
 
 let uploadImage = () => {
     return new Promise((resolve, reject) => {
@@ -131,6 +161,10 @@ let serverPretests = [
     {
         'name' : 'Connect to Server',
         'test' : connectToServer
+    },
+    {
+        'name' : 'Set Default Paths', 
+        'test' : setDefaultPaths
     }
 ];
 
