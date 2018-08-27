@@ -34,8 +34,6 @@
 // is found in ../build/
 window.BIS={
     internal : false,
-    iconpath  : "../build/web/",
-    imagepath : "",
 };
 
 /**

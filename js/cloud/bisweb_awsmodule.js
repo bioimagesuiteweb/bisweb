@@ -201,10 +201,8 @@ class AWSModule {
      * 2.) Attempts to register the user with an Amazon Cognito Identity pool authorized to access the relevant bucket. If successful, the user will be returned a set of credentials that expire in a short period of tiem (about an hour).
      * 
      * @param {Function} cb - Function to call after successful authentication
-     * @param {Object} bucketParams - S3 parameters related to the bucket the user is trying to log in to.
      */ 
     awsAuthUser(cb) {
-
         let returnf="./biswebaws.html";
         if (typeof window.BIS !=='undefined') {
             returnf="../build/web/biswebaws.html";

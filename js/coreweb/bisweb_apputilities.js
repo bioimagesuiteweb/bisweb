@@ -56,13 +56,19 @@ module.exports = {
             return;
         }
 
-        //console.log('fname', fname);
-        //fname may be an object 
-        fname = fname || 'outputimage.nii.gz';
-        if (typeof fname === "object") {
-            if (fname.hasOwnProperty('responseFunction') === false) {
-                fname =  img.getFilename() ||  "outputimage.nii.gz";
+        if (!fname && !webutil.inElectronApp())  {
+            fname = null;
+        } else {
+            if (fname) {
+                if (typeof fname === "object" ) {
+                    if (fname.hasOwnProperty('responseFunction') === false) {
+                        fname =  img.getFilename() ||  "outputimage.nii.gz";
+                    }
+                }
+            }  else {
+                fname="outputimage.nii.gz";
             }
+
         }
 
         img.save(fname).then( (f) => {

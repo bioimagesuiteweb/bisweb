@@ -421,7 +421,7 @@ namespace bisAdvancedImageAlgorithms {
 
   template<class T> std::unique_ptr<bisSimpleImage<T> >  backProjectImage(bisSimpleImage<T>* threed_input,
                                                                           bisSimpleImage<T>* twod_input,
-                                                                          int axis,int flip,
+                                                                          int axis,int flipthird,int flipsecond,
                                                                           float threshold,int windowsize) {
 
     // ----------- Original_input should be done at this point
@@ -511,13 +511,15 @@ namespace bisAdvancedImageAlgorithms {
             if (first==odim[0]/2 && second==odim[1]/2)
             debug=1;*/
             int v_offset=second*offset[1]+first*offset[0];
+            if (flipsecond)
+              v_offset=(endsecond-1-second)*offset[1]+first*offset[0];
             double intensity=0.0;
             // Again this should be the average frame;
-            int begin_third=find_third<T>(input_data,axis,flip,idim,v_offset,increment,threshold,intensity);
+            int begin_third=find_third<T>(input_data,axis,flipthird,idim,v_offset,increment,threshold,intensity);
             if (begin_third>=0)
               {
                 int end_third=0;
-                if (flip)
+                if (flipthird)
                   {
                     end_third=begin_third+winradius;
                     if (end_third>=idim[axis])

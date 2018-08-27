@@ -85,6 +85,16 @@ class BackProjectImageModule extends BaseModule {
                     "default": false,
                 },
                 {
+                    "name": "VFlip",
+                    "description": "It true flip the vertical  axis",
+                    "priority": 11,
+                    "advanced": true,
+                    "gui": "check",
+                    "varname": "flipy",
+                    "type": 'boolean',
+                    "default": false,
+                },
+                {
                     "name": "Axis",
                     "description": "Which axis to project along ('x', 'y', 'z', 'auto')",
                     "priority": 1,
@@ -233,6 +243,7 @@ class BackProjectImageModule extends BaseModule {
                 
                 this.outputs['output'] = biswrap.backProjectImageWASM(threed,input, {
                     "flip":  this.parseBoolean(vals.flip),
+                    "flipy":  this.parseBoolean(vals.flipy),
                     "axis":  parseInt(axis),
                     "window": parseInt(vals.window),
                     "threshold": parseFloat(vals.threshold),

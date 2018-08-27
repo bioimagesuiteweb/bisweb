@@ -74,7 +74,7 @@ class BinaryThresholdImageModule extends ThresholdImageModule {
         vals['replaceout']=true;
         vals['inval']=1;
         vals['outval']=0;
-
+        vals['outtype']='UChar';
         return super.directInvokeAlgorithm(vals);
     }
 

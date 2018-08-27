@@ -131,6 +131,7 @@ class PaintToolElement extends HTMLElement {
             morphologyModule : null,
             maskModule : null,
             thresholdModule : null,
+            defaceModule : null,
             internalUpdate : false,
         };
 
@@ -956,6 +957,8 @@ class PaintToolElement extends HTMLElement {
             this.internal.regularizeModule.createOrUpdateGUI(); 
         if (this.internal.maskModule)
             this.internal.maskModule.createOrUpdateGUI();
+        if (this.internal.defaceModule)
+            this.internal.defaceModule.createOrUpdateGUI();
        
     }
 
@@ -1108,6 +1111,16 @@ class PaintToolElement extends HTMLElement {
 
                 biswrap.initialize().then( () => {
                     if (biswrap.uses_gpl()) {
+                        moduleoptions.name='Deface Head Image';
+                        this.internal.defaceModule=biscustom.createCustom(this.internal.layoutcontroller,
+                                                                          this.internal.algocontroller,
+                                                                          new modules.defaceImage(),
+                                                                          moduleoptions);
+                        webutil.createMenuItem(tmenu, moduleoptions.name,function() {
+                            self.internal.defaceModule.show();
+                        });
+                        webutil.createMenuItem(tmenu,'');
+                        
                         moduleoptions.name='Regularize Objectmap';
                         this.internal.regularizeModule=biscustom.createCustom(this.internal.layoutcontroller,
                                                                               this.internal.algocontroller,
@@ -1125,6 +1138,9 @@ class PaintToolElement extends HTMLElement {
                         webutil.createMenuItem(tmenu, moduleoptions.name,function() {
                             self.internal.maskModule.show();
                         });
+
+
+
                     }
                     resolve();
                 });

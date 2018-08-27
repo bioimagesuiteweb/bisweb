@@ -21,6 +21,7 @@ const biswrap = require('libbiswasm_wrapper');
 const BaseModule = require('basemodule.js');
 const baseutils = require('baseutils.js');
 const genericio = require('bis_genericio.js');
+const xformutil=require('bis_transformationutil.js');
 
 /**
  * Aligns a set of images to a reference image using nonlinear registration and returns the set of transformations
@@ -101,6 +102,17 @@ class NonLinearRegistrationModule extends BaseModule {
             "high" : 1.0,
         });
 
+        des.params.push({
+            "name": "Header Orient",
+            "description": "use header orientation for initial matrix",
+            "priority": 10,
+            "advanced": false,
+            "type": "boolean",
+            "default": true,
+            "varname": "useheader"
+        });
+
+
         baseutils.setParamDefaultValue(des.params,'debug',true);
         
         return des;
@@ -124,13 +136,32 @@ class NonLinearRegistrationModule extends BaseModule {
             biswrap.initialize().then( () => {
 
                 let initial=transform;
+
+                let useheader=this.parseBoolean(vals.useheader);
+                let centeronrefonly=false;
+                if (xformutil.isTransformIdentityOrNULL(initial)) {
+                    if (useheader) {
+                        let o1=reference.getOrientationName();
+                        let o2=target.getOrientationName();
+                        if (o1!==o2) {
+                            centeronrefonly=true;
+                            console.log("oooo Creating orientation mapping transformation to initialize either linear or nonlinear mapping");
+                            initial=xformutil.computeHeaderTransformation(reference,target,false);
+                        }
+                    }
+                } else if (linearmode>=0) {
+                    centeronrefonly=true;
+                    console.log('oooo an actual initial transformation is specified, assume centeronrefonly=',centeronrefonly);
+                }
+                
                 
                 if (linearmode>=0) {
 
-                    initial = biswrap.runLinearRegistrationWASM(reference, target, transform,{
+                    initial = biswrap.runLinearRegistrationWASM(reference, target, initial,{
                         'intscale' : parseInt(vals.intscale),
                         'numbins' : parseInt(vals.numbins),
                         'levels' : parseInt(vals.levels),
+                        'centeronrefonly' : this.parseBoolean(centeronrefonly),
                         'steps' : parseInt(vals.steps),
                         'stepsize' : parseFloat(vals.stepsize),
                         'smoothing' : parseFloat(vals.imagesmoothing),
@@ -141,9 +172,10 @@ class NonLinearRegistrationModule extends BaseModule {
                         'mode' : linearmode,
                         'resolution' : parseFloat(vals.resolution),
                         'debug' : this.parseBoolean(vals.debug),
-                        'return_vector' : false},
-                                                                this.parseBoolean(vals.debug));
+                        'return_vector' : false
+                    },this.parseBoolean(vals.debug));
                 }
+                    
 
                 this.outputs['output'] = biswrap.runNonLinearRegistrationWASM(reference, target, initial,{
                     'cps' : parseFloat(vals.cps),

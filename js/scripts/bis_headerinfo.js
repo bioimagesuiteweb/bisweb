@@ -38,6 +38,9 @@ var help = function() {
 
 program.version('1.0.0')
     .option('-i, --input <s>','filename of the file to print header for')
+    .option('-f, --force <s>','force orientation to RAS or LPS or LAS or None')
+    .option('-d, --debug <n>','debug on')
+    .option('-s, --save <n>','save on')
     .on('--help',function() {
 	help();
     })
@@ -45,20 +48,39 @@ program.version('1.0.0')
 
 
 let inpfilename=program.input || null;
+let debug=program.debug || 0;
 
-if (inpfilename===null) {
+if (parseInt(debug) !==0)
+    debug=true;
+else
+    debug=false;
+let slist;
+
+if (inpfilename)
+    slist=[ inpfilename ].concat(program.args);
+else
+    slist=program.args;
+
+let force=program.force || "None";
+let save= parseInt(program.save || 0);
+
+if (save!==1)
+    save=0;
+
+if (slist.length<1) {
     console.log('No input filename specified');
     process.exit(1);
 }
 
-let slist=[ inpfilename ].concat(program.args);
+
 
 let img=new Array(slist.length);
 let p=[];
 
 for (let i=0;i<slist.length;i++) {
     img[i]=new BisWebImage();
-    p.push(img[i].load(slist[i],"None"));
+    img[i].debug=debug;
+    p.push(img[i].load(slist[i],force));
 }
 
 Promise.all(p).then( () => {
@@ -66,6 +88,14 @@ Promise.all(p).then( () => {
 	console.log('----------------------------------------------------');
 	console.log('\n', img[i].getDescription(),'\n');
 	console.log(img[i].getHeader().getDescription());
+        if (force !== "None" && save!==0) {
+            let index=slist[i].lastIndexOf(".nii");
+            let outname=slist[i].substr(0,index)+"_"+force.toLowerCase()+".nii.gz";
+            img[i].save(outname).then( (e) => {
+                console.log(e);
+
+            });
+        } 
     }
     console.log('----------------------------------------------------');
 }).catch( (e) => {

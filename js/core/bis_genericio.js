@@ -1007,7 +1007,7 @@ let write = function (url, data,isbinary=false) {
  */
 let getFixedSaveFileName = function(fobj,replacement) {
 
-    if (fobj=== undefined || fobj===null)
+    if (fobj=== undefined || fobj===null || fobj == {} )
         return replacement;
     
     if (typeof fobj === "object") {
@@ -1044,15 +1044,17 @@ let getFixedLoadFileName = function(fobj) {
 
     if (fobj.indexOf("http")===0) {
         // Url -- try to get the last parts
-
+        let s=fobj.split("/");
+        
         if (fobj.indexOf("dl.dropbox")>0) {
-            let s=fobj.split("/");
+
             let f="dropbox/";
             for (let i=6;i<s.length;i++) {
                 f=f+"/"+s[i];
             }
             return f;
         }
+        return s[s.length-1];
     }
 
     
@@ -1060,6 +1062,31 @@ let getFixedLoadFileName = function(fobj) {
 
 };
 
+let getimagepath=function() {
+
+    let imagepath="";
+    if (typeof window !== "undefined") {
+        let scope=window.document.URL.split("?")[0];
+        let index=scope.lastIndexOf("/");
+        if (scope.indexOf("external")>0)  {
+            scope=scope.substr(0,index)+"/../src/web/images";
+            console.log('external=',external,scope);
+        } else {
+            scope=scope.substr(0,index)+"/images";
+        }
+        imagepath=scope;
+    } else {
+        
+        const path=getpathmodule();
+        console.log('Dirname=',__dirname);
+        imagepath=path.resolve(__dirname, '../../web/images');
+        if (!fs.existsSync(imagepath))
+            imagepath=path.resolve(__dirname, '../images');
+    }
+
+
+    return imagepath;
+};
 
 // -------------------------------------------------------------------------------------------------------
 /*
@@ -1095,6 +1122,7 @@ const bisgenericio = {
     write : write, // Global Write data
     getFixedSaveFileName : getFixedSaveFileName,
     getFixedLoadFileName : getFixedLoadFileName,
+    getimagepath : getimagepath,
 };
 
 

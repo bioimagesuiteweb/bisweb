@@ -20,6 +20,7 @@
 exports.smoothImage = require('smoothImage.js');
 exports.gradientImage = require('gradientImage.js');
 exports.thresholdImage = require('thresholdImage.js');
+exports.shiftScaleImage = require('shiftScaleImage.js');
 exports.changeImageSpacing = require('changeImageSpacing.js');
 exports.binaryThresholdImage = require('binaryThresholdImage.js');
 exports.extractSlice = require('extractSlice.js');
@@ -58,6 +59,9 @@ exports.linearRegistration = require('linearRegistration.js');
 exports.nonlinearRegistration = require('nonlinearRegistration.js');
 exports.motionCorrection = require('motionCorrection.js');
 
+exports.defaceImage=require('defaceImage.js');
+exports.reorientImage=require('reorientImage.js');
+
 exports.moduleNamesArray = {
     'approximatefield': exports.approximateField,
     'backprojectimage': exports.backProjectImage,
@@ -71,6 +75,7 @@ exports.moduleNamesArray = {
     'computeglm': exports.computeGLM,
     'computeroi': exports.computeROI,
     'cropimage' : exports.cropImage,
+    'defaceimage' : exports.defaceImage,
     'displacementfield': exports.displacementField,
     'extractframe': exports.extractFrame,
     'extractslice': exports.extractSlice,
@@ -90,12 +95,14 @@ exports.moduleNamesArray = {
     'projectimage': exports.projectImage,
     'regressglobal': exports.regressGlobal,
     'regressout': exports.regressOut,
+    'reorientimage': exports.reorientImage,
     'resampleimage': exports.resampleImage,
     'resliceimage': exports.resliceImage,
     'segmentimage': exports.segmentImage,
     'regularizeobjectmap': exports.regularizeObjectmap,
     'slicebiascorrect': exports.sliceBiasFieldCorrect,
     'smoothimage': exports.smoothImage,
+    'shiftscaleimage': exports.shiftScaleImage,
     'thresholdimage': exports.thresholdImage,
 };
 

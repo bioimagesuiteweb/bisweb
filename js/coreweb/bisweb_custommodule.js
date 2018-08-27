@@ -437,6 +437,8 @@ class CustomModule {
      */
     moduleDone(inputParams, outputs) {
 
+        webutil.createAlert(`Module ${this.module.getDescription().name} done`);
+        
         this.description.outputs.forEach((opt) => {
             let outobj = outputs[opt.varname];
 

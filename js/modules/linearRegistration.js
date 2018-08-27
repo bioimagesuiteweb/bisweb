@@ -21,6 +21,7 @@ const biswrap = require('libbiswasm_wrapper');
 const BaseModule = require('basemodule.js');
 const baseutils = require('baseutils.js');
 const genericio = require('bis_genericio.js');
+const xformutil=require('bis_transformationutil.js');
 
 /**
  * Runs linear registration on an image set given a reference image and returns the set of transformations required
@@ -47,27 +48,61 @@ class LinearRegistrationModule extends  BaseModule {
         };
 
         des.params.push(baseutils.getLinearMode("mode"));
+        des.params.push({
+            "name": "Header Orient",
+            "description": "use header orientation for initial matrix",
+            "priority": 10,
+            "advanced": false,
+            "type": "boolean",
+            "default": true,
+            "varname": "useheader"
+        });
+  
         return des;
     }
 
     directInvokeAlgorithm(vals) {
 
-        console.log('oooo invoking: linearRegistration', JSON.stringify(vals)); 
+        console.log('oooo invoking: linearRegistration', JSON.stringify(vals),'\noooo'); 
         let target = this.inputs['target'];
         let reference = this.inputs['reference'];
-        let transform = this.inputs['initial'] || 0;
+        let initial = this.inputs['initial'] || 0;
 
         if (genericio.getenvironment()!=='node') {
             vals.doreslice=true;
             vals.debug=true;
         }
+
+        let useheader=this.parseBoolean(vals.useheader);
+        let centeronrefonly=false;
         
+        if (xformutil.isTransformIdentityOrNULL(initial) ) {
+
+            if (useheader) {
+                let o1=reference.getOrientationName();
+                let o2=target.getOrientationName();
+                
+                if (o1!==o2) {
+                    centeronrefonly=true;
+                    initial=xformutil.computeHeaderTransformation(reference,target,false);
+                    console.log('oooo Using header to initialize to first reslicing for orientation centeronrefonly=',centeronrefonly);
+                }
+            }
+        } else {
+            centeronrefonly=true;
+            console.log('oooo an actual initial transformation is specified, assume centeronrefonly=',centeronrefonly);
+            
+        }
+
         return new Promise( (resolve, reject) => {
             biswrap.initialize().then( () => {
-                let matr = biswrap.runLinearRegistrationWASM(reference, target, transform, {
+
+                
+                let matr = biswrap.runLinearRegistrationWASM(reference, target, initial, {
                     'intscale' : parseInt(vals.intscale),
                     'numbins' : parseInt(vals.numbins),
                     'levels' : parseInt(vals.levels),
+                    'centeronrefonly' : this.parseBoolean(centeronrefonly),
                     'smoothing' : parseFloat(vals.imagesmoothing),
                     'optimization' : baseutils.getOptimizationCode(vals.optimization),
                     'stepsize' : parseFloat(vals.stepsize),
@@ -79,12 +114,14 @@ class LinearRegistrationModule extends  BaseModule {
                     'normalize' : this.parseBoolean(vals.norm),
                     'debug' : this.parseBoolean(vals.debug),
                     'return_vector' : true}, this.parseBoolean(vals.debug));
-                
+
                 this.outputs['output'] = matr;
-                if (vals.doreslice)
+                
+                if (vals.doreslice) 
                     this.outputs['resliced']=baseutils.resliceRegistrationOutput(biswrap,reference,target,this.outputs['output']);
-                else
+                else 
                     this.outputs['resliced']=null;
+                
                 resolve();
             }).catch( (e) => {
                 reject(e.stack);

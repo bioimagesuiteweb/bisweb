@@ -28,10 +28,13 @@ process4DImage
 projectImage
 regressGlobal
 regressOut
+reorientImage
 regularizeObjectmap
 resampleImage
 resliceImage
 segmentImage
 sliceBiasFieldCorrect
+shiftScaleImage
 smoothImage
 thresholdImage
+defaceImage
