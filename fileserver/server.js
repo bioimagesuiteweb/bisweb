@@ -544,12 +544,6 @@ let serveFileList = (socket, basedir, type, depth = 2,id=-1) => {
                                     case 'gz' : {
                                         treeEntry.type = 'picture'; break;
                                     }
-                                    case 'html' : {
-                                        treeEntry.type = 'html'; break;
-                                    }
-                                    case 'js' : {
-                                        treeEntry.type = 'js'; break;
-                                    }
                                     default : {
                                         treeEntry.type = 'file';
                                     }
@@ -579,11 +573,11 @@ let serveFileList = (socket, basedir, type, depth = 2,id=-1) => {
     expandDirectory(basedir, fileTree, 0).then( (tree) => {
 
         //bisweb_fileserver handles the base file request differently than the supplemental ones, so we want to ship them to different endpoints
-        if (basedir === os.homedir()) {
-            socket.write(formatPacket('filelist', { 'type' : type, 'data' : tree, 'modalType' : type, 'id' : id }));
-        } else {
+        //        if (basedir === os.homedir()) {
+        socket.write(formatPacket('filelist', { 'path' : basedir,'type' : type, 'data' : tree, 'modalType' : type, 'id' : id }));
+        /*} else {
             socket.write(formatPacket('supplementalfiles',  { 'path' : basedir, 'list' : tree, 'modalType' : type, 'id' : id }));
-        }
+        }*/
     });
 };
 
@@ -700,7 +694,7 @@ let formatPacket = (payloadType, data) => {
             'payload' : data
         });
         opcode = 1;
-        console.log('Sending payload',payload.substr(0,50));
+        console.log('Sending payload',payload.substr(0,100));
     }
 
     let controlFrame = wsutil.formatControlFrame(opcode, payload.length);

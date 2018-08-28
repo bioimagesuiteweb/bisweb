@@ -1,7 +1,7 @@
 const $ = require('jquery');
 const webutil = require('bis_webutil');
 const wsutil = require('wsutil');
-const bisweb_filedialog = require('bisweb_filedialog');
+const bisweb_simplefiledialog = require('bisweb_simplefiledialog');
 const bisgenericio=require('bis_genericio');
 const pako=require('pako');
 const biswebasync=require('bisweb_asyncutils');
@@ -24,13 +24,8 @@ class BisWebFileServerClient {
         //connection over which uploads are exchanged
         this.dataSocket = null;
 
-        //File tree requests display the contents of the disk on the server machine in a moda;
-        webutil.runAfterAllLoaded( () => {
-            // Because this involves creating webcomponents (deep down, they need to be afterAllLoaded);
-            this.fileLoadDialog = new bisweb_filedialog('BisWeb File Server Connector');
-            this.fileSaveDialog = new bisweb_filedialog('Choose a save location', { 'makeFavoriteButton' : false, 'modalType' : 'save', 'displayFiles' : false  });
-
-        });
+        // Because this involves creating webcomponents (deep down, they need to be afterAllLoaded);
+        this.fileDialog = new bisweb_simplefiledialog();
 
         //When connecting to the server, it may sometimes request that the user authenticates
         this.authenticateModal = null;
@@ -38,6 +33,7 @@ class BisWebFileServerClient {
         this.hostname=null;
         this.password=null;
         this.passwordid=null;
+        this.lastdirectory=null;
     }
 
     /**
@@ -63,18 +59,14 @@ class BisWebFileServerClient {
         }
         //file tree dialog needs to be able to call some of file server's code 
         //they are separated for modularity reasons, so to enforce the hierarchical relationship between the two fileserver provides the functions and the socket
-        if (this.fileLoadDialog) {
-            this.fileLoadDialog.fileListFn = this.requestFileList.bind(this);
-            this.fileLoadDialog.fileRequestFn = this.invokeReadFilenameCallbackFunction.bind(this);
-            this.fileLoadDialog.socket = this.socket;
+        console.log('This =',this.fileDialog);
+        if (this.fileDialog) {
+            this.fileDialog.fileListFn = this.requestFileList.bind(this);
+
+            this.fileDialog.socket = this.socket;
         }
 
-        if (this.fileSaveDialog) {
-            this.fileSaveDialog.fileListFn = this.requestFileList.bind(this);
-            this.fileSaveDialog.fileRequestFn = this.invokeWriteFilenameCallbackFunction.bind(this);
-            this.fileSaveDialog.socket = this.socket;
-        }
-
+        
         //add the event listeners for the control port
         let closeEvent = this.socket.addEventListener('close', (event) => {
             console.log('Socket closing', event);
@@ -106,7 +98,7 @@ class BisWebFileServerClient {
         // Is this binary ?
         // ---------------------
         if (typeof (event.data) !== "string") {
-            console.log('received a binary transmission',event.data);
+            //            console.log('received a binary transmission',event.data);
             this.handleDataReceivedFromServer(event.data,true,-1);
             return;
         }
@@ -118,7 +110,7 @@ class BisWebFileServerClient {
         let id=data.payload.id || -1;
         
         if (data.type==='text') {
-            console.log('received text data: ', data.type,data.id,biswebasync.printEvent(id));
+            //  console.log('received text data: ', data.type,data.id,biswebasync.printEvent(id));
             this.handleDataReceivedFromServer(data.payload.data,false,id);
             return;
         }
@@ -131,11 +123,11 @@ class BisWebFileServerClient {
         let success=true;
 
 
-        console.log('++++\n++++ Received message: ', data.type,id,biswebasync.printEvent(id));
+        //        console.log('++++\n++++ Received message: ', data.type,id,biswebasync.printEvent(id));
         switch (data.type)
         {
             case 'checksum' : {
-                console.log('Checksum =', data.payload.checksum);
+                //console.log('Checksum =', data.payload.checksum);
                 // Nothing to do let promise handle it;
                 break;
             }
@@ -186,6 +178,7 @@ class BisWebFileServerClient {
 
                 setTimeout( () => {
                     if (this.lastCommand) {
+                        console.log('Authenticated ... ');
                         this.wrapInAuth(this.lastCommand, this.lastOpts);
                         this.lastCommand=null;
                     }
@@ -199,7 +192,7 @@ class BisWebFileServerClient {
         }
 
         if (id>=0) {
-            console.log("++++ Resolving in handleEvent ",biswebasync.printEvent(id),success);
+            //            console.log("++++ Resolving in handleEvent ",biswebasync.printEvent(id),success);
             if (success)
                 biswebasync.resolveServerEvent(id,data.payload);
             else
@@ -216,7 +209,7 @@ class BisWebFileServerClient {
      * @param {Array} payload.list - The supplemental files retrieved by the server. 
      * @param {String} payload.modalType - The type of modal that the data should be appended to. Either 'load' or 'save'. 
      */
-    handleSupplementalFileRequest(payload) {
+    /*handleSupplementalFileRequest(payload) {
 
         //file tree dialog keeps track of the data stored within it -- however the since the file server retrieves the new data it is responsible for adding it
         let requestingDialog = (payload.modalType === 'load') ? this.fileLoadDialog : this.fileSaveDialog;
@@ -235,25 +228,28 @@ class BisWebFileServerClient {
         } else {
             console.log('could not find', payload.path, 'in the list of files');
         }
-    }
+    }*/
 
     /**
      * Renders a file list fetched by requestFileList in the file tree modal using jstree. 
      * Called in response to a file list returned by the server (itself in response to requestFileList) or by the fileTreeDisplayModal trying to fetch more nodes.
      * 
-     * @param {Object} response - Object specifying the list of files on the server machine and which modal it corresponds to.
+     * @param {Object} payload - Object specifying the list of files on the server machine and which modal it corresponds to.
      *
      * // TODO: some how have a title here ... and suffix list
      */
-    displayFileList(response) {
+    displayFileList(payload) {
 
-        if (response.type === 'load') {
-            this.fileLoadDialog.createFileList(response.data,null,this.lastOpts);
-            this.fileLoadDialog.showDialog();
-        } else if (response.type === 'save') {
-            this.fileSaveDialog.createFileList(response.data,null,this.lastOpts);
-            this.fileSaveDialog.showDialog();
-        }
+        if (payload.type === 'save') 
+            this.lastOpts.mode='save';
+        else
+            this.lastOpts.mode='load';
+        
+        this.lastdirectory=payload.path;
+        this.fileDialog.fileRequestFn = this.callback;
+        this.fileDialog.openDialog(payload.data,
+                                   payload.path,
+                                   this.lastOpts);
     }
 
     //
@@ -275,8 +271,6 @@ class BisWebFileServerClient {
      */
     requestFileList(type, directory = null, showdialog=true) {
 
-        console.log('Here ' ,type,directory,showdialog);
-        
         return new Promise ((resolve,reject) => {
 
             let cb=( (payload) => {
@@ -394,18 +388,8 @@ class BisWebFileServerClient {
             });
             reader.readAsArrayBuffer(data);
         } else {
-            console.log('All set id=',id,' length=',data.length);
             biswebasync.resolveServerEvent(id,data);
         }
-    }
-
-    /**
-     * Packages the relevant parameters and functionality for downloading data from the local filesystem into an object that can be invoked by bis_genericio.
-     * 
-     * @param {Object} params - Parameters object containing the following
-     */
-    invokeReadFilenameCallbackFunction(params) {
-        this.callback(params);
     }
 
     // ------------------ Upload file and helper routines -----------------------------------------------------------------
@@ -432,15 +416,6 @@ class BisWebFileServerClient {
     }
     
 
-    /**
-     * Packages the relevant parameters and functionality for uploading data to the local filesystem into an object that can be invoked by bis_genericio.
-     * 
-     * @param {Object} params - Parameters object c
-     */
-    invokeWriteFilenameCallbackFunction(params) {
-        console.log('callback in invokeWriteFilename', this.callback);
-        this.callback(params.name);
-    }
 
     /**
      * Sends a file from the client to the server to be saved on the server machine. Large files are sliced and transmitted in chunks. 
@@ -646,11 +621,14 @@ class BisWebFileServerClient {
         this.lastOpts=opts;
         
         if (this.authenticated) {
+
+            console.log('I have been authenticated',command);
             if (command==='showfiles') {
-                this.requestFileList('load', null,true); 
-                this.callback = opts.callback; 
+                this.lastOpts.mode='load';
+                this.callback = opts.callback;
+                this.requestFileList('load', this.lastdirectory,true); 
             } else if (command==='uploadfile') {
-                this.requestFileList('save', null,true); 
+                this.requestFileList('save', this.lastdirectory,true); 
                 this.callback = opts.callback; 
             } else {
                 console.log('unrecognized command', command);

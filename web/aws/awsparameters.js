@@ -30,7 +30,7 @@ let awsparams = {
     'UserPoolId': 'us-east-1_BAOsizFzq'
 };
 
-console.log('redirect sign in', awsparams.RedirectUriSignIn);
+//console.log('redirect sign in', awsparams.RedirectUriSignIn);
 
 module.exports = {
     'authParams' : awsparams,

@@ -237,8 +237,6 @@ class ViewerApplicationElement extends HTMLElement {
         const img = new BisWebImage();
         return new Promise( (resolve,reject) => {
 
-            console.log('fname=',fname);
-            
             webutil.createAlert('Loading image from ' + genericio.getFixedLoadFileName(fname),'progress',30);
             setTimeout( () => {
                 img.load(fname)
