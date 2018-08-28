@@ -397,7 +397,7 @@ class FileDialogElement {
         
         if (filters)
             this.filters = filters;
-        console.log(this.modal.dialog);
+
         this.modal.dialog.modal('show');
     }
 
@@ -478,10 +478,15 @@ class FileDialogElement {
      */
     makeFileRequest(params) {
 
+        // NO NO NO needed for fileserver
         //strip out leading '/' if necessary 
-        let name = params.path.charAt(0) === '/' ? params.path.substring(1) : params.path;
+        let name = params.path;//.charAt(0) === '/' ? params.path.substring(1) : params.path;
+
 
         this.modal.dialog.modal('hide');
+
+        console.log('Filename=',name);
+        
         setTimeout( () => {
             this.fileRequestFn(name, true);
         },10);

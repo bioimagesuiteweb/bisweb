@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const path=require('path');
 const os = require('os');
 const timers = require('timers');
+const util = require('bis_util');
 const { StringDecoder } = require('string_decoder');
 
 // One time password library
@@ -182,7 +183,7 @@ let startServer = (hostname, port, newport = true, readycb = () => {}) => {
 let readFrame = (chunk) => {
     let controlFrame = chunk.slice(0, 14);
     let parsedControl = wsutil.parseControlFrame(controlFrame);
-    console.log('parsed control frame', parsedControl);
+//    console.log('parsed control frame', parsedControl);
 
     //drop unmasked packets
     if (!parsedControl.mask) {
@@ -279,12 +280,13 @@ let prepareForControlFrames = (socket) => {
  */
 let handleTextRequest = (rawText, control, socket) => {
     let parsedText = parseClientJSON(rawText);
+    parsedText=parsedText || -1;
     console.log('____ text request', JSON.stringify(parsedText));
     switch (parsedText.command)
     {
         //get file list
         case 'getfilelist': {
-            serveFileList(socket, parsedText.directory, parsedText.type, parsedText.depth);
+            serveFileList(socket, parsedText.directory, parsedText.type, parsedText.depth,parsedText.id);
             break;
         }
         case 'readfile': {
@@ -295,12 +297,12 @@ let handleTextRequest = (rawText, control, socket) => {
             getFileFromClientAndSave(parsedText, control, socket);
             break;
         }
-        case 'getimageloadlocation' : {
-            serveImageLoadLocation(socket);
+        case 'getserverbasedirectory' : {
+            serveServerBaseDirectory(socket,parsedText.id);
             break;
         }
-        case 'getimagesavelocation' : {
-            serveImageSaveLocation(socket);
+        case 'getservertempdirectory' : {
+            serveServerTempDirectory(socket,parsedText.id);
             break;
         }
         default: {
@@ -451,7 +453,8 @@ let getFileFromClientAndSave = (upload, control, socket) => {
 let readFileAndSendToClient = (parsedText, control, socket) => {
     let filename = parsedText.filename;
     let isbinary = parsedText.isbinary;
-
+    let id=parsedText.id;
+    
     /*let pkgformat='binary';
     if (!isbinary)
         pkgformat='text';*/
@@ -459,12 +462,16 @@ let readFileAndSendToClient = (parsedText, control, socket) => {
     if (isbinary) {
         fs.readFile(filename,  (err, d1) => {
             if (err) {
-                handleBadRequestFromClient(socket, err);
+                handleBadRequestFromClient(socket, err,parsedText.id);
             } else {
                 console.log(`____ load binary file ${filename} successful, writing to socket.`);
-                socket.write(formatPacket('binary',d1), () => {
-
-                });
+                let checksum=`${util.SHA256(new Uint8Array(d1))}`;
+                console.log('checksum=',checksum, 'id=',id);
+                socket.write(formatPacket('checksum', {
+                    'checksum' : checksum,
+                    'id' : id
+                }));
+                socket.write(formatPacket('binary',d1));
             }
         });
     } else {
@@ -474,9 +481,7 @@ let readFileAndSendToClient = (parsedText, control, socket) => {
                 handleBadRequestFromClient(socket, err);
             } else {
                 console.log(`____ load text file ${filename} successful, writing to socket.`);
-                socket.write(formatPacket('text',d1), () => {
-
-                });
+                socket.write(formatPacket('text', { 'data' :  d1, 'id' : id}));
             }
         });
     }        
@@ -494,9 +499,10 @@ let readFileAndSendToClient = (parsedText, control, socket) => {
  * @param {String} basedir - Directory on the server machine to display files starting from, null indicates '~/'. Writes different responses to the socket if basedir is null or not ('filelist' vs 'supplementalfiles').
  * @param {String} type - The type of modal that will be served the file list. Either 'load' or 'save'. 
  * @param {Number} depth - Number of directories under basedir to expand. Optional, depth will be 2 if not specified.
+ * @param {Number} id - the request id
  * @returns A file tree rooted at basedir.
  */
-let serveFileList = (socket, basedir, type, depth = 2) => {
+let serveFileList = (socket, basedir, type, depth = 2,id=-1) => {
     let fileTree = [];
     if (basedir === null) { basedir = os.homedir(); }
 
@@ -574,9 +580,9 @@ let serveFileList = (socket, basedir, type, depth = 2) => {
 
         //bisweb_fileserver handles the base file request differently than the supplemental ones, so we want to ship them to different endpoints
         if (basedir === os.homedir()) {
-            socket.write(formatPacket('filelist', { 'type' : type, 'data' : tree, 'modalType' : type }));
+            socket.write(formatPacket('filelist', { 'type' : type, 'data' : tree, 'modalType' : type, 'id' : id }));
         } else {
-            socket.write(formatPacket('supplementalfiles',  { 'path' : basedir, 'list' : tree, 'modalType' : type }));
+            socket.write(formatPacket('supplementalfiles',  { 'path' : basedir, 'list' : tree, 'modalType' : type, 'id' : id }));
         }
     });
 };
@@ -585,49 +591,35 @@ let serveFileList = (socket, basedir, type, depth = 2) => {
  * Sends the default location for the client to load images from. Typically used during regression testing, when many files will be loaded without user interaction.
  *  
  * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place.  
+ * @param {Number} id - the request id
  */
-let serveImageLoadLocation = (socket) => {
+let serveServerBaseDirectory = (socket,id=0) => {
     let homedir = os.homedir();
-    socket.write(formatPacket('fileloadlocation', { 'path' : homedir }));
+    socket.write(formatPacket('serverbasedirectory', { 'path' : homedir,  'id' : id }));
 };
 
 /**
  * Sends the default location for the client to save images to. Typically used during regression testing, when many files will be loaded without user interaction.
  * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
+ * @param {Number} id - the request id
  */
-let serveImageSaveLocation = (socket) => {
+let serveServerTempDirectory = (socket) => {
     let homedir = os.homedir();
-    socket.write(formatPacket('filesavelocation', { 'path' : homedir }));
+    socket.write(formatPacket('servertempdirectory', { 'path' : path.join(homedir,'tmp'), 'id' : id }));
 };
-
-/*let serveModuleInvocationRequest = (parsedText, control, socket) => {
-    let args = parsedText.params.args, modulename = parsedText.params.modulename;
-
-    let inputName = parsedText.params.inputs[0];
-    let img = new BisWebImage();
-    img.load(inputName).then( () => {
-        let module = modules.getModule(modulename);
-        console.log('invoking module', module, 'with args', args, 'and input', data);
-
-        console.log('img', img.getDescription());
-
-        module.execute({ 'input' : img }, args).then( () => {
-            console.log('module', module);
-        });
-    }).catch( (e) => { console.log('could not read image', inputName, e); })
-};*/
 
 /**
  * Sends a message to the client describing the server error that occured during their request. 
  * 
  * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
  * @param {String} reason - Text describing the error.
+ * @param {Number} id - the request id
  */
-let handleBadRequestFromClient = (socket, reason) => {
+let handleBadRequestFromClient = (socket, reason,id=-1) => {
     let error = "An error occured while handling your request. ";
     error = error.concat(reason);
 
-    socket.write(formatPacket('error', error), () => { console.log('---- request returned an error', reason, '\nsent error to client'); });
+    socket.write(formatPacket('error', { 'text' : error, 'id': id}), () => { console.log('---- request returned an error', reason, '\nsent error to client'); });
 };
 
 /**
@@ -708,6 +700,7 @@ let formatPacket = (payloadType, data) => {
             'payload' : data
         });
         opcode = 1;
+        console.log('Sending payload',payload.substr(0,50));
     }
 
     let controlFrame = wsutil.formatControlFrame(opcode, payload.length);

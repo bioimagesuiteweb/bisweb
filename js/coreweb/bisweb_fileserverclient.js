@@ -4,17 +4,16 @@ const wsutil = require('wsutil');
 const bisweb_filedialog = require('bisweb_filedialog');
 const bisgenericio=require('bis_genericio');
 const pako=require('pako');
+const biswebasync=require('bisweb_asyncutils');
+
 const insecure=wsutil.insecure;
 
-const ERROR_EVENT='server_error_evt_'+webutil.getuniqueid();
-const TRANSMISSION_EVENT='transmission_evt_'+webutil.getuniqueid();
 
 
 class BisWebFileServerClient { 
 
     constructor() {
 
-        console.log('hello from bisweb fileserver constructor');
         this.lastCommand=null;
         this.lastOpts=null;
         this.portNumber=8081;
@@ -31,7 +30,6 @@ class BisWebFileServerClient {
             this.fileLoadDialog = new bisweb_filedialog('BisWeb File Server Connector');
             this.fileSaveDialog = new bisweb_filedialog('Choose a save location', { 'makeFavoriteButton' : false, 'modalType' : 'save', 'displayFiles' : false  });
 
-            console.log('file load dialog', this.fileLoadDialog, 'file save dialog', this.fileSaveDialog);
         });
 
         //When connecting to the server, it may sometimes request that the user authenticates
@@ -57,8 +55,6 @@ class BisWebFileServerClient {
         this.portNumber=parseInt(prt);
         this.socket = new WebSocket(address);
 
-
-        console.log(this.socket);
 
         if (!this.socket) {
             this.socket=null;
@@ -105,46 +101,64 @@ class BisWebFileServerClient {
      */
     handleServerResponse(event) {
         
-        console.log('received data: ', event);
-        let data;
-        
-        //parse stringified JSON if the transmission is text
-        if (typeof (event.data) === "string") {
-            data = wsutil.parseJSON(event.data);
-        } else {
+
+        // ---------------------
+        // Is this binary ?
+        // ---------------------
+        if (typeof (event.data) !== "string") {
             console.log('received a binary transmission',event.data);
-            this.handleDataReceivedFromServer(event.data,true);
+            this.handleDataReceivedFromServer(event.data,true,-1);
+            return;
+        }
+
+        // ---------------------
+        // Text from here on out
+        // ---------------------
+        let data = wsutil.parseJSON(event.data);
+        let id=data.payload.id || -1;
+        
+        if (data.type==='text') {
+            console.log('received text data: ', data.type,data.id,biswebasync.printEvent(id));
+            this.handleDataReceivedFromServer(data.payload.data,false,id);
             return;
         }
 
         
+        // We have handle file download events (i.e. server sending large data to us)
+        // From here on it is commands
+            
+        
+        let success=true;
+
+
+        console.log('++++\n++++ Received message: ', data.type,id,biswebasync.printEvent(id));
         switch (data.type)
         {
-            case 'text' : {
-                // this is a text file
-                this.handleDataReceivedFromServer(data.payload,false);
+            case 'checksum' : {
+                console.log('Checksum =', data.payload.checksum);
+                // Nothing to do let promise handle it;
                 break;
             }
+            
             case 'filelist':  {
-                this.displayFileList(data.payload);
+                // Nothing to do let promise handle it
                 break;
             }
             case 'supplementalfiles': {
                 this.handleSupplementalFileRequest(data.payload);
                 break;
             }
-            case 'fileloadlocation': {
-                this.setFileLoadLocation(data.payload);
+            case 'getserverbasedirectory': {
+                // Nothing to do let promise handle it
                 break;
             }
-            case 'filesavelocation': {
-                this.setFileSaveLocation(data.payload);
+            case 'getservertempdirectory': {
+                // Nothing to do let promise handle it
                 break;
             }
             case 'error': {
                 console.log('Error from client:', data.payload); 
-                let errorEvent = new CustomEvent(ERROR_EVENT, { 'detail' : data.payload });
-                document.dispatchEvent(errorEvent);
+                success=false;
                 break;
             }
             case 'datasocketready': {
@@ -180,27 +194,17 @@ class BisWebFileServerClient {
             }
             default: {
                 console.log('received a transmission with unknown type', data.type, 'cannot interpret');
+                success=false;
             }
         }
-        
-    }
 
-    /**
-     * Sends a request for a list of the files on the server machine and prepares the display modal for the server's reply. 
-     * Once the list of files arrives it is rendered using jstree. The user may request individual files from the server using this list. 
-     * 
-     * requestFileList doesn't expand the contents of the entire server file system; just the first four levels of directories. 
-     * When the user clicks on an unexpanded node the node will request four levels of directories below it. 
-     * This will eventually end up calling this.handleServerRequest (via nested callbacks)
-     * 
-     * @param {String} type - Which type of modal is requesting the list. One of either 'load' or 'save'. // TODO: add directory as type
-     * @param {String} directory - The directory to expand the files under. Optional -- if unspecified the server will return the directories under ~/.
-     */
-    requestFileList(type, directory = null) {
-        let command = JSON.stringify({ 'command' : 'getfilelist', 'directory' : directory, 'type' : type , 'depth' : 0}); 
-        this.socket.send(command);
-
-        // When this replies we will end up in this.handleServerRequest
+        if (id>=0) {
+            console.log("++++ Resolving in handleEvent ",biswebasync.printEvent(id),success);
+            if (success)
+                biswebasync.resolveServerEvent(id,data.payload);
+            else
+                biswebasync.rejectServerEvent(id,data.payload);
+        }
     }
 
     /**
@@ -242,6 +246,7 @@ class BisWebFileServerClient {
      * // TODO: some how have a title here ... and suffix list
      */
     displayFileList(response) {
+
         if (response.type === 'load') {
             this.fileLoadDialog.createFileList(response.data,null,this.lastOpts);
             this.fileLoadDialog.showDialog();
@@ -251,47 +256,72 @@ class BisWebFileServerClient {
         }
     }
 
-    getFileLoadLocation() {
-        let command = JSON.stringify({ 'command' : 'getimageloadlocation' }); 
-        this.socket.send(command);
-
-    }
-
-    getFileSaveLocation() {
-        let command = JSON.stringify({ 'command' : 'getimagesavelocation' });
-        this.socket.send(command);
-    }
-
+    //
+    // ------------------------- External Functions ---------------------------------
+    // 
+    
     /**
-     * Sets the default load location for the server, i.e. the top level path that requests for files should go to if no path is specified by the user. 
-     * Typically this is used during regression testing when many loads and saves will be performed without user interaction.
+     * Sends a request for a list of the files on the server machine and prepares the display modal for the server's reply. 
+     * Once the list of files arrives it is rendered using jstree. The user may request individual files from the server using this list. 
      * 
-     * @param {Object} data - Object containing the server's default file load location.
+     * requestFileList doesn't expand the contents of the entire server file system; just the first four levels of directories. 
+     * When the user clicks on an unexpanded node the node will request four levels of directories below it. 
+     * This will eventually end up calling this.handleServerRequest (via nested callbacks)
+     * 
+     * @param {String} type - Which type of modal is requesting the list. One of either 'load' or 'save'. // TODO: add directory as type
+     * @param {String} directory - The directory to expand the files under. Optional -- if unspecified the server will return the directories under ~/.
+     * @param {Boolean} showdialog - if true then popup the relevant dialog else just return the file list in the promise
+     * @returns {Promise} with payload is the event
      */
-    setFileLoadLocation(data) {
-        console.log('data', data);
-        
-        let path = data.path ? data.path : data;
-        console.log('setting file load location to', path);
+    requestFileList(type, directory = null, showdialog=true) {
 
-        this.fileLoadLocation = path;
+        console.log('Here ' ,type,directory,showdialog);
+        
+        return new Promise ((resolve,reject) => {
+
+            let cb=( (payload) => {
+                if (showdialog)
+                    this.displayFileList(payload);
+                resolve(payload);
+            });
+            
+            let serverEvent=biswebasync.addServerEvent(cb,reject,'requestFileList');
+            let command = JSON.stringify({ 'command' : 'getfilelist', 'directory' : directory, 'type' : type , 'depth' : 0, 'id' : serverEvent.id}); 
+            this.socket.send(command);
+        });
+        // When this replies we will end up in this.handleServerRequest
     }
 
-    /**
-     * Sets the default save location for the server, i.e. the top level path that save requests should write to if no path is specified by the user. 
-     * Typically this is used during regression testing when many loads and saves will be performed without user interaction.
-     * 
-     * @param {Object} data - Object containing the server's default file load location.
-     */
-    setFileSaveLocation(data) {
-        console.log('data', data);
-        
-        let path = data.path ? data.path : data;
-        console.log('setting file save location to', path);
 
-        this.fileLoadLocation = path;
+
+    /** get the base directory of the server
+     * @returns {Promise} - whose payload is the location of the directory
+     */
+    getServerBaseDirectory() {
+
+        return new Promise( (resolve,reject) => {
+            
+            let serverEvent=biswebasync.addServerEvent(resolve,reject,'getServerBaseDir');
+            let command = JSON.stringify({ 'command' : 'getserverbasedirectory', 'id' : serverEvent.id }); 
+            this.socket.send(command);
+        });
+
     }
 
+    /** get a temporary write directory
+     * @returns {Promise} - whose payload is the location of the temp directory
+     */
+    getServerTempDirectory() {
+        
+        return new Promise( (resolve,reject) => {
+            let serverEvent=biswebasync.addServerEvent(resolve,reject,'getServerTempDir');
+            let command = JSON.stringify({ 'command' : 'getservertempdirectory' , 'id' : serverEvent.id});
+            this.socket.send(command);
+        });
+    }
+
+
+    // ------------------ Download file and helper routines -----------------------------------------------------------------
     /**
      * downloads a file from the server 
      * @param{String} url - the filename
@@ -300,20 +330,16 @@ class BisWebFileServerClient {
      */
     downloadFile(url,isbinary) {
         return new Promise( (resolve, reject) => {
-            let command = JSON.stringify({ 'command' : 'readfile',
-                                           'filename' : url,
-                                           'isbinary' : isbinary });
             
-            var cblistener = document.addEventListener(TRANSMISSION_EVENT , (e) => { 
-                document.removeEventListener(ERROR_EVENT, eblistener);
+            let handledata = ( (raw_data) => { 
 
                 if (!isbinary) {
                     resolve({
-                        'data' : e.detail,
+                        'data' : raw_data,
                         'filename' : url,
                     });
                 } else {
-                    let dat = new Uint8Array(e.detail);
+                    let dat = new Uint8Array(raw_data);
                     let comp=bisgenericio.iscompressed(url);
                     if (!comp) {
                         resolve({
@@ -330,16 +356,59 @@ class BisWebFileServerClient {
                     }
                     dat=null;
                 }
-            }, { 'once' : true });
+            });
             
-            var eblistener = document.addEventListener(ERROR_EVENT, () => { 
-                document.removeEventListener(TRANSMISSION_EVENT, cblistener);
-                reject('An error occured during transmission'); 
-            }, { 'once' : true });
             
+            let serverEvent=biswebasync.addServerEvent(handledata,reject,'downloadFile');
+            
+            let command = JSON.stringify({ 'command' : 'readfile',
+                                           'filename' : url,
+                                           'id' : serverEvent.id,
+                                           'isbinary' : isbinary });
             this.socket.send(command);
         });
     }
+
+    
+    
+
+
+
+    /** This is the helper function
+     * Takes raw input from the server, formats it as a proper BisImage and displays it. 
+     * Note that the server transfers images in binary form to avoid wasting space converting it to UTF-8 or a similar encoding. 
+     *  
+     * this.callback is attached to bisweb_fileserver when a bisweb_filedialog modal is opened. 
+     * Given that modals are opened one at a time and all user-driven file I/O happens through one of these, the callback should be a
+     * @param {TypedArray|String} data - data transferred by the server either uint8array or text (depending on isbinary)
+     * @param {Boolean} isbinary - if true data is binary
+     * @param {Number} id - the id of the request or -1 if this is binary
+     */
+    handleDataReceivedFromServer(data,isbinary=true,id=-1) {
+
+        if (isbinary) {
+            
+            let reader = new FileReader();
+            reader.addEventListener('loadend', () => {
+                biswebasync.resolveBinaryData(data.id,reader.result);
+            });
+            reader.readAsArrayBuffer(data);
+        } else {
+            console.log('All set id=',id,' length=',data.length);
+            biswebasync.resolveServerEvent(id,data);
+        }
+    }
+
+    /**
+     * Packages the relevant parameters and functionality for downloading data from the local filesystem into an object that can be invoked by bis_genericio.
+     * 
+     * @param {Object} params - Parameters object containing the following
+     */
+    invokeReadFilenameCallbackFunction(params) {
+        this.callback(params);
+    }
+
+    // ------------------ Upload file and helper routines -----------------------------------------------------------------
 
     /** upload file 
      * @param {String} url -- abstact file handle object
@@ -362,14 +431,6 @@ class BisWebFileServerClient {
         });
     }
     
-    /**
-     * Packages the relevant parameters and functionality for downloading data from the local filesystem into an object that can be invoked by bis_genericio.
-     * 
-     * @param {Object} params - Parameters object containing the following
-     */
-    invokeReadFilenameCallbackFunction(params) {
-        this.callback(params.paths[0]);
-    }
 
     /**
      * Packages the relevant parameters and functionality for uploading data to the local filesystem into an object that can be invoked by bis_genericio.
@@ -379,40 +440,6 @@ class BisWebFileServerClient {
     invokeWriteFilenameCallbackFunction(params) {
         console.log('callback in invokeWriteFilename', this.callback);
         this.callback(params.name);
-    }
-
-    /**
-     * Sends a list of files for the server to send to the client machine. 
-     * 
-     * @param {String} filelist - The name of a file to fetch from the server. 
-     */
-    sendFileRequest(file, cb, eb) {
-        let command = { 'command' : 'readfile', 'filename' : file };
-        let filesdata = JSON.stringify(command);
-
-        let cblistener = document.addEventListener(TRANSMISSION_EVENT , () => { 
-            document.removeEventListener('errorevent', eblistener);
-            cb(); 
-        }, { 'once' : true });
-
-        let eblistener = document.addEventListener(ERROR_EVENT, () => { 
-            document.removeEventListener(TRANSMISSION_EVENT, cblistener); 
-            eb(); 
-        }, { 'once' : true });
-
-        this.socket.send(filesdata);
-    }
-
-    /**
-     * Sends a request to the server to run a given module on a given input.
-     * Sends the name of a module and the module's parameters to the server.
-     * 
-     * TODO: Implement this function!
-     * @param parameters - The list of parameters for the module, including the module's name. See module documentation for more details. 
-     */
-    sendInvocationRequest(parameters) {
-        let params = JSON.stringify(parameters);
-        this.socket.send(params);
     }
 
     /**
@@ -536,37 +563,11 @@ class BisWebFileServerClient {
         }
     }
 
-    /**
-     * Takes raw input from the server, formats it as a proper BisImage and displays it. 
-     * Note that the server transfers images in binary form to avoid wasting space converting it to UTF-8 or a similar encoding. 
-     *  
-     * this.callback is attached to bisweb_fileserver when a bisweb_filedialog modal is opened. 
-     * Given that modals are opened one at a time and all user-driven file I/O happens through one of these, the callback should be a
-     * @param {TypedArray|String} data - data transferred by the server either uint8array or text (depending on isbinary)
-     * @param {Boolean} isbinary - if true data is binary
-     */
-    handleDataReceivedFromServer(data,isbinary=true) {
 
-        if (isbinary) {
-
-            console.log('Data is binary blob');
-            
-            let reader = new FileReader();
-            
-            //filedialog does actions when an image is loaded (dismisses loading messages, etc.)
-            //so notify once the data is loaded
-            reader.addEventListener('loadend', () => {
-                //notify the Promise created by invokeReadFilenameCallbackFunction 
-                let dataLoadEvent = new CustomEvent(TRANSMISSION_EVENT, { detail : reader.result });
-                document.dispatchEvent(dataLoadEvent);
-            });
-            reader.readAsArrayBuffer(data);
-        } else {
-            let dataLoadEvent = new CustomEvent(TRANSMISSION_EVENT, { detail : data });
-            document.dispatchEvent(dataLoadEvent);
-        }
-    }
-
+    // ------------------------------------------------------
+    // Authentication Functionality
+    //
+    
     /**
      * Creates a small modal dialog to allow the user to enter the session password used to authenticate access to the local fileserver. 
      * Also displays whether authentication succeeded or failed. 
@@ -646,10 +647,10 @@ class BisWebFileServerClient {
         
         if (this.authenticated) {
             if (command==='showfiles') {
-                this.requestFileList('load', null); 
+                this.requestFileList('load', null,true); 
                 this.callback = opts.callback; 
             } else if (command==='uploadfile') {
-                this.requestFileList('save', null); 
+                this.requestFileList('save', null,true); 
                 this.callback = opts.callback; 
             } else {
                 console.log('unrecognized command', command);

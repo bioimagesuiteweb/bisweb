@@ -48,7 +48,7 @@ const localforage = require('localforage');
 // Global Flags
 // ------------------------
 
-const enableserver=false;
+const enableserver=true;
 const enableaws=false;
 
 // ------------------------

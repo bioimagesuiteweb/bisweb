@@ -6,8 +6,8 @@ const wsutil = require('wsutil.js');
 const BiswebImage = require('bisweb_image.js');
 const FileServer = new bisweb_fileserverclient();
 
-//const testImagePath = '/home/zach/javascript/bisweb/test/testdata/serverTestData';
-//const testOutputPath = '/home/zach';
+const testImagePath = '/home/zach/javascript/bisweb/test/testdata/serverTestData';
+const testOutputPath = '/home/zach';
 
 let setFileMode = () => {
     return new Promise( (resolve) => {
@@ -72,7 +72,7 @@ let setDefaultPaths = () => {
         FileServer.socket.addEventListener('message', fileSaveLocationListener);
         FileServer.getFileLoadLocation();
     });
-}
+};
 
 let uploadImage = () => {
     return new Promise((resolve, reject) => {
