@@ -274,9 +274,9 @@ class ViewerApplicationElement extends HTMLElement {
     // Save Image
     // --------------------------------------------------------------------------------
     /** Save image from viewer to a file */
-    saveImage(fname, viewerno = 0) {
+    saveImage(fname=null, viewerno = 0) {
         let img = this.VIEWERS[viewerno].getimage();
-        bisweb_apputil.saveImage(img, null, name);
+        bisweb_apputil.saveImage(img, fname, name);
     }
 
     getSaveImageInitialFilename(viewerno = 0) {
@@ -290,7 +290,7 @@ class ViewerApplicationElement extends HTMLElement {
 
         let index = viewerno + 1;
         let img = this.VIEWERS[viewerno].getobjectmap();
-        let name = "objectmap " + index;
+        let name = "objectmap" + index +".nii.gz";
         bisweb_apputil.saveImage(img, fname, name);
     }
 

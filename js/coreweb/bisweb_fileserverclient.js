@@ -59,10 +59,8 @@ class BisWebFileServerClient {
         }
         //file tree dialog needs to be able to call some of file server's code 
         //they are separated for modularity reasons, so to enforce the hierarchical relationship between the two fileserver provides the functions and the socket
-        console.log('This =',this.fileDialog);
         if (this.fileDialog) {
             this.fileDialog.fileListFn = this.requestFileList.bind(this);
-
             this.fileDialog.socket = this.socket;
         }
 
@@ -178,7 +176,6 @@ class BisWebFileServerClient {
 
                 setTimeout( () => {
                     if (this.lastCommand) {
-                        console.log('Authenticated ... ');
                         this.wrapInAuth(this.lastCommand, this.lastOpts);
                         this.lastCommand=null;
                     }
@@ -240,10 +237,14 @@ class BisWebFileServerClient {
      */
     displayFileList(payload) {
 
+        this.lastOpts=this.lastOpts || {};
+        
         if (payload.type === 'save') 
             this.lastOpts.mode='save';
         else
             this.lastOpts.mode='load';
+
+        console.log("In Display",this.lastOpts);
         
         this.lastdirectory=payload.path;
         this.fileDialog.fileRequestFn = this.callback;
@@ -619,10 +620,9 @@ class BisWebFileServerClient {
 
         this.lastCommand=command;
         this.lastOpts=opts;
-        
+
         if (this.authenticated) {
 
-            console.log('I have been authenticated',command);
             if (command==='showfiles') {
                 this.lastOpts.mode='load';
                 this.callback = opts.callback;

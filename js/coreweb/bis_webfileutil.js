@@ -278,6 +278,13 @@ const webfileutils = {
 
             
             if (fileMode === 'server') {
+                
+                if (fileopts.defaultpath==='') {
+                    if (fileopts.initialCallback)
+                        fileopts.defaultpath=fileopts.initialCallback() || '';
+                }
+                cbopts.initialFilename=fileopts.defaultpath;
+                
                 bisweb_fileserverclient.wrapInAuth('uploadfile', cbopts);
                 return;
             }

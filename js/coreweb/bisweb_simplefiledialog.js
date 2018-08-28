@@ -63,7 +63,7 @@ class SimpleFileDialog {
      */
     filenameCallback(name=null) {
 
-        if (!name) {
+        if (name===null) {
             name='';
             try {
                 name = this.filenameEntry.val() || '';
@@ -75,6 +75,10 @@ class SimpleFileDialog {
         if (name.length>0) {
             this.modal.dialog.modal('hide');
             setTimeout( () => {
+
+                console.log("Shipping=",this.currentDirectory+this.separator+name);
+                console.log("To",this.fileRequestFn);
+                
                 this.fileRequestFn(this.currentDirectory+this.separator+name);
             },10);
         }
@@ -206,6 +210,7 @@ class SimpleFileDialog {
             this.createDialogUserInterface();
 
         this.oldfilters=null;
+        let initialfilename=null;
         
         if (opts!==null) {
             this.filters=opts.suffix || '';
@@ -227,8 +232,13 @@ class SimpleFileDialog {
                 this.okButton.text('Load');
                 this.displayFiles = true;
             }
-        }
 
+            if (opts.initialFilename)
+                initialfilename=opts.initialFilename;
+            
+        }
+        console.log('Opts=',opts.initialfilename);
+        
         this.fileList = list;
         this.currentDirectory = startDirectory;
 
@@ -237,7 +247,7 @@ class SimpleFileDialog {
         this.currentPath = startDirectory;
         this.container.find('.bisweb-file-navbar').empty();
 
-        this.updateTree(list);
+        this.updateTree(list,initialfilename);
 
         if (!this.isVisible()) {
             this.modal.dialog.modal('show');
@@ -254,7 +264,6 @@ class SimpleFileDialog {
     updateTree(list,lastfilename=null) {
 
         this.previousList=JSON.parse(JSON.stringify(list));
-        console.log('Filter Mode=',this.filterMode);
         
         let fileList = this.container.find('.bisweb-file-list');
         fileList.remove();
@@ -408,14 +417,13 @@ class SimpleFileDialog {
         
         //create navbar buttons for each folder in the current path
 
-        console.log(`Current Path=${this.currentPath}.`);
         let folders=this.currentPath.split(this.separator);
 
         for (let i=folders.length-1;i>=0;i=i-1) {
             if (folders[i].length<1)
                 folders.splice(i,1);
         }
-        console.log('folders=',folders);        
+
         for (let i=0;i<folders.length;i++) {
 
             let newPath ='';
