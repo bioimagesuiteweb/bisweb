@@ -30,7 +30,7 @@ class SimpleFileDialog {
 
         this.options= {
             'makeFavoriteButton' : options.makeFavouriteButton || false,
-            'modalType' :  options.mode || 'load',
+            'mode' :  options.mode || 'load',
             'modalName' :  options.modalName || 'File Server Dialog',
         };
 
@@ -61,14 +61,16 @@ class SimpleFileDialog {
     /** 
      * Request Filename from GUI
      */
-    filenameCallback() {
+    filenameCallback(name=null) {
 
-        let name ='';
-        try {
-            name = this.filenameEntry.val() || '';
-        } catch(e) {
-            console.log("error",e);
-            return;
+        if (!name) {
+            name='';
+            try {
+                name = this.filenameEntry.val() || '';
+            } catch(e) {
+                console.log("error",e);
+                return;
+            }
         }
         if (name.length>0) {
             this.modal.dialog.modal('hide');
@@ -249,7 +251,7 @@ class SimpleFileDialog {
      * Sorts contents before display so that folders are shown first.
      * @param {Array} list - An array of file entries. 
      */
-    updateTree(list) {
+    updateTree(list,lastfilename=null) {
 
         this.previousList=JSON.parse(JSON.stringify(list));
         console.log('Filter Mode=',this.filterMode);
@@ -320,7 +322,8 @@ class SimpleFileDialog {
                             this.filterMode=false;
                         else
                             this.filterMode=true;
-                        this.updateTree(this.previousList);
+                        let name = this.filenameEntry.val() || '';
+                        this.updateTree(this.previousList,name);
                     }
                 });
                 sel.empty();
@@ -379,7 +382,7 @@ class SimpleFileDialog {
         $(fileList).on('select_node.jstree', (event, data) => {
 
             let fname=data.node.original.path;
-            if (data.node.type === 'file' || data.nodetype ==='picture') {
+            if (data.node.type === 'file' || data.node.type ==='picture') {
 
                 let ind=fname.lastIndexOf(this.separator);
                 let dname=fname;
@@ -391,14 +394,15 @@ class SimpleFileDialog {
             }
         });
 
+
         fileDisplay.append(fileList);
-        this.updateFileNavbar();
+        this.updateFileNavbar(lastfilename);
     }
 
     /**
      * Updates the list of folders at the top of the file dialog to reflect the folders in the current path.
      */
-    updateFileNavbar() {
+    updateFileNavbar(lastfilename=null) {
         let navbar = this.modal.body.find('.bisweb-file-navbar');
         navbar.empty();
         
@@ -428,8 +432,11 @@ class SimpleFileDialog {
         }
 
         
-        this.filenameEntry=$(`<input type='text'class="btn-link btn-sm" style="width:500px">`);
-        this.filenameEntry.val('');
+        this.filenameEntry=$(`<input type='text'class="btn-link btn-sm" style="width:500px; border-style : dotted; border-color: white">`);
+        if (!lastfilename)
+            this.filenameEntry.val('');
+        else
+            this.filenameEntry.val(lastfilename);
         navbar.append(this.filenameEntry);
         this.filenameEntry.keypress( ( (ev) => {
             if ( ev.which == 13 ) {
