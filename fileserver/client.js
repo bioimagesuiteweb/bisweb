@@ -6,6 +6,10 @@ const genericio=require('bis_genericio');
 const BisWebImage=require('bisweb_image');
 bisasyncutil.setVerbose(true);
 
+const path=require('path');
+
+let basedir=path.resolve(__dirname, '../web/images/');
+console.log('Base dir=',basedir);
 
 
 let p=async function() {
@@ -21,8 +25,8 @@ let p=async function() {
     console.log('\n',JSON.stringify(p));
 
     console.log('++++\n++++ Base Dir\n++++');
-    let q=await client.getServerBaseDirectory();
-    console.log('\nBase =',q);
+    let bd=await client.getServerBaseDirectory();
+    console.log('\nBase =',bd);
 
     console.log('++++\n++++ Temp Dir\n++++');
     let t=await client.getServerTempDirectory();
@@ -31,16 +35,18 @@ let p=async function() {
 
     console.log('++++\n++++ Download File\n++++');
     let img=new BisWebImage();
-    let d=await img.load('/Users/Xenios/Desktop/MNI_T1_2mm_stripped_ras.nii.gz','None');
+    let d=await img.load(`${basedir}/MNI_T1_2mm_stripped_ras.nii.gz`,'None');
     console.log('Done ', img.getDescription());
 
+    
+    
 
-    let f=await img.save('/Users/xenios/Desktop/t.nii.gz');
+    let f=await img.save(`${bd}/t.nii.gz`);
     console.log('\n Saved =',JSON.stringify(f));
 
 
     let img2=new BisWebImage();
-    let d2=await img2.load('/Users/xenios/Desktop/t.nii.gz');
+    let d2=await img2.load(`${bd}/t.nii.gz`);
 
     console.log("Read",img2.getDescription());
     
