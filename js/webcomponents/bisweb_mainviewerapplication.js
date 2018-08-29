@@ -572,9 +572,9 @@ class ViewerApplicationElement extends HTMLElement {
                                                save: true,
                                                filters: "NII",
                                                suffix : "NII",
-                                               initialCallback : () => {
+                                               initialCallback : (() => {
                                                    return self.getSaveImageInitialFilename(viewerno);
-                                               }
+                                               })
                                            });
             
             
