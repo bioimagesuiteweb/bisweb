@@ -2,8 +2,8 @@
 
 // https://git.yale.edu/pages/zls5/webapp/
 
-let IdentityPoolId = 'us-east-1:13a0bffd-384b-43d8-83c3-050815009aa6';
-let BucketName = 'bisweb-test';
+let IdentityPoolId = 'us-east-1:22c9ad94-83eb-4411-92b1-780193ca2476';
+let BucketName = 'bisweb-test-2';
 let RegionName = 'us-east-1'; //N. Virginia
 let AccountId = '687575629668'; //My (Zach's) Amazon AWS account
 
