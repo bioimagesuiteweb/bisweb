@@ -403,9 +403,9 @@ let prepareForDataFrames = (socket) => {
         if (verbose)
             console.log('\tupload=',fileInProgress.offset,'Lengths: total=',fileInProgress.data.length,
                         'piecel=',upload.length);
-        for (let i=0;i<upload.length;i++)
-            fileInProgress.data[i+fileInProgress.offset]=upload[i];
-        //fileInProgress.data.set(upload,fileInProgress.offset);
+        //        for (let i=0;i<upload.length;i++)
+        //  fileInProgress.data[i+fileInProgress.offset]=upload[i];
+        fileInProgress.data.set(upload,fileInProgress.offset);
         fileInProgress.offset+=upload.length;
 
         //check to see if what we've received is complete 
