@@ -39,7 +39,12 @@ class BisFileServerClient extends BisBaseServerClient {
      */
     connectToServer(address = 'ws://localhost:8081') {
 
-        if (this.socket) { this.socket.close(1000, 'Restarting connection'); this.hostname=null; }
+        if (this.socket) {
+
+            console.log('Connecting ... closing connection first');
+            this.socket.close(1000, 'Restarting connection');
+            this.hostname=null;
+        }
 
         let arr=address.split(':');
         let prt=arr[arr.length-1];
@@ -57,7 +62,7 @@ class BisFileServerClient extends BisBaseServerClient {
         
         //add the event listeners for the control port
         let closeEvent = this.socket.addEventListener('close', (event) => {
-            console.log('Socket closing', event);
+            console.log('Socket closing');
         });
 
         // Handle Data From Server
@@ -166,6 +171,11 @@ class BisFileServerClient extends BisBaseServerClient {
                 //console.log('received text data: ', bisasyncutil.printEvent(this.authenticatingEvent.id));
                 if (this.authenticatingEvent)
                     id=this.authenticatingEvent.id;
+                break;
+            }
+
+            case 'filesystemoperations': {
+                // Handled by promise
                 break;
             }
 
@@ -439,7 +449,7 @@ class BisFileServerClient extends BisBaseServerClient {
                 if (m!=='tryagain' || packetSize<1000)
                     reject(m);
                 packetSize=Math.round(packetSize/2);
-                if (verbose)
+                if (packetSize<16384)
                     console.log('++++ Trying again',packetSize);
                 this.uploadFileHelper(url,body,isbinary,checksum,success,tryagain,packetSize);
             };
@@ -542,7 +552,7 @@ class BisFileServerClient extends BisBaseServerClient {
                         // We are done!
                         if (verbose)
                             console.log('Received uploadcomplete, closing');
-                        console.log('++++ Closing transfer socket');
+                        console.log('++++ Closing transfer socket success');
                         fileTransferSocket.close(1000, 'Transfer completed successfully');
                         successCB(metadata);
                         break;
@@ -562,6 +572,26 @@ class BisFileServerClient extends BisBaseServerClient {
             sendDataSlice();
         }
     }
+
+    /** performs a file system operation
+     * @param{String} operation -- the operation
+     * @param{String} url -- the filename
+     * @returns {Promise} payload is the result
+     */
+    fileSystemOperation(name,url) {
+
+        return new Promise( (resolve,reject) => {
+            
+            let res=((obj) => { resolve(obj.result); });
+            let serverEvent=bisasyncutil.addServerEvent(res,reject,'fileSystemOperation');
+            let command = JSON.stringify({ 'command' : 'filesystemoperation',
+                                           'operation' : name,
+                                           'url' : url,
+                                           'id' : serverEvent.id }); 
+            this.socket.send(command);
+        });
+    }
+
 }
 
 module.exports = BisFileServerClient;
