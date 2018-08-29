@@ -5,6 +5,8 @@ const serverEventList = { };
 const binaryDataList = { };
 let serverEventId=1;
 
+const verbose=false;
+
 
 var printEvent=function(id) {
     if (serverEventList[id])
@@ -23,7 +25,8 @@ var addServerEvent=function(resolve,reject,name="") {
         'name'    : name,
     };
 
-    console.log('Create server event',printEvent(serverEventId));
+    if (verbose)
+        console.log('Create server event',printEvent(serverEventId));
     
     return serverEventList[serverEventId];
 };
@@ -41,16 +44,19 @@ var resolveServerEvent=function(id,obj={}) {
     if (s) {
         if (obj.checksum) {
             if ( binaryDataList[obj.checksum]) {
-                console.log('Resolving checksum server event',printEvent(id),obj.checksum);
+                if (verbose)
+                    console.log('Resolving checksum server event',printEvent(id),obj.checksum);
                 resolveServerEvent(id,binaryDataList[obj.checksum]);
                 delete binaryDataList[obj.checksum];
                 removeServerEvent(id);
             } else {
-                console.log('Registering checksum in server event',printEvent(id),obj.checksum);
+                if (verbose)
+                    console.log('Registering checksum in server event',printEvent(id),obj.checksum);
                 serverEventList[id].checksum=obj.checksum;
             }
         } else {
-            console.log('Resolving server event',printEvent(id));
+            if (verbose)
+                console.log('Resolving server event',printEvent(id));
             s.resolve(obj);
             removeServerEvent(id);
         }
@@ -61,7 +67,8 @@ var rejectServerEvent=function(id,e="") {
 
     let s=serverEventList[id];
     if (s) {
-        //        console.log('Rejecting server event',printEvent(id));
+        if (verbose)
+            console.log('Rejecting server event',printEvent(id));
         s.reject(e);
         removeServerEvent(id);
     }
@@ -87,7 +94,8 @@ var addBinaryDataList = function(checksum,data) {
         }
     }
     binaryDataList[checksum]=data;
-    //console.log('Adding binaryData Event',checksum);
+    if (verbose)
+        console.log('Adding binaryData Event',checksum);
 };
 
 var resolveBinaryData = function(id,data) {
