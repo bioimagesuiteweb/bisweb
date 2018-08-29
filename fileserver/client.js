@@ -36,9 +36,9 @@ let p=async function() {
 
 
     let f=await img.save('/Users/xenios/Desktop/t.nii.gz');
-    console.log('\n Saved =',f);
+    console.log('\n Saved =',JSON.stringify(f));
 
-    console.log('Here We go');
+
     let img2=new BisWebImage();
     let d2=await img2.load('/Users/xenios/Desktop/t.nii.gz');
 

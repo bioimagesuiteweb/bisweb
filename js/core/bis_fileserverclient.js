@@ -406,7 +406,6 @@ class BisFileServerClient {
 
             let res=( (msg) => {
                 let m=msg.name;
-                console.log('Name=',m);
 
                 if (m==='datasocketready') {
                     resolve(msg.port);
@@ -466,7 +465,8 @@ class BisFileServerClient {
             this.createTransferSocket(metadata).then( (port) => {
                 
                 let server=`ws://localhost:${port}`;
-                console.log("Connecting to data server ",server);
+                if (verbose)
+                    console.log("Connecting to data server ",server);
 
                 if (!this.NodeWebSocket)
                     fileTransferSocket = new WebSocket(server);
@@ -501,12 +501,14 @@ class BisFileServerClient {
 
 
                         let slice=new Uint8Array(data.buffer,begin,end-begin);
-                        console.log('\t\t Sending ',begin,end-1,' Total=',data.length,' slice=',slice.length);
+                        if (verbose)
+                            console.log('\t\t Sending ',begin,end-1,' Total=',data.length,' slice=',slice.length);
 
                         fileTransferSocket.send(slice);
                         currentIndex+=(end-begin);
                     } else {
-                        console.log('We are done ignoring');
+                        if (verbose)
+                            console.log('We are done ignoring');
                     }
                 };
                 
@@ -519,8 +521,9 @@ class BisFileServerClient {
                         reject();
                         return null;
                     }
-                    
-                    console.log('____ In Transfer ',data.type);
+
+                    if (verbose)
+                        console.log('____ In Transfer ',data.type);
                     
                     switch (data.type)
                     {
@@ -532,7 +535,8 @@ class BisFileServerClient {
                         case 'uploadcomplete':
                         {
                             // We are done!
-                            console.log('Received uploadcomplete, closing');
+                            if (verbose)
+                                console.log('Received uploadcomplete, closing');
                             fileTransferSocket.close(1000, 'Transfer completed successfully');
                             resolve(metadata);
                             break;
