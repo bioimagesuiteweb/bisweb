@@ -27,7 +27,7 @@ const genericio = require('bis_genericio.js');
 const tcpPortUsed = require('tcp-port-used');
 
 // In Insecure Mode (if true);
-const insecure=wsutil.insecure;
+let insecure=wsutil.insecure;
 
 //'magic' string for WebSockets
 //https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers
@@ -597,7 +597,7 @@ let serveServerBaseDirectory = (socket,id=0) => {
  * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
  * @param {Number} id - the request id
  */
-let serveServerTempDirectory = (socket) => {
+let serveServerTempDirectory = (socket,id=0) => {
     let homedir = os.homedir();
     socket.write(formatPacket('servertempdirectory', { 'path' : path.join(homedir,'tmp'), 'id' : id }));
 };
@@ -749,6 +749,7 @@ program
     .option('-v, --verbose', 'Whether or not to display messages written by the server')
     .option('-p, --port <n>', 'Which port to start the server on')
     .option('--read-only', 'Whether or not the server should accept requests to write files')
+    .option('--insecure', 'USE WITH EXTREME CARE -- if true no password')
     .parse(process.argv);
 
 
@@ -758,10 +759,15 @@ if (program.port)
     portno=parseInt(program.port)
 
 readOnly = program.readOnly ? program.readOnly : false;
+insecure = program.insecure ? program.insecure : false;
 
 startServer('localhost', portno, true, () => {
     console.log('Server started ',portno)
-})
+    if (insecure) {
+        console.log("+++++ IN INSECURE MODE");
+    }
+});
+           
 
 
 

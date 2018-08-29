@@ -1,13 +1,5 @@
 // Set this to false
 // ---------------------------------
-const insecure=true;
-
-if (typeof (window) === "undefined") {
-    if (insecure) {
-        console.log('\n----\n---- In INSECURE MODE\n----\n----');
-    }
-}
-
 
 /**
  * Parses the first 112 bits of a WebSocket dataframe, i.e. the control portion of the frame.
@@ -122,5 +114,4 @@ module.exports = {
     formatControlFrame: formatControlFrame,
     decodeUTF8: decodeUTF8,
     parseJSON: parseJSON,
-    insecure : insecure
 };

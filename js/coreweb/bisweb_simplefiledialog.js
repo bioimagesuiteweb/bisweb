@@ -54,7 +54,6 @@ class SimpleFileDialog {
         this.filterMode=true;
         this.oldfilters='';
         this.previousList=null;
-        console.log("Simple File Dialog Created",this.options);
     }
 
     // --------------- GUI Callbacks ------------------------
@@ -75,10 +74,6 @@ class SimpleFileDialog {
         if (name.length>0) {
             this.modal.dialog.modal('hide');
             setTimeout( () => {
-
-                console.log("Shipping=",this.currentDirectory+this.separator+name);
-                console.log("To",this.fileRequestFn);
-                
                 this.fileRequestFn(this.currentDirectory+this.separator+name);
             },10);
         }
@@ -237,8 +232,6 @@ class SimpleFileDialog {
                 initialfilename=opts.initialFilename;
             
         }
-        console.log('Opts=',opts.initialfilename);
-        
         this.fileList = list;
         this.currentDirectory = startDirectory;
 
