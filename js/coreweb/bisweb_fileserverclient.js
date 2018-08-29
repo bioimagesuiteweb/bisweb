@@ -25,11 +25,12 @@ class BisWebFileServerClient {
         this.dataSocket = null;
 
         // Because this involves creating webcomponents (deep down, they need to be afterAllLoaded);
-        this.fileDialog = new bisweb_simplefiledialog();
+        this.fileDialog = null;new bisweb_simplefiledialog();
 
         //When connecting to the server, it may sometimes request that the user authenticates
         this.authenticateModal = null;
         this.authenticated = false;
+        this.authenticatingEvent= -1;
         this.hostname=null;
         this.password=null;
         this.passwordid=null;
@@ -59,11 +60,6 @@ class BisWebFileServerClient {
         }
         //file tree dialog needs to be able to call some of file server's code 
         //they are separated for modularity reasons, so to enforce the hierarchical relationship between the two fileserver provides the functions and the socket
-        if (this.fileDialog) {
-            this.fileDialog.fileListFn = this.requestFileList.bind(this);
-            this.fileDialog.socket = this.socket;
-        }
-
         
         //add the event listeners for the control port
         let closeEvent = this.socket.addEventListener('close', (event) => {
@@ -134,10 +130,7 @@ class BisWebFileServerClient {
                 // Nothing to do let promise handle it
                 break;
             }
-            case 'supplementalfiles': {
-                this.handleSupplementalFileRequest(data.payload);
-                break;
-            }
+
             case 'getserverbasedirectory': {
                 // Nothing to do let promise handle it
                 break;
@@ -164,24 +157,29 @@ class BisWebFileServerClient {
                 break;
             }
             case 'badauth':  {
-                $('#'+this.passwordid).val('');
-                this.authenticateModal.header.find('.modal-title').text('Please try again');
+                id=-1;
+                if (this.authenticateModal) {
+                    $('#'+this.passwordid).val('');
+                    this.authenticateModal.header.find('.modal-title').text('Please try again');
+                } else if (this.authenticatingEvent) {
+                    id=this.authenticatingEvent.id;
+                    success=false;
+                }
                 break;
             }
-            case 'goodauth': { 
+
+            case 'goodauth': {
+                id=-1;
                 webutil.createAlert('Login to BisWeb FileServer Successful');
                 this.authenticated = true;
                 if (this.authenticateModal)
                     this.authenticateModal.dialog.modal('hide');
-
-                setTimeout( () => {
-                    if (this.lastCommand) {
-                        this.wrapInAuth(this.lastCommand, this.lastOpts);
-                        this.lastCommand=null;
-                    }
-                },100);
+                //console.log('received text data: ', biswebasync.printEvent(this.authenticatingEvent.id));
+                if (this.authenticatingEvent)
+                    id=this.authenticatingEvent.id;
                 break;
             }
+
             default: {
                 console.log('received a transmission with unknown type', data.type, 'cannot interpret');
                 success=false;
@@ -197,36 +195,113 @@ class BisWebFileServerClient {
         }
     }
 
+        // ------------------------------------------------------
+    // Authentication Functionality
+    //
+    
     /**
-     * The file dialog will request additional files from the server if the user selects a folder that the dialog does not have the children for. 
-     * This function adds the new files sent by the server to the existing file tree in the appropriate place.
-     * 
-     * @param {Object} payload - The full data package from the server.
-     * @param {String} payload.path - The file path at which the new files should be added. 
-     * @param {Array} payload.list - The supplemental files retrieved by the server. 
-     * @param {String} payload.modalType - The type of modal that the data should be appended to. Either 'load' or 'save'. 
+     * Creates a small modal dialog to allow the user to enter the session password used to authenticate access to the local fileserver. 
+     * Also displays whether authentication succeeded or failed. 
      */
-    /*handleSupplementalFileRequest(payload) {
+    showAuthenticationDialog(title='Connect To BisWeb Server') {
 
-        //file tree dialog keeps track of the data stored within it -- however the since the file server retrieves the new data it is responsible for adding it
-        let requestingDialog = (payload.modalType === 'load') ? this.fileLoadDialog : this.fileSaveDialog;
+        if (!this.authenticateModal) {
 
-        //first two entries in split paths will be '' 'home' and '[user]' and since the file tree starts below those we can safely remove them.
-        let splitPaths = payload.path.split('/');
-        splitPaths.splice(0,3);
-        let formattedPath = splitPaths.join('/');
-        console.log('splitPaths', splitPaths);
+            let hid=webutil.getuniqueid();
+            let pid=webutil.getuniqueid();
+            
+            let passwordEntryBox=$(`
+                <div class='form-group'>
+                    <label for='server'>Host:</label>
+                                 <input type='text' class = 'form-control' id='${hid}' value="localhost:8081">
+                </div>
+                <div class='form-group'>
+                    <label for='filename'>Password:</label>
+                    <input type='text' class = 'form-control' id='${pid}'>
+                </div>
+            `);
 
-        let entry = requestingDialog.searchTree(formattedPath);
-        if (entry) {
-            entry.children = payload.list;
-            entry.expand = false;
-            requestingDialog.createFileList(payload.list, { 'path': formattedPath, 'list': entry.children });
-        } else {
-            console.log('could not find', payload.path, 'in the list of files');
+            this.authenticateModal = webutil.createmodal('Connect To BisWeb Server', 'modal-sm');
+            this.authenticateModal.dialog.find('.modal-footer').find('.btn').remove();
+            this.authenticateModal.body.append(passwordEntryBox);
+            
+            let confirmButton = webutil.createbutton({ 'name': 'Connnect', 'type': 'btn-success' });
+            let cancelButton = webutil.createbutton({ 'name': 'Cancel', 'type': 'btn-danger' });
+            
+            this.authenticateModal.footer.append(confirmButton);
+            this.authenticateModal.footer.append(cancelButton);
+
+            $(cancelButton).on('click', () => {
+                this.authenticateModal.dialog.modal('hide');
+            });
+
+            $(confirmButton).on('click', () => {
+
+                let hst=$('#'+hid).val();
+                this.password = $('#'+pid).val();
+                if (this.hostname!==hst) {
+                    this.hostname = hst;
+                    this.connectToServer('ws://'+this.hostname);
+                } else {
+                    setTimeout( () => {
+                        this.socket.send(this.password);
+                    },10);
+                }
+            });
+
+            this.passwordid=pid;
         }
-    }*/
 
+        $('#'+this.passwordid).val('');
+        
+        if (title!==null)
+            this.authenticateModal.header.find('.modal-title').text(title);
+
+        this.authenticateModal.dialog.modal('show');
+    }
+
+    /**
+     * Authenticate
+     * Initiates authentication with the server
+     * @param{String} password - if not null this is used
+     * @param{String} hostname - if not null this is used
+     * @returns{Promise} - when this is done
+     */
+    authenticate(password=null,hostname=null) {
+
+        if (this.authenticated)
+            return Promise.resolve();
+
+        return new Promise( (resolve,reject) => {
+
+            let successCB = (() => {
+                this.authenticatingEvent=null;
+                resolve();
+            });
+            let failureCB= ( () => {
+                this.authenticatingEvent=null;
+                reject();
+            });
+            
+            this.authenticatingEvent=biswebasync.addServerEvent(successCB,failureCB,'authenticate');
+
+            hostname = hostname || 'ws://localhost:8081';
+            
+            if (insecure) {
+                this.password="";
+                this.connectToServer(hostname);
+            } else if (password) {
+                this.password=password;
+                this.connectToServer(hostname);
+            } else {
+                this.showAuthenticationDialog();
+            }
+        });
+    }
+
+
+    // ------------------------- File Dialog Functions ---------------------------------
+    
     /**
      * Renders a file list fetched by requestFileList in the file tree modal using jstree. 
      * Called in response to a file list returned by the server (itself in response to requestFileList) or by the fileTreeDisplayModal trying to fetch more nodes.
@@ -235,7 +310,7 @@ class BisWebFileServerClient {
      *
      * // TODO: some how have a title here ... and suffix list
      */
-    displayFileList(payload) {
+    showFileDialog(payload) {
 
         this.lastOpts=this.lastOpts || {};
         
@@ -244,10 +319,13 @@ class BisWebFileServerClient {
         else
             this.lastOpts.mode='load';
 
-        console.log("In Display",this.lastOpts);
+        if (!this.fileDialog) {
+            this.fileDialog=new bisweb_simplefiledialog();
+            this.fileDialog.fileListFn = this.requestFileList.bind(this);
+        }
         
         this.lastdirectory=payload.path;
-        this.fileDialog.fileRequestFn = this.callback;
+        this.fileDialog.fileRequestFn = this.lastOpts.callback;
         this.fileDialog.openDialog(payload.data,
                                    payload.path,
                                    this.lastOpts);
@@ -260,31 +338,40 @@ class BisWebFileServerClient {
     /**
      * Sends a request for a list of the files on the server machine and prepares the display modal for the server's reply. 
      * Once the list of files arrives it is rendered using jstree. The user may request individual files from the server using this list. 
-     * 
+     * It calls authenticate first ...
      * requestFileList doesn't expand the contents of the entire server file system; just the first four levels of directories. 
-     * When the user clicks on an unexpanded node the node will request four levels of directories below it. 
+
      * This will eventually end up calling this.handleServerRequest (via nested callbacks)
      * 
      * @param {String} type - Which type of modal is requesting the list. One of either 'load' or 'save'. // TODO: add directory as type
      * @param {String} directory - The directory to expand the files under. Optional -- if unspecified the server will return the directories under ~/.
-     * @param {Boolean} showdialog - if true then popup the relevant dialog else just return the file list in the promise
+     * @param {Boolean} showdialog - if true popup a gui dialog else just text
+     * @param {Objects} opts - the options object
+     * @param {Function} opts.callback - A callback function propagated from bis_webfileutil that will handle the non-AWS I/O for the retrieved data, , and a list of acceptable file suffixes.
+     * @param {String} opts.title - The title to display on the load/save modal
+     * @param {String} opts.initialname - The initial filename
+
      * @returns {Promise} with payload is the event
      */
-    requestFileList(type, directory = null, showdialog=true) {
+    requestFileList(type, directory = null, showdialog=true,opts=null) {
+
+        if (opts)
+            this.lastOpts=opts;
 
         return new Promise ((resolve,reject) => {
 
             let cb=( (payload) => {
                 if (showdialog)
-                    this.displayFileList(payload);
+                    this.showFileDialog(payload);
                 resolve(payload);
             });
-            
-            let serverEvent=biswebasync.addServerEvent(cb,reject,'requestFileList');
-            let command = JSON.stringify({ 'command' : 'getfilelist', 'directory' : directory, 'type' : type , 'depth' : 0, 'id' : serverEvent.id}); 
-            this.socket.send(command);
+
+            this.authenticate().then( () => {
+                let serverEvent=biswebasync.addServerEvent(cb,reject,'requestFileList');
+                let command = JSON.stringify({ 'command' : 'getfilelist', 'directory' : directory, 'type' : type , 'depth' : 0, 'id' : serverEvent.id}); 
+                this.socket.send(command);
+            });
         });
-        // When this replies we will end up in this.handleServerRequest
     }
 
 
@@ -539,108 +626,6 @@ class BisWebFileServerClient {
         }
     }
 
-
-    // ------------------------------------------------------
-    // Authentication Functionality
-    //
-    
-    /**
-     * Creates a small modal dialog to allow the user to enter the session password used to authenticate access to the local fileserver. 
-     * Also displays whether authentication succeeded or failed. 
-     */
-    showAuthenticationDialog(title='Connect To BisWeb Server') {
-
-        if (!this.authenticateModal) {
-
-            let hid=webutil.getuniqueid();
-            let pid=webutil.getuniqueid();
-            
-            let passwordEntryBox=$(`
-                <div class='form-group'>
-                    <label for='server'>Host:</label>
-                                 <input type='text' class = 'form-control' id='${hid}' value="localhost:8081">
-                </div>
-                <div class='form-group'>
-                    <label for='filename'>Password:</label>
-                    <input type='text' class = 'form-control' id='${pid}'>
-                </div>
-            `);
-
-            this.authenticateModal = webutil.createmodal('Connect To BisWeb Server', 'modal-sm');
-            this.authenticateModal.dialog.find('.modal-footer').find('.btn').remove();
-            this.authenticateModal.body.append(passwordEntryBox);
-            
-            let confirmButton = webutil.createbutton({ 'name': 'Connnect', 'type': 'btn-success' });
-            let cancelButton = webutil.createbutton({ 'name': 'Cancel', 'type': 'btn-danger' });
-            
-            this.authenticateModal.footer.append(confirmButton);
-            this.authenticateModal.footer.append(cancelButton);
-
-            $(cancelButton).on('click', () => {
-                this.authenticateModal.dialog.modal('hide');
-            });
-
-            $(confirmButton).on('click', () => {
-
-                let hst=$('#'+hid).val();
-                this.password = $('#'+pid).val();
-                if (this.hostname!==hst) {
-                    this.hostname = hst;
-                    this.connectToServer('ws://'+this.hostname);
-                } else {
-                    setTimeout( () => {
-                        this.socket.send(this.password);
-                    },10);
-                }
-            });
-
-            this.passwordid=pid;
-        }
-
-        $('#'+this.passwordid).val('');
-        
-        if (title!==null)
-            this.authenticateModal.header.find('.modal-title').text(title);
-
-        this.authenticateModal.dialog.modal('show');
-    }
-
-    /**
-     * Checks whether the user has authenticated with the fileserver. Performs the command if they have, otherwise prompts the user to login.
-     * 
-     * //TODO: Add dialog title in gui:
-     * //TODO: Add list of allowed suffixes:
-     *
-     * @param {String} command - A string indicating the command to execute. 
-     * @param {Object} opts - An options object
-     * @param {Function} opts.callback - A callback function propagated from bis_webfileutil that will handle the non-AWS I/O for the retrieved data, , and a list of acceptable file suffixes.
-     * @param {String} opts.title - The title to display on the load/save modal
-     */
-    wrapInAuth(command, opts) {
-
-        this.lastCommand=command;
-        this.lastOpts=opts;
-
-        if (this.authenticated) {
-
-            if (command==='showfiles') {
-                this.lastOpts.mode='load';
-                this.callback = opts.callback;
-                this.requestFileList('load', this.lastdirectory,true); 
-            } else if (command==='uploadfile') {
-                this.requestFileList('save', this.lastdirectory,true); 
-                this.callback = opts.callback; 
-            } else {
-                console.log('unrecognized command', command);
-            }
-        } else if (insecure) {
-            this.password="";
-            this.connectToServer('ws://localhost:8081');
-        } else {
-            this.showAuthenticationDialog();
-            // make this call us back ...
-        }
-    }
 }
 
 module.exports = BisWebFileServerClient;
