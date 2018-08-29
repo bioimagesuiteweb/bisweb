@@ -108,6 +108,7 @@ let readParameterFile=async function(fname,debug=0) {
     debug = debug || 0;
     
     try {
+        console.log('Reading fname=',fname);
         let obj=  await bisgenericio.read(fname);
         let lines= obj.data.split('\n');
 
