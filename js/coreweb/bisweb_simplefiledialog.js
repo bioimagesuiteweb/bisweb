@@ -88,7 +88,7 @@ class SimpleFileDialog {
      * @param {String} dname -- the name of the directory
      */
     changeDirectory(dname) {
-        this.fileListFn(this.options.mode, dname);
+        this.fileListFn(this.options.mode, dname,true);
     }
 
     // --------------- Create GUI ------------------------------
@@ -429,8 +429,10 @@ class SimpleFileDialog {
             let newPath ='';
             for (let k=0;k<=i;k++) 
                 newPath=newPath+'/'+folders[k];
-
-            let button = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-folder-close'></span> ${folders[i]}</button>`);
+            let b="";
+            if (i==0)
+                b=`<span class='glyphicon glyphicon-folder-close'></span>/`;
+            let button = $(`<button type='button' class='btn btn-sm btn-link' style='margin:0px'>${b}${folders[i]}/</button>`);
             button.on('click', (event) => {
                 event.preventDefault();
                 this.fileListFn(this.options.mode, newPath);
