@@ -33,7 +33,6 @@
  * @namespace BisReadBruker
  */
 
-const pako=require('pako');
 const bisheader=require('bis_header');
 const BisWebImage=require('bisweb_image');
 const bisgenericio=require('bis_genericio');
@@ -47,7 +46,8 @@ const inelectron=( bisgenericio.getmode() === "electron");
 
 const sleep=function(millis) {
     return new Promise(resolve => setTimeout(resolve, millis));
-}
+};
+
 let dualPrint=function() {
     
     let text = "[BIS:]"+(Array.from(arguments)).join("");
@@ -440,10 +440,8 @@ let createHeader = function(data,debug) {
 /**
  * @alias BisReadBruker.saveTextFiles
  */
-let saveTextFiles = async function(data,debug) {
+let saveTextFiles = async function(data) {
 
-    debug = debug || false;
-    
     // -------------
     // Details file
     // -------------
@@ -504,7 +502,7 @@ let directSaveImage=async function(part_img,part_imageoutname,forceorient) {
         let output=new BisWebImage();
         output.initialize();
         output.debug=1;
-        output.parseNII(dat.buffer,vals.orient);
+        output.parseNII(dat.buffer,forceorient);
         await output.save(part_imageoutname);
     } else {
         await part_img.save(part_imageoutname);
@@ -585,9 +583,6 @@ let saveRegularImage = async function (data,debug) {
     let imghead=img.getHeader();
     //    if (debug)
         dualPrint("+++++ Normal Image Dimensions = "+imghead.struct.dim+", spa=" +imghead.struct.pixdim);
-
-    let hd=img.getHeader();
-    let dim=hd.struct.dim;
 
     let imageoutname=data.basename+".nii.gz";
     img.addQuaternionCode(biswrap);

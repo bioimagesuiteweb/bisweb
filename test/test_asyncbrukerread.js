@@ -28,7 +28,7 @@ const BisWebImage=require('bisweb_image');
 const BisFileServerClient=require('bis_fileserverclient');
 const WebSocket = require('ws');
 const os=require('os');
-const tempfs = require('temp').track();
+//const tempfs = require('temp').track();
 const genericio=require('bis_genericio');
 
 console.log('tmp=',os.tmpdir());
@@ -80,15 +80,18 @@ describe('Testing BisImage (from bis_readbruker.js) a class that imports Bruker 
 
                 return new Promise( (resolve,reject) => {
                     genericio.makeDirectory(tmpDir).then( (m) => {
+                        console.log(' Directory=',m);
                         client=new BisFileServerClient(WebSocket);
                         client.authenticate().then( () => {
                             console.log('Done authenticating');
                             genericio.setFileServerObject(client);
                             resolve();
                         });
+                    }).catch( (e) => {
+                        reject(e);
                     });
                 });
-            }
+            };
             
             
             let importimage = async function() {

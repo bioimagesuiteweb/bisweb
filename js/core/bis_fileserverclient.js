@@ -77,7 +77,7 @@ class BisFileServerClient extends BisBaseServerClient {
         }
         
         //add the event listeners for the control port
-        let closeEvent = this.socket.addEventListener('close', (event) => {
+        let closeEvent = this.socket.addEventListener('close', () => {
             console.log('Socket closing');
         });
 
@@ -200,6 +200,7 @@ class BisFileServerClient extends BisBaseServerClient {
                 console.log('\n___________\n---------------------- \t\t Failed retrying',this.lastCommand,'\n__________________');
                 this.lastCommand.taketwo="              ";
                 this.sendCommand(this.lastCommand);
+                break;
             }
 
             case 'nogood' : {
