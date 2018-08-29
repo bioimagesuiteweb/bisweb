@@ -34,9 +34,6 @@ const rimraf=biscoreio.getrimrafmodule();
 let fileServerClient=null;
 const inBrowser= biscoreio.getmode() === 'browser';
 
-
-console.log('In Browser=',inBrowser);
-
 /** Sets the file server object 
  * @alias BisGenericIO#setFileServerObject
  * @param {Object} obj - the server object
@@ -254,9 +251,9 @@ let getFileSize=function(url) {
     try {
         let stats = fs.statSync(url);
         fileSizeInBytes = stats["size"];
-        return Promise.resolved(fileSizeInBytes);
+        return Promise.resolve(fileSizeInBytes);
     } catch(e) {
-        return Promise.rejected(fileSizeInBytes);
+        return Promise.reject(e);
     }
 };
 
@@ -273,13 +270,13 @@ let isDirectory=function(url) {
     }
 
     if (inBrowser) {
-        return Promise.rejected('getFileSize can not be  done in a  Browser');
+        return Promise.reject('getFileSize can not be  done in a  Browser');
     }
 
     let m=true;
     if (!fs.lstatSync(url).isDirectory())
         m=false;
-    return Promise.resolved(m);
+    return Promise.resolve(m);
 };
 
 /** Create the directory in url
@@ -295,7 +292,7 @@ let makeDirectory=function(url) {
     }
 
     if (inBrowser) {
-        return Promise.rejected('getFileSize can not be  done in a  Browser');
+        return Promise.reject('getFileSize can not be  done in a  Browser');
     }
 
     let m=false;
@@ -303,7 +300,7 @@ let makeDirectory=function(url) {
         fs.mkdirSync(url);
         m=true;
     }
-    return Promise.resolved(m);
+    return Promise.resolve(m);
 };
 
 /** Checks is a path is a directory
@@ -319,11 +316,11 @@ let deleteDirectory=function(url) {
     }
 
     if (inBrowser) {
-        return Promise.rejected('getFileSize can not be  done in a  Browser');
+        return Promise.reject('getFileSize can not be  done in a  Browser');
     }
     
-    if (fs.lstatSync(url).isDirectory())
-        return Promise.rejected(url+' is not a directory');
+    if (!fs.lstatSync(url).isDirectory())
+        return Promise.reject(url+' is not a directory');
 
     return new Promise( (resolve,reject) => {
         try {
@@ -348,11 +345,11 @@ let getMatchingFiles=function(matchstring) {
     }
 
     if (inBrowser) {
-        return Promise.rejected('getMatchingFiles can not be  done in a  Browser');
+        return Promise.reject('getMatchingFiles can not be  done in a  Browser');
     }
 
     let m=glob.sync(matchstring);
-    return Promise.resolved(m);
+    return Promise.resolve(m);
 };
 
 // -------------------------------------------------------------------------------------------------------
