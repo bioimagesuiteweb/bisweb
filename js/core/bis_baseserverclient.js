@@ -48,12 +48,22 @@ class BisBaseServerClient {
         return Promise.rejected('uploadFile not implemented '+url+' '+isbinary+' ' +typeof data);
     }
 
+
+    /** performs a file system operation
+     * @param{String} operation -- the operation
+     * @param{String} url -- the filename
+     * @returns {Promise} payload is the result
+     */
+    fileSystemOperation(name,url) {
+        return Promise.rejected(name+' not implemented '+url);
+    }
+
     /** get file size -- the size of a file
      * @param{String} url -- the filename
      * @returns {Promise} payload is the file size
      */
     getFileSize(url) {
-        return Promise.rejected('getFileSize not implemented '+url);
+        return this.fileSystemOperation('getFileSize',url);
     }
 
     /** checks is filename is a directory
@@ -61,7 +71,7 @@ class BisBaseServerClient {
      * @returns {Promise} payload true or false
      */
     isDirectory(url) {
-        return Promise.rejected('isDirectory not implemented '+url);
+        return this.fileSystemOperation('isDirectory',url);
     }
 
     /** creates a directory
@@ -69,7 +79,7 @@ class BisBaseServerClient {
      * @returns {Promise} payload true (created) or false (already existing)
      */
     makeDirectory(url) {
-        return Promise.rejected('makeDirectory not implemented '+url);
+        return this.fileSystemOperation('makeDirectory',url);
     }
 
     /** deletes a directory
@@ -77,7 +87,7 @@ class BisBaseServerClient {
      * @returns {Promise} payload true or false
      */
     deleteDirectory(url) {
-        return Promise.rejected('deleteDirectory not implemented '+url);
+        return this.fileSystemOperation('deleteDirectory',url);
     }
 
     /** getMatching Files
@@ -85,7 +95,7 @@ class BisBaseServerClient {
      * @returns {Promise} payload list of filenames that match
      */
     getMatchingFiles(querystring) {
-        return Promise.rejected('getMatchingFiles not implemented '+querystring);
+        return this.fileSystemOperation('getMatchingFiles',querystring);
     }
 }
 
