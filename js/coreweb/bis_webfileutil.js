@@ -242,6 +242,7 @@ const webfileutils = {
 
         let suffix = fileopts.suffix || '';
         let title = fileopts.title || '';
+        let defaultpath=fileopts.defaultpath || '';
         
         if (suffix === "NII")
             suffix = '.nii.gz,.nii,.gz,.tiff';
@@ -267,6 +268,8 @@ const webfileutils = {
             }
         }
 
+
+        
         let fmode=fileMode;
         if (fileopts.force)
             fmode=fileopts.force;
@@ -278,14 +281,31 @@ const webfileutils = {
 
             
             if (fileMode === 'server') {
-                
-                if (fileopts.defaultpath==='') {
-                    if (fileopts.initialCallback)
-                        fileopts.defaultpath=fileopts.initialCallback() || '';
+
+                let initialDir=null;
+                let initialFilename=null;
+
+                if (fileopts.initialCallback) {
+                    let f=fileopts.initialCallback() || '';
+                    if (f.length>0) {
+                        let ind=f.lastIndexOf("/");
+                        if (ind>0) {
+                            initialDir=f.substr(0,ind);
+                            initialFilename=f.substr(ind+1,f.length);
+                        } else {
+                            initialFilename=f;
+                            initialDir=null;
+                        }
+                    }
                 }
-                cbopts.initialFilename=fileopts.defaultpath;
+
+                if (!initialFilename && defaultpath.length>0) {
+                    initialDir=defaultpath;
+                    initialFilename=null;
+                }
                 
-                bisweb_fileserverclient.wrapInAuth('uploadfile', cbopts);
+                cbopts.initialFilename=initialFilename || '';
+                bisweb_fileserverclient.requestFileList('uploadfile', initialDir, true, cbopts);
                 return;
             }
 
@@ -330,7 +350,7 @@ const webfileutils = {
         }
 
         if (fileMode==="server") {
-            bisweb_fileserverclient.wrapInAuth('showfiles', cbopts);
+            bisweb_fileserverclient.requestFileList('showfiles', null,true,cbopts);
             return;
         }
 
