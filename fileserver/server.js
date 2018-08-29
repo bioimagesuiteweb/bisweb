@@ -410,7 +410,6 @@ let prepareForDataFrames = (socket) => {
     
     function addToCurrentTransfer(upload, control, socket) {
 
-        let port=socket._sockname.port;
         let dataInProgress=fileInProgress;
         
         if (verbose)
@@ -495,8 +494,6 @@ let getFileFromClientAndSave = (upload, control, socket) => {
         return;
     }
 
-    let port=socket._sockname.port;
-    
     fileInProgress = {
         'totalSize': upload.totalSize,
         'packetSize': upload.packetSize,
