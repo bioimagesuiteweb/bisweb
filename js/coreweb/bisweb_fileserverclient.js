@@ -107,8 +107,8 @@ class BisWebFileServerClient extends BisFileServerClient {
     showFileDialog(payload) {
 
         this.lastOpts=this.lastOpts || {};
-        
-        if (payload.type === 'save') 
+
+        if (payload.type === 'uploadfile') 
             this.lastOpts.mode='save';
         else
             this.lastOpts.mode='load';
