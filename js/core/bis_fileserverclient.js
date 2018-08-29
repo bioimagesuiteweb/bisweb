@@ -6,7 +6,7 @@ const bisasyncutil=require('bis_asyncutils');
 const util = require('bis_util');
 const BisBaseServerClient= require('bis_baseserverclient');
 // Debug Mode
-const verbose=false;
+const verbose=true;
 let uploadcount=0;
 
 class BisFileServerClient extends BisBaseServerClient { 

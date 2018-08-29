@@ -27,6 +27,7 @@
 const biscoreio=require('bis_coregenericio');
 const glob=biscoreio.getglobmodule();
 const fs=biscoreio.getfsmodule();
+const path=biscoreio.getpathmodule();
 const rimraf=biscoreio.getrimrafmodule();
 // -------------------------------------------------------------------------------------------------------
 // File server stuff
@@ -233,7 +234,7 @@ let write = function (url, data,isbinary=false) {
 
 /** Returns the size in bytes of a file
  * @alias BisGenericIO#getFileSize
- * @param {Object} url - the filename
+ * @param {String} url - the filename
  * @returns {Promise} - the payload is the size of the file in bytes
  */
 
@@ -259,7 +260,7 @@ let getFileSize=function(url) {
 
 /** Checks is a path is a directory
  * @alias BisGenericIO#isDirectory
- * @param {Object} url - the directory string
+ * @param {String} url - the directory string
  * @returns {Promise} - the payload is true or false
  */
 
@@ -281,7 +282,7 @@ let isDirectory=function(url) {
 
 /** Create the directory in url
  * @alias BisGenericIO#makeDirectory
- * @param {Object} url - the directory string
+ * @param {String} url - the directory string
  * @returns {Promise} - the payload is true or false
  */
 
@@ -305,7 +306,7 @@ let makeDirectory=function(url) {
 
 /** Checks is a path is a directory
  * @alias BisGenericIO#isDirectory
- * @param {Object} url - abstract file handle object
+ * @param {String} url - the directory name
  * @returns {Promise} - the payload is true or false
  */
 
@@ -334,7 +335,7 @@ let deleteDirectory=function(url) {
 
 /** Returns matching files in a path
  * @alias BisGenericIO#getMatchingFiles
- * @param {Object} matchstring - abstract file path
+ * @param {String} matchstring - the query string
  * @returns {Promise} - the payload is the file list
  */
 
@@ -352,15 +353,77 @@ let getMatchingFiles=function(matchstring) {
     return Promise.resolve(m);
 };
 
-// -------------------------------------------------------------------------------------------------------
-/*
-Legacy exports -- removed
+/** Returns the base name of a file (i.e. strips out the directory)
+ * @alias BisGenericIO#getBaseName
+ * @param {String} fname - the filename
+ * @param {Boolean} forceinternal - if true use internal implementation (not path in node.js)
+ * @returns {string} - the base name
+ */
+let getBaseName=function(fname,forceinternal=false) {
+    if (!inBrowser && !forceinternal) {
+        return path.basename(fname);
+    }
+    let i=path.lastIndexOf('/');
+    if (i<0)
+        return fname;
+    return fname.substr(i+1,fname.length);
+};
 
-    readbinarydata : readbinarydata,
-    readtextdata : readtextdata,
-    writebinarydata : writebinarydata,
-    writetextdata : writetextdata,
-*/
+/** Returns the directory part of the name of a file (i.e. strips out the basename)
+ * @alias BisGenericIO#getDirectoryName
+ * @param {String} fname - the filename
+ * @param {Boolean} forceinternal - if true use internal implementation (not path in node.js)
+ * @returns {string} - the directory name
+ */
+let getDirectoryName=function(fname,forceinternal=false) {
+    if (!inBrowser && !forceinternal) {
+        return path.dirname(fname);
+    }
+    let i=path.lastIndexOf('/');
+    if (i<0)
+        return fname;
+    return fname.substr(0,i);
+};
+
+/** Returns a normalized filename (removes ../ and makes absolute)
+ * @alias BisGenericIO#getNormalizedFilename
+ * @param {String} fname - the filename
+ * @param {Boolean} forceinternal - if true use internal implementation (not path in node.js)
+ * @returns {string} - the normalized name
+ */
+let getNormalizedFilename=function(fname,forceinternal=false) {
+    if (!inBrowser && !forceinternal) {
+        return path.resolve(path.normalize(fname));
+    }
+    return fname;
+};
+
+/** Returns a joined file name (path.join)
+ * @alias BisGenericIO#joinFilenames
+ * @param {String} path1 - the first path
+ * @param {String} path2 - the seconf path
+ * @param {Boolean} forceinternal - if true use internal implementation (not path in node.js)
+ * @returns {string} - the normalized name
+ */
+let joinFilenames=function(path1,path2,forceinternal=false) {
+    if (!inBrowser && !forceinternal) {
+        return path.join(path1,path2);
+    }
+    return path1+'/'+path2;
+};
+
+/** Returns the path separator , either path.sep or '/'
+ * @alias BisGenericIO#getPathSeparator
+ * @returns {string} - the path separator
+ */
+let getPathSeparator=function() {
+    if (!inBrowser) 
+        return path.sep;
+    
+    return '/';
+};
+
+// -------------------------------------------------------------------------------------------------------
 
 // Export object
 const bisgenericio = {
@@ -396,6 +459,12 @@ const bisgenericio = {
     getMatchingFiles : getMatchingFiles,
     makeDirectory :    makeDirectory,
     deleteDirectory :  deleteDirectory,
+    // Filename operations
+    getBaseName : getBaseName,
+    getDirectoryName : getDirectoryName,
+    getNormalizedFilename : getNormalizedFilename,
+    joinFilenames : joinFilenames,
+    getPathSeparator : getPathSeparator,
 };
 
 
