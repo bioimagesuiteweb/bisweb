@@ -274,11 +274,12 @@ const webfileutils = {
         if (fileopts.force)
             fmode=fileopts.force;
 
-        let cbopts = { 'callback' : callback, 'title' : title, 'suffix' : suffix, 'mode' : fmode };
-        if (fileopts.save) {
-            //if the callback is specified presumably that's what should be called
-            //            console.log('opts', fileopts);
+        let cbopts = { 'callback' : callback, 'title' : title, 'suffix' : suffix };
 
+        // -------------------- End Of Part I ---------------
+        
+        if (fileopts.save) {
+            // We are now saving only server, aws or local
             
             if (fileMode === 'server') {
 
@@ -305,6 +306,7 @@ const webfileutils = {
                 }
                 
                 cbopts.initialFilename=initialFilename || '';
+                cbopts.type='save';
                 bisweb_fileserverclient.requestFileList('uploadfile', initialDir, true, cbopts);
                 return;
             }
@@ -318,7 +320,7 @@ const webfileutils = {
             return;
         }
  
-        // -------- load -----------
+        // -------- Part II Load -----------
         
         if (fmode==='dropbox') { 
             fileopts.suffix=suffix;
