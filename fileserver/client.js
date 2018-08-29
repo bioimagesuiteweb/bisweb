@@ -40,18 +40,21 @@ let p=async function() {
 
     
     
+    try {
+        let f=await img.save(`${bd}/t.nii.gz`);
+        console.log('\n Saved =',JSON.stringify(f));
+        
+        
+        let img2=new BisWebImage();
+        let d2=await img2.load(`${bd}/t.nii.gz`);
+        
+        console.log("Read",img2.getDescription());
+        
+        let out=img.compareWithOther(img2);
+        console.log(JSON.stringify(out));
+    } catch(e) {
 
-    let f=await img.save(`${bd}/t.nii.gz`);
-    console.log('\n Saved =',JSON.stringify(f));
-
-
-    let img2=new BisWebImage();
-    let d2=await img2.load(`${bd}/t.nii.gz`);
-
-    console.log("Read",img2.getDescription());
-    
-    let out=img.compareWithOther(img2);
-    console.log(JSON.stringify(out));
+    }
 
     process.exit();
 };

@@ -406,7 +406,7 @@ class BisFileServerClient {
                 if (m==='datasocketready') {
                     resolve(msg.port);
                 } else if (m === 'serverreadonly') {
-                    this.showAlert('The server is set to read-only mode and will not save files.', true);
+                    this.alertEvent('The server is set to read-only mode and will not save files.', true);
                     reject('Failed');
                 } else {
                     console.log('heard unexpected message', m, 'not opening data socket');
@@ -473,7 +473,6 @@ class BisFileServerClient {
                     doDataTransfer(body);
                 });
             }).catch( (e) => {
-                console.log(e.stack);
                 reject(e);
             });
         
