@@ -142,4 +142,27 @@ _Figure 9: The Identity Pool role page, with the relevant role highlighted in re
 
 Once these steps are complete your bucket may be accessed through the AWS Bucket Selector within BioImageSuite. This will require you to enter your Identity Pool ID and Bucket Name the first time you add the bucket, but these settings will be retained in the browser cache afterwards. Happy processing!
 
-__TODO: Add image of AWS selector__
+
+![](./AWSBucketsImages/AWSSelector.png)
+_Figure 10: The BioImageSuite AWS Bucket selector, accessible through Help->AWS Selector_
+
+
+### Appendices
+
+#### Appendix A: Finding your Identity Pool ID
+
+All AWS resources have a unique identifier associated with them. You will need the ID of your identity pool in order for BioImageSuite to be able to access resources associated with your account. 
+
+The first step is to go to the AWS dashboard find your list of Identity Pools (see [the section on Identity Pools](#identity-pool) for more details). Once inside the dashboard, find your Identity Pool that corresponds to BioImageSuite and go to its settings. The Identity Pool ID should be listed there.
+
+
+![](./AWSBucketsImages/IdentityPoolSelection.png)
+_Figure 11: The Identity Pool Selection Screen. If, for example, "bisweb test identity pool 2" was the Identity Pool associated with your S3 Bucket, this would be where you click._
+
+
+![](./AWSBucketsImages/EditIdentityPool.png)
+_Figure 12: The dashboard for an Identity Pool and where to click to display its settings._
+
+
+![](./AWSBucketsImages/IdentityPoolIDScreen.png)
+_Figure 13: Where to find the ID associated with the Identity Pool. Note that this one has been blurred out, but yours will be here._
