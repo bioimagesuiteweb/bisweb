@@ -30,8 +30,6 @@ class BisWebFileServerClient {
             // Because this involves creating webcomponents (deep down, they need to be afterAllLoaded);
             this.fileLoadDialog = new bisweb_filedialog('BisWeb File Server Connector');
             this.fileSaveDialog = new bisweb_filedialog('Choose a save location', { 'makeFavoriteButton' : false, 'modalType' : 'save', 'displayFiles' : false  });
-
-            console.log('file load dialog', this.fileLoadDialog, 'file save dialog', this.fileSaveDialog);
         });
 
         //When connecting to the server, it may sometimes request that the user authenticates

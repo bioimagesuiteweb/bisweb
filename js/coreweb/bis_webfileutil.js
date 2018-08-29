@@ -673,17 +673,18 @@ const webfileutils = {
     },
 
     createAWSBucketEntry : function() {
+
+        let bucketInfoTitle = "The full name of your bucket, e.g. \"bisweb-test-bucket\"";
+        let idpoolInfoTitle = "The Identity Pool ID will take the form region:identifier. For more info on how to find the ID, consult AWSBuckets.md in the docs section of the repository."
         let entryContainer = $(`
             <div class='container-fluid'>
                 <div class='form-group'>
                     <label for='bucket'>Bucket Name:</label><br>
-                    <input name='bucket' class='bucket-input' type='text' class='form-control'><br>
-                    <label for='username'>Username:</label><br>
-                    <input name='username' class='username-input' type='text' class='form-control'><br>
-                    <label for='access-key'>Access Key Id:</label><br>
-                    <input name='access-key' class = 'access-key-input' type='text' class='form-control'><br>
-                    <label for='secret-key'>Secret Key Id:</label><br>
-                    <input name='secret-key' class = 'secret-key-input' type='text' class='form-control'><br>
+                    <input name='bucket' class='bucket-input' type='text' class='form-control'>
+                    <span class='glyphicon glyphicon-question-sign bucket-input-info' style='color: rgb(12, 227, 172);' data-toggle='tooltip' title='${bucketInfoTitle}'></span><br>
+                    <label for='access-key'>Identity Pool ID:</label><br>
+                    <input name='access-key' class='identity-pool-input' type='text' class='form-control'>
+                    <span class='glyphicon glyphicon-question-sign idpool-input-info' style='color: rgb(12, 227, 172);' data-toggle='tooltip' title='${idpoolInfoTitle}'></span><br>
                 </div>
                 <div class='btn-group' role=group' aria-label='Viewer Buttons' style='float: left'></div>
             </div>
@@ -694,12 +695,9 @@ const webfileutils = {
 
         confirmButton.on('click', () => {
 
-
             let paramsObj = {
                 'bucketName': entryContainer.find('.bucket-input')[0].value,
-                'userName': entryContainer.find('.username-input')[0].value,
-                'accessKey': entryContainer.find('.access-key-input')[0].value,
-                'secretKey': entryContainer.find('.secret-key-input')[0].value
+                'identityPoolID': entryContainer.find('.identity-pool-input')[0].value
             };
 
             //index contains the number of keys in the database
@@ -711,7 +709,18 @@ const webfileutils = {
         cancelButton.on('click', () => {
             awsmodal.dialog.modal('hide');
         });
-        
+
+        //set tooltips for help buttons
+        let bucketInfoSpan = entryContainer.find('.bucket-input-info');
+        bucketInfoSpan.on('click hover', () => {
+            bucketInfoSpan.tooltip('show');
+        });
+
+        let idpoolInfoSpan = entryContainer.find('.idpool-input-info');
+        idpoolInfoSpan.on('click', () => {
+            idpoolInfoSpan.tooltip('show');
+        });
+
         let buttonBar = entryContainer.find('.btn-group');
         buttonBar.append(confirmButton);
         buttonBar.append(cancelButton);
