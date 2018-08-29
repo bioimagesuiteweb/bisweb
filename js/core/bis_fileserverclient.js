@@ -150,7 +150,7 @@ class BisFileServerClient {
                 break;
             }
             case 'uploadmessage': {
-                //some control phrases are handled elsewhere, so the main listener should ignore them
+                // Nothing to do let promise handle it
                 break;
             }
             case 'authenticate': {
@@ -365,10 +365,6 @@ class BisFileServerClient {
 
 
     /** This is the helper function
-     * Takes raw input from the server, formats it as a proper BisImage and displays it. 
-     * Note that the server transfers images in binary form to avoid wasting space converting it to UTF-8 or a similar encoding. 
-     *  
-     * this.callback is attached to bisweb_fileserver when a bisweb_filedialog modal is opened. 
      * Given that modals are opened one at a time and all user-driven file I/O happens through one of these, the callback should be a
      * @param {TypedArray|String} data - data transferred by the server either uint8array or text (depending on isbinary)
      * @param {Boolean} isbinary - if true data is binary
@@ -400,7 +396,7 @@ class BisFileServerClient {
      * @returns{Promise} whose payload is the Transfer Socket
      */
 
-    createTransferSocket(command) {
+    initiateDataUploadHandshakeAndGetPort(command) {
 
         return new Promise( (resolve,reject) => {
 
@@ -442,7 +438,7 @@ class BisFileServerClient {
             body=new Uint8Array(data.buffer);
         
         
-        const packetSize = 20000;
+        const packetSize = 20000; // Keep this to less than 25,000
         let fileTransferSocket=null;
 
         
@@ -462,7 +458,7 @@ class BisFileServerClient {
 
         return new Promise( (resolve,reject) => {
             
-            this.createTransferSocket(metadata).then( (port) => {
+            this.initiateDataUploadHandshakeAndGetPort(metadata).then( (port) => {
                 
                 let server=`ws://localhost:${port}`;
                 if (verbose)
