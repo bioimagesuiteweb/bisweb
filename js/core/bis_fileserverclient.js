@@ -4,15 +4,16 @@ const bisgenericio=require('bis_genericio');
 const pako=require('pako');
 const bisasyncutil=require('bis_asyncutils');
 const util = require('bis_util');
-
+const BisBaseServerClient= require('bis_baseserverclient');
 // Debug Mode
 const verbose=false;
 let uploadcount=0;
 
-class BisFileServerClient { 
+class BisFileServerClient extends BisBaseServerClient { 
 
     constructor(nodesocket=null) {
 
+        super();
         this.lastOpts=null;
         this.portNumber=8081;
         
@@ -23,28 +24,12 @@ class BisFileServerClient {
         this.dataSocket = null;
         
         //When connecting to the server, it may sometimes request that the user authenticates
-        this.authenticated = false;
         this.authenticatingEvent= -1;
         this.hostname=null;
         this.password=null;
         this.NodeWebSocket=nodesocket;
-
-        this.hasGUI=false;
     }
 
-    /** GUI Replacement for webutil.createAlert */
-    alertEvent(name,error=false) {
-        if (error)
-            console.log('---- File Client Error:',name);
-        else
-            console.log('____ File Client:',name);
-    }
-
-    /** Pure Virtual to be replaced for GUI */
-    retryAuthenticationDialog() { }
-    showAuthenticationDialog() { }
-    hideAuthenticationDialog() { }
-    showFileDialog() {}
 
     /**
      * Initiates a connection to the fileserver at the specified address. Note that the handshaking protocol is handled entirely by the native Javascript WebSocket API.
@@ -479,7 +464,7 @@ class BisFileServerClient {
             'uploadCount' : uploadcount,
         };
 
-        console.log('\n\t \n\t \nBeginnning uploadFileHelper',metadata.command,'size=',metadata.totalSize,' packetSize=',metadata.packetSize,' count=',metadata.uploadcount);
+        console.log('\n\t \n\t \nBeginnning uploadFileHelper',metadata.command,'size=',metadata.totalSize,' packetSize=',metadata.packetSize,' count=',metadata.uploadCount);
         
         if (verbose)
             console.log(JSON.stringify(metadata));
