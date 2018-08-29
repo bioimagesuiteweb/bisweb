@@ -3,7 +3,7 @@ const wsutil = require('wsutil');
 const bisgenericio=require('bis_genericio');
 const pako=require('pako');
 const bisasyncutil=require('bis_asyncutils');
-
+const verbose=false;
 
 class BisFileServerClient { 
 
@@ -121,8 +121,8 @@ class BisFileServerClient {
         
         let success=true;
 
-
-        //        console.log('____\n____ Received message: ', data.type,id,bisasyncutil.printEvent(id));
+        if (verbose)
+            console.log('____\n____ Received message: ', data.type,id,bisasyncutil.printEvent(id));
         switch (data.type)
         {
             case 'checksum' : {
@@ -149,12 +149,8 @@ class BisFileServerClient {
                 success=false;
                 break;
             }
-            case 'datasocketready': {
+            case 'uploadmessage': {
                 //some control phrases are handled elsewhere, so the main listener should ignore them
-                break;
-            }
-            case 'uploadcomplete': {
-                console.log('Upload to server completed successfully');
                 break;
             }
             case 'authenticate': {
@@ -397,6 +393,39 @@ class BisFileServerClient {
 
     // ------------------ Upload file and helper routines -----------------------------------------------------------------
 
+
+    /** uploadFile Helper
+     * createFileTransferSocket
+     * @param{Object) metadata - the upload metadata
+     * @returns{Promise} whose payload is the Transfer Socket
+     */
+
+    createTransferSocket(command) {
+
+        return new Promise( (resolve,reject) => {
+
+            let res=( (msg) => {
+                let m=msg.name;
+                console.log('Name=',m);
+
+                if (m==='datasocketready') {
+                    resolve(msg.port);
+                } else if (m === 'serverreadonly') {
+                    this.showAlert('The server is set to read-only mode and will not save files.', true);
+                    reject('Failed');
+                } else {
+                    console.log('heard unexpected message', m, 'not opening data socket');
+                    reject('Failed');
+                }
+            });
+            
+            let serverEvent=bisasyncutil.addServerEvent(res,reject,'initiateTransfer');
+            command.id=serverEvent.id;
+            this.socket.send(JSON.stringify(command));
+        });
+    }
+                            
+    
     /** upload file 
      * @param {String} url -- abstact file handle object
      * @param {Data} data -- the data to save, either a sting or a Uint8Array
@@ -405,33 +434,6 @@ class BisFileServerClient {
      */
     uploadFile(url, data, isbinary=false) {
 
-        return new Promise( (resolve, reject) => {
-            let promiseCb = () => {
-                resolve('Upload successful');
-            };
-            
-            let promiseEb = () => {
-                reject('Upload failed');
-            };
-            
-            this.uploadFileToServer(url, data, isbinary, promiseCb, promiseEb);
-        });
-    }
-    
-
-
-    /**
-     * Sends a file from the client to the server to be saved on the server machine. Large files are sliced and transmitted in chunks. 
-     * Creates its own socket to do the transfer over (doing transfer on control socket seems to make that socket unstable).
-     * 
-     * TODO: Extend this function to support matrices and transformations.
-     * @param {String} name - What the file should be named once it is saved to the server. 
-     * @param {TypedArray|String} data - Data to send to the server. TypedArray if binary and String otherwise.
-     * @param {Boolean} isbinary - if true data is binary
-     * @param {Function} cb - A callback for if the transfer is successful. Optional.
-     * @param {Function} eb - A callback for if the transfer is a failure (errorback). Optional.
-     */
-    uploadFileToServer(name, data, isbinary=false, cb = () => {}, eb = () => {}) {
 
         // TODO: is the size of body < packetsize upload in one shot
         let body=null;
@@ -439,40 +441,12 @@ class BisFileServerClient {
             body=bisgenericio.string2binary(data);
         else
             body=new Uint8Array(data.buffer);
-            
         
-        const packetSize = 50000;
-        let fileTransferSocket;
         
-        //negotiate opening of the data port
-        this.socket.addEventListener('message', (e) => {
-            let message;
-            try {
-                message = JSON.parse(e.data);
-                if (message.type === 'datasocketready') {
-                    
-                    let port=this.portNumber+1;
-                    console.log('Second port=',port);
-                    let server=`ws://localhost:${port}`;
-                    if (!this.NodeWebSocket)
-                        fileTransferSocket = new WebSocket(server);
-                    else
-                        fileTransferSocket = new this.NodeWebSocket(server);
-                    fileTransferSocket.addEventListener('open', () => {
-                        doDataTransfer(body);
-                    });
-                } else if (message.type === 'serverreadonly') {
-                    this.showAlert('The server is set to read-only mode and will not save files.', true);
-                } else {
-                    console.log('heard unexpected message', message, 'not opening data socket');
-                    eb();
-                }
-            } catch(e) {
-                console.log('failed to parse response to data socket request from server', e);
-                eb();
-            }
-        }, { once : true });
+        const packetSize = 20000;
+        let fileTransferSocket=null;
 
+        
 
         
         let metadata = {
@@ -480,68 +454,99 @@ class BisFileServerClient {
             'totalSize': body.length,
             'storageSize': body.length,
             'packetSize': packetSize,
-            'filename': name,
+            'filename': url,
             'isbinary' : isbinary,
         };
 
-        
-        console.log('sending metadata to server', metadata);
-        this.socket.send(JSON.stringify(metadata));
-        
-        
-        //transfer file in 50KB chunks, wait for acknowledge from server
-        function doDataTransfer(data) {
+        if (verbose)
+            console.log(JSON.stringify(metadata));
 
-            let currentIndex = 0;
-            let done=false;
+        return new Promise( (resolve,reject) => {
+            
+            this.createTransferSocket(metadata).then( (port) => {
+                
+                let server=`ws://localhost:${port}`;
+                console.log("Connecting to data server ",server);
 
-            //send data in chunks
-            let sendDataSlice = () => {
+                if (!this.NodeWebSocket)
+                    fileTransferSocket = new WebSocket(server);
+                else
+                    fileTransferSocket = new this.NodeWebSocket(server);
 
-                if (done===false) {
-                    let begin=currentIndex;
-                    let end=currentIndex+packetSize;
-                    if (end>data.length) {
-                        end=data.length;
-                        done=true;
+                fileTransferSocket.addEventListener('open', () => {
+                    doDataTransfer(body);
+                });
+            }).catch( (e) => {
+                console.log(e.stack);
+                reject(e);
+            });
+        
+        
+            //transfer file in 50KB chunks, wait for acknowledge from server
+            function doDataTransfer(data) {
+                
+                let currentIndex = 0;
+                let done=false;
+                
+                //send data in chunks
+                let sendDataSlice = () => {
+                    
+                    if (done===false) {
+                        let begin=currentIndex;
+                        let end=currentIndex+packetSize;
+                        if (end>data.length) {
+                            end=data.length;
+                            done=true;
+                        }
+
+
+                        let slice=new Uint8Array(data.buffer,begin,end-begin);
+                        console.log('\t\t Sending ',begin,end-1,' Total=',data.length,' slice=',slice.length);
+
+                        fileTransferSocket.send(slice);
+                        currentIndex+=(end-begin);
+                    } else {
+                        console.log('We are done ignoring');
+                    }
+                };
+                
+                fileTransferSocket.addEventListener('message', (event) => {
+                    let data;
+                    try {
+                        data = JSON.parse(event.data);
+                    } catch (e) {
+                        console.log('an error occured while parsing event.data', e);
+                        reject();
+                        return null;
                     }
                     
-                    let slice=new Uint8Array(data.buffer,begin,end-begin);
-                    fileTransferSocket.send(slice);
-                    currentIndex+=(end-begin);
-                } else {
-                    // We are done!
-                    console.log('sending close after upload');
-                    fileTransferSocket.close(1000, 'Transfer completed successfully');
-                    cb();
-                }
-            };
-
-            fileTransferSocket.addEventListener('message', (event) => {
-                let data;
-                try {
-                    data = JSON.parse(event.data);
-                } catch (e) {
-                    console.log('an error occured while parsing event.data', e);
-                    eb();
-                    return null;
-                }
-
-                switch (data.type) {
-                    case 'nextpacket':
-                        sendDataSlice();
-                        break;
-                    case 'uploadcomplete':
-                        console.log('closing file transfer socket', fileTransferSocket);
-                        fileTransferSocket.close(1000, 'Transfer completed successfully');
-                        cb();
-                        break;
-                    default: console.log('received unexpected message', event, 'while listening for server responses');
-                }
-            });
-
-            sendDataSlice();
-        }
+                    console.log('____ In Transfer ',data.type);
+                    
+                    switch (data.type)
+                    {
+                        case 'nextpacket':
+                        {
+                            sendDataSlice();
+                            break;
+                        }
+                        case 'uploadcomplete':
+                        {
+                            // We are done!
+                            console.log('Received uploadcomplete, closing');
+                            fileTransferSocket.close(1000, 'Transfer completed successfully');
+                            resolve(metadata);
+                            break;
+                        }
+                        default:
+                        {
+                            console.log('received unexpected message', event, 'while listening for server responses');
+                        }
+                    }
+                });
+                
+                sendDataSlice();
+            }
+        });
     }
 
 }
