@@ -6,7 +6,7 @@ const bisasyncutil=require('bis_asyncutils');
 const util = require('bis_util');
 const BisBaseServerClient= require('bis_baseserverclient');
 // Debug Mode
-const verbose=true;
+const verbose=0;
 let uploadcount=0;
 
 class BisFileServerClient extends BisBaseServerClient { 
@@ -27,7 +27,24 @@ class BisFileServerClient extends BisBaseServerClient {
         this.authenticatingEvent= -1;
         this.hostname=null;
         this.password=null;
+        this.lastCommand="";
         this.NodeWebSocket=nodesocket;
+    }
+
+    sendCommand(command,json=true) {
+        if (verbose) {
+            console.log('Sending ',command,' length=',command.length);
+        }
+        this.socket.send(command);
+        this.lastCommand=command;
+    }
+
+    closeConnection() {
+        if (this.socket) {
+            console.log('... closing connection first');
+            this.socket.close(1000, 'Restarting connection');
+            this.hostname=null;
+        }
     }
 
 
@@ -40,10 +57,7 @@ class BisFileServerClient extends BisBaseServerClient {
     connectToServer(address = 'ws://localhost:8081') {
 
         if (this.socket) {
-
-            console.log('Connecting ... closing connection first');
-            this.socket.close(1000, 'Restarting connection');
-            this.hostname=null;
+            this.closeConnection();
         }
 
         let arr=address.split(':');
@@ -148,7 +162,7 @@ class BisFileServerClient extends BisBaseServerClient {
                 break;
             }
             case 'authenticate': {
-                this.socket.send(this.password || '');
+                this.sendCommand(this.password || '',false);
                 break;
             }
             case 'badauth':  {
@@ -179,6 +193,24 @@ class BisFileServerClient extends BisBaseServerClient {
                 break;
             }
 
+            case 'tryagain' : {
+                id=-1;
+                console.log('\n___________\n---------------------- \t\t Failed retrying',this.lastCommand,this.lastCommand.length,'\n__________________');
+                this.sendCommand(this.lastCommand+"              ");
+                break;
+            }
+
+            case 'nogood' : {
+                id=-1;
+                let a=this.lastCommand;
+                let cmd = JSON.stringify({ 'command' : 'restart'});
+                this.sendCommand(cmd);
+                this.lastCommand=a;
+                break;
+            }
+
+
+            
             default: {
                 console.log('received a transmission with unknown type', data.type, 'cannot interpret');
                 success=false;
@@ -274,7 +306,7 @@ class BisFileServerClient extends BisBaseServerClient {
             this.authenticate().then( () => {
                 let serverEvent=bisasyncutil.addServerEvent(cb,reject,'requestFileList');
                 let command = JSON.stringify({ 'command' : 'getfilelist', 'directory' : directory, 'type' : type , 'depth' : 0, 'id' : serverEvent.id}); 
-                this.socket.send(command);
+                this.sendCommand(command);
             });
         });
     }
@@ -291,7 +323,7 @@ class BisFileServerClient extends BisBaseServerClient {
             let res=((obj) => { resolve(obj.path); });
             let serverEvent=bisasyncutil.addServerEvent(res,reject,'getServerBaseDir');
             let command = JSON.stringify({ 'command' : 'getserverbasedirectory', 'id' : serverEvent.id }); 
-            this.socket.send(command);
+            this.sendCommand(command);
         });
 
     }
@@ -305,7 +337,7 @@ class BisFileServerClient extends BisBaseServerClient {
             let res=((obj) => { resolve(obj.path); });
             let serverEvent=bisasyncutil.addServerEvent(res,reject,'getServerTempDir');
             let command = JSON.stringify({ 'command' : 'getservertempdirectory' , 'id' : serverEvent.id});
-            this.socket.send(command);
+            this.sendCommand(command);
         });
     }
 
@@ -354,7 +386,7 @@ class BisFileServerClient extends BisBaseServerClient {
                                            'filename' : url,
                                            'id' : serverEvent.id,
                                            'isbinary' : isbinary });
-            this.socket.send(command);
+            this.sendCommand(command);
         });
     }
 
@@ -415,7 +447,7 @@ class BisFileServerClient extends BisBaseServerClient {
             
             let serverEvent=bisasyncutil.addServerEvent(res,reject,'initiateTransfer');
             command.id=serverEvent.id;
-            this.socket.send(JSON.stringify(command));
+            this.sendCommand(JSON.stringify(command));
         });
     }
                             
@@ -438,7 +470,7 @@ class BisFileServerClient extends BisBaseServerClient {
 
 
         let checksum=util.SHA256(body);
-        let packetSize=32768;
+        let packetSize=32768/4;
         return new Promise((resolve,reject) => {
 
             let success=(m) => {
@@ -517,13 +549,13 @@ class BisFileServerClient extends BisBaseServerClient {
                     
                     
                     let slice=new Uint8Array(data.buffer,begin,end-begin);
-                    if (verbose)
+                    if (verbose>1)
                         console.log('\t\t Sending ',begin,end-1,' Total=',data.length,' slice=',slice.length);
                     
                     fileTransferSocket.send(slice);
                     currentIndex+=(end-begin);
                 } else {
-                    if (verbose)
+                    if (verbose>1)
                         console.log('We are done ignoring');
                 }
             };
@@ -537,7 +569,7 @@ class BisFileServerClient extends BisBaseServerClient {
                     return null;
                 }
                 
-                if (verbose)
+                if (verbose>1)
                     console.log('____ In Transfer ',data.type);
                 
                 switch (data.type)
@@ -588,7 +620,7 @@ class BisFileServerClient extends BisBaseServerClient {
                                            'operation' : name,
                                            'url' : url,
                                            'id' : serverEvent.id }); 
-            this.socket.send(command);
+            this.sendCommand(command);
         });
     }
 

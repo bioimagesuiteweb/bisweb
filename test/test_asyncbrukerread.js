@@ -36,7 +36,8 @@ console.log('tmp=',os.tmpdir());
 
 let indata=path.resolve(__dirname,path.join('testdata','bruker_exp'));
 
-let tmpDir=tempfs.mkdirSync('test_image');
+let tmpDir=os.homedir()+'/tmp/1234';
+console.log('Tmp=',tmpDir);
 
 let tmpname=[
     path.resolve(tmpDir,'test'),
@@ -71,18 +72,20 @@ describe('Testing BisImage (from bis_readbruker.js) a class that imports Bruker 
         let outimagenames=["",""];
         let flag=[false,false],falseflag=[false,false];
 
-
+        let client=null;
         
         before(function(done) {
 
             let initializeServer = function() {
 
                 return new Promise( (resolve,reject) => {
-                    let client=new BisFileServerClient(WebSocket);
-                    client.authenticate().then( () => {
-                        genericio.setFileServerObject(client);
-                        console.log('Done authenticating');
-                        resolve();
+                    genericio.makeDirectory(tmpDir).then( (m) => {
+                        client=new BisFileServerClient(WebSocket);
+                        client.authenticate().then( () => {
+                            console.log('Done authenticating');
+                            genericio.setFileServerObject(client);
+                            resolve();
+                        });
                     });
                 });
             }
@@ -105,8 +108,12 @@ describe('Testing BisImage (from bis_readbruker.js) a class that imports Bruker 
                             falseflag[i]=true;
                     }
                     console.log('Falseflags='+falseflag);
-
-                    done();
+                    client.closeConnection();
+                    genericio.setFileServerObject(null);
+                    genericio.deleteDirectory(tmpDir).then( (m) => {
+                        console.log('\t',m);
+                        done();
+                    });
                 };
                 
 
@@ -140,7 +147,7 @@ describe('Testing BisImage (from bis_readbruker.js) a class that imports Bruker 
                     origimages[i]=inp_images[i];
                 importimage();
             };
-
+            
 
             initializeServer().then( () => {
                 let p2=[];

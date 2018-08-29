@@ -195,6 +195,8 @@ let startServer = (hostname, port, newport = true, readycb = () => {}) => {
 // ------------------------------------------------------------------------------------
 
 let readFrame = (chunk) => {
+
+
     let controlFrame = chunk.slice(0, 14);
     let parsedControl = wsutil.parseControlFrame(controlFrame);
     //    console.log('parsed control frame', parsedControl);
@@ -206,8 +208,12 @@ let readFrame = (chunk) => {
     }
 
     if (parsedControl.payloadLength<0 ||
-        parsedControl.payloadLength>65536)
+        parsedControl.payloadLength>65536) {
+        //console.log('Chunk=',chunk.byteLength);
+        //        console.log('ControlFrame=',controlFrame,controlFrame.byteLength);
+        //        console.log('Bad payload',parsedControl.payloadLength);
         return;
+    }
         
     
     let decoded = new Uint8Array(parsedControl.payloadLength);
@@ -267,6 +273,12 @@ let prepareForControlFrames = (socket) => {
     //socket listener is stored here because it gets replaced during file transfer
     socket.on('data', (chunk) => {
         let frame = readFrame(chunk);
+        if (!frame) {
+            console.log('---- Bad Frame',socket._sockname);
+            console.log('++++ Received bad frame, sending nogood');
+            socket.write(formatPacket('nogood', 'badframe'));
+            return;
+        }
         let parsedControl = frame.parsedControl, decoded = frame.decoded;
         switch (parsedControl.opcode)
         {
@@ -298,7 +310,8 @@ let prepareForControlFrames = (socket) => {
 let handleTextRequest = (rawText, control, socket) => {
     let parsedText = parseClientJSON(rawText);
     parsedText=parsedText || -1;
-    console.log('____ text request', JSON.stringify(parsedText));
+    if (verbose)
+        console.log('____ text request', JSON.stringify(parsedText));
     switch (parsedText.command)
     {
         //get file list
@@ -319,6 +332,13 @@ let handleTextRequest = (rawText, control, socket) => {
             serveServerBaseDirectory(socket,parsedText.id);
             break;
         }
+
+        case 'restart' : {
+            console.log('++++ Received restart, sending tryagain');
+            socket.write(formatPacket('tryagain', ''));
+            break;
+        }
+        
         case 'getservertempdirectory' : {
             serveServerTempDirectory(socket,parsedText.id);
             break;
@@ -556,7 +576,8 @@ let readFileAndSendToClient = (parsedText, control, socket) => {
             } else {
                 console.log(`____ load binary file ${filename} successful, writing to socket.`);
                 let checksum=`${util.SHA256(new Uint8Array(d1))}`;
-                console.log('_____ Sending checksum=',checksum, 'id=',id);
+                if (verbose)
+                    console.log('_____ Sending checksum=',checksum, 'id=',id);
                 socket.write(formatPacket('checksum', {
                     'checksum' : checksum,
                     'id' : id
@@ -565,7 +586,7 @@ let readFileAndSendToClient = (parsedText, control, socket) => {
             }
         });
     } else {
-        console.log('filename', filename);
+        //        console.log('filename', filename);
         fs.readFile(filename, 'utf-8', (err, d1) => {
             if (err) {
                 handleBadRequestFromClient(socket, err);
@@ -735,7 +756,7 @@ let fileSystemOperations = (socket,opname,url,id=0) => {
         return;
     
     prom.then( (m) => {
-        console.log('File system pass',opname,url,m);
+        console.log('____ File system success=',opname,url,m);
         socket.write(formatPacket('filesystemoperations', { 'result' : m,
                                                             'url' : url,
                                                             'operation' : opname,

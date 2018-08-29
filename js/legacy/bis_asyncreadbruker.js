@@ -45,6 +45,9 @@ if (typeof window === 'undefined') {
 
 const inelectron=( bisgenericio.getmode() === "electron");
 
+const sleep=function(millis) {
+    return new Promise(resolve => setTimeout(resolve, millis));
+}
 let dualPrint=function() {
     
     let text = "[BIS:]"+(Array.from(arguments)).join("");
@@ -109,7 +112,12 @@ let readParameterFile=async function(fname,debug=0) {
     
     try {
         console.log('Reading fname=',fname);
-        let obj=  await bisgenericio.read(fname);
+        let obj=null;
+        try {
+            obj=  await bisgenericio.read(fname,false);
+        } catch(e) {
+            console.log('Error =',e);
+        }
         let lines= obj.data.split('\n');
 
         console.log('Reading fname=',fname,' numlines=',lines.length);
@@ -217,7 +225,7 @@ let parseTextFiles = async function(filename,outprefix,debug,forceorient) {
     let methodname=bisgenericio.getNormalizedFilename(bisgenericio.joinFilenames(dirname,'../../method'));
     let visuname=bisgenericio.getNormalizedFilename(bisgenericio.joinFilenames(dirname,'/visu_pars'));
     let binname=bisgenericio.getNormalizedFilename(filename);
-    let numgood=0;
+
 
     console.log('Starting ',reconame,visuname);
     
@@ -231,22 +239,30 @@ let parseTextFiles = async function(filename,outprefix,debug,forceorient) {
         //reco=readParameterFile(reconame);
     }
 
-    console.log('++++ Next step',data.havereco);
+    console.log('++++ I Have Reco =',data.havereco);
     
     let arr=[ visuname,acqpname,methodname,binname];
-    arr.forEach(function(e) {
-        numgood+=printFileStats(e);
-    });
-
+    let numgood=0;
+    for (let i=0;i<arr.length;i++) {
+        let s=await printFileStats(arr[i],true);
+        numgood+=s;
+    }
+    
     if (numgood<arr.length) {
         data.error='One or more files are missing';
         return data;
     }
 
-    let visu=await readParameterFile(visuname);
-    let method=await readParameterFile(methodname);
-    let acqp=await readParameterFile(acqpname);
+    console.log('Now reading actual files',numgood);
 
+    console.log('Reding Parameter File',visuname);
+    let visu=await readParameterFile(visuname);
+    await sleep(500);
+    console.log('Reding Parameter File',methodname);
+    let method=await readParameterFile(methodname);
+    await sleep(500);
+    let acqp=await readParameterFile(acqpname);
+    await sleep(500);
     data.orient=method['PVM_SPackArrSliceOrient'] || 'axial';
 
 
@@ -580,8 +596,8 @@ let saveRegularImage = async function (data,debug) {
     data.imageDimensions=img.getDimensions();
     
     data.partnames=[ bisgenericio.getNormalizedFilename(bisgenericio.getNormalizedFilename(imageoutname))];
-    await saveTextFiles(data,debug);
-    dualPrint('Text files saved');
+    //    await saveTextFiles(data,debug);
+    //    dualPrint('Text files saved');
     c=null;
     img=null;
 };
