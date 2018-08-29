@@ -8,6 +8,7 @@ const os = require('os');
 const timers = require('timers');
 const util = require('bis_util');
 const { StringDecoder } = require('string_decoder');
+const bisgenericio=require('bis_genericio');
 
 // One time password library
 const otplib = require('otplib');
@@ -20,6 +21,10 @@ const secret = otplib.authenticator.generateSecret();
 // this extension should be used make node-like calls work on Windows
 // https://github.com/prantlf/node-posix-ext
 
+// TODO:
+// Check for base directory
+// Add options for multiple base directories -- treat these as drives
+// Abstract Windows separator to always be "/" and rename at each end
 
 const fs = require('fs');
 const wsutil = require('wsutil');
@@ -54,7 +59,7 @@ let globalHostname="";
 
 //flag denoting whether the server will accept write requests 
 
-let readOnly;
+let globalReadOnlyFlag=false;
 
 // password token
 // create function and global variable
@@ -318,6 +323,10 @@ let handleTextRequest = (rawText, control, socket) => {
             serveServerTempDirectory(socket,parsedText.id);
             break;
         }
+        case 'filesystemoperation' : {
+            fileSystemOperations(socket,parsedText.operation,parsedText.url,parsedText.id);
+            break;
+        }
         default: {
             console.log('---- Cannot interpret request with unknown command', parsedText.command);
         }
@@ -485,7 +494,7 @@ let prepareForDataFrames = (socket) => {
  */
 let getFileFromClientAndSave = (upload, control, socket) => {
 
-    if (readOnly) {
+    if (globalReadOnlyFlag) {
         console.log('Server is in read-only mode and will not accept writes.');
         socket.write(formatPacket('uploadmessage', {
             'name' : 'serverreadonly',
@@ -682,6 +691,65 @@ let serveServerTempDirectory = (socket,id=0) => {
     socket.write(formatPacket('servertempdirectory', { 'path' : path.join(homedir,'tmp'), 'id' : id }));
 };
 
+
+/**
+ * Performs file operations (isDirectory etc.)
+ * @param {String} - operation name
+ * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
+ * @param {Number} id - the request id
+ */
+let fileSystemOperations = (socket,opname,url,id=0) => {
+
+    let prom=null;
+    switch (opname)
+    {
+        case 'getFileSize' : {
+            prom=bisgenericio.getFileSize(url);
+            break;
+        }
+        case 'isDirectory' : {
+            prom=bisgenericio.isDirectory(url);
+            break;
+        }
+        case 'getMatchingFiles' : {
+            prom=bisgenericio.getMatchingFiles(url);
+            break;
+        }
+        case 'makeDirectory' : {
+            if (!globalReadOnlyFlag) 
+                prom=bisgenericio.makeDirectory(url);
+            else
+                prom=Promise.reject('In Read Only Mode');
+            break;
+        }
+        case 'deleteDirectory' : {
+            if (!globalReadOnlyFlag) 
+                prom=bisgenericio.deleteDirectory(url);
+            else
+                prom=Promise.reject('In Read Only Mode');
+            break;
+        }
+    }
+
+    if (prom===null)
+        return;
+    
+    prom.then( (m) => {
+        console.log('File system pass',opname,url,m);
+        socket.write(formatPacket('filesystemoperations', { 'result' : m,
+                                                            'url' : url,
+                                                            'operation' : opname,
+                                                            'id' : id }));
+    }).catch( (e) => {
+        console.log('File system fail',opname,url,e);
+        socket.write(formatPacket('error', { 'result' : e,
+                                             'operation' : opname,
+                                             'url' : url,
+                                             'id' : id }));
+    });
+};
+
+
 /**
  * Sends a message to the client describing the server error that occured during their request. 
  * 
@@ -840,7 +908,7 @@ let portno=8081;
 if (program.port)
     portno=parseInt(program.port);
 
-readOnly = program.readOnly ? program.readOnly : false;
+globalReadOnlyFlag = program.readOnly ? program.readOnly : false;
 insecure = program.insecure ? program.insecure : false;
 verbose = program.verbose ? program.verbose : false;
 
