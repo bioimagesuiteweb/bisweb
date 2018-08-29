@@ -460,10 +460,15 @@ class BisHeader {
      */
     copyOrientationInfo(other,spacing=null) {
 
+
+        
         let otherstruct=other.struct;
         let names=[ "quatern_b",        "quatern_c",    "quatern_d", "qoffset_x", "qoffset_y",  "qoffset_z" ,
-                    "srow_x", "srow_y", "srow_z" ];
+                    "srow_x", "srow_y", "srow_z" , "qform_code", "sform_code"];
 
+        
+
+        
         for (let i=0;i<names.length;i++) {
             let item=names[i];
             if (otherstruct[item].length) {
@@ -474,6 +479,10 @@ class BisHeader {
             }
         }
 
+        // This must be copied too as this defines left-handedness of quaternion
+        this.struct.pixdim[0]=other.struct.pixdim[0];
+
+        
         if (spacing!==null) {
             this.struct.pixdim[1]=spacing[0];
             this.struct.pixdim[2]=spacing[1];
@@ -494,6 +503,8 @@ class BisHeader {
                 }
             }
         }
+
+
     }
     
 

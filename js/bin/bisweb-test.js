@@ -89,6 +89,7 @@ if (test_type==="registration") {
 
 
 // Disable auto reorient on load
+console.log('++++ Disabling auto-reorient of images on load.\n+++++');
 userPreferences.setImageOrientationOnLoad('None');
 
 commandline.loadParse(args, bisModule).then(() => {

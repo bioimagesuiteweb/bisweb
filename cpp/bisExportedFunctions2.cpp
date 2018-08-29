@@ -187,7 +187,8 @@ unsigned char*  backProjectImageWASM(unsigned char* input_ptr,unsigned char* inp
   }
 
 
-  int flip=params->getBooleanValue("flip",0);
+  int flipz=params->getBooleanValue("flip",0);
+  int flipy=params->getBooleanValue("flipy",0);
   int axis=params->getIntValue("axis",1);
   float threshold=params->getFloatValue("threshold",0.05);
   int window=params->getIntValue("window",5);
@@ -195,7 +196,7 @@ unsigned char*  backProjectImageWASM(unsigned char* input_ptr,unsigned char* inp
     std::cout << "Beginning actual Image Back Projecting" << std::endl;
   }
   
-  std::unique_ptr<bisSimpleImage<float> > out_image=bisAdvancedImageAlgorithms::backProjectImage(threed.get(),twod.get(),axis,flip,threshold,window);
+  std::unique_ptr<bisSimpleImage<float> > out_image=bisAdvancedImageAlgorithms::backProjectImage(threed.get(),twod.get(),axis,flipz,flipy,threshold,window);
   if (debug)
     std::cout << "Back Projecting Done" << std::endl;
   

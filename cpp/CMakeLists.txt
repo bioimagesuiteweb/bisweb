@@ -19,7 +19,7 @@ cmake_minimum_required(VERSION 3.5)
 
 PROJECT(BISWEB)
 
-SET (BISWEB_VERSION "0.9.5")
+SET (BISWEB_VERSION "0.9.7")
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Core Project
@@ -57,7 +57,9 @@ SET (HEADER_SCRIPT ${TOOLS_DIR}/bis_create_matlab_header_file.js)
 # ---------------------------------------------------------------------------------------------
 
 OPTION(BIS_USEGPL "Include the GPL-licensed C++ files (plugin)" OFF)
+OPTION(BIS_USEEXTERNAL "Include additional external C++ files (plugin)" OFF)
 MARK_AS_ADVANCED(BIS_USEGPL)
+MARK_AS_ADVANCED(BIS_USEEXTERNAL)
 
 
 IF (BIS_USEGPL)
@@ -71,6 +73,21 @@ IF (BIS_USEGPL)
 ELSE (BIS_USEGPL)
   SET (EXTRASRCS nongpl/bisReplacementExportedFunctions.cpp)
 ENDIF (BIS_USEGPL)
+
+
+IF (BIS_USEEXTERNAL)
+  #
+  # This should sdefine two variables
+  #    (1) EXTERNALSOURCES -- list of C++ file to compile
+  #    (2) EXTERNALHEADERS -- list of .h files containing function headers
+  #        to create js/python functions for
+  #
+  FIND_PATH(BIS_EXTERNAL_DIR BisWebExtra.cmake  REQUIRED)
+  get_filename_component(BIS_EXTERNAL_DIR ${BIS_EXTERNAL_DIR} ABSOLUTE)
+  MESSAGE("-- Using EXTERNAL Licensed Code from ${BIS_EXTERNAL_DIR}")
+  INCLUDE (${BIS_EXTERNAL_DIR}/BisWebExtra.cmake)
+  SET (EXTRASRCS ${EXTRASRCS} ${EXTERNALSOURCES})
+ENDIF (BIS_USEEXTERNAL)
 
     
 SET(KITSRCS
@@ -135,7 +152,15 @@ ELSE (BIS_USEGPL)
     ${PARSE_HEADERS}
     ${CPP_SOURCE_DIR}/nongpl/bisReplacementExportedFunctions.h
     )
-ENDIF (BIS_USEGPL)  
+ENDIF (BIS_USEGPL)
+
+IF (BIS_USEEXTERNAL)
+  SET(PARSE_HEADERS
+    ${PARSE_HEADERS}
+    ${EXTERNALHEADERS}
+  )
+ENDIF (BIS_USEEXTERNAL)
+
 
 STRING(REGEX REPLACE ";" "," PARSE_LIST "${PARSE_HEADERS}")
 
@@ -170,6 +195,9 @@ ELSE (BIS_USEGPL)
 ENDIF (BIS_USEGPL)
 
 install (FILES ${LICENSE_FILE} DESTINATION bisweb/ RENAME LICENSE)
+
+install (FILES ${PROJECT_SOURCE_DIR}/../web/images/mean_reg2mean.nii.gz DESTINATION bisweb/images)
+install (FILES ${PROJECT_SOURCE_DIR}/../web/images/facemask_char.nii.gz DESTINATION bisweb/images)
 
 
 IF (BIS_A_EMSCRIPTEN)

@@ -32,7 +32,7 @@ const bisgenericio=require("bis_genericio");
 const tiff=require('tiff2');
 const bisheader = require("bis_header.js");
 const simplemat=require('bis_simplemat');
-
+const numeric=require('numeric');
 
 
 /** Class representing a medical image */
@@ -128,11 +128,12 @@ class BisWebImage extends BisWebDataObject {
     /**
      * Load an image from a filename or file object
      * @param {fobj} - If in browser this is a File object, if in node.js this is the filename!
-     * @param {String} forceorient - if true or "RAS" force input image to be repermuted to Axial RAS. if "LPS" force LPS. Else do nothing
+     * @param {String} forceorient - if true or "RAS" force input image to be repermuted to Axial RAS. if "LPS" force LPS. If "LAS" force to LAS (.nii.gz only).  Else do nothing
      * @return {Promise} a promise that is fuilfilled when the image is loaded
      */
     load(fobj,forceorient) {
 
+        
         forceorient = userPreferences.sanitizeOrientationOnLoad(forceorient ||  userPreferences.getImageOrientationOnLoad());
         if (this.debug) {
             console.log('..... forceorient in readbinary=',forceorient);
@@ -153,6 +154,7 @@ class BisWebImage extends BisWebDataObject {
                     self.internal.header.setExtensionsFromArray(self.commentlist);
                 } else {
                     try {
+                        //    console.log('\n Parse NII\n+++',fobj);
                         self.parseNII(obj.data.buffer,forceorient);
                     } catch(e) {
                         reject('Failed to load from '+fobj + '('+e+')');
@@ -167,6 +169,8 @@ class BisWebImage extends BisWebDataObject {
                     console.log('++++ \t **** forced image orientation to ',forceorient,' to match user preferences');
                     self.commentlist.push({ "Operation" : "On Load from "+fobj+" reoriented to "+self.internal.orient.name+" to match user preferences."});
                     self.internal.header.setExtensionsFromArray(self.commentlist);
+                } else {
+                    console.log('++++ \t **** maintained original orientation ',forceorient,' ',self.internal.forcedorientationchange);
                 }
                 
                 resolve();
@@ -687,7 +691,10 @@ class BisWebImage extends BisWebDataObject {
      * @param{BisWebImage} otherimage - often the reference in a reslicing operations
      */
     copyOrientationInfo(otherimage) {
+        // Fixed here
         this.getHeader().copyOrientationInfo(otherimage.getHeader(),this.getSpacing());
+        // This should happen so in memory stuff is good
+        BisWebImage.parseHeaderAndComputeOrientation(this.internal);
         this.addComment({ "Operation" : "Copied orientation info from "+otherimage.getFilename() });
     }
     
@@ -744,8 +751,13 @@ class BisWebImage extends BisWebDataObject {
         let same=true;
 
         let maxd=d1.length;
-        if (spaceonly)
+        let maxs=s1.length;
+        if (spaceonly) {
+            maxs=3;
             maxd=3;
+        }
+
+        
         
         for (let i=0;i<maxd;i++) {
             if (d1[i]!==d2[i])
@@ -754,10 +766,9 @@ class BisWebImage extends BisWebDataObject {
 
         if (same) {
 
-            let maxs=s1.length;
-            if (spaceonly)
+            if (d1[3]*d1[4]<=1 && d2[3]* d2[4]<=1)
                 maxs=3;
-
+        
             
             for (let i=0;i<maxs;i++) {
                 let diff=Math.abs(s1[i]-s2[i]);
@@ -770,6 +781,7 @@ class BisWebImage extends BisWebDataObject {
                 let o2=otherimage.getOrientationName();
                 if (o1!==o2)
                     same=false;
+
             }
         }
         return same;
@@ -851,11 +863,11 @@ class BisWebImage extends BisWebDataObject {
     
     /** parses a binary buffer (nifti image) to create the image
      * @param {ArrayBuffer} _inputbuffer - the raw array buffer that is read using some File I/O operation
-     * @param {String} forceorient_in - if set to "RAS" or true the image will be repermuted to be RAS (axial) oriented. If set to LPS it will be mapped to LPS. 
+     * @param {String} forceorient_in - if set to "RAS" or true the image will be repermuted to be RAS (axial) oriented. If set to LPS it will be mapped to LPS. If LAS it will be mapped to LAS. 
      * @param {boolean} forcecopy -- if false then potential store image in existing inputbuffer (use this for large images)
      */
     parseNII(_inputbuffer,forceorient_in,forcecopy=false) {
-        
+
         forcecopy = true;
         
         let forceorient=userPreferences.sanitizeOrientationOnLoad(forceorient_in);
@@ -912,7 +924,7 @@ class BisWebImage extends BisWebDataObject {
         // -------------------------------------------------------
         // Store key things
         // -------------------------------------------------------
-        BisWebImage.parseHeaderAndComputeOrientation(internal);
+        BisWebImage.parseHeaderAndComputeOrientation(internal,debug);
         //if (debug)    
         //      console.log('+++++ orientation: name=',internal.orient.name,'(axis = ',internal.orient.axis, ' flip=', internal.orient.flip,' imginfo',internal.imginfo,'dims=',internal.dimensions);
         let headerlength=internal.header.struct.vox_offset;
@@ -948,7 +960,7 @@ class BisWebImage extends BisWebDataObject {
             let origdata=new Imginfo(_inputbuffer);
             if (debug)
                 console.log('+++++ permuting data ',forceorient);
-            BisWebImage.permuteDataToMatchDesiredOrientation(internal,origdata,headerlength/internal.imginfo.size,internal.imgdata,forceorient);
+            BisWebImage.permuteDataToMatchDesiredOrientation(internal,origdata,headerlength/internal.imginfo.size,internal.imgdata,forceorient,debug);
             internal.forcedorientationchange=true;
         }
         
@@ -1318,7 +1330,7 @@ class BisWebImage extends BisWebDataObject {
         to parse the header and compute orientation. It's implcit input
         is internal.header.struct and output goes into internal
     */
-    static parseHeaderAndComputeOrientation(internal) {
+    static parseHeaderAndComputeOrientation(internal,debug=0) {
 
         // Create IJKtoXYZ matrix
         let IJKToRAS = simplemat.GMMat4.createFloat32();
@@ -1407,68 +1419,95 @@ class BisWebImage extends BisWebDataObject {
         internal.volsize = dim[1] * dim[2] * dim[3]*dim[4]*dim[5];
         internal.offsets =   [ 1, dim[1], dim[1]*dim[2], dim[1]*dim[2]*dim[3], dim[1]*dim[2]*dim[3]*dim[4] ];
 
-        // We need the RAS to IJK to figure out orientation
-        let invMat = simplemat.GMMat4.createFloat32();
-        simplemat.GMMat4.invert(internal.orient.IJKToRAS,invMat);
-        let combo = [ [ 0,0,0 ], [ 0,0,0 ],[ 0,0,0 ]];
-        for (i=0;i<=2;i++) {
-            for (let j=0;j<=2;j++)
-                combo[i][j]=invMat[i*4+j];
 
+        // At this point realise that if A=IJKTORAS
+        // A maps (i,j,k) to (x,y,z)
+        // We need to factor out spacing from A so A*[ [ 1/sp0 0 0; 0 1/sp1 0 ; 0 0 1/sp1 ]] to
+        // get the orientation matrix
+
+        // Only using 3x3 subset as we don't get care about translation here
+        let A=numeric.identity(3);
+        let S=numeric.identity(3);
+        for (let ia=0;ia<=2;ia++) {
+            for (let ib=0;ib<=2;ib++) {
+                A[ia][ib]=internal.orient.IJKToRAS[ia+ib*4];
+            }
+            S[ia][ia]=1.0/internal.spacing[ia];
         }
-        //console.log('combo=[ ',combo[0][0],combo[0][1],combo[0][2],']\n[',combo[1][0],combo[1][1],combo[1][2],']\n[', combo[2][0],combo[2][1],combo[2][2],']\n');
+        let OR=numeric.dot(A,S);
+
+//        debug=0;
+
+        if (debug) {
+            console.log('\n A=\n',numeric.prettyPrint(A));
+            console.log('\n OR=\n',numeric.prettyPrint(OR));
+        }
+
+            
         // Fix * spacing instead of /spacing as dealing with inverse
         let axis=[ 0 ,1, 2 ], flip=[ 0 ,0, 0 ];
         // Find Max Value
 
-        for (let ia=0;ia<=2;ia++) {
-            for (let ib=0;ib<=2;ib++) {
-                if (axis[ia]!=ib) {
-                    // probably spacing[ib] should be spacing[ia] !!!
-                    if (Math.abs(combo[ia][ib]*internal.spacing[ib])>Math.abs(combo[ia][axis[ia]]*internal.spacing[axis[ia]])) {
-                        axis[ia]=ib;
+        // First Z-axis;
+        let order=[2,0,1];
+        let left=[2,0,1];
+
+        for (let i=0;i<=2;i++) {
+            let ia=order[i];
+            axis[ia]=left[0];
+
+            for (let ib=1;ib<left.length;ib++) {
+                let other=left[ib];
+                //    console.log('Looking for ib=',ib,left,'other=',other);
+                //    console.log('Comparing new ',other,'=',OR[ia][other]);
+                //    console.log('\t with orig=',axis[ia],'=',OR[ia][axis[ia]]);
+                if (Math.abs(OR[ia][other])>Math.abs(OR[ia][axis[ia]])) {
+                    axis[ia]=other;
+                    //console.log('Now axis[ia]=',axis[ia]);
+                }
+            }
+            if (OR[ia][axis[ia]]<0)
+                flip[ia]=1;
+            //            console.log('Final axis ',ia,'=',axis[ia],' flip=',OR[ia][axis[ia]], flip[ia]);
+            for (let k=0;k<=2;k++) {
+                OR[k][axis[ia]]=0;
+                OR[ia][k]=0;
+            }
+
+            //            if (i<2) console.log('\n Blanked OR=\n',numeric.prettyPrint(OR));
+
+            
+            for (let col=0;col<=2;col++) {
+                let sum=0.0;
+                for (let row=0;row<=2;row++)  {
+                    sum+=(OR[row][col]*OR[row][col]);
+                }
+                if (sum>0.0) {
+                    sum=Math.sqrt(sum);
+                    for (let row=0;row<=2;row++)  {
+                        OR[row][col]=OR[row][col]/sum;
                     }
                 }
-                
             }
-            if (combo[ia][axis[ia]]<0)
-                flip[ia]=1;
+
+            //if (debug && i<2) console.log('\n Normalized OR=\n',numeric.prettyPrint(OR));
+
+            
+            let ind=left.indexOf(axis[ia]);
+            if (ind>=0)
+                left.splice(ind,1);
+
+            if (debug) {
+                if (i<2) console.log('\n Blanked OR=\n',numeric.prettyPrint(OR));
+                console.log('Left = ',left);
+            }
         }
+
+        if (debug)
+            console.log('Final axis=',axis,' flip=',flip);
         
-        let votes=[0,0,0];
-        for (let ia=0;ia<=2;ia++) {
-            votes[axis[ia]]+=1;
-        }
-        
-        if (votes[0]===0 || votes[1]===0 || votes[2]===0) {
-            
-            let first=0,second=1;
-            if (axis[0]===axis[2]) {
-                second=2;
-            } else if (axis[1]===axis[2]) {
-                first=2;
-            }
-            
-            
-            let tochange=first;
-            let v1=Math.abs(combo[first][axis[first]]*internal.spacing[axis[first]]);
-            let v2=Math.abs(combo[second][axis[second]]*internal.spacing[axis[second]]);
-            if (v2<v1)
-                tochange=second;
-            console.log("Axis",tochange,"needs to change",first,v1,second,v2,'votes=',votes);
-            
-            let k=votes.indexOf(0);
-            console.log('k=',k);
-            if (k>=0 && k<=2) {
-                axis[tochange]=k;
-                if (combo[tochange][k]<0)
-                    flip[tochange]=1;
-                console.log('new axis=',axis,flip);
-            } else {
-                console.log('Something is seriously wrong');
-            }
-        }
-               
+
+        // Done with checking now storing
         internal.orient.axis=axis;
         for (let k=0;k<=2;k++) {
             let cj=0,truej=0;
@@ -1487,10 +1526,9 @@ class BisWebImage extends BisWebDataObject {
         internal.orient.name='';
         let names = [ [ 'L','R' ],[ 'P','A' ], ['I','S']];
         for (i=0;i<=2;i++) {
-            //  console.log('invaxis='+internal.orient.invaxis[i]+' names='+names[i]);
             internal.orient.name+=names[internal.orient.invaxis[i]][1-internal.orient.invflip[i]];
         }
-        //      console.log('name='+internal.orient.name+' flip='+internal.orient.flip+' axis='+internal.orient.axis);
+
     }
 
     /** Function to permute the header to yield a RAS image. Still incomplete.
@@ -1515,16 +1553,15 @@ class BisWebImage extends BisWebDataObject {
     /** Function to permute the image data to yield a RAS oriented image. Works but header is incomplete
         @alias BisImageUtilities~permuteDataToMatchDesiredOrientation
     */
-    static permuteDataToMatchDesiredOrientation(internal,inarray,inoffset,outarray,forceorient) {
-        
+    static permuteDataToMatchDesiredOrientation(internal,inarray,inoffset,outarray,forceorient,debug=false) {
+
+
         let dim = [ internal.dimensions[0],internal.dimensions[1],internal.dimensions[2] ];
         let framesize=dim[0]*dim[1]*dim[2];
 
         // This permutes internal.dimensions hence dim is a copy of original
         BisWebImage.permuteHeaderDimensionsSpacing(internal);
-        //  if (debug)
-        //      console.log('+++++ permuted header, new dims=', internal.dimensions,'inoffset=',inoffset);
-        // Increments
+
         let outincr= [ 1, internal.dimensions[0], internal.dimensions[0]*internal.dimensions[1] ];
         // Straight from BioImage Suite
         let ia= [ 0,0,0 ],ib=[ 0,0,0 ],j=0,outindex=0,frame=0,baseframe=0,nc=internal.dimensions[3]*internal.dimensions[4];
@@ -1534,21 +1571,38 @@ class BisWebImage extends BisWebDataObject {
         let axis    = [ internal.orient.axis[0], internal.orient.axis[1], internal.orient.axis[2] ];
         let flip    = [ internal.orient.flip[0], internal.orient.flip[1], internal.orient.flip[2] ];
 
-        //        console.log('Original flip=',flip);
 
-        let scaleXYaxis=1;
+        // Compute Flips
+        let oname="RAS",max=0;
+        internal.orient.invaxis=[0,1,2];
+
+        
+
         if (forceorient==="LPS") {
-            //          console.log('Extra Flipping');
-            scaleXYaxis=-1;
-            for (let ia=0;ia<=1;ia++) {
+            oname="LPS";
+            max=2;
+            internal.orient.invflip  = [ 1,1,0 ];
+        } else if (forceorient=="LAS") {
+            oname="LAS";
+            max=1;
+            internal.orient.invflip  = [ 1,0,0 ];
+        } else {
+            internal.orient.invflip  = [ 0,0,0 ];
+        }
+            
+        if (max>0)  {
+            for (let ia=0;ia<max;ia++) {
                 flip[ia]=1-flip[ia];
                 internal.orient.flip[ia]=1-internal.orient.flip[ia];
-                internal.orient.invflip[ia]=1-internal.orient.invflip[ia];
+                //internal.orient.invflip[ia]=1-internal.orient.invflip[ia];
             }
         }
 
-        //        console.log('Actual Flips=',flip);
-
+        if (debug) {
+            console.log('++++ orient=',oname,'flip=',flip,'max=',max);
+        }
+        
+        // Perform Permutation
         for (ia[2]=0;ia[2]<dim[2];ia[2]++) {
             for (ia[1]=0;ia[1]<dim[1];ia[1]++) {
                 for (ia[0]=0;ia[0]<dim[0];ia[0]++) {
@@ -1573,44 +1627,72 @@ class BisWebImage extends BisWebDataObject {
             }
         }
 
-//        console.log('scaleXYaxis=',scaleXYaxis,axis,flip);
-
-        //  let end=new Date().getTime();
-        //  let time=end-start;
-        //if (debug)
-        //      console.log('****** ellapsed time=',time, ' optimized=',optimized);
-        //  optimized=!optimized;
+        // Fix orientation
+        internal.orient.name=oname;
 
 
-        if (scaleXYaxis<0) {
-            internal.orient.name="LPS";
-        } else {
-            internal.orient.name="RAS";
+        // Reompute matrices
+        let A=numeric.identity(4);
+        for (let i=0;i<=3;i++)  {
+            for (let j=0;j<=3;j++) 
+                A[i][j]=internal.orient.IJKToRAS[i+j*4];
         }
 
+        let B=numeric.rep([4,4],0.0);
+        B[3][3]=1.0;
 
-        simplemat.GMMat4.setRowValues(internal.orient.IJKToRAS, 0, scaleXYaxis*internal.spacing[0], 0, 0, 0);
-        simplemat.GMMat4.setRowValues(internal.orient.IJKToRAS, 1, 0, scaleXYaxis*internal.spacing[1], 0, 0);
-        simplemat.GMMat4.setRowValues(internal.orient.IJKToRAS, 2, 0, 0, internal.spacing[2], 0);
+        if (debug)
+            console.log('Axis=',axis,' flip=',flip,' dim=',flipdim);
+        
+        for (let i=0;i<=2;i++) {
+            let ax=axis[i];
+            if (flip[i]) {
+                B[ax][3]=flipdim[i];
+                B[ax][i]=-1.0;
+            } else {
+                B[ax][i]=1.0;
+            }
+        }
+        let C=numeric.dot(A,B);
+
+        let fn=function(A,name) {
+            let s=name+'= [ ';
+            for (let i=0;i<=3;i++) {
+                for(let j=0;j<=3;j++) {
+                    s+=A[i][j]+' ';
+                    if (j==3 && i!==3)
+                        s+=";";
+                }
+            }
+            s+='];';
+            console.log(s);
+        };
+        
+        if (debug) {
+            fn(A,'A');
+            fn(B,'B');
+            fn(C,'C');
+
+        }
+        
+        
+        // Store header stuff
+        for (let row=0;row<=2;row++)
+            simplemat.GMMat4.setRowValues(internal.orient.IJKToRAS, row, C[row][0],C[row][1],C[row][2],C[row][3]);
+
         internal.header.struct.qform_code=0;
         internal.header.struct.sform_code=1;
 
+        for (let i=0;i<=3;i++) {
+            internal.header.struct.srow_x[i]=C[0][i];
+            internal.header.struct.srow_y[i]=C[1][i];
+            internal.header.struct.srow_z[i]=C[2][i];
+        }
 
-        internal.header.struct.srow_x[0]=scaleXYaxis*internal.spacing[0];
-        internal.header.struct.srow_x[1]=0.0;
-        internal.header.struct.srow_x[2]=0.0;
-        internal.header.struct.srow_x[3]=0.0;
 
-        internal.header.struct.srow_y[0]=0.0;
-        internal.header.struct.srow_y[1]=scaleXYaxis*internal.spacing[1];
-        internal.header.struct.srow_y[2]=0.0;
-        internal.header.struct.srow_y[3]=0.0;
+        // Finally axis is done
+        internal.orient.axis=[0,1,2];
 
-        internal.header.struct.srow_z[0]=0.0;
-        internal.header.struct.srow_z[1]=0.0;
-        internal.header.struct.srow_z[2]=internal.spacing[2];
-        internal.header.struct.srow_z[3]=0.0;
-        
     }
 
 }

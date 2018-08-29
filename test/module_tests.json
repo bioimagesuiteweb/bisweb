@@ -329,6 +329,12 @@
 	    "result"  : true,
 	    "dopython": false
 	},
+        {
+            "command" : "binaryThresholdImage --low 384.5 --high 386 --debug true -i testdata/reorient/avg152T1_LR_PSR_ss.nii.gz",
+            "test"    : "--test_target testdata/reorient/avg152T1_LR_PSR_ss_binary.nii.gz",
+            "result"  : true,
+            "dopython": true
+        },
         { 
 	    "command" : "morphologyFilter --radius 1 --mode median --debug true --input testdata/morphology/mask_128.nii.gz",
 	    "test"    : "--test_target testdata/morphology/median_mask_128.nii.gz --test_comparison cc --test_threshold 0.98",
@@ -466,8 +472,61 @@
             "test"    : "--test_target testdata/thr_obj.nii.gz --test_threshold 30.0 --test_comparison ssd",
             "result"  : false,
             "dopython": true
+        },
+        {
+            "command" : "defaceImage --levels 3 --iterations 5 --resolution 2.0 --debug true -i testdata/deface/sag_2mm.nii.gz",
+            "test"    : "--test_target testdata/deface/sag_2mm_defaced.nii.gz --test_threshold 0.9999 --test_comparison cc",
+            "result"  : true,
+            "dopython": false
+        },
+        {
+            "command" : "reorientImage --orient RAS --debug true -i testdata/reorient/avg152T1_LR_PSR.nii.gz",
+            "test"    : "--test_target testdata/reorient/avg152T1_LR_RAS.nii.gz",
+            "result"  : true,
+            "dopython": false
+        },
+        {
+            "command" : "reorientImage --orient RAS --debug true -i testdata/reorient/avg152T1_LR_LIP.nii.gz",
+            "test"    : "--test_target testdata/reorient/avg152T1_LR_RAS.nii.gz",
+            "result"  : true,
+            "dopython": false
+        },
+        {
+            "command" : "reorientImage --orient RAS --debug true -i testdata/reorient/avg152T1_LR_LPS.nii.gz",
+            "test"    : "--test_target testdata/reorient/avg152T1_LR_RAS.nii.gz",
+            "result"  : true,
+            "dopython": false
+        },
+        {
+            "command" : "reorientImage --orient LPS --debug true -i testdata/reorient/avg152T1_LR_PSR.nii.gz",
+            "test"    : "--test_target testdata/reorient/avg152T1_LR_LPS.nii.gz",
+            "result"  : true,
+            "dopython": false
+        },
+        {
+            "command" : "reorientImage --orient LPS --debug true -i testdata/reorient/avg152T1_LR_LIP.nii.gz",
+            "test"    : "--test_target testdata/reorient/avg152T1_LR_LPS.nii.gz",
+            "result"  : true,
+            "dopython": false
+        },
+        {
+            "command" : "reorientImage --orient LPS --debug true -i testdata/reorient/avg152T1_LR_RAS.nii.gz",
+            "test"    : "--test_target testdata/reorient/avg152T1_LR_LPS.nii.gz",
+            "result"  : true,
+            "dopython": false
+        },
+        {
+            "command" : "reorientImage --orient LAS --debug true -i testdata/reorient/avg152T1_LR_RAS.nii.gz",
+            "test"    : "--test_target testdata/reorient/avg152T1_LR_LPS.nii.gz",
+            "result"  : false,
+            "dopython": false
+        },
+        {
+            "command" : "shiftScaleImage --shift 2.0 --scale 1.5 --outtype Float --debug true -i testdata/reorient/avg152T1_LR_PSR.nii.gz",
+            "test"    : "--test_target testdata/reorient/avg152T1_LR_PSR_ss.nii.gz",
+            "result"  : true,
+            "dopython": false
         }
-
     ]
 }
 

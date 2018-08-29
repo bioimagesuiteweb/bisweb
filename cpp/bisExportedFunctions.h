@@ -178,6 +178,15 @@ extern "C" {
   // BIS: { 'thresholdImageWASM', 'bisImage', [ 'bisImage', 'ParamObj', 'debug' ] } 
   BISEXPORT unsigned char*  thresholdImageWASM(unsigned char* input,const char* jsonstring,int debug);
 
+  /** ShiftScale image using \link bisImageAlgorithms::shiftScaleImage \endlink
+   * @param input serialized input as unsigned char array 
+   * @param jsonstring the parameter string for the algorithm { "shift" : 0.0, "scale": 1.0, "datatype: -1 }, (datatype=-1 same as input)
+   * @param debug if > 0 print debug messages
+   * @returns a pointer to a serialized image
+   */
+  // BIS: { 'shiftScaleImageWASM', 'bisImage', [ 'bisImage', 'ParamObj', 'debug' ] } 
+  BISEXPORT unsigned char*  shiftScaleImageWASM(unsigned char* input,const char* jsonstring,int debug);
+
 
   /** Threshold image using \link bisImageAlgorithms::thresholdImage \endlink
    * @param input serialized input as unsigned char array 

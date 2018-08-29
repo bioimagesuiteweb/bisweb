@@ -404,7 +404,7 @@ module.exports = {
     },
 
 
-    resliceRegistrationOutput: function (biswrap, reference, target, transform) {
+    resliceRegistrationOutput: function (biswrap, reference, target, transform,interpolation=1) {
 
         let spa = reference.getSpacing();
         let dim = reference.getDimensions();
@@ -412,7 +412,7 @@ module.exports = {
             target, transform, {
                 "spacing": [spa[0], spa[1], spa[2]],
                 "dimensions": [dim[0], dim[1], dim[2]],
-                "interpolation": 1
+                "interpolation": interpolation
             });
         out.copyOrientationInfo(reference);
         return out;

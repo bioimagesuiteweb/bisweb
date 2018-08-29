@@ -2,8 +2,10 @@
 // ---------------------------------
 const insecure=true;
 
-if (insecure) {
-    console.log('\n----\n---- In INSECURE MODE\n----\n----');
+if (typeof (window) === "undefined") {
+    if (insecure) {
+        console.log('\n----\n---- In INSECURE MODE\n----\n----');
+    }
 }
 
 

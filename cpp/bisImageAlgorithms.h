@@ -65,7 +65,16 @@ namespace bisImageAlgorithms {
    * @returns thresholded image
    */
   template<class IT,class OT> std::unique_ptr<bisSimpleImage<OT> >  thresholdImage(bisSimpleImage<IT>* input,float thresholds[2],int replace[2],OT replacevalues[2]);
-      
+
+  /** Shifts Scales and Casts an image. Essentially out = (input+shift)*scale and then cast to desired type
+   * @param input the input image
+   * @param shift the shift value 
+   * @param scale the scale value 
+   * @returns shifted and scaled image
+   */
+  template<class IT,class OT> std::unique_ptr<bisSimpleImage<OT> >  shiftScaleImage(bisSimpleImage<IT>* input,double shift,double scale);
+
+  
   /** extract single Frame and Component from Image[i][j][j][frame][component]
    * @param input the input image
    * @param frame the frame to extract
