@@ -125,7 +125,7 @@ let internal = {
         "./node_modules/jstree/dist/themes/default/style.css",
         "./web/biscommon.css"
     ],
-    lintscripts : ['js/**/*.js','config/*.js','compiletools/*.js','*.js','web/**/*.js','test/**/*.js'],
+    lintscripts : ['js/**/*.js','config/*.js','compiletools/*.js','*.js','web/**/*.js','test/**/*.js','fileserver/*.js'],
     toolarray : [ 'index'],
     htmlcounter : 0,
     csscounter  : 0,

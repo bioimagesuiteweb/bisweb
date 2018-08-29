@@ -1,10 +1,11 @@
 require('../config/bisweb_pathconfig.js');
 const BisFileServerClient=require('bis_fileserverclient');
 const WebSocket = require('ws');
-const bisasyncutil=require('bis_asyncutils');
 const genericio=require('bis_genericio');
 const BisWebImage=require('bisweb_image');
-bisasyncutil.setVerbose(true);
+
+//const bisasyncutil=require('bis_asyncutils');
+//bisasyncutil.setVerbose(true);
 
 const path=require('path');
 
@@ -35,25 +36,29 @@ let p=async function() {
 
     console.log('++++\n++++ Download File\n++++');
     let img=new BisWebImage();
-    let d=await img.load(`${basedir}/MNI_T1_2mm_stripped_ras.nii.gz`,'None');
+    await img.load(`${basedir}/MNI_T1_2mm_stripped_ras.nii.gz`,'None');
     console.log('Done ', img.getDescription());
 
     
-    
-    try {
-        let f=await img.save(`${bd}/t.nii.gz`);
-        console.log('\n Saved =',JSON.stringify(f));
-        
-        
-        let img2=new BisWebImage();
-        let d2=await img2.load(`${bd}/t.nii.gz`);
-        
-        console.log("Read",img2.getDescription());
-        
-        let out=img.compareWithOther(img2);
-        console.log(JSON.stringify(out));
-    } catch(e) {
 
+    for (let k=0;k<20;k++) {
+        try {
+            let f=await img.save(`${bd}/t.nii.gz`);
+            console.log('\n Saved =',JSON.stringify(f));
+            
+            
+            let img2=new BisWebImage();
+            await img2.load(`${bd}/t.nii.gz`);
+            
+            console.log("Read",img2.getDescription());
+            
+            let out=img.compareWithOther(img2);
+            console.log(JSON.stringify(out));
+            if (out.testresult===false)
+                process.exit(1);
+        } catch(e) {
+            console.log("Error =",e);
+        }
     }
 
     process.exit();

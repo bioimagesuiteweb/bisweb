@@ -27,7 +27,7 @@ const genericio = require('bis_genericio.js');
 const tcpPortUsed = require('tcp-port-used');
 
 
-const verbose=false;
+let verbose=false;
 
 // In Insecure Mode (if true);
 let insecure=wsutil.insecure;
@@ -55,7 +55,6 @@ let globalHostname="";
 //flag denoting whether the server will accept write requests 
 
 let readOnly;
-let controlSocket = null;
 
 // password token
 // create function and global variable
@@ -95,7 +94,7 @@ let startServer = (hostname, port, newport = true, readycb = () => {}) => {
     try {
         newServer.listen(port, hostname, readycb);
     } catch(e) {
-        console.log(e,e.stack);
+        console.log(e);
     }
     
     if (newport) {
@@ -112,8 +111,6 @@ let startServer = (hostname, port, newport = true, readycb = () => {}) => {
     //as well it attaches protocols to handle when the socket is ended or closed
     function handleConnectionRequest(socket) {
 
-        console.log('Handling connection request');
-        
         //construct the handshake response
         //https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers
         let response = "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ";
@@ -146,7 +143,7 @@ let startServer = (hostname, port, newport = true, readycb = () => {}) => {
             let port = socket.localPort;
             socket.write(response, 'utf-8', () => {
                 //connectors on globalPortNumber are negotiating a control port, connectors on globalDataPortNumber are negotiating a transfer port
-                console.log('We are ready to respond',port,globalPortNumber,globalDataPortNumber);
+                console.log('____ We are ready to respond',port,globalPortNumber,globalDataPortNumber);
                 switch (port) {
                 case globalPortNumber:
                     authenticate(socket);
@@ -185,8 +182,8 @@ let startServer = (hostname, port, newport = true, readycb = () => {}) => {
                 }
             });
         });
-    };
-
+    }
+    
 };
 
 
@@ -203,6 +200,11 @@ let readFrame = (chunk) => {
         return;
     }
 
+    if (parsedControl.payloadLength<0 ||
+        parsedControl.payloadLength>65536)
+        return;
+        
+    
     let decoded = new Uint8Array(parsedControl.payloadLength);
 
     //decode the raw data (undo the XOR)
@@ -252,8 +254,6 @@ let authenticate = (socket) => {
  * @param {Net.Socket} socket - Node.js net socket between the client and server for the transmission.
  */
 let prepareForControlFrames = (socket) => {
-    //add an error listener for the transmission
-    controlSocket = socket;
 
     socket.on('error', (error) => {
         console.log('---- an error occured', error);
@@ -269,10 +269,10 @@ let prepareForControlFrames = (socket) => {
                 handleTextRequest(decoded, parsedControl, socket);
                 break;
             }
-            case 2:  {
+            /*case 2:  {
                 handleFileFromClient(decoded, parsedControl, socket);
                 break;
-            }
+            }*/
             case 8: { 
                 handleCloseFromClient(decoded, parsedControl, socket);
                 break;
@@ -339,8 +339,13 @@ let prepareForDataFrames = (socket) => {
 
     //server can send mangled packets during transfer that may parse as commands that shouldn't occur at that time, 
     //e.g. a mangled packet that parses to have an opcode of 8, closing the connection. so unbind the default listener and replace it after transmission.
+
+    console.log('Socket=',socket._sockname);
+    
     socket.on('data', (chunk) => {
 
+
+        
         let controlFrame = chunk.slice(0, 14);
         let parsedControl = wsutil.parseControlFrame(controlFrame);
         //        console.log('parsed control frame', parsedControl);
@@ -358,9 +363,13 @@ let prepareForDataFrames = (socket) => {
 
         switch (parsedControl.opcode) {
         case 2:
-            if (verbose)
-                console.log('---- adding packet with control', JSON.stringify(parsedControl));
-            addToCurrentTransfer(decoded, parsedControl, socket);
+            //if (verbose)
+            //console.log('---- adding packet with control', JSON.stringify(parsedControl));
+            try {
+                addToCurrentTransfer(decoded, parsedControl, socket);
+            } catch(e) {
+                console.log("Addition error");
+            }
             if (timeout) {
                 timers.clearTimeout(timeout);
                 timeout = null;
@@ -369,6 +378,7 @@ let prepareForDataFrames = (socket) => {
         case 8: 
             console.log('---- received close from client, ending data connection.');
             socket.end();
+            socket.destroy();
             break;
         default: 
             console.log('---- dropping packet with control', JSON.stringify(parsedControl));
@@ -382,9 +392,9 @@ let prepareForDataFrames = (socket) => {
     });
 
 
-    let getWriteLocation=function(name) {
+    let getWriteLocation=function(name,dataInProgress) {
 
-        console.log('Name=',name,'BaseDirectory=',baseDirectory);
+        //console.log('Name=',name,'BaseDirectory=',baseDirectory);
         
         if (name.indexOf(baseDirectory)===0)
             return name;
@@ -394,47 +404,71 @@ let prepareForDataFrames = (socket) => {
             name=name.substr(f+1,name.length);
         }
         
-        name=path.join(baseDirectory,fileInProgress.name);
+        name=path.join(baseDirectory,dataInProgress.name);
         return name;
     };
     
     function addToCurrentTransfer(upload, control, socket) {
 
+        let port=socket._sockname.port;
+        let dataInProgress=fileInProgress;
+        
         if (verbose)
-            console.log('\tupload=',fileInProgress.offset,'Lengths: total=',fileInProgress.data.length,
+            console.log('\tupload=',dataInProgress.offset,'Lengths: total=',dataInProgress.data.length,
                         'piecel=',upload.length);
+
+        if ( (upload.length!==dataInProgress.packetSize) &&
+             (dataInProgress.offset+upload.length!== dataInProgress.totalSize)) {
+            console.log('\t bad packet size', upload.length, ' should be =', dataInProgress.packetSize, ' or ', dataInProgress.totalSize-dataInProgress.offset);
+            return;
+        }
+
+        
         //        for (let i=0;i<upload.length;i++)
-        //  fileInProgress.data[i+fileInProgress.offset]=upload[i];
-        fileInProgress.data.set(upload,fileInProgress.offset);
-        fileInProgress.offset+=upload.length;
+        //  dataInProgress.data[i+dataInProgress.offset]=upload[i];
+        dataInProgress.data.set(upload,dataInProgress.offset);
+        dataInProgress.offset+=upload.length;
 
         //check to see if what we've received is complete 
-        if (fileInProgress.offset >= fileInProgress.totalSize) {
+        if (dataInProgress.offset >= dataInProgress.totalSize) {
 
 
-            if (!fileInProgress.isbinary) {
-                fileInProgress.data=genericio.binary2string(fileInProgress.data);
+            let checksum=util.SHA256(new Uint8Array(dataInProgress.data));
+            if (checksum!== dataInProgress.checksum) {
+                console.log('Bad Checksum', checksum, ' vs' ,dataInProgress.checksum);
+                socket.write(formatPacket('uploadfailed',`${checksum}`));
+                dataInProgress=null;
+                return;
+            }
+            
+            if (!dataInProgress.isbinary) {
+                dataInProgress.data=genericio.binary2string(dataInProgress.data);
             }
 
-            let writeLocation = getWriteLocation(fileInProgress.name);
-            console.log('____ writing to file', writeLocation,'size=',fileInProgress.data.length);
+            let writeLocation = getWriteLocation(dataInProgress.name,dataInProgress);
+            console.log('____ writing to file', writeLocation,'size=',dataInProgress.data.length,' checksum matched=',checksum,dataInProgress.checksum);
             
-            genericio.write(writeLocation, fileInProgress.data, fileInProgress.isbinary).then( () => {
+            genericio.write(writeLocation, dataInProgress.data, dataInProgress.isbinary).then( () => {
                 socket.write(formatPacket('uploadcomplete', ''), () => {
-                    fileInProgress.data=null;
+                    dataInProgress.data=null;
                     //socket.end(); //if for some reason the client doesn't send a FIN we know the socket should close here anyway.
-                    console.log('____ message sent -- file saved in ',writeLocation,' binary=',fileInProgress.isbinary);
+                    console.log('____ message sent -- file saved in ',writeLocation,' binary=',dataInProgress.isbinary);
                 });
 
-                //controlSocket.write(formatPacket('uploadcomplete', ''));
+
             }).catch( (e) => {
                 console.log('---- an error occured', e);
                 socket.write(formatPacket('error', e));
                 socket.destroy();
             });
         } else {
-            //console.log('____ received chunk,', fileInProgress.receivedFile.length, 'received so far.');
-            socket.write(formatPacket('nextpacket', ''));
+            //console.log('____ received chunk,', dataInProgress.receivedFile.length, 'received so far.');
+            try {
+                socket.write(formatPacket('nextpacket', ''));
+            } catch(e) {
+                console.log('\n\n\n\n\n -------------------------------- \n\n\n\n\n Error Caught =');
+                socket.destroy();
+            }
         }
     }  
 };
@@ -461,26 +495,30 @@ let getFileFromClientAndSave = (upload, control, socket) => {
         return;
     }
 
+    let port=socket._sockname.port;
+    
     fileInProgress = {
         'totalSize': upload.totalSize,
         'packetSize': upload.packetSize,
         'isbinary' : upload.isbinary,
         'name': upload.filename,
         'storageSize' : upload.storageSize,
+        'checksum' : upload.checksum,
         'offset' : 0,
+        'uploadCount' : upload.uploadCount,
     };
+    
 
     fileInProgress.data = new Uint8Array(upload.storageSize);
-    console.log('\n+++++++++++++\n+++++++++++ fileInProgress data created=',fileInProgress.data.length,fileInProgress.data.buffer);
+    console.log('\n+++++++++++++\n+++++++++++ fileInProgress data created=',fileInProgress.totalSize,' count=',fileInProgress.uploadCount,'\n++++++++++++');
 
     //spawn a new server to handle the data transfer
-    startServer('localhost', globalDataPortNumber,false, (m) => {
-        console.log('Message= All set on globalDataPortNumber');
+    startServer('localhost', globalDataPortNumber,false, () => {
         socket.write(formatPacket('uploadmessage', {
             'name' : 'datasocketready',
             'port' : globalDataPortNumber,
             'id' : upload.id
-        }));;
+        }));
     });
 };
 
@@ -512,7 +550,7 @@ let readFileAndSendToClient = (parsedText, control, socket) => {
             } else {
                 console.log(`____ load binary file ${filename} successful, writing to socket.`);
                 let checksum=`${util.SHA256(new Uint8Array(d1))}`;
-                console.log('checksum=',checksum, 'id=',id);
+                console.log('_____ Sending checksum=',checksum, 'id=',id);
                 socket.write(formatPacket('checksum', {
                     'checksum' : checksum,
                     'id' : id
@@ -521,7 +559,7 @@ let readFileAndSendToClient = (parsedText, control, socket) => {
             }
         });
     } else {
-    	console.log('filename', filename);
+        console.log('filename', filename);
         fs.readFile(filename, 'utf-8', (err, d1) => {
             if (err) {
                 handleBadRequestFromClient(socket, err);
@@ -675,10 +713,11 @@ let handleCloseFromClient = (rawText, control, socket) => {
     //TODO: send a close frame in response
     socket.end();
 
-    controlSocket = null;
     console.log('____ closed connection');
 };
 
+
+// ----------------------- Filename Validation Code (not used) -------------------------------------
 
 /**
  * Takes a path specifying a file to load on the server machine and determines whether the path is clean, i.e. specifies a file that exists, does not contain symbolic links.
@@ -795,19 +834,21 @@ program
     .option('-p, --port <n>', 'Which port to start the server on')
     .option('--read-only', 'Whether or not the server should accept requests to write files')
     .option('--insecure', 'USE WITH EXTREME CARE -- if true no password')
+    .option('--verbose', ' print extra statements')
     .parse(process.argv);
 
 
 
 let portno=8081;
 if (program.port)
-    portno=parseInt(program.port)
+    portno=parseInt(program.port);
 
 readOnly = program.readOnly ? program.readOnly : false;
 insecure = program.insecure ? program.insecure : false;
+verbose = program.verbose ? program.verbose : false;
 
 startServer('localhost', portno, true, () => {
-    console.log('Server started ',portno)
+    console.log('Server started ',portno);
     if (insecure) {
         console.log("+++++ IN INSECURE MODE");
     }
