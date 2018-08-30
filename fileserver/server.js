@@ -142,8 +142,8 @@ class FileServer {
         onetimePasswordCounter+=1;
         let token = hotp.generate(secret, onetimePasswordCounter);
         if (abbrv===0) {
-            console.log('++++ BioImage Suite Web FileServer Initialized');
-            console.log('++++ \t I am listening for incoming connections, using the following one time info.');
+            console.log('++++ BioImage Suite Web FileServer Initialized\n++++');
+            console.log('++++ \t The websocket server is listening for incoming connections,\n++++\t using the following one time info.\n++++');
             console.log(`++++ \t\t hostname: ${globalHostname}:${globalPortNumber}`);
         }  else if (abbrv===1) {
             console.log('++++\n++++ Create New Password ... try again.');
@@ -260,7 +260,7 @@ class FileServer {
                         
                         //start the server listening for new connections if it's on the control port
                         if (port === globalPortNumber) {
-                            newServer.listen(globalPortNumber, 'localhost');
+                            newServer.listen(globalPortNumber, globalHostname);
                             self.createPassword();
                         }
                     }
@@ -584,7 +584,9 @@ class FileServer {
         //spawn a new server to handle the data transfer
         let tserver=new FileServer();
         //        globalDataPortNumber+=1; // get me the next available port
-        tserver.startServer('localhost', globalDataPortNumber,false, () => {
+        globalDataPortNumber+=1;
+        console.log('Starting tserver',globalHostname,globalDataPortNumber);
+        tserver.startServer(globalHostname, globalDataPortNumber,false, () => {
             tserver.createFileInProgress(upload);
             socket.write(formatPacket('uploadmessage', {
                 'name' : 'datasocketready',
@@ -919,9 +921,10 @@ class FileServer {
 program
     .option('-v, --verbose', 'Whether or not to display messages written by the server')
     .option('-p, --port <n>', 'Which port to start the server on')
-    .option('--read-only', 'Whether or not the server should accept requests to write files')
+    .option('--readonly', 'Whether or not the server should accept requests to write files')
     .option('--insecure', 'USE WITH EXTREME CARE -- if true no password')
     .option('--verbose', ' print extra statements')
+    .option('--nolocalhost', ' allow remote connections')
     .parse(process.argv);
 
 
@@ -930,17 +933,37 @@ let portno=8081;
 if (program.port)
     portno=parseInt(program.port);
 
-READONLYFLAG = program.readOnly ? program.readOnly : false;
+let nolocalhost=false;
+
+READONLYFLAG = program.readonly ? program.readonly : false;
 insecure = program.insecure ? program.insecure : false;
 verbose = program.verbose ? program.verbose : false;
+nolocalhost = program.nolocalhost ? program.nolocalhost : false;
+
+//if (insecure)
+//    nolocalhost=false;
+
 
 let server=new FileServer();
 
-server.startServer('localhost', portno, true, () => {
-    console.log('Server started ',portno);
-    if (insecure) {
-        console.log("+++++ IN INSECURE MODE");
-    }
+require('dns').lookup(require('os').hostname(), function (err, add, fam) {
+
+    let ipaddr='localhost';
+    if (nolocalhost)
+        ipaddr=`${add}`;
+    console.log('__________________________________________________________________________________');
+    server.startServer(ipaddr, portno, true, () => {
+        if (insecure) {
+            console.log("++++\t IN INSECURE MODE");
+        }
+        if (nolocalhost) 
+            console.log("----\t Allowing remote connections");
+        else
+            console.log("----\t Allowing only local connections");
+        if (READONLYFLAG)
+            console.log("----\t Running in 'read-only' mode");
+    console.log('__________________________________________________________________________________');
+    });
 });
 
 
