@@ -266,7 +266,7 @@ class FileServer {
                     }
                 });
             });
-        };
+        }
         
     }
     
@@ -728,7 +728,7 @@ class FileServer {
             });
         };
 
-        console.log('type', type);
+
         expandDirectory(basedir, fileTree, 0).then( (tree) => {
 
             //bisweb_fileserver handles the base file request differently than the supplemental ones, so we want to ship them to different endpoints
@@ -946,7 +946,7 @@ nolocalhost = program.nolocalhost ? program.nolocalhost : false;
 
 let server=new FileServer();
 
-require('dns').lookup(require('os').hostname(), function (err, add, fam) {
+require('dns').lookup(require('os').hostname(), function (err, add) {
 
     let ipaddr='localhost';
     if (nolocalhost)
