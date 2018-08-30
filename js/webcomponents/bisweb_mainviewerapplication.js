@@ -760,7 +760,6 @@ class ViewerApplicationElement extends HTMLElement {
             });
         }
 
-        console.log('create help menu');
         webfileutil.createFileSourceSelector(hmenu);
         webfileutil.createAWSBucketMenu(hmenu);
 

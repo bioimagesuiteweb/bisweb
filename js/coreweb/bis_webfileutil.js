@@ -600,12 +600,15 @@ const webfileutils = {
             awsstoredbuckets = {};
             bucketSelectorDropdown.append(`<option id='aws-empty-entry'></option>`);
             awsbucketstorage.iterate( (value, key) => {
-                //data is stored as stringified JSON
                 try { 
-                    let bucketObj = JSON.parse(value);
-                    let entry = $(`<option id=${key}>${bucketObj.bucketName}</option>`);
-                    bucketSelectorDropdown.append(entry);
-                    awsstoredbuckets[key] = bucketObj;
+                    //ignore the 'currentAWS' key because it's a duplicate of an entry already in the bucket
+                    if (key !== 'currentAWS') {
+                        //data is stored as stringified JSON
+                        let bucketObj = JSON.parse(value);
+                        let entry = $(`<option id=${key}>${bucketObj.bucketName}</option>`);
+                        bucketSelectorDropdown.append(entry); 
+                        awsstoredbuckets[key] = bucketObj;
+                    }
                 } catch(e) {
                     console.log('an error occured while parsing the AWS bucket data', e);
                 }
@@ -676,6 +679,7 @@ const webfileutils = {
 
             let selectedItemInfo = awsstoredbuckets[selectedItem.id];
             awsbucketstorage.setItem('currentAWS', JSON.stringify(selectedItemInfo));
+            bisweb_awsmodule.changeBuckets(selectedItemInfo.bucketName, selectedItemInfo.identityPoolID);
         });
 
         //we want the selector to populate both when the modal is opened and when the selector tab is selected

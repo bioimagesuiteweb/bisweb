@@ -17,7 +17,7 @@ class AWSModule {
         AWS.config.update({
             'region' : AWSParameters.RegionName,
             'credentials' : new AWS.CognitoIdentityCredentials({
-                'IdentityPoolId' : AWSParameters.IdentityPoolId
+                'IdentityPoolId' : AWSParameters.IdentityPoolId()
             })
         });
 
@@ -35,6 +35,8 @@ class AWSModule {
         //UI features
         this.createUserModal = null;
         this.authUserModal = null;
+
+        this.refreshCredentials = true;
 
         //file display modal gets deleted if you try to load it too soon
         //not completely sure why -Zach
@@ -56,7 +58,7 @@ class AWSModule {
             'apiVersion' : '2006-03-01',
             'credentials' : credentials,
             'sessionToken' : session_token,
-            'params' : { Bucket : bucketName}
+            'params' : { Bucket : bucketName }
         });
 
         return s3;
@@ -90,7 +92,7 @@ class AWSModule {
         return new Promise( (resolve, reject) => {
             let getParams = { 
                 'Key' : filename,
-                'Bucket' : AWSParameters.BucketName
+                'Bucket' : AWSParameters.BucketName()
             };
 
             this.s3.getObject(getParams, (err, data) => {
@@ -168,7 +170,6 @@ class AWSModule {
     wrapInAuth(command, opts) {
         console.log('opts', opts);
         let parseCommand = () => {
-            //this.callback = opts.callback;
             switch(command) {
                 case 'showfiles' : {
                     this.fileDisplayModal.fileRequestFn = opts.callback;
@@ -185,7 +186,8 @@ class AWSModule {
         };
         let expireTime = AWS.config.credentials.expireTime ? Date.parse(AWS.config.credentials.expireTime) : -1;
 
-        if (expireTime < Date.now()) {
+        if (expireTime < Date.now() || this.refreshCredentials) {
+            this.refreshCredentials = false;
             this.awsAuthUser(parseCommand, opts.AWSParameters);
             return;
         } else {
@@ -224,7 +226,7 @@ class AWSModule {
                 //https://docs.aws.amazon.com/cognitoidentity/latest/APIReference/API_GetId.html#API_GetId_ResponseSyntax
                 login[cognitoUserPoolKey] = data.newValue;
                 AWS.config.credentials = new AWS.CognitoIdentityCredentials({
-                    'IdentityPoolId': AWSParameters.IdentityPoolId,
+                    'IdentityPoolId': AWSParameters.IdentityPoolId(),
                     'Logins': login,
                     'RoleSessionName': 'web'
                 });
@@ -242,7 +244,7 @@ class AWSModule {
                             if (err) { console.log('an error occured refreshing', err); }
                             else { 
                                 console.log('refresh successful.'); 
-                                this.s3 = this.createS3(AWSParameters.BucketName, AWS.config.credentials);
+                                this.s3 = this.createS3(AWSParameters.BucketName(), AWS.config.credentials);
                                 authWindow.close();
                                 cb();
                             }
@@ -253,6 +255,12 @@ class AWSModule {
         };
 
         window.addEventListener('storage', idTokenEvent);
+    }
+
+    changeBuckets(bucketName, identityPoolId) {
+        this.s3 = this.createS3(bucketName);
+        AWSParameters.updateBucketInfo(bucketName, identityPoolId);
+        this.refreshCredentials = true;
     }
 
     /**
