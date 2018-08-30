@@ -402,7 +402,8 @@ let getNormalizedFilename=function(fname,root="",forceinternal=false) {
     fname=util.filenameWindowsToUnix(fname);
     
     // First replace '/./' with '/'
-    fname=fname.trim().replace(/\/.\//g,'\/');
+    // eslint-disable-next-line no-useless-escape
+    fname=fname.trim().replace(/\/.\//g,'\/');   
     
     let ind1=fname.indexOf(root+'/');
     let ind2=fname.indexOf('..');

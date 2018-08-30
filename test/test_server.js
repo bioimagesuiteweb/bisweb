@@ -16,7 +16,7 @@
  ENDLICENSE */
 
 /* jshint node:true */
-/*global describe, it */
+/*global describe, it,before,after */
 "use strict";
 
 
@@ -139,7 +139,7 @@ describe('Testing the server utilities\n', function() {
         for (let i=1;i<offset;i++)
             part1=part1+sep+s[i];
         for (let i=offset+1;i<s.length;i++)
-            part2=part2+sep+s[i]
+            part2=part2+sep+s[i];
         
 
         console.log('\t\tpart1=',part1);
@@ -173,10 +173,10 @@ describe('Testing the server utilities\n', function() {
             if (path.sep=='\\')
                 e=util.filenameUnixToWindows(e);
             if (e!==fname) {
-                console.log('\t\Connected Bad',e);
+                console.log('\t\tConnected Bad',e);
                 ok=false;
             } else {
-                console.log('\t\tConnected Good ',e)
+                console.log('\t\tConnected Good ',e);
             }
             console.log('');
 
@@ -197,7 +197,7 @@ describe('Testing the server\n', function() {
         let cmd=`node ${servername} --insecure`;
         console.log('Executing ',cmd);
         
-        bisgulputil.executeCommandPromise(cmd,__dirname)
+        bisgulputil.executeCommandPromise(cmd,__dirname);
         setTimeout( () => {
             console.log('\n ____Now attempting to connect');
             client=new BisFileServerClient(WebSocket);
@@ -208,16 +208,25 @@ describe('Testing the server\n', function() {
             });
         },500);
         
-    })
+    });
 
 
     it('test home dir',function(done) {
 
         let baseDirectory = os.homedir();
         console.log('++++\n++++ Base Dir\n++++');
-        client.getServerBaseDirectory().then( (bd) => {
-            console.log('\nBase =',bd, 'vs',baseDirectory);
-            assert.equal(bd.trim(),baseDirectory.trim());
+        Promise.all([
+            client.getServerBaseDirectory(),
+            client.getServerTempDirectory()
+        ]).then( (obj) => {
+            console.log('Obj=',obj);
+            let bd0=obj[0][0];
+            if (path.sep==='\\')
+                bd0=util.filenameUnixToWindows(bd0);
+
+            console.log('\nTemp=',obj[1]);
+            console.log('\nBase =',bd0, 'vs',baseDirectory, '(full list='+obj[0].join(',')+')');
+            assert.equal(bd0.trim(),baseDirectory.trim());
             done();
         }).catch( (e) => {
             console.log('\nReceived bad event',e);
@@ -225,6 +234,23 @@ describe('Testing the server\n', function() {
             done();
         });
     });
+
+    it('test get list',function(done) {
+
+        client.requestFileList('load').then( (m) => {
+            console.log(JSON.stringify(m,null,2));
+            done();
+        });
+    });
+
+    it('test get list2',function(done) {
+
+        client.requestFileList('load',os.homedir()).then( (m) => {
+            console.log(JSON.stringify(m,null,2));
+            done();
+        });
+    });
+
 
     it ('test timeout',function(done) {
 

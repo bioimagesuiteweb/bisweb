@@ -22,6 +22,7 @@ var addServerEvent=function(resolve,reject,name="") {
         'id'      : serverEventId,
         'checksum': 0,
         'name'    : name,
+        'timeout' : null,
     };
 
     if (verbose)
@@ -31,8 +32,15 @@ var addServerEvent=function(resolve,reject,name="") {
 };
 
 var removeServerEvent=function(id) {
-    if (serverEventList)
-        delete serverEventList[id];
+    if (!serverEventList) 
+        return;
+        
+    if (serverEventList[id].timeout) {
+        clearTimeout(serverEventList[id].timeout);
+        if (verbose)
+            console.log("Removing timeout event",serverEventList[id].id,' done');
+    }
+    delete serverEventList[id];
 };
 
 
@@ -72,6 +80,23 @@ var rejectServerEvent=function(id,e="") {
         removeServerEvent(id);
     }
     
+};
+
+var addEventTimeout=function(id,timeout=10000) {
+
+    let s=serverEventList[id];
+    if (!s) {
+        return 0;
+    }
+
+    serverEventList[id].timeout=setTimeout( () => {
+        serverEventList[id].timeout=null;
+        //        if (verbose)
+        console.log('____ Processing timeout',id);
+        rejectServerEvent(id,'timeout');
+    },timeout);
+
+
 };
 
 
@@ -117,5 +142,6 @@ module.exports = {
     resolveBinaryData: resolveBinaryData,
     resolveServerEvent : resolveServerEvent,
     setVerbose : (f) => {   verbose = f || false; },
+    addEventTimeout : addEventTimeout,
 };
     

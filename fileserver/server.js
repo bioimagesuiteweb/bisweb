@@ -9,12 +9,17 @@ const timers = require('timers');
 const util = require('bis_util');
 const { StringDecoder } = require('string_decoder');
 const bisgenericio=require('bis_genericio');
+const glob=bisgenericio.getglobmodule();
 
 // One time password library
 const otplib = require('otplib');
 const hotp = otplib.hotp;
 hotp.options  = { crypto };
 const secret = otplib.authenticator.generateSecret();
+
+const bisserverutil=require('bis_fileserverutils');
+const formatPacket=bisserverutil.formatPacket;
+const readFrame=bisserverutil.readFrame;
 
 
 // TODO:
@@ -34,106 +39,60 @@ const wsutil = require('wsutil');
 const genericio = require('bis_genericio.js');
 
 
-let verbose=false;
-
-// In Insecure Mode (if true);
-let insecure=wsutil.insecure;
-let baseDirectory = os.homedir();
-
-
 //'magic' string for WebSockets
 //https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers
 const SHAstring = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 
 
-//data transfer requires switching a few variables that need to be global in scope
-let timeout = undefined;
-
 //variables related to generating one-time passwords (OTP)
 let onetimePasswordCounter = 0;
 
-//flag denoting whether the server will accept write requests 
-let READONLYFLAG=false;
-
-//
 // ------------------------------------------ Utility Functions ------------------------
 // 
-let globalPortNumber=-1;
-let globalDataPortNumber=-2;
-let globalHostname="";
+/*let globalPortNumber=-1;
+  let globalDataPortNumber=-2;
+  let globalHostname="";
+*/
 
-/**
- * Takes a payload and a description of the payload type and formats the packet for transmission. 
- * 
- * @param {String} payloadType - A word describing the nature of the payload.
- * @param {String|Binary} data - The payload for the packet.
- * @returns A raw bytestream that can be sent over the socket.
- */
-let formatPacket = (payloadType, data) => {
-    let payload, opcode;
-    //transmissions are either text (JSON) or a raw image 
-    if (payloadType === 'binary') {
-        payload = data;
-        opcode = 2;
-    } else {
-        payload = JSON.stringify({
-            'type' : payloadType,
-            'payload' : data
-        });
-        opcode = 1;
-        //console.log('Sending payload',payload.substr(0,100));
-    }
-    
-    let controlFrame = wsutil.formatControlFrame(opcode, payload.length);
-    let packetHeader = Buffer.from(controlFrame.buffer), packetBody = Buffer.from(payload);
-    let packet = Buffer.concat([packetHeader, packetBody]);
-    
-    return packet;
-};
-
-
-const readFrame = (chunk) => {
-        
-    let controlFrame = chunk.slice(0, 14);
-    let parsedControl = wsutil.parseControlFrame(controlFrame);
-    //    console.log('parsed control frame', parsedControl);
-    
-    //drop unmasked packets
-    if (!parsedControl.mask) {
-        //console.log('Received a transmission with no mask from client, dropping packet.'); 
-        return;
-    }
-    
-    if (parsedControl.payloadLength<0 ||
-        parsedControl.payloadLength>65536) {
-        //console.log('Chunk=',chunk.byteLength);
-        //        console.log('ControlFrame=',controlFrame,controlFrame.byteLength);
-        //        console.log('Bad payload',parsedControl.payloadLength);
-        return;
-    }
-    
-    
-    let decoded = new Uint8Array(parsedControl.payloadLength);
-    
-    //decode the raw data (undo the XOR)
-    for (let i = 0; i < parsedControl.payloadLength; i++) {
-        decoded[i] = chunk[i + parsedControl.datastart] ^ parsedControl.mask[i % 4];
-    }
-    
-    return { 
-        'parsedControl' : parsedControl,
-        'decoded' : decoded
-    };
-};
 
 // ------------------------------------------ This is the class --------------------------------
 
 class FileServer {
 
-    constructor() {
+    constructor(opts={}) {
         //  ------------------- Per Connection ----------------------------------------------
         //file transfer may occur in chunks, which requires storing the chunks as they arrive
         this.fileInProgress = null;
+
+        this.verbose = opts.verbose || false;
+        this.baseDirectoriesList = opts.baseDirectoriesList || null;
+        this.readonly = opts.readonly || false;
+
+        this.tempDirectory='/tmp';
+
+        
+        if (this.baseDirectoriesList === null) {
+            if (path.sep==='/')  {
+                this.baseDirectoriesList=[ os.homedir() ];
+            } else {
+                this.baseDirectoriesList=[ util.filenameWindowsToUnix(os.homedir()), util.filenameWindowsToUnix('e:') ];
+            }
+        }
+
+        if (path.sep==='\\')
+            this.tempDirectory=util.filenameWindowsToUnix(os.homedir()+'/temp');
+        else
+            this.baseDirectoriesList.push(this.tempDirectory);
+
+        
+
+        // Former global variables
+        this.portNumber=-1;
+        this.dataPortNumber=-2;
+        this.hostname='localhost';
+
+        // Formerly global variable
+        this.timeout = undefined;
     }
     
     // password token
@@ -144,7 +103,7 @@ class FileServer {
         if (abbrv===0) {
             console.log('++++ BioImage Suite Web FileServer Initialized\n++++');
             console.log('++++ \t The websocket server is listening for incoming connections,\n++++\t using the following one time info.\n++++');
-            console.log(`++++ \t\t hostname: ${globalHostname}:${globalPortNumber}`);
+            console.log(`++++ \t\t hostname: ${this.hostname}:${this.portNumber}`);
         }  else if (abbrv===1) {
             console.log('++++\n++++ Create New Password ... try again.');
         } else {
@@ -154,6 +113,8 @@ class FileServer {
     }
 
 
+
+    
     /**
      * Creates the server instance, binds the handshake protocol to its 'connection' event, and begins listening on port 8081 (control port for the transfer).
      * Future sockets may be opened after this method has been called if the server is made to listen for the eonnection. 
@@ -163,14 +124,27 @@ class FileServer {
      * 
      * @param {String} hostname - The name of the domain that will be attempting to connect to the server, i.e. the client address. 
      * @param {Number} port - The control port for the exchanges between the client and server. 
+     * @param {Boolean} datatransfer - if true this is a data transfer server
      * @param {Function} readycb - A callback to invoke when the server emits its 'listening' event. Optional.
      * @returns The server instance.  
      */
-    startServer(hostname, port, newport = true, readycb = null) {
-
+    startServer(hostname='localhost', port=8081, datatransfer = true, readycb = null) {
 
         
+
         let newServer = net.createServer(handleConnectionRequest);
+
+        if (datatransfer) {
+            this.dataPortNumber=port;
+            this.portNumber=-1;
+            console.log('____ Starting transfer data server on ',port);
+        } else {
+            this.portNumber=port;
+            this.dataPortNumber=port+1000;
+            this.hostname=hostname;
+            this.createPassword();
+        }
+            
         
         try {
             newServer.listen(port, hostname, readycb);
@@ -178,15 +152,6 @@ class FileServer {
             console.log(e);
         }
         
-        if (newport) {
-            globalPortNumber=port;
-            globalDataPortNumber=port+1000;
-            globalHostname=hostname;
-            this.createPassword();
-        } else {
-            console.log('____ Starting transfer data server on ',port);
-        }
-
         //handleConnectionRequest is called when a connection is successfuly made between the client and the server and a socket is prepared
         //it performs the WebSocket handshake (see https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers#The_WebSocket_Handshake)
         //as well it attaches protocols to handle when the socket is ended or closed
@@ -225,20 +190,21 @@ class FileServer {
                 response = response + acceptKey + '\r\n\r\n';
                 
                 let port = socket.localPort;
+                if (datatransfer) {
+                    this.dataPortNumber=port;
+                    this.portNumber=-1;
+                } else {
+                    this.portNumber=port;
+                }
+                this.portNumber=port;
                 socket.write(response, 'utf-8', () => {
                     //connectors on globalPortNumber are negotiating a control port, connectors on globalDataPortNumber are negotiating a transfer port
-                    console.log('____ We are ready to respond',port,globalPortNumber,globalDataPortNumber);
-                    switch (port) {
-                    case globalPortNumber:
+                    console.log('____ We are ready to respond',port,' datatransfer=',datatransfer);
+                    if (!datatransfer) {
                         self.authenticate(socket);
-                        break;
-                    case globalDataPortNumber:
+                    } else {
                         self.prepareForDataFrames(socket);
-                        break;
-                    default:
-                        console.log('---- Client attempting to connect on unexpected port', socket.localPort, 'rejecting connection.');
-                        return;
-                    } 
+                    }
                 });    
             };
             
@@ -259,8 +225,8 @@ class FileServer {
                         newServer.close();
                         
                         //start the server listening for new connections if it's on the control port
-                        if (port === globalPortNumber) {
-                            newServer.listen(globalPortNumber, globalHostname);
+                        if (port === this.portNumber) {
+                            newServer.listen(this.portNumber, this.hostname);
                             self.createPassword();
                         }
                     }
@@ -352,13 +318,13 @@ class FileServer {
     handleTextRequest(rawText, control, socket)  {
         let parsedText = this.parseClientJSON(rawText);
         parsedText=parsedText || -1;
-        if (verbose)
+        if (this.verbose)
             console.log('____ text request', JSON.stringify(parsedText));
         switch (parsedText.command)
         {
             //get file list
             case 'getfilelist': {
-                this.serveFileList(socket, parsedText.directory, parsedText.type, parsedText.depth,parsedText.id);
+                this.serveFileList(socket, parsedText.directory, parsedText.type,parsedText.id);
                 break;
             }
             case 'readfile': {
@@ -400,6 +366,7 @@ class FileServer {
                 socket.end();
                 socket.destroy();
                 process.exit(0);
+                break;
             }
             
             default: {
@@ -446,16 +413,16 @@ class FileServer {
             
             switch (parsedControl.opcode) {
             case 2:
-                if (verbose)
+                if (this.verbose)
                     console.log('---- adding packet with control', JSON.stringify(parsedControl));
                 try {
                     addToCurrentTransfer(decoded, parsedControl, socket);
                 } catch(e) {
                     console.log("Addition error",e);
                 }
-                if (timeout) {
-                    timers.clearTimeout(timeout);
-                    timeout = null;
+                if (this.timeout) {
+                    timers.clearTimeout(this.timeout);
+                    this.timeout = null;
                 }
                 break;
             case 8: 
@@ -465,8 +432,8 @@ class FileServer {
                 break;
             default: 
                 console.log('---- dropping packet with control', JSON.stringify(parsedControl));
-                if (!timeout) {
-                    timeout = self.setSocketTimeout( () => {
+                if (!this.timeout) {
+                    this.timeout = self.setSocketTimeout( () => {
                         console.log('---- timed out waiting for client');
                         socket.end();
                     });
@@ -478,16 +445,19 @@ class FileServer {
         let getWriteLocation=function(name,dataInProgress) {
             
             //console.log('Name=',name,'BaseDirectory=',baseDirectory);
-            
-            if (name.indexOf(baseDirectory)===0)
-                return name;
+            let i=0;
+            while (i<self.baseDirectoriesList.length) {
+                if (name.indexOf(self.baseDirectoriesList[i])===0)
+                    return name;
+                i=i+1;
+            }
             
             if (name.indexOf("/")===0) {
                 let f=name.lastIndexOf("/");
                 name=name.substr(f+1,name.length);
             }
             
-            name=path.join(baseDirectory,dataInProgress.name);
+            name=path.join(self.baseDirectoriesList[0],dataInProgress.name);
             return name;
         };
         
@@ -495,7 +465,7 @@ class FileServer {
             
             let dataInProgress=self.fileInProgress;
 
-            if (verbose)
+            if (self.verbose)
                 console.log('\tupload=',dataInProgress.offset,'Lengths: total=',dataInProgress.data.length,
                             'piecel=',upload.length);
             
@@ -528,6 +498,8 @@ class FileServer {
                 }
 
                 let writeLocation = getWriteLocation(dataInProgress.name,dataInProgress);
+                if (path.sep==='\\')
+                    writeLocation=util.filenameUnixToWindows(writeLocation);
                 console.log('____ writing to file', writeLocation,'size=',dataInProgress.data.length,' checksum matched=',checksum,dataInProgress.checksum);
                 
                 genericio.write(writeLocation, dataInProgress.data, dataInProgress.isbinary).then( () => {
@@ -568,7 +540,11 @@ class FileServer {
             'uploadCount' : upload.uploadCount,
         };
         this.fileInProgress.data = new Uint8Array(upload.storageSize);
-        console.log('\n+++++++++++++\n+++++++++++ this.fileInProgress data created=',this.fileInProgress.totalSize,' count=',this.fileInProgress.uploadCount,'\n++++++++++++');
+        console.log('\n+++++++++++++\n+++++++++++ this.fileInProgress',
+                    'data created=',this.fileInProgress.totalSize,
+                    'count=',this.fileInProgress.uploadCount,
+                    'name=',upload.filename,
+                    '\n++++++++++++');
     }
     
     /**
@@ -583,7 +559,7 @@ class FileServer {
      */
     getFileFromClientAndSave(upload, control, socket) {
 
-        if (READONLYFLAG) {
+        if (this.readonly) {
             console.log('Server is in read-only mode and will not accept writes.');
             socket.write(formatPacket('uploadmessage', {
                 'name' : 'serverreadonly',
@@ -595,15 +571,19 @@ class FileServer {
         
 
         //spawn a new server to handle the data transfer
-        let tserver=new FileServer();
+        let tserver=new FileServer({ verbose : this.verbose,
+                                     readonly : this.readonly
+                                   });
+
         //        globalDataPortNumber+=1; // get me the next available port
-        globalDataPortNumber+=1;
-        console.log('Starting tserver',globalHostname,globalDataPortNumber);
-        tserver.startServer(globalHostname, globalDataPortNumber,false, () => {
+        this.dataPortNumber+=1;
+
+        tserver.startServer(this.hostname, this.dataPortNumber,true, () => {
             tserver.createFileInProgress(upload);
+
             socket.write(formatPacket('uploadmessage', {
                 'name' : 'datasocketready',
-                'port' : globalDataPortNumber,
+                'port' : this.dataPortNumber,
                 'id' : upload.id
             }));
         });
@@ -630,6 +610,9 @@ class FileServer {
           if (!isbinary)
           pkgformat='text';*/
 
+        if (path.sep==='\\')
+            filename=util.filenameUnixToWindows(filename);
+
         if (isbinary) {
             fs.readFile(filename,  (err, d1) => {
                 if (err) {
@@ -637,7 +620,7 @@ class FileServer {
                 } else {
                     console.log(`____ load binary file ${filename} successful, writing to socket.`);
                     let checksum=`${util.SHA256(new Uint8Array(d1))}`;
-                    if (verbose)
+                    if (this.verbose)
                         console.log('_____ Sending checksum=',checksum, 'id=',id);
                     socket.write(formatPacket('checksum', {
                         'checksum' : checksum,
@@ -653,7 +636,8 @@ class FileServer {
                     this.handleBadRequestFromClient(socket, err);
                 } else {
                     console.log(`____ load text file ${filename} successful, writing to socket.`);
-                    socket.write(formatPacket('text', { 'data' :  d1, 'id' : id}));
+                    socket.write(formatPacket('text', { 'data' :  d1,
+                                                        'id' : id}));
                 }
             });
         }        
@@ -670,84 +654,136 @@ class FileServer {
      * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
      * @param {String} basedir - Directory on the server machine to display files starting from, null indicates '~/'. Writes different responses to the socket if basedir is null or not ('filelist' vs 'supplementalfiles').
      * @param {String} type - The type of modal that will be served the file list. Either 'load' or 'save'. 
-     * @param {Number} depth - Number of directories under basedir to expand. Optional, depth will be 2 if not specified.
      * @param {Number} id - the request id
      * @returns A file tree rooted at basedir.
      */
-    serveFileList(socket, basedir, type, depth = 2,id=-1)  {
-        let fileTree = [];
-        if (basedir === null) {
-            basedir = baseDirectory;
-        }
+    serveFileList(socket, basedir, type,id=-1)  {
 
-        //path = full filepath
-        //fileTreeIndex = the the children of the current tree entry
-        //directoriesExpanded = the number of file tree entries expanded so far
-        let expandDirectory = (pathname, fileTreeIndex, directoriesExpanded) => {
-            return new Promise( (resolve, reject) => {
-                fs.readdir(pathname, (err, files) => {
-                    if (err) { reject(err); }
+        const debug=this.debug;
+        
+        let getmatchedfiles=function(basedir) {
 
-                    //remove hidden files/folders from results
-                    let validFiles = files.filter( (unfilteredFile) => { return unfilteredFile.charAt(0) !== '.'; });
-                    
-                    let expandInnerDirectory = (pathname, treeEntry) => {
-                        return new Promise((resolve, reject) => {
-                            //if file is a directory, expand it and add its children to fileTree recursively
-                            //otherwise just add the entry and resolve
-                            fs.lstat(pathname, (err, stat) => {
-                                if (err) { reject(err); }
-
-                                fileTreeIndex.push(treeEntry);
-
-                                if (stat.isDirectory()) {
-                                    treeEntry.children = [];
-                                    treeEntry.type = 'directory';
-                                    
-                                    if (!directoriesExpanded < depth) {
-                                        expandDirectory(pathname, treeEntry.children, directoriesExpanded + 1).then( () => { resolve(fileTreeIndex); });
-                                    } else {
-                                        treeEntry.expand = true;
-                                        resolve(fileTreeIndex);
-                                    }
-                                } else {
-                                    //if not a directory determine the filetype 
-                                    //get the file extension by taking the file at the end of the pathname and looking after the last '.'
-                                    let extension = path.parse(pathname).ext;
-                                    switch (extension)
-                                    {
-                                        case 'gz' : {
-                                            treeEntry.type = 'picture'; break;
-                                        }
-                                        default : {
-                                            treeEntry.type = 'file';
-                                        }
-                                    }
-                                    resolve(fileTreeIndex);
-                                }
-
-                                treeEntry.path = util.filenameWindowsToUnix(pathname);
-                            });
-                        });
-                    };
-
-                    //expand a directory inside the current directory -- resolve promise when all contents examined.
-                    let promisesInsideDirectory = [];
-                    for (let file of validFiles) {
-                        let newTreeEntry = { 'text': file };
-                        let newPathname = path.join(pathname,file);
-                        promisesInsideDirectory.push(expandInnerDirectory(newPathname, newTreeEntry));
-                    }
-
-                    Promise.all(promisesInsideDirectory).then(() => { resolve(fileTreeIndex); });
+            if (debug)
+                console.log('____ Reading directory=',basedir);
+            
+            let pathname=basedir;
+            if (path.sep==='\\') 
+                pathname=util.filenameUnixToWindows(basedir);
+            
+            let p=path.join(pathname,'*');
+            
+            return new Promise( (resolve,reject) => {
+                glob(p, function(er,files) {
+                    if (er) 
+                        reject(er);
+                    resolve({
+                        pathname : pathname,
+                        files : files});
                 });
             });
         };
 
+        let getstats=function(fname) {
 
-        expandDirectory(basedir, fileTree, 0).then( (tree) => {
-            socket.write(formatPacket('filelist', { 'path' : basedir,'type' : type, 'data' : tree, 'modalType' : type, 'id' : id }));
-        });
+            return new Promise( (resolve,reject) => {
+
+                fs.lstat(fname,(err,result) => {
+                    if (err)
+                        reject(err)
+
+                    resolve(result);
+                });
+            });
+        };
+        
+        let createTree=async function(files) {
+
+            console.log('Creating files=',files);
+            
+            let treelist=[];
+            for (let f=0;f<files.length;f++) {
+                
+                let fname=files[f];
+                let basename=path.basename(fname);
+                if (fname.indexOf(".")!==0 && basename.indexOf("#")!==0) {
+                    
+                    let treeEntry = { };
+                    treeEntry.text=basename;
+                    
+                    //let stats=fs.lstatSync(fname);
+                    let stats;
+                    try{
+                        stats=await getstats(fname);
+                    } catch(e) {
+                        return null;
+                    }
+                    if (!stats.isSymbolicLink()) {
+                        if (stats.isDirectory()) {
+                            treeEntry.type = 'directory';
+                            treeEntry.size = 0;
+                        } else {
+                            let extension = path.parse(fname).ext;
+                            switch (extension)
+                            {
+                                case 'gz' : {
+                                    treeEntry.type = 'picture'; break;
+                                }
+                                default : {
+                                    treeEntry.type = 'file';
+                                }
+                            }
+                            treeEntry.size = stats["size"];
+                            }
+                    }
+                    let f2=util.filenameWindowsToUnix(path.resolve(path.normalize(fname)));
+
+                    if (treeEntry.type === 'directory') {
+                        if (f2.lastIndexOf('/')===f2.length-1)
+                            f2=f2.substr(0,f2.length-1);
+                    }
+                    treeEntry.path = f2;
+                    treelist.push(treeEntry);
+                }
+            }
+
+            return treelist;
+        };
+
+        let treelist=null;
+        
+        if (basedir || this.baseDirectoriesList.length<2) {
+
+            basedir = basedir || this.baseDirectoriesList[0];
+            getmatchedfiles(basedir).then( (obj) => {
+
+                let pathname=obj.pathname;
+                if (path.sep==='\\')
+                    pathname=util.filenameWindowsToUnix(pathname);
+                
+                createTree(obj.files).then( (treelist) => {
+                    socket.write(formatPacket('filelist', { 'path' : pathname,'type' : type, 'data' : treelist, 'modalType' : type, 'id' : id }));
+                });
+            }).catch( (e) => {
+                console.log(e,e.stack);
+            });
+        } else {
+            console.log('\n\n this far',this.baseDirectoriesList);
+            let lst=this.baseDirectoriesList;
+            if (path.sep==='\\') {
+                lst=[];
+                for (let i=0;i<this.baseDirectoriesList.length;i++) {
+                    lst.push(util.filenameUnixToWindows(this.baseDirectoriesList[i]));
+                }
+            }
+            
+            createTree(lst).then( (treelist) => {
+                socket.write(formatPacket('filelist', { 'path' : "/",'type' : type, 'data' : treelist, 'modalType' : type, 'id' : id }));
+            }).catch( (e) => {
+                console.log(e,e.stack);
+            });
+        }
+
+
     }
 
     /**
@@ -757,7 +793,7 @@ class FileServer {
      * @param {Number} id - the request id
      */
     serveServerBaseDirectory(socket,id=0)  {
-        socket.write(formatPacket('serverbasedirectory', { 'path' : baseDirectory,  'id' : id }));
+        socket.write(formatPacket('serverbasedirectory', { 'path' : this.baseDirectoriesList,  'id' : id }));
     }
 
     /**
@@ -766,8 +802,7 @@ class FileServer {
      * @param {Number} id - the request id
      */
     serveServerTempDirectory(socket,id=0) {
-        let homedir = os.homedir();
-        socket.write(formatPacket('servertempdirectory', { 'path' : path.join(homedir,'tmp'), 'id' : id }));
+        socket.write(formatPacket('servertempdirectory', { 'path' : this.tempDirectory, 'id' : id }));
     }
 
 
@@ -780,6 +815,10 @@ class FileServer {
     fileSystemOperations(socket,opname,url,id=0)  {
 
         let prom=null;
+
+        if (path.sep==='\\')
+            url=util.filenameUnixToWindows(url);
+
         switch (opname)
         {
             case 'getFileSize' : {
@@ -795,14 +834,15 @@ class FileServer {
                 break;
             }
             case 'makeDirectory' : {
-                if (!READONLYFLAG) 
+                console.log('Making ',url);
+                if (!this.readonly) 
                     prom=bisgenericio.makeDirectory(url);
                 else
                     prom=Promise.reject('In Read Only Mode');
                 break;
             }
             case 'deleteDirectory' : {
-                if (!READONLYFLAG) 
+                if (!this.readonly) 
                     prom=bisgenericio.deleteDirectory(url);
                 else
                     prom=Promise.reject('In Read Only Mode');
@@ -814,6 +854,14 @@ class FileServer {
             return;
         
         prom.then( (m) => {
+            if (opname==='getMatchingFiles' && path.sep==='\\') {
+                let s=[];
+                for (let i=0;i<m.length;i++)
+                    s.push(util.filenameWindowsToUnix(m[i]));
+                m=s;
+            }
+                
+                
             console.log('____ File system success=',opname,url,m);
             socket.write(formatPacket('filesystemoperations', { 'result' : m,
                                                                 'url' : url,
@@ -943,18 +991,20 @@ let portno=8081;
 if (program.port)
     portno=parseInt(program.port);
 
-let nolocalhost=false;
 
-READONLYFLAG = program.readonly ? program.readonly : false;
-insecure = program.insecure ? program.insecure : false;
-verbose = program.verbose ? program.verbose : false;
-nolocalhost = program.nolocalhost ? program.nolocalhost : false;
+let readonlyflag = program.readonly ? program.readonly : false;
+let insecure = program.insecure ? program.insecure : false;
+let verbose = program.verbose ? program.verbose : false;
+let nolocalhost = program.nolocalhost ? program.nolocalhost : false;
 
-//if (insecure)
-//    nolocalhost=false;
-
-
-let server=new FileServer();
+let server=new FileServer(
+    {
+        "verbose" : verbose,
+        "insecure" : insecure,
+        "readonly" : readonlyflag,
+        "nolocalhost" : nolocalhost,
+    }
+);
 
 require('dns').lookup(require('os').hostname(), function (err, add) {
 
@@ -962,7 +1012,7 @@ require('dns').lookup(require('os').hostname(), function (err, add) {
     if (nolocalhost)
         ipaddr=`${add}`;
     console.log('__________________________________________________________________________________');
-    server.startServer(ipaddr, portno, true, () => {
+    server.startServer(ipaddr, portno, false, () => {
         if (insecure) {
             console.log("++++\t IN INSECURE MODE");
         }
@@ -970,7 +1020,7 @@ require('dns').lookup(require('os').hostname(), function (err, add) {
             console.log("----\t Allowing remote connections");
         else
             console.log("----\t Allowing only local connections");
-        if (READONLYFLAG)
+        if (this.readonly)
             console.log("----\t Running in 'read-only' mode");
     console.log('__________________________________________________________________________________');
     });

@@ -43,10 +43,8 @@ class BisFileServerClient extends BisBaseServerClient {
 
         let id=command.id;
         let timeout=command.timeout || 10000;
-        
-        setTimeout( () => {
-            bisasyncutil.rejectServerEvent(id,'timeout')
-        },timeout);
+
+        bisasyncutil.addEventTimeout(id,timeout);
     }
 
     sendRawText(text) {
@@ -54,10 +52,7 @@ class BisFileServerClient extends BisBaseServerClient {
         // id is this.authenticatingEvent.id;
         this.socket.send(text);
         let id=this.authenticatingEvent.id;
-        setTimeout( () => {
-            bisasyncutil.rejectServerEvent(id,'timeout')
-        },10000);
-        
+        bisasyncutil.addEventTimeout(id);
     }
         
 
@@ -319,6 +314,7 @@ class BisFileServerClient extends BisBaseServerClient {
      */
     requestFileList(type, directory = null, showdialog=true,opts=null) {
 
+        
         if (opts)
             this.lastOpts=opts;
 
@@ -332,7 +328,10 @@ class BisFileServerClient extends BisBaseServerClient {
 
             this.authenticate().then( () => {
                 let serverEvent=bisasyncutil.addServerEvent(cb,reject,'requestFileList');
-                this.sendCommand({ 'command' : 'getfilelist', 'directory' : directory, 'type' : type , 'depth' : 0, 'id' : serverEvent.id}); 
+                this.sendCommand({ 'command' : 'getfilelist',
+                                   'directory' : directory,
+                                   'type' : type ,
+                                   'id' : serverEvent.id}); 
             });
         });
     }
@@ -375,6 +374,10 @@ class BisFileServerClient extends BisBaseServerClient {
      */
     downloadFile(url,isbinary) {
         return new Promise( (resolve, reject) => {
+
+            if (url.indexOf('\\')>=0)
+                url=util.filenameWindowsToUnix(url);
+
             
             let handledata = ( (raw_data) => { 
 
@@ -408,6 +411,7 @@ class BisFileServerClient extends BisBaseServerClient {
             
             this.sendCommand({ 'command' : 'readfile',
                                'filename' : url,
+                               'timeout' : 999999,
                                'id' : serverEvent.id,
                                'isbinary' : isbinary });
         });
@@ -484,6 +488,10 @@ class BisFileServerClient extends BisBaseServerClient {
     uploadFile(url, data, isbinary=false) {
 
 
+        if (url.indexOf('\\')>=0)
+            url=util.filenameWindowsToUnix(url);
+
+        
         // TODO: is the size of body < packetsize upload in one shot
         let body=null;
         if (!isbinary) 
@@ -526,6 +534,7 @@ class BisFileServerClient extends BisBaseServerClient {
             'filename': url,
             'isbinary' : isbinary,
             'checksum' : checksum,
+            'timeout' : 999999,
             'uploadCount' : uploadcount,
         };
 
@@ -536,6 +545,8 @@ class BisFileServerClient extends BisBaseServerClient {
 
         this.initiateDataUploadHandshakeAndGetPort(metadata).then( (port) => {
 
+            console.log("looking to connect to port",port);
+            
             let server=this.hostname || null;
             if (server) {
                 let ind=server.lastIndexOf(":");
@@ -641,6 +652,9 @@ class BisFileServerClient extends BisBaseServerClient {
      * @returns {Promise} payload is the result
      */
     fileSystemOperation(name,url) {
+
+        if (url.indexOf('\\')>=0)
+            url=util.filenameWindowsToUnix(url);
 
         return new Promise( (resolve,reject) => {
             

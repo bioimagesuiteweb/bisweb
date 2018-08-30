@@ -8,7 +8,7 @@ const BisWebImage=require('bisweb_image');
 //bisasyncutil.setVerbose(true);
 
 const path=require('path');
-
+const util=require('bis_util');
 let basedir=path.resolve(__dirname, '../web/images/');
 console.log('Base dir=',basedir);
 
@@ -31,13 +31,15 @@ let test_fn=async function(address) {
 
     console.log('++++\n++++ Base Dir\n++++');
     let bd=await client.getServerBaseDirectory();
+    bd=bd[0];
     console.log('\nBase =',bd);
 
     console.log('++++\n++++ Temp Dir\n++++');
     let t=await client.getServerTempDirectory();
     console.log('\nTemp =',t);
 
-    let newdirname=`${bd}/tmp_xenios`;
+    let newdirname=bd+'/tmp_xenios';
+    console.log('New dirname',newdirname);
     try {
         let f1=await genericio.getFileSize(`${basedir}/MNI_T1_2mm_stripped_ras.nii.gz`);
         console.log('File size=',f1);
@@ -48,13 +50,12 @@ let test_fn=async function(address) {
         let f3=await genericio.isDirectory(`${basedir}/MNI_T1_2mm_stripped_ras.nii.gz`);
         console.log('is File Directory=',f3);
         
-
+        
         let f4=await genericio.makeDirectory(newdirname);
         console.log('made File Directory=',newdirname,f4);
 
         let f6=await genericio.isDirectory(newdirname);
         console.log(newdirname,' is directory=',f6);
-        
         
     } catch(e) {
         console.log(e);
@@ -63,10 +64,13 @@ let test_fn=async function(address) {
     
     console.log('++++\n++++ Download File\n++++');
     let img=new BisWebImage();
-    await img.load(`${basedir}/MNI_T1_2mm_stripped_ras.nii.gz`,'None');
+    let f=util.filenameWindowsToUnix(`${basedir}/MNI_T1_2mm_stripped_ras.nii.gz`);
+    await img.load(f);
     console.log('Done ', img.getDescription());
 
-    let maxk=40;
+
+    
+    let maxk=20;
 
     for (let k=1;k<maxk;k+=5) {
         try {
