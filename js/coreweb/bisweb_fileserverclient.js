@@ -74,7 +74,7 @@ class BisWebFileServerClient extends BisFileServerClient {
                     this.connectToServer('ws://'+this.hostname);
                 } else {
                     setTimeout( () => {
-                        this.socket.send(this.password);
+                        this.sendRawText(this.password);
                     },10);
                 }
             });

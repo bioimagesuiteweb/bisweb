@@ -38,8 +38,28 @@ class BisFileServerClient extends BisBaseServerClient {
             console.log('____ \t\t Sending ',js,' length=',js.length);
         }
         this.socket.send(js);
+        // id here = command.id
         this.lastCommand=command;
+
+        let id=command.id;
+        let timeout=command.timeout || 10000;
+        
+        setTimeout( () => {
+            bisasyncutil.rejectServerEvent(id,'timeout')
+        },timeout);
     }
+
+    sendRawText(text) {
+        // Password only really
+        // id is this.authenticatingEvent.id;
+        this.socket.send(text);
+        let id=this.authenticatingEvent.id;
+        setTimeout( () => {
+            bisasyncutil.rejectServerEvent(id,'timeout')
+        },10000);
+        
+    }
+        
 
     closeConnection() {
         if (this.socket) {
@@ -170,7 +190,7 @@ class BisFileServerClient extends BisBaseServerClient {
                 break;
             }
             case 'authenticate': {
-                this.socket.send(this.password || '');
+                this.sendRawText(this.password || '');
                 break;
             }
             case 'badauth':  {
@@ -631,6 +651,16 @@ class BisFileServerClient extends BisBaseServerClient {
                                'url' : url,
                                'id' : serverEvent.id }); 
         });
+    }
+
+    sendCommandPromise(command) {
+        
+        return new Promise( (resolve,reject) => {
+            let serverEvent=bisasyncutil.addServerEvent(resolve,reject,'direct');
+            command.id=serverEvent.id;
+            this.sendCommand(command);
+        });
+
     }
 
 }
