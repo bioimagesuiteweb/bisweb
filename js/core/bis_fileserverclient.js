@@ -78,20 +78,24 @@ class BisFileServerClient extends BisBaseServerClient {
         
         //add the event listeners for the control port
         let closeEvent = this.socket.addEventListener('close', () => {
-            console.log('Socket closing');
+            console.log('---- Socket closing');
+            if (this.authenticatingEvent) {
+                let id=this.authenticatingEvent.id;
+                bisasyncutil.rejectServerEvent(id,'failure to authenticate');
+            }
         });
 
         // Handle Data From Server
         let messageEvent = this.socket.addEventListener('message', (event) => {
             this.handleServerResponse(event);
+            this.hostname=address;
         });
 
         let errorEvent = this.socket.addEventListener('error', (event) => {
-            console.log('error event', event);
             this.alertEvent('Failed to connect to server: '+address+'. It may not exist.',true);
-            this.socket=removeEventListener('close', closeEvent);
-            this.socket=removeEventListener('message', messageEvent);
-            this.socket=removeEventListener('error', errorEvent);
+            this.socket.removeEventListener('close', closeEvent);
+            this.socket.removeEventListener('message', messageEvent);
+            this.socket.removeEventListener('error', errorEvent);
             this.socket=null;
         });
 
@@ -241,8 +245,8 @@ class BisFileServerClient extends BisBaseServerClient {
      * @returns{Promise} - when this is done
      */
     authenticate(password='',hostname=null) {
-
-        password = password || '';
+        
+        this.password = password || '';
         hostname = hostname || 'ws://localhost:8081';
         
         if (this.authenticated)
@@ -262,7 +266,6 @@ class BisFileServerClient extends BisBaseServerClient {
             this.authenticatingEvent=bisasyncutil.addServerEvent(successCB,failureCB,'authenticate');
 
             if (password.length>0 || this.hasGUI===false) {
-                this.password=password || '';
                 this.connectToServer(hostname);
             } else {
                 // Useless if no GUI
@@ -510,8 +513,15 @@ class BisFileServerClient extends BisBaseServerClient {
             console.log((metadata));
 
         this.initiateDataUploadHandshakeAndGetPort(metadata).then( (port) => {
+
+            let server=this.hostname || null;
+            if (server) {
+                let ind=server.lastIndexOf(":");
+                server=server.substr(0,ind)+`:${port}`;
+            } else {
+                server=`ws://localhost:${port}`;
+            }
             
-            let server=`ws://localhost:${port}`;
             if (verbose)
                 console.log("Connecting to data server ",server);
             
