@@ -108,10 +108,10 @@ let test_fn=async function(address) {
     process.exit();
 };
 
-require('dns').lookup(require('os').hostname(), function (err, add, fam) {
+require('dns').lookup(require('os').hostname(), function (err, add) {
     try {
         test_fn(add);
     } catch(e) {
-        console.log("Error",e);
+        console.log("Error",e,err);
     }
 });
