@@ -113,40 +113,32 @@ describe('Testing the server\n', function() {
 
     it ('normalize filenames',function() {
 
-        console.log('\n-------------------------------------------------\n');
+        console.log('\n');
         
         let ok=true;
         let fname=fullnames[0];
         let sep=path.sep;
-        console.log('Fname=('+fname+')');
+        console.log('\tOriginal Fname=('+fname+')');
         let s=fname.trim().split(sep);
 
-        console.log('Normalized by us=',genericio.getNormalizedFilename(fname,"",true));
-        
+        console.log('\t\t Normalized by us=',genericio.getNormalizedFilename(fname,"",true));
 
-
-
-        console.log('Parts=',s.join('__'));
+        console.log('\tParts=',s.join('__'));
         
         let offset=4;
         let part1=s[0],part2=s[offset];
         if (sep==='/')
             part1=sep+part1;
 
-        console.log('Initial (part1='+part1+', part2='+part2+')');
-
         for (let i=1;i<offset;i++)
             part1=part1+sep+s[i];
         for (let i=offset+1;i<s.length;i++)
             part2=part2+sep+s[i]
         
-        console.log('fname=',fname);
-        console.log('\tpart1=',part1);
-        console.log('\tpart2=',part2);
-        console.log('____');
-        console.log('____');
 
-        console.log('\n-------------------------------------------------\n');        
+        console.log('\t\tpart1=',part1);
+        console.log('\t\tpart2=',part2);
+
         for (let j=1;j<=3;j++) {
 
             let newpart1=part1,newpart2=part2;
@@ -154,34 +146,34 @@ describe('Testing the server\n', function() {
                 newpart1=newpart1+sep+'..';
                 newpart2=s[offset-add-1]+sep+newpart2;
             }
-            console.log('j=',j,' parts=('+newpart1+','+newpart2+')');
+            console.log('\n\tj=',j,' parts=  '+newpart1+'\n\t\t and '+newpart2);
 
             let f2=path.resolve(path.join(newpart1,newpart2));
-            console.log('\t\t reconnected=',f2);
+            console.log('\t      reconnected native=',f2);
             if (f2!==fname) {
-                console.log("failed to reconnect");
+                console.log("failed to reconnect native");
                 ok=false;
             }
 
             // actual test
             let p1=util.filenameWindowsToUnix(newpart1);
             let p2=util.filenameWindowsToUnix(newpart2);
-            console.log('p=('+p1+','+p2+')');
+            console.log('\t\tparts mapped to unix='+p1+'\n\t\t and '+p2+')');
             let c=genericio.joinFilenames(p1,p2,true);
-            console.log('c=('+c+')');
+            console.log('\n\t\tjoined=('+c+')');
             let d=genericio.getNormalizedFilename(c,"",true);
-            console.log('d=('+d+')');
-            console.log('____');
-            console.log('____');
+            console.log('\t\tnormalized=('+d+')');
             let e=d;
             if (path.sep=='\\')
                 e=util.filenameUnixToWindows(e);
             if (e!==fname) {
-                console.log('Bad resolve',e);
+                console.log('\t\Connected Bad',e);
                 ok=false;
             } else {
-                console.log('Connected ',e,'good')
+                console.log('\t\tConnected Good ',e)
             }
+            console.log('');
+
         }
 
         assert(ok,true);
