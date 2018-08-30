@@ -21,11 +21,15 @@
 
 
 require('../config/bisweb_pathconfig.js');
+const bisgulputil=require('../config/bis_gulputils.js');
 
 const assert = require("assert");
 const path=require('path');
 const util=require('bis_util');
 const genericio=require('bis_genericio');
+const BisFileServerClient=require('bis_fileserverclient');
+const WebSocket = require('ws');
+const os=require('os');
 
 let inpfilename = "testdata/MNI_2mm_resliced.nii.gz";
 let testfilename = "testdata/newtests/goldsmooth2sigma.nii.gz";
@@ -36,7 +40,9 @@ for (let i=0;i<=1;i++)
     fullnames[i]=path.resolve(__dirname, imgnames[i]);
 
 
-describe('Testing the server\n', function() {
+let client=null;
+
+describe('Testing the server utilities\n', function() {
 
     this.timeout(50000);
     
@@ -178,6 +184,69 @@ describe('Testing the server\n', function() {
 
         assert(ok,true);
     });
-    
 });
 
+
+describe('Testing the server\n', function() {
+
+    this.timeout(50000);
+    
+    before(function(done) {
+
+        let servername=path.resolve(__dirname, "../fileserver/server.js");
+        let cmd=`node ${servername} --insecure`;
+        console.log('Executing ',cmd);
+        
+        bisgulputil.executeCommandPromise(cmd,__dirname)
+        setTimeout( () => {
+            console.log('\n ____Now attempting to connect');
+            client=new BisFileServerClient(WebSocket);
+            client.authenticate().then( () => {
+                console.log('Done authenticating');
+                genericio.setFileServerObject(client);
+                done();
+            });
+        },500);
+        
+    })
+
+
+    it('test home dir',function(done) {
+
+        let baseDirectory = os.homedir();
+        console.log('++++\n++++ Base Dir\n++++');
+        client.getServerBaseDirectory().then( (bd) => {
+            console.log('\nBase =',bd, 'vs',baseDirectory);
+            assert.equal(bd.trim(),baseDirectory.trim());
+            done();
+        }).catch( (e) => {
+            console.log('\nReceived bad event',e);
+            assert.equal(true,false);
+            done();
+        });
+    });
+
+    it ('test timeout',function(done) {
+
+        client.sendCommandPromise({'command' :'ignore',
+                                   'timeout': 500}).then( (m) => {
+            console.log('We have a response ... this is bad',m);
+            assert.equal(true,false);
+            done();
+        }).catch( (e) => {
+            console.log('We have a timeout ... this is good',e);
+            assert.equal('timeout',e.trim());
+            done();
+        });
+    });
+
+    after(function(done) {
+        console.log('______________________________\n____________ Cleanup time');
+        client.sendCommand({'command' :'terminate'});
+        setTimeout( () => {
+            done();
+        },1000);
+    });
+
+});
+           
