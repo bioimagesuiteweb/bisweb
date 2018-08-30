@@ -571,7 +571,7 @@ const webfileutils = {
         webutil.createMenuItem(bmenu, 'AWS Selector', createModal);
     },
 
-    createAWSBucketSelector : function(awsmodal, tabView) {
+    createAWSBucketSelector : (awsmodal, tabView) => {
 
         let selectContainer = $(`
             <div class='container-fluid form-group'>
@@ -600,6 +600,7 @@ const webfileutils = {
             awsstoredbuckets = {};
             bucketSelectorDropdown.append(`<option id='aws-empty-entry'></option>`);
             awsbucketstorage.iterate( (value, key) => {
+
                 try { 
                     //ignore the 'currentAWS' key because it's a duplicate of an entry already in the bucket
                     if (key !== 'currentAWS') {
@@ -638,17 +639,30 @@ const webfileutils = {
                             <tr>
                                 <th scope="col">Bucket Name</th>
                                 <th scope="col">Identity Pool ID</th>
+                                <th scope="col"></th>
                             </tr>
                         </thead>
-                            <tbody id='aws-selector-table-body' align='justify'>   
-                            </tbody>
+                        <tbody id='aws-selector-table-body' align='justify'>   
+                        </tbody>               
                     </table> 
                 `);
 
                 let tableRow = $(`
                     <td class='bootstrap-table-entry'>${selectedItemInfo.bucketName}</td>
                     <td class='bootstrap-table-entry'>${selectedItemInfo.identityPoolID}</td>
+                    <td class='bootstrap-table-entry'>
+                        <span class='input-group-btn'>
+                            <button class='btn btn-default btn-sm'>
+                                <i class='glyphicon glyphicon-pencil'></i>
+                            </button>
+                        </span>
+                    </td>
                 `);
+
+                //set behavior for edit button
+                tableRow.find('btn').on('click', () => {
+                    //TODO: bring up modal to let user edit the values they've already entered
+                });
 
                 tableHead.find('#aws-selector-table-body').append(tableRow);
                 tableContainer.append(tableHead);
@@ -680,6 +694,8 @@ const webfileutils = {
             let selectedItemInfo = awsstoredbuckets[selectedItem.id];
             awsbucketstorage.setItem('currentAWS', JSON.stringify(selectedItemInfo));
             bisweb_awsmodule.changeBuckets(selectedItemInfo.bucketName, selectedItemInfo.identityPoolID);
+            awsmodal.dialog.modal('hide');
+            webutil.createAlert('Changed to bucket ' + selectedItemInfo.bucketName, false, null, 2500);
         });
 
         //we want the selector to populate both when the modal is opened and when the selector tab is selected
@@ -692,7 +708,7 @@ const webfileutils = {
     createAWSBucketEntry : function() {
 
         let bucketInfoTitle = "The full name of your bucket, e.g. \"bisweb-test-bucket\"";
-        let idpoolInfoTitle = "The Identity Pool ID will take the form region:identifier. For more info on how to find the ID, consult AWSBuckets.md in the docs section of the repository."
+        let idpoolInfoTitle = "The Identity Pool ID will take the form region:identifier. For more info on how to find the ID, consult AWSBuckets.md in the docs section of the repository.";
         let entryContainer = $(`
             <div class='container-fluid'>
                 <div class='form-group'>
