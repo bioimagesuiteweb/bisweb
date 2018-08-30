@@ -14,7 +14,6 @@ class BisWebFileServerClient {
 
     constructor() {
 
-        console.log('hello from bisweb fileserver constructor');
         this.lastCommand=null;
         this.lastOpts=null;
         this.portNumber=8081;

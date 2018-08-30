@@ -49,7 +49,7 @@ const localforage = require('localforage');
 // ------------------------
 
 const enableserver=false;
-const enableaws=false;
+const enableaws=true;
 
 // ------------------------
 // Link File Server if not in Electron
@@ -634,9 +634,7 @@ const webfileutils = {
                         <thead> 
                             <tr>
                                 <th scope="col">Bucket Name</th>
-                                <th scope="col">Username</th>
-                                <th scope="col">Public Access Key</th>
-                                <th scope="col">Secret Access Key</th>
+                                <th scope="col">Identity Pool ID</th>
                             </tr>
                         </thead>
                             <tbody id='aws-selector-table-body' align='justify'>   
@@ -646,9 +644,7 @@ const webfileutils = {
 
                 let tableRow = $(`
                     <td class='bootstrap-table-entry'>${selectedItemInfo.bucketName}</td>
-                    <td class='bootstrap-table-entry'>${selectedItemInfo.userName}</td>
-                    <td class='bootstrap-table-entry'>${selectedItemInfo.accessKey}</td>
-                    <td class='bootstrap-table-entry'>${selectedItemInfo.secretKey}</td>
+                    <td class='bootstrap-table-entry'>${selectedItemInfo.identityPoolID}</td>
                 `);
 
                 tableHead.find('#aws-selector-table-body').append(tableRow);
@@ -672,7 +668,14 @@ const webfileutils = {
         });
 
         confirmButton.on('click', () => {
-            //bisweb_awsmodule.
+            let selectedItem = dropdown[0][dropdown[0].selectedIndex];
+            if (!selectedItem.id) {
+                webutil.showErrorModal('An error occured', 'Please select an item from the list');
+                return;
+            }
+
+            let selectedItemInfo = awsstoredbuckets[selectedItem.id];
+            awsbucketstorage.setItem('currentAWS', JSON.stringify(selectedItemInfo));
         });
 
         //we want the selector to populate both when the modal is opened and when the selector tab is selected
@@ -704,6 +707,12 @@ const webfileutils = {
         let cancelButton = webutil.createbutton({ 'name': 'Cancel', 'type': 'danger' });
 
         confirmButton.on('click', () => {
+
+            let bucketName = entryContainer.find('.bucket-input')[0].value;
+            let identityPoolID = entryContainer.find('.identity-pool-input')[0].value;
+
+            if (bucketName === '') { webutil.showErrorModal('An error occured', 'Please fill out the required field \'Bucket Name\''); return; }
+            if (identityPoolID === '') { webutil.showErrorModal('An error occured', 'Please fill out the required field \'Identity Pool ID\''); return;}
 
             let paramsObj = {
                 'bucketName': entryContainer.find('.bucket-input')[0].value,

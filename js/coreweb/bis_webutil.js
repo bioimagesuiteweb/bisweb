@@ -1123,9 +1123,9 @@ style="position:absolute; top:${top}px; left:10px; z-index:${1000+internal.alert
     
 
     showErrorModal: function(title = 'An error occured', errorMessage = 'Click close or anywhere outside the modal to continue') {
-        let modal = webutil.createmodal(title);
+        let modal = webutil.createmodal(title, 'modal-sm');
         let confirmButton = webutil.createbutton({ 'name': 'Continue', 'type': 'success' });
-        
+
         modal.dialog.on('hidden.bs.modal', (e) => {
             e.preventDefault();
             deleteModal(modal);
@@ -1138,9 +1138,11 @@ style="position:absolute; top:${top}px; left:10px; z-index:${1000+internal.alert
         
         let messageBody = $(`<p>${errorMessage}</p>`);
         modal.body.append(messageBody);
+        modal.body.append($(`<br>`));
+        modal.body.append(confirmButton);
+
         //remove close button
-        modal.footer.find('.btn')[0].remove();
-        modal.footer.append(confirmButton);
+        modal.footer.remove();
         
         modal.dialog.modal('show');
         return {
