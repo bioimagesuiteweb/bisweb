@@ -520,10 +520,44 @@ const util = {
         var covar=Math.pow(sumprod/length-mean[0]*mean[1],2.0);
         var covar2=covar/(variance[0]*variance[1]);
         return covar2;
-    }
+    },
+    
 
     
     
+    /** 
+     * This function translates a filename from Windows to a unix style
+     * for use with the fileserver
+     * @alias Util.filenameWindowsToUnix
+     * @param {String} filename
+     * @returns {String} - tranlated filename
+     */
+    filenameWindowsToUnix(fname) {
+
+        let a=fname.trim().replace(/\\/g,'/');
+        if (fname.indexOf('/')!==0 && fname.indexOf(":")==1) // ":" is for drive name
+            a='/'+a;
+        return a;
+    },
+    
+    /** 
+     * This function translates a filename from unix to Windows style
+     * for use with the fileserver
+     * @alias Util.filenameUnixToWindows
+     * @param {String} filename
+     * @returns {String} - tranlated filename
+     */
+
+    filenameUnixToWindows(fname) {
+
+        let a=fname.trim().replace(/\//g,'\\');
+        if (fname.indexOf('/')==0)
+            a=a.substr(1,a.length);
+        return a;
+
+        
+    }
+
 
 };
 

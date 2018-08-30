@@ -25,6 +25,7 @@
  */
 
 const biscoreio=require('bis_coregenericio');
+const util=require('bis_util');
 const glob=biscoreio.getglobmodule();
 const fs=biscoreio.getfsmodule();
 const path=biscoreio.getpathmodule();
@@ -363,10 +364,9 @@ let getBaseName=function(fname,forceinternal=false) {
     if (!inBrowser && !forceinternal) {
         return path.basename(fname);
     }
-    let i=path.lastIndexOf('/');
-    if (i<0)
-        return fname;
-    return fname.substr(i+1,fname.length);
+    fname=util.filenameWindowsToUnix(fname);
+    let q=fname.split('/');
+    return q[q.length-1];
 };
 
 /** Returns the directory part of the name of a file (i.e. strips out the basename)
@@ -379,7 +379,8 @@ let getDirectoryName=function(fname,forceinternal=false) {
     if (!inBrowser && !forceinternal) {
         return path.dirname(fname);
     }
-    let i=path.lastIndexOf('/');
+    fname=util.filenameWindowsToUnix(fname);
+    let i=fname.lastIndexOf('/');
     if (i<0)
         return fname;
     return fname.substr(0,i);
@@ -391,11 +392,67 @@ let getDirectoryName=function(fname,forceinternal=false) {
  * @param {Boolean} forceinternal - if true use internal implementation (not path in node.js)
  * @returns {string} - the normalized name
  */
-let getNormalizedFilename=function(fname,forceinternal=false) {
+
+let getNormalizedFilename=function(fname,root="",forceinternal=false) {
     if (!inBrowser && !forceinternal) {
         return path.resolve(path.normalize(fname));
     }
-    return fname;
+
+
+    fname=util.filenameWindowsToUnix(fname);
+    
+    // First replace '/./' with '/'
+    fname=fname.trim().replace(/\/.\//g,'\/');
+    
+    let ind1=fname.indexOf(root+'/');
+    let ind2=fname.indexOf('..');
+    if (ind1===0 && ind2<0)
+        return fname;  // nothing to do
+
+    console.log('\n ------------- Beginning \n');
+    
+    fname=root+fname;
+    let parts=fname.split('/');
+
+    console.log('fname=',fname,'\n\t parts='+parts.join("__")+'\n');
+    
+    let j=parts.length-1;
+    while (j>=0) {
+        if (parts[j].length<1) {
+            parts.splice(j,1);
+            j=parts.length-1;
+        } else if (parts[j]=="..") {
+            console.log('\t\t before ',j,parts[j],' -->',parts.join('/'));
+            
+            if (j>0) {
+                let k=j-1,done=false;
+                while(k>=0 && done===false) {
+                    if (parts[k]!=="..")
+                        done=true;
+                    else
+                        k=k-1;
+                }
+                if (done) {
+                    let diff=j-k;
+                    parts.splice(j-2*diff+1,2*diff);
+                    console.log('\t\t\t after ',parts.join(' / '));
+                    j=j-2*diff;
+                }
+            } else {
+                parts.splice(j,1);
+                console.log('\t\t\t after ',parts.join(' / '));
+                j=j-1;
+            }
+        } else {
+            j=j-1;
+        }
+        console.log('J=',j,' parts=',parts.join('__'),parts.length);
+    }
+
+    let out='/'+parts.join('/');
+    console.log('Returning fname=',out);
+    console.log('\n ------------- Done \n');
+    return out;
 };
 
 /** Returns a joined file name (path.join)
@@ -409,7 +466,8 @@ let joinFilenames=function(path1,path2,forceinternal=false) {
     if (!inBrowser && !forceinternal) {
         return path.join(path1,path2);
     }
-    return path1+'/'+path2;
+    
+    return util.filenameWindowsToUnix(path1+'/'+path2);
 };
 
 /** Returns the path separator , either path.sep or '/'
