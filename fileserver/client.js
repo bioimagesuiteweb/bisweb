@@ -13,11 +13,15 @@ let basedir=path.resolve(__dirname, '../web/images/');
 console.log('Base dir=',basedir);
 
 
-let p=async function() {
+let test_fn=async function(address) {
     
 
     let client=new BisFileServerClient(WebSocket);
-    await client.authenticate();
+    try {
+        await client.authenticate('',`ws://${address}:8081`);
+    } catch(e) {
+        await client.authenticate('','ws://localhost:8081');
+    }
 
     genericio.setFileServerObject(client);
 
@@ -104,8 +108,10 @@ let p=async function() {
     process.exit();
 };
 
-try {
-    p();
-} catch(e) {
-    console.log("Error",e);
-}
+require('dns').lookup(require('os').hostname(), function (err, add, fam) {
+    try {
+        test_fn(add);
+    } catch(e) {
+        console.log("Error",e);
+    }
+});
