@@ -389,6 +389,19 @@ class FileServer {
                 this.fileSystemOperations(socket,parsedText.operation,parsedText.url,parsedText.id);
                 break;
             }
+
+            case 'ignore':  {
+                console.log('Received ignore, ignoring');
+                break;
+            }
+            
+            case 'terminate': {
+                console.log('---- received terminate from client.');
+                socket.end();
+                socket.destroy();
+                process.exit(0);
+            }
+            
             default: {
                 console.log('---- Cannot interpret request with unknown command', parsedText.command);
             }
@@ -663,7 +676,9 @@ class FileServer {
      */
     serveFileList(socket, basedir, type, depth = 2,id=-1)  {
         let fileTree = [];
-        if (basedir === null) { basedir = baseDirectory; }
+        if (basedir === null) {
+            basedir = baseDirectory;
+        }
 
         //path = full filepath
         //fileTreeIndex = the the children of the current tree entry
@@ -675,6 +690,7 @@ class FileServer {
 
                     //remove hidden files/folders from results
                     let validFiles = files.filter( (unfilteredFile) => { return unfilteredFile.charAt(0) !== '.'; });
+                    
                     let expandInnerDirectory = (pathname, treeEntry) => {
                         return new Promise((resolve, reject) => {
                             //if file is a directory, expand it and add its children to fileTree recursively
@@ -710,7 +726,7 @@ class FileServer {
                                     resolve(fileTreeIndex);
                                 }
 
-                                treeEntry.path = pathname;
+                                treeEntry.path = util.filenameWindowsToUnix(pathname);
                             });
                         });
                     };
@@ -719,7 +735,7 @@ class FileServer {
                     let promisesInsideDirectory = [];
                     for (let file of validFiles) {
                         let newTreeEntry = { 'text': file };
-                        let newPathname = pathname + '/' + file;
+                        let newPathname = path.join(pathname,file);
                         promisesInsideDirectory.push(expandInnerDirectory(newPathname, newTreeEntry));
                     }
 
@@ -730,13 +746,7 @@ class FileServer {
 
 
         expandDirectory(basedir, fileTree, 0).then( (tree) => {
-
-            //bisweb_fileserver handles the base file request differently than the supplemental ones, so we want to ship them to different endpoints
-            //        if (basedir === os.homedir()) {
             socket.write(formatPacket('filelist', { 'path' : basedir,'type' : type, 'data' : tree, 'modalType' : type, 'id' : id }));
-            /*} else {
-              socket.write(formatPacket('supplementalfiles',  { 'path' : basedir, 'list' : tree, 'modalType' : type, 'id' : id }));
-              }*/
         });
     }
 
