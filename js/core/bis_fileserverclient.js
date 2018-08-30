@@ -79,6 +79,8 @@ class BisFileServerClient extends BisBaseServerClient {
         //add the event listeners for the control port
         let closeEvent = this.socket.addEventListener('close', () => {
             console.log('---- Socket closing');
+            this.authenticated=false;
+            this.alertEvent('Connection to fileserver at '+this.hostname+' closed',true);
             if (this.authenticatingEvent) {
                 let id=this.authenticatingEvent.id;
                 bisasyncutil.rejectServerEvent(id,'failure to authenticate');
@@ -91,7 +93,7 @@ class BisFileServerClient extends BisBaseServerClient {
             this.hostname=address;
         });
 
-        let errorEvent = this.socket.addEventListener('error', (event) => {
+        let errorEvent = this.socket.addEventListener('error', () => {
             this.alertEvent('Failed to connect to server: '+address+'. It may not exist.',true);
             this.socket.removeEventListener('close', closeEvent);
             this.socket.removeEventListener('message', messageEvent);
