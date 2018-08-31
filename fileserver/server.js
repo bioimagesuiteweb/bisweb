@@ -47,13 +47,6 @@ const SHAstring = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 //variables related to generating one-time passwords (OTP)
 let onetimePasswordCounter = 0;
 
-// .................................................. Utility Functions ..............................
-// 
-/*let globalPortNumber=-1;
-  let globalDataPortNumber=-2;
-  let globalHostname="";
-*/
-
 
 // .................................................. This is the class ........................................
 
@@ -135,11 +128,12 @@ class FileServer {
 
         // Former global variables
         this.portNumber=0;
-        this.dataPortNumber=0;
         this.hostname='localhost';
         this.datatransfer=false;
+        this.netServer=null;
         // Formerly global variable
         this.timeout = undefined;
+        this.terminating=false;
     }
     
     // .......................................................................................
@@ -174,35 +168,70 @@ class FileServer {
      * @param {String} hostname - The name of the domain that will be attempting to connect to the server, i.e. the client address. 
      * @param {Number} port - The control port for the exchanges between the client and server. 
      * @param {Boolean} datatransfer - if true this is a data transfer server
-     * @param {Function} readycb - A callback to invoke when the server emits its 'listening' event. Optional.
-     * @returns The server instance.  
+     * @returns A Promise
      */
-    startServer(hostname='localhost', port=8081, datatransfer = true, readycb = null) {
+    startServer(hostname='localhost', port=8081, datatransfer = true) {
 
-        let newServer = net.createServer(handleConnectionRequest);
-            
-        if (datatransfer) {
-            this.datatransfer=true;
-            this.dataPortNumber=port;
-            this.portNumber=port;
-            console.log('._._._._._._- \tStarting transfer data server on ',port);
-        } else {
-            this.datatransfer=false;
-            this.portNumber=port;
-            this.dataPortNumber=port+10;
-            this.hostname=hostname;
-            this.createPassword();
+        const self=this;
+        let netServer = net.createServer(handleConnectionRequest);
+        this.netServer=netServer;
+        
+        return new Promise( (resolve,reject) => {
 
-        }
+            netServer.on('error', (error) => {
+                if (error.code === 'EADDRINUSE') {
+                    console.log(".... Port",port,"is in use");
+                    port=port+1;
+                    if (port<32767) {
+                        netServer.listen(port,hostname);
+                    } else {
+                        reject('Can not find port');
+                    }
+                }
+            });
+
+            netServer.on('close', (m) => {
+                if (datatransfer) {
+                    console.log('._._._._._._- Stopping transfer data server on port='+this.portNumber);
+                } else {
+                    console.log('..... Stopping server on port='+this.portNumber);
+                }
+            });
+
+        
+            netServer.listen(port, hostname, () => {
+                if (datatransfer) {
+                    this.datatransfer=true;
+                    this.portNumber=port;
+                    console.log('._._._._._._- \tStarting transfer data server on ',port);
+                } else {
+                    this.datatransfer=false;
+                    this.portNumber=port;
+                    this.hostname=hostname;
+                    this.createPassword();
+                    if (this.opts.insecure) {
+                        console.log(".....\t IN INSECURE MODE");
+                    }
+                    if (this.opts.nolocalhost) 
+                        console.log(".....\t Allowing remote connections");
+                    else
+                        console.log(".....\t Allowing only local connections");
+                    if (this.opts.readonly)
+                        console.log(".....\t Running in 'read-only' mode");
+                    
+                    console.log('.....\t Providing access to:',this.opts.baseDirectoriesList.join(', '));
+                    
+                    console.log('..................................................................................');
+                }
+                resolve(this.portNumber);
+            });
+        });
             
-        newServer.listen(port, hostname, readycb);
-        
-        
         //handleConnectionRequest is called when a connection is successfuly made between the client and the server and a socket is prepared
         //it performs the WebSocket handshake (see https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers#The_WebSocket_Handshake)
         //as well it attaches protocols to handle when the socket is ended or closed
 
-        const self=this;
+
         
         function handleConnectionRequest(socket) {
             
@@ -236,16 +265,8 @@ class FileServer {
                 response = response + acceptKey + '\r\n\r\n';
 
                 let port = socket.localPort;
-                if (self.datatransfer) {
-                    self.dataPortNumber=port;
-                    self.portNumber=-1;
-                } else {
-                    self.portNumber=port;
-                }
                 self.portNumber=port;
                 socket.write(response, 'utf-8', () => {
-                    //connectors on globalPortNumber are negotiating a control port, connectors on globalDataPortNumber are negotiating a transfer port
-
                     if (!datatransfer) {
                         console.log('..... We are ready to respond on port='+port);
                         self.authenticate(socket);
@@ -261,17 +282,19 @@ class FileServer {
             //server should close when all sockets are fully closed
             //note that the socket does not listen for 'end' because WebSockets do not cause those events to emit.
             socket.on('close', () => {
-                newServer.getConnections( (err, count) => {
+                netServer.getConnections( (err, count) => {
                     if (err) { 
                         console.log('..... Server encountered an error getting its active connections, shutting down server'); 
-                        newServer.close(); 
+                        netServer.close();
                         return; 
                     }
                     
-                    if (count === 0) { 
-                        if (!self.datatransfer) {
+                    if (count === 0) {
+                        if (self.terminating) {
+                            console.log('..... Terminating');
+                        } else  if (!self.datatransfer) {
                             console.log('.....\n..... Restarting server as connections went down to zero');
-                            newServer.listen(self.portNumber, self.hostname);
+                            netServer.listen(self.portNumber, self.hostname);
                             self.createPassword();
                         }
                     }
@@ -282,6 +305,7 @@ class FileServer {
     
 
     authenticate(socket) {
+
         let readOTP = (chunk) => {
             let frame = readFrame(chunk);
             let decoded = frame.decoded;
@@ -405,10 +429,12 @@ class FileServer {
             }
             
             case 'terminate': {
-                console.log('..... received terminate from client.');
+                console.log('..... received terminate from client');
                 socket.end();
                 socket.destroy();
-                process.exit(0);
+                this.netServer.close();
+                this.terminating=true;
+                setTimeout( () => { process.exit(0)},1000);
                 break;
             }
             
@@ -469,12 +495,14 @@ class FileServer {
                 }
                 break;
             case 8:
-                if (self.datatransfer)
-                    console.log('._._._._._._-\n._._._._._._- received close from client, ending data connection on port',self.portNumber,' data=',self.datatransfer,'\n._._._._._._-');
-                else
-                    console.log('.....\n..... received close from client, ending data connection on port',self.portNumber,' data=',self.datatransfer,'\n.....');
                 socket.end();
                 socket.destroy();
+                if (self.datatransfer) {
+                    console.log('._._._._._._-\n._._._._._._- received close from client, ending data connection on port',self.portNumber,' data=',self.datatransfer,'\n._._._._._._-');
+                    this.netServer.close();
+                }  else {
+                    console.log('.....\n..... received close from client, ending data connection on port',self.portNumber,' data=',self.datatransfer,'\n.....');
+                }
                 break;
             default: 
                 console.log('..... dropping packet with control', JSON.stringify(parsedControl));
@@ -616,21 +644,21 @@ class FileServer {
         
 
         //spawn a new server to handle the data transfer
+        console.log('.... .... Beginning data transfer', this.portNumber+1);
+        
         let tserver=new FileServer({ verbose : this.opts.verbose,
-                                     readonly : this.opts.readonly
+                                     readonly : false,
                                    });
 
-        //        globalDataPortNumber+=1; // get me the next available port
-        this.dataPortNumber+=1;
-
-        tserver.startServer(this.hostname, this.dataPortNumber,true, () => {
+        tserver.startServer(this.hostname, this.portNumber+1,true).then( (p) => {
             tserver.createFileInProgress(upload);
-
-            socket.write(formatPacket('uploadmessage', {
+            let cmd={
                 'name' : 'datasocketready',
-                'port' : this.dataPortNumber,
+                'port' : p,
                 'id' : upload.id
-            }));
+            };
+            console.log('._._._._._._- \t Sending back',JSON.stringify(cmd));
+            socket.write(formatPacket('uploadmessage', cmd));
         });
     }
 
@@ -1071,21 +1099,11 @@ require('dns').lookup(require('os').hostname(), function (err, add) {
     if (nolocalhost)
         ipaddr=`${add}`;
     console.log('..................................................................................');
-    server.startServer(ipaddr, portno, false, () => {
-        if (server.opts.insecure) {
-            console.log(".....\t IN INSECURE MODE");
-        }
-        if (server.opts.nolocalhost) 
-            console.log(".....\t Allowing remote connections");
-        else
-            console.log(".....\t Allowing only local connections");
-        if (server.opts.readonly)
-            console.log(".....\t Running in 'read-only' mode");
-
-        console.log('.....\t Providing access to:',server.opts.baseDirectoriesList.join(', '));
-        
-    console.log('..................................................................................');
+    server.startServer(ipaddr, portno, false).catch( (e) => {
+        console.log(e);
+        process.exit(0);
     });
+
 });
 
 
