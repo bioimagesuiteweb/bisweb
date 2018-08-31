@@ -16,7 +16,7 @@
     ENDLICENSE */
 
 /* jshint node:true */
-/*global describe, it, before */
+/*global describe, it, after, before */
 "use strict";
 
 require('../config/bisweb_pathconfig.js');
@@ -26,29 +26,18 @@ const assert = require("assert");
 const bisasyncbruker=require('bis_asyncreadbruker');
 const path=require('path');
 const BisWebImage=require('bisweb_image');
-const os=require('os');
 const genericio=require('bis_genericio');
 const bisserverutil=require('bis_fileserverutils');
-
-console.log('tmp=',os.tmpdir());
-
-
+const colors=require('colors/safe');
 let indata=path.resolve(__dirname,path.join('testdata','bruker_exp'));
 
-let tmpDir=os.homedir()+'/tmp/1234';
-console.log('Tmp=',tmpDir);
 
-let tmpname=[
-    path.resolve(tmpDir,'test'),
-    path.resolve(tmpDir,'testras')
-];
+let tmpname=null;
+let tmpDir=null;
 
 
 
-
-
-
-describe('Testing BisImage (from bis_readbruker.js) a class that imports Bruker Paravision images\n', function() {
+describe('Testing BisImage (from bis_asyncreadbruker.js) a class that imports Bruker Paravision images\n', function() {
     
     this.timeout(50000);
 
@@ -64,7 +53,7 @@ describe('Testing BisImage (from bis_readbruker.js) a class that imports Bruker 
         console.log('+++++ importing from data dir '+ indata+ 'twice');
         
         let gold_loc = [ 64,60,12];
-        let origimages=[ 0,0];
+        let origimages=[ new BisWebImage(), new BisWebImage()];
         let origimagenames=['',''];
         for (let j=0;j<=1;j++)
             origimagenames[j]=path.join(indata,filenames[j][1]);
@@ -74,46 +63,44 @@ describe('Testing BisImage (from bis_readbruker.js) a class that imports Bruker 
         let client=null;
         
         before(function(done) {
-
+            
             let initializeServer = function() {
 
                 return new Promise( (resolve,reject) => {
-                    genericio.makeDirectory(tmpDir).then( (m) => {
-                        console.log(' Directory=',m);
-                        bisserverutil.createTestingServer().then( (c) => {
-                            client=c;
-                            resolve();
-                        });
-                    }).catch( (e) => {
-                        reject(e);
-                    });
+                    bisserverutil.createTestingServer().then( (obj) => {
+                        client=obj.client;
+                        tmpDir=obj.tmpDir;
+                        tmpname = [ 
+                            path.resolve(tmpDir,'test'),
+                            path.resolve(tmpDir,'testras')
+                        ];
+                        resolve();
+                    }).catch( (e)=> { reject(e);});
                 });
             };
+
+            let newload = function( outimages ) {
+            
+                for (let i=0;i<outimages.length;i++) {
+                        outimages[i].debug=false;
+                    console.log('\n+++++ Comparing\n\t'+outimages[i].getDescription()+ '\n\t and \n\t' + origimages[i].getDescription());
+                    let maxd=outimages[i].maxabsdiff(origimages[i],gold_loc);
+                    if (maxd<0.01)
+                        flag[i]=true;
+                    console.log('+++++ \t\t\t maxd=',maxd);
+                    
+                    console.log('\n+++++ False Comparing '+outimages[i].getDescription()+'\n\t and \n\t' + origimages[1-i].getDescription());
+                    let falsemaxd=outimages[i].maxabsdiff(origimages[1-i],gold_loc);
+                    console.log('+++++ \t\t\t falsemaxd=',falsemaxd);
+                    if (falsemaxd>0.01)
+                        falseflag[i]=true;
+                    console.log(colors.cyan('------------------------------------------------------------------------'));
+                }
+            };
+
             
             let importimage = async function() {
                 
-                let newload = function( outimages ) {
-                    for (let i=0;i<outimages.length;i++) {
-                        outimages[i].debug=false;
-                        console.log('+++++ Comparing '+outimages[i].getFilename()+ ' and ' + origimages[i].getFilename());
-                        let maxd=outimages[i].maxabsdiff(origimages[i],gold_loc);
-                        if (maxd<0.01)
-                            flag[i]=true;
-                        
-                        console.log('+++++ False Comparing '+outimages[i].getFilename()+ ' and ' + origimages[1-i].getFilename());
-                        let falsemaxd=outimages[i].maxabsdiff(origimages[1-i],gold_loc);
-
-                        if (falsemaxd>0.01)
-                            falseflag[i]=true;
-                    }
-                    console.log('Falseflags='+falseflag);
-
-                    genericio.setFileServerObject(null);
-                    genericio.deleteDirectory(tmpDir).then( (m) => {
-                        console.log('\t',m);
-                        done();
-                    });
-                };
 
                 let forceorient="None";
                 for (let count=0;count<=1;count++) {
@@ -121,42 +108,43 @@ describe('Testing BisImage (from bis_readbruker.js) a class that imports Bruker 
                         forceorient="RAS";
                     
                     let infilename=path.join(indata,'pdata/1/2dseq');
+                    console.log(colors.cyan('------------------------------------------------------------------------'));
                     console.log('\n+++++ Importing bruker data from '+infilename+' forceorient='+forceorient);
                     
                     let data=await bisasyncbruker.readFile(infilename,tmpname[count],forceorient,false);
                     outimagenames[count]=data.partnames[0];
+                                
                 }
+                console.log(colors.cyan('------------------------------------------------------------------------'));
+                console.log('_____ done',outimagenames.join('\n\t and'));
+                console.log(colors.cyan('------------------------------------------------------------------------'));
+                genericio.setFileServerObject(null);
 
-                console.log('_____ done',JSON.stringify(outimagenames));
 
-                
-                let p=[];
                 let outimages=[];
                 for (let i=0;i<outimagenames.length;i++) {
                     let img=new BisWebImage();
                     outimages.push(img);
-                    p.push(img.load(outimagenames[i]));
+                    await img.load(outimagenames[i]);
                 }
-                Promise.all(p).then( () => { newload(outimages); });
-            };
-
-            let origload = function( inp_images ) {
-                for (let i=0;i<inp_images.length;i++)
-                    origimages[i]=inp_images[i];
-                importimage();
+                console.log(colors.cyan('------------------------------------------------------------------------'));
+                newload(outimages);
+                return;
+                
             };
             
+            Promise.all([
+                origimages[0].load(origimagenames[0]),
+                origimages[1].load(origimagenames[1]),
+            ]).then( () => {
 
-            initializeServer().then( () => {
-                let p2=[];
-                let outimages2=[];
-                for (let i=0;i<origimagenames.length;i++) {
-                    let img=new BisWebImage();
-                    outimages2.push(img);
-                    p2.push(img.load(origimagenames[i]));
-                }
-                Promise.all(p2).then( () => {
-                    origload(outimages2);
+                console.log('Finished loading');
+                console.log(colors.cyan('------------------------------------------------------------------------'));
+                initializeServer().then( () => {
+                    console.log("server initialized",tmpname);
+                    importimage().then( () => {
+                        done();
+                    });
                 });
             });
         });
@@ -164,22 +152,27 @@ describe('Testing BisImage (from bis_readbruker.js) a class that imports Bruker 
         
         
         it('check if orig import is correct',function() {
+            console.log("Looking at ",flag[1]);
             assert.equal(true,flag[0]);
         });
 
         it('check if ras import is correct',function() {
+            console.log("Looking at ",flag[1]);
             assert.equal(true,flag[1]);
         });
 
         it('check if ras and non ras are not same',function() {
+            console.log("Looking at ",falseflag[0],' and ',falseflag[1]);
             assert.equal(true,(falseflag[0] && falseflag[1]));
         });
 
         after(function(done) {
+            console.log(colors.cyan('------------------------------------------------------------------------'));
             bisserverutil.terminateTestingServer(client).then( ()=> {
                 done();
             }).catch( (e) => {
                 console.log('---- termination error',e,e.stack);
+                done();
             });
         });
 

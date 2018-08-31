@@ -196,9 +196,12 @@ describe('Testing the server\n', function() {
     
     before(function(done) {
 
-        bisserverutil.createTestingServer().then( (c) => {
-            client=c;
+        bisserverutil.createTestingServer().then( (obj) => {
+            client=obj.client;
             done();
+        }).catch( (e) => {
+            console.log(e);
+            process.exit(1);
         });
     });
         
