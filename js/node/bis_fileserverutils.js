@@ -95,13 +95,13 @@ const createTestingServer=function(serverpath=null,timeout=1000) {
 
     return new Promise( (resolve,reject) => {
         
-        serverpath=serverpath || path.join(__dirname,'../fileserver');
+        serverpath=serverpath || path.join(__dirname,'../../fileserver');
         
         let servername=path.resolve(serverpath,"server.js");
         let cmd=`node ${servername} --insecure`;
         console.log('Executing ',cmd);
         
-        biscmdline.executeCommandPromise(cmd,__dirname,((status,code) => {
+        biscmdline.executeCommand(cmd,__dirname,((status,code) => {
             if (status===false) {
                 console.log('---- server failed ',code);
                 reject('---- server failed '+code);

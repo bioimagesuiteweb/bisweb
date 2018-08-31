@@ -225,16 +225,14 @@ describe('Testing the server\n', function() {
 
     it('test get list',function(done) {
 
-        client.requestFileList('load').then( (m) => {
-            console.log(JSON.stringify(m,null,2));
+        client.requestFileList('load').then( () => {
             done();
         });
     });
 
     it('test get list2',function(done) {
 
-        client.requestFileList('load',os.homedir()).then( (m) => {
-            console.log(JSON.stringify(m,null,2));
+        client.requestFileList('load',os.homedir()).then( () => {
             done();
         });
     });

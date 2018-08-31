@@ -44,9 +44,9 @@ if (typeof window === 'undefined') {
 
 const inelectron=( bisgenericio.getmode() === "electron");
 
-const sleep=function(millis) {
+/*const sleep=function(millis) {
     return new Promise(resolve => setTimeout(resolve, millis));
-};
+};*/
 
 let dualPrint=function() {
     
@@ -58,7 +58,7 @@ let dualPrint=function() {
 };
 
 
-const printFileStats = async function(fname,debug=true) {
+const printFileStats = async function(fname,debug=false) {
 
     debug= debug || false;
     try {
@@ -111,7 +111,8 @@ let readParameterFile=async function(fname,debug=0) {
     debug = debug || 0;
     
     try {
-        console.log('Reading fname=',fname);
+        if (debug)
+            console.log('Reading fname=',fname);
         let obj=null;
         try {
             obj=  await bisgenericio.read(fname,false);
@@ -120,7 +121,8 @@ let readParameterFile=async function(fname,debug=0) {
         }
         let lines= obj.data.split('\n');
 
-        console.log('Reading fname=',fname,' numlines=',lines.length);
+        if (debug)
+            console.log('Reading fname=',fname,' numlines=',lines.length);
         
         let outputlst = {};
         
@@ -208,7 +210,8 @@ let parseTextFiles = async function(filename,outprefix,debug,forceorient) {
     data.originalfilename=filename;
     data.forceorient=userPreferences.sanitizeOrientationOnLoad(forceorient);
 
-    console.log('Force orient=',data.forceorient);
+    if (debug)
+        console.log('Force orient=',data.forceorient);
     
     let dirname = bisgenericio.getNormalizedFilename(bisgenericio.getDirectoryName(filename));
     let tailname = bisgenericio.getBaseName(filename);
@@ -227,7 +230,8 @@ let parseTextFiles = async function(filename,outprefix,debug,forceorient) {
     let binname=bisgenericio.getNormalizedFilename(filename);
 
 
-    console.log('Starting ',reconame,visuname);
+    if (debug)
+        console.log('Starting ',reconame,visuname);
     
     data.havereco=false;
     
@@ -239,7 +243,8 @@ let parseTextFiles = async function(filename,outprefix,debug,forceorient) {
         //reco=readParameterFile(reconame);
     }
 
-    console.log('++++ I Have Reco =',data.havereco);
+    if (debug)
+        console.log('++++ I Have Reco =',data.havereco);
     
     let arr=[ visuname,acqpname,methodname,binname];
     let numgood=0;
@@ -253,21 +258,22 @@ let parseTextFiles = async function(filename,outprefix,debug,forceorient) {
         return data;
     }
 
-    console.log('Now reading actual files',numgood);
+    if (debug)
+        console.log('Now reading actual files',numgood);
 
-    console.log('Reding Parameter File',visuname);
+    if (debug)
+        console.log('Reding Parameter File',visuname);
     let visu=await readParameterFile(visuname);
-    await sleep(500);
-    console.log('Reding Parameter File',methodname);
+    if (debug)
+        console.log('Reding Parameter File',methodname);
     let method=await readParameterFile(methodname);
-    await sleep(500);
     let acqp=await readParameterFile(acqpname);
-    await sleep(500);
     data.orient=method['PVM_SPackArrSliceOrient'] || 'axial';
 
 
     data.numechos=method['PVM_NEchoImages'];
-    console.log('Number of echos=',data.numechos);
+    if (debug)
+        console.log('Number of echos=',data.numechos);
     
     if (data.orient.length>1) {
         data.error='multi orientation localizer '+data.orient;
@@ -359,7 +365,6 @@ let parseTextFiles = async function(filename,outprefix,debug,forceorient) {
     let b=bisgenericio.getBaseName(bisgenericio.getDirectoryName(bisgenericio.getNormalizedFilename(data.originalfilename)));
     data.displaynames=[ (a+"_"+mname+"_"+b).replace(/ /g,'_').replace(/\t/g,'_').replace(/\(/g,'').replace(/\)/g,'') ];
 
-    //    console.log('All done, returning data',JSON.stringify(data));
     return data;
 };
 
@@ -501,7 +506,7 @@ let directSaveImage=async function(part_img,part_imageoutname,forceorient) {
         let dat=part_img.serializeToNII();
         let output=new BisWebImage();
         output.initialize();
-        output.debug=1;
+        output.debug=0;
         output.parseNII(dat.buffer,forceorient);
         await output.save(part_imageoutname);
     } else {
@@ -832,10 +837,7 @@ let saveMultiPartDTIFile = async function(data,debug) {
  * @param {Boolean} debug - if true print extra messages
  * @returns {Boolean} 
  */
-let readFile = async function (filename,outprefix,forceorient,debug) {
-
-    
-    debug = debug || false;
+let readFile = async function (filename,outprefix,forceorient,debug=false) {
 
     console.log('\n\n\n\n Force orient input in readFile=',forceorient);
 

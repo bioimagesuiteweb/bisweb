@@ -21,15 +21,14 @@
 
 require('../config/bisweb_pathconfig.js');
 require('bisweb_userpreferences.js').setImageOrientationOnLoad('None');
+
 const assert = require("assert");
 const bisasyncbruker=require('bis_asyncreadbruker');
 const path=require('path');
 const BisWebImage=require('bisweb_image');
-const BisFileServerClient=require('bis_fileserverclient');
-const WebSocket = require('ws');
 const os=require('os');
-//const tempfs = require('temp').track();
 const genericio=require('bis_genericio');
+const bisserverutil=require('bis_fileserverutils');
 
 console.log('tmp=',os.tmpdir());
 
@@ -81,10 +80,8 @@ describe('Testing BisImage (from bis_readbruker.js) a class that imports Bruker 
                 return new Promise( (resolve,reject) => {
                     genericio.makeDirectory(tmpDir).then( (m) => {
                         console.log(' Directory=',m);
-                        client=new BisFileServerClient(WebSocket);
-                        client.authenticate().then( () => {
-                            console.log('Done authenticating');
-                            genericio.setFileServerObject(client);
+                        bisserverutil.createTestingServer().then( (c) => {
+                            client=c;
                             resolve();
                         });
                     }).catch( (e) => {
@@ -93,12 +90,11 @@ describe('Testing BisImage (from bis_readbruker.js) a class that imports Bruker 
                 });
             };
             
-            
             let importimage = async function() {
                 
                 let newload = function( outimages ) {
                     for (let i=0;i<outimages.length;i++) {
-                        outimages[i].debug=true;
+                        outimages[i].debug=false;
                         console.log('+++++ Comparing '+outimages[i].getFilename()+ ' and ' + origimages[i].getFilename());
                         let maxd=outimages[i].maxabsdiff(origimages[i],gold_loc);
                         if (maxd<0.01)
@@ -115,7 +111,9 @@ describe('Testing BisImage (from bis_readbruker.js) a class that imports Bruker 
                     genericio.setFileServerObject(null);
                     genericio.deleteDirectory(tmpDir).then( (m) => {
                         console.log('\t',m);
-                        done();
+                        bisserverutil.terminateTestingServer(client).then( ()=> {
+                            done();
+                        });
                     });
                 };
                 
@@ -132,7 +130,7 @@ describe('Testing BisImage (from bis_readbruker.js) a class that imports Bruker 
                     outimagenames[count]=data.partnames[0];
                 }
 
-                console.log(' ----------------- done',JSON.stringify(outimagenames));
+                console.log('_____ done',JSON.stringify(outimagenames));
 
                 
                 let p=[];
@@ -165,6 +163,7 @@ describe('Testing BisImage (from bis_readbruker.js) a class that imports Bruker 
                 });
             });
         });
+
         
         
         it('check if orig import is correct',function() {
