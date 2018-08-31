@@ -55,12 +55,13 @@ const server_fields = [
     { name : 'baseDirectoriesList', value: null },
     { name : 'readonly', value: false },
     { name : 'insecure', value: false },
-    { name : 'tempDirectory', value: null }
+    { name : 'tempDirectory', value: '' }
 ];
 
 class FileServer {
 
     constructor(opts={}) {
+
         //  .................... Per Connection .......................................................
         //file transfer may occur in chunks, which requires storing the chunks as they arrive
         this.fileInProgress = null;
@@ -87,14 +88,14 @@ class FileServer {
                 this.opts[name]=cnf[name];
         }
 
-        if (!this.opts.tempDirectory) {
+        
+        if (this.opts.tempDirectory.length<1) {
             if (path.sep==='\\') {
                 this.opts.tempDirectory=util.filenameWindowsToUnix(os.homedir()+'/temp');
             } else {
                 this.opts.tempDirectory='/tmp';
             }
         }
-        
                 
         if (!this.opts.baseDirectoriesList) {
             if (path.sep==='/')  {
@@ -140,19 +141,19 @@ class FileServer {
     
     // password token
     // create function and global variable
-    createPassword(abbrv=0) {
+        createPassword(abbrv=0) {
         onetimePasswordCounter+=1;
         let token = hotp.generate(secret, onetimePasswordCounter);
         if (abbrv===0) {
             console.log('..... BioImage Suite Web FileServer datatransfer=',this.datatransfer,' Initialized\n.....');
-            console.log('..... \t The websocket server is listening for incoming connections,\n...... \t using the following one time info.\n.....');
-            console.log(`..... \t\t hostname: ${this.hostname}:${this.portNumber}`);
+            console.log('..... \t The websocket server is listening for incoming connections,\n..... \t using the following one time info.\n.....');
+            console.log(`..ss. \t\t hostname: ws://${this.hostname}:${this.portNumber}`);
         }  else if (abbrv===1) {
             console.log('.....\n..... Create New Password ... try again.');
         } else {
             console.log('.....\n..... Create New Password as this one is now used successfully.');
         }
-        console.log(`..... \t\t password: ${token}\n.....`);
+        console.log(`..ss. \t\t password: ${token}\n.....`);
     }
 
 
@@ -173,24 +174,24 @@ class FileServer {
     startServer(hostname='localhost', port=8081, datatransfer = true) {
 
         const self=this;
-        let netServer = net.createServer(handleConnectionRequest);
-        this.netServer=netServer;
+        this.netServer = net.createServer(handleConnectionRequest);
         
         return new Promise( (resolve,reject) => {
 
-            netServer.on('error', (error) => {
+            this.netServer.on('error', (error) => {
                 if (error.code === 'EADDRINUSE') {
-                    console.log(".... Port",port,"is in use");
+                    if (self.verbose)
+                        console.log(".... Port",port,"is in use");
                     port=port+1;
                     if (port<32767) {
-                        netServer.listen(port,hostname);
+                        this.netServer.listen(port,hostname);
                     } else {
                         reject('Can not find port');
                     }
                 }
             });
 
-            netServer.on('close', (m) => {
+            this.netServer.on('close', () => {
                 if (datatransfer) {
                     console.log('._._._._._._- Stopping transfer data server on port='+this.portNumber);
                 } else {
@@ -199,7 +200,7 @@ class FileServer {
             });
 
         
-            netServer.listen(port, hostname, () => {
+            this.netServer.listen(port, hostname, () => {
                 if (datatransfer) {
                     this.datatransfer=true;
                     this.portNumber=port;
@@ -220,6 +221,7 @@ class FileServer {
                         console.log(".....\t Running in 'read-only' mode");
                     
                     console.log('.....\t Providing access to:',this.opts.baseDirectoriesList.join(', '));
+                    console.log('.....\t\t  The temp directory is set to:',this.opts.tempDirectory);
                     
                     console.log('..................................................................................');
                 }
@@ -282,10 +284,10 @@ class FileServer {
             //server should close when all sockets are fully closed
             //note that the socket does not listen for 'end' because WebSockets do not cause those events to emit.
             socket.on('close', () => {
-                netServer.getConnections( (err, count) => {
+                self.netServer.getConnections( (err, count) => {
                     if (err) { 
                         console.log('..... Server encountered an error getting its active connections, shutting down server'); 
-                        netServer.close();
+                        self.netServer.close();
                         return; 
                     }
                     
@@ -294,7 +296,7 @@ class FileServer {
                             console.log('..... Terminating');
                         } else  if (!self.datatransfer) {
                             console.log('.....\n..... Restarting server as connections went down to zero');
-                            netServer.listen(self.portNumber, self.hostname);
+                            self.netServer.listen(self.portNumber, self.hostname);
                             self.createPassword();
                         }
                     }
@@ -434,7 +436,7 @@ class FileServer {
                 socket.destroy();
                 this.netServer.close();
                 this.terminating=true;
-                setTimeout( () => { process.exit(0)},1000);
+                setTimeout( () => { process.exit(0);},500);
                 break;
             }
             
@@ -518,11 +520,11 @@ class FileServer {
         
         let getWriteLocation=function(name,dataInProgress) {
             
-            //console.log('.....','Name=',name,'BaseDirectory=',baseDirectory);
             let i=0;
             while (i<self.opts.baseDirectoriesList.length) {
-                if (name.indexOf(self.opts.baseDirectoriesList[i])===0)
+                if (name.indexOf(self.opts.baseDirectoriesList[i])===0) {
                     return name;
+                }
                 i=i+1;
             }
             
@@ -648,6 +650,8 @@ class FileServer {
         
         let tserver=new FileServer({ verbose : this.opts.verbose,
                                      readonly : false,
+                                     baseDirectoriesList: this.opts.baseDirectoriesList,
+                                     tempDiretory : this.opts.tempDirectory,
                                    });
 
         tserver.startServer(this.hostname, this.portNumber+1,true).then( (p) => {
@@ -1061,6 +1065,7 @@ program
     .option('--insecure', 'USE WITH EXTREME CARE -- if true no password')
     .option('--verbose', ' print extra statements')
     .option('--nolocalhost', ' allow remote connections')
+    .option('--tmpdir <s>', ' specify temporary directory')
     .option('--config <s>', ' read config file')
     .option('--createconfig', ' print sample config file and exit')
     .parse(process.argv);
@@ -1078,6 +1083,7 @@ let verbose = program.verbose ? program.verbose : false;
 let nolocalhost = program.nolocalhost ? program.nolocalhost : false;
 let config = program.config || null;
 let createconfig = program.createconfig || null;
+let tmpdir= program.tmpdir || null;
 
 if (nolocalhost)
     insecure=false;
@@ -1090,6 +1096,7 @@ let server=new FileServer(
         "nolocalhost" : nolocalhost,
         "config" : config,
         "createconfig" : createconfig,
+        "tempDirectory" : tmpdir,
     }
 );
 
