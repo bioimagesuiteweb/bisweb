@@ -86,3 +86,15 @@
 	-load: Loads a specified module and execute it with the specified parameters.
 	
 	-test: Validates the proper function of a module by executing it on a test image and comparing it against the expected output. Same parameters as load. 
+
+
+## Adding a New Module
+
+1. Create your module probably copying an existing one and renaming it
+2. Register the module in moduleindex.js  (see what happens to smoothimage and
+   copy, two lines need to be added)
+3. Add it to cpp/ModuleList.txt -- this is needed to create the script to run
+   the module on make install
+4. Add a test in modules_test.json  and any goldstandard data in
+   test/testdata/ ....
+   
