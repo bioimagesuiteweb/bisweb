@@ -107,16 +107,13 @@ describe('Testing BisImage (from bis_readbruker.js) a class that imports Bruker 
                             falseflag[i]=true;
                     }
                     console.log('Falseflags='+falseflag);
-                    client.closeConnection();
+
                     genericio.setFileServerObject(null);
                     genericio.deleteDirectory(tmpDir).then( (m) => {
                         console.log('\t',m);
-                        bisserverutil.terminateTestingServer(client).then( ()=> {
-                            done();
-                        });
+                        done();
                     });
                 };
-                
 
                 let forceorient="None";
                 for (let count=0;count<=1;count++) {
@@ -177,6 +174,15 @@ describe('Testing BisImage (from bis_readbruker.js) a class that imports Bruker 
         it('check if ras and non ras are not same',function() {
             assert.equal(true,(falseflag[0] && falseflag[1]));
         });
+
+        after(function(done) {
+            bisserverutil.terminateTestingServer(client).then( ()=> {
+                done();
+            }).catch( (e) => {
+                console.log('---- termination error',e,e.stack);
+            });
+        });
+
     });
 
 });
