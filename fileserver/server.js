@@ -47,7 +47,7 @@ const SHAstring = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 //variables related to generating one-time passwords (OTP)
 let onetimePasswordCounter = 0;
 
-// ------------------------------------------ Utility Functions ------------------------
+// .................................................. Utility Functions ..............................
 // 
 /*let globalPortNumber=-1;
   let globalDataPortNumber=-2;
@@ -55,12 +55,12 @@ let onetimePasswordCounter = 0;
 */
 
 
-// ------------------------------------------ This is the class --------------------------------
+// .................................................. This is the class ........................................
 
 class FileServer {
 
     constructor(opts={}) {
-        //  ------------------- Per Connection ----------------------------------------------
+        //  .................... Per Connection .......................................................
         //file transfer may occur in chunks, which requires storing the chunks as they arrive
         this.fileInProgress = null;
 
@@ -87,10 +87,10 @@ class FileServer {
         
 
         // Former global variables
-        this.portNumber=-1;
-        this.dataPortNumber=-2;
+        this.portNumber=0;
+        this.dataPortNumber=0;
         this.hostname='localhost';
-
+        this.datatransfer=false;
         // Formerly global variable
         this.timeout = undefined;
     }
@@ -101,15 +101,15 @@ class FileServer {
         onetimePasswordCounter+=1;
         let token = hotp.generate(secret, onetimePasswordCounter);
         if (abbrv===0) {
-            console.log('++++ BioImage Suite Web FileServer Initialized\n++++');
-            console.log('++++ \t The websocket server is listening for incoming connections,\n++++\t using the following one time info.\n++++');
-            console.log(`++++ \t\t hostname: ${this.hostname}:${this.portNumber}`);
+            console.log('..... BioImage Suite Web FileServer datatransfer=',this.datatransfer,' Initialized\n.....');
+            console.log('..... \t The websocket server is listening for incoming connections,\n.....\t using the following one time info.\n.....');
+            console.log(`..... \t\t hostname: ${this.hostname}:${this.portNumber}`);
         }  else if (abbrv===1) {
-            console.log('++++\n++++ Create New Password ... try again.');
+            console.log('.....\n..... Create New Password ... try again.');
         } else {
-            console.log('++++\n++++ Create New Password as this one is now used successfully.');
+            console.log('.....\n..... Create New Password as this one is now used successfully.');
         }
-        console.log(`++++ \t\t password: ${token}\n++++`);
+        console.log(`..... \t\t password: ${token}\n.....`);
     }
 
 
@@ -135,10 +135,12 @@ class FileServer {
         let newServer = net.createServer(handleConnectionRequest);
 
         if (datatransfer) {
+            this.datatransfer=true;
             this.dataPortNumber=port;
             this.portNumber=-1;
-            console.log('____ Starting transfer data server on ',port);
+            console.log('..... Starting transfer data server on ',port);
         } else {
+            this.datatransfer=false;
             this.portNumber=port;
             this.dataPortNumber=port+1000;
             this.hostname=hostname;
@@ -149,7 +151,7 @@ class FileServer {
         try {
             newServer.listen(port, hostname, readycb);
         } catch(e) {
-            console.log(e);
+            console.log('.....',e);
         }
         
         //handleConnectionRequest is called when a connection is successfuly made between the client and the server and a socket is prepared
@@ -199,7 +201,7 @@ class FileServer {
                 this.portNumber=port;
                 socket.write(response, 'utf-8', () => {
                     //connectors on globalPortNumber are negotiating a control port, connectors on globalDataPortNumber are negotiating a transfer port
-                    console.log('____ We are ready to respond',port,' datatransfer=',datatransfer);
+                    console.log('..... We are ready to respond',port,' datatransfer=',datatransfer);
                     if (!datatransfer) {
                         self.authenticate(socket);
                     } else {
@@ -215,17 +217,18 @@ class FileServer {
             socket.on('close', () => {
                 newServer.getConnections( (err, count) => {
                     if (err) { 
-                        console.log('---- Server encountered an error getting its active connections, shutting down server'); 
+                        console.log('..... Server encountered an error getting its active connections, shutting down server'); 
                         newServer.close(); 
                         return; 
                     }
                     
                     if (count === 0) { 
-                        //console.log('all connections done, shutting down server');
+                        //console.log('.....','all connections done, shutting down server');
                         newServer.close();
                         
                         //start the server listening for new connections if it's on the control port
-                        if (port === this.portNumber) {
+                        if (!datatransfer) {
+                            console.log('.....',' Restarting server as connections went down to zero');
                             newServer.listen(this.portNumber, this.hostname);
                             self.createPassword();
                         }
@@ -233,7 +236,6 @@ class FileServer {
                 });
             });
         }
-        
     }
     
 
@@ -243,19 +245,19 @@ class FileServer {
             let decoded = frame.decoded;
             let password = wsutil.decodeUTF8(decoded, frame.parsedControl);
             
-            console.log('---- entered password');
-            console.log('---- sent by client:', password);
+            console.log('..... entered password');
+            console.log('..... sent by client:', password);
             
             if (hotp.check(parseInt(password), secret, onetimePasswordCounter) || (insecure && password.length<1)) {
-                console.log('++++ Starting helper server');
+                console.log('..... Starting helper server');
                 socket.removeListener('data', readOTP);
                 
                 this.prepareForControlFrames(socket);
                 socket.write(formatPacket('goodauth', ''));
                 this.createPassword(2);
-                console.log('++++ Authenticated OK');
+                console.log('..... Authenticated OK');
             } else {
-                console.log('---- The token you entered is incorrect.');
+                console.log('..... The token you entered is incorrect.');
                 this.createPassword(1);
                 socket.write(formatPacket('badauth', ''));
             }
@@ -275,15 +277,15 @@ class FileServer {
     prepareForControlFrames(socket) {
 
         socket.on('error', (error) => {
-            console.log('---- an error occured', error);
+            console.log('..... an error occured', error);
         });
         
         //socket listener is stored here because it gets replaced during file transfer
         socket.on('data', (chunk) => {
             let frame = readFrame(chunk);
             if (!frame) {
-                console.log('---- Bad Frame',socket._sockname);
-                console.log('++++ Received bad frame, sending nogood');
+                console.log('..... Bad Frame',socket._sockname);
+                console.log('..... Received bad frame, sending nogood');
                 socket.write(formatPacket('nogood', 'badframe'));
                 return;
             }
@@ -319,7 +321,7 @@ class FileServer {
         let parsedText = this.parseClientJSON(rawText);
         parsedText=parsedText || -1;
         if (this.verbose)
-            console.log('____ text request', JSON.stringify(parsedText));
+            console.log('..... text request', JSON.stringify(parsedText));
         switch (parsedText.command)
         {
             //get file list
@@ -332,7 +334,7 @@ class FileServer {
                 break;
             }
             case 'uploadfile' : {
-                console.log('\n+++++\n++++\n++++ upload');
+                console.log('.....','\n.....+\n.....\n..... upload');
                 this.getFileFromClientAndSave(parsedText, control, socket);
                 break;
             }
@@ -342,7 +344,7 @@ class FileServer {
             }
             
             case 'restart' : {
-                console.log('++++ Received restart, sending tryagain');
+                console.log('..... Received restart, sending tryagain');
                 socket.write(formatPacket('tryagain', ''));
                 break;
             }
@@ -357,12 +359,12 @@ class FileServer {
             }
 
             case 'ignore':  {
-                console.log('Received ignore, ignoring');
+                console.log('.....','Received ignore, ignoring');
                 break;
             }
             
             case 'terminate': {
-                console.log('---- received terminate from client.');
+                console.log('..... received terminate from client.');
                 socket.end();
                 socket.destroy();
                 process.exit(0);
@@ -370,14 +372,14 @@ class FileServer {
             }
             
             default: {
-                console.log('---- Cannot interpret request with unknown command', parsedText.command);
+                console.log('..... Cannot interpret request with unknown command', parsedText.command);
             }
         }
     }
 
-    // ------------------------------------------------------------------------------------------------------------------------------------
-    // ----------------------------------------- Receive File From Client -----------------------------------------------------------------
-    // ------------------------------------------------------------------------------------------------------------------------------------
+    // .....................................................................................................................................................................
+    // .................................................. Receive File From Client ................................................................................
+    // .....................................................................................................................................................................
     
     /**
      * Prepares the transfer socket to receive from the client. 
@@ -391,17 +393,17 @@ class FileServer {
         //server can send mangled packets during transfer that may parse as commands that shouldn't occur at that time, 
         //e.g. a mangled packet that parses to have an opcode of 8, closing the connection. so unbind the default listener and replace it after transmission.
         
-        console.log('Socket=',socket._sockname);
+        console.log('.....','Socket=',socket._sockname);
         const self=this;
         
         socket.on('data', (chunk) => {
             
             let controlFrame = chunk.slice(0, 14);
             let parsedControl = wsutil.parseControlFrame(controlFrame);
-            //        console.log('parsed control frame', parsedControl);
+            //        console.log('.....','parsed control frame', parsedControl);
             
             if (!parsedControl.mask) {
-                console.log('---- Received a transmission with no mask from client, dropping packet.');
+                console.log('..... Received a transmission with no mask from client, dropping packet.');
                 return;
             }
             
@@ -414,11 +416,11 @@ class FileServer {
             switch (parsedControl.opcode) {
             case 2:
                 if (this.verbose)
-                    console.log('---- adding packet with control', JSON.stringify(parsedControl));
+                    console.log('..... adding packet with control', JSON.stringify(parsedControl));
                 try {
                     addToCurrentTransfer(decoded, parsedControl, socket);
                 } catch(e) {
-                    console.log("Addition error",e);
+                    console.log('.....',"Addition error",e);
                 }
                 if (this.timeout) {
                     timers.clearTimeout(this.timeout);
@@ -426,15 +428,15 @@ class FileServer {
                 }
                 break;
             case 8: 
-                console.log('---- received close from client, ending data connection.');
+                console.log('..... received close from client, ending data connection.');
                 socket.end();
                 socket.destroy();
                 break;
             default: 
-                console.log('---- dropping packet with control', JSON.stringify(parsedControl));
+                console.log('..... dropping packet with control', JSON.stringify(parsedControl));
                 if (!this.timeout) {
                     this.timeout = self.setSocketTimeout( () => {
-                        console.log('---- timed out waiting for client');
+                        console.log('..... timed out waiting for client');
                         socket.end();
                     });
                 }
@@ -444,7 +446,7 @@ class FileServer {
         
         let getWriteLocation=function(name,dataInProgress) {
             
-            //console.log('Name=',name,'BaseDirectory=',baseDirectory);
+            //console.log('.....','Name=',name,'BaseDirectory=',baseDirectory);
             let i=0;
             while (i<self.baseDirectoriesList.length) {
                 if (name.indexOf(self.baseDirectoriesList[i])===0)
@@ -466,12 +468,12 @@ class FileServer {
             let dataInProgress=self.fileInProgress;
 
             if (self.verbose)
-                console.log('\tupload=',dataInProgress.offset,'Lengths: total=',dataInProgress.data.length,
+                console.log('.....','\tupload=',dataInProgress.offset,'Lengths: total=',dataInProgress.data.length,
                             'piecel=',upload.length);
             
             if ( (upload.length!==dataInProgress.packetSize) &&
                  (dataInProgress.offset+upload.length!== dataInProgress.totalSize)) {
-                console.log('\t bad packet size', upload.length, ' should be =', dataInProgress.packetSize, ' or ', dataInProgress.totalSize-dataInProgress.offset);
+                console.log('.....','\t bad packet size', upload.length, ' should be =', dataInProgress.packetSize, ' or ', dataInProgress.totalSize-dataInProgress.offset);
                 return;
             }
             
@@ -487,7 +489,7 @@ class FileServer {
 
                 let checksum=util.SHA256(new Uint8Array(dataInProgress.data));
                 if (checksum!== dataInProgress.checksum) {
-                    console.log('Bad Checksum', checksum, ' vs' ,dataInProgress.checksum);
+                    console.log('.....','Bad Checksum', checksum, ' vs' ,dataInProgress.checksum);
                     socket.write(formatPacket('uploadfailed',`${checksum}`));
                     dataInProgress=null;
                     return;
@@ -500,27 +502,27 @@ class FileServer {
                 let writeLocation = getWriteLocation(dataInProgress.name,dataInProgress);
                 if (path.sep==='\\')
                     writeLocation=util.filenameUnixToWindows(writeLocation);
-                console.log('____ writing to file', writeLocation,'size=',dataInProgress.data.length,' checksum matched=',checksum,dataInProgress.checksum);
+                console.log('..... writing to file', writeLocation,'size=',dataInProgress.data.length,' checksum matched=',checksum,dataInProgress.checksum);
                 
                 genericio.write(writeLocation, dataInProgress.data, dataInProgress.isbinary).then( () => {
                     socket.write(formatPacket('uploadcomplete', ''), () => {
                         dataInProgress.data=null;
                         //socket.end(); //if for some reason the client doesn't send a FIN we know the socket should close here anyway.
-                        console.log('____ message sent -- file saved in ',writeLocation,' binary=',dataInProgress.isbinary);
+                        console.log('..... message sent -- file saved in ',writeLocation,' binary=',dataInProgress.isbinary);
                     });
 
 
                 }).catch( (e) => {
-                    console.log('---- an error occured', e);
+                    console.log('..... an error occured', e);
                     socket.write(formatPacket('error', e));
                     socket.destroy();
                 });
             } else {
-                //console.log('____ received chunk,', dataInProgress.receivedFile.length, 'received so far.');
+                //console.log('..... received chunk,', dataInProgress.receivedFile.length, 'received so far.');
                 try {
                     socket.write(formatPacket('nextpacket', ''));
                 } catch(e) {
-                    console.log('\n\n\n\n\n -------------------------------- \n\n\n\n\n Error Caught =');
+                    console.log('.....','\n\n\n\n\n ........................................ \n\n\n\n\n Error Caught =');
                     socket.destroy();
                 }
             }
@@ -540,11 +542,11 @@ class FileServer {
             'uploadCount' : upload.uploadCount,
         };
         this.fileInProgress.data = new Uint8Array(upload.storageSize);
-        console.log('\n+++++++++++++\n+++++++++++ this.fileInProgress',
+        console.log('.....','\n...............+\n..........+++ this.fileInProgress',
                     'data created=',this.fileInProgress.totalSize,
                     'count=',this.fileInProgress.uploadCount,
                     'name=',upload.filename,
-                    '\n++++++++++++');
+                    '\n...............');
     }
     
     /**
@@ -560,7 +562,7 @@ class FileServer {
     getFileFromClientAndSave(upload, control, socket) {
 
         if (this.readonly) {
-            console.log('Server is in read-only mode and will not accept writes.');
+            console.log('.....','Server is in read-only mode and will not accept writes.');
             socket.write(formatPacket('uploadmessage', {
                 'name' : 'serverreadonly',
                 'id' : upload.id
@@ -590,9 +592,9 @@ class FileServer {
     }
 
 
-    // ---------------------------------------------------------------------------------------------------------------------------------------
-    // ------------------------------------ Send File To Client ------------------------------------------------------------------------------
-    // ---------------------------------------------------------------------------------------------------------------------------------------
+    // .................................................................................................................................................................
+    // ............................................. Send File To Client ...............................................................................................
+    // .................................................................................................................................................................
 
     /**
      * Takes a request from the client and returns the requested file or series of files. 
@@ -618,10 +620,10 @@ class FileServer {
                 if (err) {
                     this.handleBadRequestFromClient(socket, err,parsedText.id);
                 } else {
-                    console.log(`____ load binary file ${filename} successful, writing to socket.`);
+                    console.log('.....',`load binary file ${filename} successful, writing to socket.`);
                     let checksum=`${util.SHA256(new Uint8Array(d1))}`;
                     if (this.verbose)
-                        console.log('_____ Sending checksum=',checksum, 'id=',id);
+                        console.log('..... Sending checksum=',checksum, 'id=',id);
                     socket.write(formatPacket('checksum', {
                         'checksum' : checksum,
                         'id' : id
@@ -630,12 +632,12 @@ class FileServer {
                 }
             });
         } else {
-            //        console.log('filename', filename);
+            //        console.log('.....','filename', filename);
             fs.readFile(filename, 'utf-8', (err, d1) => {
                 if (err) {
                     this.handleBadRequestFromClient(socket, err);
                 } else {
-                    console.log(`____ load text file ${filename} successful, writing to socket.`);
+                    console.log(`..... load text file ${filename} successful, writing to socket.`);
                     socket.write(formatPacket('text', { 'data' :  d1,
                                                         'id' : id}));
                 }
@@ -644,9 +646,9 @@ class FileServer {
     }
 
 
-    // ------------------------------------------------------------------------------------------------------------------------------------
-    //  ---------- Directory and File List Operations
-    // ------------------------------------------------------------------------------------------------------------------------------------    
+    // .....................................................................................................................................................................
+    //  .......... Directory and File List Operations
+    // .....................................................................................................................................................................    
 
     /**
      * Sends the list of available files to the user, hiding files above the ~/ directory.
@@ -664,7 +666,7 @@ class FileServer {
         let getmatchedfiles=function(basedir) {
 
             if (debug)
-                console.log('____ Reading directory=',basedir);
+                console.log('..... Reading directory=',basedir);
             
             let pathname=basedir;
             if (path.sep==='\\') 
@@ -698,8 +700,6 @@ class FileServer {
         
         let createTree=async function(files) {
 
-            console.log('Creating files=',files);
-            
             let treelist=[];
             for (let f=0;f<files.length;f++) {
                 
@@ -762,10 +762,10 @@ class FileServer {
                     socket.write(formatPacket('filelist', { 'path' : pathname,'type' : type, 'data' : treelist, 'modalType' : type, 'id' : id }));
                 });
             }).catch( (e) => {
-                console.log(e,e.stack);
+                console.log('.....',e,e.stack);
             });
         } else {
-            console.log('\n\n this far',this.baseDirectoriesList);
+            console.log('.....','\n\n this far',this.baseDirectoriesList);
             let lst=this.baseDirectoriesList;
             if (path.sep==='\\') {
                 lst=[];
@@ -777,7 +777,7 @@ class FileServer {
             createTree(lst).then( (treelist) => {
                 socket.write(formatPacket('filelist', { 'path' : "/",'type' : type, 'data' : treelist, 'modalType' : type, 'id' : id }));
             }).catch( (e) => {
-                console.log(e,e.stack);
+                console.log('.....',e,e.stack);
             });
         }
     }
@@ -830,7 +830,7 @@ class FileServer {
                 break;
             }
             case 'makeDirectory' : {
-                console.log('Making ',url);
+                console.log('.....','Making ',url);
                 if (!this.readonly) 
                     prom=bisgenericio.makeDirectory(url);
                 else
@@ -858,13 +858,13 @@ class FileServer {
             }
                 
                 
-            console.log('____ File system success=',opname,url,m);
+            console.log('..... File system success=',opname,url,m);
             socket.write(formatPacket('filesystemoperations', { 'result' : m,
                                                                 'url' : url,
                                                                 'operation' : opname,
                                                                 'id' : id }));
         }).catch( (e) => {
-            console.log('File system fail',opname,url,e);
+            console.log('.....','File system fail',opname,url,e);
             socket.write(formatPacket('error', { 'result' : e,
                                                  'operation' : opname,
                                                  'url' : url,
@@ -884,7 +884,7 @@ class FileServer {
         let error = "An error occured while handling your request. ";
         error = error.concat(reason);
 
-        socket.write(formatPacket('error', { 'text' : error, 'id': id}), () => { console.log('---- request returned an error', reason, '\nsent error to client'); });
+        socket.write(formatPacket('error', { 'text' : error, 'id': id}), () => { console.log('..... request returned an error', reason, '\nsent error to client'); });
     }
 
     /**
@@ -896,16 +896,16 @@ class FileServer {
      */
     handleCloseFromClient(rawText, control, socket) {
         let text = wsutil.decodeUTF8(rawText, control);
-        console.log('____ received CLOSE frame from client',text);
+        console.log('..... received CLOSE frame from client',text);
 
         //TODO: send a close frame in response
         socket.end();
 
-        console.log('____ closed connection');
+        console.log('..... closed connection');
     }
 
 
-    // ----------------------- Filename Validation Code (not used) -------------------------------------
+    // ......................... Filename Validation Code (not used) .............................................
 
     /**
      * Takes a path specifying a file to load on the server machine and determines whether the path is clean, i.e. specifies a file that exists, does not contain symbolic links.
@@ -918,9 +918,9 @@ class FileServer {
             let pathCheck = (pathname) => {
                 if (pathname === '') { resolve(); return; }
 
-                //console.log('____ checking path', pathname);
+                //console.log('..... checking path', pathname);
                 fs.lstat(pathname, (err, stats) => {
-                    if (err) { console.log('---- err', err); reject('An error occured while statting filepath. Is there something on the path that would cause issues?'); return; }
+                    if (err) { console.log('..... err', err); reject('An error occured while statting filepath. Is there something on the path that would cause issues?'); return; }
                     if (stats.isSymbolicLink()) { reject('Symbolic link in path of file request.'); return; }
 
                     //look one directory up
@@ -961,7 +961,7 @@ class FileServer {
         try {
             parsedText = JSON.parse(text);
         } catch (e) {
-            console.log('---- an error occured while parsing the data from the client', e);
+            console.log('..... an error occured while parsing the data from the client', e);
         }
 
         return parsedText;
@@ -969,9 +969,9 @@ class FileServer {
 
 }
 
-// ------------------------------------------------------------------------------------
+// .........................................................................................................
 // This is the main function
-// ------------------------------------------------------------------------------------
+// .........................................................................................................
 program
     .option('-v, --verbose', 'Whether or not to display messages written by the server')
     .option('-p, --port <n>', 'Which port to start the server on')
@@ -1007,18 +1007,18 @@ require('dns').lookup(require('os').hostname(), function (err, add) {
     let ipaddr='localhost';
     if (nolocalhost)
         ipaddr=`${add}`;
-    console.log('__________________________________________________________________________________');
+    console.log('..................................................................................');
     server.startServer(ipaddr, portno, false, () => {
         if (insecure) {
-            console.log("++++\t IN INSECURE MODE");
+            console.log(".....\t IN INSECURE MODE");
         }
         if (nolocalhost) 
-            console.log("----\t Allowing remote connections");
+            console.log(".....\t Allowing remote connections");
         else
-            console.log("----\t Allowing only local connections");
+            console.log(".....\t Allowing only local connections");
         if (this.readonly)
-            console.log("----\t Running in 'read-only' mode");
-    console.log('__________________________________________________________________________________');
+            console.log(".....\t Running in 'read-only' mode");
+    console.log('..................................................................................');
     });
 });
 
