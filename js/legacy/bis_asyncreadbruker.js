@@ -416,6 +416,10 @@ let createHeader = function(data,debug) {
         headerstruct.dim[4]=data.ndir*data.nbval+data.nb0;
     }
 
+
+    headerstruct.qform_code=0;
+    headerstruct.sform_code=1;
+
     
     let origin= [ -data.fov[0]/2,-data.fov[1]/2, -data.fov[2]/2 ];
     
@@ -590,14 +594,14 @@ let saveRegularImage = async function (data,debug) {
         dualPrint("+++++ Normal Image Dimensions = "+imghead.struct.dim+", spa=" +imghead.struct.pixdim);
 
     let imageoutname=data.basename+".nii.gz";
-    img.addQuaternionCode(biswrap);
+    //    img.addQuaternionCode(biswrap);
     await directSaveImage(img,imageoutname,false);
     
     data.imageDimensions=img.getDimensions();
     
     data.partnames=[ bisgenericio.getNormalizedFilename(bisgenericio.getNormalizedFilename(imageoutname))];
-    //    await saveTextFiles(data,debug);
-    //    dualPrint('Text files saved');
+    await saveTextFiles(data,debug);
+    dualPrint('Text files saved');
     c=null;
     img=null;
 };

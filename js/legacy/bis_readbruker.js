@@ -384,6 +384,9 @@ let createHeader = function(data,debug) {
         headerstruct.dim[4]=data.ndir*data.nbval+data.nb0;
     }
 
+
+    headerstruct.qform_code=0;
+    headerstruct.sform_code=1;
     
     let origin= [ -data.fov[0]/2,-data.fov[1]/2, -data.fov[2]/2 ];
     
@@ -479,8 +482,14 @@ let directSaveImage=function(part_img,part_imageoutname,forceorient) {
         reorient_img.initialize();
         reorient_img.bindeserialize(serialized,forceorient);
         serialized=reorient_img.serializeToNII();
+        console.log('Reorient image=',reorient_img.getDescription());
         reorient_img=null;
+    } else {
+        console.log('Orig image=',part_img.getDescription());
     }
+    console.log('\n\n ',forceorient,'\n\n');
+
+    
 
     let cdata=pako.gzip(serialized);
     let fd=fs.openSync(part_imageoutname,'w');
@@ -567,7 +576,7 @@ let saveRegularImage = function (data,debug) {
 
     
     let imageoutname=data.basename+".nii.gz";
-    img.addQuaternionCode(biswrap);
+    //    img.addQuaternionCode(biswrap);
     directSaveImage(img,imageoutname,false);
     
     data.imageDimensions=img.getDimensions();
