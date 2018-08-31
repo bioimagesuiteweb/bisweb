@@ -58,7 +58,7 @@ class BisFileServerClient extends BisBaseServerClient {
 
     closeConnection() {
         if (this.socket) {
-            console.log('... closing connection first');
+            console.log('---- closing connection first');
             this.socket.close(1000, ' Restarting connection ');
             this.hostname=null;
         }
