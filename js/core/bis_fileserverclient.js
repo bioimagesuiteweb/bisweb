@@ -29,6 +29,7 @@ class BisFileServerClient extends BisBaseServerClient {
         this.password=null;
         this.lastCommand="";
         this.NodeWebSocket=nodesocket;
+        this.terminating=false;
     }
 
     sendCommand(command) {
@@ -40,7 +41,10 @@ class BisFileServerClient extends BisBaseServerClient {
         this.socket.send(js);
         // id here = command.id
         this.lastCommand=command;
-
+        if (command.command==='terminate') {
+            this.terminating=true;
+        }
+        
         let id=command.id;
         let timeout=command.timeout || 10000;
 
@@ -58,7 +62,7 @@ class BisFileServerClient extends BisBaseServerClient {
 
     closeConnection() {
         if (this.socket) {
-            console.log('---- closing connection first');
+            console.log('---- closing connection');
             this.socket.close(1000, ' Restarting connection ');
             this.hostname=null;
         }
@@ -94,6 +98,8 @@ class BisFileServerClient extends BisBaseServerClient {
         //add the event listeners for the control port
         let closeEvent = this.socket.addEventListener('close', () => {
             console.log('---- Socket closing');
+            if (this.terminating)
+                return;
             this.authenticated=false;
             this.alertEvent('Connection to fileserver at '+this.hostname+' closed',true);
             if (this.authenticatingEvent) {
