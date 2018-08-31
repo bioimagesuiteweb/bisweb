@@ -21,15 +21,14 @@
 
 
 require('../config/bisweb_pathconfig.js');
-const bisgulputil=require('../config/bis_gulputils.js');
+
 
 const assert = require("assert");
 const path=require('path');
 const util=require('bis_util');
 const genericio=require('bis_genericio');
-const BisFileServerClient=require('bis_fileserverclient');
-const WebSocket = require('ws');
 const os=require('os');
+const bisserverutil=require('bis_fileserverutils');
 
 let inpfilename = "testdata/MNI_2mm_resliced.nii.gz";
 let testfilename = "testdata/newtests/goldsmooth2sigma.nii.gz";
@@ -193,24 +192,13 @@ describe('Testing the server\n', function() {
     
     before(function(done) {
 
-        let servername=path.resolve(__dirname, "../fileserver/server.js");
-        let cmd=`node ${servername} --insecure`;
-        console.log('Executing ',cmd);
-        
-        bisgulputil.executeCommandPromise(cmd,__dirname);
-        setTimeout( () => {
-            console.log('\n ____Now attempting to connect');
-            client=new BisFileServerClient(WebSocket);
-            client.authenticate().then( () => {
-                console.log('Done authenticating');
-                genericio.setFileServerObject(client);
-                done();
-            });
-        },500);
-        
+        bisserverutil.createTestingServer().then( (c) => {
+            client=c;
+            done();
+        });
     });
-
-
+        
+    
     it('test home dir',function(done) {
 
         let baseDirectory = os.homedir();
@@ -267,11 +255,9 @@ describe('Testing the server\n', function() {
     });
 
     after(function(done) {
-        console.log('______________________________\n____________ Cleanup time');
-        client.sendCommand({'command' :'terminate'});
-        setTimeout( () => {
+        bisserverutil.terminateTestingServer(client).then( ()=> {
             done();
-        },1000);
+        });
     });
 
 });

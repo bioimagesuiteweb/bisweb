@@ -689,7 +689,7 @@ class FileServer {
 
                 fs.lstat(fname,(err,result) => {
                     if (err)
-                        reject(err)
+                        reject(err);
 
                     resolve(result);
                 });
@@ -749,8 +749,6 @@ class FileServer {
             return treelist;
         };
 
-        let treelist=null;
-        
         if (basedir || this.baseDirectoriesList.length<2) {
 
             basedir = basedir || this.baseDirectoriesList[0];

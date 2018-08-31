@@ -17,8 +17,12 @@
 
 "use strict";
 
-
+const path=require('path');
 const wsutil = require('wsutil');
+const biscmdline = require('bis_commandlineutils');
+const WebSocket = require('ws');
+const BisFileServerClient=require('bis_fileserverclient');
+const genericio=require('bis_genericio');
 
 /**
  * Takes a payload and a description of the payload type and formats the packet for transmission. 
@@ -84,9 +88,61 @@ const readFrame = function(chunk) {
     };
 };
 
-// ------------------------------- Exporting --------------------------------------------------
+
+// ------------------------------- Testing Code --------------------------------------------------
+
+const createTestingServer=function(serverpath=null,timeout=1000) {
+
+    return new Promise( (resolve,reject) => {
+        
+        serverpath=serverpath || path.join(__dirname,'../fileserver');
+        
+        let servername=path.resolve(serverpath,"server.js");
+        let cmd=`node ${servername} --insecure`;
+        console.log('Executing ',cmd);
+        
+        biscmdline.executeCommandPromise(cmd,__dirname,((status,code) => {
+            if (status===false) {
+                console.log('---- server failed ',code);
+                reject('---- server failed '+code);
+            } else {
+                console.log('---- server done',code);
+            }
+        }));
+                                        
+    
+        setTimeout( () => {
+            console.log('\n ____Now attempting to connect');
+            let client=new BisFileServerClient(WebSocket);
+            client.authenticate().then( () => {
+                console.log('Done authenticating');
+                genericio.setFileServerObject(client);
+                resolve(client);
+            });
+        },timeout);
+    });
+};
+
+const terminateTestingServer = function(client,timeout=1000) {
+
+    return new Promise( (resolve,reject) => {
+        try {
+            console.log('______________________________\n____________ Cleanup time');
+            client.sendCommand({'command' :'terminate'});
+            genericio.setFileServerObject(null);
+        } catch(e) {
+            reject(e);
+        }
+        
+        setTimeout( () => { resolve();  },timeout);
+    });
+};
+
+// ------------------------------- Exporting -----------------------------------------------------
 
 module.exports = {
     formatPacket : formatPacket,
     readFrame :  readFrame,
+    createTestingServer :     createTestingServer,
+    terminateTestingServer :     terminateTestingServer
 };
