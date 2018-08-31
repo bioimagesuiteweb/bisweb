@@ -106,7 +106,7 @@ const createTestingServer=function(serverpath=null,timeout=1000) {
                 console.log('---- server failed ',code);
                 reject('---- server failed '+code);
             } else {
-                console.log('---- server done',code);
+                console.log('---- terminate command done');
             }
         }));
                                         
@@ -123,7 +123,7 @@ const createTestingServer=function(serverpath=null,timeout=1000) {
     });
 };
 
-const terminateTestingServer = function(client,timeout=1000) {
+const terminateTestingServer = function(client,timeout=500) {
 
     return new Promise( (resolve,reject) => {
         try {
@@ -131,10 +131,13 @@ const terminateTestingServer = function(client,timeout=1000) {
             client.sendCommand({'command' :'terminate'});
             genericio.setFileServerObject(null);
         } catch(e) {
+            console.log("There is an error",e);
             reject(e);
         }
-        
-        setTimeout( () => { resolve();  },timeout);
+
+        setTimeout( () => { 
+            resolve();
+        },timeout);
     });
 };
 
