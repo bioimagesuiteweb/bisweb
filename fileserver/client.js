@@ -113,6 +113,6 @@ let test_fn=async function() {
 try {
     test_fn();
 } catch(e) {
-    console.log("Error",e,err);
+    console.log("Error",e);
 }
 
