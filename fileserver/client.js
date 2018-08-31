@@ -13,7 +13,7 @@ let basedir=path.resolve(__dirname, '../web/images/');
 console.log('Base dir=',basedir);
 
 
-let test_fn=async function(address) {
+let test_fn=async function() {
     
 
     let client=new BisFileServerClient(WebSocket);
@@ -110,10 +110,9 @@ let test_fn=async function(address) {
     process.exit();
 };
 
-require('dns').lookup(require('os').hostname(), function (err, add) {
-    try {
-        test_fn(add);
-    } catch(e) {
-        console.log("Error",e,err);
-    }
-});
+try {
+    test_fn();
+} catch(e) {
+    console.log("Error",e,err);
+}
+

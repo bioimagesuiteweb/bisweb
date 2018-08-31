@@ -417,15 +417,23 @@ class SimpleFileDialog {
                 folders.splice(i,1);
         }
 
-        for (let i=0;i<folders.length;i++) {
+        for (let i=-1;i<folders.length;i++) {
 
             let newPath ='';
-            for (let k=0;k<=i;k++) 
-                newPath=newPath+'/'+folders[k];
             let b="";
-            if (i==0)
-                b=`<span class='glyphicon glyphicon-folder-close'></span>/`;
-            let button = $(`<button type='button' class='btn btn-sm btn-link' style='margin:0px'>${b}${folders[i]}/</button>`);
+            let name="";
+            if (i===-1)
+                b=`<span class='glyphicon glyphicon-folder-close'></span>`;
+            if (i>=0) {
+                for (let k=0;k<=i;k++) 
+                    newPath=newPath+'/'+folders[k];
+
+                name=folders[i]+'/';
+            } else {
+                newPath=null;
+                name=" [Root]";
+            }
+            let button = $(`<button type='button' class='btn btn-sm btn-link' style='margin:0px'>${b}${name}</button>`);
             button.on('click', (event) => {
                 event.preventDefault();
                 this.fileListFn(this.options.mode, newPath);

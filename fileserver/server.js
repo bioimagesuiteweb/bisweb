@@ -75,7 +75,7 @@ class FileServer {
             if (path.sep==='/')  {
                 this.baseDirectoriesList=[ os.homedir() ];
             } else {
-                this.baseDirectoriesList=[ util.filenameWindowsToUnix(os.homedir()), util.filenameWindowsToUnix('e:') ];
+                this.baseDirectoriesList=[ util.filenameWindowsToUnix(os.homedir()) ];
             }
         }
 
@@ -660,7 +660,20 @@ class FileServer {
     serveFileList(socket, basedir, type,id=-1)  {
 
         const debug=this.debug;
-        
+
+        if (basedir) {
+            let found=false,i=0;
+            while(i<this.baseDirectoriesList.length && !found) {
+                if (basedir.indexOf(this.baseDirectoriesList[i])===0) {
+                    found=true;
+                } else  {
+                    i=i+1;
+                }
+            }
+            if (found===false)
+                basedir=this.baseDirectoriesList[0];
+        }
+            
         let getmatchedfiles=function(basedir) {
 
             if (debug)
