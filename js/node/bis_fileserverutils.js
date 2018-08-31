@@ -112,10 +112,10 @@ const createTestingServer=function(serverpath=null,timeout=1000) {
                                         
     
         setTimeout( () => {
-            console.log('\n ____Now attempting to connect');
+            console.log('\n____ Now attempting to connect');
             let client=new BisFileServerClient(WebSocket);
             client.authenticate().then( () => {
-                console.log('Done authenticating');
+                console.log('____ Done authenticating');
                 genericio.setFileServerObject(client);
                 resolve(client);
             });

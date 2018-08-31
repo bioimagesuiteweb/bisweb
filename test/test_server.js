@@ -48,12 +48,16 @@ describe('Testing the server utilities\n', function() {
     it('run filename conversion',function() {
 
         let ok=true;
-        for (let j=0;j<fullnames.length;j++) {
+        if (path.sep==='\\') {
+            for (let j=0;j<fullnames.length;j++) {
             let b=util.filenameWindowsToUnix(fullnames[j]);
             let c=util.filenameUnixToWindows(b);
-            console.log('\tfrom '+fullnames[j]+'\n\t  to '+b+'\n\t    back to '+c+'\n');
-            if (c.trim()!==fullnames[j].trim())
-                ok=false;
+                console.log('\tfrom '+fullnames[j]+'\n\t  to '+b+'\n\t    back to '+c+'\n');
+                if (c.trim()!==fullnames[j].trim())
+                    ok=false;
+            }
+        } else {
+            console.log('This is a windows only test');
         }
 
         

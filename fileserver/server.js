@@ -102,7 +102,7 @@ class FileServer {
         let token = hotp.generate(secret, onetimePasswordCounter);
         if (abbrv===0) {
             console.log('..... BioImage Suite Web FileServer datatransfer=',this.datatransfer,' Initialized\n.....');
-            console.log('..... \t The websocket server is listening for incoming connections,\n.....\t using the following one time info.\n.....');
+            console.log('..... \t The websocket server is listening for incoming connections,\n...... \t using the following one time info.\n.....');
             console.log(`..... \t\t hostname: ${this.hostname}:${this.portNumber}`);
         }  else if (abbrv===1) {
             console.log('.....\n..... Create New Password ... try again.');
@@ -130,15 +130,14 @@ class FileServer {
      */
     startServer(hostname='localhost', port=8081, datatransfer = true, readycb = null) {
 
-        
 
         let newServer = net.createServer(handleConnectionRequest);
 
         if (datatransfer) {
             this.datatransfer=true;
             this.dataPortNumber=port;
-            this.portNumber=-1;
-            console.log('..... Starting transfer data server on ',port);
+            this.portNumber=port;
+            console.log('._._._._._._- \tStarting transfer data server on ',port);
         } else {
             this.datatransfer=false;
             this.portNumber=port;
@@ -190,21 +189,23 @@ class FileServer {
                 shasum.update(websocketKey);
                 let acceptKey = shasum.digest('base64');
                 response = response + acceptKey + '\r\n\r\n';
-                
+
                 let port = socket.localPort;
-                if (datatransfer) {
-                    this.dataPortNumber=port;
-                    this.portNumber=-1;
+                if (self.datatransfer) {
+                    self.dataPortNumber=port;
+                    self.portNumber=-1;
                 } else {
-                    this.portNumber=port;
+                    self.portNumber=port;
                 }
-                this.portNumber=port;
+                self.portNumber=port;
                 socket.write(response, 'utf-8', () => {
                     //connectors on globalPortNumber are negotiating a control port, connectors on globalDataPortNumber are negotiating a transfer port
-                    console.log('..... We are ready to respond',port,' datatransfer=',datatransfer);
+
                     if (!datatransfer) {
+                        console.log('..... We are ready to respond on port='+port);
                         self.authenticate(socket);
                     } else {
+                        console.log('._._._._._._- \t Data Transfer is ON: We are ready to respond',port,' datatransfer=',self.datatransfer);
                         self.prepareForDataFrames(socket);
                     }
                 });    
@@ -223,13 +224,9 @@ class FileServer {
                     }
                     
                     if (count === 0) { 
-                        //console.log('.....','all connections done, shutting down server');
-                        newServer.close();
-                        
-                        //start the server listening for new connections if it's on the control port
-                        if (!datatransfer) {
-                            console.log('.....',' Restarting server as connections went down to zero');
-                            newServer.listen(this.portNumber, this.hostname);
+                        if (!self.datatransfer) {
+                            console.log('.....\n..... Restarting server as connections went down to zero');
+                            newServer.listen(self.portNumber, self.hostname);
                             self.createPassword();
                         }
                     }
@@ -245,17 +242,16 @@ class FileServer {
             let decoded = frame.decoded;
             let password = wsutil.decodeUTF8(decoded, frame.parsedControl);
             
-            console.log('..... entered password');
-            console.log('..... sent by client:', password);
+            console.log('..... password sent by client=('+password+')');
             
             if (hotp.check(parseInt(password), secret, onetimePasswordCounter) || (insecure && password.length<1)) {
-                console.log('..... Starting helper server');
+                console.log('..... \tStarting helper server');
                 socket.removeListener('data', readOTP);
                 
                 this.prepareForControlFrames(socket);
                 socket.write(formatPacket('goodauth', ''));
                 this.createPassword(2);
-                console.log('..... Authenticated OK');
+                console.log('..... Authenticated OK\n.....');
             } else {
                 console.log('..... The token you entered is incorrect.');
                 this.createPassword(1);
@@ -334,7 +330,7 @@ class FileServer {
                 break;
             }
             case 'uploadfile' : {
-                console.log('.....','\n.....+\n.....\n..... upload');
+                console.log('._._._._._._-\n._._._._._._- beginning upload event');
                 this.getFileFromClientAndSave(parsedText, control, socket);
                 break;
             }
@@ -393,7 +389,7 @@ class FileServer {
         //server can send mangled packets during transfer that may parse as commands that shouldn't occur at that time, 
         //e.g. a mangled packet that parses to have an opcode of 8, closing the connection. so unbind the default listener and replace it after transmission.
         
-        console.log('.....','Socket=',socket._sockname);
+        console.log('._._._._._._- \t receiving data on socket=',socket._sockname);
         const self=this;
         
         socket.on('data', (chunk) => {
@@ -427,8 +423,11 @@ class FileServer {
                     this.timeout = null;
                 }
                 break;
-            case 8: 
-                console.log('..... received close from client, ending data connection.');
+            case 8:
+                if (self.datatransfer)
+                    console.log('._._._._._._-\n._._._._._._- received close from client, ending data connection on port',self.portNumber,' data=',self.datatransfer,'\n._._._._._._-');
+                else
+                    console.log('.....\n..... received close from client, ending data connection on port',self.portNumber,' data=',self.datatransfer,'\n.....');
                 socket.end();
                 socket.destroy();
                 break;
@@ -468,12 +467,12 @@ class FileServer {
             let dataInProgress=self.fileInProgress;
 
             if (self.verbose)
-                console.log('.....','\tupload=',dataInProgress.offset,'Lengths: total=',dataInProgress.data.length,
+                console.log('._._._._._._- \t\t offset=',dataInProgress.offset,'Lengths: total=',dataInProgress.data.length,
                             'piecel=',upload.length);
             
             if ( (upload.length!==dataInProgress.packetSize) &&
                  (dataInProgress.offset+upload.length!== dataInProgress.totalSize)) {
-                console.log('.....','\t bad packet size', upload.length, ' should be =', dataInProgress.packetSize, ' or ', dataInProgress.totalSize-dataInProgress.offset);
+                console.log('._._._._._._-','\t bad packet size', upload.length, ' should be =', dataInProgress.packetSize, ' or ', dataInProgress.totalSize-dataInProgress.offset);
                 return;
             }
             
@@ -489,7 +488,7 @@ class FileServer {
 
                 let checksum=util.SHA256(new Uint8Array(dataInProgress.data));
                 if (checksum!== dataInProgress.checksum) {
-                    console.log('.....','Bad Checksum', checksum, ' vs' ,dataInProgress.checksum);
+                    console.log('._._._._._._-','Bad Checksum', checksum, ' vs' ,dataInProgress.checksum);
                     socket.write(formatPacket('uploadfailed',`${checksum}`));
                     dataInProgress=null;
                     return;
@@ -502,33 +501,34 @@ class FileServer {
                 let writeLocation = getWriteLocation(dataInProgress.name,dataInProgress);
                 if (path.sep==='\\')
                     writeLocation=util.filenameUnixToWindows(writeLocation);
-                console.log('..... writing to file', writeLocation,'size=',dataInProgress.data.length,' checksum matched=',checksum,dataInProgress.checksum);
+                console.log('._._._._._._- \t writing to file', writeLocation,'\n._._._._._._- \t\t size=',dataInProgress.data.length,'\n._._._._._._- \t\t checksum matched=',checksum);
                 
                 genericio.write(writeLocation, dataInProgress.data, dataInProgress.isbinary).then( () => {
                     socket.write(formatPacket('uploadcomplete', ''), () => {
                         dataInProgress.data=null;
                         //socket.end(); //if for some reason the client doesn't send a FIN we know the socket should close here anyway.
-                        console.log('..... message sent -- file saved in ',writeLocation,' binary=',dataInProgress.isbinary);
+                        console.log('._._._._._._- \t message sent -- file saved in ',writeLocation,' binary=',dataInProgress.isbinary);
                     });
 
 
                 }).catch( (e) => {
-                    console.log('..... an error occured', e);
+                    console.log('._._._._._._- an error occured', e);
                     socket.write(formatPacket('error', e));
                     socket.destroy();
                 });
             } else {
-                //console.log('..... received chunk,', dataInProgress.receivedFile.length, 'received so far.');
+                //console.log('._._._._._._- received chunk,', dataInProgress.receivedFile.length, 'received so far.');
                 try {
                     socket.write(formatPacket('nextpacket', ''));
                 } catch(e) {
-                    console.log('.....','\n\n\n\n\n ........................................ \n\n\n\n\n Error Caught =');
+                    console.log('._._._._._._-','\n\n\n\n\n ._._._._._._-................................... \n\n\n\n\n Error Caught =');
                     socket.destroy();
                 }
             }
         }  
     }
 
+    
     createFileInProgress(upload) {
 
         this.fileInProgress = {
@@ -542,11 +542,9 @@ class FileServer {
             'uploadCount' : upload.uploadCount,
         };
         this.fileInProgress.data = new Uint8Array(upload.storageSize);
-        console.log('.....','\n...............+\n..........+++ this.fileInProgress',
-                    'data created=',this.fileInProgress.totalSize,
+        console.log('._._._._._._-\n._._._._._._- \t fileinProgress data created=',this.fileInProgress.totalSize,
                     'count=',this.fileInProgress.uploadCount,
-                    'name=',upload.filename,
-                    '\n...............');
+                    'name=',upload.filename);
     }
     
     /**
@@ -637,7 +635,7 @@ class FileServer {
                 if (err) {
                     this.handleBadRequestFromClient(socket, err);
                 } else {
-                    console.log(`..... load text file ${filename} successful, writing to socket.`);
+                    console.log(`..... load text file ${filename} successful, writing to socket`);
                     socket.write(formatPacket('text', { 'data' :  d1,
                                                         'id' : id}));
                 }
@@ -765,7 +763,6 @@ class FileServer {
                 console.log('.....',e,e.stack);
             });
         } else {
-            console.log('.....','\n\n this far',this.baseDirectoriesList);
             let lst=this.baseDirectoriesList;
             if (path.sep==='\\') {
                 lst=[];
@@ -830,7 +827,6 @@ class FileServer {
                 break;
             }
             case 'makeDirectory' : {
-                console.log('.....','Making ',url);
                 if (!this.readonly) 
                     prom=bisgenericio.makeDirectory(url);
                 else
@@ -858,7 +854,7 @@ class FileServer {
             }
                 
                 
-            console.log('..... File system success=',opname,url,m);
+            console.log('..... File system success=',opname,url,m,'\n.....');
             socket.write(formatPacket('filesystemoperations', { 'result' : m,
                                                                 'url' : url,
                                                                 'operation' : opname,
@@ -992,6 +988,9 @@ let readonlyflag = program.readonly ? program.readonly : false;
 let insecure = program.insecure ? program.insecure : false;
 let verbose = program.verbose ? program.verbose : false;
 let nolocalhost = program.nolocalhost ? program.nolocalhost : false;
+
+if (nolocalhost)
+    insecure=false;
 
 let server=new FileServer(
     {

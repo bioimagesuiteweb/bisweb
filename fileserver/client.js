@@ -17,11 +17,7 @@ let test_fn=async function(address) {
     
 
     let client=new BisFileServerClient(WebSocket);
-    try {
-        await client.authenticate('',`ws://${address}:8081`);
-    } catch(e) {
-        await client.authenticate('','ws://localhost:8081');
-    }
+    await client.authenticate('','ws://localhost:8081');
 
     genericio.setFileServerObject(client);
 
@@ -64,7 +60,9 @@ let test_fn=async function(address) {
     
     console.log('++++\n++++ Download File\n++++');
     let img=new BisWebImage();
-    let f=util.filenameWindowsToUnix(`${basedir}/MNI_T1_2mm_stripped_ras.nii.gz`);
+    let f=`${basedir}/MNI_T1_2mm_stripped_ras.nii.gz`;
+    if (path.sep==='\\')
+        f=util.filenameWindowsToUnix(f);
     await img.load(f);
     console.log('Done ', img.getDescription());
 
