@@ -659,7 +659,6 @@ class OrthogonalViewerElement extends BaseViewerElement {
         
         if (!this.internal.midlinepresent) {
             let par=$(parentcanvas).parent().parent();
-            console.log(par[0]);
             par.append(this.internal.midline);
             par.append(this.internal.midline2);
             this.internal.midlinepresent=true;
