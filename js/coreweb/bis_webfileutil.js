@@ -152,6 +152,28 @@ const webfileutils = {
         userPreferences.storeUserPreferences();
     },
 
+
+    // ------------------------------------------------------------------------------------------
+    /** can I do complex I/O
+     * Either Electron or Browser with Server or S3
+     * @alias WebFileUtil.candoComplexIO
+     * @returns{Boolean} true or false
+     */
+    candoComplexIO: function() {
+        
+        if (genericio.getmode()!=='browser')
+            return true;
+        
+        if (fileMode==='server' || fileMode==='amazonaws')
+            return true;
+        
+        webutil.createAlert('You need to connect to a local fileserver on an S3 share before this operation.',true);
+        return false;
+    },
+
+
+    // ------------------------------------------------------------------------------------------
+    
     /** 
      * Electron file callback function -- invoked instead of webFileCallback if the application is running in Electron. 
      * @alias WebFileUtil.electronFileCallback
@@ -244,31 +266,34 @@ const webfileutils = {
         let title = fileopts.title || '';
         let defaultpath=fileopts.defaultpath || '';
         
+        if (!fileopts.suffix && fileopts.filters)
+            suffix=fileopts.filters;
+
+        
         if (suffix === "NII")
             suffix = '.nii.gz,.nii,.gz,.tiff';
-
-        if (suffix!=='') {
-            let s=suffix.split(",");
-            for (let i=0;i<s.length;i++) {
-                let a=s[i];
-                if (a.indexOf(".")!==0)
-                    s[i]="."+s[i];
-            }
-            suffix=s.join(",");
-        } else {
-            let flt=fileopts.filters || [];
-            if (flt.length>0) {
-                let extensions=[];
-                for (let i=0;i<flt.length;i++) {
-                    let s=flt[i].extensions;
-                    for (let j=0;j<s.length;j++)
-                        extensions.push("."+s[j]);
+        if (suffix !== "DIRECTORY") {
+            if (suffix!=='') {
+                let s=suffix.split(",");
+                for (let i=0;i<s.length;i++) {
+                    let a=s[i];
+                    if (a.indexOf(".")!==0)
+                        s[i]="."+s[i];
                 }
+                suffix=s.join(",");
+            } else {
+                let flt=fileopts.filters || [];
+                if (flt.length>0) {
+                    let extensions=[];
+                    for (let i=0;i<flt.length;i++) {
+                        let s=flt[i].extensions;
+                        for (let j=0;j<s.length;j++)
+                            extensions.push("."+s[j]);
+                    }
                 suffix=extensions.join(',');
+                }
             }
         }
-
-
         
         let fmode=fileMode;
         if (fileopts.force)
@@ -277,6 +302,16 @@ const webfileutils = {
         let cbopts = { 'callback' : callback, 'title' : title, 'suffix' : suffix };
 
         // -------------------- End Of Part I ---------------
+
+        if (fileopts.suffix === "DIRECTORY" && fileMode === 'server') {
+            cbopts.initialFilename= '';
+            cbopts.type='directory';
+            cbopts.suffix='';
+            bisweb_fileserverclient.requestFileList('directory', null, true, cbopts);
+            return;
+        }
+
+        // -------------------- End of Part IA -------------
         
         if (fileopts.save) {
             // We are now saving only server, aws or local
@@ -286,6 +321,10 @@ const webfileutils = {
                 let initialDir=null;
                 let initialFilename=null;
 
+
+                    
+
+                
                 if (fileopts.initialCallback) {
                     let f=fileopts.initialCallback() || '';
                     if (f.length>0) {
@@ -371,27 +410,22 @@ const webfileutils = {
     },
 
     /** 
-     * Create File Callback. Attaches either webFileCallback or electronFileCallback to a button. 
-     * @alias WebFileUtil.attachFileCallback
-     * @param {Event} e -- the element to attach the callback to
-     * @param {Function} callback -- functiont to call when done
+     * Use this to activate a file callback directly (in electron or for server/s3)
+     * @alias WebFileUtil.genericFileCallback
      * @param {object} fileopts - the file dialog options object (in file style)
      * @param {string}  fileopts.title  - in file: dialog title
      * @param {boolean} fileopts.save -  in file determine load or save
      * @param {string}  fileopts.defaultpath -  use this as original filename
      * @param {string}  fileopts.filter - use this as filter (if in electron)
      * @param {string}  fileopts.suffix - List of file types to accept as a comma-separated string e.g. ".ljson,.land" (simplified version filter)
+     * @param {Function} callback -- functiont to call when done
+
      */
-    genericFileCallback : function(e,callback,fileopts={}) {
+    genericFileCallback : function(fileopts={},callback=null) {
 
         fileopts = fileopts || {};
         fileopts.save = fileopts.save || false;
 
-        if (e) {
-            e.stopPropagation();
-            e.preventDefault();
-        }
-                    
         const that = this;
 
         if (webutil.inElectronApp()) {
