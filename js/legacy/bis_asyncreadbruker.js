@@ -37,11 +37,6 @@ const bisheader=require('bis_header');
 const BisWebImage=require('bisweb_image');
 const bisgenericio=require('bis_genericio');
 const userPreferences = require('bisweb_userpreferences.js');
-const biswrap = require('libbiswasm_wrapper');
-if (typeof window === 'undefined') {
-    biswrap.initialize();
-}
-
 const inelectron=( bisgenericio.getmode() === "electron");
 
 /*const sleep=function(millis) {
@@ -80,26 +75,29 @@ var getmatchingfiles = function (querystring) {
 // ---------------
 // Get matching filenames
 // ---------------
-let getMatchingFilenames=function(f) {
+let getMatchingFilenames=async function(f) {
 
     var pname=bisgenericio.getNormalizedFilename(f);
     var l=bisgenericio.getDirectoryName(pname).length+1;
+
     var p2=bisgenericio.getNormalizedFilename(pname+'/*/pdata/*/2dseq');
-    var n1=getmatchingfiles(p2);
+    var n1=await getmatchingfiles(p2);
     if (n1.length<1) {
         p2=bisgenericio.getNormalizedFilename(pname+'/pdata/*/2dseq');
-        n1=getmatchingfiles(p2);
+        n1=await getmatchingfiles(p2);
     }
+
     if (n1.length<1) {
         p2=bisgenericio.getNormalizedFilename(pname+'/*/2dseq');
-        n1=getmatchingfiles(p2);
+        n1=await getmatchingfiles(p2);
     }
+
     if (n1.length<1) {
         p2=bisgenericio.getNormalizedFilename(pname+'/2dseq');
-        n1=getmatchingfiles(p2);
+        n1=await getmatchingfiles(p2);
     }
     
-    
+
     return { names : n1,
              len   : l
            };
@@ -921,7 +919,7 @@ let readMultiple= async function (filename,outprefix,forceorient,addcallback,deb
     };
     
 
-    let obj=getMatchingFilenames(filename);
+    let obj=await getMatchingFilenames(filename);
     let fnames=obj.names;
     let len=obj.len;
     
@@ -937,7 +935,7 @@ let readMultiple= async function (filename,outprefix,forceorient,addcallback,deb
         if (counter===0) {
             let dirname = bisgenericio.getDirectoryName(bisgenericio.getDirectoryName(bisgenericio.getNormalizedFilename(bisgenericio.getDirectoryName(fnames[0]))));
             let visuname=bisgenericio.joinFilenames(dirname,"visu_pars");
-            let visu=readParameterFile(visuname);
+            let visu=await readParameterFile(visuname);
             if (visu['VisuSubjectId'][0].length>2)
                 subjectname=visu['VisuSubjectId'][0].substr(1,visu['VisuSubjectId'][0].length-2);
         }
@@ -999,7 +997,7 @@ let readMultiple= async function (filename,outprefix,forceorient,addcallback,deb
         let ifile=fnamepairs[counter].inp;
         let ofile=fnamepairs[counter].out;
         ofile=bisgenericio.joinFilenames(outprefix,ofile);
-        let data=readFile(ifile,ofile,forceorient);
+        let data=await readFile(ifile,ofile,forceorient);
         let error=data.error || "";
         if (error !="" ) {
             dualPrint('----- ERROR: '+error);
@@ -1041,7 +1039,7 @@ let readMultiple= async function (filename,outprefix,forceorient,addcallback,deb
         job : joblist,
     };
     let txt=JSON.stringify(outobj);
-    bisgenericio.write(jobname,txt);
+    await bisgenericio.write(jobname,txt);
     return [ true, 'saved job in '+jobname ];
 };
 
