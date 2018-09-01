@@ -92,6 +92,8 @@ class FileServer {
         if (this.opts.tempDirectory.length<1) {
             if (path.sep==='\\') {
                 this.opts.tempDirectory=util.filenameWindowsToUnix(os.homedir()+'/temp');
+            } else if (os.platform()==='darwin' ) {
+                this.opts.tempDirectory='/'+fs.readlinkSync('/tmp');
             } else {
                 this.opts.tempDirectory='/tmp';
             }
@@ -105,15 +107,21 @@ class FileServer {
             }
         }
 
+        let temp=this.opts.tempDirectory.trim();
         let i=0,found=false;
-        while (i<this.opts.baseDirectoriesList && found===false) {
-            if (this.opts.tempDirectory.indexOf(this.opts.baseDirectoriesList[i])===0)
+
+        while (i<this.opts.baseDirectoriesList.length && found===false) {
+            let nm=this.opts.baseDirectoriesList[i].trim();
+            if (temp.trim() === nm.trim() ||
+                temp.indexOf(nm)===0) {
                 found=true;
-            else
+            }  else {
                 i=i+1;
+            }
         }
-        if (!found)
+        if (!found) {
             this.opts.baseDirectoriesList.push(this.opts.tempDirectory);
+        }
         
         if (opts.createconfig || this.opts.verbose) {
             console.log('\n.................................');
@@ -1106,6 +1114,7 @@ require('dns').lookup(require('os').hostname(), function (err, add) {
     if (nolocalhost)
         ipaddr=`${add}`;
     console.log('..................................................................................');
+    console.log('.... running on',os.platform());
     server.startServer(ipaddr, portno, false).catch( (e) => {
         console.log(e);
         process.exit(0);
