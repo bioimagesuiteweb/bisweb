@@ -1,4 +1,4 @@
-require('../config/bisweb_pathconfig.js');
+require('../../config/bisweb_pathconfig.js');
 
 const program = require('commander');
 const net = require('net');
@@ -35,7 +35,7 @@ const readFrame=bisserverutil.readFrame;
 // Detect free port !!!!
 
 const fs = require('fs');
-const wsutil = require('wsutil');
+const wsutil = require('bis_wsutil');
 const genericio = require('bis_genericio.js');
 
 

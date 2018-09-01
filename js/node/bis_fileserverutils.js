@@ -18,7 +18,7 @@
 "use strict";
 
 const path=require('path');
-const wsutil = require('wsutil');
+const wsutil = require('bis_wsutil');
 const util = require('bis_util');
 const biscmdline = require('bis_commandlineutils');
 const WebSocket = require('ws');
@@ -99,7 +99,7 @@ const readFrame = function(chunk) {
 
 const createTestingServer=function(serverpath=null,timeout=1000) {
 
-    serverpath=serverpath || path.join(__dirname,'../../fileserver');
+    serverpath=serverpath || path.join(__dirname,'../bin');
     
     let servername=path.resolve(serverpath,"server.js");
 

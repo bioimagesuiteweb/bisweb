@@ -1,5 +1,5 @@
 
-const wsutil = require('wsutil');
+const wsutil = require('bis_wsutil');
 const bisgenericio=require('bis_genericio');
 const pako=require('pako');
 const bisasyncutil=require('bis_asyncutils');

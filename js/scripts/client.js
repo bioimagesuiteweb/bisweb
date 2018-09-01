@@ -1,15 +1,11 @@
-require('../config/bisweb_pathconfig.js');
+require('../../config/bisweb_pathconfig.js');
 const BisFileServerClient=require('bis_fileserverclient');
 const WebSocket = require('ws');
 const genericio=require('bis_genericio');
 const BisWebImage=require('bisweb_image');
-
-//const bisasyncutil=require('bis_asyncutils');
-//bisasyncutil.setVerbose(true);
-
 const path=require('path');
 const util=require('bis_util');
-let basedir=path.resolve(__dirname, '../web/images/');
+let basedir=path.resolve(__dirname, '../../web/images/');
 console.log('Base dir=',basedir);
 
 
