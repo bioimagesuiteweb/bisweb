@@ -347,7 +347,7 @@ var readbinarydatanode = function (filename, loadedcallback, errorcallback) {
                     dt = null;
                 });
             } else {
-                let dt = new Uint8Array(d1).buffer;
+                let dt = new Uint8Array(d1);//.buffer;
                 loadedcallback(dt, filename);
                 dt = null;
         }

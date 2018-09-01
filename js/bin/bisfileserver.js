@@ -1067,7 +1067,6 @@ class FileServer {
 // This is the main function
 // .........................................................................................................
 program
-    .option('-v, --verbose', 'Whether or not to display messages written by the server')
     .option('-p, --port <n>', 'Which port to start the server on')
     .option('--readonly', 'Whether or not the server should accept requests to write files')
     .option('--insecure', 'USE WITH EXTREME CARE -- if true no password')
