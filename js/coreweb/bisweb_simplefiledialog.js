@@ -62,6 +62,14 @@ class SimpleFileDialog {
      */
     filenameCallback(name=null) {
 
+        if (this.options.mode.indexOf('dir')>=0) {
+            // Directory Mode
+            this.modal.dialog.modal('hide');
+            setTimeout( () => {
+                this.fileRequestFn(this.currentDirectory);
+            },10);
+        }
+        
         if (name===null) {
             name='';
             try {
@@ -201,37 +209,47 @@ class SimpleFileDialog {
      */
     openDialog(list, startDirectory = null, opts=null) {
 
-        if (this.modal===null)
-            this.createDialogUserInterface();
-
-        this.oldfilters=null;
-        let initialfilename=null;
         
-        if (opts!==null) {
-            this.filters=opts.suffix || '';
-            let newtitle=opts.title || null;
-            if (newtitle) {
-                let title = this.modal.header.find('.modal-title');
-                title.text(newtitle+ ' (using bisweb fileserver)');
+        if (this.modal===null) {
+            this.createDialogUserInterface();
+        }
+        
+        this.oldfilters=null;
+        
+        if (opts) {
+
+            if (opts.suffix) {
+                this.filters=opts.suffix;
             }
-            
-            this.options.mode = opts.mode || 'load';
-            
+            if (opts.title) {
+                let newtitle=opts.title;
+                if (newtitle) {
+                    let title = this.modal.header.find('.modal-title');
+                    title.text(newtitle+ ' (using bisweb fileserver)');
+                }
+            }
+
+            if (opts.type) 
+                this.options.mode = opts.type;
+
             if (this.options.mode === 'save') {
                 this.okButton.text('Save');
                 this.displayFiles = true;
-            } else if (this.options.mode === 'dir') {
+            } else if (this.options.mode.indexOf('dir')>=0) {
                 this.okButton.text('Select Directory');
-                this.displayFiles = false;
+                this.displayFiles = true;
             } else {
                 this.okButton.text('Load');
                 this.displayFiles = true;
             }
+        }
 
+        let initialfilename=null;
+        if (opts!==null) {
             if (opts.initialFilename)
                 initialfilename=opts.initialFilename;
-            
         }
+        
         this.fileList = list;
         this.currentDirectory = startDirectory;
 
@@ -242,9 +260,7 @@ class SimpleFileDialog {
 
         this.updateTree(list,initialfilename);
 
-        if (!this.isVisible()) {
-            this.modal.dialog.modal('show');
-        }
+        this.modal.dialog.modal('show');
     }
 
     /**
