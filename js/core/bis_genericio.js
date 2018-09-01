@@ -24,8 +24,8 @@
  * @version 1.0
  */
 
-const biscoreio=require('bis_coregenericio');
-const util=require('bis_util');
+const biscoreio=require('./bis_coregenericio');
+const util=require('./bis_util');
 const glob=biscoreio.getglobmodule();
 const fs=biscoreio.getfsmodule();
 const path=biscoreio.getpathmodule();
