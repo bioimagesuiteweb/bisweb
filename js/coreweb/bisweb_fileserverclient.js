@@ -110,6 +110,8 @@ class BisWebFileServerClient extends BisFileServerClient {
 
         if (payload.type === 'uploadfile') 
             this.lastOpts.mode='save';
+        else if (payload.type=='directory')
+            this.lastOpts.mode='dir';
         else
             this.lastOpts.mode='load';
 
