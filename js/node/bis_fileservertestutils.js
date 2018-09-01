@@ -24,6 +24,7 @@ const BisFileServerClient=require('bis_fileserverclient');
 const genericio=require('bis_genericio');
 const colors=require('colors/safe');
 const tempfs = require('temp').track();
+const WebSocket = require('ws');
 
 let terminateResolve=null;
 let terminateReject=null;
@@ -32,7 +33,7 @@ let terminateReject=null;
 
 // ------------------------------- Testing Code --------------------------------------------------
 
-const createTestingServer=function(WebSocket,serverpath=null,timeout=1000) {
+const createTestingServer=function(serverpath=null,timeout=1000) {
 
     serverpath=serverpath || path.join(__dirname,'../bin');
     

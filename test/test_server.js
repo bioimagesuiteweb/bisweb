@@ -28,7 +28,7 @@ const path=require('path');
 const util=require('bis_util');
 const genericio=require('bis_genericio');
 const os=require('os');
-const bisserverutil=require('bis_fileserverutils');
+const bisserverutil=require('bis_fileservertestutils');
 
 let inpfilename = "testdata/MNI_2mm_resliced.nii.gz";
 let testfilename = "testdata/newtests/goldsmooth2sigma.nii.gz";

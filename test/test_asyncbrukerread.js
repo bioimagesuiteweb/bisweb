@@ -22,13 +22,16 @@
 require('../config/bisweb_pathconfig.js');
 require('bisweb_userpreferences.js').setImageOrientationOnLoad('None');
 
+
 const assert = require("assert");
 const bisasyncbruker=require('bis_asyncreadbruker');
 const path=require('path');
 const BisWebImage=require('bisweb_image');
 const genericio=require('bis_genericio');
-const bisserverutil=require('bis_fileserverutils');
+const bisserverutil=require('bis_fileservertestutils');
 const colors=require('colors/safe');
+
+
 let indata=path.resolve(__dirname,path.join('testdata','bruker_exp'));
 
 
