@@ -562,10 +562,20 @@ const webfileutils = {
         let fn=function() {
             userPreferencesLoaded.then(() => {
                 let initial=userPreferences.getItem('filesource') || 'local';
+
+
+                let extra="";
+                if (enableserver) {
+                   extra=`<HR><p>You may download the bisweb fileserver 
+<a href="server.zip" target="_blank" rel="noopener">
+from this link</a>. Use with care. This requires <a href="https://nodejs.org/en/download/" target="_blank" rel="noopener">node.js vs 8.x </p>`;
+                }
+                
                 webutil.createRadioSelectModalPromise(`<H4>Select file source</H4><HR>`,
                                                       "Close",
                                                       initial,
-                                                      self.getModeList()
+                                                      self.getModeList(),
+                                                      extra,
                                                      ).then( (m) => {
                                                          self.setMode(m);
                                                      }).catch((e) => {
