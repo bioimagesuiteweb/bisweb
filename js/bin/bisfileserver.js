@@ -660,12 +660,24 @@ class FileServer {
         //spawn a new server to handle the data transfer
         console.log('.... .... Beginning data transfer', this.portNumber+1);
         
+
+
+        
+
+        if (!this.checkValidFilename(upload.filename)) {
+            socket.write(formatPacket('uploadmessage', {
+                name : 'badfilename',
+                payload : 'filename '+upload.filename+' is not valid',
+                id : upload.id,
+            }));
+            return;
+        }
+        
         let tserver=new FileServer({ verbose : this.opts.verbose,
                                      readonly : false,
                                      baseDirectoriesList: this.opts.baseDirectoriesList,
                                      tempDiretory : this.opts.tempDirectory,
                                    });
-
         tserver.startServer(this.hostname, this.portNumber+1,true).then( (p) => {
             tserver.createFileInProgress(upload);
             let cmd={
@@ -1002,9 +1014,7 @@ class FileServer {
      * @param {Number} id - the request id
      */
     handleBadRequestFromClient(socket, reason,id=-1) {
-        let error = "An error occured while handling your request. ";
-        error = error.concat(reason);
-
+        let error = "An error occured:"+reason;
         socket.write(formatPacket('error', { 'text' : error, 'id': id}), () => { console.log('..... request returned an error', reason, '\nsent error to client'); });
     }
 
@@ -1033,27 +1043,45 @@ class FileServer {
      * Recursively checks every file and directory on the path.
      * 
      * @param {String} filepath - Path to check.
+     * @return {Boolean} true if OK, false if not OK,
      */
-    checkValidPath(filepath) {
-        return new Promise( (resolve, reject) => {
-            let pathCheck = (pathname) => {
-                if (pathname === '') { resolve(); return; }
+    checkValidFilename(filepath) {
 
-                //console.log('..... checking path', pathname);
-                fs.lstat(pathname, (err, stats) => {
-                    if (err) { console.log('..... err', err); reject('An error occured while statting filepath. Is there something on the path that would cause issues?'); return; }
-                    if (stats.isSymbolicLink()) { reject('Symbolic link in path of file request.'); return; }
+        console.log('Checking ',filepath);
+        
+        filepath=filepath||'';
+        if (filepath.length<1)
+            return false;
+        
+        let i=0,found=false;
+        while (i<this.opts.baseDirectoriesList.length && found===false) {
+            if (filepath.indexOf(this.opts.baseDirectoriesList[i])===0) {
+                found=true;
+            } else {
+                i=i+1;
+            }
+        }
 
-                    //look one directory up
-                    let newPath = pathname.split('/');
-                    newPath.splice(newPath.length - 1, 1);
-                    pathCheck(newPath.join('/'));
-                });
-            };
+        if (found===false)
+            return false;
 
-            pathCheck(filepath);
-        });
+        let realname=filepath;
+        if (path.sep==='\\')
+            realname=util.filenameWindowsToUnix(filepath);
 
+
+        if (fs.existsSync(realname)) {
+            let stats=fs.lstatSync(realname);
+            if (stats.isSymbolicLink())
+                return false;
+        } else {
+            let dirname=path.dirname(realname);
+            let stats=fs.lstatSync(dirname);
+            if (stats.isSymbolicLink())
+                return false;
+        }
+
+        return true;
     }
 
     /**
