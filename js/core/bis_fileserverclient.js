@@ -15,7 +15,7 @@ class BisFileServerClient extends BisBaseServerClient {
 
         super();
         this.lastOpts=null;
-        this.portNumber=8081;
+        this.portNumber=9081;
         
         //connection over which all control communication takes place
         this.socket = null;
@@ -75,7 +75,7 @@ class BisFileServerClient extends BisBaseServerClient {
      * 
      * @param {String} address - The hostname and port to try to connect to, e.g. 'ws://localhost:8080'. These addresses must be prefixed with 'ws://' 
      */
-    connectToServer(address = 'ws://localhost:8081') {
+    connectToServer(address = 'ws://localhost:9081') {
 
         if (this.socket) {
             this.closeConnection();
@@ -143,6 +143,13 @@ class BisFileServerClient extends BisBaseServerClient {
         // Text from here on out
         // ---------------------
         let data = wsutil.parseJSON(event.data);
+        if (data===null) {
+            data= {
+                id : -1,
+                type : 'error',
+                payload : 'bad frame received:'+event.data
+            };
+        }
         let id=data.payload.id || -1;
         
         if (data.type==='text') {
@@ -270,7 +277,7 @@ class BisFileServerClient extends BisBaseServerClient {
     authenticate(password='',hostname=null) {
         
         this.password = password || '';
-        hostname = hostname || 'ws://localhost:8081';
+        hostname = hostname || 'ws://localhost:9081';
         
         if (this.authenticated)
             return Promise.resolve();
@@ -327,8 +334,9 @@ class BisFileServerClient extends BisBaseServerClient {
         return new Promise ((resolve,reject) => {
 
             let cb=( (payload) => {
-                if (showdialog)
+                if (showdialog) {
                     this.showFileDialog(payload);
+                }
                 resolve(payload);
             });
 
