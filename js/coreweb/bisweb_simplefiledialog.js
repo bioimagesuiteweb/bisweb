@@ -1,7 +1,8 @@
 const $ = require('jquery');
 const localforage = require('localforage');
+const bis_genericio = require('bis_genericio');
 const webutil = require('bis_webutil.js');
-
+const bootbox=require('bootbox');
 
 require('jstree');
 
@@ -27,12 +28,8 @@ class SimpleFileDialog {
 
         this.separator='/';
 
-
-        this.options= {
-            'makeFavoriteButton' : options.makeFavouriteButton || false,
-            'mode' :  options.mode || 'load',
-            'modalName' :  options.modalName || 'File Server Dialog',
-        };
+        this.mode =  options.mode || 'load',
+        this.modalName =  options.modalName || 'File Server Dialog',
 
         // Key Widgets
         this.modal=null;
@@ -62,7 +59,7 @@ class SimpleFileDialog {
      */
     filenameCallback(name=null) {
 
-        if (this.options.mode.indexOf('dir')>=0) {
+        if (this.mode.indexOf('dir')>=0) {
             // Directory Mode
             this.modal.dialog.modal('hide');
             setTimeout( () => {
@@ -79,19 +76,43 @@ class SimpleFileDialog {
                 return;
             }
         }
-        if (name.length>0) {
+        
+        if (name.length<1) {
+            return;
+        }
+
+        let outname=this.currentDirectory+this.separator+name;
+        
+        let sendCallback= (() => {
             this.modal.dialog.modal('hide');
             setTimeout( () => {
-                this.fileRequestFn(this.currentDirectory+this.separator+name);
+                this.fileRequestFn(outname);
             },10);
+        });
+        
+        
+        if (this.mode!=='save') {
+            return sendCallback();
         }
+
+        // Save Stuff
+        bis_genericio.getFileSize(outname).then( () => {
+            bootbox.confirm("The file "+outname+" exists. Are you sure you want to overwrite this?", ( (result) => {
+                if (result)  {
+                    sendCallback();
+                }
+            }));
+        }).catch( () => {
+            sendCallback();
+        });
     }
+
 
     /** Request Directory
      * @param {String} dname -- the name of the directory
      */
     changeDirectory(dname) {
-        this.fileListFn(this.options.mode, dname,true);
+        this.fileListFn( dname,true);
     }
 
     // --------------- Create GUI ------------------------------
@@ -103,7 +124,7 @@ class SimpleFileDialog {
     
     createDialogUserInterface() {
 
-        this.modal = webutil.createmodal(this.options.modalName, 'modal-lg');
+        this.modal = webutil.createmodal(this.modalName, 'modal-lg');
         $('body').append(this.modal);
         
         this.contentDisplayTemplate = 
@@ -132,7 +153,7 @@ class SimpleFileDialog {
              </div>`);
 
         
-        
+        /*
         let favoriteBar = this.container.find('.favorite-bar');
 
         if (this.options.makeFavoriteButton) {
@@ -181,8 +202,8 @@ class SimpleFileDialog {
 
                 pillsBar.append(newPill);
             });
-        }
-
+        }*/
+        
         this.okButton = $(`<button type='button' class='btn btn-success'>Load</button>`);
         this.okButton.on('click', (event) => {
             event.preventDefault();
@@ -201,7 +222,6 @@ class SimpleFileDialog {
      * NOTE: The file server that creates the file dialog will provide a few of its functions with the socket bound, e.g. fileListFn, to avoid sharing too many of its internal structures.
      * @param {Array} list - An array of file entries. 
      * @param {String} list.text - The name of the file or folder.
-     * @param {String} list.type - What type of file or folder the entry represents. One of 'picture', 'html', 'js', 'text', 'video', 'audio', 'file', or 'directory'.
      * @param {String} list.path - The full path indicating where the file is located on the server machine.
      * @param {Object} startDirectory - File entry representing the directory at which the files in list should be added. Undefined means the files represent the files in the current directory
      * @param {Object} rootDirectory - File entry representing the root directory from which startDirectory derives
@@ -209,15 +229,16 @@ class SimpleFileDialog {
      */
     openDialog(list, startDirectory = null, rootDirectory=null,opts=null) {
 
-        
         if (this.modal===null) {
             this.createDialogUserInterface();
         }
         
         this.oldfilters=null;
         
-        if (opts) {
-
+        
+        if (opts!==null) {
+            console.log('Opts=',opts);
+        
             if (opts.suffix) {
                 this.filters=opts.suffix;
             }
@@ -229,19 +250,21 @@ class SimpleFileDialog {
                 }
             }
 
-            if (opts.type) 
-                this.options.mode = opts.type;
+            if (opts.mode) 
+                this.mode = opts.mode;
 
-            if (this.options.mode === 'save') {
+            if (this.mode === 'save') {
                 this.okButton.text('Save');
                 this.displayFiles = true;
-            } else if (this.options.mode.indexOf('dir')>=0) {
+            } else if (this.mode.indexOf('dir')>=0) {
                 this.okButton.text('Select Directory');
                 this.displayFiles = true;
             } else {
                 this.okButton.text('Load');
                 this.displayFiles = true;
             }
+        } else {
+            console.log('No opts');
         }
 
         let initialfilename=null;
@@ -470,7 +493,7 @@ class SimpleFileDialog {
             let button = $(`<button type='button' class='btn btn-sm btn-link' style='margin:0px'>${b}${name}</button>`);
             button.on('click', (event) => {
                 event.preventDefault();
-                this.fileListFn(this.options.mode, newPath);
+                this.fileListFn(newPath);
             });
             
             navbar.append(button);
