@@ -9,7 +9,11 @@ let verbose=false;
 
 var printEvent=function(id) {
     if (serverEventList[id])
-        return JSON.stringify(serverEventList[id]);
+        return JSON.stringify({
+            id : id,
+            name : serverEventList[id].name,
+            checksum :serverEventList[id].checksum
+        });
     return `[No event ${id} ]`;
 };
 
