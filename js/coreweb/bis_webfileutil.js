@@ -204,8 +204,12 @@ const webfileutils = {
         
         
         if (fileopts.defaultpath==='') {
-            if (fileopts.initialCallback)
-                fileopts.defaultpath=fileopts.initialCallback() || '';
+            try {
+                if (fileopts.initialCallback)
+                    fileopts.defaultpath=fileopts.initialCallback() || '';
+            } catch(e) {
+                console.log(e);
+            }
         }
         
         
@@ -262,41 +266,36 @@ const webfileutils = {
      */
     webFileCallback: function (fileopts, callback) {
 
+        fileopts.suffix=fileopts.suffix || null;
+        fileopts.filters=fileopts.filters || null;
+        fileopts.force=fileopts.force || null;
+
         let suffix = fileopts.suffix || '';
         let title = fileopts.title || '';
         let defaultpath=fileopts.defaultpath || '';
-        
-        if (!fileopts.suffix && fileopts.filters)
-            suffix=fileopts.filters;
 
         
-        if (suffix === "NII")
-            suffix = '.nii.gz,.nii,.gz,.tiff';
-        if (suffix !== "DIRECTORY") {
-            if (suffix!=='') {
-                let s=suffix.split(",");
-                for (let i=0;i<s.length;i++) {
-                    let a=s[i];
-                    if (a.indexOf(".")!==0)
-                        s[i]="."+s[i];
-                }
-                suffix=s.join(",");
-            } else {
-                let flt=fileopts.filters || [];
-                if (flt.length>0) {
-                    let extensions=[];
-                    for (let i=0;i<flt.length;i++) {
-                        let s=flt[i].extensions;
-                        for (let j=0;j<s.length;j++)
-                            extensions.push("."+s[j]);
-                    }
-                suffix=extensions.join(',');
-                }
+        if (fileopts.suffix===null && fileopts.filters!==null) {
+            if (fileopts.filters==="DIRECTORY" ||
+                fileopts.filters==="NII" ) {
+                suffix=fileopts.filters;
+                fileopts.suffix=suffix;
             }
         }
-        
+        if (suffix === "NII")
+            suffix = '.nii.gz,.nii,.gz,.tiff';
+        else if (suffix !== "DIRECTORY" && suffix!=='') {
+            let s=suffix.split(",");
+            for (let i=0;i<s.length;i++) {
+                let a=s[i];
+                if (a.indexOf(".")!==0)
+                    s[i]="."+s[i];
+            }
+            suffix=s.join(",");
+        }
+
         let fmode=fileMode;
-        if (fileopts.force)
+        if (fileopts.force !== null)
             fmode=fileopts.force;
 
         let cbopts = { 'callback' : callback, 'title' : title, 'suffix' : suffix };
@@ -324,19 +323,22 @@ const webfileutils = {
 
                     
 
-                
-                if (fileopts.initialCallback) {
-                    let f=fileopts.initialCallback() || '';
-                    if (f.length>0) {
-                        let ind=f.lastIndexOf("/");
-                        if (ind>0) {
-                            initialDir=f.substr(0,ind);
-                            initialFilename=f.substr(ind+1,f.length);
-                        } else {
-                            initialFilename=f;
-                            initialDir=null;
+                try {
+                    if (fileopts.initialCallback) {
+                        let f=fileopts.initialCallback() || '';
+                        if (f.length>0) {
+                            let ind=f.lastIndexOf("/");
+                            if (ind>0) {
+                                initialDir=f.substr(0,ind);
+                                initialFilename=f.substr(ind+1,f.length);
+                            } else {
+                                initialFilename=f;
+                                initialDir=null;
+                            }
                         }
                     }
+                } catch(e) {
+                    console.log(e);
                 }
 
                 if (!initialFilename && defaultpath.length>0) {
@@ -465,7 +467,6 @@ const webfileutils = {
                 },1);
             });
         } else {
-
             button.click(function(e) {
                 setTimeout( () => {
                     e.stopPropagation();
