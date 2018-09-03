@@ -10,6 +10,7 @@ const util = require('bis_util');
 const { StringDecoder } = require('string_decoder');
 const bisgenericio=require('bis_genericio');
 const glob=bisgenericio.getglobmodule();
+const bisdate=require('bisdate.js');
 
 // One time password library
 const otplib = require('otplib');
@@ -20,6 +21,8 @@ const secret = otplib.authenticator.generateSecret();
 const bisserverutil=require('bis_fileserverutils');
 const formatPacket=bisserverutil.formatPacket;
 const readFrame=bisserverutil.readFrame;
+
+
 
 
 // TODO:
@@ -143,6 +146,7 @@ class FileServer {
         // Formerly global variable
         this.timeout = undefined;
         this.terminating=false;
+        this.lastDirectory=null;
     }
     
     // .......................................................................................
@@ -168,7 +172,7 @@ class FileServer {
 
     
     /**
-     * Creates the server instance, binds the handshake protocol to its 'connection' event, and begins listening on port 8081 (control port for the transfer).
+     * Creates the server instance, binds the handshake protocol to its 'connection' event, and begins listening on port 9081 (control port for the transfer).
      * Future sockets may be opened after this method has been called if the server is made to listen for the eonnection. 
      * 
      * Client and server *must* open a socket on a control port in order to communicate -- the control port will listen for commands from the server, interpret them, then serve the results.
@@ -179,7 +183,7 @@ class FileServer {
      * @param {Boolean} datatransfer - if true this is a data transfer server
      * @returns A Promise
      */
-    startServer(hostname='localhost', port=8081, datatransfer = true) {
+    startServer(hostname='localhost', port=9081, datatransfer = true) {
 
         const self=this;
         this.netServer = net.createServer(handleConnectionRequest);
@@ -745,19 +749,36 @@ class FileServer {
     serveFileList(socket, basedir, type,id=-1)  {
 
         const debug=this.debug;
+        let foundDirectory='';
+        console.log('Serving base=',basedir,' last=',this.lastDirectory);
 
-        if (basedir) {
-            let found=false,i=0;
-            while(i<this.opts.baseDirectoriesList.length && !found) {
-                if (basedir.indexOf(this.opts.baseDirectoriesList[i])===0) {
-                    found=true;
-                } else  {
-                    i=i+1;
-                }
+        if (basedir==='[Root]') {
+            basedir=null;
+            this.lastDirectory=null;
+        } else {
+            if (basedir===null && this.lastDirectory!==null) {
+                basedir=this.lastDirectory;
             }
-            if (found===false)
-                basedir=this.opts.baseDirectoriesList[0];
+            
+            if (basedir) {
+                let found=false,i=0;
+                while(i<this.opts.baseDirectoriesList.length && !found) {
+                    if (basedir.indexOf(this.opts.baseDirectoriesList[i])===0) {
+                        found=true;
+                        foundDirectory=this.opts.baseDirectoriesList[i];
+                    } else  {
+                        i=i+1;
+                    }
+            }
+                if (found===false) {
+                    basedir=null;
+                    foundDirectory=null;
+                }
+                this.lastDirectory=basedir;
+            }
         }
+
+        console.log('\t\t Serving base=',basedir,' last=',this.lastDirectory, 'found=',foundDirectory);
             
         let getmatchedfiles=function(basedir) {
 
@@ -855,7 +876,11 @@ class FileServer {
                     pathname=util.filenameWindowsToUnix(pathname);
                 
                 createTree(obj.files).then( (treelist) => {
-                    socket.write(formatPacket('filelist', { 'path' : pathname,'type' : type, 'data' : treelist, 'modalType' : type, 'id' : id }));
+                    socket.write(formatPacket('filelist', { 'path' : pathname,'type' : type,
+                                                            'root' : foundDirectory,
+                                                            'data' : treelist,
+                                                            'modalType' : type,
+                                                            'id' : id }));
                 });
             }).catch( (e) => {
                 console.log('.....',e,e.stack);
@@ -870,7 +895,9 @@ class FileServer {
             }
             
             createTree(lst).then( (treelist) => {
-                socket.write(formatPacket('filelist', { 'path' : "/",'type' : type, 'data' : treelist, 'modalType' : type, 'id' : id }));
+                socket.write(formatPacket('filelist', { 'path' : "/",'type' : type,
+                                                        'root' : "/",
+                                                        'data' : treelist, 'modalType' : type, 'id' : id }));
             }).catch( (e) => {
                 console.log('.....',e,e.stack);
             });
@@ -1079,7 +1106,7 @@ program
 
 
 
-let portno=8081;
+let portno=9081;
 if (program.port)
     portno=parseInt(program.port);
 
@@ -1114,6 +1141,7 @@ require('dns').lookup(require('os').hostname(), function (err, add) {
         ipaddr=`${add}`;
     console.log('..................................................................................');
     console.log('.... running on',os.platform());
+    console.log('.... this is BioImage Suite Web Build',bisdate.date,' ',bisdate.time,' ',bisdate.version);
     server.startServer(ipaddr, portno, false).catch( (e) => {
         console.log(e);
         process.exit(0);
