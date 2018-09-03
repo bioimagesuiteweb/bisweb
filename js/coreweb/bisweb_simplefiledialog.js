@@ -203,11 +203,11 @@ class SimpleFileDialog {
      * @param {String} list.text - The name of the file or folder.
      * @param {String} list.type - What type of file or folder the entry represents. One of 'picture', 'html', 'js', 'text', 'video', 'audio', 'file', or 'directory'.
      * @param {String} list.path - The full path indicating where the file is located on the server machine.
-     * @param {Array} list.children - File entries for each file contained in the list entry. Only for list entries of type 'directory'.
      * @param {Object} startDirectory - File entry representing the directory at which the files in list should be added. Undefined means the files represent the files in the current directory
+     * @param {Object} rootDirectory - File entry representing the root directory from which startDirectory derives
      * @param {Object} opts - filter options
      */
-    openDialog(list, startDirectory = null, opts=null) {
+    openDialog(list, startDirectory = null, rootDirectory=null,opts=null) {
 
         
         if (this.modal===null) {
@@ -258,7 +258,7 @@ class SimpleFileDialog {
         this.currentPath = startDirectory;
         this.container.find('.bisweb-file-navbar').empty();
 
-        this.updateTree(list,initialfilename);
+        this.updateTree(list,initialfilename,rootDirectory);
 
         this.modal.dialog.modal('show');
     }
@@ -269,8 +269,11 @@ class SimpleFileDialog {
      * 
      * Sorts contents before display so that folders are shown first.
      * @param {Array} list - An array of file entries. 
+     * @param {String} lastfilename - the last selected filename
+     * @param {String} rootDirectory - "the drive" we are looking in
+
      */
-    updateTree(list,lastfilename=null) {
+    updateTree(list,lastfilename=null,rootDirectory=null) {
 
         this.previousList=JSON.parse(JSON.stringify(list));
         
@@ -341,7 +344,7 @@ class SimpleFileDialog {
                         else
                             this.filterMode=true;
                         let name = this.filenameEntry.val() || '';
-                        this.updateTree(this.previousList,name);
+                        this.updateTree(this.previousList,name,rootDirectory);
                     }
                 });
                 sel.empty();
@@ -414,20 +417,35 @@ class SimpleFileDialog {
 
 
         fileDisplay.append(fileList);
-        this.updateFileNavbar(lastfilename);
+        this.updateFileNavbar(lastfilename,rootDirectory);
     }
 
     /**
      * Updates the list of folders at the top of the file dialog to reflect the folders in the current path.
+     * @param {String} lastfilename - the last selected filename
+     * @param {String} rootDirectory - "the drive" we are looking in
      */
-    updateFileNavbar(lastfilename=null) {
+    updateFileNavbar(lastfilename=null,rootDirectory='/') {
         let navbar = this.modal.body.find('.bisweb-file-navbar');
         navbar.empty();
         
         //create navbar buttons for each folder in the current path
 
-        let folders=this.currentPath.split(this.separator);
+        
+        let folders=null;
+        
+        if (rootDirectory.length>1 && this.currentPath.length>=rootDirectory.length) {
 
+            let p=this.currentPath.substr(rootDirectory.length+1,this.currentPath.length);
+            let f=p.split(this.separator);
+            folders=[ rootDirectory.substr(1,rootDirectory.length)].concat(f);
+        } else {
+            folders=this.currentPath.split(this.separator);
+        }
+
+        
+//        console.log('Path=',this.currentPath,'root=',rootDirectory,' folders=',folders.join(', '));
+        
         for (let i=folders.length-1;i>=0;i=i-1) {
             if (folders[i].length<1)
                 folders.splice(i,1);
@@ -446,7 +464,7 @@ class SimpleFileDialog {
 
                 name=folders[i]+'/';
             } else {
-                newPath=null;
+                newPath="[Root]";
                 name=" [Root]";
             }
             let button = $(`<button type='button' class='btn btn-sm btn-link' style='margin:0px'>${b}${name}</button>`);
