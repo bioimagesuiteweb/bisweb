@@ -6,7 +6,7 @@ const bisasyncutil=require('bis_asyncutils');
 const util = require('bis_util');
 const BisBaseServerClient= require('bis_baseserverclient');
 // Debug Mode
-const verbose=1;
+const verbose=0;
 let uploadcount=0;
 
 class BisFileServerClient extends BisBaseServerClient { 
@@ -142,6 +142,7 @@ class BisFileServerClient extends BisBaseServerClient {
         // ---------------------
         // Text from here on out
         // ---------------------
+        //console.log(event.data);
         let data = wsutil.parseJSON(event.data);
         if (data===null) {
             data= {
@@ -189,8 +190,6 @@ class BisFileServerClient extends BisBaseServerClient {
                 break;
             }
             case 'error': {
-                console.log('Error from client:', data.payload,'id=',id);
-                console.log('data.payload=',data.payload);
                 this.alertEvent(data.payload.text,true);
                 success=false;
                 break;
@@ -228,6 +227,13 @@ class BisFileServerClient extends BisBaseServerClient {
 
             case 'filesystemoperations': {
                 // Handled by promise
+                break;
+            }
+
+            case 'filesystemoperationserror': {
+                // Handled by promise
+                console.log('FIle System OPeration failed');
+                success=false;
                 break;
             }
 
@@ -316,8 +322,6 @@ class BisFileServerClient extends BisBaseServerClient {
      * requestFileList doesn't expand the contents of the entire server file system; just the first four levels of directories. 
 
      * This will eventually end up calling this.handleServerRequest (via nested callbacks)
-     * 
-     * @param {String} type - Which type of modal is requesting the list. One of either 'load' or 'save'. // TODO: add directory as type
      * @param {String} directory - The directory to expand the files under. Optional -- if unspecified the server will return the directories under ~/.
      * @param {Boolean} showdialog - if true popup a gui dialog else just text
      * @param {Objects} opts - the options object
@@ -327,7 +331,7 @@ class BisFileServerClient extends BisBaseServerClient {
 
      * @returns {Promise} with payload is the event
      */
-    requestFileList(type, directory = null, showdialog=true,opts=null) {
+    requestFileList(directory = null, showdialog=true,opts=null) {
 
         
         if (opts)
@@ -337,7 +341,7 @@ class BisFileServerClient extends BisBaseServerClient {
 
             let cb=( (payload) => {
                 if (showdialog) {
-                    this.showFileDialog(payload);
+                    this.showFileDialog(payload,this.lastOpts);
                 }
                 resolve(payload);
             });
@@ -346,7 +350,6 @@ class BisFileServerClient extends BisBaseServerClient {
                 let serverEvent=bisasyncutil.addServerEvent(cb,reject,'requestFileList');
                 this.sendCommand({ 'command' : 'getfilelist',
                                    'directory' : directory,
-                                   'type' : type ,
                                    'id' : serverEvent.id}); 
             });
         });
@@ -529,7 +532,7 @@ class BisFileServerClient extends BisBaseServerClient {
         return new Promise((resolve,reject) => {
             
             let success=(m) => {
-                resolve(m);
+                resolve(m.filename);
             };
             
             let tryagain=(m) => {
