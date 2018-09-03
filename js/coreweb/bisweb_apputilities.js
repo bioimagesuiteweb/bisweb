@@ -72,9 +72,7 @@ module.exports = {
         }
 
         img.save(fname).then( (f) => {
-            if (webutil.inElectronApp())  {
-                webutil.createAlert(name+' saved in '+f);
-            }
+            webutil.createAlert(name+' saved in '+f);
         }).catch( (e) => {
             webutil.createAlert('failed to save '+name+' ('+e+')',true);
         });
