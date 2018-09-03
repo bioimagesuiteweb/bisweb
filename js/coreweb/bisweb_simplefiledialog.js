@@ -1,8 +1,9 @@
 const $ = require('jquery');
-const localforage = require('localforage');
 const bis_genericio = require('bis_genericio');
 const webutil = require('bis_webutil.js');
 const bootbox=require('bootbox');
+const userPreferences=require('bisweb_userpreferences');
+const bisdbase = require('bisweb_dbase');
 
 require('jstree');
 
@@ -51,6 +52,9 @@ class SimpleFileDialog {
         this.filterMode=true;
         this.oldfilters='';
         this.previousList=null;
+        this.favorites = [];
+        this.lastFavorite=null;
+
     }
 
     // --------------- GUI Callbacks ------------------------
@@ -139,70 +143,23 @@ class SimpleFileDialog {
                    <div class='col-sm-12 bisweb-file-navbar'></div>
                 </div>
 
+
                 <div class='row justify-content-start content-box'>
                     <div class='col-sm-3 favorite-bar'></div>
                     <div class='col-sm-9 bisweb-file-display'>
                       <div class='bisweb-file-list'><p>Content goes here...</p></div>
                     </div>
                 </div>
-
                 <div class='row justify-content-start content-box'>
-                    <div class='col-sm-3'></div>
-                    <div class='col-sm-9 bisweb-file-filterbar' style='margin-top:10px'></div>
+                    <div class='col-sm-3 favorite-buttons'></div>
+                    <div class='col-sm-9 bisweb-file-filterbar' style='margin-top:5px'></div>
                 </div>
+
              </div>`);
 
         
-        /*
-        let favoriteBar = this.container.find('.favorite-bar');
-
-        if (this.options.makeFavoriteButton) {
-            let favoriteButton = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-star-empty'></span> Mark folder as favorite</button>`);
-            favoriteBar.append(favoriteButton);
-            
-            let pillsHTML = $(`<ul class='nav nav-pills nav-stacked'></ul>`);
-            favoriteBar.append(pillsHTML);
-            
-            let selectPillFromPills = (pill, pills) => {
-                for (let otherPill of pills) {
-                    $(otherPill).removeClass('active');
-                }
-                $(pill).addClass('active');
-            };
-
-            //TODO: add folder to localforage ...
-            favoriteButton.on('click', (event) => {
-                event.preventDefault();
-                let key = webutil.getuniqueid(), name = this.currentPath[this.currentPath.length - 1];
-                let favorite = {
-                    'name' : name,
-                    'path' : Array.from(this.currentPath),
-                    'key' : key
-                };
-
-                localforage.setItem(key, JSON.stringify(favorite));
-
-                //create the pill
-                let pillsBar = favoriteBar.find('.nav.nav-pills');
-                let newPill = $(`<li><a href='#'>${name}</a></li>`);
-                newPill.on('click', (event) => {
-                    event.preventDefault();
-                    selectPillFromPills(newPill, pillsBar.find('li'));
-                    localforage.getItem(key, (err, value) => {
-                        let favoriteFolder;
-                        try {
-                            favoriteFolder = JSON.parse(value);
-                            this.changeDirectory(favoriteFolder.path);
-                        } catch(e) {
-                            console.log('error parsing JSON', value);
-                        }
-                        
-                    });
-                });
-
-                pillsBar.append(newPill);
-            });
-        }*/
+        
+        this.createFavorites();
         
         this.okButton = $(`<button type='button' class='btn btn-success'>Load</button>`);
         this.okButton.on('click', (event) => {
@@ -237,8 +194,6 @@ class SimpleFileDialog {
         
         
         if (opts!==null) {
-            console.log('Opts=',opts);
-        
             if (opts.suffix) {
                 this.filters=opts.suffix;
             }
@@ -513,7 +468,124 @@ class SimpleFileDialog {
         }));
     }
 
+    addFavorite(pillsBar,elem) {
 
+        let selectPillFromPills = (pill, pills) => {
+            for (let otherPill of pills) {
+                $(otherPill).removeClass('active');
+            }
+            $(pill).addClass('active');
+        };
+
+        let newPill = $(`<li><a href='#' class="active" style="padding: 2px 2px 2px 2px">${elem.name}</a></li>`);
+        this.lastFavorite=elem.path;
+        
+        newPill.on('click', (event) => {
+            event.preventDefault();
+            selectPillFromPills(newPill, pillsBar.find('li'));
+            this.changeDirectory(elem.path);
+            this.lastFavorite=elem.path;
+        });
+        pillsBar.append(newPill);
+    }
+
+    addAllFavorites(pillsBar) {
+        pillsBar.empty();
+        let l=this.favorites.length;
+        if (l>5)
+            l=5;
+        for (let i=0;i<l;i++) {
+            this.addFavorite(pillsBar,this.favorites[i]);
+        }
+        this.lastFavorite=null;
+
+    }
+    
+    createFavorites() {
+
+        let favoriteBar = this.container.find('.favorite-bar');
+        let favoriteButtons = this.container.find('.favorite-buttons');
+
+        favoriteBar.css({ 'max-height' : '300px',
+                          'height'     : '300px',
+                          'max-width'  : '250px',
+                          "overflow-y": "auto",
+                          "overflow-x": "auto",
+                          "color" : "#0ce3ac",
+                          "background-color": "#444444"
+                    });
+
+        let favoriteButton = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-star-empty'></span>Bookmark</button>`);
+        favoriteButtons.append(favoriteButton);
+        let favoriteButton2 = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-remove'></span> Remove</button>`);
+        favoriteButtons.append(favoriteButton2);
+
+        let pillsHTML = $(`<ul class='nav nav-pills nav-stacked btn-sm'></ul>`);
+        favoriteBar.append(pillsHTML);
+        
+        let pillsBar = favoriteBar.find('.nav.nav-pills');        
+        
+        //TODO: add folder to localforage ...
+        favoriteButton.on('click', (event) => {
+            event.preventDefault();
+            if (this.favorites.length>8)
+                return;
+            let name = this.currentDirectory;
+            if (name.length>23)
+                name='___'+name.substr(name.length-23,name.length);
+            let elem = {
+                'name' : name,
+                'path' : this.currentDirectory,
+            };
+            if (!this.favorites)
+                this.favorites = [];
+
+            let i=0,found=false;
+            while (i<this.favorites.length && found===false) {
+                if (elem.path===this.favorites[i].path)
+                    found=true;
+                i=i+1;
+            }
+            if (!found) {
+                this.favorites.push(elem);
+                this.addFavorite(pillsBar,elem);
+                userPreferences.setItem('favoriteFolders',this.favorites,true);
+            }
+        });
+
+        favoriteButton2.on('click', (event) => {
+            event.preventDefault();
+            let i=0;
+            while (i<this.favorites.length) {
+                if (this.lastFavorite===this.favorites[i].path) {
+                    this.favorites.splice(i,1);
+                    this.addAllFavorites(pillsBar);
+                    userPreferences.setItem('favoriteFolders',this.favorites,true);
+                    this.lastFavorite=null;
+                    return;
+                } 
+                i=i+1;
+            }
+        });
+            
+        let userPreferencesLoaded = userPreferences.webLoadUserPreferences(bisdbase);
+        userPreferencesLoaded.then( () => {
+            let f=null;
+            try {
+                f= userPreferences.getItem('favoriteFolders');
+            } catch(e) {
+                console.log(e);
+            }
+            if (f) {
+                this.favorites=f;
+                console.log('This favorites=',this.favorites);
+                this.addAllFavorites(pillsBar);
+            }
+        }).catch( (e) => {
+            console.log('Error',e);
+        });
+    }
+    
     /**
        * @returns {Boolean} if visible return true
        */
@@ -536,11 +608,8 @@ class SimpleFileDialog {
      */
     fixFilename(name, filters='') {
 
-        console.log('name=',name,filters);
-        
         let splitFilters = filters.split(',');
         if (splitFilters.length < 1) {
-            console.log('No filters returning',name);
             return name;
         }
         
@@ -551,13 +620,13 @@ class SimpleFileDialog {
             if (nl>fl) {
                 let subname=name.substr(nl-fl,fl);
                 if (subname===filter) {
-                    console.log('Matched filter',filter,subname,' returning',name);
+                    //console.log('Matched filter',filter,subname,' returning',name);
                     return name;
                 }
             }
         }
 
-        console.log('Adding ',splitFilters[0]);
+        //        console.log('Adding ',splitFilters[0]);
         return name + splitFilters[0];
     }
 
