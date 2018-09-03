@@ -102,19 +102,11 @@ class BisWebFileServerClient extends BisFileServerClient {
      * Called in response to a file list returned by the server (itself in response to requestFileList) or by the fileTreeDisplayModal trying to fetch more nodes.
      * 
      * @param {Object} payload - Object specifying the list of files on the server machine and which modal it corresponds to.
+     * @param {Object} opts - Object specific options for the Dialog
      *
      * // TODO: some how have a title here ... and suffix list
      */
-    showFileDialog(payload) {
-
-        this.lastOpts=this.lastOpts || {};
-
-        if (payload.type === 'uploadfile') 
-            this.lastOpts.mode='save';
-        else if (payload.type=='directory')
-            this.lastOpts.mode='dir';
-        else
-            this.lastOpts.mode='load';
+    showFileDialog(payload,opts=null) {
 
         if (!this.fileDialog) {
             this.fileDialog=new bisweb_simplefiledialog();
@@ -122,11 +114,11 @@ class BisWebFileServerClient extends BisFileServerClient {
         }
         
         this.lastdirectory=payload.path;
-        this.fileDialog.fileRequestFn = this.lastOpts.callback;
+        this.fileDialog.fileRequestFn = opts.callback;
         this.fileDialog.openDialog(payload.data,
                                    payload.path,
                                    payload.root,
-                                   this.lastOpts);
+                                   opts);
     }
 }
 module.exports = BisWebFileServerClient;
