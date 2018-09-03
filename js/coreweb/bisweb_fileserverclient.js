@@ -1,3 +1,4 @@
+
 const $ = require('jquery');
 const webutil = require('bis_webutil');
 const bisweb_simplefiledialog = require('bisweb_simplefiledialog');
@@ -43,7 +44,7 @@ class BisWebFileServerClient extends BisFileServerClient {
             let passwordEntryBox=$(`
                 <div class='form-group'>
                     <label for='server'>Host:</label>
-                                 <input type='text' class = 'form-control' id='${hid}' value="localhost:8081">
+                                 <input type='text' class = 'form-control' id='${hid}' value="localhost:9081">
                 </div>
                 <div class='form-group'>
                     <label for='filename'>Password:</label>
@@ -124,6 +125,7 @@ class BisWebFileServerClient extends BisFileServerClient {
         this.fileDialog.fileRequestFn = this.lastOpts.callback;
         this.fileDialog.openDialog(payload.data,
                                    payload.path,
+                                   payload.root,
                                    this.lastOpts);
     }
 }
