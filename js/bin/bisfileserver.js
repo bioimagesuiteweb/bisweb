@@ -22,20 +22,9 @@ const bisserverutil=require('bis_fileserverutils');
 const formatPacket=bisserverutil.formatPacket;
 const readFrame=bisserverutil.readFrame;
 
+// TODO: IP Filtering
+// TODO: Check Base Directories not / /usr (probably two levels)
 
-
-
-// TODO:
-// this extension should be used make node-like calls work on Windows
-// https://github.com/prantlf/node-posix-ext
-
-// TODO:
-// Check for base directory
-// Add options for multiple base directories -- treat these as drives
-// Abstract Windows separator to always be "/" and rename at each end
-
-// TODO:
-// Detect free port !!!!
 
 const fs = require('fs');
 const wsutil = require('bis_wsutil');
@@ -100,8 +89,10 @@ class FileServer {
             } else {
                 this.opts.tempDirectory='/tmp';
             }
+        } else {
+            this.opts.tempDirectory=this.validateDirectories([this.opts.tempDirectory],'temp')[0];
         }
-                
+        
         if (!this.opts.baseDirectoriesList) {
             if (path.sep==='/')  {
                 this.opts.baseDirectoriesList=[ os.homedir() ];
@@ -109,7 +100,10 @@ class FileServer {
                 this.opts.baseDirectoriesList=[ util.filenameWindowsToUnix(os.homedir()) ];
             }
         }
-
+        
+        this.opts.baseDirectoriesList=this.validateDirectories(this.opts.baseDirectoriesList,'base');
+        
+        
         let temp=this.opts.tempDirectory.trim();
         let i=0,found=false;
 
@@ -1115,6 +1109,63 @@ class FileServer {
         return true;
     }
 
+    /** Validate Directories
+     * @params{Array} - array of directories
+     * @params{String} - name of list for debugging
+     * @returns{Array} - fixed array
+     */
+    validateDirectories(lst,name="") {
+
+        let newlist=[];
+        for (let i=0;i<lst.length;i++) {
+
+            let p = path.normalize(lst[i]);
+
+            let stats=null;
+            try {
+                stats=fs.lstatSync(p);
+            } catch(e) {
+                p=null;
+            }
+
+            if (stats) {
+                if (stats.isSymbolicLink()) {
+                    let q=fs.readlinkSync(p);
+                    p=q;
+                }
+
+                if (!stats.isDirectory()) {
+                    p=null;
+                }
+
+                if (p.lastIndexOf(path.sep)==(p.length-1)) {
+                    p=p.substr(0,p.length-1);
+                } 
+
+                
+                let ignore=false;
+                
+                if (path.sep==='/') {
+                    if (p!=='/tmp') {
+                        let l=p.split('/');
+                        if (l.length<3)
+                            ignore=true;
+                    }
+                } else {
+                    let l=p.split('\\');
+                    if (l.length<3)
+                        ignore=true;
+                }
+                
+                if (!ignore) 
+                    newlist.push(p);
+            }
+        }
+        console.log('..... Validating '+name+' directory list=',lst.join(','),'-->\n.....\t ' , newlist.join(','));
+        return newlist;
+    }
+
+    
     /**
      * Sets a function to execute after a given delay. Uses Node Timers class.
      * 
@@ -1199,8 +1250,7 @@ require('dns').lookup(require('os').hostname(), function (err, add) {
     if (nolocalhost)
         ipaddr=`${add}`;
     console.log('..................................................................................');
-    console.log('.... running on',os.platform());
-    console.log('.... this is BioImage Suite Web Build',bisdate.date,' ',bisdate.time,' ',bisdate.version);
+    console.log('..... BioImage Suite Web date='+bisdate.date+' ('+bisdate.time+'), v='+bisdate.version+', os='+os.platform()+'.\n.....');
     server.startServer(ipaddr, portno, false).catch( (e) => {
         console.log(e);
         process.exit(0);
