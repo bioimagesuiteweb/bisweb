@@ -6,7 +6,7 @@ const bisasyncutil=require('bis_asyncutils');
 const util = require('bis_util');
 const BisBaseServerClient= require('bis_baseserverclient');
 // Debug Mode
-const verbose=0;
+const verbose=1;
 let uploadcount=0;
 
 class BisFileServerClient extends BisBaseServerClient { 
@@ -189,7 +189,9 @@ class BisFileServerClient extends BisBaseServerClient {
                 break;
             }
             case 'error': {
-                console.log('Error from client:', data.payload); 
+                console.log('Error from client:', data.payload,'id=',id);
+                console.log('data.payload=',data.payload);
+                this.alertEvent(data.payload.text,true);
                 success=false;
                 break;
             }
@@ -400,6 +402,7 @@ class BisFileServerClient extends BisBaseServerClient {
                         'data' : raw_data,
                         'filename' : url,
                     });
+                    return;
                 } else {
                     let dat = new Uint8Array(raw_data);
                     let comp=bisgenericio.iscompressed(url);
@@ -477,12 +480,19 @@ class BisFileServerClient extends BisBaseServerClient {
 
                 if (m==='datasocketready') {
                     resolve(msg.port);
+                    return;
                 } else if (m === 'serverreadonly') {
                     this.alertEvent('The server is set to read-only mode and will not save files.', true);
                     reject('Failed');
+                    return;
+                } else if (m === 'badfilename') {
+                    this.alertEvent(msg.payload);
+                    reject(msg.payload);
+                    return;
                 } else {
                     console.log('heard unexpected message', m, 'not opening data socket');
                     reject('Failed');
+                    return;
                 }
             });
             
@@ -504,7 +514,7 @@ class BisFileServerClient extends BisBaseServerClient {
 
         if (url.indexOf('\\')>=0)
             url=util.filenameWindowsToUnix(url);
-
+        
         
         // TODO: is the size of body < packetsize upload in one shot
         let body=null;
@@ -512,19 +522,21 @@ class BisFileServerClient extends BisBaseServerClient {
             body=bisgenericio.string2binary(data);
         else
             body=new Uint8Array(data.buffer);
-
-
+        
+        
         let checksum=util.SHA256(body);
         let packetSize=32768/4;
         return new Promise((resolve,reject) => {
-
+            
             let success=(m) => {
                 resolve(m);
             };
-
+            
             let tryagain=(m) => {
-                if (m!=='tryagain' || packetSize<1000)
+                if (m!=='tryagain' || packetSize<1000) {
                     reject(m);
+                    return;
+                }
                 packetSize=Math.round(packetSize/2);
                 if (packetSize<16384)
                     console.log('++++ Trying again',packetSize);
@@ -533,6 +545,7 @@ class BisFileServerClient extends BisBaseServerClient {
             tryagain("tryagain");
         });
     }
+
         
 
     uploadFileHelper(url,body,isbinary=false,checksum,successCB,failureCB,packetSize=400000) {
@@ -581,7 +594,7 @@ class BisFileServerClient extends BisBaseServerClient {
                 doDataTransfer(body);
             });
         }).catch( (e) => {
-            failureCB('error -- failed to connect '+e);
+            failureCB('error '+e);
         });
             
             
@@ -653,6 +666,7 @@ class BisFileServerClient extends BisBaseServerClient {
                     default:
                     {
                         console.log('received unexpected message', event, 'while listening for server responses');
+                        failureCB('Error-'+data.payload);
                     }
                 }
             });
