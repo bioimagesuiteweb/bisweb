@@ -298,15 +298,15 @@ const webfileutils = {
         if (fileopts.force !== null)
             fmode=fileopts.force;
 
-        let cbopts = { 'callback' : callback, 'title' : title, 'suffix' : suffix };
+        let cbopts = { 'callback' : callback, 'title' : title, 'suffix' : suffix, 'mode' : 'load' };
 
         // -------------------- End Of Part I ---------------
 
         if (fileopts.suffix === "DIRECTORY" && fileMode === 'server') {
             cbopts.initialFilename= '';
-            cbopts.type='directory';
+            cbopts.mode='directory';
             cbopts.suffix='';
-            bisweb_fileserverclient.requestFileList('directory', null, true, cbopts);
+            bisweb_fileserverclient.requestFileList(null, true, cbopts);
             return;
         }
 
@@ -324,21 +324,23 @@ const webfileutils = {
                     
 
                 try {
-                    if (fileopts.initialCallback) {
-                        let f=fileopts.initialCallback() || '';
-                        if (f.length>0) {
-                            let ind=f.lastIndexOf("/");
-                            if (ind>0) {
-                                initialDir=f.substr(0,ind);
-                                initialFilename=f.substr(ind+1,f.length);
-                            } else {
-                                initialFilename=f;
-                                initialDir=null;
+                    if (fileopts) {
+                        if (fileopts.initialCallback) {
+                            let f=fileopts.initialCallback() || '';
+                            if (f.length>0) {
+                                let ind=f.lastIndexOf("/");
+                                if (ind>0) {
+                                    initialDir=f.substr(0,ind);
+                                    initialFilename=f.substr(ind+1,f.length);
+                                } else {
+                                    initialFilename=f;
+                                    initialDir=null;
+                                }
                             }
                         }
                     }
                 } catch(e) {
-                    console.log(e);
+                    console.log(e); 
                 }
 
                 if (!initialFilename && defaultpath.length>0) {
@@ -347,8 +349,8 @@ const webfileutils = {
                 }
                 
                 cbopts.initialFilename=initialFilename || '';
-                cbopts.type='save';
-                bisweb_fileserverclient.requestFileList('uploadfile', initialDir, true, cbopts);
+                cbopts.mode='save';
+                bisweb_fileserverclient.requestFileList(initialDir, true, cbopts);
                 return;
             }
 
@@ -393,7 +395,7 @@ const webfileutils = {
         }
 
         if (fileMode==="server") {
-            bisweb_fileserverclient.requestFileList('showfiles', null,true,cbopts);
+            bisweb_fileserverclient.requestFileList(null,true,cbopts);
             return;
         }
 
