@@ -153,18 +153,20 @@ class FileServer {
     
     // password token
     // create function and global variable
-        createPassword(abbrv=0) {
+    createPassword(abbrv=0) {
         onetimePasswordCounter+=1;
         let token = hotp.generate(secret, onetimePasswordCounter);
         if (abbrv===0) {
             console.log('..... BioImage Suite Web FileServer datatransfer=',this.datatransfer,' Initialized\n.....');
             console.log('..... \t The websocket server is listening for incoming connections,\n..... \t using the following one time info.\n.....');
+            // the ".ss." in the next lines is needed for mocha testing
             console.log(`..ss. \t\t hostname: ws://${this.hostname}:${this.portNumber}`);
         }  else if (abbrv===1) {
             console.log('.....\n..... Create New Password ... try again.');
         } else {
             console.log('.....\n..... Create New Password as this one is now used successfully.');
         }
+        // the ".ss." in the next lines is needed for mocha testing
         console.log(`..ss. \t\t password: ${token}\n.....`);
     }
 
@@ -405,7 +407,7 @@ class FileServer {
         {
             //get file list
             case 'getfilelist': {
-                this.serveFileList(socket, parsedText.directory, parsedText.type,parsedText.id);
+                this.serveFileList(socket, parsedText.directory,parsedText.id);
                 break;
             }
             case 'readfile': {
@@ -591,7 +593,7 @@ class FileServer {
                 console.log('._._._._._._- \t writing to file', writeLocation,'\n._._._._._._- \t\t size=',dataInProgress.data.length,'\n._._._._._._- \t\t checksum matched=',checksum);
                 
                 genericio.write(writeLocation, dataInProgress.data, dataInProgress.isbinary).then( () => {
-                    socket.write(formatPacket('uploadcomplete', ''), () => {
+                    socket.write(formatPacket('uploadcomplete', 'file saved in '+writeLocation+' (isbinary='+dataInProgress.isbinary+')'), () => {
                         dataInProgress.data=null;
                         //socket.end(); //if for some reason the client doesn't send a FIN we know the socket should close here anyway.
                         console.log('._._._._._._- \t message sent -- file saved in ',writeLocation,' binary=',dataInProgress.isbinary);
@@ -655,14 +657,8 @@ class FileServer {
             return;
         }
 
-        
-
         //spawn a new server to handle the data transfer
         console.log('.... .... Beginning data transfer', this.portNumber+1);
-        
-
-
-        
 
         if (!this.checkValidFilename(upload.filename)) {
             socket.write(formatPacket('uploadmessage', {
@@ -711,13 +707,31 @@ class FileServer {
           if (!isbinary)
           pkgformat='text';*/
 
+        if (!this.checkValidFilename(filename)) {
+            this.handleBadRequestFromClient(socket,
+                                            'filename '+filename+' is not valid',
+                                            parsedText.id);
+            return;
+        }
+
+        
         if (path.sep==='\\')
             filename=util.filenameUnixToWindows(filename);
 
+        let handleError=(filenane,err) => {
+            if (err.code==="EACCES")
+                this.handleBadRequestFromClient(socket, 'Failed to read file'+filename+' permission denied');
+            else if (err.code==="ENOENT")
+                this.handleBadRequestFromClient(socket, 'Failed to read file'+filename+' (no such file)');
+            else
+                this.handleBadRequestFromClient(socket, 'Failed to read file'+filename+' (code='+err.code+')');
+        };
+        
         if (isbinary) {
             fs.readFile(filename,  (err, d1) => {
+                
                 if (err) {
-                    this.handleBadRequestFromClient(socket, err,parsedText.id);
+                    handleError(filename,err);
                 } else {
                     console.log('.....',`load binary file ${filename} successful, writing to socket.`);
                     let checksum=`${util.SHA256(new Uint8Array(d1))}`;
@@ -734,7 +748,7 @@ class FileServer {
             //        console.log('.....','filename', filename);
             fs.readFile(filename, 'utf-8', (err, d1) => {
                 if (err) {
-                    this.handleBadRequestFromClient(socket, err);
+                    handleError(filename,err);
                 } else {
                     console.log(`..... load text file ${filename} successful, writing to socket`);
                     socket.write(formatPacket('text', { 'data' :  d1,
@@ -758,40 +772,43 @@ class FileServer {
      * @param {Number} id - the request id
      * @returns A file tree rooted at basedir.
      */
-    serveFileList(socket, basedir, type,id=-1)  {
+    serveFileList(socket, basedir, id=-1)  {
 
         const debug=this.debug;
         let foundDirectory='';
-        console.log('Serving base=',basedir,' last=',this.lastDirectory);
+
+        if (basedir===null && this.lastDirectory!==null) {
+            basedir=this.lastDirectory;
+        }
+
+        if (basedir===null) {
+            foundDirectory=true;
+            if (this.opts.baseDirectoriesList.length===1)
+                basedir=this.opts.baseDirectoriesList[0];
+            else
+                basedir='[Root]';
+        }
 
         if (basedir==='[Root]') {
-            basedir=null;
             this.lastDirectory=null;
         } else {
-            if (basedir===null && this.lastDirectory!==null) {
-                basedir=this.lastDirectory;
-            }
-            
-            if (basedir) {
-                let found=false,i=0;
-                while(i<this.opts.baseDirectoriesList.length && !found) {
-                    if (basedir.indexOf(this.opts.baseDirectoriesList[i])===0) {
-                        found=true;
-                        foundDirectory=this.opts.baseDirectoriesList[i];
-                    } else  {
-                        i=i+1;
-                    }
-            }
-                if (found===false) {
-                    basedir=null;
-                    foundDirectory=null;
+            let found=false,i=0;
+            while(i<this.opts.baseDirectoriesList.length && !found) {
+                if (basedir.indexOf(this.opts.baseDirectoriesList[i])===0) {
+                    found=true;
+                    foundDirectory=this.opts.baseDirectoriesList[i];
+                } else  {
+                    i=i+1;
                 }
+            }
+            if (found===false) {
+                basedir='[Root]';
+                foundDirectory=null;
+            } else {
                 this.lastDirectory=basedir;
             }
         }
 
-        console.log('\t\t Serving base=',basedir,' last=',this.lastDirectory, 'found=',foundDirectory);
-            
         let getmatchedfiles=function(basedir) {
 
             if (debug)
@@ -878,7 +895,7 @@ class FileServer {
             return treelist;
         };
 
-        if (basedir || this.opts.baseDirectoriesList.length<2) {
+        if (basedir!=='[Root]' || this.opts.baseDirectoriesList.length<2) {
 
             basedir = basedir || this.opts.baseDirectoriesList[0];
             getmatchedfiles(basedir).then( (obj) => {
@@ -888,10 +905,9 @@ class FileServer {
                     pathname=util.filenameWindowsToUnix(pathname);
                 
                 createTree(obj.files).then( (treelist) => {
-                    socket.write(formatPacket('filelist', { 'path' : pathname,'type' : type,
+                    socket.write(formatPacket('filelist', { 'path' : pathname,
                                                             'root' : foundDirectory,
                                                             'data' : treelist,
-                                                            'modalType' : type,
                                                             'id' : id }));
                 });
             }).catch( (e) => {
@@ -907,9 +923,10 @@ class FileServer {
             }
             
             createTree(lst).then( (treelist) => {
-                socket.write(formatPacket('filelist', { 'path' : "/",'type' : type,
+                socket.write(formatPacket('filelist', { 'path' : "/",
                                                         'root' : "/",
-                                                        'data' : treelist, 'modalType' : type, 'id' : id }));
+                                                        'data' : treelist,
+                                                        'id' : id }));
             }).catch( (e) => {
                 console.log('.....',e,e.stack);
             });
@@ -923,6 +940,7 @@ class FileServer {
      * @param {Number} id - the request id
      */
     serveServerBaseDirectory(socket,id=0)  {
+        console.log("Serving Base",this.opts.baseDirectoriesList);
         socket.write(formatPacket('serverbasedirectory', { 'path' : this.opts.baseDirectoriesList,  'id' : id }));
     }
 
@@ -932,6 +950,7 @@ class FileServer {
      * @param {Number} id - the request id
      */
     serveServerTempDirectory(socket,id=0) {
+        console.log("Serving Temp",this.opts.tempDirectory);
         socket.write(formatPacket('servertempdirectory', { 'path' : this.opts.tempDirectory, 'id' : id }));
     }
 
@@ -946,6 +965,14 @@ class FileServer {
 
         let prom=null;
 
+        if (!this.checkValidFilename(url)) {
+            this.handleBadRequestFromClient(socket,
+                                            'url '+url+' is not valid',
+                                            id);
+            return;
+        }
+
+        
         if (path.sep==='\\')
             url=util.filenameUnixToWindows(url);
 
@@ -998,10 +1025,10 @@ class FileServer {
                                                                 'id' : id }));
         }).catch( (e) => {
             console.log('.....','File system fail',opname,url,e);
-            socket.write(formatPacket('error', { 'result' : e,
-                                                 'operation' : opname,
-                                                 'url' : url,
-                                                 'id' : id }));
+            socket.write(formatPacket('filesystemoperationserror', { 'result' : e,
+                                                                     'operation' : opname,
+                                                                     'url' : url,
+                                                                     'id' : id }));
         });
     }
 
@@ -1015,7 +1042,7 @@ class FileServer {
      */
     handleBadRequestFromClient(socket, reason,id=-1) {
         let error = "An error occured:"+reason;
-        socket.write(formatPacket('error', { 'text' : error, 'id': id}), () => { console.log('..... request returned an error', reason, '\nsent error to client'); });
+        socket.write(formatPacket('error', { 'text' : error, 'id': id}), () => { console.log('..... request returned an error', reason, '\n.....\t sent error to client'); });
     }
 
     /**
@@ -1047,7 +1074,7 @@ class FileServer {
      */
     checkValidFilename(filepath) {
 
-        console.log('Checking ',filepath);
+//        console.log('Checking ',filepath);
         
         filepath=filepath||'';
         if (filepath.length<1)
@@ -1076,9 +1103,13 @@ class FileServer {
                 return false;
         } else {
             let dirname=path.dirname(realname);
-            let stats=fs.lstatSync(dirname);
-            if (stats.isSymbolicLink())
+            try {
+                let stats=fs.lstatSync(dirname);
+                if (stats.isSymbolicLink())
+                    return false;
+            } catch(e) {
                 return false;
+            }
         }
 
         return true;
