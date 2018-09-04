@@ -79,7 +79,7 @@ class BisWebFileServerClient extends BisFileServerClient {
             this.authenticateModal.dialog.find('.modal-footer').find('.btn').remove();
             this.authenticateModal.body.append(passwordEntryBox);
             
-            let confirmButton = webutil.createbutton({ 'name': 'Connnect', 'type': 'btn-success' });
+            let confirmButton = webutil.createbutton({ 'name': 'Connect', 'type': 'btn-success' });
             let cancelButton = webutil.createbutton({ 'name': 'Cancel', 'type': 'btn-danger' });
             
             this.authenticateModal.footer.append(confirmButton);
@@ -132,6 +132,7 @@ class BisWebFileServerClient extends BisFileServerClient {
     showFileDialog(payload,opts=null) {
 
         console.log('opts', opts);
+        console.log('callback', opts.callback);
         
         if (!this.fileDialog) {
             this.fileDialog=new bisweb_simplefiledialog();
@@ -140,9 +141,10 @@ class BisWebFileServerClient extends BisFileServerClient {
         
         this.lastdirectory=payload.path;
         this.fileDialog.fileRequestFn = opts.callback;
+        opts.startDirectory = payload.path;
+        opts.rootDirectory = payload.root;
+
         this.fileDialog.openDialog(payload.data,
-                                   payload.path,
-                                   payload.root,
                                    opts);
     }
 }

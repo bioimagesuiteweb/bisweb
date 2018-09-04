@@ -174,15 +174,17 @@ class SimpleFileDialog {
     }
 
     /**
-     * Create Filters 
+     * Parse a list of filters and create an Array of filters to use in the dialog. 
+     * @param {String|Array} filters - An unparsed list of filters.
      */
-    createFilters(filters=null) {
-
+    createFilters(filters = null) {
+        console.log('create filters', filters);
         if (filters) {
             this.currentFilters=JSON.parse(JSON.stringify(filters));
-        }  else {
+        } else {
             this.currentFilters=[];
         }
+
         this.currentFilters.push({ name: 'All Files', extensions: [] });
         this.newFilters=true;
         this.activeFilterList=this.currentFilters[0].extensions;
@@ -196,11 +198,18 @@ class SimpleFileDialog {
      * @param {Array} list - An array of file entries. 
      * @param {String} list.text - The name of the file or folder.
      * @param {String} list.path - The full path indicating where the file is located on the server machine.
-     * @param {Object} startDirectory - File entry representing the directory at which the files in list should be added. Undefined means the files represent the files in the current directory
-     * @param {Object} rootDirectory - File entry representing the root directory from which startDirectory derives
-     * @param {Object} opts - filter options
+     * @param {Object} opts - A parameter object for the file dialog.
+     * @param {String} opts.moda - What mode the modal is in, either 'load' or 'save'.
+     * @param {String} opts.title - The name to display at the top of the file dialog modal.
+     * @param {Array} opts.filters - A list of filters for the file dialog. Only files that end in a filetype contained in opts.filters will be displayed.
+     * @param {String} opts.startDirectory - File entry representing the directory at which the files in list should be added. Defaults to '/'.
+     * @param {Object} opts.rootDirectory - File entry representing the root directory from which startDirectory derives. Defaults to '/'.
      */
-    openDialog(list, startDirectory = null, rootDirectory='/', opts=null) {
+    openDialog(list, opts = null) {
+
+        //null or undefined startDirectory and rootDirectory should default to '/'
+        let startDirectory = opts.startDirectory || '/';
+        let rootDirectory = opts.rootDirectory || '/';
 
         if (this.modal===null) {
             this.createDialogUserInterface();
@@ -217,7 +226,7 @@ class SimpleFileDialog {
                 let newtitle=opts.title;
                 if (newtitle) {
                     let title = this.modal.header.find('.modal-title');
-                    title.text(newtitle+ ' (using bisweb fileserver)');
+                    title.text(newtitle + ' (using bisweb fileserver)');
                 }
             }
 
@@ -281,8 +290,6 @@ class SimpleFileDialog {
             let addOption= ((b) => {
                 sel.append($(b));
             });
-
-            console.log('adding ', this.currentFilters.join('\n\t'));
             
             for (let i=0;i<this.currentFilters.length;i++) {
 
@@ -299,51 +306,9 @@ class SimpleFileDialog {
         this.modal.dialog.modal('show');
     }
 
-     /**
-     * Adds the files specified by list to the file dialog. If the dialog is empty this effectively creates the dialog.
-     * The list may also specify extra files fetched by the server, in which case startDirectory will designate the path at which they should be added.
-     * 
-     * NOTE: The file server that creates the file dialog will provide a few of its functions with the socket bound, e.g. fileListFn, to avoid sharing too many of its internal structures.
-     * @param {Array} list - An array of file entries. May contain children that are themselves file entries. A list entry may contain the following fields:
-     * @param {String} list.text - The name of the file or folder.
-     * @param {String} list.type - What type of file or folder the entry represents. One of 'picture', 'html', 'js', 'text', 'video', 'audio', 'file', or 'directory'.
-     * @param {String} list.path - The full path indicating where the file is located on the server machine.
-     * @param {Array} list.children - File entries for each file contained in the list entry. Only for list entries of type 'directory'.
-     * @param {Object} startDirectory - File entry representing the directory at which the files in list should be added. Undefined means the files represent the files in the current directory
-     */
-    createFileList(list, startDirectory = null, opts=null) {
-
-        if (opts!==null) {
-            this.filters=opts.suffix || '';
-            let newtitle=opts.title || null;
-            if (newtitle) {
-                let title = this.modal.header.find('.modal-title');
-                title.text(newtitle+ ' (using bisweb fileserver)');
-            }
-        }
-        
-        //file list is constructed as more files are fetched -- the first request will provide a certain number of files then supplemental requests will build it up.
-        //createFileList will be called to make the list from scratch, but should not alter the list after that.
-        this.fileList = this.fileList ? this.fileList : list;
-        this.currentDirectory = list;
-
-        this.lastDirectories = [];
-        this.lastPaths = [];
-
-        //keep track of the current directory for the navbar
-        this.currentPath = startDirectory ? startDirectory.path.split('/') : [];
-        this.container.find('.file-navbar').empty();
-
-        if (startDirectory) {
-            this.expandDirectory(startDirectory.list);
-        } else {
-            this.expandDirectory(list);
-        }   
-    }
     
     /**
-     * Creates the visual representation of the files specified by list. Called from createFileList (see notes there for format of file entries).
-     * Uses jstree to render the list.
+     * Creates the visual representation of the files specified by list. Uses jstree to render the list.
      * 
      * Sorts contents before display so that folders are shown first.
      * @param {Array} list - An array of file entries. 

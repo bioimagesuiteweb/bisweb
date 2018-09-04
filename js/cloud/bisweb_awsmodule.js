@@ -42,8 +42,7 @@ class AWSModule {
         //file display modal gets deleted if you try to load it too soon
         //not completely sure why -Zach
         bis_webutil.runAfterAllLoaded( () => {   
-            this.fileDisplayModal = new bisweb_simplefiledialog('Bucket Contents', { 'makeFavoriteButton' : false });
-            this.fileSaveModal = new bisweb_simplefiledialog('Choose Folder to Save In', { 'makeFavoriteButton' : false, 'modalType' : 'save', 'displayFiles' : false });           
+            this.fileDisplayModal = new bisweb_simplefiledialog('Bucket Contents');
         });
 
     }
@@ -69,16 +68,22 @@ class AWSModule {
      * Lists the objects in the bucket referred to by the current S3 instance (this.S3). Note that S3 is a flat storage structure in which everything is stored in the same place.
      * Creates a file browsing dialog using bisweb_filedialog (see the documentation in that file for more details).
      * 
+     * @param {Array} filters - Filters object passed from bis_genericio.
+     * @param {String} modalTitle - Name to display at the top of the modal.
+     * @param {String} suffixes - Comma separated list of file extensions for files that should be displayed in the modal. 
      */
-    listObjectsInBucket(filters, modalTitle) {
+    createLoadImageModal(filters, modalTitle, suffixes) {
         this.s3.listObjectsV2( {}, (err, data) => {
             if (err) { console.log('an error occured', err); return; }
-            console.log('got objects', data);
 
-            let formattedFiles = this.formatRawS3Files(data.Contents, filters);
+            let formattedFiles = this.formatRawS3Files(data.Contents, suffixes);
+            console.log('formatted files', formattedFiles);
 
-            this.fileDisplayModal.openDialog(formattedFiles);
-            this.fileDisplayModal.showDialog(filters, modalTitle);
+            this.fileDisplayModal.openDialog(formattedFiles, {
+                'filters' : filters,
+                'title' : modalTitle,
+                'mode' : 'load'
+            });
         });
     }
 
@@ -91,6 +96,21 @@ class AWSModule {
     downloadFile(filename) {
 
         return new Promise( (resolve, reject) => {
+
+            //strip leading '/'s from name 
+            let splitName = filename.split('/');
+            for (let i = 0; i < splitName.length; i++) {
+                if (splitName[i] === '') {
+                    splitName.splice(i,1);
+                    i--;
+                } else {
+                    break;
+                }
+            }
+
+            filename = splitName.join('/');
+            console.log('filename', filename);
+
             let getParams = { 
                 'Key' : filename,
                 'Bucket' : AWSParameters.BucketName()
@@ -151,12 +171,24 @@ class AWSModule {
 
             let formattedFiles = this.formatRawS3Files(data.Contents);
 
-            console.log('files', formattedFiles);
-            this.fileSaveModal.createFileList(formattedFiles);
-            this.fileSaveModal.showDialog(filters, modalTitle);
+            this.fileDisplayModal.fileRequestFn = this.uploadFile;
+            this.fileDisplayModal.openDialog(formattedFiles, {
+                 'filters' : filters,
+                 'title' : modalTitle,
+                 'mode' : 'save'
+            });
         });
     }
 
+    /**
+     * Gets the size of a file with a given name and returns it. Technically a synchronous function but templated as a promise for compatibility with bis_genericio.
+     * @param {String} filename 
+     */
+    getFileSize(filename) {
+        return new Promise( (resolve, reject) => {
+
+        });
+    }
     /**
      * Attempts to authenticate the current user before executing a given S3 command (one of either 'showfiles' or 'uploadfiles' as of 7-23-18, which respectively call listObjectsInBucket and createImageSaveDialog).
      * If the user is not authenticated, a popup will appear that will prompt the user to enter their AWS credentials, or if the credentials are already cached, it will begin the authentication process. It will execute the command once the user has been successfully authenticated.
@@ -174,12 +206,12 @@ class AWSModule {
             switch(command) {
                 case 'showfiles' : {
                     this.fileDisplayModal.fileRequestFn = opts.callback;
-                    this.listObjectsInBucket(opts.suffix, opts.title); 
+                    this.createLoadImageModal(opts.filters, opts.title, opts.suffix); 
                     break;
                 }
                 case 'uploadfile' : {
-                    this.fileSaveModal.fileRequestFn = opts.callback;
-                    this.createSaveImageModal(opts.suffix, opts.title); 
+                    this.fileDisplayModal.fileRequestFn = opts.callback;
+                    this.createSaveImageModal(opts.filters, opts.title, opts.suffix); 
                     break;
                 }
                 default : console.log('Unrecognized aws command', command, 'cannot complete request.');
@@ -268,15 +300,15 @@ class AWSModule {
      * Takes the raw data returned by S3.listObjectsV2 and turns it into a nested file tree that bisweb_filedialog can render.
      *
      * @param {Object} files - The 'Contents' field of the data returned by S3.listObjects.
-     * @param {String} filters - A comma separated string of acceptable file types -- files with an extension not in filters are excluded. 
+     * @param {String} suffixes - A comma separated string of acceptable file types -- files with an extension not in filters are excluded. 
      * @returns An array of files parseable by bisweb_filedialog
      */
-    formatRawS3Files(files, filters = null) {
+    formatRawS3Files(files, suffixes = null) {
 
-        let filtersArray = filters ? filters.split(',') : null;
+        let filtersArray = suffixes ? suffixes.split(',') : null;
 
         //filters start with a '.' which we strip out here for compatibility with String.split()
-        if (filters) {
+        if (suffixes) {
             for (let i = 0; i < filtersArray.length; i++) {
                 filtersArray[i] = filtersArray[i].substring(1);
             }
@@ -284,6 +316,7 @@ class AWSModule {
 
         //split filenames and strip out all the folders (filepaths that end with '/')
         let paths = [];
+        console.log('files', files);
         for (let file of files) {
 
             let splitFile = file.Key.split('/');
@@ -292,14 +325,14 @@ class AWSModule {
             if (splitFile[splitFile.length - 1] !== '') {
                 let fileExtension = splitFile[splitFile.length - 1].split('.');
 
-                if (filters) {
+                if (suffixes) {
                     for (let filter of filtersArray) {
                         if (fileExtension[fileExtension.length - 1] === filter) {
-                            paths.push(splitFile);
+                            paths.push({ 'filepath' : splitFile, 'size' : file.Size });
                         }
                     }
                 } else {
-                    paths.push(splitFile);
+                    paths.push({ 'path' : splitFile, 'size' : file.Size });
                 }
 
             }
@@ -315,7 +348,7 @@ class AWSModule {
         for (let path of paths) {
             let currentLocation = formattedFiles;
 
-            for (let folder of path) {
+            for (let folder of path.filepath) {
                 let enclosingFolder = findFileWithKey(folder, currentLocation);
                 if (!enclosingFolder) {
 
@@ -337,12 +370,13 @@ class AWSModule {
                         enclosingFolder = newEntry;
                     } else {
 
-                        let folderPath = path.join('/');
+                        let folderPath = path.filepath.join('/');
                         let fileType = folder.split('.');
 
                         let newEntry = {
                             'text' : folder,
-                            'path' : folderPath
+                            'path' : folderPath,
+                            'size' : path.size
                         };
 
                         switch(fileType[fileType.length - 1]){
