@@ -674,7 +674,11 @@ class BaseFileServer {
 
         let i=0,found=false;
         while (i<this.opts.baseDirectoriesList.length && found===false) {
-            if (filepath.indexOf(this.opts.baseDirectoriesList[i].toLowerCase())===0) {
+            if (path.sep==='\\') {
+                if (filepath.indexOf(this.opts.baseDirectoriesList[i].toLowerCase())===0) {
+                    found=true;
+                }
+            } else if (filepath.indexOf(this.opts.baseDirectoriesList[i])===0) {
                 found=true;
             } else {
                 i=i+1;
