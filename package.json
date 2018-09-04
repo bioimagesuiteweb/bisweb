@@ -51,7 +51,7 @@
         "gulp-eslint": "4.0.2",
         "gulp-html-replace": "1.6.2",
         "gulp-jshint": "2.0.4",
-        "gulp-rename": "1.4.0",
+        "gulp-rename": "^1.4.0",
         "gulp-replace": "1.0.0",
         "gulp-template": "4.0.0",
         "gulp-watch": "4.3.11",
