@@ -131,6 +131,8 @@ class BisWebFileServerClient extends BisFileServerClient {
      */
     showFileDialog(payload,opts=null) {
 
+        console.log('opts', opts);
+        
         if (!this.fileDialog) {
             this.fileDialog=new bisweb_simplefiledialog();
             this.fileDialog.fileListFn = this.requestFileList.bind(this);

@@ -22,7 +22,7 @@ const secret = otplib.authenticator.generateSecret();
 
 
 const fs = require('fs');
-const wsutil = require('wsutil');
+const wsutil = require('bis_wsutil');
 const genericio = require('bis_genericio.js');
 const tcpPortUsed = require('tcp-port-used');
 
@@ -611,8 +611,7 @@ let serveFileList = (socket, basedir, type, depth = 2, id = -1) => {
             });
         });
     };
-
-    console.log('type', type);
+    
     expandDirectory(basedir, fileTree, 0).then((tree) => {
 
         //bisweb_fileserver handles the base file request differently than the supplemental ones, so we want to ship them to different endpoints

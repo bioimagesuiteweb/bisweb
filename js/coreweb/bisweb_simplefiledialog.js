@@ -200,7 +200,7 @@ class SimpleFileDialog {
      * @param {Object} rootDirectory - File entry representing the root directory from which startDirectory derives
      * @param {Object} opts - filter options
      */
-    openDialog(list, startDirectory = null, rootDirectory=null,opts=null) {
+    openDialog(list, startDirectory = null, rootDirectory='/', opts=null) {
 
         if (this.modal===null) {
             this.createDialogUserInterface();
@@ -351,7 +351,7 @@ class SimpleFileDialog {
      * @param {String} rootDirectory - "the drive" we are looking in
 
      */
-    updateTree(list,lastfilename=null,rootDirectory=null) {
+    updateTree(list,lastfilename=null, rootDirectory='/') {
 
         this.previousList=JSON.parse(JSON.stringify(list));
         
@@ -466,7 +466,9 @@ class SimpleFileDialog {
      * @param {String} lastfilename - the last selected filename
      * @param {String} rootDirectory - "the drive" we are looking in
      */
-    updateFileNavbar(lastfilename=null,rootDirectory='/') {
+    updateFileNavbar(lastfilename=null, rootDirectory='/') {
+
+        console.log('root directory', rootDirectory, 'current path', this.currentPath);
         let navbar = this.modal.body.find('.bisweb-file-navbar');
         navbar.empty();
         
