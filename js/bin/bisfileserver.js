@@ -208,7 +208,6 @@ class FileServer {
                 }
             });
 
-        
             this.netServer.listen(port, hostname, () => {
                 if (datatransfer) {
                     this.datatransfer=true;
@@ -653,9 +652,9 @@ class FileServer {
         }
 
         //spawn a new server to handle the data transfer
-        console.log('.... .... Beginning data transfer', this.portNumber+1);
+        console.log('.... .... Beginning data transfer', this.portNumber+1,'upload=',upload.filename);
 
-        if (!this.checkValidFilename(upload.filename)) {
+        if (!this.validateFilename(upload.filename)) {
             socket.write(formatPacket('uploadmessage', {
                 name : 'badfilename',
                 payload : 'filename '+upload.filename+' is not valid',
@@ -702,7 +701,7 @@ class FileServer {
           if (!isbinary)
           pkgformat='text';*/
 
-        if (!this.checkValidFilename(filename)) {
+        if (!this.validateFilename(filename)) {
             this.handleBadRequestFromClient(socket,
                                             'filename '+filename+' is not valid',
                                             parsedText.id);
@@ -935,7 +934,7 @@ class FileServer {
      * @param {Number} id - the request id
      */
     serveServerBaseDirectory(socket,id=0)  {
-        console.log("Serving Base",this.opts.baseDirectoriesList);
+        console.log("..... Serving Base",this.opts.baseDirectoriesList);
         socket.write(formatPacket('serverbasedirectory', { 'path' : this.opts.baseDirectoriesList,  'id' : id }));
     }
 
@@ -945,7 +944,7 @@ class FileServer {
      * @param {Number} id - the request id
      */
     serveServerTempDirectory(socket,id=0) {
-        console.log("Serving Temp",this.opts.tempDirectory);
+        console.log("..... Serving Temp",this.opts.tempDirectory);
         socket.write(formatPacket('servertempdirectory', { 'path' : this.opts.tempDirectory, 'id' : id }));
     }
 
@@ -960,7 +959,7 @@ class FileServer {
 
         let prom=null;
 
-        if (!this.checkValidFilename(url)) {
+        if (!this.validateFilename(url)) {
             this.handleBadRequestFromClient(socket,
                                             'url '+url+' is not valid',
                                             id);
@@ -1067,41 +1066,46 @@ class FileServer {
      * @param {String} filepath - Path to check.
      * @return {Boolean} true if OK, false if not OK,
      */
-    checkValidFilename(filepath) {
+    validateFilename(filepath) {
 
-//        console.log('Checking ',filepath);
-        
         filepath=filepath||'';
-        if (filepath.length<1)
+        if (filepath.length<1) {
             return false;
-        
+        }
+
+        if (path.sep==='\\') 
+            filepath=filepath.toLowerCase();
+
         let i=0,found=false;
         while (i<this.opts.baseDirectoriesList.length && found===false) {
-            if (filepath.indexOf(this.opts.baseDirectoriesList[i])===0) {
+            if (filepath.indexOf(this.opts.baseDirectoriesList[i].toLowerCase())===0) {
                 found=true;
             } else {
                 i=i+1;
             }
         }
 
-        if (found===false)
+        if (found===false) {
             return false;
+        }
 
         let realname=filepath;
         if (path.sep==='\\')
-            realname=util.filenameWindowsToUnix(filepath);
+            realname=util.filenameUnixToWindows(filepath);
 
 
         if (fs.existsSync(realname)) {
             let stats=fs.lstatSync(realname);
-            if (stats.isSymbolicLink())
+            if (stats.isSymbolicLink()) {
                 return false;
+            }
         } else {
             let dirname=path.dirname(realname);
             try {
                 let stats=fs.lstatSync(dirname);
-                if (stats.isSymbolicLink())
+                if (stats.isSymbolicLink()) {
                     return false;
+                }
             } catch(e) {
                 return false;
             }
@@ -1120,16 +1124,23 @@ class FileServer {
         let newlist=[];
         for (let i=0;i<lst.length;i++) {
 
-            let p = path.normalize(lst[i]);
-
+            let p=lst[i];
+            if (path.sep==='\\') 
+                p=util.filenameUnixToWindows(p);
+            
+            p = path.normalize(p);
             let stats=null;
             try {
+
                 stats=fs.lstatSync(p);
             } catch(e) {
                 p=null;
             }
 
+            
+            
             if (stats) {
+                
                 if (stats.isSymbolicLink()) {
                     let q=fs.readlinkSync(p);
                     p=q;
@@ -1142,24 +1153,26 @@ class FileServer {
                 if (p.lastIndexOf(path.sep)==(p.length-1)) {
                     p=p.substr(0,p.length-1);
                 } 
+            } else {
+                p=null;
+            }
 
-                
-                let ignore=false;
+            if (p!=null) {
                 
                 if (path.sep==='/') {
+                    let ignore=false;
                     if (p!=='/tmp') {
                         let l=p.split('/');
                         if (l.length<3)
                             ignore=true;
                     }
+                    if (!ignore) 
+                        newlist.push(p);
                 } else {
                     let l=p.split('\\');
-                    if (l.length<3)
-                        ignore=true;
-                }
-                
-                if (!ignore) 
-                    newlist.push(p);
+                    if (l.length>=3)
+                        newlist.push(util.filenameWindowsToUnix(p));
+                }                
             }
         }
         console.log('..... Validating '+name+' directory list=',lst.join(','),'-->\n.....\t ' , newlist.join(','));
