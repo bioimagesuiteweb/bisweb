@@ -15,7 +15,7 @@ class BisFileServerClient extends BisBaseServerClient {
 
         super();
         this.lastOpts=null;
-        this.portNumber=9081;
+        this.portNumber=wsutil.initialPort;
         
         //connection over which all control communication takes place
         this.socket = null;
@@ -73,14 +73,17 @@ class BisFileServerClient extends BisBaseServerClient {
      * Initiates a connection to the fileserver at the specified address. Note that the handshaking protocol is handled entirely by the native Javascript WebSocket API.
      * Sets this.socket internally, the structure representing the control socket between client and server.
      * 
-     * @param {String} address - The hostname and port to try to connect to, e.g. 'ws://localhost:8080'. These addresses must be prefixed with 'ws://' 
+     * @param {String} address - The hostname and port to try to connect to, e.g. 'ws://localhost:24000'. 
      */
-    connectToServer(address = 'ws://localhost:9081') {
+    connectToServer(address = 'ws://localhost:'+wsutil.initialPort) {
 
         if (this.socket) {
             this.closeConnection();
         }
 
+        if (address.indexOf('ws://')!==0)
+            address='ws://'+address;
+        
         let arr=address.split(':');
         let prt=arr[arr.length-1];
         this.portNumber=parseInt(prt);
@@ -285,7 +288,7 @@ class BisFileServerClient extends BisBaseServerClient {
     authenticate(password='',hostname=null) {
         
         this.password = password || '';
-        hostname = hostname || 'ws://localhost:9081';
+        hostname = hostname || 'ws://localhost:'+wsutil.initialPort;
         
         if (this.authenticated)
             return Promise.resolve();
