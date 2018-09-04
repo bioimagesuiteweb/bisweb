@@ -33,7 +33,7 @@ let terminateReject=null;
 
 // ------------------------------- Testing Code --------------------------------------------------
 
-const createTestingServer=function(serverpath=null,timeout=1000) {
+const createTestingServer=function(serverpath=null,timeout=500) {
 
     serverpath=serverpath || path.join(__dirname,'../bin');
     
