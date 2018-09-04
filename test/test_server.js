@@ -196,7 +196,7 @@ describe('Testing the server\n', function() {
     
     before(function(done) {
 
-        bisserverutil.createTestingServer().then( (obj) => {
+        bisserverutil.createTestingServer(true).then( (obj) => {
             client=obj.client;
             done();
         }).catch( (e) => {
