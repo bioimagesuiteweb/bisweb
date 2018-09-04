@@ -29,6 +29,7 @@ const path=require('path');
 const BisWebImage=require('bisweb_image');
 const genericio=require('bis_genericio');
 const bisserverutil=require('bis_fileservertestutils');
+const util=require('bis_util');
 const colors=require('colors/safe');
 
 
@@ -73,6 +74,10 @@ describe('Testing BisImage (from bis_asyncreadbruker.js) a class that imports Br
                     bisserverutil.createTestingServer().then( (obj) => {
                         client=obj.client;
                         tmpDir=obj.tmpDir;
+
+                        if (path.sep==='\\')
+                            tmpDir=util.filenameUnixToWindows(tmpDir);
+                        
                         tmpname = [ 
                             path.resolve(tmpDir,'test'),
                             path.resolve(tmpDir,'testras')
