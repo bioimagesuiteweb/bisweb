@@ -72,7 +72,7 @@ class CollectionElement extends HTMLElement {
             this.specific = {
                 name : "Transformation",
                 type : "transform",
-                extensions : ".bisxform,.matr,.grd",
+                extensions : [ ".bisxform",".matr",".grd" ],
                 title : "Transformation Manager"
             };
             this.dataCollection.addItem(new BisWebLinearTransformation(0),{ "name" : "0.identity" });
@@ -82,7 +82,7 @@ class CollectionElement extends HTMLElement {
             this.specific = {
                 name : "Matrix",
                 type : "matrix",
-                extensions : ".bismatr,.matr",
+                extensions : [ ".bismatr" , ".matr" ],
                 title : "Matrix Manager"
             };
         }
@@ -383,7 +383,7 @@ class CollectionElement extends HTMLElement {
                                          title    : 'Select file to add a new '+self.specific.name+' from',
                                          filters  : [ { name: self.specific.name+' Files', extensions: self.specific.extensions }],
                                          save : false,
-                                         suffix : self.specific.extensions,
+                                         suffix : self.specific.extensions.join(','),
                                      });
 
         
@@ -400,7 +400,7 @@ class CollectionElement extends HTMLElement {
                                          title    : 'Select file to add a new '+self.specific.name+' from',
                                          filters  : [ { name: self.specific.name+' Files', extensions: self.specific.extensions }],
                                          save : true,
-                                         suffix : self.specific.extensions,
+                                         suffix : self.specific.extensions.join(','),
                                          initialCallback : () => {
                                              return self.getInitialFilename();
                                          }
