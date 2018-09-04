@@ -2,10 +2,10 @@
 const path=require('path');
 const timers = require('timers');
 const util = require('bis_util');
-const bisserverutil=require('bis_fileserverutils');
 const WebSocket=require('ws');
 const genericio = require('bis_genericio.js');
-const globalInitialServerPort=wsutil.initialPort;
+
+const globalInitialServerPort=require('bis_wsutil').initialPort;
 
 
 const BaseFileServer=require('bis_basefileserver');
@@ -13,10 +13,9 @@ const BaseFileServer=require('bis_basefileserver');
 
 // .................................................. This is the class ........................................
 
-class BisNetWebSocketFileServer extends BaseFileServer {
+class BisWSWebSocketFileServer extends BaseFileServer {
 
     constructor(opts={}) {
-
         super(opts);
     }
 
@@ -40,15 +39,11 @@ class BisNetWebSocketFileServer extends BaseFileServer {
         return new Promise( (resolve,reject) => {
 
             let res=(m) => {
-                console.log('.... Data sent ',m);
-                resolve();
-            }
-            
+                resolve(m);
+            };
+           
             try {
-                if (obj==='utf-8') {
-                    socket.send(type, { binary : false},res);
-                    resolve(m);
-                } else if (type!=='binary') {
+                if (type!=='binary') {
                     let payload =JSON.stringify({
                         'type' : type,
                         'payload' : obj,
@@ -71,8 +66,8 @@ class BisNetWebSocketFileServer extends BaseFileServer {
      * @param{Function} fn - the event handler
      */
     attachSocketEvent(socket,eventname,fn) {
-        console.log('..... \t\t attaching socket event='+eventname+' to '+socket.localPort);
-        socket.addEventListener(eventname, fn);
+        console.log('..... \t\t attaching socket event='+eventname+' to '+socket);
+        socket.on(eventname, fn);
     }
 
     /** Remove Socket Event 
@@ -115,8 +110,18 @@ class BisNetWebSocketFileServer extends BaseFileServer {
      * @returns {String} - the decoded string
      */
     decodeUTF8(text,length) {
-        return wsutil.decodeUTF8(text, length);
+        return text;
     }
+
+    getSocketInfo(socket) {
+
+        try {
+            return socket.Server._connectionKey;
+        } catch(e) {
+            return "()"
+        }
+    }
+
     // --------------------------------------------------------------------------
 
 
@@ -138,67 +143,82 @@ class BisNetWebSocketFileServer extends BaseFileServer {
     startServer(hostname='localhost', port=globalInitialServerPort, datatransfer = true) {
 
         const self=this;
-        this.netServer = new WebSocket.Server({
-            'host' : hostname,
-            'port' : port
-        });
 
         return new Promise ( (resolve,reject) => {
+        
+            console.log("Creating Server=",hostname,port);
             
-            this.netServer.on('connection', (socket) => {
-
-                this.attachSocketEvent(socket,'close', () => {
-
-                    if (this.terminating) {
-                        console.log('..... Terminating');
-                    } else  if (!self.datatransfer) {
-                        console.log('.....\n..... Restarting server as connections went down to zero');
-                        self.createPassword();
+            this.netServer = new WebSocket.Server({
+                'host' : hostname,
+                'port' : port
+            }, () => {
+                
+                this.datatransfer=datatransfer;
+                this.hostname=hostname;
+                this.port=port;
+                
+                this.netServer.on('connection', (socket) => {
+                    
+                    console.log('..... Connected server=',this.netServer._server._connectionKey);
+                    
+                    this.attachSocketEvent(socket,'close', () => {
+                        
+                        if (this.terminating) {
+                            console.log('..... Terminating');
+                        } else  if (!self.datatransfer) {
+                            console.log('.....\n..... Restarting server as connections went down to zero');
+                            self.createPassword();
+                        }
+                    });
+                    
+                    if (this.datatransfer) {
+                        console.log('._._._._._._- \t Data Transfer is ON: We are ready to respond',port,' datatransfer=',self.datatransfer,self.hostname,self.port,this.netServer._serv);
+                        self.prepareForDataFrames(socket);
+                    } else {
+                        console.log('..... We are ready to respond on port='+port);
+                        setTimeout( () => {
+                            self.authenticate(socket)
+                        },500);
                     }
                 });
                 
-                if (this.datatransfer) {
-                    console.log('._._._._._._- \t Data Transfer is ON: We are ready to respond',port,' datatransfer=',self.datatransfer);
-                    self.prepareForDataFrames(socket);
-                } else {
-                    console.log('..... We are ready to respond on port='+port);
-                    self.authenticate(socket);
-                }
-            });
-            
-            
-            
-            this.netServer.on('listening', () => {
-                if (datatransfer) {
-                    this.datatransfer=true;
-                    this.portNumber=port;
-                    console.log('._._._._._._- \tStarting transfer data server on ',port);
-                } else {
-                    this.datatransfer=false;
-                    this.portNumber=port;
-                    this.hostname=hostname;
-                    this.createPassword();
-                    if (this.opts.insecure) {
-                        console.log(".....\t IN INSECURE MODE");
+                
+                
+                this.netServer.on('listening', () => {
+                    if (datatransfer) {
+                        this.datatransfer=true;
+                        this.portNumber=port;
+                        console.log('._._._._._._- \tStarting transfer data server on ',port);
+                    } else {
+                        this.datatransfer=false;
+                        this.portNumber=port;
+                        this.hostname=hostname;
+                        this.createPassword();
+                        if (this.opts.insecure) {
+                            console.log(".....\t IN INSECURE MODE");
+                        }
+                        if (this.opts.nolocalhost) 
+                            console.log(".....\t Allowing remote connections");
+                        else
+                            console.log(".....\t Allowing only local connections");
+                        if (this.opts.readonly)
+                            console.log(".....\t Running in 'read-only' mode");
+                        
+                        console.log('.....\t Providing access to:',this.opts.baseDirectoriesList.join(', '));
+                        console.log('.....\t\t  The temp directory is set to:',this.opts.tempDirectory);
+                        
+                        console.log('..................................................................................');
                     }
-                    if (this.opts.nolocalhost) 
-                        console.log(".....\t Allowing remote connections");
-                    else
-                        console.log(".....\t Allowing only local connections");
-                    if (this.opts.readonly)
-                        console.log(".....\t Running in 'read-only' mode");
-                    
-                    console.log('.....\t Providing access to:',this.opts.baseDirectoriesList.join(', '));
-                    console.log('.....\t\t  The temp directory is set to:',this.opts.tempDirectory);
-                    
-                    console.log('..................................................................................');
-                }
-                resolve(this.portNumber);
-            });
+                });
+                
+                this.netServer.on('error', (m) => {
+                    console.log('..... server error',m);
+                    reject();
+                });
 
-            this.netServer.on('error', (m) => {
-                console.log('..... server error',m);
-                reject();
+                setTimeout( () => {
+                    resolve(this.portNumber);
+                },100);
             });
         });
     }
@@ -212,21 +232,26 @@ class BisNetWebSocketFileServer extends BaseFileServer {
             console.log('..... password sent by client=('+password+')');
 
             if ( this.checkPassword(password) || (this.opts.insecure && password.length<1)) {
-                //console.log('..... \tStarting helper server');
-                this.removeSocketEvent(socket,'messsage', readOTP);
                 this.prepareForControlFrames(socket);
+                this.removeSocketEvent(socket,'messsage', readOTP);
                 this.sendCommand(socket,'goodauth', '');
                 this.createPassword(2);
+                socket.removeEventListener('message',readOTP);
                 console.log('..... Authenticated OK\n.....');
+                console.log("Done preparing",socket._events);
+                
             } else {
                 console.log('..... The token you entered is incorrect.');
                 this.createPassword(1);
                 this.sendCommand(socket,'badauth', '');
             }
         };
-        
-        this.attachSocketEvent(socket,'messsage', readOTP);
-        this.sendCommand(socket,'authenticate', '');
+
+
+        socket.on('message',readOTP);
+        this.sendCommand(socket,'authenticate', 'wss').then( (m) => {
+            console.log("message sent");
+        });
     }
 
 
@@ -238,23 +263,27 @@ class BisNetWebSocketFileServer extends BaseFileServer {
      */
     prepareForControlFrames(socket) {
 
-        this.attachSocketEvent(socket,'error', (error) => {
+        console.log("Preparing for Control Frames",socket._events);
+        
+        socket.on('error', (error) => {
             console.log('..... an error occured', error);
         });
         
         //socket listener is stored here because it gets replaced during file transfer
-        this.attachSocketEvent(socket,'messsage', (message) => {
+        let handleMessage= ((message) => {
             if (!message) {
                 console.log('..... Bad Frame ',this.getSocketInfo(socket));
                 console.log('..... Received bad frame, sending nogood');
                 this.sendCommand(socket,'nogood', 'badframe');
                 return;
             }
-
-            console.log("Received message type=",typeof message)
             
-            this.handleTextRequest(message, socket);
+            console.log("Received message type=",typeof message);
+            
+            this.handleTextRequest(message, null, socket);
         });
+
+        socket.on('message',handleMessage);
     }
     
     
@@ -275,10 +304,13 @@ class BisNetWebSocketFileServer extends BaseFileServer {
         //server can send mangled packets during transfer that may parse as commands that shouldn't occur at that time, 
         //e.g. a mangled packet that parses to have an opcode of 8, closing the connection. so unbind the default listener and replace it after transmission.
         
-        console.log('._._._._._._- \t receiving data on socket=',this.getSocketInfo(socket));
+        console.log('._._._._._._- \t receiving data on socket',this.getSocketInfo(socket),socket.protocol);
         const self=this;
         
-        this.attachSocketEvent(socket,'messsage', (chunk) => {
+        socket.on('messsage', (chunk) => {
+            console.log('._._._._._._- \t receiving data on socket inside');
+            
+            console.log('Chunk',typeof chunk);
             
             let controlFrame = chunk.slice(0, 14);
             let parsedControl = wsutil.parseControlFrame(controlFrame);
@@ -449,12 +481,14 @@ class BisNetWebSocketFileServer extends BaseFileServer {
             return;
         }
         
-        let tserver=new BisNetWebSocketFileServer({ verbose : this.opts.verbose,
-                                                    readonly : false,
-                                                    baseDirectoriesList: this.opts.baseDirectoriesList,
-                                                    tempDiretory : this.opts.tempDirectory,
-                                                  });
+        let tserver=new BisWSWebSocketFileServer({ verbose : this.opts.verbose,
+                                                   readonly : false,
+                                                   baseDirectoriesList: this.opts.baseDirectoriesList,
+                                                   tempDiretory : this.opts.tempDirectory,
+                                                 });
         tserver.startServer(this.hostname, this.portNumber+1,true).then( (p) => {
+
+            console.log(p);
             tserver.createFileInProgress(upload);
             let cmd={
                 'name' : 'datasocketready',
@@ -468,4 +502,4 @@ class BisNetWebSocketFileServer extends BaseFileServer {
 }
 
 
-module.exports=BisNetWebSocketFileServer;
+module.exports=BisWSWebSocketFileServer;
