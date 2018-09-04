@@ -25,12 +25,14 @@ const gulp = require('gulp'),
       program=require('commander'),
       connect = require('gulp-connect'),
       os = require('os'),
+      rename = require('gulp-rename'),
       path=require('path'),
       del = require('del'),
       colors=require('colors/safe'),
       git = require('git-rev'),
       runSequence = require('run-sequence'),
       bis_gutil=require('./config/bis_gulputils'),
+      gulpzip = require('gulp-zip'),
       jshint = require('gulp-jshint'),
       eslint = require('gulp-eslint');
 
@@ -125,7 +127,7 @@ let internal = {
         "./node_modules/jstree/dist/themes/default/style.css",
         "./web/biscommon.css"
     ],
-    lintscripts : ['js/**/*.js','config/*.js','compiletools/*.js','*.js','web/**/*.js','test/**/*.js'],
+    lintscripts : ['js/**/*.js','config/*.js','compiletools/*.js','*.js','web/**/*.js','test/**/*.js','fileserver/*.js'],
     toolarray : [ 'index'],
     htmlcounter : 0,
     csscounter  : 0,
@@ -414,6 +416,14 @@ gulp.task('commonfiles', function() {
     bis_gutil.createHTML('console',options.outdir,'',internal.biscss);
 });
 
+gulp.task('installserver',function() {
+    gulp.src(['./build/wasm/lib/bisfileserver.js',
+              './js/bin/example-server-config.json']).
+        pipe(rename({dirname: 'server'})).
+        pipe(gulpzip(path.join(options.outdir,'server.zip'))).
+        pipe(gulp.dest('.'));
+});
+
 gulp.task('tools', function(done) {
     internal.toolarray = options.inpfilename.split(",");
     console.log(bis_gutil.getTime()+colors.green(' Building tools ['+internal.toolarray+']'));
@@ -435,6 +445,7 @@ gulp.task('build', function(callback) {
 
     runSequence('commonfiles',
                 'tools',
+                'installserver',
                 'buildtest',
                 callback);
 });

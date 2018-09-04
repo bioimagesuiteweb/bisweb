@@ -1,5 +1,7 @@
+
 const $ = require('jquery');
 const webutil = require('bis_webutil');
+const wsutil = require('bis_wsutil');
 const bisweb_simplefiledialog = require('bisweb_simplefiledialog');
 const BisFileServerClient=require('bis_fileserverclient');
 
@@ -65,7 +67,7 @@ class BisWebFileServerClient extends BisFileServerClient {
             let passwordEntryBox=$(`
                 <div class='form-group'>
                     <label for='server'>Host:</label>
-                                 <input type='text' class = 'form-control' id='${hid}' value="localhost:8081">
+                                 <input type='text' class = 'form-control' id='${hid}' value="localhost:${wsutil.initialPort}">
                 </div>
                 <div class='form-group'>
                     <label for='filename'>Password:</label>
@@ -96,7 +98,7 @@ class BisWebFileServerClient extends BisFileServerClient {
                     this.connectToServer('ws://'+this.hostname);
                 } else {
                     setTimeout( () => {
-                        this.socket.send(this.password);
+                        this.sendRawText(this.password);
                     },10);
                 }
             });
@@ -123,17 +125,11 @@ class BisWebFileServerClient extends BisFileServerClient {
      * Called in response to a file list returned by the server (itself in response to requestFileList) or by the fileTreeDisplayModal trying to fetch more nodes.
      * 
      * @param {Object} payload - Object specifying the list of files on the server machine and which modal it corresponds to.
+     * @param {Object} opts - Object specific options for the Dialog
      *
      * // TODO: some how have a title here ... and suffix list
      */
-    showFileDialog(payload) {
-
-        this.lastOpts=this.lastOpts || {};
-
-        if (payload.type === 'uploadfile') 
-            this.lastOpts.mode='save';
-        else
-            this.lastOpts.mode='load';
+    showFileDialog(payload,opts=null) {
 
         if (!this.fileDialog) {
             this.fileDialog=new bisweb_simplefiledialog();
@@ -141,10 +137,11 @@ class BisWebFileServerClient extends BisFileServerClient {
         }
         
         this.lastdirectory=payload.path;
-        this.fileDialog.fileRequestFn = this.lastOpts.callback;
+        this.fileDialog.fileRequestFn = opts.callback;
         this.fileDialog.openDialog(payload.data,
                                    payload.path,
-                                   this.lastOpts);
+                                   payload.root,
+                                   opts);
     }
 }
 module.exports = BisWebFileServerClient;

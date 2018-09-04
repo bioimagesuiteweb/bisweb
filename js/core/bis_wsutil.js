@@ -114,4 +114,6 @@ module.exports = {
     formatControlFrame: formatControlFrame,
     decodeUTF8: decodeUTF8,
     parseJSON: parseJSON,
+    initialPort : 24000,
+    finalPort : 24999,
 };

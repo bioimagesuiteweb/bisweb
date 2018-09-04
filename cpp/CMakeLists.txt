@@ -299,7 +299,7 @@ IF (BIS_A_EMSCRIPTEN)
   SET(JSFILES ${H1} ${H2} ${H3})
 
 
-  SET (WNAMELIST bisweb.js bisweb-test.js)
+  SET (WNAMELIST bisweb.js bisweb-test.js bisfileserver.js)
   GET_FILENAME_COMPONENT(WEBPCONFIG ${PROJECT_SOURCE_DIR}/../config/app.config.js ABSOLUTE)
 
   FOREACH(item ${WNAMELIST})
@@ -318,6 +318,12 @@ IF (BIS_A_EMSCRIPTEN)
         install (FILES ${OUTSCRIPT} DESTINATION bisweb/lib
           PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
     endif (${item} MATCHES "bisweb.js")
+    if (${item} MATCHES "bisfileserver.js")
+        install (FILES ${OUTSCRIPT} DESTINATION bisweb/server
+          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
+         install (FILES ${PROJECT_SOURCE_DIR}/../js/bin/example-server-config.json DESTINATION bisweb/server
+          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
+    endif (${item} MATCHES "bisfileserver.js")
   ENDFOREACH(item ${WNAMELIST})
 
 

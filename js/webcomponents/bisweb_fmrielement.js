@@ -180,8 +180,11 @@ class FMRIElement extends HTMLElement {
         // load image from file and sort based on user selection
         let imageFileSelect = function() {
             
-            webfileutil.genericFileCallback(null, 
-                
+            webfileutil.genericFileCallback(
+                {
+                    'title': 'Load Image',
+                    'suffix': 'NII'
+                },
                 function(filename) {
                     let newimg = new BisWebImage();
                     
@@ -201,12 +204,8 @@ class FMRIElement extends HTMLElement {
                         }
                         app_state.viewer.setimage(newimg);
                     });
-                }, 
-                
-                {
-                    'title': 'Load Image',
-                    'suffix': 'NII'
-                });
+                } 
+            );
         };
 
            

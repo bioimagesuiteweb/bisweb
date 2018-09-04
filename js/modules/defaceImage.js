@@ -36,11 +36,13 @@ class DefaceImageModule extends BaseModule {
     constructor() {
         super();
         this.name = 'defaceImage';
+        this.outputmask=false;
     }
 
 
     createDescription() {
-        
+
+        let m=this.outputmask;
         return {
             "name": "Deface",
             "description": "This module uses data from the openfmri project to deface an image by first affinely registering it to a template",
@@ -95,7 +97,7 @@ class DefaceImageModule extends BaseModule {
                     "gui": "check",
                     "varname": "outputmask",
                     "type": 'boolean',
-                    "default": this.outputmask,
+                    "default": m,
                 },
                 baseutils.getDebugParam()
             ]

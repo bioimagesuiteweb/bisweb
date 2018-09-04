@@ -40,6 +40,7 @@ const userPreferences = {
     snapshotdowhite : true,
     filesource : 'local',
     showwelcome : true,
+    favoriteFolders : [],
 };
 
 
@@ -196,11 +197,9 @@ let webLoadUserPreferences=function(dbase=null) {
         return Promise.reject();
     }
 
-
-    //    console.log('In Web load');
     dbase = dbase  || dbasepointer;
-    
     let keys=Object.keys(userPreferences);
+
     return new Promise( (resolve,reject) => {
         dbase.getItems(keys).then( (obj) => {
             if (parseUserPreferences(obj)) {

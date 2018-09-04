@@ -19,14 +19,12 @@
 
 //const util=require('bis_util');
 const BisWebImage = require('bisweb_image');
-const bisbruker=require('bis_readbruker');
+const bisbruker=require('bis_asyncreadbruker');
 const webutil=require('bis_webutil');
 const bisgenericio=require('bis_genericio');
 const $=require('jquery');
 //const bootbox=require('bootbox');
 const userPreferences = require('bisweb_userpreferences.js');
-const path=bisgenericio.getpathmodule();
-const fs=bisgenericio.getfsmodule();
 const misac=require('../node/misac_util');
 const webfileutil = require('bis_webfileutil');
 const BisWebPanel = require('bisweb_panel.js');
@@ -171,6 +169,7 @@ class ParavisionImportElement extends HTMLElement {
                                      },{
                                          title: 'Directory to import study from',
                                          filters:  'DIRECTORY',
+                                         suffix:  'DIRECTORY',
                                          save : false,
                                      });
         
@@ -185,7 +184,7 @@ class ParavisionImportElement extends HTMLElement {
                                          filters:  [ { name: 'JSON Files', extensions: ['json' ]}],
                                          title    : 'Select the file to load from',
                                          save : false,
-                                         suffix : "",
+                                         suffix : ".json",
                                      });
         
         
@@ -233,11 +232,13 @@ class ParavisionImportElement extends HTMLElement {
                     })
                     .catch( (e) => { webutil.createAlert(e,true); });
             } else {
-                let info = fname+"\n"+fs.readFileSync(fname,'utf-8');
-                let modal=webutil.createmodal("Imported File Properties","modal-lrg");
-                let a2=$('<pre>'+info+'</pre>');
-                modal.body.append(a2);
-                modal.dialog.modal('show');
+                bisgenericio.read(fname).then( (obj) => {
+                    let info = fname+"\n"+obj.data;
+                    let modal=webutil.createmodal("Imported File Properties","modal-lrg");
+                    let a2=$('<pre>'+info+'</pre>');
+                    modal.body.append(a2);
+                    modal.dialog.modal('show');
+                });
             }
         };
 
@@ -283,8 +284,8 @@ class ParavisionImportElement extends HTMLElement {
 
         
         let details={ name  : name,
-                      filename : path.basename(fname),
-                      details : path.basename(infoname),
+                      filename : bisgenericio.getBaseName(fname),
+                      details : bisgenericio.getBaseName(infoname),
                       tag : tagvalue,
                     };
         
@@ -293,15 +294,7 @@ class ParavisionImportElement extends HTMLElement {
         //        let keys=Object.keys(internal.buttonpairs);
         
         let counter=internal.joblist.length+1;
-        /*        let s1=(name);
-        s1=s1.substr(0,5)+"...";
-        let s2="|";
-        try { 
-            let stats = fs.statSync(fname);
-            s2 = stats["size"];
-        } catch(e) {
-            
-        }*/
+
         let nid0=webutil.getuniqueid();
         let nid1=webutil.getuniqueid();
         let nid2=webutil.getuniqueid();
@@ -348,7 +341,7 @@ class ParavisionImportElement extends HTMLElement {
         let btn2=$('#'+nid2);
         if (infoname.length>2) {
             btn2.click(buttonCallback);
-            internal.buttonpairs[nid2]=infoname;
+            internal.buttonpairs[nid2]=[infoname,0];
         } else {
             btn2.remove();
         }
@@ -362,10 +355,12 @@ class ParavisionImportElement extends HTMLElement {
 
         const self=this;
         const internal=this.internal;
-        
+
         webutil.createAlert("Importing files from "+f+"-->"+outpath);
-        window.BISELECTRON.ipc.send('showconsole','');
-        window.BISELECTRON.ipc.send('clearconsole','');
+        if (bisgenericio.getmode() === 'electron') {
+            window.BISELECTRON.ipc.send('showconsole','');
+            window.BISELECTRON.ipc.send('clearconsole','');
+        }
         internal.table.empty();
         internal.showpanel.show();
         internal.buttonpairs={};
@@ -377,14 +372,15 @@ class ParavisionImportElement extends HTMLElement {
 
         let forceorient=userPreferences.getImageOrientationOnLoad();
 
-        
-        let out=bisbruker.readMultiple(f,outpath,forceorient,addT,false);
-        let status=out[0];
-        if (status===true)
-            webutil.createAlert('Job saved in '+out[1]);
-        else
-            webutil.createAlert(out[1],true);
+        bisbruker.readMultiple(f,outpath,forceorient,addT,false).then( (out) => {
+            let status=out[0];
+            if (status===true)
+                webutil.createAlert('Job saved in '+out[1]);
+            else
+                webutil.createAlert(out[1],true);
+        });
     }
+                                                                     
     
     /** import files
      * @memberof ParavisionImportElementInternal.prototype
@@ -392,26 +388,44 @@ class ParavisionImportElement extends HTMLElement {
      */
     importfiles(f) {
 
-
         const internal=this.internal;
-        
-        if (!fs.lstatSync(f).isDirectory())
-            f=path.dirname(path.normalize(f));
-        
-        let fnames=bisbruker.getMatchingFilenames(f).names;
-        if (fnames.length<1) {
-            webutil.createAlert("No matching files (2dseq) in "+f +" or its subdirectories",true);
+
+        if (!webfileutil.candoComplexIO()) {
             return;
         }
+
+
         
-        let clb=function(fout) {
-            internal.this.internalimportfiles2(f,fout);
-        };
+        if (!bisgenericio.isDirectory(f)) {
+            f=bisgenericio.getDirectoryName(bisgenericio.getNormalizedFilename(f));
+        }
         
-        webfileutil.electronFileCallback({filters : "DIRECTORY",
-                                          title : "Select Directory to store output files",
-                                          save : false,
-                                         },clb);
+        bisbruker.getMatchingFilenames(f).then( (obj) => {
+
+            console.log(JSON.stringify(obj));
+            
+            let fnames=obj.names;
+            if (fnames.length<1) {
+                webutil.createAlert("No matching files (2dseq) in "+f +" or its subdirectories",true);
+                return;
+            }
+        
+            let clb=function(fout) {
+                console.log('f=',f,fout);
+                internal.this.internalimportfiles2(f,fout);
+            };
+
+            setTimeout( () => {
+                webfileutil.genericFileCallback({
+                    filters : "DIRECTORY",
+                    suffix : "DIRECTORY",
+                    title : "Select Directory to store output files",
+                    save : false,
+                },clb);
+            },100);
+        }).catch( (e) => {
+            console.log(e,e.stack);
+        });
         
     }
     
@@ -420,10 +434,15 @@ class ParavisionImportElement extends HTMLElement {
      */
     importjob(f) {
 
+        if (!webfileutil.candoComplexIO()) { 
+            return;
+        }
+
+        console.log('This far');
+        
         const self=this;
         const internal=this.internal;
-        let dirname=path.resolve(path.dirname(f));
-        
+        let dirname=bisgenericio.getDirectoryName(bisgenericio.getNormalizedFilename(f));
         
         let loaderror = function(e) {
             webutil.createAlert('Failed to read job from' +f + " ("+e+")");
@@ -441,7 +460,7 @@ class ParavisionImportElement extends HTMLElement {
             internal.showpanel.show();
             internal.table.empty();
             for (let ic=0;ic<n;ic++) {
-                if (path.isAbsolute(data[ic].filename)) {
+                if (data[ic].filename.indexOf('/')===0) {
                     self.addTableRow(data[ic].name,
                                      data[ic].filename,
                                      data[ic].details,
@@ -449,8 +468,8 @@ class ParavisionImportElement extends HTMLElement {
                                     );
                 } else {
                     self.addTableRow(data[ic].name,
-                                     path.join(dirname,data[ic].filename),
-                                     path.join(dirname,data[ic].details),
+                                     bisgenericio.joinFilenames(dirname,data[ic].filename),
+                                     bisgenericio.joinFilenames(dirname,data[ic].details),
                                      data[ic].tag,
                                     );
                 }
@@ -461,6 +480,10 @@ class ParavisionImportElement extends HTMLElement {
     }
 
     savejob(f) {
+
+        if (!webfileutil.candoComplexIO()) { 
+            return;
+        }
 
         let obj = {
             "bisformat" : 'ParavisionJob',
@@ -477,12 +500,15 @@ class ParavisionImportElement extends HTMLElement {
     // -----------------------------------------------------------------------------------
     computeAverageImages(outdir) {
 
+        if (!webfileutil.candoComplexIO()) { 
+            return;
+        }
         console.log('Reading last=',this.internal.lastfilename,outdir);
 
         const self=this;
         
-        misac.createAverageAnatomical(this.internal.joblist,path.join(path.dirname(this.internal.lastfilename),'result')).then( (results) => {
-
+        misac.createAverageAnatomical(this.internal.joblist,bisgenericio.joinFilenames(bisgenericio.getDirectoryName(this.internal.lastfilename),'result')).then( (results) => {
+            
             let objlist=results.objlist;
             let outname=results.outnamelist;
             for (let i=0;i<=2;i++) {
@@ -495,8 +521,13 @@ class ParavisionImportElement extends HTMLElement {
     
     computeAverageImages1() {
 
+        if (!webfileutil.candoComplexIO()) { 
+            return;
+        }
+
+        
         if (this.internal.lastfilename) {
-            return this.computeAverageImages(path.dirname(this.internal.lastfilename));
+            return this.computeAverageImages(bisgenericio.getDirectoryName.dirname(this.internal.lastfilename));
         }
 
 

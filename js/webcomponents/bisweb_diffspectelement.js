@@ -460,20 +460,20 @@ class DiffSpectElement extends HTMLElement {
 
         let handleInterictalFileSelect = function() {
 
-            webfileutil.genericFileCallback(null,
-                    function(fname) {
-                        console.log('Custom method reached');
-                        handleGenericFileSelect(fname,
+            webfileutil.genericFileCallback(
+                { 
+                    "title"  : `Load interictal image`,
+                    "suffix" : "NII" 
+                },
+                function(fname) {
+                    console.log('Custom method reached');
+                    handleGenericFileSelect(fname,
                                             'interictal',
                                             true, // Whether to show to viewer
                                             'Inter-Ictal', // Name
                                             interictalLoaded); // function to call when successful
-                    }, 
-                    { 
-                        "title"  : `Load interictal image`,
-                        "suffix" : "NII" 
-                    }
-                );
+                }
+            );
         };
 
         let ictalLoaded = (() => {
@@ -481,19 +481,19 @@ class DiffSpectElement extends HTMLElement {
         });
 
         let handleIctalFileSelect = (() => {
-            webfileutil.genericFileCallback(null,
-                function(fname) {
-                    console.log('Custom method reached');
-                    handleGenericFileSelect(fname,
-                                        'ictal',
-                                        true, // Whether to show to viewer
-                                        'Ictal', // Name
-                                        ictalLoaded); // function to call when successful
-                }, 
+            webfileutil.genericFileCallback(
                 { 
                     "title"  : `Load Ictal image`,
                     "suffix" : "NII" 
-                }
+                },
+                function(fname) {
+                    console.log('Custom method reached');
+                    handleGenericFileSelect(fname,
+                                            'ictal',
+                                        true, // Whether to show to viewer
+                                        'Ictal', // Name
+                                        ictalLoaded); // function to call when successful
+                } 
             );
         });
 
@@ -502,7 +502,11 @@ class DiffSpectElement extends HTMLElement {
         });
 
         let handleMRIFileSelect = (() => {
-            webfileutil.genericFileCallback(null,
+            webfileutil.genericFileCallback(
+                { 
+                    "title"  : `Load MR image`,
+                    "suffix" : "NII" 
+                },
                 function(fname) {
                     console.log('Custom method reached');
                     handleGenericFileSelect(fname,
@@ -510,10 +514,6 @@ class DiffSpectElement extends HTMLElement {
                                         true, // Whether to show to viewer
                                         'Ictal', // Name
                                         mriLoaded); // function to call when successful
-                }, 
-                { 
-                    "title"  : `Load MR image`,
-                    "suffix" : "NII" 
                 }
             );
         });
