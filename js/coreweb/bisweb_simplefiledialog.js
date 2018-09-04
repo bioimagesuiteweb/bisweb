@@ -513,8 +513,6 @@ class SimpleFileDialog {
     addAllFavorites(pillsBar) {
         pillsBar.empty();
         let l=this.favorites.length;
-        if (l>5)
-            l=5;
         for (let i=0;i<l;i++) {
             this.addFavorite(pillsBar,this.favorites[i]);
         }
