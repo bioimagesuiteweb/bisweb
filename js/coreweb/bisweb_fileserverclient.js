@@ -1,6 +1,7 @@
 
 const $ = require('jquery');
 const webutil = require('bis_webutil');
+const wsutil = require('bis_wsutil');
 const bisweb_simplefiledialog = require('bisweb_simplefiledialog');
 const BisFileServerClient=require('bis_fileserverclient');
 
@@ -44,7 +45,7 @@ class BisWebFileServerClient extends BisFileServerClient {
             let passwordEntryBox=$(`
                 <div class='form-group'>
                     <label for='server'>Host:</label>
-                                 <input type='text' class = 'form-control' id='${hid}' value="localhost:9081">
+                                 <input type='text' class = 'form-control' id='${hid}' value="localhost:${wsutil.initialPort}">
                 </div>
                 <div class='form-group'>
                     <label for='filename'>Password:</label>
