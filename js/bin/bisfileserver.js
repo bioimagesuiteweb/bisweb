@@ -166,7 +166,17 @@ class FileServer {
     }
 
 
+    /**
+     * send JSON data
+     * @param{Socket} socket - the socket to use
+     * @param{String} type - either binary or the name of the package
+     * @param{Object} obj - the dictionary to send
+     */
+    sendJSONData(socket,type,obj) {
+        socket.write(formatPacket(type, obj));
 
+    }
+    
     
     /**
      * Creates the server instance, binds the handshake protocol to its 'connection' event, and begins listening on port 24000 (control port for the transfer).
@@ -328,18 +338,18 @@ class FileServer {
                 socket.removeListener('data', readOTP);
                 
                 this.prepareForControlFrames(socket);
-                socket.write(formatPacket('goodauth', ''));
+                this.sendJSONData(socket,'goodauth', '');
                 this.createPassword(2);
                 console.log('..... Authenticated OK\n.....');
             } else {
                 console.log('..... The token you entered is incorrect.');
                 this.createPassword(1);
-                socket.write(formatPacket('badauth', ''));
+                this.sendJSONData(socket,'badauth', '');
             }
         };
         
         socket.on('data', readOTP);
-        socket.write(formatPacket('authenticate', ''));
+        this.sendJSONData(socket,'authenticate', '');
     }
 
 
@@ -361,7 +371,7 @@ class FileServer {
             if (!frame) {
                 console.log('..... Bad Frame',socket._sockname);
                 console.log('..... Received bad frame, sending nogood');
-                socket.write(formatPacket('nogood', 'badframe'));
+                this.sendJSONData(socket,'nogood', 'badframe');
                 return;
             }
             let parsedControl = frame.parsedControl, decoded = frame.decoded;
