@@ -171,10 +171,19 @@ class FileServer {
      * @param{Socket} socket - the socket to use
      * @param{String} type - either binary or the name of the package
      * @param{Object} obj - the dictionary to send
+     * @returns {Promise} 
      */
-    sendJSONData(socket,type,obj) {
-        socket.write(formatPacket(type, obj));
+    sendJSONData(socket,type,obj,fn=null) {
 
+        return new Promise( (resolve,reject) => {
+            try {
+                socket.write(formatPacket(type, obj), ((m) => {
+                    resolve(m);
+                }));
+            } catch(e) {
+                reject(e);
+            }
+        });
     }
     
     
