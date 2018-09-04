@@ -1222,7 +1222,7 @@ program
     .option('--readonly', 'Whether or not the server should accept requests to write files')
     .option('--insecure', 'USE WITH EXTREME CARE -- if true no password')
     .option('--verbose', ' print extra statements')
-    .option('--nolocalhost', ' allow remote connections')
+    .option('--ipaddr <s>', ' set the ip address to bind to, else localhost (localhost= no remote connections)')
     .option('--tmpdir <s>', ' specify temporary directory')
     .option('--config <s>', ' read config file')
     .option('--createconfig', ' print sample config file and exit')
@@ -1238,16 +1238,23 @@ if (portno<wsutil.initialPort || portno>wsutil.finalPort)
     portno=wsutil.initialPort;
 
 
+let ipaddr = program.ipaddr || 'localhost';
 let readonlyflag = program.readonly ? program.readonly : false;
 let insecure = program.insecure ? program.insecure : false;
 let verbose = program.verbose ? program.verbose : false;
-let nolocalhost = program.nolocalhost ? program.nolocalhost : false;
+
 let config = program.config || null;
 let createconfig = program.createconfig || null;
 let tmpdir= program.tmpdir || null;
 
-if (nolocalhost)
+
+
+let nolocalhost=false;
+if (ipaddr!=='localhost') {
+    nolocalhost=true;
     insecure=false;
+}
+
 
 let server=new FileServer(
     {
@@ -1261,18 +1268,12 @@ let server=new FileServer(
     }
 );
 
-require('dns').lookup(require('os').hostname(), function (err, add) {
 
-    let ipaddr='localhost';
-    if (nolocalhost)
-        ipaddr=`${add}`;
-    console.log('..................................................................................');
-    console.log('..... BioImage Suite Web date='+bisdate.date+' ('+bisdate.time+'), v='+bisdate.version+', os='+os.platform()+'.\n.....');
-    server.startServer(ipaddr, portno, false).catch( (e) => {
-        console.log(e);
-        process.exit(0);
-    });
-
+console.log('..................................................................................');
+console.log('..... BioImage Suite Web date='+bisdate.date+' ('+bisdate.time+'), v='+bisdate.version+', os='+os.platform()+'.\n.....');
+server.startServer(ipaddr, portno, false).catch( (e) => {
+    console.log(e);
+    process.exit(0);
 });
 
 
