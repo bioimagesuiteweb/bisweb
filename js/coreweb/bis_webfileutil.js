@@ -270,6 +270,8 @@ const webfileutils = {
         fileopts.filters=fileopts.filters || null;
         fileopts.force=fileopts.force || null;
 
+        console.log('Incoming Suffix =',fileopts.suffix,' filters=',fileopts.filters);
+
         let suffix = fileopts.suffix || '';
         let title = fileopts.title || '';
         let defaultpath=fileopts.defaultpath || '';
@@ -282,9 +284,13 @@ const webfileutils = {
                 fileopts.suffix=suffix;
             }
         }
-        if (suffix === "NII")
+
+        console.log('Suffix =',fileopts.suffix,suffix,fileopts.filters);
+        
+        if (suffix === "NII" || fileopts.filters === "NII") {
             suffix = '.nii.gz,.nii,.gz,.tiff';
-        else if (suffix !== "DIRECTORY" && suffix!=='') {
+            fileopts.filters=[{ name: 'NIFTI Images', extensions: ['nii.gz', 'nii'] }];
+        } else if (suffix !== "DIRECTORY" && suffix!=='') {
             let s=suffix.split(",");
             for (let i=0;i<s.length;i++) {
                 let a=s[i];
@@ -298,7 +304,12 @@ const webfileutils = {
         if (fileopts.force !== null)
             fmode=fileopts.force;
 
-        let cbopts = { 'callback' : callback, 'title' : title, 'suffix' : suffix, 'mode' : 'load' };
+        let cbopts = { 'callback' : callback,
+                       'title' : title,
+                       'suffix' : suffix,
+                       'mode' : 'load' ,
+                       'filters' : fileopts.filters
+                     };
 
         // -------------------- End Of Part I ---------------
 
@@ -306,6 +317,7 @@ const webfileutils = {
             cbopts.initialFilename= '';
             cbopts.mode='directory';
             cbopts.suffix='';
+            cbopts.filters=null;
             bisweb_fileserverclient.requestFileList(null, true, cbopts);
             return;
         }
