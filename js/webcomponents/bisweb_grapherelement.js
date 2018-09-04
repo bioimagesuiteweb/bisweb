@@ -57,7 +57,7 @@ class GrapherModule extends HTMLElement {
         this.graphcanvasid = webutil.getuniqueid();
         this.graph = null;
         this.graphWindow = document.createElement('bisweb-dialogelement');                          
-        this.graphWindow.create("VOI Timeseries Plotter", this.desired_width, this.desired_height, 20,100,100,true);
+        this.graphWindow.create("VOI Timeseries Plotter", this.desired_width, this.desired_height, 20,100,5000,true);
         this.graphWindow.widget.css({ "background-color": "#222222" });
         let w=this.desired_width;
         let h=this.desired_height;
@@ -67,7 +67,8 @@ class GrapherModule extends HTMLElement {
 
         let self = this;
         this.graphWindow.close.remove();
-
+        bbar.empty();
+        
         let fn3 = function (e) {
             e.preventDefault();
             self.exportLastData();
