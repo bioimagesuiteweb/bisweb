@@ -48,9 +48,10 @@ class SimpleFileDialog {
         this.currentDirectory = null;
 
         // Filter files
-        this.filters='';
-        this.filterMode=true;
-        this.oldfilters='';
+        this.currentFilters=[{ name: 'All Files', extensions: [] }];
+        this.newFilters=true;
+        this.activeFilterList=this.currentFilters[0].extensions;
+
         this.previousList=null;
         this.favorites = [];
         this.lastFavorite=null;
@@ -171,6 +172,21 @@ class SimpleFileDialog {
         this.modal.body.append(this.container);        
 
     }
+
+    /**
+     * Create Filters 
+     */
+    createFilters(filters=null) {
+
+        if (filters) {
+            this.currentFilters=JSON.parse(JSON.stringify(filters));
+        }  else {
+            this.currentFilters=[];
+        }
+        this.currentFilters.push({ name: 'All Files', extensions: [] });
+        this.newFilters=true;
+        this.activeFilterList=this.currentFilters[0].extensions;
+    }
     
     /**
      * Adds the files specified by list to the file dialog. If the dialog is empty this effectively creates the dialog.
@@ -190,13 +206,13 @@ class SimpleFileDialog {
             this.createDialogUserInterface();
         }
         
-        this.oldfilters=null;
-        
+        this.newFilters=true;
         
         if (opts!==null) {
-            if (opts.suffix) {
-                this.filters=opts.suffix;
-            }
+            opts.filters=opts.filters || null;
+
+            this.createFilters(opts.filters);
+
             if (opts.title) {
                 let newtitle=opts.title;
                 if (newtitle) {
@@ -236,6 +252,48 @@ class SimpleFileDialog {
         this.currentPath = startDirectory;
         this.container.find('.bisweb-file-navbar').empty();
 
+
+        let filterbar=this.container.find('.bisweb-file-filterbar');
+        if (this.currentFilters.length<1 || this.displayFiles===false) {
+            filterbar.empty();
+            this.activeFilterList=[];
+        } else if (this.newFilters===true) {
+            filterbar.empty();
+            this.newFilters=false;
+                
+            let filter_label=$("<span>Filter Files: </span>");
+            filter_label.css({'padding':'10px'});
+            filterbar.append(filter_label);
+            let sel=webutil.createselect({
+                parent : filterbar,
+                values : [],
+                callback : (e) => {
+                    e.preventDefault();
+                    let ind=parseInt(e.target.value);
+                    if (ind>=0 && ind<this.currentFilters.length) {
+                        this.activeFilterList=this.currentFilters[ind].extensions;
+                        this.updateTree(this.previousList,name,rootDirectory);
+                    }
+                }
+            });
+            sel.empty();
+
+            let addOption= ((b) => {
+                sel.append($(b));
+            });
+
+            console.log('adding ', this.currentFilters.join('\n\t'));
+            
+            for (let i=0;i<this.currentFilters.length;i++) {
+
+                if (this.currentFilters[i].extensions.length>0) {
+                    addOption(`<option value="${i}">${this.currentFilters[i].name}, (${this.currentFilters[i].extensions.join(',')})</option>`);
+                } else {
+                    addOption(`<option value="${i}">${this.currentFilters[i].name}</option>`);
+                }
+            }
+        }
+
         this.updateTree(list,initialfilename,rootDirectory);
 
         this.modal.dialog.modal('show');
@@ -271,8 +329,6 @@ class SimpleFileDialog {
                        "background-color": "#444444"
                      });
 
-        
-        //sort folders ahead of files
 
         if (!this.displayFiles) {
             let len=list.length-1;
@@ -282,55 +338,20 @@ class SimpleFileDialog {
                     i--;
                 } 
             }
-            
-            let filterbar=this.container.find('.bisweb-file-filterbar');
-            filterbar.empty();
-        } else if (this.filters) {
-
-            if (this.filterMode===true) {
-                let splitFilters = this.filters.split(',');
-                if (splitFilters.length>0) {
-                    let len=list.length-1;
-                    for (let i = len; i >=0; i=i-1) {
-                        if (list[i].type !== 'directory') {
-                            let ok=this.checkFilenameForFilter(list[i].text,splitFilters);
-                            if (!ok) {
-                                list.splice(i,1);
-                            }
-                        }
+        } else if (this.activeFilterList.length>0) {
+            console.log('Filtering with',this.activeFilterList);
+            let len=list.length-1;
+            for (let i = len; i >=0; i=i-1) {
+                if (list[i].type !== 'directory') {
+                    let ok=this.checkFilenameForFilter(list[i].text,this.activeFilterList);
+                    if (!ok) {
+                        list.splice(i,1);
                     }
                 }
             }
-
-            if (this.oldfilters !== this.filters) {
-                let filterbar=this.container.find('.bisweb-file-filterbar');
-                filterbar.empty();
-                this.oldfilters=this.filters;
-                
-                let values = [ 'Selected: '+this.filters.split(',').join(', '),
-                               'Show All Files' ];
-                
-                let filter_label=$("<span>Filter Files: </span>");
-                filter_label.css({'padding':'10px'});
-                filterbar.append(filter_label);
-                let sel=webutil.createselect({
-                    parent : filterbar,
-                    values : [],
-                    callback : (e) => {
-                        if (e.target.value>0)
-                            this.filterMode=false;
-                        else
-                            this.filterMode=true;
-                        let name = this.filenameEntry.val() || '';
-                        this.updateTree(this.previousList,name,rootDirectory);
-                    }
-                });
-                sel.empty();
-                sel.append($(`<option value="0">${values[0]}</option>`));
-                sel.append($(`<option value="1">${values[1]}</option>`));
-            }
         }
-
+        
+        //sort folders ahead of files
         list.sort( (a, b) => {
 
             let isadir=(a.type === 'directory');
@@ -578,7 +599,6 @@ class SimpleFileDialog {
             }
             if (f) {
                 this.favorites=f;
-                console.log('This favorites=',this.favorites);
                 this.addAllFavorites(pillsBar);
             }
         }).catch( (e) => {
@@ -603,18 +623,13 @@ class SimpleFileDialog {
      * Checks a proposed filename against a set of file extension filters to determine whether name should have another kind of filetype applied to it.
      * 
      * @param {String} name - A tentative filename
-     * @param {String} filters - A set of file extensions separated by commas.
+     * @param {Array} filtersList- A string set of file extensions
      * @returns A properly formatted filename
      */
-    fixFilename(name, filters='') {
+    fixFilename(name, filterList) {
 
-        let splitFilters = filters.split(',');
-        if (splitFilters.length < 1) {
-            return name;
-        }
-        
-        for (let i=0;i<splitFilters.length;i++) {
-            let filter=splitFilters[i];
+        for (let i=0;i<filterList.length;i++) {
+            let filter=filterList[i];
             let nl=name.length;
             let fl=filter.length;
             if (nl>fl) {
@@ -625,9 +640,7 @@ class SimpleFileDialog {
                 }
             }
         }
-
-        //        console.log('Adding ',splitFilters[0]);
-        return name + splitFilters[0];
+        return name + '.'+ filterList[0];
     }
 
     checkFilenameForFilter(name,filterList) {
@@ -647,7 +660,6 @@ class SimpleFileDialog {
             }
         }
         return false;
-        
     }
     
 
