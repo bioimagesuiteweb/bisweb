@@ -234,9 +234,7 @@ class SimpleFileDialog {
                 this.okButton.text('Load');
                 this.displayFiles = true;
             }
-        } else {
-            console.log('No opts');
-        }
+        } 
 
         let initialfilename=null;
         if (opts!==null) {
@@ -282,8 +280,6 @@ class SimpleFileDialog {
                 sel.append($(b));
             });
 
-            console.log('adding ', this.currentFilters.join('\n\t'));
-            
             for (let i=0;i<this.currentFilters.length;i++) {
 
                 if (this.currentFilters[i].extensions.length>0) {
@@ -339,7 +335,6 @@ class SimpleFileDialog {
                 } 
             }
         } else if (this.activeFilterList.length>0) {
-            console.log('Filtering with',this.activeFilterList);
             let len=list.length-1;
             for (let i = len; i >=0; i=i-1) {
                 if (list[i].type !== 'directory') {
@@ -443,7 +438,6 @@ class SimpleFileDialog {
         }
 
         
-//        console.log('Path=',this.currentPath,'root=',rootDirectory,' folders=',folders.join(', '));
         
         for (let i=folders.length-1;i>=0;i=i-1) {
             if (folders[i].length<1)
