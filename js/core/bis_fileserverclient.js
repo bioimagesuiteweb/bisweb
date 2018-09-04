@@ -1,5 +1,5 @@
 
-const wsutil = require('bis_wsutil');
+const wsUtilInitialPort = require('bis_wsutil').initialPort;
 const bisgenericio=require('bis_genericio');
 const pako=require('pako');
 const bisasyncutil=require('bis_asyncutils');
@@ -15,7 +15,7 @@ class BisFileServerClient extends BisBaseServerClient {
 
         super();
         this.lastOpts=null;
-        this.portNumber=wsutil.initialPort;
+        this.portNumber=wsUtilInitialPort;
         
         //connection over which all control communication takes place
         this.socket = null;
@@ -82,7 +82,7 @@ class BisFileServerClient extends BisBaseServerClient {
      * 
      * @param {String} address - The hostname and port to try to connect to, e.g. 'ws://localhost:24000'. 
      */
-    connectToServer(address = 'ws://localhost:'+wsutil.initialPort) {
+    connectToServer(address = 'ws://localhost:'+wsUtilInitialPort) {
 
         if (this.socket) {
             this.closeConnection();
@@ -153,8 +153,10 @@ class BisFileServerClient extends BisBaseServerClient {
         // Text from here on out
         // ---------------------
         //console.log(event.data);
-        let data = wsutil.parseJSON(event.data);
-        if (data===null) {
+        let data=null;
+        try {
+            data = JSON.parse(event.data);
+        } catch(e) {
             data= {
                 id : -1,
                 type : 'error',
@@ -295,7 +297,7 @@ class BisFileServerClient extends BisBaseServerClient {
     authenticate(password='',hostname=null) {
         
         this.password = password || '';
-        hostname = hostname || 'ws://localhost:'+wsutil.initialPort;
+        hostname = hostname || 'ws://localhost:'+wsUtilInitialPort;
         
         if (this.authenticated)
             return Promise.resolve();
