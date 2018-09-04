@@ -38,6 +38,7 @@ const SHAstring = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 
 //variables related to generating one-time passwords (OTP)
 let onetimePasswordCounter = 0;
+const globalInitialServerPort = wsutil.initialPort;
 
 
 // .................................................. This is the class ........................................
@@ -134,7 +135,7 @@ class FileServer {
 
         // Former global variables
         this.portNumber=0;
-        this.hostname='localhost';
+        this.hostname='ws://localhost';
         this.datatransfer=false;
         this.netServer=null;
         // Formerly global variable
@@ -161,14 +162,14 @@ class FileServer {
             console.log('.....\n..... Create New Password as this one is now used successfully.');
         }
         // the ".ss." in the next lines is needed for mocha testing
-        console.log(`..ss. \t\t password: ${token}\n.....`);
+        console.log(`..ss. \t\t ws://${this.hostname}:${this.portNumber}, password: ${token}\n.....`);
     }
 
 
 
     
     /**
-     * Creates the server instance, binds the handshake protocol to its 'connection' event, and begins listening on port 9081 (control port for the transfer).
+     * Creates the server instance, binds the handshake protocol to its 'connection' event, and begins listening on port 24000 (control port for the transfer).
      * Future sockets may be opened after this method has been called if the server is made to listen for the eonnection. 
      * 
      * Client and server *must* open a socket on a control port in order to communicate -- the control port will listen for commands from the server, interpret them, then serve the results.
@@ -179,7 +180,7 @@ class FileServer {
      * @param {Boolean} datatransfer - if true this is a data transfer server
      * @returns A Promise
      */
-    startServer(hostname='localhost', port=9081, datatransfer = true) {
+    startServer(hostname='localhost', port=globalInitialServerPort, datatransfer = true) {
 
         const self=this;
         this.netServer = net.createServer(handleConnectionRequest);
@@ -191,7 +192,7 @@ class FileServer {
                     if (self.verbose)
                         console.log(".... Port",port,"is in use");
                     port=port+1;
-                    if (port<32767) {
+                    if (port<=wsutil.finalPort) {
                         this.netServer.listen(port,hostname);
                     } else {
                         reject('Can not find port');
@@ -324,7 +325,7 @@ class FileServer {
             console.log('..... password sent by client=('+password+')');
             
             if (hotp.check(parseInt(password), secret, onetimePasswordCounter) || (insecure && password.length<1)) {
-                console.log('..... \tStarting helper server');
+                //console.log('..... \tStarting helper server');
                 socket.removeListener('data', readOTP);
                 
                 this.prepareForControlFrames(socket);
@@ -1216,9 +1217,12 @@ program
 
 
 
-let portno=9081;
+let portno=globalInitialServerPort;
 if (program.port)
     portno=parseInt(program.port);
+
+if (portno<wsutil.initialPort || portno>wsutil.finalPort)
+    portno=wsutil.initialPort;
 
 
 let readonlyflag = program.readonly ? program.readonly : false;
