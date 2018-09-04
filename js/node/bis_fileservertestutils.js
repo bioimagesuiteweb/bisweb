@@ -35,7 +35,7 @@ let terminateReject=null;
 
 const createTestingServer=function(wsmode=false,timeout=500) {
 
-    serverpath=serverpath || path.join(__dirname,'../bin');
+    const serverpath= path.join(__dirname,'../bin');
     
     let servername=path.resolve(serverpath,"bisfileserver.js");
 
