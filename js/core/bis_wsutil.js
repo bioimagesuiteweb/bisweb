@@ -115,5 +115,5 @@ module.exports = {
     decodeUTF8: decodeUTF8,
     parseJSON: parseJSON,
     initialPort : 24000,
-    maxPort : 24999,
+    finalPort : 24999,
 };
