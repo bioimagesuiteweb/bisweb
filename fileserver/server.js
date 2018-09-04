@@ -3,15 +3,16 @@ require('../config/bisweb_pathconfig.js');
 const program = require('commander');
 const net = require('net');
 const crypto = require('crypto');
-const path=require('path');
+const path = require('path');
 const os = require('os');
 const timers = require('timers');
+const util = require('bis_util');
 const { StringDecoder } = require('string_decoder');
 
 // One time password library
 const otplib = require('otplib');
 const hotp = otplib.hotp;
-hotp.options  = { crypto };
+hotp.options = { crypto };
 const secret = otplib.authenticator.generateSecret();
 
 
@@ -25,8 +26,13 @@ const wsutil = require('wsutil');
 const genericio = require('bis_genericio.js');
 const tcpPortUsed = require('tcp-port-used');
 
+
+const verbose = false;
+
 // In Insecure Mode (if true);
-const insecure=wsutil.insecure;
+let insecure = wsutil.insecure;
+let baseDirectory = os.homedir();
+
 
 //'magic' string for WebSockets
 //https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers
@@ -42,9 +48,9 @@ let timeout = undefined;
 //variables related to generating one-time passwords (OTP)
 
 let onetimePasswordCounter = 0;
-let globalPortNumber=-1;
-let globalDataPortNumber=-2;
-let globalHostname="";
+let globalPortNumber = -1;
+let globalDataPortNumber = -2;
+let globalHostname = "";
 
 //flag denoting whether the server will accept write requests 
 
@@ -53,14 +59,14 @@ let controlSocket = null;
 
 // password token
 // create function and global variable
-let createPassword=function(abbrv=0) {
-    onetimePasswordCounter+=1;
+let createPassword = function (abbrv = 0) {
+    onetimePasswordCounter += 1;
     let token = hotp.generate(secret, onetimePasswordCounter);
-    if (abbrv===0) {
+    if (abbrv === 0) {
         console.log('++++ BioImage Suite Web FileServer Initialized');
         console.log('++++ \t I am listening for incoming connections, using the following one time info.');
         console.log(`++++ \t\t hostname: ${globalHostname}:${globalPortNumber}`);
-    }  else if (abbrv===1) {
+    } else if (abbrv === 1) {
         console.log('++++\n++++ Create New Password ... try again.');
     } else {
         console.log('++++\n++++ Create New Password as this one is now used successfully.');
@@ -82,59 +88,65 @@ let createPassword=function(abbrv=0) {
  * @param {Function} readycb - A callback to invoke when the server emits its 'listening' event. Optional.
  * @returns The server instance.  
  */
-let startServer = (hostname, port, newport = true, readycb = () => {}) => {
+let startServer = (hostname, port, newport = true, readycb = () => { }) => {
 
     let newServer = net.createServer(handleConnectionRequest);
-    newServer.listen(port, hostname, readycb);
-    
-    if (newport) {
-        globalPortNumber=port;
-        globalDataPortNumber=port+1;
-        globalHostname=hostname;
-        createPassword();
-    } else {
-        console.log('____ Starting transfer data server on ',port);
+
+    try {
+        newServer.listen(port, hostname, readycb);
+    } catch (e) {
+        console.log(e, e.stack);
     }
 
-    
+    if (newport) {
+        globalPortNumber = port;
+        globalDataPortNumber = port + 1000;
+        globalHostname = hostname;
+        createPassword();
+    } else {
+        console.log('____ Starting transfer data server on ', port);
+    }
+
     //handleConnectionRequest is called when a connection is successfuly made between the client and the server and a socket is prepared
     //it performs the WebSocket handshake (see https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers#The_WebSocket_Handshake)
     //as well it attaches protocols to handle when the socket is ended or closed
     function handleConnectionRequest(socket) {
-    
+
+        console.log('Handling connection request');
+
         //construct the handshake response
         //https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers
         let response = "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ";
-    
+
         //parse websocket key out of response
         let websocketKey;
-        
+
         let handshake = (chunk) => {
             let decodedChunk = new StringDecoder('utf-8').write(chunk);
             let headers = decodedChunk.split('\n');
-    
+
             for (let i = 0; i < headers.length; i++) {
                 headers[i] = headers[i].split(':');
             }
-    
+
             for (let header of headers) {
                 if (header[0] === 'Sec-WebSocket-Key') {
                     //remove leading space from key
                     websocketKey = header[1].slice(1, -1);
                 }
             }
-    
+
             //create Sec-WebSocket-Accept hash (see documentation)
             let shasum = crypto.createHash('sha1');
             websocketKey = websocketKey + SHAstring;
             shasum.update(websocketKey);
             let acceptKey = shasum.digest('base64');
             response = response + acceptKey + '\r\n\r\n';
-    
+
             let port = socket.localPort;
             socket.write(response, 'utf-8', () => {
                 //connectors on globalPortNumber are negotiating a control port, connectors on globalDataPortNumber are negotiating a transfer port
-                console.log('We are ready to respond',port,globalPortNumber,globalDataPortNumber);
+                console.log('We are ready to respond', port, globalPortNumber, globalDataPortNumber);
                 switch (port) {
                     case globalPortNumber:
                         authenticate(socket);
@@ -145,23 +157,23 @@ let startServer = (hostname, port, newport = true, readycb = () => {}) => {
                     default:
                         console.log('---- Client attempting to connect on unexpected port', socket.localPort, 'rejecting connection.');
                         return;
-                } 
-            });    
+                }
+            });
         };
-    
+
         socket.once('data', handshake);
 
         //server should close when all sockets are fully closed
         //note that the socket does not listen for 'end' because WebSockets do not cause those events to emit.
         socket.on('close', () => {
-            newServer.getConnections( (err, count) => {
-                if (err) { 
-                    console.log('---- Server encountered an error getting its active connections, shutting down server'); 
-                    newServer.close(); 
-                    return; 
+            newServer.getConnections((err, count) => {
+                if (err) {
+                    console.log('---- Server encountered an error getting its active connections, shutting down server');
+                    newServer.close();
+                    return;
                 }
-    
-                if (count === 0) { 
+
+                if (count === 0) {
                     //console.log('all connections done, shutting down server');
                     newServer.close();
 
@@ -173,16 +185,17 @@ let startServer = (hostname, port, newport = true, readycb = () => {}) => {
                 }
             });
         });
-    }
+    };
+
 };
 
 
 // ------------------------------------------------------------------------------------
-    
+
 let readFrame = (chunk) => {
     let controlFrame = chunk.slice(0, 14);
     let parsedControl = wsutil.parseControlFrame(controlFrame);
-    console.log('parsed control frame', parsedControl);
+    //    console.log('parsed control frame', parsedControl);
 
     //drop unmasked packets
     if (!parsedControl.mask) {
@@ -197,9 +210,9 @@ let readFrame = (chunk) => {
         decoded[i] = chunk[i + parsedControl.datastart] ^ parsedControl.mask[i % 4];
     }
 
-    return { 
-        'parsedControl' : parsedControl,
-        'decoded' : decoded
+    return {
+        'parsedControl': parsedControl,
+        'decoded': decoded
     };
 };
 
@@ -212,7 +225,7 @@ let authenticate = (socket) => {
         console.log('---- entered password');
         console.log('---- sent by client:', password);
 
-        if (hotp.check(parseInt(password), secret, onetimePasswordCounter) || (insecure && password.length<1)) {
+        if (hotp.check(parseInt(password), secret, onetimePasswordCounter) || (insecure && password.length < 1)) {
             console.log('++++ Starting helper server');
             socket.removeListener('data', readOTP);
 
@@ -236,7 +249,7 @@ let authenticate = (socket) => {
  * Prepares the control socket to receive chunks of data from the client. 
  * This involves XORing the payload and decoding it to UTF-8, then performing file I/O based on the contents.
  * 
- * @param {Socket} socket - Node.js net socket between the client and server for the transmission.
+ * @param {Net.Socket} socket - Node.js net socket between the client and server for the transmission.
  */
 let prepareForControlFrames = (socket) => {
     //add an error listener for the transmission
@@ -250,17 +263,16 @@ let prepareForControlFrames = (socket) => {
     socket.on('data', (chunk) => {
         let frame = readFrame(chunk);
         let parsedControl = frame.parsedControl, decoded = frame.decoded;
-        switch (parsedControl.opcode)
-        {
-            case 1:  {
+        switch (parsedControl.opcode) {
+            case 1: {
                 handleTextRequest(decoded, parsedControl, socket);
                 break;
             }
-            case 2:  {
+            case 2: {
                 handleFileFromClient(decoded, parsedControl, socket);
                 break;
             }
-            case 8: { 
+            case 8: {
                 handleCloseFromClient(decoded, parsedControl, socket);
                 break;
             }
@@ -275,24 +287,33 @@ let prepareForControlFrames = (socket) => {
  * 
  * @param {String} rawText - Unparsed JSON denoting the file or series of files to read. 
  * @param {Object} control - Parsed WebSocket header for the file request.
- * @param {Socket} socket - WebSocket over which the communication is currently taking place.
+ * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place.
  */
 let handleTextRequest = (rawText, control, socket) => {
     let parsedText = parseClientJSON(rawText);
+    parsedText = parsedText || -1;
     console.log('____ text request', JSON.stringify(parsedText));
-    switch (parsedText.command)
-    {
+    switch (parsedText.command) {
         //get file list
         case 'getfilelist': {
-            serveFileList(socket, parsedText.directory, parsedText.type, parsedText.depth);
+            serveFileList(socket, parsedText.directory, parsedText.type, parsedText.depth, parsedText.id);
             break;
         }
         case 'readfile': {
             readFileAndSendToClient(parsedText, control, socket);
             break;
         }
-        case 'uploadfile' : {
+        case 'uploadfile': {
+            console.log('\n+++++\n++++\n++++ upload');
             getFileFromClientAndSave(parsedText, control, socket);
+            break;
+        }
+        case 'getserverbasedirectory': {
+            serveServerBaseDirectory(socket, parsedText.id);
+            break;
+        }
+        case 'getservertempdirectory': {
+            serveServerTempDirectory(socket, parsedText.id);
             break;
         }
         default: {
@@ -310,7 +331,7 @@ let handleTextRequest = (rawText, control, socket) => {
  * Client and server engage in chunked transfer, meaning that the client will send a chunk of data, the server will acknowledge, and then the client will transfer the next chunk.
  * They will exchange messages in this way until the transfer is complete, or an unrecoverable error occurs.
  * 
- * @param {Socket} socket - Node.js net socket between the client and the server for transmission.
+ * @param {Net.Socket} socket - Node.js net socket between the client and the server for transmission.
  */
 let prepareForDataFrames = (socket) => {
 
@@ -320,7 +341,7 @@ let prepareForDataFrames = (socket) => {
 
         let controlFrame = chunk.slice(0, 14);
         let parsedControl = wsutil.parseControlFrame(controlFrame);
-        console.log('parsed control frame', parsedControl);
+        //        console.log('parsed control frame', parsedControl);
 
         if (!parsedControl.mask) {
             console.log('---- Received a transmission with no mask from client, dropping packet.');
@@ -334,21 +355,23 @@ let prepareForDataFrames = (socket) => {
         }
 
         switch (parsedControl.opcode) {
-            case 2: 
+            case 2:
+                if (verbose)
+                    console.log('---- adding packet with control', JSON.stringify(parsedControl));
                 addToCurrentTransfer(decoded, parsedControl, socket);
                 if (timeout) {
                     timers.clearTimeout(timeout);
                     timeout = null;
                 }
                 break;
-            case 8: 
+            case 8:
                 console.log('---- received close from client, ending data connection.');
                 socket.end();
                 break;
-            default: 
-                console.log('---- dropping packet with control', parsedControl);
+            default:
+                console.log('---- dropping packet with control', JSON.stringify(parsedControl));
                 if (!timeout) {
-                    timeout = setSocketTimeout( () => {
+                    timeout = setSocketTimeout(() => {
                         console.log('---- timed out waiting for client');
                         socket.end();
                     });
@@ -356,32 +379,53 @@ let prepareForDataFrames = (socket) => {
         }
     });
 
+
+    let getWriteLocation = function (name) {
+
+        console.log('Name=', name, 'BaseDirectory=', baseDirectory);
+
+        if (name.indexOf(baseDirectory) === 0)
+            return name;
+
+        if (name.indexOf("/") === 0) {
+            let f = name.lastIndexOf("/");
+            name = name.substr(f + 1, name.length);
+        }
+
+        name = path.join(baseDirectory, fileInProgress.name);
+        return name;
+    };
+
     function addToCurrentTransfer(upload, control, socket) {
 
-        //        console.log('upload=',upload.buffer,typeof upload);
-        fileInProgress.data.set(upload,fileInProgress.offset);
-        fileInProgress.offset+=upload.length;
+        if (verbose)
+            console.log('\tupload=', fileInProgress.offset, 'Lengths: total=', fileInProgress.data.length,
+                'piecel=', upload.length);
+        //        for (let i=0;i<upload.length;i++)
+        //  fileInProgress.data[i+fileInProgress.offset]=upload[i];
+        fileInProgress.data.set(upload, fileInProgress.offset);
+        fileInProgress.offset += upload.length;
 
         //check to see if what we've received is complete 
         if (fileInProgress.offset >= fileInProgress.totalSize) {
-            let baseDirectory = os.homedir();
+
 
             if (!fileInProgress.isbinary) {
-                fileInProgress.data=genericio.binary2string(fileInProgress.data);
+                fileInProgress.data = genericio.binary2string(fileInProgress.data);
             }
-            //save serialized NIFTI image
-            let writeLocation = path.join(baseDirectory,fileInProgress.name);
-            console.log('____ writing to file', writeLocation,'size=',fileInProgress.data.length);
-            
-            genericio.write(writeLocation, fileInProgress.data, fileInProgress.isbinary).then( () => {
+
+            let writeLocation = getWriteLocation(fileInProgress.name);
+            console.log('____ writing to file', writeLocation, 'size=', fileInProgress.data.length);
+
+            genericio.write(writeLocation, fileInProgress.data, fileInProgress.isbinary).then(() => {
                 socket.write(formatPacket('uploadcomplete', ''), () => {
-                    fileInProgress.data=null;
+                    fileInProgress.data = null;
                     //socket.end(); //if for some reason the client doesn't send a FIN we know the socket should close here anyway.
-                    console.log('____ message sent -- file saved in ',writeLocation,' binary=',fileInProgress.isbinary);
+                    console.log('____ message sent -- file saved in ', writeLocation, ' binary=', fileInProgress.isbinary);
                 });
 
-                controlSocket.write(formatPacket('uploadcomplete', ''));
-            }).catch( (e) => {
+                //controlSocket.write(formatPacket('uploadcomplete', ''));
+            }).catch((e) => {
                 console.log('---- an error occured', e);
                 socket.write(formatPacket('error', e));
                 socket.destroy();
@@ -390,7 +434,7 @@ let prepareForDataFrames = (socket) => {
             //console.log('____ received chunk,', fileInProgress.receivedFile.length, 'received so far.');
             socket.write(formatPacket('nextpacket', ''));
         }
-    }  
+    }
 };
 
 
@@ -402,76 +446,89 @@ let prepareForDataFrames = (socket) => {
  * 
  * @param {Object|Uint8Array} upload - Either the first transmission initiating the transfer loop or a chunk.
  * @param {Object} control - Parsed WebSocket header for the file request. 
- * @param {Socket} socket - The control socket that will negotiate the opening of the data socket and send various communications about the transfer. 
+ * @param {Net.Socket} socket - The control socket that will negotiate the opening of the data socket and send various communications about the transfer. 
  */
 let getFileFromClientAndSave = (upload, control, socket) => {
 
     if (readOnly) {
         console.log('Server is in read-only mode and will not accept writes.');
-        socket.write(formatPacket('serverreadonly', ''));
+        socket.write(formatPacket('uploadmessage', {
+            'name': 'serverreadonly',
+            'id': upload.id
+        }));
         return;
     }
 
     fileInProgress = {
         'totalSize': upload.totalSize,
         'packetSize': upload.packetSize,
-        'isbinary' : upload.isbinary,
+        'isbinary': upload.isbinary,
         'name': upload.filename,
-        'storageSize' : upload.storageSize,
-        'offset' : 0,
+        'storageSize': upload.storageSize,
+        'offset': 0,
     };
 
     fileInProgress.data = new Uint8Array(upload.storageSize);
-    console.log('fileInProgress data created=',fileInProgress.data.length,fileInProgress.data.buffer);
+    console.log('\n+++++++++++++\n+++++++++++ fileInProgress data created=', fileInProgress.data.length, fileInProgress.data.buffer);
 
     //spawn a new server to handle the data transfer
-    startServer('localhost', globalDataPortNumber,false, () => { socket.write(formatPacket('datasocketready', '')); });
+    startServer('localhost', globalDataPortNumber, false, (m) => {
+        console.log('Message= All set on globalDataPortNumber');
+        socket.write(formatPacket('uploadmessage', {
+            'name': 'datasocketready',
+            'port': globalDataPortNumber,
+            'id': upload.id
+        }));;
+    });
 };
 
 
 // ---------------------------------------------------------------------------------------------------------------------------------------
 // ------------------------------------ Send File To Client ------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------------------------------------------------------------
-    
+
 /**
  * Takes a request from the client and returns the requested file or series of files. 
  * 
  * @param {String} rawText - Unparsed JSON denoting the file or series of files to read. 
  * @param {Object} control - Parsed WebSocket header for the file request.
- * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
+ * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
  */
 let readFileAndSendToClient = (parsedText, control, socket) => {
     let filename = parsedText.filename;
     let isbinary = parsedText.isbinary;
+    let id = parsedText.id;
 
     /*let pkgformat='binary';
-    if (!isbinary)
-        pkgformat='text';*/
+      if (!isbinary)
+      pkgformat='text';*/
 
     if (isbinary) {
-        fs.readFile(filename,  (err, d1) => {
+        fs.readFile(filename, (err, d1) => {
             if (err) {
-                handleBadRequestFromClient(socket, err);
+                handleBadRequestFromClient(socket, err, parsedText.id);
             } else {
                 console.log(`____ load binary file ${filename} successful, writing to socket.`);
-                socket.write(formatPacket('binary',d1), () => {
-
-                });
+                let checksum = `${util.SHA256(new Uint8Array(d1))}`;
+                console.log('checksum=', checksum, 'id=', id);
+                socket.write(formatPacket('checksum', {
+                    'checksum': checksum,
+                    'id': id
+                }));
+                socket.write(formatPacket('binary', d1));
             }
         });
     } else {
-    	console.log('filename', filename);
+        console.log('filename', filename);
         fs.readFile(filename, 'utf-8', (err, d1) => {
             if (err) {
                 handleBadRequestFromClient(socket, err);
             } else {
                 console.log(`____ load text file ${filename} successful, writing to socket.`);
-                socket.write(formatPacket('text',d1), () => {
-
-                });
+                socket.write(formatPacket('text', { 'data': d1, 'id': id }));
             }
         });
-    }        
+    }
 };
 
 
@@ -482,26 +539,27 @@ let readFileAndSendToClient = (parsedText, control, socket) => {
 /**
  * Sends the list of available files to the user, hiding files above the ~/ directory.
  * 
- * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
+ * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
  * @param {String} basedir - Directory on the server machine to display files starting from, null indicates '~/'. Writes different responses to the socket if basedir is null or not ('filelist' vs 'supplementalfiles').
  * @param {String} type - The type of modal that will be served the file list. Either 'load' or 'save'. 
  * @param {Number} depth - Number of directories under basedir to expand. Optional, depth will be 2 if not specified.
+ * @param {Number} id - the request id
  * @returns A file tree rooted at basedir.
  */
-let serveFileList = (socket, basedir, type, depth = 2) => {
+let serveFileList = (socket, basedir, type, depth = 2, id = -1) => {
     let fileTree = [];
-    if (basedir === null) { basedir = os.homedir(); }
+    if (basedir === null) { basedir = baseDirectory; }
 
     //path = full filepath
     //fileTreeIndex = the the children of the current tree entry
     //directoriesExpanded = the number of file tree entries expanded so far
     let expandDirectory = (pathname, fileTreeIndex, directoriesExpanded) => {
-        return new Promise( (resolve, reject) => {
+        return new Promise((resolve, reject) => {
             fs.readdir(pathname, (err, files) => {
                 if (err) { reject(err); }
 
                 //remove hidden files/folders from results
-                let validFiles = files.filter( (unfilteredFile) => { return unfilteredFile.charAt(0) !== '.'; });
+                let validFiles = files.filter((unfilteredFile) => { return unfilteredFile.charAt(0) !== '.'; });
                 let expandInnerDirectory = (pathname, treeEntry) => {
                     return new Promise((resolve, reject) => {
                         //if file is a directory, expand it and add its children to fileTree recursively
@@ -514,9 +572,9 @@ let serveFileList = (socket, basedir, type, depth = 2) => {
                             if (stat.isDirectory()) {
                                 treeEntry.children = [];
                                 treeEntry.type = 'directory';
-                                
+
                                 if (!directoriesExpanded < depth) {
-                                    expandDirectory(pathname, treeEntry.children, directoriesExpanded + 1).then( () => { resolve(fileTreeIndex); });
+                                    expandDirectory(pathname, treeEntry.children, directoriesExpanded + 1).then(() => { resolve(fileTreeIndex); });
                                 } else {
                                     treeEntry.expand = true;
                                     resolve(fileTreeIndex);
@@ -525,18 +583,11 @@ let serveFileList = (socket, basedir, type, depth = 2) => {
                                 //if not a directory determine the filetype 
                                 //get the file extension by taking the file at the end of the pathname and looking after the last '.'
                                 let extension = path.parse(pathname).ext;
-                                switch (extension)
-                                {
-                                    case 'gz' : {
+                                switch (extension) {
+                                    case 'gz': {
                                         treeEntry.type = 'picture'; break;
                                     }
-                                    case 'html' : {
-                                        treeEntry.type = 'html'; break;
-                                    }
-                                    case 'js' : {
-                                        treeEntry.type = 'js'; break;
-                                    }
-                                    default : {
+                                    default: {
                                         treeEntry.type = 'file';
                                     }
                                 }
@@ -562,47 +613,49 @@ let serveFileList = (socket, basedir, type, depth = 2) => {
     };
 
     console.log('type', type);
-    expandDirectory(basedir, fileTree, 0).then( (tree) => {
+    expandDirectory(basedir, fileTree, 0).then((tree) => {
 
         //bisweb_fileserver handles the base file request differently than the supplemental ones, so we want to ship them to different endpoints
-        if (basedir === os.homedir()) {
-            socket.write(formatPacket('filelist', { 'type' : type, 'data' : tree, 'modalType' : type }));
-        } else {
-            socket.write(formatPacket('supplementalfiles',  { 'path' : basedir, 'list' : tree, 'modalType' : type }));
-        }
+        //        if (basedir === os.homedir()) {
+        socket.write(formatPacket('filelist', { 'path': basedir, 'type': type, 'data': tree, 'modalType': type, 'id': id }));
+        /*} else {
+          socket.write(formatPacket('supplementalfiles',  { 'path' : basedir, 'list' : tree, 'modalType' : type, 'id' : id }));
+          }*/
     });
 };
 
+/**
+ * Sends the default location for the client to load images from. Typically used during regression testing, when many files will be loaded without user interaction.
+ *  
+ * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place.  
+ * @param {Number} id - the request id
+ */
+let serveServerBaseDirectory = (socket, id = 0) => {
+    socket.write(formatPacket('serverbasedirectory', { 'path': baseDirectory, 'id': id }));
+};
 
-
-/*let serveModuleInvocationRequest = (parsedText, control, socket) => {
-    let args = parsedText.params.args, modulename = parsedText.params.modulename;
-
-    let inputName = parsedText.params.inputs[0];
-    let img = new BisWebImage();
-    img.load(inputName).then( () => {
-        let module = modules.getModule(modulename);
-        console.log('invoking module', module, 'with args', args, 'and input', data);
-
-        console.log('img', img.getDescription());
-
-        module.execute({ 'input' : img }, args).then( () => {
-            console.log('module', module);
-        });
-    }).catch( (e) => { console.log('could not read image', inputName, e); })
-};*/
+/**
+ * Sends the default location for the client to save images to. Typically used during regression testing, when many files will be loaded without user interaction.
+ * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
+ * @param {Number} id - the request id
+ */
+let serveServerTempDirectory = (socket, id = 0) => {
+    let homedir = os.homedir();
+    socket.write(formatPacket('servertempdirectory', { 'path': path.join(homedir, 'tmp'), 'id': id }));
+};
 
 /**
  * Sends a message to the client describing the server error that occured during their request. 
  * 
- * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
+ * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
  * @param {String} reason - Text describing the error.
+ * @param {Number} id - the request id
  */
-let handleBadRequestFromClient = (socket, reason) => {
+let handleBadRequestFromClient = (socket, reason, id = -1) => {
     let error = "An error occured while handling your request. ";
     error = error.concat(reason);
 
-    socket.write(formatPacket('error', error), () => { console.log('---- request returned an error', reason, '\nsent error to client'); });
+    socket.write(formatPacket('error', { 'text': error, 'id': id }), () => { console.log('---- request returned an error', reason, '\nsent error to client'); });
 };
 
 /**
@@ -610,11 +663,11 @@ let handleBadRequestFromClient = (socket, reason) => {
  * 
  * @param {String} rawText - Unparsed JSON denoting the file or series of files to read. 
  * @param {Object} control - Parsed WebSocket header for the file request.
- * @param {Socket} socket - WebSocket over which the communication is currently taking place. 
+ * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
  */
 let handleCloseFromClient = (rawText, control, socket) => {
     let text = wsutil.decodeUTF8(rawText, control);
-    console.log('____ received CLOSE frame from client',text);
+    console.log('____ received CLOSE frame from client', text);
 
     //TODO: send a close frame in response
     socket.end();
@@ -631,7 +684,7 @@ let handleCloseFromClient = (rawText, control, socket) => {
  * @param {String} filepath - Path to check.
  */
 let checkValidPath = (filepath) => {
-    return new Promise( (resolve, reject) => {
+    return new Promise((resolve, reject) => {
         let pathCheck = (pathname) => {
             if (pathname === '') { resolve(); return; }
 
@@ -679,10 +732,11 @@ let formatPacket = (payloadType, data) => {
         opcode = 2;
     } else {
         payload = JSON.stringify({
-            'type' : payloadType,
-            'payload' : data
+            'type': payloadType,
+            'payload': data
         });
         opcode = 1;
+        //console.log('Sending payload',payload.substr(0,100));
     }
 
     let controlFrame = wsutil.formatControlFrame(opcode, payload.length);
@@ -719,7 +773,7 @@ let findFreePort = () => {
     checkInUse(base);
 
     function checkInUse(port) {
-        tcpPortUsed.check(port, '127.0.0.1').then( (used) => {
+        tcpPortUsed.check(port, '127.0.0.1').then((used) => {
             if (used) {
                 base = base + 2;
                 checkInUse(base);
@@ -737,19 +791,25 @@ program
     .option('-v, --verbose', 'Whether or not to display messages written by the server')
     .option('-p, --port <n>', 'Which port to start the server on')
     .option('--read-only', 'Whether or not the server should accept requests to write files')
+    .option('--insecure', 'USE WITH EXTREME CARE -- if true no password')
     .parse(process.argv);
 
 
 
-let portno=8081;
+let portno = 8081;
 if (program.port)
-    portno=parseInt(program.port)
+    portno = parseInt(program.port)
 
 readOnly = program.readOnly ? program.readOnly : false;
+insecure = program.insecure ? program.insecure : false;
 
 startServer('localhost', portno, true, () => {
-    console.log('Server started ',portno)
-})
+    console.log('Server started ', portno)
+    if (insecure) {
+        console.log("+++++ IN INSECURE MODE");
+    }
+});
+
 
 
 

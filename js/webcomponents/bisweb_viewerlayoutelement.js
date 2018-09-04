@@ -51,6 +51,7 @@ var detectWebGL = function() {
  *    bis-coreopen="true"
  *    bis-minimizedockpanel="0"
  *    bis-fixed="1"
+ *    bis-noresize="0"
  *    bis-defaulttext="">
  * </bisweb-viewerlayoutelement>
  *
@@ -81,7 +82,27 @@ class ViewerLayoutElement extends HTMLElement {
         this.verticalLines2=[ null, null];
         this.verticalLinesX=[null,null];
         this.fixed=0;
+        this.noresize=0;
     }
+
+    getCSSLength(n='width') {
+        let v=$(this).css(n);
+        return parseFloat(v.replace(/px/g,''));
+    }
+            
+
+    getInnerWidth() {
+        if (!this.noresize)
+            return window.innerWidth;
+        return this.getCSSLength('width') || 800;
+    }
+
+    getInnerHeight() {
+        if (!this.noresize)
+            return window.innerHeight;
+        return this.getCSSLength('height') || 800;
+    }
+
     
     /** call when the window is resized to adjust the proportions */
     handleresize() {
@@ -93,10 +114,14 @@ class ViewerLayoutElement extends HTMLElement {
             sidewidth=1;
         }
 
+        let innerW=this.getInnerWidth();
+        let innerH=this.getInnerHeight();
+
+        
         if (this.minimizedockpanel)
             dockwidth=50;
 
-        let maxw=Math.round(0.4*window.innerWidth);
+        let maxw=Math.round(0.4*innerW);
         if (dockwidth>maxw)
             dockwidth=maxw;
         if (sidewidth>maxw)
@@ -104,23 +129,28 @@ class ViewerLayoutElement extends HTMLElement {
 
         // Check if we have an extra tall menubar
         let offset=87;
+        if (this.noresize) {
+            offset=0;
+            this.topheight=0;
+        }
+        
         this.viewertop=0;
-        if (window.innerWidth>767) {
+        if (innerW>767) {
             //let tm=$("#bismenuparent");
-            let w=window.innerWidth-90;
+            let w=innerW-90;
             $('#bismenuparent').css({'width' : `${w}px`,
                                      'max-width': `${2*w}px`});
         } else {
             $('#bismenuparent').css({'max-width' : `100%`});
         }
         // Set the height of the viewer
-        this.viewerheight=window.innerHeight-this.topheight-offset;
-        this.viewerwidth= window.innerWidth-dockwidth-sidewidth;
+        this.viewerheight=innerH-this.topheight-offset;
+        this.viewerwidth= innerW-dockwidth-sidewidth;
         let docktop=0,dockleft=0,dockbarheight=this.viewerheight,sidetop=0,wide=1;
         
-        if ( window.innerWidth<768 || this.viewerwidth<380) {
+        if ( innerW<768 || this.viewerwidth<380) {
             // Responsive fix, stack elements
-            this.viewerwidth=window.innerWidth;
+            this.viewerwidth=innerW;
             this.viewerheight=this.viewerheight-100;
             dockbarheight=1.5*this.viewerheight;
             dockwidth=this.viewerwidth;
@@ -232,6 +262,7 @@ class ViewerLayoutElement extends HTMLElement {
         this.dualmode=parseInt(this.getAttribute('bis-dualmode')) || 0;
 
         this.fixed=parseInt(this.getAttribute('bis-fixed') || 0 );
+        this.noresize=parseInt(this.getAttribute('bis-noresize') || 0 );
         
         this.minimizedockpanel=parseInt(this.getAttribute('bis-minimizedockpanel') || 0 );
         if (this.minimizedockpanel!==0)
@@ -463,7 +494,7 @@ class ViewerLayoutElement extends HTMLElement {
     setsidebarwidth(n) {
         if (n<10)
             n=0;
-        let maxl=Math.round(0.5*window.innerWidth);
+        let maxl=Math.round(0.5*this.getInnerWidth());
         if (n>maxl)
             n=maxl;
         this.sidebarwidth=n;
@@ -528,10 +559,10 @@ class ViewerLayoutElement extends HTMLElement {
         let minl=0,maxl=0;
         if (index===0) {
             minl=151;
-            maxl=Math.round(0.4*window.innerWidth);
+            maxl=Math.round(0.4*this.getInnerWidth());
         } else {
-            minl=Math.round(0.4*window.innerWidth+this.sidebarwidth);
-            maxl=window.innerWidth-151;
+            minl=Math.round(0.4*this.getInnerWidth()+this.sidebarwidth);
+            maxl=this.getInnerWidth()-151;
         }
         
         if (x<minl)
@@ -554,7 +585,7 @@ class ViewerLayoutElement extends HTMLElement {
                 if (index===0) {
                     this.setsidebarwidth(x);
                 } else {
-                    this.dockpanelwidth=window.innerWidth-x;
+                    this.dockpanelwidth=this.getInnerWidth()-x;
                     if (this.dockpanelwidth<150)
                         this.dockpanelwidth=150;
                     window.dispatchEvent(new Event('resize'));
@@ -599,7 +630,7 @@ class ViewerLayoutElement extends HTMLElement {
     createOrShowLines(sidewidth=10,dockwidth=300) {
 
         let w=[sidewidth,dockwidth ];
-        let left=[sidewidth,window.innerWidth-dockwidth];
+        let left=[sidewidth,this.getInnerWidth()-dockwidth];
         let dh=this.viewerheight;
 
         for (let ia=0;ia<=1;ia++) {

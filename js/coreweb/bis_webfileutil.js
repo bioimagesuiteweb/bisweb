@@ -242,6 +242,7 @@ const webfileutils = {
 
         let suffix = fileopts.suffix || '';
         let title = fileopts.title || '';
+        let defaultpath=fileopts.defaultpath || '';
         
         if (suffix === "NII")
             suffix = '.nii.gz,.nii,.gz,.tiff';
@@ -267,18 +268,46 @@ const webfileutils = {
             }
         }
 
+
+        
         let fmode=fileMode;
         if (fileopts.force)
             fmode=fileopts.force;
 
-        let cbopts = { 'callback' : callback, 'title' : title, 'suffix' : suffix, 'mode' : fmode };
-        if (fileopts.save) {
-            //if the callback is specified presumably that's what should be called
-            //            console.log('opts', fileopts);
+        let cbopts = { 'callback' : callback, 'title' : title, 'suffix' : suffix };
 
+        // -------------------- End Of Part I ---------------
+        
+        if (fileopts.save) {
+            // We are now saving only server, aws or local
             
             if (fileMode === 'server') {
-                bisweb_fileserverclient.wrapInAuth('uploadfile', cbopts);
+
+                let initialDir=null;
+                let initialFilename=null;
+
+                if (fileopts.initialCallback) {
+                    let f=fileopts.initialCallback() || '';
+                    if (f.length>0) {
+                        let ind=f.lastIndexOf("/");
+                        if (ind>0) {
+                            initialDir=f.substr(0,ind);
+                            initialFilename=f.substr(ind+1,f.length);
+                        } else {
+                            initialFilename=f;
+                            initialDir=null;
+                        }
+                    }
+                }
+
+                if (!initialFilename && defaultpath.length>0) {
+                    initialDir=defaultpath;
+                    initialFilename=null;
+                }
+                
+                cbopts.initialFilename=initialFilename || '';
+                cbopts.type='save';
+                bisweb_fileserverclient.requestFileList('uploadfile', initialDir, true, cbopts);
                 return;
             }
 
@@ -291,7 +320,7 @@ const webfileutils = {
             return;
         }
  
-        // -------- load -----------
+        // -------- Part II Load -----------
         
         if (fmode==='dropbox') { 
             fileopts.suffix=suffix;
@@ -323,7 +352,7 @@ const webfileutils = {
         }
 
         if (fileMode==="server") {
-            bisweb_fileserverclient.wrapInAuth('showfiles', cbopts);
+            bisweb_fileserverclient.requestFileList('showfiles', null,true,cbopts);
             return;
         }
 

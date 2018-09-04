@@ -893,7 +893,6 @@ let read = function (url, isbinary = false) {
 
     if (fileServerClient && typeof url === 'string') {
         if (url.indexOf('http')!==0) {
-            console.log('\n\n Reading from server');
             return fileServerClient.downloadFile(url,isbinary);
         }
     }

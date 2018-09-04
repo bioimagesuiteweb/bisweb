@@ -141,7 +141,7 @@ class FileDialogElement {
      * @param {String} list.type - What type of file or folder the entry represents. One of 'picture', 'html', 'js', 'text', 'video', 'audio', 'file', or 'directory'.
      * @param {String} list.path - The full path indicating where the file is located on the server machine.
      * @param {Array} list.children - File entries for each file contained in the list entry. Only for list entries of type 'directory'.
-     * @param {Object} startDirectory - File entry representing the directory at which the files in list should be added. Undefined means the files represent the files in the user's home directory (~/).
+     * @param {Object} startDirectory - File entry representing the directory at which the files in list should be added. Undefined means the files represent the files in the current directory
      */
     createFileList(list, startDirectory = null, opts=null) {
 
@@ -385,6 +385,21 @@ class FileDialogElement {
         }
     }
 
+
+    /**
+       * @returns {Boolean} if visible return true
+       */
+    isVisible() {
+        let vis=this.modal.dialog.css('display');
+        if (vis==='block') {
+            console.log("Visible");
+            return true;
+        } 
+
+        console.log("Not Visible");
+        return false;
+    }
+    
     /**
      * Displays the file dialog to the user. 
      * 
@@ -397,7 +412,7 @@ class FileDialogElement {
         
         if (filters)
             this.filters = filters;
-        console.log(this.modal.dialog);
+
         this.modal.dialog.modal('show');
     }
 
@@ -478,10 +493,15 @@ class FileDialogElement {
      */
     makeFileRequest(params) {
 
+        // NO NO NO needed for fileserver
         //strip out leading '/' if necessary 
-        let name = params.path.charAt(0) === '/' ? params.path.substring(1) : params.path;
+        let name = params.path;//.charAt(0) === '/' ? params.path.substring(1) : params.path;
+
 
         this.modal.dialog.modal('hide');
+
+        //console.log('Filename=',name);
+        
         setTimeout( () => {
             this.fileRequestFn(name, true);
         },10);
@@ -645,8 +665,10 @@ class FileDialogElement {
      * @returns The corresponding entry in the file structure, or null.
      */
     searchTree(path) {
+
         let list = this.fileList;
         let foundDirectory = false, splitPaths = path.split('/'), currentDirectory = list;
+        
         while (splitPaths.length > 0) {
             console.log('looking for a match with', splitPaths[0]);
             for (let entry of currentDirectory) {

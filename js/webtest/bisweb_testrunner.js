@@ -1,55 +1,11 @@
 const webutil = require('bis_webutil');
-
 const bisweb_serverregression=require('bisweb_serverregression');
 
 class BiswebTestRunner extends HTMLElement {
 
     constructor() {
         super();
-
         console.log("Test runner");
-        
-        /*let sampleTests = [
-            {
-                'name' : 'Test 1',
-                'test' : () => {
-                    return new Promise( (resolve) => {
-                        console.log('Test 1');
-                        resolve();
-                    });
-                }
-            },
-            {
-                'name' : 'Test 2',
-                'test' : () => {
-                    return new Promise( (resolve, reject) => {
-                        console.log('Test 2');
-                        reject();
-                    });
-                }
-            },
-            {
-                'name' : 'Test 3',
-                'test' : () => {
-                    return new Promise( (resolve) => {
-                        console.log('Test 3');
-                        resolve();
-                    });
-                }
-            },
-            {
-                'name' : 'Test 4',
-                'test' : () => {
-                    return new Promise( (resolve) => {
-                        console.log('Test 4');
-                        resolve();
-                    });
-                }
-            }
-        ];
-
-        this.setTests(sampleTests);
-        this.runTests();*/
     }
 
     setTests(tests, pretests) {

@@ -5,6 +5,7 @@ const AWSCognitoIdentity = require('amazon-cognito-identity-js');
 const AWSParameters = require('../../web/aws/awsparameters.js');
 const bis_webutil = require('bis_webutil.js');
 const bisweb_filedialog = require('bisweb_filedialog.js');
+const bisweb_simplefiledialog = require('bisweb_simplefiledialog.js');
 
 
 /**
@@ -41,8 +42,8 @@ class AWSModule {
         //file display modal gets deleted if you try to load it too soon
         //not completely sure why -Zach
         bis_webutil.runAfterAllLoaded( () => {   
-            this.fileDisplayModal = new bisweb_filedialog('Bucket Contents', { 'makeFavoriteButton' : false });
-            this.fileSaveModal = new bisweb_filedialog('Choose Folder to Save In', { 'makeFavoriteButton' : false, 'modalType' : 'save', 'displayFiles' : false });           
+            this.fileDisplayModal = new bisweb_simplefiledialog('Bucket Contents', { 'makeFavoriteButton' : false });
+            this.fileSaveModal = new bisweb_simplefiledialog('Choose Folder to Save In', { 'makeFavoriteButton' : false, 'modalType' : 'save', 'displayFiles' : false });           
         });
 
     }
@@ -76,7 +77,7 @@ class AWSModule {
 
             let formattedFiles = this.formatRawS3Files(data.Contents, filters);
 
-            this.fileDisplayModal.createFileList(formattedFiles);
+            this.fileDisplayModal.openDialog(formattedFiles);
             this.fileDisplayModal.showDialog(filters, modalTitle);
         });
     }
