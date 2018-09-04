@@ -284,7 +284,7 @@ class BisWebDialogElement extends HTMLElement {
      * @param{boolean} motion - if true then the dialog can move
      * @param{function} callback - if not null the closecallback function 
      */
-    create(name, w=400, h=400, x=100, y=100, zindex=500,motion=true,closecallback=null) {
+    create(name, w=400, h=400, x=100, y=100, zindex=5000,motion=true,closecallback=null) {
 
         if (y<100)
             y=100;
@@ -340,14 +340,14 @@ class BisWebDialogElement extends HTMLElement {
         if (!grow) {
             this.dialog.css({ "height": `${this.dimensions.height}px` });
             this.content.css({ "height" : "100%" });
-            this.widgetbase.css({ "height" : `${this.dimensions.height-120}px`, "overflow-y": "auto"  });
+            this.widgetbase.css({ "height" : `${this.dimensions.height-130}px`, "overflow-y": "auto"  });
         } else {
             this.widgetbase.css({ "max-height" : `${this.dimensions.height}px`, "overflow-y": "auto"  });
         }
         
         this.footer.css({
             "width" : "100%",
-            "padding" : "10px",
+            "padding" : "5px",
         });
         
 
