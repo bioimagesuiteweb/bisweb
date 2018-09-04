@@ -892,10 +892,12 @@ class ViewerApplicationElement extends HTMLElement {
         //        console.log('Fobj=',fobj);
         
         return new Promise(function (resolve, reject) {
-            //            console.log('fobj=',fobj);
             genericio.write(fobj, output).then((f) => {
-                resolve(f);
-            }).catch((e) => { reject(e); });
+                webutil.createAlert('Application State saved '+f);
+            }).catch((e) => {
+                webutil.createAlert('Failed to save Application State '+e);
+                reject(e);
+            });
         });
     }
 
@@ -929,6 +931,7 @@ class ViewerApplicationElement extends HTMLElement {
                                        },
                                        { title: 'Load Application State',
                                          save: false,
+                                         suffix : "biswebstate",
                                          filters : [ { name: 'Application State File', extensions: ['biswebstate']}],
                                        }
                                       );

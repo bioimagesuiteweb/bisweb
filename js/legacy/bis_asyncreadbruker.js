@@ -33,22 +33,15 @@
  * @namespace BisReadBruker
  */
 
-const pako=require('pako');
 const bisheader=require('bis_header');
 const BisWebImage=require('bisweb_image');
 const bisgenericio=require('bis_genericio');
 const userPreferences = require('bisweb_userpreferences.js');
-
-const fs=bisgenericio.getfsmodule();
-const path=bisgenericio.getpathmodule();
-const glob=bisgenericio.getglobmodule();
-
-const biswrap = require('libbiswasm_wrapper');
-if (typeof window === 'undefined') {
-    biswrap.initialize();
-}
-
 const inelectron=( bisgenericio.getmode() === "electron");
+
+/*const sleep=function(millis) {
+    return new Promise(resolve => setTimeout(resolve, millis));
+};*/
 
 let dualPrint=function() {
     
@@ -60,144 +53,166 @@ let dualPrint=function() {
 };
 
 
-const printFileStats = function(fname,debug) {
+const printFileStats = async function(fname,debug=false) {
+
     debug= debug || false;
     try {
-        let stats = fs.statSync(fname);
-        let fileSizeInBytes = stats["size"];
+        let p=await bisgenericio.getFileSize(fname);
         if (debug)
-            dualPrint('+++++ file='+path.basename(fname)+',\t\t size =', fileSizeInBytes);
+            dualPrint('+++++ file='+fname+',\t\t size =', p);
     } catch(e) {
-        dualPrint('----- file='+path.basename(fname)+' does not exist');
+        dualPrint('----- file='+bisgenericio.getBaseName(fname)+' does not exist');
         return 0;
     }
     return 1;
 };
 
 var getmatchingfiles = function (querystring) {
-    return glob.sync(querystring);
+    return bisgenericio.getMatchingFiles(querystring);
 };
 
 
 // ---------------
 // Get matching filenames
 // ---------------
-let getMatchingFilenames=function(f) {
+let getMatchingFilenames=async function(f) {
 
-    var pname=path.resolve(path.normalize(f));
-    var l=path.dirname(pname).length+1;
-    var p2=path.normalize(pname+'/*/pdata/*/2dseq');
-    var n1=getmatchingfiles(p2);
+    var pname=bisgenericio.getNormalizedFilename(f);
+    var l=bisgenericio.getDirectoryName(pname).length+1;
+
+    var p2=bisgenericio.getNormalizedFilename(pname+'/*/pdata/*/2dseq');
+    var n1=await getmatchingfiles(p2);
     if (n1.length<1) {
-        p2=path.normalize(pname+'/pdata/*/2dseq');
-        n1=getmatchingfiles(p2);
+        p2=bisgenericio.getNormalizedFilename(pname+'/pdata/*/2dseq');
+        n1=await getmatchingfiles(p2);
     }
+
     if (n1.length<1) {
-        p2=path.normalize(pname+'/*/2dseq');
-        n1=getmatchingfiles(p2);
+        p2=bisgenericio.getNormalizedFilename(pname+'/*/2dseq');
+        n1=await getmatchingfiles(p2);
     }
+
     if (n1.length<1) {
-        p2=path.normalize(pname+'/2dseq');
-        n1=getmatchingfiles(p2);
+        p2=bisgenericio.getNormalizedFilename(pname+'/2dseq');
+        n1=await getmatchingfiles(p2);
     }
     
-    
+
     return { names : n1,
              len   : l
            };
 };
 
 
-let readParameterFile=function(fname,debug) {
-    
+let readParameterFile=async function(fname,debug=0) {
+
     debug = debug || 0;
-    let lines = fs.readFileSync(fname,'utf-8').split('\n');
-    let outputlst = {};
-
-    let i=0;
-    while (i<lines.length-1) {
-        let ln=lines[i];
-        if (ln.indexOf('##$')===0) {
-            let ind=ln.indexOf("=",ln);
-            let name=ln.substr(3,ind-3);
-            let val=ln.substr(ind+1).trim();
-            if (val.indexOf('(')===0) {
-                let eind=val.indexOf(')');
-                let orange=val.substr(1,eind-1).trim();
-                let range=orange.split(",");
-                if (debug>0) {
-                    if (range.length===1) {
-                        dualPrint('Found 1d-array in line '+i+' name='+name+' range='+range[0]);
-                    } else {
-                        dualPrint('Found array in line '+i+' name='+name+' range=*'+orange+'* -->'+range.join(''));
-                    }
-                }
-                // Read array
-                let j=i+1,found=false;
-                while (j<lines.length && found===false) {
-                    ln=lines[j];
-                    if (ln.indexOf('##$')===0 || ln.indexOf('$$')===0) {
-                        found=1;
-                    } else {
-                        ++j;
-                    }
-                }
-                j=j-1;
-                if (debug>1)
-                    dualPrint('+++++ range of lines='+(i+1)+':'+j+' name='+name);
-                
-                outputlst[name]=[];
-                if (j<=i) {
-                    for (let kb=0;kb<range.length;kb++)
-                        outputlst[name].push(range[kb].trim());
-                    
-                } else {
-                    for (let k=i+1;k<=j;k++) {
-                        let a=lines[k].trim().split(" ");
-                        for (let ka=0;ka<a.length;ka++)
-                            outputlst[name].push(a[ka].trim());
-                    }
-                    
-                }
-                i=i+(j-i);
-            } else {
-                if (debug>1)
-                    dualPrint('Found simple letiable in line '+ln+' ('+name+'='+val+')');
-                outputlst[name]=val;
-            }
-            ++i;
-            
-
-            
-        } else {
-            if (debug>1) {
-                if (ln.indexOf('$$')!==0 && ln.indexOf('##')!==0 && ln.size>1)
-                    dualPrint('---- bad line'+i+'='+ln);
-                else if (ln.size>1)
-                    dualPrint('____ ignoring line'+i+'='+ln);
-            }
-            ++i;
-        }
-    }
     
-    return outputlst;
+    try {
+        if (debug)
+            console.log('Reading fname=',fname);
+        let obj=null;
+        try {
+            obj=  await bisgenericio.read(fname,false);
+        } catch(e) {
+            console.log('Error =',e);
+        }
+        let lines= obj.data.split('\n');
+
+        if (debug)
+            console.log('Reading fname=',fname,' numlines=',lines.length);
+        
+        let outputlst = {};
+        
+        let i=0;
+        while (i<lines.length-1) {
+            let ln=lines[i];
+            if (ln.indexOf('##$')===0) {
+                let ind=ln.indexOf("=",ln);
+                let name=ln.substr(3,ind-3);
+                let val=ln.substr(ind+1).trim();
+                if (val.indexOf('(')===0) {
+                    let eind=val.indexOf(')');
+                    let orange=val.substr(1,eind-1).trim();
+                    let range=orange.split(",");
+                    if (debug>0) {
+                        if (range.length===1) {
+                            dualPrint('Found 1d-array in line '+i+' name='+name+' range='+range[0]);
+                        } else {
+                            dualPrint('Found array in line '+i+' name='+name+' range=*'+orange+'* -->'+range.join(''));
+                        }
+                    }
+                    // Read array
+                    let j=i+1,found=false;
+                    while (j<lines.length && found===false) {
+                        ln=lines[j];
+                        if (ln.indexOf('##$')===0 || ln.indexOf('$$')===0) {
+                            found=1;
+                        } else {
+                            ++j;
+                        }
+                    }
+                    j=j-1;
+                    if (debug>1)
+                        dualPrint('+++++ range of lines='+(i+1)+':'+j+' name='+name);
+                    
+                    outputlst[name]=[];
+                    if (j<=i) {
+                        for (let kb=0;kb<range.length;kb++)
+                            outputlst[name].push(range[kb].trim());
+                        
+                    } else {
+                        for (let k=i+1;k<=j;k++) {
+                            let a=lines[k].trim().split(" ");
+                            for (let ka=0;ka<a.length;ka++)
+                                outputlst[name].push(a[ka].trim());
+                        }
+                        
+                    }
+                    i=i+(j-i);
+                } else {
+                    if (debug>1)
+                        dualPrint('Found simple letiable in line '+ln+' ('+name+'='+val+')');
+                    outputlst[name]=val;
+                }
+                ++i;
+                
+
+                
+            } else {
+                if (debug>1) {
+                    if (ln.indexOf('$$')!==0 && ln.indexOf('##')!==0 && ln.size>1)
+                        dualPrint('---- bad line'+i+'='+ln);
+                    else if (ln.size>1)
+                        dualPrint('____ ignoring line'+i+'='+ln);
+                }
+                ++i;
+            }
+        }
+        return (outputlst);
+    } catch(e) {
+        return(-1);
+    }
+
 };
 
 /**
  * @alias BisReadBruker.parseTextFiles
  */
-let parseTextFiles = function(filename,outprefix,debug,forceorient) {
+let parseTextFiles = async function(filename,outprefix,debug,forceorient) {
 
+    
     let data = {};
     debug = debug || false;
 
     data.originalfilename=filename;
     data.forceorient=userPreferences.sanitizeOrientationOnLoad(forceorient);
 
-    console.log('Force orient=',data.forceorient);
+    if (debug)
+        console.log('Force orient=',data.forceorient);
     
-    let dirname = path.resolve(path.dirname(filename));
-    let tailname = path.basename(filename);
+    let dirname = bisgenericio.getNormalizedFilename(bisgenericio.getDirectoryName(filename));
+    let tailname = bisgenericio.getBaseName(filename);
 
     dualPrint('');
     dualPrint('+++++ reading '+filename);
@@ -206,43 +221,57 @@ let parseTextFiles = function(filename,outprefix,debug,forceorient) {
         return data;
     } 
 
-    let reconame=path.normalize(path.join(dirname,'/reco'));
-    let acqpname=path.normalize(path.join(dirname,'../../acqp'));
-    let methodname=path.normalize(path.join(dirname,'../../method'));
-    let visuname=path.normalize(path.join(dirname,'/visu_pars'));
-    let binname=path.normalize(filename);
-    let numgood=0;
+    let reconame=bisgenericio.getNormalizedFilename(bisgenericio.joinFilenames(dirname,'/reco'));
+    let acqpname=bisgenericio.getNormalizedFilename(bisgenericio.joinFilenames(dirname,'../../acqp'));
+    let methodname=bisgenericio.getNormalizedFilename(bisgenericio.joinFilenames(dirname,'../../method'));
+    let visuname=bisgenericio.getNormalizedFilename(bisgenericio.joinFilenames(dirname,'/visu_pars'));
+    let binname=bisgenericio.getNormalizedFilename(filename);
 
 
+    if (debug)
+        console.log('Starting ',reconame,visuname);
     
     data.havereco=false;
     
     //    let reco=null;
-    if (printFileStats(reconame)===1) {
+    let pw= await printFileStats(reconame);
+
+    if (pw===1) {
         data.havereco=true;
         //reco=readParameterFile(reconame);
     }
 
+    if (debug)
+        console.log('++++ I Have Reco =',data.havereco);
     
     let arr=[ visuname,acqpname,methodname,binname];
-    arr.forEach(function(e) {
-        numgood+=printFileStats(e);
-    });
-
+    let numgood=0;
+    for (let i=0;i<arr.length;i++) {
+        let s=await printFileStats(arr[i],true);
+        numgood+=s;
+    }
+    
     if (numgood<arr.length) {
         data.error='One or more files are missing';
         return data;
     }
 
-    let visu=readParameterFile(visuname);
-    let method=readParameterFile(methodname);
-    let acqp=readParameterFile(acqpname);
-    
+    if (debug)
+        console.log('Now reading actual files',numgood);
+
+    if (debug)
+        console.log('Reding Parameter File',visuname);
+    let visu=await readParameterFile(visuname);
+    if (debug)
+        console.log('Reding Parameter File',methodname);
+    let method=await readParameterFile(methodname);
+    let acqp=await readParameterFile(acqpname);
     data.orient=method['PVM_SPackArrSliceOrient'] || 'axial';
 
 
     data.numechos=method['PVM_NEchoImages'];
-    console.log('Number of echos=',data.numechos);
+    if (debug)
+        console.log('Number of echos=',data.numechos);
     
     if (data.orient.length>1) {
         data.error='multi orientation localizer '+data.orient;
@@ -330,9 +359,10 @@ let parseTextFiles = function(filename,outprefix,debug,forceorient) {
     
     data.basename=data.basename.trim().replace(/ /g,'_').replace(/\t/g,'_').replace(/\(/g,'').replace(/\)/g,'');
 
-    let a=path.basename(path.dirname(path.normalize(acqpname)));
-    let b=path.basename(path.dirname(path.normalize(data.originalfilename)));
+    let a=bisgenericio.getBaseName(bisgenericio.getDirectoryName(bisgenericio.getNormalizedFilename(acqpname)));
+    let b=bisgenericio.getBaseName(bisgenericio.getDirectoryName(bisgenericio.getNormalizedFilename(data.originalfilename)));
     data.displaynames=[ (a+"_"+mname+"_"+b).replace(/ /g,'_').replace(/\t/g,'_').replace(/\(/g,'').replace(/\)/g,'') ];
+
     return data;
 };
 
@@ -360,8 +390,8 @@ let createHeader = function(data,debug) {
     }
     
     for (let ia=0;ia<=2;ia++) {
-        headerstruct.dim[ia+1]=data.dims[ia];
-        headerstruct.pixdim[ia+1]=data.spa[ia];
+        headerstruct.dim[ia+1]=parseInt(data.dims[ia]);
+        headerstruct.pixdim[ia+1]=parseFloat(data.spa[ia]);
     } /*else {
       // DTI is forwhatever reason flipped in
       // specifying dimensions
@@ -387,6 +417,7 @@ let createHeader = function(data,debug) {
 
     headerstruct.qform_code=0;
     headerstruct.sform_code=1;
+
     
     let origin= [ -data.fov[0]/2,-data.fov[1]/2, -data.fov[2]/2 ];
     
@@ -416,10 +447,8 @@ let createHeader = function(data,debug) {
 /**
  * @alias BisReadBruker.saveTextFiles
  */
-let saveTextFiles = function(data,debug) {
+let saveTextFiles = async function(data) {
 
-    debug = debug || false;
-    
     // -------------
     // Details file
     // -------------
@@ -439,10 +468,10 @@ let saveTextFiles = function(data,debug) {
                 details+=key+": "+data[key]+"\n";
         }
     }
-    if (debug)
-        dualPrint("\n"+details+"\n");
+    //    if (debug)
+    //      dualPrint("\n"+details+"\n");
     dualPrint("+++++ saving header info in "+detailsname);
-    fs.writeFileSync(detailsname,details);
+    await bisgenericio.write(detailsname,details);
     data.detailsname=detailsname;
     
     // --------------------
@@ -458,7 +487,7 @@ let saveTextFiles = function(data,debug) {
             datatext=datatext+x.join(" ")+"\n";
         }
         dualPrint("+++++ saving directions in "+directionsname);
-        fs.writeFileSync(directionsname,datatext);
+        await bisgenericio.write(directionsname,datatext);
         data.directionsname=directionsname;
     }
     
@@ -471,33 +500,22 @@ let saveTextFiles = function(data,debug) {
 /**
  * @alias BisReadBruker.directSaveImage
  */
-let directSaveImage=function(part_img,part_imageoutname,forceorient) {
+let directSaveImage=async function(part_img,part_imageoutname,forceorient) {
 
-    forceorient=userPreferences.sanitizeOrientationOnLoad(forceorient);
+    console.log('In Direct Save',part_img.getDescription(),part_imageoutname,forceorient);
 
-    
-    let serialized=part_img.serializeToNII();
-    if (forceorient!=="None") {
-        let reorient_img=new BisWebImage();
-        reorient_img.initialize();
-        reorient_img.bindeserialize(serialized,forceorient);
-        serialized=reorient_img.serializeToNII();
-        console.log('Reorient image=',reorient_img.getDescription());
-        reorient_img=null;
+    if (forceorient) {
+        let dat=part_img.serializeToNII();
+        let output=new BisWebImage();
+        output.initialize();
+        output.debug=0;
+        output.parseNII(dat.buffer,forceorient);
+        await output.save(part_imageoutname);
     } else {
-        console.log('Orig image=',part_img.getDescription());
+        await part_img.save(part_imageoutname);
     }
-    console.log('\n\n ',forceorient,'\n\n');
 
-    
-
-    let cdata=pako.gzip(serialized);
-    let fd=fs.openSync(part_imageoutname,'w');
-    let buf=bisgenericio.createBuffer(cdata);
-    fs.writeSync(fd,buf,0,buf.length);
-    fs.closeSync(fd);
-    let stats = fs.statSync(part_imageoutname);
-    let fileSizeInBytes = stats["size"];
+    let fileSizeInBytes = await bisgenericio.getFileSize(part_imageoutname);
     dualPrint("+++++ saved image in "+part_imageoutname+", size="+fileSizeInBytes);
     return true;
 };
@@ -506,35 +524,35 @@ let directSaveImage=function(part_img,part_imageoutname,forceorient) {
 /** 
  * @alias BisReadBruker.saveRegularImage
  */
-let saveRegularImage = function (data,debug) {
+let saveRegularImage = async function (data,debug) {
 
-    
-    
     let header=createHeader(data,debug);
 
     let headerbin=header.createHeaderRawData(false);
+
+    
     if (debug)
         dualPrint('+++++ Reading data from filename='+data.originalfilename);
 
-    let raw_file_data=fs.readFileSync(data.originalfilename);
 
-
+    let obj = await bisgenericio.read(data.originalfilename,true);
+    let raw_file_data=obj.data;
 
     let rawdata = new Uint8Array(raw_file_data);
-    let c=new Uint8Array(headerbin.length+raw_file_data.length);    
+    let c=new Uint8Array(headerbin.length+rawdata.length);
+    
     c.set(headerbin.data);
     c.set(rawdata,headerbin.length);
+
     headerbin=null;
     rawdata=null;
     raw_file_data=null;
 
-    
-    
     let img=new BisWebImage();
     img.initialize();
     img.parseNII(c.buffer,data.forceorient);
     dualPrint("+++++ created image "+img.getDescription());
-
+    
 
     if (data.numechos>1) {
 
@@ -567,23 +585,21 @@ let saveRegularImage = function (data,debug) {
         newimg=null;
     }
     
-
+    debug=true;
     
     let imghead=img.getHeader();
-    if (debug)
+    //    if (debug)
         dualPrint("+++++ Normal Image Dimensions = "+imghead.struct.dim+", spa=" +imghead.struct.pixdim);
 
-
-    
     let imageoutname=data.basename+".nii.gz";
     //    img.addQuaternionCode(biswrap);
-    directSaveImage(img,imageoutname,false);
+    await directSaveImage(img,imageoutname,false);
     
     data.imageDimensions=img.getDimensions();
     
-    
-    data.partnames=[ path.resolve(path.normalize(imageoutname))];
-    saveTextFiles(data,debug);
+    data.partnames=[ bisgenericio.getNormalizedFilename(bisgenericio.getNormalizedFilename(imageoutname))];
+    await saveTextFiles(data,debug);
+    dualPrint('Text files saved');
     c=null;
     img=null;
 };
@@ -593,11 +609,12 @@ let saveRegularImage = function (data,debug) {
  * @alias BisReadBruker.saveMultiPartReconstructedDTIFile
  */
 
-let saveMultiPartReconstructedDTIFile = function(data,debug) {
+let saveMultiPartReconstructedDTIFile = async function(data,debug) {
 
     let filename=data.originalfilename;
     let header=createHeader(data,debug);
-    let raw_file_data=fs.readFileSync(filename);
+    let raw_file_data=await bisgenericio.read(filename,true).data;
+
     let dt = new Uint8Array(raw_file_data).buffer;
     
     let castarray=null;
@@ -717,14 +734,14 @@ let saveMultiPartReconstructedDTIFile = function(data,debug) {
             
             let part_imageoutname=data.basename+"_"+key+extra+".nii.gz";
             
-            let a=path.basename(path.dirname(path.dirname(path.dirname(path.resolve(filename)))));
-            let b=path.basename(path.dirname(path.normalize(filename)));
+            let a=bisgenericio.getBaseName(bisgenericio.getDirectoryName(bisgenericio.getDirectoryName(bisgenericio.getDirectoryName(bisgenericio.getNormalizedFilename(filename)))));
+            let b=bisgenericio.getBaseName(bisgenericio.getDirectoryName(bisgenericio.getNormalizedFilename(filename)));
             let c=key+extra+":"+a+"_"+b;
 
-            data.partnames.push( path.resolve(path.normalize(part_imageoutname)));
+            data.partnames.push( bisgenericio.getNormalizedFilename(bisgenericio.getNormalizedFilename(part_imageoutname)));
             data.displaynames.push(c.replace(/ /g,'_').replace(/\t/g,'_').replace(/\(/g,'').replace(/\)/g,''));
             
-            directSaveImage(part_img,part_imageoutname,data.forceorient);
+            await directSaveImage(part_img,part_imageoutname,data.forceorient);
         }
     }
     
@@ -739,16 +756,14 @@ let saveMultiPartReconstructedDTIFile = function(data,debug) {
  * @alias BisReadBruker.saveMultiPartDTIFile
  */
 
-let saveMultiPartDTIFile = function(data,debug) {
+let saveMultiPartDTIFile = async function(data,debug) {
     let filename=data.originalfilename;
     
     // Create Header
     let header=createHeader(data,debug);
 
-
-    
     //
-    let raw_file_data=fs.readFileSync(filename);
+    let raw_file_data=await bisgenericio.read(filename,true).data;
     let dt = new Uint8Array(raw_file_data).buffer;
     
     let castarray=null;
@@ -800,13 +815,13 @@ let saveMultiPartDTIFile = function(data,debug) {
         
         let part_imageoutname=data.basename+"_dti"+extra+".nii.gz";
         
-        let a=path.basename(path.dirname(path.dirname(path.dirname(path.resolve(filename)))));
-        let b=path.basename(path.dirname(path.normalize(filename)));
+        let a=bisgenericio.getBaseName(bisgenericio.getDirectoryName(bisgenericio.getDirectoryName(bisgenericio.getDirectoryName(bisgenericio.getNormalizedFilename(filename)))));
+        let b=bisgenericio.getBaseName(bisgenericio.getDirectoryName(bisgenericio.getNormalizedFilename(filename)));
         let c="dti"+extra+":"+a+"_"+b;
-        data.partnames.push( path.resolve(path.normalize(part_imageoutname)));
+        data.partnames.push( bisgenericio.getNormalizedFilename(bisgenericio.getNormalizedFilename(part_imageoutname)));
         data.displaynames.push(c.replace(/ /g,'_').replace(/\t/g,'_').replace(/\(/g,'').replace(/\)/g,''));
 
-        directSaveImage(part_img,part_imageoutname,data.forceorient);
+        await directSaveImage(part_img,part_imageoutname,data.forceorient);
     }
 
     part_img=null;
@@ -824,14 +839,12 @@ let saveMultiPartDTIFile = function(data,debug) {
  * @param {Boolean} debug - if true print extra messages
  * @returns {Boolean} 
  */
-let readFile = function (filename,outprefix,forceorient,debug) {
-
-    
-    debug = debug || false;
+let readFile = async function (filename,outprefix,forceorient,debug=false) {
 
     console.log('\n\n\n\n Force orient input in readFile=',forceorient);
+
     
-    let data=parseTextFiles(filename,outprefix,debug,forceorient);
+    let data=await parseTextFiles(filename,outprefix,debug,forceorient);
     let error=data.error || "";
     if (error!=="") {
         return data;
@@ -840,22 +853,20 @@ let readFile = function (filename,outprefix,forceorient,debug) {
     // Save Text Files
 
     dualPrint("+++++ "+data.basename);
-    
+
     if (data.ndir>0 && data.repeats>1) {
         dualPrint("_____ Processing as multi part raw dti file.");
-        saveMultiPartDTIFile(data,debug);
+        await saveMultiPartDTIFile(data,debug);
     } else if (data.names[0]!=="<DTI_FA>" ) {
         dualPrint("_____ Processing as normal file.");
-        saveRegularImage(data,debug);
-        return data;
+        await saveRegularImage(data,debug);
     } else {
         dualPrint("_____ Processing as multi part reconstructed dti file.");
-        saveMultiPartReconstructedDTIFile(data,debug);
+        await saveMultiPartReconstructedDTIFile(data,debug);
     }
 
     return data;
 };
-
 
 
 /** 
@@ -869,21 +880,23 @@ let readFile = function (filename,outprefix,forceorient,debug) {
  * @param {Boolean} debug - if true print extra messages
  * @returns {Boolean} 
  */
-let readMultiple = function (filename,outprefix,forceorient,addcallback,debug) {
+let readMultiple= async function (filename,outprefix,forceorient,addcallback,debug) {
 
     if (debug)
         console.log('In Read Multiple');
     
     try {
-        if (!fs.lstatSync(outprefix).isDirectory()) 
+        let p=await bisgenericio.isDirectory(outprefix);
+        if (!p) {
             return [ false, ' cannot write to '+outprefix+'. It is not a directory\n'];
+        }
     } catch(e) {
         return [ false, e ];
     }
 
     let tmp_txt=[ filename, outprefix,forceorient ].join(" ");
-    try { 
-        fs.writeFileSync(path.join(outprefix,"log.txt"),tmp_txt);
+    try {
+        await bisgenericio.write(bisgenericio.joinFilenames(outprefix,"log.txt"),tmp_txt);
     } catch (e) {
         return [false,'Cannot write to output directory '+outprefix];
     }
@@ -896,8 +909,8 @@ let readMultiple = function (filename,outprefix,forceorient,addcallback,debug) {
 
     let addElement = function (name,fname,infoname) {
         joblist.push({ name  : name,
-                       filename : path.basename(fname),
-                       details : path.basename(infoname),
+                       filename : bisgenericio.getBaseName(fname),
+                       details : bisgenericio.getBaseName(infoname),
                      });
         if (addcallback !== null)
             addcallback(name,fname,infoname);
@@ -906,7 +919,7 @@ let readMultiple = function (filename,outprefix,forceorient,addcallback,debug) {
     };
     
 
-    let obj=getMatchingFilenames(filename);
+    let obj=await getMatchingFilenames(filename);
     let fnames=obj.names;
     let len=obj.len;
     
@@ -920,14 +933,14 @@ let readMultiple = function (filename,outprefix,forceorient,addcallback,debug) {
     for (let counter=0;counter<fnames.length;counter++) {
         let ifile=fnames[counter].substr(len,fnames[counter].length-len);
         if (counter===0) {
-            let dirname = path.dirname(path.dirname(path.resolve(path.dirname(fnames[0]))));
-            let visuname=path.join(dirname,"visu_pars");
-            let visu=readParameterFile(visuname);
+            let dirname = bisgenericio.getDirectoryName(bisgenericio.getDirectoryName(bisgenericio.getNormalizedFilename(bisgenericio.getDirectoryName(fnames[0]))));
+            let visuname=bisgenericio.joinFilenames(dirname,"visu_pars");
+            let visu=await readParameterFile(visuname);
             if (visu['VisuSubjectId'][0].length>2)
                 subjectname=visu['VisuSubjectId'][0].substr(1,visu['VisuSubjectId'][0].length-2);
         }
         
-        let a=path.normalize(path.dirname(ifile)).split(path.sep);
+        let a=bisgenericio.getNormalizedFilename(bisgenericio.getDirectoryName(ifile)).split(bisgenericio.getPathSeparator());
         if (subjectname.length>1)
             a[0]=subjectname;
         let ofile="";
@@ -983,8 +996,8 @@ let readMultiple = function (filename,outprefix,forceorient,addcallback,debug) {
     for (let counter=0;counter<maxcounter;counter++) {
         let ifile=fnamepairs[counter].inp;
         let ofile=fnamepairs[counter].out;
-        ofile=path.join(outprefix,ofile);
-        let data=readFile(ifile,ofile,forceorient);
+        ofile=bisgenericio.joinFilenames(outprefix,ofile);
+        let data=await readFile(ifile,ofile,forceorient);
         let error=data.error || "";
         if (error !="" ) {
             dualPrint('----- ERROR: '+error);
@@ -1014,11 +1027,11 @@ let readMultiple = function (filename,outprefix,forceorient,addcallback,debug) {
     
     let jobname="";
     if (forceorient==="RAS")
-        jobname=path.join(outprefix,"paravisionconvert_RAS.json");
+        jobname=bisgenericio.joinFilenames(outprefix,"paravisionconvert_RAS.json");
     else if (forceorient==="LPS")
-        jobname=path.join(outprefix,"paravisionconvert_LPS.json");
+        jobname=bisgenericio.joinFilenames(outprefix,"paravisionconvert_LPS.json");
     else
-        jobname=(path.join(outprefix,"paravisionconvert.json"));
+        jobname=(bisgenericio.joinFilenames(outprefix,"paravisionconvert.json"));
 
 
     let outobj = {
@@ -1026,9 +1039,10 @@ let readMultiple = function (filename,outprefix,forceorient,addcallback,debug) {
         job : joblist,
     };
     let txt=JSON.stringify(outobj);
-    bisgenericio.write(jobname,txt);
+    await bisgenericio.write(jobname,txt);
     return [ true, 'saved job in '+jobname ];
 };
+
 
 
 

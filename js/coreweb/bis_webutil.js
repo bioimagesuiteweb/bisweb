@@ -684,9 +684,10 @@ const webutil = {
      * @param{String} title -- the top text
      * @param{String} value  - the current value
      * @param{array} options -- arrray of objects { value: value, text:text }
+     * @param{String} extra -- extra html for the bottom
      * @returns{Promise} - the payload is the return value
      */
-    createRadioSelectModalPromise : function (title,buttonname,value,options) {
+    createRadioSelectModalPromise : function (title,buttonname,value,options,extra="") {
 
         let name=this.getuniqueid();
         
@@ -704,6 +705,7 @@ const webutil = {
                 <label><input type="radio"  name="${name}" id="${newid}" value="${options[i].value}" ${checked}>${options[i].text}</label>
                 </div>`;
         }
+        str+=extra;
 
         return new Promise( (resolve,reject) => {
             

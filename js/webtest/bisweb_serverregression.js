@@ -2,7 +2,7 @@ const bisweb_fileserverclient = require('bisweb_fileserverclient.js');
 const bis_genericio = require('bis_genericio.js');
 const webfileutil = require('bis_webfileutil');
 const webutil = require('bis_webutil.js');
-const wsutil = require('wsutil.js');
+const wsutil = require('bis_wsutil.js');
 const BiswebImage = require('bisweb_image.js');
 const FileServer = new bisweb_fileserverclient();
 

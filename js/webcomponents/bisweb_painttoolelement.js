@@ -1112,9 +1112,11 @@ class PaintToolElement extends HTMLElement {
                 biswrap.initialize().then( () => {
                     if (biswrap.uses_gpl()) {
                         moduleoptions.name='Deface Head Image';
+                        let mod=new modules.defaceImage();
+                        mod.outputmask=true;
                         this.internal.defaceModule=biscustom.createCustom(this.internal.layoutcontroller,
                                                                           this.internal.algocontroller,
-                                                                          new modules.defaceImage(),
+                                                                          mod,
                                                                           moduleoptions);
                         webutil.createMenuItem(tmenu, moduleoptions.name,function() {
                             self.internal.defaceModule.show();

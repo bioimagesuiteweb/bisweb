@@ -26,6 +26,7 @@ const bisbruker=require('bis_readbruker');
 const path=require('path');
 const BisWebImage=require('bisweb_image');
 const os=require('os');
+const colors=require('colors/safe');
 const tempfs = require('temp').track();
 
 console.log('tmp=',os.tmpdir());
@@ -94,7 +95,7 @@ describe('Testing BisImage (from bis_readbruker.js) a class that imports Bruker 
                         forceorient="RAS";
                     
                     let infilename=path.join(indata,'pdata/1/2dseq');
-                    console.log('\n+++++ Importing bruker data from '+infilename+' forceorient='+forceorient);
+                    console.log(colors.cyan('\n+++++ Importing bruker data from '+infilename+' forceorient='+forceorient+'\n-------- --------'));
 
                     let data=bisbruker.readFile(infilename,tmpname[count],forceorient,false);
                     outimagenames[count]=data.partnames[0];

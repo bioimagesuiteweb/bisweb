@@ -1,7 +1,9 @@
 const $ = require('jquery');
-const localforage = require('localforage');
+const bis_genericio = require('bis_genericio');
 const webutil = require('bis_webutil.js');
-
+const bootbox=require('bootbox');
+const userPreferences=require('bisweb_userpreferences');
+const bisdbase = require('bisweb_dbase');
 
 require('jstree');
 
@@ -27,12 +29,8 @@ class SimpleFileDialog {
 
         this.separator='/';
 
-
-        this.options= {
-            'makeFavoriteButton' : options.makeFavouriteButton || false,
-            'mode' :  options.mode || 'load',
-            'modalName' :  options.modalName || 'File Server Dialog',
-        };
+        this.mode =  options.mode || 'load',
+        this.modalName =  options.modalName || 'File Server Dialog',
 
         // Key Widgets
         this.modal=null;
@@ -50,10 +48,14 @@ class SimpleFileDialog {
         this.currentDirectory = null;
 
         // Filter files
-        this.filters='';
-        this.filterMode=true;
-        this.oldfilters='';
+        this.currentFilters=[{ name: 'All Files', extensions: [] }];
+        this.newFilters=true;
+        this.activeFilterList=this.currentFilters[0].extensions;
+
         this.previousList=null;
+        this.favorites = [];
+        this.lastFavorite=null;
+
     }
 
     // --------------- GUI Callbacks ------------------------
@@ -62,6 +64,14 @@ class SimpleFileDialog {
      */
     filenameCallback(name=null) {
 
+        if (this.mode.indexOf('dir')>=0) {
+            // Directory Mode
+            this.modal.dialog.modal('hide');
+            setTimeout( () => {
+                this.fileRequestFn(this.currentDirectory);
+            },10);
+        }
+        
         if (name===null) {
             name='';
             try {
@@ -71,19 +81,43 @@ class SimpleFileDialog {
                 return;
             }
         }
-        if (name.length>0) {
+        
+        if (name.length<1) {
+            return;
+        }
+
+        let outname=this.currentDirectory+this.separator+name;
+        
+        let sendCallback= (() => {
             this.modal.dialog.modal('hide');
             setTimeout( () => {
-                this.fileRequestFn(this.currentDirectory+this.separator+name);
+                this.fileRequestFn(outname);
             },10);
+        });
+        
+        
+        if (this.mode!=='save') {
+            return sendCallback();
         }
+
+        // Save Stuff
+        bis_genericio.getFileSize(outname).then( () => {
+            bootbox.confirm("The file "+outname+" exists. Are you sure you want to overwrite this?", ( (result) => {
+                if (result)  {
+                    sendCallback();
+                }
+            }));
+        }).catch( () => {
+            sendCallback();
+        });
     }
+
 
     /** Request Directory
      * @param {String} dname -- the name of the directory
      */
     changeDirectory(dname) {
-        this.fileListFn(this.options.mode, dname,true);
+        this.fileListFn( dname,true);
     }
 
     // --------------- Create GUI ------------------------------
@@ -95,7 +129,7 @@ class SimpleFileDialog {
     
     createDialogUserInterface() {
 
-        this.modal = webutil.createmodal(this.options.modalName, 'modal-lg');
+        this.modal = webutil.createmodal(this.modalName, 'modal-lg');
         $('body').append(this.modal);
         
         this.contentDisplayTemplate = 
@@ -110,71 +144,24 @@ class SimpleFileDialog {
                    <div class='col-sm-12 bisweb-file-navbar'></div>
                 </div>
 
+
                 <div class='row justify-content-start content-box'>
                     <div class='col-sm-3 favorite-bar'></div>
                     <div class='col-sm-9 bisweb-file-display'>
                       <div class='bisweb-file-list'><p>Content goes here...</p></div>
                     </div>
                 </div>
-
                 <div class='row justify-content-start content-box'>
-                    <div class='col-sm-3'></div>
-                    <div class='col-sm-9 bisweb-file-filterbar' style='margin-top:10px'></div>
+                    <div class='col-sm-3 favorite-buttons'></div>
+                    <div class='col-sm-9 bisweb-file-filterbar' style='margin-top:5px'></div>
                 </div>
+
              </div>`);
 
         
         
-        let favoriteBar = this.container.find('.favorite-bar');
-
-        if (this.options.makeFavoriteButton) {
-            let favoriteButton = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-star-empty'></span> Mark folder as favorite</button>`);
-            favoriteBar.append(favoriteButton);
-            
-            let pillsHTML = $(`<ul class='nav nav-pills nav-stacked'></ul>`);
-            favoriteBar.append(pillsHTML);
-            
-            let selectPillFromPills = (pill, pills) => {
-                for (let otherPill of pills) {
-                    $(otherPill).removeClass('active');
-                }
-                $(pill).addClass('active');
-            };
-
-            //TODO: add folder to localforage ...
-            favoriteButton.on('click', (event) => {
-                event.preventDefault();
-                let key = webutil.getuniqueid(), name = this.currentPath[this.currentPath.length - 1];
-                let favorite = {
-                    'name' : name,
-                    'path' : Array.from(this.currentPath),
-                    'key' : key
-                };
-
-                localforage.setItem(key, JSON.stringify(favorite));
-
-                //create the pill
-                let pillsBar = favoriteBar.find('.nav.nav-pills');
-                let newPill = $(`<li><a href='#'>${name}</a></li>`);
-                newPill.on('click', (event) => {
-                    event.preventDefault();
-                    selectPillFromPills(newPill, pillsBar.find('li'));
-                    localforage.getItem(key, (err, value) => {
-                        let favoriteFolder;
-                        try {
-                            favoriteFolder = JSON.parse(value);
-                            this.changeDirectory(favoriteFolder.path);
-                        } catch(e) {
-                            console.log('error parsing JSON', value);
-                        }
-                        
-                    });
-                });
-
-                pillsBar.append(newPill);
-            });
-        }
-
+        this.createFavorites();
+        
         this.okButton = $(`<button type='button' class='btn btn-success'>Load</button>`);
         this.okButton.on('click', (event) => {
             event.preventDefault();
@@ -185,6 +172,21 @@ class SimpleFileDialog {
         this.modal.body.append(this.container);        
 
     }
+
+    /**
+     * Create Filters 
+     */
+    createFilters(filters=null) {
+
+        if (filters) {
+            this.currentFilters=JSON.parse(JSON.stringify(filters));
+        }  else {
+            this.currentFilters=[];
+        }
+        this.currentFilters.push({ name: 'All Files', extensions: [] });
+        this.newFilters=true;
+        this.activeFilterList=this.currentFilters[0].extensions;
+    }
     
     /**
      * Adds the files specified by list to the file dialog. If the dialog is empty this effectively creates the dialog.
@@ -193,45 +195,55 @@ class SimpleFileDialog {
      * NOTE: The file server that creates the file dialog will provide a few of its functions with the socket bound, e.g. fileListFn, to avoid sharing too many of its internal structures.
      * @param {Array} list - An array of file entries. 
      * @param {String} list.text - The name of the file or folder.
-     * @param {String} list.type - What type of file or folder the entry represents. One of 'picture', 'html', 'js', 'text', 'video', 'audio', 'file', or 'directory'.
      * @param {String} list.path - The full path indicating where the file is located on the server machine.
-     * @param {Array} list.children - File entries for each file contained in the list entry. Only for list entries of type 'directory'.
      * @param {Object} startDirectory - File entry representing the directory at which the files in list should be added. Undefined means the files represent the files in the current directory
+     * @param {Object} rootDirectory - File entry representing the root directory from which startDirectory derives
      * @param {Object} opts - filter options
      */
-    openDialog(list, startDirectory = null, opts=null) {
+    openDialog(list, startDirectory = null, rootDirectory=null,opts=null) {
 
-        if (this.modal===null)
+        if (this.modal===null) {
             this.createDialogUserInterface();
-
-        this.oldfilters=null;
-        let initialfilename=null;
+        }
+        
+        this.newFilters=true;
         
         if (opts!==null) {
-            this.filters=opts.suffix || '';
-            let newtitle=opts.title || null;
-            if (newtitle) {
-                let title = this.modal.header.find('.modal-title');
-                title.text(newtitle+ ' (using bisweb fileserver)');
+            opts.filters=opts.filters || null;
+
+            this.createFilters(opts.filters);
+
+            if (opts.title) {
+                let newtitle=opts.title;
+                if (newtitle) {
+                    let title = this.modal.header.find('.modal-title');
+                    title.text(newtitle+ ' (using bisweb fileserver)');
+                }
             }
-            
-            this.options.mode = opts.mode || 'load';
-            
-            if (this.options.mode === 'save') {
+
+            if (opts.mode) 
+                this.mode = opts.mode;
+
+            if (this.mode === 'save') {
                 this.okButton.text('Save');
                 this.displayFiles = true;
-            } else if (this.options.mode === 'dir') {
+            } else if (this.mode.indexOf('dir')>=0) {
                 this.okButton.text('Select Directory');
-                this.displayFiles = false;
+                this.displayFiles = true;
             } else {
                 this.okButton.text('Load');
                 this.displayFiles = true;
             }
+        } else {
+            console.log('No opts');
+        }
 
+        let initialfilename=null;
+        if (opts!==null) {
             if (opts.initialFilename)
                 initialfilename=opts.initialFilename;
-            
         }
+        
         this.fileList = list;
         this.currentDirectory = startDirectory;
 
@@ -240,11 +252,51 @@ class SimpleFileDialog {
         this.currentPath = startDirectory;
         this.container.find('.bisweb-file-navbar').empty();
 
-        this.updateTree(list,initialfilename);
 
-        if (!this.isVisible()) {
-            this.modal.dialog.modal('show');
+        let filterbar=this.container.find('.bisweb-file-filterbar');
+        if (this.currentFilters.length<1 || this.displayFiles===false) {
+            filterbar.empty();
+            this.activeFilterList=[];
+        } else if (this.newFilters===true) {
+            filterbar.empty();
+            this.newFilters=false;
+                
+            let filter_label=$("<span>Filter Files: </span>");
+            filter_label.css({'padding':'10px'});
+            filterbar.append(filter_label);
+            let sel=webutil.createselect({
+                parent : filterbar,
+                values : [],
+                callback : (e) => {
+                    e.preventDefault();
+                    let ind=parseInt(e.target.value);
+                    if (ind>=0 && ind<this.currentFilters.length) {
+                        this.activeFilterList=this.currentFilters[ind].extensions;
+                        this.updateTree(this.previousList,name,rootDirectory);
+                    }
+                }
+            });
+            sel.empty();
+
+            let addOption= ((b) => {
+                sel.append($(b));
+            });
+
+            console.log('adding ', this.currentFilters.join('\n\t'));
+            
+            for (let i=0;i<this.currentFilters.length;i++) {
+
+                if (this.currentFilters[i].extensions.length>0) {
+                    addOption(`<option value="${i}">${this.currentFilters[i].name}, (${this.currentFilters[i].extensions.join(',')})</option>`);
+                } else {
+                    addOption(`<option value="${i}">${this.currentFilters[i].name}</option>`);
+                }
+            }
         }
+
+        this.updateTree(list,initialfilename,rootDirectory);
+
+        this.modal.dialog.modal('show');
     }
 
     /**
@@ -253,8 +305,11 @@ class SimpleFileDialog {
      * 
      * Sorts contents before display so that folders are shown first.
      * @param {Array} list - An array of file entries. 
+     * @param {String} lastfilename - the last selected filename
+     * @param {String} rootDirectory - "the drive" we are looking in
+
      */
-    updateTree(list,lastfilename=null) {
+    updateTree(list,lastfilename=null,rootDirectory=null) {
 
         this.previousList=JSON.parse(JSON.stringify(list));
         
@@ -274,8 +329,6 @@ class SimpleFileDialog {
                        "background-color": "#444444"
                      });
 
-        
-        //sort folders ahead of files
 
         if (!this.displayFiles) {
             let len=list.length-1;
@@ -285,55 +338,20 @@ class SimpleFileDialog {
                     i--;
                 } 
             }
-            
-            let filterbar=this.container.find('.bisweb-file-filterbar');
-            filterbar.empty();
-        } else if (this.filters) {
-
-            if (this.filterMode===true) {
-                let splitFilters = this.filters.split(',');
-                if (splitFilters.length>0) {
-                    let len=list.length-1;
-                    for (let i = len; i >=0; i=i-1) {
-                        if (list[i].type !== 'directory') {
-                            let ok=this.checkFilenameForFilter(list[i].text,splitFilters);
-                            if (!ok) {
-                                list.splice(i,1);
-                            }
-                        }
+        } else if (this.activeFilterList.length>0) {
+            console.log('Filtering with',this.activeFilterList);
+            let len=list.length-1;
+            for (let i = len; i >=0; i=i-1) {
+                if (list[i].type !== 'directory') {
+                    let ok=this.checkFilenameForFilter(list[i].text,this.activeFilterList);
+                    if (!ok) {
+                        list.splice(i,1);
                     }
                 }
             }
-
-            if (this.oldfilters !== this.filters) {
-                let filterbar=this.container.find('.bisweb-file-filterbar');
-                filterbar.empty();
-                this.oldfilters=this.filters;
-                
-                let values = [ 'Selected: '+this.filters.split(',').join(', '),
-                               'Show All Files' ];
-                
-                let filter_label=$("<span>Filter Files: </span>");
-                filter_label.css({'padding':'10px'});
-                filterbar.append(filter_label);
-                let sel=webutil.createselect({
-                    parent : filterbar,
-                    values : [],
-                    callback : (e) => {
-                        if (e.target.value>0)
-                            this.filterMode=false;
-                        else
-                            this.filterMode=true;
-                        let name = this.filenameEntry.val() || '';
-                        this.updateTree(this.previousList,name);
-                    }
-                });
-                sel.empty();
-                sel.append($(`<option value="0">${values[0]}</option>`));
-                sel.append($(`<option value="1">${values[1]}</option>`));
-            }
         }
-
+        
+        //sort folders ahead of files
         list.sort( (a, b) => {
 
             let isadir=(a.type === 'directory');
@@ -398,37 +416,60 @@ class SimpleFileDialog {
 
 
         fileDisplay.append(fileList);
-        this.updateFileNavbar(lastfilename);
+        this.updateFileNavbar(lastfilename,rootDirectory);
     }
 
     /**
      * Updates the list of folders at the top of the file dialog to reflect the folders in the current path.
+     * @param {String} lastfilename - the last selected filename
+     * @param {String} rootDirectory - "the drive" we are looking in
      */
-    updateFileNavbar(lastfilename=null) {
+    updateFileNavbar(lastfilename=null,rootDirectory='/') {
         let navbar = this.modal.body.find('.bisweb-file-navbar');
         navbar.empty();
         
         //create navbar buttons for each folder in the current path
 
-        let folders=this.currentPath.split(this.separator);
+        
+        let folders=null;
+        
+        if (rootDirectory.length>1 && this.currentPath.length>=rootDirectory.length) {
 
+            let p=this.currentPath.substr(rootDirectory.length+1,this.currentPath.length);
+            let f=p.split(this.separator);
+            folders=[ rootDirectory.substr(1,rootDirectory.length)].concat(f);
+        } else {
+            folders=this.currentPath.split(this.separator);
+        }
+
+        
+//        console.log('Path=',this.currentPath,'root=',rootDirectory,' folders=',folders.join(', '));
+        
         for (let i=folders.length-1;i>=0;i=i-1) {
             if (folders[i].length<1)
                 folders.splice(i,1);
         }
 
-        for (let i=0;i<folders.length;i++) {
+        for (let i=-1;i<folders.length;i++) {
 
             let newPath ='';
-            for (let k=0;k<=i;k++) 
-                newPath=newPath+'/'+folders[k];
             let b="";
-            if (i==0)
-                b=`<span class='glyphicon glyphicon-folder-close'></span>/`;
-            let button = $(`<button type='button' class='btn btn-sm btn-link' style='margin:0px'>${b}${folders[i]}/</button>`);
+            let name="";
+            if (i===-1)
+                b=`<span class='glyphicon glyphicon-folder-close'></span>`;
+            if (i>=0) {
+                for (let k=0;k<=i;k++) 
+                    newPath=newPath+'/'+folders[k];
+
+                name=folders[i]+'/';
+            } else {
+                newPath="[Root]";
+                name=" [Root]";
+            }
+            let button = $(`<button type='button' class='btn btn-sm btn-link' style='margin:0px'>${b}${name}</button>`);
             button.on('click', (event) => {
                 event.preventDefault();
-                this.fileListFn(this.options.mode, newPath);
+                this.fileListFn(newPath);
             });
             
             navbar.append(button);
@@ -448,7 +489,121 @@ class SimpleFileDialog {
         }));
     }
 
+    addFavorite(pillsBar,elem) {
 
+        let selectPillFromPills = (pill, pills) => {
+            for (let otherPill of pills) {
+                $(otherPill).removeClass('active');
+            }
+            $(pill).addClass('active');
+        };
+
+        let newPill = $(`<li><a href='#' class="active" style="padding: 2px 2px 2px 2px">${elem.name}</a></li>`);
+        this.lastFavorite=elem.path;
+        
+        newPill.on('click', (event) => {
+            event.preventDefault();
+            selectPillFromPills(newPill, pillsBar.find('li'));
+            this.changeDirectory(elem.path);
+            this.lastFavorite=elem.path;
+        });
+        pillsBar.append(newPill);
+    }
+
+    addAllFavorites(pillsBar) {
+        pillsBar.empty();
+        let l=this.favorites.length;
+        for (let i=0;i<l;i++) {
+            this.addFavorite(pillsBar,this.favorites[i]);
+        }
+        this.lastFavorite=null;
+
+    }
+    
+    createFavorites() {
+
+        let favoriteBar = this.container.find('.favorite-bar');
+        let favoriteButtons = this.container.find('.favorite-buttons');
+
+        favoriteBar.css({ 'max-height' : '300px',
+                          'height'     : '300px',
+                          'max-width'  : '250px',
+                          "overflow-y": "auto",
+                          "overflow-x": "auto",
+                          "color" : "#0ce3ac",
+                          "background-color": "#444444"
+                    });
+
+        let favoriteButton = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-star-empty'></span>Bookmark</button>`);
+        favoriteButtons.append(favoriteButton);
+        let favoriteButton2 = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-remove'></span> Remove</button>`);
+        favoriteButtons.append(favoriteButton2);
+
+        let pillsHTML = $(`<ul class='nav nav-pills nav-stacked btn-sm'></ul>`);
+        favoriteBar.append(pillsHTML);
+        
+        let pillsBar = favoriteBar.find('.nav.nav-pills');        
+        
+        //TODO: add folder to localforage ...
+        favoriteButton.on('click', (event) => {
+            event.preventDefault();
+            if (this.favorites.length>8)
+                return;
+            let name = this.currentDirectory;
+            if (name.length>23)
+                name='___'+name.substr(name.length-23,name.length);
+            let elem = {
+                'name' : name,
+                'path' : this.currentDirectory,
+            };
+            if (!this.favorites)
+                this.favorites = [];
+
+            let i=0,found=false;
+            while (i<this.favorites.length && found===false) {
+                if (elem.path===this.favorites[i].path)
+                    found=true;
+                i=i+1;
+            }
+            if (!found) {
+                this.favorites.push(elem);
+                this.addFavorite(pillsBar,elem);
+                userPreferences.setItem('favoriteFolders',this.favorites,true);
+            }
+        });
+
+        favoriteButton2.on('click', (event) => {
+            event.preventDefault();
+            let i=0;
+            while (i<this.favorites.length) {
+                if (this.lastFavorite===this.favorites[i].path) {
+                    this.favorites.splice(i,1);
+                    this.addAllFavorites(pillsBar);
+                    userPreferences.setItem('favoriteFolders',this.favorites,true);
+                    this.lastFavorite=null;
+                    return;
+                } 
+                i=i+1;
+            }
+        });
+            
+        let userPreferencesLoaded = userPreferences.webLoadUserPreferences(bisdbase);
+        userPreferencesLoaded.then( () => {
+            let f=null;
+            try {
+                f= userPreferences.getItem('favoriteFolders');
+            } catch(e) {
+                console.log(e);
+            }
+            if (f) {
+                this.favorites=f;
+                this.addAllFavorites(pillsBar);
+            }
+        }).catch( (e) => {
+            console.log('Error',e);
+        });
+    }
+    
     /**
        * @returns {Boolean} if visible return true
        */
@@ -466,34 +621,24 @@ class SimpleFileDialog {
      * Checks a proposed filename against a set of file extension filters to determine whether name should have another kind of filetype applied to it.
      * 
      * @param {String} name - A tentative filename
-     * @param {String} filters - A set of file extensions separated by commas.
+     * @param {Array} filtersList- A string set of file extensions
      * @returns A properly formatted filename
      */
-    fixFilename(name, filters='') {
+    fixFilename(name, filterList) {
 
-        console.log('name=',name,filters);
-        
-        let splitFilters = filters.split(',');
-        if (splitFilters.length < 1) {
-            console.log('No filters returning',name);
-            return name;
-        }
-        
-        for (let i=0;i<splitFilters.length;i++) {
-            let filter=splitFilters[i];
+        for (let i=0;i<filterList.length;i++) {
+            let filter=filterList[i];
             let nl=name.length;
             let fl=filter.length;
             if (nl>fl) {
                 let subname=name.substr(nl-fl,fl);
                 if (subname===filter) {
-                    console.log('Matched filter',filter,subname,' returning',name);
+                    //console.log('Matched filter',filter,subname,' returning',name);
                     return name;
                 }
             }
         }
-
-        console.log('Adding ',splitFilters[0]);
-        return name + splitFilters[0];
+        return name + '.'+ filterList[0];
     }
 
     checkFilenameForFilter(name,filterList) {
@@ -513,7 +658,6 @@ class SimpleFileDialog {
             }
         }
         return false;
-        
     }
     
 

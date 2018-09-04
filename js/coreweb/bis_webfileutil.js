@@ -152,6 +152,28 @@ const webfileutils = {
         userPreferences.storeUserPreferences();
     },
 
+
+    // ------------------------------------------------------------------------------------------
+    /** can I do complex I/O
+     * Either Electron or Browser with Server or S3
+     * @alias WebFileUtil.candoComplexIO
+     * @returns{Boolean} true or false
+     */
+    candoComplexIO: function() {
+        
+        if (genericio.getmode()!=='browser')
+            return true;
+        
+        if (fileMode==='server' || fileMode==='amazonaws')
+            return true;
+        
+        webutil.createAlert('You need to connect to a local fileserver on an S3 share before this operation.',true);
+        return false;
+    },
+
+
+    // ------------------------------------------------------------------------------------------
+    
     /** 
      * Electron file callback function -- invoked instead of webFileCallback if the application is running in Electron. 
      * @alias WebFileUtil.electronFileCallback
@@ -182,8 +204,12 @@ const webfileutils = {
         
         
         if (fileopts.defaultpath==='') {
-            if (fileopts.initialCallback)
-                fileopts.defaultpath=fileopts.initialCallback() || '';
+            try {
+                if (fileopts.initialCallback)
+                    fileopts.defaultpath=fileopts.initialCallback() || '';
+            } catch(e) {
+                console.log(e);
+            }
         }
         
         
@@ -240,14 +266,31 @@ const webfileutils = {
      */
     webFileCallback: function (fileopts, callback) {
 
+        fileopts.suffix=fileopts.suffix || null;
+        fileopts.filters=fileopts.filters || null;
+        fileopts.force=fileopts.force || null;
+
+        console.log('Incoming Suffix =',fileopts.suffix,' filters=',fileopts.filters);
+
         let suffix = fileopts.suffix || '';
         let title = fileopts.title || '';
         let defaultpath=fileopts.defaultpath || '';
-        
-        if (suffix === "NII")
-            suffix = '.nii.gz,.nii,.gz,.tiff';
 
-        if (suffix!=='') {
+        
+        if (fileopts.suffix===null && fileopts.filters!==null) {
+            if (fileopts.filters==="DIRECTORY" ||
+                fileopts.filters==="NII" ) {
+                suffix=fileopts.filters;
+                fileopts.suffix=suffix;
+            }
+        }
+
+        console.log('Suffix =',fileopts.suffix,suffix,fileopts.filters);
+        
+        if (suffix === "NII" || fileopts.filters === "NII") {
+            suffix = '.nii.gz,.nii,.gz,.tiff';
+            fileopts.filters=[{ name: 'NIFTI Images', extensions: ['nii.gz', 'nii'] }];
+        } else if (suffix !== "DIRECTORY" && suffix!=='') {
             let s=suffix.split(",");
             for (let i=0;i<s.length;i++) {
                 let a=s[i];
@@ -255,28 +298,31 @@ const webfileutils = {
                     s[i]="."+s[i];
             }
             suffix=s.join(",");
-        } else {
-            let flt=fileopts.filters || [];
-            if (flt.length>0) {
-                let extensions=[];
-                for (let i=0;i<flt.length;i++) {
-                    let s=flt[i].extensions;
-                    for (let j=0;j<s.length;j++)
-                        extensions.push("."+s[j]);
-                }
-                suffix=extensions.join(',');
-            }
         }
 
-
-        
         let fmode=fileMode;
-        if (fileopts.force)
+        if (fileopts.force !== null)
             fmode=fileopts.force;
 
-        let cbopts = { 'callback' : callback, 'title' : title, 'suffix' : suffix };
+        let cbopts = { 'callback' : callback,
+                       'title' : title,
+                       'suffix' : suffix,
+                       'mode' : 'load' ,
+                       'filters' : fileopts.filters
+                     };
 
         // -------------------- End Of Part I ---------------
+
+        if (fileopts.suffix === "DIRECTORY" && fileMode === 'server') {
+            cbopts.initialFilename= '';
+            cbopts.mode='directory';
+            cbopts.suffix='';
+            cbopts.filters=null;
+            bisweb_fileserverclient.requestFileList(null, true, cbopts);
+            return;
+        }
+
+        // -------------------- End of Part IA -------------
         
         if (fileopts.save) {
             // We are now saving only server, aws or local
@@ -286,18 +332,27 @@ const webfileutils = {
                 let initialDir=null;
                 let initialFilename=null;
 
-                if (fileopts.initialCallback) {
-                    let f=fileopts.initialCallback() || '';
-                    if (f.length>0) {
-                        let ind=f.lastIndexOf("/");
-                        if (ind>0) {
-                            initialDir=f.substr(0,ind);
-                            initialFilename=f.substr(ind+1,f.length);
-                        } else {
-                            initialFilename=f;
-                            initialDir=null;
+
+                    
+
+                try {
+                    if (fileopts) {
+                        if (fileopts.initialCallback) {
+                            let f=fileopts.initialCallback() || '';
+                            if (f.length>0) {
+                                let ind=f.lastIndexOf("/");
+                                if (ind>0) {
+                                    initialDir=f.substr(0,ind);
+                                    initialFilename=f.substr(ind+1,f.length);
+                                } else {
+                                    initialFilename=f;
+                                    initialDir=null;
+                                }
+                            }
                         }
                     }
+                } catch(e) {
+                    console.log(e); 
                 }
 
                 if (!initialFilename && defaultpath.length>0) {
@@ -306,8 +361,8 @@ const webfileutils = {
                 }
                 
                 cbopts.initialFilename=initialFilename || '';
-                cbopts.type='save';
-                bisweb_fileserverclient.requestFileList('uploadfile', initialDir, true, cbopts);
+                cbopts.mode='save';
+                bisweb_fileserverclient.requestFileList(initialDir, true, cbopts);
                 return;
             }
 
@@ -352,7 +407,7 @@ const webfileutils = {
         }
 
         if (fileMode==="server") {
-            bisweb_fileserverclient.requestFileList('showfiles', null,true,cbopts);
+            bisweb_fileserverclient.requestFileList(null,true,cbopts);
             return;
         }
 
@@ -371,27 +426,22 @@ const webfileutils = {
     },
 
     /** 
-     * Create File Callback. Attaches either webFileCallback or electronFileCallback to a button. 
-     * @alias WebFileUtil.attachFileCallback
-     * @param {Event} e -- the element to attach the callback to
-     * @param {Function} callback -- functiont to call when done
+     * Use this to activate a file callback directly (in electron or for server/s3)
+     * @alias WebFileUtil.genericFileCallback
      * @param {object} fileopts - the file dialog options object (in file style)
      * @param {string}  fileopts.title  - in file: dialog title
      * @param {boolean} fileopts.save -  in file determine load or save
      * @param {string}  fileopts.defaultpath -  use this as original filename
      * @param {string}  fileopts.filter - use this as filter (if in electron)
      * @param {string}  fileopts.suffix - List of file types to accept as a comma-separated string e.g. ".ljson,.land" (simplified version filter)
+     * @param {Function} callback -- functiont to call when done
+
      */
-    genericFileCallback : function(e,callback,fileopts={}) {
+    genericFileCallback : function(fileopts={},callback=null) {
 
         fileopts = fileopts || {};
         fileopts.save = fileopts.save || false;
 
-        if (e) {
-            e.stopPropagation();
-            e.preventDefault();
-        }
-                    
         const that = this;
 
         if (webutil.inElectronApp()) {
@@ -431,7 +481,6 @@ const webfileutils = {
                 },1);
             });
         } else {
-
             button.click(function(e) {
                 setTimeout( () => {
                     e.stopPropagation();
@@ -528,10 +577,20 @@ const webfileutils = {
         let fn=function() {
             userPreferencesLoaded.then(() => {
                 let initial=userPreferences.getItem('filesource') || 'local';
+
+
+                let extra="";
+                if (enableserver) {
+                   extra=`<HR><p>You may download the bisweb fileserver 
+<a href="server.zip" target="_blank" rel="noopener">
+from this link</a>. Use with care. This requires <a href="https://nodejs.org/en/download/" target="_blank" rel="noopener">node.js vs 8.x </p>`;
+                }
+                
                 webutil.createRadioSelectModalPromise(`<H4>Select file source</H4><HR>`,
                                                       "Close",
                                                       initial,
-                                                      self.getModeList()
+                                                      self.getModeList(),
+                                                      extra,
                                                      ).then( (m) => {
                                                          self.setMode(m);
                                                      }).catch((e) => {

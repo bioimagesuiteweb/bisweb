@@ -1,0 +1,11 @@
+{
+    "verbose": false,
+    "baseDirectoriesList": [
+        "/Users/xenios",
+        "/usr/local",
+        "/tmp"
+    ],
+    "readonly": false,
+    "insecure": true,
+    "tempDirectory": "/tmp"
+}
