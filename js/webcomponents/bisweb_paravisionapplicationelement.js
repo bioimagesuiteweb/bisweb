@@ -35,8 +35,6 @@ const FastClick=require('fastclick');
 const ViewerApplicationElement = require('bisweb_mainviewerapplication');
 const userPreferences = require('bisweb_userpreferences.js');
 const bisgenericio=require('bis_genericio');
-const fs=bisgenericio.getfsmodule();
-const path=bisgenericio.getpathmodule();
 const internalmode = require('bisextra').hasinternal;
 
 /**
@@ -130,12 +128,17 @@ class ParavisionApplicationElement extends ViewerApplicationElement {
                 PARATOOL.importjob(f);
             } else if (ext==="gz") {
                 this.loadImage(f,0);
-            } else if (fs.lstatSync(f).isDirectory()) {
+            } else if ( bisgenericio.getBaseName(f)==="2dseq") {
                 PARATOOL.importfiles(f);
-            } else if ( path.basename(f)==="2dseq") {
-                PARATOOL.importfiles(f);
-            } else {
-                webutil.createAlert("Can not process file "+f,true);
+            }  else {
+                bisgenericio.isDirectory(f).then( (m) => {
+                    if (m===true)
+                        PARATOOL.importfiles(f);
+                    else
+                        webutil.createAlert("Can not process file "+f,true);
+                }).catch( (e) => {
+                    webutil.createAlert("Can not process file "+f,true);
+                });
             }
         };
         webutil.createDragAndCropController(HandleFiles);
