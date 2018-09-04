@@ -26,6 +26,12 @@ class BisBaseServerClient {
     hideAuthenticationDialog() { }
     showFileDialog() {}
 
+    /** returns the name of the server
+     * @returns{String} -- the name 
+     */
+    getServerType() {
+        return null;
+    }
 
     // ------------------ Download file and helper routines -----------------------------------------------------------------
     /**

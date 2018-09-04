@@ -32,6 +32,13 @@ class BisFileServerClient extends BisBaseServerClient {
         this.terminating=false;
     }
 
+    /** returns the name of the server
+     * @returns{String} -- the name 
+     */
+    getServerType() {
+        return "bisfileserver";
+    }
+
     sendCommand(command) {
         
         let js=JSON.stringify(command)+' ';
