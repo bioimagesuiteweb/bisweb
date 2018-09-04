@@ -2,7 +2,7 @@ require('../../config/bisweb_pathconfig.js');
 
 const program = require('commander');
 const BisNetWebSocketFileServer=require('bis_netwebsocketfileserver');
-const BisWDWebSocketFileServer=require('bis_wswebsocketfileserver');
+const BisWSWebSocketFileServer=require('bis_wswebsocketfileserver');
 const os = require('os');
 const wsutil = require('bis_wsutil');
 const globalInitialServerPort=wsutil.initialPort;
