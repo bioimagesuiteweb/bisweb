@@ -136,7 +136,7 @@ class ParavisionApplicationElement extends ViewerApplicationElement {
                         PARATOOL.importfiles(f);
                     else
                         webutil.createAlert("Can not process file "+f,true);
-                }).catch( (e) => {
+                }).catch( () => {
                     webutil.createAlert("Can not process file "+f,true);
                 });
             }
