@@ -460,7 +460,7 @@ class BisNetWebSocketFileServer extends BaseFileServer {
             return name;
         };
         
-        function addToCurrentTransfer(upload, socket, control) {
+        function addToCurrentTransfer(upload, socket) {
             
             let dataInProgress=self.fileInProgress;
 
@@ -534,10 +534,9 @@ class BisNetWebSocketFileServer extends BaseFileServer {
      * 
      * @param {Object|Uint8Array} upload - Either the first transmission initiating the transfer loop or a chunk.
      * @param {Net.Socket} socket - The control socket that will negotiate the opening of the data socket and send various communications about the transfer. 
-     * @param {Object} control - Parsed WebSocket header for the file request. 
      */
-    getFileFromClientAndSave(upload, socket, control) {
-
+    getFileFromClientAndSave(upload, socket) {
+        
         if (this.opts.readonly) {
             console.log('.....','Server is in read-only mode and will not accept writes.');
             this.sendCommand(socket,'uploadmessage', {
