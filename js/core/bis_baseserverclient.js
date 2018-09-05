@@ -10,6 +10,7 @@ class BisBaseServerClient {
     constructor() {
         this.authenticated = false;
         this.hasGUI=false;
+        this.serverinfo='';
     }
 
     /** GUI Replacement for webutil.createAlert */
@@ -31,6 +32,10 @@ class BisBaseServerClient {
      */
     getServerType() {
         return null;
+    }
+
+    getServerInfo() {
+        return this.serverinfo;
     }
 
     // ------------------ Download file and helper routines -----------------------------------------------------------------
