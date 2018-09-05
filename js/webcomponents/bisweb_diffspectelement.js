@@ -29,19 +29,6 @@ const tree_template_string = `
     </div>       `;
 
 
-
-const chart_string = `
-      <br>
-      <br>
-      <br>
-      <div class="container" style="width:400px">
-      <div><label id="head"></label></div>
-      <div><label id="lab1"></label></div>
-      <div><label id="lab2"></label></div>
-      <div><label id="lab3"></label></div>
-      <div><label id="lab4"></label></div>
-      </div> `;
-
 // ---------------------------------------------------------------
 // Messages to user
 // --------------------------------------------------------------
@@ -85,6 +72,8 @@ class DiffSpectElement extends DualViewerApplicationElement {
 
         super();
 
+        
+        
         // boolean values 
         this.state_machine = {
             images_processed: false,
@@ -100,6 +89,8 @@ class DiffSpectElement extends DualViewerApplicationElement {
         this.dataPanel=null;
         this.resultsPanel=null;
 
+        this.fields= [ '#','I','J','K','size','maxT','clusterP','actualP' ];
+        
         this.app_state = {
             sm_carousel: null,
             viewer: null,
@@ -131,7 +122,8 @@ class DiffSpectElement extends DualViewerApplicationElement {
             mritointer_xform: null,
             mritointer_reslice: null,
             
-            hyper: null
+            hyper: null,
+            hypo : null
         };
     }
 
@@ -223,7 +215,8 @@ class DiffSpectElement extends DualViewerApplicationElement {
             atlastointer: strReg_AT_IN,
             intertoictal: strReg_IN_IC,
             atlastoictal: strReg_AT_IC,
-            hyper: this.app_state.hyper
+            hyper: this.app_state.hyper,
+            hypo: this.app_state.hypo
         };
 
         return obj;
@@ -239,6 +232,22 @@ class DiffSpectElement extends DualViewerApplicationElement {
         this.fillFields(dt.spect);
         super.setElementState(dt,name);
 
+        if (!this.app_state.does_have_mri) {
+            Promise.all( [ this.resliceImages(0),
+                           this.resliceImages(3),
+                           this.resliceImages(4),
+                         ]).catch( () => {
+                             console.log('Not all data in memory to reslice');
+                         });
+        } else {
+            Promise.all([
+                this.resliceImages(1),
+                this.resliceImages(2)
+            ]).catch( ()=> {
+                console.log('Not all data in memory to reslice');
+            });
+        }
+
     }
 
 
@@ -246,7 +255,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
     fillFields(b) { // url as argument somehow
 
         let input = b;
-        let interictal = null, ictal = null, tmap = null, hyper = null;
+        let interictal = null, ictal = null, tmap = null, hyper = null,hypo=null;
         let intertoictal = null, atlastointer = null, atlastoictal = null;
 
         if (input.inter !== "") {
@@ -290,6 +299,9 @@ class DiffSpectElement extends DualViewerApplicationElement {
         if (null !== input.hyper)
             hyper = input.hyper;
 
+        if (null !== input.hypo)
+            hypo = input.hypo;
+
         this.app_state.patient_name = input.name;
         this.app_state.patient_number = input.number;
         this.app_state.interictal = interictal;
@@ -299,13 +311,14 @@ class DiffSpectElement extends DualViewerApplicationElement {
         this.app_state.atlastointer_xform = atlastointer;
         this.app_state.atlastoictal_xform = atlastoictal;
         this.app_state.hyper = hyper;
+        this.app_state.hypo = hypo;
 
         if (null !== this.app_state.tmap) {
             this.showTmapImage();            
         }
 
         if (null !== this.app_state.hyper) {
-            this.generateChart();
+            this.generateCharts();
             this.resultsPanel.show();
         }
 
@@ -313,6 +326,8 @@ class DiffSpectElement extends DualViewerApplicationElement {
         $('#sm_patientName').val(input.name);
         $('#sm_patientNumber').val(input.number);
 
+        
+        
     }
 
     // --------------------------------------------------------------------------------
@@ -467,7 +482,6 @@ class DiffSpectElement extends DualViewerApplicationElement {
             
         };
         tree.jstree(json_data);
-        console.log(tree[0]);
     }
 
     customMenuOptions(node) {
@@ -478,8 +492,6 @@ class DiffSpectElement extends DualViewerApplicationElement {
             let newimage = new BisWebImage();
             newimage.load(imgfile, false).then( () =>  { 
                 console.log('Image read :' + newimage.getDescription(''));
-                console.log(self);
-                console.log(self.app_state);
                 
                 self.app_state[imgname] = newimage;
                 if (show) {
@@ -524,7 +536,6 @@ class DiffSpectElement extends DualViewerApplicationElement {
                     "suffix" : "NII" 
                 },
                 (fname) => {
-                    console.log('Custom method reached');
                     handleGenericFileSelect(fname,
                                             'ictal',
                                             true, // Whether to show to viewer
@@ -545,7 +556,6 @@ class DiffSpectElement extends DualViewerApplicationElement {
                     "suffix" : "NII" 
                 },
                 (fname) => {
-                    console.log('Custom method reached');
                     handleGenericFileSelect(fname,
                                             'mri',
                                             true, // Whether to show to viewer
@@ -555,12 +565,10 @@ class DiffSpectElement extends DualViewerApplicationElement {
             );
         });
 
-        console.log('Node=',node);
         let items = {
             loadinter: {
                 'label': 'Load Interictal',
                 'action': () => {
-                    console.log('In action');
                     handleInterictalFileSelect();
                 },
                 
@@ -575,7 +583,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
             
             loadmri: {
                 'label': 'Load MRI',
-               'action': () =>  {
+                'action': () =>  {
                     handleMRIFileSelect();
                 }
             },
@@ -584,8 +592,6 @@ class DiffSpectElement extends DualViewerApplicationElement {
                 'label': 'Show Image',
                 'action': () => {
 
-                    console.log('Node text=',node.text);
-                    
                     if (node.text === "Interictal") {
                         if (self.app_state.interictal !== null)
                             self.app_state.viewer.setimage(self.app_state.interictal);
@@ -674,68 +680,87 @@ class DiffSpectElement extends DualViewerApplicationElement {
 
     }
     
-    
-    
-    generateChart() {
+
+    generateChart(parent,data,name) {
         
-        let lines = this.parseNewLines(this.app_state.hyper);
-        let coordinates = [];
+        let templates=webutil.getTemplates();
+        let newid=webutil.createWithTemplate(templates.bisscrolltable,$('body'));
+        let stable=$('#'+newid);
         
-        for (let i=1;i<lines.length;i++) 
-            coordinates.push(this.parseCoordinates(lines[i]));
-
-        let one=$('#lab1'), two=$('#lab2'), three=$('#lab3'), four=$('#lab4');
-        let head=$('#head');
+        let buttoncoords = {};
+        let callback = (e) => {
+            let id=e.target.id;
+            if (!id)
+                id=e.target.parentElement.id;
+            let coordinate=buttoncoords[id];
+            this.app_state.viewer.setcoordinates([coordinate[0], coordinate[1], coordinate[2]]);
+        };
         
-        console.log(lines[0] + '\n' + lines[1] + '\n' + lines[2] + '\n' + lines[3] + '\n' + lines[4] + '\n');
+        let thead = stable.find(".bisthead");
+        let tbody = stable.find(".bistbody",stable);
+        
+        thead.empty();
+        tbody.empty();
+        tbody.css({'font-size':'11px',
+                   'user-select': 'none'});
+        thead.css({'font-size':'12px',
+                   'user-select': 'none'});
+        
+        
+        let hd=$(`<tr>
+                 <td width="5%">#</td>
+                 <td width="25%">${name}-Coords</td>
+                 <td width="15%">Size</td>
+                 <td width="20%">ClusterP</td>
+                 <td width="20%">CorrectP</td>
+                 <td width="15%">MaxT</td>
+                 </tr>`);
+        thead.append(hd);
 
-        head.html('<PRE>' + lines[0] + '</PRE>');
+        for (let i=0;i<data.length;i++) {
 
-        one.html('<PRE>' + lines[1] + '</PRE>');
-        two.html('<PRE>' + lines[2] + '</PRE>');
-        three.html('<PRE>' + lines[3] + '</PRE>');
-        four.html('<PRE>' + lines[4] + '</PRE>');
+            let index=data[i].index;
+            let size=data[i].size;
+            let coords=data[i].coords.join(',');
+            
+            let clusterP=Number.parseFloat(data[i].clusterPvalue).toExponential(3);
+            let correctP=Number.parseFloat(data[i].correctPvalue).toExponential(3);
+            let maxt=Number.parseFloat(data[i].maxt).toFixed(2);
+            let nid=webutil.getuniqueid();
+            let w=$(`<tr id="${nid}">
+                    <td width="5%">${index}</td>
+                    <td width="25%">${coords}</td>
+                    <td width="15%">${size}</td>
+                    <td width="20%">${clusterP}</td>
+                    <td width="20%">${correctP}</td>
+                    <td width="15%">${maxt}</td>
+                    </tr>`);
+            tbody.append(w);
+            $('#'+nid).click(callback);
+            buttoncoords[nid]=data[i].coords;
+        }
+        
+        parent.append(stable);
+    }
 
-        one.click(() =>  {
-            var coordinate = coordinates[0];
-            this.app_state.viewer.setcoordinates([coordinate[0], coordinate[1], coordinate[2]]);
-            one.css('border', '2px solid #246BB2');
-            two.css("border", "0px");
-            three.css("border", "0px");
-            four.css("border", "0px");
-        });
+    generateCharts() {
+        if (this.app_state.hyper === null)
+            return;
 
-        two.click(() =>  {
-            var coordinate = coordinates[1];
-            this.app_state.viewer.setcoordinates([coordinate[0], coordinate[1], coordinate[2]]);
-            one.css("border", "0px");
-            two.css("border", "2px solid #246BB2");
-            three.css("border", "0px");
-            four.css("border", "0px");
-        });
+        let pdiv=this.resultsToolsDiv;
+        pdiv.empty();
 
-        three.click(() =>  {
-            var coordinate = coordinates[2];
-            this.app_state.viewer.setcoordinates([coordinate[0], coordinate[1], coordinate[2]]);
-            one.css("border", "0px");
-            two.css("border", "0px");
-            three.css("border", "2px solid #246BB2");
-            four.css("border", "0px");
-        });
+        let lst = [ 'Hyper', 'Hypo' ];
+        let data = [ this.app_state.hyper, this.app_state.hypo ];
 
-        four.click(() =>  {
-            var coordinate = coordinates[3];
-            this.app_state.viewer.setcoordinates([coordinate[0], coordinate[1], coordinate[2]]);
-            one.css("border", "0px");
-            two.css("border", "0px");
-            three.css("border", "0px");
-            four.css("border", "2px solid #246BB2");
-        });
+        let maxpass=1;
+        for (let pass=0;pass<=maxpass;pass++) {
+            this.generateChart(pdiv,data[pass],lst[pass]);
+        }
     }
 
     showAtlasToInterictalRegistration() {
         
-        console.log(this.app_state.ATLAS_spect);
         this.app_state.viewer.setimage(this.app_state.ATLAS_spect);
         this.app_state.viewer.setobjectmap(this.app_state.atlastointer_reslice,false,'overlay');
     }
@@ -863,7 +888,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
     
     // calls computeLinearRegistration to register interictal image to ictal image.
     registerInterictalToIctal() {
-            
+        
         this.app_state.intertoictal = null;
         
         // check that the images exist
@@ -908,8 +933,8 @@ class DiffSpectElement extends DualViewerApplicationElement {
         // default is to compute linear registration
         return this.computeLinearRegistration(this.app_state.ATLAS_spect, this.app_state.mri, null, null).then( (output) => {
             this.app_state.atlastomri_xform = output.transformation;
-                this.app_state.atlastomri_reslice = output.reslice;
-            });
+            this.app_state.atlastomri_reslice = output.reslice;
+        });
     }
     
     // calls computeLinearRegistration to register MRI to interictal image
@@ -927,10 +952,10 @@ class DiffSpectElement extends DualViewerApplicationElement {
         });
         
     }
-        
+    
     // calls computeLinearRegistration or computeNonlinearRegistration to register ATLAS image to interictal image
     registerAtlasToInterictal() {
-            
+        
         this.app_state.atlastointer = null;
         
         // check to see if images exist
@@ -953,7 +978,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
         }
         
         
-            // defaults to linear registration
+        // defaults to linear registration
         return this.computeLinearRegistration(this.app_state.ATLAS_spect, this.app_state.interictal).then( (output) => {
             console.log(output);
             this.app_state.atlastointer_xform = output.transformation;
@@ -963,10 +988,113 @@ class DiffSpectElement extends DualViewerApplicationElement {
         });
         
     }
+
+    resliceImages(mode) {
+
+        let reslicer = new ResliceImage();
+        console.log(" ...............................\n .............\n.............\n reslicing images ",mode);
         
+        return new Promise( (resolve,reject) => {
+
+            if (mode===0 ) {
+
+                if (!this.app_state.ictal || !this.app_state.atlastointer_xform ||
+                    !this.app_state.intertoictal_xform || !this.app_state.ATLAS_spect) {
+                    reject('Some missing data');
+                }
+                
+                let input = {
+                    'input'    : this.app_state.ictal,
+                    'xform'    : this.app_state.atlastointer_xform,
+                    'xform2'   : this.app_state.intertoictal_xform,
+                    'reference': this.app_state.ATLAS_spect           
+                };
+                
+                // instance of image reslicer module
+                let reslicer = new ResliceImage();
+                
+                reslicer.execute(input).then( () => {
+                    this.app_state.atlastoictal_reslice = reslicer.getOutputObject('output');
+                    resolve();
+                }).catch( (e) => {
+                    console.log(e,e.stack);
+                    reject(e);
+                });
+            } else if (mode===1) {
+
+                if (!this.app_state.ictal ||
+                    !this.app_state.atlastomri_xform ||
+                    !this.app_state.mritointer_xform ||
+                    !this.app_state.intertoictal_xform ||
+                    !this.app_state.ATLAS_spect) {
+                    reject('Some missing data');
+                }
+
+                
+                let input = {
+                    'input' : this.app_state.ictal,
+                    'xform' : this.app_state.atlastomri_xform,
+                    'xform2': this.app_state.mritointer_xform,
+                    'xform3': this.app_state.intertoictal_xform,
+                    'reference': this.app_state.ATLAS_spect
+                };
+                
+                reslicer.execute(input).then( () => {
+                    this.app_state.atlastoictal_reslice =reslicer.getOutputObject('output');
+                    resolve();
+                }).catch( (e) => {
+                    console.log(e,e.stack);
+                    reject(e);
+                });
+            } else if (mode==2) {
+
+                if (!this.app_state.interictal ||
+                    !this.app_state.atlastomri_xform ||
+                    !this.app_state.mritointer_xform ||
+                    !this.app_state.ATLAS_spect) {
+                    reject('Some missing data');
+                }
+
+                
+                let input = {
+                    'input' : this.app_state.interictal,
+                    'xform' : this.app_state.atlastomri_xform,
+                    'xform2': this.app_state.mritointer_xform,
+                    'reference': this.app_state.ATLAS_spect
+                };
+                
+                reslicer.execute(input).then( () => {
+                    this.app_state.atlastointer_reslice = reslicer.getOutputObject('output');
+                    resolve();
+                });
+            } else if (mode===3) {
+                let input = {
+                    'reference' : this.app_state.ATLAS_spect,
+                    'input' : this.app_state.interictal,
+                    'xform' : this.app_state.atlastointer_xform
+                };
+                reslicer.execute(input).then( () => {
+                    this.app_state.atlastointer_reslice = reslicer.getOutputObject('output');
+                    resolve();
+                });
+            } else if (mode===4) {
+
+                let input = {
+                    'reference' : this.app_state.interictal,
+                    'input' : this.app_state.ictal,
+                    'xform' : this.app_state.intertoictal_xform
+                };
+                reslicer.execute(input).then( () => {
+                    this.app_state.intertoictal_reslice = reslicer.getOutputObject('output');
+                    resolve();
+                });
+            }
+        });
+    }
+    
     // calls all of the above custom registration methods in correct order and reslices images as necessary
     computeRegistrationOfImages() {
-            
+        
         // execute registration order if MRI is not uploaded by user
         if (!this.app_state.does_have_mri) {
             
@@ -981,22 +1109,9 @@ class DiffSpectElement extends DualViewerApplicationElement {
             
             // executes all promises in order
             Promise.all(p).then( () => {
-                
-                let input = {
-                    'input'    : this.app_state.ictal,
-                    'xform'    : this.app_state.atlastointer_xform,
-                    'xform2'   : this.app_state.intertoictal_xform,
-                    'reference': this.app_state.ATLAS_spect
-                };
-                
-                // instance of image reslicer module
-                let reslicer = new ResliceImage();
-                
-                reslicer.execute(input).then( () => {
-                    this.app_state.atlastoictal_reslice = reslicer.getOutputObject('output');
+                this.resliceImages(0).then( () => {
                     this.dataPanel.show();
                 });
-                
             });
         } else {             // execute order of registration when MRI image is uploaded
             
@@ -1005,19 +1120,10 @@ class DiffSpectElement extends DualViewerApplicationElement {
                        this.registerInterictalToIctal()
                      ];
             
-            let reslicer = new ResliceImage();
+
             
             Promise.all(p1).then( () => {
-                let input = {
-                    'input' : this.app_state.ictal,
-                    'xform' : this.app_state.atlastomri_xform,
-                    'xform2': this.app_state.mritointer_xform,
-                    'xform3': this.app_state.intertoictal_xform,
-                    'reference': this.app_state.ATLAS_spect
-                };
-                
-                reslicer.execute(input).then( () => {
-                    this.app_state.atlastoictal_reslice =reslicer.getOutputObject('output');
+                this.resliceImages(1).then( () => {
                     this.dataPanel.show();
                 });
             });
@@ -1025,19 +1131,9 @@ class DiffSpectElement extends DualViewerApplicationElement {
             let p2 = [ this.registerAtlasToMRI(), this.registerMRIToInterictal()];
             
             Promise.all(p2).then( () => {
-                
-                let input = {
-                    'input' : this.app_state.interictal,
-                    'xform' : this.app_state.atlastomri_xform,
-                    'xform2': this.app_state.mritointer_xform,
-                    'reference': this.app_state.ATLAS_spect
-                };
-                
-                reslicer.execute(input).then( () => {
-                    this.app_state.atlastointer_reslice = reslicer.getOutputObject('output');
+                this.resliceImages(2).then( () => {
                     this.dataPanel.show();
                 });
-                
             });
         }
     }
@@ -1072,7 +1168,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
         let showerror = false;
 
         let dim0 = images[0].getDimensions();
-            
+        
         // check that dimensions match
         for (let m = 1; m < images.length; m++) {
             var dim1 = images[m].getDimensions();
@@ -1128,32 +1224,12 @@ class DiffSpectElement extends DualViewerApplicationElement {
         var resliced_ictal = this.app_state.atlastoictal_reslice;
         
         var results = this.processSpect(resliced_inter, resliced_ictal, this.app_state.ATLAS_stdspect, this.app_state.ATLAS_mask);
-        
-            console.log(results);
-        
-        console.log();
-        console.log();
-        
-        var hyper_str = '';
-        hyper_str += '#\tI\tJ\tK\tsize\tmaxT\tclusterP\tactualP\n';
-        for (var i = 0; i < results.hyper.length; i++) {
-            hyper_str += results.hyper[i].string + '\n';
-        }
-        
-        // format string for displaying as table
-        this.app_state.hyper = hyper_str;
-        
-        var hypo_str = 'hypo cluster statistics \n';
-        hypo_str += '#\tx\ty\tz\tsize\tmaxT\tclusterP\tactualP\n';
-        for (var k = 0; k < results.hypo.length; k++) {
-            hypo_str += results.hypo[k].string + '\n';
-        }
-        
-        console.log(hyper_str);
-        console.log();
-        console.log();
-        console.log(hypo_str);
+        this.app_state.hyper = results.hyper;
+        this.app_state.hypo = results.hypo;
         this.app_state.tmap = results.tmap;
+        
+        console.log(JSON.stringify(results.hyper,null,2));
+        console.log(JSON.stringify(results.hypo,null,2));
     }
     
     
@@ -1162,7 +1238,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
         console.log("compute spect callback");
         this.computeSpectNoMRI();
         this.showTmapImage();
-        this.generateChart();
+        this.generateCharts();
         this.resultsPanel.show();
     }
 
@@ -1184,22 +1260,19 @@ class DiffSpectElement extends DualViewerApplicationElement {
 
         this.resultsPanel=new BisWebPanel(layoutcontroller,
                                           {  name  : 'Diff-Spect Results',
-                                             permanent : true,
+                                             permanent : false,
                                              width : '300',
                                              //                                      dual : false,
                                              //                                    mode : 'sidebar'
                                           });
         this.resultsToolsDiv = this.resultsPanel.getWidget();
+        this.resultsToolsDiv.append($('<div> No results yet.</div>'));
         
         // stamp template
         this.tree_div=$(tree_template_string);
-        this.chart_div=$(chart_string);
         
         this.spectToolsDiv.append(this.tree_div);
-        this.resultsToolsDiv.append(this.chart_div);
 
-        this.dataPanel.show();
-        this.resultsPanel.show();
         this.dataPanel.show();
         //      this.resultsPanel.hide();
         
@@ -1246,7 +1319,9 @@ class DiffSpectElement extends DualViewerApplicationElement {
         
         webutil.createMenuItem(sMenu,'');
         webutil.createMenuItem(sMenu, 'Compute Diff Spect MAPS', () =>  {
-            if (self.app_state.atlastoictal_reslice !== null && self.app_state.atlastointer_reslice !== null && self.app_state.intertoictal_reslice !== null)
+            if (self.app_state.atlastoictal_reslice !== null &&
+                self.app_state.atlastointer_reslice !== null &&
+                self.app_state.intertoictal_reslice !== null)
                 self.computeSpect(); 
             else
                 bootbox.alert('IMAGES NOT REGISTERED/RESLICED');
@@ -1256,14 +1331,10 @@ class DiffSpectElement extends DualViewerApplicationElement {
     }
     
     connectedCallback() {
-
+        this.simpleFileMenus=true;
         super.connectedCallback();
-        
-        
         this.app_state.viewer = this.VIEWERS[0];
         this.app_state.viewer.collapseCore();
-        
-
     }
 }
 
