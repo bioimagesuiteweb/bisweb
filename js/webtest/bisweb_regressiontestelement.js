@@ -400,7 +400,9 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
             
 
     console.clear();
-    
+    bis_genericio.setFileServerObject(null);
+
+    console.log("++++ File Server set to null. Working with web downloads here. (should be null=",bis_genericio.getFileServerObject(),")");
     if (firsttest<0)
         firsttest=0;
     
