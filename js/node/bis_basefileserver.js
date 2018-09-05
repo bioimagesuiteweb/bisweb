@@ -123,6 +123,7 @@ class BaseFileServer {
         this.timeout = undefined;
         this.terminating=false;
         this.lastDirectory=null;
+        this.indent='.....';
     }
     
     // .......................................................................................
@@ -132,17 +133,17 @@ class BaseFileServer {
         onetimePasswordCounter+=1;
         let token = hotp.generate(secret, onetimePasswordCounter);
         if (abbrv===0) {
-            console.log('..... BioImage Suite Web FileServer datatransfer=',this.datatransfer,' Initialized\n.....');
-            console.log('..... \t The websocket server is listening for incoming connections,\n..... \t using the following one time info.\n.....');
+            console.log(this.indent,'BioImage Suite Web FileServer datatransfer=',this.datatransfer,' Initialized\n'+this.indent+'');
+            console.log(this.indent,'\t The websocket server is listening for incoming connections,\n'+this.indent+' \t using the following one time info.\n'+this.indent+'');
             // the ".ss." in the next lines is needed for mocha testing
             console.log(`..ss. \t\t hostname: ws://${this.hostname}:${this.portNumber}`);
         }  else if (abbrv===1) {
-            console.log('.....\n..... Create New Password ... try again.');
+            console.log(this.indent+'\n'+this.indent+' Create New Password ... try again.');
         } else {
-            console.log('.....\n..... Create New Password as this one is now used successfully.');
+            console.log(this.indent+'\n'+this.indent+' Create New Password as this one is now used successfully.');
         }
         // the ".ss." in the next lines is needed for mocha testing
-        console.log(`..ss. \t\t ws://${this.hostname}:${this.portNumber}, password: ${token}\n.....`);
+        console.log(`..ss. \t\t ws://${this.hostname}:${this.portNumber}, password: ${token}\n${this.indent}`);
 
     }
 
@@ -218,7 +219,7 @@ class BaseFileServer {
         let parsedText = this.parseClientJSON(rawText);
         parsedText=parsedText || -1;
         if (this.opts.verbose)
-            console.log('..... text request', JSON.stringify(parsedText));
+            console.log(this.indent,'text request', JSON.stringify(parsedText));
         switch (parsedText.command)
         {
             //get file list
@@ -241,7 +242,7 @@ class BaseFileServer {
             }
             
             case 'restart' : {
-                console.log('..... Received restart, sending tryagain');
+                console.log(this.indent,'Received restart, sending tryagain');
                 this.sendCommand(socket,'tryagain', '');
                 break;
             }
@@ -256,12 +257,12 @@ class BaseFileServer {
             }
 
             case 'ignore':  {
-                console.log('.....','Received ignore, ignoring');
+                console.log(this.indent,'Received ignore, ignoring');
                 break;
             }
             
             case 'terminate': {
-                console.log('..... received terminate from client');
+                console.log(this.indent,'received terminate from client');
                 this.closeSocket(socket,true);
                 this.stopServer(this.netServer);
                 this.netServer.close();
@@ -271,7 +272,7 @@ class BaseFileServer {
             }
             
             default: {
-                console.log('..... Cannot interpret request with unknown command', parsedText.command);
+                console.log(this.indent,'Cannot interpret request with unknown command', parsedText.command);
             }
         }
     }
@@ -317,10 +318,10 @@ class BaseFileServer {
                 if (err) {
                     handleError(filename,err);
                 } else {
-                    console.log('.....',`load binary file ${filename} successful, writing to socket`);
+                    console.log(`${this.indent} load binary file ${filename} successful, writing to socket`);
                     let checksum=`${util.SHA256(new Uint8Array(d1))}`;
                     if (this.opts.verbose)
-                        console.log('..... Sending checksum=',checksum, 'id=',id);
+                        console.log(this.indent,'Sending checksum=',checksum, 'id=',id);
                     this.sendCommand(socket,'checksum', {
                         'checksum' : checksum,
                         'id' : id
@@ -329,12 +330,12 @@ class BaseFileServer {
                 }
             });
         } else {
-            //        console.log('.....','filename', filename);
+            //        console.log(this.indent,'filename', filename);
             fs.readFile(filename, 'utf-8', (err, d1) => {
                 if (err) {
                     handleError(filename,err);
                 } else {
-                    console.log(`..... load text file ${filename} successful, writing to socket`);
+                    console.log(`${this.indent} load text file ${filename} successful, writing to socket`);
                     this.sendCommand(socket,'text', { 'data' :  d1,
                                                       'id' : id});
                 }
@@ -358,7 +359,7 @@ class BaseFileServer {
      */
     serveFileList(socket, basedir, id=-1)  {
 
-        const debug=this.debug;
+        const debug=this.opts.verbose;
         let foundDirectory='';
 
         if (basedir===null && this.lastDirectory!==null) {
@@ -396,7 +397,7 @@ class BaseFileServer {
         let getmatchedfiles=function(basedir) {
 
             if (debug)
-                console.log('..... Reading directory=',basedir);
+                console.log(this.indent,'Reading directory=',basedir);
             
             let pathname=basedir;
             if (path.sep==='\\') 
@@ -479,9 +480,14 @@ class BaseFileServer {
             return treelist;
         };
 
-        if (basedir!=='[Root]' || this.opts.baseDirectoriesList.length<2) {
 
-            basedir = basedir || this.opts.baseDirectoriesList[0];
+
+        if (basedir===['Root'] && this.opts.baseDirectoriesList.length<2)
+            basedir = this.opts.baseDirectoriesList[0];
+
+        
+        if (basedir!=='[Root]') {
+        
             getmatchedfiles(basedir).then( (obj) => {
 
                 let pathname=obj.pathname;
@@ -495,7 +501,7 @@ class BaseFileServer {
                                                           'id' : id });
                 });
             }).catch( (e) => {
-                console.log('.....',e,e.stack);
+                console.log(this.ident,e,e.stack);
             });
         } else {
             let lst=this.opts.baseDirectoriesList;
@@ -512,7 +518,7 @@ class BaseFileServer {
                                                       'data' : treelist,
                                                       'id' : id });
             }).catch( (e) => {
-                console.log('.....',e,e.stack);
+                console.log(this.indent,e,e.stack);
             });
         }
     }
@@ -524,7 +530,7 @@ class BaseFileServer {
      * @param {Number} id - the request id
      */
     serveServerBaseDirectory(socket,id=0)  {
-        console.log("..... Serving Base",this.opts.baseDirectoriesList);
+        console.log(this.indent," Serving Base",this.opts.baseDirectoriesList);
         this.sendCommand(socket,'serverbasedirectory', { 'path' : this.opts.baseDirectoriesList,  'id' : id });
     }
 
@@ -534,7 +540,7 @@ class BaseFileServer {
      * @param {Number} id - the request id
      */
     serveServerTempDirectory(socket,id=0) {
-        console.log("..... Serving Temp",this.opts.tempDirectory);
+        console.log(this.indent,"Serving Temp",this.opts.tempDirectory);
         this.sendCommand(socket,'servertempdirectory', { 'path' : this.opts.tempDirectory, 'id' : id });
     }
 
@@ -602,13 +608,13 @@ class BaseFileServer {
             }
                 
                 
-            console.log('..... File system success=',opname,url,m,'\n.....');
+            console.log(this.indent,'File system success=',opname,url,m,'\n'+this.indent+'');
             this.sendCommand(socket,'filesystemoperations', { 'result' : m,
                                                              'url' : url,
                                                              'operation' : opname,
                                                              'id' : id });
         }).catch( (e) => {
-            console.log('.....','File system fail',opname,url,e);
+            console.log(this.indent,'File system fail',opname,url,e);
             this.sendCommand(socket,'filesystemoperationserror', { 'result' : e,
                                                                    'operation' : opname,
                                                                    'url' : url,
@@ -627,7 +633,7 @@ class BaseFileServer {
     handleBadRequestFromClient(socket, reason,id=-1) {
         let error = "An error occured:"+reason;
         this.sendCommand(socket,'error', { 'text' : error, 'id': id}).then( () => {
-            console.log('..... request returned an error', reason, '\n.....\t sent error to client');
+            console.log(this.indent,'request returned an error', reason, '\n'+this.indent+'\t sent error to client');
         });
     }
 
@@ -640,12 +646,12 @@ class BaseFileServer {
      */
     handleCloseFromClient(rawText, socket, control) {
         let text = this.decodeUTF8(rawText, control);
-        console.log('..... received CLOSE frame from client',text);
+        console.log(this.indent,'received CLOSE frame from client',text);
 
         //TODO: send a close frame in response
         this.closeSocket(socket,false);
 
-        console.log('..... closed connection');
+        console.log(this.indent,'closed connection');
     }
 
 
@@ -772,7 +778,7 @@ class BaseFileServer {
             }
         }
         if (this.opts.verbose)
-            console.log('..... Validating '+name+' directory list=',lst.join(','),'-->\n.....\t ' , newlist.join(','));
+            console.log(this.indent,'Validating '+name+' directory list=',lst.join(','),'-->\n'+this.indent+'\t ' , newlist.join(','));
         return newlist;
     }
 
@@ -803,7 +809,7 @@ class BaseFileServer {
         try {
             parsedText = JSON.parse(text);
         } catch (e) {
-            console.log('..... an error occured while parsing the data from the client', e);
+            console.log(this.indent,'an error occured while parsing the data from the client', e);
         }
 
         return parsedText;
