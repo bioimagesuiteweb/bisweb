@@ -321,9 +321,9 @@ IF (BIS_A_EMSCRIPTEN)
     if (${item} MATCHES "bisfileserver.js")
         install (FILES ${OUTSCRIPT} DESTINATION bisweb/server
           PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
-        install (FILES ${PROJECT_SOURCE_DIR}/../js/bin/serverexample-server-config.json DESTINATION bisweb/server PERMISSIONS OWNER_READ WORLD_READ)
-        install (FILES ${PROJECT_SOURCE_DIR}/../js/bin/README.md DESTINATION bisweb/server PERMISSIONS OWNER_READ WORLD_READ)
-        install (FILES ${PROJECT_SOURCE_DIR}/../js/bin/package.json DESTINATION bisweb/server PERMISSIONS OWNER_READ WORLD_READ)
+        install (FILES ${PROJECT_SOURCE_DIR}/../js/bin/server/example-server-config.json DESTINATION bisweb/server PERMISSIONS OWNER_READ WORLD_READ)
+        install (FILES ${PROJECT_SOURCE_DIR}/../js/bin/server/README.md DESTINATION bisweb/server PERMISSIONS OWNER_READ WORLD_READ)
+        install (FILES ${PROJECT_SOURCE_DIR}/../js/bin/server/package.json DESTINATION bisweb/server PERMISSIONS OWNER_READ WORLD_READ)
     endif (${item} MATCHES "bisfileserver.js")
   ENDFOREACH(item ${WNAMELIST})
 
