@@ -7,6 +7,31 @@ const wsutil = require('bis_wsutil');
 const globalInitialServerPort=require('bis_wsutil').initialPort;
 
 
+/**
+ * Secure Example
+ *
+const fs = require('fs');
+const https = require('https');
+const WebSocket = require('ws');
+ 
+const server = new https.createServer({
+  cert: fs.readFileSync('/path/to/cert.pem'),
+  key: fs.readFileSync('/path/to/key.pem')
+});
+const wss = new WebSocket.Server({ server });
+ 
+wss.on('connection', function connection(ws) {
+  ws.on('message', function incoming(message) {
+    console.log('received: %s', message);
+  });
+ 
+  ws.send('something');
+});
+ 
+server.listen(8080);
+
+*
+*/
 const BaseFileServer=require('bis_basefileserver');
 
 
