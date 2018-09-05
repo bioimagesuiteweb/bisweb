@@ -220,16 +220,16 @@ class BisWSWebSocketFileServer extends BaseFileServer {
                                 console.log(".....\t IN INSECURE MODE");
                             }
                             if (this.opts.nolocalhost) 
-                                console.log(".....\t Allowing remote connections");
+                                console.log(",,,,,\t Allowing remote connections");
                             else
-                                console.log(".....\t Allowing only local connections");
+                                console.log(",,,,,\t Allowing only local connections");
                             if (this.opts.readonly)
-                                console.log(".....\t Running in 'read-only' mode");
+                                console.log(",,,,,\t Running in 'read-only' mode");
                             
-                            console.log('.....\t Providing access to:',this.opts.baseDirectoriesList.join(', '));
-                            console.log('.....\t\t  The temp directory is set to:',this.opts.tempDirectory);
+                            console.log(',,,,,\t Providing access to:',this.opts.baseDirectoriesList.join(', '));
+                            console.log(',,,,,\t\t  The temp directory is set to:',this.opts.tempDirectory);
                             
-                            console.log('..................................................................................');
+                            console.log(',,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,');
                         }
                     });
                     
@@ -273,7 +273,7 @@ class BisWSWebSocketFileServer extends BaseFileServer {
                 this.sendCommand(socket,'goodauth', '');
                 this.createPassword(2);
                 socket.removeEventListener('message',readOTP);
-                console.log(',,,,,  Authenticated OK\n.....');
+                console.log(',,,,,  Authenticated OK\n,,,,,');
             } else {
                 console.log(',,,,,  The token you entered is incorrect.');
                 this.createPassword(1);
@@ -346,7 +346,7 @@ class BisWSWebSocketFileServer extends BaseFileServer {
             try {
                 addToCurrentTransfer(decoded, socket);
             } catch(e) {
-                console.log('.....',"Addition error",e);
+                console.log(',,,,,',"Addition error",e);
             }
             if (this.timeout) {
                 timers.clearTimeout(this.timeout);
@@ -432,7 +432,7 @@ class BisWSWebSocketFileServer extends BaseFileServer {
                     //console.log('Sending next packet');
                     self.sendCommand(socket,'nextpacket', '');
                 } catch(e) {
-                    console.log(',_,_,_,_,_,_','\n\n\n\n\n ,_,_,_,_,_,_................................... \n\n\n\n\n Error Caught =');
+                    console.log(',_,_,_,_,_,_','\n\n\n\n\n ,_,_,_,_,_,_,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,, \n\n\n\n\n Error Caught =');
                     self.closeSocket(socket,true);
                 }
             }
@@ -462,7 +462,7 @@ class BisWSWebSocketFileServer extends BaseFileServer {
     getFileFromClientAndSave(upload, socket) {
 
         if (this.opts.readonly) {
-            console.log('.....','Server is in read-only mode and will not accept writes.');
+            console.log(',,,,,','Server is in read-only mode and will not accept writes.');
             this.sendCommand(socket,'uploadmessage', {
                 'name' : 'serverreadonly',
                 'id' : upload.id
