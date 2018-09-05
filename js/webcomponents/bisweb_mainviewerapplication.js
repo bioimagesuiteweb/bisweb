@@ -74,6 +74,7 @@ class ViewerApplicationElement extends HTMLElement {
     constructor() {
         super();
         this.syncmode = false;
+        this.simpleFileMenus=false;
         this.VIEWERS=[];
         this.num_independent_viewers = 0;
         this.saveState=null;
@@ -81,6 +82,7 @@ class ViewerApplicationElement extends HTMLElement {
         this.applicationName=webutil.getWebPageName();
         console.log("App name=",this.applicationName,this.applicationURL);
         clipboard.setItem('appname',this.applicationName);
+
     }
 
 
@@ -554,33 +556,34 @@ class ViewerApplicationElement extends HTMLElement {
             // File Menu
             // ----------------------------------------------------------
             fmenu[viewerno] = webutil.createTopMenuBarMenu(fmenuname, menubar);
-            
-            webfileutil.createFileMenuItem(fmenu[viewerno], 'Load Image',
-                                           function (f) {
-                                               self.loadImage(f, viewerno);
-                                           },
-                                           { title: 'Load image',
-                                             save: false,
-                                             suffix: 'NII'
-                                           });
 
-            webfileutil.createFileMenuItem(fmenu[viewerno], 'Save Image',
-                                           function (f) {
-                                               self.saveImage(f, viewerno); },
-                                           {
-                                               title: 'Save Image',
-                                               save: true,
-                                               filters: "NII",
-                                               suffix : "NII",
-                                               initialCallback : (() => {
-                                                   return self.getSaveImageInitialFilename(viewerno);
-                                               })
-                                           });
-            
-            
-            webutil.createMenuItem(fmenu[viewerno], ''); // separator
-
-            bisweb_apputil.createMNIImageLoadMenuEntries(fmenu[viewerno], load_image, viewerno);
+            if (!self.simpleFileMenus) {
+                webfileutil.createFileMenuItem(fmenu[viewerno], 'Load Image',
+                                               function (f) {
+                                                   self.loadImage(f, viewerno);
+                                               },
+                                               { title: 'Load image',
+                                                 save: false,
+                                                 suffix: 'NII'
+                                               });
+                
+                webfileutil.createFileMenuItem(fmenu[viewerno], 'Save Image',
+                                               function (f) {
+                                                   self.saveImage(f, viewerno); },
+                                               {
+                                                   title: 'Save Image',
+                                                   save: true,
+                                                   filters: "NII",
+                                                   suffix : "NII",
+                                                   initialCallback : (() => {
+                                                       return self.getSaveImageInitialFilename(viewerno);
+                                                   })
+                                               });
+                
+                
+                webutil.createMenuItem(fmenu[viewerno], ''); // separator
+                bisweb_apputil.createMNIImageLoadMenuEntries(fmenu[viewerno], load_image, viewerno);
+            }
 
 
             // ----------------------------------------------------------
@@ -602,43 +605,49 @@ class ViewerApplicationElement extends HTMLElement {
                                        });
 
             } else {
-                
-                webfileutil.createFileMenuItem(objmenu[viewerno], 'Load Overlay',
-                                               function (f) {
-                                                   self.loadOverlay(f, viewerno);
-                                               }, 
-                                               { title: 'Load overlay', save: false, suffix: "NII" });
-                
-                webfileutil.createFileMenuItem(objmenu[viewerno], 'Save Overlay',
-                                               function (f) {
-                                                   self.saveOverlay(f, viewerno);
-                                               },
-                                               {
-                                                   title: 'Save Overlay',
-                                                   save: true,
-                                                   filters: "NII",
-                                                   suffix : "NII",
-                                                   initialCallback : () => {
-                                                       return self.getSaveOverlayInitialFilename(viewerno);
-                                                   }
-                                               });
 
-                webutil.createMenuItem(objmenu[viewerno], ''); // separator
+                if (!self.simpleFileMenus) {
+                    webfileutil.createFileMenuItem(objmenu[viewerno], 'Load Overlay',
+                                                   function (f) {
+                                                       self.loadOverlay(f, viewerno);
+                                                   }, 
+                                                   { title: 'Load overlay', save: false, suffix: "NII" });
+                    
+                    webfileutil.createFileMenuItem(objmenu[viewerno], 'Save Overlay',
+                                                   function (f) {
+                                                       self.saveOverlay(f, viewerno);
+                                                   },
+                                                   {
+                                                       title: 'Save Overlay',
+                                                       save: true,
+                                                       filters: "NII",
+                                                       suffix : "NII",
+                                                       initialCallback : () => {
+                                                           return self.getSaveOverlayInitialFilename(viewerno);
+                                                       }
+                                                   });
+                    webutil.createMenuItem(objmenu[viewerno], ''); // separator
+                }
+
 
                 
                 webutil.createMenuItem(objmenu[viewerno], 'Clear Overlay',
                                        function () {
                                            self.VIEWERS[viewerno].clearobjectmap();
                                        });
-                webutil.createMenuItem(objmenu[viewerno], ''); // separator
-                webutil.createMenuItem(objmenu[viewerno], 'Reslice Overlay To Match Image',
-                                       function () {
-                                           self.resliceOverlay(viewerno);
-                                       });
+                if (!self.simpleFileMenus) {
+                    webutil.createMenuItem(objmenu[viewerno], ''); // separator
+                    webutil.createMenuItem(objmenu[viewerno], 'Reslice Overlay To Match Image',
+                                           function () {
+                                               self.resliceOverlay(viewerno);
+                                           });
+                }
             }
-            webutil.createMenuItem(objmenu[viewerno], ''); // separator
 
-            bisweb_apputil.createBroadmannAtlasLoadMenuEntries(objmenu[viewerno], load_objectmap, viewerno);
+            if (!self.simpleFileMenus) {
+                webutil.createMenuItem(objmenu[viewerno], ''); // separator
+                bisweb_apputil.createBroadmannAtlasLoadMenuEntries(objmenu[viewerno], load_objectmap, viewerno);
+            }
         };
 
         // ---------------------------------------------------------------------
@@ -924,7 +933,9 @@ class ViewerApplicationElement extends HTMLElement {
     createApplicationMenu(bmenu) {
 
         const self=this;
-        webutil.createMenuItem(bmenu,'');
+        if (!self.simpleFileMenus) 
+            webutil.createMenuItem(bmenu,'');
+            
         webfileutil.createFileMenuItem(bmenu,'Load Application State',
                                        function(f) {
                                            self.loadApplicationState(f);
