@@ -30,13 +30,44 @@ const userPreferences = require('bisweb_userpreferences.js');
 const bisdate=require('bisdate.js').date;
 const wrapperutil=require('bis_wrapperutils');
 const BisWebImage=require('bisweb_image');
+const bis_webfileutil=require('bis_webfileutil');
 
 
 import module_testlist from '../../test/module_tests.json';
 let replacing=false;
 let logtext="";
-let extradir="";
+let testDataRootDirectory="";
 let threadController=null;
+let oldTestDataRootDirectory='';
+
+let disableServer=function() {
+
+    bis_webfileutil.setMode('local',false);
+    testDataRootDirectory=oldTestDataRootDirectory;
+};
+
+let enableServer=async function() {
+    bis_webfileutil.setMode('server',false);
+
+    let serverClient=bis_genericio.getFileServerObject();
+    if (serverClient===null)
+        return false;
+
+    let name=serverClient.getServerType();
+    
+    if (name==='bisfileserver') {
+        try {
+            await serverClient.authenticate();
+        } catch(e) {
+            disableServer();
+            return Promise.reject(e);
+        }
+    }
+    let tempdir=await serverClient.getServerTempDirectory();
+    testDataRootDirectory=tempdir+'/';
+    webutil.createAlert('Connected to '+serverClient.getServerInfo()+'. Using '+testDataRootDirectory+' as data directory on server');
+    return true;
+};
 
 var replacesystemprint=function(doreplace=true) {
     if (doreplace===true && replacing===false) {
@@ -83,7 +114,7 @@ var loadparamfile=function(paramfile,modulename,params) {
 
     return new Promise( (resolve,reject) => {
 
-        bis_genericio.read(extradir+paramfile).then( (res) => {
+        bis_genericio.read(testDataRootDirectory+paramfile).then( (res) => {
             
             try {
                 let obj=JSON.parse(res.data);
@@ -129,7 +160,7 @@ var execute_test=function(test,i,usethread=false) {
                     
                     let inp=des.inputs[j];
                     if (inp.shortname===pname || inp.varname===pname) {
-                        inputs[inp.varname]=extradir+value;
+                        inputs[inp.varname]=testDataRootDirectory+value;
                         found=true;
                     }
                     j=j+1;
@@ -255,7 +286,7 @@ const execute_compare=function(module,test) {
             test_type="transform";
         }
         
-        BisWebDataObjectCollection.loadObject(extradir+test_target,test_type).then( (obj) => {
+        BisWebDataObjectCollection.loadObject(testDataRootDirectory+test_target,test_type).then( (obj) => {
 
             let resultObject=module.getOutputObject();
             if (test_type==='registration') {
@@ -297,6 +328,8 @@ const execute_compare=function(module,test) {
 
 var run_memory_test=function() {
 
+    disableServer();
+
 
     let images = [ new BisWebImage(),new BisWebImage() ];
     let imgnames = [ 'thr.nii.gz',
@@ -305,7 +338,7 @@ var run_memory_test=function() {
     
     let fullnames = [ '','','','' ];
     for (let i=0;i<=1;i++)
-        fullnames[i]=extradir+'testdata/'+imgnames[i];
+        fullnames[i]=testDataRootDirectory+'testdata/'+imgnames[i];
     
     let p=[ biswrap.reinitialize() ];
     for (let i=0;i<images.length;i++) {
@@ -385,7 +418,7 @@ var run_memory_test=function() {
 
     
 
-var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',usethread=false) { // jshint ignore:line
+var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',usethread=false,usefileserver=false) { // jshint ignore:line
 
     if (webutil.inElectronApp()) {
         window.BISELECTRON.remote.getCurrentWindow().openDevTools();
@@ -397,12 +430,26 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
     let thread=0;
     if (usethread)
         thread=1;
+    let fileserverflag=0;
+    if (usefileserver)
+        fileserverflag=1;
             
-
     console.clear();
-    bis_genericio.setFileServerObject(null);
+    
+    if (!usefileserver) {
+        console.log('Disabling File Server');
+        disableServer();
+    } else {
+        try {
+            console.log('Enabling Disabling File Server');
+            await enableServer();
+        } catch(e) {
+            //            webutil.createAlert('Server Error. Perhaps the server does not exist');
+            console.log(e);
+            return;
+        }
+    }
 
-    console.log("++++ File Server set to null. Working with web downloads here. (should be null=",bis_genericio.getFileServerObject(),")");
     if (firsttest<0)
         firsttest=0;
     
@@ -522,7 +569,7 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
         main.append(`.... total test execution time=${(0.001*(t11 - t00)).toFixed(2)}s`);
 
         if (!webutil.inElectronApp()) {
-            let link=`${url}?first=${firsttest}&last=${lasttest}&testname=${testname}&webworker=${thread}&run=1`;
+            let link=`${url}?first=${firsttest}&last=${lasttest}&testname=${testname}&webworker=${thread}&fileserver=${fileserverflag}&run=1`;
             main.append(`<BR><p>To run this specific test directly click:<BR> <a href="${link}" target="_blank">${link}</a></p><HR><p></p>`);
         }
 
@@ -604,19 +651,25 @@ let initialize=function(data) {
     }
     
     let usethread=parseInt(webutil.getQueryParameter('webworker') || 0);
+    let usefileserver=parseInt(webutil.getQueryParameter('fileserver') || 0);
     let dorun=parseInt(webutil.getQueryParameter('run') || 0);
     
     if (usethread)
         usethread=true;
     else
         usethread=false;
-
-
+    
+    if (usefileserver)
+        usefileserver=true;
+    else
+        usefileserver=false;
+        
     
     $('#first').val(firsttest);
     $('#last').val(lasttest);
     $('#testselect').val(testname);
     $('#usethread').prop("checked", usethread);
+    $('#usefileserver').prop("checked", usefileserver);
 
     var fixRange=function(targetname) {
 
@@ -647,21 +700,21 @@ let initialize=function(data) {
         let testname=$('#testselect').val() || 'All';
 
         let usethread= $('#usethread').is(":checked") || false;
-
+        let usefileserver= $('#usefileserver').is(":checked") || false;
         
         if (last===undefined)
             last=testlist.length-1;
 
 
         
-        run_tests(testlist,first,last,testname,usethread);
+        run_tests(testlist,first,last,testname,usethread,usefileserver);
     });
     
     
     $('#compute').click(fn);
 
     if (dorun) {
-        run_tests(testlist,firsttest,lasttest,testname,usethread);
+        run_tests(testlist,firsttest,lasttest,testname,usethread,usefileserver);
     }
 
 
@@ -689,9 +742,11 @@ var startFunction = (() => {
 
     
     if (typeof window.BIS !=='undefined') 
-        extradir="../test/";
+        testDataRootDirectory="../test/";
     else 
-        extradir="./test/";
+        testDataRootDirectory="./test/";
+
+    oldTestDataRootDirectory=testDataRootDirectory;
     initialize(module_testlist);
 
 });
