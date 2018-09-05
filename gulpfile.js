@@ -25,6 +25,7 @@ const gulp = require('gulp'),
       program=require('commander'),
       connect = require('gulp-connect'),
       os = require('os'),
+      fs = require('fs'),
       rename = require('gulp-rename'),
       path=require('path'),
       del = require('del'),
@@ -416,12 +417,43 @@ gulp.task('commonfiles', function() {
     bis_gutil.createHTML('console',options.outdir,'',internal.biscss);
 });
 
+gulp.task('createserver',function(done) {
+
+    let inp=path.normalize(path.join(__dirname,path.join('js',path.join('bin','bisfileserver.js'))));
+    console.log(inp);
+    let cfg=path.normalize(path.join(__dirname,path.join('config','app.config.js')));
+    console.log(cfg);
+    let out=path.normalize(path.join(__dirname,
+                                     path.join(options.outdir,
+                                               path.join('..',
+                                                         path.join('wasm','lib')))));
+    console.log(out);
+    let cmd=` webpack-cli --entry ${inp} --config ${cfg} --output-path ${out} --output-filename bisfileserver.js`;
+    console.log('Command=',cmd);
+    bis_gutil.executeCommandPromise(cmd,__dirname).then( () => {
+        let url=path.join(out,'bisfileserver.js');
+        let stats = fs.statSync(url);
+        let bytes = stats["size"];
+        console.log('____ saved in '+url+' (size='+bytes+')');
+        done();
+    });
+});
+
 gulp.task('installserver',function() {
+
     gulp.src(['./build/wasm/lib/bisfileserver.js',
-              './js/bin/example-server-config.json']).
+              './js/bin/server/example-server-config.json',
+              './js/bin/server/package.json',
+              './js/bin/server/README.md'
+             ]).
         pipe(rename({dirname: 'server'})).
         pipe(gulpzip(path.join(options.outdir,'server.zip'))).
         pipe(gulp.dest('.'));
+    let url=path.resolve(path.join(options.outdir,'server.zip'));
+    let stats = fs.statSync(url);
+    let bytes = stats["size"];
+    console.log('____ zip file created in '+url+' (size='+bytes+')');
+
 });
 
 gulp.task('tools', function(done) {
@@ -445,6 +477,7 @@ gulp.task('build', function(callback) {
 
     runSequence('commonfiles',
                 'tools',
+                'createserver',
                 'installserver',
                 'buildtest',
                 callback);
