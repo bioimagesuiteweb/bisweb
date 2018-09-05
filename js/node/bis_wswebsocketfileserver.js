@@ -218,7 +218,7 @@ class BisWSWebSocketFileServer extends BaseFileServer {
                     },100);
                 });
             
-                this.netServer.on('error', (m) => {
+                this.netServer.on('error', () => {
                     let newport=port+1;
                     this.netServer.close();
                     this.netServer=null;
