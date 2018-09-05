@@ -301,7 +301,7 @@ var createZIPFile = function(dozip,baseoutput,outdir,version,distdir) {
         return;
     }
     console.log('baseoutput=',baseoutput,outdir);
-    const outfile=distdir+"/bisweb_"+getVersionTag(version)+".zip";
+    let outfile=distdir+"/bisweb_"+getVersionTag(version)+".zip";
     del([ outfile]);
     console.log(getTime()+' Creating zip file '+outfile+'.');
     return gulp.src([outdir+"*",
@@ -312,7 +312,15 @@ var createZIPFile = function(dozip,baseoutput,outdir,version,distdir) {
                      outdir+"images/*",
                      outdir+"test/**/*",
                      outdir+"var/*"],
-                    {base:outdir}).pipe(gulpzip(outfile)).pipe(gulp.dest('.'));
+                    {base:outdir}).pipe(gulpzip(outfile)).pipe(gulp.dest('.')).on('end', () => {
+                        outfile=path.resolve(outfile);
+                        let stats = fs.statSync(outfile);
+                        let bytes = stats["size"];
+                        let mbytes=Math.round(bytes/(1024*1024)*100)*0.01;
+                        
+                        console.log('____ zip file created in '+outfile+' (size='+mbytes+' MB )');
+
+                    });
 
 };
 

@@ -448,11 +448,13 @@ gulp.task('packageserver',function() {
              ]).
         pipe(rename({dirname: 'biswebserver'})).
         pipe(gulpzip(path.join(options.outdir,'server.zip'))).
-        pipe(gulp.dest('.'));
-    let url=path.resolve(path.join(options.outdir,'server.zip'));
-    let stats = fs.statSync(url);
-    let bytes = stats["size"];
-    console.log('____ zip file created in '+url+' (size='+bytes+')');
+        pipe(gulp.dest('.')).on('end', () => {
+            let url=path.resolve(path.join(options.outdir,'server.zip'));
+            let stats = fs.statSync(url);
+            let bytes = stats["size"];
+            let kbytes=Math.round(bytes/(1024)*10)*0.1;
+            console.log('____ zip file created in '+url+' (size='+kbytes+' KB)');
+        });
 
 });
 
@@ -510,6 +512,7 @@ gulp.task('clean', function() {
         let arr = [options.outdir+'#*',
                    options.outdir+'*~',
                    options.outdir+'*.js*',
+                   options.outdir+'*.zip',
                    options.outdir+'*.wasm',
                    options.outdir+'*.png',
                    options.outdir+'*.html*',
