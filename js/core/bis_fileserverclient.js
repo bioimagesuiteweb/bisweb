@@ -96,15 +96,19 @@ class BisFileServerClient extends BisBaseServerClient {
         let arr=address.split(':');
         let prt=arr[arr.length-1];
         this.portNumber=parseInt(prt);
-        if (!this.NodeWebSocket)
-            this.socket = new WebSocket(address);
-        else
-            this.socket = new this.NodeWebSocket(address);
-
-        if (!this.socket) {
-            this.socket=null;
-
-            return;
+        try {
+            if (!this.NodeWebSocket)
+                this.socket = new WebSocket(address);
+            else
+                this.socket = new this.NodeWebSocket(address);
+            
+            if (!this.socket) {
+                this.socket=null;
+                console.log("Bad Socket");
+                return;
+            }
+        } catch(e) {
+            console.log("Failed to connect to server"+e);
         }
         
         //add the event listeners for the control port
@@ -112,11 +116,14 @@ class BisFileServerClient extends BisBaseServerClient {
             console.log('---- Socket closing');
             if (this.terminating)
                 return;
+            if (this.authenticated)
+                this.alertEvent('Connection to fileserver at '+this.hostname+' closed',true);
             this.authenticated=false;
-            this.alertEvent('Connection to fileserver at '+this.hostname+' closed',true);
+
             if (this.authenticatingEvent) {
                 let id=this.authenticatingEvent.id;
                 bisasyncutil.rejectServerEvent(id,'failure to authenticate');
+                this.hideAuthenticationDialog();
             }
         });
 
@@ -132,6 +139,7 @@ class BisFileServerClient extends BisBaseServerClient {
             this.socket.removeEventListener('message', messageEvent);
             this.socket.removeEventListener('error', errorEvent);
             this.socket=null;
+            
         });
 
     }
@@ -308,10 +316,12 @@ class BisFileServerClient extends BisBaseServerClient {
 
             let successCB = (() => {
                 this.authenticatingEvent=null;
+                this.serverinfo=this.hostname;
                 resolve();
             });
             let failureCB= ( () => {
                 this.authenticatingEvent=null;
+                this.serverinfo='';
                 reject();
             });
             
