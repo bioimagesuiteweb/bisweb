@@ -698,8 +698,6 @@ from this link</a>. Use with care. This requires <a href="https://nodejs.org/en/
                     console.log('an error occured while parsing the AWS bucket data', e);
                 }
 
-            }).then( () => {
-                console.log('done iterating over aws bucket objects', awsstoredbuckets);
             }).catch( (err) => {
                 console.log('an error occured while fetching values from localstorage', err);
             });

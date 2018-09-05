@@ -336,6 +336,7 @@ class AWSModule {
 
         //split filenames and strip out all the folders (filepaths that end with '/')
         let paths = [];
+        let folders = [];
         console.log('files', files);
         for (let file of files) {
 
@@ -355,6 +356,8 @@ class AWSModule {
                     paths.push({ 'path' : splitFile, 'size' : file.Size });
                 }
 
+            } else {
+                folders.push(splitFile);
             }
         }
 
@@ -421,10 +424,40 @@ class AWSModule {
                 currentLocation = enclosingFolder.children;
             }
         }
+
+        //add empty folders to list
+        //folders is an array of filepaths split on the character '/'
+        for (let splitFolder of folders) {
+            let currentFolder = findFileWithKey(splitFolder[0], formattedFiles);
+
+            //skip the last index because every entry in folders ends in ''
+            for (let i = 0; i < splitFolder.length - 1; i++) {
+
+                if (i === splitFolder.length - 2) {
+                    currentFolder = currentFolder || formattedFiles;
+                    let folderName = splitFolder[splitFolder.length - 2];
+
+                    if (!findFileWithKey(folderName, currentFolder)) {
+                        let folderPath = makeFolderPath(splitFolder, folderName);
+                        let newEntry = {
+                            'text' : folderName,
+                            'path' : folderPath,
+                            'type' : 'directory',
+                            'children' : []
+                        };
+                        currentFolder.unshift(newEntry);
+                    }
+                } else {
+                    currentFolder = findFileWithKey(splitFolder[i], currentFolder);
+                }
+            }
+        }
+
         return formattedFiles;
 
         //helper function to find whether a folder or a file with the given name already exists in currentDirectory
         function findFileWithKey(key, currentDirectory) {
+            console.log('split folder', key, currentDirectory);
             for (let file of currentDirectory) {
                 if (file.text === key) {
                     return file;
