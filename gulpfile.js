@@ -439,14 +439,14 @@ gulp.task('createserver',function(done) {
     });
 });
 
-gulp.task('installserver',function() {
+gulp.task('packageserver',function() {
 
     gulp.src(['./build/wasm/lib/bisfileserver.js',
               './js/bin/server/example-server-config.json',
               './js/bin/server/package.json',
               './js/bin/server/README.md'
              ]).
-        pipe(rename({dirname: 'server'})).
+        pipe(rename({dirname: 'biswebserver'})).
         pipe(gulpzip(path.join(options.outdir,'server.zip'))).
         pipe(gulp.dest('.'));
     let url=path.resolve(path.join(options.outdir,'server.zip'));
@@ -478,7 +478,7 @@ gulp.task('build', function(callback) {
     runSequence('commonfiles',
                 'tools',
                 'createserver',
-                'installserver',
+                'packageserver',
                 'buildtest',
                 callback);
 });
