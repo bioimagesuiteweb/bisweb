@@ -1,10 +1,9 @@
-
 const path=require('path');
 const timers = require('timers');
 const util = require('bis_util');
 const WebSocket=require('ws');
 const genericio = require('bis_genericio.js');
-
+const wsutil = require('bis_wsutil');
 const globalInitialServerPort=require('bis_wsutil').initialPort;
 
 
@@ -106,10 +105,9 @@ class BisWSWebSocketFileServer extends BaseFileServer {
 
     /**  decodes text from socket
      * @param{Blob} text - the string to decode
-     * @param{Number} length - the length of the string
      * @returns {String} - the decoded string
      */
-    decodeUTF8(text,length) {
+    decodeUTF8(text) {
         return text;
     }
 
@@ -117,8 +115,8 @@ class BisWSWebSocketFileServer extends BaseFileServer {
 
         try {
             return socket.Server._connectionKey;
-        } catch(e) {
-            return "()"
+        } catch ( e ) {
+            return "()";
         }
     }
 
@@ -146,8 +144,6 @@ class BisWSWebSocketFileServer extends BaseFileServer {
 
         return new Promise ( (resolve,reject) => {
         
-            console.log("Creating Server=",hostname,port);
-            
             this.netServer = new WebSocket.Server({
                 'host' : hostname,
                 'port' : port
@@ -156,10 +152,11 @@ class BisWSWebSocketFileServer extends BaseFileServer {
                 this.datatransfer=datatransfer;
                 this.hostname=hostname;
                 this.port=port;
+
                 
                 this.netServer.on('connection', (socket) => {
                     
-                    console.log('..... Connected server=',this.netServer._server._connectionKey);
+                    console.log('..... Connected WS server=',this.netServer._server._connectionKey);
                     
                     this.attachSocketEvent(socket,'close', () => {
                         
@@ -177,7 +174,7 @@ class BisWSWebSocketFileServer extends BaseFileServer {
                     } else {
                         console.log('..... We are ready to respond on port='+port);
                         setTimeout( () => {
-                            self.authenticate(socket)
+                            self.authenticate(socket);
                         },500);
                     }
                 });
@@ -220,6 +217,18 @@ class BisWSWebSocketFileServer extends BaseFileServer {
                     resolve(this.portNumber);
                 },100);
             });
+            
+            this.netServer.on('error', (m,err) => {
+                let newport=port+1;
+                this.netServer.close();
+                this.netServer=null;
+                if (port<=wsutil.finalPort) {
+                    this.startServer(hostname,newport,datatransfer);
+                } else {
+                    reject('..... Can not find free port');
+                }
+            });
+
         });
     }
     
@@ -238,8 +247,6 @@ class BisWSWebSocketFileServer extends BaseFileServer {
                 this.createPassword(2);
                 socket.removeEventListener('message',readOTP);
                 console.log('..... Authenticated OK\n.....');
-                console.log("Done preparing",socket._events);
-                
             } else {
                 console.log('..... The token you entered is incorrect.');
                 this.createPassword(1);
@@ -249,8 +256,8 @@ class BisWSWebSocketFileServer extends BaseFileServer {
 
 
         socket.on('message',readOTP);
-        this.sendCommand(socket,'authenticate', 'wss').then( (m) => {
-            console.log("message sent");
+        this.sendCommand(socket,'authenticate', 'wss').then( () => {
+            console.log("..... authenticate message sent");
         });
     }
 
@@ -263,8 +270,6 @@ class BisWSWebSocketFileServer extends BaseFileServer {
      */
     prepareForControlFrames(socket) {
 
-        console.log("Preparing for Control Frames",socket._events);
-        
         socket.on('error', (error) => {
             console.log('..... an error occured', error);
         });
@@ -277,13 +282,10 @@ class BisWSWebSocketFileServer extends BaseFileServer {
                 this.sendCommand(socket,'nogood', 'badframe');
                 return;
             }
-            
-            console.log("Received message type=",typeof message);
-            
-            this.handleTextRequest(message, null, socket);
+            this.handleTextRequest(message, socket);
         });
 
-        socket.on('message',handleMessage);
+        socket.on('message',  handleMessage);
     }
     
     
@@ -304,64 +306,26 @@ class BisWSWebSocketFileServer extends BaseFileServer {
         //server can send mangled packets during transfer that may parse as commands that shouldn't occur at that time, 
         //e.g. a mangled packet that parses to have an opcode of 8, closing the connection. so unbind the default listener and replace it after transmission.
         
-        console.log('._._._._._._- \t receiving data on socket',this.getSocketInfo(socket),socket.protocol);
+
         const self=this;
         
-        socket.on('messsage', (chunk) => {
-            console.log('._._._._._._- \t receiving data on socket inside');
+        let parseBinary= ( (chunk) => {
+            //            console.log('._._._._._._- \t receiving data on socket inside');
             
-            console.log('Chunk',typeof chunk);
-            
-            let controlFrame = chunk.slice(0, 14);
-            let parsedControl = wsutil.parseControlFrame(controlFrame);
-            //        console.log('.....','parsed control frame', parsedControl);
-            
-            if (!parsedControl.mask) {
-                console.log('..... Received a transmission with no mask from client, dropping packet.');
-                return;
-            }
-            
-            let decoded = new Uint8Array(parsedControl.payloadLength);
-            //decode the raw data (undo the XOR)
-            for (let i = 0; i < parsedControl.payloadLength; i++) {
-                decoded[i] = chunk[i + parsedControl.datastart] ^ parsedControl.mask[i % 4];
-            }
-            
-            switch (parsedControl.opcode) {
-            case 2:
-                if (this.opts.verbose)
-                    console.log('..... adding packet with control', JSON.stringify(parsedControl));
-                try {
-                    addToCurrentTransfer(decoded, parsedControl, socket);
-                } catch(e) {
-                    console.log('.....',"Addition error",e);
-                }
-                if (this.timeout) {
-                    timers.clearTimeout(this.timeout);
-                    this.timeout = null;
-                }
-                break;
-            case 8:
-                this.closeSocket(socket,true);
+            let decoded = new Uint8Array(chunk);
 
-                if (self.datatransfer) {
-                    console.log('._._._._._._-\n._._._._._._- received close from client, ending data connection on port',self.portNumber,' data=',self.datatransfer,'\n._._._._._._-');
-                    self.stopServer(self.netServer);
-                }  else {
-                    console.log('.....\n..... received close from client, ending data connection on port',self.portNumber,' data=',self.datatransfer,'\n.....');
-                }
-                break;
-            default: 
-                console.log('..... dropping packet with control', JSON.stringify(parsedControl));
-                if (!this.timeout) {
-                    this.timeout = self.setSocketTimeout( () => {
-                        console.log('..... timed out waiting for client');
-                        this.closeSocket(socket,false);
-                    });
-                }
+            //if (this.opts.verbose)
+            //console.log('..... adding packet with control', decoded.length);
+            try {
+                addToCurrentTransfer(decoded, socket);
+            } catch(e) {
+                console.log('.....',"Addition error",e);
+            }
+            if (this.timeout) {
+                timers.clearTimeout(this.timeout);
+                this.timeout = null;
             }
         });
-        
         
         let getWriteLocation=function(name,dataInProgress) {
             
@@ -382,7 +346,7 @@ class BisWSWebSocketFileServer extends BaseFileServer {
             return name;
         };
         
-        function addToCurrentTransfer(upload, control, socket) {
+        function addToCurrentTransfer(upload, socket) {
             
             let dataInProgress=self.fileInProgress;
 
@@ -438,13 +402,24 @@ class BisWSWebSocketFileServer extends BaseFileServer {
             } else {
                 //console.log('._._._._._._- received chunk,', dataInProgress.receivedFile.length, 'received so far.');
                 try {
+                    //console.log('Sending next packet');
                     self.sendCommand(socket,'nextpacket', '');
                 } catch(e) {
                     console.log('._._._._._._-','\n\n\n\n\n ._._._._._._-................................... \n\n\n\n\n Error Caught =');
                     self.closeSocket(socket,true);
                 }
             }
-        }  
+        }
+
+        
+        socket.on('close', () => {
+            console.log('..... closing data transfer server\n.....');
+            self.stopServer(self.netServer);
+        });
+
+        console.log('._._._._._._- \t receiving data on socket',this.getSocketInfo(socket),socket.protocol);
+        socket.on('message',parseBinary);
+
     }
 
     
@@ -455,10 +430,9 @@ class BisWSWebSocketFileServer extends BaseFileServer {
      * Client transmissions are handled by prepareForDataFrames.
      * 
      * @param {Object|Uint8Array} upload - Either the first transmission initiating the transfer loop or a chunk.
-     * @param {Object} control - Parsed WebSocket header for the file request. 
      * @param {Net.Socket} socket - The control socket that will negotiate the opening of the data socket and send various communications about the transfer. 
      */
-    getFileFromClientAndSave(upload, control, socket) {
+    getFileFromClientAndSave(upload, socket) {
 
         if (this.opts.readonly) {
             console.log('.....','Server is in read-only mode and will not accept writes.');

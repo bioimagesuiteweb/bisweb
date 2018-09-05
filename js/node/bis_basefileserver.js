@@ -210,10 +210,11 @@ class BaseFileServer {
      * Parses a textual request from the client and serves accordingly. 
      * 
      * @param {String} rawText - Unparsed JSON denoting the file or series of files to read. 
-     * @param {Object} control - Parsed WebSocket header for the file request.
      * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place.
+     * @param {Object} control - Parsed WebSocket header for the file request.
+
      */
-    handleTextRequest(rawText, control, socket)  {
+    handleTextRequest(rawText, socket, control)  {
         let parsedText = this.parseClientJSON(rawText);
         parsedText=parsedText || -1;
         if (this.opts.verbose)
@@ -226,12 +227,12 @@ class BaseFileServer {
                 break;
             }
             case 'readfile': {
-                this.readFileAndSendToClient(parsedText, control, socket);
+                this.readFileAndSendToClient(parsedText, socket, control);
                 break;
             }
             case 'uploadfile' : {
                 console.log('._._._._._._-\n._._._._._._- beginning upload event');
-                this.getFileFromClientAndSave(parsedText, control, socket);
+                this.getFileFromClientAndSave(parsedText, socket, control);
                 break;
             }
             case 'getserverbasedirectory' : {
@@ -283,10 +284,10 @@ class BaseFileServer {
      * Takes a request from the client and returns the requested file or series of files. 
      * 
      * @param {String} rawText - Unparsed JSON denoting the file or series of files to read. 
-     * @param {Object} control - Parsed WebSocket header for the file request.
      * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
+     * @param {Object} control - Parsed WebSocket header for the file request.
      */
-    readFileAndSendToClient(parsedText, control, socket) {
+    readFileAndSendToClient(parsedText, socket, control) {
         let filename = parsedText.filename;
         let isbinary = parsedText.isbinary;
         let id=parsedText.id;
@@ -639,10 +640,10 @@ class BaseFileServer {
      * Closes the server side of the socket gracefully. Meant to be called upon receipt of a 'connection close' packet from the client, i.e. a packet with opcode 8.
      * 
      * @param {String} rawText - Unparsed JSON denoting the file or series of files to read. 
-     * @param {Object} control - Parsed WebSocket header for the file request.
      * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
+     * @param {Object} control - Parsed WebSocket header for the file request.
      */
-    handleCloseFromClient(rawText, control, socket) {
+    handleCloseFromClient(rawText, socket, control) {
         let text = this.decodeUTF8(rawText, control);
         console.log('..... received CLOSE frame from client',text);
 

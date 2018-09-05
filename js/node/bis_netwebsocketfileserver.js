@@ -355,15 +355,11 @@ class BisNetWebSocketFileServer extends BaseFileServer {
             switch (parsedControl.opcode)
             {
                 case 1:  {
-                    this.handleTextRequest(decoded, parsedControl, socket);
+                    this.handleTextRequest(decoded, socket, parsedControl);
                     break;
                 }
-                /*case 2:  {
-                  handleFileFromClient(decoded, parsedControl, socket);
-                  break;
-                  }*/
                 case 8: { 
-                    this.handleCloseFromClient(decoded, parsedControl, socket);
+                    this.handleCloseFromClient(decoded, socket, parsedControl);
                     break;
                 }
             }
@@ -414,7 +410,7 @@ class BisNetWebSocketFileServer extends BaseFileServer {
                 if (this.opts.verbose)
                     console.log('..... adding packet with control', JSON.stringify(parsedControl));
                 try {
-                    addToCurrentTransfer(decoded, parsedControl, socket);
+                    addToCurrentTransfer(decoded, socket, parsedControl);
                 } catch(e) {
                     console.log('.....',"Addition error",e);
                 }
@@ -464,7 +460,7 @@ class BisNetWebSocketFileServer extends BaseFileServer {
             return name;
         };
         
-        function addToCurrentTransfer(upload, control, socket) {
+        function addToCurrentTransfer(upload, socket, control) {
             
             let dataInProgress=self.fileInProgress;
 
@@ -537,10 +533,10 @@ class BisNetWebSocketFileServer extends BaseFileServer {
      * Client transmissions are handled by prepareForDataFrames.
      * 
      * @param {Object|Uint8Array} upload - Either the first transmission initiating the transfer loop or a chunk.
-     * @param {Object} control - Parsed WebSocket header for the file request. 
      * @param {Net.Socket} socket - The control socket that will negotiate the opening of the data socket and send various communications about the transfer. 
+     * @param {Object} control - Parsed WebSocket header for the file request. 
      */
-    getFileFromClientAndSave(upload, control, socket) {
+    getFileFromClientAndSave(upload, socket, control) {
 
         if (this.opts.readonly) {
             console.log('.....','Server is in read-only mode and will not accept writes.');
