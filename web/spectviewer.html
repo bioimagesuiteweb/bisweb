@@ -63,45 +63,83 @@
 </head>
 <body>
 
-  <bisweb-topmenubar   id="viewer_menubar"></bisweb-topmenubar> 
+  </head>
+  <body oncontextmenu="return false;" ondragstart="return false;" ondrop="return false;">
 
-  <div id="viewerwidget">
-
-    <bisweb-viewerlayoutelement
-       id="viewer_layout"
-       bis-sidewidth="300"
-       bis-coreopen="false"
-       bis-wholescreen="1"
-       bis-defaulttext="  ">
-    </bisweb-viewerlayoutelement>
-
-    <bisweb-colormapcontrollerelement id="viewer_cmap"></bisweb-colormapcontrollerelement>
+    <bisweb-topmenubar   id="viewer_menubar"></bisweb-topmenubar> 
+    <div role="tabpanel" id="bistabs">
+      <ul class="nav nav-tabs" role="tablist" id="viewers">
+	    <li role="presentation" class="active"><a href="#ortho" aria-controls="ortho" role="tab" data-toggle="tab">Orthogonal</a></li>
+	    <li role="presentation"><a href="#mosaic" aria-controls="mosaic" role="tab" data-toggle="tab">Mosaic</a></li>
+      </ul>
+      <div class="tab-content">
+	    <div role="tabpanel" class="tab-pane active" id="ortho">
+	      <div id="viewerwidget1">
+	        <bisweb-viewerlayoutelement
+	           id="viewer_layout1"
+	           bis-dockwidth="400"
+	           bis-topheight="55"
+	           bis-coreopen="true"
+                   bis-dualmode="1">
+	        </bisweb-viewerlayoutelement>
+                
+                <bisweb-colormapcontrollerelement id="viewer_cmap1"></bisweb-colormapcontrollerelement>
+                
+                <bisweb-orthogonalviewer
+	           id="viewer1"
+	           bis-layoutwidgetid="#viewer_layout1"
+	           bis-colormapeditorid="#viewer_cmap1">
+	        </bisweb-orthogonalviewer>
+                
+	        <bisweb-snapshotelement
+	          bis-layoutwidgetid="#viewer_layout1"
+	           bis-dowhite="false"
+	           bis-viewerid="#viewer1">
+	        </bisweb-snapshotelement>
+	      </div>
+	    </div>
+	    <div role="tabpanel" class="tab-pane" id="mosaic">
+	      <div id="viewerwidget2">
+                
+                <bisweb-viewerlayoutelement
+	           id="viewer_layout2"
+	           bis-dockwidth="300"
+	           bis-topheight="55"
+	           bis-coreopen="true"
+                   bis-fixed="1"
+	           bis-wholescreen="1"
+	           bis-defaulttext="">
+	        </bisweb-viewerlayoutelement>
+                
+                <bisweb-colormapcontrollerelement id="viewer_cmap2"></bisweb-colormapcontrollerelement>
+                
+                <bisweb-mosaicviewer
+	           id="viewer2"
+	           bis-layoutwidgetid="#viewer_layout2"
+	           bis-colormapeditorid="#viewer_cmap2">
+	        </bisweb-mosaicviewer>
+                
+                <bisweb-snapshotelement
+	           bis-layoutwidgetid="#viewer_layout2"
+	           bis-dowhite="false"
+	           bis-viewerid="#viewer2">
+	        </bisweb-snapshotelement>
+	      </div>
+	    </div>
+      </div>
+    </div>
     
-    <bisweb-orthogonalviewer
-       id="viewer"
-       bis-layoutwidgetid="#viewer_layout"
-       bis-colormapeditorid="#viewer_cmap">
-    </bisweb-orthogonalviewer>
-      
-    <bisweb-snapshotelement
-      bis-layoutwidgetid="#viewer_layout"
-      bis-dowhite="false"
-      bis-viewerid="#viewer">
-    </bisweb-snapshotelement>
-
-    <bisweb-console id="bisconsole"></bisweb-console>
-
     <bisweb-diffspectelement
+       bis-tabset="#viewers"
+       bis-mode="overlay",
+       bis-tab1="#ortho"
+       bis-tab2="#mosaic"
        bis-menubarid="#viewer_menubar"
-       bis-layoutwidgetid="#viewer_layout"
-       bis-consoleid="#bisconsole"
-       bis-viewerid="#viewer">
+       bis-viewerid="#viewer1"
+       bis-viewerid2="#viewer2"
+       bis-layoutwidgetid="#viewer_layout1">
     </bisweb-diffspectelement>
-
-
-  </div>
-
-  
-  <bisweb-botmenubar></bisweb-botmenubar>
+    
+    <bisweb-botmenubar></bisweb-botmenubar>
 </body>
 </html>
