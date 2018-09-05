@@ -214,7 +214,7 @@ class BaseFileServer {
      * @param {Object} control - Parsed WebSocket header for the file request.
 
      */
-    handleTextRequest(rawText, socket, control)  {
+    handleTextRequest(rawText, socket, control=null)  {
         let parsedText = this.parseClientJSON(rawText);
         parsedText=parsedText || -1;
         if (this.opts.verbose)
@@ -285,17 +285,12 @@ class BaseFileServer {
      * 
      * @param {String} rawText - Unparsed JSON denoting the file or series of files to read. 
      * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
-     * @param {Object} control - Parsed WebSocket header for the file request.
      */
-    readFileAndSendToClient(parsedText, socket, control) {
+    readFileAndSendToClient(parsedText, socket) {
         let filename = parsedText.filename;
         let isbinary = parsedText.isbinary;
         let id=parsedText.id;
         
-        /*let pkgformat='binary';
-          if (!isbinary)
-          pkgformat='text';*/
-
         if (!this.validateFilename(filename)) {
             this.handleBadRequestFromClient(socket,
                                             'filename '+filename+' is not valid',
@@ -776,7 +771,8 @@ class BaseFileServer {
                 }                
             }
         }
-        console.log('..... Validating '+name+' directory list=',lst.join(','),'-->\n.....\t ' , newlist.join(','));
+        if (this.opts.verbose)
+            console.log('..... Validating '+name+' directory list=',lst.join(','),'-->\n.....\t ' , newlist.join(','));
         return newlist;
     }
 
