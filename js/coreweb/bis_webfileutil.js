@@ -125,8 +125,9 @@ const webfileutils = {
     /**
      * Changes the file source of the application. 
      * @param {String} m - The source to change to. One of 'dropbox', 'googledrive', 'onedrive', 'amazonaws', 'server', or 'local'
+     * @param {Boolean} save - If true -- save preferences on change
      */
-    setMode : function(m='') {
+    setMode : function(m='',save=true) {
 
       // TODO: Check if fileserver and aws are enabled else disable
       
@@ -148,8 +149,10 @@ const webfileutils = {
             genericio.setFileServerObject(null);
         }
 
-        userPreferences.setItem('filesource',fileMode);
-        userPreferences.storeUserPreferences();
+        if (save) {
+            userPreferences.setItem('filesource',fileMode);
+            userPreferences.storeUserPreferences();
+        }
     },
 
 
