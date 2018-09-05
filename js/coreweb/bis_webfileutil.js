@@ -116,8 +116,6 @@ const webfileutils = {
             s.push({ value: "googledrive", text: "Google Drive (Load Only)" });
         if (mkey.length>1) 
             s.push({ value: "onedrive", text: "Microsoft OneDrive (Load Only)" });
-        
-        //TODO: Does this need a key or something? I don't think so but would be nice if there was some comparable flag...
 
         return s;
     },
@@ -127,9 +125,6 @@ const webfileutils = {
      * @param {String} m - The source to change to. One of 'dropbox', 'googledrive', 'onedrive', 'amazonaws', 'server', or 'local'
      */
     setMode : function(m='') {
-
-      // TODO: Check if fileserver and aws are enabled else disable
-      
       
         switch(m) {
             case 'dropbox' : if(dkey) { fileMode = 'dropbox'; } break;
@@ -599,7 +594,8 @@ from this link</a>. Use with care. This requires <a href="https://nodejs.org/en/
             });
         };
         
-        if (!webutil.inElectronApp() && this.needModes()) {
+        //if (!webutil.inElectronApp() && this.needModes()) {
+        if (!webutil.inElectronApp()) {
             if (separator)
                 webutil.createMenuItem(bmenu,'');
             webutil.createMenuItem(bmenu, name, fn);

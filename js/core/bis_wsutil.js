@@ -67,7 +67,6 @@ let formatControlFrame = (opcode, payloadLength) => {
         controlFrame[9] = remainingPayload;
     }
 
-    //TODO: implement logic for setting fin bit
     controlFrame[0] = opcode;
     controlFrame[0] = controlFrame[0] | 0b10000000;
 

@@ -340,7 +340,7 @@ class FileDialogElement {
             this.changeDirectory(null, this.fileList);
         });
 
-        //        navbar.append(backButton);
+        navbar.append(backButton);
         navbar.append(homeButton);
 
         //create navbar buttons for each folder in the current path

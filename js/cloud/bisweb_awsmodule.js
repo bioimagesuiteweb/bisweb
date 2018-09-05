@@ -238,16 +238,27 @@ class AWSModule {
      * @param {Function} cb - Function to call after successful authentication
      */ 
     awsAuthUser(cb) {
+
+        console.log('window.BIS', typeof window.BIS);
+
         let returnf="./biswebaws.html";
-        if (typeof window.BIS !=='undefined') {
+        if (typeof window.BIS !== 'undefined') {
             returnf="../build/web/biswebaws.html";
         }
 
         let authWindow = window.open(returnf, '_blank', 'width=400, height=400');
+
+        //set timeout in case window doesn't return a storage event
+        let timeoutEvent = setTimeout( () => {
+            bis_webutil.createAlert('Timed out waiting for AWS to respond', true);
+            window.removeEventListener('storage', idTokenEvent);
+            window.close(authWindow);
+        }, 20000);
+
         let idTokenEvent = (data) => {
-            //console.log('storage event', data);
             if (data.key === 'aws_id_token') {
                 window.removeEventListener('storage', idTokenEvent);
+                clearTimeout(timeoutEvent);
 
                 //---------------------------------------------------------------
                 // 2.) log into identity pool
