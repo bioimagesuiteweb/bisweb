@@ -7,7 +7,6 @@ const bis_webutil = require('bis_webutil.js');
 const bisweb_filedialog = require('bisweb_filedialog.js');
 const bisweb_simplefiledialog = require('bisweb_simplefiledialog.js');
 
-
 /**
  * Class designed to save and load files from Amazon S3, using Amazon Cognito for authentication. 
  * Does not require the use of an app key like Dropbox and Google Drive. 
@@ -239,12 +238,22 @@ class AWSModule {
      */ 
     awsAuthUser(cb) {
 
-        console.log('window.BIS', typeof window.BIS);
-
         let returnf="./biswebaws.html";
         if (typeof window.BIS !== 'undefined') {
             returnf="../build/web/biswebaws.html";
         }
+
+        let authParams = {
+            'regionName' : AWSParameters.RegionName,
+            'identityPoolId' : AWSParameters.IdentityPoolId(),
+            'cognitoParams' : AWSParameters.authParams
+        };
+
+        window.addEventListener('awsready', () => {
+            console.log('received awsready');
+            authWindow.authParams = authParams;
+            authWindow.dispatchEvent( new CustomEvent('handleIncoming'));
+        });
 
         let authWindow = window.open(returnf, '_blank', 'width=400, height=400');
 
@@ -252,7 +261,7 @@ class AWSModule {
         let timeoutEvent = setTimeout( () => {
             bis_webutil.createAlert('Timed out waiting for AWS to respond', true);
             window.removeEventListener('storage', idTokenEvent);
-            window.close(authWindow);
+            //authWindow.close();
         }, 20000);
 
         let idTokenEvent = (data) => {

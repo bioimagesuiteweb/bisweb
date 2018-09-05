@@ -1,16 +1,17 @@
 'use strict';
 
 const localforage = require('localforage');
-let cachedAWSBuckets = localforage.createInstance({
-    'name' : 'bis_webfileutil',
-    'storeName' : 'AWSBuckets'
-});
 
 // https://git.yale.edu/pages/zls5/webapp/
 let IdentityPoolID;
 let BucketName;
 let RegionName = 'us-east-1'; //N. Virginia
 let AccountId = '687575629668'; //My (Zach's) Amazon AWS account
+
+let cachedAWSBuckets = localforage.createInstance({
+    'name' : 'bis_webfileutil',
+    'storeName' : 'AWSBuckets'
+});
 
 cachedAWSBuckets.getItem('currentAWS', (err, value) => {
     if (err) { console.log('An error occured while fetching from the AWS bucket', err); return; }
