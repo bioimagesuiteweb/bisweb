@@ -120,6 +120,9 @@ class BaseViewerElement extends HTMLElement {
 
     /* returns last cross hairs (null) */
     getViewerCrossHairs() { return null; }
+
+    /* returns the colormap controller */
+    getColormapController() { return this.internal.cmapcontroller; }
     
     // ------------------------------------------------------------------------------------
     /** returns the size of the viewer
@@ -580,7 +583,7 @@ class BaseViewerElement extends HTMLElement {
      * @param {BisF.ColorMapControllerPayload } input - new transfer functions
      */
     updateColormapObservers(input) {
-        
+
         const self=this;
         this.internal.ignorecolormapobservers = true;
         
