@@ -73,5 +73,5 @@ class DualViewerApplicationElement extends ViewerApplicationElement {
 webutil.defineElement('bisweb-dualviewerapplication', DualViewerApplicationElement);
 
 
-
+module.exports=DualViewerApplicationElement;
 
