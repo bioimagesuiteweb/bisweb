@@ -273,7 +273,7 @@ const webfileutils = {
         fileopts.filters=fileopts.filters || null;
         fileopts.force=fileopts.force || null;
 
-        console.log('Incoming Suffix =',fileopts.suffix,' filters=',fileopts.filters);
+        //        console.log('Incoming Suffix =',fileopts.suffix,' filters=',fileopts.filters);
 
         let suffix = fileopts.suffix || '';
         let title = fileopts.title || '';
@@ -288,7 +288,7 @@ const webfileutils = {
             }
         }
 
-        console.log('Suffix =',fileopts.suffix,suffix,fileopts.filters);
+        //        console.log('Suffix =',fileopts.suffix,suffix,fileopts.filters);
         
         if (suffix === "NII" || fileopts.filters === "NII") {
             suffix = '.nii.gz,.nii,.gz,.tiff';
