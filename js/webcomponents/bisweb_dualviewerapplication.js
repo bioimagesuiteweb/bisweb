@@ -46,6 +46,40 @@ const ViewerApplicationElement = require('bisweb_mainviewerapplication');
  */
 class DualViewerApplicationElement extends ViewerApplicationElement {
 
+
+    getElementState(storeImages=false) {
+
+        let obj=super.getElementState(storeImages);
+
+        if (this.tab1name && this.tab2name) {
+            let tab1link = this.getAttribute('bis-tab1');
+            let widget=$(tab1link);
+            let cls=widget.attr('class');
+            if (cls.indexOf('active')>=0) {
+                obj.activeViewer='1';
+            } else {
+                obj.activeViewer='2';
+            }
+        }
+        
+        return obj;
+    }
+
+    setElementState(dt=null,name="") {
+
+        if (dt===null)
+            return;
+
+        if (this.tab1name && this.tab2name) { 
+            let ind=dt.activeViewer || 1;
+            if (ind===1)
+                $(this.tab1name).tab('show');
+            else
+                $(this.tab2name).tab('show');
+        }
+        super.setElementState(dt,name);
+    }
+    
     connectedCallback() {
 
         this.syncmode = true;
@@ -61,12 +95,16 @@ class DualViewerApplicationElement extends ViewerApplicationElement {
         if (tabset !== null) {
             let tab1link = this.getAttribute('bis-tab1');
             let tab2link = this.getAttribute('bis-tab2');
-            let tab1name = tabset + ' a[href="' + tab1link + '"]';
-            let tab2name = tabset + ' a[href="' + tab2link + '"]';
-            $(tab1name).tab('show');
-            $(tab1name).on('shown.bs.tab', () => self.VIEWERS[0].handleresize());
-            $(tab2name).on('shown.bs.tab', () => self.VIEWERS[1].handleresize());
+            this.tab1name = tabset + ' a[href="' + tab1link + '"]';
+            this.tab2name = tabset + ' a[href="' + tab2link + '"]';
+            $(this.tab1name).tab('show');
+            $(this.tab1name).on('shown.bs.tab', () => self.VIEWERS[0].handleresize());
+            $(this.tab2name).on('shown.bs.tab', () => self.VIEWERS[1].handleresize());
         }
+
+        setTimeout( () => {
+            this.getElementState(false);
+        },300);
     }
 }
 

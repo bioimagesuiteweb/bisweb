@@ -208,6 +208,7 @@ class MosaicViewerElement extends BaseViewerElement {
         let s=this.internal.objectmap;
         super.deleteoldobjectmap();
         this.internal.objectmap=s;
+        console.log('obj=',this.internal.objectmap.getDescription());
     }
     
     /** deletes artifacts of oldimage (display elements)
@@ -218,7 +219,6 @@ class MosaicViewerElement extends BaseViewerElement {
      * THIS IS DIFFERENT from orthogonal viewer which has no such complications
      */
     deleteoldimage_artifacts() {
-
         super.deleteoldimage();
     }
 
@@ -523,7 +523,6 @@ class MosaicViewerElement extends BaseViewerElement {
      */
     setimageplane(pl,force) {
 
-
         
         force = force || false;
         if (pl!==0)
@@ -532,8 +531,11 @@ class MosaicViewerElement extends BaseViewerElement {
         if (force===false && pl===this.internal.plane) {
             return;
         }
-        
+
+        let obj=this.internal.objectmap;
         this.deleteoldimage_artifacts();
+        this.internal.objectmap=obj;
+
         
         // CMAP
         const self=this;
