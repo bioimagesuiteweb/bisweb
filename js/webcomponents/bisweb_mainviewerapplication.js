@@ -557,31 +557,30 @@ class ViewerApplicationElement extends HTMLElement {
             // ----------------------------------------------------------
             fmenu[viewerno] = webutil.createTopMenuBarMenu(fmenuname, menubar);
 
-            webfileutil.createFileMenuItem(fmenu[viewerno], 'Load Image',
-                                           function (f) {
-                                               self.loadImage(f, viewerno);
-                                           },
-                                           { title: 'Load image',
-                                             save: false,
-                                             suffix: 'NII'
-                                           });
-            
-            webfileutil.createFileMenuItem(fmenu[viewerno], 'Save Image',
-                                           function (f) {
-                                               self.saveImage(f, viewerno); },
-                                           {
-                                               title: 'Save Image',
-                                               save: true,
-                                               filters: "NII",
-                                               suffix : "NII",
-                                               initialCallback : (() => {
-                                                   return self.getSaveImageInitialFilename(viewerno);
-                                               })
-                                           });
-            webutil.createMenuItem(fmenu[viewerno], ''); // separator
-            
             if (!self.simpleFileMenus) {
-
+                            
+                webfileutil.createFileMenuItem(fmenu[viewerno], 'Load Image',
+                                               function (f) {
+                                                   self.loadImage(f, viewerno);
+                                               },
+                                               { title: 'Load image',
+                                                 save: false,
+                                                 suffix: 'NII'
+                                               });
+                
+                webfileutil.createFileMenuItem(fmenu[viewerno], 'Save Image',
+                                               function (f) {
+                                                   self.saveImage(f, viewerno); },
+                                               {
+                                                   title: 'Save Image',
+                                                   save: true,
+                                                   filters: "NII",
+                                                   suffix : "NII",
+                                                   initialCallback : (() => {
+                                                       return self.getSaveImageInitialFilename(viewerno);
+                                                   })
+                                               });
+                webutil.createMenuItem(fmenu[viewerno], ''); // separator
                 bisweb_apputil.createMNIImageLoadMenuEntries(fmenu[viewerno], load_image, viewerno);
             }
 
@@ -589,58 +588,56 @@ class ViewerApplicationElement extends HTMLElement {
             // ----------------------------------------------------------
             // Objectmap/Overlay Menu
             // ----------------------------------------------------------
-            objmenu[viewerno] = webutil.createTopMenuBarMenu(objmenuname, menubar);
-
-            let painttool = null;
-
-            if (painttoolid !== null && viewerno === paintviewerno) {
-                painttool = document.querySelector(painttoolid);
+            if (!self.simpleFileMenus) {
+                objmenu[viewerno] = webutil.createTopMenuBarMenu(objmenuname, menubar);
                 
-                painttool.createMenu(objmenu[viewerno]);
-
-                const graphtool = document.createElement('bisweb-graphelement');
-                webutil.createMenuItem(objmenu[viewerno], 'VOI Analysis',
-                                       function () {
-                                           graphtool.parsePaintedAreaAverageTimeSeries(self.VIEWERS[paintviewerno]);
-                                       });
-
-            } else {
-
-                webfileutil.createFileMenuItem(objmenu[viewerno], 'Load Overlay',
-                                               function (f) {
-                                                   self.loadOverlay(f, viewerno);
-                                               }, 
-                                               { title: 'Load overlay', save: false, suffix: "NII" });
+                let painttool = null;
                 
-                webfileutil.createFileMenuItem(objmenu[viewerno], 'Save Overlay',
-                                               function (f) {
-                                                   self.saveOverlay(f, viewerno);
-                                               },
-                                               {
-                                                   title: 'Save Overlay',
-                                                   save: true,
-                                                   filters: "NII",
-                                                   suffix : "NII",
-                                                   initialCallback : () => {
-                                                       return self.getSaveOverlayInitialFilename(viewerno);
-                                                   }
-                                               });
-                webutil.createMenuItem(objmenu[viewerno], ''); // separator
-                
-                webutil.createMenuItem(objmenu[viewerno], 'Clear Overlay',
-                                       function () {
-                                           self.VIEWERS[viewerno].clearobjectmap();
-                                       });
-                if (!self.simpleFileMenus) {
+                if (painttoolid !== null && viewerno === paintviewerno) {
+                    painttool = document.querySelector(painttoolid);
+                    
+                    painttool.createMenu(objmenu[viewerno]);
+                    
+                    const graphtool = document.createElement('bisweb-graphelement');
+                    webutil.createMenuItem(objmenu[viewerno], 'VOI Analysis',
+                                           function () {
+                                               graphtool.parsePaintedAreaAverageTimeSeries(self.VIEWERS[paintviewerno]);
+                                           });
+                    
+                } else {
+                    
+                    webfileutil.createFileMenuItem(objmenu[viewerno], 'Load Overlay',
+                                                   function (f) {
+                                                       self.loadOverlay(f, viewerno);
+                                                   }, 
+                                                   { title: 'Load overlay', save: false, suffix: "NII" });
+                    
+                    webfileutil.createFileMenuItem(objmenu[viewerno], 'Save Overlay',
+                                                   function (f) {
+                                                       self.saveOverlay(f, viewerno);
+                                                   },
+                                                   {
+                                                       title: 'Save Overlay',
+                                                       save: true,
+                                                       filters: "NII",
+                                                       suffix : "NII",
+                                                       initialCallback : () => {
+                                                           return self.getSaveOverlayInitialFilename(viewerno);
+                                                       }
+                                                   });
+                    webutil.createMenuItem(objmenu[viewerno], ''); // separator
+                    
+                    webutil.createMenuItem(objmenu[viewerno], 'Clear Overlay',
+                                           function () {
+                                               self.VIEWERS[viewerno].clearobjectmap();
+                                           });
                     webutil.createMenuItem(objmenu[viewerno], ''); // separator
                     webutil.createMenuItem(objmenu[viewerno], 'Reslice Overlay To Match Image',
                                            function () {
                                                self.resliceOverlay(viewerno);
                                            });
                 }
-            }
-
-            if (!self.simpleFileMenus) {
+                
                 webutil.createMenuItem(objmenu[viewerno], ''); // separator
                 bisweb_apputil.createBroadmannAtlasLoadMenuEntries(objmenu[viewerno], load_objectmap, viewerno);
             }
@@ -893,7 +890,7 @@ class ViewerApplicationElement extends HTMLElement {
             "params" : this.saveState,
         },null,4);
 
-        fobj=genericio.getFixedSaveFileName(fobj,self.applicationName+".biswebstate");
+        fobj=genericio.getFixedSaveFileName(fobj,self.getApplicationStateName());
         //        console.log('Fobj=',fobj);
         
         return new Promise(function (resolve, reject) {
@@ -910,6 +907,7 @@ class ViewerApplicationElement extends HTMLElement {
     createEditMenu(menubar) {
         const self=this;
         let editmenu=webutil.createTopMenuBarMenu("Edit", menubar);
+
         if (this.num_independent_viewers > 1) {
             webutil.createMenuItem(editmenu, 'Copy Viewer 1', function () { self.copyViewer(0); });
             webutil.createMenuItem(editmenu, 'Paste Viewer 1', function () { self.pasteViewer(0); });
@@ -925,6 +923,11 @@ class ViewerApplicationElement extends HTMLElement {
 
         return editmenu;
     }
+
+    getApplicationStateName() {
+        return this.applicationName+".biswebstate";
+    }
+
     
     createApplicationMenu(bmenu) {
 
@@ -955,7 +958,7 @@ class ViewerApplicationElement extends HTMLElement {
                                            filters : [ { name: 'Application State File', extensions: ['biswebstate']}],
                                            suffix : "biswebstate",
                                            initialCallback : () => {
-                                               return self.applicationName+".biswebstate";
+                                               self.getApplicationStateName();
                                            }
                                        });
 
@@ -1103,44 +1106,43 @@ class ViewerApplicationElement extends HTMLElement {
 
         this.createApplicationMenu(fmenu);
 
-        let editmenu=this.createEditMenu(menubar);
-        this.createAdvancedTransferTool(modulemanager,editmenu);
-        
-        
-        
-        if (this.num_independent_viewers >1)
-            this.createDisplayMenu(menubar,null);
+             
+        if (!this.simpleFileMenus) {
+            let editmenu=this.createEditMenu(menubar);
+            this.createAdvancedTransferTool(modulemanager,editmenu);
+            
+            
+            
+            if (this.num_independent_viewers >1)
+                this.createDisplayMenu(menubar,null);
 
-
-        // ----------------------------------------------------------
-        // Module Manager
-        // ----------------------------------------------------------
-        if (modulemanager)
-            modulemanager.initializeElements(menubar, self.VIEWERS);
-
-        if (this.num_independent_viewers <2 ) {
-            this.createDisplayMenu(menubar, editmenu);
-        }
-
-        if (painttoolid !== null || landmarkcontrolid !==null) {
-
-            let toolmenu = webutil.createTopMenuBarMenu('Tools', menubar);
-            let p=Promise.resolve();
-            if (painttoolid) {
-                let painttool = document.querySelector(painttoolid);
-                p=painttool.addTools(toolmenu);
+            if (modulemanager)
+                modulemanager.initializeElements(menubar, self.VIEWERS);
+            
+            if (this.num_independent_viewers <2 ) {
+                this.createDisplayMenu(menubar, editmenu);
             }
-            if (landmarkcontrolid) {
-                let landmarkcontrol=document.querySelector(landmarkcontrolid);
-                p.then( () => {
-                    if (painttoolid)
-                        webutil.createMenuItem(toolmenu,'');
-                    
-                    webutil.createMenuItem(toolmenu,'Landmark Editor',function() {
-                        landmarkcontrol.show();
+            
+            if (painttoolid !== null || landmarkcontrolid !==null) {
+                
+                let toolmenu = webutil.createTopMenuBarMenu('Tools', menubar);
+                let p=Promise.resolve();
+                if (painttoolid) {
+                    let painttool = document.querySelector(painttoolid);
+                    p=painttool.addTools(toolmenu);
+                }
+                if (landmarkcontrolid) {
+                    let landmarkcontrol=document.querySelector(landmarkcontrolid);
+                    p.then( () => {
+                        if (painttoolid)
+                            webutil.createMenuItem(toolmenu,'');
+                        
+                        webutil.createMenuItem(toolmenu,'Landmark Editor',function() {
+                            landmarkcontrol.show();
+                        });
                     });
-                });
-            }   
+                }   
+            }
         }
         
 
