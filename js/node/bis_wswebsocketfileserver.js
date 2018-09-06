@@ -6,32 +6,8 @@ const genericio = require('bis_genericio.js');
 const wsutil = require('bis_wsutil');
 const globalInitialServerPort=require('bis_wsutil').initialPort;
 const fs=require('fs');
-const https=require('http');
-/**
- * Secure Example
- *
-const fs = require('fs');
-const https = require('https');
-const WebSocket = require('ws');
- 
-const server = new https.createServer({
-  cert: fs.readFileSync('/path/to/cert.pem'),
-  key: fs.readFileSync('/path/to/key.pem')
-});
-const wss = new WebSocket.Server({ server });
- 
-wss.on('connection', function connection(ws) {
-  ws.on('message', function incoming(message) {
-    console.log('received: %s', message);
-  });
- 
-  ws.send('something');
-});
- 
-server.listen(8080);
-
-*
-*/
+const https=require('https');
+const crypto=require('crypto');
 const BaseFileServer=require('bis_basefileserver');
 
 
@@ -174,8 +150,6 @@ class BisWSWebSocketFileServer extends BaseFileServer {
     // ---------------------------------------------------------------------------
     startDirectServer(hostname,externalport,datatransfer) {
         
-        const self=this;
-
         return new Promise ( (resolve,reject) => {
 
             let internalStartServer = ( (port) => {
@@ -210,12 +184,13 @@ class BisWSWebSocketFileServer extends BaseFileServer {
     // ---------------------------------------------------------------------------
     startHTTPServer(hostname,externalport,datatransfer) {
         
-        const self=this;
-
         let options={
-            cert: fs.readFileSync('cert.pem'),
-            key: fs.readFileSync('key.pem')
+            cert: fs.readFileSync('server.cert').toString(),
+            key: fs.readFileSync('server.key').toString(),
         };
+
+        //let credentials = crypto.createCredentials({key: options.key, cert: options.cert});
+        
         
         return new Promise ( (resolve,reject) => {
 
@@ -233,7 +208,7 @@ class BisWSWebSocketFileServer extends BaseFileServer {
 
                 try {
                     console.log('Starting server');
-                    this.httpserver=https.createServer(options);
+                    this.httpserver=new https.createServer(options);
                     console.log("Server created");
                     this.httpserver.listen(port);
                     console.log("Server listening on port",port);
@@ -247,9 +222,9 @@ class BisWSWebSocketFileServer extends BaseFileServer {
                     } else {
                         reject(this.indent+' Can not find free port');
                     }
-                };
+                }
 
-            }
+            };
             
             internalStartServer(externalport);
         });
@@ -315,7 +290,6 @@ class BisWSWebSocketFileServer extends BaseFileServer {
         
         this.netServer.on('error', (m) => {
             console.log(this.indent+' server error',m);
-            reject();
         });
         
     }
