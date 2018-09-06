@@ -117,7 +117,11 @@ class SimpleFileDialog {
      * @param {String} dname -- the name of the directory
      */
     changeDirectory(dname) {
-        this.fileListFn( dname,true);
+        this.fileListFn( dname,false).then( (payload) => {
+            this.updateDialog(payload.data,
+                              payload.path,
+                              payload.root);
+        });
     }
 
     // --------------- Create GUI ------------------------------
@@ -168,7 +172,7 @@ class SimpleFileDialog {
             this.filenameCallback();
         });
 
-        this.modal.footer.append(this.okButton);        
+         this.modal.footer.append(this.okButton);        
         this.modal.body.append(this.container);        
 
     }
@@ -241,16 +245,20 @@ class SimpleFileDialog {
             if (opts.initialFilename)
                 initialfilename=opts.initialFilename;
         }
+
+        this.updateDialog(list,startDirectory,rootDirectory,initialfilename);
+    }
+    
+    updateDialog(list,startDirectory,rootDirectory,initialfilename=null) {
         
         this.fileList = list;
         this.currentDirectory = startDirectory;
-
-
+        
         //keep track of the current directory for the navbar
         this.currentPath = startDirectory;
         this.container.find('.bisweb-file-navbar').empty();
-
-
+        
+        
         let filterbar=this.container.find('.bisweb-file-filterbar');
         if (this.currentFilters.length<1 || this.displayFiles===false) {
             filterbar.empty();
@@ -463,7 +471,7 @@ class SimpleFileDialog {
             let button = $(`<button type='button' class='btn btn-sm btn-link' style='margin:0px'>${b}${name}</button>`);
             button.on('click', (event) => {
                 event.preventDefault();
-                this.fileListFn(newPath);
+                this.changeDirectory(newPath);
             });
             
             navbar.append(button);
