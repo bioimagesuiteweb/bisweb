@@ -73,9 +73,6 @@ class DiffSpectElement extends DualViewerApplicationElement {
 
         super();
 
-        this.elements = {
-            continuePatientFile: null,
-        };
         this.dataPanel=null;
         this.resultsPanel=null;
 
@@ -134,7 +131,71 @@ class DiffSpectElement extends DualViewerApplicationElement {
         
         for(let i=0;i<this.allList.length;i++) {
             this.app_state[this.allList[i]]=null;
-        }        
+        }
+
+        this.patientInfoModal = null;
+    }
+
+
+    getApplicationStateName(suffix='biswebstate') {
+
+        let s=`${this.app_state.patient_name}_${this.app_state.patient_number}_diffspect.${suffix}`;
+        return s.trim().replace(/ /g,'_');
+
+    }
+
+        /**
+     * Creates a small modal dialog to allow the user to enter the session password used to authenticate access to the local fileserver. 
+     * Also displays whether authentication succeeded or failed. 
+     */
+    showPatientInfoModal() {
+
+        if (!this.patientInfoModal) {
+
+            let nid=webutil.getuniqueid();
+            let uid=webutil.getuniqueid();
+            
+            let dataEntryBox=$(`
+                <div class='form-group'>
+                    <label for='name'>Patient Name:</label>
+                                 <input type='text' class = 'form-control' id='${nid}' value="">
+                </div>
+                <div class='form-group'>
+                    <label for='number'>Patient ID:</label>
+                    <input type='text' class = 'form-control' id='${uid}'>
+                </div>
+            `);
+
+            this.patientInfoModal = webutil.createmodal('Enter Patient Information', 'modal-sm');
+            this.patientInfoModal.dialog.find('.modal-footer').find('.btn').remove();
+            this.patientInfoModal.body.append(dataEntryBox);
+            
+            let confirmButton = webutil.createbutton({ 'name': 'Save', 'type': 'btn-success' });
+            let cancelButton = webutil.createbutton({ 'name': 'Cancel', 'type': 'btn-danger' });
+            
+            this.patientInfoModal.footer.append(confirmButton);
+            this.patientInfoModal.footer.append(cancelButton);
+
+            cancelButton.on('click', (e) => {
+                e.preventDefault();
+                this.patientInfoModal.dialog.modal('hide');
+            });
+
+            confirmButton.on('click', (e) => {
+                e.preventDefault();
+                this.patientInfoModal.dialog.modal('hide');
+                console.log(this);
+                this.app_state.patient_name=$('#'+nid).val();
+                this.app_state.patient_number= $('#'+uid).val();
+            });
+
+            this.patientNameId=nid;
+            this.patientNumberId=uid;
+        }
+
+        $('#'+this.patientNameId).val(this.app_state.patient_name);
+        $('#'+this.patientNumberId).val(this.app_state.patient_number);
+        this.patientInfoModal.dialog.modal('show');
     }
 
     // ------------------------------------
@@ -183,8 +244,9 @@ class DiffSpectElement extends DualViewerApplicationElement {
         super.setElementState(dt,name);
 
         let input=dt.spect || {};
-        this.app_state.name= input.name || '';
-        this.app_state.number= input.patient_number || 0;
+
+        this.app_state.patient_name= input.name || '';
+        this.app_state.patient_number= input.number || 0;
 
         for (let i=0;i<this.saveList.length;i++) {
             let elem=this.saveList[i];
@@ -212,11 +274,6 @@ class DiffSpectElement extends DualViewerApplicationElement {
             this.generateCharts();
             this.resultsPanel.show();
         }
-
-        //      $('#sm_patientName').val(input.name);
-        //    $('#sm_patientNumber').val(input.number);
-
-        
         
     }
 
@@ -263,20 +320,8 @@ class DiffSpectElement extends DualViewerApplicationElement {
     // --------------------------------------------------------------------------------
     // GUI Callbacks
     // -------------------------------------------------------------------------------
-    createNewPatient(patientname, patientnumber) {
-        if ('' === patientname ||
-            '' === patientnumber ||
-            null === patientname ||
-            null === patientnumber) {
-            errormessage('please enter a name and ID number for the new patient');
-            return false;
-        }
 
-        this.app_state.patient_name = patientname;
-        this.app_state.patient_number = patientnumber;
-        return true;
 
-    }
 
     // --------------------------------------------------------------------------------
     // Load Image Callback
@@ -573,6 +618,8 @@ class DiffSpectElement extends DualViewerApplicationElement {
         let pdiv=this.resultsToolsDiv;
         pdiv.empty();
 
+        pdiv.append($(`<H4> Results for ${this.app_state.patient_name} : ${this.app_state.patient_number}</H4>`));
+
         let lst = [ 'Hyper', 'Hypo' ];
         let data = [ this.app_state.hyper, this.app_state.hypo ];
 
@@ -588,14 +635,14 @@ class DiffSpectElement extends DualViewerApplicationElement {
 
         let lst = [ 'Hyper', 'Hypo' ];
         let datalist = [ this.app_state.hyper, this.app_state.hypo ];
-
-        let str='Mode,Index,I,J,K,Size,clusterP,correctedP,maxT-score\n';
-
+        
+        let str=`Name, ${this.app_state.patient_name}, Number, ${this.app_state.patient_number}\n`;
+        str+='Mode,Index,I,J,K,Size,clusterP,correctedP,maxT-score\n';
 
         for (let pass=0;pass<datalist.length;pass++) {
             let data=datalist[pass];
             let name=lst[pass];
-
+            
             for (let i=0;i<data.length;i++) {
 
                 let index=data[i].index;
@@ -612,7 +659,8 @@ class DiffSpectElement extends DualViewerApplicationElement {
 
         }
 
-        fobj=genericio.getFixedSaveFileName(fobj,self.applicationName+".csv");
+        let fn=this.getApplicationStateName('csv');
+        fobj=genericio.getFixedSaveFileName(fobj,fn);
         
         return new Promise(function (resolve, reject) {
             genericio.write(fobj, str).then((f) => {
@@ -1136,14 +1184,10 @@ class DiffSpectElement extends DualViewerApplicationElement {
         
         let sMenu = webutil.createTopMenuBarMenu("diff-SPECT", menubar);
         
-            /*        webutil.createMenuItem(sMenu, 'New Patient',
+        webutil.createMenuItem(sMenu, 'Enter Patient Info',
                       () =>  {
-                      let pn = self.spectToolsDiv.parent();
-                      pn.collapse('show');
-                      self.app_state.sm_carousel.carousel(0);
-                      $('#newPatientButton').click();
+                          self.showPatientInfoModal();
                       });
-                      webutil.createMenuItem(sMenu,'');*/
 
         webutil.createMenuItem(sMenu, 'Load Patient Ictal Image', () =>  {
             self.loadImage('ictal'); 
