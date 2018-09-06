@@ -6,6 +6,7 @@ build/*
 **/*.wasm
 **/*.pyc
 **/*.wast
+**/*.old
 **/.#*
 **/a.txt
 **/TAGS
