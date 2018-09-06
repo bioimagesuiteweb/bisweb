@@ -5,8 +5,8 @@ const WebSocket=require('ws');
 const genericio = require('bis_genericio.js');
 const wsutil = require('bis_wsutil');
 const globalInitialServerPort=require('bis_wsutil').initialPort;
-
-
+const fs=require('fs');
+const https=require('http');
 /**
  * Secure Example
  *
@@ -166,6 +166,14 @@ class BisWSWebSocketFileServer extends BaseFileServer {
      */
     startServer(hostname='localhost', externalport=globalInitialServerPort, datatransfer = true) {
 
+        if (hostname==='localhost')
+            return this.startDirectServer('localhost',externalport,datatransfer);
+        return this.startHTTPServer('localhost',externalport,datatransfer);
+    }
+
+    // ---------------------------------------------------------------------------
+    startDirectServer(hostname,externalport,datatransfer) {
+        
         const self=this;
 
         return new Promise ( (resolve,reject) => {
@@ -177,73 +185,12 @@ class BisWSWebSocketFileServer extends BaseFileServer {
                     'port' : port
                 }, () => {
                 
-                    this.datatransfer=datatransfer;
-                    this.hostname=hostname;
-                    this.port=port;
-
-                    
-                    this.netServer.on('connection', (socket) => {
-                        
-                        console.log(this.indent+' Connected WS server=',this.netServer._server._connectionKey);
-                        
-                        this.attachSocketEvent(socket,'close', () => {
-                            
-                            if (this.terminating) {
-                                console.log(this.indent+' Terminating');
-                            } else  if (!self.datatransfer) {
-                                console.log(this.indent+' \n'+this.indent+' Restarting server as connections went down to zero');
-                                self.createPassword();
-                            }
-                        });
-                        
-                        if (this.datatransfer) {
-                            console.log(',_._._._._._ \t Data Transfer is ON: We are ready to respond',port,' datatransfer=',self.datatransfer,self.hostname,self.port,this.netServer._serv);
-                            self.prepareForDataFrames(socket);
-                        } else {
-                            console.log(this.indent+' We are ready to respond on port='+port);
-                            setTimeout( () => {
-                                self.authenticate(socket);
-                            },500);
-                        }
-                    });
-                    
-                    this.netServer.on('listening', () => {
-                        if (datatransfer) {
-                            this.datatransfer=true;
-                            this.portNumber=port;
-                            console.log(',_._._._._._ \tStarting transfer data server on ',port);
-                        } else {
-                            this.datatransfer=false;
-                            this.portNumber=port;
-                            this.hostname=hostname;
-                            this.createPassword();
-                            if (this.opts.insecure) {
-                                console.log(".....\t IN INSECURE MODE");
-                            }
-                            if (this.opts.nolocalhost) 
-                                console.log(this.indent+"\t Allowing remote connections");
-                            else
-                                console.log(this.indent+"\t Allowing only local connections");
-                            if (this.opts.readonly)
-                                console.log(this.indent+"\t Running in 'read-only' mode");
-                            
-                            console.log(this.indent+'\t Providing access to:',this.opts.baseDirectoriesList.join(', '));
-                            console.log(this.indent+'\t\t  The temp directory is set to:',this.opts.tempDirectory);
-                            
-                            console.log('................................................................................,,');
-                        }
-                    });
-                    
-                    this.netServer.on('error', (m) => {
-                        console.log(this.indent+' server error',m);
-                        reject();
-                    });
-                    
+                    this.attachServerEvents(hostname,port,datatransfer);
                     setTimeout( () => {
                         resolve(this.portNumber);
                     },100);
                 });
-            
+                
                 this.netServer.on('error', () => {
                     let newport=port+1;
                     this.netServer.close();
@@ -259,7 +206,121 @@ class BisWSWebSocketFileServer extends BaseFileServer {
             internalStartServer(externalport);
         });
     }
-    
+
+    // ---------------------------------------------------------------------------
+    startHTTPServer(hostname,externalport,datatransfer) {
+        
+        const self=this;
+
+        let options={
+            cert: fs.readFileSync('cert.pem'),
+            key: fs.readFileSync('key.pem')
+        };
+        
+        return new Promise ( (resolve,reject) => {
+
+            let startNetServer = ( (server,port) => {
+                
+                this.netServer = new WebSocket.Server({ server } , () => {
+                    this.attachServerEvents(hostname,port,datatransfer);
+                    setTimeout( () => {
+                        resolve(this.portNumber);
+                    },100);
+                });
+            });
+
+            let internalStartServer= (port) => {
+
+                try {
+                    console.log('Starting server');
+                    this.httpserver=https.createServer(options);
+                    console.log("Server created");
+                    this.httpserver.listen(port);
+                    console.log("Server listening on port",port);
+                    startNetServer(this.httpserver,port);
+                    
+                } catch(e) {
+                    console.log(e);
+                    let newport=port+1;
+                    if (port<=wsutil.finalPort) {
+                        internalStartServer(newport);
+                    } else {
+                        reject(this.indent+' Can not find free port');
+                    }
+                };
+
+            }
+            
+            internalStartServer(externalport);
+        });
+    }
+
+
+    // ---------------------------------------------------------------------------
+    attachServerEvents(hostname,port,datatransfer=false) {
+        
+        this.datatransfer=datatransfer;
+        this.hostname=hostname;
+        this.portNumber=port;
+        const self=this;
+        
+        this.netServer.on('connection', (socket) => {
+                        
+            console.log(this.indent+' Connected WS server=',this.netServer._server._connectionKey);
+            
+            this.attachSocketEvent(socket,'close', () => {
+                
+                if (this.terminating) {
+                    console.log(this.indent+' Terminating');
+                } else  if (!self.datatransfer) {
+                    console.log(this.indent+' \n'+this.indent+' Restarting server as connections went down to zero');
+                    self.createPassword();
+                }
+            });
+            
+            if (this.datatransfer) {
+                console.log(',_._._._._._ \t Data Transfer is ON: We are ready to respond',port,' datatransfer=',self.datatransfer,self.hostname,self.port,this.netServer._serv);
+                self.prepareForDataFrames(socket);
+            } else {
+                console.log(this.indent+' We are ready to respond on port='+port);
+                setTimeout( () => {
+                    self.authenticate(socket);
+                },500);
+            }
+        });
+        
+        this.netServer.on('listening', () => {
+            if (this.datatransfer) {
+                console.log(',_._._._._._ \tStarting transfer data server on ',this.portNumber);
+            } else {
+                this.portNumber=port;
+                this.hostname=hostname;
+                this.createPassword();
+                if (this.opts.insecure) {
+                    console.log(".....\t IN INSECURE MODE");
+                }
+                if (this.opts.nolocalhost) 
+                    console.log(this.indent+"\t Allowing remote connections");
+                else
+                    console.log(this.indent+"\t Allowing only local connections");
+                if (this.opts.readonly)
+                    console.log(this.indent+"\t Running in 'read-only' mode");
+                
+                console.log(this.indent+'\t Providing access to:',this.opts.baseDirectoriesList.join(', '));
+                console.log(this.indent+'\t\t  The temp directory is set to:',this.opts.tempDirectory);
+                
+                console.log('................................................................................,,');
+            }
+        });
+        
+        this.netServer.on('error', (m) => {
+            console.log(this.indent+' server error',m);
+            reject();
+        });
+        
+    }
+
+    // ---------------------------------------------------------------------------
     
     authenticate(socket) {
 
