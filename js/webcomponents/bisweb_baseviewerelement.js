@@ -899,16 +899,18 @@ class BaseViewerElement extends HTMLElement {
             }
         }
 
-        let n=this.internal.subviewers.length;
-        if (n>0) {
-            obj.subviewers = [];
-            for (let i=0;i<n;i++) {
-                if (this.internal.subviewers[i]) {
-                    let controls=this.internal.subviewers[i].controls;
-                    let p=controls.serializeCamera();
-                    obj.subviewers.push(p);
-                } else {
-                    i=n; // let's get out of here
+        if (this.internal.subviewers) {
+            let n=this.internal.subviewers.length;
+            if (n>0) {
+                obj.subviewers = [];
+                for (let i=0;i<n;i++) {
+                    if (this.internal.subviewers[i]) {
+                        let controls=this.internal.subviewers[i].controls;
+                        let p=controls.serializeCamera();
+                        obj.subviewers.push(p);
+                    } else {
+                        i=n; // let's get out of here
+                    }
                 }
             }
         }
