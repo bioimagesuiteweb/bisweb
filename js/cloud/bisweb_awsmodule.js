@@ -42,6 +42,7 @@ class AWSModule {
         //not completely sure why -Zach
         bis_webutil.runAfterAllLoaded( () => {   
             this.fileDisplayModal = new bisweb_simplefiledialog('Bucket Contents');
+            this.fileDisplayModal.fileListFn = this.changeDirectory.bind(this);
         });
 
     }
@@ -72,11 +73,11 @@ class AWSModule {
      * @param {String} suffixes - Comma separated list of file extensions for files that should be displayed in the modal. 
      */
     createLoadImageModal(filters, modalTitle, suffixes) {
-        this.s3.listObjectsV2( {}, (err, data) => {
+        this.s3.listObjectsV2( { 'Delimiter' : '/' }, (err, data) => {
             if (err) { console.log('an error occured', err); return; }
 
-            let formattedFiles = this.formatRawS3Files(data.Contents, suffixes);
-            console.log('formatted files', formattedFiles);
+            console.log('contents', data);
+            let formattedFiles = this.formatRawS3Files(data.Contents, data.CommonPrefixes, suffixes);
 
             this.fileDisplayModal.openDialog(formattedFiles, {
                 'filters' : filters,
@@ -108,7 +109,6 @@ class AWSModule {
             }
 
             filename = splitName.join('/');
-            console.log('filename', filename);
 
             let getParams = { 
                 'Key' : filename,
@@ -166,7 +166,6 @@ class AWSModule {
     createSaveImageModal(filters, modalTitle) {
         this.s3.listObjectsV2( {}, (err, data) => {
             if (err) { console.log('an error occured', err); return; }
-            console.log('got objects', data);
 
             let formattedFiles = this.formatRawS3Files(data.Contents);
 
@@ -180,6 +179,33 @@ class AWSModule {
     }
 
     /**
+     * Changes directories to another directory in the AWS bucket. Will also update the file dialog's GUI. Used as the fileListFn for AWS's file dialog (see changeDirectory in bisweb_simplefiledialog).
+     * AWS returns all the files in the user's bucket (there are some limits with pagination but I haven't encountered problems with this as of 9/6/18).
+     * This is functionally different from the file server, which fetches directories on demand. 
+     * 
+     * @param {String} path - Full path of the new directory, separated by '/'.
+     */
+    changeDirectory(path) {
+        
+        return new Promise( (resolve, reject) => {
+            this.s3.listObjectsV2( { 'Prefix' : path, 'Delimiter' : '/' }, (err, data) => {
+                if (err) { console.log('an error occured', err); reject(err); return; }
+
+                let formattedFiles = this.formatRawS3Files(data.Contents);
+                 
+                let cdopts = {
+                    'data' : formattedFiles,
+                    'startDirectory' : path,
+                    'rootDirectory' : '/'
+                };
+
+                resolve(cdopts);
+            });
+        })
+
+    }
+
+    /**
      * Gets the size of a file with a given name and returns it. Technically a synchronous function but templated as a promise for compatibility with bis_genericio.
      * @param {String} filename 
      */
@@ -188,6 +214,8 @@ class AWSModule {
 
         });
     }
+
+
     /**
      * Attempts to authenticate the current user before executing a given S3 command (one of either 'showfiles' or 'uploadfiles' as of 7-23-18, which respectively call listObjectsInBucket and createImageSaveDialog).
      * If the user is not authenticated, a popup will appear that will prompt the user to enter their AWS credentials, or if the credentials are already cached, it will begin the authentication process. It will execute the command once the user has been successfully authenticated.
@@ -319,11 +347,12 @@ class AWSModule {
     /**
      * Takes the raw data returned by S3.listObjectsV2 and turns it into a nested file tree that bisweb_filedialog can render.
      *
-     * @param {Object} files - The 'Contents' field of the data returned by S3.listObjects.
+     * @param {Object} files - The 'Contents' field of the data returned by S3.listObjects. May also contain a 'fullPath' field containing the full canonical path of the file, as file.Key is sometimes truncated.
+     * @param {String} directories - The list of directories rooted in the current directory (i.e. the directory provided as 'Prefix' while fetching the objects)
      * @param {String} suffixes - A comma separated string of acceptable file types -- files with an extension not in filters are excluded. 
      * @returns An array of files parseable by bisweb_filedialog
      */
-    formatRawS3Files(files, suffixes = null) {
+    formatRawS3Files(files, directories, suffixes = null) {
 
         let filtersArray = suffixes ? suffixes.split(',') : null;
 
@@ -337,7 +366,7 @@ class AWSModule {
         //split filenames and strip out all the folders (filepaths that end with '/')
         let paths = [];
         let folders = [];
-        console.log('files', files);
+
         for (let file of files) {
 
             let splitFile = file.Key.split('/');
@@ -349,15 +378,15 @@ class AWSModule {
                 if (suffixes) {
                     for (let filter of filtersArray) {
                         if (fileExtension[fileExtension.length - 1] === filter) {
-                            paths.push({ 'filepath' : splitFile, 'size' : file.Size });
+                            paths.push({ 'filepath' : splitFile, 'size' : file.Size, 'fullpath' : file.FullPath });
                         }
                     }
                 } else {
-                    paths.push({ 'path' : splitFile, 'size' : file.Size });
+                    paths.push({ 'filepath' : splitFile, 'size' : file.Size, 'fullPath' : file.fullPath });
                 }
 
             } else {
-                folders.push(splitFile);
+                folders.push({ 'filepath' : splitFile, 'fullPath' : file.fullPath });
             }
         }
 
@@ -370,7 +399,6 @@ class AWSModule {
 
         for (let path of paths) {
             let currentLocation = formattedFiles;
-
             for (let folder of path.filepath) {
                 let enclosingFolder = findFileWithKey(folder, currentLocation);
                 if (!enclosingFolder) {
@@ -427,18 +455,19 @@ class AWSModule {
 
         //add empty folders to list
         //folders is an array of filepaths split on the character '/'
-        for (let splitFolder of folders) {
-            let currentFolder = findFileWithKey(splitFolder[0], formattedFiles);
+        for (let folder of folders) {
+            console.log('folder', folder);
+            let currentFolder = findFileWithKey(folder.filepath[0], formattedFiles);
 
             //skip the last index because every entry in folders ends in ''
-            for (let i = 0; i < splitFolder.length - 1; i++) {
+            for (let i = 0; i < folder.filepath.length - 1; i++) {
 
-                if (i === splitFolder.length - 2) {
+                if (i === folder.filepath.length - 2) {
                     currentFolder = currentFolder || formattedFiles;
-                    let folderName = splitFolder[splitFolder.length - 2];
+                    let folderName = folder.filepath[folder.filepath.length - 2];
 
                     if (!findFileWithKey(folderName, currentFolder)) {
-                        let folderPath = makeFolderPath(splitFolder, folderName);
+                        let folderPath = folder.fullPath ? folder.fullPath : makeFolderPath(folder.filepath, folderName);
                         let newEntry = {
                             'text' : folderName,
                             'path' : folderPath,
@@ -448,7 +477,7 @@ class AWSModule {
                         currentFolder.unshift(newEntry);
                     }
                 } else {
-                    currentFolder = findFileWithKey(splitFolder[i], currentFolder);
+                    currentFolder = findFileWithKey(folder.filepath[i], currentFolder);
                 }
             }
         }
@@ -457,7 +486,7 @@ class AWSModule {
 
         //helper function to find whether a folder or a file with the given name already exists in currentDirectory
         function findFileWithKey(key, currentDirectory) {
-            console.log('split folder', key, currentDirectory);
+            console.log('current directory', currentDirectory);
             for (let file of currentDirectory) {
                 if (file.text === key) {
                     return file;
@@ -465,20 +494,6 @@ class AWSModule {
             }
 
             return false;
-        }
-
-        function makeFolderPath(fullPath, folderName) {
-            let newPath = '';
-
-            for (let i = 0; i < fullPath.length; i++) {
-                if (fullPath[i] === folderName) {
-                    return newPath.concat(folderName);
-                }
-
-                newPath = newPath.concat(fullPath[i]);
-            }
-
-            return -1;
         }
     }
 }

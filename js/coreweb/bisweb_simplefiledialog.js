@@ -12,16 +12,8 @@ require('jstree');
  * This class will render a list of files in a window similar to the file system dialog that opens when a user clicks on an <input type='file'> button.
  * 
  * TODO: Back button breaks after adding supplemental files
-
- TODO:
-
- Eventually move save filename inside the dialog box -- one dialog box on save
- Have option to apply the filter on not 
- It would be nice to show date and filesize eventually (and sort by size)
-
-*/
-
-
+ * TODO: It would be nice to show date and filesize eventually (and sort by size)
+ */
 class SimpleFileDialog {
 
     constructor(options = {}) {
@@ -37,8 +29,8 @@ class SimpleFileDialog {
         this.okButton=null;
         this.filenameEntry=null;
 
-        
-        // This are the callbacks 
+        //fileListFn is meant to be called when a directory is clicked, and should handle all behavior needed to display its contents.
+        //fileRequestFn is meant to be called when a file is selected to be loaded/saved
         this.fileListFn=null;
         this.fileRequestFn=null;
 
@@ -113,11 +105,19 @@ class SimpleFileDialog {
     }
 
 
-    /** Request Directory
+    /** 
+     * Requests the contents of a directory from the relevant file service (using the function provided through fileListFn) and updates the the GUI with the new data.
      * @param {String} dname -- the name of the directory
      */
     changeDirectory(dname) {
-        this.fileListFn( dname,true);
+        this.fileListFn(dname, true).then( (payload) => {
+            let opts = {
+                'startDirectory' : payload.path,
+                'rootDirectory' : payload.root
+            };
+
+            this.openDialog(payload.data, opts);
+        });
     }
 
     // --------------- Create GUI ------------------------------
@@ -178,7 +178,7 @@ class SimpleFileDialog {
      * @param {String|Array} filters - An unparsed list of filters.
      */
     createFilters(filters = null) {
-        console.log('create filters', filters);
+
         if (filters) {
             this.currentFilters=JSON.parse(JSON.stringify(filters));
         } else {
@@ -199,7 +199,7 @@ class SimpleFileDialog {
      * @param {String} list.text - The name of the file or folder.
      * @param {String} list.path - The full path indicating where the file is located on the server machine.
      * @param {Object} opts - A parameter object for the file dialog.
-     * @param {String} opts.moda - What mode the modal is in, either 'load' or 'save'.
+     * @param {String} opts.mode - What mode the modal is in, either 'load' or 'save'.
      * @param {String} opts.title - The name to display at the top of the file dialog modal.
      * @param {Array} opts.filters - A list of filters for the file dialog. Only files that end in a filetype contained in opts.filters will be displayed.
      * @param {String} opts.startDirectory - File entry representing the directory at which the files in list should be added. Defaults to '/'.
@@ -314,9 +314,8 @@ class SimpleFileDialog {
      * @param {Array} list - An array of file entries. 
      * @param {String} lastfilename - the last selected filename
      * @param {String} rootDirectory - "the drive" we are looking in
-
      */
-    updateTree(list,lastfilename=null, rootDirectory='/') {
+    updateTree(list, lastfilename = null, rootDirectory = '/') {
 
         this.previousList=JSON.parse(JSON.stringify(list));
         
@@ -346,7 +345,6 @@ class SimpleFileDialog {
                 } 
             }
         } else if (this.activeFilterList.length>0) {
-            console.log('Filtering with',this.activeFilterList);
             let len=list.length-1;
             for (let i = len; i >=0; i=i-1) {
                 if (list[i].type !== 'directory') {
@@ -475,10 +473,12 @@ class SimpleFileDialog {
                 newPath="[Root]";
                 name=" [Root]";
             }
+
             let button = $(`<button type='button' class='btn btn-sm btn-link' style='margin:0px'>${b}${name}</button>`);
             button.on('click', (event) => {
                 event.preventDefault();
-                this.fileListFn(newPath);
+                console.log('newPath', newPath);
+                this.changeDirectory(newPath);
             });
             
             navbar.append(button);
