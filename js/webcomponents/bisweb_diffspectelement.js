@@ -515,8 +515,11 @@ class DiffSpectElement extends DualViewerApplicationElement {
         let buttoncoords = {};
         let callback = (e) => {
             let id=e.target.id;
-            if (!id)
+            if (!id) {
                 id=e.target.parentElement.id;
+                if (!id)
+                    id=e.target.parentElement.id;
+            }
             let coordinate=buttoncoords[id];
             console.log('coord=',coordinate,id,buttoncoords[id]);
             self.VIEWERS[0].setcoordinates([coordinate[0], coordinate[1], coordinate[2]]);
@@ -738,8 +741,9 @@ class DiffSpectElement extends DualViewerApplicationElement {
 
         let reference=this.app_state[params['reference']];
         let target=this.app_state[params['target']];
+
         if (reference === null || target === null) {
-            errormessage('Bad '+params['reference']+' or '+params[target]+' images. Can not execute registration');
+            webutil.createAlert('No images in memore (either '+params['reference']+' or '+params['target']+'). Can not execute registration');
             return Promise.reject('no images');
         }
 
@@ -863,7 +867,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
     }
     
     // calls all of the above custom registration methods in correct order and reslices images as necessary
-    computeRegistrationOfImages() {
+    computeAllRegistrations() {
 
         const self=this;
         // execute registration order if MRI is not uploaded by user
@@ -871,11 +875,12 @@ class DiffSpectElement extends DualViewerApplicationElement {
         if (!this.app_state.does_have_mri) {
             prom =new Promise( (resolve,reject) => {
                 this.registerImages('atlas2interictal').then( () => {
+
                     this.registerImages('interictal2ictal').then( ()=> {
                         webutil.createAlert('Done computing registrations in no_mri mode');
                         resolve();
-                    }).catch( (e) => { reject(e,e.stack);});
-                });
+                    });
+                }).catch( (e) => { reject(e,e.stack);});
             });
         } else {
             prom=new Promise( (resolve,reject) => {
@@ -894,7 +899,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
             self.resliceImages('ictal2Atlas').then( () => {
                 self.showAtlasToIctalRegistration();
                 self.dataPanel.show();
-            });
+            }).catch( (e) => { console.log(e,e.stack); });
         });
     }
 
@@ -1069,7 +1074,6 @@ class DiffSpectElement extends DualViewerApplicationElement {
         });
     }
 
-
     // ---------------------------------------------------------------------------------------
     // Extra Menu with 
 
@@ -1120,31 +1124,28 @@ class DiffSpectElement extends DualViewerApplicationElement {
                       self.app_state.sm_carousel.carousel(0);
                       $('#newPatientButton').click();
                       });
-        webutil.createMenuItem(sMenu,'');*/
-        webutil.createMenuItem(sMenu,'Show diff SPECT Data Tree(Images)',() => {
-            self.dataPanel.show();
+                      webutil.createMenuItem(sMenu,'');*/
+
+        webutil.createMenuItem(sMenu, 'Load Patient Ictal Image', () =>  {
+            self.loadImage('ictal'); 
+        }); 
+        webutil.createMenuItem(sMenu, 'Load Patient Inter-Ictal Image', () =>  {
+            self.loadImage('interictal'); 
         });
-        webutil.createMenuItem(sMenu,'Show diff SPECT Results',() => {
-            self.resultsPanel.show();
+        webutil.createMenuItem(sMenu, 'Load Patient MRI Image', () =>  {
+            self.loadImage('mri'); 
         });
+       
         webutil.createMenuItem(sMenu,'');
         
-        webutil.createMenuItem(sMenu, 'Register Images With Linear Registration', () =>  {
-            if (self.app_state.interictal !== null && self.app_state.interictal !== null)
-                self.computeRegistrationOfImages();
-            else
-                bootbox.alert('INVALID IMAGE(S)');
-            
+        webutil.createMenuItem(sMenu, 'Register Images using Linear Registration (fast,incaccurate)', () =>  {
+            self.app_state.nonlinear = false;
+            self.computeAllRegistrations();
         });
 
-        webutil.createMenuItem(sMenu, 'Register Images With Nonlinear Registration', () =>  {
-            if (self.app_state.interictal !== null && self.app_state.interictal !== null) {
-                self.app_state.nonlinear = true;
-                self.computeRegistrationOfImages();
-            }
-            else
-                bootbox.alert('INVALID IMAGE(S)');
-            
+        webutil.createMenuItem(sMenu, 'Register Images With Nonlinear Registration (slow,accurate)', () =>  {
+            self.app_state.nonlinear = true;
+            self.computeAllRegistrations();
         });
 
         
@@ -1152,6 +1153,15 @@ class DiffSpectElement extends DualViewerApplicationElement {
         webutil.createMenuItem(sMenu, 'Compute Diff Spect MAPS', () =>  {
             self.computeSpect(); 
         });
+
+        webutil.createMenuItem(sMenu,'');
+        webutil.createMenuItem(sMenu,'Show diff SPECT Data Tree(Images)',() => {
+            self.dataPanel.show();
+        });
+        webutil.createMenuItem(sMenu,'Show diff SPECT Results',() => {
+            self.resultsPanel.show();
+        });
+        
 
 
     }
