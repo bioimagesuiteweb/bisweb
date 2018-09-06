@@ -122,6 +122,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
 
         
         this.allList= this.saveList.concat(this.tempImageList).concat(this.atlasList);
+        this.clearList = this.xformList.concat(this.tempImageList).concat(this.resultsList);
         
         this.app_state = {
             patient_name: "No Name",
@@ -132,16 +133,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
         
         for(let i=0;i<this.allList.length;i++) {
             this.app_state[this.allList[i]]=null;
-        }
-
-
-        console.log(JSON.stringify(this.app_state,null,2));
-
-        console.log('SaveList');
-        console.log(JSON.stringify(this.saveList,null,2));
-        console.log('TypeList');
-        console.log(JSON.stringify(this.typeList,null,2));
-        
+        }        
     }
 
     // ------------------------------------
@@ -232,7 +224,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
     // Load Atlas Images
     // --------------------------------------------------------------------------------
 
-    loadAtlas() {
+    loadAtlasData() {
 
         let loadimagearray=function(imgnames, alldone) {
                 
@@ -288,6 +280,42 @@ class DiffSpectElement extends DualViewerApplicationElement {
     }
 
     // --------------------------------------------------------------------------------
+    // Load Image Callback
+    loadImage(name='ictal') {
+
+        console.log('Loading image',name);
+        
+        let handleGenericFileSelect = (imgfile)=> {
+            
+            let newimage = new BisWebImage();
+            newimage.load(imgfile, false).then( () =>  { 
+                console.log('Image read :' + newimage.getDescription(''));
+                this.app_state[name] = newimage;
+                webutil.createAlert('Loaded '+name +': '+this.app_state[name].getDescription());
+                this.VIEWERS[0].setimage(this.app_state[name]);
+                
+                console.log('Clearing intermediate results');
+                for (let i=0;i<this.clearList.length;i++) {
+                    let elem=this.clearList[i];
+                    console.log('clearing ',elem);
+                    this.app_state[elem]=null;
+                }
+            });
+        };
+
+        webfileutil.genericFileCallback(
+            { 
+                "title"  : `Load ${name} image`,
+                "suffix" : "NII" 
+            },
+            ( (fname) => {
+                handleGenericFileSelect(fname);
+            }),
+        );
+        
+    }
+
+    // --------------------------------------------------------------------------------
     // Create the SPECT Tool GUI
     // --------------------------------------------------------------------------------
 
@@ -296,7 +324,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
         let treeOptionsCallback=this.treeCallback.bind(this);
         
         const self = this;
-        self.loadAtlas();
+        self.loadAtlasData();
         
         let tree=this.tree_div.find('#treeDiv');
 
@@ -368,89 +396,12 @@ class DiffSpectElement extends DualViewerApplicationElement {
     treeCallback(node) {
 
         const self=this;
-        let handleGenericFileSelect = (imgfile, imgname, show, comment, nextfn)=> {
-            
-            let newimage = new BisWebImage();
-            newimage.load(imgfile, false).then( () =>  { 
-                console.log('Image read :' + newimage.getDescription(''));
-                
-                self.app_state[imgname] = newimage;
-                if (show) {
-                    console.log('loaded ' + imgname + '--> (' + comment + ') ' + self.app_state[imgname].getDescription());
-                    nextfn();
-                }
-            });
-        };
-        
-        
-        let interictalLoaded = (() => {
-            self.VIEWERS[0].setimage(self.app_state.interictal);
-            console.log(self.app_state.interictal);
-        });
-
-        let handleInterictalFileSelect = () => {
-
-            webfileutil.genericFileCallback(
-                { 
-                    "title"  : `Load interictal image`,
-                    "suffix" : "NII" 
-                },
-                (fname) => {
-                    console.log('Custom method reached');
-                    handleGenericFileSelect(fname,
-                                            'interictal',
-                                            true, // Whether to show to viewer
-                                            'Inter-Ictal', // Name
-                                            interictalLoaded); // fn to call when successful
-                }
-            );
-        };
-
-        let ictalLoaded = (() => {
-            self.VIEWERS[0].setimage(self.app_state.ictal);
-        });
-
-        let handleIctalFileSelect = (() => {
-            webfileutil.genericFileCallback(
-                { 
-                    "title"  : `Load Ictal image`,
-                    "suffix" : "NII" 
-                },
-                (fname) => {
-                    handleGenericFileSelect(fname,
-                                            'ictal',
-                                            true, // Whether to show to viewer
-                                            'Ictal', // Name
-                                            ictalLoaded); // fn to call when successful
-                } 
-            );
-        });
-
-        let mriLoaded = (() => {
-            self.VIEWERS[0].setimage(self.app_state.mri);
-        });
-
-        let handleMRIFileSelect = (() => {
-            webfileutil.genericFileCallback(
-                { 
-                    "title"  : `Load MR image`,
-                    "suffix" : "NII" 
-                },
-                (fname) => {
-                    handleGenericFileSelect(fname,
-                                            'mri',
-                                            true, // Whether to show to viewer
-                                            'Ictal', // Name
-                                            mriLoaded); // fn to call when successful
-                }
-            );
-        });
 
         let items = {
             loadinter: {
                 'label': 'Load Interictal',
                 'action': () => {
-                    handleInterictalFileSelect();
+                    self.loadImage('interictal');
                 },
                 
             },
@@ -458,17 +409,17 @@ class DiffSpectElement extends DualViewerApplicationElement {
             loadictal: {
                 'label': 'Load Ictal',
                 'action': () => {
-                    handleIctalFileSelect();
+                    self.loadImage('ictal');
                 }
             },
             
             loadmri: {
                 'label': 'Load MRI',
                 'action': () =>  {
-                    handleMRIFileSelect();
+                    self.loadImage('mri');
                 }
             },
-
+            
             showimage: {
                 'label': 'Show Image',
                 'action': () => {
