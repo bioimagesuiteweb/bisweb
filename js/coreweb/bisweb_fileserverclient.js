@@ -21,13 +21,6 @@ class BisWebFileServerClient extends BisFileServerClient {
         //connection over which uploads are exchanged
         this.dataSocket = null;
 
-        //File tree requests display the contents of the disk on the server machine in a moda;
-        webutil.runAfterAllLoaded( () => {
-            // Because this involves creating webcomponents (deep down, they need to be afterAllLoaded);
-            this.fileLoadDialog = new bisweb_simplefiledialog('BisWeb File Server Connector');
-            this.fileSaveDialog = new bisweb_simplefiledialog('Choose a save location', { 'makeFavoriteButton' : false, 'modalType' : 'save', 'displayFiles' : false  });
-        });
-
         //When connecting to the server, it may sometimes request that the user authenticates
         this.authenticateModal = null;
         this.authenticated = false;
@@ -126,14 +119,9 @@ class BisWebFileServerClient extends BisFileServerClient {
      * 
      * @param {Object} payload - Object specifying the list of files on the server machine and which modal it corresponds to.
      * @param {Object} opts - Object specific options for the Dialog
-     *
-     * // TODO: some how have a title here ... and suffix list
      */
     showFileDialog(payload,opts=null) {
 
-        console.log('opts', opts);
-        console.log('callback', opts.callback);
-        
         if (!this.fileDialog) {
             this.fileDialog=new bisweb_simplefiledialog();
             this.fileDialog.fileListFn = this.requestFileList.bind(this);

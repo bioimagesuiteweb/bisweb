@@ -179,32 +179,16 @@ class BisFileServerClient extends BisBaseServerClient {
         if (verbose)
             console.log('____\n____ Received message: ', data.type, id, bisasyncutil.printEvent(id));
         switch (data.type) {
-            case 'checksum': {
-                //console.log('Checksum =', data.payload.checksum);
-                // Nothing to do let promise handle it;
-                break;
-            }
-
-            case 'filelist': {
-                // Nothing to do let promise handle it
-                break;
-            }
-
-            case 'serverbasedirectory': {
-                // Nothing to do let promise handle it
-                break;
-            }
-            case 'servertempdirectory': {
-                // Nothing to do let promise handle it
-                break;
-            }
+            //These commands are handled by the promise, so just ignore them here
+            case 'checksum':
+            case 'uploadmessage':
+            case 'filelist': 
+            case 'serverbasedirectory': 
+            case 'servertempdirectory': 
+            case 'filesystemoperations': break;
             case 'error': {
                 this.alertEvent(data.payload.text,true);
                 success=false;
-                break;
-            }
-            case 'uploadmessage': {
-                // Nothing to do let promise handle it
                 break;
             }
             case 'authenticate': {
@@ -221,7 +205,6 @@ class BisFileServerClient extends BisBaseServerClient {
                 }
                 break;
             }
-
             case 'goodauth': {
                 id = -1;
                 this.alertEvent('Login to BisWeb FileServer Successful'); //webutil.createAlert
@@ -233,19 +216,12 @@ class BisFileServerClient extends BisBaseServerClient {
                     id = this.authenticatingEvent.id;
                 break;
             }
-
-            case 'filesystemoperations': {
-                // Handled by promise
-                break;
-            }
-
             case 'filesystemoperationserror': {
                 // Handled by promise
                 console.log('FIle System OPeration failed');
                 success=false;
                 break;
             }
-
             case 'tryagain' : {
                 id=-1;
                 console.log('\n___________\n---------------------- \t\t Failed retrying',this.lastCommand,'\n__________________');
@@ -253,7 +229,6 @@ class BisFileServerClient extends BisBaseServerClient {
                 this.sendCommand(this.lastCommand);
                 break;
             }
-
             case 'nogood' : {
                 id=-1;
                 let a=this.lastCommand;
@@ -261,9 +236,6 @@ class BisFileServerClient extends BisBaseServerClient {
                 this.lastCommand=a;
                 break;
             }
-
-
-            
             default: {
                 console.log('received a transmission with unknown type', data.type, 'cannot interpret');
                 success = false;
@@ -299,16 +271,9 @@ class BisFileServerClient extends BisBaseServerClient {
         if (this.authenticated)
             return Promise.resolve();
 
-        return new Promise((resolve, reject) => {
-
-            let successCB = (() => {
-                this.authenticatingEvent = null;
-                resolve();
-            });
-            let failureCB = (() => {
-                this.authenticatingEvent = null;
-                reject();
-            });
+        //TODO: WebSocket API does not expose errors for security reasons -- this makes it hard to interact with opening the socket.
+        //Is there a better way to do this so that errors opening the socket could reject the promise?
+        return new Promise( (resolve) => {
 
             if (password.length>0 || this.hasGUI===false) {
                 this.connectToServer(hostname);
@@ -316,6 +281,8 @@ class BisFileServerClient extends BisBaseServerClient {
                 // Useless if no GUI
                 this.showAuthenticationDialog();
             }
+
+            resolve();
         });
     }
 
@@ -325,28 +292,25 @@ class BisFileServerClient extends BisBaseServerClient {
     /**
      * Sends a request for a list of the files on the server machine and prepares the display modal for the server's reply. 
      * Once the list of files arrives it is rendered using jstree. The user may request individual files from the server using this list. 
-     * It calls authenticate first ...
-     * requestFileList doesn't expand the contents of the entire server file system; just the first four levels of directories. 
-
-     * This will eventually end up calling this.handleServerRequest (via nested callbacks)
-     * @param {String} directory - The directory to expand the files under. Optional -- if unspecified the server will return the directories under ~/.
-     * @param {Boolean} showdialog - if true popup a gui dialog else just text
-     * @param {Objects} opts - the options object
+     * This will eventually end up calling this.handleServerRequest (via nested callbacks).
+     * 
+     * @param {String} directory - The directory to expand the files under. If unspecified the server will return the directories under ~/.
+     * @param {Boolean} showdialog - If true popup a gui dialog else just text
+     * @param {Objects} opts - The options object
      * @param {Function} opts.callback - A callback function propagated from bis_webfileutil that will handle the non-AWS I/O for the retrieved data, , and a list of acceptable file suffixes.
      * @param {String} opts.title - The title to display on the load/save modal
      * @param {String} opts.initialname - The initial filename
 
      * @returns {Promise} with payload is the event
      */
-    requestFileList(directory = null, showdialog=true,opts=null) {
+    requestFileList(directory = null, showdialog = true, opts = null) {
 
-        
         if (opts)
             this.lastOpts = opts;
 
-        return new Promise((resolve, reject) => {
+        return new Promise( (resolve, reject) => {
 
-            let cb=( (payload) => {
+            let cb = ( (payload) => {
                 if (showdialog) {
                     this.showFileDialog(payload,this.lastOpts);
                 }
@@ -357,7 +321,8 @@ class BisFileServerClient extends BisBaseServerClient {
                 let serverEvent=bisasyncutil.addServerEvent(cb,reject,'requestFileList');
                 this.sendCommand({ 'command' : 'getfilelist',
                                    'directory' : directory,
-                                   'id' : serverEvent.id}); 
+                                   'id' : serverEvent.id
+                                }); 
             });
         });
     }
@@ -443,11 +408,6 @@ class BisFileServerClient extends BisBaseServerClient {
                                'isbinary' : isbinary });
         });
     }
-
-
-
-
-
 
     /** This is the helper function
      * Given that modals are opened one at a time and all user-driven file I/O happens through one of these, the callback should be a
@@ -651,13 +611,11 @@ class BisFileServerClient extends BisBaseServerClient {
                 
                 switch (data.type)
                 {
-                    case 'nextpacket':
-                    {
+                    case 'nextpacket': {
                         sendDataSlice();
                         break;
                     }
-                    case 'uploadcomplete':
-                    {
+                    case 'uploadcomplete': {
                         // We are done!
                         if (verbose)
                             console.log('Received uploadcomplete, closing');
@@ -666,14 +624,12 @@ class BisFileServerClient extends BisBaseServerClient {
                         successCB(metadata);
                         break;
                     }
-                    case 'uploadfailed':
-                    {
+                    case 'uploadfailed': {
                         console.log('Update failed');
                         failureCB('tryagain');
                         break;
                     }
-                    default:
-                    {
+                    default: {
                         console.log('received unexpected message', event, 'while listening for server responses');
                         failureCB('Error-'+data.payload);
                     }
