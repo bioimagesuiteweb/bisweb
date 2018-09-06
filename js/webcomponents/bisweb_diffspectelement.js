@@ -4,7 +4,6 @@
 
 // imported modules from open source and bisweb repo
 const bisimagesmoothreslice = require('bis_imagesmoothreslice');
-const bistransformations = require('bis_transformationutil');
 const BisWebImage = require('bisweb_image');
 const webutil = require('bis_webutil');
 const webfileutil = require('bis_webfileutil');
@@ -17,6 +16,7 @@ const NonlinearRegistration = require('nonlinearRegistration');
 const baseutils = require('baseutils');
 const BisWebPanel = require('bisweb_panel.js');
 const DualViewerApplicationElement = require('bisweb_dualviewerapplication');
+const BisWebDataObjectCollection=require('bisweb_dataobjectcollection');
 
 require('jstree');
 
@@ -72,59 +72,76 @@ class DiffSpectElement extends DualViewerApplicationElement {
 
         super();
 
-        
-        
-        // boolean values 
-        this.state_machine = {
-            images_processed: false,
-            images_registered: false,
-            mri_loaded: false,
-            ictal_loaded: false,
-            interictal_loaded: false
-        };
-
         this.elements = {
             continuePatientFile: null,
         };
         this.dataPanel=null;
         this.resultsPanel=null;
 
-        this.fields= [ '#','I','J','K','size','maxT','clusterP','actualP' ];
+        this.imageList = [
+            'ictal',
+            'interictal',
+            'tmap',
+            'mri'
+        ];
+        this.xformList = [
+            'intertoictal_xform',
+            'atlastomri_xform',
+            'mritointerictal_xform',
+            'atlastointer_xform'
+        ];
+        this.tempImageList = [
+            'atlastointer_reslice',
+            'atlastoictal_reslice',
+            'intertoictal_reslice',
+            'atlastomri_reslice',
+            'mritointerictal_reslice',
+        ];
+        this.resultsList = [
+            'hyper',
+            'hypo'
+        ];
+
+        this.atlasList = [
+            'ATLAS_spect',
+            'ATLAS_mri',
+            'ATLAS_stdspect',
+            'ALAS_mask'
+        ];
+
+        this.saveList = this.imageList.concat(this.xformList).concat(this.resultsList);
+        this.typeList = [];
+        for (let i=0;i<this.saveList.length;i++) {
+            if (i<this.imageList.length) {
+                this.typeList.push('image');
+            }  else if (i<this.imageList.length+this.xformList.length) {
+                this.typeList.push('transform');
+            } else
+                this.typeList.push('dictionary');
+        }
+
+        
+        this.allList= this.saveList.concat(this.tempImageList).concat(this.atlasList);
         
         this.app_state = {
-            sm_carousel: null,
-            viewer: null,
             patient_name: "No Name",
             patient_number: "0",
             does_have_mri: false,
-            ictal: null,
-            interictal: null,
-            mri: null,
-            ATLAS_spect: null,
-            ATLAS_mri: null,
-            ATLAS_stdspect: null,
-            ATLAS_mask: null,
-            tmap: null,
             nonlinear: false,
-            
-            intertoictal_xform: null,
-            intertoictal_reslice: null,
-            
-            atlastointer_xform: null,
-            atlastointer_reslice: null,
-            
-            atlastoictal_xform: null,
-            atlastoictal_reslice: null,
-            
-            atlastomri_xform: null,
-            atlastomri_reslice: null,
-            
-            mritointer_xform: null,
-            mritointer_reslice: null,
-            
-            hyper: null,
-            hypo : null
         };
+        
+        for(let i=0;i<this.allList.length;i++) {
+            this.app_state[this.allList[i]]=null;
+        }
+
+
+        console.log(JSON.stringify(this.app_state,null,2));
+
+        console.log('SaveList');
+        console.log(JSON.stringify(this.saveList,null,2));
+        console.log('TypeList');
+        console.log(JSON.stringify(this.typeList,null,2));
+        
     }
 
     // ------------------------------------
@@ -134,63 +151,31 @@ class DiffSpectElement extends DualViewerApplicationElement {
         @returns {object} -- the state of the element as a dictionary*/
     getElementState(storeImages=false) {
 
-        let obj=super.getElementState(storeImages);
+        let obj=super.getElementState(false);//storeImages);
 
         if (storeImages) {
-            let strIctal = "", strInterictal = "", strTmap = "";
-            let strReg_AT_IN = "", strReg_IN_IC = "", strReg_AT_IC = "";
-            
-            //serializing transformations
-            
-            if (null !== this.app_state.atlastointer_xform)
-                strReg_AT_IN = this.app_state.atlastointer_xform.serializeToJSON();
-            
-            if (null !== this.app_state.intertoictal_xform)
-                strReg_IN_IC = this.app_state.intertoictal_xform.serializeToJSON();
-            
-            if (null !== this.app_state.atlastoictal_xform)
-                strReg_AT_IC = this.app_state.atlastoictal_xform.serializeToJSON();
-            
-            
-            
-            //serializing images 
-            
-            if (null !== this.app_state.interictal)
-                strInterictal = this.app_state.interictal.serializeToJSON();
-            
-            
-            if (null !== this.app_state.ictal)
-                strIctal = this.app_state.ictal.serializeToJSON();
-            
-            if (null !== this.app_state.tmap)
-                strTmap = this.app_state.tmap.serializeToJSON();
-            
-            // json objewct to save
             obj.spect = {
                 name: this.app_state.patient_name,
                 number: this.app_state.patient_number,
-                inter: strInterictal,
-                ictal: strIctal,
-                tmap: strTmap,
-                atlastointer: strReg_AT_IN,
-                intertoictal: strReg_IN_IC,
-                atlastoictal: strReg_AT_IC,
-                hyper: this.app_state.hyper,
-                hypo: this.app_state.hypo
             };
+
+            for (let i=0;i<this.saveList.length;i++) {
+                let elem=this.saveList[i];
+                if (!this.app_state[elem]) {
+                    obj.spect[elem]='';
+                } else {
+                    if (this.typeList[i]==='dictionary') {
+                        obj.spect[elem]=this.app_state[elem];
+                    } else {
+                        obj.spect[elem]=this.app_state[elem].serializeToJSON();
+                    }
+                }
+            }
         } else {
-            obj.spect = {
-                name: this.app_state.patient_name,
-                number: this.app_state.patient_number,
-                inter: "",
-                ictal: "",
-                tmap: "",
-                atlastointer: "",
-                intertoictal: "",
-                atlastoictal: "",
-                hyper: "",
-                hypo: ""
-            };
+            obj.spect={};
+            for (let i=0;i<this.saveList.length;i++) {
+                obj.spect[this.saveList[i]]='';
+            }
         }
         return obj;
     }
@@ -202,85 +187,42 @@ class DiffSpectElement extends DualViewerApplicationElement {
         if (dt===null)
             return;
 
-        this.fillFields(dt.spect);
         super.setElementState(dt,name);
-    }
 
+        let input=dt.spect || {};
+        this.app_state.name= input.name || '';
+        this.app_state.number= input.patient_number || 0;
 
-    // parse fill variable values from file
-    fillFields(b) { // url as argument somehow
-
-        let input = b || {};
-        let interictal = null, ictal = null, tmap = null, hyper = null,hypo=null;
-        let intertoictal = null, atlastointer = null, atlastoictal = null;
-
-        if (input.inter !== "") {
-            interictal = new BisWebImage();
-            interictal.parseFromJSON(input.inter);
-            this.state_machine.interictal_loaded = true;
+        for (let i=0;i<this.saveList.length;i++) {
+            let elem=this.saveList[i];
+            input[elem]=input[elem] || '';
+            console.log("Reading",elem,input[elem].length);
+            if (input[elem].length<1) {
+                this.app_state[elem]=null;
+            } else {
+                if (this.typeList[i]==='dictionary') {
+                    this.app_state[elem]=input[elem];
+                    console.log(elem+' loaded '+JSON.stringify(this.app_state[elem],null,2));
+                } else {
+                    this.app_state[elem]=BisWebDataObjectCollection.parseObject(input[elem],
+                                                                                this.typeList[i]);
+                    console.log(elem+' loaded=',this.app_state[elem].getDescription());
+                }
+            }
         }
+        
 
-        if (input.ictal !== "") {
-            ictal = new BisWebImage();
-            ictal.parseFromJSON(input.ictal);
-            this.state_machine.ictal_loaded = true;
-        }
-
-        if (input.tmap !== "") {
-            tmap = new BisWebImage();
-            tmap.parseFromJSON(input.tmap);
-            this.state_machine.images_processed = true;
-        }
-
-        if (input.intertoictal !== "") {
-            intertoictal = bistransformations.createLinearTransformation();
-            intertoictal.parseFromJSON(input.intertoictal);
-        }
-
-        if (input.atlastointer !== "") {
-            atlastointer = bistransformations.createLinearTransformation();
-            atlastointer.parseFromJSON(input.atlastointer);
-        }
-
-        if (input.atlastoictal !== "") {
-            atlastoictal = bistransformations.createLinearTransformation();
-            atlastoictal.parseFromJSON(input.atlastoictal);
-        }
-
-        if (null !== intertoictal &&
-            null !== atlastointer &&
-            null !== atlastoictal)
-            this.state_machine.images_registered = true;
-
-        if (null !== input.hyper)
-            hyper = input.hyper;
-
-        if (null !== input.hypo)
-            hypo = input.hypo;
-
-        this.app_state.patient_name = input.name;
-        this.app_state.patient_number = input.number;
-        this.app_state.interictal = interictal;
-        this.app_state.ictal = ictal;
-        this.app_state.tmap = tmap;
-        this.app_state.intertoictal_xform = intertoictal;
-        this.app_state.atlastointer_xform = atlastointer;
-        this.app_state.atlastoictal_xform = atlastoictal;
-        this.app_state.hyper = hyper;
-        this.app_state.hypo = hypo;
-
-        if (null !== this.app_state.tmap) {
+        if (null !== this.app_state['tmap']) {
             this.showTmapImage();            
         }
 
-        if (null !== this.app_state.hyper) {
+        if (null !== this.app_state['hyper']) {
             this.generateCharts();
             this.resultsPanel.show();
         }
 
-
-        $('#sm_patientName').val(input.name);
-        $('#sm_patientNumber').val(input.number);
+        //      $('#sm_patientName').val(input.name);
+        //    $('#sm_patientNumber').val(input.number);
 
         
         
@@ -313,7 +255,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
             this.app_state.ATLAS_mri = images[1];
             this.app_state.ATLAS_stdspect = images[2];
             this.app_state.ATLAS_mask = images[3];
-            this.app_state.viewer.setimage(this.app_state.ATLAS_mri);
+            this.VIEWERS[0].setimage(this.app_state.ATLAS_mri);
             console.log('.... ATLAS images loaded');
             webutil.createAlert('The SPECT Tool is now ready. The core data has been loaded.');//<BR> Click either "Create New Patient" or "Load Existing Patient" to begin.');
         });
@@ -442,7 +384,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
         
         
         let interictalLoaded = (() => {
-            self.app_state.viewer.setimage(self.app_state.interictal);
+            self.VIEWERS[0].setimage(self.app_state.interictal);
             console.log(self.app_state.interictal);
         });
 
@@ -465,7 +407,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
         };
 
         let ictalLoaded = (() => {
-            self.app_state.viewer.setimage(self.app_state.ictal);
+            self.VIEWERS[0].setimage(self.app_state.ictal);
         });
 
         let handleIctalFileSelect = (() => {
@@ -485,7 +427,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
         });
 
         let mriLoaded = (() => {
-            self.app_state.viewer.setimage(self.app_state.mri);
+            self.VIEWERS[0].setimage(self.app_state.mri);
         });
 
         let handleMRIFileSelect = (() => {
@@ -532,31 +474,37 @@ class DiffSpectElement extends DualViewerApplicationElement {
                 'action': () => {
 
                     if (node.text === "Interictal") {
-                        if (self.app_state.interictal !== null)
-                            self.app_state.viewer.setimage(self.app_state.interictal);
-                        else 
-                            bootbox.alert('NO INTERICTAL IMAGE LOADED');
+                        if (self.app_state.interictal !== null) {
+                            webutil.createAlert('Displaying original interictal image');
+                            self.VIEWERS[0].setimage(self.app_state.interictal);
+                        } else  {
+                            bootbox.alert('No interictal image loaded');
+                        }
                     }
 
                     if (node.text === "Ictal") {
-                        if (self.app_state.ictal !== null)
-                            self.app_state.viewer.setimage(self.app_state.ictal);
-                        else 
-                            bootbox.alert('NO ICTAL IMAGE LOADED');
+                        if (self.app_state.ictal !== null) {
+                            webutil.createAlert('Displaying original ictal image');
+                            self.VIEWERS[0].setimage(self.app_state.ictal);
+                        } else  {
+                            bootbox.alert('No ictal image loaded');
+                        }
                     }
 
                     if (node.text === "MRI") {
-                        if (self.app_state.mri !== null)
-                            self.app_state.viewer.setimage(self.app_state.mri);
-                        else 
-                            bootbox.alert('NO MR IMAGE LOADED');
+                        if (self.app_state.mri !== null) {
+                            webutil.createAlert('Displaying original mri image');
+                            self.VIEWERS[0].setimage(self.app_state.mri);
+                        } else  {
+                            bootbox.alert('No MRI image loaded');
+                        }
                     }
 
                     if (node.text === 'Tmap Image') {
                         if (self.app_state.tmap !== null) {
                             self.showTmapImage();
                         } else  {
-                            bootbox.alert('NO DIFF SPECT IMAGE IN MEMORY');
+                            bootbox.alert('No diff-SPECT tmap image. You need to compute this first.');
                         }
                     }
                     
@@ -572,7 +520,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
                     } else if (node.text === "ATLAS to Ictal") {
                         self.showAtlasToIctalRegistration();
                     }  else if (node.text === "Interictal to Ictal") {
-                        self.showAtlasToIctalRegistration();
+                        self.showInterictalToIctalRegistration();
                     }
                 }
             },
@@ -611,6 +559,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
         let templates=webutil.getTemplates();
         let newid=webutil.createWithTemplate(templates.bisscrolltable,$('body'));
         let stable=$('#'+newid);
+        const self=this;
         
         let buttoncoords = {};
         let callback = (e) => {
@@ -618,7 +567,8 @@ class DiffSpectElement extends DualViewerApplicationElement {
             if (!id)
                 id=e.target.parentElement.id;
             let coordinate=buttoncoords[id];
-            this.app_state.viewer.setcoordinates([coordinate[0], coordinate[1], coordinate[2]]);
+            console.log('coord=',coordinate,id,buttoncoords[id]);
+            self.VIEWERS[0].setcoordinates([coordinate[0], coordinate[1], coordinate[2]]);
         };
         
         let thead = stable.find(".bisthead");
@@ -654,7 +604,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
             let nid=webutil.getuniqueid();
             let w=$(`<tr id="${nid}">
                     <td width="5%">${index}</td>
-                    <td width="25%">${coords}</td>
+                    <td width="25%"><span class="btn-link">${coords}</span></td>
                     <td width="15%">${size}</td>
                     <td width="20%">${clusterP}</td>
                     <td width="20%">${correctP}</td>
@@ -688,7 +638,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
     // --------------------------------------------------------------------------------
     // Compute Registrations
     //
-    computeLinearRegistration(reference, target) {
+    computeLinearRegistration(reference, target,mode='Rigid') {
 
         let lin_opts = {
             "intscale": 1,
@@ -700,7 +650,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
             "metric": "NMI",
             "steps": 1,
             "iterations": 10,
-            "mode": "Rigid",
+            "mode": mode,
             "resolution": 1.5,
             "doreslice": true,
             "norm": true,
@@ -754,7 +704,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
                 "stepsize": 1,
                 "metric": "NMI",
                 "steps": 1,
-                "iterations": 1,
+                "iterations": 10,
                 "cps": 20,
                 "append": true,
                 "linearmode": "Affine",
@@ -787,6 +737,9 @@ class DiffSpectElement extends DualViewerApplicationElement {
     // Custom Registration Methods
     // --------------------------------------------------------------------------------
     registerImages(mode) {
+
+        console.log('Beginning registerImages',mode);
+        
         let speclist = {
             'interictal2ictal' : {
                 'reference' :  'interictal',
@@ -805,8 +758,8 @@ class DiffSpectElement extends DualViewerApplicationElement {
             'mri2interictal' : {
                 'reference' : 'mri',
                 'target'    : 'interictal',
-                'output'    : 'atlastomri_reslice',
-                'xform'     : 'atlastomri_xform',
+                'output'    : 'mritointerictal_reslice',
+                'xform'     : 'mritointerictal_xform',
                 'nonlinear' : false
             },
             'atlas2interictal' : {
@@ -821,9 +774,16 @@ class DiffSpectElement extends DualViewerApplicationElement {
         mode=mode || 'inter2ictal';
         let params=speclist[mode];
         let nonlinear = params['nonlinear'];
+        let text="nonlinear";
+        let linearmode='Rigid';
+        if (nonlinear)
+            linearmode='Affine';
         if (!this.app_state.nonlinear) {
             nonlinear=false;
         }
+        if (nonlinear===false)
+            text=linearmode.toLowerCase()+" linear";
+        
 
         let reference=this.app_state[params['reference']];
         let target=this.app_state[params['target']];
@@ -832,20 +792,29 @@ class DiffSpectElement extends DualViewerApplicationElement {
             return Promise.reject('no images');
         }
 
+        
+        webutil.createAlert('Computing '+mode+' registration, using '+text+' registration',"progress",30);
+        
         return new Promise( (resolve,reject) => {
-            if (nonlinear) {
-                this.computeNonlinearRegistration(reference,target).then( (output) => {
-                    this.app_state[params['xform']] = output.transformation;
-                    this.app_state[params['output']]= output.reslice;
-                    resolve('Done Nonlinear');
-                }).catch( ()=> { reject('Not computed linear'); });
-            } else {
-                this.computeLinearRegistration(reference,target).then( (output) => {
-                    this.app_state[params['xform']] = output.transformation;
-                    this.app_state[params['output']]= output.reslice;
-                    resolve('Done Linear');
-                }).catch( ()=> { reject('Not computed linear'); });
-            }
+
+            setTimeout( () => {
+                if (nonlinear) {
+                    this.computeNonlinearRegistration(reference,target).then( (output) => {
+                        this.app_state[params['xform']] = output.transformation;
+                        this.app_state[params['output']]= output.reslice;
+                        resolve('Done Nonlinear');
+                        webutil.createAlert('Done computing nonlinear registration for '+mode);
+                    }).catch( ()=> { reject('Not computed linear'); });
+                } else {
+                    this.computeLinearRegistration(reference,target,linearmode).then( (output) => {
+                        this.app_state[params['xform']] = output.transformation;
+                        this.app_state[params['output']]= output.reslice;
+                        webutil.createAlert('Done computing linear registration for '+mode);
+                        resolve('Done Linear');
+
+                    }).catch( ()=> { reject('Not computed linear'); });
+                }
+            },100);
         });
     }
 
@@ -856,6 +825,8 @@ class DiffSpectElement extends DualViewerApplicationElement {
 
     resliceImages(operation,force=true) {
 
+        console.log('In Reslice Images',operation,force);
+        
         let resliceList = {};
 
         if (!this.app_state.does_have_mri) {
@@ -866,7 +837,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
                 'output' : 'atlastoictal_reslice',
             };
             resliceList['inter2Atlas']= {
-                'input'    : 'inter',
+                'input'    : 'interictal',
                 'xforms'   : [ 'atlastointer_xform' ],
                 'reference': 'ATLAS_spect',
                 'output' : 'atlastointer_reslice',
@@ -892,7 +863,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
             'xforms' : [ 'intertoictal_xform' ],
             'output' : 'intertoictal_reslice',
         };
-
+        
         operation =operation || 'ictal2Atlas';
 
         let inputKey=resliceList[operation]['input'];
@@ -903,14 +874,14 @@ class DiffSpectElement extends DualViewerApplicationElement {
             return Promise.resolve('Reliced image in '+operation+' exists');
         }
 
-        console.log(" ...............................\n .............\n.............\n reslicing images ");
+        console.log(" .... reslicing images "+inputKey+' '+refKey);
 
         if (!this.app_state[inputKey] ||  !this.app_state[refKey]) {
-            return Promise.reject('Missing images in reslice '+operation);
+            return Promise.reject(`Missing images in reslice ${operation}. ${inputKey}=${this.app_state[inputKey]} ${refKey}=${this.app_state[refKey]}`);
         }
         
         let xformnames= ['xform','xform2', 'xform3' ];
-        let xformlist ={ };
+        let xformlist =[];
         let xformKeys=resliceList[operation]['xforms'];
         for (let i=0;i<xformKeys.length;i++) {
             let xform=this.app_state[xformKeys[i]];
@@ -942,58 +913,86 @@ class DiffSpectElement extends DualViewerApplicationElement {
     
     // calls all of the above custom registration methods in correct order and reslices images as necessary
     computeRegistrationOfImages() {
-        
+
+        const self=this;
         // execute registration order if MRI is not uploaded by user
-        let plist=[];
+        let prom=null;
         if (!this.app_state.does_have_mri) {
-            plist= [ this.registerImages('atlas2interictal'),
-                     this.registerImages('interictal2ictal')
-                   ];
+            prom =new Promise( (resolve,reject) => {
+                this.registerImages('atlas2interictal').then( () => {
+                    this.registerImages('interictal2ictal').then( ()=> {
+                        webutil.createAlert('Done computing registrations in no_mri mode');
+                        resolve();
+                    }).catch( (e) => { reject(e,e.stack);});
+                });
+            });
         } else {
-            plist=[ this.registerImages('atlas2mri'),
-                    this.registerImages('mri2interictal'),
-                    this.registerImages('interictal2ictal')
-                  ];
+            prom=new Promise( (resolve,reject) => {
+                this.registerImages('atlas2mri').then( () => {
+                    this.registerImages('mri2interictal').then( () => {
+                        this.registerImages('interictal2ictal').then( () => {
+                            webutil.createAlert('Done computing registrations in with_mri mode');
+                            resolve();
+                        });
+                    });
+                }).catch( (e) => { reject(e,e.stack);});
+            });
         }
         
-        // executes all promises in order
-        Promise.all(plist).then( () => {
-            this.resliceImages('ictal2Atlas').then( () => {
-                this.dataPanel.show();
+        prom.then( ()=> {
+            self.resliceImages('ictal2Atlas').then( () => {
+                self.showAtlasToIctalRegistration();
+                self.dataPanel.show();
             });
         });
     }
 
     // ---------------------------------------------------------------------------------------
     // Show Transformations and Images
+
+    setViewerOpacity(opa=0.5) {
+        let cmapcontrol=this.VIEWERS[0].getColormapController();
+        let elem=cmapcontrol.getElementState();
+        elem.opacity=opa;
+        cmapcontrol.setElementState(elem);
+        cmapcontrol.updateTransferFunctions(true);
+    }
     
     showAtlasToInterictalRegistration() {
         this.resliceImages('inter2Atlas',false).then( () => {
-            this.app_state.viewer.setimage(this.app_state.ATLAS_spect);
-            this.app_state.viewer.setobjectmap(this.app_state.atlastointer_reslice,false,'overlay');
+            webutil.createAlert('Displaying resliced interictal image over atlas SPECT image');
+            this.VIEWERS[0].setimage(this.app_state.ATLAS_spect);
+            this.VIEWERS[0].setobjectmap(this.app_state.atlastointer_reslice,false,'overlay');
+            this.setViewerOpacity(0.5);
         }).catch( (e) => { errormessage(e); });
                            
     }
 
-    showInterictalToIctalRegistration() {
-        this.resliceImages('inter2ictal',false).then( () => {
-            this.app_state.viewer.setimage(this.app_state.interictal);
-            this.app_state.viewer.setobjectmap(this.app_state.intertoictal_reslice,false,'overlay');
+
+    showAtlasToIctalRegistration() {
+        this.resliceImages('ictal2Atlas',false).then( () => {
+            webutil.createAlert('Displaying resliced ictal image over atlas SPECT image');
+            this.VIEWERS[0].setimage(this.app_state.ATLAS_spect);
+            this.VIEWERS[0].setobjectmap(this.app_state.atlastoictal_reslice,false,'overlay');
+            this.setViewerOpacity(0.5);
         }).catch( (e) => { errormessage(e); });
     }
 
-    showAtlasToIctalRegistration() {
-        this.resliceImages('ictal2atlas',false).then( () => {
-            this.app_state.viewer.setimage(this.app_state.ATLAS_spect);
-            this.app_state.viewer.setobjectmap(this.app_state.atlastoictal_reslice,false,'overlay');
+    showInterictalToIctalRegistration() {
+        this.resliceImages('inter2ictal',false).then( () => {
+            webutil.createAlert('Displaying resliced ictal image over interictal image');
+            this.VIEWERS[0].setimage(this.app_state.interictal);
+            this.VIEWERS[0].setobjectmap(this.app_state.intertoictal_reslice,false,'overlay');
+            this.setViewerOpacity(0.5);
         }).catch( (e) => { errormessage(e); });
     }
 
     showTmapImage() {
         if (this.app_state.tmap) {
-            this.app_state.viewer.setimage(this.app_state.ATLAS_mri);
-            this.app_state.viewer.setobjectmap(this.app_state.tmap, false, "Overlay");
-            let cmapcontrol=this.app_state.viewer.getColormapController();
+            webutil.createAlert('Displaying diff-spect TMAP over atlas MRI image');
+            this.VIEWERS[0].setimage(this.app_state.ATLAS_mri);
+            this.VIEWERS[0].setobjectmap(this.app_state.tmap, false, "Overlay");
+            let cmapcontrol=this.VIEWERS[0].getColormapController();
             let elem=cmapcontrol.getElementState();
             elem.minth=1.0;
             cmapcontrol.setElementState(elem);
@@ -1103,17 +1102,20 @@ class DiffSpectElement extends DualViewerApplicationElement {
     
     // button callback for computing diff spect data
     computeSpect() {
-        console.log("compute spect callback");
-        Promise.all( [ this.resliceImages('ictal2Atlas'),
-                       this.resliceImages('inter2Atlas'),
-                     ]).then( () => {
-                         this.computeSpectNoMRI();
-                         this.showTmapImage();
-                         this.generateCharts();
-                         this.resultsPanel.show();
-                     }).catch( (e) => {
-                         errormessage(e);
-                     });
+        
+        this.resliceImages('ictal2Atlas').then( () => {
+            this.resliceImages('inter2Atlas').then( () => {
+                webutil.createAlert('Computing diff SPECT analysis',"progress",30);
+                setTimeout( () => {
+                    this.computeSpectNoMRI();
+                    this.showTmapImage();
+                    this.generateCharts();
+                    this.resultsPanel.show();
+                },100);
+            });
+        }).catch( (e) => {
+            errormessage(e);
+        });
     }
 
 
@@ -1197,12 +1199,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
         
         webutil.createMenuItem(sMenu,'');
         webutil.createMenuItem(sMenu, 'Compute Diff Spect MAPS', () =>  {
-            if (self.app_state.atlastoictal_reslice !== null &&
-                self.app_state.atlastointer_reslice !== null &&
-                self.app_state.intertoictal_reslice !== null)
-                self.computeSpect(); 
-            else
-                bootbox.alert('IMAGES NOT REGISTERED/RESLICED');
+            self.computeSpect(); 
         });
 
 
@@ -1214,116 +1211,9 @@ class DiffSpectElement extends DualViewerApplicationElement {
     connectedCallback() {
         this.simpleFileMenus=true;
         super.connectedCallback();
-        this.app_state.viewer = this.VIEWERS[0];
-        this.app_state.viewer.collapseCore();
+        this.VIEWERS[0].collapseCore();
     }
 }
 
 webutil.defineElement('bisweb-diffspectelement', DiffSpectElement);
 
-    // -------
-       
-    
-        /*    resliceImages(mode) {
-
-        let reslicer = new ResliceImage();
-        console.log(" ...............................\n .............\n.............\n reslicing images ",mode);
-        
-        return new Promise( (resolve,reject) => {
-
-            if (mode===0 ) {
-
-                if (!this.app_state.ictal || !this.app_state.atlastointer_xform ||
-                    !this.app_state.intertoictal_xform || !this.app_state.ATLAS_spect) {
-                    reject('Some missing data');
-                }
-                
-                let input = {
-                    'input'    : this.app_state.ictal,
-                    'xform'    : this.app_state.atlastointer_xform,
-                    'xform2'   : this.app_state.intertoictal_xform,
-                    'reference': this.app_state.ATLAS_spect           
-                };
-                
-                // instance of image reslicer module
-                let reslicer = new ResliceImage();
-                
-                reslicer.execute(input).then( () => {
-                    this.app_state.atlastoictal_reslice = reslicer.getOutputObject('output');
-                    resolve();
-                }).catch( (e) => {
-                    console.log(e,e.stack);
-                    reject(e);
-                });
-            } else if (mode===1) {
-
-                if (!this.app_state.ictal ||
-                    !this.app_state.atlastomri_xform ||
-                    !this.app_state.mritointer_xform ||
-                    !this.app_state.intertoictal_xform ||
-                    !this.app_state.ATLAS_spect) {
-                    reject('Some missing data');
-                }
-
-                
-                let input = {
-                    'input' : this.app_state.ictal,
-                    'xform' : this.app_state.atlastomri_xform,
-                    'xform2': this.app_state.mritointer_xform,
-                    'xform3': this.app_state.intertoictal_xform,
-                    'reference': this.app_state.ATLAS_spect
-                };
-                
-                reslicer.execute(input).then( () => {
-                    this.app_state.atlastoictal_reslice =reslicer.getOutputObject('output');
-                    resolve();
-                }).catch( (e) => {
-                    console.log(e,e.stack);
-                    reject(e);
-                });
-            } else if (mode==2) {
-
-                if (!this.app_state.interictal ||
-                    !this.app_state.atlastomri_xform ||
-                    !this.app_state.mritointer_xform ||
-                    !this.app_state.ATLAS_spect) {
-                    reject('Some missing data');
-                }
-
-                
-                let input = {
-                    'input' : this.app_state.interictal,
-                    'xform' : this.app_state.atlastomri_xform,
-                    'xform2': this.app_state.mritointer_xform,
-                    'reference': this.app_state.ATLAS_spect
-                };
-                
-                reslicer.execute(input).then( () => {
-                    this.app_state.atlastointer_reslice = reslicer.getOutputObject('output');
-                    resolve();
-                });
-            } else if (mode===3) {
-                let input = {
-                    'reference' : this.app_state.ATLAS_spect,
-                    'input' : this.app_state.interictal,
-                    'xform' : this.app_state.atlastointer_xform
-                };
-                reslicer.execute(input).then( () => {
-                    this.app_state.atlastointer_reslice = reslicer.getOutputObject('output');
-                    resolve();
-                });
-            } else if (mode===4) {
-
-                let input = {
-                    'reference' : this.app_state.interictal,
-                    'input' : this.app_state.ictal,
-                    'xform' : this.app_state.intertoictal_xform
-                };
-                reslicer.execute(input).then( () => {
-                    this.app_state.intertoictal_reslice = reslicer.getOutputObject('output');
-                    resolve();
-                });
-            }
-        });
-    }
-    */
