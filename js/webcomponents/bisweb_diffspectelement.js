@@ -17,6 +17,7 @@ const baseutils = require('baseutils');
 const BisWebPanel = require('bisweb_panel.js');
 const DualViewerApplicationElement = require('bisweb_dualviewerapplication');
 const BisWebDataObjectCollection=require('bisweb_dataobjectcollection');
+const genericio=require('bis_genericio');
 
 require('jstree');
 
@@ -188,13 +189,12 @@ class DiffSpectElement extends DualViewerApplicationElement {
         for (let i=0;i<this.saveList.length;i++) {
             let elem=this.saveList[i];
             input[elem]=input[elem] || '';
-            console.log("Reading",elem,input[elem].length);
             if (input[elem].length<1) {
                 this.app_state[elem]=null;
             } else {
                 if (this.typeList[i]==='dictionary') {
                     this.app_state[elem]=input[elem];
-                    console.log(elem+' loaded '+JSON.stringify(this.app_state[elem],null,2));
+                    console.log(elem+' loaded elements='+this.app_state[elem].length);
                 } else {
                     this.app_state[elem]=BisWebDataObjectCollection.parseObject(input[elem],
                                                                                 this.typeList[i]);
@@ -248,7 +248,6 @@ class DiffSpectElement extends DualViewerApplicationElement {
             this.app_state.ATLAS_stdspect = images[2];
             this.app_state.ATLAS_mask = images[3];
             this.VIEWERS[0].setimage(this.app_state.ATLAS_mri);
-            console.log('.... ATLAS images loaded');
             webutil.createAlert('The SPECT Tool is now ready. The core data has been loaded.');//<BR> Click either "Create New Patient" or "Load Existing Patient" to begin.');
         });
         
@@ -283,21 +282,16 @@ class DiffSpectElement extends DualViewerApplicationElement {
     // Load Image Callback
     loadImage(name='ictal') {
 
-        console.log('Loading image',name);
-        
         let handleGenericFileSelect = (imgfile)=> {
             
             let newimage = new BisWebImage();
             newimage.load(imgfile, false).then( () =>  { 
-                console.log('Image read :' + newimage.getDescription(''));
                 this.app_state[name] = newimage;
                 webutil.createAlert('Loaded '+name +': '+this.app_state[name].getDescription());
                 this.VIEWERS[0].setimage(this.app_state[name]);
                 
-                console.log('Clearing intermediate results');
                 for (let i=0;i<this.clearList.length;i++) {
                     let elem=this.clearList[i];
-                    console.log('clearing ',elem);
                     this.app_state[elem]=null;
                 }
             });
@@ -518,10 +512,10 @@ class DiffSpectElement extends DualViewerApplicationElement {
             if (!id) {
                 id=e.target.parentElement.id;
                 if (!id)
-                    id=e.target.parentElement.id;
+                    id=e.target.parentElement.parentElement.id;
+                console.log('id=',id);
             }
             let coordinate=buttoncoords[id];
-            console.log('coord=',coordinate,id,buttoncoords[id]);
             self.VIEWERS[0].setcoordinates([coordinate[0], coordinate[1], coordinate[2]]);
         };
         
@@ -552,13 +546,13 @@ class DiffSpectElement extends DualViewerApplicationElement {
             let size=data[i].size;
             let coords=data[i].coords.join(',');
             
-            let clusterP=Number.parseFloat(data[i].clusterPvalue).toExponential(3);
-            let correctP=Number.parseFloat(data[i].correctPvalue).toExponential(3);
-            let maxt=Number.parseFloat(data[i].maxt).toFixed(2);
+            let clusterP=Number.parseFloat(data[i].clusterPvalue).toFixed(4);
+            let correctP=Number.parseFloat(data[i].correctPvalue).toFixed(4);
+            let maxt=Number.parseFloat(data[i].maxt).toFixed(3);
             let nid=webutil.getuniqueid();
-            let w=$(`<tr id="${nid}">
+            let w=$(`<tr>
                     <td width="5%">${index}</td>
-                    <td width="25%"><span class="btn-link">${coords}</span></td>
+                    <td width="25%"><span id="${nid}" class="btn-link">${coords}</span></td>
                     <td width="15%">${size}</td>
                     <td width="20%">${clusterP}</td>
                     <td width="20%">${correctP}</td>
@@ -589,6 +583,48 @@ class DiffSpectElement extends DualViewerApplicationElement {
     }
 
 
+    saveResults(fobj) {
+
+
+        let lst = [ 'Hyper', 'Hypo' ];
+        let datalist = [ this.app_state.hyper, this.app_state.hypo ];
+
+        let str='Mode,Index,I,J,K,Size,clusterP,correctedP,maxT-score\n';
+
+
+        for (let pass=0;pass<datalist.length;pass++) {
+            let data=datalist[pass];
+            let name=lst[pass];
+
+            for (let i=0;i<data.length;i++) {
+
+                let index=data[i].index;
+                let size=data[i].size;
+                let coords=data[i].coords;
+                
+                let clusterP=Number.parseFloat(data[i].clusterPvalue).toFixed(8);
+                let correctP=Number.parseFloat(data[i].correctPvalue).toFixed(8);
+                let maxt=Number.parseFloat(data[i].maxt).toFixed(3);
+
+                str+=`${name},${index},${coords[0]},${coords[1]},${coords[2]}`;
+                str+=`${size},${clusterP},${correctP},${maxt}\n`;
+            }
+
+        }
+
+        fobj=genericio.getFixedSaveFileName(fobj,self.applicationName+".csv");
+        
+        return new Promise(function (resolve, reject) {
+            genericio.write(fobj, str).then((f) => {
+                webutil.createAlert('Results saved in '+f);
+            }).catch((e) => {
+                webutil.createAlert('Failed to save results '+e);
+                reject(e);
+            });
+        });
+    }
+
+
     // --------------------------------------------------------------------------------
     // Compute Registrations
     //
@@ -612,7 +648,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
         };
         let input = {'reference': reference,
                      'target'   : target}; 
-        var linear = new LinearRegistration();
+        let linear = new LinearRegistration();
         let output = {
             transformation: null,
             reslice: null
@@ -623,7 +659,6 @@ class DiffSpectElement extends DualViewerApplicationElement {
                 output.transformation = linear.getOutputObject('output'); 
                 output.reslice = linear.getOutputObject('resliced');
                 if (baseutils.getLinearMode(lin_opts["mode"])) {
-                    console.log(output);
                     resolve(output);
                 }
                 resolve();
@@ -692,8 +727,6 @@ class DiffSpectElement extends DualViewerApplicationElement {
     // --------------------------------------------------------------------------------
     registerImages(mode) {
 
-        console.log('Beginning registerImages',mode);
-        
         let speclist = {
             'interictal2ictal' : {
                 'reference' :  'interictal',
@@ -780,8 +813,6 @@ class DiffSpectElement extends DualViewerApplicationElement {
 
     resliceImages(operation,force=true) {
 
-        console.log('In Reslice Images',operation,force);
-        
         let resliceList = {};
 
         if (!this.app_state.does_have_mri) {
@@ -828,8 +859,6 @@ class DiffSpectElement extends DualViewerApplicationElement {
         if (this.app_state[outputKey] && force===false) {
             return Promise.resolve('Reliced image in '+operation+' exists');
         }
-
-        console.log(" .... reslicing images "+inputKey+' '+refKey);
 
         if (!this.app_state[inputKey] ||  !this.app_state[refKey]) {
             return Promise.reject(`Missing images in reslice ${operation}. ${inputKey}=${this.app_state[inputKey]} ${refKey}=${this.app_state[refKey]}`);
@@ -993,8 +1022,8 @@ class DiffSpectElement extends DualViewerApplicationElement {
         
         // check that dimensions match
         for (let m = 1; m < images.length; m++) {
-            var dim1 = images[m].getDimensions();
-            var q = Math.abs(dim0[0] - dim1[0]) + Math.abs(dim0[1] - dim1[1]) + Math.abs(dim0[2] - dim1[2]);
+            let dim1 = images[m].getDimensions();
+            let q = Math.abs(dim0[0] - dim1[0]) + Math.abs(dim0[1] - dim1[1]) + Math.abs(dim0[2] - dim1[2]);
             
             if (q > 0) {
                 console.log('Image ' + m + ' is different ' + dim0 + ' , ' + dim1);
@@ -1008,30 +1037,23 @@ class DiffSpectElement extends DualViewerApplicationElement {
         
         
         // execute Diff SPECT algorithm
-        for (var i = 0; i <= 1; i++) {
-            var masked = bisimagealgo.multiplyImages(images[i], images[3]);
-            var smoothed = bisimagesmoothreslice.smoothImage(masked, [sigma, sigma, sigma], true, 6.0, d);
-            var normalized = bisimagealgo.spectNormalize(smoothed);
+        for (let i = 0; i <= 1; i++) {
+            let masked = bisimagealgo.multiplyImages(images[i], images[3]);
+            let smoothed = bisimagesmoothreslice.smoothImage(masked, [sigma, sigma, sigma], true, 6.0, d);
+            let normalized = bisimagealgo.spectNormalize(smoothed);
             console.log('+++++ normalized ' + names[i]);
             final[i] = normalized;
         }
         
         // display results
-        var tmapimage = bisimagealgo.spectTmap(final[0], final[1], images[2], null);
-        var outspect = [0, 0];
-        var sname = ['hyper', 'hypo'];
+        let tmapimage = bisimagealgo.spectTmap(final[0], final[1], images[2], null);
+        let outspect = [0, 0];
         
         // format results
-        for (i = 0; i <= 1; i++) {
+        for (let i = 0; i <= 1; i++) {
             outspect[i] = bisimagealgo.processDiffSPECTImageTmap(tmapimage, params.pvalue, params.clustersize, (i === 0));
-            var stats = outspect[i].stats;
-            var str = '#' + sname[i] + ' cluster statistics\n';
-            str += '#\tx\ty\tz\tsize\tmaxt\tclusterP\tcorrectP\n';
-            for (var j = 0; j < stats.length; j++) {
-                str += stats[j].string + '\n';
-            }
-            console.log(str);
         }
+        
         return {
             tmap: tmapimage, // image
             hyper: outspect[0].stats, // strings
@@ -1042,17 +1064,14 @@ class DiffSpectElement extends DualViewerApplicationElement {
     // ---------------------------------------------------------------------------------------
     // processes registered SPECT images and generates hyperperfusion and hypoperfusion stats
     computeSpectNoMRI() {
-        console.log("compute spect no MRI");
-        var resliced_inter = this.app_state.atlastointer_reslice;
-        var resliced_ictal = this.app_state.atlastoictal_reslice;
+
+        let resliced_inter = this.app_state.atlastointer_reslice;
+        let resliced_ictal = this.app_state.atlastoictal_reslice;
         
         var results = this.processSpect(resliced_inter, resliced_ictal, this.app_state.ATLAS_stdspect, this.app_state.ATLAS_mask);
         this.app_state.hyper = results.hyper;
         this.app_state.hypo = results.hypo;
         this.app_state.tmap = results.tmap;
-        
-        console.log(JSON.stringify(results.hyper,null,2));
-        console.log(JSON.stringify(results.hypo,null,2));
     }
     
     
@@ -1158,12 +1177,26 @@ class DiffSpectElement extends DualViewerApplicationElement {
         webutil.createMenuItem(sMenu,'Show diff SPECT Data Tree(Images)',() => {
             self.dataPanel.show();
         });
-        webutil.createMenuItem(sMenu,'Show diff SPECT Results',() => {
+        webutil.createMenuItem(sMenu,'Show diff SPECT Text Results (Regions)',() => {
             self.resultsPanel.show();
         });
+
+        webutil.createMenuItem(sMenu,'');
+
+        webfileutil.createFileMenuItem(sMenu, 'Save diff SPECT Text Results',
+                                       function (f) {
+                                           self.saveResults(f);
+                                       },
+                                       {
+                                           title: 'Save diff SPECT Text Results',
+                                           save: true,
+                                           filters : [ { name: 'CSV File', extensions: ['csv']}],
+                                           suffix : "csv",
+                                           initialCallback : () => {
+                                               return "results.csv";
+                                           }
+                                       });
         
-
-
     }
 
     // ---------------------------------------------------------------------------------------

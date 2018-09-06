@@ -557,31 +557,31 @@ class ViewerApplicationElement extends HTMLElement {
             // ----------------------------------------------------------
             fmenu[viewerno] = webutil.createTopMenuBarMenu(fmenuname, menubar);
 
+            webfileutil.createFileMenuItem(fmenu[viewerno], 'Load Image',
+                                           function (f) {
+                                               self.loadImage(f, viewerno);
+                                           },
+                                           { title: 'Load image',
+                                             save: false,
+                                             suffix: 'NII'
+                                           });
+            
+            webfileutil.createFileMenuItem(fmenu[viewerno], 'Save Image',
+                                           function (f) {
+                                               self.saveImage(f, viewerno); },
+                                           {
+                                               title: 'Save Image',
+                                               save: true,
+                                               filters: "NII",
+                                               suffix : "NII",
+                                               initialCallback : (() => {
+                                                   return self.getSaveImageInitialFilename(viewerno);
+                                               })
+                                           });
+            webutil.createMenuItem(fmenu[viewerno], ''); // separator
+            
             if (!self.simpleFileMenus) {
-                webfileutil.createFileMenuItem(fmenu[viewerno], 'Load Image',
-                                               function (f) {
-                                                   self.loadImage(f, viewerno);
-                                               },
-                                               { title: 'Load image',
-                                                 save: false,
-                                                 suffix: 'NII'
-                                               });
-                
-                webfileutil.createFileMenuItem(fmenu[viewerno], 'Save Image',
-                                               function (f) {
-                                                   self.saveImage(f, viewerno); },
-                                               {
-                                                   title: 'Save Image',
-                                                   save: true,
-                                                   filters: "NII",
-                                                   suffix : "NII",
-                                                   initialCallback : (() => {
-                                                       return self.getSaveImageInitialFilename(viewerno);
-                                                   })
-                                               });
-                
-                
-                webutil.createMenuItem(fmenu[viewerno], ''); // separator
+
                 bisweb_apputil.createMNIImageLoadMenuEntries(fmenu[viewerno], load_image, viewerno);
             }
 
@@ -606,30 +606,26 @@ class ViewerApplicationElement extends HTMLElement {
 
             } else {
 
-                if (!self.simpleFileMenus) {
-                    webfileutil.createFileMenuItem(objmenu[viewerno], 'Load Overlay',
-                                                   function (f) {
-                                                       self.loadOverlay(f, viewerno);
-                                                   }, 
-                                                   { title: 'Load overlay', save: false, suffix: "NII" });
-                    
-                    webfileutil.createFileMenuItem(objmenu[viewerno], 'Save Overlay',
-                                                   function (f) {
-                                                       self.saveOverlay(f, viewerno);
-                                                   },
-                                                   {
-                                                       title: 'Save Overlay',
-                                                       save: true,
-                                                       filters: "NII",
-                                                       suffix : "NII",
-                                                       initialCallback : () => {
-                                                           return self.getSaveOverlayInitialFilename(viewerno);
-                                                       }
-                                                   });
-                    webutil.createMenuItem(objmenu[viewerno], ''); // separator
-                }
-
-
+                webfileutil.createFileMenuItem(objmenu[viewerno], 'Load Overlay',
+                                               function (f) {
+                                                   self.loadOverlay(f, viewerno);
+                                               }, 
+                                               { title: 'Load overlay', save: false, suffix: "NII" });
+                
+                webfileutil.createFileMenuItem(objmenu[viewerno], 'Save Overlay',
+                                               function (f) {
+                                                   self.saveOverlay(f, viewerno);
+                                               },
+                                               {
+                                                   title: 'Save Overlay',
+                                                   save: true,
+                                                   filters: "NII",
+                                                   suffix : "NII",
+                                                   initialCallback : () => {
+                                                       return self.getSaveOverlayInitialFilename(viewerno);
+                                                   }
+                                               });
+                webutil.createMenuItem(objmenu[viewerno], ''); // separator
                 
                 webutil.createMenuItem(objmenu[viewerno], 'Clear Overlay',
                                        function () {
