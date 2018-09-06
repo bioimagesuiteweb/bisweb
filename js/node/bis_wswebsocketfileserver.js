@@ -142,9 +142,9 @@ class BisWSWebSocketFileServer extends BaseFileServer {
      */
     startServer(hostname='localhost', externalport=globalInitialServerPort, datatransfer = true) {
 
-        if (hostname==='localhost')
-            return this.startDirectServer('localhost',externalport,datatransfer);
-        return this.startHTTPServer('localhost',externalport,datatransfer);
+        //if (hostname==='localhost')
+        return this.startDirectServer('localhost',externalport,datatransfer);
+        //        return this.startHTTPServer('localhost',externalport,datatransfer);
     }
 
     // ---------------------------------------------------------------------------
