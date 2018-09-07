@@ -5,9 +5,6 @@ const WebSocket=require('ws');
 const genericio = require('bis_genericio.js');
 const wsutil = require('bis_wsutil');
 const globalInitialServerPort=require('bis_wsutil').initialPort;
-const fs=require('fs');
-const https=require('https');
-const crypto=require('crypto');
 const BaseFileServer=require('bis_basefileserver');
 
 
@@ -142,13 +139,6 @@ class BisWSWebSocketFileServer extends BaseFileServer {
      */
     startServer(hostname='localhost', externalport=globalInitialServerPort, datatransfer = true) {
 
-        //if (hostname==='localhost')
-        return this.startDirectServer('localhost',externalport,datatransfer);
-        //        return this.startHTTPServer('localhost',externalport,datatransfer);
-    }
-
-    // ---------------------------------------------------------------------------
-    startDirectServer(hostname,externalport,datatransfer) {
         
         return new Promise ( (resolve,reject) => {
 
@@ -182,61 +172,10 @@ class BisWSWebSocketFileServer extends BaseFileServer {
     }
 
     // ---------------------------------------------------------------------------
-    startHTTPServer(hostname,externalport,datatransfer) {
-        
-        let options={
-            cert: fs.readFileSync('server.cert').toString(),
-            key: fs.readFileSync('server.key').toString(),
-        };
-
-        //let credentials = crypto.createCredentials({key: options.key, cert: options.cert});
-        
-        
-        return new Promise ( (resolve,reject) => {
-
-            let startNetServer = ( (server,port) => {
-                
-                this.netServer = new WebSocket.Server({ server } , () => {
-                    this.attachServerEvents(hostname,port,datatransfer);
-                    setTimeout( () => {
-                        resolve(this.portNumber);
-                    },100);
-                });
-            });
-
-            let internalStartServer= (port) => {
-
-                try {
-                    console.log('Starting server');
-                    this.httpserver=new https.createServer(options);
-                    console.log("Server created");
-                    this.httpserver.listen(port);
-                    console.log("Server listening on port",port);
-                    startNetServer(this.httpserver,port);
-                    
-                } catch(e) {
-                    console.log(e);
-                    let newport=port+1;
-                    if (port<=wsutil.finalPort) {
-                        internalStartServer(newport);
-                    } else {
-                        reject(this.indent+' Can not find free port');
-                    }
-                }
-
-            };
-            
-            internalStartServer(externalport);
-        });
-    }
-
-
-    // ---------------------------------------------------------------------------
     attachServerEvents(hostname,port,datatransfer=false) {
         
         this.datatransfer=datatransfer;
-        this.hostname=hostname;
-        this.portNumber=port;
+
         const self=this;
         
         this.netServer.on('connection', (socket) => {
