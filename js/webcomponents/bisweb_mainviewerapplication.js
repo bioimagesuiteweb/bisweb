@@ -85,6 +85,21 @@ class ViewerApplicationElement extends HTMLElement {
 
     }
 
+    //  ---------------------------------------------------------------------------
+    /** returns the extension to use when saving/loading the application state
+     * @returns {String} - the extension without a preceeding "."
+     */
+    getApplicationStateFilenameExtension() {
+        return 'biswebstate';
+    }
+    
+    /** returns the default filename to use when saving/loading the application state
+     * @returns {String} - the filename
+     */
+    getApplicationStateFilename() {
+        return this.applicationName+"."+this.getApplicationStateFilenameExtension();
+    }
+
 
     //  ---------------------------------------------------------------------------
     // Find the viewers ('bis-viewerid' and 'bis-viewerid2') and store them in t
@@ -666,7 +681,7 @@ class ViewerApplicationElement extends HTMLElement {
 
             let n=genericio.getFixedLoadFileName(fname);
             let ext=n.split(".").pop();
-            if (ext==="biswebstate") {
+            if (ext===this.getApplicationStateFilenameExtension()) {
                 self.loadApplicationState(fname);
                 return 1;
             } else {
@@ -790,7 +805,7 @@ class ViewerApplicationElement extends HTMLElement {
             }
 
             let ext=files[0].name.split(".").pop();
-            if (ext==="biswebstate")
+            if (ext===this.getApplicationStateFilenameExtension())
                 self.loadApplicationState(files[0]);
             else
                 self.loadImage(files[0], count, false);
@@ -890,7 +905,7 @@ class ViewerApplicationElement extends HTMLElement {
             "params" : this.saveState,
         },null,4);
 
-        fobj=genericio.getFixedSaveFileName(fobj,self.getApplicationStateName());
+        fobj=genericio.getFixedSaveFileName(fobj,self.getApplicationStateFilename());
         //        console.log('Fobj=',fobj);
         
         return new Promise(function (resolve, reject) {
@@ -924,10 +939,6 @@ class ViewerApplicationElement extends HTMLElement {
         return editmenu;
     }
 
-    getApplicationStateName() {
-        return this.applicationName+".biswebstate";
-    }
-
     
     createApplicationMenu(bmenu) {
 
@@ -941,8 +952,8 @@ class ViewerApplicationElement extends HTMLElement {
                                        },
                                        { title: 'Load Application State',
                                          save: false,
-                                         suffix : "biswebstate",
-                                         filters : [ { name: 'Application State File', extensions: ['biswebstate']}],
+                                         suffix : self.getApplicationStateFilenameExtension(),
+                                         filters : [ { name: 'Application State File', extensions: [self.getApplicationStateFilenameExtension()]}],
                                        }
                                       );
         
@@ -955,10 +966,10 @@ class ViewerApplicationElement extends HTMLElement {
                                        {
                                            title: 'Save Application State',
                                            save: true,
-                                           filters : [ { name: 'Application State File', extensions: ['biswebstate']}],
-                                           suffix : "biswebstate",
+                                           filters : [ { name: 'Application State File', extensions: [self.getApplicationStateFilenameExtension()]}],
+                                           suffix : self.getApplicationStateFilenameExtension(),
                                            initialCallback : () => {
-                                               self.getApplicationStateName();
+                                               return self.getApplicationStateFilename();
                                            }
                                        });
 
