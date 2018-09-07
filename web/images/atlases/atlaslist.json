@@ -1,0 +1,7 @@
+{
+    'humanmni' : {
+        'filename' : 'humanmni.json',
+        'dimensions' : [ 181,217,181 ],
+        'spacing' : [ 1.0,1.0,1.0 ],
+    }
+}
