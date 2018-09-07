@@ -208,7 +208,7 @@ class AtlasControlElement extends HTMLElement {
     initializeAtlas(data) {
 
         let img=new BisWebImage();
-        img.load(this.atlaspath+data.labels.filename).then( () => {
+        img.load(this.atlaspath+data.labels.filename,"NONE").then( () => {
 
             console.log('Atlas loaded ',img.getDescription());
             this.atlaslabelimage=img;
@@ -306,9 +306,21 @@ class AtlasControlElement extends HTMLElement {
 
         let results={
             'coords' : [ mm[0],mm[1],mm[2] ],
-            'atlas'  : [ voxelcoords[0], voxelcoords[1], voxelcoords[2]  ],
             'data' : []
         };
+
+
+        if (this.atlasdescription.labels.coordinates) {
+            let atlas=[0,0,0];
+            let offsets=this.atlasdescription.labels.coordinates.offsets;
+            for (let i=0;i<=2;i++)
+                atlas[i]=voxelcoords[i]-offsets[i];
+            results.data.push({
+                "name" : this.atlasdescription.labels.coordinates.name,
+                "desc" : atlas.join(", ")
+            });
+        }
+        
 
         let data=this.atlasdescription.labels.data;
         for (let j=0;j<this.atlasdimensions[3];j++) {
@@ -319,9 +331,8 @@ class AtlasControlElement extends HTMLElement {
                 let desc=elem.labels[v] || 'None';
                 if (desc) {
                     results.data.push( { 
-                                    name : elem.name,
-                                    value : v,
-                                    desc : desc
+                        name : elem.name,
+                        desc : desc
                                   });
                 }
             }

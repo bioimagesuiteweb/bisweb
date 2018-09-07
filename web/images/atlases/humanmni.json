@@ -4,6 +4,10 @@
         "filename" : "../Reorder_Atlas.nii.gz",
         "description" : "BioImage Suite Atlas (MNI)",
         "extra" : "Human Brain",
+        "coordinates" : {
+            "name" : "MNI Coordinates",
+            "offsets" : [ 90,126,72 ]
+        },
         "data" : [
             {
                 "name"  : "Lobes",
