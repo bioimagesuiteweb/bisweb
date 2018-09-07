@@ -151,7 +151,7 @@ class BisWSWebSocketFileServer extends BaseFileServer {
                 
                     this.attachServerEvents(hostname,port,datatransfer);
                     setTimeout( () => {
-                        resolve(this.portNumber);
+                        resolve(port);
                     },100);
                 });
                 
