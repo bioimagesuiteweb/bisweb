@@ -1,9 +1,9 @@
 {
     "anatomical" : "../MNI_T1_1mm_stripped_ras.nii.gz",
-    "dimensions" : [ 181,217,181 ],
     "labels" : {
         "filename" : "../Reorder_Atlas.nii.gz",
-        "description" : "BioImage Suite Atlas",
+        "description" : "BioImage Suite Atlas (MNI)",
+        "extra" : "Human Brain",
         "data" : [
             {
                 "name"  : "Lobes",

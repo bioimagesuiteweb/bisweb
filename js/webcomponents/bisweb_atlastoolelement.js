@@ -72,8 +72,10 @@ class AtlasControlElement extends HTMLElement {
         this.atlasslicesize=0;
         this.atlasvolumesize=0;
 
-
-        
+        this.tablebody=null;
+        this.orientation="";
+        this.atlasOrientation="";
+        this.flips=[0,0,0];
         this.atlasLoaded=new Promise( (resolve,reject) => {
             
             bis_genericio.read(mastername).then( (obj) => {
@@ -93,12 +95,13 @@ class AtlasControlElement extends HTMLElement {
         });
     }
 
-    compareDimensions(imgdim,imgspa,atlasdim,atlasspa,factor=1.5) {
+    compareDimensions(imgdim,imgspa,atlasdim,atlasspa,factor=2.0) {
             
         let agrees=true;
         for (let i=0;i<=2;i++) {
             let sz=imgdim[i]*imgspa[i];
             let asz=atlasdim[i]*atlasspa[i];
+            //            console.log("Checking ",i,sz,asz);
             if (Math.abs(sz-asz)>factor*atlasspa[i])
                 agrees=false;
         }
@@ -106,6 +109,31 @@ class AtlasControlElement extends HTMLElement {
     }
 
 
+    removeAtlas() {
+
+        this.atlaslabelimage=null;
+        this.atlasdescription=null;
+        if (this.panel) {
+            this.parentDomElement.empty();
+            this.parentDomElement.append($("<div>There is no suiteable atlas for this image.</div>"));
+            this.panel.hide();
+        }
+    }
+
+    setFlips() {
+        this.flips=[0,0,0];
+        if (this.orientation===this.atlasOrientation)
+            return;
+        
+        for (let i=0;i<=2;i++) {
+            let a=this.orientation.substr(i,1);
+            let b=this.atlasOrientation.substr(i,1);
+            if (a!==b)
+                this.flips[i]=1;
+        }
+        //        console.log('Flips=',this.flips);
+    }
+    
     /** Called by OrthoViewer when the image changes */
     initialize(subviewers,volume,samesize=false) {
 
@@ -120,20 +148,31 @@ class AtlasControlElement extends HTMLElement {
 
         let dim=volume.getDimensions();
         let spa=volume.getSpacing();
-
+        this.orientation=volume.getOrientationName();
+        if (this.orientation!=="LPS" &&
+            this.orientation!=="RAS" &&
+            this.orientation!=="LAS" ) {
+            this.removeAtlas();
+            return;
+        }
+            
+        
         if (this.atlaslabelimage) {
             let atlasdim=this.atlaslabelimage.getDimensions();
             let atlasspa=this.atlaslabelimage.getSpacing();
             if (this.compareDimensions(dim,spa,atlasdim,atlasspa)) {
-                console.log('This atlas will do');
+                //Good Enough keeping it
+                this.setFlips();
+                this.updateGUI(this.queryAtlas(this.orthoviewer.getmmcoordinates()));
                 return;
             }
         }
 
-        
+        this.atlaslabelimage=null;
+        this.atlasdescription=null;
         let found=false,i=0;
         let keys=Object.keys(this.atlaslist);
-        console.log('Keys=',keys,dim,spa);
+
         
         while (i<keys.length && found===false) {
             let atlasdim=this.atlaslist[keys[i]]['dimensions'];
@@ -146,11 +185,8 @@ class AtlasControlElement extends HTMLElement {
         }
 
         if (found) {
-            this.atlaslabelimage=null;
-            this.atlasdescription=null;
-
             let atlas=this.atlaslist[keys[i]];
-            console.log(atlas);
+
             bis_genericio.read(this.atlaspath+atlas.filename).then( (obj) => {
                 try {
                     let data=JSON.parse(obj.data);
@@ -160,12 +196,12 @@ class AtlasControlElement extends HTMLElement {
                 }
             }).catch( (e) => {
                 console.log(e);
+                this.removeAtlas();
             });
         } else {
-            webutil.createAlert('Could not load find a good atlas',true);
-        }
-            
+            this.removeAtlas();
         
+        }
     }
 
     /** parse and load atlas */
@@ -181,14 +217,60 @@ class AtlasControlElement extends HTMLElement {
             this.atlasspacing=img.getSpacing();
             this.atlasslicesize=this.atlasdimensions[0]*this.atlasdimensions[1];
             this.atlasvolumesize=this.atlasslicesize*this.atlasdimensions[2];
+            this.atlasOrientation=img.getOrientationName();
+            
+            this.parentDomElement.empty();
+
+            
+            let templates=webutil.getTemplates();
+            let newid=webutil.createWithTemplate(templates.bisscrolltable,$('body'));
+            let stable=$('#'+newid);
+
+        
+            
+            let thead = stable.find(".bisthead");
+            let tbody = stable.find(".bistbody",stable);
+            
+            thead.empty();
+            tbody.empty();
+            tbody.css({'font-size':'11px',
+                       'user-select': 'none'});
+            thead.css({'font-size':'14px',
+                       'user-select': 'none'});
+
+
+            thead.append($(`<tr><td width="10%"></td><td width="90%">${this.atlasdescription.labels.description}</td></tr>`));
+            thead.append($(`<tr><BR></tr>`));
+            //thead.append($(`<tr><td width="100%">${this.atlasdescription.labels.extra}</td></tr>`));
+
+            
+            this.tablebody=tbody;
+            this.parentDomElement.append(stable);
+            this.setFlips();
+            this.updateGUI(this.queryAtlas(this.orthoviewer.getmmcoordinates()));
         }).catch( (e) => {
             webutil.createAlert('Could not load atlas image from '+this.atlaspath+data.labels.filename+' '+e,true);
+            this.removeAtlas();
         });
     }
     
 
-    updateGUI(result) {
+    updateGUI(results) {
 
+        this.tablebody.empty();
+        let w=`<tr><td width="50%">Coordinates (mm)</td><td width="50%">${results.coords.join(', ')}</td></tr>`;
+        this.tablebody.append($(w));
+                
+        for (let i=0;i<results.data.length;i++) {
+
+            let elem=results.data[i];
+            let w=$(`<tr>
+                    <td width="50%">${elem.name}</td>
+                    <td width="50%">${elem.desc}</td>
+                    </tr>`);
+            this.tablebody.append(w);
+
+        }
     }
     
     /** receive mousecoordinates and act appropriately!
@@ -199,23 +281,36 @@ class AtlasControlElement extends HTMLElement {
      */
     updatemousecoordinates(mm,plane,mousestate) {
 
-        if (this.atlasdescription===null)
+        if (this.atlasdescription===null || this.atlaslabelimage===null)
             return;
         
-        if ( mousestate === undefined )
+        if ( mousestate === undefined || mousestate===2)
             return;
         
         if (!this.panel.isOpen())
             return;
 
+        // ----- all clear try something
+        this.updateGUI(this.queryAtlas(mm));
+    }
+
+    queryAtlas(mm) {
+
         let voxelcoords=[0,0,0,0];
         for (let i=0;i<=2;i++) {
             voxelcoords[i]=util.range(mm[i]*this.atlasspacing[i],0,this.atlasdimensions[i]-1);
+            if (this.flips[i])
+                voxelcoords[i]=(this.atlasdimensions[i]-1)-voxelcoords[i];
         }
 
-        let result=[];
+
+        let results={
+            'coords' : [ mm[0],mm[1],mm[2] ],
+            'atlas'  : [ voxelcoords[0], voxelcoords[1], voxelcoords[2]  ],
+            'data' : []
+        };
+
         let data=this.atlasdescription.labels.data;
-        console.log(data);
         for (let j=0;j<this.atlasdimensions[3];j++) {
             voxelcoords[3]=j;
             let elem=data[j];
@@ -223,15 +318,15 @@ class AtlasControlElement extends HTMLElement {
                 let v=( this.atlaslabelimage.getVoxel(voxelcoords));
                 let desc=elem.labels[v] || 'None';
                 if (desc) {
-                    result.push( { coordinates : voxelcoords,
-                                   name : elem.name,
-                                   value : v,
-                                   desc : desc
-                                 });
+                    results.data.push( { 
+                                    name : elem.name,
+                                    value : v,
+                                    desc : desc
+                                  });
                 }
             }
         }
-        this.updateGUI(result);
+        return results;
     }
 
         /** initialize (or reinitialize landmark control). Called from viewer when image changes. This actually creates (or recreates the GUI) as well.(This implements a function from the {@link BisMouseObserver} interface.)
@@ -248,16 +343,16 @@ class AtlasControlElement extends HTMLElement {
             this.orthoviewer.addMouseObserver(this);
             
             let layoutcontroller=document.querySelector(layoutid);
-            console.log('Panel ...\n');
             this.panel=new BisWebPanel(layoutcontroller,
                                        {  name  : 'Atlas Tool',
-                                          permanent : false,
+                                          permanent : true,
                                           width : '290',
                                           dual : false,
                                        });
+            this.panel.show();
             this.parentDomElement=this.panel.getWidget();
-            var basediv=$("<div>This will appear once an image is loaded.</div>");
-            this.parentDomElement.append(basediv);
+            this.parentDomElement.append($("<div>This will appear once an image is loaded.</div>"));
+
         });
     }
                                 
