@@ -386,6 +386,8 @@ class ColormapControllerElement extends HTMLElement {
                                             clustersize : this.data.clustersize,
                                             mapfunction : util.mapoverlayfactory(this.data.minth,this.data.maxth,opa,cmode,usef4),
                                           };
+                
+                console.log(this.internal.clusterinfo.data);
             }
         }
         return;
@@ -777,7 +779,14 @@ class ColormapControllerElement extends HTMLElement {
 
         return 1;
     }
-       
+
+    getClusterInfoData() {
+
+        if (this.internal.clusterinfo) {
+            return this.internal.clusterinfo.data || null;
+        }
+        return null;
+    }
 }
 
 
