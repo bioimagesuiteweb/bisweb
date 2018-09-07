@@ -356,7 +356,7 @@ class AtlasControlElement extends HTMLElement {
                                    {  name  : 'Atlas Tool',
                                       permanent : false,
                                       width : '290',
-                                      dual : true,
+                                      dual : false,
                                    });
         this.parentDomElement=this.panel.getWidget();
         this.parentDomElement.append($("<div>This will appear once an image is loaded.</div>"));
