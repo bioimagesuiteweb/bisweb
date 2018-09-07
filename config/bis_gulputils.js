@@ -306,6 +306,7 @@ var createZIPFile = function(dozip,baseoutput,outdir,version,distdir) {
     console.log(getTime()+' Creating zip file '+outfile+'.');
     return gulp.src([outdir+"*",
                      outdir+"images/*",
+                     outdir+"images/*/*",
                      outdir+"fonts/*",
                      outdir+"css/*",
                      outdir+"fonts/*",
