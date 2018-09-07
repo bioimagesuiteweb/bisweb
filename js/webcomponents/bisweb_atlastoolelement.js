@@ -352,11 +352,10 @@ class AtlasControlElement extends HTMLElement {
         let layoutcontroller=document.querySelector(layoutid);
         this.panel=new BisWebPanel(layoutcontroller,
                                    {  name  : 'Atlas Tool',
-                                      permanent : true,
+                                      permanent : false,
                                       width : '290',
                                       dual : false,
                                    });
-        this.panel.show();
         this.parentDomElement=this.panel.getWidget();
         this.parentDomElement.append($("<div>This will appear once an image is loaded.</div>"));
         

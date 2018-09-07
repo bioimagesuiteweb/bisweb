@@ -83,6 +83,10 @@ class ViewerApplicationElement extends HTMLElement {
         console.log("App name=",this.applicationName,this.applicationURL);
         clipboard.setItem('appname',this.applicationName);
 
+        // For dual tab apps
+        this.tab1name=null;
+        this.tab2name=null;
+
     }
 
     //  ---------------------------------------------------------------------------
@@ -100,6 +104,35 @@ class ViewerApplicationElement extends HTMLElement {
         return this.applicationName+"."+this.getApplicationStateFilenameExtension();
     }
 
+    //  ---------------------------------------------------------------------------
+    // In case of dual viewers
+    /** Return the visible tab
+     * @returns{Number} - either 1 or 2
+     */
+    getVisibleTab() {
+        if (this.tab1name && this.tab2name) {
+            let tab2link = this.getAttribute('bis-tab2');
+            let widget=$(tab2link);
+            let cls=widget.attr('class');
+            if (cls.indexOf('active')>=0) 
+                return 2;
+        }
+        return 1;
+    }
+
+    /** Set the visible tab in case of a dual viewer 
+     * @param{Number} n - either 1 or 2
+     */
+    setVisibleTab(n) {
+
+        if (this.tab1name && this.tab2name) {
+            if (n===1)
+                $(this.tab1name).tab('show');
+            else
+                $(this.tab2name).tab('show');
+        }
+    }
+    
 
     //  ---------------------------------------------------------------------------
     // Find the viewers ('bis-viewerid' and 'bis-viewerid2') and store them in t
@@ -805,7 +838,7 @@ class ViewerApplicationElement extends HTMLElement {
             }
 
             let ext=files[0].name.split(".").pop();
-            if (ext===this.getApplicationStateFilenameExtension())
+            if (ext===self.getApplicationStateFilenameExtension())
                 self.loadApplicationState(files[0]);
             else
                 self.loadImage(files[0], count, false);
@@ -1088,6 +1121,7 @@ class ViewerApplicationElement extends HTMLElement {
         const menubarid = this.getAttribute('bis-menubarid');
         const painttoolid = this.getAttribute('bis-painttoolid') || null;
         const landmarkcontrolid=this.getAttribute('bis-landmarkcontrolid') || null;
+        const atlastoolid=this.getAttribute('bis-atlastoolid') || null;
         const managerid = this.getAttribute('bis-modulemanagerid') || null;
 
         this.findViewers();
@@ -1117,9 +1151,10 @@ class ViewerApplicationElement extends HTMLElement {
 
         this.createApplicationMenu(fmenu);
 
-             
+        let editmenu=null;
+
         if (!this.simpleFileMenus) {
-            let editmenu=this.createEditMenu(menubar);
+            editmenu=this.createEditMenu(menubar);
             this.createAdvancedTransferTool(modulemanager,editmenu);
             
             
@@ -1154,6 +1189,20 @@ class ViewerApplicationElement extends HTMLElement {
                     });
                 }   
             }
+        } else {
+            editmenu=webutil.createTopMenuBarMenu("Edit", menubar);
+            webutil.createMenuItem(editmenu, 'Viewer Info', function () { self.VIEWERS[0].viewerInformation(); });
+        }
+        
+        if (atlastoolid) {
+            let atlascontrol=document.querySelector(atlastoolid);
+            if (atlastoolid)
+                webutil.createMenuItem(editmenu,'');
+            
+            webutil.createMenuItem(editmenu,'Atlas Tool',() => {
+                atlascontrol.show();
+                this.setVisibleTab(1);
+            });
         }
         
 

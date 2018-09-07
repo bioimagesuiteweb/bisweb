@@ -50,18 +50,7 @@ class DualViewerApplicationElement extends ViewerApplicationElement {
     getElementState(storeImages=false) {
 
         let obj=super.getElementState(storeImages);
-
-        if (this.tab1name && this.tab2name) {
-            let tab1link = this.getAttribute('bis-tab1');
-            let widget=$(tab1link);
-            let cls=widget.attr('class');
-            if (cls.indexOf('active')>=0) {
-                obj.activeViewer='1';
-            } else {
-                obj.activeViewer='2';
-            }
-        }
-        
+        obj.activeViewer=this.getVisibleTab();
         return obj;
     }
 
@@ -70,16 +59,11 @@ class DualViewerApplicationElement extends ViewerApplicationElement {
         if (dt===null)
             return;
 
-        if (this.tab1name && this.tab2name) { 
-            let ind=dt.activeViewer || 1;
-            if (ind===1)
-                $(this.tab1name).tab('show');
-            else
-                $(this.tab2name).tab('show');
-        }
+        this.setVisibleTab(dt.activeViewer || 1);
         super.setElementState(dt,name);
     }
-    
+
+
     connectedCallback() {
 
         this.syncmode = true;
