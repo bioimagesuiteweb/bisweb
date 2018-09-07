@@ -176,6 +176,22 @@ class ViewerApplicationElement extends HTMLElement {
             }
             obj[name]=this.VIEWERS[i].getElementState(getimg);
         }
+
+        obj.sidetools={};
+        const atlastoolid=this.getAttribute('bis-atlastoolid') || null;
+        const blobanalyzerid=this.getAttribute('bis-blobanalyzerid') || null;
+        
+        if (atlastoolid) {
+            let atlascontrol=document.querySelector(atlastoolid);
+            if (atlascontrol.isOpen())
+                obj.sidetools.atlascontrol=true;
+        }
+        if (blobanalyzerid) {
+            let blobcontrol=document.querySelector(blobanalyzerid);
+            if (blobcontrol.isOpen())
+                obj.sidetools.clustertool=true;
+        }
+        
         return obj;
     }
     
@@ -197,6 +213,28 @@ class ViewerApplicationElement extends HTMLElement {
         }
         if (this.num_independent_viewers > 1) {
             this.VIEWERS[1].setDualViewerMode(this.VIEWERS[1].internal.viewerleft);
+        }
+
+        let sidetools=dt.sidetools || {};
+
+        const atlastoolid=this.getAttribute('bis-atlastoolid') || null;
+        const blobanalyzerid=this.getAttribute('bis-blobanalyzerid') || null;
+
+        console.log('sidetools=',sidetools);
+        
+        if (sidetools.atlascontrol && atlastoolid) {
+            let atlascontrol=document.querySelector(atlastoolid);
+            setTimeout(()=> {
+                atlascontrol.show();
+            },100);
+        }
+        
+        if (sidetools.clustertool && blobanalyzerid) {
+            console.log('here');
+            let blobcontrol=document.querySelector(blobanalyzerid);
+            setTimeout( ()=> {
+                blobcontrol.show();
+            },1000);
         }
     }
 
@@ -1122,6 +1160,7 @@ class ViewerApplicationElement extends HTMLElement {
         const painttoolid = this.getAttribute('bis-painttoolid') || null;
         const landmarkcontrolid=this.getAttribute('bis-landmarkcontrolid') || null;
         const atlastoolid=this.getAttribute('bis-atlastoolid') || null;
+        const blobanalyzerid=this.getAttribute('bis-blobanalyzerid') || null;
         const managerid = this.getAttribute('bis-modulemanagerid') || null;
 
         this.findViewers();
@@ -1194,15 +1233,23 @@ class ViewerApplicationElement extends HTMLElement {
             webutil.createMenuItem(editmenu, 'Viewer Info', function () { self.VIEWERS[0].viewerInformation(); });
         }
         
-        if (atlastoolid) {
-            let atlascontrol=document.querySelector(atlastoolid);
-            if (atlastoolid)
-                webutil.createMenuItem(editmenu,'');
+        if (atlastoolid || blobanalyzerid) {
+            webutil.createMenuItem(editmenu,'');
             
-            webutil.createMenuItem(editmenu,'Atlas Tool',() => {
-                atlascontrol.show();
-                this.setVisibleTab(1);
-            });
+            if (atlastoolid) {
+                let atlascontrol=document.querySelector(atlastoolid);
+                webutil.createMenuItem(editmenu,'Atlas Tool',() => {
+                    atlascontrol.show();
+                    this.setVisibleTab(1);
+                });
+            }
+            if (blobanalyzerid) {
+                let blobcontrol=document.querySelector(blobanalyzerid);
+                webutil.createMenuItem(editmenu,'Cluster Info Tool',() => {
+                    blobcontrol.show();
+                    this.setVisibleTab(1);
+                });
+            }   
         }
         
 
