@@ -220,7 +220,6 @@ class ViewerApplicationElement extends HTMLElement {
         const atlastoolid=this.getAttribute('bis-atlastoolid') || null;
         const blobanalyzerid=this.getAttribute('bis-blobanalyzerid') || null;
 
-        console.log('sidetools=',sidetools);
         
         if (sidetools.atlascontrol && atlastoolid) {
             let atlascontrol=document.querySelector(atlastoolid);
@@ -230,11 +229,10 @@ class ViewerApplicationElement extends HTMLElement {
         }
         
         if (sidetools.clustertool && blobanalyzerid) {
-            console.log('here');
             let blobcontrol=document.querySelector(blobanalyzerid);
             setTimeout( ()=> {
                 blobcontrol.show();
-            },1000);
+            },500);
         }
     }
 
