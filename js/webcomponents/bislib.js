@@ -33,6 +33,7 @@ require("bisweb_mosaicviewerelement.js");
 require("bisweb_orthogonalviewerelement.js");
 require("bisweb_landmarkcontrolelement.js");
 require("bisweb_atlastoolelement.js");
+require("bisweb_blobanalyzerelement.js");
 require("bisweb_painttoolelement.js");
 require("bisweb_snapshotelement.js");
 require("bisweb_console.js");
