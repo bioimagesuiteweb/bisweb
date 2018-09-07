@@ -698,7 +698,7 @@ class BisFileServerClient extends BisBaseServerClient {
                         // We are done!
                         if (self.verbose>0)
                             console.log('+++++ Received uploadcomplete, closing');
-                        fileTransferSocket.on('close', () => {
+                        fileTransferSocket.addEventListener('close', () => {
                             console.log('++++ Closing transfer socket success');
                             successCB(metadata);
                         });
