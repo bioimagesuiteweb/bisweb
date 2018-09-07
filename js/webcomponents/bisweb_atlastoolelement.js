@@ -338,22 +338,21 @@ class AtlasControlElement extends HTMLElement {
         let viewerid=this.getAttribute('bis-viewerid');
         let layoutid=this.getAttribute('bis-layoutwidgetid');
         
-        webutil.runAfterAllLoaded( () => {
-            this.orthoviewer=document.querySelector(viewerid);
-            this.orthoviewer.addMouseObserver(this);
+        let layoutcontroller=document.querySelector(layoutid);
+        this.panel=new BisWebPanel(layoutcontroller,
+                                   {  name  : 'Atlas Tool',
+                                      permanent : true,
+                                      width : '290',
+                                      dual : false,
+                                   });
+        this.panel.show();
+        this.parentDomElement=this.panel.getWidget();
+        this.parentDomElement.append($("<div>This will appear once an image is loaded.</div>"));
+        
+        this.orthoviewer=document.querySelector(viewerid);
+        this.orthoviewer.addMouseObserver(this);
             
-            let layoutcontroller=document.querySelector(layoutid);
-            this.panel=new BisWebPanel(layoutcontroller,
-                                       {  name  : 'Atlas Tool',
-                                          permanent : true,
-                                          width : '290',
-                                          dual : false,
-                                       });
-            this.panel.show();
-            this.parentDomElement=this.panel.getWidget();
-            this.parentDomElement.append($("<div>This will appear once an image is loaded.</div>"));
 
-        });
     }
                                 
 
