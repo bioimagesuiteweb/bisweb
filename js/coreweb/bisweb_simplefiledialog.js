@@ -108,6 +108,7 @@ class SimpleFileDialog {
                 }
             }));
         }).catch( () => {
+            outname=this.addExtensionToFilnameIfNeeded(outname,this.activeFilterList);
             sendCallback();
         });
     }
@@ -230,13 +231,10 @@ class SimpleFileDialog {
 
             if (this.mode === 'save') {
                 this.okButton.text('Save');
-                this.displayFiles = true;
             } else if (this.mode.indexOf('dir')>=0) {
                 this.okButton.text('Select Directory');
-                this.displayFiles = true;
             } else {
                 this.okButton.text('Load');
-                this.displayFiles = true;
             }
         } 
 
@@ -247,6 +245,7 @@ class SimpleFileDialog {
         }
 
         this.updateDialog(list,startDirectory,rootDirectory,initialfilename);
+        this.modal.dialog.modal('show');
     }
     
     updateDialog(list,startDirectory,rootDirectory,initialfilename=null) {
@@ -260,7 +259,7 @@ class SimpleFileDialog {
         
         
         let filterbar=this.container.find('.bisweb-file-filterbar');
-        if (this.currentFilters.length<1 || this.displayFiles===false) {
+        if (this.currentFilters.length<1) { 
             filterbar.empty();
             this.activeFilterList=[];
         } else if (this.newFilters===true) {
@@ -300,7 +299,7 @@ class SimpleFileDialog {
 
         this.updateTree(list,initialfilename,rootDirectory);
 
-        this.modal.dialog.modal('show');
+
     }
 
     /**
@@ -334,15 +333,7 @@ class SimpleFileDialog {
                      });
 
 
-        if (!this.displayFiles) {
-            let len=list.length-1;
-            for (let i = len; i >=0; i=i-1) {
-                if (list[i].type !== 'directory') {
-                    list.splice(i, 1);
-                    i--;
-                } 
-            }
-        } else if (this.activeFilterList.length>0) {
+        if (this.activeFilterList.length>0) {
             let len=list.length-1;
             for (let i = len; i >=0; i=i-1) {
                 if (list[i].type !== 'directory') {
@@ -606,18 +597,6 @@ class SimpleFileDialog {
         });
     }
     
-    /**
-       * @returns {Boolean} if visible return true
-       */
-    isVisible() {
-        let vis=this.modal.dialog.css('display');
-        if (vis==='block') {
-            return true;
-        } 
-
-        return false;
-    }
-    
 
     /**
      * Checks a proposed filename against a set of file extension filters to determine whether name should have another kind of filetype applied to it.
@@ -626,8 +605,13 @@ class SimpleFileDialog {
      * @param {Array} filtersList- A string set of file extensions
      * @returns A properly formatted filename
      */
-    fixFilename(name, filterList) {
+    addExtensionToFilnameIfNeeded(name, filterList) {
+        if (!filterList)
+            return name;
 
+        if (filterList.length<1)
+            return name;
+        
         for (let i=0;i<filterList.length;i++) {
             let filter=filterList[i];
             let nl=name.length;
