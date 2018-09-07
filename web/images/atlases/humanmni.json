@@ -2,11 +2,10 @@
     "anatomical" : "../MNI_T1_1mm_stripped_ras.nii.gz",
     "dimensions" : [ 181,217,181 ],
     "labels" : {
-        "filename" : "Reorder_Atlas.nii.gz",
+        "filename" : "../Reorder_Atlas.nii.gz",
         "description" : "BioImage Suite Atlas",
-        "labels" : [
+        "data" : [
             {
-                "frame" : "0",
                 "name"  : "Lobes",
                 "description" : "Anatomically Defined Brain Lobes",
                 "labels": {
@@ -33,9 +32,27 @@
                 }
             },
             {
+                "name" : ""
+            },
+            {
+                "name" : "Networks",
+                "description" : "Networks as defined by Power et al. Neuron 2011.",
+                "labels" : {
+                    "1" :  "Somato-Motor",
+                    "3" :  "Cingular-opercular",
+                    "4" :  "Auditory",
+                    "5" :  "Default Mode",
+                    "7" :  "Visual",
+                    "8" :  "Frontal-Parietal",
+                    "9" :  "Salience",
+                    "10" : "Subcortical",
+                    "11" : "Ventral-Attention",
+                    "12" : "Dorsal-Attention"
+                }
+            },
+            {
                 "name" : "Brodman Areas",
                 "description" : "The Brodmann areas use the BioImage Suite internal definition (Lacadie et al OHBM 2008)",
-                "frame" : "1",
                 "labels" : {
                     "1" : "PrimSensory (1)",
                     "4" : "PrimMotor (4)",
@@ -81,23 +98,6 @@
                     "55" : "Hypothalamus (55)",
                     "58" : "BrainStem",
                     "57" : "Cerebellum"
-                }
-            },
-            {
-                "name" : "Networks",
-                "description" : "Networks as defined by Power et al. Neuron 2011.",
-                "frame" : "3",
-                "labels" : {
-                    "1" :  "Somato-Motor",
-                    "3" :  "Cingular-opercular",
-                    "4" :  "Auditory",
-                    "5" :  "Default Mode",
-                    "7" :  "Visual",
-                    "8" :  "Frontal-Parietal",
-                    "9" :  "Salience",
-                    "10" : "Subcortical",
-                    "11" : "Ventral-Attention",
-                    "12" : "Dorsal-Attention"
                 }
             }
         ]
