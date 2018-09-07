@@ -1161,10 +1161,9 @@ class DiffSpectElement extends DualViewerApplicationElement {
 
         this.dataPanel=new BisWebPanel(layoutcontroller,
                                    {  name  : 'Diff-Spect DataTree',
-                                      permanent : true,
+                                      permanent : false,
                                       width : '300',
-                                      //                                      dual : false,
-                                      //                                    mode : 'sidebar'
+                                      dual : false,
                                    });
         this.spectToolsDiv = this.dataPanel.getWidget();
 
@@ -1173,8 +1172,8 @@ class DiffSpectElement extends DualViewerApplicationElement {
                                           {  name  : 'Diff-Spect Results',
                                              permanent : false,
                                              width : '300',
-                                             //                                      dual : false,
-                                             //                                    mode : 'sidebar'
+                                             dual : true,
+                                             mode : 'sidebar'
                                           });
         this.resultsToolsDiv = this.resultsPanel.getWidget();
         this.resultsToolsDiv.append($('<div> No results yet.</div>'));
@@ -1184,7 +1183,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
         
         this.spectToolsDiv.append(this.tree_div);
 
-        this.dataPanel.show();
+        //        this.dataPanel.show();
         //      this.resultsPanel.hide();
         
         
