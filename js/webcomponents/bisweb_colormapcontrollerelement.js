@@ -387,7 +387,6 @@ class ColormapControllerElement extends HTMLElement {
                                             mapfunction : util.mapoverlayfactory(this.data.minth,this.data.maxth,opa,cmode,usef4),
                                           };
                 
-                console.log(this.internal.clusterinfo.data);
             }
         }
         return;
