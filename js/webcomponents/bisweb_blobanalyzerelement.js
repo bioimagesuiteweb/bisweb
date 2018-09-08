@@ -21,9 +21,10 @@
 "use strict";
 
 const webutil=require('bis_webutil');
+const webfileutil = require('bis_webfileutil');
 const $=require('jquery');
 const BisWebPanel = require('bisweb_panel.js');
-
+const genericio=require('bis_genericio');
 
 
 
@@ -61,13 +62,22 @@ class BlobAnalyzerElement extends HTMLElement {
             cmode : -1,
         };
         this.cnames = [ 'minth', 'maxth', 'clustersize' , 'cmode'];
-        
+        this.outputstring='';
     }
 
     cleanCache() {
         this.clusterInfo=null;
+        this.outputstring='';
         this.parentDomElement.empty();
-        this.parentDomElement.append($("<div>No Clusters to Examine</div>"));
+        this.parentDomElement.append($(`<div style="font-size:12px"><p>No Clusters to Examine. Please create
+an overlay as follows:</p> <OL> <LI> Load the underlying anatomical
+image using the menu option File | Load Image</LI> <LI> Load the
+functional overlay using the menu option Overlay | Load Overlay</LI>
+<LI> Cluster the functional overlay by setting the Cluster Size
+parameter (found under "Overlay Color Mapping" in the "Viewer
+Controls" tool on the far right of this window) to a value greater
+than zero.</LI> </OL></div>`));
+
     }
     
     
@@ -203,6 +213,17 @@ class BlobAnalyzerElement extends HTMLElement {
         
     }
 
+    saveTextResults(fobj) {
+
+        fobj=genericio.getFixedSaveFileName(fobj,"results.csv");
+        genericio.write(fobj, this.outputstring).then((f) => {
+            webutil.createAlert('Results saved in '+f);
+        }).catch((e) => {
+            webutil.createAlert('Failed to save results '+e,true);
+        });
+
+    }
+    
     updateTable(outputdata) {
 
         const atlastoolid=this.getAttribute('bis-atlastoolid') || null;
@@ -217,6 +238,10 @@ class BlobAnalyzerElement extends HTMLElement {
         let newid=webutil.createWithTemplate(templates.bisscrolltable,$('body'));
         let stable=$('#'+newid);
         this.table=stable;
+
+        let des=this.orthoviewer.getobjectmap().getDescription();
+
+        
         this.parentDomElement.append(stable);
         let thead = stable.find(".bisthead");
         let tbody = stable.find(".bistbody",stable);
@@ -227,8 +252,32 @@ class BlobAnalyzerElement extends HTMLElement {
                    'user-select': 'none'});
         thead.css({'font-size':'14px',
                    'user-select': 'none'});
+
+        const self=this;
+
+        this.parentDomElement.append($('<HR>'));
+        this.parentDomElement.append($(`<p style="font-size:12px"> Image:${des}</p>`));
+        this.parentDomElement.append($('<HR>'));
+        webfileutil.createFileButton({ name : 'Save Table',
+                                       parent : this.parentDomElement,
+                                       type : "success",
+                                       callback : (f) => { self.saveTextResults(f); },
+                                       css : { 'position' : 'right' },
+                                     },
+                                     {
+                                         title: 'Save ClusterAnalysis Results',
+                                         save: true,
+                                         filters : [ { name: 'CSV File', extensions: ['csv']}],
+                                         suffix : "csv",
+                                         initialCallback : () => {
+                                             return "results.csv";
+                                         }
+                                     });
         
+
+
         
+
         thead.append($(`<tr>
                        <td width="5%">#</td>
                        <td width="45%">Coordinates of Peak</td>
@@ -237,12 +286,14 @@ class BlobAnalyzerElement extends HTMLElement {
 
         tbody.empty();
 
+        this.outputstring=`,${des}\n#, ,Coordinates of Peak, , Size (voxels), Value at Peak\n`;
+        
         let max=outputdata.length;
         if (max>25)
             max=25;
 
         let buttoncoords=[];
-        const self=this;
+
         let callback = (e) => {
             let id=e.target.id;
             if (!id) {
@@ -261,6 +312,7 @@ class BlobAnalyzerElement extends HTMLElement {
             let nid=webutil.getuniqueid();
 
             let cstring=elem.coords.join(', ');
+            let dstring='';
             if (atlascontrol) {
                 let mm=[ 0, 0, 0];
 
@@ -269,8 +321,10 @@ class BlobAnalyzerElement extends HTMLElement {
                 let results=atlascontrol.queryAtlas(mm);
                 //                console.log(JSON.stringify(results.data,null,2));
                 //console.log(results.data[0]);
-                if (results.data[0].name==="MNI Coordinates")
+                if (results.data[0].name==="MNI Coordinates") {
                     cstring=`MNI: ${results.data[0].desc}`;
+                    dstring=results.data[0].desc;
+                }
             }
             let w=$(`<tr>
                     <td width="5%">${i+1}</td>
@@ -278,6 +332,8 @@ class BlobAnalyzerElement extends HTMLElement {
                     <td width="20%">${elem.size}</td>
                     <td width="30%">${Number.parseFloat(elem.maxt).toFixed(3)}</td>
                     </tr>`);
+            this.outputstring+=`${i+1},${dstring},${elem.size},${elem.maxt}\n`;
+
             tbody.append(w);
             $('#'+nid).click(callback);
             buttoncoords[nid]=elem.coords;
