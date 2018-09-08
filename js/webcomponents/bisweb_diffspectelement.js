@@ -675,7 +675,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
             genericio.write(fobj, str).then((f) => {
                 webutil.createAlert('Results saved in '+f);
             }).catch((e) => {
-                webutil.createAlert('Failed to save results '+e);
+                webutil.createAlert('Failed to save results '+e,true);
                 reject(e);
             });
         });
