@@ -354,6 +354,7 @@ class AWSModule {
      */
     formatRawS3Files(files, directories, suffixes = null) {
 
+        console.log('directories', directories);
         let filtersArray = suffixes ? suffixes.split(',') : null;
 
         //filters start with a '.' which we strip out here for compatibility with String.split()
@@ -370,131 +371,72 @@ class AWSModule {
         for (let file of files) {
 
             let splitFile = file.Key.split('/');
+            let fileExtension = splitFile[splitFile.length - 1].split('.');
 
-            //folders have an empty string after the last '/'
-            if (splitFile[splitFile.length - 1] !== '') {
-                let fileExtension = splitFile[splitFile.length - 1].split('.');
-
-                if (suffixes) {
-                    for (let filter of filtersArray) {
-                        if (fileExtension[fileExtension.length - 1] === filter) {
-                            paths.push({ 'filepath' : splitFile, 'size' : file.Size, 'fullpath' : file.FullPath });
-                        }
+            if (suffixes) {
+                for (let filter of filtersArray) {
+                    if (fileExtension[fileExtension.length - 1] === filter) {
+                        paths.push({ 'filepath' : splitFile, 'size' : file.Size});
                     }
-                } else {
-                    paths.push({ 'filepath' : splitFile, 'size' : file.Size, 'fullPath' : file.fullPath });
                 }
-
             } else {
-                folders.push({ 'filepath' : splitFile, 'fullPath' : file.fullPath });
+                paths.push({ 'filepath' : splitFile, 'size' : file.Size });
             }
-        }
 
-        //sort files by hierarchical order (root folders first, then folders one level deep, and so on)
-        paths.sort( (a,b) => { 
-            return (a.length - b.length);
-        });
+        }
 
         let formattedFiles = [];
 
         for (let path of paths) {
-            let currentLocation = formattedFiles;
-            for (let folder of path.filepath) {
-                let enclosingFolder = findFileWithKey(folder, currentLocation);
-                if (!enclosingFolder) {
+            let fullpath = path.filepath.join('/');
+            let name = path.filepath[path.filepath.length - 1];
+            let fileType = name.split('.'); 
+            fileType = fileType[fileType.length - 1];
 
-                    //files should end in a filetype, i.e. a '.' and some extension
-                    //otherwise it's a folder
-                    if(folder.split('.').length === 1) {
+            let newEntry = {
+                'text' : name,
+                'path' : fullpath,
+                'size' : path.size
+            };
 
-                        let folderPath = makeFolderPath(path, folder);
-                        let newEntry = { 
-                            'text' : folder,
-                            'path' : folderPath,
-                            'type' : 'directory',
-                            'children' : []
-                        };
-
-                        currentLocation.push(newEntry);
-
-                        //we created the new file in the process of determining where to add the new file, so set the new folder to be the enclosing folder for files farther down the path
-                        enclosingFolder = newEntry;
-                    } else {
-
-                        let folderPath = path.filepath.join('/');
-                        let fileType = folder.split('.');
-
-                        let newEntry = {
-                            'text' : folder,
-                            'path' : folderPath,
-                            'size' : path.size
-                        };
-
-                        switch(fileType[fileType.length - 1]){
-                            case 'gz' : newEntry.type = (fileType[fileType.length - 2] === 'nii') ? 'picture' : 'file'; break;
-                            case 'md' : newEntry.type = 'text'; break;
-                            case 'mkv' : 
-                            case 'avi' : 
-                            case 'mp4' : newEntry.type = 'video'; break;
-                            case 'mp3' :
-                            case 'flac' :
-                            case 'FLAC' :
-                            case 'wav' : 
-                            case 'WAV' : newEntry.type = 'audio'; break;
-                            default : newEntry.type = 'file';
-                        }
-
-
-                        currentLocation.push(newEntry);
-                    }
-                } 
-                
-                currentLocation = enclosingFolder.children;
+            switch(fileType[fileType.length - 1]){
+                case 'gz' : newEntry.type = (fileType[fileType.length - 2] === 'nii') ? 'picture' : 'file'; break;
+                case 'md' : newEntry.type = 'text'; break;
+                case 'mkv' : 
+                case 'avi' : 
+                case 'mp4' : newEntry.type = 'video'; break;
+                case 'mp3' :
+                case 'flac' :
+                case 'FLAC' :
+                case 'wav' : 
+                case 'WAV' : newEntry.type = 'audio'; break;
+                default : newEntry.type = 'file';
             }
+
+             formattedFiles.push(newEntry);
         }
 
-        //add empty folders to list
-        //folders is an array of filepaths split on the character '/'
-        for (let folder of folders) {
-            console.log('folder', folder);
-            let currentFolder = findFileWithKey(folder.filepath[0], formattedFiles);
+        //sort files in alphabetical order
+        formattedFiles.sort( (a,b) => { 
+            let pathA = a.text.toLowerCase(), pathB = b.text.toLowerCase();
+            if (pathA > pathB) return 1;
+            if (pathA < pathB) return -1;
+            return 0;
+        });
 
-            //skip the last index because every entry in folders ends in ''
-            for (let i = 0; i < folder.filepath.length - 1; i++) {
 
-                if (i === folder.filepath.length - 2) {
-                    currentFolder = currentFolder || formattedFiles;
-                    let folderName = folder.filepath[folder.filepath.length - 2];
+        for (let directory of directories) {
+            let newEntry = { 
+                'text' : directory.Prefix,
+                'path' : directory.Prefix,
+                'type' : 'directory',
+                'children' : []
+            };
 
-                    if (!findFileWithKey(folderName, currentFolder)) {
-                        let folderPath = folder.fullPath ? folder.fullPath : makeFolderPath(folder.filepath, folderName);
-                        let newEntry = {
-                            'text' : folderName,
-                            'path' : folderPath,
-                            'type' : 'directory',
-                            'children' : []
-                        };
-                        currentFolder.unshift(newEntry);
-                    }
-                } else {
-                    currentFolder = findFileWithKey(folder.filepath[i], currentFolder);
-                }
-            }
+            formattedFiles.unshift(newEntry);
         }
 
         return formattedFiles;
-
-        //helper function to find whether a folder or a file with the given name already exists in currentDirectory
-        function findFileWithKey(key, currentDirectory) {
-            console.log('current directory', currentDirectory);
-            for (let file of currentDirectory) {
-                if (file.text === key) {
-                    return file;
-                }
-            }
-
-            return false;
-        }
     }
 }
 
