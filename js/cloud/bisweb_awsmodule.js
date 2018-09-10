@@ -44,7 +44,6 @@ class AWSModule {
             this.fileDisplayModal = new bisweb_simplefiledialog('Bucket Contents');
             this.fileDisplayModal.fileListFn = this.changeDirectory.bind(this);
         });
-
     }
 
     /**
@@ -169,6 +168,11 @@ class AWSModule {
 
             let formattedFiles = this.formatRawS3Files(data.Contents);
 
+            //TODO: Talk with Xenios and find how he would do this
+            this.fileDisplayModal.dialogOpts.filters = filters;
+            this.fileDisplayModal.dialogOpts.title = modalTitle;
+            this.fileDisplayModal.dialogOpts.mode = 'save';
+
             this.fileDisplayModal.fileRequestFn = this.uploadFile;
             this.fileDisplayModal.openDialog(formattedFiles, {
                  'filters' : filters,
@@ -191,12 +195,12 @@ class AWSModule {
             this.s3.listObjectsV2( { 'Prefix' : path, 'Delimiter' : '/' }, (err, data) => {
                 if (err) { console.log('an error occured', err); reject(err); return; }
 
-                let formattedFiles = this.formatRawS3Files(data.Contents);
+                let formattedFiles = this.formatRawS3Files(data.Contents, data.CommonPrefixes);
                  
                 let cdopts = {
                     'data' : formattedFiles,
                     'startDirectory' : path,
-                    'rootDirectory' : '/'
+                    'rootDirectory' : path
                 };
 
                 resolve(cdopts);
@@ -244,6 +248,7 @@ class AWSModule {
                 default : console.log('Unrecognized aws command', command, 'cannot complete request.');
             }
         };
+
         let expireTime = AWS.config.credentials.expireTime ? Date.parse(AWS.config.credentials.expireTime) : -1;
 
         if (expireTime < Date.now() || this.refreshCredentials) {
@@ -353,8 +358,7 @@ class AWSModule {
      * @returns An array of files parseable by bisweb_filedialog
      */
     formatRawS3Files(files, directories, suffixes = null) {
-
-        console.log('directories', directories);
+        
         let filtersArray = suffixes ? suffixes.split(',') : null;
 
         //filters start with a '.' which we strip out here for compatibility with String.split()
@@ -393,27 +397,30 @@ class AWSModule {
             let fileType = name.split('.'); 
             fileType = fileType[fileType.length - 1];
 
-            let newEntry = {
-                'text' : name,
-                'path' : fullpath,
-                'size' : path.size
-            };
+            if (name.length > 0) {
+                let newEntry = {
+                    'text' : name,
+                    'path' : fullpath,
+                    'size' : path.size
+                };
 
-            switch(fileType[fileType.length - 1]){
-                case 'gz' : newEntry.type = (fileType[fileType.length - 2] === 'nii') ? 'picture' : 'file'; break;
-                case 'md' : newEntry.type = 'text'; break;
-                case 'mkv' : 
-                case 'avi' : 
-                case 'mp4' : newEntry.type = 'video'; break;
-                case 'mp3' :
-                case 'flac' :
-                case 'FLAC' :
-                case 'wav' : 
-                case 'WAV' : newEntry.type = 'audio'; break;
-                default : newEntry.type = 'file';
+                switch(fileType[fileType.length - 1]){
+                    case 'gz' : newEntry.type = (fileType[fileType.length - 2] === 'nii') ? 'picture' : 'file'; break;
+                    case 'md' : newEntry.type = 'text'; break;
+                    case 'mkv' : 
+                    case 'avi' : 
+                    case 'mp4' : newEntry.type = 'video'; break;
+                    case 'mp3' :
+                    case 'flac' :
+                    case 'FLAC' :
+                    case 'wav' : 
+                    case 'WAV' : newEntry.type = 'audio'; break;
+                    default : newEntry.type = 'file';
+                }
+
+                formattedFiles.push(newEntry);
             }
 
-             formattedFiles.push(newEntry);
         }
 
         //sort files in alphabetical order
@@ -426,8 +433,10 @@ class AWSModule {
 
 
         for (let directory of directories) {
+            let name = directory.Prefix.split('/');
+            name = name[name.length - 2]; //prefix is a string of folder names ending in '/', so the very last entry in the split prefix will be empty
             let newEntry = { 
-                'text' : directory.Prefix,
+                'text' : name,
                 'path' : directory.Prefix,
                 'type' : 'directory',
                 'children' : []

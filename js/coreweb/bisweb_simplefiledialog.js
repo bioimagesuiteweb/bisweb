@@ -48,6 +48,7 @@ class SimpleFileDialog {
         this.favorites = [];
         this.lastFavorite=null;
 
+        this.dialogOpts = {};
     }
 
     // --------------- GUI Callbacks ------------------------
@@ -78,7 +79,11 @@ class SimpleFileDialog {
             return;
         }
 
-        let outname=this.currentDirectory+this.separator+name;
+        let outname;
+        if (this.currentDirectory.charAt(this.currentDirectory.length - 1) !== this.separator)
+            outname=this.currentDirectory+this.separator+name;
+        else 
+            outname = this.currentDirectory + name;
         
         let sendCallback= (() => {
             this.modal.dialog.modal('hide');
@@ -111,12 +116,13 @@ class SimpleFileDialog {
      */
     changeDirectory(dname) {
         this.fileListFn(dname, true).then( (payload) => {
-            let opts = {
-                'startDirectory' : payload.path,
-                'rootDirectory' : payload.root
-            };
 
-            this.openDialog(payload.data, opts);
+            this.dialogOpts.startDirectory = payload.startDirectory;
+            this.dialogOpts.rootDirectory = payload.rootDirectory;
+
+            this.currentDirectory = payload.startDirectory;
+
+            this.openDialog(payload.data, this.dialogOpts);
         });
     }
 
@@ -409,10 +415,12 @@ class SimpleFileDialog {
             let fname=data.node.original.path;
             if (data.node.type === 'file' || data.node.type ==='picture') {
 
+                console.log('fname', fname);
                 let ind=fname.lastIndexOf(this.separator);
                 let dname=fname;
-                if (ind>0)
+                if (ind>0) {
                     dname=fname.substr(ind+1,fname.length);
+                }
                 this.filenameEntry.val(dname);
             } else if ( data.node.type=== 'directory') {
                 this.changeDirectory(fname);
@@ -431,7 +439,6 @@ class SimpleFileDialog {
      */
     updateFileNavbar(lastfilename=null, rootDirectory='/') {
 
-        console.log('root directory', rootDirectory, 'current path', this.currentPath);
         let navbar = this.modal.body.find('.bisweb-file-navbar');
         navbar.empty();
         
