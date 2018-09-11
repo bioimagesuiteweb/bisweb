@@ -48,8 +48,10 @@ class BaseViewerElement extends HTMLElement {
             colormapobservers : [],
             mouseobservers : [],
             resizeobservers : [],
+            framechangedobservers :[],
             imagechangedobservers : [],
             ignorecolormapobservers : false,
+            ignoreframeobservers : false,
             ignoremouseobservers : false,
             
             // Image Stuff
@@ -60,6 +62,9 @@ class BaseViewerElement extends HTMLElement {
             objectmapspa   : [ 1.0,1.0,1.0 ],
             imagedim   : [ 0,0,0 ],
             objectmapshift : [ 0,0,0 ],
+
+            // MaxNumFrames
+            maxnumframes : 0,
             
             //  scene
             showdecorations : true,
@@ -729,6 +734,51 @@ class BaseViewerElement extends HTMLElement {
         }
     }
 
+
+    /* add a frame observer to notify after new frame events
+     * @param {BisFrameChangedIbserver} v - frame observer  */
+    addFrameChangedObserver(v) {
+        this.internal.framechangedobservers.push(v);
+    }
+
+    /* add a frame observer to notify after new frame events
+     * @param {BisFrameChangedObserver} v - frame observer  */
+    removeFrameChangedObserver(v) {
+        let i=this.internal.framechangedobservers.indexOf(v);
+        if (i<0)
+            return;
+        this.internal.framechangedobservers.splice(i,1);
+    }
+    
+    /** update all frame observers with new coordinates 
+     *  Called from {@link BisWebOrthogonalViewerElementElementThis.Internal.handleframe}.
+     */
+    updateFrameChangedObservers() {
+
+        if (this.internal.framechangedobservers.length===0 ||
+           !this.internal.volume)
+            return;
+
+        this.internal.ignoreframeobservers = true;
+
+        let frame=this.getframe();
+        
+        this.internal.framechangedobservers.forEach((f) => {
+            f.handleFrameChanged(frame);
+        });
+        this.internal.ignoreframeobservers = false;
+    }
+
+    /** this class can also be an framechangedobserver */
+    handleFrameChanged(frame) {
+        
+        if (this.internal.ignoreframeobservers || !this.internal.volume)
+            return;
+
+        this.setframe(frame);
+    }
+
+
     // -----------------------------------------------------------------------------
     //  finalize tools
     // -----------------------------------------------------------------------------
@@ -991,8 +1041,19 @@ class BaseViewerElement extends HTMLElement {
     getLayoutController() {
         return this.internal.layoutcontroller;
     }
-    
 
+
+    /** remap dimensions to 4D 
+     * @param{Array} idim -- input/output 5 dimensional array
+     */
+    remapDimensionsTo4D(dim) {
+        // TODO: One day do proper 5D
+        // Force everything to 4D for now ...
+        if (dim[4]>1) {
+            dim[3]=dim[3]*dim[4];
+            dim[4]=1;
+        }
+    }
 }
 
 
