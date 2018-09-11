@@ -73,6 +73,9 @@ class DualViewerApplicationElement extends ViewerApplicationElement {
         this.VIEWERS[0].addColormapObserver(this.VIEWERS[1]);
         this.VIEWERS[1].addColormapObserver(this.VIEWERS[0]);
 
+        this.VIEWERS[0].addFrameChangedObserver(this.VIEWERS[1]);
+        this.VIEWERS[1].addFrameChangedObserver(this.VIEWERS[0]);
+
 
         const self = this;
         let tabset = this.getAttribute('bis-tabset') || null;
