@@ -1,28 +1,29 @@
 
-const wsutil = require('bis_wsutil');
+const wsUtilInitialPort = require('bis_wsutil').initialPort;
 const bisgenericio=require('bis_genericio');
 const pako=require('pako');
 const bisasyncutil=require('bis_asyncutils');
 const util = require('bis_util');
 const BisBaseServerClient= require('bis_baseserverclient');
 // Debug Mode
-const verbose=0;
 let uploadcount=0;
+
+
 
 class BisFileServerClient extends BisBaseServerClient { 
 
-    constructor(nodesocket = null) {
+    constructor(nodesocket=null) {
 
         super();
         this.lastOpts=null;
-        this.portNumber=wsutil.initialPort;
+        this.portNumber=wsUtilInitialPort;
         
         //connection over which all control communication takes place
         this.socket = null;
 
         //connection over which uploads are exchanged
         this.dataSocket = null;
-
+        
         //When connecting to the server, it may sometimes request that the user authenticates
         this.authenticatingEvent= -1;
         this.hostname=null;
@@ -30,6 +31,7 @@ class BisFileServerClient extends BisBaseServerClient {
         this.lastCommand="";
         this.NodeWebSocket=nodesocket;
         this.terminating=false;
+        this.verbose=0;
     }
 
     /** returns the name of the server
@@ -42,7 +44,7 @@ class BisFileServerClient extends BisBaseServerClient {
     sendCommand(command) {
         
         let js=JSON.stringify(command)+' ';
-        if (verbose) {
+        if (this.verbose>0) {
             console.log('____ \t\t Sending ',js,' length=',js.length);
         }
         this.socket.send(js);
@@ -82,7 +84,7 @@ class BisFileServerClient extends BisBaseServerClient {
      * 
      * @param {String} address - The hostname and port to try to connect to, e.g. 'ws://localhost:24000'. 
      */
-    connectToServer(address = 'ws://localhost:'+wsutil.initialPort) {
+    connectToServer(address = 'ws://localhost:'+wsUtilInitialPort) {
 
         if (this.socket) {
             this.closeConnection();
@@ -94,27 +96,34 @@ class BisFileServerClient extends BisBaseServerClient {
         let arr=address.split(':');
         let prt=arr[arr.length-1];
         this.portNumber=parseInt(prt);
-        if (!this.NodeWebSocket)
-            this.socket = new WebSocket(address);
-        else
-            this.socket = new this.NodeWebSocket(address);
-
-        if (!this.socket) {
-            this.socket = null;
-
-            return;
+        try {
+            if (!this.NodeWebSocket)
+                this.socket = new WebSocket(address);
+            else
+                this.socket = new this.NodeWebSocket(address);
+            
+            if (!this.socket) {
+                this.socket=null;
+                console.log("Bad Socket");
+                return;
+            }
+        } catch(e) {
+            console.log("Failed to connect to server"+e);
         }
-
+        
         //add the event listeners for the control port
         let closeEvent = this.socket.addEventListener('close', () => {
             console.log('---- Socket closing');
             if (this.terminating)
                 return;
+            if (this.authenticated)
+                this.alertEvent('Connection to fileserver at '+this.hostname+' closed',true);
             this.authenticated=false;
-            this.alertEvent('Connection to fileserver at '+this.hostname+' closed',true);
+
             if (this.authenticatingEvent) {
                 let id=this.authenticatingEvent.id;
                 bisasyncutil.rejectServerEvent(id,'failure to authenticate');
+                this.hideAuthenticationDialog();
             }
         });
 
@@ -130,6 +139,7 @@ class BisFileServerClient extends BisBaseServerClient {
             this.socket.removeEventListener('message', messageEvent);
             this.socket.removeEventListener('error', errorEvent);
             this.socket=null;
+            
         });
 
     }
@@ -138,14 +148,14 @@ class BisFileServerClient extends BisBaseServerClient {
      * @param {Object} event - an object containing info from server
      */
     handleServerResponse(event) {
-
+        
 
         // ---------------------
         // Is this binary ?
         // ---------------------
         if (typeof (event.data) !== "string") {
             //            console.log('received a binary transmission',event.data);
-            this.handleDataReceivedFromServer(event.data, true, -1);
+            this.handleDataReceivedFromServer(event.data,true,-1);
             return;
         }
 
@@ -153,8 +163,10 @@ class BisFileServerClient extends BisBaseServerClient {
         // Text from here on out
         // ---------------------
         //console.log(event.data);
-        let data = wsutil.parseJSON(event.data);
-        if (data===null) {
+        let data=null;
+        try {
+            data = JSON.parse(event.data);
+        } catch(e) {
             data= {
                 id : -1,
                 type : 'error',
@@ -165,27 +177,28 @@ class BisFileServerClient extends BisBaseServerClient {
         
         if (data.type==='text') {
             //  console.log('received text data: ', data.type,data.id,bisasyncutil.printEvent(id));
-            this.handleDataReceivedFromServer(data.payload.data, false, id);
+            this.handleDataReceivedFromServer(data.payload.data,false,id);
             return;
         }
 
-
+        
         // We have handle file download events (i.e. server sending large data to us)
         // From here on it is commands
+        
+        
+        let success=true;
 
-
-        let success = true;
-
-        if (verbose)
-            console.log('____\n____ Received message: ', data.type, id, bisasyncutil.printEvent(id));
-        switch (data.type) {
-            case 'checksum': {
+        if (this.verbose>0)
+            console.log('____\n____ Received message: ', data.type,id,bisasyncutil.printEvent(id));
+        switch (data.type)
+        {
+            case 'checksum' : {
                 //console.log('Checksum =', data.payload.checksum);
                 // Nothing to do let promise handle it;
                 break;
             }
-
-            case 'filelist': {
+            
+            case 'filelist':  {
                 // Nothing to do let promise handle it
                 break;
             }
@@ -211,26 +224,26 @@ class BisFileServerClient extends BisBaseServerClient {
                 this.sendRawText(this.password || '');
                 break;
             }
-            case 'badauth': {
-                id = -1;
+            case 'badauth':  {
+                id=-1;
                 if (this.hasGUI) {
                     this.retryAuthenticationDialog();
                 } else if (this.authenticatingEvent) {
-                    id = this.authenticatingEvent.id;
-                    success = false;
+                    id=this.authenticatingEvent.id;
+                    success=false;
                 }
                 break;
             }
 
             case 'goodauth': {
-                id = -1;
+                id=-1;
                 this.alertEvent('Login to BisWeb FileServer Successful'); //webutil.createAlert
                 this.authenticated = true;
                 this.hideAuthenticationDialog();
 
                 //console.log('received text data: ', bisasyncutil.printEvent(this.authenticatingEvent.id));
                 if (this.authenticatingEvent)
-                    id = this.authenticatingEvent.id;
+                    id=this.authenticatingEvent.id;
                 break;
             }
 
@@ -266,23 +279,23 @@ class BisFileServerClient extends BisBaseServerClient {
             
             default: {
                 console.log('received a transmission with unknown type', data.type, 'cannot interpret');
-                success = false;
+                success=false;
             }
         }
 
-        if (id >= 0) {
+        if (id>=0) {
             //            console.log("____ Resolving in handleEvent ",bisasyncutil.printEvent(id),success);
             if (success)
-                bisasyncutil.resolveServerEvent(id, data.payload);
+                bisasyncutil.resolveServerEvent(id,data.payload);
             else
-                bisasyncutil.rejectServerEvent(id, data.payload);
+                bisasyncutil.rejectServerEvent(id,data.payload);
         }
     }
 
     // ------------------------------------------------------
     // Authentication Functionality
     //
-
+    
 
     /**
      * Authenticate
@@ -294,21 +307,25 @@ class BisFileServerClient extends BisBaseServerClient {
     authenticate(password='',hostname=null) {
         
         this.password = password || '';
-        hostname = hostname || 'ws://localhost:'+wsutil.initialPort;
+        hostname = hostname || 'ws://localhost:'+wsUtilInitialPort;
         
         if (this.authenticated)
             return Promise.resolve();
 
-        return new Promise((resolve, reject) => {
+        return new Promise( (resolve,reject) => {
 
             let successCB = (() => {
-                this.authenticatingEvent = null;
+                this.authenticatingEvent=null;
+                this.serverinfo=this.hostname;
                 resolve();
             });
-            let failureCB = (() => {
-                this.authenticatingEvent = null;
+            let failureCB= ( () => {
+                this.authenticatingEvent=null;
+                this.serverinfo='';
                 reject();
             });
+            
+            this.authenticatingEvent=bisasyncutil.addServerEvent(successCB,failureCB,'authenticate');
 
             if (password.length>0 || this.hasGUI===false) {
                 this.connectToServer(hostname);
@@ -321,7 +338,7 @@ class BisFileServerClient extends BisBaseServerClient {
 
     // ------------------------- External Functions ---------------------------------
     // 
-
+    
     /**
      * Sends a request for a list of the files on the server machine and prepares the display modal for the server's reply. 
      * Once the list of files arrives it is rendered using jstree. The user may request individual files from the server using this list. 
@@ -342,9 +359,9 @@ class BisFileServerClient extends BisBaseServerClient {
 
         
         if (opts)
-            this.lastOpts = opts;
+            this.lastOpts=opts;
 
-        return new Promise((resolve, reject) => {
+        return new Promise ((resolve,reject) => {
 
             let cb=( (payload) => {
                 if (showdialog) {
@@ -369,7 +386,7 @@ class BisFileServerClient extends BisBaseServerClient {
      */
     getServerBaseDirectory() {
 
-        return new Promise((resolve, reject) => {
+        return new Promise( (resolve,reject) => {
 
             let res=((obj) => { resolve(obj.path); });
             let serverEvent=bisasyncutil.addServerEvent(res,reject,'getServerBaseDir');
@@ -409,27 +426,27 @@ class BisFileServerClient extends BisBaseServerClient {
 
                 if (!isbinary) {
                     resolve({
-                        'data': raw_data,
-                        'filename': url,
+                        'data' : raw_data,
+                        'filename' : url,
                     });
                     return;
                 } else {
                     let dat = new Uint8Array(raw_data);
-                    let comp = bisgenericio.iscompressed(url);
+                    let comp=bisgenericio.iscompressed(url);
                     if (!comp) {
                         resolve({
-                            'data': dat,
-                            'filename': url
+                            'data' : dat,
+                            'filename' : url
                         });
                     } else {
                         let a = pako.ungzip(dat);
                         resolve({
-                            'data': a,
-                            'filename': url
+                            'data' : a,
+                            'filename' : url
                         });
-                        a = null;
+                        a=null;
                     }
-                    dat = null;
+                    dat=null;
                 }
             });
             
@@ -444,8 +461,8 @@ class BisFileServerClient extends BisBaseServerClient {
         });
     }
 
-
-
+    
+    
 
 
 
@@ -455,10 +472,10 @@ class BisFileServerClient extends BisBaseServerClient {
      * @param {Boolean} isbinary - if true data is binary
      * @param {Number} id - the id of the request or -1 if this is binary
      */
-    handleDataReceivedFromServer(data, isbinary = true, id = -1) {
+    handleDataReceivedFromServer(data,isbinary=true,id=-1) {
 
         if (isbinary) {
-            if (bisgenericio.getenvironment() !== 'node') {
+            if (bisgenericio.getenvironment()!=='node') {
                 let reader = new FileReader();
                 reader.addEventListener('loadend', () => {
                     bisasyncutil.resolveBinaryData(reader.result);
@@ -468,7 +485,7 @@ class BisFileServerClient extends BisBaseServerClient {
                 bisasyncutil.resolveBinaryData(data);
             }
         } else {
-            bisasyncutil.resolveServerEvent(id, data);
+            bisasyncutil.resolveServerEvent(id,data);
         }
     }
 
@@ -483,12 +500,12 @@ class BisFileServerClient extends BisBaseServerClient {
 
     initiateDataUploadHandshakeAndGetPort(command) {
 
-        return new Promise((resolve, reject) => {
+        return new Promise( (resolve,reject) => {
 
-            let res = ((msg) => {
-                let m = msg.name;
+            let res=( (msg) => {
+                let m=msg.name;
 
-                if (m === 'datasocketready') {
+                if (m==='datasocketready') {
                     resolve(msg.port);
                     return;
                 } else if (m === 'serverreadonly') {
@@ -511,15 +528,15 @@ class BisFileServerClient extends BisBaseServerClient {
             this.sendCommand(command);
         });
     }
-
-
+                            
+    
     /** upload file 
      * @param {String} url -- abstact file handle object
      * @param {Data} data -- the data to save, either a sting or a Uint8Array
      * @param {Boolean} isbinary -- is data binary
      * @returns {Promise} 
      */
-    uploadFile(url, data, isbinary = false) {
+    uploadFile(url, data, isbinary=false) {
 
 
         if (url.indexOf('\\')>=0)
@@ -527,9 +544,9 @@ class BisFileServerClient extends BisBaseServerClient {
         
         
         // TODO: is the size of body < packetsize upload in one shot
-        let body = null;
-        if (!isbinary)
-            body = bisgenericio.string2binary(data);
+        let body=null;
+        if (!isbinary) 
+            body=bisgenericio.string2binary(data);
         else
             body=new Uint8Array(data.buffer);
         
@@ -556,11 +573,13 @@ class BisFileServerClient extends BisBaseServerClient {
         });
     }
 
+        
 
     uploadFileHelper(url,body,isbinary=false,checksum,successCB,failureCB,packetSize=400000) {
 
         let fileTransferSocket=null;
         uploadcount=uploadcount+1;
+        const self=this;
         
         let metadata = {
             'command': 'uploadfile',
@@ -574,14 +593,17 @@ class BisFileServerClient extends BisBaseServerClient {
             'uploadCount' : uploadcount,
         };
 
-        console.log('\n\t \n\t \nBeginnning uploadFileHelper',metadata.command,'size=',metadata.totalSize,' packetSize=',metadata.packetSize,' count=',metadata.uploadCount);
+        console.log('\n\t \n\t \nBeginning uploadFileHelper',metadata.command,'size=',metadata.totalSize,' packetSize=',metadata.packetSize,' count=',metadata.uploadCount);
         
-        if (verbose)
+        if (this.verbose>0)
             console.log((metadata));
 
         this.initiateDataUploadHandshakeAndGetPort(metadata).then( (port) => {
 
-            console.log("looking to connect to port",port);
+            if (this.verbose>0)
+                console.log("looking to connect to port",port,this.hostname);
+
+            
             
             let server=this.hostname || null;
             if (server) {
@@ -590,8 +612,8 @@ class BisFileServerClient extends BisBaseServerClient {
             } else {
                 server=`ws://localhost:${port}`;
             }
-            
-            if (verbose)
+
+            if (this.verbose>0)
                 console.log("Connecting to data server ",server);
             
             if (!this.NodeWebSocket)
@@ -600,6 +622,9 @@ class BisFileServerClient extends BisBaseServerClient {
                 fileTransferSocket = new this.NodeWebSocket(server);
             
             fileTransferSocket.addEventListener('open', () => {
+                if (this.verbose) {
+                    console.log("Data Connection established");
+                }
                 doDataTransfer(body);
             });
         }).catch( (e) => {
@@ -626,18 +651,28 @@ class BisFileServerClient extends BisBaseServerClient {
                     
                     
                     let slice=new Uint8Array(data.buffer,begin,end-begin);
-                    if (verbose>1)
+                    if (self.verbose>1)
                         console.log('\t\t Sending ',begin,end-1,' Total=',data.length,' slice=',slice.length);
-                    
-                    fileTransferSocket.send(slice);
+
+                    try {
+                        fileTransferSocket.send(slice);
+                    } catch(e) {
+                        console.log('error',e);
+                    }
+
+                    if (self.verbose)
+                        console.log('Waiting');
+
+
                     currentIndex+=(end-begin);
                 } else {
-                    if (verbose>1)
+                    if (this.verbose>1)
                         console.log('We are done ignoring');
                 }
             };
             
             fileTransferSocket.addEventListener('message', (event) => {
+
                 let data;
                 try {
                     data = JSON.parse(event.data);
@@ -645,8 +680,10 @@ class BisFileServerClient extends BisBaseServerClient {
                     failureCB('error -- an error occured while parsing event.data', e);
                     return null;
                 }
+
                 
-                if (verbose>1)
+                
+                if (self.verbose>1)
                     console.log('____ In Transfer ',data.type);
                 
                 switch (data.type)
@@ -659,11 +696,14 @@ class BisFileServerClient extends BisBaseServerClient {
                     case 'uploadcomplete':
                     {
                         // We are done!
-                        if (verbose)
-                            console.log('Received uploadcomplete, closing');
-                        console.log('++++ Closing transfer socket success');
+                        if (self.verbose>0)
+                            console.log('+++++ Received uploadcomplete, closing');
+                        fileTransferSocket.addEventListener('close', () => {
+                            console.log('++++ Closing transfer socket success');
+                            successCB(metadata);
+                        });
                         fileTransferSocket.close(1000, 'Transfer completed successfully ');
-                        successCB(metadata);
+
                         break;
                     }
                     case 'uploadfailed':

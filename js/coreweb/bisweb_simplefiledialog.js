@@ -12,8 +12,9 @@ require('jstree');
  * This class will render a list of files in a window similar to the file system dialog that opens when a user clicks on an <input type='file'> button.
  * 
  * TODO: Back button breaks after adding supplemental files
- * TODO: It would be nice to show date and filesize eventually (and sort by size)
- */
+*/
+
+
 class SimpleFileDialog {
 
     constructor(options = {}) {
@@ -29,9 +30,12 @@ class SimpleFileDialog {
         this.okButton=null;
         this.filenameEntry=null;
 
-        //fileListFn is meant to be called when a directory is clicked, and should handle all behavior needed to display its contents.
-        //fileRequestFn is meant to be called when a file is selected to be loaded/saved
+        
+        // This are the callbacks
+        // Call this to get updated directory
         this.fileListFn=null;
+        // Call this to pass the selected filename back to the main code
+        // (this is in fact the final callback from outside code)
         this.fileRequestFn=null;
 
         // Entries
@@ -49,9 +53,16 @@ class SimpleFileDialog {
         this.favorites = [];
         this.lastFavorite=null;
 
-        this.dialogOpts = {};
     }
 
+    getCombinedFilename(dname,fname) {
+
+        if (dname.lastIndexOf(this.separator)!==(dname.length - 1))
+            return dname+this.separator+fname;
+        return dname+fname;
+    }
+
+    
     // --------------- GUI Callbacks ------------------------
     /** 
      * Request Filename from GUI
@@ -80,11 +91,7 @@ class SimpleFileDialog {
             return;
         }
 
-        let outname;
-        if (this.currentDirectory.charAt(this.currentDirectory.length - 1) !== this.separator)
-            outname=this.currentDirectory+this.separator+name;
-        else 
-            outname = this.currentDirectory + name;
+        let outname=this.getCombinedFilename(this.currentDirectory,name);
         
         let sendCallback= (() => {
             this.modal.dialog.modal('hide');
@@ -106,24 +113,21 @@ class SimpleFileDialog {
                 }
             }));
         }).catch( () => {
+            outname=this.addExtensionToFilnameIfNeeded(outname,this.activeFilterList);
             sendCallback();
         });
     }
 
 
-    /** 
-     * Requests the contents of a directory from the relevant file service (using the function provided through fileListFn) and updates the the GUI with the new data.
+    /** Request Directory
      * @param {String} dname -- the name of the directory
      */
     changeDirectory(dname) {
-        this.fileListFn(dname, true).then( (payload) => {
-
-            this.dialogOpts.startDirectory = payload.startDirectory;
-            this.dialogOpts.rootDirectory = payload.rootDirectory;
-
-            this.currentDirectory = payload.startDirectory;
-
-            this.openDialog(payload.data, this.dialogOpts);
+        // 
+        this.fileListFn( dname,false).then( (payload) => {
+            this.updateDialog(payload.data,
+                              payload.path,
+                              payload.root);
         });
     }
 
@@ -175,23 +179,22 @@ class SimpleFileDialog {
             this.filenameCallback();
         });
 
-        this.modal.footer.append(this.okButton);        
+         this.modal.footer.append(this.okButton);        
         this.modal.body.append(this.container);        
 
     }
 
     /**
-     * Parse a list of filters and create an Array of filters to use in the dialog. 
-     * @param {String|Array} filters - An unparsed list of filters.
+     * Create Filters 
+     * @param {Array} filters - An unparsed list of filters (Electron style)
      */
-    createFilters(filters = null) {
+    createFilters(filters=null) {
 
         if (filters) {
             this.currentFilters=JSON.parse(JSON.stringify(filters));
-        } else {
+        }  else {
             this.currentFilters=[];
         }
-
         this.currentFilters.push({ name: 'All Files', extensions: [] });
         this.newFilters=true;
         this.activeFilterList=this.currentFilters[0].extensions;
@@ -208,22 +211,21 @@ class SimpleFileDialog {
      * @param {Object} opts - A parameter object for the file dialog.
      * @param {String} opts.mode - What mode the modal is in, either 'load' or 'save'.
      * @param {String} opts.title - The name to display at the top of the file dialog modal.
-     * @param {Array} opts.filters - A list of filters for the file dialog. Only files that end in a filetype contained in opts.filters will be displayed.
-     * @param {String} opts.startDirectory - File entry representing the directory at which the files in list should be added. Defaults to '/'.
-     * @param {Object} opts.rootDirectory - File entry representing the root directory from which startDirectory derives. Defaults to '/'.
+     * @param {Array} opts.filters - A list of filters for the file dialog. Only files that end in a filetype contained in opts.filters will be displayed. These are Electron style
+     * @param {String} opts.startDirectory - This is the directory at which the file dialog will start (i.e. a user supplied path. If none supplied then this goes to the base directory of the server)
+     * @param {Object} opts.rootDirectory - In case where the server has multiple "drives" or baseDirectories (/home /tmp --- rootDirectory of /home/xenios/Desktop is /home)
      */
-    openDialog(list, opts = null) {
-
-        //null or undefined startDirectory and rootDirectory should default to '/'
-        let startDirectory = opts.startDirectory || '/';
-        let rootDirectory = opts.rootDirectory || '/';
+    openDialog(list,opts=null) {
 
         if (this.modal===null) {
             this.createDialogUserInterface();
         }
         
         this.newFilters=true;
-        
+        //null or undefined startDirectory and rootDirectory should default to null;
+        let startDirectory = opts.startDirectory || null;
+        let rootDirectory = opts.rootDirectory || null;
+
         if (opts!==null) {
             opts.filters=opts.filters || null;
 
@@ -233,7 +235,7 @@ class SimpleFileDialog {
                 let newtitle=opts.title;
                 if (newtitle) {
                     let title = this.modal.header.find('.modal-title');
-                    title.text(newtitle + ' (using bisweb fileserver)');
+                    title.text(newtitle+ ' (using bisweb fileserver)');
                 }
             }
 
@@ -242,35 +244,35 @@ class SimpleFileDialog {
 
             if (this.mode === 'save') {
                 this.okButton.text('Save');
-                this.displayFiles = true;
             } else if (this.mode.indexOf('dir')>=0) {
                 this.okButton.text('Select Directory');
-                this.displayFiles = true;
             } else {
                 this.okButton.text('Load');
-                this.displayFiles = true;
             }
-        } else {
-            console.log('No opts');
-        }
+        } 
 
         let initialfilename=null;
         if (opts!==null) {
             if (opts.initialFilename)
                 initialfilename=opts.initialFilename;
         }
+
+        this.updateDialog(list,startDirectory,rootDirectory,initialfilename);
+        this.modal.dialog.modal('show');
+    }
+    
+    updateDialog(list,startDirectory,rootDirectory,initialfilename=null) {
         
         this.fileList = list;
         this.currentDirectory = startDirectory;
-
-
+        
         //keep track of the current directory for the navbar
         this.currentPath = startDirectory;
         this.container.find('.bisweb-file-navbar').empty();
-
-
+        
+        
         let filterbar=this.container.find('.bisweb-file-filterbar');
-        if (this.currentFilters.length<1 || this.displayFiles===false) {
+        if (this.currentFilters.length<1) { 
             filterbar.empty();
             this.activeFilterList=[];
         } else if (this.newFilters===true) {
@@ -297,7 +299,7 @@ class SimpleFileDialog {
             let addOption= ((b) => {
                 sel.append($(b));
             });
-            
+
             for (let i=0;i<this.currentFilters.length;i++) {
 
                 if (this.currentFilters[i].extensions.length>0) {
@@ -308,22 +310,22 @@ class SimpleFileDialog {
             }
         }
 
-        this.currentList = list;
         this.updateTree(list,initialfilename,rootDirectory);
 
-        this.modal.dialog.modal('show');
+
     }
 
-    
     /**
-     * Creates the visual representation of the files specified by list. Uses jstree to render the list.
+     * Creates the visual representation of the files specified by list. Called from createFileList (see notes there for format of file entries).
+     * Uses jstree to render the list.
      * 
      * Sorts contents before display so that folders are shown first.
      * @param {Array} list - An array of file entries. 
      * @param {String} lastfilename - the last selected filename
      * @param {String} rootDirectory - "the drive" we are looking in
+
      */
-    updateTree(list, lastfilename = null, rootDirectory = '/') {
+    updateTree(list,lastfilename=null,rootDirectory=null) {
 
         this.previousList=JSON.parse(JSON.stringify(list));
         
@@ -344,15 +346,7 @@ class SimpleFileDialog {
                      });
 
 
-        if (!this.displayFiles) {
-            let len=list.length-1;
-            for (let i = len; i >=0; i=i-1) {
-                if (list[i].type !== 'directory') {
-                    list.splice(i, 1);
-                    i--;
-                } 
-            }
-        } else if (this.activeFilterList.length>0) {
+        if (this.activeFilterList.length>0) {
             let len=list.length-1;
             for (let i = len; i >=0; i=i-1) {
                 if (list[i].type !== 'directory') {
@@ -417,12 +411,10 @@ class SimpleFileDialog {
             let fname=data.node.original.path;
             if (data.node.type === 'file' || data.node.type ==='picture') {
 
-                console.log('fname', fname);
                 let ind=fname.lastIndexOf(this.separator);
                 let dname=fname;
-                if (ind>0) {
+                if (ind>0)
                     dname=fname.substr(ind+1,fname.length);
-                }
                 this.filenameEntry.val(dname);
             } else if ( data.node.type=== 'directory') {
                 this.changeDirectory(fname);
@@ -439,35 +431,34 @@ class SimpleFileDialog {
      * @param {String} lastfilename - the last selected filename
      * @param {String} rootDirectory - "the drive" we are looking in
      */
-    updateFileNavbar(lastfilename=null, rootDirectory='/') {
-
-        console.log('root directory', rootDirectory);
+    updateFileNavbar(lastfilename=null,rootDirectory='/') {
         let navbar = this.modal.body.find('.bisweb-file-navbar');
         navbar.empty();
+
+        if (this.currentPath===null)
+            return;
+        
+        rootDirectory = rootDirectory || '';
         
         //create navbar buttons for each folder in the current path
 
         
         let folders=null;
+
+        console.log('lastfilename=',lastfilename);
+        console.log('cp=',this.currentPath);
+        console.log('rootDirectory=',rootDirectory);
         
         if (rootDirectory.length>1 && this.currentPath.length>=rootDirectory.length) {
-            let p;
-            if (this.currentPath[0] === this.separator) {
-                p=this.currentPath.substr(rootDirectory.length+1,this.currentPath.length);
-            } else { 
-                p = this.currentPath;
-            }
 
+            let p=this.currentPath.substr(rootDirectory.length+1,this.currentPath.length);
             let f=p.split(this.separator);
-
-            let root = (rootDirectory[0] === this.separator) ? rootDirectory.substr(1, rootDirectory.length) : rootDirectory; 
-            folders=[root].concat(f);
+            folders=[ rootDirectory.substr(1,rootDirectory.length)].concat(f);
         } else {
             folders=this.currentPath.split(this.separator);
         }
 
         
-//        console.log('Path=',this.currentPath,'root=',rootDirectory,' folders=',folders.join(', '));
         
         for (let i=folders.length-1;i>=0;i=i-1) {
             if (folders[i].length<1)
@@ -490,11 +481,9 @@ class SimpleFileDialog {
                 newPath="[Root]";
                 name=" [Root]";
             }
-
             let button = $(`<button type='button' class='btn btn-sm btn-link' style='margin:0px'>${b}${name}</button>`);
             button.on('click', (event) => {
                 event.preventDefault();
-                console.log('changing directories to', newPath);
                 this.changeDirectory(newPath);
             });
             
@@ -630,18 +619,6 @@ class SimpleFileDialog {
         });
     }
     
-    /**
-       * @returns {Boolean} if visible return true
-       */
-    isVisible() {
-        let vis=this.modal.dialog.css('display');
-        if (vis==='block') {
-            return true;
-        } 
-
-        return false;
-    }
-    
 
     /**
      * Checks a proposed filename against a set of file extension filters to determine whether name should have another kind of filetype applied to it.
@@ -650,8 +627,13 @@ class SimpleFileDialog {
      * @param {Array} filtersList- A string set of file extensions
      * @returns A properly formatted filename
      */
-    fixFilename(name, filterList) {
+    addExtensionToFilnameIfNeeded(name, filterList) {
+        if (!filterList)
+            return name;
 
+        if (filterList.length<1)
+            return name;
+        
         for (let i=0;i<filterList.length;i++) {
             let filter=filterList[i];
             let nl=name.length;
@@ -685,6 +667,10 @@ class SimpleFileDialog {
         }
         return false;
     }
+    
+
+
+
 }
 
 module.exports = SimpleFileDialog;

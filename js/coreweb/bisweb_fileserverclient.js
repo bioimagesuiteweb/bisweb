@@ -9,27 +9,12 @@ const BisFileServerClient=require('bis_fileserverclient');
 class BisWebFileServerClient extends BisFileServerClient { 
 
     constructor() {
+
         super();
-
-        this.lastCommand=null;
-        this.lastOpts=null;
-        this.portNumber=8081;
-
-        //connection over which all control communication takes place
-        this.socket = null;
-
-        //connection over which uploads are exchanged
-        this.dataSocket = null;
-
-        //When connecting to the server, it may sometimes request that the user authenticates
-        this.authenticateModal = null;
-        this.authenticated = false;
-        this.hostname=null;
-        this.password=null;
-        
         this.hasGUI=true;
         this.fileDialog = null;
         this.passwordid=null;
+        this.authenticateModal = null;
     }
 
     alertEvent(name,error=false) {
@@ -119,6 +104,8 @@ class BisWebFileServerClient extends BisFileServerClient {
      * 
      * @param {Object} payload - Object specifying the list of files on the server machine and which modal it corresponds to.
      * @param {Object} opts - Object specific options for the Dialog
+     *
+     * // TODO: some how have a title here ... and suffix list
      */
     showFileDialog(payload,opts=null) {
 
@@ -132,8 +119,7 @@ class BisWebFileServerClient extends BisFileServerClient {
         opts.startDirectory = payload.path;
         opts.rootDirectory = payload.root;
 
-        this.fileDialog.openDialog(payload.data,
-                                   opts);
+        this.fileDialog.openDialog(payload.data,opts);
     }
 }
 module.exports = BisWebFileServerClient;
