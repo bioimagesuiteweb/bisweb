@@ -36,7 +36,7 @@ class AWSModule extends BaseServerClient {
 
         this.s3 = this.createS3(AWSParameters.BucketName);
 
-        this.saveImageModal = null;
+        this.saveModal = null;
 
         //UI features
         this.createUserModal = null;
@@ -73,11 +73,11 @@ class AWSModule extends BaseServerClient {
      * Lists the objects in the bucket referred to by the current S3 instance (this.S3). Note that S3 is a flat storage structure in which everything is stored in the same place.
      * Creates a file browsing dialog using bisweb_filedialog (see the documentation in that file for more details).
      * 
-     * @param {Array} filters - Filters object passed from bis_genericio.
-     * @param {String} modalTitle - Name to display at the top of the modal.
-     * @param {String} suffixes - Comma separated list of file extensions for files that should be displayed in the modal. 
+     * @param {Array} opts.filters - Filters object passed from bis_genericio.
+     * @param {String} opts.modalTitle - Name to display at the top of the modal.
+     * @param {String} opts.suffixes - Comma separated list of file extensions for files that should be displayed in the modal. 
      */
-    createLoadImageModal(filters, modalTitle, suffixes) {
+    createLoadModal(opts) {
         this.s3.listObjectsV2( { 'Delimiter' : '/' }, (err, data) => {
             if (err) { console.log('an error occured', err); return; }
             let formattedFiles = this.formatRawS3Files(data.Contents, data.CommonPrefixes, suffixes);
@@ -85,12 +85,7 @@ class AWSModule extends BaseServerClient {
 
             this.fileDisplayModal.openDialog(
                 formattedFiles,
-                {
-                    'filters' : filters,
-                    'title' : modalTitle,
-                    'mode' : 'load',
-                    'startDirectory' : '',
-                });
+                opts);
         });
     }
 
@@ -187,7 +182,7 @@ class AWSModule extends BaseServerClient {
                     reject(err); 
                 } else {
                     bis_webutil.createAlert('Uploaded ' + filename + ' to S3 bucket successfully', false, 0, 3000); 
-                    resolve('Upload successful');
+                    resolve(filename);//'Upload successful');
                 }
             });
         });
@@ -196,22 +191,13 @@ class AWSModule extends BaseServerClient {
     /**
      * Creates the file list to allow a user to choose where to save an image on one of the viewers  
      */
-    createSaveImageModal(filters, modalTitle) {
+    createSaveModal(opts) {
         this.s3.listObjectsV2( { 'Delimiter' : '/' }, (err, data) => {
             if (err) { console.log('an error occured', err); return; }
 
+            console.log(JSON.stringify(opts,null,2));
             let formattedFiles = this.formatRawS3Files(data.Contents, data.CommonPrefixes);
-
-            //TODO: Talk with Xenios and find how he would do this
-            this.fileDisplayModal.dialogOpts.filters = filters;
-            this.fileDisplayModal.dialogOpts.title = modalTitle;
-            this.fileDisplayModal.dialogOpts.mode = 'save';
-
-            this.fileDisplayModal.openDialog(formattedFiles, {
-                 'filters' : filters,
-                 'title' : modalTitle,
-                 'mode' : 'save'
-            });
+            this.fileDisplayModal.openDialog(formattedFiles, opts);
         });
     }
 
@@ -294,12 +280,12 @@ class AWSModule extends BaseServerClient {
             switch(command) {
                 case 'showfiles' : {
                     this.fileDisplayModal.fileRequestFn = opts.callback;
-                    this.createLoadImageModal(opts.filters, opts.title, opts.suffix); 
+                    this.createLoadModal(opts); 
                     break;
                 }
                 case 'uploadfile' : {
                     this.fileDisplayModal.fileRequestFn = opts.callback.bind(this);
-                    this.createSaveImageModal(opts.filters, opts.title, opts.suffix); 
+                    this.createSaveModal(opts); 
                     break;
                 }
                 default : console.log('Unrecognized aws command', command, 'cannot complete request.');
