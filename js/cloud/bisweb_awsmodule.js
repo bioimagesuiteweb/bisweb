@@ -80,12 +80,9 @@ class AWSModule extends BaseServerClient {
     createLoadModal(opts) {
         this.s3.listObjectsV2( { 'Delimiter' : '/' }, (err, data) => {
             if (err) { console.log('an error occured', err); return; }
-            let formattedFiles = this.formatRawS3Files(data.Contents, data.CommonPrefixes, suffixes);
-            //            console.log('FormattedFiles',JSON.stringify(formattedFiles,null,2));
+            let formattedFiles = this.formatRawS3Files(data.Contents, data.CommonPrefixes, opts.suffixes);
 
-            this.fileDisplayModal.openDialog(
-                formattedFiles,
-                opts);
+            this.fileDisplayModal.openDialog(formattedFiles, opts);
         });
     }
 
