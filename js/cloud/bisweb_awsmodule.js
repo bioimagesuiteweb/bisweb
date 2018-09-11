@@ -229,9 +229,9 @@ class AWSModule extends BaseServerClient {
                 let formattedFiles = this.formatRawS3Files(data.Contents, data.CommonPrefixes);
                  
                 let cdopts = {
-                    'data' : formattedFiles,
-                    'startDirectory' : path,
-                    'rootDirectory' : path
+                    'data' : formattedFiles, 
+                    'path' : path,
+                    'root' : path
                 };
 
                 resolve(cdopts);
