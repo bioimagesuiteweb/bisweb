@@ -291,6 +291,7 @@ class MosaicViewerElement extends BaseViewerElement {
                 let vp  =this.internal.subviewers[i].controls.normViewport;
                 let sliceno=this.computeslice(i);
 
+
                 if (sliceno>=0 && sliceno <=maxslice && (vp.x1-vp.x0)*domwidth>150) {
                     let xmin=Math.round((f[0]*vp.x0+f[1]*vp.x1)*domwidth);
                     let xmax=Math.round((f[0]*vp.x1+f[1]*vp.x0)*domwidth);
@@ -314,6 +315,8 @@ class MosaicViewerElement extends BaseViewerElement {
                     context.fillText(lab[3],xmid,ymax);
                     
                     let name=names[trueplane]+axes[imageorientaxis[trueplane]]+'='+sliceno;
+                    if (this.internal.maxnumframes>1)
+                        name+=' (fr='+this.internal.frame+')';
                     context.textAlign='start';
                     context.textBaseline='bottom';
                     let xmid0=Math.round( domwidth*(0.8*vp.x0+0.2*vp.x1));
@@ -368,10 +371,14 @@ class MosaicViewerElement extends BaseViewerElement {
         let objmapframe=this.internal.frame;
         if (objmapframe>=this.internal.objectmapnumframes)
             objmapframe=this.internal.objectmapnumframes-1;
+
+        let imageframe=this.internal.frame;
+        if (imageframe>=this.internal.imagedim[3])
+            imageframe=this.internal.imagedim[3]-1;
         
         for (var i=0;i<numviewers;i++) {
             var sl=this.computeslice(i);
-            this.internal.slices[i].setsliceno(sl,this.internal.frame,this.internal.imagetransferfunction);
+            this.internal.slices[i].setsliceno(sl,imageframe,this.internal.imagetransferfunction);
             this.internal.slices[i].showdecorations(this.internal.showdecorations);
             if (hasoverlay && this.internal.overlayslices[i]!==null) {
                 var slmm=this.getmmsl(i);
@@ -379,6 +386,7 @@ class MosaicViewerElement extends BaseViewerElement {
             }
         }
         this.drawlabels();
+        this.updateFrameChangedObservers();
     }
     
     /** Update viewports if rows or columns have changed */
@@ -499,10 +507,13 @@ class MosaicViewerElement extends BaseViewerElement {
 
         if (samesize===false) {
             this.internal.imagedim=volume.getDimensions();
+            // TODO: One day do proper 5D
+            this.remapDimensionsTo4D(this.internal.imagedim);
             this.internal.plane=2;
             this.internal.imagespa=volume.getSpacing();
             this.internal.firstslice=Math.round(this.internal.imagedim[2]/2);
             this.internal.increment=1;
+            this.internal.maxnumframes=this.internal.imagedim[3];
         }
         let imagerange=volume.getIntensityRange();
         this.internal.imagetransferfunction=util.mapstepcolormapfactory(imagerange[0],imagerange[1],255);
@@ -605,7 +616,6 @@ class MosaicViewerElement extends BaseViewerElement {
             return;
         }
         
-        var i=0;
         /*var dim=ovolume.getDimensions();
           var sum=0;
           for (var i=0;i<=2;i++)
@@ -616,24 +626,31 @@ class MosaicViewerElement extends BaseViewerElement {
           }*/
         
         this.internal.objectmap=ovolume;
-        var ospa=this.internal.objectmap.getSpacing();
-        var odim=this.internal.objectmap.getDimensions();
+        let ospa=this.internal.objectmap.getSpacing();
+        let odim=this.internal.objectmap.getDimensions();
+        this.remapDimensionsTo4D(odim);
         
-        for (i=0;i<=2;i++) {
+        for (let i=0;i<=2;i++) {
             var ci=(this.internal.imagedim[i])*0.5*this.internal.imagespa[i];
             var co=(odim[i])*0.5*ospa[i];
             this.internal.objectmapshift[i]=co-ci;
         }
         this.internal.objectmapnumframes=odim[3];
-        
+        if (this.internal.objectmapnumframes>this.internal.maxnumframes) {
+            this.internal.maxnumframes=this.internal.objectmapnumframes;
+        }
+
         // Make these update next time to handle overlay
         var numviewers=this.internal.numrows*this.internal.numcols;
-        for (var pl=0;pl<numviewers;pl++) {
+        for (let pl=0;pl<numviewers;pl++) {
             if (this.internal.slices[pl]!==null)
                 this.internal.slices[pl].setnexttimeforce();
         }
-        
-        
+
+
+        if (this.internal.maxnumframes>this.internal.imagedim[3]) {
+            this.createdatgui();
+        }
         this.setobjectmapplane(this.internal.plane,true,plainmode,colormapmode);
         this.updateImageChangedObservers('overlay');
     }
@@ -657,7 +674,7 @@ class MosaicViewerElement extends BaseViewerElement {
         this.deleteoldobjectmap_artifacts();
         
         this.internal.overlayslices=new Array(MAXVIEWERS);
-        for (var i=0;i<MAXVIEWERS;i++) {
+        for (let i=0;i<MAXVIEWERS;i++) {
             this.internal.overlayslices[i]=null;
         }
         this.ensureviewersexist(true);
@@ -707,8 +724,11 @@ class MosaicViewerElement extends BaseViewerElement {
     /** set the frame 
      * @param{integer} frame*/
     setframe(fr) {
+
+        if (!this.internal.framecontroller)
+            return;
         
-        let num=this.internal.imagedim[3];
+        let num=this.internal.maxnumframes;
         if (fr<0)
             fr=num-1;
         else if (fr>=num)
@@ -717,8 +737,9 @@ class MosaicViewerElement extends BaseViewerElement {
         this.setslices(this.internal.firstslice,this.internal.increment,fr);
         let data = this.internal.datgui.data;
         data.tcoord=this.internal.frame;
-        this.internal.framecontroller.updateDisplay();
 
+        this.internal.framecontroller.updateDisplay();
+        this.updateFrameChangedObservers();
     }
 
     /** @return {number} the current frame} */
@@ -793,8 +814,8 @@ class MosaicViewerElement extends BaseViewerElement {
         xcoord.onChange(coordchange);
         ycoord.onChange(coordchange);
 
-        if (this.internal.imagedim[3]>1) {
-            this.internal.framecontroller=f1.add(data,'tcoord',0,this.internal.imagedim[3]-1).name("Frame");
+        if (this.internal.maxnumframes>1) {
+            this.internal.framecontroller=f1.add(data,'tcoord',0,this.internal.maxnumframes-1).name("Frame");
             this.internal.framecontroller.onChange(coordchange);
             moviefolder = gui.addFolder('Movie');
         }
