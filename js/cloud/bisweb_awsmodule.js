@@ -4,16 +4,22 @@ const AWS = require('aws-sdk');
 const AWSCognitoIdentity = require('amazon-cognito-identity-js');
 const AWSParameters = require('../../web/aws/awsparameters.js');
 const bis_webutil = require('bis_webutil.js');
-const bisweb_filedialog = require('bisweb_filedialog.js');
 const bisweb_simplefiledialog = require('bisweb_simplefiledialog.js');
+const BaseServerClient = require('bis_baseserverclient.js');
+const bis_genericio = require('bis_genericio.js');
+const pako = require('pako');
 
 /**
  * Class designed to save and load files from Amazon S3, using Amazon Cognito for authentication. 
  * Does not require the use of an app key like Dropbox and Google Drive. 
  */
-class AWSModule {
+class AWSModule extends BaseServerClient {
 
     constructor() {
+        
+        super(); 
+        this.hasGUI = true;
+
         AWS.config.update({
             'region' : AWSParameters.RegionName,
             'credentials' : new AWS.CognitoIdentityCredentials({
@@ -91,8 +97,9 @@ class AWSModule {
      * Called by bis_genericio starting from when a user sends the request by clicking on a file in a file display modal.
      * 
      * @param {String} filename - The name of the file 
+     * @param {Boolean} isbinary - Whether the file is in a binary format or not
      */
-    downloadFile(filename) {
+    downloadFile(filename, isbinary) {
 
         return new Promise( (resolve, reject) => {
 
@@ -122,10 +129,29 @@ class AWSModule {
 
                 console.log('data', data.Body);
 
-                resolve({ 
-                    data: data.Body, 
-                    filename: filename 
-                });
+                //check to see if data needs to be uncompressed before loading
+                if (!isbinary) {
+                    resolve({
+                        'data': data.Body,
+                        'filename': filename
+                    });
+                    return;
+                } else {
+                    let compressed = bis_genericio.iscompressed(filename);
+                    if (!compressed) {
+                        resolve({
+                            'data': data.Body,
+                            'filename': filename
+                        });
+                    } else {
+                        let unzippedData = pako.ungzip(data.Body);
+                        resolve({
+                            'data': unzippedData,
+                            'filename': filename
+                        });
+                    }
+                }
+
             });
         });
     }
@@ -137,14 +163,26 @@ class AWSModule {
      * @param {String} filename - The name of the file 
      * 
      */
-    uploadFile(filename, data) {
+    uploadFile(filename, data, isbinary = false) {
 
         return new Promise( (resolve, reject) => {
+            let sendData;
+            if (!isbinary) {
+                sendData = bis_genericio.string2binary(data);
+            } else {
+                //binary data is assumed to be image data, which should be compressed before sending
+                sendData = pako.gzip(data);
+
+                console.log('zipped data', sendData);
+            }
+
             let uploadParams = {
                 'Key' : filename,
                 'Bucket' : AWSParameters.BucketName,
-                'Body' : data
+                'Body' : sendData
             };
+
+            console.log('s3', this.s3);
 
             this.s3.upload(uploadParams, (err) => {
                 if (err) { 
@@ -163,10 +201,10 @@ class AWSModule {
      * Creates the file list to allow a user to choose where to save an image on one of the viewers  
      */
     createSaveImageModal(filters, modalTitle) {
-        this.s3.listObjectsV2( {}, (err, data) => {
+        this.s3.listObjectsV2( { 'Delimiter' : '/' }, (err, data) => {
             if (err) { console.log('an error occured', err); return; }
 
-            let formattedFiles = this.formatRawS3Files(data.Contents);
+            let formattedFiles = this.formatRawS3Files(data.Contents, data.CommonPrefixes);
 
             //TODO: Talk with Xenios and find how he would do this
             this.fileDisplayModal.dialogOpts.filters = filters;
@@ -214,8 +252,20 @@ class AWSModule {
      * @param {String} filename 
      */
     getFileSize(filename) {
-        return new Promise( (resolve, reject) => {
 
+        //TODO: this should return the size of the image we're trying to save!
+        return new Promise( (resolve, reject) => {
+            let currentList = this.fileDisplayModal.currentList;
+            console.log('current list', currentList);
+
+            for (let entry of currentList) {
+                if (entry.path === filename) {
+                    resolve(entry.size);
+                }
+            }
+
+            console.log('could not find', filename);
+            reject('cannot get size');
         });
     }
 

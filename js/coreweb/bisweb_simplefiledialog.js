@@ -44,6 +44,7 @@ class SimpleFileDialog {
         this.newFilters=true;
         this.activeFilterList=this.currentFilters[0].extensions;
 
+        this.currentList = null;
         this.previousList=null;
         this.favorites = [];
         this.lastFavorite=null;
@@ -307,6 +308,7 @@ class SimpleFileDialog {
             }
         }
 
+        this.currentList = list;
         this.updateTree(list,initialfilename,rootDirectory);
 
         this.modal.dialog.modal('show');
