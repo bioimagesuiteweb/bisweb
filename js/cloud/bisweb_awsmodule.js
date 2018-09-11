@@ -84,10 +84,7 @@ class AWSModule extends BaseServerClient {
             //TODO: suffixes is NULL mostly should not be passed in
             let formattedFiles = this.formatRawS3Files(data.Contents, data.CommonPrefixes, null);
             //            console.log('FormattedFiles',JSON.stringify(formattedFiles,null,2));
-
-            this.fileDisplayModal.openDialog(
-                formattedFiles,
-                opts);
+            this.fileDisplayModal.openDialog(formattedFiles, opts);
         });
     }
 
