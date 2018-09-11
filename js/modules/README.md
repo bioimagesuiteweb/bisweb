@@ -97,4 +97,5 @@
    the module on make install
 4. Add a test in modules_test.json  and any goldstandard data in
    test/testdata/ ....
+5. Initialize the module in `webcomponents/modulemanagerelement.js` if     you want the module to have a menu item in BioImageSuite.
    
