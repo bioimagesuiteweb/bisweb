@@ -80,8 +80,6 @@ class AWSModule extends BaseServerClient {
     createLoadImageModal(filters, modalTitle, suffixes) {
         this.s3.listObjectsV2( { 'Delimiter' : '/' }, (err, data) => {
             if (err) { console.log('an error occured', err); return; }
-
-            console.log('contents', data);
             let formattedFiles = this.formatRawS3Files(data.Contents, data.CommonPrefixes, suffixes);
 
             this.fileDisplayModal.openDialog(formattedFiles, {
@@ -161,28 +159,23 @@ class AWSModule extends BaseServerClient {
      * Called by bis_genericio starting from when a user types a filename into the save filename modal and clicks confirm. 
      * 
      * @param {String} filename - The name of the file 
+     * @param {Uint8Array} data - The raw image data
      * 
      */
-    uploadFile(filename, data, isbinary = false) {
+    uploadFile(filename, data) {
 
         return new Promise( (resolve, reject) => {
-            let sendData;
-            if (!isbinary) {
-                sendData = bis_genericio.string2binary(data);
-            } else {
-                //binary data is assumed to be image data, which should be compressed before sending
-                sendData = pako.gzip(data);
+            let sendData = pako.gzip(data);
 
-                console.log('zipped data', sendData);
-            }
+            //a leading '/' will create an empty folder with no name in the s3 bucket, so we want to trim it here.
+            if (filename[0] === '/') filename = filename.substring(1,filename.length);
+            console.log('filename', filename);
 
             let uploadParams = {
                 'Key' : filename,
-                'Bucket' : AWSParameters.BucketName,
+                'Bucket' : AWSParameters.BucketName(),
                 'Body' : sendData
             };
-
-            console.log('s3', this.s3);
 
             this.s3.upload(uploadParams, (err) => {
                 if (err) { 
@@ -211,7 +204,6 @@ class AWSModule extends BaseServerClient {
             this.fileDisplayModal.dialogOpts.title = modalTitle;
             this.fileDisplayModal.dialogOpts.mode = 'save';
 
-            this.fileDisplayModal.fileRequestFn = this.uploadFile;
             this.fileDisplayModal.openDialog(formattedFiles, {
                  'filters' : filters,
                  'title' : modalTitle,
@@ -291,7 +283,7 @@ class AWSModule extends BaseServerClient {
                     break;
                 }
                 case 'uploadfile' : {
-                    this.fileDisplayModal.fileRequestFn = opts.callback;
+                    this.fileDisplayModal.fileRequestFn = opts.callback.bind(this);
                     this.createSaveImageModal(opts.filters, opts.title, opts.suffix); 
                     break;
                 }
