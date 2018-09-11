@@ -322,13 +322,10 @@ const webfileutils = {
         if (fileopts.save) {
             // We are now saving only server, aws or local
             
-            if (fileMode === 'server') {
+            if (fileMode === 'server' || 'amazonaws') {
 
                 let initialDir=null;
                 let initialFilename=null;
-
-
-                    
 
                 try {
                     if (fileopts) {
@@ -357,15 +354,17 @@ const webfileutils = {
                 
                 cbopts.initialFilename=initialFilename || '';
                 cbopts.mode='save';
-                bisweb_fileserverclient.requestFileList(initialDir, true, cbopts);
+                if (fileMode === 'server') 
+                    bisweb_fileserverclient.requestFileList(initialDir, true, cbopts);
+                else
+                    bisweb_awsmodule.wrapInAuth('uploadfile', cbopts);
                 return;
             }
 
-            if (fileMode==='amazonaws') {
-                bisweb_awsmodule.wrapInAuth('uploadfile', cbopts);
-                return;
-            }
-
+            // Local file system save
+            // The way this works is that you first create the save object
+            // and then it invokes download object which saves the thing to a file
+            // and never tells you whether it happened.
             callback();
             return;
         }
