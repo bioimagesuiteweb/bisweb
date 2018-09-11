@@ -277,6 +277,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
             let sum=0.0;
             for (let i=0;i<=3;i++)
                 sum+=Math.abs(imagecoord[i]-coord[i]);
+            sum+=Math.abs(this.internal.objectmapnumframes-this.internal.imagedim[3]);
 
             if (sum>0) {
                 if (this.internal.objectmapnumframes<2 && this.maxnumframes<2)
@@ -1243,7 +1244,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         if (plane!==0 && plane!==1 && plane!==2)
             plane  = -1;
         this.updatescene(c,plane,-1,true);
-        console.log('Calling update frame changed observers');
+        this.updateFrameChangedObservers();
     }
 
     /** set the frame 
