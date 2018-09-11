@@ -441,6 +441,7 @@ class SimpleFileDialog {
      */
     updateFileNavbar(lastfilename=null, rootDirectory='/') {
 
+        console.log('root directory', rootDirectory);
         let navbar = this.modal.body.find('.bisweb-file-navbar');
         navbar.empty();
         
@@ -450,10 +451,17 @@ class SimpleFileDialog {
         let folders=null;
         
         if (rootDirectory.length>1 && this.currentPath.length>=rootDirectory.length) {
+            let p;
+            if (this.currentPath[0] === this.separator) {
+                p=this.currentPath.substr(rootDirectory.length+1,this.currentPath.length);
+            } else { 
+                p = this.currentPath;
+            }
 
-            let p=this.currentPath.substr(rootDirectory.length+1,this.currentPath.length);
             let f=p.split(this.separator);
-            folders=[ rootDirectory.substr(1,rootDirectory.length)].concat(f);
+
+            let root = (rootDirectory[0] === this.separator) ? rootDirectory.substr(1, rootDirectory.length) : rootDirectory; 
+            folders=[root].concat(f);
         } else {
             folders=this.currentPath.split(this.separator);
         }
@@ -486,7 +494,7 @@ class SimpleFileDialog {
             let button = $(`<button type='button' class='btn btn-sm btn-link' style='margin:0px'>${b}${name}</button>`);
             button.on('click', (event) => {
                 event.preventDefault();
-                console.log('newPath', newPath);
+                console.log('changing directories to', newPath);
                 this.changeDirectory(newPath);
             });
             

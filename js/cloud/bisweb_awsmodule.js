@@ -160,7 +160,6 @@ class AWSModule extends BaseServerClient {
      * 
      * @param {String} filename - The name of the file 
      * @param {Uint8Array} data - The raw image data
-     * 
      */
     uploadFile(filename, data) {
 
@@ -217,11 +216,13 @@ class AWSModule extends BaseServerClient {
      * AWS returns all the files in the user's bucket (there are some limits with pagination but I haven't encountered problems with this as of 9/6/18).
      * This is functionally different from the file server, which fetches directories on demand. 
      * 
-     * @param {String} path - Full path of the new directory, separated by '/'.
+     * @param {String} path - Full path of the new directory, separated by '/'. If the path is 
      */
     changeDirectory(path) {
         
         return new Promise( (resolve, reject) => {
+            if (path === '[Root]') { path = ''; }
+
             this.s3.listObjectsV2( { 'Prefix' : path, 'Delimiter' : '/' }, (err, data) => {
                 if (err) { console.log('an error occured', err); reject(err); return; }
 
@@ -248,15 +249,12 @@ class AWSModule extends BaseServerClient {
         //TODO: this should return the size of the image we're trying to save!
         return new Promise( (resolve, reject) => {
             let currentList = this.fileDisplayModal.currentList;
-            console.log('current list', currentList);
 
             for (let entry of currentList) {
                 if (entry.path === filename) {
                     resolve(entry.size);
                 }
             }
-
-            console.log('could not find', filename);
             reject('cannot get size');
         });
     }
