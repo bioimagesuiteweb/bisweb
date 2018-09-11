@@ -81,12 +81,16 @@ class AWSModule extends BaseServerClient {
         this.s3.listObjectsV2( { 'Delimiter' : '/' }, (err, data) => {
             if (err) { console.log('an error occured', err); return; }
             let formattedFiles = this.formatRawS3Files(data.Contents, data.CommonPrefixes, suffixes);
+            //            console.log('FormattedFiles',JSON.stringify(formattedFiles,null,2));
 
-            this.fileDisplayModal.openDialog(formattedFiles, {
-                'filters' : filters,
-                'title' : modalTitle,
-                'mode' : 'load'
-            });
+            this.fileDisplayModal.openDialog(
+                formattedFiles,
+                {
+                    'filters' : filters,
+                    'title' : modalTitle,
+                    'mode' : 'load',
+                    'startDirectory' : '',
+                });
         });
     }
 
@@ -216,27 +220,40 @@ class AWSModule extends BaseServerClient {
      * AWS returns all the files in the user's bucket (there are some limits with pagination but I haven't encountered problems with this as of 9/6/18).
      * This is functionally different from the file server, which fetches directories on demand. 
      * 
-     * @param {String} path - Full path of the new directory, separated by '/'. If the path is 
+     * @param {String} pathname - Full path of the new directory, separated by '/'. If the path is 
      */
-    changeDirectory(path) {
-        
-        return new Promise( (resolve, reject) => {
-            if (path === '[Root]') { path = ''; }
+    changeDirectory(pathname) {
 
-            this.s3.listObjectsV2( { 'Prefix' : path, 'Delimiter' : '/' }, (err, data) => {
+        pathname = pathname ||'';
+        console.log('In Change Directory ('+pathname+')');
+
+
+        if (pathname==='[Root]') {
+            pathname='';
+        } else {
+        if (pathname.indexOf('/')===0)
+            pathname=pathname.substr(1,pathname.length);
+        if (pathname.lastIndexOf('/')!==pathname.length-1)
+            pathname=pathname+'/';
+        }
+        
+        console.log('\t\t In Fixed Change Directory ('+pathname+')');
+
+        return new Promise( (resolve, reject) => {
+            this.s3.listObjectsV2( { 'Prefix' : pathname, 'Delimiter' : '/' }, (err, data) => {
                 if (err) { console.log('an error occured', err); reject(err); return; }
 
                 let formattedFiles = this.formatRawS3Files(data.Contents, data.CommonPrefixes);
                  
                 let cdopts = {
                     'data' : formattedFiles, 
-                    'path' : path,
-                    'root' : path
+                    'path' : pathname,
+                    'root' : '',
                 };
 
                 resolve(cdopts);
             });
-        })
+        });
 
     }
 
@@ -410,7 +427,6 @@ class AWSModule extends BaseServerClient {
 
         //split filenames and strip out all the folders (filepaths that end with '/')
         let paths = [];
-        let folders = [];
 
         for (let file of files) {
 

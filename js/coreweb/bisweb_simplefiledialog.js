@@ -144,30 +144,30 @@ class SimpleFileDialog {
         $('body').append(this.modal);
         
         this.contentDisplayTemplate = 
-        `<div class='col-sm-9 bisweb-file-display'>
+            `<div class='col-sm-9 bisweb-file-display'>
             <div><p>Content goes here...</p></div>
-        </div>`;
+            </div>`;
 
         //make the skeleton for the box
         this.container = $(
             `<div class='container-fluid'>
                 <div class='row justify-content-start' style='margin-bottom:10px'>
-                   <div class='col-sm-12 bisweb-file-navbar'></div>
+                <div class='col-sm-12 bisweb-file-navbar'></div>
                 </div>
 
 
                 <div class='row justify-content-start content-box'>
-                    <div class='col-sm-3 favorite-bar'></div>
-                    <div class='col-sm-9 bisweb-file-display'>
-                      <div class='bisweb-file-list'><p>Content goes here...</p></div>
-                    </div>
+                <div class='col-sm-3 favorite-bar'></div>
+                <div class='col-sm-9 bisweb-file-display'>
+                <div class='bisweb-file-list'><p>Content goes here...</p></div>
+                </div>
                 </div>
                 <div class='row justify-content-start content-box'>
-                    <div class='col-sm-3 favorite-buttons'></div>
-                    <div class='col-sm-9 bisweb-file-filterbar' style='margin-top:5px'></div>
+                <div class='col-sm-3 favorite-buttons'></div>
+                <div class='col-sm-9 bisweb-file-filterbar' style='margin-top:5px'></div>
                 </div>
 
-             </div>`);
+            </div>`);
 
         
         
@@ -179,7 +179,7 @@ class SimpleFileDialog {
             this.filenameCallback();
         });
 
-         this.modal.footer.append(this.okButton);        
+        this.modal.footer.append(this.okButton);        
         this.modal.body.append(this.container);        
 
     }
@@ -217,14 +217,16 @@ class SimpleFileDialog {
      */
     openDialog(list,opts=null) {
 
+        console.log(JSON.stringify(opts,null,2));
+
         if (this.modal===null) {
             this.createDialogUserInterface();
         }
         
         this.newFilters=true;
         //null or undefined startDirectory and rootDirectory should default to null;
-        let startDirectory = opts.startDirectory || null;
-        let rootDirectory = opts.rootDirectory || null;
+        let startDirectory = opts.startDirectory || '';
+        let rootDirectory = opts.rootDirectory || '';
 
         if (opts!==null) {
             opts.filters=opts.filters || null;
@@ -278,7 +280,7 @@ class SimpleFileDialog {
         } else if (this.newFilters===true) {
             filterbar.empty();
             this.newFilters=false;
-                
+            
             let filter_label=$("<span>Filter Files: </span>");
             filter_label.css({'padding':'10px'});
             filterbar.append(filter_label);
