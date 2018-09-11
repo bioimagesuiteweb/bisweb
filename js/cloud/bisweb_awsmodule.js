@@ -8,7 +8,7 @@ const bisweb_simplefiledialog = require('bisweb_simplefiledialog.js');
 const BaseServerClient = require('bis_baseserverclient.js');
 const bis_genericio = require('bis_genericio.js');
 const pako = require('pako');
-
+const bisgenericio=require('bis_genericio');
 /**
  * Class designed to save and load files from Amazon S3, using Amazon Cognito for authentication. 
  * Does not require the use of an app key like Dropbox and Google Drive. 
@@ -80,7 +80,9 @@ class AWSModule extends BaseServerClient {
     createLoadModal(opts) {
         this.s3.listObjectsV2( { 'Delimiter' : '/' }, (err, data) => {
             if (err) { console.log('an error occured', err); return; }
-            let formattedFiles = this.formatRawS3Files(data.Contents, data.CommonPrefixes, suffixes);
+
+            //TODO: suffixes is NULL mostly should not be passed in
+            let formattedFiles = this.formatRawS3Files(data.Contents, data.CommonPrefixes, null);
             //            console.log('FormattedFiles',JSON.stringify(formattedFiles,null,2));
 
             this.fileDisplayModal.openDialog(
@@ -158,12 +160,18 @@ class AWSModule extends BaseServerClient {
      * Called by bis_genericio starting from when a user types a filename into the save filename modal and clicks confirm. 
      * 
      * @param {String} filename - The name of the file 
-     * @param {Uint8Array} data - The raw image data
+     * @param {String|Uint8Array} data - The raw image data
+     * @param {Boolean} isbinary - if true then data is binary
      */
-    uploadFile(filename, data) {
+    uploadFile(filename, data,isbinary=false) {
 
+        // Compression
+        // XENIOS changed this
+        let sendData=data;
+        if (isbinary && bisgenericio.iscompressed(filename))
+            sendData = pako.gzip(data);
+        
         return new Promise( (resolve, reject) => {
-            let sendData = pako.gzip(data);
 
             //a leading '/' will create an empty folder with no name in the s3 bucket, so we want to trim it here.
             if (filename[0] === '/') filename = filename.substring(1,filename.length);
