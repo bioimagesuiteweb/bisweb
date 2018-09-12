@@ -534,8 +534,9 @@ var writetextdatanode = function (filename, data, donecallback, errorcallback) {
  * @param {Uint8Array} data - the data to write (or optionally array)
  * @param {BisCoreGenericIO.MessageCallback} donecallback - callback function if done
  * @param {BisCoreGenericIO.MessageCallback} errror - error callback function
+ * @param {Boolean} donotcompress - if true then no compression is done even if filename ends in .gz
  */
-var writebinarydatanode = function (filename, data, donecallback, errorcallback) {
+var writebinarydatanode = function (filename, data, donecallback, errorcallback,nocompress=false) {
 
  
     let donecompressing = function (cdata, mode) {
@@ -560,7 +561,7 @@ var writebinarydatanode = function (filename, data, donecallback, errorcallback)
         }
     };
 
-    if(iscompressed(filename)) {
+    if(iscompressed(filename) && nocompress===false) {
         let buf = createBuffer(data);
         zlib.gzip(buf, function (err, data) {
             if (err) {
@@ -939,6 +940,8 @@ const biscoregenericio = {
     readbinarydata: readbinarydata,
     writetextdata : writetextdata,
     writebinarydata : writebinarydata,
+    writetextdatanode : writetextdatanode,
+    writebinarydatanode : writebinarydatanode,
     getimagepath : getimagepath,
 };
 

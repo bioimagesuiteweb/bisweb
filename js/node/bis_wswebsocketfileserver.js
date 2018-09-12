@@ -3,6 +3,7 @@ const timers = require('timers');
 const util = require('bis_util');
 const WebSocket=require('ws');
 const genericio = require('bis_genericio.js');
+const coregenericio = require('bis_coregenericio.js');
 const wsutil = require('bis_wsutil');
 const globalInitialServerPort=require('bis_wsutil').initialPort;
 const BaseFileServer=require('bis_basefileserver');
@@ -64,7 +65,7 @@ class BisWSWebSocketFileServer extends BaseFileServer {
      * @param{Function} fn - the event handler
      */
     attachSocketEvent(socket,eventname,fn) {
-        console.log(this.indent+' \t\t attaching socket event='+eventname+' to '+socket);
+        console.log(this.indent+' \t\t attaching socket event='+eventname+' to socket');
         socket.on(eventname, fn);
     }
 
@@ -193,7 +194,7 @@ class BisWSWebSocketFileServer extends BaseFileServer {
             });
             
             if (this.datatransfer) {
-                console.log(',_._._._._._ \t Data Transfer is ON: We are ready to respond',port,' datatransfer=',self.datatransfer,self.hostname,self.port,this.netServer._serv);
+                console.log(',_._._._._._ \t Data Transfer is ON: We are ready to respond',port,' datatransfer=',self.datatransfer);
                 self.prepareForDataFrames(socket);
             } else {
                 console.log(this.indent+' We are ready to respond on port='+port);
@@ -388,19 +389,28 @@ class BisWSWebSocketFileServer extends BaseFileServer {
                 if (path.sep==='\\')
                     writeLocation=util.filenameUnixToWindows(writeLocation);
                 console.log(',_._._._._._ \t writing to file', writeLocation,'\n,_._._._._._ \t\t size=',dataInProgress.data.length,'\n,_._._._._._ \t\t checksum matched=',checksum);
-                
-                genericio.write(writeLocation, dataInProgress.data, dataInProgress.isbinary).then( () => {
+
+                // Writing -- old fashioned write
+                let completefn= (() => {
                     self.sendCommand(socket,'uploadcomplete', 'file saved in '+writeLocation+' (isbinary='+dataInProgress.isbinary+')').then( () => {
                         dataInProgress.data=null;
                         console.log(',_._._._._._ \t message sent -- file saved in ',writeLocation,' binary=',dataInProgress.isbinary);
-                    });
+                    })
+                });
 
-
-                }).catch( (e) => {
+                let errorfn= ( (e) => {
                     console.log(',_._._._._._ an error occured', e);
                     self.sendCommand(socket,'error', e);
                     self.closeSocket(socket,true);
+
                 });
+                
+                if (dataInProgress.isbinary) {
+                    coregenericio.writebinarydatanode(writeLocation,dataInProgress.data,completefn,errorfn,true);
+                } else {
+                    coregenericio.writetextdatanode(writeLocation,dataInProgress.data,completefn,errorfn);
+                }
+                return;
             } else {
                 //console.log(',_._._._._._ received chunk,', dataInProgress.receivedFile.length, 'received so far.');
                 try {

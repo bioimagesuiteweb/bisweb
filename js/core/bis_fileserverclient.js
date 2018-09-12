@@ -545,14 +545,17 @@ class BisFileServerClient extends BisBaseServerClient {
         
         // TODO: is the size of body < packetsize upload in one shot
         let body=null;
-        if (!isbinary) 
+        if (!isbinary)  {
             body=bisgenericio.string2binary(data);
-        else
+        } else {
             body=new Uint8Array(data.buffer);
-        
+            if (bisgenericio.iscompressed(url)) {
+                body=new Uint8Array(pako.gzip(data.buffer));
+            }
+        }
         
         let checksum=util.SHA256(body);
-        let packetSize=32768/4;
+        let packetSize=65536*2;
         return new Promise((resolve,reject) => {
             
             let success=(m) => {
