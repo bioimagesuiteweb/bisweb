@@ -241,7 +241,6 @@ let write = function (url, data,isbinary=false) {
 
 let getFileSize=function(url) {
 
-    console.log('file server client', fileServerClient);
     if (fileServerClient) {
         return fileServerClient.getFileSize(url);
     }
