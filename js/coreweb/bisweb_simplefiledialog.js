@@ -217,8 +217,6 @@ class SimpleFileDialog {
      */
     openDialog(list,opts=null) {
 
-        console.log(JSON.stringify(opts,null,2));
-
         if (this.modal===null) {
             this.createDialogUserInterface();
         }
@@ -442,14 +440,7 @@ class SimpleFileDialog {
         
         rootDirectory = rootDirectory || '';
         
-        //create navbar buttons for each folder in the current path
-
-        
         let folders=null;
-
-        console.log('lastfilename=',lastfilename);
-        console.log('cp=',this.currentPath);
-        console.log('rootDirectory=',rootDirectory);
         
         if (rootDirectory.length>1 && this.currentPath.length>=rootDirectory.length) {
 

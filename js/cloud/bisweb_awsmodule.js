@@ -230,8 +230,6 @@ class AWSModule extends BaseServerClient {
     changeDirectory(pathname) {
 
         pathname = pathname ||'';
-        console.log('In Change Directory ('+pathname+')');
-
 
         if (pathname==='[Root]') {
             pathname='';
@@ -241,8 +239,6 @@ class AWSModule extends BaseServerClient {
         if (pathname.lastIndexOf('/')!==pathname.length-1)
             pathname=pathname+'/';
         }
-        
-        console.log('\t\t In Fixed Change Directory ('+pathname+')');
 
         return new Promise( (resolve, reject) => {
             this.s3.listObjectsV2( { 'Prefix' : pathname, 'Delimiter' : '/' }, (err, data) => {
@@ -268,17 +264,56 @@ class AWSModule extends BaseServerClient {
      */
     getFileSize(filename) {
 
-        //TODO: this should return the size of the image we're trying to save!
         return new Promise( (resolve, reject) => {
-            let currentList = this.fileDisplayModal.currentList;
+            
+            let splitName = filename.split('/');
+            let splitFolder = splitName.slice(0, splitName.length - 1);
+            let folderName = splitFolder.join('/');
+            this.s3.listObjectsV2( { 'Prefix' : folderName + '/', 'Delimiter' : '/' }, (err, data) => {
+                if (err) { reject(err); return; }
 
-            for (let entry of currentList) {
-                if (entry.path === filename) {
-                    resolve(entry.size);
+                for (let item of data.Contents) {
+                    if (item.Key === filename) {
+                        resolve(item.Size);
+                    }
                 }
-            }
-            reject('cannot get size');
+
+                reject('cannot get size');
+            });
+            
         });
+    }
+
+     /** checks is filename is a directory
+     * @param{String} url -- the filename
+     * @returns {Promise} payload true or false
+     */
+    isDirectory(url) {
+        return this.fileSystemOperation('isDirectory',url);
+    }
+
+    /** creates a directory
+     * @param{String} url -- the directory name
+     * @returns {Promise} payload true (created) or false (already existing)
+     */
+    makeDirectory(url) {
+        return this.fileSystemOperation('makeDirectory',url);
+    }
+
+    /** deletes a directory
+     * @param{String} url -- the directory name
+     * @returns {Promise} payload true or false
+     */
+    deleteDirectory(url) {
+        return this.fileSystemOperation('deleteDirectory',url);
+    }
+
+    /** getMatching Files
+     * @param{String} querystring -- the matching string
+     * @returns {Promise} payload list of filenames that match
+     */
+    getMatchingFiles(querystring) {
+        return this.fileSystemOperation('getMatchingFiles',querystring);
     }
 
 
