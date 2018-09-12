@@ -259,13 +259,15 @@ class AWSModule extends BaseServerClient {
     }
 
     /**
-     * Gets the size of a file with a given name and returns it. Technically a synchronous function but templated as a promise for compatibility with bis_genericio.
-     * @param {String} filename 
+     * Looks for a file with a given name on the S3 bucket, resolves its size if it exists, and rejects otherwise. 
+     * This function is called when saving a file with a user supplied name to check whether the user will be overwriting an existing file.
+     * 
+     * @param {String} filename - Name of the file to search for.
      */
     getFileSize(filename) {
 
         return new Promise( (resolve, reject) => {
-            
+
             let splitName = filename.split('/');
             let splitFolder = splitName.slice(0, splitName.length - 1);
             let folderName = splitFolder.join('/');
@@ -278,18 +280,29 @@ class AWSModule extends BaseServerClient {
                     }
                 }
 
-                reject('cannot get size');
+                reject('No file found');
             });
             
         });
     }
 
-     /** checks is filename is a directory
-     * @param{String} url -- the filename
+    /** 
+     * Checks whether the url is a directory or not by querying S3. Overwrites BaseServerClient.isDirectory.
+     * @param {String} url - the filename
      * @returns {Promise} payload true or false
      */
     isDirectory(url) {
-        return this.fileSystemOperation('isDirectory',url);
+        return new Promise( (resolve, reject) => {
+            if (url[url.length - 1] !== '/') { url = url + '/'; }
+
+            this.s3.listObjectsV2( { 'Prefix' : url, 'Delimiter' : '/' }, (err, data) => {
+                if (err) { reject(err); return; }
+
+                if (data.Contents.length > 0) { resolve(true); }                
+                else { reject('No file found'); }
+            });
+            
+        });
     }
 
     /** creates a directory
