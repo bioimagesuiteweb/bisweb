@@ -305,28 +305,32 @@ class AWSModule extends BaseServerClient {
         });
     }
 
-    /** creates a directory
-     * @param{String} url -- the directory name
-     * @returns {Promise} payload true (created) or false (already existing)
+    /** 
+     * This function is not supported by bisweb_awsmodule, but overwritten to avoid a caller using the BaseServerClient.makeDirectory.
+     * @param {String} url - The directory name
+     * @returns A rejected promise notifying the caller that makeDirectory is not supported in this file mode.
      */
     makeDirectory(url) {
-        return this.fileSystemOperation('makeDirectory',url);
+        return Promise.reject('makeDirectory is not supported in AWS. Cannot make directory ' + url);
     }
 
-    /** deletes a directory
-     * @param{String} url -- the directory name
-     * @returns {Promise} payload true or false
+    /** 
+     * This function is not supported by bisweb_awsmodule, but overwritten to avoid a caller using the BaseServerClient.deleteDirectory.
+     * @param {String} url - The directory name
+     * @returns A rejected promise notifying the caller that deleteDirectory is not supported in this file mode.
      */
     deleteDirectory(url) {
-        return this.fileSystemOperation('deleteDirectory',url);
+        return Promise.reject('deleteDirectory is not supported in AWS. Cannot delete directory ' + url);
     }
 
+    //TODO: Implement getMatchingFiles
     /** getMatching Files
-     * @param{String} querystring -- the matching string
+     * @param {String} querystring - the matching string
      * @returns {Promise} payload list of filenames that match
      */
     getMatchingFiles(querystring) {
-        return this.fileSystemOperation('getMatchingFiles',querystring);
+        return Promise.reject('AWS does not currently support this operation');
+        //return this.fileSystemOperation('getMatchingFiles',querystring);
     }
 
 
