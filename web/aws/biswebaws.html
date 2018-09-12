@@ -59,7 +59,7 @@
                     document.getElementById('workingmessage').innerHTML = 'Login complete, you may now close this window';
                 } else {
                     document.getElementById('pagetitle').innerHTML = 'Error';
-                    document.getElementById('workingmessage').innerHTML = 'An error occured during login, please try again';
+                    document.getElementById('workingmessage').innerHTML = 'An error occured during login.\n\n' + message.data.error;
                 }
             }, { 'once': true });
 

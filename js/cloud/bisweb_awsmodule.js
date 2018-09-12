@@ -8,7 +8,9 @@ const bisweb_simplefiledialog = require('bisweb_simplefiledialog.js');
 const BaseServerClient = require('bis_baseserverclient.js');
 const bis_genericio = require('bis_genericio.js');
 const pako = require('pako');
-const bisgenericio=require('bis_genericio');
+const localforage = require('localforage');
+const $ = require('jquery');
+
 /**
  * Class designed to save and load files from Amazon S3, using Amazon Cognito for authentication. 
  * Does not require the use of an app key like Dropbox and Google Drive. 
@@ -44,6 +46,18 @@ class AWSModule extends BaseServerClient {
 
         this.refreshCredentials = true;
 
+
+        this.awsstoredbuckets = null;
+
+
+        this.awsbucketstorage = localforage.createInstance({
+            'driver' : localforage.INDEXEDDB,
+            'name' : 'bis_webfileutil', 
+            'version' : 1.0,
+            'size' : 10000,
+            'storeName' : 'AWSBuckets',
+            'description' : 'A database of AWS buckets that the user has attempted to connect to'
+        });
         //file display modal gets deleted if you try to load it too soon
         //not completely sure why -Zach
         bis_webutil.runAfterAllLoaded( () => {   
@@ -165,7 +179,7 @@ class AWSModule extends BaseServerClient {
         // Compression
         // XENIOS changed this
         let sendData=data;
-        if (isbinary && bisgenericio.iscompressed(filename))
+        if (isbinary && bis_genericio.iscompressed(filename))
             sendData = pako.gzip(data);
         
         return new Promise( (resolve, reject) => {
@@ -368,10 +382,10 @@ class AWSModule extends BaseServerClient {
                 AWS.config.credentials.get( (err) => {
                     if (err) {
                         console.log(err);
-                        authWindow.postMessage({ 'failure': 'auth failed' });
+                        authWindow.postMessage({ 'failure': 'auth failed', 'error' : err.toString() }, '*');
                     } else {
                         console.log('Exchanged access token for access key');
-                        authWindow.postMessage({ 'success': 'auth complete' }, window.location);
+                        authWindow.postMessage({ 'success': 'auth complete' }, '*');
 
                         //TODO: determine whether refresh is necessary
                         AWS.config.credentials.refresh( (err) => {
@@ -493,6 +507,247 @@ class AWSModule extends BaseServerClient {
         }
 
         return formattedFiles;
+    }
+
+    createAWSBucketMenu() {
+        let awsmodal = bis_webutil.createmodal('AWS Buckets');
+
+        let tabView = this.createAWSTabView();
+
+        let selectPane = this.createAWSBucketSelector(awsmodal, tabView);
+        tabView.find('#aws-bucket-selector-pane').append(selectPane);
+
+        let entryPane = this.createAWSBucketEntry(awsmodal);
+        tabView.find('#aws-bucket-entry-pane').append(entryPane);
+
+        awsmodal.body.append(tabView);
+        awsmodal.dialog.find('.modal-footer').remove();
+
+        awsmodal.dialog.on('hidden.bs.modal', () => {
+            let bucketSelectorDropdown = awsmodal.body.find('#bucket-selector-dropdown');
+            bucketSelectorDropdown.empty(); //remove all option elements from the dropdown
+        });
+
+        return awsmodal;
+    }
+
+    createAWSTabView() {
+        let tabView = $( `
+                <ul class="nav nav-tabs" id="aws-tab-menu" role="tablist">
+                    <li class="nav-item active">
+                        <a class="nav-link" id="selector-tab" data-toggle="tab" href="#aws-selector-tab-panel" role="tab" aria-controls="home" aria-selected="true">Select AWS Bucket</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="entry-tab" data-toggle="tab" href="#aws-entry-tab-panel" role="tab" aria-controls="entry" aria-selected="false">Enter New Bucket</a>
+                    </li>
+                </ul>
+                <div class="tab-content" id="aws-tab-content">
+                    <div class="tab-pane fade active in" id="aws-selector-tab-panel" role="tabpanel" aria-labelledby="selector-tab">
+                        <br>
+                        <div id="aws-bucket-selector-pane"></div>
+                    </div>
+                    <div class="tab-pane fade" id="aws-entry-tab-panel" role="tabpanel" aria-labelledby="profile-tab">
+                        <br>
+                        <div id="aws-bucket-entry-pane"></div>
+                    </div>
+                </div>
+                `);
+        return tabView;
+    }
+
+    createAWSBucketSelector(awsmodal, tabView) {
+
+        let selectContainer = $(`
+            <div class='container-fluid form-group'>
+                <label for='bucket-selector'>Select a Bucket:</label>
+                <select class='form-control' id='bucket-selector-dropdown'>
+                </select>
+                <div id='bucket-selector-table-container'></div>
+                <div class='btn-group' role=group' aria-label='Viewer Buttons' style='float : left, visibility : hidden'></div>   
+            </div>
+        `);
+
+        let confirmButton = bis_webutil.createbutton({ 'name' : 'Confirm', 'type' : 'success', 'css' : { 'visibility' : 'hidden' } });
+        let cancelButton = bis_webutil.createbutton({ 'name' : 'Cancel', 'type' : 'danger', 'css' : { 'visibility' : 'hidden' } });
+
+        let buttonGroup = selectContainer.find('.btn-group');
+        buttonGroup.append(confirmButton);
+        buttonGroup.append(cancelButton);
+
+        //delete the old dropdown list and recreate it using the fresh data from the application cache
+        let refreshDropdown = () => {
+
+            //clear out old options and read localStorage for new keys. 
+            let bucketSelectorDropdown = selectContainer.find('#bucket-selector-dropdown');
+            bucketSelectorDropdown.empty();
+
+            this.awsstoredbuckets = {};
+            bucketSelectorDropdown.append(`<option id='aws-empty-entry'></option>`);
+            this.awsbucketstorage.iterate( (value, key) => {
+
+                try { 
+                    //ignore the 'currentAWS' key because it's a duplicate of an entry already in the bucket
+                    if (key !== 'currentAWS') {
+                        //data is stored as stringified JSON
+                        let bucketObj = JSON.parse(value);
+                        let entry = $(`<option id=${key}>${bucketObj.bucketName}</option>`);
+                        bucketSelectorDropdown.append(entry); 
+                        this.awsstoredbuckets[key] = bucketObj;
+                    }
+                } catch(e) {
+                    console.log('an error occured while parsing the AWS bucket data', e);
+                }
+
+            }).catch( (err) => {
+                console.log('an error occured while fetching values from localstorage', err);
+            });
+        };
+
+
+        //recreate the info table each time the user selects a different dropdown item
+        let dropdown = selectContainer.find('#bucket-selector-dropdown');
+        dropdown.on('change', () => {
+            let tableContainer = awsmodal.body.find('#bucket-selector-table-container');
+            tableContainer.empty();
+
+            let selectedItem = dropdown[0][dropdown[0].selectedIndex];
+            let selectedItemId = selectedItem.id;
+
+            if (selectedItemId !== 'aws-empty-entry') {
+                let selectedItemInfo = this.awsstoredbuckets[selectedItemId];
+                let tableHead = $(`
+                    <table class='table table-sm table-dark'>
+                        <thead> 
+                            <tr>
+                                <th scope="col">Bucket Name</th>
+                                <th scope="col">Identity Pool ID</th>
+                                <th scope="col"></th>
+                            </tr>
+                        </thead>
+                        <tbody id='aws-selector-table-body' align='justify'>   
+                        </tbody>               
+                    </table> 
+                `);
+
+                let tableRow = $(`
+                    <td class='bootstrap-table-entry'>${selectedItemInfo.bucketName}</td>
+                    <td class='bootstrap-table-entry'>${selectedItemInfo.identityPoolID}</td>
+                    <td class='bootstrap-table-entry'>
+                        <span class='input-group-btn'>
+                            <button class='btn btn-default btn-sm'>
+                                <i class='glyphicon glyphicon-pencil'></i>
+                            </button>
+                        </span>
+                    </td>
+                `);
+
+                //set behavior for edit button
+                tableRow.find('btn').on('click', () => {
+                    //TODO: bring up modal to let user edit the values they've already entered
+                });
+
+                tableHead.find('#aws-selector-table-body').append(tableRow);
+                tableContainer.append(tableHead);
+
+                //show confirm and cancel buttons
+                let selectorButtons = selectContainer.find('.btn-group').find('.btn');
+                for (let button of selectorButtons) {
+                    $(button).css('visibility', 'visible');
+                }
+            }
+        });
+
+        awsmodal.dialog.on('hidden.bs.modal', () => {
+            $('#bucket-selector-table-container').empty();
+            //show confirm and cancel buttons
+            let selectorButtons = selectContainer.find('.btn-group').find('.btn');
+            for (let button of selectorButtons) {
+                $(button).css('visibility', 'hidden');
+            }
+        });
+
+        confirmButton.on('click', () => {
+            let selectedItem = dropdown[0][dropdown[0].selectedIndex];
+            if (!selectedItem.id) {
+                bis_webutil.showErrorModal('An error occured', 'Please select an item from the list');
+                return;
+            }
+
+            let selectedItemInfo = this.awsstoredbuckets[selectedItem.id];
+            this.awsbucketstorage.setItem('currentAWS', JSON.stringify(selectedItemInfo));
+            this.changeBuckets(selectedItemInfo.bucketName, selectedItemInfo.identityPoolID);
+            awsmodal.dialog.modal('hide');
+            bis_webutil.createAlert('Changed to bucket ' + selectedItemInfo.bucketName, false, null, 2500);
+        });
+
+        //we want the selector to populate both when the modal is opened and when the selector tab is selected
+        tabView.find('#selector-tab').on('show.bs.tab', refreshDropdown);
+        awsmodal.dialog.on('show.bs.modal', refreshDropdown);
+
+        return selectContainer;
+    }
+
+    createAWSBucketEntry(awsmodal) {
+
+        let bucketInfoTitle = "The full name of your bucket, e.g. \"bisweb-test-bucket\"";
+        let idpoolInfoTitle = "The Identity Pool ID will take the form region:identifier. For more info on how to find the ID, consult AWSBuckets.md in the docs section of the repository.";
+        let entryContainer = $(`
+            <div class='container-fluid'>
+                <div class='form-group'>
+                    <label for='bucket'>Bucket Name:</label><br>
+                    <input name='bucket' class='bucket-input' type='text' class='form-control'>
+                    <span class='glyphicon glyphicon-question-sign bucket-input-info' style='color: rgb(12, 227, 172);' data-toggle='tooltip' title='${bucketInfoTitle}'></span><br>
+                    <label for='access-key'>Identity Pool ID:</label><br>
+                    <input name='access-key' class='identity-pool-input' type='text' class='form-control'>
+                    <span class='glyphicon glyphicon-question-sign idpool-input-info' style='color: rgb(12, 227, 172);' data-toggle='tooltip' title='${idpoolInfoTitle}'></span><br>
+                </div>
+                <div class='btn-group' role=group' aria-label='Viewer Buttons' style='float: left'></div>
+            </div>
+        `);
+
+        let confirmButton = bis_webutil.createbutton({ 'name': 'Confirm', 'type': 'success' });
+        let cancelButton = bis_webutil.createbutton({ 'name': 'Cancel', 'type': 'danger' });
+
+        confirmButton.on('click', () => {
+
+            let bucketName = entryContainer.find('.bucket-input')[0].value;
+            let identityPoolID = entryContainer.find('.identity-pool-input')[0].value;
+
+            if (bucketName === '') { bis_webutil.showErrorModal('An error occured', 'Please fill out the required field \'Bucket Name\''); return; }
+            if (identityPoolID === '') { bis_webutil.showErrorModal('An error occured', 'Please fill out the required field \'Identity Pool ID\''); return;}
+
+            let paramsObj = {
+                'bucketName': entryContainer.find('.bucket-input')[0].value,
+                'identityPoolID': entryContainer.find('.identity-pool-input')[0].value
+            };
+
+            //index contains the number of keys in the database
+            let key = 'awsbucket' + bis_webutil.getuniqueid();
+            this.awsbucketstorage.setItem(key, JSON.stringify(paramsObj));
+
+            bis_webutil.createAlert('Created bucket ' + bucketName, false, null, 2500);
+        });
+
+        cancelButton.on('click', () => {
+            awsmodal.dialog.modal('hide');
+        });
+
+        //set tooltips for help buttons
+        let bucketInfoSpan = entryContainer.find('.bucket-input-info');
+        bucketInfoSpan.on('click hover', () => {
+            bucketInfoSpan.tooltip('show');
+        });
+
+        let idpoolInfoSpan = entryContainer.find('.idpool-input-info');
+        idpoolInfoSpan.on('click', () => {
+            idpoolInfoSpan.tooltip('show');
+        });
+
+        let buttonBar = entryContainer.find('.btn-group');
+        buttonBar.append(confirmButton);
+        buttonBar.append(cancelButton);
+
+        return entryContainer;
     }
 }
 
