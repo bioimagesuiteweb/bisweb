@@ -684,16 +684,19 @@ class AWSModule extends BaseServerClient {
                 <select class='form-control' id='bucket-selector-dropdown'>
                 </select>
                 <div id='bucket-selector-table-container'></div>
-                <div class='btn-group' role=group' aria-label='Viewer Buttons' style='float : left, visibility : hidden'></div>   
+                <div class='btn-group' role=group' aria-label='Viewer Buttons' style='float: left'></div>
             </div>
         `);
 
-        let confirmButton = bis_webutil.createbutton({ 'name' : 'Confirm', 'type' : 'success', 'css' : { 'visibility' : 'hidden' } });
-        let cancelButton = bis_webutil.createbutton({ 'name' : 'Cancel', 'type' : 'danger', 'css' : { 'visibility' : 'hidden' } });
+        let confirmButton = bis_webutil.createbutton({ 'name' : 'Confirm', 'type' : 'success' });
+        let cancelButton = bis_webutil.createbutton({ 'name' : 'Cancel', 'type' : 'danger' });
+        let entryButton = bis_webutil.createbutton({ 'name' : 'Enter New Bucket', 'type' : 'info' });
+        $(confirmButton).prop('disabled', 'disabled');
 
         let buttonGroup = selectContainer.find('.btn-group');
         buttonGroup.append(confirmButton);
         buttonGroup.append(cancelButton);
+        buttonGroup.append(entryButton);
 
         //delete the old dropdown list and recreate it using the fresh data from the application cache
         let refreshDropdown = () => {
@@ -764,30 +767,29 @@ class AWSModule extends BaseServerClient {
 
                 //set behavior for edit button
                 tableRow.find('btn').on('click', () => {
-                    //TODO: bring up modal to let user edit the values they've already entered
+                    let editModal = this.createAWSEditModal();
+                    editModal.dialog.modal('show');
                 });
 
                 tableHead.find('#aws-selector-table-body').append(tableRow);
                 tableContainer.append(tableHead);
 
-                //show confirm and cancel buttons
-                let selectorButtons = selectContainer.find('.btn-group').find('.btn');
-                for (let button of selectorButtons) {
-                    $(button).css('visibility', 'visible');
-                }
+                //show confirm button if changed to a valid entry
+                confirmButton.prop('disabled', '');
+            } else {
+                confirmButton.prop('disabled', 'disabled');
             }
         });
 
         awsmodal.dialog.on('hidden.bs.modal', () => {
             $('#bucket-selector-table-container').empty();
-            //show confirm and cancel buttons
-            let selectorButtons = selectContainer.find('.btn-group').find('.btn');
-            for (let button of selectorButtons) {
-                $(button).css('visibility', 'hidden');
-            }
+            $(confirmButton).prop('disabled', 'disabled');
         });
 
-        confirmButton.on('click', () => {
+
+        //Set button actions
+        confirmButton.on('click', (e) => {
+            e.preventDefault();
             let selectedItem = dropdown[0][dropdown[0].selectedIndex];
             if (!selectedItem.id) {
                 bis_webutil.showErrorModal('An error occured', 'Please select an item from the list');
@@ -801,11 +803,28 @@ class AWSModule extends BaseServerClient {
             bis_webutil.createAlert('Changed to bucket ' + selectedItemInfo.bucketName, false, null, 2500);
         });
 
+        cancelButton.on('click', (e) => {
+            e.preventDefault();
+            awsmodal.dialog.modal('hide');
+        });
+
+        entryButton.on('click', (e) => {
+            e.preventDefault();
+            let newBucketTab = awsmodal.body.find('#entry-tab');
+            console.log('new bucket tab');
+            newBucketTab.click();
+        });
+
         //we want the selector to populate both when the modal is opened and when the selector tab is selected
         tabView.find('#selector-tab').on('show.bs.tab', refreshDropdown);
         awsmodal.dialog.on('show.bs.modal', refreshDropdown);
 
         return selectContainer;
+    }
+
+    createAWSEditModal() {
+        let editModal = bis_webutil.createmodal('Edit Entry');
+
     }
 
     createAWSBucketEntry(awsmodal) {
