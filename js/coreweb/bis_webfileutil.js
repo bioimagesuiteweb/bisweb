@@ -595,12 +595,10 @@ const webfileutils = {
 
         if (!enableaws)
             return;
-        
-        let createModal = () => {
-            if (!awsmodal) {
-                awsmodal = bisweb_awsmodule.createAWSBucketMenu();
-            }
 
+        awsmodal = bisweb_awsmodule.createAWSBucketMenu();
+
+        let createModal = () => {
             awsmodal.dialog.modal('show');
         };
 

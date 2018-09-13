@@ -46,9 +46,8 @@ class AWSModule extends BaseServerClient {
 
         this.refreshCredentials = true;
 
-
         this.awsstoredbuckets = null;
-
+        this.bucketMenuModal = null;
 
         this.awsbucketstorage = localforage.createInstance({
             'driver' : localforage.INDEXEDDB,
@@ -62,11 +61,13 @@ class AWSModule extends BaseServerClient {
         this.awsbucketstorage.getItem('currentAWS', (err, value) => {
             if (err) { console.log('an error occured fetching from aws bucket storage', err); }
             try {
+                console.log('value', value);
                 let parsedAWS = JSON.parse(value);
                 if (parsedAWS.bucketName && parsedAWS.identityPoolId)
                     this.currentAWS = JSON.parse(value);
                 else 
                     this.currentAWS = null;
+                console.log('current aws', this.currentAWS);
             } catch(e) {
                 console.log('an error occured parsing JSON', e);
                 this.currentAWS = null;
@@ -112,7 +113,6 @@ class AWSModule extends BaseServerClient {
 
             //TODO: suffixes is NULL mostly should not be passed in
             let formattedFiles = this.formatRawS3Files(data.Contents, data.CommonPrefixes, null);
-            //            console.log('FormattedFiles',JSON.stringify(formattedFiles,null,2));
             this.fileDisplayModal.openDialog(formattedFiles, opts);
         });
     }
@@ -343,7 +343,7 @@ class AWSModule extends BaseServerClient {
      * @param {String} querystring - the matching string
      * @returns {Promise} payload list of filenames that match
      */
-    getMatchingFiles(querystring) {
+    getMatchingFiles(querystring = '') {
         return Promise.reject('AWS does not currently support this operation');
         //return this.fileSystemOperation('getMatchingFiles',querystring);
     }
@@ -380,7 +380,11 @@ class AWSModule extends BaseServerClient {
 
         let expireTime = AWS.config.credentials.expireTime ? Date.parse(AWS.config.credentials.expireTime) : -1;
 
-        if (expireTime < Date.now() || this.refreshCredentials) {
+        //check if the user has an AWS bucket selected and if their credentials are still valid
+        if (!this.currentAWS) {
+            this.bucketMenuModal.dialog.modal('show');
+            return;
+        } else if (expireTime < Date.now() || this.refreshCredentials) {
             this.refreshCredentials = false;
             this.awsAuthUser(parseCommand, opts.AWSParameters);
             return;
@@ -474,7 +478,7 @@ class AWSModule extends BaseServerClient {
 
     changeBuckets(bucketName, identityPoolId) {
         this.s3 = this.createS3(bucketName);
-        this.currentAWS = { 'bucketName' : bucketName, 'identityPoolID' : identityPoolId };
+        this.currentAWS = { 'bucketName' : bucketName, 'identityPoolId' : identityPoolId };
         AWSParameters.updateBucketInfo(bucketName, identityPoolId);
         this.refreshCredentials = true;
     }
@@ -596,6 +600,7 @@ class AWSModule extends BaseServerClient {
             bucketSelectorDropdown.empty(); //remove all option elements from the dropdown
         });
 
+        this.bucketMenuModal = awsmodal;
         return awsmodal;
     }
 
@@ -699,7 +704,7 @@ class AWSModule extends BaseServerClient {
 
                 let tableRow = $(`
                     <td class='bootstrap-table-entry'>${selectedItemInfo.bucketName}</td>
-                    <td class='bootstrap-table-entry'>${selectedItemInfo.identityPoolID}</td>
+                    <td class='bootstrap-table-entry'>${selectedItemInfo.identityPoolId}</td>
                     <td class='bootstrap-table-entry'>
                         <span class='input-group-btn'>
                             <button class='btn btn-default btn-sm'>
@@ -743,7 +748,7 @@ class AWSModule extends BaseServerClient {
 
             let selectedItemInfo = this.awsstoredbuckets[selectedItem.id];
             this.awsbucketstorage.setItem('currentAWS', JSON.stringify(selectedItemInfo));
-            this.changeBuckets(selectedItemInfo.bucketName, selectedItemInfo.identityPoolID);
+            this.changeBuckets(selectedItemInfo.bucketName, selectedItemInfo.identityPoolId);
             awsmodal.dialog.modal('hide');
             bis_webutil.createAlert('Changed to bucket ' + selectedItemInfo.bucketName, false, null, 2500);
         });
@@ -779,14 +784,14 @@ class AWSModule extends BaseServerClient {
         confirmButton.on('click', () => {
 
             let bucketName = entryContainer.find('.bucket-input')[0].value;
-            let identityPoolID = entryContainer.find('.identity-pool-input')[0].value;
+            let identityPoolId = entryContainer.find('.identity-pool-input')[0].value;
 
             if (bucketName === '') { bis_webutil.showErrorModal('An error occured', 'Please fill out the required field \'Bucket Name\''); return; }
-            if (identityPoolID === '') { bis_webutil.showErrorModal('An error occured', 'Please fill out the required field \'Identity Pool ID\''); return;}
+            if (identityPoolId === '') { bis_webutil.showErrorModal('An error occured', 'Please fill out the required field \'Identity Pool ID\''); return;}
 
             let paramsObj = {
                 'bucketName': entryContainer.find('.bucket-input')[0].value,
-                'identityPoolID': entryContainer.find('.identity-pool-input')[0].value
+                'identityPoolId': entryContainer.find('.identity-pool-input')[0].value
             };
 
             //index contains the number of keys in the database

@@ -3,7 +3,7 @@
 const localforage = require('localforage');
 
 // https://git.yale.edu/pages/zls5/webapp/
-let IdentityPoolID;
+let IdentityPoolId;
 let BucketName;
 let RegionName = 'us-east-1'; //N. Virginia
 let AccountId = '687575629668'; //My (Zach's) Amazon AWS account
@@ -18,7 +18,7 @@ cachedAWSBuckets.getItem('currentAWS', (err, value) => {
     try {
         let parsedItem = JSON.parse(value);
         console.log('parsed item', parsedItem);
-        IdentityPoolID = parsedItem.identityPoolID;
+        IdentityPoolId = parsedItem.identityPoolId;
         BucketName = parsedItem.bucketName;
     } catch(e) {
         console.log('an error occured while parsing the aws bucket item', e);
@@ -51,11 +51,11 @@ let awsparams = {
 
 let updateBucketInfo = (bucketName, identityPoolId) => {
     BucketName = bucketName;
-    IdentityPoolID = identityPoolId;
+    IdentityPoolId = identityPoolId;
 };
 
-let getIdentityPoolID = () => {
-    return IdentityPoolID;
+let getIdentityPoolId = () => {
+    return IdentityPoolId;
 };
 
 let getBucketName = () => {
@@ -69,6 +69,6 @@ module.exports = {
     'RegionName' : RegionName,
     'AccountId' : AccountId,
     'BucketName' : getBucketName,
-    'IdentityPoolId' : getIdentityPoolID,
+    'IdentityPoolId' : getIdentityPoolId,
     'updateBucketInfo' : updateBucketInfo
 };
