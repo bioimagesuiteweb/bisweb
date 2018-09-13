@@ -146,7 +146,7 @@ class DefaceImageModule extends BaseModule {
                     'debug' : true,
                     'return_vector' : false}, this.parseBoolean(vals.debug));
 
-                let temp=baseutils.resliceRegistrationOutput(biswrap,input,images[1],matr,0);
+                let temp=baseutils.resliceRegistrationOutput(biswrap,input,images[1],matr,0,1);
 
                 if (this.parseBoolean(vals.outputmask)) {
                     this.outputs['output']=temp;
