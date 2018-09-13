@@ -58,6 +58,21 @@ class AWSModule extends BaseServerClient {
             'storeName' : 'AWSBuckets',
             'description' : 'A database of AWS buckets that the user has attempted to connect to'
         });
+
+        this.awsbucketstorage.getItem('currentAWS', (err, value) => {
+            if (err) { console.log('an error occured fetching from aws bucket storage', err); }
+            try {
+                let parsedAWS = JSON.parse(value);
+                if (parsedAWS.bucketName && parsedAWS.identityPoolId)
+                    this.currentAWS = JSON.parse(value);
+                else 
+                    this.currentAWS = null;
+            } catch(e) {
+                console.log('an error occured parsing JSON', e);
+                this.currentAWS = null;
+            }
+        });
+
         //file display modal gets deleted if you try to load it too soon
         //not completely sure why -Zach
         bis_webutil.runAfterAllLoaded( () => {   
@@ -378,7 +393,7 @@ class AWSModule extends BaseServerClient {
 
     /**
      * Begins the AWS authentication process by opening a new winbow with the URL specified as 'biswebaws.html'. This performs the following steps:
-     * 1.) Attempts to log in to the Amazon Cognito User Pool associated with BisWeb, which will prompt the user for their Amazon Cognito credentials. The user may create an account at this time.
+     * 1.) Attempts to log in to the Amazon Cognito User Pool associated with BisWeb, which will prompt the user for teeeheir Amazon Cognito credentials. The user may create an account at this time.
      * 2.) Attempts to register the user with an Amazon Cognito Identity pool authorized to access the relevant bucket. If successful, the user will be returned a set of credentials that expire in a short period of tiem (about an hour).
      * 
      * @param {Function} cb - Function to call after successful authentication
@@ -459,6 +474,7 @@ class AWSModule extends BaseServerClient {
 
     changeBuckets(bucketName, identityPoolId) {
         this.s3 = this.createS3(bucketName);
+        this.currentAWS = { 'bucketName' : bucketName, 'identityPoolID' : identityPoolId };
         AWSParameters.updateBucketInfo(bucketName, identityPoolId);
         this.refreshCredentials = true;
     }
