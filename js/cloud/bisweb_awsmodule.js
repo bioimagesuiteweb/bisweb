@@ -154,8 +154,6 @@ class AWSModule extends BaseServerClient {
 
                 console.log('data', data.Body);
 
-                this.makeDirectory('yet another folder');
-
                 //check to see if data needs to be uncompressed before loading
                 if (!isbinary) {
                     resolve({
@@ -193,8 +191,6 @@ class AWSModule extends BaseServerClient {
      */
     uploadFile(filename, data, isbinary = false) {
 
-        // Compression
-        // XENIOS changed this
         let sendData=data;
         if (isbinary && bis_genericio.iscompressed(filename))
             sendData = pako.gzip(data);
@@ -251,10 +247,10 @@ class AWSModule extends BaseServerClient {
         if (pathname==='[Root]') {
             pathname='';
         } else {
-        if (pathname.indexOf('/')===0)
-            pathname=pathname.substr(1,pathname.length);
-        if (pathname.lastIndexOf('/')!==pathname.length-1)
-            pathname=pathname+'/';
+            if (pathname.indexOf('/') === 0)
+                pathname=pathname.substr(1,pathname.length);
+            if (pathname.lastIndexOf('/')!==pathname.length-1)
+                pathname=pathname+'/';
         }
 
         return new Promise( (resolve, reject) => {
@@ -355,11 +351,39 @@ class AWSModule extends BaseServerClient {
 
     /** 
      * This function is not supported by bisweb_awsmodule, but overwritten to avoid a caller using the BaseServerClient.deleteDirectory.
-     * @param {String} url - The directory name
+     * @param {String} directory - The directory name
      * @returns A rejected promise notifying the caller that deleteDirectory is not supported in this file mode.
      */
-    deleteDirectory(url) {
-        return Promise.reject('deleteDirectory is not supported in AWS. Cannot delete directory ' + url);
+    deleteDirectory(directory) {
+
+        return new Promise((resolve, reject) => {
+            if (directory.indexOf('/') === 0)
+                directory = directory.substr(1, directory.length);
+            if (directory.lastIndexOf('/') !== directory.length - 1)
+                directory = directory + '/';
+
+            this.s3.listObjectsV2({ 'Prefix': directory, 'Delimiter': '/' }, (err, data) => {
+                if (err) { console.log('Error trying to delete directory', directory, err); reject(err); return; }
+
+                console.log('data', data);
+                let deleteParams = {
+                    'Delete' : {
+                        'Objects': [],
+                        'Quiet': false
+                    },
+                };
+
+                for (let entry of data.Contents) {
+                    deleteParams.Delete.Objects.push({ 'Key': entry.Key });
+                }
+
+                this.s3.deleteObjects(deleteParams, (err, data) => {
+                    if (err) { console.log('err', err); reject(err); return; }
+                    console.log('deleted items', data);
+                    resolve();
+                });
+            });
+        });
     }
 
     //TODO: Implement getMatchingFiles
