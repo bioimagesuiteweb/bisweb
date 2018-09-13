@@ -154,6 +154,8 @@ class AWSModule extends BaseServerClient {
 
                 console.log('data', data.Body);
 
+                this.makeDirectory('yet another folder');
+
                 //check to see if data needs to be uncompressed before loading
                 if (!isbinary) {
                     resolve({
@@ -189,7 +191,7 @@ class AWSModule extends BaseServerClient {
      * @param {String|Uint8Array} data - The raw image data
      * @param {Boolean} isbinary - if true then data is binary
      */
-    uploadFile(filename, data,isbinary=false) {
+    uploadFile(filename, data, isbinary = false) {
 
         // Compression
         // XENIOS changed this
@@ -322,11 +324,33 @@ class AWSModule extends BaseServerClient {
 
     /** 
      * This function is not supported by bisweb_awsmodule, but overwritten to avoid a caller using the BaseServerClient.makeDirectory.
-     * @param {String} url - The directory name
+     * @param {String} filename - The directory name
      * @returns A rejected promise notifying the caller that makeDirectory is not supported in this file mode.
      */
-    makeDirectory(url) {
-        return Promise.reject('makeDirectory is not supported in AWS. Cannot make directory ' + url);
+    makeDirectory(filename) {
+        return new Promise( (resolve, reject) => {
+            //a leading '/' will create an empty folder with no name in the s3 bucket, so we want to trim it here.
+            if (filename[0] === '/') { filename = filename.substring(1,filename.length); }
+            if (filename[filename.length] !== '/') { filename = filename + '/'; }
+            console.log('filename', filename);
+
+            let uploadParams = {
+                'Key' : filename,
+                'Bucket' : AWSParameters.BucketName(),
+                'Body' : ''
+            };
+
+            this.s3.upload(uploadParams, (err) => {
+                if (err) { 
+                    bis_webutil.createAlert('Failed to upload ' + filename + ' to S3 bucket', true, 0, 3000);
+                    console.log('S3 error', err);
+                    reject(err); 
+                } else {
+                    bis_webutil.createAlert('Uploaded ' + filename + ' to S3 bucket successfully', false, 0, 3000); 
+                    resolve(filename);//'Upload successful');
+                }
+            });
+        });
     }
 
     /** 
@@ -340,10 +364,10 @@ class AWSModule extends BaseServerClient {
 
     //TODO: Implement getMatchingFiles
     /** getMatching Files
-     * @param {String} querystring - the matching string
+     * @param {String} querystring - e.g. "data/*.nii.gz"  -> return all files in data with .nii.gz as their suffix. 
      * @returns {Promise} payload list of filenames that match
      */
-    getMatchingFiles(querystring = '') {
+    getMatchingFiles(querystring = '*') {
         return Promise.reject('AWS does not currently support this operation');
         //return this.fileSystemOperation('getMatchingFiles',querystring);
     }
@@ -797,8 +821,11 @@ class AWSModule extends BaseServerClient {
             //index contains the number of keys in the database
             let key = 'awsbucket' + bis_webutil.getuniqueid();
             this.awsbucketstorage.setItem(key, JSON.stringify(paramsObj));
+            this.awsbucketstorage.setItem('currentAWS', JSON.stringify(paramsObj));
 
-            bis_webutil.createAlert('Created bucket ' + bucketName, false, null, 2500);
+            this.changeBuckets(bucketName, identityPoolId);
+            awsmodal.dialog.modal('hide');
+            bis_webutil.createAlert('Created bucket ' + bucketName + ' and switched to it.', false, null, 2500);
         });
 
         cancelButton.on('click', () => {

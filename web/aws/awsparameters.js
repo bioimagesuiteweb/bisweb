@@ -21,7 +21,7 @@ cachedAWSBuckets.getItem('currentAWS', (err, value) => {
         IdentityPoolId = parsedItem.identityPoolId;
         BucketName = parsedItem.bucketName;
     } catch(e) {
-        console.log('an error occured while parsing the aws bucket item', e);
+        console.log('No current AWS found, requesting one once user attempts to connect.');
     }
 });
 
