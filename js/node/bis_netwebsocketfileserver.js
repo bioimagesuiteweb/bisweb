@@ -666,7 +666,7 @@ class BisNetWebSocketFileServer extends BaseFileServer {
                         dataInProgress.data=null;
                         console.log('.=.=.=.=.=.=. \t message sent -- file saved in ',writeLocation,' binary=',dataInProgress.isbinary);
                         
-                    })
+                    });
                 });
                 
                 let errorfn= ( (e) => {

@@ -395,7 +395,7 @@ class BisWSWebSocketFileServer extends BaseFileServer {
                     self.sendCommand(socket,'uploadcomplete', 'file saved in '+writeLocation+' (isbinary='+dataInProgress.isbinary+')').then( () => {
                         dataInProgress.data=null;
                         console.log(',_._._._._._ \t message sent -- file saved in ',writeLocation,' binary=',dataInProgress.isbinary);
-                    })
+                    });
                 });
 
                 let errorfn= ( (e) => {
@@ -485,6 +485,5 @@ class BisWSWebSocketFileServer extends BaseFileServer {
         });
     }
 }
-
 
 module.exports=BisWSWebSocketFileServer;
