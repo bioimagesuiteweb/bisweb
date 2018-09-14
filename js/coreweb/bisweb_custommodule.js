@@ -83,6 +83,7 @@ class CustomModule {
 
         this.name = opts.name || this.description.dialogname || this.description.name;
         this.dual = opts.dual || false;
+
         
         // Three states
 
@@ -230,7 +231,17 @@ class CustomModule {
     updateModuleGUIFromInputObjects() {
 
         let inputelements = this.getCurrentInputObjects();
-        this.description = this.module.updateOnChangedInput(inputelements, this.parameterControllers, this.guiVars);
+        this.description = this.module.updateOnChangedInput(inputelements, this.guiVars,this.parameterControllers);
+
+        if (this.module.recreateGUI) {
+
+            let dict=parser.recreateParameterGUI(this.generatedContent,this.description);
+            this.parameterControllers = dict.controllers;
+            this.module.recreateGUI=false;
+            // recreateGUI
+        }
+            
+        
 
         if (this.module.mouseobserver) {
             // get the current position in the viewer
@@ -326,6 +337,7 @@ class CustomModule {
                                                                        this.moduleOptions['numViewers']);
             
             // Gui Event Handling for Input stuff
+            this.generatedContent=generatedContent;
             this.inputVars = generatedContent.inputVars;
             this.outputVars = generatedContent.outputVars;
             this.inputControllers = generatedContent.inputControllers;

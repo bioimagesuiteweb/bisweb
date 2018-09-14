@@ -198,10 +198,28 @@ let createParametersGUI=function(gui,description,numViewers,dict) {
     if (description.params.length<1) {
         dict.guiVars={};
         dict.mainGUI=gui;
+        dict.advancedParamGUI=null;
         dict.controllers = {};
         return;
     }
         
+
+    let paramGUI = gui.addFolder('Parameters');
+    let advancedParamGUI=gui.addFolder('Advanced');
+    let guiVars = initializeDefaultParams(description);
+    
+    paramGUI.open();
+
+    dict.controllers=createParametersGUIInternal(paramGUI,advancedParamGUI,description,guiVars,dict);
+    dict.guiVars=guiVars;
+    dict.mainGUI=gui;
+    dict.paramGUI=paramGUI;
+    dict.advancedGUI=advancedParamGUI;
+};
+
+/** Create Inputs */
+let createParametersGUIInternal=function(paramGUI,advancedParamGUI,description,guiVars,dict) {
+
     
     //sort so that elements are added in priority order
     description.params = description.params.sort((a, b) => {
@@ -209,18 +227,14 @@ let createParametersGUI=function(gui,description,numViewers,dict) {
     });
     
     //create dictionary of parameters linked to dat.gui then create the HTML Elements
-    let guiVars = initializeDefaultParams(description);
+  
     
     
     //parse parameters out of the JSON and put them in the frame
     // store controllers in controller_list for later use
     const controller_list = { };
 
-    let paramGUI = gui.addFolder('Parameters');
-    let advancedParamGUI=null;
-
     paramGUI.open();
-
     
     let dopass=function(pass) {
         
@@ -237,8 +251,6 @@ let createParametersGUI=function(gui,description,numViewers,dict) {
         
     for (let pass=0;pass<=1;pass++) {
         dopass(pass);
-        if (pass===0)
-            advancedParamGUI = gui.addFolder('Advanced');
     }
     
     if (description.autoupdate===false)
@@ -246,10 +258,53 @@ let createParametersGUI=function(gui,description,numViewers,dict) {
     else
         dict.inputVars['autoupdate']= true;
     dict.inputControllers['autoupdate']=advancedParamGUI.add(dict.inputVars, 'autoupdate').name("Auto Update");
+    return controller_list;
 
-    dict.guiVars=guiVars;
-    dict.mainGUI=gui;
-    dict.controllers=controller_list;
+    
+};
+
+
+/**
+   recreate GUI if module has dramatically changed 
+ * Uses dat.gui to generate the menu items.
+ * @alias bisWebParser.parseDescriptionAndCreateGUI
+ * @param {JQueryElement} frame - JQuery Element for dat.gui
+ * @param {JQueryElement} buttonFrame - JQuery Element for buttons
+ * @param {Object} description - JSON description of how elements should be displayed
+ * @param {Number} numViewers - how many image viewers (1 or 2)
+ * @returns A dictionary containing information about the added element.
+*/
+let recreateParameterGUI = function(dict, description) {
+
+    // Empty the folders and redo them;
+
+    let guiVars=dict.guiVars;
+    let paramGUI=dict.paramGUI;
+    let advancedParamGUI=dict.advancedGUI;
+
+    let folders=[ paramGUI,advancedParamGUI];
+
+    for (let folder=0;folder<=1;folder++) {
+        
+        let f=folders[folder];
+        let l=f.__controllers.length-1;
+        for (let c=l;c>=0;c=c-1) {
+            let elem=f.__controllers[c];
+            if (elem !==null) {
+                try {
+                    f.remove(elem);
+                } catch(e) {
+                    // Left over mess as contollers.remove does not always do the right thing.
+                    //
+                }
+            }
+        }
+        f.__controllers=[ ];
+    }
+
+
+    dict.controllers=createParametersGUIInternal(paramGUI,advancedParamGUI,description,guiVars,dict);
+    return dict;
 };
 
 /** 
@@ -316,6 +371,8 @@ let parseDescriptionAndCreateGUI = function(frame, buttonFrame,description, numV
         dict.dropmenu=webutil.createDropdownMenu('More',buttonFrame);
     else
         dict.dropmenu=null;
+
+    
     return dict;
 };
 
@@ -331,66 +388,73 @@ let parseDescriptionAndCreateGUI = function(frame, buttonFrame,description, numV
 let parseParam = function(gui, param, guiParams) {
     let controller = {}, base = gui;
 
-
     //add a UI element appropriate to the type specified in param
     //names of parameters are taken from param.name (specified by 'name' in call to base.add)
     switch(param.gui) {
     case 'slider': {
-        let step=param.step || 0.1;
-        let low=(param.lowbound || param.low || 0);
-        let high=(param.high || param.highbound);
-        if (high === undefined || high === null)
-            high=100;
-
-        if (high<low) {
-            let tmp=low;
-            low=high;
-            high=tmp;
-        } else if (high===low) {
-            high=low+1.0;
-        }
-            
         
-        while (step> 0.01*(high-low)) 
-            step=step*0.1;
+        let step=param.step;
+        let low=(param.lowbound || param.low);
+        let high=(param.high || param.highbound);
+        if (low===undefined)
+            low=null;
+        if (high===undefined)
+            high=null;
+        if (step===undefined)
+            step=null;
 
-        if (param.type === "int") {
+        if (low!==null && high!==null && step!==null) {
+
+            if (high<low) {
+                let tmp=low;
+                low=high;
+                high=tmp;
+            } else if (high===low) {
+                high=low+1.0;
+            }
+        }
+        
+        if (param.type === "int" && step!==null) {
             step = Math.round(step);
             if (step<1)
                 step=1;
         }
-        controller = base.add(guiParams, param.varname,low, high).step(step);
+
+        if (low!==null && high!==null && step!==null) {
+            controller = base.add(guiParams, param.varname).name(param.name).min(low).max(high).step(step);
+        } else {
+            if (step!==null)
+                controller = base.add(guiParams, param.varname).name(param.name).step(step);
+            else
+                controller = base.add(guiParams, param.varname).name(param.name);
+            if (low!==null)
+                controller.min(low);
+            if (high!==null)
+                controller.max(high);
+        }
         break;
     }
     case 'check':
     case 'checkbox': 
-        controller = base.add(guiParams, param.varname);
+        controller = base.add(guiParams, param.varname).name(param.name);
         break;
     case 'dropdown':
-        controller = base.add(guiParams, param.varname, param['fields']);
+        controller = base.add(guiParams, param.varname, param['fields']).name(param.name);
         break;
     case 'text':
     case 'entrywidget':
-        controller = base.add(guiParams, param.varname);
+        controller = base.add(guiParams, param.varname).name(param.name);
         break;
     case 'tab':
     case 'folder': 
         controller = base.addFolder(param.name);
         break;
-    default: 
-        controller = base.add(guiParams, param.varname);    
+    default:
+        controller = base.add(guiParams, param.varname).name(param.name);
+        break;
     }
 
     
-    //change name of GUI element from variable name to something more human readable
-    if (param.gui != 'tab') {
-        let parentSpan = controller.domElement.parentElement.querySelector('.property-name');
-        parentSpan.innerHTML = param.name;
-        parentSpan.setAttribute('data-toggle', 'tooltip');
-        parentSpan.setAttribute('title', (param.description || ""));
-        controller.bisid = param.id;
-    }
-
     //set tooltip
     controller.domElement.setAttribute("data-toggle", "tooltip");
     controller.domElement.setAttribute("title", (param.description || ""));
@@ -447,5 +511,6 @@ let initializeDefaultParams = function(description) {
 
 module.exports = {
     parseDescriptionAndCreateGUI : parseDescriptionAndCreateGUI,
+    recreateParameterGUI :     recreateParameterGUI,
     getControllerKey :          getControllerKey 
 };
