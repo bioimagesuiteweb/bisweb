@@ -51,14 +51,6 @@
 	    "picture" : "",
 	    "electrononly": false,
             "hide" : true
-	},
-        "fmriviewer" : {
-	    "title" : "The fMRITool Application",
-	    "url"   : "fmriviewer",
-	    "description" : "The fMRI Tool",
-	    "picture" : "",
-	    "electrononly": false,
-            "hide" : true
 	}
     },
     "version" : "0.9.7"
