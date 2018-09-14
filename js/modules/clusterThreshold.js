@@ -139,7 +139,7 @@ class ClusterThresholdModule extends BaseModule {
     }
 
 
-    updateOnChangedInput(inputs,controllers=null,guiVars=null) {
+    updateOnChangedInput(inputs,guiVars=null) {
 
         let newDes = this.getDescription();
         inputs = inputs || this.inputs;
@@ -173,10 +173,11 @@ class ClusterThresholdModule extends BaseModule {
                     newDes.params[i].default=100;
                 }
                 
-                if (controllers!==null)
-                    this.updateSingleGUIElement(newDes.params[i],controllers[name],guiVars,name);
+                if (guiVars)
+                    guiVars[name]=newDes.params[i].default;
             }
         }
+        this.recreateGUI=true;
         return newDes;
     }
     

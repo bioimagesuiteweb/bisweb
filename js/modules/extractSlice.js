@@ -111,7 +111,7 @@ class ExtractSliceModule extends BaseModule {
     }
 
 
-    updateOnChangedInput(inputs,controllers=null,guiVars=null) {
+    updateOnChangedInput(inputs,guiVars=null) {
 
         let newDes = this.getDescription();
         inputs = inputs || this.inputs;
@@ -137,11 +137,12 @@ class ExtractSliceModule extends BaseModule {
                     newDes.params[i].low = 0;
                     newDes.params[i].high = dim[4]-1; 
                 }
+                if (guiVars)
+                    guiVars[name]=newDes.params[i].default;
 
-                if (controllers!==null)
-                    this.updateSingleGUIElement(newDes.params[i],controllers[name],guiVars,name);
             }
         }
+        this.recreateGUI=true;
         return newDes;
     }
 

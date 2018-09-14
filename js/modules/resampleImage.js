@@ -124,7 +124,7 @@ class ResampleImageModule extends BaseModule {
         });
     }
 
-    updateOnChangedInput(inputs,controllers=null,guiVars=null) {
+    updateOnChangedInput(inputs,guiVars=null) {
 
         let newDes = this.getDescription();
         inputs = inputs || this.inputs;
@@ -148,11 +148,12 @@ class ResampleImageModule extends BaseModule {
                 while (st>0.1*spa[index])
                     st=0.1*st;
                 newDes.params[i].step=st;
-                if (controllers!==null)
-                    this.updateSingleGUIElement(newDes.params[i],controllers[name],guiVars,name);
-                
+
+                if (guiVars)
+                    guiVars[name]=newDes.params[i].default;
             }
         }
+        this.recreateGUI=true;
         return newDes;
     }
 

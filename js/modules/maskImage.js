@@ -143,7 +143,7 @@ class maskModule extends BaseModule {
     }
 
     
-    updateOnChangedInput(inputs,controllers=null,guiVars=null) {
+    updateOnChangedInput(inputs,guiVars) {
 
         let newDes = this.getDescription();
         inputs = inputs || this.inputs;
@@ -159,11 +159,11 @@ class maskModule extends BaseModule {
                 newDes.params[i].low = imagerange[0];
                 newDes.params[i].high = imagerange[1];
                 newDes.params[i].default = 0.99 * imagerange[0] + 0.01 * imagerange[1]; 
-                
-                if (controllers!==null)
-                    this.updateSingleGUIElement(newDes.params[i],controllers[name],guiVars,name);
             }
+            if (guiVars)
+                guiVars[name]=newDes.params[i].default;
         }
+        this.recreateGUI=true;
         return newDes;
     }
 

@@ -75,6 +75,7 @@ class DefaceImageModule extends BaseModule {
                     "varname": "iterations",
                     "low": 1,
                     "high": 32,
+                    "step" : 1,
                     "default": 5,
                 },
                 {
@@ -88,6 +89,7 @@ class DefaceImageModule extends BaseModule {
                     "varname": "levels",
                     "low": 1,
                     "high": 4,
+                    "step" : 1,
                 },
                 {
                     "name": "Output Mask",
@@ -146,9 +148,17 @@ class DefaceImageModule extends BaseModule {
                     'debug' : true,
                     'return_vector' : false}, this.parseBoolean(vals.debug));
 
-                let temp=baseutils.resliceRegistrationOutput(biswrap,input,images[1],matr,0,1);
+                let temp=baseutils.resliceRegistrationOutput(biswrap,input,images[1],matr,1,0);
 
                 if (this.parseBoolean(vals.outputmask)) {
+                    let tdat=temp.getImageData();
+                    let l=tdat.length;
+                    for (let i=0;i<l;i++) {
+                        if (tdat[i]<50)
+                            tdat[i]=0;
+                        else
+                            tdat[i]=1;
+                    }
                     this.outputs['output']=temp;
                 } else {
                     let output=new BisWebImage();
@@ -168,7 +178,7 @@ class DefaceImageModule extends BaseModule {
                     
                     for (let i=0;i<volumesize;i++) {
                         let v=tdat[i];
-                        if (!v) {
+                        if (v<50) {
                             count=count+1;
                             for (let f=0;f<numframes;f++) {
                                 odat[f*volumesize+i]=0;

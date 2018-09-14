@@ -23,6 +23,10 @@ const BaseModule = require('basemodule.js');
 /**
  * blanks an image along 
  */
+
+const defaultMin=-1;
+const defaultMax=10001;
+
 class BlankImageModule extends BaseModule {
     constructor() {
         super();
@@ -33,8 +37,10 @@ class BlankImageModule extends BaseModule {
         
         let createParam=function(axis,name,shortname,value,p,adv=false) {
 
+            let fname=axis.toUpperCase()+'-'+name;
+
             return {
-                "name": `${axis.toUpperCase()}-${name}`,
+                "name": fname,
                 "description": `The ${name} along the ${axis} axis.`,
                 "priority": p,
                 "advanced": adv,
@@ -56,12 +62,12 @@ class BlankImageModule extends BaseModule {
             "buttonName": "Execute",
             "shortname" : "blk",
             "params": [
-                createParam('i','Start','i0',-10000,1),
-                createParam('i','End','i1',10000,2),
-                createParam('j','Start','j0',-10000,4),
-                createParam('j','End','j1',10000,5),
-                createParam('k','Start','k0',-10000,7),
-                createParam('k','End','k1',10000,8),
+                createParam('i','Start','i0',defaultMin,1),
+                createParam('i','End','i1',defaultMax,2),
+                createParam('j','Start','j0',defaultMin,4),
+                createParam('j','End','j1',defaultMax,5),
+                createParam('k','Start','k0',defaultMin,7),
+                createParam('k','End','k1',defaultMax,8),
                 baseutils.getDebugParam(),
             ],
             
@@ -71,17 +77,15 @@ class BlankImageModule extends BaseModule {
     directInvokeAlgorithm(vals) {
         let input = this.inputs['input'];
         let dim=input.getDimensions();
-        console.log(vals);
         let names = ['i0','i1','j0','j1','k0','k1' ];
         for (let ia=0;ia<=2;ia++) {
             let n0=names[2*ia];
             let n1=names[2*ia+1];
             let v0=parseInt(vals[n0]);
             let v1=parseInt(vals[n1]);
-            console.log([n0,v0,n1,v1]);
-            if (v0===-10000)
+            if (v0===-defaultMin)
                 vals[n0]=0;
-            if (v1===10000)
+            if (v1===defaultMax)
                 vals[n1]=dim[ia]-1;
         }
         console.log('oooo invoking: blankImage with vals', JSON.stringify(vals));
@@ -103,7 +107,7 @@ class BlankImageModule extends BaseModule {
         });
     }
 
-    updateOnChangedInput(inputs,controllers=null,guiVars=null) {
+    updateOnChangedInput(inputs,guiVars) {
 
         let newDes = this.getDescription();
         inputs = inputs || this.inputs;
@@ -124,17 +128,17 @@ class BlankImageModule extends BaseModule {
 
                 newDes.params[i].low = 0;
                 newDes.params[i].high = dim[axis]-1;
-
+                
                 if (high>0) {
                     newDes.params[i].default=dim[axis]-1;
                 } else {
                     newDes.params[i].default=0;
                 }
-                
-                if (controllers!==null) 
-                    this.updateSingleGUIElement(newDes.params[i],controllers[name],guiVars,name);
+                if (guiVars)
+                    guiVars[name]=newDes.params[i].default;                                
             }
         }
+        this.recreateGUI=true;
         return newDes;
     }
 

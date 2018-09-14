@@ -118,7 +118,7 @@ class ShiftScaleImageModule extends BaseModule {
     }
 
 
-    updateOnChangedInput(inputs,controllers=null,guiVars=null) {
+    updateOnChangedInput(inputs,guiVars) {
 
         let newDes = this.getDescription();
         inputs = inputs || this.inputs;
@@ -133,15 +133,14 @@ class ShiftScaleImageModule extends BaseModule {
             if(name === 'shift') {
                 let maxv=Math.max(Math.abs(imagerange[0]),Math.abs(imagerange[1]));
                 
-                newDes.params[i].low = -maxv;
-                newDes.params[i].high = maxv;
+                newDes.params[i].low = -2.0*maxv;
+                newDes.params[i].high = 2.0*maxv;
                 newDes.params[i].default=0.0;
-                
-                if (controllers!==null)
-                    this.updateSingleGUIElement(newDes.params[i],controllers[name],guiVars,name);
-
+                if (guiVars)
+                    guiVars[name]=newDes.params[i].default;
             }
         }
+        this.recreateGUI=true;
         return newDes;
     }
 

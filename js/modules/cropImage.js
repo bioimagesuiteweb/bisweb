@@ -41,6 +41,8 @@ class CropImageModule extends BaseModule {
                 "varname": shortname,
                 "type": 'int',
                 "default" : value,
+                "low" :  0,
+                "high" : 10,
             };
         };
         
@@ -55,17 +57,17 @@ class CropImageModule extends BaseModule {
             "buttonName": "Crop",
             "shortname" : "crp",
             "params": [
-                createParam('i','Start','i0',-10000,1),
-                createParam('i','End','i1',10000,2),
+                createParam('i','Start','i0',0,1),
+                createParam('i','End','i1',10,2),
                 createParam('i','Step','di',1,20,true),
-                createParam('j','Start','j0',-10000,4),
-                createParam('j','End','j1',10000,5),
+                createParam('j','Start','j0',0,4),
+                createParam('j','End','j1',10,5),
                 createParam('j','Step','dj',1,21,true),
-                createParam('k','Start','k0',-10000,7),
-                createParam('k','End','k1',10000,8),
+                createParam('k','Start','k0',0,7),
+                createParam('k','End','k1',10,8),
                 createParam('k','Step','dk',1,22,true),
-                createParam('t','Start','t0',-10000,10,true),
-                createParam('t','End','t1',10000,11,true),
+                createParam('t','Start','t0',0,10,true),
+                createParam('t','End','t1',10,11,true),
                 createParam('t','Step','dt',1,23,true),
                 baseutils.getDebugParam(),
             ],
@@ -75,18 +77,6 @@ class CropImageModule extends BaseModule {
 
     directInvokeAlgorithm(vals) {
         let input = this.inputs['input'];
-        let dim=input.getDimensions();
-        let names = ['i0','i1','j0','j1','k0','k1','t0','t1' ];
-        for (let ia=0;ia<=3;ia++) {
-            let n0=names[2*ia];
-            let n1=names[2*ia+1];
-            let v0=parseInt(vals[n0]);
-            let v1=parseInt(vals[n1]);
-            if (v0===-10000)
-                vals[n0]=0;
-            if (v1===10000)
-                vals[n1]=dim[ia]-1;
-        }
         console.log('oooo invoking: cropImage with vals', JSON.stringify(vals));
         return new Promise( (resolve, reject) => {
 
@@ -112,7 +102,7 @@ class CropImageModule extends BaseModule {
         });
     }
 
-    updateOnChangedInput(inputs,controllers=null,guiVars=null) {
+    updateOnChangedInput(inputs,guiVars=null) {
 
         let newDes = this.getDescription();
         inputs = inputs || this.inputs;
@@ -171,11 +161,11 @@ class CropImageModule extends BaseModule {
                     newDes.params[i].default=1;
                 }
             }
-            
-            if (controllers!==null && index>=0) {
-                this.updateSingleGUIElement(newDes.params[i],controllers[name],guiVars,name);
-            }
+
+            if (guiVars)
+                guiVars[name]=newDes.params[i].default;
         }
+        this.recreateGUI=true;
         return newDes;
     }
 

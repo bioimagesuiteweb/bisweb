@@ -256,7 +256,7 @@ class BackProjectImageModule extends BaseModule {
         });
     }
     
-    updateOnChangedInput(inputs,controllers=null,guiVars=null) {
+    updateOnChangedInput(inputs) {
 
         let newDes = this.getDescription();
         inputs = inputs || this.inputs;
@@ -272,11 +272,9 @@ class BackProjectImageModule extends BaseModule {
                 newDes.params[i].low = imagerange[0];
                 newDes.params[i].high = imagerange[1];
                 newDes.params[i].default = 0.95 * imagerange[0] + 0.05 * imagerange[1]; 
-
-                if (controllers!==null)
-                    this.updateSingleGUIElement(newDes.params[i],controllers[name],guiVars,name);
             }
         }
+        this.recreateGUI=true;
         return newDes;
     }
 

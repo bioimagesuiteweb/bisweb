@@ -178,7 +178,7 @@ class MorphologyFilterModule extends BaseModule {
         });
     }
 
-    updateOnChangedInput(inputs,controllers=null,guiVars=null) {
+    updateOnChangedInput(inputs,guiVars) {
         
         let newDes = this.getDescription();
         inputs = inputs || this.inputs;
@@ -195,11 +195,12 @@ class MorphologyFilterModule extends BaseModule {
                 newDes.params[i].low = 0;
                 newDes.params[i].high = dim[index]-1;
                 newDes.params[i].default=Math.round( (dim[index]-1)/2);
-                
-                if (controllers!==null) 
-                    this.updateSingleGUIElement(newDes.params[i],controllers[name],guiVars,name);
             }
+            if (guiVars)
+                guiVars[name]=newDes.params[i].default;
+
         }
+        this.recreateGUI=true;
         return newDes;
     }
 

@@ -61,7 +61,7 @@ class ThresholdImageModule extends BaseModule {
                     "advanced": false,
                     "gui": "slider",
                     "type": "float",
-                    "default" : 1000,
+                    "default" : 2,
                     "varname": "high",
                 },
                 {
@@ -159,7 +159,7 @@ class ThresholdImageModule extends BaseModule {
     }
 
 
-    updateOnChangedInput(inputs,controllers=null,guiVars=null) {
+    updateOnChangedInput(inputs,guiVars) {
 
         let newDes = this.getDescription();
         inputs = inputs || this.inputs;
@@ -180,12 +180,11 @@ class ThresholdImageModule extends BaseModule {
                 } else if (name === 'high') {
                     newDes.params[i].default = imagerange[1];
                 }
-
-                if (controllers!==null)
-                    this.updateSingleGUIElement(newDes.params[i],controllers[name],guiVars,name);
-
+                if (guiVars)
+                    guiVars[name]=newDes.params[i].default;
             }
         }
+        this.recreateGUI=true;
         return newDes;
     }
 

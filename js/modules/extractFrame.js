@@ -113,7 +113,7 @@ class ExtractFrameModule extends BaseModule {
         }
     }
 
-    updateOnChangedInput(inputs,controllers=null,guiVars=null) {
+    updateOnChangedInput(inputs,guiVars=null) {
 
         let newDes = this.getDescription();
         inputs = inputs || this.inputs;
@@ -128,16 +128,26 @@ class ExtractFrameModule extends BaseModule {
             if (name==='frame' || name === 'component' ) {
                 if (name==='frame') {
                     newDes.params[i].low = 0;
-                    newDes.params[i].high = dim[3]-1;
+                    if (dim[3]>1)
+                        newDes.params[i].high = dim[3]-1;
+                    else
+                        newDes.params[i].high = 1;
+                        
                 } else if (name === 'component') {
                     newDes.params[i].low = 0;
-                    newDes.params[i].high = dim[4]-1; 
+                    if (dim[4]>1) 
+                        newDes.params[i].high = dim[4]-1;
+                    else
+                        newDes.params[i].high = 1;
+                        
                 }
-
-                if (controllers!==null)
-                    this.updateSingleGUIElement(newDes.params[i],controllers[name],guiVars,name);
             }
+            if (guiVars)
+                guiVars[name]=newDes.params[i].default;
+
         }
+        
+        this.recreateGUI=true;
         return newDes;
     }
 

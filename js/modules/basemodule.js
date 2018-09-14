@@ -44,6 +44,7 @@ class BaseModule {
         this.description = null;
         this.useworker=false;
         this.mouseobserver=false;
+        this.recreateGUI = false;
     }
 
     /**
@@ -148,9 +149,34 @@ class BaseModule {
             controller.min(param.low).max(param.high).step(param.step);
         else
             controller.min(param.low).max(param.high);
+        
         if (guiVars[name]<param.low ||
             guiVars[name]>param.high)
             guiVars[name]=param.default;
+
+
+        console.log('Value=',guiVars[name],name);
+
+        controller.onFinishChange(() => {
+            console.log('On finish change',name);
+            let val=guiVars[name];
+            let changed=false;
+            if (param.low !== undefined) {
+                if (val<param.low) {
+                    guiVars[name]=param.low;
+                    changed=true;
+                }
+            }
+            if (param.high !== undefined) {
+                if (val>param.high) {
+                    guiVars[name]=param.high;
+                    changed=true;
+                }
+            }
+            if (changed)
+                controller.updateDisplay();
+        });
+       
         controller.updateDisplay();
     }
     
