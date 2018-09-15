@@ -312,7 +312,9 @@ var createZIPFile = function(dozip,baseoutput,outdir,version,distdir) {
                      outdir+"fonts/*",
                      outdir+"images/*",
                      outdir+"test/**/*",
-                     outdir+"var/*"],
+                     outdir+"var/*",
+                     `!${outdir}/package.json`
+                    ],
                     {base:outdir}).pipe(gulpzip(outfile)).pipe(gulp.dest('.')).on('end', () => {
                         outfile=path.resolve(outfile);
                         let stats = fs.statSync(outfile);
