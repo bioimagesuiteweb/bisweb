@@ -201,7 +201,7 @@ class ModuleManagerElement extends HTMLElement {
         let dosep=(this.mode === 'paravision');
         
         this.createModule('Combine Images',1, false, modules.combineImages, moduleoptions);
-        this.createModule('Average 4D Image',1, dosep, modules.process4DImage, moduleoptions);
+        this.createModule('Process 4D Image',1, dosep, modules.process4DImage, moduleoptions);
         this.createModule('Create Mask',2, false, modules.binaryThresholdImage, moduleoptions);
         this.createModule('Morphology Filter',2, false, modules.morphologyFilter, moduleoptions);
         if (usesgpl) {
