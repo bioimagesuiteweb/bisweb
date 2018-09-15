@@ -915,6 +915,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                     update();
                     setnode(internal.conndata.maxsumnode);
                     if (!sample) {
+                        if (filename.name)
+                            filename=filename.name;
                         if (index===0)
                             webutil.createAlert('Positive matrix of dimensions '+np+'*'+np+' read from '+filename);
                         else
