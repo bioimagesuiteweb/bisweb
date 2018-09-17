@@ -907,12 +907,10 @@ let getimagepath=function() {
         let index=scope.lastIndexOf("/");
         // First 8 characters are file:///
         const os=getosmodule();
-        console.log(scope);
         if (os.platform==='win32')
             scope=scope.substr(8,index-8)+"/images";
         else
             scope=scope.substr(7,index-7)+"/images";
-        console.log(scope);
         imagepath=scope;
     } else {
         const path=getpathmodule();
