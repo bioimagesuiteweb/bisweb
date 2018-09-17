@@ -53,7 +53,7 @@ let testscript=path.resolve(path.join(tpath,'bisweb-test.js'));
 
 
 if (!fs.existsSync(testscript)) {
-    tpath=program.tpath || path.join(__dirname,path.join("..", "lib"))
+    tpath=program.tpath || path.join(__dirname,path.join("..", "lib"));
     testscript=path.resolve(path.join(tpath,'bisweb-test.js'));
 }
 
