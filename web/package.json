@@ -1,8 +1,8 @@
 {
     "name": "bioimagesuiteweb",
-    "version": "0.9.1",
+    "version": "0.9.8",
     "license": "GPL",
-    "homepage": "https://github.com/bioimagesuiteweb/bisweb",
+    "homepage": "http//www.bioimagesuite.org",
     "description": "An Implementation of BioImage Suite in Javascript",
     "main": "biselectron.js",
     "dependencies": {
