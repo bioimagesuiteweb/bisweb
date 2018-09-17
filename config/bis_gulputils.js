@@ -313,7 +313,8 @@ var createZIPFile = function(dozip,baseoutput,outdir,version,distdir) {
                      outdir+"images/*",
                      outdir+"test/**/*",
                      outdir+"var/*",
-                     `!${outdir}/package.json`
+                     `!${outdir}/package.json`,
+                     `!${outdir}/*.map`
                     ],
                     {base:outdir}).pipe(gulpzip(outfile)).pipe(gulp.dest('.')).on('end', () => {
                         outfile=path.resolve(outfile);
