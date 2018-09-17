@@ -7,6 +7,7 @@
     "main": "biselectron.js",
     "dependencies": {
         "electron-debug": "^1.0.1",
+        "rimraf": "2.6.2",
         "glob": "^7.1.1"
     }
 }
