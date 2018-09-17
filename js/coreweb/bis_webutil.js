@@ -963,6 +963,9 @@ const webutil = {
     // ------------------------------------------------------------------------
     inElectronApp: function () {
 
+        console.log('window=',window);
+        console.log('window.BISELECTRON=',window.BISELECTRON);
+        
         if (typeof (window.BISELECTRON) === "undefined")
             return false;
 
