@@ -42,8 +42,8 @@ class CropImageModule extends BaseModule {
                 "varname": shortname,
                 "type": 'int',
                 "default" : value,
-                "low" :  0,
-                "high" : 10,
+                "low" :  -10,
+                "high" : 200,
             };
         };
         

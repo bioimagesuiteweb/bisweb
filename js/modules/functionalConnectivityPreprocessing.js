@@ -28,7 +28,7 @@ const BisWebMatrix = require('bisweb_matrix.js');
 class functionalConnectivityPreprocessingModule extends BaseModule {
     constructor() {
         super();
-        this.name = 'computeROI';
+        this.name = 'funcConnectivityPreprocessing';
 
     }
 
