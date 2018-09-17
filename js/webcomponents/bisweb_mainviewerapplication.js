@@ -373,7 +373,9 @@ class ViewerApplicationElement extends HTMLElement {
 
     getSaveImageInitialFilename(viewerno = 0) {
         let img = this.VIEWERS[viewerno].getimage();
-        return img.getFilename();
+        if (img)
+            return img.getFilename();
+        return "none.nii.gz";
     }
 
     
@@ -389,7 +391,9 @@ class ViewerApplicationElement extends HTMLElement {
     getSaveOverlayInitialFilename(viewerno = 0) {
 
         let img = this.VIEWERS[viewerno].getobjectmap();
-        return img.getFilename();
+        if (img)
+            return img.getFilename();
+        return "none.nii.gz";
     }
 
 
@@ -1111,7 +1115,7 @@ class ViewerApplicationElement extends HTMLElement {
                 
                 let txt=msg;
 
-                
+                console.log('In Electron=',webutil.inElectronApp());
                 
                 if (!webutil.inElectronApp() && firsttime===true) {
                     txt+=`<HR><H3>Some things you should
