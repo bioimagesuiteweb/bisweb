@@ -47,7 +47,7 @@ class LinearRegistrationModule extends  BaseModule {
             "params": baseutils.getRegistrationParams(),
         };
 
-        des.params.push(baseutils.getLinearMode("mode"));
+        des.params.push(baseutils.getLinearMode("Mode"));
         des.params.push({
             "name": "Header Orient",
             "description": "use header orientation for initial matrix",

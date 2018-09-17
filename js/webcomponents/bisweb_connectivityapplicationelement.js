@@ -242,12 +242,14 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         var imenu=webutil.createTopMenuBarMenu("Parcellations",menubar);
         webutil.createMenuItem(imenu,'Use the Shen Atlas',
                                function() {
+                                   control.clearmatrices();
                                    loadatlas(`${imagepath}/gray_highres_groupncut150_right5_left1_emily_reord_new.nii.gz`,'RAS');
                                });
         webutil.createMenuItem(imenu,'Use the AAL Atlas',
                                function() {
                                    let img=new BisWebImage();
                                    img.load(`${imagepath}/AAL_1mm_ras.nii.gz`,'RAS').then( () => {
+                                       control.clearmatrices();
                                        control.importparcellation(img,'AAL Atlas');
                                    });
                                });
