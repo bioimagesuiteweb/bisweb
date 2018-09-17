@@ -30,6 +30,8 @@ const util=require('bis_util');
 const webfileutil = require('bis_webfileutil');
 const ViewerApplicationElement = require('bisweb_mainviewerapplication');
 const imagepath=webutil.getWebPageImagePath();
+const bisdbase = require('bisweb_dbase');
+const userPreferences = require('bisweb_userpreferences.js');
 
 /**
  * A Application Level Element that creates a Connectivity Application
@@ -48,6 +50,10 @@ const imagepath=webutil.getWebPageImagePath();
  */
 class ConnectivityApplicationElement extends ViewerApplicationElement {
 
+    constructor() {
+        super();
+        this.extraManualHTML='tools/conncontrol.html';
+    }
 
     //  ---------------------------------------------------------------------------
 
@@ -272,18 +278,15 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         
         
         // ------------------------------------ Help Menu ----------------------------
-        
-        var helpmenu=webutil.createTopMenuBarMenu("Help",menubar);
-        webutil.createMenuItem(helpmenu,'About this application',function() {  control.about(); });
+
+        let userPreferencesLoaded = userPreferences.webLoadUserPreferences(bisdbase);
+        let helpmenu=this.createHelpMenu(menubar,userPreferencesLoaded);
         webutil.createMenuItem(helpmenu,''); // separator
         helpmenu.append($("<li><a href=\"https://www.nitrc.org/frs/?group_id=51\" target=\"_blank\" rel=\"noopener\" \">Download Parcellation</a></li>"));
         webutil.createMenuItem(helpmenu,''); // separator
         webutil.createMenuItem(helpmenu,'Load Sample Matrices',function() {
             control.loadsamplematrices([`${imagepath}/pos_mat.txt`,`${imagepath}/neg_mat.txt`]);
         });
-        
-
-
         
         // ------------------------------------ Initialize ---------------------------
         

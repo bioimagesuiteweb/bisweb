@@ -73,6 +73,7 @@ class ViewerApplicationElement extends HTMLElement {
 
     constructor() {
         super();
+        this.extraManualHTML='';
         this.syncmode = false;
         this.simpleFileMenus=false;
         this.VIEWERS=[];
@@ -86,6 +87,11 @@ class ViewerApplicationElement extends HTMLElement {
         // For dual tab apps
         this.tab1name=null;
         this.tab2name=null;
+
+        if (this.applicationName=="overlayviewer") 
+            this.extraManualHTML='overlayviewer.html';
+        else if (this.applicationName==="editor")
+            this.extraManualHTML='imageeditor.html';
 
     }
 
@@ -803,7 +809,11 @@ class ViewerApplicationElement extends HTMLElement {
 
     }
     
-    createHelpMenu(menubar,userPreferencesLoaded) {
+    createHelpMenu(menubar,userPreferencesLoaded,extrahtml=null) {
+
+        if (extrahtml===null)
+            extrahtml=this.extraManualHTML;
+        
         let hmenu = webutil.createTopMenuBarMenu("Help", menubar);
 
         let fn = (() => { this.welcomeMessage(userPreferencesLoaded,true) ;});
@@ -816,7 +826,8 @@ class ViewerApplicationElement extends HTMLElement {
                                function () {
                                    helpdialog.setLayoutController(self.VIEWERS[0].getLayoutController());
                                    helpdialog.displayVideo();
-                               });*/
+                                   });*/
+        hmenu.append($(`<li><a href="https://bioimagesuiteweb.github.io/bisweb-manual/${extrahtml}" target="_blank" rel="noopener" ">BioImage Suite Web Online Manual</a></li>`));
         webutil.createMenuItem(hmenu, ''); // separator
         
         this.addOrientationSelectToMenu(hmenu,userPreferencesLoaded);
@@ -1099,6 +1110,8 @@ class ViewerApplicationElement extends HTMLElement {
                 let body=dlg.body;
                 
                 let txt=msg;
+
+                
                 
                 if (!webutil.inElectronApp() && firsttime===true) {
                     txt+=`<HR><H3>Some things you should
