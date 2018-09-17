@@ -25,10 +25,12 @@ import sys
 
 
 my_path=os.path.dirname(os.path.realpath(__file__));
+# Needed for installed version
+sys.path.append(os.path.abspath(my_path+'/../lib'));
+# Needed for source version
 sys.path.append(os.path.abspath(my_path+'/../build/native'));
 sys.path.append(os.path.abspath(my_path+'/../python'));
 sys.path.append(os.path.abspath(my_path+'/../python/modules'));
-
 import biswrapper as libbis;
 import bis_objects as bis
 import bis_commandline
