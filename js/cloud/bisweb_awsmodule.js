@@ -701,30 +701,37 @@ class AWSModule extends BaseServerClient {
         //delete the old dropdown list and recreate it using the fresh data from the application cache
         let refreshDropdown = () => {
 
-            //clear out old options and read localStorage for new keys. 
-            let bucketSelectorDropdown = selectContainer.find('#bucket-selector-dropdown');
-            bucketSelectorDropdown.empty();
+            return new Promise((resolve, reject) => {
+                //clear out old options and read localStorage for new keys. 
+                let bucketSelectorDropdown = selectContainer.find('#bucket-selector-dropdown');
+                bucketSelectorDropdown.empty();
 
-            this.awsstoredbuckets = {};
-            bucketSelectorDropdown.append(`<option id='aws-empty-entry'></option>`);
-            this.awsbucketstorage.iterate( (value, key) => {
+                this.awsstoredbuckets = {};
+                bucketSelectorDropdown.append(`<option id='aws-empty-entry'></option>`);
+                this.awsbucketstorage.iterate((value, key) => {
 
-                try { 
-                    //ignore the 'currentAWS' key because it's a duplicate of an entry already in the bucket
-                    if (key !== 'currentAWS') {
-                        //data is stored as stringified JSON
-                        let bucketObj = JSON.parse(value);
-                        let entry = $(`<option id=${key}>${bucketObj.bucketName}</option>`);
-                        bucketSelectorDropdown.append(entry); 
-                        this.awsstoredbuckets[key] = bucketObj;
+                    try {
+                        //ignore the 'currentAWS' key because it's a duplicate of an entry already in the bucket
+                        if (key !== 'currentAWS') {
+                            //data is stored as stringified JSON
+                            let bucketObj = JSON.parse(value);
+                            let entry = $(`<option id=${key} value=${bucketObj.bucketName}>${bucketObj.bucketName}</option>`);
+                            bucketSelectorDropdown.append(entry);
+                            this.awsstoredbuckets[key] = bucketObj;
+                        }
+                    } catch (e) {
+                        console.log('an error occured while parsing the AWS bucket data', e);
+                        reject(e);
                     }
-                } catch(e) {
-                    console.log('an error occured while parsing the AWS bucket data', e);
-                }
 
-            }).catch( (err) => {
-                console.log('an error occured while fetching values from localstorage', err);
+                }).catch((err) => {
+                    console.log('an error occured while fetching values from localstorage', err);
+                    reject(err);
+                });
+
+                resolve(bucketSelectorDropdown);
             });
+
         };
 
 
@@ -754,8 +761,8 @@ class AWSModule extends BaseServerClient {
                 `);
 
                 let tableRow = $(`
-                    <td class='bootstrap-table-entry'>${selectedItemInfo.bucketName}</td>
-                    <td class='bootstrap-table-entry'>${selectedItemInfo.identityPoolId}</td>
+                    <td class='bootstrap-table-entry bucket-name'>${selectedItemInfo.bucketName}</td>
+                    <td class='bootstrap-table-entry identity-pool-id'>${selectedItemInfo.identityPoolId}</td>
                     <td class='bootstrap-table-entry'>
                         <span class='input-group-btn'>
                             <button class='btn btn-default btn-sm'>
@@ -765,10 +772,26 @@ class AWSModule extends BaseServerClient {
                     </td>
                 `);
 
-                //set behavior for edit button
-                tableRow.find('btn').on('click', () => {
-                    let editModal = this.createAWSEditModal();
-                    editModal.dialog.modal('show');
+                //create edit modal and update UI with the changed values
+                tableRow.find('.btn').on('click', () => {
+                    this.createAWSEditModal(selectedItemId, selectedItemInfo.bucketName, selectedItemInfo.identityPoolId)
+                    .then( (params) => {
+                        console.log('params', params);
+                        tableContainer.find('table .bucket-name')[0].innerHTML = params.bucketName;
+                        tableContainer.find('table .identity-pool-id')[0].innerHTML = params.identityPoolId;
+
+                        refreshDropdown().then( (dropdown) => {
+                            console.log('refresh dropdown', dropdown[0], 'bucket name', params.bucketName);
+                            //TODO: Select item from dropdown here
+                        });
+                    })
+                    .catch( (e) => { 
+                        if (e !== 'Edit Canceled') {
+                            console.log('error', e);
+                        } else {
+                            bis_webutil.createAlert('Edit canceled', false, null, 2500);
+                        }
+                    });
                 });
 
                 tableHead.find('#aws-selector-table-body').append(tableRow);
@@ -797,6 +820,8 @@ class AWSModule extends BaseServerClient {
             }
 
             let selectedItemInfo = this.awsstoredbuckets[selectedItem.id];
+            selectedItemInfo['id'] = selectedItem.id;
+
             this.awsbucketstorage.setItem('currentAWS', JSON.stringify(selectedItemInfo));
             this.changeBuckets(selectedItemInfo.bucketName, selectedItemInfo.identityPoolId);
             awsmodal.dialog.modal('hide');
@@ -822,9 +847,68 @@ class AWSModule extends BaseServerClient {
         return selectContainer;
     }
 
-    createAWSEditModal() {
-        let editModal = bis_webutil.createmodal('Edit Entry');
+    createAWSEditModal(id, bucketName, identityPoolId) {
+        return new Promise( (resolve, reject) => {
+            let editModal = bis_webutil.createmodal('Edit Entry', 'modal-sm');
+            let editContainer = $(`
+                <div class='container-fluid'>
+                    <div class='form-group'>
+                        <label for='bucket'>Bucket Name:</label><br>
+                        <input name='bucket' class='edit-bucket-input' type='text' class='form-control'><br>
+                        <label for='access-key'>Identity Pool ID:</label><br>
+                        <input name='access-key' class='edit-identity-pool-input' type='text' class='form-control'>
+                    </div>
+                    <div class='btn-group' role=group' aria-label='Viewer Buttons' style='float: left'></div>
+                </div>
+            `);
+    
+            let confirmButton = bis_webutil.createbutton({ 'name' : 'Confirm', 'type' : 'success' });
+            let cancelButton = bis_webutil.createbutton({ 'name' : 'Cancel', 'type' : 'danger' });
+    
+            editContainer.find('.edit-bucket-input').val(bucketName);
+            editContainer.find('.edit-identity-pool-input').val(identityPoolId);
+    
+            let buttonGroup = editContainer.find('.btn-group');
 
+            let resolvePromise = false;
+            let newBucketName, newIdentityPoolName;
+
+            confirmButton.on('click', () => {
+                newBucketName = editContainer.find('.edit-bucket-input').val();
+                newIdentityPoolName = editContainer.find('.edit-identity-pool-input').val();
+    
+                let paramsObj = {
+                    'id' : id,
+                    'bucketName': newBucketName,
+                    'identityPoolId': newIdentityPoolName
+                };
+    
+                this.awsbucketstorage.setItem(id, JSON.stringify(paramsObj));
+                this.awsbucketstorage.setItem('currentAWS', JSON.stringify(paramsObj));
+    
+                this.changeBuckets(bucketName, identityPoolId);
+                bis_webutil.createAlert('Settings changed.', false, null, 2500);
+
+                resolvePromise = true;
+                editModal.dialog.modal('hide');
+            });
+    
+            cancelButton.on('click', () => {
+                editModal.dialog.modal('hide');
+            });
+
+            editModal.dialog.on('hidden.bs.modal', () => {
+                if (resolvePromise) { resolve({ 'id' : id, 'bucketName' : newBucketName, 'identityPoolId' : newIdentityPoolName }); }
+                else { reject('Edit canceled'); }
+            });
+    
+            editModal.body.append(editContainer);
+            buttonGroup.append(confirmButton);
+            buttonGroup.append(cancelButton);
+    
+            editModal.footer.remove();
+            editModal.dialog.modal('show');
+        });
     }
 
     createAWSBucketEntry(awsmodal) {
@@ -856,13 +940,15 @@ class AWSModule extends BaseServerClient {
             if (bucketName === '') { bis_webutil.showErrorModal('An error occured', 'Please fill out the required field \'Bucket Name\''); return; }
             if (identityPoolId === '') { bis_webutil.showErrorModal('An error occured', 'Please fill out the required field \'Identity Pool ID\''); return;}
 
+            //index contains the number of keys in the database
+            let key = 'awsbucket' + bis_webutil.getuniqueid();
+
             let paramsObj = {
+                'id' : key,
                 'bucketName': entryContainer.find('.bucket-input')[0].value,
                 'identityPoolId': entryContainer.find('.identity-pool-input')[0].value
             };
 
-            //index contains the number of keys in the database
-            let key = 'awsbucket' + bis_webutil.getuniqueid();
             this.awsbucketstorage.setItem(key, JSON.stringify(paramsObj));
             this.awsbucketstorage.setItem('currentAWS', JSON.stringify(paramsObj));
 
