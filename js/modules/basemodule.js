@@ -192,6 +192,29 @@ class BaseModule {
         return this.description;
     }
 
+    /** Compare two arrays and return the max difference or null
+     * @param{Array} arr1 -- the first array
+     * @param{Array} arr2 -- the second array
+     * @param{Number} beginindex - the begin index (or 0 if not specified)
+     * @param{Number} endindex - the begin index (or arr1.length-1 if not specified)
+     */
+    compareArrays(arr1,arr2,beginindex=0,endindex=null) {
+
+        if (!arr1 || !arr2)
+            return 1000;
+        
+        if (endindex===null) {
+            endindex=arr1.length-1;
+        }
+        let maxd=0;
+        for (let i=beginindex;i<=endindex;i++) {
+            let v=Math.abs(arr1[i]-arr2[i]);
+            if (v>maxd)
+                maxd=v;
+        }
+        return maxd;   
+    }
+    
     /**
      * Gets the viewer coordinates (see morphologyFilter)
      */

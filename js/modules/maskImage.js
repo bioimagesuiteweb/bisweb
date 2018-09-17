@@ -28,6 +28,7 @@ class maskModule extends BaseModule {
     constructor() {
         super();
         this.name = 'maskImage';
+        this.lastInputRange=[0,0];
     }
     
     createDescription() {
@@ -152,6 +153,13 @@ class maskModule extends BaseModule {
             return newDes;
 
         let imagerange = current_input.getIntensityRange();
+
+        if (this.compareArrays(imagerange,this.lastInputRange,0,1)<1.0) {
+            return;
+        }
+        this.lastInputRange=imagerange;
+
+        
 
         for (let i = 0; i < newDes.params.length; i++) {
             let name = newDes.params[i].varname;

@@ -28,6 +28,7 @@ class ExtractSliceModule extends BaseModule {
     constructor() {
         super();
         this.name = 'extractSlice';
+        this.lastInputDimensions=[0,0,0];
     }
 
     //0 = Sagittal, 1 = Coronal, 2 = Axial
@@ -121,6 +122,12 @@ class ExtractSliceModule extends BaseModule {
             return newDes;
 
         let dim = img.getDimensions();
+        if (this.compareArrays(dim,this.lastInputDimensions,0,2)<1) {
+            return;
+        }
+        this.lastInputDimensions=dim;
+
+        
         let maxd=Math.max( dim[0],dim[1],dim[2])-1;
 
         for (let i = 0; i < newDes.params.length; i++) {

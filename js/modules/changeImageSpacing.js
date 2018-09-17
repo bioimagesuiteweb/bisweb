@@ -35,6 +35,7 @@ class ChangeImageSpacingModule extends BaseModule {
     constructor() {
         super();
         this.name = 'changeImageSpacing';
+        this.lastInputSpacing=[1.0,1.0,1.0];
     }
 
 
@@ -129,13 +130,17 @@ class ChangeImageSpacingModule extends BaseModule {
         if (current_input===null)
             return newDes;
         let spa=current_input.getSpacing();
+        if (this.compareArrays(spa,this.lastInputSpacing,0,2)<.01) {
+            return;
+        }
+        this.lastInputSpacing=spa;
+
 
         for (let i = 0; i < newDes.params.length; i++) {
             let name = newDes.params[i].varname;
             let index= [ 'xsp','ysp','zsp'].indexOf(name);
 
             if (index>=0) {
-                console.log('index=',index,newDes.params[i].default);
                 newDes.params[i].low=Number.parseFloat(spa[index]*0.2).toFixed(3);
                 newDes.params[i].high=spa[index]*5.0;
                 newDes.params[i].step=Number.parseFloat(spa[index]*0.1).toFixed(3);

@@ -29,6 +29,7 @@ class MorphologyFilterModule extends BaseModule {
         super();
         this.name = 'morphologyFilter';
         this.mouseobserver=true;
+        this.lastInputDimensions=[0,0,0];
     }
 
 
@@ -187,6 +188,13 @@ class MorphologyFilterModule extends BaseModule {
             return newDes;
 
         let dim = img.getDimensions();
+        if (this.compareArrays(dim,this.lastInputDimensions,0,2)<1) {
+            console.log('No need to re-create GUI');
+            return;
+        }
+        this.lastInputDimensions=dim;
+        console.log('Need to re-create GUI');
+
         let names = [ 'seedi','seedj', 'seedk' ];
         for (let i = 0; i < newDes.params.length; i++) {
             let name = newDes.params[i].varname;
@@ -204,7 +212,11 @@ class MorphologyFilterModule extends BaseModule {
         return newDes;
     }
 
+    //TODO: In Paint Tool, range of seeds does not change on new image
+    //TODO: Cross Hairs do not update automatically outside paint tool
+    
     setViewerCoordinates(controllers,guivars,coords=null) {
+
         if (coords===null)
             return;
 

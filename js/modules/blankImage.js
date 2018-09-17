@@ -31,6 +31,7 @@ class BlankImageModule extends BaseModule {
     constructor() {
         super();
         this.name = 'blankImage';
+        this.lastInputDimensions=[0,0,0];
     }
 
     createDescription() {
@@ -117,6 +118,11 @@ class BlankImageModule extends BaseModule {
 
         let dim = img.getDimensions();
         let bounds = [ 'i0','i1', 'j0','j1', 'k0','k1' ];
+
+        if (this.compareArrays(dim,this.lastInputDimensions,0,2)<1) {
+            return;
+        }
+        this.lastInputDimensions=dim;
 
 
         for (let i = 0; i < newDes.params.length; i++) {

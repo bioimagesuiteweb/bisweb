@@ -34,6 +34,7 @@ class ResampleImageModule extends BaseModule {
     constructor() {
         super();
         this.name = 'resampleImage';
+        this.lastInputSpacing=[1.0,1.0,1.0];
     }
 
 
@@ -135,6 +136,11 @@ class ResampleImageModule extends BaseModule {
         let nm = [ 'xsp','ysp','zsp' ];
         
         let spa = current_input.getSpacing();
+        if (this.compareArrays(spa,this.lastInputSpacing,0,2)<.01) {
+            return;
+        }
+        this.lastInputSpacing=spa;
+
 
         for (let i = 0; i < newDes.params.length; i++) {
             let name = newDes.params[i].varname;

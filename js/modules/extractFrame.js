@@ -30,6 +30,7 @@ class ExtractFrameModule extends BaseModule {
     constructor() {
         super();
         this.name = 'extractFrame';
+        this.lastInputDimensions=[0,0,0,0,0];
     }
 
     createDescription() {
@@ -123,6 +124,11 @@ class ExtractFrameModule extends BaseModule {
 
         let dim = img.getDimensions();
 
+        if (this.compareArrays(dim,this.lastInputDimensions,3,4)<1) {
+            return;
+        }
+        this.lastInputDimensions=dim;
+        
         for (let i = 0; i < newDes.params.length; i++) {
             let name = newDes.params[i].varname;
             if (name==='frame' || name === 'component' ) {

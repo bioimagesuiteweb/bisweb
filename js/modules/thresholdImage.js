@@ -30,6 +30,7 @@ class ThresholdImageModule extends BaseModule {
     constructor() {
         super();
         this.name = 'thresholdImage';
+        this.lastInputRange=[0,0];
     }
 
 
@@ -168,6 +169,11 @@ class ThresholdImageModule extends BaseModule {
             return newDes;
 
         let imagerange = current_input.getIntensityRange();
+        if (this.compareArrays(imagerange,this.lastInputRange,0,1)<1.0) {
+            return;
+        }
+        this.lastInputRange=imagerange;
+
         
         for (let i = 0; i < newDes.params.length; i++) {
             let name = newDes.params[i].varname;

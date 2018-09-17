@@ -27,6 +27,7 @@ class CropImageModule extends BaseModule {
     constructor() {
         super();
         this.name = 'cropImage';
+        this.lastInputDimensions=[0,0,0,0,0];
     }
 
     createDescription() {
@@ -111,7 +112,11 @@ class CropImageModule extends BaseModule {
             return newDes;
 
         let dim = img.getDimensions();
-
+        if (this.compareArrays(dim,this.lastInputDimensions)<1) {
+            return;
+        }
+        this.lastInputDimensions=dim;
+        
         let extra = [ 0,0,0,dim[3]];
         for (let i=0;i<=2;i++) {
             extra[i] = Math.round(dim[i]/5);

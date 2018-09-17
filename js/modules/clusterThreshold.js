@@ -33,6 +33,7 @@ class ClusterThresholdModule extends BaseModule {
     constructor() {
         super();
         this.name = 'clusterThreshold';
+        this.lastInputRange=[0,0];
     }
 
     createDescription() {
@@ -150,6 +151,12 @@ class ClusterThresholdModule extends BaseModule {
         
         let dim = current_input.getDimensions();
         let imagerange = current_input.getIntensityRange();
+
+        if (this.compareArrays(imagerange,this.lastInputRange,0,1)<1.0) {
+            return;
+        }
+        this.lastInputRange=imagerange;
+
         let maxv=Math.max(Math.abs(imagerange[0]),Math.abs(imagerange[1]));
         
         for (let i = 0; i < newDes.params.length; i++) {
