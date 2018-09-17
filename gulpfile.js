@@ -475,15 +475,22 @@ gulp.task('tools', function(done) {
     runSequence('webpack','css',nexttool);
 });
 
-gulp.task('build', function(callback) {
+gulp.task('buildint', function(callback) {
 
     runSequence('commonfiles',
                 'tools',
-                'createserver',
-                'packageserver',
                 'buildtest',
                 callback);
 });
+
+gulp.task('build', function(callback) {
+
+    runSequence('buildint',
+                'createserver',
+                'packageserver',
+                callback);
+});
+
 
 gulp.task('zip', function() {
 
@@ -500,7 +507,7 @@ gulp.task('package2', function(done) {
 });
 
 gulp.task('package', function(done) {
-    runSequence('build',
+    runSequence('buildint',
                 'package2',
                 done);
 });
