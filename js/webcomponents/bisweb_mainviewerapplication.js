@@ -368,6 +368,9 @@ class ViewerApplicationElement extends HTMLElement {
     // --------------------------------------------------------------------------------
     /** Save image from viewer to a file */
     saveImage(fname=null, viewerno = 0) {
+        let name="Image";
+        if (this.num_independent_viewers >1) 
+            name=`${name} ${viewerno + 1}`;
         let img = this.VIEWERS[viewerno].getimage();
         bisweb_apputil.saveImage(img, fname, name);
     }
@@ -378,14 +381,19 @@ class ViewerApplicationElement extends HTMLElement {
             return img.getFilename();
         return "none.nii.gz";
     }
-
     
     /** Save image from viewer to a file */
     saveOverlay(fname, viewerno = 0) {
 
-        let index = viewerno + 1;
+        let name="Overlay";
+        let index="";
+        if (this.num_independent_viewers >1)  {
+            name=`${name} ${viewerno + 1}`;
+            index=`_${viewerno+1}`;
+        }
         let img = this.VIEWERS[viewerno].getobjectmap();
-        let name = "objectmap" + index +".nii.gz";
+        if (!fname)
+            fname = "objectmap" + index +".nii.gz";
         bisweb_apputil.saveImage(img, fname, name);
     }
 
@@ -995,7 +1003,8 @@ class ViewerApplicationElement extends HTMLElement {
         
         return new Promise(function (resolve, reject) {
             genericio.write(fobj, output).then((f) => {
-                webutil.createAlert('Application State saved '+f);
+                if (!genericio.isSaveDownload())
+                    webutil.createAlert('Application State saved '+f);
             }).catch((e) => {
                 webutil.createAlert('Failed to save Application State '+e);
                 reject(e);
