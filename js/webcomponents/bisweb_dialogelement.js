@@ -21,9 +21,7 @@
 const $=require('jquery');
 const webutil=require('bis_webutil');
 
-/** Only one modules can be open at a time. This is stored in globalOpenDialog
- */
-let globalOpenDialog=null;
+
 
 /**
  * Non-Modal Dialog Class
@@ -86,6 +84,9 @@ class BisWebDialogElement extends HTMLElement {
      * @returns {JQueryElement} 
      */
     getContent() { return this.content; }
+
+    /** returns the widget base */
+    getWidgetBase() { return this.widgetbase; }
     
     /** sets a function to call when the dialog is closed
      * @param {function} clb - the function to call 
@@ -195,41 +196,27 @@ class BisWebDialogElement extends HTMLElement {
         if (this.dialog===null)
             return;
         
-        let previous=null;
-        if (globalOpenDialog!==null)  {
-            previous=globalOpenDialog.dialog.dialog.css(['left','top']);
-            globalOpenDialog.hideDialog();
-        }
-
-        if (previous!==null) {
-            this.dialog.css({'left' : previous.left,
-                             'top'  : previous.top
-                            });
-        } else {
-            let w=window.innerWidth;
-            let arr=this.dialog.css(['width','height' ]);
-            Object.keys(arr).forEach((key) => {
-                arr[key]=parseFloat(arr[key].replace(/px/g,''));
-            });
-            
-            let left=w-arr['width']-320;
-            if (left<10)
-                left=10;
-            let l=`${left}px`;
-            let top=60;
-            let t=`${top}px`;
-            this.dialog.css({ "left" : l, "top" : t});
-            
-            let a={ 
-                "top": `${this.dimensions.top}px`,
-                "left": `${this.dimensions.left}px`,
-            };
-            
-            this.dialog.css(a);
-        }
+        let w=window.innerWidth;
+        let arr=this.dialog.css(['width','height' ]);
+        Object.keys(arr).forEach((key) => {
+            arr[key]=parseFloat(arr[key].replace(/px/g,''));
+        });
         
+        let left=w-arr['width']-320;
+        if (left<10)
+            left=10;
+        let l=`${left}px`;
+        let top=60;
+        let t=`${top}px`;
+        this.dialog.css({ "left" : l, "top" : t});
+        
+        let a={ 
+            "top": `${this.dimensions.top}px`,
+            "left": `${this.dimensions.left}px`,
+        };
+        
+        this.dialog.css(a);
 
-        globalOpenDialog=this;
         this.visible=true;
         let drag=$("bisweb-draganddropelement") || null;
         if (drag!==null)   {
@@ -255,9 +242,6 @@ class BisWebDialogElement extends HTMLElement {
                 drag[0].removeBlock();
             }
         }
-
-        if (globalOpenDialog===this)
-            globalOpenDialog=null;
 
     }
 
