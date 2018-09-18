@@ -402,7 +402,7 @@ app.on('ready', function() {
         
     }
 
-    createConsole();
+    //createConsole();
 });
 
 app.on('activate', () => { createOrShowMainWindow();});
