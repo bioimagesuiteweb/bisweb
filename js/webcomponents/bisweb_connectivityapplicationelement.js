@@ -30,8 +30,6 @@ const util=require('bis_util');
 const webfileutil = require('bis_webfileutil');
 const ViewerApplicationElement = require('bisweb_mainviewerapplication');
 const imagepath=webutil.getWebPageImagePath();
-const bisdbase = require('bisweb_dbase');
-const userPreferences = require('bisweb_userpreferences.js');
 
 /**
  * A Application Level Element that creates a Connectivity Application
@@ -281,8 +279,7 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         
         // ------------------------------------ Help Menu ----------------------------
 
-        let userPreferencesLoaded = userPreferences.webLoadUserPreferences(bisdbase);
-        let helpmenu=this.createHelpMenu(menubar,userPreferencesLoaded);
+        let helpmenu=this.createHelpMenu(menubar);
         webutil.createMenuItem(helpmenu,''); // separator
         helpmenu.append($("<li><a href=\"https://www.nitrc.org/frs/?group_id=51\" target=\"_blank\" rel=\"noopener\" \">Download Parcellation</a></li>"));
         webutil.createMenuItem(helpmenu,''); // separator

@@ -493,19 +493,22 @@ class SnapshotElement extends HTMLElement {
         });
         webutil.tooltip(inlineform);
 
-        let v=userPreferences.getItem('snapshotscale');
-        if (v !== null) {
-            let v2 = parseFloat(v);
-            if (v2 !== Math.Nan) {
-                self.data.scale = Math.floor(v);
-                if (self.select !== null)
-                    self.select.val(self.data.scale - 1);
+        userPreferences.safeGetItem('snapshotscale').then( (v) => {
+            if (v !== null) {
+                let v2 = parseFloat(v);
+                if (v2 !== Math.Nan) {
+                    self.data.scale = Math.floor(v);
+                    if (self.select !== null)
+                        self.select.val(self.data.scale - 1);
+                }
             }
-        }
+        });
 
-        self.data.dowhite=userPreferences.getItem('snapshotdowhite') || false;
-        if (self.colorselector !== null)
-            self.colorselector.prop("checked", self.data.dowhite);
+        userPreferences.safeGetItem('snapshotdowhite').then( (v) => {
+            self.data.dowhite=v;
+            if (self.colorselector !== null)
+                self.colorselector.prop("checked", self.data.dowhite);
+        });
     }
 
     /** function that receives update from viewer once snapshot is requested
