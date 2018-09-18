@@ -155,8 +155,6 @@ class BaseModule {
             guiVars[name]=param.default;
 
 
-        console.log('Value=',guiVars[name],name);
-
         controller.onFinishChange(() => {
             console.log('On finish change',name);
             let val=guiVars[name];

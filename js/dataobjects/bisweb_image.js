@@ -170,7 +170,7 @@ class BisWebImage extends BisWebDataObject {
                     self.commentlist.push({ "Operation" : "On Load from "+fobj+" reoriented to "+self.internal.orient.name+" to match user preferences."});
                     self.internal.header.setExtensionsFromArray(self.commentlist);
                 } else {
-                    console.log('++++ \t **** maintained original orientation ',forceorient,' ',self.internal.forcedorientationchange);
+                    console.log('++++ \t\t maintained original orientation ');
                 }
                 
                 resolve();
