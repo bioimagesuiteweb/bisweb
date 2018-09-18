@@ -35,7 +35,6 @@ const FastClick=require('fastclick');
 const ViewerApplicationElement = require('bisweb_mainviewerapplication');
 const userPreferences = require('bisweb_userpreferences.js');
 const bisgenericio=require('bis_genericio');
-const internalmode = require('bisextra').hasinternal;
 
 /**
  * A Application Level Element that creates a Paravision Import Application (electron only)
@@ -68,24 +67,11 @@ class ParavisionApplicationElement extends ViewerApplicationElement {
         if (managerid!==null)
             modulemanager=document.querySelector(managerid);
 
-        let misactool=null;
-        if (internalmode) {
-            misactool=document.createElement('bisweb-misactool');
-            let algoid=this.getAttribute('bis-algorithmcontrollerid');
-            misactool.setAttribute('bis-algorithmcontrollerid','#'+algoid);
-            document.body.appendChild(misactool);
-        } else {
-            console.log('The misac tool only exists in internal mode');
-        }
-
         const PARATOOL=document.querySelector(importid);
         this.findViewers();
         this.VIEWERS[0].finalizeTools();
 
-        let userPreferencesLoaded = userPreferences.webLoadUserPreferences();
-        userPreferencesLoaded.then(() => {
-            userPreferences.saveUserPreferences();
-        });
+
         
         
         let menubar=document.querySelector(menubarid).getMenuBar();
@@ -94,21 +80,30 @@ class ParavisionApplicationElement extends ViewerApplicationElement {
         this.createApplicationMenu(fmenu);
         let editmenu=this.createEditMenu(menubar);
         this.createAdvancedTransferTool(modulemanager,editmenu);
-        
         this.createDisplayMenu(menubar,null);
 
         
-        if (modulemanager!==null) 
-            modulemanager.initializeElements(menubar,self.VIEWERS);
-
-        if (misactool)
-            misactool.addtomenubar(menubar);
-
+        if (modulemanager!==null)  {
+            modulemanager.initializeElements(menubar,self.VIEWERS).then( (menus) => {
+                userPreferences.safeGetItem("internal").then( (f) =>  {
+                    if (f) {
+                        let misactool=document.createElement('bisweb-misactool');
+                        let algoid=this.getAttribute('bis-algorithmcontrollerid');
+                        misactool.setAttribute('bis-algorithmcontrollerid','#'+algoid);
+                        document.body.appendChild(misactool);
+                        let regmenu=menus[3] || editmenu;
+                        webutil.createMenuItem(regmenu, ''); // separator
+                        misactool.addtomenu(regmenu);
+                    }
+                });
+            });
+        }
+        
 
         // ----------------------------------------------------------
         // Console
         // ----------------------------------------------------------
-        this.createHelpMenu(menubar,userPreferencesLoaded);
+        this.createHelpMenu(menubar);
 
         // ----------------------------------------------------------
 

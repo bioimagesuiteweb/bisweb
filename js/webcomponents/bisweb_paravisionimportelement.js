@@ -147,16 +147,21 @@ class ParavisionImportElement extends HTMLElement {
                                callback : function() {
                                    internal.showpanel.show();},
                              });
-        
-        webutil.createbutton({ type : "info",
-                               name : "Compute Averages",
-                               position : "danger",
-                               parent : basediv1,
-                               css : { 'width' : '90%' , 'margin' : '3px' },
-                               callback : function() {
-                                   self.computeAverageImages1();
-                               }
-                             });
+
+
+        userPreferences.safeGetItem("internal").then( (f) =>  {
+            if (f) {
+                webutil.createbutton({ type : "info",
+                                       name : "Compute Averages",
+                                       position : "danger",
+                                       parent : basediv1,
+                                       css : { 'width' : '90%' , 'margin' : '3px' },
+                                       callback : function() {
+                                           self.computeAverageImages1();
+                                       }
+                                     });
+            }
+        });
         
 
         webfileutil.createFileButton({ type : "danger",
@@ -370,16 +375,17 @@ class ParavisionImportElement extends HTMLElement {
             self.addTableRow(name,fname,infoname);
         };
 
-        let forceorient=userPreferences.getImageOrientationOnLoad();
-
-        bisbruker.readMultiple(f,outpath,forceorient,addT,false).then( (out) => {
-            let status=out[0];
-            if (status===true)
-                webutil.createAlert('Job saved in '+out[1]);
-            else
-                webutil.createAlert(out[1],true);
+        userPreferences.safeGetImageOrientationOnLoad().then( (forceorient) => {
+            bisbruker.readMultiple(f,outpath,forceorient,addT,false).then( (out) => {
+                let status=out[0];
+                if (status===true)
+                    webutil.createAlert('Job saved in '+out[1]);
+                else
+                    webutil.createAlert(out[1],true);
+            });
         });
     }
+                                          
                                                                      
     
     /** import files
