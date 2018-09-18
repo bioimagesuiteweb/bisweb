@@ -81,7 +81,7 @@ class ViewerApplicationElement extends HTMLElement {
         this.saveState=null;
         this.applicationURL=webutil.getWebPageURL();
         this.applicationName=webutil.getWebPageName();
-        console.log("App name=",this.applicationName,this.applicationURL);
+        console.log("+++++ App name=",this.applicationName,this.applicationURL);
         clipboard.setItem('appname',this.applicationName);
 
         // For dual tab apps
@@ -93,6 +93,7 @@ class ViewerApplicationElement extends HTMLElement {
         else if (this.applicationName==="editor")
             this.extraManualHTML='imageeditor.html';
 
+        userPreferences.initialize(bisdbase); // this is an async call to initialize. Use safe get later to make sure
     }
 
     //  ---------------------------------------------------------------------------
@@ -793,13 +794,13 @@ class ViewerApplicationElement extends HTMLElement {
     // create the help menu
     // ---------------------------------------------
 
-    addOrientationSelectToMenu(hmenu,userPreferencesLoaded) {
+    addOrientationSelectToMenu(hmenu) {
 
         let orientSelect = function () {
-            userPreferencesLoaded.then(() => {
+            userPreferences.safeGetImageOrientationOnLoad().then( (orient) => {
                 webutil.createRadioSelectModalPromise(`<H4>Select default orientation "on load"</H4><p>If RAS or LPS is elected then the images will be reoriented to Axial RAS or LPS on load.</p><HR>`,
                                                       "Close",
-                                                      userPreferences.getImageOrientationOnLoad(),
+                                                      orient,
                                                       [{ value: "RAS", text: "Axial RAS (SPM)" },
                                                        { value: "LPS", text: "Axial LPS (DICOM, BioImage Suite legacy)" },
                                                        { value: "None", text: "Leave as is" }]).then((m) => {
@@ -813,14 +814,14 @@ class ViewerApplicationElement extends HTMLElement {
 
     }
     
-    createHelpMenu(menubar,userPreferencesLoaded,extrahtml=null) {
+    createHelpMenu(menubar,extrahtml=null) {
 
         if (extrahtml===null)
             extrahtml=this.extraManualHTML;
         
         let hmenu = webutil.createTopMenuBarMenu("Help", menubar);
 
-        let fn = (() => { this.welcomeMessage(userPreferencesLoaded,true) ;});
+        let fn = (() => { this.welcomeMessage(true) ;});
         
         webutil.createMenuItem(hmenu,'About this application',fn);
         
@@ -834,7 +835,7 @@ class ViewerApplicationElement extends HTMLElement {
         hmenu.append($(`<li><a href="https://bioimagesuiteweb.github.io/bisweb-manual/${extrahtml}" target="_blank" rel="noopener" ">BioImage Suite Web Online Manual</a></li>`));
         webutil.createMenuItem(hmenu, ''); // separator
         
-        this.addOrientationSelectToMenu(hmenu,userPreferencesLoaded);
+        this.addOrientationSelectToMenu(hmenu);
 
         const consoleid = this.getAttribute('bis-consoleid') || null;
         if (consoleid !== null) {
@@ -851,8 +852,8 @@ class ViewerApplicationElement extends HTMLElement {
                                    function () {
                                        window.BISELECTRON.remote.getCurrentWindow().toggleDevTools();
                                    });
-            userPreferencesLoaded.then( () => {
-                let z=parseFloat(userPreferences.getItem('electronzoom')) || 1.0;
+            userPreferences.safeGetItem('electonzoom').then( (v) => {
+                let z=v || 1.0;
                 if (z<0.8 || z>1.25)
                     z=1.0;
                 window.BISELECTRON.electron.webFrame.setZoomFactor(z);
@@ -1089,36 +1090,39 @@ class ViewerApplicationElement extends HTMLElement {
                                 
 
     // ---------------------------------------------------------------------------
-    welcomeMessage(userPreferencesLoaded,force=false) {
+    welcomeMessage(force=false) {
 
         let show=force;
 
-        userPreferencesLoaded.then( () => {
-            webutil.aboutText().then( (msg) => {
-
-
-                let forceorient=userPreferences.getImageOrientationOnLoad();
-                let firsttime=userPreferences.getItem('showwelcome');
-                if (firsttime === undefined)
-                    firsttime=true;
-                
-                if (!force) {
-                    if (forceorient !== 'None' || firsttime===true)
+        Promise.all( [ 
+            userPreferences.safeGetImageOrientationOnLoad(),
+            userPreferences.safeGetItem('showwelcome'),
+            webutil.aboutText()
+        ]).then( (lst) => {
+            let forceorient=lst[0];
+            let firsttime=lst[1];
+            let msg=lst[2];
+            
+            if (firsttime === undefined)
+                firsttime=true;
+            
+            if (!force) {
+                if (forceorient !== 'None' || firsttime===true)
                         show=true;
-                }
-
-                if (!show)
-                    return;
-                
-                let dlg=webutil.createmodal('Welcome to BioImage Suite Web');
-                let body=dlg.body;
-                
-                let txt=msg;
-
-                console.log('In Electron=',webutil.inElectronApp());
-                
-                if (!webutil.inElectronApp() && firsttime===true) {
-                    txt+=`<HR><H3>Some things you should
+            }
+            
+            if (!show)
+                return;
+            
+            let dlg=webutil.createmodal('Welcome to BioImage Suite Web');
+            let body=dlg.body;
+            
+            let txt=msg;
+            
+            console.log('In Electron=',webutil.inElectronApp());
+            
+            if (!webutil.inElectronApp() && firsttime===true) {
+                txt+=`<HR><H3>Some things you should
                 know ...</H3><H4>File Save</H4> <p>Because this application is
                 running inside a web browser, saving a file is performed by
                 mimicking downloading a file. You should change the options
@@ -1135,26 +1139,25 @@ class ViewerApplicationElement extends HTMLElement {
                 Google.</p>`;
                 }
                 
-                if (forceorient!== "None") {
-                    txt+=`<HR><H3>Forcing Image Orientation</H3><p>On load all images are currently <B> automatically reoriented to ${forceorient}</B> based on your user preferences. Select Help|Set Image Orientation On Load to change this.</p>`;
-                }
-                
-                dlg.header.empty();
-                dlg.header.append('<H3>Welcome to BioImage Suite Web</H3>');
-                body.append($(txt));
-
-                if (!force && forceorient==="None") {
-                    let confirmButton = webutil.createbutton({ 'name': 'Do not show this next time', 'type': 'success' });
-                    confirmButton.on('click', (e) => {
-                        e.preventDefault();
-                        dlg.dialog.modal('hide');
-                        userPreferences.setItem('showwelcome',false,true);
-                    });
-                    dlg.footer.append(confirmButton);
-                }
-
-                dlg.dialog.modal('show');
-            });
+            if (forceorient!== "None") {
+                txt+=`<HR><H3>Forcing Image Orientation</H3><p>On load all images are currently <B> automatically reoriented to ${forceorient}</B> based on your user preferences. Select Help|Set Image Orientation On Load to change this.</p>`;
+            }
+            
+            dlg.header.empty();
+            dlg.header.append('<H3>Welcome to BioImage Suite Web</H3>');
+            body.append($(txt));
+            
+            if (!force && forceorient==="None") {
+                let confirmButton = webutil.createbutton({ 'name': 'Do not show this next time', 'type': 'success' });
+                confirmButton.on('click', (e) => {
+                    e.preventDefault();
+                    dlg.dialog.modal('hide');
+                    userPreferences.setItem('showwelcome',false,true);
+                });
+                dlg.footer.append(confirmButton);
+            }
+            
+            dlg.dialog.modal('show');
         }).catch( (e) => {
             console.log(e.stack,e);
         });
@@ -1180,10 +1183,6 @@ class ViewerApplicationElement extends HTMLElement {
 
         this.findViewers();
         
-        let userPreferencesLoaded = userPreferences.webLoadUserPreferences(bisdbase);
-        userPreferencesLoaded.then(() => {
-            userPreferences.storeUserPreferences();
-        });
 
 
         let menubar = document.querySelector(menubarid).getMenuBar();
@@ -1289,7 +1288,7 @@ class ViewerApplicationElement extends HTMLElement {
         // ----------------------------------------------------------
         // Console
         // ----------------------------------------------------------
-        let hmenu=this.createHelpMenu(menubar,userPreferencesLoaded);
+        let hmenu=this.createHelpMenu(menubar);
 
 
         // ----------------------------------------------------------------
@@ -1323,7 +1322,7 @@ class ViewerApplicationElement extends HTMLElement {
         webutil.runAfterAllLoaded( () => {
             this.parseQueryParameters();
             document.body.style.zoom =  1.0;
-            this.welcomeMessage(userPreferencesLoaded,false);
+            this.welcomeMessage(false);
         });
 
     }

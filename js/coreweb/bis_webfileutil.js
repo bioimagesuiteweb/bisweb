@@ -40,7 +40,9 @@ const keystore=require('bis_keystore');
 const dkey=keystore.DropboxAppKey || "";
 const gkey=keystore.GoogleDriveKey || "";
 const mkey=keystore.OneDriveKey || "";
-const userPreferencesLoaded = userPreferences.webLoadUserPreferences(bisdbase);
+
+// Ensure that these get initialized
+userPreferences.initialize(bisdbase);
 
 const localforage = require('localforage');
 
@@ -578,13 +580,11 @@ const webfileutils = {
         const self=this;
         
         let fn=function() {
-            userPreferencesLoaded.then(() => {
-                let initial=userPreferences.getItem('filesource') || 'local';
-
-
+            userPreferences.safeGetItem('filesource').then( (initial) => {
+                initial= initial || 'local';
                 let extra="";
                 if (enableserver) {
-                   extra=`<HR><p>You may download the bisweb fileserver 
+                    extra=`<HR><p>You may download the bisweb fileserver 
 <a href="server.zip" target="_blank" rel="noopener">
 from this link</a>. Use with care. This requires <a href="https://nodejs.org/en/download/" target="_blank" rel="noopener">node.js vs 8.x </p>`;
                 }
@@ -824,10 +824,10 @@ from this link</a>. Use with care. This requires <a href="https://nodejs.org/en/
     
 };
 
-userPreferencesLoaded.then(() => {
-    let f=userPreferences.getItem('filesource') || fileMode;
-    console.log('Initial File Source=',f);
-    webfileutils.setMode(f);
+userPreferences.safeGetItem('filesource').then( (f) => {
+    f= f || fileMode;
+    console.log('+++++ Initial File Source=',f);
+    webfileutils.setMode(f,false);
 });
 
 module.exports=webfileutils;
