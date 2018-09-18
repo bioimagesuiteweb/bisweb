@@ -1294,9 +1294,7 @@ class ViewerApplicationElement extends HTMLElement {
         // ----------------------------------------------------------------
         // Add help sample data option
         // ----------------------------------------------------------------
-        const mode = this.getAttribute('bis-mode');
-
-        if (mode==='overlay') {
+        if (this.applicationName==='overlayviewer') {
             webutil.createMenuItem(hmenu, ''); // separator
             webutil.createMenuItem(hmenu, 'Load Sample Data',
                                    function () {

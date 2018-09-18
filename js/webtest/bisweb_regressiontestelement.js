@@ -434,7 +434,7 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
     if (usefileserver)
         fileserverflag=1;
             
-    console.clear();
+    //    console.clear();
     
     if (!usefileserver) {
         console.log('Disabling File Server');
@@ -669,7 +669,11 @@ let initialize=function(data) {
     $('#last').val(lasttest);
     $('#testselect').val(testname);
     $('#usethread').prop("checked", usethread);
-    $('#usefileserver').prop("checked", usefileserver);
+    if (!webutil.inElectronApp()) {
+        $('#usefileserver').prop("checked", usefileserver);
+    } else  {
+        usefileserver=false;
+    }
 
     var fixRange=function(targetname) {
 
@@ -700,7 +704,10 @@ let initialize=function(data) {
         let testname=$('#testselect').val() || 'All';
 
         let usethread= $('#usethread').is(":checked") || false;
-        let usefileserver= $('#usefileserver').is(":checked") || false;
+        let usefileserver=false;
+        if (!webutil.inElectronApp()) {
+            usefileserver= $('#usefileserver').is(":checked") || false;
+        }
         
         if (last===undefined)
             last=testlist.length-1;
@@ -717,14 +724,17 @@ let initialize=function(data) {
         run_tests(testlist,firsttest,lasttest,testname,usethread,usefileserver);
     }
 
-
-    $('#computemem').click(function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('Starting');
-        run_memory_test();
-    });
-
+    if (!webutil.inElectronApp()) {
+        $('#computemem').click(function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Starting');
+            run_memory_test();
+        });
+    } else {
+        $('#computemem').remove();
+        $('#usefileserverdiv').remove();
+    }
 };
 
 var startFunction = (() => {

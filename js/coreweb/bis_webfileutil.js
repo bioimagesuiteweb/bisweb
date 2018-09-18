@@ -133,7 +133,7 @@ const webfileutils = {
 
       // TODO: Check if fileserver and aws are enabled else disable
       
-      
+        
         switch(m) {
             case 'dropbox' : if(dkey) { fileMode = 'dropbox'; } break;
             case 'googledrive' : if (gkey) { fileMode = 'googledrive'; } break;
@@ -824,11 +824,15 @@ from this link</a>. Use with care. This requires <a href="https://nodejs.org/en/
     
 };
 
-userPreferences.safeGetItem('filesource').then( (f) => {
-    f= f || fileMode;
-    console.log('+++++ Initial File Source=',f);
-    webfileutils.setMode(f,false);
-});
+if (!webutil.inElectronApp() ) {
+    userPreferences.safeGetItem('filesource').then( (f) => {
+        f= f || fileMode;
+        console.log('+++++ Initial File Source=',f);
+        webfileutils.setMode(f,false);
+    });
+} else {
+    webfileutils.setMode('local',true);
+}
 
 module.exports=webfileutils;
 
