@@ -724,12 +724,13 @@ class AWSModule extends BaseServerClient {
                         reject(e);
                     }
 
+                }).then( () => {
+                    resolve(bucketSelectorDropdown);
                 }).catch((err) => {
                     console.log('an error occured while fetching values from localstorage', err);
                     reject(err);
                 });
 
-                resolve(bucketSelectorDropdown);
             });
 
         };
@@ -781,8 +782,8 @@ class AWSModule extends BaseServerClient {
                         tableContainer.find('table .identity-pool-id')[0].innerHTML = params.identityPoolId;
 
                         refreshDropdown().then( (dropdown) => {
-                            console.log('refresh dropdown', dropdown[0], 'bucket name', params.bucketName);
-                            //TODO: Select item from dropdown here
+                            console.log('refresh dropdown', dropdown, 'bucket name', params.bucketName);
+                            dropdown.val(params.bucketName);
                         });
                     })
                     .catch( (e) => { 
