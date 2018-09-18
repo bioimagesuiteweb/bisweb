@@ -188,7 +188,9 @@ var createWindow=function(index,fullURL) {
         }
 
         if (anyalive===false) {
-            state.console.hide();
+            if (state.console) {
+                state.console.hide();
+            }
             state.console=null;
             process.exit(0);
         }
