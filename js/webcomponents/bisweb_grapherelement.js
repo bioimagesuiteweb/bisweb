@@ -49,7 +49,7 @@ class GrapherModule extends HTMLElement {
         this.graphcanvasid = null;
         this.lastShowVolume=false;
         this.graphWindow=null;
-        this.handlingResize=false;
+        this.resizingTimer=null;
     }
 
     createGUI() {
@@ -83,7 +83,7 @@ class GrapherModule extends HTMLElement {
             },
             position: "right",
             parent: bbar
-        }).click(() => { this.rePlotGraph(false); });
+        }).click(() => { this.rePlotGraph(false).catch( () => { } ); });
 
         webutil.createbutton({
             name: 'Plot VOI Volumes',
@@ -94,7 +94,7 @@ class GrapherModule extends HTMLElement {
             },
             position: "left",
             parent: bbar
-        }).click(() => { this.rePlotGraph(true); });
+        }).click(() => { this.rePlotGraph(true).catch( () => { } );});
 
         webutil.createbutton({
             name: 'Export as CSV',
@@ -151,7 +151,7 @@ class GrapherModule extends HTMLElement {
             this.lastviewer.removeResizeObserver(this);
         
         this.lastviewer=orthoElement;
-        this.lastviewer.addResizeObserver(this);
+
         
         let image = orthoElement.getimage();
         let objectmap = orthoElement.getobjectmap();
@@ -187,7 +187,11 @@ class GrapherModule extends HTMLElement {
             }
         }
         
-        this.plotGraph(x, y, matrix.numvoxels);
+        this.plotGraph(x, y, matrix.numvoxels).then( () => {
+            this.lastviewer.addResizeObserver(this);
+        }).catch( (e) => {
+            console.log(e,e.stack);
+        });
     }
 
     plotGraph(x, y, numvoxels) {
@@ -198,7 +202,7 @@ class GrapherModule extends HTMLElement {
             y: y,
             numvoxels: numvoxels
         };
-        this.rePlotGraph(false);
+        return this.rePlotGraph(false);
 
     }
 
@@ -210,7 +214,7 @@ class GrapherModule extends HTMLElement {
         
         if (this.lastdata.y < 1) {
             webutil.createAlert('No  objecmap in memory', true);
-            return;
+            return Promise.reject();
         }
 
         let dim = numeric.dim(this.lastdata.y);
@@ -296,7 +300,9 @@ class GrapherModule extends HTMLElement {
         this.createGUI();
         this.graphWindow.show();
         let dm=this.getCanvasDimensions(viewerDimensions);
-
+        if (!dm) {
+            return Promise.reject("Bad Dimensions");
+        }
         let cw=dm[0];
         let ch=dm[1];
         
@@ -507,14 +513,25 @@ class GrapherModule extends HTMLElement {
      * @param {array} dim - [ width,height] of viewer
      */
     handleresize(dim) {
-        if (this.handlingResize)
+
+        if (this.resizingTimer) {
+            clearTimeout(this.resizingTimer);
+            this.resizingTimer=null;
+        }
+
+        if (this.graphWindow===null) {
             return;
-        
-        this.handlingResize=true;
+        }
+
+        if (!this.graphWindow.isVisible()) {
+            return;
+        }
+
+
         const self=this;
-        setTimeout( () => {
-            self.rePlotGraph(self.lastShowVolume,dim).then( () => {
-                self.handlingResize=false;
+        this.resizingTimer=setTimeout( () => {
+            self.rePlotGraph(self.lastShowVolume,dim).catch( (e) => {
+                console.log(e,e.stack);
             });
         },500);
         
@@ -525,9 +542,6 @@ class GrapherModule extends HTMLElement {
      * @returns {array} - [ canvaswidth,canvasheight ]
      */
     getCanvasDimensions(dim) {
-        
-        if (!this.graphWindow.isVisible())
-            return;
         
         if (dim===null) {
             if (this.lastviewer)
