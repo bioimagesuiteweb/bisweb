@@ -562,17 +562,15 @@ class GrapherModule extends HTMLElement {
         let left=10;
         let top=40;
 
-        let obj={'left': `${left}px`,
-                 'width' :`${width}px`,
-                 'top' : `${top}px`,
-                 'height' : `${height}px`,
-                };
-
-        this.graphWindow.dialog.css(obj);
+        this.graphWindow.dialog.css({
+            'left': `${left}px`,
+            'width' :`${width}px`,
+            'top' : `${top}px`,
+            'height' : `${height}px`,
+        });
 
         let innerh=height-120;
         let innerw=width-10;
-
         this.graphWindow.widget.css({
             'margin' : '0 0 0 0',
             'padding' : '0 0 0 0',
