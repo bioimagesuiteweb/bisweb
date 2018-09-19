@@ -1,5 +1,6 @@
 
 const wsUtilInitialPort = require('bis_wsutil').initialPort;
+const wsUtilPayloadSize = require('bis_wsutil').maxPayloadSize;
 const bisgenericio=require('bis_genericio');
 const pako=require('pako');
 const bisasyncutil=require('bis_asyncutils');
@@ -555,24 +556,28 @@ class BisFileServerClient extends BisBaseServerClient {
         }
         
         let checksum=util.SHA256(body);
-        let packetSize=65536*2;
+        let packetSize= wsUtilPayloadSize;
         return new Promise((resolve,reject) => {
             
             let success=(m) => {
                 resolve(m.filename);
             };
             
-            let tryagain=(m) => {
+            let tryagain=(m,firsttime=false) => {
                 if (m!=='tryagain' || packetSize<1000) {
                     reject(m);
                     return;
                 }
-                packetSize=Math.round(packetSize/2);
-                if (packetSize<16384)
-                    console.log('++++ Trying again',packetSize);
+                if (!firsttime) {
+                    packetSize=Math.round(packetSize/2);
+                    if (packetSize<wsUtilPayloadSize)
+                        console.log('+++++\n++++ \t\t Trying again',packetSize);
+                } else {
+                    console.log('+++++\n++++ \t\t First attempt',packetSize);
+                }
                 this.uploadFileHelper(url,body,isbinary,checksum,success,tryagain,packetSize);
             };
-            tryagain("tryagain");
+            tryagain("tryagain",true);
         });
     }
 
@@ -631,7 +636,7 @@ class BisFileServerClient extends BisBaseServerClient {
                 doDataTransfer(body);
             });
         }).catch( (e) => {
-            failureCB('error '+e);
+            failureCB('error '+e,false);
         });
             
             
