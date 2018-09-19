@@ -15,7 +15,7 @@
  
  ENDLICENSE */
 
-/* global window,document,Blob,dataURLToBlob,FileReader,setTimeout,HTMLElement */
+/* global window,document,Blob,FileReader,setTimeout,HTMLElement */
 
 /**
  * @file A Broswer module. Contains {@link BisWEB_ViewerElements}.
@@ -31,9 +31,9 @@ const $ = require('jquery');
 const webutil = require('bis_webutil');
 const filesaver = require('FileSaver');
 const bootbox = require('bootbox');
-const io = require('bis_genericio');
 const userPreferences = require('bisweb_userpreferences.js');
 const BisWebPanel = require('bisweb_panel.js');
+const BisWebImage = require('bisweb_image.js');
 
 require('bootstrap-colorselector.js');
 
@@ -52,11 +52,25 @@ require('bootstrap-colorselector.js');
  * Attributes:
  *      bis-viewerid : the orthogonal viewer to draw in 
  *      bis-layoutwidgetid :  the layout widget to create the GUI in
- *      bis-dowhite :  if true then default background for snapshot is white else it is blacked.
+ *      bis-dowhite :  if true then default background for snapshot is white else it is black.
  */
 class SnapshotElement extends HTMLElement {
 
 
+    constructor() {
+        super();
+        
+        this.data = {
+            scale: 3.0,
+            dowhite: false,
+            crop: true
+        };
+
+        this.testingResolve=null;
+        this.testingReject=null;
+    }
+
+    
     computeGoodRows(in_imgdata, dowhite, border = 20, padding = 10) {
 
         let ht = in_imgdata.height;
@@ -259,20 +273,16 @@ class SnapshotElement extends HTMLElement {
     }
 
 
-    createsnapshot(img, ismosaic = false) {
+    createOutputCanvas(img,ismosaic=false,scale=1.0,dowhite=false,crop=false) {
 
+        console.log('In createOutputCanvas');
         let fillcolor = "#000000";
-        if (this.data.dowhite)
+        if (dowhite)
             fillcolor = "#ffffff";
-
-        // Store scale
-        userPreferences.setItem('snapshotscale', this.data.scale);
-        userPreferences.setItem('snapshotdowhite', this.data.dowhite);
-        userPreferences.storeUserPreferences();
-
+        
         let outcanvas = document.createElement('canvas');
-        outcanvas.width = this.canvaslist[0].width * this.data.scale;
-        outcanvas.height = this.canvaslist[0].height * this.data.scale;
+        outcanvas.width = this.canvaslist[0].width * scale;
+        outcanvas.height = this.canvaslist[0].height * scale;
 
         let ctx = outcanvas.getContext('2d');
         ctx.fillStyle = fillcolor;
@@ -283,11 +293,23 @@ class SnapshotElement extends HTMLElement {
         }
         ctx.drawImage(img, 0, 0, outcanvas.width, outcanvas.height);
 
-        if (this.data.crop) {
-            outcanvas = this.autoCrop(outcanvas, this.data.dowhite, ismosaic);
+        if (crop) {
+            outcanvas = this.autoCrop(outcanvas, dowhite, ismosaic);
         }
 
-        let outimg = outcanvas.toDataURL("image/png");
+        return outcanvas;
+    }
+    
+    createsnapshot(img, ismosaic = false) {
+
+        // Store scale
+        userPreferences.setItem('snapshotscale', this.data.scale);
+        userPreferences.setItem('snapshotdowhite', this.data.dowhite);
+        userPreferences.storeUserPreferences();
+
+        let outcanvas=this.createOutputCanvas(img,ismosaic,this.data.scale,this.data.dowhite,this.data.crop);
+        let outimg=outcanvas.toDataURL("image/png");
+        
         let dispimg = $('<img id="dynamic">');
         dispimg.attr('src', outimg);
         dispimg.width(300);
@@ -343,12 +365,7 @@ class SnapshotElement extends HTMLElement {
 
     connectedCallback() {
 
-        this.data = {
-            scale: 3.0,
-            dowhite: false,
-            crop: true
-        };
-
+        
         if (this.getAttribute('bis-dowhite') === 'true')
             this.data.dowhite = true;
 
@@ -479,13 +496,95 @@ class SnapshotElement extends HTMLElement {
      * @param{Boolean} ismosaic -- is the viewer a mosaic viewer (run auto crop);
      */
     update(t, ismosaic = false) {
-        const self = this;
+
         let img = document.createElement('img');
         img.src = t;
-        setTimeout(function () {
-            self.createsnapshot(img, ismosaic);
+        
+        setTimeout( () => {
+            
+            if (this.testingResolve===null) {
+                this.createsnapshot(img, ismosaic);
+            } else {
+                this.testingResolve(this.createOutputCanvas(img,ismosaic,this.data.scale,this.data.dowhite,this.data.crop));
+            }
         }, 500);
     }
+
+
+    // --------------------------------------------------
+    // Testing Code
+    
+
+    /*
+      * creates a BisWebImage object from a canvas
+      * @param{Canvas} in_canvas - the input canvas element
+      * @return{BisWebImage} - the output image
+      */
+    createBisWebImageFromCanvas(in_canvas) {
+
+        let wd = in_canvas.width;
+        let ht = in_canvas.height;
+        let in_imgdata = in_canvas.getContext("2d").getImageData(0, 0, wd, ht).data;
+        let output=new BisWebImage();
+        output.initialize();
+        output.createImage( {
+            type : "uchar",
+            numcomponents : 1,
+            numframes : 4,
+            orientation : 'LPS',
+            dimensions : [ wd,ht,1 ],
+        });
+        console.log('Created = ',output.getDescription());
+        let out_imgdata=output.getImageData();
+        
+        let slicesize=wd*ht;
+        let index=0;
+        for (let row=0;row<ht;row++) {
+            for (let col=0;col<wd;col++) {
+                for (let comp=0;comp<=3;comp++) {
+                    out_imgdata[comp*slicesize+row*wd+col]=in_imgdata[index];
+                    ++index;
+                }
+            }
+        }
+        return output;
+    }
+
+    /*
+      * creates a BisWebImage object from an image element
+      * @param{Image} - the input imageelement
+      * @return{BisWebImage} - the output image
+      */
+    createBisWebImageFromImageElement(imageelement) {
+
+
+
+    }
+    
+    
+    getTestImage(scale=1.0,dowhite=false,docrop=false) {
+
+        this.data.scale=scale;
+        this.data.dowhite=dowhite;
+        this.data.crop=docrop;
+        const self=this;
+
+        return new Promise( (resolve,reject) => {
+
+            let finalResolve=( (dat) => {
+
+                self.testingResolve=null;
+                self.testingReject=null;
+                console.log(dat);
+                resolve(dat);
+            });
+
+            self.testingResolve=finalResolve;
+            self.testingReject=reject;
+            self.viewer.savenextrender(self);
+        });
+    }
+    
 }
 
 webutil.defineElement('bisweb-snapshotelement', SnapshotElement);
