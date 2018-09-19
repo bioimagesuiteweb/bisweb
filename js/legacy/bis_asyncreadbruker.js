@@ -854,6 +854,8 @@ let readFile = async function (filename,outprefix,forceorient,debug=false) {
 
     dualPrint("+++++ "+data.basename);
 
+
+    
     if (data.ndir>0 && data.repeats>1) {
         dualPrint("_____ Processing as multi part raw dti file.");
         await saveMultiPartDTIFile(data,debug);
@@ -877,10 +879,11 @@ let readFile = async function (filename,outprefix,forceorient,debug=false) {
  * @param {Function} addcallback -- a callback for gui updates that is
  * called each time a new file was converted. It takes three arguments,
  * (i) name, (ii) image filename, (iii) text filename
+ * @param {Function} infocallback -- creates a message on the screen (if needed)
  * @param {Boolean} debug - if true print extra messages
  * @returns {Boolean} 
  */
-let readMultiple= async function (filename,outprefix,forceorient,addcallback,debug) {
+let readMultiple= async function (filename,outprefix,forceorient,addcallback,infoCallback=null,debug=false) {
 
     if (debug)
         console.log('In Read Multiple');
@@ -997,6 +1000,10 @@ let readMultiple= async function (filename,outprefix,forceorient,addcallback,deb
         let ifile=fnamepairs[counter].inp;
         let ofile=fnamepairs[counter].out;
         ofile=bisgenericio.joinFilenames(outprefix,ofile);
+
+        if (infoCallback)
+            await infoCallback('Converting '+ifile+' ->'+ofile);
+        
         let data=await readFile(ifile,ofile,forceorient);
         let error=data.error || "";
         if (error !="" ) {

@@ -23,7 +23,7 @@ const bisbruker=require('bis_asyncreadbruker');
 const webutil=require('bis_webutil');
 const bisgenericio=require('bis_genericio');
 const $=require('jquery');
-//const bootbox=require('bootbox');
+const bootbox=require('bootbox');
 const userPreferences = require('bisweb_userpreferences.js');
 const misac=require('../node/misac_util');
 const webfileutil = require('bis_webfileutil');
@@ -40,9 +40,6 @@ const BisWebPanel = require('bisweb_panel.js');
  */
 
 /** 
- * A web (electron only) element to create and manage a GUI for importing and converting Bruker Paravision Files.
- * This is a wrapper around a {@link ParavisionImportElementInternal} object.
- *
  *
  * @example
  *   <bisweb-paravisionimportelement
@@ -206,7 +203,13 @@ class ParavisionImportElement extends HTMLElement {
                                          save : true,
                                          suffix : "json",
                                      });
-        
+
+
+        if (bisgenericio.getmode() !== 'electron') {
+            setTimeout( () => {
+                bootbox.alert('<H4> For your information</H4> <p>Since you running this appication as a web-application, you will need to:</p> <UL> <LI>  Start an instance of the BioImage Suite Web File Server to allow you to access files from disk directly. </LI><LI> Set this as the file source using the "Set FileSource" option under the "Help" menu</LI></UL>');
+            },1000);
+        }
     }
 
     // ------------------------------------------------------------------------
@@ -230,12 +233,15 @@ class ParavisionImportElement extends HTMLElement {
             let ext=fname.split('.').pop();
             if (ext==="gz") {
                 const img=new BisWebImage();
-                img.load(fname,false)
-                    .then(function() {
-                        webutil.createAlert('Image loaded from '+img.getDescription());
-                        internal.viewers[index].setimage(img);
-                    })
-                    .catch( (e) => { webutil.createAlert(e,true); });
+                webutil.createAlert('Loading image from '+fname,'progress');
+                setTimeout( () => {
+                    img.load(fname,false)
+                        .then(function() {
+                            webutil.createAlert('Image loaded from '+img.getDescription());
+                            internal.viewers[index].setimage(img);
+                        })
+                        .catch( (e) => { webutil.createAlert(e,true); });
+                },100);
             } else {
                 bisgenericio.read(fname).then( (obj) => {
                     let info = fname+"\n"+obj.data;
@@ -375,8 +381,17 @@ class ParavisionImportElement extends HTMLElement {
             self.addTableRow(name,fname,infoname);
         };
 
+        let infoT= ((name) => {
+            return new Promise( (resolve) => {
+                setTimeout( ()=> {
+                    webutil.createAlert(name,'progress');
+                    resolve();
+                },1);
+            });
+        });
+
         userPreferences.safeGetImageOrientationOnLoad().then( (forceorient) => {
-            bisbruker.readMultiple(f,outpath,forceorient,addT,false).then( (out) => {
+            bisbruker.readMultiple(f,outpath,forceorient,addT,infoT,false).then( (out) => {
                 let status=out[0];
                 if (status===true)
                     webutil.createAlert('Job saved in '+out[1]);
