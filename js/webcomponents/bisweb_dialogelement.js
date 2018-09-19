@@ -1,3 +1,4 @@
+
 /*  LICENSE
  
  _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
@@ -316,7 +317,6 @@ class BisWebDialogElement extends HTMLElement {
             "z-index": zindex,
             "position" : "absolute",
             "width": `${this.dimensions.width}px`,
-            "min-width": `${this.dimensions.width}px`,
         });
         
         this.content.css({  "width" : "100%"});
@@ -324,9 +324,11 @@ class BisWebDialogElement extends HTMLElement {
         if (!grow) {
             this.dialog.css({ "height": `${this.dimensions.height}px` });
             this.content.css({ "height" : "100%" });
-            this.widgetbase.css({ "height" : `${this.dimensions.height-130}px`, "overflow-y": "auto"  });
+            this.widgetbase.css({ "height" : `${this.dimensions.height-130}px`});
         } else {
             this.widgetbase.css({ "max-height" : `${this.dimensions.height}px`, "overflow-y": "auto"  });
+            this.dialog.css({"min-width": `${this.dimensions.width}px`});
+
         }
         
         this.footer.css({
