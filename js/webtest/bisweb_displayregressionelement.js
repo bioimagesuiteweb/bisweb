@@ -41,11 +41,29 @@ var startFunction = (() => {
         console.log('Image=',img);
         console.log('Viewer=',viewer);
         viewer.setimage(img);
+
+        let state=viewer.getElementState(false);
+        console.log(JSON.stringify(state,null,2));
+        
         console.log('Viewer=',snapshotElement);
         snapshotElement.getTestImage().then( (dat) => {
             console.log('Creating new image');
             let newimg=snapshotElement.createBisWebImageFromCanvas(dat);
             viewer.setimage(newimg);
+
+            setTimeout( () => {
+
+                let url=imagepath+'/../../test/testdata/display/disptest1.png';
+                console.log(url);
+                snapshotElement.createBisWebImageFromImageElement(url).then( (newimg2) => {
+                    console.log(newimg2.getDescription());
+                    viewer.setobjectmap(newimg2);
+
+                    let tst=newimg.compareWithOther(newimg2,"maxabs",2);
+                    webutil.createAlert(JSON.stringify(tst,null,2));
+                });
+            },20);
+            
         });
     });
 
