@@ -499,6 +499,8 @@ gulp.task('zip', function() {
 
 gulp.task('package2', function(done) {
 
+    if (options.package===0)
+        options.package=1;
 
     
     bis_gutil.createPackage(options.package,

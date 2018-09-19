@@ -845,15 +845,6 @@ class ViewerApplicationElement extends HTMLElement {
         
         this.addOrientationSelectToMenu(hmenu);
 
-        const consoleid = this.getAttribute('bis-consoleid') || null;
-        if (consoleid !== null) {
-            let console = document.querySelector(consoleid);
-            if (console) {
-                webutil.createMenuItem(hmenu, ''); // separator
-                console.addtomenu(hmenu);
-            }
-        }
-
         if (webutil.inElectronApp()) {
             webutil.createMenuItem(hmenu, ''); // separator
             webutil.createMenuItem(hmenu, 'Show JavaScript Console',

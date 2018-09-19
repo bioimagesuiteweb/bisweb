@@ -31,8 +31,6 @@ const $ = require('jquery');
 const webutil = require('bis_webutil');
 const filesaver = require('FileSaver');
 const bootbox = require('bootbox');
-const dropbox = require('bisweb_dropboxmodule');
-const drive = require('bisweb_drivemodule');
 const io = require('bis_genericio');
 const userPreferences = require('bisweb_userpreferences.js');
 const BisWebPanel = require('bisweb_panel.js');
@@ -324,41 +322,6 @@ class SnapshotElement extends HTMLElement {
                                 filesaver(blob, 'snapshot.png');
                             }
                         }
-                    }
-                },
-                dropbox: {
-                    label: "Dropbox",
-                    className: "btn-info",
-                    callback: function () {
-                        let blob = dataURLToBlob(outimg);
-
-                        let reader = new FileReader();
-                        reader.addEventListener("loadend", () => {
-                            dropbox.pickWriteFile("", reader.result).then((response) => {
-                                console.log('pick write file ', response);
-                                io.write(response, reader.result);
-                            }).catch((error) => { console.log(error); });
-                            //dropbox.uploadFile({ data: reader.result });
-                        });
-
-                        reader.readAsArrayBuffer(blob);
-                    }
-                },
-                googledrive: {
-                    label: "G-Drive",
-                    className: "btn-info",
-                    callback: function () {
-                        let blob = dataURLToBlob(outimg);
-                        // Do something here
-                        let reader = new FileReader();
-                        reader.addEventListener("loadend", () => {
-                            drive.pickWriteFile("single folder").then((response) => {
-                                console.log(response);
-                                io.write(response, reader.result);
-                            }).catch((error) => { console.log(error); });
-                        });
-                        console.log(blob);
-                        reader.readAsArrayBuffer(blob);
                     }
                 },
                 cancel: {
