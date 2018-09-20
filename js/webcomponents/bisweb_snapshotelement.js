@@ -70,6 +70,27 @@ class SnapshotElement extends HTMLElement {
         this.testingReject=null;
     }
 
+
+    getElementState() {
+        return JSON.parse(JSON.stringify(this.data));
+    }
+
+    setElementState(dt) {
+        if (!dt)
+            return;
+
+        let names=[ 'scale','dowhite','crop' ];
+        for (let i=0;i<names.length;i++) {
+            let key=names[i];
+            if (dt[key] !== undefined)
+                this.data[key]= dt[key];
+        }
+
+        this.colorselector.prop("checked", this.data.dowhite);
+        this.cropselector.prop("checked", this.data.crop);
+        this.select.val(this.data.scale - 1);
+    }
+    
     
     computeGoodRows(in_imgdata, dowhite, border = 20, padding = 10) {
 
@@ -275,7 +296,6 @@ class SnapshotElement extends HTMLElement {
 
     createOutputCanvas(img,ismosaic=false,scale=1.0,dowhite=false,crop=false) {
 
-        console.log('In createOutputCanvas');
         let fillcolor = "#000000";
         if (dowhite)
             fillcolor = "#ffffff";
@@ -375,6 +395,7 @@ class SnapshotElement extends HTMLElement {
         let layoutcontroller = document.querySelector(layoutid);
 
         this.viewer = viewer;
+        this.viewer.setSnapShotController(this);
         this.renderer = layoutcontroller.renderer;
         this.canvaslist = [layoutcontroller.canvas,
                            layoutcontroller.overlaycanvas];
@@ -579,11 +600,8 @@ class SnapshotElement extends HTMLElement {
     }
     
     
-    getTestImage(scale=1.0,dowhite=false,docrop=false) {
+    getTestImage() {
 
-        this.data.scale=scale;
-        this.data.dowhite=dowhite;
-        this.data.crop=docrop;
         const self=this;
 
         return new Promise( (resolve,reject) => {

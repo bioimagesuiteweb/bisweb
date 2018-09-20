@@ -280,7 +280,7 @@ class ViewerApplicationElement extends HTMLElement {
      */
     pasteViewer(index=0) {
         clipboard.getItem('viewer').then( (st) => {
-            console.log('Read state',st.length);
+            console.log('Read state',Object.keys(st));
             this.VIEWERS[index].setElementState(st);
         }).catch( (e) => {
             console.log('paste error',e,e.stack);
