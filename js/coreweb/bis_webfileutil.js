@@ -302,6 +302,8 @@ const webfileutils = {
                        'filters' : fileopts.filters
                      };
 
+        console.log('FileMode=',fileMode, fileopts.save);
+        
         // -------------------- End Of Part I ---------------
 
         if (fileopts.suffix === "DIRECTORY" && fileMode === 'server') {
@@ -318,7 +320,7 @@ const webfileutils = {
         if (fileopts.save) {
             // We are now saving only server, aws or local
             
-            if (fileMode === 'server' || 'amazonaws') {
+            if (fileMode === 'server' || fileMode === 'amazonaws') {
 
                 let initialDir=null;
                 let initialFilename=null;
