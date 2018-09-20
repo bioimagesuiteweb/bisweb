@@ -954,7 +954,6 @@ class BaseViewerElement extends HTMLElement {
         if (this.internal.viewerleft)
             obj['viewerleft'] = this.internal.viewerleft;
 
-        console.log('here');
         if (this.internal.snapshotcontroller) 
             obj['snapshotcontroller']=this.internal.snapshotcontroller.getElementState();
         
