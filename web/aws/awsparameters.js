@@ -1,12 +1,29 @@
 'use strict';
 
-// https://git.yale.edu/pages/zls5/webapp/
+const localforage = require('localforage');
 
-let IdentityPoolId = 'us-east-1:13a0bffd-384b-43d8-83c3-050815009aa6';
-let BucketName = 'bisweb-test';
+// https://git.yale.edu/pages/zls5/webapp/
+let IdentityPoolId;
+let BucketName;
 let RegionName = 'us-east-1'; //N. Virginia
 let AccountId = '687575629668'; //My (Zach's) Amazon AWS account
 
+let cachedAWSBuckets = localforage.createInstance({
+    'name' : 'bis_webfileutil',
+    'storeName' : 'AWSBuckets'
+});
+
+cachedAWSBuckets.getItem('currentAWS', (err, value) => {
+    if (err) { console.log('An error occured while fetching from the AWS bucket', err); return; }
+    try {
+        let parsedItem = JSON.parse(value);
+        console.log('parsed item', parsedItem);
+        IdentityPoolId = parsedItem.identityPoolId;
+        BucketName = parsedItem.bucketName;
+    } catch(e) {
+        console.log('No current AWS found, requesting one once user attempts to connect.');
+    }
+});
 
 let apath="http://localhost:8080/build/web/";
 
@@ -20,6 +37,7 @@ if (typeof window.BIS ==='undefined') {
     apath=apath.substr(0,apath.length-scope.length-5);
 }
 
+
 let awsparams = {
     'ClientId': '5edh465pitl9rb04qbi37csv8e',
     'AppWebDomain': 'bisweb-test.auth.us-east-1.amazoncognito.com',
@@ -30,12 +48,27 @@ let awsparams = {
     'UserPoolId': 'us-east-1_BAOsizFzq'
 };
 
-//console.log('redirect sign in', awsparams.RedirectUriSignIn);
+
+let updateBucketInfo = (bucketName, identityPoolId) => {
+    BucketName = bucketName;
+    IdentityPoolId = identityPoolId;
+};
+
+let getIdentityPoolId = () => {
+    return IdentityPoolId;
+};
+
+let getBucketName = () => {
+    return BucketName;
+};
+
+console.log('redirect sign in', awsparams.RedirectUriSignIn);
 
 module.exports = {
     'authParams' : awsparams,
-    'IdentityPoolId' : IdentityPoolId,
     'RegionName' : RegionName,
-    'BucketName' : BucketName,
-    'AccountId' : AccountId
+    'AccountId' : AccountId,
+    'BucketName' : getBucketName,
+    'IdentityPoolId' : getIdentityPoolId,
+    'updateBucketInfo' : updateBucketInfo
 };
