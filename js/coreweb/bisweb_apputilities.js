@@ -17,8 +17,10 @@
 
 "use strict";
 
+const genericio=require('bis_genericio');
 const webutil = require('bis_webutil');
 let imagepath=webutil.getWebPageImagePath();
+
 
 module.exports = {
 
@@ -72,7 +74,8 @@ module.exports = {
         }
 
         img.save(fname).then( (f) => {
-            webutil.createAlert(name+' saved in '+f);
+            if (!genericio.isSaveDownload())
+                webutil.createAlert(name+' saved in '+f);
         }).catch( (e) => {
             webutil.createAlert('failed to save '+name+' ('+e+')',true);
         });

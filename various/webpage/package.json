@@ -1,0 +1,13 @@
+{
+    "private": true,
+    "name": "bioimagesuiteweb_webpage",
+    "version": "0.9.7",
+    "description": "The BioImage Suite Web Webpage",
+    "homepage": "https://github.com/bioimagesuiteweb/bisweb",
+    "author": "Xenios Papademetris",
+    "license": "Apache",
+    "devDependencies": {
+        "gulp": "^3.9.1",
+        "gulp-connect": "^5.0.0"
+    }
+}

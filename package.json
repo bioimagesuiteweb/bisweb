@@ -43,7 +43,6 @@
         "colors": "1.1.2",
         "del": "3.0.0",
         "eslint": "4.19.1",
-        "express": "4.16.3",
         "git-rev": "0.2.1",
         "gulp": "3.9.1",
         "gulp-concat-css": "2.3.0",

@@ -3,7 +3,6 @@ const bis_genericio = require('bis_genericio');
 const webutil = require('bis_webutil.js');
 const bootbox=require('bootbox');
 const userPreferences=require('bisweb_userpreferences');
-const bisdbase = require('bisweb_dbase');
 
 require('jstree');
 
@@ -108,6 +107,7 @@ class SimpleFileDialog {
                 }
             }));
         }).catch( () => {
+            outname=this.addExtensionToFilnameIfNeeded(outname,this.activeFilterList);
             sendCallback();
         });
     }
@@ -117,7 +117,11 @@ class SimpleFileDialog {
      * @param {String} dname -- the name of the directory
      */
     changeDirectory(dname) {
-        this.fileListFn( dname,true);
+        this.fileListFn( dname,false).then( (payload) => {
+            this.updateDialog(payload.data,
+                              payload.path,
+                              payload.root);
+        });
     }
 
     // --------------- Create GUI ------------------------------
@@ -168,7 +172,7 @@ class SimpleFileDialog {
             this.filenameCallback();
         });
 
-        this.modal.footer.append(this.okButton);        
+         this.modal.footer.append(this.okButton);        
         this.modal.body.append(this.container);        
 
     }
@@ -226,35 +230,35 @@ class SimpleFileDialog {
 
             if (this.mode === 'save') {
                 this.okButton.text('Save');
-                this.displayFiles = true;
             } else if (this.mode.indexOf('dir')>=0) {
                 this.okButton.text('Select Directory');
-                this.displayFiles = true;
             } else {
                 this.okButton.text('Load');
-                this.displayFiles = true;
             }
-        } else {
-            console.log('No opts');
-        }
+        } 
 
         let initialfilename=null;
         if (opts!==null) {
             if (opts.initialFilename)
                 initialfilename=opts.initialFilename;
         }
+
+        this.updateDialog(list,startDirectory,rootDirectory,initialfilename);
+        this.modal.dialog.modal('show');
+    }
+    
+    updateDialog(list,startDirectory,rootDirectory,initialfilename=null) {
         
         this.fileList = list;
         this.currentDirectory = startDirectory;
-
-
+        
         //keep track of the current directory for the navbar
         this.currentPath = startDirectory;
         this.container.find('.bisweb-file-navbar').empty();
-
-
+        
+        
         let filterbar=this.container.find('.bisweb-file-filterbar');
-        if (this.currentFilters.length<1 || this.displayFiles===false) {
+        if (this.currentFilters.length<1) { 
             filterbar.empty();
             this.activeFilterList=[];
         } else if (this.newFilters===true) {
@@ -282,8 +286,6 @@ class SimpleFileDialog {
                 sel.append($(b));
             });
 
-            console.log('adding ', this.currentFilters.join('\n\t'));
-            
             for (let i=0;i<this.currentFilters.length;i++) {
 
                 if (this.currentFilters[i].extensions.length>0) {
@@ -296,7 +298,7 @@ class SimpleFileDialog {
 
         this.updateTree(list,initialfilename,rootDirectory);
 
-        this.modal.dialog.modal('show');
+
     }
 
     /**
@@ -330,16 +332,7 @@ class SimpleFileDialog {
                      });
 
 
-        if (!this.displayFiles) {
-            let len=list.length-1;
-            for (let i = len; i >=0; i=i-1) {
-                if (list[i].type !== 'directory') {
-                    list.splice(i, 1);
-                    i--;
-                } 
-            }
-        } else if (this.activeFilterList.length>0) {
-            console.log('Filtering with',this.activeFilterList);
+        if (this.activeFilterList.length>0) {
             let len=list.length-1;
             for (let i = len; i >=0; i=i-1) {
                 if (list[i].type !== 'directory') {
@@ -443,7 +436,6 @@ class SimpleFileDialog {
         }
 
         
-//        console.log('Path=',this.currentPath,'root=',rootDirectory,' folders=',folders.join(', '));
         
         for (let i=folders.length-1;i>=0;i=i-1) {
             if (folders[i].length<1)
@@ -469,7 +461,7 @@ class SimpleFileDialog {
             let button = $(`<button type='button' class='btn btn-sm btn-link' style='margin:0px'>${b}${name}</button>`);
             button.on('click', (event) => {
                 event.preventDefault();
-                this.fileListFn(newPath);
+                this.changeDirectory(newPath);
             });
             
             navbar.append(button);
@@ -587,14 +579,8 @@ class SimpleFileDialog {
             }
         });
             
-        let userPreferencesLoaded = userPreferences.webLoadUserPreferences(bisdbase);
-        userPreferencesLoaded.then( () => {
-            let f=null;
-            try {
-                f= userPreferences.getItem('favoriteFolders');
-            } catch(e) {
-                console.log(e);
-            }
+
+        userPreferences.safeGetItem('favoriteFolders').then( (f) => {
             if (f) {
                 this.favorites=f;
                 this.addAllFavorites(pillsBar);
@@ -602,18 +588,6 @@ class SimpleFileDialog {
         }).catch( (e) => {
             console.log('Error',e);
         });
-    }
-    
-    /**
-       * @returns {Boolean} if visible return true
-       */
-    isVisible() {
-        let vis=this.modal.dialog.css('display');
-        if (vis==='block') {
-            return true;
-        } 
-
-        return false;
     }
     
 
@@ -624,8 +598,13 @@ class SimpleFileDialog {
      * @param {Array} filtersList- A string set of file extensions
      * @returns A properly formatted filename
      */
-    fixFilename(name, filterList) {
+    addExtensionToFilnameIfNeeded(name, filterList) {
+        if (!filterList)
+            return name;
 
+        if (filterList.length<1)
+            return name;
+        
         for (let i=0;i<filterList.length;i++) {
             let filter=filterList[i];
             let nl=name.length;

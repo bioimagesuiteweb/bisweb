@@ -41,59 +41,16 @@ const userPreferences = {
     filesource : 'local',
     showwelcome : true,
     favoriteFolders : [],
+    internal : false,
+};
+
+const expobj = {
+    loadedPromise : null
 };
 
 
-
-/** 
- * Given a string returns one of 'RAS', 'LPS' or 'None'
- * true maps to RAS, all else to 'None'
- * @alias biswebUserPreferences.santizeOrientationOnLoad
- * @param {String} name - the input orientation name
- * @returns {String} - the output orientation name
- */
-
-let sanitizeOrientationOnLoad=function(name) {
-
-    if (name==='Auto')
-        return userPreferences['orientationOnLoad'];
-    
-    if (['RAS','LPS','LAS', 'None'].indexOf(name)>=0)
-        return name;
-
-    if (name === undefined || name === null)
-        return userPreferences['orientationOnLoad'];
-    
-    if (name===true)
-        return 'RAS';
-    
-    return "None";
-};
-
-
-/** 
- * Sets the orientation to a given name. Calls sanitizeOrientationOnLoad to clean this up first
- * @alias biswebUserPreferences.setImageOrientationOnLoad
- * @param {String} name - the input orientation name
- * @param {String} comment - an optional string for console.log logging output
- */
-let setImageOrientationOnLoad=function(name='',comment='') {
-
-    userPreferences['orientationOnLoad']=sanitizeOrientationOnLoad(name);
-    count=count+1;
-    if (comment!==null && count===1)
-        console.log(',,,, Setting forcing orientationOnLoad to: '+userPreferences['orientationOnLoad']+' (from '+name+'), '+comment);
-};
-
-/** 
- * Returns the  ImageOrientationOnLoad setting
- * @alias biswebUserPreferences.getImageOrientationOnLoad
- * @returns {String} - the current force orientation on load
- */
-let getImageOrientationOnLoad=function() {
-    return userPreferences['orientationOnLoad'];
-};
-
+// ------------------------------------------------------------------------------------------
+// Internal Functions
 
 /** 
  * @alias biswebUserPreferences.getDefaultFileName
@@ -121,7 +78,8 @@ let getDefaultFileName=function() {
 let parseUserPreferences=function(obj) {
 
     Object.keys(obj).forEach((key) => {
-        userPreferences[key]=obj[key];
+        if (obj[key]!== undefined)
+            userPreferences[key]=obj[key];
     });
 
     // Make sure this is sane
@@ -129,7 +87,7 @@ let parseUserPreferences=function(obj) {
     if (!userPreferences['orientationOnLoad'])
         userPreferences['orientationOnLoad']='None';
     else
-        setImageOrientationOnLoad(userPreferences['orientationOnLoad'],'None');
+        expobj.setImageOrientationOnLoad(userPreferences['orientationOnLoad'],'None');
 
 
     if (userPreferences['showwelcome']!==false)
@@ -210,6 +168,75 @@ let webLoadUserPreferences=function(dbase=null) {
     });
 };
 
+// Internal Functions
+// ------------------------------------------------------------------------------------------
+
+/** 
+ * Given a string returns one of 'RAS', 'LPS' or 'None'
+ * true maps to RAS, all else to 'None'
+ * @alias biswebUserPreferences.santizeOrientationOnLoad
+ * @param {String} name - the input orientation name
+ * @returns {String} - the output orientation name
+ */
+
+expobj.sanitizeOrientationOnLoad=function(name) {
+
+    if (name==='Auto')
+        return userPreferences['orientationOnLoad'];
+    
+    if (['RAS','LPS','LAS', 'None'].indexOf(name)>=0)
+        return name;
+
+    if (name === undefined || name === null)
+        return userPreferences['orientationOnLoad'];
+    
+    if (name===true)
+        return 'RAS';
+    
+    return "None";
+};
+
+
+/** 
+ * Sets the orientation to a given name. Calls sanitizeOrientationOnLoad to clean this up first
+ * @alias biswebUserPreferences.setImageOrientationOnLoad
+ * @param {String} name - the input orientation name
+ * @param {String} comment - an optional string for console.log logging output
+ */
+expobj.setImageOrientationOnLoad=function(name='',comment='') {
+
+    userPreferences['orientationOnLoad']=expobj.sanitizeOrientationOnLoad(name);
+    count=count+1;
+    if (comment!==null && count===1)
+        console.log('+++++ Setting forcing orientationOnLoad to: '+userPreferences['orientationOnLoad']+' (from '+name+'), '+comment);
+};
+
+/** 
+ * Returns the  ImageOrientationOnLoad setting
+ * @alias biswebUserPreferences.getImageOrientationOnLoad
+ * @returns {String} - the current force orientation on load
+ */
+expobj.getImageOrientationOnLoad=function() {
+    return userPreferences['orientationOnLoad'];
+};
+
+/** getImageOrientationOnLoad but ensures loadedPromise is fuilfilled
+ * Returns the  ImageOrientationOnLoad setting
+ * @alias biswebUserPreferences.safeGetImageOrientationOnLoad
+ * @returns {Promise} - whose payload the current force orientation on load
+ */
+expobj.safeGetImageOrientationOnLoad=function() {
+    return new Promise( (resolve,reject) => {
+        expobj.loadedPromise.then( () => {
+            let or=expobj.getImageOrientationOnLoad();
+            resolve(or);
+        }).catch( (e) => {
+            reject(e);
+        });
+    });
+};
+
+
 
 /** 
  * Saves the user preferences from a file object or ${HOME}/.bisweb
@@ -217,7 +244,7 @@ let webLoadUserPreferences=function(dbase=null) {
  * @param {String} filename - the current filename or ${HOME}/.bisweb
  * @returns {Promise} - if successful
  */
-let saveUserPreferences=function(fname=null) {
+expobj.saveUserPreferences=function(fname=null) {
     
     if (fname === null) 
         fname=getDefaultFileName();
@@ -236,7 +263,7 @@ let saveUserPreferences=function(fname=null) {
     return true;
 };
 
-let printUserPreferences=function() {
+expobj.printUserPreferences=function() {
     console.log(JSON.stringify(userPreferences,null,2));
 };
 
@@ -246,10 +273,10 @@ let printUserPreferences=function() {
  * @returns {Promise} - resolved if all is well
  */
 
-let storeUserPreferences=function(dbase) {
+expobj.storeUserPreferences=function(dbase) {
 
-    if (genericio.getenvironment()==='electron') {
-        if (saveUserPreferences())
+    if (genericio.getenvironment()!=='browser') {
+        if (expobj.saveUserPreferences())
             return Promise.resolve();
         return Promise.reject();
     }
@@ -266,14 +293,35 @@ let storeUserPreferences=function(dbase) {
 /** 
  * Returns the entire user preferences object
  * @alias biswebUserPreferences.getItem
- * @returns {String} - the current item key
+ * @param {String} item  the current item key
+ * @returns {String} - the value of the key
  */
-let getItem=function(item) {
+expobj.getItem=function(item) {
     let a=userPreferences[item];
     if (a===undefined)
         return null;
     return a;
 };
+
+/** getItem but ensures loadedPromise is fuilfilled
+ * @alias biswebUserPreferences.safeGetItem
+ * @param {String} item  the current item key
+ * @returns {Promise} - whose payload is the value of the key
+ */
+
+expobj.safeGetItem=function(item) {
+
+    return new Promise( (resolve,reject) => {
+        expobj.loadedPromise.then( () => {
+            resolve(expobj.getItem(item));
+        }).catch( (e) => {
+            reject(e);
+        });
+    });
+};
+
+
+// -------------------------------------------------------    
 
 /** 
  * Returns the entire user preferences object
@@ -281,7 +329,7 @@ let getItem=function(item) {
  * @returns {String} key - the current key
  * @returns {String} value - the current value
  */
-let setItem=function(key,value,save=false) {
+expobj.setItem=function(key,value,save=false) {
     if (key==="orientationOnLoad")
         this.setImageOrientationOnLoad(value);
     else
@@ -289,43 +337,20 @@ let setItem=function(key,value,save=false) {
 
     if (save) {
         if (genericio.getmode() === 'browser')  {
-            storeUserPreferences();
+            expobj.storeUserPreferences();
         } else {
-            saveUserPreferences();
+            expobj.saveUserPreferences();
         }
     }
 };
 
-// -------------------------------- On Load if in browser -----------------------
-// Load ${HOME}/.bisweb
-// ------------------------------------------------------------------------------
-if (genericio.getmode() !== 'browser')  {
-    console.log(',,,,');
-    let fname=nodeLoadUserPreferences();
-    if (fname!==null) {
-        console.log(",,,, bisweb commandline user preferences loaded from "+fname);
-        console.log(',,,, ',JSON.stringify(userPreferences));
-        console.log(',,,,');
-    } else {
-        console.log(',,,, Failed to read user preferences from default location');
-        setImageOrientationOnLoad(userPreferences['orientationOnLoad'],null);
-        fname=getDefaultFileName();
-        if (saveUserPreferences(fname))
-            console.log(',,,, \t created and saved user preferences in ',fname);
-        console.log(',,,,');
-    }
-}
 
 // ----------------------------
 // Export Functions
 // ----------------------------
 
-module.exports = {
-    getItem : getItem,
+/*    expobj.getItem=getItem;
     setItem : setItem,
-    //
-    nodeLoadUserPreferences : nodeLoadUserPreferences,
-    webLoadUserPreferences : webLoadUserPreferences,
     //
     storeUserPreferences :  storeUserPreferences,
     saveUserPreferences : saveUserPreferences,
@@ -335,5 +360,69 @@ module.exports = {
     sanitizeOrientationOnLoad : sanitizeOrientationOnLoad,
     setImageOrientationOnLoad : setImageOrientationOnLoad ,
     getImageOrientationOnLoad : getImageOrientationOnLoad,
+    //
+*/
+
+
+// -------------------------------- On Load if not in browser -----------------------
+// Load ${HOME}/.bisweb
+// ------------------------------------------------------------------------------
+
+let initializeCommandLine=function() {
+
+    if (expobj.loadedPromise!==null)
+        return;
+    
+    console.log(',,,,');
+    let fname=nodeLoadUserPreferences();
+    if (fname!==null) {
+        console.log(",,,, bisweb commandline user preferences loaded from "+fname);
+        console.log(',,,, ',JSON.stringify(userPreferences));
+        console.log(',,,,');
+    } else {
+        console.log(',,,, Failed to read user preferences from default location');
+        expobj.setImageOrientationOnLoad(userPreferences['orientationOnLoad'],null);
+        fname=getDefaultFileName();
+        if (expobj.saveUserPreferences(fname))
+            console.log(',,,, \t created and saved user preferences in ',fname);
+        console.log(',,,,');
+    }
+    // Resolve the promise for later
+    expobj.loadedPromise=Promise.resolve();
+};    
+
+
+
+
+// -------------------------------------------------
+// initialize function
+
+expobj.initialize=function(dbase) {
+
+    if (expobj.loadedPromise!==null) {
+        console.log('+++++ \t user preferences already initialized (or in process of being initialized)');
+        return expobj.loadedPromise;
+    }
+    
+    if (genericio.getmode() === 'browser')  {
+        expobj.loadedPromise=webLoadUserPreferences(dbase);
+        expobj.loadedPromise.then(() => {
+            expobj.storeUserPreferences(dbase);
+        });
+    } else {
+        initializeCommandLine();
+    }
+    return expobj.loadedPromise;
 };
 
+// -------------------------- auto execute code -----------------------------
+// If one command line, initialize automatically
+if (genericio.getmode() !== 'browser')  {
+    initializeCommandLine();
+} else {
+    Window.biswebpref=expobj;
+}
+
+
+
+module.exports=expobj;

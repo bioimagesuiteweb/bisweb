@@ -48,6 +48,10 @@ const imagepath=webutil.getWebPageImagePath();
  */
 class ConnectivityApplicationElement extends ViewerApplicationElement {
 
+    constructor() {
+        super();
+        this.extraManualHTML='tools/conncontrol.html';
+    }
 
     //  ---------------------------------------------------------------------------
 
@@ -236,12 +240,14 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         var imenu=webutil.createTopMenuBarMenu("Parcellations",menubar);
         webutil.createMenuItem(imenu,'Use the Shen Atlas',
                                function() {
+                                   control.clearmatrices();
                                    loadatlas(`${imagepath}/gray_highres_groupncut150_right5_left1_emily_reord_new.nii.gz`,'RAS');
                                });
         webutil.createMenuItem(imenu,'Use the AAL Atlas',
                                function() {
                                    let img=new BisWebImage();
                                    img.load(`${imagepath}/AAL_1mm_ras.nii.gz`,'RAS').then( () => {
+                                       control.clearmatrices();
                                        control.importparcellation(img,'AAL Atlas');
                                    });
                                });
@@ -272,18 +278,14 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         
         
         // ------------------------------------ Help Menu ----------------------------
-        
-        var helpmenu=webutil.createTopMenuBarMenu("Help",menubar);
-        webutil.createMenuItem(helpmenu,'About this application',function() {  control.about(); });
+
+        let helpmenu=this.createHelpMenu(menubar);
         webutil.createMenuItem(helpmenu,''); // separator
         helpmenu.append($("<li><a href=\"https://www.nitrc.org/frs/?group_id=51\" target=\"_blank\" rel=\"noopener\" \">Download Parcellation</a></li>"));
         webutil.createMenuItem(helpmenu,''); // separator
         webutil.createMenuItem(helpmenu,'Load Sample Matrices',function() {
             control.loadsamplematrices([`${imagepath}/pos_mat.txt`,`${imagepath}/neg_mat.txt`]);
         });
-        
-
-
         
         // ------------------------------------ Initialize ---------------------------
         

@@ -33,9 +33,9 @@ let terminateReject=null;
 
 // ------------------------------- Testing Code --------------------------------------------------
 
-const createTestingServer=function(serverpath=null,timeout=1000) {
+const createTestingServer=function(wsmode=false,timeout=500) {
 
-    serverpath=serverpath || path.join(__dirname,'../bin');
+    const serverpath= path.join(__dirname,'../bin');
     
     let servername=path.resolve(serverpath,"bisfileserver.js");
 
@@ -44,6 +44,8 @@ const createTestingServer=function(serverpath=null,timeout=1000) {
     let tmpDir=tempfs.mkdirSync('test_image');
     console.log(colors.blue('____ created temporary directory:'+tmpDir));
     let cmd=`node ${servername} --tmpdir ${tmpDir}`;
+    if (!wsmode)
+        cmd=cmd+' --old';
     
     return new Promise( (resolve,reject) => {
 

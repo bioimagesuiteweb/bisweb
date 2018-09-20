@@ -28,6 +28,7 @@ class ExtractSliceModule extends BaseModule {
     constructor() {
         super();
         this.name = 'extractSlice';
+        this.lastInputDimensions=[0,0,0];
     }
 
     //0 = Sagittal, 1 = Coronal, 2 = Axial
@@ -111,7 +112,7 @@ class ExtractSliceModule extends BaseModule {
     }
 
 
-    updateOnChangedInput(inputs,controllers=null,guiVars=null) {
+    updateOnChangedInput(inputs,guiVars=null) {
 
         let newDes = this.getDescription();
         inputs = inputs || this.inputs;
@@ -121,6 +122,12 @@ class ExtractSliceModule extends BaseModule {
             return newDes;
 
         let dim = img.getDimensions();
+        if (this.compareArrays(dim,this.lastInputDimensions,0,2)<1) {
+            return;
+        }
+        this.lastInputDimensions=dim;
+
+        
         let maxd=Math.max( dim[0],dim[1],dim[2])-1;
 
         for (let i = 0; i < newDes.params.length; i++) {
@@ -137,11 +144,12 @@ class ExtractSliceModule extends BaseModule {
                     newDes.params[i].low = 0;
                     newDes.params[i].high = dim[4]-1; 
                 }
+                if (guiVars)
+                    guiVars[name]=newDes.params[i].default;
 
-                if (controllers!==null)
-                    this.updateSingleGUIElement(newDes.params[i],controllers[name],guiVars,name);
             }
         }
+        this.recreateGUI=true;
         return newDes;
     }
 

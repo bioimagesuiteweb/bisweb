@@ -19,7 +19,7 @@ cmake_minimum_required(VERSION 3.5)
 
 PROJECT(BISWEB)
 
-SET (BISWEB_VERSION "0.9.7")
+SET (BISWEB_VERSION "0.9.8")
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Core Project
@@ -184,6 +184,9 @@ MARK_AS_ADVANCED(BIS_UNITTEST)
 OPTION(BIS_MODULETEST "Enable MODULE Tests" ON)
 MARK_AS_ADVANCED(BIS_MODULETEST)
 
+OPTION(BIS_INSTALLTESTS "Install Module Tests & Data" OFF)
+MARK_AS_ADVANCED(BIS_INSTALLTESTS)
+
 # ---------------------------------------------------------------------------------------------
 # License File depending on whether we are using the GPL plugin or not
 # ---------------------------------------------------------------------------------------------
@@ -299,8 +302,12 @@ IF (BIS_A_EMSCRIPTEN)
   SET(JSFILES ${H1} ${H2} ${H3})
 
 
-  SET (WNAMELIST bisweb.js bisweb-test.js bisfileserver.js)
+  SET (WNAMELIST bisweb.js)
+  IF (BIS_INSTALLTESTS)
+    SET (WNAMELIST ${WNAMELIST} bisweb-test.js)
+  ENDIF (BIS_INSTALLTESTS)
   GET_FILENAME_COMPONENT(WEBPCONFIG ${PROJECT_SOURCE_DIR}/../config/app.config.js ABSOLUTE)
+  GET_FILENAME_COMPONENT(WEBPCONFIGMOCHA ${PROJECT_SOURCE_DIR}/../config/mocha.config.js ABSOLUTE)
 
   FOREACH(item ${WNAMELIST})
     SET (OUTSCRIPT ${LIBRARY_OUTPUT_PATH}/${item})
@@ -314,16 +321,10 @@ IF (BIS_A_EMSCRIPTEN)
       COMMAND webpack-cli --entry ${INSCRIPT} --config ${WEBPCONFIG} --output-path ${LIBRARY_OUTPUT_PATH} --output-filename ${item}
       )
     add_custom_target(${item} ALL DEPENDS ${OUTSCRIPT})
-    if (${item} MATCHES "bisweb.js")
-        install (FILES ${OUTSCRIPT} DESTINATION bisweb/lib
-          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
-    endif (${item} MATCHES "bisweb.js")
-    if (${item} MATCHES "bisfileserver.js")
-        install (FILES ${OUTSCRIPT} DESTINATION bisweb/server
-          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
-         install (FILES ${PROJECT_SOURCE_DIR}/../js/bin/example-server-config.json DESTINATION bisweb/server
-          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
-    endif (${item} MATCHES "bisfileserver.js")
+    install (FILES ${OUTSCRIPT} DESTINATION bisweb/lib
+      PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
+
+  
   ENDFOREACH(item ${WNAMELIST})
 
 
@@ -385,6 +386,25 @@ IF (BIS_A_EMSCRIPTEN)
   ENDIF (BIS_WASMLIB_COPY)
 
   # ---------------------------------------------------------------------------------------------
+
+  IF (BIS_INSTALLTESTS)
+    GET_FILENAME_COMPONENT(WEBPCONFIG ${PROJECT_SOURCE_DIR}/../config/app.config.js ABSOLUTE)
+
+    SET (OUTSCRIPT test_module.js)
+    SET (INSCRIPT ${PROJECT_SOURCE_DIR}/../test/test_module.js)
+
+    GET_FILENAME_COMPONENT(INSCRIPT ${INSCRIPT} ABSOLUTE)
+    message("INSCRIPT=${INSCRIPT}")    
+    add_custom_command(OUTPUT ${OUTSCRIPT}
+      DEPENDS ${MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JSFILES}  ${LIBNAME} ${INSCRIPT} ${JS_WRAP_OUTPUT} ${WEBPACK_WASM_MODULE}
+      PRE_BUILD COMMENT "Creating webpack-cli test_module.js"
+      COMMAND webpack-cli --entry ${INSCRIPT} --config ${WEBPCONFIG} --output-path ${LIBRARY_OUTPUT_PATH} --output-filename test_module.js
+      )
+    add_custom_target(module_test ALL DEPENDS ${OUTSCRIPT})
+    install (FILES ${PROJECT_BINARY_DIR}/lib/${OUTSCRIPT} DESTINATION bisweb/test
+          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
+  ENDIF (BIS_INSTALLTESTS)
+    
   
 ELSE(BIS_A_EMSCRIPTEN)
 
@@ -500,6 +520,11 @@ ELSE(BIS_A_EMSCRIPTEN)
       ENDFOREACH (item ${TLIST})
       MESSAGE("~~~~~ Added ${COUNT} python/unittest tests")
     ENDIF(BIS_UNITTEST)
+
+    IF (BIS_INSTALLTESTS)
+      install (FILES ${PROJECT_SOURCE_DIR}/../test/test_module.py DESTINATION bisweb/test)
+    ENDIF (BIS_INSTALLTESTS)
+
   ENDIF(BIS_A_PYTHON)
 
   # ---------------
@@ -547,6 +572,16 @@ MARK_AS_ADVANCED(BIS_EXTRAPATH)
 MARK_AS_ADVANCED(BIS_WEB_OPT)
 MARK_AS_ADVANCED(BIS_A_DEVEL)
 
+
+# ----------------------------------------------------------
+# If installing tests
+
+IF (BIS_INSTALLTESTS)
+  install (FILES ${PROJECT_SOURCE_DIR}/../test/module_tests.json DESTINATION bisweb/test)
+  install (DIRECTORY ${PROJECT_SOURCE_DIR}/../test/testdata DESTINATION bisweb/test)
+  install (FILES ${PROJECT_SOURCE_DIR}/../various/txt/README_test.md DESTINATION bisweb/test)
+ENDIF (BIS_INSTALLTESTS)
+
 # ----------------------------------------------------------
 # Run Doxygen
 # ----------------------------------------------------------
@@ -554,3 +589,4 @@ ADD_CUSTOM_TARGET(doc COMMAND doxygen config/Doxyfile WORKING_DIRECTORY ${PROJEC
 
 
 INCLUDE (${PROJECT_SOURCE_DIR}/CPackOptions.cmake)
+

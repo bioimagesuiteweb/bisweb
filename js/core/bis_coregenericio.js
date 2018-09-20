@@ -534,8 +534,9 @@ var writetextdatanode = function (filename, data, donecallback, errorcallback) {
  * @param {Uint8Array} data - the data to write (or optionally array)
  * @param {BisCoreGenericIO.MessageCallback} donecallback - callback function if done
  * @param {BisCoreGenericIO.MessageCallback} errror - error callback function
+ * @param {Boolean} donotcompress - if true then no compression is done even if filename ends in .gz
  */
-var writebinarydatanode = function (filename, data, donecallback, errorcallback) {
+var writebinarydatanode = function (filename, data, donecallback, errorcallback,nocompress=false) {
 
  
     let donecompressing = function (cdata, mode) {
@@ -560,7 +561,7 @@ var writebinarydatanode = function (filename, data, donecallback, errorcallback)
         }
     };
 
-    if(iscompressed(filename)) {
+    if(iscompressed(filename) && nocompress===false) {
         let buf = createBuffer(data);
         zlib.gzip(buf, function (err, data) {
             if (err) {
@@ -891,7 +892,7 @@ var getrimrafmodule = function () {
 let getimagepath=function() {
 
     let imagepath="";
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && !inelectron) {
         let scope=window.document.URL.split("?")[0];
         let index=scope.lastIndexOf("/");
         if (scope.indexOf("external")>0)  {
@@ -901,8 +902,17 @@ let getimagepath=function() {
             scope=scope.substr(0,index)+"/images";
         }
         imagepath=scope;
+    } else if (inelectron) {
+        let scope=window.document.URL.split("?")[0];
+        let index=scope.lastIndexOf("/");
+        // First 8 characters are file:///
+        const os=getosmodule();
+        if (os.platform()==='win32')
+            scope=scope.substr(8,index-8)+"/images";
+        else
+            scope=scope.substr(7,index-7)+"/images";
+        imagepath=scope;
     } else {
-        
         const path=getpathmodule();
         console.log('Dirname=',__dirname);
         imagepath=path.resolve(__dirname, '../../web/images');
@@ -939,6 +949,8 @@ const biscoregenericio = {
     readbinarydata: readbinarydata,
     writetextdata : writetextdata,
     writebinarydata : writebinarydata,
+    writetextdatanode : writetextdatanode,
+    writebinarydatanode : writebinarydatanode,
     getimagepath : getimagepath,
 };
 

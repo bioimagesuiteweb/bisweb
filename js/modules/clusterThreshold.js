@@ -33,6 +33,7 @@ class ClusterThresholdModule extends BaseModule {
     constructor() {
         super();
         this.name = 'clusterThreshold';
+        this.lastInputRange=[0,0];
     }
 
     createDescription() {
@@ -117,6 +118,8 @@ class ClusterThresholdModule extends BaseModule {
         console.log('oooo invoking: clusterThresholdImage with vals', JSON.stringify(vals));
         let input = this.inputs['input'];
 
+        console.log('\n ClusterThreshold\n--------------------\ncurrent=',input.getDescription());
+        
         return new Promise((resolve, reject) => {
             biswrap.initialize().then(() => {
                 this.outputs['output'] = biswrap.clusterThresholdImageWASM(input, {
@@ -137,7 +140,7 @@ class ClusterThresholdModule extends BaseModule {
     }
 
 
-    updateOnChangedInput(inputs,controllers=null,guiVars=null) {
+    updateOnChangedInput(inputs,guiVars=null) {
 
         let newDes = this.getDescription();
         inputs = inputs || this.inputs;
@@ -145,13 +148,20 @@ class ClusterThresholdModule extends BaseModule {
         if (current_input===null)
             return newDes;
 
+        
         let dim = current_input.getDimensions();
         let imagerange = current_input.getIntensityRange();
-        let maxv=Math.max(Math.abs(imagerange[0]),Math.abs(imagerange[1]));
 
+        if (this.compareArrays(imagerange,this.lastInputRange,0,1)<1.0) {
+            return;
+        }
+        this.lastInputRange=imagerange;
+
+        let maxv=Math.max(Math.abs(imagerange[0]),Math.abs(imagerange[1]));
+        
         for (let i = 0; i < newDes.params.length; i++) {
             let name = newDes.params[i].varname;
-            if (name === 'threshold' || name ==='frame' || name ==='component') {
+            if (name === 'threshold' || name ==='frame' || name ==='component' || name==='size') {
                 if(name === 'threshold' ) {
                     newDes.params[i].low = 0.01*maxv;
                     newDes.params[i].high = maxv;
@@ -164,12 +174,17 @@ class ClusterThresholdModule extends BaseModule {
                     newDes.params[i].low = 0;
                     newDes.params[i].high = dim[4]-1;
                     newDes.params[i].default = 1;
+                } else if (name === 'size') {
+                    newDes.params[i].low=5;
+                    newDes.params[i].high=Math.round(dim[0]*dim[1]*dim[2]*0.001);
+                    newDes.params[i].default=100;
                 }
                 
-                if (controllers!==null)
-                    this.updateSingleGUIElement(newDes.params[i],controllers[name],guiVars,name);
+                if (guiVars)
+                    guiVars[name]=newDes.params[i].default;
             }
         }
+        this.recreateGUI=true;
         return newDes;
     }
     

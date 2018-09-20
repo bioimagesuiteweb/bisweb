@@ -43,25 +43,25 @@ class GrapherModule extends HTMLElement {
         super();
 
         this.lastviewer = null;
-        this.desired_width=900;
-        this.desired_height=750;
+        this.desired_width=500;
+        this.desired_height=500;
         this.lastdata = null;
         this.graphcanvasid = null;
+        this.lastShowVolume=false;
+        this.graphWindow=null;
+        this.resizingTimer=null;
     }
 
     createGUI() {
 
         if (this.graphcanvasid!==null)
             return;
-        
+
         this.graphcanvasid = webutil.getuniqueid();
         this.graph = null;
         this.graphWindow = document.createElement('bisweb-dialogelement');                          
-        this.graphWindow.create("VOI Timeseries Plotter", this.desired_width, this.desired_height, 20,100,5000,true);
+        this.graphWindow.create("VOI Tool", this.desired_width, this.desired_height, 20,100,100,false);
         this.graphWindow.widget.css({ "background-color": "#222222" });
-        let w=this.desired_width;
-        let h=this.desired_height;
-        this.graphWindow.widget.append($(`<canvas id="${this.graphcanvasid}" width="${w-10}" height="${h-160}"></canvas></div>`));
 
         let bbar=this.graphWindow.getFooter();
 
@@ -83,7 +83,7 @@ class GrapherModule extends HTMLElement {
             },
             position: "right",
             parent: bbar
-        }).click(() => { this.rePlotGraph(false); });
+        }).click(() => { this.rePlotGraph(false).catch( () => { } ); });
 
         webutil.createbutton({
             name: 'Plot VOI Volumes',
@@ -94,7 +94,7 @@ class GrapherModule extends HTMLElement {
             },
             position: "left",
             parent: bbar
-        }).click(() => { this.rePlotGraph(true); });
+        }).click(() => { this.rePlotGraph(true).catch( () => { } );});
 
         webutil.createbutton({
             name: 'Export as CSV',
@@ -126,7 +126,9 @@ class GrapherModule extends HTMLElement {
             },
             position: "right",
             parent: bbar
-        }).click(() => { this.graphWindow.hide(); });
+        }).click(() => {
+            this.graphWindow.hide();
+        });
 
 
         bbar.tooltip();
@@ -151,7 +153,7 @@ class GrapherModule extends HTMLElement {
             this.lastviewer.removeResizeObserver(this);
         
         this.lastviewer=orthoElement;
-        this.lastviewer.addResizeObserver(this);
+
         
         let image = orthoElement.getimage();
         let objectmap = orthoElement.getobjectmap();
@@ -187,27 +189,34 @@ class GrapherModule extends HTMLElement {
             }
         }
         
-        this.plotGraph(x, y, matrix.numvoxels);
+        this.plotGraph(x, y, matrix.numvoxels).then( () => {
+            this.lastviewer.addResizeObserver(this);
+        }).catch( (e) => {
+            console.log(e,e.stack);
+        });
     }
 
     plotGraph(x, y, numvoxels) {
 
-        this.createGUI();
         
         this.lastdata = {
             x: x,
             y: y,
             numvoxels: numvoxels
         };
-        this.rePlotGraph(false);
+        return this.rePlotGraph(false);
 
     }
 
     rePlotGraph(showVolume = false) {
 
+        this.lastShowVolume=showVolume;
+
+
+        
         if (this.lastdata.y < 1) {
             webutil.createAlert('No  objecmap in memory', true);
-            return;
+            return Promise.reject();
         }
 
         let dim = numeric.dim(this.lastdata.y);
@@ -290,6 +299,29 @@ class GrapherModule extends HTMLElement {
             d_type = 'bar';
         }
 
+        this.createGUI();
+        this.graphWindow.show();
+        let dm=this.getCanvasDimensions();
+        if (!dm) {
+            return Promise.reject("Bad Dimensions");
+        }
+        let cw=dm[0];
+        let ch=dm[1];
+        
+
+        let cnv=$(`<canvas id="${this.graphcanvasid}" width="${cw}" height="${ch}"></canvas></div>`);
+        this.graphWindow.widget.append(cnv);
+        cnv.css({
+            'background-color' : '#555555',
+            'position' : 'absolute',
+            'left' : '5px',
+            'top'  : '8px',
+            'margin' : '0 0 0 0',
+            'padding' : '0 0 0 0',
+            'height' : `${ch}px`,
+            'width'  : `${cw}px`,
+        });
+
 
         let canvas = document.getElementById(this.graphcanvasid);
         let context = canvas.getContext("2d");
@@ -297,18 +329,18 @@ class GrapherModule extends HTMLElement {
 
         if (this.graph !== null)
             this.graph.destroy();
+        
 
-        this.graph = new Chart(canvas, {
-            type: d_type,
-            data: data,
-            options: options
+        return new Promise( (resolve) => {
+            setTimeout(() => {
+                this.graph = new Chart(canvas, {
+                    type: d_type,
+                    data: data,
+                    options: options
+                });
+                resolve();
+            },1);
         });
-
-
-        setTimeout(() => {
-            this.graphWindow.show();
-            this.handleresize(null);
-        }, 1);
     }
 
     /**
@@ -341,7 +373,7 @@ class GrapherModule extends HTMLElement {
                         pointRadius: 0,
                         fill: false
                     };
-                    console.log('Adding ', i, y[i]);
+
                 }
             }
             labels = x;
@@ -485,68 +517,88 @@ class GrapherModule extends HTMLElement {
      * handles resize event from viewer
      * @param {array} dim - [ width,height] of viewer
      */
-    handleresize(dim) {
-        
-        if (!this.graphWindow.isVisible())
-            return;
-        
-        if (dim===null) {
-            if (this.lastviewer)
-                dim=this.lastviewer.getViewerDimensions();
-            else 
-                dim=[ window.innerWidth,window.innerHeight ];
+    handleresize() {
+
+        if (this.resizingTimer) {
+            clearTimeout(this.resizingTimer);
+            this.resizingTimer=null;
         }
 
-        let val=this.graphWindow.dialog.css(['left','width','top','height']);
-        let left=parseFloat(val['left'].replace(/px/g,''));
-        let width=parseFloat(val['width'].replace(/px/g,''));
-        let top=parseFloat(val['top'].replace(/px/g,''));
-        let height=parseFloat(val['height'].replace(/px/g,''));
-
-        let newwidth=dim[0]-30;
-        let newheight=dim[1]-60;
-        
-        if ( (width>=this.desired_width && left+width< dim[0]) &&
-             (height>=this.desired_height && top+height< dim[1])) {
+        if (this.graphWindow===null) {
             return;
         }
 
-        if (width>newwidth) {
-            width=newwidth;
-            left=15;
-        } else if (width<this.desired_width && newwidth>=this.desired_width) {
-            width=this.desired_width;
-        } else if (width<this.desired_width && newwidth>width) {
-            width=newwidth;
+        if (!this.graphWindow.isVisible()) {
+            this.getCanvasDimensions();
+            return;
         }
-             
-        if (height>newheight) {
-            height=newheight;
-            if (height<200)
-                height=200;
-            top=45;
-        } else if (height<this.desired_height && newheight>=this.desired_height) {
-            height=this.desired_height;
-        } else if (height<this.desired_height && newheight>height) {
-            height=newheight;
-            if (height<200)
-                height=200;
-        }             
 
 
-
-        this.graphWindow.dialog.css({'left': `${left}px`,
-                                     'width' :`${width}px`,
-                                     'top' : `${top}px`,
-                                     'height' : `${height}px`,
-                                     'min-width' :`${width}px` });
-        this.graphWindow.widget.css({ 'height' :`${height-120}px` });
+        const self=this;
+        this.resizingTimer=setTimeout( () => {
+            self.rePlotGraph(self.lastShowVolume).catch( (e) => {
+                console.log(e,e.stack);
+            });
+        },200);
         
-        this.graphWindow.content.css({'width' :`${width}px`,
-                                      'height' :`${height}px`,
-                                      'min-width' :`${width}px` });
-        
+    }
 
+
+    /** Resizes elements and returns the canvas dimensions
+     * @returns {array} - [ canvaswidth,canvasheight ]
+     */
+    getCanvasDimensions() {
+
+        let dim=[200,200];
+        
+        if (this.lastviewer) {
+            dim=this.lastviewer.getViewerDimensions();
+        } else if (dim===null) {
+            dim=[ window.innerWidth,window.innerHeight ];
+        }
+        
+        let width=dim[0]-20;
+        let height=dim[1]-20;
+        let left=10;
+        let top=40;
+
+        this.graphWindow.dialog.css({
+            'left': `${left}px`,
+            'width' :`${width}px`,
+            'top' : `${top}px`,
+            'height' : `${height}px`,
+        });
+
+        let innerh=height-120;
+        let innerw=width-10;
+        this.graphWindow.widget.css({
+            'margin' : '0 0 0 0',
+            'padding' : '0 0 0 0',
+            'height' : `${innerh}px`,
+            'width'  : `${innerw}px`,
+            "overflow-y": "hidden",
+            "overflow-x": "hidden" ,
+        });
+        this.graphWindow.widgetbase.css({
+            'height' : `${innerh}px`,
+            'width'  : `${innerw}px`,
+            'background-color' : '#222222',
+            'margin' : '0 0 0 0',
+            'padding' : '0 0 0 0',
+            "overflow-y": "hidden",
+            "overflow-x": "hidden" ,
+        });
+
+        this.graphWindow.footer.css({
+            "height" : "40px",
+            'margin' : '3 3 3 3',
+            'padding' : '0 0 0 0',
+            "overflow-y": "hidden",
+            "overflow-x": "hidden" ,
+        });
+
+        this.graphWindow.widget.empty();
+        return [ innerw, innerh-15 ];
     }
 
 }

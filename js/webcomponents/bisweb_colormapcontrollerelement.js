@@ -135,6 +135,26 @@ class ColormapControllerElement extends HTMLElement {
     }
 
     /**
+     * @returns {Boolean} - true if single frame
+     */
+    showClusterControls() {
+
+        if (!this.inFunctionalOverlayMode())
+            return false;
+        
+        if (!this.internal.objectmap)
+            return false;
+
+        let dim=this.internal.objectmap.getDimensions();
+        if (dim[3]*dim[4]>1) {
+            return false;
+        }
+        
+        return true;
+    }
+
+
+    /**
      * sets the image and function to call 
      * @param {BisImage} volume -  image to manage
      * @param {function} callback - function to call (on viewer) to update it
@@ -285,7 +305,7 @@ class ColormapControllerElement extends HTMLElement {
         let sumuthr=Math.abs(this.data.maxth-this.olddata.maxth);
         let sumopa=Math.abs(this.data.opacity-this.olddata.opacity);
         let sumclu=0;
-        if (this.inFunctionalOverlayMode()) 
+        if (this.showClusterControls()) 
             sumclu=Math.abs(this.data.clustersize-this.olddata.clustersize);
 
         let sum=sumlthr+sumuthr+sumopa+sumclu;
@@ -299,7 +319,7 @@ class ColormapControllerElement extends HTMLElement {
         this.olddata.funcmode=this.data.funcmode;
         this.olddata.outmode= this.data.outmode;
         this.olddata.opacity=this.data.opacity;
-        if (this.inFunctionalOverlayMode()) 
+        if (this.showClusterControls()) 
             this.olddata.clustersize=this.data.clustersize;
         let opa=Math.round(Math.sqrt(this.data.opacity)*255);
         
@@ -386,6 +406,7 @@ class ColormapControllerElement extends HTMLElement {
                                             clustersize : this.data.clustersize,
                                             mapfunction : util.mapoverlayfactory(this.data.minth,this.data.maxth,opa,cmode,usef4),
                                           };
+                
             }
         }
         return;
@@ -501,7 +522,7 @@ class ColormapControllerElement extends HTMLElement {
 
         this.internal.functionalcontrollers.push(this.internal.minobjectmap);
         this.internal.functionalcontrollers.push(this.internal.maxobjectmap);
-        if (this.inFunctionalOverlayMode()) {
+        if (this.showClusterControls()) {
             this.internal.clusterslider =  folder.add(this.data,'clustersize').min(0).max(2000).step(1).name("Cluster Size");
             this.internal.functionalcontrollers.push(this.internal.clusterslider);
         } else {
@@ -691,6 +712,8 @@ class ColormapControllerElement extends HTMLElement {
             this.internal.basegui=basegui;
             f2 = basegui.addFolder('Image Color Mapping');
             this.internal.folder[0]=f2;
+            this.internal.folder[1]= this.internal.basegui.addFolder('Overlay Color Mapping');
+            
             let a1=f2.add(this.data,'minintensity',this.internal.imagerange[0],this.internal.imagerange[1]).name("Min Int");
             let a2=f2.add(this.data,'maxintensity',this.internal.imagerange[0],this.internal.imagerange[1]).name("Max Int");
             let a3=f2.add(this.data,'interpolate').name('Interpolate');
@@ -777,7 +800,14 @@ class ColormapControllerElement extends HTMLElement {
 
         return 1;
     }
-       
+
+    getClusterInfoData() {
+
+        if (this.internal.clusterinfo) {
+            return this.internal.clusterinfo.data || null;
+        }
+        return null;
+    }
 }
 
 

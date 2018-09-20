@@ -154,7 +154,12 @@ body {
     width:100%;
 }
 
-
+#manual {
+    padding: 10px;
+    text-align : center;
+    background-color : #0000000;
+    color : #ffffff;
+}
 
 #baselectbox {
     width:92%;

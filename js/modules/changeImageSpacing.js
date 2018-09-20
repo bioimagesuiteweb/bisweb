@@ -29,10 +29,13 @@ const BisWebImage = require('bisweb_image.js');
  * Resamples a given image to use a new set of voxel spacings. Can specify how voxels should be interpolated, either nearest-neighbor,
  * linear interpolation, or cubic interpolation.
  */
+
+
 class ChangeImageSpacingModule extends BaseModule {
     constructor() {
         super();
         this.name = 'changeImageSpacing';
+        this.lastInputSpacing=[1.0,1.0,1.0];
     }
 
 
@@ -55,7 +58,10 @@ class ChangeImageSpacingModule extends BaseModule {
                     "gui": "slider",
                     "type": "float",
                     "varname": "xsp",
-                    "default" : -1.0,
+                    "default" : 1.0,
+                    "low" : 0.1,
+                    "high" : 10.0,
+                    "step" : 0.1,
                 },
                 {
                     "name": "Y Spacing", 
@@ -65,17 +71,24 @@ class ChangeImageSpacingModule extends BaseModule {
                     "gui": "slider",
                     "type": "float",
                     "varname": "ysp",
-                    "default" : -1.0,
+                    "default" : 1.0,
+                    "low" : 0.1,
+                    "high" : 10.0,
+                    "step" : 0.1,
+
                 },
                 {
-                    "name": "Z Spacing", 
-                    "description": "Desired voxel spacing in Z direction",
+                    "name": "Z Spacing",
+                    "description": "Desired voxel spacing in the z-direction",
                     "priority": 3,
                     "advanced": false,
                     "gui": "slider",
-                    "type": "float",
                     "varname": "zsp",
-                    "default" : -1.0,
+                    "default": 1.0,
+                    "type": 'float',
+                    "low":  0.1,
+                    "high": 10.0,
+                    "step" : 0.1,
                 },
             ]
         };
@@ -109,34 +122,34 @@ class ChangeImageSpacingModule extends BaseModule {
         });
     }
 
-    updateOnChangedInput(inputs,controllers=null,guiVars=null) {
+    updateOnChangedInput(inputs,guiVars) {
 
         let newDes = this.getDescription();
         inputs = inputs || this.inputs;
         let current_input = inputs['input'] || null;
         if (current_input===null)
             return newDes;
-
         let spa=current_input.getSpacing();
-        console.log('Spa=',spa);
+        if (this.compareArrays(spa,this.lastInputSpacing,0,2)<.01) {
+            return;
+        }
+        this.lastInputSpacing=spa;
+
+
         for (let i = 0; i < newDes.params.length; i++) {
             let name = newDes.params[i].varname;
             let index= [ 'xsp','ysp','zsp'].indexOf(name);
 
             if (index>=0) {
-                console.log('index=',index,newDes.params[i].default);
-                newDes.params[i].low=0.0001;
-                newDes.params[i].high=10.0;
-                newDes.params[i].step=0.0001;
-                if (newDes.params[i].default<0) {
-                    newDes.params[i].default=spa[i];
-                }
-                console.log('index=',index,newDes.params[i].default);
-                if (controllers!==null)
-                    this.updateSingleGUIElement(newDes.params[i],controllers[name],guiVars,name);
-                
+                newDes.params[i].low=Number.parseFloat(spa[index]*0.2).toFixed(3);
+                newDes.params[i].high=spa[index]*5.0;
+                newDes.params[i].step=Number.parseFloat(spa[index]*0.1).toFixed(3);
+                newDes.params[i].default=spa[i];
+                if (guiVars)
+                    guiVars[name]=newDes.params[i].default;
             }
         }
+        this.recreateGUI=true;
         return newDes;
     }
     

@@ -1,5 +1,3 @@
-#!/usr/bin/env mocha
-
 /*  LICENSE
     
     _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
@@ -51,8 +49,20 @@ program.version('1.0.0')
 
 
 let tpath=program.tpath || path.join(__dirname,path.join("..", path.join("js","bin")));
-let testscript='node '+path.resolve(path.join(tpath,'bisweb-test.js'));
+let testscript=path.resolve(path.join(tpath,'bisweb-test.js'));
 
+
+if (!fs.existsSync(testscript)) {
+    tpath=program.tpath || path.join(__dirname,path.join("..", "lib"));
+    testscript=path.resolve(path.join(tpath,'bisweb-test.js'));
+}
+
+if (!fs.existsSync(testscript)) {
+    console.log(`---- bisweb-test.js can not be found`);
+    process.exit(1);
+}
+
+testscript='node '+testscript;
 
 
 let testlistfilename=program.input || path.join(__dirname,'module_tests.json');
