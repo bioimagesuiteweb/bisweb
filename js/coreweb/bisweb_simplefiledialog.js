@@ -11,13 +11,6 @@ require('jstree');
  * This class will render a list of files in a window similar to the file system dialog that opens when a user clicks on an <input type='file'> button.
  * 
  * TODO: Back button breaks after adding supplemental files
-
- TODO:
-
- Eventually move save filename inside the dialog box -- one dialog box on save
- Have option to apply the filter on not 
- It would be nice to show date and filesize eventually (and sort by size)
-
 */
 
 
@@ -37,8 +30,11 @@ class SimpleFileDialog {
         this.filenameEntry=null;
 
         
-        // This are the callbacks 
+        // This are the callbacks
+        // Call this to get updated directory
         this.fileListFn=null;
+        // Call this to pass the selected filename back to the main code
+        // (this is in fact the final callback from outside code)
         this.fileRequestFn=null;
 
         // Entries
@@ -51,12 +47,21 @@ class SimpleFileDialog {
         this.newFilters=true;
         this.activeFilterList=this.currentFilters[0].extensions;
 
+        this.currentList = null;
         this.previousList=null;
         this.favorites = [];
         this.lastFavorite=null;
 
     }
 
+    getCombinedFilename(dname,fname) {
+
+        if (dname.lastIndexOf(this.separator)!==(dname.length - 1))
+            return dname+this.separator+fname;
+        return dname+fname;
+    }
+
+    
     // --------------- GUI Callbacks ------------------------
     /** 
      * Request Filename from GUI
@@ -85,7 +90,7 @@ class SimpleFileDialog {
             return;
         }
 
-        let outname=this.currentDirectory+this.separator+name;
+        let outname=this.getCombinedFilename(this.currentDirectory,name);
         
         let sendCallback= (() => {
             this.modal.dialog.modal('hide');
@@ -117,6 +122,7 @@ class SimpleFileDialog {
      * @param {String} dname -- the name of the directory
      */
     changeDirectory(dname) {
+
         this.fileListFn( dname,false).then( (payload) => {
             this.updateDialog(payload.data,
                               payload.path,
@@ -137,30 +143,30 @@ class SimpleFileDialog {
         $('body').append(this.modal);
         
         this.contentDisplayTemplate = 
-        `<div class='col-sm-9 bisweb-file-display'>
+            `<div class='col-sm-9 bisweb-file-display'>
             <div><p>Content goes here...</p></div>
-        </div>`;
+            </div>`;
 
         //make the skeleton for the box
         this.container = $(
             `<div class='container-fluid'>
                 <div class='row justify-content-start' style='margin-bottom:10px'>
-                   <div class='col-sm-12 bisweb-file-navbar'></div>
+                <div class='col-sm-12 bisweb-file-navbar'></div>
                 </div>
 
 
                 <div class='row justify-content-start content-box'>
-                    <div class='col-sm-3 favorite-bar'></div>
-                    <div class='col-sm-9 bisweb-file-display'>
-                      <div class='bisweb-file-list'><p>Content goes here...</p></div>
-                    </div>
+                <div class='col-sm-3 favorite-bar'></div>
+                <div class='col-sm-9 bisweb-file-display'>
+                <div class='bisweb-file-list'><p>Content goes here...</p></div>
+                </div>
                 </div>
                 <div class='row justify-content-start content-box'>
-                    <div class='col-sm-3 favorite-buttons'></div>
-                    <div class='col-sm-9 bisweb-file-filterbar' style='margin-top:5px'></div>
+                <div class='col-sm-3 favorite-buttons'></div>
+                <div class='col-sm-9 bisweb-file-filterbar' style='margin-top:5px'></div>
                 </div>
 
-             </div>`);
+            </div>`);
 
         
         
@@ -179,6 +185,7 @@ class SimpleFileDialog {
 
     /**
      * Create Filters 
+     * @param {Array} filters - An unparsed list of filters (Electron style)
      */
     createFilters(filters=null) {
 
@@ -200,18 +207,24 @@ class SimpleFileDialog {
      * @param {Array} list - An array of file entries. 
      * @param {String} list.text - The name of the file or folder.
      * @param {String} list.path - The full path indicating where the file is located on the server machine.
-     * @param {Object} startDirectory - File entry representing the directory at which the files in list should be added. Undefined means the files represent the files in the current directory
-     * @param {Object} rootDirectory - File entry representing the root directory from which startDirectory derives
-     * @param {Object} opts - filter options
+     * @param {Object} opts - A parameter object for the file dialog.
+     * @param {String} opts.mode - What mode the modal is in, either 'load' or 'save'.
+     * @param {String} opts.title - The name to display at the top of the file dialog modal.
+     * @param {Array} opts.filters - A list of filters for the file dialog. Only files that end in a filetype contained in opts.filters will be displayed. These are Electron style
+     * @param {String} opts.startDirectory - This is the directory at which the file dialog will start (i.e. a user supplied path. If none supplied then this goes to the base directory of the server)
+     * @param {Object} opts.rootDirectory - In case where the server has multiple "drives" or baseDirectories (/home /tmp --- rootDirectory of /home/xenios/Desktop is /home)
      */
-    openDialog(list, startDirectory = null, rootDirectory=null,opts=null) {
+    openDialog(list,opts=null) {
 
         if (this.modal===null) {
             this.createDialogUserInterface();
         }
         
         this.newFilters=true;
-        
+        //null or undefined startDirectory and rootDirectory should default to null;
+        let startDirectory = opts.startDirectory || '';
+        let rootDirectory = opts.rootDirectory || '';
+
         if (opts!==null) {
             opts.filters=opts.filters || null;
 
@@ -264,7 +277,7 @@ class SimpleFileDialog {
         } else if (this.newFilters===true) {
             filterbar.empty();
             this.newFilters=false;
-                
+            
             let filter_label=$("<span>Filter Files: </span>");
             filter_label.css({'padding':'10px'});
             filterbar.append(filter_label);
@@ -420,9 +433,11 @@ class SimpleFileDialog {
     updateFileNavbar(lastfilename=null,rootDirectory='/') {
         let navbar = this.modal.body.find('.bisweb-file-navbar');
         navbar.empty();
-        
-        //create navbar buttons for each folder in the current path
 
+        if (this.currentPath===null)
+            return;
+        
+        rootDirectory = rootDirectory || '';
         
         let folders=null;
         

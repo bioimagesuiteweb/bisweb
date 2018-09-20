@@ -14,85 +14,100 @@
  limitations under the License.__
  
  ENDLICENSE -->
- 
- <!DOCTYPE html> 
 
- <html lang="en">
-     <head> 
-         <title id='pagetitle'>Working...</title>
-         <script src='./aws-sdk.min.js'></script>
-         <script src='./amazon-cognito-auth.min.js'></script>
-         <script src='./awsparameters.js'></script>
-         <reference types="aws-sdk"></reference>
-         <script>
-                function handleIncoming() {
-                    AWS.config.update({
-                        'region' : RegionName,
-                        'credentials' : new AWS.CognitoIdentityCredentials({
-                            'IdentityPoolId' : IdentityPoolId
-                        })
-                    });
+<!DOCTYPE html>
 
-                    let params = window.location.hash.split('&');
-                    if (params.length <= 1) {
+<html lang="en">
 
-                        //-------------------------------------------------------------------
-                        // 1.) log into user pool
-                        //-------------------------------------------------------------------
+<head>
+    <title id='pagetitle'>Working...</title>
+    <script src='./aws-sdk.min.js'></script>
+    <script src='./amazon-cognito-auth.min.js'></script>
+    <reference types="aws-sdk"></reference>
+    <script>
+        //-----------------------------------------------------------------------------------------------------
+        // 1.) Logging into the user pool will refresh the page with the parameters needed to authenticate
+        //-----------------------------------------------------------------------------------------------------
+        function logIntoUserPool() {
+            let authParams = window.authParams;
+            console.log('auth params', authParams);
+            AWS.config.update({
+                'region': authParams.regionName,
+                'credentials': new AWS.CognitoIdentityCredentials({
+                    'IdentityPoolId': authParams.identityPoolId
+                })
+            });
+            let auth = new AmazonCognitoIdentity.CognitoAuth(authParams.cognitoParams);
+            auth.userhandler = {
+                onSuccess: () => { console.log('logged in successfully!'); },
+                onFailure: () => { console.log('failed to login'); }
+            }
+            auth.getSession();
+        }
 
-                        let auth = new AmazonCognitoIdentity.CognitoAuth(awsparams);
-                        auth.userhandler = {
-                            onSuccess: () => { console.log('logged in successfully!'); },
-                            onFailure: () => { console.log('failed to login'); }
-                        }
-                        auth.getSession();
-                    } else {
-                        window.addEventListener('message', (message) => {
-                            console.log('data', message);
+        //--------------------------------------------------------------------------------------------------------
+        // 2.) Once logged into the user pool, use the URL parameters to authenticate
+        //--------------------------------------------------------------------------------------------------------
+        function exchangeTokenForCredentials() {
 
-                            if (message.data.success) {
-                                document.getElementById('pagetitle').innerHTML = 'Done';
-                                document.getElementById('workingmessage').innerHTML = 'Login complete, you may now close this window';
-                            } else {
-                                document.getElementById('pagetitle').innerHTML = 'Error';
-                                document.getElementById('workingmessage').innerHTML = 'An error occured during login, please try again';       
-                            }
-                        }, { 'once' : true});
-                        console.log('params', params);
+            console.log('exhange token for credentials');
+            window.addEventListener('message', (message) => {
+                console.log('data', message);
 
-                        //parse tokens out of URL
-                        let access_token, id_token, token_type;
-                        for (let param of params) {
-                            let pair = param.split('=');
-                            console.log('param', param, 'pair', pair);
-                            if (decodeURIComponent(pair[0]) == 'access_token' || decodeURIComponent(pair[0]) == '#access_token') {
-                                access_token = pair[1];
-                            } else if (decodeURIComponent(pair[0]) == 'id_token' || decodeURIComponent(pair[0]) == '#id_token') {
-                                id_token = pair[1];
-                            } else if (decodeURIComponent(pair[0]) == 'token_type' || decodeURIComponent(pair[0]) == '#token_type') {
-                                token_type = pair[1];
-                            }
-                        }
-                        
-                        localStorage.setItem('aws_id_token', id_token);
-                        
-                        //Amazon Role ARN format — 'arn:aws:iam::account-id:role/role-name
-                        //https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html#Identifiers_ARNs
-                        /*AWS.config.credentials = new AWS.WebIdentityCredentials({
-                            'RoleArn' : `arn:aws:iam::${AccountId}:role/WebIdentity`,
-                            'WebIdentityToken' : id_token,
-                            'RoleSessionName' : 'web'
-                        });
-                        AWS.config.credentials.refresh();
-                        */
-                        
-                    }
-                    
+                if (message.data.success) {
+                    document.getElementById('pagetitle').innerHTML = 'Done';
+                    document.getElementById('workingmessage').innerHTML = 'Login complete, you may now close this window';
+                } else {
+                    document.getElementById('pagetitle').innerHTML = 'Error';
+                    document.getElementById('workingmessage').innerHTML = 'An error occured during login.\n\n' + message.data.error;
                 }
-             </script>
-     </head>
-     <body onload = 'handleIncoming()'>
-         <p id='workingmessage'>Just a second...</p>
- 
-     </body>
- </html>
+            }, { 'once': true });
+
+            let params = window.location.hash.split('&');
+            console.log('params', params);
+
+            //parse tokens out of URL
+            let access_token, id_token, token_type;
+            for (let param of params) {
+                let pair = param.split('=');
+                console.log('param', param, 'pair', pair);
+                if (decodeURIComponent(pair[0]) == 'access_token' || decodeURIComponent(pair[0]) == '#access_token') {
+                    access_token = pair[1];
+                } else if (decodeURIComponent(pair[0]) == 'id_token' || decodeURIComponent(pair[0]) == '#id_token') {
+                    id_token = pair[1];
+                } else if (decodeURIComponent(pair[0]) == 'token_type' || decodeURIComponent(pair[0]) == '#token_type') {
+                    token_type = pair[1];
+                }
+            }
+
+            console.log('local storage event');
+            localStorage.setItem('aws_id_token', id_token);
+
+            //Amazon Role ARN format — 'arn:aws:iam::account-id:role/role-name
+            //https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html#Identifiers_ARNs
+            AWS.config.credentials = new AWS.WebIdentityCredentials({
+                'RoleArn': `arn:aws:iam::${AccountId}:role/WebIdentity`,
+                'WebIdentityToken': id_token,
+                'RoleSessionName': 'web'
+            });
+            AWS.config.credentials.refresh();
+
+        }
+    </script>
+</head>
+
+<body>
+    <p id='workingmessage'>Just a second...</p>
+    <script>
+
+        let params = window.location.hash.split('&');
+        if (params.length <= 1) {
+            window.addEventListener('handleIncoming', logIntoUserPool);
+            window.opener.dispatchEvent(new CustomEvent('awsready'));
+        } else {
+            exchangeTokenForCredentials();
+        }
+    </script>
+</body>
+
+</html>
