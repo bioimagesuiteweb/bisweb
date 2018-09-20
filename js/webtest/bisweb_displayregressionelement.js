@@ -59,7 +59,7 @@ var startFunction = (() => {
                     console.log(newimg2.getDescription());
                     viewer.setobjectmap(newimg2);
 
-                    let tst=newimg.compareWithOther(newimg2,"maxabs",2);
+                    let tst=newimg.compareWithOther(newimg2,"cc",0.98);
                     webutil.createAlert(JSON.stringify(tst,null,2));
                 });
             },20);
