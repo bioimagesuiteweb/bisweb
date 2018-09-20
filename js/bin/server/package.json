@@ -1,0 +1,12 @@
+{
+    "name": "bisweb_fileserver",
+    "version": "1.0.0",
+    "description": "server",
+    "main": "bisfileserver.js",
+    "author": "Xenios Papademetris",
+    "license": "Apache-2.0",
+    "homepage": "https://github.com/bioimagesuiteweb/bisweb",
+    "dependencies": {
+        "ws": "6.0.0"
+    }
+}

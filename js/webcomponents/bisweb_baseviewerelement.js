@@ -48,8 +48,10 @@ class BaseViewerElement extends HTMLElement {
             colormapobservers : [],
             mouseobservers : [],
             resizeobservers : [],
+            framechangedobservers :[],
             imagechangedobservers : [],
             ignorecolormapobservers : false,
+            ignoreframeobservers : false,
             ignoremouseobservers : false,
             
             // Image Stuff
@@ -60,6 +62,9 @@ class BaseViewerElement extends HTMLElement {
             objectmapspa   : [ 1.0,1.0,1.0 ],
             imagedim   : [ 0,0,0 ],
             objectmapshift : [ 0,0,0 ],
+
+            // MaxNumFrames
+            maxnumframes : 0,
             
             //  scene
             showdecorations : true,
@@ -120,6 +125,9 @@ class BaseViewerElement extends HTMLElement {
 
     /* returns last cross hairs (null) */
     getViewerCrossHairs() { return null; }
+
+    /* returns the colormap controller */
+    getColormapController() { return this.internal.cmapcontroller; }
     
     // ------------------------------------------------------------------------------------
     /** returns the size of the viewer
@@ -253,11 +261,28 @@ class BaseViewerElement extends HTMLElement {
     // ------------------------------------------------------------------------------------
     // Main Renderloop
     // ------------------------------------------------------------------------------------
+
+    /** this sets the snapshot controller for use in store/retrieve Element state
+     * @param{SnapshotController} - cont
+     */
+    setSnapShotController(cont) {
+        this.internal.snapshotcontroller=cont;
+    }
+
+    /** this geets the snapshot controller 
+     * @returns{SnapshotController}
+     */
+    getSnapShotController() {
+        return this.internal.snapshotcontroller;
+    }
     
     /** this is the callback registered on {@link SnapshotController} to call when it 
      * requests an update
      * @param{SnapshotController} - controller
      */
+
+
+    
     savenextrender(controller) {
         this.internal.preservesnapshot=true;
         this.internal.snapshotcontroller=controller;
@@ -272,7 +297,7 @@ class BaseViewerElement extends HTMLElement {
         return this.internal.subviewers.length;
     }
 
-
+    
     /** disable renderloop */
     disable_renderloop() {
         this.enable_renderloop_flag=false;
@@ -580,7 +605,7 @@ class BaseViewerElement extends HTMLElement {
      * @param {BisF.ColorMapControllerPayload } input - new transfer functions
      */
     updateColormapObservers(input) {
-        
+
         const self=this;
         this.internal.ignorecolormapobservers = true;
         
@@ -725,6 +750,51 @@ class BaseViewerElement extends HTMLElement {
             this.setimage(img);
         }
     }
+
+
+    /* add a frame observer to notify after new frame events
+     * @param {BisFrameChangedIbserver} v - frame observer  */
+    addFrameChangedObserver(v) {
+        this.internal.framechangedobservers.push(v);
+    }
+
+    /* add a frame observer to notify after new frame events
+     * @param {BisFrameChangedObserver} v - frame observer  */
+    removeFrameChangedObserver(v) {
+        let i=this.internal.framechangedobservers.indexOf(v);
+        if (i<0)
+            return;
+        this.internal.framechangedobservers.splice(i,1);
+    }
+    
+    /** update all frame observers with new coordinates 
+     *  Called from {@link BisWebOrthogonalViewerElementElementThis.Internal.handleframe}.
+     */
+    updateFrameChangedObservers() {
+
+        if (this.internal.framechangedobservers.length===0 ||
+           !this.internal.volume)
+            return;
+
+        this.internal.ignoreframeobservers = true;
+
+        let frame=this.getframe();
+        
+        this.internal.framechangedobservers.forEach((f) => {
+            f.handleFrameChanged(frame);
+        });
+        this.internal.ignoreframeobservers = false;
+    }
+
+    /** this class can also be an framechangedobserver */
+    handleFrameChanged(frame) {
+        
+        if (this.internal.ignoreframeobservers || !this.internal.volume)
+            return;
+
+        this.setframe(frame);
+    }
+
 
     // -----------------------------------------------------------------------------
     //  finalize tools
@@ -883,6 +953,10 @@ class BaseViewerElement extends HTMLElement {
             obj['colormap']=this.internal.cmapcontroller.getElementState();
         if (this.internal.viewerleft)
             obj['viewerleft'] = this.internal.viewerleft;
+
+        console.log('here');
+        if (this.internal.snapshotcontroller) 
+            obj['snapshotcontroller']=this.internal.snapshotcontroller.getElementState();
         
         if (storeImages) {
             let img=this.getimage();
@@ -896,16 +970,18 @@ class BaseViewerElement extends HTMLElement {
             }
         }
 
-        let n=this.internal.subviewers.length;
-        if (n>0) {
-            obj.subviewers = [];
-            for (let i=0;i<n;i++) {
-                if (this.internal.subviewers[i]) {
-                    let controls=this.internal.subviewers[i].controls;
-                    let p=controls.serializeCamera();
-                    obj.subviewers.push(p);
-                } else {
-                    i=n; // let's get out of here
+        if (this.internal.subviewers) {
+            let n=this.internal.subviewers.length;
+            if (n>0) {
+                obj.subviewers = [];
+                for (let i=0;i<n;i++) {
+                    if (this.internal.subviewers[i]) {
+                        let controls=this.internal.subviewers[i].controls;
+                        let p=controls.serializeCamera();
+                        obj.subviewers.push(p);
+                    } else {
+                        i=n; // let's get out of here
+                    }
                 }
             }
         }
@@ -947,6 +1023,11 @@ class BaseViewerElement extends HTMLElement {
             this.internal.cmapcontroller.updateTransferFunctions(true);
         }
 
+        if (this.internal.snapshotcontroller) 
+            this.internal.snapshotcontroller.setElementState(dt['snapshotcontroller']);
+        
+
+
         return;
     }
 
@@ -986,8 +1067,19 @@ class BaseViewerElement extends HTMLElement {
     getLayoutController() {
         return this.internal.layoutcontroller;
     }
-    
 
+
+    /** remap dimensions to 4D 
+     * @param{Array} idim -- input/output 5 dimensional array
+     */
+    remapDimensionsTo4D(dim) {
+        // TODO: One day do proper 5D
+        // Force everything to 4D for now ...
+        if (dim[4]>1) {
+            dim[3]=dim[3]*dim[4];
+            dim[4]=1;
+        }
+    }
 }
 
 

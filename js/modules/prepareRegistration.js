@@ -140,7 +140,7 @@ class PrepareRegistrationModule extends BaseModule {
 
 
 
-    updateOnChangedInput(inputs,controllers=null,guiVars=null) {
+    updateOnChangedInput(inputs,guiVars) {
 
         let newDes = this.getDescription();
         inputs = inputs || this.inputs;
@@ -157,10 +157,12 @@ class PrepareRegistrationModule extends BaseModule {
                 newDes.params[i].low = 0;
                 newDes.params[i].high = imagedim[3]-1;
                 newDes.params[i].default =0;
-                if (controllers!==null)
-                    this.updateSingleGUIElement(newDes.params[i],controllers[name],guiVars,name);
+
+                if (guiVars)
+                    guiVars[name]=newDes.params[i].default;
             }
         }
+        this.recreateGUI=true;
         return newDes;
     }
 }

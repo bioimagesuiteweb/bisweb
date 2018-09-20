@@ -3,7 +3,6 @@ const bis_genericio = require('bis_genericio');
 const webutil = require('bis_webutil.js');
 const bootbox=require('bootbox');
 const userPreferences=require('bisweb_userpreferences');
-const bisdbase = require('bisweb_dbase');
 
 require('jstree');
 
@@ -123,7 +122,7 @@ class SimpleFileDialog {
      * @param {String} dname -- the name of the directory
      */
     changeDirectory(dname) {
-        // 
+
         this.fileListFn( dname,false).then( (payload) => {
             this.updateDialog(payload.data,
                               payload.path,
@@ -179,7 +178,7 @@ class SimpleFileDialog {
             this.filenameCallback();
         });
 
-        this.modal.footer.append(this.okButton);        
+         this.modal.footer.append(this.okButton);        
         this.modal.body.append(this.container);        
 
     }
@@ -595,14 +594,8 @@ class SimpleFileDialog {
             }
         });
             
-        let userPreferencesLoaded = userPreferences.webLoadUserPreferences(bisdbase);
-        userPreferencesLoaded.then( () => {
-            let f=null;
-            try {
-                f= userPreferences.getItem('favoriteFolders');
-            } catch(e) {
-                console.log(e);
-            }
+
+        userPreferences.safeGetItem('favoriteFolders').then( (f) => {
             if (f) {
                 this.favorites=f;
                 this.addAllFavorites(pillsBar);

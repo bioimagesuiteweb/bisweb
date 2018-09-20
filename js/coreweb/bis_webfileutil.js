@@ -40,7 +40,9 @@ const keystore=require('bis_keystore');
 const dkey=keystore.DropboxAppKey || "";
 const gkey=keystore.GoogleDriveKey || "";
 const mkey=keystore.OneDriveKey || "";
-const userPreferencesLoaded = userPreferences.webLoadUserPreferences(bisdbase);
+
+// Ensure that these get initialized
+userPreferences.initialize(bisdbase);
 
 
 // ------------------------
@@ -112,9 +114,12 @@ const webfileutils = {
     /**
      * Changes the file source of the application. 
      * @param {String} m - The source to change to. One of 'dropbox', 'googledrive', 'onedrive', 'amazonaws', 'server', or 'local'
+     * @param {Boolean} save - If true -- save preferences on change
      */
-    setMode : function(m='') {
-      
+
+    setMode : function(m='',save=true) {
+
+      // TODO: Check if fileserver and aws are enabled else disable
         switch(m) {
             case 'dropbox' : if(dkey) { fileMode = 'dropbox'; } break;
             case 'googledrive' : if (gkey) { fileMode = 'googledrive'; } break;
@@ -132,8 +137,10 @@ const webfileutils = {
             genericio.setFileServerObject(null);
         }
 
-        userPreferences.setItem('filesource',fileMode);
-        userPreferences.storeUserPreferences();
+        if (save) {
+            userPreferences.setItem('filesource',fileMode);
+            userPreferences.storeUserPreferences();
+        }
     },
 
 
@@ -254,7 +261,7 @@ const webfileutils = {
         fileopts.filters=fileopts.filters || null;
         fileopts.force=fileopts.force || null;
 
-        console.log('Incoming Suffix =',fileopts.suffix,' filters=',fileopts.filters);
+        //        console.log('Incoming Suffix =',fileopts.suffix,' filters=',fileopts.filters);
 
         let suffix = fileopts.suffix || '';
         let title = fileopts.title || '';
@@ -269,7 +276,7 @@ const webfileutils = {
             }
         }
 
-        console.log('Suffix =',fileopts.suffix,suffix,fileopts.filters);
+        //        console.log('Suffix =',fileopts.suffix,suffix,fileopts.filters);
         
         if (suffix === "NII" || fileopts.filters === "NII") {
             suffix = '.nii.gz,.nii,.gz,.tiff';
@@ -558,10 +565,8 @@ const webfileutils = {
         const self=this;
         
         let fn=function() {
-            userPreferencesLoaded.then(() => {
-                let initial=userPreferences.getItem('filesource') || 'local';
-
-
+            userPreferences.safeGetItem('filesource').then( (initial) => {
+                initial= initial || 'local';
                 let extra="";
                 if (enableserver) {
                    extra=`
@@ -609,11 +614,15 @@ const webfileutils = {
     
 };
 
-userPreferencesLoaded.then(() => {
-    let f=userPreferences.getItem('filesource') || fileMode;
-    console.log('Initial File Source=',f);
-    webfileutils.setMode(f);
-});
+if (!webutil.inElectronApp() ) {
+    userPreferences.safeGetItem('filesource').then( (f) => {
+        f= f || fileMode;
+        console.log('+++++ Initial File Source=',f);
+        webfileutils.setMode(f,false);
+    });
+} else {
+    webfileutils.setMode('local',true);
+}
 
 module.exports=webfileutils;
 

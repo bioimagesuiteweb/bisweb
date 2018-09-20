@@ -457,8 +457,10 @@ let createApplicationSelector=function(obj) {
         },10);
     });
 
+    $("#othermenu").append($(`<li class="divider"></li>`));
+    
     if (typeof (window.BISELECTRON) === "undefined") {
-        $("#othermenu").append($(`<li class="divider"></li>`));
+
         let newitem0 = $(`<li><a href="#">Remove Application (from Cache)</a></li>`);
         $("#othermenu").append(newitem0);
         newitem0.click( (e) => {
@@ -480,18 +482,23 @@ let createApplicationSelector=function(obj) {
                 installLatestVersion();
             },10);
         });
-
-
-        let s=window.document.URL;
-        let index=s.lastIndexOf("/");
-        let urlbase=s.substr(0,index);
-        let url=`${urlbase}/overlayviewer.html?load=${urlbase}/images/viewer.biswebstate`;
-
         $("#othermenu").append($(`<li class="divider"></li>`));
-        $("#othermenu").append($(`<li><a href="${url}" target="_blank">Example Image Overlay</a></li>`));
     }
 
+    let s=window.document.URL;
+    console.log(s);
+    let index=s.lastIndexOf("/");
+    console.log(index);
+    let urlbase=s.substr(0,index);
+    let urlbase2=urlbase+'/images';
+    if (inelectron)
+        urlbase2='images/';
+    console.log(urlbase);
+    let newurl=`${urlbase}/overlayviewer.html?load=${urlbase2}/viewer.biswebstate`;
     
+    $("#othermenu").append($(`<li><a href="${newurl}" target="_blank">Example Image Overlay</a></li>`));
+
+
     $("#applicationstext").click( (e) => {
         setTimeout( () => {
             e.preventDefault();
@@ -504,7 +511,7 @@ let createApplicationSelector=function(obj) {
     let bb=$(`<div align="center" style="padding:15px;  right:5.5vw; top:570px; border-radius:30px;background-color:#221100; z-index:5000; position: absolute; color:#ffffff">
              Version:  ${tools.version} (${extra2}${bisdate.date})</div>`);
     $('body').append(bb);
-    console.log('bisdate=',JSON.stringify(bisdate));
+    //    console.log('bisdate=',JSON.stringify(bisdate));
 
 };
 
@@ -594,7 +601,7 @@ window.onload = (() => {
     setTimeout( ()=> {
         $(".dropdown").removeClass("open");//this will remove the active class from  
         $('#appmenu').addClass('open');
-    },2000);
+    },500);
 
 });
 

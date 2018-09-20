@@ -44,6 +44,7 @@ class BaseModule {
         this.description = null;
         this.useworker=false;
         this.mouseobserver=false;
+        this.recreateGUI = false;
     }
 
     /**
@@ -148,9 +149,32 @@ class BaseModule {
             controller.min(param.low).max(param.high).step(param.step);
         else
             controller.min(param.low).max(param.high);
+        
         if (guiVars[name]<param.low ||
             guiVars[name]>param.high)
             guiVars[name]=param.default;
+
+
+        controller.onFinishChange(() => {
+            console.log('On finish change',name);
+            let val=guiVars[name];
+            let changed=false;
+            if (param.low !== undefined) {
+                if (val<param.low) {
+                    guiVars[name]=param.low;
+                    changed=true;
+                }
+            }
+            if (param.high !== undefined) {
+                if (val>param.high) {
+                    guiVars[name]=param.high;
+                    changed=true;
+                }
+            }
+            if (changed)
+                controller.updateDisplay();
+        });
+       
         controller.updateDisplay();
     }
     
@@ -166,6 +190,29 @@ class BaseModule {
         return this.description;
     }
 
+    /** Compare two arrays and return the max difference or null
+     * @param{Array} arr1 -- the first array
+     * @param{Array} arr2 -- the second array
+     * @param{Number} beginindex - the begin index (or 0 if not specified)
+     * @param{Number} endindex - the begin index (or arr1.length-1 if not specified)
+     */
+    compareArrays(arr1,arr2,beginindex=0,endindex=null) {
+
+        if (!arr1 || !arr2)
+            return 1000;
+        
+        if (endindex===null) {
+            endindex=arr1.length-1;
+        }
+        let maxd=0;
+        for (let i=beginindex;i<=endindex;i++) {
+            let v=Math.abs(arr1[i]-arr2[i]);
+            if (v>maxd)
+                maxd=v;
+        }
+        return maxd;   
+    }
+    
     /**
      * Gets the viewer coordinates (see morphologyFilter)
      */

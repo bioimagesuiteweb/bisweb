@@ -28,6 +28,7 @@ class maskModule extends BaseModule {
     constructor() {
         super();
         this.name = 'maskImage';
+        this.lastInputRange=[0,0];
     }
     
     createDescription() {
@@ -143,7 +144,7 @@ class maskModule extends BaseModule {
     }
 
     
-    updateOnChangedInput(inputs,controllers=null,guiVars=null) {
+    updateOnChangedInput(inputs,guiVars) {
 
         let newDes = this.getDescription();
         inputs = inputs || this.inputs;
@@ -153,17 +154,24 @@ class maskModule extends BaseModule {
 
         let imagerange = current_input.getIntensityRange();
 
+        if (this.compareArrays(imagerange,this.lastInputRange,0,1)<1.0) {
+            return;
+        }
+        this.lastInputRange=imagerange;
+
+        
+
         for (let i = 0; i < newDes.params.length; i++) {
             let name = newDes.params[i].varname;
             if(name === 'threshold') {
                 newDes.params[i].low = imagerange[0];
                 newDes.params[i].high = imagerange[1];
                 newDes.params[i].default = 0.99 * imagerange[0] + 0.01 * imagerange[1]; 
-                
-                if (controllers!==null)
-                    this.updateSingleGUIElement(newDes.params[i],controllers[name],guiVars,name);
             }
+            if (guiVars)
+                guiVars[name]=newDes.params[i].default;
         }
+        this.recreateGUI=true;
         return newDes;
     }
 

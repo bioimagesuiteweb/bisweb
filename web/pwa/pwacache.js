@@ -67,6 +67,8 @@ module.exports = {
         'images/yale_broadmann_2mm_ras.nii.gz',
         'images/yale_broadmann_ras.nii.gz',
         'images/yale_brod_xy.png',
+        'images/atlases/atlaslist.json',
+        'images/atlases/humanmni.json',
         'jquery.min.js',
         'webcomponents-lite.js',
         'biswebaws.html',

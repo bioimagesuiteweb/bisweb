@@ -56,6 +56,36 @@
     font-size : 14px;
 }
 
+#bottom {
+    margin : 10 10 10 10;
+    left: 20px;
+}
+
+#baseresults {
+    position: absolute;
+    margin-top: 80px;
+    margin-left : 820px;
+    width : 400px;
+    background-color : #333333;
+}
+
+#displayresults {
+    max-height : 590px;
+    min-height : 590px;
+    overflow-x : auto;
+    overflow-y : auto;
+    font-size : 14px;
+    padding : 2 2 2 2;
+}
+
+#resultimages {
+    position: relative;
+    left: 15px;
+    top: 10px;
+    margin : 4 4 4 4;
+};
+
+
 #results {
     margin-top : 15px;
     margin-left : 5vw;
@@ -88,3 +118,15 @@ pre {
 #computemem {
     margin-left: 50px;
 }
+
+.topbuttons {
+    margin-top : 5px;
+    margin-bottom: 10px;
+    margin-left: 20px;
+}
+    
+#loadstate1,#loadstate2,#savestate1,#savestate2 {
+    margin-top : 5px;
+    margin-left: 20px;
+}
+

@@ -27,7 +27,7 @@ const BaseModule = require('basemodule.js');
 class ReorientImageModule extends BaseModule {
     constructor() {
         super();
-        this.name = 'blankImage';
+        this.name = 'reorientImage';
     }
 
     createDescription() {

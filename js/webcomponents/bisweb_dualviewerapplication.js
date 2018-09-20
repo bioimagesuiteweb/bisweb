@@ -46,6 +46,24 @@ const ViewerApplicationElement = require('bisweb_mainviewerapplication');
  */
 class DualViewerApplicationElement extends ViewerApplicationElement {
 
+
+    getElementState(storeImages=false) {
+
+        let obj=super.getElementState(storeImages);
+        obj.activeViewer=this.getVisibleTab();
+        return obj;
+    }
+
+    setElementState(dt=null,name="") {
+
+        if (dt===null)
+            return;
+
+        this.setVisibleTab(dt.activeViewer || 1);
+        super.setElementState(dt,name);
+    }
+
+
     connectedCallback() {
 
         this.syncmode = true;
@@ -55,23 +73,30 @@ class DualViewerApplicationElement extends ViewerApplicationElement {
         this.VIEWERS[0].addColormapObserver(this.VIEWERS[1]);
         this.VIEWERS[1].addColormapObserver(this.VIEWERS[0]);
 
+        this.VIEWERS[0].addFrameChangedObserver(this.VIEWERS[1]);
+        this.VIEWERS[1].addFrameChangedObserver(this.VIEWERS[0]);
+
 
         const self = this;
         let tabset = this.getAttribute('bis-tabset') || null;
         if (tabset !== null) {
             let tab1link = this.getAttribute('bis-tab1');
             let tab2link = this.getAttribute('bis-tab2');
-            let tab1name = tabset + ' a[href="' + tab1link + '"]';
-            let tab2name = tabset + ' a[href="' + tab2link + '"]';
-            $(tab1name).tab('show');
-            $(tab1name).on('shown.bs.tab', () => self.VIEWERS[0].handleresize());
-            $(tab2name).on('shown.bs.tab', () => self.VIEWERS[1].handleresize());
+            this.tab1name = tabset + ' a[href="' + tab1link + '"]';
+            this.tab2name = tabset + ' a[href="' + tab2link + '"]';
+            $(this.tab1name).tab('show');
+            $(this.tab1name).on('shown.bs.tab', () => self.VIEWERS[0].handleresize());
+            $(this.tab2name).on('shown.bs.tab', () => self.VIEWERS[1].handleresize());
         }
+
+        setTimeout( () => {
+            this.getElementState(false);
+        },300);
     }
 }
 
 webutil.defineElement('bisweb-dualviewerapplication', DualViewerApplicationElement);
 
 
-
+module.exports=DualViewerApplicationElement;
 

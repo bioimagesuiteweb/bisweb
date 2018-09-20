@@ -71,7 +71,7 @@ describe('Testing BisImage (from bis_asyncreadbruker.js) a class that imports Br
             let initializeServer = function() {
 
                 return new Promise( (resolve,reject) => {
-                    bisserverutil.createTestingServer().then( (obj) => {
+                    bisserverutil.createTestingServer(true).then( (obj) => {
                         client=obj.client;
                         tmpDir=obj.tmpDir;
 

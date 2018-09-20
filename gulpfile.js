@@ -25,6 +25,7 @@ const gulp = require('gulp'),
       program=require('commander'),
       connect = require('gulp-connect'),
       os = require('os'),
+      fs = require('fs'),
       rename = require('gulp-rename'),
       path=require('path'),
       del = require('del'),
@@ -416,12 +417,45 @@ gulp.task('commonfiles', function() {
     bis_gutil.createHTML('console',options.outdir,'',internal.biscss);
 });
 
-gulp.task('installserver',function() {
+gulp.task('createserver',function(done) {
+
+    let inp=path.normalize(path.join(__dirname,path.join('js',path.join('bin','bisfileserver.js'))));
+    console.log(inp);
+    let cfg=path.normalize(path.join(__dirname,path.join('config','app.config.js')));
+    console.log(cfg);
+    let out=path.normalize(path.join(__dirname,
+                                     path.join(options.outdir,
+                                               path.join('..',
+                                                         path.join('wasm','lib')))));
+    console.log(out);
+    let cmd=` webpack-cli --entry ${inp} --config ${cfg} --output-path ${out} --output-filename bisfileserver.js`;
+    console.log('Command=',cmd);
+    bis_gutil.executeCommandPromise(cmd,__dirname).then( () => {
+        let url=path.join(out,'bisfileserver.js');
+        let stats = fs.statSync(url);
+        let bytes = stats["size"];
+        console.log('____ saved in '+url+' (size='+bytes+')');
+        done();
+    });
+});
+
+gulp.task('packageserver',function() {
+
     gulp.src(['./build/wasm/lib/bisfileserver.js',
-              './js/bin/example-server-config.json']).
-        pipe(rename({dirname: 'server'})).
+              './js/bin/server/example-server-config.json',
+              './js/bin/server/package.json',
+              './js/bin/server/README.md'
+             ]).
+        pipe(rename({dirname: 'biswebserver'})).
         pipe(gulpzip(path.join(options.outdir,'server.zip'))).
-        pipe(gulp.dest('.'));
+        pipe(gulp.dest('.')).on('end', () => {
+            let url=path.resolve(path.join(options.outdir,'server.zip'));
+            let stats = fs.statSync(url);
+            let bytes = stats["size"];
+            let kbytes=Math.round(bytes/(1024)*10)*0.1;
+            console.log('____ zip file created in '+url+' (size='+kbytes+' KB)');
+        });
+
 });
 
 gulp.task('tools', function(done) {
@@ -441,14 +475,22 @@ gulp.task('tools', function(done) {
     runSequence('webpack','css',nexttool);
 });
 
-gulp.task('build', function(callback) {
+gulp.task('buildint', function(callback) {
 
     runSequence('commonfiles',
                 'tools',
-                'installserver',
                 'buildtest',
                 callback);
 });
+
+gulp.task('build', function(callback) {
+
+    runSequence('buildint',
+                'createserver',
+                'packageserver',
+                callback);
+});
+
 
 gulp.task('zip', function() {
 
@@ -457,6 +499,8 @@ gulp.task('zip', function() {
 
 gulp.task('package2', function(done) {
 
+    if (options.package===0)
+        options.package=1;
 
     
     bis_gutil.createPackage(options.package,
@@ -465,7 +509,7 @@ gulp.task('package2', function(done) {
 });
 
 gulp.task('package', function(done) {
-    runSequence('build',
+    runSequence('buildint',
                 'package2',
                 done);
 });
@@ -477,6 +521,7 @@ gulp.task('clean', function() {
         let arr = [options.outdir+'#*',
                    options.outdir+'*~',
                    options.outdir+'*.js*',
+                   options.outdir+'*.zip',
                    options.outdir+'*.wasm',
                    options.outdir+'*.png',
                    options.outdir+'*.html*',

@@ -140,6 +140,13 @@ class BisImageSlicer {
         
         this.internal.imagedata=bisimage.getImageData();
         this.internal.imagedim=bisimage.getDimensions();
+        if (this.internal.imagedim[4]>1) {
+            // TODO: One day do proper 5D
+            // Force everything to 4D for now ...
+            this.internal.imagedim[3]=this.internal.imagedim[3]*this.internal.imagedim[4];
+            this.internal.imagedim[4]=1;
+        }
+        
         this.internal.plane=util.range(opts.plane,0,2);
         
         if (this.internal.plane===0) 

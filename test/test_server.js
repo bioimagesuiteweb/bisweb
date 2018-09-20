@@ -41,7 +41,7 @@ for (let i=0;i<=1;i++)
 
 let client=null;
 
-describe('Testing the server utilities\n', function() {
+describe('Testing the WS server utilities\n', function() {
 
     this.timeout(50000);
     
@@ -190,13 +190,13 @@ describe('Testing the server utilities\n', function() {
 });
 
 
-describe('Testing the server\n', function() {
+describe('Testing the NET server\n', function() {
 
     this.timeout(50000);
     
     before(function(done) {
 
-        bisserverutil.createTestingServer().then( (obj) => {
+        bisserverutil.createTestingServer(false).then( (obj) => {
             client=obj.client;
             done();
         }).catch( (e) => {
@@ -206,7 +206,7 @@ describe('Testing the server\n', function() {
     });
         
     
-    it('test home dir',function(done) {
+    it('NET ...test home dir',function(done) {
 
         let baseDirectory = os.homedir();
         console.log('++++\n++++ Base Dir\n++++');
@@ -230,14 +230,14 @@ describe('Testing the server\n', function() {
         });
     });
 
-    it('test get list',function(done) {
+    it('NET ...test get list',function(done) {
 
         client.requestFileList('load').then( () => {
             done();
         });
     });
 
-    it('test get list2',function(done) {
+    it('NET ...test get list2',function(done) {
 
         client.requestFileList('load',os.homedir()).then( () => {
             done();
@@ -266,4 +266,81 @@ describe('Testing the server\n', function() {
     });
 
 });
-           
+
+describe('Testing the WS server\n', function() {
+
+    this.timeout(50000);
+    
+    before(function(done) {
+
+        bisserverutil.createTestingServer(true).then( (obj) => {
+            client=obj.client;
+            done();
+        }).catch( (e) => {
+            console.log(e);
+            process.exit(1);
+        });
+    });
+        
+    
+    it('WS ...test home dir',function(done) {
+
+        let baseDirectory = os.homedir();
+        console.log('++++\n++++ Base Dir\n++++');
+        Promise.all([
+            client.getServerBaseDirectory(),
+            client.getServerTempDirectory()
+        ]).then( (obj) => {
+            console.log('Obj=',obj);
+            let bd0=obj[0][0];
+            if (path.sep==='\\')
+                bd0=util.filenameUnixToWindows(bd0);
+
+            console.log('\nTemp=',obj[1]);
+            console.log('\nBase =',bd0, 'vs',baseDirectory, '(full list='+obj[0].join(',')+')');
+            assert.equal(bd0.trim(),baseDirectory.trim());
+            done();
+        }).catch( (e) => {
+            console.log('\nReceived bad event',e);
+            assert.equal(true,false);
+            done();
+        });
+    });
+
+    it('WS ...test get list',function(done) {
+
+        client.requestFileList('load').then( () => {
+            done();
+        });
+    });
+
+    it('WS ...test get list2',function(done) {
+
+        client.requestFileList('load',os.homedir()).then( () => {
+            done();
+        });
+    });
+
+
+    it ('WS ...test timeout',function(done) {
+
+        client.sendCommandPromise({'command' :'ignore',
+                                   'timeout': 500}).then( (m) => {
+            console.log('We have a response ... this is bad',m);
+            assert.equal(true,false);
+            done();
+        }).catch( (e) => {
+            console.log('We have a timeout ... this is good',e);
+            assert.equal('timeout',e.trim());
+            done();
+        });
+    });
+
+    after(function(done) {
+        bisserverutil.terminateTestingServer(client).then( ()=> {
+            done();
+        });
+    });
+
+});
+
