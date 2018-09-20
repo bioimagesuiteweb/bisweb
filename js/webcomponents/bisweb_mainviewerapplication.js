@@ -96,6 +96,17 @@ class ViewerApplicationElement extends HTMLElement {
         userPreferences.initialize(bisdbase); // this is an async call to initialize. Use safe get later to make sure
     }
 
+    // ----------------------------------------------------------------------------
+    /** return a viewer by index
+     * @param{Number} index -- 0 or 1
+     * @returns{Viewer}
+     */
+    getViewer(index) {
+        if (index<0 || index>=this.VIEWERS.length)
+            return this.VIEWERS[0];
+        return this.VIEWERS[index];
+    }
+    
     //  ---------------------------------------------------------------------------
     /** returns the extension to use when saving/loading the application state
      * @returns {String} - the extension without a preceeding "."
