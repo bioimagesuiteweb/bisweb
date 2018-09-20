@@ -582,9 +582,11 @@ const webfileutils = {
                                                      });
             });
         };
-        
-        //if (!webutil.inElectronApp() && this.needModes()) {
-        if (!webutil.inElectronApp()) {
+
+        //TODO: debug dropbox, googledrive and one dirve to make sure they work
+        //if (!webutil.inElectronApp()) {
+
+        if (!webutil.inElectronApp() && this.needModes()) {
             if (separator)
                 webutil.createMenuItem(bmenu,'');
             webutil.createMenuItem(bmenu, name, fn);
