@@ -147,7 +147,8 @@ class BisWSWebSocketFileServer extends BaseFileServer {
         
                 this.netServer = new WebSocket.Server({
                     'host' : hostname,
-                    'port' : port
+                    'port' : port,
+                    'maxPayload' : wsutil.maxPayloadSize,
                 }, () => {
                 
                     this.attachServerEvents(hostname,port,datatransfer);
@@ -205,8 +206,11 @@ class BisWSWebSocketFileServer extends BaseFileServer {
         });
         
         this.netServer.on('listening', () => {
+            let sz=wsutil.maxPayloadSize/(1024*1024);
+            let szn='maximum packet size='+sz+' MB';
             if (this.datatransfer) {
-                console.log(',_._._._._._ \tStarting transfer data server on ',this.portNumber);
+
+                console.log(',_._._._._._ \tStarting transfer data server on ',this.portNumber,',', szn);
             } else {
                 this.portNumber=port;
                 this.hostname=hostname;
@@ -223,6 +227,7 @@ class BisWSWebSocketFileServer extends BaseFileServer {
                 
                 console.log(this.indent+'\t Providing access to:',this.opts.baseDirectoriesList.join(', '));
                 console.log(this.indent+'\t\t  The temp directory is set to:',this.opts.tempDirectory);
+                console.log(this.indent+'\t\t  The '+szn);
                 
                 console.log('................................................................................,,');
             }
@@ -485,6 +490,5 @@ class BisWSWebSocketFileServer extends BaseFileServer {
         });
     }
 }
-
 
 module.exports=BisWSWebSocketFileServer;
