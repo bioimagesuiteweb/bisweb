@@ -22,10 +22,9 @@
 
 const webutil=require('bis_webutil');
 const webfileutil=require('bis_webfileutil');
-const imagepath=webutil.getWebPageImagePath();
 const $=require('jquery');
 const genericio=require('bis_genericio');
-
+const bisdate=require('bisdate.js').date;
 import testmodule from '../../test/testdata/display/displaytests.json';
 const displaytestlist=testmodule.displaytestlist;
 
@@ -39,6 +38,7 @@ let globalParams = {
     testDataRootDirectory : '',
     resultImageElement : null,
     goldImageElement: null,
+    comparisonTextElement : null,
 };
 
 
@@ -143,7 +143,6 @@ var saveStateCallback=function() {
 
 var runTest = async function(basestate='',viewerstate='',comparisonpng='') {
 
-    globalParams.resdiv.append('<p>Starting</p>');
     globalParams.goldImageElement.src=comparisonpng;
 
     try {
@@ -163,7 +162,7 @@ var runTest = async function(basestate='',viewerstate='',comparisonpng='') {
     }
 
     
-    let canvas=await globalParams.snapshotElement.getTestImage(1.0,false,false);
+    let canvas=await globalParams.snapshotElement.getTestImage();
     
     let outpng=canvas.toDataURL("image/png");
     globalParams.resultImageElement.attr('src',outpng);
@@ -178,10 +177,10 @@ var runTest = async function(basestate='',viewerstate='',comparisonpng='') {
             globalParams.snapshotElement.createBisWebImageFromImageElement(comparisonpng).then( (goldstandard) => {
                 console.log(goldstandard.getDescription());
                 let tst=resultimg.compareWithOther(goldstandard,"cc",0.98);
-                globalParams.resdiv.append(`<H4>Test</H4> <p> ${JSON.stringify(tst,null,2)}</p>`);
+                globalParams.resdiv.append(`<p><b>Result</b>: ${JSON.stringify(tst)}</p>`);
                 setTimeout( () => {
                     resolve(tst);
-                },50);
+                },100);
             }).catch( (e) => {
                 reject(e);
             });
@@ -190,29 +189,58 @@ var runTest = async function(basestate='',viewerstate='',comparisonpng='') {
 };
 
 
-var runSingleTest=function() {
-    runTest(globalParams.testDataRootDirectory+'/viewer.biswebstate',
-            '',
-            imagepath+'/../../test/testdata/display/disptest1.png'
-           );
-};
-
 var runTests= async function() {
 
     let first=parseInt($("#first").val())||0;
     let last=parseInt($("#last").val()) || 0;
 
+
+    let good=0;
+    let bad=0;
+    let goodlist=[];
+    let intentionalfail=[];
+    let badlist=[];
+
     for (let test=first;test<=last;test++) {
 
+        globalParams.resdiv.append('<HR><p>Starting Test '+test+'</p>');
+        
+        
         let statefile = displaytestlist[test]['state'];
         if (statefile.length>0) {
             statefile=globalParams.testDataRootDirectory+'/'+statefile;
         }
+
+        let desired=displaytestlist[test]['result'];
         
-        let ok=await runTest(globalParams.testDataRootDirectory+'/'+displaytestlist[test]['base'],
-                             statefile,
-                             globalParams.testDataRootDirectory+'/'+displaytestlist[test]['comparison']);
-        console.log(ok);
+        let result=await runTest(globalParams.testDataRootDirectory+'/'+displaytestlist[test]['base'],
+                                 statefile,
+                                 globalParams.testDataRootDirectory+'/'+displaytestlist[test]['comparison']);
+
+
+        globalParams.comparisonTextElement.empty();
+        globalParams.comparisonTextElement.append('<p>'+result.value+'</p>');
+
+        globalParams.resdiv[0].scrollTop = globalParams.resdiv[0].scrollHeight-50;
+
+        
+        if (result.testresult === desired)  {
+            good+=1;
+            if (result.testresult===false)
+                intentionalfail.push(test);
+            else
+                goodlist.push(test);
+        } else {
+            bad+=1;
+            badlist.push(test);
+        }
+        
+        const webconsole=$('#results');
+        webconsole.empty();
+        let numtests=last-first+1;
+        let run=test-first+1;
+        webconsole.append(`Tests for version=${bisdate}: completed=${run}/${numtests}, passed=${good}/${numtests}, failed=${bad}/${numtests}`);
+
     }
     
 };
@@ -269,6 +297,8 @@ class DisplayRegressionElement extends HTMLElement {
             globalParams.resdiv=$('#displayresults');
             globalParams.resultImageElement=$('#imgoutput');
             globalParams.goldImageElement=document.querySelector('#imggold');
+            globalParams.comparisonTextElement=$('#comparison');
+            
             $('#loadstate').click( (e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -287,14 +317,12 @@ class DisplayRegressionElement extends HTMLElement {
                 runTests();
             });
 
-
             console.log(JSON.stringify(displaytestlist,null,2),displaytestlist.length);
             initialize(displaytestlist);
         });
     }
 }
 
-
-
 webutil.defineElement('bisweb-displayregressionelement', DisplayRegressionElement);
+
 

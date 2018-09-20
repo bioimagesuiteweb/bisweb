@@ -60,16 +60,17 @@
     position: absolute;
     margin-top: 80px;
     margin-left : 850px;
-    max-height : 550px;
-    min-height : 550px;
+    width : 400px;
+    background-color : #333333;
+}
+
+#displayresults {
+    max-height : 600px;
+    min-height : 600px;
     overflow-x : auto;
     overflow-y : auto;
-    margin-right : 5px;
-    margin-bottom: 100px;
-    background-color : #333333;
     font-size : 14px;
-    width : 300px;
-    border : 4px;
+    padding : 2 2 2 2;
 }
 
 #resultimages {
@@ -77,7 +78,6 @@
     left: 15px;
     top: 10px;
     margin : 4 4 4 4;
-
 };
 
 

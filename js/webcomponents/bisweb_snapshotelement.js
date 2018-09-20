@@ -601,13 +601,7 @@ class SnapshotElement extends HTMLElement {
     }
     
     
-    getTestImage(scale=1.0,dowhite=false,docrop=false) {
-
-        this.setElementState({
-            'scale' : scale,
-            'dowhite' : dowhite,
-            'crop' : docrop,
-        });
+    getTestImage() {
 
         const self=this;
 

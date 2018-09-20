@@ -3,12 +3,32 @@
         {
             "base" : "viewer.biswebstate",
             "state" : "",
-            "comparison" : "disptest1.png"
+            "comparison" : "disptest1.png",
+            "result" : true
+        },
+        {
+            "base" : "viewer.biswebstate",
+            "state" : "",
+            "comparison" : "test2.png",
+            "result" : false
         },
         {
             "base" : "viewer.biswebstate",
             "state" : "test2.state",
-            "comparison" : "test2.png"
+            "comparison" : "test2.png",
+            "result" : true
+        },
+        {
+            "base" : "overlay.biswebstate",
+            "state" : "test3.state",
+            "comparison" : "test3.png",
+            "result" : true
+        },
+        {
+            "base" : "overlay.biswebstate",
+            "state" : "test4.state",
+            "comparison" : "test4.png",
+            "result" : true
         }
     ]
 }
