@@ -32,13 +32,17 @@ const displaytestlist=testmodule.displaytestlist;
 // ------------------------ global Parameters --------------------------
 
 let globalParams = { 
-    viewer : null ,
+    viewers : [] ,
+    viewerid : [],
+    tabset : '',
+    tabid : [],
+    currentViewer : null,
     resdiv : null,
-    snapshotElement : null,
     testDataRootDirectory : '',
     resultImageElement : null,
     goldImageElement: null,
     comparisonTextElement : null,
+    firsttime : false,
 };
 
 
@@ -62,8 +66,15 @@ var loadApplicationState=function(fname)  {
                 return;
             }
 
+            globalParams.viewers[1].clearobjectmap();
+            
             let dat=obj.params['viewer1'];
-            globalParams.viewer.setElementState(dat);
+            let dat2=obj.params['viewer2'];
+            globalParams.viewers[0].setElementState(dat);
+            if (globalParams.currentViewer===globalParams.viewers[1])
+                globalParams.viewers[1].setElementState(dat2);
+
+            
             globalParams.resdiv.append('<p>Base Viewer state file loaded from '+contents.filename+'</p>');
             resolve("Done");
         }).catch((e) => {
@@ -85,8 +96,9 @@ var loadViewerParameters=function(fname)  {
                 globalParams.resdiv.append('<H4>Error</H4><p>Bad application state file '+contents.filename+' probably not a application state file.</p>');
                 reject(e);
             }
-            
-            globalParams.viewer.setElementState(obj);
+
+            console.log('Here setting element state',globalParams.currentViewer,obj);
+            globalParams.currentViewer.setElementState(obj);
             globalParams.resdiv.append('<p>Viewer param file loaded from '+contents.filename+'</p>');
             resolve("Done");
         }).catch((e) => {
@@ -97,8 +109,10 @@ var loadViewerParameters=function(fname)  {
 };
 
 
-var loadStateCallback=function() {
+var loadStateCallback=function(ind) {
 
+    
+    
     webfileutil.genericFileCallback(
         { title: 'Load Application State',
           save: false,
@@ -107,13 +121,14 @@ var loadStateCallback=function() {
         }
         ,
         ( (fname) => {
+            setViewer(ind);
             loadApplicationState(fname);
         }),
     );
 };
 
 
-var saveStateCallback=function() {
+var saveStateCallback=function(ind) {
 
     webfileutil.genericFileCallback(
         { title: 'Save Viewer State',
@@ -124,7 +139,8 @@ var saveStateCallback=function() {
         ,
         ( (fobj) => {
             fobj=genericio.getFixedSaveFileName(fobj,"viewer.state");
-            let state=globalParams.viewer.getElementState(false);
+            setViewer(ind);
+            let state=globalParams.currentViewer.getElementState(false);
             return new Promise(function (resolve, reject) {
                 genericio.write(fobj, JSON.stringify(state)).then((f) => {
                     if (!genericio.isSaveDownload())
@@ -151,7 +167,7 @@ var runTest = async function(basestate='',viewerstate='',comparisonpng='') {
     } catch(e) {
         throw new Error(e);
     }
-        
+    
     if (viewerstate!=='') {
         console.log("Reading viewer state from",viewerstate);
         try { 
@@ -161,20 +177,21 @@ var runTest = async function(basestate='',viewerstate='',comparisonpng='') {
         }
     }
 
+    let snapshotElement=globalParams.currentViewer.getSnapShotController();
     
-    let canvas=await globalParams.snapshotElement.getTestImage();
+    let canvas=await snapshotElement.getTestImage();
     
     let outpng=canvas.toDataURL("image/png");
     globalParams.resultImageElement.attr('src',outpng);
     
-    let resultimg=globalParams.snapshotElement.createBisWebImageFromCanvas(canvas);
+    let resultimg=snapshotElement.createBisWebImageFromCanvas(canvas);
     
     return new Promise( (resolve,reject) => {
 
         setTimeout( () => {
             
             globalParams.resdiv.append('<p>Reading result from: '+comparisonpng+'</p>');
-            globalParams.snapshotElement.createBisWebImageFromImageElement(comparisonpng).then( (goldstandard) => {
+            snapshotElement.createBisWebImageFromImageElement(comparisonpng).then( (goldstandard) => {
                 console.log(goldstandard.getDescription());
                 let tst=resultimg.compareWithOther(goldstandard,"cc",0.98);
                 globalParams.resdiv.append(`<p><b>Result</b>: ${JSON.stringify(tst)}</p>`);
@@ -189,8 +206,20 @@ var runTest = async function(basestate='',viewerstate='',comparisonpng='') {
 };
 
 
+var setViewer=function(n) {
+
+    let tabname = globalParams.tabset + ' a[href="' + globalParams.tabid[n-1] + '"]';
+    console.log(tabname);
+    $(tabname).tab('show');
+
+    globalParams.currentViewer=document.querySelector(globalParams.viewerid[n-1]);
+};
+
 var runTests= async function() {
 
+
+    globalParams.firsttime=true;
+    
     let first=parseInt($("#first").val())||0;
     let last=parseInt($("#last").val()) || 0;
 
@@ -211,6 +240,8 @@ var runTests= async function() {
             statefile=globalParams.testDataRootDirectory+'/'+statefile;
         }
 
+        setViewer(displaytestlist[test]['viewer'] || 1);
+        
         let desired=displaytestlist[test]['result'];
         
         let result=await runTest(globalParams.testDataRootDirectory+'/'+displaytestlist[test]['base'],
@@ -283,32 +314,74 @@ class DisplayRegressionElement extends HTMLElement {
     
     // Fires when an instance of the element is created.
     connectedCallback() {
-        let viewerid = this.getAttribute('bis-viewerid');
-        let snapshotid = this.getAttribute('bis-snapshotid');
+        let numviewers = parseInt(this.getAttribute('bis-numviewers') || 1);
 
+        globalParams.tabset = this.getAttribute('bis-tabset') || null;
+        
+        globalParams.viewerid=[];
+        globalParams.tabid=[];
+        for (let i=1;i<=numviewers;i++) {
+            globalParams.viewerid.push(this.getAttribute('bis-viewerid'+i));
+            globalParams.tabid.push(this.getAttribute('bis-tab'+i));
+        }
+        
         if (typeof window.BIS !=='undefined') 
             globalParams.testDataRootDirectory="../test/testdata/display";
         else 
             globalParams.testDataRootDirectory="./test/testdata/display";
 
-        webutil.runAfterAllLoaded( () => {        
-            globalParams.viewer = document.querySelector(viewerid);
-            globalParams.snapshotElement = document.querySelector(snapshotid);
+        webutil.runAfterAllLoaded( () => {
+
+            globalParams.viewer = document.querySelector(globalParams.viewerid[0]);
             globalParams.resdiv=$('#displayresults');
             globalParams.resultImageElement=$('#imgoutput');
             globalParams.goldImageElement=document.querySelector('#imggold');
             globalParams.comparisonTextElement=$('#comparison');
+
+            if (numviewers>1) {
+
+                globalParams.viewers= [
+                    document.querySelector(globalParams.viewerid[0]),
+                    document.querySelector(globalParams.viewerid[1]),
+                ];
+
+                
+                globalParams.viewers[0].addImageChangedObserver(globalParams.viewers[1]);
+                
+                globalParams.viewers[0].addColormapObserver(globalParams.viewers[1]);
+                globalParams.viewers[1].addColormapObserver(globalParams.viewers[0]);
+                
+                globalParams.viewers[0].addFrameChangedObserver(globalParams.viewers[1]);
+                globalParams.viewers[1].addFrameChangedObserver(globalParams.viewers[0]);
+                
+
             
-            $('#loadstate').click( (e) => {
+
+            }
+            
+            
+            $('#loadstate1').click( (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                loadStateCallback();
+                loadStateCallback(1);
             });
 
-            $('#savestate').click( (e) => {
+            $('#savestate1').click( (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                saveStateCallback();
+                saveStateCallback(1);
+            });
+
+            $('#loadstate2').click( (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                loadStateCallback(2);
+            });
+
+            $('#savestate2').click( (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                saveStateCallback(2);
             });
 
             $('#compute').click( (e) => {
@@ -317,8 +390,8 @@ class DisplayRegressionElement extends HTMLElement {
                 runTests();
             });
 
-            console.log(JSON.stringify(displaytestlist,null,2),displaytestlist.length);
             initialize(displaytestlist);
+            setViewer(1);
         });
     }
 }

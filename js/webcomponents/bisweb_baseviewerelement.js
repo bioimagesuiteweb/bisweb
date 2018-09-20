@@ -263,11 +263,17 @@ class BaseViewerElement extends HTMLElement {
     // ------------------------------------------------------------------------------------
 
     /** this sets the snapshot controller for use in store/retrieve Element state
-     * requests an update
      * @param{SnapshotController} - cont
      */
     setSnapShotController(cont) {
         this.internal.snapshotcontroller=cont;
+    }
+
+    /** this geets the snapshot controller 
+     * @returns{SnapshotController}
+     */
+    getSnapShotController() {
+        return this.internal.snapshotcontroller;
     }
     
     /** this is the callback registered on {@link SnapshotController} to call when it 

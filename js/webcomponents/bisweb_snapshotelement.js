@@ -296,7 +296,6 @@ class SnapshotElement extends HTMLElement {
 
     createOutputCanvas(img,ismosaic=false,scale=1.0,dowhite=false,crop=false) {
 
-        console.log('In createOutputCanvas');
         let fillcolor = "#000000";
         if (dowhite)
             fillcolor = "#ffffff";

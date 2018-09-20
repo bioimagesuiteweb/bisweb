@@ -208,7 +208,6 @@ class MosaicViewerElement extends BaseViewerElement {
         let s=this.internal.objectmap;
         super.deleteoldobjectmap();
         this.internal.objectmap=s;
-        console.log('obj=',this.internal.objectmap.getDescription());
     }
     
     /** deletes artifacts of oldimage (display elements)
@@ -688,7 +687,11 @@ class MosaicViewerElement extends BaseViewerElement {
     // ------------------------------------------------------------------------
     /** clears the objectmap.  */
     clearobjectmap() {
+        if (this.internal.objectmap===null)
+            return;
+
         this.deleteoldobjectmap_artifacts();
+        this.internal.objectmap=null;
         this.internal.cmapcontroller.removeobjectmap();     
         this.internal.objectmap=null;
     }

@@ -4,31 +4,66 @@
             "base" : "viewer.biswebstate",
             "state" : "",
             "comparison" : "disptest1.png",
+            "viewer" : 1,
             "result" : true
         },
         {
             "base" : "viewer.biswebstate",
             "state" : "",
             "comparison" : "test2.png",
+            "viewer" : 1,
             "result" : false
         },
         {
             "base" : "viewer.biswebstate",
             "state" : "test2.state",
             "comparison" : "test2.png",
+            "viewer" : 1,
             "result" : true
         },
         {
             "base" : "overlay.biswebstate",
             "state" : "test3.state",
             "comparison" : "test3.png",
+            "viewer" : 1,
             "result" : true
         },
         {
             "base" : "overlay.biswebstate",
             "state" : "test4.state",
             "comparison" : "test4.png",
+            "viewer" : 1,
+            "result" : true
+        },
+        {
+            "base" : "overlay.biswebstate",
+            "state" : "test5.state",
+            "comparison" : "test5.png",
+            "viewer" : 2,
+            "result" : true
+        },
+        {
+            "base" : "overlay2.biswebstate",
+            "state" : "test6.state",
+            "comparison" : "test6.png",
+            "viewer" : 1,
+            "result" : true
+        },
+        {
+            "base" : "overlay2.biswebstate",
+            "state" : "test7.state",
+            "comparison" : "test7.png",
+            "viewer" : 2,
+            "result" : true
+        },
+        {
+            "base" : "overlay2.biswebstate",
+            "state" : "test8.state",
+            "comparison" : "test8.png",
+            "viewer" : 2,
             "result" : true
         }
+
+
     ]
 }
