@@ -1,0 +1,14 @@
+{
+    "displaytestlist" : [
+        {
+            "base" : "viewer.biswebstate",
+            "state" : "",
+            "comparison" : "disptest1.png"
+        },
+        {
+            "base" : "viewer.biswebstate",
+            "state" : "test2.state",
+            "comparison" : "test2.png"
+        }
+    ]
+}

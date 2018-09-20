@@ -21,55 +21,230 @@
 
 
 const webutil=require('bis_webutil');
-const BisWebImage=require('bisweb_image');
+const webfileutil=require('bis_webfileutil');
 const imagepath=webutil.getWebPageImagePath();
+const $=require('jquery');
+const genericio=require('bis_genericio');
 
-let viewerid=null;
-let snapshotid=null;
+import testmodule from '../../test/testdata/display/displaytests.json';
+const displaytestlist=testmodule.displaytestlist;
 
 
-var startFunction = (() => {
+// ------------------------ global Parameters --------------------------
 
-    const viewer = document.querySelector(viewerid);
-    const snapshotElement = document.querySelector(snapshotid);
-    
-    console.log('viewer=',viewer);
-    
-    let img=new BisWebImage();
-    img.load(`${imagepath}/MNI_T1_1mm_stripped_ras.nii.gz`).then( () => {
-        webutil.createAlert('Image loaded from ' + img.getDescription());
-        console.log('Image=',img);
-        console.log('Viewer=',viewer);
-        viewer.setimage(img);
+let globalParams = { 
+    viewer : null ,
+    resdiv : null,
+    snapshotElement : null,
+    testDataRootDirectory : '',
+    resultImageElement : null,
+    goldImageElement: null,
+};
 
-        let state=viewer.getElementState(false);
-        console.log(JSON.stringify(state,null,2));
-        
-        console.log('Viewer=',snapshotElement);
-        snapshotElement.getTestImage().then( (dat) => {
-            console.log('Creating new image');
-            let newimg=snapshotElement.createBisWebImageFromCanvas(dat);
-            viewer.setimage(newimg);
 
-            setTimeout( () => {
+// ------------------------ load viewer application state -------------
 
-                let url=imagepath+'/../../test/testdata/display/disptest1.png';
-                console.log(url);
-                snapshotElement.createBisWebImageFromImageElement(url).then( (newimg2) => {
-                    console.log(newimg2.getDescription());
-                    viewer.setobjectmap(newimg2);
+var loadApplicationState=function(fname)  {
 
-                    let tst=newimg.compareWithOther(newimg2,"cc",0.98);
-                    webutil.createAlert(JSON.stringify(tst,null,2));
-                });
-            },20);
+
+    return new Promise( (resolve,reject) => {
+        genericio.read(fname, false).then((contents) => {
+            let obj = null;
+            try {
+                obj=JSON.parse(contents.data);
+            } catch(e) {
+                globalParams.resdiv.append('<H4>Error</H4><p>Bad application state file '+contents.filename+' probably not a application state file.</p>');
+                reject(e);
+            }
             
-        });
+            if (!obj.app) {
+                globalParams.resdiv.append('<H4>Error</H4><p>Bad application state file '+contents.filename+' probably not a application state file.</p>');
+                return;
+            }
+
+            let dat=obj.params['viewer1'];
+            globalParams.viewer.setElementState(dat);
+            globalParams.resdiv.append('<p>Base Viewer state file loaded from '+contents.filename+'</p>');
+            resolve("Done");
+        }).catch((e) => {
+            console.log(e.stack,e);
+            webutil.createAlert(`${e}`,true);});
     });
 
-    
+};
 
-});
+var loadViewerParameters=function(fname)  {
+
+
+    return new Promise( (resolve,reject) => {
+        genericio.read(fname, false).then((contents) => {
+            let obj = null;
+            try {
+                obj=JSON.parse(contents.data);
+            } catch(e) {
+                globalParams.resdiv.append('<H4>Error</H4><p>Bad application state file '+contents.filename+' probably not a application state file.</p>');
+                reject(e);
+            }
+            
+            globalParams.viewer.setElementState(obj);
+            globalParams.resdiv.append('<p>Viewer param file loaded from '+contents.filename+'</p>');
+            resolve("Done");
+        }).catch((e) => {
+            console.log(e.stack,e);
+            webutil.createAlert(`${e}`,true);});
+    });
+
+};
+
+
+var loadStateCallback=function() {
+
+    webfileutil.genericFileCallback(
+        { title: 'Load Application State',
+          save: false,
+          suffix : "biswebstate",
+          filters : [ { name: 'Application State File', extensions: [ "biswebstate" ]}],
+        }
+        ,
+        ( (fname) => {
+            loadApplicationState(fname);
+        }),
+    );
+};
+
+
+var saveStateCallback=function() {
+
+    webfileutil.genericFileCallback(
+        { title: 'Save Viewer State',
+          save: true,
+          suffix : "viewerstate",
+          filters : [ { name: 'Application State File', extensions: [ "viewerstate" ]}],
+        }
+        ,
+        ( (fobj) => {
+            fobj=genericio.getFixedSaveFileName(fobj,"viewer.state");
+            let state=globalParams.viewer.getElementState(false);
+            return new Promise(function (resolve, reject) {
+                genericio.write(fobj, JSON.stringify(state)).then((f) => {
+                    if (!genericio.isSaveDownload())
+                        webutil.createAlert('Viewer State saved '+f);
+                }).catch((e) => {
+                    //                    webutil.createAlert('Failed to save Viewer State '+e);
+                    console.log(e,e.stack);
+                    reject(e);
+                });
+            });
+
+        }),
+    );
+};
+
+
+var runTest = async function(basestate='',viewerstate='',comparisonpng='') {
+
+    globalParams.resdiv.append('<p>Starting</p>');
+    globalParams.goldImageElement.src=comparisonpng;
+
+    try {
+        console.log("Reading app state from",basestate);
+        await loadApplicationState(basestate);
+    } catch(e) {
+        throw new Error(e);
+    }
+        
+    if (viewerstate!=='') {
+        console.log("Reading viewer state from",viewerstate);
+        try { 
+            await loadViewerParameters(viewerstate);
+        } catch(e) {
+            throw new Error(e);
+        }
+    }
+
+    
+    let canvas=await globalParams.snapshotElement.getTestImage(1.0,false,false);
+    
+    let outpng=canvas.toDataURL("image/png");
+    globalParams.resultImageElement.attr('src',outpng);
+    
+    let resultimg=globalParams.snapshotElement.createBisWebImageFromCanvas(canvas);
+    
+    return new Promise( (resolve,reject) => {
+
+        setTimeout( () => {
+            
+            globalParams.resdiv.append('<p>Reading result from: '+comparisonpng+'</p>');
+            globalParams.snapshotElement.createBisWebImageFromImageElement(comparisonpng).then( (goldstandard) => {
+                console.log(goldstandard.getDescription());
+                let tst=resultimg.compareWithOther(goldstandard,"cc",0.98);
+                globalParams.resdiv.append(`<H4>Test</H4> <p> ${JSON.stringify(tst,null,2)}</p>`);
+                setTimeout( () => {
+                    resolve(tst);
+                },50);
+            }).catch( (e) => {
+                reject(e);
+            });
+        },20);
+    });
+};
+
+
+var runSingleTest=function() {
+    runTest(globalParams.testDataRootDirectory+'/viewer.biswebstate',
+            '',
+            imagepath+'/../../test/testdata/display/disptest1.png'
+           );
+};
+
+var runTests= async function() {
+
+    let first=parseInt($("#first").val())||0;
+    let last=parseInt($("#last").val()) || 0;
+
+    for (let test=first;test<=last;test++) {
+
+        let statefile = displaytestlist[test]['state'];
+        if (statefile.length>0) {
+            statefile=globalParams.testDataRootDirectory+'/'+statefile;
+        }
+        
+        let ok=await runTest(globalParams.testDataRootDirectory+'/'+displaytestlist[test]['base'],
+                             statefile,
+                             globalParams.testDataRootDirectory+'/'+displaytestlist[test]['comparison']);
+        console.log(ok);
+    }
+    
+};
+
+var initialize=function(testlist) {
+
+    var fixRange=function(targetname) {
+        
+        let target=$(targetname);
+        let val=target.val();
+        if (val<0)
+            val=0;
+        if (val>=testlist.length)
+            val=testlist.length-1;
+        target.val(val);
+        
+    };
+    
+    $('#first').change( (e) => {
+        e.preventDefault();
+        fixRange("#first");
+    });
+
+    $('#last').change( (e) => {
+        e.preventDefault();
+        fixRange("#last");
+    });
+
+    $('#first').val(0);
+    $('#last').val(testlist.length-1);
+
+};
 
 
 // -----------------------------------------------------------------
@@ -80,10 +255,41 @@ class DisplayRegressionElement extends HTMLElement {
     
     // Fires when an instance of the element is created.
     connectedCallback() {
-        viewerid = this.getAttribute('bis-viewerid');
-        snapshotid = this.getAttribute('bis-snapshotid');
-        webutil.runAfterAllLoaded( () => {
-            startFunction();
+        let viewerid = this.getAttribute('bis-viewerid');
+        let snapshotid = this.getAttribute('bis-snapshotid');
+
+        if (typeof window.BIS !=='undefined') 
+            globalParams.testDataRootDirectory="../test/testdata/display";
+        else 
+            globalParams.testDataRootDirectory="./test/testdata/display";
+
+        webutil.runAfterAllLoaded( () => {        
+            globalParams.viewer = document.querySelector(viewerid);
+            globalParams.snapshotElement = document.querySelector(snapshotid);
+            globalParams.resdiv=$('#displayresults');
+            globalParams.resultImageElement=$('#imgoutput');
+            globalParams.goldImageElement=document.querySelector('#imggold');
+            $('#loadstate').click( (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                loadStateCallback();
+            });
+
+            $('#savestate').click( (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                saveStateCallback();
+            });
+
+            $('#compute').click( (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                runTests();
+            });
+
+
+            console.log(JSON.stringify(displaytestlist,null,2),displaytestlist.length);
+            initialize(displaytestlist);
         });
     }
 }

@@ -56,6 +56,31 @@
     font-size : 14px;
 }
 
+#baseresults {
+    position: absolute;
+    margin-top: 80px;
+    margin-left : 850px;
+    max-height : 550px;
+    min-height : 550px;
+    overflow-x : auto;
+    overflow-y : auto;
+    margin-right : 5px;
+    margin-bottom: 100px;
+    background-color : #333333;
+    font-size : 14px;
+    width : 300px;
+    border : 4px;
+}
+
+#resultimages {
+    position: relative;
+    left: 15px;
+    top: 10px;
+    margin : 4 4 4 4;
+
+};
+
+
 #results {
     margin-top : 15px;
     margin-left : 5vw;
