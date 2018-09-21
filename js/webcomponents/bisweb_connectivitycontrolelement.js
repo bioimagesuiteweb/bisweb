@@ -652,7 +652,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             internal.overlaycontext.clearRect(bd[0],bd[1],bd[2],bd[3]);
             internal.parcellation.drawCircles(internal.context);
         } else {
-            console.log('canvas too small ... skipping 2d');
+            //console.log('canvas too small ... skipping 2d');
             skip2d=true;
         }
         
@@ -1466,6 +1466,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
 
         doNotUpdateFlagMatrix=doNotUpdateFlagMatrix || false;
+
+        console.log('Rendermode=',internal.rendermode);
+        if (internal.rendermode===6)
+            doNotUpdateFlagMatrix=false;
+        
         if (internal.parcellations=== null ||
             internal.subviewers === null)
             return 0;
@@ -1857,7 +1862,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             @param {object} state -- the state of the element */
         setElementState : function (dt=null) {
 
-            console.log('Cleaning up');
+            //            console.log('Cleaning up');
             internal.context.clearRect(0,0,internal.canvas.width,internal.canvas.height);
             internal.overlaycontext.clearRect(0,0,internal.canvas.width,internal.canvas.height);
             internal.rendermode=dt.rendermode;
