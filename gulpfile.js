@@ -362,8 +362,10 @@ gulp.task('buildtest',function() {
     bis_gutil.createCSSCommon([maincss],'biswebtest.css',options.outdir);
 
     bis_gutil.createHTML('biswebdisplaytest',options.outdir,'bislib.js',internal.biscss);
+    bis_gutil.createHTML('biswebdisplaytest2',options.outdir,'bislib.js',internal.biscss);
     let maincss2    = './web/biswebdisplaytest.css';
     bis_gutil.createCSSCommon([maincss2],'biswebdisplaytest.css',options.outdir);
+
 
 });
 
