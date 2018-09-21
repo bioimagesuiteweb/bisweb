@@ -19,7 +19,7 @@
 
 "use strict";
 
-
+const bis_webfileutil=require('bis_webfileutil');
 const webutil=require('bis_webutil');
 const $=require('jquery');
 const bisdate=require('bisdate.js').date;
@@ -123,12 +123,14 @@ var runTest = async function(testindex,viewerindex,basestate='',viewerstate='',c
 
 var runTests= async function(multiple=false) {
 
+    bis_webfileutil.setMode('local',false);
+    
     globalParams.resdiv.empty();
     
     let first=parseInt($("#first").val())||0;
     let last=parseInt($("#last").val()) || 0;
 
-    if (multiple===false)
+    if (multiple===false) 
         last=first;
     
     let good=0;
@@ -191,7 +193,13 @@ var runTests= async function(multiple=false) {
     }
 
     webutil.createAlert("Tests Completed");
-    
+    if (multiple===false)  {
+        let newfirst=first+1;
+        if (newfirst<displaytestlist.length)
+            $('#first').val(newfirst);
+        else
+            $('#first').val(0);
+    }
 };
 
 var initialize=function(testlist) {
@@ -247,11 +255,15 @@ class DisplayRegressionElement extends HTMLElement {
 
         let name=this.getAttribute('bis-testlist') || 'overlay';
         displaytestlist=testmodule[name];
+
+
         
         webutil.runAfterAllLoaded( () => {
 
+
+            
             if (name==="overlay")
-                webutil.setAlertTop(910);
+                webutil.setAlertTop(920);
             else
                 webutil.setAlertTop(870);
             

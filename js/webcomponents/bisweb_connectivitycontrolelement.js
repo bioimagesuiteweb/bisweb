@@ -448,9 +448,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     
     var drawMatricesAndLegendsAsImages = function() {
 
-        if (internal.showlegend===false)
-            return;
-        
         if (internal.parcellation===null)
             return;
         
@@ -498,47 +495,50 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         let py=originy+4+offset;
         let lobegap=dlobe;
 
-        internal.overlaycontext.save();
-        internal.overlaycontext.fillStyle="#cccccc";
-        internal.overlaycontext.fillRect(px-4,py-4,pw+8,needed);
-        internal.overlaycontext.fillStyle="#000000";
-        internal.overlaycontext.textAlign="left";
-        internal.overlaycontext.font=fnsize2+"px Arial";
-        internal.overlaycontext.fillText("'Lobes'",px+5,py+lobegap);
-        internal.overlaycontext.textAlign="center";
-        internal.overlaycontext.font=fnsize+"px Arial";
-        py+=(2*lobegap);
-        
-        for (let i=1;i<=10;i++) {
-            let tot=util.range(internal.parcellation.lobeStats[i][2],0,10000),tot2=0;
-            if (internal.parcellation.lobeStats.length>(i+10))
-                tot2=util.range(internal.parcellation.lobeStats[i+10][2],0,10000);
-            if (tot+tot2>0) {
-                internal.overlaycontext.fillStyle=internal.parcellation.getNonSidedLobeColor(i);
-                internal.overlaycontext.fillRect(px,py,pw,1.5*lobegap);
-                internal.overlaycontext.fillStyle=internal.parcellation.getInverseNonSidedLobeColor(i);
-                let name=gui_Lobes[i];
-                name=name.slice(2,name.length);
-                internal.overlaycontext.fillText(name,px+0.5*pw,py+lobegap);
-                py+=(2*lobegap);
+        if (internal.showlegend) {
+            internal.overlaycontext.save();
+            internal.overlaycontext.fillStyle="#cccccc";
+            internal.overlaycontext.fillRect(px-4,py-4,pw+8,needed);
+            internal.overlaycontext.fillStyle="#000000";
+            internal.overlaycontext.textAlign="left";
+            internal.overlaycontext.font=fnsize2+"px Arial";
+            internal.overlaycontext.fillText("'Lobes'",px+5,py+lobegap);
+            internal.overlaycontext.textAlign="center";
+            internal.overlaycontext.font=fnsize+"px Arial";
+            py+=(2*lobegap);
+            
+            for (let i=1;i<=10;i++) {
+                let tot=util.range(internal.parcellation.lobeStats[i][2],0,10000),tot2=0;
+                if (internal.parcellation.lobeStats.length>(i+10))
+                    tot2=util.range(internal.parcellation.lobeStats[i+10][2],0,10000);
+                if (tot+tot2>0) {
+                    internal.overlaycontext.fillStyle=internal.parcellation.getNonSidedLobeColor(i);
+                    internal.overlaycontext.fillRect(px,py,pw,1.5*lobegap);
+                    internal.overlaycontext.fillStyle=internal.parcellation.getInverseNonSidedLobeColor(i);
+                    let name=gui_Lobes[i];
+                    name=name.slice(2,name.length);
+                    internal.overlaycontext.fillText(name,px+0.5*pw,py+lobegap);
+                    py+=(2*lobegap);
+                }
             }
         }
         
         
         let y0=fnsize2*2;
-        if (y0<internal.parcellation.box[1]) {
-            let midx=0.5*(internal.parcellation.box[0]+internal.parcellation.box[2]);
-            internal.overlaycontext.fillStyle="rgb(0,0,0)";
-            internal.overlaycontext.font=fnsize2+"px Arial";
-            internal.overlaycontext.textAlign="center";
-            internal.overlaycontext.clearRect(0,0,cw,internal.parcellation.box[1]-2);
-            let y0_0=internal.parcellation.box[1]-0.5*(internal.parcellation.box[1]-fnsize2);
-            internal.overlaycontext.fillText('Using node definitions from '+internal.parcellation.description+' with '+(internal.parcellation.rois.length)+' nodes.',
-                                             midx,y0_0);
+        if (internal.showlegend) {
+            if (y0<internal.parcellation.box[1]) {
+                let midx=0.5*(internal.parcellation.box[0]+internal.parcellation.box[2]);
+                internal.overlaycontext.fillStyle="rgb(0,0,0)";
+                internal.overlaycontext.font=fnsize2+"px Arial";
+                internal.overlaycontext.textAlign="center";
+                internal.overlaycontext.clearRect(0,0,cw,internal.parcellation.box[1]-2);
+                let y0_0=internal.parcellation.box[1]-0.5*(internal.parcellation.box[1]-fnsize2);
+                internal.overlaycontext.fillText('Using node definitions from '+internal.parcellation.description+' with '+(internal.parcellation.rois.length)+' nodes.',
+                                                 midx,y0_0);
+            }
+            
+            internal.overlaycontext.restore();
         }
-
-
-        internal.overlaycontext.restore();
         
         let needed2=2*(imagewidth+25+4)+30;
         if (needed2>boxheight) {
@@ -570,11 +570,10 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                                                        internal.overlaycontext,
                                                        internal.parcellation);
             let minx=offsets[im][0],miny=offsets[im][1],sz=offsets[im][2];
-
             
             
-            if (image!==null) {
-                
+            if (internal.showlegend && image!==null) {
+                    
                 internal.overlaycontext.save();
                 internal.overlaycontext.lineWidth=1;
                 internal.overlaycontext.fillStyle="rgb(0,0,0)";
@@ -610,18 +609,28 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 if (im==0) {
                     let a=minx,b=miny,c=sz;
                     ImageObject.onload = function() {
-                        internal.overlaycontext.drawImage(ImageObject,
-                                                          0,0,numrows,numrows,
-                                                          a,b,c,c);
+                        if (internal.showlegend) {
+                            internal.overlaycontext.drawImage(ImageObject,
+                                                              0,0,numrows,numrows,
+                                                              a,b,c,c);
+                        }
                     };
                 } else {
                     let a1=minx,b1=miny,c1=sz;
                     ImageObject.onload = function() {
-                        internal.overlaycontext.drawImage(ImageObject,
-                                                          0,0,numrows,numrows,
-                                                          a1,b1,c1,c1);
+                        if (internal.showlegend) {
+                            internal.overlaycontext.drawImage(ImageObject,
+                                                              0,0,numrows,numrows,
+                                                              a1,b1,c1,c1);
+                        }
                     };
                 }
+            } else {
+                let a=minx,b=miny,c=sz;
+                internal.overlaycontext.save();
+                internal.overlaycontext.fillStyle="#ffffff";
+                internal.overlaycontext.fillRect(a,b,c,c);
+                internal.overlaycontext.restore();
             }
         }
     };
@@ -702,8 +711,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             
         }
 
-        if (internal.showlegend === true)
-            drawMatricesAndLegendsAsImages();
+        //if (internal.showlegend === true)
+        drawMatricesAndLegendsAsImages();
 
         if (!skip3d)
             internal.layoutmanager.getrenderer().render(internal.subviewers[3].scene,
@@ -1910,6 +1919,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             
             internal.showlegend=!dt.showlegend;
             toggleshowlegend();
+
             internal.inrestorestate=false;
         },
     
