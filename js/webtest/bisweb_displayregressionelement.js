@@ -23,8 +23,9 @@
 const webutil=require('bis_webutil');
 const $=require('jquery');
 const bisdate=require('bisdate.js').date;
-import testmodule from '../../test/testdata/display/displaytests.json';
-const displaytestlist=testmodule.displaytestlist;
+import testmodule from '../../web/images/testdata/displaytests.json';
+let displaytestlist=null;
+
 
 
 // ------------------------ global Parameters --------------------------
@@ -39,20 +40,6 @@ let globalParams = {
     currentViewer : null,
 };
 
-
-/*// ---------------------- set visible viewer -------------------------------------
-
-  var setViewer=function(n) {
-
-  return new Promise( (resolve) => {
-  console.log("Setting visible tab",n);
-  globalParams.application.setVisibleTab(n);
-  globalParams.currentViewer=globalParams.application.getViewer(n-1);
-  setTimeout( () => {
-  resolve();
-  },100);
-  });
-  };*/
 
 // ---------------------- run Test -------------------------------------
 
@@ -79,8 +66,6 @@ var runTest = async function(testindex,viewerindex,basestate='',viewerstate='',c
     }
 
     let snapshotElement=globalParams.currentViewer.getSnapShotController();
-    console.log("Current=",globalParams.currentViewer,snapshotElement);
-    
     
     let canvas=await snapshotElement.getTestImage();
     
@@ -126,7 +111,7 @@ var runTest = async function(testindex,viewerindex,basestate='',viewerstate='',c
                 setTimeout( () => {
                     resolve(tst);
                 },1);
-            },1000);
+            },500);
         }).catch( (e) => {
             reject(e);
         });
@@ -135,14 +120,16 @@ var runTest = async function(testindex,viewerindex,basestate='',viewerstate='',c
 
 // ---------------------- run tests -------------------------------------
 
-var runTests= async function() {
+var runTests= async function(multiple=false) {
 
     globalParams.resdiv.empty();
     
     let first=parseInt($("#first").val())||0;
     let last=parseInt($("#last").val()) || 0;
 
-
+    if (multiple===false)
+        last=first;
+    
     let good=0;
     let bad=0;
     let goodlist=[];
@@ -201,6 +188,8 @@ var runTests= async function() {
         webconsole.append(`Tests for version=${bisdate}: completed=${run}/${numtests}, passed=${good}/${numtests}, failed=${bad}/${numtests}`);
 
     }
+
+    webutil.createAlert("Tests Completed");
     
 };
 
@@ -253,13 +242,17 @@ class DisplayRegressionElement extends HTMLElement {
             globalParams.tabid.push(this.getAttribute('bis-tab'+i));
         }
         
-        if (typeof window.BIS !=='undefined') 
-            globalParams.testDataRootDirectory="../test/testdata/display";
-        else 
-            globalParams.testDataRootDirectory="./test/testdata/display";
+        globalParams.testDataRootDirectory="images/testdata";
 
+        let name=this.getAttribute('bis-testlist') || 'overlay';
+        displaytestlist=testmodule[name];
+        
         webutil.runAfterAllLoaded( () => {
 
+            if (name==="overlay")
+                webutil.setAlertTop(910);
+            else
+                webutil.setAlertTop(870);
             
             globalParams.application = document.querySelector(this.getAttribute("bis-application"));
             globalParams.resdiv=$('#displayresults');
@@ -270,9 +263,14 @@ class DisplayRegressionElement extends HTMLElement {
 
             $('#compute').click( (e) => {
                 e.preventDefault(); // cancel default behavior
-                runTests();
+                runTests(true);
             });
-            
+
+            $('#computesingle').click( (e) => {
+                e.preventDefault(); // cancel default behavior
+                runTests(false);
+            });
+
         });
     }
 }

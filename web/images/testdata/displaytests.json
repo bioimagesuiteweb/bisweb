@@ -1,5 +1,5 @@
 {
-    "displaytestlist" : [
+    "overlay" : [
         {
             "base" : "viewer.biswebstate",
             "state" : "test1.state",
@@ -75,6 +75,38 @@
             "state" : "test10.state",
             "comparison" : "test10.png",
             "viewer" : 2,
+            "result" : true
+        }
+    ],
+    "connviewer" : [
+        {
+            "base" : "connstate.biswebstate",
+            "state" : "",
+            "comparison" : "otest1.png",
+            "result" : true
+        },
+        {
+            "base" : "connstate.biswebstate",
+            "state" : "otest2.state",
+            "comparison" : "otest2.png",
+            "result" : true
+        },        
+        {
+            "base" : "connstate.biswebstate",
+            "state" : "otest3.state",
+            "comparison" : "otest3.png",
+            "result" : true
+        },
+        {
+            "base" : "connstate.biswebstate",
+            "state" : "otest4.state",
+            "comparison" : "otest4.png",
+            "result" : true
+        },
+        {
+            "base" : "connstate.biswebstate",
+            "state" : "otest5.state",
+            "comparison" : "otest5.png",
             "result" : true
         }
 

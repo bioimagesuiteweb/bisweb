@@ -20,7 +20,7 @@
 <html lang="en">
 
   <head>
-    <title>BioImage Suite Display Test</title>
+    <title>BioImage Suite Display Test 2</title>
     <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0"/> -->
     <meta name="viewport" content="width=device-width, user-scalable=no">
     <meta name="theme-color" content="rgb(28,45,64)">
@@ -62,10 +62,10 @@
 
     <bisweb-topmenubar   id="viewer_menubar"></bisweb-topmenubar>
 
-    <div id="toph4">
+    <div id="toph4" style="width:910px">
       <div id="midh4">
 
-        <H4> BioImage Suite Web Display Regression Test Runner</H4>
+        <H4> BioImage Suite Web Display Regression Test Runner (2)</H4>
         <form class="form-inline" id="form">
           <label for="first">First:</label>
           <input type="number" step="1"  id="first" placeholder="0">
@@ -80,7 +80,7 @@
 
     </div> 
 
-    <div id="baseresults">
+    <div id="baseresults" style="left: 930px; width: calc(100% - 940px)">
       <div  id="resultimages">
         <table>
           <tr>
@@ -102,109 +102,53 @@
       </div>
     </div>
 
+  <div id="viewerwidget">
 
+    <bisweb-viewerlayoutelement
+       id="viewer_layout"
+       bis-dockwidth="300"
+       bis-coreopen="false"
+      bis-noresize="1"
+      bis-defaulttext="Load Data to Begin">
+    </bisweb-viewerlayoutelement>
+
+    <bisweb-colormapcontrollerelement id="viewer_cmap">
+    </bisweb-colormapcontrollerelement>
     
-    <div role="tabpanel" id="bistabs">
-      <ul class="nav nav-tabs" role="tablist" id="viewers">
-	<li role="presentation" class="active"><a href="#ortho" aria-controls="ortho" role="tab" data-toggle="tab">Orthogonal</a></li>
-	<li role="presentation"><a href="#mosaic" aria-controls="mosaic" role="tab" data-toggle="tab">Mosaic</a></li>
-      </ul>
-      <div class="tab-content">
-	<div role="tabpanel" class="tab-pane active" id="ortho">
-	  <div id="viewerwidget1">
-	    <bisweb-viewerlayoutelement
-	      id="viewer_layout1"
-	      bis-dockwidth="200"
-	      bis-topheight="200"
-	      bis-coreopen="true"
-              bis-noresize="1"
-              bis-fixed="1"
-	      bis-defaulttext="">
-	    </bisweb-viewerlayoutelement>
-
-            <bisweb-colormapcontrollerelement id="viewer_cmap1"></bisweb-colormapcontrollerelement>
-
-            <bisweb-orthogonalviewer
-	      id="viewer1"
-	      bis-layoutwidgetid="#viewer_layout1"
-	      bis-colormapeditorid="#viewer_cmap1">
-	    </bisweb-orthogonalviewer>
-            
-	    <bisweb-snapshotelement
-	      bis-layoutwidgetid="#viewer_layout1"
-	      bis-dowhite="false"
-	      bis-viewerid="#viewer1">
-	    </bisweb-snapshotelement>
-            <bisweb-atlastoolelement
-              id="atlastool"
-              bis-layoutwidgetid="#viewer_layout1"
-              bis-viewerid="#viewer1">
-            </bisweb-atlastoolelement>
-
-            <bisweb-blobanalyzerelement
-              id="blobanalyzer"
-              bis-layoutwidgetid="#viewer_layout1"
-              bis-viewerid="#viewer1"
-              bis-atlastoolid="#atlastool">
-            </bisweb-blobanalyzerelement>
-
-
-	  </div>
-	</div>
-	<div role="tabpanel" class="tab-pane" id="mosaic">
-	  <div id="viewerwidget2">
-
-            <bisweb-viewerlayoutelement
-	      id="viewer_layout2"
-	      bis-dockwidth="200"
-	      bis-topheight="200"
-	      bis-coreopen="true"
-              bis-fixed="1"
-              bis-noresize="1"
-	      bis-defaulttext="">
-	    </bisweb-viewerlayoutelement>
-
-            <bisweb-colormapcontrollerelement id="viewer_cmap2"></bisweb-colormapcontrollerelement>
-
-            <bisweb-mosaicviewer
-	      id="viewer2"
-	      bis-layoutwidgetid="#viewer_layout2"
-	      bis-colormapeditorid="#viewer_cmap2">
-	    </bisweb-mosaicviewer>
-
-            <bisweb-snapshotelement
-	      bis-layoutwidgetid="#viewer_layout2"
-	      bis-dowhite="false"
-	      bis-viewerid="#viewer2">
-	    </bisweb-snapshotelement>
-	  </div>
-	</div>
-      </div>
+    <bisweb-orthogonalviewer
+      id="viewer"
+      bis-simplemode="true"
+       bis-layoutwidgetid="#viewer_layout"
+       bis-colormapeditorid="#viewer_cmap">
+    </bisweb-orthogonalviewer>
       
-    </div>
+    <bisweb-snapshotelement
+       bis-layoutwidgetid="#viewer_layout"
+       bis-dowhite="true"
+       bis-viewerid="#viewer">
+    </bisweb-snapshotelement>
     
-    <bisweb-dualviewerapplication
-      id="maindual"
+    <bisweb-connectivitycontrolelement
+       id="conncontrol"
+       bis-layoutwidgetid="#viewer_layout"
+       bis-viewerid="#viewer">
+    </bisweb-connectivitycontrolelement>
+    
+    <bisweb-connectivityapplication
+      id="mainconn"
       bis-extrastatesave="1"
-      bis-tabset="#viewers"
-      bis-mode="overlay",
-      bis-tab1="#ortho"
-      bis-tab2="#mosaic"
       bis-menubarid="#viewer_menubar"
-      bis-atlastoolid="#atlastool"
-      bis-blobanalyzerid="#blobanalyzer"
-      bis-viewerid="#viewer1"
-      bis-viewerid2="#viewer2">
-    </bisweb-dualviewerapplication>
+      bis-connectivitycontrolid="#conncontrol"
+      bis-viewerid="#viewer">
+    </bisweb-connectivityapplication>
+    
+  </div>
 
-    <bisweb-botmenubar></bisweb-botmenubar>
-
-
-    <bisweb-displayregressionelement
-      bis-testlist="overlay"
-      bis-application="#maindual">
-    </bisweb-displayregressionelement>
-
+  <bisweb-displayregressionelement
+    bis-testlist="connviewer"
+    bis-application="#mainconn">
+  </bisweb-displayregressionelement>
+  
     
     <nav class="navbar navbar-default navbar-fixed-bottom">
       <span id="results"> A summary of the test results will appear here. </span>

@@ -9,7 +9,7 @@ body {
 
 #toph4 {
     position: relative;
-    top: 110px;
+    top: 65px;
     left: 0px;
     width: 805px;
     margin-left: 0px;
@@ -21,20 +21,20 @@ body {
 }
 
 #midh4 {
-    margin-left : 40px;
+    margin-left : 20px;
 }
     
 
 #bistabs {
     position: absolute;
-    top: 200px;
+    top: 150px;
     margin-top : 0px;
     padding-top : 0px;
     -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
     width:805px;
 }
 
-#viewerwidget1,#viewerwidget2 {
+#viewerwidget,#viewerwidget1,#viewerwidget2 {
     top: 0px;
     left: 0px;
     position: relative;
@@ -42,27 +42,32 @@ body {
     padding-left:5px;
     -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
     width: 100vw;
-    height: calc(100%-400px);
+    height: 700px;
+    min-height: 700px;
+    max-height: 700px;
   
 }
 
-#results {
-    position : absolute;
+#viewerwidget {
     top: 65px;
-    height : 50px;
-    min-height : 50px;
-    width : 805px;
-    background-color : #000033;
+    width: 900px;
 }
+
+
 
 bisweb-viewerlayoutelement {
     width:800px;
     height:700px;
+    min-height: 700px;
+    max-height: 800px;
     top:2px;
     left:2px;
     position:relative;
 }
 
+#viewer_layout {
+    width : 900px
+}
 
 
 .topbuttons {
@@ -81,14 +86,28 @@ bisweb-viewerlayoutelement {
     position: absolute;
     margin-top: 0px;
     top: 65px;
-    margin-left : 820px;
-    width : 400px;
+    left : 820px;
     background-color : #333333;
+    width: calc(100% - 830px);
+    height: calc(100% - 140px);
 }
 
+#baseresults2 {
+    position: absolute;
+    margin-top: 0px;
+    top: 65px;
+    left : 930px;
+    background-color : #888888;
+    width: calc(100% - 930px);
+    height: calc(100% - 140px);
+}
+
+
+
+
 #displayresults {
-    max-height : 673px;
-    min-height : 673px;
+    min-height: calc(100% - 250px);
+    max-height: calc(100% - 250px);
     overflow-x : auto;
     overflow-y : auto;
     font-size : 14px;
@@ -100,12 +119,17 @@ bisweb-viewerlayoutelement {
     left: 15px;
     top: 10px;
     margin : 4 4 4 4;
-};
+}
+
+.bisbtn {
+    margin-left : 10px;
+}
 
 #first,#last {
     background-color: #183748;
     color : #ffffff;
-    width : 30px;
+    width : 40px;
     margin-left: 5px;
-    margin-right: 10px;
+    margin-right: 10px
 }
+
