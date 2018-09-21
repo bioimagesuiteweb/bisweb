@@ -27,7 +27,7 @@ body {
 
 #bistabs {
     position: absolute;
-    top: 150px;
+    top: 160px;
     margin-top : 0px;
     padding-top : 0px;
     -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
@@ -41,7 +41,7 @@ body {
     margin-top : 5px;
     padding-left:5px;
     -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
-    width: 100vw;
+    width: 800px;
     height: 700px;
     min-height: 700px;
     max-height: 700px;
@@ -59,7 +59,7 @@ bisweb-viewerlayoutelement {
     width:800px;
     height:700px;
     min-height: 700px;
-    max-height: 800px;
+    max-height: 700px;
     top:2px;
     left:2px;
     position:relative;
@@ -131,5 +131,25 @@ bisweb-viewerlayoutelement {
     width : 40px;
     margin-left: 5px;
     margin-right: 10px
+}
+
+.bisimg {
+    width : 145px;
+    height: 168px;
+    min-width : 127px;
+    border-style: ridge;
+    border-color: #444444;
+    border-radius: 1px;
+}
+
+#imggold, #imgoutput {
+    margin-left: 9px;
+
+}
+
+#imgmiddle {
+    width : 50px;
+    height: 150px;
+    min-height: 150px;
 }
 
