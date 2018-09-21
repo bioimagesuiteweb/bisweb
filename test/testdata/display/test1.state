@@ -8,9 +8,9 @@
             "colormap": {
                 "interpolate": true,
                 "autocontrast": true,
-                "opacity": 0.9,
-                "minintensity": 88.07784186599984,
-                "maxintensity": 172.9254901960784,
+                "opacity": 0,
+                "minintensity": 1,
+                "maxintensity": 2530.0549019607843,
                 "funcmode": "Objectmap",
                 "outmode": "Both",
                 "minth": 1,
@@ -19,13 +19,13 @@
             },
             "snapshotcontroller": {
                 "scale": 1,
-                "dowhite": true,
+                "dowhite": false,
                 "crop": false
             },
             "subviewers": [
                 {
                     "position": {
-                        "x": 400,
+                        "x": 398,
                         "y": 108,
                         "z": 90
                     },
@@ -48,7 +48,7 @@
                 {
                     "position": {
                         "x": 90,
-                        "y": -218,
+                        "y": -217,
                         "z": 90
                     },
                     "up": {
@@ -71,7 +71,7 @@
                     "position": {
                         "x": 90,
                         "y": 108,
-                        "z": 400
+                        "z": 398
                     },
                     "up": {
                         "x": 0,
@@ -91,14 +91,14 @@
                 },
                 {
                     "position": {
-                        "x": 102.07875258292556,
-                        "y": -182.09196358468677,
-                        "z": 238.2455948742528
+                        "x": 90,
+                        "y": 433,
+                        "z": 90
                     },
                     "up": {
-                        "x": 0.33598608662488544,
-                        "y": -0.41746962304130747,
-                        "z": -0.8442940621799038
+                        "x": 0,
+                        "y": 0,
+                        "z": -1
                     },
                     "target": {
                         "x": 90,
@@ -116,9 +116,9 @@
                 "playing": false,
                 "displaymode": "Slices",
                 "decorations": true,
-                "xcoord": 45,
-                "ycoord": 24,
-                "zcoord": 41,
+                "xcoord": 90,
+                "ycoord": 108,
+                "zcoord": 90,
                 "tcoord": 0
             }
         },
@@ -129,9 +129,9 @@
             "colormap": {
                 "interpolate": true,
                 "autocontrast": true,
-                "opacity": 0.9,
-                "minintensity": 88.07784186599984,
-                "maxintensity": 172.9254901960784,
+                "opacity": 0,
+                "minintensity": 1,
+                "maxintensity": 2530.0549019607843,
                 "funcmode": "Objectmap",
                 "outmode": "Both",
                 "minth": 1,
@@ -148,7 +148,7 @@
                     "position": {
                         "x": 90,
                         "y": 108,
-                        "z": 400
+                        "z": 398
                     },
                     "up": {
                         "x": 0,
@@ -161,16 +161,16 @@
                         "z": 90
                     },
                     "zoomFactor": 1,
-                    "bottom": 131,
-                    "top": -131,
-                    "left": -131,
-                    "right": 131
+                    "bottom": 130,
+                    "top": -130,
+                    "left": -130,
+                    "right": 130
                 },
                 {
                     "position": {
                         "x": 90,
                         "y": 108,
-                        "z": 400
+                        "z": 398
                     },
                     "up": {
                         "x": 0,
@@ -183,16 +183,16 @@
                         "z": 90
                     },
                     "zoomFactor": 1,
-                    "bottom": 131,
-                    "top": -131,
-                    "left": -131,
-                    "right": 131
+                    "bottom": 130,
+                    "top": -130,
+                    "left": -130,
+                    "right": 130
                 }
             ],
             "data": {
                 "playing": false,
                 "displaymode": "Axial",
-                "first": 46,
+                "first": 91,
                 "numrows": 1,
                 "numcols": 2,
                 "increment": 1,

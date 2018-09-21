@@ -109,17 +109,21 @@ class ViewerApplicationElement extends HTMLElement {
     
     //  ---------------------------------------------------------------------------
     /** returns the extension to use when saving/loading the application state
+     * @param{Boolean} storeimages - if true storing images
      * @returns {String} - the extension without a preceeding "."
      */
-    getApplicationStateFilenameExtension() {
-        return 'biswebstate';
+    getApplicationStateFilenameExtension(storeimages=true) {
+        if (storeimages)
+            return 'biswebstate';
+        return 'state';
     }
     
     /** returns the default filename to use when saving/loading the application state
+     * @param{Boolean} storeimages - if true storing images
      * @returns {String} - the filename
      */
-    getApplicationStateFilename() {
-        return this.applicationName+"."+this.getApplicationStateFilenameExtension();
+    getApplicationStateFilename(storeimages=false) {
+        return this.applicationName+"."+this.getApplicationStateFilenameExtension(storeimages);
     }
 
     //  ---------------------------------------------------------------------------
@@ -780,7 +784,7 @@ class ViewerApplicationElement extends HTMLElement {
 
             let n=genericio.getFixedLoadFileName(fname);
             let ext=n.split(".").pop();
-            if (ext===this.getApplicationStateFilenameExtension()) {
+            if (ext===this.getApplicationStateFilenameExtension(true)) {
                 self.loadApplicationState(fname);
                 return 1;
             } else {
@@ -900,7 +904,7 @@ class ViewerApplicationElement extends HTMLElement {
             }
 
             let ext=files[0].name.split(".").pop();
-            if (ext===self.getApplicationStateFilenameExtension())
+            if (ext===self.getApplicationStateFilenameExtension(true))
                 self.loadApplicationState(files[0]);
             else
                 self.loadImage(files[0], count, false);
@@ -989,18 +993,18 @@ class ViewerApplicationElement extends HTMLElement {
 
     /** save parameters to a file
      */
-    saveApplicationState(fobj) {
+    saveApplicationState(fobj,storeimages=true) {
 
         const self=this;
         
-        this.storeState(true);
+        this.storeState(storeimages);
         
         let output= JSON.stringify({
             "app" : self.applicationName,
             "params" : this.saveState,
         },null,4);
 
-        fobj=genericio.getFixedSaveFileName(fobj,self.getApplicationStateFilename());
+        fobj=genericio.getFixedSaveFileName(fobj,self.getApplicationStateFilename(storeimages));
         //        console.log('Fobj=',fobj);
         
         return new Promise(function (resolve, reject) {
@@ -1048,8 +1052,8 @@ class ViewerApplicationElement extends HTMLElement {
                                        },
                                        { title: 'Load Application State',
                                          save: false,
-                                         suffix : self.getApplicationStateFilenameExtension(),
-                                         filters : [ { name: 'Application State File', extensions: [self.getApplicationStateFilenameExtension()]}],
+                                         suffix : self.getApplicationStateFilenameExtension(true),
+                                         filters : [ { name: 'Application State File', extensions: [self.getApplicationStateFilenameExtension(true)]}],
                                        }
                                       );
         
@@ -1057,19 +1061,35 @@ class ViewerApplicationElement extends HTMLElement {
 
         webfileutil.createFileMenuItem(bmenu, 'Save Application State',
                                        function (f) {
-                                           self.saveApplicationState(f);
+                                           self.saveApplicationState(f,true);
                                        },
                                        {
                                            title: 'Save Application State',
                                            save: true,
-                                           filters : [ { name: 'Application State File', extensions: [self.getApplicationStateFilenameExtension()]}],
-                                           suffix : self.getApplicationStateFilenameExtension(),
+                                           filters : [ { name: 'Application State File', extensions: [self.getApplicationStateFilenameExtension(true)]}],
+                                           suffix : self.getApplicationStateFilenameExtension(true),
                                            initialCallback : () => {
-                                               return self.getApplicationStateFilename();
+                                               return self.getApplicationStateFilename(true);
                                            }
                                        });
 
-        
+
+        if (this.savelightstate)
+            webfileutil.createFileMenuItem(bmenu, 'Save Light Application State',
+                                           function (f) {
+                                               self.saveApplicationState(f,false);
+                                           },
+                                           {
+                                               title: 'Save Application State',
+                                               save: true,
+                                               filters : [ { name: 'Application State File', extensions: [self.getApplicationStateFilenameExtension(false)]}],
+                                               suffix : self.getApplicationStateFilenameExtension(false),
+                                               initialCallback : () => {
+                                                   return self.getApplicationStateFilename(false);
+                                               }
+                                           });
+
+
 
         
         webutil.createMenuItem(bmenu,'');
@@ -1191,6 +1211,7 @@ class ViewerApplicationElement extends HTMLElement {
         const atlastoolid=this.getAttribute('bis-atlastoolid') || null;
         const blobanalyzerid=this.getAttribute('bis-blobanalyzerid') || null;
         const managerid = this.getAttribute('bis-modulemanagerid') || null;
+        this.savelightstate = this.getAttribute('bis-extrastatesave') || null;
 
         this.findViewers();
         

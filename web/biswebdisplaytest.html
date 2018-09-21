@@ -81,14 +81,19 @@
 
     <div id="baseresults">
       <div  id="resultimages">
-        <table><tr> <td>Result </td><td>&nbsp;&nbsp;&nbsp; </td><td> Gold</td></tr>
-          <tr><td><img id="imgoutput" height="125px"
-                       width="125px"><img></td><td> </td>
-            <td><img id="imggold" height="125px"
-                     width="125px"><img></td></tr>
-          <tr><td><span id="comparison">0.0<span></td><td></td><td></td></tr>
+        <table>
+          <tr>
+            <td><span id="goldtd">Gold</span></td>
+            <td>&nbsp;&nbsp;&nbsp; </td>
+            <td><span id="resulttd">Result</span></td>
+          </tr>
+          <tr>
+            <td><img id="imggold" height="148" width="125px"><img></td>
+            <td> </td>
+            <td><img id="imgoutput" height="148" width="125px"><img></td>
+          </tr>
         </table>
-        
+        <div id="comparison">0.0</div>
       </div>
       <HR>
       <div id="displayresults">
@@ -179,6 +184,7 @@
     
     <bisweb-dualviewerapplication
       id="maindual"
+      bis-extrastatesave="1"
       bis-tabset="#viewers"
       bis-mode="overlay",
       bis-tab1="#ortho"

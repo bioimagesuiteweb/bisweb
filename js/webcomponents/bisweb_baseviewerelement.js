@@ -978,8 +978,6 @@ class BaseViewerElement extends HTMLElement {
                         let controls=this.internal.subviewers[i].controls;
                         let p=controls.serializeCamera();
                         obj.subviewers.push(p);
-                    } else {
-                        i=n; // let's get out of here
                     }
                 }
             }
@@ -1034,6 +1032,8 @@ class BaseViewerElement extends HTMLElement {
      * by updating the subviewer cameras */
     setElementStateCameras(dt=null) {
 
+        this.resetViewers();
+        
         if (dt.subviewers) {
             let subviewers=this.internal.subviewers;
             let num=subviewers.length;
@@ -1041,8 +1041,11 @@ class BaseViewerElement extends HTMLElement {
                 num=dt.subviewers.length;
             let renderer=this.internal.layoutcontroller.renderer;
             for (let i=0;i<num;i++) {
-                subviewers[i].controls.parseCamera(dt.subviewers[i]);
-                renderer.render( subviewers[i].scene, subviewers[i].camera);
+                console.log(i,subviewers[i],dt.subviewers[i]);
+                if (dt.subviewers[i] && subviewers[i]) {
+                    subviewers[i].controls.parseCamera(dt.subviewers[i]);
+                    renderer.render( subviewers[i].scene, subviewers[i].camera);
+                }
             }
         } 
 

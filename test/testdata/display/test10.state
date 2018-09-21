@@ -1,0 +1,362 @@
+{
+    "app": "biswebdisplaytest",
+    "params": {
+        "viewer1": {
+            "image": "",
+            "overlay": "",
+            "colortype": "",
+            "colormap": {
+                "interpolate": true,
+                "autocontrast": true,
+                "opacity": 0.5,
+                "minintensity": -89.7357177734375,
+                "maxintensity": 2657.8922573912378,
+                "funcmode": "Overlay",
+                "outmode": "Both",
+                "minth": 958.4409173377597,
+                "maxth": 2487.6006591796877,
+                "clustersize": 0
+            },
+            "snapshotcontroller": {
+                "scale": 2,
+                "dowhite": true,
+                "crop": true
+            },
+            "subviewers": [
+                {
+                    "position": {
+                        "x": -240,
+                        "y": 118.125,
+                        "z": 57.75
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 0,
+                        "z": -1
+                    },
+                    "target": {
+                        "x": 120,
+                        "y": 118.125,
+                        "z": 57.75
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 160,
+                    "top": -160,
+                    "left": -160,
+                    "right": 160
+                },
+                {
+                    "position": {
+                        "x": 118.125,
+                        "y": 480,
+                        "z": 57.75
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 0,
+                        "z": -1
+                    },
+                    "target": {
+                        "x": 118.125,
+                        "y": 120,
+                        "z": 57.75
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 160,
+                    "top": -160,
+                    "left": -160,
+                    "right": 160
+                },
+                {
+                    "position": {
+                        "x": 118.125,
+                        "y": 118.125,
+                        "z": 359
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 118.125,
+                        "y": 118.125,
+                        "z": 59.5
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 160,
+                    "top": -160,
+                    "left": -160,
+                    "right": 160
+                },
+                {
+                    "position": {
+                        "x": 118.125,
+                        "y": -240,
+                        "z": 57.75
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 0,
+                        "z": -1
+                    },
+                    "target": {
+                        "x": 118.125,
+                        "y": 120,
+                        "z": 57.75
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 160,
+                    "top": -160,
+                    "left": -160,
+                    "right": 160
+                }
+            ],
+            "data": {
+                "playing": false,
+                "displaymode": "Slices",
+                "decorations": true,
+                "xcoord": 32,
+                "ycoord": 37,
+                "zcoord": 18,
+                "tcoord": 1,
+                "rate": 20
+            }
+        },
+        "viewer2": {
+            "image": "",
+            "overlay": "",
+            "colortype": "",
+            "colormap": {
+                "interpolate": true,
+                "autocontrast": true,
+                "opacity": 0.5,
+                "minintensity": -89.7357177734375,
+                "maxintensity": 2657.8922573912378,
+                "funcmode": "Overlay",
+                "outmode": "Both",
+                "minth": 958.4409173377597,
+                "maxth": 2487.6006591796877,
+                "clustersize": 0
+            },
+            "snapshotcontroller": {
+                "scale": 2,
+                "dowhite": true,
+                "crop": false
+            },
+            "subviewers": [
+                {
+                    "position": {
+                        "x": 118.125,
+                        "y": 118.125,
+                        "z": 359
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 118.125,
+                        "y": 118.125,
+                        "z": 59.5
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 144,
+                    "top": -144,
+                    "left": -144,
+                    "right": 144
+                },
+                {
+                    "position": {
+                        "x": 118.125,
+                        "y": 118.125,
+                        "z": 359
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 118.125,
+                        "y": 118.125,
+                        "z": 59.5
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 144,
+                    "top": -144,
+                    "left": -144,
+                    "right": 144
+                },
+                {
+                    "position": {
+                        "x": 118.125,
+                        "y": 118.125,
+                        "z": 359
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 118.125,
+                        "y": 118.125,
+                        "z": 59.5
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 144,
+                    "top": -144,
+                    "left": -144,
+                    "right": 144
+                },
+                {
+                    "position": {
+                        "x": 118.125,
+                        "y": 118.125,
+                        "z": 359
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 118.125,
+                        "y": 118.125,
+                        "z": 59.5
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 144,
+                    "top": -144,
+                    "left": -144,
+                    "right": 144
+                },
+                {
+                    "position": {
+                        "x": 118.125,
+                        "y": 118.125,
+                        "z": 359
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 118.125,
+                        "y": 118.125,
+                        "z": 59.5
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 144,
+                    "top": -144,
+                    "left": -144,
+                    "right": 144
+                },
+                {
+                    "position": {
+                        "x": 118.125,
+                        "y": 118.125,
+                        "z": 359
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 118.125,
+                        "y": 118.125,
+                        "z": 59.5
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 144,
+                    "top": -144,
+                    "left": -144,
+                    "right": 144
+                },
+                {
+                    "position": {
+                        "x": 118.125,
+                        "y": 118.125,
+                        "z": 359
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 118.125,
+                        "y": 118.125,
+                        "z": 59.5
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 144,
+                    "top": -144,
+                    "left": -144,
+                    "right": 144
+                },
+                {
+                    "position": {
+                        "x": 118.125,
+                        "y": 118.125,
+                        "z": 359
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 118.125,
+                        "y": 118.125,
+                        "z": 59.5
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 144,
+                    "top": -144,
+                    "left": -144,
+                    "right": 144
+                },
+                {
+                    "position": {
+                        "x": 118.125,
+                        "y": 118.125,
+                        "z": 359
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 118.125,
+                        "y": 118.125,
+                        "z": 59.5
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 144,
+                    "top": -144,
+                    "left": -144,
+                    "right": 144
+                }
+            ],
+            "data": {
+                "playing": false,
+                "displaymode": "Axial",
+                "first": 17,
+                "numrows": 3,
+                "numcols": 3,
+                "increment": 1,
+                "tcoord": 1,
+                "decorations": false,
+                "rate": 20
+            }
+        },
+        "sidetools": {},
+        "activeViewer": 2
+    }
+}

@@ -137,14 +137,16 @@ class DiffSpectElement extends DualViewerApplicationElement {
     }
 
 
-    getApplicationStateFilenameExtension() {
-        return 'diffspect';
+    getApplicationStateFilenameExtension(saveimages=true) {
+        if (saveimages)
+            return 'diffspect';
+        return "state";
     }
 
     
-    getApplicationStateFilename(ext=null) {
+    getApplicationStateFilename(storeimages=true,ext=null) {
 
-        ext = ext || this.getApplicationStateFilenameExtension();
+        ext = ext || this.getApplicationStateFilenameExtension(storeimages);
         
         let s=`${this.app_state.patient_name}_${this.app_state.patient_number}.${ext}`;
         s=s.trim().replace(/ /g,'_');
@@ -668,7 +670,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
 
         }
 
-        let fn=this.getApplicationStateFilename('csv');
+        let fn=this.getApplicationStateFilename(false,'csv');
         fobj=genericio.getFixedSaveFileName(fobj,fn);
         
         return new Promise(function (resolve, reject) {
@@ -1245,7 +1247,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
                                            filters : [ { name: 'CSV File', extensions: ['csv']}],
                                            suffix : "csv",
                                            initialCallback : () => {
-                                               return self.getApplicationStateFilename("csv");
+                                               return self.getApplicationStateFilename(false,"csv");
                                            }
                                        });
         

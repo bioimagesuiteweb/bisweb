@@ -1,19 +1,19 @@
 /*  LICENSE
- 
- _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
- 
- BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
- 
- - you may not use this software except in compliance with the License.
- - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
- 
- __Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.__
- 
- ENDLICENSE */
+    
+    _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+    
+    BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+    
+    - you may not use this software except in compliance with the License.
+    - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+    
+    __Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.__
+    
+    ENDLICENSE */
 
 /* global  HTMLElement, window,document */
 
@@ -21,9 +21,7 @@
 
 
 const webutil=require('bis_webutil');
-const webfileutil=require('bis_webfileutil');
 const $=require('jquery');
-const genericio=require('bis_genericio');
 const bisdate=require('bisdate.js').date;
 import testmodule from '../../test/testdata/display/displaytests.json';
 const displaytestlist=testmodule.displaytestlist;
@@ -42,132 +40,104 @@ let globalParams = {
 };
 
 
-// ------------------------ load viewer application state -------------
+/*// ---------------------- set visible viewer -------------------------------------
 
-var loadViewerParameters=function(fname)  {
+  var setViewer=function(n) {
 
+  return new Promise( (resolve) => {
+  console.log("Setting visible tab",n);
+  globalParams.application.setVisibleTab(n);
+  globalParams.currentViewer=globalParams.application.getViewer(n-1);
+  setTimeout( () => {
+  resolve();
+  },100);
+  });
+  };*/
 
-    return new Promise( (resolve,reject) => {
-        genericio.read(fname, false).then((contents) => {
-            let obj = null;
-            try {
-                obj=JSON.parse(contents.data);
-            } catch(e) {
-                globalParams.resdiv.append('<H4>Error</H4><p>Bad application state file '+contents.filename+' probably not a application state file.</p>');
-                reject(e);
-            }
+// ---------------------- run Test -------------------------------------
 
-            console.log('Here setting element state',globalParams.currentViewer,obj);
-            globalParams.currentViewer.setElementState(obj);
-            
-            globalParams.resdiv.append('<p>Viewer param file loaded from '+contents.filename+'</p>');
-            resolve("Done");
-        }).catch((e) => {
-            console.log(e.stack,e);
-            webutil.createAlert(`${e}`,true);});
+var runTest = async function(testindex,viewerindex,basestate='',viewerstate='',comparisonpng='') {
+
+    globalParams.goldImageElement.addEventListener('load', () => {
+        $('#goldtd').empty();
+        $('#goldtd').append('Gold '+(testindex));
     });
-
-};
-
-
-var saveStateCallback=function(ind) {
-
-    webfileutil.genericFileCallback(
-        { title: 'Save Viewer State',
-          save: true,
-          suffix : "viewerstate",
-          filters : [ { name: 'Application State File', extensions: [ "viewerstate" ]}],
-        }
-        ,
-        ( (fobj) => {
-            fobj=genericio.getFixedSaveFileName(fobj,"viewer.state");
-            setViewer(ind);
-            let state=globalParams.currentViewer.getElementState(false);
-            return new Promise(function (resolve, reject) {
-                genericio.write(fobj, JSON.stringify(state)).then((f) => {
-                    if (!genericio.isSaveDownload())
-                        webutil.createAlert('Viewer State saved '+f);
-                }).catch((e) => {
-                    //                    webutil.createAlert('Failed to save Viewer State '+e);
-                    console.log(e,e.stack);
-                    reject(e);
-                });
-            });
-
-        }),
-    );
-};
-
-
-var runTest = async function(viewerindex,basestate='',viewerstate='',comparisonpng='') {
 
     globalParams.goldImageElement.src=comparisonpng;
 
+    
     try {
         console.log("Reading app state from",basestate);
         globalParams.application.getViewer(0).clearobjectmap();
-        await setViewer(2);
-        await setViewer(1);
+        globalParams.resdiv.append('<p>Reading app state from '+basestate+'</p>');
         await globalParams.application.loadApplicationState(basestate);
-        await setViewer(viewerindex);
+        if (viewerstate)
+            await globalParams.application.loadApplicationState(viewerstate);
+        globalParams.currentViewer=globalParams.application.getViewer(globalParams.application.getVisibleTab()-1);
     } catch(e) {
         throw new Error(e);
     }
-    
-    if (viewerstate!=='') {
-        console.log("Reading viewer state from",viewerstate);
-        try { 
-            await loadViewerParameters(viewerstate);
-        } catch(e) {
-            throw new Error(e);
-        }
-    }
 
-    
     let snapshotElement=globalParams.currentViewer.getSnapShotController();
+    console.log("Current=",globalParams.currentViewer,snapshotElement);
+    
     
     let canvas=await snapshotElement.getTestImage();
     
     let outpng=canvas.toDataURL("image/png");
     globalParams.resultImageElement.attr('src',outpng);
-
+    $('#resulttd').empty();
+    $('#resulttd').append('Result '+(testindex));
+    
     let resultimg=snapshotElement.createBisWebImageFromCanvas(canvas);
     
     return new Promise( (resolve,reject) => {
-
+        
         snapshotElement.createBisWebImageFromImageElement(comparisonpng).then( (goldstandard) => {
             setTimeout( () => {
                 globalParams.resdiv.append('<p>Reading result from: '+comparisonpng+'</p>');
                 console.log(goldstandard.getDescription());
-                let tst=resultimg.compareWithOther(goldstandard,"cc",0.98);
+                let tst = null;
+                
+                try {
+                    tst=resultimg.compareWithOther(goldstandard,"cc",0.98);
+                } catch(e) {
+                    console.log('failed ...'+e);
+                }
+                if (tst==null) {
+                    let canvas = document.createElement("canvas");
+                    let image_element=globalParams.resultImageElement[0];
+                    let dim=goldstandard.getDimensions();
+                    canvas.height=dim[1];
+                    canvas.width=dim[0];
+                    console.log('Canvas=',canvas);
+                    canvas.getContext("2d").drawImage(image_element,0,0,dim[0],dim[1]);
+                    let newimg=snapshotElement.createBisWebImageFromCanvas(canvas);
+                    console.log('newimg=',newimg.getDescription());
+                    console.log('gold=',goldstandard.getDescription());
+                    try {
+                        tst=newimg.compareWithOther(goldstandard,"cc",0.9);
+                    } catch(e) {
+                        console.log('failed ...'+e);
+                        tst={ testresult : false, value : -1.0 };
+                    }
+                }
                 globalParams.resdiv.append(`<p><b>Result</b>: ${JSON.stringify(tst)}</p>`);
                 setTimeout( () => {
                     resolve(tst);
-                },100);
-            },100);
+                },1);
+            },1000);
         }).catch( (e) => {
             reject(e);
         });
     });
 };
 
-
-var setViewer=function(n) {
-
-    return new Promise( (resolve) => {
-        console.log("Setting visible tab",n);
-        globalParams.application.setVisibleTab(n);
-        globalParams.currentViewer=globalParams.application.getViewer(n-1);
-        setTimeout( () => {
-            resolve();
-        },100);
-    });
-};
+// ---------------------- run tests -------------------------------------
 
 var runTests= async function() {
 
-
-    globalParams.firsttime=true;
+    globalParams.resdiv.empty();
     
     let first=parseInt($("#first").val())||0;
     let last=parseInt($("#last").val()) || 0;
@@ -193,6 +163,7 @@ var runTests= async function() {
         let desired=displaytestlist[test]['result'];
         
         let result=await runTest(
+            test,
             displaytestlist[test]['viewer'] || 1,
             globalParams.testDataRootDirectory+'/'+displaytestlist[test]['base'],
             statefile,
@@ -200,7 +171,14 @@ var runTests= async function() {
 
 
         globalParams.comparisonTextElement.empty();
-        globalParams.comparisonTextElement.append('<p>'+result.value+'</p>');
+
+        let a="";
+        if (!desired)
+            a=' (should fail!)';
+        let b="<b>F A I L E D "+a+"</b>";
+        if (result.testresult)
+            b="P A S S E D "+a;
+        globalParams.comparisonTextElement.append('<p>Test:'+test+' cc='+Number.parseFloat(result.value).toFixed(3)+' '+b+'</p>');
 
         globalParams.resdiv[0].scrollTop = globalParams.resdiv[0].scrollHeight-50;
 
@@ -289,11 +267,6 @@ class DisplayRegressionElement extends HTMLElement {
             globalParams.goldImageElement=document.querySelector('#imggold');
             globalParams.comparisonTextElement=$('#comparison');
             initialize(displaytestlist);
-
-            globalParams.application.setVisibleTab(2);
-            setTimeout( () => {
-                globalParams.application.setVisibleTab(1);
-            },1000);
 
             $('#compute').click( (e) => {
                 e.preventDefault(); // cancel default behavior
