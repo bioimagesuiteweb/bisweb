@@ -309,7 +309,6 @@ class BisWebDataObject {
             for (let i=0;i<lst.length;i++) {
                 s+=formatObject(lst[i]).replace(/\\n/g,'<BR>').replace(/===================================/g,'<HR>');
             }
-            console.log(s);
             return s+'</OL>';
 
         };
