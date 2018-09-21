@@ -1033,15 +1033,14 @@ class BaseViewerElement extends HTMLElement {
     setElementStateCameras(dt=null) {
 
         this.resetViewers();
+        let subviewers=this.internal.subviewers;
         
-        if (dt.subviewers) {
-            let subviewers=this.internal.subviewers;
+        if (dt.subviewers && subviewers) {
             let num=subviewers.length;
             if (dt.subviewers.length<num)
                 num=dt.subviewers.length;
             let renderer=this.internal.layoutcontroller.renderer;
             for (let i=0;i<num;i++) {
-                console.log(i,subviewers[i],dt.subviewers[i]);
                 if (dt.subviewers[i] && subviewers[i]) {
                     subviewers[i].controls.parseCamera(dt.subviewers[i]);
                     renderer.render( subviewers[i].scene, subviewers[i].camera);

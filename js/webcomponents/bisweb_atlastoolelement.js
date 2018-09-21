@@ -169,7 +169,7 @@ class AtlasControlElement extends HTMLElement {
                 return;
             }
         } else {
-            console.log("No atlas in memory");
+            //            console.log("No atlas in memory");
         }
         
         this.useAtlas=false;
