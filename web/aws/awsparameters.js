@@ -18,8 +18,10 @@ cachedAWSBuckets.getItem('currentAWS', (err, value) => {
     try {
         let parsedItem = JSON.parse(value);
         console.log('parsed item', parsedItem);
-        IdentityPoolId = parsedItem.identityPoolId;
-        BucketName = parsedItem.bucketName;
+        if (parsedItem) {
+            IdentityPoolId = parsedItem.identityPoolId;
+            BucketName = parsedItem.bucketName;
+        }
     } catch(e) {
         console.log('No current AWS found, requesting one once user attempts to connect.');
     }
