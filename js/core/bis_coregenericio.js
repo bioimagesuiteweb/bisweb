@@ -339,12 +339,19 @@ var readbinarydatanode = function (filename, loadedcallback, errorcallback) {
             if (comp) {
                 zlib.gunzip(d1, function (err, data) {
                     if (err) {
-                        console.log(' failed to read binary data error=' + err.toString);
-                        errorcallback(' failed to read binary data error=' + err.toString);
+                        try {
+                            let dt = pako.ungzip(new Uint8Array(d1));
+                            loadedcallback(dt, filename);
+                            dt = null;
+                        } catch(e) {
+                            console.log(' failed to read binary data error=' + err+' '+err.toString);
+                            errorcallback(' failed to read binary data error=' + err.toString);
+                        }
+                    } else {
+                        var dt = new Uint8Array(data);
+                        loadedcallback(dt, filename);
+                        dt = null;
                     }
-                    var dt = new Uint8Array(data);
-                    loadedcallback(dt, filename);
-                    dt = null;
                 });
             } else {
                 let dt = new Uint8Array(d1);//.buffer;
