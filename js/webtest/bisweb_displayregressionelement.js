@@ -85,7 +85,7 @@ var runTest = async function(testindex,viewerindex,basestate='',viewerstate='',c
                 let tst = null;
                 
                 try {
-                    tst=resultimg.compareWithOther(goldstandard,"cc",0.98);
+                    tst=resultimg.compareWithOther(goldstandard,"cc",0.94);
                 } catch(e) {
                     console.log('failed ...'+e);
                 }
@@ -109,6 +109,7 @@ var runTest = async function(testindex,viewerindex,basestate='',viewerstate='',c
                 }
                 globalParams.resdiv.append(`<p><b>Result</b>: ${JSON.stringify(tst)}</p>`);
                 setTimeout( () => {
+                    console.log('Tst=',tst);
                     resolve(tst);
                 },1);
             },500);

@@ -108,8 +108,12 @@
             "state" : "otest5.state",
             "comparison" : "otest5.png",
             "result" : true
+        },
+        {
+            "base" : "connstate.biswebstate",
+            "state" : "otest2.state",
+            "comparison" : "otest5.png",
+            "result" : false
         }
-
-
     ]
 }
