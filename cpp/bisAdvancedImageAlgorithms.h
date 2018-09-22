@@ -75,6 +75,7 @@ namespace bisAdvancedImageAlgorithms {
   /** compute  shading-color 2d projection of an image (possibly) functional image with a mask to specify boundaries
    * @param input - the input image
    * @param mask - the mask image
+   * @param output - the output image
    * @param axis - the axis to integrate/project along
    * @param flip - if true integrate from 0 -> maxdim instead of maxdim->0
    * @param lps - if true y-axis needs to be flipped ....

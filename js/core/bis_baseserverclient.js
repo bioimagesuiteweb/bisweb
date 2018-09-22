@@ -43,7 +43,7 @@ class BisBaseServerClient {
      * downloads a file from the server 
      * @param{String} url - the filename
      * @param{Boolean} isbinary - if true file is binary
-     * @returns a Promise with payload { obj.name obj.data } much like bis_genericio.read (from where it will be called indirectly)
+     * @returns {Promise} -  a Promise with payload { obj.name obj.data } much like bis_genericio.read (from where it will be called indirectly)
      */
     downloadFile(url,isbinary) {
         return Promise.rejected('downloadFile not implemented '+url+' '+isbinary);

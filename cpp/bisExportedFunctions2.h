@@ -37,7 +37,7 @@ extern "C" {
 
   /** Project a 3D image to 2D either mip or average or shaded average
    * @param input serialized input as unsigned char array 
-   * @param funcinput serialized functional input (optional) as unsigned char array 
+   * @param functional_input serialized functional input (optional) as unsigned char array 
    * @param jsonstring the parameter string for the algorithm 
    * { "domip" : 1: ,"axis" : -1, "flip" : 0, "sigma" : 1.0: 'threshold' : 0.05, 'gradsigma' : 1.0, 'windowsize': 5 }
    * @param debug if > 0 print debug messages
