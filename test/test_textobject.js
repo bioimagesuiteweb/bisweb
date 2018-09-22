@@ -73,7 +73,8 @@ describe('Testing Text Object\n', function() {
         
         let sampletext="Yale 1701\nHelp";
         let jsontext ='{"bisformat":"BisText","filename":"","comments":[],"text":"Yale 1701\\nHelp"}';
-        let obj =new BisWebTextObject(sampletext);
+        let obj =new BisWebTextObject();
+        obj.setText(sampletext);
         Promise.all( [
             obj.save(tmpFname),
             obj.save(tmpFname2),
