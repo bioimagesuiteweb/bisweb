@@ -88,9 +88,8 @@ module.exports = {
                 'name' : 'Results',
                 'description': 'log file',
                 'varname': 'logoutput',
-                'shortname': 'log',
                 'required': false,
-                'extension': '.txt'
+                'extension': '.bistext'
             });
         }
         return arr;

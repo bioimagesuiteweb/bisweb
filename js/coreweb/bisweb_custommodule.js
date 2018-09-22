@@ -568,6 +568,8 @@ class CustomModule {
     showText(obj) {
 
         let txt=obj.getText();
+        if (txt.length<1)
+            return;
         txt=txt.replace(/\n---\n/g,'<HR>');
         txt=txt.replace(/\n/g,'<BR>').replace(/\t/g,'&nbsp;&nbsp;&nbsp;&nbsp;');
         txt=txt.replace(/\\n/g,'<BR>').replace(/\\t/g,'&nbsp;&nbsp;&nbsp;&nbsp;');
