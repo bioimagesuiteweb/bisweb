@@ -29,7 +29,7 @@ const util=require('bis_util');
 const wasmutil=require('bis_wasmutils');
 const numeric=require('numeric');
 
-/** Abstract Class representing a data object 
+/** Class for storing a matrix
  * @param{string} dtype - either matrix or vector (needed for wasm)
  * @param{Matrix} inputmat - if not null set the values from this
  */
@@ -45,7 +45,7 @@ class BisWebMatrix extends BisWebDataObject{
         super();
         this.jsonformatname='BisMatrix';
         this.legacyextension="csv";
-        this.extensions=".bismatr";
+        this.extension=".bismatr";
         this.dimensions=[0,0];
         this.data=null;
         this.wasmtype=dtype;
