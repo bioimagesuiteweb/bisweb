@@ -30,13 +30,13 @@
 ## Supporting Functionality
 
 * extend (or really refactor) VOI analysis tool to create a separate time series plotter as well (without the ROI step, and not showing volume)
-  -- essentially provide matrix input and hide show volume button if not applicable!
+  -- essentially provide matrix input and hide show volume button if not applicable! -- __DONE__
 
 * text output for modules (object added) but need to figure out where to store it, how to save it etc.
-  popup text viewer with save option
+  popup text viewer with save option __DONE__
 
 * Test S3 and add querystring match for paravision
 
-* Random back when loading settings
+* Random bug when loading settings
 
 

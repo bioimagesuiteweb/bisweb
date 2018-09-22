@@ -50,12 +50,26 @@ class GrapherModule extends HTMLElement {
         this.lastShowVolume=false;
         this.graphWindow=null;
         this.resizingTimer=null;
+        this.buttons=[];
     }
 
-    createGUI() {
 
-        if (this.graphcanvasid!==null)
+    /** create the GUI (or modifiy it if it exists)
+     * @param{Boolean} showbuttons -- if true show the 'Plot VOI Values' and 'Plot VOI Volumes' buttons, else hide them (as we may only have values!)
+     */
+    createGUI(showbuttons=true) {
+
+        if (this.graphcanvasid!==null) {
+            if (this.buttons.length>0) {
+                for (let i=0;i<this.buttons.length;i++) {
+                    if (showbuttons) 
+                        this.buttons[i].css({ "visibility": "visible" });
+                    else
+                        this.buttons[i].css({ "visibility": "hidden" });
+                }
+            }
             return;
+        }
 
         this.graphcanvasid = webutil.getuniqueid();
         this.graph = null;
@@ -74,28 +88,32 @@ class GrapherModule extends HTMLElement {
             self.exportLastData();
         };
 
-        webutil.createbutton({
-            name: 'Plot VOI Values',
-            type: "primary",
-            tooltip: '',
-            css: {
-                'margin-left': '10px',
-            },
-            position: "right",
-            parent: bbar
-        }).click(() => { this.rePlotGraph(false).catch( () => { } ); });
+        if (showbuttons) {
 
-        webutil.createbutton({
-            name: 'Plot VOI Volumes',
-            type: "default",
-            tooltip: '',
-            css: {
-                'margin-left': '10px',
-            },
-            position: "left",
-            parent: bbar
-        }).click(() => { this.rePlotGraph(true).catch( () => { } );});
-
+            this.buttons=[];
+            this.buttons.push(webutil.createbutton({
+                name: 'Plot VOI Values',
+                type: "primary",
+                tooltip: '',
+                css: {
+                    'margin-left': '10px',
+                },
+                position: "right",
+                parent: bbar
+            }).click(() => { this.rePlotGraph(false).catch( () => { } ); }));
+            
+            this.buttons.push(webutil.createbutton({
+                name: 'Plot VOI Volumes',
+                type: "default",
+                tooltip: '',
+                css: {
+                    'margin-left': '10px',
+                },
+                position: "left",
+                parent: bbar
+            }).click(() => { this.rePlotGraph(true).catch( () => { } );}));
+        }
+        
         webutil.createbutton({
             name: 'Export as CSV',
             type: "info",
@@ -135,26 +153,17 @@ class GrapherModule extends HTMLElement {
 
     }
 
-    /**
+    /** Main Function 1 as called by the editor tool
      * Graphs the time-averaged mean of fMRI intensity in the area painted by {@link bisweb_painttoolelement} using 
      * {@link bis_fmrimatrixconnectivity.js}. Uses chart.js for the graphics. 
+     * Calls plot Graph for the actual plotting
      */
-    parsePaintedAreaAverageTimeSeries(orthoElement = null) {
+    parsePaintedAreaAverageTimeSeries(orthoElement) {
 
-        this.lastdata = null;
-
-        if (orthoElement === null)
-            orthoElement = document.getElementsByClassName('ortho-viewer').item(0);
-
-        if (orthoElement === null)
+        if (!orthoElement)
             return;
-
-        if (orthoElement!==this.lastviewer && this.lastviewer!==null) 
-            this.lastviewer.removeResizeObserver(this);
         
-        this.lastviewer=orthoElement;
-
-        
+        this.lastdata = null;
         let image = orthoElement.getimage();
         let objectmap = orthoElement.getobjectmap();
 
@@ -189,30 +198,58 @@ class GrapherModule extends HTMLElement {
             }
         }
         
-        this.plotGraph(x, y, matrix.numvoxels).then( () => {
-            this.lastviewer.addResizeObserver(this);
-        }).catch( (e) => {
-            console.log(e,e.stack);
-        });
+        this.plotGraph(x, y, matrix.numvoxels,orthoElement);
     }
 
-    plotGraph(x, y, numvoxels) {
+    /** Main Function 2 plots a Graph directly from data!
+     * @param{Array} x - x-axis
+     * @param{Array} y - y-axis data (values)
+     * @param{Array} numvoxels - y-axis data 2 (optional, these are the "volumes" of ROI if specified)
+     * @param{orthoElement} viewer - the viewer to attach to for resizing info (defaults to looking for an ortho-viewer)
+     */
+    plotGraph(x, y, numvoxels=null,orthoElement=null) {
 
+        if (!orthoElement)
+            orthoElement = document.getElementsByClassName('bisweb-orthogonalviewer').item(0);
+        if (!orthoElement)
+            return;
+        
+        let changedViewer=false;
+        
+        if (orthoElement!==this.lastviewer) {
+            if (this.lastviewer)
+                this.lastviewer.removeResizeObserver(this);
+            changedViewer=true;
+            this.lastviewer=orthoElement;
+        }
         
         this.lastdata = {
             x: x,
             y: y,
             numvoxels: numvoxels
         };
-        return this.rePlotGraph(false);
+        this.rePlotGraph(false).then( () => {
+            if (changedViewer)
+                this.lastviewer.addResizeObserver(this);
+        }).catch( (e) => {
+            console.log(e,e.stack);
+        });
 
     }
 
+    /** replots the current values
+     * @param {Boolean} showVolume -- if true show the volumes (if they exist), else the values
+     * @returns {Promise} - when done
+     */
     rePlotGraph(showVolume = false) {
 
+        let showbuttons=true;
         this.lastShowVolume=showVolume;
 
-
+        if (this.lastdata.numvoxels===null) {
+            showVolume=false;
+            showbuttons=false;
+        }
         
         if (this.lastdata.y < 1) {
             webutil.createAlert('No  objecmap in memory', true);
@@ -299,7 +336,9 @@ class GrapherModule extends HTMLElement {
             d_type = 'bar';
         }
 
-        this.createGUI();
+        this.createGUI(showbuttons);
+        
+        
         this.graphWindow.show();
         let dm=this.getCanvasDimensions();
         if (!dm) {
@@ -346,6 +385,10 @@ class GrapherModule extends HTMLElement {
     /**
      * Reformats the means returned by {@link bis_fmrimatrixconnectivity}.roimean to a format readable by chart.js.
      * Internal use only. 
+     * @param{Array} x - x-axis
+     * @param{Array} y - y-axis data (values)
+     * @param{Array} numVoxels - y-axis data 2 (optional, these are the "volumes" of ROI if specified)
+     * @param{Boolean} showVolume - if true then show the second y-axis data (numVoxels) if they exist
      */
     formatChartData(x, y, numVoxels, showVolume) {
 
@@ -386,7 +429,14 @@ class GrapherModule extends HTMLElement {
             // Bar Chart
             let parsedDataSet = [], data = [], backgroundColor = [];
             for (let i = 0; i < y.length; i++) {
-                if (numVoxels[i] > 0) {
+
+                let doshow=false;
+                if (numVoxels===null) {
+                    doshow=true;
+                } else if (numVoxels[i] > 0) {
+                    doshow=true;
+                }
+                if (doshow) {
                     let index = i + 1;
                     let colorindex = index;
                     while (colorindex >= mx) { colorindex = (colorindex - 1) - (mx - 1) + 1; }
@@ -463,6 +513,7 @@ class GrapherModule extends HTMLElement {
         return false;
     }
 
+    /** save the last data to csv */
     exportLastData() {
 
         if (this.lastdata === null)
