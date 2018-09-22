@@ -63,8 +63,12 @@ module.exports = {
         ];
     },
 
-    getImageToImageOutputs: function (desc = null, viewer='viewer1',vtype='image') {
-        return [
+    getImageToImageOutputs: function (desc = null, viewer='viewer1',vtype='image',addlog=false) {
+
+        vtype=vtype || 'image';
+        viewer=viewer || 'viewer1';
+        
+        let arr=[
             {
                 'type': 'image',
                 'name': 'Output Image',
@@ -77,6 +81,19 @@ module.exports = {
                 'guiviewer'  : viewer,
             }
         ];
+
+        if (addlog) {
+            arr.push({
+                'type' : 'text',
+                'name' : 'Results',
+                'description': 'log file',
+                'varname': 'logoutput',
+                'shortname': 'log',
+                'required': false,
+                'extension': '.txt'
+            });
+        }
+        return arr;
     },
 
     getMatrixToMatrixInputs: function (addweights = false, desc = null) {
