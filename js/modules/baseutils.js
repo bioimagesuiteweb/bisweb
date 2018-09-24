@@ -82,17 +82,21 @@ module.exports = {
             }
         ];
 
-        if (addlog) {
-            arr.push({
-                'type' : 'text',
-                'name' : 'Results',
-                'description': 'log file',
-                'varname': 'logoutput',
-                'required': false,
-                'extension': '.bistext'
-            });
-        }
+        if (addlog) 
+            this.addLogOutput(arr);
+        
         return arr;
+    },
+
+    addLogOutput(arr,required=false) {
+        arr.push({
+            'type' : 'text',
+            'name' : 'Results',
+            'description': 'log file',
+            'varname': 'logoutput',
+            'required': required,
+            'extension': '.bistext'
+        });
     },
 
     getMatrixToMatrixInputs: function (addweights = false, desc = null) {
