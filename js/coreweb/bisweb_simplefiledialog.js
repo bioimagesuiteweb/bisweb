@@ -327,6 +327,150 @@ class SimpleFileDialog {
     updateTree(list,lastfilename=null,rootDirectory=null) {
 
         this.previousList=JSON.parse(JSON.stringify(list));
+        if (this.activeFilterList.length>0) {
+            let len=list.length-1;
+            for (let i = len; i >=0; i=i-1) {
+                if (list[i].type !== 'directory') {
+                    let ok=this.checkFilenameForFilter(list[i].text,this.activeFilterList);
+                    if (!ok) {
+                        list.splice(i,1);
+                    }
+                }
+            }
+        }
+        
+        //sort folders ahead of files
+        list.sort( (a, b) => {
+
+            let isadir=(a.type === 'directory');
+            let isbdir=(b.type === 'directory');
+
+            if (isadir && !isbdir)
+                return -1;
+            if (isbdir && !isadir)
+                return 1;
+
+            let at=a.text.toLowerCase();
+            let bt=b.text.toLowerCase();
+            
+            if (at>bt)
+                return 1;
+            if (at<bt)
+                return -1;
+            return 0;
+        });
+
+
+        
+        let fileList = this.container.find('.bisweb-file-list');
+        fileList.remove();
+        fileList = $(`<div class='bisweb-file-list'></div>`);
+        
+        let fileDisplay = this.container.find('.bisweb-file-display');
+        fileList.empty();
+        
+
+
+        let templates=webutil.getTemplates();
+        let newid=webutil.createWithTemplate(templates.bisscrolltable,$('body'));
+        let stable=$('#'+newid);
+        let thead = stable.find(".bisthead");
+        let tbody = stable.find(".bistbody",stable);
+        let tmain = stable.find(".bistscroll",stable);
+
+        tmain.css({ 'max-height' : '300px',
+                    'height'     : '300px',
+                    'max-width'  : '600px',
+                    "color" : "#0ce3ac",
+                    "background-color": "#444444"
+                     });
+
+
+        thead.empty();
+        tbody.empty();
+        tbody.css({'font-size':'13px',
+                   'user-select': 'none'});
+        thead.css({'font-size':'14px',
+                   'user-select': 'none'});
+
+        let elementlist=[];
+
+        let callback = (e,doubleclick=false) => {
+            e.preventDefault();
+            e.stopPropagation();
+            let id=e.target.id;
+            if (!id) {
+                id=e.target.parentElement.id;
+                if (!id)
+                    id=e.target.parentElement.parentElement.id;
+            }
+
+            let elem=elementlist[id];
+            let fname=elem.path;
+            if (elem.type === 'file' || elem.type ==='picture') {
+
+                let ind=fname.lastIndexOf(this.separator);
+                let dname=fname;
+                if (ind>0)
+                    dname=fname.substr(ind+1,fname.length);
+                this.filenameEntry.val(dname);
+                if (doubleclick) 
+                    this.filenameCallback();
+
+            } else if ( elem.type=== 'directory') {
+                this.changeDirectory(fname);
+            }
+        };
+
+
+        let max=list.length;
+        for (let i=0;i<max;i++) {
+
+            let elem=list[i];
+            let nid=webutil.getuniqueid();
+
+            let name=elem.text;
+            let sz="";
+            let c="";
+            if (elem.type === 'directory') {
+                c=`<span class='glyphicon glyphicon-folder-close'></span>&nbsp;`;
+                name='<B>['+name+']</B>';
+            } else {
+                c=`<span class='glyphicon glyphicon-file'></span>&nbsp;`;
+                sz=Number.parseFloat(list[i].size/(1024)).toFixed(2);
+            }
+
+            
+            let w=$(`<tr>
+                    <td width="80%"><span id="${nid}">${c} ${name}</span></td>
+                    <td width="20%" align="right">${sz}</td></tr>
+                    </tr>`);
+            tbody.append(w);
+            $('#'+nid).click( (e) => { callback(e,false); });
+            $('#'+nid).dblclick( (e) => { callback(e,true);});
+
+            elementlist[nid]=elem;
+        }
+
+
+        fileDisplay.append(fileList);
+        fileList.append(stable);
+        this.updateFileNavbar(lastfilename,rootDirectory);
+    }
+
+        /**
+     * Creates the visual representation of the files specified by list. Called from createFileList (see notes there for format of file entries).
+     * Uses jstree to render the list.
+     * 
+     * Sorts contents before display so that folders are shown first.
+     * @param {Array} list - An array of file entries. 
+     * @param {String} lastfilename - the last selected filename
+     * @param {String} rootDirectory - "the drive" we are looking in
+
+     */
+    updateTreeOld(list,lastfilename=null,rootDirectory=null) {
+
+        this.previousList=JSON.parse(JSON.stringify(list));
         
         let fileList = this.container.find('.bisweb-file-list');
         fileList.remove();
@@ -382,7 +526,7 @@ class SimpleFileDialog {
         fileList.jstree({
             'core': {
                 'data': list,
-                'dblclick_toggle': false
+                'dblclick_toggle': true
             },
             'types': {
                 'default': {

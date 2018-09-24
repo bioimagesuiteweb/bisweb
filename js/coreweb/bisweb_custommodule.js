@@ -450,6 +450,8 @@ class CustomModule {
     moduleDone(inputParams, outputs) {
 
         webutil.createAlert(`Module ${this.module.getDescription().name} done`);
+
+        let count=0;
         
         this.description.outputs.forEach((opt) => {
             let outobj = outputs[opt.varname];
@@ -486,7 +488,11 @@ class CustomModule {
                         }
                     });
                 } else if (outobj.getObjectType() === "text") {
-                    this.showText(outobj);
+                    count=count+1;
+                    if (count===1) {
+                        // Only show the first text object
+                        this.showText(outobj,"Module "+this.module.getDescription().name+' done.');
+                    }
                 }
             }
         });
@@ -565,11 +571,17 @@ class CustomModule {
      * display text object and present an option to save it
      * @param{BisWebTextObject} - obj
      */
-    showText(obj) {
+    showText(obj,title="Output Information") {
 
         let txt=obj.getText();
         if (txt.length<1)
             return;
+
+        // Hide alert messages
+        $('.alert-success').remove();
+        $('.alert-info').remove();
+
+        
         txt=txt.replace(/\n---\n/g,'<HR>');
         txt=txt.replace(/\n/g,'<BR>').replace(/\t/g,'&nbsp;&nbsp;&nbsp;&nbsp;');
         txt=txt.replace(/\\n/g,'<BR>').replace(/\\t/g,'&nbsp;&nbsp;&nbsp;&nbsp;');
@@ -580,7 +592,7 @@ class CustomModule {
 
         
         bootbox.dialog({
-            title: 'Output Information',
+            title: title,
             message: output,
                 buttons: {
                     ok: {
