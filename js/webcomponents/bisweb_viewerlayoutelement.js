@@ -86,7 +86,9 @@ class ViewerLayoutElement extends HTMLElement {
     }
 
     getCSSLength(n='width') {
-        let v=$(this).css(n);
+
+        const style = getComputedStyle(this);
+        const v = style[n];
         return parseFloat(v.replace(/px/g,''));
     }
             
@@ -100,7 +102,7 @@ class ViewerLayoutElement extends HTMLElement {
     getInnerHeight() {
         if (!this.noresize)
             return window.innerHeight;
-        return this.getCSSLength('height') || 800;
+        return this.getCSSLength('height') || 700;
     }
 
     
@@ -117,7 +119,6 @@ class ViewerLayoutElement extends HTMLElement {
         let innerW=this.getInnerWidth();
         let innerH=this.getInnerHeight();
 
-        
         if (this.minimizedockpanel)
             dockwidth=50;
 
@@ -434,10 +435,9 @@ class ViewerLayoutElement extends HTMLElement {
                                                           'background-color': webutil.getpassivecolor()
                                                       }
                                                       });
-
         this.handleresize();
-
         webutil.runAfterAllLoaded( () => {
+
             if (this.defaulttext.length<4) {
                 this.context.fillText('Load (or Drag) an Image (.nii.gz or .nii)',100,100);
                 this.context.fillText(' or an application viewer file (.biswebstate)',100,180);

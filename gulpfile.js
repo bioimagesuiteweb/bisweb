@@ -361,6 +361,12 @@ gulp.task('buildtest',function() {
     let maincss    = './web/biswebtest.css';
     bis_gutil.createCSSCommon([maincss],'biswebtest.css',options.outdir);
 
+    bis_gutil.createHTML('biswebdisplaytest',options.outdir,'bislib.js',internal.biscss);
+    bis_gutil.createHTML('biswebdisplaytest2',options.outdir,'bislib.js',internal.biscss);
+    let maincss2    = './web/biswebdisplaytest.css';
+    bis_gutil.createCSSCommon([maincss2],'biswebdisplaytest.css',options.outdir);
+
+
 });
 
 
@@ -499,6 +505,8 @@ gulp.task('zip', function() {
 
 gulp.task('package2', function(done) {
 
+    if (options.package===0)
+        options.package=1;
 
     
     bis_gutil.createPackage(options.package,

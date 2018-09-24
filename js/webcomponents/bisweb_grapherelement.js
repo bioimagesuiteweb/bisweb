@@ -43,25 +43,39 @@ class GrapherModule extends HTMLElement {
         super();
 
         this.lastviewer = null;
-        this.desired_width=900;
-        this.desired_height=750;
+        this.desired_width=500;
+        this.desired_height=500;
         this.lastdata = null;
         this.graphcanvasid = null;
+        this.lastShowVolume=false;
+        this.graphWindow=null;
+        this.resizingTimer=null;
+        this.buttons=[];
     }
 
-    createGUI() {
 
-        if (this.graphcanvasid!==null)
+    /** create the GUI (or modifiy it if it exists)
+     * @param{Boolean} showbuttons -- if true show the 'Plot VOI Values' and 'Plot VOI Volumes' buttons, else hide them (as we may only have values!)
+     */
+    createGUI(showbuttons=true) {
+
+        if (this.graphcanvasid!==null) {
+            if (this.buttons.length>0) {
+                for (let i=0;i<this.buttons.length;i++) {
+                    if (showbuttons) 
+                        this.buttons[i].css({ "visibility": "visible" });
+                    else
+                        this.buttons[i].css({ "visibility": "hidden" });
+                }
+            }
             return;
-        
+        }
+
         this.graphcanvasid = webutil.getuniqueid();
         this.graph = null;
         this.graphWindow = document.createElement('bisweb-dialogelement');                          
-        this.graphWindow.create("VOI Timeseries Plotter", this.desired_width, this.desired_height, 20,100,5000,true);
+        this.graphWindow.create("VOI Tool", this.desired_width, this.desired_height, 20,100,100,false);
         this.graphWindow.widget.css({ "background-color": "#222222" });
-        let w=this.desired_width;
-        let h=this.desired_height;
-        this.graphWindow.widget.append($(`<canvas id="${this.graphcanvasid}" width="${w-10}" height="${h-160}"></canvas></div>`));
 
         let bbar=this.graphWindow.getFooter();
 
@@ -74,28 +88,32 @@ class GrapherModule extends HTMLElement {
             self.exportLastData();
         };
 
-        webutil.createbutton({
-            name: 'Plot VOI Values',
-            type: "primary",
-            tooltip: '',
-            css: {
-                'margin-left': '10px',
-            },
-            position: "right",
-            parent: bbar
-        }).click(() => { this.rePlotGraph(false); });
+        if (showbuttons) {
 
-        webutil.createbutton({
-            name: 'Plot VOI Volumes',
-            type: "default",
-            tooltip: '',
-            css: {
-                'margin-left': '10px',
-            },
-            position: "left",
-            parent: bbar
-        }).click(() => { this.rePlotGraph(true); });
-
+            this.buttons=[];
+            this.buttons.push(webutil.createbutton({
+                name: 'Plot VOI Values',
+                type: "primary",
+                tooltip: '',
+                css: {
+                    'margin-left': '10px',
+                },
+                position: "right",
+                parent: bbar
+            }).click(() => { this.rePlotGraph(false).catch( () => { } ); }));
+            
+            this.buttons.push(webutil.createbutton({
+                name: 'Plot VOI Volumes',
+                type: "default",
+                tooltip: '',
+                css: {
+                    'margin-left': '10px',
+                },
+                position: "left",
+                parent: bbar
+            }).click(() => { this.rePlotGraph(true).catch( () => { } );}));
+        }
+        
         webutil.createbutton({
             name: 'Export as CSV',
             type: "info",
@@ -126,33 +144,26 @@ class GrapherModule extends HTMLElement {
             },
             position: "right",
             parent: bbar
-        }).click(() => { this.graphWindow.hide(); });
+        }).click(() => {
+            this.graphWindow.hide();
+        });
 
 
         bbar.tooltip();
 
     }
 
-    /**
+    /** Main Function 1 as called by the editor tool
      * Graphs the time-averaged mean of fMRI intensity in the area painted by {@link bisweb_painttoolelement} using 
      * {@link bis_fmrimatrixconnectivity.js}. Uses chart.js for the graphics. 
+     * Calls plot Graph for the actual plotting
      */
-    parsePaintedAreaAverageTimeSeries(orthoElement = null) {
+    parsePaintedAreaAverageTimeSeries(orthoElement) {
 
-        this.lastdata = null;
-
-        if (orthoElement === null)
-            orthoElement = document.getElementsByClassName('ortho-viewer').item(0);
-
-        if (orthoElement === null)
+        if (!orthoElement)
             return;
-
-        if (orthoElement!==this.lastviewer && this.lastviewer!==null) 
-            this.lastviewer.removeResizeObserver(this);
         
-        this.lastviewer=orthoElement;
-        this.lastviewer.addResizeObserver(this);
-        
+        this.lastdata = null;
         let image = orthoElement.getimage();
         let objectmap = orthoElement.getobjectmap();
 
@@ -187,27 +198,62 @@ class GrapherModule extends HTMLElement {
             }
         }
         
-        this.plotGraph(x, y, matrix.numvoxels);
+        this.plotGraph(x, y, matrix.numvoxels,orthoElement);
     }
 
-    plotGraph(x, y, numvoxels) {
+    /** Main Function 2 plots a Graph directly from data!
+     * @param{Array} x - x-axis
+     * @param{Array} y - y-axis data (values)
+     * @param{Array} numvoxels - y-axis data 2 (optional, these are the "volumes" of ROI if specified)
+     * @param{orthoElement} viewer - the viewer to attach to for resizing info (defaults to looking for an ortho-viewer)
+     */
+    plotGraph(x, y, numvoxels=null,orthoElement=null) {
 
-        this.createGUI();
+        if (!orthoElement)
+            orthoElement = document.getElementsByClassName('bisweb-orthogonalviewer').item(0);
+        if (!orthoElement)
+            return;
+        
+        let changedViewer=false;
+        
+        if (orthoElement!==this.lastviewer) {
+            if (this.lastviewer)
+                this.lastviewer.removeResizeObserver(this);
+            changedViewer=true;
+            this.lastviewer=orthoElement;
+        }
         
         this.lastdata = {
             x: x,
             y: y,
             numvoxels: numvoxels
         };
-        this.rePlotGraph(false);
+        this.rePlotGraph(false).then( () => {
+            if (changedViewer)
+                this.lastviewer.addResizeObserver(this);
+        }).catch( (e) => {
+            console.log(e,e.stack);
+        });
 
     }
 
+    /** replots the current values
+     * @param {Boolean} showVolume -- if true show the volumes (if they exist), else the values
+     * @returns {Promise} - when done
+     */
     rePlotGraph(showVolume = false) {
 
+        let showbuttons=true;
+        this.lastShowVolume=showVolume;
+
+        if (this.lastdata.numvoxels===null) {
+            showVolume=false;
+            showbuttons=false;
+        }
+        
         if (this.lastdata.y < 1) {
             webutil.createAlert('No  objecmap in memory', true);
-            return;
+            return Promise.reject();
         }
 
         let dim = numeric.dim(this.lastdata.y);
@@ -290,6 +336,31 @@ class GrapherModule extends HTMLElement {
             d_type = 'bar';
         }
 
+        this.createGUI(showbuttons);
+        
+        
+        this.graphWindow.show();
+        let dm=this.getCanvasDimensions();
+        if (!dm) {
+            return Promise.reject("Bad Dimensions");
+        }
+        let cw=dm[0];
+        let ch=dm[1];
+        
+
+        let cnv=$(`<canvas id="${this.graphcanvasid}" width="${cw}" height="${ch}"></canvas></div>`);
+        this.graphWindow.widget.append(cnv);
+        cnv.css({
+            'background-color' : '#555555',
+            'position' : 'absolute',
+            'left' : '5px',
+            'top'  : '8px',
+            'margin' : '0 0 0 0',
+            'padding' : '0 0 0 0',
+            'height' : `${ch}px`,
+            'width'  : `${cw}px`,
+        });
+
 
         let canvas = document.getElementById(this.graphcanvasid);
         let context = canvas.getContext("2d");
@@ -297,23 +368,27 @@ class GrapherModule extends HTMLElement {
 
         if (this.graph !== null)
             this.graph.destroy();
+        
 
-        this.graph = new Chart(canvas, {
-            type: d_type,
-            data: data,
-            options: options
+        return new Promise( (resolve) => {
+            setTimeout(() => {
+                this.graph = new Chart(canvas, {
+                    type: d_type,
+                    data: data,
+                    options: options
+                });
+                resolve();
+            },1);
         });
-
-
-        setTimeout(() => {
-            this.graphWindow.show();
-            this.handleresize(null);
-        }, 1);
     }
 
     /**
      * Reformats the means returned by {@link bis_fmrimatrixconnectivity}.roimean to a format readable by chart.js.
      * Internal use only. 
+     * @param{Array} x - x-axis
+     * @param{Array} y - y-axis data (values)
+     * @param{Array} numVoxels - y-axis data 2 (optional, these are the "volumes" of ROI if specified)
+     * @param{Boolean} showVolume - if true then show the second y-axis data (numVoxels) if they exist
      */
     formatChartData(x, y, numVoxels, showVolume) {
 
@@ -341,7 +416,7 @@ class GrapherModule extends HTMLElement {
                         pointRadius: 0,
                         fill: false
                     };
-                    console.log('Adding ', i, y[i]);
+
                 }
             }
             labels = x;
@@ -354,7 +429,14 @@ class GrapherModule extends HTMLElement {
             // Bar Chart
             let parsedDataSet = [], data = [], backgroundColor = [];
             for (let i = 0; i < y.length; i++) {
-                if (numVoxels[i] > 0) {
+
+                let doshow=false;
+                if (numVoxels===null) {
+                    doshow=true;
+                } else if (numVoxels[i] > 0) {
+                    doshow=true;
+                }
+                if (doshow) {
                     let index = i + 1;
                     let colorindex = index;
                     while (colorindex >= mx) { colorindex = (colorindex - 1) - (mx - 1) + 1; }
@@ -431,6 +513,7 @@ class GrapherModule extends HTMLElement {
         return false;
     }
 
+    /** save the last data to csv */
     exportLastData() {
 
         if (this.lastdata === null)
@@ -485,68 +568,88 @@ class GrapherModule extends HTMLElement {
      * handles resize event from viewer
      * @param {array} dim - [ width,height] of viewer
      */
-    handleresize(dim) {
-        
-        if (!this.graphWindow.isVisible())
-            return;
-        
-        if (dim===null) {
-            if (this.lastviewer)
-                dim=this.lastviewer.getViewerDimensions();
-            else 
-                dim=[ window.innerWidth,window.innerHeight ];
+    handleresize() {
+
+        if (this.resizingTimer) {
+            clearTimeout(this.resizingTimer);
+            this.resizingTimer=null;
         }
 
-        let val=this.graphWindow.dialog.css(['left','width','top','height']);
-        let left=parseFloat(val['left'].replace(/px/g,''));
-        let width=parseFloat(val['width'].replace(/px/g,''));
-        let top=parseFloat(val['top'].replace(/px/g,''));
-        let height=parseFloat(val['height'].replace(/px/g,''));
-
-        let newwidth=dim[0]-30;
-        let newheight=dim[1]-60;
-        
-        if ( (width>=this.desired_width && left+width< dim[0]) &&
-             (height>=this.desired_height && top+height< dim[1])) {
+        if (this.graphWindow===null) {
             return;
         }
 
-        if (width>newwidth) {
-            width=newwidth;
-            left=15;
-        } else if (width<this.desired_width && newwidth>=this.desired_width) {
-            width=this.desired_width;
-        } else if (width<this.desired_width && newwidth>width) {
-            width=newwidth;
+        if (!this.graphWindow.isVisible()) {
+            this.getCanvasDimensions();
+            return;
         }
-             
-        if (height>newheight) {
-            height=newheight;
-            if (height<200)
-                height=200;
-            top=45;
-        } else if (height<this.desired_height && newheight>=this.desired_height) {
-            height=this.desired_height;
-        } else if (height<this.desired_height && newheight>height) {
-            height=newheight;
-            if (height<200)
-                height=200;
-        }             
 
 
-
-        this.graphWindow.dialog.css({'left': `${left}px`,
-                                     'width' :`${width}px`,
-                                     'top' : `${top}px`,
-                                     'height' : `${height}px`,
-                                     'min-width' :`${width}px` });
-        this.graphWindow.widget.css({ 'height' :`${height-120}px` });
+        const self=this;
+        this.resizingTimer=setTimeout( () => {
+            self.rePlotGraph(self.lastShowVolume).catch( (e) => {
+                console.log(e,e.stack);
+            });
+        },200);
         
-        this.graphWindow.content.css({'width' :`${width}px`,
-                                      'height' :`${height}px`,
-                                      'min-width' :`${width}px` });
-        
+    }
 
+
+    /** Resizes elements and returns the canvas dimensions
+     * @returns {array} - [ canvaswidth,canvasheight ]
+     */
+    getCanvasDimensions() {
+
+        let dim=[200,200];
+        
+        if (this.lastviewer) {
+            dim=this.lastviewer.getViewerDimensions();
+        } else if (dim===null) {
+            dim=[ window.innerWidth,window.innerHeight ];
+        }
+        
+        let width=dim[0]-20;
+        let height=dim[1]-20;
+        let left=10;
+        let top=40;
+
+        this.graphWindow.dialog.css({
+            'left': `${left}px`,
+            'width' :`${width}px`,
+            'top' : `${top}px`,
+            'height' : `${height}px`,
+        });
+
+        let innerh=height-120;
+        let innerw=width-10;
+        this.graphWindow.widget.css({
+            'margin' : '0 0 0 0',
+            'padding' : '0 0 0 0',
+            'height' : `${innerh}px`,
+            'width'  : `${innerw}px`,
+            "overflow-y": "hidden",
+            "overflow-x": "hidden" ,
+        });
+        this.graphWindow.widgetbase.css({
+            'height' : `${innerh}px`,
+            'width'  : `${innerw}px`,
+            'background-color' : '#222222',
+            'margin' : '0 0 0 0',
+            'padding' : '0 0 0 0',
+            "overflow-y": "hidden",
+            "overflow-x": "hidden" ,
+        });
+
+        this.graphWindow.footer.css({
+            "height" : "40px",
+            'margin' : '3 3 3 3',
+            'padding' : '0 0 0 0',
+            "overflow-y": "hidden",
+            "overflow-x": "hidden" ,
+        });
+
+        this.graphWindow.widget.empty();
+        return [ innerw, innerh-15 ];
     }
 
 }

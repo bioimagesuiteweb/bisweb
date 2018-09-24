@@ -276,6 +276,7 @@ extern "C" {
   /** Prepare Image for Registration using \link bisImageAlgorithms::prepareImageForRegistration \endlink
    * @param input serialized input as unsigned char array 
    * @param jsonstring the parameter string for the algorithm 
+   * @param debug if > 0 print debug messages
    * @returns a pointer to a serialized image
    */
   // BIS: { 'prepareImageForRegistrationWASM', 'bisImage', [ 'bisImage',  'ParamObj','debug' ] } 

@@ -136,7 +136,7 @@ var loadparamfile=function(paramfile,modulename,params) {
     });
 };
 
-var execute_test=function(test,i,usethread=false) {
+var execute_test=function(test,usethread=false) {
 
     return new Promise( (resolve,reject) => {
 
@@ -189,7 +189,7 @@ var execute_test=function(test,i,usethread=false) {
                 }
             }
         }
-
+        
         let tobj=get_test_object(test);
         let test_type = tobj['test_type'] || 'image';
         if (test_type==='registration')
@@ -497,7 +497,7 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
             replacesystemprint(true);
             try {
                 let t0 = performance.now();
-                let obj=await execute_test(v,i,usethread); // jshint ignore:line
+                let obj=await execute_test(v,usethread); // jshint ignore:line
                 var t1 = performance.now();
                 main.append(`.... test execution time=${(0.001*(t1 - t0)).toFixed(2)}s`);
 

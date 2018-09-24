@@ -555,11 +555,15 @@ class BaseFileServer {
 
         let prom=null;
 
-        if (!this.validateFilename(url)) {
-            this.handleBadRequestFromClient(socket,
-                                            'url '+url+' is not valid',
-                                            id);
-            return;
+        if (opname!=='getMatchingFiles') {
+            // This is a potential security hole as "*" and '?'
+           
+            if (!this.validateFilename(url)) {
+                this.handleBadRequestFromClient(socket,
+                                                'url '+url+' is not valid',
+                                                id);
+                return;
+            }
         }
 
         

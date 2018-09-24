@@ -28,6 +28,7 @@ const BisWebDataObject = require('bisweb_dataobject');
 const genericio = require('bis_genericio');
 const BisWebImage = require('bisweb_image.js');
 const BisWebMatrix = require('bisweb_matrix.js');
+const BisWebTextObject = require('bisweb_textobject.js');
 const bistransforms = require('bis_transformationutil.js');
 
 /** Class to store a collection of data objects */
@@ -265,8 +266,12 @@ class BisWebDataObjectCollection extends BisWebDataObject {
             obj= new BisWebImage();
         } else  if (objecttype ==="collection")  {
             obj= new BisWebDataObjectCollection();
+        } else if (objecttype === "text" || objecttype === "textobject") {
+            obj= new BisWebTextObject();
         }
 
+
+        
         if (obj===null) {
             console.log('Error unknown ',objecttype,' =null');
             return null;
@@ -301,6 +306,15 @@ class BisWebDataObjectCollection extends BisWebDataObject {
                 }).catch( (e) => {reject(e);});
             });
         }
+        
+        if (objecttype === 'text' || objecttype==='textobject') {
+            let obj=new BisWebTextObject();
+            return new Promise( (resolve,reject) => {
+                obj.load(filename).then( () => {
+                    resolve(obj);
+                }).catch( (e) => {reject(e);});
+            });
+        }
 
         if (objecttype === 'collection') {
             let obj=new BisWebDataObjectCollection();
@@ -311,6 +325,8 @@ class BisWebDataObjectCollection extends BisWebDataObject {
             });
         }
 
+
+        
         if (objecttype.indexOf('transform')>=0)  {
             return new Promise((resolve, reject) => {
                 bistransforms.loadTransformation(filename).then((obj) => {

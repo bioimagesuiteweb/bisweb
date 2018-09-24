@@ -184,7 +184,7 @@ MARK_AS_ADVANCED(BIS_UNITTEST)
 OPTION(BIS_MODULETEST "Enable MODULE Tests" ON)
 MARK_AS_ADVANCED(BIS_MODULETEST)
 
-OPTION(BIS_INSTALLTESTS "Install Module Tests & Data" ON)
+OPTION(BIS_INSTALLTESTS "Install Module Tests & Data" OFF)
 MARK_AS_ADVANCED(BIS_INSTALLTESTS)
 
 # ---------------------------------------------------------------------------------------------
@@ -302,7 +302,10 @@ IF (BIS_A_EMSCRIPTEN)
   SET(JSFILES ${H1} ${H2} ${H3})
 
 
-  SET (WNAMELIST bisweb.js bisweb-test.js bisfileserver.js)
+  SET (WNAMELIST bisweb.js)
+  IF (BIS_INSTALLTESTS)
+    SET (WNAMELIST ${WNAMELIST} bisweb-test.js)
+  ENDIF (BIS_INSTALLTESTS)
   GET_FILENAME_COMPONENT(WEBPCONFIG ${PROJECT_SOURCE_DIR}/../config/app.config.js ABSOLUTE)
   GET_FILENAME_COMPONENT(WEBPCONFIGMOCHA ${PROJECT_SOURCE_DIR}/../config/mocha.config.js ABSOLUTE)
 
@@ -318,17 +321,10 @@ IF (BIS_A_EMSCRIPTEN)
       COMMAND webpack-cli --entry ${INSCRIPT} --config ${WEBPCONFIG} --output-path ${LIBRARY_OUTPUT_PATH} --output-filename ${item}
       )
     add_custom_target(${item} ALL DEPENDS ${OUTSCRIPT})
-    if (${item} MATCHES "bisweb*")
-        install (FILES ${OUTSCRIPT} DESTINATION bisweb/lib
-          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
-    endif (${item} MATCHES "bisweb*")
-    if (${item} MATCHES "bisfileserver.js")
-        install (FILES ${OUTSCRIPT} DESTINATION bisweb/server
-          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
-        install (FILES ${PROJECT_SOURCE_DIR}/../js/bin/server/example-server-config.json DESTINATION bisweb/server PERMISSIONS OWNER_READ WORLD_READ)
-        install (FILES ${PROJECT_SOURCE_DIR}/../js/bin/server/README.md DESTINATION bisweb/server PERMISSIONS OWNER_READ WORLD_READ)
-        install (FILES ${PROJECT_SOURCE_DIR}/../js/bin/server/package.json DESTINATION bisweb/server PERMISSIONS OWNER_READ WORLD_READ)
-    endif (${item} MATCHES "bisfileserver.js")
+    install (FILES ${OUTSCRIPT} DESTINATION bisweb/lib
+      PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
+
+  
   ENDFOREACH(item ${WNAMELIST})
 
 

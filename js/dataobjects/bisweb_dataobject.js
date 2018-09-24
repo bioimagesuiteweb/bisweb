@@ -307,15 +307,15 @@ class BisWebDataObject {
 
             let s='<OL>';
             for (let i=0;i<lst.length;i++) {
-                s+=formatObject(lst[i]);
+                s+=formatObject(lst[i]).replace(/\\n/g,'<BR>').replace(/===================================/g,'<HR>');
             }
             return s+'</OL>';
+
         };
 
         name=name || this.getObjectType();
 
-        let des=this.getDescription(true).replace(/\n/g,'<BR>');
-
+        let des=this.getDescription(true).replace(/\\n/g,'<BR>');
 
         if (this.getCommentList().length>0) {
             let b=formatCommentList(this.getCommentList());

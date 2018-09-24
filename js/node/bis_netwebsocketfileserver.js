@@ -4,7 +4,6 @@ const crypto = require('crypto');
 const path=require('path');
 const timers = require('timers');
 const util = require('bis_util');
-const coregenericio = require('bis_coregenericio.js');
 const { StringDecoder } = require('string_decoder');
 
 // TODO: IP Filtering
@@ -659,29 +658,19 @@ class BisNetWebSocketFileServer extends BaseFileServer {
                 if (path.sep==='\\')
                     writeLocation=util.filenameUnixToWindows(writeLocation);
                 console.log('.=.=.=.=.=.=. \t writing to file', writeLocation,'\n.=.=.=.=.=.=. \t\t size=',dataInProgress.data.length,'\n.=.=.=.=.=.=. \t\t checksum matched=',checksum);
-
-                // Writing -- old fashioned write
-                let completefn= (() => {
+                
+                genericio.write(writeLocation, dataInProgress.data, dataInProgress.isbinary).then( () => {
                     self.sendCommand(socket,'uploadcomplete', 'file saved in '+writeLocation+' (isbinary='+dataInProgress.isbinary+')').then( () => {
                         dataInProgress.data=null;
                         console.log('.=.=.=.=.=.=. \t message sent -- file saved in ',writeLocation,' binary=',dataInProgress.isbinary);
-                        
                     });
-                });
-                
-                let errorfn= ( (e) => {
-                    console.log(',_._._._._._ an error occured', e);
+
+
+                }).catch( (e) => {
+                    console.log('.=.=.=.=.=.=. an error occured', e);
                     self.sendCommand(socket,'error', e);
                     self.closeSocket(socket,true);
-
                 });
-                
-                if (dataInProgress.isbinary) {
-                    coregenericio.writebinarydatanode(writeLocation,dataInProgress.data,completefn,errorfn,true);
-                } else {
-                    coregenericio.writetextdatanode(writeLocation,dataInProgress.data,completefn,errorfn);
-                }
-                return;
             } else {
                 //console.log('.=.=.=.=.=.=. received chunk,', dataInProgress.receivedFile.length, 'received so far.');
                 try {

@@ -1,0 +1,206 @@
+{
+    "app": "biswebdisplaytest",
+    "params": {
+        "viewer1": {
+            "image": "",
+            "overlay": "",
+            "colortype": "",
+            "colormap": {
+                "interpolate": true,
+                "autocontrast": true,
+                "opacity": 0.9,
+                "minintensity": 88.07784186599984,
+                "maxintensity": 172.9254901960784,
+                "funcmode": "Objectmap",
+                "outmode": "Both",
+                "minth": 1,
+                "maxth": 100,
+                "clustersize": 0
+            },
+            "snapshotcontroller": {
+                "scale": 1,
+                "dowhite": true,
+                "crop": false
+            },
+            "subviewers": [
+                {
+                    "position": {
+                        "x": 400,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 0,
+                        "z": -1
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 145,
+                    "top": -145,
+                    "left": -145,
+                    "right": 145
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": -218,
+                        "z": 90
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 0,
+                        "z": -1
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 145,
+                    "top": -145,
+                    "left": -145,
+                    "right": 145
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 400
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": -1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 145,
+                    "top": -145,
+                    "left": -145,
+                    "right": 145
+                },
+                {
+                    "position": {
+                        "x": 102.07875258292556,
+                        "y": -182.09196358468677,
+                        "z": 238.2455948742528
+                    },
+                    "up": {
+                        "x": 0.33598608662488544,
+                        "y": -0.41746962304130747,
+                        "z": -0.8442940621799038
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 145,
+                    "top": -145,
+                    "left": -145,
+                    "right": 145
+                }
+            ],
+            "data": {
+                "playing": false,
+                "displaymode": "Slices",
+                "decorations": true,
+                "xcoord": 45,
+                "ycoord": 24,
+                "zcoord": 41,
+                "tcoord": 0
+            }
+        },
+        "viewer2": {
+            "image": "",
+            "overlay": "",
+            "colortype": "",
+            "colormap": {
+                "interpolate": true,
+                "autocontrast": true,
+                "opacity": 0.9,
+                "minintensity": 88.07784186599984,
+                "maxintensity": 172.9254901960784,
+                "funcmode": "Objectmap",
+                "outmode": "Both",
+                "minth": 1,
+                "maxth": 100,
+                "clustersize": 0
+            },
+            "snapshotcontroller": {
+                "scale": 1,
+                "dowhite": true,
+                "crop": true
+            },
+            "subviewers": [
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 400
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": -1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 131,
+                    "top": -131,
+                    "left": -131,
+                    "right": 131
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 400
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": -1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 131,
+                    "top": -131,
+                    "left": -131,
+                    "right": 131
+                }
+            ],
+            "data": {
+                "playing": false,
+                "displaymode": "Axial",
+                "first": 46,
+                "numrows": 1,
+                "numcols": 2,
+                "increment": 1,
+                "tcoord": 0,
+                "decorations": true
+            }
+        },
+        "sidetools": {},
+        "activeViewer": 1
+    }
+}

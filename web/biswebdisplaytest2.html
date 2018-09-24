@@ -1,0 +1,159 @@
+<!---  LICENSE
+    
+    _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+    
+    BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+    
+    - you may not use this software except in compliance with the License.
+    - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+    
+    __Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.__
+    
+    ENDLICENSE -->
+
+<!DOCTYPE html>
+
+<html lang="en">
+
+  <head>
+    <title>BioImage Suite Display Test 2</title>
+    <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0"/> -->
+    <meta name="viewport" content="width=device-width, user-scalable=no">
+    <meta name="theme-color" content="rgb(28,45,64)">
+    <meta name="description" content="Yale BioImage Suite Medical Image
+                                      Analysis Software">
+    <meta name="keywords" content="Image Segmentation, Registration,
+                                   Visualization, fMRI, Connectivity, JS,
+                                   WebAssembly, NIH Brain Inititative">
+    <meta name="author" content="Xenophon Papademetris and Dustin Scheinost,
+                                 Dept of Radiology and Biomedical Imaging,
+                                 Yale School of Medicine">
+
+    <link rel="icon" href="images/favicon.ico">
+
+    <!-- begin webpack/gulp modifications -->
+    <!-- external css files -->
+    <!-- build:css -->
+    <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_dark.css">
+    <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap-colorselector.css">
+    <link rel="stylesheet" type="text/css" href="biscommon.css">
+    <!-- endbuild -->
+
+    <!-- all javascript files -->
+    <!-- build:js -->
+    <script src="bis.js"></script>
+    <script src="../build/web/webcomponents-lite.js"></script>
+    <script src="../build/web/jquery.min.js"></script>
+    <script src="../build/web/bootstrap.min.js"></script>
+    <script src="../build/web/libbiswasm_wasm.js"></script>
+    <script src="../build/web/bislib.js"></script>
+    <!-- endbuild -->
+    <!-- end webpack/gulp modifications -->
+
+    <!-- these stays as is, dropbox and main css file -->
+    <link rel="stylesheet" type="text/css" href="biswebdisplaytest.css">
+    <!-- end of stay as is -->
+  </head>
+  <body oncontextmenu="return false;" ondragstart="return false;" ondrop="return false;">
+
+    <bisweb-topmenubar   id="viewer_menubar"></bisweb-topmenubar>
+
+    <div id="toph4" style="width:910px">
+      <div id="midh4">
+
+        <H4> BioImage Suite Web Display Regression Test Runner (2)</H4>
+        <form class="form-inline" id="form">
+          <label for="first">First:</label>
+          <input type="number" step="1"  id="first" placeholder="0">
+          <label for="last">Last:</label>
+          <input type="number" step="1"  id="last" placeholder="5">
+          <button class="btn-small btn-success bisbtn" type="submit" id="computesingle">Run
+          Single Test</button>
+          <button class="btn-small btn-warning bisbtn" id="compute">Run
+          Multiple Tests</button>
+        </form>
+      </div>
+
+    </div> 
+
+    <div id="baseresults" style="left: 930px; width: calc(100% - 940px)">
+      <div  id="resultimages">
+        <table>
+          <tr>
+            <td><span id="goldtd">Gold</span></td>
+            <td>&nbsp;&nbsp;&nbsp; </td>
+            <td><span id="resulttd">Result</span></td>
+          </tr>
+          <tr>
+            <td class="bisimg"><img id="imggold" height="148" width="125px"><img></td>
+            <td id="imgmiddle"> </td>
+            <td class="bisimg"><img id="imgoutput" height="148" width="125px"><img></td>
+          </tr>
+        </table>
+        <div id="comparison">0.0</div>
+      </div>
+      <HR>
+      <div id="displayresults">
+        <pre>Results will appear here ...</pre>
+      </div>
+    </div>
+
+  <div id="viewerwidget">
+
+    <bisweb-viewerlayoutelement
+       id="viewer_layout"
+       bis-dockwidth="300"
+       bis-coreopen="false"
+      bis-noresize="1"
+      bis-defaulttext="Load Data to Begin">
+    </bisweb-viewerlayoutelement>
+
+    <bisweb-colormapcontrollerelement id="viewer_cmap">
+    </bisweb-colormapcontrollerelement>
+    
+    <bisweb-orthogonalviewer
+      id="viewer"
+      bis-simplemode="true"
+       bis-layoutwidgetid="#viewer_layout"
+       bis-colormapeditorid="#viewer_cmap">
+    </bisweb-orthogonalviewer>
+      
+    <bisweb-snapshotelement
+       bis-layoutwidgetid="#viewer_layout"
+       bis-dowhite="true"
+       bis-viewerid="#viewer">
+    </bisweb-snapshotelement>
+    
+    <bisweb-connectivitycontrolelement
+       id="conncontrol"
+       bis-layoutwidgetid="#viewer_layout"
+       bis-viewerid="#viewer">
+    </bisweb-connectivitycontrolelement>
+    
+    <bisweb-connectivityapplication
+      id="mainconn"
+      bis-extrastatesave="1"
+      bis-menubarid="#viewer_menubar"
+      bis-connectivitycontrolid="#conncontrol"
+      bis-viewerid="#viewer">
+    </bisweb-connectivityapplication>
+    
+  </div>
+
+  <bisweb-displayregressionelement
+    bis-testlist="connviewer"
+    bis-application="#mainconn">
+  </bisweb-displayregressionelement>
+  
+    
+    <nav class="navbar navbar-default navbar-fixed-bottom">
+      <span id="results"> A summary of the test results will appear here. </span>
+    </nav>
+    
+  </body>
+</html>
+

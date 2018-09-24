@@ -188,7 +188,9 @@ var createWindow=function(index,fullURL) {
         }
 
         if (anyalive===false) {
-            state.console.hide();
+            if (state.console) {
+                state.console.hide();
+            }
             state.console=null;
             process.exit(0);
         }
@@ -402,7 +404,7 @@ app.on('ready', function() {
         
     }
 
-    createConsole();
+    //createConsole();
 });
 
 app.on('activate', () => { createOrShowMainWindow();});
@@ -420,8 +422,10 @@ ipcMain.on('showdevtools', function () {
 });
 
 ipcMain.on('showconsole',function() {
+    console.log('Creating console');
     if (state.console===null)
         createConsole();
+    console.log('Showing console');
     state.console.show();
 });
 
@@ -438,7 +442,8 @@ ipcMain.on('bisconsole', function (event,arg) {
 });
 
 ipcMain.on('clearconsole', function (event,arg) {
-    state.consolehandler.send('clear-text',arg);
+    if (state.consolehandler)
+        state.consolehandler.send('clear-text',arg);
 });
 
 ipcMain.on('arguments', function (event,arg) {

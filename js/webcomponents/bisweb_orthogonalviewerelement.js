@@ -521,7 +521,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                                                  'background-color' : '#444444',
                                                  'color' : '#cc6600',
                                                  'position' : 'absolute',
-                                                 'z-index' : '504',
+                                                 'z-index' : '20',
                                                  'visibility' : 'hidden'});
 
             base.append(this.internal.arrowbuttons[ind]);
@@ -1219,6 +1219,10 @@ class OrthogonalViewerElement extends BaseViewerElement {
     /** clears the objectmap.
      */
     clearobjectmap() {
+
+        if (this.internal.objectmap===null)
+            return;
+        
         this.deleteoldobjectmap();
         this.internal.cmapcontroller.removeobjectmap();
         this.internal.objectmaptransferinfo={ isfunctional : false, 'colormode' : 'Objectmap' };

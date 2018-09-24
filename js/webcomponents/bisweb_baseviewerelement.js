@@ -261,11 +261,28 @@ class BaseViewerElement extends HTMLElement {
     // ------------------------------------------------------------------------------------
     // Main Renderloop
     // ------------------------------------------------------------------------------------
+
+    /** this sets the snapshot controller for use in store/retrieve Element state
+     * @param{SnapshotController} - cont
+     */
+    setSnapShotController(cont) {
+        this.internal.snapshotcontroller=cont;
+    }
+
+    /** this geets the snapshot controller 
+     * @returns{SnapshotController}
+     */
+    getSnapShotController() {
+        return this.internal.snapshotcontroller;
+    }
     
     /** this is the callback registered on {@link SnapshotController} to call when it 
      * requests an update
      * @param{SnapshotController} - controller
      */
+
+
+    
     savenextrender(controller) {
         this.internal.preservesnapshot=true;
         this.internal.snapshotcontroller=controller;
@@ -280,7 +297,7 @@ class BaseViewerElement extends HTMLElement {
         return this.internal.subviewers.length;
     }
 
-
+    
     /** disable renderloop */
     disable_renderloop() {
         this.enable_renderloop_flag=false;
@@ -936,6 +953,9 @@ class BaseViewerElement extends HTMLElement {
             obj['colormap']=this.internal.cmapcontroller.getElementState();
         if (this.internal.viewerleft)
             obj['viewerleft'] = this.internal.viewerleft;
+
+        if (this.internal.snapshotcontroller) 
+            obj['snapshotcontroller']=this.internal.snapshotcontroller.getElementState();
         
         if (storeImages) {
             let img=this.getimage();
@@ -958,8 +978,6 @@ class BaseViewerElement extends HTMLElement {
                         let controls=this.internal.subviewers[i].controls;
                         let p=controls.serializeCamera();
                         obj.subviewers.push(p);
-                    } else {
-                        i=n; // let's get out of here
                     }
                 }
             }
@@ -1002,6 +1020,11 @@ class BaseViewerElement extends HTMLElement {
             this.internal.cmapcontroller.updateTransferFunctions(true);
         }
 
+        if (this.internal.snapshotcontroller) 
+            this.internal.snapshotcontroller.setElementState(dt['snapshotcontroller']);
+        
+
+
         return;
     }
 
@@ -1009,15 +1032,19 @@ class BaseViewerElement extends HTMLElement {
      * by updating the subviewer cameras */
     setElementStateCameras(dt=null) {
 
-        if (dt.subviewers) {
-            let subviewers=this.internal.subviewers;
+        this.resetViewers();
+        let subviewers=this.internal.subviewers;
+        
+        if (dt.subviewers && subviewers) {
             let num=subviewers.length;
             if (dt.subviewers.length<num)
                 num=dt.subviewers.length;
             let renderer=this.internal.layoutcontroller.renderer;
             for (let i=0;i<num;i++) {
-                subviewers[i].controls.parseCamera(dt.subviewers[i]);
-                renderer.render( subviewers[i].scene, subviewers[i].camera);
+                if (dt.subviewers[i] && subviewers[i]) {
+                    subviewers[i].controls.parseCamera(dt.subviewers[i]);
+                    renderer.render( subviewers[i].scene, subviewers[i].camera);
+                }
             }
         } 
 

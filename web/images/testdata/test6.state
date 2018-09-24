@@ -1,0 +1,712 @@
+{
+    "app": "biswebdisplaytest",
+    "params": {
+        "viewer1": {
+            "image": "",
+            "overlay": "",
+            "colortype": "",
+            "colormap": {
+                "interpolate": true,
+                "autocontrast": true,
+                "opacity": 1,
+                "minintensity": 1,
+                "maxintensity": 285.07703354779414,
+                "funcmode": "Overlay",
+                "outmode": "Both",
+                "minth": 2882.13134765625,
+                "maxth": 5187.83642578125,
+                "clustersize": 102
+            },
+            "snapshotcontroller": {
+                "scale": 1,
+                "dowhite": true,
+                "crop": true
+            },
+            "subviewers": [
+                {
+                    "position": {
+                        "x": -219,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 0,
+                        "z": -1
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 0.5754935479924769,
+                    "bottom": 84.02205800690162,
+                    "top": -84.02205800690162,
+                    "left": -84.02205800690162,
+                    "right": 84.02205800690162
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 438,
+                        "z": 90
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 0,
+                        "z": -1
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 0.5754935479924769,
+                    "bottom": 84.02205800690162,
+                    "top": -84.02205800690162,
+                    "left": -84.02205800690162,
+                    "right": 84.02205800690162
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 402
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 0.5754935479924769,
+                    "bottom": 84.02205800690162,
+                    "top": -84.02205800690162,
+                    "left": -84.02205800690162,
+                    "right": 84.02205800690162
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": -222,
+                        "z": 90
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 0,
+                        "z": -1
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 146,
+                    "top": -146,
+                    "left": -146,
+                    "right": 146
+                }
+            ],
+            "data": {
+                "playing": false,
+                "displaymode": "Slices",
+                "decorations": true,
+                "xcoord": 36,
+                "ycoord": 37,
+                "zcoord": 25,
+                "tcoord": 0
+            }
+        },
+        "viewer2": {
+            "image": "",
+            "overlay": "",
+            "colortype": "",
+            "colormap": {
+                "interpolate": true,
+                "autocontrast": true,
+                "opacity": 1,
+                "minintensity": 1,
+                "maxintensity": 285.07703354779414,
+                "funcmode": "Overlay",
+                "outmode": "Both",
+                "minth": 2882.13134765625,
+                "maxth": 5187.83642578125,
+                "clustersize": 102
+            },
+            "snapshotcontroller": {
+                "scale": 1,
+                "dowhite": true,
+                "crop": true
+            },
+            "subviewers": [
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 402
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 131,
+                    "top": -131,
+                    "left": -131,
+                    "right": 131
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 402
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 131,
+                    "top": -131,
+                    "left": -131,
+                    "right": 131
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 402
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 131,
+                    "top": -131,
+                    "left": -131,
+                    "right": 131
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 402
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 131,
+                    "top": -131,
+                    "left": -131,
+                    "right": 131
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 402
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 131,
+                    "top": -131,
+                    "left": -131,
+                    "right": 131
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 402
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 131,
+                    "top": -131,
+                    "left": -131,
+                    "right": 131
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 402
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 131,
+                    "top": -131,
+                    "left": -131,
+                    "right": 131
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 402
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 131,
+                    "top": -131,
+                    "left": -131,
+                    "right": 131
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 402
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 131,
+                    "top": -131,
+                    "left": -131,
+                    "right": 131
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 402
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 131,
+                    "top": -131,
+                    "left": -131,
+                    "right": 131
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 402
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 131,
+                    "top": -131,
+                    "left": -131,
+                    "right": 131
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 402
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 131,
+                    "top": -131,
+                    "left": -131,
+                    "right": 131
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 402
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 131,
+                    "top": -131,
+                    "left": -131,
+                    "right": 131
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 402
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 131,
+                    "top": -131,
+                    "left": -131,
+                    "right": 131
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 402
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 131,
+                    "top": -131,
+                    "left": -131,
+                    "right": 131
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 402
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 131,
+                    "top": -131,
+                    "left": -131,
+                    "right": 131
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 402
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 131,
+                    "top": -131,
+                    "left": -131,
+                    "right": 131
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 402
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 131,
+                    "top": -131,
+                    "left": -131,
+                    "right": 131
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 402
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 131,
+                    "top": -131,
+                    "left": -131,
+                    "right": 131
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 402
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 131,
+                    "top": -131,
+                    "left": -131,
+                    "right": 131
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 402
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 131,
+                    "top": -131,
+                    "left": -131,
+                    "right": 131
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 402
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 131,
+                    "top": -131,
+                    "left": -131,
+                    "right": 131
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 402
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 131,
+                    "top": -131,
+                    "left": -131,
+                    "right": 131
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 402
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 131,
+                    "top": -131,
+                    "left": -131,
+                    "right": 131
+                },
+                {
+                    "position": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 402
+                    },
+                    "up": {
+                        "x": 0,
+                        "y": 1,
+                        "z": 0
+                    },
+                    "target": {
+                        "x": 90,
+                        "y": 108,
+                        "z": 90
+                    },
+                    "zoomFactor": 1,
+                    "bottom": 131,
+                    "top": -131,
+                    "left": -131,
+                    "right": 131
+                }
+            ],
+            "data": {
+                "playing": false,
+                "displaymode": "Axial",
+                "first": 31,
+                "numrows": 1,
+                "numcols": 2,
+                "increment": 1,
+                "tcoord": 0,
+                "decorations": true
+            }
+        },
+        "sidetools": {},
+        "activeViewer": 1
+    }
+}

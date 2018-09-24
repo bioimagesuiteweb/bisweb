@@ -1,0 +1,119 @@
+{
+    "overlay" : [
+        {
+            "base" : "viewer.biswebstate",
+            "state" : "test1.state",
+            "comparison" : "disptest1.png",
+            "viewer" : 1,
+            "result" : true
+        },
+        {
+            "base" : "viewer.biswebstate",
+            "state" : "test1.state",
+            "comparison" : "test2.png",
+            "viewer" : 1,
+            "result" : false
+        },
+        {
+            "base" : "viewer.biswebstate",
+            "state" : "test2.state",
+            "comparison" : "test2.png",
+            "viewer" : 1,
+            "result" : true
+        },
+        {
+            "base" : "overlay.biswebstate",
+            "state" : "test3.state",
+            "comparison" : "test3.png",
+            "viewer" : 1,
+            "result" : true
+        },
+        {
+            "base" : "overlay.biswebstate",
+            "state" : "test4.state",
+            "comparison" : "test4.png",
+            "viewer" : 1,
+            "result" : true
+        },
+        {
+            "base" : "overlay.biswebstate",
+            "state" : "test5.state",
+            "comparison" : "test5.png",
+            "viewer" : 2,
+            "result" : true
+        },
+        {
+            "base" : "overlay2.biswebstate",
+            "state" : "test6.state",
+            "comparison" : "test6.png",
+            "viewer" : 1,
+            "result" : true
+        },
+        {
+            "base" : "overlay2.biswebstate",
+            "state" : "test7.state",
+            "comparison" : "test7.png",
+            "viewer" : 2,
+            "result" : true
+        },
+        {
+            "base" : "overlay2.biswebstate",
+            "state" : "test8.state",
+            "comparison" : "test8.png",
+            "viewer" : 2,
+            "result" : true
+        },
+        {
+            "base" : "4d.biswebstate",
+            "state" : "test9.state",
+            "comparison" : "test9.png",
+            "viewer" : 2,
+            "result" : true
+        },
+        {
+            "base" : "4d.biswebstate",
+            "state" : "test10.state",
+            "comparison" : "test10.png",
+            "viewer" : 2,
+            "result" : true
+        }
+    ],
+    "connviewer" : [
+        {
+            "base" : "connstate.biswebstate",
+            "state" : "",
+            "comparison" : "otest1.png",
+            "result" : true
+        },
+        {
+            "base" : "connstate.biswebstate",
+            "state" : "otest2.state",
+            "comparison" : "otest2.png",
+            "result" : true
+        },        
+        {
+            "base" : "connstate.biswebstate",
+            "state" : "otest3.state",
+            "comparison" : "otest3.png",
+            "result" : true
+        },
+        {
+            "base" : "connstate.biswebstate",
+            "state" : "otest4.state",
+            "comparison" : "otest4.png",
+            "result" : true
+        },
+        {
+            "base" : "connstate.biswebstate",
+            "state" : "otest5.state",
+            "comparison" : "otest5.png",
+            "result" : true
+        },
+        {
+            "base" : "connstate.biswebstate",
+            "state" : "otest2.state",
+            "comparison" : "otest5.png",
+            "result" : false
+        }
+    ]
+}

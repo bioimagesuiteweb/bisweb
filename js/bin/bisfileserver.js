@@ -1,7 +1,6 @@
 require('../../config/bisweb_pathconfig.js');
 
 const program = require('commander');
-const BisNetWebSocketFileServer=require('bis_netwebsocketfileserver');
 const BisWSWebSocketFileServer=require('bis_wswebsocketfileserver');
 const os = require('os');
 const wsutil = require('bis_wsutil');
@@ -18,7 +17,6 @@ program
     .option('--ipaddr <s>', ' set the ip address to bind to, else localhost (localhost= no remote connections)')
     .option('--tmpdir <s>', ' specify temporary directory')
     .option('--config <s>', ' read config file')
-    .option('--old', ' if set use the old style websocket server (advanced) file')
     .option('--createconfig', ' print sample config file and exit')
     .parse(process.argv);
 
@@ -49,13 +47,8 @@ if (ipaddr!=='localhost') {
     insecure=false;
 }
 
-let serverclass=BisWSWebSocketFileServer;
-if (program.old)
-    serverclass=BisNetWebSocketFileServer;
 
-
-
-let server=new serverclass(
+let server=new BisWSWebSocketFileServer(
     {
         "verbose" : verbose,
         "insecure" : insecure,

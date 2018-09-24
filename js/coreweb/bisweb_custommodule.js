@@ -485,6 +485,8 @@ class CustomModule {
                             'description': outputCreationInfo
                         }
                     });
+                } else if (outobj.getObjectType() === "text") {
+                    this.showText(outobj);
                 }
             }
         });
@@ -558,7 +560,53 @@ class CustomModule {
             });
         });
     }
+
+    /** show text
+     * display text object and present an option to save it
+     * @param{BisWebTextObject} - obj
+     */
+    showText(obj) {
+
+        let txt=obj.getText();
+        if (txt.length<1)
+            return;
+        txt=txt.replace(/\n---\n/g,'<HR>');
+        txt=txt.replace(/\n/g,'<BR>').replace(/\t/g,'&nbsp;&nbsp;&nbsp;&nbsp;');
+        txt=txt.replace(/\\n/g,'<BR>').replace(/\\t/g,'&nbsp;&nbsp;&nbsp;&nbsp;');
+
+        console.log(obj.getText(),'--->\n',txt);
+        
+        const output=`<div style="margin-left:5px; margin-right:5px; margin-top:5px; overflow-y: auto; position:relative; color:#fefefe; width:100%; background-color:#000000;">${txt}</div>`;
+
+        
+        bootbox.dialog({
+            title: 'Output Information',
+            message: output,
+                buttons: {
+                    ok: {
+                        label: "Save To File",
+                        className: "btn-success",
+                        callback: function () {
+                            bisgenericio.write({
+                                filename: "log.txt",
+                                title: 'Select file to save snapshot in',
+                                suffix : "txt" ,
+                                filters: [{ name: 'Text Files', extensions: ['txt'] }],
+                            }, output, false);
+                        }
+                    },
+                cancel: {
+                    label: "Close",
+                    className: "btn-danger",
+                }
+                
+                }
+        });
+        return false;
+    }
 }
+
+
 
 /**
  * Creates a custom module and adds it to the frame as a child of parent. 

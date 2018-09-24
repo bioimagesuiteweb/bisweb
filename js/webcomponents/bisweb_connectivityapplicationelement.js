@@ -51,6 +51,7 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
     constructor() {
         super();
         this.extraManualHTML='tools/conncontrol.html';
+        this.savelightstate = false;
     }
 
     //  ---------------------------------------------------------------------------
@@ -73,7 +74,7 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
     setElementState(dt=null,name=null) {
 
         name = name || this.applicationName;
-        if (name!=="connviewer") {
+        if (name!=="connviewer" && this.savelightstate === false) {
             bootbox.alert("Viewer State is not from a connectivity viewer (it is from"+name+")");
             return;
         }
@@ -88,6 +89,7 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
 
     connectedCallback() {
 
+        this.savelightstate = this.getAttribute('bis-extrastatesave') || null;
         
         var VIEWER = {
             inBrowser : true,

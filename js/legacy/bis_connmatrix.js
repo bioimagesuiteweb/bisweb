@@ -388,6 +388,7 @@ class ConnMatrix {
             this.negMatrix===null ||
             this.statMatrix===null ||
             this.flagMatrix===null) {
+            console.log('Bad Matrices');
             return [];
         }
         

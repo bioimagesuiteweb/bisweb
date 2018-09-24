@@ -484,6 +484,19 @@ let getPathSeparator=function() {
     return '/';
 };
 
+
+/** isSaveDownload -- if we are in a browser and not using a fileserver or the cloud then 
+    save operations are download ops
+    @returns{Boolean} - true or false
+*/
+let isSaveDownload =function() {
+
+    if (inBrowser && fileServerClient===null)
+        return true;
+
+    return false;
+};
+
 // -------------------------------------------------------------------------------------------------------
 
 // Export object
@@ -526,6 +539,8 @@ const bisgenericio = {
     getNormalizedFilename : getNormalizedFilename,
     joinFilenames : joinFilenames,
     getPathSeparator : getPathSeparator,
+    //
+    isSaveDownload : isSaveDownload,
 };
 
 

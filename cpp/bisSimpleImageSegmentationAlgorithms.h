@@ -40,10 +40,19 @@ namespace bisSimpleImageSegmentationAlgorithms {
    * @param mode (0=dilate,1=erode,2=median)
    * @param radius the kernel radius
    * @param do3d if >0 work in 3d
+   * @return the output image
    */
   std::unique_ptr<bisSimpleImage<unsigned char> > doBinaryMorphology(bisSimpleImage<unsigned char>* label_image,int mode=2,int radius=2,int do3d=1);
 
+/**
+ * Perform simple sed conectivity on an image
+ * @param input the input image
+ * @param seed the coordinates of the seed to start connectivity from
+ * @param oneconnected if 1 use oneconnected morphology else also use diagonals
+ * @return the output image
+ */
 
+  
   std::unique_ptr<bisSimpleImage<unsigned char> > seedConnectivityAlgorithm(bisSimpleImage<unsigned char>* input,int seed[3],int oneconnected=1);
 
 
