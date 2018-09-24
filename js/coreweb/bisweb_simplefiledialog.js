@@ -431,13 +431,18 @@ class SimpleFileDialog {
 
             let name=elem.text;
             let sz="";
-            if (elem.type === 'directory')
+            let c="";
+            if (elem.type === 'directory') {
+                c=`<span class='glyphicon glyphicon-folder-close'></span>&nbsp;`;
                 name='<B>['+name+']</B>';
-            else
+            } else {
+                c=`<span class='glyphicon glyphicon-file'></span>&nbsp;`;
                 sz=Number.parseFloat(list[i].size/(1024)).toFixed(2);
+            }
+
             
             let w=$(`<tr>
-                    <td width="80%"><span id="${nid}">${name}</span></td>
+                    <td width="80%"><span id="${nid}">${c} ${name}</span></td>
                     <td width="20%" align="right">${sz}</td></tr>
                     </tr>`);
             tbody.append(w);
