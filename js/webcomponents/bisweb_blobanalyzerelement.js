@@ -26,8 +26,6 @@ const $=require('jquery');
 const BisWebPanel = require('bisweb_panel.js');
 const genericio=require('bis_genericio');
 
-
-
 // -------------------------------------------------------------------------
 
 /** 

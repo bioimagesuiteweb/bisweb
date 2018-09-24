@@ -38,16 +38,14 @@ class BisWebPanel {
 
 
     /** Creates a panel for the viewers
-        * @param {LayoutController} layout controller - the viewer layoutcontroller
-        * @param {Object} options - the options object
-        * @param {String} options.name - the title string
-        * @param {number} options.width - the width of the panel
-        * @param {number} options.mode - the mode of the panel (one of "docked", "sidebar" )
-        * @param {number} options.dual - if true , enable hopping from docked to sidebar
-        * @param {number} options.permanent - if true and in docked, this does not get count towards globalDockedPanels max limits
-        */
-       
-    
+     * @param {LayoutController} layout controller - the viewer layoutcontroller
+     * @param {Object} options - the options object
+     * @param {String} options.name - the title string
+     * @param {number} options.width - the width of the panel
+     * @param {number} options.mode - the mode of the panel (one of "docked", "sidebar" )
+     * @param {number} options.dual - if true , enable hopping from docked to sidebar
+     * @param {number} options.permanent - if true and in docked, this does not get count towards globalDockedPanels max limits
+     */
     constructor(layoutcontroller=null,options={}) {
 
         this.layoutController=layoutcontroller;
