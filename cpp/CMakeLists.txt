@@ -35,6 +35,7 @@ SET (DESCRIPTION_SCRIPT ${TOOLS_DIR}/bis_createmoduledescriptions.js)
 SET (BISWEB_PYTHON_INIT ${PROJECT_SOURCE_DIR}/../config/__init__.py)
 SET (BISWEB_PYTHON_PATH ${PROJECT_SOURCE_DIR}/../config/bis_path.py)
 SET (MODULE_LIST_FILENAME ${PROJECT_SOURCE_DIR}/ModuleList.txt)
+SET (PYTHON_MODULE_LIST_FILENAME ${PROJECT_SOURCE_DIR}/PythonModuleList.txt)
 FIND_PROGRAM(NodeInterp node)
 
 # ---------------------------------------------------------------------------------------------
@@ -394,7 +395,6 @@ IF (BIS_A_EMSCRIPTEN)
     SET (INSCRIPT ${PROJECT_SOURCE_DIR}/../test/test_module.js)
 
     GET_FILENAME_COMPONENT(INSCRIPT ${INSCRIPT} ABSOLUTE)
-    message("INSCRIPT=${INSCRIPT}")    
     add_custom_command(OUTPUT ${OUTSCRIPT}
       DEPENDS ${MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JSFILES}  ${LIBNAME} ${INSCRIPT} ${JS_WRAP_OUTPUT} ${WEBPACK_WASM_MODULE}
       PRE_BUILD COMMENT "Creating webpack-cli test_module.js"
@@ -458,14 +458,18 @@ ELSE(BIS_A_EMSCRIPTEN)
     install (FILES ${PYTHON_WRAP_OUTPUT} DESTINATION bisweb/lib)
 
     # ------------------ create module descriptions -------------
+
+    FILE (STRINGS ${PYTHON_MODULE_LIST_FILENAME} PMODULES)
     
     SET (PYTHON_MODULE_DESC ${LIBRARY_OUTPUT_PATH}/modules_desc.py)
+    
     add_custom_command(OUTPUT ${PYTHON_MODULE_DESC}
       DEPENDS ${MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JSMODULES}
       PRE_BUILD COMMENT "Creating Python Module Descriptions"
-      COMMAND ${NodeInterp} ${DESCRIPTION_SCRIPT} -i ${MODULE_LIST_FILENAME} -o ${PYTHON_MODULE_DESC}
+      COMMAND ${NodeInterp} ${DESCRIPTION_SCRIPT} -i ${PYTHON_MODULE_LIST_FILENAME} -o ${PYTHON_MODULE_DESC} }
       )
     add_custom_target(module_desc_py ALL DEPENDS ${PYTHON_MODULE_DESC})
+    add_custom_target(python_module_list_py ALL DEPENDS ${PYTHON_MODULE_DESC})
     install (FILES ${PYTHON_MODULE_DESC} DESTINATION bisweb/lib)
 
     GET_FILENAME_COMPONENT(PYTHON_SOURCE_DIR ${PROJECT_SOURCE_DIR}/../python ABSOLUTE)
@@ -497,11 +501,12 @@ ELSE(BIS_A_EMSCRIPTEN)
 	  
     # ------------------ module tests ---------------------------
     IF(BIS_MODULETEST)
+#      FILE (STRINGS ${PYTHON_MODULE_LIST} MODULES)
       SET (COUNT 0)
-      FOREACH (item ${MODULES})
+      FOREACH (item ${PMODULES})
 	add_test(NAME "py-module-${item}" COMMAND python3 test_module.py --testname ${item} WORKING_DIRECTORY ${TEST_DIR})
 	MATH (EXPR COUNT "${COUNT}+1")
-      ENDFOREACH (item ${TLIST})
+      ENDFOREACH (item ${PMODULES})
       MESSAGE("~~~~~ Added ${COUNT} python module tests")
     
     ENDIF(BIS_MODULETEST)

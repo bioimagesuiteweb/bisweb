@@ -37,6 +37,7 @@ class DefaceImageModule extends BaseModule {
         super();
         this.name = 'defaceImage';
         this.outputmask=false;
+        this.JSOnly=true;
     }
 
 
