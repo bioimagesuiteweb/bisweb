@@ -26,13 +26,14 @@ require('../config/bisweb_pathconfig.js');
 const assert = require("assert");
 const bisserverutil=require('bis_fileservertestutils');
 
-let indir="/home/xenios/dicom/data";
+let indir="/home/xenios/dicom/data/tmp";
+let outdir="/home/xenios/dicom/tmp";
 
 let client=null;
 
 describe('Testing the WS server DCM2NII\n', function() {
 
-    this.timeout(50000000);
+    this.timeout(50000);
     
     before(function(done) {
 
@@ -46,15 +47,30 @@ describe('Testing the WS server DCM2NII\n', function() {
     });
         
     
-    it('WS ...test conversion',function(done) {
+/*    it('WS ...test conversion',function(done) {
 
         let hello = function(msg) {
             console.log(' ____'+msg+'_____\n');
         };
         
-        client.dicomConversion(indir,hello,true).then( (m) => {
+        client.dicomConversion(indir,hello,false).then( (m) => {
             console.log('All set ',m);
             assert(true,true);
+            done();
+        });
+    });*/
+
+    it('WS ...test bids conversion',function(done) {
+
+
+        console.log('Working on BIDS\n------------------------------------\n');
+        client.dicom2BIDS(indir,outdir,false).then( (m) => {
+            console.log('All set ',m);
+            assert.equal(true,true);
+            done();
+        }).catch( (e) => {
+            console.log('Error ',e,e.stack);
+            assert.equal(true,false);
             done();
         });
     });
