@@ -233,6 +233,45 @@ let write = function (url, data,isbinary=false) {
     });
 };
 
+/** Copies a single file
+ * @param{String} source -- the input filename
+ * @param{String} target -- the output filename
+ * @returns {Promise} without payload
+ */
+
+let copyFile=function(source,target) {
+
+    if (fileServerClient) {
+        try {
+            return fileServerClient.copyFile(source.target);
+        } catch (e) {
+            return Promise.reject('No copy file functionality');
+        }
+    }
+
+    if (inBrowser) {
+        return Promise.rejected('copyFile can not be  done in a  Browser');
+    }
+
+    // https://stackoverflow.com/questions/11293857/fastest-way-to-copy-file-in-node-js
+    let rd = fs.createReadStream(source);
+    let wr = fs.createWriteStream(target);
+    return new Promise(function(resolve, reject) {
+        rd.on('error', reject);
+        wr.on('error', reject);
+        wr.on('finish', resolve);
+        try {
+            rd.pipe(wr);
+        } catch(e) {
+            rd.destroy();
+            wr.end();
+            reject(e);
+        }
+    });
+            
+              
+};
+
 /** Returns the size in bytes of a file
  * @alias BisGenericIO#getFileSize
  * @param {String} url - the filename
@@ -528,6 +567,7 @@ const bisgenericio = {
     getFixedSaveFileName : getFixedSaveFileName,
     getFixedLoadFileName : getFixedLoadFileName,
     // Operations needed for Bruker and more
+    copyFile : copyFile,
     getFileSize :     getFileSize,
     isDirectory :     isDirectory,
     getMatchingFiles : getMatchingFiles,
