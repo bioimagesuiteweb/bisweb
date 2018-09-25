@@ -267,7 +267,7 @@ class BisFileServerClient extends BisBaseServerClient {
             }
 
             case 'dicomConversionError': {
-                console.log('Dicom Conversion Failed');
+                console.log('Dicom Conversion/Tidying up Failed');
                 success=false;
                 break;
             }
@@ -780,21 +780,64 @@ class BisFileServerClient extends BisBaseServerClient {
         if (indir.indexOf('\\')>=0)
             indir=util.filenameWindowsToUnix(indir);
 
-        this.updateCallback= upd || console.log;
+        let outstring="";
+        
+        this.updateCallback= ((msg) => {
+            outstring+=msg;
+            if (upd)
+                upd(msg);
+        });
+
         
         return new Promise( (resolve,reject) => {
             
             let res=((obj) => {
                 this.updateCallback= console.log;
-                resolve(obj.output);
+                resolve({
+                    output : obj.output,
+                    log  : outstring
+                });
             });
 
+            let rej=() => {
+                this.updateCallback= console.log;
+                reject();
+            };
             
-            let serverEvent=bisasyncutil.addServerEvent(res,reject,'dicomConversion');
+            let serverEvent=bisasyncutil.addServerEvent(res,rej,'dicomConversion');
             this.sendCommand({ 'command' : 'dicomConversion',
                                'operation' : 'dicomConversion',
                                'indir' : indir,
                                'debug' : debug,
+                               'id' : serverEvent.id }); 
+        });
+    }
+
+    /** performs DICOM 2 BIDS on the output of dcm2nii
+     * @param{String} indir -- the input directory (output of dcm2nii)
+     * @param{String} outdir -- the output directory
+     * @param{Function} upd - function to call for progress messages
+     * @returns {Promise} payload is the result
+     */
+    dicom2BIDS(indir,outdir) {
+
+        if (indir.indexOf('\\')>=0)
+            indir=util.filenameWindowsToUnix(indir);
+        if (outdir.indexOf('\\')>=0)
+            outdir=util.filenameWindowsToUnix(outdir);
+
+        return new Promise( (resolve,reject) => {
+            
+            let res=((obj) => {
+                resolve(obj.output);
+            });
+
+            
+            let serverEvent=bisasyncutil.addServerEvent(res,reject,'dicom2BIDS');
+            this.sendCommand({ 'command' : 'dicom2BIDS',
+                               'operation' : 'dicom2BIDS',
+                               'indir' : indir,
+                               'outdir' : outdir,
                                'id' : serverEvent.id }); 
         });
     }
