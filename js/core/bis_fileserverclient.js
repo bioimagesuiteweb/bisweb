@@ -33,6 +33,8 @@ class BisFileServerClient extends BisBaseServerClient {
         this.NodeWebSocket=nodesocket;
         this.terminating=false;
         this.verbose=0;
+
+        this.updateCallback=console.log;
     }
 
     /** returns the name of the server
@@ -254,9 +256,24 @@ class BisFileServerClient extends BisBaseServerClient {
             }
 
             case 'filesystemoperationserror': {
-                // Handled by promise
-                console.log('FIle System OPeration failed');
+                console.log('File system operation failed'); 
                 success=false;
+                break;
+            }
+
+            case 'dicomConversionProgress': {
+                this.updateCallback(data.payload);
+                break;
+            }
+
+            case 'dicomConversionError': {
+                console.log('Dicom Conversion Failed');
+                success=false;
+                break;
+            }
+
+            case 'dicomConversionDone' : {
+                // handled by promise
                 break;
             }
 
@@ -752,6 +769,40 @@ class BisFileServerClient extends BisBaseServerClient {
         });
     }
 
+    /** performs DICOM conversion by having the server run dcm2nii
+     * @param{String} indir -- the input directory
+     * @param{Function} upd - function to call for progress messages
+     * @param{Boolean} debug - if true run dummy function
+     * @returns {Promise} payload is the result
+     */
+    dicomConversion(indir,upd,debug=false) {
+
+        if (indir.indexOf('\\')>=0)
+            indir=util.filenameWindowsToUnix(indir);
+
+        this.updateCallback= upd || console.log;
+        
+        return new Promise( (resolve,reject) => {
+            
+            let res=((obj) => {
+                this.updateCallback= console.log;
+                resolve(obj.output);
+            });
+
+            
+            let serverEvent=bisasyncutil.addServerEvent(res,reject,'dicomConversion');
+            this.sendCommand({ 'command' : 'dicomConversion',
+                               'operation' : 'dicomConversion',
+                               'indir' : indir,
+                               'debug' : debug,
+                               'id' : serverEvent.id }); 
+        });
+    }
+
+    /** Send command to server
+     * @param {Dictionary} command -- the command to send
+     */
+        
     sendCommandPromise(command) {
         
         return new Promise( (resolve,reject) => {
