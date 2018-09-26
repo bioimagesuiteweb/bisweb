@@ -902,12 +902,17 @@ class ViewerApplicationElement extends HTMLElement {
                 else
                     count = 1;
             }
-
+            
             let ext=files[0].name.split(".").pop();
-            if (ext===self.getApplicationStateFilenameExtension(true))
+            if (ext===self.getApplicationStateFilenameExtension(true)) {
                 self.loadApplicationState(files[0]);
-            else
-                self.loadImage(files[0], count, false);
+            } else {
+                self.loadImage(files[0], count, false).then( () => {
+                    if (files.length>1) {
+                        self.loadOverlay(files[1],count,false);
+                    }
+                });
+            }
         };
         webutil.createDragAndCropController(HandleFiles);
     }
