@@ -1,6 +1,7 @@
 const $ = require('jquery');
 const bisweb_panel = require('bisweb_panel.js');
 const bis_webutil = require('bis_webutil.js');
+require('jstree');
 
 /**
  * <bisweb-treepanel
@@ -40,8 +41,49 @@ class FileTreePanel extends HTMLElement {
                 });
             
             
-            console.log('menubar', this.menubar.getMenuBar());
             this.addMenuItem(this.menubar.getMenuBar());
+
+            let list = [
+                {
+                    'text' : 'a file',
+                    'type' : 'file'
+                },
+                {
+                    'text' : 'picture',
+                    'type' : 'picture'
+                }
+            ];
+            
+            let listElement = this.panel.getWidget();
+            let listContainer = $(`<div class = 'file-container'></div>`);
+            listElement.append(listContainer);
+
+            listContainer.jstree({
+                'core': {
+                    'data': list,
+                    'dblclick_toggle': true
+                },
+                'types': {
+                    'default': {
+                        'icon': 'glyphicon glyphicon-file'
+                    },
+                    'file': {
+                        'icon': 'glyphicon glyphicon-file'
+                    },
+                    'root': {
+                        'icon': 'glyphicon glyphicon-home'
+                    },
+                    'directory': {
+                        'icon': 'glyphicon glyphicon-folder-close'
+                    },
+                    'picture': {
+                        'icon': 'glyphicon glyphicon-picture'
+                    },
+                },
+                'plugins': ["types"]
+            });
+
+            console.log('panel', this.panel);
         });
     }
 
@@ -51,7 +93,6 @@ class FileTreePanel extends HTMLElement {
      */
     addMenuItem(menubar) {
         let menuItems = menubar[0].children;
-        console.log('menuItems', menuItems);
 
         for (let item of menuItems) {
 
@@ -76,6 +117,14 @@ class FileTreePanel extends HTMLElement {
 
         console.log('could not find \'File\' menu item, cannot add File Tree Panel item to it');
         return false;
+    }
+
+    /**
+     * Populates the file tree panel with a list of files.
+     * @param {Object} files 
+     */
+    updateFileTree(files) {
+
     }
 
 
