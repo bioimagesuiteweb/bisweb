@@ -420,8 +420,15 @@ let parseParam = function(gui, param, guiParams) {
                 step=1;
         }
 
+        if (param.type === "int" && step===null) {
+            step=1;
+        }
+        
+
         if (low!==null && high!==null && step!==null) {
-            controller = base.add(guiParams, param.varname).name(param.name).min(low).max(high).step(step);
+            controller = base.add(guiParams, param.varname,low,high).name(param.name).step(step);
+        } else if (low!==null && high!==null) {
+            controller = base.add(guiParams, param.varname,low,high).name(param.name);
         } else {
             if (step!==null)
                 controller = base.add(guiParams, param.varname).name(param.name).step(step);

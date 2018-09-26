@@ -16,7 +16,7 @@
  ENDLICENSE */
 
 /* jshint node:true */
-/*global describe, it,before,after */
+/*global describe, it */
 "use strict";
 
 
@@ -29,7 +29,7 @@ const bidsutils=require('bis_bidsutils');
 let indir="/mnt/e/dicom/final";
 let outdir="/mnt/e/dicom/tmp";
 
-let client=null;
+
 
 describe('Testing the DICOM 2 BIDS\n', function() {
 
