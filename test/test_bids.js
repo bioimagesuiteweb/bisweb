@@ -24,64 +24,34 @@ require('../config/bisweb_pathconfig.js');
 
 
 const assert = require("assert");
-const bisserverutil=require('bis_fileservertestutils');
+const bidsutils=require('bis_bidsutils');
 
 let indir="/mnt/e/dicom/final";
 let outdir="/mnt/e/dicom/tmp";
 
-
 let client=null;
 
-describe('Testing the WS server DCM2NII\n', function() {
+describe('Testing the DICOM 2 BIDS\n', function() {
 
     this.timeout(50000);
     
-    before(function(done) {
-
-        bisserverutil.createTestingServer().then( (obj) => {
-            client=obj.client;
-            done();
-        }).catch( (e) => {
-            console.log(e);
-            process.exit(1);
-        });
-    });
-        
-    
-/*    it('WS ...test conversion',function(done) {
-
-        let hello = function(msg) {
-            console.log(' ____'+msg+'_____\n');
-        };
-        
-        client.dicomConversion(indir,hello,false).then( (m) => {
-            console.log('All set ',m);
-            assert(true,true);
-            done();
-        });
-    });*/
-
     it('WS ...test bids conversion',function(done) {
 
 
         console.log('Working on BIDS\n------------------------------------\n');
-        client.dicom2BIDS(indir,outdir).then( (m) => {
-            console.log('All set ',m);
-            assert.equal(true,true);
-            done();
-        }).catch( (e) => {
-            console.log('Error ',e,e.stack);
-            assert.equal(true,false);
-            done();
-        });
+        bidsutils.dicom2BIDS(
+            {
+                indir : indir,
+                outdir : outdir
+            }).then( (m) => {
+                console.log('All set ',m);
+                assert.equal(true,true);
+                done();
+            }).catch( (e) => {
+                console.log('Error ',e,e.stack);
+                assert.equal(true,false);
+                done();
+            });
     });
-
-    after(function(done) {
-        bisserverutil.terminateTestingServer(client).then( ()=> {
-            done();
-        });
-    });
-
-            
 });
 

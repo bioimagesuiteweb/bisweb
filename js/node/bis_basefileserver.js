@@ -8,7 +8,7 @@ const util = require('bis_util');
 const bisgenericio=require('bis_genericio');
 const glob=bisgenericio.getglobmodule();
 const biscmdline = require('bis_commandlineutils');
-
+const bidsutils=require('bis_bidsutils.js');
 // TODO: IP Filtering
 // TODO: Check Base Directories not / /usr (probably two levels)
 
@@ -915,13 +915,6 @@ class BaseFileServer {
      */
     dicom2BIDS(socket,opts)  {
 
-        let errorfn=( (msg) => {
-            this.sendCommand(socket,'dicomConversionError', { 
-                'output' : msg,
-                'id' : id });
-            return false;
-        });
-        
         let id=opts.id;
         let indir=opts.indir || '';
         let outdir=opts.outdir || '';
@@ -934,107 +927,24 @@ class BaseFileServer {
 
         if (!this.validateFilename(indir) || !this.validateFilename(outdir)) {
             console.log(this.indent,'Bad outputdir',indir,outdir);
-            return errorfn(indir+' is not valid');
-        }
-        
-        let match=path.join(indir,'*.nii.gz');
-        
-        let flist=glob.sync(match);
-        if (flist.length<1) {
-            return errorfn('No data to convert in '+indir);
+                this.sendCommand(socket,'dicomConversionError', { 
+                    'output' : indir+' or '+outdir+' is not valid',
+                    'id' : id });
         }
 
-        let b=path.basename(flist[0]).toLowerCase();
-
-        let regex = /[a-z]/g;
-        let ind=b.search(regex);
-        if (ind<1) {
-            return errorfn('Bad data to convert in '+indir);
-        }
-
-        let subjname=b.substr(0,ind-1);
-
-        let makeDir=function(f) {
-            try {
-                fs.mkdirSync(f);
-            } catch(e) {
-                if (e.code !== 'EEXIST') {
-                    errorfn('Error'+e);
-                    return false;
-                } else {
-                    console.log('Directory Exists Ignoring');
-                }
-            }
-            return true;
-        };
-
-
-        
-        
-        let outputdirectory=path.join(outdir,subjname);
-        if (!makeDir(outputdirectory))
-            return;
-
-        console.log(this.indent,'Created directory',outputdirectory);
-
-        let funcdir=path.join(outputdirectory,'functional'); 
-        let anatdir=path.join(outputdirectory,'anatomical'); 
-        let otherdir=path.join(outputdirectory,'other');
-        let locdir=path.join(outputdirectory,'localizer'); 
-
-        if (!makeDir(funcdir))
-            return;
-        if (!makeDir(anatdir))
-            return;
-        if (!makeDir(otherdir))
-            return;
-        if (!makeDir(locdir))
-            return;
-        let maxindex=flist.length;
-        let tlist=[];
-        let index=0;
-
-        return new Promise( (resolve,reject) => {
-            
-            let copyNext= () => {
-                
-                let name=flist[index];
-                let dirname=otherdir;
-                let tname=name.toLowerCase();
-                
-                if (tname.indexOf('bold')>0) {
-                    dirname=funcdir;
-                } else if (tname.indexOf('mprage')>0 || tname.indexOf('t1flash')>0) {
-                    dirname=anatdir;
-
-                } else if (tname.indexOf('localizer')>0) {
-                    dirname=locdir;
-                }
-                let target=path.join(dirname,path.basename(name));
-                console.log(this.indent,index+', name=',name,dirname,target);
-                
-                bisgenericio.copyFile(name,target).then( () => {
-                    tlist.push(target);
-                    index=index+1;
-                    if (index<maxindex) {
-                        copyNext();
-                    } else {
-                        this.sendCommand(socket,'dicomConversionDone', { 
-                            'output' : tlist,
-                            'id' : id });
-                        resolve();
-                        return;
-                    }
-                }).catch( (e) => {
-                    errorfn(e);
-                    reject(e);
-                });
-            };
-
-            copyNext();
-        });
+        bidsutils.dicom2BIDS(
+            { indir : indir,
+              outdir : outdir
+            }).then( (tlist) => {
+                this.sendCommand(socket,'dicomConversionDone', { 
+                    'output' : tlist,
+                    'id' : id });
+            }).catch( (msg) => {
+                this.sendCommand(socket,'dicomConversionError', { 
+                    'output' : msg,
+                    'id' : id });
+            });
     }
-    
 }
 
 
