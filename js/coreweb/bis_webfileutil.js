@@ -53,7 +53,7 @@ const enableserver=true;
 
 // This is an option
 let enableaws=false;
-let helpmenu=null;
+
 
 // ------------------------
 // Link File Server if not in Electron
@@ -67,7 +67,6 @@ if (!webutil.inElectronApp() && enableserver===true) {
 let fileMode='local';
 let fileInputElements= [];
 
-let awsmodal = null;
 
 
 
@@ -625,30 +624,6 @@ const webfileutils = {
         }
     },
 
-    createAWSBucketMenu : function(bmenu) {
-
-        if (helpmenu===null && bmenu===null)
-            return;
-
-        if (!enableaws) {
-            helpmenu=bmenu;
-            return;
-        }
-        
-        if (bmenu===null)
-            bmenu=helpmenu;
-
-
-        awsmodal = bisweb_awsmodule.createAWSBucketMenu();
-
-        let createModal = () => {
-            awsmodal.dialog.modal('show');
-        };
-
-        webutil.createMenuItem(bmenu, 'AWS Selector', createModal);
-        helpmenu=null;
-    },
-    
 };
 
 if (!webutil.inElectronApp() ) {

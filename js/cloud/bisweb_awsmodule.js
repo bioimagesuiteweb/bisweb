@@ -152,7 +152,7 @@ class AWSModule extends BaseServerClient {
                     return;
                 }
 
-                console.log('data', data.Body);
+                //                console.log('data', data.Body);
 
                 //check to see if data needs to be uncompressed before loading
                 if (!isbinary) {
@@ -365,7 +365,6 @@ class AWSModule extends BaseServerClient {
             this.s3.listObjectsV2({ 'Prefix': directory, 'Delimiter': '/' }, (err, data) => {
                 if (err) { console.log('Error trying to delete directory', directory, err); reject(err); return; }
 
-                console.log('data', data);
                 let deleteParams = {
                     'Delete' : {
                         'Objects': [],
@@ -430,6 +429,10 @@ class AWSModule extends BaseServerClient {
 
         //check if the user has an AWS bucket selected and if their credentials are still valid
         if (!this.currentAWS) {
+            if (!this.bucketMenuModal) {
+                this.createAWSBucketMenu();
+            }
+            console.log('Items=',this.awsbucketstorage);
             this.bucketMenuModal.dialog.modal('show');
             return;
         } else if (expireTime < Date.now() || this.refreshCredentials) {
@@ -656,10 +659,10 @@ class AWSModule extends BaseServerClient {
         let tabView = $( `
                 <ul class="nav nav-tabs" id="aws-tab-menu" role="tablist">
                     <li class="nav-item active">
-                        <a class="nav-link" id="selector-tab" data-toggle="tab" href="#aws-selector-tab-panel" role="tab" aria-controls="home" aria-selected="true">Select AWS Bucket</a>
+                        <a class="nav-link" id="entry-tab" data-toggle="tab" href="#aws-entry-tab-panel" role="tab" aria-controls="entry" aria-selected="false">Enter New Bucket</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="entry-tab" data-toggle="tab" href="#aws-entry-tab-panel" role="tab" aria-controls="entry" aria-selected="false">Enter New Bucket</a>
+                        <a class="nav-link" id="selector-tab" data-toggle="tab" href="#aws-selector-tab-panel" role="tab" aria-controls="home" aria-selected="true">Select AWS Bucket</a>
                     </li>
                 </ul>
                 <div class="tab-content" id="aws-tab-content">
@@ -679,17 +682,17 @@ class AWSModule extends BaseServerClient {
     createAWSBucketSelector(awsmodal, tabView) {
 
         let selectContainer = $(`
-            <div class='container-fluid form-group'>
+            <div class='container-fluid form-group' style="margin-top: 10px">
                 <label for='bucket-selector'>Select a Bucket:</label>
-                <select class='form-control' id='bucket-selector-dropdown'>
+                <select class='form-control' id='bucket-selector-dropdown' css="margin-top:10px; margin-left:10px; margin-right:10px">
                 </select>
                 <div id='bucket-selector-table-container'></div>
-                <div class='btn-group' role=group' aria-label='Viewer Buttons' style='float: left'></div>
+                <div class='btn-group' role=group' aria-label='Viewer Buttons' style='float: left; margin-top:10px'></div>
             </div>
         `);
 
-        let confirmButton = bis_webutil.createbutton({ 'name' : 'Confirm', 'type' : 'success' });
-        let cancelButton = bis_webutil.createbutton({ 'name' : 'Cancel', 'type' : 'danger' });
+        let confirmButton = bis_webutil.createbutton({ 'name' : 'Confirm', 'type' : 'success', 'css' : { 'margin-right' : '10px' }});
+        let cancelButton = bis_webutil.createbutton({ 'name' : 'Cancel', 'type' : 'danger', 'css' : { 'margin-right' : '10px' } });
         let entryButton = bis_webutil.createbutton({ 'name' : 'Enter New Bucket', 'type' : 'info' });
         $(confirmButton).prop('disabled', 'disabled');
 
@@ -930,7 +933,7 @@ class AWSModule extends BaseServerClient {
             </div>
         `);
 
-        let confirmButton = bis_webutil.createbutton({ 'name': 'Confirm', 'type': 'success' });
+        let confirmButton = bis_webutil.createbutton({ 'name': 'Confirm', 'type': 'success','css' : { 'margin-right' : '10px' } });
         let cancelButton = bis_webutil.createbutton({ 'name': 'Cancel', 'type': 'danger' });
 
         confirmButton.on('click', () => {
