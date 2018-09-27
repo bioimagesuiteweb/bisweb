@@ -83,6 +83,17 @@ class FileTreePanel extends HTMLElement {
                 'plugins': ["types"]
             });
 
+            let buttonBar =  $(`<div class='btn-group' role=group' aria-label='Viewer Buttons' style='float: left'></div>`);
+
+            let loadButton = bis_webutil.createbutton({ 'name' : 'Load Study', 'type' : 'info'});
+            loadButton.on('click', (e) => {
+                e.preventDefault();
+                
+            });
+
+            buttonBar.append(loadButton);
+            listElement.append(buttonBar);
+
             console.log('panel', this.panel);
         });
     }

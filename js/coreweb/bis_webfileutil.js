@@ -417,6 +417,14 @@ const webfileutils = {
         loadelement[0].click();
     },
 
+    /**
+     * Loads a folder and all its subfolders from a file source. Typically used for loading studies to be displayed in bisweb_filetreepanel.
+     * @param {Object} fileopts - Options while loading the study. 
+     */
+    loadFolder : function(fileopts) {
+
+    },
+
     /** 
      * Use this to activate a file callback directly (in electron or for server/s3)
      * @alias WebFileUtil.genericFileCallback
