@@ -50,7 +50,10 @@ userPreferences.initialize(bisdbase);
 // ------------------------
 
 const enableserver=true;
-const enableaws=true;
+
+// This is an option
+let enableaws=false;
+let helpmenu=null;
 
 // ------------------------
 // Link File Server if not in Electron
@@ -105,8 +108,8 @@ const webfileutils = {
             s.push({ value: "dropbox", text: "Dropbox (Load Only)" });
         if (gkey.length>1) 
             s.push({ value: "googledrive", text: "Google Drive (Load Only)" });
-        if (mkey.length>1) 
-            s.push({ value: "onedrive", text: "Microsoft OneDrive (Load Only)" });
+        //  if (mkey.length>1) 
+        //     s.push({ value: "onedrive", text: "Microsoft OneDrive (Load Only)" });
 
         return s;
     },
@@ -119,14 +122,36 @@ const webfileutils = {
 
     setMode : function(m='',save=true) {
 
+        fileMode='local';
+        
       // TODO: Check if fileserver and aws are enabled else disable
-        switch(m) {
-            case 'dropbox' : if(dkey) { fileMode = 'dropbox'; } break;
-            case 'googledrive' : if (gkey) { fileMode = 'googledrive'; } break;
-            case 'onedrive' : if (mkey) { fileMode = 'onedrive'; } break;
-            case 'amazonaws' : fileMode = 'amazonaws'; break;
-            case 'server' : fileMode = 'server'; break;
-            default : fileMode = 'local';
+        switch(m)
+        {
+            case 'dropbox' : {
+                if(dkey) 
+                    fileMode = 'dropbox';
+                break;
+            } 
+            case 'googledrive' : {
+                if (gkey) 
+                    fileMode = 'googledrive';
+                break;
+            }
+            case 'onedrive' :  {
+                if (mkey) 
+                    fileMode = 'onedrive';
+                break;
+            }
+            case 'amazonaws' : {
+                if (enableaws) 
+                    fileMode = 'amazonaws';
+                break;
+            }
+            case 'server' : {
+                if (enableserver)
+                    fileMode = 'server';
+                break;
+            }
         }
 
         if (fileMode === 'server') {
@@ -371,12 +396,12 @@ const webfileutils = {
         
         if (fmode==='dropbox') { 
             fileopts.suffix=suffix;
-            return bisweb_dropbox.pickReadFile(fileopts, cbopts);
+            return bisweb_dropbox.pickReadFile(fileopts, callback);
         }
         
         if (fmode==='onedrive') { 
             fileopts.suffix=suffix;
-            return bisweb_onedrive.pickReadFile(fileopts, cbopts);
+            return bisweb_onedrive.pickReadFile(fileopts, callback);
         }
         
         
@@ -584,8 +609,8 @@ const webfileutils = {
                                                       extra,
                                                      ).then( (m) => {
                                                          self.setMode(m);
-                                                     }).catch((e) => {
-                                                         console.log('Error ', e);
+                                                     }).catch(() => {
+                                                         
                                                      });
             });
         };
@@ -602,8 +627,17 @@ const webfileutils = {
 
     createAWSBucketMenu : function(bmenu) {
 
-        if (!enableaws)
+        if (helpmenu===null && bmenu===null)
             return;
+
+        if (!enableaws) {
+            helpmenu=bmenu;
+            return;
+        }
+        
+        if (bmenu===null)
+            bmenu=helpmenu;
+
 
         awsmodal = bisweb_awsmodule.createAWSBucketMenu();
 
@@ -612,16 +646,22 @@ const webfileutils = {
         };
 
         webutil.createMenuItem(bmenu, 'AWS Selector', createModal);
+        helpmenu=null;
     },
     
 };
 
 if (!webutil.inElectronApp() ) {
-    userPreferences.safeGetItem('filesource').then( (f) => {
-        f= f || fileMode;
-        console.log('+++++ Initial File Source=',f);
-        webfileutils.setMode(f,false);
-    });
+
+    Promise.all( [ userPreferences.safeGetItem('filesource'),
+                   userPreferences.safeGetItem('enables3') ]).then( (lst) => {
+                       console.log(lst.join(','));
+                       let f=lst[0];
+                       enableaws=lst[1] || false;
+                       f= f || fileMode;
+                       console.log('+++++ Initial File Source=',f, 's3enabeled=',enableaws);
+                       webfileutils.setMode(f,false);
+                   });
 } else {
     webfileutils.setMode('local',true);
 }
