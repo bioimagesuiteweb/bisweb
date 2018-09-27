@@ -76,7 +76,7 @@ class BisWebFileServerClient extends BisFileServerClient {
                     this.connectToServer('ws://'+this.hostname);
                 } else {
                     setTimeout( () => {
-                        this.sendRawText(this.password);
+                        this.sendPassword(this.password);
                     },10);
                 }
             });
@@ -93,7 +93,7 @@ class BisWebFileServerClient extends BisFileServerClient {
     }
 
     hideAuthenticationDialog() {
-        if (this.authenticateModal)
+        if (this.authenticateModal) 
             this.authenticateModal.dialog.modal('hide');
     }
     // ------------------------- File Dialog Functions ---------------------------------
@@ -118,6 +118,15 @@ class BisWebFileServerClient extends BisFileServerClient {
         this.fileDialog.fileRequestFn = opts.callback;
         opts.startDirectory = payload.path;
         opts.rootDirectory = payload.root;
+
+        console.log('payload', payload);
+        if (opts.showFiles === false) {
+            let filteredData = [];
+            for (let file of payload.data) {
+                if (file.type === 'directory') { filteredData.push(file); }
+            }
+            payload.data = filteredData;
+        }
 
         this.fileDialog.openDialog(payload.data,opts);
     }

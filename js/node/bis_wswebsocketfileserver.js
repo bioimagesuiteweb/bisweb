@@ -19,8 +19,6 @@ class BisWSWebSocketFileServer extends BaseFileServer {
     }
 
     
-
-
     // -----------------------------------------------------------------------------------
     // Socket Wrappers
     // -----------------------------------------------------------------------------------
@@ -33,7 +31,6 @@ class BisWSWebSocketFileServer extends BaseFileServer {
      * @returns {Promise} 
      */
     sendCommand(socket,type,obj) {
-
         
         return new Promise( (resolve,reject) => {
 

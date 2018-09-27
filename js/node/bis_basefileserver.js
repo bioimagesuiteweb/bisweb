@@ -213,7 +213,6 @@ class BaseFileServer {
      * @param {String} rawText - Unparsed JSON denoting the file or series of files to read. 
      * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place.
      * @param {Object} control - Parsed WebSocket header for the file request.
-
      */
     handleTextRequest(rawText, socket, control=null)  {
         let parsedText = this.parseClientJSON(rawText);
@@ -521,6 +520,11 @@ class BaseFileServer {
                 console.log(this.indent,e,e.stack);
             });
         }
+    }
+
+    //TODO: This function should return every file under a given directory
+    serveAllFilesInDirectory(socket, basedir) {
+
     }
 
     /**

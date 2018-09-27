@@ -299,7 +299,8 @@ const webfileutils = {
                        'title' : title,
                        'suffix' : suffix,
                        'mode' : 'load' ,
-                       'filters' : fileopts.filters
+                       'filters' : fileopts.filters,
+                       'showFiles' : (fileopts.showFiles === false ? false : true)
                      };
 
         console.log('FileMode=',fileMode, fileopts.save);
@@ -311,6 +312,7 @@ const webfileutils = {
             cbopts.mode='directory';
             cbopts.suffix='';
             cbopts.filters=null;
+            cbopts.showFiles = true;
             bisweb_fileserverclient.requestFileList(null, true, cbopts);
             return;
         }
@@ -399,6 +401,7 @@ const webfileutils = {
         }
 
         if (fileMode==="server") {
+            console.log('webfileutil cbopts', cbopts);
             bisweb_fileserverclient.requestFileList(null,true,cbopts);
             return;
         }
@@ -420,6 +423,7 @@ const webfileutils = {
     /**
      * Loads a folder and all its subfolders from a file source. Typically used for loading studies to be displayed in bisweb_filetreepanel.
      * @param {Object} fileopts - Options while loading the study. 
+     * @param {String} fileopts.directoryPath - The path of the directory to return the files from.
      * @returns A Promise resolving the list of files.
      */
     loadFolder : function(fileopts) {
@@ -471,26 +475,23 @@ const webfileutils = {
      */
     attachFileCallback : function(button,callback,fileopts={}) {
 
-        fileopts = fileopts || {};
         fileopts.save = fileopts.save || false;
-        
-        const that = this;
 
         if (webutil.inElectronApp()) {
             
-            button.click(function(e) {
+            button.click( (e) => {
                 setTimeout( () => {
                     e.stopPropagation();
                     e.preventDefault();  
-                    that.electronFileCallback(fileopts, callback);
+                    this.electronFileCallback(fileopts, callback);
                 },1);
             });
         } else {
-            button.click(function(e) {
+            button.click( (e) => {
                 setTimeout( () => {
                     e.stopPropagation();
                     e.preventDefault();
-                    that.webFileCallback(fileopts, callback);
+                    this.webFileCallback(fileopts, callback);
                 },1);
             });
         }

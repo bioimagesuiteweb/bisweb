@@ -1,6 +1,8 @@
 const $ = require('jquery');
 const bisweb_panel = require('bisweb_panel.js');
 const bis_webutil = require('bis_webutil.js');
+const bis_webfileutil = require('bis_webfileutil.js');
+
 require('jstree');
 
 /**
@@ -46,16 +48,23 @@ class FileTreePanel extends HTMLElement {
             let list = [
                 {
                     'text' : 'a file',
-                    'type' : 'file'
+                    'type' : 'directory',
+                    'children' : [
+                        {
+                            'text' : 'a child file',
+                            'type' : 'file'
+                        }
+                    ]
                 },
                 {
                     'text' : 'picture',
                     'type' : 'picture'
                 }
             ];
-            
+
             let listElement = this.panel.getWidget();
-            let listContainer = $(`<div class = 'file-container'></div>`);
+            let listContainer = $(`<div class='file-container'></div>`);
+            listContainer.css({ 'color' : 'rgb(12, 227, 172)' });
             listElement.append(listContainer);
 
             listContainer.jstree({
@@ -86,15 +95,19 @@ class FileTreePanel extends HTMLElement {
             let buttonBar =  $(`<div class='btn-group' role=group' aria-label='Viewer Buttons' style='float: left'></div>`);
 
             let loadButton = bis_webutil.createbutton({ 'name' : 'Load Study', 'type' : 'info'});
-            loadButton.on('click', (e) => {
-                e.preventDefault();
-                
+
+            //Route study load through bis_webfileutil file callbacks
+            bis_webfileutil.attachFileCallback(loadButton, null, {
+                'title' : 'Load Study',
+                'showFiles' : false,
+                'callback' : () => {
+                    console.log('hello from filetreepanel callback');
+                }
             });
 
             buttonBar.append(loadButton);
+            listElement.append(`<br>`);
             listElement.append(buttonBar);
-
-            console.log('panel', this.panel);
         });
     }
 

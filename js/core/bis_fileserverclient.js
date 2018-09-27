@@ -84,9 +84,11 @@ class BisFileServerClient extends BisBaseServerClient {
      * Sets this.socket internally, the structure representing the control socket between client and server.
      * 
      * @param {String} address - The hostname and port to try to connect to, e.g. 'ws://localhost:24000'. 
+     * 
+     * TODO: Remaking the socket causes strange issues with password behavior, so I stopped the server from closing the socket after a failed connection.
+     * You should look at this, Xenios! I didn't want to fool with it too much.
      */
     connectToServer(address = 'ws://localhost:'+wsUtilInitialPort) {
-        console.log('connect to server', this.socket);
         if (this.socket) {
             console.log('closing connection connect to server');
             //this.closeConnection();
@@ -353,15 +355,15 @@ class BisFileServerClient extends BisBaseServerClient {
      * @param {String} directory - The directory to expand the files under. Optional -- if unspecified the server will return the directories under ~/.
      * @param {Boolean} showdialog - if true popup a gui dialog else just text
      * @param {Objects} opts - the options object
-     * @param {Function} opts.callback - A callback function propagated from bis_webfileutil that will handle the non-AWS I/O for the retrieved data, , and a list of acceptable file suffixes.
+     * @param {Function} opts.callback - A callback function propagated from bis_webfileutil that will handle the non-AWS I/O for the retrieved data and a list of acceptable file suffixes.
      * @param {String} opts.title - The title to display on the load/save modal
+     * @param {Boolean} opts.showFiles - Whether or not to show files. Defaults to true.
      * @param {String} opts.initialname - The initial filename
 
      * @returns {Promise} with payload is the event
      */
     requestFileList(directory = null, showdialog=true,opts=null) {
 
-        
         if (opts)
             this.lastOpts=opts;
 
@@ -379,9 +381,8 @@ class BisFileServerClient extends BisBaseServerClient {
                 this.sendCommand({ 'command' : 'getfilelist',
                                    'directory' : directory,
                                    'id' : serverEvent.id}); 
-            }).catch( (err) => {
-                console.log('promise rejected');
             });
+
         });
     }
 
