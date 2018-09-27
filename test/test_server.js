@@ -260,20 +260,6 @@ describe('Testing the WS server\n', function() {
         });
     });
 
-    it('WS ...test dummy dcm2nii conversion',function(done) {
-
-        let hello = function(msg) {
-            console.log(' ____'+msg+'_____\n');
-        };
-
-        
-        
-        client.dicomConversion(__dirname,hello,true).then( (m) => {
-            console.log('All set ',m);
-            assert(true,true);
-            done();
-        });
-    });
 
     after(function(done) {
         bisserverutil.terminateTestingServer(client).then( ()=> {
