@@ -61,7 +61,7 @@ class BisFileServerClient extends BisBaseServerClient {
         bisasyncutil.addEventTimeout(id,timeout);
     }
 
-    sendRawText(text) {
+    sendPassword(text) {
         // Password only really
         // id is this.authenticatingEvent.id;
         this.socket.send(text);
@@ -86,9 +86,10 @@ class BisFileServerClient extends BisBaseServerClient {
      * @param {String} address - The hostname and port to try to connect to, e.g. 'ws://localhost:24000'. 
      */
     connectToServer(address = 'ws://localhost:'+wsUtilInitialPort) {
-
+        console.log('connect to server', this.socket);
         if (this.socket) {
-            this.closeConnection();
+            console.log('closing connection connect to server');
+            //this.closeConnection();
         }
 
         if (address.indexOf('ws://')!==0)
@@ -222,7 +223,7 @@ class BisFileServerClient extends BisBaseServerClient {
                 break;
             }
             case 'authenticate': {
-                this.sendRawText(this.password || '');
+                this.sendPassword(this.password || '');
                 break;
             }
             case 'badauth':  {
@@ -320,6 +321,7 @@ class BisFileServerClient extends BisBaseServerClient {
                 this.serverinfo=this.hostname;
                 resolve();
             });
+
             let failureCB= ( () => {
                 this.authenticatingEvent=null;
                 this.serverinfo='';
@@ -332,6 +334,7 @@ class BisFileServerClient extends BisBaseServerClient {
                 this.connectToServer(hostname);
             } else {
                 // Useless if no GUI
+                console.log('authenticating event', this.authenticatingEvent);
                 this.showAuthenticationDialog();
             }
         });
@@ -376,11 +379,36 @@ class BisFileServerClient extends BisBaseServerClient {
                 this.sendCommand({ 'command' : 'getfilelist',
                                    'directory' : directory,
                                    'id' : serverEvent.id}); 
+            }).catch( (err) => {
+                console.log('promise rejected');
             });
         });
     }
 
+    requestFolderList(directory = null, showdialog = true, opts = null) {
 
+        if (opts) 
+            this.lastOpts = opts;
+
+        return new Promise( (resolve, reject) => {
+            let cb = ( (payload) => {
+                if (showdialog) {
+                    this.showFileDialog(payload, this.lastOpts);
+                }
+
+                resolve(payload);
+            });
+
+            this.authenticate().then( () => {
+                let serverEvent = bisasyncutil.addServerEvent(cb, reject, 'requestFolderList');
+                this.sendCommand({
+                    'command' : 'getfolderlist',
+                    'directory' : directory,
+                    'id' : serverEvent.id
+                });
+            });
+        });
+    }
 
     /** get the base directory of the server
      * @returns {Promise} - whose payload is the location of the directory

@@ -420,9 +420,14 @@ const webfileutils = {
     /**
      * Loads a folder and all its subfolders from a file source. Typically used for loading studies to be displayed in bisweb_filetreepanel.
      * @param {Object} fileopts - Options while loading the study. 
+     * @returns A Promise resolving the list of files.
      */
     loadFolder : function(fileopts) {
+        if (fileMode==='server') {
+            return bisweb_fileserverclient.requestFolderList(null,true,fileopts);
+        }
 
+        console.log('load folder', fileopts);
     },
 
     /** 
