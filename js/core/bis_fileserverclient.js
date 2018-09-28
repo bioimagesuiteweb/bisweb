@@ -16,7 +16,6 @@ class BisFileServerClient extends BisBaseServerClient {
     constructor(nodesocket=null) {
 
         super();
-        this.lastOpts=null;
         this.portNumber=wsUtilInitialPort;
         
         //connection over which all control communication takes place
@@ -360,16 +359,15 @@ class BisFileServerClient extends BisBaseServerClient {
 
      * @returns {Promise} with payload is the event
      */
-    requestFileList(directory = null, showdialog=true,opts=null) {
+    requestFileList(directory = null, showdialog=true, opts=null) {
         
-        if (opts)
-            this.lastOpts=opts;
+        let requestOpts = opts || null;
 
         return new Promise ((resolve,reject) => {
 
             let cb=( (payload) => {
                 if (showdialog) {
-                    this.showFileDialog(payload,this.lastOpts);
+                    this.showFileDialog(payload, requestOpts);
                 }
                 resolve(payload);
             });
@@ -381,31 +379,6 @@ class BisFileServerClient extends BisBaseServerClient {
                                    'id' : serverEvent.id}); 
             });
 
-        });
-    }
-
-    requestFolderList(directory = null, showdialog = true, opts = null) {
-
-        if (opts) 
-            this.lastOpts = opts;
-
-        return new Promise( (resolve, reject) => {
-            let cb = ( (payload) => {
-                if (showdialog) {
-                    this.showFileDialog(payload, this.lastOpts);
-                }
-
-                resolve(payload);
-            });
-
-            this.authenticate().then( () => {
-                let serverEvent = bisasyncutil.addServerEvent(cb, reject, 'requestFolderList');
-                this.sendCommand({
-                    'command' : 'getfolderlist',
-                    'directory' : directory,
-                    'id' : serverEvent.id
-                });
-            });
         });
     }
 

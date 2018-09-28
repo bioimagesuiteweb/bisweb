@@ -2,6 +2,7 @@ const $ = require('jquery');
 const bisweb_panel = require('bisweb_panel.js');
 const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
+const bis_genericio = require('bis_genericio.js');
 
 require('jstree');
 
@@ -98,8 +99,8 @@ class FileTreePanel extends HTMLElement {
             let loadButton = bis_webfileutil.createFileButton({
                 'type': 'info',
                 'name': 'Import Study',
-                'callback' : function (f) {
-                        self.importfiles(f);
+                'callback' : (f) => {
+                        this.importFiles(f);
                     },
                 }, {
                     title: 'Import study',
@@ -153,6 +154,15 @@ class FileTreePanel extends HTMLElement {
 
         console.log('could not find \'File\' menu item, cannot add File Tree Panel item to it');
         return false;
+    }
+
+    importFiles(filename) {
+        let queryString = filename + '/*';
+        console.log('query string', queryString);
+        bis_genericio.getMatchingFiles(queryString).then( (files) => {
+            console.log('files', files);
+        });
+
     }
 
     /**

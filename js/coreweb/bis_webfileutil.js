@@ -306,7 +306,6 @@ const webfileutils = {
             cbopts.initialFilename= '';
             cbopts.mode='directory';
             cbopts.suffix='';
-            cbopts.filters=null;
             bisweb_fileserverclient.requestFileList(null, true, cbopts);
             return;
         }
@@ -412,20 +411,6 @@ const webfileutils = {
         });
         $('body').append(loadelement);
         loadelement[0].click();
-    },
-
-    /**
-     * Loads a folder and all its subfolders from a file source. Typically used for loading studies to be displayed in bisweb_filetreepanel.
-     * @param {Object} fileopts - Options while loading the study. 
-     * @param {String} fileopts.directoryPath - The path of the directory to return the files from.
-     * @returns A Promise resolving the list of files.
-     */
-    loadFolder : function(fileopts) {
-        if (fileMode==='server') {
-            return bisweb_fileserverclient.requestFolderList(null,true,fileopts);
-        }
-
-        console.log('load folder', fileopts);
     },
 
     /** 

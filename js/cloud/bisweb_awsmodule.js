@@ -108,6 +108,7 @@ class AWSModule extends BaseServerClient {
      * @param {String} opts.suffixes - Comma separated list of file extensions for files that should be displayed in the modal. 
      */
     createLoadModal(opts) {
+        console.log('loadmodal', opts);
         this.s3.listObjectsV2( { 'Delimiter' : '/' }, (err, data) => {
             if (err) { console.log('an error occured', err); return; }
 

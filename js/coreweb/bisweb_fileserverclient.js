@@ -104,8 +104,6 @@ class BisWebFileServerClient extends BisFileServerClient {
      * 
      * @param {Object} payload - Object specifying the list of files on the server machine and which modal it corresponds to.
      * @param {Object} opts - Object specific options for the Dialog
-     *
-     * // TODO: some how have a title here ... and suffix list
      */
     showFileDialog(payload,opts=null) {
 
