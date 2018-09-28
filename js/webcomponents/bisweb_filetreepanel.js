@@ -94,16 +94,28 @@ class FileTreePanel extends HTMLElement {
 
             let buttonBar =  $(`<div class='btn-group' role=group' aria-label='Viewer Buttons' style='float: left'></div>`);
 
-            let loadButton = bis_webutil.createbutton({ 'name' : 'Load Study', 'type' : 'info'});
-
             //Route study load through bis_webfileutil file callbacks
-            bis_webfileutil.attachFileCallback(loadButton, null, {
+            let loadButton = bis_webfileutil.createFileButton({
+                'type': 'info',
+                'name': 'Import Study',
+                'callback' : function (f) {
+                        self.importfiles(f);
+                    },
+                }, {
+                    title: 'Import study',
+                    'filters': 'DIRECTORY',
+                    'suffix': 'DIRECTORY',
+                    'save': false,
+                });
+
+            /*bis_webfileutil.attachFileCallback(loadButton, null, {
                 'title' : 'Load Study',
-                'showFiles' : false,
+                'filter' : 'DIRECTORY',
+                'suffix' : 'DIRECTORY',
                 'callback' : () => {
                     console.log('hello from filetreepanel callback');
                 }
-            });
+            });*/
 
             buttonBar.append(loadButton);
             listElement.append(`<br>`);

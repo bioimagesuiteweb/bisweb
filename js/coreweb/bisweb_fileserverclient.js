@@ -119,12 +119,13 @@ class BisWebFileServerClient extends BisFileServerClient {
         opts.startDirectory = payload.path;
         opts.rootDirectory = payload.root;
 
-        console.log('payload', payload);
-        if (opts.showFiles === false) {
+        if (opts.mode === 'directory') {
             let filteredData = [];
             for (let file of payload.data) {
-                if (file.type === 'directory') { filteredData.push(file); }
+                if (file.type === 'directory') 
+                    filteredData.push(file);
             }
+
             payload.data = filteredData;
         }
 

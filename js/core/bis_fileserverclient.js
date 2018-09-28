@@ -336,7 +336,6 @@ class BisFileServerClient extends BisBaseServerClient {
                 this.connectToServer(hostname);
             } else {
                 // Useless if no GUI
-                console.log('authenticating event', this.authenticatingEvent);
                 this.showAuthenticationDialog();
             }
         });
@@ -357,13 +356,12 @@ class BisFileServerClient extends BisBaseServerClient {
      * @param {Objects} opts - the options object
      * @param {Function} opts.callback - A callback function propagated from bis_webfileutil that will handle the non-AWS I/O for the retrieved data and a list of acceptable file suffixes.
      * @param {String} opts.title - The title to display on the load/save modal
-     * @param {Boolean} opts.showFiles - Whether or not to show files. Defaults to true.
      * @param {String} opts.initialname - The initial filename
 
      * @returns {Promise} with payload is the event
      */
     requestFileList(directory = null, showdialog=true,opts=null) {
-
+        
         if (opts)
             this.lastOpts=opts;
 

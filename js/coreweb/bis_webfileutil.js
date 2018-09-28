@@ -261,22 +261,19 @@ const webfileutils = {
         fileopts.filters=fileopts.filters || null;
         fileopts.force=fileopts.force || null;
 
-        //        console.log('Incoming Suffix =',fileopts.suffix,' filters=',fileopts.filters);
-
         let suffix = fileopts.suffix || '';
         let title = fileopts.title || '';
         let defaultpath=fileopts.defaultpath || '';
 
         
         if (fileopts.suffix===null && fileopts.filters!==null) {
-            if (fileopts.filters==="DIRECTORY" ||
-                fileopts.filters==="NII" ) {
+            if (fileopts.filters==="DIRECTORY" || fileopts.filters==="NII" ) {
                 suffix=fileopts.filters;
                 fileopts.suffix=suffix;
             }
         }
 
-        //        console.log('Suffix =',fileopts.suffix,suffix,fileopts.filters);
+        console.log('Suffix =',fileopts.suffix,suffix,fileopts.filters);
         
         if (suffix === "NII" || fileopts.filters === "NII") {
             suffix = '.nii.gz,.nii,.gz,.tiff';
@@ -299,12 +296,10 @@ const webfileutils = {
                        'title' : title,
                        'suffix' : suffix,
                        'mode' : 'load' ,
-                       'filters' : fileopts.filters,
-                       'showFiles' : (fileopts.showFiles === false ? false : true)
+                       'filters' : fileopts.filters
                      };
 
         console.log('FileMode=',fileMode, fileopts.save);
-        
         // -------------------- End Of Part I ---------------
 
         if (fileopts.suffix === "DIRECTORY" && fileMode === 'server') {
@@ -312,7 +307,6 @@ const webfileutils = {
             cbopts.mode='directory';
             cbopts.suffix='';
             cbopts.filters=null;
-            cbopts.showFiles = true;
             bisweb_fileserverclient.requestFileList(null, true, cbopts);
             return;
         }
@@ -368,7 +362,7 @@ const webfileutils = {
             callback();
             return;
         }
- 
+        
         // -------- Part II Load -----------
         
         if (fmode==='dropbox') { 
