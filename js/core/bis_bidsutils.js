@@ -111,15 +111,11 @@ let dicom2BIDS=async function(opts)  {
         let index=name.lastIndexOf('.');
         let mainname=name.substr(0,index-1);
 
-        index=mainname.lastIndexOf('a001');
+        index=mainname.lastIndexOf('a');
         if (index>0) {
-            name=name.substr(0,index)+name.substr(index+3,name.length);
-        } else {
-            index=mainname.lastIndexOf('a');
-            if (index>0) {
-                name=name.substr(0,index)+'_'+name.substr(index,name.length);
-            }
+            name=name.substr(0,index)+'_'+name.substr(index,name.length);
         }
+
 
         index=name.lastIndexOf('s');
         if (index>0) {
