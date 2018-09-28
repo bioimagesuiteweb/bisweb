@@ -119,16 +119,6 @@ class BisWebFileServerClient extends BisFileServerClient {
         opts.startDirectory = payload.path;
         opts.rootDirectory = payload.root;
 
-        if (opts.mode === 'directory') {
-            let filteredData = [];
-            for (let file of payload.data) {
-                if (file.type === 'directory') 
-                    filteredData.push(file);
-            }
-
-            payload.data = filteredData;
-        }
-
         this.fileDialog.openDialog(payload.data,opts);
     }
 }

@@ -309,6 +309,16 @@ class SimpleFileDialog {
             }
         }
 
+        if (this.mode === 'directory') {
+            let filteredData = [];
+            for (let file of list) {
+                if (file.type === 'directory')
+                    filteredData.push(file);
+            }
+
+            list = filteredData;
+        }
+
         this.updateTree(list,initialfilename,rootDirectory);
 
 
