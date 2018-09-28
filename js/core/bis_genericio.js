@@ -434,7 +434,9 @@ let getDirectoryName=function(fname,forceinternal=false) {
 
 let getNormalizedFilename=function(fname,root="",forceinternal=false) {
     if (!inBrowser && !forceinternal) {
-        return path.resolve(path.normalize(fname));
+        if (root==="")
+            return path.resolve(path.normalize(fname));
+        return path.normalize(fname);
     }
 
     // console.log('---\n---\nInitial fname=',fname);

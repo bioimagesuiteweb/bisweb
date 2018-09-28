@@ -140,14 +140,63 @@ let dicom2BIDS=async function(opts)  {
         } catch (e) {
             return errorfn(e);
         }
-
         tlist.push(target);
     }
-
-    // Now do something with tlist
-
+        
+    let outfilename=genericio.joinFilenames(outputdirectory,'dicom_job.json');
+    let outobj = {
+        "bisformat":"DICOMImport",
+        "job":[ ],
+    };
     
-    return tlist;
+    for (let i=0;i<tlist.length;i++) {
+        let fname=tlist[i];
+        let name=genericio.getBaseName(tlist[i]);
+        let infoname='';
+        if (name.indexOf(".nii.gz")>0) {
+
+            let tagname=genericio.getBaseName(genericio.getDirectoryName(fname));
+            
+            name=name.substr(0,name.length-7);
+            let f2=fname.substr(0,fname.length-7)+'.bvec';
+            let ind2=tlist.indexOf(f2);
+            console.log('Looking for ',f2,ind2);
+            if (ind2>=0) {
+                infoname=tlist[ind2];
+                tagname="DTI";
+            } else {
+                if (tagname==='functional') {
+                    tagname='Functional';
+                } else if (tagname==='diffusion')  {
+                    tagname='DTI';
+                } else if (tagname==='anatomical') {
+                    if (fname.indexOf('3D')>=0 || fname.indexOf('3d')> 0 ) {
+                        tagname = '3DAnatomical';
+                    } else {
+                        tagname='Anatomical';
+                    }
+                } else {
+                    tagname='None';
+                }
+            }
+            
+            outobj.job.push({
+                name : name,
+                filename : fname.substr(outputdirectory.length+1,fname.length),
+                tag : tagname,
+                details : infoname
+            });
+
+        }
+    }
+    
+    try {
+        await genericio.write(outfilename,JSON.stringify(outobj,null,2),false);
+    } catch(e) {
+        return errorfn(e);
+    }
+    return outfilename;
+       
 };
 
 

@@ -20,7 +20,7 @@
 
 require('../../config/bisweb_pathconfig.js');
 const program=require('commander');
-const bisserverutil=require('bis_fileservertestutils');
+
 const bidsutils=require('bis_bidsutils');
 
 /* jshint node:true */

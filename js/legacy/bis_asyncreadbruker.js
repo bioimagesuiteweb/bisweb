@@ -260,10 +260,10 @@ let parseTextFiles = async function(filename,outprefix,debug,forceorient) {
         console.log('Now reading actual files',numgood);
 
     if (debug)
-        console.log('Reding Parameter File',visuname);
+        console.log('Reading Parameter File',visuname);
     let visu=await readParameterFile(visuname);
     if (debug)
-        console.log('Reding Parameter File',methodname);
+        console.log('Reading Parameter File',methodname);
     let method=await readParameterFile(methodname);
     let acqp=await readParameterFile(acqpname);
     data.orient=method['PVM_SPackArrSliceOrient'] || 'axial';
@@ -942,8 +942,11 @@ let readMultiple= async function (filename,outprefix,forceorient,addcallback,inf
             if (visu['VisuSubjectId'][0].length>2)
                 subjectname=visu['VisuSubjectId'][0].substr(1,visu['VisuSubjectId'][0].length-2);
         }
-        
-        let a=bisgenericio.getNormalizedFilename(bisgenericio.getDirectoryName(ifile)).split(bisgenericio.getPathSeparator());
+
+        let d1=bisgenericio.getDirectoryName(ifile);
+        let d2=bisgenericio.getNormalizedFilename(d1," "); // " " is to prevent absolute
+        let a=d2.split(bisgenericio.getPathSeparator());
+
         if (subjectname.length>1)
             a[0]=subjectname;
         let ofile="";
