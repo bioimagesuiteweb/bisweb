@@ -56,10 +56,6 @@ class FileTreePanel extends HTMLElement {
                             'type' : 'file'
                         }
                     ]
-                },
-                {
-                    'text' : 'picture',
-                    'type' : 'picture'
                 }
             ];
 
@@ -157,20 +153,111 @@ class FileTreePanel extends HTMLElement {
     }
 
     importFiles(filename) {
-        let queryString = filename + '/*';
+        let queryString = filename + '/*/*';
         console.log('query string', queryString);
         bis_genericio.getMatchingFiles(queryString).then( (files) => {
             console.log('files', files);
+            console.log('base directory', filename)
+            this.updateFileTree(files, filename);
         });
 
     }
 
     /**
      * Populates the file tree panel with a list of files.
-     * @param {Object} files 
+     * @param {Array} files - A list of file names. 
+     * @param {String} baseDirectory - The directory which importFiles was originally called on.
      */
-    updateFileTree(files) {
+    updateFileTree(files, baseDirectory) {
 
+        let fileTree = [];
+
+        for (let file of files) {
+            //trim the common directory name from the filtered out name
+            let trimmedName = file.replace(baseDirectory, '');
+
+            let splitName = trimmedName.split('/');
+
+            let index = 0, currentDirectory = fileTree, nextDirectory = null;
+
+            //find the entry in file tree
+            while (index < splitName.length) {
+
+                nextDirectory = findParentAtTreeLevel(splitName[index], currentDirectory);
+                
+                //if the next directory doesn't exist, create it, otherwise return it.
+                if (!nextDirectory) {
+
+                    //type will be file if the current name is at the end of the name (after all the slashes), directory otherwise
+                    let newEntry = {
+                        'text' : splitName[index]
+                    };
+
+                    if (index === splitName.length - 1) {
+                        newEntry.type = 'file';
+                    } else {
+                        newEntry.type = 'directory';
+                        newEntry.children = [];
+                    }
+
+                    currentDirectory.push(newEntry);
+                    currentDirectory = newEntry.children;
+                } else {
+                    currentDirectory = nextDirectory;
+                }
+
+                index = index + 1;
+            }
+
+        }
+
+        let listElement = this.panel.getWidget();
+        listElement.empty();
+
+        let listContainer = $(`<div class='file-container'></div>`);
+        listContainer.css({ 'color' : 'rgb(12, 227, 172)' });
+        listElement.append(listContainer);
+        
+        console.log('fileTree', fileTree[0].children);
+        console.log('list container', listContainer);
+
+        listContainer.jstree({
+            'core': {
+                'data': fileTree[0].children,
+                'dblclick_toggle': true
+            },
+            'types': {
+                'default': {
+                    'icon': 'glyphicon glyphicon-file'
+                },
+                'file': {
+                    'icon': 'glyphicon glyphicon-file'
+                },
+                'root': {
+                    'icon': 'glyphicon glyphicon-home'
+                },
+                'directory': {
+                    'icon': 'glyphicon glyphicon-folder-close'
+                },
+                'picture': {
+                    'icon': 'glyphicon glyphicon-picture'
+                },
+            },
+            'plugins': ["types"]
+        });
+
+        //Searches for the directory that should contain a file given the file's path, e.g. 'a/b/c' should be contained in folders a and b.
+        //Returns the children 
+        function findParentAtTreeLevel(name, entries) {
+            console.log('entries', entries);
+            for (let entry of entries) {
+                if (entry.text === name) {
+                    return entry.children;
+                }
+            }
+
+            return false;
+        }
     }
 
 
