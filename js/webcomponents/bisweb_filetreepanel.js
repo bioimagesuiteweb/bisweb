@@ -153,12 +153,23 @@ class FileTreePanel extends HTMLElement {
     }
 
     importFiles(filename) {
-        let queryString = filename + '/*/*';
-        console.log('query string', queryString);
+        
+        let queryString = filename + '/pdata/*/2dseq';
+
+        //check to see if folder contains the data itself by looking for the 'pdata' folder.
+        //if it does then update the file tree with just that file. otherwise look one level deeper for the whole study
         bis_genericio.getMatchingFiles(queryString).then( (files) => {
             console.log('files', files);
-            console.log('base directory', filename)
-            this.updateFileTree(files, filename);
+            if (files.length > 0) {
+                this.updateFileTree(files, filename);
+                return;
+            } 
+            
+            queryString = filename + '/*/pdata/*/2dseq';
+            bis_genericio.getMatchingFiles(queryString).then( (newFiles) => {
+                this.updateFileTree(newFiles, filename);
+            });
+            
         });
 
     }
@@ -218,8 +229,7 @@ class FileTreePanel extends HTMLElement {
         listContainer.css({ 'color' : 'rgb(12, 227, 172)' });
         listElement.prepend(listContainer);
         
-        console.log('fileTree', fileTree[0].children);
-        console.log('list container', listContainer);
+        console.log('fileTree', fileTree);
 
         listContainer.jstree({
             'core': {

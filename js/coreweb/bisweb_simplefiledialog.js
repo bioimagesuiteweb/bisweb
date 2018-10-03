@@ -304,7 +304,7 @@ class SimpleFileDialog {
                     let ind=parseInt(e.target.value);
                     if (ind>=0 && ind<this.currentFilters.length) {
                         if (this.currentFilters[ind].name === 'Directories') {
-                            this.activeFilterList = ['directories']
+                            this.activeFilterList = ['directories'];
                         } else {
                             this.activeFilterList=this.currentFilters[ind].extensions;
                         }
@@ -697,7 +697,7 @@ class SimpleFileDialog {
     }
 
     checkFilenameForFilter(entry, filterList) {
-        let name = entry.text
+        let name = entry.text;
         if (filterList.length<1)
             return true;
         
