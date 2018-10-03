@@ -46,49 +46,7 @@ class FileTreePanel extends HTMLElement {
             
             this.addMenuItem(this.menubar.getMenuBar());
 
-            let list = [
-                {
-                    'text' : 'a file',
-                    'type' : 'directory',
-                    'children' : [
-                        {
-                            'text' : 'a child file',
-                            'type' : 'file'
-                        }
-                    ]
-                }
-            ];
-
             let listElement = this.panel.getWidget();
-            let listContainer = $(`<div class='file-container'></div>`);
-            listContainer.css({ 'color' : 'rgb(12, 227, 172)' });
-            listElement.append(listContainer);
-
-            listContainer.jstree({
-                'core': {
-                    'data': list,
-                    'dblclick_toggle': true
-                },
-                'types': {
-                    'default': {
-                        'icon': 'glyphicon glyphicon-file'
-                    },
-                    'file': {
-                        'icon': 'glyphicon glyphicon-file'
-                    },
-                    'root': {
-                        'icon': 'glyphicon glyphicon-home'
-                    },
-                    'directory': {
-                        'icon': 'glyphicon glyphicon-folder-close'
-                    },
-                    'picture': {
-                        'icon': 'glyphicon glyphicon-picture'
-                    },
-                },
-                'plugins': ["types"]
-            });
-
             let buttonBar =  $(`<div class='btn-group' role=group' aria-label='Viewer Buttons' style='float: left'></div>`);
 
             //Route study load through bis_webfileutil file callbacks
@@ -104,15 +62,6 @@ class FileTreePanel extends HTMLElement {
                     'suffix': 'DIRECTORY',
                     'save': false,
                 });
-
-            /*bis_webfileutil.attachFileCallback(loadButton, null, {
-                'title' : 'Load Study',
-                'filter' : 'DIRECTORY',
-                'suffix' : 'DIRECTORY',
-                'callback' : () => {
-                    console.log('hello from filetreepanel callback');
-                }
-            });*/
 
             buttonBar.append(loadButton);
             listElement.append(`<br>`);
@@ -154,7 +103,8 @@ class FileTreePanel extends HTMLElement {
 
     importFiles(filename) {
         
-        let queryString = filename + '/pdata/*/2dseq';
+        console.log('importFiles', filename);
+        let queryString = filename + '/*/*.nii.gz';
 
         //check to see if folder contains the data itself by looking for the 'pdata' folder.
         //if it does then update the file tree with just that file. otherwise look one level deeper for the whole study
@@ -165,7 +115,7 @@ class FileTreePanel extends HTMLElement {
                 return;
             } 
             
-            queryString = filename + '/*/pdata/*/2dseq';
+            queryString = filename + '/*.nii.gz';
             bis_genericio.getMatchingFiles(queryString).then( (newFiles) => {
                 this.updateFileTree(newFiles, filename);
             });
@@ -205,7 +155,11 @@ class FileTreePanel extends HTMLElement {
                     };
 
                     if (index === splitName.length - 1) {
-                        newEntry.type = 'file';
+                        let splitEntry = newEntry.text.split('.');
+                        if (splitEntry[splitEntry.length - 1] === 'gz')
+                            newEntry.type = 'picture';
+                        else
+                            newEntry.type = 'file';
                     } else {
                         newEntry.type = 'directory';
                         newEntry.children = [];
@@ -220,6 +174,12 @@ class FileTreePanel extends HTMLElement {
                 index = index + 1;
             }
 
+        }
+
+        //if the file tree is empty, display an error message and return
+        if (!fileTree[0] || !fileTree[0].children) {
+            bis_webutil.createAlert('No study files could be found in the chosen directory, try a different directory.', false);
+            return;
         }
 
         let listElement = this.panel.getWidget();
@@ -255,6 +215,8 @@ class FileTreePanel extends HTMLElement {
             },
             'plugins': ["types"]
         });
+
+
 
         //Searches for the directory that should contain a file given the file's path, e.g. 'a/b/c' should be contained in folders a and b.
         //Returns the children 

@@ -302,12 +302,10 @@ const webfileutils = {
         console.log('FileMode=',fileMode, fileopts.save);
         // -------------------- End Of Part I ---------------
 
-        if (fileopts.suffix === "DIRECTORY" && fileMode === 'server') {
+        if (fileopts.suffix === "DIRECTORY") {
             cbopts.initialFilename= '';
             cbopts.mode='directory';
             cbopts.suffix='';
-            bisweb_fileserverclient.requestFileList(null, true, cbopts);
-            return;
         }
 
         // -------------------- End of Part IA -------------
@@ -394,7 +392,6 @@ const webfileutils = {
         }
 
         if (fileMode==="server") {
-            console.log('webfileutil cbopts', cbopts);
             bisweb_fileserverclient.requestFileList(null,true,cbopts);
             return;
         }

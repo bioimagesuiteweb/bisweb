@@ -224,7 +224,6 @@ class SimpleFileDialog {
      */
     openDialog(list,opts=null) {
 
-        console.log('openDialog', opts);
         if (this.modal===null) {
             this.createDialogUserInterface();
         }
@@ -244,10 +243,15 @@ class SimpleFileDialog {
                 let newtitle=opts.title;
                 if (newtitle) {
                     let title = this.modal.header.find('.modal-title');
-                    title.text(newtitle+ ' (using bisweb fileserver)');
+                    if (opts.server === 'amazonaws') {
+                        title.text(newtitle+ ' (using Amazon S3)');
+                    } else {
+                        title.text(newtitle + ' (using bisweb fileserver)');
+                    }
                 }
             }
 
+            console.log('mode', opts.mode);
             if (opts.mode) 
                 this.mode = opts.mode;
 

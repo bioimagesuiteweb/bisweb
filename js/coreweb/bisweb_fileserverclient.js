@@ -117,6 +117,7 @@ class BisWebFileServerClient extends BisFileServerClient {
         opts.startDirectory = payload.path;
         opts.rootDirectory = payload.root;
 
+        opts.server = 'server';
         this.fileDialog.openDialog(payload.data,opts);
     }
 }
