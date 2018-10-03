@@ -216,7 +216,14 @@ class FileTreePanel extends HTMLElement {
             'plugins': ["types"]
         });
 
+        listContainer.on('select_node.jstree', function(event, data) {
+            console.log('select node', data);
 
+            if (data.node.original.type === 'directory') {
+                console.log('selected a directory', this);
+                data.instance.open_node(this, false);
+            }
+        });
 
         //Searches for the directory that should contain a file given the file's path, e.g. 'a/b/c' should be contained in folders a and b.
         //Returns the children 

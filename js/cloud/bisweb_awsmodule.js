@@ -109,6 +109,7 @@ class AWSModule extends BaseServerClient {
      */
     createLoadModal(opts) {
         console.log('loadmodal', opts);
+        opts.server = 'amazonaws';
         this.s3.listObjectsV2( { 'Delimiter' : '/' }, (err, data) => {
             if (err) { console.log('an error occured', err); return; }
 
@@ -225,6 +226,7 @@ class AWSModule extends BaseServerClient {
      * Creates the file list to allow a user to choose where to save an image on one of the viewers  
      */
     createSaveModal(opts) {
+        opts.server = 'amazonaws';
         this.s3.listObjectsV2( { 'Delimiter' : '/' }, (err, data) => {
             if (err) { console.log('an error occured', err); return; }
 
@@ -389,12 +391,25 @@ class AWSModule extends BaseServerClient {
 
     //TODO: Implement getMatchingFiles
     /** getMatching Files
-     * @param {String} querystring - e.g. "data/*.nii.gz"  -> return all files in data with .nii.gz as their suffix. 
+     * @param {String} queryString - e.g. "data/*.nii.gz"  -> return all files in data with .nii.gz as their suffix. 
      * @returns {Promise} payload list of filenames that match
      */
-    getMatchingFiles(querystring = '*') {
-        return Promise.reject('AWS does not currently support this operation');
-        //return this.fileSystemOperation('getMatchingFiles',querystring);
+    getMatchingFiles(queryString = '*') {
+        return new Promise( (resolve, reject) => {
+
+            let splitString = queryString.split('/');
+            this.s3.listObjectsV2({ 'Prefix' : splitString[0] + '/', 'Delimiter': '/'}, (err, data) => {
+                if (err) { reject(err); return; }
+
+                console.log('data', data);
+            });
+
+        });
+        
+        function getDirectoryContents(directory) {
+            
+        }
+
     }
 
 
