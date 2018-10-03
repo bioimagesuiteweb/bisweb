@@ -212,11 +212,11 @@ class FileTreePanel extends HTMLElement {
         }
 
         let listElement = this.panel.getWidget();
-        listElement.empty();
+        listElement.find('.file-container').remove();
 
         let listContainer = $(`<div class='file-container'></div>`);
         listContainer.css({ 'color' : 'rgb(12, 227, 172)' });
-        listElement.append(listContainer);
+        listElement.prepend(listContainer);
         
         console.log('fileTree', fileTree[0].children);
         console.log('list container', listContainer);
@@ -249,7 +249,6 @@ class FileTreePanel extends HTMLElement {
         //Searches for the directory that should contain a file given the file's path, e.g. 'a/b/c' should be contained in folders a and b.
         //Returns the children 
         function findParentAtTreeLevel(name, entries) {
-            console.log('entries', entries);
             for (let entry of entries) {
                 if (entry.text === name) {
                     return entry.children;
