@@ -28,12 +28,14 @@ class FileTreePanel extends HTMLElement {
         this.viewerid=this.getAttribute('bis-viewerid');
         this.layoutid=this.getAttribute('bis-layoutwidgetid');
         this.menubarid = this.getAttribute('bis-menubarid');
+        this.viewerappid = this.getAttribute('bis-viewerapplicationid');
 
         bis_webutil.runAfterAllLoaded( () => {
 
             this.viewer = document.querySelector(this.viewerid);
             this.layout = document.querySelector(this.layoutid);
             this.menubar = document.querySelector(this.menubarid);
+            this.viewerapplication = document.querySelector(this.viewerappid);
 
             this.panel=new bisweb_panel(this.layout,
                 {  name  : 'Files',
@@ -47,25 +49,7 @@ class FileTreePanel extends HTMLElement {
             this.addMenuItem(this.menubar.getMenuBar());
 
             let listElement = this.panel.getWidget();
-            let buttonBar =  $(`<div class='btn-group' role=group' aria-label='Viewer Buttons' style='float: left'></div>`);
-
-            //Route study load through bis_webfileutil file callbacks
-            let loadButton = bis_webfileutil.createFileButton({
-                'type': 'info',
-                'name': 'Import Study',
-                'callback' : (f) => {
-                        this.importFiles(f);
-                    },
-                }, {
-                    title: 'Import study',
-                    'filters': 'DIRECTORY',
-                    'suffix': 'DIRECTORY',
-                    'save': false,
-                });
-
-            buttonBar.append(loadButton);
-            listElement.append(`<br>`);
-            listElement.append(buttonBar);
+            this.makeButtons(listElement);
         });
     }
 
@@ -103,13 +87,11 @@ class FileTreePanel extends HTMLElement {
 
     importFiles(filename) {
         
-        console.log('importFiles', filename);
         let queryString = filename + '/*/*.nii.gz';
 
         //check to see if folder contains the data itself by looking for the 'pdata' folder.
         //if it does then update the file tree with just that file. otherwise look one level deeper for the whole study
         bis_genericio.getMatchingFiles(queryString).then( (files) => {
-            console.log('files', files);
             if (files.length > 0) {
                 this.updateFileTree(files, filename);
                 return;
@@ -184,13 +166,14 @@ class FileTreePanel extends HTMLElement {
 
         let listElement = this.panel.getWidget();
         listElement.find('.file-container').remove();
+        
+        let loadImageButton = listElement.find('.load-image-button');
+        console.log('loadImageButton', loadImageButton);
 
         let listContainer = $(`<div class='file-container'></div>`);
         listContainer.css({ 'color' : 'rgb(12, 227, 172)' });
         listElement.prepend(listContainer);
         
-        console.log('fileTree', fileTree);
-
         listContainer.jstree({
             'core': {
                 'data': fileTree[0].children,
@@ -216,14 +199,8 @@ class FileTreePanel extends HTMLElement {
             'plugins': ["types"]
         });
 
-        listContainer.on('select_node.jstree', function(event, data) {
-            console.log('select node', data);
-
-            if (data.node.original.type === 'directory') {
-                console.log('selected a directory', this);
-                data.instance.open_node(this, false);
-            }
-        });
+        this.loadImageButton.prop('disabled', false);
+        this.setOnClickListeners(listContainer);
 
         //Searches for the directory that should contain a file given the file's path, e.g. 'a/b/c' should be contained in folders a and b.
         //Returns the children 
@@ -238,6 +215,54 @@ class FileTreePanel extends HTMLElement {
         }
     }
 
+    /**
+     * Makes the buttons that import a study into the files tab and load an image. 
+     * 
+     * @param {HTMLElement} listElement - The element of the files tab where the buttons should be created.
+     */
+    makeButtons(listElement) {
+        let buttonBar =  $(`<div class='btn-group' role=group' aria-label='Viewer Buttons' style='float: left'></div>`);
+
+        //Route study load through bis_webfileutil file callbacks
+        let loadStudyButton = bis_webfileutil.createFileButton({
+            'type': 'info',
+            'name': 'Import study',
+            'callback': (f) => {
+                this.importFiles(f);
+            },
+        }, {
+                'title': 'Import study',
+                'filters': 'DIRECTORY',
+                'suffix': 'DIRECTORY',
+                'save': false,
+            });
+
+        this.loadImageButton = $(`<button type='button' class='btn btn-success btn-sm load-image-button' disabled>Load image</button>`);
+        this.loadImageButton.on('click', () => {
+            this.viewerapplication.loadImage(baseDirectory + this.currentlySelectedName);
+        });
+
+        buttonBar.append(this.loadImageButton);
+        buttonBar.append(loadStudyButton);
+        listElement.append(`<br>`);
+        listElement.append(buttonBar);
+    }
+    /**
+     * Sets the jstree select events for a new jstree list container. 
+     * 
+     * @param {HTMLElement} listContainer - The div that contains the jstree object.
+     */
+    setOnClickListeners(listContainer) {
+        listContainer.on('select_node.jstree', function(event, data) {
+            console.log('select node', data);
+
+            if (data.node.original.type === 'directory') {
+                data.instance.open_node(this, false);
+            } else if (data.node.original.type === 'picture') {
+                this.currentlySelectedNode = data.node;
+            }
+        });
+    }
 
 }
 
