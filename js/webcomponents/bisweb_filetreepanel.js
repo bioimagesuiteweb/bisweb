@@ -86,7 +86,14 @@ class FileTreePanel extends HTMLElement {
 
     importFiles(filename) {
         
-        let queryString = filename + '/*/*.nii.gz';
+        //filter filename before calling getMatchingFiles
+        let queryString = filename;
+        if (queryString === '') {
+             queryString = '*/*.nii.gz'; 
+        } else {
+            if (queryString[queryString.length - 1] === '/') { queryString = queryString.slice(0, filename.length -2); }
+            queryString = filename + '/*/*.nii.gz';
+        }
 
         //check to see if folder contains the data itself by looking for the 'pdata' folder.
         //if it does then update the file tree with just that file. otherwise look one level deeper for the whole study

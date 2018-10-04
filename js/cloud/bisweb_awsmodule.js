@@ -398,7 +398,10 @@ class AWSModule extends BaseServerClient {
         return new Promise( (resolve, reject) => {
 
             let splitString = queryString.split('/');
-            this.s3.listObjectsV2({ 'Prefix' : splitString[0] + '/', 'Delimiter': '/'}, (err, data) => {
+            console.log('query string', queryString, 'split string', splitString);
+            let prefix = splitString[0] === '' ? '' : splitString[0] + '/';
+
+            this.s3.listObjectsV2({ 'Prefix' : prefix, 'Delimiter': '/'}, (err, data) => {
                 if (err) { reject(err); return; }
 
                 console.log('data', data);
