@@ -3,8 +3,7 @@ const bisweb_panel = require('bisweb_panel.js');
 const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
 const bis_genericio = require('bis_genericio.js');
-
-require('jstree');
+const jstree = require('jstree');
 
 /**
  * <bisweb-treepanel
@@ -112,6 +111,7 @@ class FileTreePanel extends HTMLElement {
      * @param {String} baseDirectory - The directory which importFiles was originally called on.
      */
     updateFileTree(files, baseDirectory) {
+        this.baseDirectory = baseDirectory;
 
         let fileTree = [];
 
@@ -235,11 +235,23 @@ class FileTreePanel extends HTMLElement {
                 'filters': 'DIRECTORY',
                 'suffix': 'DIRECTORY',
                 'save': false,
-            });
+        });
 
         this.loadImageButton = $(`<button type='button' class='btn btn-success btn-sm load-image-button' disabled>Load image</button>`);
         this.loadImageButton.on('click', () => {
-            this.viewerapplication.loadImage(baseDirectory + this.currentlySelectedName);
+            //construct the full name out of the current node
+            let name = '', currentNode = this.currentlySelectedNode;
+            console.log('base directory', this.baseDirectory);
+            let tree = listElement.find('.file-container').jstree();
+
+            while(currentNode.parent) {
+                name = '/' + currentNode.text + name;
+                let parentNode = tree.get_node(currentNode.parent);
+
+                console.log('parentNode', parentNode);
+                currentNode = parentNode;
+            }
+            this.viewerapplication.loadImage(this.baseDirectory + name);
         });
 
         buttonBar.append(this.loadImageButton);
@@ -253,7 +265,7 @@ class FileTreePanel extends HTMLElement {
      * @param {HTMLElement} listContainer - The div that contains the jstree object.
      */
     setOnClickListeners(listContainer) {
-        listContainer.on('select_node.jstree', function(event, data) {
+        listContainer.on('select_node.jstree', (event, data) => {
             console.log('select node', data);
 
             if (data.node.original.type === 'directory') {
