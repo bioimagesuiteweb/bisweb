@@ -1100,14 +1100,6 @@ class PaintToolElement extends HTMLElement {
                 });
 
                 
-                moduleoptions.name='Morphology Operations';
-                this.internal.morphologyModule=biscustom.createCustom(this.internal.layoutcontroller,
-                                                                      this.internal.algocontroller,
-                                                                      new modules.morphologyFilter(),
-                                                                      moduleoptions);
-                webutil.createMenuItem(tmenu, moduleoptions.name,function() {
-                    self.internal.morphologyModule.show();
-                });
 
                 biswrap.initialize().then( () => {
                     if (biswrap.uses_gpl()) {
@@ -1122,7 +1114,16 @@ class PaintToolElement extends HTMLElement {
                             self.internal.defaceModule.show();
                         });
                         webutil.createMenuItem(tmenu,'');
-                        
+
+                        moduleoptions.name='Morphology Operations';
+                        this.internal.morphologyModule=biscustom.createCustom(this.internal.layoutcontroller,
+                                                                              this.internal.algocontroller,
+                                                                              new modules.morphologyFilter(),
+                                                                              moduleoptions);
+                        webutil.createMenuItem(tmenu, moduleoptions.name,function() {
+                            self.internal.morphologyModule.show();
+                        });
+
                         moduleoptions.name='Regularize Objectmap';
                         this.internal.regularizeModule=biscustom.createCustom(this.internal.layoutcontroller,
                                                                               this.internal.algocontroller,
@@ -1132,6 +1133,7 @@ class PaintToolElement extends HTMLElement {
                             self.internal.regularizeModule.show();
                         });
 
+                        webutil.createMenuItem(tmenu,'');
                         moduleoptions.name='Mask Image';
                         this.internal.maskModule=biscustom.createCustom(this.internal.layoutcontroller,
                                                                         this.internal.algocontroller,

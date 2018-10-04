@@ -743,9 +743,13 @@ class BaseViewerElement extends HTMLElement {
         else
             img=viewer.getimage();
 
+        console.log('Setting ' , this, img, source);
         if (source==='overlay') {
             let plainmode= (colortype === "Objectmap");
-            this.setobjectmap(img,plainmode,colortype);
+            if (img!==null)
+                this.setobjectmap(img,plainmode,colortype);
+            else
+                this.clearobjectmap();
         } else {
             this.setimage(img);
         }

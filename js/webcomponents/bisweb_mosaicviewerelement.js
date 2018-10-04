@@ -710,7 +710,7 @@ class MosaicViewerElement extends BaseViewerElement {
         increment = Math.floor(increment || 1);
         frame = Math.floor(frame || 0);
         this.internal.firstslice=util.range(beginslice,0,this.internal.imagedim[this.internal.plane]-1);
-        this.internal.increment=util.range(increment,-10,10);
+        this.internal.increment=util.range(increment,-20,20);
         this.internal.frame= frame;
 
         // GUI Update
@@ -813,7 +813,7 @@ class MosaicViewerElement extends BaseViewerElement {
         this.internal.play_movie_controller=null;
         
         var xcoord=f1.add(data,'first',0,this.internal.imagedim[this.internal.plane]-1).name("First").step(1);
-        var ycoord=f1.add(data,'increment',-10,10).name("Increment").step(1);
+        var ycoord=f1.add(data,'increment').name("Increment").step(1);
         xcoord.onChange(coordchange);
         ycoord.onChange(coordchange);
 
