@@ -1,7 +1,6 @@
 'use strict';
 
 const AWS = require('aws-sdk');
-const AWSCognitoIdentity = require('amazon-cognito-identity-js');
 const AWSParameters = require('../../web/aws/awsparameters.js');
 const bis_webutil = require('bis_webutil.js');
 const bisweb_simplefiledialog = require('bisweb_simplefiledialog.js');
@@ -21,22 +20,6 @@ class AWSModule extends BaseServerClient {
         
         super(); 
         this.hasGUI = true;
-
-        AWS.config.update({
-            'region' : AWSParameters.RegionName,
-            'credentials' : new AWS.CognitoIdentityCredentials({
-                'IdentityPoolId' : AWSParameters.IdentityPoolId()
-            })
-        });
-
-        const userPoolData = {
-            'UserPoolId' : AWSParameters.authParams.UserPoolId,
-            'ClientId' : AWSParameters.authParams.ClientId
-        };
-
-        this.userPool = new AWSCognitoIdentity.CognitoUserPool(userPoolData);
-
-        this.s3 = this.createS3(AWSParameters.BucketName);
 
         this.saveModal = null;
 
@@ -153,8 +136,6 @@ class AWSModule extends BaseServerClient {
                     reject(err); 
                     return;
                 }
-
-                console.log('data', data.Body);
 
                 //check to see if data needs to be uncompressed before loading
                 if (!isbinary) {
@@ -445,7 +426,12 @@ class AWSModule extends BaseServerClient {
             }
         };
 
-        let expireTime = AWS.config.credentials.expireTime ? Date.parse(AWS.config.credentials.expireTime) : -1;
+        let expireTime;
+        if (AWS.config.credentials && AWS.config.credentials.expireTime) {
+            expireTime = Date.parse(AWS.config.credentials.expireTime);
+        } else {
+            expireTime = -1;
+        }
 
         //check if the user has an AWS bucket selected and if their credentials are still valid
         if (!this.currentAWS) {
@@ -471,6 +457,16 @@ class AWSModule extends BaseServerClient {
      */ 
     awsAuthUser(cb) {
 
+        //create AWS configuration object before beginning login process
+        AWS.config.update({
+            'region' : AWSParameters.RegionName,
+            'credentials' : new AWS.CognitoIdentityCredentials({
+                'IdentityPoolId' : AWSParameters.IdentityPoolId()
+            })
+        });
+
+        this.s3 = this.createS3(AWSParameters.BucketName);
+
         let returnf="./biswebaws.html";
         if (typeof window.BIS !== 'undefined') {
             returnf="../build/web/biswebaws.html";
@@ -479,7 +475,7 @@ class AWSModule extends BaseServerClient {
         let authParams = {
             'regionName' : AWSParameters.RegionName,
             'identityPoolId' : AWSParameters.IdentityPoolId(),
-            'cognitoParams' : AWSParameters.authParams
+            'cognitoParams' : AWSParameters.getCurrentCognitoParams()
         };
 
         window.addEventListener('awsready', () => {
@@ -935,6 +931,8 @@ class AWSModule extends BaseServerClient {
 
         let bucketInfoTitle = "The full name of your bucket, e.g. \"bisweb-test-bucket\"";
         let idpoolInfoTitle = "The Identity Pool ID will take the form region:identifier. For more info on how to find the ID, consult AWSBuckets.md in the docs section of the repository.";
+        let userpoolInfoTitle = "The User Pool ID should take the form region:identifier, e.g. 'us-east-1' followed by a series of letters and characters."
+
         let entryContainer = $(`
             <div class='container-fluid'>
                 <div class='form-group'>
@@ -944,6 +942,12 @@ class AWSModule extends BaseServerClient {
                     <label for='access-key'>Identity Pool ID:</label><br>
                     <input name='access-key' class='identity-pool-input' type='text' class='form-control'>
                     <span class='glyphicon glyphicon-question-sign idpool-input-info' style='color: rgb(12, 227, 172);' data-toggle='tooltip' title='${idpoolInfoTitle}'></span><br>
+                    <label for='pool-id'>User Pool ID:</label><br>
+                    <input name='pool-id' class='user-pool-input' type='text' class='form-control'>
+                    <span class='glyphicon glyphicon-question-sign idpool-input-info' style='color: rgb(12, 227, 172);' data-toggle='tooltip' title='${userpoolInfoTitle}'></span><br>
+                    <label for='pool-id'>User Pool ID:</label><br>
+                    <input name='pool-id' class='user-pool-input' type='text' class='form-control'>
+                    <span class='glyphicon glyphicon-question-sign idpool-input-info' style='color: rgb(12, 227, 172);' data-toggle='tooltip' title='${userpoolInfoTitle}'></span><br>
                 </div>
                 <div class='btn-group' role=group' aria-label='Viewer Buttons' style='float: left'></div>
             </div>

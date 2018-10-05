@@ -5,8 +5,11 @@ const localforage = require('localforage');
 // https://git.yale.edu/pages/zls5/webapp/
 let IdentityPoolId;
 let BucketName;
+let ClientId = '5edh465pitl9rb04qbi37csv8e';
+let UserPoolId = 'us-east-1_BAOsizFzq';
+let AppWebDomain = 'bisweb-test.auth.us-east-1.amazoncognito.com';
 let RegionName = 'us-east-1'; //N. Virginia
-let AccountId = '687575629668'; //My (Zach's) Amazon AWS account
+//let AccountId = '687575629668'; //My (Zach's) Amazon AWS account
 
 let cachedAWSBuckets = localforage.createInstance({
     'name' : 'bis_webfileutil',
@@ -41,19 +44,28 @@ if (typeof window.BIS ==='undefined') {
 
 
 let awsparams = {
-    'ClientId': '5edh465pitl9rb04qbi37csv8e',
-    'AppWebDomain': 'bisweb-test.auth.us-east-1.amazoncognito.com',
     'TokenScopesArray': ['email', 'openid'],
     'RedirectUriSignIn': apath+'biswebaws.html',
     'RedirectUriSignOut': apath+'biswebaws.html',
-    'IdentityProvider': 'COGNITO',
-    'UserPoolId': 'us-east-1_BAOsizFzq'
+    'IdentityProvider': 'COGNITO'
 };
 
 
 let updateBucketInfo = (bucketName, identityPoolId) => {
     BucketName = bucketName;
     IdentityPoolId = identityPoolId;
+};
+
+let getClientId = () => {
+    return ClientId;
+};
+
+let getAppWebDomain = () => {
+    return AppWebDomain;
+};
+
+let getUserPoolId = () => {
+    return UserPoolId;
 };
 
 let getIdentityPoolId = () => {
@@ -64,13 +76,25 @@ let getBucketName = () => {
     return BucketName;
 };
 
-console.log('redirect sign in', awsparams.RedirectUriSignIn);
+let getCurrentCognitoParams = () => {
+    let currentParams = awsparams;
+    currentParams.ClientId = ClientId;
+    currentParams.UserPoolId = UserPoolId;
+    currentParams.AppWebDomain = AppWebDomain;
+
+    return currentParams;
+};
+
 
 module.exports = {
     'authParams' : awsparams,
     'RegionName' : RegionName,
-    'AccountId' : AccountId,
     'BucketName' : getBucketName,
     'IdentityPoolId' : getIdentityPoolId,
-    'updateBucketInfo' : updateBucketInfo
+    'ClientId' : getClientId,
+    'AppWebDomain' : getAppWebDomain,
+    'UserPoolId' : getUserPoolId,
+    'updateBucketInfo' : updateBucketInfo,
+    'getCurrentCognitoParams' : getCurrentCognitoParams
+    //'AccountId' : AccountId,
 };
