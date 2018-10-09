@@ -51,9 +51,12 @@ let awsparams = {
 };
 
 
-let updateBucketInfo = (bucketName, identityPoolId) => {
-    BucketName = bucketName;
-    IdentityPoolId = identityPoolId;
+let updateBucketInfo = (newBucketInfo) => {
+    BucketName = newBucketInfo.bucketName;
+    IdentityPoolId = newBucketInfo.identityPoolId;
+    UserPoolId = newBucketInfo.userPoolId;
+    ClientId = newBucketInfo.appClientId;
+    AppWebDomain = newBucketInfo.appWebDomain;
 };
 
 let getClientId = () => {

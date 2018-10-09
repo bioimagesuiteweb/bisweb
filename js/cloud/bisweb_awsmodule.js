@@ -539,10 +539,17 @@ class AWSModule extends BaseServerClient {
         window.addEventListener('storage', idTokenEvent);
     }
 
-    changeBuckets(bucketName, identityPoolId) {
+    changeBuckets(newBucketInfo) {
         this.s3 = this.createS3(bucketName);
-        this.currentAWS = { 'bucketName' : bucketName, 'identityPoolId' : identityPoolId };
-        AWSParameters.updateBucketInfo(bucketName, identityPoolId);
+        this.currentAWS = { 
+            'bucketName' : newBucketInfo.bucketName, 
+            'identityPoolId' : newBucketInfo.identityPoolId,
+            'userPoolId' : newBucketInfo.userPoolId,
+            'appClientId' : newBucketInfo.appClientId,
+            'appWebDomain' : newBucketInfo.appWebDomain 
+        };
+
+        AWSParameters.updateBucketInfo(newBucketInfo);
         this.refreshCredentials = true;
     }
 
@@ -645,9 +652,9 @@ class AWSModule extends BaseServerClient {
     }
 
     createAWSBucketMenu() {
-        let awsmodal = bis_webutil.createmodal('AWS Buckets');
+        let awsmodal = bis_webutil.createmodal('AWS Buckets', 'modal-lg');
 
-        let tabView = this.createAWSTabView();
+        let tabView = this.createAWSTabView(awsmodal);
 
         let selectPane = this.createAWSBucketSelector(awsmodal, tabView);
         tabView.find('#aws-bucket-selector-pane').append(selectPane);
@@ -655,7 +662,6 @@ class AWSModule extends BaseServerClient {
         let entryPane = this.createAWSBucketEntry(awsmodal);
         tabView.find('#aws-bucket-entry-pane').append(entryPane);
 
-        awsmodal.body.append(tabView);
         awsmodal.dialog.find('.modal-footer').remove();
 
         awsmodal.dialog.on('hidden.bs.modal', () => {
@@ -663,11 +669,21 @@ class AWSModule extends BaseServerClient {
             bucketSelectorDropdown.empty(); //remove all option elements from the dropdown
         });
 
+        //dynamic modal resizing requires overriding the default settings for bootstrap modals (modal changes size when tabs change)
+        //https://stackoverflow.com/questions/19396631/re-size-the-modal-dialog-in-bootstrap-dynamically
+        awsmodal.dialog.on('shown.bs.modal', () => {
+            awsmodal.dialog.css({
+                'width' : 'auto',
+                'height' : 'auto',
+                'max-height' : '100%'
+            });
+        });
+
         this.bucketMenuModal = awsmodal;
         return awsmodal;
     }
 
-    createAWSTabView() {
+    createAWSTabView(awsmodal) {
         let tabView = $( `
                 <ul class="nav nav-tabs" id="aws-tab-menu" role="tablist">
                     <li class="nav-item active">
@@ -688,6 +704,38 @@ class AWSModule extends BaseServerClient {
                     </div>
                 </div>
                 `);
+        
+        awsmodal.body.append(tabView);
+
+        //set dynamic tab resizing behavior
+        let navTabs = awsmodal.body.find('.nav-tabs a');
+        navTabs.on('show.bs.tab', (e) => {
+            console.log('show bs tab', e.target.id);
+
+            //set modal to be large for selector tab and small for entry tab
+            //TODO: Re-center modal after changing sizes
+            if (e.target.id === 'entry-tab') {
+                awsmodal.dialog.find('.modal-content').css({ 
+                    'width' : '400px',
+                });
+            } else if (e.target.id === 'selector-tab') {
+                awsmodal.dialog.find('.modal-content').css({ 
+                    'width' : '900px',
+                });
+            }
+            
+        });
+
+        console.log('nav tabs', navTabs);
+
+        /*selectorTab.on('show.bs.tab', () => {
+            console.log('hello from selector tab show.bs.tab');
+            awsmodal.find('.modal-body').css({
+                'width' : '400px',
+                'height' : 'auto'
+            });
+        });
+        */
         return tabView;
     }
 
@@ -768,6 +816,9 @@ class AWSModule extends BaseServerClient {
                             <tr>
                                 <th scope="col">Bucket Name</th>
                                 <th scope="col">Identity Pool ID</th>
+                                <th scope="col">User Pool ID</th>
+                                <th scope="col">App Client ID</th>
+                                <th scope="col">App Web Domain</th>
                                 <th scope="col"></th>
                             </tr>
                         </thead>
@@ -779,6 +830,9 @@ class AWSModule extends BaseServerClient {
                 let tableRow = $(`
                     <td class='bootstrap-table-entry bucket-name'>${selectedItemInfo.bucketName}</td>
                     <td class='bootstrap-table-entry identity-pool-id'>${selectedItemInfo.identityPoolId}</td>
+                    <td class='bootstrap-table-entry user-pool-id'>${selectedItemInfo.userPoolId}</td>
+                    <td class='bootstrap-table-entry client-id'>${selectedItemInfo.appClientId}</td>
+                    <td class='bootstrap-table-entry web-domain'>${selectedItemInfo.appWebDomain}</td>
                     <td class='bootstrap-table-entry'>
                         <span class='input-group-btn'>
                             <button class='btn btn-default btn-sm'>
@@ -838,8 +892,10 @@ class AWSModule extends BaseServerClient {
             let selectedItemInfo = this.awsstoredbuckets[selectedItem.id];
             selectedItemInfo['id'] = selectedItem.id;
 
+            console.log('selectedItemInfo', selectedItemInfo);
+
             this.awsbucketstorage.setItem('currentAWS', JSON.stringify(selectedItemInfo));
-            this.changeBuckets(selectedItemInfo.bucketName, selectedItemInfo.identityPoolId);
+            this.changeBuckets(selectedItemInfo);
             awsmodal.dialog.modal('hide');
             bis_webutil.createAlert('Changed to bucket ' + selectedItemInfo.bucketName, false, null, 2500);
         });
@@ -896,23 +952,17 @@ class AWSModule extends BaseServerClient {
             let buttonGroup = editContainer.find('.btn-group');
 
             let resolvePromise = false;
-            let newBucketName, newIdentityPoolName, newUserPoolId, newClientId, newWebDomain;
+            let newBucketName, newIdentityPoolId, newUserPoolId, newClientId, newWebDomain;
 
             confirmButton.on('click', () => {
                 newBucketName = editContainer.find('.edit-bucket-input').val();
-                newIdentityPoolName = editContainer.find('.edit-identity-pool-input').val();
+                newIdentityPoolId = editContainer.find('.edit-identity-pool-input').val();
                 newUserPoolId = editContainer.find('.edit-user-pool-input').val();
                 newClientId = editContainer.find('.edit-client-input').val();
                 newWebDomain = editContainer.find('.edit-web-domain-input').val();
 
-                let paramsObj = {
-                    'id' : id,
-                    'bucketName' : newBucketName,
-                    'identityPoolId' : newIdentityPoolName,
-                    'userPoolId' : newUserPoolId,
-                    'clientID' : newClientId,
-                    'webDomain' : newWebDomain
-                };
+                let paramsObj = this.createNewBucketInfo(newBucketName, newIdentityPoolId, newUserPoolId, newClientId, newWebDomain);
+                paramsObj.id = id;
     
                 this.awsbucketstorage.setItem(id, JSON.stringify(paramsObj));
                 this.awsbucketstorage.setItem('currentAWS', JSON.stringify(paramsObj));
@@ -928,15 +978,11 @@ class AWSModule extends BaseServerClient {
             });
 
             editModal.dialog.on('hidden.bs.modal', () => {
-                if (resolvePromise) { 
-                    resolve({ 
-                        'id' : id, 
-                        'bucketName' : newBucketName, 
-                        'identityPoolId' : newIdentityPoolName,
-                        'userPoolId' : newUserPoolId,
-                        'clientID' : newClientId,
-                        'webDomain' : newWebDomain
-                    }); 
+                if (resolvePromise) {
+                    let paramsObj = this.createNewBucketInfo(newBucketName, newIdentityPoolId, newUserPoolId, newClientId, newWebDomain);
+                    paramsObj.id = id;
+
+                    resolve(paramsObj); 
                 }
                 else { reject('Edit canceled'); }
             });
@@ -988,26 +1034,25 @@ class AWSModule extends BaseServerClient {
 
             let bucketName = entryContainer.find('.bucket-input')[0].value;
             let identityPoolId = entryContainer.find('.identity-pool-input')[0].value;
+            let userPoolId = entryContainer.find('.user-pool-input')[0].value;
+            let appClientId = entryContainer.find('.client-input')[0].value;
+            let appWebDomain = entryContainer.find('.web-domain-input')[0].value;
 
-            if (bucketName === '') { bis_webutil.showErrorModal('An error occured', 'Please fill out the required field \'Bucket Name\''); return; }
-            if (identityPoolId === '') { bis_webutil.showErrorModal('An error occured', 'Please fill out the required field \'Identity Pool ID\''); return;}
+            if (bucketName === '' || identityPoolId === '' || userPoolId === '' || appClientId === '' || appWebDomain  === '') { 
+                bis_webutil.showErrorModal('An error occured', 'Please fill out all the required fileds'); 
+                return; 
+            }
 
             //index contains the number of keys in the database
             let key = 'awsbucket' + bis_webutil.getuniqueid();
 
-            let paramsObj = {
-                'id' : key,
-                'bucketName': entryContainer.find('.bucket-input')[0].value,
-                'identityPoolId': entryContainer.find('.identity-pool-input')[0].value,
-                'userPoolId' : entryContainer.find('.user-pool-input')[0].value,
-                'appClientId' : entryContainer.find('.client-input')[0].value,
-                'appWebDomain' : entryContainer.find('web-domain-input')[0].value
-            };
+            let paramsObj = this.createNewBucketInfo(bucketName, identityPoolId, userPoolId, appClientId, appWebDomain);
+            paramsObj.id = key;
 
             this.awsbucketstorage.setItem(key, JSON.stringify(paramsObj));
             this.awsbucketstorage.setItem('currentAWS', JSON.stringify(paramsObj));
 
-            this.changeBuckets(bucketName, identityPoolId);
+            this.changeBuckets(paramsObj);
             awsmodal.dialog.modal('hide');
             bis_webutil.createAlert('Created bucket ' + bucketName + ' and switched to it.', false, null, 2500);
         });
@@ -1032,6 +1077,18 @@ class AWSModule extends BaseServerClient {
         buttonBar.append(cancelButton);
 
         return entryContainer;
+    }
+
+    createNewBucketInfo(bucketName, identityPoolId, userPoolId, appClientId, appWebDomain) {
+        let paramsObj = {
+            'bucketName': bucketName,
+            'identityPoolId': identityPoolId,
+            'userPoolId' : userPoolId,
+            'appClientId' : appClientId,
+            'appWebDomain' : appWebDomain
+        }
+
+        return paramsObj;
     }
 }
 
