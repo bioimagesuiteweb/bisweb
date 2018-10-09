@@ -863,7 +863,7 @@ class AWSModule extends BaseServerClient {
         return selectContainer;
     }
 
-    createAWSEditModal(id, bucketName, identityPoolId) {
+    createAWSEditModal(id, oldParams) {
         return new Promise( (resolve, reject) => {
             let editModal = bis_webutil.createmodal('Edit Entry', 'modal-sm');
             let editContainer = $(`
@@ -873,6 +873,12 @@ class AWSModule extends BaseServerClient {
                         <input name='bucket' class='edit-bucket-input' type='text' class='form-control'><br>
                         <label for='access-key'>Identity Pool ID:</label><br>
                         <input name='access-key' class='edit-identity-pool-input' type='text' class='form-control'>
+                        <label for='pool-id'>User Pool ID:</label><br>
+                        <input name='pool-id' class='edit-user-pool-input' type='text' class='form-control'>
+                        <label for='client-id'>App Client ID:</label><br>
+                        <input name='client-id' class='edit-client-input' type='text' class='form-control'>
+                        <label for='web-domain'>App Web Domain:</label><br>
+                        <input name='web-domain' class='edit-web-domain-input' type='text' class='form-control'>
                     </div>
                     <div class='btn-group' role=group' aria-label='Viewer Buttons' style='float: left'></div>
                 </div>
@@ -881,28 +887,36 @@ class AWSModule extends BaseServerClient {
             let confirmButton = bis_webutil.createbutton({ 'name' : 'Confirm', 'type' : 'success' });
             let cancelButton = bis_webutil.createbutton({ 'name' : 'Cancel', 'type' : 'danger' });
     
-            editContainer.find('.edit-bucket-input').val(bucketName);
-            editContainer.find('.edit-identity-pool-input').val(identityPoolId);
+            editContainer.find('.edit-bucket-input').val(oldParams.bucketName);
+            editContainer.find('.edit-identity-pool-input').val(oldParams.identityPoolId);
+            editContainer.find('.edit-user-pool-input').val(oldParams.userPoolId);
+            editContainer.find('.edit-client-input').val(oldParams.clientId);
+            editContainer.find('.edit-web-domain-input').val(oldParams.webDomain);
     
             let buttonGroup = editContainer.find('.btn-group');
 
             let resolvePromise = false;
-            let newBucketName, newIdentityPoolName;
+            let newBucketName, newIdentityPoolName, newUserPoolId, newClientId, newWebDomain;
 
             confirmButton.on('click', () => {
                 newBucketName = editContainer.find('.edit-bucket-input').val();
                 newIdentityPoolName = editContainer.find('.edit-identity-pool-input').val();
-    
+                newUserPoolId = editContainer.find('.edit-user-pool-input').val();
+                newClientId = editContainer.find('.edit-client-input').val();
+                newWebDomain = editContainer.find('.edit-web-domain-input').val();
+
                 let paramsObj = {
                     'id' : id,
-                    'bucketName': newBucketName,
-                    'identityPoolId': newIdentityPoolName
+                    'bucketName' : newBucketName,
+                    'identityPoolId' : newIdentityPoolName,
+                    'userPoolId' : newUserPoolId,
+                    'clientID' : newClientId,
+                    'webDomain' : newWebDomain
                 };
     
                 this.awsbucketstorage.setItem(id, JSON.stringify(paramsObj));
                 this.awsbucketstorage.setItem('currentAWS', JSON.stringify(paramsObj));
-    
-                this.changeBuckets(bucketName, identityPoolId);
+
                 bis_webutil.createAlert('Settings changed.', false, null, 2500);
 
                 resolvePromise = true;
@@ -914,7 +928,16 @@ class AWSModule extends BaseServerClient {
             });
 
             editModal.dialog.on('hidden.bs.modal', () => {
-                if (resolvePromise) { resolve({ 'id' : id, 'bucketName' : newBucketName, 'identityPoolId' : newIdentityPoolName }); }
+                if (resolvePromise) { 
+                    resolve({ 
+                        'id' : id, 
+                        'bucketName' : newBucketName, 
+                        'identityPoolId' : newIdentityPoolName,
+                        'userPoolId' : newUserPoolId,
+                        'clientID' : newClientId,
+                        'webDomain' : newWebDomain
+                    }); 
+                }
                 else { reject('Edit canceled'); }
             });
     
@@ -931,8 +954,10 @@ class AWSModule extends BaseServerClient {
 
         let bucketInfoTitle = "The full name of your bucket, e.g. \"bisweb-test-bucket\"";
         let idpoolInfoTitle = "The Identity Pool ID will take the form region:identifier. For more info on how to find the ID, consult AWSBuckets.md in the docs section of the repository.";
-        let userpoolInfoTitle = "The User Pool ID should take the form region:identifier, e.g. 'us-east-1' followed by a series of letters and characters."
-
+        let userpoolInfoTitle = "The User Pool ID should take the form region:identifier, e.g. \"us-east-1\" followed by a series of letters and characters.";
+        let clientInfoTitle = "The App Client ID is the identifier for the App Client associated with your User Pool. It should be a 25 character string that you can find on the \"App client settings\" section of your User Pool settings.";
+        let domainInfoTitle = "The App Web Domain is the URL at which you should authenticate with your User Pool, i.e. a web address ending in \".amazoncognito.com\". Consult the User Pool section of AWSBuckets.md for more detail.";
+        
         let entryContainer = $(`
             <div class='container-fluid'>
                 <div class='form-group'>
@@ -945,9 +970,12 @@ class AWSModule extends BaseServerClient {
                     <label for='pool-id'>User Pool ID:</label><br>
                     <input name='pool-id' class='user-pool-input' type='text' class='form-control'>
                     <span class='glyphicon glyphicon-question-sign idpool-input-info' style='color: rgb(12, 227, 172);' data-toggle='tooltip' title='${userpoolInfoTitle}'></span><br>
-                    <label for='pool-id'>User Pool ID:</label><br>
-                    <input name='pool-id' class='user-pool-input' type='text' class='form-control'>
-                    <span class='glyphicon glyphicon-question-sign idpool-input-info' style='color: rgb(12, 227, 172);' data-toggle='tooltip' title='${userpoolInfoTitle}'></span><br>
+                    <label for='client-id'>App Client ID:</label><br>
+                    <input name='client-id' class='client-input' type='text' class='form-control'>
+                    <span class='glyphicon glyphicon-question-sign client-input-info' style='color: rgb(12, 227, 172);' data-toggle='tooltip' title='${clientInfoTitle}'></span><br>
+                    <label for='web-domain'>App Web Domain:</label><br>
+                    <input name='web-domain' class='web-domain-input' type='text' class='form-control'>
+                    <span class='glyphicon glyphicon-question-sign web-domain-input-info' style='color: rgb(12, 227, 172);' data-toggle='tooltip' title='${domainInfoTitle}'></span><br>
                 </div>
                 <div class='btn-group' role=group' aria-label='Viewer Buttons' style='float: left'></div>
             </div>
@@ -970,7 +998,10 @@ class AWSModule extends BaseServerClient {
             let paramsObj = {
                 'id' : key,
                 'bucketName': entryContainer.find('.bucket-input')[0].value,
-                'identityPoolId': entryContainer.find('.identity-pool-input')[0].value
+                'identityPoolId': entryContainer.find('.identity-pool-input')[0].value,
+                'userPoolId' : entryContainer.find('.user-pool-input')[0].value,
+                'appClientId' : entryContainer.find('.client-input')[0].value,
+                'appWebDomain' : entryContainer.find('web-domain-input')[0].value
             };
 
             this.awsbucketstorage.setItem(key, JSON.stringify(paramsObj));
