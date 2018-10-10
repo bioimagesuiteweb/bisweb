@@ -540,7 +540,7 @@ class AWSModule extends BaseServerClient {
     }
 
     changeBuckets(newBucketInfo) {
-        this.s3 = this.createS3(bucketName);
+        this.s3 = this.createS3(newBucketInfo.bucketName);
         this.currentAWS = { 
             'bucketName' : newBucketInfo.bucketName, 
             'identityPoolId' : newBucketInfo.identityPoolId,
@@ -718,9 +718,13 @@ class AWSModule extends BaseServerClient {
                 awsmodal.dialog.find('.modal-content').css({ 
                     'width' : '400px',
                 });
+                /*awsmodal.dialog.find('.modal-content').css({
+                    'width' : 'auto'
+                });*/
+
             } else if (e.target.id === 'selector-tab') {
                 awsmodal.dialog.find('.modal-content').css({ 
-                    'width' : '900px',
+                    'width' : 'auto',
                 });
             }
             
@@ -728,14 +732,6 @@ class AWSModule extends BaseServerClient {
 
         console.log('nav tabs', navTabs);
 
-        /*selectorTab.on('show.bs.tab', () => {
-            console.log('hello from selector tab show.bs.tab');
-            awsmodal.find('.modal-body').css({
-                'width' : '400px',
-                'height' : 'auto'
-            });
-        });
-        */
         return tabView;
     }
 
@@ -954,7 +950,10 @@ class AWSModule extends BaseServerClient {
             let resolvePromise = false;
             let newBucketName, newIdentityPoolId, newUserPoolId, newClientId, newWebDomain;
 
-            confirmButton.on('click', () => {
+
+            //set button behavior
+            confirmButton.on('click', (e) => {
+                e.preventDefault();
                 newBucketName = editContainer.find('.edit-bucket-input').val();
                 newIdentityPoolId = editContainer.find('.edit-identity-pool-input').val();
                 newUserPoolId = editContainer.find('.edit-user-pool-input').val();
@@ -973,10 +972,12 @@ class AWSModule extends BaseServerClient {
                 editModal.dialog.modal('hide');
             });
     
-            cancelButton.on('click', () => {
+            cancelButton.on('click', (e) => {
+                e.preventDefault();
                 editModal.dialog.modal('hide');
             });
 
+            //set behavior for creating new bucket when modal closes (confirm button closes modal)
             editModal.dialog.on('hidden.bs.modal', () => {
                 if (resolvePromise) {
                     let paramsObj = this.createNewBucketInfo(newBucketName, newIdentityPoolId, newUserPoolId, newClientId, newWebDomain);
@@ -1029,6 +1030,7 @@ class AWSModule extends BaseServerClient {
 
         let confirmButton = bis_webutil.createbutton({ 'name': 'Confirm', 'type': 'success' });
         let cancelButton = bis_webutil.createbutton({ 'name': 'Cancel', 'type': 'danger' });
+        let selectBucketButton = bis_webutil.createbutton({ 'name' : 'Select an Existing Bucket', 'type' : 'info' });
 
         confirmButton.on('click', () => {
 
@@ -1061,6 +1063,12 @@ class AWSModule extends BaseServerClient {
             awsmodal.dialog.modal('hide');
         });
 
+        selectBucketButton.on('click', (e) => {
+            e.preventDefault();
+            let selectorTab = awsmodal.body.find('#selector-tab');
+            selectorTab.click();
+        });
+
         //set tooltips for help buttons
         let bucketInfoSpan = entryContainer.find('.bucket-input-info');
         bucketInfoSpan.on('click hover', () => {
@@ -1075,6 +1083,7 @@ class AWSModule extends BaseServerClient {
         let buttonBar = entryContainer.find('.btn-group');
         buttonBar.append(confirmButton);
         buttonBar.append(cancelButton);
+        buttonBar.append(selectBucketButton);
 
         return entryContainer;
     }
@@ -1086,7 +1095,7 @@ class AWSModule extends BaseServerClient {
             'userPoolId' : userPoolId,
             'appClientId' : appClientId,
             'appWebDomain' : appWebDomain
-        }
+        };
 
         return paramsObj;
     }
