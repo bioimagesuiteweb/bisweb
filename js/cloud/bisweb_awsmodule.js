@@ -840,23 +840,37 @@ class AWSModule extends BaseServerClient {
 
                 //create edit modal and update UI with the changed values
                 tableRow.find('.btn').on('click', () => {
-                    this.createAWSEditModal(selectedItemId, selectedItemInfo.bucketName, selectedItemInfo.identityPoolId)
-                    .then( (params) => {
-                        console.log('params', params);
-                        tableContainer.find('table .bucket-name')[0].innerHTML = params.bucketName;
-                        tableContainer.find('table .identity-pool-id')[0].innerHTML = params.identityPoolId;
-
-                        refreshDropdown().then( (dropdown) => {
-                            console.log('refresh dropdown', dropdown, 'bucket name', params.bucketName);
-                            dropdown.val(params.bucketName);
-                        });
-                    })
-                    .catch( (e) => { 
-                        if (e !== 'Edit Canceled') {
-                            console.log('error', e);
-                        } else {
-                            bis_webutil.createAlert('Edit canceled', false, null, 2500);
+                    //fetch new data from app cache and open edit modal
+                    this.awsbucketstorage.getItem(selectedItemId).then( (val) => {
+                        
+                        let parsedVal;
+                        try {
+                            parsedVal = JSON.parse(val)
+                        } catch(e) {
+                            console.log('could not parsed val', val);
                         }
+
+                        this.createAWSEditModal(selectedItemId, parsedVal)
+                        .then( (params) => {
+                            console.log('params', params);
+                            tableContainer.find('table .bucket-name')[0].innerHTML = params.bucketName;
+                            tableContainer.find('table .identity-pool-id')[0].innerHTML = params.identityPoolId;
+                            tableContainer.find('table .user-pool-id')[0].innerHTML = params.userPoolId;
+                            tableContainer.find('table .client-id')[0].innerHTML = params.appClientId;
+                            tableContainer.find('table .web-domain')[0].innerHTML = params.appWebDomain;
+    
+                            refreshDropdown().then( (dropdown) => {
+                                console.log('refresh dropdown', dropdown, 'bucket name', params.bucketName);
+                                dropdown.val(params.bucketName);
+                            });
+                        })
+                        .catch( (e) => { 
+                            if (e !== 'Edit Canceled') {
+                                console.log('error', e);
+                            } else {
+                                bis_webutil.createAlert('Edit canceled', false, null, 2500);
+                            }
+                        });
                     });
                 });
 
@@ -938,12 +952,13 @@ class AWSModule extends BaseServerClient {
     
             let confirmButton = bis_webutil.createbutton({ 'name' : 'Confirm', 'type' : 'success' });
             let cancelButton = bis_webutil.createbutton({ 'name' : 'Cancel', 'type' : 'danger' });
-    
+            
+            console.log('old params', oldParams);
             editContainer.find('.edit-bucket-input').val(oldParams.bucketName);
             editContainer.find('.edit-identity-pool-input').val(oldParams.identityPoolId);
             editContainer.find('.edit-user-pool-input').val(oldParams.userPoolId);
-            editContainer.find('.edit-client-input').val(oldParams.clientId);
-            editContainer.find('.edit-web-domain-input').val(oldParams.webDomain);
+            editContainer.find('.edit-client-input').val(oldParams.appClientId);
+            editContainer.find('.edit-web-domain-input').val(oldParams.appWebDomain);
     
             let buttonGroup = editContainer.find('.btn-group');
 
