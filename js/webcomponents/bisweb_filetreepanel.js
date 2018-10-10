@@ -3,7 +3,7 @@ const bisweb_panel = require('bisweb_panel.js');
 const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
 const bis_genericio = require('bis_genericio.js');
-const jstree = require('jstree');
+require('jstree');
 
 /**
  * <bisweb-treepanel
@@ -85,17 +85,19 @@ class FileTreePanel extends HTMLElement {
     }
 
     importFiles(filename) {
-        
+        console.log('filename', filename);
         //filter filename before calling getMatchingFiles
         let queryString = filename;
         if (queryString === '') {
              queryString = '*/*.nii.gz'; 
         } else {
-            if (queryString[queryString.length - 1] === '/') { queryString = queryString.slice(0, filename.length -2); }
-            queryString = filename + '/*/*.nii.gz';
+            if (queryString[queryString.length - 1] === '/') { 
+                queryString = queryString.slice(0, filename.length - 1) + '/*/*.nii.gz'; 
+            } else { 
+                queryString = filename + '/*/*.nii.gz';
+            }
         }
 
-        //check to see if folder contains the data itself by looking for the 'pdata' folder.
         //if it does then update the file tree with just that file. otherwise look one level deeper for the whole study
         bis_genericio.getMatchingFiles(queryString).then( (files) => {
             if (files.length > 0) {

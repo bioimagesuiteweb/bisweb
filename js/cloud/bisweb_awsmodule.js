@@ -380,7 +380,7 @@ class AWSModule extends BaseServerClient {
 
             let splitString = queryString.split('/');
             console.log('query string', queryString, 'split string', splitString);
-            let prefix = splitString[0] === '' ? '' : splitString[0] + '/';
+            let prefix = (splitString[0] === ''  || splitString[0] === '*') ? '' : splitString[0] + '/';
 
             this.s3.listObjectsV2({ 'Prefix' : prefix, 'Delimiter': '/'}, (err, data) => {
                 if (err) { reject(err); return; }
@@ -845,7 +845,7 @@ class AWSModule extends BaseServerClient {
                         
                         let parsedVal;
                         try {
-                            parsedVal = JSON.parse(val)
+                            parsedVal = JSON.parse(val);
                         } catch(e) {
                             console.log('could not parsed val', val);
                         }
