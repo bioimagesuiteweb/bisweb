@@ -245,6 +245,7 @@ class CustomModule {
 
         if (this.module.mouseobserver) {
             // get the current position in the viewer
+            this.description = this.module.getDescription();
             let elem=this.description.inputs[0];
             let varname = elem.varname;
             let viewer = this.getViewerFromName(this.inputVars, varname);
@@ -361,7 +362,7 @@ class CustomModule {
 
                 webutil.enablebutton(generatedContent.runbutton, status);
                 webutil.enablebutton(generatedContent.undobutton, status);
-                webutil.enablebutton(generatedContent.redobutton, status);
+                //                webutil.enablebutton(generatedContent.redobutton, status);
             });
 
 
@@ -389,16 +390,16 @@ class CustomModule {
                 this.handleUndo();
             });
 
-            generatedContent.redobutton[0].addEventListener("click", (e) => {
+            /*            generatedContent.redobutton[0].addEventListener("click", (e) => {
                 e.preventDefault();
                 this.handleRedo();
-            });
+            });*/
             
             let dropmenu=generatedContent.dropmenu;
             if (dropmenu!==null) {
-                webutil.createDropdownItem(dropmenu,'Update Inputs', function() {
+                /*webutil.createDropdownItem(dropmenu,'Update Inputs', function() {
                     self.updateModuleGUIFromInputObjects();
-                });
+                });*/
                 
                 webutil.createDropdownItem(dropmenu,'Reset Parameters',function() {
                     self.resetParameters();

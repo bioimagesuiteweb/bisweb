@@ -163,7 +163,8 @@ class BaseViewerElement extends HTMLElement {
         if (val!==undefined) {
             data.playing=val;
         } else {
-            this.internal.play_movie_controller.updateDisplay();
+            if (this.internal.play_movie_controller)
+                this.internal.play_movie_controller.updateDisplay();
         }
 
         

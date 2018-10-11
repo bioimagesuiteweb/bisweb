@@ -1120,7 +1120,7 @@ class PaintToolElement extends HTMLElement {
                                                                               this.internal.algocontroller,
                                                                               new modules.morphologyFilter(),
                                                                               moduleoptions);
-                        webutil.createMenuItem(tmenu, moduleoptions.name,function() {
+                        webutil.createMenuItem(tmenu, moduleoptions.name, () => {
                             self.internal.morphologyModule.show();
                         });
 

@@ -783,6 +783,8 @@ class MosaicViewerElement extends BaseViewerElement {
         data.increment = this.internal.increment;
         data.tcoord = this.internal.frame;
         data.decorations = true;
+        data.rate=20;
+        data.playing=false;
 
         this.internal.displaymodes=dpname;
         
@@ -809,7 +811,7 @@ class MosaicViewerElement extends BaseViewerElement {
         var coordchange = function() {
             self.setslices(data.first, data.increment,data.tcoord);
         };
-        let moviefolder=null;
+        //        let moviefolder=null;
         this.internal.play_movie_controller=null;
         
         var xcoord=f1.add(data,'first',0,this.internal.imagedim[this.internal.plane]-1).name("First").step(1);
@@ -817,11 +819,11 @@ class MosaicViewerElement extends BaseViewerElement {
         xcoord.onChange(coordchange);
         ycoord.onChange(coordchange);
 
-        if (this.internal.maxnumframes>1) {
+        /*if (this.internal.maxnumframes>1) {
             this.internal.framecontroller=f1.add(data,'tcoord',0,this.internal.maxnumframes-1).name("Frame");
             this.internal.framecontroller.onChange(coordchange);
             moviefolder = gui.addFolder('Movie');
-        }
+        }*/
 
         data.decorations=self.internal.showdecorations;
         var deco=f1.add(data, 'decorations').name("Labels");
@@ -871,8 +873,8 @@ class MosaicViewerElement extends BaseViewerElement {
                                parent : bbar }).click( function() { self.viewerInformation();});
 
 
-        if (moviefolder!==null)
-            this.createmoviecontrols(moviefolder);
+        //        if (moviefolder!==null)
+        //this.createmoviecontrols(moviefolder);
         bbar.tooltip();
     }
 
