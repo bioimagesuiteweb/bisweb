@@ -376,21 +376,112 @@ class AWSModule extends BaseServerClient {
      * @returns {Promise} payload list of filenames that match
      */
     getMatchingFiles(queryString = '*') {
+        let s3 = this.s3;
+        let matchingFiles = [];
+
         return new Promise( (resolve, reject) => {
 
             let splitString = queryString.split('/');
+
             console.log('query string', queryString, 'split string', splitString);
-            let prefix = (splitString[0] === ''  || splitString[0] === '*') ? '' : splitString[0] + '/';
 
-            this.s3.listObjectsV2({ 'Prefix' : prefix, 'Delimiter': '/'}, (err, data) => {
-                if (err) { reject(err); return; }
-
-                console.log('data', data);
+            expandPrefixes('*.nii.gz', '').then((data) => {
+                console.log('data from prefixes', data);
+            }).catch( (err) => {
+                reject(err);
             });
-
+            
         });
         
-        function getDirectoryContents(directory) {
+        /*
+         * Searches S3 for files at a current level and returns both the contents at that level and the prefixes of the folders under it. 
+         * @param {String} directory - The name of the file that should go at the end of the file path
+         * @param {String} filePath - The file path leading up to 'directory', e.g. for 'a/b/c.nii.gz' this would be 'a/b'
+         */
+        function expandPrefixes(directory, filePath = '') {
+            return new Promise((resolve, reject) => {
+                if (directory === '') { 
+                    resolve([]);
+                } else if (directory.includes('*')) {
+
+                    let prefix = (filePath === '') ? '' : filePath + '/';
+
+                    s3.listObjects({ 'Prefix' : prefix, 'Delimiter' : '/'}, (err, data) => {
+                        if (err) { reject(err); }
+
+                        console.log('initial list', data);
+                        let promiseList = [];
+                        for (let prefixEntry of data.CommonPrefixes) {
+                            let listFn = new Promise( (resolve, reject) => {
+                                s3.listObjectsV2({ 'Prefix' : prefix + prefixEntry.Prefix, 'Delimiter' : '/' }, (err, data) => {
+
+                                    if (err) { reject(err); }
+                                    resolve(data);
+                                });
+                            });
+
+                            promiseList.push(listFn);
+                        }
+
+                        Promise.all(promiseList).then((values) => {
+
+                            console.log('resolved promises', values);
+                            //filter files based on query string (e.g. if it was *.nii.gz filter out all the non-'.nii.gz' files)
+                            let filterString = directory.split('.');
+                            if (filterString.length > 1) {
+
+                                //some file extensions are more than one part long (e.g. .nii.gz), so we only want to strip off the filename and rejoin the rest
+                                filterString = filterString.slice(1).join('.');
+                                console.log('filter string', filterString);
+
+                                let filteredFiles = { 'files' : [], 'commonPrefixes' : [] };
+
+                                //parse the results of each promise for files that end in the desired type
+                                for (let value of values) {
+
+                                    for (let file of value.Contents) {
+
+                                        //split the filename off from the full filepath, i.e. Contents field from the S3 list function will contain something of the form 'a/b/c.nii.gz' and we only want 'c.nii.gz'
+                                        let filename = file.Key.split('/');
+                                        filename = filename[filename.length - 1];
+
+                                        let fileExtension = filename.split('.');
+                                        fileExtension = fileExtension.slice(1).join('.');
+
+                                        if (fileExtension === filterString) {
+                                            filteredFiles.files.push(file);
+                                        }
+                                    }
+
+                                    filteredFiles.commonPrefixes = filteredFiles.commonPrefixes.concat(value.CommonPrefixes);
+                                }
+
+                                resolve(filteredFiles);
+                            } else {
+
+                                let compiledFiles = { 'files' : [], 'commonPrefixes' : [] };
+                                for (let value of values) {
+                                    compiledFiles.files = compiledFiles.files.concat(value.Contents);
+                                    compiledFiles.commonPrefixes = compiledFiles.commonPrefixes.concat(value.CommonPrefixes);
+                                }  
+                                
+                                console.log('compiled files', compiledFiles);
+                                resolve(compiledFiles);
+                            }
+
+                        });
+
+                    });
+
+                } else {
+                    let prefix = filePath + '/' + directory + '/';
+                     s3.listObjectsV2({ 'Prefix' : prefix, 'Delimiter' : '/' }, (err, data) => {
+                        if (err) { reject(err); }
+
+                        resolve(data);
+                     });
+                }
+            });
             
         }
 
