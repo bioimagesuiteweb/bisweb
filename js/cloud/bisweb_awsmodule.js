@@ -377,7 +377,9 @@ class AWSModule extends BaseServerClient {
      */
     getMatchingFiles(queryString = '*') {
         let s3 = this.s3;
-        let matchingFiles = [];
+        let currentDirectoryIndex = 0;
+        let currentDirectory = queryString[currentDirectoryIndex];
+        let currentPrefixList = [];
 
         return new Promise( (resolve, reject) => {
 
@@ -385,14 +387,34 @@ class AWSModule extends BaseServerClient {
 
             console.log('query string', queryString, 'split string', splitString);
 
-            expandPrefixes('*.nii.gz', '').then((data) => {
+
+            let handlePrefixExpansion = (values = null) => {
+
+                if (currentDirectoryIndex + 1 >= splitString.length) {
+                    resolve(values.files);
+                } else {
+
+                    currentDirectoryIndex = currentDirectoryIndex + 1;
+                    currentDirectory = queryString[currentDirectoryIndex];
+                    expandPrefixes(currentDirectory, currentPrefixList).then( (values) => {
+                        handlePrefixExpansion(values);
+                    });
+                }
+            };
+            
+
+
+            handlePrefixExpansion();
+
+            /*expandPrefixes('*.nii.gz', '').then((data) => {
                 console.log('data from prefixes', data);
             }).catch( (err) => {
                 reject(err);
             });
+            */
             
         });
-        
+
         /*
          * Searches S3 for files at a current level and returns both the contents at that level and the prefixes of the folders under it. 
          * @param {String} directory - The name of the file that should go at the end of the file path
@@ -478,7 +500,8 @@ class AWSModule extends BaseServerClient {
                      s3.listObjectsV2({ 'Prefix' : prefix, 'Delimiter' : '/' }, (err, data) => {
                         if (err) { reject(err); }
 
-                        resolve(data);
+                        let formattedData = { 'files' : data.Contents, 'commonPrefixes' : data.CommonPrefixes};
+                        resolve(formattedData);
                      });
                 }
             });
