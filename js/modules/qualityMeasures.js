@@ -193,8 +193,7 @@ class QualityMeasuresModule extends BaseModule {
     let bdata=this.segmentedImage.getImageData(); // background and non-background image
     let islicesize=indims[0]*indims[1];
     
-    //this.outputs['segm']=this.segmentedMaskedImage;
-    this.outputs['segm']=this.segmentedImage;
+    this.outputs['segm']=this.segmentedMaskedImage;
     
     let imageVar = this.variance(idata);
     let imageMean = this.mean(idata);
@@ -239,31 +238,29 @@ class QualityMeasuresModule extends BaseModule {
     }
 
     x_max = Math.sqrt(x_max);
+    
+    let snr = this.mean(signal)/(Math.sqrt(this.variance(bm))); // higher better
+    let cjv = (Math.sqrt(this.variance(wm))+Math.sqrt(this.variance(gm)))/Math.abs(this.mean(wm)-this.mean(gm)); // lower better
+    let cnr = Math.abs(this.mean(gm)-this.mean(wm))/Math.sqrt(this.variance(bm)+this.variance(wm)+this.variance(gm)); // higher better
+    let efc = -x_j.map(function(v){ return v/x_max*Math.log(v/x_max)}).reduce((a,b)=>a+b); // lower better
+
     console.log('xj.length:',x_j.length);
-    console.log('noise.length:',noise.length);
     console.log('signal.length:',signal.length);
     console.log('bm.length:',bm.length);
     console.log('wm.length:',wm.length);
     console.log('gm.length:',gm.length);
     console.log('image mean:',imageMean);
     console.log('image var:',imageVar);
-    console.log('image mean x_j>0:',this.mean(x_j));
-    console.log('image var x_j>0:',this.variance(x_j));
-    console.log('image mean x_j>mu:',this.mean(signal));
-    console.log('image var x_j>mu:',this.variance(signal));
-    console.log('image mean 0<x_j<mu:',this.mean(noise));
-    console.log('image var  0<x_j<mu:',this.variance(noise));
     console.log('mean wm:',this.mean(wm));
-    console.log('var wm:',this.variance(wm));
     console.log('mean gm:',this.mean(gm));
-    console.log('var gm:',this.variance(gm));
-
     console.log('mean bm:',this.mean(bm));
+    console.log('var gm:',this.variance(gm));
     console.log('var bm:',this.variance(bm));
-    let snr = this.mean(signal)/(Math.sqrt(this.variance(bm))); // higher better
-    let cjv = (Math.sqrt(this.variance(wm))+Math.sqrt(this.variance(gm)))/Math.abs(this.mean(wm)-this.mean(gm)); // lower better
-    let cnr = Math.abs(this.mean(gm)-this.mean(wm))/Math.sqrt(this.variance(bm)+this.variance(wm)+this.variance(gm)); // higher better
-    let efc = -x_j.map(function(v){ return v/x_max*Math.log(v/x_max)}).reduce((a,b)=>a+b); // lower better
+    console.log('var wm:',this.variance(wm));
+    console.log('snr:',snr);
+    console.log('cjv:',cjv);
+    console.log('cnr:',cnr);
+    console.log('efc:',efc);
     return [snr,cnr,cjv,efc];
   };
 
