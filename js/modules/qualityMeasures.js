@@ -23,26 +23,63 @@ const BisWebImage = require('bisweb_image.js');
 const biswrap = require('libbiswasm_wrapper');
 const genericio= require('bis_genericio');
 const xformutil=require('bis_transformationutil.js');
+const BisWebTextObject = require('bisweb_textobject.js');
+const BisWebMatrix = require('bisweb_matrix.js');
+
 /**
- * Combines images
- */
+   * Quality Control class
+   * @author: Javid Dadashkarimi
+   * structural metrics: signal to noise ratio (snr) , contrast-to-noise ratio (cnr), coefficient of joint variation (cjv),  entropy focus criterion (efc)
+**/
 class QualityMeasuresModule extends BaseModule {
   constructor() {
     super();
-    this.name = 'combineImages';
+    this.name = 'Quality Control';
     this.outputmask=false;
+    this.maskedImage= new BisWebImage();
+    this.reslicedImage = new BisWebImage();
+    this.segmentedImage = new BisWebImage();
+    this.segmentedMaskedImage = new BisWebImage();
   }
 
   createDescription() {
 
     let m=this.outputmask;
     return {
-      "name": "Deface",
+      "name": "QC",
         "description": "This module uses data from the openfmri project to deface an image by first affinely registering it to a template",
         "author": "Javid Dadashkarimi",
         "version": "1.0",
         "inputs": baseutils.getImageToImageInputs(),
-        "outputs": baseutils.getImageToImageOutputs(null,'viewer1','overlay'),
+        "outputs": [
+            {
+                'type': 'matrix',
+                'name': 'Output Matrix',
+                'description': 'The results matrix',
+                'varname': 'output',
+                'shortname': 'o',
+                'required': false,
+                'extension' : '.matr'
+            },
+            {
+                'type' : 'text',
+                'name' : 'Results',
+                'description': 'log file',
+                'varname': 'logoutput',
+                'required': true,
+                'extension': '.bistext'
+            },
+            {
+                'type': 'image',
+                'name': 'Output Image',
+                'description': 'Segmentation image',
+                'varname': 'segm',
+                'required': false,
+                'extension': '.nii.gz',
+                'guiviewertype' : 'overlay',
+                'guiviewer'  : 'viewer1',
+            }
+        ],
         "buttonName": "Execute",
         "shortname" : "quality",
         "params": [
@@ -99,6 +136,9 @@ class QualityMeasuresModule extends BaseModule {
     };
   }
 
+  /***
+    * takes array=arr and returns mean of it. 
+  ***/
   mean(arr){
     if(arr.length){
       return arr.reduce(function(a, b) { return a + b; })/arr.length;
@@ -106,6 +146,10 @@ class QualityMeasuresModule extends BaseModule {
       return 0;
     }
   };
+
+  /***
+    * takes array=arr and returns varience of it.
+  ***/
   variance(arr){
     var mu = this.mean(arr);
     return this.mean(arr.map(function(num) {
@@ -113,31 +157,45 @@ class QualityMeasuresModule extends BaseModule {
           }));
   };
 
-  getSmoothMeasures(input,vals) {
-
-    //let defacedImage = biswrap.segmentImageWASM(img, {});
-    let segmentedImage = biswrap.segmentImageWASM(input, {
+  /***
+    * image segmentation: takes masked image and segemnt it into
+    * k=3 classes based on white matter, grey matter, and background.
+  ***/
+  segmentImage(maskedImage, vals, k){
+    return biswrap.segmentImageWASM(maskedImage, {
         "frame" : 0,
         "component" : 0,
-        "numclasses" : 3,
+        "numclasses" : k,
         "numbins" : 256,
         "maxsigmaratio" : 0.2,
         "robust" : false,
         "smoothhisto" : true,
         "smoothness" : 0,
         "mrfconvergence" : 0.2,
-        "mrfiterations" : 8,
+        "mrfiterations" : 8, 
         "internaliterations" : 4,
         "noisesigma2" : 0
         },vals.debug);
+    
 
-    let indims=input.getDimensions();
-    let spa=input.getSpacing();
-    let idata=input.getImageData();
-    let sdata=segmentedImage.getImageData();
+  }
+
+  /***
+    * computes quality control metrics and set output
+    * input: vals
+    * output: [snr,cnr,cjv,efc]
+  ***/
+  getQualityMeasures(vals) {
+    let indims=this.maskedImage.getDimensions();
+    let spa=this.maskedImage.getSpacing();
+    let idata=this.maskedImage.getImageData();
+    let sdata=this.segmentedMaskedImage.getImageData(); // masked image 
+    let bdata=this.segmentedImage.getImageData(); // background and non-background image
     let islicesize=indims[0]*indims[1];
-
-    console.log('segmentedImage',segmentedImage); 
+    
+    //this.outputs['segm']=this.segmentedMaskedImage;
+    this.outputs['segm']=this.segmentedImage;
+    
     let imageVar = this.variance(idata);
     let imageMean = this.mean(idata);
     console.log('variance:',imageVar);
@@ -148,177 +206,256 @@ class QualityMeasuresModule extends BaseModule {
     let bm = []; // background
     let x_j = []; // voxel intensities
     let x_max = 0;
+
+    signal.push(0.01);
+    noise.push(0.01);
+    bm.push(0.01);
+    wm.push(0.01);
+    gm.push(0.01);
+    x_j.push(0.01);
+
     for (let k=0;k<indims[2];k++) {
       for (let j=0;j<indims[1];j++) {
         for (let i=0;i<indims[0];i++) {
           let inindex= i+j*indims[0]+k*islicesize;
-          if(idata[inindex]){
-            x_j.push(idata[inindex]);
-            x_max +=Math.pow(idata[inindex],2); 
+
+          x_j.push(idata[inindex]);
+          x_max +=Math.pow(idata[inindex],2); 
+
+          if(idata[inindex] > imageMean){
+            signal.push(idata[inindex]);
           }
+
           if(sdata[inindex]==1){
             wm.push(idata[inindex]);
           }else if(sdata[inindex]==2){
             gm.push(idata[inindex]);
-          } else if(sdata[inindex]==0){
+          } else if(bdata[inindex]==0){ // from two-class segmentation
             bm.push(idata[inindex]);
           } 
 
-          if(idata[inindex] > imageMean){
-            signal.push(idata[inindex]);
-          }else{
-            noise.push(idata[inindex]);
-          }
         }
       }
     }
+
     x_max = Math.sqrt(x_max);
+    console.log('xj.length:',x_j.length);
     console.log('noise.length:',noise.length);
-    //let snr = mean(signal)/(variance(noise)*Math.pow(2/(4-Math.PI),0.5)); // higher better
-    let snr = this.mean(x_j)/(Math.sqrt(this.variance(x_j))*Math.sqrt(x_j.length/(x_j.length-1))); // higher better
+    console.log('signal.length:',signal.length);
+    console.log('bm.length:',bm.length);
+    console.log('wm.length:',wm.length);
+    console.log('gm.length:',gm.length);
+    console.log('image mean:',imageMean);
+    console.log('image var:',imageVar);
+    console.log('image mean x_j>0:',this.mean(x_j));
+    console.log('image var x_j>0:',this.variance(x_j));
+    console.log('image mean x_j>mu:',this.mean(signal));
+    console.log('image var x_j>mu:',this.variance(signal));
+    console.log('image mean 0<x_j<mu:',this.mean(noise));
+    console.log('image var  0<x_j<mu:',this.variance(noise));
+    console.log('mean wm:',this.mean(wm));
+    console.log('var wm:',this.variance(wm));
+    console.log('mean gm:',this.mean(gm));
+    console.log('var gm:',this.variance(gm));
+
+    console.log('mean bm:',this.mean(bm));
+    console.log('var bm:',this.variance(bm));
+    let snr = this.mean(signal)/(Math.sqrt(this.variance(bm))); // higher better
     let cjv = (Math.sqrt(this.variance(wm))+Math.sqrt(this.variance(gm)))/Math.abs(this.mean(wm)-this.mean(gm)); // lower better
     let cnr = Math.abs(this.mean(gm)-this.mean(wm))/Math.sqrt(this.variance(bm)+this.variance(wm)+this.variance(gm)); // higher better
-    let ecf = -x_j.map(function(v){ return v/x_max*Math.log(v/x_max)}).reduce((a,b)=>a+b); // lower better
-    return [snr,cnr,cjv,ecf];
-
+    let efc = -x_j.map(function(v){ return v/x_max*Math.log(v/x_max)}).reduce((a,b)=>a+b); // lower better
+    return [snr,cnr,cjv,efc];
   };
 
 
+  /*
+   * input: images, vals= images[0]: structural mask, images[1]: brain mask
+   * output: linear registered image
+   *
+   */
+  registeration(images,vals){
+    let img = this.inputs['input'];
+    let initial=0;
+    let idat=img.getImageData();
+    let o1=img.getOrientationName();
+    let o2=images[0].getOrientationName();
+    let centeronrefonly=false;
+    let snr = this.mean(signal)/(Math.sqrt(this.variance(noise))); // higher better
+    let cjv = (Math.sqrt(this.variance(wm))+Math.sqrt(this.variance(gm)))/Math.abs(this.mean(wm)-this.mean(gm)); // lower better
+    let cnr = Math.abs(this.mean(gm)-this.mean(wm))/Math.sqrt(this.variance(bm)+this.variance(wm)+this.variance(gm)); // higher better
+    let efc = -x_j.map(function(v){ return v/x_max*Math.log(v/x_max)}).reduce((a,b)=>a+b); // lower better
+    return [snr,cnr,cjv,efc];
+  };
 
-  qualityControlAlgorithm(vals,img){
+
+  /*
+   * input: images, vals= images[0]: structural mask, images[1]: brain mask
+   * output: linear registered image
+   *
+   */
+  registeration(images,vals){
+    let img = this.inputs['input'];
+    let initial=0;
+    let idat=img.getImageData();
+    let o1=img.getOrientationName();
+    let o2=images[0].getOrientationName();
+    let centeronrefonly=false;
+
+    if (o1!==o2) {
+      centeronrefonly=true;
+      initial=xformutil.computeHeaderTransformation(img,images[0],false);
+    }
+
+    return biswrap.runLinearRegistrationWASM(img, images[0], initial, {
+        'intscale' : 1,
+        'numbins' : 64,
+        'levels' : parseInt(vals.levels),
+        'centeronrefonly' : this.parseBoolean(centeronrefonly),
+        'smoothing' : 1.0,
+        'optimization' : 2,
+        'stepsize' : 1.0,
+        'metric' : 3,
+        'steps' : 1,
+        'iterations' : parseInt(vals.iterations),
+        'mode' : 3,
+        'resolution' : parseFloat(vals.resolution),
+        'normalize' : true,
+        'debug' : true,
+        'return_vector' : false}, this.parseBoolean(vals.debug));
+  }
+
+  /*
+   * input: img, vals
+   * output: masked image = setting areas outside of the mask as zero
+   */
+  maskImage(img,vals){
+    if (this.parseBoolean(vals.outputmask)) {
+      let tdat=this.reslicedImage.getImageData();
+      let l=tdat.length;
+
+
+      for (let i=0;i<l;i++) {
+        if (tdat[i]<1)
+          tdat[i]=0;
+        else
+          tdat[i]=1;
+      }
+    } else {
+      this.maskedImage.cloneImage(img);
+      let odat=this.maskedImage.getImageData();
+
+      let idat=img.getImageData();
+      let tdat=this.reslicedImage.getImageData();
+
+      let dm=this.maskedImage.getDimensions();
+      let volumesize=dm[0]*dm[1]*dm[2];
+      let numframes=dm[3]*dm[4];
+
+      let count=0;
+      for (let i=0;i<volumesize;i++) {
+        let v=tdat[i];
+        if (v<1) {
+          count=count+1;
+          for (let f=0;f<numframes;f++) {
+            odat[f*volumesize+i]=0;
+          }
+        } else {
+          for (let f=0;f<numframes;f++) {
+            odat[f*volumesize+i]=idat[f*volumesize+i];
+          }
+        }
+      }
+      console.log('Done masked=',count,'/',volumesize,' voxels');
+    }
+    return this.maskedImage;
+  }
+
+  /*
+   * input: img, vals
+   * output: BisWebTextObject of quality controls
+   */
+  printQualityControl(img,vals){
+    let mode=vals.mode;
+    let fdata=img.getImageData();
+    let dim = img.getDimensions();
+    var snr,cnr,cjv,ecf;// measures 
+    [snr,cnr,cjv,ecf] = this.getQualityMeasures(vals);
+
+    let message = "<p>  Image Quality Metrics</p><p>SNR= <span style=\"color:green\">"+snr.toFixed(4).toString()+"</span></p>"+
+      "<p>CNR= <span style=\"color:green\">"+cnr.toFixed(4).toString()+"</span><a href=\"https://mriqc.readthedocs.io/en/stable/iqms/t1w.html#magnota2006\"/></p>"+
+      "<p>CJV= <span style=\"color:green\">"+cjv.toFixed(4).toString()+"</span></p>"+
+      "<p>ECF= <span style=\"color:green\">"+ecf.toFixed(4).toString()+"</span></p>";
+
+    this.outputs['logoutput']=new BisWebTextObject(message);
+    let mat=new BisWebMatrix();
+    mat.zero(4,1);
+    mat.setElement(0,0,snr);
+    mat.setElement(1,0,cnr);
+    mat.setElement(2,0,cjv);
+    mat.setElement(3,0,ecf);
+    this.outputs['output']=mat;
+
+  }
+
+  /***
+   * the main function for quality control
+   * input: vals, image
+   * output: BisWebTextObject(message)
+   ***/
+
+  qualityCtrlProcess(img,vals){
     let images = [ new BisWebImage(), new BisWebImage() ];
     let imagepath = genericio.getimagepath();
+    console.log('imagepath:',imagepath);
     return new Promise((resolve, reject) => { // defacing
         Promise.all( [
             images[0].load(`${imagepath}/mean_reg2mean.nii.gz`),
-            images[1].load(`${imagepath}/facemask_char.nii.gz`),
+            images[1].load(`${imagepath}/brain_mask_for_qc.nii.gz`),
             biswrap.initialize()
         ]).then( () => {
 
-          let img = this.inputs['input'];
-          let initial=0;
-          let idat=img.getImageData();
-          let o1=img.getOrientationName();
-          let o2=images[0].getOrientationName();
-          let centeronrefonly=false;
+          /*
+           * step 1: linear registeration
+           */
+          var matr = this.registeration(images,vals); 
 
-          if (o1!==o2) {
-          centeronrefonly=true;
-          initial=xformutil.computeHeaderTransformation(img,images[0],false);
-          }
+          /*
+           * step 2: reslice registered image
+           */
+          this.reslicedImage=baseutils.resliceRegistrationOutput(biswrap,img,images[1],matr,1,0);
 
-          console.log('initial:',initial); 
-          console.log('images',images[0]);
-         
-          let matr = biswrap.runLinearRegistrationWASM(img, images[0], initial, {
-              'intscale' : 1,
-              'numbins' : 64,
-              'levels' : parseInt(vals.levels),
-              'centeronrefonly' : this.parseBoolean(centeronrefonly),
-              'smoothing' : 1.0,
-              'optimization' : 2,
-              'stepsize' : 1.0,
-              'metric' : 3,
-              'steps' : 1,
-              'iterations' : parseInt(vals.iterations),
-              'mode' : 3,
-              'resolution' : parseFloat(vals.resolution)/2,
-              'normalize' : true,
-              'debug' : true,
-              'return_vector' : false}, this.parseBoolean(vals.debug));
+          /*
+           * step 3: mask resliced Image
+           */
+          this.maskedImage = this.maskImage(img,vals);
+          //this.maskedImage = maskedImage;
 
-          let temp=baseutils.resliceRegistrationOutput(biswrap,img,images[1],matr,1,0);
+          /*
+           * step 4: segmentImage
+           */
+          this.segmentedImage = this.segmentImage(img, vals , 2); // Step 3 image segmentation 
+          this.segmentedMaskedImage =  this.segmentImage(this.maskedImage, vals , 3); // Step 3 image segmentation 
+          //var segmentedBackgroundImage =  this.segmentImage(maskedImage, vals , 2); // Step 3 image segmentation 
 
-          if (this.parseBoolean(vals.outputmask)) {
-            let tdat=temp.getImageData();
-            let l=tdat.length;
-            for (let i=0;i<l;i++) {
-              if (tdat[i]<50)
-                tdat[i]=0;
-              else
-                tdat[i]=1;
-            }
-            this.outputs['output']=temp;
-          } else {
-            let output=new BisWebImage();
-            output.cloneImage(img);
+          /*
+           * step 5: compute quality control metrics
+           */
+          this.printQualityControl(img,vals);       
 
-            let idat=img.getImageData();
-            let odat=output.getImageData();
-            let tdat=temp.getImageData();
+          resolve();
 
-            let dm=output.getDimensions();
-            let volumesize=dm[0]*dm[1]*dm[2];
-            let numframes=dm[3]*dm[4];
-
-            let count=0;
-
-            for (let i=0;i<volumesize;i++) {
-              let v=tdat[i];
-              if (v<50) {
-                count=count+1;
-                for (let f=0;f<numframes;f++) {
-                  odat[f*volumesize+i]=0;
-                }
-              } else {
-                for (let f=0;f<numframes;f++) {
-                  odat[f*volumesize+i]=idat[f*volumesize+i];
-                }
-              }
-            }
-
-            console.log('Done masked=',count,'/',volumesize,' voxels');
-            this.outputs['output']= output;
-          }
-
-          let mode=vals.mode;
-          let fdata=img.getImageData();
-          let dim = img.getDimensions();
-          var snr,cnr,cjv,ecf;// measures;
-          //[snr,cnr,cjv,ecf] = this.getSmoothMeasures(this.outputs['output'],vals);//.toFixed(10).toString();
-          [snr,cnr,cjv,ecf] = this.getSmoothMeasures(img,vals);//.toFixed(10).toString();
-
-          let message = "<p>  Image Quality Metrics</p><p>SNR= <span style=\"color:green\">"+snr.toFixed(4).toString()+"</span></p>"+
-            "<p>CNR= <span style=\"color:green\">"+cnr.toFixed(4).toString()+"</span></p>"+
-            "<p>CJV= <span style=\"color:green\">"+cjv.toFixed(4).toString()+"</span></p>"+
-            "<p>ECF= <span style=\"color:green\">"+ecf.toFixed(4).toString()+"</span></p>";
-
-
-
-          const bootbox=require('bootbox');
-          bootbox.dialog({
-    message: message,
-    closeButton: false,
-    buttons: {
-    ok: {
-    label: 'close',
-    className: 'btn-info',
-    callback: function(){
-    }
-    }
-    }});
-
-    resolve();
-
-    }).catch( (e) => {
-      reject(e.stack);
-      });
+        }).catch( (e) => {
+          reject(e.stack);
+          });
     });
 
-}
+  }
 
-directInvokeAlgorithm(vals) {
-  console.log('oooo invoking: defaceImage with vals', JSON.stringify(vals));
-
-  //let input = this.inputs['input'];
-
-  let img = this.inputs['input'];
-  let  a= this.qualityControlAlgorithm(vals,img);
-
-
-  return a;
-
-}
+  directInvokeAlgorithm(vals) {
+    console.log('oooo invoking: defaceImage with vals', JSON.stringify(vals));
+    let img = this.inputs['input'];
+    return this.qualityCtrlProcess(img,vals);
+  }
 
 }
 
