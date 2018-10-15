@@ -422,10 +422,8 @@ ipcMain.on('showdevtools', function () {
 });
 
 ipcMain.on('showconsole',function() {
-    console.log('Creating console');
     if (state.console===null)
         createConsole();
-    console.log('Showing console');
     state.console.show();
 });
 

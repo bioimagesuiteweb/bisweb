@@ -28,18 +28,19 @@ const BisWebTextObject = require('bisweb_textobject.js');
 class ReorientImageModule extends BaseModule {
     constructor() {
         super();
+        this.JSOnly=true;
         this.name = 'reorientImage';
     }
 
     createDescription() {
 
-        return {
+        let des= {
             "name": "Reorient Image",
             "description": "This algorithm reorients an image to a fixed orientation",
             "author": "Xenios Papademetris",
             "version": "1.0",
             "inputs": baseutils.getImageToImageInputs('Load the image to be blanked'),
-            "outputs": baseutils.getImageToImageOutputs(null,null,null,true),
+            "outputs": baseutils.getImageToImageOutputs(),
             "buttonName": "Execute",
             "shortname" : "reornt",
             "params": [
@@ -59,6 +60,9 @@ class ReorientImageModule extends BaseModule {
             ],
             
         };
+
+        baseutils.addLogOutput(des.outputs);
+        return des;
     }
 
     directInvokeAlgorithm(vals) {

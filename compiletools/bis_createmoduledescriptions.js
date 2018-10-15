@@ -40,13 +40,15 @@ var help = function() {
 program.version('1.0.0')
     .option('-i, --input  <s>','module list file')
     .option('-o, --output  <s>','output python module')
+    .option('-m, --modulelist  <s>','output python module list')
     .on('--help',function() {
         help();
     })
     .parse(process.argv);
 
 let outputname = program.output || null;
-if (program.output===null) {
+let modulelistname = program.modulelist || null;
+if (program.output===null ) {
     help();
     process.exit();
 }
@@ -61,25 +63,35 @@ modulelist=mtext.split('\n');
 
 
 let outobj={ };
-
+let lst=[];
 for (let i=0;i<modulelist.length;i++) {
 
     let modulename=modulelist[i];
     let moduleclass=modules[modulename];
     let module=new moduleclass();
-    let desc = module.getDescription();
-    let name = module.name;
-    outobj[name]=desc;
-    console.log('++++\t Processed module ',modulename,'-->' , name);
+    if (! module.JSOnly) {
+        let desc = module.getDescription();
+        let name = module.name;
+        outobj[name]=desc;
+        console.log('++++\t Processed module ',modulename,'-->' , name);
+        lst.push(modulelist[i]);
+    } else {
+        console.log('----\t Skipping module ',modulename, ' (JSOnly='+module.JSOnly+')');
+    }
 }
 
 let a=JSON.stringify(outobj,null,4);
 a = a.replace(/true/g, 'True');
 a = a.replace(/false/g, 'False');
-
+    
 let jsonout = "descriptions = "+a+"\n";
 console.log('++++\n++++ Writing descriptions in ',outputname,'\n++++');
 fs.writeFileSync(outputname, jsonout);
 
+if (modulelistname) {
+    console.log('++++\n++++ Writing modulelist in ',modulelistname,'\n++++');    
+    fs.writeFileSync(modulelistname, lst.join('\n'));
+}
+    
 process.exit(0);
     

@@ -245,6 +245,7 @@ class CustomModule {
 
         if (this.module.mouseobserver) {
             // get the current position in the viewer
+            this.description = this.module.getDescription();
             let elem=this.description.inputs[0];
             let varname = elem.varname;
             let viewer = this.getViewerFromName(this.inputVars, varname);
@@ -361,7 +362,7 @@ class CustomModule {
 
                 webutil.enablebutton(generatedContent.runbutton, status);
                 webutil.enablebutton(generatedContent.undobutton, status);
-                webutil.enablebutton(generatedContent.redobutton, status);
+                //                webutil.enablebutton(generatedContent.redobutton, status);
             });
 
 
@@ -389,16 +390,16 @@ class CustomModule {
                 this.handleUndo();
             });
 
-            generatedContent.redobutton[0].addEventListener("click", (e) => {
+            /*            generatedContent.redobutton[0].addEventListener("click", (e) => {
                 e.preventDefault();
                 this.handleRedo();
-            });
+            });*/
             
             let dropmenu=generatedContent.dropmenu;
             if (dropmenu!==null) {
-                webutil.createDropdownItem(dropmenu,'Update Inputs', function() {
+                /*webutil.createDropdownItem(dropmenu,'Update Inputs', function() {
                     self.updateModuleGUIFromInputObjects();
-                });
+                });*/
                 
                 webutil.createDropdownItem(dropmenu,'Reset Parameters',function() {
                     self.resetParameters();
@@ -450,6 +451,8 @@ class CustomModule {
     moduleDone(inputParams, outputs) {
 
         webutil.createAlert(`Module ${this.module.getDescription().name} done`);
+
+        let count=0;
         
         this.description.outputs.forEach((opt) => {
             let outobj = outputs[opt.varname];
@@ -486,7 +489,11 @@ class CustomModule {
                         }
                     });
                 } else if (outobj.getObjectType() === "text") {
-                    this.showText(outobj);
+                    count=count+1;
+                    if (count===1) {
+                        // Only show the first text object
+                        this.showText(outobj,"Module "+this.module.getDescription().name+' done.');
+                    }
                 }
             }
         });
@@ -565,11 +572,17 @@ class CustomModule {
      * display text object and present an option to save it
      * @param{BisWebTextObject} - obj
      */
-    showText(obj) {
+    showText(obj,title="Output Information") {
 
         let txt=obj.getText();
         if (txt.length<1)
             return;
+
+        // Hide alert messages
+        $('.alert-success').remove();
+        $('.alert-info').remove();
+
+        
         txt=txt.replace(/\n---\n/g,'<HR>');
         txt=txt.replace(/\n/g,'<BR>').replace(/\t/g,'&nbsp;&nbsp;&nbsp;&nbsp;');
         txt=txt.replace(/\\n/g,'<BR>').replace(/\\t/g,'&nbsp;&nbsp;&nbsp;&nbsp;');
@@ -580,7 +593,7 @@ class CustomModule {
 
         
         bootbox.dialog({
-            title: 'Output Information',
+            title: title,
             message: output,
                 buttons: {
                     ok: {

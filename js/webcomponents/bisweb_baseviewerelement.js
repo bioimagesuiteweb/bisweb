@@ -163,7 +163,8 @@ class BaseViewerElement extends HTMLElement {
         if (val!==undefined) {
             data.playing=val;
         } else {
-            this.internal.play_movie_controller.updateDisplay();
+            if (this.internal.play_movie_controller)
+                this.internal.play_movie_controller.updateDisplay();
         }
 
         
@@ -743,9 +744,13 @@ class BaseViewerElement extends HTMLElement {
         else
             img=viewer.getimage();
 
+        console.log('Setting ' , this, img, source);
         if (source==='overlay') {
             let plainmode= (colortype === "Objectmap");
-            this.setobjectmap(img,plainmode,colortype);
+            if (img!==null)
+                this.setobjectmap(img,plainmode,colortype);
+            else
+                this.clearobjectmap();
         } else {
             this.setimage(img);
         }

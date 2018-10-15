@@ -26,6 +26,7 @@ const BisWebImage = require('bisweb_image.js');
 class CombineImageModule extends BaseModule {
     constructor() {
         super();
+        this.JSOnly=true;
         this.name = 'combineImages';
     }
 

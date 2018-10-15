@@ -29,6 +29,7 @@ class ManualRegistrationModule extends BaseModule {
     constructor() {
         super();
         this.name = 'manualRegistration';
+        this.JSOnly=true;
     }
     
     createDescription() {

@@ -37,6 +37,7 @@ class DefaceImageModule extends BaseModule {
         super();
         this.name = 'defaceImage';
         this.outputmask=false;
+        this.JSOnly=true;
     }
 
 
@@ -92,6 +93,19 @@ class DefaceImageModule extends BaseModule {
                     "step" : 1,
                 },
                 {
+                    "name": "Smoothing",
+                    "description": "Amount of image smoothing to perform",
+                    "priority": 4,
+                    "advanced": true,
+                    "type": "float",
+                    "gui": "slider",
+                    "varname": "imagesmoothing",
+                    "default": 2.0,
+                    "low":  0.0,
+                    "high": 4.0,
+                    "step" : 0.5,
+                },
+                {
                     "name": "Output Mask",
                     "description": "If true output the mask",
                     "priority": 5,
@@ -130,13 +144,14 @@ class DefaceImageModule extends BaseModule {
                     centeronrefonly=true;
                     initial=xformutil.computeHeaderTransformation(input,images[0],false);
                 }
+
                 
                 let matr = biswrap.runLinearRegistrationWASM(input, images[0], initial, {
                     'intscale' : 1,
                     'numbins' : 64,
                     'levels' : parseInt(vals.levels),
                     'centeronrefonly' : this.parseBoolean(centeronrefonly),
-                    'smoothing' : 1.0,
+                    'smoothing' : parseFloat(vals.imagesmoothing),
                     'optimization' : 2,
                     'stepsize' : 1.0,
                     'metric' : 3,

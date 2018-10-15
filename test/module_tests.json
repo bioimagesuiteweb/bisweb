@@ -474,7 +474,7 @@
             "dopython": true
         },
         {
-            "command" : "defaceImage --levels 3 --iterations 5 --resolution 2.0 --debug true -i testdata/deface/sag_2mm.nii.gz",
+            "command" : "defaceImage --levels 3 --iterations 5 --resolution 2.0 --imagesmoothing 1.0 --debug true -i testdata/deface/sag_2mm.nii.gz",
             "test"    : "--test_target testdata/deface/sag_2mm_defaced.nii.gz --test_threshold 0.9999 --test_comparison cc",
             "result"  : true,
             "dopython": false

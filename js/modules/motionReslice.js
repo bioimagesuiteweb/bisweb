@@ -33,6 +33,7 @@ class MotionResliceModule extends BaseModule {
     constructor() {
         super();
         this.name = 'motionReslice';
+        this.JSOnly=true;
         this.useworker=true;
     }
 

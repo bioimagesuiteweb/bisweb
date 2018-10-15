@@ -28,6 +28,7 @@ class ProjectImageModule extends BaseModule {
     constructor() {
         super();
         this.name = 'projectImage';
+        this.JSOnly=true;
     }
 
     

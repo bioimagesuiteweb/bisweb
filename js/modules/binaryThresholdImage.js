@@ -29,6 +29,7 @@ class BinaryThresholdImageModule extends ThresholdImageModule {
     constructor() {
         super();
         this.name = 'binaryThresholdImage';
+        this.JSOnly=true;
     }
 
 
