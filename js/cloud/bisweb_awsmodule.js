@@ -17,8 +17,8 @@ const $ = require('jquery');
 class AWSModule extends BaseServerClient {
 
     constructor() {
-        
-        super(); 
+
+        super();
         this.hasGUI = true;
 
         this.saveModal = null;
@@ -33,25 +33,23 @@ class AWSModule extends BaseServerClient {
         this.bucketMenuModal = null;
 
         this.awsbucketstorage = localforage.createInstance({
-            'driver' : localforage.INDEXEDDB,
-            'name' : 'bis_webfileutil', 
-            'version' : 1.0,
-            'size' : 10000,
-            'storeName' : 'AWSBuckets',
-            'description' : 'A database of AWS buckets that the user has attempted to connect to'
+            'driver': localforage.INDEXEDDB,
+            'name': 'bis_webfileutil',
+            'version': 1.0,
+            'size': 10000,
+            'storeName': 'AWSBuckets',
+            'description': 'A database of AWS buckets that the user has attempted to connect to'
         });
 
         this.awsbucketstorage.getItem('currentAWS', (err, value) => {
             if (err) { console.log('an error occured fetching from aws bucket storage', err); }
             try {
-                console.log('value', value);
                 let parsedAWS = JSON.parse(value);
                 if (parsedAWS.bucketName && parsedAWS.identityPoolId)
                     this.currentAWS = JSON.parse(value);
-                else 
+                else
                     this.currentAWS = null;
-                console.log('current aws', this.currentAWS);
-            } catch(e) {
+            } catch (e) {
                 console.log('an error occured parsing JSON', e);
                 this.currentAWS = null;
             }
@@ -59,7 +57,7 @@ class AWSModule extends BaseServerClient {
 
         //file display modal gets deleted if you try to load it too soon
         //not completely sure why -Zach
-        bis_webutil.runAfterAllLoaded( () => {   
+        bis_webutil.runAfterAllLoaded(() => {
             this.fileDisplayModal = new bisweb_simplefiledialog('Bucket Contents');
             this.fileDisplayModal.fileListFn = this.changeDirectory.bind(this);
         });
@@ -73,10 +71,10 @@ class AWSModule extends BaseServerClient {
      */
     createS3(bucketName, credentials = null, session_token = null) {
         let s3 = new AWS.S3({
-            'apiVersion' : '2006-03-01',
-            'credentials' : credentials,
-            'sessionToken' : session_token,
-            'params' : { Bucket : bucketName }
+            'apiVersion': '2006-03-01',
+            'credentials': credentials,
+            'sessionToken': session_token,
+            'params': { Bucket: bucketName }
         });
 
         return s3;
@@ -93,7 +91,7 @@ class AWSModule extends BaseServerClient {
     createLoadModal(opts) {
         console.log('loadmodal', opts);
         opts.server = 'amazonaws';
-        this.s3.listObjectsV2( { 'Delimiter' : '/' }, (err, data) => {
+        this.s3.listObjectsV2({ 'Delimiter': '/' }, (err, data) => {
             if (err) { console.log('an error occured', err); return; }
 
             //TODO: suffixes is NULL mostly should not be passed in
@@ -111,13 +109,13 @@ class AWSModule extends BaseServerClient {
      */
     downloadFile(filename, isbinary) {
 
-        return new Promise( (resolve, reject) => {
+        return new Promise((resolve, reject) => {
 
             //strip leading '/'s from name 
             let splitName = filename.split('/');
             for (let i = 0; i < splitName.length; i++) {
                 if (splitName[i] === '') {
-                    splitName.splice(i,1);
+                    splitName.splice(i, 1);
                     i--;
                 } else {
                     break;
@@ -126,14 +124,14 @@ class AWSModule extends BaseServerClient {
 
             filename = splitName.join('/');
 
-            let getParams = { 
-                'Key' : filename,
-                'Bucket' : AWSParameters.BucketName()
+            let getParams = {
+                'Key': filename,
+                'Bucket': AWSParameters.BucketName()
             };
 
             this.s3.getObject(getParams, (err, data) => {
-                if (err) { 
-                    reject(err); 
+                if (err) {
+                    reject(err);
                     return;
                 }
 
@@ -174,29 +172,29 @@ class AWSModule extends BaseServerClient {
      */
     uploadFile(filename, data, isbinary = false) {
 
-        let sendData=data;
+        let sendData = data;
         if (isbinary && bis_genericio.iscompressed(filename))
             sendData = pako.gzip(data);
-        
-        return new Promise( (resolve, reject) => {
+
+        return new Promise((resolve, reject) => {
 
             //a leading '/' will create an empty folder with no name in the s3 bucket, so we want to trim it here.
-            if (filename[0] === '/') filename = filename.substring(1,filename.length);
+            if (filename[0] === '/') filename = filename.substring(1, filename.length);
             console.log('filename', filename);
 
             let uploadParams = {
-                'Key' : filename,
-                'Bucket' : AWSParameters.BucketName(),
-                'Body' : sendData
+                'Key': filename,
+                'Bucket': AWSParameters.BucketName(),
+                'Body': sendData
             };
 
             this.s3.upload(uploadParams, (err) => {
-                if (err) { 
+                if (err) {
                     bis_webutil.createAlert('Failed to upload ' + filename + ' to S3 bucket', true, 0, 3000);
                     console.log('S3 error', err);
-                    reject(err); 
+                    reject(err);
                 } else {
-                    bis_webutil.createAlert('Uploaded ' + filename + ' to S3 bucket successfully', false, 0, 3000); 
+                    bis_webutil.createAlert('Uploaded ' + filename + ' to S3 bucket successfully', false, 0, 3000);
                     resolve(filename);//'Upload successful');
                 }
             });
@@ -208,10 +206,10 @@ class AWSModule extends BaseServerClient {
      */
     createSaveModal(opts) {
         opts.server = 'amazonaws';
-        this.s3.listObjectsV2( { 'Delimiter' : '/' }, (err, data) => {
+        this.s3.listObjectsV2({ 'Delimiter': '/' }, (err, data) => {
             if (err) { console.log('an error occured', err); return; }
 
-            console.log(JSON.stringify(opts,null,2));
+            console.log(JSON.stringify(opts, null, 2));
             let formattedFiles = this.formatRawS3Files(data.Contents, data.CommonPrefixes);
             this.fileDisplayModal.openDialog(formattedFiles, opts);
         });
@@ -226,27 +224,27 @@ class AWSModule extends BaseServerClient {
      */
     changeDirectory(pathname) {
 
-        pathname = pathname ||'';
+        pathname = pathname || '';
 
-        if (pathname==='[Root]') {
-            pathname='';
+        if (pathname === '[Root]') {
+            pathname = '';
         } else {
             if (pathname.indexOf('/') === 0)
-                pathname=pathname.substr(1,pathname.length);
-            if (pathname.lastIndexOf('/')!==pathname.length-1)
-                pathname=pathname+'/';
+                pathname = pathname.substr(1, pathname.length);
+            if (pathname.lastIndexOf('/') !== pathname.length - 1)
+                pathname = pathname + '/';
         }
 
-        return new Promise( (resolve, reject) => {
-            this.s3.listObjectsV2( { 'Prefix' : pathname, 'Delimiter' : '/' }, (err, data) => {
+        return new Promise((resolve, reject) => {
+            this.s3.listObjectsV2({ 'Prefix': pathname, 'Delimiter': '/' }, (err, data) => {
                 if (err) { console.log('an error occured', err); reject(err); return; }
 
                 let formattedFiles = this.formatRawS3Files(data.Contents, data.CommonPrefixes);
-                 
+
                 let cdopts = {
-                    'data' : formattedFiles, 
-                    'path' : pathname,
-                    'root' : '',
+                    'data': formattedFiles,
+                    'path': pathname,
+                    'root': '',
                 };
 
                 resolve(cdopts);
@@ -263,12 +261,12 @@ class AWSModule extends BaseServerClient {
      */
     getFileSize(filename) {
 
-        return new Promise( (resolve, reject) => {
+        return new Promise((resolve, reject) => {
 
             let splitName = filename.split('/');
             let splitFolder = splitName.slice(0, splitName.length - 1);
             let folderName = splitFolder.join('/');
-            this.s3.listObjectsV2( { 'Prefix' : folderName + '/', 'Delimiter' : '/' }, (err, data) => {
+            this.s3.listObjectsV2({ 'Prefix': folderName + '/', 'Delimiter': '/' }, (err, data) => {
                 if (err) { reject(err); return; }
 
                 for (let item of data.Contents) {
@@ -279,7 +277,7 @@ class AWSModule extends BaseServerClient {
 
                 reject('No file found');
             });
-            
+
         });
     }
 
@@ -289,16 +287,16 @@ class AWSModule extends BaseServerClient {
      * @returns {Promise} payload true or false
      */
     isDirectory(url) {
-        return new Promise( (resolve, reject) => {
+        return new Promise((resolve, reject) => {
             if (url[url.length - 1] !== '/') { url = url + '/'; }
 
-            this.s3.listObjectsV2( { 'Prefix' : url, 'Delimiter' : '/' }, (err, data) => {
+            this.s3.listObjectsV2({ 'Prefix': url, 'Delimiter': '/' }, (err, data) => {
                 if (err) { reject(err); return; }
 
-                if (data.Contents.length > 0) { resolve(true); }                
+                if (data.Contents.length > 0) { resolve(true); }
                 else { reject('No file found'); }
             });
-            
+
         });
     }
 
@@ -308,25 +306,25 @@ class AWSModule extends BaseServerClient {
      * @returns A rejected promise notifying the caller that makeDirectory is not supported in this file mode.
      */
     makeDirectory(filename) {
-        return new Promise( (resolve, reject) => {
+        return new Promise((resolve, reject) => {
             //a leading '/' will create an empty folder with no name in the s3 bucket, so we want to trim it here.
-            if (filename[0] === '/') { filename = filename.substring(1,filename.length); }
+            if (filename[0] === '/') { filename = filename.substring(1, filename.length); }
             if (filename[filename.length] !== '/') { filename = filename + '/'; }
             console.log('filename', filename);
 
             let uploadParams = {
-                'Key' : filename,
-                'Bucket' : AWSParameters.BucketName(),
-                'Body' : ''
+                'Key': filename,
+                'Bucket': AWSParameters.BucketName(),
+                'Body': ''
             };
 
             this.s3.upload(uploadParams, (err) => {
-                if (err) { 
+                if (err) {
                     bis_webutil.createAlert('Failed to upload ' + filename + ' to S3 bucket', true, 0, 3000);
                     console.log('S3 error', err);
-                    reject(err); 
+                    reject(err);
                 } else {
-                    bis_webutil.createAlert('Uploaded ' + filename + ' to S3 bucket successfully', false, 0, 3000); 
+                    bis_webutil.createAlert('Uploaded ' + filename + ' to S3 bucket successfully', false, 0, 3000);
                     resolve(filename);//'Upload successful');
                 }
             });
@@ -351,7 +349,7 @@ class AWSModule extends BaseServerClient {
 
                 console.log('data', data);
                 let deleteParams = {
-                    'Delete' : {
+                    'Delete': {
                         'Objects': [],
                         'Quiet': false
                     },
@@ -370,7 +368,6 @@ class AWSModule extends BaseServerClient {
         });
     }
 
-    //TODO: Implement getMatchingFiles
     /** getMatching Files
      * @param {String} queryString - e.g. "data/*.nii.gz"  -> return all files in data with .nii.gz as their suffix. 
      * @returns {Promise} payload list of filenames that match
@@ -378,136 +375,130 @@ class AWSModule extends BaseServerClient {
     getMatchingFiles(queryString = '*') {
         let s3 = this.s3;
         let currentDirectoryIndex = 0;
-        let currentDirectory = queryString[currentDirectoryIndex];
-        let currentPrefixList = [];
 
-        return new Promise( (resolve, reject) => {
+        //empty prefix will search base directory
+        let currentPrefixList = [''];
+
+        return new Promise((resolve, reject) => {
 
             let splitString = queryString.split('/');
-
             console.log('query string', queryString, 'split string', splitString);
-
 
             let handlePrefixExpansion = (values = null) => {
 
-                if (currentDirectoryIndex + 1 >= splitString.length) {
+                if (currentDirectoryIndex + 1 > splitString.length) {
+                    console.log('values on finish', values);
                     resolve(values.files);
                 } else {
 
-                    currentDirectoryIndex = currentDirectoryIndex + 1;
-                    currentDirectory = queryString[currentDirectoryIndex];
-                    expandPrefixes(currentDirectory, currentPrefixList).then( (values) => {
+                    expandPrefixes(splitString[currentDirectoryIndex], currentPrefixList).then((values) => {
+
+                        currentPrefixList = values.commonPrefixes;
+                        currentDirectoryIndex = currentDirectoryIndex + 1;
                         handlePrefixExpansion(values);
+                    }).catch( (e) => {
+                        reject(e);
                     });
                 }
             };
-            
-
 
             handlePrefixExpansion();
 
-            /*expandPrefixes('*.nii.gz', '').then((data) => {
-                console.log('data from prefixes', data);
-            }).catch( (err) => {
-                reject(err);
-            });
-            */
-            
         });
 
         /*
          * Searches S3 for files at a current level and returns both the contents at that level and the prefixes of the folders under it. 
          * @param {String} directory - The name of the file that should go at the end of the file path
-         * @param {String} filePath - The file path leading up to 'directory', e.g. for 'a/b/c.nii.gz' this would be 'a/b'
+         * @param {Object} prefixList - A list of prefixes to search for this pass of expandPrefixes, i.e. the CommonPrefixes of all the folders above this one. 
          */
-        function expandPrefixes(directory, filePath = '') {
+        function expandPrefixes(directory, prefixList = {}) {
             return new Promise((resolve, reject) => {
-                if (directory === '') { 
+
+                console.log('prefix list', prefixList);
+                let promiseList = [];
+
+                if (directory === '') {
                     resolve([]);
                 } else if (directory.includes('*')) {
 
-                    let prefix = (filePath === '') ? '' : filePath + '/';
+                    for (let prefixEntry of prefixList) {
+                        let listFn = new Promise( (resolve, reject) => {
+                            s3.listObjectsV2({ 'Prefix': prefixEntry.Prefix, 'Delimiter': '/' }, (err, data) => {
 
-                    s3.listObjects({ 'Prefix' : prefix, 'Delimiter' : '/'}, (err, data) => {
-                        if (err) { reject(err); }
-
-                        console.log('initial list', data);
-                        let promiseList = [];
-                        for (let prefixEntry of data.CommonPrefixes) {
-                            let listFn = new Promise( (resolve, reject) => {
-                                s3.listObjectsV2({ 'Prefix' : prefix + prefixEntry.Prefix, 'Delimiter' : '/' }, (err, data) => {
-
-                                    if (err) { reject(err); }
-                                    resolve(data);
-                                });
+                                if (err) { reject(err); }
+                                resolve(data);
                             });
-
-                            promiseList.push(listFn);
-                        }
-
-                        Promise.all(promiseList).then((values) => {
-
-                            console.log('resolved promises', values);
-                            //filter files based on query string (e.g. if it was *.nii.gz filter out all the non-'.nii.gz' files)
-                            let filterString = directory.split('.');
-                            if (filterString.length > 1) {
-
-                                //some file extensions are more than one part long (e.g. .nii.gz), so we only want to strip off the filename and rejoin the rest
-                                filterString = filterString.slice(1).join('.');
-                                console.log('filter string', filterString);
-
-                                let filteredFiles = { 'files' : [], 'commonPrefixes' : [] };
-
-                                //parse the results of each promise for files that end in the desired type
-                                for (let value of values) {
-
-                                    for (let file of value.Contents) {
-
-                                        //split the filename off from the full filepath, i.e. Contents field from the S3 list function will contain something of the form 'a/b/c.nii.gz' and we only want 'c.nii.gz'
-                                        let filename = file.Key.split('/');
-                                        filename = filename[filename.length - 1];
-
-                                        let fileExtension = filename.split('.');
-                                        fileExtension = fileExtension.slice(1).join('.');
-
-                                        if (fileExtension === filterString) {
-                                            filteredFiles.files.push(file);
-                                        }
-                                    }
-
-                                    filteredFiles.commonPrefixes = filteredFiles.commonPrefixes.concat(value.CommonPrefixes);
-                                }
-
-                                resolve(filteredFiles);
-                            } else {
-
-                                let compiledFiles = { 'files' : [], 'commonPrefixes' : [] };
-                                for (let value of values) {
-                                    compiledFiles.files = compiledFiles.files.concat(value.Contents);
-                                    compiledFiles.commonPrefixes = compiledFiles.commonPrefixes.concat(value.CommonPrefixes);
-                                }  
-                                
-                                console.log('compiled files', compiledFiles);
-                                resolve(compiledFiles);
-                            }
-
                         });
 
-                    });
-
-                } else {
-                    let prefix = filePath + '/' + directory + '/';
-                     s3.listObjectsV2({ 'Prefix' : prefix, 'Delimiter' : '/' }, (err, data) => {
-                        if (err) { reject(err); }
-
-                        let formattedData = { 'files' : data.Contents, 'commonPrefixes' : data.CommonPrefixes};
-                        resolve(formattedData);
-                     });
+                        promiseList.push(listFn);
+                    }
                 }
+
+                Promise.all(promiseList).then((values) => {
+
+                    //filter files based on query string (e.g. if it was *.nii.gz filter out all the non-'.nii.gz' files)
+                    let filterString = directory.split('.');
+                    if (filterString.length > 1) {
+
+                        //some file extensions are more than one part long (e.g. .nii.gz), so we only want to strip off the filename and rejoin the rest
+                        filterString = filterString.slice(1).join('.');
+                        console.log('filter string', filterString);
+
+                        let filteredFiles = { 'files': [], 'commonPrefixes': [] };
+
+                        //parse the results of each promise for files that end in the desired type
+                        for (let value of values) {
+
+                            for (let file of value.Contents) {
+
+                                //split the filename off from the full filepath, i.e. Contents field from the S3 list function will contain something of the form 'a/b/c.nii.gz' and we only want 'c.nii.gz'
+                                let filename = file.Key.split('/');
+                                filename = filename[filename.length - 1];
+
+                                let fileExtension = filename.split('.');
+                                fileExtension = fileExtension.slice(1).join('.');
+
+                                if (fileExtension === filterString) {
+                                    filteredFiles.files.push(file);
+                                }
+                            }
+
+                            filteredFiles.commonPrefixes = filteredFiles.commonPrefixes.concat(value.CommonPrefixes);
+                        }
+
+                        resolve(filteredFiles);
+                    } else {
+
+                        let compiledFiles = { 'files': [], 'commonPrefixes': [] };
+                        for (let value of values) {
+                            compiledFiles.files = compiledFiles.files.concat(value.Contents);
+                            compiledFiles.commonPrefixes = compiledFiles.commonPrefixes.concat(value.CommonPrefixes);
+                        }
+
+                        resolve(compiledFiles);
+                    }
+
+                }).catch( (e) => {
+                    reject(e);
+                });
+
             });
             
+           
         }
 
+
+            /*else {
+                    let prefix = filePath + '/' + directory + '/';
+                    s3.listObjectsV2({ 'Prefix': prefix, 'Delimiter': '/' }, (err, data) => {
+                        if (err) { reject(err); }
+
+                        let formattedData = { 'files': data.Contents, 'commonPrefixes': data.CommonPrefixes };
+                        resolve(formattedData);
+                    });
+                }
+            });
+            */
     }
 
 
@@ -525,18 +516,18 @@ class AWSModule extends BaseServerClient {
     wrapInAuth(command, opts) {
         console.log('opts', opts);
         let parseCommand = () => {
-            switch(command) {
-                case 'showfiles' : {
+            switch (command) {
+                case 'showfiles': {
                     this.fileDisplayModal.fileRequestFn = opts.callback;
-                    this.createLoadModal(opts); 
+                    this.createLoadModal(opts);
                     break;
                 }
-                case 'uploadfile' : {
+                case 'uploadfile': {
                     this.fileDisplayModal.fileRequestFn = opts.callback.bind(this);
-                    this.createSaveModal(opts); 
+                    this.createSaveModal(opts);
                     break;
                 }
-                default : console.log('Unrecognized aws command', command, 'cannot complete request.');
+                default: console.log('Unrecognized aws command', command, 'cannot complete request.');
             }
         };
 
@@ -559,7 +550,7 @@ class AWSModule extends BaseServerClient {
             parseCommand();
         }
 
-       
+
     }
 
     /**
@@ -568,40 +559,40 @@ class AWSModule extends BaseServerClient {
      * 2.) Attempts to register the user with an Amazon Cognito Identity pool authorized to access the relevant bucket. If successful, the user will be returned a set of credentials that expire in a short period of tiem (about an hour).
      * 
      * @param {Function} cb - Function to call after successful authentication
-     */ 
+     */
     awsAuthUser(cb) {
 
         //create AWS configuration object before beginning login process
         AWS.config.update({
-            'region' : AWSParameters.RegionName,
-            'credentials' : new AWS.CognitoIdentityCredentials({
-                'IdentityPoolId' : AWSParameters.IdentityPoolId()
+            'region': AWSParameters.RegionName,
+            'credentials': new AWS.CognitoIdentityCredentials({
+                'IdentityPoolId': AWSParameters.IdentityPoolId()
             })
         });
 
         this.s3 = this.createS3(AWSParameters.BucketName);
 
-        let returnf="./biswebaws.html";
+        let returnf = "./biswebaws.html";
         if (typeof window.BIS !== 'undefined') {
-            returnf="../build/web/biswebaws.html";
+            returnf = "../build/web/biswebaws.html";
         }
 
         let authParams = {
-            'regionName' : AWSParameters.RegionName,
-            'identityPoolId' : AWSParameters.IdentityPoolId(),
-            'cognitoParams' : AWSParameters.getCurrentCognitoParams()
+            'regionName': AWSParameters.RegionName,
+            'identityPoolId': AWSParameters.IdentityPoolId(),
+            'cognitoParams': AWSParameters.getCurrentCognitoParams()
         };
 
         window.addEventListener('awsready', () => {
             console.log('received awsready');
             authWindow.authParams = authParams;
-            authWindow.dispatchEvent( new CustomEvent('handleIncoming'));
+            authWindow.dispatchEvent(new CustomEvent('handleIncoming'));
         });
 
         let authWindow = window.open(returnf, '_blank', 'width=400, height=400');
 
         //set timeout in case window doesn't return a storage event
-        let timeoutEvent = setTimeout( () => {
+        let timeoutEvent = setTimeout(() => {
             bis_webutil.createAlert('Timed out waiting for AWS to respond', true);
             window.removeEventListener('storage', idTokenEvent);
             //authWindow.close();
@@ -627,19 +618,19 @@ class AWSModule extends BaseServerClient {
                     'RoleSessionName': 'web'
                 });
 
-                AWS.config.credentials.get( (err) => {
+                AWS.config.credentials.get((err) => {
                     if (err) {
                         console.log(err);
-                        authWindow.postMessage({ 'failure': 'auth failed', 'error' : err.toString() }, '*');
+                        authWindow.postMessage({ 'failure': 'auth failed', 'error': err.toString() }, '*');
                     } else {
                         console.log('Exchanged access token for access key');
                         authWindow.postMessage({ 'success': 'auth complete' }, '*');
 
                         //TODO: determine whether refresh is necessary
-                        AWS.config.credentials.refresh( (err) => {
+                        AWS.config.credentials.refresh((err) => {
                             if (err) { console.log('an error occured refreshing', err); }
-                            else { 
-                                console.log('refresh successful.'); 
+                            else {
+                                console.log('refresh successful.');
                                 this.s3 = this.createS3(AWSParameters.BucketName(), AWS.config.credentials);
                                 authWindow.close();
                                 cb();
@@ -655,12 +646,12 @@ class AWSModule extends BaseServerClient {
 
     changeBuckets(newBucketInfo) {
         this.s3 = this.createS3(newBucketInfo.bucketName);
-        this.currentAWS = { 
-            'bucketName' : newBucketInfo.bucketName, 
-            'identityPoolId' : newBucketInfo.identityPoolId,
-            'userPoolId' : newBucketInfo.userPoolId,
-            'appClientId' : newBucketInfo.appClientId,
-            'appWebDomain' : newBucketInfo.appWebDomain 
+        this.currentAWS = {
+            'bucketName': newBucketInfo.bucketName,
+            'identityPoolId': newBucketInfo.identityPoolId,
+            'userPoolId': newBucketInfo.userPoolId,
+            'appClientId': newBucketInfo.appClientId,
+            'appWebDomain': newBucketInfo.appWebDomain
         };
 
         AWSParameters.updateBucketInfo(newBucketInfo);
@@ -676,7 +667,7 @@ class AWSModule extends BaseServerClient {
      * @returns An array of files parseable by bisweb_filedialog
      */
     formatRawS3Files(files, directories, suffixes = null) {
-        
+
         let filtersArray = suffixes ? suffixes.split(',') : null;
 
         //filters start with a '.' which we strip out here for compatibility with String.split()
@@ -697,11 +688,11 @@ class AWSModule extends BaseServerClient {
             if (suffixes) {
                 for (let filter of filtersArray) {
                     if (fileExtension[fileExtension.length - 1] === filter) {
-                        paths.push({ 'filepath' : splitFile, 'size' : file.Size});
+                        paths.push({ 'filepath': splitFile, 'size': file.Size });
                     }
                 }
             } else {
-                paths.push({ 'filepath' : splitFile, 'size' : file.Size });
+                paths.push({ 'filepath': splitFile, 'size': file.Size });
             }
 
         }
@@ -711,28 +702,28 @@ class AWSModule extends BaseServerClient {
         for (let path of paths) {
             let fullpath = path.filepath.join('/');
             let name = path.filepath[path.filepath.length - 1];
-            let fileType = name.split('.'); 
+            let fileType = name.split('.');
             fileType = fileType[fileType.length - 1];
 
             if (name.length > 0) {
                 let newEntry = {
-                    'text' : name,
-                    'path' : fullpath,
-                    'size' : path.size
+                    'text': name,
+                    'path': fullpath,
+                    'size': path.size
                 };
 
-                switch(fileType[fileType.length - 1]){
-                    case 'gz' : newEntry.type = (fileType[fileType.length - 2] === 'nii') ? 'picture' : 'file'; break;
-                    case 'md' : newEntry.type = 'text'; break;
-                    case 'mkv' : 
-                    case 'avi' : 
-                    case 'mp4' : newEntry.type = 'video'; break;
-                    case 'mp3' :
-                    case 'flac' :
-                    case 'FLAC' :
-                    case 'wav' : 
-                    case 'WAV' : newEntry.type = 'audio'; break;
-                    default : newEntry.type = 'file';
+                switch (fileType[fileType.length - 1]) {
+                    case 'gz': newEntry.type = (fileType[fileType.length - 2] === 'nii') ? 'picture' : 'file'; break;
+                    case 'md': newEntry.type = 'text'; break;
+                    case 'mkv':
+                    case 'avi':
+                    case 'mp4': newEntry.type = 'video'; break;
+                    case 'mp3':
+                    case 'flac':
+                    case 'FLAC':
+                    case 'wav':
+                    case 'WAV': newEntry.type = 'audio'; break;
+                    default: newEntry.type = 'file';
                 }
 
                 formattedFiles.push(newEntry);
@@ -741,7 +732,7 @@ class AWSModule extends BaseServerClient {
         }
 
         //sort files in alphabetical order
-        formattedFiles.sort( (a,b) => { 
+        formattedFiles.sort((a, b) => {
             let pathA = a.text.toLowerCase(), pathB = b.text.toLowerCase();
             if (pathA > pathB) return 1;
             if (pathA < pathB) return -1;
@@ -752,11 +743,11 @@ class AWSModule extends BaseServerClient {
         for (let directory of directories) {
             let name = directory.Prefix.split('/');
             name = name[name.length - 2]; //prefix is a string of folder names ending in '/', so the very last entry in the split prefix will be empty
-            let newEntry = { 
-                'text' : name,
-                'path' : directory.Prefix,
-                'type' : 'directory',
-                'children' : []
+            let newEntry = {
+                'text': name,
+                'path': directory.Prefix,
+                'type': 'directory',
+                'children': []
             };
 
             formattedFiles.unshift(newEntry);
@@ -787,9 +778,9 @@ class AWSModule extends BaseServerClient {
         //https://stackoverflow.com/questions/19396631/re-size-the-modal-dialog-in-bootstrap-dynamically
         awsmodal.dialog.on('shown.bs.modal', () => {
             awsmodal.dialog.css({
-                'width' : 'auto',
-                'height' : 'auto',
-                'max-height' : '100%'
+                'width': 'auto',
+                'height': 'auto',
+                'max-height': '100%'
             });
         });
 
@@ -798,7 +789,7 @@ class AWSModule extends BaseServerClient {
     }
 
     createAWSTabView(awsmodal) {
-        let tabView = $( `
+        let tabView = $(`
                 <ul class="nav nav-tabs" id="aws-tab-menu" role="tablist">
                     <li class="nav-item active">
                         <a class="nav-link" id="selector-tab" data-toggle="tab" href="#aws-selector-tab-panel" role="tab" aria-controls="home" aria-selected="true">Select AWS Bucket</a>
@@ -818,7 +809,7 @@ class AWSModule extends BaseServerClient {
                     </div>
                 </div>
                 `);
-        
+
         awsmodal.body.append(tabView);
 
         //set dynamic tab resizing behavior
@@ -829,19 +820,19 @@ class AWSModule extends BaseServerClient {
             //set modal to be large for selector tab and small for entry tab
             //TODO: Re-center modal after changing sizes
             if (e.target.id === 'entry-tab') {
-                awsmodal.dialog.find('.modal-content').css({ 
-                    'width' : '400px',
+                awsmodal.dialog.find('.modal-content').css({
+                    'width': '400px',
                 });
                 /*awsmodal.dialog.find('.modal-content').css({
                     'width' : 'auto'
                 });*/
 
             } else if (e.target.id === 'selector-tab') {
-                awsmodal.dialog.find('.modal-content').css({ 
-                    'width' : 'auto',
+                awsmodal.dialog.find('.modal-content').css({
+                    'width': 'auto',
                 });
             }
-            
+
         });
 
         console.log('nav tabs', navTabs);
@@ -861,9 +852,9 @@ class AWSModule extends BaseServerClient {
             </div>
         `);
 
-        let confirmButton = bis_webutil.createbutton({ 'name' : 'Confirm', 'type' : 'success' });
-        let cancelButton = bis_webutil.createbutton({ 'name' : 'Cancel', 'type' : 'danger' });
-        let entryButton = bis_webutil.createbutton({ 'name' : 'Enter New Bucket', 'type' : 'info' });
+        let confirmButton = bis_webutil.createbutton({ 'name': 'Confirm', 'type': 'success' });
+        let cancelButton = bis_webutil.createbutton({ 'name': 'Cancel', 'type': 'danger' });
+        let entryButton = bis_webutil.createbutton({ 'name': 'Enter New Bucket', 'type': 'info' });
         $(confirmButton).prop('disabled', 'disabled');
 
         let buttonGroup = selectContainer.find('.btn-group');
@@ -897,7 +888,7 @@ class AWSModule extends BaseServerClient {
                         reject(e);
                     }
 
-                }).then( () => {
+                }).then(() => {
                     resolve(bucketSelectorDropdown);
                 }).catch((err) => {
                     console.log('an error occured while fetching values from localstorage', err);
@@ -955,36 +946,36 @@ class AWSModule extends BaseServerClient {
                 //create edit modal and update UI with the changed values
                 tableRow.find('.btn').on('click', () => {
                     //fetch new data from app cache and open edit modal
-                    this.awsbucketstorage.getItem(selectedItemId).then( (val) => {
-                        
+                    this.awsbucketstorage.getItem(selectedItemId).then((val) => {
+
                         let parsedVal;
                         try {
                             parsedVal = JSON.parse(val);
-                        } catch(e) {
+                        } catch (e) {
                             console.log('could not parsed val', val);
                         }
 
                         this.createAWSEditModal(selectedItemId, parsedVal)
-                        .then( (params) => {
-                            console.log('params', params);
-                            tableContainer.find('table .bucket-name')[0].innerHTML = params.bucketName;
-                            tableContainer.find('table .identity-pool-id')[0].innerHTML = params.identityPoolId;
-                            tableContainer.find('table .user-pool-id')[0].innerHTML = params.userPoolId;
-                            tableContainer.find('table .client-id')[0].innerHTML = params.appClientId;
-                            tableContainer.find('table .web-domain')[0].innerHTML = params.appWebDomain;
-    
-                            refreshDropdown().then( (dropdown) => {
-                                console.log('refresh dropdown', dropdown, 'bucket name', params.bucketName);
-                                dropdown.val(params.bucketName);
+                            .then((params) => {
+                                console.log('params', params);
+                                tableContainer.find('table .bucket-name')[0].innerHTML = params.bucketName;
+                                tableContainer.find('table .identity-pool-id')[0].innerHTML = params.identityPoolId;
+                                tableContainer.find('table .user-pool-id')[0].innerHTML = params.userPoolId;
+                                tableContainer.find('table .client-id')[0].innerHTML = params.appClientId;
+                                tableContainer.find('table .web-domain')[0].innerHTML = params.appWebDomain;
+
+                                refreshDropdown().then((dropdown) => {
+                                    console.log('refresh dropdown', dropdown, 'bucket name', params.bucketName);
+                                    dropdown.val(params.bucketName);
+                                });
+                            })
+                            .catch((e) => {
+                                if (e !== 'Edit Canceled') {
+                                    console.log('error', e);
+                                } else {
+                                    bis_webutil.createAlert('Edit canceled', false, null, 2500);
+                                }
                             });
-                        })
-                        .catch( (e) => { 
-                            if (e !== 'Edit Canceled') {
-                                console.log('error', e);
-                            } else {
-                                bis_webutil.createAlert('Edit canceled', false, null, 2500);
-                            }
-                        });
                     });
                 });
 
@@ -1044,7 +1035,7 @@ class AWSModule extends BaseServerClient {
     }
 
     createAWSEditModal(id, oldParams) {
-        return new Promise( (resolve, reject) => {
+        return new Promise((resolve, reject) => {
             let editModal = bis_webutil.createmodal('Edit Entry', 'modal-sm');
             let editContainer = $(`
                 <div class='container-fluid'>
@@ -1063,17 +1054,17 @@ class AWSModule extends BaseServerClient {
                     <div class='btn-group' role=group' aria-label='Viewer Buttons' style='float: left'></div>
                 </div>
             `);
-    
-            let confirmButton = bis_webutil.createbutton({ 'name' : 'Confirm', 'type' : 'success' });
-            let cancelButton = bis_webutil.createbutton({ 'name' : 'Cancel', 'type' : 'danger' });
-            
+
+            let confirmButton = bis_webutil.createbutton({ 'name': 'Confirm', 'type': 'success' });
+            let cancelButton = bis_webutil.createbutton({ 'name': 'Cancel', 'type': 'danger' });
+
             console.log('old params', oldParams);
             editContainer.find('.edit-bucket-input').val(oldParams.bucketName);
             editContainer.find('.edit-identity-pool-input').val(oldParams.identityPoolId);
             editContainer.find('.edit-user-pool-input').val(oldParams.userPoolId);
             editContainer.find('.edit-client-input').val(oldParams.appClientId);
             editContainer.find('.edit-web-domain-input').val(oldParams.appWebDomain);
-    
+
             let buttonGroup = editContainer.find('.btn-group');
 
             let resolvePromise = false;
@@ -1091,7 +1082,7 @@ class AWSModule extends BaseServerClient {
 
                 let paramsObj = this.createNewBucketInfo(newBucketName, newIdentityPoolId, newUserPoolId, newClientId, newWebDomain);
                 paramsObj.id = id;
-    
+
                 this.awsbucketstorage.setItem(id, JSON.stringify(paramsObj));
                 this.awsbucketstorage.setItem('currentAWS', JSON.stringify(paramsObj));
 
@@ -1100,7 +1091,7 @@ class AWSModule extends BaseServerClient {
                 resolvePromise = true;
                 editModal.dialog.modal('hide');
             });
-    
+
             cancelButton.on('click', (e) => {
                 e.preventDefault();
                 editModal.dialog.modal('hide');
@@ -1112,15 +1103,15 @@ class AWSModule extends BaseServerClient {
                     let paramsObj = this.createNewBucketInfo(newBucketName, newIdentityPoolId, newUserPoolId, newClientId, newWebDomain);
                     paramsObj.id = id;
 
-                    resolve(paramsObj); 
+                    resolve(paramsObj);
                 }
                 else { reject('Edit canceled'); }
             });
-    
+
             editModal.body.append(editContainer);
             buttonGroup.append(confirmButton);
             buttonGroup.append(cancelButton);
-    
+
             editModal.footer.remove();
             editModal.dialog.modal('show');
         });
@@ -1133,7 +1124,7 @@ class AWSModule extends BaseServerClient {
         let userpoolInfoTitle = "The User Pool ID should take the form region:identifier, e.g. \"us-east-1\" followed by a series of letters and characters.";
         let clientInfoTitle = "The App Client ID is the identifier for the App Client associated with your User Pool. It should be a 25 character string that you can find on the \"App client settings\" section of your User Pool settings.";
         let domainInfoTitle = "The App Web Domain is the URL at which you should authenticate with your User Pool, i.e. a web address ending in \".amazoncognito.com\". Consult the User Pool section of AWSBuckets.md for more detail.";
-        
+
         let entryContainer = $(`
             <div class='container-fluid'>
                 <div class='form-group'>
@@ -1159,7 +1150,7 @@ class AWSModule extends BaseServerClient {
 
         let confirmButton = bis_webutil.createbutton({ 'name': 'Confirm', 'type': 'success' });
         let cancelButton = bis_webutil.createbutton({ 'name': 'Cancel', 'type': 'danger' });
-        let selectBucketButton = bis_webutil.createbutton({ 'name' : 'Select an Existing Bucket', 'type' : 'info' });
+        let selectBucketButton = bis_webutil.createbutton({ 'name': 'Select an Existing Bucket', 'type': 'info' });
 
         confirmButton.on('click', () => {
 
@@ -1169,9 +1160,9 @@ class AWSModule extends BaseServerClient {
             let appClientId = entryContainer.find('.client-input')[0].value;
             let appWebDomain = entryContainer.find('.web-domain-input')[0].value;
 
-            if (bucketName === '' || identityPoolId === '' || userPoolId === '' || appClientId === '' || appWebDomain  === '') { 
-                bis_webutil.showErrorModal('An error occured', 'Please fill out all the required fileds'); 
-                return; 
+            if (bucketName === '' || identityPoolId === '' || userPoolId === '' || appClientId === '' || appWebDomain === '') {
+                bis_webutil.showErrorModal('An error occured', 'Please fill out all the required fileds');
+                return;
             }
 
             //index contains the number of keys in the database
@@ -1221,9 +1212,9 @@ class AWSModule extends BaseServerClient {
         let paramsObj = {
             'bucketName': bucketName,
             'identityPoolId': identityPoolId,
-            'userPoolId' : userPoolId,
-            'appClientId' : appClientId,
-            'appWebDomain' : appWebDomain
+            'userPoolId': userPoolId,
+            'appClientId': appClientId,
+            'appWebDomain': appWebDomain
         };
 
         return paramsObj;
