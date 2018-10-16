@@ -107,6 +107,7 @@ class FileTreePanel extends HTMLElement {
             
             queryString = filename + '/*.nii.gz';
             bis_genericio.getMatchingFiles(queryString).then( (newFiles) => {
+                console.log('filename', filename);
                 this.updateFileTree(newFiles, filename);
             });
             
@@ -124,10 +125,10 @@ class FileTreePanel extends HTMLElement {
 
         let fileTree = [];
 
+        console.log('files', files);
         for (let file of files) {
             //trim the common directory name from the filtered out name
             let trimmedName = file.replace(baseDirectory, '');
-
             let splitName = trimmedName.split('/');
 
             let index = 0, currentDirectory = fileTree, nextDirectory = null;
@@ -167,6 +168,7 @@ class FileTreePanel extends HTMLElement {
 
         }
 
+
         //if the file tree is empty, display an error message and return
         if (!fileTree[0] || !fileTree[0].children) {
             bis_webutil.createAlert('No study files could be found in the chosen directory, try a different directory.', false);
@@ -183,9 +185,15 @@ class FileTreePanel extends HTMLElement {
         listContainer.css({ 'color' : 'rgb(12, 227, 172)' });
         listElement.prepend(listContainer);
         
+
+        //some data sources produce trees where the files are contained in an empty directory, so unwrap those if necessary.
+        if (fileTree.length === 1 && fileTree[0].text === '') { 
+            fileTree = fileTree[0].children; 
+        }
+
         listContainer.jstree({
             'core': {
-                'data': fileTree[0].children,
+                'data': fileTree,
                 'dblclick_toggle': true
             },
             'types': {

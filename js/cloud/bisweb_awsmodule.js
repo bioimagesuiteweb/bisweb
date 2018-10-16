@@ -388,7 +388,13 @@ class AWSModule extends BaseServerClient {
 
                 if (currentDirectoryIndex + 1 > splitString.length) {
                     console.log('values on finish', values);
-                    resolve(values.files);
+
+                    //file tree panel expects a list of filenames, so format them like that before resolving
+                    let formattedValues = [];
+                    for (let value of values.files) {
+                        formattedValues.push(value.Key);
+                    }
+                    resolve(formattedValues);
                 } else {
 
                     expandPrefixes(splitString[currentDirectoryIndex], currentPrefixList).then((values) => {
