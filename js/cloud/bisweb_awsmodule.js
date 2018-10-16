@@ -492,19 +492,6 @@ class AWSModule extends BaseServerClient {
             
            
         }
-
-
-            /*else {
-                    let prefix = filePath + '/' + directory + '/';
-                    s3.listObjectsV2({ 'Prefix': prefix, 'Delimiter': '/' }, (err, data) => {
-                        if (err) { reject(err); }
-
-                        let formattedData = { 'files': data.Contents, 'commonPrefixes': data.CommonPrefixes };
-                        resolve(formattedData);
-                    });
-                }
-            });
-            */
     }
 
 
@@ -764,6 +751,7 @@ class AWSModule extends BaseServerClient {
 
     createAWSBucketMenu() {
         let awsmodal = bis_webutil.createmodal('AWS Buckets', 'modal-lg');
+        awsmodal.dialog.find('.modal-content').addClass('resizing-frame show-selector');
 
         let tabView = this.createAWSTabView(awsmodal);
 
@@ -783,11 +771,11 @@ class AWSModule extends BaseServerClient {
         //dynamic modal resizing requires overriding the default settings for bootstrap modals (modal changes size when tabs change)
         //https://stackoverflow.com/questions/19396631/re-size-the-modal-dialog-in-bootstrap-dynamically
         awsmodal.dialog.on('shown.bs.modal', () => {
-            awsmodal.dialog.css({
+            /*awsmodal.dialog.css({
                 'width': 'auto',
                 'height': 'auto',
                 'max-height': '100%'
-            });
+            });*/
         });
 
         this.bucketMenuModal = awsmodal;
@@ -826,17 +814,12 @@ class AWSModule extends BaseServerClient {
             //set modal to be large for selector tab and small for entry tab
             //TODO: Re-center modal after changing sizes
             if (e.target.id === 'entry-tab') {
-                awsmodal.dialog.find('.modal-content').css({
-                    'width': '400px',
-                });
-                /*awsmodal.dialog.find('.modal-content').css({
-                    'width' : 'auto'
-                });*/
+                awsmodal.dialog.find('.modal-content').removeClass('show-selector');
+                awsmodal.dialog.find('.modal-content').addClass('show-entry');
 
             } else if (e.target.id === 'selector-tab') {
-                awsmodal.dialog.find('.modal-content').css({
-                    'width': 'auto',
-                });
+                awsmodal.dialog.find('.modal-content').removeClass('show-entry');
+                awsmodal.dialog.find('.modal-content').addClass('show-selector');
             }
 
         });
