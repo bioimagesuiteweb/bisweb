@@ -583,9 +583,7 @@ const webfileutils = {
         //TODO: debug dropbox, googledrive and one dirve to make sure they work
         
 
-        //REMOVED FOR TESTING PURPOSES -Zach
-        //if (!webutil.inElectronApp() && this.needModes()) {
-        if (!webutil.inElectronApp()) {    
+        if (!webutil.inElectronApp() && this.needModes()) {
             if (separator)
                 webutil.createMenuItem(bmenu,'');
             webutil.createMenuItem(bmenu, name, fn);

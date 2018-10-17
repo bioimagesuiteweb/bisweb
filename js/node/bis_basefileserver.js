@@ -522,11 +522,6 @@ class BaseFileServer {
         }
     }
 
-    //TODO: This function should return every file under a given directory
-    serveAllFilesInDirectory(socket, basedir) {
-
-    }
-
     /**
      * Sends the default location for the client to load images from. Typically used during regression testing, when many files will be loaded without user interaction.
      *  
