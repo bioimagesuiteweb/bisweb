@@ -190,6 +190,7 @@ class ModuleManagerElement extends HTMLElement {
             usesgpl=false;
 
         this.createModule('Smooth Image',1, false, modules.smoothImage, moduleoptions);
+        this.createModule('Quality Measures',1, false, modules.qualityMeasures, moduleoptions);
         this.createModule('Normalize Image',1, false, modules.normalizeImage, moduleoptions);
         this.createModule('Threshold Image',1, false, modules.thresholdImage, moduleoptions);
         this.createModule('Cluster Threshold',1, false, modules.clusterThreshold, moduleoptions);
