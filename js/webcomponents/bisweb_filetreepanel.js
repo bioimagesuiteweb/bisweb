@@ -288,7 +288,6 @@ class FileTreePanel extends HTMLElement {
      * Loads an image selected in the file tree and displays it on the viewer. 
      */
     loadImageFromTree() {
-        console.log('node', node);
 
         //construct the full name out of the current node 
         let name = '', currentNode = this.currentlySelectedNode;
