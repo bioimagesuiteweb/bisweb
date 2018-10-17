@@ -218,8 +218,15 @@ class FileTreePanel extends HTMLElement {
             this.loadImageFromTree();
         });
 
-        this.loadImageButton.prop('disabled', false);
+        let loadImageButton = this.panel.widget.find('.load-image-button');
+        loadImageButton.prop('disabled', false);
+
+        let saveStudyButton = this.panel.widget.find('.save-study-button');
+        saveStudyButton.prop('disabled', false);
+
         this.setOnClickListeners(listContainer);
+
+        this.fileTree = fileTree;
 
         //Searches for the directory that should contain a file given the file's path, e.g. 'a/b/c' should be contained in folders a and b.
         //Returns the children 
@@ -240,9 +247,19 @@ class FileTreePanel extends HTMLElement {
      * @param {HTMLElement} listElement - The element of the files tab where the buttons should be created.
      */
     makeButtons(listElement) {
-        let buttonBar =  $(`<div class='btn-group' role=group' aria-label='Viewer Buttons' style='float: left'></div>`);
+        let buttonGroupDisplay = $(`
+            <div class='btn-group'>
+                <div class='btn-group top-bar' role='group' aria-label='Viewer Buttons' style='float: left;'>
+                </div>
+                <br>
+                <div class='btn-group bottom-bar' role='group' aria-label='Viewer Buttons' style='float: left;'>
+                </div>
+            </div>
+        `);
+        let topButtonBar = buttonGroupDisplay.find('.top-bar');
+        let bottomButtonBar = buttonGroupDisplay.find('.bottom-bar');
 
-        //Route study load through bis_webfileutil file callbacks
+        //Route study load and save through bis_webfileutil file callbacks
         let loadStudyButton = bis_webfileutil.createFileButton({
             'type': 'info',
             'name': 'Import study',
@@ -256,16 +273,34 @@ class FileTreePanel extends HTMLElement {
                 'save': false,
         });
 
-        this.loadImageButton = $(`<button type='button' class='btn btn-success btn-sm load-image-button' disabled>Load image</button>`);
-        this.loadImageButton.on('click', () => {
+        let saveStudyButton = bis_webfileutil.createFileButton({
+            'type': 'primary',
+            'name': 'Export study',
+            'callback': (f) => {
+                this.exportStudy(f);
+            },
+        }, {
+                'title': 'Export study',
+                'filters': 'DIRECTORY',
+                'suffix': 'DIRECTORY',
+                'save': true,
+        });
+
+        saveStudyButton.addClass('save-study-button');
+        saveStudyButton.prop('disabled', 'true');
+
+
+        let loadImageButton = $(`<button type='button' class='btn btn-success btn-sm load-image-button' disabled>Load image</button>`);
+        loadImageButton.on('click', () => {
             this.loadImageFromTree();
         });
 
+        topButtonBar.append(loadImageButton);
+        topButtonBar.append(loadStudyButton);
+        bottomButtonBar.append(saveStudyButton);
 
-        buttonBar.append(this.loadImageButton);
-        buttonBar.append(loadStudyButton);
         listElement.append(`<br>`);
-        listElement.append(buttonBar);
+        listElement.append(buttonGroupDisplay);
     }
     /**
      * Sets the jstree select events for a new jstree list container. 
@@ -302,6 +337,25 @@ class FileTreePanel extends HTMLElement {
         }
 
         this.viewerapplication.loadImage(this.baseDirectory + name);
+    }
+
+    exportStudy(filepath) {
+        try {
+            let stringifiedFiles = JSON.stringify(this.fileTree);
+            console.log('stringified files', stringifiedFiles, 'path', filepath);
+
+            //set the correct file extension if it isn't set yet
+            let splitPath = filepath.split('.');
+            if (splitPath.length < 2 || splitPath[1] !== 'JSON' || splitPath[1] !== 'json') {
+                splitPath[1] = 'json';
+            }
+
+            filepath = splitPath.join('.');
+            bis_genericio.write(filepath, stringifiedFiles, false);
+        } catch(e) {
+            console.log('an error occured while saving to disk', e);
+            bis_webutil.createAlert('An error occured while saving the study files to disk.', false);
+        }
     }
 
 }

@@ -121,12 +121,19 @@
     
 
     <bisweb-viewerapplication
+       id="viewer_application"
        bis-menubarid="#viewer_menubar"
        bis-modulemanagerid="#modulemanager"
        bis-viewerid="#viewer"
        bis-viewerid2="#viewer2">
     </bisweb-viewerapplication>
     
+    <bisweb-treepanel
+        bis-layoutwidgetid="#viewer_layout" 
+        bis-viewerid="#viewer"
+        bis-menubarid="#viewer_menubar"
+        bis-viewerapplicationid="#viewer_application">
+    </bisweb-treepanel>
   </div>
 
   
