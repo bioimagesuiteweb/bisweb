@@ -809,10 +809,8 @@ class AWSModule extends BaseServerClient {
         //set dynamic tab resizing behavior
         let navTabs = awsmodal.body.find('.nav-tabs a');
         navTabs.on('show.bs.tab', (e) => {
-            console.log('show bs tab', e.target.id);
 
-            //set modal to be large for selector tab and small for entry tab
-            //TODO: Re-center modal after changing sizes
+            //change class of element to adjust size (see viewer.css)
             if (e.target.id === 'entry-tab') {
                 awsmodal.dialog.find('.modal-content').removeClass('show-selector');
                 awsmodal.dialog.find('.modal-content').addClass('show-entry');

@@ -50,6 +50,7 @@ class FileTreePanel extends HTMLElement {
             let listElement = this.panel.getWidget();
             this.makeButtons(listElement);
         });
+
     }
 
     /**
@@ -125,7 +126,6 @@ class FileTreePanel extends HTMLElement {
 
         let fileTree = [];
 
-        console.log('files', files);
         for (let file of files) {
             //trim the common directory name from the filtered out name
             let trimmedName = file.replace(baseDirectory, '');
@@ -177,9 +177,6 @@ class FileTreePanel extends HTMLElement {
 
         let listElement = this.panel.getWidget();
         listElement.find('.file-container').remove();
-        
-        let loadImageButton = listElement.find('.load-image-button');
-        console.log('loadImageButton', loadImageButton);
 
         let listContainer = $(`<div class='file-container'></div>`);
         listContainer.css({ 'color' : 'rgb(12, 227, 172)' });
@@ -214,6 +211,11 @@ class FileTreePanel extends HTMLElement {
                 },
             },
             'plugins': ["types"]
+        });
+
+        listContainer.bind('dblclick.jstree', (e) => {
+            console.log('event', e);
+            this.loadImageFromTree();
         });
 
         this.loadImageButton.prop('disabled', false);
@@ -256,20 +258,9 @@ class FileTreePanel extends HTMLElement {
 
         this.loadImageButton = $(`<button type='button' class='btn btn-success btn-sm load-image-button' disabled>Load image</button>`);
         this.loadImageButton.on('click', () => {
-            //construct the full name out of the current node
-            let name = '', currentNode = this.currentlySelectedNode;
-            console.log('base directory', this.baseDirectory);
-            let tree = listElement.find('.file-container').jstree();
-
-            while(currentNode.parent) {
-                name = '/' + currentNode.text + name;
-                let parentNode = tree.get_node(currentNode.parent);
-
-                console.log('parentNode', parentNode);
-                currentNode = parentNode;
-            }
-            this.viewerapplication.loadImage(this.baseDirectory + name);
+            this.loadImageFromTree();
         });
+
 
         buttonBar.append(this.loadImageButton);
         buttonBar.append(loadStudyButton);
@@ -291,6 +282,27 @@ class FileTreePanel extends HTMLElement {
                 this.currentlySelectedNode = data.node;
             }
         });
+    }
+
+    /**
+     * Loads an image selected in the file tree and displays it on the viewer. 
+     */
+    loadImageFromTree() {
+        console.log('node', node);
+
+        //construct the full name out of the current node 
+        let name = '', currentNode = this.currentlySelectedNode;
+        let tree = this.panel.widget.find('.file-container').jstree();
+
+        while (currentNode.parent) {
+            name = '/' + currentNode.text + name;
+            let parentNode = tree.get_node(currentNode.parent);
+
+            console.log('parentNode', parentNode);
+            currentNode = parentNode;
+        }
+
+        this.viewerapplication.loadImage(this.baseDirectory + name);
     }
 
 }
