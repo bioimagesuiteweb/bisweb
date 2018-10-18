@@ -314,17 +314,20 @@ class BaseFileServer {
         };
         
         if (isbinary) {
-            //TODO: fs.readFile crashes when trying to load large files (typically functional images)
-            //Examine a way to load these files and send them in chunks?
+            
             console.log('reading binary file and sending to client...');
             fs.stat(filename, (err, stats) => {
                 if (err) { console.log('An error occured while statting', filename, err); return; }
 
-                console.log('stats', stats);
-                if (stats.size > 500 * 1024 * 1024) {
+                if (stats.size > 50 * 1024 * 1024) {
 
-                    console.log(this.indent, 'File larger than 500MB, negotiating stream...');
-                    this.createFilestream(filename);
+                    console.log(this.indent, 'File larger than 50MB, negotiating stream...');
+                    this.streamFileToClient(socket, filename).then( () => {
+                        console.log('file uploaded successfully');
+                    }).catch( (e) => {
+                        console.log('An error occured while streaming', filename, 'to the client', e);
+                    });
+
                 } else {
                     console.log(this.indent, 'Sending small file as a single chunk...');
                     fs.readFile(filename, (err, d1) => {
@@ -844,23 +847,35 @@ class BaseFileServer {
     findFreePort(port) {
         return new Promise( (resolve, reject) => {
             let currentPort = port;
-            
+            let testServer = new net.Server();
+
             let searchPort = () => {
                 currentPort = currentPort + 1;
                 if (currentPort > port + 20) { reject('timed out scanning ports'); }
                 console.log('checking port', currentPort);
-                net.createConnection({ 'port' : currentPort }, (socket) => {
-                    socket.on('error', () => {
-                        socket.close();
-                        searchPort();
+                try {
+                    testServer.listen(currentPort, 'localhost');
+
+                    testServer.on('error', (e) => {
+                        if (e.code === 'EADDRINUSE') {
+                            testServer.close();
+                            searchPort();
+                        } else {
+                            reject(e);
+                        }
                     });
 
-                    socket.on('connect', () => {
-                        socket.close();
+                    testServer.on('listening', () => {
+                        testServer.close();
                         resolve(currentPort);
                     });
-                }); 
+                } catch(e) {
+                    console.log('catch', e);
+                }
+                
             };
+
+            searchPort();
 
         });
     }

@@ -200,12 +200,10 @@ class BisFileServerClient extends BisBaseServerClient {
                 // Nothing to do let promise handle it;
                 break;
             }
-            
             case 'filelist':  {
                 // Nothing to do let promise handle it
                 break;
             }
-
             case 'serverbasedirectory': {
                 // Nothing to do let promise handle it
                 break;
@@ -223,6 +221,16 @@ class BisFileServerClient extends BisBaseServerClient {
                 // Nothing to do let promise handle it
                 break;
             }
+            case 'initiatefilestream': {
+                console.log('event', event);
+                try {
+                    let data = JSON.parse(event.data);
+                    this.connectToFilestream(data.payload.port);
+                } catch(e) {
+                    console.log('Error parsing port from server', e);
+                }
+                break;
+            }
             case 'authenticate': {
                 this.sendPassword(this.password || '');
                 break;
@@ -237,7 +245,6 @@ class BisFileServerClient extends BisBaseServerClient {
                 }
                 break;
             }
-
             case 'goodauth': {
                 id=-1;
                 this.alertEvent('Login to BisWeb FileServer Successful'); //webutil.createAlert
@@ -249,19 +256,16 @@ class BisFileServerClient extends BisBaseServerClient {
                     id=this.authenticatingEvent.id;
                 break;
             }
-
             case 'filesystemoperations': {
                 // Handled by promise
                 break;
             }
-
             case 'filesystemoperationserror': {
                 // Handled by promise
                 console.log('FIle System OPeration failed');
                 success=false;
                 break;
             }
-
             case 'tryagain' : {
                 id=-1;
                 console.log('\n___________\n---------------------- \t\t Failed retrying',this.lastCommand,'\n__________________');
@@ -269,7 +273,6 @@ class BisFileServerClient extends BisBaseServerClient {
                 this.sendCommand(this.lastCommand);
                 break;
             }
-
             case 'nogood' : {
                 id=-1;
                 let a=this.lastCommand;
@@ -277,9 +280,6 @@ class BisFileServerClient extends BisBaseServerClient {
                 this.lastCommand=a;
                 break;
             }
-
-
-            
             default: {
                 console.log('received a transmission with unknown type', data.type, 'cannot interpret');
                 success=false;
@@ -467,7 +467,8 @@ class BisFileServerClient extends BisBaseServerClient {
 
 
 
-    /** This is the helper function
+    /** 
+     * This is the helper function
      * Given that modals are opened one at a time and all user-driven file I/O happens through one of these, the callback should be a
      * @param {TypedArray|String} data - data transferred by the server either uint8array or text (depending on isbinary)
      * @param {Boolean} isbinary - if true data is binary
@@ -729,6 +730,20 @@ class BisFileServerClient extends BisBaseServerClient {
             });
             sendDataSlice();
         }
+    }
+
+    connectToFilestream(port) {
+        let hostname = 'ws://localhost:' + port;
+        let ssocket = new WebSocket(hostname);
+
+        ssocket.addEventListener('message', (e) => {
+            console.log('received data', e);
+        });
+
+        ssocket.addEventListener('open', () => {
+            ssocket.write('ready');
+        });
+
     }
 
     /** performs a file system operation

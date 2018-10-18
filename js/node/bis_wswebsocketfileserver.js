@@ -493,22 +493,44 @@ class BisWSWebSocketFileServer extends BaseFileServer {
     /**
      * Creates a stream between the client and server in order to transfer large files. Spins up a new file server on a different port to handle the transfer.
      * 
-     * @param {Net.Socket} socket - The control socket negotiated between the client and server when the connection is formed.
+     * @param {WebSocket} socket - The control socket already negotiated between the client and the server.
      * @param {String} filename - The full path of the file to stream to the client.
      */
-    createFilestream(socket, filename) {
+    streamFileToClient(socket, filename) {
         return new Promise( (resolve, reject) => {
             //find a free port and create the streaming server
             this.findFreePort(this.portNumber).then( (port) => {
 
-                let sserver = new BisWSWebSocketFileServer({
-                    'verbose' : this.opts.verbose,
-                    'readonly' : true,
-                    'baseDirectoriesList' : this.opts.baseDirectoriesList,
-                    'tempDirectory' : this.opts.tempDirectory
+                console.log('found free port', port);
+                let connected = false;
+
+                let sserver = new WebSocket.Server({
+                    'host' : 'localhost',
+                    'port' : port
                 });
 
-                this.sendCommand(socket, 'initiateFilestream', { 'port' : port });
+                sserver.on('listening', () => {
+                    this.sendCommand(socket, 'initiatefilestream', { 'port' : port });
+
+                    //port should close itself if server is non-responsive (i.e. has not connected)
+                    let timeout = timers.setTimeout( () => {
+                        if (!connected) { 
+                            console.log('Client nonresponse, closing server on port', port);
+                            sserver.close(); 
+                        }
+                        timers.clearTimeout(timeout);
+                    }, 15000);
+                });
+
+                sserver.on('connection', (socket) => {
+                    connected = true;
+                    console.log('formed connection', socket);
+                    //TODO: handle streaming the data
+                });
+
+
+            }).catch( (e) => {
+                reject(e);
             });
         });
     }
