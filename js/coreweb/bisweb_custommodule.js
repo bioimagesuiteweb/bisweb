@@ -268,7 +268,7 @@ class CustomModule {
      * Reset Parameters of the module to default values
      */
     resetParameters() {
-
+        this.description = this.module.getDescription();
         this.description.params.forEach((param) => {
             let v = param.default;
             this.guiVars[param.varname] = v;
@@ -280,6 +280,7 @@ class CustomModule {
      * @param{FileObject} fobj - the file object to load from
      */
     loadParameters(fobj) {
+        this.description = this.module.getDescription();
         this.module.loadParameters(fobj).then( (obj) => {
             this.description.params.forEach((param) => {
                 let varname=param.varname;
