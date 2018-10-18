@@ -195,13 +195,15 @@ class ModuleManagerElement extends HTMLElement {
             if (f) {
                 webutil.createMenuItem(this.moduleMenu[1],'');
                 this.createModule('Quality Measures',1, false, modules.qualityMeasures, moduleoptions);
+                this.createModule('Change Header Spacing',1, false, modules.changeImageSpacing, moduleoptions);
             }
         });
         this.createModule('Normalize Image',1, false, modules.normalizeImage, moduleoptions);
         this.createModule('Threshold Image',1, false, modules.thresholdImage, moduleoptions);
         this.createModule('Cluster Threshold',1, false, modules.clusterThreshold, moduleoptions);
         this.createModule('Correct Bias Field',1, true, modules.sliceBiasFieldCorrect, moduleoptions);
-        this.createModule('Change Spacing',1, true, modules.changeImageSpacing, moduleoptions);
+        
+
         this.createModule('Resample Image',1, false, modules.resampleImage, moduleoptions);
         this.createModule('Shift+Scale(+Cast) Image',1, false, modules.shiftScaleImage, moduleoptions);
         this.createModule('Reorient Image',1, false, modules.reorientImage, moduleoptions);

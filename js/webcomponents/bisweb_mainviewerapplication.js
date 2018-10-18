@@ -749,11 +749,13 @@ class ViewerApplicationElement extends HTMLElement {
                                            function () {
                                                self.VIEWERS[viewerno].clearobjectmap();
                                            });
-                    webutil.createMenuItem(objmenu[viewerno], ''); // separator
-                    webutil.createMenuItem(objmenu[viewerno], 'Reslice Overlay To Match Image',
-                                           function () {
-                                               self.resliceOverlay(viewerno);
-                                           });
+                    if (self.applicationName=="overlayviewer") {
+                        webutil.createMenuItem(objmenu[viewerno], ''); // separator
+                        webutil.createMenuItem(objmenu[viewerno], 'Reslice Overlay To Match Image',
+                                               function () {
+                                                   self.resliceOverlay(viewerno);
+                                               });
+                    }
                 }
                 
                 webutil.createMenuItem(objmenu[viewerno], ''); // separator
@@ -1101,8 +1103,9 @@ class ViewerApplicationElement extends HTMLElement {
         webutil.createMenuItem(bmenu, 'Restart Application',
                                function () {
                                    bootbox.confirm("Are you sure? You will lose all unsaved data.",
-                                                   function() {
-                                                       window.open(self.applicationURL,'_self');
+                                                   function(e) {
+                                                       if (e)
+                                                           window.open(self.applicationURL,'_self');
                                                    }
                                                   );
                                });
