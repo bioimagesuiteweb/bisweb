@@ -16,9 +16,9 @@ class BisWSWebSocketFileServer extends BaseFileServer {
     constructor(opts={}) {
         super(opts);
         this.indent='.....';
+        this.hostname = null;
+        this.portNumber = null;
     }
-
-    
 
 
     // -----------------------------------------------------------------------------------
@@ -60,9 +60,9 @@ class BisWSWebSocketFileServer extends BaseFileServer {
 
     /** Attach Socket Event 
      *
-     * @param{Socket} socket - the socket to use
-     * @param{String} eventname - the name of the event
-     * @param{Function} fn - the event handler
+     * @param {Socket} socket - the socket to use
+     * @param {String} eventname - the name of the event
+     * @param {Function} fn - the event handler
      */
     attachSocketEvent(socket,eventname,fn) {
         console.log(this.indent+' \t\t attaching socket event='+eventname+' to socket');
@@ -472,10 +472,10 @@ class BisWSWebSocketFileServer extends BaseFileServer {
             return;
         }
         
-        let tserver=new BisWSWebSocketFileServer({ verbose : this.opts.verbose,
-                                                   readonly : false,
-                                                   baseDirectoriesList: this.opts.baseDirectoriesList,
-                                                   tempDiretory : this.opts.tempDirectory,
+        let tserver=new BisWSWebSocketFileServer({ 'verbose' : this.opts.verbose,
+                                                   'readonly' : false,
+                                                   'baseDirectoriesList': this.opts.baseDirectoriesList,
+                                                   'tempDiretory' : this.opts.tempDirectory,
                                                  });
         tserver.startServer(this.hostname, this.portNumber+1,true).then( (p) => {
 
@@ -489,6 +489,30 @@ class BisWSWebSocketFileServer extends BaseFileServer {
             this.sendCommand(socket,'uploadmessage', cmd);
         });
     }
+
+    /**
+     * Creates a stream between the client and server in order to transfer large files. Spins up a new file server on a different port to handle the transfer.
+     * 
+     * @param {Net.Socket} socket - The control socket negotiated between the client and server when the connection is formed.
+     * @param {String} filename - The full path of the file to stream to the client.
+     */
+    createFilestream(socket, filename) {
+        return new Promise( (resolve, reject) => {
+            //find a free port and create the streaming server
+            this.findFreePort(this.portNumber).then( (port) => {
+
+                let sserver = new BisWSWebSocketFileServer({
+                    'verbose' : this.opts.verbose,
+                    'readonly' : true,
+                    'baseDirectoriesList' : this.opts.baseDirectoriesList,
+                    'tempDirectory' : this.opts.tempDirectory
+                });
+
+                this.sendCommand(socket, 'initiateFilestream', { 'port' : port });
+            });
+        });
+    }
+
 }
 
 module.exports=BisWSWebSocketFileServer;

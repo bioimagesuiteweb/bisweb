@@ -339,6 +339,12 @@ class FileTreePanel extends HTMLElement {
         this.viewerapplication.loadImage(this.baseDirectory + name);
     }
 
+    /**
+     * Saves a the current list of study files to whichever storage service the user has selected, e.g. the local file system, Amazon AWS, etc.
+     * The list will be saved as a .json file with the study files nested the same way as the file tree.
+     * 
+     * @param {String} filepath - The path to save the file to. 
+     */
     exportStudy(filepath) {
         try {
             let stringifiedFiles = JSON.stringify(this.fileTree);

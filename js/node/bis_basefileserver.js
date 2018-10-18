@@ -12,6 +12,7 @@ const glob=bisgenericio.getglobmodule();
 // TODO: Check Base Directories not / /usr (probably two levels)
 
 const fs = require('fs');
+const net = require('net');
 
 // One time password library
 const otplib = require('otplib');
@@ -281,7 +282,8 @@ class BaseFileServer {
     // .................................................................................................................................................................
 
     /**
-     * Takes a request from the client and returns the requested file or series of files. 
+     * Takes a request from the client and returns the requested file or series of files.
+     * Will either read the entire file and send it in a single chunk or negotiate a stream and send it in smaller chunks.
      * 
      * @param {String} rawText - Unparsed JSON denoting the file or series of files to read. 
      * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
@@ -302,7 +304,7 @@ class BaseFileServer {
         if (path.sep==='\\')
             filename=util.filenameUnixToWindows(filename);
 
-        let handleError=(filenane,err) => {
+        let handleError=(filename,err) => {
             if (err.code==="EACCES")
                 this.handleBadRequestFromClient(socket, 'Failed to read file'+filename+' permission denied');
             else if (err.code==="ENOENT")
@@ -312,24 +314,40 @@ class BaseFileServer {
         };
         
         if (isbinary) {
-            fs.readFile(filename,  (err, d1) => {
-                
-                if (err) {
-                    handleError(filename,err);
+            //TODO: fs.readFile crashes when trying to load large files (typically functional images)
+            //Examine a way to load these files and send them in chunks?
+            console.log('reading binary file and sending to client...');
+            fs.stat(filename, (err, stats) => {
+                if (err) { console.log('An error occured while statting', filename, err); return; }
+
+                console.log('stats', stats);
+                if (stats.size > 500 * 1024 * 1024) {
+
+                    console.log(this.indent, 'File larger than 500MB, negotiating stream...');
+                    this.createFilestream(filename);
                 } else {
-                    console.log(`${this.indent} load binary file ${filename} successful, writing to socket`);
-                    let checksum=`${util.SHA256(new Uint8Array(d1))}`;
-                    if (this.opts.verbose)
-                        console.log(this.indent,'Sending checksum=',checksum, 'id=',id);
-                    this.sendCommand(socket,'checksum', {
-                        'checksum' : checksum,
-                        'id' : id
+                    console.log(this.indent, 'Sending small file as a single chunk...');
+                    fs.readFile(filename, (err, d1) => {
+        
+                        if (err) {
+                            handleError(filename,err);
+                        } else {
+                            console.log(`${this.indent} load binary file ${filename} successful, writing to socket`);
+                            let checksum=`${util.SHA256(new Uint8Array(d1))}`;
+                            if (this.opts.verbose)
+                                console.log(this.indent,'Sending checksum=',checksum, 'id=',id);
+                            this.sendCommand(socket,'checksum', {
+                                'checksum' : checksum,
+                                'id' : id
+                            });
+                            this.sendCommand(socket,'binary',d1);
+                        }
                     });
-                    this.sendCommand(socket,'binary',d1);
                 }
             });
+
+
         } else {
-            //        console.log(this.indent,'filename', filename);
             fs.readFile(filename, 'utf-8', (err, d1) => {
                 if (err) {
                     handleError(filename,err);
@@ -625,7 +643,6 @@ class BaseFileServer {
         });
     }
 
-
     /**
      * Sends a message to the client describing the server error that occured during their request. 
      * 
@@ -818,6 +835,35 @@ class BaseFileServer {
         return parsedText;
     }
 
+    /**
+     * Iteratively scans for a free port on the user's system.
+     * 
+     * @param {Number} port - The port to start scanning from, typically the number of the control socket. Increments each time the function finds an in-use port.
+     * @returns A promise that will resolve a free port, or reject with an error.
+     */
+    findFreePort(port) {
+        return new Promise( (resolve, reject) => {
+            let currentPort = port;
+            
+            let searchPort = () => {
+                currentPort = currentPort + 1;
+                if (currentPort > port + 20) { reject('timed out scanning ports'); }
+                console.log('checking port', currentPort);
+                net.createConnection({ 'port' : currentPort }, (socket) => {
+                    socket.on('error', () => {
+                        socket.close();
+                        searchPort();
+                    });
+
+                    socket.on('connect', () => {
+                        socket.close();
+                        resolve(currentPort);
+                    });
+                }); 
+            };
+
+        });
+    }
 }
 
 
