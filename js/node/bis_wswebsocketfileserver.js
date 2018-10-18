@@ -1,7 +1,9 @@
 const path=require('path');
 const timers = require('timers');
 const util = require('bis_util');
+const fs = require('fs');
 const WebSocket=require('ws');
+const StreamingWebSocket=require('websocket-stream');
 const genericio = require('bis_genericio.js');
 const coregenericio = require('bis_coregenericio.js');
 const wsutil = require('bis_wsutil');
@@ -105,6 +107,10 @@ class BisWSWebSocketFileServer extends BaseFileServer {
 
     /**  decodes text from socket
      * @param{Blob} text - the string to decode
+        ssocket.addEventListener('open', () => {
+            ssocket.send('ready');
+        });
+
      * @returns {String} - the decoded string
      */
     decodeUTF8(text) {
@@ -504,9 +510,24 @@ class BisWSWebSocketFileServer extends BaseFileServer {
                 console.log('found free port', port);
                 let connected = false;
 
-                let sserver = new WebSocket.Server({
+                //create a streaming websocket server and bind the connected event to create a read stream from the chosen file and begin piping
+                let sserver = new StreamingWebSocket.Server({
                     'host' : 'localhost',
-                    'port' : port
+                    'port' : port,
+                    'perMessageDeflate' : false //Authors recommend disabling this https://www.npmjs.com/package/websocket-stream
+                }, 
+                (stream) => {
+                    connected = true;
+                    console.log('beginning stream');
+                    
+                    let fileReadStream = fs.createReadStream(filename);
+                    fileReadStream.on('end', () => {
+                        console.log('stream done, ending stream');
+                        stream.write('');
+                        stream.end();
+                    });
+
+                    fileReadStream.pipe(stream);
                 });
 
                 sserver.on('listening', () => {
@@ -517,17 +538,11 @@ class BisWSWebSocketFileServer extends BaseFileServer {
                         if (!connected) { 
                             console.log('Client nonresponse, closing server on port', port);
                             sserver.close(); 
+                            reject();
                         }
                         timers.clearTimeout(timeout);
                     }, 15000);
                 });
-
-                sserver.on('connection', (socket) => {
-                    connected = true;
-                    console.log('formed connection', socket);
-                    //TODO: handle streaming the data
-                });
-
 
             }).catch( (e) => {
                 reject(e);

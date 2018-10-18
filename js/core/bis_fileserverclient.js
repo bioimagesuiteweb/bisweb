@@ -734,15 +734,28 @@ class BisFileServerClient extends BisBaseServerClient {
 
     connectToFilestream(port) {
         let hostname = 'ws://localhost:' + port;
+        let blobArray = [];
+
+        //once connected the server will begin piping images chunks, which we will assemble on this side
         let ssocket = new WebSocket(hostname);
-
+        let loggedPacket = false;
         ssocket.addEventListener('message', (e) => {
-            console.log('received data', e);
+
+            if (!loggedPacket) {
+                loggedPacket = true;
+                console.log('e', e, e.data.size);
+            }
+            //empty packet should indicate the end of stream
+            if (e.data.size === 0) {
+                let combinedImage = new Blob(blobArray);
+                console.log('combined image', combinedImage);
+                ssocket.close();
+            } else {
+                blobArray.push(e.data);
+            }
         });
 
-        ssocket.addEventListener('open', () => {
-            ssocket.write('ready');
-        });
+
 
     }
 

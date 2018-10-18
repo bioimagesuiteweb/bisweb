@@ -37,7 +37,8 @@
         "platform": "1.3.5",
         "rimraf": "2.6.2",
         "three": "0.95.0",
-        "webcomponents": "0.1.4"
+        "webcomponents": "0.1.4",
+        "websocket-stream": "^5.1.2"
     },
     "devDependencies": {
         "colors": "1.1.2",
