@@ -63,24 +63,38 @@ class OrthogonalViewerElement extends BaseViewerElement {
         this.internal.simplemode=false;
         this.internal.rendermode=8;
         this.internal.origviewports = [
+            // Slices=0
             [ { x0:0.52, y0:0.55, x1:0.97,  y1:1.0},  { x0:0.03, y0:0.55, x1:0.48, y1:1.0},
               { x0:0.03, y0:0.09, x1:0.48,  y1:0.54}, { x0:0.99, y0:0.0,  x1:0.995, y1:0.01 } , { x0:0.0,y0:0.0,x1:0.0,y1:0.0 } ],
+            // Sagittal=1
             [ { x0:0.05, y0:0.09, x1:0.95, y1:0.99},  { x0:0.0, y0:0.0,  x1:0.01, y1:0.01},
               { x0:0.0, y0:0.3,  x1:0.01, y1:0.31},  { x0:0.0, y0:0.6,  x1:0.01, y1:0.61}, { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
+            // Coronal=2
             [ { x0:0.0, y0:0.0,  x1:0.01, y1:0.01}, { x0:0.05, y0:0.09, x1:0.95, y1:0.99},
               { x0:0.0, y0:0.3,  x1:0.01, y1:0.31},  { x0:0.0, y0:0.6,  x1:0.01, y1:0.61}, { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
+            // Axial=3
             [ { x0:0.0, y0:0.0,  x1:0.01, y1:0.01}, { x0:0.0, y0:0.3,  x1:0.01, y1:0.31},
               { x0:0.05, y0:0.09, x1:0.95, y1:0.99},   { x0:0.0, y0:0.6,  x1:0.01, y1:0.61}, { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
+            // 3D +Slices=4
             [ { x0:0.6, y0:0.81, x1:0.79, y1:1.0},  { x0:0.0, y0:0.81, x1:0.19, y1:1.0},
               { x0:0.0, y0:0.2, x1:0.19,  y1:0.39},  { x0:0.21, y0:0.0,  x1:1.0, y1:0.8} , { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
+            // 3D Only=5
             [ { x0:0.0, y0:0.0,  x1:0.01, y1:0.01}, { x0:0.0, y0:0.3,  x1:0.01, y1:0.31},
               { x0:0.0, y0:0.6,  x1:0.01, y1:0.61}, { x0:0.01, y0:0.01, x1:1.0, y1:1.0}, { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
+            // Conn 1=6
             [ { x0:0.01, y0:0.06, x1:0.26, y1:0.32},  { x0:0.01, y0:0.38, x1:0.26, y1:0.63},
               { x0:0.01, y0:0.74, x1:0.26,  y1:0.99},  { x0:0.29, y0:0.01,  x1:0.99, y1:0.99},  { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
+            // Conn 2=7
             [ { x0:0.05, y0:0.01, x1:0.31, y1:0.27},  { x0:0.37, y0:0.01, x1:0.63, y1:0.27},
               { x0:0.69, y0:0.0, x1:0.95,  y1:0.27},  { x0:0.6, y0:0.30,  x1:0.99, y1:0.99 }, { x0:0.01, y0:0.30,  x1:0.59, y1:0.99}],
+            // Conn 3=8
             [ { x0:0.05, y0:0.01, x1:0.31, y1:0.27},  { x0:0.37, y0:0.01, x1:0.63, y1:0.27},
-              { x0:0.69, y0:0.0, x1:0.95,  y1:0.27},  { x0:0.99, y0:0.0,  x1:0.995, y1:0.01}, { x0:0.00,y0:0.29,x1:1.0,y1:1.0}]];
+              { x0:0.69, y0:0.0, x1:0.95,  y1:0.27},  { x0:0.99, y0:0.0,  x1:0.995, y1:0.01}, { x0:0.00,y0:0.29,x1:1.0,y1:1.0}],
+            // Simple Mode=9
+            [ { x0:0.05, y0:0.10, x1:0.31, y1:0.9},  { x0:0.37, y0:0.10, x1:0.63, y1:0.90},
+              { x0:0.69, y0:0.10, x1:0.95, y1:0.9},  { x0:0.99, y0:0.0,  x1:0.995, y1:0.01}, { x0:0.99, y0:0.0,  x1:0.995, y1:0.01} ]
+
+        ];
 
 
         this.internal.viewports = this.internal.origviewports;
@@ -918,7 +932,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
     // ------------------------------------------------------------------------
     
     /** gui callback. Set the rendermode to either single slice, three-slice view, three-slice +3D etc.
-     * @param {number} mode - 0='Slices',  1='Sagittal', 2='Coronal', 3='Axial', 4='3D+slices', 5='3D Only'
+     * @param {number} mode - 0='Slices',  1='Sagittal', 2='Coronal', 3='Axial', 4='3D+slices', 5='3D Only', 9='Simple Mode'
      * @param {boolean} force - force update otherwise do as needed
      */
     setrendermode(mode,force) {
@@ -1339,7 +1353,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         
         //this.internal.layoutcontroller.getcorecontrols().empty();
         
-        let dpname = [ 'Slices', 'Sagittal', 'Coronal', 'Axial' , 'Slices+3D','3D Only' ];
+        let dpname = [ 'Slices', 'Sagittal', 'Coronal', 'Axial' , 'Slices+3D','3D Only','Simple Mode'];
         let data = this.internal.datgui.data;
         
         data.displaymode = dpname[0];
@@ -1407,6 +1421,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
             
             dmode.onChange(function(val) {
                 let ind=dpname.indexOf(val);
+                if (ind===6)
+                    ind=9;
                 self.setrendermode(ind);
             });
             
@@ -1615,6 +1631,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 let ind=this.internal.displaymodes.indexOf(sanedata['displaymode']);
                 if (ind>=0) {
                     this.internal.datgui.data.displaymode=this.internal.displaymodes[ind];
+                    if (ind===6) // Simple Mode
+                        ind=9;
                     this.setrendermode(ind);
                 }
             }
