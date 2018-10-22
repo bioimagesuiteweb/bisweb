@@ -423,7 +423,12 @@ expobj.initialize=function(dbase) {
 if (genericio.getmode() !== 'browser')  {
     initializeCommandLine();
 } else {
-    Window.biswebpref=expobj;
+    try {
+        // Web worker gives an error
+        Window.biswebpref=expobj;
+    } catch (e) {
+        console.log("++++ In web worker, no export");
+    }
 }
 
 
