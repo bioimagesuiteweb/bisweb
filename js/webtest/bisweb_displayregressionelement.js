@@ -23,6 +23,7 @@ const bis_webfileutil=require('bis_webfileutil');
 const webutil=require('bis_webutil');
 const $=require('jquery');
 const bisdate=require('bisdate.js').date;
+const userPreferences = require('bisweb_userpreferences.js');
 import testmodule from '../../web/images/testdata/displaytests.json';
 let displaytestlist=null;
 
@@ -51,6 +52,7 @@ var runTest = async function(testindex,viewerindex,basestate='',viewerstate='',c
     });
 
     globalParams.goldImageElement.src=comparisonpng;
+    userPreferences.setImageOrientationOnLoad('None');
 
     
     try {
