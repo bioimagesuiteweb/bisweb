@@ -83,7 +83,7 @@ class GrapherModule extends HTMLElement {
                 }
             }
             this.graphWindow.hide();
-        })
+        });
 
         let bbar=this.graphWindow.getFooter();
 
