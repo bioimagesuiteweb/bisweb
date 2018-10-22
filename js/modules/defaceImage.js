@@ -166,15 +166,21 @@ class DefaceImageModule extends BaseModule {
                 let temp=baseutils.resliceRegistrationOutput(biswrap,input,images[1],matr,1,0);
 
                 if (this.parseBoolean(vals.outputmask)) {
+                    // Make this short !!!!
+                    let output = new BisWebImage();
+                    output.cloneImage(temp, {
+                        "type" : "uchar"
+                    });
+                    let odat=output.getImageData();
                     let tdat=temp.getImageData();
                     let l=tdat.length;
                     for (let i=0;i<l;i++) {
                         if (tdat[i]<50)
-                            tdat[i]=0;
+                            odat[i]=0;
                         else
-                            tdat[i]=1;
+                            odat[i]=1;
                     }
-                    this.outputs['output']=temp;
+                    this.outputs['output']=output;
                 } else {
                     let output=new BisWebImage();
                     output.cloneImage(input);
