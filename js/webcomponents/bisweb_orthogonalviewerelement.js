@@ -758,11 +758,6 @@ class OrthogonalViewerElement extends BaseViewerElement {
         context.clearRect(Math.floor(this.cleararea[0]*dw),0,Math.floor(this.cleararea[1]*dw),dh);
         let cdim=$(context.canvas).css(['width','height','left','top' ]);
         
-        if (this.internal.showdecorations===false) {
-            this.hidearrowbuttons();
-            return;
-        }
-
         // Add R&L s
         var labels = [ [ 'A','P', 'S','I' ] ,
                        [ 'R','L', 'S','I' ] ,
@@ -786,7 +781,10 @@ class OrthogonalViewerElement extends BaseViewerElement {
         let arrowsize=this.createarrowbuttons($(context.canvas).parent().parent(),fnsize);
         this.createmidline(context.canvas,dw,dh);
 
-
+        if (this.internal.showdecorations===false) {
+            this.hidearrowbuttons();
+            return;
+        }
         
         var invorientaxis = this.internal.volume.getOrientation().invaxis;
         var orientaxis = this.internal.volume.getOrientation().axis;
