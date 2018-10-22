@@ -326,7 +326,7 @@ const webfileutils = {
                        'filters' : fileopts.filters
                      };
 
-        console.log('FileMode=',fileMode, fileopts.save);
+        //console.log('FileMode=',fileMode, fileopts.save);
         
         // -------------------- End Of Part I ---------------
 

@@ -212,7 +212,7 @@ class AtlasControlElement extends HTMLElement {
         let img=new BisWebImage();
         img.load(this.atlaspath+data.labels.filename,"NONE").then( () => {
 
-            console.log('Atlas loaded ',img.getDescription());
+            console.log('.... Atlas loaded ',img.getDescription());
             this.useAtlas=true;
             this.atlaslabelimage=img;
             this.atlasdescription=data;
