@@ -51,6 +51,7 @@ class BaseViewerElement extends HTMLElement {
             framechangedobservers :[],
             imagechangedobservers : [],
             ignorecolormapobservers : false,
+            ignoreimageobservers : false,
             ignoreframeobservers : false,
             ignoremouseobservers : false,
             
@@ -622,8 +623,12 @@ class BaseViewerElement extends HTMLElement {
      * @param {BisF.ColorMapControllerPayload } input - new transfer functions
      */
     updatecmap(other,input) {
-        if (this.internal.ignorecolormapobservers === true)
+
+        if (this.internal.ignorecolormapobservers === true ||
+            this.internal.ignoreimageobservers === true)
             return;
+
+        //console.log('This = ',this,'Receiving update cmap');
         
         if (this.internal.cmapcontroller!==null && this.internal.volume!==null) {
             this.internal.cmapcontroller.setElementState(other.getElementState());
@@ -730,21 +735,30 @@ class BaseViewerElement extends HTMLElement {
         if (this.internal.imagechangedobservers.length===0)
             return;
 
+        this.internal.ignoreimageobservers=true;
+        
         this.internal.imagechangedobservers.forEach((f) => {
             f.handleViewerImageChanged(this,mode,this.internal.objectmaptransferinfo.colormode);
         });
+
+        this.internal.ignoreimageobservers=false;
     }
 
     /** this class can also be an imagechangedobserver */
     handleViewerImageChanged(viewer,source,colortype) {
 
+        if (this.internal.ignoreimageobservers === true)
+            return;
+
+        
         let img=null;
         if (source==="overlay")
             img=viewer.getobjectmap();
         else
             img=viewer.getimage();
 
-        console.log('Setting ' , this, img, source);
+        //console.log('<HR><BR>Setting ' , this, img, source);
+        this.internal.ignoreimageobservers = true;
         if (source==='overlay') {
             let plainmode= (colortype === "Objectmap");
             if (img!==null)
@@ -754,6 +768,7 @@ class BaseViewerElement extends HTMLElement {
         } else {
             this.setimage(img);
         }
+        this.internal.ignoreimageobservers = false;
     }
 
 
@@ -997,6 +1012,8 @@ class BaseViewerElement extends HTMLElement {
         if (dt===null)
             return;
 
+        this.internal.ignorecolormapobservers = true;
+
         if (dt['viewerleft'])
             this.internal.viewerleft= dt['viewerleft'];
 
@@ -1019,6 +1036,8 @@ class BaseViewerElement extends HTMLElement {
             }
         }
 
+
+        this.internal.ignorecolormapobservers = false;
         
         if (this.internal.cmapcontroller) {
             this.internal.cmapcontroller.setElementState(dt['colormap']);
