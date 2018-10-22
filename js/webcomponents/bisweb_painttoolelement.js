@@ -553,6 +553,7 @@ class PaintToolElement extends HTMLElement {
                 self.internal.settingviewer=false;
                 self.resetundo();
                 self.updategui();
+                self.setObjectmapOpacity(0.8);
                 resolve('all set');
             },1);
         });
@@ -1056,6 +1057,18 @@ class PaintToolElement extends HTMLElement {
         webutil.createMenuItem(parent,''); // separator
     }
 
+    setObjectmapOpacity(val) {
+        setTimeout( () => {
+            let cmapcontrol=this.internal.orthoviewer.getColormapController();
+            let elem=cmapcontrol.getElementState();
+            elem.opacity=val;
+            cmapcontrol.setElementState(elem);
+            cmapcontrol.updateTransferFunctions(true);
+        },10);
+    }
+
+
+    
     addTools(tmenu)  {
         // Trap set objectmap function and redirect this here ...
         const self=this;
@@ -1071,6 +1084,7 @@ class PaintToolElement extends HTMLElement {
 
         return new Promise( (resolve) => {
 
+
             if (this.internal.algocontroller) {
                 
                 const self=this;
@@ -1081,8 +1095,8 @@ class PaintToolElement extends HTMLElement {
                             webutil.createAlert(e,true);
                         });
                     } else {
-                        console.log('Setting image ... ');
                         self.internal.orthoviewer.setimage(input);
+                        self.setObjectmapOpacity(0.5);
                     }
                 };
 
