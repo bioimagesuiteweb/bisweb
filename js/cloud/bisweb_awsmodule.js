@@ -59,17 +59,19 @@ class AWSModule extends BaseServerClient {
         });
 
         this.awsbucketstorage.getItem('currentAWS', (err, value) => {
-            if (err) { console.log('an error occured fetching from aws bucket storage', err); }
+            if (err) {
+                //console.log('an error occured fetching from aws bucket storage', err);
+            }
             try {
-                console.log('value', value);
+                //console.log('value', value);
                 let parsedAWS = JSON.parse(value);
                 if (parsedAWS.bucketName && parsedAWS.identityPoolId)
                     this.currentAWS = JSON.parse(value);
                 else 
                     this.currentAWS = null;
-                console.log('current aws', this.currentAWS);
+                //console.log('current aws', this.currentAWS);
             } catch(e) {
-                console.log('an error occured parsing JSON', e);
+                //    console.log('an error occured parsing JSON', e);
                 this.currentAWS = null;
             }
         });
