@@ -525,6 +525,7 @@ class BisWSWebSocketFileServer extends BaseFileServer {
                         console.log('stream done, ending stream');
                         stream.write('');
                         stream.end();
+                        resolve();
                     });
 
                     fileReadStream.pipe(stream);
