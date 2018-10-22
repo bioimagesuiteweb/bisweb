@@ -429,9 +429,7 @@ class BisFileServerClient extends BisBaseServerClient {
                 } else {
                     //de-Blob the raw data
                     let reader = new FileReader();
-                    console.log('beginning reader...')
                     reader.addEventListener('loadend', () => {
-                        console.log('reader done');
                         let dat = new Uint8Array(reader.result);
 
                         let comp=bisgenericio.iscompressed(url);
@@ -499,10 +497,6 @@ class BisFileServerClient extends BisBaseServerClient {
                                'isbinary' : isbinary });
         });
     }
-
-    
-    
-
 
 
     /** 
@@ -584,10 +578,12 @@ class BisFileServerClient extends BisBaseServerClient {
         
         
         // TODO: is the size of body < packetsize upload in one shot
+        // TODO: large files cannot be converted into typed arrays in a single go, have to space it out to avoid crashing browser
         let body=null;
         if (!isbinary)  {
             body=bisgenericio.string2binary(data);
         } else {
+            console.log('converting file to be saved to typed array');
             body=new Uint8Array(data.buffer);
             if (bisgenericio.iscompressed(url)) {
                 body=new Uint8Array(pako.gzip(data.buffer));
@@ -614,6 +610,7 @@ class BisFileServerClient extends BisBaseServerClient {
                 } else {
                     console.log('+++++\n++++ \t\t First attempt',packetSize);
                 }
+
                 this.uploadFileHelper(url,body,isbinary,checksum,success,tryagain,packetSize);
             };
             tryagain("tryagain",true);
