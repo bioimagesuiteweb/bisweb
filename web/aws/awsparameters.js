@@ -20,13 +20,13 @@ cachedAWSBuckets.getItem('currentAWS', (err, value) => {
     if (err) { console.log('An error occured while fetching from the AWS bucket', err); return; }
     try {
         let parsedItem = JSON.parse(value);
-        console.log('parsed item', parsedItem);
+        //        console.log('parsed item', parsedItem);
         if (parsedItem) {
             IdentityPoolId = parsedItem.identityPoolId;
             BucketName = parsedItem.bucketName;
         }
     } catch(e) {
-        console.log('No current AWS found, requesting one once user attempts to connect.');
+        //console.log('No current AWS found, requesting one once user attempts to connect.');
     }
 });
 

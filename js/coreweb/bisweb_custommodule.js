@@ -245,6 +245,7 @@ class CustomModule {
 
         if (this.module.mouseobserver) {
             // get the current position in the viewer
+            this.description = this.module.getDescription();
             let elem=this.description.inputs[0];
             let varname = elem.varname;
             let viewer = this.getViewerFromName(this.inputVars, varname);
@@ -267,7 +268,7 @@ class CustomModule {
      * Reset Parameters of the module to default values
      */
     resetParameters() {
-
+        this.description = this.module.getDescription();
         this.description.params.forEach((param) => {
             let v = param.default;
             this.guiVars[param.varname] = v;
@@ -279,6 +280,7 @@ class CustomModule {
      * @param{FileObject} fobj - the file object to load from
      */
     loadParameters(fobj) {
+        this.description = this.module.getDescription();
         this.module.loadParameters(fobj).then( (obj) => {
             this.description.params.forEach((param) => {
                 let varname=param.varname;
@@ -361,7 +363,7 @@ class CustomModule {
 
                 webutil.enablebutton(generatedContent.runbutton, status);
                 webutil.enablebutton(generatedContent.undobutton, status);
-                webutil.enablebutton(generatedContent.redobutton, status);
+                //                webutil.enablebutton(generatedContent.redobutton, status);
             });
 
 
@@ -389,16 +391,16 @@ class CustomModule {
                 this.handleUndo();
             });
 
-            generatedContent.redobutton[0].addEventListener("click", (e) => {
+            /*            generatedContent.redobutton[0].addEventListener("click", (e) => {
                 e.preventDefault();
                 this.handleRedo();
-            });
+            });*/
             
             let dropmenu=generatedContent.dropmenu;
             if (dropmenu!==null) {
-                webutil.createDropdownItem(dropmenu,'Update Inputs', function() {
+                /*webutil.createDropdownItem(dropmenu,'Update Inputs', function() {
                     self.updateModuleGUIFromInputObjects();
-                });
+                });*/
                 
                 webutil.createDropdownItem(dropmenu,'Reset Parameters',function() {
                     self.resetParameters();

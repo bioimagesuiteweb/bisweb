@@ -42,6 +42,7 @@ const userPreferences = {
     showwelcome : true,
     favoriteFolders : [],
     internal : false,
+    enables3 : false,
 };
 
 const expobj = {
@@ -281,9 +282,10 @@ expobj.storeUserPreferences=function(dbase) {
         return Promise.reject();
     }
 
-    //    console.log('In Web store');
     dbase = dbase  || dbasepointer;
     return new Promise( (resolve,reject) => {
+        console.log('Storing',JSON.stringify(userPreferences,null,2));
+        
         dbase.setItems(userPreferences).then( () => {
             resolve();
         }).catch( (e) => { reject(e);});
@@ -335,6 +337,7 @@ expobj.setItem=function(key,value,save=false) {
     else
         userPreferences[key]=value;
 
+    
     if (save) {
         if (genericio.getmode() === 'browser')  {
             expobj.storeUserPreferences();
@@ -420,7 +423,12 @@ expobj.initialize=function(dbase) {
 if (genericio.getmode() !== 'browser')  {
     initializeCommandLine();
 } else {
-    Window.biswebpref=expobj;
+    try {
+        // Web worker gives an error
+        Window.biswebpref=expobj;
+    } catch (e) {
+        console.log("++++ In web worker, no export");
+    }
 }
 
 

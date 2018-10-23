@@ -169,9 +169,9 @@ class BisWebImage extends BisWebDataObject {
                     console.log('++++ \t **** forced image orientation to ',forceorient,' to match user preferences');
                     self.commentlist.push({ "Operation" : "On Load from "+fobj+" reoriented to "+self.internal.orient.name+" to match user preferences."});
                     self.internal.header.setExtensionsFromArray(self.commentlist);
-                } else {
+                } /*else {
                     console.log('++++ \t\t maintained original orientation ');
-                }
+                }*/
                 
                 resolve();
             }).catch( (e)=> { reject(e); });

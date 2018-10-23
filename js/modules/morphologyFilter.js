@@ -189,11 +189,10 @@ class MorphologyFilterModule extends BaseModule {
 
         let dim = img.getDimensions();
         if (this.compareArrays(dim,this.lastInputDimensions,0,2)<1) {
-            console.log('No need to re-create GUI');
             return;
         }
         this.lastInputDimensions=dim;
-        console.log('Need to re-create GUI');
+
 
         let names = [ 'seedi','seedj', 'seedk' ];
         for (let i = 0; i < newDes.params.length; i++) {

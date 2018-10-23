@@ -2060,6 +2060,9 @@ class ConnectivityControl extends HTMLElement {
     /* prints info about current data */
     info() { this.innercontrol.info(); }
 
+    /* reset default display parameters */
+    resetdefault() { this.innercontrol.resetdefault(); }
+    
     /* shows a popup dialog listing the most "interesting" nodes */
     viewInteresting() { this.innercontrol.viewInteresting(); }
 

@@ -68,14 +68,6 @@ class SimpleFileDialog {
      */
     filenameCallback(name=null) {
 
-        if (this.mode.indexOf('dir')>=0) {
-            // Directory Mode
-            this.modal.dialog.modal('hide');
-            setTimeout( () => {
-                this.fileRequestFn(this.currentDirectory);
-            },10);
-        }
-        
         if (name===null) {
             name='';
             try {
@@ -85,6 +77,21 @@ class SimpleFileDialog {
                 return;
             }
         }
+
+        if (this.mode.indexOf('dir')>=0) {
+            // Directory Mode
+            if (name.length>0) {
+                // Make a directory
+                return this.createDirectoryCallback(name);
+            }
+
+            // We are done
+            this.modal.dialog.modal('hide');
+            setTimeout( () => {
+                this.fileRequestFn(this.currentDirectory);
+            },10);
+        }
+        
         
         if (name.length<1) {
             return;
@@ -117,6 +124,18 @@ class SimpleFileDialog {
         });
     }
 
+
+    createDirectoryCallback(name) {
+
+        let newdir=this.getCombinedFilename(this.currentDirectory,name);
+        
+        bis_genericio.makeDirectory(newdir).then( () => {
+            this.changeDirectory(newdir);
+            webutil.createAlert('Created directory '+newdir,false);
+        }).catch( (e) => {
+            webutil.createAlert(e,true);
+        });
+    }
 
     /** Request Directory
      * @param {String} dname -- the name of the directory
@@ -152,34 +171,38 @@ class SimpleFileDialog {
             `<div class='container-fluid'>
                 <div class='row justify-content-start' style='margin-bottom:10px'>
                 <div class='col-sm-12 bisweb-file-navbar'></div>
-                </div>
+             </div>
 
-
-                <div class='row justify-content-start content-box'>
+             <div class='row justify-content-start content-box'>
                 <div class='col-sm-3 favorite-bar'></div>
                 <div class='col-sm-9 bisweb-file-display'>
                 <div class='bisweb-file-list'><p>Content goes here...</p></div>
-                </div>
-                </div>
-                <div class='row justify-content-start content-box'>
+             </div>
+
+             <div class='row justify-content-start content-box'>
                 <div class='col-sm-3 favorite-buttons'></div>
                 <div class='col-sm-9 bisweb-file-filterbar' style='margin-top:5px'></div>
                 </div>
-
             </div>`);
 
         
         
         this.createFavorites();
+
         
         this.okButton = $(`<button type='button' class='btn btn-success'>Load</button>`);
+        this.okButton.css( { "margin-right" : "10px",
+                             "width" : "200px",
+                           });
         this.okButton.on('click', (event) => {
             event.preventDefault();
             this.filenameCallback();
         });
 
-         this.modal.footer.append(this.okButton);        
+        
+        this.modal.footer.prepend(this.okButton);
         this.modal.body.append(this.container);        
+
 
     }
 
@@ -262,7 +285,7 @@ class SimpleFileDialog {
             } else {
                 this.okButton.text('Load');
             }
-        } 
+        }
 
         let initialfilename=null;
         if (opts!==null) {

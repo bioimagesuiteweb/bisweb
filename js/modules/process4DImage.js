@@ -28,6 +28,7 @@ const BisWebImage = require('bisweb_image.js');
 class process4DImageModule extends BaseModule {
     constructor() {
         super();
+        this.JSOnly=true;        
         this.name = 'process4DImage';
     }
     

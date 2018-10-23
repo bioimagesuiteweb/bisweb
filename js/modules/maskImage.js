@@ -28,6 +28,7 @@ class maskModule extends BaseModule {
     constructor() {
         super();
         this.name = 'maskImage';
+        this.JSOnly=true;
         this.lastInputRange=[0,0];
     }
     

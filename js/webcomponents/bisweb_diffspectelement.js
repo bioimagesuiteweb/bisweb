@@ -1064,8 +1064,8 @@ class DiffSpectElement extends DualViewerApplicationElement {
     processSpect(interictal, ictal, stdev, mask, pvalue, clustersize) {
 
         let params = {
-            pvalue: pvalue || 0.05,
-            clustersize: clustersize || 100,
+            pvalue: pvalue || 0.01,
+            clustersize: clustersize || 125,
         };
         
         let sigma = 16 * 0.4248, d = {};
@@ -1105,7 +1105,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
         }
         
         // display results
-        let tmapimage = bisimagealgo.spectTmap(final[0], final[1], images[2], null);
+        let tmapimage = bisimagealgo.spectTmap(final[1], final[0], images[2], null);
         let outspect = [0, 0];
         
         // format results

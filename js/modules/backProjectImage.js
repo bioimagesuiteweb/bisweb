@@ -28,6 +28,7 @@ class BackProjectImageModule extends BaseModule {
     constructor() {
         super();
         this.name = 'backProjectImage';
+        this.JSOnly=true;
     }
 
     

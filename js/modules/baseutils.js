@@ -269,6 +269,7 @@ module.exports = {
                 "default": obj.resolution,
                 "low": 1.0,
                 "high": 5.0,
+                "step" : 0.25,
             },
             this.getDebugParam(),
 
@@ -345,6 +346,7 @@ module.exports = {
                 "default": 1.0,
                 "low":  0.0,
                 "high": 4.0,
+                "step" : 0.5,
             },
             {
                 "name": "Metric",

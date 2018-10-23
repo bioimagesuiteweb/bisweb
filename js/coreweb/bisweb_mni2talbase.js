@@ -486,10 +486,12 @@ class OrthoViewer {
                 self.setMNICoordinates(x,y,z);
             } else {
                 self.TalSliderLabels[0].value=x;
-                self.TalSliderLabels[1].value=x;
-                self.TalSliderLabels[2].value=x;
+                self.TalSliderLabels[1].value=y;
+                self.TalSliderLabels[2].value=z;
                 self.setTalairach();
             }
+
+            //            console.log('Showing ',x,y,z ,' mni2tal=',mni2tal);
             
             return new Promise( (resolve) => {
                 setTimeout( () => { 

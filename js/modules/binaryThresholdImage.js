@@ -29,6 +29,7 @@ class BinaryThresholdImageModule extends ThresholdImageModule {
     constructor() {
         super();
         this.name = 'binaryThresholdImage';
+        this.JSOnly=true;
     }
 
 
@@ -40,7 +41,7 @@ class BinaryThresholdImageModule extends ThresholdImageModule {
             "version": "1.0",
             "inputs": baseutils.getImageToImageInputs(),
             "outputs": baseutils.getImageToImageOutputs("The output mask","viewer1","overlay"),
-            "buttonName": "Threshold",
+            "buttonName": "Create Mask",
             "shortname" : "bthr",
             "params": [
                 {
