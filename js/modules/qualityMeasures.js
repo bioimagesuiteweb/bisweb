@@ -145,7 +145,7 @@ class QualityMeasuresModule extends BaseModule {
     }else{
       return 0;
     }
-  };
+  }
 
   /***
     * takes array=arr and returns varience of it.
@@ -155,7 +155,7 @@ class QualityMeasuresModule extends BaseModule {
     return this.mean(arr.map(function(num) {
           return Math.pow(num - mu, 2);
           }));
-  };
+  }
 
   /***
     * image segmentation: takes masked image and segemnt it into
@@ -185,15 +185,15 @@ class QualityMeasuresModule extends BaseModule {
     * input: vals
     * output: [snr,cnr,cjv,efc]
   ***/
-  getQualityMeasures(vals) {
-    let indims=this.maskedImage.getDimensions();
-    let spa=this.maskedImage.getSpacing();
-    let idata=this.maskedImage.getImageData();
-    let sdata=this.segmentedMaskedImage.getImageData(); // masked image 
-    let bdata=this.segmentedImage.getImageData(); // background and non-background image
+  getQualityMeasures(maskedImage,segmentedImage,segmentedMaskedImage) {
+    let indims=maskedImage.getDimensions();
+    //let spa=maskedImage.getSpacing();
+    let idata=maskedImage.getImageData();
+    let sdata=segmentedMaskedImage.getImageData(); // masked image 
+    let bdata=segmentedImage.getImageData(); // background and non-background image
     let islicesize=indims[0]*indims[1];
     
-    this.outputs['segm']=this.segmentedMaskedImage;
+    this.outputs['segm']=segmentedMaskedImage;
     
     let imageVar = this.variance(idata);
     let imageMean = this.mean(idata);
@@ -218,7 +218,8 @@ class QualityMeasuresModule extends BaseModule {
         for (let i=0;i<indims[0];i++) {
           let inindex= i+j*indims[0]+k*islicesize;
 
-          x_j.push(idata[inindex]);
+          if(idata[inindex])
+            x_j.push(idata[inindex]);
           x_max +=Math.pow(idata[inindex],2); 
 
           if(idata[inindex] > imageMean){
@@ -242,9 +243,10 @@ class QualityMeasuresModule extends BaseModule {
     let snr = this.mean(signal)/(Math.sqrt(this.variance(bm))); // higher better
     let cjv = (Math.sqrt(this.variance(wm))+Math.sqrt(this.variance(gm)))/Math.abs(this.mean(wm)-this.mean(gm)); // lower better
     let cnr = Math.abs(this.mean(gm)-this.mean(wm))/Math.sqrt(this.variance(bm)+this.variance(wm)+this.variance(gm)); // higher better
-    let efc = -x_j.map(function(v){ return v/x_max*Math.log(v/x_max)}).reduce((a,b)=>a+b); // lower better
+      let efc = -x_j.map(function(v){ return v/x_max*Math.log(v/x_max);}).reduce((a,b)=>a+b); // lower better
 
     console.log('xj.length:',x_j.length);
+    console.log('x_max:',x_max);
     console.log('signal.length:',signal.length);
     console.log('bm.length:',bm.length);
     console.log('wm.length:',wm.length);
@@ -262,7 +264,7 @@ class QualityMeasuresModule extends BaseModule {
     console.log('cnr:',cnr);
     console.log('efc:',efc);
     return [snr,cnr,cjv,efc];
-  };
+  }
 
 
   /*
@@ -270,7 +272,7 @@ class QualityMeasuresModule extends BaseModule {
    * output: linear registered image
    *
    */
-  registeration(images,vals){
+  /*registeration(images,vals){
     let img = this.inputs['input'];
     let initial=0;
     let idat=img.getImageData();
@@ -282,7 +284,7 @@ class QualityMeasuresModule extends BaseModule {
     let cnr = Math.abs(this.mean(gm)-this.mean(wm))/Math.sqrt(this.variance(bm)+this.variance(wm)+this.variance(gm)); // higher better
     let efc = -x_j.map(function(v){ return v/x_max*Math.log(v/x_max)}).reduce((a,b)=>a+b); // lower better
     return [snr,cnr,cjv,efc];
-  };
+  }*/
 
 
   /*
@@ -293,7 +295,7 @@ class QualityMeasuresModule extends BaseModule {
   registeration(images,vals){
     let img = this.inputs['input'];
     let initial=0;
-    let idat=img.getImageData();
+    //let idat=img.getImageData();
     let o1=img.getOrientationName();
     let o2=images[0].getOrientationName();
     let centeronrefonly=false;
@@ -371,12 +373,12 @@ class QualityMeasuresModule extends BaseModule {
    * input: img, vals
    * output: BisWebTextObject of quality controls
    */
-  printQualityControl(img,vals){
-    let mode=vals.mode;
-    let fdata=img.getImageData();
-    let dim = img.getDimensions();
+  printQualityControl(maskedImage,segmentImage,segmentedMaskedImage){
+    //let mode=vals.mode;
+    //let fdata=img.getImageData();
+    //let dim = img.getDimensions();
     var snr,cnr,cjv,ecf;// measures 
-    [snr,cnr,cjv,ecf] = this.getQualityMeasures(vals);
+    [snr,cnr,cjv,ecf] = this.getQualityMeasures(maskedImage,segmentImage,segmentedMaskedImage);
 
     let message = "<p>  Image Quality Metrics</p><p>SNR= <span style=\"color:green\">"+snr.toFixed(4).toString()+"</span></p>"+
       "<p>CNR= <span style=\"color:green\">"+cnr.toFixed(4).toString()+"</span><a href=\"https://mriqc.readthedocs.io/en/stable/iqms/t1w.html#magnota2006\"/></p>"+
@@ -437,7 +439,7 @@ class QualityMeasuresModule extends BaseModule {
           /*
            * step 5: compute quality control metrics
            */
-          this.printQualityControl(img,vals);       
+          this.printQualityControl(this.maskedImage,this.segmentImage,this.segmentedMaskedImage);
 
           resolve();
 
