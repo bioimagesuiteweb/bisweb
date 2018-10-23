@@ -298,6 +298,21 @@ let binary2string=function(arr,donifti) {
 
 // -------------------------------------------- Read Node ---------------------------------------------------------------------
 
+var removeSpacesFromFilenameWin32Electron=function(s) {
+
+    if (environment !== 'electron') {
+        return s;
+    }
+    
+    const os=getosmodule();
+    if (os.platform()!=='win32')
+        return s;
+
+    let q=s.trim().replace(/%20/g,' ');
+    return q;
+
+};
+
 /** read text data in node.js
  * @alias BisCoreGenericIO~readtextdatanode
  * @param {string} filename - the filename
@@ -306,6 +321,8 @@ let binary2string=function(arr,donifti) {
  */
 var readtextdatanode = function (filename, loadedcallback, errorcallback) {
 
+    filename=removeSpacesFromFilenameWin32Electron(filename);
+    
     try {
         fs.readFile(filename, 'utf-8', (err, d1) => {
             if (err) {
@@ -319,6 +336,9 @@ var readtextdatanode = function (filename, loadedcallback, errorcallback) {
     }
 };
 
+
+
+
 /** read binary data in node.js
  * if filename ends in .gz also decompress.
  * @alias BisCoreGenericIO~readbinarydatanode
@@ -328,6 +348,8 @@ var readtextdatanode = function (filename, loadedcallback, errorcallback) {
  */
 var readbinarydatanode = function (filename, loadedcallback, errorcallback) {
 
+    filename=removeSpacesFromFilenameWin32Electron(filename);
+    
     try {
         fs.readFile(filename,  (err, d1) => {
             if (err) {
@@ -918,7 +940,10 @@ let getimagepath=function() {
             scope=scope.substr(8,index-8)+"/images";
         else
             scope=scope.substr(7,index-7)+"/images";
-        imagepath=scope;
+        const path=getpathmodule();
+        imagepath=path.resolve(scope);
+        console.log('Imagepath=',imagepath);
+
     } else {
         const path=getpathmodule();
         console.log('Dirname=',__dirname);
