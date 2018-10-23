@@ -76,7 +76,7 @@ class BisWebFileServerClient extends BisFileServerClient {
                     this.connectToServer('ws://'+this.hostname);
                 } else {
                     setTimeout( () => {
-                        this.sendRawText(this.password);
+                        this.sendPassword(this.password);
                     },10);
                 }
             });
@@ -93,7 +93,7 @@ class BisWebFileServerClient extends BisFileServerClient {
     }
 
     hideAuthenticationDialog() {
-        if (this.authenticateModal)
+        if (this.authenticateModal) 
             this.authenticateModal.dialog.modal('hide');
     }
     // ------------------------- File Dialog Functions ---------------------------------
@@ -104,8 +104,6 @@ class BisWebFileServerClient extends BisFileServerClient {
      * 
      * @param {Object} payload - Object specifying the list of files on the server machine and which modal it corresponds to.
      * @param {Object} opts - Object specific options for the Dialog
-     *
-     * // TODO: some how have a title here ... and suffix list
      */
     showFileDialog(payload,opts=null) {
 
@@ -119,6 +117,7 @@ class BisWebFileServerClient extends BisFileServerClient {
         opts.startDirectory = payload.path;
         opts.rootDirectory = payload.root;
 
+        opts.server = 'server';
         this.fileDialog.openDialog(payload.data,opts);
     }
 }

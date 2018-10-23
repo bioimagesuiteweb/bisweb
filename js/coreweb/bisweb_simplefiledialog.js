@@ -213,11 +213,19 @@ class SimpleFileDialog {
     createFilters(filters=null) {
 
         if (filters) {
-            this.currentFilters=JSON.parse(JSON.stringify(filters));
+
+            if (filters === 'DIRECTORY' || filters === 'directory') {
+                this.currentFilters = [{ name: 'Directories', extensions: []}];
+            } else {
+                this.currentFilters=JSON.parse(JSON.stringify(filters));
+            }
+            
         }  else {
             this.currentFilters=[];
         }
+
         this.currentFilters.push({ name: 'All Files', extensions: [] });
+
         this.newFilters=true;
         this.activeFilterList=this.currentFilters[0].extensions;
     }
@@ -251,16 +259,22 @@ class SimpleFileDialog {
         if (opts!==null) {
             opts.filters=opts.filters || null;
 
+            console.log('opts.filters', opts.filters);
             this.createFilters(opts.filters);
 
             if (opts.title) {
                 let newtitle=opts.title;
                 if (newtitle) {
                     let title = this.modal.header.find('.modal-title');
-                    title.text(newtitle+ ' (using bisweb fileserver)');
+                    if (opts.server === 'amazonaws') {
+                        title.text(newtitle+ ' (using Amazon S3)');
+                    } else {
+                        title.text(newtitle + ' (using bisweb fileserver)');
+                    }
                 }
             }
 
+            console.log('mode', opts.mode);
             if (opts.mode) 
                 this.mode = opts.mode;
 
@@ -278,6 +292,11 @@ class SimpleFileDialog {
             if (opts.initialFilename)
                 initialfilename=opts.initialFilename;
         }
+
+        console.log('opts.mode', opts.mode);
+        if (opts.mode === 'directory') 
+            this.activeFilterList = ['directories'];
+        
 
         this.updateDialog(list,startDirectory,rootDirectory,initialfilename);
         this.modal.dialog.modal('show');
@@ -311,7 +330,11 @@ class SimpleFileDialog {
                     e.preventDefault();
                     let ind=parseInt(e.target.value);
                     if (ind>=0 && ind<this.currentFilters.length) {
-                        this.activeFilterList=this.currentFilters[ind].extensions;
+                        if (this.currentFilters[ind].name === 'Directories') {
+                            this.activeFilterList = ['directories'];
+                        } else {
+                            this.activeFilterList=this.currentFilters[ind].extensions;
+                        }
                         this.updateTree(this.previousList,name,rootDirectory);
                     }
                 }
@@ -332,6 +355,16 @@ class SimpleFileDialog {
             }
         }
 
+        /*if (this.mode === 'directory') {
+            let filteredData = [];
+            for (let file of list) {
+                if (file.type === 'directory')
+                    filteredData.push(file);
+            }
+
+            list = filteredData;
+        }*/
+
         this.updateTree(list,initialfilename,rootDirectory);
 
 
@@ -350,14 +383,13 @@ class SimpleFileDialog {
     updateTree(list,lastfilename=null,rootDirectory=null) {
 
         this.previousList=JSON.parse(JSON.stringify(list));
+
         if (this.activeFilterList.length>0) {
             let len=list.length-1;
             for (let i = len; i >=0; i=i-1) {
-                if (list[i].type !== 'directory') {
-                    let ok=this.checkFilenameForFilter(list[i].text,this.activeFilterList);
-                    if (!ok) {
-                        list.splice(i,1);
-                    }
+                let ok = this.checkFilenameForFilter(list[i], this.activeFilterList);
+                if (!ok) {
+                    list.splice(i, 1);
                 }
             }
         }
@@ -478,117 +510,6 @@ class SimpleFileDialog {
 
         fileDisplay.append(fileList);
         fileList.append(stable);
-        this.updateFileNavbar(lastfilename,rootDirectory);
-    }
-
-        /**
-     * Creates the visual representation of the files specified by list. Called from createFileList (see notes there for format of file entries).
-     * Uses jstree to render the list.
-     * 
-     * Sorts contents before display so that folders are shown first.
-     * @param {Array} list - An array of file entries. 
-     * @param {String} lastfilename - the last selected filename
-     * @param {String} rootDirectory - "the drive" we are looking in
-
-     */
-    updateTreeOld(list,lastfilename=null,rootDirectory=null) {
-
-        this.previousList=JSON.parse(JSON.stringify(list));
-        
-        let fileList = this.container.find('.bisweb-file-list');
-        fileList.remove();
-        fileList = $(`<div class='bisweb-file-list'></div>`);
-
-
-        let fileDisplay = this.container.find('.bisweb-file-display');
-        fileList.empty();
-        fileList.css({ 'max-height' : '300px',
-                       'height'     : '300px',
-                       'max-width'  : '600px',
-                       "overflow-y": "auto",
-                       "overflow-x": "auto",
-                       "color" : "#0ce3ac",
-                       "background-color": "#444444"
-                     });
-
-
-        if (this.activeFilterList.length>0) {
-            let len=list.length-1;
-            for (let i = len; i >=0; i=i-1) {
-                if (list[i].type !== 'directory') {
-                    let ok=this.checkFilenameForFilter(list[i].text,this.activeFilterList);
-                    if (!ok) {
-                        list.splice(i,1);
-                    }
-                }
-            }
-        }
-        
-        //sort folders ahead of files
-        list.sort( (a, b) => {
-
-            let isadir=(a.type === 'directory');
-            let isbdir=(b.type === 'directory');
-
-            if (isadir && !isbdir)
-                return -1;
-            if (isbdir && !isadir)
-                return 1;
-
-            let at=a.text.toLowerCase();
-            let bt=b.text.toLowerCase();
-            
-            if (at>bt)
-                return 1;
-            if (at<bt)
-                return -1;
-            return 0;
-        });
-
-        
-        fileList.jstree({
-            'core': {
-                'data': list,
-                'dblclick_toggle': true
-            },
-            'types': {
-                'default': {
-                    'icon': 'glyphicon glyphicon-file'
-                },
-                'file': {
-                    'icon': 'glyphicon glyphicon-file'
-                },
-                'root': {
-                    'icon': 'glyphicon glyphicon-home'
-                },
-                'directory': {
-                    'icon': 'glyphicon glyphicon-folder-close'
-                },
-                'picture': {
-                    'icon': 'glyphicon glyphicon-picture'
-                },
-            },
-            'plugins': ["types"]
-        });
-
-        //determine based on the type of the node what should happen when the user clicks on it
-        $(fileList).on('select_node.jstree', (event, data) => {
-
-            let fname=data.node.original.path;
-            if (data.node.type === 'file' || data.node.type ==='picture') {
-
-                let ind=fname.lastIndexOf(this.separator);
-                let dname=fname;
-                if (ind>0)
-                    dname=fname.substr(ind+1,fname.length);
-                this.filenameEntry.val(dname);
-            } else if ( data.node.type=== 'directory') {
-                this.changeDirectory(fname);
-            }
-        });
-
-
-        fileDisplay.append(fileList);
         this.updateFileNavbar(lastfilename,rootDirectory);
     }
 
@@ -802,22 +723,33 @@ class SimpleFileDialog {
         return name + '.'+ filterList[0];
     }
 
-    checkFilenameForFilter(name,filterList) {
-
+    checkFilenameForFilter(entry, filterList) {
+        let name = entry.text;
         if (filterList.length<1)
             return true;
         
-        for (let i=0;i<filterList.length;i++) {
-            let filter=filterList[i];
-            let nl=name.length;
-            let fl=filter.length;
-            if (nl>fl) {
-                let subname=name.substr(nl-fl,fl);
-                if (subname===filter) {
-                    return true;
+        //if checking for directories only return names with no extension
+        if (filterList === 'directory') {
+            return entry.type === 'directory';
+        }
+
+        //otherwise check if non-directories match the filters and return true for directories
+        if (name.split('.').length > 1) {
+            for (let i=0;i<filterList.length;i++) {
+                let filter=filterList[i];
+                let nl=name.length;
+                let fl=filter.length;
+                if (nl>fl) {
+                    let subname=name.substr(nl-fl,fl);
+                    if (subname===filter) {
+                        return true;
+                    }
                 }
             }
+        } else {
+            return true;
         }
+
         return false;
     }
     
@@ -825,5 +757,116 @@ class SimpleFileDialog {
 
 
 }
+
+ /**
+     * Creates the visual representation of the files specified by list. Called from createFileList (see notes there for format of file entries).
+     * Uses jstree to render the list.
+     * 
+     * Sorts contents before display so that folders are shown first.
+     * @param {Array} list - An array of file entries. 
+     * @param {String} lastfilename - the last selected filename
+     * @param {String} rootDirectory - "the drive" we are looking in
+
+     */
+   /* updateTreeOld(list,lastfilename=null,rootDirectory=null) {
+
+        this.previousList=JSON.parse(JSON.stringify(list));
+        
+        let fileList = this.container.find('.bisweb-file-list');
+        fileList.remove();
+        fileList = $(`<div class='bisweb-file-list'></div>`);
+
+
+        let fileDisplay = this.container.find('.bisweb-file-display');
+        fileList.empty();
+        fileList.css({ 'max-height' : '300px',
+                       'height'     : '300px',
+                       'max-width'  : '600px',
+                       "overflow-y": "auto",
+                       "overflow-x": "auto",
+                       "color" : "#0ce3ac",
+                       "background-color": "#444444"
+                     });
+
+
+        if (this.activeFilterList.length>0) {
+            let len=list.length-1;
+            for (let i = len; i >=0; i=i-1) {
+                if (list[i].type !== 'directory') {
+                    let ok=this.checkFilenameForFilter(list[i].text,this.activeFilterList);
+                    if (!ok) {
+                        list.splice(i,1);
+                    }
+                }
+            }
+        }
+        
+        //sort folders ahead of files
+        list.sort( (a, b) => {
+
+            let isadir=(a.type === 'directory');
+            let isbdir=(b.type === 'directory');
+
+            if (isadir && !isbdir)
+                return -1;
+            if (isbdir && !isadir)
+                return 1;
+
+            let at=a.text.toLowerCase();
+            let bt=b.text.toLowerCase();
+            
+            if (at>bt)
+                return 1;
+            if (at<bt)
+                return -1;
+            return 0;
+        });
+
+        
+        fileList.jstree({
+            'core': {
+                'data': list,
+                'dblclick_toggle': true
+            },
+            'types': {
+                'default': {
+                    'icon': 'glyphicon glyphicon-file'
+                },
+                'file': {
+                    'icon': 'glyphicon glyphicon-file'
+                },
+                'root': {
+                    'icon': 'glyphicon glyphicon-home'
+                },
+                'directory': {
+                    'icon': 'glyphicon glyphicon-folder-close'
+                },
+                'picture': {
+                    'icon': 'glyphicon glyphicon-picture'
+                },
+            },
+            'plugins': ["types"]
+        });
+
+        //determine based on the type of the node what should happen when the user clicks on it
+        $(fileList).on('select_node.jstree', (event, data) => {
+
+            let fname=data.node.original.path;
+            if (data.node.type === 'file' || data.node.type ==='picture') {
+
+                let ind=fname.lastIndexOf(this.separator);
+                let dname=fname;
+                if (ind>0)
+                    dname=fname.substr(ind+1,fname.length);
+                this.filenameEntry.val(dname);
+            } else if ( data.node.type=== 'directory') {
+                this.changeDirectory(fname);
+            }
+        });
+
+
+        fileDisplay.append(fileList);
+        this.updateFileNavbar(lastfilename,rootDirectory);
+    } */
 
 module.exports = SimpleFileDialog;

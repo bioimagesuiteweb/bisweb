@@ -1,0 +1,12 @@
+.resizing-frame {
+    transition: all 0.5s ease-out;
+}
+
+.show-selector {
+    width : 100%;
+}
+
+.show-entry {
+    width : 50%;
+    transform : translate(25%, 0);
+}

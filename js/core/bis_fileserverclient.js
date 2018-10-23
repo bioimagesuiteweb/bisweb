@@ -16,7 +16,6 @@ class BisFileServerClient extends BisBaseServerClient {
     constructor(nodesocket=null) {
 
         super();
-        this.lastOpts=null;
         this.portNumber=wsUtilInitialPort;
         
         //connection over which all control communication takes place
@@ -63,7 +62,7 @@ class BisFileServerClient extends BisBaseServerClient {
         bisasyncutil.addEventTimeout(id,timeout);
     }
 
-    sendRawText(text) {
+    sendPassword(text) {
         // Password only really
         // id is this.authenticatingEvent.id;
         this.socket.send(text);
@@ -86,11 +85,14 @@ class BisFileServerClient extends BisBaseServerClient {
      * Sets this.socket internally, the structure representing the control socket between client and server.
      * 
      * @param {String} address - The hostname and port to try to connect to, e.g. 'ws://localhost:24000'. 
+     * 
+     * TODO: Remaking the socket causes strange issues with password behavior, so I stopped the server from closing the socket after a failed connection.
+     * You should look at this, Xenios! I didn't want to fool with it too much.
      */
     connectToServer(address = 'ws://localhost:'+wsUtilInitialPort) {
-
         if (this.socket) {
-            this.closeConnection();
+            console.log('closing connection connect to server');
+            //this.closeConnection();
         }
 
         if (address.indexOf('ws://')!==0)
@@ -224,7 +226,7 @@ class BisFileServerClient extends BisBaseServerClient {
                 break;
             }
             case 'authenticate': {
-                this.sendRawText(this.password || '');
+                this.sendPassword(this.password || '');
                 break;
             }
             case 'badauth':  {
@@ -337,6 +339,7 @@ class BisFileServerClient extends BisBaseServerClient {
                 this.serverinfo=this.hostname;
                 resolve();
             });
+
             let failureCB= ( () => {
                 this.authenticatingEvent=null;
                 this.serverinfo='';
@@ -367,23 +370,21 @@ class BisFileServerClient extends BisBaseServerClient {
      * @param {String} directory - The directory to expand the files under. Optional -- if unspecified the server will return the directories under ~/.
      * @param {Boolean} showdialog - if true popup a gui dialog else just text
      * @param {Objects} opts - the options object
-     * @param {Function} opts.callback - A callback function propagated from bis_webfileutil that will handle the non-AWS I/O for the retrieved data, , and a list of acceptable file suffixes.
+     * @param {Function} opts.callback - A callback function propagated from bis_webfileutil that will handle the non-AWS I/O for the retrieved data and a list of acceptable file suffixes.
      * @param {String} opts.title - The title to display on the load/save modal
      * @param {String} opts.initialname - The initial filename
 
      * @returns {Promise} with payload is the event
      */
-    requestFileList(directory = null, showdialog=true,opts=null) {
-
+    requestFileList(directory = null, showdialog=true, opts=null) {
         
-        if (opts)
-            this.lastOpts=opts;
+        let requestOpts = opts || null;
 
         return new Promise ((resolve,reject) => {
 
             let cb=( (payload) => {
                 if (showdialog) {
-                    this.showFileDialog(payload,this.lastOpts);
+                    this.showFileDialog(payload, requestOpts);
                 }
                 resolve(payload);
             });
@@ -394,10 +395,9 @@ class BisFileServerClient extends BisBaseServerClient {
                                    'directory' : directory,
                                    'id' : serverEvent.id}); 
             });
+
         });
     }
-
-
 
     /** get the base directory of the server
      * @returns {Promise} - whose payload is the location of the directory

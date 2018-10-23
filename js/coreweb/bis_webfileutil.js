@@ -285,22 +285,19 @@ const webfileutils = {
         fileopts.filters=fileopts.filters || null;
         fileopts.force=fileopts.force || null;
 
-        //        console.log('Incoming Suffix =',fileopts.suffix,' filters=',fileopts.filters);
-
         let suffix = fileopts.suffix || '';
         let title = fileopts.title || '';
         let defaultpath=fileopts.defaultpath || '';
 
         
         if (fileopts.suffix===null && fileopts.filters!==null) {
-            if (fileopts.filters==="DIRECTORY" ||
-                fileopts.filters==="NII" ) {
+            if (fileopts.filters==="DIRECTORY" || fileopts.filters==="NII" ) {
                 suffix=fileopts.filters;
                 fileopts.suffix=suffix;
             }
         }
 
-        //        console.log('Suffix =',fileopts.suffix,suffix,fileopts.filters);
+        console.log('Suffix =',fileopts.suffix,suffix,fileopts.filters);
         
         if (suffix === "NII" || fileopts.filters === "NII") {
             suffix = '.nii.gz,.nii,.gz,.tiff';
@@ -326,17 +323,13 @@ const webfileutils = {
                        'filters' : fileopts.filters
                      };
 
-        //console.log('FileMode=',fileMode, fileopts.save);
-        
+
         // -------------------- End Of Part I ---------------
 
-        if (fileopts.suffix === "DIRECTORY" && fileMode === 'server') {
+        if (fileopts.suffix === "DIRECTORY") {
             cbopts.initialFilename= '';
             cbopts.mode='directory';
             cbopts.suffix='';
-            cbopts.filters=null;
-            bisweb_fileserverclient.requestFileList(null, true, cbopts);
-            return;
         }
 
         // -------------------- End of Part IA -------------
@@ -390,7 +383,7 @@ const webfileutils = {
             callback();
             return;
         }
- 
+        
         // -------- Part II Load -----------
         
         if (fmode==='dropbox') { 
@@ -482,26 +475,23 @@ const webfileutils = {
      */
     attachFileCallback : function(button,callback,fileopts={}) {
 
-        fileopts = fileopts || {};
         fileopts.save = fileopts.save || false;
-        
-        const that = this;
 
         if (webutil.inElectronApp()) {
             
-            button.click(function(e) {
+            button.click( (e) => {
                 setTimeout( () => {
                     e.stopPropagation();
                     e.preventDefault();  
-                    that.electronFileCallback(fileopts, callback);
+                    this.electronFileCallback(fileopts, callback);
                 },1);
             });
         } else {
-            button.click(function(e) {
+            button.click( (e) => {
                 setTimeout( () => {
                     e.stopPropagation();
                     e.preventDefault();
-                    that.webFileCallback(fileopts, callback);
+                    this.webFileCallback(fileopts, callback);
                 },1);
             });
         }
@@ -615,7 +605,7 @@ const webfileutils = {
         };
 
         //TODO: debug dropbox, googledrive and one dirve to make sure they work
-        //if (!webutil.inElectronApp()) {
+        
 
         if (!webutil.inElectronApp() && this.needModes()) {
             if (separator)
