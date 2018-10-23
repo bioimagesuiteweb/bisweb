@@ -591,7 +591,7 @@ const webfileutils = {
                         </p>`;
                 }
                 
-                webutil.createRadioSelectModalPromise(`<H4>Select file source</H4><HR>`,
+                webutil.createRadioSelectModalPromise(`<H4>Select File Source</H4><HR>`,
                                                       "Close",
                                                       initial,
                                                       self.getModeList(),
