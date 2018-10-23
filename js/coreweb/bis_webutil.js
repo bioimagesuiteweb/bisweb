@@ -909,6 +909,8 @@ const webutil = {
      * @param {string} css - extra css attributes (as string)
      */
     createDropdownItem : function (dropdown,name,callback,css='') {
+        if (css==='')
+            css="background-color: #303030; color: #ffffff; font-size:13px; margin-bottom: 2px";
         return this.createMenuItem(dropdown,name,callback,css);
     },
 

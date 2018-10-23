@@ -14,7 +14,6 @@ program
     .option('--readonly', 'Whether or not the server should accept requests to write files')
     .option('--insecure', 'USE WITH EXTREME CARE -- if true no password')
     .option('--verbose', ' print extra statements')
-    .option('--ipaddr <s>', ' set the ip address to bind to, else localhost (localhost= no remote connections)')
     .option('--tmpdir <s>', ' specify temporary directory')
     .option('--config <s>', ' read config file')
     .option('--createconfig', ' print sample config file and exit')
@@ -30,7 +29,7 @@ if (portno<wsutil.initialPort || portno>wsutil.finalPort)
     portno=wsutil.initialPort;
 
 
-let ipaddr = program.ipaddr || 'localhost';
+let ipaddr =  'localhost';
 let readonlyflag = program.readonly ? program.readonly : false;
 let insecure = program.insecure ? program.insecure : false;
 let verbose = program.verbose ? program.verbose : false;
