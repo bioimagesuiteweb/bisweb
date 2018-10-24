@@ -500,7 +500,7 @@ class BisFileServerClient extends BisBaseServerClient {
                     handledata(event.data);
                 } else if (data.type === 'initiatefilestream') {
                     this.socket.removeEventListener('message', responseListener);
-                    this.connectToFilestream(data.payload.port).then( (imagedata) => {
+                    this.connectToFilestream(data.payload.port, data.payload.size).then( (imagedata) => {
                         handledata(imagedata);
                     });
                 } 
@@ -785,7 +785,14 @@ class BisFileServerClient extends BisBaseServerClient {
         }
     }
 
-    connectToFilestream(port) {
+    /**
+     * Connects to a waiting port on the server machine, which upon connection will begin streaming chunks of a large file. 
+     * These are saved and combined in a Blob which is returned once the stream is finished.
+     * 
+     * @param {Number} port - The port on which the server machine is listening. 
+     * @param {Number} filesize - The size of the file in bytes.
+     */
+    connectToFilestream(port, filesize) {
         return new Promise( (resolve, reject) => {
 
             let hostname = 'ws://localhost:' + port;
@@ -793,6 +800,8 @@ class BisFileServerClient extends BisBaseServerClient {
     
             //once connected the server will begin piping images chunks, which we will assemble on this side
             let ssocket = new WebSocket(hostname);
+
+            //TODO: Create loading bar and connect it to blobArray
             ssocket.addEventListener('message', (e) => {
     
                 //empty packet should indicate the end of stream

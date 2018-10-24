@@ -532,19 +532,23 @@ class BisWSWebSocketFileServer extends BaseFileServer {
                 });
 
                 sserver.on('listening', () => {
-                    this.sendCommand(socket, 'initiatefilestream', { 'port' : port });
+                    fs.stat(filename, (err, stats) => {
+                        if (err) { reject(err); sserver.close(); }
 
-                    //port should close itself if server is non-responsive (i.e. has not connected)
-                    let timeout = timers.setTimeout( () => {
-                        if (!connected) { 
-                            console.log('Client nonresponse, closing server on port', port);
-                            sserver.close(); 
-                            reject();
-                        }
-                        timers.clearTimeout(timeout);
-                    }, 15000);
+                        this.sendCommand(socket, 'initiatefilestream', { 'port' : port, 'size' : stats.size });
+
+                        //port should close itself if server is non-responsive (i.e. has not connected)
+                        let timeout = timers.setTimeout( () => {
+                            if (!connected) { 
+                                console.log('Client nonresponse, closing server on port', port);
+                                sserver.close(); 
+                                reject();
+                            }
+                            timers.clearTimeout(timeout);
+                        }, 15000);
+                    });
+                    
                 });
-
             }).catch( (e) => {
                 reject(e);
             });
