@@ -170,18 +170,25 @@ class SimpleFileDialog {
         this.container = $(
             `<div class='container-fluid'>
                 <div class='row justify-content-start' style='margin-bottom:10px'>
-                <div class='col-sm-12 bisweb-file-navbar'></div>
-             </div>
+                    <div class='col-sm-12 bisweb-file-navbar'>
+                    </div>
+                </div>
 
-             <div class='row justify-content-start content-box'>
-                <div class='col-sm-3 favorite-bar'></div>
-                <div class='col-sm-9 bisweb-file-display'>
-                <div class='bisweb-file-list'><p>Content goes here...</p></div>
-             </div>
+                <div class='row justify-content-start content-box'>
+                    <div class='col-sm-3 favorite-bar'>
+                    </div>
+                    <div class='col-sm-9 bisweb-file-display'>
+                        <div class='bisweb-file-list'><p>Content goes here...</p>
+                    </div>
+                </div>
 
-             <div class='row justify-content-start content-box'>
-                <div class='col-sm-3 favorite-buttons'></div>
-                <div class='col-sm-9 bisweb-file-filterbar' style='margin-top:5px'></div>
+                <div class='row justify-content-start content-box'>
+                    <div class='col-sm-3 favorite-buttons'>
+                    </div>
+                    <div class='col-sm-7 bisweb-file-filterbar' style='margin-top:5px'>
+                    </div>
+                    <div class='col-sm-2 bisweb-aws-selector-button style='margin-top:5px'>
+                    </div>
                 </div>
             </div>`);
 
@@ -201,12 +208,13 @@ class SimpleFileDialog {
 
         
         if (this.enableAWSSelector) {
-            let selectorButton = $(`<button type='button' class='btn btn-sm'>Change AWS buckets</button>`);
+            let selectorButton = $(`<button type='button' class='btn btn-link' display = 'inline' style='font-size: 11px;' : >Change AWS buckets</button>`);
             selectorButton.on('click', () => {
                 this.AWSModalShowFn();
             });
 
-            this.modal.footer.append(selectorButton);
+            console.log('file navbar', this.modal.dialog.find('.bisweb-file-navbar'));
+            this.container.find('.bisweb-aws-selector-button').append(selectorButton);
         }
         
 
@@ -581,7 +589,7 @@ class SimpleFileDialog {
         }
 
         
-        this.filenameEntry=$(`<input type='text'class="btn-link btn-sm" style="width:500px; border-style : dotted; border-color: white">`);
+        this.filenameEntry=$(`<input type='text'class="btn-link btn-sm" display="inline-block" style="width:500px; border-style : dotted; border-color: white">`);
         if (!lastfilename)
             this.filenameEntry.val('');
         else
