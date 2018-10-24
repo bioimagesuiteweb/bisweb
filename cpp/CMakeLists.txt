@@ -303,10 +303,8 @@ IF (BIS_A_EMSCRIPTEN)
   SET(JSFILES ${H1} ${H2} ${H3})
 
 
-  SET (WNAMELIST bisweb.js)
-  IF (BIS_INSTALLTESTS)
-    SET (WNAMELIST ${WNAMELIST} bisweb-test.js)
-  ENDIF (BIS_INSTALLTESTS)
+  SET (WNAMELIST bisweb.js bisweb-test.js)
+  
   GET_FILENAME_COMPONENT(WEBPCONFIG ${PROJECT_SOURCE_DIR}/../config/app.config.js ABSOLUTE)
   GET_FILENAME_COMPONENT(WEBPCONFIGMOCHA ${PROJECT_SOURCE_DIR}/../config/mocha.config.js ABSOLUTE)
 
@@ -322,11 +320,17 @@ IF (BIS_A_EMSCRIPTEN)
       COMMAND webpack-cli --entry ${INSCRIPT} --config ${WEBPCONFIG} --output-path ${LIBRARY_OUTPUT_PATH} --output-filename ${item}
       )
     add_custom_target(${item} ALL DEPENDS ${OUTSCRIPT})
+  ENDFOREACH(item ${WNAMELIST})
+
+  SET (OUTSCRIPT ${LIBRARY_OUTPUT_PATH}/bisweb.js)
+  install (FILES ${OUTSCRIPT} DESTINATION bisweb/lib
+    PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
+
+  IF (BIS_INSTALLTESTS)
+    SET (OUTSCRIPT ${LIBRARY_OUTPUT_PATH}/bisweb-test.js)
     install (FILES ${OUTSCRIPT} DESTINATION bisweb/lib
       PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
-
-  
-  ENDFOREACH(item ${WNAMELIST})
+  ENDIF (BIS_INSTALLTESTS)
 
 
   SET(OUTFILES "")
@@ -582,6 +586,7 @@ MARK_AS_ADVANCED(BIS_A_DEVEL)
 # If installing tests
 
 IF (BIS_INSTALLTESTS)
+  MESSAGE("Installing tests ${BIS_INSTALLTESTS}")
   install (FILES ${PROJECT_SOURCE_DIR}/../test/module_tests.json DESTINATION bisweb/test)
   install (DIRECTORY ${PROJECT_SOURCE_DIR}/../test/testdata DESTINATION bisweb/test)
   install (FILES ${PROJECT_SOURCE_DIR}/../various/txt/README_test.md DESTINATION bisweb/test)
