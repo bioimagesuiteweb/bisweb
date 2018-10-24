@@ -36,7 +36,6 @@ const BisWebLinearTransformation = require('bisweb_lineartransformation.js');
 
 const localforage=require('localforage');
 
-
 const clipboard=localforage.createInstance({
     driver : localforage.INDEXEDDB,
     name : "BioImageSuiteWebClipboard",

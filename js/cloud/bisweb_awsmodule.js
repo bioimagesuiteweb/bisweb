@@ -46,23 +46,23 @@ class AWSModule extends BaseServerClient {
                 //console.log('an error occured fetching from aws bucket storage', err);
             }
             try {
-
                 let parsedAWS = JSON.parse(value);
                 if (parsedAWS.bucketName && parsedAWS.identityPoolId)
                     this.currentAWS = JSON.parse(value);
                 else
                     this.currentAWS = null;
-
-            } catch (e) {
-               //console.log('current aws', this.currentAWS);
+            } catch(e) {
+                console.log('an error occured parsing JSON', e);
                 this.currentAWS = null;
             }
         });
 
+
         //file display modal gets deleted if you try to load it too soon
         //not completely sure why -Zach
-        bis_webutil.runAfterAllLoaded(() => {
-            this.fileDisplayModal = new bisweb_simplefiledialog('Bucket Contents');
+        bis_webutil.runAfterAllLoaded( () => {   
+            this.fileDisplayModal = new bisweb_simplefiledialog({ 'enableAWSSelector' : true });
+            this.fileDisplayModal.AWSModalShowFn = this.showBucketModal.bind(this);
             this.fileDisplayModal.fileListFn = this.changeDirectory.bind(this);
         });
     }
@@ -645,6 +645,16 @@ class AWSModule extends BaseServerClient {
         window.addEventListener('storage', idTokenEvent);
     }
 
+    /**
+     * Changes the bucket that BioImage Suite will try to access. 
+     * 
+     * @param {Object} newBucketInfo - Container object for the fields BioImage Suite needs to access a bucket. 
+     * @param {String} newBucketInfo.bucketName - The name of the new S3 bucket. 
+     * @param {String} newBucketInfo.identityPoolId - The unique identifier for the identity pool associated with the new bucket. 
+     * @param {String} newBucketInfo.userPoolId - The unique identifier forthe user pool associated with the new bucket and identity pool.
+     * @param {String} newBucketInfo.appClientId - The unique identifier for the app client that this bucket's user pool will use to authenticate your credentials.
+     * @param {String} newBucketInfo.appWebDomain - The URL of the verification endpoint for this bucket's user pool.
+     */
     changeBuckets(newBucketInfo) {
         this.s3 = this.createS3(newBucketInfo.bucketName);
         this.currentAWS = {
@@ -1214,6 +1224,14 @@ class AWSModule extends BaseServerClient {
         };
 
         return paramsObj;
+    }
+
+    showBucketModal() { 
+        if (!this.bucketMenuModal) {
+            this.createAWSBucketMenu();
+        }
+
+        this.bucketMenuModal.dialog.modal('show');
     }
 }
 

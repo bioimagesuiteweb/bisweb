@@ -1,8 +1,8 @@
 const $ = require('jquery');
 const bis_genericio = require('bis_genericio');
 const webutil = require('bis_webutil.js');
-const bootbox=require('bootbox');
-const userPreferences=require('bisweb_userpreferences');
+const bootbox = require('bootbox');
+const userPreferences = require('bisweb_userpreferences');
 
 require('jstree');
 
@@ -28,7 +28,7 @@ class SimpleFileDialog {
         this.modal=null;
         this.okButton=null;
         this.filenameEntry=null;
-
+        this.enableAWSSelector = options.enableAWSSelector || false;
         
         // This are the callbacks
         // Call this to get updated directory
@@ -200,6 +200,16 @@ class SimpleFileDialog {
         });
 
         
+        if (this.enableAWSSelector) {
+            let selectorButton = $(`<button type='button' class='btn btn-sm'>Change AWS buckets</button>`);
+            selectorButton.on('click', () => {
+                this.AWSModalShowFn();
+            });
+
+            this.modal.footer.append(selectorButton);
+        }
+        
+
         this.modal.footer.prepend(this.okButton);
         this.modal.body.append(this.container);        
 

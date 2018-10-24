@@ -613,7 +613,6 @@ const webfileutils = {
             webutil.createMenuItem(bmenu, name, fn);
         }
     },
-
 };
 
 if (!webutil.inElectronApp() ) {
