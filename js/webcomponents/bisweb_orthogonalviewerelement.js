@@ -1158,6 +1158,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
     /** Same as above but allows rerouting */
     setobjectmap_internal(ovolume,plainmode,colormapmode) {
 
+
+        this.disableClustering();
         colormapmode=colormapmode || "Auto";
 
         if (plainmode===null)

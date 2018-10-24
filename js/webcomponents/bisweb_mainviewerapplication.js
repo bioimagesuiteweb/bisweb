@@ -329,16 +329,8 @@ class ViewerApplicationElement extends HTMLElement {
             addgrid : false,
             interpolation : 3
         }).then(() => {
-
-            let cmapcontrol=this.VIEWERS[index].getColormapController();
-            let elem=cmapcontrol.getElementState();
-            elem.clustersize=0;
-            cmapcontrol.setElementState(elem);
-            cmapcontrol.updateTransferFunctions(true);
             let temp=mod.getOutputObject('output');
-            setTimeout( () => {
-                this.VIEWERS[index].setobjectmap(temp, false);
-            },10);
+            this.VIEWERS[index].setobjectmap(temp, false);
         });
     }
 

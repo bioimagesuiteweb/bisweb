@@ -129,6 +129,15 @@ class BaseViewerElement extends HTMLElement {
 
     /* returns the colormap controller */
     getColormapController() { return this.internal.cmapcontroller; }
+
+    /* Disable clustering for objectmap */
+    disableClustering() {
+        let cmapcontrol=this.getColormapController();
+        let elem=cmapcontrol.getElementState();
+        elem.clustersize=0;
+        cmapcontrol.setElementState(elem);
+        cmapcontrol.updateTransferFunctions(true);
+    }
     
     // ------------------------------------------------------------------------------------
     /** returns the size of the viewer
@@ -544,7 +553,7 @@ class BaseViewerElement extends HTMLElement {
      * @param {BisF.ColorMapControllerPayload} input - definition of new transfer functions to use
      */
     updatetransferfunctions(input) {
-        
+
         let num=this.internal.slices.length;
         
         if (input.image!==null) {
