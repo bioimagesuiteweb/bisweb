@@ -63,24 +63,38 @@ class OrthogonalViewerElement extends BaseViewerElement {
         this.internal.simplemode=false;
         this.internal.rendermode=8;
         this.internal.origviewports = [
+            // Slices=0
             [ { x0:0.52, y0:0.55, x1:0.97,  y1:1.0},  { x0:0.03, y0:0.55, x1:0.48, y1:1.0},
               { x0:0.03, y0:0.09, x1:0.48,  y1:0.54}, { x0:0.99, y0:0.0,  x1:0.995, y1:0.01 } , { x0:0.0,y0:0.0,x1:0.0,y1:0.0 } ],
+            // Sagittal=1
             [ { x0:0.05, y0:0.09, x1:0.95, y1:0.99},  { x0:0.0, y0:0.0,  x1:0.01, y1:0.01},
               { x0:0.0, y0:0.3,  x1:0.01, y1:0.31},  { x0:0.0, y0:0.6,  x1:0.01, y1:0.61}, { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
+            // Coronal=2
             [ { x0:0.0, y0:0.0,  x1:0.01, y1:0.01}, { x0:0.05, y0:0.09, x1:0.95, y1:0.99},
               { x0:0.0, y0:0.3,  x1:0.01, y1:0.31},  { x0:0.0, y0:0.6,  x1:0.01, y1:0.61}, { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
+            // Axial=3
             [ { x0:0.0, y0:0.0,  x1:0.01, y1:0.01}, { x0:0.0, y0:0.3,  x1:0.01, y1:0.31},
               { x0:0.05, y0:0.09, x1:0.95, y1:0.99},   { x0:0.0, y0:0.6,  x1:0.01, y1:0.61}, { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
+            // 3D +Slices=4
             [ { x0:0.6, y0:0.81, x1:0.79, y1:1.0},  { x0:0.0, y0:0.81, x1:0.19, y1:1.0},
               { x0:0.0, y0:0.2, x1:0.19,  y1:0.39},  { x0:0.21, y0:0.0,  x1:1.0, y1:0.8} , { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
+            // 3D Only=5
             [ { x0:0.0, y0:0.0,  x1:0.01, y1:0.01}, { x0:0.0, y0:0.3,  x1:0.01, y1:0.31},
               { x0:0.0, y0:0.6,  x1:0.01, y1:0.61}, { x0:0.01, y0:0.01, x1:1.0, y1:1.0}, { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
+            // Conn 1=6
             [ { x0:0.01, y0:0.06, x1:0.26, y1:0.32},  { x0:0.01, y0:0.38, x1:0.26, y1:0.63},
               { x0:0.01, y0:0.74, x1:0.26,  y1:0.99},  { x0:0.29, y0:0.01,  x1:0.99, y1:0.99},  { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
+            // Conn 2=7
             [ { x0:0.05, y0:0.01, x1:0.31, y1:0.27},  { x0:0.37, y0:0.01, x1:0.63, y1:0.27},
               { x0:0.69, y0:0.0, x1:0.95,  y1:0.27},  { x0:0.6, y0:0.30,  x1:0.99, y1:0.99 }, { x0:0.01, y0:0.30,  x1:0.59, y1:0.99}],
+            // Conn 3=8
             [ { x0:0.05, y0:0.01, x1:0.31, y1:0.27},  { x0:0.37, y0:0.01, x1:0.63, y1:0.27},
-              { x0:0.69, y0:0.0, x1:0.95,  y1:0.27},  { x0:0.99, y0:0.0,  x1:0.995, y1:0.01}, { x0:0.00,y0:0.29,x1:1.0,y1:1.0}]];
+              { x0:0.69, y0:0.0, x1:0.95,  y1:0.27},  { x0:0.99, y0:0.0,  x1:0.995, y1:0.01}, { x0:0.00,y0:0.29,x1:1.0,y1:1.0}],
+            // Simple Mode=9
+            [ { x0:0.05, y0:0.10, x1:0.31, y1:0.9},  { x0:0.37, y0:0.10, x1:0.63, y1:0.90},
+              { x0:0.69, y0:0.10, x1:0.95, y1:0.9},  { x0:0.99, y0:0.0,  x1:0.995, y1:0.01}, { x0:0.99, y0:0.0,  x1:0.995, y1:0.01} ]
+
+        ];
 
 
         this.internal.viewports = this.internal.origviewports;
@@ -95,7 +109,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         this.internal.arrowbuttons=[null,null,
                                     null,null,
                                     null,null,
-                                    null,null,null,null];
+                                    null,null,null,null,null,null];
 
         this.internal.midline=null;
         this.internal.midline2=null;
@@ -449,7 +463,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
 
 
         if ( this.internal.arrowbuttons[0]!==null) {
-            for (let ind=0;ind<=9;ind++) {
+            for (let ind=0;ind<=11;ind++) {
                 this.internal.arrowbuttons[ind].css({'font-size': `${fn}px`});
             }
             return fn;
@@ -459,7 +473,9 @@ class OrthogonalViewerElement extends BaseViewerElement {
         let symbols=[ 'glyphicon glyphicon-chevron-left',
                       'glyphicon glyphicon-pause',
                       'glyphicon glyphicon-play',
-                      'glyphicon glyphicon-chevron-right'
+                      'glyphicon glyphicon-chevron-right',
+                      'glyphicon glyphicon-fast-backward',
+                      'glyphicon glyphicon-fast-forward',
                     ];
         
 
@@ -468,6 +484,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
             elem.css({'background-color':'#000000'});
 
             let index=parseInt(elem.attr('index')) || 0;
+            const data = self.internal.datgui.data;
+            
             if (index<=6 || index===9) {
                 
                 let increase=1;
@@ -477,7 +495,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 if (index<6) 
                     md=Math.floor(index/2);
                 
-                const data = self.internal.datgui.data;
+
                 if (md===0) {
                     data.xcoord+=increase;
                 } else if (md===1) {
@@ -493,7 +511,19 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 }
                 let c = [ data.xcoord, data.ycoord, data.zcoord,data.tcoord ];
                 self.setcoordinates(c);
-            } else  {
+            } else if (index>9) {
+                // rate
+                let rate = data.rate || 20;
+                if (index===11)
+                    rate+=5;
+                else
+                    rate-=5;
+                if (rate<5)
+                    rate=5;
+                else if (rate>50)
+                    rate=50;
+                data.rate=rate;
+            } else {
                 self.playStopMovie(index===8);
             }
 
@@ -502,7 +532,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         };
     
         
-        for (let ind=0;ind<=9;ind++) {
+        for (let ind=0;ind<=11;ind++) {
             let symindex=0;
             if (ind<6) {
                 if (ind%2===1)
@@ -511,7 +541,6 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 symindex=ind-6;
             }
             let a=`<span index="${ind}" class="${symbols[symindex]}"></span>`;
-
             this.internal.arrowbuttons[ind]=$(a);
             this.internal.arrowbuttons[ind].css({'font-size': `${fn}px`,
                                                  'left': '100px',
@@ -538,7 +567,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
     }
 
     hidearrowbuttons(beg=0) {
-        for (let i=beg;i<=9;i++) {
+        for (let i=beg;i<=11;i++) {
             if (this.internal.arrowbuttons[i])
                 this.internal.arrowbuttons[i].css({'visibility':'hidden'});
             }
@@ -729,11 +758,6 @@ class OrthogonalViewerElement extends BaseViewerElement {
         context.clearRect(Math.floor(this.cleararea[0]*dw),0,Math.floor(this.cleararea[1]*dw),dh);
         let cdim=$(context.canvas).css(['width','height','left','top' ]);
         
-        if (this.internal.showdecorations===false) {
-            this.hidearrowbuttons();
-            return;
-        }
-
         // Add R&L s
         var labels = [ [ 'A','P', 'S','I' ] ,
                        [ 'R','L', 'S','I' ] ,
@@ -757,7 +781,10 @@ class OrthogonalViewerElement extends BaseViewerElement {
         let arrowsize=this.createarrowbuttons($(context.canvas).parent().parent(),fnsize);
         this.createmidline(context.canvas,dw,dh);
 
-
+        if (this.internal.showdecorations===false) {
+            this.hidearrowbuttons();
+            return;
+        }
         
         var invorientaxis = this.internal.volume.getOrientation().invaxis;
         var orientaxis = this.internal.volume.getOrientation().axis;
@@ -860,7 +887,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
             //console.log("Checking on arrows",this.internal.maxnumframes);
             if (this.internal.maxnumframes<2 || dw<500) {
                 
-                for (let ia=6;ia<=9;ia++)
+                for (let ia=6;ia<=11;ia++)
                     if (this.internal.arrowbuttons[ia])
                         this.internal.arrowbuttons[ia].css({'visibility':'hidden'});
                 
@@ -869,8 +896,11 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 let lh=this.internal.layoutcontroller.getviewerheight();
                 let left=this.internal.layoutcontroller.getviewerleft();
                 let y0=0.92*lh+parseInt(cdim['top']);
-                for (let k=0;k<=3;k++) {
-                    this.internal.arrowbuttons[6+k].css({ 'left' :  `${50+40*k+left}px`,
+                for (let k=0;k<=5;k++) {
+                    let extra=0;
+                    if (k>3)
+                        extra=20;
+                    this.internal.arrowbuttons[6+k].css({ 'left' :  `${50+40*k+left+extra}px`,
                                                           'top'  :  `${y0}px`,
                                                           'visibility' : 'visible'});
                 }
@@ -900,7 +930,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
     // ------------------------------------------------------------------------
     
     /** gui callback. Set the rendermode to either single slice, three-slice view, three-slice +3D etc.
-     * @param {number} mode - 0='Slices',  1='Sagittal', 2='Coronal', 3='Axial', 4='3D+slices', 5='3D Only'
+     * @param {number} mode - 0='Slices',  1='Sagittal', 2='Coronal', 3='Axial', 4='3D+slices', 5='3D Only', 9='Simple Mode'
      * @param {boolean} force - force update otherwise do as needed
      */
     setrendermode(mode,force) {
@@ -1227,6 +1257,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         this.internal.cmapcontroller.removeobjectmap();
         this.internal.objectmaptransferinfo={ isfunctional : false, 'colormode' : 'Objectmap' };
         this.drawtext();
+        this.updateImageChangedObservers('overlay');
     }
     
     
@@ -1320,7 +1351,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         
         //this.internal.layoutcontroller.getcorecontrols().empty();
         
-        let dpname = [ 'Slices', 'Sagittal', 'Coronal', 'Axial' , 'Slices+3D','3D Only' ];
+        let dpname = [ 'Slices', 'Sagittal', 'Coronal', 'Axial' , 'Slices+3D','3D Only','Simple Mode'];
         let data = this.internal.datgui.data;
         
         data.displaymode = dpname[0];
@@ -1334,11 +1365,13 @@ class OrthogonalViewerElement extends BaseViewerElement {
         data.ycoord = this.internal.slicecoord[1];
         data.zcoord = this.internal.slicecoord[2];
         data.tcoord = this.internal.slicecoord[3] || 0;
+        data.rate=25;
+        data.playing=false;
         data.decorations=this.internal.showdecorations || true;
         data.lockcursor=this.internal.lockcursor || false;
         
         let creatingnew=false;
-        let createmovie = false;
+        //        let createmovie = false;
 
         let base_widget=this.internal.layoutcontroller.getcorecontrols(this.is_slave_viewer);
         
@@ -1368,7 +1401,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                     }
                 }
 
-                if (this.internal.moviefolder!==null) {
+                /*if (this.internal.moviefolder!==null) {
                     for (let c=this.internal.moviefolder.__controllers.length-1;c>=0;c=c-1) {
                         let elem=this.internal.moviefolder.__controllers[c];
                         try {
@@ -1378,7 +1411,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                         }
                     }
                     this.internal.play_movie_controller=null;
-                }
+                }*/
             }
             let dmode=this.internal.datgui.coords.add(data,'displaymode', dpname).name("Mode");
             this.internal.displaymodes=dpname;
@@ -1386,6 +1419,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
             
             dmode.onChange(function(val) {
                 let ind=dpname.indexOf(val);
+                if (ind===6)
+                    ind=9;
                 self.setrendermode(ind);
             });
             
@@ -1416,9 +1451,9 @@ class OrthogonalViewerElement extends BaseViewerElement {
                                                     this.internal.maxnumframes-1).
                     name("Frame/Comp").step(1);
                 this.internal.framecontroller.onChange(tcoordchange);
-                if (this.internal.moviefolder===null)
-                    this.internal.moviefolder = gui.addFolder('Movie Controls');
-                createmovie = true;
+                //if (this.internal.moviefolder===null)
+                //                    this.internal.moviefolder = gui.addFolder('Movie Controls');
+                //createmovie = true;
             }
             
 
@@ -1445,8 +1480,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
             cgui=null;
         let cmapfolder=this.internal.cmapcontroller.creategui(cgui);
 
-        if (createmovie)
-            this.createmoviecontrols(this.internal.moviefolder);
+        //if (createmovie)
+        //            this.createmoviecontrols(this.internal.moviefolder);
 
         if (!creatingnew)
             return;
@@ -1594,6 +1629,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 let ind=this.internal.displaymodes.indexOf(sanedata['displaymode']);
                 if (ind>=0) {
                     this.internal.datgui.data.displaymode=this.internal.displaymodes[ind];
+                    if (ind===6) // Simple Mode
+                        ind=9;
                     this.setrendermode(ind);
                 }
             }

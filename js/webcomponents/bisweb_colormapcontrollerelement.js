@@ -217,7 +217,8 @@ class ColormapControllerElement extends HTMLElement {
         this.internal.robustrange=smoothreslice.arrayRobustRange(volume.getImageData(),0.01,0.99);
         let dr=this.internal.robustrange[1]-this.internal.robustrange[0];
         let da=this.internal.imagerange[1]-this.internal.imagerange[0];
-        if (dr<0.5*da) {
+
+        if (dr<0.25*da) {
             this.data.autocontrast=false;
             this.internal.robustrange=this.internal.imagerange;
         }

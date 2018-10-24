@@ -450,6 +450,8 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
         }
     }
 
+    userPreferences.setImageOrientationOnLoad('None');
+    
     if (firsttest<0)
         firsttest=0;
     
@@ -748,9 +750,7 @@ var startFunction = (() => {
         $('body').append($(threadController));
     },10);
     
-    userPreferences.setImageOrientationOnLoad('None');
 
-    
     if (typeof window.BIS !=='undefined') 
         testDataRootDirectory="../test/";
     else 

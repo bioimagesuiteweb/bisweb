@@ -253,11 +253,11 @@ let createParametersGUIInternal=function(paramGUI,advancedParamGUI,description,g
         dopass(pass);
     }
     
-    if (description.autoupdate===false)
+    /*if (description.autoupdate===false)
         dict.inputVars['autoupdate']= false;
-    else
-        dict.inputVars['autoupdate']= true;
-    dict.inputControllers['autoupdate']=advancedParamGUI.add(dict.inputVars, 'autoupdate').name("Auto Update");
+    else*/
+    dict.inputVars['autoupdate']= true;
+    //dict.inputControllers['autoupdate']=advancedParamGUI.add(dict.inputVars, 'autoupdate').name("Auto Update");
     return controller_list;
 
     
@@ -360,13 +360,13 @@ let parseDescriptionAndCreateGUI = function(frame, buttonFrame,description, numV
     dict.undobutton[0].setAttribute('data-toggle', 'tooltip');
     dict.undobutton[0].setAttribute('title', 'Undo last operation');
     
-    dict.redobutton = webutil.createbutton({
+    /*    dict.redobutton = webutil.createbutton({
         'name': 'Redo',
         'type': 'info',
         'parent' :  buttonFrame,
     });
     dict.redobutton[0].setAttribute('data-toggle', 'tooltip');
-    dict.redobutton[0].setAttribute('title', 'Redo last operation');
+    dict.redobutton[0].setAttribute('title', 'Redo last operation');*/
     if (description.params.length>0) 
         dict.dropmenu=webutil.createDropdownMenu('More',buttonFrame);
     else
@@ -420,8 +420,15 @@ let parseParam = function(gui, param, guiParams) {
                 step=1;
         }
 
+        if (param.type === "int" && step===null) {
+            step=1;
+        }
+        
+
         if (low!==null && high!==null && step!==null) {
-            controller = base.add(guiParams, param.varname).name(param.name).min(low).max(high).step(step);
+            controller = base.add(guiParams, param.varname,low,high).name(param.name).step(step);
+        } else if (low!==null && high!==null) {
+            controller = base.add(guiParams, param.varname,low,high).name(param.name);
         } else {
             if (step!==null)
                 controller = base.add(guiParams, param.varname).name(param.name).step(step);

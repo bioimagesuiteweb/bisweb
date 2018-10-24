@@ -28,6 +28,7 @@ const BisWebTextObject = require('bisweb_textobject.js');
 class ReorientImageModule extends BaseModule {
     constructor() {
         super();
+        this.JSOnly=true;
         this.name = 'reorientImage';
     }
 

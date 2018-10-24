@@ -32,6 +32,8 @@ class BisFileServerClient extends BisBaseServerClient {
         this.NodeWebSocket=nodesocket;
         this.terminating=false;
         this.verbose=0;
+
+        this.updateCallback=console.log;
     }
 
     /** returns the name of the server
@@ -255,11 +257,27 @@ class BisFileServerClient extends BisBaseServerClient {
                 break;
             }
             case 'filesystemoperationserror': {
-                // Handled by promise
-                console.log('FIle System OPeration failed');
+                console.log('File system operation failed'); 
                 success=false;
                 break;
             }
+
+            case 'dicomConversionProgress': {
+                this.updateCallback(data.payload);
+                break;
+            }
+
+            case 'dicomConversionError': {
+                console.log('Dicom Conversion/Tidying up Failed');
+                success=false;
+                break;
+            }
+
+            case 'dicomConversionDone' : {
+                // handled by promise
+                break;
+            }
+
             case 'tryagain' : {
                 id=-1;
                 console.log('\n___________\n---------------------- \t\t Failed retrying',this.lastCommand,'\n__________________');
@@ -816,6 +834,83 @@ class BisFileServerClient extends BisBaseServerClient {
         });
     }
 
+    /** performs DICOM conversion by having the server run dcm2nii
+     * @param{String} indir -- the input directory
+     * @param{Function} upd - function to call for progress messages
+     * @param{Boolean} debug - if true run dummy function
+     * @returns {Promise} payload is the result
+     */
+    dicomConversion(indir,upd,debug=false) {
+
+        if (indir.indexOf('\\')>=0)
+            indir=util.filenameWindowsToUnix(indir);
+
+        let outstring="";
+        
+        this.updateCallback= ((msg) => {
+            outstring+=msg;
+            if (upd)
+                upd(msg);
+        });
+
+        
+        return new Promise( (resolve,reject) => {
+            
+            let res=((obj) => {
+                this.updateCallback= console.log;
+                resolve({
+                    output : obj.output,
+                    log  : outstring
+                });
+            });
+
+            let rej=() => {
+                this.updateCallback= console.log;
+                reject();
+            };
+            
+            let serverEvent=bisasyncutil.addServerEvent(res,rej,'dicomConversion');
+            this.sendCommand({ 'command' : 'dicomConversion',
+                               'operation' : 'dicomConversion',
+                               'indir' : indir,
+                               'debug' : debug,
+                               'id' : serverEvent.id }); 
+        });
+    }
+
+    /** performs DICOM 2 BIDS on the output of dcm2nii
+     * @param{String} indir -- the input directory (output of dcm2nii)
+     * @param{String} outdir -- the output directory
+     * @param{Function} upd - function to call for progress messages
+     * @returns {Promise} payload is the result
+     */
+    dicom2BIDS(indir,outdir) {
+
+        if (indir.indexOf('\\')>=0)
+            indir=util.filenameWindowsToUnix(indir);
+        if (outdir.indexOf('\\')>=0)
+            outdir=util.filenameWindowsToUnix(outdir);
+
+        return new Promise( (resolve,reject) => {
+            
+            let res=((obj) => {
+                resolve(obj.output);
+            });
+
+            
+            let serverEvent=bisasyncutil.addServerEvent(res,reject,'dicom2BIDS');
+            this.sendCommand({ 'command' : 'dicom2BIDS',
+                               'operation' : 'dicom2BIDS',
+                               'indir' : indir,
+                               'outdir' : outdir,
+                               'id' : serverEvent.id }); 
+        });
+    }
+
+    /** Send command to server
+     * @param {Dictionary} command -- the command to send
+     */
+        
     sendCommandPromise(command) {
         
         return new Promise( (resolve,reject) => {

@@ -19,7 +19,7 @@ cmake_minimum_required(VERSION 3.5)
 
 PROJECT(BISWEB)
 
-SET (BISWEB_VERSION "0.9.8")
+SET (BISWEB_VERSION "0.9.10")
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Core Project
@@ -35,6 +35,7 @@ SET (DESCRIPTION_SCRIPT ${TOOLS_DIR}/bis_createmoduledescriptions.js)
 SET (BISWEB_PYTHON_INIT ${PROJECT_SOURCE_DIR}/../config/__init__.py)
 SET (BISWEB_PYTHON_PATH ${PROJECT_SOURCE_DIR}/../config/bis_path.py)
 SET (MODULE_LIST_FILENAME ${PROJECT_SOURCE_DIR}/ModuleList.txt)
+SET (PYTHON_MODULE_LIST_FILENAME ${PROJECT_SOURCE_DIR}/PythonModuleList.txt)
 FIND_PROGRAM(NodeInterp node)
 
 # ---------------------------------------------------------------------------------------------
@@ -302,10 +303,8 @@ IF (BIS_A_EMSCRIPTEN)
   SET(JSFILES ${H1} ${H2} ${H3})
 
 
-  SET (WNAMELIST bisweb.js)
-  IF (BIS_INSTALLTESTS)
-    SET (WNAMELIST ${WNAMELIST} bisweb-test.js)
-  ENDIF (BIS_INSTALLTESTS)
+  SET (WNAMELIST bisweb.js bisweb-test.js)
+  
   GET_FILENAME_COMPONENT(WEBPCONFIG ${PROJECT_SOURCE_DIR}/../config/app.config.js ABSOLUTE)
   GET_FILENAME_COMPONENT(WEBPCONFIGMOCHA ${PROJECT_SOURCE_DIR}/../config/mocha.config.js ABSOLUTE)
 
@@ -321,11 +320,17 @@ IF (BIS_A_EMSCRIPTEN)
       COMMAND webpack-cli --entry ${INSCRIPT} --config ${WEBPCONFIG} --output-path ${LIBRARY_OUTPUT_PATH} --output-filename ${item}
       )
     add_custom_target(${item} ALL DEPENDS ${OUTSCRIPT})
+  ENDFOREACH(item ${WNAMELIST})
+
+  SET (OUTSCRIPT ${LIBRARY_OUTPUT_PATH}/bisweb.js)
+  install (FILES ${OUTSCRIPT} DESTINATION bisweb/lib
+    PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
+
+  IF (BIS_INSTALLTESTS)
+    SET (OUTSCRIPT ${LIBRARY_OUTPUT_PATH}/bisweb-test.js)
     install (FILES ${OUTSCRIPT} DESTINATION bisweb/lib
       PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
-
-  
-  ENDFOREACH(item ${WNAMELIST})
+  ENDIF (BIS_INSTALLTESTS)
 
 
   SET(OUTFILES "")
@@ -394,7 +399,6 @@ IF (BIS_A_EMSCRIPTEN)
     SET (INSCRIPT ${PROJECT_SOURCE_DIR}/../test/test_module.js)
 
     GET_FILENAME_COMPONENT(INSCRIPT ${INSCRIPT} ABSOLUTE)
-    message("INSCRIPT=${INSCRIPT}")    
     add_custom_command(OUTPUT ${OUTSCRIPT}
       DEPENDS ${MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JSFILES}  ${LIBNAME} ${INSCRIPT} ${JS_WRAP_OUTPUT} ${WEBPACK_WASM_MODULE}
       PRE_BUILD COMMENT "Creating webpack-cli test_module.js"
@@ -458,14 +462,18 @@ ELSE(BIS_A_EMSCRIPTEN)
     install (FILES ${PYTHON_WRAP_OUTPUT} DESTINATION bisweb/lib)
 
     # ------------------ create module descriptions -------------
+
+    FILE (STRINGS ${PYTHON_MODULE_LIST_FILENAME} PMODULES)
     
     SET (PYTHON_MODULE_DESC ${LIBRARY_OUTPUT_PATH}/modules_desc.py)
+    
     add_custom_command(OUTPUT ${PYTHON_MODULE_DESC}
       DEPENDS ${MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JSMODULES}
       PRE_BUILD COMMENT "Creating Python Module Descriptions"
-      COMMAND ${NodeInterp} ${DESCRIPTION_SCRIPT} -i ${MODULE_LIST_FILENAME} -o ${PYTHON_MODULE_DESC}
+      COMMAND ${NodeInterp} ${DESCRIPTION_SCRIPT} -i ${PYTHON_MODULE_LIST_FILENAME} -o ${PYTHON_MODULE_DESC} }
       )
     add_custom_target(module_desc_py ALL DEPENDS ${PYTHON_MODULE_DESC})
+    add_custom_target(python_module_list_py ALL DEPENDS ${PYTHON_MODULE_DESC})
     install (FILES ${PYTHON_MODULE_DESC} DESTINATION bisweb/lib)
 
     GET_FILENAME_COMPONENT(PYTHON_SOURCE_DIR ${PROJECT_SOURCE_DIR}/../python ABSOLUTE)
@@ -497,11 +505,12 @@ ELSE(BIS_A_EMSCRIPTEN)
 	  
     # ------------------ module tests ---------------------------
     IF(BIS_MODULETEST)
+#      FILE (STRINGS ${PYTHON_MODULE_LIST} MODULES)
       SET (COUNT 0)
-      FOREACH (item ${MODULES})
+      FOREACH (item ${PMODULES})
 	add_test(NAME "py-module-${item}" COMMAND python3 test_module.py --testname ${item} WORKING_DIRECTORY ${TEST_DIR})
 	MATH (EXPR COUNT "${COUNT}+1")
-      ENDFOREACH (item ${TLIST})
+      ENDFOREACH (item ${PMODULES})
       MESSAGE("~~~~~ Added ${COUNT} python module tests")
     
     ENDIF(BIS_MODULETEST)
@@ -577,6 +586,7 @@ MARK_AS_ADVANCED(BIS_A_DEVEL)
 # If installing tests
 
 IF (BIS_INSTALLTESTS)
+  MESSAGE("Installing tests ${BIS_INSTALLTESTS}")
   install (FILES ${PROJECT_SOURCE_DIR}/../test/module_tests.json DESTINATION bisweb/test)
   install (DIRECTORY ${PROJECT_SOURCE_DIR}/../test/testdata DESTINATION bisweb/test)
   install (FILES ${PROJECT_SOURCE_DIR}/../various/txt/README_test.md DESTINATION bisweb/test)

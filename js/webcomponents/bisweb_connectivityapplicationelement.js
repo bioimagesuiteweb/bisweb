@@ -297,7 +297,9 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
             var filename=files[0].name;
             var ext=filename.split('.').pop();
             console.log('filename='+filename+' extension='+ext);
-            if (ext==="parc" || ext==="json") {
+            if (ext==="biswebstate" || ext=="connstate") {
+                self.loadApplicationState(files[0]);
+            } else if (ext==="parc" || ext==="json") {
                 control.loadparcellationfile(files[0]);
             } else if (ext==="txt" || ext==="csv") {
                 control.loadmatrix(-1,files[0]);

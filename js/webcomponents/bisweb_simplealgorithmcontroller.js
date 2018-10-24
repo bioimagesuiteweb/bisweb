@@ -211,6 +211,15 @@ class SimpleAlgorithmControllerElement extends HTMLElement {
      * @param{Boolean} undo - if true then do undo else do redo
      */
     undoImage(undo=true) {
+
+        let undoMessage=() => {
+            let op='undo';
+            if (!undo)
+                op='redo';
+            
+            webutil.createAlert('Can not do '+op+' no prior data available',true);
+            return false;
+        };
         
         let undoelement;
         if (undo == false)
@@ -218,12 +227,15 @@ class SimpleAlgorithmControllerElement extends HTMLElement {
         else
             undoelement = this.undoImageStack.getUndo() || null;
 
-        if (!undoelement)
-            return false;
+        if (!undoelement) {
+            return undoMessage();
+        }
         
         undoelement = undoelement[0]; // it is an array internally
-        if (!undoelement)
-            return false;
+        if (!undoelement) {
+            return undoMessage();
+
+        }
 
         let image=undoelement.image;
         if (image === null)

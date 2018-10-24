@@ -32,6 +32,7 @@ class MotionCorrectionModule extends BaseModule {
     constructor() {
         super();
         this.name = 'motionCorrection';
+        this.JSOnly=true;
         this.useworker=true;
     }
 

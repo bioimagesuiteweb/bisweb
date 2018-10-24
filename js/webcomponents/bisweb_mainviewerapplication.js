@@ -749,11 +749,13 @@ class ViewerApplicationElement extends HTMLElement {
                                            function () {
                                                self.VIEWERS[viewerno].clearobjectmap();
                                            });
-                    webutil.createMenuItem(objmenu[viewerno], ''); // separator
-                    webutil.createMenuItem(objmenu[viewerno], 'Reslice Overlay To Match Image',
-                                           function () {
-                                               self.resliceOverlay(viewerno);
-                                           });
+                    if (self.applicationName=="overlayviewer") {
+                        webutil.createMenuItem(objmenu[viewerno], ''); // separator
+                        webutil.createMenuItem(objmenu[viewerno], 'Reslice Overlay To Match Image',
+                                               function () {
+                                                   self.resliceOverlay(viewerno);
+                                               });
+                    }
                 }
                 
                 webutil.createMenuItem(objmenu[viewerno], ''); // separator
@@ -875,7 +877,7 @@ class ViewerApplicationElement extends HTMLElement {
         }
 
         webfileutil.createFileSourceSelector(hmenu);
-        webfileutil.createAWSBucketMenu(hmenu);
+
 
         return hmenu;
     }
@@ -902,12 +904,17 @@ class ViewerApplicationElement extends HTMLElement {
                 else
                     count = 1;
             }
-
+            
             let ext=files[0].name.split(".").pop();
-            if (ext===self.getApplicationStateFilenameExtension(true))
+            if (ext===self.getApplicationStateFilenameExtension(true)) {
                 self.loadApplicationState(files[0]);
-            else
-                self.loadImage(files[0], count, false);
+            } else {
+                self.loadImage(files[0], count, false).then( () => {
+                    if (files.length>1) {
+                        self.loadOverlay(files[1],count,false);
+                    }
+                });
+            }
         };
         webutil.createDragAndCropController(HandleFiles);
     }
@@ -1096,8 +1103,9 @@ class ViewerApplicationElement extends HTMLElement {
         webutil.createMenuItem(bmenu, 'Restart Application',
                                function () {
                                    bootbox.confirm("Are you sure? You will lose all unsaved data.",
-                                                   function() {
-                                                       window.open(self.applicationURL,'_self');
+                                                   function(e) {
+                                                       if (e)
+                                                           window.open(self.applicationURL,'_self');
                                                    }
                                                   );
                                });

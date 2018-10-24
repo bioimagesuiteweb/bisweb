@@ -7,5 +7,5 @@ test('Sample test', async t => {
     
     await t 
         .click(dropdown);
-})
+});
 

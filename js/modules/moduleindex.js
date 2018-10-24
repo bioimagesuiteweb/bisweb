@@ -18,6 +18,7 @@
 "use strict";
 
 exports.smoothImage = require('smoothImage.js');
+exports.qualityMeasures = require('qualityMeasures.js');
 exports.gradientImage = require('gradientImage.js');
 exports.thresholdImage = require('thresholdImage.js');
 exports.shiftScaleImage = require('shiftScaleImage.js');
@@ -102,6 +103,7 @@ exports.moduleNamesArray = {
     'regularizeobjectmap': exports.regularizeObjectmap,
     'slicebiascorrect': exports.sliceBiasFieldCorrect,
     'smoothimage': exports.smoothImage,
+    'qualitymeasures': exports.qualityMeasures,
     'shiftscaleimage': exports.shiftScaleImage,
     'thresholdimage': exports.thresholdImage,
 };

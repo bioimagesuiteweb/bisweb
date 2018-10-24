@@ -53,7 +53,7 @@ const BisWebPanel = require('bisweb_panel.js');
  *      bis-layoutwidgetid :  the layout widget to create the GUI in
  */
 
-const imagelabels=['None','3DAnatomical','2DAnatomical','EPI','FieldMap','Angio','AngioAnatomical','DTI','DTIResult' ,'Computed' ];
+const imagelabels=['None','3DAnatomical','2DAnatomical','EPI','FieldMap','Angio','AngioAnatomical','DTI','DTIResult' ,'Computed','Anatomical','Functional','Other'  ];
 
 class ParavisionImportElement extends HTMLElement {
 
@@ -270,29 +270,35 @@ class ParavisionImportElement extends HTMLElement {
         };
         
         
-        //const imagelabels=['None','3DAnatomical','2DAnatomical','EPI','FieldMap','Angio','AngioAnatomical','DTI','DTIResult'  ];
+        //const imagelabels=['None','3DAnatomical','2DAnatomical','EPI','FieldMap','Angio','AngioAnatomical','DTI','DTIResult','Anatomical','Functional','Other'  ];
         if (!tagvalue) {
-            if (name.indexOf("EPI")>0) {
-                tagvalue="EPI";
-            } else if (name.indexOf("FLASH")>0) {
-                let dim=getDimensionsFromName(name);
-                if (dim[0]>=200)
-                    tagvalue="Angio";
-                else
-                    tagvalue="AngioAnatomical";
-            } else if (name.indexOf("FieldMap")>0) {
-                tagvalue="FieldMap";
-            } else if (name.indexOf("MSME")>0) {
-                let dim=getDimensionsFromName(name);
-                if (dim[2]<0.5*dim[0])
-                    tagvalue="2DAnatomical";
-                else
-                    tagvalue="3DAnatomical";
-            } else {
-                tagvalue="None";
+
+            if (imagelabels.indexOf('tagvalue')<0) {
+                            
+                if (name.indexOf("EPI")>0) {
+                    tagvalue="EPI";
+                } else if (name.indexOf("FLASH")>0) {
+                    let dim=getDimensionsFromName(name);
+                    if (dim[0]>=200)
+                        tagvalue="Angio";
+                    else
+                        tagvalue="AngioAnatomical";
+                } else if (name.indexOf("FieldMap")>0) {
+                    tagvalue="FieldMap";
+                } else if (name.indexOf("MSME")>0) {
+                    let dim=getDimensionsFromName(name);
+                    if (dim[2]<0.5*dim[0])
+                        tagvalue="2DAnatomical";
+                    else
+                        tagvalue="3DAnatomical";
+                } else {
+                    tagvalue="None";
+                }
             }
         }
 
+
+        console.log('Infoname=',infoname);
         
         let details={ name  : name,
                       filename : bisgenericio.getBaseName(fname),
@@ -459,8 +465,6 @@ class ParavisionImportElement extends HTMLElement {
             return;
         }
 
-        console.log('This far');
-        
         const self=this;
         const internal=this.internal;
         let dirname=bisgenericio.getDirectoryName(bisgenericio.getNormalizedFilename(f));
@@ -470,8 +474,20 @@ class ParavisionImportElement extends HTMLElement {
             return;
         };
         
-        bisgenericio.readJSON(f,"ParavisionJob").then( (obj) => {
-            obj=obj.data;
+        bisgenericio.read(f).then( (results) => {
+
+            let obj=null;
+            try {
+                obj=JSON.parse(results.data);
+            } catch(e) {
+                return loaderror(e);
+            }
+
+            let name=obj.bisformat || '';
+            if (name!=="ParavisionJob" && name !=="DICOMImport") {
+                return loaderror('Bad File Tag '+name);
+            }
+
             let data=obj.job;
             self.internal.lastfilename=f;
 
@@ -481,19 +497,28 @@ class ParavisionImportElement extends HTMLElement {
             internal.showpanel.show();
             internal.table.empty();
             for (let ic=0;ic<n;ic++) {
+
+                let details = data[ic].details;
+                if (data[ic].details.length>1 && data[ic].details.indexOf('/')===0) {
+                    details=bisgenericio.joinFilenames(dirname,data[ic].details);
+                } 
+                
                 if (data[ic].filename.indexOf('/')===0) {
                     self.addTableRow(data[ic].name,
                                      data[ic].filename,
-                                     data[ic].details,
+                                     details,
                                      data[ic].tag,
                                     );
                 } else {
                     self.addTableRow(data[ic].name,
                                      bisgenericio.joinFilenames(dirname,data[ic].filename),
-                                     bisgenericio.joinFilenames(dirname,data[ic].details),
+                                     details,
                                      data[ic].tag,
                                     );
                 }
+
+                
+                
             }
         }).catch( (e) => {
             loaderror(e);

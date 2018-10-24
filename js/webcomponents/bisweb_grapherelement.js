@@ -76,6 +76,14 @@ class GrapherModule extends HTMLElement {
         this.graphWindow = document.createElement('bisweb-dialogelement');                          
         this.graphWindow.create("VOI Tool", this.desired_width, this.desired_height, 20,100,100,false);
         this.graphWindow.widget.css({ "background-color": "#222222" });
+        this.graphWindow.setCloseCallback( () => {
+            if (this.buttons.length>0) {
+                for (let i=0;i<this.buttons.length;i++) {
+                    this.buttons[i].css({ "visibility": "hidden" });
+                }
+            }
+            this.graphWindow.hide();
+        });
 
         let bbar=this.graphWindow.getFooter();
 
@@ -135,19 +143,6 @@ class GrapherModule extends HTMLElement {
             position: "left",
             parent: bbar
         }).click(() => { this.saveSnapshot(); });
-
-        webutil.createbutton({
-            name: 'Close',
-            type: "default",
-            css: {
-                'margin-left': '10px',
-            },
-            position: "right",
-            parent: bbar
-        }).click(() => {
-            this.graphWindow.hide();
-        });
-
 
         bbar.tooltip();
 
@@ -470,7 +465,20 @@ class GrapherModule extends HTMLElement {
     saveSnapshot() {
 
         let canvas = document.getElementById(this.graphcanvasid);
-        let outimg = canvas.toDataURL("image/png");
+
+
+        let outcanvas = document.createElement('canvas');
+        outcanvas.width=canvas.width;
+        outcanvas.height=canvas.height;
+
+        let ctx = outcanvas.getContext('2d');
+        ctx.fillStyle = "#555555";
+        ctx.globalCompositeOperation = "source-over";
+        ctx.fillRect(0, 0, outcanvas.width, outcanvas.height);
+        ctx.drawImage(canvas, 0, 0, outcanvas.width, outcanvas.height);
+
+        let outimg = outcanvas.toDataURL("image/png");        
+        
         let dispimg = $('<img id="dynamic">');
         dispimg.attr('src', outimg);
         dispimg.width(300);
@@ -532,12 +540,14 @@ class GrapherModule extends HTMLElement {
                 out += "\nFrame,";
 
             for (let col = 0; col < numcols; col++) {
-                if (pass === 0 || pass === 2)
-                    out += `Region ${col + 1}`;
-                else
-                    out += `${this.lastdata.numvoxels[col]}`;
-                if (col < numcols - 1)
-                    out += ',';
+                if (this.lastdata.numvoxels[col]>0) {
+                    if (pass === 0 || pass === 2)
+                        out += `Region ${col + 1}`;
+                    else
+                        out += `${this.lastdata.numvoxels[col]}`;
+                    if (col < numcols - 1)
+                        out += ',';
+                }
             }
             out += "\n";
         }
@@ -546,9 +556,11 @@ class GrapherModule extends HTMLElement {
         for (let row = 0; row < numrows; row++) {
             let line = `${this.lastdata.x[row]}, `;
             for (let col = 0; col < numcols; col++) {
-                line += `${this.lastdata.y[col][row]}`;
-                if (col < numcols - 1)
-                    line += ',';
+                if (this.lastdata.numvoxels[col]>0) {
+                    line += `${this.lastdata.y[col][row]}`;
+                    if (col < numcols - 1)
+                        line += ',';
+                }
             }
             out += line + '\n';
         }

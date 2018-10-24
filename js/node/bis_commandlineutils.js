@@ -43,7 +43,7 @@ let executeCommand=function(command,dir,done=0,printfn=0) {
     console.log(getTime()+" "+colors.green(dir+">")+colors.red(command+'\n'));
 
     if (printfn) {
-        printfn('Hello',0);
+        printfn('Initializing output from '+command,0);
     }
     
     if (done===0) {

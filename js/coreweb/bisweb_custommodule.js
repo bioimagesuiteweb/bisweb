@@ -61,7 +61,7 @@ class CustomModule {
         this.module = mod;
         this.algocontroller = algocontroller;
         this.moduleOptions = opts;
-        this.description = this.module.getDescription();
+
 
         // Docking Options
         this.dockWidget = null;
@@ -81,7 +81,8 @@ class CustomModule {
         this.parameterControllers = null;
         this.inputControllers = {};
 
-        this.name = opts.name || this.description.dialogname || this.description.name;
+        let description = this.module.getDescription();
+        this.name = opts.name || description.dialogname || description.name;
         this.dual = opts.dual || false;
 
         
@@ -134,7 +135,7 @@ class CustomModule {
      * @returns {Dictionary} - the current module description with low/high ranges updated
      */
     getDescription() {
-        return this.description;
+        return this.module.getDescription();
     }
 
     /**
@@ -185,10 +186,10 @@ class CustomModule {
      */
     getCurrentInputObjects(forceupdate = true) {
 
-        this.description = this.module.getDescription();
+        let description = this.module.getDescription();
         let inputs = {};
 
-        this.description.inputs.forEach((elem) => {
+        description.inputs.forEach((elem) => {
             let varname = elem.varname;
             let viewer = this.getViewerFromName(this.inputVars, varname);
             let itype = this.getTypeFromName(this.inputVars, varname);
@@ -231,11 +232,11 @@ class CustomModule {
     updateModuleGUIFromInputObjects() {
 
         let inputelements = this.getCurrentInputObjects();
-        this.description = this.module.updateOnChangedInput(inputelements, this.guiVars,this.parameterControllers);
+        let description = this.module.updateOnChangedInput(inputelements, this.guiVars,this.parameterControllers);
 
         if (this.module.recreateGUI) {
 
-            let dict=parser.recreateParameterGUI(this.generatedContent,this.description);
+            let dict=parser.recreateParameterGUI(this.generatedContent,description);
             this.parameterControllers = dict.controllers;
             this.module.recreateGUI=false;
             // recreateGUI
@@ -245,7 +246,8 @@ class CustomModule {
 
         if (this.module.mouseobserver) {
             // get the current position in the viewer
-            let elem=this.description.inputs[0];
+            let description = this.module.getDescription();
+            let elem=description.inputs[0];
             let varname = elem.varname;
             let viewer = this.getViewerFromName(this.inputVars, varname);
             let coords=this.algocontroller.getViewerCrossHairs(viewer);
@@ -267,8 +269,8 @@ class CustomModule {
      * Reset Parameters of the module to default values
      */
     resetParameters() {
-
-        this.description.params.forEach((param) => {
+        let description = this.module.getDescription();
+        description.params.forEach((param) => {
             let v = param.default;
             this.guiVars[param.varname] = v;
             this.parameterControllers[param.varname].updateDisplay();
@@ -279,8 +281,9 @@ class CustomModule {
      * @param{FileObject} fobj - the file object to load from
      */
     loadParameters(fobj) {
+        let description = this.module.getDescription();
         this.module.loadParameters(fobj).then( (obj) => {
-            this.description.params.forEach((param) => {
+            description.params.forEach((param) => {
                 let varname=param.varname;
                 if (obj[varname]) {
                     this.guiVars[varname] = obj[varname];
@@ -330,10 +333,10 @@ class CustomModule {
         if (this.parameterControllers === null) {
             // We need to create this thing
 
-            this.description = this.module.getDescription();
+            let description = this.module.getDescription();
             let generatedContent = parser.parseDescriptionAndCreateGUI(this.basewidget,
                                                                        this.footer,
-                                                                       this.description,
+                                                                       description,
                                                                        this.moduleOptions['numViewers']);
             
             // Gui Event Handling for Input stuff
@@ -361,7 +364,7 @@ class CustomModule {
 
                 webutil.enablebutton(generatedContent.runbutton, status);
                 webutil.enablebutton(generatedContent.undobutton, status);
-                webutil.enablebutton(generatedContent.redobutton, status);
+                //                webutil.enablebutton(generatedContent.redobutton, status);
             });
 
 
@@ -389,16 +392,16 @@ class CustomModule {
                 this.handleUndo();
             });
 
-            generatedContent.redobutton[0].addEventListener("click", (e) => {
+            /*            generatedContent.redobutton[0].addEventListener("click", (e) => {
                 e.preventDefault();
                 this.handleRedo();
-            });
+            });*/
             
             let dropmenu=generatedContent.dropmenu;
             if (dropmenu!==null) {
-                webutil.createDropdownItem(dropmenu,'Update Inputs', function() {
+                /*webutil.createDropdownItem(dropmenu,'Update Inputs', function() {
                     self.updateModuleGUIFromInputObjects();
-                });
+                });*/
                 
                 webutil.createDropdownItem(dropmenu,'Reset Parameters',function() {
                     self.resetParameters();
@@ -431,10 +434,10 @@ class CustomModule {
                                                   );
 
 
-                if (this.description.url) {
+                if (description.url) {
                     webutil.createDropdownItem(
                         dropmenu,'Help', function() {
-                            document.createElement('bisweb-helpvideoelement').displayVideo(this.description.url);
+                            document.createElement('bisweb-helpvideoelement').displayVideo(description.url);
                         });
                 }
             }
@@ -452,8 +455,8 @@ class CustomModule {
         webutil.createAlert(`Module ${this.module.getDescription().name} done`);
 
         let count=0;
-        
-        this.description.outputs.forEach((opt) => {
+        let description=this.module.getDescription();
+        description.outputs.forEach((opt) => {
             let outobj = outputs[opt.varname];
 
             if (outobj) {
@@ -519,8 +522,9 @@ class CustomModule {
 
         return new Promise((resolve, reject) => {
             this.module.execute(inputObjects, inputParams).then(() => {
+                let description=this.getDescription();
                 let outputs = {};
-                this.description.outputs.forEach((opt) => {
+                description.outputs.forEach((opt) => {
                     let obj = this.module.getOutputObject(opt.varname);
                     outputs[opt.varname] = obj ? obj : undefined;
                 });

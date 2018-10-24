@@ -7,7 +7,8 @@ const timers = require('timers');
 const util = require('bis_util');
 const bisgenericio=require('bis_genericio');
 const glob=bisgenericio.getglobmodule();
-
+const biscmdline = require('bis_commandlineutils');
+const bidsutils=require('bis_bidsutils.js');
 // TODO: IP Filtering
 // TODO: Check Base Directories not / /usr (probably two levels)
 
@@ -33,6 +34,9 @@ const server_fields = [
     { name : 'tempDirectory', value: '' }
 ];
 
+// Used to make temp directories
+let tempDirectoryCounter=0;
+
 class BaseFileServer {
 
     constructor(opts={}) {
@@ -53,6 +57,8 @@ class BaseFileServer {
         }
 
         this.opts={};
+
+        this.opts.dcm2nii='/usr/bin/dcm2nii';
         
         for (let i=0;i<server_fields.length;i++) {
             let name=server_fields[i].name;
@@ -111,7 +117,7 @@ class BaseFileServer {
             if (opts.createconfig)
                 process.exit(0);
         }
-            
+        
 
         
 
@@ -137,16 +143,16 @@ class BaseFileServer {
             console.log(this.indent,'BioImage Suite Web FileServer datatransfer=',this.datatransfer,' Initialized\n'+this.indent+'');
             console.log(this.indent,'\t The websocket server is listening for incoming connections,\n'+this.indent+' \t using the following one time info.\n'+this.indent+'');
             // the ".ss." in the next lines is needed for mocha testing
-            console.log(`..ss. \t\t hostname: ws://${this.hostname}:${this.portNumber}`);
+            console.log('..ss. \t\t hostname: ws://'+this.hostname+':'+this.portNumber);
         }  else if (abbrv===1) {
             console.log(this.indent+'\n'+this.indent+' Create New Password ... try again.');
         } else {
             console.log(this.indent+'\n'+this.indent+' Create New Password as this one is now used successfully.');
         }
         // the ".ss." in the next lines is needed for mocha testing
-        console.log(`..ss. \t\t ws://${this.hostname}:${this.portNumber}, password: ${token}\n${this.indent}`);
-
+        console.log('..ss. \t\t ws://'+this.hostname+':'+this.portNumber+', password: '+token+'\n'+this.indent);
     }
+
 
     checkPassword(password) {
         return hotp.check(parseInt(password), secret, onetimePasswordCounter);
@@ -187,6 +193,199 @@ class BaseFileServer {
     decodeUTF8(text,length) {
         throw new Error('Cannot decode ' + text + ' '+length);
     }
+
+        /**
+     * Sends a message to the client describing the server error that occured during their request. 
+     * 
+     * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
+     * @param {String} reason - Text describing the error.
+     * @param {Number} id - the request id
+     */
+    handleBadRequestFromClient(socket, reason,id=-1) {
+        let error = "An error occured:"+reason;
+        this.sendCommand(socket,'error', { 'text' : error, 'id': id}).then( () => {
+            console.log(this.indent,'request returned an error', reason, '\n'+this.indent+'\t sent error to client');
+        });
+    }
+
+    /**
+     * Closes the server side of the socket gracefully. Meant to be called upon receipt of a 'connection close' packet from the client, i.e. a packet with opcode 8.
+     * 
+     * @param {String} rawText - Unparsed JSON denoting the file or series of files to read. 
+     * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
+     * @param {Object} control - Parsed WebSocket header for the file request.
+     */
+    handleCloseFromClient(rawText, socket, control) {
+        let text = this.decodeUTF8(rawText, control);
+        console.log(this.indent,'received CLOSE frame from client',text);
+
+        //TODO: send a close frame in response
+        this.closeSocket(socket,false);
+
+        console.log(this.indent,'closed connection');
+    }
+
+
+    // ......................... Filename Validation Code (not used) .............................................
+
+    /**
+     * Takes a path specifying a file to load on the server machine and determines whether the path is clean, i.e. specifies a file that exists, does not contain symbolic links.
+     * Recursively checks every file and directory on the path.
+     * 
+     * @param {String} filepath - Path to check.
+     * @return {Boolean} true if OK, false if not OK,
+     */
+    validateFilename(filepath) {
+
+        filepath=filepath||'';
+        if (filepath.length<1) {
+            return false;
+        }
+
+        if (path.sep==='\\') 
+            filepath=filepath.toLowerCase();
+
+        let i=0,found=false;
+        while (i<this.opts.baseDirectoriesList.length && found===false) {
+            if (path.sep==='\\') {
+                if (filepath.indexOf(this.opts.baseDirectoriesList[i].toLowerCase())===0) {
+                    found=true;
+                }
+            } else if (filepath.indexOf(this.opts.baseDirectoriesList[i])===0) {
+                found=true;
+            } else {
+                i=i+1;
+            }
+        }
+
+        if (found===false) {
+            return false;
+        }
+
+        let realname=filepath;
+        if (path.sep==='\\')
+            realname=util.filenameUnixToWindows(filepath);
+
+
+        if (fs.existsSync(realname)) {
+            let stats=fs.lstatSync(realname);
+            if (stats.isSymbolicLink()) {
+                return false;
+            }
+        } else {
+            let dirname=path.dirname(realname);
+            try {
+                let stats=fs.lstatSync(dirname);
+                if (stats.isSymbolicLink()) {
+                    return false;
+                }
+            } catch(e) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /** Validate Directories
+     * @params{Array} - array of directories
+     * @params{String} - name of list for debugging
+     * @returns{Array} - fixed array
+     */
+    validateDirectories(lst,name="") {
+
+        let newlist=[];
+        for (let i=0;i<lst.length;i++) {
+
+            let p=lst[i];
+            if (path.sep==='\\') 
+                p=util.filenameUnixToWindows(p);
+            
+            p = path.normalize(p);
+            let stats=null;
+            try {
+
+                stats=fs.lstatSync(p);
+            } catch(e) {
+                p=null;
+            }
+
+            
+            
+            if (stats) {
+                
+                if (stats.isSymbolicLink()) {
+                    let q=fs.readlinkSync(p);
+                    p=q;
+                }
+
+                if (!stats.isDirectory()) {
+                    p=null;
+                }
+
+                if (p.lastIndexOf(path.sep)==(p.length-1)) {
+                    p=p.substr(0,p.length-1);
+                } 
+            } else {
+                p=null;
+            }
+
+            if (p!=null) {
+                
+                if (path.sep==='/') {
+                    let ignore=false;
+                    if (p!=='/tmp') {
+                        let l=p.split('/');
+                        if (l.length<3)
+                            ignore=true;
+                    }
+                    if (!ignore) 
+                        newlist.push(p);
+                } else {
+                    let l=p.split('\\');
+                    if (l.length>=3)
+                        newlist.push(util.filenameWindowsToUnix(p));
+                }                
+            }
+        }
+        if (this.opts.verbose)
+            console.log(this.indent,'Validating '+name+' directory list=',lst.join(','),'-->\n'+this.indent+'\t ' , newlist.join(','));
+        return newlist;
+    }
+
+    
+    /**
+     * Sets a function to execute after a given delay. Uses Node Timers class.
+     * 
+     * @param {Function} fn - Function to call at the end of the timer period. 
+     * @param {Number} delay - Approximate amount of time before end of timeout period (see reference for Node Timers class).
+     */
+    setSocketTimeout(fn, delay = 2000) {
+        let timer = timers.setTimeout(fn, delay);
+        return timer;
+    }
+
+
+
+    /**
+     * Parses JSON sent by the client from a raw bytestream to a JavaScript Object.
+     * 
+     * @param {Uint8Array} rawText - The bytestream sent by the client.
+     * @returns The JSON object corresponding to the raw bytestream.
+     */
+    parseClientJSON(rawText) {
+        let text = this.decodeUTF8(rawText, rawText.length);
+
+        let parsedText;
+        try {
+            parsedText = JSON.parse(text);
+        } catch (e) {
+            console.log(this.indent,'an error occured while parsing the data from the client', e);
+        }
+
+        return parsedText;
+    }
+    
     // --------------------------------------------------------------------------
     
     createFileInProgress(upload) {
@@ -253,6 +452,16 @@ class BaseFileServer {
             }
             case 'filesystemoperation' : {
                 this.fileSystemOperations(socket,parsedText.operation,parsedText.url,parsedText.id);
+                break;
+            }
+
+            case 'dicomConversion' : {
+                this.dicomConversion(socket,parsedText);
+                break;
+            }
+
+            case 'dicom2BIDS' : {
+                this.dicom2BIDS(socket,parsedText);
                 break;
             }
 
@@ -484,7 +693,7 @@ class BaseFileServer {
                                 }
                             }
                             treeEntry.size = stats["size"];
-                            }
+                        }
                     }
                     let f2=util.filenameWindowsToUnix(path.resolve(path.normalize(fname)));
 
@@ -507,7 +716,7 @@ class BaseFileServer {
 
         
         if (basedir!=='[Root]') {
-        
+            
             getmatchedfiles(basedir).then( (obj) => {
 
                 let pathname=obj.pathname;
@@ -577,7 +786,7 @@ class BaseFileServer {
 
         if (opname!=='getMatchingFiles') {
             // This is a potential security hole as "*" and '?'
-           
+            
             if (!this.validateFilename(url)) {
                 this.handleBadRequestFromClient(socket,
                                                 'url '+url+' is not valid',
@@ -630,13 +839,13 @@ class BaseFileServer {
                     s.push(util.filenameWindowsToUnix(m[i]));
                 m=s;
             }
-                
-                
+            
+            
             console.log(this.indent,'File system success=',opname,url,m,'\n'+this.indent+'');
             this.sendCommand(socket,'filesystemoperations', { 'result' : m,
-                                                             'url' : url,
-                                                             'operation' : opname,
-                                                             'id' : id });
+                                                              'url' : url,
+                                                              'operation' : opname,
+                                                              'id' : id });
         }).catch( (e) => {
             console.log(this.indent,'File system fail',opname,url,e);
             this.sendCommand(socket,'filesystemoperationserror', { 'result' : e,
@@ -646,196 +855,115 @@ class BaseFileServer {
         });
     }
 
+
+    // DICOM
     /**
-     * Sends a message to the client describing the server error that occured during their request. 
-     * 
+     * Performs DICOM 2 NII conversion by calling the dcm2nii tool
      * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
-     * @param {String} reason - Text describing the error.
-     * @param {Number} id - the request id
+     * @param {Dictionary} opts  - the parameter object
+     * @param {Number} opts.id - the job id
+     * @param {String} opts.indir - the input directory
+     * @param {Boolean} opts.debug - if true run debug setup
      */
-    handleBadRequestFromClient(socket, reason,id=-1) {
-        let error = "An error occured:"+reason;
-        this.sendCommand(socket,'error', { 'text' : error, 'id': id}).then( () => {
-            console.log(this.indent,'request returned an error', reason, '\n'+this.indent+'\t sent error to client');
+    dicomConversion(socket,opts)  {
+
+        let errorfn=( (msg) => {
+            this.sendCommand(socket,'dicomConversionError', { 
+                'output' : msg,
+                'id' : id });
+            return false;
         });
-    }
+        
+        let id=opts.id;
+        let indir=opts.indir || '';
+        let debug=opts.debug || false;
 
-    /**
-     * Closes the server side of the socket gracefully. Meant to be called upon receipt of a 'connection close' packet from the client, i.e. a packet with opcode 8.
-     * 
-     * @param {String} rawText - Unparsed JSON denoting the file or series of files to read. 
-     * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
-     * @param {Object} control - Parsed WebSocket header for the file request.
-     */
-    handleCloseFromClient(rawText, socket, control) {
-        let text = this.decodeUTF8(rawText, control);
-        console.log(this.indent,'received CLOSE frame from client',text);
-
-        //TODO: send a close frame in response
-        this.closeSocket(socket,false);
-
-        console.log(this.indent,'closed connection');
-    }
-
-
-    // ......................... Filename Validation Code (not used) .............................................
-
-    /**
-     * Takes a path specifying a file to load on the server machine and determines whether the path is clean, i.e. specifies a file that exists, does not contain symbolic links.
-     * Recursively checks every file and directory on the path.
-     * 
-     * @param {String} filepath - Path to check.
-     * @return {Boolean} true if OK, false if not OK,
-     */
-    validateFilename(filepath) {
-
-        filepath=filepath||'';
-        if (filepath.length<1) {
-            return false;
+        if (path.sep==='\\') {
+            indir=util.filenameUnixToWindows(indir);
+        }
+        
+        if (!this.opts.dcm2nii) {
+            return errorfn(' No dcm2nii tool in config');
+        }
+        
+        if (!this.validateFilename(indir)) {
+            return errorfn(indir+' is not valid');
         }
 
-        if (path.sep==='\\') 
-            filepath=filepath.toLowerCase();
 
-        let i=0,found=false;
-        while (i<this.opts.baseDirectoriesList.length && found===false) {
-            if (path.sep==='\\') {
-                if (filepath.indexOf(this.opts.baseDirectoriesList[i].toLowerCase())===0) {
-                    found=true;
-                }
-            } else if (filepath.indexOf(this.opts.baseDirectoriesList[i])===0) {
-                found=true;
-            } else {
-                i=i+1;
-            }
-        }
-
-        if (found===false) {
-            return false;
-        }
-
-        let realname=filepath;
-        if (path.sep==='\\')
-            realname=util.filenameUnixToWindows(filepath);
-
-
-        if (fs.existsSync(realname)) {
-            let stats=fs.lstatSync(realname);
-            if (stats.isSymbolicLink()) {
-                return false;
-            }
-        } else {
-            let dirname=path.dirname(realname);
-            try {
-                let stats=fs.lstatSync(dirname);
-                if (stats.isSymbolicLink()) {
-                    return false;
-                }
-            } catch(e) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /** Validate Directories
-     * @params{Array} - array of directories
-     * @params{String} - name of list for debugging
-     * @returns{Array} - fixed array
-     */
-    validateDirectories(lst,name="") {
-
-        let newlist=[];
-        for (let i=0;i<lst.length;i++) {
-
-            let p=lst[i];
-            if (path.sep==='\\') 
-                p=util.filenameUnixToWindows(p);
-            
-            p = path.normalize(p);
-            let stats=null;
-            try {
-
-                stats=fs.lstatSync(p);
-            } catch(e) {
-                p=null;
-            }
-
-            
-            
-            if (stats) {
-                
-                if (stats.isSymbolicLink()) {
-                    let q=fs.readlinkSync(p);
-                    p=q;
-                }
-
-                if (!stats.isDirectory()) {
-                    p=null;
-                }
-
-                if (p.lastIndexOf(path.sep)==(p.length-1)) {
-                    p=p.substr(0,p.length-1);
-                } 
-            } else {
-                p=null;
-            }
-
-            if (p!=null) {
-                
-                if (path.sep==='/') {
-                    let ignore=false;
-                    if (p!=='/tmp') {
-                        let l=p.split('/');
-                        if (l.length<3)
-                            ignore=true;
-                    }
-                    if (!ignore) 
-                        newlist.push(p);
-                } else {
-                    let l=p.split('\\');
-                    if (l.length>=3)
-                        newlist.push(util.filenameWindowsToUnix(p));
-                }                
-            }
-        }
-        if (this.opts.verbose)
-            console.log(this.indent,'Validating '+name+' directory list=',lst.join(','),'-->\n'+this.indent+'\t ' , newlist.join(','));
-        return newlist;
-    }
-
-    
-    /**
-     * Sets a function to execute after a given delay. Uses Node Timers class.
-     * 
-     * @param {Function} fn - Function to call at the end of the timer period. 
-     * @param {Number} delay - Approximate amount of time before end of timeout period (see reference for Node Timers class).
-     */
-    setSocketTimeout(fn, delay = 2000) {
-        let timer = timers.setTimeout(fn, delay);
-        return timer;
-    }
-
-
-
-    /**
-     * Parses JSON sent by the client from a raw bytestream to a JavaScript Object.
-     * 
-     * @param {Uint8Array} rawText - The bytestream sent by the client.
-     * @returns The JSON object corresponding to the raw bytestream.
-     */
-    parseClientJSON(rawText) {
-        let text = this.decodeUTF8(rawText, rawText.length);
-
-        let parsedText;
+        tempDirectoryCounter+=1;
+        let outdir=path.join(this.opts.tempDirectory,'dicom_'+tempDirectoryCounter);
         try {
-            parsedText = JSON.parse(text);
-        } catch (e) {
-            console.log(this.indent,'an error occured while parsing the data from the client', e);
+            fs.mkdirSync(outdir);
+        } catch(e) {
+            return errorfn('can not make temp dir '+outdir);
+        }
+        
+
+        
+        let done= (status,code) => {
+            if (status===false) {
+                return errorfn('dcm2nii failed'+code);
+            }
+            
+            this.sendCommand(socket,'dicomConversionDone', { 
+                'output' : outdir,
+                'id' : id });
+            return;
+        };
+
+        let listen= (message) => {
+            this.sendCommand(socket,'dicomConversionProgress', message);
+        };
+
+        
+        let cmd=this.opts.dcm2nii+' -o '+outdir+' '+indir;
+        if (debug)
+            cmd='ls '+outdir+' '+indir;
+        biscmdline.executeCommand(cmd,__dirname,done,listen);
+        return;
+    }
+
+    // DICOM2BIDS
+    /**
+     * Performs NII 2 Bids conversion of data generated by dcm2nii
+     * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
+     * @param {Dictionary} opts  - the parameter object
+     * @param {Number} opts.id - the job id
+     * @param {String} opts.indir - the input directory (output of dcm2nii)
+     * @param {String} opts.outdir - the output directory (output of this function)
+     */
+    dicom2BIDS(socket,opts)  {
+
+        let id=opts.id;
+        let indir=opts.indir || '';
+        let outdir=opts.outdir || '';
+
+
+        if (path.sep==='\\') {
+            indir=util.filenameUnixToWindows(indir);
+            outdir=util.filenameUnixToWindows(outdir);
         }
 
-        return parsedText;
+        if (!this.validateFilename(indir) || !this.validateFilename(outdir)) {
+            console.log(this.indent,'Bad outputdir',indir,outdir);
+                this.sendCommand(socket,'dicomConversionError', { 
+                    'output' : indir+' or '+outdir+' is not valid',
+                    'id' : id });
+        }
+
+        bidsutils.dicom2BIDS(
+            { indir : indir,
+              outdir : outdir
+            }).then( (tlist) => {
+                this.sendCommand(socket,'dicomConversionDone', { 
+                    'output' : tlist,
+                    'id' : id });
+            }).catch( (msg) => {
+                this.sendCommand(socket,'dicomConversionError', { 
+                    'output' : msg,
+                    'id' : id });
+            });
     }
 
     /**
