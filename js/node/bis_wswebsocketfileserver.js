@@ -60,7 +60,7 @@ class BisWSWebSocketFileServer extends BaseFileServer {
 
     /** Attach Socket Event 
      *
-     * @param{Socket} socket - the socket to use
+     * @param{WebSocket} socket - the socket to use
      * @param{String} eventname - the name of the event
      * @param{Function} fn - the event handler
      */
@@ -71,9 +71,9 @@ class BisWSWebSocketFileServer extends BaseFileServer {
 
     /** Remove Socket Event 
      *
-     * @param{Socket} socket - the socket to use
-     * @param{String} eventname - the name of the event
-     * @param{Function} fn - the event handler
+     * @param {WebSocket} socket - the socket to use
+     * @param {String} eventname - the name of the event
+     * @param {Function} fn - the event handler
      */
     removeSocketEvent(socket,eventname,fn) {
         socket.removeEventListener(eventname, fn);
@@ -81,8 +81,8 @@ class BisWSWebSocketFileServer extends BaseFileServer {
 
 
     /** Close Socket Event
-     * @param{Socket} socket - the socket to close
-     * @param{Boolean} destroy - if true call socket.destroy() in addition
+     * @param {WebSocket} socket - WebSocket to close.
+     * @param {Boolean} destroy - If true, this will close the socket abruptly instead of gracefully.
      */
     closeSocket(socket,destroy=false) {
         socket.close();
@@ -97,24 +97,29 @@ class BisWSWebSocketFileServer extends BaseFileServer {
     //
     // Begin Server Wrapper
     /** Stop Server
-     * @param{Server} server - the server to stop
+     * @param {WebSocket.Server} server - WebSocket server to close.
      */
     stopServer(server) {
         server.close();
     }
 
     /**  decodes text from socket
-     * @param{Blob} text - the string to decode
+     * @param {Blob} text - the string to decode
      * @returns {String} - the decoded string
      */
     decodeUTF8(text) {
         return text;
     }
 
+    /**
+     * Returns a string containing information about a currently open socket.
+     * 
+     * @param {WebSocket} socket - The socket to list infomation on.
+     * @returns A string with details about the socket.
+     */
     getSocketInfo(socket) {
-
         try {
-            return socket.Server._connectionKey;
+            return 'Socket URL: ' + socket.url + ' Protocol: ' + socket.protocol + ' Negotiated extensions: ' + socket.extensions;
         } catch ( e ) {
             return "()";
         }
@@ -174,6 +179,14 @@ class BisWSWebSocketFileServer extends BaseFileServer {
     }
 
     // ---------------------------------------------------------------------------
+
+    /**
+     * Binds standard handling events to the WebSocket server (this.netServer). 
+     * 
+     * @param {String} hostname - Name of the host connected to the server. 
+     * @param {Number} port - Port the host and server are connected on.
+     * @param {Boolean} datatransfer - Whether to start this server as a data transfer server or not
+     */
     attachServerEvents(hostname,port,datatransfer=false) {
         
         this.datatransfer=datatransfer;
@@ -241,6 +254,11 @@ class BisWSWebSocketFileServer extends BaseFileServer {
 
     // ---------------------------------------------------------------------------
     
+    /**
+     * Checks a password entered by the user against the current OTP (One-time Password). If they match, the server will authenticate the user, if false it will send an error message and change the OTP.
+     * 
+     * @param {WebSocket} socket - Control socket open to the client. 
+     */
     authenticate(socket) {
 
         let readOTP = (msg) => {

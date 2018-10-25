@@ -207,7 +207,9 @@ class AWSModule extends BaseServerClient {
     }
 
     /**
-     * Creates the file list to allow a user to choose where to save an image on one of the viewers  
+     * Creates the file list to allow a user to choose where to save an image on one of the viewers 
+     * 
+     * @param {Object} opts - Options for the save modal. See bisweb_simplefiledialog.openDialog for a full list.
      */
     createSaveModal(opts) {
         opts.server = 'amazonaws';
@@ -306,9 +308,10 @@ class AWSModule extends BaseServerClient {
     }
 
     /** 
-     * This function is not supported by bisweb_awsmodule, but overwritten to avoid a caller using the BaseServerClient.makeDirectory.
+     * Makes an empty directory in the current S3 bucket. Overwrites BaseServerClient.makeDirectory.
+     * 
      * @param {String} filename - The directory name
-     * @returns A rejected promise notifying the caller that makeDirectory is not supported in this file mode.
+     * @returns A Promise that will either resolve with the name of the new folder or reject with an error message. 
      */
     makeDirectory(filename) {
         return new Promise((resolve, reject) => {
@@ -337,7 +340,8 @@ class AWSModule extends BaseServerClient {
     }
 
     /** 
-     * This function is not supported by bisweb_awsmodule, but overwritten to avoid a caller using the BaseServerClient.deleteDirectory.
+     * Deletes a folder in the S3 bucket and every object it contains, similar to 'rm -rf <directory_name>'. Overwrites BaseServerClient.deleteDirectory.
+     * 
      * @param {String} directory - The directory name
      * @returns A rejected promise notifying the caller that deleteDirectory is not supported in this file mode.
      */
@@ -372,9 +376,12 @@ class AWSModule extends BaseServerClient {
         });
     }
 
-    /** getMatching Files
-     * @param {String} queryString - e.g. "data/*.nii.gz"  -> return all files in data with .nii.gz as their suffix. 
-     * @returns {Promise} payload list of filenames that match
+    /** 
+     * Returns all files in the S3 bucket that match a query string given in glob form (see https://en.wikipedia.org/wiki/Glob_(programming)). 
+     * Note that this implementation is not necessarily complete, but will work for wildcards given in a pathname and for wildcards with file extensions, e.g. 'data/*' or 'data/*.nii.gz'.
+     * 
+     * @param {String} queryString - The query string to filter results by, e.g. 'data/*.nii.gz' will return all files in data with .nii.gz as their suffix. 
+     * @returns A Promise that will resolve with a list of all files matching the query string, or reject with an error.
      */
     getMatchingFiles(queryString = '*') {
         let s3 = this.s3;
@@ -767,6 +774,11 @@ class AWSModule extends BaseServerClient {
         return formattedFiles;
     }
 
+    /**
+     * Creates the modal menu that contains tabs to allow users to either enter a new S3 bucket to connect to or to switch to an S3 bucket they've already provided info for. 
+     * 
+     * @returns The AWS bucket menu.
+     */
     createAWSBucketMenu() {
         let awsmodal = bis_webutil.createmodal('AWS Buckets', 'modal-lg');
         awsmodal.dialog.find('.modal-content').addClass('resizing-frame show-selector');
@@ -795,6 +807,12 @@ class AWSModule extends BaseServerClient {
         return awsmodal;
     }
 
+    /**
+     * Renders a bootstrap tab view inside the blank modal created by createAWSBucketMenu. 
+     * 
+     * @param {JQuery<HTMLElement>} awsmodal - The modal created by createAWSBucketMenu
+     * @returns The tab view inserted into the awsmodal.
+     */
     createAWSTabView(awsmodal) {
         let tabView = $(`
                 <ul class="nav nav-tabs" id="aws-tab-menu" role="tablist">
@@ -840,6 +858,13 @@ class AWSModule extends BaseServerClient {
         return tabView;
     }
 
+    /**
+     * Creates the bucket selector section inside the blank tab created by createAWSTabView.
+     * 
+     * @param {JQuery<HTMLElement>} awsmodal - The modal created by createAWSBucketMenu.
+     * @param {JQuery<HTMLElement>} tabView - The tab view created by createAWSTabView.
+     * @returns The AWS Bucket selector tab view. 
+     */
     createAWSBucketSelector(awsmodal, tabView) {
 
         let selectContainer = $(`
@@ -1035,6 +1060,12 @@ class AWSModule extends BaseServerClient {
         return selectContainer;
     }
 
+    /**
+     * Creates a small modal that will allow a user to edit values for an AWS Bucket they've already created. 
+     * 
+     * @param {String} id - Identifier of the existing entry.  
+     * @param {Object} oldParams - The parameters specified for the existing entry.  
+     */
     createAWSEditModal(id, oldParams) {
         return new Promise((resolve, reject) => {
             let editModal = bis_webutil.createmodal('Edit Entry', 'modal-sm');
@@ -1118,6 +1149,11 @@ class AWSModule extends BaseServerClient {
         });
     }
 
+    /**
+     * Creates the AWS Bucket entry view in the empty tab created by createAWSTabView.
+     * 
+     * @param {JQuery<HTMLElement>} awsmodal - The modal created by createAWSBucketMenu.
+     */
     createAWSBucketEntry(awsmodal) {
 
         let bucketInfoTitle = "The full name of your bucket, e.g. \"bisweb-test-bucket\"";
