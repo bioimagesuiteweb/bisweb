@@ -430,16 +430,16 @@ var createPackage=function(dopackage=1,tools=[],indir=_dirname+"../",outdir="bui
     
     console.log('dopack=',dopackage,'indir=',indir,' outdir=',outdir,' version=',version,' platform=',platform,' distdir=',distdir);
 
-    if (!dopackage) {
-        console.log(colors.magenta(getTime()+' Not packaging for electron'));
-        return;
-    }
-
     let fn0=function() {
         createPackageInternal(dopackage,tools,indir,outdir,version,platform,distdir,done);
     };
 
-    executeCommand("npm update",indir+"/build/web",fn0);
+    if (dopackage>0) {
+        executeCommand("npm update",indir+"/build/web",fn0);
+    } else {
+        dopackage=1;
+        fn0();
+    }
 };
 
 var jsDOC=function(indir,conffile,done) {
