@@ -398,7 +398,7 @@ class ViewerApplicationElement extends HTMLElement {
     }
     
     /** Save image from viewer to a file */
-    saveOverlay(fname, viewerno = 0) {
+    saveOverlay(fname=null, viewerno = 0) {
 
         let name="Overlay";
         let index="";
@@ -407,8 +407,8 @@ class ViewerApplicationElement extends HTMLElement {
             index=`_${viewerno+1}`;
         }
         let img = this.VIEWERS[viewerno].getobjectmap();
-        if (!fname)
-            fname = "objectmap" + index +".nii.gz";
+        //        if (!fname)
+        //  fname = "objectmap" + index +".nii.gz";
         bisweb_apputil.saveImage(img, fname, name);
     }
 
