@@ -514,7 +514,7 @@ class BisWSWebSocketFileServer extends BaseFileServer {
                 let sserver = new StreamingWebSocket.Server({
                     'host' : 'localhost',
                     'port' : port,
-                    'perMessageDeflate' : false //Authors recommend disabling this https://www.npmjs.com/package/websocket-stream
+                    'perMessageDeflate' : false  //Authors recommend disabling this https://www.npmjs.com/package/websocket-stream
                 }, 
                 (stream) => {
                     connected = true;

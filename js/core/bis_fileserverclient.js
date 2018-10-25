@@ -6,6 +6,8 @@ const pako=require('pako');
 const bisasyncutil=require('bis_asyncutils');
 const util = require('bis_util');
 const BisBaseServerClient= require('bis_baseserverclient');
+const bisweb_loadbar = require('bisweb_loadbar.js');
+
 // Debug Mode
 let uploadcount=0;
 
@@ -795,13 +797,22 @@ class BisFileServerClient extends BisBaseServerClient {
     connectToFilestream(port, filesize) {
         return new Promise( (resolve, reject) => {
 
+            let uploadedBytes = 0;
             let hostname = 'ws://localhost:' + port;
             let blobArray = [];
     
+
+            //configure loading bar for the transfer
+            let loadbar = new bisweb_loadbar();
+            loadbar.attach(() => {
+                //console.log('bytes', uploadedBytes, 'filesize', filesize);
+                return (uploadedBytes / filesize) * 100;
+            }, 500);
+            loadbar.show();
+
             //once connected the server will begin piping images chunks, which we will assemble on this side
             let ssocket = new WebSocket(hostname);
 
-            //TODO: Create loading bar and connect it to blobArray
             ssocket.addEventListener('message', (e) => {
     
                 //empty packet should indicate the end of stream
@@ -812,6 +823,7 @@ class BisFileServerClient extends BisBaseServerClient {
                     resolve(combinedImage);
                 } else {
                     blobArray.push(e.data);
+                    uploadedBytes = uploadedBytes + e.data.size;
                 }
             });
 

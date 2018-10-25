@@ -1,12 +1,12 @@
 const $ = require('jquery');
 
-class ProgressBar extends HTMLElement{
+class ProgressBar {
 
     constructor() {
-        super();
 
+        let top = 70; //alerts should be displayed 70px from top since menubar has height 70
         this.progressBarContainer = $(`
-            <div class='alert alert-info progress-bar-container' role='alert' style='position: absolute; top: 0px; left: 10px'>
+            <div class='alert alert-warning progress-bar-container' role='alert' style='position: absolute; top: ${top}px; left: 10px; width: 900px; z-index: 100000'>
                 <div class='progress'>
                     <div class='progress-bar bg-success' role='progressbar' style='width: 0%'>
                     </div>
@@ -16,22 +16,13 @@ class ProgressBar extends HTMLElement{
     }
 
     /**
-     * Updates progress bar by a certain amount. Should be called by whichever function checks on the value of the loading resource, i.e. what the progress bar is tracking. 
+     * Sets progress value to a new value. Should be called by whichever function checks on the value of the loading resource, i.e. what the progress bar is tracking. 
      * 
-     * @param {Number} percent - The number of percent to advance the bar by. 
-     * @return the current value of the progress bar.
+     * @param {Number} percent - The percent to set the bar to.
      */
     updateProgressBar(percent) {
-        let currentProgress = this.progressBarContainer.find('.progress-bar').css('width');
-        
-        //strip out percent sign and add to value
-        currentProgress.replace('%', '');
-        let currentProgressValue = parseInt(currentProgress, 10) + percent; 
-        if (currentProgressValue > 100) currentProgressValue = 100;
-
-        currentProgress = currentProgressValue.toString() + '%';
-        this.progressBarContainer.find('.progress-bar').css('width', currentProgress);
-        return currentProgressValue;
+        let newProgress = percent.toString() + '%';
+        this.progressBarContainer.find('.progress-bar').css('width', newProgress);
     }
 
     /**
@@ -43,10 +34,10 @@ class ProgressBar extends HTMLElement{
      */
     attach(getterFn, interval = 250) {
         let getterInterval = setInterval( () => {
-            let percentIncrease = getterFn();
-            let totalPercent = this.updateProgressBar(percentIncrease);
+            let newPercent = getterFn();
+            this.updateProgressBar(newPercent);
 
-            if (totalPercent === 100) {
+            if (newPercent === 100) {
                 clearInterval(getterInterval);
                 this.progressBarContainer.alert('close');
             }
@@ -56,6 +47,7 @@ class ProgressBar extends HTMLElement{
     }
 
     show() {
+        $('body').append(this.progressBarContainer);
         this.progressBarContainer.alert();
     }
 
