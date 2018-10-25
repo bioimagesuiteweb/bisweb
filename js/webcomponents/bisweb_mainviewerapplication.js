@@ -345,7 +345,7 @@ class ViewerApplicationElement extends HTMLElement {
         const img = new BisWebImage();
         return new Promise( (resolve,reject) => {
 
-            webutil.createAlert('Loading image from ' + genericio.getFixedLoadFileName(fname),'progress',30);
+            webutil.createAlert('Loading image from ' + genericio.getFixedLoadFileName(fname),'progress', 30, 0, { 'makeLoadSpinner' : true });
             setTimeout( () => {
                 img.load(fname)
                     .then(function () {
@@ -362,7 +362,7 @@ class ViewerApplicationElement extends HTMLElement {
         const self=this;
         return new Promise( (resolve,reject) => {
             let img = new BisWebImage();
-            webutil.createAlert('Loading image from ' + genericio.getFixedLoadFileName(fname),'progress',30);
+            webutil.createAlert('Loading image from ' + genericio.getFixedLoadFileName(fname),'progress',30, 0, { 'makeLoadSpinner' : true });
             setTimeout( () => {
                 img.load(fname)
                     .then(function () {
