@@ -93,7 +93,9 @@ class ViewerApplicationElement extends HTMLElement {
         else if (this.applicationName==="editor")
             this.extraManualHTML='imageeditor.html';
 
-        userPreferences.initialize(bisdbase); // this is an async call to initialize. Use safe get later to make sure
+        this.applicationInitializedPromiseList= [ ];
+        this.applicationInitializedPromiseList.push(userPreferences.initialize(bisdbase)); // this is an async call to initialize. Use safe get later to make sure
+
     }
 
     // ----------------------------------------------------------------------------
@@ -1388,9 +1390,11 @@ class ViewerApplicationElement extends HTMLElement {
         document.dispatchEvent(mainViewerDoneEvent);
 
         webutil.runAfterAllLoaded( () => {
-            this.parseQueryParameters();
-            document.body.style.zoom =  1.0;
-            this.welcomeMessage(false);
+            Promise.all(this.applicationInitializedPromiseList).then( () => {
+                this.parseQueryParameters();
+                document.body.style.zoom =  1.0;
+                this.welcomeMessage(false);
+            });
         });
 
     }

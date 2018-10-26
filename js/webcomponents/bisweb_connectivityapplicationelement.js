@@ -314,16 +314,12 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         webutil.createDragAndCropController(HandleFiles);
 
 
-        loadatlas(`${imagepath}/gray_highres_groupncut150_right5_left1_emily_reord_new.nii.gz`).then( () => {
-            console.log('Atlas loaded');
+        this.applicationInitializedPromiseList.push(loadatlas(`${imagepath}/gray_highres_groupncut150_right5_left1_emily_reord_new.nii.gz`));
+
+        Promise.all(this.applicationInitializedPromiseList).then( () => {
             this.parseQueryParameters();
             document.body.style.zoom =  1.0;
         });
-        
-        //      window.onbeforeunload = function() {
-        //          return "Are you sure you want to exit?";
-        //      };      
-        
     }
 }
 
