@@ -401,10 +401,10 @@ class ViewerApplicationElement extends HTMLElement {
     saveOverlay(fname=null, viewerno = 0) {
 
         let name="Overlay";
-        let index="";
+        //let index="";
         if (this.num_independent_viewers >1)  {
             name=`${name} ${viewerno + 1}`;
-            index=`_${viewerno+1}`;
+            //index=`_${viewerno+1}`;
         }
         let img = this.VIEWERS[viewerno].getobjectmap();
         //        if (!fname)
@@ -989,6 +989,13 @@ class ViewerApplicationElement extends HTMLElement {
                     return;
                 }
 
+                if (obj.app !== this.applicationName) {
+                    clipboard.setItem('lastappstate',obj).then( () => {
+                        webutil.createAlert(`This state file was not created using this application(<EM>${this.applicationName}</EM>). Click <a href="./${obj.app}.html?restorestate=${contents.filename}">here to close this application and open <B>${obj.app}</B></a> instead.`,true);
+                    }).catch( (e) => { console.log(e); });
+                    return;
+                }
+                
                 self.restoreState(obj.params,obj.app);
                 webutil.createAlert('Application state loaded from ' + contents.filename);
                 resolve("Done");
@@ -1116,6 +1123,7 @@ class ViewerApplicationElement extends HTMLElement {
     
     parseQueryParameters() {
 
+        console.log('In Parse Query Parameters');
         // Here we check if there is any info we need on the query string
         let load=webutil.getQueryParameter('load') || '';
         let imagename=webutil.getQueryParameter('image') || '';
@@ -1124,6 +1132,28 @@ class ViewerApplicationElement extends HTMLElement {
             this.loadApplicationState(load);
         } else if (imagename.length>0) {
             this.loadImage(imagename);
+        }
+
+        let restore=webutil.getQueryParameter('restorestate');
+        console.log('\n Restore=',restore);
+        if (restore) {
+            clipboard.getItem('lastappstate').then( (st) => {
+                try {
+                    if (st.app) {
+                        setTimeout( () => {
+                            this.restoreState(st.params,st.app);
+                            clipboard.setItem('lastappstate',"");
+                            webutil.createAlert('Loaded application state from '+restore);
+                        },100);
+                    } else {
+                        webutil.createAlert('Failed to load application state from '+restore,true);
+                    }
+                } catch(e) {
+                    console.log('Bad Last app state',e);
+                }
+            }).catch( (e) => {
+                webutil.createAlert('Failed to load application state '+e,true);
+            });
         }
     }
                                 

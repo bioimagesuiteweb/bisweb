@@ -26,7 +26,17 @@
 const $=require('jquery');
 const bisdate=require('bisdate.js');
 const idb=require('idb-keyval');
+const localforage=require('localforage');
 import tools from './images/tools.json';
+
+const clipboard=localforage.createInstance({
+    driver : localforage.INDEXEDDB,
+    name : "BioImageSuiteWebClipboard",
+    version : 1.0,
+    storeName : "biswebclipboard",
+    description : "BioImageSuite Web Clipboard",
+});
+
 
 let inelectron=false;
 if (typeof (window.BISELECTRON) !== "undefined") {
@@ -561,6 +571,56 @@ var createServiceWorker=function() {
     });
 };
 
+const fileSelectHandler=function(e) {
+
+    let files = e.target.files || e.dataTransfer.files || null;
+    if (!files)
+        return;
+
+    if (files.length<1)
+        return;
+
+    let reader = new FileReader();
+    let url = files[0].name;
+
+    reader.onerror = function () {
+        $('#appmenu').removeClass('open');
+        showAlert('Failed to read file from '+url,'danger');
+        $('body').css({'background-color' : 'rgb(28,45,64)'});
+        return;
+    };
+    
+    reader.onload = function (e) {
+        $('body').css({'background-color' : 'rgb(28,45,64)'});
+        let obj=null;
+        try {
+            obj=JSON.parse(e.target.result);
+        } catch(e) {
+            $('#appmenu').removeClass('open');
+            showAlert('Bad application state file '+url+'.','danger');
+            return;
+        }
+
+        if (!obj.app) {
+            $('#appmenu').removeClass('open');
+            showAlert('Bad application state file '+url+'.','danger');
+            return;
+        }
+        
+        clipboard.setItem('lastappstate',obj).then( () => {
+            let newurl=`./${obj.app}.html?restorestate=${url}`;
+            window.open(newurl,'_self');
+
+            //          showAlert(`This state file was created using ${obj.app}</EM>. Click <a href="./${obj.app}.html?restorestate=${url}">here to open it`);
+        }).catch( (e) => { console.log(e); });
+        return;
+    };
+    
+    console.log(files);
+    reader.readAsText(files[0]);
+    return false;
+};
+
 
 // ------------------------------------------------------------------------------
 //
@@ -602,6 +662,27 @@ window.onload = (() => {
         $(".dropdown").removeClass("open");//this will remove the active class from  
         $('#appmenu').addClass('open');
     },500);
+
+
+    window.addEventListener("dragover", (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        $('#appmenu').removeClass('open');
+        $('body').css({'background-color' : 'rgb(28,45,128)'});
+
+    },false);
+    
+    window.addEventListener("dragleave", (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        $('body').css({'background-color' : 'rgb(28,45,64)'});
+    },false);
+
+    window.addEventListener("drop", (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        fileSelectHandler(e);
+    },false);
 
 });
 
