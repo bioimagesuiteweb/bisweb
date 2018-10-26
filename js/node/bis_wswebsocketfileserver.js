@@ -525,6 +525,7 @@ class BisWSWebSocketFileServer extends BaseFileServer {
                         console.log('stream done, ending stream');
                         stream.write('');
                         stream.end();
+                        sserver.close();
                         resolve();
                     });
 
@@ -549,6 +550,12 @@ class BisWSWebSocketFileServer extends BaseFileServer {
                     });
                     
                 });
+
+                sserver.on('error', (e) => {
+                    console.log('Stream server encountered an error and is closing', e);
+                    sserver.close();
+                });
+
             }).catch( (e) => {
                 reject(e);
             });
