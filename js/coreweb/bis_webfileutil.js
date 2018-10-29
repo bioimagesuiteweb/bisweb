@@ -620,7 +620,6 @@ if (!webutil.inElectronApp() ) {
 
     Promise.all( [ userPreferences.safeGetItem('filesource'),
                    userPreferences.safeGetItem('enables3') ]).then( (lst) => {
-                       console.log(lst.join(','));
                        let f=lst[0];
                        enableaws=lst[1] || false;
                        f= f || fileMode;

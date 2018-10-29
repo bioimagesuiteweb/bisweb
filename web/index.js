@@ -345,7 +345,7 @@ let aboutApplication=async function() {// jshint ignore:line
     if (dosimple)  {
         let m=getModal();
         m.title.text('About this Application');
-        let s=`<p>This is the main page of BioImage Suite Web ${tools.version} ( current build= ${bisdate.date}, ${bisdate.time}).</p>`;
+        let s=`<p>This is the main page of BioImage Suite Web ${tools.version} ( current build= ${bisdate.version}, ${bisdate.date}, ${bisdate.time}).</p>`;
         if (typeof (window.BISELECTRON) === "undefined") {
             if (offline)
                 s+=`<p>This application is running in offline mode.</p>`;
@@ -632,12 +632,15 @@ window.onload = (() => {
 
     createApplicationSelector(tools.tools);
 
-    let msg=`These applications are still in 'beta' (development) stage. Use with care.`;
-    let w = $(`<div class="alert alert-warning alert-dismissible" role="alert"  style="position:absolute; top:570px; left:5.5vw; z-index:5000">
+    let url=window.document.URL;
+    if  (url.indexOf('/unstable')>0) {
+        let msg=`These applications are under active development. Use with care.`;
+        let w = $(`<div class="alert alert-warning alert-dismissible" role="alert"  style="position:absolute; top:570px; left:5.5vw; z-index:5000">
           <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${msg}
           </div>`);
-    $('body').append(w);
-    w.alert();
+        $('body').append(w);
+        w.alert();
+    }
 
 
     // Only register if not in electron and not in development mode

@@ -20,7 +20,9 @@
 
 const $=require('jquery');
 const webutil=require('bis_webutil');
-const bisdate=require('bisdate.js').date;
+const bisversion=require('bisdate');
+
+
 
 let iconpath=webutil.getWebPageImagePath();
 
@@ -30,8 +32,8 @@ const bottommenubartext=`
             <div style="margin-top:2px; margin-left:5px; 
 'padding-right:10px, margin-bot:1px; height:10px; font-size:12px" align="right">
       <img src="${iconpath}/bislogo.png" id="bislogobottom" height="20px"/>
-      This application <span style="color:#ff8888"><B>(still in beta!)</B></span> is part of Yale
-BioImage Suite. (${bisdate})&nbsp;&nbsp; 
+      This application is part of <a href="./index.html" target="_blank">Yale
+BioImage Suite</a> (${bisversion.version}, ${bisversion.date}).&nbsp;&nbsp; 
 </div>
         </nav>`;
 

@@ -984,17 +984,31 @@ class ViewerApplicationElement extends HTMLElement {
                 } catch(e) {
                     webutil.createAlert('Bad application state file '+contents.filename+' probably not a application state file ',true);
                     reject(e);
+                    return;
                 }
 
                 if (!obj.app) {
                     webutil.createAlert('Bad application state file '+contents.filename+' probably not a application state file ',true);
+                    reject('error');
                     return;
                 }
 
                 if (obj.app !== this.applicationName) {
                     clipboard.setItem('lastappstate',obj).then( () => {
-                        webutil.createAlert(`This state file was not created using this application(<EM>${this.applicationName}</EM>). Click <a href="./${obj.app}.html?restorestate=${contents.filename}">here to close this application and open <B>${obj.app}</B></a> instead.`,true);
-                    }).catch( (e) => { console.log(e); });
+
+                        webutil.createAlert(`<p>This state file was not created using this application(<EM>${this.applicationName}</EM>).</p><p> Click <a href="./${obj.app}.html?restorestate=${contents.filename}">here to close this application and open <B>${obj.app}</B></a> instead.`,true);
+                        /*</p><p> <button class="btn btn-link btn-small" id="${id}">(Click this link to force load this)</button>`,true);
+                          let id=webutil.getuniqueid();
+                        $('#'+id).click( () => {
+                            $('.alert-danger').remove();
+                            self.restoreState(obj.params,obj.app);
+                            webutil.createAlert('Application state loaded from ' + contents.filename);
+                            resolve("Done");
+                        });*/
+                    }).catch( (e) => {
+                        console.log(e);
+                    });
+                    resolve("Done");
                     return;
                 }
                 
@@ -1003,7 +1017,9 @@ class ViewerApplicationElement extends HTMLElement {
                 resolve("Done");
             }).catch((e) => {
                 console.log(e.stack,e);
-                webutil.createAlert(`${e}`,true);});
+                webutil.createAlert(`${e}`,true);
+                reject(e);
+            });
         });
     }
 
@@ -1125,8 +1141,6 @@ class ViewerApplicationElement extends HTMLElement {
     
     parseQueryParameters() {
 
-        console.log('In Parse Query Parameters');
-        // Here we check if there is any info we need on the query string
         let load=webutil.getQueryParameter('load') || '';
         let imagename=webutil.getQueryParameter('image') || '';
 
@@ -1137,7 +1151,6 @@ class ViewerApplicationElement extends HTMLElement {
         }
 
         let restore=webutil.getQueryParameter('restorestate');
-        console.log('\n Restore=',restore);
         if (restore) {
             clipboard.getItem('lastappstate').then( (st) => {
                 try {

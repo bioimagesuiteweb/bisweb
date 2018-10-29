@@ -374,7 +374,7 @@ gulp.task('css', function() {
     bis_gutil.createCSSCommon(internal.dependcss,internal.biscss,options.outdir);
 });
 
-gulp.task('serve', function() {
+gulp.task('serve2', function() {
     connect.server(internal.serveroptions);
     console.log(colors.red('++++\n+++++ Server root directory=',internal.serveroptions.root,'\n++++'));
 
@@ -383,7 +383,7 @@ gulp.task('serve', function() {
     else
         gulp.watch(internal.lintscripts, ['jshint']);
     
-    bis_gutil.createDateFile(path.resolve(options.outdir,'../wasm/bisdate.js'));
+
     bis_gutil.runWebpack(internal.webpackjobs,
                          options.internal,
                          options.external,
@@ -555,6 +555,12 @@ gulp.task('doc', function(done) {
     runSequence('jsdoc','cdoc',done);
 
 });
+
+gulp.task('serve', function(done) {
+    runSequence('date','serve2',done);
+
+});
+
 
 gulp.task('default', function(callback) {
     runSequence('build',callback);
