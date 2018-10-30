@@ -28,6 +28,12 @@ test('Click Viewers', async t => {
         .expect(talz.value).within(15, 25);
 });
 
+test('Move Sliders', async t => {
+    const xslider = Selector('#xcontrols');
+    const yslider = Selector('#ycontrols');
+    const zslider = Selector('#zcontrols');
+});
+
 test('Enter MNI Values', async t => {
     const mnix = Selector('#mnix', {'timeout' : 3});
     const mniy = Selector('#mniy', {'timeout' : 3});
@@ -108,3 +114,16 @@ test('Open Manual', async t => {
         .click(manual)
         .expect(getPageUrl()).match(/.*bioimagesuiteweb.github.io\/bisweb-manual.*/);
 });
+
+//TODO: Test file buttons in a separate tester
+/*
+test('Open Batch Convert', async t => {
+    const tal2mniButton = Selector('#batchframe').find('#batch2');
+    const openedPageUrlOk = ClientFunction( () => { 
+        let existingWindow = window.open('', )
+        return location.match(/.*bisweb-test.auth.* /)
+            || location.match(/.*dropbox.com* /)
+            || location.match(/.*accounts.google.com.* /);
+    });
+});
+*/
