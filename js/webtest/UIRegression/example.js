@@ -1,3 +1,5 @@
+/* globals test, fixture */
+
 import { Selector } from 'testcafe';
 
 fixture `Getting Started`.page `https://bioimagesuiteweb.github.io/unstableapp/viewer.html`;
