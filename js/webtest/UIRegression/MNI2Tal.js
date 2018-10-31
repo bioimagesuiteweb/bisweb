@@ -157,7 +157,16 @@ test('Open Manual', async t => {
         .expect(getPageUrl()).match(/.*bioimagesuiteweb.github.io\/bisweb-manual.*/);
 });
 
-test('Open Application Info', async t => {
+test('Open Main Application', async t => {
+    const logo = Selector('#bislogo');
+    const getPageUrl = ClientFunction( () => { return window.location.href.toString(); });
+
+    await t
+        .click(logo)
+        .expect(getPageUrl()).match(/.*index.html.*/);
+});
+
+test('Expand Application Info', async t => {
     const aboutApp = Selector('#aboutframe');
     const checkFrameOpen = ClientFunction( () => {
         let detailsFrame = document.getElementById('detailsframe');
