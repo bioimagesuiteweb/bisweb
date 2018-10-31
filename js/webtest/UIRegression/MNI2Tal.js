@@ -32,6 +32,20 @@ test('Move Sliders', async t => {
     const xslider = Selector('#xcontrols');
     const yslider = Selector('#ycontrols');
     const zslider = Selector('#zcontrols');
+
+    await t
+        .typeText(xslider, '180')
+        .typeText(yslider, '216')
+        .typeText(zslider, '180');
+    
+    const mnix = Selector('#mnix', {'timeout' : 3});
+    const mniy = Selector('#mniy', {'timeout' : 3});
+    const mniz = Selector('#mniz', {'timeout' : 3});
+
+    await t
+        .expect(mnix.value).match(/90/)
+        .expect(mniy.value).match(/90/)
+        .expect(mniz.value).match(/108/);
 });
 
 test('Enter MNI Values', async t => {
@@ -107,12 +121,55 @@ test('Check Brodmann Areas', async t => {
 
 });
 
+test('Reset Areas', async t => {
+    const areaSelector = Selector('#baselectbox');
+    const areaOption = areaSelector.find('option');
+
+    await t
+        .click(areaSelector)
+        .click(areaOption.withText('Right-SensoryAssoc (5)'));
+    
+    const mnix = Selector('#mnix', { 'timeout': 3 });
+    const mniy = Selector('#mniy', { 'timeout': 3 });
+    const mniz = Selector('#mniz', { 'timeout': 3 });
+
+    await t
+        .expect(mnix.value).match(/15/)
+        .expect(mniy.value).match(/-33/)
+        .expect(mniz.value).match(/48/);
+
+    const resetButton = Selector('#resetbutton');
+
+    await t
+        .click(resetButton)
+        .expect(mnix.value).match(/0/)
+        .expect(mniy.value).match(/0/)
+        .expect(mniz.value).match(/0/);
+
+    
+});
+
 test('Open Manual', async t => {
     const manual = Selector('#manual').find('a');
     const getPageUrl = ClientFunction( () => { return window.location.href.toString(); });
     await t
         .click(manual)
         .expect(getPageUrl()).match(/.*bioimagesuiteweb.github.io\/bisweb-manual.*/);
+});
+
+test('Open Application Info', async t => {
+    const aboutApp = Selector('#aboutframe');
+    const checkFrameOpen = ClientFunction( () => {
+        let detailsFrame = document.getElementById('detailsframe');
+        let frameOpen = detailsFrame.getAttribute('open');
+
+        return frameOpen;
+    });
+
+    await t
+        .click(aboutApp)
+        .expect(checkFrameOpen()).eql('');
+
 });
 
 //TODO: Test file buttons in a separate tester
