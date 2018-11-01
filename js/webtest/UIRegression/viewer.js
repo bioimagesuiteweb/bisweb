@@ -1,4 +1,4 @@
-/* globals test, fixture, $ */
+/* globals test, fixture, $*/
 
 import { Selector } from 'testcafe';
 import { ClientFunction } from 'testcafe';
@@ -71,4 +71,6 @@ test('Take Snapshot', async t => {
     await t
         .expect(await checkFileDownloaded()).ok();  
 });
+
+
 
