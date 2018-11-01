@@ -3,7 +3,7 @@
 import { Selector } from 'testcafe';
 import { ClientFunction } from 'testcafe';
 
-fixture `MNI2Tal`.page `https://bioimagesuiteweb.github.io/unstableapp/mni2tal.html`;
+fixture `MNI2Tal`.page `https://git.yale.edu/pages/zls5/webapp/mni2tal.html`;
 
 test('Click Viewers', async t => {
     const xviewer = Selector('#xviewer', {'timeout' : 3});
@@ -157,14 +157,16 @@ test('Open Manual', async t => {
         .expect(getPageUrl()).match(/.*bioimagesuiteweb.github.io\/bisweb-manual.*/);
 });
 
+/*
 test('Open Main Application', async t => {
     const logo = Selector('#bislogo');
     const getPageUrl = ClientFunction( () => { return window.location.href.toString(); });
 
     await t
         .click(logo)
-        .expect(getPageUrl()).match(/.*index.html.*/);
+        .expect(getPageUrl()).match(/.*index.html.* /);
 });
+*/
 
 test('Expand Application Info', async t => {
     const aboutApp = Selector('#aboutframe');

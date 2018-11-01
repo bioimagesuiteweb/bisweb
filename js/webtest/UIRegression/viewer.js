@@ -3,9 +3,10 @@
 import { Selector } from 'testcafe';
 import { ClientFunction } from 'testcafe';
 import fs from 'fs';
+import os from 'os';
 
 
-fixture `Viewer Tests`.page `https://bioimagesuiteweb.github.io/unstableapp/viewer.html`;
+fixture `Viewer Tests`.page `https://git.yale.edu/pages/zls5/webapp/viewer.html`;
 
 test('Load Image', async t => {
     const imgLoadDropdown = Selector('.dropdown-toggle').withText('File');
@@ -34,25 +35,40 @@ test('Load Image', async t => {
 test('Take Snapshot', async t => {
     const imgLoadDropdown = Selector('.dropdown-toggle').withText('File');
     const loadImgButton = Selector('a').withText('Load MNI T1 (2mm)');
-
-    await t
-        .eval(new Function(fs.readFileSync('./jquery.min.js').toString()));
     
     await t
         .click(imgLoadDropdown)
         .click(loadImgButton);
     
     const snapshotButton = Selector('button').withText('Take Snapshot');
-    const snapshotModalOpen = ClientFunction( () => {
-        let snapshotModal = $('.bootbox.modal.fade');
-        let snapshotModalTitle = $(snapshotModal).find('.modal-title');
-        return snapshotModalTitle[0].innerHTML.match(/This is the snapshot/);
-    });
+    const saveButton = Selector('button').withText('Save To File');
+
+    const checkFileDownloaded = () => {
+        return new Promise((resolve) => {
+            //check user's download folder for a snapshot taken recently
+            let baseFilePath = os.homedir();
+            fs.readdir(baseFilePath + '/Downloads', (err, files) => {
+                if (err) { resolve(false); }
+                let filteredFiles = files.filter((word) => { return word.match(/^snapshot.*\.png$/); });
+                for (let file of filteredFiles) {
+                    let stats = fs.statSync(baseFilePath + '/Downloads/' + file);
+                    console.log(file, 'created', Date.now() - stats.birthtimeMs, 'ms ago');
+                    //look for a snapshot created fewer than ten seconds ago
+                    if (Date.now() - stats.birthtimeMs <= 10000) {
+                        resolve(true);
+                    }
+                }
+                resolve(false);
+            });
+        });
+    };
 
     await t
         .click(snapshotButton)
-        .expect(snapshotModalOpen()).ok();
+        .click(saveButton)
+        .wait(3000);
     
-        
+    await t
+        .expect(await checkFileDownloaded()).ok();  
 });
 
