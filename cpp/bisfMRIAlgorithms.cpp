@@ -70,16 +70,10 @@ namespace bisfMRIAlgorithms {
     output->allocate(outdim,spa);
     output->fill(0.0f);
     
-
     float* outdata=output->getImageData();
     Eigen::MatrixXf A=bisEigenUtil::mapToEigenMatrix(regressorMatrix);
     Eigen::MatrixXf LSQ=bisEigenUtil::createLSQMatrix(A);
     Eigen::VectorXf b=Eigen::VectorXf::Zero(numcols);
-
-    // Xenios Nov 2nd 2018
-    // This maps an image to a matrix where
-    // Rows are frames, columns are voxels
-    //    Eigen::MatrixXf inputdata=Eigen::Map<Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor> >(input->getData(),nc,nt);
     Eigen::MatrixXf inputdata=bisEigenUtil::mapImageToEigenMatrix(input);
     
     int task_offset=numcols-num_tasks;
