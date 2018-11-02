@@ -14,7 +14,7 @@ test('Check Clusters', async t => {
         .click(helpDropdown)
         .click(sampleDataButton);
     
-    //Set cluster size and open atlas and cluster tools
+    //Set cluster size, open atlas and cluster tools, and select one of the coordinate groups
     const overlayColorMappingDropdown = Selector('li').withText('Overlay Color Mapping');
     const clusterSizeItem = Selector('.property-name').withText('Cluster Size').parent();
     const clusterSizeInput = clusterSizeItem.find('input');
@@ -35,6 +35,19 @@ test('Check Clusters', async t => {
         .click(editDropdown)
         .click(clusterInfoDropdown);
     
-    
+    const MNICoord = Selector('.btn-link').withText('MNI: 42, -66, -3');
+
+    await t
+    	.click(MNICoord);
+
+    const clusterAnalyzerFrame = Selector('h4').withText('Cluster Analyzer').parent().parent().parent().parent();
+    const atlasToolFrame = Selector('a').withText('Atlas Tool').withAttribute(/^aria-expanded$/, /true/).parent().parent().parent();
+
+    //take screenshots
+    await t
+    	.takeScreenshot('screenshot1.png')
+    	.takeElementScreenshot(clusterAnalyzerFrame, 'screenshot2.png')
+    	.takeElementScreenshot(atlasToolFrame, 'screenshot3.png');
+
 
 });
