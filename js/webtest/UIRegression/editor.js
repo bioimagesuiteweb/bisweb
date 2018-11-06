@@ -2,7 +2,7 @@
 
 import { Selector, t } from 'testcafe';
 
-fixture `Editor Tests`.page `https://git.yale.edu/pages/zls5/webapp/editor.html`;
+fixture `Editor Tests`.page `localhost:8080/web/editor.html`;
 
 //specify class to avoid repeating common tasks
 //http://devexpress.github.io/testcafe/documentation/test-api/test-code-structure.html
@@ -14,13 +14,12 @@ export default class Page {
     }
 
     async loadImage() {
+        //dismiss alert
+        const alertCloseButton = Selector('.alert').find('span');
+
         await t
             .click(this.fileDropdown)
-            .click(this.loadButton);
-        
-        //dismiss alert
-        const alertCloseButton = Selector('.alert.alert-dismissible').find('button').withAttribute('aria-label', 'Close');
-        await t
+            .click(this.loadButton)
             .click(alertCloseButton);
     }
 
@@ -29,8 +28,7 @@ export default class Page {
             .click(this.viewerControlsPanel);
     }
 
-
-    async setViewer(textbox, location) {
+    async setTextbox(textbox, location) {
         await t
             .selectText(textbox)
             .pressKey('delete')
@@ -47,7 +45,11 @@ export default class Page {
     }
 
     getViewerControlPane() {
-        
+        return this.viewerControlsPanel.parent().parent().parent();
+    }
+
+    getElementFromTitle(title) {
+        return title.parent();
     }
 }
 
@@ -99,27 +101,31 @@ test('Use Sliders', async t => {
     page.loadImage();
     page.openViewerPane();
 
-    const iSlider = Selector('span').withText('I-Coord').parent().parent();
-    const jSlider = Selector('span').withText('J-Coord').parent().parent();
-    const kSlider = Selector('span').withText('K-Coord').parent().parent();
+    const iSliderElement = page.getElementFromTitle(Selector('span').withText('I-Coord'));
+    const jSliderElement = page.getElementFromTitle(Selector('span').withText('J-Coord'));
+    const kSliderElement = page.getElementFromTitle(Selector('span').withText('K-Coord'));
 
-    const iSliderTextBox = iSlider.find('input');
-    const jSliderTextBox = jSlider.find('input');
+    const iSliderDraggable = iSliderElement.find('.slider');
+    const jSliderDraggable = jSliderElement.find('.slider');
+    const kSliderDraggable = kSliderElement.find('.slider');
+
+    const iSliderTextBox = iSliderElement.find('input');
+    const jSliderTextBox = jSliderElement.find('input');
 
     await t
-        .drag(iSlider, 100, 0)
+        .drag(iSliderDraggable, 100, 0)
         .takeScreenshot('moveSagittal.png');
 
-    page.setViewer(iSliderTextBox, '45');
+    page.setTextbox(iSliderTextBox, '45');
 
     await t
-        .drag(jSlider, 100, 0)
+        .drag(jSliderDraggable, 100, 0)
         .takeScreenshot('moveCoronal.png');
 
-    page.setViewer(jSliderTextBox, '54');
+    page.setTextbox(jSliderTextBox, '54');
 
     await t
-        .drag(kSlider, 100, 0)
+        .drag(kSliderDraggable, 100, 0)
         .takeScreenshot('moveAxial.png');
 });
 
@@ -137,33 +143,33 @@ test('Use Chevrons', async t => {
     const coronalRight = rightChevron.withAttribute('index', '3');
     const axialLeft = leftChevron.withAttribute('index', '4');
     const axialRight = rightChevron.withAttribute('index', '5');
-    const iSlider = Selector('span').withText('I-Coord').parent().parent().find('input');
-    const jSlider = Selector('span').withText('J-Coord').parent().parent().find('input');
-    const kSlider = Selector('span').withText('K-Coord').parent().parent().find('input');
+    const iSlider = page.getElementFromTitle(Selector('span').withText('I-Coord')).find('input');
+    const jSlider = page.getElementFromTitle(Selector('span').withText('J-Coord')).find('input');
+    const kSlider = page.getElementFromTitle(Selector('span').withText('K-Coord')).find('input');
 
     await page.clickMultipleTimes(sagittalLeft, 10);
     await t.takeScreenshot('moveSagittalLeft.png');
-    await page.setViewer(iSlider, '45');
+    await page.setTextbox(iSlider, '45');
 
     await page.clickMultipleTimes(sagittalRight, 10);
     await t.takeScreenshot('moveSagittalRight.png');
-    await page.setViewer(iSlider, '45');
+    await page.setTextbox(iSlider, '45');
 
     await page.clickMultipleTimes(coronalLeft, 10);
     await t.takeScreenshot('moveCoronalLeft.png');
-    await page.setViewer(jSlider, '54');
+    await page.setTextbox(jSlider, '54');
 
     await page.clickMultipleTimes(coronalRight, 10);
     await t.takeScreenshot('moveCoronalRight.png');
-    await page.setViewer(jSlider, '54');
+    await page.setTextbox(jSlider, '54');
 
     await page.clickMultipleTimes(axialLeft, 10);
     await t.takeScreenshot('moveAxialLeft.png');
-    await page.setViewer(kSlider, '45');
+    await page.setTextbox(kSlider, '45');
 
     await page.clickMultipleTimes(axialRight, 10);
     await t.takeScreenshot('moveAxialRight.png');
-    await page.setViewer(kSlider, '45');
+    await page.setTextbox(kSlider, '45');
 });
 
 test('Set Slice View', async t => {
@@ -171,5 +177,64 @@ test('Set Slice View', async t => {
     page.loadImage();
     page.openViewerPane();
 
-    const modeSelector = 
+    const viewerControls = page.getViewerControlPane();
+    const modeSelectorItem = viewerControls.find('span').withText('Mode').parent();
+    const modeSelectorDropdown = modeSelectorItem.find('select');
+
+    await t
+        .click(modeSelectorDropdown)
+        .click(Selector('option').withText('Sagittal'))
+        .wait(500)
+        .takeScreenshot('sagittalView.png')
+        .click(modeSelectorDropdown)
+        .click(Selector('option').withText('Coronal'))
+        .wait(500)
+        .takeScreenshot('coronalView.png')
+        .click(modeSelectorDropdown)
+        .click(Selector('option').withText('Axial'))
+        .wait(500)
+        .takeScreenshot('axialView.png');
+});
+
+test('Check Image Settings', async t => {
+    const page = new Page();
+    page.loadImage();
+    page.openViewerPane();
+
+    //const viewerControls = page.getViewerControlPane();
+    const labelsToggle = page.getElementFromTitle(Selector('span').withText('Labels')).find('input');
+
+    await t
+        .click(labelsToggle)
+        .wait(500)
+        .takeScreenshot('noLabels.png')
+        .click(labelsToggle)
+        .click(Selector('.title').withText('Image Color Mapping'));
+    
+    const interpolateToggle = page.getElementFromTitle(Selector('span').withText('Interpolate')).find('input');
+    const autoContrastToggle = page.getElementFromTitle(Selector('span').withText('Auto-Contrast')).find('input');
+    const minIntTextbox = page.getElementFromTitle(Selector('span').withText('Min Int')).find('input');
+
+    await t
+        .click(interpolateToggle)
+        .wait(500)
+        .takeScreenshot('noInterpolate.png')
+        .click(interpolateToggle)
+        .click(autoContrastToggle)
+        .wait(500)
+        .takeScreenshot('noAutoContrast')
+        .click(autoContrastToggle);
+
+    page.setTextbox(minIntTextbox, '50');
+    
+    await t
+        .takeScreenshot('higherMinInt.png');
+    
+    const maxIntTextbox = page.getElementFromTitle(Selector('span').withText('Max Int')).find('input');
+    page.setTextbox(minIntTextbox, '0');
+    page.setTextbox(maxIntTextbox, '120');
+
+    await t
+        .takeScreenshot('lowerMaxInt.png');
+
 });
