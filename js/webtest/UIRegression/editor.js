@@ -44,12 +44,66 @@ export default class Page {
         }
     }
 
+    async initializePaintTool() {
+        this.loadImage();
+    
+        const paintToolBox = Selector('div').withAttribute('aria-label', 'bisweb-paint-widget');
+        const enableButton = this.getInputFromTitle(paintToolBox.find('label').withText('Enable'));
+    
+        await t
+            .click(enableButton);
+    }
+
+    async createThresholdedImage() {
+        this.loadImage(); 
+
+        const toolsBar = Selector('.dropdown-toggle').withText('Tools');
+        const createObjectmapItem = Selector('a').withText('Create Objectmap');
+    
+        await t
+            .click(toolsBar)
+            .click(createObjectmapItem);
+        
+        const lowObjectmapThreshold = this.getElementFromTitle(Selector('span').withText('Low Threshold')).find('input');
+        const thresholdButton = Selector('button').withText('Create Mask');
+
+        await t
+            .selectText(lowObjectmapThreshold).pressKey('delete').typeText(lowObjectmapThreshold, '100').pressKey('enter')
+            .click(thresholdButton)
+            .wait(500);
+    }
+
+    async prepareForMorphologyOperations() {
+        await this.createThresholdedImage();
+
+        //open the morphology operations sidebar
+        const toolsBar = Selector('.dropdown-toggle').withText('Tools');
+        const morphologyOperationsItem = Selector('a').withText('Morphology Operations');
+        await t
+            .click(toolsBar)
+            .click(morphologyOperationsItem);
+    }
+
+    //drag cursor across canvas to paint a line
+    //this function is a little brittle! the canvas is totally opaque as an element so I had to find the location of the viewer by trial and error
+    //-Zach
+    async paintAxialRegion(screenshotName) {
+        const canvas = Selector('canvas');
+        await t
+            .drag(canvas, 500, 400, { 'offsetX' : -2400, 'offsetY' : -1950, 'speed' : 0.05})
+            .takeScreenshot(screenshotName);
+    }
+
     getViewerControlPane() {
         return this.viewerControlsPanel.parent().parent().parent();
     }
 
     getElementFromTitle(title) {
         return title.parent();
+    }
+
+    getInputFromTitle(title) {
+        return title.parent().find('input');
     }
 }
 
@@ -62,7 +116,7 @@ test('Load Image', async t => {
     //check that paint tool appears
     const colorButton = Selector('.btn.color-btn');
     await t
-        .takeScreenshot('loadImage.png')
+        .takeScreenshot('LoadImage.png')
         .expect(colorButton.exists).ok();
     
     
@@ -82,18 +136,18 @@ test('Use Zoom Controls', async t => {
     const zoomOutButton = Selector('.btn-info').withText('Z-');
 
     await t
-        .takeScreenshot('baseImage.png')
+        .takeScreenshot('BaseImage.png')
         .click(zoomInButton)
         .click(zoomInButton)
         .click(zoomInButton)
-        .takeScreenshot('zoomedIn.png');
+        .takeScreenshot('ZoomedIn.png');
     
     await t
         .click(resetButton)
         .click(zoomOutButton)
         .click(zoomOutButton)
         .click(zoomOutButton)
-        .takeScreenshot('zoomedOut.png');    
+        .takeScreenshot('ZoomedOut.png');    
 });
 
 test('Use Sliders', async t => {
@@ -114,19 +168,19 @@ test('Use Sliders', async t => {
 
     await t
         .drag(iSliderDraggable, 100, 0)
-        .takeScreenshot('moveSagittal.png');
+        .takeScreenshot('MoveSagittal.png');
 
     page.setTextbox(iSliderTextBox, '45');
 
     await t
         .drag(jSliderDraggable, 100, 0)
-        .takeScreenshot('moveCoronal.png');
+        .takeScreenshot('MoveCoronal.png');
 
     page.setTextbox(jSliderTextBox, '54');
 
     await t
         .drag(kSliderDraggable, 100, 0)
-        .takeScreenshot('moveAxial.png');
+        .takeScreenshot('MoveAxial.png');
 });
 
 test('Use Chevrons', async t => {
@@ -148,27 +202,27 @@ test('Use Chevrons', async t => {
     const kSlider = page.getElementFromTitle(Selector('span').withText('K-Coord')).find('input');
 
     await page.clickMultipleTimes(sagittalLeft, 10);
-    await t.takeScreenshot('moveSagittalLeft.png');
+    await t.takeScreenshot('MoveSagittalLeft.png');
     await page.setTextbox(iSlider, '45');
 
     await page.clickMultipleTimes(sagittalRight, 10);
-    await t.takeScreenshot('moveSagittalRight.png');
+    await t.takeScreenshot('MoveSagittalRight.png');
     await page.setTextbox(iSlider, '45');
 
     await page.clickMultipleTimes(coronalLeft, 10);
-    await t.takeScreenshot('moveCoronalLeft.png');
+    await t.takeScreenshot('MoveCoronalLeft.png');
     await page.setTextbox(jSlider, '54');
 
     await page.clickMultipleTimes(coronalRight, 10);
-    await t.takeScreenshot('moveCoronalRight.png');
+    await t.takeScreenshot('MoveCoronalRight.png');
     await page.setTextbox(jSlider, '54');
 
     await page.clickMultipleTimes(axialLeft, 10);
-    await t.takeScreenshot('moveAxialLeft.png');
+    await t.takeScreenshot('MoveAxialLeft.png');
     await page.setTextbox(kSlider, '45');
 
     await page.clickMultipleTimes(axialRight, 10);
-    await t.takeScreenshot('moveAxialRight.png');
+    await t.takeScreenshot('MoveAxialRight.png');
     await page.setTextbox(kSlider, '45');
 });
 
@@ -185,15 +239,15 @@ test('Set Slice View', async t => {
         .click(modeSelectorDropdown)
         .click(Selector('option').withText('Sagittal'))
         .wait(500)
-        .takeScreenshot('sagittalView.png')
+        .takeScreenshot('SagittalView.png')
         .click(modeSelectorDropdown)
         .click(Selector('option').withText('Coronal'))
         .wait(500)
-        .takeScreenshot('coronalView.png')
+        .takeScreenshot('CoronalView.png')
         .click(modeSelectorDropdown)
         .click(Selector('option').withText('Axial'))
         .wait(500)
-        .takeScreenshot('axialView.png');
+        .takeScreenshot('AxialView.png');
 });
 
 test('Check Image Settings', async t => {
@@ -218,23 +272,199 @@ test('Check Image Settings', async t => {
     await t
         .click(interpolateToggle)
         .wait(500)
-        .takeScreenshot('noInterpolate.png')
+        .takeScreenshot('NoInterpolate.png')
         .click(interpolateToggle)
         .click(autoContrastToggle)
         .wait(500)
-        .takeScreenshot('noAutoContrast')
+        .takeScreenshot('NoAutoContrast')
         .click(autoContrastToggle);
 
     page.setTextbox(minIntTextbox, '50');
     
     await t
-        .takeScreenshot('higherMinInt.png');
+        .takeScreenshot('HigherMinInt.png');
     
     const maxIntTextbox = page.getElementFromTitle(Selector('span').withText('Max Int')).find('input');
     page.setTextbox(minIntTextbox, '0');
     page.setTextbox(maxIntTextbox, '120');
 
     await t
-        .takeScreenshot('lowerMaxInt.png');
+        .takeScreenshot('LowerMaxInt.png');
 
+});
+
+test('Use Paint Tool', async t => {
+    const page = new Page();
+    page.initializePaintTool();
+
+    const paintToolBox = Selector('div').withAttribute('aria-label', 'bisweb-paint-widget');
+    const paintToolContainer = paintToolBox.parent();
+
+    await t
+        .expect(paintToolContainer.getStyleProperty('background-color')).contains('rgb(68, 0, 0)');
+
+    page.paintAxialRegion('PaintedRegion.png');
+
+    const undoButton = Selector('button').withText('Undo');
+    const redoButton = Selector('button').withText('Redo');
+
+    await t
+        .click(undoButton)
+        .wait(500)
+        .takeScreenshot('UndoPaint.png')
+        .click(redoButton)
+        .wait(500)
+        .takeScreenshot('RedoPaint.png');
+});
+
+test('Change Paintbrush Size', async t => {
+    const page = new Page();
+    page.initializePaintTool();
+
+    const sliderTextBox = page.getElementFromTitle(Selector('span').withText('Brush Size')).find('input');
+
+    await t
+        .click(sliderTextBox)
+        .selectText(sliderTextBox).pressKey('delete').typeText(sliderTextBox, '25');
+
+    await page.paintAxialRegion('BigBrushPaintedRegion.png');
+
+    const undoButton = Selector('button').withText('Undo');
+
+    await t
+        .click(undoButton)
+        .click(sliderTextBox)
+        .selectText(sliderTextBox).pressKey('delete').typeText(sliderTextBox, '1');
+    
+    await page.paintAxialRegion('SmallBrushPaintedRegion.png');
+});
+
+test('Change Brush Color', async t => {
+    const page = new Page();
+    page.initializePaintTool();
+
+    const colorButton = Selector('.color-btn').withAttribute('bis', '5');
+    await t
+        .click(colorButton);
+
+    await page.paintAxialRegion('DifferentColorPaintedRegion.png');
+});
+
+test('Use 3D Brush', async t => {
+    const page = new Page();
+    page.initializePaintTool();
+
+    const brushToggle = page.getElementFromTitle(Selector('label').withText('3D Brush')).find('input');
+    const sliderTextBox = page.getElementFromTitle(Selector('span').withText('Brush Size')).find('input');
+
+    await t
+        .click(brushToggle)
+        .click(sliderTextBox)
+        .selectText(sliderTextBox).pressKey('delete').typeText(sliderTextBox, '25');
+
+    await page.paintAxialRegion('ThreeDimensionalBrush.png');
+});
+
+test('Overwrite Painted Area', async t => {
+    const page = new Page();
+    page.initializePaintTool();
+
+    const sliderTextBox = page.getElementFromTitle(Selector('span').withText('Brush Size')).find('input');
+
+    await t
+        .click(sliderTextBox)
+        .selectText(sliderTextBox).pressKey('delete').typeText(sliderTextBox, '25');
+
+    await page.paintAxialRegion('NoOverwritePaint.png');
+
+    const overwriteToggle = page.getElementFromTitle(Selector('label').withText('Overwrite')).find('input');
+    const overwriteColor = Selector('.color-btn').withText('0');
+
+    await t
+        .click(overwriteToggle)
+        .click(overwriteColor);
+
+    await page.paintAxialRegion('OverwritePaint.png');
+});
+
+test('Disable Paint Tool', async t => {
+    const page = new Page();
+    page.initializePaintTool();
+
+    const enableButton = page.getElementFromTitle(Selector('label').withText('Enable')).find('input');
+    const paintToolContainer = Selector('div').withAttribute('aria-label', 'bisweb-paint-widget').parent();
+
+    await t
+        .click(enableButton)
+        .expect(paintToolContainer.getStyleProperty('background-color')).notContains('rgb(68, 0, 0)');
+
+    await page.paintAxialRegion('DisabledPaint.png');
+});
+
+test('Do Paint Thresholding', async t => {
+    const page = new Page();
+    page.initializePaintTool();
+
+    const thresholdButton = page.getElementFromTitle(Selector('label').withText('Threshold')).find('input');
+    const minThresholdTextBox = page.getElementFromTitle(Selector('span').withText('Min Threshold')).find('input');
+    const maxThresholdTextBox = page.getElementFromTitle(Selector('span').withText('Max Threshold')).find('input');
+    const brushSizeTextBox = page.getElementFromTitle(Selector('span').withText('Brush Size')).find('input');
+    const undoButton = Selector('button').withText('Undo');
+
+    await t
+        .click(minThresholdTextBox)
+        .click(thresholdButton)
+        .selectText(minThresholdTextBox).pressKey('delete').typeText(minThresholdTextBox, '100').pressKey('enter')
+        .selectText(brushSizeTextBox).pressKey('delete').typeText(brushSizeTextBox, '25').pressKey('enter');
+
+    await page.paintAxialRegion('RaisedLowThreshold.png');
+
+    await t
+        .takeScreenshot('LowThresholdedPaint.png')
+        .click(undoButton)
+        .selectText(minThresholdTextBox).pressKey('delete').typeText(minThresholdTextBox, '0').pressKey('enter')
+        .selectText(maxThresholdTextBox).pressKey('delete').typeText(maxThresholdTextBox, '100').pressKey('enter');
+
+    await page.paintAxialRegion('LoweredHighThreshold.png');
+});
+
+test('Create Threshold Objectmaps', async t => {
+    const page = new Page();
+    await page.createThresholdedImage();
+
+    await t
+        .takeScreenshot('LowThresholdOverlay.png');
+
+    //clear objectmap opens a modal asking the user to confirm so make sure to click 'Ok' there too
+    const objectmapBar = Selector('.dropdown-toggle').withText('Objectmap');
+    const clearObjectmapItem = Selector('a').withText('Clear Objectmap');
+    const confirmButton = Selector('button').withText('OK');
+    const lowObjectmapThreshold = page.getElementFromTitle(Selector('span').withText('Low Threshold')).find('input');
+    const highObjectmapThreshold = page.getElementFromTitle(Selector('span').withText('High Threshold')).find('input');
+    const thresholdButton = Selector('button').withText('Create Mask');
+
+    await t
+        .click(objectmapBar)
+        .click(clearObjectmapItem)
+        .click(confirmButton)
+        .selectText(lowObjectmapThreshold).pressKey('delete').typeText(lowObjectmapThreshold, '0').pressKey('enter')
+        .selectText(highObjectmapThreshold).pressKey('delete').typeText(highObjectmapThreshold, '100').pressKey('enter')
+        .click(thresholdButton)
+        .wait(500)
+        .takeScreenshot('HighThresholdOverlay.png');    
+});
+
+test('Dilate Image', async t => {
+    const page = new Page();
+    await page.prepareForMorphologyOperations();
+
+    const morphologyDropdown = page.getElementFromTitle(Selector('span').withText('Operation')).find('select');
+    const runMorphologyOperation = Selector('button').withText('Execute');
+
+    await t
+        .click(morphologyDropdown)
+        .click(Selector('option').withAttribute('value', 'dilate'))
+        .click(runMorphologyOperation)
+        .wait(1000)
+        .takeScreenshot('DilatedImage.png');
 });

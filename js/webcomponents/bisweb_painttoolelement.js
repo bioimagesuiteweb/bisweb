@@ -158,7 +158,9 @@ class PaintToolElement extends HTMLElement {
                                        'permanent' : true,
                                        'width' : '300px'
                                    });
-       
+        
+            
+        $(this.panel.widget).attr('aria-label', 'bisweb-paint-widget');
         this.panel.show();
         this.internal.parentDomElement=this.panel.getWidget();
         var basediv=$("<div>Paint tool will appear once an image is loaded.</div>");
