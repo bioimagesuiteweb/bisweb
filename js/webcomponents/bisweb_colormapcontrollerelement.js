@@ -482,7 +482,7 @@ class ColormapControllerElement extends HTMLElement {
             let l=f.__controllers.length-1;
             for (let c=l;c>=0;c=c-1) {
                 let elem=f.__controllers[c];
-                if (elem !== this.internal.opacityslider && elem!==null) {
+                if (elem !== null) {
                     try {
                         f.remove(elem);
                     } catch(e) {
@@ -491,7 +491,8 @@ class ColormapControllerElement extends HTMLElement {
                     }
                 }
             }
-            f.__controllers=[ this.internal.opacityslider ];
+            f.__controllers=[ ];
+            this.internal.opacityslider=null;
         }
     }
 
@@ -787,7 +788,7 @@ class ColormapControllerElement extends HTMLElement {
                 this.data[attr] = dt[attr];
             }
         }
-        
+
         for (let pass=0;pass<=1;pass++) {
             if (this.internal.folder[pass]!==null) {
                 for (let ia=0;ia<this.internal.folder[pass].__controllers.length;ia++) {
@@ -795,15 +796,17 @@ class ColormapControllerElement extends HTMLElement {
                 }
             }
         }
-        
-        if (this.internal.functionalcontrollers===null)
-            return;
+
+        //       if (this.internal.functionalcontrollers===null) {
+        // console.log('No functional controllers');
+        //  return;
+        //}
         
         let new_mode=this.data.funcmode;
         if (new_mode !== old_mode)  {
             this.updateFunctionalGUI(new_mode);
             this.updateFunctionalSliders();
-        }
+        } 
 
         return 1;
     }
