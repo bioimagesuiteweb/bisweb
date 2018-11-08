@@ -218,7 +218,7 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         // ------------------------------------ Edit Menu ----------------------------
         var editmenu=webutil.createTopMenuBarMenu("Edit",menubar);
         webutil.createMenuItem(editmenu,'Undo',function() {  control.undo(); });
-        webutil.createMenuItem(editmenu,'Redo',function() {  control.redo(); });
+        //        webutil.createMenuItem(editmenu,'Redo',function() {  control.redo(); });
         webutil.createMenuItem(editmenu,''); // separator
         webutil.createMenuItem(editmenu,'Reset Display Parameters',function(){ control.resetdefault();});
         webutil.createMenuItem(editmenu,''); // separator
