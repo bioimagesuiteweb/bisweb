@@ -105,6 +105,10 @@ export default class Page {
     getInputFromTitle(title) {
         return title.parent().find('input');
     }
+
+    getSidebarBodyFromTitle(title) {
+        return title.parent().parent().parent();
+    }
 }
 
 test('Load Image', async t => {
@@ -584,6 +588,79 @@ test('Morphology Dilate then Erode Image', async t => {
         .wait(1000)
         .takeScreenshot('HighRadiusDilateErodedImage.png');
 });
+
+test('Regularize Objectmap', async t => {
+    const page = new Page();
+    await page.createThresholdedImage();
+
+    const toolsBar = Selector('.dropdown-toggle').withText('Tools');
+    const regularizeObjectmapItem = Selector('a').withText('Regularize Objectmap');
+    const smoothnessTextBox = page.getElementFromTitle(Selector('span').withText('Smoothness')).find('input');
+    const smoothButton = Selector('.btn-success').withText('Smooth');
+
+    await t
+        .takeScreenshot('UnregularizedObjectmap.png')
+        .click(toolsBar)
+        .click(regularizeObjectmapItem)
+        .selectText(smoothnessTextBox).pressKey('delete').typeText(smoothnessTextBox, '12.0').pressKey('enter')
+        .click(smoothButton)
+        .wait(1000)
+        .takeScreenshot('RegularizedObjectmap.png');
+});
+
+test('Mask Image', async t => {
+    const page = new Page();
+    await page.createThresholdedImage();
+
+    const toolsBar = Selector('.dropdown-toggle').withText('Tools');
+    const maskImageItem = Selector('a').withText('Mask Image');
+   
+
+    await t
+        .click(toolsBar)
+        .click(maskImageItem);
+    
+
+    const maskImageBarTitle = Selector('a').withText('Mask Image').withAttribute('data-toggle', 'collapse');
+    const maskImagePanel = maskImageBarTitle.parent().parent().parent();
+    const thresholdTextBox = maskImagePanel.find('input').withAttribute('type', 'text');
+    const maskImageButton = maskImagePanel.find('.btn.btn-success');
+
+    await t
+        .expect(maskImageBarTitle.visible).ok()
+        .selectText(thresholdTextBox).pressKey('delete').typeText(thresholdTextBox, '0.5').pressKey('enter')
+        .click(maskImageButton)
+        .wait(1000)
+        .takeScreenshot('MaskedImage.png');
+});
+
+test('Load Brodmann Areas', async t => {
+    const page = new Page();
+    await page.loadImage();
+
+    const objectmapItem = Selector('a').withText('Objectmap');
+    const loadBrodmannItem = Selector('a').withText('Load Yale Brodmann Atlas (2mm)');
+    
+    await t
+        .click(objectmapItem)
+        .click(loadBrodmannItem)
+        .takeScreenshot('BrodmannOverlay.png');
+
+    //open VOI analysis tool and 
+    const VOIAnalysisItem = Selector('a').withText('VOI Analysis');
+    const VOIAnalysisChartTitle = Selector('.modal-title').withText('VOI Tool');
+    const alertCloseButton = Selector('.alert').find('button');
+
+    await t
+        .click(objectmapItem)
+        .click(VOIAnalysisItem)
+        .wait(500)
+        .expect(VOIAnalysisChartTitle.visible).ok()
+        .click(alertCloseButton)
+        .takeElementScreenshot(page.getModalBodyFromTitle(VOIAnalysisChartTitle), 'BrodmannVOIAnalysisChart.png');
+
+});
+
 
 
 
