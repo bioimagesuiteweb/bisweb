@@ -106,7 +106,7 @@ export default class Page {
         return title.parent().find('input');
     }
 
-    getSidebarBodyFromTitle(title) {
+    getBodyFromTitle(title) {
         return title.parent().parent().parent();
     }
 }
@@ -622,7 +622,7 @@ test('Mask Image', async t => {
     
 
     const maskImageBarTitle = Selector('a').withText('Mask Image').withAttribute('data-toggle', 'collapse');
-    const maskImagePanel = maskImageBarTitle.parent().parent().parent();
+    const maskImagePanel = page.getBodyFromTitle(maskImageBarTitle);
     const thresholdTextBox = maskImagePanel.find('input').withAttribute('type', 'text');
     const maskImageButton = maskImagePanel.find('.btn.btn-success');
 
@@ -657,8 +657,20 @@ test('Load Brodmann Areas', async t => {
         .wait(500)
         .expect(VOIAnalysisChartTitle.visible).ok()
         .click(alertCloseButton)
-        .takeElementScreenshot(page.getModalBodyFromTitle(VOIAnalysisChartTitle), 'BrodmannVOIAnalysisChart.png');
+        .takeElementScreenshot(page.getBodyFromTitle(VOIAnalysisChartTitle), 'BrodmannIntensityChart.png');
+    
 
+    //can't currently test the save functionality because the system save dialogs are opaque to the browser and by extension testcafe
+    const plotVolumesButton = Selector('button').withText('Plot VOI Volumes');
+    const saveSnapshotButton = Selector('button').withText('Save Snapshot');
+    const saveSnapshotModalTitle = Selector('.modal-title').withText('This is the snapshot');
+
+    await t
+        .click(plotVolumesButton)
+        .wait(500)
+        .takeElementScreenshot(page.getBodyFromTitle(VOIAnalysisChartTitle), 'BrodmannVolumeChart.png')
+        .click(saveSnapshotButton)
+        .expect(saveSnapshotModalTitle.exists).ok();
 });
 
 
