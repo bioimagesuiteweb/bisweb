@@ -454,7 +454,7 @@ test('Create Threshold Objectmaps', async t => {
         .takeScreenshot('HighThresholdOverlay.png');    
 });
 
-test('Dilate Image', async t => {
+test('Morphology Median Image', async t => {
     const page = new Page();
     await page.prepareForMorphologyOperations();
 
@@ -462,9 +462,128 @@ test('Dilate Image', async t => {
     const runMorphologyOperation = Selector('button').withText('Execute');
 
     await t
+        .takeScreenshot('BaseMorphologyImage.png')
+        .wait(1000)
+        .click(morphologyDropdown)
+        .click(Selector('option').withAttribute('value', 'median'))
+        .click(runMorphologyOperation)
+        .wait(1000)
+        .takeScreenshot('LowRadiusMedianImage.png');
+    
+    await page.prepareForMorphologyOperations();
+    const radiusTextBox = page.getElementFromTitle(Selector('span').withText('Radius')).find('input');
+    
+    await t
+        .click(radiusTextBox)
+        .selectText(radiusTextBox).pressKey('delete').typeText(radiusTextBox, '2').pressKey('enter')
+        .click(runMorphologyOperation)
+        .wait(1000)
+        .takeScreenshot('HighRadiusMedianImage.png');
+});
+
+test('Morphology Dilate Image', async t => {
+    const page = new Page();
+    await page.prepareForMorphologyOperations();
+
+    const morphologyDropdown = page.getElementFromTitle(Selector('span').withText('Operation')).find('select');
+    const runMorphologyOperation = Selector('button').withText('Execute');
+
+    await t
+        .takeScreenshot('BaseMorphologyImage.png')
         .click(morphologyDropdown)
         .click(Selector('option').withAttribute('value', 'dilate'))
         .click(runMorphologyOperation)
         .wait(1000)
-        .takeScreenshot('DilatedImage.png');
+        .takeScreenshot('LowRadiusDilatedImage.png');
+    
+    await page.prepareForMorphologyOperations();
+    const radiusTextBox = page.getElementFromTitle(Selector('span').withText('Radius')).find('input');
+    
+    await t
+        .click(radiusTextBox)
+        .selectText(radiusTextBox).pressKey('delete').typeText(radiusTextBox, '2').pressKey('enter')
+        .click(runMorphologyOperation)
+        .wait(1000)
+        .takeScreenshot('HighRadiusDilatedImage.png');
 });
+
+test('Morphology Erode Image', async t => {
+    const page = new Page();
+    await page.prepareForMorphologyOperations();
+
+    const morphologyDropdown = page.getElementFromTitle(Selector('span').withText('Operation')).find('select');
+    const runMorphologyOperation = Selector('button').withText('Execute');
+
+    await t
+        .takeScreenshot('BaseMorphologyImage.png')
+        .click(morphologyDropdown)
+        .click(Selector('option').withAttribute('value', 'erode'))
+        .click(runMorphologyOperation)
+        .wait(1000)
+        .takeScreenshot('LowRadiusErodedImage.png');
+    
+    await page.prepareForMorphologyOperations();
+    const radiusTextBox = page.getElementFromTitle(Selector('span').withText('Radius')).find('input');
+    
+    await t
+        .click(radiusTextBox)
+        .selectText(radiusTextBox).pressKey('delete').typeText(radiusTextBox, '2').pressKey('enter')
+        .click(runMorphologyOperation)
+        .wait(1000)
+        .takeScreenshot('HighRadiusErodedImage.png');
+});
+
+test('Morphology Erode then Dilate Image', async t => {
+    const page = new Page();
+    await page.prepareForMorphologyOperations();
+
+    const morphologyDropdown = page.getElementFromTitle(Selector('span').withText('Operation')).find('select');
+    const runMorphologyOperation = Selector('button').withText('Execute');
+
+    await t
+        .takeScreenshot('BaseMorphologyImage.png')
+        .click(morphologyDropdown)
+        .click(Selector('option').withAttribute('value', 'erodedilate'))
+        .click(runMorphologyOperation)
+        .wait(1000)
+        .takeScreenshot('LowRadiusErodeDilatedImage.png');
+    
+    await page.prepareForMorphologyOperations();
+    const radiusTextBox = page.getElementFromTitle(Selector('span').withText('Radius')).find('input');
+    
+    await t
+        .click(radiusTextBox)
+        .selectText(radiusTextBox).pressKey('delete').typeText(radiusTextBox, '2').pressKey('enter')
+        .click(runMorphologyOperation)
+        .wait(1000)
+        .takeScreenshot('HighRadiusErodeDilatedImage.png');
+});
+
+test('Morphology Dilate then Erode Image', async t => {
+    const page = new Page();
+    await page.prepareForMorphologyOperations();
+
+    const morphologyDropdown = page.getElementFromTitle(Selector('span').withText('Operation')).find('select');
+    const runMorphologyOperation = Selector('button').withText('Execute');
+
+    await t
+        .takeScreenshot('BaseMorphologyImage.png')
+        .click(morphologyDropdown)
+        .click(Selector('option').withAttribute('value', 'dilateerode'))
+        .click(runMorphologyOperation)
+        .wait(1000)
+        .takeScreenshot('LowRadiusDilateErodedImage.png');
+
+    await page.prepareForMorphologyOperations();
+    const radiusTextBox = page.getElementFromTitle(Selector('span').withText('Radius')).find('input');
+    
+    await t
+        .click(radiusTextBox)
+        .selectText(radiusTextBox).pressKey('delete').typeText(radiusTextBox, '2').pressKey('enter')
+        .click(runMorphologyOperation)
+        .wait(1000)
+        .takeScreenshot('HighRadiusDilateErodedImage.png');
+});
+
+
+
