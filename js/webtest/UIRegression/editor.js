@@ -28,7 +28,7 @@ export default class Page {
             .click(this.viewerControlsPanel);
     }
 
-    async setTextbox(textbox, location) {
+    async typeInTextbox(textbox, location) {
         await t
             .selectText(textbox)
             .pressKey('delete')
@@ -94,6 +94,40 @@ export default class Page {
             .takeScreenshot(screenshotName);
     }
 
+    /**
+     * Set the file source of the application to one of the buttons on the modal.
+     * 
+     * @param {String} fileSource - The name on the label on the file source modal to change to.
+     */
+    async setFileSource(fileSource) {
+        const helpDropdown = Selector('a').withText('Help');
+        const fileSourceItem = Selector('a').withText('Set File Source');
+        const fileServerHelperLabel = Selector('label').withText(fileSource);
+        const closeButton = Selector('.btn.btn-info').withText('Close');
+    
+        await t
+            .click(helpDropdown)
+            .click(fileSourceItem)
+            .click(fileServerHelperLabel)
+            .click(closeButton);
+    }
+
+    /**
+     * Logs into the Bisweb fileserver. 
+     */
+    async signInToFileserver() {
+        const fileDropdown = Selector('a').withText('File');
+        const loadImageItem = Selector('a').withText('Load Image');
+        const connectButton = Selector('button').withText('Connect');
+        const loginAlert = Selector('.alert').withText('Login to BisWeb FileServer Successful');
+
+        await t
+            .click(fileDropdown)
+            .click(loadImageItem)
+            .click(connectButton)
+            .expect(loginAlert.visible).ok();
+    }
+
     getViewerControlPane() {
         return this.viewerControlsPanel.parent().parent().parent();
     }
@@ -120,10 +154,8 @@ test('Load Image', async t => {
     //check that paint tool appears
     const colorButton = Selector('.btn.color-btn');
     await t
-        .takeScreenshot('LoadImage.png')
+        .takeScreenshot('load_image/LoadImage.png')
         .expect(colorButton.exists).ok();
-
-
 
     const resetSlicesButton = Selector('.btn-info').withText('Reset Slices');
     await t
@@ -140,18 +172,18 @@ test('Use Zoom Controls', async t => {
     const zoomOutButton = Selector('.btn-info').withText('Z-');
 
     await t
-        .takeScreenshot('BaseImage.png')
+        .takeScreenshot('use_zoom_controls/BaseImage.png')
         .click(zoomInButton)
         .click(zoomInButton)
         .click(zoomInButton)
-        .takeScreenshot('ZoomedIn.png');
+        .takeScreenshot('use_zoom_controls/ZoomedIn.png');
 
     await t
         .click(resetButton)
         .click(zoomOutButton)
         .click(zoomOutButton)
         .click(zoomOutButton)
-        .takeScreenshot('ZoomedOut.png');
+        .takeScreenshot('use_zoom_controls/ZoomedOut.png');
 });
 
 test('Use Sliders', async t => {
@@ -172,19 +204,19 @@ test('Use Sliders', async t => {
 
     await t
         .drag(iSliderDraggable, 100, 0)
-        .takeScreenshot('MoveSagittal.png');
+        .takeScreenshot('use_sliders/MoveSagittal.png');
 
-    page.setTextbox(iSliderTextBox, '45');
+    page.typeInTextbox(iSliderTextBox, '45');
 
     await t
         .drag(jSliderDraggable, 100, 0)
-        .takeScreenshot('MoveCoronal.png');
+        .takeScreenshot('use_sliders/MoveCoronal.png');
 
-    page.setTextbox(jSliderTextBox, '54');
+    page.typeInTextbox(jSliderTextBox, '54');
 
     await t
         .drag(kSliderDraggable, 100, 0)
-        .takeScreenshot('MoveAxial.png');
+        .takeScreenshot('use_sliders/MoveAxial.png');
 });
 
 test('Use Chevrons', async t => {
@@ -206,28 +238,28 @@ test('Use Chevrons', async t => {
     const kSlider = page.getElementFromTitle(Selector('span').withText('K-Coord')).find('input');
 
     await page.clickMultipleTimes(sagittalLeft, 10);
-    await t.takeScreenshot('MoveSagittalLeft.png');
-    await page.setTextbox(iSlider, '45');
+    await t.takeScreenshot('use_chevrons/MoveSagittalLeft.png');
+    await page.typeInTextbox(iSlider, '45');
 
     await page.clickMultipleTimes(sagittalRight, 10);
-    await t.takeScreenshot('MoveSagittalRight.png');
-    await page.setTextbox(iSlider, '45');
+    await t.takeScreenshot('use_chevrons/MoveSagittalRight.png');
+    await page.typeInTextbox(iSlider, '45');
 
     await page.clickMultipleTimes(coronalLeft, 10);
-    await t.takeScreenshot('MoveCoronalLeft.png');
-    await page.setTextbox(jSlider, '54');
+    await t.takeScreenshot('use_chevrons/MoveCoronalLeft.png');
+    await page.typeInTextbox(jSlider, '54');
 
     await page.clickMultipleTimes(coronalRight, 10);
-    await t.takeScreenshot('MoveCoronalRight.png');
-    await page.setTextbox(jSlider, '54');
+    await t.takeScreenshot('use_chevrons/MoveCoronalRight.png');
+    await page.typeInTextbox(jSlider, '54');
 
     await page.clickMultipleTimes(axialLeft, 10);
-    await t.takeScreenshot('MoveAxialLeft.png');
-    await page.setTextbox(kSlider, '45');
+    await t.takeScreenshot('use_chevrons/MoveAxialLeft.png');
+    await page.typeInTextbox(kSlider, '45');
 
     await page.clickMultipleTimes(axialRight, 10);
-    await t.takeScreenshot('MoveAxialRight.png');
-    await page.setTextbox(kSlider, '45');
+    await t.takeScreenshot('use_chevrons/MoveAxialRight.png');
+    await page.typeInTextbox(kSlider, '45');
 });
 
 test('Set Slice View', async t => {
@@ -243,15 +275,15 @@ test('Set Slice View', async t => {
         .click(modeSelectorDropdown)
         .click(Selector('option').withText('Sagittal'))
         .wait(500)
-        .takeScreenshot('SagittalView.png')
+        .takeScreenshot('set_slice_view/SagittalView.png')
         .click(modeSelectorDropdown)
         .click(Selector('option').withText('Coronal'))
         .wait(500)
-        .takeScreenshot('CoronalView.png')
+        .takeScreenshot('set_slice_view/CoronalView.png')
         .click(modeSelectorDropdown)
         .click(Selector('option').withText('Axial'))
         .wait(500)
-        .takeScreenshot('AxialView.png');
+        .takeScreenshot('set_slice_view/AxialView.png');
 });
 
 test('Check Image Settings', async t => {
@@ -276,24 +308,24 @@ test('Check Image Settings', async t => {
     await t
         .click(interpolateToggle)
         .wait(500)
-        .takeScreenshot('NoInterpolate.png')
+        .takeScreenshot('check_image_settings/NoInterpolate.png')
         .click(interpolateToggle)
         .click(autoContrastToggle)
         .wait(500)
-        .takeScreenshot('NoAutoContrast')
+        .takeScreenshot('check_image_settings/NoAutoContrast')
         .click(autoContrastToggle);
 
-    page.setTextbox(minIntTextbox, '50');
+    page.typeInTextbox(minIntTextbox, '50');
 
     await t
-        .takeScreenshot('HigherMinInt.png');
+        .takeScreenshot('check_image_settings/HigherMinInt.png');
 
     const maxIntTextbox = page.getElementFromTitle(Selector('span').withText('Max Int')).find('input');
-    page.setTextbox(minIntTextbox, '0');
-    page.setTextbox(maxIntTextbox, '120');
+    page.typeInTextbox(minIntTextbox, '0');
+    page.typeInTextbox(maxIntTextbox, '120');
 
     await t
-        .takeScreenshot('LowerMaxInt.png');
+        .takeScreenshot('check_image_settings/LowerMaxInt.png');
 
 });
 
@@ -315,10 +347,10 @@ test('Use Paint Tool', async t => {
     await t
         .click(undoButton)
         .wait(500)
-        .takeScreenshot('UndoPaint.png')
+        .takeScreenshot('use_paint_tool/UndoPaint.png')
         .click(redoButton)
         .wait(500)
-        .takeScreenshot('RedoPaint.png');
+        .takeScreenshot('use_paint_tool/RedoPaint.png');
 });
 
 test('Change Paintbrush Size', async t => {
@@ -331,7 +363,7 @@ test('Change Paintbrush Size', async t => {
         .click(sliderTextBox)
         .selectText(sliderTextBox).pressKey('delete').typeText(sliderTextBox, '25');
 
-    await page.paintAxialRegion('BigBrushPaintedRegion.png');
+    await page.paintAxialRegion('change_brush_size/BigBrushPaintedRegion.png');
 
     const undoButton = Selector('button').withText('Undo');
 
@@ -340,7 +372,7 @@ test('Change Paintbrush Size', async t => {
         .click(sliderTextBox)
         .selectText(sliderTextBox).pressKey('delete').typeText(sliderTextBox, '1');
 
-    await page.paintAxialRegion('SmallBrushPaintedRegion.png');
+    await page.paintAxialRegion('change_brush_size/SmallBrushPaintedRegion.png');
 });
 
 test('Change Brush Color', async t => {
@@ -351,7 +383,7 @@ test('Change Brush Color', async t => {
     await t
         .click(colorButton);
 
-    await page.paintAxialRegion('DifferentColorPaintedRegion.png');
+    await page.paintAxialRegion('change_brush_color/DifferentColorPaintedRegion.png');
 });
 
 test('Use 3D Brush', async t => {
@@ -366,7 +398,7 @@ test('Use 3D Brush', async t => {
         .click(sliderTextBox)
         .selectText(sliderTextBox).pressKey('delete').typeText(sliderTextBox, '25');
 
-    await page.paintAxialRegion('ThreeDimensionalBrush.png');
+    await page.paintAxialRegion('use_3d_brush/ThreeDimensionalBrush.png');
 });
 
 test('Overwrite Painted Area', async t => {
@@ -379,7 +411,7 @@ test('Overwrite Painted Area', async t => {
         .click(sliderTextBox)
         .selectText(sliderTextBox).pressKey('delete').typeText(sliderTextBox, '25');
 
-    await page.paintAxialRegion('NoOverwritePaint.png');
+    await page.paintAxialRegion('overwrite_painted_area/NoOverwritePaint.png');
 
     const overwriteToggle = page.getElementFromTitle(Selector('label').withText('Overwrite')).find('input');
     const overwriteColor = Selector('.color-btn').withText('0');
@@ -388,7 +420,7 @@ test('Overwrite Painted Area', async t => {
         .click(overwriteToggle)
         .click(overwriteColor);
 
-    await page.paintAxialRegion('OverwritePaint.png');
+    await page.paintAxialRegion('overwrite_painted_area/OverwritePaint.png');
 });
 
 test('Disable Paint Tool', async t => {
@@ -402,7 +434,7 @@ test('Disable Paint Tool', async t => {
         .click(enableButton)
         .expect(paintToolContainer.getStyleProperty('background-color')).notContains('rgb(68, 0, 0)');
 
-    await page.paintAxialRegion('DisabledPaint.png');
+    await page.paintAxialRegion('disable_paint_tool/DisabledPaint.png');
 });
 
 test('Do Paint Thresholding', async t => {
@@ -421,15 +453,15 @@ test('Do Paint Thresholding', async t => {
         .selectText(minThresholdTextBox).pressKey('delete').typeText(minThresholdTextBox, '100').pressKey('enter')
         .selectText(brushSizeTextBox).pressKey('delete').typeText(brushSizeTextBox, '25').pressKey('enter');
 
-    await page.paintAxialRegion('RaisedLowThreshold.png');
+    await page.paintAxialRegion('paint_thresholding/RaisedLowThreshold.png');
 
     await t
-        .takeScreenshot('LowThresholdedPaint.png')
+        .takeScreenshot('paint_thresholding/LowThresholdedPaint.png')
         .click(undoButton)
         .selectText(minThresholdTextBox).pressKey('delete').typeText(minThresholdTextBox, '0').pressKey('enter')
         .selectText(maxThresholdTextBox).pressKey('delete').typeText(maxThresholdTextBox, '100').pressKey('enter');
 
-    await page.paintAxialRegion('LoweredHighThreshold.png');
+    await page.paintAxialRegion('paint_thresholding/LoweredHighThreshold.png');
 });
 
 test('Create Threshold Objectmaps', async t => {
@@ -437,7 +469,7 @@ test('Create Threshold Objectmaps', async t => {
     await page.createThresholdedImage();
 
     await t
-        .takeScreenshot('LowThresholdOverlay.png');
+        .takeScreenshot('create_threshold_objectmaps/LowThresholdOverlay.png');
 
     //clear objectmap opens a modal asking the user to confirm so make sure to click 'Ok' there too
     const objectmapBar = Selector('.dropdown-toggle').withText('Objectmap');
@@ -455,7 +487,7 @@ test('Create Threshold Objectmaps', async t => {
         .selectText(highObjectmapThreshold).pressKey('delete').typeText(highObjectmapThreshold, '100').pressKey('enter')
         .click(thresholdButton)
         .wait(500)
-        .takeScreenshot('HighThresholdOverlay.png');
+        .takeScreenshot('create_threshold_objectmaps/HighThresholdOverlay.png');
 });
 
 test('Morphology Median Image', async t => {
@@ -466,13 +498,13 @@ test('Morphology Median Image', async t => {
     const runMorphologyOperation = Selector('button').withText('Execute');
 
     await t
-        .takeScreenshot('BaseMorphologyImage.png')
+        .takeScreenshot('morph_median_image/BaseMorphologyImage.png')
         .wait(1000)
         .click(morphologyDropdown)
         .click(Selector('option').withAttribute('value', 'median'))
         .click(runMorphologyOperation)
         .wait(1000)
-        .takeScreenshot('LowRadiusMedianImage.png');
+        .takeScreenshot('morph_median_image/LowRadiusMedianImage.png');
 
     await page.prepareForMorphologyOperations();
     const radiusTextBox = page.getElementFromTitle(Selector('span').withText('Radius')).find('input');
@@ -482,7 +514,7 @@ test('Morphology Median Image', async t => {
         .selectText(radiusTextBox).pressKey('delete').typeText(radiusTextBox, '2').pressKey('enter')
         .click(runMorphologyOperation)
         .wait(1000)
-        .takeScreenshot('HighRadiusMedianImage.png');
+        .takeScreenshot('morph_median_image/HighRadiusMedianImage.png');
 });
 
 test('Morphology Dilate Image', async t => {
@@ -493,12 +525,12 @@ test('Morphology Dilate Image', async t => {
     const runMorphologyOperation = Selector('button').withText('Execute');
 
     await t
-        .takeScreenshot('BaseMorphologyImage.png')
+        .takeScreenshot('morph_dilate_image/BaseMorphologyImage.png')
         .click(morphologyDropdown)
         .click(Selector('option').withAttribute('value', 'dilate'))
         .click(runMorphologyOperation)
         .wait(1000)
-        .takeScreenshot('LowRadiusDilatedImage.png');
+        .takeScreenshot('morph_dilate_image/LowRadiusDilatedImage.png');
 
     await page.prepareForMorphologyOperations();
     const radiusTextBox = page.getElementFromTitle(Selector('span').withText('Radius')).find('input');
@@ -508,7 +540,7 @@ test('Morphology Dilate Image', async t => {
         .selectText(radiusTextBox).pressKey('delete').typeText(radiusTextBox, '2').pressKey('enter')
         .click(runMorphologyOperation)
         .wait(1000)
-        .takeScreenshot('HighRadiusDilatedImage.png');
+        .takeScreenshot('morph_dilate_image/HighRadiusDilatedImage.png');
 });
 
 test('Morphology Erode Image', async t => {
@@ -519,12 +551,12 @@ test('Morphology Erode Image', async t => {
     const runMorphologyOperation = Selector('button').withText('Execute');
 
     await t
-        .takeScreenshot('BaseMorphologyImage.png')
+        .takeScreenshot('morph_erode_image/BaseMorphologyImage.png')
         .click(morphologyDropdown)
         .click(Selector('option').withAttribute('value', 'erode'))
         .click(runMorphologyOperation)
         .wait(1000)
-        .takeScreenshot('LowRadiusErodedImage.png');
+        .takeScreenshot('morph_erode_image/LowRadiusErodedImage.png');
 
     await page.prepareForMorphologyOperations();
     const radiusTextBox = page.getElementFromTitle(Selector('span').withText('Radius')).find('input');
@@ -534,7 +566,7 @@ test('Morphology Erode Image', async t => {
         .selectText(radiusTextBox).pressKey('delete').typeText(radiusTextBox, '2').pressKey('enter')
         .click(runMorphologyOperation)
         .wait(1000)
-        .takeScreenshot('HighRadiusErodedImage.png');
+        .takeScreenshot('morph_erode_image/HighRadiusErodedImage.png');
 });
 
 test('Morphology Erode then Dilate Image', async t => {
@@ -545,12 +577,12 @@ test('Morphology Erode then Dilate Image', async t => {
     const runMorphologyOperation = Selector('button').withText('Execute');
 
     await t
-        .takeScreenshot('BaseMorphologyImage.png')
+        .takeScreenshot('morph_erode_dilate_image/BaseMorphologyImage.png')
         .click(morphologyDropdown)
         .click(Selector('option').withAttribute('value', 'erodedilate'))
         .click(runMorphologyOperation)
         .wait(1000)
-        .takeScreenshot('LowRadiusErodeDilatedImage.png');
+        .takeScreenshot('morph_erode_dilate_image/LowRadiusErodeDilatedImage.png');
 
     await page.prepareForMorphologyOperations();
     const radiusTextBox = page.getElementFromTitle(Selector('span').withText('Radius')).find('input');
@@ -560,7 +592,7 @@ test('Morphology Erode then Dilate Image', async t => {
         .selectText(radiusTextBox).pressKey('delete').typeText(radiusTextBox, '2').pressKey('enter')
         .click(runMorphologyOperation)
         .wait(1000)
-        .takeScreenshot('HighRadiusErodeDilatedImage.png');
+        .takeScreenshot('morph_erode_dilate_image/HighRadiusErodeDilatedImage.png');
 });
 
 test('Morphology Dilate then Erode Image', async t => {
@@ -571,12 +603,12 @@ test('Morphology Dilate then Erode Image', async t => {
     const runMorphologyOperation = Selector('button').withText('Execute');
 
     await t
-        .takeScreenshot('BaseMorphologyImage.png')
+        .takeScreenshot('morph_dilate_erode_image/BaseMorphologyImage.png')
         .click(morphologyDropdown)
         .click(Selector('option').withAttribute('value', 'dilateerode'))
         .click(runMorphologyOperation)
         .wait(1000)
-        .takeScreenshot('LowRadiusDilateErodedImage.png');
+        .takeScreenshot('morph_dilate_erode_image/LowRadiusDilateErodedImage.png');
 
     await page.prepareForMorphologyOperations();
     const radiusTextBox = page.getElementFromTitle(Selector('span').withText('Radius')).find('input');
@@ -586,7 +618,7 @@ test('Morphology Dilate then Erode Image', async t => {
         .selectText(radiusTextBox).pressKey('delete').typeText(radiusTextBox, '2').pressKey('enter')
         .click(runMorphologyOperation)
         .wait(1000)
-        .takeScreenshot('HighRadiusDilateErodedImage.png');
+        .takeScreenshot('morph_dilate_erode_image/HighRadiusDilateErodedImage.png');
 });
 
 test('Regularize Objectmap', async t => {
@@ -599,13 +631,13 @@ test('Regularize Objectmap', async t => {
     const smoothButton = Selector('.btn-success').withText('Smooth');
 
     await t
-        .takeScreenshot('UnregularizedObjectmap.png')
+        .takeScreenshot('regularize_objectmap/UnregularizedObjectmap.png')
         .click(toolsBar)
         .click(regularizeObjectmapItem)
         .selectText(smoothnessTextBox).pressKey('delete').typeText(smoothnessTextBox, '12.0').pressKey('enter')
         .click(smoothButton)
         .wait(1000)
-        .takeScreenshot('RegularizedObjectmap.png');
+        .takeScreenshot('regularize_objectmap/RegularizedObjectmap.png');
 });
 
 test('Mask Image', async t => {
@@ -631,7 +663,7 @@ test('Mask Image', async t => {
         .selectText(thresholdTextBox).pressKey('delete').typeText(thresholdTextBox, '0.5').pressKey('enter')
         .click(maskImageButton)
         .wait(1000)
-        .takeScreenshot('MaskedImage.png');
+        .takeScreenshot('mask_image/MaskedImage.png');
 });
 
 test('Load Brodmann Areas and Plot VOI', async t => {
@@ -644,7 +676,7 @@ test('Load Brodmann Areas and Plot VOI', async t => {
     await t
         .click(objectmapItem)
         .click(loadBrodmannItem)
-        .takeScreenshot('BrodmannOverlay.png');
+        .takeScreenshot('load_brodmann/BrodmannOverlay.png');
 
     //open VOI analysis tool and 
     const VOIAnalysisItem = Selector('a').withText('VOI Analysis');
@@ -657,7 +689,7 @@ test('Load Brodmann Areas and Plot VOI', async t => {
         .wait(500)
         .expect(VOIAnalysisChartTitle.visible).ok()
         .click(alertCloseButton)
-        .takeElementScreenshot(page.getBodyFromTitle(VOIAnalysisChartTitle), 'BrodmannIntensityChart.png');
+        .takeElementScreenshot(page.getBodyFromTitle(VOIAnalysisChartTitle), 'load_brodmann/BrodmannIntensityChart.png');
 
 
     //can't currently test the save functionality because the system save dialogs are opaque to the browser and by extension testcafe
@@ -668,7 +700,7 @@ test('Load Brodmann Areas and Plot VOI', async t => {
     await t
         .click(plotVolumesButton)
         .wait(500)
-        .takeElementScreenshot(page.getBodyFromTitle(VOIAnalysisChartTitle), 'BrodmannVolumeChart.png')
+        .takeElementScreenshot(page.getBodyFromTitle(VOIAnalysisChartTitle), 'load_brodmann/BrodmannVolumeChart.png')
         .click(saveSnapshotButton)
         .wait(1000)
         .expect(saveSnapshotModalTitle.exists).ok();
@@ -686,19 +718,125 @@ test('Take Viewer Snapshot', async t => {
         .click(viewerSnapshotDropdown)
         .click(snapshotButton)
         .wait(2000)
-        .takeScreenshot('ViewerSnapshotModal.png')
+        .takeScreenshot('take_viewer_snapshot/ViewerSnapshotModal.png')
         .expect(snapshotModal.exists).ok();
 });
 
-//Saved for when server is done
-/*
-test('Save Application State', async t => {
+test('Test Video Player', async t => {
     const page = new Page();
     page.loadImage();
+    await page.setFileSource('File Server Helper');
+    await page.signInToFileserver();
 
+    //currently hardcoded, perhaps create a testing directory?
+    const testPath = 'Downloads/test_motion_correction.nii.gz';
+
+    const loadImageTitle = Selector('.modal-title').withText('Load image');
+    const loadImageModal = page.getBodyFromTitle(loadImageTitle);
+    const pathEntryBox = loadImageModal.find('input');
+    const playButton = Selector('.glyphicon.glyphicon-play');
+    const alertCloseButton = Selector('.alert.alert-info').find('button');
+    const viewerControlsTitle = Selector('a').withText('Viewer Controls');
+
+    await t
+        .click(pathEntryBox)
+        .typeText(pathEntryBox, testPath)
+        .pressKey('enter')
+        .click(alertCloseButton)
+        .click(viewerControlsTitle)
+        .expect(playButton.visible).ok()
+        .takeScreenshot('test_video_player/BaseMotionCorrectedImage.png');
+
+    const frameTextbox = page.getElementFromTitle(Selector('span').withText('Frame/Comp')).find('input');
+    const pauseButton = Selector('.glyphicon.glyphicon-pause');
+    const nextSlideButton = Selector('.glyphicon.glyphicon-chevron-right').withAttribute('index', '9');
+    const previousSlideButton = Selector('.glyphicon.glyphicon-chevron-left').withAttribute('index', '6');
+
+    page.typeInTextbox(frameTextbox, '4');
+
+    await t
+        .takeScreenshot('test_video_player/AdvancedMotionCorrectedImage.png')
+        .expect(frameTextbox.value).eql('4')
+        .click(nextSlideButton)
+        .click(nextSlideButton)
+        .expect(frameTextbox.value).eql('1')
+        .click(previousSlideButton)
+        .expect(frameTextbox.value).eql('0');
+
+    //TODO: Record video of the motion correction data playing when the feature is added to testcafe 
+    //https://github.com/DevExpress/testcafe/issues/2151
+    await t
+        .click(playButton)
+        .wait(3000)
+        .click(pauseButton);
+    
+    const fileDropdown = Selector('.dropdown-toggle').withText('File');
+    const fileLoadItem = Selector('a').withText('Load MNI T1 (2mm)');
+
+    //buttons should hide once a new image is loaded
+    await t
+        .click(fileDropdown)
+        .click(fileLoadItem)
+        .wait(1000)
+        .expect(playButton.visible).notOk();
+        
+});
+
+//TODO: Fix this test
+test('Save Application State', async t => {
+    const page = new Page();
+    await page.loadImage();
+    await page.setFileSource('File Server Helper');
+
+    const iCoordTextbox = page.getElementFromTitle(Selector('span').withText('I-Coord')).find('input');
+    const jCoordTextbox = page.getElementFromTitle(Selector('span').withText('J-Coord')).find('input');
+    const kCoordTextbox = page.getElementFromTitle(Selector('span').withText('K-Coord')).find('input');
+    const viewerControlsDropdown = Selector('a').withText('Viewer Controls');
+
+    await t
+        .click(viewerControlsDropdown);
+
+    await page.typeInTextbox(iCoordTextbox, '79');
+    await page.typeInTextbox(jCoordTextbox, '73');
+    await page.typeInTextbox(kCoordTextbox, '22');
+
+    const loadImageTitle = Selector('.modal-title').withText('Load image');
+    const loadImageModal = page.getBodyFromTitle(loadImageTitle);
+    const loadImageModalCloseButton = loadImageModal.find('.modal-header').find('button');
+
+    //want to sign in to the fileserver but to close the load image modal
+    await page.signInToFileserver();
+    await t.click(loadImageModalCloseButton);
+
+    const fileDropdown = Selector('.dropdown-toggle').withText('File');
+    const saveApplicationDropdown = Selector('a').withText('Save Application State');
+
+    const saveStateTitle = Selector('.modal-title').withText('Save Application State');
+    const saveStateModal = page.getBodyFromTitle(saveStateTitle);
+    const pathEntryBox = saveStateModal.find('input');
+
+    const appstatePath = 'editor.biswebstate';
+
+    await t
+        .click(fileDropdown)
+        .click(saveApplicationDropdown)
+        .click(pathEntryBox)
+        .pressKey('enter')
+        .takeScreenshot('save_application_state/ApplicationBeforeReload.png');
+    
+    await page.loadImage();
+    const loadApplicationDropdown = Selector('a').withText('Load Application State');
+    await t
+        .takeScreenshot('save_application_state/ApplicationAfterReload.png')
+        .click(fileDropdown)
+        .click(loadApplicationDropdown)
+        .click(pathEntryBox)
+        .typeText(pathEntryBox, appstatePath)
+        .pressKey('enter')
+        .wait(1000)
+        .takeScreenshot('save_application_state/ApplicationAfterLoadAppState.png');
 
 });
-*/
 
 test('Restart Application', async t => {
     const page = new Page();
