@@ -2,12 +2,12 @@
 
 import { Selector, t } from 'testcafe';
 
-fixture `Editor Tests`.page `localhost:8080/web/editor.html`;
+fixture`Editor Tests`.page`localhost:8080/web/editor.html`;
 
 //specify class to avoid repeating common tasks
 //http://devexpress.github.io/testcafe/documentation/test-api/test-code-structure.html
 export default class Page {
-    constructor () {
+    constructor() {
         this.fileDropdown = Selector('.dropdown-toggle').withText('File');
         this.loadButton = Selector('a').withText('Load MNI T1 (2mm)');
         this.viewerControlsPanel = Selector('a').withText('Viewer Controls');
@@ -46,24 +46,24 @@ export default class Page {
 
     async initializePaintTool() {
         this.loadImage();
-    
+
         const paintToolBox = Selector('div').withAttribute('aria-label', 'bisweb-paint-widget');
         const enableButton = this.getInputFromTitle(paintToolBox.find('label').withText('Enable'));
-    
+
         await t
             .click(enableButton);
     }
 
     async createThresholdedImage() {
-        this.loadImage(); 
+        this.loadImage();
 
         const toolsBar = Selector('.dropdown-toggle').withText('Tools');
         const createObjectmapItem = Selector('a').withText('Create Objectmap');
-    
+
         await t
             .click(toolsBar)
             .click(createObjectmapItem);
-        
+
         const lowObjectmapThreshold = this.getElementFromTitle(Selector('span').withText('Low Threshold')).find('input');
         const thresholdButton = Selector('button').withText('Create Mask');
 
@@ -90,7 +90,7 @@ export default class Page {
     async paintAxialRegion(screenshotName) {
         const canvas = Selector('canvas');
         await t
-            .drag(canvas, 500, 400, { 'offsetX' : -2400, 'offsetY' : -1950, 'speed' : 0.05})
+            .drag(canvas, 500, 400, { 'offsetX': -2400, 'offsetY': -1950, 'speed': 0.05 })
             .takeScreenshot(screenshotName);
     }
 
@@ -122,8 +122,8 @@ test('Load Image', async t => {
     await t
         .takeScreenshot('LoadImage.png')
         .expect(colorButton.exists).ok();
-    
-    
+
+
 
     const resetSlicesButton = Selector('.btn-info').withText('Reset Slices');
     await t
@@ -145,13 +145,13 @@ test('Use Zoom Controls', async t => {
         .click(zoomInButton)
         .click(zoomInButton)
         .takeScreenshot('ZoomedIn.png');
-    
+
     await t
         .click(resetButton)
         .click(zoomOutButton)
         .click(zoomOutButton)
         .click(zoomOutButton)
-        .takeScreenshot('ZoomedOut.png');    
+        .takeScreenshot('ZoomedOut.png');
 });
 
 test('Use Sliders', async t => {
@@ -268,7 +268,7 @@ test('Check Image Settings', async t => {
         .takeScreenshot('noLabels.png')
         .click(labelsToggle)
         .click(Selector('.title').withText('Image Color Mapping'));
-    
+
     const interpolateToggle = page.getElementFromTitle(Selector('span').withText('Interpolate')).find('input');
     const autoContrastToggle = page.getElementFromTitle(Selector('span').withText('Auto-Contrast')).find('input');
     const minIntTextbox = page.getElementFromTitle(Selector('span').withText('Min Int')).find('input');
@@ -284,10 +284,10 @@ test('Check Image Settings', async t => {
         .click(autoContrastToggle);
 
     page.setTextbox(minIntTextbox, '50');
-    
+
     await t
         .takeScreenshot('HigherMinInt.png');
-    
+
     const maxIntTextbox = page.getElementFromTitle(Selector('span').withText('Max Int')).find('input');
     page.setTextbox(minIntTextbox, '0');
     page.setTextbox(maxIntTextbox, '120');
@@ -339,7 +339,7 @@ test('Change Paintbrush Size', async t => {
         .click(undoButton)
         .click(sliderTextBox)
         .selectText(sliderTextBox).pressKey('delete').typeText(sliderTextBox, '1');
-    
+
     await page.paintAxialRegion('SmallBrushPaintedRegion.png');
 });
 
@@ -455,7 +455,7 @@ test('Create Threshold Objectmaps', async t => {
         .selectText(highObjectmapThreshold).pressKey('delete').typeText(highObjectmapThreshold, '100').pressKey('enter')
         .click(thresholdButton)
         .wait(500)
-        .takeScreenshot('HighThresholdOverlay.png');    
+        .takeScreenshot('HighThresholdOverlay.png');
 });
 
 test('Morphology Median Image', async t => {
@@ -473,10 +473,10 @@ test('Morphology Median Image', async t => {
         .click(runMorphologyOperation)
         .wait(1000)
         .takeScreenshot('LowRadiusMedianImage.png');
-    
+
     await page.prepareForMorphologyOperations();
     const radiusTextBox = page.getElementFromTitle(Selector('span').withText('Radius')).find('input');
-    
+
     await t
         .click(radiusTextBox)
         .selectText(radiusTextBox).pressKey('delete').typeText(radiusTextBox, '2').pressKey('enter')
@@ -499,10 +499,10 @@ test('Morphology Dilate Image', async t => {
         .click(runMorphologyOperation)
         .wait(1000)
         .takeScreenshot('LowRadiusDilatedImage.png');
-    
+
     await page.prepareForMorphologyOperations();
     const radiusTextBox = page.getElementFromTitle(Selector('span').withText('Radius')).find('input');
-    
+
     await t
         .click(radiusTextBox)
         .selectText(radiusTextBox).pressKey('delete').typeText(radiusTextBox, '2').pressKey('enter')
@@ -525,10 +525,10 @@ test('Morphology Erode Image', async t => {
         .click(runMorphologyOperation)
         .wait(1000)
         .takeScreenshot('LowRadiusErodedImage.png');
-    
+
     await page.prepareForMorphologyOperations();
     const radiusTextBox = page.getElementFromTitle(Selector('span').withText('Radius')).find('input');
-    
+
     await t
         .click(radiusTextBox)
         .selectText(radiusTextBox).pressKey('delete').typeText(radiusTextBox, '2').pressKey('enter')
@@ -551,10 +551,10 @@ test('Morphology Erode then Dilate Image', async t => {
         .click(runMorphologyOperation)
         .wait(1000)
         .takeScreenshot('LowRadiusErodeDilatedImage.png');
-    
+
     await page.prepareForMorphologyOperations();
     const radiusTextBox = page.getElementFromTitle(Selector('span').withText('Radius')).find('input');
-    
+
     await t
         .click(radiusTextBox)
         .selectText(radiusTextBox).pressKey('delete').typeText(radiusTextBox, '2').pressKey('enter')
@@ -580,7 +580,7 @@ test('Morphology Dilate then Erode Image', async t => {
 
     await page.prepareForMorphologyOperations();
     const radiusTextBox = page.getElementFromTitle(Selector('span').withText('Radius')).find('input');
-    
+
     await t
         .click(radiusTextBox)
         .selectText(radiusTextBox).pressKey('delete').typeText(radiusTextBox, '2').pressKey('enter')
@@ -614,12 +614,12 @@ test('Mask Image', async t => {
 
     const toolsBar = Selector('.dropdown-toggle').withText('Tools');
     const maskImageItem = Selector('a').withText('Mask Image');
-   
+
 
     await t
         .click(toolsBar)
         .click(maskImageItem);
-    
+
 
     const maskImageBarTitle = Selector('a').withText('Mask Image').withAttribute('data-toggle', 'collapse');
     const maskImagePanel = page.getBodyFromTitle(maskImageBarTitle);
@@ -634,13 +634,13 @@ test('Mask Image', async t => {
         .takeScreenshot('MaskedImage.png');
 });
 
-test('Load Brodmann Areas', async t => {
+test('Load Brodmann Areas and Plot VOI', async t => {
     const page = new Page();
     await page.loadImage();
 
     const objectmapItem = Selector('a').withText('Objectmap');
     const loadBrodmannItem = Selector('a').withText('Load Yale Brodmann Atlas (2mm)');
-    
+
     await t
         .click(objectmapItem)
         .click(loadBrodmannItem)
@@ -658,7 +658,7 @@ test('Load Brodmann Areas', async t => {
         .expect(VOIAnalysisChartTitle.visible).ok()
         .click(alertCloseButton)
         .takeElementScreenshot(page.getBodyFromTitle(VOIAnalysisChartTitle), 'BrodmannIntensityChart.png');
-    
+
 
     //can't currently test the save functionality because the system save dialogs are opaque to the browser and by extension testcafe
     const plotVolumesButton = Selector('button').withText('Plot VOI Volumes');
@@ -670,7 +670,60 @@ test('Load Brodmann Areas', async t => {
         .wait(500)
         .takeElementScreenshot(page.getBodyFromTitle(VOIAnalysisChartTitle), 'BrodmannVolumeChart.png')
         .click(saveSnapshotButton)
+        .wait(1000)
         .expect(saveSnapshotModalTitle.exists).ok();
+});
+
+test('Take Viewer Snapshot', async t => {
+    const page = new Page();
+    await page.loadImage();
+
+    const viewerSnapshotDropdown = Selector('a').withText('Viewer Snapshot');
+    const snapshotButton = Selector('button').withText('Take Snapshot');
+    const snapshotModal = Selector('.modal-title').withText('This is the snapshot');
+
+    await t 
+        .click(viewerSnapshotDropdown)
+        .click(snapshotButton)
+        .wait(2000)
+        .takeScreenshot('ViewerSnapshotModal.png')
+        .expect(snapshotModal.exists).ok();
+});
+
+//Saved for when server is done
+/*
+test('Save Application State', async t => {
+    const page = new Page();
+    page.loadImage();
+
+
+});
+*/
+
+test('Restart Application', async t => {
+    const page = new Page();
+    await page.loadImage();
+
+    const fileDropdown = Selector('.dropdown-toggle').withText('File');
+    const restartApplication = Selector('a').withText('Restart Application');
+    const okButton = Selector('button').withText('OK');
+    const cancelButton = Selector('button').withText('Cancel');
+
+    //check cancel button
+    await t 
+        .click(fileDropdown)
+        .click(restartApplication)
+        .expect(okButton.visible).ok()
+        .click(cancelButton);
+
+    //refresh page and open reset application modal again
+    await t
+        .click(fileDropdown)
+        .click(restartApplication)
+        .click(okButton)
+        .click(fileDropdown)
+        .click(restartApplication)
+        .expect(okButton.visible).ok();
 });
 
 
