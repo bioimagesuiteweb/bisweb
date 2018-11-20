@@ -4,7 +4,7 @@ import { Selector, t } from 'testcafe';
 import { ClientFunction } from 'testcafe';
 import fs from 'fs';
 
-fixture`Overlay Tests`.page`localhost:8080/web/overlayviewer.html`;
+fixture`Overlay Tests`.page`https://git.yale.edu/pages/zls5/webapp/overlayviewer.html`;
 
 export default class Page {
     constructor() {
@@ -24,12 +24,12 @@ export default class Page {
 
     async load2mmImage() {
         //dismiss alert
-        const alertCloseButton = Selector('.alert').find('span');
+        //const alertCloseButton = Selector('.alert').find('span');
 
         await t
             .click(this.fileDropdown)
             .click(Selector('a').withText('Load MNI T1 (2mm)'))
-            .click(alertCloseButton);
+            //.click(alertCloseButton);
     }
 
     async load1mmAtlas() {
@@ -42,12 +42,12 @@ export default class Page {
     }
 
     async load2mmAtlas() {
-        const alertCloseButton = Selector('.alert').find('span');
+        //const alertCloseButton = Selector('.alert').find('span');
 
         await t
             .click(this.overlayDropdown)
             .click(Selector('a').withText('Load Yale Brodmann Atlas (2mm)'))
-            .click(alertCloseButton);
+            //.click(alertCloseButton);
     }
 
     async clearOverlay() {
@@ -65,6 +65,36 @@ export default class Page {
             .click(infoButton)
             .takeElementScreenshot(infoPopup, name)
             .click(infoPopupCloseButton);
+    }
+
+    async loadSampleData() {
+    	const helpBar = Selector('.dropdown-toggle').withText('Help');
+    	const sampleDataLoad = Selector('a').withText('Load Sample Data');
+    	const alertCloseButton = Selector('.alert').find('span');
+
+    	const overlayColorMappingDropdown = Selector('li').withText('Overlay Color Mapping');
+
+    	await t
+    		.click(helpBar)
+    		.click(sampleDataLoad)
+    		.click(overlayColorMappingDropdown);
+    		//.click(alertCloseButton);
+    }
+
+    async openScreenshotModalAndTakeSnapshot(screenshotName) {
+		const snapshotButton = Selector('button').withText('Take Snapshot');
+		const snapshotModal = this.getBodyFromTitle(Selector('.modal-title').withText('This is the snapshot'));
+		const snapshotClose = snapshotModal.find('.bootbox-close-button');
+
+		await t
+	    	.click(snapshotButton)
+			.wait(1000)
+			.takeElementScreenshot(snapshotModal, screenshotName)
+			.click(snapshotClose)
+    }
+
+    getElementFromListItem(title) {
+    	return title.parent();
     }
 
     getBodyFromTitle(title) {
@@ -137,6 +167,7 @@ test('Load Overlays', async t => {
     await page.takeViewerInfoScreenshot('load_overlay/T1_2mm_2mm_info.png');
 });
 
+
 test('Expand Viewer Info', async t => {
     const page = new Page();
 
@@ -153,7 +184,168 @@ test('Expand Viewer Info', async t => {
         .click(imageDetail)
         .click(overlayDetail);
 
-    await t.debug().takeScreenshot('expand_viewer_info/ExpandedViewerInfo.png');
+    await t.takeScreenshot('expand_viewer_info/ExpandedViewerInfo.png');
+
+    await t
+    	.click(imageDetail)
+    	.click(overlayDetail)
+    	.takeScreenshot('expand_viewer_info/MinimizedViewerInfo.png');
+});
+
+test('Check Basic Overlay Settings', async t => {
+	const page = new Page();
+	await page.loadSampleData();
+
+	await t
+		.takeScreenshot('check_sample_data/BaseSampleData.png');
+
+	await page.clearOverlay();
+	await page.loadSampleData();
+
+	const opacityTextbox = page.getElementFromListItem(Selector('.property-name').withText('Opacity')).find('input');
+	const overlayColorMappingDropdown = Selector('li').withText('Overlay Color Mapping');
+	await t
+		.click(overlayColorMappingDropdown)
+		.click(opacityTextbox)
+		.selectText(opacityTextbox).pressKey('delete').typeText(opacityTextbox, '0.5').pressKey('enter')
+		.wait(1000)
+		.takeScreenshot('check_sample_data/LowOpacity.png');
+
+
+	//NOTE: You can't really check that the colormaps work with the automated tests because a human would have to adjust the sliders by eye
+	//so this is basically just to make sure it turns it green.
+	const colorMappingInput = page.getElementFromListItem(Selector('.property-name').withText('Overlay Type')).find('select');
+	const greenMappingOption = Selector('option').withText('Green');
+
+	await t
+		.click(colorMappingInput)
+		.click(greenMappingOption)
+		.wait(1000)
+		.takeScreenshot('check_sample_data/GreenColormap.png');
+});
+
+test('Check Overlay Show', async t => {
+	const page = new Page();
+	await page.loadSampleData();
+
+	const overlayShowInput = page.getElementFromListItem(Selector('.property-name').withText('Overlay Show')).find('select');
+	const positiveOption = Selector('option').withText('Positive');
+	const negativeOption = Selector('option').withText('Negative');
+	const bothOption = Selector('option').withText('Both');
+
+	await t
+		.click(overlayShowInput)
+		.click(positiveOption)
+		.wait(1000)
+		.takeScreenshot('check_sample_data/PositiveOverlay.png')
+		.click(overlayShowInput)
+		.click(negativeOption)
+		.wait(1000)
+		.takeScreenshot('check_sample_data/NegativeOverlay.png')
+		.click(overlayShowInput)
+		.click(bothOption)
+		.wait(1000)
+		.takeScreenshot('check_sample_data/BothOverlay.png');
+
+});
+
+test('Change Min/Max Overlay', async t => {
+	const page = new Page();
+	await page.loadSampleData();
+
+	const minOverlayInput = page.getElementFromListItem(Selector('.property-name').withText('Min Overlay')).find('input');
+	const maxOverlayInput = page.getElementFromListItem(Selector('.property-name').withText('Max Overlay')).find('input');
+
+	await t
+		.click(minOverlayInput)
+		.selectText(minOverlayInput).pressKey('delete').typeText(minOverlayInput, '1000').pressKey('enter')
+		.wait(1000)
+		.takeScreenshot('check_sample_data/LowerMinOverlay.png')
+		.selectText(minOverlayInput).pressKey('delete').typeText(minOverlayInput, '2882.1').pressKey('enter')
+		.selectText(maxOverlayInput).pressKey('delete').typeText(maxOverlayInput, '3500').pressKey('enter')
+		.wait(1000)
+		.takeScreenshot('check_sample_data/LowerMaxOverlay.png');
+
+});
+
+test('Change Cluster Size', async t => {
+	const page = new Page();
+	await page.loadSampleData();
+
+	const clusterSizeInput = page.getElementFromListItem(Selector('.property-name').withText('Cluster Size')).find('input');
+
+	await t
+		.click(clusterSizeInput)
+		.selectText(clusterSizeInput).pressKey('delete').typeText(clusterSizeInput, '50').pressKey('enter')
+		.wait(1000)
+		.takeScreenshot('check_sample_data/HigherClusterSize.png');
+});
+
+test('Check Snapshot Tool', async t => {
+	const page = new Page();
+	await page.load2mmImage();
+
+	const snapshotButton = Selector('button').withText('Take Snapshot');
+	const whiteBackgroundLabel = Selector('label').withText('White Bkgd');
+	const cropLabel = Selector('label').withText('Crop');
+	const snapshotModal = page.getBodyFromTitle(Selector('.modal-title').withText('This is the snapshot'));
+	const scaleInput = Selector('option').withText('x1').parent()
+	const snapshotClose = snapshotModal.find('.bootbox-close-button');
+	const labelInput = Selector('.property-name').withText('Labels').parent().find('input');
+
+	await page.openScreenshotModalAndTakeSnapshot('check_snapshot/BlackBackgroundBaseScale.png');
+	await t.click(whiteBackgroundLabel);
+
+	await page.openScreenshotModalAndTakeSnapshot('check_snapshot/WhiteBackgroundBaseScale.png');
+	await t
+		.click(whiteBackgroundLabel)
+		.click(cropLabel);
+
+	await page.openScreenshotModalAndTakeSnapshot('check_snapshot/NoCropBaseScale.png');
+
+	await t
+		.click(labelInput);
+
+	await page.openScreenshotModalAndTakeSnapshot('check_snapshot/NoLabel.png');
+
+	await t
+		.click(labelInput)
+		.click(cropLabel)
+		.click(scaleInput)
+		.click(Selector('option').withText('x1'))
+
+	await page.openScreenshotModalAndTakeSnapshot('check_snapshot/LowScale.png');
+
+	await t
+		.click(scaleInput)
+		.click(Selector('option').withText('x6'));
+
+	await page.openScreenshotModalAndTakeSnapshot('check_snapshot/HighScale.png');
+
+});
+
+
+test('Check Mosaic Viewer', async t => {
+	const page = new Page();
+	await page.loadSampleData();
+
+	const mosaicTab = Selector('a').withText('Mosaic');
+	const rowInput = page.getElementFromListItem(Selector('.property-name').withText('Rows')).find('input');
+	const colInput = page.getElementFromListItem(Selector('.property-name').withText('Columns')).find('input');
+	const firstInput = page.getElementFromListItem(Selector('.property-name').withText('First')).find('input');
+
+	await t
+		.click(mosaicTab)
+		.takeScreenshot('mosaic_viewer/MosaicViewer.png')
+		.click(rowInput)
+		.selectText(rowInput).pressKey('delete').typeText(rowInput, '5').pressKey('enter')
+		.click(colInput)
+		.selectText(colInput).pressKey('delete').typeText(colInput, '5').pressKey('enter')
+		.wait(1000)
+		.takeScreenshot('mosaic_viewer/FiveByFive.png')
+		.selectText(firstInput).pressKey('delete').typeText(firstInput, '1').pressKey('enter')
+		.wait(1000)
+		.takeScreenshot('mosaic_viewer/ChangeFirst.png');
 });
 
 test('Check Clusters', async t => {
