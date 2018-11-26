@@ -165,7 +165,7 @@ var runTests= async function(multiple=false) {
 
         let a="";
         if (!desired)
-            a=' (should fail!)';
+            a=' (intentional fail!)';
         let b="<b>F A I L E D "+a+"</b>";
         if (result.testresult)
             b="P A S S E D "+a;
