@@ -879,8 +879,24 @@ class BisWebImage extends BisWebDataObject {
         
         // First do header stuff
         let tmpfloat=new Float32Array(_inputbuffer,108,1);
-        //        console.log('tmpfloat', tmpfloat);
+        //console.log('tmpfloat=',tmpfloat[0]);
         let len=Math.floor(tmpfloat[0]);
+        let swap=false;
+        if (len<300) {
+            let orig=new Uint8Array(_inputbuffer,108,4);
+            let tmp=new Uint8Array(4);
+            tmp[0]=orig[3];
+            tmp[1]=orig[2];
+            tmp[2]=orig[1];
+            tmp[3]=orig[0];
+            let tmpfloat=new Float32Array(tmp.buffer);
+            len=Math.floor(tmpfloat);
+            swap=true;
+        }
+        if (debug)
+            console.log('Len = ',len,' swap=',swap);
+        
+
         if (len<1) {
             throw new Error('BAD BAD BAD ..... in PARSENII BUFFER len='+len);
         }
@@ -890,9 +906,9 @@ class BisWebImage extends BisWebDataObject {
         let tmpheaderdata;
         if (forceorient!=="None" || forcecopy===true) {
             tmpheaderdata=_inputbuffer.slice(0,len);
-            internal.header.parse(tmpheaderdata,len);
+            internal.header.parse(tmpheaderdata,len,swap);
         } else {
-            internal.header.parse(_inputbuffer,len);
+            internal.header.parse(_inputbuffer,len,swap);
             internal.singlebuffer=_inputbuffer;
             if (debug)
                 console.log('Linking data ... not copying');
@@ -901,12 +917,14 @@ class BisWebImage extends BisWebDataObject {
         if (internal.header.struct.dim[1]===0) {
             throw new Error('BAD dimensions');
         }
-        
+
         if (debug) {
             console.log('+++++ dims=',internal.header.struct.dim[1],internal.header.struct.dim[2],internal.header.struct.dim[3],internal.header.struct.dim[4]);
             console.log('+++++ Read header type = ',Object.prototype.toString.call(tmpheaderdata),' off',internal.header.struct.vox_offset);
         }
         tmpheaderdata=null;
+
+
         
         // Next get ready for the real thing
         let dt=internal.header.struct.datatype;
@@ -932,6 +950,27 @@ class BisWebImage extends BisWebDataObject {
         internal.rawsize=internal.volsize*internal.header.struct.bitpix/8;
         let Imginfo=internal.imginfo.type;
         let imgend=headerlength+internal.rawsize;
+
+        if (swap) {
+
+            let _tmp=new Uint8Array(_inputbuffer,headerlength,internal.rawsize);
+            let sizeoftype=internal.imginfo.size;
+            let half=sizeoftype/2;
+            console.log('Byte swapping data',headerlength,internal.rawsize,sizeoftype,half);
+            
+            for (let i=0;i<internal.rawsize;i++) {
+                let offset=i*sizeoftype;
+                for (let j=0;j<half;j++) {
+                    let j1=j+offset;
+                    let tmp1=_tmp[j1];
+                    let j2=offset+sizeoftype-(j+1);
+                    _tmp[j1]=_tmp[j2];
+                    _tmp[j2]=tmp1;
+                }
+            }
+        }
+        
+
         
         if (forceorient === "None" || forceorient === internal.orient.name) {
             // Just link the data over
