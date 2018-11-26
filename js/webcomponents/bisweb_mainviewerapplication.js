@@ -1402,9 +1402,7 @@ class ViewerApplicationElement extends HTMLElement {
         let mainViewerDoneEvent = new CustomEvent('mainViewerDone');
         document.dispatchEvent(mainViewerDoneEvent);
 
-        let istest = this.getAttribute('bis-testingmode') || 0;
-        webutil.createAlert('Test Mode='+istest,false);
-        
+        let istest = this.getAttribute('bis-testingmode') || false;
         webutil.runAfterAllLoaded( () => {
             Promise.all(this.applicationInitializedPromiseList).then( () => {
                 this.parseQueryParameters();

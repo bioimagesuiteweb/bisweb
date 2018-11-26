@@ -372,9 +372,6 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
 
 
     let cmdlist = [];
-    let eversion ="2.0.9";
-    let cmdline='electron-packager '+outdir+' BioImageSuiteWeb --arch=x64 --electron-version '+eversion+' --out '+distdir+' --overwrite '+
-        '--app-version '+version;
     let zipopts='-ry';
     if (os.platform()==='win32')
         zipopts='-r';
@@ -391,6 +388,12 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
         var basefile=distdir+"/bisweb_"+m+"_"+getVersionTag(version);
         var zipfile=path.normalize(path.resolve(basefile+suffix));
 
+        let eversion ="2.0.9";
+        //        if (m==="linux")
+        //          eversion="3.0.10";
+        let cmdline='electron-packager '+outdir+' BioImageSuiteWeb --arch=x64 --electron-version '+eversion+' --out '+distdir+' --overwrite '+
+            '--app-version '+version;
+        
         try {
             fs.unlink(zipfile,errorf);
         } catch(e) { errorf('error '+e); }
