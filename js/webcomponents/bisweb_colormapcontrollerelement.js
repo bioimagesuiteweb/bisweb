@@ -727,7 +727,9 @@ class ColormapControllerElement extends HTMLElement {
             let a3=f2.add(this.data,'interpolate').name('Interpolate');
             const self=this;
             
-            let clb=function(e) { self.updateTransferFunctionsInternal(e); };
+            let clb=function() {
+                self.updateTransferFunctionsInternal(false);
+            };
             
             for (let i in f2.__controllers) {
                 f2.__controllers[i].onChange(clb);
@@ -735,9 +737,9 @@ class ColormapControllerElement extends HTMLElement {
             
             let a4=f2.add(this.data,'autocontrast').name('Auto-Contrast');
             this.internal.anatomicalcontrollers=[a1,a2,a3,a4];
-            a4.onChange( function(e) {
+            a4.onChange( function() {
                 self.setAutoContrast(true);
-                self.updateTransferFunctionsInternal(e);
+                self.updateTransferFunctionsInternal(false);
             });
 
         } else {
