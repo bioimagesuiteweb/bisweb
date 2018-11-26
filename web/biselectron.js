@@ -70,8 +70,8 @@ if (major<8 || (major===8 && minor<9)) {
     process.exit(1);
 }
 
-if (major>=9) {
-    console.log(`----\n---- You are using a version of node that is 9.0 or newer (actual version=${v})\n`);
+if (major===9) {
+    console.log(`----\n---- You are using a version of node that is 9.x (actual version=${v})\n`);
     process.exit(1);
 }
 
