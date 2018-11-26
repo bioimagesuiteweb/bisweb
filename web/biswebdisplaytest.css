@@ -120,12 +120,13 @@ body {
 
 
 #displayresults {
-    min-height: calc(100% - 500px);
-    max-height: calc(100% - 500px);
+    min-height: calc(100% - 430px);
+    max-height: calc(100% - 430px);
     overflow-x : auto;
     overflow-y : auto;
     font-size : 14px;
     padding : 2 2 2 2;
+    background-color: #444444;
 }
 
 #resultimages {

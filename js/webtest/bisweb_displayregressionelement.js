@@ -84,16 +84,18 @@ var runTest = async function(testindex,viewerindex,basestate='',viewerstate='',c
                     globalParams.resdiv.append('<p>Reading result from: '+comparisonpng+'</p>');
                     console.log(goldstandard.getDescription());
                     let tst = null;
+                    let dim=goldstandard.getDimensions();
                     
                     try {
                         tst=resultimg.compareWithOther(goldstandard,"cc",0.94);
+                        tst.dim=`${dim[0]},${dim[1]}`;
                     } catch(e) {
                         console.log('failed ...'+e);
                     }
                     if (tst==null) {
                         let canvas = document.createElement("canvas");
                         let image_element=globalParams.resultImageElement[0];
-                        let dim=goldstandard.getDimensions();
+                      
                         canvas.height=dim[1];
                         canvas.width=dim[0];
                         console.log('Canvas=',canvas);
@@ -107,7 +109,9 @@ var runTest = async function(testindex,viewerindex,basestate='',viewerstate='',c
                             console.log('failed ...'+e);
                             tst={ testresult : false, value : -1.0 };
                         }
-                    }
+                        tst.dim=`<EM>(resized)</EM> ${dim[0]},${dim[1]}`;
+                    } 
+                      
                     globalParams.resdiv.append(`<p><b>Result</b>: ${JSON.stringify(tst)}</p>`);
                     resolve(tst);
                 },2000);
@@ -165,7 +169,7 @@ var runTests= async function(multiple=false) {
 
         let a="";
         if (!desired)
-            a=' (intentional fail!)';
+            a=' (intentiona fail!)';
         let b="<b>F A I L E D "+a+"</b>";
         if (result.testresult)
             b="P A S S E D "+a;
