@@ -1402,11 +1402,18 @@ class ViewerApplicationElement extends HTMLElement {
         let mainViewerDoneEvent = new CustomEvent('mainViewerDone');
         document.dispatchEvent(mainViewerDoneEvent);
 
+        let istest = this.getAttribute('bis-testingmode') || 0;
+        webutil.createAlert('Test Mode='+istest,false);
+        
         webutil.runAfterAllLoaded( () => {
             Promise.all(this.applicationInitializedPromiseList).then( () => {
                 this.parseQueryParameters();
                 document.body.style.zoom =  1.0;
-                this.welcomeMessage(false);
+                if (!istest) {
+                    this.welcomeMessage(false);
+                } else {
+                    webutil.createAlert('In Test Mode',false);
+                }
             });
         });
 
