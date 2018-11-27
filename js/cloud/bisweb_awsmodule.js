@@ -776,16 +776,6 @@ class AWSModule extends BaseServerClient {
                 bucketSelectorDropdown.empty(); //remove all option elements from the dropdown
             });
     
-            //dynamic modal resizing requires overriding the default settings for bootstrap modals (modal changes size when tabs change)
-            //https://stackoverflow.com/questions/19396631/re-size-the-modal-dialog-in-bootstrap-dynamically
-            awsmodal.dialog.on('shown.bs.modal', () => {
-                /*awsmodal.dialog.css({
-                    'width': 'auto',
-                    'height': 'auto',
-                    'max-height': '100%'
-                });*/
-            });
-    
             this.bucketMenuModal = awsmodal;
         }
        
@@ -851,9 +841,9 @@ class AWSModule extends BaseServerClient {
         `);
 
 
-        let confirmButton = bis_webutil.createbutton({ 'name' : 'Confirm', 'type' : 'success', 'css' : { 'margin-right' : '10px' }});
-        let cancelButton = bis_webutil.createbutton({ 'name' : 'Cancel', 'type' : 'danger', 'css' : { 'margin-right' : '10px' } });
-        let entryButton = bis_webutil.createbutton({ 'name' : 'Enter New Bucket', 'type' : 'info' });
+        let confirmButton = bis_webutil.createbutton({ 'name' : 'Confirm', 'type' : 'success'});
+        let cancelButton = bis_webutil.createbutton({ 'name' : 'Cancel', 'type' : 'danger'});
+        let entryButton = bis_webutil.createbutton({ 'name' : 'Enter New Bucket', 'type' : 'info'});
         $(confirmButton).prop('disabled', 'disabled');
 
         let buttonGroup = selectContainer.find('.btn-group');
@@ -1147,11 +1137,16 @@ class AWSModule extends BaseServerClient {
             </div>
         `);
 
-        let confirmButton = bis_webutil.createbutton({ 'name': 'Confirm', 'type': 'success','css' : { 'margin-right' : '10px' } });
+        let confirmButton = bis_webutil.createbutton({ 'name': 'Confirm', 'type': 'success' });
         let cancelButton = bis_webutil.createbutton({ 'name': 'Cancel', 'type': 'danger' });
         let selectBucketButton = bis_webutil.createbutton({ 'name': 'Select an Existing Bucket', 'type': 'info' });
+        let importButton = bis_webutil.createbutton({ 'name' : 'Import' , 'type' : 'primary' });
+        
+        //webfileutil has to be dynamically loaded in order to avoid circular dependencies so the file callback is attached when the button is clicked
+        let importCallbackAttached = false;
 
-        confirmButton.on('click', () => {
+        confirmButton.on('click', (e) => {
+            e.preventDefault();
 
             let bucketName = entryContainer.find('.bucket-input')[0].value;
             let identityPoolId = entryContainer.find('.identity-pool-input')[0].value;
@@ -1178,8 +1173,48 @@ class AWSModule extends BaseServerClient {
             bis_webutil.createAlert('Created bucket ' + bucketName + ' and switched to it.', false, null, 2500);
         });
 
-        cancelButton.on('click', () => {
+        cancelButton.on('click', (e) => {
+            e.preventDefault();
             awsmodal.dialog.modal('hide');
+        });
+
+        importButton.on('click', (e) => {
+            e.preventDefault();
+
+            //load webfileutil and attach the file callback
+            let webfileutil = require('bis_webfileutil.js');
+            if (!importCallbackAttached) {
+                webfileutil.attachFileCallback(importButton, (file) => {
+                    console.log('files', file);
+
+                    let fileReader = new FileReader(file);
+                    fileReader.addEventListener('loadend', (e) => {
+                        console.log('e', e);
+                        try {
+                            let parsedJSON = JSON.parse(e.target.result);
+                            console.log('parsedJSON', parsedJSON);
+
+                            if (parsedJSON.bucketName) { entryContainer.find('.bucket-input').val(parsedJSON.bucketName.trim()); }
+                            if (parsedJSON.identityPoolId) { entryContainer.find('.identity-pool-input').val(parsedJSON.identityPoolId.trim()); }
+                            if (parsedJSON.userPoolId) { entryContainer.find('.user-pool-input').val(parsedJSON.userPoolId.trim()); }
+                            if (parsedJSON.appClientId) { entryContainer.find('.client-input').val(parsedJSON.appClientId.trim()); }
+                            if (parsedJSON.appWebDomain) { entryContainer.find('.web-domain-input').val(parsedJSON.appWebDomain.trim()); }
+
+                        } catch(e) {
+                            console.log('An error occured while parsing', file.name, e);
+                        }
+                    });
+
+                    fileReader.addEventListener('error', (e) => {
+                        console.log('An error occured while trying to read', file.name, e);
+                    });
+
+                    fileReader.readAsText(file);
+                }, { 'force' : 'local' });
+
+                importCallbackAttached = true;
+                importButton.click();
+            }
         });
 
         selectBucketButton.on('click', (e) => {
@@ -1202,6 +1237,7 @@ class AWSModule extends BaseServerClient {
         let buttonBar = entryContainer.find('.btn-group');
         buttonBar.append(confirmButton);
         buttonBar.append(cancelButton);
+        buttonBar.append(importButton);
         buttonBar.append(selectBucketButton);
 
         return entryContainer;
