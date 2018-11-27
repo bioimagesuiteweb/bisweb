@@ -541,7 +541,6 @@ class AWSModule extends BaseServerClient {
                 this.createAWSBucketMenu();
             }
             console.log('Items=',this.awsbucketstorage);
-            this.bucketMenuModal.dialog.modal('show');
             return;
         } else if (expireTime < Date.now() || this.refreshCredentials) {
             this.refreshCredentials = false;
@@ -758,36 +757,40 @@ class AWSModule extends BaseServerClient {
     }
 
     createAWSBucketMenu() {
-        let awsmodal = bis_webutil.createmodal('AWS Buckets', 'modal-lg');
-        awsmodal.dialog.find('.modal-content').addClass('resizing-frame show-selector');
-
-        let tabView = this.createAWSTabView(awsmodal);
-
-        let selectPane = this.createAWSBucketSelector(awsmodal, tabView);
-        tabView.find('#aws-bucket-selector-pane').append(selectPane);
-
-        let entryPane = this.createAWSBucketEntry(awsmodal);
-        tabView.find('#aws-bucket-entry-pane').append(entryPane);
-
-        awsmodal.dialog.find('.modal-footer').remove();
-
-        awsmodal.dialog.on('hidden.bs.modal', () => {
-            let bucketSelectorDropdown = awsmodal.body.find('#bucket-selector-dropdown');
-            bucketSelectorDropdown.empty(); //remove all option elements from the dropdown
-        });
-
-        //dynamic modal resizing requires overriding the default settings for bootstrap modals (modal changes size when tabs change)
-        //https://stackoverflow.com/questions/19396631/re-size-the-modal-dialog-in-bootstrap-dynamically
-        awsmodal.dialog.on('shown.bs.modal', () => {
-            /*awsmodal.dialog.css({
-                'width': 'auto',
-                'height': 'auto',
-                'max-height': '100%'
-            });*/
-        });
-
-        this.bucketMenuModal = awsmodal;
-        return awsmodal;
+        if (!this.bucketMenuModal) {
+            let awsmodal = bis_webutil.createmodal('AWS Buckets', 'modal-lg');
+            awsmodal.dialog.find('.modal-content').addClass('resizing-frame show-selector');
+    
+            let tabView = this.createAWSTabView(awsmodal);
+    
+            let selectPane = this.createAWSBucketSelector(awsmodal, tabView);
+            tabView.find('#aws-bucket-selector-pane').append(selectPane);
+    
+            let entryPane = this.createAWSBucketEntry(awsmodal);
+            tabView.find('#aws-bucket-entry-pane').append(entryPane);
+    
+            awsmodal.dialog.find('.modal-footer').remove();
+    
+            awsmodal.dialog.on('hidden.bs.modal', () => {
+                let bucketSelectorDropdown = awsmodal.body.find('#bucket-selector-dropdown');
+                bucketSelectorDropdown.empty(); //remove all option elements from the dropdown
+            });
+    
+            //dynamic modal resizing requires overriding the default settings for bootstrap modals (modal changes size when tabs change)
+            //https://stackoverflow.com/questions/19396631/re-size-the-modal-dialog-in-bootstrap-dynamically
+            awsmodal.dialog.on('shown.bs.modal', () => {
+                /*awsmodal.dialog.css({
+                    'width': 'auto',
+                    'height': 'auto',
+                    'max-height': '100%'
+                });*/
+            });
+    
+            this.bucketMenuModal = awsmodal;
+        }
+       
+        this.bucketMenuModal.dialog.modal('show');
+        return this.bucketMenuModal;
     }
 
     createAWSTabView(awsmodal) {

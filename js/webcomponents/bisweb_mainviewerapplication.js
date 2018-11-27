@@ -32,6 +32,7 @@ const bootbox=require('bootbox');
 const BisWebPanel = require('bisweb_panel.js');
 const resliceImage = require('resliceImage');
 const BisWebLinearTransformation = require('bisweb_lineartransformation.js');
+
 //const BisWebHelpVideoPanel = require('bisweb_helpvideopanel');
 
 const localforage=require('localforage');
@@ -877,6 +878,11 @@ class ViewerApplicationElement extends HTMLElement {
         }
 
         webfileutil.createFileSourceSelector(hmenu);
+        
+        webutil.createMenuItem(hmenu, 'Open AWS Selector', 
+                                () => {
+                                    webfileutil.createAWSMenu();
+                                });
 
 
         return hmenu;

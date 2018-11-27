@@ -614,6 +614,9 @@ const webfileutils = {
         }
     },
 
+    createAWSMenu() {
+        bisweb_awsmodule.createAWSBucketMenu();
+    }
 };
 
 if (!webutil.inElectronApp() ) {
