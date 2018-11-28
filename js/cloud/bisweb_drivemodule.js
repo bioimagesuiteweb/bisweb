@@ -178,6 +178,9 @@ class DriveModule {
      * Args should include at least one file with the id assigned by drive and a name assigned by a user. 
      * Files specified after this file will be ignored.
      * @param {Object} args One or many files. Formatted because the file may be specified as a single file or an array of files.
+     * @param {Object} args.file Arguments related to the file to retrieve. Optional, may be provided in args.files.
+     * @param {Array} args.files Arguments related to multiple files to retrieve. Optional, may be provided as a single file in args.file.
+     * @param {String} args.file.id The unique Google identifier for the file to get from the drive.
      */
     downloadFile(args) {
         let reqArgs = {};
@@ -232,6 +235,30 @@ class DriveModule {
                     drive.downloadFile({ file: file });
                 });
             }
+        });
+    }
+
+    /**
+     * Makes a GET request using the Google Drive API for a single file. 
+     * Unlike downloadFile this will not attempt to write the file to disk, it will simply resolve it. 
+     * @param {Object} args Arguments related to the download.
+     * @param {Object} args.file Arguments related to the file to retrieve. Optional, may be provided in args.files.
+     * @param {Array} args.files Arguments related to multiple files to retrieve. Optional, may be provided as a single file in args.file.
+     * @param {String} args.file.id The unique Google identifier for the file to get from the drive.
+     */
+    retrieveFile(args) {
+        return new Promise( (resolve, reject) => {
+            console.log('args', args);
+            let reqArgs = {};
+    
+            reqArgs.path = 'https://www.googleapis.com/drive/v3/files/' + args.id + '?alt=media';
+            reqArgs.method = 'GET';
+    
+            gapi.client.request(reqArgs).then( (response) => {
+                console.log('response', response);
+                resolve(response);
+            }).catch( (e) => { reject('Google Drive retrieveFile encountered an error', e); });
+
         });
     }
 
@@ -659,6 +686,7 @@ let pickFile = function (filter, responseFunction) {
 
             // Parse list of files to something cleaner
             let output = [];
+            let retrieveFilesPromiseArray = [];
 
             let l = listoffiles.files.length;
             if (l < 1)
@@ -673,10 +701,20 @@ let pickFile = function (filter, responseFunction) {
                     sourcetype: "Google",
                     responseFunction: responseFunction,
                 });
+
+                if (fobj.mimeType === 'text/plain' || fobj.mimeType === 'application/json') {
+                    retrieveFilesPromiseArray.push(
+                        internal.drivemodule.retrieveFile(fobj).then((data) => {
+                            output[i].data = data;
+                        }).catch((e) => {
+                            console.log('Google Drive retrieveFile returned an error', e);
+                        })
+                    );
+                }
             }
 
             if (filter.includes('single')) resolve(output[0]);
-            else resolve(output);
+            else Promise.all(retrieveFilesPromiseArray).then( () => { resolve(output); });
         };
 
 
@@ -688,7 +726,7 @@ let pickFile = function (filter, responseFunction) {
                                             {},
                                             filter);
         } catch (e) {
-            // Nothing to do
+            reject('Google Drive pickFile encountered an error', e);
         }
     });
 };

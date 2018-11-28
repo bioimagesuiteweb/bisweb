@@ -1180,41 +1180,16 @@ class AWSModule extends BaseServerClient {
 
         importButton.on('click', (e) => {
             e.preventDefault();
-
             //load webfileutil and attach the file callback
-            let webfileutil = require('bis_webfileutil.js');
             if (!importCallbackAttached) {
-                webfileutil.attachFileCallback(importButton, (file) => {
-                    console.log('files', file);
-
-                    let fileReader = new FileReader(file);
-                    fileReader.addEventListener('loadend', (e) => {
-                        console.log('e', e);
-                        try {
-                            let parsedJSON = JSON.parse(e.target.result);
-                            console.log('parsedJSON', parsedJSON);
-
-                            if (parsedJSON.bucketName) { entryContainer.find('.bucket-input').val(parsedJSON.bucketName.trim()); }
-                            if (parsedJSON.identityPoolId) { entryContainer.find('.identity-pool-input').val(parsedJSON.identityPoolId.trim()); }
-                            if (parsedJSON.userPoolId) { entryContainer.find('.user-pool-input').val(parsedJSON.userPoolId.trim()); }
-                            if (parsedJSON.appClientId) { entryContainer.find('.client-input').val(parsedJSON.appClientId.trim()); }
-                            if (parsedJSON.appWebDomain) { entryContainer.find('.web-domain-input').val(parsedJSON.appWebDomain.trim()); }
-
-                        } catch(e) {
-                            console.log('An error occured while parsing', file.name, e);
-                        }
-                    });
-
-                    fileReader.addEventListener('error', (e) => {
-                        console.log('An error occured while trying to read', file.name, e);
-                    });
-
-                    fileReader.readAsText(file);
-                }, { 'force' : 'local' });
-
+                let webfileutil = require('bis_webfileutil.js');
+                this.attachImportFileCallback(importButton, webfileutil, awsmodal);
                 importCallbackAttached = true;
                 importButton.click();
+                return;
             }
+
+            awsmodal.dialog.modal('hide');
         });
 
         selectBucketButton.on('click', (e) => {
@@ -1241,6 +1216,50 @@ class AWSModule extends BaseServerClient {
         buttonBar.append(selectBucketButton);
 
         return entryContainer;
+    }
+
+    attachImportFileCallback(importButton, webfileutil, awsmodal) {
+        webfileutil.attachFileCallback(importButton, (file) => {
+
+            console.log('file', file);
+            //the file object will differ between data sources, e.g. if it comes from Google Drive it will be a parsed response, if it comes from disk it will be a Blob, etc.
+            //so some disambiguation is required.
+            file = file.data ? (file.data.result ? file.data.result : file.data) : file;
+            console.log('typeof file', file instanceof File);
+            if (file instanceof File) {
+                let fileReader = new FileReader(file);
+                fileReader.addEventListener('loadend', (e) => {
+                    try {
+                        let parsedJSON = JSON.parse(e.target.result);
+                        awsmodal.dialog.modal('show');
+                        console.log('parsedJSON', parsedJSON);
+                        fillOutModalFields(awsmodal.dialog, parsedJSON);
+                    } catch (e) {
+                        console.log('An error occured while parsing', file.name, e);
+                        awsmodal.dialog.modal('show');
+                    }
+                });
+    
+                fileReader.addEventListener('error', (e) => {
+                    console.log('An error occured while trying to read', file.name, e);
+                    awsmodal.dialog.modal('show');
+                });
+    
+                fileReader.readAsText(file);
+            } else {
+                awsmodal.dialog.modal('show');
+                fillOutModalFields(awsmodal.dialog, file);
+            }
+           
+        });
+
+        function fillOutModalFields(entryContainer, parsedJSON) {
+            if (parsedJSON.bucketName) { entryContainer.find('.bucket-input').val(parsedJSON.bucketName.trim()); }
+            if (parsedJSON.identityPoolId) { entryContainer.find('.identity-pool-input').val(parsedJSON.identityPoolId.trim()); }
+            if (parsedJSON.userPoolId) { entryContainer.find('.user-pool-input').val(parsedJSON.userPoolId.trim()); }
+            if (parsedJSON.appClientId) { entryContainer.find('.client-input').val(parsedJSON.appClientId.trim()); }
+            if (parsedJSON.appWebDomain) { entryContainer.find('.web-domain-input').val(parsedJSON.appWebDomain.trim()); }
+        }
     }
 
     createNewBucketInfo(bucketName, identityPoolId, userPoolId, appClientId, appWebDomain) {
