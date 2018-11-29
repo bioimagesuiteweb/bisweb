@@ -774,6 +774,10 @@ class AWSModule extends BaseServerClient {
             awsmodal.dialog.on('hidden.bs.modal', () => {
                 let bucketSelectorDropdown = awsmodal.body.find('#bucket-selector-dropdown');
                 bucketSelectorDropdown.empty(); //remove all option elements from the dropdown
+
+                //clear inputs in the entry pane
+                let bucketEntryInputs = awsmodal.body.find('#aws-bucket-entry-pane').find('input');
+                bucketEntryInputs.each( (index, element) => {  $(element).val(''); });
             });
     
             this.bucketMenuModal = awsmodal;
@@ -787,10 +791,10 @@ class AWSModule extends BaseServerClient {
         let tabView = $(`
                 <ul class="nav nav-tabs" id="aws-tab-menu" role="tablist">
                     <li class="nav-item active">
-                        <a class="nav-link" id="entry-tab" data-toggle="tab" href="#aws-entry-tab-panel" role="tab" aria-controls="entry" aria-selected="false">Enter New Bucket</a>
+                        <a class="nav-link" id="selector-tab" data-toggle="tab" href="#aws-selector-tab-panel" role="tab" aria-controls="home" aria-selected="true">Select AWS Bucket</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="selector-tab" data-toggle="tab" href="#aws-selector-tab-panel" role="tab" aria-controls="home" aria-selected="true">Select AWS Bucket</a>
+                        <a class="nav-link" id="entry-tab" data-toggle="tab" href="#aws-entry-tab-panel" role="tab" aria-controls="entry" aria-selected="false">Enter New Bucket</a>
                     </li>
                 </ul>
                 <div class="tab-content" id="aws-tab-content">
@@ -1258,7 +1262,7 @@ class AWSModule extends BaseServerClient {
             if (parsedJSON.identityPoolId) { entryContainer.find('.identity-pool-input').val(parsedJSON.identityPoolId.trim()); }
             if (parsedJSON.userPoolId) { entryContainer.find('.user-pool-input').val(parsedJSON.userPoolId.trim()); }
             if (parsedJSON.appClientId) { entryContainer.find('.client-input').val(parsedJSON.appClientId.trim()); }
-            if (parsedJSON.appWebDomain) { entryContainer.find('.web-domain-input').val(parsedJSON.appWebDomain.trim()); }
+            if (parsedJSON.appWebDomain) { entryContainer.find('.web-domain-input').val(parsedJSON.appWebDomain.trim()); }      
         }
     }
 
