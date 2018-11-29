@@ -41,7 +41,7 @@ test('Check Carousel Switches Automatically', async t => {
     //get the first element displayed, wait an amount of time more than it would take for the carousel to switch, and check if 
     const firstActiveElement = await getActiveElement();
     await t
-        .wait(3000)
+        .wait(8000)
         .expect(getActiveElement()).notEql(firstActiveElement);
 });
 
