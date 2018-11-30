@@ -1,7 +1,7 @@
 /* globals test, fixture*/
 
 import { Selector } from 'testcafe';
-import { ClientFunction, t } from 'testcafe';
+import { t } from 'testcafe';
 
 fixture`Overlay Tests`.page`http://localhost:8080/web/dualviewer.html`;
 
@@ -32,6 +32,17 @@ export default class Page {
             .click(alertCloseButton);    
     }
 
+    async loadOverlayTwo() {
+        const overlayDropdown = Selector('.dropdown-toggle').withText('Overlay2');
+        const overlayTab = this.getDropdownFromTitle(overlayDropdown).find('a').withText('Load Yale Brodmann Atlas (2mm)');
+        const alertCloseButton = Selector('.alert.alert-dismissible').find('button');
+
+        await t
+            .click(overlayDropdown)
+            .click(overlayTab)
+            .click(alertCloseButton);
+    }
+
     async typeText(input, text) {
         await t
             .click(input)
@@ -45,9 +56,9 @@ export default class Page {
     //this function is a little brittle! the canvas is totally opaque as an element so I had to find the location of the viewer by trial and error
     //-Zach
     async dragAcrossViewerTwo(screenshotName) {
-        const canvas = Selector('canvas');
+        const canvas = Selector('.glyphicon.glyphicon-chevron-right').withAttribute('index', '5');
         await t
-            .drag(canvas, 500, 400, { 'offsetX': 1000, 'offsetY': 1000, 'speed': 0.05 })
+            .drag(canvas, -500, 400, { 'offsetX': 0, 'offsetY': 0, 'speed': 0.05 })
             .takeScreenshot(screenshotName);
     }
 
@@ -200,5 +211,53 @@ test('Check Disable Mouse', async t => {
     await page.loadImageTwo();
 
     await t.maximizeWindow();
-    await page.dragAcrossViewerTwo();
+    const disableMouseButton = page.getElementFromListItem(Selector('span').withText('Disable Mouse')).find('input');
+
+    await t.click(disableMouseButton);
+    await page.dragAcrossViewerTwo('viewer_two_mouse/DisabledMouse.png');
+    await t.click(disableMouseButton);
+    await page.dragAcrossViewerTwo('viewer_two_mouse/EnabledMouse.png');
+});
+
+test('Check Viewer 2 Color Mapping Sliders', async t => {
+    const page = new Page();
+    await page.loadImageTwo();
+
+    const imgColorMappingDropdown = Selector('li').withText('Image Color Mapping');
+    const minIntTextbox = page.getElementFromListItem(Selector('span').withText('Min Int')).find('input');
+    const maxIntTextbox = page.getElementFromListItem(Selector('span').withText('Max Int')).find('input');
+
+    await t
+        .click(imgColorMappingDropdown)
+        .takeScreenshot('viewer_two_color/BaseColorMapping.png');
+    
+    await page.typeText(minIntTextbox, '50');
+    await t.takeScreenshot('viewer_two_color/HigherMinInt.png');
+
+    await page.typeText(minIntTextbox, '0');
+    await page.typeText(maxIntTextbox, '100');
+    await t.takeScreenshot('viewer_two_color/LowerMaxInt.png');
+});
+
+test('Check Viewer 2 Color Mapping Options', async t => {
+    const page = new Page();
+    await page.loadImageTwo();
+
+    const imgColorMappingDropdown = Selector('li').withText('Image Color Mapping');
+    const interpolateButton = page.getElementFromListItem(Selector('span').withText('Interpolate')).find('input');
+    const autoContrastButton = page.getElementFromListItem(Selector('span').withText('Auto-Contrast')).find('input');
+
+    await t
+        .click(imgColorMappingDropdown)
+        .click(interpolateButton)
+        .takeScreenshot('viewer_two_options/NoInterpolate.png')
+        .click(interpolateButton)
+        .click(autoContrastButton)
+        .takeScreenshot('viewer_two_options/NoAutoContrast.png');
+});
+
+test('Check Viewer 2 Overlay', async t => {
+    const page = new Page();
+    await page.loadImageTwo();
+
 });
