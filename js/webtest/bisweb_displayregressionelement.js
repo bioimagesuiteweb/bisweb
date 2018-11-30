@@ -23,6 +23,7 @@ const bis_webfileutil=require('bis_webfileutil');
 const webutil=require('bis_webutil');
 const $=require('jquery');
 const bisdate=require('bisdate.js').date;
+const BisWebImage=require('bisweb_image');
 const userPreferences = require('bisweb_userpreferences.js');
 import testmodule from '../../web/images/testdata/displaytests.json';
 let displaytestlist=null;
@@ -41,6 +42,11 @@ let globalParams = {
     currentViewer : null,
 };
 
+let globalImage=new BisWebImage();
+globalImage.createImage({ "dimensions" : [ 2,2,2] ,
+                          "numframes" : 2,
+                          "type": 'float' });
+globalImage.getImageData()[4]=2.0;
 
 // ---------------------- run Test -------------------------------------
 
@@ -48,10 +54,12 @@ var runTest = async function(testindex,viewerindex,basestate='',viewerstate='',c
 
     userPreferences.setImageOrientationOnLoad('None');
 
+
+    globalParams.application.getViewer(0).setimage(globalImage);
     
     try {
         console.log("Reading app state from",basestate);
-        globalParams.application.getViewer(0).clearobjectmap();
+        //        globalParams.application.getViewer(0).clearobjectmap();
         globalParams.resdiv.append('<p>Reading app state from '+basestate+'</p>');
         await globalParams.application.loadApplicationState(basestate);
         if (viewerstate)
