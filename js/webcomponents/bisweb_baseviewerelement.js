@@ -366,7 +366,7 @@ class BaseViewerElement extends HTMLElement {
             let renderer=this.internal.layoutcontroller.renderer;
             let t=renderer.domElement.toDataURL();
             this.internal.preservesnapshot=false;
-            this.internal.snapshotcontroller.update(t,this.internal.ismosaic);
+            this.internal.snapshotcontroller.update(t,true);//this.internal.ismosaic);
         }
 
         if (this.slave_viewer!==null)
