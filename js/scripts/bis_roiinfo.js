@@ -29,6 +29,7 @@
 
 require('../../config/bisweb_pathconfig.js');
 const program=require('commander');
+const path=require('path');
 const BisWebImage=require('bisweb_image');
 
       
@@ -59,6 +60,8 @@ if (inpfilename===null || roifilename===null) {
 let img=new BisWebImage();
 let voi=new BisWebImage();
 
+let bname=roifilename.substr(0,roifilename.length-7);
+
 Promise.all( [
     img.load(inpfilename),
     voi.load(roifilename)
@@ -69,6 +72,13 @@ Promise.all( [
     let data=img.getImageData();
     let data2=voi.getImageData();
 
+    let output= [ new BisWebImage(), new BisWebImage() ];
+    let outdata= [ null,null ];
+    for (let ia=0;ia<=1;ia++) {
+        output[ia].cloneImage(img);
+        outdata[ia]=output[ia].getImageData();
+    }
+    
     let mean=[0,0],sigma=[0,0],sum=[0,0],sum2=[0,0],num=[0,0];
     
     if (data.length !== data2.length) {
@@ -84,6 +94,7 @@ Promise.all( [
             sum[r]+=v;
             sum2[r]+=v*v;
             num[r]+=1;
+            outdata[r][i]=v;
         }
     }
 
@@ -95,5 +106,18 @@ Promise.all( [
         sigma[j] = Math.sqrt(sum2[j]/(num[j])-mean[j]*mean[j]);
         console.log(`*Result*,${inpfilename},${roifilename},${j},${num[j]},${mean[j]},${sigma[j]},${sigma[j]/mean[j]}`);
     }
-    process.exit(0);
+
+    let fname=[ null,null ];
+    for (let ia=0;ia<=1;ia++) {
+        fname[ia]=path.join("masked",path.basename(bname)+`_region${ia+1}.nii.gz`);
+    }
+
+    Promise.all( [
+        output[0].save(fname[0]),
+        output[1].save(fname[1])
+    ]).then( () => {
+
+        console.log('All Saved ',fname.join('\n\t'));
+        process.exit(0);
+    });
 });

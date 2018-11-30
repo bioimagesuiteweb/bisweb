@@ -126,8 +126,8 @@ let showAlert=function(message,type='info') {
         internal.alertDiv.remove();
 
     internal.alertDiv = $(`<div class="alert alert-${type} alert-dismissible" role="alert" 
-		  style="position:absolute; top:80px; left:20px; z-index: 100">
-		  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${message}</a></div>`);
+                  style="position:absolute; top:80px; left:20px; z-index: 100">
+                  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${message}</a></div>`);
     $('body').append(internal.alertDiv);
     internal.alertDiv.alert();
 };
@@ -391,46 +391,76 @@ let installLatestVersion=async function() {// jshint ignore:line
 //
 // ------------------------------------------------------------------------------
 
-let createApplicationSelector=function(obj) {
+let createApplicationSelector=function(externalobj) {
     
     let container=$("#bisslides");
     let indicators=$(".carousel-indicators");
     let topmenu=$("#topappmenu");
 
-    
-    let keys=Object.keys(obj);
-    let max=keys.length;
 
+    let hardcorded = {
+        "youtube" : {
+            "title" : "You Tube Channel",
+            "url"   : "https://www.youtube.com/channel/UCizfR_ryJ0E-2uZspjwYtwg",
+            "description" : "The BioImage Suite Web YouTube Channel",
+            "picture" : "images/youtube.png"
+        },
+        "manual" : {
+            "title" : "BioImage Suite Web Manual",
+            "url" : "https://bioimagesuiteweb.github.io/bisweb-manual/",
+            "description" : "The BioImage Suite Web Online Manual",
+            "picture" : "images/manual.png",
+        }
+    };
+
+    let objlist = [ hardcorded,externalobj ];
     let imagestring="";
     let menustring="";
     let indstring="";
+    let count=0;
     
-    for (let i=0;i<max;i++) {
-        let elem=obj[keys[i]];
-        let title=elem.title;
-        let url='./'+elem.url+'.html';
-        let description=elem.description;
-        let picture=elem.picture;
-        let electrononly=elem.electrononly || false;
-        let hide=elem.hide || false;
-        
-        if ( hide===false && (inelectron === true || 
-                              (inelectron === false && electrononly===false))) {
-            
-            let cname="";
-            if (i===0)
-                cname=" active";
-            
-            let a=`<div class="item${cname}"><a href="${url}" target="_blank"><img src="${picture}" alt="${title}"><div class="carousel-caption">${i+1}. ${description}</div></div>`;
-            imagestring+=a;
-            
-            menustring+=`<li><a  href="${url}" target="_blank" role="button">${title}</a></li>`;
+    for (let kk=0;kk<objlist.length;kk++) {
 
-            let b='<li data-target="#mycarousel" data-slide-to="'+i+'"';
-            if (i===0)
-                b+='class="active"';
-            b+="></li>";
-            indstring+=b;
+        let obj=objlist[kk];
+        let keys=Object.keys(obj);
+        let max=keys.length;
+        
+        for (let i=0;i<max;i++) {
+            
+            let elem=obj[keys[i]];
+            let title=elem.title;
+            let url='';
+            if (elem.url.indexOf('http')===0)
+                url=elem.url;
+            else
+                url='./'+elem.url+'.html';
+            
+            let description=elem.description;
+            let picture=elem.picture;
+            let electrononly=elem.electrononly || false;
+            let hide=elem.hide || false;
+            
+            if ( hide===false && (inelectron === true || 
+                                  (inelectron === false && electrononly===false))) {
+
+                count=count+1;
+                
+                let cname="";
+                if (count===1)
+                    cname=" active";
+                
+                let a=`<div class="item${cname}"><a href="${url}" target="_blank"><img src="${picture}" alt="${title}" style="height:400px"><div class="carousel-caption">${count}. ${description}</div></div>`;
+                imagestring+=a;
+
+                if (kk>0)
+                    menustring+=`<li><a  href="${url}" target="_blank" role="button">${title}</a></li>`;
+                
+                let b='<li data-target="#mycarousel" data-slide-to="'+i+'"';
+                if (count===1)
+                    b+='class="active"';
+                b+="></li>";
+                indstring+=b;
+            }
         }
     }
 
