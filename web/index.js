@@ -687,7 +687,7 @@ window.onload = (() => {
 
     $('#mycarousel').carousel(
         {
-            interval: 2000,
+            interval: 3000,
             wrap : true,
         });
     $('#mycarousel').carousel('cycle');
