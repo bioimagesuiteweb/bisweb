@@ -393,10 +393,21 @@ const util = {
                 color=Math.floor(params.numcolors+(params.numcolors-1)*color);
             else
                 color=Math.floor((params.numcolors-1)*(1-color));
-            
-            map[0]=params.cmap[color][0];
-            map[1]=params.cmap[color][1];
-            map[2]=params.cmap[color][2];
+
+            try {
+                map[0]=params.cmap[color][0];
+                map[1]=params.cmap[color][1];
+                map[2]=params.cmap[color][2];
+            } catch(e) {
+                // TODO:
+                // There is a bug here somewhere
+                // When transitioning.
+                // Keep Try for now
+                map[0]=0;
+                map[1]=0;
+                map[2]=0;
+                map[3]=0;
+            }
         };
         return fun;
     },
