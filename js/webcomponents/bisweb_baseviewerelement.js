@@ -239,8 +239,11 @@ class BaseViewerElement extends HTMLElement {
     
     /** delete the image (called when setting a new one) */
     deleteoldimage(samesize=false) {
-        
-        this.deleteoldobjectmap();          
+
+        // TODO:
+        // Test this very carefully
+        if (!samesize)
+            this.deleteoldobjectmap();          
         
         if (this.internal.volume===null)
             return;
