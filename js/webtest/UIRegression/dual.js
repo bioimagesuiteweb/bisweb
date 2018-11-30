@@ -22,12 +22,14 @@ export default class Page {
     async loadImageTwo() {
         const fileDropdown = Selector('.dropdown-toggle').withText('Image2');
         const imageOneTab = this.getDropdownFromTitle(fileDropdown).find('a').withText('Load MNI T1 (2mm)');
+        const alertCloseButton = Selector('.alert.alert-dismissible').find('button');
         const viewerTwoControls = Selector('a').withText('Viewer 2 Controls');
 
         await t
             .click(fileDropdown)
             .click(imageOneTab)
-            .click(viewerTwoControls);    
+            .click(viewerTwoControls)
+            .click(alertCloseButton);    
     }
 
     async typeText(input, text) {
@@ -37,6 +39,16 @@ export default class Page {
             .pressKey('delete')
             .typeText(input, text)
             .pressKey('enter');
+    }
+
+    //drag cursor across canvas to paint a line
+    //this function is a little brittle! the canvas is totally opaque as an element so I had to find the location of the viewer by trial and error
+    //-Zach
+    async dragAcrossViewerTwo(screenshotName) {
+        const canvas = Selector('canvas');
+        await t
+            .drag(canvas, 500, 400, { 'offsetX': 1000, 'offsetY': 1000, 'speed': 0.05 })
+            .takeScreenshot(screenshotName);
     }
 
     getDropdownFromTitle(dropdown) {
@@ -63,13 +75,130 @@ test('Check Viewer 2 Controls', async t => {
     const page = new Page();
     await page.loadImageTwo();
 
-    const iCoordTextBox = page.getElementFromListItem(Selector('li').withText('I-Coord')).find('input');
-    const jCoordTextBox = page.getElementFromListItem(Selector('li').withText('J-Coord')).find('input');
-    const kCoordTextBox = page.getElementFromListItem(Selector('li').withText('K-Coord')).find('input');
+    const iCoordTextBox = page.getElementFromListItem(Selector('span').withText('I-Coord')).find('input');
+    const jCoordTextBox = page.getElementFromListItem(Selector('span').withText('J-Coord')).find('input');
+    const kCoordTextBox = page.getElementFromListItem(Selector('span').withText('K-Coord')).find('input');
 
     await page.typeText(iCoordTextBox, '15');
     await page.typeText(jCoordTextBox, '20');
     await page.typeText(kCoordTextBox, '15');
 
-    await t.takeScrenshot('check_viewer_two/MoveSliders.png');
+    await t.takeScreenshot('viewer_two_controls/MoveSliders.png');
+
+    const labelsCheckbox = page.getElementFromListItem(Selector('span').withText('Labels')).find('input');
+
+    await t
+        .click(labelsCheckbox)
+        .wait(1000)
+        .takeScreenshot('viewer_two_controls/NoLabels.png');   
+});
+
+test('Check Viewer 2 Modes', async t => {
+    const page = new Page();
+    await page.loadImageTwo();
+
+    const modeSelector = page.getElementFromListItem(Selector('li').withText('Mode')).find('select');
+
+    await t
+        .takeScreenshot('viewer_two_modes/SliceView.png')
+        .click(modeSelector)
+        .click(Selector('option').withText('Sagittal'))
+        .wait(1000)
+        .takeScreenshot('viewer_two_modes/SagittalView.png')
+        .click(modeSelector)
+        .click(Selector('option').withText('Coronal'))
+        .wait(1000)
+        .takeScreenshot('viewer_two_modes/CoronalView.png')
+        .click(modeSelector)
+        .click(Selector('option').withText('Axial'))
+        .wait(1000)
+        .takeScreenshot('viewer_two_modes/AxialView.png')
+        .click(modeSelector)
+        .click(Selector('option').withText('Slices+3D'))
+        .wait(1000)
+        .takeScreenshot('viewer_two_modes/SlicesAnd3D.png')
+        .click(modeSelector)
+        .click(Selector('option').withText('3D Only'))
+        .wait(1000)
+        .takeScreenshot('viewer_two_modes/3DOnly.png')
+        .click(modeSelector)
+        .click(Selector('option').withText('Simple Mode'))
+        .wait(1000)
+        .takeScreenshot('viewer_two_modes/SimpleMode.png');
+});
+
+test('Check Viewer 2 Zoom', async t => {
+    const page = new Page();
+    await page.loadImageTwo();
+
+    const zoomIn = Selector('.btn').withText('Z+');
+    const zoomOut = Selector('.btn').withText('Z-');
+    const resetSlices = Selector('.btn').withText('Reset Slices');
+
+    await t
+        .click(zoomIn)
+        .click(zoomIn)
+        .click(zoomIn)
+        .takeScreenshot('viewer_two_zoom/ZoomedIn.png')
+        .click(resetSlices)
+        .wait(1000)
+        .takeScreenshot('viewer_two_zoom/ResetSlices.png')
+        .click(zoomOut)
+        .click(zoomOut)
+        .click(zoomOut)
+        .takeScreenshot('viewer_two_zoom/ZoomedOut.png');
+});
+
+test('Check Viewer 2 Chevrons', async t => {
+    const page = new Page();
+    await page.loadImageTwo();
+
+    await t.maximizeWindow();
+
+    const iCoordTextBox = page.getElementFromListItem(Selector('span').withText('I-Coord')).find('input');
+    const jCoordTextBox = page.getElementFromListItem(Selector('span').withText('J-Coord')).find('input');
+    const kCoordTextBox = page.getElementFromListItem(Selector('span').withText('K-Coord')).find('input');
+
+    const sagittalLeft = Selector('.glyphicon.glyphicon-chevron-left').withAttribute('index', '0');
+    const sagittalRight = Selector('.glyphicon.glyphicon-chevron-right').withAttribute('index', '1');
+    const coronalLeft = Selector('.glyphicon.glyphicon-chevron-left').withAttribute('index', '2');
+    const coronalRight = Selector('.glyphicon.glyphicon-chevron-right').withAttribute('index', '3');
+    const axialLeft = Selector('.glyphicon.glyphicon-chevron-left').withAttribute('index', '4');
+    const axialRight = Selector('.glyphicon.glyphicon-chevron-right').withAttribute('index', '5');
+
+
+    await page.typeText(iCoordTextBox, '45');
+    await page.typeText(jCoordTextBox, '54');
+    await page.typeText(kCoordTextBox, '45');
+
+    await t
+        .click(sagittalLeft)
+        .click(sagittalLeft)
+        .expect(iCoordTextBox.value).eql('43')
+        .click(sagittalRight)
+        .click(sagittalRight)
+        .click(sagittalRight)
+        .expect(iCoordTextBox.value).eql('46')
+        .click(coronalLeft)
+        .click(coronalLeft)
+        .expect(jCoordTextBox.value).eql('52')
+        .click(coronalRight)
+        .click(coronalRight)
+        .click(coronalRight)
+        .expect(jCoordTextBox.value).eql('55')
+        .click(axialLeft)
+        .click(axialLeft)
+        .expect(kCoordTextBox.value).eql('43')
+        .click(axialRight)
+        .click(axialRight)
+        .click(axialRight)
+        .expect(kCoordTextBox.value).eql('46');
+});
+
+test('Check Disable Mouse', async t => {
+    const page = new Page();
+    await page.loadImageTwo();
+
+    await t.maximizeWindow();
+    await page.dragAcrossViewerTwo();
 });
