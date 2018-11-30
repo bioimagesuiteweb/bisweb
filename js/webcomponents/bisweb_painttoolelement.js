@@ -1077,10 +1077,10 @@ class PaintToolElement extends HTMLElement {
         };
 
 
-        webutil.createMenuItem(tmenu,'Paint Tool',function() {
-            webutil.activateCollapseElement(self.internal.parentDomElement);
-        });
-        webutil.createMenuItem(tmenu,''); // separator
+        //        webutil.createMenuItem(tmenu,'Paint Tool',function() {
+        //            webutil.activateCollapseElement(self.internal.parentDomElement);
+        //        });
+        //webutil.createMenuItem(tmenu,''); // separator
 
         return new Promise( (resolve) => {
 
