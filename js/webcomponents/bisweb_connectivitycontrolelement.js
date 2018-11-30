@@ -1427,7 +1427,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         
 
         let total=0;
-        
+
         if (state.linestodraw == gui_Lines[0] ||
             state.linestodraw == gui_Lines[2] ) {
             let pos=internal.conndata.createLinePairs(0,state.matrixthreshold);
@@ -1519,10 +1519,12 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             return 0;
 
         
-        let color = [ internal.parameters.poscolor, 
-                      internal.parameters.negcolor,
-                      internal.parameters.poscolor,
-                      internal.parameters.negcolor  ];
+        let color = [ state.poscolor, 
+                      state.negcolor,
+                      state.poscolor,
+                      state.negcolor  ];
+
+        //        console.log('Drawing 3D',state.poscolor,state.negcolor);
         
         let lparr = internal.conndata.draw3DLines(internal.parcellation,pos,neg);
         for (let i=0;i<=1;i++) {
