@@ -297,7 +297,7 @@ const webfileutils = {
             }
         }
 
-        console.log('Suffix =',fileopts.suffix,suffix,fileopts.filters);
+        //        console.log('Suffix =',fileopts.suffix,suffix,fileopts.filters);
         
         if (suffix === "NII" || fileopts.filters === "NII") {
             suffix = '.nii.gz,.nii,.gz,.tiff';
@@ -422,6 +422,7 @@ const webfileutils = {
 
 
         let nid=webutil.getuniqueid();
+
         let loadelement = $(`<input type="file" style="visibility: hidden;" id="${nid}" accept="${suffix}"/>`);
         for (let i=0;i<fileInputElements.length;i++)
             fileInputElements[i].remove();
