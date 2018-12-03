@@ -158,6 +158,23 @@ const dataURLToBlob = function(dataURL) {
 
 // -------------------------------------------- Utilities ---------------------------------------------------------------------
 
+/** inIOS. Checks if we are running in IOS
+ * @alias BisCoreGenericIO#inIOS
+ * @returns {boolean} 
+ */
+var inIOS = function () {
+
+    try {
+        if (/iP(hone|od|ad)/.test(navigator.platform)) {
+            return true;
+        }
+    } catch(e) {
+        return false;
+    }
+    return false;
+};
+
+
 /** is compressed. Checks if filename ends in .gz
  * @alias BisCoreGenericIO#iscompressed
  * @param {string} url - the filename or url
@@ -974,6 +991,7 @@ const biscoregenericio = {
     binary2string :     binary2string ,
     dataURLToBlob : dataURLToBlob,
     iscompressed :      iscompressed, // ends in .gz
+    inIOS : inIOS, // are we running in iOS Safari
     setWebWorkerScope :     setWebWorkerScope,
     readtextdatafromurl : readtextdatafromurl, // read from url
     readbinarydatafromurl : readbinarydatafromurl, // read from url
