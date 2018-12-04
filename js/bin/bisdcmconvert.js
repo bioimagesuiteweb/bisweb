@@ -25,17 +25,15 @@ program
     .option('-x, --reorient-crop <b>', 'Reorient and crop the 3D NIfTI images. Optional, false by default')
     .parse(process.argv);
     
-/*let parseOptions = () => {
+let parseOptions = () => {
     let optionString = '';
-    console.log('program.fourDimensional')
-    switch (program) {
-        case program.fourDimensional : optionString.concat('-4 1')
-        case 
-    }
-};*/
+    console.log('four dimensional', program.fourDimensional === true);
+    if ('fourDimensional' in program) { program.fourDimensional ? optionString.concat('-4 1') : optionString.concat('-4 0'); }
+    if ('anonymize' in program) { optionString.concat('-a 1')}
+};
 
 let runDCM2NII = (inFolder, outFolder) => {
-    console.log('parse options', parseOptions());
+    parseOptions();
     exec(`dcm2nii -o ${outFolder} ${inFolder}`, (err, stdout, stderr) => {
         if (err) { console.log('An error occurred during conversion', err); return; }
 
