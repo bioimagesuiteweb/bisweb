@@ -68,8 +68,7 @@ class FileTreePanel extends HTMLElement {
                 for (let childItem of item.children) {
                     if (childItem.className.indexOf('dropdown-menu') !== -1) {
 
-                        console.log('adding file tree panel menu item');
-                        let dropdownItem = bis_webutil.createDropdownItem($(childItem), 'File Tree Panel');
+                        let dropdownItem = bis_webutil.createMenuItem($(childItem), 'File Tree Panel');
                         dropdownItem.on('click', (e) => {
                             e.preventDefault();
                             this.panel.show();
@@ -366,4 +365,4 @@ class FileTreePanel extends HTMLElement {
 
 }
 
-bis_webutil.defineElement('bisweb-treepanel', FileTreePanel);
+bis_webutil.defineElement('bisweb-filetreepanel', FileTreePanel);
