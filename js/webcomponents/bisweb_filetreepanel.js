@@ -323,6 +323,7 @@ class FileTreePanel extends HTMLElement {
      */
     loadImageFromTree() {
 
+        console.log('currently selected node', this.currentlySelectedNode, 'base directory', this.baseDirectory);
         //construct the full name out of the current node 
         let name = '', currentNode = this.currentlySelectedNode;
         let tree = this.panel.widget.find('.file-container').jstree();
