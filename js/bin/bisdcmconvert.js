@@ -7,7 +7,7 @@ const process = require('process');
 program
     .option('-i, --in <n>', 'The folder to invoke dcm2nii on. Required.')
     .option('-o, --out <n>', 'The name of the folder to output converted files into. Optional, this will generate a default directory if not specified.')
-    .option('-4, --four-dimensional <b>','Whether or not to create 4D volumes from the DICOM files. Will otherwise it will save as many 3D volumes, true by default')
+    .option('-4, --four-dimensional <b>', 'Whether or not to create 4D volumes from the DICOM files. Will otherwise it will save as many 3D volumes, true by default')
     .option('-a, --anonymize <b>', 'Whether or not to anonymize the DICOM images. True by default.')
     .option('-b, --settings <n>', 'Load settings from a specified initialization file. Optional.')
     .option('-c, --collapse <b>', 'Collapse input folders. Optional, true by default.')
@@ -18,30 +18,54 @@ program
     .option('--id <b>', 'Put id in the filename, e.g. filename.dcm -> johndoe.nii. Optional, false by default')
     .option('-m, --manual <b>', 'Manually prompt the user to specify an output format. Optional, true by default')
     .option('-n, --nii <b>', 'Output nii file. Optional, true by default, if false will create .hdr/.img pair')
+    .option('-p, --program <b>', 'Put the protocol in filename, e.g. filename.dcm -> TFE_T1.nii. Optional, true by default.')
     .option('-r, --reorient-orthagonal <b>', 'Reorient image to the nearest orthagonal. Optional.')
     .option('-s, --spm2-analyze <b>', 'Do SPM2/Analyze rather than SPM5/NIfTI. Optional, false by default.')
     .option('-t, --text <b>', 'Make a text report, (patient and scan details). Optional, false by default.')
     .option('-v, --convert <b>', 'Convert every image in the specified in directory. Optional, true by default')
     .option('-x, --reorient-crop <b>', 'Reorient and crop the 3D NIfTI images. Optional, false by default')
     .parse(process.argv);
-    
+
 let parseOptions = () => {
     let optionString = '';
-    console.log('four dimensional', program.fourDimensional === true);
-    if ('fourDimensional' in program) { program.fourDimensional ? optionString.concat('-4 1') : optionString.concat('-4 0'); }
-    if ('anonymize' in program) { optionString.concat('-a 1')}
+    addOption('fourDimentional', '-4');
+    addOption('anonymize', '-a');
+    addOption('settings', '-b');
+    addOption('collapse', '-c');
+    addOption('date', '-d');
+    addOption('events', '-e');
+    addOption('sourceFilename', '-f');
+    addOption('gzip', '-g');
+    addOption('id', '-i');
+    addOption('manual', '-m');
+    addOption('nii', '-n');
+    addOption('program', '-p');
+    addOption('reorientOrthagonal', '-r');
+    addOption('spm2Analyze', '-s');
+    addOption('text', '-t');
+    addOption('convert', '-v');
+    addOption('reorientCrop', '-x');
+
+    console.log('option string', optionString);
+    return optionString;
+
+    function addOption(key, code) {
+        if (key in program) {
+            return (program[key] === true) ? optionString.concat(`${code} Y `) : optionString.concat(`${code} N `);
+        }
+    }
 };
 
 let runDCM2NII = (inFolder, outFolder) => {
-    parseOptions();
-    exec(`dcm2nii -o ${outFolder} ${inFolder}`, (err, stdout, stderr) => {
-        if (err) { console.log('An error occurred during conversion', err); return; }
+    let optionString = parseOptions();
 
-        console.log('stdout', stdout, 'stderr', stderr);
+    exec(`dcm2nii ${optionString} -o ${outFolder} ${inFolder}`, (err, stdout) => {
+        if (err) { console.log('An error occurred during conversion', err); return; }
+        console.log('stdout', stdout);
     });
 };
 
-    
+
 exec('which dcm2nii', (err, stdout, stderr) => {
     if (err) {
         console.log('The program dcm2nii could not be found in your path, please ensure that you have installed this program and try again.');
