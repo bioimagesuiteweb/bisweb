@@ -1,5 +1,6 @@
 require('../../config/bisweb_pathconfig.js');
 const exec = require('child_process').exec;
+const spawn = require('child_process').spawn;
 const program = require('commander');
 const process = require('process');
 
@@ -14,7 +15,7 @@ program
     .option('-d, --date <b>', 'Put the date in the filename. Optional, true by default.')
     .option('-e, --events <b>', 'Put events (series, acquisitions) in the filename, e.g. filename.dcm -> s002a003.nii. Optional, true by default')
     .option('-f, --source-filenames', 'Source the filenames. Optional, false by default.')
-    .option('-g, --gzip <b>', 'Compress output. Optional, true by default')
+    .option('-g, --gzip <b>', 'Compress output. Optional, false by default')
     .option('--id <b>', 'Put id in the filename, e.g. filename.dcm -> johndoe.nii. Optional, false by default')
     .option('-m, --manual <b>', 'Manually prompt the user to specify an output format. Optional, true by default')
     .option('-n, --nii <b>', 'Output nii file. Optional, true by default, if false will create .hdr/.img pair')
@@ -27,7 +28,7 @@ program
     .parse(process.argv);
 
 let parseOptions = () => {
-    let optionString = '';
+    let optionArray = [];
     addOption('fourDimentional', '-4');
     addOption('anonymize', '-a');
     addOption('settings', '-b');
@@ -46,22 +47,32 @@ let parseOptions = () => {
     addOption('convert', '-v');
     addOption('reorientCrop', '-x');
 
-    console.log('option string', optionString);
-    return optionString;
+    if (!optionArray.includes('-g')) { optionArray.push('-g', 'N'); }
+    return optionArray;
 
     function addOption(key, code) {
         if (key in program) {
-            return (program[key] === true) ? optionString.concat(`${code} Y `) : optionString.concat(`${code} N `);
+            console.log(key, 'in program', program[key], program[key] === 'true');
+            return (program[key] === true || program[key] === 'true') ? optionArray.push(code, 'Y') : optionArray.push(code, 'N');
         }
     }
 };
 
 let runDCM2NII = (inFolder, outFolder) => {
-    let optionString = parseOptions();
+    let optionArray = parseOptions();
+    optionArray.push('-o', outFolder, inFolder);
+    console.log('option array', optionArray);
+    const dcmProcess = spawn('dcm2nii', optionArray);
 
-    exec(`dcm2nii ${optionString} -o ${outFolder} ${inFolder}`, (err, stdout) => {
-        if (err) { console.log('An error occurred during conversion', err); return; }
-        console.log('stdout', stdout);
+    dcmProcess.on('close', (code) => {
+        console.log('dcm2nii closed with error code', code);
+
+        //spawn new process to separate parsed files into BIDS directories
+
+    });
+
+    dcmProcess.on('error', (err) => {
+        console.log('dcm2nii returned an error', err);
     });
 };
 
@@ -80,13 +91,27 @@ exec('which dcm2nii', (err, stdout, stderr) => {
         const outFolder = program.out;
 
         if (!outFolder) {
-            const dateString = Date.getMonth() + 1 + '-' + Date.getDate() + '-' + Date.getFullYear();
+            const date = new Date();
+            const dateString = date.getMonth() + 1 + '-' + date.getDate() + '-' + date.getFullYear();
             const defaultOutFolder = process.cwd() + '/dcm2nii_' + dateString;
-            console.log('default out folder', defaultOutFolder);
-            exec(`mkdir ${defaultOutFolder}`, (err) => {
-                if (err) { console.log('An error occured while making the default folder', err); return; }
-                runDCM2NII(inFolder, defaultOutFolder);
+
+            exec('ls -a', (err, stdout) => {
+                if (err) { console.log('Process encountered an error while creating the default folder', err); }
+
+                console.log('using default out folder', defaultOutFolder);
+                let splitFolderName = defaultOutFolder.split('/');
+                let deindexedFolderName = splitFolderName[splitFolderName.length - 1];
+
+                if (stdout.indexOf(deindexedFolderName) < 0) {
+                    exec(`mkdir ${defaultOutFolder}`, (err) => {
+                        if (err) { console.log('An error occured while making the default folder', err); return; }
+                        runDCM2NII(inFolder, defaultOutFolder);
+                    });
+                } else {
+                    runDCM2NII(inFolder, defaultOutFolder);
+                }
             });
+
         } else {
             const outFolder = program.out;
             runDCM2NII(inFolder, outFolder);
