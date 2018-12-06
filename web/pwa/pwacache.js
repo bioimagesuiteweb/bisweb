@@ -69,6 +69,8 @@ module.exports = {
         'images/yale_brod_xy.png',
         'images/atlases/atlaslist.json',
         'images/atlases/humanmni.json',
+        'images/youtube.png',
+        'images/manual.png',
         'jquery.min.js',
         'webcomponents-lite.js',
         'biswebaws.html',
