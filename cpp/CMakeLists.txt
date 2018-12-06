@@ -186,7 +186,7 @@ OPTION(BIS_MODULETEST "Enable MODULE Tests" ON)
 MARK_AS_ADVANCED(BIS_MODULETEST)
 
 OPTION(BIS_INSTALLTESTS "Install Module Tests & Data" OFF)
-MARK_AS_ADVANCED(BIS_INSTALLTESTS)
+#MARK_AS_ADVANCED(BIS_INSTALLTESTS)
 
 # ---------------------------------------------------------------------------------------------
 # License File depending on whether we are using the GPL plugin or not
