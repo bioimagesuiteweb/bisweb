@@ -36,14 +36,17 @@ let dicom2BIDS=async function(opts)  {
     
     
     let match=genericio.joinFilenames(indir,'2*.nii.gz');
+    let matchuncompressed = genericio.joinFilenames(indir, '2*.nii');
     let matchdti=genericio.joinFilenames(indir,'*.bv*');
     
     console.log('Match=',match,matchdti);
     
     let flist= await genericio.getMatchingFiles(match);
     let flist2=await genericio.getMatchingFiles(matchdti);
+    let flist3= await genericio.getMatchingFiles(matchuncompressed);
 
     flist=flist.concat(flist2);
+    flist=flist.concat(flist3);
     console.log('Flist=',flist.join('\n\t'));
 
     

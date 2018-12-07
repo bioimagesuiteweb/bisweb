@@ -374,18 +374,21 @@ let deleteDirectory=function(url) {
 /**
  * Tries to move a directory from source to destination. Currently only for fileserver. 
  * @alias BisGenericIO#moveDirectory
- * @param {String} src - the name of the directory to move
- * @param {String} dest - destination to move src to
+ * @param {String} url - name of source and destination, separated by '&&'
  * @returns {Promise} - the payload is true or false
  */
-let moveDirectory=function(src, dest) {
+let moveDirectory=function(url) {
+    console.log('moveDirectory', url);
     if (fileServerClient) {
-        return fileServerClient.moveDirectory(src, dest);
+        return fileServerClient.moveDirectory(url);
     }
 
     if (inBrowser) {
         return Promise.reject('moveDirectory can not be  done in a  Browser');
     }
+
+    let splitNames = url.split('&&');
+    let src = splitNames[0], dest = splitNames[1];
 
     if (!fs.lstatSync(src).isFile())
         return Promise.reject(src + ' does not describe a file, cannot move it.');

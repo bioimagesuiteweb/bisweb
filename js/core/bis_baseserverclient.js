@@ -59,16 +59,6 @@ class BisBaseServerClient {
         return Promise.rejected('uploadFile not implemented '+url+' '+isbinary+' ' +typeof data);
     }
 
-
-    /** performs a file system operation
-     * @param{String} operation -- the operation
-     * @param{String} url -- the filename
-     * @returns {Promise} payload is the result
-     */
-    fileSystemOperation(name,url) {
-        return Promise.rejected(name+' not implemented '+url);
-    }
-
     /** get file size -- the size of a file
      * @param{String} url -- the filename
      * @returns {Promise} payload is the file size
@@ -99,6 +89,16 @@ class BisBaseServerClient {
      */
     deleteDirectory(url) {
         return this.fileSystemOperation('deleteDirectory',url);
+    }
+
+    /** moves a file from source to destination 
+     * @param{String} src -- the source directory
+     * @param{String} dest -- the destination directory
+     * @returns {Promise} payload true or false
+     */
+    moveDirectory(src, dest) {
+        console.log('base client move directory');
+        return this.fileSystemOperation('moveDirectory', src + '&&' + dest);
     }
 
     /** getMatching Files

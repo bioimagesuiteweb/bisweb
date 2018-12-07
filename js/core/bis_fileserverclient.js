@@ -839,7 +839,7 @@ class BisFileServerClient extends BisBaseServerClient {
      * @returns {Promise} payload is the result
      */
     fileSystemOperation(name,url) {
-
+        console.log('file system operation', name, url);
         if (url.indexOf('\\')>=0)
             url=util.filenameWindowsToUnix(url);
 

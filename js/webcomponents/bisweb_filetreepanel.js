@@ -89,12 +89,12 @@ class FileTreePanel extends HTMLElement {
         //filter filename before calling getMatchingFiles
         let queryString = filename;
         if (queryString === '') {
-             queryString = '*/*.nii.gz'; 
+             queryString = '*/*.nii*'; 
         } else {
             if (queryString[queryString.length - 1] === '/') { 
-                queryString = queryString.slice(0, filename.length - 1) + '/*/*.nii.gz'; 
+                queryString = queryString.slice(0, filename.length - 1) + '/*/*.nii*'; 
             } else { 
-                queryString = filename + '/*/*.nii.gz';
+                queryString = filename + '/*/*.nii*';
             }
         }
 
@@ -105,7 +105,7 @@ class FileTreePanel extends HTMLElement {
                 return;
             } 
             
-            queryString = filename + '/*.nii.gz';
+            queryString = filename + '/*.nii*';
             bis_genericio.getMatchingFiles(queryString).then( (newFiles) => {
                 console.log('filename', filename);
                 this.updateFileTree(newFiles, filename);
@@ -147,7 +147,7 @@ class FileTreePanel extends HTMLElement {
 
                     if (index === splitName.length - 1) {
                         let splitEntry = newEntry.text.split('.');
-                        if (splitEntry[splitEntry.length - 1] === 'gz')
+                        if (splitEntry[splitEntry.length - 1] === 'gz' || splitEntry[splitEntry.length - 1] === 'nii')
                             newEntry.type = 'picture';
                         else
                             newEntry.type = 'file';
@@ -187,10 +187,11 @@ class FileTreePanel extends HTMLElement {
             fileTree = fileTree[0].children; 
         }
 
-        listContainer.jstree({
+        let tree = listContainer.jstree({
             'core': {
                 'data': fileTree,
-                'dblclick_toggle': true
+                'dblclick_toggle': true,
+                'check_callback' : true
             },
             'types': {
                 'default': {
@@ -209,7 +210,11 @@ class FileTreePanel extends HTMLElement {
                     'icon': 'glyphicon glyphicon-picture'
                 },
             },
-            'plugins': ["types"]
+            'plugins': ["types", "dnd"]
+        }).bind('move_node.jstree', (e, data) => {
+            console.log('e', e, 'data', data);
+            let moveNodes = this.parseSourceAndDestination(data);
+            bis_genericio.moveDirectory(moveNodes.src + '&&' + moveNodes.dest);
         });
 
         listContainer.bind('dblclick.jstree', (e) => {
@@ -362,6 +367,40 @@ class FileTreePanel extends HTMLElement {
             console.log('an error occured while saving to disk', e);
             bis_webutil.createAlert('An error occured while saving the study files to disk.', false);
         }
+    }
+
+    /**
+     * Parses a move_node event and returns the source and destination of the move. 
+     * 
+     * @param {Object} data - Data object returned from a move_node.jstree event.
+     * @returns Source and destination directory.
+     */
+    parseSourceAndDestination(data) {
+        let srcName, destName;
+
+        let movingNode = $(`#${data.node.id}`);
+        let nodeName = movingNode.find(`#${data.node.id}_anchor`).text();
+
+        //id of the base directory will be '#', so if we see that we don't have to resolve it
+        console.log('data.old_parent', data.old_parent, 'data.parent', data.parent);
+        if (data.old_parent === '#') { 
+            srcName = this.baseDirectory + '/' + nodeName; 
+        } else {
+            let oldParentNode = $(`#${data.old_parent}`);
+            let oldParentName = oldParentNode.find(`#${data.old_parent}_anchor`).text();
+            srcName = this.baseDirectory + '/' + oldParentName + '/' + nodeName;
+        }
+
+        if (data.parent === '#') {
+            destName = this.baseDirectory + '/' + nodeName;
+        } else {
+            let newParentNode = $(`#${data.parent}`);
+            let newParentName = newParentNode.find(`#${data.parent}_anchor`).text();
+            destName = this.baseDirectory + '/' + newParentName + '/' + nodeName;
+        }
+
+        console.log('srcName', srcName, 'destName', destName);
+        return { 'src' : srcName, 'dest' : destName};
     }
 
 }

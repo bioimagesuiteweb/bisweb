@@ -4,6 +4,7 @@ const spawn = require('child_process').spawn;
 const program = require('commander');
 const process = require('process');
 
+const bidsutils = require('bis_bidsutils.js');
 
 program
     .option('-i, --in <n>', 'The folder to invoke dcm2nii on. Required.')
@@ -52,7 +53,6 @@ let parseOptions = () => {
 
     function addOption(key, code) {
         if (key in program) {
-            console.log(key, 'in program', program[key], program[key] === 'true');
             return (program[key] === true || program[key] === 'true') ? optionArray.push(code, 'Y') : optionArray.push(code, 'N');
         }
     }
@@ -68,7 +68,15 @@ let runDCM2NII = (inFolder, outFolder) => {
         console.log('dcm2nii closed with error code', code);
 
         //spawn new process to separate parsed files into BIDS directories
+        exec(`mkdir ${outFolder}/BIDS`, (err) => {
+            if (err) { console.log('Encountered an error making the BIDS directory'); }
 
+            console.log('outfolder', outFolder);
+            bidsutils.dicom2BIDS( { 'indir' : outFolder, 'outdir' : outFolder + '/BIDS'} ).then( (data) => {
+                console.log('data', data);
+            });
+        });
+        
     });
 
     dcmProcess.on('error', (err) => {
