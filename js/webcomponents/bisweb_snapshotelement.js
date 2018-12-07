@@ -328,7 +328,8 @@ class SnapshotElement extends HTMLElement {
 
         // Store scale
         userPreferences.setItem('snapshotscale', this.data.scale);
-        userPreferences.setItem('snapshotdowhite', this.data.dowhite);
+        if (!this.simplemode)
+            userPreferences.setItem('snapshotdowhite', this.data.dowhite);
         userPreferences.storeUserPreferences();
 
         let outcanvas=this.createOutputCanvas(img,hasOverlayColorbar,this.data.scale,this.data.dowhite,this.data.crop);
@@ -402,7 +403,7 @@ class SnapshotElement extends HTMLElement {
         if (simple==="1" || simple==="true") {
             this.simplemode=true;
             this.data.dowhite=true;
-        }
+        } 
             
         
         this.viewer = viewer;
@@ -517,11 +518,13 @@ class SnapshotElement extends HTMLElement {
             }
         });
 
-        userPreferences.safeGetItem('snapshotdowhite').then( (v) => {
-            self.data.dowhite=v;
-            if (self.colorselector !== null)
-                self.colorselector.prop("checked", self.data.dowhite);
-        });
+        if (!this.simplemode) {
+            userPreferences.safeGetItem('snapshotdowhite').then( (v) => {
+                self.data.dowhite=v;
+                if (self.colorselector !== null)
+                    self.colorselector.prop("checked", self.data.dowhite);
+            });
+        }
     }
 
     /** function that receives update from viewer once snapshot is requested
