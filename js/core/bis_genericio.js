@@ -344,12 +344,11 @@ let makeDirectory=function(url) {
     return Promise.resolve(m);
 };
 
-/** Checks is a path is a directory
- * @alias BisGenericIO#isDirectory
+/** Checks is a path is a directory, then deletes it if it can
+ * @alias BisGenericIO#deleteDirectory
  * @param {String} url - the directory name
  * @returns {Promise} - the payload is true or false
  */
-
 let deleteDirectory=function(url) {
 
     if (fileServerClient) {
@@ -371,6 +370,39 @@ let deleteDirectory=function(url) {
         }
     });
 };
+
+/**
+ * Tries to move a directory from source to destination. Currently only for fileserver. 
+ * @alias BisGenericIO#moveDirectory
+ * @param {String} src - the name of the directory to move
+ * @param {String} dest - destination to move src to
+ * @returns {Promise} - the payload is true or false
+ */
+let moveDirectory=function(src, dest) {
+    if (fileServerClient) {
+        return fileServerClient.moveDirectory(src, dest);
+    }
+
+    if (inBrowser) {
+        return Promise.reject('moveDirectory can not be  done in a  Browser');
+    }
+
+    if (!fs.lstatSync(src).isFile())
+        return Promise.reject(src + ' does not describe a file, cannot move it.');
+    
+    return new Promise( (resolve, reject) => {
+        fs.copyFile(src, dest, (err) => {
+            if (err) { console.log('Encountered an error trying to move file', src, err); reject(false); return; }
+            fs.unlink(src, (err) => {
+                if (err) { console.log('Encountered an error trying to delete', src, err); reject(false); return; }
+
+                console.log('Move file operation successful');
+                resolve(true);
+            });
+        });
+    });
+};
+ 
 
 
 /** Returns matching files in a path
@@ -575,6 +607,7 @@ const bisgenericio = {
     getMatchingFiles : getMatchingFiles,
     makeDirectory :    makeDirectory,
     deleteDirectory :  deleteDirectory,
+    moveDirectory : moveDirectory,
     // Filename operations
     getBaseName : getBaseName,
     getDirectoryName : getDirectoryName,
