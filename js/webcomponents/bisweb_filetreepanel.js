@@ -210,7 +210,22 @@ class FileTreePanel extends HTMLElement {
                     'icon': 'glyphicon glyphicon-picture'
                 },
             },
-            'plugins': ["types", "dnd", "contextmenu"]
+            'plugins': ["types", "dnd", "contextmenu"],
+            'contextmenu' : {
+                'items' : (node) => {
+                    tree.jstree(true);
+                    return {
+                        'Hello' : {
+                            'separator_before' : false,
+                            'separator_after' : false,
+                            'label' : 'Hello!',
+                            'action' : (obj) =>  {
+                                console.log('hello!', node, 'obj', obj);
+                            }
+                        } 
+                    }
+                }
+            }
         }).bind('move_node.jstree', (e, data) => {
             console.log('e', e, 'data', data);
             let moveNodes = this.parseSourceAndDestination(data);
