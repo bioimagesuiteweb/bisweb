@@ -60,12 +60,19 @@ var runTest = async function(testindex,viewerindex,basestate='',viewerstate='',
     
     try {
         console.log("Reading app state from",basestate);
-        //        globalParams.application.getViewer(0).clearobjectmap();
         globalParams.resdiv.append('<p>Reading app state from '+basestate+'</p>');
         await globalParams.application.loadApplicationState(basestate);
-        if (viewerstate)
+        console.log('App state read from ',basestate);
+        if (viewerstate) {
             await globalParams.application.loadApplicationState(viewerstate);
-        globalParams.currentViewer=globalParams.application.getViewer(globalParams.application.getVisibleTab()-1);
+            console.log('Viewer  state read from ',viewerstate);
+        }
+        if (!isconnviewer) {
+            console.log('\t\t Getting visible viewer ..');
+            globalParams.currentViewer=globalParams.application.getViewer(globalParams.application.getVisibleTab()-1);
+        } else {
+            globalParams.currentViewer=globalParams.application.getViewer(0);
+        }
     } catch(e) {
         throw new Error(e);
     }
