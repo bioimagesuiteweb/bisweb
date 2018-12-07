@@ -210,7 +210,7 @@ class FileTreePanel extends HTMLElement {
                     'icon': 'glyphicon glyphicon-picture'
                 },
             },
-            'plugins': ["types", "dnd"]
+            'plugins': ["types", "dnd", "contextmenu"]
         }).bind('move_node.jstree', (e, data) => {
             console.log('e', e, 'data', data);
             let moveNodes = this.parseSourceAndDestination(data);
@@ -317,6 +317,7 @@ class FileTreePanel extends HTMLElement {
 
             if (data.node.original.type === 'directory') {
                 data.instance.open_node(this, false);
+                this.currentlySelectedNode = data.node
             } else if (data.node.original.type === 'picture') {
                 this.currentlySelectedNode = data.node;
             }
@@ -327,21 +328,22 @@ class FileTreePanel extends HTMLElement {
      * Loads an image selected in the file tree and displays it on the viewer. 
      */
     loadImageFromTree() {
-
         console.log('currently selected node', this.currentlySelectedNode, 'base directory', this.baseDirectory);
-        //construct the full name out of the current node 
-        let name = '', currentNode = this.currentlySelectedNode;
-        let tree = this.panel.widget.find('.file-container').jstree();
+        if (this.currentlySelectedNode.original.type === 'picture') {
+            //construct the full name out of the current node 
+            let name = '', currentNode = this.currentlySelectedNode;
+            let tree = this.panel.widget.find('.file-container').jstree();
 
-        while (currentNode.parent) {
-            name = '/' + currentNode.text + name;
-            let parentNode = tree.get_node(currentNode.parent);
+            while (currentNode.parent) {
+                name = '/' + currentNode.text + name;
+                let parentNode = tree.get_node(currentNode.parent);
 
-            console.log('parentNode', parentNode);
-            currentNode = parentNode;
+                console.log('parentNode', parentNode);
+                currentNode = parentNode;
+            }
+
+            this.viewerapplication.loadImage(this.baseDirectory + name);
         }
-
-        this.viewerapplication.loadImage(this.baseDirectory + name);
     }
 
     /**
