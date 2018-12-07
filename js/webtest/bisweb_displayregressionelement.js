@@ -280,6 +280,13 @@ var initialize=function(testlist) {
  * A web element that runs the regression testing in conjuction with biswebtest.html
  */
 class DisplayRegressionElement extends HTMLElement {
+
+    constructor() {
+
+        super();
+        webutil.setAlertTop(920);
+    }
+        
     
     // Fires when an instance of the element is created.
     connectedCallback() {
@@ -303,7 +310,7 @@ class DisplayRegressionElement extends HTMLElement {
         
         webutil.runAfterAllLoaded( () => {
 
-
+            console.log('Name = ',name);
             
             if (name==="overlay") {
                 webutil.setAlertTop(920);

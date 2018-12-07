@@ -177,8 +177,6 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         
         var fmenu=webutil.createTopMenuBarMenu("File",menubar).attr('id','bisfilemenu');
         const self=this;
-        console.log('self=',self);
-        
         
         webfileutil.createFileMenuItem(fmenu,'Load Node Definition File',
                                        function(e) {  control.loadparcellationfile(e);},
