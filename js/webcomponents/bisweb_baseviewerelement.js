@@ -369,7 +369,12 @@ class BaseViewerElement extends HTMLElement {
             let renderer=this.internal.layoutcontroller.renderer;
             let t=renderer.domElement.toDataURL();
             this.internal.preservesnapshot=false;
-            this.internal.snapshotcontroller.update(t,true);//this.internal.ismosaic);
+
+            let hasColorbar=true;
+            if (this.internal.simplemode)
+                hasColorbar=false;
+            
+            this.internal.snapshotcontroller.update(t,hasColorbar);//this.internal.ismosaic);
         }
 
         if (this.slave_viewer!==null)
@@ -879,7 +884,7 @@ class BaseViewerElement extends HTMLElement {
         
         const self=this;
         let layoutwidgetid=this.getAttribute('bis-layoutwidgetid');
-        
+
         let simple=this.getAttribute('bis-simplemode');
         this.internal.simplemode=false;
         if (simple==="1" || simple==="true")
