@@ -87,8 +87,12 @@ class ViewerLayoutElement extends HTMLElement {
 
     getCSSLength(n='width') {
 
-        const style = getComputedStyle(this);
-        const v = style[n];
+        let style = getComputedStyle(this);
+        let v = style[n];
+        if (v==="auto") {
+            style = getComputedStyle(this.parentElement);
+            v = style[n];
+        }
         return parseFloat(v.replace(/px/g,''));
     }
             
@@ -96,7 +100,7 @@ class ViewerLayoutElement extends HTMLElement {
     getInnerWidth() {
         if (!this.noresize)
             return window.innerWidth;
-        return this.getCSSLength('width') || 800;
+        return this.getCSSLength('width');
     }
 
     getInnerHeight() {

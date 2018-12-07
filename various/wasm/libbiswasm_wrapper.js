@@ -45,7 +45,7 @@ var get_module=function() {
 
 
 var get_date=function() {
-    return "09/05/2018";     
+    return "10/29/2018";     
 };
         
 
@@ -754,6 +754,7 @@ var get_date=function() {
   /** Prepare Image for Registration using \link bisImageAlgorithms::prepareImageForRegistration \endlink
   * @param input serialized input as unsigned char array
   * @param jsonstring the parameter string for the algorithm
+  * @param debug if > 0 print debug messages
   * @returns a pointer to a serialized image
   */
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1272,7 +1273,7 @@ var get_date=function() {
   // C++:
   /** Project a 3D image to 2D either mip or average or shaded average
   * @param input serialized input as unsigned char array
-  * @param funcinput serialized functional input (optional) as unsigned char array
+  * @param functional_input serialized functional input (optional) as unsigned char array
   * @param jsonstring the parameter string for the algorithm
   * { "domip" : 1: ,"axis" : -1, "flip" : 0, "sigma" : 1.0: 'threshold' : 0.05, 'gradsigma' : 1.0, 'windowsize': 5 }
   * @param debug if > 0 print debug messages
@@ -2195,200 +2196,6 @@ var get_date=function() {
     return output;
   };
 
-  //--------------------------------------------------------------
-  // C++:
-  /** check vectors */
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // JS: {'check_vectors', 'Int'}
-  //      returns a Int
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  var check_vectors = function(debug=false) { 
-
-    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
-
-    // Call WASM
-    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:check_vectors\n++++');
-    const output=Module.ccall('check_vectors','number',
-       [],
-       [ ]);
-
-    // Return
-    return output;
-  };
-
-  //--------------------------------------------------------------
-  // C++:
-  /** check vectors */
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // JS: {'check_interpolation', 'Int'}
-  //      returns a Int
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  var check_interpolation = function(debug=false) { 
-
-    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
-
-    // Call WASM
-    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:check_interpolation\n++++');
-    const output=Module.ccall('check_interpolation','number',
-       [],
-       [ ]);
-
-    // Return
-    return output;
-  };
-
-  //--------------------------------------------------------------
-  // C++:
-  /** Smooth image along one dimensions
-  * @param input serialized input as unsigned char array
-  * @param jsonstring the parameter string for the algorithm { "sigma" : 1.0, "inmm" :  true, "radiusfactor" : 1.5 , "direction" : 2},
-  * @param debug if > 0 print debug messages
-  * @returns a pointer to a serialized image
-  */
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // JS: {'gaussianSmoothImage1DWASM', 'bisImage', [ 'bisImage', 'ParamObj', 'debug' ]}
-  //      returns a bisImage
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  var gaussianSmoothImage1DWASM = function(image1,paramobj,debug) { 
-
-    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
-    const jsonstring=JSON.stringify(paramobj || { } );
-
-    // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
-
-    // Call WASM
-    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:gaussianSmoothImage1DWASM with '+jsonstring+'\n++++');
-    const wasm_output=Module.ccall('gaussianSmoothImage1DWASM','number',
-       ['number', 'string', 'number'],
-       [ image1_ptr, jsonstring, debug]);
-
-    // Deserialize Output
-    const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisImage',image1);
-    
-
-    // Cleanup
-    if (image1_ptr !== image1)
-      wasmutil.release_memory(Module,image1_ptr);
-
-    // Return
-    return output;
-  };
-
-  //--------------------------------------------------------------
-  // C++:
-  /** Smooth image along two dimensions perpendicular to the one specified.
-  * @param input serialized input as unsigned char array
-  * @param jsonstring the parameter string for the algorithm { "sigma" : 1.0, "inmm" :  true, "radiusfactor" : 1.5 , "direction" : 2},
-  * @param debug if > 0 print debug messages
-  * @returns a pointer to a serialized image
-  */
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // JS: {'gaussianSmoothImage2DWASM', 'bisImage', [ 'bisImage', 'ParamObj', 'debug' ]}
-  //      returns a bisImage
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  var gaussianSmoothImage2DWASM = function(image1,paramobj,debug) { 
-
-    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
-    const jsonstring=JSON.stringify(paramobj || { } );
-
-    // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
-
-    // Call WASM
-    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:gaussianSmoothImage2DWASM with '+jsonstring+'\n++++');
-    const wasm_output=Module.ccall('gaussianSmoothImage2DWASM','number',
-       ['number', 'string', 'number'],
-       [ image1_ptr, jsonstring, debug]);
-
-    // Deserialize Output
-    const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisImage',image1);
-    
-
-    // Cleanup
-    if (image1_ptr !== image1)
-      wasmutil.release_memory(Module,image1_ptr);
-
-    // Return
-    return output;
-  };
-
-  //--------------------------------------------------------------
-  // C++:
-  /** Create Smooth image pyramid along a given direction
-  * @param input serialized input as unsigned char array
-  * @param jsonstring the parameter string for the algorithm { "sigmastep" : 1.0, "numscales" : 2,  "inmm" :  true, "radiusfactor" : 1.5 , "direction" : 2},
-  * @param debug if > 0 print debug messages
-  * @returns a pointer to a serialized image
-  */
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // JS: {'gaussianSmoothImagePyramid1DWASM', 'bisImage', [ 'bisImage', 'ParamObj', 'debug' ]}
-  //      returns a bisImage
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  var gaussianSmoothImagePyramid1DWASM = function(image1,paramobj,debug) { 
-
-    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
-    const jsonstring=JSON.stringify(paramobj || { } );
-
-    // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
-
-    // Call WASM
-    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:gaussianSmoothImagePyramid1DWASM with '+jsonstring+'\n++++');
-    const wasm_output=Module.ccall('gaussianSmoothImagePyramid1DWASM','number',
-       ['number', 'string', 'number'],
-       [ image1_ptr, jsonstring, debug]);
-
-    // Deserialize Output
-    const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisImage',image1);
-    
-
-    // Cleanup
-    if (image1_ptr !== image1)
-      wasmutil.release_memory(Module,image1_ptr);
-
-    // Return
-    return output;
-  };
-
-  //--------------------------------------------------------------
-  // C++:
-  /** Create Multiscale Intrinsic Resolitopn along a direction
-  * @param input serialized input as unsigned char array
-  * @param jsonstring the parameter string for the algorithm { "sigmastep" : 1.0, "numscales" : 2,  "inmm" :  true, "radiusfactor" : 1.5 , "direction" : 2, "ssdsigma" : 2.0, "noisesigma" : 20.0, "outputssd" : false},
-  * @param debug if > 0 print debug messages
-  * @returns a pointer to a serialized image
-  */
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // JS: {'computeMultiScaleIntrinsicResolutionWASM', 'bisImage', [ 'bisImage', 'ParamObj', 'debug' ]}
-  //      returns a bisImage
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  var computeMultiScaleIntrinsicResolutionWASM = function(image1,paramobj,debug) { 
-
-    if (debug!==true && debug!=="true" && debug!==1 && debug!==2) debug=0; else if (debug!==2) debug=1;
-    const jsonstring=JSON.stringify(paramobj || { } );
-
-    // Serialize objects
-    let image1_ptr=wrapperutil.serializeObject(Module,image1,'bisImage');
-
-    // Call WASM
-    if (debug || debug==='true') console.log('++++\n++++ Calling WASM Function:computeMultiScaleIntrinsicResolutionWASM with '+jsonstring+'\n++++');
-    const wasm_output=Module.ccall('computeMultiScaleIntrinsicResolutionWASM','number',
-       ['number', 'string', 'number'],
-       [ image1_ptr, jsonstring, debug]);
-
-    // Deserialize Output
-    const output=wrapperutil.deserializeAndDeleteObject(Module,wasm_output,'bisImage',image1);
-    
-
-    // Cleanup
-    if (image1_ptr !== image1)
-      wasmutil.release_memory(Module,image1_ptr);
-
-    // Return
-    return output;
-  };
-
   //-------------------------------------------------------------
 
   const outputobj = { 
@@ -2452,13 +2259,7 @@ var get_date=function() {
     computeDTITensorFitWASM : computeDTITensorFitWASM,
     computeTensorEigenSystemWASM : computeTensorEigenSystemWASM,
     computeDTITensorInvariantsWASM : computeDTITensorInvariantsWASM,
-    computeDTIColorMapImageWASM : computeDTIColorMapImageWASM,
-    check_vectors : check_vectors,
-    check_interpolation : check_interpolation,
-    gaussianSmoothImage1DWASM : gaussianSmoothImage1DWASM,
-    gaussianSmoothImage2DWASM : gaussianSmoothImage2DWASM,
-    gaussianSmoothImagePyramid1DWASM : gaussianSmoothImagePyramid1DWASM,
-    computeMultiScaleIntrinsicResolutionWASM : computeMultiScaleIntrinsicResolutionWASM
+    computeDTIColorMapImageWASM : computeDTIColorMapImageWASM
   };
 
 module.exports=outputobj;

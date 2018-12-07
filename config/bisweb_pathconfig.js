@@ -25,17 +25,19 @@ let s=v.split(".");
 let major=parseInt(s[0]);
 let minor=parseInt(s[1]);
 
-if (major<8 || (major===8 && minor<9)) {
-    console.log(`----\n---- You are using a version of node older than 8.9 (actual version=${v})\n`);
+let ok=false;
+
+if (major === 8  && minor >=9) {
+    ok=true;
+} else if (major === 10 && minor >= 13) {
+    ok=true;
+} else {
+    console.log(`----\n---- You are using an incompatible version of node (either 8.9 or newer, or 10.13 or newer) (actual version=${v})\n`);
     process.exit(1);
 }
 
-if (major>=9) {
-    console.log(`----\n---- You are using a version of node that is 9.0 or newer (actual version=${v})\n`);
-    process.exit(1);
-}
 
-console.log(`....\n.... Using node.js version ${v} (OK)`);
+console.log(`....\n.... Using node.js version ${v} (OK=${ok})`);
 console.log('.... This program is part of the commandline suite of tools from BioImage Suite Web.\n.... See https://github.com/bioimagesuiteweb/bisweb for more information.\n....');
 
 let d=path.dirname(__dirname);

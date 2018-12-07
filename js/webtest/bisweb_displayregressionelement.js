@@ -46,12 +46,6 @@ let globalParams = {
 
 var runTest = async function(testindex,viewerindex,basestate='',viewerstate='',comparisonpng='') {
 
-    globalParams.goldImageElement.addEventListener('load', () => {
-        $('#goldtd').empty();
-        $('#goldtd').append('Gold '+(testindex));
-    });
-
-    globalParams.goldImageElement.src=comparisonpng;
     userPreferences.setImageOrientationOnLoad('None');
 
     
@@ -80,44 +74,53 @@ var runTest = async function(testindex,viewerindex,basestate='',viewerstate='',c
     
     return new Promise( (resolve,reject) => {
         
-        snapshotElement.createBisWebImageFromImageElement(comparisonpng).then( (goldstandard) => {
-            setTimeout( () => {
-                globalParams.resdiv.append('<p>Reading result from: '+comparisonpng+'</p>');
-                console.log(goldstandard.getDescription());
-                let tst = null;
-                
-                try {
-                    tst=resultimg.compareWithOther(goldstandard,"cc",0.94);
-                } catch(e) {
-                    console.log('failed ...'+e);
-                }
-                if (tst==null) {
-                    let canvas = document.createElement("canvas");
-                    let image_element=globalParams.resultImageElement[0];
+        let loadfn=() => {
+            $('#goldtd').empty();
+            $('#goldtd').append('Gold '+(testindex));
+            globalParams.goldImageElement.removeEventListener('load',loadfn);
+            
+            snapshotElement.createBisWebImageFromImageElement(comparisonpng).then( (goldstandard) => {
+                setTimeout( () => {
+                    globalParams.resdiv.append('<p>Reading result from: '+comparisonpng+'</p>');
+                    console.log(goldstandard.getDescription());
+                    let tst = null;
                     let dim=goldstandard.getDimensions();
-                    canvas.height=dim[1];
-                    canvas.width=dim[0];
-                    console.log('Canvas=',canvas);
-                    canvas.getContext("2d").drawImage(image_element,0,0,dim[0],dim[1]);
-                    let newimg=snapshotElement.createBisWebImageFromCanvas(canvas);
-                    console.log('newimg=',newimg.getDescription());
-                    console.log('gold=',goldstandard.getDescription());
+                    
                     try {
-                        tst=newimg.compareWithOther(goldstandard,"cc",0.9);
+                        tst=resultimg.compareWithOther(goldstandard,"cc",0.94);
+                        tst.dim=`${dim[0]},${dim[1]}`;
                     } catch(e) {
                         console.log('failed ...'+e);
-                        tst={ testresult : false, value : -1.0 };
                     }
-                }
-                globalParams.resdiv.append(`<p><b>Result</b>: ${JSON.stringify(tst)}</p>`);
-                setTimeout( () => {
-                    console.log('Tst=',tst);
+                    if (tst==null) {
+                        let canvas = document.createElement("canvas");
+                        let image_element=globalParams.resultImageElement[0];
+                      
+                        canvas.height=dim[1];
+                        canvas.width=dim[0];
+                        console.log('Canvas=',canvas);
+                        canvas.getContext("2d").drawImage(image_element,0,0,dim[0],dim[1]);
+                        let newimg=snapshotElement.createBisWebImageFromCanvas(canvas);
+                        console.log('newimg=',newimg.getDescription());
+                        console.log('gold=',goldstandard.getDescription());
+                        try {
+                            tst=newimg.compareWithOther(goldstandard,"cc",0.9);
+                        } catch(e) {
+                            console.log('failed ...'+e);
+                            tst={ testresult : false, value : -1.0 };
+                        }
+                        tst.dim=`<EM>(resized)</EM> ${dim[0]},${dim[1]}`;
+                    } 
+                      
+                    globalParams.resdiv.append(`<p><b>Result</b>: ${JSON.stringify(tst)}</p>`);
                     resolve(tst);
-                },1);
-            },500);
-        }).catch( (e) => {
-            reject(e);
-        });
+                },2000);
+            }).catch( (e) => {
+                reject(e);
+            });
+        };
+        globalParams.goldImageElement.addEventListener('load', loadfn);
+        globalParams.goldImageElement.src=comparisonpng;
     });
 };
 
@@ -166,11 +169,12 @@ var runTests= async function(multiple=false) {
 
         let a="";
         if (!desired)
-            a=' (should fail!)';
+            a=' (intentiona fail!)';
         let b="<b>F A I L E D "+a+"</b>";
         if (result.testresult)
             b="P A S S E D "+a;
         globalParams.comparisonTextElement.append('<p>Test:'+test+' cc='+Number.parseFloat(result.value).toFixed(3)+' '+b+'</p>');
+        globalParams.resdiv.append('<p>Test:'+test+' cc='+Number.parseFloat(result.value).toFixed(3)+' '+b+'</p>');
 
         globalParams.resdiv[0].scrollTop = globalParams.resdiv[0].scrollHeight-50;
 
@@ -190,7 +194,19 @@ var runTests= async function(multiple=false) {
         webconsole.empty();
         let numtests=last-first+1;
         let run=test-first+1;
-        webconsole.append(`Tests for version=${bisdate}: completed=${run}/${numtests}, passed=${good}/${numtests}, failed=${bad}/${numtests}`);
+
+        let ps="(none)";
+        if (goodlist.length>0)
+            ps="["+goodlist.join(',')+"]";
+        let ifail="(none)";
+        if (intentionalfail.length>0)
+            ifail="["+intentionalfail.join(',')+"]";
+        let fail="(none)";
+        if (badlist.length>0)
+            fail="["+badlist.join(',')+"]";
+
+        
+        webconsole.append(`Tests for version=${bisdate}: completed=${run}/${numtests}, passed=${good}/${numtests}, failed=${bad}/${numtests}.&nbsp;&nbsp;&nbsp; <EM>D e t a i l s :</EM> Passed=${ps}, Failed=${fail}, Intentionally Failed=${ifail}`);
 
     }
 

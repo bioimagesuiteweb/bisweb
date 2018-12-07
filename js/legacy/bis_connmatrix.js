@@ -268,7 +268,7 @@ class ConnMatrix {
             return 0;
         }
         
-        var s= [ "Pos", "Neg","Sum","Diff" ];
+        //var s= [ "Pos", "Neg","Sum","Diff" ];
         //var s2= [ "Lobe","EBA","Network","Broadmann","","",""];
 
         console.log('+++++ Drawing lines, mode='+mode+' singlevalue='+singlevalue+', attribcomponent='+attribcomponent);
@@ -293,7 +293,7 @@ class ConnMatrix {
         for (i=1;i<np;i++) 
             maxsum=Math.max(maxsum, this.statMatrix[i][column]);
         
-        console.log("+++++ Maximum Number of Connections in column "+s[column]+" = "+maxsum+" degreethreshold="+degreethreshold);
+        //console.log("+++++ Maximum Number of Connections in column "+s[column]+" = "+maxsum+" degreethreshold="+degreethreshold);
         if (degreethreshold>maxsum) {
             console.log("+++++ Reducing degreethreshold to "+maxsum);
             degreethreshold=maxsum;
@@ -410,7 +410,7 @@ class ConnMatrix {
         if (negative)
             column=1;
 
-        console.log("+++++ Creating Line pairs numnodes="+n+" column="+column+' val(matrix) threshold > abs('+matrixthreshold+')');
+        //console.log("+++++ Creating Line pairs numnodes="+n+" column="+column+' val(matrix) threshold > abs('+matrixthreshold+')');
         
         for (var row=0;row<n-1;row++) {
             var rowval=this.flagMatrix[row][column];

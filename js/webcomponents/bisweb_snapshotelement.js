@@ -607,7 +607,6 @@ class SnapshotElement extends HTMLElement {
         return new Promise( (resolve,reject) => {
 
             let finalResolve=( (dat) => {
-
                 self.testingResolve=null;
                 self.testingReject=null;
                 resolve(dat);

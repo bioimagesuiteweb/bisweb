@@ -482,7 +482,7 @@ class ColormapControllerElement extends HTMLElement {
             let l=f.__controllers.length-1;
             for (let c=l;c>=0;c=c-1) {
                 let elem=f.__controllers[c];
-                if (elem !== this.internal.opacityslider && elem!==null) {
+                if (elem !== null) {
                     try {
                         f.remove(elem);
                     } catch(e) {
@@ -491,7 +491,8 @@ class ColormapControllerElement extends HTMLElement {
                     }
                 }
             }
-            f.__controllers=[ this.internal.opacityslider ];
+            f.__controllers=[ ];
+            this.internal.opacityslider=null;
         }
     }
 
@@ -726,7 +727,9 @@ class ColormapControllerElement extends HTMLElement {
             let a3=f2.add(this.data,'interpolate').name('Interpolate');
             const self=this;
             
-            let clb=function(e) { self.updateTransferFunctionsInternal(e); };
+            let clb=function() {
+                self.updateTransferFunctionsInternal(false);
+            };
             
             for (let i in f2.__controllers) {
                 f2.__controllers[i].onChange(clb);
@@ -734,9 +737,9 @@ class ColormapControllerElement extends HTMLElement {
             
             let a4=f2.add(this.data,'autocontrast').name('Auto-Contrast');
             this.internal.anatomicalcontrollers=[a1,a2,a3,a4];
-            a4.onChange( function(e) {
+            a4.onChange( function() {
                 self.setAutoContrast(true);
-                self.updateTransferFunctionsInternal(e);
+                self.updateTransferFunctionsInternal(false);
             });
 
         } else {
@@ -787,7 +790,7 @@ class ColormapControllerElement extends HTMLElement {
                 this.data[attr] = dt[attr];
             }
         }
-        
+
         for (let pass=0;pass<=1;pass++) {
             if (this.internal.folder[pass]!==null) {
                 for (let ia=0;ia<this.internal.folder[pass].__controllers.length;ia++) {
@@ -795,15 +798,17 @@ class ColormapControllerElement extends HTMLElement {
                 }
             }
         }
-        
-        if (this.internal.functionalcontrollers===null)
-            return;
+
+        //       if (this.internal.functionalcontrollers===null) {
+        // console.log('No functional controllers');
+        //  return;
+        //}
         
         let new_mode=this.data.funcmode;
         if (new_mode !== old_mode)  {
             this.updateFunctionalGUI(new_mode);
             this.updateFunctionalSliders();
-        }
+        } 
 
         return 1;
     }
