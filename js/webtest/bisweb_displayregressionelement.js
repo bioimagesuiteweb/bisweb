@@ -68,7 +68,6 @@ var runTest = async function(testindex,viewerindex,basestate='',viewerstate='',
             console.log('Viewer  state read from ',viewerstate);
         }
         if (!isconnviewer) {
-            console.log('\t\t Getting visible viewer ..');
             globalParams.currentViewer=globalParams.application.getViewer(globalParams.application.getVisibleTab()-1);
         } else {
             globalParams.currentViewer=globalParams.application.getViewer(0);
@@ -87,17 +86,20 @@ var runTest = async function(testindex,viewerindex,basestate='',viewerstate='',
     $('#resulttd').append('Result '+(testindex));
     
     let resultimg=snapshotElement.createBisWebImageFromCanvas(canvas);
+
+    console.log('Snapshot created');
     
     return new Promise( (resolve,reject) => {
         
         let loadfn=() => {
+            console.log("Image Loaded ... ");
             $('#goldtd').empty();
             $('#goldtd').append('Gold '+(testindex));
             globalParams.goldImageElement.removeEventListener('load',loadfn);
             
             snapshotElement.createBisWebImageFromImageElement(comparisonpng).then( (goldstandard) => {
                 setTimeout( () => {
-                    globalParams.resdiv.append('<p>Reading result from: '+comparisonpng+'</p>');
+                    globalParams.resdiv.append('<p>Read result from: '+comparisonpng+'</p>');
                     console.log(goldstandard.getDescription());
                     let tst = null;
                     let dim=goldstandard.getDimensions();
@@ -130,13 +132,17 @@ var runTest = async function(testindex,viewerindex,basestate='',viewerstate='',
                       
                     globalParams.resdiv.append(`<p><b>Result</b>: ${JSON.stringify(tst)}</p>`);
                     resolve(tst);
-                },2000);
+                },500);
             }).catch( (e) => {
                 reject(e);
             });
         };
         globalParams.goldImageElement.addEventListener('load', loadfn);
-        globalParams.goldImageElement.src=comparisonpng;
+        setTimeout( () => {
+            comparisonpng=comparisonpng+"?time=" + new Date().getTime();
+            console.log('Loading comparison from ',comparisonpng);
+            globalParams.goldImageElement.src=comparisonpng;
+        },100);
     });
 };
 
