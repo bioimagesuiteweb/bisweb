@@ -1476,7 +1476,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         doNotUpdateFlagMatrix=doNotUpdateFlagMatrix || false;
 
-        console.log('Rendermode=',internal.rendermode);
+        //        console.log('Rendermode=',internal.rendermode);
         if (internal.rendermode===6)
             doNotUpdateFlagMatrix=false;
         
@@ -1877,7 +1877,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             internal.context.clearRect(0,0,internal.canvas.width,internal.canvas.height);
             internal.overlaycontext.clearRect(0,0,internal.canvas.width,internal.canvas.height);
             internal.rendermode=dt.rendermode;
-            console.log('New Render mode=',dt.rendermode);
+            //console.log('New Render mode=',dt.rendermode);
             togglemode(false);
 
             internal.posFileInfo=[ "NONE", 0 ];
