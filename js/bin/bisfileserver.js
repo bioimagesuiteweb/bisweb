@@ -14,6 +14,7 @@ program
     .option('--readonly', 'Whether or not the server should accept requests to write files')
     .option('--insecure', 'USE WITH EXTREME CARE -- if true no password')
     .option('--ipaddr <s>', 'USE WITH EXTREME CARE -- if used this allow remote access (maybe)')
+    .option('--proxyport <n>', 'If enabled, creates a proxy server mirroring http://bisweb.yale.edu/local (use with care)')
     .option('--verbose', ' print extra statements')
     .option('--tmpdir <s>', ' specify temporary directory')
     .option('--config <s>', ' read config file')
@@ -38,7 +39,7 @@ let verbose = program.verbose ? program.verbose : false;
 let config = program.config || null;
 let createconfig = program.createconfig || null;
 let tmpdir= program.tmpdir || null;
-
+let proxyport = program.proxyport || 0
 
 let nolocalhost=false;
 
@@ -47,6 +48,23 @@ if (ipaddr!=='localhost') {
     insecure=false;
 }
 
+
+if (proxyport>0) {
+    const http = require('http');
+    const httpProxy = require('http-proxy');
+    const proxy = httpProxy.createProxyServer({});
+    const target='http://bisweb.yale.edu/local';
+    console.log('pppp Creating proxy http server on port proxyport');
+    console.log(`pppp \t To access navigate to http://localhost:${proxyport}`);
+    console.log(`pppp \t                 or    http://${os.hostname}:${proxyport}`);
+    console.log('pppp ------------------------------------------------------');
+    http.createServer(function(req, res) {
+        if (req.url.indexOf('.html')>0)
+            console.log('pppp');
+        console.log('pppp \t Proxy request', req.url, ' redirecting to ' +target+req.url);
+        proxy.web(req, res, { target: target });
+    }).listen(proxyport);
+}
 
 let serveroptions= {
     "verbose" : verbose,
@@ -58,7 +76,7 @@ let serveroptions= {
     "tempDirectory" : tmpdir,
 };
 
-console.log('Server Options=',JSON.stringify(serveroptions,null,4));
+//console.log('Server Options=',JSON.stringify(serveroptions,null,4));
 
 let server=new BisWSWebSocketFileServer(serveroptions);
 

@@ -55,6 +55,7 @@
         "gulp-template": "4.0.0",
         "gulp-watch": "4.3.11",
         "gulp-zip": "4.0.0",
+        "http-proxy": "^1.17.0",
         "jsdoc": "3.5.5",
         "jshint": "2.9.5",
         "mocha": "3.5.3",
