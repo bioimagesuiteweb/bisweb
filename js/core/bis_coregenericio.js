@@ -639,7 +639,7 @@ var writetextdatabrowser = function (filename, data, donecallback) {
 
     donecallback = donecallback || console.log;
 
-    var blob = new Blob([data], { type: "text/plain" });
+    var blob = new Blob([data], { type: "application/octet-stream" });
 
     filesaver(blob, filename);
     donecallback('');
@@ -660,9 +660,9 @@ var writebinarydatabrowser = function (filename, data, donecallback) {
     var iscomp = iscompressed(filename);
     if (iscomp) {
         var compressed = pako.gzip(data);
-        blob = new Blob([compressed]);
+        blob = new Blob([compressed],{ type: "application/gzip" });
     } else {
-        blob = new Blob([data]);
+        blob = new Blob([data],{ type: "application/octet-stream" });
     }
 
     filesaver(blob, filename);
