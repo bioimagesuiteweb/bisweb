@@ -29,6 +29,7 @@ const server_fields = [
     { name : 'verbose',   value: false  },
     { name : 'baseDirectoriesList', value: null },
     { name : 'readonly', value: false },
+    { name : 'nolocalhost', value: false },
     { name : 'insecure', value: false },
     { name : 'tempDirectory', value: '' }
 ];

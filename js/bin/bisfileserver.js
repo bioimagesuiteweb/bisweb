@@ -13,6 +13,7 @@ program
     .option('-p, --port <n>', 'Which port to start the server on')
     .option('--readonly', 'Whether or not the server should accept requests to write files')
     .option('--insecure', 'USE WITH EXTREME CARE -- if true no password')
+    .option('--ipaddr <s>', 'USE WITH EXTREME CARE -- if used this allow remote access (maybe)')
     .option('--verbose', ' print extra statements')
     .option('--tmpdir <s>', ' specify temporary directory')
     .option('--config <s>', ' read config file')
@@ -29,7 +30,7 @@ if (portno<wsutil.initialPort || portno>wsutil.finalPort)
     portno=wsutil.initialPort;
 
 
-let ipaddr =  'localhost';
+let ipaddr =  program.ipaddr || 'localhost';
 let readonlyflag = program.readonly ? program.readonly : false;
 let insecure = program.insecure ? program.insecure : false;
 let verbose = program.verbose ? program.verbose : false;
@@ -41,23 +42,26 @@ let tmpdir= program.tmpdir || null;
 
 
 let nolocalhost=false;
+
 if (ipaddr!=='localhost') {
     nolocalhost=true;
     insecure=false;
 }
 
 
-let server=new BisWSWebSocketFileServer(
-    {
-        "verbose" : verbose,
-        "insecure" : insecure,
-        "readonly" : readonlyflag,
-        "nolocalhost" : nolocalhost,
-        "config" : config,
-        "createconfig" : createconfig,
-        "tempDirectory" : tmpdir,
-    }
-);
+let serveroptions= {
+    "verbose" : verbose,
+    "insecure" : insecure,
+    "readonly" : readonlyflag,
+    "nolocalhost" : nolocalhost,
+    "config" : config,
+    "createconfig" : createconfig,
+    "tempDirectory" : tmpdir,
+}
+
+console.log('Server Options=',JSON.stringify(serveroptions,null,4));
+
+let server=new BisWSWebSocketFileServer(serveroptions);
 
 console.log('..................................................................................');
 console.log('..... BioImage Suite Web date='+bisdate.date+' ('+bisdate.time+'), v='+bisdate.version+', os='+os.platform()+'.\n..... \t server=', server.constructor.name,'\n.....');
