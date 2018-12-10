@@ -290,7 +290,11 @@ let downloadLatestVersion=async function(hasnewversion) { // jshint ignore:line
     let idbmode=await getMode();  // jshint ignore:line
     let latestVersion=internal.latestVersion;
 
-    let s=`<p> BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which can download itself into the cache of your Broswer for offline use.</p>`;
+    let s='';
+
+    if (internal.hasServiceWorker) {
+        s=`<p> BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which can download itself into the cache of your Broswer for offline use.</p>`;
+    }
     let dates=`<UL>
 <LI>The version you are using is: ${bisdate.date} (${bisdate.time})</LI>
 <LI> The latest version is: ${latestVersion.date} (${latestVersion.time})</LI></UL>`;
@@ -374,7 +378,7 @@ let aboutApplication=async function() {// jshint ignore:line
         let m=getModal();
         m.title.text('About this Application');
         let s=`<p>This is the main page of BioImage Suite Web ${tools.version} ( current build= ${bisdate.version}, ${bisdate.date}, ${bisdate.time}).</p>`;
-        if (typeof (window.BISELECTRON) === "undefined") {
+        if (internal.hasServiceWorker) {
             if (offline)
                 s+=`<p>This application is running in offline mode.</p>`;
             s+=`<p>BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which can download itself into the cache of your Browser for offline use.</p>`;

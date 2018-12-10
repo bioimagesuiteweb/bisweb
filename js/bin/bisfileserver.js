@@ -60,8 +60,7 @@ if (proxyport>0) {
     console.log('pppp ------------------------------------------------------');
     http.createServer(function(req, res) {
         if (req.url.indexOf('.html')>0)
-            console.log('pppp');
-        console.log('pppp \t Proxy request', req.url, ' redirecting to ' +target+req.url);
+            console.log('pppp \t Proxy request', req.url, ' redirecting to ' +target+req.url);
         proxy.web(req, res, { target: target });
     }).listen(proxyport);
 }
