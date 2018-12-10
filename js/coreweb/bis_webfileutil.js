@@ -66,7 +66,7 @@ if (!webutil.inElectronApp() && enableserver===true) {
 // Initial mode
 let fileMode='local';
 let fileInputElements= [];
-
+let iosFileDialog=null;
 
 
 
@@ -422,17 +422,42 @@ const webfileutils = {
 
 
         let nid=webutil.getuniqueid();
-
-        let loadelement = $(`<input type="file" style="visibility: hidden;" id="${nid}" accept="${suffix}"/>`);
         for (let i=0;i<fileInputElements.length;i++)
             fileInputElements[i].remove();
-        fileInputElements.push(loadelement);
+
         
-        loadelement[0].addEventListener('change', function (f) {
-            callback(f.target.files[0]);
-        });
-        $('body').append(loadelement);
-        loadelement[0].click();
+        
+        if (!genericio.inIOS()) {
+            let loadelement = $(`<input type="file" style="visibility: hidden;" id="${nid}" accept="${suffix}"/>`);
+            fileInputElements.push(loadelement);
+
+            loadelement[0].addEventListener('change', function (f) {
+                callback(f.target.files[0]);
+            });
+            $('body').append(loadelement);
+            loadelement[0].click();
+        } else {
+            if (!iosFileDialog) 
+                iosFileDialog=webutil.createmodal('Select Input File');
+            
+            iosFileDialog.titlediv.empty();
+            if (fileopts.title.length<1)
+                fileopts.title='Select File';
+            iosFileDialog.titlediv.append(`<H4>${fileopts.title}</H4>`);
+            let loadelement = $(`<input type="file" id="${nid}" accept="${suffix}"/>`);
+            fileInputElements.push(loadelement);
+            loadelement[0].addEventListener('change', function (f) {
+                iosFileDialog.dialog.modal('hide');
+                setTimeout( () => {
+                    callback(f.target.files[0]);
+                },50);
+                return false;
+            });
+            iosFileDialog.body.append(loadelement);
+            iosFileDialog.dialog.modal('show');
+            iosFileDialog.body[0].click();
+        }
+            
     },
 
     /** 

@@ -817,6 +817,7 @@ const webutil = {
             body: div.find('.modal-body'),
             footer: div.find('.modal-footer'),
             header: div.find('.modal-header'),
+            titlediv : div.find('.modal-title'),
             close: div.find('btn-default'),
         };
     },
