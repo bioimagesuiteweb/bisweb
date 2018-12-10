@@ -40,7 +40,6 @@ let createconfig = program.createconfig || null;
 let tmpdir= program.tmpdir || null;
 
 
-
 let nolocalhost=false;
 
 if (ipaddr!=='localhost') {
@@ -57,7 +56,7 @@ let serveroptions= {
     "config" : config,
     "createconfig" : createconfig,
     "tempDirectory" : tmpdir,
-}
+};
 
 console.log('Server Options=',JSON.stringify(serveroptions,null,4));
 

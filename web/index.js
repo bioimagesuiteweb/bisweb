@@ -509,9 +509,11 @@ let createApplicationSelector=function(externalobj) {
     $('#bismenuparent0').append(othermenu);
 
     let extra2="";
+    let extra3="";
     let url=window.document.URL;
-    if  (url.indexOf('/unstable')>0) {
+    if  (url.indexOf('/unstable')>0 || url.indexOf('/build')>0) {
         extra2="Unstable ";
+        extra3=`, ${bisdate.time}`;
     }
 
     
@@ -536,9 +538,12 @@ let createApplicationSelector=function(externalobj) {
     });
 
     $("#othermenu").append($(`<li class="divider"></li>`));
-    
-    if (typeof (window.BISELECTRON) === "undefined") {
 
+    
+
+    console.log('.... Creating Service Worker Menu Items='+internal.hasServiceWorker);
+    
+    if (internal.hasServiceWorker) {
         let newitem0 = $(`<li><a href="#">Remove Application (from Cache)</a></li>`);
         $("#othermenu").append(newitem0);
         newitem0.click( (e) => {
@@ -564,14 +569,11 @@ let createApplicationSelector=function(externalobj) {
     }
 
     let s=window.document.URL;
-    console.log(s);
     let index=s.lastIndexOf("/");
-    console.log(index);
     let urlbase=s.substr(0,index);
     let urlbase2=urlbase+'/images';
     if (inelectron)
         urlbase2='images/';
-    console.log(urlbase);
     let newurl=`${urlbase}/overlayviewer.html?load=${urlbase2}/viewer.biswebstate`;
     
     $("#othermenu").append($(`<li><a href="${newurl}" target="_blank">Example Image Overlay</a></li>`));
@@ -587,7 +589,7 @@ let createApplicationSelector=function(externalobj) {
     });
         
     let bb=$(`<div align="center" style="padding:15px;  right:5.5vw; top:570px; border-radius:30px;background-color:#221100; z-index:5000; position: absolute; color:#ffffff">
-             Version:  ${tools.version} (${extra2}${bisdate.date})</div>`);
+             Version:  ${tools.version} (${extra2}${bisdate.date}${extra3})</div>`);
     $('body').append(bb);
     //    console.log('bisdate=',JSON.stringify(bisdate));
 
@@ -615,7 +617,10 @@ var createServiceWorker=function() {
         }
     }
 
+
     internal.scope=scope;
+
+
     
     // register service worker if needed
     navigator.serviceWorker.register(`${scope}bisweb-sw.js`, { scope: scope }).then(function(registration) {
@@ -698,6 +703,20 @@ const fileSelectHandler=function(e) {
 
 window.onload = (() => {
 
+    // Only register if not in electron and not in development mode
+    if (!inelectron) {
+        if ('serviceWorker' in navigator) {
+
+            let scope=window.document.URL;
+            if (scope.indexOf('https')===0) {
+                console.log('---- creating service worker ... ',scope);
+                createServiceWorker();
+            } else {
+                console.log('---- not creating service worker ... not https',scope);
+            }
+        }
+    }
+
     createApplicationSelector(tools.tools);
 
     let url=window.document.URL;
@@ -711,17 +730,6 @@ window.onload = (() => {
     }
 
 
-    // Only register if not in electron and not in development mode
-    if (!inelectron) {
-        if ('serviceWorker' in navigator) {
-            
-            if (typeof (window.BIS) === "undefined") {
-                createServiceWorker();
-            } else {
-                console.log('---- not creating service worker ... in development mode');
-            }
-        }
-    }
 
     $('#mycarousel').carousel(
         {
@@ -732,7 +740,7 @@ window.onload = (() => {
     setTimeout( ()=> {
         $(".dropdown").removeClass("open");//this will remove the active class from  
         $('#appmenu').addClass('open');
-    },500);
+    },5000);
 
 
     window.addEventListener("dragover", (e) => {
