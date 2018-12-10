@@ -398,7 +398,7 @@ gulp.task('serve2', function() {
 });
 
 
-gulp.task('server', function() {
+gulp.task('serveronly', function() {
     connect.server(internal.serveroptions);
     console.log('++++ Server root directory=',internal.serveroptions.root);
 });

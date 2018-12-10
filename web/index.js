@@ -87,8 +87,21 @@ let getModal=function() {
             title : m.find('.modal-title'),
             body  : m.find('.modal-body'),
             footer : m.find('.modal-footer'),
-            show : ( () => { m.modal('show'); }),
-            hide : ( () => { m.modal('hide'); }),
+            firsttime : false,
+            show : ( () => {
+                $('#mycarousel').carousel('pause');
+                m.modal('show');
+                if (internal.modal.firsttime) {
+                    internal.modal.dlg.modal.on("hidden.bs.modal", function () {
+                        $('#mycarousel').carousel('cycle');
+                    });
+                }
+                internal.modal.firsttime=false;
+            }),
+            hide : ( () => {
+                $('#mycarousel').carousel('cycle');
+                m.modal('hide');
+            }),
         };
         internal.modal.addButton = function(name,type,clb=null) {
             let tp=`type="submit"`;
@@ -108,13 +121,16 @@ let getModal=function() {
                 }
             });
         };
+
     }
 
+    internal.modal.body.parent().css({ "background-color" : "rgb(28,45,64)"});
     internal.modal.title.empty();
     internal.modal.body.empty();
     internal.modal.footer.empty();
     return internal.modal;
 };
+
 
 // -------------------------------------
 // Alert Pill
@@ -301,6 +317,18 @@ let downloadLatestVersion=async function(hasnewversion) { // jshint ignore:line
     m.addButton('Close','default');
     m.show();
 }; // jshint ignore:line
+
+
+let showHelpVideo=function() {
+
+    let m=getModal();
+    m.title.text('BioImage Suite Web Introductory Video');
+    m.body.parent().css({ "background-color" : "#202020"});
+    m.body.append(`<iframe width="550" height="310" src="https://www.youtube.com/embed/CnbdaQ0O52k?rel=0;&autoplay=1" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`);
+    m.addButton('Close','default');
+    m.show();
+};
+
 
 // ---------------------------------------------
 // Called on start
@@ -494,6 +522,16 @@ let createApplicationSelector=function(externalobj) {
             e.preventDefault();
             e.stopPropagation();
             aboutApplication();
+        },10);
+    });
+
+    let newitem3 = $(`<li><a href="#">Show Introductory Video</a></li>`);
+    $("#othermenu").append(newitem3);
+    newitem3.click( (e) => {
+        setTimeout( () => {
+            e.preventDefault();
+            e.stopPropagation();
+            showHelpVideo();
         },10);
     });
 
