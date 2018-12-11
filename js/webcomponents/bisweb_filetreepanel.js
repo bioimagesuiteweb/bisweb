@@ -191,7 +191,7 @@ class FileTreePanel extends HTMLElement {
             'core': {
                 'data': fileTree,
                 'dblclick_toggle': true,
-                'check_callback' : true
+                'check_callback': true
             },
             'types': {
                 'default': {
@@ -211,23 +211,19 @@ class FileTreePanel extends HTMLElement {
                 },
             },
             'plugins': ["types", "dnd", "contextmenu"],
-            'contextmenu' : {
-                'items' : (node) => {
-                    tree.jstree(true);
-                    return {
-                        'Hello' : {
-                            'separator_before' : false,
-                            'separator_after' : false,
-                            'label' : 'Hello!',
-                            'action' : (obj) =>  {
-                                console.log('hello!', node, 'obj', obj);
-                            }
-                        } 
+            'contextmenu': {
+                'show_at_node' : false,
+                'items': {
+                    '_disabled' : false,
+                    'separator_before': false,
+                    'separator_after': false,
+                    'label': 'Hello!',
+                    'action': (node) => {
+                        console.log('hello!', node, 'obj', obj);
                     }
                 }
             }
         }).bind('move_node.jstree', (e, data) => {
-            console.log('e', e, 'data', data);
             let moveNodes = this.parseSourceAndDestination(data);
             bis_genericio.moveDirectory(moveNodes.src + '&&' + moveNodes.dest);
         });

@@ -367,3 +367,8 @@ body {
     to { -webkit-transform: rotate(360deg);}
 }
 
+/* You have to change the index of the jstree context menu in order for it to display over the other html elements */
+.vakata-context {
+    z-index : 100000 !important
+}
+
