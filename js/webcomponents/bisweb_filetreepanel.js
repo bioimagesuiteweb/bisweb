@@ -417,33 +417,38 @@ class FileTreePanel extends HTMLElement {
 
     showInfoModal() {
 
-        bis_genericio.getFileStats(this.constructNodeName()).then( (stats) => { 
+        bis_genericio.isDirectory(this.constructNodeName()).then( (isDirectory) => {
+            bis_genericio.getFileStats(this.constructNodeName()).then( (stats) => { 
 
-            //make file size something more readable than bytes
-            let displayedSize, filetype;
-            let kb = stats.size / 1000;
-            let mb = kb / 1000;
-            let gb = mb / 1000;
-
-            if (gb > 1) { displayedSize = gb; filetype = 'GB'; }
-            else if (mb > 1) { displayedSize = mb; filetype = 'MB'; }
-            else { displayedSize = kb; filetype = 'KB'; }
-
-            let roundedSize = Math.round(displayedSize * 10) / 10;
-            let accessedTime = new Date(stats.atimeMs);
-            let createdTime = new Date(stats.birthtimeMs);
-            let modifiedTime = new Date(stats.mtimeMs);
-
-            console.log('accessed time', accessedTime.toDateString(), 'created time', createdTime, 'modified time', modifiedTime);
-
-            //make info dialog
-            let infoDisplay = `File Size: ${roundedSize}${filetype}<br> First Created: ${createdTime}<br> Last Modified: ${modifiedTime}<br> Last Accessed: ${accessedTime}`;
-
-            bootbox.dialog({
-                'title' : 'File Info',
-                'message' : infoDisplay
+                console.log('stats', stats);
+                //make file size something more readable than bytes
+                let displayedSize, filetype;
+                let kb = stats.size / 1000;
+                let mb = kb / 1000;
+                let gb = mb / 1000;
+    
+                if (gb > 1) { displayedSize = gb; filetype = 'GB'; }
+                else if (mb > 1) { displayedSize = mb; filetype = 'MB'; }
+                else { displayedSize = kb; filetype = 'KB'; }
+    
+                let roundedSize = Math.round(displayedSize * 10) / 10;
+                let accessedTime = new Date(stats.atimeMs);
+                let createdTime = new Date(stats.birthtimeMs);
+                let modifiedTime = new Date(stats.mtimeMs);
+                let parsedIsDirectory = isDirectory ? 'Yes' : 'No';
+    
+                console.log('accessed time', accessedTime.toDateString(), 'created time', createdTime, 'modified time', modifiedTime);
+    
+                //make info dialog
+                let infoDisplay = `File Size: ${roundedSize}${filetype}<br> First Created: ${createdTime}<br> Last Modified: ${modifiedTime}<br> Last Accessed: ${accessedTime} <br> Is a Directory: ${parsedIsDirectory}`;
+    
+                bootbox.dialog({
+                    'title' : 'File Info',
+                    'message' : infoDisplay
+                });
             });
         });
+        
     }
 
     constructNodeName() {
