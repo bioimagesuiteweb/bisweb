@@ -379,6 +379,7 @@ body {
 }
 
 .vakata-context li > a {
+    font-size : 14px;
     text-shadow : none;
     color : #0ce3ac
 }
@@ -386,6 +387,7 @@ body {
 .vakata-context li > a:hover {
     box-shadow: unset;
     background-color : #beebff;
+    color: #097640;
 }
 
 .vakata-context li > a .vakata-contextmenu-sep {

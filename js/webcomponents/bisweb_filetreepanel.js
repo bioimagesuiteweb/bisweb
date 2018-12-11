@@ -224,12 +224,12 @@ class FileTreePanel extends HTMLElement {
                             this.showInfoModal();
                         }
                     },
-                    'Another' : {
+                    'Load' : {
                         'separator_before': false,
                         'separator_after': false,
-                        'label': 'Another Tab',
+                        'label': 'Load Image',
                         'action': () => {
-                            this.showInfoModal();
+                            this.loadImageFromTree();
                         }
                     }
 
@@ -418,7 +418,7 @@ class FileTreePanel extends HTMLElement {
     showInfoModal() {
 
         bis_genericio.getFileStats(this.constructNodeName()).then( (stats) => { 
-            console.log('stats', stats); 
+
             //make file size something more readable than bytes
             let displayedSize, filetype;
             let kb = stats.size / 1000;
@@ -430,11 +430,11 @@ class FileTreePanel extends HTMLElement {
             else { displayedSize = kb; filetype = 'KB'; }
 
             let roundedSize = Math.round(displayedSize * 10) / 10;
-            let accessedTime = new Date(stats.atimeMs * 1000);
-            let createdTime = new Date(stats.birthtimeMs * 1000);
-            let modifiedTime = new Date(stats.mtimeMs * 1000);
+            let accessedTime = new Date(stats.atimeMs);
+            let createdTime = new Date(stats.birthtimeMs);
+            let modifiedTime = new Date(stats.mtimeMs);
 
-            console.log('accessed time', accessedTime, 'created time', createdTime, 'modified time', modifiedTime);
+            console.log('accessed time', accessedTime.toDateString(), 'created time', createdTime, 'modified time', modifiedTime);
 
             //make info dialog
             let infoDisplay = `File Size: ${roundedSize}${filetype}<br> First Created: ${createdTime}<br> Last Modified: ${modifiedTime}<br> Last Accessed: ${accessedTime}`;
@@ -448,24 +448,20 @@ class FileTreePanel extends HTMLElement {
 
     constructNodeName() {
         console.log('currently selected node', this.currentlySelectedNode, 'base directory', this.baseDirectory);
-        if (this.currentlySelectedNode.original.type === 'picture') {
-            //construct the full name out of the current node 
-            let name = '', currentNode = this.currentlySelectedNode;
-            let tree = this.panel.widget.find('.file-container').jstree();
+        //construct the full name out of the current node 
+        let name = '', currentNode = this.currentlySelectedNode;
+        let tree = this.panel.widget.find('.file-container').jstree();
 
-            while (currentNode.parent) {
-                name = '/' + currentNode.text + name;
-                let parentNode = tree.get_node(currentNode.parent);
+        while (currentNode.parent) {
+            name = '/' + currentNode.text + name;
+            let parentNode = tree.get_node(currentNode.parent);
 
-                console.log('parentNode', parentNode);
-                currentNode = parentNode;
-            }
-
-            return this.baseDirectory + name;
-        } else {
-            console.log('Error: cannot return name of node', this.currentlySelectedNode);
-            return false;
+            console.log('parentNode', parentNode);
+            currentNode = parentNode;
         }
+
+        return this.baseDirectory + name;
+
     }
   
 }
