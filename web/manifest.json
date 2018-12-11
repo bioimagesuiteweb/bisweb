@@ -8,6 +8,7 @@
     "lang" : "English",
     "orientation" : "any",
     "start_url": "index.html",
+    "scope" : "localhost:8080/build/web/",
     "splash_pages": null,
     "icons": [
     {

@@ -37,7 +37,8 @@ const clipboard=localforage.createInstance({
     description : "BioImageSuite Web Clipboard",
 });
 
-let deferredPrompt=null;
+
+
 
 
 let inelectron=false;
@@ -57,6 +58,9 @@ const internal = {
     latestVersion : null,
     scope : '',
     disableServiceWorker : false,
+    runningAsDesktopApp : false,
+    deferredInstallPrompt : null,
+    installButton : null,
 };
 
 // ----------------------------------- GUI Utility Functions -------------------------------------
@@ -186,7 +190,10 @@ let receivedMessageFromServiceWorker = function(msg) {
             });
         });
     } else if (msg.indexOf('NewSW')>=0 ) {
-        showAlert('All offline capabilities have been removed (due to major update). You may re-cache the  application for offline use using Help|Cache.','info');
+        if (internal.runningAsDesktopApp)
+            showAlert('All offline capabilities have been removed (due to major update).','info');
+        else
+            showAlert('All offline capabilities have been removed.','info');
     } else {
         console.log('other=',msg);
     }
@@ -239,7 +246,6 @@ let getLatestVersion=async function() { // jshint ignore:line
     try {
         let t= new Date().getTime();
         let a=`${extra}/bisdate.json?time=${t}`;
-        console.log(a);
         const fetchResult=await fetch(a); // jshint ignore:line
         const response=await fetchResult;  // jshint ignore:line
         internal.latestVersion= await response.json(); // jshint ignore:line
@@ -294,9 +300,9 @@ let downloadLatestVersion=async function(hasnewversion) { // jshint ignore:line
 
     let s='';
 
-    if (internal.hasServiceWorker) {
+    /*    if (internal.hasServiceWorker) {
         s=`<p> BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which can download itself into the cache of your Browser for offline use.</p>`;
-    }
+    }*/
     let dates=`<UL>
 <LI>The version you are using is: ${bisdate.date} (${bisdate.time})</LI>
 <LI> The latest version is: ${latestVersion.date} (${latestVersion.time})</LI></UL>`;
@@ -383,7 +389,7 @@ let aboutApplication=async function() {// jshint ignore:line
         if (internal.hasServiceWorker) {
             if (offline)
                 s+=`<p>This application is running in offline mode.</p>`;
-            s+=`<p>BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which can download itself into the cache of your Browser for offline use.</p>`;
+            /*s+=`<p>BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which can download itself into the cache of your Browser for offline use.</p>`;*/
         }
         m.body.append($(s));
         m.addButton('Close','default');
@@ -409,8 +415,6 @@ let cacheLatestVersion=async function() {// jshint ignore:line
         showAlert(`We can not connect to the server right now. Please try again later.`,'info');
         return false;
     } 
-    
-    //console.log('bisdate=',bisdate,'latest=',internal.latestVersion);
     
     let mytime=bisdate['absolutetime'];
     let diff=internal.latestVersion['absolutetime']-mytime;
@@ -452,6 +456,8 @@ let createApplicationSelector=function(externalobj) {
     let menustring="";
     let indstring="";
     let count=0;
+    let urllist= [];
+    let target="_blank";
     
     for (let kk=0;kk<objlist.length;kk++) {
 
@@ -464,10 +470,14 @@ let createApplicationSelector=function(externalobj) {
             let elem=obj[keys[i]];
             let title=elem.title;
             let url='';
-            if (elem.url.indexOf('http')===0)
+
+            if (elem.url.indexOf('http')===0) {
                 url=elem.url;
-            else
-                url='./'+elem.url+'.html';
+            } else {
+                url=internal.scope+elem.url+'.html';
+            }
+
+            console.log('Adding ',url,target);
             
             let description=elem.description;
             let picture=elem.picture;
@@ -483,11 +493,18 @@ let createApplicationSelector=function(externalobj) {
                 if (count===1)
                     cname=" active";
                 
-                let a=`<div class="item${cname}"><a href="${url}" target="_blank"><img src="${picture}" alt="${title}" style="height:400px"><div class="carousel-caption">${count}. ${description}</div></div>`;
+                let a=`<div class="item${cname}"><a href="${url}" target="${target}"><img src="${picture}" alt="${title}" style="height:400px"><div class="carousel-caption">${count}. ${description}</div></div>`;
                 imagestring+=a;
-
-                if (kk>0)
-                    menustring+=`<li><a  href="${url}" target="_blank" role="button">${title}</a></li>`;
+                
+                if (kk>0) {
+                    if (!internal.runningAsDesktopApp) {
+                        menustring+=`<li><a  href="${url}" target="${target}" role="button">${title}</a></li>`;
+                    } else {
+                        let a=`<li><a href="#" id="W${elem.url}" role="button">${title}</a></li>`;
+                        menustring+=a;
+                        urllist.push(elem.url);
+                    }
+                }
                 
                 let b='<li data-target="#mycarousel" data-slide-to="'+i+'"';
                 if (count===1)
@@ -506,6 +523,18 @@ let createApplicationSelector=function(externalobj) {
     indicators.empty();
     indicators.append($(indstring));
 
+    console.log('List=',urllist);
+    
+    for (let i=0;i<urllist.length;i++) {
+        let url=urllist[i];
+        $(`#W${url}`).click( (e) => {
+            console.log('Opening ',url);
+            e.preventDefault();
+            window.open(url+".html");
+        });
+    }
+
+    
     let othermenu=$(`<li class='dropdown'>
             <a href='#' class='dropdown-toggle'  data-toggle='dropdown'
                role='button' aria-expanded='false'>Help<span class='caret'></span></a>
@@ -546,13 +575,28 @@ let createApplicationSelector=function(externalobj) {
         },10);
     });
 
-    $("#othermenu").append($(`<li class="divider"></li>`));
+    let sep=$(`<li class="divider"></li>`);
+    $("#othermenu").append(sep);
 
+    let s=window.document.URL;
+    let index=s.lastIndexOf("/");
+    let urlbase=s.substr(0,index);
+    let urlbase2=urlbase+'/images';
+    if (inelectron)
+        urlbase2='images/';
+    let newurl=`${urlbase}/overlayviewer.html?load=${urlbase2}/viewer.biswebstate`;
     
+    $("#othermenu").append($(`<li><a href="${newurl}" target="${target}">Example Image Overlay</a></li>`));
 
+
+
+    $("#othermenu").append($(`<li class="divider"></li>`));
+    
     console.log('.... Creating Service Worker Menu Items='+internal.hasServiceWorker);
     
+
     if (internal.hasServiceWorker) {
+    
         let newitem0 = $(`<li><a href="#">Remove Application (from Cache)</a></li>`);
         $("#othermenu").append(newitem0);
         newitem0.click( (e) => {
@@ -562,7 +606,8 @@ let createApplicationSelector=function(externalobj) {
                 sendCommandToServiceWorker('clearCache');
             },10);
         });
-
+        
+        
         
         let newitem = $(`<li><a href="#">Cache Application for Offline Use</a></li>`);
         $("#othermenu").append(newitem);
@@ -574,54 +619,38 @@ let createApplicationSelector=function(externalobj) {
                 cacheLatestVersion();
             },10);
         });
-        let sep=$(`<li class="divider"></li>`);
-        $("#othermenu").append(sep);
 
-        window.addEventListener('beforeinstallprompt', (e) => {
-            // Prevent Chrome 67 and earlier from automatically showing the prompt
-            e.preventDefault();
-            // Stash the event so it can be triggered later.
-            deferredPrompt=e;
-            console.log('Before Install Fired');
-
-            let newsep=$(`<li class="divider"></li>`);
-            $("#othermenu").append(newsep);
-            let btnToAdd = $(`<li><a href="#">Install as Desktop Application</a></li>`);
-            $("#othermenu").append(btnToAdd);
-            
-            btnToAdd.click('click', () => {
-
-                console.log('Clicked');
-        
-                // hide our user interface that shows our A2HS button
-                newsep.remove();
-                btnToAdd.remove();
-                // Show the prompt
-                deferredPrompt.prompt();
-                // Wait for the user to respond to the prompt
-                deferredPrompt.userChoice
-                    .then((choiceResult) => {
-                        if (choiceResult.outcome === 'accepted') {
-                            console.log('User accepted the A2HS prompt');
-                            sendCommandToServiceWorker('updateCache'); 
-                        } else {
-                            console.log('User dismissed the A2HS prompt');
-                        }
-                        deferredPrompt = null;
-                    });
-            });
-        });
     }
-
-    let s=window.document.URL;
-    let index=s.lastIndexOf("/");
-    let urlbase=s.substr(0,index);
-    let urlbase2=urlbase+'/images';
-    if (inelectron)
-        urlbase2='images/';
-    let newurl=`${urlbase}/overlayviewer.html?load=${urlbase2}/viewer.biswebstate`;
     
-    $("#othermenu").append($(`<li><a href="${newurl}" target="_blank">Example Image Overlay</a></li>`));
+    window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevent Chrome 67 and earlier from automatically showing the prompt
+        e.preventDefault();
+        // Stash the event so it can be triggered later.
+        internal.deferredInstallPrompt=e;
+        console.log('++++ Before Install Fired');
+        
+        let newsep=$(`<li class="divider"></li>`);
+        $("#othermenu").append(newsep);
+        let btnToAdd = $(`<li><a href="#">Install as Desktop-"like" Application</a></li>`);
+        $("#othermenu").append(btnToAdd);
+        
+        btnToAdd.click('click', () => {
+            
+                // hide our user interface that shows our A2HS button
+            newsep.remove();
+            btnToAdd.remove();
+            // Show the prompt
+            internal.deferredInstallPrompt.prompt();
+            // Wait for the user to respond to the prompt
+            internal.deferredInstallPrompt.userChoice
+                .then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        sendCommandToServiceWorker('updateCache'); 
+                        }
+                    internal.deferredInstallPrompt = null;
+                });
+        });
+    });
 
 
     $("#applicationstext").click( (e) => {
@@ -649,7 +678,7 @@ var createServiceWorker=function() {
 
     internal.hasServiceWorker=true;
     let scope=window.document.URL;
-    console.log('scope=',scope);
+    
     let index=scope.indexOf(".html");
     if (index>0) {
         index=scope.lastIndexOf("/");
@@ -761,6 +790,18 @@ window.onload = (() => {
             }
         }
     }
+
+    try {
+        if (window.matchMedia('(display-mode: standalone)').matches)
+            internal.runningAsDesktopApp=true;
+    } catch (e) {
+        console.log('Error ',e);
+    }
+
+    if (window.navigator.standalone === true) {
+        internal.runningAsDesktopApp=true;
+    }
+    console.log('.... Running as Desktop app=',internal.runningAsDesktopApp);
 
     createApplicationSelector(tools.tools);
 
