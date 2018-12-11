@@ -320,6 +320,27 @@ let isDirectory=function(url) {
     return Promise.resolve(m);
 };
 
+/**
+ * Gets the stats object for a file. Currently only for file server.
+ * @alias BisGenericIO#getFileStats
+ * @param {String} url - the file string
+ * @returns {Promise} - promise resolving 
+ */
+let getFileStats=function(url) {
+
+    console.log('get file stats');
+    if (fileServerClient) {
+        return fileServerClient.getFileStats(url);
+    }
+
+    if (inBrowser) {
+        return Promise.reject('getFileStats cannot be done in a Browser');
+    }
+
+    let m=fs.lstatSync(url);
+    return Promise.resolve(m);
+}
+
 /** Create the directory in url
  * @alias BisGenericIO#makeDirectory
  * @param {String} url - the directory string
@@ -606,6 +627,7 @@ const bisgenericio = {
     // Operations needed for Bruker and more
     copyFile : copyFile,
     getFileSize :     getFileSize,
+    getFileStats:     getFileStats,
     isDirectory :     isDirectory,
     getMatchingFiles : getMatchingFiles,
     makeDirectory :    makeDirectory,

@@ -67,6 +67,14 @@ class BisBaseServerClient {
         return this.fileSystemOperation('getFileSize',url);
     }
 
+    /** get file stats -- fs.getStats 
+     * @param{String} url -- the filename
+     * @returns {Promise} stats object 
+     */
+    getFileStats(url) {
+        return this.fileSystemOperation('getFileStats',url);
+    }
+
     /** checks is filename is a directory
      * @param{String} url -- the filename
      * @returns {Promise} payload true or false

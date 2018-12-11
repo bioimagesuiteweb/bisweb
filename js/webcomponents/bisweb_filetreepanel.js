@@ -1,4 +1,5 @@
 const $ = require('jquery');
+const bootbox = require('bootbox');
 const bisweb_panel = require('bisweb_panel.js');
 const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
@@ -123,6 +124,7 @@ class FileTreePanel extends HTMLElement {
     updateFileTree(files, baseDirectory) {
         this.baseDirectory = baseDirectory;
 
+        console.log('files', files);
         let fileTree = [];
 
         for (let file of files) {
@@ -214,13 +216,23 @@ class FileTreePanel extends HTMLElement {
             'contextmenu': {
                 'show_at_node' : false,
                 'items': {
-                    '_disabled' : false,
-                    'separator_before': false,
-                    'separator_after': false,
-                    'label': 'Hello!',
-                    'action': (node) => {
-                        console.log('hello!', node, 'obj', obj);
+                    'Info' : {
+                        'separator_before': false,
+                        'separator_after': false,
+                        'label': 'File Info',
+                        'action': () => {
+                            this.showInfoModal();
+                        }
+                    },
+                    'Another' : {
+                        'separator_before': false,
+                        'separator_after': false,
+                        'label': 'Another Tab',
+                        'action': () => {
+                            this.showInfoModal();
+                        }
                     }
+
                 }
             }
         }).bind('move_node.jstree', (e, data) => {
@@ -317,6 +329,7 @@ class FileTreePanel extends HTMLElement {
         listElement.append(`<br>`);
         listElement.append(buttonGroupDisplay);
     }
+
     /**
      * Sets the jstree select events for a new jstree list container. 
      * 
@@ -328,7 +341,7 @@ class FileTreePanel extends HTMLElement {
 
             if (data.node.original.type === 'directory') {
                 data.instance.open_node(this, false);
-                this.currentlySelectedNode = data.node
+                this.currentlySelectedNode = data.node;
             } else if (data.node.original.type === 'picture') {
                 this.currentlySelectedNode = data.node;
             }
@@ -339,22 +352,8 @@ class FileTreePanel extends HTMLElement {
      * Loads an image selected in the file tree and displays it on the viewer. 
      */
     loadImageFromTree() {
-        console.log('currently selected node', this.currentlySelectedNode, 'base directory', this.baseDirectory);
-        if (this.currentlySelectedNode.original.type === 'picture') {
-            //construct the full name out of the current node 
-            let name = '', currentNode = this.currentlySelectedNode;
-            let tree = this.panel.widget.find('.file-container').jstree();
-
-            while (currentNode.parent) {
-                name = '/' + currentNode.text + name;
-                let parentNode = tree.get_node(currentNode.parent);
-
-                console.log('parentNode', parentNode);
-                currentNode = parentNode;
-            }
-
-            this.viewerapplication.loadImage(this.baseDirectory + name);
-        }
+        let nodeName = this.constructNodeName();
+        this.viewerapplication.loadImage(nodeName);
     }
 
     /**
@@ -416,6 +415,59 @@ class FileTreePanel extends HTMLElement {
         return { 'src' : srcName, 'dest' : destName};
     }
 
+    showInfoModal() {
+
+        bis_genericio.getFileStats(this.constructNodeName()).then( (stats) => { 
+            console.log('stats', stats); 
+            //make file size something more readable than bytes
+            let displayedSize, filetype;
+            let kb = stats.size / 1000;
+            let mb = kb / 1000;
+            let gb = mb / 1000;
+
+            if (gb > 1) { displayedSize = gb; filetype = 'GB'; }
+            else if (mb > 1) { displayedSize = mb; filetype = 'MB'; }
+            else { displayedSize = kb; filetype = 'KB'; }
+
+            let roundedSize = Math.round(displayedSize * 10) / 10;
+            let accessedTime = new Date(stats.atimeMs * 1000);
+            let createdTime = new Date(stats.birthtimeMs * 1000);
+            let modifiedTime = new Date(stats.mtimeMs * 1000);
+
+            console.log('accessed time', accessedTime, 'created time', createdTime, 'modified time', modifiedTime);
+
+            //make info dialog
+            let infoDisplay = `File Size: ${roundedSize}${filetype}<br> First Created: ${createdTime}<br> Last Modified: ${modifiedTime}<br> Last Accessed: ${accessedTime}`;
+
+            bootbox.dialog({
+                'title' : 'File Info',
+                'message' : infoDisplay
+            });
+        });
+    }
+
+    constructNodeName() {
+        console.log('currently selected node', this.currentlySelectedNode, 'base directory', this.baseDirectory);
+        if (this.currentlySelectedNode.original.type === 'picture') {
+            //construct the full name out of the current node 
+            let name = '', currentNode = this.currentlySelectedNode;
+            let tree = this.panel.widget.find('.file-container').jstree();
+
+            while (currentNode.parent) {
+                name = '/' + currentNode.text + name;
+                let parentNode = tree.get_node(currentNode.parent);
+
+                console.log('parentNode', parentNode);
+                currentNode = parentNode;
+            }
+
+            return this.baseDirectory + name;
+        } else {
+            console.log('Error: cannot return name of node', this.currentlySelectedNode);
+            return false;
+        }
+    }
+  
 }
 
 bis_webutil.defineElement('bisweb-filetreepanel', FileTreePanel);

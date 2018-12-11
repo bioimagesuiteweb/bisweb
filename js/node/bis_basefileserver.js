@@ -811,6 +811,10 @@ class BaseFileServer {
                 prom=bisgenericio.getFileSize(url);
                 break;
             }
+            case 'getFileStats' : {
+                prom=bisgenericio.getFileStats(url);
+                break;
+            }
             case 'isDirectory' : {
                 prom=bisgenericio.isDirectory(url);
                 break;

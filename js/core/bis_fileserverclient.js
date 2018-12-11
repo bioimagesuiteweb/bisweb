@@ -799,16 +799,6 @@ class BisFileServerClient extends BisBaseServerClient {
             let hostname = 'ws://localhost:' + port;
             let blobArray = [];
     
-
-            //configure loading bar for the transfer
-            /*let loadbar = new bisweb_loadbar();
-            loadbar.attach(() => {
-                //console.log('bytes', uploadedBytes, 'filesize', filesize);
-                return (uploadedBytes / filesize) * 100;
-            }, 500);
-            loadbar.show();
-            */
-            
             console.log('Beginning load for file with size', filesize);
             //once connected the server will begin piping images chunks, which we will assemble on this side
             let ssocket = new WebSocket(hostname);
