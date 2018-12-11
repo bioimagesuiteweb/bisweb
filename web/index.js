@@ -37,6 +37,8 @@ const clipboard=localforage.createInstance({
     description : "BioImageSuite Web Clipboard",
 });
 
+let deferredPrompt=null;
+
 
 let inelectron=false;
 if (typeof (window.BISELECTRON) !== "undefined") {
@@ -155,7 +157,7 @@ let showAlert=function(message,type='info') {
 let receivedMessageFromServiceWorker = function(msg) {
     
     if (msg.indexOf("Cache Updated")>=0) {
-        showAlert(`The application has been updated. <a href="./index.html">Reload this webpage to use the new version.</a>`);
+        showAlert(`The application has been updated. <a href="./index.html">Reload this to use the new version.</a>`);
 
     } else if (msg.indexOf('Downloaded')>=0) {
         showAlert(msg);
@@ -173,7 +175,7 @@ let receivedMessageFromServiceWorker = function(msg) {
         /*        idb.get('mode').then( (mode) => {
                   console.log('Mode=',mode);
                   if (mode!=='online') {
-                  showAlert(`The application has been automatically updated (as current version is invalid). <a href="./index.html">Reload this page to use the new version.</a>`);
+                  showAlert(`The application has been automatically updated (as current version is invalid). <a href="./index.html">Reload this to use the new version.</a>`);
                   }*/
     } else if (msg.indexOf('Cleaned')>=0) {
         showAlert('All offline capabilities have been removed. The application will still happily run if you have a network connection. <a href="./index.html">Please restart this page to complete the process.</a>','info');
@@ -184,7 +186,7 @@ let receivedMessageFromServiceWorker = function(msg) {
             });
         });
     } else if (msg.indexOf('NewSW')>=0 ) {
-        showAlert('All offline capabilities have been removed (due to major update). You may re-cache the  application for offline use using Help|Install.','info');
+        showAlert('All offline capabilities have been removed (due to major update). You may re-cache the  application for offline use using Help|Cache.','info');
     } else {
         console.log('other=',msg);
     }
@@ -200,7 +202,7 @@ let sendCommandToServiceWorker=function(cmd='updateCache') {
                                                             data : 'userInput'
                                                            }));
     } catch(e) {
-        showAlert('You got the application mid-update. Please <a href="./index.html">reload this webpage and try again.</a>','warning');
+        showAlert('You got the application mid-update. Please <a href="./index.html">reload this page and try again.</a>','warning');
         navigator.serviceWorker.ready.then(function(registration) {
             internal.serviceWorker = registration.active;
             navigator.serviceWorker.addEventListener('message', function(event) {
@@ -293,7 +295,7 @@ let downloadLatestVersion=async function(hasnewversion) { // jshint ignore:line
     let s='';
 
     if (internal.hasServiceWorker) {
-        s=`<p> BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which can download itself into the cache of your Broswer for offline use.</p>`;
+        s=`<p> BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which can download itself into the cache of your Browser for offline use.</p>`;
     }
     let dates=`<UL>
 <LI>The version you are using is: ${bisdate.date} (${bisdate.time})</LI>
@@ -307,13 +309,13 @@ let downloadLatestVersion=async function(hasnewversion) { // jshint ignore:line
         s+=dates+`<p> If you would like to update (recommended), press <EM>Update</EM> below.</p>`;
         m.addButton('Update','danger',fn);
     }  else if (idbmode==='online') {
-        m.title.text('You can install this application offline');
-        s+=`<p> If you would like to download all files in the browser cache to enable offline mode (recommended), press <EM>Install</EM> below.</p>`;
-        m.addButton('Install','success',fn);
+        m.title.text('You can cache this application offline');
+        s+=`<p> If you would like to download all files in the browser cache to enable offline mode (recommended), press <EM>Cache</EM> below.</p>`;
+        m.addButton('Cache','success',fn);
     } else if (internal.disableServiceWorker==false) {
         m.title.text('This is the latest version (and is already stored offline)');
-        s+=dates+`<p> If you would like to reload all files, press <EM>Reinstall</EM> below.</p>`;
-        m.addButton('Reinstall','info',fn);
+        s+=dates+`<p> If you would like to reload all files, press <EM>Re-cache</EM> below.</p>`;
+        m.addButton('Re-cache','info',fn);
     } else {
         s+=dates;
     }
@@ -395,7 +397,7 @@ let aboutApplication=async function() {// jshint ignore:line
 // ---------------------------------------------
 // Called under Help | Install
 // ---------------------------------------------
-let installLatestVersion=async function() {// jshint ignore:line
+let cacheLatestVersion=async function() {// jshint ignore:line
 
     if (internal.disableServiceWorker===true) {
         showAlert('Please reload <a href="./index.html">this page</a> and try again.','info');
@@ -408,7 +410,7 @@ let installLatestVersion=async function() {// jshint ignore:line
         return false;
     } 
     
-    console.log('bisdate=',bisdate,'latest=',internal.latestVersion);
+    //console.log('bisdate=',bisdate,'latest=',internal.latestVersion);
     
     let mytime=bisdate['absolutetime'];
     let diff=internal.latestVersion['absolutetime']-mytime;
@@ -515,7 +517,10 @@ let createApplicationSelector=function(externalobj) {
     let extra2="";
     let extra3="";
     let url=window.document.URL;
-    if  (url.indexOf('/unstable')>0 || url.indexOf('/build')>0) {
+    if  (url.indexOf('/unstable')>0 ||
+         url.indexOf('/build')>0 ||
+         url.indexOf('/biswebtest')>0 
+        ) {
         extra2="Unstable ";
         extra3=`, ${bisdate.time}`;
     }
@@ -559,17 +564,53 @@ let createApplicationSelector=function(externalobj) {
         });
 
         
-        let newitem = $(`<li><a href="#">Install (Cache) Application for Offline Use</a></li>`);
+        let newitem = $(`<li><a href="#">Cache Application for Offline Use</a></li>`);
         $("#othermenu").append(newitem);
         
         newitem.click( (e) => {
             setTimeout( () => {
                 e.preventDefault();
                 e.stopPropagation();
-                installLatestVersion();
+                cacheLatestVersion();
             },10);
         });
-        $("#othermenu").append($(`<li class="divider"></li>`));
+        let sep=$(`<li class="divider"></li>`);
+        $("#othermenu").append(sep);
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent Chrome 67 and earlier from automatically showing the prompt
+            e.preventDefault();
+            // Stash the event so it can be triggered later.
+            deferredPrompt=e;
+            console.log('Before Install Fired');
+
+            let newsep=$(`<li class="divider"></li>`);
+            $("#othermenu").append(newsep);
+            let btnToAdd = $(`<li><a href="#">Install as Desktop Application</a></li>`);
+            $("#othermenu").append(btnToAdd);
+            
+            btnToAdd.click('click', () => {
+
+                console.log('Clicked');
+        
+                // hide our user interface that shows our A2HS button
+                newsep.remove();
+                btnToAdd.remove();
+                // Show the prompt
+                deferredPrompt.prompt();
+                // Wait for the user to respond to the prompt
+                deferredPrompt.userChoice
+                    .then((choiceResult) => {
+                        if (choiceResult.outcome === 'accepted') {
+                            console.log('User accepted the A2HS prompt');
+                            sendCommandToServiceWorker('updateCache'); 
+                        } else {
+                            console.log('User dismissed the A2HS prompt');
+                        }
+                        deferredPrompt = null;
+                    });
+            });
+        });
     }
 
     let s=window.document.URL;
@@ -712,7 +753,7 @@ window.onload = (() => {
         if ('serviceWorker' in navigator) {
 
             let scope=window.document.URL;
-            if (scope.indexOf('https')===0) {
+            if (scope.indexOf('https')===0 || scope.indexOf('localhost')) {
                 console.log('---- creating service worker ... ',scope);
                 createServiceWorker();
             } else {
@@ -741,10 +782,11 @@ window.onload = (() => {
             wrap : true,
         });
     $('#mycarousel').carousel('cycle');
-    setTimeout( ()=> {
+
+    /*setTimeout( ()=> {
         $(".dropdown").removeClass("open");//this will remove the active class from  
         $('#appmenu').addClass('open');
-    },5000);
+    },5000);*/
 
 
     window.addEventListener("dragover", (e) => {
@@ -768,7 +810,6 @@ window.onload = (() => {
     },false);
 
 });
-
 
 
 
