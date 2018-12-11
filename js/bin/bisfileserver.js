@@ -39,7 +39,7 @@ let verbose = program.verbose ? program.verbose : false;
 let config = program.config || null;
 let createconfig = program.createconfig || null;
 let tmpdir= program.tmpdir || null;
-let proxyport = program.proxyport || 0
+let proxyport = program.proxyport || 0;
 
 let nolocalhost=false;
 

@@ -579,7 +579,6 @@ class PaintToolElement extends HTMLElement {
         let img=new bisweb_image();
         img.load(infile)
             .then(() => {
-                console.log('read');
                 self.safeSetNewObjectmap(img).catch( (e) => {
                     webutil.createAlert(e,true);
                 });

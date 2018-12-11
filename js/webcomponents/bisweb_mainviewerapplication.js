@@ -1139,15 +1139,34 @@ class ViewerApplicationElement extends HTMLElement {
 
     //  ---------------------------------------------------------------------------
     
-    parseQueryParameters() {
+    parseQueryParameters(painttoolid) {
 
         let load=webutil.getQueryParameter('load') || '';
         let imagename=webutil.getQueryParameter('image') || '';
-
+        let imagename2=webutil.getQueryParameter('image2') || '';
+        let overlayname=webutil.getQueryParameter('overlay') || '';
+        let overlayname2=webutil.getQueryParameter('overlay2') || '';
+        
         if (load.length>0) {
             this.loadApplicationState(load);
         } else if (imagename.length>0) {
-            this.loadImage(imagename);
+            this.loadImage(imagename,0).then( () => {
+                if (overlayname.length>0) {
+                    if (painttoolid===null)  {
+                        this.loadOverlay(overlayname,0);
+                    } else {
+                        let painttool = document.querySelector(painttoolid);
+                        painttool.loadobjectmap(overlayname);
+                    }
+                }
+            });
+            if (imagename2.length>0 && this.num_independent_viewers>1) {
+                this.loadImage(imagename2,1).then( () => {
+                    if (overlayname2.length>0) {
+                        this.loadOverlay(overlayname2,1);
+                    }
+                });
+            }
         }
 
         let restore=webutil.getQueryParameter('restorestate');
@@ -1405,7 +1424,7 @@ class ViewerApplicationElement extends HTMLElement {
         let istest = this.getAttribute('bis-testingmode') || false;
         webutil.runAfterAllLoaded( () => {
             Promise.all(this.applicationInitializedPromiseList).then( () => {
-                this.parseQueryParameters();
+                this.parseQueryParameters(painttoolid);
                 document.body.style.zoom =  1.0;
                 if (!istest) {
                     this.welcomeMessage(false);
