@@ -477,7 +477,7 @@ let createApplicationSelector=function(externalobj) {
                 url=internal.scope+elem.url+'.html';
             }
 
-            console.log('Adding ',url,target);
+            //            console.log('Adding ',url,target);
             
             let description=elem.description;
             let picture=elem.picture;
@@ -523,12 +523,12 @@ let createApplicationSelector=function(externalobj) {
     indicators.empty();
     indicators.append($(indstring));
 
-    console.log('List=',urllist);
+    //    console.log('List=',urllist);
     
     for (let i=0;i<urllist.length;i++) {
         let url=urllist[i];
         $(`#W${url}`).click( (e) => {
-            console.log('Opening ',url);
+            //            console.log('Opening ',url);
             e.preventDefault();
             window.open(url+".html");
         });
@@ -622,34 +622,41 @@ let createApplicationSelector=function(externalobj) {
 
     }
     
-    window.addEventListener('beforeinstallprompt', (e) => {
-        // Prevent Chrome 67 and earlier from automatically showing the prompt
-        e.preventDefault();
-        // Stash the event so it can be triggered later.
-        internal.deferredInstallPrompt=e;
-        console.log('++++ Before Install Fired');
+    window.addEventListener('beforeinstallprompt', (evt) => {
+
+        evt.preventDefault();
         
-        let newsep=$(`<li class="divider"></li>`);
-        $("#othermenu").append(newsep);
-        let btnToAdd = $(`<li><a href="#">Install as Desktop-"like" Application</a></li>`);
-        $("#othermenu").append(btnToAdd);
-        
-        btnToAdd.click('click', () => {
+        if (internal.installButton===null) {
+            let newsep=null;
             
-                // hide our user interface that shows our A2HS button
-            newsep.remove();
-            btnToAdd.remove();
-            // Show the prompt
-            internal.deferredInstallPrompt.prompt();
-            // Wait for the user to respond to the prompt
-            internal.deferredInstallPrompt.userChoice
-                .then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        sendCommandToServiceWorker('updateCache'); 
-                        }
+            evt.preventDefault();
+            // Stash the event so it can be triggered later.
+            internal.deferredInstallPrompt=evt;
+            
+            internal.deferredInstallPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    sendCommandToServiceWorker('updateCache');
+                    newsep.remove();
+                    internal.installButton.remove();
+                    internal.installButton=null;
                     internal.deferredInstallPrompt = null;
-                });
-        });
+                }
+            });
+            
+
+            // Prevent Chrome 67 and earlier from automatically showing the prompt
+            console.log('++++ Before Install Fired');
+            newsep=$(`<li class="divider"></li>`);
+            $("#othermenu").append(newsep);
+            internal.installButton = $(`<li><a href="#">Install as Desktop-"like" Application</a></li>`);
+            $("#othermenu").append(internal.installButton);
+
+            internal.installButton.click('click', () => {
+                internal.deferredInstallPrompt.prompt(); 
+            });
+        } else {
+            internal.deferredInstallPrompt=evt;
+        }
     });
 
 
@@ -665,7 +672,7 @@ let createApplicationSelector=function(externalobj) {
     let bb=$(`<div align="center" style="padding:15px;  right:5.5vw; top:570px; border-radius:30px;background-color:#221100; z-index:5000; position: absolute; color:#ffffff">
              Version:  ${tools.version} (${extra2}${bisdate.date}${extra3})</div>`);
     $('body').append(bb);
-    //    console.log('bisdate=',JSON.stringify(bisdate));
+
 
 };
 
