@@ -39,6 +39,7 @@
     <!-- build:css -->
     <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_dark.css">
     <link rel="stylesheet" type="text/css"  href="../lib/css/bootstrap-colorselector.css">
+    <link rel="stylesheet" href="../node_modules/jstree/dist/themes/default/style.css">
     <link rel="stylesheet" type="text/css" href="biscommon.css">
     <!-- endbuild -->
 
@@ -128,12 +129,13 @@
        bis-viewerid2="#viewer2">
     </bisweb-viewerapplication>
     
-    <bisweb-treepanel
+    <bisweb-filetreepanel
         bis-layoutwidgetid="#viewer_layout" 
         bis-viewerid="#viewer"
+        bis-viewerid2="#viewer2"
         bis-menubarid="#viewer_menubar"
         bis-viewerapplicationid="#viewer_application">
-    </bisweb-treepanel>
+    </bisweb-filetreepanel>
   </div>
   
   <bisweb-botmenubar></bisweb-botmenubar>

@@ -14,6 +14,7 @@ require('jstree');
  *  
  * Attributes:
  *      bis-viewerid : the orthogonal viewer to draw in 
+ *      bis-viewerid2 : the second orthagonal viewer to draw in. Optional.
  *      bis-layoutwidgetid :  the layout widget to create the GUI in
  *      bis-menubarid: menu to which to add a tab that will open the panel
  */
@@ -26,6 +27,7 @@ class FileTreePanel extends HTMLElement {
     connectedCallback() {
 
         this.viewerid=this.getAttribute('bis-viewerid');
+        this.viewertwoid = this.getAttribute('bis-viewerid2');
         this.layoutid=this.getAttribute('bis-layoutwidgetid');
         this.menubarid = this.getAttribute('bis-menubarid');
         this.viewerappid = this.getAttribute('bis-viewerapplicationid');
@@ -33,6 +35,7 @@ class FileTreePanel extends HTMLElement {
         bis_webutil.runAfterAllLoaded( () => {
 
             this.viewer = document.querySelector(this.viewerid);
+            this.viewertwo = document.querySelector(this.viewertwoid) || null;
             this.layout = document.querySelector(this.layoutid);
             this.menubar = document.querySelector(this.menubarid);
             this.viewerapplication = document.querySelector(this.viewerappid);
@@ -52,6 +55,25 @@ class FileTreePanel extends HTMLElement {
             this.makeButtons(listElement);
         });
 
+
+        this.contextMenuDefaultSettings = {
+            'Info' : {
+                'separator_before': false,
+                'separator_after': false,
+                'label': 'File Info',
+                'action': () => {
+                    this.showInfoModal();
+                }
+            },
+            'Load' : {
+                'separator_before': false,
+                'separator_after': false,
+                'label': 'Load Image',
+                'action': () => {
+                    this.loadImageFromTree();
+                }
+            }
+        }
     }
 
     /**
@@ -214,30 +236,43 @@ class FileTreePanel extends HTMLElement {
             'plugins': ["types", "dnd", "contextmenu"],
             'contextmenu': {
                 'show_at_node' : false,
-                'items': {
-                    'Info' : {
-                        'separator_before': false,
-                        'separator_after': false,
-                        'label': 'File Info',
-                        'action': () => {
-                            this.showInfoModal();
-                        }
-                    },
-                    'Load' : {
-                        'separator_before': false,
-                        'separator_after': false,
-                        'label': 'Load Image',
-                        'action': () => {
-                            this.loadImageFromTree();
-                        }
-                    }
-
-                }
+                'items': this.contextMenuDefaultSettings
             }
         }).bind('move_node.jstree', (e, data) => {
             let moveNodes = this.parseSourceAndDestination(data);
             bis_genericio.moveDirectory(moveNodes.src + '&&' + moveNodes.dest);
         });
+
+        let newSettings = this.contextMenuDefaultSettings;
+
+        //add viewer one and viewer two options to pages with multiple viewers
+        if (this.viewertwo) {
+            delete newSettings.Load;
+
+            console.log('new settings', newSettings);
+            newSettings = Object.assign(newSettings, {
+                'Viewer1' : {
+                    'separator_before': false,
+                    'separator_after': false,
+                    'label': 'Load Image to Viewer 1',
+                    'action': () => {
+                        this.loadImageFromTree(0);
+                    }
+                },
+                'Viewer2' : {
+                    'separator_before': false,
+                    'separator_after': false,
+                    'label': 'Load Image to Viewer 2',
+                    'action': () => {
+                        this.loadImageFromTree(1);
+                    }
+                }
+            });
+        }
+
+        console.log('new settings', newSettings);
+        tree.jstree(true).settings.contextmenu.items = newSettings;
+        tree.jstree(true).redraw(true); 
 
         let loadImageButton = this.panel.widget.find('.load-image-button');
         loadImageButton.prop('disabled', false);
@@ -341,9 +376,9 @@ class FileTreePanel extends HTMLElement {
 
         let handleRightClick = (data) => {
             if (data.node.original.type === 'directory') {
-                tree.jstree(true).settings.contextmenu.items.Load._disabled = true;
+                this.toggleContextMenuLoadButtons(tree, 'off')
             } else {
-                tree.jstree(true).settings.contextmenu.items.Load._disabled = false;
+                this.toggleContextMenuLoadButtons(tree, 'on');
             }
         };
 
@@ -359,7 +394,7 @@ class FileTreePanel extends HTMLElement {
             this.currentlySelectedNode = data.node;
 
             if (data.event.type === 'click') {
-               handleLeftClick(data);
+                handleLeftClick(data);
             } else if (data.event.type === 'contextmenu') {
                 handleRightClick(data);
             }
@@ -373,10 +408,12 @@ class FileTreePanel extends HTMLElement {
 
     /**
      * Loads an image selected in the file tree and displays it on the viewer. 
+     * 
+     * @param {Number} - The number of the viewer to load to. Optional, defaults to viewer one. 
      */
-    loadImageFromTree() {
+    loadImageFromTree(viewer = 0) {
         let nodeName = this.constructNodeName();
-        this.viewerapplication.loadImage(nodeName);
+        this.viewerapplication.loadImage(nodeName, viewer);
     }
 
     /**
@@ -472,6 +509,26 @@ class FileTreePanel extends HTMLElement {
             });
         });
         
+    }
+
+    toggleContextMenuLoadButtons(tree, toggle) {
+        let existingTreeSettings = tree.jstree(true).settings.contextmenu.items;
+        console.log('existing tree settings', existingTreeSettings);
+        if (toggle === 'on') {
+            if (existingTreeSettings.Load) {
+                existingTreeSettings.Load._disabled = false;
+            } else {
+                existingTreeSettings.Viewer1._disabled = false;
+                existingTreeSettings.Viewer2._disabled = false;
+            }
+        } else if (toggle === 'off') {
+            if (existingTreeSettings.Load) {
+                existingTreeSettings.Load._disabled = true;
+            } else {
+                existingTreeSettings.Viewer1._disabled = true;
+                existingTreeSettings.Viewer2._disabled = true;
+            }
+        }
     }
 
     constructNodeName() {
