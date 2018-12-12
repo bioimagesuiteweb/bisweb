@@ -238,7 +238,7 @@ class FileTreePanel extends HTMLElement {
         }).bind('move_node.jstree', (e, data) => {
             let moveNodes = this.parseSourceAndDestination(data);
             bis_genericio.moveDirectory(moveNodes.src + '&&' + moveNodes.dest);
-        });
+        })
 
         listContainer.bind('dblclick.jstree', (e) => {
             console.log('event', e);
@@ -251,7 +251,7 @@ class FileTreePanel extends HTMLElement {
         let saveStudyButton = this.panel.widget.find('.save-study-button');
         saveStudyButton.prop('disabled', false);
 
-        this.setOnClickListeners(listContainer);
+        this.setOnClickListeners(tree, listContainer);
 
         this.fileTree = fileTree;
 
@@ -335,16 +335,34 @@ class FileTreePanel extends HTMLElement {
      * 
      * @param {HTMLElement} listContainer - The div that contains the jstree object.
      */
-    setOnClickListeners(listContainer) {
-        listContainer.on('select_node.jstree', (event, data) => {
-            console.log('select node', data);
+    setOnClickListeners(tree, listContainer) {
 
+        let handleLeftClick = (data) => {
             if (data.node.original.type === 'directory') {
                 data.instance.open_node(this, false);
                 this.currentlySelectedNode = data.node;
             } else if (data.node.original.type === 'picture') {
                 this.currentlySelectedNode = data.node;
             }
+        };
+
+        let handleRightClick = (data) => {
+            if (data.node.original.type === 'directory') {
+                tree.jstree(true).settings.contextmenu.items.Load._disabled = true;
+            } else {
+                tree.jstree(true).settings.contextmenu.items.Load._disabled = false;
+            }
+            tree.jstree(true).redraw(true);
+        };
+
+        listContainer.on('select_node.jstree', (event, data) => {
+            console.log('select_node', event, data);
+            if (data.event.type === 'click') {
+               handleLeftClick(data);
+            } else if (data.event.type === 'contextmenu') {
+                handleRightClick(data);
+            }
+           
         });
     }
 
