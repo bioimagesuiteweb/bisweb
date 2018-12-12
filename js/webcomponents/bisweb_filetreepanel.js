@@ -169,7 +169,6 @@ class FileTreePanel extends HTMLElement {
 
         }
 
-
         //if the file tree is empty, display an error message and return
         if (!fileTree[0] || !fileTree[0].children) {
             bis_webutil.createAlert('No study files could be found in the chosen directory, try a different directory.', false);
@@ -238,11 +237,6 @@ class FileTreePanel extends HTMLElement {
         }).bind('move_node.jstree', (e, data) => {
             let moveNodes = this.parseSourceAndDestination(data);
             bis_genericio.moveDirectory(moveNodes.src + '&&' + moveNodes.dest);
-        })
-
-        listContainer.bind('dblclick.jstree', (e) => {
-            console.log('event', e);
-            this.loadImageFromTree();
         });
 
         let loadImageButton = this.panel.widget.find('.load-image-button');
@@ -341,9 +335,8 @@ class FileTreePanel extends HTMLElement {
             if (data.node.original.type === 'directory') {
                 data.instance.open_node(this, false);
                 this.currentlySelectedNode = data.node;
-            } else if (data.node.original.type === 'picture') {
-                this.currentlySelectedNode = data.node;
             }
+            //node is already selected by select_node event handler so nothing to do for selecting a picture
         };
 
         let handleRightClick = (data) => {
@@ -352,17 +345,29 @@ class FileTreePanel extends HTMLElement {
             } else {
                 tree.jstree(true).settings.contextmenu.items.Load._disabled = false;
             }
-            tree.jstree(true).redraw(true);
         };
+
+        let handleDblClick = () => {
+            console.log('currently selected node', this.currentlySelectedNode);
+            if (this.currentlySelectedNode.original.type === 'picture') {
+               this.loadImageFromTree(); 
+            }
+        }
 
         listContainer.on('select_node.jstree', (event, data) => {
             console.log('select_node', event, data);
+            this.currentlySelectedNode = data.node;
+
             if (data.event.type === 'click') {
                handleLeftClick(data);
             } else if (data.event.type === 'contextmenu') {
                 handleRightClick(data);
             }
-           
+        });
+
+        tree.bind('dblclick.jstree', (e) => {
+            console.log('dblclick', e);
+            handleDblClick();
         });
     }
 
