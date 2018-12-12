@@ -22,6 +22,9 @@
 /*jshint undef: true, unused: true */
 
 
+// Remember to turn
+// chrome://flags/#enable-desktop-pwas-link-capturing
+// to on
 // ----------------------------------- Imports and Global Variables -------------------------------------
 const $=require('jquery');
 const bisdate=require('bisdate.js');
@@ -456,7 +459,7 @@ let createApplicationSelector=function(externalobj) {
     let menustring="";
     let indstring="";
     let count=0;
-    let urllist= [];
+
     let target="_blank";
     
     for (let kk=0;kk<objlist.length;kk++) {
@@ -497,14 +500,13 @@ let createApplicationSelector=function(externalobj) {
                 imagestring+=a;
                 
                 if (kk>0) {
-                    if (!internal.runningAsDesktopApp) {
-                        menustring+=`<li><a  href="${url}" target="${target}" role="button">${title}</a></li>`;
-                    } else {
+                    menustring+=`<li><a  href="${url}" target="${target}" role="button">${title}</a></li>`;
+                }/* else {
                         let a=`<li><a href="#" id="W${elem.url}" role="button">${title}</a></li>`;
                         menustring+=a;
                         urllist.push(elem.url);
                     }
-                }
+                }*/
                 
                 let b='<li data-target="#mycarousel" data-slide-to="'+i+'"';
                 if (count===1)
@@ -524,15 +526,15 @@ let createApplicationSelector=function(externalobj) {
     indicators.append($(indstring));
 
     //    console.log('List=',urllist);
-    
+    /*
     for (let i=0;i<urllist.length;i++) {
         let url=urllist[i];
         $(`#W${url}`).click( (e) => {
-            //            console.log('Opening ',url);
+            console.log('Opening ',url,' with chrome.app.window');
             e.preventDefault();
-            window.open(url+".html");
+            chrome.app.window.create(url+".html");
         });
-    }
+    }*/
 
     
     let othermenu=$(`<li class='dropdown'>
