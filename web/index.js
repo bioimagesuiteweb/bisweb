@@ -861,3 +861,11 @@ window.onload = (() => {
 
 
 
+Window.biswebdebug=function(f) {
+    if (f) {
+        sendCommandToServiceWorker("debugon");
+    } else {
+        sendCommandToServiceWorker("debugoff");
+    }
+};
+    
