@@ -18,6 +18,7 @@ const internal =  {
     count : {},
     maxcount : {},
     webfirst : true,
+    debug : false,
 };
 
 internal.path2= internal.path+"#";
@@ -191,6 +192,10 @@ self.addEventListener('message', (msg) => {
             }
         } else if (name==="clearCache") {
             cleanCache().then( () => { send_message_to_all_clients(`Cleaned Cache. Disabled offline capabilities`); });
+        } else if (name==="debugon") {
+            internal.debug=true;
+        } else if (name==="debugoff") {
+            internal.debug=false;
         }
     } catch(e) {
         console.log(`bisweb-sw: ${getTime()}. Bad Message ${e} received`);
@@ -235,19 +240,6 @@ self.addEventListener('activate',  event => {
 // The Critical Fetch Event
 // -------------------------
 
-
-/*self.addEventListener('fetch', event => {
-    // Prevent the default, and handle the request ourselves.
-    event.respondWith(async function() {
-        // Try to get the response from a cache.
-        const cachedResponse = await caches.match(event.request);
-        // Return it if we found one.
-        if (cachedResponse) return cachedResponse;
-        // If we didn't find a match in the cache, use the network.
-        return fetch(event.request);
-    }());
-});*/
-
 self.addEventListener('fetch', (event) => {
 
     event.respondWith(async function() { 
@@ -265,6 +257,8 @@ self.addEventListener('fetch', (event) => {
         }
 
         // Cache then Web
+
+        // First check for special paths and reroute
         let url=event.request;
         let urlname=event.request.url;
         if (urlname === internal.path ||
@@ -278,7 +272,9 @@ self.addEventListener('fetch', (event) => {
             urlname=url;
         }
 
-
+        if (internal.debug) {
+            console.log('--bisweb-sw :'+getTime()+'. request to download '+event.request.url+' webfirst='+webfirst);
+        }
         
         if (webfirst) {
             try {
@@ -289,7 +285,13 @@ self.addEventListener('fetch', (event) => {
         }
 
         try {
-            return await caches.match(url, {ignoreSearch : true});
+            let q=await caches.match(url, {ignoreSearch : true});
+            if (q) {
+                return q;
+            } else {
+                console.log('bisweb-sw: '+getTime()+'. Cache fetch returned undefined; will try returning online version for', event.request.url);
+                url=event.request;
+            }
         } catch(e) {
             console.log('bisweb-sw: '+getTime()+'. Cache fetch failed; will try returning online version for', event.request.url,urlname);
         }
@@ -300,10 +302,24 @@ self.addEventListener('fetch', (event) => {
         } catch(e) {
             console.log('bisweb-sw: '+getTime()+'. Network fetch(2) failed; will return null', event.request.url,urlname,'\n Fetch error 2=',e,'\n');
         }
-        console.log("bisweb-sw: "+getTime()+". About to return null");
-        return null;
+        console.log("bisweb-sw: "+getTime()+". About to return dummy");
+
+        // https://googlechrome.github.io/samples/service-worker/fallback-response/
+        // For demo purposes, use a pared-down, static YouTube API response as fallback.
+        const fallbackResponse = {
+          items: [{
+              snippet: {title: 'Fallback Title 1'}
+          }]
+        };
+
+        // Construct the fallback response via an in-memory variable. In a real application,
+        // you might use something like `return fetch(FALLBACK_URL)` instead,
+        // to retrieve the fallback response via the network.
+        return new Response(JSON.stringify(fallbackResponse), { headers: {'Content-Type': 'application/json'}});
     }());
 });
 
 
 console.log(`bisweb-sw: ${getTime()}. BioImage Suite Web Service Worker starting name=${internal.name} path=${internal.path}`);                       
+
+
