@@ -4,45 +4,62 @@
 	    "title" : "Orthogonal Viewer Tool",
 	    "url"   : "viewer",
 	    "description" : "The orthogonal viewer + image processing tool.",
-	    "picture" : "images/viewer.png"
+	    "picture" : "images/viewer.png",
+            "width" : "800",
+            "height" : "600"
 	},
 	"connviewer" : {
 	    "title" : "Connectivity Viewer",
 	    "url"   : "connviewer",
 	    "description" : "The fMRI connectivity display tool.",
-	    "picture" : "images/connviewer.png"
-	    
+	    "picture" : "images/connviewer.png",
+	    "width" : "1024",
+            "height" : "800"
+
 	},
 	"mni2tal" : {
 	    "title" : "MNI2TAL",
 	    "url"   : "mni2tal",
 	    "description" : "The MNI 2 Talairach Converter program.",
-	    "picture" : "images/mni2tal.png"
+	    "picture" : "images/mni2tal.png",
+            "width" : "450",
+            "height" : "500"
+
 	},
 	"editor" : {
 	    "title" : "Image Editor",
 	    "url"   : "editor",
 	    "description" : "The orthogonal viewer and editor.",
-	    "picture" : "images/editor.png"
+	    "picture" : "images/editor.png",
+            "width" : "800",
+            "height" : "600"
 	},
 	"overlayviewer" : {
 	    "title" : "Overlay Viewer",
 	    "url"   : "overlayviewer",
 	    "description" : "The orthogonal and mosaic functional overlay viewer.",
-	    "picture" : "images/overlayviewer.png"
+	    "picture" : "images/overlayviewer.png",
+            "width" : "800",
+            "height" : "600"
 	},
 	"dualviewer" : {
 	    "title" : "Dual Viewer Tool",
 	    "url"   : "dualviewer",
 	    "description" : "A dual registration viewer with linked cursors.",
-	    "picture" : "images/dualviewer.png"
+	    "picture" : "images/dualviewer.png",
+            "width" : "1024",
+            "height" : "800"
+
 	},
 	"paravision" : {
 	    "title" : "Paravision Import Viewer",
 	    "url"   : "paravision",
 	    "description" : "The paravision import tool.",
 	    "picture" : "images/paravision.png",
-	    "electrononly": true
+	    "electrononly": true,
+            "width" : "1024",
+            "height" : "800"
+
 	},
         "spectviewer" : {
 	    "title" : "Diff Spect Application",
@@ -50,9 +67,12 @@
 	    "description" : "The diff-spect tool",
 	    "picture" : "",
 	    "electrononly": false,
-            "hide" : true
+            "hide" : true,
+            "width" : "800",
+            "height" : "600"
+
 	}
     },
-    "version" : "1.0.0b4"
+    "version" : "1.1a1"
 }
 
