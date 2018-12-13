@@ -139,7 +139,7 @@ let dicom2BIDS=async function(opts)  {
         console.log('+++++',index+', name=',origname,'-->',target);
         
         try {
-            await genericio.copyFile(origname,target);
+            await genericio.copyFile(origname + '&&' + target);
         } catch (e) {
             return errorfn(e);
         }

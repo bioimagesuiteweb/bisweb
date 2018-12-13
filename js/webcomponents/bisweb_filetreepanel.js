@@ -43,8 +43,8 @@ class FileTreePanel extends HTMLElement {
             this.panel=new bisweb_panel(this.layout,
                 {  name  : 'Files',
                    permanent : false,
-                   width : '290',
-                   dual : false,
+                   width : '400',
+                   dual : true,
                    mode : 'sidebar',
                 });
             
@@ -73,7 +73,14 @@ class FileTreePanel extends HTMLElement {
                     this.loadImageFromTree();
                 }
             }
-        }
+        };
+    }
+
+    /**
+     * Shows file tree panel in the sidebar.
+     */
+    showTreePanel() {
+        this.panel.show();
     }
 
     /**
@@ -376,7 +383,7 @@ class FileTreePanel extends HTMLElement {
 
         let handleRightClick = (data) => {
             if (data.node.original.type === 'directory') {
-                this.toggleContextMenuLoadButtons(tree, 'off')
+                this.toggleContextMenuLoadButtons(tree, 'off');
             } else {
                 this.toggleContextMenuLoadButtons(tree, 'on');
             }
@@ -387,7 +394,7 @@ class FileTreePanel extends HTMLElement {
             if (this.currentlySelectedNode.original.type === 'picture') {
                this.loadImageFromTree(); 
             }
-        }
+        };
 
         listContainer.on('select_node.jstree', (event, data) => {
             console.log('select_node', event, data);

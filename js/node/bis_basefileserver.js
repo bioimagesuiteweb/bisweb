@@ -844,6 +844,13 @@ class BaseFileServer {
                     prom=Promise.reject('In Read Only Mode');
                 break;
             }
+            case 'copyFile' : {
+                if (!this.opts.readonly)
+                    prom=bisgenericio.copyFile(url);
+                else
+                    prom=Promise.reject('In Read Only Mode');
+                break;
+            }
         }
 
         if (prom===null)

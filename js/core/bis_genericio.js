@@ -233,45 +233,6 @@ let write = function (url, data,isbinary=false) {
     });
 };
 
-/** Copies a single file
- * @param{String} source -- the input filename
- * @param{String} target -- the output filename
- * @returns {Promise} without payload
- */
-
-let copyFile=function(source,target) {
-
-    if (fileServerClient) {
-        try {
-            return fileServerClient.copyFile(source.target);
-        } catch (e) {
-            return Promise.reject('No copy file functionality');
-        }
-    }
-
-    if (inBrowser) {
-        return Promise.rejected('copyFile can not be  done in a  Browser');
-    }
-
-    // https://stackoverflow.com/questions/11293857/fastest-way-to-copy-file-in-node-js
-    let rd = fs.createReadStream(source);
-    let wr = fs.createWriteStream(target);
-    return new Promise(function(resolve, reject) {
-        rd.on('error', reject);
-        wr.on('error', reject);
-        wr.on('finish', resolve);
-        try {
-            rd.pipe(wr);
-        } catch(e) {
-            rd.destroy();
-            wr.end();
-            reject(e);
-        }
-    });
-            
-              
-};
-
 /** Returns the size in bytes of a file
  * @alias BisGenericIO#getFileSize
  * @param {String} url - the filename
@@ -339,7 +300,7 @@ let getFileStats=function(url) {
 
     let m=fs.lstatSync(url);
     return Promise.resolve(m);
-}
+};
 
 /** Create the directory in url
  * @alias BisGenericIO#makeDirectory
@@ -394,6 +355,7 @@ let deleteDirectory=function(url) {
 
 /**
  * Tries to move a directory from source to destination. Currently only for fileserver. 
+ * 
  * @alias BisGenericIO#moveDirectory
  * @param {String} url - name of source and destination, separated by '&&'
  * @returns {Promise} - the payload is true or false
@@ -408,7 +370,7 @@ let moveDirectory=function(url) {
         return Promise.reject('moveDirectory can not be  done in a  Browser');
     }
 
-    let splitNames = url.split('&&');
+    let splitNames = splitFilenames(url);
     let src = splitNames[0], dest = splitNames[1];
 
     if (!fs.lstatSync(src).isFile())
@@ -427,7 +389,46 @@ let moveDirectory=function(url) {
     });
 };
  
+/** Copies a single file
+ * @param {String} url - Source and destination 
+ * @returns {Promise} without payload
+ */
 
+let copyFile=function(url) {
+
+    if (fileServerClient) {
+        try {
+            return fileServerClient.copyFile(url);
+        } catch (e) {
+            return Promise.reject('No copy file functionality');
+        }
+    }
+
+    if (inBrowser) {
+        return Promise.rejected('copyFile can not be  done in a  Browser');
+    }
+
+    let splitNames = splitFilenames(url);
+    let src = splitNames[0], dest = splitNames[1];
+
+    // https://stackoverflow.com/questions/11293857/fastest-way-to-copy-file-in-node-js
+    let rd = fs.createReadStream(src);
+    let wr = fs.createWriteStream(dest);
+    return new Promise(function(resolve, reject) {
+        rd.on('error', reject);
+        wr.on('error', reject);
+        wr.on('finish', resolve);
+        try {
+            rd.pipe(wr);
+        } catch(e) {
+            rd.destroy();
+            wr.end();
+            reject(e);
+        }
+    });
+            
+              
+};
 
 /** Returns matching files in a path
  * @alias BisGenericIO#getMatchingFiles
@@ -594,6 +595,42 @@ let isSaveDownload =function() {
     return false;
 };
 
+
+/**
+ * Runs file conversion for a given filetype using server utilities. 
+ * 
+ * @param {Object} params - Parameter object for the file conversion. 
+ * @param {String} params.fileType - The type of the file to convert from. Currently supports 'dicom'.
+ * @param {String} params.inputDirectory - The input directory to run file conversions in. 
+ */
+let runFileConversion = (params) => {
+    let updateFn = (obj) => {
+        console.log('update fn', obj);
+    };
+
+    return new Promise( (resolve, reject) => {
+        if (fileServerClient) {
+            if (params.fileType === 'dicom') {
+                fileServerClient.dicomConversion(params.inputDirectory, updateFn)
+                    .then( (obj) => {
+                        console.log('Conversion done');
+                        resolve(obj);
+                     }).catch( (e) => { reject(e); });
+            }
+        }
+    });
+};
+
+/**
+ * Splits a filename concatenated by the symbol '&&' into two names.
+ * 
+ * @param {String} url - Two filenames, concatenated by '&&'.
+ * @returns Array of filenames.
+ */
+let splitFilenames = (url) => {
+    return url.split('&&');
+};
+
 // -------------------------------------------------------------------------------------------------------
 
 // Export object
@@ -625,7 +662,7 @@ const bisgenericio = {
     getFixedSaveFileName : getFixedSaveFileName,
     getFixedLoadFileName : getFixedLoadFileName,
     // Operations needed for Bruker and more
-    copyFile : copyFile,
+    copyFile :     copyFile,
     getFileSize :     getFileSize,
     getFileStats:     getFileStats,
     isDirectory :     isDirectory,
@@ -641,6 +678,7 @@ const bisgenericio = {
     getPathSeparator : getPathSeparator,
     //
     isSaveDownload : isSaveDownload,
+    runFileConversion : runFileConversion
 };
 
 

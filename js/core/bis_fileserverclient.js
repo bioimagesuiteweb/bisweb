@@ -828,6 +828,7 @@ class BisFileServerClient extends BisBaseServerClient {
      * @param{String} url -- the filename
      * @returns {Promise} payload is the result
      */
+    //TODO: Add second input for file move operation
     fileSystemOperation(name,url) {
         console.log('file system operation', name, url);
         if (url.indexOf('\\')>=0)
@@ -884,7 +885,8 @@ class BisFileServerClient extends BisBaseServerClient {
                                'operation' : 'dicomConversion',
                                'indir' : indir,
                                'debug' : debug,
-                               'id' : serverEvent.id }); 
+                               'id' : serverEvent.id,
+                               'timeout' : 300000}); 
         });
     }
 

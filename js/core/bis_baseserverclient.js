@@ -104,9 +104,17 @@ class BisBaseServerClient {
      * @param{String} dest -- the destination directory
      * @returns {Promise} payload true or false
      */
-    moveDirectory(src, dest) {
-        console.log('base client move directory');
-        return this.fileSystemOperation('moveDirectory', src + '&&' + dest);
+    moveDirectory(url) {
+        return this.fileSystemOperation('moveDirectory', url);
+    }
+
+    /** copies a file from source to destination
+     *@param{String} src -- the source directory
+     * @param{String} dest -- the destination directory
+     * @returns {Promise} payload true or false
+     */
+    copyFile(url) {
+        return this.fileSystemOperation('copyFile', url);
     }
 
     /** getMatching Files
