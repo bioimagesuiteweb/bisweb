@@ -461,6 +461,7 @@ let createApplicationSelector=function(externalobj) {
     let count=0;
 
     let target="_blank";
+    let urllist = [];
     
     for (let kk=0;kk<objlist.length;kk++) {
 
@@ -495,18 +496,23 @@ let createApplicationSelector=function(externalobj) {
                 let cname="";
                 if (count===1)
                     cname=" active";
-                
-                let a=`<div class="item${cname}"><a href="${url}" target="${target}"><img src="${picture}" alt="${title}" style="height:400px"><div class="carousel-caption">${count}. ${description}</div></div>`;
-                imagestring+=a;
-                
-                if (kk>0) {
-                    menustring+=`<li><a  href="${url}" target="${target}" role="button">${title}</a></li>`;
-                }/* else {
-                        let a=`<li><a href="#" id="W${elem.url}" role="button">${title}</a></li>`;
-                        menustring+=a;
-                        urllist.push(elem.url);
+
+                if (kk===0) {
+
+                    imagestring+=`<div class="item${cname}"><a href="${url}" target="${target}"><img src="${picture}" alt="${title}" style="height:400px"><div class="carousel-caption">${count}. ${description}</div></div>`;
+                } else {
+                    if (internal.runningAsDesktopApp) {
+                        imagestring+=`<div class="item${cname}"><a href="#" id="L${url}" target="${target}"><img src="${picture}" alt="${title}" style="height:400px"><div class="carousel-caption">${count}. ${description}</div></div>`;
+                        menustring+=`<li><a href="#" id="W${elem.url}" role="button">${title}</a></li>`;
+                        urllist.push({
+                            name : elem.url,
+                            url  : url
+                        });
+                    } else {
+                        imagestring+=`<div class="item${cname}"><a href="${url}" target="${target}"><img src="${picture}" alt="${title}" style="height:400px"><div class="carousel-caption">${count}. ${description}</div></div>`;
+                        menustring+=`<li><a href="${url}" role="button">${title}</a></li>`;
                     }
-                }*/
+                }
                 
                 let b='<li data-target="#mycarousel" data-slide-to="'+i+'"';
                 if (count===1)
@@ -525,18 +531,40 @@ let createApplicationSelector=function(externalobj) {
     indicators.empty();
     indicators.append($(indstring));
 
-    //    console.log('List=',urllist);
-    /*
-    for (let i=0;i<urllist.length;i++) {
-        let url=urllist[i];
-        $(`#W${url}`).click( (e) => {
-            console.log('Opening ',url,' with chrome.app.window');
-            e.preventDefault();
-            chrome.app.window.create(url+".html");
-        });
-    }*/
+    if (internal.runningAsDesktopApp) {
+        console.log('List=',urllist);
+        let scale=window.devicePixelRatio || 1.0;
+        for (let i=0;i<urllist.length;i++) {
+            let elem=urllist[i];
+            let url=elem.url;
+            let name=elem.name;
+            
+            let wd=Math.round(scale * (tools.tools[name].width || 800));
+            let ht=Math.round(scale*  (tools.tools[name].height || 600));
+            
+            console.log('Name=',name,wd,ht);
+            
+            $(`#W${name}`).click( (e) => {
+                e.preventDefault();
+                window.open(url,'BioImageSuite Web '+name,`height=${ht},width=${wd}`);
+            });
+            $(`#L${name}`).click( (e) => {
+                e.preventDefault();
+                window.open(url,'BioImageSuite Web '+name,`height=${ht},width=${wd}`);
+            });
+        }
+        let slist=$('.bislink');
+        for (let i=0;i<2;i++) {
+            let link=slist[i].href;
+            //            slist[i].href="";
+            console.log('Link = ',slist[i],slist[i].href);
+            slist[i].click( (e) => {
+                e.preventDefault();
+                console.log('Link was',link);
+            });
+        }
+    }
 
-    
     let othermenu=$(`<li class='dropdown'>
             <a href='#' class='dropdown-toggle'  data-toggle='dropdown'
                role='button' aria-expanded='false'>Help<span class='caret'></span></a>
@@ -787,15 +815,17 @@ const fileSelectHandler=function(e) {
 window.onload = (() => {
 
     // Only register if not in electron and not in development mode
-    if (!inelectron) {
-        if ('serviceWorker' in navigator) {
-
-            let scope=window.document.URL;
-            if (scope.indexOf('https')===0 || scope.indexOf('localhost')) {
-                console.log('---- creating service worker ... ',scope);
-                createServiceWorker();
-            } else {
-                console.log('---- not creating service worker ... not https',scope);
+    if (typeof (window.BIS) === "undefined") {
+        if (!inelectron) {
+            if ('serviceWorker' in navigator) {
+                
+                let scope=window.document.URL;
+                if (scope.indexOf('https')===0 || scope.indexOf('localhost')) {
+                    console.log('---- creating service worker ... ',scope);
+                    createServiceWorker();
+                } else {
+                    console.log('---- not creating service worker ... not https',scope);
+                }
             }
         }
     }
