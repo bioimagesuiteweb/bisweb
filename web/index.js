@@ -54,7 +54,6 @@ const internal = {
     unstable : false,
     hasServiceWorker : false,
     modal : null,
-    alertDiv : null,
     serviceWorker : null,
     latestVersion : null,
     scope : '',
@@ -62,7 +61,8 @@ const internal = {
     runningAsDesktopPWA : false,
     deferredInstallPrompt : null,
     installButton : null,
-    offlineButton : false,
+    toggleOnlineFunction : null,
+    debug : false,
 };
 
 // ----------------------------------- GUI Utility Functions -------------------------------------
@@ -70,7 +70,7 @@ const internal = {
 // Modal Dialog
 // -------------------------------------
 
-let getModal=function() {
+var getModal=function() {
 
     if (internal.modal===null) {
         let m =$(`
@@ -144,36 +144,29 @@ let getModal=function() {
 // Alert Pill
 // -------------------------------------
 
-let showAlert=function(message,type='info') {
+var showAlert=function(message,type='info') {
 
-    if (internal.alertDiv)
-        internal.alertDiv.remove();
-
-    internal.alertDiv = $(`<div class="alert alert-${type} alert-dismissible" role="alert" 
+    $(".alert").remove();
+    let alertDiv = $(`<div class="alert alert-${type} alert-dismissible" role="alert" 
                   style="position:absolute; top:65px; left:30px; z-index: 100">
                   <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${message}</a></div>`);
-    $('body').append(internal.alertDiv);
-    internal.alertDiv.alert();
+    $('body').append(alertDiv);
+    alertDiv.alert();
 };
 
-let setEnableDisableMenu=function(enable=true) {
 
-    let w=internal.offlineButton[0].children[0];
-    if (enable)
-        w.innerHTML='Enable Offline Mode';
-    else
-        w.innerHTML='Disable Offline Mode';
-};
 
 // ------------------------------------------------------------------------------
 // Communication with Service Worker
 // ------------------------------------------------------------------------------
 
-let receivedMessageFromServiceWorker = function(msg) {
+var receivedMessageFromServiceWorker = function(msg) {
+
+    if (internal.debug)
+        console.log('.... Received',msg);
     
     if (msg.indexOf("Cache Updated")>=0) {
         showAlert(`The application cache has been updated. The application can now run in offline mode if there is need.`);
-        setEnableDisableMenu(false);
     } else if (msg.indexOf('Downloaded')>=0) {
         showAlert(msg);
     } else if (msg.indexOf('Activate')>=0) {
@@ -189,31 +182,39 @@ let receivedMessageFromServiceWorker = function(msg) {
         checkForLatestVersion();
     } else if (msg.indexOf('Cleaned')>=0) {
         showAlert('All offline capabilities have been removed. The application will still happily run if you have a network connection.','info');
-        setEnableDisableMenu(true);
     } else if (msg.indexOf('NewSW')>=0 ) {
         if (internal.runningAsDesktopPWA)
             showAlert('All offline capabilities have been removed (due to major update).','info');
         else
             showAlert('All offline capabilities have been removed due to update.','info');
 
-        setEnableDisableMenu(true);
         
-    } else {
-        console.log('other=',msg);
-    }
+    } else if (msg.indexOf('Going')>=0) {
+
+        let online=false;
+        if (msg.indexOf('Online')>0) {
+            online=true;
+        }
+        internal.toggleOnlineFunction(!online);
+        if (msg.indexOf('empty cache')>0) {
+            cacheLatestVersion(false);
+        } else if (msg.indexOf('No network connection')>=0 && online===false) {
+            showAlert(`Staying in offline mode. There is no network connection`);
+        }
+    } 
+
 };
 
-let sendCommandToServiceWorker=function(cmd='updateCache') {
+var sendCommandToServiceWorker=function(cmd='updateCache') {
     
 
     // Find worker
     try {
-        
         internal.serviceWorker.postMessage(JSON.stringify( {name : cmd,
                                                             data : 'userInput'
                                                            }));
     } catch(e) {
-        showAlert('You got the application mid-update. Please <a href="./index.html">reload this page and try again.</a>','warning');
+        showAlert('You got the application mid-update. Please <a href="./index.html">reload this page and try again.</a>','danger');
         navigator.serviceWorker.ready.then(function(registration) {
             internal.serviceWorker = registration.active;
             navigator.serviceWorker.addEventListener('message', function(event) {
@@ -240,7 +241,7 @@ let sendCommandToServiceWorker=function(cmd='updateCache') {
 // ---------------------
 // Initial Check
 // ---------------------
-let getLatestVersion=async function() { // jshint ignore:line
+var getLatestVersion=async function() { // jshint ignore:line
 
     let extra=".";
     if (typeof (window.BIS) !== "undefined") {
@@ -263,7 +264,7 @@ let getLatestVersion=async function() { // jshint ignore:line
 
 }; // jshint ignore:line
 
-let getCacheState=async function() { // jshint ignore:line
+var getCacheState=async function() { // jshint ignore:line
 
     let mode='empty';
     try {
@@ -275,11 +276,11 @@ let getCacheState=async function() { // jshint ignore:line
     return mode;
 };// jshint ignore:line
 
-let getOfflineMode=async function() { // jshint ignore:line
+var getOfflineMode=async function() { // jshint ignore:line
 
     try {
-        let n=await idb.get('network');
-        if (n==='offline')
+        let s=await idb.get('mode');
+        if (s==='offline')
             return true;
     } catch(e) {
         console.log('---- Failed to read network. Assuming online');
@@ -289,7 +290,7 @@ let getOfflineMode=async function() { // jshint ignore:line
 };// jshint ignore:line
 
 
-let getCachedVersion=async function() { // jshint ignore:line
+var getCachedVersion=async function() { // jshint ignore:line
 
     let dt= {
         "date" : "0000/00/00",
@@ -307,9 +308,18 @@ let getCachedVersion=async function() { // jshint ignore:line
     return dt;
 };// jshint ignore:line
 
+
+var setOfflineMode=function(mode) {
+    if (mode)
+        sendCommandToServiceWorker('goOffline');
+    else
+        sendCommandToServiceWorker('goOnline');
+
+};
+
 // ------------------------------------------------------------------------
 
-let doesNewVersionExist=async function() { // jshint ignore:line
+var doesNewVersionExist=async function() { // jshint ignore:line
     
     // Check if we are in offline mode else return;
     let mode=await getCacheState();  // jshint ignore:line
@@ -333,38 +343,35 @@ let doesNewVersionExist=async function() { // jshint ignore:line
     return newversion;
 }; // jshint ignore:line
 
-let cacheLatestVersion=async function(hasnewversion) { // jshint ignore:line
+var cacheLatestVersion=async function(check=true) { // jshint ignore:line
 
-    let state=await getCacheState();  // jshint ignore:line
-    let latestVersion=internal.latestVersion;
-    let cacheVersion=await getCachedVersion();
-    
-    let s='';
-
-    /*    if (internal.hasServiceWorker) {
-        s=`<p> BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which can download itself into the cache of your Browser for offline use.</p>`;
-    }*/
-    let dates=`<UL>
-<LI>The version you have cached is: ${cacheVersion.date} (${cacheVersion.time})</LI>
-<LI> The latest version is: ${latestVersion.date} (${latestVersion.time})</LI></UL>`;
 
     let fn = ( () => { sendCommandToServiceWorker('updateCache'); });
+    let fn2 = ( () => { sendCommandToServiceWorker('clearCache'); });
     
     let m=getModal();
-    if (hasnewversion) {
+    let s='';
+    
+    let state=await getCacheState();  // jshint ignore:line
+    if (state==='empty')
+        check=false;
+    
+    if (check) {
+        let latestVersion=internal.latestVersion;
+        let cacheVersion=await getCachedVersion();
+        let dates='';
+        dates=`<UL>
+<LI>The version you have cached is: ${cacheVersion.date} (${cacheVersion.time})</LI>
+<LI>The latest version is: ${latestVersion.date} (${latestVersion.time})</LI></UL>`;
+
         m.title.text('The cached version (for offline use) is out of date');
         s+=dates+`<p> If you would like to update this (recommended), press <EM>Update</EM> below.</p>`;
         m.addButton('Update','danger',fn);
-    }  else if (state==='empty') {
-        m.title.text('You can cache this application offline');
-        s+=`<p> If you would like to download all files in the browser cache to enable offline mode (recommended), press <EM>Cache</EM> below.</p>`;
-        m.addButton('Cache','success',fn);
-    } else if (internal.disableServiceWorker==false) {
-        m.title.text('This is the latest version (and is already stored offline)');
-        s+=dates+`<p> If you would like to reload all files, press <EM>Re-cache</EM> below.</p>`;
-        m.addButton('Re-cache','info',fn);
-    } else {
-        s+=dates;
+        m.addButton('Disable Offline Mode','warning',fn2);
+    }  else {
+        m.title.text('Enable Offline Use');
+        s+=`<p> If you would like to download all files in the browser cache to enable offline mode (recommended), press <EM>Store</EM> below.</p>`;
+        m.addButton('Store','success',fn);
     }
     m.body.append($(s));
     m.addButton('Close','default');
@@ -372,7 +379,7 @@ let cacheLatestVersion=async function(hasnewversion) { // jshint ignore:line
 }; // jshint ignore:line
 
 
-let showHelpVideo=function() {
+var showHelpVideo=function() {
 
     let m=getModal();
     m.title.text('BioImage Suite Web Introductory Video');
@@ -391,13 +398,13 @@ var checkForLatestVersion=async function() {// jshint ignore:line
 
     let m =await doesNewVersionExist();  // jshint ignore:line
     if (m)
-        cacheLatestVersion(true);
+        cacheLatestVersion();
 };// jshint ignore:line
 
 // ---------------------------------------------
 // Called Help|About
 // ---------------------------------------------
-let aboutApplication=async function() {// jshint ignore:line
+var aboutApplication=async function() {// jshint ignore:line
 
     let dosimple=true;
     let offline=false;
@@ -409,13 +416,7 @@ let aboutApplication=async function() {// jshint ignore:line
         electron=false;
         
         offline=await getOfflineMode();
-        if (offline) {
-            showAlert(`In offline mode. Everything should still work (other than regression testing.)`);
-            return;
-        }
-        
         mode= await getCacheState(); // jshint ignore:line
-
         if (mode === 'full') {
             let dt=await getCachedVersion();
             cachedate=` (<EM>Cached Version=${dt.version}, ${dt.date}, ${dt.time}</EM>)`;
@@ -458,7 +459,7 @@ let aboutApplication=async function() {// jshint ignore:line
 //
 // ------------------------------------------------------------------------------
 
-let createApplicationSelector=async function(externalobj) {
+var createApplicationSelector=async function(externalobj) {
     
     let container=$("#bisslides");
     let indicators=$(".carousel-indicators");
@@ -526,7 +527,7 @@ let createApplicationSelector=async function(externalobj) {
                 });
             } else {
                 imagestring+=`<div class="item${cname}"><a href="${url}" target="${target}"><img src="${picture}" alt="${title}" style="height:400px"><div class="carousel-caption">${count}. ${description}</div></div>`;
-                menustring+=`<li><a href="${url}" role="button">${title}</a></li>`;
+                menustring+=`<li><a href="${url}" role="button" target="${target}">${title}</a></li>`;
             }
                 
             let b=`<li data-target="#mycarousel" data-slide-to="${i+2}"></li>\n`;
@@ -595,34 +596,27 @@ let createApplicationSelector=async function(externalobj) {
     if (internal.hasServiceWorker) {
 
         $("#othermenu").append($(`<li class="divider"></li>`));
-
-        let cache=await getCacheState();
-        internal.offlineButton = $(`<li><a href="#">Offline Mode</a></li>`);
-        setEnableDisableMenu(cache === 'empty');
-        $("#othermenu").append(internal.offlineButton);
+        let but = $(`<li><a href="#">Disable Offline Mode</a></li>`);
+        $("#othermenu").append(but);
             
-        internal.offlineButton.click( (e) => {
+        but.click( (e) => {
             e.preventDefault();
 
             setTimeout( () => {
                 getCacheState().then( (m) => {
-                    
                     if (m==='full') {
                         sendCommandToServiceWorker('clearCache');
-                    } else {
-                        sendCommandToServiceWorker('updateCache');
                     }
                 });
             },100);
         });
-        
         
         window.addEventListener('beforeinstallprompt', (evt) => {
             
             evt.preventDefault();
             
             if (internal.installButton===null) {
-                let newsep=null;
+
                 
                 evt.preventDefault();
                 // Stash the event so it can be triggered later.
@@ -631,7 +625,6 @@ let createApplicationSelector=async function(externalobj) {
                 internal.deferredInstallPrompt.userChoice.then((choiceResult) => {
                     if (choiceResult.outcome === 'accepted') {
                         sendCommandToServiceWorker('updateCache');
-                        newsep.remove();
                         internal.installButton.remove();
                         internal.installButton=null;
                         internal.deferredInstallPrompt = null;
@@ -641,8 +634,6 @@ let createApplicationSelector=async function(externalobj) {
                 
                 // Prevent Chrome 67 and earlier from automatically showing the prompt
                 console.log('.... Before Install Fired');
-                newsep=$(`<li class="divider"></li>`);
-                $("#othermenu").append(newsep);
                 internal.installButton = $(`<li><a href="#">Install as Desktop-"like" Application</a></li>`);
                 $("#othermenu").append(internal.installButton);
                 
@@ -669,7 +660,7 @@ let createApplicationSelector=async function(externalobj) {
 
 };
 
-let createVersionBoxes=async function() {
+var createVersionBoxes=async function() {
 
 
     let extra="";
@@ -696,7 +687,7 @@ let createVersionBoxes=async function() {
         msg=`These applications are under active development. Use with care.`;
     }
     if (offline) {
-        msg+=" <B> Running in offline mode -- no network connection.</B>";
+        msg+=" <B> Running in offline mode.</B>";
         cmode="info";
     }
 
@@ -707,6 +698,52 @@ let createVersionBoxes=async function() {
         $('body').append(w);
         w.alert();
     }
+};
+
+
+// ------------------------------------------------------------------------------
+var mapOnlineOfflineButtons=async function() {
+
+    let but1=$("#onlinebut");
+    let but2=$("#offlinebut");
+
+    if (!internal.hasServiceWorker) {
+        but1.remove();
+        but2.remove();
+        return;
+    }
+
+    let fn1=function(offline) {
+
+        let good=but1,bad=but2;
+        if (offline) {
+            good=but2;
+            bad=but1;
+        }
+        good.addClass("active");
+        good.addClass("btn-danger");
+        good.removeClass("btn-default");
+        bad.removeClass("btn-danger");
+        bad.removeClass("active");
+        bad.addClass("btn-default");
+    };
+
+    but1.click( (e) => {
+        e.preventDefault();
+        setOfflineMode(false);
+    });
+
+    but2.click( (e) => {
+        e.preventDefault();
+        fn1(but2,but1);
+        setOfflineMode(true);
+    });
+
+    internal.toggleOnlineFunction=fn1;
+    
+    let offline=await getOfflineMode();
+    internal.toggleOnlineFunction(offline);
+    
 };
 
 // ------------------------------------------------------------------------------
@@ -749,11 +786,13 @@ var createServiceWorker=function() {
         navigator.serviceWorker.addEventListener('message', function(event) {
             receivedMessageFromServiceWorker(event.data);
         });
-        getCacheState().then( (m) => {
-            if (m===('full')) {
-                checkForLatestVersion();
-            } 
-        });
+        setTimeout( () => {
+            getCacheState().then( (m) => {
+                if (m===('full')) {
+                    checkForLatestVersion();
+                }
+            });
+        },2000);
     });
 };
 
@@ -846,7 +885,7 @@ window.onload = (() => {
 
     createApplicationSelector(tools.tools);
     createVersionBoxes();
-
+    mapOnlineOfflineButtons();
     
 
     $('#mycarousel').carousel(
@@ -888,9 +927,11 @@ window.onload = (() => {
 window.biswebdebug=function(f) {
     if (f) {
         sendCommandToServiceWorker("debugon");
+        internal.debug=true;
     } else {
         sendCommandToServiceWorker("debugoff");
+        internal.debug=false;
     }
 };
     
-window.doesNewVersionExist=doesNewVersionExist;
+
