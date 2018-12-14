@@ -339,4 +339,62 @@ body {
     word-break : break-all;
 }
 
+.resizing-frame {
+    transition: all 0.5s ease-out;
+}
+
+.show-selector {
+    width : 100%;
+}
+
+.show-entry {
+    width : 50%;
+    transform : translate(25%, 0);
+}
+
+.glyphicon-refresh-animate {
+    -animation: spin .7s infinite linear;
+    -webkit-animation: spin2 .7s infinite linear;
+}
+
+@keyframes spin {
+    from { transform: scale(1) rotate(0deg);}
+    to { transform: scale(1) rotate(360deg);}
+}
+
+@-webkit-keyframes spin2 {
+    from { -webkit-transform: rotate(0deg);}
+    to { -webkit-transform: rotate(360deg);}
+}
+
+/* You have to change the index of the jstree context menu in order for it to display over the other html elements */
+.vakata-context {
+    z-index : 100000 !important
+}
+
+.vakata-context {
+    background : #464545;
+    box-shadow : unset;
+    border: 1px solid #303030;
+}
+
+.vakata-context li > a {
+    font-size : 14px;
+    text-shadow : none;
+    color : #0ce3ac
+}
+
+.vakata-context li > a:hover {
+    box-shadow: unset;
+    background-color : #beebff;
+    color: #097640;
+}
+
+.vakata-context li > a .vakata-contextmenu-sep {
+    border-left: 1px solid #707070;
+}
+
+.vakata-context .vakata-context-separator > a {
+    border : 1px solid #707070;
+}
 

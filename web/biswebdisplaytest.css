@@ -34,7 +34,7 @@ body {
     width:805px;
 }
 
-#viewerwidget,#viewerwidget1,#viewerwidget2 {
+#viewerwidget1,#viewerwidget2 {
     top: 0px;
     left: 0px;
     position: relative;
@@ -49,13 +49,21 @@ body {
 }
 
 #viewerwidget {
+    left: 0px;
+    position: relative;
+    margin-top : 5px;
+    padding-left:5px;
+    -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
+    height: 700px;
+    min-height: 700px;
+    max-height: 700px;
     top: 65px;
     width: 900px;
 }
 
 
 
-bisweb-viewerlayoutelement {
+#viewer_layout1,#viewer_layout2 {
     width:800px;
     height:700px;
     min-height: 700px;
@@ -66,7 +74,13 @@ bisweb-viewerlayoutelement {
 }
 
 #viewer_layout {
-    width : 900px
+    width:900px;
+    height:700px;
+    min-height: 700px;
+    max-height: 700px;
+    top:2px;
+    left:2px;
+    position:relative;
 }
 
 
@@ -106,12 +120,13 @@ bisweb-viewerlayoutelement {
 
 
 #displayresults {
-    min-height: calc(100% - 250px);
-    max-height: calc(100% - 250px);
+    min-height: calc(100% - 430px);
+    max-height: calc(100% - 430px);
     overflow-x : auto;
     overflow-y : auto;
     font-size : 14px;
     padding : 2 2 2 2;
+    background-color: #444444;
 }
 
 #resultimages {
@@ -135,8 +150,8 @@ bisweb-viewerlayoutelement {
 }
 
 .bisimg {
-    width : 145px;
-    height: 168px;
+    width : 290px;
+    height: 339px;
     min-width : 127px;
     border-style: ridge;
     border-color: #444444;
@@ -144,13 +159,13 @@ bisweb-viewerlayoutelement {
 }
 
 #imggold, #imgoutput {
-    margin-left: 9px;
+    margin-left: 4px;
 
 }
 
 #imgmiddle {
-    width : 50px;
-    height: 150px;
-    min-height: 150px;
+    width : 100px;
+    height: 300px;
+    min-height: 300px;
 }
 

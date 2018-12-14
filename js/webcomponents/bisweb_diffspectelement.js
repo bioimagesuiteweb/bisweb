@@ -294,38 +294,47 @@ class DiffSpectElement extends DualViewerApplicationElement {
 
     loadAtlasData() {
 
-        let loadimagearray=function(imgnames, alldone) {
+        let p=new Promise( (resolve) => {
+            
+            let loadimagearray=function(imgnames, alldone) {
                 
-            let numimages = imgnames.length;
-            let images = new Array(numimages);
+                let numimages = imgnames.length;
+                let images = new Array(numimages);
+                
+                for (let i = 0; i < numimages; i++)
+                    images[i] = new BisWebImage();
+                
+                let p = [];
+                for (let i = 0; i < numimages; i++)
+                    p.push(images[i].load(imgnames[i]));
+                Promise.all(p)
+                    .then( () => { alldone(images);
+                                   resolve();
+                                 }
+                         )
+                    .catch((e) => {
+                        errormessage(e);
+                    });
+            };
             
-            for (let i = 0; i < numimages; i++)
-                images[i] = new BisWebImage();
+            let alldone = ((images) => {            
+                this.app_state.ATLAS_spect = images[0];
+                this.app_state.ATLAS_mri = images[1];
+                this.app_state.ATLAS_stdspect = images[2];
+                this.app_state.ATLAS_mask = images[3];
+                this.VIEWERS[0].setimage(this.app_state.ATLAS_mri);
+                webutil.createAlert('The SPECT Tool is now ready. The core data has been loaded.');//<BR> Click either "Create New Patient" or "Load Existing Patient" to begin.');
+            });
             
-            let p = [];
-            for (let i = 0; i < numimages; i++)
-                p.push(images[i].load(imgnames[i]));
-            Promise.all(p)
-                .then( () => { alldone(images); })
-                .catch((e) => { errormessage(e); });
-        };
-
-        let alldone = ((images) => {            
-            this.app_state.ATLAS_spect = images[0];
-            this.app_state.ATLAS_mri = images[1];
-            this.app_state.ATLAS_stdspect = images[2];
-            this.app_state.ATLAS_mask = images[3];
-            this.VIEWERS[0].setimage(this.app_state.ATLAS_mri);
-            webutil.createAlert('The SPECT Tool is now ready. The core data has been loaded.');//<BR> Click either "Create New Patient" or "Load Existing Patient" to begin.');
+            let imagepath=webutil.getWebPageImagePath();
+            
+            loadimagearray([`${imagepath}/ISAS_SPECT_Template.nii.gz`,
+                            `${imagepath}/MNI_T1_2mm_stripped_ras.nii.gz`,
+                            `${imagepath}/ISASHN_Standard_Deviation.nii.gz`,
+                            `${imagepath}/ISAS_SPECT_Mask.nii.gz`
+                           ], alldone);
         });
-        
-        let imagepath=webutil.getWebPageImagePath();
-        
-        loadimagearray([`${imagepath}/ISAS_SPECT_Template.nii.gz`,
-                        `${imagepath}/MNI_T1_2mm_stripped_ras.nii.gz`,
-                        `${imagepath}/ISASHN_Standard_Deviation.nii.gz`,
-                        `${imagepath}/ISAS_SPECT_Mask.nii.gz`
-                       ], alldone);
+        this.applicationInitializedPromiseList.push(p);
     }
 
     // --------------------------------------------------------------------------------

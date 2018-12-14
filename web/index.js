@@ -26,7 +26,17 @@
 const $=require('jquery');
 const bisdate=require('bisdate.js');
 const idb=require('idb-keyval');
+const localforage=require('localforage');
 import tools from './images/tools.json';
+
+const clipboard=localforage.createInstance({
+    driver : localforage.INDEXEDDB,
+    name : "BioImageSuiteWebClipboard",
+    version : 1.0,
+    storeName : "biswebclipboard",
+    description : "BioImageSuite Web Clipboard",
+});
+
 
 let inelectron=false;
 if (typeof (window.BISELECTRON) !== "undefined") {
@@ -116,8 +126,8 @@ let showAlert=function(message,type='info') {
         internal.alertDiv.remove();
 
     internal.alertDiv = $(`<div class="alert alert-${type} alert-dismissible" role="alert" 
-		  style="position:absolute; top:80px; left:20px; z-index: 100">
-		  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${message}</a></div>`);
+                  style="position:absolute; top:80px; left:20px; z-index: 100">
+                  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${message}</a></div>`);
     $('body').append(internal.alertDiv);
     internal.alertDiv.alert();
 };
@@ -335,7 +345,7 @@ let aboutApplication=async function() {// jshint ignore:line
     if (dosimple)  {
         let m=getModal();
         m.title.text('About this Application');
-        let s=`<p>This is the main page of BioImage Suite Web ${tools.version} ( current build= ${bisdate.date}, ${bisdate.time}).</p>`;
+        let s=`<p>This is the main page of BioImage Suite Web ${tools.version} ( current build= ${bisdate.version}, ${bisdate.date}, ${bisdate.time}).</p>`;
         if (typeof (window.BISELECTRON) === "undefined") {
             if (offline)
                 s+=`<p>This application is running in offline mode.</p>`;
@@ -381,46 +391,76 @@ let installLatestVersion=async function() {// jshint ignore:line
 //
 // ------------------------------------------------------------------------------
 
-let createApplicationSelector=function(obj) {
+let createApplicationSelector=function(externalobj) {
     
     let container=$("#bisslides");
     let indicators=$(".carousel-indicators");
     let topmenu=$("#topappmenu");
 
-    
-    let keys=Object.keys(obj);
-    let max=keys.length;
 
+    let hardcorded = {
+        "youtube" : {
+            "title" : "You Tube Channel",
+            "url"   : "https://www.youtube.com/channel/UCizfR_ryJ0E-2uZspjwYtwg",
+            "description" : "The BioImage Suite Web YouTube Channel",
+            "picture" : "images/youtube.png"
+        },
+        "manual" : {
+            "title" : "BioImage Suite Web Manual",
+            "url" : "https://bioimagesuiteweb.github.io/bisweb-manual/",
+            "description" : "The BioImage Suite Web Online Manual",
+            "picture" : "images/manual.png",
+        }
+    };
+
+    let objlist = [ hardcorded,externalobj ];
     let imagestring="";
     let menustring="";
     let indstring="";
+    let count=0;
     
-    for (let i=0;i<max;i++) {
-        let elem=obj[keys[i]];
-        let title=elem.title;
-        let url='./'+elem.url+'.html';
-        let description=elem.description;
-        let picture=elem.picture;
-        let electrononly=elem.electrononly || false;
-        let hide=elem.hide || false;
-        
-        if ( hide===false && (inelectron === true || 
-                              (inelectron === false && electrononly===false))) {
-            
-            let cname="";
-            if (i===0)
-                cname=" active";
-            
-            let a=`<div class="item${cname}"><a href="${url}" target="_blank"><img src="${picture}" alt="${title}"><div class="carousel-caption">${i+1}. ${description}</div></div>`;
-            imagestring+=a;
-            
-            menustring+=`<li><a  href="${url}" target="_blank" role="button">${title}</a></li>`;
+    for (let kk=0;kk<objlist.length;kk++) {
 
-            let b='<li data-target="#mycarousel" data-slide-to="'+i+'"';
-            if (i===0)
-                b+='class="active"';
-            b+="></li>";
-            indstring+=b;
+        let obj=objlist[kk];
+        let keys=Object.keys(obj);
+        let max=keys.length;
+        
+        for (let i=0;i<max;i++) {
+            
+            let elem=obj[keys[i]];
+            let title=elem.title;
+            let url='';
+            if (elem.url.indexOf('http')===0)
+                url=elem.url;
+            else
+                url='./'+elem.url+'.html';
+            
+            let description=elem.description;
+            let picture=elem.picture;
+            let electrononly=elem.electrononly || false;
+            let hide=elem.hide || false;
+            
+            if ( hide===false && (inelectron === true || 
+                                  (inelectron === false && electrononly===false))) {
+
+                count=count+1;
+                
+                let cname="";
+                if (count===1)
+                    cname=" active";
+                
+                let a=`<div class="item${cname}"><a href="${url}" target="_blank"><img src="${picture}" alt="${title}" style="height:400px"><div class="carousel-caption">${count}. ${description}</div></div>`;
+                imagestring+=a;
+
+                if (kk>0)
+                    menustring+=`<li><a  href="${url}" target="_blank" role="button">${title}</a></li>`;
+                
+                let b='<li data-target="#mycarousel" data-slide-to="'+i+'"';
+                if (count===1)
+                    b+='class="active"';
+                b+="></li>";
+                indstring+=b;
+            }
         }
     }
 
@@ -561,6 +601,56 @@ var createServiceWorker=function() {
     });
 };
 
+const fileSelectHandler=function(e) {
+
+    let files = e.target.files || e.dataTransfer.files || null;
+    if (!files)
+        return;
+
+    if (files.length<1)
+        return;
+
+    let reader = new FileReader();
+    let url = files[0].name;
+
+    reader.onerror = function () {
+        $('#appmenu').removeClass('open');
+        showAlert('Failed to read file from '+url,'danger');
+        $('body').css({'background-color' : 'rgb(28,45,64)'});
+        return;
+    };
+    
+    reader.onload = function (e) {
+        $('body').css({'background-color' : 'rgb(28,45,64)'});
+        let obj=null;
+        try {
+            obj=JSON.parse(e.target.result);
+        } catch(e) {
+            $('#appmenu').removeClass('open');
+            showAlert('Bad application state file '+url+'.','danger');
+            return;
+        }
+
+        if (!obj.app) {
+            $('#appmenu').removeClass('open');
+            showAlert('Bad application state file '+url+'.','danger');
+            return;
+        }
+        
+        clipboard.setItem('lastappstate',obj).then( () => {
+            let newurl=`./${obj.app}.html?restorestate=${url}`;
+            window.open(newurl,'_self');
+
+            //          showAlert(`This state file was created using ${obj.app}</EM>. Click <a href="./${obj.app}.html?restorestate=${url}">here to open it`);
+        }).catch( (e) => { console.log(e); });
+        return;
+    };
+    
+    console.log(files);
+    reader.readAsText(files[0]);
+    return false;
+};
+
 
 // ------------------------------------------------------------------------------
 //
@@ -572,12 +662,15 @@ window.onload = (() => {
 
     createApplicationSelector(tools.tools);
 
-    let msg=`These applications are still in 'beta' (development) stage. Use with care.`;
-    let w = $(`<div class="alert alert-warning alert-dismissible" role="alert"  style="position:absolute; top:570px; left:5.5vw; z-index:5000">
+    let url=window.document.URL;
+    if  (url.indexOf('/unstable')>0) {
+        let msg=`These applications are under active development. Use with care.`;
+        let w = $(`<div class="alert alert-warning alert-dismissible" role="alert"  style="position:absolute; top:570px; left:5.5vw; z-index:5000">
           <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${msg}
           </div>`);
-    $('body').append(w);
-    w.alert();
+        $('body').append(w);
+        w.alert();
+    }
 
 
     // Only register if not in electron and not in development mode
@@ -602,6 +695,27 @@ window.onload = (() => {
         $(".dropdown").removeClass("open");//this will remove the active class from  
         $('#appmenu').addClass('open');
     },500);
+
+
+    window.addEventListener("dragover", (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        $('#appmenu').removeClass('open');
+        $('body').css({'background-color' : 'rgb(28,45,128)'});
+
+    },false);
+    
+    window.addEventListener("dragleave", (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        $('body').css({'background-color' : 'rgb(28,45,64)'});
+    },false);
+
+    window.addEventListener("drop", (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        fileSelectHandler(e);
+    },false);
 
 });
 

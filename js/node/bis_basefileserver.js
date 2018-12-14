@@ -237,6 +237,13 @@ class BaseFileServer {
      */
     validateFilename(filepath) {
 
+        //some filepaths will be two filepaths conjoined by the symbol &&, check these separately
+        if (filepath.indexOf('&&') >= 0) {
+            const filepaths = filepath.split('&&');
+            console.log('filepaths', filepaths);
+            return this.validateFilename(filepaths[0]) && this.validateFilename(filepaths[1]);
+        }
+
         filepath=filepath||'';
         if (filepath.length<1) {
             return false;
@@ -781,7 +788,6 @@ class BaseFileServer {
      * @param {Number} id - the request id
      */
     fileSystemOperations(socket,opname,url,id=0)  {
-
         let prom=null;
 
         if (opname!=='getMatchingFiles') {
@@ -805,6 +811,10 @@ class BaseFileServer {
                 prom=bisgenericio.getFileSize(url);
                 break;
             }
+            case 'getFileStats' : {
+                prom=bisgenericio.getFileStats(url);
+                break;
+            }
             case 'isDirectory' : {
                 prom=bisgenericio.isDirectory(url);
                 break;
@@ -823,6 +833,20 @@ class BaseFileServer {
             case 'deleteDirectory' : {
                 if (!this.opts.readonly) 
                     prom=bisgenericio.deleteDirectory(url);
+                else
+                    prom=Promise.reject('In Read Only Mode');
+                break;
+            }
+            case 'moveDirectory' : {
+                if (!this.opts.readonly)
+                    prom=bisgenericio.moveDirectory(url);
+                else    
+                    prom=Promise.reject('In Read Only Mode');
+                break;
+            }
+            case 'copyFile' : {
+                if (!this.opts.readonly)
+                    prom=bisgenericio.copyFile(url);
                 else
                     prom=Promise.reject('In Read Only Mode');
                 break;

@@ -541,7 +541,6 @@ class AWSModule extends BaseServerClient {
                 this.createAWSBucketMenu();
             }
             console.log('Items=',this.awsbucketstorage);
-            this.bucketMenuModal.dialog.modal('show');
             return;
         } else if (expireTime < Date.now() || this.refreshCredentials) {
             this.refreshCredentials = false;
@@ -758,46 +757,44 @@ class AWSModule extends BaseServerClient {
     }
 
     createAWSBucketMenu() {
-        let awsmodal = bis_webutil.createmodal('AWS Buckets', 'modal-lg');
-        awsmodal.dialog.find('.modal-content').addClass('resizing-frame show-selector');
+        if (!this.bucketMenuModal) {
+            let awsmodal = bis_webutil.createmodal('AWS Buckets', 'modal-lg');
+            awsmodal.dialog.find('.modal-content').addClass('resizing-frame show-selector');
+    
+            let tabView = this.createAWSTabView(awsmodal);
+    
+            let selectPane = this.createAWSBucketSelector(awsmodal, tabView);
+            tabView.find('#aws-bucket-selector-pane').append(selectPane);
+    
+            let entryPane = this.createAWSBucketEntry(awsmodal);
+            tabView.find('#aws-bucket-entry-pane').append(entryPane);
+    
+            awsmodal.dialog.find('.modal-footer').remove();
+    
+            awsmodal.dialog.on('hidden.bs.modal', () => {
+                let bucketSelectorDropdown = awsmodal.body.find('#bucket-selector-dropdown');
+                bucketSelectorDropdown.empty(); //remove all option elements from the dropdown
 
-        let tabView = this.createAWSTabView(awsmodal);
-
-        let selectPane = this.createAWSBucketSelector(awsmodal, tabView);
-        tabView.find('#aws-bucket-selector-pane').append(selectPane);
-
-        let entryPane = this.createAWSBucketEntry(awsmodal);
-        tabView.find('#aws-bucket-entry-pane').append(entryPane);
-
-        awsmodal.dialog.find('.modal-footer').remove();
-
-        awsmodal.dialog.on('hidden.bs.modal', () => {
-            let bucketSelectorDropdown = awsmodal.body.find('#bucket-selector-dropdown');
-            bucketSelectorDropdown.empty(); //remove all option elements from the dropdown
-        });
-
-        //dynamic modal resizing requires overriding the default settings for bootstrap modals (modal changes size when tabs change)
-        //https://stackoverflow.com/questions/19396631/re-size-the-modal-dialog-in-bootstrap-dynamically
-        awsmodal.dialog.on('shown.bs.modal', () => {
-            /*awsmodal.dialog.css({
-                'width': 'auto',
-                'height': 'auto',
-                'max-height': '100%'
-            });*/
-        });
-
-        this.bucketMenuModal = awsmodal;
-        return awsmodal;
+                //clear inputs in the entry pane
+                let bucketEntryInputs = awsmodal.body.find('#aws-bucket-entry-pane').find('input');
+                bucketEntryInputs.each( (index, element) => {  $(element).val(''); });
+            });
+    
+            this.bucketMenuModal = awsmodal;
+        }
+       
+        this.bucketMenuModal.dialog.modal('show');
+        return this.bucketMenuModal;
     }
 
     createAWSTabView(awsmodal) {
         let tabView = $(`
                 <ul class="nav nav-tabs" id="aws-tab-menu" role="tablist">
                     <li class="nav-item active">
-                        <a class="nav-link" id="entry-tab" data-toggle="tab" href="#aws-entry-tab-panel" role="tab" aria-controls="entry" aria-selected="false">Enter New Bucket</a>
+                        <a class="nav-link" id="selector-tab" data-toggle="tab" href="#aws-selector-tab-panel" role="tab" aria-controls="home" aria-selected="true">Select AWS Bucket</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="selector-tab" data-toggle="tab" href="#aws-selector-tab-panel" role="tab" aria-controls="home" aria-selected="true">Select AWS Bucket</a>
+                        <a class="nav-link" id="entry-tab" data-toggle="tab" href="#aws-entry-tab-panel" role="tab" aria-controls="entry" aria-selected="false">Enter New Bucket</a>
                     </li>
                 </ul>
                 <div class="tab-content" id="aws-tab-content">
@@ -848,9 +845,9 @@ class AWSModule extends BaseServerClient {
         `);
 
 
-        let confirmButton = bis_webutil.createbutton({ 'name' : 'Confirm', 'type' : 'success', 'css' : { 'margin-right' : '10px' }});
-        let cancelButton = bis_webutil.createbutton({ 'name' : 'Cancel', 'type' : 'danger', 'css' : { 'margin-right' : '10px' } });
-        let entryButton = bis_webutil.createbutton({ 'name' : 'Enter New Bucket', 'type' : 'info' });
+        let confirmButton = bis_webutil.createbutton({ 'name' : 'Confirm', 'type' : 'success'});
+        let cancelButton = bis_webutil.createbutton({ 'name' : 'Cancel', 'type' : 'danger'});
+        let entryButton = bis_webutil.createbutton({ 'name' : 'Enter New Bucket', 'type' : 'info'});
         $(confirmButton).prop('disabled', 'disabled');
 
         let buttonGroup = selectContainer.find('.btn-group');
@@ -1144,11 +1141,16 @@ class AWSModule extends BaseServerClient {
             </div>
         `);
 
-        let confirmButton = bis_webutil.createbutton({ 'name': 'Confirm', 'type': 'success','css' : { 'margin-right' : '10px' } });
+        let confirmButton = bis_webutil.createbutton({ 'name': 'Confirm', 'type': 'success' });
         let cancelButton = bis_webutil.createbutton({ 'name': 'Cancel', 'type': 'danger' });
         let selectBucketButton = bis_webutil.createbutton({ 'name': 'Select an Existing Bucket', 'type': 'info' });
+        let importButton = bis_webutil.createbutton({ 'name' : 'Import' , 'type' : 'primary' });
+        
+        //webfileutil has to be dynamically loaded in order to avoid circular dependencies so the file callback is attached when the button is clicked
+        let importCallbackAttached = false;
 
-        confirmButton.on('click', () => {
+        confirmButton.on('click', (e) => {
+            e.preventDefault();
 
             let bucketName = entryContainer.find('.bucket-input')[0].value;
             let identityPoolId = entryContainer.find('.identity-pool-input')[0].value;
@@ -1175,7 +1177,22 @@ class AWSModule extends BaseServerClient {
             bis_webutil.createAlert('Created bucket ' + bucketName + ' and switched to it.', false, null, 2500);
         });
 
-        cancelButton.on('click', () => {
+        cancelButton.on('click', (e) => {
+            e.preventDefault();
+            awsmodal.dialog.modal('hide');
+        });
+
+        importButton.on('click', (e) => {
+            e.preventDefault();
+            //load webfileutil and attach the file callback
+            if (!importCallbackAttached) {
+                let webfileutil = require('bis_webfileutil.js');
+                this.attachImportFileCallback(importButton, webfileutil, awsmodal);
+                importCallbackAttached = true;
+                importButton.click();
+                return;
+            }
+
             awsmodal.dialog.modal('hide');
         });
 
@@ -1199,9 +1216,54 @@ class AWSModule extends BaseServerClient {
         let buttonBar = entryContainer.find('.btn-group');
         buttonBar.append(confirmButton);
         buttonBar.append(cancelButton);
+        buttonBar.append(importButton);
         buttonBar.append(selectBucketButton);
 
         return entryContainer;
+    }
+
+    attachImportFileCallback(importButton, webfileutil, awsmodal) {
+        webfileutil.attachFileCallback(importButton, (file) => {
+
+            console.log('file', file);
+            //the file object will differ between data sources, e.g. if it comes from Google Drive it will be a parsed response, if it comes from disk it will be a Blob, etc.
+            //so some disambiguation is required.
+            file = file.data ? (file.data.result ? file.data.result : file.data) : file;
+            console.log('typeof file', file instanceof File);
+            if (file instanceof File) {
+                let fileReader = new FileReader(file);
+                fileReader.addEventListener('loadend', (e) => {
+                    try {
+                        let parsedJSON = JSON.parse(e.target.result);
+                        awsmodal.dialog.modal('show');
+                        console.log('parsedJSON', parsedJSON);
+                        fillOutModalFields(awsmodal.dialog, parsedJSON);
+                    } catch (e) {
+                        console.log('An error occured while parsing', file.name, e);
+                        awsmodal.dialog.modal('show');
+                    }
+                });
+    
+                fileReader.addEventListener('error', (e) => {
+                    console.log('An error occured while trying to read', file.name, e);
+                    awsmodal.dialog.modal('show');
+                });
+    
+                fileReader.readAsText(file);
+            } else {
+                awsmodal.dialog.modal('show');
+                fillOutModalFields(awsmodal.dialog, file);
+            }
+           
+        });
+
+        function fillOutModalFields(entryContainer, parsedJSON) {
+            if (parsedJSON.bucketName) { entryContainer.find('.bucket-input').val(parsedJSON.bucketName.trim()); }
+            if (parsedJSON.identityPoolId) { entryContainer.find('.identity-pool-input').val(parsedJSON.identityPoolId.trim()); }
+            if (parsedJSON.userPoolId) { entryContainer.find('.user-pool-input').val(parsedJSON.userPoolId.trim()); }
+            if (parsedJSON.appClientId) { entryContainer.find('.client-input').val(parsedJSON.appClientId.trim()); }
+            if (parsedJSON.appWebDomain) { entryContainer.find('.web-domain-input').val(parsedJSON.appWebDomain.trim()); }      
+        }
     }
 
     createNewBucketInfo(bucketName, identityPoolId, userPoolId, appClientId, appWebDomain) {

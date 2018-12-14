@@ -140,6 +140,7 @@
     </div>
     
     <bisweb-dualviewerapplication
+      id="viewer_application"
       bis-tabset="#viewers"
       bis-mode="overlay",
       bis-tab1="#ortho"
@@ -151,6 +152,12 @@
       bis-viewerid2="#viewer2">
     </bisweb-dualviewerapplication>
 
+    <bisweb-filetreepanel
+     bis-viewerid="#viewer1"
+     bis-layoutwidgetid="#viewer_layout1"
+     bis-menubarid="#viewer_menubar"
+     bis-viewerapplicationid="#viewer_application">    
+    </bisweb-filetreepanel>
     <bisweb-botmenubar></bisweb-botmenubar>
     
   </body>

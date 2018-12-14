@@ -1,4 +1,5 @@
 const $ = require('jquery');
+const bootbox = require('bootbox');
 const bisweb_panel = require('bisweb_panel.js');
 const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
@@ -13,6 +14,7 @@ require('jstree');
  *  
  * Attributes:
  *      bis-viewerid : the orthogonal viewer to draw in 
+ *      bis-viewerid2 : the second orthagonal viewer to draw in. Optional.
  *      bis-layoutwidgetid :  the layout widget to create the GUI in
  *      bis-menubarid: menu to which to add a tab that will open the panel
  */
@@ -25,6 +27,7 @@ class FileTreePanel extends HTMLElement {
     connectedCallback() {
 
         this.viewerid=this.getAttribute('bis-viewerid');
+        this.viewertwoid = this.getAttribute('bis-viewerid2');
         this.layoutid=this.getAttribute('bis-layoutwidgetid');
         this.menubarid = this.getAttribute('bis-menubarid');
         this.viewerappid = this.getAttribute('bis-viewerapplicationid');
@@ -32,6 +35,7 @@ class FileTreePanel extends HTMLElement {
         bis_webutil.runAfterAllLoaded( () => {
 
             this.viewer = document.querySelector(this.viewerid);
+            this.viewertwo = document.querySelector(this.viewertwoid) || null;
             this.layout = document.querySelector(this.layoutid);
             this.menubar = document.querySelector(this.menubarid);
             this.viewerapplication = document.querySelector(this.viewerappid);
@@ -39,8 +43,8 @@ class FileTreePanel extends HTMLElement {
             this.panel=new bisweb_panel(this.layout,
                 {  name  : 'Files',
                    permanent : false,
-                   width : '290',
-                   dual : false,
+                   width : '400',
+                   dual : true,
                    mode : 'sidebar',
                 });
             
@@ -51,6 +55,32 @@ class FileTreePanel extends HTMLElement {
             this.makeButtons(listElement);
         });
 
+
+        this.contextMenuDefaultSettings = {
+            'Info' : {
+                'separator_before': false,
+                'separator_after': false,
+                'label': 'File Info',
+                'action': () => {
+                    this.showInfoModal();
+                }
+            },
+            'Load' : {
+                'separator_before': false,
+                'separator_after': false,
+                'label': 'Load Image',
+                'action': () => {
+                    this.loadImageFromTree();
+                }
+            }
+        };
+    }
+
+    /**
+     * Shows file tree panel in the sidebar.
+     */
+    showTreePanel() {
+        this.panel.show();
     }
 
     /**
@@ -68,8 +98,7 @@ class FileTreePanel extends HTMLElement {
                 for (let childItem of item.children) {
                     if (childItem.className.indexOf('dropdown-menu') !== -1) {
 
-                        console.log('adding file tree panel menu item');
-                        let dropdownItem = bis_webutil.createDropdownItem($(childItem), 'File Tree Panel');
+                        let dropdownItem = bis_webutil.createMenuItem($(childItem), 'File Tree Panel');
                         dropdownItem.on('click', (e) => {
                             e.preventDefault();
                             this.panel.show();
@@ -90,12 +119,12 @@ class FileTreePanel extends HTMLElement {
         //filter filename before calling getMatchingFiles
         let queryString = filename;
         if (queryString === '') {
-             queryString = '*/*.nii.gz'; 
+             queryString = '*/*.nii*'; 
         } else {
             if (queryString[queryString.length - 1] === '/') { 
-                queryString = queryString.slice(0, filename.length - 1) + '/*/*.nii.gz'; 
+                queryString = queryString.slice(0, filename.length - 1) + '/*/*.nii*'; 
             } else { 
-                queryString = filename + '/*/*.nii.gz';
+                queryString = filename + '/*/*.nii*';
             }
         }
 
@@ -106,7 +135,7 @@ class FileTreePanel extends HTMLElement {
                 return;
             } 
             
-            queryString = filename + '/*.nii.gz';
+            queryString = filename + '/*.nii*';
             bis_genericio.getMatchingFiles(queryString).then( (newFiles) => {
                 console.log('filename', filename);
                 this.updateFileTree(newFiles, filename);
@@ -124,6 +153,7 @@ class FileTreePanel extends HTMLElement {
     updateFileTree(files, baseDirectory) {
         this.baseDirectory = baseDirectory;
 
+        console.log('files', files);
         let fileTree = [];
 
         for (let file of files) {
@@ -148,7 +178,7 @@ class FileTreePanel extends HTMLElement {
 
                     if (index === splitName.length - 1) {
                         let splitEntry = newEntry.text.split('.');
-                        if (splitEntry[splitEntry.length - 1] === 'gz')
+                        if (splitEntry[splitEntry.length - 1] === 'gz' || splitEntry[splitEntry.length - 1] === 'nii')
                             newEntry.type = 'picture';
                         else
                             newEntry.type = 'file';
@@ -167,7 +197,6 @@ class FileTreePanel extends HTMLElement {
             }
 
         }
-
 
         //if the file tree is empty, display an error message and return
         if (!fileTree[0] || !fileTree[0].children) {
@@ -188,10 +217,11 @@ class FileTreePanel extends HTMLElement {
             fileTree = fileTree[0].children; 
         }
 
-        listContainer.jstree({
+        let tree = listContainer.jstree({
             'core': {
                 'data': fileTree,
-                'dblclick_toggle': true
+                'dblclick_toggle': true,
+                'check_callback': true
             },
             'types': {
                 'default': {
@@ -210,13 +240,46 @@ class FileTreePanel extends HTMLElement {
                     'icon': 'glyphicon glyphicon-picture'
                 },
             },
-            'plugins': ["types"]
+            'plugins': ["types", "dnd", "contextmenu"],
+            'contextmenu': {
+                'show_at_node' : false,
+                'items': this.contextMenuDefaultSettings
+            }
+        }).bind('move_node.jstree', (e, data) => {
+            let moveNodes = this.parseSourceAndDestination(data);
+            bis_genericio.moveDirectory(moveNodes.src + '&&' + moveNodes.dest);
         });
 
-        listContainer.bind('dblclick.jstree', (e) => {
-            console.log('event', e);
-            this.loadImageFromTree();
-        });
+        let newSettings = this.contextMenuDefaultSettings;
+
+        //add viewer one and viewer two options to pages with multiple viewers
+        if (this.viewertwo) {
+            delete newSettings.Load;
+
+            console.log('new settings', newSettings);
+            newSettings = Object.assign(newSettings, {
+                'Viewer1' : {
+                    'separator_before': false,
+                    'separator_after': false,
+                    'label': 'Load Image to Viewer 1',
+                    'action': () => {
+                        this.loadImageFromTree(0);
+                    }
+                },
+                'Viewer2' : {
+                    'separator_before': false,
+                    'separator_after': false,
+                    'label': 'Load Image to Viewer 2',
+                    'action': () => {
+                        this.loadImageFromTree(1);
+                    }
+                }
+            });
+        }
+
+        console.log('new settings', newSettings);
+        tree.jstree(true).settings.contextmenu.items = newSettings;
+        tree.jstree(true).redraw(true); 
 
         let loadImageButton = this.panel.widget.find('.load-image-button');
         loadImageButton.prop('disabled', false);
@@ -224,7 +287,7 @@ class FileTreePanel extends HTMLElement {
         let saveStudyButton = this.panel.widget.find('.save-study-button');
         saveStudyButton.prop('disabled', false);
 
-        this.setOnClickListeners(listContainer);
+        this.setOnClickListeners(tree, listContainer);
 
         this.fileTree = fileTree;
 
@@ -302,41 +365,62 @@ class FileTreePanel extends HTMLElement {
         listElement.append(`<br>`);
         listElement.append(buttonGroupDisplay);
     }
+
     /**
      * Sets the jstree select events for a new jstree list container. 
      * 
      * @param {HTMLElement} listContainer - The div that contains the jstree object.
      */
-    setOnClickListeners(listContainer) {
-        listContainer.on('select_node.jstree', (event, data) => {
-            console.log('select node', data);
+    setOnClickListeners(tree, listContainer) {
 
+        let handleLeftClick = (data) => {
             if (data.node.original.type === 'directory') {
                 data.instance.open_node(this, false);
-            } else if (data.node.original.type === 'picture') {
                 this.currentlySelectedNode = data.node;
             }
+            //node is already selected by select_node event handler so nothing to do for selecting a picture
+        };
+
+        let handleRightClick = (data) => {
+            if (data.node.original.type === 'directory') {
+                this.toggleContextMenuLoadButtons(tree, 'off');
+            } else {
+                this.toggleContextMenuLoadButtons(tree, 'on');
+            }
+        };
+
+        let handleDblClick = () => {
+            console.log('currently selected node', this.currentlySelectedNode);
+            if (this.currentlySelectedNode.original.type === 'picture') {
+               this.loadImageFromTree(); 
+            }
+        };
+
+        listContainer.on('select_node.jstree', (event, data) => {
+            console.log('select_node', event, data);
+            this.currentlySelectedNode = data.node;
+
+            if (data.event.type === 'click') {
+                handleLeftClick(data);
+            } else if (data.event.type === 'contextmenu') {
+                handleRightClick(data);
+            }
+        });
+
+        tree.bind('dblclick.jstree', (e) => {
+            console.log('dblclick', e);
+            handleDblClick();
         });
     }
 
     /**
      * Loads an image selected in the file tree and displays it on the viewer. 
+     * 
+     * @param {Number} - The number of the viewer to load to. Optional, defaults to viewer one. 
      */
-    loadImageFromTree() {
-
-        //construct the full name out of the current node 
-        let name = '', currentNode = this.currentlySelectedNode;
-        let tree = this.panel.widget.find('.file-container').jstree();
-
-        while (currentNode.parent) {
-            name = '/' + currentNode.text + name;
-            let parentNode = tree.get_node(currentNode.parent);
-
-            console.log('parentNode', parentNode);
-            currentNode = parentNode;
-        }
-
-        this.viewerapplication.loadImage(this.baseDirectory + name);
+    loadImageFromTree(viewer = 0) {
+        let nodeName = this.constructNodeName();
+        this.viewerapplication.loadImage(nodeName, viewer);
     }
 
     /**
@@ -364,6 +448,114 @@ class FileTreePanel extends HTMLElement {
         }
     }
 
+    /**
+     * Parses a move_node event and returns the source and destination of the move. 
+     * 
+     * @param {Object} data - Data object returned from a move_node.jstree event.
+     * @returns Source and destination directory.
+     */
+    parseSourceAndDestination(data) {
+        let srcName, destName;
+
+        let movingNode = $(`#${data.node.id}`);
+        let nodeName = movingNode.find(`#${data.node.id}_anchor`).text();
+
+        //id of the base directory will be '#', so if we see that we don't have to resolve it
+        console.log('data.old_parent', data.old_parent, 'data.parent', data.parent);
+        if (data.old_parent === '#') { 
+            srcName = this.baseDirectory + '/' + nodeName; 
+        } else {
+            let oldParentNode = $(`#${data.old_parent}`);
+            let oldParentName = oldParentNode.find(`#${data.old_parent}_anchor`).text();
+            srcName = this.baseDirectory + '/' + oldParentName + '/' + nodeName;
+        }
+
+        if (data.parent === '#') {
+            destName = this.baseDirectory + '/' + nodeName;
+        } else {
+            let newParentNode = $(`#${data.parent}`);
+            let newParentName = newParentNode.find(`#${data.parent}_anchor`).text();
+            destName = this.baseDirectory + '/' + newParentName + '/' + nodeName;
+        }
+
+        console.log('srcName', srcName, 'destName', destName);
+        return { 'src' : srcName, 'dest' : destName};
+    }
+
+    showInfoModal() {
+
+        bis_genericio.isDirectory(this.constructNodeName()).then( (isDirectory) => {
+            bis_genericio.getFileStats(this.constructNodeName()).then( (stats) => { 
+
+                console.log('stats', stats);
+                //make file size something more readable than bytes
+                let displayedSize, filetype;
+                let kb = stats.size / 1000;
+                let mb = kb / 1000;
+                let gb = mb / 1000;
+    
+                if (gb > 1) { displayedSize = gb; filetype = 'GB'; }
+                else if (mb > 1) { displayedSize = mb; filetype = 'MB'; }
+                else { displayedSize = kb; filetype = 'KB'; }
+    
+                let roundedSize = Math.round(displayedSize * 10) / 10;
+                let accessedTime = new Date(stats.atimeMs);
+                let createdTime = new Date(stats.birthtimeMs);
+                let modifiedTime = new Date(stats.mtimeMs);
+                let parsedIsDirectory = isDirectory ? 'Yes' : 'No';
+    
+                console.log('accessed time', accessedTime.toDateString(), 'created time', createdTime, 'modified time', modifiedTime);
+    
+                //make info dialog
+                let infoDisplay = `File Size: ${roundedSize}${filetype}<br> First Created: ${createdTime}<br> Last Modified: ${modifiedTime}<br> Last Accessed: ${accessedTime} <br> Is a Directory: ${parsedIsDirectory}`;
+    
+                bootbox.dialog({
+                    'title' : 'File Info',
+                    'message' : infoDisplay
+                });
+            });
+        });
+        
+    }
+
+    toggleContextMenuLoadButtons(tree, toggle) {
+        let existingTreeSettings = tree.jstree(true).settings.contextmenu.items;
+        console.log('existing tree settings', existingTreeSettings);
+        if (toggle === 'on') {
+            if (existingTreeSettings.Load) {
+                existingTreeSettings.Load._disabled = false;
+            } else {
+                existingTreeSettings.Viewer1._disabled = false;
+                existingTreeSettings.Viewer2._disabled = false;
+            }
+        } else if (toggle === 'off') {
+            if (existingTreeSettings.Load) {
+                existingTreeSettings.Load._disabled = true;
+            } else {
+                existingTreeSettings.Viewer1._disabled = true;
+                existingTreeSettings.Viewer2._disabled = true;
+            }
+        }
+    }
+
+    constructNodeName() {
+        console.log('currently selected node', this.currentlySelectedNode, 'base directory', this.baseDirectory);
+        //construct the full name out of the current node 
+        let name = '', currentNode = this.currentlySelectedNode;
+        let tree = this.panel.widget.find('.file-container').jstree();
+
+        while (currentNode.parent) {
+            name = '/' + currentNode.text + name;
+            let parentNode = tree.get_node(currentNode.parent);
+
+            console.log('parentNode', parentNode);
+            currentNode = parentNode;
+        }
+
+        return this.baseDirectory + name;
+
+    }
+  
 }
 
-bis_webutil.defineElement('bisweb-treepanel', FileTreePanel);
+bis_webutil.defineElement('bisweb-filetreepanel', FileTreePanel);

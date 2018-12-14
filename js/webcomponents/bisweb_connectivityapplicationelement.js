@@ -126,21 +126,27 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
 
         var loadatlas=function(fname) {
 
-            let image0 = new BisWebImage();
-            image0.load(`${imagepath}/MNI_T1_1mm_stripped_ras.nii.gz`,"RAS")
-                .then(function() {
-                    VIEWER.viewer.setimage(image0);
-                    VIEWER.viewer.setcoordinates([90,126,72]);
-                    let image1 = new BisWebImage();
-                    image1.load(fname,"RAS").then(function() {
-                        objectmapread(image1);
+            return new Promise( (resolve,reject) => {
+                let image0 = new BisWebImage();
+                image0.load(`${imagepath}/MNI_T1_1mm_stripped_ras.nii.gz`,"RAS")
+                    .then(function() {
+                        VIEWER.viewer.setimage(image0);
+                        VIEWER.viewer.setcoordinates([90,126,72]);
+                        let image1 = new BisWebImage();
+                        image1.load(fname,"RAS").then(function() {
+                            objectmapread(image1);
+                            resolve();
+                        }).catch( (e) => {
+                            myerror(e);
+                            reject(e);
+                        });
                     }).catch( (e) => {
                         myerror(e);
+                        reject(e);
                     });
-                }).catch( (e) => {
-                    myerror(e);
-                });
+            });
         };
+                                
         
         var myerror =function(e) {
             e= e || "";
@@ -212,7 +218,7 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         // ------------------------------------ Edit Menu ----------------------------
         var editmenu=webutil.createTopMenuBarMenu("Edit",menubar);
         webutil.createMenuItem(editmenu,'Undo',function() {  control.undo(); });
-        webutil.createMenuItem(editmenu,'Redo',function() {  control.redo(); });
+        //        webutil.createMenuItem(editmenu,'Redo',function() {  control.redo(); });
         webutil.createMenuItem(editmenu,''); // separator
         webutil.createMenuItem(editmenu,'Reset Display Parameters',function(){ control.resetdefault();});
         webutil.createMenuItem(editmenu,''); // separator
@@ -308,13 +314,12 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         webutil.createDragAndCropController(HandleFiles);
 
 
-        loadatlas(`${imagepath}/gray_highres_groupncut150_right5_left1_emily_reord_new.nii.gz`);
-        
-        
-        //      window.onbeforeunload = function() {
-        //          return "Are you sure you want to exit?";
-        //      };      
-        
+        this.applicationInitializedPromiseList.push(loadatlas(`${imagepath}/gray_highres_groupncut150_right5_left1_emily_reord_new.nii.gz`));
+
+        Promise.all(this.applicationInitializedPromiseList).then( () => {
+            this.parseQueryParameters();
+            document.body.style.zoom =  1.0;
+        });
     }
 }
 

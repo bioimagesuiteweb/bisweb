@@ -69,17 +69,13 @@ namespace bisfMRIAlgorithms {
     float spa[5]; input->getSpacing(spa);
     output->allocate(outdim,spa);
     output->fill(0.0f);
-
     
     float* outdata=output->getImageData();
-    float* timeseries=input->getData();
-
     Eigen::MatrixXf A=bisEigenUtil::mapToEigenMatrix(regressorMatrix);
     Eigen::MatrixXf LSQ=bisEigenUtil::createLSQMatrix(A);
-
-    Eigen::VectorXf x=Eigen::VectorXf::Zero(nc);
     Eigen::VectorXf b=Eigen::VectorXf::Zero(numcols);
-
+    Eigen::MatrixXf inputdata=bisEigenUtil::mapImageToEigenMatrix(input);
+    
     int task_offset=numcols-num_tasks;
     int volsize=nt;
     for (int voxel=0;voxel<nt;voxel++)
@@ -95,12 +91,10 @@ namespace bisfMRIAlgorithms {
 
 	if (compute)
 	  {
-	    for (int i=0;i<nc;i++)
-	      x[i]=timeseries[i*volsize+voxel];
-
-	    bisEigenUtil::inPlaceMultiplyMV(LSQ,x,b);
-	    for (int task=0;task<num_tasks;task++)
-	      outdata[task*volsize+voxel]=b[task+task_offset];
+            Eigen::VectorXf x=inputdata.col(voxel);
+    	    bisEigenUtil::inPlaceMultiplyMV(LSQ,x,b);
+            for (int task=0;task<num_tasks;task++)
+              outdata[task*volsize+voxel]=b[task+task_offset];
 	  }
       }
     return std::move(output);

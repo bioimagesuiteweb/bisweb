@@ -623,6 +623,7 @@ class MosaicViewerElement extends BaseViewerElement {
           window.alert('bad objectmap -- dimensions != image dimensions');
           return;
           }*/
+        this.disableClustering();
         
         this.internal.objectmap=ovolume;
         let ospa=this.internal.objectmap.getSpacing();

@@ -200,7 +200,7 @@ class BisHeader {
      * @param {arraybuffer} buffer - raw data buffer to parse
      * @param {number} totallength - optional length of buffer else computed from size of header spec
      */
-    parse(buffer,totallength) {
+    parse(buffer,totallength,swap=false) {
 
         let offset=0;
         let l=this.internal.typedefs.length;
@@ -210,6 +210,20 @@ class BisHeader {
             let sz=this.internal.typedefs[i][2];
             let sizeoftype=typesizes[tp][0];
             let Arraytype=typesizes[tp][1];
+
+            if (swap && sizeoftype>1) {
+                let _tmp=new Uint8Array(buffer,offset,sz*sizeoftype);
+                for (let i=0;i<sz;i++) {
+                    let offset=i*sizeoftype;
+                    for (let j=0;j<sizeoftype/2;j++) {
+                        let j1=j+offset;
+                        let tmp1=_tmp[j1];
+                        let j2=offset+(sizeoftype-1-j);
+                        _tmp[j1]=_tmp[j2];
+                        _tmp[j2]=tmp1;
+                    }
+                }
+            }
             
             let _bytes = new Arraytype(buffer,offset,sz);
             offset+=sz*sizeoftype;
@@ -221,10 +235,10 @@ class BisHeader {
                     newbytes[j]=_bytes[j];
                 this.struct[key]=newbytes;
             }
+
         }
 
         this.extensions = null;
-
         if (offset < totallength) {
             let diff=totallength-offset;
             this.extensions=new Uint8Array(diff);
@@ -232,7 +246,7 @@ class BisHeader {
             for (let kk=0;kk<diff;kk++)
                 this.extensions[kk]=_inbytes[kk];
         }
-
+        
         // Check bit pix
         let dt=this.struct['datatype'];
         let name=niftitypes[dt][0];

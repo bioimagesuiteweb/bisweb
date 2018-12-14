@@ -59,22 +59,20 @@ class BisBaseServerClient {
         return Promise.rejected('uploadFile not implemented '+url+' '+isbinary+' ' +typeof data);
     }
 
-
-    /** performs a file system operation
-     * @param{String} operation -- the operation
-     * @param{String} url -- the filename
-     * @returns {Promise} payload is the result
-     */
-    fileSystemOperation(name,url) {
-        return Promise.rejected(name+' not implemented '+url);
-    }
-
     /** get file size -- the size of a file
      * @param{String} url -- the filename
      * @returns {Promise} payload is the file size
      */
     getFileSize(url) {
         return this.fileSystemOperation('getFileSize',url);
+    }
+
+    /** get file stats -- fs.getStats 
+     * @param{String} url -- the filename
+     * @returns {Promise} stats object 
+     */
+    getFileStats(url) {
+        return this.fileSystemOperation('getFileStats',url);
     }
 
     /** checks is filename is a directory
@@ -99,6 +97,24 @@ class BisBaseServerClient {
      */
     deleteDirectory(url) {
         return this.fileSystemOperation('deleteDirectory',url);
+    }
+
+    /** moves a file from source to destination 
+     * @param{String} src -- the source directory
+     * @param{String} dest -- the destination directory
+     * @returns {Promise} payload true or false
+     */
+    moveDirectory(url) {
+        return this.fileSystemOperation('moveDirectory', url);
+    }
+
+    /** copies a file from source to destination
+     *@param{String} src -- the source directory
+     * @param{String} dest -- the destination directory
+     * @returns {Promise} payload true or false
+     */
+    copyFile(url) {
+        return this.fileSystemOperation('copyFile', url);
     }
 
     /** getMatching Files

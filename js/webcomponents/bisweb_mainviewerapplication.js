@@ -32,6 +32,7 @@ const bootbox=require('bootbox');
 const BisWebPanel = require('bisweb_panel.js');
 const resliceImage = require('resliceImage');
 const BisWebLinearTransformation = require('bisweb_lineartransformation.js');
+
 //const BisWebHelpVideoPanel = require('bisweb_helpvideopanel');
 
 const localforage=require('localforage');
@@ -93,7 +94,9 @@ class ViewerApplicationElement extends HTMLElement {
         else if (this.applicationName==="editor")
             this.extraManualHTML='imageeditor.html';
 
-        userPreferences.initialize(bisdbase); // this is an async call to initialize. Use safe get later to make sure
+        this.applicationInitializedPromiseList= [ ];
+        this.applicationInitializedPromiseList.push(userPreferences.initialize(bisdbase)); // this is an async call to initialize. Use safe get later to make sure
+
     }
 
     // ----------------------------------------------------------------------------
@@ -345,7 +348,7 @@ class ViewerApplicationElement extends HTMLElement {
         const img = new BisWebImage();
         return new Promise( (resolve,reject) => {
 
-            webutil.createAlert('Loading image from ' + genericio.getFixedLoadFileName(fname),'progress',30);
+            webutil.createAlert('Loading image from ' + genericio.getFixedLoadFileName(fname),'progress', 30, 0, { 'makeLoadSpinner' : true });
             setTimeout( () => {
                 img.load(fname)
                     .then(function () {
@@ -362,7 +365,7 @@ class ViewerApplicationElement extends HTMLElement {
         const self=this;
         return new Promise( (resolve,reject) => {
             let img = new BisWebImage();
-            webutil.createAlert('Loading image from ' + genericio.getFixedLoadFileName(fname),'progress',30);
+            webutil.createAlert('Loading image from ' + genericio.getFixedLoadFileName(fname),'progress',30, 0, { 'makeLoadSpinner' : true });
             setTimeout( () => {
                 img.load(fname)
                     .then(function () {
@@ -398,17 +401,17 @@ class ViewerApplicationElement extends HTMLElement {
     }
     
     /** Save image from viewer to a file */
-    saveOverlay(fname, viewerno = 0) {
+    saveOverlay(fname=null, viewerno = 0) {
 
         let name="Overlay";
-        let index="";
+        //let index="";
         if (this.num_independent_viewers >1)  {
             name=`${name} ${viewerno + 1}`;
-            index=`_${viewerno+1}`;
+            //index=`_${viewerno+1}`;
         }
         let img = this.VIEWERS[viewerno].getobjectmap();
-        if (!fname)
-            fname = "objectmap" + index +".nii.gz";
+        //        if (!fname)
+        //  fname = "objectmap" + index +".nii.gz";
         bisweb_apputil.saveImage(img, fname, name);
     }
 
@@ -877,6 +880,11 @@ class ViewerApplicationElement extends HTMLElement {
         }
 
         webfileutil.createFileSourceSelector(hmenu);
+        
+        webutil.createMenuItem(hmenu, 'Open AWS Selector', 
+                                () => {
+                                    webfileutil.createAWSMenu();
+                                });
 
 
         return hmenu;
@@ -982,19 +990,42 @@ class ViewerApplicationElement extends HTMLElement {
                 } catch(e) {
                     webutil.createAlert('Bad application state file '+contents.filename+' probably not a application state file ',true);
                     reject(e);
+                    return;
                 }
 
                 if (!obj.app) {
                     webutil.createAlert('Bad application state file '+contents.filename+' probably not a application state file ',true);
+                    reject('error');
                     return;
                 }
 
+                if (obj.app !== this.applicationName) {
+                    clipboard.setItem('lastappstate',obj).then( () => {
+
+                        webutil.createAlert(`<p>This state file was not created using this application(<EM>${this.applicationName}</EM>).</p><p> Click <a href="./${obj.app}.html?restorestate=${contents.filename}">here to close this application and open <B>${obj.app}</B></a> instead.`,true);
+                        /*</p><p> <button class="btn btn-link btn-small" id="${id}">(Click this link to force load this)</button>`,true);
+                          let id=webutil.getuniqueid();
+                        $('#'+id).click( () => {
+                            $('.alert-danger').remove();
+                            self.restoreState(obj.params,obj.app);
+                            webutil.createAlert('Application state loaded from ' + contents.filename);
+                            resolve("Done");
+                        });*/
+                    }).catch( (e) => {
+                        console.log(e);
+                    });
+                    resolve("Done");
+                    return;
+                }
+                
                 self.restoreState(obj.params,obj.app);
                 webutil.createAlert('Application state loaded from ' + contents.filename);
                 resolve("Done");
             }).catch((e) => {
                 console.log(e.stack,e);
-                webutil.createAlert(`${e}`,true);});
+                webutil.createAlert(`${e}`,true);
+                reject(e);
+            });
         });
     }
 
@@ -1116,7 +1147,6 @@ class ViewerApplicationElement extends HTMLElement {
     
     parseQueryParameters() {
 
-        // Here we check if there is any info we need on the query string
         let load=webutil.getQueryParameter('load') || '';
         let imagename=webutil.getQueryParameter('image') || '';
 
@@ -1124,6 +1154,27 @@ class ViewerApplicationElement extends HTMLElement {
             this.loadApplicationState(load);
         } else if (imagename.length>0) {
             this.loadImage(imagename);
+        }
+
+        let restore=webutil.getQueryParameter('restorestate');
+        if (restore) {
+            clipboard.getItem('lastappstate').then( (st) => {
+                try {
+                    if (st.app) {
+                        setTimeout( () => {
+                            this.restoreState(st.params,st.app);
+                            clipboard.setItem('lastappstate',"");
+                            webutil.createAlert('Loaded application state from '+restore);
+                        },100);
+                    } else {
+                        webutil.createAlert('Failed to load application state from '+restore,true);
+                    }
+                } catch(e) {
+                    console.log('Bad Last app state',e);
+                }
+            }).catch( (e) => {
+                webutil.createAlert('Failed to load application state '+e,true);
+            });
         }
     }
                                 
@@ -1357,10 +1408,17 @@ class ViewerApplicationElement extends HTMLElement {
         let mainViewerDoneEvent = new CustomEvent('mainViewerDone');
         document.dispatchEvent(mainViewerDoneEvent);
 
+        let istest = this.getAttribute('bis-testingmode') || false;
         webutil.runAfterAllLoaded( () => {
-            this.parseQueryParameters();
-            document.body.style.zoom =  1.0;
-            this.welcomeMessage(false);
+            Promise.all(this.applicationInitializedPromiseList).then( () => {
+                this.parseQueryParameters();
+                document.body.style.zoom =  1.0;
+                if (!istest) {
+                    this.welcomeMessage(false);
+                } else {
+                    webutil.createAlert('In Test Mode',false);
+                }
+            });
         });
 
     }

@@ -6,6 +6,7 @@ const pako=require('pako');
 const bisasyncutil=require('bis_asyncutils');
 const util = require('bis_util');
 const BisBaseServerClient= require('bis_baseserverclient');
+
 // Debug Mode
 let uploadcount=0;
 
@@ -792,16 +793,16 @@ class BisFileServerClient extends BisBaseServerClient {
      * @param {Number} port - The port on which the server machine is listening. 
      * @param {Number} filesize - The size of the file in bytes.
      */
-    connectToFilestream(port, filesize) {
+    connectToFilestream(port, filesize = -1) {
         return new Promise( (resolve, reject) => {
 
             let hostname = 'ws://localhost:' + port;
             let blobArray = [];
     
+            console.log('Beginning load for file with size', filesize);
             //once connected the server will begin piping images chunks, which we will assemble on this side
             let ssocket = new WebSocket(hostname);
 
-            //TODO: Create loading bar and connect it to blobArray
             ssocket.addEventListener('message', (e) => {
     
                 //empty packet should indicate the end of stream
@@ -827,8 +828,9 @@ class BisFileServerClient extends BisBaseServerClient {
      * @param{String} url -- the filename
      * @returns {Promise} payload is the result
      */
+    //TODO: Add second input for file move operation
     fileSystemOperation(name,url) {
-
+        console.log('file system operation', name, url);
         if (url.indexOf('\\')>=0)
             url=util.filenameWindowsToUnix(url);
 
@@ -883,7 +885,8 @@ class BisFileServerClient extends BisBaseServerClient {
                                'operation' : 'dicomConversion',
                                'indir' : indir,
                                'debug' : debug,
-                               'id' : serverEvent.id }); 
+                               'id' : serverEvent.id,
+                               'timeout' : 300000}); 
         });
     }
 

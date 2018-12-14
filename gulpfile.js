@@ -52,7 +52,7 @@ program
     .option('-m, --minify <s>','flag to minify 1=minify 0=regular + sourcemaps,-1 = fast, no sourcemaps')
     .option('-l, --platform  <s>','platform')
     .option('-d, --debug <s>','debug')
-    .option('-p, --dopack <s>','dopackage 0=no, 1=electron-packager, 2=run inno or zip in addition')
+    .option('-p, --dopack <s>','dopackage 0=electron-packager, 0=run npm update in addition 2=run inno or zip in addition')
     .option('-z, --dozip <s>','dozip')
     .option('-n, --internal <n>','if 1 use internal code, if 2 serve the internal directory as well',parseInt)
     .option('-x, --external <n>','if 1 use extra external code (in ../external)',parseInt)
@@ -95,7 +95,7 @@ const mainoption=program.rawArgs[2];
 // -----------------------------------------------------------------------------------------
 if (mainoption=="zip")
     options.zip=1;
-if (mainoption=="package" && options.package===0)
+if (mainoption=="fullpackage")
     options.package=2;
 
 
@@ -374,7 +374,7 @@ gulp.task('css', function() {
     bis_gutil.createCSSCommon(internal.dependcss,internal.biscss,options.outdir);
 });
 
-gulp.task('serve', function() {
+gulp.task('serve2', function() {
     connect.server(internal.serveroptions);
     console.log(colors.red('++++\n+++++ Server root directory=',internal.serveroptions.root,'\n++++'));
 
@@ -383,7 +383,7 @@ gulp.task('serve', function() {
     else
         gulp.watch(internal.lintscripts, ['jshint']);
     
-    bis_gutil.createDateFile(path.resolve(options.outdir,'../wasm/bisdate.js'));
+
     bis_gutil.runWebpack(internal.webpackjobs,
                          options.internal,
                          options.external,
@@ -503,20 +503,16 @@ gulp.task('zip', function() {
     bis_gutil.createZIPFile(options.zip,options.baseoutput,options.outdir,internal.setup.version,options.distdir);
 });
 
-gulp.task('package2', function(done) {
+gulp.task('package', function(done) {
 
-    if (options.package===0)
-        options.package=1;
-
-    
     bis_gutil.createPackage(options.package,
                             internal.setup.tools,
                             __dirname,options.outdir,internal.setup.version,options.platform,options.distdir,done);
 });
 
-gulp.task('package', function(done) {
+gulp.task('buildpackage', function(done) {
     runSequence('buildint',
-                'package2',
+                'package',
                 done);
 });
 
@@ -559,6 +555,12 @@ gulp.task('doc', function(done) {
     runSequence('jsdoc','cdoc',done);
 
 });
+
+gulp.task('serve', function(done) {
+    runSequence('date','serve2',done);
+
+});
+
 
 gulp.task('default', function(callback) {
     runSequence('build',callback);
