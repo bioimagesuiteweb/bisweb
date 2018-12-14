@@ -62,6 +62,7 @@ const internal = {
     runningAsDesktopApp : false,
     deferredInstallPrompt : null,
     installButton : null,
+    offlineButton : false,
 };
 
 // ----------------------------------- GUI Utility Functions -------------------------------------
@@ -149,10 +150,19 @@ let showAlert=function(message,type='info') {
         internal.alertDiv.remove();
 
     internal.alertDiv = $(`<div class="alert alert-${type} alert-dismissible" role="alert" 
-                  style="position:absolute; top:80px; left:20px; z-index: 100">
+                  style="position:absolute; top:65px; left:30px; z-index: 100">
                   <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${message}</a></div>`);
     $('body').append(internal.alertDiv);
     internal.alertDiv.alert();
+};
+
+let setEnableDisableMenu=function(enable=true) {
+
+    let w=internal.offlineButton[0].children[0];
+    if (enable)
+        w.innerHTML='Enable Offline Mode';
+    else
+        w.innerHTML='Disable Offline Mode';
 };
 
 // ------------------------------------------------------------------------------
@@ -162,8 +172,8 @@ let showAlert=function(message,type='info') {
 let receivedMessageFromServiceWorker = function(msg) {
     
     if (msg.indexOf("Cache Updated")>=0) {
-        showAlert(`The application has been updated. <a href="./index.html">Reload this to use the new version.</a>`);
-
+        showAlert(`The application cache has been updated. The application can now run in offline mode if there is need.`);
+        setEnableDisableMenu(false);
     } else if (msg.indexOf('Downloaded')>=0) {
         showAlert(msg);
     } else if (msg.indexOf('Activate')>=0) {
@@ -177,24 +187,17 @@ let receivedMessageFromServiceWorker = function(msg) {
             });
         },100);
         checkForLatestVersion();
-        /*        idb.get('mode').then( (mode) => {
-                  console.log('Mode=',mode);
-                  if (mode!=='online') {
-                  showAlert(`The application has been automatically updated (as current version is invalid). <a href="./index.html">Reload this to use the new version.</a>`);
-                  }*/
     } else if (msg.indexOf('Cleaned')>=0) {
-        showAlert('All offline capabilities have been removed. The application will still happily run if you have a network connection. <a href="./index.html">Please restart this page to complete the process.</a>','info');
-        navigator.serviceWorker.register(`${internal.scope}bisweb-sw.js`, { scope: internal.scope }).then(function(registration) {
-            registration.unregister().then( (m) => {
-                console.log('service worker unregistered for good measure ',m);
-                internal.disableServiceWorker=true;
-            });
-        });
+        showAlert('All offline capabilities have been removed. The application will still happily run if you have a network connection.','info');
+        setEnableDisableMenu(true);
     } else if (msg.indexOf('NewSW')>=0 ) {
         if (internal.runningAsDesktopApp)
             showAlert('All offline capabilities have been removed (due to major update).','info');
         else
-            showAlert('All offline capabilities have been removed.','info');
+            showAlert('All offline capabilities have been removed due to update.','info');
+
+        setEnableDisableMenu(true);
+        
     } else {
         console.log('other=',msg);
     }
@@ -243,7 +246,7 @@ let getLatestVersion=async function() { // jshint ignore:line
     if (typeof (window.BIS) !== "undefined") {
         extra="/build/web";
     }
-        
+
     try {
         let t= new Date().getTime();
         let a=`${extra}/bisdate.json?time=${t}`;
@@ -260,22 +263,57 @@ let getLatestVersion=async function() { // jshint ignore:line
 
 }; // jshint ignore:line
 
-let getMode=async function() { // jshint ignore:line
+let getCacheState=async function() { // jshint ignore:line
 
-    let mode='online';
+    let mode='empty';
     try {
-        mode=idb.get('mode');
+        mode=await idb.get('cache');
     } catch(e) {
-        mode='online';
+        console.log('---- Failed to read mode. Assuming empty');
     }
+
     return mode;
 };// jshint ignore:line
+
+let getOfflineMode=async function() { // jshint ignore:line
+
+    try {
+        let n=await idb.get('network');
+        if (n==='offline')
+            return true;
+    } catch(e) {
+        console.log('---- Failed to read network. Assuming online');
+    }
+
+    return false;
+};// jshint ignore:line
+
+
+let getCachedVersion=async function() { // jshint ignore:line
+
+    let dt= {
+        "date" : "0000/00/00",
+        "time" : "00:00:00",
+        "absolutetime" : 0 ,
+        "version": "0.0.0"
+    };
+
+    try {
+        dt=await idb.get('cachedate');
+    } catch(e) {
+        console.log('---- Failed to read cachedate. Assuming past');
+    }
+
+    return dt;
+};// jshint ignore:line
+
+// ------------------------------------------------------------------------
 
 let doesNewVersionExist=async function() { // jshint ignore:line
     
     // Check if we are in offline mode else return;
-    let mode=await getMode();  // jshint ignore:line
-    if (mode!=='offline-complete') {
+    let mode=await getCacheState();  // jshint ignore:line
+    if (mode!=='full') {
         return false;
     }
 
@@ -287,35 +325,37 @@ let doesNewVersionExist=async function() { // jshint ignore:line
     }
 
     internal.onlinetime=latest;
-    
-    let mytime=bisdate['absolutetime'];
+
+    let myversion=await getCachedVersion();
+    let mytime=myversion['absolutetime'];
     let diff=internal.onlinetime-mytime;
     let newversion=(diff>1000);
     return newversion;
 }; // jshint ignore:line
 
-let downloadLatestVersion=async function(hasnewversion) { // jshint ignore:line
+let cacheLatestVersion=async function(hasnewversion) { // jshint ignore:line
 
-    let idbmode=await getMode();  // jshint ignore:line
+    let state=await getCacheState();  // jshint ignore:line
     let latestVersion=internal.latestVersion;
-
+    let cacheVersion=await getCachedVersion();
+    
     let s='';
 
     /*    if (internal.hasServiceWorker) {
         s=`<p> BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which can download itself into the cache of your Browser for offline use.</p>`;
     }*/
     let dates=`<UL>
-<LI>The version you are using is: ${bisdate.date} (${bisdate.time})</LI>
+<LI>The version you have cached is: ${cacheVersion.date} (${cacheVersion.time})</LI>
 <LI> The latest version is: ${latestVersion.date} (${latestVersion.time})</LI></UL>`;
 
     let fn = ( () => { sendCommandToServiceWorker('updateCache'); });
     
     let m=getModal();
     if (hasnewversion) {
-        m.title.text('There is an updated version online');
-        s+=dates+`<p> If you would like to update (recommended), press <EM>Update</EM> below.</p>`;
+        m.title.text('The cached version (for offline use) is out of date');
+        s+=dates+`<p> If you would like to update this (recommended), press <EM>Update</EM> below.</p>`;
         m.addButton('Update','danger',fn);
-    }  else if (idbmode==='online') {
+    }  else if (state==='empty') {
         m.title.text('You can cache this application offline');
         s+=`<p> If you would like to download all files in the browser cache to enable offline mode (recommended), press <EM>Cache</EM> below.</p>`;
         m.addButton('Cache','success',fn);
@@ -351,7 +391,7 @@ var checkForLatestVersion=async function() {// jshint ignore:line
 
     let m =await doesNewVersionExist();  // jshint ignore:line
     if (m)
-        downloadLatestVersion(true);
+        cacheLatestVersion(true);
 };// jshint ignore:line
 
 // ---------------------------------------------
@@ -361,22 +401,29 @@ let aboutApplication=async function() {// jshint ignore:line
 
     let dosimple=true;
     let offline=false;
+    let mode='empty';
+    let cachedate='';
+    let electron=true;
     
     if (typeof (window.BISELECTRON) === "undefined") {
-    
+        electron=false;
         
-        let latest=await getLatestVersion(); // jshint ignore:line
-        if (latest<0) {
-            offline=true;
+        offline=await getOfflineMode();
+        if (offline) {
             showAlert(`In offline mode. Everything should still work (other than regression testing.)`);
             return;
         }
         
-        let mode= await getMode(); // jshint ignore:line
+        mode= await getCacheState(); // jshint ignore:line
 
+        if (mode === 'full') {
+            let dt=await getCachedVersion();
+            cachedate=` (<EM>Cached Version=${dt.version}, ${dt.date}, ${dt.time}</EM>)`;
+        }
+        
         if (internal.disableServiceWorker===true) {
             dosimple=true;
-        } else if (mode!=='online') {
+        } else if (mode!=='empty') {
             let m=await doesNewVersionExist(); // jshint ignore:line
             if (m)
                 dosimple=false;
@@ -390,39 +437,20 @@ let aboutApplication=async function() {// jshint ignore:line
         if (internal.hasServiceWorker) {
             if (offline)
                 s+=`<p>This application is running in offline mode.</p>`;
-            /*s+=`<p>BioImage Suite Web is a <a href="https://developers.google.com/web/progressive-web-apps/" target="_blank" rel="nopener"> progressive web application</a> which can download itself into the cache of your Browser for offline use.</p>`;*/
+            else if (mode === 'full')
+                s+=`<p><B>Note:</B> This application has been cached in your Browser's cache to enable running in offline mode.${cachedate}</p>`;
+            else if (electron===false)
+                s+=`<p>This application has not been cached in your Browser's cache. Hence it can not run in offline mode. You may enable this under the Help menu </p>`;
         }
         m.body.append($(s));
         m.addButton('Close','default');
         m.show();
     } else {
-        downloadLatestVersion(true);
+        cacheLatestVersion(true);
     }
 
 }; // jshint ignore:line
 
-// ---------------------------------------------
-// Called under Help | Install
-// ---------------------------------------------
-let cacheLatestVersion=async function() {// jshint ignore:line
-
-    if (internal.disableServiceWorker===true) {
-        showAlert('Please reload <a href="./index.html">this page</a> and try again.','info');
-        return;
-    }
-    
-    let latest=await getLatestVersion(); // jshint ignore:line
-    if (latest<0) {
-        showAlert(`We can not connect to the server right now. Please try again later.`,'info');
-        return false;
-    } 
-    
-    let mytime=bisdate['absolutetime'];
-    let diff=internal.latestVersion['absolutetime']-mytime;
-    let newversion=(diff>1000);
-    downloadLatestVersion(newversion);
-    
-};// jshint ignore:line
 
 // ------------------------------------------------------------------------------
 //
@@ -430,7 +458,7 @@ let cacheLatestVersion=async function() {// jshint ignore:line
 //
 // ------------------------------------------------------------------------------
 
-let createApplicationSelector=function(externalobj) {
+let createApplicationSelector=async function(externalobj) {
     
     let container=$("#bisslides");
     let indicators=$(".carousel-indicators");
@@ -575,68 +603,65 @@ let createApplicationSelector=function(externalobj) {
     if (internal.hasServiceWorker) {
 
         $("#othermenu").append($(`<li class="divider"></li>`));
-        
-        let newitem0 = $(`<li><a href="#">Remove Application (from Cache)</a></li>`);
-        $("#othermenu").append(newitem0);
-        newitem0.click( (e) => {
+
+        let cache=await getCacheState();
+        internal.offlineButton = $(`<li><a href="#">Offline Mode</a></li>`);
+        setEnableDisableMenu(cache === 'empty');
+        $("#othermenu").append(internal.offlineButton);
+            
+        internal.offlineButton.click( (e) => {
+            e.preventDefault();
+
             setTimeout( () => {
-                e.preventDefault();
-                e.stopPropagation();
-                sendCommandToServiceWorker('clearCache');
-            },10);
+                getCacheState().then( (m) => {
+                    
+                    if (m==='full') {
+                        sendCommandToServiceWorker('clearCache');
+                    } else {
+                        sendCommandToServiceWorker('updateCache');
+                    }
+                });
+            },100);
         });
         
         
-        
-        let newitem = $(`<li><a href="#">Cache Application for Offline Use</a></li>`);
-        $("#othermenu").append(newitem);
-        
-        newitem.click( (e) => {
-            setTimeout( () => {
-                e.preventDefault();
-                e.stopPropagation();
-                cacheLatestVersion();
-            },10);
-        });
-
-    }
-    
-    window.addEventListener('beforeinstallprompt', (evt) => {
-
-        evt.preventDefault();
-        
-        if (internal.installButton===null) {
-            let newsep=null;
+        window.addEventListener('beforeinstallprompt', (evt) => {
             
             evt.preventDefault();
-            // Stash the event so it can be triggered later.
-            internal.deferredInstallPrompt=evt;
             
-            internal.deferredInstallPrompt.userChoice.then((choiceResult) => {
-                if (choiceResult.outcome === 'accepted') {
-                    sendCommandToServiceWorker('updateCache');
-                    newsep.remove();
-                    internal.installButton.remove();
-                    internal.installButton=null;
-                    internal.deferredInstallPrompt = null;
-                }
-            });
-            
-
-            // Prevent Chrome 67 and earlier from automatically showing the prompt
-            console.log('++++ Before Install Fired');
-            newsep=$(`<li class="divider"></li>`);
-            $("#othermenu").append(newsep);
-            internal.installButton = $(`<li><a href="#">Install as Desktop-"like" Application</a></li>`);
-            $("#othermenu").append(internal.installButton);
-
-            internal.installButton.click('click', () => {
-                internal.deferredInstallPrompt.prompt(); 
-            });
-        } else {
-            internal.deferredInstallPrompt=evt;
-        }
-    });
+            if (internal.installButton===null) {
+                let newsep=null;
+                
+                evt.preventDefault();
+                // Stash the event so it can be triggered later.
+                internal.deferredInstallPrompt=evt;
+                
+                internal.deferredInstallPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        sendCommandToServiceWorker('updateCache');
+                        newsep.remove();
+                        internal.installButton.remove();
+                        internal.installButton=null;
+                        internal.deferredInstallPrompt = null;
+                    }
+                });
+                
+                
+                // Prevent Chrome 67 and earlier from automatically showing the prompt
+                console.log('.... Before Install Fired');
+                newsep=$(`<li class="divider"></li>`);
+                $("#othermenu").append(newsep);
+                internal.installButton = $(`<li><a href="#">Install as Desktop-"like" Application</a></li>`);
+                $("#othermenu").append(internal.installButton);
+                
+                internal.installButton.click('click', () => {
+                    internal.deferredInstallPrompt.prompt(); 
+                });
+            } else {
+                internal.deferredInstallPrompt=evt;
+            }
+        });
+    }
 
 
     $("#applicationstext").click( (e) => {
@@ -656,8 +681,6 @@ let createVersionBoxes=async function() {
 
 
     let extra="";
-
-
     
     let color="#ffffff";
     if (tools.version.indexOf("a")>1 || tools.version.indexOf("b")>1) {
@@ -666,31 +689,27 @@ let createVersionBoxes=async function() {
         color="#ff2222";
     }
 
-    let bb=$(`<div align="right" style="right:5.5vw; top:574px;  z-index:5000; position: absolute; color:${color}">
+    let bb=$(`<div align="right" style="right:5.5vw; top:624px;  z-index:5000; position: absolute; color:${color}">
              Version:  ${tools.version} (${bisdate.date}${extra})</div>`);
     $('body').append(bb);
 
-    let offline=false;
-    let mode=await getMode();  // jshint ignore:line
-    console.log('Mode=',mode);
-    if (mode==='offline-complete') {
-        offline=true;
-    }
+
+    let offline=await getOfflineMode();
+    let state=await getCacheState();
+    console.log('.... Initializing cache-state=',state,' offline=',offline);
 
     let msg="";
     let cmode="warning";    
     if (internal.unstable) {
         msg=`These applications are under active development. Use with care.`;
-        if (offline) {
-            msg+=" <B> Running in offline mode </B>";
-        }
-    } else if (offline) {
-        msg=" <B> Running in offline mode </B>";
-        cmode="info"
+    }
+    if (offline) {
+        msg+=" <B> Running in offline mode -- no network connection.</B>";
+        cmode="info";
     }
 
     if (msg.length>1) {
-        let w = $(`<div class="alert alert-${cmode} alert-dismissible" role="alert"  style="position:absolute; top:570px; left:5.5vw; z-index:5000">
+        let w = $(`<div class="alert alert-${cmode} alert-dismissible" role="alert"  style="position:absolute; top:65px; left:20px; z-index:5000">
           <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${msg}
           </div>`);
         $('body').append(w);
@@ -727,7 +746,7 @@ var createServiceWorker=function() {
     // register service worker if needed
     navigator.serviceWorker.register(`${scope}bisweb-sw.js`, { scope: scope }).then(function(registration) {
         internal.serviceWorker = registration.active;
-        console.log(`____ bisweb -- service worker registered ${scope}`);
+        console.log(`.... bisweb -- service worker registered ${scope}`);
     });
     
     
@@ -738,8 +757,8 @@ var createServiceWorker=function() {
         navigator.serviceWorker.addEventListener('message', function(event) {
             receivedMessageFromServiceWorker(event.data);
         });
-        idb.get('mode').then( (m) => {
-            if (m===('offline-complete')) {
+        getCacheState().then( (m) => {
+            if (m===('full')) {
                 checkForLatestVersion();
             } 
         });
@@ -874,7 +893,7 @@ window.onload = (() => {
 
 
 
-Window.biswebdebug=function(f) {
+window.biswebdebug=function(f) {
     if (f) {
         sendCommandToServiceWorker("debugon");
     } else {
@@ -882,3 +901,4 @@ Window.biswebdebug=function(f) {
     }
 };
     
+window.doesNewVersionExist=doesNewVersionExist;

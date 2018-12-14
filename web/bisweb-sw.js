@@ -4,10 +4,10 @@ const idb=require('idb-keyval');
 
 /*global self, caches,fetch, MessageChannel, clients */
 
-// idb-store has a key 'mode' with three values
-// online  -- no cache
-// offline -- can download
-// offline-complete -- has downloaded
+// idb-store has a key 'cache' with two values
+
+// empty  -- no cache
+// full   -- has downloaded copy of application
 
 // --------- First Configuration Info --------------------
 const internal =  {
@@ -17,8 +17,8 @@ const internal =  {
     updating : false,
     count : {},
     maxcount : {},
-    webfirst : true,
     debug : false,
+    offline : false,
 };
 
 internal.path2= internal.path+"#";
@@ -47,15 +47,15 @@ let getTime=function(nobracket=0) {
     return  hour + ":" + min + ":" + sec;
 };
 
-let cleanCache=function(keepmode=false) {
+let cleanCache=function() {
     console.log('bisweb-sw: '+getTime()+'. Cleaning cache',internal.name);
-    internal.webfirst=true;
+
     return new Promise( (resolve,reject) => {
         
         let p=[];
-        
-        if (keepmode===false)
-            p.push(idb.set('mode','online'));
+
+        p.push(idb.set('cache','empty'));
+        p.push(idb.set('cachedate',{}));
 
         caches.open(internal.name).then(cache => {
             cache.keys().then( (keys) => {
@@ -68,6 +68,7 @@ let cleanCache=function(keepmode=false) {
             Promise.all(p).then( ()=> {
                 cache.keys().then( (keys) => {
                     console.log('bisweb-sw: '+getTime()+'. Cache deleted files left=', keys.length);
+                    send_message_to_all_clients(`Cleaned Cache. Disabled offline capabilities`);
                     resolve();
                 });
             }).catch( (e) => {
@@ -110,7 +111,6 @@ let populateCache=function(msg="Cache Updated",mode='internal') {
         newlst.push(item);
     }
 
-    internal.webfirst=true;
 
     return caches.open(internal.name).then(cache => {
 
@@ -129,11 +129,17 @@ let populateCache=function(msg="Cache Updated",mode='internal') {
         Promise.all(p).then( () => {
             internal.updating=false;
             if (mode==='internal') {
-                console.log('bisweb-sw: '+getTime()+'. Installation (caching) successful');
-                idb.set('mode','offline-complete').then( () => {
-                    internal.webfirst=false;
-                    send_message_to_all_clients(msg);
-                    self.skipWaiting();
+                fetch(`bisdate.json?t=${t}`).then( (resp) => {
+                    resp.json().then ( (obj) => {
+                        console.log('bisweb-sw: '+getTime()+' bisdate.json',obj);
+                        console.log('bisweb-sw: '+getTime()+'. Installation (caching) successful');
+                        idb.set('cachedate',obj).then( () => {
+                            idb.set('cache','full').then( () => {
+                                send_message_to_all_clients(msg);
+                                self.skipWaiting();
+                            });
+                        });
+                    });
                 });
             }
         });
@@ -175,7 +181,7 @@ let send_message_to_all_clients=function(msg){
 // -------------------------
 self.addEventListener('message', (msg) => {
     
-    console.log('bisweb-sw: '+getTime()+'. Received message=',msg.data, ' webfirst=',internal.webfirst);
+    console.log('bisweb-sw: '+getTime()+'. Received message=',msg.data);
     
     try {
         let obj=JSON.parse(msg.data);
@@ -191,7 +197,7 @@ self.addEventListener('message', (msg) => {
                 console.log('bisweb-sw: '+getTime()+'. Already updating cache');
             }
         } else if (name==="clearCache") {
-            cleanCache().then( () => { send_message_to_all_clients(`Cleaned Cache. Disabled offline capabilities`); });
+            cleanCache();
         } else if (name==="debugon") {
             internal.debug=true;
         } else if (name==="debugoff") {
@@ -208,15 +214,8 @@ self.addEventListener('message', (msg) => {
 // -------------------------
 self.addEventListener('install', () => {
 
-    internal.webfirst=true;
-    idb.get('mode').then( (m) => {
-        m=m || '';
-        if (m!=='online') {
-            cleanCache(true).then( () => {
-                send_message_to_all_clients(`NewSW -- Due to Major Updatehe Cache was emptied.`);
-                self.skipWaiting();
-            });
-        } 
+    cleanCache().then( () => {
+        self.skipWaiting();
     });
 });
 
@@ -227,13 +226,7 @@ self.addEventListener('activate',  event => {
 
     event.waitUntil(self.clients.claim());
     self.skipWaiting();
-    idb.get('mode').then( (m) => {
-        console.log('bisweb-sw: '+getTime()+'. In activate mode=',m);
-        if (m!=='online')
-            idb.set('mode','online').then( () => {
-                send_message_to_all_clients(`NewSW -- Due to Major Updatehe Cache was emptied.`);
-            });
-    });
+    console.log('bisweb-sw: '+getTime()+'. In activate mode');
 });
 
 // -------------------------
@@ -244,20 +237,6 @@ self.addEventListener('fetch', (event) => {
 
     event.respondWith(async function() { 
         
-        let webfirst=internal.webfirst;
-        
-        if (!webfirst) {
-            
-            let url=event.request.url;
-            if (url.indexOf('bisdate.json')>=0)
-                webfirst=true;
-            
-            if (internal.updating)
-                webfirst=true;
-        }
-
-        // Cache then Web
-
         // First check for special paths and reroute
         let url=event.request;
         let urlname=event.request.url;
@@ -265,44 +244,47 @@ self.addEventListener('fetch', (event) => {
             urlname === internal.path2 ||
             urlname === internal.path3) {
             url=internal.mainpage;
-            if (webfirst)
-                console.log('--bisweb-sw: '+getTime()+'. In Web First mode',url,' was', urlname);
-            else
-                console.log('--bisweb-sw: '+getTime()+'. In Cache mode',url,' was',urlname);
+            if (internal.debug) {
+                console.log('--bisweb-sw: '+getTime()+'. Getting ',url,' was', urlname);
+            }
             urlname=url;
         }
 
-        if (internal.debug) {
-            console.log('--bisweb-sw :'+getTime()+'. request to download '+event.request.url+' webfirst='+webfirst);
-        }
-        
-        if (webfirst) {
+        // If .json or .html force online check even if offline
+        let ind=urlname.indexOf(".html");
+        let ind2=urlname.indexOf(".json");
+        if (ind2>0 || ind>0 >0 || internal.offline===false) {
             try {
-                return await fetch(url);
+                if (internal.offline)
+                    console.log('bisweb-sw: '+getTime()+'. Trying network fetch for', event.request.url,urlname);
+                let q=await fetch(url);
+                await idb.set('network','online');
+                internal.offline=false;
+                return q;
             } catch(e) {
-                console.log('bisweb-sw: '+getTime()+'. Network fetch failed; will try returning cached version for', event.request.url,urlname);
+                if (internal.debug)
+                    console.log('bisweb-sw: '+getTime()+'. Network fetch failed; will try returning cached version for', event.request.url,urlname);
             }
         }
-
+        
         try {
             let q=await caches.match(url, {ignoreSearch : true});
             if (q) {
+                internal.offline=true;
+                await idb.set('network','offline');
                 return q;
             } else {
-                console.log('bisweb-sw: '+getTime()+'. Cache fetch returned undefined; will try returning online version for', event.request.url);
+                if (internal.debug)
+                    console.log('bisweb-sw: '+getTime()+'. Cache fetch returned undefined; will try returning online version for', event.request.url);
                 url=event.request;
             }
         } catch(e) {
-            console.log('bisweb-sw: '+getTime()+'. Cache fetch failed; will try returning online version for', event.request.url,urlname);
+            if (internal.debug)
+                console.log('bisweb-sw: '+getTime()+'. Cache fetch failed; will try returning online version for', event.request.url,urlname);
         }
-        try { 
-            let f2=await fetch(url);
-            console.log('Fetch 2 ', urlname,' OK');
-            return f2;
-        } catch(e) {
-            console.log('bisweb-sw: '+getTime()+'. Network fetch(2) failed; will return null', event.request.url,urlname,'\n Fetch error 2=',e,'\n');
-        }
-        console.log("bisweb-sw: "+getTime()+". About to return dummy");
+        
+        if (internal.debug)
+            console.log("bisweb-sw: "+getTime()+". About to return dummy");
 
         // https://googlechrome.github.io/samples/service-worker/fallback-response/
         // For demo purposes, use a pared-down, static YouTube API response as fallback.
@@ -320,6 +302,19 @@ self.addEventListener('fetch', (event) => {
 });
 
 
-console.log(`bisweb-sw: ${getTime()}. BioImage Suite Web Service Worker starting name=${internal.name} path=${internal.path}`);                       
+idb.get('cache').then( (m) => {
+    idb.get('network').then( (n) => {
+        console.log(`bisweb-sw: ${getTime()}. BioImage Suite Web Service Worker starting name=${internal.name} path=${internal.path}, mode=${m},${n}`);
+        if (n !== 'offline') {
+            idb.set('network','online');
+        }
+        if ( m !== 'full') {
+            idb.set('cache','empty');
+        }
+    });
+}).catch( (e) => {
+    console.log('Error ',e);
+});
+
 
 
