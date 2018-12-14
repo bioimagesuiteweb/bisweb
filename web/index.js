@@ -41,9 +41,6 @@ const clipboard=localforage.createInstance({
 });
 
 
-
-
-
 let inelectron=false;
 if (typeof (window.BISELECTRON) !== "undefined") {
     inelectron=true;
@@ -53,7 +50,8 @@ if (typeof (window.BISELECTRON) !== "undefined") {
 // online  -- no cache
 // offline -- can download
 // offline-complete -- has downloaded
-const internal = { 
+const internal = {
+    unstable : false,
     hasServiceWorker : false,
     modal : null,
     alertDiv : null,
@@ -439,7 +437,7 @@ let createApplicationSelector=function(externalobj) {
     let topmenu=$("#topappmenu");
 
 
-    let hardcorded = {
+    /*    let hardcorded = {
         "youtube" : {
             "title" : "You Tube Channel",
             "url"   : "https://www.youtube.com/channel/UCizfR_ryJ0E-2uZspjwYtwg",
@@ -452,9 +450,8 @@ let createApplicationSelector=function(externalobj) {
             "description" : "The BioImage Suite Web Online Manual",
             "picture" : "images/manual.png",
         }
-    };
+    };*/
 
-    let objlist = [ hardcorded,externalobj ];
     let imagestring="";
     let menustring="";
     let indstring="";
@@ -463,72 +460,55 @@ let createApplicationSelector=function(externalobj) {
     let target="_blank";
     let urllist = [];
     
-    for (let kk=0;kk<objlist.length;kk++) {
-
-        let obj=objlist[kk];
-        let keys=Object.keys(obj);
-        let max=keys.length;
+    let keys=Object.keys(externalobj);
+    let max=keys.length;
         
-        for (let i=0;i<max;i++) {
+    for (let i=0;i<max;i++) {
             
-            let elem=obj[keys[i]];
-            let title=elem.title;
-            let url='';
-
-            if (elem.url.indexOf('http')===0) {
-                url=elem.url;
+        let elem=externalobj[keys[i]];
+        let title=elem.title;
+        let url='';
+        
+        if (elem.url.indexOf('http')===0) {
+            url=elem.url;
+        } else {
+            url=internal.scope+elem.url+'.html';
+        }
+        
+        let description=elem.description;
+        let picture=elem.picture;
+        let electrononly=elem.electrononly || false;
+        let hide=elem.hide || false;
+        
+        if ( hide===false && (inelectron === true || 
+                              (inelectron === false && electrononly===false))) {
+            
+            count=count+1;
+            
+            let cname="";
+            if (count===1)
+                cname=" active";
+            
+            if (internal.runningAsDesktopApp) {
+                imagestring+=`<div class="item${cname}"><a href="#" id="L${url}" target="${target}"><img src="${picture}" alt="${title}" style="height:400px"><div class="carousel-caption">${count}. ${description}</div></div>`;
+                menustring+=`<li><a href="#" id="W${elem.url}" role="button">${title}</a></li>`;
+                urllist.push({
+                    name : elem.url,
+                    url  : url
+                });
             } else {
-                url=internal.scope+elem.url+'.html';
+                imagestring+=`<div class="item${cname}"><a href="${url}" target="${target}"><img src="${picture}" alt="${title}" style="height:400px"><div class="carousel-caption">${count}. ${description}</div></div>`;
+                menustring+=`<li><a href="${url}" role="button">${title}</a></li>`;
             }
-
-            //            console.log('Adding ',url,target);
-            
-            let description=elem.description;
-            let picture=elem.picture;
-            let electrononly=elem.electrononly || false;
-            let hide=elem.hide || false;
-            
-            if ( hide===false && (inelectron === true || 
-                                  (inelectron === false && electrononly===false))) {
-
-                count=count+1;
                 
-                let cname="";
-                if (count===1)
-                    cname=" active";
-
-                if (kk===0) {
-
-                    imagestring+=`<div class="item${cname}"><a href="${url}" target="${target}"><img src="${picture}" alt="${title}" style="height:400px"><div class="carousel-caption">${count}. ${description}</div></div>`;
-                } else {
-                    if (internal.runningAsDesktopApp) {
-                        imagestring+=`<div class="item${cname}"><a href="#" id="L${url}" target="${target}"><img src="${picture}" alt="${title}" style="height:400px"><div class="carousel-caption">${count}. ${description}</div></div>`;
-                        menustring+=`<li><a href="#" id="W${elem.url}" role="button">${title}</a></li>`;
-                        urllist.push({
-                            name : elem.url,
-                            url  : url
-                        });
-                    } else {
-                        imagestring+=`<div class="item${cname}"><a href="${url}" target="${target}"><img src="${picture}" alt="${title}" style="height:400px"><div class="carousel-caption">${count}. ${description}</div></div>`;
-                        menustring+=`<li><a href="${url}" role="button">${title}</a></li>`;
-                    }
-                }
-                
-                let b='<li data-target="#mycarousel" data-slide-to="'+i+'"';
-                if (count===1)
-                    b+='class="active"';
-                b+="></li>";
-                indstring+=b;
-            }
+            let b=`<li data-target="#mycarousel" data-slide-to="${i+2}"></li>\n`;
+            indstring+=b;
         }
     }
 
-    container.empty();
     container.append($(imagestring));
     topmenu.empty();
     topmenu.append($(menustring));
-
-    indicators.empty();
     indicators.append($(indstring));
 
     if (internal.runningAsDesktopApp) {
@@ -542,8 +522,6 @@ let createApplicationSelector=function(externalobj) {
             let wd=Math.round(scale * (tools.tools[name].width || 800));
             let ht=Math.round(scale*  (tools.tools[name].height || 600));
             
-            console.log('Name=',name,wd,ht);
-            
             $(`#W${name}`).click( (e) => {
                 e.preventDefault();
                 window.open(url,'BioImageSuite Web '+name,`height=${ht},width=${wd}`);
@@ -556,8 +534,6 @@ let createApplicationSelector=function(externalobj) {
         let slist=$('.bislink');
         for (let i=0;i<2;i++) {
             let link=slist[i].href;
-            //            slist[i].href="";
-            console.log('Link = ',slist[i],slist[i].href);
             slist[i].click( (e) => {
                 e.preventDefault();
                 console.log('Link was',link);
@@ -565,29 +541,9 @@ let createApplicationSelector=function(externalobj) {
         }
     }
 
-    let othermenu=$(`<li class='dropdown'>
-            <a href='#' class='dropdown-toggle'  data-toggle='dropdown'
-               role='button' aria-expanded='false'>Help<span class='caret'></span></a>
-            <ul class='dropdown-menu' role='menu' id="othermenu">
-            </ul>
-          </li>`);
-    $('#bismenuparent0').append(othermenu);
 
-    let extra2="";
-    let extra3="";
-    let url=window.document.URL;
-    if  (url.indexOf('/unstable')>0 ||
-         url.indexOf('/build')>0 ||
-         url.indexOf('/biswebtest')>0 
-        ) {
-        extra2="Unstable ";
-        extra3=`, ${bisdate.time}`;
-    }
 
-    
-    let newitem2 = $(`<li><a href="#">About Application</a></li>`);
-    $("#othermenu").append(newitem2);
-    newitem2.click( (e) => {
+    $("#aboutapp").click( (e) => {
         setTimeout( () => {
             e.preventDefault();
             e.stopPropagation();
@@ -595,18 +551,13 @@ let createApplicationSelector=function(externalobj) {
         },10);
     });
 
-    let newitem3 = $(`<li><a href="#">Show Introductory Video</a></li>`);
-    $("#othermenu").append(newitem3);
-    newitem3.click( (e) => {
+    $("#showvideo").click( (e) => {
         setTimeout( () => {
             e.preventDefault();
             e.stopPropagation();
             showHelpVideo();
         },10);
     });
-
-    let sep=$(`<li class="divider"></li>`);
-    $("#othermenu").append(sep);
 
     let s=window.document.URL;
     let index=s.lastIndexOf("/");
@@ -618,15 +569,13 @@ let createApplicationSelector=function(externalobj) {
     
     $("#othermenu").append($(`<li><a href="${newurl}" target="${target}">Example Image Overlay</a></li>`));
 
-
-
-    $("#othermenu").append($(`<li class="divider"></li>`));
     
     console.log('.... Creating Service Worker Menu Items='+internal.hasServiceWorker);
-    
 
     if (internal.hasServiceWorker) {
-    
+
+        $("#othermenu").append($(`<li class="divider"></li>`));
+        
         let newitem0 = $(`<li><a href="#">Remove Application (from Cache)</a></li>`);
         $("#othermenu").append(newitem0);
         newitem0.click( (e) => {
@@ -699,11 +648,54 @@ let createApplicationSelector=function(externalobj) {
         },10);
     });
         
-    let bb=$(`<div align="center" style="padding:15px;  right:5.5vw; top:570px; border-radius:30px;background-color:#221100; z-index:5000; position: absolute; color:#ffffff">
-             Version:  ${tools.version} (${extra2}${bisdate.date}${extra3})</div>`);
+
+
+};
+
+let createVersionBoxes=async function() {
+
+
+    let extra="";
+
+
+    
+    let color="#ffffff";
+    if (tools.version.indexOf("a")>1 || tools.version.indexOf("b")>1) {
+        internal.unstable=true;
+        extra=`, ${bisdate.time}`;
+        color="#ff2222";
+    }
+
+    let bb=$(`<div align="right" style="right:5.5vw; top:574px;  z-index:5000; position: absolute; color:${color}">
+             Version:  ${tools.version} (${bisdate.date}${extra})</div>`);
     $('body').append(bb);
 
+    let offline=false;
+    let mode=await getMode();  // jshint ignore:line
+    console.log('Mode=',mode);
+    if (mode==='offline-complete') {
+        offline=true;
+    }
 
+    let msg="";
+    let cmode="warning";    
+    if (internal.unstable) {
+        msg=`These applications are under active development. Use with care.`;
+        if (offline) {
+            msg+=" <B> Running in offline mode </B>";
+        }
+    } else if (offline) {
+        msg=" <B> Running in offline mode </B>";
+        cmode="info"
+    }
+
+    if (msg.length>1) {
+        let w = $(`<div class="alert alert-${cmode} alert-dismissible" role="alert"  style="position:absolute; top:570px; left:5.5vw; z-index:5000">
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${msg}
+          </div>`);
+        $('body').append(w);
+        w.alert();
+    }
 };
 
 // ------------------------------------------------------------------------------
@@ -727,7 +719,6 @@ var createServiceWorker=function() {
             scope=scope.substr(0,index+1);
         }
     }
-
 
     internal.scope=scope;
 
@@ -843,18 +834,9 @@ window.onload = (() => {
     console.log('.... Running as Desktop app=',internal.runningAsDesktopApp);
 
     createApplicationSelector(tools.tools);
+    createVersionBoxes();
 
-    let url=window.document.URL;
-    if  (url.indexOf('/unstable')>0) {
-        let msg=`These applications are under active development. Use with care.`;
-        let w = $(`<div class="alert alert-warning alert-dismissible" role="alert"  style="position:absolute; top:570px; left:5.5vw; z-index:5000">
-          <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${msg}
-          </div>`);
-        $('body').append(w);
-        w.alert();
-    }
-
-
+    
 
     $('#mycarousel').carousel(
         {
@@ -867,7 +849,6 @@ window.onload = (() => {
         $(".dropdown").removeClass("open");//this will remove the active class from  
         $('#appmenu').addClass('open');
     },5000);*/
-
 
     window.addEventListener("dragover", (e) => {
         e.stopPropagation();
