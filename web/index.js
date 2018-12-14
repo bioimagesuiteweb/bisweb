@@ -59,7 +59,7 @@ const internal = {
     latestVersion : null,
     scope : '',
     disableServiceWorker : false,
-    runningAsDesktopApp : false,
+    runningAsDesktopPWA : false,
     deferredInstallPrompt : null,
     installButton : null,
     offlineButton : false,
@@ -191,7 +191,7 @@ let receivedMessageFromServiceWorker = function(msg) {
         showAlert('All offline capabilities have been removed. The application will still happily run if you have a network connection.','info');
         setEnableDisableMenu(true);
     } else if (msg.indexOf('NewSW')>=0 ) {
-        if (internal.runningAsDesktopApp)
+        if (internal.runningAsDesktopPWA)
             showAlert('All offline capabilities have been removed (due to major update).','info');
         else
             showAlert('All offline capabilities have been removed due to update.','info');
@@ -517,7 +517,7 @@ let createApplicationSelector=async function(externalobj) {
             if (count===1)
                 cname=" active";
             
-            if (internal.runningAsDesktopApp) {
+            if (internal.runningAsDesktopPWA) {
                 imagestring+=`<div class="item${cname}"><a href="#" id="L${url}" target="${target}"><img src="${picture}" alt="${title}" style="height:400px"><div class="carousel-caption">${count}. ${description}</div></div>`;
                 menustring+=`<li><a href="#" id="W${elem.url}" role="button">${title}</a></li>`;
                 urllist.push({
@@ -539,7 +539,7 @@ let createApplicationSelector=async function(externalobj) {
     topmenu.append($(menustring));
     indicators.append($(indstring));
 
-    if (internal.runningAsDesktopApp) {
+    if (internal.runningAsDesktopPWA) {
         console.log('List=',urllist);
         let scale=window.devicePixelRatio || 1.0;
         for (let i=0;i<urllist.length;i++) {
@@ -557,14 +557,6 @@ let createApplicationSelector=async function(externalobj) {
             $(`#L${name}`).click( (e) => {
                 e.preventDefault();
                 window.open(url,'BioImageSuite Web '+name,`height=${ht},width=${wd}`);
-            });
-        }
-        let slist=$('.bislink');
-        for (let i=0;i<2;i++) {
-            let link=slist[i].href;
-            slist[i].click( (e) => {
-                e.preventDefault();
-                console.log('Link was',link);
             });
         }
     }
@@ -842,15 +834,15 @@ window.onload = (() => {
 
     try {
         if (window.matchMedia('(display-mode: standalone)').matches)
-            internal.runningAsDesktopApp=true;
+            internal.runningAsDesktopPWA=true;
     } catch (e) {
         console.log('Error ',e);
     }
-
+    
     if (window.navigator.standalone === true) {
-        internal.runningAsDesktopApp=true;
+        internal.runningAsDesktopPWA=true;
     }
-    console.log('.... Running as Desktop app=',internal.runningAsDesktopApp);
+    console.log('.... Running as Desktop pwa=',internal.runningAsDesktopPWA);
 
     createApplicationSelector(tools.tools);
     createVersionBoxes();
