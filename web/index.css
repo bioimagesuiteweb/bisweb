@@ -3,6 +3,25 @@
     padding : 0 0 0 0;
 }
 
+#offline {
+    left : 0vw;
+    right : 0vw;
+    top: 75px;
+    width : 95vw;
+    height : 45px;
+    position: absolute;
+}
+
+#offline2 {
+    float : right;
+    position : relative;
+}
+
+.bisoffline {
+    margin: 5 5 5 5;
+}
+
+
 #main {
     left : 5vw;
     top: 125px;
