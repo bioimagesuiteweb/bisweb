@@ -189,7 +189,7 @@ var receivedMessageFromServiceWorker = function(msg) {
     
     if (msg.indexOf("Cache Updated")>=0) {
         setEnableDisableMenu(false);
-        if (internal.installingDesktopPWA) {
+        if (internal.installingDesktopPWA || internal.runningAsDesktopPWA) {
             setOfflineMode(true);
             showAlert(`The application has been installed and running in offline mode.`);
             internal.installingDesktopPWA=false;
@@ -575,13 +575,14 @@ var createApplicationSelector=async function(externalobj) {
     if (internal.runningAsDesktopPWA) {
         console.log('List=',urllist);
         let scale=window.devicePixelRatio || 1.0;
+
         for (let i=0;i<urllist.length;i++) {
             let elem=urllist[i];
             let url=elem.url;
             let name=elem.name;
             
-            let wd=Math.round(scale * (tools.tools[name].width || 800));
-            let ht=Math.round(scale*  (tools.tools[name].height || 600));
+            let wd=Math.round(scale * (tools.tools[name].width || 700));
+            let ht=Math.round(scale*  (tools.tools[name].height || 625));
             
             $(`#W${name}`).click( (e) => {
                 e.preventDefault();
@@ -745,12 +746,6 @@ var mapOnlineOfflineButtons=async function() {
 
     let but1=$("#onlinebut");
     let but2=$("#offlinebut");
-
-    if (!internal.hasServiceWorker) {
-        but1.css({ "visibility" : "hidden"});
-        but2.css({ "visibility" : "hidden"});
-        return;
-    }
 
     let fn1=function(offline) {
 
