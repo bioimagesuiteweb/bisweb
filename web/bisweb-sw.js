@@ -15,8 +15,8 @@ const internal =  {
     name : 'bisweb',
     path : self.location.href.substr(0,self.location.href.lastIndexOf('/')+1),
     updating : false,
-    count : {},
-    maxcount : {},
+    count : 0,
+    maxcount : 0,
     debug : false,
     forceOffline : false,
 };
@@ -82,7 +82,7 @@ var cleanCache=function() {
     });
 };
 
-var getSingleItem=function(cache,mode,url,url2) {
+var getSingleItem=function(cache,url,url2) {
 
     return new Promise( (resolve,reject) => {
                 fetch(url2).then(function(response) {
@@ -90,9 +90,8 @@ var getSingleItem=function(cache,mode,url,url2) {
                         throw new TypeError('bad response status');
                     }
                     cache.put(url, response).then( () => {
-                        internal.count[mode]=internal.count[mode]+1;
-                        if (mode==='internal')
-                            send_message_to_all_clients(`Updating Cache. Downloaded file ${internal.count[mode]}/${internal.maxcount[mode]}`);
+                        internal.count=internal.count+1;
+                        send_message_to_all_clients(`Updating Cache. Downloaded file ${internal.count}/${internal.maxcount}`);
                         resolve();
                     }).catch( (e) => {
                         internal.updating=false;
@@ -102,24 +101,27 @@ var getSingleItem=function(cache,mode,url,url2) {
     });
 };
 
-var populateCache=function(msg="Cache Updated",mode='internal') {
+var populateCache=function(msg="Cache Updated") {
 
-    let lst=internal.cachelist[mode];
-    console.log(`bisweb-sw: ${getTime()}. Beginning to  install (cache) ${lst.length} files. Mode=${mode}`);
 
     let newlst = [ ];
-    //    if (mode==='internal')
-    //      newlst.push(internal.path);
-    for (let i=0;i<lst.length;i++) {
-        let item=lst[i];
-        newlst.push(item);
+    let lst=internal.cachelist['internal'];
+    let maxpass=0; //TODO: make this 1
+    for (let pass=0;pass<=maxpass;pass++) {
+        for (let i=0;i<lst.length;i++) {
+            let item=lst[i];
+            newlst.push(item);
+        }
+        lst=internal.cachelist['external'];
     }
+
+    console.log(`bisweb-sw: ${getTime()}. Beginning to  install (cache) ${lst.length} files.`);
 
 
     return caches.open(internal.name).then(cache => {
 
-        internal.count[mode]=0;
-        internal.maxcount[mode]=newlst.length;
+        internal.count=0;
+        internal.maxcount=newlst.length;
 
         let t= new Date().getTime();
         let p=[];
@@ -127,24 +129,22 @@ var populateCache=function(msg="Cache Updated",mode='internal') {
         for (let i=0;i<newlst.length;i++) {
             let url=newlst[i];
             let url2=`${url}?t=${t}`;
-            p.push(getSingleItem(cache,mode,url,url2));
+            p.push(getSingleItem(cache,url,url2));
         }
         
         Promise.all(p).then( () => {
             internal.updating=false;
-            if (mode==='internal') {
-                fetch(`bisdate.json?t=${t}`).then( (resp) => {
-                    resp.json().then ( (obj) => {
-                        console.log('bisweb-sw: '+getTime()+'. Installation (caching) successful');
-                        idb.set('cachedate',obj).then( () => {
-                            idb.set('cache','full').then( () => {
-                                send_message_to_all_clients(msg);
-                                self.skipWaiting();
-                            });
+            fetch(`bisdate.json?t=${t}`).then( (resp) => {
+                resp.json().then ( (obj) => {
+                    console.log('bisweb-sw: '+getTime()+'. Installation (caching) successful');
+                    idb.set('cachedate',obj).then( () => {
+                        idb.set('cache','full').then( () => {
+                            send_message_to_all_clients(msg);
+                            self.skipWaiting();
                         });
                     });
                 });
-            }
+            });
         });
     });
 };
@@ -235,11 +235,13 @@ self.addEventListener('message', (msg) => {
     let data=obj.data;
     if (internal.debug)
         console.log(`bisweb-sw: ${getTime()}. Received ${name}:${data}`);
-    if (name==="updateCache") {
+
+    if (name.indexOf("updateCache")>=0) {
         if (internal.updating===false) {
             internal.updating=true;
-            populateCache('Cache Updated','internal');
-            populateCache('Cache Updated','external');
+            populateCache('Cache Updated').then( () => {
+                console.log('Done updating');
+            });
         } else {
             console.log('bisweb-sw: '+getTime()+'. Already updating cache');
         }
@@ -380,8 +382,20 @@ self.addEventListener('fetch', (event) => {
             }
         } catch(e) {
             if (internal.debug)
-                console.log('--bisweb-sw: '+getTime()+'. Network error in getting ',urlname,' was', e);
+                console.log('--bisweb-sw: '+getTime()+'. Cache error in getting ',urlname,' was', e);
         }
+
+        if (internal.forceOffline===true) {
+            // Nothing offline, let's try back to online
+            try {
+                let q=await tryNetwork(url,urlname);
+                if (q)
+                    return q;
+            }  catch(e) {
+                if (internal.debug)
+                    console.log('--bisweb-sw: '+getTime()+'. Network error in getting ',urlname,' was', e);
+            }
+        }   
         
         return dummyResponse(urlname,internal.mainpage);
     }());

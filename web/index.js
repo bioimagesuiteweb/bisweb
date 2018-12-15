@@ -59,8 +59,10 @@ const internal = {
     scope : '',
     disableServiceWorker : false,
     runningAsDesktopPWA : false,
+    installingDesktopPWA : false,
     deferredInstallPrompt : null,
     installButton : null,
+    enableOfflineButton : false,
     toggleOnlineFunction : null,
     debug : false,
 };
@@ -155,6 +157,26 @@ var showAlert=function(message,type='info') {
 };
 
 
+let setEnableDisableMenu=function(enable=true) {
+ 
+    if (!internal.hasServiceWorker) 
+        return;
+
+    let w=internal.enableOfflineButton[0].children[0];
+    let but1=$("#onlinebut");
+    let but2=$("#offlinebut");
+
+    if (enable) {
+        w.innerHTML='Enable Offline Mode';
+        but1.css({ "visibility" : "hidden"});
+        but2.css({ "visibility" : "hidden"});
+    } else {
+        w.innerHTML='Disable Offline Mode';
+        but1.css({ "visibility" : "visible"});
+        but2.css({ "visibility" : "visible"});
+    }
+};
+
 
 // ------------------------------------------------------------------------------
 // Communication with Service Worker
@@ -166,7 +188,14 @@ var receivedMessageFromServiceWorker = function(msg) {
         console.log('.... Received',msg);
     
     if (msg.indexOf("Cache Updated")>=0) {
-        showAlert(`The application cache has been updated. The application can now run in offline mode if there is need.`);
+        setEnableDisableMenu(false);
+        if (internal.installingDesktopPWA) {
+            setOfflineMode(true);
+            showAlert(`The application has been installed and running in offline mode.`);
+            internal.installingDesktopPWA=false;
+        } else {
+            showAlert(`The application cache has been updated. The application can now run in offline mode if there is need.`);
+        }
     } else if (msg.indexOf('Downloaded')>=0) {
         showAlert(msg);
     } else if (msg.indexOf('Activate')>=0) {
@@ -178,16 +207,18 @@ var receivedMessageFromServiceWorker = function(msg) {
                     receivedMessageFromServiceWorker(event.data);
                 });
             });
+            setEnableDisableMenu(true);
         },100);
         checkForLatestVersion();
     } else if (msg.indexOf('Cleaned')>=0) {
         showAlert('All offline capabilities have been removed. The application will still happily run if you have a network connection.','info');
+        setEnableDisableMenu(true);
     } else if (msg.indexOf('NewSW')>=0 ) {
         if (internal.runningAsDesktopPWA)
             showAlert('All offline capabilities have been removed (due to major update).','info');
         else
             showAlert('All offline capabilities have been removed due to update.','info');
-
+        setEnableDisableMenu(true);
         
     } else if (msg.indexOf('Going')>=0) {
 
@@ -197,9 +228,10 @@ var receivedMessageFromServiceWorker = function(msg) {
         }
         internal.toggleOnlineFunction(!online);
         if (msg.indexOf('empty cache')>0) {
+            console.log('Msg=',msg);
             cacheLatestVersion(false);
         } else if (msg.indexOf('No network connection')>=0 && online===false) {
-            showAlert(`Staying in offline mode. There is no network connection`);
+            showAlert(`Operating in offline mode. There is no network connection.`);
         }
     } 
 
@@ -598,6 +630,10 @@ var createApplicationSelector=async function(externalobj) {
         $("#othermenu").append($(`<li class="divider"></li>`));
         let but = $(`<li><a href="#">Disable Offline Mode</a></li>`);
         $("#othermenu").append(but);
+
+        internal.enableOfflineButton = but;
+        let cache=await getCacheState();
+        setEnableDisableMenu(cache === 'empty');
             
         but.click( (e) => {
             e.preventDefault();
@@ -606,7 +642,9 @@ var createApplicationSelector=async function(externalobj) {
                 getCacheState().then( (m) => {
                     if (m==='full') {
                         sendCommandToServiceWorker('clearCache');
-                    }
+                    } else {
+                        sendCommandToServiceWorker('updateCache');
+                     }
                 });
             },100);
         });
@@ -624,6 +662,7 @@ var createApplicationSelector=async function(externalobj) {
                 
                 internal.deferredInstallPrompt.userChoice.then((choiceResult) => {
                     if (choiceResult.outcome === 'accepted') {
+                        internal.installingDesktopPWA=true;
                         sendCommandToServiceWorker('updateCache');
                         internal.installButton.remove();
                         internal.installButton=null;
@@ -708,8 +747,8 @@ var mapOnlineOfflineButtons=async function() {
     let but2=$("#offlinebut");
 
     if (!internal.hasServiceWorker) {
-        but1.remove();
-        but2.remove();
+        but1.css({ "visibility" : "hidden"});
+        but2.css({ "visibility" : "hidden"});
         return;
     }
 
@@ -726,6 +765,7 @@ var mapOnlineOfflineButtons=async function() {
         bad.removeClass("btn-danger");
         bad.removeClass("active");
         bad.addClass("btn-default");
+
     };
 
     but1.click( (e) => {
@@ -933,5 +973,6 @@ window.biswebdebug=function(f) {
         internal.debug=false;
     }
 };
-    
+
+
 
