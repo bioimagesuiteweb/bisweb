@@ -62,7 +62,7 @@
 
     <bisweb-topmenubar   id="viewer_menubar"></bisweb-topmenubar>
 
-    <div id="toph4" style="width:910px">
+    <div id="toph4" style="width:900px; left:5px">
       <div id="midh4">
 
         <H4> BioImage Suite Web Display Regression Test Runner (2)</H4>
@@ -80,7 +80,7 @@
 
     </div> 
 
-    <div id="baseresults" style="left: 930px; width: calc(100% - 940px)">
+    <div id="baseresults" style="left: 920px; width: calc(100% - 930px)">
       <div  id="resultimages">
         <table>
           <tr>
@@ -89,9 +89,9 @@
             <td><span id="resulttd">Result</span></td>
           </tr>
           <tr>
-            <td class="bisimg"><img id="imggold" height="148" width="125px"><img></td>
+            <td class="bisimg"><img id="imggold" height="292" width="250px"><img></td>
             <td id="imgmiddle"> </td>
-            <td class="bisimg"><img id="imgoutput" height="148" width="125px"><img></td>
+            <td class="bisimg"><img id="imgoutput" height="292" width="250px"><img></td>
           </tr>
         </table>
         <div id="comparison">0.0</div>
@@ -105,23 +105,24 @@
   <div id="viewerwidget">
 
     <bisweb-viewerlayoutelement
-       id="viewer_layout"
-       bis-dockwidth="300"
-       bis-coreopen="false"
+      id="viewer_layout"
+      bis-dockwidth="300"
+      bis-coreopen="false"
       bis-noresize="1"
+      bis-fixed="1"
       bis-defaulttext="Load Data to Begin">
     </bisweb-viewerlayoutelement>
-
+    
     <bisweb-colormapcontrollerelement id="viewer_cmap">
     </bisweb-colormapcontrollerelement>
     
     <bisweb-orthogonalviewer
       id="viewer"
       bis-simplemode="true"
-       bis-layoutwidgetid="#viewer_layout"
-       bis-colormapeditorid="#viewer_cmap">
+      bis-layoutwidgetid="#viewer_layout"
+      bis-colormapeditorid="#viewer_cmap">
     </bisweb-orthogonalviewer>
-      
+    
     <bisweb-snapshotelement
        bis-layoutwidgetid="#viewer_layout"
        bis-dowhite="true"
@@ -137,6 +138,7 @@
     <bisweb-connectivityapplication
       id="mainconn"
       bis-extrastatesave="1"
+      bis-testingmode="1"
       bis-menubarid="#viewer_menubar"
       bis-connectivitycontrolid="#conncontrol"
       bis-viewerid="#viewer">

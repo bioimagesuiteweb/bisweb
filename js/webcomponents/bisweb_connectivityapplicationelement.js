@@ -177,8 +177,6 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         
         var fmenu=webutil.createTopMenuBarMenu("File",menubar).attr('id','bisfilemenu');
         const self=this;
-        console.log('self=',self);
-        
         
         webfileutil.createFileMenuItem(fmenu,'Load Node Definition File',
                                        function(e) {  control.loadparcellationfile(e);},
@@ -218,7 +216,7 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         // ------------------------------------ Edit Menu ----------------------------
         var editmenu=webutil.createTopMenuBarMenu("Edit",menubar);
         webutil.createMenuItem(editmenu,'Undo',function() {  control.undo(); });
-        webutil.createMenuItem(editmenu,'Redo',function() {  control.redo(); });
+        //        webutil.createMenuItem(editmenu,'Redo',function() {  control.redo(); });
         webutil.createMenuItem(editmenu,''); // separator
         webutil.createMenuItem(editmenu,'Reset Display Parameters',function(){ control.resetdefault();});
         webutil.createMenuItem(editmenu,''); // separator

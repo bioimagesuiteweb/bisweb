@@ -556,6 +556,7 @@ const bisgenericio = {
     binary2string :     biscoreio.binary2string ,
     dataURLToBlob : biscoreio.dataURLToBlob,
     iscompressed :      biscoreio.iscompressed, // ends in .gz
+    inIOS : biscoreio.inIOS, // are we running in iOS Safari
     setWebWorkerScope :     biscoreio.setWebWorkerScope,
     readtextdatafromurl : biscoreio.readtextdatafromurl, // read from url
     readbinarydatafromurl : biscoreio.readbinarydatafromurl, // read from url

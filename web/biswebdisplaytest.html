@@ -89,9 +89,9 @@
             <td><span id="resulttd">Result</span></td>
           </tr>
           <tr>
-            <td class="bisimg"><img id="imggold" height="148" width="125px"><img></td>
+            <td class="bisimg"><img id="imggold" height="292" width="250px"><img></td>
             <td id="imgmiddle"> </td>
-            <td class="bisimg"><img id="imgoutput" height="148" width="125px"><img></td>
+            <td class="bisimg"><img id="imgoutput" height="292" width="250px"><img></td>
           </tr>
         </table>
         <div id="comparison">0.0</div>
@@ -135,18 +135,6 @@
 	      bis-dowhite="false"
 	      bis-viewerid="#viewer1">
 	    </bisweb-snapshotelement>
-            <bisweb-atlastoolelement
-              id="atlastool"
-              bis-layoutwidgetid="#viewer_layout1"
-              bis-viewerid="#viewer1">
-            </bisweb-atlastoolelement>
-
-            <bisweb-blobanalyzerelement
-              id="blobanalyzer"
-              bis-layoutwidgetid="#viewer_layout1"
-              bis-viewerid="#viewer1"
-              bis-atlastoolid="#atlastool">
-            </bisweb-blobanalyzerelement>
 
 
 	  </div>
@@ -188,11 +176,10 @@
       bis-extrastatesave="1"
       bis-tabset="#viewers"
       bis-mode="overlay",
+      bis-testingmode="1"
       bis-tab1="#ortho"
       bis-tab2="#mosaic"
       bis-menubarid="#viewer_menubar"
-      bis-atlastoolid="#atlastool"
-      bis-blobanalyzerid="#blobanalyzer"
       bis-viewerid="#viewer1"
       bis-viewerid2="#viewer2">
     </bisweb-dualviewerapplication>

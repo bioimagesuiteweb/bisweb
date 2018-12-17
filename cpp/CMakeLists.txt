@@ -19,7 +19,7 @@ cmake_minimum_required(VERSION 3.5)
 
 PROJECT(BISWEB)
 
-SET (BISWEB_VERSION "1.0.0b1")
+SET (BISWEB_VERSION "1.0.0b4")
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Core Project
@@ -186,7 +186,7 @@ OPTION(BIS_MODULETEST "Enable MODULE Tests" ON)
 MARK_AS_ADVANCED(BIS_MODULETEST)
 
 OPTION(BIS_INSTALLTESTS "Install Module Tests & Data" OFF)
-MARK_AS_ADVANCED(BIS_INSTALLTESTS)
+#MARK_AS_ADVANCED(BIS_INSTALLTESTS)
 
 # ---------------------------------------------------------------------------------------------
 # License File depending on whether we are using the GPL plugin or not

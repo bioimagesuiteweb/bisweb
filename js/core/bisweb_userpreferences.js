@@ -284,8 +284,6 @@ expobj.storeUserPreferences=function(dbase) {
 
     dbase = dbase  || dbasepointer;
     return new Promise( (resolve,reject) => {
-        console.log('Storing',JSON.stringify(userPreferences,null,2));
-        
         dbase.setItems(userPreferences).then( () => {
             resolve();
         }).catch( (e) => { reject(e);});

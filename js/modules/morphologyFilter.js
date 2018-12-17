@@ -180,7 +180,7 @@ class MorphologyFilterModule extends BaseModule {
     }
 
     updateOnChangedInput(inputs,guiVars) {
-        
+
         let newDes = this.getDescription();
         inputs = inputs || this.inputs;
         let img=inputs['input'] || null;
@@ -219,6 +219,10 @@ class MorphologyFilterModule extends BaseModule {
         if (coords===null)
             return;
 
+        if (!guivars) {
+            return;
+        }
+        
         let newDes = this.getDescription();
         let names = [ 'seedi','seedj', 'seedk' ];
         for (let i = 0; i < newDes.params.length; i++) {

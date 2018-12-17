@@ -239,8 +239,11 @@ class BaseViewerElement extends HTMLElement {
     
     /** delete the image (called when setting a new one) */
     deleteoldimage(samesize=false) {
-        
-        this.deleteoldobjectmap();          
+
+        // TODO:
+        // Test this very carefully
+        if (!samesize)
+            this.deleteoldobjectmap();          
         
         if (this.internal.volume===null)
             return;
@@ -366,7 +369,12 @@ class BaseViewerElement extends HTMLElement {
             let renderer=this.internal.layoutcontroller.renderer;
             let t=renderer.domElement.toDataURL();
             this.internal.preservesnapshot=false;
-            this.internal.snapshotcontroller.update(t,this.internal.ismosaic);
+
+            let hasColorbar=true;
+            if (this.internal.simplemode)
+                hasColorbar=false;
+            
+            this.internal.snapshotcontroller.update(t,hasColorbar);//this.internal.ismosaic);
         }
 
         if (this.slave_viewer!==null)
@@ -618,12 +626,20 @@ class BaseViewerElement extends HTMLElement {
     updateColormapObservers(input) {
 
         const self=this;
+
+        if (this.internal.ignorecolormapobservers)
+            return;
+        
         this.internal.ignorecolormapobservers = true;
+
+        //        console.log('Updating colormap observers',this.id);
         
         this.internal.colormapobservers.forEach(function(f) {
             f.updatecmap(self.internal.cmapcontroller,input);
         });
-        this.internal.ignorecolormapobservers = false;
+        setTimeout( () => {
+            this.internal.ignorecolormapobservers = false;
+        });
     }
     
     /** update the transfer functions of this viewer from outside.
@@ -637,7 +653,7 @@ class BaseViewerElement extends HTMLElement {
             this.internal.ignoreimageobservers === true)
             return;
 
-        //console.log('This = ',this,'Receiving update cmap');
+        //        console.log('COlormap Update',this.id);
         
         if (this.internal.cmapcontroller!==null && this.internal.volume!==null) {
             this.internal.cmapcontroller.setElementState(other.getElementState());
@@ -769,7 +785,7 @@ class BaseViewerElement extends HTMLElement {
         //console.log('<HR><BR>Setting ' , this, img, source);
         this.internal.ignoreimageobservers = true;
         if (source==='overlay') {
-            let plainmode= (colortype === "Objectmap");
+            let plainmode= false;//(colortype === "Objectmap");
             if (img!==null)
                 this.setobjectmap(img,plainmode,colortype);
             else
@@ -868,7 +884,7 @@ class BaseViewerElement extends HTMLElement {
         
         const self=this;
         let layoutwidgetid=this.getAttribute('bis-layoutwidgetid');
-        
+
         let simple=this.getAttribute('bis-simplemode');
         this.internal.simplemode=false;
         if (simple==="1" || simple==="true")
@@ -1030,7 +1046,7 @@ class BaseViewerElement extends HTMLElement {
         if (img.length>1) {
             let newimg=new BisWebImage();
             newimg.parseFromJSON(dt['image']);
-            console.log('has image',newimg.getDescription());
+            //            console.log('has image',newimg.getDescription());
                                     
             this.setimage(newimg);
             
@@ -1038,7 +1054,7 @@ class BaseViewerElement extends HTMLElement {
             if (ovr.length >1) {
                 let newobj=new BisWebImage();
                 newobj.parseFromJSON(dt['overlay']);
-                console.log('has overlay',newobj.getDescription());
+                //console.log('has overlay',newobj.getDescription());
                 let colortype=dt['colortype'] || 'Overlay';
                 let plainmode= (colortype === "Objectmap");
                 this.setobjectmap(newobj,plainmode,colortype);
