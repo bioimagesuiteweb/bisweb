@@ -4,6 +4,8 @@ const bisweb_panel = require('bisweb_panel.js');
 const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
 const bis_genericio = require('bis_genericio.js');
+const userPreferences = require('bisweb_userpreferences.js');
+
 require('jstree');
 
 /**
@@ -34,27 +36,30 @@ class FileTreePanel extends HTMLElement {
 
         bis_webutil.runAfterAllLoaded( () => {
 
-            this.viewer = document.querySelector(this.viewerid);
-            this.viewertwo = document.querySelector(this.viewertwoid) || null;
-            this.layout = document.querySelector(this.layoutid);
-            this.menubar = document.querySelector(this.menubarid);
-            this.viewerapplication = document.querySelector(this.viewerappid);
-
-            this.panel=new bisweb_panel(this.layout,
-                {  name  : 'Files',
-                   permanent : false,
-                   width : '400',
-                   dual : true,
-                   mode : 'sidebar',
-                });
-            
-            
-            this.addMenuItem(this.menubar.getMenuBar());
-
-            let listElement = this.panel.getWidget();
-            this.makeButtons(listElement);
+            userPreferences.safeGetItem("internal").then( (f) =>  {
+                this.viewer = document.querySelector(this.viewerid);
+                this.viewertwo = document.querySelector(this.viewertwoid) || null;
+                this.layout = document.querySelector(this.layoutid);
+                this.menubar = document.querySelector(this.menubarid);
+                this.viewerapplication = document.querySelector(this.viewerappid);
+                
+                this.panel=new bisweb_panel(this.layout,
+                                            {  name  : 'Files',
+                                               permanent : false,
+                                               width : '400',
+                                               dual : true,
+                                               mode : 'sidebar',
+                                            });
+                
+                
+                
+                if (f) {
+                    this.addMenuItem(this.menubar.getMenuBar());
+                }
+                let listElement = this.panel.getWidget();
+                this.makeButtons(listElement);
+            });
         });
-
 
         this.contextMenuDefaultSettings = {
             'Info' : {
