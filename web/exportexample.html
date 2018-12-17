@@ -31,13 +31,15 @@
 </head>
 <body>
 
-  <bisweb-exportelement id="bisexport"></bisweb-exportelement>
+  <bisweb-exportelement id="bis"></bisweb-exportelement>
 
   
   <script type="text/javascript">
 
     window.onload = function(e) {
 
+     let bisexport=document.querySelector("#bis");
+    
      let img=bisexport.createObject('image');
 
      img.load("https://bioimagesuiteweb.github.io/unstableapp/images/MNI_T1_2mm_stripped_ras.nii.gz").then( () => {
