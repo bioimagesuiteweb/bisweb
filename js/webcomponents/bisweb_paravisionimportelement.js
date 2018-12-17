@@ -160,7 +160,6 @@ class ParavisionImportElement extends HTMLElement {
             }
         });
         
-
         webfileutil.createFileButton({ type : "danger",
                                        name : 'Import Images from Paravision Study',
                                        parent : basediv0,
@@ -417,10 +416,10 @@ class ParavisionImportElement extends HTMLElement {
 
         const internal=this.internal;
 
-        if (!webfileutil.candoComplexIO()) {
+        let s=webfileutil.candoComplexIO();
+        console.log('Can do =',s);
+        if (!s) 
             return;
-        }
-
 
         
         if (!bisgenericio.isDirectory(f)) {
