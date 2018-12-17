@@ -430,6 +430,61 @@ class BisFileServerClient extends BisBaseServerClient {
      * @returns{Promise} - a Promise with payload { obj.name obj.data } much like bis_genericio.read (from where it will be called indirectly)
      */
     downloadFile(url,isbinary) {
+        return new Promise( (resolve, reject) => {
+            
+            if (url.indexOf('\\')>=0)
+                url=util.filenameWindowsToUnix(url);
+
+            
+            let handledata = ( (raw_data) => { 
+
+                if (!isbinary) {
+                    resolve({
+                        'data' : raw_data,
+                        'filename' : url,
+                    });
+                    return;
+                } else {
+                    let dat = new Uint8Array(raw_data);
+                    let comp=bisgenericio.iscompressed(url);
+                    if (!comp) {
+                        resolve({
+                            'data' : dat,
+                            'filename' : url
+                        });
+                    } else {
+                        let a = pako.ungzip(dat);
+                        resolve({
+                            'data' : a,
+                            'filename' : url
+                        });
+                        a=null;
+                    }
+                    dat=null;
+                }
+            });
+            
+            
+            let serverEvent=bisasyncutil.addServerEvent(handledata,reject,'downloadFile');
+            
+            this.sendCommand({ 'command' : 'readfile',
+                               'filename' : url,
+                               'timeout' : 999999,
+                               'id' : serverEvent.id,
+                               'isbinary' : isbinary });
+        });
+    }
+
+    /**
+     * downloads a file from the server 
+     * @param{String} url - the filename
+     * @param{Boolean} isbinary - if true file is binary
+     * @returns{Promise} - a Promise with payload { obj.name obj.data } much like bis_genericio.read (from where it will be called indirectly)
+     */
+
+    downloadFileWithStream(url,isbinary) {
+
+        // TODO: Needs work to match final server Event
         
         return new Promise( (resolve, reject) => {
 
@@ -475,7 +530,7 @@ class BisFileServerClient extends BisBaseServerClient {
 
                     reader.readAsArrayBuffer(raw_data);
                 }
-             });
+            });
 
 
             //Handler must be defined explicitly because the server may respond two different depending on the file's size, 
@@ -507,12 +562,13 @@ class BisFileServerClient extends BisBaseServerClient {
                 } 
             };
             
-            this.socket.addEventListener('message', responseListener);
-            
+            //this.socket.addEventListener('message', responseListener);
+
+            let serverEvent=bisasyncutil.addServerEvent(handledata,reject,'downloadFile');
             this.sendCommand({ 'command' : 'readfile',
                                'filename' : url,
                                'timeout' : 999999,
-                               //'id' : serverEvent.id,
+                               'id' : serverEvent.id,
                                'isbinary' : isbinary });
         });
     }
@@ -602,7 +658,7 @@ class BisFileServerClient extends BisBaseServerClient {
         if (!isbinary)  {
             body=bisgenericio.string2binary(data);
         } else {
-            console.log('converting file to be saved to typed array');
+            //console.log('converting file to be saved to typed array');
             body=new Uint8Array(data.buffer);
             if (bisgenericio.iscompressed(url)) {
                 body=new Uint8Array(pako.gzip(data.buffer));

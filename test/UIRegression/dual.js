@@ -1,7 +1,7 @@
 /* globals test, fixture*/
 
 import { Selector } from 'testcafe';
-import { t } from 'testcafe';
+//import { t } from 'testcafe';
 
 fixture`Overlay Tests`.page`http://localhost:8080/web/dualviewer.html`;
 

@@ -13,7 +13,7 @@ const bidsutils=require('bis_bidsutils.js');
 // TODO: Check Base Directories not / /usr (probably two levels)
 
 const fs = require('fs');
-const net = require('net');
+const net = require('net'); // needed for find free port
 
 // One time password library
 const otplib = require('otplib');
@@ -37,6 +37,8 @@ const server_fields = [
 
 // Used to make temp directories
 let tempDirectoryCounter=0;
+const enableStream=false;
+
 
 class BaseFileServer {
 
@@ -536,8 +538,12 @@ class BaseFileServer {
             fs.stat(filename, (err, stats) => {
                 if (err) { console.log('An error occured while statting', filename, err); return; }
 
-                if (stats.size > 50 * 1024 * 1024) {
+                if (stats.size > 50 * 1024 * 1024 && enableStream) {
 
+                    // TODO: Needs work
+                    // Needs to send checksum at the end
+                    // etc. etc. etc.
+                    
                     console.log(this.indent, 'File larger than 50MB, negotiating stream...');
                     this.streamFileToClient(socket, filename).then( () => {
                         console.log('file uploaded successfully');

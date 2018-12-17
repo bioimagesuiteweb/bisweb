@@ -39,8 +39,8 @@
     <!-- build:css -->
     <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_dark.css">
     <link rel="stylesheet" type="text/css"  href="../lib/css/bootstrap-colorselector.css">
-    <link rel="stylesheet" href="../node_modules/jstree/dist/themes/default/style.css">
     <link rel="stylesheet" type="text/css" href="biscommon.css">
+    <link rel="stylesheet" href="../node_modules/jstree/dist/themes/default/style.css">
     <!-- endbuild -->
 
     <!-- all javascript files -->
@@ -53,6 +53,10 @@
     <script src="../build/web/bislib.js"></script>
     <!-- endbuild -->
     <!-- end webpack/gulp modifications -->
+
+    <!-- begin stay as is -->
+    <link rel="stylesheet" type="text/css" href="viewer.css">
+    <!-- end of stay as is -->
 
 </head>
 
@@ -105,26 +109,12 @@
     </bisweb-modulemanager>
 
     <bisweb-viewerapplication
-      id="viewer_application"
-      bis-menubarid="#viewer_menubar"
-      bis-modulemanagerid="#modulemanager"
-      bis-viewerid="#viewer">
+       id="viewer_application"
+       bis-menubarid="#viewer_menubar"
+       bis-modulemanagerid="#modulemanager"
+       bis-viewerid="#viewer">
     </bisweb-viewerapplication>
     
-
-    <bisweb-filetreepanel
-      id="filetreepanel"
-      bis-viewerid="#viewer"
-      bis-layoutwidgetid="#viewer_layout"
-      bis-menubarid="#viewer_menubar"
-      bis-viewerapplicationid="#viewer_application">    
-    </bisweb-filetreepanel>
-
-    <bisweb-dicomimportelement
-      bis-viewerid="#viewer"
-      bis-layoutwidgetid="#viewer_layout"
-      bis-filetreepanelid="#filetreepanel">
-    </bisweb-dicomimportelement>
   </div>
 
   
