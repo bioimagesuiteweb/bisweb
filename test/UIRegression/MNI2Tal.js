@@ -2,8 +2,13 @@
 
 import { Selector } from 'testcafe';
 import { ClientFunction } from 'testcafe';
+import * as BisSetup from './bissetup';
 
-fixture `MNI2Tal`.page `http://localhost:8080/web/mni2tal.html`;
+const webpage = `${BisSetup.getServer()}/mni2tal.html`
+
+console.log('BisSetup=',BisSetup.getServer(),'-->',webpage);
+
+fixture `MNI2Tal`.page`${webpage}`;
 
 test('Click Viewers', async t => {
     const xviewer = Selector('#xviewer', {'timeout' : 3});
