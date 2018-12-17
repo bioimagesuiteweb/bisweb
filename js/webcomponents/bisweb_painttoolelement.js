@@ -579,7 +579,6 @@ class PaintToolElement extends HTMLElement {
         let img=new bisweb_image();
         img.load(infile)
             .then(() => {
-                console.log('read');
                 self.safeSetNewObjectmap(img).catch( (e) => {
                     webutil.createAlert(e,true);
                 });
@@ -1077,10 +1076,10 @@ class PaintToolElement extends HTMLElement {
         };
 
 
-        webutil.createMenuItem(tmenu,'Paint Tool',function() {
-            webutil.activateCollapseElement(self.internal.parentDomElement);
-        });
-        webutil.createMenuItem(tmenu,''); // separator
+        //        webutil.createMenuItem(tmenu,'Paint Tool',function() {
+        //            webutil.activateCollapseElement(self.internal.parentDomElement);
+        //        });
+        //webutil.createMenuItem(tmenu,''); // separator
 
         return new Promise( (resolve) => {
 

@@ -32,7 +32,7 @@ const bootbox=require('bootbox');
 const BisWebPanel = require('bisweb_panel.js');
 const resliceImage = require('resliceImage');
 const BisWebLinearTransformation = require('bisweb_lineartransformation.js');
-
+const idb=require('idb-keyval');
 //const BisWebHelpVideoPanel = require('bisweb_helpvideopanel');
 
 const localforage=require('localforage');
@@ -298,7 +298,7 @@ class ViewerApplicationElement extends HTMLElement {
      */
     pasteViewer(index=0) {
         clipboard.getItem('viewer').then( (st) => {
-            console.log('Read state',Object.keys(st));
+            //console.log('Read state',Object.keys(st));
             this.VIEWERS[index].setElementState(st);
         }).catch( (e) => {
             console.log('paste error',e,e.stack);
@@ -853,13 +853,6 @@ class ViewerApplicationElement extends HTMLElement {
         
         webutil.createMenuItem(hmenu,'About this application',fn);
         
-/*        let helpdialog = new BisWebHelpVideoPanel();
-        const self=this;
-        webutil.createMenuItem(hmenu, 'About Video',
-                               function () {
-                                   helpdialog.setLayoutController(self.VIEWERS[0].getLayoutController());
-                                   helpdialog.displayVideo();
-                                   });*/
         hmenu.append($(`<li><a href="https://bioimagesuiteweb.github.io/bisweb-manual/${extrahtml}" target="_blank" rel="noopener" ">BioImage Suite Web Online Manual</a></li>`));
         webutil.createMenuItem(hmenu, ''); // separator
         
@@ -1145,15 +1138,34 @@ class ViewerApplicationElement extends HTMLElement {
 
     //  ---------------------------------------------------------------------------
     
-    parseQueryParameters() {
+    parseQueryParameters(painttoolid) {
 
         let load=webutil.getQueryParameter('load') || '';
         let imagename=webutil.getQueryParameter('image') || '';
-
+        let imagename2=webutil.getQueryParameter('image2') || '';
+        let overlayname=webutil.getQueryParameter('overlay') || '';
+        let overlayname2=webutil.getQueryParameter('overlay2') || '';
+        
         if (load.length>0) {
             this.loadApplicationState(load);
         } else if (imagename.length>0) {
-            this.loadImage(imagename);
+            this.loadImage(imagename,0).then( () => {
+                if (overlayname.length>0) {
+                    if (painttoolid===null)  {
+                        this.loadOverlay(overlayname,0);
+                    } else {
+                        let painttool = document.querySelector(painttoolid);
+                        painttool.loadobjectmap(overlayname);
+                    }
+                }
+            });
+            if (imagename2.length>0 && this.num_independent_viewers>1) {
+                this.loadImage(imagename2,1).then( () => {
+                    if (overlayname2.length>0) {
+                        this.loadOverlay(overlayname2,1);
+                    }
+                });
+            }
         }
 
         let restore=webutil.getQueryParameter('restorestate');
@@ -1187,11 +1199,16 @@ class ViewerApplicationElement extends HTMLElement {
         Promise.all( [ 
             userPreferences.safeGetImageOrientationOnLoad(),
             userPreferences.safeGetItem('showwelcome'),
-            webutil.aboutText()
+            webutil.aboutText(),
+            idb.get('mode')
         ]).then( (lst) => {
             let forceorient=lst[0];
             let firsttime=lst[1];
             let msg=lst[2];
+
+            let offline=false;
+            if (lst[3].indexOf('offline')>=0)
+                offline=true;
             
             if (firsttime === undefined)
                 firsttime=true;
@@ -1208,6 +1225,9 @@ class ViewerApplicationElement extends HTMLElement {
             let body=dlg.body;
             
             let txt=msg;
+
+            if (offline)
+                txt+="<HR><p>This application is operating in Offline Mode.</p><HR>";
             
             console.log('In Electron=',webutil.inElectronApp());
             
@@ -1411,7 +1431,7 @@ class ViewerApplicationElement extends HTMLElement {
         let istest = this.getAttribute('bis-testingmode') || false;
         webutil.runAfterAllLoaded( () => {
             Promise.all(this.applicationInitializedPromiseList).then( () => {
-                this.parseQueryParameters();
+                this.parseQueryParameters(painttoolid);
                 document.body.style.zoom =  1.0;
                 if (!istest) {
                     this.welcomeMessage(false);

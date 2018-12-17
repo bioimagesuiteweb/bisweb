@@ -140,65 +140,63 @@
                      target="_blank" rel="noopener">Plugin Repository</a></li>
 
               <li class="divider"></li>
-              <li><a href="./biswebtest.html"
+              <li><a href="./biswebtest.html" class="bislink"
                      target="_blank">Run Module Regression Tests</a></li>
-              <li><a href="./biswebdisplaytest.html"
+              <li><a href="./biswebdisplaytest.html" class="bislink"
                      target="_blank">Run Display Regression Tests</a></li>
-              <li><a href="./biswebdisplaytest2.html"
+              <li><a href="./biswebdisplaytest2.html" class="bislink"
                      target="_blank">Run Display Regression Tests 2</a></li>
 
             </ul>
           </li>
 
+          <li class='dropdown'>
+            <a href='#' class='dropdown-toggle'  data-toggle='dropdown'
+               role='button' aria-expanded='false'>Help<span class='caret'></span></a>
+            <ul class='dropdown-menu' role='menu' id="othermenu">
+              <li id="aboutapp"><a href="#">About Application</a></li>
+              <li class="divider"></li>
+              <li id="showvideo"><a href="#">Show Introductory Video</a></li>
+            
+            </ul>
+          </li>
+          
 	</ul>
       </div>
     </div><!-- /.container-fluid -->
   </nav>
+
+  <div id="offline">
+    <div class="btn-group" role="group" id="offline2">
+      <button type="button" id="onlinebut" class="btn">Online</button>
+      <button type="button" id="offlinebut" class="btn">Offline</button>
+    </div>
+  </div>
   
   <div id="main">
     <div id="mycarousel" class="carousel slide">
       
       <ol class="carousel-indicators">
+        <li data-target="#mycarousel" data-slide-to="0" class="active"></li>
+        <li data-target="#mycarousel" data-slide-to="1"></li>
       </ol>
       
       <!-- Wrapper for slides -->
       <div class="carousel-inner" align="center"
            id="bisslides">
-        <div class="item active"><a href="./viewer.html"
-                                    target="_blank"><img src="images/viewer.png" alt="Orthogonal Viewer Tool">
-            <div class="carousel-caption">The orthogonal viewer + image processing tool.</div>
+
+        <div class="item active">
+          <a href="https://www.youtube.com/channel/UCizfR_ryJ0E-2uZspjwYtwg"
+             target="_blank"><img src="images/youtube.png"
+                                  alt="You Tube Channel" style="height:400px">
+            <div class="carousel-caption">1. The BioImage Suite Web YouTube Channel</div>
         </div>
-
-        <div class="item"><a href="./connviewer.html"
-                             target="_blank"><img src="images/connviewer.png"
-                                                  alt="Connectivity Viewer">
-            <div class="carousel-caption">The fMRI connectivity display
-              tool.</div>
-        </div>
-
-
-        <div class="item"><a href="./mni2tal.html"
-                             target="_blank"><img src="images/mni2tal.png"
-                                                  alt="MNI2TAL"><div class="carousel-caption">The MNI 2 Talairach
-              Converter program.</div></div>
-
-        <div class="item"><a href="./editor.html"
-                             target="_blank"><img src="images/editor.png"
-                                                  alt="Image Editor"><div class="carousel-caption">The orthogonal viewer and
-              editor.</div>
-        </div>
-
-        <div class="item"><a href="./overlayviewer.html"
-                             target="_blank"><img src="images/overlayviewer.png"
-                                                  alt="Overlay Viewer"><div class="carousel-caption">The orthogonal and mosaic
-              functional overlay viewer.</div>
-        </div>
-        
-        <div class="item"><a href="./dualviewer.html"
-                             target="_blank"><img src="images/dualviewer.png"
-                                                  alt="Dual Viewer
-                             Tool"><div class="carousel-caption">A dual
-              registration viewer with linked cursors.</div>
+        <div class="item"><a href="https://bioimagesuiteweb.github.io/bisweb-manual/"
+                             target="_blank">
+            <img src="images/manual.png" alt="BioImage Suite Web Manual"
+                 style="height:400px">
+            <div class="carousel-caption">2. The BioImage Suite Web Online
+              Manual</div>
         </div>
         
       </div>
