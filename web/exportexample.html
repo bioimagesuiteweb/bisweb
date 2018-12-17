@@ -1,0 +1,101 @@
+<!---  LICENSE
+ 
+ _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+ 
+ BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+ 
+ - you may not use this software except in compliance with the License.
+ - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+ 
+ __Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.__
+ 
+ ENDLICENSE -->
+
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <title>BioImage Suite Web</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no">
+    <meta name="theme-color" content="rgb(28,45,64)">
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <meta name="description" content="Yale BioImage Suite Medical Image
+                                      Analysis Software">
+    <meta name="keywords" content="Image Segmentation, Registration,
+                                   Visualization, fMRI, Connectivity, JS,
+                                   WebAssembly, NIH Brain Inititative">
+    <meta name="author" content="Xenophon Papademetris and Dustin Scheinost,
+                                 Dept of Radiology and Biomedical Imaging,
+                                 Yale School of Medicine">
+
+    <meta name="theme-color" content="rgb(28,45,64)">
+    <meta name="description" content="Yale BioImage Suite Medical Image
+                                      Analysis Software">
+    <meta name="keywords" content="Image Segmentation, Registration,
+                                   Visualization, fMRI, Connectivity, JS,
+                                   WebAssembly, NIH Brain Inititative">
+    <meta name="author" content="Xenophon Papademetris and Dustin Scheinost,
+                                 Dept of Radiology and Biomedical Imaging,
+                                 Yale School of Medicine">
+    <link rel="icon" href="images/favicon.ico">
+
+    <!-- begin webpack/gulp modifications -->
+    <!-- external css files -->
+    <!-- build:css -->
+    <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_dark.css">
+    <!-- endbuild -->
+
+    <!-- all javascript files -->
+    <!-- build:js -->
+    <script src="../build/web/webcomponents-lite.js"></script>
+    <script src="../build/web/jquery.min.js"></script>
+    <script src="../build/web/libbiswasm_wasm.js"></script>
+    <script src="../build/web/bislib.js"></script>
+    <!-- endbuild -->
+    <!-- end webpack/gulp modifications -->
+
+
+    <!-- begin stay as is -->
+    <link rel="stylesheet" type="text/css" href="index.css">
+    <!-- end of stay as is -->
+
+    <!-- build:manifest-->
+    <!-- endbuild-->
+
+
+</head>
+<body>
+
+  <bisweb-exportelement id="bisexport"></bisweb-exportelement>
+
+  
+  <script type="text/javascript">
+
+    document.addEventListener("DOMContentLoaded", () => {
+    
+     let bisexport=$("#bisexport")[0];
+    
+     let img=bisexport.createObject('image');
+
+     img.load("./images/MNI_T1_2mm_stripped_ras.nii.gz").then( () => {
+         console.log('Image = ',img.getDescription());
+
+         let mod=bisexport.createModule("resampleImage");
+         console.log('Module created=',mod);
+         mod.execute( { "input" : img   }, { "xsp"  : 2.0, "ysp" : 3.0, "zsp" : 4.0
+           }).then( () => {
+              let out=mod.getOutputObject("output");
+              console.log('OutImage = ',out.getDescription());
+              out.save("test.nii.gz");
+         });
+      });
+    });
+  </script>
+</body>
+</html>
