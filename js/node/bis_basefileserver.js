@@ -35,9 +35,6 @@ const server_fields = [
     { name : 'tempDirectory', value: '' }
 ];
 
-// Used to make temp directories
-let tempDirectoryCounter=0;
-
 class BaseFileServer {
 
     constructor(opts={}) {
@@ -892,7 +889,8 @@ class BaseFileServer {
      */
     dicomConversion(socket,opts)  {
 
-        let errorfn=( (msg) => {
+        let errorfn=( (msg, e = 'No available error message') => {
+            console.log('error in dicom conversion', msg, e);
             this.sendCommand(socket,'dicomConversionError', { 
                 'output' : msg,
                 'id' : id });
@@ -915,16 +913,12 @@ class BaseFileServer {
             return errorfn(indir+' is not valid');
         }
 
-
-        tempDirectoryCounter+=1;
-        let outdir=path.join(this.opts.tempDirectory,'dicom_'+tempDirectoryCounter);
+        let outdir=path.join(this.opts.tempDirectory,'dicom_' + Date.now());
         try {
             fs.mkdirSync(outdir);
         } catch(e) {
-            return errorfn('can not make temp dir '+outdir);
+            return errorfn('cannot make temp dir' + outdir, e);
         }
-        
-
         
         let done= (status,code) => {
             if (status===false) {
