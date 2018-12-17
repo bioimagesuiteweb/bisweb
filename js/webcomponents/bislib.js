@@ -20,7 +20,7 @@
 
 require("__BISWEB_CUSTOM");
 require("__BISWEB_EXTERNAL");
-
+require("bisweb_exportelement.js");
 require("bisweb_regressiontestelement.js");
 require("bisweb_displayregressionelement.js");
 require("bisweb_dialogelement.js");

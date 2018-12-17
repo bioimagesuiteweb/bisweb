@@ -339,6 +339,8 @@ class ViewerLayoutElement extends HTMLElement {
                                                }),
         };
         
+        this.elements.dockbar.attr('aria-label', 'viewer_dockbar');
+        
         let b1=this.defaulttext.substr(0,1) || "";
         if (this.defaulttext.length>10 && b1!=" ")
             this.elements.canvasbase.css({'background-color' : "#fefefe"});

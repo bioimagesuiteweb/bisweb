@@ -17,3 +17,4 @@ data/*
 **/package-lock.json
 *.pem
 **/dcm2nii*
+**/screenshots
