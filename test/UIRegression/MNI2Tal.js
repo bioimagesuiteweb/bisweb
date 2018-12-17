@@ -3,7 +3,7 @@
 import { Selector } from 'testcafe';
 import { ClientFunction } from 'testcafe';
 
-fixture `MNI2Tal`.page `https://git.yale.edu/pages/zls5/webapp/mni2tal.html`;
+fixture `MNI2Tal`.page `http://localhost:8080/web/mni2tal.html`;
 
 test('Click Viewers', async t => {
     const xviewer = Selector('#xviewer', {'timeout' : 3});

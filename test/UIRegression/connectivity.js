@@ -2,7 +2,7 @@
 
 import { Selector, t } from 'testcafe';
 
-fixture`Overlay Tests`.page`https://git.yale.edu/pages/zls5/webapp/connviewer.html`;
+fixture`Overlay Tests`.page`http://localhost:8080/web/connviewer.html`;
 
 export default class Page {
 

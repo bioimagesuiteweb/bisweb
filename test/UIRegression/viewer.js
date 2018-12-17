@@ -6,7 +6,7 @@ import fs from 'fs';
 import os from 'os';
 
 
-fixture `Viewer Tests`.page `https://git.yale.edu/pages/zls5/webapp/viewer.html`;
+fixture `Viewer Tests`.page `http://localhost:8080/web/viewer.html`;
 
 test('Load Image', async t => {
     const imgLoadDropdown = Selector('.dropdown-toggle').withText('File');
