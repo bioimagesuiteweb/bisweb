@@ -1202,12 +1202,14 @@ class ViewerApplicationElement extends HTMLElement {
             webutil.aboutText(),
             idb.get('mode')
         ]).then( (lst) => {
+            console.log('lst', lst);
+
             let forceorient=lst[0];
             let firsttime=lst[1];
             let msg=lst[2];
 
             let offline=false;
-            if (lst[3].indexOf('offline')>=0)
+            if ( lst[3] && lst[3].indexOf('offline')>=0)
                 offline=true;
             
             if (firsttime === undefined)
