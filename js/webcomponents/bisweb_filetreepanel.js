@@ -72,6 +72,14 @@ class FileTreePanel extends HTMLElement {
                 'action': () => {
                     this.loadImageFromTree();
                 }
+            },
+            'Tag' : {
+                'separator_before': false,
+                'separator_after': false,
+                'label': 'Set Tag',
+                'action': (node) => {
+                    this.openTagSettingPopover(node);
+                }
             }
         };
     }
@@ -519,6 +527,27 @@ class FileTreePanel extends HTMLElement {
             });
         });
         
+    }
+
+    openTagSettingPopover(node) {
+        console.log('element', node);
+        let popover = $(`<a href='#' data-toggle='popover' title='Select Tag'></a>`);
+        //let dropdownMenu = $(`<select><option value='Slices'>Slices</option><option value='Sagittal'>Sagittal</option></select>`);
+        let dropdownMenu = $(`<ul><li>Something</li><li>Something Else</li></ul>`);
+        $(node.reference.prevObject[0]).append(popover);
+        popover.popover({ 
+            'trigger' : 'click', 
+        });
+        
+        popover.on('shown.bs.popover', () => {
+            console.log('shown bs popover');
+            $('.popover.fade.in .popover-content').append(dropdownMenu);
+        });
+        popover.popover('show');
+    }
+
+    createPopoverSelect() {
+        return $(`<select><option>Sagittal</option><option>Coronal</option></select>`);
     }
 
     toggleContextMenuLoadButtons(tree, toggle) {
