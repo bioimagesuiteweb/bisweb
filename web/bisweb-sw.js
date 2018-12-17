@@ -106,7 +106,7 @@ var populateCache=function(msg="Cache Updated") {
 
     let newlst = [ ];
     let lst=internal.cachelist['internal'];
-    let maxpass=0; //TODO: make this 1
+    let maxpass=1; //TODO: make this 1
     for (let pass=0;pass<=maxpass;pass++) {
         for (let i=0;i<lst.length;i++) {
             let item=lst[i];
