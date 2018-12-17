@@ -1035,9 +1035,11 @@ const webutil = {
      * @param {string} text - 
      * @param {boolean} error  - if true this is an error else info;
      * @param {JQueryElement} parent - the parent to add this to. Uses $('body') if not specified.
+     * @param {Object} options - additional options for the alert.
+     * @param {Boolean} options.makeLoadSpinner - if set to true, creates a spinning icon at the beginning of the alert
      * @alias WebUtil.createAlert
      */
-    createAlert: function (text, error, top=0,timeout=0) {
+    createAlert: function (text, error, top=0, timeout=0, options = {}) {
 
         // Remove all previous alerts -- only one is needed
         $('.alert-success').remove();
@@ -1053,10 +1055,21 @@ const webutil = {
         else if (error==="progress")
             b='success';
 
-        let w = $(`<div class="alert alert-${b} alert-dismissible" role="alert"  
-style="position:absolute; top:${top}px; left:10px; z-index:${1000+internal.alertcount}">
- <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${text}</div>`);
+
+        let w = $(`
+            <div class="alert alert-${b} alert-dismissible" role="alert" style="position:absolute; top:${top}px; left:10px; z-index:${1000+internal.alertcount}">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <span class='glyphicon glyphicon-refresh glyphicon-refresh-animate' style='display: none'></span>  ${text}
+            </div>`
+        );
         
+        if (options.makeLoadSpinner) {
+            //enable the loading spinner in w
+            w.find('.glyphicon-refresh-animate').css('display', '');
+        }
+
         $('body').append(w);
         internal.alertcount += 1;
         w.alert();

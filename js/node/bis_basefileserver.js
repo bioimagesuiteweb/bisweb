@@ -13,6 +13,7 @@ const bidsutils=require('bis_bidsutils.js');
 // TODO: Check Base Directories not / /usr (probably two levels)
 
 const fs = require('fs');
+const net = require('net');
 
 // One time password library
 const otplib = require('otplib');
@@ -236,6 +237,13 @@ class BaseFileServer {
      * @return {Boolean} true if OK, false if not OK,
      */
     validateFilename(filepath) {
+
+        //some filepaths will be two filepaths conjoined by the symbol &&, check these separately
+        if (filepath.indexOf('&&') >= 0) {
+            const filepaths = filepath.split('&&');
+            console.log('filepaths', filepaths);
+            return this.validateFilename(filepaths[0]) && this.validateFilename(filepaths[1]);
+        }
 
         filepath=filepath||'';
         if (filepath.length<1) {
@@ -491,7 +499,8 @@ class BaseFileServer {
     // .................................................................................................................................................................
 
     /**
-     * Takes a request from the client and returns the requested file or series of files. 
+     * Takes a request from the client and returns the requested file or series of files.
+     * Will either read the entire file and send it in a single chunk or negotiate a stream and send it in smaller chunks.
      * 
      * @param {String} rawText - Unparsed JSON denoting the file or series of files to read. 
      * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
@@ -512,7 +521,7 @@ class BaseFileServer {
         if (path.sep==='\\')
             filename=util.filenameUnixToWindows(filename);
 
-        let handleError=(filenane,err) => {
+        let handleError=(filename,err) => {
             if (err.code==="EACCES")
                 this.handleBadRequestFromClient(socket, 'Failed to read file'+filename+' permission denied');
             else if (err.code==="ENOENT")
@@ -522,24 +531,43 @@ class BaseFileServer {
         };
         
         if (isbinary) {
-            fs.readFile(filename,  (err, d1) => {
-                
-                if (err) {
-                    handleError(filename,err);
-                } else {
-                    console.log(`${this.indent} load binary file ${filename} successful, writing to socket`);
-                    let checksum=`${util.SHA256(new Uint8Array(d1))}`;
-                    if (this.opts.verbose)
-                        console.log(this.indent,'Sending checksum=',checksum, 'id=',id);
-                    this.sendCommand(socket,'checksum', {
-                        'checksum' : checksum,
-                        'id' : id
+            
+            console.log('reading binary file and sending to client...');
+            fs.stat(filename, (err, stats) => {
+                if (err) { console.log('An error occured while statting', filename, err); return; }
+
+                if (stats.size > 50 * 1024 * 1024) {
+
+                    console.log(this.indent, 'File larger than 50MB, negotiating stream...');
+                    this.streamFileToClient(socket, filename).then( () => {
+                        console.log('file uploaded successfully');
+                    }).catch( (e) => {
+                        console.log('An error occured while streaming', filename, 'to the client', e);
                     });
-                    this.sendCommand(socket,'binary',d1);
+
+                } else {
+                    console.log(this.indent, 'Sending small file as a single chunk...');
+                    fs.readFile(filename, (err, d1) => {
+        
+                        if (err) {
+                            handleError(filename,err);
+                        } else {
+                            console.log(`${this.indent} load binary file ${filename} successful, writing to socket`);
+                            let checksum=`${util.SHA256(new Uint8Array(d1))}`;
+                            if (this.opts.verbose)
+                                console.log(this.indent,'Sending checksum=',checksum, 'id=',id);
+                            this.sendCommand(socket,'checksum', {
+                                'checksum' : checksum,
+                                'id' : id
+                            });
+                            this.sendCommand(socket,'binary',d1);
+                        }
+                    });
                 }
             });
+
+
         } else {
-            //        console.log(this.indent,'filename', filename);
             fs.readFile(filename, 'utf-8', (err, d1) => {
                 if (err) {
                     handleError(filename,err);
@@ -761,7 +789,6 @@ class BaseFileServer {
      * @param {Number} id - the request id
      */
     fileSystemOperations(socket,opname,url,id=0)  {
-
         let prom=null;
 
         if (opname!=='getMatchingFiles') {
@@ -785,6 +812,10 @@ class BaseFileServer {
                 prom=bisgenericio.getFileSize(url);
                 break;
             }
+            case 'getFileStats' : {
+                prom=bisgenericio.getFileStats(url);
+                break;
+            }
             case 'isDirectory' : {
                 prom=bisgenericio.isDirectory(url);
                 break;
@@ -803,6 +834,20 @@ class BaseFileServer {
             case 'deleteDirectory' : {
                 if (!this.opts.readonly) 
                     prom=bisgenericio.deleteDirectory(url);
+                else
+                    prom=Promise.reject('In Read Only Mode');
+                break;
+            }
+            case 'moveDirectory' : {
+                if (!this.opts.readonly)
+                    prom=bisgenericio.moveDirectory(url);
+                else    
+                    prom=Promise.reject('In Read Only Mode');
+                break;
+            }
+            case 'copyFile' : {
+                if (!this.opts.readonly)
+                    prom=bisgenericio.copyFile(url);
                 else
                     prom=Promise.reject('In Read Only Mode');
                 break;
@@ -944,6 +989,48 @@ class BaseFileServer {
                     'output' : msg,
                     'id' : id });
             });
+    }
+
+    /**
+     * Iteratively scans for a free port on the user's system.
+     * 
+     * @param {Number} port - The port to start scanning from, typically the number of the control socket. Increments each time the function finds an in-use port.
+     * @returns A promise that will resolve a free port, or reject with an error.
+     */
+    findFreePort(port) {
+        return new Promise( (resolve, reject) => {
+            let currentPort = port;
+            let testServer = new net.Server();
+
+            let searchPort = () => {
+                currentPort = currentPort + 1;
+                if (currentPort > port + 20) { reject('timed out scanning ports'); }
+                console.log('checking port', currentPort);
+                try {
+                    testServer.listen(currentPort, 'localhost');
+
+                    testServer.on('error', (e) => {
+                        if (e.code === 'EADDRINUSE') {
+                            testServer.close();
+                            searchPort();
+                        } else {
+                            reject(e);
+                        }
+                    });
+
+                    testServer.on('listening', () => {
+                        testServer.close();
+                        resolve(currentPort);
+                    });
+                } catch(e) {
+                    console.log('catch', e);
+                }
+                
+            };
+
+            searchPort();
+
+        });
     }
 }
 

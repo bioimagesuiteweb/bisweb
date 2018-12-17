@@ -1,7 +1,9 @@
 const path=require('path');
 const timers = require('timers');
 const util = require('bis_util');
+const fs = require('fs');
 const WebSocket=require('ws');
+const StreamingWebSocket=require('websocket-stream');
 const genericio = require('bis_genericio.js');
 const coregenericio = require('bis_coregenericio.js');
 const wsutil = require('bis_wsutil');
@@ -16,9 +18,9 @@ class BisWSWebSocketFileServer extends BaseFileServer {
     constructor(opts={}) {
         super(opts);
         this.indent='.....';
+        this.hostname = null;
+        this.portNumber = null;
     }
-
-    
 
 
     // -----------------------------------------------------------------------------------
@@ -60,9 +62,9 @@ class BisWSWebSocketFileServer extends BaseFileServer {
 
     /** Attach Socket Event 
      *
-     * @param{Socket} socket - the socket to use
-     * @param{String} eventname - the name of the event
-     * @param{Function} fn - the event handler
+     * @param {Socket} socket - the socket to use
+     * @param {String} eventname - the name of the event
+     * @param {Function} fn - the event handler
      */
     attachSocketEvent(socket,eventname,fn) {
         console.log(this.indent+' \t\t attaching socket event='+eventname+' to socket');
@@ -105,6 +107,10 @@ class BisWSWebSocketFileServer extends BaseFileServer {
 
     /**  decodes text from socket
      * @param{Blob} text - the string to decode
+        ssocket.addEventListener('open', () => {
+            ssocket.send('ready');
+        });
+
      * @returns {String} - the decoded string
      */
     decodeUTF8(text) {
@@ -472,10 +478,10 @@ class BisWSWebSocketFileServer extends BaseFileServer {
             return;
         }
         
-        let tserver=new BisWSWebSocketFileServer({ verbose : this.opts.verbose,
-                                                   readonly : false,
-                                                   baseDirectoriesList: this.opts.baseDirectoriesList,
-                                                   tempDiretory : this.opts.tempDirectory,
+        let tserver=new BisWSWebSocketFileServer({ 'verbose' : this.opts.verbose,
+                                                   'readonly' : false,
+                                                   'baseDirectoriesList': this.opts.baseDirectoriesList,
+                                                   'tempDiretory' : this.opts.tempDirectory,
                                                  });
         tserver.startServer(this.hostname, this.portNumber+1,true).then( (p) => {
 
@@ -489,6 +495,73 @@ class BisWSWebSocketFileServer extends BaseFileServer {
             this.sendCommand(socket,'uploadmessage', cmd);
         });
     }
+
+    /**
+     * Creates a stream between the client and server in order to transfer large files. Spins up a new file server on a different port to handle the transfer.
+     * 
+     * @param {WebSocket} socket - The control socket already negotiated between the client and the server.
+     * @param {String} filename - The full path of the file to stream to the client.
+     */
+    streamFileToClient(socket, filename) {
+        return new Promise( (resolve, reject) => {
+            //find a free port and create the streaming server
+            this.findFreePort(this.portNumber).then( (port) => {
+
+                console.log('found free port', port);
+                let connected = false;
+
+                //create a streaming websocket server and bind the connected event to create a read stream from the chosen file and begin piping
+                let sserver = new StreamingWebSocket.Server({
+                    'host' : 'localhost',
+                    'port' : port,
+                    'perMessageDeflate' : false  //Authors recommend disabling this https://www.npmjs.com/package/websocket-stream
+                }, 
+                (stream) => {
+                    connected = true;
+                    console.log('beginning stream');
+                    
+                    let fileReadStream = fs.createReadStream(filename);
+                    fileReadStream.on('end', () => {
+                        console.log('stream done, ending stream');
+                        stream.write('');
+                        stream.end();
+                        sserver.close();
+                        resolve();
+                    });
+
+                    fileReadStream.pipe(stream);
+                });
+
+                sserver.on('listening', () => {
+                    fs.stat(filename, (err, stats) => {
+                        if (err) { reject(err); sserver.close(); }
+
+                        this.sendCommand(socket, 'initiatefilestream', { 'port' : port, 'size' : stats.size });
+
+                        //port should close itself if server is non-responsive (i.e. has not connected)
+                        let timeout = timers.setTimeout( () => {
+                            if (!connected) { 
+                                console.log('Client nonresponse, closing server on port', port);
+                                sserver.close(); 
+                                reject();
+                            }
+                            timers.clearTimeout(timeout);
+                        }, 15000);
+                    });
+                    
+                });
+
+                sserver.on('error', (e) => {
+                    console.log('Stream server encountered an error and is closing', e);
+                    sserver.close();
+                });
+
+            }).catch( (e) => {
+                reject(e);
+            });
+        });
+    }
+
 }
 
 module.exports=BisWSWebSocketFileServer;

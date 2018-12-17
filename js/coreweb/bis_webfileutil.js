@@ -264,9 +264,6 @@ const webfileutils = {
         }
     },
 
-
-
-
     /** 
      * Web file callback function. This function will be invoked by any buttons that load or save if the application has been launched from a browser. 
      * This function will call the load and save functions of whichever file source is specified (see setFileSource or another similar function). 
@@ -289,7 +286,6 @@ const webfileutils = {
         let title = fileopts.title || '';
         let defaultpath=fileopts.defaultpath || '';
 
-        
         if (fileopts.suffix===null && fileopts.filters!==null) {
             if (fileopts.filters==="DIRECTORY" || fileopts.filters==="NII" ) {
                 suffix=fileopts.filters;
@@ -337,7 +333,7 @@ const webfileutils = {
         if (fileopts.save) {
             // We are now saving only server, aws or local
             
-            if (fileMode === 'server' || fileMode === 'amazonaws') {
+            if (fmode === 'server' || fmode === 'amazonaws') {
 
                 let initialDir=null;
                 let initialFilename=null;
@@ -369,7 +365,7 @@ const webfileutils = {
                 
                 cbopts.initialFilename=initialFilename || '';
                 cbopts.mode='save';
-                if (fileMode === 'server') 
+                if (fmode === 'server') 
                     bisweb_fileserverclient.requestFileList(initialDir, true, cbopts);
                 else
                     bisweb_awsmodule.wrapInAuth('uploadfile', cbopts);
@@ -410,12 +406,12 @@ const webfileutils = {
             return;
         }
 
-        if (fileMode==="amazonaws") {
+        if (fmode==="amazonaws") {
             bisweb_awsmodule.wrapInAuth('showfiles', cbopts);
             return;
         }
 
-        if (fileMode==="server") {
+        if (fmode==="server") {
             bisweb_fileserverclient.requestFileList(null,true,cbopts);
             return;
         }
@@ -469,6 +465,7 @@ const webfileutils = {
      * @param {string}  fileopts.defaultpath -  use this as original filename
      * @param {string}  fileopts.filter - use this as filter (if in electron)
      * @param {string}  fileopts.suffix - List of file types to accept as a comma-separated string e.g. ".ljson,.land" (simplified version filter)
+     * @param {string}  fileopts.force - If defined this load will force the load to use a given file source.
      * @param {Function} callback -- functiont to call when done
 
      */
@@ -640,6 +637,9 @@ const webfileutils = {
         }
     },
 
+    createAWSMenu() {
+        bisweb_awsmodule.createAWSBucketMenu();
+    }
 };
 
 if (!webutil.inElectronApp() ) {
