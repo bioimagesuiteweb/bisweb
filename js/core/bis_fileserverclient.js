@@ -269,7 +269,7 @@ class BisFileServerClient extends BisBaseServerClient {
             }
 
             case 'dicomConversionError': {
-                console.log('Dicom Conversion/Tidying up Failed');
+                console.log('Dicom Conversion/Tidying up Failed', data.payload.output);
                 success=false;
                 break;
             }

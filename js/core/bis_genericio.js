@@ -395,7 +395,7 @@ let moveDirectory=function(url) {
  */
 
 let copyFile=function(url) {
-
+    console.log('copy file');
     if (fileServerClient) {
         try {
             return fileServerClient.copyFile(url);
@@ -604,6 +604,8 @@ let isSaveDownload =function() {
  * @param {String} params.inputDirectory - The input directory to run file conversions in. 
  */
 let runFileConversion = (params) => {
+
+    console.log('file conversion');
     let updateFn = (obj) => {
         console.log('update fn', obj);
     };
@@ -612,11 +614,15 @@ let runFileConversion = (params) => {
         if (fileServerClient) {
             if (params.fileType === 'dicom') {
                 fileServerClient.dicomConversion(params.inputDirectory, updateFn)
-                    .then( (obj) => {
+                    .then((obj) => {
                         console.log('Conversion done');
                         resolve(obj);
-                     }).catch( (e) => { reject(e); });
+                    }).catch((e) => { reject(e); });
+            } else {
+                reject('Error: unsupported file type', params.fileType);
             }
+        } else {
+            reject('No file server client');
         }
     });
 };

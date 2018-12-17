@@ -130,14 +130,18 @@ class FileTreePanel extends HTMLElement {
 
         //if it does then update the file tree with just that file. otherwise look one level deeper for the whole study
         bis_genericio.getMatchingFiles(queryString).then( (files) => {
+
             if (files.length > 0) {
                 this.updateFileTree(files, filename);
+                bis_webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
                 return;
             } 
             
             queryString = filename + '/*.nii*';
             bis_genericio.getMatchingFiles(queryString).then( (newFiles) => {
                 console.log('filename', filename);
+
+                bis_webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
                 this.updateFileTree(newFiles, filename);
             });
             
@@ -277,7 +281,6 @@ class FileTreePanel extends HTMLElement {
             });
         }
 
-        console.log('new settings', newSettings);
         tree.jstree(true).settings.contextmenu.items = newSettings;
         tree.jstree(true).redraw(true); 
 
