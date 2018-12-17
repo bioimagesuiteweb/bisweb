@@ -361,7 +361,7 @@ let deleteDirectory=function(url) {
  * @returns {Promise} - the payload is true or false
  */
 let moveDirectory=function(url) {
-    console.log('moveDirectory', url);
+
     if (fileServerClient) {
         return fileServerClient.moveDirectory(url);
     }
@@ -395,7 +395,7 @@ let moveDirectory=function(url) {
  */
 
 let copyFile=function(url) {
-    console.log('copy file');
+
     if (fileServerClient) {
         try {
             return fileServerClient.copyFile(url);
@@ -605,7 +605,6 @@ let isSaveDownload =function() {
  */
 let runFileConversion = (params) => {
 
-    console.log('file conversion');
     let updateFn = (obj) => {
         console.log('update fn', obj);
     };
