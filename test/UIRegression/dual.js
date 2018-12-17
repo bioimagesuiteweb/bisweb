@@ -1,7 +1,9 @@
 /* globals test, fixture*/
 
 import { Selector } from 'testcafe';
-//import { t } from 'testcafe';
+
+
+import { t } from 'testcafe'; // eslint-disable-no-unused-vars
 
 fixture`Overlay Tests`.page`http://localhost:8080/web/dualviewer.html`;
 
@@ -257,6 +259,7 @@ test('Check Viewer 2 Color Mapping Options', async t => {
 });
 
 test('Check Viewer 2 Overlay', async t => {
+    await t; // TODO: XENIOS added this to silence eslint
     const page = new Page();
     await page.loadImageTwo();
 
