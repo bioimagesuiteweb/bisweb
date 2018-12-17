@@ -20,53 +20,12 @@
 <html lang="en">
 
 <head>
-    <title>BioImage Suite Web</title>
-    <meta name="viewport" content="width=device-width, user-scalable=no">
-    <meta name="theme-color" content="rgb(28,45,64)">
-    <meta name="mobile-web-app-capable" content="yes">
+    <title>BioImage Suite Web Import Test</title>
 
-    <meta name="description" content="Yale BioImage Suite Medical Image
-                                      Analysis Software">
-    <meta name="keywords" content="Image Segmentation, Registration,
-                                   Visualization, fMRI, Connectivity, JS,
-                                   WebAssembly, NIH Brain Inititative">
-    <meta name="author" content="Xenophon Papademetris and Dustin Scheinost,
-                                 Dept of Radiology and Biomedical Imaging,
-                                 Yale School of Medicine">
-
-    <meta name="theme-color" content="rgb(28,45,64)">
-    <meta name="description" content="Yale BioImage Suite Medical Image
-                                      Analysis Software">
-    <meta name="keywords" content="Image Segmentation, Registration,
-                                   Visualization, fMRI, Connectivity, JS,
-                                   WebAssembly, NIH Brain Inititative">
-    <meta name="author" content="Xenophon Papademetris and Dustin Scheinost,
-                                 Dept of Radiology and Biomedical Imaging,
-                                 Yale School of Medicine">
-    <link rel="icon" href="images/favicon.ico">
-
-    <!-- begin webpack/gulp modifications -->
-    <!-- external css files -->
-    <!-- build:css -->
-    <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_dark.css">
-    <!-- endbuild -->
-
-    <!-- all javascript files -->
-    <!-- build:js -->
-    <script src="../build/web/webcomponents-lite.js"></script>
-    <script src="../build/web/jquery.min.js"></script>
-    <script src="../build/web/libbiswasm_wasm.js"></script>
-    <script src="../build/web/bislib.js"></script>
-    <!-- endbuild -->
-    <!-- end webpack/gulp modifications -->
-
-
-    <!-- begin stay as is -->
-    <link rel="stylesheet" type="text/css" href="index.css">
-    <!-- end of stay as is -->
-
-    <!-- build:manifest-->
-    <!-- endbuild-->
+    <script src="https://bioimagesuiteweb.github.io/unstableapp/webcomponents-lite.js"></script>
+    <script src="https://bioimagesuiteweb.github.io/unstableapp/jquery.min.js"></script>
+    <script src="https://bioimagesuiteweb.github.io/unstableapp/libbiswasm_wasm.js"></script>
+    <script src="https://bioimagesuiteweb.github.io/unstableapp/bislib.js"></script>
 
 
 </head>
@@ -77,25 +36,24 @@
   
   <script type="text/javascript">
 
-    document.addEventListener("DOMContentLoaded", () => {
-    
-     let bisexport=$("#bisexport")[0];
-    
+    window.onload = function(e) {
+
      let img=bisexport.createObject('image');
 
-     img.load("./images/MNI_T1_2mm_stripped_ras.nii.gz").then( () => {
-         console.log('Image = ',img.getDescription());
+     img.load("https://bioimagesuiteweb.github.io/unstableapp/images/MNI_T1_2mm_stripped_ras.nii.gz").then( () => {
+         console.log('Image Loaded = ',img.getDescription());
 
          let mod=bisexport.createModule("resampleImage");
          console.log('Module created=',mod);
+     
          mod.execute( { "input" : img   }, { "xsp"  : 2.0, "ysp" : 3.0, "zsp" : 4.0
            }).then( () => {
               let out=mod.getOutputObject("output");
               console.log('OutImage = ',out.getDescription());
-              out.save("test.nii.gz");
+              out.save();
          });
       });
-    });
+    };
   </script>
 </body>
 </html>

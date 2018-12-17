@@ -2,7 +2,8 @@
 
 "use strict";
 
-const webutil = require('bis_webutil');
+
+const genericio = require('bis_genericio');
 const BisWebImage = require('bisweb_image');
 const BisWebMatrix = require('bisweb_matrix');
 const BisWebTextObject = require('bisweb_textobject');
@@ -67,7 +68,7 @@ class ExportElement extends HTMLElement {
             return new BisWebDataObjectCollection();
         }
 
-        if (objecttype.indexOf('lineartransform')>=0)  {
+        if (objecttype.indexOf('lineartransform')>=0)  { 
             return bistransforms.createLinearTransformation(param);
         }
 
@@ -86,8 +87,15 @@ class ExportElement extends HTMLElement {
     createModule(modulename) {
         return moduleindex.getModule(modulename);
     }
+
+    /** return module genericio 
+     * @returns{JavaScript Module} 
+     */
+    getGenericIO() {
+        return genericio;
+    }
+
+
 }
     
-
-console.log('here 1');
-webutil.defineElement('bisweb-exportelement', ExportElement);
+window.customElements.define('bisweb-exportelement', ExportElement);
