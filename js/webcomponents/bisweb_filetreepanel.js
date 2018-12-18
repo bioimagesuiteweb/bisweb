@@ -39,6 +39,7 @@ class FileTreePanel extends HTMLElement {
             this.layout = document.querySelector(this.layoutid);
             this.menubar = document.querySelector(this.menubarid);
             this.viewerapplication = document.querySelector(this.viewerappid);
+            this.popoverDisplayed = false;
 
             this.panel=new bisweb_panel(this.layout,
                 {  name  : 'Files',
@@ -48,13 +49,21 @@ class FileTreePanel extends HTMLElement {
                    mode : 'sidebar',
                 });
             
-            
             this.addMenuItem(this.menubar.getMenuBar());
 
             let listElement = this.panel.getWidget();
             this.makeButtons(listElement);
         });
 
+        //https://stackoverflow.com/questions/11703093/how-to-dismiss-a-twitter-bootstrap-popover-by-clicking-outside
+        $('html').on('click', (e) => {
+            if (typeof $(e.target).data('original-title') == 'undefined' && !$(e.target).parents().is('.popover.in')) {
+                if (this.popoverDisplayed) {
+                    $('[data-original-title]').popover('hide');
+                    this.popoverDisplayed = false;
+                }
+            }
+        });
 
         this.contextMenuDefaultSettings = {
             'Info' : {
@@ -530,24 +539,27 @@ class FileTreePanel extends HTMLElement {
     }
 
     openTagSettingPopover(node) {
-        console.log('element', node);
         let popover = $(`<a href='#' data-toggle='popover' title='Select Tag'></a>`);
-        //let dropdownMenu = $(`<select><option value='Slices'>Slices</option><option value='Sagittal'>Sagittal</option></select>`);
-        let dropdownMenu = $(`<ul><li>Something</li><li>Something Else</li></ul>`);
+        let dropdownMenu = this.createPopoverSelect();
+
         $(node.reference.prevObject[0]).append(popover);
         popover.popover({ 
-            'trigger' : 'click', 
+            'html' : true,
+            'content' : dropdownMenu,
+            'trigger' : 'manual', 
+            'container' : 'body'
         });
         
         popover.on('shown.bs.popover', () => {
             console.log('shown bs popover');
-            $('.popover.fade.in .popover-content').append(dropdownMenu);
+            this.popoverDisplayed = true;
         });
+
         popover.popover('show');
     }
 
     createPopoverSelect() {
-        return $(`<select><option>Sagittal</option><option>Coronal</option></select>`);
+        return $(`<div class='form-group'><select class='form-control'><option>Sagittal</option><option>Coronal</option></select></div>`);
     }
 
     toggleContextMenuLoadButtons(tree, toggle) {
