@@ -895,7 +895,6 @@ class BisFileServerClient extends BisBaseServerClient {
             let handledata = ( (raw_data) => { 
 
                 let dat = new Uint8Array(raw_data);
-                    
                 let comp=bisgenericio.iscompressed(url);
                 if (!comp) {
                     resolve({
@@ -994,16 +993,18 @@ class BisFileServerClient extends BisBaseServerClient {
                 // console.log('In Message',e.data.size,e.data.length,'--->',l);
                 //empty packet should indicate the end of stream
                 if (l === 0) {
-                    //  console.log('Combining ' , blobArray.length,bisgenericio.getmode());
-                    let combinedData = null;
-                    if (bisgenericio.getmode() !== 'node')
-                        combinedData = new Blob(blobArray);
-                    else
-                        combinedData=Buffer.concat(blobArray);
-                    //                    console.log('Combining done');
-                    //                    console.log('++++ combined data', combinedData.length);
+                    if (bisgenericio.getmode() !== 'node') {
+                        let combinedData = new Blob(blobArray);
+                        let reader = new FileReader();
+                        reader.addEventListener('loadend', () => {
+                            resolve(reader.result);
+                        });
+                        reader.readAsArrayBuffer(combinedData);
+                    } else {
+                        let combinedData=Buffer.concat(blobArray);
+                        resolve(combinedData);
+                    }
                     ssocket.close();
-                    resolve(combinedData);
                 } else {
                     //console.log('++++ Read one more blob',l,e.data);
                     blobArray.push(e.data);
