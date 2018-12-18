@@ -63,7 +63,6 @@ const internal = {
     deferredInstallPrompt : null,
     installButton : null,
     enableOfflineButton : false,
-    toggleOnlineFunction : null,
     debug : false,
 };
 
@@ -226,7 +225,7 @@ var receivedMessageFromServiceWorker = function(msg) {
         if (msg.indexOf('Online')>0) {
             online=true;
         }
-        internal.toggleOnlineFunction(!online);
+        setOfflineMode(!online,false);
         if (msg.indexOf('empty cache')>0) {
             console.log('Msg=',msg);
             cacheLatestVersion(false);
@@ -341,12 +340,30 @@ var getCachedVersion=async function() { // jshint ignore:line
 };// jshint ignore:line
 
 
-var setOfflineMode=function(mode) {
-    if (mode)
-        sendCommandToServiceWorker('goOffline');
-    else
-        sendCommandToServiceWorker('goOnline');
+var setOfflineMode=function(mode,updateserviceworker=true) {
 
+    let but1=$("#onlinebut");
+    let but2=$("#offlinebut");
+
+    let good=but1,bad=but2;
+    if (mode) {
+        good=but2;
+        bad=but1;
+    }
+    good.addClass("active");
+    good.addClass("btn-danger");
+    good.removeClass("btn-default");
+    bad.removeClass("btn-danger");
+    bad.removeClass("active");
+    bad.addClass("btn-default");
+    
+
+    if (updateserviceworker) {
+        if (mode)
+            sendCommandToServiceWorker('goOffline');
+        else
+            sendCommandToServiceWorker('goOnline');
+    }
 };
 
 // ------------------------------------------------------------------------
@@ -747,22 +764,6 @@ var mapOnlineOfflineButtons=async function() {
     let but1=$("#onlinebut");
     let but2=$("#offlinebut");
 
-    let fn1=function(offline) {
-
-        let good=but1,bad=but2;
-        if (offline) {
-            good=but2;
-            bad=but1;
-        }
-        good.addClass("active");
-        good.addClass("btn-danger");
-        good.removeClass("btn-default");
-        bad.removeClass("btn-danger");
-        bad.removeClass("active");
-        bad.addClass("btn-default");
-
-    };
-
     but1.click( (e) => {
         e.preventDefault();
         setOfflineMode(false);
@@ -770,14 +771,11 @@ var mapOnlineOfflineButtons=async function() {
 
     but2.click( (e) => {
         e.preventDefault();
-        fn1(but2,but1);
         setOfflineMode(true);
     });
 
-    internal.toggleOnlineFunction=fn1;
-    
     let offline=await getOfflineMode();
-    internal.toggleOnlineFunction(offline);
+    setOfflineMode(offline,false);
     
 };
 
