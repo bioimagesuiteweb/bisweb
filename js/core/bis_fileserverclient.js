@@ -937,14 +937,14 @@ class BisFileServerClient extends BisBaseServerClient {
                 }
                 
                 
-                console.log('response listener data', data.length);
+                //console.log('response listener data', data.length);
                 if (!data.type) {
                     this.socket.removeEventListener('message', responseListener);
                     handledata(event.data);
                 } else if (data.type === 'initiatefilestream') {
                     this.socket.removeEventListener('message', responseListener);
                     this.connectToFilestream(data.payload.port, data.payload.size).then( (imagedata) => {
-                        console.log('Done reading stuff',imagedata.size);
+                        //console.log('Done reading stuff',imagedata.size);
                         handledata(imagedata);
                     }).catch( (e) => {
                         console.log('Error',e,e.stack);
