@@ -9,9 +9,13 @@ console.log('BisSetup=',BisSetup.getServer(),'-->',webpage);
 fixture `Getting Started`.page `${webpage}`;
 
 test('Sample test', async t => {
-    const run = Selector('#toph4').find('#compute');
+    const runbutton = Selector('#compute');
+
+    await t;
+    await t.wait(10);
+    await t.maximizeWindow();
+    await t.click(runbutton);
+    await t.wait(50000);
     
-    await t
-        .maximizeWindow()
-        .click(run);
+       
 });
