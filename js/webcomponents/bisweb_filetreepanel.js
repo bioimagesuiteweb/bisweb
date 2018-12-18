@@ -56,14 +56,17 @@ class FileTreePanel extends HTMLElement {
         });
 
         //https://stackoverflow.com/questions/11703093/how-to-dismiss-a-twitter-bootstrap-popover-by-clicking-outside
-        $('html').on('click', (e) => {
+        let dismissPopoverFn = (e) => {
             if (typeof $(e.target).data('original-title') == 'undefined' && !$(e.target).parents().is('.popover.in')) {
                 if (this.popoverDisplayed) {
                     $('[data-original-title]').popover('hide');
                     this.popoverDisplayed = false;
                 }
             }
-        });
+        }
+
+        $('html').on('click', dismissPopoverFn);
+        $('html').on('contextmenu', dismissPopoverFn);
 
         this.contextMenuDefaultSettings = {
             'Info' : {
@@ -238,6 +241,7 @@ class FileTreePanel extends HTMLElement {
             fileTree = fileTree[0].children; 
         }
 
+        console.log('file tree', fileTree);
         let tree = listContainer.jstree({
             'core': {
                 'data': fileTree,
@@ -540,7 +544,7 @@ class FileTreePanel extends HTMLElement {
 
     openTagSettingPopover(node) {
         let popover = $(`<a href='#' data-toggle='popover' title='Select Tag'></a>`);
-        let dropdownMenu = this.createPopoverSelect();
+        let dropdownMenu = this.createPopoverSelect(node);
 
         $(node.reference.prevObject[0]).append(popover);
         popover.popover({ 
@@ -550,16 +554,38 @@ class FileTreePanel extends HTMLElement {
             'container' : 'body'
         });
         
+        //set flag to dismiss popover if user clicks area outside
         popover.on('shown.bs.popover', () => {
-            console.log('shown bs popover');
             this.popoverDisplayed = true;
         });
 
         popover.popover('show');
     }
 
-    createPopoverSelect() {
-        return $(`<div class='form-group'><select class='form-control'><option>Sagittal</option><option>Coronal</option></select></div>`);
+    createPopoverSelect(node) {
+        let defaultSelection = this.currentlySelectedNode.original.tag || undefined;
+        let popoverSelect = $(`
+            <div class='form-group'>
+                <select class='form-control'>
+                    <option value='sagittal'>Sagittal</option>
+                    <option value='coronal'>Coronal</option>
+                </select>
+            </div>`
+        );
+
+        if (defaultSelection) {
+            popoverSelect.find(`option[value=${defaultSelection}]`).attr('selected', 'selected');
+        }
+
+        popoverSelect.find('.form-control').on('change', () => {
+            let selectedValue = popoverSelect.find('.form-control').val(); 
+            console.log('select value', selectedValue);
+            console.log('node', node, 'currently selected node', this.currentlySelectedNode);
+
+            this.currentlySelectedNode.original.tag = selectedValue;
+        });
+
+        return popoverSelect;
     }
 
     toggleContextMenuLoadButtons(tree, toggle) {
