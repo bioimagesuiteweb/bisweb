@@ -2,10 +2,9 @@
 
 import { Selector } from 'testcafe';
 import { ClientFunction } from 'testcafe';
+
 import * as BisSetup from './bissetup';
-
 const webpage = `${BisSetup.getServer()}/mni2tal.html`;
-
 console.log('BisSetup=',BisSetup.getServer(),'-->',webpage);
 
 fixture `MNI2Tal`.page`${webpage}`;

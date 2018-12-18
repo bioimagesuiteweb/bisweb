@@ -5,7 +5,11 @@ import { Selector } from 'testcafe';
 
 import { t } from 'testcafe'; // eslint-disable-no-unused-vars
 
-fixture`Overlay Tests`.page`http://localhost:8080/web/dualviewer.html`;
+import * as BisSetup from './bissetup';
+const webpage = `${BisSetup.getServer()}/dualviewer.html`;
+console.log('BisSetup=',BisSetup.getServer(),'-->',webpage);
+
+fixture`Dual Viewer Tests`.page`${webpage}`;
 
 export default class Page {
     constructor() {}
