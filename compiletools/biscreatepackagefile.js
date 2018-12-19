@@ -68,7 +68,7 @@ let obj = {
     "private": true,
     "name": "bioimagesuiteweb",
     "version": version,
-    "description": "An Implementation of BioImage Suite in Javascript and WebAssembly",
+    "description": "A commandline node.js only implementation of BioImage Suite in Javascript and WebAssembly",
     "homepage": "https://github.com/bioimagesuiteweb/bisweb",
     "homepage": "www.bioimagesuite.org",
     "main" : "lib/bioimagesuiteweblib.js",
