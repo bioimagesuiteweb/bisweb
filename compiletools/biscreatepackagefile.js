@@ -82,11 +82,6 @@ let obj = {
 };
 
 if (testing) {
-    obj["dependencies"] = {
-        "commander": "2.16.0",
-        "rimraf": "2.6.2",
-        "tmp": "0.0.33"
-    };
     obj["devDependencies"] = {
         "mocha": "3.5.3",
     };
