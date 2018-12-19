@@ -40,7 +40,7 @@
 
      let bisexport=bioimagesuiteweb();
     
-     let img=bisexport.createObject('image');
+     let img=new bisexport.BisWebImage();
 
      img.load("../build/web/images/MNI_T1_2mm_stripped_ras.nii.gz").then( () => {
          console.log('Image Loaded = ',img.getDescription());

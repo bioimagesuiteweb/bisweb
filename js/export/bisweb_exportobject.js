@@ -4,18 +4,22 @@
 
 
 const genericio = require('bis_genericio');
+const moduleindex=require('moduleindex');
+
 const BisWebImage = require('bisweb_image');
 const BisWebMatrix = require('bisweb_matrix');
 const BisWebTextObject = require('bisweb_textobject');
-const bistransforms = require('bis_transformationutil');
 const BisWebDataObjectCollection = require('bisweb_dataobjectcollection');
-const moduleindex=require('moduleindex');
+const BisWebComboTransformation=require('bisweb_combotransformation');
+const BisWebLinearTransformation=require('bisweb_lineartransformation');
+const BisWebGridTransformation=require('bisweb_gridtransformation');
+const BisWebTransformationCollection=require('bisweb_transformationcollection');
+const userPreferences = require('bisweb_userpreferences.js');
 const bisdate=require('bisdate.js');
-
 /**
  * A set of utility functions. <BR>
  * If using from node.js/webpack it is the output of <B>require('bisweblib')</B>.<BR>
- * Util namespace.
+ * BisWebExportObject namespace.
  * @namespace biswebexport
  */
 
@@ -36,39 +40,6 @@ module.exports= {
 
     },
 
-    /** Code to create objects 
-     * @alias biswebexport.createObject
-     * @param {string} text -- the JSON String to parse
-     * @param {string} objecttype -- one of image,matrix,transformation,...
-     * @param {Various} param -- type specific initialization object, or parameter
-     * @returns {BisWebDataObject} the underlying object
-     */
-    createObject(objecttype,param=null) {
-
-        if (objecttype === 'matrix' || objecttype==='vector') {
-            return new BisWebMatrix(objecttype);
-        }
-        
-        if (objecttype === 'text' || objecttype==='textobject') {
-            return new BisWebTextObject();
-        }
-
-        if (objecttype === 'collection') {
-            return new BisWebDataObjectCollection();
-        }
-
-        if (objecttype.indexOf('lineartransform')>=0)  { 
-            return bistransforms.createLinearTransformation(param);
-        }
-
-        if (objecttype.indexOf('gridtransform')>=0) {
-            return bistransforms.createComboTransformation(param);
-        }
-        return new BisWebImage();
-
-
-    },
-
     /** createModule
      * @alias biswebexport.createModule
      * @param{string} ModuleName - the name of the module to create
@@ -82,12 +53,18 @@ module.exports= {
      * @alias biswebexport.getGenericIO
      * @returns{JavaScript Module} 
      */
-    getGenericIO() {
-        return genericio;
-    },
-
-
+    bisgenericio : genericio,
+    bisdate : bisdate,
+    BisWebImage : BisWebImage,
+    BisWebMatrix : BisWebMatrix,
+    BisWebTextObject : BisWebTextObject,
+    BisWebLinearTransformation : BisWebLinearTransformation,
+    BisWebGridTransformation : BisWebGridTransformation,
+    BisWebComboTransformation : BisWebComboTransformation,
+    BisWebDataObjectCollection :     BisWebDataObjectCollection,
+    BisWebTransformationCollection :     BisWebTransformationCollection,
+    userPreferences :     userPreferences,
 };
-    
+
 
 

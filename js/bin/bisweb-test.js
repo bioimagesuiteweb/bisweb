@@ -21,12 +21,14 @@
  * Runs modules in test mode
  */
 
-require('../../config/bisweb_pathconfig.js');
-const program = require('commander');
-const tmp = require('tmp');
-const rimraf=require('rimraf');
-const commandline = require('commandline');
-const userPreferences = require('bisweb_userpreferences.js');
+global.bioimagesuiteweblib=false;
+
+const bioimagesuiteweblib=require('./bioimagesuiteweblib');
+const program = bioimagesuiteweblib.commander;
+const tmp = bioimagesuiteweblib.tmp;
+const rimraf=bioimagesuiteweblib.rimraf;
+const commandline=bioimagesuiteweblib.commandline;
+const userPreferences = bioimagesuiteweblib.userPreferences;
 
 let tmpDirectory = tmp.dirSync();
 console.log('.... created tmp directory',tmpDirectory.name);

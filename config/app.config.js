@@ -35,7 +35,6 @@ if (fs.existsSync(extrafile)) {
     console.log('---- Using internal ',extrapath);
 }
 
-
 module.exports = {
 
     node: {

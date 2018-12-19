@@ -36,9 +36,10 @@ if (major === 8  && minor >=9) {
     process.exit(1);
 }
 
-
-console.log(`....\n.... Using node.js version ${v} (OK=${ok})`);
-console.log('.... This program is part of the commandline suite of tools from BioImage Suite Web.\n.... See https://github.com/bioimagesuiteweb/bisweb for more information.\n....');
+if (!global.bioimagesuiteweblib) {
+    console.log(`....\n.... Using node.js version ${v} (OK=${ok})`);
+    console.log('.... This program is part of the commandline suite of tools from BioImage Suite Web.\n.... See https://github.com/bioimagesuiteweb/bisweb for more information.\n....');
+}
 
 let d=path.dirname(__dirname);
 
