@@ -51,6 +51,7 @@ let d=path.dirname(__dirname);
  'js/node',
  'js/legacy',
  'js/core',
+ 'js/export',
  'js/dataobjects',
  'js/modules' ].forEach((p) => {
     module.paths.push(path.normalize(path.join(d,p)));

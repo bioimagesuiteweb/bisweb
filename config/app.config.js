@@ -46,14 +46,15 @@ module.exports = {
     resolve: {
 	extensions: [ '.js'],
 	modules : [ path.resolve(mypath,'node_modules'),
-                    path.resolve(mypath,'lib/js'),
-                    path.resolve(mypath,'js'),
-                    path.resolve(mypath,'js/legacy'),
-                    path.resolve(mypath,'js/core'),
-                    path.resolve(mypath,'js/dataobjects'),
-                    path.resolve(mypath,'js/node'),
-                    path.resolve(mypath,'js/modules'),
-                    path.resolve(mypath,'build/wasm') ]
+                path.resolve(mypath,'lib/js'),
+                path.resolve(mypath,'js'),
+                path.resolve(mypath,'js/legacy'),
+                path.resolve(mypath,'js/core'),
+                path.resolve(mypath,'js/dataobjects'),
+                path.resolve(mypath,'js/node'),
+                path.resolve(mypath,'js/export'),
+                path.resolve(mypath,'js/modules'),
+                path.resolve(mypath,'build/wasm') ]
     },
     target : "node",
     externals: {

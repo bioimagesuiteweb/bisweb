@@ -55,3 +55,10 @@ require("bisweb_fileserverclient.js");
 require("bisweb_misactool.js");
 require("bisweb_filetreepanel.js");
 require("bisweb_dicomimportelement.js");
+
+const exportobj=require('bisweb_exportobject');
+
+export default function get() {
+    return exportobj;
+}
+

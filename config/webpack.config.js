@@ -99,11 +99,16 @@ if (output !== "webworkermain.js") {
                         path.resolve(mypath,'js/coreweb'),
                         path.resolve(mypath,'js/legacy'),
                         path.resolve(mypath,'js/modules'),
+                        path.resolve(mypath,'js/export'),
                         path.resolve(mypath,'js/webtest'),
                         path.resolve(mypath,'build/wasm') ]
         },
         mode : 'development',
         target : "web",
+        output : {
+            library: 'bioimagesuiteweb',
+            libraryExport: 'default',
+        },
         externals: {
             // require("jquery") is external and available on the global var jQuery
             "jquery": "jQuery",
