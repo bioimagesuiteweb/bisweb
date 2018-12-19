@@ -334,9 +334,20 @@ IF (BIS_A_EMSCRIPTEN)
   install (FILES ${OUTSCRIPT} DESTINATION bisweb/lib
     PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
 
-  SET (MAINSCRIPT ${PROJECT_SOURCE_DIR}/../js/bin/bisweb.js)
+  SET (MAINSCRIPT  ${PROJECT_SOURCE_DIR}/../js/bin/bisweb.js )
   install (FILES ${MAINSCRIPT} DESTINATION bisweb/lib PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
 
+  SET (NPMREADME
+    ${LIBRARY_OUTPUT_PATH}/README.md )
+  add_custom_command(OUTPUT ${NPMREADME}
+    DEPENDS ${PROJECT_SOURCE_DIR}/../config/biswebnode_readme.md
+    PRE_BUILD COMMENT "Creating npm README.md"
+    COMMAND ${CMAKE_COMMAND} -E copy "${PROJECT_SOURCE_DIR}/../config/biswebnode_readme.md" ${NPMREADME}
+    )
+  add_custom_target(npmreadme ALL DEPENDS ${NPMREADME})
+  install (FILES ${NPMREADME}  DESTINATION bisweb)
+
+  
   SET(TFLAG "")
   IF (BIS_INSTALLTESTS)
     MESSAGE("Installing tests")

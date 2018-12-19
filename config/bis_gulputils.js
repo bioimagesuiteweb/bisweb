@@ -31,8 +31,8 @@ let colors=require('colors/safe'),
     del = require('del'),
     replace = require('gulp-replace'),
     rimraf= require('rimraf'),
-    gulp=require("gulp");
-
+    gulp=require("gulp"),
+    rename = require('gulp-rename');
 
 
 var getTime=function(nobracket=0) {
@@ -481,13 +481,18 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
                `${indir}/build/web/libbiswasm_wasm.js`
              ]).pipe(gulp.dest(distDir));
 
+    
+    gulp.src([`${indir}/config/biswebbrowser_readme.md`])
+        .pipe(rename('README.md'))
+              .pipe(gulp.dest(odir));
+
 
     console.log('.... Files copied in',distDir);
     
     // Step 2 create package.json
     let obj = { 
         "private": true,
-        "name": "bisweb",
+        "name": "biswebbrowser",
         "version": version,
         "description": "A web-based implementation of BioImage Suite in Javascript and WebAssembly",
         "homepage": "www.bioimagesuite.org",
