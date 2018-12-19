@@ -554,6 +554,10 @@ gulp.task('cdoc', function(done) {
     bis_gutil.doxygen(__dirname,'config/Doxyfile',done);
 });
 
+gulp.task('npmpack',function(done) {
+    bis_gutil.createnpmpackage(__dirname,internal.setup.version,'build/dist',done);
+});
+
 gulp.task('doc', function(done) {
     runSequence('jsdoc','cdoc',done);
 

@@ -66,10 +66,9 @@ console.log('++++ Testing=',testing, program.testing);
 
 let obj = { 
     "private": true,
-    "name": "bioimagesuiteweb",
+    "name": "biswebnode",
     "version": version,
-    "description": "A commandline node.js only implementation of BioImage Suite in Javascript and WebAssembly",
-    "homepage": "https://github.com/bioimagesuiteweb/bisweb",
+    "description": "A node.js only implementation of BioImage Suite in Javascript and WebAssembly",
     "homepage": "www.bioimagesuite.org",
     "main" : "lib/bioimagesuiteweblib.js",
     "author": "Xenios Papademetris",
