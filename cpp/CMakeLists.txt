@@ -19,7 +19,7 @@ cmake_minimum_required(VERSION 3.5)
 
 PROJECT(BISWEB)
 
-SET (BISWEB_VERSION "1.0.0b4")
+SET (BISWEB_VERSION "1.1.1a1")
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Core Project
@@ -31,6 +31,7 @@ GET_FILENAME_COMPONENT(JSMODULES_DIR ${PROJECT_SOURCE_DIR}/../js/modules ABSOLUT
 GET_FILENAME_COMPONENT(PYTHONMODULE_DIR ${PROJECT_SOURCE_DIR}/../python/modules ABSOLUTE)
 GET_FILENAME_COMPONENT(SCRIPT_DIR ${PROJECT_SOURCE_DIR}/bin ABSOLUTE)
 SET (WRAP_SCRIPT ${TOOLS_DIR}/bis_create_wrappers.js)
+SET (NPM_PACKAGE_SCRIPT ${TOOLS_DIR}/biscreatepackagefile.js)
 SET (DESCRIPTION_SCRIPT ${TOOLS_DIR}/bis_createmoduledescriptions.js)
 SET (BISWEB_PYTHON_INIT ${PROJECT_SOURCE_DIR}/../config/__init__.py)
 SET (BISWEB_PYTHON_PATH ${PROJECT_SOURCE_DIR}/../config/bis_path.py)
@@ -308,25 +309,28 @@ IF (BIS_A_EMSCRIPTEN)
   GET_FILENAME_COMPONENT(WEBPLIBCONFIG ${PROJECT_SOURCE_DIR}/../config/lib.config.js ABSOLUTE)
   GET_FILENAME_COMPONENT(WEBPCONFIGMOCHA ${PROJECT_SOURCE_DIR}/../config/mocha.config.js ABSOLUTE)
 
-  SET (item bioimagesuiteweblib.js)
-  SET (OUTSCRIPT ${LIBRARY_OUTPUT_PATH}/${item})
+  # bioimagesuiteweblib.js
+  SET (BISWEBLIBFILE bioimagesuiteweblib.js)
+  SET (OUTSCRIPT ${LIBRARY_OUTPUT_PATH}/${BISWEBLIBFILE})
   GET_FILENAME_COMPONENT(OUTSCRIPT ${OUTSCRIPT} ABSOLUTE)
-  SET (INSCRIPT ${PROJECT_SOURCE_DIR}/../js/bin/${item})
+  SET (INSCRIPT ${PROJECT_SOURCE_DIR}/../js/bin/${BISWEBLIBFILE})
   GET_FILENAME_COMPONENT(INSCRIPT ${INSCRIPT} ABSOLUTE)
   SET (CONFIGFILE ${WEBPCONFIG})
-  IF (${item} MATCHES "bioimagesuiteweblib.js")
+  IF (${BISWEBLIBFILE} MATCHES "bioimagesuiteweblib.js")
     SET (CONFIGFILE ${WEBPLIBCONFIG})
     MESSAGE("Using ${CONFIGFILE}")
-  ENDIF (${item} MATCHES "bioimagesuiteweblib.js")
-  
+  ENDIF (${BISWEBLIBFILE} MATCHES "bioimagesuiteweblib.js")
+
+
   add_custom_command(OUTPUT ${OUTSCRIPT}
     DEPENDS ${MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JSFILES}  ${LIBNAME} ${INSCRIPT} ${JS_WRAP_OUTPUT} ${JS_DATE_OUTPUT} ${WEBPACK_WASM_MODULE} ${CONFIGFILE}
-    PRE_BUILD COMMENT "Creating webpack-cli commandline library ${item}"
-    COMMAND webpack-cli --entry ${INSCRIPT} --config ${CONFIGFILE} --output-path ${LIBRARY_OUTPUT_PATH} --output-filename ${item}
+    PRE_BUILD COMMENT "Creating webpack-cli commandline library ${BISWEBLIBFILE}"
+    COMMAND webpack-cli --entry ${INSCRIPT} --config ${CONFIGFILE} --output-path ${LIBRARY_OUTPUT_PATH} --output-filename ${BISWEBLIBFILE}
     )
-  add_custom_target(${item} ALL DEPENDS ${OUTSCRIPT})
+  add_custom_target(${BISWEBLIBFILE} ALL DEPENDS ${OUTSCRIPT})
 
-  SET (OUTSCRIPT ${LIBRARY_OUTPUT_PATH}/${item})
+  
+  SET (OUTSCRIPT ${LIBRARY_OUTPUT_PATH}/${BISWEBLIBFILE})
   install (FILES ${OUTSCRIPT} DESTINATION bisweb/lib
     PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
 
@@ -338,6 +342,16 @@ IF (BIS_A_EMSCRIPTEN)
     install (FILES ${OUTSCRIPT} DESTINATION bisweb/lib
       PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
   ENDIF (BIS_INSTALLTESTS)
+
+  # package.json
+  set (NPMPACKAGEFILE ${LIBRARY_OUTPUT_PATH}/package.json)
+  add_custom_command(OUTPUT ${NPMPACKAGEFILE}
+    DEPENDS ${NPM_PACKAGE_SCRIPT} 
+    PRE_BUILD COMMENT "Creating package.json file"
+    COMMAND node ${NPM_PACKAGE_SCRIPT} -o ${LIBRARY_OUTPUT_PATH}
+    )
+  add_custom_target(package.json ALL DEPENDS ${NPMPACKAGEFILE})
+  install (FILES ${NPMPACKAGEFILE} DESTINATION bisweb PERMISSIONS OWNER_READ WORLD_READ)
 
 
   SET(OUTFILES "")

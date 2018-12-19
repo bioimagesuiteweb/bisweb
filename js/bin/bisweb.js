@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /*  LICENSE
     
     _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
@@ -14,6 +16,7 @@
     limitations under the License.__
     
     ENDLICENSE */
+
 
 'use strict';
 
