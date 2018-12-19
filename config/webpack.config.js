@@ -108,6 +108,7 @@ if (output !== "webworkermain.js") {
         output : {
             library: 'bioimagesuiteweb',
             libraryExport: 'default',
+            libraryTarget : 'umd'
         },
         externals: {
             // require("jquery") is external and available on the global var jQuery

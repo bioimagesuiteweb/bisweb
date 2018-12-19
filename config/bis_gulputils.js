@@ -520,13 +520,7 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
     
     // step 3
     // Master file
-    let txt2=`
-const wasm=require('./libbiswasm_wasm.js');
-const internal=require('./bislib.js');
-window.biswebpack=wasm;
-modules.export= internal.get();
-`+'\n';
-    
+    let txt2=`window.biswebpack=require('./libbiswasm_wasm.js');\nmodule.exports=require('./bislib.js')();\n`;
 
     console.log('++++ Output (2) = \n'+txt2+'++++');
     let output2=path.resolve(path.join(odir,"dist/bioimagesuiteweb.js"));
