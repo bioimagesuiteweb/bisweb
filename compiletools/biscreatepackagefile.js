@@ -37,6 +37,7 @@ var help = function() {
 
 program.version('1.0.0')
     .option('-o, --output <s>', 'The output directory for the package.json file')
+    .option('--testing', 'if  set create test options')
     .on('--help',function() {
         help();
     })
@@ -45,6 +46,7 @@ program.version('1.0.0')
 
 
 let output = program.output || null;
+let testing = program.testing || false;
 
 if (output === null) {
     console.log('--- must specify an output file using -o flag');
@@ -56,10 +58,10 @@ let ind= version.indexOf('a');
 if (ind<0)
     ind= version.indexOf('b');
 
-console.log('Index=',ind);
-
 if (ind>0)
     version=version.substr(0,ind);
+
+console.log('++++ Testing=',testing, program.testing);
 
 
 let obj = { 
@@ -68,24 +70,31 @@ let obj = {
     "version": version,
     "description": "An Implementation of BioImage Suite in Javascript and WebAssembly",
     "homepage": "https://github.com/bioimagesuiteweb/bisweb",
-    "scripts": {
-        "test": "mocha test/test_module.js"
-    },
     "homepage": "www.bioimagesuite.org",
     "main" : "lib/bioimagesuiteweblib.js",
     "author": "Xenios Papademetris",
     "license": "GPL V2 (most source code is Apache V2)",
-    "dependencies": {
-    },
-    "devDependencies": {
-        "mocha": "3.5.3",
-    },
     "bin" : "lib/bisweb.js",
     "repository": {
         "type" : "git",
         "url" : "https://github.com/bioimagesuiteweb/bisweb"
     },
 };
+
+if (testing) {
+    obj["dependencies"] = {
+        "commander": "2.16.0",
+        "rimraf": "2.6.2",
+        "tmp": "0.0.33"
+    };
+    obj["devDependencies"] = {
+        "mocha": "3.5.3",
+    };
+    obj["scripts"]= {
+        "test": "mocha test/test_module.js"
+    };
+}
+
 
 let txt=JSON.stringify(obj,null,4)+"\n";
 

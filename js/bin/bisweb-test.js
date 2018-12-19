@@ -25,10 +25,11 @@
 
 global.bioimagesuiteweblib=false;
 
+const program=require('commander');
+const tmp=require('tmp');
+const rimraf=require('rimraf');
+
 const bioimagesuiteweblib=require('./bioimagesuiteweblib');
-const program = bioimagesuiteweblib.commander;
-const tmp = bioimagesuiteweblib.tmp;
-const rimraf=bioimagesuiteweblib.rimraf;
 const commandline=bioimagesuiteweblib.commandline;
 const userPreferences = bioimagesuiteweblib.userPreferences;
 
