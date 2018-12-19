@@ -54,15 +54,7 @@ if (output === null) {
 }
 
 let version=bisdate.version;
-let ind= version.indexOf('a');
-if (ind<0)
-    ind= version.indexOf('b');
-
-if (ind>0)
-    version=version.substr(0,ind);
-
 console.log('++++ Testing=',testing, program.testing);
-
 
 let obj = { 
     "private": true,
