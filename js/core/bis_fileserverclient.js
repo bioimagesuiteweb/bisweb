@@ -923,7 +923,7 @@ class BisFileServerClient extends BisBaseServerClient {
                             a = null;
                         }
                     }
-                }
+                };
 
                 if (raw_data instanceof Blob) { 
                     let reader = new FileReader();
@@ -932,7 +932,7 @@ class BisFileServerClient extends BisBaseServerClient {
                     });
                     reader.readAsArrayBuffer(raw_data);
                 } else {
-                    parseBuffer(raw_data)
+                    parseBuffer(raw_data);
                 }
             });
                              

@@ -35,8 +35,6 @@ const server_fields = [
     { name : 'tempDirectory', value: '' }
 ];
 
-// Used to make temp directories
-let tempDirectoryCounter=0;
 const enableStream=true;
 
 class BaseFileServer {

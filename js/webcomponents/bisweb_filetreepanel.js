@@ -664,7 +664,7 @@ class FileTreePanel extends HTMLElement {
         });
 
         return tagSelectMenu;
-    };
+    }
   
 }
 
