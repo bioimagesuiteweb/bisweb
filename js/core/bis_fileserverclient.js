@@ -888,19 +888,8 @@ class BisFileServerClient extends BisBaseServerClient {
 
             if (url.indexOf('\\')>=0)
                 url=util.filenameWindowsToUnix(url);
-
             
             let handledata = ( (raw_data) => { 
-
-                if (raw_data instanceof Blob) { 
-                    let reader = new FileReader();
-                    reader.addEventListener('loadend', () => {
-                        parseBuffer(reader.result);
-                    });
-                    reader.readAsArrayBuffer(raw_data);
-                } else {
-                    parseBuffer(raw_data)
-                }
 
                 let parseBuffer = (buffer) => {
                     let dat = new Uint8Array(buffer);
@@ -922,18 +911,28 @@ class BisFileServerClient extends BisBaseServerClient {
                             });
                         } else {
                             let a;
-                            //try {
-                                //a = pako.ungzip(dat);
+                            try {
+                                a = pako.ungzip(dat);
                                 resolve({
-                                    'data': dat,
+                                    'data': a,
                                     'filename': url
                                 });
-                            //} catch(err) {
-                                //console.log('An error occured', err);
-                            //}
-                            a=null;
+                            } catch (err) {
+                                console.log('An error occured', err);
+                            }
+                            a = null;
                         }
                     }
+                }
+
+                if (raw_data instanceof Blob) { 
+                    let reader = new FileReader();
+                    reader.addEventListener('loadend', () => {
+                        parseBuffer(reader.result);
+                    });
+                    reader.readAsArrayBuffer(raw_data);
+                } else {
+                    parseBuffer(raw_data)
                 }
             });
                              

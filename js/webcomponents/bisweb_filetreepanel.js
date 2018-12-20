@@ -55,7 +55,12 @@ class FileTreePanel extends HTMLElement {
                 if (f) {
                     this.addMenuItem(this.menubar.getMenuBar());
                 }
+
                 let listElement = this.panel.getWidget();
+                let biswebElementMenu = $(`<div class='bisweb-elements-menu'></div>`);
+
+                console.log('list element', listElement);
+                listElement.append(biswebElementMenu);
                 this.makeButtons(listElement);
             });
 
@@ -67,7 +72,7 @@ class FileTreePanel extends HTMLElement {
                         this.popoverDisplayed = false;
                     }
                 }
-            }
+            };
 
             $('html').on('click', dismissPopoverFn);
             $('html').on('contextmenu', dismissPopoverFn);
@@ -320,6 +325,7 @@ class FileTreePanel extends HTMLElement {
         this.fileTree = fileTree;
 
         if (!this.renderedTagSelectMenu) {
+            console.log('tag select menu', this.renderedTagSelectMenu === true);
             //append the tag selecting menu to the bottom of the file tree div
             let tagSelectDiv = $(`<div></div>`);
             tagSelectDiv.append(this.createTagSelectMenu());
@@ -436,6 +442,7 @@ class FileTreePanel extends HTMLElement {
 
         listContainer.on('select_node.jstree', (event, data) => {
             console.log('select_node', event, data);
+            $('.bisweb-elements-menu').find('select').prop('disabled', '');
             this.currentlySelectedNode = data.node;
 
             if (data.event.type === 'click') {
@@ -643,6 +650,7 @@ class FileTreePanel extends HTMLElement {
     createTagSelectMenu() {
         return $(`
             <select class='form-control' disabled> 
+                <option value='none'></option>
                 <option value='sagittal'>Sagittal</option>
                 <option value='coronal'>Coronal</option>
             </select>
