@@ -1,6 +1,6 @@
 "use strict";
 
-window.onload = function(e) {
+window.onload = function() {
     
     // Get access to the computational tools via the export element
     const bisweb=document.querySelector("#bis").export;

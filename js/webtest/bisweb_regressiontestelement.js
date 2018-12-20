@@ -39,7 +39,7 @@ let logtext="";
 let testDataRootDirectory="";
 let threadController=null;
 let oldTestDataRootDirectory='';
-
+let serverDirectory=null;
 let disableServer=function() {
 
     bis_webfileutil.setMode('local',false);
@@ -63,10 +63,36 @@ let enableServer=async function() {
             return Promise.reject(e);
         }
     }
-    let tempdir=await serverClient.getServerTempDirectory();
-    testDataRootDirectory=tempdir+'/';
-    webutil.createAlert('Connected to '+serverClient.getServerInfo()+'. Using '+testDataRootDirectory+' as data directory on server');
+
+    if (serverDirectory===null) {
+        
+        return new Promise( (resolve,reject) => {
+            
+            let clb=function(f) {
+                
+                if (f.length>0) {
+                    serverDirectory=f;
+                    testDataRootDirectory=serverDirectory+'/';
+                    webutil.createAlert('Connected to '+serverClient.getServerInfo()+'. Using '+testDataRootDirectory+' as data directory on server');
+                    resolve();
+                } else {
+                    reject();
+                }
+            };
+            
+            bis_webfileutil.genericFileCallback({
+                filters : "DIRECTORY",
+                suffix : "DIRECTORY",
+                title : "Select Testdata directory",
+                save : false,
+            },clb);
+        });
+    }
+
     return true;
+
+
+    
 };
 
 var replacesystemprint=function(doreplace=true) {

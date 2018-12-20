@@ -22,7 +22,7 @@ hotp.options  = { crypto };
 const secret = otplib.authenticator.generateSecret();
 let onetimePasswordCounter=1;
 
-
+let portCount=0;
 
 // .................................................. This is the class ........................................
 
@@ -1016,8 +1016,11 @@ class BaseFileServer {
             let testServer = new net.Server();
 
             let searchPort = () => {
-                currentPort = currentPort + 1;
-                if (currentPort > port + 20) { reject('---- timed out scanning ports'); }
+                currentPort = currentPort + portCount+3;
+                portCount+=1;
+                if (portCount>15)
+                    portCount=0;
+                if (currentPort > port + 2000) { reject('---- timed out scanning ports'); }
                 try {
                     testServer.listen(currentPort, 'localhost');
                     
