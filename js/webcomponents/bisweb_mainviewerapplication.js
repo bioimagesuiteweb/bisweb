@@ -33,8 +33,6 @@ const BisWebPanel = require('bisweb_panel.js');
 const resliceImage = require('resliceImage');
 const BisWebLinearTransformation = require('bisweb_lineartransformation.js');
 const idb=require('idb-keyval');
-//const BisWebHelpVideoPanel = require('bisweb_helpvideopanel');
-
 const localforage=require('localforage');
 
 
@@ -849,7 +847,7 @@ class ViewerApplicationElement extends HTMLElement {
         
         let hmenu = webutil.createTopMenuBarMenu("Help", menubar);
 
-        let fn = (() => { this.welcomeMessage(true) ;});
+        let fn = (() => { /*this.welcomeMessage(true) ;*/});
         
         webutil.createMenuItem(hmenu,'About this application',fn);
         
@@ -1435,6 +1433,7 @@ class ViewerApplicationElement extends HTMLElement {
             Promise.all(this.applicationInitializedPromiseList).then( () => {
                 this.parseQueryParameters(painttoolid);
                 document.body.style.zoom =  1.0;
+
                 if (!istest) {
                     this.welcomeMessage(false);
                 } else {

@@ -1,7 +1,7 @@
 {
     "private": true,
     "name": "bioimagesuiteweb_wasm",
-    "version": "0.9.1",
+    "version": "1.1a1",
     "description": "An Implementation of BioImage Suite in Javascript and WebAssembly",
     "homepage": "https://github.com/bioimagesuiteweb/bisweb",
     "scripts": {
@@ -38,7 +38,7 @@
         "rimraf": "2.6.2",
         "three": "0.95.0",
         "webcomponents": "0.1.4",
-        "websocket-stream": "^5.1.2"
+        "websocket-stream": "5.1.2"
     },
     "devDependencies": {
         "colors": "1.1.2",
@@ -67,5 +67,9 @@
         "webpack": "4.8.3",
         "webpack-cli": "2.1.5",
         "ws": "6.1.2"
+<<<<<<< HEAD
+=======
+
+>>>>>>> aac48fa24ec26015e6c7838b819f5ecea7a797c9
     }
 }
