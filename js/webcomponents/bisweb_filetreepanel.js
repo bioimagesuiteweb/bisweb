@@ -52,7 +52,9 @@ class FileTreePanel extends HTMLElement {
             this.addMenuItem(this.menubar.getMenuBar());
 
             let listElement = this.panel.getWidget();
-            this.makeButtons(listElement);
+            let elementsDiv = $(`<div class='bisweb-elements-menu'></div>`);
+            listElement.append(elementsDiv);
+            this.makeButtons(elementsDiv);
         });
 
         //https://stackoverflow.com/questions/11703093/how-to-dismiss-a-twitter-bootstrap-popover-by-clicking-outside
@@ -241,7 +243,6 @@ class FileTreePanel extends HTMLElement {
             fileTree = fileTree[0].children; 
         }
 
-        console.log('file tree', fileTree);
         let tree = listContainer.jstree({
             'core': {
                 'data': fileTree,
@@ -315,6 +316,17 @@ class FileTreePanel extends HTMLElement {
 
         this.fileTree = fileTree;
 
+        if (!this.renderedTagSelectMenu) {
+            //append the tag selecting menu to the bottom of the file tree div
+            let tagSelectDiv = $(`<div></div>`);
+            tagSelectDiv.append(this.createTagSelectMenu());
+
+            let elementsDiv = $('.bisweb-elements-menu');
+            elementsDiv.prepend(tagSelectDiv);
+            elementsDiv.prepend($(`<br><label>Tag Selected Element:</label></br>`));
+            this.renderedTagSelectMenu = true;
+        }
+
         //Searches for the directory that should contain a file given the file's path, e.g. 'a/b/c' should be contained in folders a and b.
         //Returns the children 
         function findParentAtTreeLevel(name, entries) {
@@ -386,7 +398,6 @@ class FileTreePanel extends HTMLElement {
         topButtonBar.append(loadStudyButton);
         bottomButtonBar.append(saveStudyButton);
 
-        listElement.append(`<br>`);
         listElement.append(buttonGroupDisplay);
     }
 
@@ -625,6 +636,15 @@ class FileTreePanel extends HTMLElement {
         return this.baseDirectory + name;
 
     }
+
+    createTagSelectMenu() {
+        return $(`
+            <select class='form-control'> 
+                <option value='sagittal'>Sagittal</option>
+                <option value='coronal'>Coronal</option>
+            </select>
+        `);
+    };
   
 }
 
