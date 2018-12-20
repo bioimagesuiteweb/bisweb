@@ -20,48 +20,44 @@
 <html lang="en">
 
 <head>
-    <title>BioImage Suite Web Import Test</title>
+    <title>Test</title>
 
     <script src="https://bioimagesuiteweb.github.io/unstableapp/webcomponents-lite.js"></script>
     <script src="https://bioimagesuiteweb.github.io/unstableapp/jquery.min.js"></script>
+    <script src="https://bioimagesuiteweb.github.io/unstableapp/bootstrap.min.js"></script>
     <script src="https://bioimagesuiteweb.github.io/unstableapp/libbiswasm_wasm.js"></script>
     <script src="https://bioimagesuiteweb.github.io/unstableapp/bislib.js"></script>
-    <!--
-        <script src="../build/web/webcomponents-lite.js"></script>
-        <script src="../build/web/jquery.min.js"></script>
-        <script src="../build/web/libbiswasm_wasm.js"></script>
-        <script src="../build/web/bislib.js"></script>
-        -->
+    <link rel="stylesheet" type="text/css" href="https://bioimagesuiteweb.github.io/unstableapp/bislib.css">
 
+    <script src="./exportexample.js"></script>
+    
 </head>
 <body>
 
+  <!-- this is the element that imports all bisweb code -->
   <bisweb-exportelement id="bis"></bisweb-exportelement>
 
-  
-  <script type="text/javascript">
-
-    window.onload = function(e) {
-
-    let bisweb=document.querySelector("#bis").export;
-    console.log('Bisweb=',bisweb);
+  <!-- this is an optional viewer so that you can see what is going on -->
+  <div id="viewerwidget" style="width:800px;
+                                left:25px;position:absolute;padding:10 10 10 10;
+                                top:25px; background-color:#2222222">
     
-     let img=new bisweb.BisWebImage();
-
-     img.load("https://bioimagesuiteweb.github.io/unstableapp/images/MNI_T1_2mm_stripped_ras.nii.gz").then( () => {
-         console.log('Image Loaded = ',img.getDescription());
-
-         let mod=bisweb.createModule("resampleImage");
-         console.log('Module created=',mod);
-     
-         mod.execute( { "input" : img   }, { "xsp"  : 2.0, "ysp" : 3.0, "zsp" : 4.0
-           }).then( () => {
-              let out=mod.getOutputObject("output");
-              console.log('OutImage = ',out.getDescription());
-              out.save();
-         });
-      });
-    };
-  </script>
+    <bisweb-viewerlayoutelement
+      id="viewer_layout"
+      bis-dockwidth="300"
+      bis-coreopen="true"
+      bis-noresize="1">
+    </bisweb-viewerlayoutelement>
+    
+    <bisweb-colormapcontrollerelement id="viewer_cmap">
+    </bisweb-colormapcontrollerelement>
+    
+    <bisweb-orthogonalviewer
+      id="viewer"
+      bis-layoutwidgetid="#viewer_layout"
+      bis-colormapeditorid="#viewer_cmap">
+    </bisweb-orthogonalviewer>
+  </div>
+  
 </body>
 </html>
