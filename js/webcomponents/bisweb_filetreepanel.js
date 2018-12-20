@@ -328,12 +328,14 @@ class FileTreePanel extends HTMLElement {
             console.log('tag select menu', this.renderedTagSelectMenu === true);
             //append the tag selecting menu to the bottom of the file tree div
             let tagSelectDiv = $(`<div></div>`);
-            tagSelectDiv.append(this.createTagSelectMenu());
+            tagSelectDiv.append(this.createTagSelectMenu({ 'setDefaultValue' : false, 'listenForTagEvents' : true }));
 
             let elementsDiv = $('.bisweb-elements-menu');
             elementsDiv.prepend(tagSelectDiv);
             elementsDiv.prepend($(`<br><label>Tag Selected Element:</label></br>`));
             this.renderedTagSelectMenu = true;
+        } else {
+            $('.bisweb-elements-menu').find('select').prop('disabled', 'disabled');
         }
 
         //Searches for the directory that should contain a file given the file's path, e.g. 'a/b/c' should be contained in folders a and b.
@@ -565,7 +567,7 @@ class FileTreePanel extends HTMLElement {
 
     openTagSettingPopover(node) {
         let popover = $(`<a href='#' data-toggle='popover' title='Select Tag'></a>`);
-        let dropdownMenu = this.createPopoverSelect(node);
+        let dropdownMenu = this.createTagSelectMenu({ 'enabled' : true, 'setDefaultValue' : true });
 
         $(node.reference.prevObject[0]).append(popover);
         popover.popover({ 
@@ -581,32 +583,6 @@ class FileTreePanel extends HTMLElement {
         });
 
         popover.popover('show');
-    }
-
-    createPopoverSelect(node) {
-        let defaultSelection = this.currentlySelectedNode.original.tag || undefined;
-        let popoverSelect = $(`
-            <div class='form-group'>
-                <select class='form-control'>
-                    <option value='sagittal'>Sagittal</option>
-                    <option value='coronal'>Coronal</option>
-                </select>
-            </div>`
-        );
-
-        if (defaultSelection) {
-            popoverSelect.find(`option[value=${defaultSelection}]`).attr('selected', 'selected');
-        }
-
-        popoverSelect.find('.form-control').on('change', () => {
-            let selectedValue = popoverSelect.find('.form-control').val(); 
-            console.log('select value', selectedValue);
-            console.log('node', node, 'currently selected node', this.currentlySelectedNode);
-
-            this.currentlySelectedNode.original.tag = selectedValue;
-        });
-
-        return popoverSelect;
     }
 
     toggleContextMenuLoadButtons(tree, toggle) {
@@ -647,14 +623,47 @@ class FileTreePanel extends HTMLElement {
 
     }
 
-    createTagSelectMenu() {
-        return $(`
-            <select class='form-control' disabled> 
-                <option value='none'></option>
-                <option value='sagittal'>Sagittal</option>
-                <option value='coronal'>Coronal</option>
-            </select>
-        `);
+    createTagSelectMenu(options = {}) {
+
+        let tagSelectMenu = $(
+        `<select class='form-control' disabled> 
+            <option value='none'></option>
+            <option value='sagittal'>Sagittal</option>
+            <option value='coronal'>Coronal</option>
+        </select>`
+        );
+        
+        console.log('options', options, 'tag select menu', tagSelectMenu);
+        if (options.enabled) { tagSelectMenu.prop('disabled', ''); }
+
+        let setSelectedValue = () => {
+            let defaultSelection = this.currentlySelectedNode.original.tag || undefined;
+            console.log('default selection', defaultSelection);
+            tagSelectMenu.find(`option[value=${defaultSelection}]`).attr('selected', 'selected');
+        };
+
+        if (options.setDefaultValue) {
+            setSelectedValue();
+        }
+
+        if (options.listenForTagEvents) {
+            document.addEventListener('bisweb.tag.changed', () => {
+                console.log('tag select event');
+                setSelectedValue();
+            });
+        }
+
+        tagSelectMenu.on('change', () => {
+            let selectedValue = tagSelectMenu.val(); 
+            this.currentlySelectedNode.original.tag = selectedValue;
+
+            //tag select menus can be created by popovers or statically in the file bar
+            //in order for one to change when the other does, they should emit and listen to each other's events
+            let tagChangedEvent = new CustomEvent('bisweb.tag.changed', { 'bubbles' : true });
+            document.dispatchEvent(tagChangedEvent);
+        });
+
+        return tagSelectMenu;
     };
   
 }
