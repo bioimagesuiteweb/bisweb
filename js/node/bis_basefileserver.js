@@ -13,7 +13,7 @@ const bidsutils=require('bis_bidsutils.js');
 // TODO: Check Base Directories not / /usr (probably two levels)
 
 const fs = require('fs');
-const net = require('net');
+const net = require('net'); // needed for find free port
 
 // One time password library
 const otplib = require('otplib');
@@ -34,6 +34,10 @@ const server_fields = [
     { name : 'insecure', value: false },
     { name : 'tempDirectory', value: '' }
 ];
+
+// Used to make temp directories
+let tempDirectoryCounter=0;
+const enableStream=true;
 
 class BaseFileServer {
 
@@ -506,6 +510,8 @@ class BaseFileServer {
         let filename = parsedText.filename;
         let isbinary = parsedText.isbinary;
         let id=parsedText.id;
+
+        console.log('Reading file',filename,isbinary);
         
         if (!this.validateFilename(filename)) {
             this.handleBadRequestFromClient(socket,
@@ -531,19 +537,29 @@ class BaseFileServer {
             
             console.log('reading binary file and sending to client...');
             fs.stat(filename, (err, stats) => {
-                if (err) { console.log('An error occured while statting', filename, err); return; }
+                if (err) {
+                    console.log('An error occured while statting', filename, err);
+                    return;
+                }
 
-                if (stats.size > 50 * 1024 * 1024) {
+                console.log(`${this.indent} reading file size =${stats.size}`);
+                
+                if (enableStream) {
 
-                    console.log(this.indent, 'File larger than 50MB, negotiating stream...');
+                    console.log(this.indent,'+++++ Streaming');
+                    
+                    // TODO: Needs work
+                    // Needs to send checksum at the end
+                    // etc. etc. etc.
+                    
                     this.streamFileToClient(socket, filename).then( () => {
-                        console.log('file uploaded successfully');
+                        console.log(this.indent,' streaming file uploaded successfully');
                     }).catch( (e) => {
-                        console.log('An error occured while streaming', filename, 'to the client', e);
+                        console.log(this.indent,'An error occured while streaming', filename, 'to the client', e);
                     });
 
                 } else {
-                    console.log(this.indent, 'Sending small file as a single chunk...');
+                    console.log(this.indent,'+++++ Not Streaming');
                     fs.readFile(filename, (err, d1) => {
         
                         if (err) {
@@ -998,11 +1014,10 @@ class BaseFileServer {
 
             let searchPort = () => {
                 currentPort = currentPort + 1;
-                if (currentPort > port + 20) { reject('timed out scanning ports'); }
-                console.log('checking port', currentPort);
+                if (currentPort > port + 20) { reject('---- timed out scanning ports'); }
                 try {
                     testServer.listen(currentPort, 'localhost');
-
+                    
                     testServer.on('error', (e) => {
                         if (e.code === 'EADDRINUSE') {
                             testServer.close();

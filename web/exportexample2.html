@@ -22,36 +22,28 @@
 <head>
     <title>BioImage Suite Web Import Test</title>
 
-    <script src="https://bioimagesuiteweb.github.io/unstableapp/webcomponents-lite.js"></script>
-    <script src="https://bioimagesuiteweb.github.io/unstableapp/jquery.min.js"></script>
-    <script src="https://bioimagesuiteweb.github.io/unstableapp/libbiswasm_wasm.js"></script>
-    <script src="https://bioimagesuiteweb.github.io/unstableapp/bislib.js"></script>
-    <!--
-        <script src="../build/web/webcomponents-lite.js"></script>
-        <script src="../build/web/jquery.min.js"></script>
-        <script src="../build/web/libbiswasm_wasm.js"></script>
-        <script src="../build/web/bislib.js"></script>
-        -->
+
+    <script src="../build/web/webcomponents-lite.js"></script>
+    <script src="../build/web/jquery.min.js"></script>
+    <script src="../build/web/libbiswasm_wasm.js"></script>
+    <script src="../build/web/bislib.js"></script>
+    
 
 </head>
 <body>
-
-  <bisweb-exportelement id="bis"></bisweb-exportelement>
-
   
   <script type="text/javascript">
 
     window.onload = function(e) {
 
-    let bisweb=document.querySelector("#bis").export;
-    console.log('Bisweb=',bisweb);
+     let bisexport=bioimagesuiteweb();
     
-     let img=new bisweb.BisWebImage();
+     let img=new bisexport.BisWebImage();
 
-     img.load("https://bioimagesuiteweb.github.io/unstableapp/images/MNI_T1_2mm_stripped_ras.nii.gz").then( () => {
+     img.load("../build/web/images/MNI_T1_2mm_stripped_ras.nii.gz").then( () => {
          console.log('Image Loaded = ',img.getDescription());
 
-         let mod=bisweb.createModule("resampleImage");
+         let mod=bisexport.createModule("resampleImage");
          console.log('Module created=',mod);
      
          mod.execute( { "input" : img   }, { "xsp"  : 2.0, "ysp" : 3.0, "zsp" : 4.0

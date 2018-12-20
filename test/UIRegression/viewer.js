@@ -5,8 +5,11 @@ import { ClientFunction } from 'testcafe';
 import fs from 'fs';
 import os from 'os';
 
+import * as BisSetup from './bissetup';
+const webpage = `${BisSetup.getServer()}/viewer.html`;
+console.log('BisSetup=',BisSetup.getServer(),'-->',webpage);
 
-fixture `Viewer Tests`.page `http://localhost:8080/web/viewer.html`;
+fixture `Viewer Tests`.page `${webpage}`;
 
 test('Load Image', async t => {
     const imgLoadDropdown = Selector('.dropdown-toggle').withText('File');

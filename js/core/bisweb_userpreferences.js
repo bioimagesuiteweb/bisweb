@@ -369,24 +369,30 @@ expobj.setItem=function(key,value,save=false) {
 // Load ${HOME}/.bisweb
 // ------------------------------------------------------------------------------
 
-let initializeCommandLine=function() {
+let initializeCommandLine=function(silent=false) {
 
     if (expobj.loadedPromise!==null)
         return;
-    
-    console.log(',,,,');
+
+    if (!silent)
+        console.log(',,,,');
     let fname=nodeLoadUserPreferences();
     if (fname!==null) {
-        console.log(",,,, bisweb commandline user preferences loaded from "+fname);
-        console.log(',,,, ',JSON.stringify(userPreferences));
-        console.log(',,,,');
+        if (!silent) {
+            console.log(",,,, bisweb commandline user preferences loaded from "+fname);
+            console.log(',,,, ',JSON.stringify(userPreferences));
+            console.log(',,,,');
+        }
     } else {
         console.log(',,,, Failed to read user preferences from default location');
         expobj.setImageOrientationOnLoad(userPreferences['orientationOnLoad'],null);
         fname=getDefaultFileName();
-        if (expobj.saveUserPreferences(fname))
-            console.log(',,,, \t created and saved user preferences in ',fname);
-        console.log(',,,,');
+        if (expobj.saveUserPreferences(fname)) {
+            if (!silent) {
+                console.log(',,,, \t created and saved user preferences in ',fname);
+                console.log(',,,,');
+            }
+        }
     }
     // Resolve the promise for later
     expobj.loadedPromise=Promise.resolve();
@@ -419,7 +425,11 @@ expobj.initialize=function(dbase) {
 // -------------------------- auto execute code -----------------------------
 // If one command line, initialize automatically
 if (genericio.getmode() !== 'browser')  {
-    initializeCommandLine();
+
+    if (global.bioimagesuiteweblib)
+        count=1;
+    
+    initializeCommandLine(global.bioimagesuiteweblib);
 } else {
     try {
         // Web worker gives an error

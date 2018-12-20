@@ -30,8 +30,9 @@ let colors=require('colors/safe'),
     template=require('gulp-template'),
     del = require('del'),
     replace = require('gulp-replace'),
-    gulp=require("gulp");
-
+    rimraf= require('rimraf'),
+    gulp=require("gulp"),
+    rename = require('gulp-rename');
 
 
 var getTime=function(nobracket=0) {
@@ -458,6 +459,88 @@ var doxygen=function(indir,conffile,done) {
     return executeCommand(cmd,indir,done);
 };
 
+var createnpmpackage=function(indir,version,in_outdir,done) {
+
+    // Step 1 copy file
+    // make directories
+    let odir=path.resolve(path.join(in_outdir,'bisweb'));
+    console.log('.... Deleting ',odir);
+    try {
+        rimraf.sync(odir);
+    } catch(e) {
+        console.log(e);
+    }
+
+    console.log('Making directory',odir);
+    fs.mkdirSync(odir);
+    
+    let distDir=path.join(odir,'dist');
+    fs.mkdirSync(distDir);
+    
+    gulp.src([ `${indir}/build/web/bislib.js`,
+               `${indir}/build/web/libbiswasm_wasm.js`
+             ]).pipe(gulp.dest(distDir));
+
+    
+    gulp.src([`${indir}/config/biswebbrowser_readme.md`])
+        .pipe(rename('README.md'))
+              .pipe(gulp.dest(odir));
+
+
+    console.log('.... Files copied in',distDir);
+    
+    // Step 2 create package.json
+    let obj = { 
+        "private": true,
+        "name": "biswebbrowser",
+        "version": version,
+        "description": "A web-based implementation of BioImage Suite in Javascript and WebAssembly",
+        "homepage": "www.bioimagesuite.org",
+        "main" : "dist/bioimagesuiteweb.js",
+        "author": "Xenios Papademetris",
+        "license": "GPL V2 (most source code is Apache V2)",
+        "repository": {
+            "type" : "git",
+            "url" : "https://github.com/bioimagesuiteweb/bisweb",
+        },
+        "dependencies": {
+            "bootstrap": "3.3.7",
+            "jquery": "2.2.4",
+            "webcomponents": "0.1.4",
+        },
+    };
+    
+    let txt=JSON.stringify(obj,null,4)+"\n";
+    let output=path.resolve(path.join(odir,"package.json"));
+    console.log('++++ Output = ',output,'\n'+txt+'++++');
+
+    try {
+        fs.writeFileSync(output,txt);
+    } catch(e) {
+        console.log(e);
+    }
+    console.log('++++');
+    console.log('++++ Package.json file created in',output);
+    console.log('++++');
+    
+    // step 3
+    // Master file
+    let txt2=`window.biswebpack=require('./libbiswasm_wasm.js');\nmodule.exports=require('./bislib.js')();\n`;
+
+    console.log('++++ Output (2) = \n'+txt2+'++++');
+    let output2=path.resolve(path.join(odir,"dist/bioimagesuiteweb.js"));
+    
+    fs.writeFileSync(output2,txt2);
+    console.log('++++');
+    console.log('++++ main.js file created in',output2);
+    console.log('++++');
+                     
+    // Step 4 run npm pack
+    executeCommand('npm pack',odir,done);
+    
+    
+};
+
 // -----------------------------------------------------------------------------------------
 // Export line
 // -----------------------------------------------------------------------------------------
@@ -477,6 +560,7 @@ module.exports = {
     doxygen : doxygen,
     createZIPFile : createZIPFile,
     createPackage : createPackage,
+    createnpmpackage :     createnpmpackage,
 };
 
 

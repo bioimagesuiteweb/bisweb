@@ -507,7 +507,7 @@ class BisWSWebSocketFileServer extends BaseFileServer {
             //find a free port and create the streaming server
             this.findFreePort(this.portNumber).then( (port) => {
 
-                console.log('found free port', port);
+                //                console.log('____ Found free port', port);
                 let connected = false;
 
                 //create a streaming websocket server and bind the connected event to create a read stream from the chosen file and begin piping
@@ -518,11 +518,11 @@ class BisWSWebSocketFileServer extends BaseFileServer {
                 }, 
                 (stream) => {
                     connected = true;
-                    console.log('beginning stream');
+                    console.log(this.indent,'\t Beginning stream on port',port);
                     
                     let fileReadStream = fs.createReadStream(filename);
                     fileReadStream.on('end', () => {
-                        console.log('stream done, ending stream');
+                        // console.log('stream done, ending stream');
                         stream.write('');
                         stream.end();
                         sserver.close();

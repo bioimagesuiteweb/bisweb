@@ -40,7 +40,10 @@ let globalParams = {
     comparisonTextElement : null,
     application : null,
     currentViewer : null,
+    scope : webutil.getScope()
 };
+
+
 
 let globalImage=new BisWebImage();
 globalImage.createImage({ "dimensions" : [ 2,2,2] ,
@@ -314,7 +317,7 @@ class DisplayRegressionElement extends HTMLElement {
             globalParams.tabid.push(this.getAttribute('bis-tab'+i));
         }
         
-        globalParams.testDataRootDirectory="images/testdata";
+        globalParams.testDataRootDirectory=globalParams.scope+"images/testdata";
 
         let name=this.getAttribute('bis-testlist') || 'overlay';
         displaytestlist=testmodule[name];

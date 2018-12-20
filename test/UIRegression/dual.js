@@ -1,9 +1,15 @@
 /* globals test, fixture*/
 
 import { Selector } from 'testcafe';
-import { t } from 'testcafe';
 
-fixture`Overlay Tests`.page`http://localhost:8080/web/dualviewer.html`;
+
+import { t } from 'testcafe'; // eslint-disable-no-unused-vars
+
+import * as BisSetup from './bissetup';
+const webpage = `${BisSetup.getServer()}/dualviewer.html`;
+console.log('BisSetup=',BisSetup.getServer(),'-->',webpage);
+
+fixture`Dual Viewer Tests`.page`${webpage}`;
 
 export default class Page {
     constructor() {}
@@ -257,6 +263,7 @@ test('Check Viewer 2 Color Mapping Options', async t => {
 });
 
 test('Check Viewer 2 Overlay', async t => {
+    await t; // TODO: XENIOS added this to silence eslint
     const page = new Page();
     await page.loadImageTwo();
 

@@ -871,12 +871,15 @@ class ViewerApplicationElement extends HTMLElement {
         }
 
         webfileutil.createFileSourceSelector(hmenu);
-        
-        webutil.createMenuItem(hmenu, 'Open AWS Selector', 
-                                () => {
-                                    webfileutil.createAWSMenu();
-                                });
 
+        userPreferences.safeGetItem("internal").then( (f) =>  {
+            if (f) {
+                webutil.createMenuItem(hmenu, 'Open AWS Selector', 
+                                       () => {
+                                           webfileutil.createAWSMenu();
+                                       });
+            }
+        });
 
         return hmenu;
     }

@@ -2,7 +2,11 @@
 
 import { Selector, t } from 'testcafe';
 
-fixture`Overlay Tests`.page`http://localhost:8080/web/connviewer.html`;
+import * as BisSetup from './bissetup';
+const webpage = `${BisSetup.getServer()}/connviewer.html`;
+console.log('BisSetup=',BisSetup.getServer(),'-->',webpage);
+
+fixture`Connectivity Viewer Tests`.page`${webpage}`;
 
 export default class Page {
 

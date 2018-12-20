@@ -326,6 +326,11 @@ const webfileutils = {
             cbopts.initialFilename= '';
             cbopts.mode='directory';
             cbopts.suffix='';
+
+            if (fmode !== 'server' && fmode !== 'amazonaws') {
+                webutil.createAlert('You need to connect to a local fileserver on an S3 share before this operation.',true);
+                return false;
+            }
         }
 
         // -------------------- End of Part IA -------------

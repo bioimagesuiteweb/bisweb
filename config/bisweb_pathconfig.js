@@ -36,9 +36,10 @@ if (major === 8  && minor >=9) {
     process.exit(1);
 }
 
-
-console.log(`....\n.... Using node.js version ${v} (OK=${ok})`);
-console.log('.... This program is part of the commandline suite of tools from BioImage Suite Web.\n.... See https://github.com/bioimagesuiteweb/bisweb for more information.\n....');
+if (!global.bioimagesuiteweblib) {
+    console.log(`....\n.... Using node.js version ${v} (OK=${ok})`);
+    console.log('.... This program is part of the commandline suite of tools from BioImage Suite Web.\n.... See https://github.com/bioimagesuiteweb/bisweb for more information.\n....');
+}
 
 let d=path.dirname(__dirname);
 
@@ -51,6 +52,7 @@ let d=path.dirname(__dirname);
  'js/node',
  'js/legacy',
  'js/core',
+ 'js/export',
  'js/dataobjects',
  'js/modules' ].forEach((p) => {
     module.paths.push(path.normalize(path.join(d,p)));

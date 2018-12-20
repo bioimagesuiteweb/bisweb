@@ -3,14 +3,19 @@
 import { Selector } from 'testcafe';
 
 import * as BisSetup from './bissetup';
-const webpage = `${BisSetup.getServer()}/viewer.html`;
+const webpage = `${BisSetup.getServer()}/biswebdisplaytest.html`;
 console.log('BisSetup=',BisSetup.getServer(),'-->',webpage);
 
 fixture `Getting Started`.page `${webpage}`;
 
 test('Sample test', async t => {
-    const dropdown = Selector('.navbar-nav').find('.dropdown');
+    const runbutton = Selector('#compute');
+
+    await t;
+    await t.wait(10);
+    await t.maximizeWindow();
+    await t.click(runbutton);
+    await t.wait(50000);
     
-    await t 
-        .click(dropdown);
+       
 });

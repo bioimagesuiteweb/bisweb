@@ -4,7 +4,11 @@ import { Selector, t } from 'testcafe';
 import { ClientFunction } from 'testcafe';
 import fs from 'fs';
 
-fixture`Overlay Tests`.page`localhost:8080/web/overlayviewer.html`;
+import * as BisSetup from './bissetup';
+const webpage = `${BisSetup.getServer()}/overlayviewer.html`;
+console.log('BisSetup=',BisSetup.getServer(),'-->',webpage);
+
+fixture`Overlay Tests`.page`${webpage}`;
 
 export default class Page {
     constructor() {

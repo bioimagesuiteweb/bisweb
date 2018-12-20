@@ -4,7 +4,12 @@ import { Selector } from 'testcafe';
 import { ClientFunction } from 'testcafe';
 import fs from 'fs';
 
-fixture`Overlay Tests`.page`http://localhost:8080/web/`;
+import * as BisSetup from './bissetup';
+const webpage = `${BisSetup.getServer()}/index.html`;
+console.log('BisSetup=',BisSetup.getServer(),'-->',webpage);
+
+
+fixture`Main Page Tests`.page`${webpage}`;
 
 export default class Page {
     constructor() {

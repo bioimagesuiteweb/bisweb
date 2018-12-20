@@ -2,7 +2,11 @@
 
 import { Selector, t } from 'testcafe';
 
-fixture`Editor Tests`.page`localhost:8080/web/editor.html`;
+import * as BisSetup from './bissetup';
+const webpage = `${BisSetup.getServer()}/editor.html`;
+console.log('BisSetup=',BisSetup.getServer(),'-->',webpage);
+
+fixture`Editor Tests`.page`${webpage}`;
 
 //specify class to avoid repeating common tasks
 //http://devexpress.github.io/testcafe/documentation/test-api/test-code-structure.html

@@ -1,5 +1,16 @@
 
-export function getServer(mode=0) {
+import minimist from 'minimist';
+
+
+const args = minimist(process.argv.slice(2));
+const mode = args.mode || 0;
+
+console.log('++++ in bissetup, processed arguments, mode=',mode);
+
+export function getServer() {
+
+    if (mode===3)
+        return "https://bioimagesuiteweb.github.io/webapp";
 
     if (mode===2)
         return "https://bioimagesuiteweb.github.io/unstableapp";
