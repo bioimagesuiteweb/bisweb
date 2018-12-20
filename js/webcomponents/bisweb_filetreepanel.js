@@ -34,9 +34,8 @@ class FileTreePanel extends HTMLElement {
         this.menubarid = this.getAttribute('bis-menubarid');
         this.viewerappid = this.getAttribute('bis-viewerapplicationid');
 
-        bis_webutil.runAfterAllLoaded( () => {
-
-            userPreferences.safeGetItem("internal").then( (f) =>  {
+        bis_webutil.runAfterAllLoaded(() => {
+            userPreferences.safeGetItem("internal").then((f) => {
                 this.viewer = document.querySelector(this.viewerid);
                 this.viewertwo = document.querySelector(this.viewertwoid) || null;
                 this.layout = document.querySelector(this.layoutid);
@@ -44,14 +43,15 @@ class FileTreePanel extends HTMLElement {
                 this.viewerapplication = document.querySelector(this.viewerappid);
                 this.popoverDisplayed = false;
 
-                this.panel=new bisweb_panel(this.layout,
-                                            {  name  : 'Files',
-                                               permanent : false,
-                                               width : '400',
-                                               dual : true,
-                                               mode : 'sidebar',
-                                            });
-                
+                this.panel = new bisweb_panel(this.layout,
+                    {
+                        name: 'Files',
+                        permanent: false,
+                        width: '400',
+                        dual: true,
+                        mode: 'sidebar',
+                    });
+
                 if (f) {
                     this.addMenuItem(this.menubar.getMenuBar());
                 }
@@ -642,7 +642,7 @@ class FileTreePanel extends HTMLElement {
 
     createTagSelectMenu() {
         return $(`
-            <select class='form-control'> 
+            <select class='form-control' disabled> 
                 <option value='sagittal'>Sagittal</option>
                 <option value='coronal'>Coronal</option>
             </select>

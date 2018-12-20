@@ -115,6 +115,25 @@
        bis-viewerid="#viewer">
     </bisweb-viewerapplication>
     
+    <bisweb-filetreepanel
+        id="bis_filetreepanel"
+        bis-layoutwidgetid="#viewer_layout" 
+        bis-viewerid="#viewer"
+        bis-menubarid="#viewer_menubar"
+        bis-viewerapplicationid="#viewer_application">
+    </bisweb-filetreepanel>
+
+    let viewerid = this.getAttribute('bis-viewerid');
+    let viewerid2 = this.getAttribute('bis-viewerid2');
+    let layoutid = this.getAttribute('bis-layoutwidgetid');
+    let filetreepanelid = this.getAttribute('bis-filetreepanelid');
+
+    <bisweb-dicomimportelement
+        id="dicom_import"
+        bis-viewerid="#viewer"
+        bis-layoutwidgetid="#viewer_layout"
+        bis-filetreepanelid="#bis_filetreepanel">
+    </bisweb-dicomimportelement>
   </div>
 
   

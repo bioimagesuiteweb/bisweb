@@ -881,8 +881,6 @@ class BisFileServerClient extends BisBaseServerClient {
 
     downloadFile(url,isbinary) {
 
-        // TODO: Needs work to match final server Event
-
         if (!isbinary)
             return this.downloadFileOld(url,isbinary);
         
@@ -894,28 +892,47 @@ class BisFileServerClient extends BisBaseServerClient {
             
             let handledata = ( (raw_data) => { 
 
-                let dat = new Uint8Array(raw_data);
-                let comp=bisgenericio.iscompressed(url);
-                if (!comp) {
-                    resolve({
-                        'data' : dat,
-                        'filename' : url
+                if (raw_data instanceof Blob) { 
+                    let reader = new FileReader();
+                    reader.addEventListener('loadend', () => {
+                        parseBuffer(reader.result);
                     });
+                    reader.readAsArrayBuffer(raw_data);
                 } else {
-                    let dat = new Uint8Array(raw_data);
+                    parseBuffer(raw_data)
+                }
+
+                let parseBuffer = (buffer) => {
+                    let dat = new Uint8Array(buffer);
                     let comp=bisgenericio.iscompressed(url);
+    
+                    console.log('dat', dat);
                     if (!comp) {
                         resolve({
                             'data' : dat,
                             'filename' : url
                         });
                     } else {
-                        let a = pako.ungzip(dat);
-                        resolve({
-                            'data' : a,
-                            'filename' : url
-                        });
-                        a=null;
+                        let dat = new Uint8Array(raw_data);
+                        let comp=bisgenericio.iscompressed(url);
+                        if (!comp) {
+                            resolve({
+                                'data' : dat,
+                                'filename' : url
+                            });
+                        } else {
+                            let a;
+                            //try {
+                                //a = pako.ungzip(dat);
+                                resolve({
+                                    'data': dat,
+                                    'filename': url
+                                });
+                            //} catch(err) {
+                                //console.log('An error occured', err);
+                            //}
+                            a=null;
+                        }
                     }
                 }
             });
@@ -923,7 +940,6 @@ class BisFileServerClient extends BisBaseServerClient {
             //Handler must be defined explicitly because the server may respond two different depending on the file's size, 
             //either with the image in the message or with the command word 'initiatefilestream', which will begin streaming the file between client and server.
             let responseListener = (event) => {
-
                 let data;
                 if (typeof(event.data) === 'string') {
                     try {
@@ -937,14 +953,13 @@ class BisFileServerClient extends BisBaseServerClient {
                 }
                 
                 
-                //console.log('response listener data', data.length);
+                console.log('response listener data', data);
                 if (!data.type) {
                     this.socket.removeEventListener('message', responseListener);
                     handledata(event.data);
                 } else if (data.type === 'initiatefilestream') {
                     this.socket.removeEventListener('message', responseListener);
                     this.connectToFilestream(data.payload.port, data.payload.size).then( (imagedata) => {
-                        //console.log('Done reading stuff',imagedata.size);
                         handledata(imagedata);
                     }).catch( (e) => {
                         console.log('Error',e,e.stack);
@@ -954,7 +969,12 @@ class BisFileServerClient extends BisBaseServerClient {
             
             this.socket.addEventListener('message', responseListener);
 
-            let serverEvent=bisasyncutil.addServerEvent(resolve,reject,'downloadFile');
+            let removeServerEvent = () => {
+                //events remove themselves automatically
+                console.log('server event resolve function'); 
+            };
+
+            let serverEvent=bisasyncutil.addServerEvent(removeServerEvent, reject,'downloadFile');
             this.sendCommand({ 'command' : 'readfile',
                                'filename' : url,
                                'timeout' : 999999,
