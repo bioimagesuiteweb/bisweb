@@ -1,7 +1,7 @@
 {
-    "name": "bisweb_fileserver",
+    "name": "biswebfileserver",
     "version": "1.0.0",
-    "description": "server",
+    "description": "This is the simple file server from BioImage Suite Web",
     "main": "bisfileserver.js",
     "author": "Xenios Papademetris",
     "license": "Apache-2.0",
