@@ -515,7 +515,7 @@ class BaseFileServer {
         let isbinary = parsedText.isbinary;
         let id=parsedText.id;
 
-        console.log('Reading file',filename,isbinary,'do stream=',isstream);
+        console.log(this.indent,'\t Reading file',filename,isbinary,'do stream=',isstream);
         
         if (!this.validateFilename(filename)) {
             this.handleBadRequestFromClient(socket,
@@ -539,27 +539,27 @@ class BaseFileServer {
         
         if (isbinary) {
             
-            console.log('reading binary file and sending to client...');
             fs.stat(filename, (err, stats) => {
                 if (err) {
                     console.log('An error occured while statting', filename, err);
                     return;
                 }
 
-                console.log(`${this.indent} reading file size =${stats.size}`);
-                
                 if (isstream) {
 
-                    console.log(this.indent,'+++++ Streaming');
+                    if (this.opts.verbose)
+                        console.log(this.indent,'+++++ Streaming');
                     
                     this.streamFileToClient(id,socket, filename).then( () => {
-                        console.log(this.indent,' streaming file uploaded successfully');
+                        if (this.opts.verbose)
+                            console.log(this.indent,' streaming file uploaded successfully');
                     }).catch( (e) => {
                         console.log(this.indent,'An error occured while streaming', filename, 'to the client', e);
                     });
                     
                 } else {
-                    console.log(this.indent,'+++++ Not Streaming');
+                    if (this.opts.verbose)
+                        console.log(this.indent,'+++++ Not Streaming');
                     fs.readFile(filename, (err, d1) => {
         
                         if (err) {

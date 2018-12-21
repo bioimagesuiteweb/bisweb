@@ -97,7 +97,8 @@ class BisWSWebSocketFileServer extends BaseFileServer {
         let ind=portsInUse.indexOf(port);
         if (ind>=0)
             portsInUse.splice(ind);
-        console.log('----------- Closing ',port,' List=',portsInUse,'old index=',ind);
+        if (this.opts.verbose)
+            console.log('----------- Closing ',port,' List=',portsInUse,'old index=',ind);
     }
     
     // End of Socket Wrapper
@@ -534,7 +535,7 @@ class BisWSWebSocketFileServer extends BaseFileServer {
                     let fileReadStream = fs.createReadStream(filename);
                     fileReadStream.on('end', () => {
                         this.releasePort(port);
-                        console.log('stream done, ending stream');
+                        //console.log('stream done, ending stream');
                         stream.write('');
                         stream.end();
                         sserver.close();
