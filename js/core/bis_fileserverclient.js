@@ -888,15 +888,64 @@ class BisFileServerClient extends BisBaseServerClient {
             if (url.indexOf('\\')>=0)
                 url=util.filenameWindowsToUnix(url);
 
-            //Handler must be defined explicitly because the server may respond two different depending on the file's size, 
-            //either with the image in the message or with the command word 'initiatefilestream', which will begin streaming the file between client and server.
-            let responseListener = (msg) => {
-                
-                //                console.log('in response listener msg',msg);
-                let host=msg.host;
-                let port=msg.port;
 
-                this.connectToFileStream(host,port).then( (data) => {
+            /**
+             * Connects to a waiting port on the server machine, which upon connection will begin streaming chunks of a large file. 
+             * These are saved and combined in a Blob which is returned once the stream is finished.
+             * @param {String} hostname - The hostname to connect to
+             * @param {Number} port - The port on which the server machine is listening. 
+             */
+            let connectToFileStream= (in_hostname,port) => {
+                
+                return new Promise( (resolve, reject) => {
+                    
+                    let hostname = 'ws://'+in_hostname+':' + port;
+                    let blobArray = [];
+                    
+                    //once connected the server will begin piping images chunks, which we will assemble on this side
+                    let ssocket = null;
+                    
+                    if (!this.NodeWebSocket)
+                        ssocket = new WebSocket(hostname);
+                    else
+                        ssocket = new this.NodeWebSocket(hostname);
+                    
+                    
+                    ssocket.addEventListener('message', (e) => {
+                        
+                        let l =e.data.size;
+                        if (l === undefined)
+                            l=e.data.length;
+                        
+                        if (l === 0) {
+                            if (bisgenericio.getmode() !== 'node') {
+                                let combinedData = new Blob(blobArray);
+                                let reader = new FileReader();
+                                reader.addEventListener('loadend', () => {
+                                    resolve(reader.result);
+                                });
+                                reader.readAsArrayBuffer(combinedData);
+                            } else {
+                                let combinedData=Buffer.concat(blobArray);
+                                resolve(combinedData);
+                            }
+                            ssocket.close();
+                        } else {
+                            //console.log('++++ Read one more blob',l,e.data);
+                            blobArray.push(e.data);
+                        }
+                    });
+                    
+                    ssocket.addEventListener('error', (e) => {
+                        console.log('Error on filestream', e);
+                        reject(e);
+                    });
+                });
+            };
+            
+            // This is the callback if event is resolved
+            let responseListener = (msg) => {
+                connectToFileStream(msg.host,msg.port).then( (data) => {
                     this.handleDownloadedFile(url,isbinary,data,resolve);
                 }).catch( (e) => {
                     console.log('Error',e,e.stack);
@@ -912,64 +961,6 @@ class BisFileServerClient extends BisBaseServerClient {
                                'isbinary' : isbinary });
         });
     }
-
-
-    /**
-     * Connects to a waiting port on the server machine, which upon connection will begin streaming chunks of a large file. 
-     * These are saved and combined in a Blob which is returned once the stream is finished.
-     * @param {String} hostname - The hostname to connect to
-     * @param {Number} port - The port on which the server machine is listening. 
-     */
-    connectToFileStream(in_hostname,port) {
-
-        //        console.log('In Connect to File Stream',in_hostname,port);
-        
-        return new Promise( (resolve, reject) => {
-            
-            let hostname = 'ws://'+in_hostname+':' + port;
-            let blobArray = [];
-    
-            //once connected the server will begin piping images chunks, which we will assemble on this side
-            let ssocket = null;
-
-            if (!this.NodeWebSocket)
-                ssocket = new WebSocket(hostname);
-            else
-                ssocket = new this.NodeWebSocket(hostname);
-            
-
-            ssocket.addEventListener('message', (e) => {
-
-                let l =e.data.size;
-                if (l === undefined)
-                    l=e.data.length;
-                
-                if (l === 0) {
-                    if (bisgenericio.getmode() !== 'node') {
-                        let combinedData = new Blob(blobArray);
-                        let reader = new FileReader();
-                        reader.addEventListener('loadend', () => {
-                            resolve(reader.result);
-                        });
-                        reader.readAsArrayBuffer(combinedData);
-                    } else {
-                        let combinedData=Buffer.concat(blobArray);
-                        resolve(combinedData);
-                    }
-                    ssocket.close();
-                } else {
-                    //console.log('++++ Read one more blob',l,e.data);
-                    blobArray.push(e.data);
-                }
-            });
-
-            ssocket.addEventListener('error', (e) => {
-                console.log('Error on filestream', e);
-                reject(e);
-            });
-        });
-    }
-    
 
 }
 
