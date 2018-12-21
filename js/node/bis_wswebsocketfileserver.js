@@ -9,8 +9,9 @@ const coregenericio = require('bis_coregenericio.js');
 const wsutil = require('bis_wsutil');
 const globalInitialServerPort=require('bis_wsutil').initialPort;
 const BaseFileServer=require('bis_basefileserver');
+const net = require('net'); // needed for find free port
 
-
+const portsInUse=[];
 // .................................................. This is the class ........................................
 
 class BisWSWebSocketFileServer extends BaseFileServer {
@@ -92,7 +93,12 @@ class BisWSWebSocketFileServer extends BaseFileServer {
             socket.terminate();
     }
 
-    
+    releasePort(port) {
+        let ind=portsInUse.indexOf(port);
+        if (ind>=0)
+            portsInUse.splice(ind);
+        console.log('----------- Closing ',port,' List=',portsInUse,'old index=',ind);
+    }
     
     // End of Socket Wrapper
     // -----------------------------------------------------------------------------------
@@ -102,6 +108,7 @@ class BisWSWebSocketFileServer extends BaseFileServer {
      * @param{Server} server - the server to stop
      */
     stopServer(server) {
+        this.releasePort(this.portNumber);
         server.close();
     }
 
@@ -148,15 +155,21 @@ class BisWSWebSocketFileServer extends BaseFileServer {
 
         
         return new Promise ( (resolve,reject) => {
-
+            
             let internalStartServer = ( (port) => {
-        
+
+                while (portsInUse.indexOf(port)>=0)
+                    port+=1;
+
+                portsInUse.push(port);
+                console.log('Ports in Use=',portsInUse);
+                
                 this.netServer = new WebSocket.Server({
                     'host' : hostname,
                     'port' : port,
                     'maxPayload' : wsutil.maxPayloadSize,
                 }, () => {
-                
+                    this.portNumber=port;
                     this.attachServerEvents(hostname,port,datatransfer);
                     setTimeout( () => {
                         resolve(port);
@@ -437,7 +450,7 @@ class BisWSWebSocketFileServer extends BaseFileServer {
         
         socket.on('close', () => {
             console.log(self.indent+' closing data transfer server\n'+this.indent+' ');
-            self.stopServer(self.netServer);
+            self.stopServer(self.netServer,);
         });
 
         console.log(',_._._._._._ \t receiving data on socket',this.getSocketInfo(socket),socket.protocol);
@@ -491,38 +504,37 @@ class BisWSWebSocketFileServer extends BaseFileServer {
                 'port' : p,
                 'id' : upload.id
             };
-            console.log(',_._._._._._ \t Sending back',JSON.stringify(cmd));
+            console.log(',_._._._._._ \t Sending back',JSON.stringify(cmd),tserver.portNumber);
             this.sendCommand(socket,'uploadmessage', cmd);
         });
     }
 
     /**
      * Creates a stream between the client and server in order to transfer large files. Spins up a new file server on a different port to handle the transfer.
-     * 
+     * @param {Number} id - the request id
      * @param {WebSocket} socket - The control socket already negotiated between the client and the server.
      * @param {String} filename - The full path of the file to stream to the client.
      */
-    streamFileToClient(socket, filename) {
+    streamFileToClient(id,socket, filename) {
+
         return new Promise( (resolve, reject) => {
             //find a free port and create the streaming server
-            this.findFreePort(this.portNumber).then( (port) => {
+            this.findFreePort(this.portNumber+5).then( (port) => {
 
-                //                console.log('____ Found free port', port);
                 let connected = false;
-
-                //create a streaming websocket server and bind the connected event to create a read stream from the chosen file and begin piping
+                console.log(this.indent,'Creating streaming download server on port',port);
                 let sserver = new StreamingWebSocket.Server({
-                    'host' : 'localhost',
+                    'host' : this.hostname,
                     'port' : port,
                     'perMessageDeflate' : false  //Authors recommend disabling this https://www.npmjs.com/package/websocket-stream
-                }, 
-                (stream) => {
+                }, (stream) => {
                     connected = true;
-                    console.log(this.indent,'\t Beginning stream on port',port);
+                    console.log(this.indent,'\t Beginning stream on port',port,filename);
                     
                     let fileReadStream = fs.createReadStream(filename);
                     fileReadStream.on('end', () => {
-                        // console.log('stream done, ending stream');
+                        this.releasePort(port);
+                        console.log('stream done, ending stream');
                         stream.write('');
                         stream.end();
                         sserver.close();
@@ -535,8 +547,14 @@ class BisWSWebSocketFileServer extends BaseFileServer {
                 sserver.on('listening', () => {
                     fs.stat(filename, (err, stats) => {
                         if (err) { reject(err); sserver.close(); }
-
-                        this.sendCommand(socket, 'initiatefilestream', { 'port' : port, 'size' : stats.size });
+                        
+                        //                        console.log('Initiating command',port);
+                        this.sendCommand(socket, 'initiatefilestream', {
+                            'host' : this.hostname,
+                            'port' : port,
+                            'id' :   id,
+                            'size' : stats.size
+                        });
 
                         //port should close itself if server is non-responsive (i.e. has not connected)
                         let timeout = timers.setTimeout( () => {
@@ -554,11 +572,60 @@ class BisWSWebSocketFileServer extends BaseFileServer {
                 sserver.on('error', (e) => {
                     console.log('Stream server encountered an error and is closing', e);
                     sserver.close();
+                    reject(e);
                 });
 
             }).catch( (e) => {
                 reject(e);
             });
+        });
+    }
+
+        /**
+     * Iteratively scans for a free port on the user's system.
+     * 
+     * @param {Number} port - The port to start scanning from, typically the number of the control socket. Increments each time the function finds an in-use port.
+     * @returns A promise that will resolve a free port, or reject with an error.
+     */
+    findFreePort(port) {
+        return new Promise( (resolve, reject) => {
+            let currentPort = port;
+            let testServer = new net.Server();
+
+            let searchPort = () => {
+                currentPort+=1;
+                while (portsInUse.includes(currentPort))
+                    currentPort+=1;
+                if (currentPort > port + 2000) {
+                    reject('---- timed out scanning ports');
+                }
+                try {
+                    portsInUse.push(currentPort);
+                    //                    console.log('Ports in Use=',portsInUse);
+                    testServer.listen(currentPort, 'localhost');
+                    
+                    testServer.on('error', (e) => {
+                        if (e.code === 'EADDRINUSE') {
+                            portsInUse.push(currentPort);
+                            testServer.close();
+                            searchPort();
+                        } else {
+                            reject(e);
+                        }
+                    });
+
+                    testServer.on('listening', () => {   testServer.close(); });
+                    testServer.on('close', () => {
+                        //console.log('Found port',currentPort);
+                        resolve(currentPort);
+                    });
+                } catch(e) {
+                    console.log('catch', e);
+                }
+            };
+            
+            searchPort();
+
         });
     }
 

@@ -22,7 +22,6 @@ hotp.options  = { crypto };
 const secret = otplib.authenticator.generateSecret();
 let onetimePasswordCounter=1;
 
-let portCount=0;
 
 // .................................................. This is the class ........................................
 
@@ -35,9 +34,10 @@ const server_fields = [
     { name : 'tempDirectory', value: '' }
 ];
 
+const portsInUse=[];
+
 // Used to make temp directories
 let tempDirectoryCounter=0;
-const enableStream=true;
 
 class BaseFileServer {
 
@@ -436,7 +436,11 @@ class BaseFileServer {
                 break;
             }
             case 'readfile': {
-                this.readFileAndSendToClient(parsedText, socket, control);
+                this.readFileAndSendToClient(parsedText, socket,false);
+                break;
+            }
+            case 'readfilestream': {
+                this.readFileAndSendToClient(parsedText, socket,true);
                 break;
             }
             case 'uploadfile' : {
@@ -506,12 +510,12 @@ class BaseFileServer {
      * @param {String} rawText - Unparsed JSON denoting the file or series of files to read. 
      * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
      */
-    readFileAndSendToClient(parsedText, socket) {
+    readFileAndSendToClient(parsedText, socket,isstream) {
         let filename = parsedText.filename;
         let isbinary = parsedText.isbinary;
         let id=parsedText.id;
 
-        console.log('Reading file',filename,isbinary);
+        console.log('Reading file',filename,isbinary,'do stream=',isstream);
         
         if (!this.validateFilename(filename)) {
             this.handleBadRequestFromClient(socket,
@@ -544,20 +548,16 @@ class BaseFileServer {
 
                 console.log(`${this.indent} reading file size =${stats.size}`);
                 
-                if (enableStream) {
+                if (isstream) {
 
                     console.log(this.indent,'+++++ Streaming');
                     
-                    // TODO: Needs work
-                    // Needs to send checksum at the end
-                    // etc. etc. etc.
-                    
-                    this.streamFileToClient(socket, filename).then( () => {
+                    this.streamFileToClient(id,socket, filename).then( () => {
                         console.log(this.indent,' streaming file uploaded successfully');
                     }).catch( (e) => {
                         console.log(this.indent,'An error occured while streaming', filename, 'to the client', e);
                     });
-
+                    
                 } else {
                     console.log(this.indent,'+++++ Not Streaming');
                     fs.readFile(filename, (err, d1) => {
@@ -1016,16 +1016,18 @@ class BaseFileServer {
             let testServer = new net.Server();
 
             let searchPort = () => {
-                currentPort = currentPort + portCount+3;
-                portCount+=1;
-                if (portCount>15)
-                    portCount=0;
-                if (currentPort > port + 2000) { reject('---- timed out scanning ports'); }
+                currentPort+=1;
+                while (portsInUse.includes(currentPort))
+                    currentPort+=1;
+                if (currentPort > port + 2000) {
+                    reject('---- timed out scanning ports');
+                }
                 try {
                     testServer.listen(currentPort, 'localhost');
                     
                     testServer.on('error', (e) => {
                         if (e.code === 'EADDRINUSE') {
+                            portsInUse.push(currentPort);
                             testServer.close();
                             searchPort();
                         } else {
@@ -1033,16 +1035,17 @@ class BaseFileServer {
                         }
                     });
 
-                    testServer.on('listening', () => {
-                        testServer.close();
+                    testServer.on('listening', () => {   testServer.close(); });
+                    testServer.on('close', () => {
+                        console.log('Found port',currentPort);
                         resolve(currentPort);
                     });
                 } catch(e) {
+                    
                     console.log('catch', e);
                 }
-                
             };
-
+            
             searchPort();
 
         });
