@@ -35,6 +35,7 @@ const server_fields = [
 ];
 
 const portsInUse=[];
+const minSizeToUseStreamingDownload=5*1024*1024;
 
 // Used to make temp directories
 let tempDirectoryCounter=0;
@@ -544,8 +545,9 @@ class BaseFileServer {
                     console.log('An error occured while statting', filename, err);
                     return;
                 }
+                console.log(this.ident,'File size=',stats['size'],stats['size']-minSizeToUseStreamingDownload);
 
-                if (isstream) {
+                if (isstream && stats['size']>minSizeToUseStreamingDownload) {
 
                     if (this.opts.verbose)
                         console.log(this.indent,'+++++ Streaming');
@@ -559,7 +561,7 @@ class BaseFileServer {
                     
                 } else {
                     if (this.opts.verbose)
-                        console.log(this.indent,'+++++ Not Streaming');
+                        console.log(this.indent,'+++++ Not Streaming',isstream,stats['size']);
                     fs.readFile(filename, (err, d1) => {
         
                         if (err) {

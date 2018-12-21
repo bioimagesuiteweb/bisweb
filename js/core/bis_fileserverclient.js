@@ -895,7 +895,7 @@ class BisFileServerClient extends BisBaseServerClient {
              * @param {String} hostname - The hostname to connect to
              * @param {Number} port - The port on which the server machine is listening. 
              */
-            let connectToFileStream= (in_hostname,port) => {
+            let connectToFileStreamAndReceiveData= (in_hostname,port) => {
                 
                 return new Promise( (resolve, reject) => {
                     
@@ -944,12 +944,21 @@ class BisFileServerClient extends BisBaseServerClient {
             };
             
             // This is the callback if event is resolved
+            // If msg.host is not defined then it is probably a simple download event
+            // i.e. the server decided that the file was too small
             let responseListener = (msg) => {
-                connectToFileStream(msg.host,msg.port).then( (data) => {
-                    this.handleDownloadedFile(url,isbinary,data,resolve);
-                }).catch( (e) => {
-                    console.log('Error',e,e.stack);
-                });
+
+                if (!msg.host) {
+                    console.log('\n ------------- \n trying to handle as a simple download \n');
+                    this.handleDownloadedFile(url,isbinary,msg,resolve);
+                } else {
+                    connectToFileStreamAndReceiveData(msg.host,msg.port).then( (data) => {
+                        this.handleDownloadedFile(url,isbinary,data,resolve);
+                    }).catch( (e) => {
+                        console.log('Error',e,e.stack);
+                        reject(e);
+                    });
+                }
             };
             
             let serverEvent=bisasyncutil.addServerEvent(responseListener,reject,'downloadFile');
