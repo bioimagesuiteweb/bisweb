@@ -848,7 +848,7 @@ class ViewerApplicationElement extends HTMLElement {
         
         let hmenu = webutil.createTopMenuBarMenu("Help", menubar);
 
-        let fn = (() => { /*this.welcomeMessage(true) ;*/});
+        let fn = (() => { this.welcomeMessage(true) ; });
         
         webutil.createMenuItem(hmenu,'About this application',fn);
         

@@ -87,7 +87,6 @@ var initialize_wasm=function(obj=null) {
                     };
                     window.onload = newOnload;
                 } else {
-                    //window invokes attachViewers so have to bind algorithm controller explicitly
                     window.onload = clb;
                 }
             }
