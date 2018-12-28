@@ -37,6 +37,7 @@ const iconpath=webutil.getWebPageImagePath();
  *    content : an HTML string that is included on the menubar
  *    logo  : an image file to use as logo e.g. "images/bioimagesuite.png"
  *    logoheight : the height of the logo e.g. "50px"
+ *    logolink : url of link to open when logo is clicked 
  */
 class TopMenuBarElement extends HTMLElement {
     
@@ -48,6 +49,7 @@ class TopMenuBarElement extends HTMLElement {
 
         const logoheight=this.getAttribute('logoheight') || '50px';
         const logo=this.getAttribute('logo') || `${iconpath}/bioimagesuite.png`;
+        let logolink=this.getAttribute('logolink') || "./index.html";
         
         const topmenubartext=`
             <nav class="navbar navbar-default navbar-fixed-top">
@@ -60,7 +62,7 @@ class TopMenuBarElement extends HTMLElement {
       <span class="icon-bar"></span>
       <span class="icon-bar"></span>
             </button>
-        <a href="./index.html" target="_blank"><img src="${logo}" height="${logoheight}" id="bislogo" style="margin-top:5px"></a>
+        <a href="${logolink}" target="_blank"><img src="${logo}" height="${logoheight}" id="bislogo" style="margin-top:5px"></a>
     </div>  <!-- Collect the nav links, forms, and other content for toggling -->
     <div class="collapse navbar-collapse" id="bismenu">
         <ul class="nav navbar-nav" id="bismenuparent">
@@ -125,39 +127,9 @@ BioImage Suite</a> (${bisversion.version}, ${bisversion.date})</div>`;
     
 }
 
-/**
- * A main div element that fills the screen
- *
- * to access simply include this file into your code and then add this as an element to your html page
- *
- * @example
- * <bisweb-viewerwidget bis-margin="60px">  
- *        <bisweb-mni2tal></bisweb-mni2tal>
- * </bisweb-viewerwidget>
- *
- * Attributes:
- *    bis-margin : pixel offset from the top
- */
-class ViewerWidgetElement extends HTMLElement {
-    
-    // Fires when an instance of the element is created.
-    connectedCallback() {
-        let margin=this.getAttribute('bis-margin') || '65px';
-        $(this).css({
-            'position' : 'relative',
-            'width' : '800px',
-            'height' : '800px',
-            'top' : `${margin}`,
-            'left' : '5px',
-            '-webkit-user-select': 'none',
-            '-moz-user-select': 'none',
-            '-ms-user-select': 'none',
-            'user-select': 'none',
-            '-webkit-app-region': 'no-drag'});
-    }
-}
+// ----------------- Register Elements -------------------------------
 
 webutil.defineElement('bisweb-topmenubar', TopMenuBarElement);
 webutil.defineElement('bisweb-botmenubar', BottomMenuBarElement);
-webutil.defineElement('bisweb-viewerwidget', ViewerWidgetElement);
+
 
