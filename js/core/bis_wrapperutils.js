@@ -125,8 +125,6 @@ var initialize_wasm=function(obj=null) {
 
     return new Promise( (resolve,reject) => {
 
-        console.log('Here ',obj);
-
         if (obj!==null) {
             // Web worker for now ...
             if (!obj.binary)
@@ -137,7 +135,7 @@ var initialize_wasm=function(obj=null) {
             };
 
             dname="internal js module (webworker)";
-            libbiswasm_raw(done,dname,obj.binary);
+            obj.initialize(done,dname,obj.binary);
             return;
         }
         

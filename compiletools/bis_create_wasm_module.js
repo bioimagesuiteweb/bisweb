@@ -108,6 +108,10 @@ let str=genericio.tozbase64(arr);
 let a=getDate("/");
 let b=getTime(1);
 
+
+
+txt='var biswasm_initialize_function=null;\n'+txt.trim().replace(/module.exports/g,'biswasm_initialize_function');
+
 let output_text=`
 
 
