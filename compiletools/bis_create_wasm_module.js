@@ -30,7 +30,7 @@
 const program=require('commander');
 const genericio=require('../js/core/bis_genericio.js');
 const fs=require('fs');
-
+const path=require('path');
 
 var help = function() {
     console.log('\nThis program creates the biswasmmodule.js file\n');
@@ -108,7 +108,7 @@ let str=genericio.tozbase64(arr);
 let a=getDate("/");
 let b=getTime(1);
 
-
+let inputfilename=path.basename(path.normalize(fname2));
 
 txt='var biswasm_initialize_function=null;\n'+txt.trim().replace(/module.exports/g,'biswasm_initialize_function');
 
@@ -121,10 +121,8 @@ let output_text=`
     const biswebpack= {
         binary: "${str}",
         date : "${a}, ${b}",
-        initialize : function(a,b,c) {
-            console.log('++++ Loading WASM Code');
-            biswasm_initialize_function(a,b,c);
-        }
+        filename : "external js module: ${inputfilename}",
+        initialize : biswasm_initialize_function,
     };
 
     if (typeof module !== "undefined" && module.exports) {

@@ -47,8 +47,6 @@ var initialize_wasm=function(obj=null) {
     if (genericio.getmode() === "node") 
         return initialize_wasm_node();
 
-    let dname="external js_module (libbiswasm_wasm.js)";
-    
     return new Promise( (resolve,reject) => {
         
         if (obj!==null) {
@@ -61,16 +59,16 @@ var initialize_wasm=function(obj=null) {
                 resolve(m);
             };
 
-            dname="internal js module (webworker)";
-            obj.initialize(done,dname,obj.binary);
+            obj.initialize(done,obj.filename,obj.binary);
             return;
         }
 
-
         let done=function(m) {
-            m.bisdate=window.biswebpack.date; resolve(m);
+            m.bisdate=window.biswebpack.date;
+            resolve(m);
         };
         let clb=function() {
+            let dname=window.biswebpack.filename;
             let binary=genericio.fromzbase64(window.biswebpack.binary);
             window.biswebpack.initialize(done,dname,binary);
         };
