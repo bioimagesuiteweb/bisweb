@@ -21,10 +21,7 @@
 const $=require('jquery');
 const webutil=require('bis_webutil');
 const bisversion=require('bisdate');
-
-
-
-
+const iconpath=webutil.getWebPageImagePath();
 
 
 // -----------------------------------------------------------------
@@ -48,7 +45,7 @@ class TopMenuBarElement extends HTMLElement {
         
         // Move the children out
 
-        const iconpath=webutil.getWebPageImagePath();
+
         const logoheight=this.getAttribute('logoheight') || '50px';
         const logo=this.getAttribute('logo') || `${iconpath}/bioimagesuite.png`;
         
@@ -120,7 +117,7 @@ BioImage Suite</a> (${bisversion.version}, ${bisversion.date})</div>`;
         let content=this.getAttribute('content') || '';
         if (content.length<3)
             content=bottomtext;
-        let elem=$(bottommenubar);
+        const elem=$(bottommenubar);
         elem.append($(content));
         this.appendChild(elem[0]);
         webutil.disableDrag(elem);
