@@ -231,20 +231,25 @@ var execute_test=function(test,usethread=false) {
                 console.log('oooo Invoking Module with params=',JSON.stringify(params));
                 let newParams = module.parseValuesAndAddDefaults(params);
 
+
                 if (!usethread) {
+                    replacesystemprint(true);
                     module.directInvokeAlgorithm(newParams).then(() => {
+                        replacesystemprint(false);
                         console.log('oooo -------------------------------------------------------');
                         resolve( {
                             result : ' Test completed, now checking results.',
                             module : module,
                         });
                     }).catch((e) => {
+                        replacesystemprint(false);
                         reject('---- Failed to invoke algorithm '+e);
                     });
                 } else {
                     console.log('oooo ..........---Calling Web Worker ..............................-');
+                    replacesystemprint(true);
                     threadController.executeModule(module.name, module.inputs,newParams).then((outputs) => {
-
+                        replacesystemprint(false);
                         if (Object.keys(outputs).length<1)
                             reject('---- Failed to execute in thread manager ');
 
@@ -256,6 +261,7 @@ var execute_test=function(test,usethread=false) {
                             module : module,
                         });
                     }).catch((e) => {
+                        replacesystemprint(false);
                         reject('---- Failed to invoke algorithm via thread manager '+e);
                     });
                 }
@@ -522,7 +528,7 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
                 main.append(`<P> Running in WebWorker </P>`);
             console.log(`-------------------------------`);
             console.log(`-------------------------------\nRunning test ${i}: ${v.command}, ${v.test},${v.result}\n------------------------`);
-            replacesystemprint(true);
+
             try {
                 let t0 = performance.now();
                 let obj=await execute_test(v,usethread); // jshint ignore:line
@@ -533,7 +539,6 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
                     let a='<P>.... WASM memory size=' +biswrap.get_module()['wasmMemory'].buffer.byteLength/(1024*1024)+' MB.</P>';
                     main.append(a);
                 } catch(e) {
-                    console.log(e);
                     // sometimes we have pure js modules, no wasm
                 }
 
@@ -564,7 +569,7 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
                 bad+=1;
                 badlist.push(tname);
             }
-            replacesystemprint(false);
+
 
             main.append(`<details><summary><B>Details</B></summary><PRE>${logtext}</PRE></details><HR>`);
             window.scrollTo(0,document.body.scrollHeight-100);
@@ -602,15 +607,6 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
         }
 
         window.scrollTo(0,document.body.scrollHeight-100);
-
-        if (!usethread) {
-            try {
-                biswrap.get_module()._print_memory();
-                console.log('Memory size=',biswrap.get_module()['wasmMemory'].buffer.byteLength/(1024*1024),' MB');
-            } catch(e) {
-                // sometimes we have pure js modules, no wasm
-            }
-        }
     } else {
         main.append(`<BR> <BR> <BR>`);
         window.scrollTo(0,0);

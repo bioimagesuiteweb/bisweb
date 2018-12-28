@@ -23,7 +23,7 @@ const bisdate=require('bisdate.js');
  * @namespace biswebexport
  */
 
-console.log(`BioImage Suite Web Export Object (bioimagesuiteweb) loaded. Current build= (${bisdate.version}, ${bisdate.date}, ${bisdate.time}).`);
+
 
 module.exports= {
 

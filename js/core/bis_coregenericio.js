@@ -961,6 +961,10 @@ let getimagepath=function() {
         imagepath=path.resolve(scope);
         console.log('Imagepath=',imagepath);
 
+    } else if (webWorkerScope) {
+        console.log('In Web Worker ...');
+        console.log('Web Worker can not get path, or perform fetch');
+
     } else {
         const path=getpathmodule();
         console.log('Dirname=',__dirname);
