@@ -35,7 +35,7 @@ const BisWebImage=require('bisweb_image');
 const BisWebMatrix=require('bisweb_matrix');
 const bistransforms=require('bis_transformationutil');
 const wasmutil=require('bis_wasmutils');
-const libbiswasm_raw=require('libbiswasm');
+const libbiswasm_raw=require('libbiswasm'); // Ignored in Webpack for Web
 const genericio=require('bis_genericio.js');
 
 var serializeObject=function(Module,obj,datatype) {
@@ -125,6 +125,7 @@ var initialize_wasm=function(obj=null) {
 
     return new Promise( (resolve,reject) => {
 
+        console.log('Here ',obj);
 
         if (obj!==null) {
             // Web worker for now ...
@@ -152,7 +153,7 @@ var initialize_wasm=function(obj=null) {
 
             
             let clb=function() {
-                libbiswasm_raw(done,dname,binary);
+                window.biswebpack.initialize(done,dname,binary);
             };
             
             if (document.readyState == 'complete') {

@@ -90,6 +90,15 @@ try {
     process.exit(1);
 }
 
+let fname2=program.input.substr(0,program.input.length-4)+'js';
+let txt=null;
+try {
+    txt=fs.readFileSync(fname2,'utf-8');
+} catch(e) {
+    console.log('Failed to read data',e);
+    process.exit(1);
+}
+
 let arr=new Uint8Array(d);
 //console.log("++++ RAW Binary WASM Array length=",arr.length);
 let str=genericio.tozbase64(arr);
@@ -104,7 +113,15 @@ let output_text=`
 
 (function () {
 
-    const biswebpack= { binary: "${str}", date : "${a}, ${b}" };
+    ${txt};
+    const biswebpack= {
+        binary: "${str}",
+        date : "${a}, ${b}",
+        initialize : function(a,b,c) {
+            console.log('++++ Loading WASM Code');
+            biswasm_initialize_function(a,b,c);
+        }
+    };
 
     if (typeof module !== "undefined" && module.exports) {
         module.exports = biswebpack;

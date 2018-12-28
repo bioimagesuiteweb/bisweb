@@ -113,6 +113,7 @@ if (output !== "webworkermain.js") {
         externals: {
             // require("jquery") is external and available on the global var jQuery
             "jquery": "jQuery",
+            "libbiswasm" : "console.log" // this is not needed in this case and should be excluded
         },
         watchOptions: {
             aggregateTimeout: 300,
@@ -163,6 +164,9 @@ if (output !== "webworkermain.js") {
                         path.resolve(mypath,'build/wasm'),
                         path.resolve(mypath,'build/web')]
         },
+/*        externals: {
+            "libbiswasm" : "console.log" // this is not needed in this case and should be excluded
+        },*/
         mode : 'development',
         target : "web",
         watchOptions: {
