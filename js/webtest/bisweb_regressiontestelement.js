@@ -215,7 +215,11 @@ var execute_test=function(test,usethread=false) {
                 }
             }
         }
-        
+
+        let doworker = test.webworker;
+        if (doworker!==false)
+            doworker=true;
+
         let tobj=get_test_object(test);
         let test_type = tobj['test_type'] || 'image';
         if (test_type==='registration')
@@ -245,7 +249,7 @@ var execute_test=function(test,usethread=false) {
                         replacesystemprint(false);
                         reject('---- Failed to invoke algorithm '+e);
                     });
-                } else {
+                } else if (doworker) {
                     console.log('oooo ..........---Calling Web Worker ..............................-');
                     replacesystemprint(true);
                     threadController.executeModule(module.name, module.inputs,newParams).then((outputs) => {
@@ -264,6 +268,9 @@ var execute_test=function(test,usethread=false) {
                         replacesystemprint(false);
                         reject('---- Failed to invoke algorithm via thread manager '+e);
                     });
+                } else {
+                    replacesystemprint(false);
+                    reject('---- Cannot invoke this test via thread manager '+JSON.stringify(test,null,2));
                 }
             }).catch((e) => {
                 reject('----- Bad input filenames in test '+e);
