@@ -317,6 +317,8 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         Promise.all(this.applicationInitializedPromiseList).then( () => {
             this.parseQueryParameters();
             document.body.style.zoom =  1.0;
+        }).catch( (e) => {
+            console.log('Error ',e);
         });
     }
 }
