@@ -21,7 +21,7 @@
 
 const THREE = require('three');
 const $=require('jquery');
-
+const inobounce=require('inobounce.js');
 
 /** 
  * @file Browser module. Contains {@link Bis_3dOrthographicCameraControls}
@@ -662,6 +662,8 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
         if (event.touches.length>1 && !mouseinviewport(event.touches[1]))
             return;
 
+
+        inobounce.enable();
         
         if (event.touches.length==1) {
 
@@ -749,6 +751,7 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
         
 
         if ( _this.enabled === false ) return;
+
         
         switch ( event.touches.length ) {
             
@@ -767,7 +770,8 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
             break;
             
         }
-        
+
+        inobounce.disable();
         _state = STATE.NONE;
         _this.dispatchEvent( endEvent );
     }
