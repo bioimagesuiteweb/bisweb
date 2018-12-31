@@ -105,11 +105,6 @@ if (output !== "webworkermain.js") {
         },
         mode : 'development',
         target : "web",
-        output : {
-            library: 'bioimagesuiteweb',
-            libraryExport: 'default',
-            libraryTarget : 'umd'
-        },
         externals: {
             // require("jquery") is external and available on the global var jQuery
             "jquery": "jQuery",
@@ -174,6 +169,15 @@ if (output !== "webworkermain.js") {
             poll: 1000
         }, plugins : [
         ]
+    };
+}
+
+if (output === "bislib.js") {
+    console.log('++++ Adding library output to bislib.js');
+    module.exports.output= {
+        library: 'bioimagesuiteweb',
+        libraryExport: 'default',
+        libraryTarget : 'umd'
     };
 }
 
