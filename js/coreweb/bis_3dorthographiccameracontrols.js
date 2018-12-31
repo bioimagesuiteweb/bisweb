@@ -655,10 +655,15 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
 
         if ( _this.enabled === false ) 
             return false;
+
+        if (!mouseinviewport(event.touches[0]))
+            return;
+
+        if (event.touches.length>1 && !mouseinviewport(event.touches[1]))
+            return;
+
         
         if (event.touches.length==1) {
-            if (!mouseinviewport(event.touches[0]))
-                return;
 
             if ( _this.noRotate) {
                 coordinateCallback(0);
@@ -666,6 +671,8 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
             }
         }
         
+
+
         
         switch ( event.touches.length ) {
         case 1:
@@ -710,7 +717,9 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
             }
         }
 
-
+        if (event.touches.length>1 && !mouseinviewport(event.touches[1]))
+            return;
+        
         switch ( event.touches.length ) {
         case 1:
             _rotateEnd.copy( getMouseProjectionOnBall( _this.lastNormalizedCoordinates[0],_this.lastNormalizedCoordinates[1] ) );
@@ -731,17 +740,13 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
             
         }
 
-        event.preventDefault();
-        event.stopPropagation();
+        //        event.preventDefault();
+        //        event.stopPropagation();
     }
 
     /* touch end handler*/
     function touchend( event ) {
         
-        var w=$("#debugtext");
-        w.empty();
-        w.append('hello touchend'+event.touches.length);
-
 
         if ( _this.enabled === false ) return;
         
