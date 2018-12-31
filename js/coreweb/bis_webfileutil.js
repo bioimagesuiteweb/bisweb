@@ -42,7 +42,9 @@ const gkey=keystore.GoogleDriveKey || "";
 const mkey=keystore.OneDriveKey || "";
 
 // Ensure that these get initialized
-userPreferences.initialize(bisdbase);
+userPreferences.initialize(bisdbase).catch( () => {
+    console.log('--- No preference database available');
+});
 
 
 // ------------------------
@@ -656,6 +658,8 @@ if (!webutil.inElectronApp() ) {
                        f= f || fileMode;
                        console.log('+++++ Initial File Source=',f, 's3enabeled=',enableaws);
                        webfileutils.setMode(f,false);
+                   }).catch( () => {
+                       webfileutils.setMode('local',false);
                    });
 } else {
     webfileutils.setMode('local',true);
