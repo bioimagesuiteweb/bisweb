@@ -160,13 +160,17 @@ let webLoadUserPreferences=function(dbase=null) {
     let keys=Object.keys(userPreferences);
 
     return new Promise( (resolve,reject) => {
-        dbase.getItems(keys).then( (obj) => {
-            if (parseUserPreferences(obj)) {
-                dbasepointer=dbase;
-                resolve();
-            }
-        }).catch( (e) => { reject(e); });
-    });
+        try {
+            dbase.getItems(keys).then( (obj) => {
+                if (parseUserPreferences(obj)) {
+                    dbasepointer=dbase;
+                    resolve();
+                }
+            }).catch( (e) => { reject(e); });
+        } catch(e) {
+            reject(e);
+        }
+    });              
 };
 
 // Internal Functions
@@ -284,10 +288,15 @@ expobj.storeUserPreferences=function(dbase) {
 
     dbase = dbase  || dbasepointer;
     return new Promise( (resolve,reject) => {
-        dbase.setItems(userPreferences).then( () => {
-            resolve();
-        }).catch( (e) => { reject(e);});
+        try {
+            dbase.setItems(userPreferences).then( () => {
+                resolve();
+            }).catch( (e) => { reject(e);});
+        } catch(e) {
+            reject(e);
+        }
     });
+                      
 };
 
 /** 
@@ -311,11 +320,11 @@ expobj.getItem=function(item) {
 
 expobj.safeGetItem=function(item) {
 
-    return new Promise( (resolve,reject) => {
+    return new Promise( (resolve) => {
         expobj.loadedPromise.then( () => {
             resolve(expobj.getItem(item));
-        }).catch( (e) => {
-            reject(e);
+        }).catch( () => {
+            resolve(userPreferences[item]);
         });
     });
 };
@@ -338,7 +347,7 @@ expobj.setItem=function(key,value,save=false) {
     
     if (save) {
         if (genericio.getmode() === 'browser')  {
-            expobj.storeUserPreferences();
+            expobj.storeUserPreferences().catch( () => { });
         } else {
             expobj.saveUserPreferences();
         }
@@ -410,16 +419,27 @@ expobj.initialize=function(dbase) {
         console.log('+++++ \t user preferences already initialized (or in process of being initialized)');
         return expobj.loadedPromise;
     }
+
+
+    return new Promise( (resolve,reject) => {
     
-    if (genericio.getmode() === 'browser')  {
-        expobj.loadedPromise=webLoadUserPreferences(dbase);
-        expobj.loadedPromise.then(() => {
-            expobj.storeUserPreferences(dbase);
-        });
-    } else {
-        initializeCommandLine();
-    }
-    return expobj.loadedPromise;
+        if (genericio.getmode() === 'browser')  {
+            
+            expobj.loadedPromise=webLoadUserPreferences(dbase);
+            expobj.loadedPromise.then( () => {
+                expobj.storeUserPreferences(dbase).catch( (e) => {
+                    console.log('Error =',e);
+                });
+                resolve();
+            }).catch( () => { 
+                reject('Bad Pref Database');
+            });
+        } else {
+            initializeCommandLine();
+            expobj.loadedPromise=Promise.resolve();
+            resolve();
+        }
+    });
 };
 
 // -------------------------- auto execute code -----------------------------
