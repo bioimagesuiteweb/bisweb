@@ -22,7 +22,6 @@
 
 const BisWebImage = require('bisweb_image');
 const webutil=require('bis_webutil');
-const FastClick=require('fastclick');
 const $=require('jquery'); 	
 const bootbox=require('bootbox');
 const numeric=require('numeric');
@@ -295,7 +294,7 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         
         // ------------------------------------ Initialize ---------------------------
         
-        new FastClick(document.body);
+        this.fixMobileMouseHandling();
         
         var HandleFiles = function(files) {
             var filename=files[0].name;

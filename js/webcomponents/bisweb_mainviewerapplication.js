@@ -1283,6 +1283,20 @@ class ViewerApplicationElement extends HTMLElement {
         });
     }
 
+
+    /** Fix touch events and prevent multitouch zoom of the whole UI */
+    
+    fixMobileMouseHandling() {
+        new FastClick(document.body);
+        window.addEventListener("touchstart", 
+                                (event) => {
+                                    if(event.touches.length > 1) {
+                                        //the event is multi-touch
+                                        //you can then prevent the behavior
+                                        event.preventDefault();
+                                    }
+                                },{ passive : false});
+    }
     
     //  ---------------------------------------------------------------------------
     // Essentially the main function, called when element is attached to the page
@@ -1425,19 +1439,10 @@ class ViewerApplicationElement extends HTMLElement {
                                    });
         }
 
-
         // ----------------------------------------------------------
         // Mouse Issues on mobile and final cleanup
         // ----------------------------------------------------------
-        new FastClick(document.body);
-        window.addEventListener("touchstart", 
-                                (event) => {
-                                    if(event.touches.length > 1) {
-                                        //the event is multi-touch
-                                        //you can then prevent the behavior
-                                        event.preventDefault();
-                                    }
-                                },{ passive : false});
+        this.fixMobileMouseHandling();
                                     
         
         if (this.num_independent_viewers > 1)
