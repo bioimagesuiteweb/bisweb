@@ -446,7 +446,6 @@ class FileTreePanel extends HTMLElement {
         };
 
         listContainer.on('select_node.jstree', (event, data) => {
-            console.log('select_node', event, data);
             $('.bisweb-elements-menu').find('select').prop('disabled', '');
             this.currentlySelectedNode = data.node;
 
@@ -667,16 +666,16 @@ class FileTreePanel extends HTMLElement {
 
     changeTagSelectMenu(menu, node) {
         let defaultSelection = node.original.tag || "none";
-        console.log('tag select', menu);
 
         //clear selected options
         let options = menu.find('option');
-        console.log('options', options);
         for (let i = 0; i < options.length; i++) {
             options[i].removeAttribute('selected');
         }
 
-        menu.find(`option[value=${defaultSelection}]`).attr('selected', 'selected');
+        menu.find(`option[value=${defaultSelection}]`).prop('selected', true);
+        //menu.html(defaultSelection);
+        console.log('default selection', defaultSelection);
     }
   
 }
