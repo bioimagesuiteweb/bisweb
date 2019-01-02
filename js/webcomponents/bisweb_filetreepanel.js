@@ -42,6 +42,7 @@ class FileTreePanel extends HTMLElement {
                 this.menubar = document.querySelector(this.menubarid);
                 this.viewerapplication = document.querySelector(this.viewerappid);
                 this.popoverDisplayed = false;
+                this.staticTagSelectMenu = null;
 
                 this.panel = new bisweb_panel(this.layout,
                     {
@@ -320,15 +321,14 @@ class FileTreePanel extends HTMLElement {
         let saveStudyButton = this.panel.widget.find('.save-study-button');
         saveStudyButton.prop('disabled', false);
 
-        this.setOnClickListeners(tree, listContainer);
-
         this.fileTree = fileTree;
 
         if (!this.renderedTagSelectMenu) {
-            console.log('tag select menu', this.renderedTagSelectMenu === true);
+
             //append the tag selecting menu to the bottom of the file tree div
             let tagSelectDiv = $(`<div></div>`);
-            tagSelectDiv.append(this.createTagSelectMenu({ 'setDefaultValue' : false, 'listenForTagEvents' : true }));
+            this.staticTagSelectMenu = this.createTagSelectMenu({ 'setDefaultValue' : false, 'listenForTagEvents' : true });
+            tagSelectDiv.append(this.staticTagSelectMenu);
 
             let elementsDiv = $('.bisweb-elements-menu');
             elementsDiv.prepend(tagSelectDiv);
@@ -337,6 +337,9 @@ class FileTreePanel extends HTMLElement {
         } else {
             $('.bisweb-elements-menu').find('select').prop('disabled', 'disabled');
         }
+
+        //attach listeners to new file tree
+        this.setOnClickListeners(tree, listContainer);
 
         //Searches for the directory that should contain a file given the file's path, e.g. 'a/b/c' should be contained in folders a and b.
         //Returns the children 
@@ -446,6 +449,8 @@ class FileTreePanel extends HTMLElement {
             console.log('select_node', event, data);
             $('.bisweb-elements-menu').find('select').prop('disabled', '');
             this.currentlySelectedNode = data.node;
+
+            this.changeTagSelectMenu(this.staticTagSelectMenu, data.node);
 
             if (data.event.type === 'click') {
                 handleLeftClick(data);
@@ -636,20 +641,14 @@ class FileTreePanel extends HTMLElement {
         console.log('options', options, 'tag select menu', tagSelectMenu);
         if (options.enabled) { tagSelectMenu.prop('disabled', ''); }
 
-        let setSelectedValue = () => {
-            let defaultSelection = this.currentlySelectedNode.original.tag || undefined;
-            console.log('default selection', defaultSelection);
-            tagSelectMenu.find(`option[value=${defaultSelection}]`).attr('selected', 'selected');
-        };
-
         if (options.setDefaultValue) {
-            setSelectedValue();
+            this.changeTagSelectMenu(tagSelectMenu, this.currentlySelectedNode);
         }
 
         if (options.listenForTagEvents) {
             document.addEventListener('bisweb.tag.changed', () => {
                 console.log('tag select event');
-                setSelectedValue();
+                this.changeTagSelectMenu(tagSelectMenu, this.currentlySelectedNode);
             });
         }
 
@@ -664,6 +663,20 @@ class FileTreePanel extends HTMLElement {
         });
 
         return tagSelectMenu;
+    }
+
+    changeTagSelectMenu(menu, node) {
+        let defaultSelection = node.original.tag || "none";
+        console.log('tag select', menu);
+
+        //clear selected options
+        let options = menu.find('option');
+        console.log('options', options);
+        for (let i = 0; i < options.length; i++) {
+            options[i].removeAttribute('selected');
+        }
+
+        menu.find(`option[value=${defaultSelection}]`).attr('selected', 'selected');
     }
   
 }
