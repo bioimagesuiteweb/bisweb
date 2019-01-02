@@ -392,11 +392,13 @@ class FileTreePanel extends HTMLElement {
             'callback': (f) => {
                 this.exportStudy(f);
             },
-        }, {
-                'title': 'Export study',
-                'filters': 'DIRECTORY',
-                'suffix': 'DIRECTORY',
-                'save': true,
+        }, 
+        {
+            'title': 'Export study',
+            'filters': 'DIRECTORY',
+            'suffix': 'DIRECTORY',
+            'save': true,
+            initialCallback: () => { return this.getDefaultFilename(); },
         });
 
         saveStudyButton.addClass('save-study-button');
@@ -674,7 +676,18 @@ class FileTreePanel extends HTMLElement {
         //menu.html(defaultSelection);
         console.log('default selection', defaultSelection);
     }
-  
+    
+    getDefaultFilename() {
+        let date = new Date();
+        let parsedDate = 'ExportedStudy' + date.getFullYear() + '-' + date.getMonth() + 1 + '-' + zeroPadLeft(date.getDate()) + 'T' + zeroPadLeft(date.getHours()) + ':' + zeroPadLeft(date.getMinutes()) + ':' + zeroPadLeft(date.getSeconds());
+        console.log('date', parsedDate);
+        return parsedDate + '.json';
+
+        function zeroPadLeft(num) { 
+            let pad = '00', numStr = '' + num;
+            return pad.substring(0, pad.length - numStr.length) + numStr;
+        }
+    }
 }
 
 bis_webutil.defineElement('bisweb-filetreepanel', FileTreePanel);
