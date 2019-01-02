@@ -84,7 +84,7 @@ class FileTreePanel extends HTMLElement {
                 'separator_before': false,
                 'separator_after': false,
                 'label': 'File Info',
-                'action': () => {
+                'action': (node) => {
                     this.showInfoModal();
                 }
             },
@@ -439,7 +439,6 @@ class FileTreePanel extends HTMLElement {
         };
 
         let handleDblClick = () => {
-            console.log('currently selected node', this.currentlySelectedNode);
             if (this.currentlySelectedNode.original.type === 'picture') {
                this.loadImageFromTree(); 
             }
@@ -538,7 +537,7 @@ class FileTreePanel extends HTMLElement {
         bis_genericio.isDirectory(this.constructNodeName()).then( (isDirectory) => {
             bis_genericio.getFileStats(this.constructNodeName()).then( (stats) => { 
 
-                console.log('stats', stats);
+                console.log('stats', stats, 'node', this.currentlySelectedNode);
                 //make file size something more readable than bytes
                 let displayedSize, filetype;
                 let kb = stats.size / 1000;
@@ -558,7 +557,7 @@ class FileTreePanel extends HTMLElement {
                 console.log('accessed time', accessedTime.toDateString(), 'created time', createdTime, 'modified time', modifiedTime);
     
                 //make info dialog
-                let infoDisplay = `File Size: ${roundedSize}${filetype}<br> First Created: ${createdTime}<br> Last Modified: ${modifiedTime}<br> Last Accessed: ${accessedTime} <br> Is a Directory: ${parsedIsDirectory}`;
+                let infoDisplay = `File Size: ${roundedSize}${filetype}<br> First Created: ${createdTime}<br> Last Modified: ${modifiedTime}<br> Last Accessed: ${accessedTime} <br> Is a Directory: ${parsedIsDirectory} <br> Tag: ${this.currentlySelectedNode.original.tag}`;
     
                 bootbox.dialog({
                     'title' : 'File Info',
@@ -591,7 +590,6 @@ class FileTreePanel extends HTMLElement {
 
     toggleContextMenuLoadButtons(tree, toggle) {
         let existingTreeSettings = tree.jstree(true).settings.contextmenu.items;
-        console.log('existing tree settings', existingTreeSettings);
         if (toggle === 'on') {
             if (existingTreeSettings.Load) {
                 existingTreeSettings.Load._disabled = false;
@@ -646,7 +644,6 @@ class FileTreePanel extends HTMLElement {
 
         if (options.listenForTagEvents) {
             document.addEventListener('bisweb.tag.changed', () => {
-                console.log('tag select event');
                 this.changeTagSelectMenu(tagSelectMenu, this.currentlySelectedNode);
             });
         }
