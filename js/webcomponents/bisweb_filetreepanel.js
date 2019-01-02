@@ -60,7 +60,6 @@ class FileTreePanel extends HTMLElement {
                 let listElement = this.panel.getWidget();
                 let biswebElementMenu = $(`<div class='bisweb-elements-menu'></div>`);
 
-                console.log('list element', listElement);
                 listElement.append(biswebElementMenu);
                 this.makeButtons(listElement);
             });
@@ -84,7 +83,7 @@ class FileTreePanel extends HTMLElement {
                 'separator_before': false,
                 'separator_after': false,
                 'label': 'File Info',
-                'action': (node) => {
+                'action': () => {
                     this.showInfoModal();
                 }
             },
@@ -321,8 +320,6 @@ class FileTreePanel extends HTMLElement {
         let saveStudyButton = this.panel.widget.find('.save-study-button');
         saveStudyButton.prop('disabled', false);
 
-        this.fileTree = fileTree;
-
         if (!this.renderedTagSelectMenu) {
 
             //append the tag selecting menu to the bottom of the file tree div
@@ -340,6 +337,7 @@ class FileTreePanel extends HTMLElement {
 
         //attach listeners to new file tree
         this.setOnClickListeners(tree, listContainer);
+        this.fileTree = tree;
 
         //Searches for the directory that should contain a file given the file's path, e.g. 'a/b/c' should be contained in folders a and b.
         //Returns the children 
@@ -447,6 +445,7 @@ class FileTreePanel extends HTMLElement {
         };
 
         listContainer.on('select_node.jstree', (event, data) => {
+            console.log('select_node', data);
             $('.bisweb-elements-menu').find('select').prop('disabled', '');
             this.currentlySelectedNode = data.node;
 
@@ -483,9 +482,37 @@ class FileTreePanel extends HTMLElement {
      */
     exportStudy(filepath) {
         try {
-            let stringifiedFiles = JSON.stringify(this.fileTree);
-            console.log('stringified files', stringifiedFiles, 'path', filepath);
 
+            //reconstruct tree from jstree
+            let rawTree = this.fileTree.jstree(true);
+            let rawTreeJSON = rawTree.get_json('#'); 
+            let reconstructedTree = [];
+
+            let fillTreeNode = (node, parentNode) => {
+                console.log('fill tree node', node);
+                let item = rawTree.get_node(node.id);
+                let newNode = item.original;
+                if (item.children.length > 0) {
+                    newNode.children = [];
+                    for (let child of node.children) {
+                        fillTreeNode(child, newNode);
+                    }
+                }
+
+                if (parentNode) {
+                    parentNode.children.push(newNode);
+                } else {
+                    reconstructedTree.push(newNode);
+                }
+                    
+            }; 
+
+            console.log('raw tree json', rawTreeJSON);
+            for (let item of rawTreeJSON) { fillTreeNode(item); }
+
+            console.log('reconstructed tree', reconstructedTree);
+
+            let stringifiedFiles = JSON.stringify(reconstructedTree);
             //set the correct file extension if it isn't set yet
             let splitPath = filepath.split('.');
             if (splitPath.length < 2 || splitPath[1] !== 'JSON' || splitPath[1] !== 'json') {
@@ -610,7 +637,6 @@ class FileTreePanel extends HTMLElement {
     }
 
     constructNodeName() {
-        console.log('currently selected node', this.currentlySelectedNode, 'base directory', this.baseDirectory);
         //construct the full name out of the current node 
         let name = '', currentNode = this.currentlySelectedNode;
         let tree = this.panel.widget.find('.file-container').jstree();
