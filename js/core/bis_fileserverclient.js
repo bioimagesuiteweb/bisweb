@@ -305,6 +305,8 @@ class BisFileServerClient extends BisBaseServerClient {
                 bisasyncutil.resolveServerEvent(id,data.payload);
             else
                 bisasyncutil.rejectServerEvent(id,data.payload);
+        } else {
+            console.log('Id Error=',id);
         }
     }
 
@@ -421,101 +423,6 @@ class BisFileServerClient extends BisBaseServerClient {
         });
     }
 
-
-    // ------------------ Download file and helper routines -----------------------------------------------------------------
-    /**
-     * downloads a file from the server 
-     * @param{String} url - the filename
-     * @param{Boolean} isbinary - if true file is binary
-     * @returns{Promise} - a Promise with payload { obj.name obj.data } much like bis_genericio.read (from where it will be called indirectly)
-     */
-    downloadFileOld(url,isbinary) {
-        return new Promise( (resolve, reject) => {
-            
-            if (url.indexOf('\\')>=0)
-                url=util.filenameWindowsToUnix(url);
-
-            
-            let handledata = ( (raw_data) => { 
-
-                if (!isbinary) {
-                    resolve({
-                        'data' : raw_data,
-                        'filename' : url,
-                    });
-                    return;
-                } else {
-                    let dat = new Uint8Array(raw_data);
-                    let comp=bisgenericio.iscompressed(url);
-                    if (!comp) {
-                        resolve({
-                            'data' : dat,
-                            'filename' : url
-                        });
-                    } else {
-                        let a = pako.ungzip(dat);
-                        resolve({
-                            'data' : a,
-                            'filename' : url
-                        });
-                        a=null;
-                    }
-                    dat=null;
-                }
-            });
-            
-            
-            let serverEvent=bisasyncutil.addServerEvent(handledata,reject,'downloadFile');
-            
-            this.sendCommand({ 'command' : 'readfile',
-                               'filename' : url,
-                               'timeout' : 999999,
-                               'id' : serverEvent.id,
-                               'isbinary' : isbinary });
-        });
-    }
-
-
-    /** 
-     * This is the helper function
-     * Given that modals are opened one at a time and all user-driven file I/O happens through one of these, the callback should be a
-     * @param {TypedArray|String} data - data transferred by the server either uint8array or text (depending on isbinary)
-     * @param {Boolean} isbinary - if true data is binary
-     * @param {Number} id - the id of the request or -1 if this is binary
-     */
-    handleDataReceivedFromServer(data,isbinary=true,id=-1) {
-
-        // TODO:
-        // Add stream handling here
-        // So basically if add streaming flag somehow in here
-        // Problem might be more than one download at a time and knowing
-        // Which pieces to stitch
-        // Potentially let the server handle this somehow
-        // Something like the below
-        /*  let blobArray = [];
-        
-            if (e.data.size === 0) {
-            let data = new Blob(blobArray);
-                resolve(combinedImage);
-             } else {
-                blobArray.push(e.data);
-             }
-        */
-        
-        if (isbinary) {
-            if (bisgenericio.getenvironment()!=='node') {
-                let reader = new FileReader();
-                reader.addEventListener('loadend', () => {
-                    bisasyncutil.resolveBinaryData(reader.result);
-                });
-                reader.readAsArrayBuffer(data);
-            } else {
-                bisasyncutil.resolveBinaryData(data);
-            }
-        } else {
-            bisasyncutil.resolveServerEvent(id,data);
-        }
-    }
 
     // ------------------ Upload file and helper routines -----------------------------------------------------------------
 
@@ -872,6 +779,97 @@ class BisFileServerClient extends BisBaseServerClient {
 
     }
 
+
+    // ------------------ Download file and helper routines -----------------------------------------------------------------
+    /**
+     * Handles the final download
+     * @param{String} url - the filename
+     * @param{Boolean} isbinary - if true file is binary
+     * @param{Buffer} raw_data received
+     * @param{function} resolvefn - the completed callback
+     * @returns Promose - payload has form { data : , filename : }
+     */
+    handleDownloadedFile(url,isbinary,raw_data, resolvefn)  {
+
+        if (!isbinary) {
+            resolvefn({
+                'data' : raw_data,
+                'filename' : url,
+            });
+            return;
+        } else {
+            let dat = new Uint8Array(raw_data);
+            let comp=bisgenericio.iscompressed(url);
+            if (!comp) {
+                resolvefn({
+                    'data' : dat,
+                    'filename' : url
+                });
+            } else {
+                let a = pako.ungzip(dat);
+                resolvefn({
+                    'data' : a,
+                    'filename' : url
+                });
+                a=null;
+            }
+            dat=null;
+        }
+    }
+
+    /** 
+     * This is the helper function for when downloaded binary data arrives
+     * Given that modals are opened one at a time and all user-driven file I/O happens through one of these, the callback should be a
+     * @param {TypedArray|String} data - data transferred by the server either uint8array or text (depending on isbinary)
+     * @param {Boolean} isbinary - if true data is binary
+     * @param {Number} id - the id of the request or -1 if this is binary
+     */
+    handleDataReceivedFromServer(data,isbinary=true,id=-1) {
+
+        if (isbinary) {
+            if (bisgenericio.getenvironment()!=='node') {
+                let reader = new FileReader();
+                reader.addEventListener('loadend', () => {
+                    bisasyncutil.resolveBinaryData(reader.result);
+                });
+                reader.readAsArrayBuffer(data);
+            } else {
+                bisasyncutil.resolveBinaryData(data);
+            }
+        } else {
+            bisasyncutil.resolveServerEvent(id,data);
+        }
+    }
+
+
+    /**
+     * downloads a file from the server 
+     * @param{String} url - the filename
+     * @param{Boolean} isbinary - if true file is binary
+     * @returns{Promise} - a Promise with payload { obj.name obj.data } much like bis_genericio.read (from where it will be called indirectly)
+     */
+    downloadFileSimple(url,isbinary) {
+        return new Promise( (resolve, reject) => {
+            
+            if (url.indexOf('\\')>=0)
+                url=util.filenameWindowsToUnix(url);
+
+            let fn=((raw_data)  => {
+                this.handleDownloadedFile(url,isbinary,raw_data,resolve);
+            });
+            
+            let serverEvent=bisasyncutil.addServerEvent(fn,reject,'downloadFile');
+            
+            this.sendCommand({ 'command' : 'readfile',
+                               'filename' : url,
+                               'timeout' : 999999,
+                               'id' : serverEvent.id,
+                               'isbinary' : isbinary });
+        });
+    }
+
+
+    
     /**
      * downloads a file from the server 
      * @param{String} url - the filename
@@ -882,161 +880,95 @@ class BisFileServerClient extends BisBaseServerClient {
     downloadFile(url,isbinary) {
 
         if (!isbinary)
-            return this.downloadFileOld(url,isbinary);
+            return this.downloadFileSimple(url,isbinary);
         
         return new Promise( (resolve, reject) => {
 
             if (url.indexOf('\\')>=0)
                 url=util.filenameWindowsToUnix(url);
-            
-            let handledata = ( (raw_data) => { 
 
-                let parseBuffer = (buffer) => {
-                    let dat = new Uint8Array(buffer);
-                    let comp=bisgenericio.iscompressed(url);
-    
-                    console.log('dat', dat);
-                    if (!comp) {
-                        resolve({
-                            'data' : dat,
-                            'filename' : url
-                        });
-                    } else {
-                        let dat = new Uint8Array(raw_data);
-                        let comp=bisgenericio.iscompressed(url);
-                        if (!comp) {
-                            resolve({
-                                'data' : dat,
-                                'filename' : url
-                            });
-                        } else {
-                            let a;
-                            try {
-                                a = pako.ungzip(dat);
-                                resolve({
-                                    'data': a,
-                                    'filename': url
+
+            /**
+             * Connects to a waiting port on the server machine, which upon connection will begin streaming chunks of a large file. 
+             * These are saved and combined in a Blob which is returned once the stream is finished.
+             * @param {String} hostname - The hostname to connect to
+             * @param {Number} port - The port on which the server machine is listening. 
+             */
+            let connectToFileStreamAndReceiveData= (in_hostname,port) => {
+                
+                return new Promise( (resolve, reject) => {
+                    
+                    let hostname = 'ws://'+in_hostname+':' + port;
+                    let blobArray = [];
+                    
+                    //once connected the server will begin piping images chunks, which we will assemble on this side
+                    let ssocket = null;
+                    
+                    if (!this.NodeWebSocket)
+                        ssocket = new WebSocket(hostname);
+                    else
+                        ssocket = new this.NodeWebSocket(hostname);
+                    
+                    
+                    ssocket.addEventListener('message', (e) => {
+                        
+                        let l =e.data.size;
+                        if (l === undefined)
+                            l=e.data.length;
+                        
+                        if (l === 0) {
+                            if (bisgenericio.getmode() !== 'node') {
+                                let combinedData = new Blob(blobArray);
+                                let reader = new FileReader();
+                                reader.addEventListener('loadend', () => {
+                                    resolve(reader.result);
                                 });
-                            } catch (err) {
-                                console.log('An error occured', err);
+                                reader.readAsArrayBuffer(combinedData);
+                            } else {
+                                let combinedData=Buffer.concat(blobArray);
+                                resolve(combinedData);
                             }
-                            a = null;
+                            ssocket.close();
+                        } else {
+                            //console.log('++++ Read one more blob',l,e.data);
+                            blobArray.push(e.data);
                         }
-                    }
-                };
-
-                if (raw_data instanceof Blob) { 
-                    let reader = new FileReader();
-                    reader.addEventListener('loadend', () => {
-                        parseBuffer(reader.result);
                     });
-                    reader.readAsArrayBuffer(raw_data);
-                } else {
-                    parseBuffer(raw_data);
-                }
-            });
-                             
-            //Handler must be defined explicitly because the server may respond two different depending on the file's size, 
-            //either with the image in the message or with the command word 'initiatefilestream', which will begin streaming the file between client and server.
-            let responseListener = (event) => {
-                let data;
-                if (typeof(event.data) === 'string') {
-                    try {
-                        data = JSON.parse(event.data);
-                    } catch (e) {
-                        this.socket.removeEventListener('message', responseListener);
+                    
+                    ssocket.addEventListener('error', (e) => {
+                        console.log('Error on filestream', e);
                         reject(e);
-                    }
+                    });
+                });
+            };
+            
+            // This is the callback if event is resolved
+            // If msg.host is not defined then it is probably a simple download event
+            // i.e. the server decided that the file was too small
+            let responseListener = (msg) => {
+
+                if (!msg.host) {
+                    console.log('\n ------------- \n trying to handle as a simple download \n');
+                    this.handleDownloadedFile(url,isbinary,msg,resolve);
                 } else {
-                    data = event.data;
-                }
-                
-                
-                console.log('response listener data', data);
-                if (!data.type) {
-                    this.socket.removeEventListener('message', responseListener);
-                    handledata(event.data);
-                } else if (data.type === 'initiatefilestream') {
-                    this.socket.removeEventListener('message', responseListener);
-                    this.connectToFilestream(data.payload.port, data.payload.size).then( (imagedata) => {
-                        handledata(imagedata);
+                    connectToFileStreamAndReceiveData(msg.host,msg.port).then( (data) => {
+                        this.handleDownloadedFile(url,isbinary,data,resolve);
                     }).catch( (e) => {
                         console.log('Error',e,e.stack);
+                        reject(e);
                     });
-                } 
+                }
             };
             
-            this.socket.addEventListener('message', responseListener);
-
-            let removeServerEvent = () => {
-                //events remove themselves automatically
-                console.log('server event resolve function'); 
-            };
-
-            let serverEvent=bisasyncutil.addServerEvent(removeServerEvent, reject,'downloadFile');
-            this.sendCommand({ 'command' : 'readfile',
+            let serverEvent=bisasyncutil.addServerEvent(responseListener,reject,'downloadFile');
+            
+            this.sendCommand({ 'command' : 'readfilestream',
                                'filename' : url,
                                'timeout' : 999999,
                                'id' : serverEvent.id,
                                'isbinary' : isbinary });
         });
     }
-
-
-    /**
-     * Connects to a waiting port on the server machine, which upon connection will begin streaming chunks of a large file. 
-     * These are saved and combined in a Blob which is returned once the stream is finished.
-     * 
-     * @param {Number} port - The port on which the server machine is listening. 
-     */
-    connectToFilestream(port) {
-        return new Promise( (resolve, reject) => {
-
-            let hostname = 'ws://localhost:' + port;
-            let blobArray = [];
-    
-            //once connected the server will begin piping images chunks, which we will assemble on this side
-            let ssocket = null;
-
-            if (!this.NodeWebSocket)
-                ssocket = new WebSocket(hostname);
-            else
-                ssocket = new this.NodeWebSocket(hostname);
-            
-
-            ssocket.addEventListener('message', (e) => {
-
-                let l =e.data.size;
-                if (l === undefined)
-                    l=e.data.length;
-                // console.log('In Message',e.data.size,e.data.length,'--->',l);
-                //empty packet should indicate the end of stream
-                if (l === 0) {
-                    if (bisgenericio.getmode() !== 'node') {
-                        let combinedData = new Blob(blobArray);
-                        let reader = new FileReader();
-                        reader.addEventListener('loadend', () => {
-                            resolve(reader.result);
-                        });
-                        reader.readAsArrayBuffer(combinedData);
-                    } else {
-                        let combinedData=Buffer.concat(blobArray);
-                        resolve(combinedData);
-                    }
-                    ssocket.close();
-                } else {
-                    //console.log('++++ Read one more blob',l,e.data);
-                    blobArray.push(e.data);
-                }
-            });
-
-            ssocket.addEventListener('error', (e) => {
-                console.log('Error on filestream', e);
-                reject(e);
-            });
-        });
-    }
-
 
 }
 

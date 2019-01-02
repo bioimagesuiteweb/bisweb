@@ -57,7 +57,7 @@ class AWSModule extends BaseServerClient {
                //console.log('current aws', this.currentAWS);
                 this.currentAWS = null;
             }
-        });
+        }).catch( () => { });
 
         //file display modal gets deleted if you try to load it too soon
         //not completely sure why -Zach

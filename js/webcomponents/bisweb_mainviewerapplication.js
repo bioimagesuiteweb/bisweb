@@ -81,7 +81,10 @@ class ViewerApplicationElement extends HTMLElement {
         this.applicationURL=webutil.getWebPageURL();
         this.applicationName=webutil.getWebPageName();
         console.log("+++++ App name=",this.applicationName,this.applicationURL);
-        clipboard.setItem('appname',this.applicationName);
+
+        clipboard.setItem('appname',this.applicationName).catch( (e) => {
+            console.log('No database to store appname'+e);
+        });
 
         // For dual tab apps
         this.tab1name=null;
@@ -93,7 +96,12 @@ class ViewerApplicationElement extends HTMLElement {
             this.extraManualHTML='imageeditor.html';
 
         this.applicationInitializedPromiseList= [ ];
-        this.applicationInitializedPromiseList.push(userPreferences.initialize(bisdbase)); // this is an async call to initialize. Use safe get later to make sure
+
+        let p=userPreferences.initialize(bisdbase);
+        p.catch( (e) => {
+            console.log('No dbase available',e);
+        });
+        this.applicationInitializedPromiseList.push(p); // this is an async call to initialize. Use safe get later to make sure
 
     }
 
@@ -847,7 +855,7 @@ class ViewerApplicationElement extends HTMLElement {
         
         let hmenu = webutil.createTopMenuBarMenu("Help", menubar);
 
-        let fn = (() => { /*this.welcomeMessage(true) ;*/});
+        let fn = (() => { this.welcomeMessage(true) ; });
         
         webutil.createMenuItem(hmenu,'About this application',fn);
         
@@ -879,7 +887,7 @@ class ViewerApplicationElement extends HTMLElement {
                                            webfileutil.createAWSMenu();
                                        });
             }
-        });
+        }).catch( () => { });
 
         return hmenu;
     }
@@ -1276,6 +1284,20 @@ class ViewerApplicationElement extends HTMLElement {
         });
     }
 
+
+    /** Fix touch events and prevent multitouch zoom of the whole UI */
+    
+    fixMobileMouseHandling() {
+        new FastClick(document.body);
+        window.addEventListener("touchstart", 
+                                (event) => {
+                                    if(event.touches.length > 1) {
+                                        //the event is multi-touch
+                                        //you can then prevent the behavior
+                                        event.preventDefault();
+                                    }
+                                },{ passive : false});
+    }
     
     //  ---------------------------------------------------------------------------
     // Essentially the main function, called when element is attached to the page
@@ -1418,11 +1440,11 @@ class ViewerApplicationElement extends HTMLElement {
                                    });
         }
 
-
         // ----------------------------------------------------------
         // Mouse Issues on mobile and final cleanup
         // ----------------------------------------------------------
-        new FastClick(document.body);
+        this.fixMobileMouseHandling();
+                                    
         
         if (this.num_independent_viewers > 1)
             self.VIEWERS[1].setDualViewerMode(0.5);
@@ -1442,6 +1464,8 @@ class ViewerApplicationElement extends HTMLElement {
                 } else {
                     webutil.createAlert('In Test Mode',false);
                 }
+            }).catch( (e) => {
+                console.log('Error ',e);
             });
         });
 

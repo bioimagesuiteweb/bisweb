@@ -478,9 +478,16 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
     fs.mkdirSync(distDir);
     
     gulp.src([ `${indir}/build/web/bislib.js`,
-               `${indir}/build/web/libbiswasm_wasm.js`
+               `${indir}/build/web/libbiswasm*wasm.js`,
+               `${indir}/build/web/webcomponents-lite.js`,
+               `${indir}/build/web/jquery.min.js`,
+               `${indir}/build/web/bootstrap.min.js`,
+               `${indir}/build/web/bislib.css`,
              ]).pipe(gulp.dest(distDir));
 
+    gulp.src([ 'node_modules/bootstrap/dist/css/*']).pipe(gulp.dest(distDir+'/css/'));
+    gulp.src([ 'node_modules/bootstrap/dist/fonts/*']).pipe(gulp.dest(distDir+'/fonts/'));
+    gulp.src([ 'lib/fonts/*']).pipe(gulp.dest(distDir+'/fonts/'));
     
     gulp.src([`${indir}/config/biswebbrowser_readme.md`])
         .pipe(rename('README.md'))
@@ -502,12 +509,7 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
         "repository": {
             "type" : "git",
             "url" : "https://github.com/bioimagesuiteweb/bisweb",
-        },
-        "dependencies": {
-            "bootstrap": "3.3.7",
-            "jquery": "2.2.4",
-            "webcomponents": "0.1.4",
-        },
+        }
     };
     
     let txt=JSON.stringify(obj,null,4)+"\n";

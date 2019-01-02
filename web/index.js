@@ -149,7 +149,7 @@ var showAlert=function(message,type='info') {
 
     $(".alert").remove();
     let alertDiv = $(`<div class="alert alert-${type} alert-dismissible" role="alert" 
-                  style="position:absolute; top:65px; left:30px; z-index: 100">
+                  style="position:absolute; top:65px; left:30px; z-index: 20">
                   <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${message}</a></div>`);
     $('body').append(alertDiv);
     alertDiv.alert();
@@ -729,7 +729,7 @@ var createVersionBoxes=async function() {
         color="#ff2222";
     }
 
-    let bb=$(`<div align="right" style="right:5.5vw; top:624px;  z-index:5000; position: absolute; color:${color}">
+    let bb=$(`<div align="right" style="right:5.5vw; top:624px;  z-index:50; position: absolute; color:${color}">
              Version:  ${tools.version} (${bisdate.date}${extra})</div>`);
     $('body').append(bb);
 
@@ -749,7 +749,7 @@ var createVersionBoxes=async function() {
     }
 
     if (msg.length>1) {
-        let w = $(`<div class="alert alert-${cmode} alert-dismissible" role="alert"  style="position:absolute; top:65px; left:20px; z-index:5000">
+        let w = $(`<div class="alert alert-${cmode} alert-dismissible" role="alert"  style="position:absolute; top:65px; left:20px; z-index:50">
           <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>${msg}
           </div>`);
         $('body').append(w);
@@ -931,7 +931,7 @@ window.onload = (() => {
     /*setTimeout( ()=> {
         $(".dropdown").removeClass("open");//this will remove the active class from  
         $('#appmenu').addClass('open');
-    },5000);*/
+    },50);*/
 
     window.addEventListener("dragover", (e) => {
         e.stopPropagation();
