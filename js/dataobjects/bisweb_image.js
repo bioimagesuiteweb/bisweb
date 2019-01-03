@@ -1305,6 +1305,196 @@ class BisWebImage extends BisWebDataObject {
         internal.header.struct.pixdim[3]=quat[8];
     }
 
+    /** Get Patch Info for tensorflow.js 
+     * @param{Number} width - width of patch (should be power of 2)
+     * @param{Number} stridex - stride size (should be even and less than width)
+     * @param{Number} thickness - for 2.5d models default is 0
+     * @param{Number} height - if different than width 
+     * @param{Number} stridey - if different than stridey 
+     * @returns{Object} - patch info
+     */
+    getPatchInfo(width,stridex,thickness=0,height=null,stridey=null) {
+        if (height===null)
+            height=width;
+        if (stridey===null)
+            stridey=stridex;
+
+        if (stridey>height)
+            stridey=height;
+        if (stridex>width)
+            stridex=width;
+
+        let dims=this.getDimensions();
+        let dimx=Math.floor(dims[0]/stridex);
+        if (dims[0]%width>0)
+            dimx+=1;
+
+        let dimy=Math.floor(dims[1]/stridey);
+        if (dims[1]%height>0)
+            dimy+=1;
+
+        let numslices=2*thickness+1;
+        
+        let output={
+            'thickness' : thickness,
+            'numslices' : numslices,
+            'height' : height,
+            'width'  : width,
+            'numrows' : dimy,
+            'numcols' : dimx,
+            'stridex' : stridex,
+            'stridey' : stridey,
+            'numframes' : dims[3]*dims[4],
+            'dims' : dims,
+        };
+        output['patch']= new this.internal.imginfo.type(width*height*numslices);
+        return output;
+
+    }
+
+    /** Get Patch Limits 
+     * @param{Object} patchinfo -- output of getPatchInfo
+     * @param{Number} slice - slice to extract -- 1D
+     * @param{Number} frame - frame index for patch
+     * @param{Number} row - row index for patch
+     * @param{Number} col - col index for patch
+     * @param{Boolean} store - if true, get middle portion
+     * @returns{Object} - { begini, beginj, endi,endj,offset }
+     */
+    getPatchLimits(patchinfo,slice,frame,row,col,store=false) {
+
+        let dims=this.getDimensions();
+        let offset=slice*dims[0]*dims[1]+frame*dims[0]*dims[1]*dims[2];
+        
+        let begini=col*patchinfo.stridex;
+        let endi=begini+patchinfo.width-1;
+        let beginj=row*patchinfo.stridey;
+        let endj=beginj+patchinfo.height-1;
+
+        let obj = { 
+            begini : begini,
+            endi : endi,
+            beginj : beginj,
+            endj : endj,
+            offset : offset
+
+        };
+        
+        if (store) {
+
+            let midx=Math.floor((patchinfo.width-patchinfo.stridex)*0.5);
+            let midy=Math.floor((patchinfo.height-patchinfo.stridey)*0.5);
+            
+            if (col>0)
+                obj.imin=begini+midx;
+            else
+                obj.imin=begini;
+            
+            if (row>0)
+                obj.jmin=beginj+midy;
+            else
+                obj.jmin=beginj;
+
+            if (col<patchinfo.numcols-1)
+                obj.imax=endi-midx;
+            else
+                obj.imax=endi;
+            
+            if (row<patchinfo.numrows-1)
+                obj.jmax=endj-midy;
+            else
+                obj.jmax=endj;
+        }
+        if (obj.jmax>=dims[1])
+            obj.jmax=dims[1]-1;
+        return obj;
+    }
+    
+    /** Get Patch  for tensorflow.js 
+     * @param{Object} patchinfo -- output of getPatchInfo
+     * @param{Number} slice - slice to extract -- 1D
+     * @param{Number} frame - frame index for patch
+     * @param{Number} row - row index for patch
+     * @param{Number} col - col index for patch
+     * @returns{Boolean} - true if success
+     */
+    getPatch(patchinfo,slice,frame,row,col) {
+
+        let patch=patchinfo.patch;
+        let dims=this.getDimensions();
+        let numslices=patchinfo.numslices;
+        let minslice=slice-patchinfo.thickness;
+        let maxslice=slice+patchinfo.thickness;
+
+        if (patch.length !== patchinfo.width*patchinfo.height*patchinfo.numslices) {
+            console.log('Bad patch');
+            return false;
+        }
+
+        let l=patch.length;
+        for (let i=0;i<l;i++)
+            patch[i]=0;
+        
+        for (let slice=minslice;slice<=maxslice;slice++) {
+            let sl=slice;
+            if (sl<0)
+                sl=0;
+            if (sl>=dims[2])
+                sl=dims[2]-1;
+        
+            let limits=this.getPatchLimits(patchinfo,sl,frame,row,col,false);
+            
+            console.log(`+++ get patch  slice=${slice}/${frame}, sl=${slice}/${numslices}, i=${limits.begini}:${limits.endi}, j=${limits.beginj}:${limits.endj}`);
+            
+            let index=slice;
+            for (let j=limits.beginj;j<=limits.endj;j++) {
+                let joffset=j*dims[0];
+                for (let i=limits.begini;i<=limits.endi;i++) {
+                    if (i<dims[0]) 
+                        patch[index]=this.internal.imgdata[limits.offset+i+joffset];
+                    index+=numslices;
+                }
+            }
+        }
+        return true;
+    }
+
+    /** Set Patch from tensorflow.js 
+     * @param{TypedArray} patch -- Typed Array to get patch from
+     * @param{Object} patchinfo -- output of getPatchInfo
+     * @param{Number} slice - slice to extract 
+     * @param{Number} frame - slice to extract 
+     * @param{Number} row - row index for patch
+     * @param{Number} col - col index for patch
+     * @returns{Boolean} - true if success
+     */
+    setPatch(patch,patchinfo,slice,frame,row,col) {
+
+        let limits=this.getPatchLimits(patchinfo,slice,frame,row,col,true);
+        let dims=this.getDimensions();
+
+        
+        if (patch.length !== patchinfo.width*patchinfo.height) {
+            console.log('Bad patch');
+            return false;
+        }
+
+        console.log(`+++ set patch i=${limits.imin}:${limits.imax}, j=${limits.jmin}:${limits.jmax}, slice=${slice}/${frame}`);
+        
+        let index=0;
+        for (let j=limits.beginj;j<=limits.endj;j++) {
+            let joffset=j*dims[0];
+            for (let i=limits.begini;i<=limits.endi;i++) {
+                if (i<dims[0] &&
+                    i<=limits.imax && i>=limits.imin &&
+                    j<=limits.jmax && j>=limits.jmin ) {
+                    this.internal.imgdata[limits.offset+i+joffset]=patch[index];
+                }
+                index++;
+            }
+        }
+        return true;
+    }
     /** Static Function to change Spacing inside a header 
      * @param{Dictionary} internal -- thisinternal from a BisWebImage
      */
