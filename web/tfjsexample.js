@@ -8,57 +8,17 @@ let run_tf=async function(img) {
 
     const MODEL_URL =  URL+'/tensorflowjs_model.pb';
     const WEIGHTS_URL = URL+'/weights_manifest.json';
-
     const model = await tf.loadFrozenModel(MODEL_URL, WEIGHTS_URL);
     const bisweb=document.querySelector("#bis").export;
 
     let shape=model.inputs[0].shape;
     let patchsize=shape[1];
-    console.log('Model Input Shape=',shape,' Patch size=',patchsize);
-    
-    let dims=img.getDimensions();
-    
-    let outimg=new bisweb.BisWebImage();
-    outimg.cloneImage(img);
-
-    let patchinfo=img.getPatchInfo(patchsize,patchsize-16);
-
-    let minslice=0,maxslice=1;
-    if (dims[2]>1) {
-        minslice=100;
-        maxslice=103;
-    }
         
-    
-    
-    for (let frame=0;frame<dims[3]*dims[4];frame++) {
-        for (let slice=minslice;slice<maxslice;slice++) {
-            for (let row=0;row<patchinfo.numrows;row++) {
-                for (let col=0;col<patchinfo.numcols;col++) {
-                    
-                    console.log('Working on part ',slice,'/',dims[2],'row=',row,'col=',col);
-                    img.getPatch(patchinfo,slice,frame,row,col);
+    let recon=new bisweb.bistfutil.BisWebTensorFlowRecon(img,patchsize,patchsize-16);
+    let output=recon.simpleRecon(tf,model);
 
-                    
-                    const tensor= tf.tensor(patchinfo.patch, [ 1, patchsize,patchsize ]);
-                    let dummy=false,predict=null;
-                    if (!dummy) {
-                        console.log('Calling Model',tensor.shape);
-                        const output=model.predict(tensor);
-                        console.log('Output = ',output.shape);
-                        predict=output.as1D().dataSync();
-                        console.log(predict);
-                    } else {
-                        predict=tensor.as1D().dataSync();
-                    }
-
-                    outimg.setPatch(predict,patchinfo,slice,frame,row,col);
-                }
-            }
-        }
-    }
     const viewer=document.querySelector("#viewer");
-    viewer.setobjectmap(outimg);
+    viewer.setobjectmap(output);
 };
 
 

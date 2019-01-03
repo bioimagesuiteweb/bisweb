@@ -5,7 +5,7 @@
 
 const genericio = require('bis_genericio');
 const moduleindex=require('moduleindex');
-
+const bistfutil=require('bis_tfutil');
 const BisWebImage = require('bisweb_image');
 const BisWebMatrix = require('bisweb_matrix');
 const BisWebTextObject = require('bisweb_textobject');
@@ -63,6 +63,7 @@ module.exports= {
     BisWebComboTransformation : BisWebComboTransformation,
     BisWebDataObjectCollection :     BisWebDataObjectCollection,
     BisWebTransformationCollection :     BisWebTransformationCollection,
+    bistfutil: bistfutil,
     userPreferences :     userPreferences,
 };
 
