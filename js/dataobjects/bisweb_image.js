@@ -1405,9 +1405,16 @@ class BisWebImage extends BisWebDataObject {
                 obj.jmax=endj-midy;
             else
                 obj.jmax=endj;
-        }
-        if (obj.jmax>=dims[1])
-            obj.jmax=dims[1]-1;
+
+            if (obj.jmax>=dims[1])
+                obj.jmax=dims[1]-1;
+            if (obj.imax>=dims[0])
+                obj.imax=dims[0]-1;
+        } 
+
+        if (obj.endj>=dims[1])
+            obj.endj=dims[1]-1;
+        
         return obj;
     }
     
@@ -1427,14 +1434,11 @@ class BisWebImage extends BisWebDataObject {
         let minslice=slice-patchinfo.thickness;
         let maxslice=slice+patchinfo.thickness;
 
-        if (patch.length !== patchinfo.width*patchinfo.height*patchinfo.numslices) {
-            console.log('Bad patch');
-            return false;
-        }
 
         let l=patch.length;
         for (let i=0;i<l;i++)
             patch[i]=0;
+        
         
         for (let slice=minslice;slice<=maxslice;slice++) {
             let sl=slice;
@@ -1445,17 +1449,23 @@ class BisWebImage extends BisWebDataObject {
 
             let limits=this.getPatchLimits(patchinfo,sl,frame,row,col,false);
 
-            let index=slice-minslice;
-            console.log(`+++ get patch  slice=${slice}/${frame}, sl=${sl}, i=${limits.begini}:${limits.endi}, j=${limits.beginj}:${limits.endj}, offset=${limits.offset}, index=${index}, numslices=${numslices}`);
-            
+            let index=(slice-minslice);
+            console.log(`+++ get patch  slice=${slice}/${frame}, sl=${sl}, i=${limits.begini}:${limits.endi}, j=${limits.beginj}:${limits.endj}, offset=${limits.offset}, index=${index}`);
 
+            let iextra=0;
+            if (limits.endi>=dims[0]) {
+                iextra=(limits.endi-(dims[0]-1));
+                limits.endi=dims[0]-1;
+            }
+            
             for (let j=limits.beginj;j<=limits.endj;j++) {
-                let joffset=j*dims[0];
+                let joffset=j*dims[0]+limits.offset+limits.begini;
                 for (let i=limits.begini;i<=limits.endi;i++) {
-                    if (i<dims[0]) 
-                        patch[index]=this.internal.imgdata[limits.offset+i+joffset];
+                    patch[index]=this.internal.imgdata[joffset];
+                    joffset++;
                     index+=numslices;
                 }
+                index+=(numslices*iextra);
             }
         }
         return true;
@@ -1476,24 +1486,31 @@ class BisWebImage extends BisWebDataObject {
         let dims=this.getDimensions();
 
         
-        if (patch.length !== patchinfo.width*patchinfo.height) {
+        /*if (patch.length !== patchinfo.width*patchinfo.height) {
             console.log('Bad patch');
             return false;
-        }
+        }*/
 
-        console.log(`+++ set patch i=${limits.imin}:${limits.imax}, j=${limits.jmin}:${limits.jmax}, slice=${slice}/${frame}`);
+        let jminextra=0,iminextra=0,imaxextra=0;
+        if (limits.jmin>limits.beginj)
+            jminextra=(limits.jmin-limits.beginj);
+        if (limits.imin>limits.begini)
+            iminextra=(limits.imin-limits.begini);
+        if (limits.imax<limits.endi)
+            imaxextra=(limits.endi-limits.imax);
         
-        let index=0;
-        for (let j=limits.beginj;j<=limits.endj;j++) {
-            let joffset=j*dims[0];
-            for (let i=limits.begini;i<=limits.endi;i++) {
-                if (i<dims[0] &&
-                    i<=limits.imax && i>=limits.imin &&
-                    j<=limits.jmax && j>=limits.jmin ) {
-                    this.internal.imgdata[limits.offset+i+joffset]=patch[index];
-                }
+        let index=(jminextra*patchinfo.width);
+        console.log(`+++ set patch i=${limits.imin}:${limits.imax}, j=${limits.jmin}:${limits.jmax}, slice=${slice}/${frame}, index=${index}`);
+        
+        for (let j=limits.jmin;j<=limits.jmax;j++) {
+            let joffset=j*dims[0]+limits.offset+limits.imin;
+            index+=iminextra;
+            for (let i=limits.imin;i<=limits.imax;i++)  {
+                this.internal.imgdata[joffset]=patch[index];
+                joffset++;
                 index++;
             }
+            index+=imaxextra;
         }
         return true;
     }
