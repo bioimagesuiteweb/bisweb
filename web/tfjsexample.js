@@ -28,10 +28,12 @@ let run_tf=async function(img) {
             for (let row=0;row<patchinfo.numrows;row++) {
                 for (let col=0;col<patchinfo.numcols;col++) {
                     
-                    console.log('Working on part ',slice,frame,row,col);
+                    console.log('Working on part ',slice,'/',dims[2],'row=',row,'col=',col);
                     img.getPatch(patchinfo,slice,frame,row,col);
+                    console.log('patchinfo.patch=',patchinfo.patch.length,'patchsize=',patchsize,patchsize*patchsize);
                     
                     const tensor= tf.tensor(patchinfo.patch, [ 1, patchsize,patchsize ]);
+                    console.log('Calling Model');
                     const output=model.predict(tensor);
                     let predict=output.as1D().dataSync();
                     
@@ -60,7 +62,7 @@ window.onload = function() {
     let img=new bisweb.BisWebImage();
     
     // Load an image --> returns a promise so .then()
-    img.load(`${URL}/sample1.nii.gz`).then( () => {
+    img.load(`${URL}/sample3d.nii.gz`).then( () => {
         console.log('Image Loaded = ',img.getDescription());
         
         // Set the image to the viewer

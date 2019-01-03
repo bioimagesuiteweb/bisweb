@@ -1347,7 +1347,8 @@ class BisWebImage extends BisWebDataObject {
             'numframes' : dims[3]*dims[4],
             'dims' : dims,
         };
-        output['patch']= new this.internal.imginfo.type(width*height*numslices);
+        console.log('Output=',output);
+        output['patch']= new Float32Array(width*height*numslices);//this.internal.imginfo.type(width*height*numslices);
         return output;
 
     }
@@ -1441,12 +1442,13 @@ class BisWebImage extends BisWebDataObject {
                 sl=0;
             if (sl>=dims[2])
                 sl=dims[2]-1;
-        
+
             let limits=this.getPatchLimits(patchinfo,sl,frame,row,col,false);
+
+            let index=slice-minslice;
+            console.log(`+++ get patch  slice=${slice}/${frame}, sl=${sl}, i=${limits.begini}:${limits.endi}, j=${limits.beginj}:${limits.endj}, offset=${limits.offset}, index=${index}, numslices=${numslices}`);
             
-            console.log(`+++ get patch  slice=${slice}/${frame}, sl=${slice}/${numslices}, i=${limits.begini}:${limits.endi}, j=${limits.beginj}:${limits.endj}`);
-            
-            let index=slice;
+
             for (let j=limits.beginj;j<=limits.endj;j++) {
                 let joffset=j*dims[0];
                 for (let i=limits.begini;i<=limits.endi;i++) {
