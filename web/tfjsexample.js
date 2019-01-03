@@ -11,13 +11,17 @@ let run_tf=async function(img) {
 
     const model = await tf.loadFrozenModel(MODEL_URL, WEIGHTS_URL);
     const bisweb=document.querySelector("#bis").export;
+
+    let shape=model.inputs[0].shape;
+    let patchsize=shape[1];
+    console.log('Model Input Shape=',shape,' Patch size=',patchsize);
     
     let dims=img.getDimensions();
     
     let outimg=new bisweb.BisWebImage();
     outimg.cloneImage(img);
 
-    let patchinfo=img.getPatchInfo(128,110);
+    let patchinfo=img.getPatchInfo(patchsize,patchsize-16);
 
     for (let frame=0;frame<dims[3]*dims[4];frame++) {
         for (let slice=0;slice<dims[2];slice++) {
@@ -27,7 +31,7 @@ let run_tf=async function(img) {
                     console.log('Working on part ',slice,frame,row,col);
                     img.getPatch(patchinfo,slice,frame,row,col);
                     
-                    const tensor= tf.tensor(patchinfo.patch, [ 1,128,128 ]);
+                    const tensor= tf.tensor(patchinfo.patch, [ 1, patchsize,patchsize ]);
                     const output=model.predict(tensor);
                     let predict=output.as1D().dataSync();
                     
