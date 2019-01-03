@@ -3,9 +3,28 @@
     padding : 0 0 0 0;
 }
 
+#offline {
+    left : 0vw;
+    right : 0vw;
+    top: 75px;
+    width : 95vw;
+    height : 45px;
+    position: absolute;
+}
+
+#offline2 {
+    float : right;
+    position : relative;
+}
+
+#onlinebut,#offlinebut {
+    visibility : hidden;
+}
+
+
 #main {
     left : 5vw;
-    top: 75px;
+    top: 125px;
     width : 90vw;
     height : 525px;
     position: absolute;
@@ -16,7 +35,7 @@
     left : 5vw;
     max-width: 1024px;
     position: absolute;
-    top: 625px;
+    top: 675px;
 
 }
 

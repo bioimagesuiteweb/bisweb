@@ -158,6 +158,23 @@ const dataURLToBlob = function(dataURL) {
 
 // -------------------------------------------- Utilities ---------------------------------------------------------------------
 
+/** inIOS. Checks if we are running in IOS
+ * @alias BisCoreGenericIO#inIOS
+ * @returns {boolean} 
+ */
+var inIOS = function () {
+
+    try {
+        if (/iP(hone|od|ad)/.test(navigator.platform)) {
+            return true;
+        }
+    } catch(e) {
+        return false;
+    }
+    return false;
+};
+
+
 /** is compressed. Checks if filename ends in .gz
  * @alias BisCoreGenericIO#iscompressed
  * @param {string} url - the filename or url
@@ -622,7 +639,7 @@ var writetextdatabrowser = function (filename, data, donecallback) {
 
     donecallback = donecallback || console.log;
 
-    var blob = new Blob([data], { type: "text/plain" });
+    var blob = new Blob([data], { type: "application/octet-stream" });
 
     filesaver(blob, filename);
     donecallback('');
@@ -643,9 +660,9 @@ var writebinarydatabrowser = function (filename, data, donecallback) {
     var iscomp = iscompressed(filename);
     if (iscomp) {
         var compressed = pako.gzip(data);
-        blob = new Blob([compressed]);
+        blob = new Blob([compressed],{ type: "application/gzip" });
     } else {
-        blob = new Blob([data]);
+        blob = new Blob([data],{ type: "application/octet-stream" });
     }
 
     filesaver(blob, filename);
@@ -944,6 +961,10 @@ let getimagepath=function() {
         imagepath=path.resolve(scope);
         console.log('Imagepath=',imagepath);
 
+    } else if (webWorkerScope) {
+        console.log('In Web Worker ...');
+        console.log('Web Worker can not get path, or perform fetch');
+
     } else {
         const path=getpathmodule();
         console.log('Dirname=',__dirname);
@@ -974,6 +995,7 @@ const biscoregenericio = {
     binary2string :     binary2string ,
     dataURLToBlob : dataURLToBlob,
     iscompressed :      iscompressed, // ends in .gz
+    inIOS : inIOS, // are we running in iOS Safari
     setWebWorkerScope :     setWebWorkerScope,
     readtextdatafromurl : readtextdatafromurl, // read from url
     readbinarydatafromurl : readbinarydatafromurl, // read from url

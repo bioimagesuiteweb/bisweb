@@ -160,13 +160,17 @@ let webLoadUserPreferences=function(dbase=null) {
     let keys=Object.keys(userPreferences);
 
     return new Promise( (resolve,reject) => {
-        dbase.getItems(keys).then( (obj) => {
-            if (parseUserPreferences(obj)) {
-                dbasepointer=dbase;
-                resolve();
-            }
-        }).catch( (e) => { reject(e); });
-    });
+        try {
+            dbase.getItems(keys).then( (obj) => {
+                if (parseUserPreferences(obj)) {
+                    dbasepointer=dbase;
+                    resolve();
+                }
+            }).catch( (e) => { reject(e); });
+        } catch(e) {
+            reject(e);
+        }
+    });              
 };
 
 // Internal Functions
@@ -284,12 +288,15 @@ expobj.storeUserPreferences=function(dbase) {
 
     dbase = dbase  || dbasepointer;
     return new Promise( (resolve,reject) => {
-        console.log('Storing',JSON.stringify(userPreferences,null,2));
-        
-        dbase.setItems(userPreferences).then( () => {
-            resolve();
-        }).catch( (e) => { reject(e);});
+        try {
+            dbase.setItems(userPreferences).then( () => {
+                resolve();
+            }).catch( (e) => { reject(e);});
+        } catch(e) {
+            reject(e);
+        }
     });
+                      
 };
 
 /** 
@@ -313,11 +320,11 @@ expobj.getItem=function(item) {
 
 expobj.safeGetItem=function(item) {
 
-    return new Promise( (resolve,reject) => {
+    return new Promise( (resolve) => {
         expobj.loadedPromise.then( () => {
             resolve(expobj.getItem(item));
-        }).catch( (e) => {
-            reject(e);
+        }).catch( () => {
+            resolve(userPreferences[item]);
         });
     });
 };
@@ -340,7 +347,7 @@ expobj.setItem=function(key,value,save=false) {
     
     if (save) {
         if (genericio.getmode() === 'browser')  {
-            expobj.storeUserPreferences();
+            expobj.storeUserPreferences().catch( () => { });
         } else {
             expobj.saveUserPreferences();
         }
@@ -371,24 +378,30 @@ expobj.setItem=function(key,value,save=false) {
 // Load ${HOME}/.bisweb
 // ------------------------------------------------------------------------------
 
-let initializeCommandLine=function() {
+let initializeCommandLine=function(silent=false) {
 
     if (expobj.loadedPromise!==null)
         return;
-    
-    console.log(',,,,');
+
+    if (!silent)
+        console.log(',,,,');
     let fname=nodeLoadUserPreferences();
     if (fname!==null) {
-        console.log(",,,, bisweb commandline user preferences loaded from "+fname);
-        console.log(',,,, ',JSON.stringify(userPreferences));
-        console.log(',,,,');
+        if (!silent) {
+            console.log(",,,, bisweb commandline user preferences loaded from "+fname);
+            console.log(',,,, ',JSON.stringify(userPreferences));
+            console.log(',,,,');
+        }
     } else {
         console.log(',,,, Failed to read user preferences from default location');
         expobj.setImageOrientationOnLoad(userPreferences['orientationOnLoad'],null);
         fname=getDefaultFileName();
-        if (expobj.saveUserPreferences(fname))
-            console.log(',,,, \t created and saved user preferences in ',fname);
-        console.log(',,,,');
+        if (expobj.saveUserPreferences(fname)) {
+            if (!silent) {
+                console.log(',,,, \t created and saved user preferences in ',fname);
+                console.log(',,,,');
+            }
+        }
     }
     // Resolve the promise for later
     expobj.loadedPromise=Promise.resolve();
@@ -406,28 +419,43 @@ expobj.initialize=function(dbase) {
         console.log('+++++ \t user preferences already initialized (or in process of being initialized)');
         return expobj.loadedPromise;
     }
+
+
+    return new Promise( (resolve,reject) => {
     
-    if (genericio.getmode() === 'browser')  {
-        expobj.loadedPromise=webLoadUserPreferences(dbase);
-        expobj.loadedPromise.then(() => {
-            expobj.storeUserPreferences(dbase);
-        });
-    } else {
-        initializeCommandLine();
-    }
-    return expobj.loadedPromise;
+        if (genericio.getmode() === 'browser')  {
+            
+            expobj.loadedPromise=webLoadUserPreferences(dbase);
+            expobj.loadedPromise.then( () => {
+                expobj.storeUserPreferences(dbase).catch( (e) => {
+                    console.log('Error =',e);
+                });
+                resolve();
+            }).catch( () => { 
+                reject('Bad Pref Database');
+            });
+        } else {
+            initializeCommandLine();
+            expobj.loadedPromise=Promise.resolve();
+            resolve();
+        }
+    });
 };
 
 // -------------------------- auto execute code -----------------------------
 // If one command line, initialize automatically
 if (genericio.getmode() !== 'browser')  {
-    initializeCommandLine();
+
+    if (global.bioimagesuiteweblib)
+        count=1;
+    
+    initializeCommandLine(global.bioimagesuiteweblib);
 } else {
     try {
         // Web worker gives an error
         Window.biswebpref=expobj;
     } catch (e) {
-        console.log("++++ In web worker, no export");
+        //        console.log("++++ In web worker, no export");
     }
 }
 

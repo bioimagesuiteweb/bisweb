@@ -57,7 +57,7 @@ class AWSModule extends BaseServerClient {
                //console.log('current aws', this.currentAWS);
                 this.currentAWS = null;
             }
-        });
+        }).catch( () => { });
 
         //file display modal gets deleted if you try to load it too soon
         //not completely sure why -Zach
@@ -1152,11 +1152,12 @@ class AWSModule extends BaseServerClient {
         confirmButton.on('click', (e) => {
             e.preventDefault();
 
-            let bucketName = entryContainer.find('.bucket-input')[0].value;
-            let identityPoolId = entryContainer.find('.identity-pool-input')[0].value;
-            let userPoolId = entryContainer.find('.user-pool-input')[0].value;
-            let appClientId = entryContainer.find('.client-input')[0].value;
-            let appWebDomain = entryContainer.find('.web-domain-input')[0].value;
+            //strip whitespace from raw inputs since none of the fields should contain any
+            let bucketName = entryContainer.find('.bucket-input')[0].value.replace(/\s*/g, '');
+            let identityPoolId = entryContainer.find('.identity-pool-input')[0].value.replace(/\s*/g, '');
+            let userPoolId = entryContainer.find('.user-pool-input')[0].value.replace(/\s*/g, '');
+            let appClientId = entryContainer.find('.client-input')[0].value.replace(/\s*/g, '');
+            let appWebDomain = entryContainer.find('.web-domain-input')[0].value.replace(/\s*/g, '').replace(/^https:\/\//, '');
 
             if (bucketName === '' || identityPoolId === '' || userPoolId === '' || appClientId === '' || appWebDomain === '') {
                 bis_webutil.showErrorModal('An error occured', 'Please fill out all the required fileds');

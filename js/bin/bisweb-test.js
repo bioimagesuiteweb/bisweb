@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /*  LICENSE
     
     _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
@@ -21,12 +23,14 @@
  * Runs modules in test mode
  */
 
-require('../../config/bisweb_pathconfig.js');
-const program = require('commander');
-const tmp = require('tmp');
-const rimraf=require('rimraf');
-const commandline = require('commandline');
-const userPreferences = require('bisweb_userpreferences.js');
+global.bioimagesuiteweblib=false;
+
+const bioimagesuiteweblib=require('./bioimagesuiteweblib');
+const program = bioimagesuiteweblib.commander;
+const tmp = bioimagesuiteweblib.tmp;
+const rimraf=bioimagesuiteweblib.rimraf;
+const commandline=bioimagesuiteweblib.commandline;
+const userPreferences = bioimagesuiteweblib.userPreferences;
 
 let tmpDirectory = tmp.dirSync();
 console.log('.... created tmp directory',tmpDirectory.name);

@@ -361,7 +361,7 @@ let deleteDirectory=function(url) {
  * @returns {Promise} - the payload is true or false
  */
 let moveDirectory=function(url) {
-    console.log('moveDirectory', url);
+
     if (fileServerClient) {
         return fileServerClient.moveDirectory(url);
     }
@@ -604,6 +604,7 @@ let isSaveDownload =function() {
  * @param {String} params.inputDirectory - The input directory to run file conversions in. 
  */
 let runFileConversion = (params) => {
+
     let updateFn = (obj) => {
         console.log('update fn', obj);
     };
@@ -612,11 +613,15 @@ let runFileConversion = (params) => {
         if (fileServerClient) {
             if (params.fileType === 'dicom') {
                 fileServerClient.dicomConversion(params.inputDirectory, updateFn)
-                    .then( (obj) => {
+                    .then((obj) => {
                         console.log('Conversion done');
                         resolve(obj);
-                     }).catch( (e) => { reject(e); });
+                    }).catch((e) => { reject(e); });
+            } else {
+                reject('Error: unsupported file type', params.fileType);
             }
+        } else {
+            reject('No file server client');
         }
     });
 };
@@ -649,6 +654,7 @@ const bisgenericio = {
     binary2string :     biscoreio.binary2string ,
     dataURLToBlob : biscoreio.dataURLToBlob,
     iscompressed :      biscoreio.iscompressed, // ends in .gz
+    inIOS : biscoreio.inIOS, // are we running in iOS Safari
     setWebWorkerScope :     biscoreio.setWebWorkerScope,
     readtextdatafromurl : biscoreio.readtextdatafromurl, // read from url
     readbinarydatafromurl : biscoreio.readbinarydatafromurl, // read from url

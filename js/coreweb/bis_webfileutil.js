@@ -42,7 +42,9 @@ const gkey=keystore.GoogleDriveKey || "";
 const mkey=keystore.OneDriveKey || "";
 
 // Ensure that these get initialized
-userPreferences.initialize(bisdbase);
+userPreferences.initialize(bisdbase).catch( () => {
+    console.log('--- No preference database available');
+});
 
 
 // ------------------------
@@ -66,7 +68,7 @@ if (!webutil.inElectronApp() && enableserver===true) {
 // Initial mode
 let fileMode='local';
 let fileInputElements= [];
-
+let iosFileDialog=null;
 
 
 
@@ -293,7 +295,7 @@ const webfileutils = {
             }
         }
 
-        console.log('Suffix =',fileopts.suffix,suffix,fileopts.filters);
+        //        console.log('Suffix =',fileopts.suffix,suffix,fileopts.filters);
         
         if (suffix === "NII" || fileopts.filters === "NII") {
             suffix = '.nii.gz,.nii,.gz,.tiff';
@@ -326,6 +328,11 @@ const webfileutils = {
             cbopts.initialFilename= '';
             cbopts.mode='directory';
             cbopts.suffix='';
+
+            if (fmode !== 'server' && fmode !== 'amazonaws') {
+                webutil.createAlert('You need to connect to a local fileserver on an S3 share before this operation.',true);
+                return false;
+            }
         }
 
         // -------------------- End of Part IA -------------
@@ -418,16 +425,42 @@ const webfileutils = {
 
 
         let nid=webutil.getuniqueid();
-        let loadelement = $(`<input type="file" style="visibility: hidden;" id="${nid}" accept="${suffix}"/>`);
         for (let i=0;i<fileInputElements.length;i++)
             fileInputElements[i].remove();
-        fileInputElements.push(loadelement);
+
         
-        loadelement[0].addEventListener('change', function (f) {
-            callback(f.target.files[0]);
-        });
-        $('body').append(loadelement);
-        loadelement[0].click();
+        
+        if (!genericio.inIOS()) {
+            let loadelement = $(`<input type="file" style="visibility: hidden;" id="${nid}" accept="${suffix}"/>`);
+            fileInputElements.push(loadelement);
+
+            loadelement[0].addEventListener('change', function (f) {
+                callback(f.target.files[0]);
+            });
+            $('body').append(loadelement);
+            loadelement[0].click();
+        } else {
+            if (!iosFileDialog) 
+                iosFileDialog=webutil.createmodal('Select Input File');
+            
+            iosFileDialog.titlediv.empty();
+            if (fileopts.title.length<1)
+                fileopts.title='Select File';
+            iosFileDialog.titlediv.append(`<H4>${fileopts.title}</H4>`);
+            let loadelement = $(`<input type="file" id="${nid}" accept="${suffix}"/>`);
+            fileInputElements.push(loadelement);
+            loadelement[0].addEventListener('change', function (f) {
+                iosFileDialog.dialog.modal('hide');
+                setTimeout( () => {
+                    callback(f.target.files[0]);
+                },50);
+                return false;
+            });
+            iosFileDialog.body.append(loadelement);
+            iosFileDialog.dialog.modal('show');
+            iosFileDialog.body[0].click();
+        }
+            
     },
 
     /** 
@@ -625,6 +658,8 @@ if (!webutil.inElectronApp() ) {
                        f= f || fileMode;
                        console.log('+++++ Initial File Source=',f, 's3enabeled=',enableaws);
                        webfileutils.setMode(f,false);
+                   }).catch( () => {
+                       webfileutils.setMode('local',false);
                    });
 } else {
     webfileutils.setMode('local',true);

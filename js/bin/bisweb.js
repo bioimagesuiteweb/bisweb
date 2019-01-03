@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /*  LICENSE
     
     _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
@@ -15,14 +17,15 @@
     
     ENDLICENSE */
 
+
 'use strict';
 
 /**
  * This is the main command line tool for all modules. Uses functionality in commandline.
  */
 
-require('../../config/bisweb_pathconfig.js');
-const commandline = require('commandline');
+global.bioimagesuiteweblib=false;
+const commandline=require('./bioimagesuiteweblib').commandline;
 
 let args=[];
 for (let i=0;i<process.argv.length;i++) {

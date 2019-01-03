@@ -325,7 +325,7 @@ class ViewerLayoutElement extends HTMLElement {
                                                  css : {'position':'absolute',
                                                         'top' : '0px',
                                                         'left' : '0px',
-                                                        'z-index' : '4',
+                                                        'z-index' : '25',
                                                         'margin-top' : '0px',
                                                         'padding-right' : '2px',
                                                         'margin-bottom' : '0px',
@@ -338,6 +338,8 @@ class ViewerLayoutElement extends HTMLElement {
                                                        }
                                                }),
         };
+        
+        this.elements.dockbar.attr('aria-label', 'viewer_dockbar');
         
         let b1=this.defaulttext.substr(0,1) || "";
         if (this.defaulttext.length>10 && b1!=" ")

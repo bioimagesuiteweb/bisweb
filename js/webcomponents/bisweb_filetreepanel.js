@@ -4,6 +4,8 @@ const bisweb_panel = require('bisweb_panel.js');
 const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
 const bis_genericio = require('bis_genericio.js');
+const userPreferences = require('bisweb_userpreferences.js');
+
 require('jstree');
 
 /**
@@ -32,29 +34,49 @@ class FileTreePanel extends HTMLElement {
         this.menubarid = this.getAttribute('bis-menubarid');
         this.viewerappid = this.getAttribute('bis-viewerapplicationid');
 
-        bis_webutil.runAfterAllLoaded( () => {
+        bis_webutil.runAfterAllLoaded(() => {
+            userPreferences.safeGetItem("internal").then((f) => {
+                this.viewer = document.querySelector(this.viewerid);
+                this.viewertwo = document.querySelector(this.viewertwoid) || null;
+                this.layout = document.querySelector(this.layoutid);
+                this.menubar = document.querySelector(this.menubarid);
+                this.viewerapplication = document.querySelector(this.viewerappid);
+                this.popoverDisplayed = false;
+                this.staticTagSelectMenu = null;
 
-            this.viewer = document.querySelector(this.viewerid);
-            this.viewertwo = document.querySelector(this.viewertwoid) || null;
-            this.layout = document.querySelector(this.layoutid);
-            this.menubar = document.querySelector(this.menubarid);
-            this.viewerapplication = document.querySelector(this.viewerappid);
+                this.panel = new bisweb_panel(this.layout,
+                    {
+                        name: 'Files',
+                        permanent: false,
+                        width: '400',
+                        dual: true,
+                        mode: 'sidebar',
+                    });
 
-            this.panel=new bisweb_panel(this.layout,
-                {  name  : 'Files',
-                   permanent : false,
-                   width : '400',
-                   dual : true,
-                   mode : 'sidebar',
-                });
-            
-            
-            this.addMenuItem(this.menubar.getMenuBar());
+                if (f) {
+                    this.addMenuItem(this.menubar.getMenuBar());
+                }
 
-            let listElement = this.panel.getWidget();
-            this.makeButtons(listElement);
+                let listElement = this.panel.getWidget();
+                let biswebElementMenu = $(`<div class='bisweb-elements-menu'></div>`);
+
+                listElement.append(biswebElementMenu);
+                this.makeButtons(listElement);
+            });
+
+            //https://stackoverflow.com/questions/11703093/how-to-dismiss-a-twitter-bootstrap-popover-by-clicking-outside
+            let dismissPopoverFn = (e) => {
+                if (typeof $(e.target).data('original-title') == 'undefined' && !$(e.target).parents().is('.popover.in')) {
+                    if (this.popoverDisplayed) {
+                        $('[data-original-title]').popover('hide');
+                        this.popoverDisplayed = false;
+                    }
+                }
+            };
+
+            $('html').on('click', dismissPopoverFn);
+            $('html').on('contextmenu', dismissPopoverFn);
         });
-
 
         this.contextMenuDefaultSettings = {
             'Info' : {
@@ -71,6 +93,14 @@ class FileTreePanel extends HTMLElement {
                 'label': 'Load Image',
                 'action': () => {
                     this.loadImageFromTree();
+                }
+            },
+            'Tag' : {
+                'separator_before': false,
+                'separator_after': false,
+                'label': 'Set Tag',
+                'action': (node) => {
+                    this.openTagSettingPopover(node);
                 }
             }
         };
@@ -130,14 +160,18 @@ class FileTreePanel extends HTMLElement {
 
         //if it does then update the file tree with just that file. otherwise look one level deeper for the whole study
         bis_genericio.getMatchingFiles(queryString).then( (files) => {
+
             if (files.length > 0) {
                 this.updateFileTree(files, filename);
+                bis_webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
                 return;
             } 
             
             queryString = filename + '/*.nii*';
             bis_genericio.getMatchingFiles(queryString).then( (newFiles) => {
                 console.log('filename', filename);
+
+                bis_webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
                 this.updateFileTree(newFiles, filename);
             });
             
@@ -277,7 +311,6 @@ class FileTreePanel extends HTMLElement {
             });
         }
 
-        console.log('new settings', newSettings);
         tree.jstree(true).settings.contextmenu.items = newSettings;
         tree.jstree(true).redraw(true); 
 
@@ -287,9 +320,24 @@ class FileTreePanel extends HTMLElement {
         let saveStudyButton = this.panel.widget.find('.save-study-button');
         saveStudyButton.prop('disabled', false);
 
-        this.setOnClickListeners(tree, listContainer);
+        if (!this.renderedTagSelectMenu) {
 
-        this.fileTree = fileTree;
+            //append the tag selecting menu to the bottom of the file tree div
+            let tagSelectDiv = $(`<div></div>`);
+            this.staticTagSelectMenu = this.createTagSelectMenu({ 'setDefaultValue' : false, 'listenForTagEvents' : true });
+            tagSelectDiv.append(this.staticTagSelectMenu);
+
+            let elementsDiv = $('.bisweb-elements-menu');
+            elementsDiv.prepend(tagSelectDiv);
+            elementsDiv.prepend($(`<br><label>Tag Selected Element:</label></br>`));
+            this.renderedTagSelectMenu = true;
+        } else {
+            $('.bisweb-elements-menu').find('select').prop('disabled', 'disabled');
+        }
+
+        //attach listeners to new file tree
+        this.setOnClickListeners(tree, listContainer);
+        this.fileTree = tree;
 
         //Searches for the directory that should contain a file given the file's path, e.g. 'a/b/c' should be contained in folders a and b.
         //Returns the children 
@@ -342,11 +390,13 @@ class FileTreePanel extends HTMLElement {
             'callback': (f) => {
                 this.exportStudy(f);
             },
-        }, {
-                'title': 'Export study',
-                'filters': 'DIRECTORY',
-                'suffix': 'DIRECTORY',
-                'save': true,
+        }, 
+        {
+            'title': 'Export study',
+            'filters': 'DIRECTORY',
+            'suffix': 'DIRECTORY',
+            'save': true,
+            initialCallback: () => { return this.getDefaultFilename(); },
         });
 
         saveStudyButton.addClass('save-study-button');
@@ -362,7 +412,6 @@ class FileTreePanel extends HTMLElement {
         topButtonBar.append(loadStudyButton);
         bottomButtonBar.append(saveStudyButton);
 
-        listElement.append(`<br>`);
         listElement.append(buttonGroupDisplay);
     }
 
@@ -390,15 +439,17 @@ class FileTreePanel extends HTMLElement {
         };
 
         let handleDblClick = () => {
-            console.log('currently selected node', this.currentlySelectedNode);
             if (this.currentlySelectedNode.original.type === 'picture') {
                this.loadImageFromTree(); 
             }
         };
 
         listContainer.on('select_node.jstree', (event, data) => {
-            console.log('select_node', event, data);
+            console.log('select_node', data);
+            $('.bisweb-elements-menu').find('select').prop('disabled', '');
             this.currentlySelectedNode = data.node;
+
+            this.changeTagSelectMenu(this.staticTagSelectMenu, data.node);
 
             if (data.event.type === 'click') {
                 handleLeftClick(data);
@@ -431,9 +482,37 @@ class FileTreePanel extends HTMLElement {
      */
     exportStudy(filepath) {
         try {
-            let stringifiedFiles = JSON.stringify(this.fileTree);
-            console.log('stringified files', stringifiedFiles, 'path', filepath);
 
+            //reconstruct tree from jstree
+            let rawTree = this.fileTree.jstree(true);
+            let rawTreeJSON = rawTree.get_json('#'); 
+            let reconstructedTree = [];
+
+            let fillTreeNode = (node, parentNode) => {
+                console.log('fill tree node', node);
+                let item = rawTree.get_node(node.id);
+                let newNode = item.original;
+                if (item.children.length > 0) {
+                    newNode.children = [];
+                    for (let child of node.children) {
+                        fillTreeNode(child, newNode);
+                    }
+                }
+
+                if (parentNode) {
+                    parentNode.children.push(newNode);
+                } else {
+                    reconstructedTree.push(newNode);
+                }
+                    
+            }; 
+
+            console.log('raw tree json', rawTreeJSON);
+            for (let item of rawTreeJSON) { fillTreeNode(item); }
+
+            console.log('reconstructed tree', reconstructedTree);
+
+            let stringifiedFiles = JSON.stringify(reconstructedTree);
             //set the correct file extension if it isn't set yet
             let splitPath = filepath.split('.');
             if (splitPath.length < 2 || splitPath[1] !== 'JSON' || splitPath[1] !== 'json') {
@@ -487,7 +566,7 @@ class FileTreePanel extends HTMLElement {
         bis_genericio.isDirectory(this.constructNodeName()).then( (isDirectory) => {
             bis_genericio.getFileStats(this.constructNodeName()).then( (stats) => { 
 
-                console.log('stats', stats);
+                console.log('stats', stats, 'node', this.currentlySelectedNode);
                 //make file size something more readable than bytes
                 let displayedSize, filetype;
                 let kb = stats.size / 1000;
@@ -507,7 +586,7 @@ class FileTreePanel extends HTMLElement {
                 console.log('accessed time', accessedTime.toDateString(), 'created time', createdTime, 'modified time', modifiedTime);
     
                 //make info dialog
-                let infoDisplay = `File Size: ${roundedSize}${filetype}<br> First Created: ${createdTime}<br> Last Modified: ${modifiedTime}<br> Last Accessed: ${accessedTime} <br> Is a Directory: ${parsedIsDirectory}`;
+                let infoDisplay = `File Size: ${roundedSize}${filetype}<br> First Created: ${createdTime}<br> Last Modified: ${modifiedTime}<br> Last Accessed: ${accessedTime} <br> Is a Directory: ${parsedIsDirectory} <br> Tag: ${this.currentlySelectedNode.original.tag}`;
     
                 bootbox.dialog({
                     'title' : 'File Info',
@@ -518,9 +597,28 @@ class FileTreePanel extends HTMLElement {
         
     }
 
+    openTagSettingPopover(node) {
+        let popover = $(`<a href='#' data-toggle='popover' title='Select Tag'></a>`);
+        let dropdownMenu = this.createTagSelectMenu({ 'enabled' : true, 'setDefaultValue' : true });
+
+        $(node.reference.prevObject[0]).append(popover);
+        popover.popover({ 
+            'html' : true,
+            'content' : dropdownMenu,
+            'trigger' : 'manual', 
+            'container' : 'body'
+        });
+        
+        //set flag to dismiss popover if user clicks area outside
+        popover.on('shown.bs.popover', () => {
+            this.popoverDisplayed = true;
+        });
+
+        popover.popover('show');
+    }
+
     toggleContextMenuLoadButtons(tree, toggle) {
         let existingTreeSettings = tree.jstree(true).settings.contextmenu.items;
-        console.log('existing tree settings', existingTreeSettings);
         if (toggle === 'on') {
             if (existingTreeSettings.Load) {
                 existingTreeSettings.Load._disabled = false;
@@ -539,7 +637,6 @@ class FileTreePanel extends HTMLElement {
     }
 
     constructNodeName() {
-        console.log('currently selected node', this.currentlySelectedNode, 'base directory', this.baseDirectory);
         //construct the full name out of the current node 
         let name = '', currentNode = this.currentlySelectedNode;
         let tree = this.panel.widget.find('.file-container').jstree();
@@ -555,7 +652,68 @@ class FileTreePanel extends HTMLElement {
         return this.baseDirectory + name;
 
     }
-  
+
+    createTagSelectMenu(options = {}) {
+
+        let tagSelectMenu = $(
+        `<select class='form-control' disabled> 
+            <option value='none'></option>
+            <option value='sagittal'>Sagittal</option>
+            <option value='coronal'>Coronal</option>
+        </select>`
+        );
+        
+        console.log('options', options, 'tag select menu', tagSelectMenu);
+        if (options.enabled) { tagSelectMenu.prop('disabled', ''); }
+
+        if (options.setDefaultValue) {
+            this.changeTagSelectMenu(tagSelectMenu, this.currentlySelectedNode);
+        }
+
+        if (options.listenForTagEvents) {
+            document.addEventListener('bisweb.tag.changed', () => {
+                this.changeTagSelectMenu(tagSelectMenu, this.currentlySelectedNode);
+            });
+        }
+
+        tagSelectMenu.on('change', () => {
+            let selectedValue = tagSelectMenu.val(); 
+            this.currentlySelectedNode.original.tag = selectedValue;
+
+            //tag select menus can be created by popovers or statically in the file bar
+            //in order for one to change when the other does, they should emit and listen to each other's events
+            let tagChangedEvent = new CustomEvent('bisweb.tag.changed', { 'bubbles' : true });
+            document.dispatchEvent(tagChangedEvent);
+        });
+
+        return tagSelectMenu;
+    }
+
+    changeTagSelectMenu(menu, node) {
+        let defaultSelection = node.original.tag || "none";
+
+        //clear selected options
+        let options = menu.find('option');
+        for (let i = 0; i < options.length; i++) {
+            options[i].removeAttribute('selected');
+        }
+
+        menu.find(`option[value=${defaultSelection}]`).prop('selected', true);
+        //menu.html(defaultSelection);
+        console.log('default selection', defaultSelection);
+    }
+    
+    getDefaultFilename() {
+        let date = new Date();
+        let parsedDate = 'ExportedStudy' + date.getFullYear() + '-' + date.getMonth() + 1 + '-' + zeroPadLeft(date.getDate()) + 'T' + zeroPadLeft(date.getHours()) + ':' + zeroPadLeft(date.getMinutes()) + ':' + zeroPadLeft(date.getSeconds());
+        console.log('date', parsedDate);
+        return parsedDate + '.json';
+
+        function zeroPadLeft(num) { 
+            let pad = '00', numStr = '' + num;
+            return pad.substring(0, pad.length - numStr.length) + numStr;
+        }
+    }
 }
 
 bis_webutil.defineElement('bisweb-filetreepanel', FileTreePanel);

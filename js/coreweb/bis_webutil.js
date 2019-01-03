@@ -817,6 +817,7 @@ const webutil = {
             body: div.find('.modal-body'),
             footer: div.find('.modal-footer'),
             header: div.find('.modal-header'),
+            titlediv : div.find('.modal-title'),
             close: div.find('btn-default'),
         };
     },
@@ -1288,6 +1289,25 @@ const webutil = {
         scope=scope.substr(0,index);
         return scope;
     },
+
+    getScope() {
+    
+        let scope=window.document.URL;
+        let index=scope.indexOf(".html");
+        if (index>0) {
+            index=scope.lastIndexOf("/");
+            scope=scope.substr(0,index+1);
+        } else {
+            let index=scope.indexOf("#");
+            if (index>0) {
+                index=scope.lastIndexOf("/");
+                scope=scope.substr(0,index+1);
+            }
+        }
+        return scope;
+    },
+
+
     
     /** returns the templates stored in this file */
     getTemplates: function () {

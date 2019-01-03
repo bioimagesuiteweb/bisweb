@@ -19,7 +19,7 @@ cmake_minimum_required(VERSION 3.5)
 
 PROJECT(BISWEB)
 
-SET (BISWEB_VERSION "1.0.0b3")
+SET (BISWEB_VERSION "1.1.1a1")
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Core Project
@@ -31,12 +31,44 @@ GET_FILENAME_COMPONENT(JSMODULES_DIR ${PROJECT_SOURCE_DIR}/../js/modules ABSOLUT
 GET_FILENAME_COMPONENT(PYTHONMODULE_DIR ${PROJECT_SOURCE_DIR}/../python/modules ABSOLUTE)
 GET_FILENAME_COMPONENT(SCRIPT_DIR ${PROJECT_SOURCE_DIR}/bin ABSOLUTE)
 SET (WRAP_SCRIPT ${TOOLS_DIR}/bis_create_wrappers.js)
+SET (NPM_PACKAGE_SCRIPT ${TOOLS_DIR}/biscreatepackagefile.js)
 SET (DESCRIPTION_SCRIPT ${TOOLS_DIR}/bis_createmoduledescriptions.js)
 SET (BISWEB_PYTHON_INIT ${PROJECT_SOURCE_DIR}/../config/__init__.py)
 SET (BISWEB_PYTHON_PATH ${PROJECT_SOURCE_DIR}/../config/bis_path.py)
 SET (MODULE_LIST_FILENAME ${PROJECT_SOURCE_DIR}/ModuleList.txt)
 SET (PYTHON_MODULE_LIST_FILENAME ${PROJECT_SOURCE_DIR}/PythonModuleList.txt)
 FIND_PROGRAM(NodeInterp node)
+
+
+# ---------------------------------------------------------------------------------------------
+# C++ Sources Core
+# ---------------------------------------------------------------------------------------------
+
+SET(KITSRCS
+  b_jsmn.c
+  bisDataTypes.cpp
+  bisUtil.cpp
+  bisEigenUtil.cpp
+  bisMemoryManagement.cpp
+  bisLegacyFileSupport.cpp
+  bisObject.cpp
+  bisDataObject.cpp
+  bisJSONParameterList.cpp
+  bisAbstractTransformation.cpp
+  bisTransformationCollection.cpp
+  bisMatrixTransformation.cpp
+  bisIdentityTransformation.cpp
+  bisLinearTransformation.cpp
+  bisGridTransformation.cpp
+  bisComboTransformation.cpp
+  bisDataObjectFactory.cpp
+  bisSimpleImageSegmentationAlgorithms.cpp
+  bisfMRIAlgorithms.cpp
+  bisJointHistogram.cpp
+  bisExportedFunctions.cpp
+  bisExportedFunctions2.cpp
+  bisTesting.cpp
+  )
 
 # ---------------------------------------------------------------------------------------------
 # JS Stuff
@@ -62,17 +94,33 @@ OPTION(BIS_USEEXTERNAL "Include additional external C++ files (plugin)" OFF)
 MARK_AS_ADVANCED(BIS_USEGPL)
 MARK_AS_ADVANCED(BIS_USEEXTERNAL)
 
-
 IF (BIS_USEGPL)
 
+  OPTION(BIS_BUILDNONGPL "Also Build Non GPL-licensed library" OFF)
+  
   FIND_PATH(BIS_GPL_DIR BisWebExtra.cmake  REQUIRED)
   get_filename_component(BIS_GPL_DIR ${BIS_GPL_DIR} ABSOLUTE)
   MESSAGE("-- Using GPL Licensed Code from ${BIS_GPL_DIR}")
   INCLUDE (${BIS_GPL_DIR}/BisWebExtra.cmake)
+
+  # Build also a library without the gpl code
+  IF (BIS_BUILDNONGPL)
+    SET(LIBNAME2 libbiswasm_nongpl)
+    SET (NONGPLSRCS
+      ${KITSRCS}
+      nongpl/bisReplacementExportedFunctions.cpp)
+  ENDIF (BIS_BUILDNONGPL)
+    
+  SET (KITSRCS
+    ${KITSRCS}
+    ${GPLSOURCES}
+    )
   
-  SET (EXTRASRCS ${GPLSOURCES})
 ELSE (BIS_USEGPL)
-  SET (EXTRASRCS nongpl/bisReplacementExportedFunctions.cpp)
+  SET (KITSRCS
+    ${KITSRCS}
+    nongpl/bisReplacementExportedFunctions.cpp
+    )
 ENDIF (BIS_USEGPL)
 
 
@@ -87,38 +135,11 @@ IF (BIS_USEEXTERNAL)
   get_filename_component(BIS_EXTERNAL_DIR ${BIS_EXTERNAL_DIR} ABSOLUTE)
   MESSAGE("-- Using EXTERNAL Licensed Code from ${BIS_EXTERNAL_DIR}")
   INCLUDE (${BIS_EXTERNAL_DIR}/BisWebExtra.cmake)
-  SET (EXTRASRCS ${EXTRASRCS} ${EXTERNALSOURCES})
+  SET (KITSRCS
+    ${KITSRCS}
+    ${EXTERNALSOURCES}
+    )
 ENDIF (BIS_USEEXTERNAL)
-
-    
-SET(KITSRCS
-  b_jsmn.c
-  bisDataTypes.cpp
-  bisUtil.cpp
-  bisEigenUtil.cpp
-  bisMemoryManagement.cpp
-  bisLegacyFileSupport.cpp
-  bisObject.cpp
-  bisDataObject.cpp
-  bisJSONParameterList.cpp
-  bisAbstractTransformation.cpp
-  bisTransformationCollection.cpp
-  bisMatrixTransformation.cpp
-  bisIdentityTransformation.cpp
-  bisLinearTransformation.cpp
-  bisGridTransformation.cpp
-  bisComboTransformation.cpp
-  bisDataObjectFactory.cpp
-  bisSimpleImageSegmentationAlgorithms.cpp
-  bisfMRIAlgorithms.cpp
-  bisJointHistogram.cpp
-  bisExportedFunctions.cpp
-  bisExportedFunctions2.cpp
-  bisTesting.cpp
-  ${EXTRASRCS}
-)
-
-
 
 FILE(GLOB H1 ${CPP_SOURCE_DIR}/b*.h)
 FILE(GLOB H2 ${CPP_SOURCE_DIR}/b*.txx)
@@ -186,7 +207,7 @@ OPTION(BIS_MODULETEST "Enable MODULE Tests" ON)
 MARK_AS_ADVANCED(BIS_MODULETEST)
 
 OPTION(BIS_INSTALLTESTS "Install Module Tests & Data" OFF)
-MARK_AS_ADVANCED(BIS_INSTALLTESTS)
+#MARK_AS_ADVANCED(BIS_INSTALLTESTS)
 
 # ---------------------------------------------------------------------------------------------
 # License File depending on whether we are using the GPL plugin or not
@@ -223,73 +244,46 @@ IF (BIS_A_EMSCRIPTEN)
     SET(WASM_STRING "")
   ENDIF(BIS_WEB_WASM)
   
-  SET( COMPILE_FLAGS "-Wall -DBISWASM ${BIS_WEB_OPT} ${WASM_STRING} -I ${EIGEN3_INCLUDE_DIRS} -I ${PROJECT_SOURCE_DIR}")
+  SET( COMPILE_FLAGS "-Wall  -DBISWASM ${BIS_WEB_OPT} ${WASM_STRING} -I ${EIGEN3_INCLUDE_DIRS} -I ${PROJECT_SOURCE_DIR}")
   SET (CMAKE_CXX_FLAGS ${COMPILE_FLAGS} CACHE STRING "" FORCE)
   SET (CMAKE_C_FLAGS ${COMPILE_FLAGS} CACHE STRING "" FORCE)
   SET (CMAKE_EXE_LINKER_FLAGS "--pre-js ${PRE_JS} --post-js ${POST_JS}" CACHE STRING "" FORCE)
   
   SET (EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR} CACHE PATH "Single output directory for building all libraries.")
   SET (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib CACHE PATH "Single output directory for building command line libraries.")
-  ADD_EXECUTABLE (${LIBNAME} ${KITSRCS})
-  SET_TARGET_PROPERTIES(${LIBNAME} PROPERTIES LINK_DEPENDS "${POST_JS};${PRE_JS}")
-
-
-  SET(FVAR "${EXECUTABLE_OUTPUT_PATH}/${LIBNAME}.js")
-  SET(FVAR2 "${EXECUTABLE_OUTPUT_PATH}/${LIBNAME}.wasm")
-  install (FILES ${FVAR2} DESTINATION bisweb/lib)
-
-  SET(WEBPACK_WASM_MODULE "${EXECUTABLE_OUTPUT_PATH}/../web/${LIBNAME}_wasm.js")
-  # ------------------ create webpack wasm module ---------------
-  ADD_CUSTOM_COMMAND(OUTPUT ${WEBPACK_WASM_MODULE}
-    DEPENDS ${LIBNAME} ${TOOLS_DIR}/bis_create_wasm_module.js
-    COMMENT "\nCreating Webpack Wasm Module"
-    COMMAND ${NodeInterp} ${TOOLS_DIR}/bis_create_wasm_module.js -i ${FVAR2} -o ${WEBPACK_WASM_MODULE})
-  add_custom_target(wasm ALL DEPENDS ${WEBPACK_WASM_MODULE})
   
-  # --------------------- Copy to windows
+  IF (BIS_BUILDNONGPL)
+    MESSAGE("-- Also building Pure Apache C++ Library excluding GPL-Code from ${BIS_GPL_DIR}")
+    ADD_EXECUTABLE (${LIBNAME} ${KITSRCS})
+    ADD_EXECUTABLE (${LIBNAME2} ${NONGPLSRCS})
+    SET (LIBLIST ${LIBNAME} ${LIBNAME2})
+  ELSE (BIS_BUILDNONGPL)
+    ADD_EXECUTABLE (${LIBNAME} ${KITSRCS})
+    SET (LIBLIST ${LIBNAME})
+  ENDIF (BIS_BUILDNONGPL)
 
+  foreach(lib ${LIBLIST})
+  
+    SET_TARGET_PROPERTIES(${lib} PROPERTIES LINK_DEPENDS "${POST_JS};${PRE_JS}")
+    SET(FVAR "${EXECUTABLE_OUTPUT_PATH}/${lib}.js")
+    SET(FVAR2 "${EXECUTABLE_OUTPUT_PATH}/${lib}.wasm")
+    install (FILES ${FVAR2} DESTINATION bisweb/lib)
+    
+    SET(WEBPACK_WASM_MODULE "${EXECUTABLE_OUTPUT_PATH}/../web/${lib}_wasm.js")
+    # ------------------ create webpack wasm module ---------------
+    ADD_CUSTOM_COMMAND(OUTPUT ${WEBPACK_WASM_MODULE}
+      DEPENDS ${lib} ${TOOLS_DIR}/bis_create_wasm_module.js
+      COMMENT "\nCreating Webpack Wasm Module"
+      COMMAND ${NodeInterp} ${TOOLS_DIR}/bis_create_wasm_module.js -i ${FVAR2} -o ${WEBPACK_WASM_MODULE})
+    add_custom_target(wasm_${lib} ALL DEPENDS ${WEBPACK_WASM_MODULE})
+  endforeach(lib ${LIBLIST})
 
   SET (README_FILE "${PROJECT_SOURCE_DIR}/../various/txt/README_js.txt")
   install (FILES ${README_FILE} DESTINATION bisweb/)
-  
-  
-  configure_file( ${LICENSE_FILE} "${EXECUTABLE_OUTPUT_PATH}/../web/LICENSE" @ONLY )
+  configure_file( ${LICENSE_FILE} "${EXECUTABLE_OUTPUT_PATH}/../web/LICENSE" @ONLY ) 
 
-  
-  IF (BIS_WASMLIB_COPY)
-    MESSAGE("-- Copying to second directory ${BIS_EXTRAPATH}")
-    ADD_CUSTOM_COMMAND(
-      TARGET ${LIBNAME}
-      POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy
-      ARGS ${FVAR} ${BIS_EXTRAPATH})
-
-    ADD_CUSTOM_COMMAND(
-      TARGET ${LIBNAME}
-      POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy
-      ARGS ${FVAR2} ${BIS_EXTRAPATH})
-
-    install (FILES ${FVAR2} DESTINATION bisweb/lib
-      PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
-
-    SET(WEBPACK_WASM_MODULE_COPY "${BIS_EXTRAPATH}/../web/${LIBNAME}_wasm.js")
-    MESSAGE("-- Copying ${WEBPACK_WASM_MODULE} -> ${WEBPACK_WASM_MODULE_COPY}")
-    ADD_CUSTOM_COMMAND(OUTPUT ${WEBPACK_WASM_MODULE_COPY}
-      DEPENDS ${WEBPACK_WASM_MODULE}
-      COMMENT "Copying Webpack Masm Module to windows"
-      COMMAND ${CMAKE_COMMAND} -E copy ${WEBPACK_WASM_MODULE} ${WEBPACK_WASM_MODULE_COPY})
-    add_custom_target(wasm2 ALL DEPENDS ${WEBPACK_WASM_MODULE_COPY})
-
-    configure_file( ${LICENSE_FILE} "${BIS_EXTRAPATH}/../web/LICENSE" @ONLY )
-
-  ENDIF(BIS_WASMLIB_COPY)
- 
-    
- 
   # ------------------ create wrapper ---------------------------
 
-  
   add_custom_command(OUTPUT ${JS_WRAP_OUTPUT}
     DEPENDS ${PARSE_HEADERS} ${WRAP_SCRIPT} CMakeLists.txt
     PRE_BUILD COMMENT "Creating JS Wrappers"
@@ -302,35 +296,68 @@ IF (BIS_A_EMSCRIPTEN)
   FILE(GLOB H3 ${PROJECT_SOURCE_DIR}/../js/modules/*.js)
   SET(JSFILES ${H1} ${H2} ${H3})
 
-
-  SET (WNAMELIST bisweb.js bisweb-test.js)
-  
   GET_FILENAME_COMPONENT(WEBPCONFIG ${PROJECT_SOURCE_DIR}/../config/app.config.js ABSOLUTE)
+  GET_FILENAME_COMPONENT(WEBPLIBCONFIG ${PROJECT_SOURCE_DIR}/../config/lib.config.js ABSOLUTE)
   GET_FILENAME_COMPONENT(WEBPCONFIGMOCHA ${PROJECT_SOURCE_DIR}/../config/mocha.config.js ABSOLUTE)
 
-  FOREACH(item ${WNAMELIST})
-    SET (OUTSCRIPT ${LIBRARY_OUTPUT_PATH}/${item})
-    GET_FILENAME_COMPONENT(OUTSCRIPT ${OUTSCRIPT} ABSOLUTE)
-    SET (INSCRIPT ${PROJECT_SOURCE_DIR}/../js/bin/${item})
-    GET_FILENAME_COMPONENT(INSCRIPT ${INSCRIPT} ABSOLUTE)
-    
-    add_custom_command(OUTPUT ${OUTSCRIPT}
-      DEPENDS ${MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JSFILES}  ${LIBNAME} ${INSCRIPT} ${JS_WRAP_OUTPUT} ${JS_DATE_OUTPUT} ${WEBPACK_WASM_MODULE}
-      PRE_BUILD COMMENT "Creating webpack-cli commandline library ${item}"
-      COMMAND webpack-cli --entry ${INSCRIPT} --config ${WEBPCONFIG} --output-path ${LIBRARY_OUTPUT_PATH} --output-filename ${item}
-      )
-    add_custom_target(${item} ALL DEPENDS ${OUTSCRIPT})
-  ENDFOREACH(item ${WNAMELIST})
+  # bioimagesuiteweblib.js
+  SET (BISWEBLIBFILE bioimagesuiteweblib.js)
+  SET (OUTSCRIPT ${LIBRARY_OUTPUT_PATH}/${BISWEBLIBFILE})
+  GET_FILENAME_COMPONENT(OUTSCRIPT ${OUTSCRIPT} ABSOLUTE)
+  SET (INSCRIPT ${PROJECT_SOURCE_DIR}/../js/bin/${BISWEBLIBFILE})
+  GET_FILENAME_COMPONENT(INSCRIPT ${INSCRIPT} ABSOLUTE)
+  SET (CONFIGFILE ${WEBPCONFIG})
+  IF (${BISWEBLIBFILE} MATCHES "bioimagesuiteweblib.js")
+    SET (CONFIGFILE ${WEBPLIBCONFIG})
+    MESSAGE("++ Using ${CONFIGFILE}")
+  ENDIF (${BISWEBLIBFILE} MATCHES "bioimagesuiteweblib.js")
 
-  SET (OUTSCRIPT ${LIBRARY_OUTPUT_PATH}/bisweb.js)
+
+  add_custom_command(OUTPUT ${OUTSCRIPT}
+    DEPENDS ${MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JSFILES}  ${LIBNAME} ${INSCRIPT} ${JS_WRAP_OUTPUT} ${JS_DATE_OUTPUT} ${WEBPACK_WASM_MODULE} ${CONFIGFILE}
+    PRE_BUILD COMMENT "Creating webpack-cli commandline library ${BISWEBLIBFILE}"
+    COMMAND webpack-cli --entry ${INSCRIPT} --config ${CONFIGFILE} --output-path ${LIBRARY_OUTPUT_PATH} --output-filename ${BISWEBLIBFILE}
+    )
+  add_custom_target(${BISWEBLIBFILE} ALL DEPENDS ${OUTSCRIPT})
+
+  
+  SET (OUTSCRIPT ${LIBRARY_OUTPUT_PATH}/${BISWEBLIBFILE})
   install (FILES ${OUTSCRIPT} DESTINATION bisweb/lib
     PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
 
+  SET (MAINSCRIPT  ${PROJECT_SOURCE_DIR}/../js/bin/bisweb.js )
+  install (FILES ${MAINSCRIPT} DESTINATION bisweb/lib PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
+
+  SET (NPMREADME
+    ${LIBRARY_OUTPUT_PATH}/README.md )
+  add_custom_command(OUTPUT ${NPMREADME}
+    DEPENDS ${PROJECT_SOURCE_DIR}/../config/biswebnode_readme.md
+    PRE_BUILD COMMENT "Creating npm README.md"
+    COMMAND ${CMAKE_COMMAND} -E copy "${PROJECT_SOURCE_DIR}/../config/biswebnode_readme.md" ${NPMREADME}
+    )
+  add_custom_target(npmreadme ALL DEPENDS ${NPMREADME})
+  install (FILES ${NPMREADME}  DESTINATION bisweb)
+
+  
+  SET(TFLAG "")
   IF (BIS_INSTALLTESTS)
-    SET (OUTSCRIPT ${LIBRARY_OUTPUT_PATH}/bisweb-test.js)
+    MESSAGE("Installing tests")
+    SET(TFLAG "--testing")
+    SET (OUTSCRIPT ${PROJECT_SOURCE_DIR}/../js/bin/bisweb-test.js)
     install (FILES ${OUTSCRIPT} DESTINATION bisweb/lib
       PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
+  ELSEIF (BIS_INSTALLTESTS)
+    MESSAGE("Not installing tests")
   ENDIF (BIS_INSTALLTESTS)
+
+  set (NPMPACKAGEFILE ${LIBRARY_OUTPUT_PATH}/package.json)
+  add_custom_command(OUTPUT ${NPMPACKAGEFILE}
+    DEPENDS ${NPM_PACKAGE_SCRIPT} 
+    PRE_BUILD COMMENT "Creating package.json file ${TFLAG}"
+    COMMAND node ${NPM_PACKAGE_SCRIPT} -o ${LIBRARY_OUTPUT_PATH} ${TFLAG}
+    )
+  add_custom_target(package.json ALL DEPENDS ${NPMPACKAGEFILE})
+  install (FILES ${NPMPACKAGEFILE} DESTINATION bisweb PERMISSIONS OWNER_READ WORLD_READ)
 
 
   SET(OUTFILES "")

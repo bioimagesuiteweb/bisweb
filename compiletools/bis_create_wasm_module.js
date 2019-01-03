@@ -30,7 +30,7 @@
 const program=require('commander');
 const genericio=require('../js/core/bis_genericio.js');
 const fs=require('fs');
-
+const path=require('path');
 
 var help = function() {
     console.log('\nThis program creates the biswasmmodule.js file\n');
@@ -90,6 +90,15 @@ try {
     process.exit(1);
 }
 
+let fname2=program.input.substr(0,program.input.length-4)+'js';
+let txt=null;
+try {
+    txt=fs.readFileSync(fname2,'utf-8');
+} catch(e) {
+    console.log('Failed to read data',e);
+    process.exit(1);
+}
+
 let arr=new Uint8Array(d);
 //console.log("++++ RAW Binary WASM Array length=",arr.length);
 let str=genericio.tozbase64(arr);
@@ -99,12 +108,22 @@ let str=genericio.tozbase64(arr);
 let a=getDate("/");
 let b=getTime(1);
 
+let inputfilename=path.basename(path.normalize(fname2));
+
+txt='var biswasm_initialize_function=null;\n'+txt.trim().replace(/module.exports/g,'biswasm_initialize_function');
+
 let output_text=`
 
 
 (function () {
 
-    const biswebpack= { binary: "${str}", date : "${a}, ${b}" };
+    ${txt};
+    const biswebpack= {
+        binary: "${str}",
+        date : "${a}, ${b}",
+        filename : "external js module: ${inputfilename}",
+        initialize : biswasm_initialize_function,
+    };
 
     if (typeof module !== "undefined" && module.exports) {
         module.exports = biswebpack;

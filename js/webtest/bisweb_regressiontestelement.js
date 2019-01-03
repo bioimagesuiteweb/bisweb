@@ -39,7 +39,7 @@ let logtext="";
 let testDataRootDirectory="";
 let threadController=null;
 let oldTestDataRootDirectory='';
-
+let serverDirectory=null;
 let disableServer=function() {
 
     bis_webfileutil.setMode('local',false);
@@ -63,10 +63,36 @@ let enableServer=async function() {
             return Promise.reject(e);
         }
     }
-    let tempdir=await serverClient.getServerTempDirectory();
-    testDataRootDirectory=tempdir+'/';
-    webutil.createAlert('Connected to '+serverClient.getServerInfo()+'. Using '+testDataRootDirectory+' as data directory on server');
+
+    if (serverDirectory===null) {
+        
+        return new Promise( (resolve,reject) => {
+            
+            let clb=function(f) {
+                
+                if (f.length>0) {
+                    serverDirectory=f;
+                    testDataRootDirectory=serverDirectory+'/';
+                    webutil.createAlert('Connected to '+serverClient.getServerInfo()+'. Using '+testDataRootDirectory+' as data directory on server');
+                    resolve();
+                } else {
+                    reject();
+                }
+            };
+            
+            bis_webfileutil.genericFileCallback({
+                filters : "DIRECTORY",
+                suffix : "DIRECTORY",
+                title : "Select Testdata directory",
+                save : false,
+            },clb);
+        });
+    }
+
     return true;
+
+
+    
 };
 
 var replacesystemprint=function(doreplace=true) {
@@ -189,7 +215,11 @@ var execute_test=function(test,usethread=false) {
                 }
             }
         }
-        
+
+        let doworker = test.webworker;
+        if (doworker!==false)
+            doworker=true;
+
         let tobj=get_test_object(test);
         let test_type = tobj['test_type'] || 'image';
         if (test_type==='registration')
@@ -205,20 +235,25 @@ var execute_test=function(test,usethread=false) {
                 console.log('oooo Invoking Module with params=',JSON.stringify(params));
                 let newParams = module.parseValuesAndAddDefaults(params);
 
+
                 if (!usethread) {
+                    replacesystemprint(true);
                     module.directInvokeAlgorithm(newParams).then(() => {
+                        replacesystemprint(false);
                         console.log('oooo -------------------------------------------------------');
                         resolve( {
                             result : ' Test completed, now checking results.',
                             module : module,
                         });
                     }).catch((e) => {
+                        replacesystemprint(false);
                         reject('---- Failed to invoke algorithm '+e);
                     });
-                } else {
+                } else if (doworker) {
                     console.log('oooo ..........---Calling Web Worker ..............................-');
+                    replacesystemprint(true);
                     threadController.executeModule(module.name, module.inputs,newParams).then((outputs) => {
-
+                        replacesystemprint(false);
                         if (Object.keys(outputs).length<1)
                             reject('---- Failed to execute in thread manager ');
 
@@ -230,8 +265,12 @@ var execute_test=function(test,usethread=false) {
                             module : module,
                         });
                     }).catch((e) => {
+                        replacesystemprint(false);
                         reject('---- Failed to invoke algorithm via thread manager '+e);
                     });
+                } else {
+                    replacesystemprint(false);
+                    reject('---- Cannot invoke this test via thread manager '+JSON.stringify(test,null,2));
                 }
             }).catch((e) => {
                 reject('----- Bad input filenames in test '+e);
@@ -496,7 +535,7 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
                 main.append(`<P> Running in WebWorker </P>`);
             console.log(`-------------------------------`);
             console.log(`-------------------------------\nRunning test ${i}: ${v.command}, ${v.test},${v.result}\n------------------------`);
-            replacesystemprint(true);
+
             try {
                 let t0 = performance.now();
                 let obj=await execute_test(v,usethread); // jshint ignore:line
@@ -507,7 +546,6 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
                     let a='<P>.... WASM memory size=' +biswrap.get_module()['wasmMemory'].buffer.byteLength/(1024*1024)+' MB.</P>';
                     main.append(a);
                 } catch(e) {
-                    console.log(e);
                     // sometimes we have pure js modules, no wasm
                 }
 
@@ -538,7 +576,7 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
                 bad+=1;
                 badlist.push(tname);
             }
-            replacesystemprint(false);
+
 
             main.append(`<details><summary><B>Details</B></summary><PRE>${logtext}</PRE></details><HR>`);
             window.scrollTo(0,document.body.scrollHeight-100);
@@ -576,15 +614,6 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
         }
 
         window.scrollTo(0,document.body.scrollHeight-100);
-
-        if (!usethread) {
-            try {
-                biswrap.get_module()._print_memory();
-                console.log('Memory size=',biswrap.get_module()['wasmMemory'].buffer.byteLength/(1024*1024),' MB');
-            } catch(e) {
-                // sometimes we have pure js modules, no wasm
-            }
-        }
     } else {
         main.append(`<BR> <BR> <BR>`);
         window.scrollTo(0,0);

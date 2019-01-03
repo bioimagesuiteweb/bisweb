@@ -20,8 +20,9 @@ self.onmessage = function(e) {
     if (e.data==='initialize') {
         if (!initialized) {
             console.log('++++ Webworker Initializing Web Assembly');
-            let binary=genericio.fromzbase64(wasmlib.binary);
-            biswrap.initialize({ binary : binary, date : wasmlib.date}).then( () => {
+            // Decompress binary
+            wasmlib.binary=genericio.fromzbase64(wasmlib.binary);
+            biswrap.initialize(wasmlib).then( () => {
                 initialized=true;
                 postMessage('initialized');
             });

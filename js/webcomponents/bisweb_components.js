@@ -21,24 +21,37 @@
 const $=require('jquery');
 const webutil=require('bis_webutil');
 const bisversion=require('bisdate');
+const iconpath=webutil.getWebPageImagePath();
 
 
+// -----------------------------------------------------------------
+/**
+ * A web element that creates a top menu bar (using BootStrap <nav class="navbar navbar-default navbar-fixed-top">
+ *
+ * to access simply include this file into your code and then add this as an element to your html page
+ *
+ * @example
+ *  <bisweb-topmenubar id="viewer_menubar" logo="some.png" logoheight="50px"></bisweb-topmenubar> 
+ *
+ * Attributes:
+ *    content : an HTML string that is included on the menubar
+ *    logo  : an image file to use as logo e.g. "images/bioimagesuite.png"
+ *    logoheight : the height of the logo e.g. "50px"
+ *    logolink : url of link to open when logo is clicked 
+ */
+class TopMenuBarElement extends HTMLElement {
+    
+    // Fires when an instance of the element is created.
+    connectedCallback() {
+        
+        // Move the children out
 
-let iconpath=webutil.getWebPageImagePath();
 
-
-const bottommenubartext=`
-            <nav class="navbar navbar-default navbar-fixed-bottom" style=" min-height:25px; max-height:25px">
-            <div style="margin-top:2px; margin-left:5px; 
-'padding-right:10px, margin-bot:1px; height:10px; font-size:12px" align="right">
-      <img src="${iconpath}/bislogo.png" id="bislogobottom" height="20px"/>
-      This application is part of <a href="./index.html" target="_blank">Yale
-BioImage Suite</a> (${bisversion.version}, ${bisversion.date}).&nbsp;&nbsp; 
-</div>
-        </nav>`;
-
-
-const topmenubartext=`
+        const logoheight=this.getAttribute('logoheight') || '50px';
+        const logo=this.getAttribute('logo') || `${iconpath}/bioimagesuite.png`;
+        let logolink=this.getAttribute('logolink') || "./index.html";
+        
+        const topmenubartext=`
             <nav class="navbar navbar-default navbar-fixed-top">
             <div class="container-fluid" id="bismenucontainer">
       <!-- Brand and toggle get grouped for better mobile display -->
@@ -49,7 +62,7 @@ const topmenubartext=`
       <span class="icon-bar"></span>
       <span class="icon-bar"></span>
             </button>
-        <a href="./index.html" target="_blank"><img src="${iconpath}/bioimagesuite.png" height="50px" id="bislogo" style="margin-top:5px"></a>
+        <a href="${logolink}" target="_blank"><img src="${logo}" height="${logoheight}" id="bislogo" style="margin-top:5px"></a>
     </div>  <!-- Collect the nav links, forms, and other content for toggling -->
     <div class="collapse navbar-collapse" id="bismenu">
         <ul class="nav navbar-nav" id="bismenuparent">
@@ -58,26 +71,8 @@ const topmenubartext=`
     </div><!-- /.container-fluid -->
         </nav>`;
 
-
-// -----------------------------------------------------------------
-/**
- * A web element that creates a top menu bar (using BootStrap <nav class="navbar navbar-default navbar-fixed-top">
- *
- * to access simply include this file into your code and then add this as an element to your html page
- *
- * @example
- *  <bisweb-topmenubar   id="viewer_menubar"></bisweb-topmenubar> 
- *
- * Attributes:
- *    bis-content : an HTML string that is included on the menubar
- */
-class TopMenuBarElement extends HTMLElement {
-    
-    // Fires when an instance of the element is created.
-    connectedCallback() {
         
-        // Move the children out
-        let elem=$(topmenubartext);
+        const elem=$(topmenubartext);
         this.appendChild(elem[0]);
         this.menubar=$(".navbar-nav",elem);
         
@@ -104,54 +99,37 @@ class TopMenuBarElement extends HTMLElement {
  * to access simply include this file into your code and then add this as an element to your html page
  *
  * @example
- * <bisweb-botmenubar></bisweb-botmenubar>
+ * <bisweb-botmenubar content="html for bottom text"></bisweb-botmenubar>
  *
  * Attributes:
- *    None
+ *    content : if non blank some html text (in a <div>, <span> or <p>) to put on bottom bar)
  */
 class BottomMenuBarElement extends HTMLElement {
     
     connectedCallback() {
-        let elem=$(bottommenubartext);
+
+        
+        const st=`display: inline-block;margin-top:1px; padding-left:2px; padding-right:5px; margin-bottom:1px; height:10px; font-size:14px;`;
+        
+        const bottommenubar=`<nav class="navbar navbar-default navbar-fixed-bottom" style=" min-height:25px; max-height:25px"></nav>`;
+        
+        const bottomtext=`<div style="${st} float:left"><img src="${iconpath}/bislogo.png" id="bislogobottom" height="20px"/></div><div style="${st} float:right">This application is part of <a href="./index.html" target="_blank">Yale
+BioImage Suite</a> (${bisversion.version}, ${bisversion.date})</div>`;
+
+        let content=this.getAttribute('content') || '';
+        if (content.length<3)
+            content=bottomtext;
+        const elem=$(bottommenubar);
+        elem.append($(content));
         this.appendChild(elem[0]);
         webutil.disableDrag(elem);
     }
     
 }
 
-/**
- * A main div element that fills the screen
- *
- * to access simply include this file into your code and then add this as an element to your html page
- *
- * @example
- * <bisweb-viewerwidget bis-margin="60px">  
- *        <bisweb-mni2tal></bisweb-mni2tal>
- * </bisweb-viewerwidget>
- *
- * Attributes:
- *    bis-margin : pixel offset from the top
- */
-class ViewerWidgetElement extends HTMLElement {
-    
-    // Fires when an instance of the element is created.
-    connectedCallback() {
-        let margin=this.getAttribute('bis-margin') || '65px';
-        $(this).css({
-            'position' : 'relative',
-            'width' : '800px',
-            'height' : '800px',
-            'top' : `${margin}`,
-            'left' : '5px',
-            '-webkit-user-select': 'none',
-            '-moz-user-select': 'none',
-            '-ms-user-select': 'none',
-            'user-select': 'none',
-            '-webkit-app-region': 'no-drag'});
-    }
-}
+// ----------------- Register Elements -------------------------------
 
 webutil.defineElement('bisweb-topmenubar', TopMenuBarElement);
 webutil.defineElement('bisweb-botmenubar', BottomMenuBarElement);
-webutil.defineElement('bisweb-viewerwidget', ViewerWidgetElement);
+
 

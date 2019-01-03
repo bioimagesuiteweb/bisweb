@@ -30,13 +30,116 @@
  * @namespace BisWasmWrapperUtils
  */
 
-
+const libbiswasm_raw=require('libbiswasm'); // Ignored in Webpack for Web, used just for node.js
 const BisWebImage=require('bisweb_image');
 const BisWebMatrix=require('bisweb_matrix');
 const bistransforms=require('bis_transformationutil');
 const wasmutil=require('bis_wasmutils');
-const libbiswasm_raw=require('libbiswasm');
 const genericio=require('bis_genericio.js');
+
+// --------------------------------------------------------------------------------------------------
+/** Initialize Wasm library
+ * @param{Object} obj - used in webworker setup
+ * @returns{Promise} with Module as payload
+ */
+var initialize_wasm=function(obj=null) {
+
+    if (genericio.getmode() === "node") 
+        return initialize_wasm_node();
+
+    return new Promise( (resolve,reject) => {
+        
+        if (obj!==null) {
+            
+            if (!obj.binary)
+                reject('No binary in obj');
+            
+            let done=function(m) {
+                m.bisdate=obj.date;
+                resolve(m);
+            };
+
+            obj.initialize(done,obj.filename,obj.binary);
+            return;
+        }
+
+        let done=function(m) {
+            m.bisdate=window.biswebpack.date;
+            resolve(m);
+        };
+        let clb=function() {
+            let dname=window.biswebpack.filename;
+            let binary=genericio.fromzbase64(window.biswebpack.binary);
+            window.biswebpack.initialize(done,dname,binary);
+        };
+        
+        if (document.readyState == 'complete') {
+            clb();
+        } else {
+            if (window.attachEvent) {
+                window.attachEvent('onload', clb);
+            } else {
+                if (window.onload) {
+                    let currentOnLoad = window.onload;
+                    let newOnload = (event) => {
+                        currentOnLoad(event);
+                        clb();
+                    };
+                    window.onload = newOnload;
+                } else {
+                    window.onload = clb;
+                }
+            }
+        }
+    });
+};
+                      
+/** Initialize Wasm library in node.js
+ * @returns{Promise} with Module as payload
+ */
+var initialize_wasm_node=function() {
+
+    // Node.js, read .wasm file directly here
+    const fs=genericio.getfsmodule();
+    const path=genericio.getpathmodule();
+
+    return new Promise( (resolve,reject) => {    
+        let dname=path.normalize(path.resolve(__dirname, 'libbiswasm.wasm'));
+        if (!fs.existsSync(dname)) {
+            dname=path.normalize(path.resolve(__dirname, '../lib/libbiswasm.wasm'));
+        }
+        
+        if (!fs.existsSync(dname)) {
+            dname=path.normalize(path.resolve(__dirname, '../libbiswasm.wasm'));
+        }
+        
+        if (!fs.existsSync(dname)) {
+            dname=path.normalize(path.resolve(__dirname, '../../build/wasm/libbiswasm.wasm'));
+        }
+        if (!fs.existsSync(dname)) {
+            reject('Can not find libbiswasm.wasm in '+dname);
+        } 
+        
+        let binary=null;
+
+        try {
+            console.log('.... Reading wasm binary from dname=',dname);
+            let d1=fs.readFileSync(dname);
+            binary=new Uint8Array(d1);
+        } catch(e)  {
+            reject(e);
+        }
+        
+        if (binary===null) {
+            reject('no wasm library specified');
+        }
+        
+        // Load WASM and initialize libbiswasm_wrapper module
+        // ------------------------------------------------------------
+        libbiswasm_raw(resolve,dname,binary);
+    });
+};
+// -------------------------------------------------------------------------------------------
 
 var serializeObject=function(Module,obj,datatype) {
 
@@ -95,7 +198,6 @@ var deserializeAndDeleteObject=function(Module,ptr,datatype,first_input=0) {
         output.deserializeWasmAndDelete(Module,ptr);
         return output;
     }
-
     
     if (datatype==='bisGridTransformation') {
         const output=bistransforms.createGridTransformation();
@@ -119,111 +221,6 @@ var deserializeAndDeleteObject=function(Module,ptr,datatype,first_input=0) {
 };
 
 
-var initialize_wasm=function(obj=null) {
-
-    let dname="external js_module (libbiswasm_wasm.js)";
-
-    return new Promise( (resolve,reject) => {
-
-
-        if (obj!==null) {
-            // Web worker for now ...
-            if (!obj.binary)
-                reject('No binary in obj');
-            let done=function(m) {
-                m.bisdate=obj.date;
-                resolve(m);
-            };
-
-            dname="internal js module (webworker)";
-            libbiswasm_raw(done,dname,obj.binary);
-            return;
-        }
-        
-        
-        if (typeof window !== 'undefined') {
-            let binary=genericio.fromzbase64(window.biswebpack.binary);
-
-            let done=function(m) {
-                m.bisdate=window.biswebpack.date;
-                resolve(m);
-            };
-
-
-            
-            let clb=function() {
-                libbiswasm_raw(done,dname,binary);
-            };
-            
-            if (document.readyState == 'complete') {
-                clb();
-            } else {
-                
-                if (window.attachEvent) {
-                    window.attachEvent('onload', clb);
-                } else {
-                    if (window.onload) {
-                        let currentOnLoad = window.onload;
-                        let newOnload = (event) => {
-                            currentOnLoad(event);
-                            clb();
-                        };
-                        window.onload = newOnload;
-                    } else {
-                        //window invokes attachViewers so have to bind algorithm controller explicitly
-                        window.onload = clb;
-                    }
-                }
-            }
-            return;
-        }
-
-        // Node.js, read .wasm file directly here
-        const fs=genericio.getfsmodule();
-        const path=genericio.getpathmodule();
-        
-        dname=path.normalize(path.resolve(__dirname, 'libbiswasm.wasm'));
-        if (!fs.existsSync(dname)) {
-            //                console.log('Can not find libbiswasm.wasm in',dname);
-            dname=path.normalize(path.resolve(__dirname, '../lib/libbiswasm.wasm'));
-        }
-        
-        if (!fs.existsSync(dname)) {
-            //                console.log('Can not find libbiswasm.wasm in',dname);
-            dname=path.normalize(path.resolve(__dirname, '../libbiswasm.wasm'));
-        }
-        
-        if (!fs.existsSync(dname)) {
-            //console.log('Can not find libbiswasm.wasm in',dname);
-            dname=path.normalize(path.resolve(__dirname, '../../build/wasm/libbiswasm.wasm'));
-        }
-        if (!fs.existsSync(dname)) {
-            reject('Can not find libbiswasm.wasm in '+dname);
-        } 
-
-        let binary=null;
-        try {
-            console.log('.... Reading wasm binary from dname=',dname);
-            let d1=fs.readFileSync(dname);
-            binary=new Uint8Array(d1);
-        } catch(e)  {
-            reject(e);
-        }
-        
-        // Make String Binary
-        // ------------------------------------------------------------
-        if (binary===null) {
-            reject('no wasm library specified');
-        }
-        
-        // Load WASM and initialize libbiswasm_wrapper module
-        // ------------------------------------------------------------
-        // console.log('Initializing wasm library :', binary.length);
-        
-        libbiswasm_raw(resolve,dname,binary);
-    });
-    
-};
 // ----------------------------------------------------------------------------------
 // Output Object
 // ----------------------------------------------------------------------------------

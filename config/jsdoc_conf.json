@@ -4,7 +4,7 @@
         "dictionaries": ["jsdoc"]
     },
     "source": {
-	"include": [ "js/cloud/" , "js/core/", "js/cloud", "js/coreweb",  "js/dataobjects/", "js/legacy/", "js/modules/", "js/node/" ,  "js/webcomponents/", "js/webworker/", "js/webtest" ],
+	    "include": [ "js/cloud/" , "js/core/", "js/cloud", "js/coreweb",  "js/dataobjects/", "js/legacy/", "js/modules/", "js/node/" , "js/export",  "js/webcomponents/", "js/webworker/", "js/webtest" ],
 	"includePattern": ".+\\.js(doc)?$",
 	"excludePattern": "js/libbiswasm*"
     },

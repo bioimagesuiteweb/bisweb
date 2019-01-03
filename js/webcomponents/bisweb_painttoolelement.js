@@ -158,7 +158,9 @@ class PaintToolElement extends HTMLElement {
                                        'permanent' : true,
                                        'width' : '300px'
                                    });
-       
+        
+            
+        $(this.panel.widget).attr('aria-label', 'bisweb-paint-widget');
         this.panel.show();
         this.internal.parentDomElement=this.panel.getWidget();
         var basediv=$("<div>Paint tool will appear once an image is loaded.</div>");
@@ -579,7 +581,6 @@ class PaintToolElement extends HTMLElement {
         let img=new bisweb_image();
         img.load(infile)
             .then(() => {
-                console.log('read');
                 self.safeSetNewObjectmap(img).catch( (e) => {
                     webutil.createAlert(e,true);
                 });
@@ -1077,10 +1078,10 @@ class PaintToolElement extends HTMLElement {
         };
 
 
-        webutil.createMenuItem(tmenu,'Paint Tool',function() {
-            webutil.activateCollapseElement(self.internal.parentDomElement);
-        });
-        webutil.createMenuItem(tmenu,''); // separator
+        //        webutil.createMenuItem(tmenu,'Paint Tool',function() {
+        //            webutil.activateCollapseElement(self.internal.parentDomElement);
+        //        });
+        //webutil.createMenuItem(tmenu,''); // separator
 
         return new Promise( (resolve) => {
 

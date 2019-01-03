@@ -52,7 +52,7 @@ program
     .option('-m, --minify <s>','flag to minify 1=minify 0=regular + sourcemaps,-1 = fast, no sourcemaps')
     .option('-l, --platform  <s>','platform')
     .option('-d, --debug <s>','debug')
-    .option('-p, --dopack <s>','dopackage 0=electron-packager, 0=run npm update in addition 2=run inno or zip in addition')
+    .option('-p, --dopack <s>','dopackage 0=electron-packager, 1=run npm update in addition 2=run inno or zip in addition')
     .option('-z, --dozip <s>','dozip')
     .option('-n, --internal <n>','if 1 use internal code, if 2 serve the internal directory as well',parseInt)
     .option('-x, --external <n>','if 1 use extra external code (in ../external)',parseInt)
@@ -62,6 +62,9 @@ program
     .option('--light <n>','if 1 only build the main bislib.js library',parseInt)
     .parse(process.argv);
 
+
+if (program.dopack === undefined)
+    program.dopack=2;
 
 
 let options = {
@@ -395,7 +398,7 @@ gulp.task('serve2', function() {
 });
 
 
-gulp.task('server', function() {
+gulp.task('serveronly', function() {
     connect.server(internal.serveroptions);
     console.log('++++ Server root directory=',internal.serveroptions.root);
 });
@@ -549,6 +552,10 @@ gulp.task('jsdoc', function(done) {
 
 gulp.task('cdoc', function(done) {
     bis_gutil.doxygen(__dirname,'config/Doxyfile',done);
+});
+
+gulp.task('npmpack',function(done) {
+    bis_gutil.createnpmpackage(__dirname,internal.setup.version,'build/dist',done);
 });
 
 gulp.task('doc', function(done) {

@@ -22,7 +22,6 @@
 
 const BisWebImage = require('bisweb_image');
 const webutil=require('bis_webutil');
-const FastClick=require('fastclick');
 const $=require('jquery'); 	
 const bootbox=require('bootbox');
 const numeric=require('numeric');
@@ -177,8 +176,6 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         
         var fmenu=webutil.createTopMenuBarMenu("File",menubar).attr('id','bisfilemenu');
         const self=this;
-        console.log('self=',self);
-        
         
         webfileutil.createFileMenuItem(fmenu,'Load Node Definition File',
                                        function(e) {  control.loadparcellationfile(e);},
@@ -297,7 +294,7 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         
         // ------------------------------------ Initialize ---------------------------
         
-        new FastClick(document.body);
+        this.fixMobileMouseHandling();
         
         var HandleFiles = function(files) {
             var filename=files[0].name;
@@ -319,6 +316,8 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         Promise.all(this.applicationInitializedPromiseList).then( () => {
             this.parseQueryParameters();
             document.body.style.zoom =  1.0;
+        }).catch( (e) => {
+            console.log('Error ',e);
         });
     }
 }

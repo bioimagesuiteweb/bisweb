@@ -259,7 +259,7 @@ class SimpleFileDialog {
         if (opts!==null) {
             opts.filters=opts.filters || null;
 
-            console.log('opts.filters', opts.filters);
+            //console.log('opts.filters', opts.filters);
             this.createFilters(opts.filters);
 
             if (opts.title) {
@@ -274,7 +274,7 @@ class SimpleFileDialog {
                 }
             }
 
-            console.log('mode', opts.mode);
+            //console.log('mode', opts.mode);
             if (opts.mode) 
                 this.mode = opts.mode;
 
@@ -293,7 +293,7 @@ class SimpleFileDialog {
                 initialfilename=opts.initialFilename;
         }
 
-        console.log('opts.mode', opts.mode);
+        //console.log('opts.mode', opts.mode);
         if (opts.mode === 'directory') 
             this.activeFilterList = ['directories'];
         

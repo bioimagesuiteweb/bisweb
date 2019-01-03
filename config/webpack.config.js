@@ -99,6 +99,7 @@ if (output !== "webworkermain.js") {
                         path.resolve(mypath,'js/coreweb'),
                         path.resolve(mypath,'js/legacy'),
                         path.resolve(mypath,'js/modules'),
+                        path.resolve(mypath,'js/export'),
                         path.resolve(mypath,'js/webtest'),
                         path.resolve(mypath,'build/wasm') ]
         },
@@ -107,6 +108,7 @@ if (output !== "webworkermain.js") {
         externals: {
             // require("jquery") is external and available on the global var jQuery
             "jquery": "jQuery",
+            "libbiswasm" : "console.log" // this is not needed in this case and should be excluded
         },
         watchOptions: {
             aggregateTimeout: 300,
@@ -157,6 +159,9 @@ if (output !== "webworkermain.js") {
                         path.resolve(mypath,'build/wasm'),
                         path.resolve(mypath,'build/web')]
         },
+/*        externals: {
+            "libbiswasm" : "console.log" // this is not needed in this case and should be excluded
+        },*/
         mode : 'development',
         target : "web",
         watchOptions: {
@@ -164,6 +169,15 @@ if (output !== "webworkermain.js") {
             poll: 1000
         }, plugins : [
         ]
+    };
+}
+
+if (output === "bislib.js") {
+    console.log('++++ Adding library output to bislib.js');
+    module.exports.output= {
+        library: 'bioimagesuiteweb',
+        libraryExport: 'default',
+        libraryTarget : 'umd'
     };
 }
 

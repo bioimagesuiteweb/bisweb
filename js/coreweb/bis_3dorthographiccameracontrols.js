@@ -21,7 +21,7 @@
 
 const THREE = require('three');
 const $=require('jquery');
-
+const inobounce=require('inobounce.js');
 
 /** 
  * @file Browser module. Contains {@link Bis_3dOrthographicCameraControls}
@@ -327,8 +327,7 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
 
         if (manual === null) {
             if ( _state === STATE.TOUCH_ZOOM_PAN ) {
-                factor = _touchZoomDistanceStart / _touchZoomDistanceEnd;
-                _touchZoomDistanceStart = _touchZoomDistanceEnd;
+                factor = 1.0+  (_touchZoomDistanceStart - _touchZoomDistanceEnd)* 0.05*_this.zoomSpeed;
             } else {
                 factor = 1.0 + ( _zoomEnd.y - _zoomStart.y ) * _this.zoomSpeed;
             }
@@ -348,6 +347,7 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
                     console.log('Zooming resize plane=',this.plane,' left0=',_this.left0,' left=',_this.camera.left);
                     }*/
             _zoomStart.copy( _zoomEnd );
+            _touchZoomDistanceStart = _touchZoomDistanceEnd;
         }
         
     };
@@ -655,10 +655,17 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
 
         if ( _this.enabled === false ) 
             return false;
+
+        if (!mouseinviewport(event.touches[0]))
+            return;
+
+        if (event.touches.length>1 && !mouseinviewport(event.touches[1]))
+            return;
+
+
+        inobounce.enable();
         
         if (event.touches.length==1) {
-            if (!mouseinviewport(event.touches[0]))
-                return;
 
             if ( _this.noRotate) {
                 coordinateCallback(0);
@@ -666,6 +673,8 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
             }
         }
         
+
+
         
         switch ( event.touches.length ) {
         case 1:
@@ -682,10 +691,10 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
             var dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
             _touchZoomDistanceEnd = _touchZoomDistanceStart = Math.sqrt( dx * dx + dy * dy );
             
-            var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
-            var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
-            _panStart.copy( getMouseOnScreen( x, y ) );
-            _panEnd.copy( _panStart );
+            /*            var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
+                          var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
+                          _panStart.copy( getMouseOnScreen( x, y ) );
+                          _panEnd.copy( _panStart );*/
             break;
             
         default:
@@ -710,7 +719,9 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
             }
         }
 
-
+        if (event.touches.length>1 && !mouseinviewport(event.touches[1]))
+            return;
+        
         switch ( event.touches.length ) {
         case 1:
             _rotateEnd.copy( getMouseProjectionOnBall( _this.lastNormalizedCoordinates[0],_this.lastNormalizedCoordinates[1] ) );
@@ -721,9 +732,9 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
             var dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
             _touchZoomDistanceEnd = Math.sqrt( dx * dx + dy * dy );
             
-            var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
-            var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
-            _panEnd.copy( getMouseOnScreen( x, y ) );
+            //            var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
+            //            var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
+            //            _panEnd.copy( getMouseOnScreen( x, y ) );
             break;
             
         default:
@@ -731,19 +742,16 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
             
         }
 
-        event.preventDefault();
-        event.stopPropagation();
+        //        event.preventDefault();
+        //        event.stopPropagation();
     }
 
     /* touch end handler*/
     function touchend( event ) {
         
-        var w=$("#debugtext");
-        w.empty();
-        w.append('hello touchend'+event.touches.length);
-
 
         if ( _this.enabled === false ) return;
+
         
         switch ( event.touches.length ) {
             
@@ -755,14 +763,15 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
         case 2:
             _touchZoomDistanceStart = _touchZoomDistanceEnd = 0;
             
-            var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
-            var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
-            _panEnd.copy( getMouseOnScreen( x, y ) );
-            _panStart.copy( _panEnd );
+            /*            var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
+                          var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
+                          _panEnd.copy( getMouseOnScreen( x, y ) );
+                          _panStart.copy( _panEnd );*/
             break;
             
         }
-        
+
+        inobounce.disable();
         _state = STATE.NONE;
         _this.dispatchEvent( endEvent );
     }
@@ -778,9 +787,9 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
         _this.domElement.removeEventListener( 'mousewheel', mousewheel, false );
         _this.domElement.removeEventListener( 'DOMMouseScroll', mousewheel, false ); // firefox
         
-        _this.domElement.removeEventListener( 'touchstart', touchstart, false );
-        _this.domElement.removeEventListener( 'touchend', touchend, false );
-        _this.domElement.removeEventListener( 'touchmove', touchmove, false );
+        _this.domElement.removeEventListener( 'touchstart', touchstart, { 'passive' : true } );
+        _this.domElement.removeEventListener( 'touchend', touchend, { 'passive' : true } );
+        _this.domElement.removeEventListener( 'touchmove', touchmove, { 'passive' : true } );
         
         window.removeEventListener( 'keydown', keydown, false );
         window.removeEventListener( 'keyup', keyup, false );
