@@ -11,11 +11,15 @@ let run_tf=async function(img) {
     const model = await tf.loadFrozenModel(MODEL_URL, WEIGHTS_URL);
     const bisweb=document.querySelector("#bis").export;
 
-    let shape=model.inputs[0].shape;
-    let patchsize=shape[1];
-        
-    let recon=new bisweb.bistfutil.BisWebTensorFlowRecon(img,patchsize,patchsize-16);
-    let output=recon.simpleRecon(tf,model);
+    let complex=false;
+    let recon=new bisweb.bistfutil.BisWebTensorFlowRecon(img,model,32,-1);
+    let output;
+
+    if (complex)
+        output=recon.complexRecon(tf);
+    else
+        output=recon.simpleRecon(tf);
+
 
     const viewer=document.querySelector("#viewer");
     viewer.setobjectmap(output);
@@ -37,7 +41,7 @@ window.onload = function() {
     let img=new bisweb.BisWebImage();
     
     // Load an image --> returns a promise so .then()
-    img.load(`${URL}/sample1.nii.gz`).then( () => {
+    img.load(`${URL}/sample3d.nii.gz`).then( () => {
         console.log('Image Loaded = ',img.getDescription());
         
         // Set the image to the viewer
