@@ -145,38 +145,55 @@ class FileTreePanel extends HTMLElement {
     }
 
     importFiles(filename) {
-        console.log('filename', filename);
-        //filter filename before calling getMatchingFiles
-        let queryString = filename;
-        if (queryString === '') {
-             queryString = '*/*.nii*'; 
-        } else {
-            if (queryString[queryString.length - 1] === '/') { 
-                queryString = queryString.slice(0, filename.length - 1) + '/*/*.nii*'; 
-            } else { 
-                queryString = filename + '/*/*.nii*';
-            }
-        }
 
-        //if it does then update the file tree with just that file. otherwise look one level deeper for the whole study
-        bis_genericio.getMatchingFiles(queryString).then( (files) => {
+        let parseJSON = () => {
+            bis_genericio.read(filename).then( (obj) => {
+                let jsonData = obj.data; 
 
-            if (files.length > 0) {
-                this.updateFileTree(files, filename);
-                bis_webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
-                return;
-            } 
-            
-            queryString = filename + '/*.nii*';
-            bis_genericio.getMatchingFiles(queryString).then( (newFiles) => {
-                console.log('filename', filename);
-
-                bis_webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
-                this.updateFileTree(newFiles, filename);
             });
-            
-        });
+        };
 
+        let parseDirectory = () => {
+            //filter filename before calling getMatchingFiles
+            let queryString = filename;
+            if (queryString === '') {
+                queryString = '*/*.nii*';
+            } else {
+                if (queryString[queryString.length - 1] === '/') {
+                    queryString = queryString.slice(0, filename.length - 1) + '/*/*.nii*';
+                } else {
+                    queryString = filename + '/*/*.nii*';
+                }
+            }
+
+            //if it does then update the file tree with just that file. otherwise look one level deeper for the whole study
+            bis_genericio.getMatchingFiles(queryString).then((files) => {
+
+                if (files.length > 0) {
+                    this.updateFileTree(files, filename);
+                    bis_webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
+                    return;
+                }
+
+                queryString = filename + '/*.nii*';
+                bis_genericio.getMatchingFiles(queryString).then((newFiles) => {
+                    console.log('filename', filename);
+
+                    bis_webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
+                    this.updateFileTree(newFiles, filename);
+                });
+
+            });
+        };
+
+        //if the file is a JSON file parse it as a study, otherwise parse it as a directory
+        let splitName = filename.split('.');
+        if (splitName[splitName.length - 1] === 'json' || splitName[splitName.length - 1] === 'JSON') {
+            parseJSON();
+        } else {
+            parseDirectory();
+        }
+        
     }
 
     /**
@@ -488,38 +505,29 @@ class FileTreePanel extends HTMLElement {
             let rawTreeJSON = rawTree.get_json('#'); 
             let reconstructedTree = [];
 
-            //recursive function to fill out a tree node then fill out the nodes below it
-            let fillTreeNode = (node, parentNode) => {
-                let item = rawTree.get_node(node.id);
-                let newNode = item.original;
-                if (item.children.length > 0) {
-                    newNode.children = [];
-                    for (let child of node.children) {
-                        fillTreeNode(child, newNode);
-                    }
-                }
-
-                if (parentNode) {
-                    parentNode.children.push(newNode);
-                } else {
-                    reconstructedTree.push(newNode);
-                }
-                    
-            }; 
-
-            for (let item of rawTreeJSON) { fillTreeNode(item); }
+            for (let item of rawTreeJSON) { fillTreeNode(reconstructedTree, rawTree, item); }
 
             console.log('reconstructed tree', reconstructedTree);
+            bis_genericio.getFileStats(this.baseDirectory).then( (stats) => {
 
-            let stringifiedFiles = JSON.stringify(reconstructedTree);
-            //set the correct file extension if it isn't set yet
-            let splitPath = filepath.split('.');
-            if (splitPath.length < 2 || splitPath[1] !== 'JSON' || splitPath[1] !== 'json') {
-                splitPath[1] = 'json';
-            }
+                let dateCreated = new Date(stats.birthtimeMs);
+                let treeMetadataContainer = { 
+                    'baseDirectory' : this.baseDirectory, 
+                    'dateCreated' : parseDate(dateCreated),
+                    'contents' : reconstructedTree
+                };
+    
+                let stringifiedFiles = JSON.stringify(treeMetadataContainer);
+                //set the correct file extension if it isn't set yet
+                let splitPath = filepath.split('.');
+                if (splitPath.length < 2 || splitPath[1] !== 'JSON' || splitPath[1] !== 'json') {
+                    splitPath[1] = 'json';
+                }
+    
+                filepath = splitPath.join('.');
+                bis_genericio.write(filepath, stringifiedFiles, false);
+            });
 
-            filepath = splitPath.join('.');
-            bis_genericio.write(filepath, stringifiedFiles, false);
         } catch(e) {
             console.log('an error occured while saving to disk', e);
             bis_webutil.createAlert('An error occured while saving the study files to disk.', false);
@@ -704,15 +712,38 @@ class FileTreePanel extends HTMLElement {
     
     getDefaultFilename() {
         let date = new Date();
-        let parsedDate = 'ExportedStudy' + date.getFullYear() + '-' + date.getMonth() + 1 + '-' + zeroPadLeft(date.getDate()) + 'T' + zeroPadLeft(date.getHours()) + ':' + zeroPadLeft(date.getMinutes()) + ':' + zeroPadLeft(date.getSeconds());
+        let parsedDate = 'ExportedStudy' + parseDate(date);
         console.log('date', parsedDate);
         return parsedDate + '.json';
-
-        function zeroPadLeft(num) { 
-            let pad = '00', numStr = '' + num;
-            return pad.substring(0, pad.length - numStr.length) + numStr;
-        }
     }
 }
+
+//recursive function to fill out a tree node then fill out the nodes below it
+let fillTreeNode = (newTree, rawTree, node, parentNode) => {
+    let item = rawTree.get_node(node.id);
+    let newNode = item.original;
+    if (item.children.length > 0) {
+        newNode.children = [];
+        for (let child of node.children) {
+            fillTreeNode(child, newNode);
+        }
+    }
+
+    if (parentNode) {
+        parentNode.children.push(newNode);
+    } else {
+        newTree.push(newNode);
+    }
+        
+}; 
+
+let parseDate = (date) => {
+    return date.getFullYear() + '-' + date.getMonth() + 1 + '-' + zeroPadLeft(date.getDate()) + 'T' + zeroPadLeft(date.getHours()) + ':' + zeroPadLeft(date.getMinutes()) + ':' + zeroPadLeft(date.getSeconds());
+
+    function zeroPadLeft(num) { 
+        let pad = '00', numStr = '' + num;
+        return pad.substring(0, pad.length - numStr.length) + numStr;
+    }
+};
 
 bis_webutil.defineElement('bisweb-filetreepanel', FileTreePanel);

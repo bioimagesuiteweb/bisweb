@@ -37,9 +37,6 @@ const server_fields = [
 const portsInUse=[];
 const minSizeToUseStreamingDownload=5*1024*1024;
 
-// Used to make temp directories
-let tempDirectoryCounter=0;
-
 class BaseFileServer {
 
     constructor(opts={}) {
