@@ -64,15 +64,13 @@ let reconAndSave=function(img,modelname,batchsize,padding,usegpu,outname) {
 	console.log('----------------------------------------------------------');
 	console.log('--- Recon finished :',output.getDescription());
 	
-	try {
-	    output.save(outname);
-	} catch(e) {
+	output.save(outname).then( () => {
+	    console.log('--- \t file saved in',outname);
+	    resolve();
+	}).catch( (e) => {
 	    console.log('--- Failed to save in',outname,e);
 	    reject();
-	}
-	
-	console.log('--- \t file saved in',outname);
-	resolve();
+	});
     });
 };
 
