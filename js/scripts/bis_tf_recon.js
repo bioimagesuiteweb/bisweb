@@ -31,8 +31,6 @@ require('../../config/bisweb_pathconfig.js');
 const program=require('commander');
 const BisWebImage=require('bisweb_image');
 const bistfutil = require('bis_tfutil');
-const tf=require('@tensorflow/tfjs');
-require('@tensorflow/tfjs-node');
 
 const path=require('path');
 
@@ -43,33 +41,39 @@ var help = function() {
 
 // -------------------------------------------------------------------------
 
-let reconAndSave=function(img,modelname,batchsize,padding,outname) {
+let reconAndSave=function(img,modelname,batchsize,padding,usegpu,outname) {
 
-    return new Promise( (resolve,reject) => {
+    const tf=require('bis_loadtf')(usegpu); // flag to look for GPU version
+    
+    return new Promise( async (resolve,reject) => {
 	
 	let URL='file://'+path.normalize(path.resolve(modelname));
 
-	bistfutil.loadAndWarmUpModel(tf,URL).then( (model) => {
-	    console.log('--- numTensors (post load): ' + tf.memory().numTensors);
-	    console.log('----------------------------------------------------------');
-	    console.log(`--- Beginning padding=${padding}`);
-	    let recon=new bistfutil.BisWebTensorFlowRecon(img,model,padding);
-	    let output=recon.reconstructImage(tf,batchsize);
-	    console.log('----------------------------------------------------------');
-	    console.log('--- Recon finished :',output.getDescription());
-
-
-	    output.save(outname).then( () => {
-		console.log('--- \t file saved in',outname);
-		resolve();
-	    }).catch( () => {
-		console.log('--- Failed to save in',outname);
-		reject();
-	    });
-	}).catch( (e) => {
+	let model=null;
+	try {
+	    model=await bistfutil.loadAndWarmUpModel(tf,URL);
+	} catch(e) {
 	    console.log('--- Failed load model from',URL,e);
 	    reject();
-	});
+	}
+
+	console.log('--- numTensors (post load): ' + tf.memory().numTensors);
+	console.log('----------------------------------------------------------');
+	console.log(`--- Beginning padding=${padding}`);
+	let recon=new bistfutil.BisWebTensorFlowRecon(img,model,padding);
+	let output=recon.reconstructImage(tf,batchsize);
+	console.log('----------------------------------------------------------');
+	console.log('--- Recon finished :',output.getDescription());
+	
+	try {
+	    output.save(outname);
+	} catch(e) {
+	    console.log('--- Failed to save in',outname,e);
+	    reject();
+	}
+	
+	console.log('--- \t file saved in',outname);
+	resolve();
     });
 };
 
@@ -83,6 +87,7 @@ program.version('1.0.0')
     .option('-m, --modelname <s>','model directory')
     .option('-b, --batchsize <s>','batch size')
     .option('-p, --padding <s>','padding')
+    .option('-g, --usegpu','try to use GPU for processing if possible')
     .on('--help',function() {
 	help();
     })
@@ -94,6 +99,7 @@ let outfilename=program.output || null;
 let modelname = program.modelname || null;
 let batchsize = parseInt(program.batchsize || 1);
 let padding = parseInt(program.padding || 8);
+let usegpu = program.usegpu || false;
 let debug=program.debug || 0;
 
 if (program.input===null || program.output===null || program.modelname === null) {
@@ -105,7 +111,7 @@ let input=new BisWebImage();
 console.log('----------------------------------------------------------\n---');
 input.load(inpfilename).then( () => { 
     console.log('----------------------------------------------------------');
-    reconAndSave(input,modelname,batchsize,padding,outfilename).then( () => {
+    reconAndSave(input,modelname,batchsize,padding,usegpu,outfilename).then( () => {
 	process.exit(0);
     }).catch( () => {
 	process.exit(1);
