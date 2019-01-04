@@ -1,0 +1,1 @@
+node ~/bisweb/src/js/bin/bis_tf_recon.js -i tfjsexample64/sample1.nii.gz -o sampleout.nii.gz -m tfjsexample64 -b 12 -p 8

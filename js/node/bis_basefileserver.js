@@ -484,7 +484,7 @@ class BaseFileServer {
                 break;
             }
 
-            case 'bistfRecon' : {
+            case 'bistfReconstruction' : {
                 this.bistfReconstructImage(socket,parsedText);
                 break;
             }
@@ -578,7 +578,7 @@ class BaseFileServer {
                     if (this.opts.verbose)
                         console.log(this.indent,'+++++ Not Streaming',isstream,stats['size']);
                     fs.readFile(filename, (err, d1) => {
-        
+                        
                         if (err) {
                             handleError(filename,err);
                         } else {
@@ -1026,9 +1026,9 @@ class BaseFileServer {
 
         if (!this.validateFilename(indir) || !this.validateFilename(outdir)) {
             console.log(this.indent,'Bad outputdir',indir,outdir);
-                this.sendCommand(socket,'dicomConversionError', { 
-                    'output' : indir+' or '+outdir+' is not valid',
-                    'id' : id });
+            this.sendCommand(socket,'dicomConversionError', { 
+                'output' : indir+' or '+outdir+' is not valid',
+                'id' : id });
         }
 
         bidsutils.dicom2BIDS(
@@ -1061,51 +1061,68 @@ class BaseFileServer {
     bistfReconstructImage(socket,opts)  {
 
         let errorfn=( (msg) => {
+            console.log('Message =',msg);
             this.sendCommand(socket,'bistfReconstructImage', { 
                 'output' : msg,
                 'id' : id });
             return false;
         });
+
+        console.log("Received ",JSON.stringify(opts,null,2));
+
         
         let id=opts.id;
 
         if (path.sep==='\\') {
-            indir=util.filenameUnixToWindows(indir);
+            opts.input=util.filenameUnixToWindows(opts.input);
+            opts.output=util.filenameUnixToWindows(opts.output);
+            opts.modeldir=util.filenameUnixToWindows(opts.modeldir);
         }
+
+
         
         if (!this.opts.bistfrecon) {
             return errorfn(' No bistfrecon tool in config');
         }
+
         
-        if (!this.validateFilename(opts.input)) {
+            /*        if (!this.validateFilename(opts.input)) {
             return errorfn(opts.input+' is not valid');
         }
+
+        console.log('Pre output',opts.output);
+        
         if (!this.validateFilename(opts.output)) {
             return errorfn(opts.output+' is not valid');
         }
-        if (!this.validateFilename(opts.model)) {
-            return errorfn(opts.model+' is not valid');
-        }
+
+        
+        if (!this.validateFilename(opts.modeldir)) {
+            return errorfn(opts.modeldir+' is not valid');
+        }*/
         opts.batchsize = opts.batchsize || 4;
         opts.padding = opts.padding || 8;
+
+        console.log(JSON.stringify(opts,null,4));
         
         let done= (status,code) => {
             if (status===false) {
                 return errorfn('bistfrecon failed'+code);
             }
             
-            this.sendCommand(socket,'bistfreconDone', { 
+            this.sendCommand(socket,'bistfReconDone', { 
                 'output' : opts.output,
                 'id' : id });
             return;
         };
 
         let listen= (message) => {
-            this.sendCommand(socket,'bistfreconprogress', message);
+            this.sendCommand(socket,'bistfReconProgress', message);
         };
 
         
-        let cmd=this.opts.bistfrecon+` -i ${opts.input} -o ${opts.output} -m ${opts.model} -b ${opts.batchsize} -p ${opts.padding}`
+        let cmd='node '+this.opts.bistfrecon+` -i ${opts.input} -o ${opts.output} -m ${opts.modeldir} -b ${opts.batchsize} -p ${opts.padding}`
+        console.log(cmd);
         biscmdline.executeCommand(cmd,__dirname,done,listen);
         return;
     }
