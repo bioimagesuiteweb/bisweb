@@ -14,14 +14,10 @@ let run_tf=async function(img) {
     viewer.disable_renderloop();
     
     console.log('numTensors (post load): ' + tf.memory().numTensors);
-    let complex=true;
+
     
     let recon=new bisweb.bistfutil.BisWebTensorFlowRecon(img,model,16,-1);
-    let output;
-    if (complex)
-        output=recon.complexRecon(tf,2);
-    else
-        output=recon.simpleRecon(tf);
+    let output=recon.batchRecon(tf,1);
     
     tf.disposeVariables();
 

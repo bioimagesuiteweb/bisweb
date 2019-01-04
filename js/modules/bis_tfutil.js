@@ -254,7 +254,7 @@ class BisWebTensorFlowRecon {
         return true;
     }
 
-    simpleRecon(tf) {
+    recon(tf) {
 
         
         this.createPatch(1);
@@ -288,8 +288,11 @@ class BisWebTensorFlowRecon {
         return this.getOutput();
     }
 
-    complexRecon(tf,batchsize=4) {
+    batchRecon(tf,batchsize=4) {
 
+        if (batchsize<2)
+            return this.recon(tf);
+        
         this.createPatch(batchsize);
         let shape=this.model.inputs[0].shape;
         //console.log('Model Input Shape=',shape);
@@ -308,7 +311,7 @@ class BisWebTensorFlowRecon {
             }
         }
 
-        console.log('+++ Working on ',objlist.length,'patches, batchsize=',batchsize);
+        //        console.log('+++ Working on ',objlist.length,'patches, batchsize=',batchsize);
 
         for (let pindex=0;pindex<objlist.length;pindex+=batchsize) {
             
@@ -319,7 +322,7 @@ class BisWebTensorFlowRecon {
             else
                 numpatches=batchsize;
 
-            console.log(`+++ Beginning at ${pindex}, num=${numpatches}, max=${objlist.length}`);
+            console.log(`+++ Beginning batch of size ${numpatches} at ${pindex}.`);
             
             for (let inner=0;inner<numpatches;inner++) {
                 let elem=objlist[pindex+inner];
