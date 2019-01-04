@@ -6,8 +6,8 @@ module.exports=function(trygpu) {
 
     if (trygpu) {
 	try {
-	    require('@tensorflow/tfjs-node-gpu');
-	    console.log('**** Using tfjs-node-gpu');
+	    let a=require('@tensorflow/tfjs-node-gpu');
+	    console.log('**** Using tfjs-node-gpu',a);
 	    return tf;
 	} catch(e) {
 	    console.log('**** Failed to get tfjs-node-gpu, trying CPU version');
@@ -15,8 +15,8 @@ module.exports=function(trygpu) {
     }
     
     try {
-	require('@tensorflow/tfjs-node');
-	console.log('**** Using tfjs-node');
+	let a=require('@tensorflow/tfjs-node');
+	console.log('**** Using tfjs-node',a);
 
 	return tf;
     } catch(e) {

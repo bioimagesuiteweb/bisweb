@@ -1,3 +1,5 @@
+
+
 /*  LICENSE
     
     _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
@@ -448,9 +450,32 @@ gulp.task('createserver',function(done) {
     });
 });
 
+gulp.task('createtfjsrecon',function(done) {
+
+    let inp=path.normalize(path.join(__dirname,path.join('js',path.join('bin','bis_tf_recon.js'))));
+    console.log(inp);
+    let cfg=path.normalize(path.join(__dirname,path.join('config','app.config.js')));
+    console.log(cfg);
+    let out=path.normalize(path.join(__dirname,
+                                     path.join(options.outdir,
+                                               path.join('..',
+                                                         path.join('wasm','lib')))));
+    console.log(out);
+    let cmd=` webpack-cli --entry ${inp} --config ${cfg} --output-path ${out} --output-filename bis_tf_recon.js`;
+    console.log('Command=',cmd);
+    bis_gutil.executeCommandPromise(cmd,__dirname).then( () => {
+        let url=path.join(out,'bisfileserver.js');
+        let stats = fs.statSync(url);
+        let bytes = stats["size"];
+        console.log('____ saved in '+url+' (size='+bytes+')');
+        done();
+    });
+});
+
 gulp.task('packageserver',function() {
 
     gulp.src(['./build/wasm/lib/bisfileserver.js',
+              './build/wasm/lib/bis_tf_recon.js',
               './js/bin/server/example-server-config.json',
               './js/bin/server/package.json',
               './js/bin/server/README.md'

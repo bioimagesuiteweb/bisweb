@@ -1,6 +1,7 @@
 require('../../config/bisweb_pathconfig.js');
 
 const program = require('commander');
+const path=require('path');
 const BisWSWebSocketFileServer=require('bis_wswebsocketfileserver');
 const os = require('os');
 const wsutil = require('bis_wsutil');
@@ -73,11 +74,13 @@ let serveroptions= {
     "config" : config,
     "createconfig" : createconfig,
     "tempDirectory" : tmpdir,
+    "mydirectory" : path.resolve(path.normalize(__dirname))
 };
 
 //console.log('Server Options=',JSON.stringify(serveroptions,null,4));
 
 let server=new BisWSWebSocketFileServer(serveroptions);
+
 
 console.log('..................................................................................');
 console.log('..... BioImage Suite Web date='+bisdate.date+' ('+bisdate.time+'), v='+bisdate.version+', os='+os.platform()+'.\n..... \t server=', server.constructor.name,'\n.....');

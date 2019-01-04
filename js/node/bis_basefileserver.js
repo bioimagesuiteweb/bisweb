@@ -22,6 +22,7 @@ hotp.options  = { crypto };
 const secret = otplib.authenticator.generateSecret();
 let onetimePasswordCounter=1;
 
+let filecounter=0;
 
 // .................................................. This is the class ........................................
 
@@ -61,6 +62,8 @@ class BaseFileServer {
 
         this.opts={};
 
+        this.opts.bistfrecon=path.join(opts.mydirectory,'bis_tf_recon.js');
+        opts.mydirectory=undefined;
         this.opts.dcm2nii='/usr/bin/dcm2nii';
         
         for (let i=0;i<server_fields.length;i++) {
@@ -464,6 +467,13 @@ class BaseFileServer {
                 this.serveServerTempDirectory(socket,parsedText.id);
                 break;
             }
+
+
+            case 'gettempfilename' : {
+                this.gettempfilename(socket,parsedText);
+                break;
+            }
+
             case 'filesystemoperation' : {
                 this.fileSystemOperations(socket,parsedText.operation,parsedText.url,parsedText.id);
                 break;
@@ -471,6 +481,11 @@ class BaseFileServer {
 
             case 'dicomConversion' : {
                 this.dicomConversion(socket,parsedText);
+                break;
+            }
+
+            case 'bistfRecon' : {
+                this.bistfReconstructImage(socket,parsedText);
                 break;
             }
 
@@ -798,6 +813,30 @@ class BaseFileServer {
 
 
     /**
+     * Return an empty filename in the temp directory for the user to save to 
+     * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
+     * @param {Number} id - the request id
+     */
+    gettempfilename(socket,opts) {
+
+        let suffix=opts.suffix || '.nii.gz';
+        let id=opts.id;
+
+        let fname='';
+        let done=false;
+        while (!done) {
+            filecounter=filecounter+1;
+            fname=this.opts.tempDirectory+'/tempname'+filecounter+'.'+suffix;
+            if (!fs.existsSync(fname)) 
+                done=true;
+        }
+        
+        console.log(this.indent,"Serving Temp Filename",fname);
+        this.sendCommand(socket,'gettempfilename', { 'path' : fname, 'id' : id });
+    }
+
+
+    /**
      * Performs file operations (isDirectory etc.)
      * @param {String} - operation name
      * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
@@ -1004,6 +1043,71 @@ class BaseFileServer {
                     'output' : msg,
                     'id' : id });
             });
+    }
+
+    // Tensor Flow Recon
+    /**
+     * Performs Tensor Flow Reconstruction
+     * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
+     * @param {Dictionary} opts  - the parameter object
+     * @param {Number} opts.id - the job id
+     * @param {String} opts.input - the input filename
+     * @param {String} opts.output - the output filename
+     * @param {String} opts.model - the model directory
+     * @param {Number} opts.batchsize - the batchsize
+     * @param {Number} opts.padding - the padding
+     * @param {Boolean} opts.debug - if true run debug setup
+     */
+    bistfReconstructImage(socket,opts)  {
+
+        let errorfn=( (msg) => {
+            this.sendCommand(socket,'bistfReconstructImage', { 
+                'output' : msg,
+                'id' : id });
+            return false;
+        });
+        
+        let id=opts.id;
+
+        if (path.sep==='\\') {
+            indir=util.filenameUnixToWindows(indir);
+        }
+        
+        if (!this.opts.bistfrecon) {
+            return errorfn(' No bistfrecon tool in config');
+        }
+        
+        if (!this.validateFilename(opts.input)) {
+            return errorfn(opts.input+' is not valid');
+        }
+        if (!this.validateFilename(opts.output)) {
+            return errorfn(opts.output+' is not valid');
+        }
+        if (!this.validateFilename(opts.model)) {
+            return errorfn(opts.model+' is not valid');
+        }
+        opts.batchsize = opts.batchsize || 4;
+        opts.padding = opts.padding || 8;
+        
+        let done= (status,code) => {
+            if (status===false) {
+                return errorfn('bistfrecon failed'+code);
+            }
+            
+            this.sendCommand(socket,'bistfreconDone', { 
+                'output' : opts.output,
+                'id' : id });
+            return;
+        };
+
+        let listen= (message) => {
+            this.sendCommand(socket,'bistfreconprogress', message);
+        };
+
+        
+        let cmd=this.opts.bistfrecon+` -i ${opts.input} -o ${opts.output} -m ${opts.model} -b ${opts.batchsize} -p ${opts.padding}`
+        biscmdline.executeCommand(cmd,__dirname,done,listen);
+        return;
     }
 
     /**
