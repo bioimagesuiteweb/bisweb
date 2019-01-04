@@ -86,7 +86,7 @@ class DicomImportElement extends HTMLElement {
                     let splitName = jsonFileName.split('/');
                     splitName.pop();
                     let outputFolderName = splitName.join('/');
-                    this.filetreepanel.importFiles(outputFolderName);
+                    this.filetreepanel.importFilesFromDirectory(outputFolderName);
                     this.filetreepanel.showTreePanel();
                 });
             }).catch( () => {
