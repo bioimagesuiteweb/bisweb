@@ -17,7 +17,7 @@ let run_tf=async function(img) {
 
     
     let recon=new bisweb.bistfutil.BisWebTensorFlowRecon(img,model,16,-1);
-    let output=recon.batchRecon(tf,1);
+    let output=recon.batchRecon(tf,20);
     
     tf.disposeVariables();
 

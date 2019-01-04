@@ -150,17 +150,20 @@ class BisWebTensorFlowRecon {
     }
     
     /** Get Patch  for tensorflow.js 
-     * @param{Number} slice - slice to extract -- 1D
-     * @param{Number} frame - frame index for patch
-     * @param{Number} row - row index for patch
-     * @param{Number} col - col index for patch
+     * @param{Array} indices - [ slice,frame,row,col]  to extract -- 1D
      * @returns{TypedArray} - the patch (temporary)
+     * @param{Number} batchindex - index in batch
      */
-    extractPatch(slice,frame,row,col,batchindex=0) {
+    extractPatch(indices,batchindex=0) {
 
         if (this.patch===null) {
             throw new Error('Call allocate Patch before');
         }
+
+        let slice=indices[0];
+        let frame=indices[1];
+        let row=indices[2];
+        let col=indices[3];
         
         let dims=this.input.getDimensions();
         let minslice=slice-this.patchinfo.thickness;
@@ -212,14 +215,17 @@ class BisWebTensorFlowRecon {
 
     /** Set Patch from tensorflow.js 
      * @param{TypedArray} patch -- Typed Array to get patch from
-     * @param{Number} slice - slice to extract 
-     * @param{Number} frame - slice to extract 
-     * @param{Number} row - row index for patch
-     * @param{Number} col - col index for patch
+     * @param{Array} indices - [ slice,frame,row,col]  to extract -- 1D
+     * @param{Number} batchindex - index in batch
      * @returns{Boolean} - true if success
      */
-    storePatch(patcharray,slice,frame,row,col,batchindex=0) {
-        
+    storePatch(patcharray,indices,batchindex=0) {
+
+        let slice=indices[0];
+        let frame=indices[1];
+        let row=indices[2];
+        let col=indices[3];
+
 
         let limits=this.getPatchLimits(slice,frame,row,col,true);
         let dims=this.output.getDimensions();
@@ -254,68 +260,59 @@ class BisWebTensorFlowRecon {
         return true;
     }
 
-    recon(tf) {
+    /** Get list of indices */
+    getPatchIndices() {
 
-        
-        this.createPatch(1);
-
-        let shape=this.model.inputs[0].shape;
-        shape[0]=this.patchinfo.batchsize;
-        console.log('Model Input Shape=',shape);
-        
+        let indiceslist=[];
         let dims=this.input.getDimensions();
-        
+        // Create patchlist
         for (let frame=0;frame<dims[3]*dims[4];frame++) {
             for (let slice=0;slice<dims[2];slice++) {
                 for (let row=0;row<this.patchinfo.numrows;row++) {
                     for (let col=0;col<this.patchinfo.numcols;col++) {
-                        tf.tidy( () => {
-                            let patch=this.extractPatch(slice,frame,row,col);
-                            const tensor= tf.tensor(patch, shape);
-                            console.log('Calling Model',tensor.shape);
-                            const output=this.model.predict(tensor);
-                            const predict0=output.as1D();
-                            const predict=predict0.dataSync();
-                            this.storePatch(predict,slice,frame,row,col);
-                        });
+                        indiceslist.push([ frame,slice,row,col]);
                     }
                 }
             }
         }
+        return indiceslist;
+    }
+    
+    recon(tf) {
 
-        console.log('numTensors (outside tidy): ' + tf.memory().numTensors);
+        this.createPatch(1);
+        let shape=this.model.inputs[0].shape;   shape[0]=1;
+        let patchindexlist=this.getPatchIndices();
+        for (let pindex=0;pindex<patchindexlist.length;pindex++) {
+            let elem=patchindexlist[pindex];
+            tf.tidy( () => {
+                let patch=this.extractPatch(elem);
+                const tensor= tf.tensor(patch, shape);
+                console.log('Calling Model',tensor.shape);
+                const output=this.model.predict(tensor);
+                const predict=output.as1D().dataSync();
+                this.storePatch(predict,elem);
+            });
+        }
         this.cleanup();
         return this.getOutput();
     }
 
     batchRecon(tf,batchsize=4) {
 
-        if (batchsize<2)
-            return this.recon(tf);
+        if (batchsize<1)
+            batchsize=1;
+        let patchindexlist=this.getPatchIndices();
+        if (batchsize>patchindexlist.length)
+            batchsize=patchindexlist.length;
         
         this.createPatch(batchsize);
         let shape=this.model.inputs[0].shape;
         //console.log('Model Input Shape=',shape);
         
-        let dims=this.input.getDimensions();
-        let objlist=[];
-
-        // Create patchlist
-        for (let frame=0;frame<dims[3]*dims[4];frame++) {
-            for (let slice=0;slice<dims[2];slice++) {
-                for (let row=0;row<this.patchinfo.numrows;row++) {
-                    for (let col=0;col<this.patchinfo.numcols;col++) {
-                        objlist.push([ frame,slice,row,col]);
-                    }
-                }
-            }
-        }
-
-        //        console.log('+++ Working on ',objlist.length,'patches, batchsize=',batchsize);
-
-        for (let pindex=0;pindex<objlist.length;pindex+=batchsize) {
+        for (let pindex=0;pindex<patchindexlist.length;pindex+=batchsize) {
             
-            let numpatches=objlist.length-pindex;
+            let numpatches=patchindexlist.length-pindex;
             
             if (numpatches<batchsize)
                 this.createPatch(numpatches);
@@ -325,8 +322,8 @@ class BisWebTensorFlowRecon {
             console.log(`+++ Beginning batch of size ${numpatches} at ${pindex}.`);
             
             for (let inner=0;inner<numpatches;inner++) {
-                let elem=objlist[pindex+inner];
-                this.extractPatch(elem[0],elem[1],elem[2],elem[3],inner);
+                let elem=patchindexlist[pindex+inner];
+                this.extractPatch(elem,inner);
             }
 
             let patch=this.getPatch();
@@ -341,8 +338,8 @@ class BisWebTensorFlowRecon {
                 const predict=output.as1D().dataSync();
 
                 for (let inner=0;inner<numpatches;inner++) {
-                    let elem=objlist[pindex+inner];
-                    this.storePatch(predict,elem[0],elem[1],elem[2],elem[3],inner);
+                    let elem=patchindexlist[pindex+inner];
+                    this.storePatch(predict,elem,inner);
                 }
             });
         }
