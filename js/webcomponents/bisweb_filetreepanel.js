@@ -488,8 +488,8 @@ class FileTreePanel extends HTMLElement {
             let rawTreeJSON = rawTree.get_json('#'); 
             let reconstructedTree = [];
 
+            //recursive function to fill out a tree node then fill out the nodes below it
             let fillTreeNode = (node, parentNode) => {
-                console.log('fill tree node', node);
                 let item = rawTree.get_node(node.id);
                 let newNode = item.original;
                 if (item.children.length > 0) {
@@ -507,7 +507,6 @@ class FileTreePanel extends HTMLElement {
                     
             }; 
 
-            console.log('raw tree json', rawTreeJSON);
             for (let item of rawTreeJSON) { fillTreeNode(item); }
 
             console.log('reconstructed tree', reconstructedTree);
