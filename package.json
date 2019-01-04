@@ -10,6 +10,7 @@
     "author": "Xenios Papademetris",
     "license": "Apache",
     "dependencies": {
+	"@tensorflow/tfjs-node": "^0.2.1",
         "amazon-cognito-auth-js": "1.2.3",
         "amazon-cognito-identity-js": "2.0.16",
         "atob": "2.1.2",
