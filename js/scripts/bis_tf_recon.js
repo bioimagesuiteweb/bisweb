@@ -54,7 +54,7 @@ let reconAndSave=function(img,modelname,batchsize,padding,outname) {
 	    console.log('----------------------------------------------------------');
 	    console.log(`--- Beginning padding=${padding}`);
 	    let recon=new bistfutil.BisWebTensorFlowRecon(img,model,padding);
-	    let output=recon.batchRecon(tf,batchsize);
+	    let output=recon.reconstructImage(tf,batchsize);
 	    console.log('----------------------------------------------------------');
 	    console.log('--- Recon finished :',output.getDescription());
 

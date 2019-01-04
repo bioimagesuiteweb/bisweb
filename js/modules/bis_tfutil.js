@@ -314,31 +314,9 @@ class BisWebTensorFlowRecon {
         }
         return indiceslist;
     }
-    
-    recon(tf) {
 
-        this.createPatch(1);
-        let shape=this.model.inputs[0].shape;   shape[0]=1;
-        let patchindexlist=this.getPatchIndices();
-        for (let pindex=0;pindex<patchindexlist.length;pindex++) {
-            let elem=patchindexlist[pindex];
-            tf.tidy( () => {
-                let patch=this.extractPatch(elem);
-                const tensor= tf.tensor(patch, shape);
-                console.log('Calling Model',tensor.shape);
-                const output=this.model.predict(tensor);
-                const predict=output.dataSync();
-                this.storePatch(predict,elem);
-
-            });
-
-        }
-        this.cleanup();
-        return this.getOutput();
-    }
-
-    batchRecon(tf,batchsize=2,cleanup=true) {
-
+    reconstructImage(tf,batchsize=2,cleanup=true) {
+	
         if (batchsize<1)
             batchsize=1;
         let patchindexlist=this.getPatchIndices();
@@ -364,8 +342,9 @@ class BisWebTensorFlowRecon {
             else
                 numpatches=batchsize;
 
-            if (this.debug || (pindex-last>step)) {
-                console.log(`${getTime()} Beginning ${pindex}:${pindex+numpatches-1}/${patchindexlist.length} numt=`, tf.memory().numTensors);
+            if (this.debug || (pindex-last>step) || pindex===0) {
+		let per=Math.round( (100.0*pindex)/patchindexlist.length);
+                console.log(`${getTime()} At ${per}%. Patches ${pindex}:${pindex+numpatches-1}/${patchindexlist.length}.  Numtensors=`, tf.memory().numTensors);
                 last=pindex;
             }
             
@@ -395,7 +374,6 @@ class BisWebTensorFlowRecon {
 
             tensor.dispose();
             output.dispose();
-            //            predict.dispose();
             if (this.debug)
                 console.log('numTensors tidy: ' + tf.memory().numTensors);
         }
@@ -404,13 +382,14 @@ class BisWebTensorFlowRecon {
         let  s=Math.floor((endTime-startTime)/1000);
         let ms=Math.round((endTime-startTime)/10-s*100);
         let perslice=Math.round((endTime-startTime)/patchindexlist.length);
-        console.log(`${getTime()} Done Recon time=${s}.${ms}s, perslice=${perslice}ms`);
+        console.log(`${getTime()} Done Recon time=${s}.${ms}s, perpatch=${perslice}ms`);
 
         if (cleanup)
             this.cleanup();
 
         return this.getOutput();
     }
+
 }
 
 let loadAndWarmUpModel=function(tf,URL) {
