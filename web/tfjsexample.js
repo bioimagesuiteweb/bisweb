@@ -2,13 +2,33 @@
 
 /* global tf */
 
-const URL='http://localhost:8080/web/images/tfjsexample';
+const extra="/images/tfjsexample";
+
+let getScope=function() {
+    
+    let scope=window.document.URL;
+    let index=scope.indexOf(".html");
+    if (index>0) {
+        index=scope.lastIndexOf("/");
+        scope=scope.substr(0,index+1);
+    } else {
+        let index=scope.indexOf("#");
+        if (index>0) {
+            index=scope.lastIndexOf("/");
+            scope=scope.substr(0,index+1);
+        }
+    }
+    return scope;
+};
 
 let run_tf=async function(img) {
 
     const bisweb=document.querySelector("#bis").export;
     const viewer=document.querySelector("#viewer");
 
+    const URL=getScope()+extra;
+    console.log('URL=',URL);
+    
     const model=await bisweb.bistfutil.loadAndWarmUpModel(tf,URL);
 
     if (viewer)
@@ -18,7 +38,8 @@ let run_tf=async function(img) {
 
     
     let recon=new bisweb.bistfutil.BisWebTensorFlowRecon(img,model,16);
-    let output=recon.batchRecon(tf,8);
+    let output=recon.batchRecon(tf,1);
+
 
     //tf.disposeVariables();
 
@@ -49,6 +70,7 @@ window.onload = function() {
     let img=new bisweb.BisWebImage();
     
     // Load an image --> returns a promise so .then()
+    const URL=getScope()+extra;
     img.load(`${URL}/sample3d.nii.gz`).then( () => {
         console.log('Image Loaded = ',img.getDescription());
         

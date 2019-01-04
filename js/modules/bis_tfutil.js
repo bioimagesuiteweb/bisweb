@@ -1,5 +1,27 @@
 const BisWebImage=require('bisweb_image');
 
+
+var getTime=function(nobracket=0) {
+    //    http://stackoverflow.com/questions/7357734/how-do-i-get-the-time-of-day-in-javascript-node-js
+
+    var date = new Date();
+
+    var hour = date.getHours();
+    hour = (hour < 10 ? "0" : "") + hour;
+
+    var min  = date.getMinutes();
+    min = (min < 10 ? "0" : "") + min;
+
+    var sec  = date.getSeconds();
+    sec = (sec < 10 ? "0" : "") + sec;
+
+
+    
+    if (nobracket===0)
+        return  "[" + hour + ":" + min + ":" + sec + "]";
+    return  hour + ":" + min + ":" + sec ;
+};
+
 class BisWebTensorFlowRecon { 
     /** Get Patch Info for tensorflow.js 
      * @param{BisWebImage} img - width of patch (should be power of 2)
@@ -9,8 +31,9 @@ class BisWebTensorFlowRecon {
      */
     constructor(input,model,padding=16) {
 
+        this.debug=false;
         this.input=input;
-        this.debugthis.output=new BisWebImage();
+        this.output=new BisWebImage();
         this.output.cloneImage(this.input);
         this.model=model;
         
@@ -61,7 +84,8 @@ class BisWebTensorFlowRecon {
         this.patchinfo.patchslicesize=this.patchinfo.width*this.patchinfo.height;
         this.patchinfo.patchvolumesize=this.patchinfo.patchslicesize*this.patchinfo.numslices;
         this.patch= new Float32Array(this.patchinfo.patchslicesize*this.patchinfo.batchsize);//this.internal.imginfo.type(width*height*numslices);
-        console.log('+++ Created patch temp array ',this.patch.length,'( ',this.patchinfo.patchvolumesize,'*',this.patchinfo.batchsize,')');
+        if (this.debug)
+            console.log('+++ Created patch temp array ',this.patch.length,'( ',this.patchinfo.patchvolumesize,'*',this.patchinfo.batchsize,')');
     }
 
     cleanup() {
@@ -190,7 +214,8 @@ class BisWebTensorFlowRecon {
 
             let limits=this.getPatchLimits(sl,frame,row,col,false);
             let index=(slice-minslice)+batchindex*this.patchinfo.patchvolumesize;
-            console.log(`+++ read patch  ${slice}/${frame}/${row}/${col}, sl=${sl}, i=${limits.begini}:${limits.endi}, j=${limits.beginj}:${limits.endj}, batchindex=${batchindex}`);
+            if (this.debug)
+                console.log(`+++ read patch  ${slice}/${frame}/${row}/${col}, sl=${sl}, i=${limits.begini}:${limits.endi}, j=${limits.beginj}:${limits.endj}, batchindex=${batchindex}`);
 
             let iextra=0;
             if (limits.endi>=dims[0]) {
@@ -245,8 +270,9 @@ class BisWebTensorFlowRecon {
         let index=batchindex*this.patchinfo.patchvolumesize;
         // Increment to take account of low rows that are not stored
         index+=(jminextra*this.patchinfo.width);
-        
-        console.log(`+++ write patch i=${limits.imin}:${limits.imax}, j=${limits.jmin}:${limits.jmax}, slice=${slice}/${frame}/${row}/${col} index=${batchindex}`);
+
+        if (this.debug)
+            console.log(`+++ write patch i=${limits.imin}:${limits.imax}, j=${limits.jmin}:${limits.jmax}, slice=${slice}/${frame}/${row}/${col} index=${batchindex}`);
         
         let imagedata=this.output.getImageData();
 
@@ -271,8 +297,10 @@ class BisWebTensorFlowRecon {
 
         // -------- 3D --------
         let maxslice=dims[2]-1,minslice=0;
-        minslice=50;
-        maxslice=75;
+        if (maxslice>0) {
+            //minslice=50;
+            //maxslice=100;
+        }
         
         // Create patchlist
         for (let slice=minslice;slice<=maxslice;slice++) {
@@ -309,7 +337,7 @@ class BisWebTensorFlowRecon {
         return this.getOutput();
     }
 
-    batchRecon(tf,batchsize=4) {
+    batchRecon(tf,batchsize=2,cleanup=true) {
 
         if (batchsize<1)
             batchsize=1;
@@ -319,9 +347,15 @@ class BisWebTensorFlowRecon {
         
         this.createPatch(batchsize);
         let shape=this.model.inputs[0].shape;
-        //console.log('Model Input Shape=',shape);
+
+        console.log(`+++ Beginning Recon numpatches=${patchindexlist.length}, batchsize=${this.patchinfo.batchsize}`);
+        let startTime=new Date();
+
+        let step=Math.round(patchindexlist.length/20);
+        let last=0;
         
         for (let pindex=0;pindex<patchindexlist.length;pindex+=batchsize) {
+            
             
             let numpatches=patchindexlist.length-pindex;
             
@@ -330,7 +364,10 @@ class BisWebTensorFlowRecon {
             else
                 numpatches=batchsize;
 
-            console.log(`+++ Beginning ${pindex}:${pindex+numpatches-1}/${patchindexlist.length}.`);
+            if (this.debug || (pindex-last>step)) {
+                console.log(`${getTime()} Beginning ${pindex}:${pindex+numpatches-1}/${patchindexlist.length} numt=`, tf.memory().numTensors);
+                last=pindex;
+            }
             
             for (let inner=0;inner<numpatches;inner++) {
                 let elem=patchindexlist[pindex+inner];
@@ -340,23 +377,38 @@ class BisWebTensorFlowRecon {
             let patch=this.getPatch();
             shape[0]=numpatches;
                   
-            tf.tidy( () => {
+            if (this.debug)
                 console.log('++++ creating tensor',shape,'patch=',patch.length);
-                const tensor= tf.tensor(patch, shape);
-
+            const tensor= tf.tensor(patch, shape);
+            
+            if (this.debug)
                 console.log('Calling Model',tensor.shape);
-                const output=this.model.predict(tensor);
-                const predict=output.dataSync();
-
-                for (let inner=0;inner<numpatches;inner++) {
-                    let elem=patchindexlist[pindex+inner];
-                    this.storePatch(predict,elem,inner);
-                }
+            const output=this.model.predict(tensor);
+            const predict=output.dataSync();
+            
+            for (let inner=0;inner<numpatches;inner++) {
+                let elem=patchindexlist[pindex+inner];
+                this.storePatch(predict,elem,inner);
+            }
+            if (this.debug)
                 console.log('numTensors: ' + tf.memory().numTensors);
-            });
-            console.log('numTensors tidy: ' + tf.memory().numTensors);
+
+            tensor.dispose();
+            output.dispose();
+            //            predict.dispose();
+            if (this.debug)
+                console.log('numTensors tidy: ' + tf.memory().numTensors);
         }
-        this.cleanup();
+        let endTime=new Date();
+
+        let  s=Math.floor((endTime-startTime)/1000);
+        let ms=Math.round((endTime-startTime)/10-s*100);
+        let perslice=Math.round((endTime-startTime)/patchindexlist.length);
+        console.log(`${getTime()} Done Recon time=${s}.${ms}s, perslice=${perslice}ms`);
+
+        if (cleanup)
+            this.cleanup();
+
         return this.getOutput();
     }
 }
