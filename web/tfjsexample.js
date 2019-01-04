@@ -6,22 +6,29 @@ const URL='http://localhost:8080/web/images/tfjsexample';
 
 let run_tf=async function(img) {
 
-    const MODEL_URL =  URL+'/tensorflowjs_model.pb';
-    const WEIGHTS_URL = URL+'/weights_manifest.json';
-    const model = await tf.loadFrozenModel(MODEL_URL, WEIGHTS_URL);
     const bisweb=document.querySelector("#bis").export;
+    const viewer=document.querySelector("#viewer");
 
-    let complex=false;
-    let recon=new bisweb.bistfutil.BisWebTensorFlowRecon(img,model,32,-1);
+    const model=await bisweb.bistfutil.loadAndWarmUpModel(tf,URL);
+    
+    viewer.disable_renderloop();
+    
+    console.log('numTensors (post load): ' + tf.memory().numTensors);
+    let complex=true;
+    
+    let recon=new bisweb.bistfutil.BisWebTensorFlowRecon(img,model,16,-1);
     let output;
-
     if (complex)
-        output=recon.complexRecon(tf);
+        output=recon.complexRecon(tf,2);
     else
         output=recon.simpleRecon(tf);
+    
+    tf.disposeVariables();
 
+    console.log('numTensors (post external tidy): ' + tf.memory().numTensors);
 
-    const viewer=document.querySelector("#viewer");
+    viewer.enable_renderloop();
+    viewer.renderloop();
     viewer.setobjectmap(output);
 };
 
@@ -41,7 +48,7 @@ window.onload = function() {
     let img=new bisweb.BisWebImage();
     
     // Load an image --> returns a promise so .then()
-    img.load(`${URL}/sample3d.nii.gz`).then( () => {
+    img.load(`${URL}/sample1.nii.gz`).then( () => {
         console.log('Image Loaded = ',img.getDescription());
         
         // Set the image to the viewer
