@@ -10,22 +10,27 @@ let run_tf=async function(img) {
     const viewer=document.querySelector("#viewer");
 
     const model=await bisweb.bistfutil.loadAndWarmUpModel(tf,URL);
-    
-    viewer.disable_renderloop();
+
+    if (viewer)
+        viewer.disable_renderloop();
     
     console.log('numTensors (post load): ' + tf.memory().numTensors);
 
     
-    let recon=new bisweb.bistfutil.BisWebTensorFlowRecon(img,model,16,-1);
-    let output=recon.batchRecon(tf,20);
-    
-    tf.disposeVariables();
+    let recon=new bisweb.bistfutil.BisWebTensorFlowRecon(img,model,16);
+    let output=recon.batchRecon(tf,8);
+
+    //tf.disposeVariables();
 
     console.log('numTensors (post external tidy): ' + tf.memory().numTensors);
 
-    viewer.enable_renderloop();
-    viewer.renderloop();
-    viewer.setobjectmap(output);
+    if (viewer) {
+        viewer.enable_renderloop();
+        viewer.renderloop();
+        viewer.setobjectmap(output);
+    } else {
+        output.save('recon.nii.gz');
+    }
 };
 
 
@@ -44,11 +49,12 @@ window.onload = function() {
     let img=new bisweb.BisWebImage();
     
     // Load an image --> returns a promise so .then()
-    img.load(`${URL}/sample1.nii.gz`).then( () => {
+    img.load(`${URL}/sample3d.nii.gz`).then( () => {
         console.log('Image Loaded = ',img.getDescription());
         
         // Set the image to the viewer
-        viewer.setimage(img);
+        if (viewer)
+            viewer.setimage(img);
 
         run_tf(img);
 

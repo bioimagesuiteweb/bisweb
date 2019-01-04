@@ -10,14 +10,12 @@ class BisWebTensorFlowRecon {
     constructor(input,model,padding=16) {
 
         this.input=input;
-        this.output=new BisWebImage();
+        this.debugthis.output=new BisWebImage();
         this.output.cloneImage(this.input);
         this.model=model;
         
         let shape=model.inputs[0].shape;
 
-        //        console.log('+++ Initializing', this.input.getDimensions(), ' model=', shape);
-        
         let width=shape[1];
         let height=shape[2];
         let numslices=shape[3] || 1;
@@ -160,14 +158,14 @@ class BisWebTensorFlowRecon {
             throw new Error('Call allocate Patch before');
         }
 
-        let slice=indices[0];
+        let in_slice=indices[0];
         let frame=indices[1];
         let row=indices[2];
         let col=indices[3];
         
         let dims=this.input.getDimensions();
-        let minslice=slice-this.patchinfo.thickness;
-        let maxslice=slice+this.patchinfo.thickness;
+        let minslice=in_slice-this.patchinfo.thickness;
+        let maxslice=in_slice+this.patchinfo.thickness;
         let batchsize=this.patchinfo.batchsize;
 
         if (batchindex<0)
@@ -192,7 +190,7 @@ class BisWebTensorFlowRecon {
 
             let limits=this.getPatchLimits(sl,frame,row,col,false);
             let index=(slice-minslice)+batchindex*this.patchinfo.patchvolumesize;
-            console.log(`+++ read patch  slice=${slice}/${frame}, sl=${sl}, i=${limits.begini}:${limits.endi}, j=${limits.beginj}:${limits.endj}, batchindex=${batchindex}`);
+            console.log(`+++ read patch  ${slice}/${frame}/${row}/${col}, sl=${sl}, i=${limits.begini}:${limits.endi}, j=${limits.beginj}:${limits.endj}, batchindex=${batchindex}`);
 
             let iextra=0;
             if (limits.endi>=dims[0]) {
@@ -242,9 +240,14 @@ class BisWebTensorFlowRecon {
             iminextra=(limits.imin-limits.begini);
         if (limits.imax<limits.endi)
             imaxextra=(limits.endi-limits.imax);
+
+        // Start at start of batch slice
+        let index=batchindex*this.patchinfo.patchvolumesize;
+        // Increment to take account of low rows that are not stored
+        index+=(jminextra*this.patchinfo.width);
         
-        let index=(jminextra*this.patchinfo.width)+batchindex*this.patchinfo.patchvolumesize;
-        console.log(`+++ write patch i=${limits.imin}:${limits.imax}, j=${limits.jmin}:${limits.jmax}, slice=${slice}/${frame}, index=${batchindex}`);
+        console.log(`+++ write patch i=${limits.imin}:${limits.imax}, j=${limits.jmin}:${limits.jmax}, slice=${slice}/${frame}/${row}/${col} index=${batchindex}`);
+        
         let imagedata=this.output.getImageData();
 
         for (let j=limits.jmin;j<=limits.jmax;j++) {
@@ -265,12 +268,18 @@ class BisWebTensorFlowRecon {
 
         let indiceslist=[];
         let dims=this.input.getDimensions();
+
+        // -------- 3D --------
+        let maxslice=dims[2]-1,minslice=0;
+        minslice=50;
+        maxslice=75;
+        
         // Create patchlist
-        for (let frame=0;frame<dims[3]*dims[4];frame++) {
-            for (let slice=0;slice<dims[2];slice++) {
+        for (let slice=minslice;slice<=maxslice;slice++) {
+            for (let frame=0;frame<dims[3]*dims[4];frame++) {
                 for (let row=0;row<this.patchinfo.numrows;row++) {
                     for (let col=0;col<this.patchinfo.numcols;col++) {
-                        indiceslist.push([ frame,slice,row,col]);
+                        indiceslist.push([ slice,frame,row,col]);
                     }
                 }
             }
@@ -290,9 +299,11 @@ class BisWebTensorFlowRecon {
                 const tensor= tf.tensor(patch, shape);
                 console.log('Calling Model',tensor.shape);
                 const output=this.model.predict(tensor);
-                const predict=output.as1D().dataSync();
+                const predict=output.dataSync();
                 this.storePatch(predict,elem);
+
             });
+
         }
         this.cleanup();
         return this.getOutput();
@@ -319,7 +330,7 @@ class BisWebTensorFlowRecon {
             else
                 numpatches=batchsize;
 
-            console.log(`+++ Beginning batch of size ${numpatches} at ${pindex}.`);
+            console.log(`+++ Beginning ${pindex}:${pindex+numpatches-1}/${patchindexlist.length}.`);
             
             for (let inner=0;inner<numpatches;inner++) {
                 let elem=patchindexlist[pindex+inner];
@@ -335,13 +346,15 @@ class BisWebTensorFlowRecon {
 
                 console.log('Calling Model',tensor.shape);
                 const output=this.model.predict(tensor);
-                const predict=output.as1D().dataSync();
+                const predict=output.dataSync();
 
                 for (let inner=0;inner<numpatches;inner++) {
                     let elem=patchindexlist[pindex+inner];
                     this.storePatch(predict,elem,inner);
                 }
+                console.log('numTensors: ' + tf.memory().numTensors);
             });
+            console.log('numTensors tidy: ' + tf.memory().numTensors);
         }
         this.cleanup();
         return this.getOutput();
