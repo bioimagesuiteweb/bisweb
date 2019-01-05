@@ -62,6 +62,8 @@ exports.motionCorrection = require('motionCorrection.js');
 
 exports.defaceImage=require('defaceImage.js');
 exports.reorientImage=require('reorientImage.js');
+exports.tfrecon=require('tfRecon.js');
+
 
 exports.moduleNamesArray = {
     'approximatefield': exports.approximateField,
@@ -106,6 +108,7 @@ exports.moduleNamesArray = {
     'qualitymeasures': exports.qualityMeasures,
     'shiftscaleimage': exports.shiftScaleImage,
     'thresholdimage': exports.thresholdImage,
+    'tfrecon' : exports.tfrecon,
 };
 
 

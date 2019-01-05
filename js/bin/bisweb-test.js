@@ -73,7 +73,7 @@ for (let i=0;i<args.length;i++) {
 }
 
 let tempName="";
-if (test_type==="image")
+if (test_type==="image" || test_type==="tfjs")
     tempName= dirname+ '/out.nii.gz';
 else if (test_type==="matrix" || test_type==="matrixtransform")
     tempName= dirname+ '/out.jmatr';
@@ -90,6 +90,10 @@ if (test_type==="registration") {
     test_type="image";
 }
 
+
+if (test_type==="tfjs") {
+    test_type="image";
+}
 
 
 // Disable auto reorient on load

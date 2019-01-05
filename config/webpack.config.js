@@ -108,7 +108,10 @@ if (output !== "webworkermain.js") {
         externals: {
             // require("jquery") is external and available on the global var jQuery
             "jquery": "jQuery",
-            "libbiswasm" : "console.log" // this is not needed in this case and should be excluded
+            "libbiswasm" : "console.log", // this is not needed in this case and should be excluded
+            "@tensorflow/tfjs" : "tf", // ignore tensor flow it will come from outside
+            "@tensorflow/tfjs-node" : "console.log", // ignore tensor flow it will come from outside
+            "@tensorflow/tfjs-node-gpu" : "console.log" // ignore tensor flow it will come from outside
         },
         watchOptions: {
             aggregateTimeout: 300,
