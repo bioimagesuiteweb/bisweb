@@ -193,9 +193,12 @@ class BisFileServerClient extends BisBaseServerClient {
         
         
         let success=true;
-
+        let ignore=false;
+        
         if (this.verbose>0)
             console.log('____\n____ Received message: ', data.type,id,bisasyncutil.printEvent(id));
+
+        
         switch (data.type)
         {
             case 'checksum' : {
@@ -236,6 +239,7 @@ class BisFileServerClient extends BisBaseServerClient {
             }
             case 'authenticate': {
                 this.sendPassword(this.password || '');
+                ignore=true;
                 break;
             }
             case 'badauth':  {
@@ -257,6 +261,7 @@ class BisFileServerClient extends BisBaseServerClient {
                 //console.log('received text data: ', bisasyncutil.printEvent(this.authenticatingEvent.id));
                 if (this.authenticatingEvent)
                     id=this.authenticatingEvent.id;
+
                 break;
             }
             case 'filesystemoperations': {
@@ -271,6 +276,7 @@ class BisFileServerClient extends BisBaseServerClient {
 
             case 'dicomConversionProgress': {
                 this.updateCallback(data.payload);
+                ignore=true;
                 break;
             }
 
@@ -287,6 +293,7 @@ class BisFileServerClient extends BisBaseServerClient {
             
             case 'bistfReconProgress': {
                 this.updateCallback(data.payload);
+                ignore=true;
                 break;
             }
             
@@ -328,7 +335,7 @@ class BisFileServerClient extends BisBaseServerClient {
                 bisasyncutil.resolveServerEvent(id,data.payload);
             else
                 bisasyncutil.rejectServerEvent(id,data.payload);
-        } else {
+        } else if (!ignore) {
             console.log('Id Error=',id);
         }
     }

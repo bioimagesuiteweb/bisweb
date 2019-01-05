@@ -241,22 +241,27 @@ class BaseFileServer {
      * @param {String} filepath - Path to check.
      * @return {Boolean} true if OK, false if not OK,
      */
-    validateFilename(filepath) {
+    validateFilename(filepath,debug=false) {
 
         //some filepaths will be two filepaths conjoined by the symbol &&, check these separately
         if (filepath.indexOf('&&') >= 0) {
             const filepaths = filepath.split('&&');
-            console.log('filepaths', filepaths);
+            if (debug)
+                console.log('filepaths', filepaths);
             return this.validateFilename(filepaths[0]) && this.validateFilename(filepaths[1]);
         }
 
         filepath=filepath||'';
         if (filepath.length<1) {
+            if (debug) console.log('short filepath');
             return false;
         }
 
         if (path.sep==='\\') 
             filepath=filepath.toLowerCase();
+
+        if (debug)
+            console.log('filepath=',filepath,' ',this.opts.baseDirectoriesList);
 
         let i=0,found=false;
         while (i<this.opts.baseDirectoriesList.length && found===false) {
@@ -279,6 +284,7 @@ class BaseFileServer {
         if (path.sep==='\\')
             realname=util.filenameUnixToWindows(filepath);
 
+        
 
         if (fs.existsSync(realname)) {
             let stats=fs.lstatSync(realname);
@@ -290,9 +296,12 @@ class BaseFileServer {
             try {
                 let stats=fs.lstatSync(dirname);
                 if (stats.isSymbolicLink()) {
+                    if (debug)
+                        console.log('Sym Link ',e);
                     return false;
                 }
             } catch(e) {
+                console.log('Existence problem ',e);
                 return false;
             }
         }
@@ -1061,17 +1070,25 @@ class BaseFileServer {
     bistfReconstructImage(socket,opts)  {
 
         let errorfn=( (msg) => {
-            console.log('Message =',msg);
             this.sendCommand(socket,'bistfReconstructImage', { 
                 'output' : msg,
                 'id' : id });
             return false;
         });
-
-        console.log("Received ",JSON.stringify(opts,null,2));
-
         
         let id=opts.id;
+        
+        if (!this.opts.bistfrecon)
+            return errorfn(' No bistfrecon tool in config');
+        if (!this.validateFilename(opts.input))
+            return errorfn(opts.input+' is not valid');
+        if (!this.validateFilename(opts.output)) 
+            return errorfn(opts.output+' is not valid');
+        if (!this.validateFilename(opts.modeldir)) 
+            return errorfn(opts.modeldir+' is not valid');
+        
+        opts.batchsize = opts.batchsize || 4;
+        opts.padding = opts.padding || 8;
 
         if (path.sep==='\\') {
             opts.input=util.filenameUnixToWindows(opts.input);
@@ -1079,32 +1096,6 @@ class BaseFileServer {
             opts.modeldir=util.filenameUnixToWindows(opts.modeldir);
         }
 
-
-        
-        if (!this.opts.bistfrecon) {
-            return errorfn(' No bistfrecon tool in config');
-        }
-
-        
-            /*        if (!this.validateFilename(opts.input)) {
-            return errorfn(opts.input+' is not valid');
-        }
-
-        console.log('Pre output',opts.output);
-        
-        if (!this.validateFilename(opts.output)) {
-            return errorfn(opts.output+' is not valid');
-        }
-
-        
-        if (!this.validateFilename(opts.modeldir)) {
-            return errorfn(opts.modeldir+' is not valid');
-        }*/
-        opts.batchsize = opts.batchsize || 4;
-        opts.padding = opts.padding || 8;
-
-        console.log(JSON.stringify(opts,null,4));
-        
         let done= (status,code) => {
             if (status===false) {
                 return errorfn('bistfrecon failed'+code);
@@ -1119,10 +1110,9 @@ class BaseFileServer {
         let listen= (message) => {
             this.sendCommand(socket,'bistfReconProgress', message);
         };
-
         
         let cmd='node '+this.opts.bistfrecon+` -i ${opts.input} -o ${opts.output} -m ${opts.modeldir} -b ${opts.batchsize} -p ${opts.padding}`
-        console.log(cmd);
+        
         biscmdline.executeCommand(cmd,__dirname,done,listen);
         return;
     }

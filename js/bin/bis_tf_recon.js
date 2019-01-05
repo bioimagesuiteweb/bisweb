@@ -67,11 +67,13 @@ if (program.input===null || program.output===null || program.modelname === null)
     process.exit(1);
 }
 
+const tf=tfrecon.load(usegpu);
 let input=new BisWebImage();
+
 console.log('----------------------------------------------------------\n---');
 input.load(inpfilename).then( () => { 
     console.log('----------------------------------------------------------');
-    tfrecon.reconstruct(input,modelname,batchsize,padding,usegpu).then( (output) => {
+    tfrecon.reconstruct(tf,input,modelname,batchsize,padding).then( (output) => {
 	    output.save(outfilename).then( () => {
 	        console.log('--- \t file saved in',outfilename);
             process.exit(0);

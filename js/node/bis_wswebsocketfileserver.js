@@ -163,7 +163,6 @@ class BisWSWebSocketFileServer extends BaseFileServer {
                     port+=1;
 
                 portsInUse.push(port);
-                console.log('Ports in Use=',portsInUse);
                 
                 this.netServer = new WebSocket.Server({
                     'host' : hostname,

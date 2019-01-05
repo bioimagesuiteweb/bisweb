@@ -35,6 +35,8 @@ let indata=path.resolve(__dirname,path.join('testdata','tfjs64'));
 let input=new BisWebImage();
 let gold=new BisWebImage();
 
+const tf=tfrecon.load(false);
+
 describe('Testing TFJS recon\n', function() {
     
     this.timeout(50000);
@@ -55,7 +57,7 @@ describe('Testing TFJS recon\n', function() {
     });
           
     it ('check recon 1',function(done) {
-        tfrecon.reconstruct(input,indata,1,8,false).then( (output) => {
+        tfrecon.reconstruct(tf,input,indata,1,8).then( (output) => {
             console.log('\n+++++ Comparing\n\t'+gold.getDescription()+ '\n\t and \n\t' + output.getDescription());
             let maxd=output.maxabsdiff(gold);
             console.log('+++++ \t\t\t maxd=',maxd);
@@ -72,7 +74,7 @@ describe('Testing TFJS recon\n', function() {
     });
 
     it ('check recon 1',function(done) {
-        tfrecon.reconstruct(input,indata,12,8,false).then( (output) => {
+        tfrecon.reconstruct(tf,input,indata,12,8).then( (output) => {
             console.log('\n+++++ Comparing\n\t'+gold.getDescription()+ '\n\t and \n\t' + output.getDescription());
             let maxd=output.maxabsdiff(gold);
             console.log('+++++ \t\t\t maxd=',maxd);

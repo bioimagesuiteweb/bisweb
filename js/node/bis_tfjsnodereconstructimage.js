@@ -28,7 +28,7 @@ let load=function(trygpu) {
     if (trygpu) {
 	    try {
 	        let a=require('@tensorflow/tfjs-node-gpu');
-	        console.log('**** Using tfjs-node-gpu',a);
+	        console.log('**** Using tfjs-node-gpu',a.version);
 	        return tf;
 	    } catch(e) {
 	        console.log('**** Failed to get tfjs-node-gpu, trying CPU version');
@@ -37,7 +37,7 @@ let load=function(trygpu) {
     
     try {
 	    let a=require('@tensorflow/tfjs-node');
-	    console.log('**** Using tfjs-node',a);
+	    console.log('**** Using tfjs-node',a.version);
         
 	    return tf;
     } catch(e) {
@@ -47,9 +47,7 @@ let load=function(trygpu) {
     return null;
 };
 
-let reconstruct=function(img,modelname,batchsize,padding,usegpu) {
-    
-    const tf=load(usegpu); // flag to look for GPU version
+let reconstruct=function(tf,img,modelname,batchsize,padding) {
     
     return new Promise( async (resolve,reject) => {
 	    
@@ -70,7 +68,8 @@ let reconstruct=function(img,modelname,batchsize,padding,usegpu) {
 	    let output=recon.reconstructImage(tf,batchsize);
 	    console.log('----------------------------------------------------------');
 	    console.log('--- Recon finished :',output.getDescription());
-        
+        tf.disposeVariables()
+        console.log('--- Num Tensors=',tf.memory().numTensors);
         resolve(output);
     });
 };
