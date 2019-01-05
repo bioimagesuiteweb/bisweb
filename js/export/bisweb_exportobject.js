@@ -35,7 +35,7 @@ module.exports= {
      * @param {string} objecttype -- one of image,matrix,transformation,...
      * @returns {Promise} whose payload is the object
      */
-    loadObject(filename, objecttype,) {
+    loadObject(filename, objecttype = 'image') {
         return BisWebDataObjectCollection.loadObject(filename, objecttype);
 
     },

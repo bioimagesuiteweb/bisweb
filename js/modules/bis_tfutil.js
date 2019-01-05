@@ -1,6 +1,9 @@
 const BisWebImage=require('bisweb_image');
 
 
+/** 
+ * @returns{String} - the time hour:min:sec
+ */
 var getTime=function(nobracket=0) {
     //    http://stackoverflow.com/questions/7357734/how-do-i-get-the-time-of-day-in-javascript-node-js
 
@@ -22,12 +25,13 @@ var getTime=function(nobracket=0) {
     return  hour + ":" + min + ":" + sec ;
 };
 
+
+
 class BisWebTensorFlowRecon { 
-    /** Get Patch Info for tensorflow.js 
-     * @param{BisWebImage} img - width of patch (should be power of 2)
+    /**
+     * @param{BisWebImage} img - the image
      * @param{Model} model - tensorflow model
      * @param{Number} padding - padding for stride increment
-     * @returns{Object} - patch info
      */
     constructor(input,model,padding=16) {
 
@@ -36,7 +40,7 @@ class BisWebTensorFlowRecon {
         this.output=new BisWebImage();
         this.output.cloneImage(this.input);
         this.model=model;
-        
+
         let shape=model.inputs[0].shape;
 
         let width=shape[1];
@@ -79,6 +83,9 @@ class BisWebTensorFlowRecon {
         this.patch=null;
     }
 
+    /** create temporary patch typedarray
+     * @param{Number} b - the batchsize
+     */
     createPatch(b=1) {
         this.patchinfo.batchsize=b;
         this.patchinfo.patchslicesize=this.patchinfo.width*this.patchinfo.height;
@@ -88,6 +95,7 @@ class BisWebTensorFlowRecon {
             console.log('+++ Created patch temp array ',this.patch.length,'( ',this.patchinfo.patchvolumesize,'*',this.patchinfo.batchsize,')');
     }
 
+    /** clean up internal objects */
     cleanup() {
         this.patch=null;
         this.input=null;
@@ -99,10 +107,12 @@ class BisWebTensorFlowRecon {
         return this.output;
     }
 
+    /** @returns{Object} - the patch information */
     getPatchInfo() {
         return this.patchinfo;
     }
 
+    /** @returns{Float32Array} - the patch array */
     getPatch() {
         return this.patch;
     }
@@ -289,7 +299,7 @@ class BisWebTensorFlowRecon {
         return true;
     }
 
-    /** Get list of indices */
+    /** @return{Array} - list of indices. Each element is [ slice,frame,row,col ] */
     getPatchIndices() {
 
         let indiceslist=[];
@@ -315,6 +325,14 @@ class BisWebTensorFlowRecon {
         return indiceslist;
     }
 
+    
+    /** 
+     * Perform image reconstruction
+     * @param{Module} tf - the tensorflow.js module
+     * @param{Number} batchsize - the batch size
+     * @param{Boolean} cleanup - if true clean up memory
+     * @returns{BisWebImage} - the reconstructed image
+     */
     reconstructImage(tf,batchsize=2,cleanup=true) {
 	
         if (batchsize<1)
@@ -392,7 +410,13 @@ class BisWebTensorFlowRecon {
 
 }
 
-let loadAndWarmUpModel=function(tf,URL) {
+/** load tensorflowjs model and optionally run a warm up prediction
+ * @param{Object} tf - the tensorflowjs object
+ * @param{String} URL - the base URL for the model
+ * @param{Boolean} warm - if true run a warm up prediction
+ * @returns{Promise} - the payload is the model
+ */
+let loadAndWarmUpModel=function(tf,URL,warm=true) {
 
     console.log('___ In Load Model',URL);
     const MODEL_URL =  URL+'/tensorflowjs_model.pb';
@@ -400,14 +424,15 @@ let loadAndWarmUpModel=function(tf,URL) {
 
     return new Promise( (resolve,reject) => {
         tf.loadFrozenModel(MODEL_URL, WEIGHTS_URL).then( (model) => {
-    
-            let shape=model.inputs[0].shape;
-            shape[0]=1;
-            tf.tidy( () => {
-                console.log('___ Warp up model ',shape);
-                model.predict(tf.fill(shape,0,'float32'));
-                console.log('___ Warm up done');
-            });
+            if (warm) {
+                let shape=model.inputs[0].shape;
+                shape[0]=1;
+                tf.tidy( () => {
+                    console.log('___ Warm up model with zero input',shape);
+                    model.predict(tf.fill(shape,0,'float32'));
+                    console.log('___ Warm up done');
+                });
+            }
             
             resolve(model);
         }).catch( (e) => {
@@ -419,6 +444,14 @@ let loadAndWarmUpModel=function(tf,URL) {
 };
     
 
+/** Loads a Model and Reconstruct an image using a tf model
+ * @param{Object} tf - the tensorflowjs object
+ * @param{BisWebImage} img - the input image
+ * @param{String} URL - the base URL for the model
+ * @param{Number} batchsize - the batchsize for the recon
+ * @param{Number} padding - the padding for the recon
+ * @returns{Promise} - the payload is the output image
+ */
 let reconstructImage=function(tf,img,URL,batchsize,padding) {
     
     return new Promise( async (resolve,reject) => {

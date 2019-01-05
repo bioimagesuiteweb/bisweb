@@ -60,7 +60,6 @@ module.exports = {
         "ws" : "require('ws')",
         "@tensorflow/tfjs" : "require('@tensorflow/tfjs')",
         "@tensorflow/tfjs-node" : "require('@tensorflow/tfjs-node')",
-        "@tensorflow/tfjs-node-gpu" : "require('@tensorflow/tfjs-node-gpu')",
     },
     plugins: [
         new webpack.BannerPlugin( {

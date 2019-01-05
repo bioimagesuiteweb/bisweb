@@ -22,6 +22,8 @@ const baseutils=require("baseutils");
 const bistfutil = require('bis_tfutil.js');
 const bisgenericio = require('bis_genericio');
 
+let tfjsModule=null;
+
 /**
  * tf recon module
  */
@@ -31,7 +33,6 @@ class TFJSModule extends BaseModule {
         this.JSOnly=true;
         this.name = 'tensorFlowModule';
         this.modelname= '';
-        this.tf=null;
         this.environment=bisgenericio.getmode();
     }
 
@@ -86,8 +87,8 @@ class TFJSModule extends BaseModule {
      * @param{Module} tf - the output of require('tfjs') or window.tf
      * @param{String} modelname - the base URL of the model name
      */
-    setExternalParms(tf,modelname) {
-        this.tf=tf;
+    setExternalParams(tf,modelname) {
+        tfjsModule=tf;
         this.modelname=modelname;
     }
 
@@ -95,58 +96,86 @@ class TFJSModule extends BaseModule {
      * @returns{Boolean} -- success or failure to initialize 
      */
     initializeTFModule() {
-
-        if (this.tf!==null)
-            return true;
-
-
-        if (this.environment==='browser') {
-            this.tf = Window.tf || null;
-        } else if (this.environment === 'electron') {
-            this.tf = window.BISELECTRON.tf;
-        } else if (this.environment === 'node') {
-            // node.js
-            try {
-                this.tf=require('@tensorflow/tfjs');
-            } catch(e) {
-                console.log('**** Failed to get tfjs');
-                this.tf=null;
-                return false;
-            }
-            
-            try {
-                let a=require('@tensorflow/tfjs-node-gpu');
-                console.log('**** Using tfjs-node-gpu',a.version);
-                return true;
-            } catch(e) {
-                console.log('**** Failed to get tfjs-node-gpu, trying CPU version');
-            }
-            
-            try {
-                let a=require('@tensorflow/tfjs-node');
-                console.log('**** Using tfjs-node',a.version);
-                return true;
-            } catch(e) {
-                console.log('**** Failed to get tfjs-node. Exiting.');
-                this.tf=null;
-            }
-        }
         
-        if (this.tf)
-            return true;
-        return false;
+        return new Promise( (resolve,reject) => {
+            
+            if (tfjsModule!==null) {
+                resolve('Using preloaded tfjs module');
+                return;
+            }
+
+            if (this.environment === 'browser' ) {
+
+                if (window.tf) {
+                    tfjsModule=window.tf;
+                    resolve('Using preloaded tfjs module');
+                    return;
+                }
+                
+                let apiTag = document.createElement('script');
+                let url="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.14.1/dist/tf.min.js";
+                apiTag.src = url;
+                apiTag.onload = ( () => {
+                    tfjsModule=window.tf;
+                    resolve('Module loaded from '+url);
+                });
+                
+                apiTag.onerror=( (e) => {
+                    reject("Failed to load tfjs module"+e);
+                });
+
+                document.head.appendChild(apiTag);
+                
+                return;
+            } else if (this.environment === 'electron') {
+                tfjsModule = window.BISELECTRON.tf;
+                resolve('Module loaded from tfjs-node via electron preload');
+                return;
+            } else if (this.environment === 'node') {
+                try {
+                    tfjsModule=require("@tensorflow/tfjs");
+                    require('@tensorflow/tfjs-node');
+                    resolve('Module loaded from tfjs-node');
+                    return;
+                } catch(e) {
+                    tfjsModule=null;
+                    reject('Failed to load tfjs-node');
+                    return;
+                }
+            }
+        });
     }
     
     /** Adds file:// if in electron or node.js to the filename 
      * @param{String} md - the input model name
-     * @returns {String} model name to be used as input in tf.loadFrozenModel
+     * @returns {String} model name to be used as input in loadFrozenModel
      */
     fixModelName(md) {
 
-        if (this.environment=== 'broswer') 
+        if (this.environment === 'browser')  {
+            let getScope=() => {
+                
+                let scope=window.document.URL;
+                let index=scope.indexOf(".html");
+                if (index>0) {
+                    index=scope.lastIndexOf("/");
+                    scope=scope.substr(0,index+1);
+                } else {
+                    let index=scope.indexOf("#");
+                    if (index>0) {
+                        index=scope.lastIndexOf("/");
+                        scope=scope.substr(0,index+1);
+                    }
+                }
+                return scope;
+            };
+            if (md.indexOf('http')!==0)
+                return getScope()+md;
             return md;
+        }
         
         let path=bisgenericio.getpathmodule();
+
         return 'file://'+path.normalize(path.resolve(md));
     }
 
@@ -181,28 +210,37 @@ class TFJSModule extends BaseModule {
         if (modelname.length<2)
             modelname=this.modelname;
 
-        if (!this.initializeTFModule())
-            return Promise.reject("No TFJS module available.");
-        
         return new Promise( async(resolve,reject) => {
-        
+
+            try {
+                let msg=await this.initializeTFModule();
+                console.log('---------------------------------------');
+                console.log('---',msg);
+                console.log('--- backend='+tfjsModule.getBackend());
+                console.log('--- input image dims=',input.getDimensions());
+                console.log('---------------------------------------');
+            } catch(e) {
+                reject("No TFJS module available "+e);
+            }
+            
             let model=null;
             try {
-                model=await bistfutil.loadAndWarmUpModel(this.tf,this.fixModelName(modelname));
+                model=await bistfutil.loadAndWarmUpModel(tfjsModule,this.fixModelName(modelname),false);
             } catch(e) {
                 console.log('--- Failed load model from',modelname,e);
                 reject('Failed to load model');
+                return;
             }
 
-            console.log('--- numTensors (post load): ' + this.tf.memory().numTensors);
+            console.log('--- numTensors (post load): ' + tfjsModule.memory().numTensors);
             console.log('----------------------------------------------------------');
             console.log(`--- Beginning padding=${padding}`);
             let recon=new bistfutil.BisWebTensorFlowRecon(input,model,padding);
-            let output=recon.reconstructImage(this.tf,this.fixBatchSize(batchsize));
+            let output=recon.reconstructImage(tfjsModule,this.fixBatchSize(batchsize));
             console.log('----------------------------------------------------------');
             console.log('--- Recon finished :',output.getDescription());
-            this.tf.disposeVariables();
-            console.log('--- Num Tensors=',this.tf.memory().numTensors);
+            tfjsModule.disposeVariables();
+            console.log('--- Num Tensors=',tfjsModule.memory().numTensors);
             this.outputs['output']=output;
             resolve('Done');
         });

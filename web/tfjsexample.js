@@ -1,8 +1,9 @@
 "use strict";
 
-/* global tf */
 
-const extra="/images/tfjsexample";
+
+let extra="/images/tfjsexample";
+extra="../test/testdata/tfjs64";
 
 let getScope=function() {
     
@@ -20,7 +21,7 @@ let getScope=function() {
     }
     return scope;
 };
-
+/*
 let run_tf=async function(img) {
 
     const bisweb=document.querySelector("#bis").export;
@@ -52,6 +53,31 @@ let run_tf=async function(img) {
     } else {
         output.save('recon.nii.gz');
     }
+};*/
+
+let run_tf_module=async function(img) {
+
+    const bisweb=document.querySelector("#bis").export;
+    const viewer=document.querySelector("#viewer");
+    const URL=getScope()+extra;
+
+    let tfrecon=bisweb.createModule('tfrecon');
+    if (viewer)
+        viewer.disable_renderloop();
+    
+    tfrecon.execute( { input : img }, {  padding : 8, batchsize : 1, modelname : URL }).then( () => { 
+        let output=tfrecon.getOutputObject('output');
+        
+        if (viewer) {
+            viewer.enable_renderloop();
+            viewer.renderloop();
+            viewer.setobjectmap(output);
+        } else {
+            output.save('recon.nii.gz');
+        }
+    }).catch( (e) => {
+        console.log('Failed to invoke module',e);
+    });
 };
 
 
@@ -66,19 +92,16 @@ window.onload = function() {
     // The viewer is optional, just remove the
     const viewer=document.querySelector("#viewer");
     
-    // Create an image
-    let img=new bisweb.BisWebImage();
-    
     // Load an image --> returns a promise so .then()
     const URL=getScope()+extra;
-    img.load(`${URL}/sample3d.nii.gz`).then( () => {
+    bisweb.loadObject(`${URL}/sample1.nii.gz`,'image').then( (img) => {
         console.log('Image Loaded = ',img.getDescription());
         
         // Set the image to the viewer
         if (viewer)
             viewer.setimage(img);
 
-        run_tf(img);
+        run_tf_module(img);
 
         
 
