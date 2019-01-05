@@ -1044,7 +1044,6 @@ class BisFileServerClient extends BisBaseServerClient {
             let responseListener = (msg) => {
 
                 if (!msg.host) {
-                    console.log('\n ------------- \n trying to handle as a simple download \n');
                     this.handleDownloadedFile(url,isbinary,msg,resolve);
                 } else {
                     connectToFileStreamAndReceiveData(msg.host,msg.port).then( (data) => {

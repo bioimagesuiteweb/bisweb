@@ -560,7 +560,7 @@ class BaseFileServer {
                     console.log('An error occured while statting', filename, err);
                     return;
                 }
-                console.log(this.ident,'File size=',stats['size'],stats['size']-minSizeToUseStreamingDownload);
+                console.log(this.indent,'File size=',stats['size'],stats['size']-minSizeToUseStreamingDownload);
 
                 if (isstream && stats['size']>minSizeToUseStreamingDownload) {
 
@@ -577,8 +577,8 @@ class BaseFileServer {
                 } else {
                     if (this.opts.verbose)
                         console.log(this.indent,'+++++ Not Streaming',isstream,stats['size']);
+                    
                     fs.readFile(filename, (err, d1) => {
-                        
                         if (err) {
                             handleError(filename,err);
                         } else {

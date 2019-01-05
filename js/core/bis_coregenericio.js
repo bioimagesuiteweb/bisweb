@@ -67,7 +67,12 @@ var createBuffer = function (cdata) {
     if (cdata === null)
         return null;
     /* jshint ignore:start */
+    if (Buffer.from && Buffer.from !== Uint8Array.from) {
+        return  Buffer.from(cdata);
+    } 
+
     return new Buffer(cdata);
+
     /* jshint ignore:end */
 };
 

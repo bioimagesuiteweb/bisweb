@@ -29,54 +29,17 @@
 require('../../config/bisweb_pathconfig.js');
 const program=require('commander');
 const BisWebImage=require('bisweb_image');
-const bistfutil = require('bis_tfutil');
+const tfrecon = require('bis_tfjsnodereconstructimage');
 
-const path=require('path');
+
+// -------------------------------------------------------------------------
 
 var help = function() {
     console.log('\nThis program prints the header for a set of images');
 };
 
 
-// -------------------------------------------------------------------------
 
-let reconAndSave=function(img,modelname,batchsize,padding,usegpu,outname) {
-
-    const tf=require('bis_loadtf')(usegpu); // flag to look for GPU version
-    
-    return new Promise( async (resolve,reject) => {
-	
-	let URL='file://'+path.normalize(path.resolve(modelname));
-
-	let model=null;
-	try {
-	    model=await bistfutil.loadAndWarmUpModel(tf,URL);
-	} catch(e) {
-	    console.log('--- Failed load model from',URL,e);
-	    reject();
-	}
-
-	console.log('--- numTensors (post load): ' + tf.memory().numTensors);
-	console.log('----------------------------------------------------------');
-	console.log(`--- Beginning padding=${padding}`);
-	let recon=new bistfutil.BisWebTensorFlowRecon(img,model,padding);
-	let output=recon.reconstructImage(tf,batchsize);
-	console.log('----------------------------------------------------------');
-	console.log('--- Recon finished :',output.getDescription());
-	
-	output.save(outname).then( () => {
-	    console.log('--- \t file saved in',outname);
-	    resolve();
-	}).catch( (e) => {
-	    console.log('--- Failed to save in',outname,e);
-	    reject();
-	});
-    });
-};
-
-
-
-// -------------------------------------------------------------------------
 
 program.version('1.0.0')
     .option('-i, --input <s>','filename of the image to segment')
@@ -108,10 +71,16 @@ let input=new BisWebImage();
 console.log('----------------------------------------------------------\n---');
 input.load(inpfilename).then( () => { 
     console.log('----------------------------------------------------------');
-    reconAndSave(input,modelname,batchsize,padding,usegpu,outfilename).then( () => {
-	process.exit(0);
+    tfrecon.reconstruct(input,modelname,batchsize,padding,usegpu).then( (output) => {
+	    output.save(outfilename).then( () => {
+	        console.log('--- \t file saved in',outfilename);
+            process.exit(0);
+	    }).catch( (e) => {
+	        console.log('--- Failed to save in',outfilename,e);
+	        process.exit(1);
+	    });
     }).catch( () => {
-	process.exit(1);
+	    process.exit(1);
     });
 }).catch( (e) => {
     console.log(e.stack);
