@@ -16,7 +16,7 @@
     ENDLICENSE */
 
 /* jshint node:true */
-/*global describe, it, after, before */
+/*global describe, it,  before */
 "use strict";
 
 require('../config/bisweb_pathconfig.js');
@@ -26,16 +26,14 @@ require('bisweb_userpreferences.js').setImageOrientationOnLoad('None');
 const assert = require("assert");
 const path=require('path');
 const BisWebImage=require('bisweb_image');
-const util=require('bis_util');
-const colors=require('colors/safe');
-const tfrecon = require('bis_tfjsnodereconstructimage');
+const tfjsutil = require('bis_tfjsnodeutil');
 let indata=path.resolve(__dirname,path.join('testdata','tfjs64'));
 
 
 let input=new BisWebImage();
 let gold=new BisWebImage();
 
-const tf=tfrecon.load(false);
+const tf=tfjsutil.load(false);
 
 describe('Testing TFJS recon\n', function() {
     
@@ -51,13 +49,13 @@ describe('Testing TFJS recon\n', function() {
             gold.load(goldname)
         ]).then( () => {
             done();
-        }).catch( (e) => {
+        }).catch( () => {
             process.exit(1);
         });
     });
           
     it ('check recon 1',function(done) {
-        tfrecon.reconstruct(tf,input,indata,1,8).then( (output) => {
+        tfjsutil.reconstruct(tf,input,indata,1,8).then( (output) => {
             console.log('\n+++++ Comparing\n\t'+gold.getDescription()+ '\n\t and \n\t' + output.getDescription());
             let maxd=output.maxabsdiff(gold);
             console.log('+++++ \t\t\t maxd=',maxd);
@@ -70,11 +68,11 @@ describe('Testing TFJS recon\n', function() {
             console.log(e);
             assert(false,true);
             done();
-        })
+        });
     });
 
     it ('check recon 1',function(done) {
-        tfrecon.reconstruct(tf,input,indata,12,8).then( (output) => {
+        tfjsutil.reconstruct(tf,input,indata,12,8).then( (output) => {
             console.log('\n+++++ Comparing\n\t'+gold.getDescription()+ '\n\t and \n\t' + output.getDescription());
             let maxd=output.maxabsdiff(gold);
             console.log('+++++ \t\t\t maxd=',maxd);
@@ -87,7 +85,7 @@ describe('Testing TFJS recon\n', function() {
             console.log(e);
             assert(false,true);
             done();
-        })
+        });
     });
 
 

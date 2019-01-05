@@ -251,6 +251,7 @@ var createWindow=function(index,fullURL) {
                                             webPreferences: {
                                                 nodeIntegration: false,
                                                 preload: preload,
+                                                contextIsolation: false,
                                             },
                                             icon: __dirname+'/images/favicon.ico'});
     

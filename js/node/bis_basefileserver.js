@@ -300,7 +300,7 @@ class BaseFileServer {
                 let stats=fs.lstatSync(dirname);
                 if (stats.isSymbolicLink()) {
                     if (debug)
-                        console.log('Sym Link ',e);
+                        console.log('Sym Link ');
                     return false;
                 }
             } catch(e) {
@@ -1114,7 +1114,7 @@ class BaseFileServer {
             this.sendCommand(socket,'bistfReconProgress', message);
         };
         
-        let cmd='node '+this.opts.bistfrecon+` -i ${opts.input} -o ${opts.output} -m ${opts.modeldir} -b ${opts.batchsize} -p ${opts.padding}`
+        let cmd='node '+this.opts.bistfrecon+` -i ${opts.input} -o ${opts.output} -m ${opts.modeldir} -b ${opts.batchsize} -p ${opts.padding}`;
         
         biscmdline.executeCommand(cmd,__dirname,done,listen);
         return;

@@ -964,7 +964,7 @@ let getimagepath=function() {
             scope=scope.substr(7,index-7)+"/images";
         const path=getpathmodule();
         imagepath=path.resolve(scope);
-        console.log('Imagepath=',imagepath);
+        //        console.log('Imagepath=',imagepath);
 
     } else if (webWorkerScope) {
         console.log('In Web Worker ...');

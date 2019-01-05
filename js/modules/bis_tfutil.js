@@ -419,7 +419,34 @@ let loadAndWarmUpModel=function(tf,URL) {
 };
     
 
+let reconstructImage=function(tf,img,URL,batchsize,padding) {
+    
+    return new Promise( async (resolve,reject) => {
+        
+        let model=null;
+        try {
+            model=await loadAndWarmUpModel(tf,URL);
+        } catch(e) {
+            console.log('--- Failed load model from',URL,e);
+            reject();
+        }
+        
+        console.log('--- numTensors (post load): ' + tf.memory().numTensors);
+        console.log('----------------------------------------------------------');
+        console.log(`--- Beginning padding=${padding}`);
+        let recon=new BisWebTensorFlowRecon(img,model,padding);
+        let output=recon.reconstructImage(tf,batchsize);
+        console.log('----------------------------------------------------------');
+        console.log('--- Recon finished :',output.getDescription());
+        tf.disposeVariables();
+        console.log('--- Num Tensors=',tf.memory().numTensors);
+        resolve(output);
+    });
+};
+
+
 module.exports = {
     BisWebTensorFlowRecon : BisWebTensorFlowRecon,
-    loadAndWarmUpModel : loadAndWarmUpModel
+    loadAndWarmUpModel : loadAndWarmUpModel,
+    reconstructImage : reconstructImage
 };

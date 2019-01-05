@@ -29,7 +29,7 @@
 require('../../config/bisweb_pathconfig.js');
 const program=require('commander');
 const BisWebImage=require('bisweb_image');
-const tfrecon = require('bis_tfjsnodereconstructimage');
+const tfjsutil = require('bis_tfjsnodeutil');
 
 
 // -------------------------------------------------------------------------
@@ -49,7 +49,7 @@ program.version('1.0.0')
     .option('-p, --padding <s>','padding')
     .option('-g, --usegpu','try to use GPU for processing if possible')
     .on('--help',function() {
-	help();
+        help();
     })
     .parse(process.argv);
 
@@ -60,29 +60,29 @@ let modelname = program.modelname || null;
 let batchsize = parseInt(program.batchsize || 1);
 let padding = parseInt(program.padding || 8);
 let usegpu = program.usegpu || false;
-let debug=program.debug || 0;
+
 
 if (program.input===null || program.output===null || program.modelname === null) {
     console.log('Must specify filenames/model directory');
     process.exit(1);
 }
 
-const tf=tfrecon.load(usegpu);
+const tf=tfjsutil.load(usegpu);
 let input=new BisWebImage();
 
 console.log('----------------------------------------------------------\n---');
 input.load(inpfilename).then( () => { 
     console.log('----------------------------------------------------------');
-    tfrecon.reconstruct(tf,input,modelname,batchsize,padding).then( (output) => {
-	    output.save(outfilename).then( () => {
-	        console.log('--- \t file saved in',outfilename);
+    tfjsutil.reconstruct(tf,input,modelname,batchsize,padding).then( (output) => {
+        output.save(outfilename).then( () => {
+            console.log('--- \t file saved in',outfilename);
             process.exit(0);
-	    }).catch( (e) => {
-	        console.log('--- Failed to save in',outfilename,e);
-	        process.exit(1);
-	    });
+        }).catch( (e) => {
+            console.log('--- Failed to save in',outfilename,e);
+            process.exit(1);
+        });
     }).catch( () => {
-	    process.exit(1);
+        process.exit(1);
     });
 }).catch( (e) => {
     console.log(e.stack);

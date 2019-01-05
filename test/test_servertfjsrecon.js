@@ -34,7 +34,7 @@ const colors=require('colors/safe');
 let indata=path.resolve(__dirname,path.join('testdata','tfjs64'));
 
 
-let tmpname=null;
+
 let tmpDir=null;
 let client=null;
 let filenames = [ 'sample1.nii.gz', 'sampleout.nii.gz' ];
@@ -54,7 +54,7 @@ describe('Testing TFJS recon\n', function() {
                 tmpDir=util.filenameUnixToWindows(tmpDir);
             console.log('tmpDir=',tmpDir);
             done();
-        }).catch( (e)=> {
+        }).catch( ()=> {
             process.exit(1);
         });
     });
@@ -89,11 +89,11 @@ describe('Testing TFJS recon\n', function() {
                     else
                         assert(true,false);
                     done();
-                }).catch( (e) => {
+                }).catch( () => {
                     assert(false,true);
                     done();
                 });
-            }).catch( (e) => {
+            }).catch( () => {
                 assert(false,true);
                 done();
             });
