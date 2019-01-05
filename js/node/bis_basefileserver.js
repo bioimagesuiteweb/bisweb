@@ -62,8 +62,11 @@ class BaseFileServer {
 
         this.opts={};
 
-        this.opts.bistfrecon=path.join(opts.mydirectory,'bis_tf_recon.js');
-        opts.mydirectory=undefined;
+        this.opts.bistfrecon=undefined;
+        if (opts.mydirectory) {
+            this.opts.bistfrecon=path.join(opts.mydirectory,'bis_tf_recon.js');
+            opts.mydirectory=undefined;
+        }
         this.opts.dcm2nii='/usr/bin/dcm2nii';
         
         for (let i=0;i<server_fields.length;i++) {
