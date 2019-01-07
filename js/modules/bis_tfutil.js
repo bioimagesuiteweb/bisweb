@@ -26,6 +26,59 @@ var getTime=function(nobracket=0) {
 };
 
 
+/**
+ * tf recon module
+ */
+
+class TFWrapper {
+
+    constructor(tf) {
+        this.tf=tf;
+        this.backend=tf.getBackend();
+        this.models={};
+        this.modelcount=0;
+
+    }
+
+    disposeVariables(model) {
+        return new Promise( (resolve) => {
+            this.tf.disposeVariables();
+            resolve(this.tf.memory().numTensors);
+            this.models[model.index]=undefined;
+        });
+    }
+
+    predict(model,patch,shape,debug=false) {
+
+        return new Promise( (resolve) => {
+            if (debug)
+                console.log('++++ creating tensor',shape,'patch=',patch.length);
+            
+            const tensor= this.tf.tensor(patch, shape);
+            const output=this.models[model.index].predict(tensor);
+            const final=output.dataSync();
+            tensor.dispose();
+            output.dispose();
+            resolve(final);
+        });
+    }
+
+    loadFrozenModel(MODEL_URL,WEIGHTS_URL)  {
+        return new Promise( (resolve,reject) => {
+            this.tf.loadFrozenModel(MODEL_URL, WEIGHTS_URL).then( (m) => {
+                this.modelcount++;
+                this.models[this.modelcount]=m;
+                resolve( {
+                    index :  this.modelcount,
+                    shape :  m.inputs[0].shape,
+                    numtensors : this.tf.memory().numTensors,
+                });
+            }).catch( (e) => {
+                reject(e);
+            });
+        });
+    }
+}
 
 class BisWebTensorFlowRecon { 
     /**
@@ -33,7 +86,7 @@ class BisWebTensorFlowRecon {
      * @param{Model} model - tensorflow model
      * @param{Number} padding - padding for stride increment
      */
-    constructor(input,model,padding=16) {
+    constructor(tfwrapper,input,model,padding=16) {
 
         this.debug=false;
         this.input=input;
@@ -41,7 +94,7 @@ class BisWebTensorFlowRecon {
         this.output.cloneImage(this.input);
         this.model=model;
 
-        let shape=model.inputs[0].shape;
+        let shape=model.shape;
 
         let width=shape[1];
         let height=shape[2];
@@ -333,107 +386,95 @@ class BisWebTensorFlowRecon {
      * @param{Boolean} cleanup - if true clean up memory
      * @returns{BisWebImage} - the reconstructed image
      */
-    reconstructImage(tf,batchsize=2,cleanup=true) {
-	
-        if (batchsize<1)
-            batchsize=1;
-        let patchindexlist=this.getPatchIndices();
-        if (batchsize>patchindexlist.length)
-            batchsize=patchindexlist.length;
-        
-        this.createPatch(batchsize);
-        let shape=this.model.inputs[0].shape;
+    reconstruct(tfwrapper,batchsize=2,cleanup=true) {
 
-        console.log(`+++ Beginning Recon numpatches=${patchindexlist.length}, batchsize=${this.patchinfo.batchsize}`);
-        let startTime=new Date();
-
-        let step=Math.round(patchindexlist.length/20);
-        let last=0;
-        
-        for (let pindex=0;pindex<patchindexlist.length;pindex+=batchsize) {
+        return new Promise( async (resolve) => { 
+            if (batchsize<1)
+                batchsize=1;
+            let patchindexlist=this.getPatchIndices();
+            if (batchsize>patchindexlist.length)
+                batchsize=patchindexlist.length;
             
+            this.createPatch(batchsize);
+            let shape=this.model.shape;
             
-            let numpatches=patchindexlist.length-pindex;
+            console.log(`+++ Beginning Recon numpatches=${patchindexlist.length}, batchsize=${this.patchinfo.batchsize}`);
+            let startTime=new Date();
             
-            if (numpatches<batchsize)
-                this.createPatch(numpatches);
-            else
-                numpatches=batchsize;
-
-            if (this.debug || (pindex-last>step) || pindex===0) {
-		let per=Math.round( (100.0*pindex)/patchindexlist.length);
-                console.log(`${getTime()} At ${per}%. Patches ${pindex}:${pindex+numpatches-1}/${patchindexlist.length}.  Numtensors=`, tf.memory().numTensors);
-                last=pindex;
+            let step=Math.round(patchindexlist.length/20);
+            let last=0;
+            
+            for (let pindex=0;pindex<patchindexlist.length;pindex+=batchsize) {
+                
+                let numpatches=patchindexlist.length-pindex;
+                
+                if (numpatches<batchsize)
+                    this.createPatch(numpatches);
+                else
+                    numpatches=batchsize;
+                
+                if (this.debug || (pindex-last>step) || pindex===0) {
+                    let per=Math.round( (100.0*pindex)/patchindexlist.length);
+                    console.log(`${getTime()} At ${per}%. Patches ${pindex}:${pindex+numpatches-1}/${patchindexlist.length}.`);
+                    last=pindex;
+                }
+                
+                for (let inner=0;inner<numpatches;inner++) {
+                    let elem=patchindexlist[pindex+inner];
+                    this.extractPatch(elem,inner);
+                }
+                
+                let patch=this.getPatch();
+                shape[0]=numpatches;
+                
+                const predict=await tfwrapper.predict(this.model,patch,shape,this.debug);
+                
+                for (let inner=0;inner<numpatches;inner++) {
+                    let elem=patchindexlist[pindex+inner];
+                    this.storePatch(predict,elem,inner);
+                }
             }
             
-            for (let inner=0;inner<numpatches;inner++) {
-                let elem=patchindexlist[pindex+inner];
-                this.extractPatch(elem,inner);
-            }
-
-            let patch=this.getPatch();
-            shape[0]=numpatches;
-                  
-            if (this.debug)
-                console.log('++++ creating tensor',shape,'patch=',patch.length);
-            const tensor= tf.tensor(patch, shape);
+            let endTime=new Date();
             
-            if (this.debug)
-                console.log('Calling Model',tensor.shape);
-            const output=this.model.predict(tensor);
-            const predict=output.dataSync();
+            let  s=Math.floor((endTime-startTime)/1000);
+            let ms=Math.round((endTime-startTime)/10-s*100);
+            let perslice=Math.round((endTime-startTime)/patchindexlist.length);
+            console.log(`${getTime()} Done Recon time=${s}.${ms}s, perpatch=${perslice}ms`);
             
-            for (let inner=0;inner<numpatches;inner++) {
-                let elem=patchindexlist[pindex+inner];
-                this.storePatch(predict,elem,inner);
-            }
-            if (this.debug)
-                console.log('numTensors: ' + tf.memory().numTensors);
-
-            tensor.dispose();
-            output.dispose();
-            if (this.debug)
-                console.log('numTensors tidy: ' + tf.memory().numTensors);
-        }
-        let endTime=new Date();
-
-        let  s=Math.floor((endTime-startTime)/1000);
-        let ms=Math.round((endTime-startTime)/10-s*100);
-        let perslice=Math.round((endTime-startTime)/patchindexlist.length);
-        console.log(`${getTime()} Done Recon time=${s}.${ms}s, perpatch=${perslice}ms`);
-
-        if (cleanup)
-            this.cleanup();
-
-        return this.getOutput();
+            if (cleanup)
+                this.cleanup();
+            
+            resolve(this.getOutput());
+        });
     }
 
 }
 
 /** load tensorflowjs model and optionally run a warm up prediction
- * @param{Object} tf - the tensorflowjs object
+ * @param{Object} tfwrapper - the tensorflowjs object
  * @param{String} URL - the base URL for the model
  * @param{Boolean} warm - if true run a warm up prediction
  * @returns{Promise} - the payload is the model
  */
-let loadAndWarmUpModel=function(tf,URL,warm=true) {
+let loadAndWarmUpModel=function(tfwrapper,URL,warm=true) {
 
     console.log('___ In Load Model',URL);
     const MODEL_URL =  URL+'/tensorflowjs_model.pb';
     const WEIGHTS_URL = URL+'/weights_manifest.json';
 
     return new Promise( (resolve,reject) => {
-        tf.loadFrozenModel(MODEL_URL, WEIGHTS_URL).then( (model) => {
+        tfwrapper.loadFrozenModel(MODEL_URL, WEIGHTS_URL).then( (model) => {
+            let shape=model.shape;
             if (warm) {
-                let shape=model.inputs[0].shape;
                 shape[0]=1;
-                tf.tidy( () => {
+                /*tfwrapper.tidy( () => {
                     console.log('___ Warm up model with zero input',shape);
-                    model.predict(tf.fill(shape,0,'float32'));
+                    model.predict(tfwrapper.fill(shape,0,'float32'));
                     console.log('___ Warm up done');
-                });
+                });*/
             }
-            
+            console.log('___ Loaded model with shape',shape,' num tensors=',model.numtensors);
             resolve(model);
         }).catch( (e) => {
             console.log('___ Model load from',URL,'failed');
@@ -445,41 +486,43 @@ let loadAndWarmUpModel=function(tf,URL,warm=true) {
     
 
 /** Loads a Model and Reconstruct an image using a tf model
- * @param{Object} tf - the tensorflowjs object
+ * @param{Object} tfwrapper - the tensorflowjs object
  * @param{BisWebImage} img - the input image
  * @param{String} URL - the base URL for the model
  * @param{Number} batchsize - the batchsize for the recon
  * @param{Number} padding - the padding for the recon
  * @returns{Promise} - the payload is the output image
  */
-let reconstructImage=function(tf,img,URL,batchsize,padding) {
+let reconstructImage=function(tfwrapper,img,URL,batchsize,padding) {
     
     return new Promise( async (resolve,reject) => {
         
         let model=null;
         try {
-            model=await loadAndWarmUpModel(tf,URL);
+            model=await loadAndWarmUpModel(tfwrapper,URL);
         } catch(e) {
             console.log('--- Failed load model from',URL,e);
             reject();
         }
-        
-        console.log('--- numTensors (post load): ' + tf.memory().numTensors);
+
         console.log('----------------------------------------------------------');
         console.log(`--- Beginning padding=${padding}`);
-        let recon=new BisWebTensorFlowRecon(img,model,padding);
-        let output=recon.reconstructImage(tf,batchsize);
-        console.log('----------------------------------------------------------');
-        console.log('--- Recon finished :',output.getDescription());
-        tf.disposeVariables();
-        console.log('--- Num Tensors=',tf.memory().numTensors);
-        resolve(output);
+        let recon=new BisWebTensorFlowRecon(tfwrapper,img,model,padding);
+        recon.reconstruct(tfwrapper,batchsize).then( (output) => {
+            console.log('Done ----------------------------------------------------------');
+            console.log('--- Recon finished :',output.getDescription());
+            tfwrapper.disposeVariables(model).then( (num) => {
+                console.log('--- Num Tensors=',num);
+            });
+            resolve(output);
+        });
     });
 };
 
 
 module.exports = {
     BisWebTensorFlowRecon : BisWebTensorFlowRecon,
+    TFWrapper : TFWrapper,
     loadAndWarmUpModel : loadAndWarmUpModel,
     reconstructImage : reconstructImage
 };

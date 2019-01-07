@@ -29,7 +29,7 @@ let load=function(trygpu) {
         try {
             let a=require('@tensorflow/tfjs-node-gpu');
             console.log('**** Using tfjs-node-gpu',a.version);
-            return tf;
+            return new bistfutil.TFWrapper(tf);
         } catch(e) {
             console.log('**** Failed to get tfjs-node-gpu, trying CPU version');
         }
@@ -38,8 +38,7 @@ let load=function(trygpu) {
     try {
         let a=require('@tensorflow/tfjs-node');
         console.log('**** Using tfjs-node',a.version);
-        
-        return tf;
+        return new bistfutil.TFWrapper(tf);
     } catch(e) {
         console.log('**** Failed to get tfjs-node. Exiting.');
         process.exit(1);
@@ -47,10 +46,11 @@ let load=function(trygpu) {
     return null;
 };
 
-let reconstruct=function(tf,img,modelname,batchsize,padding) {
+let reconstruct=function(tfWrapper,img,modelname,batchsize,padding) {
 
     let URL='file://'+path.normalize(path.resolve(modelname));
-    return bistfutil.reconstructImage(tf,img,URL,batchsize,padding);
+    console.log('**** Model URL=',URL,"\n**** Image=",img.getDescription());
+    return bistfutil.reconstructImage(tfWrapper,img,URL,batchsize,padding);
 };
   
 module.exports = {

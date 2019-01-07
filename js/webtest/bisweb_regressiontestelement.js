@@ -793,9 +793,9 @@ var startFunction = (() => {
     if (typeof window.BIS !=='undefined')  {
         testDataRootDirectory="../test/";
         testDataModelDirectory="../test/";
-//        if (webutil.inElectronApp()) {
-  //          testDataModelDirectory="./test/";
-    //    }
+        if (webutil.inElectronApp()) {
+            testDataModelDirectory="./test/";
+        }
     } else  {
         testDataRootDirectory="./test/";
         testDataModelDirectory="./test/";

@@ -68,6 +68,7 @@ if (program.input===null || program.output===null || program.modelname === null)
 }
 
 const tf=tfjsutil.load(usegpu);
+console.log('****\n**** Using tf with backend:',tf.backend);
 let input=new BisWebImage();
 
 console.log('----------------------------------------------------------\n---');

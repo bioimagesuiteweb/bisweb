@@ -24,10 +24,9 @@ const bisgenericio = require('bis_genericio');
 
 let tfjsModule=null;
 
-/**
- * tf recon module
- */
-class TFJSModule extends BaseModule {
+
+
+class BisWebTFJSReconModule extends BaseModule {
     constructor() {
         super();
         this.JSOnly=true;
@@ -107,7 +106,7 @@ class TFJSModule extends BaseModule {
             if (this.environment === 'browser' ) {
 
                 if (window.tf) {
-                    tfjsModule=window.tf;
+                    this.tfjsModule=new bistfutil.TFWrapper(window.tf);
                     resolve('Using preloaded tfjs module');
                     return;
                 }
@@ -116,7 +115,7 @@ class TFJSModule extends BaseModule {
                 let url="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.14.1/dist/tf.min.js";
                 apiTag.src = url;
                 apiTag.onload = ( () => {
-                    tfjsModule=window.tf;
+                    tfjsModule=new bistfutil.TFWrapper(window.tf);
                     resolve('Module loaded from '+url);
                 });
                 
@@ -128,14 +127,15 @@ class TFJSModule extends BaseModule {
                 
                 return;
             } else if (this.environment === 'electron') {
-                tfjsModule = window.BISELECTRON.tf;
+                tfjsModule = window.BISELECTRON.tfjsModule;
                 resolve('Module loaded from tfjs-node via electron preload');
                 return;
             } else if (this.environment === 'node') {
                 try {
-                    tfjsModule=require("@tensorflow/tfjs");
+                    let tf=require("@tensorflow/tfjs");
                     require('@tensorflow/tfjs-node');
                     resolve('Module loaded from tfjs-node');
+                    tfjsModule=new bistfutil.TFWrapper(tf);
                     return;
                 } catch(e) {
                     tfjsModule=null;
@@ -216,7 +216,6 @@ class TFJSModule extends BaseModule {
                 let msg=await this.initializeTFModule();
                 console.log('---------------------------------------');
                 console.log('---',msg);
-                console.log('--- backend='+tfjsModule.getBackend());
                 console.log('--- input image dims=',input.getDimensions());
                 console.log('---------------------------------------');
             } catch(e) {
@@ -232,19 +231,22 @@ class TFJSModule extends BaseModule {
                 return;
             }
 
-            console.log('--- numTensors (post load): ' + tfjsModule.memory().numTensors);
             console.log('----------------------------------------------------------');
             console.log(`--- Beginning padding=${padding}`);
-            let recon=new bistfutil.BisWebTensorFlowRecon(input,model,padding);
-            let output=recon.reconstructImage(tfjsModule,this.fixBatchSize(batchsize));
-            console.log('----------------------------------------------------------');
-            console.log('--- Recon finished :',output.getDescription());
-            tfjsModule.disposeVariables();
-            console.log('--- Num Tensors=',tfjsModule.memory().numTensors);
-            this.outputs['output']=output;
-            resolve('Done');
+            let recon=new bistfutil.BisWebTensorFlowRecon(tfjsModule,input,model,padding);
+            recon.reconstruct(tfjsModule,this.fixBatchSize(batchsize)).then( (output) => {
+                console.log('----------------------------------------------------------');
+                console.log('--- Recon finished :',output.getDescription());
+                tfjsModule.disposeVariables().then( (num) => {
+                    console.log('--- Num Tensors=',num);
+                    this.outputs['output']=output;
+                    resolve('Done');
+                });
+            }).catch( (e) => {
+                reject(e);
+            });
         });
     }
 }
 
-module.exports = TFJSModule;
+module.exports = BisWebTFJSReconModule;
