@@ -50,7 +50,7 @@ const BrowserWindow = electron.BrowserWindow;  // Module to create native browse
 const ipcMain = electron.ipcMain;
 const shell=electron.shell;
 const toolfile=require('./images/tools.json');
-const tfjsutil=require('./biselectrontfjs');
+
 const state = {
     winlist : [null],
     screensize : {
@@ -543,9 +543,5 @@ ipcMain.on('arguments', function (event,arg) {
 
 });
 
-ipcMain.on('initTFJS', function(event) {
-    console.log('Initializing TensorFlow');
-    let ok=tfjsutil(ipcMain);
-    event.sender.send('initTFJS-reply',ok);
-});
+
 

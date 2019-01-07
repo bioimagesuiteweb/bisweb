@@ -53,7 +53,7 @@ module.exports= {
      * @alias biswebexport.getGenericIO
      * @returns{JavaScript Module} 
      */
-    bisgenericio : genericio,
+    genericio : genericio,
     bisdate : bisdate,
     BisWebImage : BisWebImage,
     BisWebMatrix : BisWebMatrix,

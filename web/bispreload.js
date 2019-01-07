@@ -51,3 +51,5 @@ process.once('loaded', () => {
 });
 
 
+window.BISELECTRON.tf=remote.require('@tensorflow/tfjs');
+remote.require('@tensorflow/tfjs-node');

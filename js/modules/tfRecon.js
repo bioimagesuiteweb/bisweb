@@ -21,7 +21,7 @@ const BaseModule = require('basemodule.js');
 const baseutils=require("baseutils");
 const bistfutil = require('bis_tfutil.js');
 const bisgenericio = require('bis_genericio');
-
+const util=require('bis_util');
 let tfjsModule=null;
 
 
@@ -127,9 +127,10 @@ class BisWebTFJSReconModule extends BaseModule {
                 
                 return;
             } else if (this.environment === 'electron') {
-                tfjsModule = new bistfutil.TFElectronWrapper();
-                tfjsModule.initialize();
-                resolve('Using tfjs-node via electron ipc',tfjsModule);
+                //                tfjsModule = new bistfutil.TFElectronWrapper();
+                //tfjsModule.initialize();
+                tfjsModule=new bistfutil.TFWrapper(window.BISELECTRON.tf);
+                resolve('Using tfjs-node via electron module',tfjsModule);
                 return;
             } else if (this.environment === 'node') {
                 try {
@@ -174,10 +175,26 @@ class BisWebTFJSReconModule extends BaseModule {
                 return getScope()+md;
             return md;
         }
-        
-        let path=bisgenericio.getpathmodule();
 
-        return 'file://'+path.normalize(path.resolve(md));
+        const path=bisgenericio.getpathmodule();
+        
+        if (this.environment==='electron') {
+            if (md.indexOf('file')===0) {
+                md=md.substr(8,md.length);
+            }
+            md=path.normalize(path.resolve(md));
+            if (path.sep=='\\') {
+                md=util.filenameUnixToWindows(md);
+            }
+            md='file://'+md;
+            return md;
+        }
+
+        md=path.normalize(path.resolve(md));
+        
+        if (md.indexOf('file')!==0)
+            return md;
+        return 'file://'+md;
     }
 
     /** Restricts batch size based on hardware and batch size
@@ -238,7 +255,7 @@ class BisWebTFJSReconModule extends BaseModule {
             recon.reconstruct(tfjsModule,this.fixBatchSize(batchsize)).then( (output) => {
                 console.log('----------------------------------------------------------');
                 console.log('--- Recon finished :',output.getDescription());
-                tfjsModule.disposeVariables().then( (num) => {
+                tfjsModule.disposeVariables(model).then( (num) => {
                     console.log('--- Num Tensors=',num);
                     this.outputs['output']=output;
                     resolve('Done');
