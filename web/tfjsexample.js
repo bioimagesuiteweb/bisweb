@@ -1,5 +1,6 @@
 "use strict";
 
+/* global $ */
 
 
 let extra="/images/tfjsexample";
@@ -65,7 +66,6 @@ window.onload = function() {
     
     // Print the functionality
     console.log('==========================================================');
-    console.log('gen=',bisweb.genericio);
     console.log('BISWeb Environment = ',bisweb.genericio.getenvironment());    
     // The viewer is optional, just remove the
     const viewer=document.querySelector("#viewer");
@@ -74,22 +74,32 @@ window.onload = function() {
     let URL=getScope()+extra;
     if (bisweb.genericio.getenvironment()==='electron') 
         URL=URL.substr(8,URL.length-8);
-    
-    console.log('Loading object=',URL);
 
-    
-    bisweb.loadObject(`${URL}/sample3d.nii.gz`,'image').then( (img) => {
-        console.log('Image Loaded = ',img.getDescription());
+
+    let fn=( (name) => {
         
-        // Set the image to the viewer
-        if (viewer)
-            viewer.setimage(img);
+        console.log('Loading object=',URL);
+        bisweb.loadObject(`${URL}/${name}.nii.gz`,'image').then( (img) => {
+            console.log('Image Loaded = ',img.getDescription());
 
-        $('#compute').click( () => {
-            run_tf_module(img);
+            setTimeout( () => {
+                run_tf_module(img);
+                
+                // Set the image to the viewer
+                if (viewer)
+                    viewer.setimage(img);
+            },1000);
+        }).catch( (e) => {
+            console.log(e,e.stack);
         });
-
-    }).catch( (e) => {
-        console.log(e,e.stack);
     });
+
+    $('#compute').click( () => {
+        fn('sample1');
+    });
+    
+    $('#compute3d').click( () => {
+        fn('sample3d');
+    });
+
 };
