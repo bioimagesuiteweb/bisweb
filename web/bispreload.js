@@ -52,4 +52,11 @@ process.once('loaded', () => {
 
 
 window.BISELECTRON.tf=require('@tensorflow/tfjs');
-require('@tensorflow/tfjs-node');
+try {
+    require('@tensorflow/tfjs-node-gpu');
+    window.BISELECTRON.tfmodulename='electron tjsfs-node-gpu';
+} catch(e) {
+    console.log('Failed to load gpu version '+e);
+    require('@tensorflow/tfjs-node');
+    window.BISELECTRON.tfmodulename='electron tfjs-node';
+}

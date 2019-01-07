@@ -127,17 +127,15 @@ class BisWebTFJSReconModule extends BaseModule {
                 
                 return;
             } else if (this.environment === 'electron') {
-                //                tfjsModule = new bistfutil.TFElectronWrapper();
-                //tfjsModule.initialize();
-                tfjsModule=new bistfutil.TFWrapper(window.BISELECTRON.tf);
-                resolve('Using tfjs-node via electron module',tfjsModule);
-                return;
+		let md=window.BISELECTRON.tfmodulename || 'electron';
+		tfjsModule=new bistfutil.TFWrapper(window.BISELECTRON.tf,md);
+                resolve(md);
             } else if (this.environment === 'node') {
                 try {
                     let tf=require("@tensorflow/tfjs");
                     require('@tensorflow/tfjs-node');
-                    resolve('Module loaded from tfjs-node');
                     tfjsModule=new bistfutil.TFWrapper(tf);
+                    resolve('Module loaded from tfjs-node');
                     return;
                 } catch(e) {
                     tfjsModule=null;
@@ -194,10 +192,10 @@ class BisWebTFJSReconModule extends BaseModule {
             md='file://'+md;
             return md;
         }
-        
+
         md=path.normalize(path.resolve(md));
         
-        if (md.indexOf('file')!==0)
+        if (md.indexOf('file')===0)
             return md;
         return 'file://'+md;
     }
@@ -247,7 +245,7 @@ class BisWebTFJSReconModule extends BaseModule {
             
             let model=null;
             try {
-                model=await bistfutil.loadAndWarmUpModel(tfjsModule,this.fixModelName(modelname),false);
+                model=await bistfutil.loadAndWarmUpModel(tfjsModule,this.fixModelName(modelname),true);
             } catch(e) {
                 console.log('--- Failed load model from',modelname,e);
                 reject('Failed to load model');

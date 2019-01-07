@@ -9,13 +9,21 @@ const bisutil=require('bis_util');
 // ---------------------------------------------------------------------------------------
 class TFWrapper {
 
-    constructor(tf) {
+    constructor(tf,mode='') {
+
+        if (mode.length>1)
+            this.mode=mode+' '+tf.getBackend();
+        else
+            this.mode=tf.getBackend();
+        
         this.tf=tf;
-        this.backend=tf.getBackend();
         this.models={};
         this.modelcount=0;
 
     }
+
+    getMode() {  return this.mode;   }
+    
 
     disposeVariables(model) {
         return new Promise( (resolve) => {
@@ -51,7 +59,7 @@ class TFWrapper {
 
     loadFrozenModel(MODEL_URL,WEIGHTS_URL)  {
 
-        console.log('Loading model ',this.tf.getBackend());
+        console.log('... Loading model ',this.getMode());
         
         return new Promise( (resolve,reject) => {
             this.tf.loadFrozenModel(MODEL_URL, WEIGHTS_URL).then( (m) => {
@@ -65,6 +73,17 @@ class TFWrapper {
             }).catch( (e) => {
                 reject(e);
             });
+        });
+    }
+
+    warmUp(model) {
+
+        let shape=model.shape;
+        shape[0]=1;
+        this.tf.tidy( () => {
+            console.log('___ Warm up model with zero input',shape);
+            this.models[model.index].predict(this.tf.fill(shape,0,'float32'));
+            console.log('___ Warm up done');
         });
     }
 }
@@ -472,15 +491,11 @@ let loadAndWarmUpModel=function(tfwrapper,URL,warm=true) {
     return new Promise( (resolve,reject) => {
         tfwrapper.loadFrozenModel(MODEL_URL, WEIGHTS_URL).then( (model) => {
             let shape=model.shape;
-            console.log('Done Loading',shape,model);
-            if (warm) {
-                shape[0]=1;
-                /*tfwrapper.tidy( () => {
-                    console.log('___ Warm up model with zero input',shape);
-                    model.predict(tfwrapper.fill(shape,0,'float32'));
-                    console.log('___ Warm up done');
-                });*/
-            }
+            console.log(`+++ Done Loading model [ ${shape.join(',')} ]`);
+            
+            if (warm) 
+                tfwrapper.warmUp(model);
+
             console.log('___ Loaded model with shape',shape,' num tensors=',model.numtensors);
             resolve(model);
         }).catch( (e) => {

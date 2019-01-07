@@ -164,8 +164,8 @@ describe(`Invoking command line tests from ${testlistfilename}`,function() {
                 this.timeout(500000);
                 console.log(colors.green('\n-------------------- test',i,'----------------------------------------------\n'));
                 bisnodecmd.executeCommand(testscript+' '+command,__dirname, ((completed,exitcode) => {
-                    let success= (exitcode ===0);
-                    console.log(bisnodecmd.getTime(), 'Returning, completed =',completed, ' success=', success, ' expected=', expected_result);
+                    let success= (parseInt(exitcode) ===0);
+                    console.log(bisnodecmd.getTime(), 'Returning, completed =',completed, 'exitcode=',exitcode,'success=', success, ' expected=', expected_result);
                     if (completed===false)
                         success=false;
                     
