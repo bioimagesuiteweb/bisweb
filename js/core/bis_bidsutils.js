@@ -122,10 +122,21 @@ let dicom2BIDS=async function(opts)  {
         }
         tlist.push(target);
     }
-        
+    
+    //date will be a 14 character string in the middle of a filename
+    let dateRegex = /\d{14}/g;
+    let fileString = flist[0];
+    let dateMatch = dateRegex.exec(fileString);
+    let date = dateMatch[0];
+
+    //separate date string into individual chunks
+    let year = date.substring(0,4), month = date.substring(4,6), day = date.substring(6,8), hour = date.substring(8,10), minute = date.substring(10,12);
+    
     let outfilename=genericio.joinFilenames(outputdirectory,'dicom_job.json');
     let outobj = {
         "bisformat":"DICOMImport",
+        "bidsversion": "1.1.0",
+        "description": `DICOM Dataset generated on ${month}/${day}, ${year} at ${hour}:${minute}`,
         "job":[ ],
     };
     
@@ -176,7 +187,7 @@ let dicom2BIDS=async function(opts)  {
         return errorfn(e);
     }
     return outfilename;
-       
+    
 };
 
 
