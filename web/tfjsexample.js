@@ -85,9 +85,9 @@ window.onload = function() {
         if (viewer)
             viewer.setimage(img);
 
-        run_tf_module(img);
-
-        
+        $('#compute').click( () => {
+            run_tf_module(img);
+        });
 
     }).catch( (e) => {
         console.log(e,e.stack);
