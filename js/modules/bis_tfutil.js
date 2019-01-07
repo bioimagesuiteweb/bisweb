@@ -79,7 +79,7 @@ class TFWrapper {
         let shape=model.shape;
         shape[0]=1;
         this.tf.tidy( () => {
-            console.log('___\t Warm up model with zero input',shape);
+            console.log('___\t Warm up model with zero input',shape.join(','));
             this.models[model.index].predict(this.tf.fill(shape,0,'float32'));
             console.log('___\t Warm up done');
         });
@@ -491,7 +491,7 @@ let loadAndWarmUpModel=function(tfwrapper,URL,warm=true) {
         tfwrapper.loadFrozenModel(MODEL_URL, WEIGHTS_URL).then( (model) => {
 
             let shape=model.shape;
-            console.log('___\t Loaded model with shape',shape,' num tensors=',model.numtensors);
+            console.log('___\t Loaded model with shape',shape.join(','),' num tensors=',model.numtensors);
 
             if (warm) 
                 tfwrapper.warmUp(model);

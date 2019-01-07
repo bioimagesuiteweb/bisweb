@@ -109,7 +109,7 @@ class BisWebTFJSReconModule extends BaseModule {
             if (this.environment === 'browser' ) {
 
                 if (window.tf) {
-                    this.tfjsModule=new bistfutil.TFWrapper(window.tf);
+                    tfjsModule=new bistfutil.TFWrapper(window.tf,'loaded from script');
                     resolve('Using preloaded tfjs module');
                     return;
                 }
@@ -118,7 +118,7 @@ class BisWebTFJSReconModule extends BaseModule {
                 let url="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.14.1/dist/tf.min.js";
                 apiTag.src = url;
                 apiTag.onload = ( () => {
-                    tfjsModule=new bistfutil.TFWrapper(window.tf);
+                    tfjsModule=new bistfutil.TFWrapper(window.tf,url);
                     resolve('Module loaded from '+url);
                 });
                 
@@ -209,7 +209,8 @@ class BisWebTFJSReconModule extends BaseModule {
         */
     fixBatchSize(batchsize) {
 
-
+        batchsize=parseInt(batchsize);
+        
         if (batchsize<1)
             batchsize=1;
         
@@ -240,7 +241,7 @@ class BisWebTFJSReconModule extends BaseModule {
                 console.log('---------------------------------------');
                 let msg=await this.initializeTFModule();
                 console.log('---',msg);
-                console.log('--- \tinput image dims=',input.getDimensions());
+                console.log('--- \tinput image dims=',input.getDimensions().join(','));
                 console.log('---------------------------------------');
             } catch(e) {
                 reject("No TFJS module available "+e);

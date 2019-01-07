@@ -103,7 +103,7 @@ input.load(inpfilename).then( () => {
                         batchsize : batchsize,
                         modelname : modelname }).then( () => { 
                             let output=tfrecon.getOutputObject('output');
-                            outputt.save(outfilename).then( () => {
+                            output.save(outfilename).then( () => {
                                 console.log('--- \t file saved in',outfilename);
                                 process.exit(0);
                             }).catch( (e) => {
