@@ -1479,6 +1479,5 @@ class ViewerApplicationElement extends HTMLElement {
     }
 }
 
-
 module.exports = ViewerApplicationElement;
 webutil.defineElement('bisweb-viewerapplication', ViewerApplicationElement);

@@ -33,7 +33,6 @@ const gulp = require('gulp'),
       del = require('del'),
       colors=require('colors/safe'),
       git = require('git-rev'),
-      runSequence = require('run-sequence'),
       bis_gutil=require('./config/bis_gulputils'),
       gulpzip = require('gulp-zip'),
       jshint = require('gulp-jshint'),
@@ -300,9 +299,9 @@ gulp.task('eslint', () => {
 
 gulp.task('watch',function() {
     if (options.eslint)
-        gulp.watch(internal.lintscripts, ['eslint']);
-    else
-        gulp.watch(internal.lintscripts, ['jshint']);
+        return gulp.watch(internal.lintscripts, gulp.series('eslint'));
+
+    return gulp.watch(internal.lintscripts, gulp.series('jshint'));
 });
 
 gulp.task('make', function(done) {
@@ -310,9 +309,7 @@ gulp.task('make', function(done) {
 });
 
 // ------------------------------------------------------------------------
-
-gulp.task('singleHTML', function() {
-
+let singleHTML=function() {
     let jsname =internal.bislib;
     if (internal.htmlcounter===0)
         jsname=internal.indexlib;
@@ -320,14 +317,21 @@ gulp.task('singleHTML', function() {
     let out=bis_gutil.createHTML(internal.toolarray[internal.htmlcounter],options.outdir,jsname,internal.biscss);
     internal.htmlcounter+=1;
     return out;
+};
+
+gulp.task('singleHTML', function() {
+    return singleHTML();
 });
 
-
-gulp.task('singleCSS', function() {
+let singleCSS=function() {
     let toolname=internal.toolarray[internal.csscounter];
     let maincss    = './web/'+toolname+'.css';
     internal.csscounter+=1;
     bis_gutil.createCSSCommon([maincss],toolname+'.css',options.outdir);
+};
+
+gulp.task('singleCSS', function() {
+    return singleCSS();
 });
 
 gulp.task('date', function(done) {
@@ -340,9 +344,10 @@ gulp.task('date', function(done) {
 
 });
 
-gulp.task('webpack', function(done) {
+gulp.task('webpack', ) {
 
-    runSequence('date', ( () => { 
+    return new Promise
+    gulp.series('date',  () => { 
         bis_gutil.runWebpack(internal.webpackjobs,
                              options.internal,
                              options.external,
@@ -384,9 +389,9 @@ gulp.task('serve2', function() {
     console.log(colors.red('++++\n+++++ Server root directory=',internal.serveroptions.root,'\n++++'));
 
     if (options.eslint)
-        gulp.watch(internal.lintscripts, ['eslint']);
+        gulp.watch(internal.lintscripts, gulp.series('eslint'));
     else
-        gulp.watch(internal.lintscripts, ['jshint']);
+        gulp.watch(internal.lintscripts, gulp.series('jshint'));
     
 
     bis_gutil.runWebpack(internal.webpackjobs,
@@ -406,7 +411,8 @@ gulp.task('serveronly', function() {
 });
 
 
-gulp.task('commonfiles', function() {
+gulp.task('commonfiles',function() {
+    
     console.log(bis_gutil.getTime()+' Copying css,fonts,images etc. .');
     gulp.src([ 'node_modules/bootstrap/dist/css/*']).pipe(gulp.dest(options.outdir+'css/'));
     gulp.src([ 'node_modules/bootstrap/dist/fonts/*']).pipe(gulp.dest(options.outdir+'fonts/'));
@@ -415,7 +421,6 @@ gulp.task('commonfiles', function() {
     gulp.src([ 'web/manifest.json']).pipe(gulp.dest(options.outdir));
     gulp.src('./web/bispreload.js').pipe(gulp.dest(options.outdir));
     gulp.src('./web/biselectron.js').pipe(gulp.dest(options.outdir));
-    gulp.src('./web/bislist.txt').pipe(gulp.dest(options.outdir));
     gulp.src('./web/package.json').pipe(gulp.dest(options.outdir));
     gulp.src('./lib/css/bootstrap_dark_edited.css').pipe(gulp.dest(options.outdir));
     gulp.src('./lib/js/webcomponents-lite.js').pipe(gulp.dest(options.outdir));
@@ -425,7 +430,8 @@ gulp.task('commonfiles', function() {
     gulp.src('./node_modules/amazon-cognito-auth-js/dist/amazon-cognito-auth.min.js').pipe(gulp.dest(options.outdir));
     gulp.src('./web/aws/awsparameters.js').pipe(gulp.dest(options.outdir));
     gulp.src('./node_modules/bootstrap/dist/js/bootstrap.min.js').pipe(gulp.dest(options.outdir));
-    bis_gutil.createHTML('console',options.outdir,'',internal.biscss);
+    bis_gutil.createHTML('console',options.outdir,'',internal.biscss)
+    return gulp.src([ 'web/manifest.json']).pipe(gulp.dest(options.outdir));
 });
 
 gulp.task('createserver',function(done) {
@@ -492,38 +498,26 @@ gulp.task('packageserver',function() {
 
 });
 
-gulp.task('tools', function(done) {
+gulp.task('tools', gulp.series('webpack',function() {
     internal.toolarray = options.inpfilename.split(",");
-    console.log(bis_gutil.getTime()+colors.green(' Building tools ['+internal.toolarray+']'));
-    let index=-1;
-    let nexttool=function() {
-        index=index+1;
-        if (index<internal.toolarray.length) {
-            console.log(bis_gutil.getTime()+colors.green(' Building tool '+(index+1)+'/'+internal.toolarray.length+' : '+internal.toolarray[index]));
-            internal.jscounter+=1;
-            runSequence('singleHTML','singleCSS',nexttool);
-        } else {
-            done();
-        }
-    };
-    runSequence('webpack','css',nexttool);
-});
+        console.log(bis_gutil.getTime()+colors.green(' Building tools ['+internal.toolarray+']'));
+    for (let index=0;index<internal.toolarray.length;index++) {
+        console.log(bis_gutil.getTime()+colors.green(' Building tool '+(index+1)+'/'+internal.toolarray.length+' : '+internal.toolarray[index]));
+        internal.jscounter+=1;
+        console.log('Counter=',internal.jscounter);
+        singleHTML();
+        singleCSS();
+    }
+}));
 
-gulp.task('buildint', function(callback) {
 
-    runSequence('commonfiles',
-                'tools',
-                'buildtest',
-                callback);
-});
+gulp.task('buildint', gulp.series('commonfiles',
+                                  'tools',
+                                  'buildtest'));
 
-gulp.task('build', function(callback) {
-
-    runSequence('buildint',
-                'createserver',
-                'packageserver',
-                callback);
-});
+gulp.task('build', gulp.series('buildint',
+                               'createserver',
+                               'packageserver'));
 
 
 gulp.task('zip', function() {
@@ -539,7 +533,7 @@ gulp.task('package', function(done) {
 });
 
 gulp.task('buildpackage', function(done) {
-    runSequence('buildint',
+    gulp.series('buildint',
                 'package',
                 done);
 });
@@ -584,16 +578,13 @@ gulp.task('npmpack',function(done) {
 });
 
 gulp.task('doc', function(done) {
-    runSequence('jsdoc','cdoc',done);
+    gulp.series('jsdoc','cdoc',done);
 
 });
 
-gulp.task('serve', function(done) {
-    runSequence('date','serve2',done);
-
-});
+gulp.task('serve', gulp.series('date','serve2'));
 
 
 gulp.task('default', function(callback) {
-    runSequence('build',callback);
+    gulp.series('build',callback);
 });
