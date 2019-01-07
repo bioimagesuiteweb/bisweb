@@ -210,8 +210,8 @@ class BisWebTFJSReconModule extends BaseModule {
         if (this.environment=== 'broswer') {
             if (batchsize>2)
                 batchsize=2;
-        } else if (batchsize>16) {
-            batchsize=16;
+        } else if (batchsize>64) {
+            batchsize=64;
         }
 
         return batchsize;

@@ -1,29 +1,5 @@
 const BisWebImage=require('bisweb_image');
-
-
-/** 
- * @returns{String} - the time hour:min:sec
- */
-var getTime=function(nobracket=0) {
-    //    http://stackoverflow.com/questions/7357734/how-do-i-get-the-time-of-day-in-javascript-node-js
-
-    var date = new Date();
-
-    var hour = date.getHours();
-    hour = (hour < 10 ? "0" : "") + hour;
-
-    var min  = date.getMinutes();
-    min = (min < 10 ? "0" : "") + min;
-
-    var sec  = date.getSeconds();
-    sec = (sec < 10 ? "0" : "") + sec;
-
-
-    
-    if (nobracket===0)
-        return  "[" + hour + ":" + min + ":" + sec + "]";
-    return  hour + ":" + min + ":" + sec ;
-};
+const bisutil=require('bis_util');
 
 
 /**
@@ -42,7 +18,6 @@ class TFWrapper {
     }
 
     disposeVariables(model) {
-        console.log('In dipose',model,this.models);
         return new Promise( (resolve) => {
             this.tf.disposeVariables();
             this.models[model.index]=undefined;
@@ -50,21 +25,27 @@ class TFWrapper {
         });
     }
 
+    disposeTensor(tensor) {
+        tensor.dispose();
+    }
+
     predict(model,patch,shape,debug=false) {
 
-
-        shape[0]=parseInt(shape[0]);
+        // shape[0] can be a string so map this to an integer
+        // Needed in electron when crossing boundaries
+        try {
+            shape[0]=parseInt(shape[0]);
+        } catch(e) {
+            shape[0]=1;
+        }
         
         return new Promise( (resolve) => {
             if (debug)
                 console.log('++++ creating tensor',shape,'patch=',patch.length);
-            
             const tensor= this.tf.tensor(patch, shape);
             const output=this.models[model.index].predict(tensor);
-            const final=output.dataSync();
             tensor.dispose();
-            output.dispose();
-            resolve(final);
+            resolve(output);
         });
     }
 
@@ -435,7 +416,7 @@ class BisWebTensorFlowRecon {
                 
                 if (this.debug || (pindex-last>step) || pindex===0) {
                     let per=Math.round( (100.0*pindex)/patchindexlist.length);
-                    console.log(`${getTime()} At ${per}%. Patches ${pindex}:${pindex+numpatches-1}/${patchindexlist.length}.`);
+                    console.log(`${bisutil.getTime()} At ${per}%. Patches ${pindex}:${pindex+numpatches-1}/${patchindexlist.length}.`);
                     last=pindex;
                 }
                 
@@ -447,13 +428,17 @@ class BisWebTensorFlowRecon {
                 let patch=this.getPatch();
                 shape[0]=numpatches;
 
-                const predict=await tfwrapper.predict(this.model,patch,shape,this.debug);
+                const output=await tfwrapper.predict(this.model,patch,shape,this.debug);
+                let predict=output.dataSync();
 
                 
                 for (let inner=0;inner<numpatches;inner++) {
                     let elem=patchindexlist[pindex+inner];
                     this.storePatch(predict,elem,inner);
                 }
+
+                tfwrapper.disposeTensor(output);
+                
             }
             
             let endTime=new Date();
@@ -461,7 +446,7 @@ class BisWebTensorFlowRecon {
             let  s=Math.floor((endTime-startTime)/1000);
             let ms=Math.round((endTime-startTime)/10-s*100);
             let perslice=Math.round((endTime-startTime)/patchindexlist.length);
-            console.log(`${getTime()} Done Recon time=${s}.${ms}s, perpatch=${perslice}ms`);
+            console.log(`${bisutil.getTime()} Done Recon time=${s}.${ms}s, perpatch=${perslice}ms`);
             
             if (cleanup)
                 this.cleanup();
