@@ -29,7 +29,8 @@
 require('../../config/bisweb_pathconfig.js');
 const program=require('commander');
 const BisWebImage=require('bisweb_image');
-const tfjsutil = require('bis_tfjsnodeutil');
+const bistfutil=require('bis_tfutil');
+const tfReconModule = require('tfRecon');
 
 
 // -------------------------------------------------------------------------
@@ -67,24 +68,51 @@ if (program.input===null || program.output===null || program.modelname === null)
     process.exit(1);
 }
 
-const tf=tfjsutil.load(usegpu);
-console.log('****\n**** Using tf with backend:',tf.backend);
+let tf=null;
+const tfinternal=require('@tensorflow/tfjs');
+console.log('----------------------------------------------------------\n---');
+if (usegpu) {
+    try {
+        require('@tensorflow/tfjs-node-gpu');
+        tf=new bistfutil.TFWrapper(tfinternal,'tfjs-node-gpu');
+    } catch(e) {
+        console.log('**** Failed to get tfjs-node-gpu, trying CPU version');
+        tf=null;
+    }
+
+    if (tf===null) {
+        try {
+            require('@tensorflow/tfjs-node');
+            tf=new bistfutil.TFWrapper(tfinternal,'tfjs-node');
+        } catch(e) {
+            console.log('**** Failed to get tfjs-node. Exiting.');
+            process.exit(1);
+        }
+    }
+}
+
 let input=new BisWebImage();
 
 console.log('----------------------------------------------------------\n---');
 input.load(inpfilename).then( () => { 
     console.log('----------------------------------------------------------');
-    tfjsutil.reconstruct(tf,input,modelname,batchsize,padding).then( (output) => {
-        output.save(outfilename).then( () => {
-            console.log('--- \t file saved in',outfilename);
-            process.exit(0);
-        }).catch( (e) => {
-            console.log('--- Failed to save in',outfilename,e);
-            process.exit(1);
-        });
-    }).catch( () => {
-        process.exit(1);
-    });
+    let tfrecon=new tfReconModule();
+    tfrecon.setTFModule(tf);
+    tfrecon.execute( {  input : input },
+                     {  padding : padding,
+                        batchsize : batchsize,
+                        modelname : modelname }).then( () => { 
+                            let output=tfrecon.getOutputObject('output');
+                            outputt.save(outfilename).then( () => {
+                                console.log('--- \t file saved in',outfilename);
+                                process.exit(0);
+                            }).catch( (e) => {
+                                console.log('--- Failed to save in',outfilename,e);
+                                process.exit(1);
+                            });
+                        }).catch( () => {
+                            process.exit(1);
+                        });
 }).catch( (e) => {
     console.log(e.stack);
     process.exit(1);

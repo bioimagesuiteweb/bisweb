@@ -59,8 +59,6 @@ class TFWrapper {
 
     loadFrozenModel(MODEL_URL,WEIGHTS_URL)  {
 
-        console.log('... Loading model ',this.getMode());
-        
         return new Promise( (resolve,reject) => {
             this.tf.loadFrozenModel(MODEL_URL, WEIGHTS_URL).then( (m) => {
                 this.modelcount++;
@@ -81,9 +79,9 @@ class TFWrapper {
         let shape=model.shape;
         shape[0]=1;
         this.tf.tidy( () => {
-            console.log('___ Warm up model with zero input',shape);
+            console.log('___\t Warm up model with zero input',shape);
             this.models[model.index].predict(this.tf.fill(shape,0,'float32'));
-            console.log('___ Warm up done');
+            console.log('___\t Warm up done');
         });
     }
 }
@@ -134,6 +132,7 @@ class BisWebTensorFlowRecon {
 
         this.patchinfo={
             'batchsize' : 1,
+            'padding' : padding,
             'thickness' : thickness,
             'numslices' : numslices,
             'height' : height,
@@ -418,7 +417,7 @@ class BisWebTensorFlowRecon {
             this.createPatch(batchsize);
             let shape=this.model.shape;
 
-            console.log(`+++ Beginning Recon numpatches=${patchindexlist.length}, batchsize=${this.patchinfo.batchsize}`);
+            console.log(`+++\n+++ Beginning Prediction: numpatches=${patchindexlist.length}, batchsize=${this.patchinfo.batchsize}, padding=${this.patchinfo.padding}\n+++`);
             let startTime=new Date();
             
             let step=Math.round(patchindexlist.length/20);
@@ -435,7 +434,7 @@ class BisWebTensorFlowRecon {
                 
                 if (this.debug || (pindex-last>step) || pindex===0) {
                     let per=Math.round( (100.0*pindex)/patchindexlist.length);
-                    console.log(`${bisutil.getTime()} At ${per}%. Patches ${pindex}:${pindex+numpatches-1}/${patchindexlist.length}.`);
+                    console.log(`+++ ${bisutil.getTime()}\t ${per}%. Patches ${pindex}:${pindex+numpatches-1}/${patchindexlist.length}.`);
                     last=pindex;
                 }
                 
@@ -465,7 +464,7 @@ class BisWebTensorFlowRecon {
             let  s=Math.floor((endTime-startTime)/1000);
             let ms=Math.round((endTime-startTime)/10-s*100);
             let perslice=Math.round((endTime-startTime)/patchindexlist.length);
-            console.log(`${bisutil.getTime()} Done Recon time=${s}.${ms}s, perpatch=${perslice}ms`);
+            console.log(`+++ ${bisutil.getTime()} \t100%. Total time=${s}.${ms}s. Time per patch=${perslice}ms\n+++`);
             
             if (cleanup)
                 this.cleanup();
@@ -490,55 +489,19 @@ let loadAndWarmUpModel=function(tfwrapper,URL,warm=true) {
 
     return new Promise( (resolve,reject) => {
         tfwrapper.loadFrozenModel(MODEL_URL, WEIGHTS_URL).then( (model) => {
+
             let shape=model.shape;
-            console.log(`+++ Done Loading model [ ${shape.join(',')} ]`);
-            
+            console.log('___\t Loaded model with shape',shape,' num tensors=',model.numtensors);
+
             if (warm) 
                 tfwrapper.warmUp(model);
-
-            console.log('___ Loaded model with shape',shape,' num tensors=',model.numtensors);
             resolve(model);
         }).catch( (e) => {
-            console.log('___ Model load from',URL,'failed');
+            console.log('___\t Model load from',URL,'failed');
             reject(e);
         });
     });
 
-};
-    
-
-/** Loads a Model and Reconstruct an image using a tf model
- * @param{Object} tfwrapper - the tensorflowjs object
- * @param{BisWebImage} img - the input image
- * @param{String} URL - the base URL for the model
- * @param{Number} batchsize - the batchsize for the recon
- * @param{Number} padding - the padding for the recon
- * @returns{Promise} - the payload is the output image
- */
-let reconstructImage=function(tfwrapper,img,URL,batchsize,padding) {
-    
-    return new Promise( async (resolve,reject) => {
-        
-        let model=null;
-        try {
-            model=await loadAndWarmUpModel(tfwrapper,URL);
-        } catch(e) {
-            console.log('--- Failed load model from',URL,e);
-            reject();
-        }
-
-        console.log('----------------------------------------------------------');
-        console.log(`--- Beginning padding=${padding}`);
-        let recon=new BisWebTensorFlowRecon(tfwrapper,img,model,padding);
-        recon.reconstruct(tfwrapper,batchsize).then( (output) => {
-            console.log('Done ----------------------------------------------------------');
-            console.log('--- Recon finished :',output.getDescription());
-            tfwrapper.disposeVariables(model).then( (num) => {
-                console.log('--- Num Tensors=',num);
-            });
-            resolve(output);
-        });
-    });
 };
 
 
@@ -546,5 +509,4 @@ module.exports = {
     BisWebTensorFlowRecon : BisWebTensorFlowRecon,
     TFWrapper : TFWrapper,
     loadAndWarmUpModel : loadAndWarmUpModel,
-    reconstructImage : reconstructImage
 };

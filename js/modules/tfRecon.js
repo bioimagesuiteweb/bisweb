@@ -86,8 +86,11 @@ class BisWebTFJSReconModule extends BaseModule {
      * @param{Module} tf - the output of require('tfjs') or window.tf
      * @param{String} modelname - the base URL of the model name
      */
-    setExternalParams(tf,modelname) {
+    setTFModule(tf) {
         tfjsModule=tf;
+    }
+
+    setModelName(modelname) {
         this.modelname=modelname;
     }
 
@@ -99,7 +102,7 @@ class BisWebTFJSReconModule extends BaseModule {
         return new Promise( (resolve,reject) => {
             
             if (tfjsModule!==null) {
-                resolve('Using preloaded tfjs module');
+                resolve('Using preloaded module: '+tfjsModule.getMode());
                 return;
             }
 
@@ -134,7 +137,7 @@ class BisWebTFJSReconModule extends BaseModule {
                 try {
                     let tf=require("@tensorflow/tfjs");
                     require('@tensorflow/tfjs-node');
-                    tfjsModule=new bistfutil.TFWrapper(tf);
+                    tfjsModule=new bistfutil.TFWrapper(tf,'tfjs-node');
                     resolve('Module loaded from tfjs-node');
                     return;
                 } catch(e) {
@@ -234,10 +237,10 @@ class BisWebTFJSReconModule extends BaseModule {
         return new Promise( async(resolve,reject) => {
 
             try {
-                let msg=await this.initializeTFModule();
                 console.log('---------------------------------------');
+                let msg=await this.initializeTFModule();
                 console.log('---',msg);
-                console.log('--- input image dims=',input.getDimensions());
+                console.log('--- \tinput image dims=',input.getDimensions());
                 console.log('---------------------------------------');
             } catch(e) {
                 reject("No TFJS module available "+e);
@@ -253,14 +256,13 @@ class BisWebTFJSReconModule extends BaseModule {
             }
 
             console.log('----------------------------------------------------------');
-            console.log(`--- Beginning padding=${padding}`);
             let recon=new bistfutil.BisWebTensorFlowRecon(tfjsModule,input,model,padding);
             recon.reconstruct(tfjsModule,this.fixBatchSize(batchsize)).then( (output) => {
                 console.log('----------------------------------------------------------');
-                console.log('--- Recon finished :',output.getDescription());
                 tfjsModule.disposeVariables(model).then( (num) => {
-                    console.log('--- Num Tensors=',num);
+                    console.log('--- Cleanup num_tensors=',num);
                     this.outputs['output']=output;
+                    console.log('--- Recon finished :',output.getDescription());
                     resolve('Done');
                 });
             }).catch( (e) => {
