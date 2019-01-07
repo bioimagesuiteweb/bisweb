@@ -881,15 +881,16 @@ class ViewerApplicationElement extends HTMLElement {
 
         webfileutil.createFileSourceSelector(hmenu);
 
-        userPreferences.safeGetItem("internal").then( (f) =>  {
-            if (f) {
-                webutil.createMenuItem(hmenu, 'Open AWS Selector', 
-                                       () => {
-                                           webfileutil.createAWSMenu();
-                                       });
-            }
-        }).catch( () => { });
-
+        if (!webutil.inElectronApp()) { 
+            userPreferences.safeGetItem("internal").then( (f) =>  {
+                if (f) {
+                    webutil.createMenuItem(hmenu, 'Open AWS Selector', 
+                                           () => {
+                                               webfileutil.createAWSMenu();
+                                           });
+                }
+            }).catch( () => { });
+        }
         return hmenu;
     }
 
