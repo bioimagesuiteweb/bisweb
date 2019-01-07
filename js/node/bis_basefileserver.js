@@ -929,8 +929,10 @@ class BaseFileServer {
         }
 
         let outdir=path.join(this.opts.tempDirectory,'dicom_' + Date.now());
+        let dstdir = outdir + '/derived';
         try {
             fs.mkdirSync(outdir);
+            fs.mkdirSync(dstdir);
         } catch(e) {
             return errorfn('cannot make temp dir' + outdir, e);
         }
@@ -950,8 +952,8 @@ class BaseFileServer {
             this.sendCommand(socket,'dicomConversionProgress', message);
         };
 
-        
-        let cmd=this.opts.dcm2nii+' -o '+outdir+' '+indir;
+        console.log('indir', indir, 'outdir', dstdir);
+        let cmd=this.opts.dcm2nii + ' -z y ' + ' -o ' + dstdir + ' -b y ' + indir;
         if (debug)
             cmd='ls '+outdir+' '+indir;
         biscmdline.executeCommand(cmd,__dirname,done,listen);

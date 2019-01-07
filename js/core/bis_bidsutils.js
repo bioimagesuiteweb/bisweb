@@ -38,32 +38,26 @@ let dicom2BIDS=async function(opts)  {
     let match=genericio.joinFilenames(indir,'2*.nii.gz');
     let matchuncompressed = genericio.joinFilenames(indir, '2*.nii');
     let matchdti=genericio.joinFilenames(indir,'*.bv*');
+    let matchniix=genericio.joinFilenames(indir, 'sourcedata*.nii.gz');
     
     console.log('Match=',match,matchdti);
     
-    let flist= await genericio.getMatchingFiles(match);
-    let flist2=await genericio.getMatchingFiles(matchdti);
-    let flist3= await genericio.getMatchingFiles(matchuncompressed);
+    let flist = await genericio.getMatchingFiles(match);
+    let flist2 = await genericio.getMatchingFiles(matchdti);
+    let flist3 = await genericio.getMatchingFiles(matchuncompressed);
+    let flist4 = await genericio.getMatchingFiles(matchniix);
 
     flist=flist.concat(flist2);
     flist=flist.concat(flist3);
+    flist=flist.concat(flist4);
     console.log('Flist=',flist.join('\n\t'));
 
     
     if (flist.length<1) {
         return errorfn('No data to convert in '+indir);
     }
-
-    let b=genericio.getBaseName(flist[0]).toLowerCase();
     
-    let regex = /[a-z]/g;
-    let ind=b.search(regex);
-    if (ind<1) {
-        return errorfn('Bad data to convert in '+indir);
-    }
-    
-    let subjname=b.substr(0,ind-1);
-    let outputdirectory=genericio.joinFilenames(outdir,subjname);
+    let outputdirectory=genericio.joinFilenames(outdir,'derived');
     try {
         await makeDir(outputdirectory);
     } catch (e) {
@@ -72,10 +66,10 @@ let dicom2BIDS=async function(opts)  {
 
     console.log('+++++','Created directory',outputdirectory);
 
-    let funcdir=genericio.joinFilenames(outputdirectory,'functional'); 
-    let anatdir=genericio.joinFilenames(outputdirectory,'anatomical'); 
+    let funcdir=genericio.joinFilenames(outputdirectory,'func'); 
+    let anatdir=genericio.joinFilenames(outputdirectory,'anat'); 
     let locdir=genericio.joinFilenames(outputdirectory,'localizer');
-    let diffdir=genericio.joinFilenames(outputdirectory,'diffusion'); 
+    let diffdir=genericio.joinFilenames(outputdirectory,'diff'); 
 
     try {
         makeDir(funcdir);
@@ -110,33 +104,16 @@ let dicom2BIDS=async function(opts)  {
         }
 
         let origname=name;
-
-        let index=name.lastIndexOf('.');
-        let mainname=name.substr(0,index-1);
-
-        index=mainname.lastIndexOf('a');
-        if (index>0) {
-            name=name.substr(0,index)+'_'+name.substr(index,name.length);
-        }
-
-
-        index=name.lastIndexOf('s');
-        if (index>0) {
-            name=name.substr(0,index)+'_'+name.substr(index,name.length);
-        }
-
         let basename=genericio.getBaseName(name).toLowerCase();
-        index=basename.search(regex);
-        console.log(index);
-        if (index>0) {
-            let l1=name.length;
-            let l2=basename.length;
-            index+=(l1-l2);
-            name=name.substr(0,index)+'_'+name.substr(index,name.length);
-        }
+
+        let regex = /^[A-Za-z0-9]*_{1}(\w.*)/g;
+        let regexMatch = regex.exec(basename);
+
+        name = regexMatch[1];
+        console.log('basename', basename, 'name', name, 'match', regexMatch);
         
         let target=genericio.joinFilenames(dirname,genericio.getBaseName(name));
-        console.log('+++++',index+', name=',origname,'-->',target);
+        console.log('+++++', 'name=',basename,'-->',target);
         
         try {
             await genericio.copyFile(origname + '&&' + target);
