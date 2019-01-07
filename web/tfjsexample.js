@@ -24,6 +24,7 @@ let getScope=function() {
         }
     }
 
+    console.log('Scope=',scope);
     return scope;
 };
 
@@ -72,10 +73,14 @@ window.onload = function() {
     
     // Load an image --> returns a promise so .then()
     let URL=getScope()+extra;
-    if (bisweb.genericio.getenvironment()==='electron') 
-        URL=URL.substr(8,URL.length-8);
-
-
+    if (bisweb.genericio.getenvironment()==='electron')  {
+        console.log('Orig URL=',URL);
+        let start=8;
+        if (bisweb.genericio.getpathmodule().sep==='/')
+            start=7;
+        URL=URL.substr(start,URL.length-start);
+        console.log('Final URL=',URL);
+    }
     let fn=( (name) => {
         
         console.log('Loading object=',URL);

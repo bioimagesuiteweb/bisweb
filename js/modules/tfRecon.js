@@ -179,17 +179,22 @@ class BisWebTFJSReconModule extends BaseModule {
         const path=bisgenericio.getpathmodule();
         
         if (this.environment==='electron') {
+
+            let start=7;
+            if (path.sep==='\\') {
+                start=8;
+            }
+            
             if (md.indexOf('file')===0) {
-                md=md.substr(8,md.length);
+                md=md.substr(start,md.length);
             }
             md=path.normalize(path.resolve(md));
-            if (path.sep=='\\') {
+            if (start===8)
                 md=util.filenameUnixToWindows(md);
-            }
             md='file://'+md;
             return md;
         }
-
+        
         md=path.normalize(path.resolve(md));
         
         if (md.indexOf('file')!==0)
