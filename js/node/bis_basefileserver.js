@@ -22,6 +22,7 @@ hotp.options  = { crypto };
 const secret = otplib.authenticator.generateSecret();
 let onetimePasswordCounter=1;
 
+let filecounter=0;
 
 // .................................................. This is the class ........................................
 
@@ -61,6 +62,11 @@ class BaseFileServer {
 
         this.opts={};
 
+        this.opts.bistfrecon=undefined;
+        if (opts.mydirectory) {
+            this.opts.bistfrecon=path.join(opts.mydirectory,'bis_tf_recon.js');
+            opts.mydirectory=undefined;
+        }
         this.opts.dcm2nii='/usr/bin/dcm2nii';
         
         for (let i=0;i<server_fields.length;i++) {
@@ -238,22 +244,27 @@ class BaseFileServer {
      * @param {String} filepath - Path to check.
      * @return {Boolean} true if OK, false if not OK,
      */
-    validateFilename(filepath) {
+    validateFilename(filepath,debug=false) {
 
         //some filepaths will be two filepaths conjoined by the symbol &&, check these separately
         if (filepath.indexOf('&&') >= 0) {
             const filepaths = filepath.split('&&');
-            console.log('filepaths', filepaths);
+            if (debug)
+                console.log('filepaths', filepaths);
             return this.validateFilename(filepaths[0]) && this.validateFilename(filepaths[1]);
         }
 
         filepath=filepath||'';
         if (filepath.length<1) {
+            if (debug) console.log('short filepath');
             return false;
         }
 
         if (path.sep==='\\') 
             filepath=filepath.toLowerCase();
+
+        if (debug)
+            console.log('filepath=',filepath,' ',this.opts.baseDirectoriesList);
 
         let i=0,found=false;
         while (i<this.opts.baseDirectoriesList.length && found===false) {
@@ -276,6 +287,7 @@ class BaseFileServer {
         if (path.sep==='\\')
             realname=util.filenameUnixToWindows(filepath);
 
+        
 
         if (fs.existsSync(realname)) {
             let stats=fs.lstatSync(realname);
@@ -287,9 +299,12 @@ class BaseFileServer {
             try {
                 let stats=fs.lstatSync(dirname);
                 if (stats.isSymbolicLink()) {
+                    if (debug)
+                        console.log('Sym Link ');
                     return false;
                 }
             } catch(e) {
+                console.log('Existence problem ',e);
                 return false;
             }
         }
@@ -464,6 +479,13 @@ class BaseFileServer {
                 this.serveServerTempDirectory(socket,parsedText.id);
                 break;
             }
+
+
+            case 'gettempfilename' : {
+                this.gettempfilename(socket,parsedText);
+                break;
+            }
+
             case 'filesystemoperation' : {
                 this.fileSystemOperations(socket,parsedText.operation,parsedText.url,parsedText.id);
                 break;
@@ -471,6 +493,11 @@ class BaseFileServer {
 
             case 'dicomConversion' : {
                 this.dicomConversion(socket,parsedText);
+                break;
+            }
+
+            case 'bistfReconstruction' : {
+                this.bistfReconstructImage(socket,parsedText);
                 break;
             }
 
@@ -545,7 +572,7 @@ class BaseFileServer {
                     console.log('An error occured while statting', filename, err);
                     return;
                 }
-                console.log(this.ident,'File size=',stats['size'],stats['size']-minSizeToUseStreamingDownload);
+                console.log(this.indent,'File size=',stats['size'],stats['size']-minSizeToUseStreamingDownload);
 
                 if (isstream && stats['size']>minSizeToUseStreamingDownload) {
 
@@ -562,8 +589,8 @@ class BaseFileServer {
                 } else {
                     if (this.opts.verbose)
                         console.log(this.indent,'+++++ Not Streaming',isstream,stats['size']);
+                    
                     fs.readFile(filename, (err, d1) => {
-        
                         if (err) {
                             handleError(filename,err);
                         } else {
@@ -798,6 +825,30 @@ class BaseFileServer {
 
 
     /**
+     * Return an empty filename in the temp directory for the user to save to 
+     * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
+     * @param {Number} id - the request id
+     */
+    gettempfilename(socket,opts) {
+
+        let suffix=opts.suffix || '.nii.gz';
+        let id=opts.id;
+
+        let fname='';
+        let done=false;
+        while (!done) {
+            filecounter=filecounter+1;
+            fname=this.opts.tempDirectory+'/tempname'+filecounter+'.'+suffix;
+            if (!fs.existsSync(fname)) 
+                done=true;
+        }
+        
+        console.log(this.indent,"Serving Temp Filename",fname);
+        this.sendCommand(socket,'gettempfilename', { 'path' : fname, 'id' : id });
+    }
+
+
+    /**
      * Performs file operations (isDirectory etc.)
      * @param {String} - operation name
      * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
@@ -987,9 +1038,9 @@ class BaseFileServer {
 
         if (!this.validateFilename(indir) || !this.validateFilename(outdir)) {
             console.log(this.indent,'Bad outputdir',indir,outdir);
-                this.sendCommand(socket,'dicomConversionError', { 
-                    'output' : indir+' or '+outdir+' is not valid',
-                    'id' : id });
+            this.sendCommand(socket,'dicomConversionError', { 
+                'output' : indir+' or '+outdir+' is not valid',
+                'id' : id });
         }
 
         bidsutils.dicom2BIDS(
@@ -1004,6 +1055,69 @@ class BaseFileServer {
                     'output' : msg,
                     'id' : id });
             });
+    }
+
+    // Tensor Flow Recon
+    /**
+     * Performs Tensor Flow Reconstruction
+     * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
+     * @param {Dictionary} opts  - the parameter object
+     * @param {Number} opts.id - the job id
+     * @param {String} opts.input - the input filename
+     * @param {String} opts.output - the output filename
+     * @param {String} opts.model - the model directory
+     * @param {Number} opts.batchsize - the batchsize
+     * @param {Number} opts.padding - the padding
+     * @param {Boolean} opts.debug - if true run debug setup
+     */
+    bistfReconstructImage(socket,opts)  {
+
+        let errorfn=( (msg) => {
+            this.sendCommand(socket,'bistfReconstructImage', { 
+                'output' : msg,
+                'id' : id });
+            return false;
+        });
+        
+        let id=opts.id;
+        
+        if (!this.opts.bistfrecon)
+            return errorfn(' No bistfrecon tool in config');
+        if (!this.validateFilename(opts.input))
+            return errorfn(opts.input+' is not valid');
+        if (!this.validateFilename(opts.output)) 
+            return errorfn(opts.output+' is not valid');
+        if (!this.validateFilename(opts.modeldir)) 
+            return errorfn(opts.modeldir+' is not valid');
+        
+        opts.batchsize = opts.batchsize || 4;
+        opts.padding = opts.padding || 8;
+
+        if (path.sep==='\\') {
+            opts.input=util.filenameUnixToWindows(opts.input);
+            opts.output=util.filenameUnixToWindows(opts.output);
+            opts.modeldir=util.filenameUnixToWindows(opts.modeldir);
+        }
+
+        let done= (status,code) => {
+            if (status===false) {
+                return errorfn('bistfrecon failed'+code);
+            }
+            
+            this.sendCommand(socket,'bistfReconDone', { 
+                'output' : opts.output,
+                'id' : id });
+            return;
+        };
+
+        let listen= (message) => {
+            this.sendCommand(socket,'bistfReconProgress', message);
+        };
+        
+        let cmd='node '+this.opts.bistfrecon+` -i ${opts.input} -o ${opts.output} -m ${opts.modeldir} -b ${opts.batchsize} -p ${opts.padding}`;
+        
+        biscmdline.executeCommand(cmd,__dirname,done,listen);
+        return;
     }
 
     /**

@@ -44,9 +44,19 @@ window.BISELECTRON = {
     electron : electron,
 };
 
+
 process.once('loaded', () => {
     global.electron = require('electron');
     electron.webFrame.setZoomFactor(1.0);
 });
 
 
+window.BISELECTRON.tf=require('@tensorflow/tfjs');
+try {
+    require('@tensorflow/tfjs-node-gpu');
+    window.BISELECTRON.tfmodulename='electron tjsfs-node-gpu';
+} catch(e) {
+    console.log('Failed to load gpu version '+e);
+    require('@tensorflow/tfjs-node');
+    window.BISELECTRON.tfmodulename='electron tfjs-node';
+}

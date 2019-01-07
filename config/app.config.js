@@ -58,6 +58,8 @@ module.exports = {
     target : "node",
     externals: {
         "ws" : "require('ws')",
+        "@tensorflow/tfjs" : "require('@tensorflow/tfjs')",
+        "@tensorflow/tfjs-node" : "require('@tensorflow/tfjs-node')",
     },
     plugins: [
         new webpack.BannerPlugin( {

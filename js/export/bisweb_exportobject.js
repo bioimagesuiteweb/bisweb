@@ -5,7 +5,7 @@
 
 const genericio = require('bis_genericio');
 const moduleindex=require('moduleindex');
-
+const bistfutil=require('bis_tfutil');
 const BisWebImage = require('bisweb_image');
 const BisWebMatrix = require('bisweb_matrix');
 const BisWebTextObject = require('bisweb_textobject');
@@ -35,7 +35,7 @@ module.exports= {
      * @param {string} objecttype -- one of image,matrix,transformation,...
      * @returns {Promise} whose payload is the object
      */
-    loadObject(filename, objecttype,) {
+    loadObject(filename, objecttype = 'image') {
         return BisWebDataObjectCollection.loadObject(filename, objecttype);
 
     },
@@ -53,7 +53,7 @@ module.exports= {
      * @alias biswebexport.getGenericIO
      * @returns{JavaScript Module} 
      */
-    bisgenericio : genericio,
+    genericio : genericio,
     bisdate : bisdate,
     BisWebImage : BisWebImage,
     BisWebMatrix : BisWebMatrix,
@@ -63,6 +63,7 @@ module.exports= {
     BisWebComboTransformation : BisWebComboTransformation,
     BisWebDataObjectCollection :     BisWebDataObjectCollection,
     BisWebTransformationCollection :     BisWebTransformationCollection,
+    bistfutil: bistfutil,
     userPreferences :     userPreferences,
 };
 

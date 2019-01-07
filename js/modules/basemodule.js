@@ -446,7 +446,7 @@ class BaseModule {
                 self.description = self.updateOnChangedInput(null);
                 resolve();
             }).catch((e) => {
-                reject(e.stack);
+                reject(e);
             });
         });
     }

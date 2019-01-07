@@ -251,6 +251,7 @@ var createWindow=function(index,fullURL) {
                                             webPreferences: {
                                                 nodeIntegration: false,
                                                 preload: preload,
+                                                contextIsolation: false,
                                             },
                                             icon: __dirname+'/images/favicon.ico'});
     
@@ -494,12 +495,7 @@ app.on('ready', function() {
         ]);
         app.dock.setMenu(menu);
         Menu.setApplicationMenu(menu2);
-
-        
-        
     }
-
-    //createConsole();
 });
 
 app.on('activate', () => { createOrShowMainWindow();});
@@ -524,7 +520,6 @@ ipcMain.on('showconsole',function() {
 
 ipcMain.on('bisconsoleinit',function(event) {
     state.consolehandler=event.sender;
-    //    console.log(getTime()+' console initialized');
 });
 
 ipcMain.on('bisconsole', function (event,arg) {
@@ -543,19 +538,10 @@ ipcMain.on('arguments', function (event,arg) {
     if (state.winlist.length>2 || state.commandargs.length<1) {
         return;
     }
-    /*    var l=state.commandargs.length;
-          for (var i=0;i<l;i++) {
-          //      var fname=state.commandargs[i];
-          //      if (fname!=="true" && fname!=="false") {
-          //          if (path.resolve( fname ) !== path.normalize( fname )) 
-          //              state.commandargs[i]=path.resolve(__dirname , fname);
-          }
-          }*/
     console.log(getTime()+ ' Sending arguments to ' +arg);
     event.sender.send('arguments-reply',state.commandargs);
 
 });
 
-    
 
 

@@ -543,7 +543,7 @@ const util = {
      * @param {String} filename
      * @returns {String} - tranlated filename
      */
-    filenameWindowsToUnix(fname) {
+    filenameWindowsToUnix : function(fname) {
 
         let a=fname.trim().replace(/\\/g,'/');
         if (fname.indexOf('/')!==0 && fname.indexOf(":")==1) // ":" is for drive name
@@ -559,7 +559,7 @@ const util = {
      * @returns {String} - tranlated filename
      */
 
-    filenameUnixToWindows(fname) {
+    filenameUnixToWindows : function (fname) {
 
         let a=fname.trim().replace(/\//g,'\\');
         if (fname.indexOf('/')==0)
@@ -567,9 +567,29 @@ const util = {
         return a;
 
         
+    },
+    
+    /** 
+     * @returns{String} - the time hour:min:sec
+     */
+    getTime : function(nobracket=0) {
+        //    http://stackoverflow.com/questions/7357734/how-do-i-get-the-time-of-day-in-javascript-node-js
+        
+        const date = new Date();
+        
+        let hour = date.getHours();
+        hour = (hour < 10 ? "0" : "") + hour;
+        
+        let min  = date.getMinutes();
+        min = (min < 10 ? "0" : "") + min;
+        
+        let sec  = date.getSeconds();
+        sec = (sec < 10 ? "0" : "") + sec;
+        
+        if (nobracket===0)
+            return  "[" + hour + ":" + min + ":" + sec + "]";
+        return  hour + ":" + min + ":" + sec ;
     }
-
-
 };
 
 

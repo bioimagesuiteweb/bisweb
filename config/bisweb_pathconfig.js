@@ -29,7 +29,7 @@ let ok=false;
 
 if (major === 8  && minor >=9) {
     ok=true;
-} else if (major === 10 && minor >= 13) {
+} else if (major === 10 && minor >= 11) {
     ok=true;
 } else {
     console.log(`----\n---- You are using an incompatible version of node (either 8.9 or newer, or 10.13 or newer) (actual version=${v})\n`);

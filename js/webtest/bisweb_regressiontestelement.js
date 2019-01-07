@@ -37,6 +37,7 @@ import module_testlist from '../../test/module_tests.json';
 let replacing=false;
 let logtext="";
 let testDataRootDirectory="";
+let testDataModelDirectory="";
 let threadController=null;
 let oldTestDataRootDirectory='';
 let serverDirectory=null;
@@ -175,7 +176,11 @@ var execute_test=function(test,usethread=false) {
         let inputs={};
         let paramfile='';
         let des=module.getDescription();
+        
+        let tobj=get_test_object(test);
+        let test_type = tobj['test_type'] || 'image';
 
+        
         for (let i=1;i<command.length;i=i+2) {
             let flag=command[i];
             if (flag.length>0) {
@@ -201,8 +206,13 @@ var execute_test=function(test,usethread=false) {
                         if (pname===s || pname===p.varname) {
                             params[p.varname]=value;
                             found=true;
+
+                            if (p.varname === "modelname" && test_type === "tfjs") {
+                                params[p.varname]=testDataModelDirectory+value;
+                                console.log('Setting ',p.varname,'to ',params[p.varname]);
+                            }
                         }
-                    j=j+1;
+                        j=j+1;
                     }
                 }
                 
@@ -216,12 +226,13 @@ var execute_test=function(test,usethread=false) {
             }
         }
 
+        if (test_type==="tfjs")
+            test_type="image";
+        
         let doworker = test.webworker;
         if (doworker!==false)
             doworker=true;
 
-        let tobj=get_test_object(test);
-        let test_type = tobj['test_type'] || 'image';
         if (test_type==='registration')
             params['doreslice']=true;
 
@@ -237,7 +248,7 @@ var execute_test=function(test,usethread=false) {
 
 
                 if (!usethread) {
-                    replacesystemprint(true);
+                    replacesystemprint(false);
                     module.directInvokeAlgorithm(newParams).then(() => {
                         replacesystemprint(false);
                         console.log('oooo -------------------------------------------------------');
@@ -473,7 +484,11 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
     if (usefileserver)
         fileserverflag=1;
             
-    //    console.clear();
+    if (thread && threadController===null) { 
+        threadController=document.createElement('bisweb-webworkercontroller');
+        $('body').append($(threadController));
+    }
+
     
     if (!usefileserver) {
         console.log('Disabling File Server');
@@ -774,16 +789,17 @@ var startFunction = (() => {
         $('#cnote').remove();
     }
 
-    setTimeout( () => {
-        threadController=document.createElement('bisweb-webworkercontroller');
-        $('body').append($(threadController));
-    },10);
-    
 
-    if (typeof window.BIS !=='undefined') 
+    if (typeof window.BIS !=='undefined')  {
         testDataRootDirectory="../test/";
-    else 
+        testDataModelDirectory="../test/";
+        if (webutil.inElectronApp()) {
+            testDataModelDirectory="./test/";
+        }
+    } else  {
         testDataRootDirectory="./test/";
+        testDataModelDirectory="./test/";
+    }
 
     oldTestDataRootDirectory=testDataRootDirectory;
     initialize(module_testlist);

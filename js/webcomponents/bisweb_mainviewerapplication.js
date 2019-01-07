@@ -881,15 +881,16 @@ class ViewerApplicationElement extends HTMLElement {
 
         webfileutil.createFileSourceSelector(hmenu);
 
-        userPreferences.safeGetItem("internal").then( (f) =>  {
-            if (f) {
-                webutil.createMenuItem(hmenu, 'Open AWS Selector', 
-                                       () => {
-                                           webfileutil.createAWSMenu();
-                                       });
-            }
-        }).catch( () => { });
-
+        if (!webutil.inElectronApp()) { 
+            userPreferences.safeGetItem("internal").then( (f) =>  {
+                if (f) {
+                    webutil.createMenuItem(hmenu, 'Open AWS Selector', 
+                                           () => {
+                                               webfileutil.createAWSMenu();
+                                           });
+                }
+            }).catch( () => { });
+        }
         return hmenu;
     }
 
@@ -1206,16 +1207,23 @@ class ViewerApplicationElement extends HTMLElement {
 
         let show=force;
 
-        Promise.all( [ 
+        let p=[ 
             userPreferences.safeGetImageOrientationOnLoad(),
             userPreferences.safeGetItem('showwelcome'),
             webutil.aboutText(),
-            idb.get('mode')
-        ]).then( (lst) => {
+        ];
+
+        if (!webutil.inElectronApp()) {
+            p.push( idb.get('mode'));
+        }
+
+        Promise.all(p).then( (lst) => {
             let forceorient=lst[0];
             let firsttime=lst[1];
             let msg=lst[2];
 
+            lst[3]=lst[3] || '';
+            
             let offline=false;
             if (lst[3].indexOf('offline')>=0)
                 offline=true;
