@@ -42,17 +42,8 @@ window.BISELECTRON = {
     remote : remote,
     Buffer : Buffer,
     electron : electron,
-    tf : null,
 };
 
-try {
-    const tf=require('@tensorflow/tfjs');
-    require('@tensorflow/tfjs-node');
-    window.BISELECTRON.tf=tf;
-    console.log('+++ TFJS-Node Available ',JSON.stringify(tf.version));
-} catch(e) {
-    console.log('--- No TFJS-Node Available ');
-}
 
 process.once('loaded', () => {
     global.electron = require('electron');

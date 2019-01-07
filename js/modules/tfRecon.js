@@ -127,8 +127,9 @@ class BisWebTFJSReconModule extends BaseModule {
                 
                 return;
             } else if (this.environment === 'electron') {
-                tfjsModule = window.BISELECTRON.tfjsModule;
-                resolve('Module loaded from tfjs-node via electron preload');
+                tfjsModule = new bistfutil.TFElectronWrapper();
+                tfjsModule.initialize();
+                resolve('Using tfjs-node via electron ipc',tfjsModule);
                 return;
             } else if (this.environment === 'node') {
                 try {

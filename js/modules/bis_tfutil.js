@@ -30,6 +30,7 @@ var getTime=function(nobracket=0) {
  * tf recon module
  */
 
+// ---------------------------------------------------------------------------------------
 class TFWrapper {
 
     constructor(tf) {
@@ -80,6 +81,100 @@ class TFWrapper {
     }
 }
 
+
+// ---------------------------------------------------------------------------------------
+class TFElectronWrapper {
+
+    constructor() {
+        this.EventList = {};
+        this.EventId = 1;
+    }
+
+    initialize() {
+        console.log('Creating TFElectronWrapper');
+        window.BISELECTRON.ipc.send('initTFJS');
+
+        window.BISELECTRON.ipc.on('tfSuccess', (evt, args) => {
+            console.log('Received tfSuccess',args);
+            let id=args.id;
+            let name=args.name;
+            let fn=this.EventList[id]['resolve'];
+            delete this.EventList[id];
+            console.log('Result=',args.result);
+            fn(args.result);
+        });
+
+        window.BISELECTRON.ipc.on('tfError', (evt, args) => {
+            console.log('Received tfError',args);
+            let id=args.id;
+            let fn=this.EventList[id]['reject'];
+            delete this.EventList[id];
+            fn(args.result);
+        });
+        
+    }
+
+    addEvent(resolve, reject) {
+        
+        this.EventId = this.EventId + 1;
+        this.EventList[this.EventId] = {
+            'resolve': resolve,
+            'reject': reject,
+            'id': this.EventId,
+        };
+        return this.EventId;
+    }
+
+    
+    disposeVariables(model) {
+
+        return new Promise( (resolve,reject) => {
+            let id=this.addEvent(resolve,reject);
+            window.BISELECTRON.ipc.send('tfDisposeVariables', {
+                model : model,
+                id : id,
+                name  : 'dispose',
+            });
+        });
+    }
+                           
+
+
+    predict(model,patch,shape,debug=false) {
+        return new Promise( (resolve,reject) => {
+            let id=this.addEvent(resolve,reject);
+            window.BISELECTRON.ipc.send('tfPredict', {
+                model : model,
+                patch : patch,
+                shape : shape,
+                debug : debug,
+                name  : 'predict',
+                id : id
+            });
+        });
+    }
+
+
+    loadFrozenModel(MODEL_URL,WEIGHTS_URL)  {
+        return new Promise( (resolve,reject) => {
+            let id=this.addEvent(resolve,reject);
+            window.BISELECTRON.ipc.send('tfLoadFrozenModel', {
+                mod : MODEL_URL,
+                wgt : WEIGHTS_URL,
+                id : id,
+                name  : 'load',
+            });
+        });
+    }
+    
+
+}
+
+
+
+
+
+// ---------------------------------------------------------------------------------------
 class BisWebTensorFlowRecon { 
     /**
      * @param{BisWebImage} img - the image
@@ -523,6 +618,7 @@ let reconstructImage=function(tfwrapper,img,URL,batchsize,padding) {
 module.exports = {
     BisWebTensorFlowRecon : BisWebTensorFlowRecon,
     TFWrapper : TFWrapper,
+    TFElectronWrapper : TFElectronWrapper,
     loadAndWarmUpModel : loadAndWarmUpModel,
     reconstructImage : reconstructImage
 };
