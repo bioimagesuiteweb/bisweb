@@ -144,100 +144,143 @@ class FileTreePanel extends HTMLElement {
         console.log('could not find \'File\' menu item, cannot add File Tree Panel item to it');
         return false;
     }
+    
+    importFilesFromDirectory(filename) {
 
-    importFiles(filename) {
-        console.log('filename', filename);
         //filter filename before calling getMatchingFiles
         let queryString = filename;
         if (queryString === '') {
-             queryString = '*/*.nii*'; 
+            queryString = '*/*.nii*';
         } else {
-            if (queryString[queryString.length - 1] === '/') { 
-                queryString = queryString.slice(0, filename.length - 1) + '/*/*.nii*'; 
-            } else { 
+            if (queryString[queryString.length - 1] === '/') {
+                queryString = queryString.slice(0, filename.length - 1) + '/*/*.nii*';
+            } else {
                 queryString = filename + '/*/*.nii*';
             }
         }
 
         //if it does then update the file tree with just that file. otherwise look one level deeper for the whole study
-        bis_genericio.getMatchingFiles(queryString).then( (files) => {
+        bis_genericio.getMatchingFiles(queryString).then((files) => {
 
             if (files.length > 0) {
                 this.updateFileTree(files, filename);
                 bis_webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
                 return;
-            } 
-            
+            }
+
             queryString = filename + '/*.nii*';
-            bis_genericio.getMatchingFiles(queryString).then( (newFiles) => {
+            bis_genericio.getMatchingFiles(queryString).then((newFiles) => {
                 console.log('filename', filename);
 
                 bis_webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
                 this.updateFileTree(newFiles, filename);
             });
-            
-        });
 
+        });
+    }
+
+    importFilesFromJSON(filename) {
+        bis_genericio.read(filename).then( (obj) => {
+            let jsonData = obj.data, parsedData; 
+            console.log('json data', jsonData);
+            try {
+                parsedData = JSON.parse(jsonData);
+            } catch(e) {
+                console.log('An error occured trying to parse the exported study file', filename, e);
+            }
+
+            this.updateFileTree(parsedData.contents, parsedData.baseDirectory);
+        });
     }
 
     /**
      * Populates the file tree panel with a list of files.
-     * @param {Array} files - A list of file names. 
+     * @param {Array} files - A list of file names, or a fully parsed tree. 
      * @param {String} baseDirectory - The directory which importFiles was originally called on.
      */
     updateFileTree(files, baseDirectory) {
-        this.baseDirectory = baseDirectory;
 
-        console.log('files', files);
-        let fileTree = [];
+        let parseFileList = (files) => {
+            let fileTree = [];
 
-        for (let file of files) {
-            //trim the common directory name from the filtered out name
-            let trimmedName = file.replace(baseDirectory, '');
-            let splitName = trimmedName.split('/');
+            for (let file of files) {
+                //trim the common directory name from the filtered out name
+                let trimmedName = file.replace(baseDirectory, '');
+                let splitName = trimmedName.split('/');
 
-            let index = 0, currentDirectory = fileTree, nextDirectory = null;
+                let index = 0, currentDirectory = fileTree, nextDirectory = null;
 
-            //find the entry in file tree
-            while (index < splitName.length) {
+                //find the entry in file tree
+                while (index < splitName.length) {
 
-                nextDirectory = findParentAtTreeLevel(splitName[index], currentDirectory);
-                
-                //if the next directory doesn't exist, create it, otherwise return it.
-                if (!nextDirectory) {
+                    nextDirectory = findParentAtTreeLevel(splitName[index], currentDirectory);
 
-                    //type will be file if the current name is at the end of the name (after all the slashes), directory otherwise
-                    let newEntry = {
-                        'text' : splitName[index]
-                    };
+                    //if the next directory doesn't exist, create it, otherwise return it.
+                    if (!nextDirectory) {
 
-                    if (index === splitName.length - 1) {
-                        let splitEntry = newEntry.text.split('.');
-                        if (splitEntry[splitEntry.length - 1] === 'gz' || splitEntry[splitEntry.length - 1] === 'nii')
-                            newEntry.type = 'picture';
-                        else
-                            newEntry.type = 'file';
+                        //type will be file if the current name is at the end of the name (after all the slashes), directory otherwise
+                        let newEntry = {
+                            'text': splitName[index]
+                        };
+
+                        if (index === splitName.length - 1) {
+                            let splitEntry = newEntry.text.split('.');
+                            if (splitEntry[splitEntry.length - 1] === 'gz' || splitEntry[splitEntry.length - 1] === 'nii')
+                                newEntry.type = 'picture';
+                            else
+                                newEntry.type = 'file';
+                        } else {
+                            newEntry.type = 'directory';
+                            newEntry.children = [];
+                        }
+
+                        currentDirectory.push(newEntry);
+                        currentDirectory = newEntry.children;
                     } else {
-                        newEntry.type = 'directory';
-                        newEntry.children = [];
+                        currentDirectory = nextDirectory;
                     }
 
-                    currentDirectory.push(newEntry);
-                    currentDirectory = newEntry.children;
-                } else {
-                    currentDirectory = nextDirectory;
+                    index = index + 1;
                 }
-
-                index = index + 1;
             }
 
+            //if the file tree is empty, display an error message and return
+            if (!fileTree[0] || !fileTree[0].children) {
+                bis_webutil.createAlert('No study files could be found in the chosen directory, try a different directory.', false);
+                return;
+            }
+
+            //some data sources produce trees where the files are contained in an empty directory, so unwrap those if necessary.
+            if (fileTree.length === 1 && fileTree[0].text === '') {
+                fileTree = fileTree[0].children;
+            }
+
+            return fileTree;
+
+            //Searches for the directory that should contain a file given the file's path, e.g. 'a/b/c' should be contained in folders a and b.
+            //Returns the children 
+            function findParentAtTreeLevel(name, entries) {
+                for (let entry of entries) {
+                    if (entry.text === name) {
+                        return entry.children;
+                    }
+                }
+
+                return false;
+            }
+        };
+
+        this.baseDirectory = baseDirectory;
+        let fileTree;
+
+        //check what type of list this is, a list of names or a fully parsed directory
+        if (typeof files[0] === 'string') {
+            fileTree = parseFileList(files);
+        } else {
+            fileTree = files;
         }
 
-        //if the file tree is empty, display an error message and return
-        if (!fileTree[0] || !fileTree[0].children) {
-            bis_webutil.createAlert('No study files could be found in the chosen directory, try a different directory.', false);
-            return;
-        }
+        console.log('file tree', fileTree);
 
         let listElement = this.panel.getWidget();
         listElement.find('.file-container').remove();
@@ -246,11 +289,6 @@ class FileTreePanel extends HTMLElement {
         listContainer.css({ 'color' : 'rgb(12, 227, 172)' });
         listElement.prepend(listContainer);
         
-
-        //some data sources produce trees where the files are contained in an empty directory, so unwrap those if necessary.
-        if (fileTree.length === 1 && fileTree[0].text === '') { 
-            fileTree = fileTree[0].children; 
-        }
 
         let tree = listContainer.jstree({
             'core': {
@@ -339,18 +377,6 @@ class FileTreePanel extends HTMLElement {
         //attach listeners to new file tree
         this.setOnClickListeners(tree, listContainer);
         this.fileTree = tree;
-
-        //Searches for the directory that should contain a file given the file's path, e.g. 'a/b/c' should be contained in folders a and b.
-        //Returns the children 
-        function findParentAtTreeLevel(name, entries) {
-            for (let entry of entries) {
-                if (entry.text === name) {
-                    return entry.children;
-                }
-            }
-
-            return false;
-        }
     }
 
     /**
@@ -372,16 +398,32 @@ class FileTreePanel extends HTMLElement {
         let bottomButtonBar = buttonGroupDisplay.find('.bottom-bar');
 
         //Route study load and save through bis_webfileutil file callbacks
-        let loadStudyButton = bis_webfileutil.createFileButton({
+        let loadStudyDirectoryButton = bis_webfileutil.createFileButton({
             'type': 'info',
-            'name': 'Import study',
+            'name': 'Import study from directory',
             'callback': (f) => {
-                this.importFiles(f);
+                this.importFilesFromDirectory(f);
             },
         }, {
-                'title': 'Import study',
+                'title': 'Import study from directory',
                 'filters': 'DIRECTORY',
                 'suffix': 'DIRECTORY',
+                'save': false,
+        });
+
+        //Route study load and save through bis_webfileutil file callbacks
+        let loadStudyJSONButton = bis_webfileutil.createFileButton({
+            'type': 'info',
+            'name': 'Import study from JSON',
+            'callback': (f) => {
+                this.importFilesFromJSON(f);
+            },
+        }, {
+                'title': 'Import study from JSON',
+                'filters': [ 
+                    { 'name' : 'Study Files', extensions: ['json']  }
+                ],
+                'suffix': 'json',
                 'save': false,
         });
 
@@ -410,7 +452,8 @@ class FileTreePanel extends HTMLElement {
         });
 
         topButtonBar.append(loadImageButton);
-        topButtonBar.append(loadStudyButton);
+        topButtonBar.append(loadStudyDirectoryButton);
+        bottomButtonBar.append(loadStudyJSONButton);
         bottomButtonBar.append(saveStudyButton);
 
         listElement.append(buttonGroupDisplay);
@@ -489,30 +532,31 @@ class FileTreePanel extends HTMLElement {
             let rawTreeJSON = rawTree.get_json('#'); 
             let reconstructedTree = [];
 
-            let fillTreeNode = (node, parentNode) => {
-                console.log('fill tree node', node);
-                let item = rawTree.get_node(node.id);
-                let newNode = item.original;
-                if (item.children.length > 0) {
-                    newNode.children = [];
-                    for (let child of node.children) {
-                        fillTreeNode(child, newNode);
-                    }
-                }
-
-                if (parentNode) {
-                    parentNode.children.push(newNode);
-                } else {
-                    reconstructedTree.push(newNode);
-                }
-                    
-            }; 
-
-            console.log('raw tree json', rawTreeJSON);
-            for (let item of rawTreeJSON) { fillTreeNode(item); }
+            console.log('rawTree', rawTree);
+            for (let item of rawTreeJSON) { fillTreeNode(rawTree, item, reconstructedTree); }
 
             console.log('reconstructed tree', reconstructedTree);
+            bis_genericio.getFileStats(this.baseDirectory).then( (stats) => {
 
+                let dateCreated = new Date(stats.birthtimeMs);
+                let treeMetadataContainer = { 
+                    'baseDirectory' : this.baseDirectory, 
+                    'dateCreated' : parseDate(dateCreated),
+                    'contents' : reconstructedTree
+                };
+    
+                let stringifiedFiles = JSON.stringify(treeMetadataContainer);
+                //set the correct file extension if it isn't set yet
+                let splitPath = filepath.split('.');
+                if (splitPath.length < 2 || splitPath[1] !== 'JSON' || splitPath[1] !== 'json') {
+                    splitPath[1] = 'json';
+                }
+    
+                filepath = splitPath.join('.');
+                bis_genericio.write(filepath, stringifiedFiles, false);
+            });
+
+<<<<<<< HEAD
             //all BIDS files are presumably created at the same time so just use the timestamp for one of them
             bis_genericio.getFileStats(this.baseDirectory).then( (stats) => {
             	let date = new Date(stats.birthtimeMs);
@@ -532,6 +576,8 @@ class FileTreePanel extends HTMLElement {
 	            bis_genericio.write(filepath, stringifiedFiles, false);
             });
             
+=======
+>>>>>>> ec64fd83fa95a15bbd83463607f600ae8f16ae77
         } catch(e) {
             console.log('an error occured while saving to disk', e);
             bis_webutil.createAlert('An error occured while saving the study files to disk.', false);
@@ -716,21 +762,48 @@ class FileTreePanel extends HTMLElement {
     
     getDefaultFilename() {
         let date = new Date();
-        let parsedDate = 'ExportedStudy' + date.getFullYear() + '-' + date.getMonth() + 1 + '-' + zeroPadLeft(date.getDate()) + 'T' + zeroPadLeft(date.getHours()) + ':' + zeroPadLeft(date.getMinutes()) + ':' + zeroPadLeft(date.getSeconds());
+        let parsedDate = 'ExportedStudy' + parseDate(date);
         console.log('date', parsedDate);
         return parsedDate + '.json';
-
-        
     }
 }
+
+
+/**
+ * Recursive function to fill out a tree node then fill out the nodes below it. If called on the root node it will construct the whole tree.
+ * Creates a single node and attaches it to a new tree.
+ * 
+ * @param {JSTree} rawTree - The existing jstree object.
+ * @param {HTMLElement} node - The node in the existing tree.
+ * @param {Array} parentNode - The node to attach the new new node to.
+ */
+let fillTreeNode = (rawTree, node, parentNode = null) => {
+    let item = rawTree.get_node(node.id);
+    let newNode = item.original;
+
+    console.log('item', item, 'parent node', parentNode);
+    if (item.children.length > 0) {
+        newNode.children = [];
+        for (let child of node.children) {
+            fillTreeNode(rawTree, child, newNode);
+        }
+    }
+
+    if (parentNode.children) {
+        parentNode.children.push(newNode);
+    } else {
+        parentNode.push(newNode);
+    }
+        
+}; 
 
 let parseDate = (date) => {
-	return date.getFullYear() + '-' + date.getMonth() + 1 + '-' + zeroPadLeft(date.getDate()) + 'T' + zeroPadLeft(date.getHours()) + ':' + zeroPadLeft(date.getMinutes()) + ':' + zeroPadLeft(date.getSeconds());
-	
-	function zeroPadLeft(num) { 
-		let pad = '00', numStr = '' + num;
+    return date.getFullYear() + '-' + date.getMonth() + 1 + '-' + zeroPadLeft(date.getDate()) + 'T' + zeroPadLeft(date.getHours()) + ':' + zeroPadLeft(date.getMinutes()) + ':' + zeroPadLeft(date.getSeconds());
+
+    function zeroPadLeft(num) { 
+        let pad = '00', numStr = '' + num;
         return pad.substring(0, pad.length - numStr.length) + numStr;
     }
-}
+};
 
 bis_webutil.defineElement('bisweb-filetreepanel', FileTreePanel);

@@ -37,9 +37,6 @@ const server_fields = [
 const portsInUse=[];
 const minSizeToUseStreamingDownload=5*1024*1024;
 
-// Used to make temp directories
-let tempDirectoryCounter=0;
-
 class BaseFileServer {
 
     constructor(opts={}) {
@@ -61,7 +58,7 @@ class BaseFileServer {
 
         this.opts={};
 
-        this.opts.dcm2nii='/usr/bin/dcm2nii';
+        this.opts.dcm2nii='/usr/bin/dcm2niix';
         
         for (let i=0;i<server_fields.length;i++) {
             let name=server_fields[i].name;
@@ -932,8 +929,10 @@ class BaseFileServer {
         }
 
         let outdir=path.join(this.opts.tempDirectory,'dicom_' + Date.now());
+        let dstdir = outdir + '/derived';
         try {
             fs.mkdirSync(outdir);
+            fs.mkdirSync(dstdir);
         } catch(e) {
             return errorfn('cannot make temp dir' + outdir, e);
         }
@@ -953,8 +952,8 @@ class BaseFileServer {
             this.sendCommand(socket,'dicomConversionProgress', message);
         };
 
-        
-        let cmd=this.opts.dcm2nii+' -o '+outdir+' '+indir;
+        console.log('indir', indir, 'outdir', dstdir);
+        let cmd=this.opts.dcm2nii + ' -z y ' + ' -o ' + dstdir + ' -b y ' + indir;
         if (debug)
             cmd='ls '+outdir+' '+indir;
         biscmdline.executeCommand(cmd,__dirname,done,listen);

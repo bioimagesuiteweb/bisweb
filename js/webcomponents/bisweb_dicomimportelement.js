@@ -81,12 +81,14 @@ class DicomImportElement extends HTMLElement {
                 'inputDirectory' : inputDirectory
             }).then( (fileConversionOutput) => {
                 console.log('Conversion done, now converting files to BIDS format.');
-                bis_bidsutils.dicom2BIDS({ 'indir' : fileConversionOutput.output, 'outdir' : outputDirectory }).then( (jsonFileName) => {
+                
+                //dicom files are in inputDirectory/derived
+                bis_bidsutils.dicom2BIDS({ 'indir' : fileConversionOutput.output + '/derived', 'outdir' : outputDirectory }).then( (jsonFileName) => {
                     //parse folder name for containing folder (should be the folder before the .json file)
                     let splitName = jsonFileName.split('/');
                     splitName.pop();
                     let outputFolderName = splitName.join('/');
-                    this.filetreepanel.importFiles(outputFolderName);
+                    this.filetreepanel.importFilesFromDirectory(outputFolderName);
                     this.filetreepanel.showTreePanel();
                 });
             }).catch( () => {
