@@ -625,8 +625,7 @@ const webfileutils = {
                                                       "Close",
                                                       initial,
                                                       self.getModeList(),
-                                                      extra,
-                                                     ).then( (m) => {
+                                                      extra).then( (m) => {
                                                          self.setMode(m);
                                                      }).catch(() => {
                                                          

@@ -1,6 +1,6 @@
 "use strict";
 
-/* global $ */
+/* global $,document,window */
 
 
 let extra="/images/tfjsexample";

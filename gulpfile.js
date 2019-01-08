@@ -224,7 +224,7 @@ if (options.debug!==0) {
 
 // ------------------ JSHint ------------------
 
-const jsHint = function() {
+const jsHint = function(done) {
 
     const jshint = require('gulp-jshint');
     for (let i=0;i<internal.lintscripts.length;i++) {
@@ -244,6 +244,7 @@ const jsHint = function() {
                             }))
             .pipe(jshint.reporter('default'));
     }
+    done();
 };
 
 

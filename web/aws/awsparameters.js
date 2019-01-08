@@ -1,6 +1,10 @@
 'use strict';
 
+/* global window*/
+
 const localforage = require('localforage');
+
+
 
 // https://git.yale.edu/pages/zls5/webapp/
 let IdentityPoolId;

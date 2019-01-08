@@ -1,3 +1,5 @@
+"use strict";
+
 require('../../config/bisweb_pathconfig.js');
 
 const program = require('commander');
