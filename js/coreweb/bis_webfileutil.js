@@ -30,7 +30,7 @@ const bisweb_dropbox=require('bisweb_simpledropbox');
 const bisweb_onedrive=require('bisweb_simpleonedrive');
 const bisweb_googledrive=require('bisweb_drivemodule');
 const amazonaws=require('bisweb_awsmodule.js');
-const bisweb_awsmodule = new amazonaws();
+let bisweb_awsmodule = null;// new amazonaws();
 
 
 const genericio=require('bis_genericio');
@@ -644,7 +644,12 @@ const webfileutils = {
     },
 
     createAWSMenu() {
-        bisweb_awsmodule.createAWSBucketMenu();
+        if (enableaws) {
+            if  (bisweb_awsmodule===null) {
+                bisweb_awsmodule = new amazonaws();
+            }
+            bisweb_awsmodule.createAWSBucketMenu();
+        }
     }
 };
 
@@ -656,6 +661,9 @@ if (!webutil.inElectronApp() ) {
                        enableaws=lst[1] || false;
                        f= f || fileMode;
                        console.log('+++++ Initial File Source=',f, 's3enabeled=',enableaws);
+                       if (enableaws && bisweb_awsmodule===null) {
+                           bisweb_awsmodule = new amazonaws();
+                       }
                        webfileutils.setMode(f,false);
                    }).catch( () => {
                        webfileutils.setMode('local',false);

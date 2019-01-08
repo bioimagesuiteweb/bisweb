@@ -19,7 +19,6 @@
 
 const webpack = require('webpack'); //to access built-in plugins
 const path = require('path');
-const fs=require('fs');
 const mypath=path.normalize(path.resolve(__dirname,'..'));
 
 

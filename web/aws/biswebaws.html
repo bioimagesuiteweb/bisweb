@@ -20,14 +20,14 @@
 <html lang="en">
 
 <head>
-    <title id='pagetitle'>Working...</title>
-    <script src='./aws-sdk.min.js'></script>
-    <script src='./amazon-cognito-auth.min.js'></script>
-    <reference types="aws-sdk"></reference>
-    <script>
-        //-----------------------------------------------------------------------------------------------------
-        // 1.) Logging into the user pool will refresh the page with the parameters needed to authenticate
-        //-----------------------------------------------------------------------------------------------------
+  <title id='pagetitle'>Working...</title>
+  <script src="https://sdk.amazonaws.com/js/aws-sdk-2.283.1.min.js"></script>
+  <script src="https://sdk.amazonaws.com/js/amazon-cognito-auth.min.js"></script>
+  <reference types="aws-sdk"></reference>
+  <script>
+    //-----------------------------------------------------------------------------------------------------
+    // 1.) Logging into the user pool will refresh the page with the parameters needed to authenticate
+    //-----------------------------------------------------------------------------------------------------
         function logIntoUserPool() {
             let authParams = window.authParams;
             console.log('auth params', authParams);

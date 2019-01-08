@@ -857,8 +857,9 @@ class ViewerApplicationElement extends HTMLElement {
         let fn = (() => { this.welcomeMessage(true) ; });
         
         webutil.createMenuItem(hmenu,'About this application',fn);
-        
-        hmenu.append($(`<li><a href="https://bioimagesuiteweb.github.io/bisweb-manual/${extrahtml}" target="_blank" rel="noopener" ">BioImage Suite Web Online Manual</a></li>`));
+
+        let link=`a href="https://bioimagesuiteweb.github.io/bisweb-manual/${extrahtml}" target="_blank" rel="noopener"`; 
+        hmenu.append($(`<li><${link}>BioImage Suite Web Online Manual</a></li>`));
         webutil.createMenuItem(hmenu, ''); // separator
         
         this.addOrientationSelectToMenu(hmenu);
@@ -1245,7 +1246,7 @@ class ViewerApplicationElement extends HTMLElement {
             if (offline)
                 txt+="<HR><p>This application is operating in Offline Mode.</p><HR>";
             
-            console.log('In Electron=',webutil.inElectronApp());
+            //            console.log('In Electron=',webutil.inElectronApp());
             
             if (!webutil.inElectronApp() && firsttime===true) {
                 txt+=`<HR><H3>Some things you should

@@ -21,6 +21,9 @@ const webpack = require('webpack'); //to access built-in plugins
 const path = require('path');
 const fs=require('fs');
 
+
+// -----------------------------------------------------------------------------------
+// Parse Command line
 let internal = 0,external=0;
 
 let found=false,i=0,output='bislib.css';
@@ -48,6 +51,9 @@ if (!found) {
     process.exit(1);
 }
 
+
+// -----------------------------------------------------------------------------------
+// Extra files for internal and external
 
 let mypath=path.normalize(path.resolve(__dirname,'..'));
 let extrapath=path.normalize(path.resolve(__dirname,'../../internal/js'));
@@ -96,12 +102,15 @@ if (!external) {
 }
 
 
+// -----------------------------------------------------------------------------------
+// Main process
+
 console.log(`--------------------------- Running Webpack --> ${output} internal=${extrafile}, external=${externalfile} -------------------------`);
 
 
 
 
-if (output !== "webworkermain.js") {
+if (output === "bislib.js" || output ==="index.js") {
     module.exports = {
         resolve: {
             extensions: [ '.js'],
@@ -122,8 +131,7 @@ if (output !== "webworkermain.js") {
         mode : 'development',
         target : "web",
         externals: {
-            // require("jquery") is external and available on the global var jQuery
-            "jquery": "jQuery",
+            "jquery": "jQuery",             // require("jquery") is external and available on the global var jQuery
             "libbiswasm" : "console.log", // this is not needed in this case and should be excluded
             "@tensorflow/tfjs" : "console.log", // ignore tensor flow it will come from outside
             "@tensorflow/tfjs-node" : "console.log", // ignore tensor flow it will come from outside
@@ -178,9 +186,6 @@ if (output !== "webworkermain.js") {
                         path.resolve(mypath,'build/wasm'),
                         path.resolve(mypath,'build/web')]
         },
-/*        externals: {
-            "libbiswasm" : "console.log" // this is not needed in this case and should be excluded
-        },*/
         mode : 'development',
         target : "web",
         watchOptions: {

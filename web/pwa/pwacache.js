@@ -3,8 +3,6 @@
 module.exports = {
     
     'internal' : [
-        'amazon-cognito-auth.min.js',
-        'aws-sdk.min.js',
         'bislib.css',
         'bislib.js',
         'biswebaws.html',
@@ -96,6 +94,9 @@ module.exports = {
         'https://fonts.gstatic.com/s/lato/v14/S6u9w4BMUTPHh6UVSwiPGQ3q5d0.woff2',
         'https://fonts.gstatic.com/s/lato/v14/S6uyw4BMUTPHjx4wXg.woff2',
         'https://fonts.gstatic.com/s/lato/v14/S6uyw4BMUTPHjx4wXiWtFCc.woff2',
+        'https://sdk.amazonaws.com/js/aws-sdk-2.283.1.min.js',
+        'https://sdk.amazonaws.com/js/amazon-cognito-auth.min.js',
+        'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.14.1/dist/tf.min.js'
     ]
 };
 

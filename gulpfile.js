@@ -66,7 +66,7 @@ let options = {
     minify : parseInt(program.minify || 0 ),
     outdir : "build/web",
     distdir : "build/dist",
-    debug : parseInt(program.debug || 0),
+    debug : program.debug || false,
     platform : program.platform || os.platform(),
     package : program.dopack || 0,
     zip : program.dozip || 0,
@@ -115,7 +115,7 @@ if (plat==='all') {
 options.platform=plat;
 
 
-if (options.debug!==0) {
+if (options.debug) {
     console.log(bis_gutil.getTime()+' Full options ='+JSON.stringify(options,null,2)+'.\n');
 }
 
@@ -237,10 +237,10 @@ if (options.debug!==0) {
 //
 // ------------------------------- ------------------------------- -------------------------------
 
-function createDate(done) {
+function createDate() {
 
     return new Promise( (resolve) => { 
-    const git = require('git-rev');
+        const git = require('git-rev');
         git.long( (str) => {
             bis_gutil.createDateFile(path.resolve(options.outdir,'bisdate.json'),str,internal.setup.version);
             bis_gutil.createDateFile(path.resolve(options.outdir,'../wasm/bisdate.js'),str,internal.setup.version);
@@ -322,6 +322,8 @@ gulp.task('watch', () => {
 
 // ------------------------------------------------------------------------
 gulp.task('webpack', function (done) {
+
+    console.log('Debug=',options.debug);
     
     createDate().then( () => {
         bis_gutil.runWebpack(internal.webpackjobs,
@@ -330,6 +332,7 @@ gulp.task('webpack', function (done) {
                              __dirname,
                              options.minify,
                              options.outdir,
+                             options.debug,
                              internal.setwebpackwatch).then( () => {
                                  console.log(bis_gutil.getTime()+' webpack done num jobs=',internal.webpackjobs.length);
                                  done();
@@ -385,16 +388,15 @@ gulp.task('commonfiles', () => {
     gulp.src('./lib/css/bootstrap_dark_edited.css').pipe(gulp.dest(options.outdir));
     gulp.src('./lib/js/webcomponents-lite.js').pipe(gulp.dest(options.outdir));
     gulp.src('./node_modules/jquery/dist/jquery.min.js').pipe(gulp.dest(options.outdir));
+    gulp.src('./node_modules/three/build/three.min.js').pipe(gulp.dest(options.outdir));
     gulp.src('./web/aws/biswebaws.html').pipe(gulp.dest(options.outdir));
-    gulp.src('./node_modules/aws-sdk/dist/aws-sdk.min.js').pipe(gulp.dest(options.outdir));
-    gulp.src('./node_modules/amazon-cognito-auth-js/dist/amazon-cognito-auth.min.js').pipe(gulp.dest(options.outdir));
     gulp.src('./web/aws/awsparameters.js').pipe(gulp.dest(options.outdir));
     gulp.src('./node_modules/bootstrap/dist/js/bootstrap.min.js').pipe(gulp.dest(options.outdir));
     bis_gutil.createHTML('console',options.outdir,'',internal.biscss);
     return gulp.src([ 'web/manifest.json']).pipe(gulp.dest(options.outdir));
 });
 
-gulp.task('createserverscripts', async function (done) { 
+gulp.task('createserverscripts', async function () { 
     
     let scripts=internal.serverscripts;
     

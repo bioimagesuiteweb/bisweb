@@ -231,9 +231,8 @@ var createDateFile=function(datefile,hash='',version='') {
 // ------------------------------------------------
 // Webpack
 // ------------------------------------------------
-var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,watch) {
+var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,debug,watch) {
 
-    let extracmd="";
     let join="/";
     if (os.platform()==='win32') {
         outdir=outdir.replace(/\//g,'\\');
@@ -250,6 +249,8 @@ var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,
         tmpout=tmpout+'_full.js';
     
     let cmd='webpack-cli --entry '+source+' --output-filename '+tmpout+' --output-path '+outdir+' --config config'+join+'webpack.config_devel.js';
+    if (debug)
+        cmd+=' --sort-modules-by size --display-modules --display-entrypoints ';
     if (tmpout==='bislib.js') 
         cmd+=' --bisinternal '+internal+' --bisexternal '+external;
 
@@ -276,13 +277,13 @@ var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,
 
 
 var runWebpack=function(joblist,internal,external,
-                        indir,minify,outdir,watch=0) {
+                        indir,minify,outdir,debug,watch=0) {
 
     let p = [ ];
     for (let i=0;i<joblist.length;i++) {
         let s=joblist[i];
         console.log(getTime()+" "+colors.red('++++ Starting webpack job=',i,s.name));
-        let cmd=getWebpackCommand(s.path+s.name,internal,external,s.name,indir,minify,outdir,watch);
+        let cmd=getWebpackCommand(s.path+s.name,internal,external,s.name,indir,minify,outdir,debug,watch);
         p.push(executeCommandPromise(cmd,indir,i));
     }
     return Promise.all(p);
