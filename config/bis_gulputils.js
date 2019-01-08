@@ -241,21 +241,6 @@ var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,
         join="\\";
     }
 
-    if (internal) {
-        if (os.platform()==='win32') {
-            extracmd=`SET BISWEB_INTERNAL=${internal}& `;
-        } else {
-            extracmd=`export BISWEB_INTERNAL=${internal}; `;
-        }
-    }
-
-    if (external) {
-        if (os.platform()==='win32') {
-            extracmd+=`SET BISWEB_EXTERNAL=${external}& `;
-        } else {
-            extracmd+=`export BISWEB_EXTERNAL=${external}; `;
-        }
-    }
 
     if (watch || out==='bisweb-sw.js' )
         minify=0;
@@ -264,14 +249,9 @@ var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,
     if (minify)
         tmpout=tmpout+'_full.js';
     
-    if (os.platform()==='win32')
-        extracmd+=`SET BISWEB_OUT=${out}&`;
-    else
-        extracmd+=`export BISWEB_OUT=${out}; `;
-    
-    
-    
-    let cmd=extracmd+' webpack-cli --entry '+source+' --output-filename '+tmpout+' --output-path '+outdir+' --config config'+join+'webpack.config_devel.js';
+    let cmd='webpack-cli --entry '+source+' --output-filename '+tmpout+' --output-path '+outdir+' --config config'+join+'webpack.config_devel.js';
+    if (tmpout==='bislib.js') 
+        cmd+=' --bisinternal '+internal+' --bisexternal '+external;
 
     if (watch!==0)
         cmd+=" --watch";
@@ -301,7 +281,7 @@ var runWebpack=function(joblist,internal,external,
     let p = [ ];
     for (let i=0;i<joblist.length;i++) {
         let s=joblist[i];
-        console.log('++++\nStarting webpack job=',i,s.name);
+        console.log(getTime()+" "+colors.red('++++ Starting webpack job=',i,s.name));
         let cmd=getWebpackCommand(s.path+s.name,internal,external,s.name,indir,minify,outdir,watch);
         p.push(executeCommandPromise(cmd,indir,i));
     }

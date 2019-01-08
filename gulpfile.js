@@ -42,22 +42,24 @@ program
     .option('-i, --input <s>','mainscript to build')
     .option('-m, --minify <s>','flag to minify 1=minify 0=regular + sourcemaps,-1 = fast, no sourcemaps')
     .option('-l, --platform  <s>','platform')
-    .option('-d, --debug <s>','debug')
+    .option('-d, --debug','debug')
     .option('-p, --dopack <s>','dopackage 0=electron-packager, 1=run npm update in addition 2=run inno or zip in addition')
     .option('-z, --dozip <s>','dozip')
+    .option('-e, --eslint <n>','if 0 use jshint instead of eslint',parseInt)
+    .option('-w, --worker','if present build the webworker as well')
+    .option('-s, --sworker','if present build the service worker and index.js as well')
     .option('--localhost','only local access')
     .option('--portno <s>','port for server (8080 is default)')
-    .option('-n, --internal <n>','if 1 use internal code, if 2 serve the internal directory as well',parseInt)
-    .option('-x, --external <n>','if 1 use extra external code (in ../external)',parseInt)
-    .option('-e, --eslint <n>','if 0 use jshint instead of eslint',parseInt)
-    .option('-w, --worker <n>','if 1 build the webworker as well',parseInt)
-    .option('-s, --sworker <n>','if 1 build the service worker and index.js as well',parseInt)
+    .option('--internal <n>','if 1 use internal code, if 2 serve the internal directory as well',parseInt)
+    .option('--external <n>','if 1 use extra external code (in ../external)',parseInt)
     .option('--light <n>','if 1 only build the main bislib.js library',parseInt)
     .parse(process.argv);
 
 
 if (program.dopack === undefined)
     program.dopack=2;
+
+//console.log('Workers=',program.worker,program.sworker);
 
 let options = {
     inpfilename : program.input || "all",
@@ -68,9 +70,9 @@ let options = {
     platform : program.platform || os.platform(),
     package : program.dopack || 0,
     zip : program.dozip || 0,
-    webworker : program.worker || 0,
+    webworker : program.worker || false,
     eslint : program.eslint,
-    sworker : program.sworker || 0,
+    sworker : program.sworker || false,
     internal : program.internal,
     external : program.external || 0 ,
     portno : parseInt(program.portno) || 8080,
@@ -114,7 +116,7 @@ options.platform=plat;
 
 
 if (options.debug!==0) {
-    console.log(bis_gutil.getTime()+' Full options ='+JSON.stringify(options)+'.\n');
+    console.log(bis_gutil.getTime()+' Full options ='+JSON.stringify(options,null,2)+'.\n');
 }
 
 // -----------------------------------------------------------------------------------------
@@ -137,7 +139,7 @@ let internal = {
     biscss     : 'bislib.css',
     indexlib   : 'index.js',
     serviceworkerlib : 'bisweb-sw.js',
-    webworkerlib  : 'wegit bworkermain.js',
+    webworkerlib  : 'webworkermain.js',
     serveroptions : { },
     setwebpackwatch : 0,
     serverscripts : [ 'bisfileserver.js', 'bis_tf_recon.js' ],
@@ -223,8 +225,8 @@ if (options.webworker) {
 // -------------------------------
 
 if (options.debug!==0) {
-    console.log(bis_gutil().getTime()+' read tool descriptions from '+colors.cyan(internal.tooldescriptionfile));
-    console.log(bis_gutil().getTime()+' Scripts to process are '+colors.cyan(options.inpfilename));
+    console.log(bis_gutil.getTime()+' read tool descriptions from '+colors.cyan(internal.tooldescriptionfile));
+    console.log(bis_gutil.getTime()+' Scripts to process are '+colors.cyan(options.inpfilename));
 }
 
 // ------------------------------- ------------------------------- -------------------------------
@@ -235,13 +237,15 @@ if (options.debug!==0) {
 //
 // ------------------------------- ------------------------------- -------------------------------
 
-async function createDate() {
+function createDate(done) {
 
+    return new Promise( (resolve) => { 
     const git = require('git-rev');
-    git.long(function (str) {
-        bis_gutil.createDateFile(path.resolve(options.outdir,'bisdate.json'),str,internal.setup.version);
-        bis_gutil.createDateFile(path.resolve(options.outdir,'../wasm/bisdate.js'),str,internal.setup.version);
-        return Promise.resolve();
+        git.long( (str) => {
+            bis_gutil.createDateFile(path.resolve(options.outdir,'bisdate.json'),str,internal.setup.version);
+            bis_gutil.createDateFile(path.resolve(options.outdir,'../wasm/bisdate.js'),str,internal.setup.version);
+            resolve();
+        });
     });
 }
 
@@ -317,18 +321,20 @@ gulp.task('watch', () => {
 
 
 // ------------------------------------------------------------------------
-gulp.task('webpack', async (done) => {
+gulp.task('webpack', function (done) {
     
-    await createDate();
-    await bis_gutil.runWebpack(internal.webpackjobs,
-                               options.internal,
-                               options.external,
-                               __dirname,
-                               options.minify,
-                               options.outdir,
-                               internal.setwebpackwatch);
-    console.log(bis_gutil.getTime()+' webpack done num jobs=',internal.webpackjobs.length);
-    return Promise.resolve('done');
+    createDate().then( () => {
+        bis_gutil.runWebpack(internal.webpackjobs,
+                             options.internal,
+                             options.external,
+                             __dirname,
+                             options.minify,
+                             options.outdir,
+                             internal.setwebpackwatch).then( () => {
+                                 console.log(bis_gutil.getTime()+' webpack done num jobs=',internal.webpackjobs.length);
+                                 done();
+                             });
+    });
 });
 
 
