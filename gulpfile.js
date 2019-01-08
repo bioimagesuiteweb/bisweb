@@ -542,8 +542,6 @@ gulp.task('build',gulp.parallel(
 gulp.task('buildpackage', gulp.series('buildint',
                                       'package'));
 
-
-
 gulp.task('doc', gulp.parallel('jsdoc','cdoc'));
 
 
