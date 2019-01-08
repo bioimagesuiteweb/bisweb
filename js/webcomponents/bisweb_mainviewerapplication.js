@@ -33,9 +33,7 @@ const BisWebPanel = require('bisweb_panel.js');
 const resliceImage = require('resliceImage');
 const BisWebLinearTransformation = require('bisweb_lineartransformation.js');
 const idb=require('idb-keyval');
-
 const localforage=require('localforage');
-
 
 const clipboard=localforage.createInstance({
     driver : localforage.INDEXEDDB,

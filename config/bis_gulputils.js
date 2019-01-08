@@ -20,19 +20,19 @@
 "use strict";
 
 let colors=require('colors/safe'),
-    htmlreplace = require('gulp-html-replace'),
-    concatCss = require('gulp-concat-css'),
-    child_process = require('child_process'),
     fs=require("fs"),
     os=require("os"),
     path=require('path'),
-    gulpzip = require('gulp-zip'),
-    template=require('gulp-template'),
-    del = require('del'),
-    replace = require('gulp-replace'),
-    rimraf= require('rimraf'),
-    gulp=require("gulp"),
-    rename = require('gulp-rename');
+    gulp=require("gulp");
+
+// On demand;
+let htmlreplace=null,
+    replace=null,
+    concatCss = null,
+    child_process=null;
+
+
+
 
 
 var getTime=function(nobracket=0) {
@@ -71,6 +71,10 @@ var getVersionTag=function(version) {
 };
 
 var executeCommand=function(command,dir,done=0,error=0,extra=0) {
+
+    if (child_process===null)
+        child_process = require('child_process');
+    
     dir = dir || __dirname;
     console.log(getTime()+" "+colors.green(dir+">")+colors.cyan(command+'\n'));
 
@@ -148,6 +152,11 @@ var executeCommandList=function(cmdlist,indir,done=0) {
 
 var createHTML=function(toolname,outdir,libjs,commoncss) {
 
+    if (htmlreplace===null)
+        htmlreplace = require('gulp-html-replace');
+    if (replace===null)
+        replace = require('gulp-replace');
+    
     if (toolname==="bisjs")
         return;
     
@@ -187,6 +196,12 @@ var createHTML=function(toolname,outdir,libjs,commoncss) {
 
 var createCSSCommon=function(dependcss,out,outdir) {
 
+    if (replace===null)
+        replace = require('gulp-replace');
+    if (concatCss===null)
+        concatCss = require('gulp-concat-css');
+
+    
     var bundlecss  = out;
 
     console.log(getTime(),colors.green('Concatenating ',dependcss.join(),' to ',out));
@@ -295,6 +310,9 @@ var runWebpack=function(joblist,internal,external,
 
 var createZIPFile = function(dozip,baseoutput,outdir,version,distdir) {
 
+    const gulpzip = require('gulp-zip'),
+          del = require('del');
+
     console.log('dozip=',dozip);
     
     if (!dozip) {
@@ -333,6 +351,8 @@ var createZIPFile = function(dozip,baseoutput,outdir,version,distdir) {
 // Packaging stuff
 // -----------------------------------------------------------------------------------------
 var inno=function(tools, version, indir , distdir ) {
+
+    const template=require('gulp-template');
     let obj=tools;
     
     var i_odir    = path.resolve(indir, distdir);
@@ -461,6 +481,10 @@ var doxygen=function(indir,conffile,done) {
 
 var createnpmpackage=function(indir,version,in_outdir,done) {
 
+    const rimraf= require('rimraf'),
+          rename = require('gulp-rename');
+
+    
     // Step 1 copy file
     // make directories
     let odir=path.resolve(path.join(in_outdir,'bisweb'));
@@ -524,7 +548,7 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
     console.log('++++');
     console.log('++++ Package.json file created in',output);
     console.log('++++');
-    
+
     // step 3
     // Master file
     let txt2=`window.biswebpack=require('./libbiswasm_wasm.js');\nmodule.exports=require('./bislib.js')();\n`;

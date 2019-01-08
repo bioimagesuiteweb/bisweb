@@ -25,21 +25,11 @@ require('./config/bis_checknodeversion');
 
 const gulp = require('gulp'),
       program=require('commander'),
-      connect = require('gulp-connect'),
       os = require('os'),
       fs = require('fs'),
-      rename = require('gulp-rename'),
       path=require('path'),
-      del = require('del'),
       colors=require('colors/safe'),
-      git = require('git-rev'),
-      bis_gutil=require('./config/bis_gulputils'),
-      gulpzip = require('gulp-zip'),
-      jshint = require('gulp-jshint'),
-      eslint = require('gulp-eslint');
-
-
-
+      bis_gutil=require('./config/bis_gulputils');
 
 // ------------------------------------ Utility Functions ---------------------------------------------
 
@@ -202,8 +192,6 @@ if (options.inpfilename === 'index') {
     internal.webpackjobs=[];
 }
 
-console.log(colors.red('Sworker='+options.sworker));
-
 if (options.sworker) {
     internal.webpackjobs.push({ path: './web/' ,  name : internal.indexlib });
     internal.webpackjobs.push({ path: './web/' ,  name : internal.serviceworkerlib });
@@ -238,6 +226,7 @@ if (options.debug!==0) {
 
 const jsHint = function() {
 
+    const jshint = require('gulp-jshint');
     for (let i=0;i<internal.lintscripts.length;i++) {
         
         gulp.src(internal.lintscripts[i])
@@ -265,6 +254,8 @@ const esLint=function() {
     // Also, Be sure to return the stream from the task;
     // Otherwise, the task may end before the stream has finished.
 
+    
+    const eslint = require('gulp-eslint');
     console.log("Scannng scripts ",internal.lintscripts.join(','));
     return gulp.src(internal.lintscripts)
     // eslint() attaches the lint output to the "eslint" property
@@ -293,26 +284,26 @@ const esLint=function() {
 };
 
 
-
 function watch() {
     if (options.eslint)
-        return gulp.watch(internal.lintscripts, gulp.series(eslint));
-
-    return gulp.watch(internal.lintscripts, gulp.series(jshint));
-};
+        return gulp.watch(internal.lintscripts, gulp.series(esLint));
+    
+    return gulp.watch(internal.lintscripts, gulp.series(jsHint));
+}
 
 function make(done) {
     bis_gutil.executeCommand("make ",__dirname+"/build/wasm",done);
-};
+}
 
 async function createDate() {
-    
+
+    const git = require('git-rev');
     git.long(function (str) {
         bis_gutil.createDateFile(path.resolve(options.outdir,'bisdate.json'),str,internal.setup.version);
         bis_gutil.createDateFile(path.resolve(options.outdir,'../wasm/bisdate.js'),str,internal.setup.version);
         return Promise.resolve();
     });
-};
+}
 
 // ------------------------------------------------------------------------
 function singleHTML() {
@@ -323,14 +314,14 @@ function singleHTML() {
     let out=bis_gutil.createHTML(internal.toolarray[internal.htmlcounter],options.outdir,jsname,internal.biscss);
     internal.htmlcounter+=1;
     return out;
-};
+}
 
 function singleCSS() {
     let toolname=internal.toolarray[internal.csscounter];
     let maincss    = './web/'+toolname+'.css';
     internal.csscounter+=1;
     return bis_gutil.createCSSCommon([maincss],toolname+'.css',options.outdir);
-};
+}
 
 
 async function runwebpack() {
@@ -344,7 +335,7 @@ async function runwebpack() {
                                options.outdir,0);
     console.log(bis_gutil.getTime()+' webpack done num jobs=',internal.webpackjobs.length);
     return Promise.resolve('done');
-};
+}
 
 
 function buildtest(done) {
@@ -363,9 +354,11 @@ function buildtest(done) {
     bis_gutil.createCSSCommon([maincss2],'biswebdisplaytest.css',options.outdir);
     done();
 
-};
+}
 
-function serve2() { 
+function serve2() {
+    const connect = require('gulp-connect');
+    
     connect.server(internal.serveroptions);
     console.log(colors.red('++++\n+++++ Server root directory=',internal.serveroptions.root,'\n++++'));
 
@@ -383,13 +376,14 @@ function serve2() {
                          options.outdir,1).then( () => {
                              console.log('webpack killed');
                          });
-};
+}
 
 
-function serveronly() { 
+function serveronly() {
+    const connect = require('gulp-connect');
     connect.server(internal.serveroptions);
     console.log('++++ Server root directory=',internal.serveroptions.root);
-};
+}
 
 
 function commonfiles() { 
@@ -411,9 +405,9 @@ function commonfiles() {
     gulp.src('./node_modules/amazon-cognito-auth-js/dist/amazon-cognito-auth.min.js').pipe(gulp.dest(options.outdir));
     gulp.src('./web/aws/awsparameters.js').pipe(gulp.dest(options.outdir));
     gulp.src('./node_modules/bootstrap/dist/js/bootstrap.min.js').pipe(gulp.dest(options.outdir));
-    bis_gutil.createHTML('console',options.outdir,'',internal.biscss)
+    bis_gutil.createHTML('console',options.outdir,'',internal.biscss);
     return gulp.src([ 'web/manifest.json']).pipe(gulp.dest(options.outdir));
-};
+}
 
 function createserver(done) { 
 
@@ -435,7 +429,7 @@ function createserver(done) {
         console.log('____ saved in '+url+' (size='+bytes+')');
         done();
     });
-};
+}
 
 function createtfjsrecon(done) { 
 
@@ -457,10 +451,13 @@ function createtfjsrecon(done) {
         console.log('____ saved in '+url+' (size='+bytes+')');
         done();
     });
-};
+}
 
 function packageserver(done) { 
 
+    const gulpzip = require('gulp-zip'),
+          rename = require('gulp-rename');
+          
     gulp.src(['./build/wasm/lib/bisfileserver.js',
               './build/wasm/lib/bis_tf_recon.js',
               './js/bin/server/example-server-config.json',
@@ -496,17 +493,18 @@ function zip(done) {
 
     bis_gutil.createZIPFile(options.zip,options.baseoutput,options.outdir,internal.setup.version,options.distdir);
     done();
-};
+}
 
 function pack(done) {
     
     bis_gutil.createPackage(options.package,
                             internal.setup.tools,
                             __dirname,options.outdir,internal.setup.version,options.platform,options.distdir,done);
-};
+}
 
 function clean() { 
 
+    const del = require('del');
     let arr = [options.outdir+'#*',
                options.outdir+'*~',
                options.outdir+'*.js*',
@@ -526,19 +524,19 @@ function clean() {
     
     console.log(bis_gutil.getTime()+' Cleaning files ***** .');
     return del(arr);
-};
+}
 
 function jsdoc(done) { 
     bis_gutil.jsDOC(__dirname,'config/jsdoc_conf.json',done);
-};
+}
 
 function cdoc(done) { 
     bis_gutil.doxygen(__dirname,'config/Doxyfile',done);
-};
+}
 
-function numpack(done) { 
+function npmpack(done) { 
     bis_gutil.createnpmpackage(__dirname,internal.setup.version,'build/dist',done);
-};
+}
 
 
 // -------------------- Straight compound tasks
@@ -546,7 +544,7 @@ function buildint() {
     return gulp.series(commonfiles,
                        tools,
                        buildtest);
-};
+}
 
 gulp.task('build',gulp.parallel(
     runwebpack,
@@ -581,4 +579,6 @@ module.exports = {
     createserver : createserver,
     packageserver : packageserver,
     buildtest: buildtest,
+    serveronly : serveronly,
+    npmpack : npmpack,
 };
