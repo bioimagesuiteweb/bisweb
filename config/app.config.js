@@ -20,20 +20,11 @@
 const webpack = require('webpack'); //to access built-in plugins
 const path = require('path');
 const fs=require('fs');
+const mypath=path.normalize(path.resolve(__dirname,'..'));
 
-let mypath=path.normalize(path.resolve(__dirname,'..'));
-let extrapath=path.normalize(path.resolve(__dirname,'../../internal/js'));
-let extrafile = path.resolve(extrapath,'bisextra.js');
 
 console.log('--------------------------- Running Webpack -------------------------');
 
-if (fs.existsSync(extrafile)) {
-    console.log('++++ Using Extra Internal Files from',extrapath);
-} else {
-    console.log('---- Directory ',extrapath,' does not exist');
-    extrapath=path.normalize(path.resolve(__dirname,'../js/nointernal'));
-    console.log('---- Using internal ',extrapath);
-}
 
 module.exports = {
 
@@ -70,5 +61,5 @@ module.exports = {
     ]
 };
 
-module.exports.resolve.modules.push(extrapath);
+
 

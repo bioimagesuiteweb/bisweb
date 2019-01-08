@@ -140,7 +140,7 @@ let internal = {
     webworkerlib  : 'wegit bworkermain.js',
     serveroptions : { },
     setwebpackwatch : 0,
-    
+    serverscripts : [ 'bisfileserver.js', 'bis_tf_recon.js' ],
 };
 
 
@@ -388,51 +388,30 @@ gulp.task('commonfiles', () => {
     return gulp.src([ 'web/manifest.json']).pipe(gulp.dest(options.outdir));
 });
 
-gulp.task('createserverscript', (done) => { 
+gulp.task('createserverscripts', async function (done) { 
     
-    let inp=path.normalize(path.join(__dirname,path.join('js',path.join('bin','bisfileserver.js'))));
-    console.log(inp);
-    let cfg=path.normalize(path.join(__dirname,path.join('config','app.config.js')));
-    console.log(cfg);
-    let out=path.normalize(path.join(__dirname,
-                                     path.join(options.outdir,
-                                               path.join('..',
-                                                         path.join('wasm','lib')))));
-    console.log(out);
-    let cmd=` webpack-cli --entry ${inp} --config ${cfg} --output-path ${out} --output-filename bisfileserver.js`;
-    console.log('Command=',cmd);
-    bis_gutil.executeCommandPromise(cmd,__dirname).then( () => {
-        let url=path.join(out,'bisfileserver.js');
+    let scripts=internal.serverscripts;
+    
+    for (let i=0;i<scripts.length;i++) {
+    
+        let inp=path.normalize(path.join(__dirname,path.join('js',path.join('bin',scripts[i]))));
+        let cfg=path.normalize(path.join(__dirname,path.join('config','app.config.js')));
+        let out=path.normalize(path.join(__dirname,
+                                         path.join(options.outdir,
+                                                   path.join('..',
+                                                             path.join('wasm','lib')))));
+        let cmd=` webpack-cli --entry ${inp} --config ${cfg} --output-path ${out} --output-filename ${scripts[i]}`;
+        console.log('Command=',cmd);
+        await bis_gutil.executeCommandPromise(cmd,__dirname);
+        let url=path.join(out,scripts[i]);
         let stats = fs.statSync(url);
         let bytes = stats["size"];
         console.log('____ saved in '+url+' (size='+bytes+')');
-        done();
-    });
+    }
+    return Promise.resolve();
 });
 
-gulp.task('createtfjsreconscript', (done) => { 
-
-    let inp=path.normalize(path.join(__dirname,path.join('js',path.join('bin','bis_tf_recon.js'))));
-    console.log(inp);
-    let cfg=path.normalize(path.join(__dirname,path.join('config','app.config.js')));
-    console.log(cfg);
-    let out=path.normalize(path.join(__dirname,
-                                     path.join(options.outdir,
-                                               path.join('..',
-                                                         path.join('wasm','lib')))));
-    console.log(out);
-    let cmd=` webpack-cli --entry ${inp} --config ${cfg} --output-path ${out} --output-filename bis_tf_recon.js`;
-    console.log('Command=',cmd);
-    bis_gutil.executeCommandPromise(cmd,__dirname).then( () => {
-        let url=path.join(out,'bisfileserver.js');
-        let stats = fs.statSync(url);
-        let bytes = stats["size"];
-        console.log('____ saved in '+url+' (size='+bytes+')');
-        done();
-    });
-});
-
-gulp.task('packageserverscript', (done)=> { 
+gulp.task('packageserverscripts', (done)=> { 
 
     const gulpzip = require('gulp-zip'),
           rename = require('gulp-rename');
@@ -533,9 +512,8 @@ gulp.task('build',gulp.parallel(
     'webpack',
     gulp.series('commonfiles','tools'),
     gulp.series(gulp.parallel('buildtest',
-                              'createserverscript',
-                              'createtfjsreconscript'),
-                'packageserverscript')));
+                              'createserverscripts'),
+                'packageserverscripts')));
 
 
 
