@@ -389,7 +389,7 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
         var basefile=distdir+"/bisweb_"+m+"_"+getVersionTag(version);
         var zipfile=path.normalize(path.resolve(basefile+suffix));
 
-        let eversion ="2.0.9";
+        let eversion ="4.0.1";
         //        if (m==="linux")
         //          eversion="3.0.10";
         let cmdline='electron-packager '+outdir+' BioImageSuiteWeb --arch=x64 --electron-version '+eversion+' --out '+distdir+' --overwrite '+
@@ -439,7 +439,7 @@ var createPackage=function(dopackage=1,tools=[],indir=_dirname+"../",outdir="bui
     };
 
     if (dopackage>0) {
-        executeCommand("npm update",indir+"/build/web",fn0);
+        executeCommand("npm update -d",indir+"/build/web",fn0);
     } else {
         dopackage=1;
         fn0();

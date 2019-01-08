@@ -236,36 +236,36 @@ if (options.debug!==0) {
 
 // ------------------ JSHint ------------------
 
-var jsHint = function() {
+const jsHint = function() {
 
     for (let i=0;i<internal.lintscripts.length;i++) {
         
         gulp.src(internal.lintscripts[i])
             .pipe(jshint({ sub:true, 
-                           node:true,
-                           unused:true,
-                           undef:true,
-                           globalstrict:true,
-                           esversion:6,
-                           "globals": {
-                               "console": true,
-                               "require": true,
-                               "module" : true,
-                       },
-                         }))
+                              node:true,
+                              unused:true,
+                              undef:true,
+                              globalstrict:true,
+                              esversion:6,
+                              "globals": {
+                                  "console": true,
+                                  "require": true,
+                                  "module" : true,
+                              },
+                            }))
             .pipe(jshint.reporter('default'));
     }
 };
 
-gulp.task('jshint', function() {
-    return jsHint();
-});
 
-var esLint=function() {
+
+const esLint=function() {
     // ESLint ignores files with "node_modules" paths.
     // So, it's best to have gulp ignore the directory as well.
     // Also, Be sure to return the stream from the task;
     // Otherwise, the task may end before the stream has finished.
+
+    console.log("Scannng scripts ",internal.lintscripts.join(','));
     return gulp.src(internal.lintscripts)
     // eslint() attaches the lint output to the "eslint" property
     // of the file object so it can be used by other modules.
@@ -292,24 +292,30 @@ var esLint=function() {
         })).pipe(eslint.format());
 };
 
-gulp.task('eslint', () => {
-    console.log("Scannng scripts ",internal.lintscripts.join(','));
-    return esLint();
-});
 
-gulp.task('watch',function() {
+
+function watch() {
     if (options.eslint)
-        return gulp.watch(internal.lintscripts, gulp.series('eslint'));
+        return gulp.watch(internal.lintscripts, gulp.series(eslint));
 
-    return gulp.watch(internal.lintscripts, gulp.series('jshint'));
-});
+    return gulp.watch(internal.lintscripts, gulp.series(jshint));
+};
 
-gulp.task('make', function(done) {
+function make(done) {
     bis_gutil.executeCommand("make ",__dirname+"/build/wasm",done);
-});
+};
+
+async function createDate() {
+    
+    git.long(function (str) {
+        bis_gutil.createDateFile(path.resolve(options.outdir,'bisdate.json'),str,internal.setup.version);
+        bis_gutil.createDateFile(path.resolve(options.outdir,'../wasm/bisdate.js'),str,internal.setup.version);
+        return Promise.resolve();
+    });
+};
 
 // ------------------------------------------------------------------------
-let singleHTML=function() {
+function singleHTML() {
     let jsname =internal.bislib;
     if (internal.htmlcounter===0)
         jsname=internal.indexlib;
@@ -319,49 +325,29 @@ let singleHTML=function() {
     return out;
 };
 
-gulp.task('singleHTML', function() {
-    return singleHTML();
-});
-
-let singleCSS=function() {
+function singleCSS() {
     let toolname=internal.toolarray[internal.csscounter];
     let maincss    = './web/'+toolname+'.css';
     internal.csscounter+=1;
-    bis_gutil.createCSSCommon([maincss],toolname+'.css',options.outdir);
+    return bis_gutil.createCSSCommon([maincss],toolname+'.css',options.outdir);
 };
 
-gulp.task('singleCSS', function() {
-    return singleCSS();
-});
 
-gulp.task('date', function(done) {
+async function runwebpack() {
     
-    git.long(function (str) {
-        bis_gutil.createDateFile(path.resolve(options.outdir,'bisdate.json'),str,internal.setup.version);
-        bis_gutil.createDateFile(path.resolve(options.outdir,'../wasm/bisdate.js'),str,internal.setup.version);
-        done();
-    });
-
-});
-
-gulp.task('webpack', ) {
-
-    return new Promise
-    gulp.series('date',  () => { 
-        bis_gutil.runWebpack(internal.webpackjobs,
-                             options.internal,
-                             options.external,
-                             __dirname,
-                             options.minify,
-                             options.outdir,0).then( () => {
-                                 console.log(bis_gutil.getTime()+' webpack done num jobs=',internal.webpackjobs.length);
-                                 done();
-                             });
-    }));
-});
+    await createDate();
+    await bis_gutil.runWebpack(internal.webpackjobs,
+                               options.internal,
+                               options.external,
+                               __dirname,
+                               options.minify,
+                               options.outdir,0);
+    console.log(bis_gutil.getTime()+' webpack done num jobs=',internal.webpackjobs.length);
+    return Promise.resolve('done');
+};
 
 
-gulp.task('buildtest',function() {
+function buildtest(done) {
 
     let testoutdir=path.resolve(path.join(options.outdir,'test'));
     console.log('Test output dir=',testoutdir);
@@ -375,16 +361,11 @@ gulp.task('buildtest',function() {
     bis_gutil.createHTML('biswebdisplaytest2',options.outdir,'bislib.js',internal.biscss);
     let maincss2    = './web/biswebdisplaytest.css';
     bis_gutil.createCSSCommon([maincss2],'biswebdisplaytest.css',options.outdir);
+    done();
 
+};
 
-});
-
-
-gulp.task('css', function() {
-    bis_gutil.createCSSCommon(internal.dependcss,internal.biscss,options.outdir);
-});
-
-gulp.task('serve2', function() {
+function serve2() { 
     connect.server(internal.serveroptions);
     console.log(colors.red('++++\n+++++ Server root directory=',internal.serveroptions.root,'\n++++'));
 
@@ -402,16 +383,16 @@ gulp.task('serve2', function() {
                          options.outdir,1).then( () => {
                              console.log('webpack killed');
                          });
-});
+};
 
 
-gulp.task('serveronly', function() {
+function serveronly() { 
     connect.server(internal.serveroptions);
     console.log('++++ Server root directory=',internal.serveroptions.root);
-});
+};
 
 
-gulp.task('commonfiles',function() {
+function commonfiles() { 
     
     console.log(bis_gutil.getTime()+' Copying css,fonts,images etc. .');
     gulp.src([ 'node_modules/bootstrap/dist/css/*']).pipe(gulp.dest(options.outdir+'css/'));
@@ -432,9 +413,9 @@ gulp.task('commonfiles',function() {
     gulp.src('./node_modules/bootstrap/dist/js/bootstrap.min.js').pipe(gulp.dest(options.outdir));
     bis_gutil.createHTML('console',options.outdir,'',internal.biscss)
     return gulp.src([ 'web/manifest.json']).pipe(gulp.dest(options.outdir));
-});
+};
 
-gulp.task('createserver',function(done) {
+function createserver(done) { 
 
     let inp=path.normalize(path.join(__dirname,path.join('js',path.join('bin','bisfileserver.js'))));
     console.log(inp);
@@ -454,9 +435,9 @@ gulp.task('createserver',function(done) {
         console.log('____ saved in '+url+' (size='+bytes+')');
         done();
     });
-});
+};
 
-gulp.task('createtfjsrecon',function(done) {
+function createtfjsrecon(done) { 
 
     let inp=path.normalize(path.join(__dirname,path.join('js',path.join('bin','bis_tf_recon.js'))));
     console.log(inp);
@@ -476,9 +457,9 @@ gulp.task('createtfjsrecon',function(done) {
         console.log('____ saved in '+url+' (size='+bytes+')');
         done();
     });
-});
+};
 
-gulp.task('packageserver',function() {
+function packageserver(done) { 
 
     gulp.src(['./build/wasm/lib/bisfileserver.js',
               './build/wasm/lib/bis_tf_recon.js',
@@ -494,11 +475,11 @@ gulp.task('packageserver',function() {
             let bytes = stats["size"];
             let kbytes=Math.round(bytes/(1024)*10)*0.1;
             console.log('____ zip file created in '+url+' (size='+kbytes+' KB)');
+            done();
         });
+}
 
-});
-
-gulp.task('tools', gulp.series('webpack',function() {
+function tools(cb) { 
     internal.toolarray = options.inpfilename.split(",");
         console.log(bis_gutil.getTime()+colors.green(' Building tools ['+internal.toolarray+']'));
     for (let index=0;index<internal.toolarray.length;index++) {
@@ -508,83 +489,96 @@ gulp.task('tools', gulp.series('webpack',function() {
         singleHTML();
         singleCSS();
     }
-}));
+    cb();
+}
 
-
-gulp.task('buildint', gulp.series('commonfiles',
-                                  'tools',
-                                  'buildtest'));
-
-gulp.task('build', gulp.series('buildint',
-                               'createserver',
-                               'packageserver'));
-
-
-gulp.task('zip', function() {
+function zip(done) {
 
     bis_gutil.createZIPFile(options.zip,options.baseoutput,options.outdir,internal.setup.version,options.distdir);
-});
+    done();
+};
 
-gulp.task('package', function(done) {
-
+function pack(done) {
+    
     bis_gutil.createPackage(options.package,
                             internal.setup.tools,
                             __dirname,options.outdir,internal.setup.version,options.platform,options.distdir,done);
-});
+};
 
-gulp.task('buildpackage', function(done) {
-    gulp.series('buildint',
-                'package',
-                done);
-});
+function clean() { 
 
+    let arr = [options.outdir+'#*',
+               options.outdir+'*~',
+               options.outdir+'*.js*',
+               options.outdir+'*.zip',
+               options.outdir+'*.wasm',
+               options.outdir+'*.png',
+               options.outdir+'*.html*',
+               options.outdir+'*.css*',
+               options.outdir+'css/*',
+               options.outdir+'fonts/*',
+               options.outdir+'images/*',
+               options.outdir+'doc/*',
+               options.outdir+'node_modules',
+               options.outdir+'test',
+               options.distdir+"/*",
+              ];
+    
+    console.log(bis_gutil.getTime()+' Cleaning files ***** .');
+    return del(arr);
+};
 
-gulp.task('clean', function() {
-
-    let cleanfiles = function() {
-        let arr = [options.outdir+'#*',
-                   options.outdir+'*~',
-                   options.outdir+'*.js*',
-                   options.outdir+'*.zip',
-                   options.outdir+'*.wasm',
-                   options.outdir+'*.png',
-                   options.outdir+'*.html*',
-                   options.outdir+'*.css*',
-                   options.outdir+'css/*',
-                   options.outdir+'fonts/*',
-                   options.outdir+'images/*',
-                   options.outdir+'doc/*',
-                   options.outdir+'node_modules',
-                   options.outdir+'test',
-                   options.distdir+"/*",
-                  ];
-        
-        console.log(bis_gutil.getTime()+' Cleaning files ***** .');
-        return del(arr);
-    };
-    return cleanfiles();
-});
-
-gulp.task('jsdoc', function(done) {
+function jsdoc(done) { 
     bis_gutil.jsDOC(__dirname,'config/jsdoc_conf.json',done);
-});
+};
 
-gulp.task('cdoc', function(done) {
+function cdoc(done) { 
     bis_gutil.doxygen(__dirname,'config/Doxyfile',done);
-});
+};
 
-gulp.task('npmpack',function(done) {
+function numpack(done) { 
     bis_gutil.createnpmpackage(__dirname,internal.setup.version,'build/dist',done);
-});
-
-gulp.task('doc', function(done) {
-    gulp.series('jsdoc','cdoc',done);
-
-});
-
-gulp.task('serve', gulp.series('date','serve2'));
+};
 
 
-gulp.task('default', function(callback) {
-    gulp.series('build',callback);
-});
+// -------------------- Straight compound tasks
+function buildint() {
+    return gulp.series(commonfiles,
+                       tools,
+                       buildtest);
+};
+
+gulp.task('build',gulp.parallel(
+    runwebpack,
+    gulp.series(commonfiles,tools),
+    gulp.series(gulp.parallel(buildtest,
+                              createserver,
+                              createtfjsrecon),
+                packageserver)));
+
+
+
+gulp.task('buildpackage', gulp.series(buildint,
+                                      pack));
+
+gulp.task('serve', gulp.series(createDate,serve2));
+
+gulp.task('doc', gulp.series(jsdoc,cdoc));
+
+
+module.exports = {
+    jshint : jsHint,
+    eslint : esLint,
+    createDate : createDate,
+    watch : watch,
+    make: make,
+    runwebpack : runwebpack,
+    tools : tools,
+    zip : zip,
+    package: pack,
+    clean : clean,
+    commonfiles : commonfiles,
+    createserver : createserver,
+    packageserver : packageserver,
+    buildtest: buildtest,
+};
