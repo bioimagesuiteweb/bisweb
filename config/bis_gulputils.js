@@ -332,6 +332,7 @@ var createZIPFile = function(dozip,baseoutput,outdir,version,distdir) {
                      outdir+"images/*",
                      outdir+"test/**/*",
                      outdir+"var/*",
+                     `!${outdir}/node_modules`,
                      `!${outdir}/package.json`,
                      `!${outdir}/*.map`
                     ],
