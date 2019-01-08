@@ -438,19 +438,23 @@ gulp.task('tools', ( (cb) => {
     
     internal.toolarray = options.inpfilename.split(",");
     console.log(bis_gutil.getTime()+colors.green(' Building tools ['+internal.toolarray+']'));
+
+    console.log(bis_gutil.getTime()+colors.green(' Building tool     : common css'));
+    bis_gutil.createCSSCommon(internal.dependcss,internal.biscss,options.outdir);
+
     
     for (let index=0;index<internal.toolarray.length;index++) {
         let toolname=internal.toolarray[index];
         console.log(bis_gutil.getTime()+colors.green(' Building tool '+(index+1)+'/'+internal.toolarray.length+' : '+internal.toolarray[index]));
         internal.jscounter+=1;
-        console.log('Counter=',internal.jscounter);
-
 
         let jsname =internal.bislib;
         if (index===0)
             jsname=internal.indexlib;
         bis_gutil.createHTML(toolname,options.outdir,jsname,internal.biscss);
-        bis_gutil.createCSSCommon(internal.dependcss,internal.toolarray[index]+'.css',options.outdir);
+        let maincss    = './web/'+toolname+'.css';
+        bis_gutil.createCSSCommon([maincss],toolname+'.css',options.outdir);
+        //bis_gutil.createCSSCommon(internal.dependcss,internal.toolarray[index]+'.css',options.outdir);
     }
     cb();
 }));
