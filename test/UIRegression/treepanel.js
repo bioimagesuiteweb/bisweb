@@ -18,7 +18,29 @@ export default class Page {
         await t.click(closeButton);
     }
 
-    async makeDummyStructure () {
+    async loadSampleData() {
+        const treePanelButton = Selector('button').withText('Open File Tree Panel');
+        const studyLoadButton = Selector('button').withText('Import study from directory');
+        await t
+            .click(treePanelButton)
+            .click(studyLoadButton);
+
+        //log into server, then click [Root] and type the path of the sample data
+        const connectButton = Selector('button').withText('Connect');
+        const rootButton = Selector('button').withText('[Root]');
+        const fileNavbar = Selector('.bisweb-file-navbar').find('input');
+        const selectDirectoryButton = Selector('button').withText('Select Directory');
+
+        await t
+            .click(connectButton)
+            .click(rootButton)
+            .typeText(fileNavbar, 'tmp/testdata')
+            .click(selectDirectoryButton)
+            .takeScreenshot('load_sample_data/PanelWithData.png');
+
+    }
+
+    async makeDummyStructure() {
         const mkdirPromise = (dirname) => {
             return new Promise( (resolve, reject) => {
                 fs.mkdir(dirname, (err) => {
@@ -26,7 +48,7 @@ export default class Page {
                     resolve();
                 });
             });
-        }
+        };
 
         const writePromise = (filename) => {
             return new Promise( (resolve, reject) => {
@@ -36,7 +58,7 @@ export default class Page {
                     resolve();
                 });
             });
-        }
+        };
 
         mkdirPromise('/tmp/testdata')
         .then( () => { mkdirPromise('/tmp/testdata/anat'); })
@@ -46,7 +68,18 @@ export default class Page {
         .then( () => { writePromise('/tmp/testdata/anat/b.nii.gz'); })
         .then( () => { writePromise('/tmp/testdata/anat/c.nii.gz'); })
         .then( () => { writePromise('/tmp/testdata/func/d.nii.gz'); })
-        .catch( (err) => { console.log('Encountered an error making folder structure', err); process.exit(1); })
+        .catch( (err) => { console.log('Encountered an error making folder structure', err); process.exit(1); });
+    }
+
+    async openFolders() {
+        const anatButton = Selector('.jstree-anchor').withText('anat');
+        const diffButton = Selector('.jstree-anchor').withText('diff');
+        const funcButton = Selector('.jstree-anchor').withText('func');
+
+        await t
+            .click(anatButton)
+            .click(diffButton)
+            .click(funcButton);
     }
 }
 
@@ -75,25 +108,82 @@ test('Open Panel', async t => {
 //TODO: no longer showing file source selector?
 test('Load Sample Data', async t => {
     const page = new Page();
-    const treePanelButton = Selector('button').withText('Open File Tree Panel');
-    const studyLoadButton = Selector('button').withText('Import study from directory');
-
+    
     await page.closePopup();
-    await t
-        .click(treePanelButton)
-        .click(studyLoadButton);
-
-    //log into server, then click [Root] and type the path of the sample data
-    const connectButton = Selector('button').withText('Connect');
-    const rootButton = Selector('button').withText('[Root]');
-    const fileNavbar = Selector('.bisweb-file-navbar').find('input');
-    const selectDirectoryButton = Selector('button').withText('Select Directory');
+    await page.loadSampleData();
 
     await t
-        .click(connectButton)
-        .click(rootButton)
-        .typeText(fileNavbar, 'tmp/testdata')
-        .click(selectDirectoryButton)
         .takeScreenshot('load_sample_data/PanelWithData.png');
 
+});
+
+test('Expand Tree Nodes', async t => {
+    const page = new Page();
+
+    await page.closePopup();
+    await page.loadSampleData();
+
+    const anatButton = Selector('.jstree-anchor').withText('anat');
+    const diffButton = Selector('.jstree-anchor').withText('diff');
+    const funcButton = Selector('.jstree-anchor').withText('func');
+
+    await t
+        .click(anatButton)
+        .click(diffButton)
+        .click(funcButton)
+        .takeScreenshot('expand_tree_node/ExpandedTreeNodes.png');
+});
+
+test('Tag Images', async t => {
+    const page = new Page();
+
+    await page.closePopup();
+    await page.loadSampleData();
+
+    const aButton = Selector('.jstree-anchor').withText('a.nii.gz');
+    const bButton = Selector('.jstree-anchor').withText('b.nii.gz');
+
+    const setTagItem = Selector('a').withText('Set Tag');
+    const tagPopoverControl = Selector('.popover-content').find('.form-control');
+    const sagittalPopoverOption = Selector('option').withText('Sagittal');
+    const coronalPopoverOption = Selector('option').withText('Coronal');
+    const tagElementsMenu = Selector('.bisweb-elements-menu');
+
+    const exportStudyButton = Selector('button').withText('Export study');
+    const rootButton = Selector('button').withText('[Root]');
+    const fileNavbar = Selector('.bisweb-file-navbar').find('input');
+    const saveStudyButton = Selector('button').withText('Save');
+
+    //open the folders and tag items a and b
+    await page.openFolders();
+    await t
+        .rightClick(aButton)
+        .click(setTagItem)
+        .click(tagPopoverControl)
+        .click(coronalPopoverOption)
+        .takeScreenshot(tagElementsMenu, 'tag_images/MenuWithCoronalTag.png')
+        .click(bButton)
+        .click(tagPopoverControl)
+        .click(sagittalPopoverOption);
+
+    await t
+        .click(exportStudyButton)
+        .click(rootButton)
+        .click(fileNavbar)
+        .typeText(fileNavbar, 'tmp/testdata/exportedStudy.json')
+        .click(saveStudyButton);
+
+    const importStudyButton = Selector('button').withText('Import study from JSON');
+    const loadStudyButton = Selector('button').withText('Load');
+    await t
+        .click(importStudyButton)
+        .click(rootButton)
+        .click(fileNavbar)
+        .typeText(fileNavbar, 'tmp/testdata/exportedStudy.json')
+        .click(loadStudyButton);
+
+    //take a screenshot of the right click menu for the a button to see whether it still has the coronal tag
+    await t
+        .click(aButton)
+        .takeScreenshot('tag_images/AButtonWithCoronalTag.png');
 });
