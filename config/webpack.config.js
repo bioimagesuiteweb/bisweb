@@ -51,6 +51,8 @@ if (!found) {
     process.exit(1);
 }
 
+output=output.trim().replace(/_full.js/g,'');
+
 
 // -----------------------------------------------------------------------------------
 // Extra files for internal and external

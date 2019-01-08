@@ -128,7 +128,7 @@ var executeCommandPromise=function(command,dir,extra="") {
 
 // -------------------------------------------------------------
 
-var executeCommandList=function(cmdlist,indir,done=0) {
+var executeCommandList=function(cmdlist,indir,done=0,extra=0) {
 
     if (done===0) {
         for (let i=0;i<cmdlist.length;i++) {
@@ -142,7 +142,7 @@ var executeCommandList=function(cmdlist,indir,done=0) {
         if (i==cmdlist.length) {
             done();
         } else {
-            executeCommand(cmdlist[i],indir,execlist,0,i);
+            executeCommand(cmdlist[i],indir,execlist,extra,i);
             ++i;
         }
     };
@@ -256,23 +256,28 @@ var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,
 
     if (watch!==0)
         cmd+=" --watch";
+
+    let cmdlist = [];
+    cmdlist.push(cmd);
     
     if (minify) {
         let ijob=outdir+tmpout;
         let ojob=outdir+out;
 
+        let cmd2=`uglifyjs ${ijob} -c  -o ${ojob} --keep-classnames`;
+        if (debug)
+            cmd2+=' --verbose';
+        cmdlist.push(cmd2);
+        
         if (os.platform()==='win32') {
-
-            //ijob=ijob.replace(/\//g,'\\');
-            //ojob=ojob.replace(/\//g,'\\');
-            cmd = cmd + ` & uglifyjs ${ijob} -c  -o ${ojob} & dir -p ${ijob} ${ojob}`;
+            cmdlist.push(`dir -p ${ijob} ${ojob}`);
         } else {
-            cmd = cmd + ` ; uglifyjs ${ijob} -c  -o ${ojob} ; ls -lrth ${ijob} ${ojob}`;
+            cmdlist.push(`ls -lrth ${ijob} ${ojob}`);
         }
     }
     
 
-    return cmd;
+    return cmdlist;
 };
 
 
@@ -283,8 +288,12 @@ var runWebpack=function(joblist,internal,external,
     for (let i=0;i<joblist.length;i++) {
         let s=joblist[i];
         console.log(getTime()+" "+colors.red('++++ Starting webpack job=',i,s.name));
-        let cmd=getWebpackCommand(s.path+s.name,internal,external,s.name,indir,minify,outdir,debug,watch);
-        p.push(executeCommandPromise(cmd,indir,i));
+        let cmdlist=getWebpackCommand(s.path+s.name,internal,external,s.name,indir,minify,outdir,debug,watch);
+        console.log('Cmdlist=',JSON.stringify(cmdlist,null,2));
+
+        p.push(new Promise( (resolve,reject) => {
+            executeCommandList(cmdlist,indir,resolve,i);
+        }));
     }
     return Promise.all(p);
 };
