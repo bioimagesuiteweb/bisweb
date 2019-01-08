@@ -56,7 +56,6 @@ fixture `Tree Panel Tests`.page `${webpage}`
     const page = new Page();
     await page.makeDummyStructure();
 }).after( async () => {
-    //console.log('after');
     let p = child_process.exec('rm -rf /tmp/testdata');
     console.log('deleted directories', p.exitCode);
 }); 
@@ -73,6 +72,7 @@ test('Open Panel', async t => {
         .expect(studyLoadButton.visible).ok();
 });
 
+//TODO: no longer showing file source selector?
 test('Load Sample Data', async t => {
     const page = new Page();
     const treePanelButton = Selector('button').withText('Open File Tree Panel');
@@ -81,5 +81,19 @@ test('Load Sample Data', async t => {
     await page.closePopup();
     await t
         .click(treePanelButton)
-        .click(studyLoadButton)
+        .click(studyLoadButton);
+
+    //log into server, then click [Root] and type the path of the sample data
+    const connectButton = Selector('button').withText('Connect');
+    const rootButton = Selector('button').withText('[Root]');
+    const fileNavbar = Selector('.bisweb-file-navbar').find('input');
+    const selectDirectoryButton = Selector('button').withText('Select Directory');
+
+    await t
+        .click(connectButton)
+        .click(rootButton)
+        .typeText(fileNavbar, 'tmp/testdata')
+        .click(selectDirectoryButton)
+        .takeScreenshot('load_sample_data/PanelWithData.png');
+
 });
