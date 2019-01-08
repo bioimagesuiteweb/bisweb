@@ -556,7 +556,6 @@ class FileTreePanel extends HTMLElement {
                 bis_genericio.write(filepath, stringifiedFiles, false);
             });
 
-<<<<<<< HEAD
             //all BIDS files are presumably created at the same time so just use the timestamp for one of them
             bis_genericio.getFileStats(this.baseDirectory).then( (stats) => {
             	let date = new Date(stats.birthtimeMs);
@@ -576,8 +575,6 @@ class FileTreePanel extends HTMLElement {
 	            bis_genericio.write(filepath, stringifiedFiles, false);
             });
             
-=======
->>>>>>> ec64fd83fa95a15bbd83463607f600ae8f16ae77
         } catch(e) {
             console.log('an error occured while saving to disk', e);
             bis_webutil.createAlert('An error occured while saving the study files to disk.', false);
