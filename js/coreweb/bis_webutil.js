@@ -1330,6 +1330,7 @@ const webutil = {
         //https://stackoverflow.com/questions/807878/javascript-that-executes-after-page-load
         if (window.attachEvent) {
             window.attachEvent('onload', clb);
+            window.attachEvent('onerror', clb);
         } else {
             if (window.onload) {
                 let currentOnLoad = window.onload;
@@ -1338,8 +1339,10 @@ const webutil = {
                     clb();
                 };
                 window.onload = newOnload;
+                window.onerror = newOnload;
             } else {
                 window.onload = clb;
+                window.onerror = clb;
             }
         }
     },

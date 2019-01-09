@@ -35,6 +35,7 @@ class FileTreePanel extends HTMLElement {
         this.viewerappid = this.getAttribute('bis-viewerapplicationid');
 
         bis_webutil.runAfterAllLoaded(() => {
+			console.log('run after all loaded');
             userPreferences.safeGetItem("internal").then((f) => {
                 this.viewer = document.querySelector(this.viewerid);
                 this.viewertwo = document.querySelector(this.viewertwoid) || null;
@@ -555,6 +556,25 @@ class FileTreePanel extends HTMLElement {
                 bis_genericio.write(filepath, stringifiedFiles, false);
             });
 
+            //all BIDS files are presumably created at the same time so just use the timestamp for one of them
+            bis_genericio.getFileStats(this.baseDirectory).then( (stats) => {
+            	let date = new Date(stats.birthtimeMs);
+            	let dataContainer = {
+            		'date' : parseDate(date),
+            		'study' : reconstructedTree
+            	}
+
+            	let stringifiedFiles = JSON.stringify(dataContainer);
+	            //set the correct file extension if it isn't set yet
+	            let splitPath = filepath.split('.');
+	            if (splitPath.length < 2 || splitPath[1] !== 'JSON' || splitPath[1] !== 'json') {
+	                splitPath[1] = 'json';
+            	}
+
+	            filepath = splitPath.join('.');
+	            bis_genericio.write(filepath, stringifiedFiles, false);
+            });
+            
         } catch(e) {
             console.log('an error occured while saving to disk', e);
             bis_webutil.createAlert('An error occured while saving the study files to disk.', false);
@@ -744,6 +764,7 @@ class FileTreePanel extends HTMLElement {
         return parsedDate + '.json';
     }
 }
+
 
 /**
  * Recursive function to fill out a tree node then fill out the nodes below it. If called on the root node it will construct the whole tree.
