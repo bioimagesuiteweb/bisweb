@@ -1,5 +1,7 @@
 "use strict";
 
+/* global window,document */
+
 window.onload = function() {
     
     // Get access to the computational tools via the export element

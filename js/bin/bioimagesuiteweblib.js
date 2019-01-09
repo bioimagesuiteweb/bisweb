@@ -1,4 +1,4 @@
-
+'use strict';
 
 if (global.bioimagesuiteweblib !== false) {
     global.bioimagesuiteweblib = true;

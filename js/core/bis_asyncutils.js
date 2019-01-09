@@ -1,3 +1,4 @@
+'use strict';
 
 const util = require('bis_util');
 

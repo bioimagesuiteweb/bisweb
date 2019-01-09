@@ -14,10 +14,13 @@ mkdir -p ${DIR}/dist
 
 WASMDIR=${DIR}/../various/wasm/
 
-cp ${WASMDIR}/libbiswasm_wasm.js ${DIR}/web
-cp ${WASMDIR}/libbiswasm.js ${DIR}/wasm
-cp ${WASMDIR}/libbiswasm.wasm ${DIR}/wasm
-cp ${WASMDIR}/libbiswasm_wrapper.js ${DIR}/wasm
+cp ${WASMDIR}/libbiswasm_wasm.js ${DIR}/web/ 
+cp ${WASMDIR}/libbiswasm_nongpl_wasm.js ${DIR}/web/ 
+cp ${WASMDIR}/libbiswasm.js    ${DIR}/wasm/
+cp ${WASMDIR}/libbiswasm_nongpl.js ${DIR}/wasm/
+cp ${WASMDIR}/libbiswasm.wasm ${DIR}/wasm/
+cp ${WASMDIR}/libbiswasm_nongpl.wasm ${DIR}/wasm/
+cp ${WASMDIR}/libbiswasm_wrapper.js ${DIR}/wasm/
 
 echo "------------------------------------------------------------------------------------"
 

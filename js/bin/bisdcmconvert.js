@@ -1,3 +1,5 @@
+"use strict";
+
 require('../../config/bisweb_pathconfig.js');
 const exec = require('child_process').exec;
 const spawn = require('child_process').spawn;

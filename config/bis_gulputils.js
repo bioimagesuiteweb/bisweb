@@ -20,19 +20,19 @@
 "use strict";
 
 let colors=require('colors/safe'),
-    htmlreplace = require('gulp-html-replace'),
-    concatCss = require('gulp-concat-css'),
-    child_process = require('child_process'),
     fs=require("fs"),
     os=require("os"),
     path=require('path'),
-    gulpzip = require('gulp-zip'),
-    template=require('gulp-template'),
-    del = require('del'),
-    replace = require('gulp-replace'),
-    rimraf= require('rimraf'),
-    gulp=require("gulp"),
-    rename = require('gulp-rename');
+    gulp=require("gulp");
+
+// On demand;
+let htmlreplace=null,
+    replace=null,
+    concatCss = null,
+    child_process=null;
+
+
+
 
 
 var getTime=function(nobracket=0) {
@@ -71,6 +71,10 @@ var getVersionTag=function(version) {
 };
 
 var executeCommand=function(command,dir,done=0,error=0,extra=0) {
+
+    if (child_process===null)
+        child_process = require('child_process');
+    
     dir = dir || __dirname;
     console.log(getTime()+" "+colors.green(dir+">")+colors.cyan(command+'\n'));
 
@@ -124,7 +128,7 @@ var executeCommandPromise=function(command,dir,extra="") {
 
 // -------------------------------------------------------------
 
-var executeCommandList=function(cmdlist,indir,done=0) {
+var executeCommandList=function(cmdlist,indir,done=0,extra=0) {
 
     if (done===0) {
         for (let i=0;i<cmdlist.length;i++) {
@@ -138,7 +142,7 @@ var executeCommandList=function(cmdlist,indir,done=0) {
         if (i==cmdlist.length) {
             done();
         } else {
-            executeCommand(cmdlist[i],indir,execlist,0,i);
+            executeCommand(cmdlist[i],indir,execlist,extra,i);
             ++i;
         }
     };
@@ -148,6 +152,11 @@ var executeCommandList=function(cmdlist,indir,done=0) {
 
 var createHTML=function(toolname,outdir,libjs,commoncss) {
 
+    if (htmlreplace===null)
+        htmlreplace = require('gulp-html-replace');
+    if (replace===null)
+        replace = require('gulp-replace');
+    
     if (toolname==="bisjs")
         return;
     
@@ -158,7 +167,7 @@ var createHTML=function(toolname,outdir,libjs,commoncss) {
     var alljs;
     if (libjs!=='') {
         if (toolname!=="index") {
-            alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'bootstrap.min.js', 'libbiswasm_wasm.js', libjs  ];
+            alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'three.min.js', 'bootstrap.min.js', 'libbiswasm_wasm.js', libjs  ];
         } else {
             alljs=[ 'jquery.min.js', 'bootstrap.min.js', libjs  ];
             bundlecss=[ "./bootstrap_dark_edited.css" ];
@@ -187,6 +196,12 @@ var createHTML=function(toolname,outdir,libjs,commoncss) {
 
 var createCSSCommon=function(dependcss,out,outdir) {
 
+    if (replace===null)
+        replace = require('gulp-replace');
+    if (concatCss===null)
+        concatCss = require('gulp-concat-css');
+
+    
     var bundlecss  = out;
 
     console.log(getTime(),colors.green('Concatenating ',dependcss.join(),' to ',out));
@@ -216,9 +231,8 @@ var createDateFile=function(datefile,hash='',version='') {
 // ------------------------------------------------
 // Webpack
 // ------------------------------------------------
-var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,watch) {
+var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,debug,watch) {
 
-    let extracmd="";
     let join="/";
     if (os.platform()==='win32') {
         outdir=outdir.replace(/\//g,'\\');
@@ -226,21 +240,6 @@ var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,
         join="\\";
     }
 
-    if (internal) {
-        if (os.platform()==='win32') {
-            extracmd=`SET BISWEB_INTERNAL=${internal}& `;
-        } else {
-            extracmd=`export BISWEB_INTERNAL=${internal}; `;
-        }
-    }
-
-    if (external) {
-        if (os.platform()==='win32') {
-            extracmd+=`SET BISWEB_EXTERNAL=${external}& `;
-        } else {
-            extracmd+=`export BISWEB_EXTERNAL=${external}; `;
-        }
-    }
 
     if (watch || out==='bisweb-sw.js' )
         minify=0;
@@ -249,51 +248,70 @@ var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,
     if (minify)
         tmpout=tmpout+'_full.js';
     
-    if (os.platform()==='win32')
-        extracmd+=`SET BISWEB_OUT=${out}&`;
+    let cmd='webpack-cli --entry '+source+' --output-filename '+tmpout+' --output-path '+outdir+' --config config'+join+'webpack.config_devel.js';
+    cmd+=' --sort-modules-by size ';
+    if (debug)
+        cmd+=' --display-modules --display-entrypoints --display-exclude';
     else
-        extracmd+=`export BISWEB_OUT=${out}; `;
+        cmd+=' --display-max-modules 20';
     
-    
-    
-    let cmd=extracmd+' webpack-cli --entry '+source+' --output-filename '+tmpout+' --output-path '+outdir+' --config config'+join+'webpack.config_devel.js';
+    if (tmpout==='bislib.js') 
+        cmd+=' --bisinternal '+internal+' --bisexternal '+external;
+    else
 
+    
     if (watch!==0)
         cmd+=" --watch";
+
+    let cmdlist = [];
+    cmdlist.push(cmd);
+
+    let ojob=outdir+out;
     
     if (minify) {
         let ijob=outdir+tmpout;
-        let ojob=outdir+out;
-
+        let cmd2=`uglifyjs ${ijob} -c  -o ${ojob} --keep-classnames`;
+        if (debug)
+            cmd2+=' --verbose';
+        cmdlist.push(cmd2);
+        
         if (os.platform()==='win32') {
-
-            //ijob=ijob.replace(/\//g,'\\');
-            //ojob=ojob.replace(/\//g,'\\');
-            cmd = cmd + ` & uglifyjs ${ijob} -c  -o ${ojob} & dir -p ${ijob} ${ojob}`;
+            cmdlist.push(`dir -p ${ijob} ${ojob}`);
         } else {
-            cmd = cmd + ` ; uglifyjs ${ijob} -c  -o ${ojob} ; ls -lrth ${ijob} ${ojob}`;
+            cmdlist.push(`ls -lrth ${ijob} ${ojob}`);
+        }
+    } else {
+        if (os.platform()==='win32') {
+            cmdlist.push(`dir -p ${ojob}`);
+        } else {
+            cmdlist.push(`ls -lrth $ojob}`);
         }
     }
     
 
-    return cmd;
+    return cmdlist;
 };
 
 
 var runWebpack=function(joblist,internal,external,
-                        indir,minify,outdir,watch=0) {
+                        indir,minify,outdir,debug,watch=0) {
 
     let p = [ ];
     for (let i=0;i<joblist.length;i++) {
         let s=joblist[i];
-        console.log('++++\nStarting webpack job=',i,s.name);
-        let cmd=getWebpackCommand(s.path+s.name,internal,external,s.name,indir,minify,outdir,watch);
-        p.push(executeCommandPromise(cmd,indir,i));
+        console.log(getTime()+" "+colors.red('++++ Starting webpack job=',i,s.name));
+        let cmdlist=getWebpackCommand(s.path+s.name,internal,external,s.name,indir,minify,outdir,debug,watch);
+        p.push(new Promise( (resolve) => {
+            executeCommandList(cmdlist,indir,resolve,i);
+        }));
     }
     return Promise.all(p);
 };
 
 var createZIPFile = function(dozip,baseoutput,outdir,version,distdir) {
+
+    const gulpzip = require('gulp-zip'),
+          del = require('del');
 
     console.log('dozip=',dozip);
     
@@ -314,6 +332,7 @@ var createZIPFile = function(dozip,baseoutput,outdir,version,distdir) {
                      outdir+"images/*",
                      outdir+"test/**/*",
                      outdir+"var/*",
+                     `!${outdir}/node_modules`,
                      `!${outdir}/package.json`,
                      `!${outdir}/*.map`
                     ],
@@ -333,6 +352,8 @@ var createZIPFile = function(dozip,baseoutput,outdir,version,distdir) {
 // Packaging stuff
 // -----------------------------------------------------------------------------------------
 var inno=function(tools, version, indir , distdir ) {
+
+    const template=require('gulp-template');
     let obj=tools;
     
     var i_odir    = path.resolve(indir, distdir);
@@ -389,7 +410,7 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
         var basefile=distdir+"/bisweb_"+m+"_"+getVersionTag(version);
         var zipfile=path.normalize(path.resolve(basefile+suffix));
 
-        let eversion ="2.0.9";
+        let eversion ="4.0.1";
         //        if (m==="linux")
         //          eversion="3.0.10";
         let cmdline='electron-packager '+outdir+' BioImageSuiteWeb --arch=x64 --electron-version '+eversion+' --out '+distdir+' --overwrite '+
@@ -439,7 +460,7 @@ var createPackage=function(dopackage=1,tools=[],indir=_dirname+"../",outdir="bui
     };
 
     if (dopackage>0) {
-        executeCommand("npm update",indir+"/build/web",fn0);
+        executeCommand("npm update -d",indir+"/build/web",fn0);
     } else {
         dopackage=1;
         fn0();
@@ -461,6 +482,10 @@ var doxygen=function(indir,conffile,done) {
 
 var createnpmpackage=function(indir,version,in_outdir,done) {
 
+    const rimraf= require('rimraf'),
+          rename = require('gulp-rename');
+
+    
     // Step 1 copy file
     // make directories
     let odir=path.resolve(path.join(in_outdir,'bisweb'));
@@ -481,6 +506,7 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
                `${indir}/build/web/libbiswasm*wasm.js`,
                `${indir}/build/web/webcomponents-lite.js`,
                `${indir}/build/web/jquery.min.js`,
+               `${indir}/build/web/three.min.js`,
                `${indir}/build/web/bootstrap.min.js`,
                `${indir}/build/web/bislib.css`,
              ]).pipe(gulp.dest(distDir));
@@ -524,7 +550,7 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
     console.log('++++');
     console.log('++++ Package.json file created in',output);
     console.log('++++');
-    
+
     // step 3
     // Master file
     let txt2=`window.biswebpack=require('./libbiswasm_wasm.js');\nmodule.exports=require('./bislib.js')();\n`;

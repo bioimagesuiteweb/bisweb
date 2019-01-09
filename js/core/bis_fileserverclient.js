@@ -1,3 +1,4 @@
+'use strict';
 
 const wsUtilInitialPort = require('bis_wsutil').initialPort;
 const wsUtilPayloadSize = require('bis_wsutil').maxPayloadSize;
@@ -566,7 +567,7 @@ class BisFileServerClient extends BisBaseServerClient {
 
         
 
-    uploadFileHelper(url,body,isbinary=false,checksum,successCB,failureCB,packetSize=400000) {
+    uploadFileHelper(url,body,isbinary,checksum,successCB,failureCB,packetSize=400000) {
 
         let fileTransferSocket=null;
         uploadcount=uploadcount+1;

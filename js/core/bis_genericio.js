@@ -15,7 +15,6 @@
  
  ENDLICENSE */
 
-/* global process,*/
 "use strict";
 
 /** 

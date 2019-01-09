@@ -453,7 +453,7 @@ if (genericio.getmode() !== 'browser')  {
 } else {
     try {
         // Web worker gives an error
-        Window.biswebpref=expobj;
+        window.biswebpref=expobj;
     } catch (e) {
         //        console.log("++++ In web worker, no export");
     }

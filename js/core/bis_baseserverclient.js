@@ -1,4 +1,4 @@
-
+'use strict';
 /**
   * This is an abstract base class for a server client 
   * It is extended for both the BioImage Suite File Server Client

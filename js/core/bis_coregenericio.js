@@ -79,7 +79,7 @@ var createBuffer = function (cdata) {
 
 if (inelectron) {
     fs = window.BISELECTRON.fs;
-    rimraf = window.BISELECTRON.rimraf,
+    rimraf = window.BISELECTRON.rimraf;
     zlib = window.BISELECTRON.zlib;
     path = window.BISELECTRON.path;
     os = window.BISELECTRON.os;
@@ -948,7 +948,7 @@ let getimagepath=function() {
         let index=scope.lastIndexOf("/");
         if (scope.indexOf("external")>0)  {
             scope=scope.substr(0,index)+"/../src/web/images";
-            console.log('external=',external,scope);
+            console.log('external=',scope);
         } else {
             scope=scope.substr(0,index)+"/images";
         }

@@ -1,6 +1,6 @@
 'use strict';
 
-const AWS = require('aws-sdk');
+//const AWS = require('aws-sdk');
 const AWSParameters = require('../../web/aws/awsparameters.js');
 const bis_webutil = require('bis_webutil.js');
 const bisweb_simplefiledialog = require('bisweb_simplefiledialog.js');
@@ -8,6 +8,7 @@ const BaseServerClient = require('bis_baseserverclient.js');
 const bis_genericio = require('bis_genericio.js');
 const pako = require('pako');
 const localforage = require('localforage');
+let AWS=null;
 const $ = require('jquery');
 
 /**
@@ -64,6 +65,10 @@ class AWSModule extends BaseServerClient {
         bis_webutil.runAfterAllLoaded(() => {
             this.fileDisplayModal = new bisweb_simplefiledialog('Bucket Contents');
             this.fileDisplayModal.fileListFn = this.changeDirectory.bind(this);
+            bis_webutil.loadJavaScriptModule('https://sdk.amazonaws.com/js/aws-sdk-2.283.1.min.js').then( (m) => {
+                console.log('--- '+m);
+                AWS=window.AWS;
+            });
         });
     }
 
@@ -657,7 +662,7 @@ class AWSModule extends BaseServerClient {
         AWSParameters.updateBucketInfo(newBucketInfo);
         this.refreshCredentials = true;
     }
-
+    
     /**
      * Takes the raw data returned by S3.listObjectsV2 and turns it into a nested file tree that bisweb_filedialog can render.
      *
