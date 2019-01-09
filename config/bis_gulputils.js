@@ -250,20 +250,19 @@ var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,
     
     let cmd='webpack-cli --entry '+source+' --output-filename '+tmpout+' --output-path '+outdir+' --config config'+join+'webpack.config_devel.js';
     cmd+=' --sort-modules-by size ';
+
     if (debug)
         cmd+=' --display-modules --display-entrypoints --display-exclude';
     else
         cmd+=' --display-max-modules 20';
     
-    if (tmpout==='bislib.js') 
+    if (tmpout.indexOf('bislib')>=0)
         cmd+=' --bisinternal '+internal+' --bisexternal '+external;
     
     if (watch!==0)
         cmd+=" --watch";
 
-    let cmdlist = [];
-    cmdlist.push(cmd);
-
+    let cmdlist = [ cmd ];
     let ojob=outdir+out;
     
     if (minify) {
