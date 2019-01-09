@@ -184,6 +184,14 @@ if (options.external) {
 // ---------------------------
 
 internal.setup=require('./web/images/tools.json');
+
+// Let example tools
+internal.extra=require('./web/images/examples.json');
+let keys2=Object.keys(internal.extra.tools);
+for (let i=0;i<keys2.length;i++) {
+    internal.setup.tools[keys2[i]]=internal.extra.tools[keys2[i]];
+}
+
 let keys=Object.keys(internal.setup.tools);
 console.log(bis_gutil.getTime()+colors.cyan(' Config versiontag='+bis_gutil.getVersionTag(internal.setup.version)+' tools='+keys));
 
@@ -448,19 +456,27 @@ gulp.task('tools', ( (cb) => {
 
     console.log(bis_gutil.getTime()+colors.green(' Building tool     : common css'));
     bis_gutil.createCSSCommon(internal.dependcss,internal.biscss,options.outdir);
-
     
     for (let index=0;index<internal.toolarray.length;index++) {
         let toolname=internal.toolarray[index];
-        console.log(bis_gutil.getTime()+colors.green(' Building tool '+(index+1)+'/'+internal.toolarray.length+' : '+internal.toolarray[index]));
+        let docss = true;
+        if (toolname!=='index') {
+            if (internal.setup.tools[toolname].nocss)
+                docss=false;
+        }
+        console.log(bis_gutil.getTime()+colors.green(' Building tool '+(index+1)+'/'+internal.toolarray.length+' : '+toolname));
         internal.jscounter+=1;
 
         let jsname =internal.bislib;
         if (index===0)
             jsname=internal.indexlib;
         bis_gutil.createHTML(toolname,options.outdir,jsname,internal.biscss);
-        let maincss    = './web/'+toolname+'.css';
-        bis_gutil.createCSSCommon([maincss],toolname+'.css',options.outdir);
+        if (docss) {
+            let maincss    = './web/'+toolname+'.css';
+            bis_gutil.createCSSCommon([maincss],toolname+'.css',options.outdir);
+        } else {
+            gulp.src([ 'web/'+toolname+'.js']).pipe(gulp.dest(options.outdir));
+        }
         //bis_gutil.createCSSCommon(internal.dependcss,internal.toolarray[index]+'.css',options.outdir);
     }
     cb();

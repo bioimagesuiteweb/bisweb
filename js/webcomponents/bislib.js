@@ -58,7 +58,6 @@ require("bisweb_dicomimportelement.js");
 
 const exportobj=require('bisweb_exportobject');
 
-export default function get() {
-    return exportobj;
-}
+export default exportobj;
+
 

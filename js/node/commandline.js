@@ -167,16 +167,15 @@ let loadParse = function (args, toolname) {
         
         // Parse From Command Line
         mod.loadInputs(program).then( () => {
-            console.log('oooo\noooo Loaded.');
+            console.log('oooo\noooo Loaded all inputs.');
             let modArguments = mod.parseValuesAndAddDefaults(program, loadedArguments);
             console.log('oooo\noooo Parsed :',JSON.stringify(modArguments));
             if (mod.typeCheckParams(modArguments)) {
-                console.log('oooo\noooo TypeCheked.\noooo');
                 mod.directInvokeAlgorithm(modArguments).then(() => {
                     console.log('oooo -------------------------------------------------------');
                     mod.storeCommentsInOutputs(args.join(" "),modArguments,baseutils.getSystemInfo(biswrap));
                     mod.saveOutputs(program).then(() => {
-                        console.log('oooo\noooo Saved.');
+                        console.log('oooo\noooo Saved outputs.');
                         resolve( 'Done Saving');
                     }).catch((e) => {
                         reject('An error occured saving'+e);

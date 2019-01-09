@@ -3,10 +3,11 @@
 /* global $,document,window */
 
 
-let extra="/images/tfjsexample";
-extra="../test/testdata/tfjs64";
-
-
+let extra="test/testdata/tfjs64";
+// In development mode
+if (window.BIS) {
+    extra="../"+extra;
+}
 
 let getScope=function() {
     
@@ -99,9 +100,13 @@ window.onload = function() {
     $('#compute').click( () => {
         fn('sample1');
     });
-    
-    $('#compute3d').click( () => {
-        fn('sample3d');
-    });
+
+    if (window.BIS) { 
+        $('#compute3d').click( () => {
+            fn('sample3d');
+        });
+    } else {
+        $('#compute3d').remove();
+    }
 
 };

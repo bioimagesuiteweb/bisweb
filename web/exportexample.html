@@ -20,27 +20,51 @@
 <html lang="en">
 
 <head>
-    <title>Test</title>
+    <title>Export Example</title>
 
-    <script src="https://bioimagesuiteweb.github.io/unstableapp/webcomponents-lite.js"></script>
-    <script src="https://bioimagesuiteweb.github.io/unstableapp/jquery.min.js"></script>
-    <script src="https://bioimagesuiteweb.github.io/unstableapp/bootstrap.min.js"></script>
-    <script src="https://bioimagesuiteweb.github.io/unstableapp/libbiswasm_wasm.js"></script>
-    <script src="https://bioimagesuiteweb.github.io/unstableapp/bislib.js"></script>
-    <link rel="stylesheet" type="text/css" href="https://bioimagesuiteweb.github.io/unstableapp/bislib.css">
+    <link rel="icon" href="images/favicon.ico">
+
+    <!-- begin webpack/gulp modifications -->
+    <!-- external css files -->
+    <!-- build:css -->
+    <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_dark.css">
+    <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap-colorselector.css">
+    <link rel="stylesheet" type="text/css" href="../node_modules/jstree/dist/themes/default/style.css">
+    <link rel="stylesheet" type="text/css" href="biscommon.css">
+    <!-- endbuild -->
+
+    <!-- all javascript files -->
+    <!-- build:js -->
+    <script src="bis.js"></script>
+    <script src="../build/web/webcomponents-lite.js"></script>
+    <script src="../build/web/jquery.min.js"></script>
+    <script src="../build/web/three.min.js"></script>
+    <script src="../build/web/bootstrap.min.js"></script>
+    <script src="../build/web/libbiswasm_wasm.js"></script>
+    <script src="../build/web/bislib.js"></script>
+    <!-- endbuild -->
+    <!-- end webpack/gulp modifications -->
 
     <script src="./exportexample.js"></script>
     
 </head>
 <body>
 
-  <!-- this is the element that imports all bisweb code -->
-  <bisweb-exportelement id="bis"></bisweb-exportelement>
+  <div style="left:5px;position:absolute; width:100vw;
+       top:0vh; background-color:#000088">
+    <button class="btn-small btn-danger" type="submit" id="compute">Run
+      Resample</button>
+  </div>
+  <div style="left:0px;position:absolute; width:100%;
+              top:90vh; background-color:#000088">
+    <H3>Open the JS Console to see the print outputs</H3>
+  </div>
+
 
   <!-- this is an optional viewer so that you can see what is going on -->
   <div id="viewerwidget" style="width:800px;
                                 left:25px;position:absolute;padding:10 10 10 10;
-                                top:25px; background-color:#2222222">
+                                top:50px; background-color:#2222222">
     
     <bisweb-viewerlayoutelement
       id="viewer_layout"
@@ -58,6 +82,6 @@
       bis-colormapeditorid="#viewer_cmap">
     </bisweb-orthogonalviewer>
   </div>
-  
+
 </body>
 </html>

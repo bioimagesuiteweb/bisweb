@@ -163,7 +163,7 @@ var createHTML=function(toolname,outdir,libjs,commoncss) {
     var mainhtml   = path.normalize(path.join(__dirname,'../web/'+toolname+'.html'));
     var bundlecss  = commoncss;
 
-    console.log(getTime()+colors.green(' Building HTML '+mainhtml));
+    console.log(getTime()+colors.green('\tBuilding HTML '+mainhtml));
     var alljs;
     if (libjs!=='') {
         if (toolname!=="index") {
@@ -204,7 +204,7 @@ var createCSSCommon=function(dependcss,out,outdir) {
     
     var bundlecss  = out;
 
-    console.log(getTime(),colors.green('Concatenating ',dependcss.join(),' to ',out));
+    console.log(getTime()+colors.green('\tBuilding CSS', out,', from ',dependcss.join()));
     gulp.src(dependcss)
         .pipe(concatCss(bundlecss))
         .pipe(replace('../../node_modules/jstree/dist/themes/default', 'images')) // jstree css fix
@@ -250,22 +250,19 @@ var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,
     
     let cmd='webpack-cli --entry '+source+' --output-filename '+tmpout+' --output-path '+outdir+' --config config'+join+'webpack.config_devel.js';
     cmd+=' --sort-modules-by size ';
+
     if (debug)
         cmd+=' --display-modules --display-entrypoints --display-exclude';
     else
         cmd+=' --display-max-modules 20';
     
-    if (tmpout==='bislib.js') 
+    if (tmpout.indexOf('bislib')>=0)
         cmd+=' --bisinternal '+internal+' --bisexternal '+external;
-    else
-
     
     if (watch!==0)
         cmd+=" --watch";
 
-    let cmdlist = [];
-    cmdlist.push(cmd);
-
+    let cmdlist = [ cmd ];
     let ojob=outdir+out;
     
     if (minify) {
