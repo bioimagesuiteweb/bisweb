@@ -101,8 +101,12 @@ var executeCommand=function(command,dir,done=0,error=0,extra=0) {
     
     try { 
         let proc=child_process.exec(command, { cwd : dir });
-        proc.stdout.on('data', function(data) { process.stdout.write(colorfn(data.trim()+'\n'));});
-        proc.stderr.on('data', function(data) { process.stdout.write(colors.red(data+'\n'));});
+        proc.stdout.on('data', function(data) {
+            process.stdout.write(colorfn(data));
+        });
+        proc.stderr.on('data', function(data) {
+            process.stdout.write(colors.red(data));
+        });
         proc.on('exit', function() { console.log(''); done();});
     } catch(e) {
         console.log(' error '+e);
@@ -129,7 +133,7 @@ var executeCommandPromise=function(command,dir,extra="") {
 // -------------------------------------------------------------
 
 var executeCommandList=function(cmdlist,indir,done=0,extra=0) {
-
+    
     if (done===0) {
         for (let i=0;i<cmdlist.length;i++) {
             executeCommand(cmdlist[i],indir,0,0,i);
@@ -308,44 +312,39 @@ var runWebpack=function(joblist,internal,external,
     return Promise.all(p);
 };
 
-var createZIPFile = function(dozip,baseoutput,outdir,version,distdir) {
-
+var createZIPFile = function(baseoutput,outdir,version,distdir,done) {
+    
     const gulpzip = require('gulp-zip'),
           del = require('del');
 
-    console.log('dozip=',dozip);
-    
-    if (!dozip) {
-        console.log(colors.magenta(getTime()+' Not creating webpage zip file'));
-        return;
-    }
-    console.log('baseoutput=',baseoutput,outdir);
     let outfile=distdir+"/bisweb_"+getVersionTag(version)+".zip";
+    console.log(getTime()+' indir='+path.resolve(outdir));
+
     del([ outfile]);
     console.log(getTime()+' Creating zip file '+outfile+'.');
-    return gulp.src([outdir+"*",
-                     outdir+"images/*",
-                     outdir+"images/*/*",
-                     outdir+"fonts/*",
-                     outdir+"css/*",
-                     outdir+"fonts/*",
-                     outdir+"images/*",
-                     outdir+"test/**/*",
-                     outdir+"var/*",
-                     `!${outdir}/node_modules`,
-                     `!${outdir}/package.json`,
-                     `!${outdir}/*.map`
-                    ],
-                    {base:outdir}).pipe(gulpzip(outfile)).pipe(gulp.dest('.')).on('end', () => {
-                        outfile=path.resolve(outfile);
-                        let stats = fs.statSync(outfile);
-                        let bytes = stats["size"];
-                        let mbytes=Math.round(bytes/(1024*1024)*100)*0.01;
-                        
-                        console.log('____ zip file created in '+outfile+' (size='+mbytes+' MB )');
-
-                    });
-
+    gulp.src([outdir+"*",
+              outdir+"images/*",
+              outdir+"images/*/*",
+              outdir+"fonts/*",
+              outdir+"css/*",
+              outdir+"fonts/*",
+              outdir+"images/*",
+              outdir+"test/**/*",
+              outdir+"var/*",
+              `!${outdir}/node_modules`,
+              `!${outdir}/package.json`,
+              `!${outdir}/*.map`
+             ],
+             {base:outdir}).pipe(gulpzip(outfile)).pipe(gulp.dest('.')).on('end', () => {
+                 outfile=path.resolve(outfile);
+                 let stats = fs.statSync(outfile);
+                 let bytes = stats["size"];
+                 let mbytes=Math.round(bytes/(1024*1024)*100)*0.01;
+                 
+                 console.log(getTime()+' ____ zip file created in '+outfile+' (size='+mbytes+' MB )');
+                 done();
+             });
+    
 };
 
 // -----------------------------------------------------------------------------------------
@@ -411,8 +410,6 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
         var zipfile=path.normalize(path.resolve(basefile+suffix));
 
         let eversion ="4.0.1";
-        //        if (m==="linux")
-        //          eversion="3.0.10";
         let cmdline='electron-packager '+outdir+' BioImageSuiteWeb --arch=x64 --electron-version '+eversion+' --out '+distdir+' --overwrite '+
             '--app-version '+version;
         
@@ -421,14 +418,22 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
         } catch(e) { errorf('error '+e); }
 
         let absdistdir=path.normalize(path.resolve(distdir));
-        var zipindir='BioImageSuiteWeb-'+n+'-x64';
+        let zipindir='BioImageSuiteWeb-'+n+'-x64';
+
+        let fullpath=path.resolve(path.join(absdistdir,zipindir),'resources/app/node_modules/@tensorflow/tfjs-node/deps');
+        console.log('Zip in dir=',fullpath);
+
+        let cleancmd='rimraf '+fullpath;
+        
         if (n==="linux") {
             cmdlist.push(cmdline+' --platform=linux');
+            cmdlist.push(cleancmd);
             if (dopackage>1) {
                 cmdlist.push('cd '+absdistdir+'; zip '+zipopts+' '+zipfile+' '+zipindir);
             }
         } else if (n==="win32") {
             cmdlist.push(cmdline+' --platform=win32 --icon web/images/bioimagesuite.png.ico');
+            cmdlist.push(cleancmd);
             if (dopackage>1)  {
                 if (os.platform()!=='win32') {
                     cmdlist.push('zip '+zipopts+' '+zipfile+' '+zipindir);
@@ -439,28 +444,35 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
             }
         } else if (n==="darwin") {
             cmdlist.push(cmdline+' --platform=darwin --icon web/images/bioimagesuite.icns');
+            cmdlist.push(cleancmd);
             if (dopackage>1)  {
                 cmdlist.push('cd '+absdistdir+'; zip '+zipopts+' '+zipfile+' '+zipindir);
             }
         }
     }
 
-    console.log('cmdlist=',cmdlist.join('\n\t'));
+    console.log(getTime()+' cmdlist=',cmdlist.join('\n\t'));
     executeCommandList(cmdlist,indir,done);
-    
+    done();
 };
 
 
 var createPackage=function(dopackage=1,tools=[],indir=_dirname+"../",outdir="build",version=1.0,platform="linux",distdir="builddist",done=null) {
     
-    console.log('dopack=',dopackage,'indir=',indir,' outdir=',outdir,' version=',version,' platform=',platform,' distdir=',distdir);
+    console.log(getTime()+' creating package: dopack=',dopackage,'indir=',indir,' outdir=',outdir,'\n\t\t version=',version,' platform=',platform,' distdir=',distdir);
 
     let fn0=function() {
         createPackageInternal(dopackage,tools,indir,outdir,version,platform,distdir,done);
     };
 
     if (dopackage>0) {
-        executeCommand("npm update -d",indir+"/build/web",fn0);
+        let idir=indir+"/build/web";
+        let cmdlist = [
+            'rimraf node_modules',
+            'npm install -d',
+            'modclean -r -a *.ts',
+        ];
+        executeCommandList(cmdlist,idir,fn0,1);
     } else {
         dopackage=1;
         fn0();
