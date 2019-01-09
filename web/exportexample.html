@@ -50,21 +50,19 @@
 </head>
 <body>
 
-  <div style="left:5px;position:absolute; width:100vw;
-       top:0vh; background-color:#000088">
-    <button class="btn-small btn-danger" type="submit" id="compute">Run
-      Resample</button>
-  </div>
-  <div style="left:0px;position:absolute; width:100%;
-              top:90vh; background-color:#000088">
-    <H3>Open the JS Console to see the print outputs</H3>
-  </div>
+  <nav class="navbar navbar-default navbar-fixed-top">
+    <div><button class="btn btn-danger" type="submit" id="compute">Run Resample</button></div>
+  </nav>
+  
+  <nav class="navbar navbar-default navbar-fixed-bottom">
+    <H4>Open the JS Console to see the print outputs</H4>
+  </nav>
 
 
   <!-- this is an optional viewer so that you can see what is going on -->
   <div id="viewerwidget" style="width:800px;
                                 left:25px;position:absolute;padding:10 10 10 10;
-                                top:50px; background-color:#2222222">
+                                top:65px; background-color:#2222222">
     
     <bisweb-viewerlayoutelement
       id="viewer_layout"

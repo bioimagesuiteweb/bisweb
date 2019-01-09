@@ -459,10 +459,10 @@ gulp.task('tools', ( (cb) => {
     
     for (let index=0;index<internal.toolarray.length;index++) {
         let toolname=internal.toolarray[index];
-        let docss = true;
+        let gpl=true;
         if (toolname!=='index') {
-            if (internal.setup.tools[toolname].nocss)
-                docss=false;
+            if (internal.setup.tools[toolname].nogpl)
+                gpl=false;
         }
         console.log(bis_gutil.getTime()+colors.green(' Building tool '+(index+1)+'/'+internal.toolarray.length+' : '+toolname));
         internal.jscounter+=1;
@@ -470,14 +470,17 @@ gulp.task('tools', ( (cb) => {
         let jsname =internal.bislib;
         if (index===0)
             jsname=internal.indexlib;
-        bis_gutil.createHTML(toolname,options.outdir,jsname,internal.biscss);
-        if (docss) {
-            let maincss    = './web/'+toolname+'.css';
-            bis_gutil.createCSSCommon([maincss],toolname+'.css',options.outdir);
-        } else {
-            gulp.src([ 'web/'+toolname+'.js']).pipe(gulp.dest(options.outdir));
+        bis_gutil.createHTML(toolname,options.outdir,jsname,internal.biscss,gpl);
+
+        let customcss='./web/'+toolname+'.css';
+        if (fs.existsSync(customcss))
+            bis_gutil.createCSSCommon([customcss],toolname+'.css',options.outdir);
+
+        let customjs='web/'+toolname+'.js';
+        if (fs.existsSync(customjs)) {
+            console.log(bis_gutil.getTime()+'\tCopying  JS '+customjs);
+            gulp.src([ customjs ]).pipe(gulp.dest(options.outdir));
         }
-        //bis_gutil.createCSSCommon(internal.dependcss,internal.toolarray[index]+'.css',options.outdir);
     }
     cb();
 }));

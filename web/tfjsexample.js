@@ -30,7 +30,7 @@ let getScope=function() {
 
 let run_tf_module=async function(img) {
 
-    const bisweb=document.querySelector("#bis").export;
+    const bisweb=window.bioimagesuiteweb;
     const viewer=document.querySelector("#viewer");
     const URL=getScope()+extra;
 
@@ -62,8 +62,8 @@ let run_tf_module=async function(img) {
 
 window.onload = function() {
     
-    // Get access to the computational tools via the export element
-    const bisweb=document.querySelector("#bis").export;
+    // Get access to the computational tools 
+    const bisweb=window.bioimagesuiteweb;
     
     // Print the functionality
     console.log('==========================================================');

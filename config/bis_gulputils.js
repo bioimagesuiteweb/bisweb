@@ -150,7 +150,7 @@ var executeCommandList=function(cmdlist,indir,done=0,extra=0) {
 };
 
 
-var createHTML=function(toolname,outdir,libjs,commoncss) {
+var createHTML=function(toolname,outdir,libjs,commoncss,gpl=true) {
 
     if (htmlreplace===null)
         htmlreplace = require('gulp-html-replace');
@@ -167,7 +167,10 @@ var createHTML=function(toolname,outdir,libjs,commoncss) {
     var alljs;
     if (libjs!=='') {
         if (toolname!=="index") {
-            alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'three.min.js', 'bootstrap.min.js', 'libbiswasm_wasm.js', libjs  ];
+            if (gpl) 
+                alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'three.min.js', 'bootstrap.min.js', 'libbiswasm_wasm.js', libjs  ];
+            else
+                alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'three.min.js', 'bootstrap.min.js', 'libbiswasm_nongpl_wasm.js', libjs  ];
         } else {
             alljs=[ 'jquery.min.js', 'bootstrap.min.js', libjs  ];
             bundlecss=[ "./bootstrap_dark_edited.css" ];
