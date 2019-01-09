@@ -96,11 +96,15 @@ if (test_type==="tfjs") {
 }
 
 
-// Disable auto reorient on load
-console.log('++++ Disabling auto-reorient of images on load.\n+++++');
-userPreferences.setImageOrientationOnLoad('None');
+// Disable auto reorient on load -- not needed any more
+//console.log('++++ Disabling auto-reorient of images on load.\n+++++');
+//userPreferences.setImageOrientationOnLoad('None');
+
+console.log('.... Testing module '+toolname);
+console.log('................................................');
 
 commandline.loadParse(args, bisModule).then(() => {
+    console.log('.... -------------------------------------------------------');
     commandline.processTestResult(toolname,tempName,
                                   program.test_target,test_type,program.test_threshold,
                                   program.test_comparison,

@@ -24,8 +24,10 @@
  * This is the main command line tool for all modules. Uses functionality in commandline.
  */
 
+console.log('++++++++++++++++++++++++++++++++++++++++++++++++');
+
 global.bioimagesuiteweblib=false;
-const commandline=require('./bioimagesuiteweblib').commandline;
+let bisweb=require('./bioimagesuiteweblib');
 
 let args=[];
 for (let i=0;i<process.argv.length;i++) {
@@ -37,9 +39,20 @@ for (let i=0;i<process.argv.length;i++) {
 
 let toolname=process.argv[2] || '';
 
-commandline.loadParse(args, toolname).then( () => {
-    process.exit(0);
-}).catch((e) => { 
+
+
+bisweb.loadUserPreferences().then( () => {
+    console.log('++++++++++++++++++++++++++++++++++++++++++++++++');
+    console.log('++++ Executing module '+toolname);
+    console.log('++++++++++++++++++++++++++++++++++++++++++++++++');
+    bisweb.loadParse(args, toolname).then( () => {
+        console.log('++++++++++++++++++++++++++++++++++++++++++++++++');
+        process.exit(0);
+    }).catch((e) => { 
+        console.log(e); 
+        process.exit(1);
+    })
+}).catch( (e) => {
     console.log(e); 
     process.exit(1);
 });
