@@ -676,7 +676,6 @@ class BisFileServerClient extends BisBaseServerClient {
      */
     //TODO: Add second input for file move operation
     fileSystemOperation(name,url) {
-        console.log('file system operation', name, url);
         if (url.indexOf('\\')>=0)
             url=util.filenameWindowsToUnix(url);
 

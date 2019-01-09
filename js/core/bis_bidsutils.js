@@ -37,22 +37,29 @@ let dicom2BIDS=async function(opts)  {
     
     let match=genericio.joinFilenames(indir,'2*.nii.gz');
     let matchuncompressed = genericio.joinFilenames(indir, '2*.nii');
-    let matchdti=genericio.joinFilenames(indir,'*.bv*');
     let matchniix=genericio.joinFilenames(indir, 'sourcedata*.nii.gz');
+    let matchsupp = genericio.joinFilenames(indir, '*');
     
-    console.log('Match=',match,matchdti);
+    console.log('Match=',match);
     
     let flist = await genericio.getMatchingFiles(match);
-    let flist2 = await genericio.getMatchingFiles(matchdti);
-    let flist3 = await genericio.getMatchingFiles(matchuncompressed);
-    let flist4 = await genericio.getMatchingFiles(matchniix);
+    let flist2 = await genericio.getMatchingFiles(matchuncompressed);
+    let flist3 = await genericio.getMatchingFiles(matchniix);
+    let suppfiles = await genericio.getMatchingFiles(matchsupp);
 
     flist=flist.concat(flist2);
     flist=flist.concat(flist3);
-    flist=flist.concat(flist4);
     console.log('Flist=',flist.join('\n\t'));
 
+    //filter supplemental files by looking for files without '.nii'. outer capture group will have the full name of the file
+    let suppFilter = /^((?!.\.nii).)*$/gm, filteredsuppfiles = [], suppmatch = undefined;
+    for (let file of suppfiles) {
+        suppmatch = suppFilter.exec(file);
+        if (suppmatch) filteredsuppfiles.push(suppmatch[0]);
+    }
     
+    console.log('filteredsuppfiles', filteredsuppfiles);
+
     if (flist.length<1) {
         return errorfn('No data to convert in '+indir);
     }
@@ -106,15 +113,33 @@ let dicom2BIDS=async function(opts)  {
         let origname=name;
         let basename=genericio.getBaseName(name).toLowerCase();
 
-        let regex = /^[A-Za-z0-9]*_{1}(\w.*)/g;
+        let regex = /[A-Za-z0-9]*_(.*)/g;
         let regexMatch = regex.exec(basename);
 
         name = regexMatch[1];
-        console.log('basename', basename, 'name', name, 'match', regexMatch);
-        
+        let splitName = name.split('.')[0];
+
+        for (let suppfile of filteredsuppfiles) {
+            //check if the trailing parts of one of the support files (without file type) match the image
+            //strip out file extension and the name of the parent folder to match image
+            let splitsupp = genericio.getBaseName(suppfile).split('.');
+            let splitbasename = splitsupp[0].split('_');
+            splitbasename.shift();
+            let suppcomparename = splitbasename.join('_');
+
+            
+            if (splitName === suppcomparename) {
+                console.log('found match for', splitName);
+                //rejoin file extension to the formatted splitsupp
+                splitsupp[0] = suppcomparename;
+                let suppname = splitsupp.join('.');
+                let suppTarget = genericio.joinFilenames(dirname, genericio.getBaseName(suppname));
+                await genericio.copyFile(suppfile + '&&' + suppTarget);
+            }
+        }
+
         let target=genericio.joinFilenames(dirname,genericio.getBaseName(name));
-        console.log('+++++', 'name=',basename,'-->',target);
-        
+    
         try {
             await genericio.copyFile(origname + '&&' + target);
         } catch (e) {
