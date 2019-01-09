@@ -257,8 +257,6 @@ var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,
     
     if (tmpout==='bislib.js') 
         cmd+=' --bisinternal '+internal+' --bisexternal '+external;
-    else
-
     
     if (watch!==0)
         cmd+=" --watch";
