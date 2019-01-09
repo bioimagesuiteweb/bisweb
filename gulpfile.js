@@ -42,7 +42,7 @@ program
     .option('-i, --input <s>','mainscript to build')
     .option('-m, --minify','flag to minify')
     .option('-l, --platform  <s>','platform')
-    .option('-p, --dopack <s>','dopackage 0=electron-packager, 1=run npm update in addition 2=run inno or zip in addition')
+    .option('-p, --dopack <s>','dopackage 0=electron-packager, 1=run npm update in addition 2=run inno or zip in addition, 3=clean + 2')
     .option('-e, --eslint <n>','if 0 use jshint instead of eslint',parseInt)
     .option('-w, --worker','if present build the webworker as well')
     .option('-s, --sworker','if present build the service worker and index.js as well')
@@ -55,7 +55,7 @@ program
 
 
 if (program.dopack === undefined)
-    program.dopack=2;
+    program.dopack=3;
 
 //console.log('Workers=',program.worker,program.sworker);
 

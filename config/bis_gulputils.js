@@ -467,11 +467,14 @@ var createPackage=function(dopackage=1,tools=[],indir=_dirname+"../",outdir="bui
 
     if (dopackage>0) {
         let idir=indir+"/build/web";
-        let cmdlist = [
-            'rimraf node_modules',
-            'npm install -d',
-            'modclean -r -a *.ts',
-        ];
+        let cmdlist=['npm install -d' ];
+        if (dopackage>2) {
+            cmdlist=[
+                'rimraf node_modules',
+                'npm install -d'
+            ];
+        } 
+        cmdlist.push('modclean -r -a *.ts');
         executeCommandList(cmdlist,idir,fn0,1);
     } else {
         dopackage=1;
