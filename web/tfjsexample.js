@@ -2,6 +2,8 @@
 
 /* global $,document,window */
 
+// Get access to the computational tools 
+const bisweb=window.bioimagesuiteweb;
 
 let extra="test/testdata/tfjs64";
 // In development mode
@@ -30,7 +32,6 @@ let getScope=function() {
 
 let run_tf_module=async function(img) {
 
-    const bisweb=window.bioimagesuiteweb;
     const viewer=document.querySelector("#viewer");
     const URL=getScope()+extra;
 
@@ -62,18 +63,15 @@ let run_tf_module=async function(img) {
 
 window.onload = function() {
     
-    // Get access to the computational tools 
-    const bisweb=window.bioimagesuiteweb;
-    
     // Print the functionality
     console.log('==========================================================');
-    console.log('BISWeb Environment = ',bisweb.genericio.getenvironment());    
+    console.log('BISWeb Environment = ',bisweb.getEnvironment());    
     // The viewer is optional, just remove the
     const viewer=document.querySelector("#viewer");
     
     // Load an image --> returns a promise so .then()
     let URL=getScope()+extra;
-    if (bisweb.genericio.getenvironment()==='electron')  {
+    if (bisweb.getEnvironment()==='electron')  {
         let start=8;
         if (bisweb.genericio.getpathmodule().sep==='/')
             start=7;

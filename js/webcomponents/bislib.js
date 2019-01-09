@@ -55,7 +55,13 @@ require("bisweb_misactool.js");
 require("bisweb_filetreepanel.js");
 require("bisweb_dicomimportelement.js");
 
-const exportobj=require('bisweb_exportobject');
+
+const webutil = require('bis_webutil');
+const webfileutil = require('bis_webfileutil');
+
+let exportobj=require('bisweb_exportobject');
+exportobj.webutil=webutil;
+exportobj.webfileutil=webfileutil;
 
 export default exportobj;
 
