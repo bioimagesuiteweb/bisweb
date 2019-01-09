@@ -16,7 +16,7 @@ const fn = function(bisweb,viewer,img) {
     // Execute module (which also returns a promise
     mod.execute(
         { "input" : img   }, // first argument is the input objects (just the image)
-        { "xsp"  : 4.0, "ysp" : 5.0, "zsp" : 7.0 } // second argument are the parameters
+        { "xsp"  : 4.0, "ysp" : 5.0, "zsp" : 17.0 } // second argument are the parameters
     ).then( () => {
         // Get the output of the module when it is done
         let out=mod.getOutputObject("output");

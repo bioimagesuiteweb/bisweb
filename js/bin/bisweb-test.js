@@ -30,7 +30,7 @@ const program = bioimagesuiteweblib.commander;
 const tmp = bioimagesuiteweblib.tmp;
 const rimraf=bioimagesuiteweblib.rimraf;
 const commandline=bioimagesuiteweblib.commandline;
-const userPreferences = bioimagesuiteweblib.userPreferences;
+
 
 let tmpDirectory = tmp.dirSync();
 console.log('.... created tmp directory',tmpDirectory.name);
