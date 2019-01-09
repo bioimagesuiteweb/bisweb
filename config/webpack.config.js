@@ -22,6 +22,7 @@ const path = require('path');
 const fs=require('fs');
 
 
+
 // -----------------------------------------------------------------------------------
 // Parse Command line
 let internal = 0,external=0;
@@ -134,6 +135,7 @@ if (output === "bislib.js" || output ==="index.js") {
         target : "web",
         externals: {
             "jquery": "jQuery",             // require("jquery") is external and available on the global var jQuery
+            "three": "THREE",             // require("three") is external and available on the global var jQuery
             "libbiswasm" : "console.log", // this is not needed in this case and should be excluded
             "@tensorflow/tfjs" : "console.log", // ignore tensor flow it will come from outside
             "@tensorflow/tfjs-node" : "console.log", // ignore tensor flow it will come from outside
@@ -190,13 +192,20 @@ if (output === "bislib.js" || output ==="index.js") {
         },
         mode : 'development',
         target : "web",
+        externals: {
+            "@tensorflow/tfjs" : "console.log", // ignore tensor flow it will come from outside
+            "@tensorflow/tfjs-node" : "console.log", // ignore tensor flow it will come from outside
+            "@tensorflow/tfjs-node-gpu" : "console.log" // ignore tensor flow it will come from outside
+        },
         watchOptions: {
             aggregateTimeout: 300,
             poll: 1000
-        }, plugins : [
-        ]
+        }, plugins : [ ]
     };
 }
+
+
+
 
 if (output === "bislib.js") {
     console.log(`${output} ++++ Adding library output info`);

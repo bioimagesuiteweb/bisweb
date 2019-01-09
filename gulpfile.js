@@ -40,9 +40,8 @@ const gulp = require('gulp'),
 
 program
     .option('-i, --input <s>','mainscript to build')
-    .option('-m, --minify <s>','flag to minify 1=minify 0=regular + sourcemaps,-1 = fast, no sourcemaps')
+    .option('-m, --minify','flag to minify')
     .option('-l, --platform  <s>','platform')
-    .option('-d, --debug','debug')
     .option('-p, --dopack <s>','dopackage 0=electron-packager, 1=run npm update in addition 2=run inno or zip in addition')
     .option('-z, --dozip <s>','dozip')
     .option('-e, --eslint <n>','if 0 use jshint instead of eslint',parseInt)
@@ -52,7 +51,7 @@ program
     .option('--portno <s>','port for server (8080 is default)')
     .option('--internal <n>','if 1 use internal code, if 2 serve the internal directory as well',parseInt)
     .option('--external <n>','if 1 use extra external code (in ../external)',parseInt)
-    .option('--light <n>','if 1 only build the main bislib.js library',parseInt)
+    .option('--verbose','verbose')
     .parse(process.argv);
 
 
@@ -63,10 +62,9 @@ if (program.dopack === undefined)
 
 let options = {
     inpfilename : program.input || "all",
-    minify : parseInt(program.minify || 0 ),
     outdir : "build/web",
     distdir : "build/dist",
-    debug : program.debug || false,
+    verbose : program.verbose || false,
     platform : program.platform || os.platform(),
     package : program.dopack || 0,
     zip : program.dozip || 0,
@@ -81,6 +79,11 @@ let options = {
 
 if (program.localhost)
     options.hostname='localhost';
+
+if (program.minify)
+    options.minify=1;
+else
+    options.minify=0;
 
 if (program.internal === undefined)
     options.internal=1;
@@ -115,7 +118,7 @@ if (plat==='all') {
 options.platform=plat;
 
 
-if (options.debug) {
+if (options.verbose) {
     console.log(bis_gutil.getTime()+' Full options ='+JSON.stringify(options,null,2)+'.\n');
 }
 
@@ -152,8 +155,6 @@ internal.serveroptions = {
     "host" : options.hostname,
     "port" : `${options.portno}`,
     'directoryListing': true,
-    'open' : true,
-
 };
 
 if (options.external>0) {
@@ -221,10 +222,10 @@ if (options.webworker) {
 }
 
 // -------------------------------
-// Debug Info
+// Verbose Info
 // -------------------------------
 
-if (options.debug!==0) {
+if (options.verbose!==0) {
     console.log(bis_gutil.getTime()+' read tool descriptions from '+colors.cyan(internal.tooldescriptionfile));
     console.log(bis_gutil.getTime()+' Scripts to process are '+colors.cyan(options.inpfilename));
 }
@@ -323,8 +324,6 @@ gulp.task('watch', () => {
 // ------------------------------------------------------------------------
 gulp.task('webpack', function (done) {
 
-    console.log('Debug=',options.debug);
-    
     createDate().then( () => {
         bis_gutil.runWebpack(internal.webpackjobs,
                              options.internal,
@@ -332,7 +331,7 @@ gulp.task('webpack', function (done) {
                              __dirname,
                              options.minify,
                              options.outdir,
-                             options.debug,
+                             options.verbose,
                              internal.setwebpackwatch).then( () => {
                                  console.log(bis_gutil.getTime()+' webpack done num jobs=',internal.webpackjobs.length);
                                  done();

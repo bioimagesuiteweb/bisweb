@@ -167,7 +167,7 @@ var createHTML=function(toolname,outdir,libjs,commoncss) {
     var alljs;
     if (libjs!=='') {
         if (toolname!=="index") {
-            alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'bootstrap.min.js', 'libbiswasm_wasm.js', libjs  ];
+            alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'three.min.js', 'bootstrap.min.js', 'libbiswasm_wasm.js', libjs  ];
         } else {
             alljs=[ 'jquery.min.js', 'bootstrap.min.js', libjs  ];
             bundlecss=[ "./bootstrap_dark_edited.css" ];
@@ -249,21 +249,27 @@ var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,
         tmpout=tmpout+'_full.js';
     
     let cmd='webpack-cli --entry '+source+' --output-filename '+tmpout+' --output-path '+outdir+' --config config'+join+'webpack.config_devel.js';
+    cmd+=' --sort-modules-by size ';
     if (debug)
-        cmd+=' --sort-modules-by size --display-modules --display-entrypoints ';
+        cmd+=' --display-modules --display-entrypoints --display-exclude';
+    else
+        cmd+=' --display-max-modules 20';
+    
     if (tmpout==='bislib.js') 
         cmd+=' --bisinternal '+internal+' --bisexternal '+external;
+    else
 
+    
     if (watch!==0)
         cmd+=" --watch";
 
     let cmdlist = [];
     cmdlist.push(cmd);
+
+    let ojob=outdir+out;
     
     if (minify) {
         let ijob=outdir+tmpout;
-        let ojob=outdir+out;
-
         let cmd2=`uglifyjs ${ijob} -c  -o ${ojob} --keep-classnames`;
         if (debug)
             cmd2+=' --verbose';
@@ -273,6 +279,12 @@ var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,
             cmdlist.push(`dir -p ${ijob} ${ojob}`);
         } else {
             cmdlist.push(`ls -lrth ${ijob} ${ojob}`);
+        }
+    } else {
+        if (os.platform()==='win32') {
+            cmdlist.push(`dir -p ${ojob}`);
+        } else {
+            cmdlist.push(`ls -lrth $ojob}`);
         }
     }
     
@@ -289,9 +301,7 @@ var runWebpack=function(joblist,internal,external,
         let s=joblist[i];
         console.log(getTime()+" "+colors.red('++++ Starting webpack job=',i,s.name));
         let cmdlist=getWebpackCommand(s.path+s.name,internal,external,s.name,indir,minify,outdir,debug,watch);
-        console.log('Cmdlist=',JSON.stringify(cmdlist,null,2));
-
-        p.push(new Promise( (resolve,reject) => {
+        p.push(new Promise( (resolve) => {
             executeCommandList(cmdlist,indir,resolve,i);
         }));
     }
@@ -496,6 +506,7 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
                `${indir}/build/web/libbiswasm*wasm.js`,
                `${indir}/build/web/webcomponents-lite.js`,
                `${indir}/build/web/jquery.min.js`,
+               `${indir}/build/web/three.min.js`,
                `${indir}/build/web/bootstrap.min.js`,
                `${indir}/build/web/bislib.css`,
              ]).pipe(gulp.dest(distDir));
