@@ -20,22 +20,38 @@
 <html lang="en">
 
 <head>
-    <title>Test</title>
+    <title>Export Example</title>
 
-    <script src="https://bioimagesuiteweb.github.io/unstableapp/webcomponents-lite.js"></script>
-    <script src="https://bioimagesuiteweb.github.io/unstableapp/jquery.min.js"></script>
-    <script src="https://bioimagesuiteweb.github.io/unstableapp/bootstrap.min.js"></script>
-    <script src="https://bioimagesuiteweb.github.io/unstableapp/libbiswasm_wasm.js"></script>
-    <script src="https://bioimagesuiteweb.github.io/unstableapp/bislib.js"></script>
-    <link rel="stylesheet" type="text/css" href="https://bioimagesuiteweb.github.io/unstableapp/bislib.css">
+    <link rel="icon" href="images/favicon.ico">
+
+    <!-- begin webpack/gulp modifications -->
+    <!-- external css files -->
+    <!-- build:css -->
+    <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_dark.css">
+    <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap-colorselector.css">
+    <link rel="stylesheet" type="text/css" href="../node_modules/jstree/dist/themes/default/style.css">
+    <link rel="stylesheet" type="text/css" href="biscommon.css">
+    <!-- endbuild -->
+
+    <!-- all javascript files -->
+    <!-- build:js -->
+    <script src="bis.js"></script>
+    <script src="../build/web/webcomponents-lite.js"></script>
+    <script src="../build/web/jquery.min.js"></script>
+    <script src="../build/web/three.min.js"></script>
+    <script src="../build/web/bootstrap.min.js"></script>
+    <script src="../build/web/libbiswasm_wasm.js"></script>
+    <script src="../build/web/bislib.js"></script>
+    <!-- endbuild -->
+    <!-- end webpack/gulp modifications -->
 
     <script src="./exportexample.js"></script>
     
 </head>
 <body>
 
-  <!-- this is the element that imports all bisweb code -->
-  <bisweb-exportelement id="bis"></bisweb-exportelement>
+  <button class="btn-small btn-danger" type="submit" id="compute">Run Resample</button>
+
 
   <!-- this is an optional viewer so that you can see what is going on -->
   <div id="viewerwidget" style="width:800px;

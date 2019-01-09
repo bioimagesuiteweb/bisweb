@@ -163,7 +163,7 @@ var createHTML=function(toolname,outdir,libjs,commoncss) {
     var mainhtml   = path.normalize(path.join(__dirname,'../web/'+toolname+'.html'));
     var bundlecss  = commoncss;
 
-    console.log(getTime()+colors.green(' Building HTML '+mainhtml));
+    console.log(getTime()+colors.green('\tBuilding HTML '+mainhtml));
     var alljs;
     if (libjs!=='') {
         if (toolname!=="index") {
@@ -204,7 +204,7 @@ var createCSSCommon=function(dependcss,out,outdir) {
     
     var bundlecss  = out;
 
-    console.log(getTime(),colors.green('Concatenating ',dependcss.join(),' to ',out));
+    console.log(getTime()+colors.green('\tBuilding CSS', out,', from ',dependcss.join()));
     gulp.src(dependcss)
         .pipe(concatCss(bundlecss))
         .pipe(replace('../../node_modules/jstree/dist/themes/default', 'images')) // jstree css fix
