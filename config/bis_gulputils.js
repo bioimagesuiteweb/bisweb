@@ -270,7 +270,7 @@ var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,
     
     if (minify) {
         let ijob=outdir+tmpout;
-        let cmd2=`uglifyjs ${ijob} -c  -o ${ojob} --keep-classnames`;
+        let cmd2=`uglifyjs ${ijob} -c  -o ${ojob}`;
         if (debug)
             cmd2+=' --verbose';
         cmdlist.push(cmd2);
@@ -284,7 +284,7 @@ var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,
         if (os.platform()==='win32') {
             cmdlist.push(`dir -p ${ojob}`);
         } else {
-            cmdlist.push(`ls -lrth $ojob}`);
+            cmdlist.push(`ls -lrth ${ojob}`);
         }
     }
     
