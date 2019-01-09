@@ -79,25 +79,28 @@ if (usegpu) {
         console.log('**** Failed to get tfjs-node-gpu, trying CPU version');
         tf=null;
     }
+}
 
-    if (tf===null) {
-        try {
-            require('@tensorflow/tfjs-node');
-            tf=new bistfutil.TFWrapper(tfinternal,'tfjs-node');
-        } catch(e) {
-            console.log('**** Failed to get tfjs-node. Exiting.');
-            process.exit(1);
-        }
+if (tf===null) {
+    try {
+        require('@tensorflow/tfjs-node');
+        tf=new bistfutil.TFWrapper(tfinternal,'tfjs-node');
+    } catch(e) {
+        console.log('**** Failed to get tfjs-node. Exiting.');
+        process.exit(1);
     }
 }
+
 
 let input=new BisWebImage();
 
 console.log('----------------------------------------------------------\n---');
 input.load(inpfilename).then( () => { 
-    console.log('----------------------------------------------------------');
     let tfrecon=new tfReconModule();
     tfrecon.setTFModule(tf);
+    console.log('----------------------------------------------------------');
+    console.log('---- executing tfrecon module');
+    console.log('----------------------------------------------------------');
     tfrecon.execute( {  input : input },
                      {  padding : padding,
                         batchsize : batchsize,

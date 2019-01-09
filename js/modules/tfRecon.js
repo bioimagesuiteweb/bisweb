@@ -20,10 +20,6 @@
 const BaseModule = require('basemodule.js');
 const baseutils=require("baseutils");
 const bistfutil = require('bis_tfutil.js');
-const bisgenericio = require('bis_genericio');
-const util=require('bis_util');
-let tfjsModule=null;
-
 
 
 class BisWebTFJSReconModule extends BaseModule {
@@ -32,11 +28,23 @@ class BisWebTFJSReconModule extends BaseModule {
         this.JSOnly=true;
         this.name = 'tensorFlowModule';
         this.modelname= '';
-        this.environment=bisgenericio.getmode();
+        this.tfjsModule=null;
     }
 
-    createDescription() {
+    addModelNameParameter() {
         return {
+            "name": "Model name",
+            "description": "Location of Model to use",
+            "priority": 20,
+            "advanced": true,
+            "varname": 'modelname',
+            "type": 'string',
+            "default" : '',
+        };
+    }
+    
+    createDescription() {
+        let obj= {
             "name": "Apply Model",
             "description": "Applies TensorFlow Models on an image to get an output",
             "author": "Xenios Papademetris",
@@ -68,18 +76,13 @@ class BisWebTFJSReconModule extends BaseModule {
                     "low" :  1,
                     "high" : 32,
                 },
-                {
-                    "name": "Model name",
-                    "description": "Location of Model to use",
-                    "priority": 20,
-                    "advanced": true,
-                    "varname": 'modelname',
-                    "type": 'string',
-                    "default" : '',
-                },
                 baseutils.getDebugParam(),
             ]
         };
+        let md=this.addModelNameParameter();
+        if (md) 
+            obj['params'].push(md);
+        return obj;
     }
 
     /** Allow setting of external model name and tf module
@@ -87,143 +90,13 @@ class BisWebTFJSReconModule extends BaseModule {
      * @param{String} modelname - the base URL of the model name
      */
     setTFModule(tf) {
-        tfjsModule=tf;
+        this.tfjsModule=tf;
     }
 
     setModelName(modelname) {
         this.modelname=modelname;
     }
-
-    /** if tf module is not set try to set it 
-     * @returns{Boolean} -- success or failure to initialize 
-     */
-    initializeTFModule() {
-        
-        return new Promise( (resolve,reject) => {
-            
-            if (tfjsModule!==null) {
-                resolve('Using preloaded module: '+tfjsModule.getMode());
-                return;
-            }
-
-            if (this.environment === 'browser' ) {
-
-                if (window.tf) {
-                    tfjsModule=new bistfutil.TFWrapper(window.tf,'loaded from script');
-                    resolve('Using preloaded tfjs module');
-                    return;
-                }
-                
-                let apiTag = document.createElement('script');
-                let url="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.14.1/dist/tf.min.js";
-                apiTag.src = url;
-                apiTag.onload = ( () => {
-                    tfjsModule=new bistfutil.TFWrapper(window.tf,url);
-                    resolve('Module loaded from '+url);
-                });
-                
-                apiTag.onerror=( (e) => {
-                    reject("Failed to load tfjs module"+e);
-                });
-
-                document.head.appendChild(apiTag);
-                
-                return;
-            } else if (this.environment === 'electron') {
-		let md=window.BISELECTRON.tfmodulename || 'electron';
-		tfjsModule=new bistfutil.TFWrapper(window.BISELECTRON.tf,md);
-                resolve(md);
-            } else if (this.environment === 'node') {
-                try {
-                    let tf=require("@tensorflow/tfjs");
-                    require('@tensorflow/tfjs-node');
-                    tfjsModule=new bistfutil.TFWrapper(tf,'tfjs-node');
-                    resolve('Module loaded from tfjs-node');
-                    return;
-                } catch(e) {
-                    tfjsModule=null;
-                    reject('Failed to load tfjs-node');
-                    return;
-                }
-            }
-        });
-    }
     
-    /** Adds file:// if in electron or node.js to the filename 
-     * @param{String} md - the input model name
-     * @returns {String} model name to be used as input in loadFrozenModel
-     */
-    fixModelName(md) {
-
-        if (this.environment === 'browser')  {
-            let getScope=() => {
-                
-                let scope=window.document.URL;
-                let index=scope.indexOf(".html");
-                if (index>0) {
-                    index=scope.lastIndexOf("/");
-                    scope=scope.substr(0,index+1);
-                } else {
-                    let index=scope.indexOf("#");
-                    if (index>0) {
-                        index=scope.lastIndexOf("/");
-                        scope=scope.substr(0,index+1);
-                    }
-                }
-                return scope;
-            };
-            if (md.indexOf('http')!==0)
-                return getScope()+md;
-            return md;
-        }
-
-        const path=bisgenericio.getpathmodule();
-        
-        if (this.environment==='electron') {
-
-            let start=7;
-            if (path.sep==='\\') {
-                start=8;
-            }
-            
-            if (md.indexOf('file')===0) {
-                md=md.substr(start,md.length);
-            }
-            md=path.normalize(path.resolve(md));
-            if (start===8)
-                md=util.filenameUnixToWindows(md);
-            md='file://'+md;
-            return md;
-        }
-
-        md=path.normalize(path.resolve(md));
-        
-        if (md.indexOf('file')===0)
-            return md;
-        return 'file://'+md;
-    }
-
-    /** Restricts batch size based on hardware and batch size
-        * @param{Number} batchsize - the use specified number
-        * @returns{Number} - clamped to be below a certain size
-        */
-    fixBatchSize(batchsize) {
-
-        batchsize=parseInt(batchsize);
-        
-        if (batchsize<1)
-            batchsize=1;
-        
-        if (this.environment=== 'broswer') {
-            if (batchsize>2)
-                batchsize=2;
-        } else if (batchsize>64) {
-            batchsize=64;
-        }
-
-        return batchsize;
-    }
-
     /** Invoke the algorithm with parameters */
     directInvokeAlgorithm(vals) {
         console.log('oooo invoking: tfReconModule with vals', JSON.stringify(vals));
@@ -237,19 +110,26 @@ class BisWebTFJSReconModule extends BaseModule {
 
         return new Promise( async(resolve,reject) => {
 
-            try {
-                console.log('---------------------------------------');
-                let msg=await this.initializeTFModule();
-                console.log('---',msg);
-                console.log('--- \tinput image dims=',input.getDimensions().join(','));
-                console.log('---------------------------------------');
-            } catch(e) {
-                reject("No TFJS module available "+e);
+            if (this.tfjsModule===null) {
+                try {
+                    console.log('---------------------------------------');
+                    let msg=await bistfutil.initializeTFModule();
+                    console.log('\t initialize done');
+                    console.log('---',msg);
+                    console.log('--- \tinput image dims=',input.getDimensions().join(','));
+                    console.log('---------------------------------------');
+                    this.tfjsModule=bistfutil.getTFJSModule();
+                    
+                } catch(e) {
+                    reject("No TFJS module available "+e);
+                }
+            } else {
+                console.log("--- Using preset TFJSModule");
             }
             
             let model=null;
             try {
-                model=await bistfutil.loadAndWarmUpModel(tfjsModule,this.fixModelName(modelname),true);
+                model=await bistfutil.loadAndWarmUpModel(this.tfjsModule,bistfutil.fixModelName(modelname),true);
             } catch(e) {
                 console.log('--- Failed load model from',modelname,e);
                 reject('Failed to load model');
@@ -257,10 +137,10 @@ class BisWebTFJSReconModule extends BaseModule {
             }
 
             console.log('----------------------------------------------------------');
-            let recon=new bistfutil.BisWebTensorFlowRecon(tfjsModule,input,model,padding);
-            recon.reconstruct(tfjsModule,this.fixBatchSize(batchsize)).then( (output) => {
+            let recon=new bistfutil.BisWebTensorFlowRecon(this.tfjsModule,input,model,padding);
+            recon.reconstruct(this.tfjsModule,bistfutil.fixBatchSize(batchsize)).then( (output) => {
                 console.log('----------------------------------------------------------');
-                tfjsModule.disposeVariables(model).then( (num) => {
+                this.tfjsModule.disposeVariables(model).then( (num) => {
                     console.log('--- Cleanup num_tensors=',num);
                     this.outputs['output']=output;
                     console.log('--- Recon finished :',output.getDescription());

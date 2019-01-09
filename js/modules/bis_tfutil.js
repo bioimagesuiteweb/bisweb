@@ -1,14 +1,21 @@
 const BisWebImage=require('bisweb_image');
 const bisutil=require('bis_util');
-
+const bisgenericio = require('bis_genericio');
 
 /**
  * tf recon module
  */
 
+
+
+// Pointer to current instance of wrapper
+let tfjsModule=null;
+
 // ---------------------------------------------------------------------------------------
+/** A wrapper class around tf object supplied by tensorflow.js*/
 class TFWrapper {
 
+    
     constructor(tf,mode='') {
 
         if (mode.length>1)
@@ -475,6 +482,148 @@ class BisWebTensorFlowRecon {
 
 }
 
+
+/** if tf module is not set try to set it 
+ * @returns{Boolean} -- success or failure to initialize 
+ */
+let initializeTFModule=function() {
+
+    let environment=bisgenericio.getmode();
+
+    return new Promise( (resolve,reject) => {
+        
+        if (tfjsModule!==null) {
+            resolve('Using preloaded module: '+tfjsModule.getMode());
+            return;
+        }
+        
+        if (environment === 'browser' ) {
+            
+            if (window.tf) {
+                tfjsModule=new TFWrapper(window.tf,'loaded from script');
+                resolve('Using preloaded tfjs module');
+                return;
+            }
+            
+            let apiTag = document.createElement('script');
+            let url="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.14.1/dist/tf.min.js";
+            apiTag.src = url;
+            apiTag.onload = ( () => {
+                tfjsModule=new TFWrapper(window.tf,url);
+                resolve('Module loaded from '+url);
+            });
+            
+            apiTag.onerror=( (e) => {
+                reject("Failed to load tfjs module"+e);
+            });
+            
+            document.head.appendChild(apiTag);
+            
+            return;
+        } else if (environment === 'electron') {
+            let md=window.BISELECTRON.tfmodulename || 'electron';
+            tfjsModule=new TFWrapper(window.BISELECTRON.tf,md);
+            resolve(md);
+        } else if (environment === 'node') {
+            try {
+                let tf=require("@tensorflow/tfjs");
+                require('@tensorflow/tfjs-node');
+                tfjsModule=new TFWrapper(tf,'tfjs-node');
+                resolve('Module loaded from tfjs-node');
+                return;
+            } catch(e) {
+                tfjsModule=null;
+                reject('Failed to load tfjs-node');
+                return;
+            }
+        }
+    });
+};
+
+/** returns current tfjsModule 
+    @returns{Module}
+*/
+let getTFJSModule=function() { return tfjsModule; };
+
+/** Adds file:// if in electron or node.js to the filename 
+ * @param{String} md - the input model name
+ * @returns {String} model name to be used as input in loadFrozenModel
+ */
+let fixModelName=function(md) {
+
+    let environment=bisgenericio.getmode();
+    
+    if (environment === 'browser')  {
+        let getScope=() => {
+            
+            let scope=window.document.URL;
+            let index=scope.indexOf(".html");
+            if (index>0) {
+                index=scope.lastIndexOf("/");
+                scope=scope.substr(0,index+1);
+            } else {
+                let index=scope.indexOf("#");
+                if (index>0) {
+                    index=scope.lastIndexOf("/");
+                    scope=scope.substr(0,index+1);
+                }
+            }
+            return scope;
+        };
+        if (md.indexOf('http')!==0)
+            return getScope()+md;
+        return md;
+    }
+    
+    const path=bisgenericio.getpathmodule();
+    
+    if (environment==='electron') {
+        
+        let start=7;
+        if (path.sep==='\\') {
+            start=8;
+        }
+        
+        if (md.indexOf('file')===0) {
+            md=md.substr(start,md.length);
+        }
+        md=path.normalize(path.resolve(md));
+        if (start===8)
+            md=bisutil.filenameUnixToWindows(md);
+        md='file://'+md;
+        return md;
+    }
+    
+    md=path.normalize(path.resolve(md));
+    
+    if (md.indexOf('file')===0)
+        return md;
+    return 'file://'+md;
+};
+
+/** Restricts batch size based on hardware and batch size
+ * @param{Number} batchsize - the use specified number
+ * @returns{Number} - clamped to be below a certain size
+ */
+let fixBatchSize=function(batchsize) {
+
+    let environment=bisgenericio.getmode();
+    batchsize=parseInt(batchsize);
+    
+    if (batchsize<1)
+        batchsize=1;
+    
+    if (environment=== 'broswer') {
+        if (batchsize>2)
+            batchsize=2;
+    } else if (batchsize>64) {
+        batchsize=64;
+    }
+    
+    return batchsize;
+};
+
+
 /** load tensorflowjs model and optionally run a warm up prediction
  * @param{Object} tfwrapper - the tensorflowjs object
  * @param{String} URL - the base URL for the model
@@ -501,12 +650,15 @@ let loadAndWarmUpModel=function(tfwrapper,URL,warm=true) {
             reject(e);
         });
     });
-
 };
 
 
 module.exports = {
     BisWebTensorFlowRecon : BisWebTensorFlowRecon,
     TFWrapper : TFWrapper,
+    initializeTFModule : initializeTFModule,
+    fixModelName : fixModelName,
+    fixBatchSize : fixBatchSize,
+    getTFJSModule :     getTFJSModule,
     loadAndWarmUpModel : loadAndWarmUpModel,
 };
