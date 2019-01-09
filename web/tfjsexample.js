@@ -57,6 +57,7 @@ let run_tf_module=async function(img) {
         }
     }).catch( (e) => {
         console.log('Failed to invoke module',e);
+        bisweb.webutil.createAlert(e,true);
     });
 };
 
@@ -79,7 +80,7 @@ window.onload = function() {
     }
     let fn=( (name) => {
 
-        console.clear();
+        //        console.clear();
         console.log('Loading object=',URL);
         bisweb.loadObject(`${URL}/${name}.nii.gz`,'image').then( (img) => {
 

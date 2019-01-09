@@ -710,6 +710,10 @@ var readtextdata = function (url, loadedcallback, errorcallback) {
         return readtextdatanode(url, loadedcallback, errorcallback);
     }
 
+    if (url.indexOf('http')===0) {
+        return readtextdatafromurl(url, loadedcallback, errorcallback);
+    }
+
     if (environment === 'electron') {
         return readdataelectron(url, false, loadedcallback, errorcallback);
     }
@@ -738,6 +742,10 @@ var readbinarydata = function (url, loadedcallback, errorcallback) {
 
     if (environment === 'node') {
         return readbinarydatanode(url, loadedcallback, errorcallback);
+    }
+
+    if (url.indexOf('http')===0) {
+        return readbinarydatafromurl(url, loadedcallback, errorcallback);
     }
 
     if (environment === 'electron') {

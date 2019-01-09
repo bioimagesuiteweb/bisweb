@@ -119,9 +119,9 @@ class BisWebTFJSReconModule extends BaseModule {
                     console.log('--- \tinput image dims=',input.getDimensions().join(','));
                     console.log('---------------------------------------');
                     this.tfjsModule=bistfutil.getTFJSModule();
-                    
                 } catch(e) {
-                    reject("No TFJS module available "+e);
+                    reject('TFRecon Error '+e);
+                    return;
                 }
             } else {
                 console.log("--- Using preset TFJSModule");

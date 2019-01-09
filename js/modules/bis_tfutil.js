@@ -521,9 +521,13 @@ let initializeTFModule=function() {
             
             return;
         } else if (environment === 'electron') {
-            let md=window.BISELECTRON.tfmodulename || 'electron';
-            tfjsModule=new TFWrapper(window.BISELECTRON.tf,md);
-            resolve(md);
+            if (window.BISELECTRON.tf !== null) {
+                let md=window.BISELECTRON.tfmodulename || 'electron';
+                tfjsModule=new TFWrapper(window.BISELECTRON.tf,md);
+                resolve(md);
+            } else {
+                reject('No TF Module Available');
+            }
         } else if (environment === 'node') {
             try {
                 let tf=require("@tensorflow/tfjs");
