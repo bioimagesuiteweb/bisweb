@@ -36,6 +36,11 @@ const fn = function(viewer,img) {
 
 window.onload = function() {
 
+    if (bisweb.getEnvironment() === "electron") {
+        window.BISELECTRON.remote.getCurrentWindow().toggleDevTools();
+        $('.navbar-fixed-bottom').remove();
+    }
+
     // The viewer is optional, just remove the
     const viewer=document.querySelector("#viewer");
     
@@ -49,6 +54,7 @@ window.onload = function() {
         // Set the image to the viewer
         if (viewer)
             viewer.setimage(img);
+
         
         $('#compute').click( () => {
             fn(viewer,img);

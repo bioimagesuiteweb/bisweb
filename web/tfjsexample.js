@@ -63,8 +63,14 @@ let run_tf_module=async function(img) {
 
 
 window.onload = function() {
+
+    if (bisweb.getEnvironment() === "electron") {
+        window.BISELECTRON.remote.getCurrentWindow().toggleDevTools();
+        $('.navbar-fixed-bottom').remove();
+    }
     
     // Print the functionality
+    
     console.log('==========================================================');
     console.log('BISWeb Environment = ',bisweb.getEnvironment());    
     // The viewer is optional, just remove the
