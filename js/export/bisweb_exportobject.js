@@ -49,10 +49,27 @@ module.exports= {
         return moduleindex.getModule(modulename);
     },
 
+    /** Modify bisweb user preferences
+     * @param{String} item - item name
+     * @param{String} value - new value
+     * @param{Boolean} save - if true save (default = false)
+     */
+     
+    setPref(item,name,save=false) {
+        userPreferences.setItem(item,name,save);
+    },
+
+    /** Print User Preferences */
+    printUserPrefs() {
+        userPreferences.printUserPreferences();
+    },
+    
     /** return module genericio 
      * @alias biswebexport.getGenericIO
      * @returns{JavaScript Module} 
      */
+
+    
     genericio : genericio,
     bisdate : bisdate,
     BisWebImage : BisWebImage,

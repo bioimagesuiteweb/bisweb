@@ -507,7 +507,12 @@ class SnapshotElement extends HTMLElement {
         });
         webutil.tooltip(inlineform);
 
+        
+
+        console.log('SNAPSHOT ::: Requesting Scale=');
         userPreferences.safeGetItem('snapshotscale').then( (v) => {
+
+            console.log('SNAPSHOT ::: Received Scale=',v);
             if (v !== null) {
                 let v2 = parseFloat(v);
                 if (v2 !== Math.Nan) {

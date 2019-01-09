@@ -314,6 +314,7 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         this.applicationInitializedPromiseList.push(loadatlas(`${imagepath}/gray_highres_groupncut150_right5_left1_emily_reord_new.nii.gz`));
 
         Promise.all(this.applicationInitializedPromiseList).then( () => {
+            webfileutil.initializeFromUserPrefs();
             this.parseQueryParameters();
             document.body.style.zoom =  1.0;
         }).catch( (e) => {

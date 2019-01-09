@@ -1462,6 +1462,7 @@ class ViewerApplicationElement extends HTMLElement {
         let istest = this.getAttribute('bis-testingmode') || false;
         webutil.runAfterAllLoaded( () => {
             Promise.all(this.applicationInitializedPromiseList).then( () => {
+                webfileutil.initializeFromUserPrefs();
                 this.parseQueryParameters(painttoolid);
                 document.body.style.zoom =  1.0;
 

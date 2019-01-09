@@ -33,7 +33,7 @@ const fn = function(bisweb,viewer,img) {
 
 window.onload = function() {
 
-    const bisweb=window.bioimagesuiteweb();
+    const bisweb=window.bioimagesuiteweb;
     
     // The viewer is optional, just remove the
     const viewer=document.querySelector("#viewer");
