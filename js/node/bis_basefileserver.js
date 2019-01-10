@@ -9,6 +9,8 @@ const bisgenericio=require('bis_genericio');
 const glob=bisgenericio.getglobmodule();
 const biscmdline = require('bis_commandlineutils');
 const bidsutils=require('bis_bidsutils.js');
+const bis_dcm2niiutils = require('bis_dcm2niiutils.js');
+
 // TODO: IP Filtering
 // TODO: Check Base Directories not / /usr (probably two levels)
 
@@ -965,7 +967,6 @@ class BaseFileServer {
         
         let id=opts.id;
         let indir=opts.indir || '';
-        let debug=opts.debug || false;
 
         if (path.sep==='\\') {
             indir=util.filenameUnixToWindows(indir);
@@ -979,13 +980,15 @@ class BaseFileServer {
             return errorfn(indir+' is not valid');
         }
 
-        let outdir=path.join(this.opts.tempDirectory,'dicom_' + Date.now());
-        let dstdir = outdir + '/derived';
+        //TODO: Make this generic
+        let dicomtmpdir=path.join(this.opts.tempDirectory,'dicom_' + Date.now());
+        let outdir = dicomtmpdir + '/derived';
         try {
+            fs.mkdirSync(dicomtmpdir);
             fs.mkdirSync(outdir);
-            fs.mkdirSync(dstdir);
-        } catch(e) {
-            return errorfn('cannot make temp dir' + outdir, e);
+        } catch (e) {
+            console.log('An error occured while making DICOM directories', e);
+            return false;
         }
         
         let done= (status,code) => {
@@ -1003,10 +1006,8 @@ class BaseFileServer {
             this.sendCommand(socket,'dicomConversionProgress', message);
         };
 
-        console.log('indir', indir, 'outdir', dstdir);
-        let cmd=this.opts.dcm2nii + ' -z y ' + ' -o ' + dstdir + ' -b y ' + indir;
-        if (debug)
-            cmd='ls '+outdir+' '+indir;
+        console.log('indir', indir, 'outdir', outdir);
+        let cmd = this.opts.dcm2nii + ' -z y ' + ' -o ' + outdir + ' -ba y -c bisweb ' + indir;
         biscmdline.executeCommand(cmd,__dirname,done,listen);
         return;
     }

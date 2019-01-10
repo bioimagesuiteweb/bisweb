@@ -39,7 +39,7 @@ let dicom2BIDS=async function(opts)  {
     
     let match=genericio.joinFilenames(indir,'2*.nii.gz');
     let matchuncompressed = genericio.joinFilenames(indir, '2*.nii');
-    let matchniix=genericio.joinFilenames(indir, 'sourcedata*.nii.gz');
+    let matchniix=genericio.joinFilenames(indir, '*.nii.gz');
     let matchsupp = genericio.joinFilenames(indir, '*');
     
     console.log('Match=',match);

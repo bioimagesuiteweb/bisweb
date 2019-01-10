@@ -81,7 +81,7 @@ class DicomImportElement extends HTMLElement {
             console.log('Conversion done, now converting files to BIDS format.');
 
             //dicom files are in inputDirectory/derived
-            bis_bidsutils.dicom2BIDS({ 'indir': fileConversionOutput.output + '/derived', 'outdir': outdir }).then((bidsDirectory) => {
+            bis_bidsutils.dicom2BIDS({ 'indir': fileConversionOutput.output, 'outdir': outdir }).then((bidsDirectory) => {
 
                 console.log('output directory', bidsDirectory);
                 //parse folder name for containing folder (should be the folder before the .json file)

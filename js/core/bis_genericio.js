@@ -25,10 +25,14 @@
 
 const biscoreio=require('./bis_coregenericio');
 const util=require('./bis_util');
+//const bis_dcm2niiutils = require('bis_dcm2niiutils.js');
+//const bis_bidsutils = require('bis_bidsutils.js');
+
 const glob=biscoreio.getglobmodule();
 const fs=biscoreio.getfsmodule();
 const path=biscoreio.getpathmodule();
 const rimraf=biscoreio.getrimrafmodule();
+
 // -------------------------------------------------------------------------------------------------------
 // File server stuff
 
@@ -620,9 +624,21 @@ let runFileConversion = (params) => {
                 reject('Error: unsupported file type', params.fileType);
             }
         } else {
-            reject('No file server client');
+            /*if (params.fileType === 'dicom') {
+                let outputDirectories = bis_dcm2niiutils.makeDicomConversionDirectories();
+                rundcm2nii(params.inputDirectory, outputDirectories.dicomTempDirectory, () => {
+                    bis_bidsutils.dicom2BIDS({ 'indir' : outputDirectories.dicomTempDirectory, 'outdir' : outputDirectories.BIDSOutputDirectory});
+                });
+            }*/
         }
     });
+};
+
+let rundcm2nii = (indir, dstdir, done, listen = console.log) => {
+    console.log('indir', indir, 'outdir', dstdir);
+    let cmd = dcm2nii + ' -z y ' + ' -o ' + dstdir + ' -ba y -c bisweb ' + indir;
+    biscmdline.executeCommand(cmd, __dirname, done, listen);
+    return;
 };
 
 /**

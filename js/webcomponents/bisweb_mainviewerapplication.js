@@ -1210,12 +1210,6 @@ class ViewerApplicationElement extends HTMLElement {
             userPreferences.safeGetImageOrientationOnLoad(),
             userPreferences.safeGetItem('showwelcome'),
             webutil.aboutText(),
-<<<<<<< HEAD
-            idb.get('mode')
-        ]).then( (lst) => {
-            console.log('lst', lst);
-
-=======
         ];
 
         if (!webutil.inElectronApp()) {
@@ -1223,7 +1217,6 @@ class ViewerApplicationElement extends HTMLElement {
         }
 
         Promise.all(p).then( (lst) => {
->>>>>>> master
             let forceorient=lst[0];
             let firsttime=lst[1];
             let msg=lst[2];
