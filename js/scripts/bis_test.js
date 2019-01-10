@@ -24,10 +24,15 @@
 'use strict';
 
 require('../../config/bisweb_pathconfig.js');
-const libbiswasm=require('libbiswasm_wrapper');
+const genericio=require('bis_genericio');
 
-libbiswasm.initialize().then( () => { 
-    console.log('Loaded testing 1701 == ',libbiswasm.test_wasm());
+let url='https://bioimagesuiteweb.github.io/test/';
+
+let name0='module_tests.json';
+let name='testdata/MNI_6mm.nii.gz';
+
+
+genericio.read(url+name,true).then( (obj) => {
     process.exit(0);
 });
 

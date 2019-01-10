@@ -33,6 +33,7 @@
         "otplib": "10.0.1",
         "pako": "1.0.7",
         "platform": "1.3.5",
+        "request": "^2.88.0",
         "rimraf": "2.6.2",
         "three": "0.95.0",
         "websocket-stream": "5.1.2"
