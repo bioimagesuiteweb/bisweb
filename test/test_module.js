@@ -192,33 +192,7 @@ let fixBounds=function(testlist) {
 
 
 let run_test=function(i,done) {
-
-    let tname=testlist[i].command.split(" ")[0].toLowerCase();
-    let command=testlist[i].command+" "+testlist[i].test;
     
-    let expected_result=testlist[i].result;
-    
-    let proceed= (testnamelist ===null);
-    if (proceed===false) {
-        proceed= (testnamelist.indexOf(tname)>=0);
-    }
-    
-    if (proceed) {
-
-        console.log(colors.green('\n-------------------- test',i,'----------------------------------------------\n'));
-        bisnodecmd.executeCommand(testscript+' '+command,__dirname, ((completed,exitcode) => {
-            let success= (parseInt(exitcode) ===0);
-            console.log(bisnodecmd.getTime(), 'Returning, completed =',completed, 'exitcode=',exitcode,'success=', success, ' expected=', expected_result);
-            if (completed===false)
-                success=false;
-            
-            assert.equal(success,expected_result);
-            console.log(colors.blue('\n------------------------------------------------------------------\n'));
-            done();
-        }));
-    } else {
-        done();
-    }
 }
 
 describe(`Invoking command line tests `,function() {
@@ -228,15 +202,46 @@ describe(`Invoking command line tests `,function() {
         testscript=getTestScript();
         console.log('Testscript=',testscript);
         let testfilename=get_testfilename(program.input);
-        get_testlist(testfilename).catch( (e) => {
-            console.log('Error=',e);
-            proecess.exit(1);
-        }).then( (obj) => {
+        get_testlist(testfilename).then( (obj) => {
             testlist=obj;
             console.log(obj[0]);
             fixBounds(testlist);
             console.log('Running tests:',begin_test,':',end_test,' out a total of=',testlist.length,'tests. Filter name='+(testnamelist || ['all']).join(" "));
-            done();
+            describe('Internal Tests',function() {
+                for (let i=begin_test;i<=end_test;i++) {
+                    let tname=testlist[i].command.split(" ")[0].toLowerCase();
+                    let proceed= (testnamelist ===null);
+                    if (proceed===false) {
+                        proceed= (testnamelist.indexOf(tname)>=0);
+                    }
+                    
+                    if (proceed) {
+                        it('Test '+i,function(done2) {
+                            let command=testlist[i].command+" "+testlist[i].test;
+                            
+                            let expected_result=testlist[i].result;
+                            
+                            console.log(colors.green('\n-------------------- test',i,'----------------------------------------------\n'));
+                            bisnodecmd.executeCommand(testscript+' '+command,__dirname, ((completed,exitcode) => {
+                                let success= (parseInt(exitcode) ===0);
+                                console.log(bisnodecmd.getTime(), 'Returning, completed =',completed, 'exitcode=',exitcode,'success=', success, ' expected=', expected_result);
+                                if (completed===false)
+                                    success=false;
+                                
+                                assert.equal(success,expected_result);
+                                console.log(colors.blue('\n------------------------------------------------------------------\n'));
+                                done();
+                            })).catch( (e) => {
+                                assert.equal(true,false);
+                                done();
+                            });
+                        });
+                    }
+                }
+            });
+        }).catch( (e) => {
+            console.log('Error=',e);
+            proecess.exit(1);
         });
     });
 
@@ -253,9 +258,9 @@ describe(`Invoking command line tests `,function() {
         };
         fn();
         });*/
-    for (let i=begin_test;i<=end_test;i++) {
-        it('Test '+i,function(done) {
-            run_test(i,done);
-        });
-    }
+    
+
+    it('This is a required placeholder to allow before() to work', function () {
+        console.log('Mocha should not require this hack IMHO');
+    });
 });
