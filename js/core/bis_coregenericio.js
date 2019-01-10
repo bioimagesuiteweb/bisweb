@@ -481,8 +481,6 @@ var readbinarydatabrowser = function (file, loadedcallback, errorcallback) {
  */
 var readdatafromurl_node = function (url, binary,loadedcallback, errorcallback) {
 
-const request = require('request');
-
     let settings= {
         url : url,
         method : 'GET',

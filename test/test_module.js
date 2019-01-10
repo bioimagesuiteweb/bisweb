@@ -16,10 +16,8 @@
     ENDLICENSE */
 
 
-
-
 /* jshint node:true */
-/*global describe, it, before */
+/*global describe, it, before,after */
 "use strict";
 
 require('../config/bisweb_pathconfig.js');
@@ -32,7 +30,7 @@ const assert = require("assert"),
       fs = require('fs');
 const modules = require('moduleindex.js');
 
-const githuburl='https://bioimagesuiteweb.github.io/test/module_tests.json'
+const githuburl='https://bioimagesuiteweb.github.io/test/module_tests.json';
 
 // ---------------------------------------------------------------------------------
 const help = function() {
@@ -64,12 +62,12 @@ let load_module=function(testfilename) {
         console.log("Reading",testfilename);
         
         if (testfilename.indexOf('http')!==0) {
-            let testfile= fs.readFileSync(testlistfilename, 'utf-8');
+            let testfile= fs.readFileSync(testfilename, 'utf-8');
             try {
                 let obj = JSON.parse(testfile);
                 resolve(obj);
             } catch (e) {
-                console.log('Failed to parse testfile from',testlistfilename,e);
+                console.log('Failed to parse testfile from',testfilename,e);
                 reject('Failed to parse from '+testfilename);
             }
         } else {
@@ -78,11 +76,11 @@ let load_module=function(testfilename) {
                     let obj = JSON.parse(out.data);
                     resolve(obj);
                 } catch (e) {
-                    console.log('Failed to parse testfile from',testlistfilename,e);
+                    console.log('Failed to parse testfile from',testfilename,e);
                     reject('Failed to parse from '+testfilename);
                 }
             }).catch( (e) => {
-                console.log('Failed to load ',testlistfilename);
+                console.log('Failed to load ',testfilename,e);
                 reject('Failed to load from '+testfilename);
             });
         }
@@ -91,15 +89,15 @@ let load_module=function(testfilename) {
 
 let get_testfilename=function(inp) {
 
-    let testlistfilename=inp || null;
+    let testfilename=inp || null;
     
-    if (testlistfilename===null) {
+    if (testfilename===null) {
         if (program.local) 
-                testlistfilename=path.join(__dirname,'module_tests.json');
+                testfilename=path.join(__dirname,'module_tests.json');
             else
-                testlistfilename=githuburl;
+                testfilename=githuburl;
     }
-    return testlistfilename;
+    return testfilename;
 };
 
 
@@ -113,7 +111,7 @@ let get_testlist=function(fname)  {
             resolve(obj['testlist']);
         }).catch( (e) => { reject(e); });
     });
-}
+};
 
 let getTestScript=function() { 
 
@@ -188,26 +186,26 @@ let fixBounds=function(testlist) {
         }
         process.exit(0);
     }
-}
+};
 
-
-let run_test=function(i,done) {
-    
-}
-
+// See this for an examplanation
+// https://stackoverflow.com/questions/22465431/how-can-i-dynamically-generate-test-cases-in-javascript-node
 describe(`Invoking command line tests `,function() {
 
-    before(function(done) {
-
+    this.timeout(50000);
+    
+    before(function() {
+        
         testscript=getTestScript();
         console.log('Testscript=',testscript);
         let testfilename=get_testfilename(program.input);
-        get_testlist(testfilename).then( (obj) => {
+        return get_testlist(testfilename).then( (obj) => {
             testlist=obj;
-            console.log(obj[0]);
             fixBounds(testlist);
             console.log('Running tests:',begin_test,':',end_test,' out a total of=',testlist.length,'tests. Filter name='+(testnamelist || ['all']).join(" "));
             describe('Internal Tests',function() {
+
+                this.timeout(50000);
                 for (let i=begin_test;i<=end_test;i++) {
                     let tname=testlist[i].command.split(" ")[0].toLowerCase();
                     let proceed= (testnamelist ===null);
@@ -217,6 +215,7 @@ describe(`Invoking command line tests `,function() {
                     
                     if (proceed) {
                         it('Test '+i,function(done2) {
+
                             let command=testlist[i].command+" "+testlist[i].test;
                             
                             let expected_result=testlist[i].result;
@@ -230,18 +229,19 @@ describe(`Invoking command line tests `,function() {
                                 
                                 assert.equal(success,expected_result);
                                 console.log(colors.blue('\n------------------------------------------------------------------\n'));
-                                done();
-                            })).catch( (e) => {
-                                assert.equal(true,false);
-                                done();
-                            });
+                                done2();
+                            }));
                         });
                     }
                 }
+
+                after(function() {
+                    console.log(colors.red('+++++ Please note: The number of tests reported below is one greater then the actual number of tests. This is because we run a dummy test in addition.'));
+                });
             });
         }).catch( (e) => {
             console.log('Error=',e);
-            proecess.exit(1);
+            process.exit(1);
         });
     });
 
@@ -261,6 +261,8 @@ describe(`Invoking command line tests `,function() {
     
 
     it('This is a required placeholder to allow before() to work', function () {
-        console.log('Mocha should not require this hack IMHO');
+        console.log(colors.blue('Dummy test'));
     });
+
+
 });

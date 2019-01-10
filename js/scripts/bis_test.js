@@ -28,11 +28,11 @@ const genericio=require('bis_genericio');
 
 let url='https://bioimagesuiteweb.github.io/test/';
 
-let name0='module_tests.json';
+
 let name='testdata/MNI_6mm.nii.gz';
 
 
-genericio.read(url+name,true).then( (obj) => {
+genericio.read(url+name,true).then( () => {
     process.exit(0);
 });
 

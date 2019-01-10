@@ -430,7 +430,7 @@ gulp.task('commonfiles', (done) => {
     let name='package_notf';
 
     if (options.tensorflow)
-        name='package'
+        name='package';
     
     console.log(getTime()+' Copying css,fonts,images etc. . tensorflow=',options.tensorflow);
 

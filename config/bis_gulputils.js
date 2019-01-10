@@ -404,11 +404,11 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
     let cmdlist = ['pwd'];
     let zipopts=' -ry';
     let inwin32=false;
-    let separator=";";
+    //let separator=";";
     if (os.platform()==='win32') {
         inwin32=true;
         zipopts='-r';
-        separator="&";
+        //  separator="&";
     }
 
     console.log('In win 32=',inwin32,outdir,path.resolve(outdir));
