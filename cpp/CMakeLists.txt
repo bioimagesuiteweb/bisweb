@@ -206,9 +206,6 @@ MARK_AS_ADVANCED(BIS_UNITTEST)
 OPTION(BIS_MODULETEST "Enable MODULE Tests" ON)
 MARK_AS_ADVANCED(BIS_MODULETEST)
 
-OPTION(BIS_INSTALLTESTS "Install Module Tests & Data" OFF)
-#MARK_AS_ADVANCED(BIS_INSTALLTESTS)
-
 # ---------------------------------------------------------------------------------------------
 # License File depending on whether we are using the GPL plugin or not
 # ---------------------------------------------------------------------------------------------
@@ -340,15 +337,11 @@ IF (BIS_A_EMSCRIPTEN)
 
   
   SET(TFLAG "")
-  IF (BIS_INSTALLTESTS)
-    MESSAGE("Installing tests")
-    SET(TFLAG "--testing")
-    SET (OUTSCRIPT ${PROJECT_SOURCE_DIR}/../js/bin/bisweb-test.js)
-    install (FILES ${OUTSCRIPT} DESTINATION bisweb/lib
-      PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
-  ELSEIF (BIS_INSTALLTESTS)
-    MESSAGE("Not installing tests")
-  ENDIF (BIS_INSTALLTESTS)
+  MESSAGE("Installing tests")
+  SET(TFLAG "--testing")
+  SET (OUTSCRIPT ${PROJECT_SOURCE_DIR}/../js/bin/bisweb-test.js)
+  install (FILES ${OUTSCRIPT} DESTINATION bisweb/lib
+    PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
 
   set (NPMPACKAGEFILE ${LIBRARY_OUTPUT_PATH}/package.json)
   add_custom_command(OUTPUT ${NPMPACKAGEFILE}
@@ -377,7 +370,7 @@ IF (BIS_A_EMSCRIPTEN)
   
   install (FILES ${OUTFILES} DESTINATION bisweb/bin 
     PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
-  install (FILES ${OUTFILESWIN} DESTINATION bisweb/winbin 
+  install (FILES ${OUTFILESWIN} DESTINATION bisweb/winbin
     PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
 
   MESSAGE("-- TEST_DIR=${TEST_DIR}")
@@ -385,7 +378,7 @@ IF (BIS_A_EMSCRIPTEN)
     IF(BIS_MODULETEST)
       SET (COUNT 0)
       FOREACH (item ${MODULES})
-	add_test(NAME "js-module-${item}" COMMAND mocha test_module.js --tpath ${LIBRARY_OUTPUT_PATH} --testname ${item} WORKING_DIRECTORY ${TEST_DIR})
+	add_test(NAME "js-module-${item}" COMMAND mocha test_module.js --tpath ${LIBRARY_OUTPUT_PATH} --testname ${item} --input ${TEST_DIR}/module_tests.json WORKING_DIRECTORY ${TEST_DIR} )
 	MATH (EXPR COUNT "${COUNT}+1")
       ENDFOREACH (item ${TLIST})
       MESSAGE("~~~~~ Added ${COUNT} javascript/mocha module tests ${LIBRARY_OUTPUT_PATH}")
@@ -407,35 +400,23 @@ IF (BIS_A_EMSCRIPTEN)
       MESSAGE("~~~~~ Added ${COUNT} javascript/mocha unit tests")
     ENDIF(BIS_UNITTEST)
   
-  OPTION(BIS_WASMLIB_COPY "Copy WASM Output to another directory (for Ubuntu -> Windows)" OFF)
-
-  IF (BIS_WASMLIB_COPY)
-    SET (BIS_EXTRAPATH  
-      ""
-      CACHE PATH
-      "Extra path to copy WASM output to")
-
-  ENDIF (BIS_WASMLIB_COPY)
 
   # ---------------------------------------------------------------------------------------------
 
-  IF (BIS_INSTALLTESTS)
-    GET_FILENAME_COMPONENT(WEBPCONFIG ${PROJECT_SOURCE_DIR}/../config/app.config.js ABSOLUTE)
-
-    SET (OUTSCRIPT test_module.js)
-    SET (INSCRIPT ${PROJECT_SOURCE_DIR}/../test/test_module.js)
-
-    GET_FILENAME_COMPONENT(INSCRIPT ${INSCRIPT} ABSOLUTE)
-    add_custom_command(OUTPUT ${OUTSCRIPT}
-      DEPENDS ${MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JSFILES}  ${LIBNAME} ${INSCRIPT} ${JS_WRAP_OUTPUT} ${WEBPACK_WASM_MODULE}
-      PRE_BUILD COMMENT "Creating webpack-cli test_module.js"
-      COMMAND webpack-cli --entry ${INSCRIPT} --config ${WEBPCONFIG} --output-path ${LIBRARY_OUTPUT_PATH} --output-filename test_module.js
-      )
-    add_custom_target(module_test ALL DEPENDS ${OUTSCRIPT})
-    install (FILES ${PROJECT_BINARY_DIR}/lib/${OUTSCRIPT} DESTINATION bisweb/test
-          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
-  ENDIF (BIS_INSTALLTESTS)
-    
+  GET_FILENAME_COMPONENT(WEBPCONFIG ${PROJECT_SOURCE_DIR}/../config/app.config.js ABSOLUTE)
+  
+  SET (OUTSCRIPT test_module.js)
+  SET (INSCRIPT ${PROJECT_SOURCE_DIR}/../test/test_module.js)
+  
+  GET_FILENAME_COMPONENT(INSCRIPT ${INSCRIPT} ABSOLUTE)
+  add_custom_command(OUTPUT ${OUTSCRIPT}
+    DEPENDS ${MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JSFILES}  ${LIBNAME} ${INSCRIPT} ${JS_WRAP_OUTPUT} ${WEBPACK_WASM_MODULE}
+    PRE_BUILD COMMENT "Creating webpack-cli test_module.js"
+    COMMAND webpack-cli --entry ${INSCRIPT} --config ${WEBPCONFIG} --output-path ${LIBRARY_OUTPUT_PATH} --output-filename test_module.js
+    )
+  add_custom_target(module_test ALL DEPENDS ${OUTSCRIPT})
+  install (FILES ${PROJECT_BINARY_DIR}/lib/${OUTSCRIPT} DESTINATION bisweb/test
+    PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
   
 ELSE(BIS_A_EMSCRIPTEN)
 
@@ -557,9 +538,8 @@ ELSE(BIS_A_EMSCRIPTEN)
       MESSAGE("~~~~~ Added ${COUNT} python/unittest tests")
     ENDIF(BIS_UNITTEST)
 
-    IF (BIS_INSTALLTESTS)
-      install (FILES ${PROJECT_SOURCE_DIR}/../test/test_module.py DESTINATION bisweb/test)
-    ENDIF (BIS_INSTALLTESTS)
+    install (FILES ${PROJECT_SOURCE_DIR}/../test/test_module.py DESTINATION bisweb/test)
+    
 
   ENDIF(BIS_A_PYTHON)
 
@@ -603,7 +583,7 @@ ENDIF(BIS_A_EMSCRIPTEN)
 # Make some flags advanced
 MARK_AS_ADVANCED(BIS_WEB_MEMORY)
 MARK_AS_ADVANCED(BIS_WEB_WASM)
-MARK_AS_ADVANCED(BIS_WASMLIB_COPY)
+
 MARK_AS_ADVANCED(BIS_EXTRAPATH)
 MARK_AS_ADVANCED(BIS_WEB_OPT)
 MARK_AS_ADVANCED(BIS_A_DEVEL)
@@ -612,12 +592,8 @@ MARK_AS_ADVANCED(BIS_A_DEVEL)
 # ----------------------------------------------------------
 # If installing tests
 
-IF (BIS_INSTALLTESTS)
-  MESSAGE("Installing tests ${BIS_INSTALLTESTS}")
-  install (FILES ${PROJECT_SOURCE_DIR}/../test/module_tests.json DESTINATION bisweb/test)
-  install (DIRECTORY ${PROJECT_SOURCE_DIR}/../test/testdata DESTINATION bisweb/test)
-  install (FILES ${PROJECT_SOURCE_DIR}/../various/txt/README_test.md DESTINATION bisweb/test)
-ENDIF (BIS_INSTALLTESTS)
+install (FILES ${PROJECT_SOURCE_DIR}/../various/txt/README_test.md DESTINATION bisweb/test)
+
 
 # ----------------------------------------------------------
 # Run Doxygen

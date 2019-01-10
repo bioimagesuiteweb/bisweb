@@ -27,15 +27,20 @@ const assert = require("assert"),
       bisnodecmd = require("bis_commandlineutils"),
       genericio=require('bis_genericio'),
       path = require('path'),
-      fs = require('fs');
+      fs = require('fs'),
+      util =require('bis_util');
+
 const modules = require('moduleindex.js');
 
-const githuburl='https://bioimagesuiteweb.github.io/test/module_tests.json';
+const githuburl='https://bioimagesuiteweb.github.io/test/';
+const githuburlfile='https://bioimagesuiteweb.github.io/test/module_tests.json';
 
 // ---------------------------------------------------------------------------------
 const help = function() {
     console.log('\nThis program runs the bisweb module tests');
 };
+
+
 
 program.version('1.0.0')
     .option('--input <s>','filename of the tests to run')
@@ -43,23 +48,25 @@ program.version('1.0.0')
     .option('--last <n>','last test to run. If negative count from the end.',parseInt)
     .option('--testname <items>','comma separated list of names of tests to run. If not specified all are run (subject to first:last)')
     .option('-f , --findmodules <n>','if 1 then print list of all modules and their tests',parseInt)
-    .option('--tpath <s>','path to bisweb-test.js')
-    .option('--local','use local data')
-    .on('--help',function() {
+    .option('--tpath <s>','path to bisweb-test.js').
+    on('--help',function() {
         help();
-    })
-    .parse(process.argv);
+    }).parse(process.argv);
 
+
+const getTime=util.getTime;
+
+program.input=program.input || '';
 
 // Global Variables
 // ---------------------
-let begin_test=0,end_test=0,testnamelist,testlist,testscript='';
+let begin_test=0,end_test=0,testnamelist,testlist,testscript='',basedirectory='';
 
 let load_module=function(testfilename) {
 
     return new Promise( (resolve,reject) => {
 
-        console.log("Reading",testfilename);
+        console.log(getTime()+" "+colors.green("\t Reading",testfilename));
         
         if (testfilename.indexOf('http')!==0) {
             let testfile= fs.readFileSync(testfilename, 'utf-8');
@@ -89,13 +96,13 @@ let load_module=function(testfilename) {
 
 let get_testfilename=function(inp) {
 
-    let testfilename=inp || null;
-    
-    if (testfilename===null) {
-        if (program.local) 
-                testfilename=path.join(__dirname,'module_tests.json');
-            else
-                testfilename=githuburl;
+    let testfilename='';
+    if (inp.length > 0) {
+        testfilename=inp;
+        basedirectory=path.resolve(path.dirname(inp))+'/';
+    } else {
+        testfilename=githuburlfile;
+        basedirectory=githuburl;
     }
     return testfilename;
 };
@@ -105,8 +112,6 @@ let get_testlist=function(fname)  {
     
     return new Promise( (resolve,reject) => {
 
-        console.log('testlistfilename=',fname);
-        
         load_module(fname).then( (obj) => {
             resolve(obj['testlist']);
         }).catch( (e) => { reject(e); });
@@ -190,20 +195,20 @@ let fixBounds=function(testlist) {
 
 // See this for an examplanation
 // https://stackoverflow.com/questions/22465431/how-can-i-dynamically-generate-test-cases-in-javascript-node
-describe(`Invoking command line tests `,function() {
+describe(getTime()+` Beginning module tests `,function() {
 
     this.timeout(50000);
     
     before(function() {
         
         testscript=getTestScript();
-        console.log('Testscript=',testscript);
+        console.log(getTime()+'\t Testscript=',testscript, ' ',__dirname);
         let testfilename=get_testfilename(program.input);
         return get_testlist(testfilename).then( (obj) => {
             testlist=obj;
             fixBounds(testlist);
-            console.log('Running tests:',begin_test,':',end_test,' out a total of=',testlist.length,'tests. Filter name='+(testnamelist || ['all']).join(" "));
-            describe('Internal Tests',function() {
+            console.log(getTime()+'\t Running tests:',begin_test,':',end_test,' out a total of=',testlist.length,'tests. Filter name='+(testnamelist || ['all']).join(" "));
+            describe('',function() {
 
                 this.timeout(50000);
                 for (let i=begin_test;i<=end_test;i++) {
@@ -219,16 +224,16 @@ describe(`Invoking command line tests `,function() {
                             let command=testlist[i].command+" "+testlist[i].test;
                             
                             let expected_result=testlist[i].result;
-                            
-                            console.log(colors.green('\n-------------------- test',i,'----------------------------------------------\n'));
+                            command=command+' --test_base_directory '+basedirectory;
+                            console.log(colors.green('\n'+getTime()+' -------------------- test',i,'----------------------------------------------\n'));
                             bisnodecmd.executeCommand(testscript+' '+command,__dirname, ((completed,exitcode) => {
                                 let success= (parseInt(exitcode) ===0);
-                                console.log(bisnodecmd.getTime(), 'Returning, completed =',completed, 'exitcode=',exitcode,'success=', success, ' expected=', expected_result);
+                                console.log('\t Returning, completed =',completed, 'exitcode=',exitcode,'success=', success, ' expected=', expected_result);
                                 if (completed===false)
                                     success=false;
                                 
                                 assert.equal(success,expected_result);
-                                console.log(colors.blue('\n------------------------------------------------------------------\n'));
+                                console.log(colors.blue('\n'+getTime()+' ------------------------------------------------------------------\n'));
                                 done2();
                             }));
                         });
@@ -260,8 +265,7 @@ describe(`Invoking command line tests `,function() {
         });*/
     
 
-    it('This is a required placeholder to allow before() to work', function () {
-        console.log(colors.blue('Dummy test'));
+    it(getTime()+'\t This is a required placeholder to allow before() to work', function () {
     });
 
 
