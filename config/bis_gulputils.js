@@ -392,10 +392,17 @@ var inno=function(tools, version, indir , distdir ) {
 var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",outdir="build",version=1.0,platform="linux",distdir="builddist",done=0) {
 
 
-    let cmdlist = [];
-    let zipopts='-ry';
-    if (os.platform()==='win32')
+    let cmdlist = ['pwd'];
+    let zipopts=' -ry';
+    let inwin32=false;
+    let separator=";";
+    if (os.platform()==='win32') {
+        inwin32=true;
         zipopts='-r';
+        separator="&";
+    }
+
+    console.log('In win 32=',inwin32,outdir,path.resolve(outdir));
     
     let errorf=function() { };
     console.log(colors.cyan(getTime()+' (electron '+version+') for: '+platform));
@@ -411,25 +418,26 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
         }
 
         if (dopackage>=2) {
-            cmdlist.push(`rimraf ${path.resolve(outdir,'node_modules')}`);
+            cmdlist.push(`rimraf ${path.resolve(idir,'node_modules')}`);
             if (dopackage===3) {
                 cmdlist.push('npm install -d');
                 cmdlist.push('modclean -r -a *.ts');
             } else if (dopackage===2) {
-                let zname=path.resolve(path.join(outdir,path.join('..','electrondist')));
-                zname=path.join(zname,`bisweb_${n}_node_modules_electron.zip`);
-                console.log('zname = ', zname, 'bisweb_win32_node_modules_electron.zip');
-                //if (fs.existsSync(zname)) {
-                    cmdlist.push(`unzip -t ${zname}`);
-//                } else {
-  //                  console.log(colors.red(' E R R O R ', zname,' does not exist'));
-    //                process.exit(1);
-      //          }
+                let zname=path.resolve(path.join(outdir,path.join('..',`electrondist/bisweb_${n}.zip`)));
+                try {
+                    let stats = fs.statSync(zname);
+                    let bytes = stats["size"];
+                    console.log('zname = ', zname,bytes);
+                    cmdlist.push(`cd ../web ${separator} unzip -q ${zname}`);
+                } catch(e) {
+                    console.log(colors.red(e));
+                    process.exit(1);
+                }
             }
         }
         
         let basefile=distdir+"/bisweb_"+m+"_"+getVersionTag(version);
-        let zipfile=path.normalize(path.resolve(basefile+suffix));
+        let zipfile=basefile+suffix;
 
         
         
@@ -451,17 +459,12 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
 
         let cleancmd='rimraf '+fullpath;
         
-        if (n==="linux") {
-            cmdlist.push(cmdline+' --platform=linux');
-            cmdlist.push(cleancmd);
-            if (dopackage>1) {
-                cmdlist.push('cd '+absdistdir+'; zip '+zipopts+' '+zipfile+' '+zipindir);
-            }
-        } else if (n==="win32") {
+        if (n==="win32") {
             let ifile=path.resolve(indir,'web/images/bioimagesuite.png.ico');
             cmdlist.push(cmdline+` --platform=win32 --icon ${ifile}`);
-            cmdlist.push(cleancmd);
-            if (dopackage>1)  {
+            if (dopackage===3)
+                cmdlist.push(cleancmd);
+            if (dopackage>0)  {
                 if (os.platform()!=='win32') {
                     cmdlist.push('zip '+zipopts+' '+zipfile+' '+zipindir);
                 } else {
@@ -470,18 +473,21 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
                     cmdlist.push('c:\\unix\\innosetup5\\ISCC.exe '+innofile);
                 }
             }
-        } else if (n==="darwin") {
-            cmdlist.push(cmdline+' --platform=darwin --icon web/images/bioimagesuite.icns');
-            cmdlist.push(cleancmd);
-            if (dopackage>1)  {
-                cmdlist.push('cd '+absdistdir+'; zip '+zipopts+' '+zipfile+' '+zipindir);
+        } else {
+            if (n==="linux") 
+                cmdlist.push(cmdline+' --platform=linux');
+            else
+                cmdlist.push(cmdline+` --platform=darwin --icon ${path.resolve(indir,'web/images/bioimagesuite.icns')}`);
+            if (dopackage===3)
+                cmdlist.push(cleancmd);
+            if (dopackage>0)  {
+                cmdlist.push(`zip `+zipopts+' '+path.basename(zipfile)+' '+path.basename(zipindir));
             }
         }
     }
-
-    console.log('About to execute in : ', path.resolve(idir),'\n\t', JSON.stringify(cmdlist,null,4));
-    done();
-    //executeCommandList(cmdlist,indir,done);
+    let ddir=path.resolve(path.join(outdir,path.join('..','dist')));
+    console.log(getTime()+colors.green('About to execute in : win32=',inwin32,'\n path=', path.resolve(ddir),'\n\t', JSON.stringify(cmdlist,null,4)));
+    executeCommandList(cmdlist,ddir,done);
 };
 
 
