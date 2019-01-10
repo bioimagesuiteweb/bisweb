@@ -30,7 +30,7 @@ const program = bioimagesuiteweblib.commander;
 const tmp = bioimagesuiteweblib.tmp;
 const rimraf=bioimagesuiteweblib.rimraf;
 const commandline=bioimagesuiteweblib.commandline;
-const userPreferences = bioimagesuiteweblib.userPreferences;
+
 
 let tmpDirectory = tmp.dirSync();
 console.log('.... created tmp directory',tmpDirectory.name);
@@ -73,7 +73,7 @@ for (let i=0;i<args.length;i++) {
 }
 
 let tempName="";
-if (test_type==="image")
+if (test_type==="image" || test_type==="tfjs")
     tempName= dirname+ '/out.nii.gz';
 else if (test_type==="matrix" || test_type==="matrixtransform")
     tempName= dirname+ '/out.jmatr';
@@ -91,12 +91,20 @@ if (test_type==="registration") {
 }
 
 
+if (test_type==="tfjs") {
+    test_type="image";
+}
 
-// Disable auto reorient on load
-console.log('++++ Disabling auto-reorient of images on load.\n+++++');
-userPreferences.setImageOrientationOnLoad('None');
+
+// Disable auto reorient on load -- not needed any more
+//console.log('++++ Disabling auto-reorient of images on load.\n+++++');
+//userPreferences.setImageOrientationOnLoad('None');
+
+console.log('.... Testing module '+toolname);
+console.log('................................................');
 
 commandline.loadParse(args, bisModule).then(() => {
+    console.log('.... -------------------------------------------------------');
     commandline.processTestResult(toolname,tempName,
                                   program.test_target,test_type,program.test_threshold,
                                   program.test_comparison,

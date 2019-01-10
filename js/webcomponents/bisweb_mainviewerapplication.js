@@ -35,7 +35,6 @@ const BisWebLinearTransformation = require('bisweb_lineartransformation.js');
 const idb=require('idb-keyval');
 const localforage=require('localforage');
 
-
 const clipboard=localforage.createInstance({
     driver : localforage.INDEXEDDB,
     name : "BioImageSuiteWebClipboard",
@@ -858,8 +857,9 @@ class ViewerApplicationElement extends HTMLElement {
         let fn = (() => { this.welcomeMessage(true) ; });
         
         webutil.createMenuItem(hmenu,'About this application',fn);
-        
-        hmenu.append($(`<li><a href="https://bioimagesuiteweb.github.io/bisweb-manual/${extrahtml}" target="_blank" rel="noopener" ">BioImage Suite Web Online Manual</a></li>`));
+
+        let link=`a href="https://bioimagesuiteweb.github.io/bisweb-manual/${extrahtml}" target="_blank" rel="noopener"`; 
+        hmenu.append($(`<li><${link}>BioImage Suite Web Online Manual</a></li>`));
         webutil.createMenuItem(hmenu, ''); // separator
         
         this.addOrientationSelectToMenu(hmenu);
@@ -880,15 +880,16 @@ class ViewerApplicationElement extends HTMLElement {
 
         webfileutil.createFileSourceSelector(hmenu);
 
-        userPreferences.safeGetItem("internal").then( (f) =>  {
-            if (f) {
-                webutil.createMenuItem(hmenu, 'Open AWS Selector', 
-                                       () => {
-                                           webfileutil.createAWSMenu();
-                                       });
-            }
-        }).catch( () => { });
-
+        if (!webutil.inElectronApp()) { 
+            userPreferences.safeGetItem("internal").then( (f) =>  {
+                if (f) {
+                    webutil.createMenuItem(hmenu, 'Open AWS Selector', 
+                                           () => {
+                                               webfileutil.createAWSMenu();
+                                           });
+                }
+            }).catch( () => { });
+        }
         return hmenu;
     }
 
@@ -1205,18 +1206,30 @@ class ViewerApplicationElement extends HTMLElement {
 
         let show=force;
 
-        Promise.all( [ 
+        let p=[ 
             userPreferences.safeGetImageOrientationOnLoad(),
             userPreferences.safeGetItem('showwelcome'),
             webutil.aboutText(),
+<<<<<<< HEAD
             idb.get('mode')
         ]).then( (lst) => {
             console.log('lst', lst);
 
+=======
+        ];
+
+        if (!webutil.inElectronApp()) {
+            p.push( idb.get('mode'));
+        }
+
+        Promise.all(p).then( (lst) => {
+>>>>>>> master
             let forceorient=lst[0];
             let firsttime=lst[1];
             let msg=lst[2];
 
+            lst[3]=lst[3] || '';
+            
             let offline=false;
             if ( lst[3] && lst[3].indexOf('offline')>=0)
                 offline=true;
@@ -1240,7 +1253,7 @@ class ViewerApplicationElement extends HTMLElement {
             if (offline)
                 txt+="<HR><p>This application is operating in Offline Mode.</p><HR>";
             
-            console.log('In Electron=',webutil.inElectronApp());
+            //            console.log('In Electron=',webutil.inElectronApp());
             
             if (!webutil.inElectronApp() && firsttime===true) {
                 txt+=`<HR><H3>Some things you should
@@ -1456,6 +1469,7 @@ class ViewerApplicationElement extends HTMLElement {
         let istest = this.getAttribute('bis-testingmode') || false;
         webutil.runAfterAllLoaded( () => {
             Promise.all(this.applicationInitializedPromiseList).then( () => {
+                webfileutil.initializeFromUserPrefs();
                 this.parseQueryParameters(painttoolid);
                 document.body.style.zoom =  1.0;
 
@@ -1471,7 +1485,6 @@ class ViewerApplicationElement extends HTMLElement {
 
     }
 }
-
 
 module.exports = ViewerApplicationElement;
 webutil.defineElement('bisweb-viewerapplication', ViewerApplicationElement);

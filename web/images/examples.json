@@ -1,0 +1,20 @@
+{
+    "tools" : {	
+	    "exportexample" : {
+	        "title" : "Image Resampling Example",
+	        "url"   : "exportexample",
+            "nogpl" : true
+	    },
+        "tfjsexample" : {
+	        "title" : "Tensorflow.js Example",
+	        "url"   : "tfjsexample",
+            "nogpl" : false
+	    },
+        "viewerexample" : {
+	        "title" : "Viewer Example",
+	        "url"   : "viewerexample",
+            "nogpl" : true
+	    }
+    }
+}
+

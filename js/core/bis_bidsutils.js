@@ -1,3 +1,5 @@
+'use strict';
+
 const genericio=require('bis_genericio');
 
 // DICOM2BIDS

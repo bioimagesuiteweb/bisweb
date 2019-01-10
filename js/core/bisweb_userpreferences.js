@@ -28,7 +28,7 @@ const genericio = require('bis_genericio');
  * @alias biswebUserPreferences.dbasepointer
  */
 let dbasepointer=null;
-let count=0;
+let count=1;
 /** 
  * The internal user preferences Object
  * @alias biswebUserPreferences.userPreferences
@@ -45,9 +45,18 @@ const userPreferences = {
     enables3 : false,
 };
 
+// Initialization Promise
 const expobj = {
-    loadedPromise : null
+
+    resolve : null,
+    reject : null,
+    initialized : false
 };
+
+expobj.loadedPromise=new Promise( (resolve,reject) => {
+    expobj.resolve=resolve;
+    expobj.reject=reject;
+});
 
 
 // ------------------------------------------------------------------------------------------
@@ -79,7 +88,7 @@ let getDefaultFileName=function() {
 let parseUserPreferences=function(obj) {
 
     Object.keys(obj).forEach((key) => {
-        if (obj[key]!== undefined)
+        if (obj[key]!== undefined && obj[key]!==null)
             userPreferences[key]=obj[key];
     });
 
@@ -93,6 +102,9 @@ let parseUserPreferences=function(obj) {
 
     if (userPreferences['showwelcome']!==false)
         userPreferences['showwelcome']=true;
+
+    if (genericio.getmode() === 'browser')
+        console.log('---- Loaded userPreferences:',JSON.stringify(userPreferences));
     
     return true;
 };
@@ -149,16 +161,9 @@ let nodeLoadUserPreferences=function(fname=null) {
 
 let webLoadUserPreferences=function(dbase=null) {
 
-
-    if (genericio.getenvironment()==='electron') {
-        if (nodeLoadUserPreferences(null))
-            return Promise.resolve();
-        return Promise.reject();
-    }
-
     dbase = dbase  || dbasepointer;
     let keys=Object.keys(userPreferences);
-
+    
     return new Promise( (resolve,reject) => {
         try {
             dbase.getItems(keys).then( (obj) => {
@@ -166,8 +171,12 @@ let webLoadUserPreferences=function(dbase=null) {
                     dbasepointer=dbase;
                     resolve();
                 }
-            }).catch( (e) => { reject(e); });
+            }).catch( (e) => {
+                console.log('Error=',e);
+                reject(e);
+            });
         } catch(e) {
+            console.log('Error=',e);
             reject(e);
         }
     });              
@@ -279,7 +288,6 @@ expobj.printUserPreferences=function() {
  */
 
 expobj.storeUserPreferences=function(dbase) {
-
     if (genericio.getenvironment()!=='browser') {
         if (expobj.saveUserPreferences())
             return Promise.resolve();
@@ -320,10 +328,14 @@ expobj.getItem=function(item) {
 
 expobj.safeGetItem=function(item) {
 
+    //console.log('expobj Loaded Promise=',expobj.loadedPromise, ' item=',item);
+    
     return new Promise( (resolve) => {
         expobj.loadedPromise.then( () => {
             resolve(expobj.getItem(item));
-        }).catch( () => {
+        }).catch( (e) => {
+            console.log('Failed to load',e,e.stack);
+            console.log('Resolving with standard ', userPreferences[item]);
             resolve(userPreferences[item]);
         });
     });
@@ -347,7 +359,9 @@ expobj.setItem=function(key,value,save=false) {
     
     if (save) {
         if (genericio.getmode() === 'browser')  {
-            expobj.storeUserPreferences().catch( () => { });
+            expobj.storeUserPreferences().then( () => {
+                console.log('--- User prefs saved');
+            }).catch( () => { });
         } else {
             expobj.saveUserPreferences();
         }
@@ -380,7 +394,7 @@ expobj.setItem=function(key,value,save=false) {
 
 let initializeCommandLine=function(silent=false) {
 
-    if (expobj.loadedPromise!==null)
+    if (expobj.initialized)
         return;
 
     if (!silent)
@@ -388,7 +402,7 @@ let initializeCommandLine=function(silent=false) {
     let fname=nodeLoadUserPreferences();
     if (fname!==null) {
         if (!silent) {
-            console.log(",,,, bisweb commandline user preferences loaded from "+fname);
+            console.log(",,,, BioImage Suite Web user preferences loaded from "+fname);
             console.log(',,,, ',JSON.stringify(userPreferences));
             console.log(',,,,');
         }
@@ -404,7 +418,7 @@ let initializeCommandLine=function(silent=false) {
         }
     }
     // Resolve the promise for later
-    expobj.loadedPromise=Promise.resolve();
+    expobj.resolve();
 };    
 
 
@@ -415,50 +429,28 @@ let initializeCommandLine=function(silent=false) {
 
 expobj.initialize=function(dbase) {
 
-    if (expobj.loadedPromise!==null) {
+    if (expobj.initialized) {
         console.log('+++++ \t user preferences already initialized (or in process of being initialized)');
         return expobj.loadedPromise;
     }
-
-
-    return new Promise( (resolve,reject) => {
     
-        if (genericio.getmode() === 'browser')  {
-            
-            expobj.loadedPromise=webLoadUserPreferences(dbase);
-            expobj.loadedPromise.then( () => {
-                expobj.storeUserPreferences(dbase).catch( (e) => {
-                    console.log('Error =',e);
-                });
-                resolve();
-            }).catch( () => { 
-                reject('Bad Pref Database');
+    if (genericio.getmode() === 'browser')  {
+
+        webLoadUserPreferences(dbase).then( () => {
+            expobj.storeUserPreferences(dbase).catch( (e) => {
+                console.log('Error =',e);
             });
-        } else {
-            initializeCommandLine();
-            expobj.loadedPromise=Promise.resolve();
-            resolve();
-        }
-    });
+            expobj.resolve();
+        }).catch( () => { 
+            expobj.reject('Bad Pref Database');
+        });
+    } else {
+        initializeCommandLine();
+        expobj.resolve();
+    }
+
+    return expobj.loadedPromise;
 };
 
-// -------------------------- auto execute code -----------------------------
-// If one command line, initialize automatically
-if (genericio.getmode() !== 'browser')  {
-
-    if (global.bioimagesuiteweblib)
-        count=1;
-    
-    initializeCommandLine(global.bioimagesuiteweblib);
-} else {
-    try {
-        // Web worker gives an error
-        Window.biswebpref=expobj;
-    } catch (e) {
-        //        console.log("++++ In web worker, no export");
-    }
-}
-
-
-
 module.exports=expobj;
+    

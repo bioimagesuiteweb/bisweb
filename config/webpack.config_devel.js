@@ -20,7 +20,6 @@
 const base=require('./webpack.config.js');
 base.devtool="source-map";
 
-let output = (process.env.BISWEB_OUT) || "";
-console.log(`${output}:++++ Adding source-maps`);
+console.log(`\t  ++++ Adding source-maps`);
 
 module.exports = base;

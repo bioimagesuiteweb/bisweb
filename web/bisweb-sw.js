@@ -26,6 +26,9 @@ internal.path3= internal.path+"index.html#";
 internal.mainpage=internal.path+"index.html";
 
 internal.pathlength=internal.path.length;
+
+internal.pending={};
+
 // ------------------- Utility Functions -----------------
 
 var getTime=function(nobracket=0) {
@@ -84,22 +87,29 @@ var cleanCache=function() {
 
 var getSingleItem=function(cache,url,url2) {
 
+    internal.pending[url]=url2;
     return new Promise( (resolve,reject) => {
-                fetch(url2).then(function(response) {
-                    if (!response.ok) {
-                        throw new TypeError('bad response status');
-                    }
-                    cache.put(url, response).then( () => {
-                        internal.count=internal.count+1;
-                        send_message_to_all_clients(`Updating Cache. Downloaded file ${internal.count}/${internal.maxcount}`);
-                        resolve();
-                    }).catch( (e) => {
-                        internal.updating=false;
-                        reject(e);
-                    });
-                });
+        fetch(url2).then(function(response) {
+            if (!response.ok) {
+                throw new TypeError('bad response status');
+            }
+            cache.put(url, response).then( () => {
+                internal.count=internal.count+1;
+                delete internal.pending[url];
+                send_message_to_all_clients(`Updating Cache. Downloaded file ${internal.count}/${internal.maxcount}`);
+                let keys=Object.keys(internal.pending);
+                if (keys.length<5) 
+                    console.log('bisweb-sw left=',JSON.stringify(keys));
+                resolve();
+            }).catch( (e) => {
+                internal.updating=false;
+                reject(e);
+            });
+        });
     });
 };
+
+
 
 var populateCache=function(msg="Cache Updated") {
 
@@ -115,7 +125,7 @@ var populateCache=function(msg="Cache Updated") {
         lst=internal.cachelist['external'];
     }
 
-    console.log(`bisweb-sw: ${getTime()}. Beginning to  install (cache) ${lst.length} files.`);
+    console.log(`bisweb-sw: ${getTime()}. Beginning to  install (cache) ${newlst.length} files.`);
 
 
     return caches.open(internal.name).then(cache => {
@@ -129,6 +139,7 @@ var populateCache=function(msg="Cache Updated") {
         for (let i=0;i<newlst.length;i++) {
             let url=newlst[i];
             let url2=`${url}?t=${t}`;
+
             p.push(getSingleItem(cache,url,url2));
         }
         
@@ -240,7 +251,7 @@ self.addEventListener('message', (msg) => {
         if (internal.updating===false) {
             internal.updating=true;
             populateCache('Cache Updated').then( () => {
-                console.log('Done updating');
+                console.log('bisweb-sw: Cache Updated');
             });
         } else {
             console.log('bisweb-sw: '+getTime()+'. Already updating cache');

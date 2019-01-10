@@ -110,11 +110,11 @@ If it returns a descriptive answer, e.g. ``v8.9.0``, then Node is correctly inst
 
 Once both Git and Node are set up, install the rest of the tools as follows: on MacOS or Linux open a terminal and type
 
-    sudo npm install -g gulp mocha jsdoc jshint webpack webpack-cli uglify-es eslint 
+    sudo npm install -g gulp mocha jsdoc eslint modclean webpack webpack-cli uglify-es rimraf 
 
 or on Windows type
 
-    npm install -g gulp mocha jsdoc jshint webpack webpack-cli uglify-es
+    npm install -g gulp mocha jsdoc eslint modclean webpack webpack-cli uglify-es rimraf
 
 This will install the core
 tools. Please note that the '-g' flag stands for 'global', which means these
@@ -183,13 +183,18 @@ Assuming the steps above, the BioImageSuite Web code should be inside a folder n
 
 Note the presence of ``package.json``. This contains references to the dependencies required by BioImageSuite Web. Ensure that these are up to date by typing:
 
-    npm update
+    npm install
 
 or, for more verbose output:
 
-    npm update -d
+    npm install -d
 
-_Note:_ Dependencies may change over time. If Bisweb does not perform as expected try checking if there are updates to the dependencies.
+_Note:_ Dependencies may change over time. If Bisweb does not perform as
+expected try checking if there are updates to the dependencies.
+
+_Note 2:_ If npm install fails to install tensorfow.js (probably because you
+do not have a proper node-gyp) setup, simply delete the line containing
+`tensorflow` from `package.json` and try again. This is optional at this point.
 
  To create the WebAssembly binaries and ``build`` folder structure from the source files, see `createbuild.sh` (instructions can be found in [Installing Emscripten and Eigen and Configuring your Build Directories](#installing-emscripten-and-eigen-and-configuring-your-build-directories)). Otherwise, Bisweb comes with a prebaked version of the wasm binaries:
 

@@ -67,14 +67,19 @@ var createBuffer = function (cdata) {
     if (cdata === null)
         return null;
     /* jshint ignore:start */
+    if (Buffer.from && Buffer.from !== Uint8Array.from) {
+        return  Buffer.from(cdata);
+    } 
+
     return new Buffer(cdata);
+
     /* jshint ignore:end */
 };
 
 
 if (inelectron) {
     fs = window.BISELECTRON.fs;
-    rimraf = window.BISELECTRON.rimraf,
+    rimraf = window.BISELECTRON.rimraf;
     zlib = window.BISELECTRON.zlib;
     path = window.BISELECTRON.path;
     os = window.BISELECTRON.os;
@@ -705,6 +710,10 @@ var readtextdata = function (url, loadedcallback, errorcallback) {
         return readtextdatanode(url, loadedcallback, errorcallback);
     }
 
+    if (url.indexOf('http')===0) {
+        return readtextdatafromurl(url, loadedcallback, errorcallback);
+    }
+
     if (environment === 'electron') {
         return readdataelectron(url, false, loadedcallback, errorcallback);
     }
@@ -733,6 +742,10 @@ var readbinarydata = function (url, loadedcallback, errorcallback) {
 
     if (environment === 'node') {
         return readbinarydatanode(url, loadedcallback, errorcallback);
+    }
+
+    if (url.indexOf('http')===0) {
+        return readbinarydatafromurl(url, loadedcallback, errorcallback);
     }
 
     if (environment === 'electron') {
@@ -943,7 +956,7 @@ let getimagepath=function() {
         let index=scope.lastIndexOf("/");
         if (scope.indexOf("external")>0)  {
             scope=scope.substr(0,index)+"/../src/web/images";
-            console.log('external=',external,scope);
+            console.log('external=',scope);
         } else {
             scope=scope.substr(0,index)+"/images";
         }
@@ -959,7 +972,7 @@ let getimagepath=function() {
             scope=scope.substr(7,index-7)+"/images";
         const path=getpathmodule();
         imagepath=path.resolve(scope);
-        console.log('Imagepath=',imagepath);
+        //        console.log('Imagepath=',imagepath);
 
     } else if (webWorkerScope) {
         console.log('In Web Worker ...');

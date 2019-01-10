@@ -1,13 +1,14 @@
 {
-    "name": "bioimagesuiteweb",
-    "version": "0.9.8",
+    "name": "bioimagesuitewebelectron",
+    "version": "1.1.1",
     "license": "GPL",
     "homepage": "http//www.bioimagesuite.org",
-    "description": "An Implementation of BioImage Suite in Javascript",
+    "description": "The Electron version of BioImageSuite Web",
     "main": "biselectron.js",
     "dependencies": {
+        "@tensorflow/tfjs-node": "^0.2.1",
         "electron-debug": "^1.0.1",
-        "rimraf": "2.6.2",
-        "glob": "^7.1.1"
+        "glob": "^7.1.1",
+        "rimraf": "2.6.2"
     }
 }

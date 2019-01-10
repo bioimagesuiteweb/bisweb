@@ -30,21 +30,22 @@ const bisweb_dropbox=require('bisweb_simpledropbox');
 const bisweb_onedrive=require('bisweb_simpleonedrive');
 const bisweb_googledrive=require('bisweb_drivemodule');
 const amazonaws=require('bisweb_awsmodule.js');
-const bisweb_awsmodule = new amazonaws();
+let bisweb_awsmodule = null;// new amazonaws();
 
 
 const genericio=require('bis_genericio');
 const userPreferences = require('bisweb_userpreferences.js');
-const bisdbase = require('bisweb_dbase');
+//const bisdbase = require('bisweb_dbase');
 const keystore=require('bis_keystore');
 const dkey=keystore.DropboxAppKey || "";
 const gkey=keystore.GoogleDriveKey || "";
 const mkey=keystore.OneDriveKey || "";
 
+
 // Ensure that these get initialized
-userPreferences.initialize(bisdbase).catch( () => {
-    console.log('--- No preference database available');
-});
+//userPreferences.initialize(bisdbase).catch( () => {
+//    console.log('--- No preference database available');
+//});
 
 
 // ------------------------
@@ -625,8 +626,7 @@ const webfileutils = {
                                                       "Close",
                                                       initial,
                                                       self.getModeList(),
-                                                      extra,
-                                                     ).then( (m) => {
+                                                      extra).then( (m) => {
                                                          self.setMode(m);
                                                      }).catch(() => {
                                                          
@@ -644,26 +644,36 @@ const webfileutils = {
         }
     },
 
-    createAWSMenu() {
-        bisweb_awsmodule.createAWSBucketMenu();
+    createAWSMenu : function() {
+        if (enableaws) {
+            if  (bisweb_awsmodule===null) {
+                bisweb_awsmodule = new amazonaws();
+            }
+            bisweb_awsmodule.createAWSBucketMenu();
+        }
+    },
+
+    initializeFromUserPrefs : function () {
+        if (!webutil.inElectronApp() ) {
+            
+            Promise.all( [ userPreferences.safeGetItem('filesource'),
+                           userPreferences.safeGetItem('enables3') ]).then( (lst) => {
+                               let f=lst[0];
+                               enableaws=lst[1] || false;
+                               f= f || fileMode;
+                               console.log('+++++ Initial File Source=',f, 's3enabeled=',enableaws);
+                               if (enableaws && bisweb_awsmodule===null) {
+                                   bisweb_awsmodule = new amazonaws();
+                               }
+                               this.setMode(f,false);
+                           }).catch( () => {
+                               this.setMode('local',false);
+                           });
+        } else {
+            this.setMode('local',true);
+        }
     }
 };
-
-if (!webutil.inElectronApp() ) {
-
-    Promise.all( [ userPreferences.safeGetItem('filesource'),
-                   userPreferences.safeGetItem('enables3') ]).then( (lst) => {
-                       let f=lst[0];
-                       enableaws=lst[1] || false;
-                       f= f || fileMode;
-                       console.log('+++++ Initial File Source=',f, 's3enabeled=',enableaws);
-                       webfileutils.setMode(f,false);
-                   }).catch( () => {
-                       webfileutils.setMode('local',false);
-                   });
-} else {
-    webfileutils.setMode('local',true);
-}
 
 module.exports=webfileutils;
 

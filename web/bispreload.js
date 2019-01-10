@@ -42,7 +42,9 @@ window.BISELECTRON = {
     remote : remote,
     Buffer : Buffer,
     electron : electron,
+    tf : null,
 };
+
 
 process.once('loaded', () => {
     global.electron = require('electron');
@@ -50,3 +52,21 @@ process.once('loaded', () => {
 });
 
 
+try {
+    window.BISELECTRON.tf=require('@tensorflow/tfjs');
+    try {
+        require('@tensorflow/tfjs-node-gpu');
+        window.BISELECTRON.tfmodulename='electron tjsfs-node-gpu';
+    } catch(e) {
+        console.log('Failed to load gpu version '+e);
+        try {
+            require('@tensorflow/tfjs-node');
+            window.BISELECTRON.tfmodulename='electron tfjs-node';
+            console.log("Loaded cpu version of tfjs");
+        } catch(e) {
+            console.log('Failed to load cpu version '+e);
+        }
+    }
+} catch(e) {
+    console.log('---- no tensorflow.js modules available');
+}

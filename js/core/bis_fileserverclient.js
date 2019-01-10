@@ -1,3 +1,4 @@
+'use strict';
 
 const wsUtilInitialPort = require('bis_wsutil').initialPort;
 const wsUtilPayloadSize = require('bis_wsutil').maxPayloadSize;
@@ -192,9 +193,12 @@ class BisFileServerClient extends BisBaseServerClient {
         // From here on it is commands
         
         let success=true;
-
+        let ignore=false;
+        
         if (this.verbose>0)
             console.log('____\n____ Received message: ', data.type,id,bisasyncutil.printEvent(id));
+
+        
         switch (data.type)
         {
             case 'checksum' : {
@@ -210,6 +214,12 @@ class BisFileServerClient extends BisBaseServerClient {
                 // Nothing to do let promise handle it
                 break;
             }
+
+            case 'gettempfilename': {
+                // Nothing to do let promise handle it
+                break;
+            }
+
             case 'servertempdirectory': {
                 // Nothing to do let promise handle it
                 break;
@@ -229,6 +239,7 @@ class BisFileServerClient extends BisBaseServerClient {
             }
             case 'authenticate': {
                 this.sendPassword(this.password || '');
+                ignore=true;
                 break;
             }
             case 'badauth':  {
@@ -250,6 +261,7 @@ class BisFileServerClient extends BisBaseServerClient {
                 //console.log('received text data: ', bisasyncutil.printEvent(this.authenticatingEvent.id));
                 if (this.authenticatingEvent)
                     id=this.authenticatingEvent.id;
+
                 break;
             }
             case 'filesystemoperations': {
@@ -264,6 +276,7 @@ class BisFileServerClient extends BisBaseServerClient {
 
             case 'dicomConversionProgress': {
                 this.updateCallback(data.payload);
+                ignore=true;
                 break;
             }
 
@@ -272,8 +285,26 @@ class BisFileServerClient extends BisBaseServerClient {
                 success=false;
                 break;
             }
-
+            
             case 'dicomConversionDone' : {
+                // handled by promise
+                break;
+            }
+            
+            case 'bistfReconProgress': {
+                this.updateCallback(data.payload);
+                ignore=true;
+                break;
+            }
+            
+            case 'bistfReconFailed': {
+                console.log('bistfRecon Failed');
+                success=false;
+                break;
+            }
+
+            
+            case 'bistfReconDone' : {
                 // handled by promise
                 break;
             }
@@ -304,7 +335,7 @@ class BisFileServerClient extends BisBaseServerClient {
                 bisasyncutil.resolveServerEvent(id,data.payload);
             else
                 bisasyncutil.rejectServerEvent(id,data.payload);
-        } else {
+        } else if (!ignore) {
             console.log('Id Error=',id);
         }
     }
@@ -422,6 +453,22 @@ class BisFileServerClient extends BisBaseServerClient {
         });
     }
 
+    /** get a temporary filename in server temp directory
+     * @param{String} suffix - suffix for filename
+     * @returns {Promise} - whose payload is the location of the temp directory
+     */
+    getServerTempFilename(suffix=".txt") {
+        
+        return new Promise( (resolve,reject) => {
+            let res=((obj) => {
+                resolve(obj.path);
+            });
+            
+            let serverEvent=bisasyncutil.addServerEvent(res,reject,'getServerTempFilename');
+            this.sendCommand({ 'command' : 'gettempfilename' , suffix : suffix, 'id' : serverEvent.id});
+        });
+    }
+
 
     // ------------------ Upload file and helper routines -----------------------------------------------------------------
 
@@ -519,7 +566,7 @@ class BisFileServerClient extends BisBaseServerClient {
 
         
 
-    uploadFileHelper(url,body,isbinary=false,checksum,successCB,failureCB,packetSize=400000) {
+    uploadFileHelper(url,body,isbinary,checksum,successCB,failureCB,packetSize=400000) {
 
         let fileTransferSocket=null;
         uploadcount=uploadcount+1;
@@ -778,6 +825,62 @@ class BisFileServerClient extends BisBaseServerClient {
     }
 
 
+    /** performs Tensor flow js reconstruction
+     * @param{String} input -- the input image
+     * @param{String} output -- the output image
+     * @param{String} modeldir -- the model directory
+     * @param{Number} batchsize -- the batchsize
+     * @param{Number} padding -- the padding
+     * @param{Function} upd - function to call for progress messages
+     * @returns {Promise} payload is the result
+     */
+    tensorFlowReconstruction(input,output,modeldir,batchsize=4,padding=8,upd=console.log,debug=false) {
+
+        if (input.indexOf('\\')>=0)
+            input=util.filenameWindowsToUnix(input);
+        if (output.indexOf('\\')>=0)
+            output=util.filenameWindowsToUnix(output);
+        if (modeldir.indexOf('\\')>=0)
+            modeldir=util.filenameWindowsToUnix(modeldir);
+
+        let outstring="";
+        
+        this.updateCallback= ((msg) => {
+            outstring+=msg;
+            if (upd)
+                upd(msg);
+        });
+
+        
+        return new Promise( (resolve,reject) => {
+            
+            let res=((obj) => {
+                this.updateCallback= console.log;
+                resolve({
+                    output : obj.output,
+                    log  : outstring
+                });
+            });
+
+            let rej=() => {
+                this.updateCallback= console.log;
+                reject();
+            };
+            
+            let serverEvent=bisasyncutil.addServerEvent(res,rej,'bistfReconstruction');
+            this.sendCommand({ 'command' : 'bistfReconstruction',
+                               'operation' : 'bistfReconstruction',
+                               'input' : input,
+                               'output' : output,
+                               'modeldir' : modeldir,
+                               'batchsize' : batchsize,
+                               'padding' : padding,
+                               'debug' : debug,
+                               'id' : serverEvent.id,
+                               'timeout' : 300000}); 
+        });
+    }
+
     // ------------------ Download file and helper routines -----------------------------------------------------------------
     /**
      * Handles the final download
@@ -946,7 +1049,6 @@ class BisFileServerClient extends BisBaseServerClient {
             let responseListener = (msg) => {
 
                 if (!msg.host) {
-                    console.log('\n ------------- \n trying to handle as a simple download \n');
                     this.handleDownloadedFile(url,isbinary,msg,resolve);
                 } else {
                     connectToFileStreamAndReceiveData(msg.host,msg.port).then( (data) => {

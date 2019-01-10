@@ -42,9 +42,9 @@ let executeCommand=function(command,dir,done=0,printfn=0) {
     dir = dir || __dirname;
     console.log(getTime()+" "+colors.green(dir+">")+colors.red(command+'\n'));
 
-    if (printfn) {
-        printfn('Initializing output from '+command,0);
-    }
+    //    if (printfn) {
+    //        printfn('Initializing output from '+command,0);
+    //  }
     
     if (done===0) {
         let out="";

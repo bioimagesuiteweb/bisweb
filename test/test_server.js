@@ -246,6 +246,7 @@ describe('Testing the WS server\n', function() {
     });
 
 
+    
     it ('WS ...test timeout',function(done) {
 
         client.sendCommandPromise({'command' :'ignore',
@@ -260,6 +261,23 @@ describe('Testing the WS server\n', function() {
         });
     });
 
+
+
+    it('Ws .. get tempfilename',function(done) {
+        console.log('======================= In Get Temp Filename');
+        client.getServerTempFilename('nii.gz').then( (m) => {
+            client.getServerTempFilename('csv').then( (m2) => {
+                console.log('\n\tm=',m,'\n\tm2=',m2);
+                assert.equal(true,true);
+                done();
+            });
+        }).catch( (e) => {
+            console.log('We have failed',e);
+            assert(true,false);
+            done();
+        });
+    });
+            
 
     after(function(done) {
         bisserverutil.terminateTestingServer(client).then( ()=> {

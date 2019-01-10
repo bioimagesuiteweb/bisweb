@@ -22,20 +22,41 @@ const path = require('path');
 const fs=require('fs');
 
 
-let orig_internal = (process.env.BISWEB_INTERNAL) || 0;
-let orig_external = (process.env.BISWEB_EXTERNAL) || 0;
-let output = (process.env.BISWEB_OUT) || "";
-let internal = parseInt(orig_internal) || 0 ;
+
+// -----------------------------------------------------------------------------------
+// Parse Command line
+let internal = 0,external=0;
+
+let found=false,i=0,output='bislib.css';
+
+while (i< process.argv.length) {
+    //    console.log('Looking at ',process.argv[i]);
+    if (process.argv[i]==='--output-filename') {
+        output=process.argv[i+1];
+        found=true;
+        i=i+2;
+    } else if (process.argv[i]==='--bisinternal') {
+        internal=parseInt(process.argv[i+1]);
+        i=i+2;
+    } else if (process.argv[i]==='--bisexternal') {
+        external=parseInt(process.argv[i+1]);
+        i=i+2;
+    } else {
+        i=i+1;
+    }
+}
 
 
-if (internal<0)
-    internal=0;
-else if (internal>2)
-    internal=2;
+if (!found) {
+    console.log('process.argv=',process.argv, ' len=',process.argv.length);
+    process.exit(1);
+}
 
-let external = parseInt(orig_external) || 0;
-if (external>0)
-    external=1;
+output=output.trim().replace(/_full.js/g,'');
+
+
+// -----------------------------------------------------------------------------------
+// Extra files for internal and external
 
 let mypath=path.normalize(path.resolve(__dirname,'..'));
 let extrapath=path.normalize(path.resolve(__dirname,'../../internal/js'));
@@ -46,8 +67,6 @@ let externalpath=path.normalize(path.resolve(__dirname,'../../external/js'));
 let externalpath2=path.normalize(path.resolve(__dirname,'../../external/node_modules'));
 let externalfile= path.resolve(externalpath,'bisextra.js');
 
-console.log(`--------------------------- Running Webpack --> ${output} -------------------------`);
-
 
 if (fs.existsSync(extrafile) && internal) {
     console.log(`${output}:++++ Using Extra Internal Files from ${extrapath}.`);
@@ -55,6 +74,7 @@ if (fs.existsSync(extrafile) && internal) {
     extrapath=path.normalize(path.resolve(__dirname,'../js/nointernal'));
     extrapath2=null;
     internal=0;
+    extrafile='(none)';
 }
 
 
@@ -64,13 +84,13 @@ if (fs.existsSync(externalfile) && external>0) {
     externalpath=null;
     externalpath2=null;
     external=0;
+    externalfile='(none)';
 }
 
 
 let bisWebCustom=path.join(extrapath,"bisextra.js");
 if (internal<2) {
     bisWebCustom="bis_util"; // dummy file
-    console.log(`${output}:++++ Not using custom extra require file.`);
 } else {
     console.log(`${output}:++++ Using custom extra require file=${bisWebCustom}`);
 }
@@ -78,14 +98,22 @@ if (internal<2) {
 let bisWebExternalFile="";
 if (!external) {
     bisWebExternalFile="bis_simplemat"; // dummy file
-    console.log(`${output}:++++ Not using custom extra require file from external, using ${bisWebExternalFile} as placeholder.`);
+    //    console.log(`${output}:++++ Not using custom extra require file from external, using ${bisWebExternalFile} as placeholder.`);
 } else {
     bisWebExternalFile=path.join(externalpath,"bisextra.js");
     console.log(`${output}:++++ Using custom extra require file=${bisWebExternalFile}`);
 }
 
 
-if (output !== "webworkermain.js") {
+// -----------------------------------------------------------------------------------
+// Main process
+
+console.log(`--------------------------- Running Webpack --> ${output} internal=${extrafile}, external=${externalfile} -------------------------`);
+
+
+
+
+if (output === "bislib.js" || output ==="index.js") {
     module.exports = {
         resolve: {
             extensions: [ '.js'],
@@ -106,9 +134,12 @@ if (output !== "webworkermain.js") {
         mode : 'development',
         target : "web",
         externals: {
-            // require("jquery") is external and available on the global var jQuery
-            "jquery": "jQuery",
-            "libbiswasm" : "console.log" // this is not needed in this case and should be excluded
+            "jquery": "jQuery",             // require("jquery") is external and available on the global var jQuery
+            "three": "THREE",             // require("three") is external and available on the global var jQuery
+            "libbiswasm" : "console.log", // this is not needed in this case and should be excluded
+            "@tensorflow/tfjs" : "console.log", // ignore tensor flow it will come from outside
+            "@tensorflow/tfjs-node" : "console.log", // ignore tensor flow it will come from outside
+            "@tensorflow/tfjs-node-gpu" : "console.log" // ignore tensor flow it will come from outside
         },
         watchOptions: {
             aggregateTimeout: 300,
@@ -159,27 +190,33 @@ if (output !== "webworkermain.js") {
                         path.resolve(mypath,'build/wasm'),
                         path.resolve(mypath,'build/web')]
         },
-/*        externals: {
-            "libbiswasm" : "console.log" // this is not needed in this case and should be excluded
-        },*/
         mode : 'development',
         target : "web",
+        externals: {
+            "@tensorflow/tfjs" : "console.log", // ignore tensor flow it will come from outside
+            "@tensorflow/tfjs-node" : "console.log", // ignore tensor flow it will come from outside
+            "@tensorflow/tfjs-node-gpu" : "console.log" // ignore tensor flow it will come from outside
+        },
         watchOptions: {
             aggregateTimeout: 300,
             poll: 1000
-        }, plugins : [
-        ]
+        }, plugins : [ ]
     };
 }
 
+
+
+
 if (output === "bislib.js") {
-    console.log('++++ Adding library output to bislib.js');
+    console.log(`${output} ++++ Adding library output info`);
     module.exports.output= {
         library: 'bioimagesuiteweb',
         libraryExport: 'default',
         libraryTarget : 'umd'
     };
 }
+
+
 
 
 

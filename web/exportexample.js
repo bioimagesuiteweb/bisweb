@@ -1,13 +1,46 @@
 "use strict";
 
+/* global window,document,$ */
+
+// Get access to the computational tools 
+const bisweb=window.bioimagesuiteweb;
+
+const fn = function(viewer,img) {
+    
+    // Set the image to the viewer
+    if (viewer) {
+        viewer.setimage(img);
+    }
+
+    // Create a module ('resampleImage')
+    let mod=bisweb.createModule("resampleImage");
+
+    
+    // Execute module (which also returns a promise
+    mod.execute(
+        { "input" : img   }, // first argument is the input objects (just the image)
+        { "xsp"  : 4.0, "ysp" : 5.0, "zsp" : 17.0 } // second argument are the parameters
+    ).then( () => {
+        // Get the output of the module when it is done
+        let out=mod.getOutputObject("output");
+        // print the description
+        console.log('OutImage = ',out.getDescription());
+        
+        // Send this to the viewer
+        if (viewer)
+            viewer.setimage(out);
+        else
+            out.save();
+    });
+};
+
 window.onload = function() {
-    
-    // Get access to the computational tools via the export element
-    const bisweb=document.querySelector("#bis").export;
-    
-    // Print the functionality
-    console.log('Bisweb=',bisweb);
-    
+
+    if (bisweb.getEnvironment() === "electron") {
+        window.BISELECTRON.remote.getCurrentWindow().toggleDevTools();
+        $('.navbar-fixed-bottom').remove();
+    }
+
     // The viewer is optional, just remove the
     const viewer=document.querySelector("#viewer");
     
@@ -19,27 +52,12 @@ window.onload = function() {
         console.log('Image Loaded = ',img.getDescription());
         
         // Set the image to the viewer
-        viewer.setimage(img);
-        
-        // Create a module ('resampleImage')
-        let mod=bisweb.createModule("resampleImage");
-        
-        // Execute module (which also returns a promise
-        mod.execute(
-            { "input" : img   }, // first argument is the input objects (just the image)
-            { "xsp"  : 4.0, "ysp" : 5.0, "zsp" : 7.0 } // second argument are the parameters
-        ).then( () => {
-            // Get the output of the module when it is done
-            let out=mod.getOutputObject("output");
-            // print the description
-            console.log('OutImage = ',out.getDescription());
+        if (viewer)
+            viewer.setimage(img);
 
-            // Send this to the viewer
-            viewer.setimage(out);
-            
-            // If uncommented this will save the image
-            //out.save();
-            
+        
+        $('#compute').click( () => {
+            fn(viewer,img);
         });
     });
 };

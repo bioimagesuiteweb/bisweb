@@ -20,19 +20,19 @@
 "use strict";
 
 let colors=require('colors/safe'),
-    htmlreplace = require('gulp-html-replace'),
-    concatCss = require('gulp-concat-css'),
-    child_process = require('child_process'),
     fs=require("fs"),
     os=require("os"),
     path=require('path'),
-    gulpzip = require('gulp-zip'),
-    template=require('gulp-template'),
-    del = require('del'),
-    replace = require('gulp-replace'),
-    rimraf= require('rimraf'),
-    gulp=require("gulp"),
-    rename = require('gulp-rename');
+    gulp=require("gulp");
+
+// On demand;
+let htmlreplace=null,
+    replace=null,
+    concatCss = null,
+    child_process=null;
+
+
+
 
 
 var getTime=function(nobracket=0) {
@@ -71,6 +71,10 @@ var getVersionTag=function(version) {
 };
 
 var executeCommand=function(command,dir,done=0,error=0,extra=0) {
+
+    if (child_process===null)
+        child_process = require('child_process');
+    
     dir = dir || __dirname;
     console.log(getTime()+" "+colors.green(dir+">")+colors.cyan(command+'\n'));
 
@@ -97,8 +101,12 @@ var executeCommand=function(command,dir,done=0,error=0,extra=0) {
     
     try { 
         let proc=child_process.exec(command, { cwd : dir });
-        proc.stdout.on('data', function(data) { process.stdout.write(colorfn(data.trim()+'\n'));});
-        proc.stderr.on('data', function(data) { process.stdout.write(colors.red(data+'\n'));});
+        proc.stdout.on('data', function(data) {
+            process.stdout.write(colorfn(data));
+        });
+        proc.stderr.on('data', function(data) {
+            process.stdout.write(colors.red(data));
+        });
         proc.on('exit', function() { console.log(''); done();});
     } catch(e) {
         console.log(' error '+e);
@@ -124,8 +132,8 @@ var executeCommandPromise=function(command,dir,extra="") {
 
 // -------------------------------------------------------------
 
-var executeCommandList=function(cmdlist,indir,done=0) {
-
+var executeCommandList=function(cmdlist,indir,done=0,extra=0) {
+    
     if (done===0) {
         for (let i=0;i<cmdlist.length;i++) {
             executeCommand(cmdlist[i],indir,0,0,i);
@@ -138,7 +146,7 @@ var executeCommandList=function(cmdlist,indir,done=0) {
         if (i==cmdlist.length) {
             done();
         } else {
-            executeCommand(cmdlist[i],indir,execlist,0,i);
+            executeCommand(cmdlist[i],indir,execlist,extra,i);
             ++i;
         }
     };
@@ -146,19 +154,27 @@ var executeCommandList=function(cmdlist,indir,done=0) {
 };
 
 
-var createHTML=function(toolname,outdir,libjs,commoncss) {
+var createHTML=function(toolname,outdir,libjs,commoncss,gpl=true) {
 
+    if (htmlreplace===null)
+        htmlreplace = require('gulp-html-replace');
+    if (replace===null)
+        replace = require('gulp-replace');
+    
     if (toolname==="bisjs")
         return;
     
     var mainhtml   = path.normalize(path.join(__dirname,'../web/'+toolname+'.html'));
     var bundlecss  = commoncss;
 
-    console.log(getTime()+colors.green(' Building HTML '+mainhtml));
+    console.log(getTime()+colors.green('\tBuilding HTML '+mainhtml));
     var alljs;
     if (libjs!=='') {
         if (toolname!=="index") {
-            alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'bootstrap.min.js', 'libbiswasm_wasm.js', libjs  ];
+            if (gpl) 
+                alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'three.min.js', 'bootstrap.min.js', 'libbiswasm_wasm.js', libjs  ];
+            else
+                alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'three.min.js', 'bootstrap.min.js', 'libbiswasm_nongpl_wasm.js', libjs  ];
         } else {
             alljs=[ 'jquery.min.js', 'bootstrap.min.js', libjs  ];
             bundlecss=[ "./bootstrap_dark_edited.css" ];
@@ -187,9 +203,15 @@ var createHTML=function(toolname,outdir,libjs,commoncss) {
 
 var createCSSCommon=function(dependcss,out,outdir) {
 
+    if (replace===null)
+        replace = require('gulp-replace');
+    if (concatCss===null)
+        concatCss = require('gulp-concat-css');
+
+    
     var bundlecss  = out;
 
-    console.log(getTime(),colors.green('Concatenating ',dependcss.join(),' to ',out));
+    console.log(getTime()+colors.green('\tBuilding CSS', out,', from ',dependcss.join()));
     gulp.src(dependcss)
         .pipe(concatCss(bundlecss))
         .pipe(replace('../../node_modules/jstree/dist/themes/default', 'images')) // jstree css fix
@@ -216,9 +238,8 @@ var createDateFile=function(datefile,hash='',version='') {
 // ------------------------------------------------
 // Webpack
 // ------------------------------------------------
-var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,watch) {
+var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,debug,watch) {
 
-    let extracmd="";
     let join="/";
     if (os.platform()==='win32') {
         outdir=outdir.replace(/\//g,'\\');
@@ -226,21 +247,6 @@ var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,
         join="\\";
     }
 
-    if (internal) {
-        if (os.platform()==='win32') {
-            extracmd=`SET BISWEB_INTERNAL=${internal}& `;
-        } else {
-            extracmd=`export BISWEB_INTERNAL=${internal}; `;
-        }
-    }
-
-    if (external) {
-        if (os.platform()==='win32') {
-            extracmd+=`SET BISWEB_EXTERNAL=${external}& `;
-        } else {
-            extracmd+=`export BISWEB_EXTERNAL=${external}; `;
-        }
-    }
 
     if (watch || out==='bisweb-sw.js' )
         minify=0;
@@ -249,90 +255,104 @@ var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,
     if (minify)
         tmpout=tmpout+'_full.js';
     
-    if (os.platform()==='win32')
-        extracmd+=`SET BISWEB_OUT=${out}&`;
-    else
-        extracmd+=`export BISWEB_OUT=${out}; `;
-    
-    
-    
-    let cmd=extracmd+' webpack-cli --entry '+source+' --output-filename '+tmpout+' --output-path '+outdir+' --config config'+join+'webpack.config_devel.js';
+    let cmd='webpack-cli --entry '+source+' --output-filename '+tmpout+' --output-path '+outdir+' --config config'+join+'webpack.config_devel.js';
+    cmd+=' --sort-modules-by size ';
 
+    if (debug)
+        cmd+=' --display-modules --display-entrypoints --display-exclude';
+    else
+        cmd+=' --display-max-modules 20';
+    
+    if (tmpout.indexOf('bislib')>=0)
+        cmd+=' --bisinternal '+internal+' --bisexternal '+external;
+    
     if (watch!==0)
         cmd+=" --watch";
+
+    let cmdlist = [ cmd ];
+    let ojob=outdir+out;
     
     if (minify) {
         let ijob=outdir+tmpout;
-        let ojob=outdir+out;
-
+        let cmd2=`uglifyjs ${ijob} -c  -o ${ojob}`;
+        if (debug)
+            cmd2+=' --verbose';
+        cmdlist.push(cmd2);
+        
         if (os.platform()==='win32') {
-
-            //ijob=ijob.replace(/\//g,'\\');
-            //ojob=ojob.replace(/\//g,'\\');
-            cmd = cmd + ` & uglifyjs ${ijob} -c  -o ${ojob} & dir -p ${ijob} ${ojob}`;
+            cmdlist.push(`dir -p ${ijob} ${ojob}`);
         } else {
-            cmd = cmd + ` ; uglifyjs ${ijob} -c  -o ${ojob} ; ls -lrth ${ijob} ${ojob}`;
+            cmdlist.push(`ls -lrth ${ijob} ${ojob}`);
+        }
+    } else {
+        if (os.platform()==='win32') {
+            cmdlist.push(`dir -p ${ojob}`);
+        } else {
+            cmdlist.push(`ls -lrth ${ojob}`);
         }
     }
     
 
-    return cmd;
+    return cmdlist;
 };
 
 
 var runWebpack=function(joblist,internal,external,
-                        indir,minify,outdir,watch=0) {
+                        indir,minify,outdir,debug,watch=0) {
 
     let p = [ ];
     for (let i=0;i<joblist.length;i++) {
         let s=joblist[i];
-        console.log('++++\nStarting webpack job=',i,s.name);
-        let cmd=getWebpackCommand(s.path+s.name,internal,external,s.name,indir,minify,outdir,watch);
-        p.push(executeCommandPromise(cmd,indir,i));
+        console.log(getTime()+" "+colors.red('++++ Starting webpack job=',i,s.name));
+        let cmdlist=getWebpackCommand(s.path+s.name,internal,external,s.name,indir,minify,outdir,debug,watch);
+        p.push(new Promise( (resolve) => {
+            executeCommandList(cmdlist,indir,resolve,i);
+        }));
     }
     return Promise.all(p);
 };
 
-var createZIPFile = function(dozip,baseoutput,outdir,version,distdir) {
-
-    console.log('dozip=',dozip);
+var createZIPFile = function(baseoutput,outdir,version,distdir,done) {
     
-    if (!dozip) {
-        console.log(colors.magenta(getTime()+' Not creating webpage zip file'));
-        return;
-    }
-    console.log('baseoutput=',baseoutput,outdir);
+    const gulpzip = require('gulp-zip'),
+          del = require('del');
+
     let outfile=distdir+"/bisweb_"+getVersionTag(version)+".zip";
+    console.log(getTime()+' indir='+path.resolve(outdir));
+
     del([ outfile]);
     console.log(getTime()+' Creating zip file '+outfile+'.');
-    return gulp.src([outdir+"*",
-                     outdir+"images/*",
-                     outdir+"images/*/*",
-                     outdir+"fonts/*",
-                     outdir+"css/*",
-                     outdir+"fonts/*",
-                     outdir+"images/*",
-                     outdir+"test/**/*",
-                     outdir+"var/*",
-                     `!${outdir}/package.json`,
-                     `!${outdir}/*.map`
-                    ],
-                    {base:outdir}).pipe(gulpzip(outfile)).pipe(gulp.dest('.')).on('end', () => {
-                        outfile=path.resolve(outfile);
-                        let stats = fs.statSync(outfile);
-                        let bytes = stats["size"];
-                        let mbytes=Math.round(bytes/(1024*1024)*100)*0.01;
-                        
-                        console.log('____ zip file created in '+outfile+' (size='+mbytes+' MB )');
-
-                    });
-
+    gulp.src([outdir+"*",
+              outdir+"images/*",
+              outdir+"images/*/*",
+              outdir+"fonts/*",
+              outdir+"css/*",
+              outdir+"fonts/*",
+              outdir+"images/*",
+              outdir+"test/**/*",
+              outdir+"var/*",
+              `!${outdir}/node_modules`,
+              `!${outdir}/package.json`,
+              `!${outdir}/*.map`
+             ],
+             {base:outdir}).pipe(gulpzip(outfile)).pipe(gulp.dest('.')).on('end', () => {
+                 outfile=path.resolve(outfile);
+                 let stats = fs.statSync(outfile);
+                 let bytes = stats["size"];
+                 let mbytes=Math.round(bytes/(1024*1024)*100)*0.01;
+                 
+                 console.log(getTime()+' ____ zip file created in '+outfile+' (size='+mbytes+' MB )');
+                 done();
+             });
+    
 };
 
 // -----------------------------------------------------------------------------------------
 // Packaging stuff
 // -----------------------------------------------------------------------------------------
 var inno=function(tools, version, indir , distdir ) {
+
+    const template=require('gulp-template');
     let obj=tools;
     
     var i_odir    = path.resolve(indir, distdir);
@@ -372,78 +392,110 @@ var inno=function(tools, version, indir , distdir ) {
 var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",outdir="build",version=1.0,platform="linux",distdir="builddist",done=0) {
 
 
-    let cmdlist = [];
-    let zipopts='-ry';
-    if (os.platform()==='win32')
+    let cmdlist = ['pwd'];
+    let zipopts=' -ry';
+    let inwin32=false;
+    let separator=";";
+    if (os.platform()==='win32') {
+        inwin32=true;
         zipopts='-r';
+        separator="&";
+    }
+
+    console.log('In win 32=',inwin32,outdir,path.resolve(outdir));
     
-    var errorf=function() { };
+    let errorf=function() { };
     console.log(colors.cyan(getTime()+' (electron '+version+') for: '+platform));
-    for (var ia=0;ia<platform.length;ia++) {
+    let idir=indir+"/build/web";
+
+    for (let ia=0;ia<platform.length;ia++) {
+
         var n=platform[ia];
         var m=n,suffix=".zip";
         if (m==="darwin") {
             m="macos";
             suffix=".app.zip";
         }
-        var basefile=distdir+"/bisweb_"+m+"_"+getVersionTag(version);
-        var zipfile=path.normalize(path.resolve(basefile+suffix));
 
-        let eversion ="2.0.9";
-        //        if (m==="linux")
-        //          eversion="3.0.10";
-        let cmdline='electron-packager '+outdir+' BioImageSuiteWeb --arch=x64 --electron-version '+eversion+' --out '+distdir+' --overwrite '+
+        if (dopackage>=2) {
+            cmdlist.push(`rimraf ${path.resolve(idir,'node_modules')}`);
+            if (dopackage===3) {
+                cmdlist.push('npm install -d');
+                cmdlist.push('modclean -r -a *.ts');
+            } else if (dopackage===2) {
+                let zname=path.resolve(path.join(outdir,path.join('..',`electrondist/bisweb_${n}.zip`)));
+                try {
+                    let stats = fs.statSync(zname);
+                    let bytes = stats["size"];
+                    console.log('zname = ', zname,bytes);
+                    cmdlist.push(`cd ../web ${separator} unzip -q ${zname}`);
+                } catch(e) {
+                    console.log(colors.red(e));
+                    process.exit(1);
+                }
+            }
+        }
+        
+        let basefile=distdir+"/bisweb_"+m+"_"+getVersionTag(version);
+        let zipfile=basefile+suffix;
+
+        
+        
+        let eversion ="4.0.1";
+        let cmdline='electron-packager '+path.resolve(outdir)+' BioImageSuiteWeb --arch=x64 --electron-version '+eversion+' --out '+path.resolve(distdir)+' --overwrite '+
             '--app-version '+version;
         
         try {
             fs.unlink(zipfile,errorf);
-        } catch(e) { errorf('error '+e); }
+        } catch(e) {
+            errorf('error '+e);
+        }
 
         let absdistdir=path.normalize(path.resolve(distdir));
-        var zipindir='BioImageSuiteWeb-'+n+'-x64';
-        if (n==="linux") {
-            cmdlist.push(cmdline+' --platform=linux');
-            if (dopackage>1) {
-                cmdlist.push('cd '+absdistdir+'; zip '+zipopts+' '+zipfile+' '+zipindir);
-            }
-        } else if (n==="win32") {
-            cmdlist.push(cmdline+' --platform=win32 --icon web/images/bioimagesuite.png.ico');
-            if (dopackage>1)  {
+        let zipindir='BioImageSuiteWeb-'+n+'-x64';
+
+        let fullpath=path.resolve(path.join(absdistdir,zipindir),'resources/app/node_modules/@tensorflow/tfjs-node/deps');
+        console.log('Zip in dir=',fullpath);
+
+        let cleancmd='rimraf '+fullpath;
+        
+        if (n==="win32") {
+            let ifile=path.resolve(indir,'web/images/bioimagesuite.png.ico');
+            cmdlist.push(cmdline+` --platform=win32 --icon ${ifile}`);
+            if (dopackage===3)
+                cmdlist.push(cleancmd);
+            if (dopackage>0)  {
                 if (os.platform()!=='win32') {
                     cmdlist.push('zip '+zipopts+' '+zipfile+' '+zipindir);
                 } else {
                     inno(tools,version,indir,distdir);
-                    cmdlist.push('c:\\unix\\innosetup5\\ISCC.exe '+distdir+'/biselectron.iss');
+                    let innofile=path.resolve(distdir,'biselectron.iss')
+                    cmdlist.push('c:\\unix\\innosetup5\\ISCC.exe '+innofile);
                 }
             }
-        } else if (n==="darwin") {
-            cmdlist.push(cmdline+' --platform=darwin --icon web/images/bioimagesuite.icns');
-            if (dopackage>1)  {
-                cmdlist.push('cd '+absdistdir+'; zip '+zipopts+' '+zipfile+' '+zipindir);
+        } else {
+            if (n==="linux") 
+                cmdlist.push(cmdline+' --platform=linux');
+            else
+                cmdlist.push(cmdline+` --platform=darwin --icon ${path.resolve(indir,'web/images/bioimagesuite.icns')}`);
+            if (dopackage===3)
+                cmdlist.push(cleancmd);
+            if (dopackage>0)  {
+                cmdlist.push(`zip `+zipopts+' '+path.basename(zipfile)+' '+path.basename(zipindir));
             }
         }
     }
-
-    console.log('cmdlist=',cmdlist.join('\n\t'));
-    executeCommandList(cmdlist,indir,done);
-    
+    let ddir=path.resolve(path.join(outdir,path.join('..','dist')));
+    console.log(getTime()+colors.green('About to execute in : win32=',inwin32,'\n path=', path.resolve(ddir),'\n\t', JSON.stringify(cmdlist,null,4)));
+    executeCommandList(cmdlist,ddir,done);
 };
 
 
 var createPackage=function(dopackage=1,tools=[],indir=_dirname+"../",outdir="build",version=1.0,platform="linux",distdir="builddist",done=null) {
     
-    console.log('dopack=',dopackage,'indir=',indir,' outdir=',outdir,' version=',version,' platform=',platform,' distdir=',distdir);
+    console.log(getTime()+' creating package: dopack=',dopackage,'indir=',indir,' outdir=',outdir,'\n\t\t version=',version,' platform=',platform,' distdir=',distdir);
 
-    let fn0=function() {
-        createPackageInternal(dopackage,tools,indir,outdir,version,platform,distdir,done);
-    };
-
-    if (dopackage>0) {
-        executeCommand("npm update",indir+"/build/web",fn0);
-    } else {
-        dopackage=1;
-        fn0();
-    }
+    createPackageInternal(dopackage,tools,indir,outdir,version,platform,distdir,done);
 };
 
 var jsDOC=function(indir,conffile,done) {
@@ -461,6 +513,10 @@ var doxygen=function(indir,conffile,done) {
 
 var createnpmpackage=function(indir,version,in_outdir,done) {
 
+    const rimraf= require('rimraf'),
+          rename = require('gulp-rename');
+
+    
     // Step 1 copy file
     // make directories
     let odir=path.resolve(path.join(in_outdir,'bisweb'));
@@ -481,6 +537,7 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
                `${indir}/build/web/libbiswasm*wasm.js`,
                `${indir}/build/web/webcomponents-lite.js`,
                `${indir}/build/web/jquery.min.js`,
+               `${indir}/build/web/three.min.js`,
                `${indir}/build/web/bootstrap.min.js`,
                `${indir}/build/web/bislib.css`,
              ]).pipe(gulp.dest(distDir));
@@ -524,7 +581,7 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
     console.log('++++');
     console.log('++++ Package.json file created in',output);
     console.log('++++');
-    
+
     // step 3
     // Master file
     let txt2=`window.biswebpack=require('./libbiswasm_wasm.js');\nmodule.exports=require('./bislib.js')();\n`;

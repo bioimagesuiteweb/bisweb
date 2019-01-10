@@ -1363,6 +1363,27 @@ const webutil = {
         }
     },
 
+
+    /** load javascript module and return a promise
+     * @param{url} - the script url
+     */
+    loadJavaScriptModule : function (url) {
+
+        return new Promise( (resolve,reject) => {
+            let apiTag = document.createElement('script');
+            apiTag.src = url;
+            apiTag.onload = ( () => {
+                console.log(' URL=',url);
+            });
+            
+            apiTag.onerror=( (e) => {
+                reject("Failed to load tfjs module"+e);
+            });
+
+            document.head.appendChild(apiTag);
+        });
+    },
+    
     /**
      * Searches query string of URL for a value given by 'name'.
      * Taken from https://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript/901144#901144
