@@ -216,7 +216,23 @@ let dicom2BIDS=async function(opts)  {
     } catch(e) {
         return errorfn(e);
     }
-    return outfilename;
+
+    //delete input folder if it lives in /tmp
+    let splitindir = indir.split('/');
+    if (splitindir[0] === '') { splitindir.shift(); } //trim a leading slash if needs be
+    if (splitindir[0] === 'tmp') {
+
+        //remove the top level folder in /tmp
+        let containingFolder = splitindir.splice(0, 2).join('/');
+        containingFolder = '/' + containingFolder;
+        genericio.deleteDirectory(containingFolder).then( () => {
+            console.log('Deleted', containingFolder, 'successfully');
+            return outfilename;
+        }).catch( (e) => {
+            console.log('An Error occured trying to delete', containingFolder, e);
+            return outfilename;
+        });
+    }
     
 };
 
