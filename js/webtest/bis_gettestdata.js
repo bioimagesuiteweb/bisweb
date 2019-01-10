@@ -1,11 +1,18 @@
 
 const webutil=require('bis_webutil');
 const scope=webutil.getScope();
+const genericio = require('bis_genericio');
+
+const environment=genericio.getenvironment();
 
 module.exports={
 
     islocal : function() {
 
+        if (environment==='electron') {
+            return false;
+        }
+        
         if (scope.indexOf('localhost')!==0 || scope.indexOf('192.168')!==0) 
             return true;
         return false;

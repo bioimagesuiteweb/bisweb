@@ -430,14 +430,14 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
             cmdlist.push(`rimraf ${path.resolve(idir,'node_modules')}`);
             if (dopackage===3) {
                 cmdlist.push('npm install -d');
-                cmdlist.push('modclean -r -a *.ts');
+                cmdlist.push('modclean -r -a *.ts ');
             } else if (dopackage===2) {
                 let zname=path.resolve(path.join(outdir,path.join('..',`electrondist/bisweb_${n}.zip`)));
                 try {
                     let stats = fs.statSync(zname);
                     let bytes = stats["size"];
                     console.log('zname = ', zname,bytes);
-                    cmdlist.push(`cd ../web ${separator} unzip -q ${zname}`);
+                    cmdlist.push(`unzip -q ${zname}`);
                 } catch(e) {
                     console.log(colors.red(e));
                     process.exit(1);
@@ -463,10 +463,24 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
         let absdistdir=path.normalize(path.resolve(distdir));
         let zipindir='BioImageSuiteWeb-'+n+'-x64';
 
-        let fullpath=path.resolve(path.join(absdistdir,zipindir),'resources/app/node_modules/@tensorflow/tfjs-node/deps');
-        console.log('Zip in dir=',fullpath);
+        let appdir=path.join(absdistdir,zipindir);
 
-        let cleancmd='rimraf '+fullpath;
+        // Cleanup useless files before we electron package
+        let todelete =  [
+            path.resolve(path.join(appdir,'resources/app/node_modules/@tensorflow/tfjs-node/deps')),
+            path.resolve(path.join(appdir,'resources/app/*.map')),
+            path.resolve(path.join(appdir,'resources/app/server.zip')),
+            path.resolve(path.join(appdir,'resources/app/mni2tal')),
+            path.resolve(path.join(appdir,'resources/app/connviewer')),
+            path.resolve(path.join(appdir,'resources/app/package-lock.json')),
+            path.resolve(path.join(appdir,'resources/app/images/bisweb-*.png'))
+        ].join(' ');
+
+        console.log('To delete=',todelete);
+
+        let cleancmd='rimraf '+todelete;
+        
+        
         
         if (n==="win32") {
             let ifile=path.resolve(indir,'web/images/bioimagesuite.png.ico');
@@ -494,9 +508,8 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
             }
         }
     }
-    let ddir=path.resolve(path.join(outdir,path.join('..','dist')));
-    console.log(getTime()+colors.green('About to execute in : win32=',inwin32,'\n path=', path.resolve(ddir),'\n\t', JSON.stringify(cmdlist,null,4)));
-    executeCommandList(cmdlist,ddir,done);
+    console.log(getTime()+colors.green('About to execute in : win32=',inwin32,'\n path=', path.resolve(outdir),'\n\t', JSON.stringify(cmdlist,null,4)));
+    executeCommandList(cmdlist,outdir,done);
 };
 
 

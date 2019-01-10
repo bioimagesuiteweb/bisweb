@@ -486,7 +486,7 @@ class BisWebTensorFlowRecon {
 /** if tf module is not set try to set it 
  * @returns{Boolean} -- success or failure to initialize 
  */
-let initializeTFModule=function() {
+let initializeTFModule=function(forcebrowser=false) {
 
     let environment=bisgenericio.getmode();
 
@@ -497,7 +497,7 @@ let initializeTFModule=function() {
             return;
         }
         
-        if (environment === 'browser' ) {
+        if (environment === 'browser'  || (environment==='electron' && forcebrowser===true)) {
             
             if (window.tf) {
                 tfjsModule=new TFWrapper(window.tf,'loaded from script');
@@ -556,6 +556,9 @@ let getTFJSModule=function() { return tfjsModule; };
 let fixModelName=function(md) {
 
     let environment=bisgenericio.getmode();
+
+    if (md.indexOf('http')===0)
+        return md;
     
     if (environment === 'browser')  {
         let getScope=() => {

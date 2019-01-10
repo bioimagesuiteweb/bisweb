@@ -50,6 +50,7 @@ program
     .option('-e, --eslint <n>','if 0 use jshint instead of eslint',parseInt)
     .option('-w, --worker','if present build the webworker as well')
     .option('-s, --sworker','if present build the service worker and index.js as well')
+    .option('--tf','if true package tensorfow in electron app')
     .option('--localhost','only local access')
     .option('--portno <s>','port for server (8080 is default)')
     .option('--internal <n>','if 1 use internal code, if 2 serve the internal directory as well',parseInt)
@@ -76,8 +77,10 @@ let options = {
     internal : program.internal,
     external : program.external || 0 ,
     portno : parseInt(program.portno) || 8080,
-    hostname : '0.0.0.0'
+    hostname : '0.0.0.0',
+    tensorflow : program.tf || false,
 };
+
 
 if (program.localhost)
     options.hostname='localhost';
@@ -92,6 +95,18 @@ if (program.internal === undefined)
 
 if (program.eslint === undefined)
     options.eslint=1;
+
+
+
+
+
+if (options.tensorflow === false) {
+    if (options.dopack===2)
+        options.dopack=3;
+}
+
+console.log('Tensorflow=',options.tensorflow,options.dopack);
+
 
 
 const mainoption=program.rawArgs[2];
@@ -409,8 +424,16 @@ gulp.task('webserver', ()=> {
 
 
 gulp.task('commonfiles', (done) => { 
+
+    const rename = require('gulp-rename');
+
+    let name='package_notf';
+
+    if (options.tensorflow)
+        name='package'
     
-    console.log(getTime()+' Copying css,fonts,images etc. .');
+    console.log(getTime()+' Copying css,fonts,images etc. . tensorflow=',options.tensorflow);
+
     es.concat(
         gulp.src([ 'node_modules/bootstrap/dist/css/*']).pipe(gulp.dest(options.outdir+'css/')),
         gulp.src([ 'node_modules/bootstrap/dist/fonts/*']).pipe(gulp.dest(options.outdir+'fonts/')),
@@ -419,7 +442,7 @@ gulp.task('commonfiles', (done) => {
         gulp.src([ 'web/manifest.json']).pipe(gulp.dest(options.outdir)),
         gulp.src('./web/bispreload.js').pipe(gulp.dest(options.outdir)),
         gulp.src('./web/biselectron.js').pipe(gulp.dest(options.outdir)),
-        gulp.src('./web/package.json').pipe(gulp.dest(options.outdir)),
+        gulp.src('./web/'+name+'.json').pipe(rename({'basename' : 'package'})).pipe(gulp.dest(options.outdir)),
         gulp.src('./lib/css/bootstrap_dark_edited.css').pipe(gulp.dest(options.outdir)),
         gulp.src('./lib/js/webcomponents-lite.js').pipe(gulp.dest(options.outdir)),
         gulp.src('./node_modules/jquery/dist/jquery.min.js').pipe(gulp.dest(options.outdir)),
@@ -526,12 +549,14 @@ gulp.task('zip', ((done) => {
     bis_gutil.createZIPFile(options.baseoutput,options.outdir,internal.setup.version,options.distdir,done);
 }));
 
-gulp.task('package', (done) => {
-    
+gulp.task('packageint', (done) => {
+
     bis_gutil.createPackage(options.dopack,
                             internal.setup.tools,
                             __dirname,options.outdir,internal.setup.version,options.platform,options.distdir,done);
 });
+
+gulp.task('package', gulp.series('commonfiles','packageint'));
 
 gulp.task('clean', () => { 
 
