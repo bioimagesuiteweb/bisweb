@@ -27,6 +27,12 @@ To run tests for a specific module type
     mocha test_module.js --testname cropImage
     
 
+## To get a list of  all the modules and tests
+
+Type
+
+    mocha test_module.js --list
+
 The tests use data from [https://bioimagesuiteweb.github.io/test/](https://bioimagesuiteweb.github.io/test/). Take a look
 at the test list file
 [https://bioimagesuiteweb.github.io/test/module_tests.json](https://bioimagesuiteweb.github.io/test/module_tests.json)
