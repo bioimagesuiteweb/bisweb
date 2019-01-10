@@ -397,25 +397,51 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
     if (os.platform()==='win32')
         zipopts='-r';
     
-    var errorf=function() { };
+    let errorf=function() { };
     console.log(colors.cyan(getTime()+' (electron '+version+') for: '+platform));
-    for (var ia=0;ia<platform.length;ia++) {
+    let idir=indir+"/build/web";
+
+    for (let ia=0;ia<platform.length;ia++) {
+
         var n=platform[ia];
         var m=n,suffix=".zip";
         if (m==="darwin") {
             m="macos";
             suffix=".app.zip";
         }
-        var basefile=distdir+"/bisweb_"+m+"_"+getVersionTag(version);
-        var zipfile=path.normalize(path.resolve(basefile+suffix));
 
+        if (dopackage>=2) {
+            cmdlist.push(`rimraf ${path.resolve(outdir,'node_modules')}`);
+            if (dopackage===3) {
+                cmdlist.push('npm install -d');
+                cmdlist.push('modclean -r -a *.ts');
+            } else if (dopackage===2) {
+                let zname=path.resolve(path.join(outdir,path.join('..','electrondist')));
+                zname=path.join(zname,`bisweb_${n}_node_modules_electron.zip`);
+                console.log('zname = ', zname, 'bisweb_win32_node_modules_electron.zip');
+                //if (fs.existsSync(zname)) {
+                    cmdlist.push(`unzip -t ${zname}`);
+//                } else {
+  //                  console.log(colors.red(' E R R O R ', zname,' does not exist'));
+    //                process.exit(1);
+      //          }
+            }
+        }
+        
+        let basefile=distdir+"/bisweb_"+m+"_"+getVersionTag(version);
+        let zipfile=path.normalize(path.resolve(basefile+suffix));
+
+        
+        
         let eversion ="4.0.1";
-        let cmdline='electron-packager '+outdir+' BioImageSuiteWeb --arch=x64 --electron-version '+eversion+' --out '+distdir+' --overwrite '+
+        let cmdline='electron-packager '+path.resolve(outdir)+' BioImageSuiteWeb --arch=x64 --electron-version '+eversion+' --out '+path.resolve(distdir)+' --overwrite '+
             '--app-version '+version;
         
         try {
             fs.unlink(zipfile,errorf);
-        } catch(e) { errorf('error '+e); }
+        } catch(e) {
+            errorf('error '+e);
+        }
 
         let absdistdir=path.normalize(path.resolve(distdir));
         let zipindir='BioImageSuiteWeb-'+n+'-x64';
@@ -432,14 +458,16 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
                 cmdlist.push('cd '+absdistdir+'; zip '+zipopts+' '+zipfile+' '+zipindir);
             }
         } else if (n==="win32") {
-            cmdlist.push(cmdline+' --platform=win32 --icon web/images/bioimagesuite.png.ico');
+            let ifile=path.resolve(indir,'web/images/bioimagesuite.png.ico');
+            cmdlist.push(cmdline+` --platform=win32 --icon ${ifile}`);
             cmdlist.push(cleancmd);
             if (dopackage>1)  {
                 if (os.platform()!=='win32') {
                     cmdlist.push('zip '+zipopts+' '+zipfile+' '+zipindir);
                 } else {
                     inno(tools,version,indir,distdir);
-                    cmdlist.push('c:\\unix\\innosetup5\\ISCC.exe '+distdir+'/biselectron.iss');
+                    let innofile=path.resolve(distdir,'biselectron.iss')
+                    cmdlist.push('c:\\unix\\innosetup5\\ISCC.exe '+innofile);
                 }
             }
         } else if (n==="darwin") {
@@ -451,9 +479,9 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
         }
     }
 
-    console.log(getTime()+' cmdlist=',cmdlist.join('\n\t'));
-    executeCommandList(cmdlist,indir,done);
+    console.log('About to execute in : ', path.resolve(idir),'\n\t', JSON.stringify(cmdlist,null,4));
     done();
+    //executeCommandList(cmdlist,indir,done);
 };
 
 
@@ -461,25 +489,7 @@ var createPackage=function(dopackage=1,tools=[],indir=_dirname+"../",outdir="bui
     
     console.log(getTime()+' creating package: dopack=',dopackage,'indir=',indir,' outdir=',outdir,'\n\t\t version=',version,' platform=',platform,' distdir=',distdir);
 
-    let fn0=function() {
-        createPackageInternal(dopackage,tools,indir,outdir,version,platform,distdir,done);
-    };
-
-    if (dopackage>0) {
-        let idir=indir+"/build/web";
-        let cmdlist=['npm install -d' ];
-        if (dopackage>2) {
-            cmdlist=[
-                'rimraf node_modules',
-                'npm install -d'
-            ];
-        } 
-        cmdlist.push('modclean -r -a *.ts');
-        executeCommandList(cmdlist,idir,fn0,1);
-    } else {
-        dopackage=1;
-        fn0();
-    }
+    createPackageInternal(dopackage,tools,indir,outdir,version,platform,distdir,done);
 };
 
 var jsDOC=function(indir,conffile,done) {
