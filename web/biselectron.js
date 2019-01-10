@@ -114,7 +114,7 @@ var getHeightWidth= function(name) {
     
     const obj = {
         height : 900,
-        width : 700
+        width : 1024
     };
 
     const maxw=electron.screen.getPrimaryDisplay().workAreaSize.width;
@@ -136,7 +136,7 @@ var getHeightWidth= function(name) {
             i=i+1;
         }
     }
-    
+
     if (!found && name.indexOf("test")>0) {
         obj.width=maxw;
         obj.height=maxh;
@@ -146,15 +146,17 @@ var getHeightWidth= function(name) {
     }
 
     
-    if (obj.width>maxw)
-        obj.width=maxw;
-    if (obj.width<600)
-        obj.width=600;
+    if (obj['width']>maxw)
+        obj['width']=maxw;
+    else if (obj['width']<600)
+        obj['width']=600;
+
+    if (obj.height<600)
+        obj.height=600;
     
     if (obj.height>maxh)
         obj.height=maxh;
-    if (obj.height<600)
-        obj.height=600;
+
 
     return obj;
 };
@@ -181,8 +183,9 @@ var createWindow=function(index,fullURL) {
     }
         
     state.dimensions=getHeightWidth(name);
+
+
     
-    var opts;
     let i_width= state.dimensions.width;
     let i_height= state.dimensions.height;
 
@@ -204,12 +207,11 @@ var createWindow=function(index,fullURL) {
         yval=undefined;
     }  
 
-    opts= { width: i_width,
-            height: i_height,
-            maxwidth: state.screensize.width,
-            maxheight: state.screensize.height
+    let opts= { width: i_width,
+                height: i_height,
+                maxwidth: state.screensize.width,
+                maxheight: state.screensize.height
           };
-
 
     
     if (opts.height>state.screensize.height-10)

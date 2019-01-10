@@ -2,6 +2,8 @@
 
 /* global $,document,window */
 
+// Get access to the computational tools 
+const bisweb=window.bioimagesuiteweb;
 
 let extra="test/testdata/tfjs64";
 // In development mode
@@ -30,7 +32,6 @@ let getScope=function() {
 
 let run_tf_module=async function(img) {
 
-    const bisweb=document.querySelector("#bis").export;
     const viewer=document.querySelector("#viewer");
     const URL=getScope()+extra;
 
@@ -56,24 +57,28 @@ let run_tf_module=async function(img) {
         }
     }).catch( (e) => {
         console.log('Failed to invoke module',e);
+        bisweb.webutil.createAlert(e,true);
     });
 };
 
 
 window.onload = function() {
-    
-    // Get access to the computational tools via the export element
-    const bisweb=document.querySelector("#bis").export;
+
+    if (bisweb.getEnvironment() === "electron") {
+        window.BISELECTRON.remote.getCurrentWindow().toggleDevTools();
+        $('.navbar-fixed-bottom').remove();
+    }
     
     // Print the functionality
+    
     console.log('==========================================================');
-    console.log('BISWeb Environment = ',bisweb.genericio.getenvironment());    
+    console.log('BISWeb Environment = ',bisweb.getEnvironment());    
     // The viewer is optional, just remove the
     const viewer=document.querySelector("#viewer");
     
     // Load an image --> returns a promise so .then()
     let URL=getScope()+extra;
-    if (bisweb.genericio.getenvironment()==='electron')  {
+    if (bisweb.getEnvironment()==='electron')  {
         let start=8;
         if (bisweb.genericio.getpathmodule().sep==='/')
             start=7;
@@ -81,7 +86,7 @@ window.onload = function() {
     }
     let fn=( (name) => {
 
-        console.clear();
+        //        console.clear();
         console.log('Loading object=',URL);
         bisweb.loadObject(`${URL}/${name}.nii.gz`,'image').then( (img) => {
 

@@ -101,8 +101,12 @@ var executeCommand=function(command,dir,done=0,error=0,extra=0) {
     
     try { 
         let proc=child_process.exec(command, { cwd : dir });
-        proc.stdout.on('data', function(data) { process.stdout.write(colorfn(data.trim()+'\n'));});
-        proc.stderr.on('data', function(data) { process.stdout.write(colors.red(data+'\n'));});
+        proc.stdout.on('data', function(data) {
+            process.stdout.write(colorfn(data));
+        });
+        proc.stderr.on('data', function(data) {
+            process.stdout.write(colors.red(data));
+        });
         proc.on('exit', function() { console.log(''); done();});
     } catch(e) {
         console.log(' error '+e);
@@ -129,7 +133,7 @@ var executeCommandPromise=function(command,dir,extra="") {
 // -------------------------------------------------------------
 
 var executeCommandList=function(cmdlist,indir,done=0,extra=0) {
-
+    
     if (done===0) {
         for (let i=0;i<cmdlist.length;i++) {
             executeCommand(cmdlist[i],indir,0,0,i);
@@ -150,7 +154,7 @@ var executeCommandList=function(cmdlist,indir,done=0,extra=0) {
 };
 
 
-var createHTML=function(toolname,outdir,libjs,commoncss) {
+var createHTML=function(toolname,outdir,libjs,commoncss,gpl=true) {
 
     if (htmlreplace===null)
         htmlreplace = require('gulp-html-replace');
@@ -167,7 +171,10 @@ var createHTML=function(toolname,outdir,libjs,commoncss) {
     var alljs;
     if (libjs!=='') {
         if (toolname!=="index") {
-            alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'three.min.js', 'bootstrap.min.js', 'libbiswasm_wasm.js', libjs  ];
+            if (gpl) 
+                alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'three.min.js', 'bootstrap.min.js', 'libbiswasm_wasm.js', libjs  ];
+            else
+                alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'three.min.js', 'bootstrap.min.js', 'libbiswasm_nongpl_wasm.js', libjs  ];
         } else {
             alljs=[ 'jquery.min.js', 'bootstrap.min.js', libjs  ];
             bundlecss=[ "./bootstrap_dark_edited.css" ];
@@ -305,44 +312,39 @@ var runWebpack=function(joblist,internal,external,
     return Promise.all(p);
 };
 
-var createZIPFile = function(dozip,baseoutput,outdir,version,distdir) {
-
+var createZIPFile = function(baseoutput,outdir,version,distdir,done) {
+    
     const gulpzip = require('gulp-zip'),
           del = require('del');
 
-    console.log('dozip=',dozip);
-    
-    if (!dozip) {
-        console.log(colors.magenta(getTime()+' Not creating webpage zip file'));
-        return;
-    }
-    console.log('baseoutput=',baseoutput,outdir);
     let outfile=distdir+"/bisweb_"+getVersionTag(version)+".zip";
+    console.log(getTime()+' indir='+path.resolve(outdir));
+
     del([ outfile]);
     console.log(getTime()+' Creating zip file '+outfile+'.');
-    return gulp.src([outdir+"*",
-                     outdir+"images/*",
-                     outdir+"images/*/*",
-                     outdir+"fonts/*",
-                     outdir+"css/*",
-                     outdir+"fonts/*",
-                     outdir+"images/*",
-                     outdir+"test/**/*",
-                     outdir+"var/*",
-                     `!${outdir}/node_modules`,
-                     `!${outdir}/package.json`,
-                     `!${outdir}/*.map`
-                    ],
-                    {base:outdir}).pipe(gulpzip(outfile)).pipe(gulp.dest('.')).on('end', () => {
-                        outfile=path.resolve(outfile);
-                        let stats = fs.statSync(outfile);
-                        let bytes = stats["size"];
-                        let mbytes=Math.round(bytes/(1024*1024)*100)*0.01;
-                        
-                        console.log('____ zip file created in '+outfile+' (size='+mbytes+' MB )');
-
-                    });
-
+    gulp.src([outdir+"*",
+              outdir+"images/*",
+              outdir+"images/*/*",
+              outdir+"fonts/*",
+              outdir+"css/*",
+              outdir+"fonts/*",
+              outdir+"images/*",
+              outdir+"test/**/*",
+              outdir+"var/*",
+              `!${outdir}/node_modules`,
+              `!${outdir}/package.json`,
+              `!${outdir}/*.map`
+             ],
+             {base:outdir}).pipe(gulpzip(outfile)).pipe(gulp.dest('.')).on('end', () => {
+                 outfile=path.resolve(outfile);
+                 let stats = fs.statSync(outfile);
+                 let bytes = stats["size"];
+                 let mbytes=Math.round(bytes/(1024*1024)*100)*0.01;
+                 
+                 console.log(getTime()+' ____ zip file created in '+outfile+' (size='+mbytes+' MB )');
+                 done();
+             });
+    
 };
 
 // -----------------------------------------------------------------------------------------
@@ -390,78 +392,110 @@ var inno=function(tools, version, indir , distdir ) {
 var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",outdir="build",version=1.0,platform="linux",distdir="builddist",done=0) {
 
 
-    let cmdlist = [];
-    let zipopts='-ry';
-    if (os.platform()==='win32')
+    let cmdlist = ['pwd'];
+    let zipopts=' -ry';
+    let inwin32=false;
+    let separator=";";
+    if (os.platform()==='win32') {
+        inwin32=true;
         zipopts='-r';
+        separator="&";
+    }
+
+    console.log('In win 32=',inwin32,outdir,path.resolve(outdir));
     
-    var errorf=function() { };
+    let errorf=function() { };
     console.log(colors.cyan(getTime()+' (electron '+version+') for: '+platform));
-    for (var ia=0;ia<platform.length;ia++) {
+    let idir=indir+"/build/web";
+
+    for (let ia=0;ia<platform.length;ia++) {
+
         var n=platform[ia];
         var m=n,suffix=".zip";
         if (m==="darwin") {
             m="macos";
             suffix=".app.zip";
         }
-        var basefile=distdir+"/bisweb_"+m+"_"+getVersionTag(version);
-        var zipfile=path.normalize(path.resolve(basefile+suffix));
 
+        if (dopackage>=2) {
+            cmdlist.push(`rimraf ${path.resolve(idir,'node_modules')}`);
+            if (dopackage===3) {
+                cmdlist.push('npm install -d');
+                cmdlist.push('modclean -r -a *.ts');
+            } else if (dopackage===2) {
+                let zname=path.resolve(path.join(outdir,path.join('..',`electrondist/bisweb_${n}.zip`)));
+                try {
+                    let stats = fs.statSync(zname);
+                    let bytes = stats["size"];
+                    console.log('zname = ', zname,bytes);
+                    cmdlist.push(`cd ../web ${separator} unzip -q ${zname}`);
+                } catch(e) {
+                    console.log(colors.red(e));
+                    process.exit(1);
+                }
+            }
+        }
+        
+        let basefile=distdir+"/bisweb_"+m+"_"+getVersionTag(version);
+        let zipfile=basefile+suffix;
+
+        
+        
         let eversion ="4.0.1";
-        //        if (m==="linux")
-        //          eversion="3.0.10";
-        let cmdline='electron-packager '+outdir+' BioImageSuiteWeb --arch=x64 --electron-version '+eversion+' --out '+distdir+' --overwrite '+
+        let cmdline='electron-packager '+path.resolve(outdir)+' BioImageSuiteWeb --arch=x64 --electron-version '+eversion+' --out '+path.resolve(distdir)+' --overwrite '+
             '--app-version '+version;
         
         try {
             fs.unlink(zipfile,errorf);
-        } catch(e) { errorf('error '+e); }
+        } catch(e) {
+            errorf('error '+e);
+        }
 
         let absdistdir=path.normalize(path.resolve(distdir));
-        var zipindir='BioImageSuiteWeb-'+n+'-x64';
-        if (n==="linux") {
-            cmdlist.push(cmdline+' --platform=linux');
-            if (dopackage>1) {
-                cmdlist.push('cd '+absdistdir+'; zip '+zipopts+' '+zipfile+' '+zipindir);
-            }
-        } else if (n==="win32") {
-            cmdlist.push(cmdline+' --platform=win32 --icon web/images/bioimagesuite.png.ico');
-            if (dopackage>1)  {
+        let zipindir='BioImageSuiteWeb-'+n+'-x64';
+
+        let fullpath=path.resolve(path.join(absdistdir,zipindir),'resources/app/node_modules/@tensorflow/tfjs-node/deps');
+        console.log('Zip in dir=',fullpath);
+
+        let cleancmd='rimraf '+fullpath;
+        
+        if (n==="win32") {
+            let ifile=path.resolve(indir,'web/images/bioimagesuite.png.ico');
+            cmdlist.push(cmdline+` --platform=win32 --icon ${ifile}`);
+            if (dopackage===3)
+                cmdlist.push(cleancmd);
+            if (dopackage>0)  {
                 if (os.platform()!=='win32') {
                     cmdlist.push('zip '+zipopts+' '+zipfile+' '+zipindir);
                 } else {
                     inno(tools,version,indir,distdir);
-                    cmdlist.push('c:\\unix\\innosetup5\\ISCC.exe '+distdir+'/biselectron.iss');
+                    let innofile=path.resolve(distdir,'biselectron.iss')
+                    cmdlist.push('c:\\unix\\innosetup5\\ISCC.exe '+innofile);
                 }
             }
-        } else if (n==="darwin") {
-            cmdlist.push(cmdline+' --platform=darwin --icon web/images/bioimagesuite.icns');
-            if (dopackage>1)  {
-                cmdlist.push('cd '+absdistdir+'; zip '+zipopts+' '+zipfile+' '+zipindir);
+        } else {
+            if (n==="linux") 
+                cmdlist.push(cmdline+' --platform=linux');
+            else
+                cmdlist.push(cmdline+` --platform=darwin --icon ${path.resolve(indir,'web/images/bioimagesuite.icns')}`);
+            if (dopackage===3)
+                cmdlist.push(cleancmd);
+            if (dopackage>0)  {
+                cmdlist.push(`zip `+zipopts+' '+path.basename(zipfile)+' '+path.basename(zipindir));
             }
         }
     }
-
-    console.log('cmdlist=',cmdlist.join('\n\t'));
-    executeCommandList(cmdlist,indir,done);
-    
+    let ddir=path.resolve(path.join(outdir,path.join('..','dist')));
+    console.log(getTime()+colors.green('About to execute in : win32=',inwin32,'\n path=', path.resolve(ddir),'\n\t', JSON.stringify(cmdlist,null,4)));
+    executeCommandList(cmdlist,ddir,done);
 };
 
 
 var createPackage=function(dopackage=1,tools=[],indir=_dirname+"../",outdir="build",version=1.0,platform="linux",distdir="builddist",done=null) {
     
-    console.log('dopack=',dopackage,'indir=',indir,' outdir=',outdir,' version=',version,' platform=',platform,' distdir=',distdir);
+    console.log(getTime()+' creating package: dopack=',dopackage,'indir=',indir,' outdir=',outdir,'\n\t\t version=',version,' platform=',platform,' distdir=',distdir);
 
-    let fn0=function() {
-        createPackageInternal(dopackage,tools,indir,outdir,version,platform,distdir,done);
-    };
-
-    if (dopackage>0) {
-        executeCommand("npm update -d",indir+"/build/web",fn0);
-    } else {
-        dopackage=1;
-        fn0();
-    }
+    createPackageInternal(dopackage,tools,indir,outdir,version,platform,distdir,done);
 };
 
 var jsDOC=function(indir,conffile,done) {

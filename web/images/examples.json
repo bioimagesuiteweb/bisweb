@@ -3,12 +3,17 @@
 	    "exportexample" : {
 	        "title" : "Image Resampling Example",
 	        "url"   : "exportexample",
-            "nocss" : true
+            "nogpl" : true
 	    },
         "tfjsexample" : {
 	        "title" : "Tensorflow.js Example",
 	        "url"   : "tfjsexample",
-            "nocss" : true
+            "nogpl" : false
+	    },
+        "viewerexample" : {
+	        "title" : "Viewer Example",
+	        "url"   : "viewerexample",
+            "nogpl" : true
 	    }
     }
 }

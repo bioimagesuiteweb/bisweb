@@ -42,8 +42,7 @@ program
     .option('-i, --input <s>','mainscript to build')
     .option('-m, --minify','flag to minify')
     .option('-l, --platform  <s>','platform')
-    .option('-p, --dopack <s>','dopackage 0=electron-packager, 1=run npm update in addition 2=run inno or zip in addition')
-    .option('-z, --dozip <s>','dozip')
+    .option('-p, --dopack <s>','dopackage 0=electron-packager, 1=run inno or zip in addition, 2=using zip distribution for node_modules, 3 run npm install',parseInt)
     .option('-e, --eslint <n>','if 0 use jshint instead of eslint',parseInt)
     .option('-w, --worker','if present build the webworker as well')
     .option('-s, --sworker','if present build the service worker and index.js as well')
@@ -66,8 +65,7 @@ let options = {
     distdir : "build/dist",
     verbose : program.verbose || false,
     platform : program.platform || os.platform(),
-    package : program.dopack || 0,
-    zip : program.dozip || 0,
+    dopack : program.dopack || 0,
     webworker : program.worker || false,
     eslint : program.eslint,
     sworker : program.sworker || false,
@@ -98,10 +96,9 @@ const mainoption=program.rawArgs[2];
 // Install and Zip Issues
 // Second pass to help with gulp zip and gulp package
 // -----------------------------------------------------------------------------------------
-if (mainoption=="zip")
-    options.zip=1;
+
 if (mainoption=="fullpackage")
-    options.package=2;
+    options.dopack=2;
 
 
 options.baseoutput=".";
@@ -233,8 +230,7 @@ if (options.webworker) {
 // Verbose Info
 // -------------------------------
 
-if (options.verbose!==0) {
-    console.log(bis_gutil.getTime()+' read tool descriptions from '+colors.cyan(internal.tooldescriptionfile));
+if (options.verbose) {
     console.log(bis_gutil.getTime()+' Scripts to process are '+colors.cyan(options.inpfilename));
 }
 
@@ -459,10 +455,10 @@ gulp.task('tools', ( (cb) => {
     
     for (let index=0;index<internal.toolarray.length;index++) {
         let toolname=internal.toolarray[index];
-        let docss = true;
+        let gpl=true;
         if (toolname!=='index') {
-            if (internal.setup.tools[toolname].nocss)
-                docss=false;
+            if (internal.setup.tools[toolname].nogpl)
+                gpl=false;
         }
         console.log(bis_gutil.getTime()+colors.green(' Building tool '+(index+1)+'/'+internal.toolarray.length+' : '+toolname));
         internal.jscounter+=1;
@@ -470,27 +466,29 @@ gulp.task('tools', ( (cb) => {
         let jsname =internal.bislib;
         if (index===0)
             jsname=internal.indexlib;
-        bis_gutil.createHTML(toolname,options.outdir,jsname,internal.biscss);
-        if (docss) {
-            let maincss    = './web/'+toolname+'.css';
-            bis_gutil.createCSSCommon([maincss],toolname+'.css',options.outdir);
-        } else {
-            gulp.src([ 'web/'+toolname+'.js']).pipe(gulp.dest(options.outdir));
+        bis_gutil.createHTML(toolname,options.outdir,jsname,internal.biscss,gpl);
+
+        let customcss='./web/'+toolname+'.css';
+        if (fs.existsSync(customcss))
+            bis_gutil.createCSSCommon([customcss],toolname+'.css',options.outdir);
+
+        let customjs='web/'+toolname+'.js';
+        if (fs.existsSync(customjs)) {
+            console.log(bis_gutil.getTime()+'\tCopying  JS '+customjs);
+            gulp.src([ customjs ]).pipe(gulp.dest(options.outdir));
         }
-        //bis_gutil.createCSSCommon(internal.dependcss,internal.toolarray[index]+'.css',options.outdir);
     }
     cb();
 }));
 
 gulp.task('zip', ((done) => {
     
-    bis_gutil.createZIPFile(options.zip,options.baseoutput,options.outdir,internal.setup.version,options.distdir);
-    done();
+    bis_gutil.createZIPFile(options.baseoutput,options.outdir,internal.setup.version,options.distdir,done);
 }));
 
 gulp.task('package', (done) => {
     
-    bis_gutil.createPackage(options.package,
+    bis_gutil.createPackage(options.dopack,
                             internal.setup.tools,
                             __dirname,options.outdir,internal.setup.version,options.platform,options.distdir,done);
 });

@@ -16,6 +16,7 @@ const BisWebGridTransformation=require('bisweb_gridtransformation');
 const BisWebTransformationCollection=require('bisweb_transformationcollection');
 const userPreferences = require('bisweb_userpreferences.js');
 const bisdate=require('bisdate.js');
+
 /**
  * A set of utility functions. <BR>
  * If using from node.js/webpack it is the output of <B>require('bisweblib')</B>.<BR>
@@ -26,7 +27,6 @@ const bisdate=require('bisdate.js');
 
 
 module.exports= {
-
 
     // ------------------------------------------------------------
     /** Code to load objects 
@@ -54,7 +54,6 @@ module.exports= {
      * @param{String} value - new value
      * @param{Boolean} save - if true save (default = false)
      */
-     
     setPref(item,name,save=false) {
         userPreferences.setItem(item,name,save);
     },
@@ -63,15 +62,19 @@ module.exports= {
     printUserPrefs() {
         userPreferences.printUserPreferences();
     },
-    
-    /** return module genericio 
-     * @alias biswebexport.getGenericIO
-     * @returns{JavaScript Module} 
-     */
 
+
+    /** @returns{String} -- browser, node, electron */
+    getEnvironment() { return genericio.getenvironment(); },
     
+    
+    /** Just list of modules being reexported */
+    // Low level code
     genericio : genericio,
+    // Bisweb info
     bisdate : bisdate,
+    userPreferences :     userPreferences,
+    // Core Data Structures
     BisWebImage : BisWebImage,
     BisWebMatrix : BisWebMatrix,
     BisWebTextObject : BisWebTextObject,
@@ -80,8 +83,8 @@ module.exports= {
     BisWebComboTransformation : BisWebComboTransformation,
     BisWebDataObjectCollection :     BisWebDataObjectCollection,
     BisWebTransformationCollection :     BisWebTransformationCollection,
-    bistfutil: bistfutil,
-    userPreferences :     userPreferences,
+    // Tensor Flow
+    bistfutil: bistfutil
 };
 
 

@@ -2,7 +2,10 @@
 
 /* global window,document,$ */
 
-const fn = function(bisweb,viewer,img) {
+// Get access to the computational tools 
+const bisweb=window.bioimagesuiteweb;
+
+const fn = function(viewer,img) {
     
     // Set the image to the viewer
     if (viewer) {
@@ -33,8 +36,11 @@ const fn = function(bisweb,viewer,img) {
 
 window.onload = function() {
 
-    const bisweb=window.bioimagesuiteweb;
-    
+    if (bisweb.getEnvironment() === "electron") {
+        window.BISELECTRON.remote.getCurrentWindow().toggleDevTools();
+        $('.navbar-fixed-bottom').remove();
+    }
+
     // The viewer is optional, just remove the
     const viewer=document.querySelector("#viewer");
     
@@ -48,9 +54,10 @@ window.onload = function() {
         // Set the image to the viewer
         if (viewer)
             viewer.setimage(img);
+
         
         $('#compute').click( () => {
-            fn(bisweb,viewer,img);
+            fn(viewer,img);
         });
     });
 };
