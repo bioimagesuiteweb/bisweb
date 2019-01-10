@@ -191,7 +191,6 @@ class BisFileServerClient extends BisBaseServerClient {
         // We have handle file download events (i.e. server sending large data to us)
         // From here on it is commands
         
-        
         let success=true;
 
         if (this.verbose>0)

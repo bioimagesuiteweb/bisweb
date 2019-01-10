@@ -47,7 +47,8 @@ class DicomImportElement extends HTMLElement {
             },
         });
 
-        bis_webfileutil.createFileButton({ type : 'danger',
+        bis_webfileutil.createFileButton({ 
+            type : 'danger',
             name : 'Import Images from DICOM Study',
             parent : basediv,
             css : { 'width' : '90%' , 'margin' : '3px' },
@@ -62,9 +63,8 @@ class DicomImportElement extends HTMLElement {
         });
     }
 
-    async importDicomStudy(inputDirectory) {
-        let outputDirectory = null;
-
+    importDicomStudy(inputDirectory) {
+        let outdir = inputDirectory; //create derived folder in the same place as the input in accordance with BIDS
         if (!bis_webfileutil.candoComplexIO()) {
             console.log('Error: cannot import DICOM study without access to file server.');
             return;
@@ -74,37 +74,23 @@ class DicomImportElement extends HTMLElement {
             inputDirectory = bis_genericio.getDirectoryName(bis_genericio.getNormalizedFilename(inputDirectory));
         }
 
-        let outputFileCallback = (f) => {
-            outputDirectory = f;
-            bis_genericio.runFileConversion({ 
-                'fileType' : 'dicom',
-                'inputDirectory' : inputDirectory
-            }).then( (fileConversionOutput) => {
-                console.log('Conversion done, now converting files to BIDS format.');
-                
-                //dicom files are in inputDirectory/derived
-                bis_bidsutils.dicom2BIDS({ 'indir' : fileConversionOutput.output + '/derived', 'outdir' : outputDirectory }).then( (jsonFileName) => {
-                    //parse folder name for containing folder (should be the folder before the .json file)
-                    let splitName = jsonFileName.split('/');
-                    splitName.pop();
-                    let outputFolderName = splitName.join('/');
-                    this.filetreepanel.importFilesFromDirectory(outputFolderName);
-                    this.filetreepanel.showTreePanel();
-                });
-            }).catch( () => {
-                console.log('An error occured during file conversion.');
+        bis_genericio.runFileConversion({
+            'fileType': 'dicom',
+            'inputDirectory': inputDirectory
+        }).then((fileConversionOutput) => {
+            console.log('Conversion done, now converting files to BIDS format.');
+
+            //dicom files are in inputDirectory/derived
+            bis_bidsutils.dicom2BIDS({ 'indir': fileConversionOutput.output + '/derived', 'outdir': outdir }).then((bidsDirectory) => {
+
+                console.log('output directory', bidsDirectory);
+                //parse folder name for containing folder (should be the folder before the .json file)
+                this.filetreepanel.importFilesFromDirectory(bidsDirectory);
+                this.filetreepanel.showTreePanel();
+            }).catch((e) => {
+                console.log('An error occured during BIDS file conversion', e);
             });
-        };
-
-        setTimeout( () => {
-            bis_webfileutil.genericFileCallback({
-                filters : "DIRECTORY",
-                suffix : "DIRECTORY",
-                title : "Select an output directory for the conversion",
-                save : false,
-            }, outputFileCallback);
         });
-
     }
 }
 

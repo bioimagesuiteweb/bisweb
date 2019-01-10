@@ -227,12 +227,12 @@ let dicom2BIDS=async function(opts)  {
         containingFolder = '/' + containingFolder;
         genericio.deleteDirectory(containingFolder).then( () => {
             console.log('Deleted', containingFolder, 'successfully');
-            return outfilename;
         }).catch( (e) => {
             console.log('An Error occured trying to delete', containingFolder, e);
-            return outfilename;
         });
-    }
+    } 
+
+    return outputdirectory;
     
 };
 
