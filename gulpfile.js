@@ -350,29 +350,29 @@ gulp.task('webpack', function (done) {
 
 gulp.task('testdata', ((done) => {
 
-    const gulpzip = require('gulp-zip'),
-          del = require('del');
+    const gulpzip = require('gulp-zip');
 
-
+    console.log(gulpzip);
     let outdir=path.resolve(path.join(options.distdir,'test'));
     let outfile=path.resolve(path.join(options.distdir,'testdata.zip'));
     rimraf.sync(outdir);
     rimraf.sync(outfile);
 
-    console.log(getTime()+' creating zip file '+outfile);
+    console.log(getTime()+' Creating zip file '+outfile);
     es.concat(
         gulp.src(['./test/testdata/**/*']).pipe(gulp.dest(outdir+'/testdata')),
         gulp.src(['./test/webtestdata/**/*']).pipe(gulp.dest(outdir+'/webtestdata')),
         gulp.src(['./test/module_tests.json']).pipe(gulp.dest(outdir)),
     ).on('end', () => {
-        console.log(getTime()+' files copied to '+outdir);
+        console.log(getTime()+' Files copied to '+outdir+', creating '+outfile);
         gulp.src([ outdir+'/**']).pipe(gulpzip(outfile)).pipe(gulp.dest('.')).on('end', () => {
+            console.log(getTime()+ ' Done zipping '+outfile);
             outfile=path.resolve(outfile);
             let stats = fs.statSync(outfile);
             let bytes = stats["size"];
             let mbytes=Math.round(bytes/(1024*1024)*100)*0.01;
             console.log(getTime()+' ____ zip file created in '+outfile+' (size='+mbytes+' MB )');
-            rimraf.sync(outdir);
+            //rimraf.sync(outdir);
             done();
         });
     });
@@ -514,11 +514,11 @@ gulp.task('tools', ( (cb) => {
         if (fs.existsSync(customjs)) {
             console.log(getTime()+'\tCopying  JS '+customjs);
             promises.push( new Promise((resolve) => {
-                gulp.src([ customjs ]).pipe(gulp.dest(options.outdir)).on('end', () => { resolve();})
+                gulp.src([ customjs ]).pipe(gulp.dest(options.outdir)).on('end', () => { resolve();});
             }));
         }
     }
-    Promise.all(promises).then( () => { cb()});
+    Promise.all(promises).then( () => { cb();});
 }));
 
 gulp.task('zip', ((done) => {

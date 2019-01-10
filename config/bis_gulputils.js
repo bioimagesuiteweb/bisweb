@@ -478,7 +478,7 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
                     cmdlist.push('zip '+zipopts+' '+zipfile+' '+zipindir);
                 } else {
                     inno(tools,version,indir,distdir);
-                    let innofile=path.resolve(distdir,'biselectron.iss')
+                    let innofile=path.resolve(distdir,'biselectron.iss');
                     cmdlist.push('c:\\unix\\innosetup5\\ISCC.exe '+innofile);
                 }
             }

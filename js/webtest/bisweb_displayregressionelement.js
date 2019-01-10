@@ -25,6 +25,7 @@ const $=require('jquery');
 const bisdate=require('bisdate.js').date;
 const BisWebImage=require('bisweb_image');
 const userPreferences = require('bisweb_userpreferences.js');
+const gettestdata=require('./bis_gettestdata');
 import testmodule from '../../test/webtestdata/displaytests.json';
 let displaytestlist=null;
 
@@ -40,8 +41,9 @@ let globalParams = {
     comparisonTextElement : null,
     application : null,
     currentViewer : null,
-    scope : webutil.getScope()
 };
+
+
 
 // TODO: Fix Paths for web-based test file distribution
 
@@ -164,6 +166,10 @@ var enableButtons=function(state=true) {
 
 var runTests= async function(multiple=false,isconnviewer=false) {
 
+    let forcegithub= $('#usegithub').is(":checked") || false;
+    globalParams.testDataRootDirectory=gettestdata.getbase(forcegithub,true);
+    console.log('++++ Test Data Directory=',globalParams.testDataRootDirectory);
+    
     enableButtons(false);
     
     bis_webfileutil.setMode('local',false);
@@ -191,7 +197,6 @@ var runTests= async function(multiple=false,isconnviewer=false) {
         if (statefile.length>0) {
             statefile=globalParams.testDataRootDirectory+'/'+statefile;
         }
-
         
         let desired=displaytestlist[test]['result'];
         
@@ -306,6 +311,14 @@ class DisplayRegressionElement extends HTMLElement {
     
     // Fires when an instance of the element is created.
     connectedCallback() {
+
+        if (gettestdata.islocal()) {
+            console.log('Islocal');
+            $("#githubdiv").css({"visibility" : "visible"});
+        }  else {
+            $("#usegithublab").text('');
+        }
+        
         let numviewers = parseInt(this.getAttribute('bis-numviewers') || 1);
 
         globalParams.tabset = this.getAttribute('bis-tabset') || null;
@@ -316,9 +329,8 @@ class DisplayRegressionElement extends HTMLElement {
             globalParams.viewerid.push(this.getAttribute('bis-viewerid'+i));
             globalParams.tabid.push(this.getAttribute('bis-tab'+i));
         }
-        
-        globalParams.testDataRootDirectory=globalParams.scope+"images/testdata";
 
+        
         let name=this.getAttribute('bis-testlist') || 'overlay';
         displaytestlist=testmodule[name];
 

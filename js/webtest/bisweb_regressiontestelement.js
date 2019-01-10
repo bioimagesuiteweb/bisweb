@@ -31,6 +31,7 @@ const bisdate=require('bisdate.js').date;
 const wrapperutil=require('bis_wrapperutils');
 const BisWebImage=require('bisweb_image');
 const bis_webfileutil=require('bis_webfileutil');
+const gettestdata=require('./bis_gettestdata');
 
 
 import module_testlist from '../../test/module_tests.json';
@@ -41,8 +42,8 @@ let testDataModelDirectory="";
 let threadController=null;
 let oldTestDataRootDirectory='';
 let serverDirectory=null;
-let disableServer=function() {
 
+let disableServer=function() {
     bis_webfileutil.setMode('local',false);
     testDataRootDirectory=oldTestDataRootDirectory;
 };
@@ -470,6 +471,12 @@ var run_memory_test=function() {
 
 var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',usethread=false,usefileserver=false) { // jshint ignore:line
 
+    let forcegithub= $('#usegithub').is(":checked") || false;
+    testDataRootDirectory=gettestdata.getbase(forcegithub,false);
+    console.log('++++ Test Data Directory=',testDataRootDirectory);
+    testDataModelDirectory=testDataRootDirectory;
+    oldTestDataRootDirectory=testDataRootDirectory;
+    
     if (webutil.inElectronApp()) {
         window.BISELECTRON.remote.getCurrentWindow().openDevTools();
     }
@@ -790,6 +797,8 @@ var startFunction = (() => {
     }
 
 
+    /*
+    
     if (typeof window.BIS !=='undefined')  {
         testDataRootDirectory="../test/";
         testDataModelDirectory="../test/";
@@ -799,9 +808,8 @@ var startFunction = (() => {
     } else  {
         testDataRootDirectory="./test/";
         testDataModelDirectory="./test/";
-    }
+    }*/
 
-    oldTestDataRootDirectory=testDataRootDirectory;
     initialize(module_testlist);
 
 });
@@ -815,6 +823,15 @@ class RegressionTestElement extends HTMLElement {
     
     // Fires when an instance of the element is created.
     connectedCallback() {
+
+        if (gettestdata.islocal()) {
+            console.log('Islocal');
+            $("#githubdiv").css({"visibility" : "visible"});
+        }  else {
+            $("#usegithublab").text('');
+        }
+        
+        
 	window.onload=startFunction;
     }
 }
