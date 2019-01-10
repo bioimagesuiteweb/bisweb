@@ -52,13 +52,12 @@ let dicom2BIDS=async function(opts)  {
     console.log('Flist=',flist.join('\n\t'));
 
     //filter supplemental files by looking for files without '.nii'. outer capture group will have the full name of the file
-    let suppFilter = /^((?!.\.nii).)*$/gm, filteredsuppfiles = [], suppmatch = undefined;
+    //once you find a file and move it, record its name 
+    let suppFilter = /^((?!.\.nii).)*$/gm, filteredsuppfiles = [], movedsuppfiles = [], suppmatch = undefined;
     for (let file of suppfiles) {
         suppmatch = suppFilter.exec(file);
         if (suppmatch) filteredsuppfiles.push(suppmatch[0]);
     }
-    
-    console.log('filteredsuppfiles', filteredsuppfiles);
 
     if (flist.length<1) {
         return errorfn('No data to convert in '+indir);
@@ -111,7 +110,7 @@ let dicom2BIDS=async function(opts)  {
         }
 
         let origname=name;
-        let basename=genericio.getBaseName(name).toLowerCase();
+        let basename=genericio.getBaseName(name);
 
         let regex = /[A-Za-z0-9]*_(.*)/g;
         let regexMatch = regex.exec(basename);
@@ -127,13 +126,12 @@ let dicom2BIDS=async function(opts)  {
             splitbasename.shift();
             let suppcomparename = splitbasename.join('_');
 
-            
-            if (splitName === suppcomparename) {
-                console.log('found match for', splitName);
+            if (splitName.toLowerCase() === suppcomparename.toLowerCase()) {
                 //rejoin file extension to the formatted splitsupp
                 splitsupp[0] = suppcomparename;
                 let suppname = splitsupp.join('.');
                 let suppTarget = genericio.joinFilenames(dirname, genericio.getBaseName(suppname));
+                movedsuppfiles.push(suppTarget);
                 await genericio.copyFile(suppfile + '&&' + suppTarget);
             }
         }
@@ -196,10 +194,17 @@ let dicom2BIDS=async function(opts)  {
                 }
             }
             
+            //find supporting files from file list 
+            let basename = name.split('.')[0], suppfileArray = [];
+            for (let file of movedsuppfiles) {
+                if (file.includes(basename)) { suppfileArray.push(file); }
+            }
+
             outobj.job.push({
                 name : name,
                 filename : fname.substr(outputdirectory.length+1,fname.length),
                 tag : tagname,
+                supportingfiles: suppfileArray,
                 details : infoname
             });
 
