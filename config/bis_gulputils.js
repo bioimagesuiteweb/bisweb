@@ -160,44 +160,52 @@ var createHTML=function(toolname,outdir,libjs,commoncss,gpl=true) {
         htmlreplace = require('gulp-html-replace');
     if (replace===null)
         replace = require('gulp-replace');
-    
-    if (toolname==="bisjs")
-        return;
-    
-    var mainhtml   = path.normalize(path.join(__dirname,'../web/'+toolname+'.html'));
-    var bundlecss  = commoncss;
 
-    console.log(getTime()+colors.green('\tBuilding HTML '+mainhtml));
-    var alljs;
-    if (libjs!=='') {
-        if (toolname!=="index") {
-            if (gpl) 
-                alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'three.min.js', 'bootstrap.min.js', 'libbiswasm_wasm.js', libjs  ];
-            else
-                alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'three.min.js', 'bootstrap.min.js', 'libbiswasm_nongpl_wasm.js', libjs  ];
-        } else {
-            alljs=[ 'jquery.min.js', 'bootstrap.min.js', libjs  ];
-            bundlecss=[ "./bootstrap_dark_edited.css" ];
-        }
-    } else {
-        alljs = [ 'jquery.min.js', 'bootstrap.min.js' ];
-    }
 
-    let repljs=alljs;
-
-    /*  
-        Cache busting one day
-        let t= new Date().getTime()
+    return new Promise( (resolve) => {
         
-        for (let i=0;i<alljs.length;i++)
-        repljs.push(`${alljs[i]}?v=${t}`);*/
+        if (toolname==="bisjs") {
+            resolve();
+            return;
+        }
     
-    return gulp.src([ mainhtml ])
-        .pipe(htmlreplace({
-            'js': repljs,
-            'css': bundlecss,
-            'manifest' : '<link rel="manifest" href="./manifest.json">',
-        })).pipe(gulp.dest(outdir));
+        let mainhtml   = path.normalize(path.join(__dirname,'../web/'+toolname+'.html'));
+        let bundlecss  = commoncss;
+
+        console.log(getTime()+colors.green('\tBuilding HTML '+mainhtml));
+        let alljs;
+        if (libjs!=='') {
+            if (toolname!=="index") {
+                if (gpl) 
+                    alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'three.min.js', 'bootstrap.min.js', 'libbiswasm_wasm.js', libjs  ];
+                else
+                    alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'three.min.js', 'bootstrap.min.js', 'libbiswasm_nongpl_wasm.js', libjs  ];
+            } else {
+                alljs=[ 'jquery.min.js', 'bootstrap.min.js', libjs  ];
+                bundlecss=[ "./bootstrap_dark_edited.css" ];
+            }
+        } else {
+            alljs = [ 'jquery.min.js', 'bootstrap.min.js' ];
+        }
+        
+        let repljs=alljs;
+        
+        /*  
+            Cache busting one day
+            let t= new Date().getTime()
+            
+            for (let i=0;i<alljs.length;i++)
+            repljs.push(`${alljs[i]}?v=${t}`);*/
+        
+        return gulp.src([ mainhtml ])
+            .pipe(htmlreplace({
+                'js': repljs,
+                'css': bundlecss,
+                'manifest' : '<link rel="manifest" href="./manifest.json">',
+            })).pipe(gulp.dest(outdir)).on('end', () => {
+                resolve();
+            });
+    });
 };
 
 
@@ -209,13 +217,15 @@ var createCSSCommon=function(dependcss,out,outdir) {
         concatCss = require('gulp-concat-css');
 
     
-    var bundlecss  = out;
-
-    console.log(getTime()+colors.green('\tBuilding CSS', out,', from ',dependcss.join()));
-    gulp.src(dependcss)
-        .pipe(concatCss(bundlecss))
-        .pipe(replace('../../node_modules/jstree/dist/themes/default', 'images')) // jstree css fix
-        .pipe(gulp.dest(outdir));
+    let bundlecss  = out;
+    
+    return new Promise( (resolve) => {
+        console.log(getTime()+colors.green('\tBuilding CSS', out,', from ',dependcss.join()));
+        gulp.src(dependcss)
+            .pipe(concatCss(bundlecss))
+            .pipe(replace('../../node_modules/jstree/dist/themes/default', 'images')) // jstree css fix
+            .pipe(gulp.dest(outdir)).on('end', () => { resolve(); });
+    });
 };
 
 
@@ -362,7 +372,6 @@ var inno=function(tools, version, indir , distdir ) {
     var i_date    = getDate();
 
 
-    console.log('i_indir=',i_indir);
     
     var i_tools = "";
     var keys=Object.keys(obj);
@@ -514,8 +523,8 @@ var doxygen=function(indir,conffile,done) {
 var createnpmpackage=function(indir,version,in_outdir,done) {
 
     const rimraf= require('rimraf'),
-          rename = require('gulp-rename');
-
+          rename = require('gulp-rename'),
+          es = require('event-stream');
     
     // Step 1 copy file
     // make directories
@@ -532,71 +541,70 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
     
     let distDir=path.join(odir,'dist');
     fs.mkdirSync(distDir);
-    
-    gulp.src([ `${indir}/build/web/bislib.js`,
-               `${indir}/build/web/libbiswasm*wasm.js`,
-               `${indir}/build/web/webcomponents-lite.js`,
-               `${indir}/build/web/jquery.min.js`,
-               `${indir}/build/web/three.min.js`,
-               `${indir}/build/web/bootstrap.min.js`,
+
+    es.concat( 
+        gulp.src([ `${indir}/build/web/bislib.js`,
+                   `${indir}/build/web/libbiswasm*wasm.js`,
+                   `${indir}/build/web/webcomponents-lite.js`,
+                   `${indir}/build/web/jquery.min.js`,
+                   `${indir}/build/web/three.min.js`,
+                   `${indir}/build/web/bootstrap.min.js`,
                `${indir}/build/web/bislib.css`,
-             ]).pipe(gulp.dest(distDir));
-
-    gulp.src([ 'node_modules/bootstrap/dist/css/*']).pipe(gulp.dest(distDir+'/css/'));
-    gulp.src([ 'node_modules/bootstrap/dist/fonts/*']).pipe(gulp.dest(distDir+'/fonts/'));
-    gulp.src([ 'lib/fonts/*']).pipe(gulp.dest(distDir+'/fonts/'));
+                 ]).pipe(gulp.dest(distDir)),
+        gulp.src([ 'node_modules/bootstrap/dist/css/*']).pipe(gulp.dest(distDir+'/css/')),
+        gulp.src([ 'node_modules/bootstrap/dist/fonts/*']).pipe(gulp.dest(distDir+'/fonts/')),
+        gulp.src([ 'lib/fonts/*']).pipe(gulp.dest(distDir+'/fonts/')),
     
-    gulp.src([`${indir}/config/biswebbrowser_readme.md`])
-        .pipe(rename('README.md'))
-              .pipe(gulp.dest(odir));
-
-
-    console.log('.... Files copied in',distDir);
-    
-    // Step 2 create package.json
-    let obj = { 
-        "private": true,
-        "name": "biswebbrowser",
-        "version": version,
-        "description": "A web-based implementation of BioImage Suite in Javascript and WebAssembly",
-        "homepage": "www.bioimagesuite.org",
-        "main" : "dist/bioimagesuiteweb.js",
-        "author": "Xenios Papademetris",
-        "license": "GPL V2 (most source code is Apache V2)",
-        "repository": {
-            "type" : "git",
-            "url" : "https://github.com/bioimagesuiteweb/bisweb",
+        gulp.src([`${indir}/config/biswebbrowser_readme.md`])
+            .pipe(rename('README.md'))
+            .pipe(gulp.dest(odir))
+    ).on('end', () => { 
+        console.log(getTime()+' .... Files copied in',distDir);
+        
+        // Step 2 create package.json
+        let obj = { 
+            "private": true,
+            "name": "biswebbrowser",
+            "version": version,
+            "description": "A web-based implementation of BioImage Suite in Javascript and WebAssembly",
+            "homepage": "www.bioimagesuite.org",
+            "main" : "dist/bioimagesuiteweb.js",
+            "author": "Xenios Papademetris",
+            "license": "GPL V2 (most source code is Apache V2)",
+            "repository": {
+                "type" : "git",
+                "url" : "https://github.com/bioimagesuiteweb/bisweb",
+            }
+        };
+        
+        let txt=JSON.stringify(obj,null,4)+"\n";
+        let output=path.resolve(path.join(odir,"package.json"));
+        console.log('++++ Output = ',output,'\n'+txt+'++++');
+        
+        try {
+            fs.writeFileSync(output,txt);
+        } catch(e) {
+            console.log(e);
         }
-    };
-    
-    let txt=JSON.stringify(obj,null,4)+"\n";
-    let output=path.resolve(path.join(odir,"package.json"));
-    console.log('++++ Output = ',output,'\n'+txt+'++++');
-
-    try {
-        fs.writeFileSync(output,txt);
-    } catch(e) {
-        console.log(e);
-    }
-    console.log('++++');
-    console.log('++++ Package.json file created in',output);
-    console.log('++++');
-
-    // step 3
-    // Master file
-    let txt2=`window.biswebpack=require('./libbiswasm_wasm.js');\nmodule.exports=require('./bislib.js')();\n`;
-
-    console.log('++++ Output (2) = \n'+txt2+'++++');
-    let output2=path.resolve(path.join(odir,"dist/bioimagesuiteweb.js"));
-    
-    fs.writeFileSync(output2,txt2);
-    console.log('++++');
-    console.log('++++ main.js file created in',output2);
-    console.log('++++');
-                     
-    // Step 4 run npm pack
-    executeCommand('npm pack',odir,done);
-    
+        console.log('++++');
+        console.log('++++ Package.json file created in',output);
+        console.log('++++');
+        
+        // step 3
+        // Master file
+        let txt2=`window.biswebpack=require('./libbiswasm_wasm.js');\nmodule.exports=require('./bislib.js')();\n`;
+        
+        console.log('++++ Output (2) = \n'+txt2+'++++');
+        let output2=path.resolve(path.join(odir,"dist/bioimagesuiteweb.js"));
+        
+        fs.writeFileSync(output2,txt2);
+        console.log('++++');
+        console.log('++++ main.js file created in',output2);
+        console.log('++++');
+        
+        // Step 4 run npm pack
+        executeCommand('npm pack',odir,done);
+    });
     
 };
 

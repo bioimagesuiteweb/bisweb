@@ -25,7 +25,7 @@ const $=require('jquery');
 const bisdate=require('bisdate.js').date;
 const BisWebImage=require('bisweb_image');
 const userPreferences = require('bisweb_userpreferences.js');
-import testmodule from '../../web/images/testdata/displaytests.json';
+import testmodule from '../../test/webtestdata/displaytests.json';
 let displaytestlist=null;
 
 
@@ -43,7 +43,7 @@ let globalParams = {
     scope : webutil.getScope()
 };
 
-
+// TODO: Fix Paths for web-based test file distribution
 
 let globalImage=new BisWebImage();
 globalImage.createImage({ "dimensions" : [ 2,2,2] ,

@@ -29,8 +29,12 @@ const gulp = require('gulp'),
       fs = require('fs'),
       path=require('path'),
       colors=require('colors/safe'),
-      bis_gutil=require('./config/bis_gulputils');
+      bis_gutil=require('./config/bis_gulputils'),
+      rimraf=require('rimraf'),
+      es = require('event-stream');
 
+
+const getTime=bis_gutil.getTime;
 // ------------------------------------ Utility Functions ---------------------------------------------
 
 
@@ -116,7 +120,7 @@ options.platform=plat;
 
 
 if (options.verbose) {
-    console.log(bis_gutil.getTime()+' Full options ='+JSON.stringify(options,null,2)+'.\n');
+    console.log(getTime()+' Full options ='+JSON.stringify(options,null,2)+'.\n');
 }
 
 // -----------------------------------------------------------------------------------------
@@ -190,7 +194,7 @@ for (let i=0;i<keys2.length;i++) {
 }
 
 let keys=Object.keys(internal.setup.tools);
-console.log(bis_gutil.getTime()+colors.cyan(' Config versiontag='+bis_gutil.getVersionTag(internal.setup.version)+' tools='+keys));
+console.log(getTime()+colors.cyan(' Config versiontag='+bis_gutil.getVersionTag(internal.setup.version)+' tools='+keys));
 
 if (options.inpfilename === "" || options.inpfilename === "all") {
     let obj=internal.setup.tools;
@@ -231,7 +235,7 @@ if (options.webworker) {
 // -------------------------------
 
 if (options.verbose) {
-    console.log(bis_gutil.getTime()+' Scripts to process are '+colors.cyan(options.inpfilename));
+    console.log(getTime()+' Scripts to process are '+colors.cyan(options.inpfilename));
 }
 
 // ------------------------------- ------------------------------- -------------------------------
@@ -290,7 +294,7 @@ gulp.task('eslint',  () => {
 
     
     const eslint = require('gulp-eslint');
-    console.log(colors.yellow(bis_gutil.getTime(),"Scannng scripts ",internal.lintscripts.join(',')));
+    console.log(colors.yellow(getTime(),"Scannng scripts ",internal.lintscripts.join(',')));
     return gulp.src(internal.lintscripts)
     // eslint() attaches the lint output to the "eslint" property
     // of the file object so it can be used by other modules.
@@ -337,19 +341,45 @@ gulp.task('webpack', function (done) {
                              options.outdir,
                              options.verbose,
                              internal.setwebpackwatch).then( () => {
-                                 console.log(bis_gutil.getTime()+' webpack done num jobs=',internal.webpackjobs.length);
+                                 console.log(getTime()+' webpack done num jobs=',internal.webpackjobs.length);
                                  done();
                              });
     });
 });
 
 
+gulp.task('testdata', ((done) => {
+
+    const gulpzip = require('gulp-zip'),
+          del = require('del');
+
+
+    let outdir=path.resolve(path.join(options.distdir,'test'));
+    let outfile=path.resolve(path.join(options.distdir,'testdata.zip'));
+    rimraf.sync(outdir);
+    rimraf.sync(outfile);
+
+    console.log(getTime()+' creating zip file '+outfile);
+    es.concat(
+        gulp.src(['./test/testdata/**/*']).pipe(gulp.dest(outdir+'/testdata')),
+        gulp.src(['./test/webtestdata/**/*']).pipe(gulp.dest(outdir+'/webtestdata')),
+        gulp.src(['./test/module_tests.json']).pipe(gulp.dest(outdir)),
+    ).on('end', () => {
+        console.log(getTime()+' files copied to '+outdir);
+        gulp.src([ outdir+'/**']).pipe(gulpzip(outfile)).pipe(gulp.dest('.')).on('end', () => {
+            outfile=path.resolve(outfile);
+            let stats = fs.statSync(outfile);
+            let bytes = stats["size"];
+            let mbytes=Math.round(bytes/(1024*1024)*100)*0.01;
+            console.log(getTime()+' ____ zip file created in '+outfile+' (size='+mbytes+' MB )');
+            rimraf.sync(outdir);
+            done();
+        });
+    });
+}));
+
 gulp.task('buildtest', ((done) => {
     
-    let testoutdir=path.resolve(path.join(options.outdir,'test'));
-    console.log('Test output dir=',testoutdir);
-    gulp.src(['./test/testdata/**/*']).pipe(gulp.dest(testoutdir+'/testdata'));
-    gulp.src('./test/module_tests.json').pipe(gulp.dest(testoutdir));
     bis_gutil.createHTML('biswebtest',options.outdir,'bislib.js',internal.biscss);
     let maincss    = './web/biswebtest.css';
     bis_gutil.createCSSCommon([maincss],'biswebtest.css',options.outdir);
@@ -358,6 +388,7 @@ gulp.task('buildtest', ((done) => {
     bis_gutil.createHTML('biswebdisplaytest2',options.outdir,'bislib.js',internal.biscss);
     let maincss2    = './web/biswebdisplaytest.css';
     bis_gutil.createCSSCommon([maincss2],'biswebdisplaytest.css',options.outdir);
+    
     done();
 
 }));
@@ -372,31 +403,35 @@ gulp.task('setwebpackwatch', (done) => {
 
 gulp.task('webserver', ()=> {
     const webserver = require('gulp-webserver');
-    console.log(colors.red(bis_gutil.getTime()+' server options=',JSON.stringify(internal.serveroptions)));
+    console.log(colors.red(getTime()+' server options=',JSON.stringify(internal.serveroptions)));
     return gulp.src('.').pipe(webserver(internal.serveroptions));
 });
 
 
-gulp.task('commonfiles', () => { 
+gulp.task('commonfiles', (done) => { 
     
-    console.log(bis_gutil.getTime()+' Copying css,fonts,images etc. .');
-    gulp.src([ 'node_modules/bootstrap/dist/css/*']).pipe(gulp.dest(options.outdir+'css/'));
-    gulp.src([ 'node_modules/bootstrap/dist/fonts/*']).pipe(gulp.dest(options.outdir+'fonts/'));
-    gulp.src([ 'web/images/**/*']).pipe(gulp.dest(options.outdir+'/images/'));
-    gulp.src([ 'lib/fonts/*']).pipe(gulp.dest(options.outdir+'/fonts/'));
-    gulp.src([ 'web/manifest.json']).pipe(gulp.dest(options.outdir));
-    gulp.src('./web/bispreload.js').pipe(gulp.dest(options.outdir));
-    gulp.src('./web/biselectron.js').pipe(gulp.dest(options.outdir));
-    gulp.src('./web/package.json').pipe(gulp.dest(options.outdir));
-    gulp.src('./lib/css/bootstrap_dark_edited.css').pipe(gulp.dest(options.outdir));
-    gulp.src('./lib/js/webcomponents-lite.js').pipe(gulp.dest(options.outdir));
-    gulp.src('./node_modules/jquery/dist/jquery.min.js').pipe(gulp.dest(options.outdir));
-    gulp.src('./node_modules/three/build/three.min.js').pipe(gulp.dest(options.outdir));
-    gulp.src('./web/aws/biswebaws.html').pipe(gulp.dest(options.outdir));
-    gulp.src('./web/aws/awsparameters.js').pipe(gulp.dest(options.outdir));
-    gulp.src('./node_modules/bootstrap/dist/js/bootstrap.min.js').pipe(gulp.dest(options.outdir));
-    bis_gutil.createHTML('console',options.outdir,'',internal.biscss);
-    return gulp.src([ 'web/manifest.json']).pipe(gulp.dest(options.outdir));
+    console.log(getTime()+' Copying css,fonts,images etc. .');
+    es.concat(
+        gulp.src([ 'node_modules/bootstrap/dist/css/*']).pipe(gulp.dest(options.outdir+'css/')),
+        gulp.src([ 'node_modules/bootstrap/dist/fonts/*']).pipe(gulp.dest(options.outdir+'fonts/')),
+        gulp.src([ 'web/images/**/*']).pipe(gulp.dest(options.outdir+'/images/')),
+        gulp.src([ 'lib/fonts/*']).pipe(gulp.dest(options.outdir+'/fonts/')),
+        gulp.src([ 'web/manifest.json']).pipe(gulp.dest(options.outdir)),
+        gulp.src('./web/bispreload.js').pipe(gulp.dest(options.outdir)),
+        gulp.src('./web/biselectron.js').pipe(gulp.dest(options.outdir)),
+        gulp.src('./web/package.json').pipe(gulp.dest(options.outdir)),
+        gulp.src('./lib/css/bootstrap_dark_edited.css').pipe(gulp.dest(options.outdir)),
+        gulp.src('./lib/js/webcomponents-lite.js').pipe(gulp.dest(options.outdir)),
+        gulp.src('./node_modules/jquery/dist/jquery.min.js').pipe(gulp.dest(options.outdir)),
+        gulp.src('./node_modules/three/build/three.min.js').pipe(gulp.dest(options.outdir)),
+        gulp.src('./web/aws/biswebaws.html').pipe(gulp.dest(options.outdir)),
+        gulp.src('./web/aws/awsparameters.js').pipe(gulp.dest(options.outdir)),
+        gulp.src('./node_modules/bootstrap/dist/js/bootstrap.min.js').pipe(gulp.dest(options.outdir)),
+        gulp.src([ 'web/manifest.json']).pipe(gulp.dest(options.outdir))
+    ).on('end', () => {
+        bis_gutil.createHTML('console',options.outdir,'',internal.biscss);
+        done();
+    });
 });
 
 gulp.task('createserverscripts', async function () { 
@@ -448,10 +483,13 @@ gulp.task('packageserverscripts', (done)=> {
 gulp.task('tools', ( (cb) => {
     
     internal.toolarray = options.inpfilename.split(",");
-    console.log(bis_gutil.getTime()+colors.green(' Building tools ['+internal.toolarray+']'));
+    console.log(getTime()+colors.green(' Building tools ['+internal.toolarray+']'));
 
-    console.log(bis_gutil.getTime()+colors.green(' Building tool     : common css'));
-    bis_gutil.createCSSCommon(internal.dependcss,internal.biscss,options.outdir);
+    console.log(getTime()+colors.green(' Building tool     : common css'));
+
+    let promises=[];
+    
+    promises.push(bis_gutil.createCSSCommon(internal.dependcss,internal.biscss,options.outdir));
     
     for (let index=0;index<internal.toolarray.length;index++) {
         let toolname=internal.toolarray[index];
@@ -460,25 +498,27 @@ gulp.task('tools', ( (cb) => {
             if (internal.setup.tools[toolname].nogpl)
                 gpl=false;
         }
-        console.log(bis_gutil.getTime()+colors.green(' Building tool '+(index+1)+'/'+internal.toolarray.length+' : '+toolname));
+        console.log(getTime()+colors.green(' Building tool '+(index+1)+'/'+internal.toolarray.length+' : '+toolname));
         internal.jscounter+=1;
 
         let jsname =internal.bislib;
         if (index===0)
             jsname=internal.indexlib;
-        bis_gutil.createHTML(toolname,options.outdir,jsname,internal.biscss,gpl);
+        promises.push(bis_gutil.createHTML(toolname,options.outdir,jsname,internal.biscss,gpl));
 
         let customcss='./web/'+toolname+'.css';
         if (fs.existsSync(customcss))
-            bis_gutil.createCSSCommon([customcss],toolname+'.css',options.outdir);
+            promises.push(bis_gutil.createCSSCommon([customcss],toolname+'.css',options.outdir));
 
         let customjs='web/'+toolname+'.js';
         if (fs.existsSync(customjs)) {
-            console.log(bis_gutil.getTime()+'\tCopying  JS '+customjs);
-            gulp.src([ customjs ]).pipe(gulp.dest(options.outdir));
+            console.log(getTime()+'\tCopying  JS '+customjs);
+            promises.push( new Promise((resolve) => {
+                gulp.src([ customjs ]).pipe(gulp.dest(options.outdir)).on('end', () => { resolve();})
+            }));
         }
     }
-    cb();
+    Promise.all(promises).then( () => { cb()});
 }));
 
 gulp.task('zip', ((done) => {
@@ -513,7 +553,7 @@ gulp.task('clean', () => {
                options.distdir+"/*",
               ];
     
-    console.log(bis_gutil.getTime()+' Cleaning files ***** .');
+    console.log(getTime()+' Cleaning files ***** .');
     return del(arr);
 });
 
