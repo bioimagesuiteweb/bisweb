@@ -129,7 +129,12 @@ let loadParse = function (args, toolname,basedirectory='') {
         }
         program.parse(outargs);
 
-        if (args.length < 3) {
+        let objinputs=mod.getDescription().inputs;
+        let max=3;
+        if (objinputs.length<1)
+            max=2;
+        
+        if (args.length < max ) {
             console.log("---- Not enough arguments passed to run this tool");
             program.help();
             reject("");

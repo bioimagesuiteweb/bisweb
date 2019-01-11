@@ -24,9 +24,7 @@ require('bisweb_userpreferences.js').setImageOrientationOnLoad('None');
 
 
 const assert = require("assert");
-const path=require('path');
 const bisserverutil=require('bis_fileservertestutils');
-const util=require('bis_util');
 const colors=require('colors/safe');
 
 let client=null;
