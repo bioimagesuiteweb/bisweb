@@ -24,7 +24,6 @@ const moduleImports = {
     'bisserver' : require('./fileservermodule.js')
 };
 
-console.log('hello from node module index');
 let moduleNames=universalmodules.createModuleNames(moduleImports);
 
 let getModule = function(toolname) {
@@ -42,7 +41,6 @@ let getModuleNames = function() {
     return b.concat(a);
 };
 
-console.log('module names', getModuleNames());
 module.exports = {
     getModule :      getModule,
     getModuleNames : getModuleNames,

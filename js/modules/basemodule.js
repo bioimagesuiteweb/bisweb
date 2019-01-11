@@ -230,7 +230,7 @@ class BaseModule {
 
         param.type = param.type || "string";
 
-        if (param.default === undefined) {
+        if (param.default === undefined && param.type !== 'string') {
             console.log('Parameter', param.name, 'does not have a default value');
             return false;
         }
@@ -281,7 +281,7 @@ class BaseModule {
                 vals[param.varname] === undefined ||
                 !this.typeCheckParam(param, vals[param.varname])
                ) {
-                console.log('Error: parameter with name=', param.varname, ', and  value=', vals[param.varname], ' does not match expected.');
+                console.log('Error: parameter with name=', param.varname, 'and  value=', vals[param.varname], ' does not match expected.');
                 return false;
             }
 

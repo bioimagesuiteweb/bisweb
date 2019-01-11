@@ -772,12 +772,15 @@ class BisFileServerClient extends BisBaseServerClient {
             };
             
             let serverEvent=bisasyncutil.addServerEvent(res,rej,'runModule');
-            this.sendCommand({ 'command' : 'runModule',
-                               'operation' : 'Running a module',
-                               'indir' : indir,
-                               'debug' : debug,
-                               'id' : serverEvent.id,
-                               'timeout' : 300000}); 
+            this.sendCommand({
+                'command': 'runModule',
+                'modulename': 'dicomconversion',
+                'operation': 'Running a module',
+                'indir': indir,
+                'debug': debug,
+                'id': serverEvent.id,
+                'timeout': 300000
+            });
         });
     }
 
