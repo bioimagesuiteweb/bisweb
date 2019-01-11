@@ -335,8 +335,6 @@ IF (BIS_A_EMSCRIPTEN)
   add_custom_target(npmreadme ALL DEPENDS ${NPMREADME})
   install (FILES ${NPMREADME}  DESTINATION bisweb)
 
-  
-  SET(TFLAG "")
   MESSAGE("Installing tests")
   SET(TFLAG "--testing")
   SET (OUTSCRIPT ${PROJECT_SOURCE_DIR}/../js/bin/bisweb-test.js)
