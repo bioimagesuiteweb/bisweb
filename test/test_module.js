@@ -31,16 +31,14 @@ const assert = require("assert"),
       util =require('bis_util');
 
 const modules = require('moduleindex.js');
-
 const githuburl='https://bioimagesuiteweb.github.io/test/';
 const githuburlfile='https://bioimagesuiteweb.github.io/test/module_tests.json';
+const getTime=util.getTime;
 
 // ---------------------------------------------------------------------------------
 const help = function() {
     console.log('\nThis program runs the bisweb module tests');
 };
-
-
 
 program.version('1.0.0')
     .option('--input <s>','filename of the tests to run')
@@ -54,14 +52,10 @@ program.version('1.0.0')
     }).parse(process.argv);
 
 
-const getTime=util.getTime;
-
+// -----------------------------------------------------------
+// Process input parameters
+// -----------------------------------------------------------
 program.input=program.input || '';
-
-// -----------------------------------------------------------
-// test name
-// -----------------------------------------------------------
-
 let testnamelist = null;
 let testname = program.testname || null;
 if (testname) {
@@ -71,12 +65,9 @@ if (testname) {
     }
 }
 
+// -----------------------------------------------------------
 
-// Global Variables
-// ---------------------
-let begin_test =0,end_test=0;
-
-let get_testfilename=function(inp) {
+let get_pathspec=function(inp) {
 
     let testfilename='';
     let basedir='';
@@ -93,6 +84,7 @@ let get_testfilename=function(inp) {
     };
 };
 
+// -----------------------------------------------------------
 
 let get_testlist=function(testfilename)  {
 
@@ -125,6 +117,8 @@ let get_testlist=function(testfilename)  {
         }
     });
 };
+
+// -----------------------------------------------------------
 
 let getTestScript=function() { 
 
@@ -169,10 +163,12 @@ let fixBounds=function(first_test,last_test,testlist) {
 
  
     return {
-        begin : first_test,
+        begin : begin_test,
         end   : end_test,
     };
 };
+
+// -----------------------------------------------------------
 
 let list_modules_and_exit=function(testlist) {   
     
@@ -196,10 +192,12 @@ let list_modules_and_exit=function(testlist) {
         }
     }
     process.exit(0);
-}
+};
 
+// -----------------------------------------------------------
 // See this for an examplanation
 // https://stackoverflow.com/questions/22465431/how-can-i-dynamically-generate-test-cases-in-javascript-node
+// -----------------------------------------------------------
 describe(getTime()+` Beginning module tests `,function() {
 
     this.timeout(50000);
@@ -208,8 +206,8 @@ describe(getTime()+` Beginning module tests `,function() {
         
         let testscript=getTestScript();
         console.log(getTime()+'\t Testscript=',testscript, ' ',__dirname);
-        let params=get_testfilename(program.input);
-        return get_testlist(params.testfilename).then( (obj) => {
+        let pathspec=get_pathspec(program.input);
+        return get_testlist(pathspec.testfilename).then( (obj) => {
             let testlist=obj;
             let bounds=fixBounds(program.first,program.last,testlist);
 
@@ -234,7 +232,7 @@ describe(getTime()+` Beginning module tests `,function() {
                             let command=testlist[i].command+" "+testlist[i].test;
                             
                             let expected_result=testlist[i].result;
-                            command=command+' --test_base_directory '+params.basedirectory;
+                            command=command+' --test_base_directory '+pathspec.basedirectory;
                             console.log(colors.green('\n'+getTime()+' -------------------- test',i,'----------------------------------------------\n'));
                             bisnodecmd.executeCommand(testscript+' '+command,__dirname, ((completed,exitcode) => {
                                 let success= (parseInt(exitcode) ===0);
@@ -260,23 +258,8 @@ describe(getTime()+` Beginning module tests `,function() {
         });
     });
 
-    /*    it ('test ',function(done) {
-        this.timeout(500000);
-        let i=bounds.begin-1;
-        let fn=() => {
-            i=i+1;
-            if (i<bounds.end) {
-                run_test(i,fn);
-            } else {
-                done();
-            }
-        };
-        fn();
-        });*/
-    
-
-    it(getTime()+'\t This is a required placeholder to allow before() to work', function () {
-    });
+    // Dummy Task
+    it(getTime()+'\t This is a required placeholder to allow before() to work', function () { });
 
 
 });

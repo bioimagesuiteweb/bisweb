@@ -503,7 +503,6 @@ var readdatafromurl_node = function (url, binary,loadedcallback, errorcallback) 
         let dt=new Uint8Array(body);
         
         let comp = iscompressed(url);
-        console.log('Dt=',dt.length,dt.constructor.name, 'comp=',comp);
         if (comp) 
             dt = pako.ungzip(dt);
             
