@@ -490,25 +490,34 @@ let initializeTFModule=function(forcebrowser=false) {
 
     let environment=bisgenericio.getmode();
 
+    if (forcebrowser && environment==='electron') {
+        environment='browser';
+    }
+    
     return new Promise( (resolve,reject) => {
         
         if (tfjsModule!==null) {
             resolve('Using preloaded module: '+tfjsModule.getMode());
             return;
         }
-
+        
         if (environment === 'electron') {
-            if (window.BISELECTRON.tf !== null) {
-                let md=window.BISELECTRON.tfmodulename || 'electron';
-                tfjsModule=new TFWrapper(window.BISELECTRON.tf,md);
+
+            let mode=2;
+            if (forcebrowser)
+                mode=0;
+            let obj=window.BISELECTRON.loadtf(mode);
+            if (obj.tf !== null) {
+                let md=obj.name || 'electron';
+                tfjsModule=new TFWrapper(obj.tf,md);
                 resolve(md);
                 return;
             } else {
-                forcebrowser=true;
+                environment='browser';
             }
         }
         
-        if (environment === 'browser'  || (environment==='electron' && forcebrowser===true)) {
+        if (environment === 'browser' ) {
             
             if (window.tf) {
                 tfjsModule=new TFWrapper(window.tf,'loaded from script');
