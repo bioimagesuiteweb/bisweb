@@ -102,6 +102,12 @@ if (test_type==="registration") {
 
 if (test_type==="tfjs") {
     test_type="image";
+    for (let i=0;i<args.length;i++) {
+        if (args[i]==='--modelname') {
+            // Add basedirectory to modelname as it is really a file path
+            args[i+1]=basedirectory+args[i+1];
+        }
+    }
 }
 
 
