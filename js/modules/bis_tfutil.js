@@ -496,6 +496,17 @@ let initializeTFModule=function(forcebrowser=false) {
             resolve('Using preloaded module: '+tfjsModule.getMode());
             return;
         }
+
+        if (environment === 'electron') {
+            if (window.BISELECTRON.tf !== null) {
+                let md=window.BISELECTRON.tfmodulename || 'electron';
+                tfjsModule=new TFWrapper(window.BISELECTRON.tf,md);
+                resolve(md);
+                return;
+            } else {
+                forcebrowser=true;
+            }
+        }
         
         if (environment === 'browser'  || (environment==='electron' && forcebrowser===true)) {
             
@@ -518,17 +529,10 @@ let initializeTFModule=function(forcebrowser=false) {
             });
             
             document.head.appendChild(apiTag);
-            
             return;
-        } else if (environment === 'electron') {
-            if (window.BISELECTRON.tf !== null) {
-                let md=window.BISELECTRON.tfmodulename || 'electron';
-                tfjsModule=new TFWrapper(window.BISELECTRON.tf,md);
-                resolve(md);
-            } else {
-                reject('No TF Module Available');
-            }
-        } else if (environment === 'node') {
+        }
+
+        if (environment === 'node') {
             try {
                 let tf=require("@tensorflow/tfjs");
                 require('@tensorflow/tfjs-node');

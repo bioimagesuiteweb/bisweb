@@ -68,5 +68,5 @@ try {
         }
     }
 } catch(e) {
-    console.log('---- no tensorflow.js modules available');
+    console.log('---- no tensorflow-node.js modules available');
 }

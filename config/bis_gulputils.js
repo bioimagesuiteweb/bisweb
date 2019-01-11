@@ -33,7 +33,24 @@ let htmlreplace=null,
 
 
 
+var getFileSize=function(outfile) {
 
+    try {
+        let stats = fs.statSync(outfile);
+        
+        let mb=Math.round(10.0*stats.size/(1024*1024))*0.1;
+        let s=`${mb}`;
+        let ind=s.lastIndexOf(".");
+        
+        //        console.log('Raw file size of ',outfile,'=',stats.size,mb,s,'ind =',ind);
+        if (ind>=0)
+            return s.substr(0,ind+2);
+        return s;
+    } catch(e) {
+        console.log('Error=',e);
+        return -1;
+    }
+};
 
 var getTime=function(nobracket=0) {
     //    http://stackoverflow.com/questions/7357734/how-do-i-get-the-time-of-day-in-javascript-node-js
@@ -347,11 +364,9 @@ var createZIPFile = function(baseoutput,outdir,version,distdir,done) {
              ],
              {base:outdir}).pipe(gulpzip(outfile)).pipe(gulp.dest('.')).on('end', () => {
                  outfile=path.resolve(outfile);
-                 let stats = fs.statSync(outfile);
-                 let bytes = stats["size"];
-                 let mbytes=Math.round(bytes/(1024*1024)*100)*0.01;
-                 
+                 let mbytes=getFileSize(outfile);
                  console.log(getTime()+' ____ zip file created in '+outfile+' (size='+mbytes+' MB )');
+                 
                  done();
              });
     
@@ -400,15 +415,13 @@ var inno=function(tools, version, indir , distdir ) {
 // -----------------------------------------------------------------------------------------
 var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",outdir="build",version=1.0,platform="linux",distdir="builddist",done=0) {
 
-
+    const gulpzip = require('gulp-zip');
+    
     let cmdlist = ['pwd'];
-    let zipopts=' -ry';
+    let ziplist = [];
     let inwin32=false;
-    //let separator=";";
     if (os.platform()==='win32') {
         inwin32=true;
-        zipopts='-r';
-        //  separator="&";
     }
 
     console.log('In win 32=',inwin32,outdir,path.resolve(outdir));
@@ -417,8 +430,16 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
     console.log(colors.cyan(getTime()+' (electron '+version+') for: '+platform));
     let idir=indir+"/build/web";
 
-    for (let ia=0;ia<platform.length;ia++) {
+    if (!inwin32) {
+        let ind=platform.indexOf('win32');
+        if (ind>=0) {
+            platform.splice(ind,1);
+            console.log(colors.red(getTime()+' Can not packge for win32 on '+os.platform()));
+        }
+    }
 
+    
+    for (let ia=0;ia<platform.length;ia++) {
         var n=platform[ia];
         var m=n,suffix=".zip";
         if (m==="darwin") {
@@ -426,6 +447,12 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
             suffix=".app.zip";
         }
 
+        let absdistdir=path.normalize(path.resolve(distdir));
+        let zipindir='BioImageSuiteWeb-'+n+'-x64';
+        let appdir=path.join(absdistdir,zipindir);
+
+        cmdlist.push(`rimraf ${appdir}`);
+        
         if (dopackage>=2) {
             cmdlist.push(`rimraf ${path.resolve(idir,'node_modules')}`);
             if (dopackage===3) {
@@ -460,36 +487,41 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
             errorf('error '+e);
         }
 
-        let absdistdir=path.normalize(path.resolve(distdir));
-        let zipindir='BioImageSuiteWeb-'+n+'-x64';
+        let newappdir;
+        if (n==='darwin')
+            newappdir=appdir+'/BioImageSuiteWeb.app/Contents/Resources/app'
+        else
+            newappdir=appdir+'/resources/app'
 
-        let appdir=path.join(absdistdir,zipindir);
 
         // Cleanup useless files before we electron package
         let todelete =  [
-            path.resolve(path.join(appdir,'resources/app/node_modules/@tensorflow/tfjs-node/deps')),
-            path.resolve(path.join(appdir,'resources/app/*.map')),
-            path.resolve(path.join(appdir,'resources/app/server.zip')),
-            path.resolve(path.join(appdir,'resources/app/mni2tal')),
-            path.resolve(path.join(appdir,'resources/app/connviewer')),
-            path.resolve(path.join(appdir,'resources/app/package-lock.json')),
-            path.resolve(path.join(appdir,'resources/app/images/bisweb-*.png'))
-        ].join(' ');
+            path.resolve(path.join(newappdir,'node_modules/@tensorflow/tfjs-node/deps')),
+            path.resolve(path.join(newappdir,'*.map')),
+            path.resolve(path.join(newappdir,'server.zip')),
+            path.resolve(path.join(newappdir,'mni2tal')),
+            path.resolve(path.join(newappdir,'connviewer')),
+            path.resolve(path.join(newappdir,'package-lock.json')),
+            path.resolve(path.join(newappdir,'images/bisweb-*.png'))
+        ];
 
-        console.log('To delete=',todelete);
-
-        let cleancmd='rimraf '+todelete;
-        
-        
+        console.log('To Delete = ',JSON.stringify(todelete,null,2));
+        let cleancmd='rimraf '+todelete.join(' ');
         
         if (n==="win32") {
             let ifile=path.resolve(indir,'web/images/bioimagesuite.png.ico');
-            cmdlist.push(cmdline+` --platform=win32 --icon ${ifile}`);
+            if (inwin32)
+                cmdlist.push(cmdline+` --platform=win32 --icon ${ifile}`);
+            else
+                cmdlist.push(cmdline+` --platform=win32`);
             if (dopackage===3)
                 cmdlist.push(cleancmd);
             if (dopackage>0)  {
-                if (os.platform()!=='win32') {
-                    cmdlist.push('zip '+zipopts+' '+zipfile+' '+zipindir);
+                if (!inwin32) {
+                    ziplist.push( {
+                        zipfile : zipfile,
+                        zipdir  : zipindir
+                    });
                 } else {
                     inno(tools,version,indir,distdir);
                     let innofile=path.resolve(distdir,'biselectron.iss');
@@ -504,12 +536,48 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
             if (dopackage===3)
                 cmdlist.push(cleancmd);
             if (dopackage>0)  {
-                cmdlist.push(`zip `+zipopts+' '+path.basename(zipfile)+' '+path.basename(zipindir));
+                ziplist.push( {
+                    zipfile : zipfile,
+                    zipdir  : zipindir
+                });
             }
         }
     }
-    console.log(getTime()+colors.green('About to execute in : win32=',inwin32,'\n path=', path.resolve(outdir),'\n\t', JSON.stringify(cmdlist,null,4)));
-    executeCommandList(cmdlist,outdir,done);
+    //console.log(getTime()+colors.green('About to execute in : win32=',inwin32,'\n path=', path.resolve(outdir),'\n\t', JSON.stringify(cmdlist,null,4)));
+
+    let counter=0;
+    let dozip=function() {
+
+        //console.log('Ziplist=',ziplist);
+        let elem=ziplist[counter];
+        
+        //console.log('counter=',counter,'elem=',elem);
+
+        let outdir=path.resolve(path.join(distdir,elem.zipdir));
+        let outfile=elem.zipfile;
+
+        console.log(getTime()+' creating zip file: Outdir=',outdir,'outfile = ',outfile,'distdir=',distdir);
+        
+        gulp.src([outdir+'/**/*']).pipe(gulpzip(path.basename(outfile))).pipe(gulp.dest(distdir)).on('end', () => {
+            outfile=path.resolve(outfile);
+
+            let sz=getFileSize(outfile);
+            if (sz>0)
+                console.log(colors.green(getTime()+' ____ zip file created in '+outfile+' (size='+sz+' MB )'));
+            else
+                console.log(colors.red(getTime()+' ____ failed to create zip file '+outfile));
+            counter=counter+1;
+            if (counter>=ziplist.length)
+                done();
+            else
+                dozip();
+        });
+    };
+
+    if (cmdlist.length>1) 
+        executeCommandList(cmdlist,outdir,dozip);
+    else
+        done();
 };
 
 
@@ -627,6 +695,7 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
 
 module.exports = {
     getTime: getTime,
+    getFileSize: getFileSize,
     getData: getDate,
     getVersionTag : getVersionTag,
     executeCommand : executeCommand,

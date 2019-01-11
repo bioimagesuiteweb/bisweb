@@ -35,6 +35,7 @@ const gulp = require('gulp'),
 
 
 const getTime=bis_gutil.getTime;
+const getFileSize=bis_gutil.getFileSize;
 // ------------------------------------ Utility Functions ---------------------------------------------
 
 
@@ -380,32 +381,31 @@ gulp.task('testdata', ((done) => {
         gulp.src(['./test/module_tests.json']).pipe(gulp.dest(outdir)),
     ).on('end', () => {
         console.log(getTime()+' Files copied to '+outdir+', creating '+outfile);
-        gulp.src([ outdir+'/**']).pipe(gulpzip(outfile)).pipe(gulp.dest('.')).on('end', () => {
+        gulp.src([outdir+'/**/*']).pipe(gulpzip(path.basename(outfile))).pipe(gulp.dest(options.distdir)).on('end', () => {
             console.log(getTime()+ ' Done zipping '+outfile);
-            outfile=path.resolve(outfile);
-            let stats = fs.statSync(outfile);
-            let bytes = stats["size"];
-            let mbytes=Math.round(bytes/(1024*1024)*100)*0.01;
-            console.log(getTime()+' ____ zip file created in '+outfile+' (size='+mbytes+' MB )');
-            //rimraf.sync(outdir);
+            let sz=getFileSize(outfile);
+            if (sz>0)
+                console.log(colors.green(getTime()+' ____ zip file created in '+outfile+' (size='+sz+' MB )'));
+            else
+                console.log(colors.red(getTime()+' ____ failed to create zip file '+outfile));
             done();
         });
     });
 }));
 
 gulp.task('buildtest', ((done) => {
-    
-    bis_gutil.createHTML('biswebtest',options.outdir,'bislib.js',internal.biscss);
+
     let maincss    = './web/biswebtest.css';
-    bis_gutil.createCSSCommon([maincss],'biswebtest.css',options.outdir);
+    let maincss2    = './web/biswebdisplaytest.css';    
 
-    bis_gutil.createHTML('biswebdisplaytest',options.outdir,'bislib.js',internal.biscss);
-    bis_gutil.createHTML('biswebdisplaytest2',options.outdir,'bislib.js',internal.biscss);
-    let maincss2    = './web/biswebdisplaytest.css';
-    bis_gutil.createCSSCommon([maincss2],'biswebdisplaytest.css',options.outdir);
+    Promise.all([
+        bis_gutil.createHTML('biswebtest',options.outdir,'bislib.js',internal.biscss),
+        bis_gutil.createCSSCommon([maincss],'biswebtest.css',options.outdir),
+        bis_gutil.createHTML('biswebdisplaytest',options.outdir,'bislib.js',internal.biscss),
+        bis_gutil.createHTML('biswebdisplaytest2',options.outdir,'bislib.js',internal.biscss),
+        bis_gutil.createCSSCommon([maincss2],'biswebdisplaytest.css',options.outdir),
+    ]).then( () => { done();});
     
-    done();
-
 }));
 
 gulp.task('setwebpackwatch', (done) => {
