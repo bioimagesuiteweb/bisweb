@@ -18,11 +18,10 @@
 "use strict";
 
 const universalmodules=require('moduleindex');
-const base=require('nodemoduleindex_base');
 
 
 const moduleImports = {
-    'bisserver' : require('./fileservermodule.js')
+    'infomodule': require('./infomodule.js'),
 };
 
 let moduleNames=universalmodules.createModuleNames(moduleImports);
@@ -31,7 +30,7 @@ let getModule = function(toolname) {
     
     let newmodulecommand=moduleImports[toolname.toLowerCase()];
     if (newmodulecommand===undefined) {
-        return base.getModule(toolname);
+        return universalmodules.getModule(toolname);
     }
     return new newmodulecommand();
 };
@@ -40,7 +39,7 @@ let getModule = function(toolname) {
 
 let getModuleNames = function() {
     let a=Object.keys(moduleNames);
-    let b=base.getModuleNames();
+    let b=universalmodules.getModuleNames();
     return b.concat(a);
 };
 
