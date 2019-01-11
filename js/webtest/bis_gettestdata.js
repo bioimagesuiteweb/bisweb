@@ -13,7 +13,7 @@ module.exports={
             return false;
         }
         
-        if (scope.indexOf('localhost')!==0 || scope.indexOf('192.168')!==0) 
+        if (scope.indexOf('localhost')>=0 || scope.indexOf('192.168')>=0) 
             return true;
         return false;
     },
