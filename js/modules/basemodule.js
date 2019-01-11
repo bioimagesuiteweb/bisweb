@@ -85,9 +85,9 @@ class BaseModule {
         let name=this.name;
         
         return new Promise( (resolve,reject) => { 
-            self.directInvokeAlgorithm(fullparams).then( () => {
+            self.directInvokeAlgorithm(fullparams).then( (m) => {
                 self.storeCommentsInOutputs(baseutils.getExecutableArguments(name), params, baseutils.getSystemInfo(biswrap));
-                resolve();
+                resolve(m);
             }).catch( (e) => {
                 reject(e);
             });
