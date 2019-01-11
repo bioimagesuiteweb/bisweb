@@ -51,11 +51,8 @@ module.exports = {
         "@tensorflow/tfjs-node" : "require('@tensorflow/tfjs-node')",
         "@tensorflow/tfjs-node-gpu" : "require('@tensorflow/tfjs-node-gpu')",
         "colors" : "require('colors')",
-        "commander" : "require('commander')",
         "http-proxy": "require('http-proxy')",
         "request" : "require('request')",
-        "rimraf" : "require('rimraf')",
-        "tmp" : "require('tmp')",
         "ws" : "require('ws')",
         'websocket-stream' : "require(''websocket-stream')"
     },
