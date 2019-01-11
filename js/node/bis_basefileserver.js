@@ -7,9 +7,8 @@ const timers = require('timers');
 const util = require('bis_util');
 const bisgenericio=require('bis_genericio');
 const glob=bisgenericio.getglobmodule();
-const biscmdline = require('bis_commandlineutils');
 const bidsutils=require('bis_bidsutils.js');
-const moduleindex=require('nodemoduleindex.js');
+const moduleindex=require('nodemoduleindex_base');
 // TODO: IP Filtering
 // TODO: Check Base Directories not / /usr (probably two levels)
 
