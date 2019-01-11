@@ -18,10 +18,10 @@
 "use strict";
 
 const program = require('commander');
-const fs = require('fs');
-const modules = require('moduleindex.js');
+const modules = require('nodemoduleindex.js');
 const BisWebDataObjectCollection = require('bisweb_dataobjectcollection.js');
 const baseutils = require('baseutils');
+const genericio=require('bis_genericio');
 const biswrap = require('libbiswasm_wrapper');
 const boldon = "";
 const boldoff = "";
@@ -30,7 +30,7 @@ const boldoff = "";
 let initialError = function (extra) {
     console.log(`${extra}\nUsage: bisweb modulename [ options ].\n`);
     console.log(` Type 'node bisweb [function name] --help' for more information`);
-    let outstring = Object.keys(modules.moduleNamesArray).join("\n");
+    let outstring = modules.getModuleNames().join("\n");
 
     console.log('\tThe list of available modules is :\n', outstring);
 };
@@ -86,7 +86,7 @@ let attachFlags = function (module, cmd) {
  * @param{array} args - the argument array to be parsed
  * @alias CommandLine.loadParse
  */
-let loadParse = function (args, toolname) {
+let loadParse = function (args, toolname,basedirectory='') {
 
     toolname= toolname || "";
 
@@ -143,51 +143,65 @@ let loadParse = function (args, toolname) {
         //  Uninteractive Parser
         //---------------------------------------------------------------------------------------------------------------
         let loadedArguments = {};
+
+        let readparam=Promise.resolve();
         
         if (program.paramfile) {
-            
-            let content = fs.readFileSync(program.paramfile, { encoding: 'utf8' });
-            let parsedContent = {};
-            try {
-                parsedContent = JSON.parse(content);
-            } catch (e) {
-                console.log("Error: 'load' could not parse JSON. \n", e);
-                reject(e);
-            }
-            //check if .json file is meant for this function
-            
-            if (toolname.toLowerCase() === parsedContent.module.toLowerCase()) {
-                loadedArguments = parsedContent.params;
-            } else {
-                let e = ('error: JSON tool name does not match the selected function');
-                console.log(e);
-                reject(e);
-            }
-        }
-        
-        // Parse From Command Line
-        mod.loadInputs(program).then( () => {
-            console.log('oooo\noooo Loaded all inputs.');
-            let modArguments = mod.parseValuesAndAddDefaults(program, loadedArguments);
-            console.log('oooo\noooo Parsed :',JSON.stringify(modArguments));
-            if (mod.typeCheckParams(modArguments)) {
-                mod.directInvokeAlgorithm(modArguments).then(() => {
-                    console.log('oooo -------------------------------------------------------');
-                    mod.storeCommentsInOutputs(args.join(" "),modArguments,baseutils.getSystemInfo(biswrap));
-                    mod.saveOutputs(program).then(() => {
-                        console.log('oooo\noooo Saved outputs.');
-                        resolve( 'Done Saving');
-                    }).catch((e) => {
-                        reject('An error occured saving'+e);
-                    });
-                }).catch((e) => {
-                    reject('---- Failed to invoke algorithm'+e);
+            console.log('++++ Reading Parameter file',basedirectory+program.paramfile);
+
+            readparam= new Promise( (resolve,reject) => {
+                
+                genericio.read(basedirectory+program.paramfile).then( (obj) => {
+                    let content=obj.data;
+                    let parsedContent='';
+                    try {
+                        parsedContent = JSON.parse(content);
+                    } catch (e) {
+                        console.log("Error: 'load' could not parse JSON. \n", e);
+                        reject(e);
+                    }
+                    //check if .json file is meant for this function
+                    if (toolname.toLowerCase() === parsedContent.module.toLowerCase()) {
+                        loadedArguments = parsedContent.params;
+                        resolve();
+                    } else {
+                        let e = ('error: JSON tool name does not match the selected function');
+                        console.log(e);
+                        reject(e);
+                    }
                 });
-            } else {
-                reject('---- Type checking of Arguements failed');
-            }
+            });
+        }
+
+
+        readparam.then( () => {
+            // Parse From Command Line
+            mod.loadInputs(program,basedirectory).then( () => {
+                console.log('oooo\noooo Loaded all inputs.');
+                let modArguments = mod.parseValuesAndAddDefaults(program, loadedArguments);
+                console.log('oooo\noooo Parsed :',JSON.stringify(modArguments));
+                if (mod.typeCheckParams(modArguments)) {
+                    mod.directInvokeAlgorithm(modArguments).then(() => {
+                        console.log('oooo -------------------------------------------------------');
+                        mod.storeCommentsInOutputs(args.join(" "),modArguments,baseutils.getSystemInfo(biswrap));
+                        mod.saveOutputs(program).then(() => {
+                            console.log('oooo\noooo Saved outputs.');
+                            resolve( 'Done Saving');
+                        }).catch((e) => {
+                            reject('An error occured saving'+e);
+                        });
+                    }).catch((e) => {
+                        reject('---- Failed to invoke algorithm'+e);
+                    });
+                } else {
+                    reject('---- Type checking of Arguements failed');
+                }
+            }).catch((e) => {
+                reject('----- Bad input filenames '+e);
+            });
         }).catch((e) => {
-            reject('----- Bad input filenames '+e);
+            console.log('error');
+            reject('----- Bad param filename '+e);
         });
     });
 };

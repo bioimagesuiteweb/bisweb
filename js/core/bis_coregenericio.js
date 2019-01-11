@@ -25,7 +25,7 @@
  */
 
 
-let filesaver, fs = null, zlib, nodewin = {}, path = null, os=null,glob=null,rimraf=null;
+let filesaver, fs = null, zlib, nodewin = {}, path = null, os=null,glob=null,rimraf=null,noderequest=null;
 let environment = '';
 let inelectron = false;
 let webWorkerScope;
@@ -44,6 +44,7 @@ if (!webpack) {
     zlib = require('zlib');
     path = require('path');
     os = require('os');
+    noderequest = require('request');
     glob = require('glob');
     rimraf= require('rimraf');
     environment = 'node';
@@ -471,6 +472,44 @@ var readbinarydatabrowser = function (file, loadedcallback, errorcallback) {
 };
 
 // -------------------------------------------- Read URL ---------------------------------------------------------------------
+/** read  data from url in node.js
+ * @alias BisCoreGenericIO~readtextdataurl_node
+ * @param {string} url - the url
+ * @param {Boolean} binary - if true binary
+ * @param {BisCoreGenericIO.TextDataRead} callback - callback function
+ * @param {BisCoreGenericIO.MessageCallback} errror - error callback function
+ */
+var readdatafromurl_node = function (url, binary,loadedcallback, errorcallback) {
+
+    let settings= {
+        url : url,
+        method : 'GET',
+    };
+
+    if (binary) {
+        settings.encoding=null;
+    }
+    
+    noderequest(settings, function (error, response, body) {
+
+        if (error!==null)
+            errorcallback(error);
+
+        if (!binary) {
+            loadedcallback(body,url);
+            return;
+        }
+
+        let dt=new Uint8Array(body);
+        
+        let comp = iscompressed(url);
+        if (comp) 
+            dt = pako.ungzip(dt);
+            
+        loadedcallback(dt,url);
+    });
+
+};
 
 /** read text data from url.
  * @alias BisCoreGenericIO~readtextdataurl
@@ -480,6 +519,10 @@ var readbinarydatabrowser = function (file, loadedcallback, errorcallback) {
  */
 var readtextdatafromurl = function (url, loadedcallback, errorcallback, requestheader = null, realname = null) {
 
+    if (environment === 'node') 
+        return readdatafromurl_node(url,false,loadedcallback,errorcallback);
+
+    
     var xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
     xhr.responseType = 'text';
@@ -514,6 +557,10 @@ var readtextdatafromurl = function (url, loadedcallback, errorcallback, requesth
  * @param {BisCoreGenericIO.MessageCallback} errror - error callback function
  */
 var readbinarydatafromurl = function (url, loadedcallback, errorcallback, requestheader = null, realname = null) {
+
+
+    if (environment === 'node') 
+        return readdatafromurl_node(url,true,loadedcallback,errorcallback);
 
     var xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
@@ -706,13 +753,15 @@ var readtextdata = function (url, loadedcallback, errorcallback) {
         return;
     }
 
+    if (url.indexOf('http')===0) {
+        return readtextdatafromurl(url, loadedcallback, errorcallback);
+    }
+
+
     if (environment === 'node') {
         return readtextdatanode(url, loadedcallback, errorcallback);
     }
 
-    if (url.indexOf('http')===0) {
-        return readtextdatafromurl(url, loadedcallback, errorcallback);
-    }
 
     if (environment === 'electron') {
         return readdataelectron(url, false, loadedcallback, errorcallback);
@@ -740,13 +789,15 @@ var readbinarydata = function (url, loadedcallback, errorcallback) {
         return;
     }
 
+    if (url.indexOf('http')===0) {
+        return readbinarydatafromurl(url, loadedcallback, errorcallback);
+    }
+
+
     if (environment === 'node') {
         return readbinarydatanode(url, loadedcallback, errorcallback);
     }
 
-    if (url.indexOf('http')===0) {
-        return readbinarydatafromurl(url, loadedcallback, errorcallback);
-    }
 
     if (environment === 'electron') {
         return readdataelectron(url, true, loadedcallback, errorcallback);

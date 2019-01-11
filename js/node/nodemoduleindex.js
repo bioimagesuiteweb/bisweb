@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 /*  LICENSE
  
  _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
@@ -17,28 +15,35 @@
  
  ENDLICENSE */
 
+"use strict";
+
+const universalmodules=require('moduleindex');
 
 
-// -----------------------------------------------------------------
-// Header and requirements for node.js
-'use strict';
+const moduleImports = {
+    'infomodule': require('./infomodule.js'),
+};
 
-require('../../config/bisweb_pathconfig.js');
-const genericio=require('bis_genericio');
+let moduleNames=universalmodules.createModuleNames(moduleImports);
 
-let url='https://bioimagesuiteweb.github.io/test/';
-
-
-let name='testdata/MNI_6mm.nii.gz';
-
-
-genericio.read(url+name,true).then( () => {
-    process.exit(0);
-});
-
-
-
-
+let getModule = function(toolname) {
+    
+    let newmodulecommand=moduleImports[toolname.toLowerCase()];
+    if (newmodulecommand===undefined) {
+        return universalmodules.getModule(toolname);
+    }
+    return new newmodulecommand();
+};
 
 
 
+let getModuleNames = function() {
+    let a=Object.keys(moduleNames);
+    let b=universalmodules.getModuleNames();
+    return b.concat(a);
+};
+
+module.exports = {
+    getModule :      getModule,
+    getModuleNames : getModuleNames,
+};

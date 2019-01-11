@@ -17,108 +17,89 @@
 
 "use strict";
 
-exports.smoothImage = require('smoothImage.js');
-exports.qualityMeasures = require('qualityMeasures.js');
-exports.gradientImage = require('gradientImage.js');
-exports.thresholdImage = require('thresholdImage.js');
-exports.shiftScaleImage = require('shiftScaleImage.js');
-exports.changeImageSpacing = require('changeImageSpacing.js');
-exports.binaryThresholdImage = require('binaryThresholdImage.js');
-exports.extractSlice = require('extractSlice.js');
-exports.extractFrame = require('extractFrame.js');
-exports.normalizeImage = require('normalizeImage.js');
-exports.clusterThreshold = require('clusterThreshold.js');
-exports.prepareRegistration = require('prepareRegistration.js');
-exports.resampleImage = require('resampleImage.js');
-exports.flipImage = require('flipImage.js');
-exports.maskImage = require('maskImage.js');
-exports.combineImages = require('combineImages.js');
-exports.cropImage = require('cropImage.js');
-exports.morphologyFilter = require('morphologyFilter.js');
-exports.blankImage = require('blankImage.js');
-exports.process4DImage = require('process4DImage.js');
-exports.sliceBiasFieldCorrect = require('sliceBiasFieldCorrect.js');
-exports.segmentImage = require('segmentImage.js');
-exports.regularizeObjectmap = require('regularizeObjectmap.js');
-exports.projectImage = require('projectImage.js');
-exports.backProjectImage = require('backProjectImage.js');
+const moduleImports = {
+    
+    smoothimage : require('smoothImage.js'),
+    qualitymeasures : require('qualityMeasures.js'),
+    gradientimage : require('gradientImage.js'),
+    thresholdimage : require('thresholdImage.js'),
+    shiftscaleimage : require('shiftScaleImage.js'),
+    changeimagespacing : require('changeImageSpacing.js'),
+    binarythresholdimage : require('binaryThresholdImage.js'),
+    extractslice : require('extractSlice.js'),
+    extractframe : require('extractFrame.js'),
+    normalizeimage : require('normalizeImage.js'),
+    clusterthreshold : require('clusterThreshold.js'),
+    prepareregistration : require('prepareRegistration.js'),
+    resampleimage : require('resampleImage.js'),
+    flipimage : require('flipImage.js'),
+    maskimage : require('maskImage.js'),
+    combineimages : require('combineImages.js'),
+    cropimage : require('cropImage.js'),
+    morphologyfilter : require('morphologyFilter.js'),
+    blankimage : require('blankImage.js'),
+    process4dimage : require('process4DImage.js'),
+    slicebiascorrect : require('sliceBiasFieldCorrect.js'),
+    segmentimage : require('segmentImage.js'),
+    regularizeobjectmap : require('regularizeObjectmap.js'),
+    projectimage : require('projectImage.js'),
+    backprojectimage : require('backProjectImage.js'),
 
-exports.butterworthFilter = require('butterworthFilter.js');
-exports.regressGlobal = require('regressGlobal.js');
-exports.regressOut = require('regressOut.js');
-exports.computeCorrelation = require('computeCorrelation.js');
-exports.computeROI = require('computeROI.js');
-exports.functionalConnectivityPreprocessing= require('functionalConnectivityPreprocessing');
+    butterworthfilter : require('butterworthFilter.js'),
+    regressglobal : require('regressGlobal.js'),
+    regressout : require('regressOut.js'),
+    computecorrelation : require('computeCorrelation.js'),
+    computeroi : require('computeROI.js'),
+    functionalconnectivitypreprocessing: require('functionalConnectivityPreprocessing'),
 
-exports.computeGLM = require('computeGLM.js');
-exports.approximateField = require('approximateField.js');
-exports.displacementField = require('displacementField.js');
-exports.resliceImage = require('resliceImage.js');
-exports.motionReslice = require('motionReslice.js');
-exports.manualRegistration = require('manualRegistration.js');
-exports.linearRegistration = require('linearRegistration.js');
-exports.nonlinearRegistration = require('nonlinearRegistration.js');
-exports.motionCorrection = require('motionCorrection.js');
+    computeglm : require('computeGLM.js'),
+    approximatefield : require('approximateField.js'),
+    displacementfield : require('displacementField.js'),
+    resliceimage : require('resliceImage.js'),
+    motionreslice : require('motionReslice.js'),
+    manualregistration : require('manualRegistration.js'),
+    linearregistration : require('linearRegistration.js'),
+    nonlinearregistration : require('nonlinearRegistration.js'),
+    motioncorrection : require('motionCorrection.js'),
 
-exports.defaceImage=require('defaceImage.js');
-exports.reorientImage=require('reorientImage.js');
-exports.tfrecon=require('tfRecon.js');
-
-
-exports.moduleNamesArray = {
-    'approximatefield': exports.approximateField,
-    'backprojectimage': exports.backProjectImage,
-    'binarythresholdimage': exports.binaryThresholdImage,    
-    'blankimage' : exports.blankImage,
-    'butterworthfilter': exports.butterworthFilter,
-    'changeimagespacing' : exports.changeImageSpacing,
-    'clusterthreshold': exports.clusterThreshold,
-    'combineimages' : exports.combineImages,
-    'computecorrelation': exports.computeCorrelation,
-    'computeglm': exports.computeGLM,
-    'computeroi': exports.computeROI,
-    'cropimage' : exports.cropImage,
-    'defaceimage' : exports.defaceImage,
-    'displacementfield': exports.displacementField,
-    'extractframe': exports.extractFrame,
-    'extractslice': exports.extractSlice,
-    'flipimage' : exports.flipImage,
-    'functionalconnectivitypreprocessing' : exports.functionalConnectivityPreprocessing,
-    'gradientimage': exports.gradientImage,
-    'linearregistration': exports.linearRegistration,
-    'manualregistration': exports.manualRegistration,
-    'maskimage' : exports.maskImage,
-    'morphologyfilter' : exports.morphologyFilter,
-    'motioncorrection' : exports.motionCorrection,
-    'motionreslice': exports.motionReslice,
-    'nonlinearregistration': exports.nonlinearRegistration,
-    'normalizeimage': exports.normalizeImage,
-    'prepareregistration': exports.prepareRegistration,
-    'process4dimage' : exports.process4DImage,
-    'projectimage': exports.projectImage,
-    'regressglobal': exports.regressGlobal,
-    'regressout': exports.regressOut,
-    'reorientimage': exports.reorientImage,
-    'resampleimage': exports.resampleImage,
-    'resliceimage': exports.resliceImage,
-    'segmentimage': exports.segmentImage,
-    'regularizeobjectmap': exports.regularizeObjectmap,
-    'slicebiascorrect': exports.sliceBiasFieldCorrect,
-    'smoothimage': exports.smoothImage,
-    'qualitymeasures': exports.qualityMeasures,
-    'shiftscaleimage': exports.shiftScaleImage,
-    'thresholdimage': exports.thresholdImage,
-    'tfrecon' : exports.tfrecon,
+    defaceimage:require('defaceImage.js'),
+    reorientimage:require('reorientImage.js'),
+    tfrecon:require('tfRecon.js'),
 };
 
+// --------------------------------------------------------------
 
-exports.getModule = function(toolname) {
+let createModuleNames=function(modules) {
     
-    let newmodulecommand=this.moduleNamesArray[toolname.toLowerCase()];
-    if (newmodulecommand===undefined) {
-        //    console.log('Error: could not find module',toolname,' in getModule()');
-        return null;
+    let names = { };
+    let keys=Object.keys(modules);
+    for (let i=0;i<keys.length;i++) {
+        let key=keys[i];
+        let name=key.toLowerCase();
+        names[name]=key;
     }
+    return names;
+};
+
+// --------------------------------------------------------------
+
+let moduleNames=createModuleNames(moduleImports);
+
+module.exports = {
+    getModule : function(toolname) {
+        
+        let newmodulecommand=moduleImports[toolname.toLowerCase()];
+        if (newmodulecommand===undefined) {
+            //    console.log('Error: could not find module',toolname,' in getModule()');
+            return null;
+        }
     
-    return new newmodulecommand();
+        return new newmodulecommand();
+    },
+
+    getModuleNames : function() {
+        return Object.keys(moduleNames);
+    },
+
+    createModuleNames : createModuleNames
 };
