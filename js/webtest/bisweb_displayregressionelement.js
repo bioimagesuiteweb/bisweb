@@ -102,7 +102,7 @@ var runTest = async function(testindex,viewerindex,basestate='',viewerstate='',
             $('#goldtd').append('Gold '+(testindex));
             globalParams.goldImageElement.removeEventListener('load',loadfn);
             
-            snapshotElement.createBisWebImageFromImageElement(comparisonpng).then( (goldstandard) => {
+            snapshotElement.createBisWebImageFromURL(comparisonpng).then( (goldstandard) => {
                 setTimeout( () => {
                     globalParams.resdiv.append('<p>Read result from: '+comparisonpng+'</p>');
                     console.log(goldstandard.getDescription());

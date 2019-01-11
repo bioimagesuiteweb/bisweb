@@ -34,7 +34,7 @@ const bootbox = require('bootbox');
 const userPreferences = require('bisweb_userpreferences.js');
 const BisWebPanel = require('bisweb_panel.js');
 const BisWebImage = require('bisweb_image.js');
-
+const pngReader=require('png.js');
 require('bootstrap-colorselector.js');
 
 
@@ -596,27 +596,47 @@ class SnapshotElement extends HTMLElement {
       * @param{URL} url - the url storing the image (e.g. .png)
       * @return{BisWebImage} - the output image
       */
-    createBisWebImageFromImageElement(url) {
+    createBisWebImageFromURL(url) {
 
         return new Promise( (resolve,reject) => { 
 
-            let image_element=new Image();
-            
-            let createimage=( () => {
+            bisgenericio.read(url,true).then( (obj) => {
                 
-                let canvas = document.createElement("canvas");
-                canvas.height=image_element.height;
-                canvas.width=image_element.width;
-                canvas.getContext("2d").drawImage(image_element,0,0);
-                resolve( this.createBisWebImageFromCanvas(canvas));
-            });
+                let data=obj.data;
+                let reader = new pngReader(data.buffer);
+                reader.parse(function(err, png){
+                    if (err)
+                        reject(err);
+                    
+                    let ht=png.getHeight();
+                    let wd=png.getWidth();
 
-            
-            image_element.src=url;
-            image_element.addEventListener('load',createimage);
-            image_element.addEventListener('onerror',reject);
+                    
+                    let output=new BisWebImage();
+                    output.initialize();
+                    output.createImage( {
+                        type : "uchar",
+                        numcomponents : 1,
+                        numframes : 4,
+                        orientation : 'LPS',
+                        dimensions : [ wd,ht,1 ],
+                    });
+                    
+                    let out_imgdata=output.getImageData();
+                    let slicesize=wd*ht;
+                    let index=0;
+                    for (let row=0;row<ht;row++) {
+                        for (let col=0;col<wd;col++) {
+                            for (let comp=0;comp<=3;comp++) {
+                                out_imgdata[comp*slicesize+row*wd+col]=png.pixels[index];
+                                ++index;
+                            }
+                        }
+                    }
+                    resolve(output);
+                });
+            }).catch( (e) => { reject(e); });
         });
-
     }
     
     
