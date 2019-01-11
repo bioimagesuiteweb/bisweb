@@ -29,7 +29,8 @@ const path=require('path');
 const program=require('commander');
 require('../config/bisweb_pathconfig.js');
 
-const bisdate=require('bisdate.js');
+const bisdate=require('../build/web/bisdate.json');
+console.log('date=',bisdate);
 
 var help = function() {
     console.log('\nThis program fixes the manifest file.\n');
@@ -57,10 +58,9 @@ let version=bisdate.version;
 console.log('++++ Testing=',testing, program.testing);
 
 let obj = { 
-    "private": true,
     "name": "biswebnode",
     "version": version,
-    "description": "A node.js only implementation of BioImage Suite in Javascript and WebAssembly",
+    "description": "A node.js implementation of BioImage Suite Web command line tools in Javascript and WebAssembly",
     "homepage": "www.bioimagesuite.org",
     "main" : "lib/bioimagesuiteweblib.js",
     "author": "Xenios Papademetris",

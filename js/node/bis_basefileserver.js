@@ -9,6 +9,7 @@ const bisgenericio=require('bis_genericio');
 const glob=bisgenericio.getglobmodule();
 const biscmdline = require('bis_commandlineutils');
 const bidsutils=require('bis_bidsutils.js');
+const moduleindex=require('nodemoduleindex');
 // TODO: IP Filtering
 // TODO: Check Base Directories not / /usr (probably two levels)
 
@@ -62,11 +63,7 @@ class BaseFileServer {
 
         this.opts={};
 
-        this.opts.bistfrecon=undefined;
-        if (opts.mydirectory) {
-            this.opts.bistfrecon=path.join(opts.mydirectory,'bis_tf_recon.js');
-            opts.mydirectory=undefined;
-        }
+
         this.opts.dcm2nii='/usr/bin/dcm2nii';
         
         for (let i=0;i<server_fields.length;i++) {
@@ -496,8 +493,8 @@ class BaseFileServer {
                 break;
             }
 
-            case 'bistfReconstruction' : {
-                this.bistfReconstructImage(socket,parsedText);
+            case 'runModule' : {
+                this.runModule(socket,parsedText);
                 break;
             }
 
@@ -1063,60 +1060,46 @@ class BaseFileServer {
      * @param {Net.Socket} socket - WebSocket over which the communication is currently taking place. 
      * @param {Dictionary} opts  - the parameter object
      * @param {Number} opts.id - the job id
-     * @param {String} opts.input - the input filename
-     * @param {String} opts.output - the output filename
-     * @param {String} opts.model - the model directory
-     * @param {Number} opts.batchsize - the batchsize
-     * @param {Number} opts.padding - the padding
+     * @param {Array} opts.moduleparams - the module parameters (need to be modules without inputs)
      * @param {Boolean} opts.debug - if true run debug setup
      */
-    bistfReconstructImage(socket,opts)  {
+    runModule(socket,opts)  {
 
-        let errorfn=( (msg) => {
-            this.sendCommand(socket,'bistfReconstructImage', { 
-                'output' : msg,
-                'id' : id });
-            return false;
-        });
-        
         let id=opts.id;
+        let modulename=opts.modulename;
+        let moduleparams=opts.params;
         
-        if (!this.opts.bistfrecon)
-            return errorfn(' No bistfrecon tool in config');
-        if (!this.validateFilename(opts.input))
-            return errorfn(opts.input+' is not valid');
-        if (!this.validateFilename(opts.output)) 
-            return errorfn(opts.output+' is not valid');
-        if (!this.validateFilename(opts.modeldir)) 
-            return errorfn(opts.modeldir+' is not valid');
         
-        opts.batchsize = opts.batchsize || 4;
-        opts.padding = opts.padding || 8;
-
-        if (path.sep==='\\') {
-            opts.input=util.filenameUnixToWindows(opts.input);
-            opts.output=util.filenameUnixToWindows(opts.output);
-            opts.modeldir=util.filenameUnixToWindows(opts.modeldir);
-        }
-
-        let done= (status,code) => {
-            if (status===false) {
-                return errorfn('bistfrecon failed'+code);
-            }
-            
-            this.sendCommand(socket,'bistfReconDone', { 
-                'output' : opts.output,
-                'id' : id });
+        let done= (success,text) => {
+            if (!success)
+                this.sendCommand(socket,'bisModuleFailed', { 
+                    'output' : text,
+                    'id' : id });
+            else
+                this.sendCommand(socket,'bisModuleDone', { 
+                    'output' : text,
+                    'id' : id });
             return;
         };
 
-        let listen= (message) => {
-            this.sendCommand(socket,'bistfReconProgress', message);
-        };
+        // Set Listen Function
+        //let listen= (message) => {
+        //            this.sendCommand(socket,'bisModuleProgress', message);
+        //        };
+        //
+        //
+        //module.setListenFunction(listen);
+
+        // Run Module and call done when it is done
+
+        let module=moduleindex.getModule(modulename);
         
-        let cmd='node '+this.opts.bistfrecon+` -i ${opts.input} -o ${opts.output} -m ${opts.modeldir} -b ${opts.batchsize} -p ${opts.padding}`;
-        
-        biscmdline.executeCommand(cmd,__dirname,done,listen);
+        module.execute( { } , moduleparams).then( (m) => {
+            console.log('M=',m);
+            done(true,m);
+        }).catch( (e) => {
+            done(false,e);
+        });
         return;
     }
 

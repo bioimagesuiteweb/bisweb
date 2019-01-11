@@ -33,7 +33,24 @@ let htmlreplace=null,
 
 
 
+var getFileSize=function(outfile) {
 
+    try {
+        let stats = fs.statSync(outfile);
+        
+        let mb=Math.round(10.0*stats.size/(1024*1024))*0.1;
+        let s=`${mb}`;
+        let ind=s.lastIndexOf(".");
+        
+        //        console.log('Raw file size of ',outfile,'=',stats.size,mb,s,'ind =',ind);
+        if (ind>=0)
+            return s.substr(0,ind+2);
+        return s;
+    } catch(e) {
+        console.log('Error=',e);
+        return -1;
+    }
+};
 
 var getTime=function(nobracket=0) {
     //    http://stackoverflow.com/questions/7357734/how-do-i-get-the-time-of-day-in-javascript-node-js
@@ -160,44 +177,52 @@ var createHTML=function(toolname,outdir,libjs,commoncss,gpl=true) {
         htmlreplace = require('gulp-html-replace');
     if (replace===null)
         replace = require('gulp-replace');
-    
-    if (toolname==="bisjs")
-        return;
-    
-    var mainhtml   = path.normalize(path.join(__dirname,'../web/'+toolname+'.html'));
-    var bundlecss  = commoncss;
 
-    console.log(getTime()+colors.green('\tBuilding HTML '+mainhtml));
-    var alljs;
-    if (libjs!=='') {
-        if (toolname!=="index") {
-            if (gpl) 
-                alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'three.min.js', 'bootstrap.min.js', 'libbiswasm_wasm.js', libjs  ];
-            else
-                alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'three.min.js', 'bootstrap.min.js', 'libbiswasm_nongpl_wasm.js', libjs  ];
-        } else {
-            alljs=[ 'jquery.min.js', 'bootstrap.min.js', libjs  ];
-            bundlecss=[ "./bootstrap_dark_edited.css" ];
-        }
-    } else {
-        alljs = [ 'jquery.min.js', 'bootstrap.min.js' ];
-    }
 
-    let repljs=alljs;
-
-    /*  
-        Cache busting one day
-        let t= new Date().getTime()
+    return new Promise( (resolve) => {
         
-        for (let i=0;i<alljs.length;i++)
-        repljs.push(`${alljs[i]}?v=${t}`);*/
+        if (toolname==="bisjs") {
+            resolve();
+            return;
+        }
     
-    return gulp.src([ mainhtml ])
-        .pipe(htmlreplace({
-            'js': repljs,
-            'css': bundlecss,
-            'manifest' : '<link rel="manifest" href="./manifest.json">',
-        })).pipe(gulp.dest(outdir));
+        let mainhtml   = path.normalize(path.join(__dirname,'../web/'+toolname+'.html'));
+        let bundlecss  = commoncss;
+
+        console.log(getTime()+colors.green('\tBuilding HTML '+mainhtml));
+        let alljs;
+        if (libjs!=='') {
+            if (toolname!=="index") {
+                if (gpl) 
+                    alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'three.min.js', 'bootstrap.min.js', 'libbiswasm_wasm.js', libjs  ];
+                else
+                    alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'three.min.js', 'bootstrap.min.js', 'libbiswasm_nongpl_wasm.js', libjs  ];
+            } else {
+                alljs=[ 'jquery.min.js', 'bootstrap.min.js', libjs  ];
+                bundlecss=[ "./bootstrap_dark_edited.css" ];
+            }
+        } else {
+            alljs = [ 'jquery.min.js', 'bootstrap.min.js' ];
+        }
+        
+        let repljs=alljs;
+        
+        /*  
+            Cache busting one day
+            let t= new Date().getTime()
+            
+            for (let i=0;i<alljs.length;i++)
+            repljs.push(`${alljs[i]}?v=${t}`);*/
+        
+        return gulp.src([ mainhtml ])
+            .pipe(htmlreplace({
+                'js': repljs,
+                'css': bundlecss,
+                'manifest' : '<link rel="manifest" href="./manifest.json">',
+            })).pipe(gulp.dest(outdir)).on('end', () => {
+                resolve();
+            });
+    });
 };
 
 
@@ -209,13 +234,15 @@ var createCSSCommon=function(dependcss,out,outdir) {
         concatCss = require('gulp-concat-css');
 
     
-    var bundlecss  = out;
-
-    console.log(getTime()+colors.green('\tBuilding CSS', out,', from ',dependcss.join()));
-    gulp.src(dependcss)
-        .pipe(concatCss(bundlecss))
-        .pipe(replace('../../node_modules/jstree/dist/themes/default', 'images')) // jstree css fix
-        .pipe(gulp.dest(outdir));
+    let bundlecss  = out;
+    
+    return new Promise( (resolve) => {
+        console.log(getTime()+colors.green('\tBuilding CSS', out,', from ',dependcss.join()));
+        gulp.src(dependcss)
+            .pipe(concatCss(bundlecss))
+            .pipe(replace('../../node_modules/jstree/dist/themes/default', 'images')) // jstree css fix
+            .pipe(gulp.dest(outdir)).on('end', () => { resolve(); });
+    });
 };
 
 
@@ -337,11 +364,9 @@ var createZIPFile = function(baseoutput,outdir,version,distdir,done) {
              ],
              {base:outdir}).pipe(gulpzip(outfile)).pipe(gulp.dest('.')).on('end', () => {
                  outfile=path.resolve(outfile);
-                 let stats = fs.statSync(outfile);
-                 let bytes = stats["size"];
-                 let mbytes=Math.round(bytes/(1024*1024)*100)*0.01;
-                 
+                 let mbytes=getFileSize(outfile);
                  console.log(getTime()+' ____ zip file created in '+outfile+' (size='+mbytes+' MB )');
+                 
                  done();
              });
     
@@ -362,7 +387,6 @@ var inno=function(tools, version, indir , distdir ) {
     var i_date    = getDate();
 
 
-    console.log('i_indir=',i_indir);
     
     var i_tools = "";
     var keys=Object.keys(obj);
@@ -391,15 +415,13 @@ var inno=function(tools, version, indir , distdir ) {
 // -----------------------------------------------------------------------------------------
 var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",outdir="build",version=1.0,platform="linux",distdir="builddist",done=0) {
 
-
+    const gulpzip = require('gulp-zip');
+    
     let cmdlist = ['pwd'];
-    let zipopts=' -ry';
+    let ziplist = [];
     let inwin32=false;
-    let separator=";";
     if (os.platform()==='win32') {
         inwin32=true;
-        zipopts='-r';
-        separator="&";
     }
 
     console.log('In win 32=',inwin32,outdir,path.resolve(outdir));
@@ -408,8 +430,16 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
     console.log(colors.cyan(getTime()+' (electron '+version+') for: '+platform));
     let idir=indir+"/build/web";
 
-    for (let ia=0;ia<platform.length;ia++) {
+    if (!inwin32) {
+        let ind=platform.indexOf('win32');
+        if (ind>=0) {
+            platform.splice(ind,1);
+            console.log(colors.red(getTime()+' Can not packge for win32 on '+os.platform()));
+        }
+    }
 
+    
+    for (let ia=0;ia<platform.length;ia++) {
         var n=platform[ia];
         var m=n,suffix=".zip";
         if (m==="darwin") {
@@ -417,18 +447,24 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
             suffix=".app.zip";
         }
 
+        let absdistdir=path.normalize(path.resolve(distdir));
+        let zipindir='BioImageSuiteWeb-'+n+'-x64';
+        let appdir=path.join(absdistdir,zipindir);
+
+        cmdlist.push(`rimraf ${appdir}`);
+        
         if (dopackage>=2) {
             cmdlist.push(`rimraf ${path.resolve(idir,'node_modules')}`);
             if (dopackage===3) {
                 cmdlist.push('npm install -d');
-                cmdlist.push('modclean -r -a *.ts');
+                cmdlist.push('modclean -r -a *.ts ');
             } else if (dopackage===2) {
                 let zname=path.resolve(path.join(outdir,path.join('..',`electrondist/bisweb_${n}.zip`)));
                 try {
                     let stats = fs.statSync(zname);
                     let bytes = stats["size"];
                     console.log('zname = ', zname,bytes);
-                    cmdlist.push(`cd ../web ${separator} unzip -q ${zname}`);
+                    cmdlist.push(`unzip -q ${zname}`);
                 } catch(e) {
                     console.log(colors.red(e));
                     process.exit(1);
@@ -451,25 +487,44 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
             errorf('error '+e);
         }
 
-        let absdistdir=path.normalize(path.resolve(distdir));
-        let zipindir='BioImageSuiteWeb-'+n+'-x64';
+        let newappdir;
+        if (n==='darwin')
+            newappdir=appdir+'/BioImageSuiteWeb.app/Contents/Resources/app';
+        else
+            newappdir=appdir+'/resources/app';
 
-        let fullpath=path.resolve(path.join(absdistdir,zipindir),'resources/app/node_modules/@tensorflow/tfjs-node/deps');
-        console.log('Zip in dir=',fullpath);
 
-        let cleancmd='rimraf '+fullpath;
+        // Cleanup useless files before we electron package
+        let todelete =  [
+            path.resolve(path.join(newappdir,'node_modules/@tensorflow/tfjs-node/deps')),
+            path.resolve(path.join(newappdir,'*.map')),
+            path.resolve(path.join(newappdir,'server.zip')),
+            path.resolve(path.join(newappdir,'mni2tal')),
+            path.resolve(path.join(newappdir,'connviewer')),
+            path.resolve(path.join(newappdir,'package-lock.json')),
+            path.resolve(path.join(newappdir,'images/bisweb-*.png'))
+        ];
+
+        console.log('To Delete = ',JSON.stringify(todelete,null,2));
+        let cleancmd='rimraf '+todelete.join(' ');
         
         if (n==="win32") {
             let ifile=path.resolve(indir,'web/images/bioimagesuite.png.ico');
-            cmdlist.push(cmdline+` --platform=win32 --icon ${ifile}`);
+            if (inwin32)
+                cmdlist.push(cmdline+` --platform=win32 --icon ${ifile}`);
+            else
+                cmdlist.push(cmdline+` --platform=win32`);
             if (dopackage===3)
                 cmdlist.push(cleancmd);
             if (dopackage>0)  {
-                if (os.platform()!=='win32') {
-                    cmdlist.push('zip '+zipopts+' '+zipfile+' '+zipindir);
+                if (!inwin32) {
+                    ziplist.push( {
+                        zipfile : zipfile,
+                        zipdir  : zipindir
+                    });
                 } else {
                     inno(tools,version,indir,distdir);
-                    let innofile=path.resolve(distdir,'biselectron.iss')
+                    let innofile=path.resolve(distdir,'biselectron.iss');
                     cmdlist.push('c:\\unix\\innosetup5\\ISCC.exe '+innofile);
                 }
             }
@@ -481,13 +536,48 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
             if (dopackage===3)
                 cmdlist.push(cleancmd);
             if (dopackage>0)  {
-                cmdlist.push(`zip `+zipopts+' '+path.basename(zipfile)+' '+path.basename(zipindir));
+                ziplist.push( {
+                    zipfile : zipfile,
+                    zipdir  : zipindir
+                });
             }
         }
     }
-    let ddir=path.resolve(path.join(outdir,path.join('..','dist')));
-    console.log(getTime()+colors.green('About to execute in : win32=',inwin32,'\n path=', path.resolve(ddir),'\n\t', JSON.stringify(cmdlist,null,4)));
-    executeCommandList(cmdlist,ddir,done);
+    //console.log(getTime()+colors.green('About to execute in : win32=',inwin32,'\n path=', path.resolve(outdir),'\n\t', JSON.stringify(cmdlist,null,4)));
+
+    let counter=0;
+    let dozip=function() {
+
+        //console.log('Ziplist=',ziplist);
+        let elem=ziplist[counter];
+        
+        //console.log('counter=',counter,'elem=',elem);
+
+        let outdir=path.resolve(path.join(distdir,elem.zipdir));
+        let outfile=elem.zipfile;
+
+        console.log(getTime()+' creating zip file: Outdir=',outdir,'outfile = ',outfile,'distdir=',distdir);
+        
+        gulp.src([outdir+'/**/*']).pipe(gulpzip(path.basename(outfile))).pipe(gulp.dest(distdir)).on('end', () => {
+            outfile=path.resolve(outfile);
+
+            let sz=getFileSize(outfile);
+            if (sz>0)
+                console.log(colors.green(getTime()+' ____ zip file created in '+outfile+' (size='+sz+' MB )'));
+            else
+                console.log(colors.red(getTime()+' ____ failed to create zip file '+outfile));
+            counter=counter+1;
+            if (counter>=ziplist.length)
+                done();
+            else
+                dozip();
+        });
+    };
+
+    if (cmdlist.length>1) 
+        executeCommandList(cmdlist,outdir,dozip);
+    else
+        done();
 };
 
 
@@ -514,89 +604,91 @@ var doxygen=function(indir,conffile,done) {
 var createnpmpackage=function(indir,version,in_outdir,done) {
 
     const rimraf= require('rimraf'),
-          rename = require('gulp-rename');
-
+          rename = require('gulp-rename'),
+          es = require('event-stream');
     
     // Step 1 copy file
     // make directories
     let odir=path.resolve(path.join(in_outdir,'bisweb'));
-    console.log('.... Deleting ',odir);
+    console.log(colors.red(getTime()+' .... Deleting ',odir));
     try {
         rimraf.sync(odir);
     } catch(e) {
         console.log(e);
     }
 
-    console.log('Making directory',odir);
+    console.log(colors.green(getTime()+' Making directory',odir));
     fs.mkdirSync(odir);
     
     let distDir=path.join(odir,'dist');
     fs.mkdirSync(distDir);
-    
-    gulp.src([ `${indir}/build/web/bislib.js`,
-               `${indir}/build/web/libbiswasm*wasm.js`,
-               `${indir}/build/web/webcomponents-lite.js`,
-               `${indir}/build/web/jquery.min.js`,
-               `${indir}/build/web/three.min.js`,
-               `${indir}/build/web/bootstrap.min.js`,
-               `${indir}/build/web/bislib.css`,
-             ]).pipe(gulp.dest(distDir));
 
-    gulp.src([ 'node_modules/bootstrap/dist/css/*']).pipe(gulp.dest(distDir+'/css/'));
-    gulp.src([ 'node_modules/bootstrap/dist/fonts/*']).pipe(gulp.dest(distDir+'/fonts/'));
-    gulp.src([ 'lib/fonts/*']).pipe(gulp.dest(distDir+'/fonts/'));
+    es.concat( 
+        gulp.src([ `${indir}/build/web/bislib.js`,
+                   `${indir}/build/web/libbiswasm*wasm.js`,
+                   `${indir}/build/web/webcomponents-lite.js`,
+                   `${indir}/build/web/jquery.min.js`,
+                   `${indir}/build/web/three.min.js`,
+                   `${indir}/build/web/bootstrap.min.js`,
+                   `${indir}/build/web/bislib.css`,
+                   `${indir}/build/web/exportexample.html`,
+                   `${indir}/build/web/exportexample.js`,
+                 ]).pipe(gulp.dest(distDir)),
+        gulp.src([ 'node_modules/bootstrap/dist/css/*']).pipe(gulp.dest(distDir+'/css/')),
+        gulp.src([ 'node_modules/bootstrap/dist/fonts/*']).pipe(gulp.dest(distDir+'/fonts/')),
+        gulp.src([ 'lib/fonts/*']).pipe(gulp.dest(distDir+'/fonts/')),
     
-    gulp.src([`${indir}/config/biswebbrowser_readme.md`])
-        .pipe(rename('README.md'))
-              .pipe(gulp.dest(odir));
-
-
-    console.log('.... Files copied in',distDir);
-    
-    // Step 2 create package.json
-    let obj = { 
-        "private": true,
-        "name": "biswebbrowser",
-        "version": version,
-        "description": "A web-based implementation of BioImage Suite in Javascript and WebAssembly",
-        "homepage": "www.bioimagesuite.org",
-        "main" : "dist/bioimagesuiteweb.js",
-        "author": "Xenios Papademetris",
-        "license": "GPL V2 (most source code is Apache V2)",
-        "repository": {
-            "type" : "git",
-            "url" : "https://github.com/bioimagesuiteweb/bisweb",
+        gulp.src([`${indir}/config/biswebbrowser_readme.md`])
+            .pipe(rename('README.md'))
+            .pipe(gulp.dest(odir))
+    ).on('end', () => { 
+        console.log(getTime()+' .... Files copied in',distDir);
+        
+        // Step 2 create package.json
+        let obj = { 
+            "private": true,
+            "name": "biswebbrowser",
+            "version": version,
+            "description": "A web-based implementation of BioImage Suite in Javascript and WebAssembly",
+            "homepage": "www.bioimagesuite.org",
+            "main" : "dist/bioimagesuiteweb.js",
+            "author": "Xenios Papademetris",
+            "license": "GPL V2 (most source code is Apache V2)",
+            "repository": {
+                "type" : "git",
+                "url" : "https://github.com/bioimagesuiteweb/bisweb",
+            }
+        };
+        
+        let txt=JSON.stringify(obj,null,4)+"\n";
+        let output=path.resolve(path.join(odir,"package.json"));
+        console.log(getTime()+ '\t package.json = ',output);
+        
+        try {
+            fs.writeFileSync(output,txt);
+        } catch(e) {
+            console.log(e);
         }
-    };
-    
-    let txt=JSON.stringify(obj,null,4)+"\n";
-    let output=path.resolve(path.join(odir,"package.json"));
-    console.log('++++ Output = ',output,'\n'+txt+'++++');
+        console.log('++++');
+        console.log('++++ Package.json file created in',output);
+        console.log('++++');
+        
+        // step 3
+        // Master file
+        let txt2=`window.biswebpack=require('./libbiswasm_wasm.js');\nmodule.exports=require('./bislib.js');\n`;
+        
+        let output2=path.resolve(path.join(odir,"dist/bioimagesuiteweb.js"));
+        console.log(getTime()+' Creating '+output2);
 
-    try {
-        fs.writeFileSync(output,txt);
-    } catch(e) {
-        console.log(e);
-    }
-    console.log('++++');
-    console.log('++++ Package.json file created in',output);
-    console.log('++++');
-
-    // step 3
-    // Master file
-    let txt2=`window.biswebpack=require('./libbiswasm_wasm.js');\nmodule.exports=require('./bislib.js')();\n`;
-
-    console.log('++++ Output (2) = \n'+txt2+'++++');
-    let output2=path.resolve(path.join(odir,"dist/bioimagesuiteweb.js"));
-    
-    fs.writeFileSync(output2,txt2);
-    console.log('++++');
-    console.log('++++ main.js file created in',output2);
-    console.log('++++');
-                     
-    // Step 4 run npm pack
-    executeCommand('npm pack',odir,done);
-    
+        
+        fs.writeFileSync(output2,txt2);
+        console.log('++++');
+        console.log('++++ main js file created in',output2);
+        console.log('++++');
+        
+        // Step 4 run npm pack
+        executeCommand('npm pack',odir,done);
+    });
     
 };
 
@@ -606,6 +698,7 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
 
 module.exports = {
     getTime: getTime,
+    getFileSize: getFileSize,
     getData: getDate,
     getVersionTag : getVersionTag,
     executeCommand : executeCommand,

@@ -292,20 +292,20 @@ class BisFileServerClient extends BisBaseServerClient {
                 break;
             }
             
-            case 'bistfReconProgress': {
+            case 'bisModuleProgress': {
                 this.updateCallback(data.payload);
                 ignore=true;
                 break;
             }
             
-            case 'bistfReconFailed': {
-                console.log('bistfRecon Failed');
+            case 'bisModuleFailed': {
+                console.log('bisModule Failed');
                 success=false;
                 break;
             }
 
             
-            case 'bistfReconDone' : {
+            case 'bisModuleDone' : {
                 // handled by promise
                 break;
             }
@@ -827,26 +827,16 @@ class BisFileServerClient extends BisBaseServerClient {
     }
 
 
-    /** performs Tensor flow js reconstruction
-     * @param{String} input -- the input image
-     * @param{String} output -- the output image
-     * @param{String} modeldir -- the model directory
-     * @param{Number} batchsize -- the batchsize
-     * @param{Number} padding -- the padding
+    /** runs Module (e.g. DCM2NII)
+     * @param{String} modulename -- the name of the module
+     * @param{Object} params -- the module params
      * @param{Function} upd - function to call for progress messages
+     * @param{Boolean} debug - if true print more stuff
      * @returns {Promise} payload is the result
      */
-    tensorFlowReconstruction(input,output,modeldir,batchsize=4,padding=8,upd=console.log,debug=false) {
-
-        if (input.indexOf('\\')>=0)
-            input=util.filenameWindowsToUnix(input);
-        if (output.indexOf('\\')>=0)
-            output=util.filenameWindowsToUnix(output);
-        if (modeldir.indexOf('\\')>=0)
-            modeldir=util.filenameWindowsToUnix(modeldir);
-
-        let outstring="";
+    runModule(modulename,params,upd=console.log,debug=false) {
         
+        let outstring="";
         this.updateCallback= ((msg) => {
             outstring+=msg;
             if (upd)
@@ -863,20 +853,17 @@ class BisFileServerClient extends BisBaseServerClient {
                     log  : outstring
                 });
             });
-
+            
             let rej=() => {
                 this.updateCallback= console.log;
                 reject();
             };
             
-            let serverEvent=bisasyncutil.addServerEvent(res,rej,'bistfReconstruction');
-            this.sendCommand({ 'command' : 'bistfReconstruction',
-                               'operation' : 'bistfReconstruction',
-                               'input' : input,
-                               'output' : output,
-                               'modeldir' : modeldir,
-                               'batchsize' : batchsize,
-                               'padding' : padding,
+            let serverEvent=bisasyncutil.addServerEvent(res,rej,'bisModule');
+            this.sendCommand({ 'command' : 'runModule',
+                               'operation' : 'runModule',
+                               'modulename' : modulename,
+                               'params' : params,
                                'debug' : debug,
                                'id' : serverEvent.id,
                                'timeout' : 300000}); 

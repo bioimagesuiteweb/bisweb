@@ -76,6 +76,17 @@ class BisWebTFJSReconModule extends BaseModule {
                     "low" :  1,
                     "high" : 32,
                 },
+                {
+                    "name": "Force Browser",
+                    "description": "If true use webgl backend",
+                    "priority": 20,
+                    "advanced": true,
+                    "gui": "check",
+                    "varname": "forcebrowser",
+                    "type": 'boolean',
+                    "default": false,
+                },
+
                 baseutils.getDebugParam(),
             ]
         };
@@ -113,7 +124,7 @@ class BisWebTFJSReconModule extends BaseModule {
             if (this.tfjsModule===null) {
                 try {
                     console.log('---------------------------------------');
-                    let msg=await bistfutil.initializeTFModule();
+                    let msg=await bistfutil.initializeTFModule(vals.forcebrowser);
                     console.log('\t initialize done');
                     console.log('---',msg);
                     console.log('--- \tinput image dims=',input.getDimensions().join(','));

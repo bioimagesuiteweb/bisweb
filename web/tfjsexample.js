@@ -7,13 +7,15 @@ const bisweb=window.bioimagesuiteweb;
 
 let extra="test/testdata/tfjs64";
 // In development mode
-if (window.BIS) {
-    extra="../"+extra;
-}
+//if (window.BIS) {
+//    extra="../"+extra;
+//}
 
 let getScope=function() {
+
+    return 'https://bioimagesuiteweb.github.io/';
     
-    let scope=window.document.URL;
+    /*    let scope=window.document.URL;
 
     let index=scope.indexOf(".html");
     if (index>0) {
@@ -25,9 +27,7 @@ let getScope=function() {
             index=scope.lastIndexOf("/");
             scope=scope.substr(0,index+1);
         }
-    }
-
-    return scope;
+    }*/
 };
 
 let run_tf_module=async function(img) {
@@ -45,7 +45,7 @@ let run_tf_module=async function(img) {
     if (window.BISELECTRON) {
         batchsize=64;
     }
-    tfrecon.execute( { input : img }, {  padding : 8, batchsize : batchsize, modelname : URL }).then( () => { 
+    tfrecon.execute( { input : img }, {  padding : 8, batchsize : batchsize, modelname : URL, forceBrowser : true }).then( () => { 
         let output=tfrecon.getOutputObject('output');
         
         if (viewer) {
@@ -75,15 +75,19 @@ window.onload = function() {
     console.log('BISWeb Environment = ',bisweb.getEnvironment());    
     // The viewer is optional, just remove the
     const viewer=document.querySelector("#viewer");
+
+    let URL=getScope()+extra;
     
     // Load an image --> returns a promise so .then()
-    let URL=getScope()+extra;
+        /*    let URL=getScope()+extra;
     if (bisweb.getEnvironment()==='electron')  {
-        let start=8;
-        if (bisweb.genericio.getpathmodule().sep==='/')
-            start=7;
-        URL=URL.substr(start,URL.length-start);
-    }
+    let start=8;
+    if (bisweb.genericio.getpathmodule().sep==='/')
+    start=7;
+    URL=URL.substr(start,URL.length-start);
+    }*/
+
+    
     let fn=( (name) => {
 
         //        console.clear();

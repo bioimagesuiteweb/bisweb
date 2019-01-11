@@ -46,6 +46,7 @@
     <script src="./bis.js"></script>
     <script src="../build/web/webcomponents-lite.js"></script>
     <script src="../build/web/jquery.min.js"></script>
+    <script src="../build/web/three.min.js"></script>
     <script src="../build/web/bootstrap.min.js"></script>
     <script src="../build/web/libbiswasm_wasm.js"></script>
     <script src="../build/web/bislib.js"></script>
@@ -87,6 +88,12 @@
               <option value="None" style="color:#dddddd">List (but not run) tests</option>
               <option value="All"  style="color:red">Test all modules</option>
             </select>
+
+            <div id="githubdiv" class="checkbox abc-checkbox info"
+                 style="display: inline-block; visibility: hidden">
+              <input id="usegithub" class="styled" type="checkbox">
+              <label for="usegithub" id="usegithublab">Use Github Data</label>
+            </div>
             
             <div id="threaddiv" class="checkbox abc-checkbox info" style="display: inline-block">
               <input id="usethread" class="styled" type="checkbox">

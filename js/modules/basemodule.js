@@ -85,9 +85,9 @@ class BaseModule {
         let name=this.name;
         
         return new Promise( (resolve,reject) => { 
-            self.directInvokeAlgorithm(fullparams).then( () => {
+            self.directInvokeAlgorithm(fullparams).then( (m) => {
                 self.storeCommentsInOutputs(baseutils.getExecutableArguments(name), params, baseutils.getSystemInfo(biswrap));
-                resolve();
+                resolve(m);
             }).catch( (e) => {
                 reject(e);
             });
@@ -415,7 +415,7 @@ class BaseModule {
      * @param{array} params - remaining parameters
      * @returns {Promise}
      */
-    loadInputs(inputparameters = {}) {
+    loadInputs(inputparameters = {},basedirectory='') {
         let p = [];
         let des = this.getDescription();
 
@@ -431,8 +431,8 @@ class BaseModule {
                 return null;
             }
             if (required || inpname !== null) {
-                console.log('.... Queuing reading of ' + objtype + ' ' + name + ' from: ' + inpname);
-                p.push(this.loadSingleInput(name, inpname, objtype));
+                console.log('.... Queuing reading of ' + objtype + ' ' + name + ' from: ' + basedirectory+inpname);
+                p.push(this.loadSingleInput(name, basedirectory+inpname, objtype));
             }
         });
 
