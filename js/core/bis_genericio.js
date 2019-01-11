@@ -634,13 +634,6 @@ let runFileConversion = (params) => {
     });
 };
 
-let rundcm2nii = (indir, dstdir, done, listen = console.log) => {
-    console.log('indir', indir, 'outdir', dstdir);
-    let cmd = dcm2nii + ' -z y ' + ' -o ' + dstdir + ' -ba y -c bisweb ' + indir;
-    biscmdline.executeCommand(cmd, __dirname, done, listen);
-    return;
-};
-
 /**
  * Splits a filename concatenated by the symbol '&&' into two names.
  * 
