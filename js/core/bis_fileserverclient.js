@@ -771,9 +771,9 @@ class BisFileServerClient extends BisBaseServerClient {
                 reject();
             };
             
-            let serverEvent=bisasyncutil.addServerEvent(res,rej,'dicomConversion');
-            this.sendCommand({ 'command' : 'dicomConversion',
-                               'operation' : 'dicomConversion',
+            let serverEvent=bisasyncutil.addServerEvent(res,rej,'runModule');
+            this.sendCommand({ 'command' : 'runModule',
+                               'operation' : 'Running a module',
                                'indir' : indir,
                                'debug' : debug,
                                'id' : serverEvent.id,

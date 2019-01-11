@@ -22,7 +22,8 @@ const universalmodules=require('moduleindex');
 
 const moduleImports = {
     'infomodule': require('./infomodule.js'),
-    'bisserver' : require('./fileservermodule.js')
+    'bisserver' : require('./fileservermodule.js'),
+    'dicommodule' : require('./dicommodule.js')
 };
 
 let moduleNames=universalmodules.createModuleNames(moduleImports);
