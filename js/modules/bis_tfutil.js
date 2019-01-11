@@ -486,7 +486,7 @@ class BisWebTensorFlowRecon {
 /** if tf module is not set try to set it 
  * @returns{Boolean} -- success or failure to initialize 
  */
-let initializeTFModule=function() {
+let initializeTFModule=function(forcebrowser=false) {
 
     let environment=bisgenericio.getmode();
 
@@ -496,8 +496,19 @@ let initializeTFModule=function() {
             resolve('Using preloaded module: '+tfjsModule.getMode());
             return;
         }
+
+        if (environment === 'electron') {
+            if (window.BISELECTRON.tf !== null) {
+                let md=window.BISELECTRON.tfmodulename || 'electron';
+                tfjsModule=new TFWrapper(window.BISELECTRON.tf,md);
+                resolve(md);
+                return;
+            } else {
+                forcebrowser=true;
+            }
+        }
         
-        if (environment === 'browser' ) {
+        if (environment === 'browser'  || (environment==='electron' && forcebrowser===true)) {
             
             if (window.tf) {
                 tfjsModule=new TFWrapper(window.tf,'loaded from script');
@@ -518,17 +529,10 @@ let initializeTFModule=function() {
             });
             
             document.head.appendChild(apiTag);
-            
             return;
-        } else if (environment === 'electron') {
-            if (window.BISELECTRON.tf !== null) {
-                let md=window.BISELECTRON.tfmodulename || 'electron';
-                tfjsModule=new TFWrapper(window.BISELECTRON.tf,md);
-                resolve(md);
-            } else {
-                reject('No TF Module Available');
-            }
-        } else if (environment === 'node') {
+        }
+
+        if (environment === 'node') {
             try {
                 let tf=require("@tensorflow/tfjs");
                 require('@tensorflow/tfjs-node');
@@ -556,6 +560,9 @@ let getTFJSModule=function() { return tfjsModule; };
 let fixModelName=function(md) {
 
     let environment=bisgenericio.getmode();
+
+    if (md.indexOf('http')===0)
+        return md;
     
     if (environment === 'browser')  {
         let getScope=() => {

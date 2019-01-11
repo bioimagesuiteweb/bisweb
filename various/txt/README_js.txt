@@ -1,8 +1,7 @@
 This distribution contains JavaScript command-line applications that are part
 of the BioImage Suite Web package. See the LICENSE file in this directory for more information.
 
-Before you do anything else you must install Node.js version 8 (ideally 8.9.x
-or newer). We have not tested with Node.js v9 or v10. You may obtain this from https://nodejs.org/en/
+Before you do anything else you must install Node.js version 10.x. You may obtain this from https://nodejs.org/en/
 
 To run the scripts
 
@@ -23,6 +22,4 @@ winbin if on MS-WINDOWS, directory.) As an example to run the smooth image
 script (and get its help page) type:
 
    bw_smoothImage -h
-
-
 

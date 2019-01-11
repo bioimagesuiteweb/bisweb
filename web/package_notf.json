@@ -1,0 +1,13 @@
+{
+    "name": "bioimagesuitewebelectron",
+    "version": "1.1.1",
+    "license": "GPL",
+    "homepage": "http//www.bioimagesuite.org",
+    "description": "The Electron version of BioImageSuite Web",
+    "main": "biselectron.js",
+    "dependencies": {
+        "electron-debug": "^1.0.1",
+        "glob": "^7.1.1",
+        "rimraf": "2.6.2"
+    }
+}
