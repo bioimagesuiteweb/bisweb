@@ -30,7 +30,7 @@ const assert = require("assert"),
       fs = require('fs'),
       util =require('bis_util');
 
-const modules = require('moduleindex.js');
+const modules = require('nodemoduleindex.js');
 const githuburl='https://bioimagesuiteweb.github.io/test/';
 const githuburlfile='https://bioimagesuiteweb.github.io/test/module_tests.json';
 const getTime=util.getTime;
@@ -90,7 +90,7 @@ let get_testlist=function(testfilename)  {
 
     return new Promise( (resolve,reject) => {
         
-        console.log(getTime()+" "+colors.green("\t Reading",testfilename));
+        console.log(getTime()+" "+colors.yellow("\t Reading",testfilename));
         
         if (testfilename.indexOf('http')!==0) {
             let testfile= fs.readFileSync(testfilename, 'utf-8');
@@ -173,22 +173,28 @@ let fixBounds=function(first_test,last_test,testlist) {
 let list_modules_and_exit=function(testlist) {   
     
     let foundmodule = {};
-    let modulelist = Object.keys(modules.moduleNamesArray);
+    let modulelist = modules.getModuleNames();
+    
     for (let i=0;i<modulelist.length;i++)  {
-        foundmodule[modulelist[i]]=[];
+        foundmodule[modulelist[i].toLowerCase()]=[];
     }
         
     for (let i=0;i<testlist.length;i++) {
         let tname=testlist[i].command.split(" ")[0].toLowerCase();
-        foundmodule[tname].push(i);
+        try {
+            foundmodule[tname].push(i);
+        } catch(e) {
+            console.log("Error ",e,tname,i);
+            process.exit(0);
+        }
     }
     
     for (let i=0;i<modulelist.length;i++)  {
         let lst=foundmodule[modulelist[i]];
         if (lst.length>0) {
-            console.log('module='+modulelist[i]+' numtests='+lst.length+' ('+lst.join(',')+')');
+            console.log('\t module '+colors.green(modulelist[i])+', numtests='+lst.length+' ('+lst.join(',')+')');
         } else {
-            console.log('module='+modulelist[i]+' H A S  N O  T E S T S.');
+            console.log('\t module '+colors.red(modulelist[i])+'\t\t H A S  N O  T E S T S.');
         }
     }
     process.exit(0);

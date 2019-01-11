@@ -18,7 +18,7 @@
 "use strict";
 
 const program = require('commander');
-const modules = require('moduleindex.js');
+const modules = require('nodemoduleindex.js');
 const BisWebDataObjectCollection = require('bisweb_dataobjectcollection.js');
 const baseutils = require('baseutils');
 const genericio=require('bis_genericio');
@@ -30,7 +30,7 @@ const boldoff = "";
 let initialError = function (extra) {
     console.log(`${extra}\nUsage: bisweb modulename [ options ].\n`);
     console.log(` Type 'node bisweb [function name] --help' for more information`);
-    let outstring = Object.keys(modules.moduleNamesArray).join("\n");
+    let outstring = modules.getModuleNames().join("\n");
 
     console.log('\tThe list of available modules is :\n', outstring);
 };

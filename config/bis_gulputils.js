@@ -489,9 +489,9 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
 
         let newappdir;
         if (n==='darwin')
-            newappdir=appdir+'/BioImageSuiteWeb.app/Contents/Resources/app'
+            newappdir=appdir+'/BioImageSuiteWeb.app/Contents/Resources/app';
         else
-            newappdir=appdir+'/resources/app'
+            newappdir=appdir+'/resources/app';
 
 
         // Cleanup useless files before we electron package
