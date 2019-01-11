@@ -610,14 +610,14 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
     // Step 1 copy file
     // make directories
     let odir=path.resolve(path.join(in_outdir,'bisweb'));
-    console.log('.... Deleting ',odir);
+    console.log(colors.red(getTime()+' .... Deleting ',odir));
     try {
         rimraf.sync(odir);
     } catch(e) {
         console.log(e);
     }
 
-    console.log('Making directory',odir);
+    console.log(colors.green(getTime()+' Making directory',odir));
     fs.mkdirSync(odir);
     
     let distDir=path.join(odir,'dist');
@@ -630,7 +630,9 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
                    `${indir}/build/web/jquery.min.js`,
                    `${indir}/build/web/three.min.js`,
                    `${indir}/build/web/bootstrap.min.js`,
-               `${indir}/build/web/bislib.css`,
+                   `${indir}/build/web/bislib.css`,
+                   `${indir}/build/web/exportexample.html`,
+                   `${indir}/build/web/exportexample.js`,
                  ]).pipe(gulp.dest(distDir)),
         gulp.src([ 'node_modules/bootstrap/dist/css/*']).pipe(gulp.dest(distDir+'/css/')),
         gulp.src([ 'node_modules/bootstrap/dist/fonts/*']).pipe(gulp.dest(distDir+'/fonts/')),
@@ -660,7 +662,7 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
         
         let txt=JSON.stringify(obj,null,4)+"\n";
         let output=path.resolve(path.join(odir,"package.json"));
-        console.log('++++ Output = ',output,'\n'+txt+'++++');
+        console.log(getTime()+ '\t package.json = ',output);
         
         try {
             fs.writeFileSync(output,txt);
@@ -673,14 +675,15 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
         
         // step 3
         // Master file
-        let txt2=`window.biswebpack=require('./libbiswasm_wasm.js');\nmodule.exports=require('./bislib.js')();\n`;
+        let txt2=`window.biswebpack=require('./libbiswasm_wasm.js');\nmodule.exports=require('./bislib.js');\n`;
         
-        console.log('++++ Output (2) = \n'+txt2+'++++');
         let output2=path.resolve(path.join(odir,"dist/bioimagesuiteweb.js"));
+        console.log(getTime()+' Creating '+output2);
+
         
         fs.writeFileSync(output2,txt2);
         console.log('++++');
-        console.log('++++ main.js file created in',output2);
+        console.log('++++ main js file created in',output2);
         console.log('++++');
         
         // Step 4 run npm pack
