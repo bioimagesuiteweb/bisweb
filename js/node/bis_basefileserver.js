@@ -5,6 +5,7 @@ const path=require('path');
 const os = require('os');
 const timers = require('timers');
 const util = require('bis_util');
+const exec = require('child_process').exec;
 const bisgenericio=require('bis_genericio');
 const glob=bisgenericio.getglobmodule();
 const bidsutils=require('bis_bidsutils.js');

@@ -17,10 +17,9 @@
 
     'use strict';
 
+    //TODO: store DCM2NIIX for each platform (package dcm2niix appropriately). stringify dcm2niix and store it somewhere on disk, then read it and parse it before using it.
     const BaseModule = require('basemodule.js');
     const baseutils=require("baseutils");
-
-    const exec = require('child_process').exec;
     
     class InfoModule extends BaseModule {
       constructor() {
@@ -61,7 +60,10 @@
             };
         }
     
-    
+        getdcm2niimodule() {
+            return '/usr/bin/dcm2niix';
+        }
+
         directInvokeAlgorithm(vals) {
     
             console.log('oooo invoking: dicommodule with vals', JSON.stringify(vals));
@@ -81,11 +83,7 @@
                 indir=util.filenameUnixToWindows(indir);
             }
             
-
-            exec('which asdf', (err) => {
-                if (err) { console.log('Error: cannot find dcm2niix'); }
-                
-            });
+            let dcm2nii = this.getdcm2niimodule();
             
             if (!this.validateFilename(indir)) {
                 return errorfn(indir+' is not valid');
@@ -118,7 +116,7 @@
             };
     
             console.log('indir', indir, 'outdir', outdir);
-            let cmd = this.opts.dcm2nii + ' -z y ' + ' -o ' + outdir + ' -ba y -c bisweb ' + indir;
+            let cmd = dcm2nii + ' -z y ' + ' -o ' + outdir + ' -ba y -c bisweb ' + indir;
             biscmdline.executeCommand(cmd,__dirname,done,listen);
             return;
 
