@@ -43,6 +43,13 @@ class BaseFileServer {
 
     constructor(opts={}) {
 
+        this.callback=function(status) {
+            if (status)
+                process.exit(0);
+            else
+                process.exit(1);
+        };
+        
         //  .................... Per Connection .......................................................
         //file transfer may occur in chunks, which requires storing the chunks as they arrive
         this.fileInProgress = null;
@@ -54,7 +61,7 @@ class BaseFileServer {
                 cnf=JSON.parse(dat);
             } catch(e) {
                 console.log('Error ',e);
-                process.exit(0);
+                this.callback(true);
             }
         }
 
@@ -122,7 +129,7 @@ class BaseFileServer {
             console.log(JSON.stringify(this.opts,null,4));
             console.log('\n.................................\n');
             if (opts.createconfig)
-                process.exit(0);
+                this.callback(true);
         }
         
 
@@ -515,7 +522,7 @@ class BaseFileServer {
                 this.stopServer(this.netServer);
                 this.netServer.close();
                 this.terminating=true;
-                setTimeout( () => { process.exit(0);},500);
+                setTimeout( () => { this.callback(true);},500);
                 break;
             }
             

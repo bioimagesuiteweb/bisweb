@@ -20,17 +20,30 @@
 /*global describe, it, before,after */
 "use strict";
 
-require('../config/bisweb_pathconfig.js');
-const program=require('commander');
+console.log('++++++++++++++++++++++++++++++++++++++++++++++++');
+
+global.bioimagesuiteweblib=false;
+let bisweb=null;
+
+try {
+    bisweb=require('../js/bin/bioimagesuiteweblib');
+} catch(e) {
+    bisweb=require('../lib/bioimagesuiteweblib');
+}
+
 const assert = require("assert"),
       colors=require('colors/safe'),
-      bisnodecmd = require("bis_commandlineutils"),
-      genericio=require('bis_genericio'),
       path = require('path'),
-      fs = require('fs'),
-      util =require('bis_util');
+      fs = require('fs');
 
-const modules = require('nodemoduleindex.js');
+const program= bisweb.commander,
+      bisnodecmd = bisweb.bisnodecmd,
+      genericio=bisweb.genericio,
+      util = bisweb.bisutil,
+      modules = bisweb.nodemodules;
+
+
+
 const githuburl='https://bioimagesuiteweb.github.io/test/';
 const githuburlfile='https://bioimagesuiteweb.github.io/test/module_tests.json';
 const getTime=util.getTime;

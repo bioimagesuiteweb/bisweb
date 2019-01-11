@@ -162,7 +162,6 @@ let internal = {
     webworkerlib  : 'webworkermain.js',
     serveroptions : { },
     setwebpackwatch : 0,
-    serverscripts : [ 'bisfileserver.js', 'bis_tf_recon.js' ],
 };
 
 
@@ -457,51 +456,6 @@ gulp.task('commonfiles', (done) => {
     });
 });
 
-gulp.task('createserverscripts', async function () { 
-    
-    let scripts=internal.serverscripts;
-    
-    for (let i=0;i<scripts.length;i++) {
-    
-        let inp=path.normalize(path.join(__dirname,path.join('js',path.join('bin',scripts[i]))));
-        let cfg=path.normalize(path.join(__dirname,path.join('config','app.config.js')));
-        let out=path.normalize(path.join(__dirname,
-                                         path.join(options.outdir,
-                                                   path.join('..',
-                                                             path.join('wasm','lib')))));
-        let cmd=` webpack-cli --entry ${inp} --config ${cfg} --output-path ${out} --output-filename ${scripts[i]}`;
-        console.log('Command=',cmd);
-        await bis_gutil.executeCommandPromise(cmd,__dirname);
-        let url=path.join(out,scripts[i]);
-        let stats = fs.statSync(url);
-        let bytes = stats["size"];
-        console.log('____ saved in '+url+' (size='+bytes+')');
-    }
-    return Promise.resolve();
-});
-
-gulp.task('packageserverscripts', (done)=> { 
-
-    const gulpzip = require('gulp-zip'),
-          rename = require('gulp-rename');
-          
-    gulp.src(['./build/wasm/lib/bisfileserver.js',
-              './build/wasm/lib/bis_tf_recon.js',
-              './js/bin/server/example-server-config.json',
-              './js/bin/server/package.json',
-              './js/bin/server/README.md'
-             ]).
-        pipe(rename({dirname: 'biswebserver'})).
-        pipe(gulpzip(path.join(options.outdir,'server.zip'))).
-        pipe(gulp.dest('.')).on('end', () => {
-            let url=path.resolve(path.join(options.outdir,'server.zip'));
-            let stats = fs.statSync(url);
-            let bytes = stats["size"];
-            let kbytes=Math.round(bytes/(1024)*10)*0.1;
-            console.log('____ zip file created in '+url+' (size='+kbytes+' KB)');
-            done();
-        });
-});
 
 gulp.task('tools', ( (cb) => {
     
@@ -600,10 +554,8 @@ gulp.task('buildint', gulp.series('commonfiles','tools','buildtest'));
 
 gulp.task('build',gulp.parallel(
     'webpack',
-    gulp.series('commonfiles','tools'),
-    gulp.series(gulp.parallel('buildtest',
-                              'createserverscripts'),
-                'packageserverscripts')));
+    gulp.series('commonfiles','tools','buildtest'),
+));
 
 
 

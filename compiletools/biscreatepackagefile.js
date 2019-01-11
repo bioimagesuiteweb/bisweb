@@ -66,6 +66,16 @@ let obj = {
     "author": "Xenios Papademetris",
     "license": "GPL V2 (most source code is Apache V2)",
     "bin" : "lib/bisweb.js",
+    "dependencies": {
+        "colors": "1.1.2",
+        "commander": "2.16.0",
+        "http-proxy": "1.17.0",
+        "request": "2.88.0",
+        "rimraf": "2.6.2",
+        "tmp": "0.0.33",
+        "websocket-stream": "5.1.2",
+        "ws": "6.1.2"
+    },
     "repository": {
         "type" : "git",
         "url" : "https://github.com/bioimagesuiteweb/bisweb"

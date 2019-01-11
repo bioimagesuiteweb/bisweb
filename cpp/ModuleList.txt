@@ -39,4 +39,5 @@ smoothImage
 thresholdImage
 defaceImage
 tfRecon
+bisserver
 
