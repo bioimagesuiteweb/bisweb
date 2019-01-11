@@ -194,6 +194,7 @@ if (output === "bislib.js" || output ==="index.js") {
         mode : 'development',
         target : "web",
         externals: {
+            'request' : 'console.log',      // ignore this
             "@tensorflow/tfjs" : "console.log", // ignore tensor flow it will come from outside
             "@tensorflow/tfjs-node" : "console.log", // ignore tensor flow it will come from outside
             "@tensorflow/tfjs-node-gpu" : "console.log" // ignore tensor flow it will come from outside
