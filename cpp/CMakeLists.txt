@@ -217,7 +217,7 @@ ELSE (BIS_USEGPL)
 ENDIF (BIS_USEGPL)
 
 install (FILES ${LICENSE_FILE} DESTINATION bisweb/ RENAME LICENSE)
-
+install (DIRECTORY ${PROJECT_SOURCE_DIR}/../various/serverconfig  DESTINATION bisweb )
 install (FILES ${PROJECT_SOURCE_DIR}/../web/images/mean_reg2mean.nii.gz DESTINATION bisweb/images)
 install (FILES ${PROJECT_SOURCE_DIR}/../web/images/facemask_char.nii.gz DESTINATION bisweb/images)
 
@@ -403,17 +403,8 @@ IF (BIS_A_EMSCRIPTEN)
 
   GET_FILENAME_COMPONENT(WEBPCONFIG ${PROJECT_SOURCE_DIR}/../config/app.config.js ABSOLUTE)
   
-  SET (OUTSCRIPT test_module.js)
   SET (INSCRIPT ${PROJECT_SOURCE_DIR}/../test/test_module.js)
-  
-  GET_FILENAME_COMPONENT(INSCRIPT ${INSCRIPT} ABSOLUTE)
-  add_custom_command(OUTPUT ${OUTSCRIPT}
-    DEPENDS ${MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JSFILES}  ${LIBNAME} ${INSCRIPT} ${JS_WRAP_OUTPUT} ${WEBPACK_WASM_MODULE}
-    PRE_BUILD COMMENT "Creating webpack-cli test_module.js"
-    COMMAND webpack-cli --entry ${INSCRIPT} --config ${WEBPCONFIG} --output-path ${LIBRARY_OUTPUT_PATH} --output-filename test_module.js
-    )
-  add_custom_target(module_test ALL DEPENDS ${OUTSCRIPT})
-  install (FILES ${PROJECT_BINARY_DIR}/lib/${OUTSCRIPT} DESTINATION bisweb/test
+  install (FILES ${INSCRIPT} DESTINATION bisweb/test
     PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
   
 ELSE(BIS_A_EMSCRIPTEN)

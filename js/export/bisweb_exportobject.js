@@ -2,7 +2,7 @@
 
 "use strict";
 
-
+const bisutil = require('bis_util');
 const genericio = require('bis_genericio');
 const moduleindex=require('moduleindex');
 const bistfutil=require('bis_tfutil');
@@ -70,6 +70,7 @@ module.exports= {
     
     /** Just list of modules being reexported */
     // Low level code
+    bisutil : bisutil,
     genericio : genericio,
     // Bisweb info
     bisdate : bisdate,
@@ -85,6 +86,7 @@ module.exports= {
     BisWebTransformationCollection :     BisWebTransformationCollection,
     // Tensor Flow
     bistfutil: bistfutil
+    
 };
 
 

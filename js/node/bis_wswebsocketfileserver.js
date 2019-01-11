@@ -152,8 +152,11 @@ class BisWSWebSocketFileServer extends BaseFileServer {
      * @param {Boolean} datatransfer - if true this is a data transfer server
      * @returns A Promise
      */
-    startServer(hostname='localhost', externalport=globalInitialServerPort, datatransfer = true) {
+    startServer(hostname='localhost', externalport=globalInitialServerPort, datatransfer = true, callback=null) {
 
+
+        if (callback)
+            this.callback=callback;
         
         return new Promise ( (resolve,reject) => {
             

@@ -617,8 +617,8 @@ const webfileutils = {
                 let extra="";
                 if (enableserver) {
                    extra=`
-                        <HR><p>You may download the bisweb fileserver <a href="server.zip" target="_blank" rel="noopener">from this link</a>. 
-                        Use with care. This requires <a href="https://nodejs.org/en/download/" target="_blank" rel="noopener">node.js vs 8.x</a>
+                        <HR><p>You may download the bisweb fileserver using npm. Type <B>npm install biswebnode</B>. Once this is installed look into the <B>biswebnode/serverconfig</B> directory for instructions.
+                        Use with care. This requires <a href="https://nodejs.org/en/download/" target="_blank" rel="noopener">node.js vs 10.x</a>
                         </p>`;
                 }
                 
