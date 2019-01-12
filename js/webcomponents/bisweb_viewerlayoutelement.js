@@ -23,15 +23,20 @@
 const $=require('jquery');
 const webutil=require('bis_webutil');
 const THREE = require('three');
+const volrenutils = require('bis_3dvolrenutils');
+
 
 var detectWebGL = function() {
-    try { 
-        var canvas = document.createElement( 'canvas' ); 
-        return !! ( window.WebGLRenderingContext && ( canvas.getContext( 'webgl' ) || canvas.getContext( 'experimental-webgl' ) ) ); 
-    } catch( e ) { 
-        console.log("WEB GL is not available");
-    }
-    return false;
+
+    let iswebgl2= volrenutils.WEBGL.isWebGL2Available();
+    if (iswebgl2)
+        return 2;
+    
+    let iswebgl=  volrenutils.WEBGL.isWebGLAvailable();
+    if (iswebgl)
+        return 1;
+
+    return 0;
 };
 
 
@@ -69,6 +74,7 @@ var detectWebGL = function() {
  *     bis-minimizedockpanel : if 1 the dock panel is minimized to a narrow column
  *     bis-defaulttext : text to draw in. If length > 10 and first character is not space then sets "simple mode"
  *     bis-dualmode : if 1 then operates in dual mode
+ *     bis-webgl   : if 2 then use webgl2 (if possible)
  */
 class ViewerLayoutElement extends HTMLElement {
 
@@ -83,6 +89,7 @@ class ViewerLayoutElement extends HTMLElement {
         this.verticalLinesX=[null,null];
         this.fixed=0;
         this.noresize=0;
+        this.webgl2=false;
     }
 
     getCSSLength(n='width') {
@@ -250,6 +257,11 @@ class ViewerLayoutElement extends HTMLElement {
         this.overlaycontext=null;
         this.domElement=$(this);
 
+
+        let webgl2=parseInt(this.getAttribute('bis-webgl') || 1);
+        if (webgl2===2) {
+            this.webgl2=true;
+        }
         
         $(this).css({
             '-webkit-user-select': 'none',
@@ -282,13 +294,16 @@ class ViewerLayoutElement extends HTMLElement {
             coreopen=false;
         else
             coreopen=true;
+
+        let webglversion=detectWebGL();
+        console.log('++++ WEBGL Version=',webglversion,this.webgl2);
         
-        if (detectWebGL() === false) {
-            var a=$("<div><B> Your Browser does not support WebGL or it is not enabled.<BR> <BR> This viewer can not function without WebGL support.</B><BR><HR><BR></div>");
-            var b=$("<div>If using Safari on MacOS do: <BR><BR><OL><LI>Open the Safari menu and select Preferences.</LI><LI>Click the Advanced tab in the Preferences window.</LI><LI>Then, at the bottom of the window, check the Show Develop menu in menu bar checkbox.</LI><LI>Then, open the Develop menu in the menu bar and select Enable WebGL.</LI></OL></div>");
-            this.domElement.append(a);
-            this.domElement.append(b);
-            return null;
+        if (webglversion<1) {
+            webutil.createAlert('Your browser does not support WEBGL (even v1).<BR> We can not proceeed.<BR> Try using a modern web browser.', true);
+        } else if (this.webgl2===true  && webglversion<2) {
+            let link=`<a target="_blank" rel="noopener" href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" style="color:#000">WebGL v2</a>`;
+            webutil.createAlert(`Your browser does not support ${link}.<BR> Some features (e.g. volume rendering) will not be available.<BR>Please switch to a modern version of chrome (or firefox).`, true);
+            this.webgl2=false;
         }
         
         this.elements = {
@@ -394,13 +409,22 @@ class ViewerLayoutElement extends HTMLElement {
         this.elements.canvasbase.append(this.canvas);
         this.elements.canvasbase.append(this.overlaycanvas);
         // create 3d renderer
-        this.renderer = new THREE.WebGLRenderer({alpha:true});
+
+
+        console.log('Webgl2=',this.webgl2);
+        if (this.webgl2) {
+            let canvas = document.createElement( 'canvas' );
+            let context = canvas.getContext( 'webgl2' );
+            this.renderer = new THREE.WebGLRenderer( { canvas: canvas, context: context, alpha : true } );
+            console.log('This.renderer=',this.renderer,'webgl2');
+        } else {
+            this.renderer = new THREE.WebGLRenderer({alpha:true});
+        }
         this.renderer.shadowMap.Enabled = true;
         this.renderer.setClearColor(0x000000, 0.0);
-        
         this.renderer.autoClear = false;
         this.elements.rendererbase.append(this.renderer.domElement);
-
+        
         const self=this;
         this.context.font="28px Arial";
         this.context.fillStyle = "#888888";

@@ -121,6 +121,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         };
         this.internal.displaymodes=null;
         this.setObjectMapFunction=null;
+        this.volumeRendering=false;
     }
     
     /** get the coordinates of the overlay given current image coordinates.
@@ -203,16 +204,19 @@ class OrthogonalViewerElement extends BaseViewerElement {
      * @param {number} depth - a characteristic depth of the image to set default camera thickness (e.g. 2.0*max image dimension in mm)
      * @returns {Bis_SubViewer} the subviewer collection object
      */
-    createcardview(ren,vol,cardslice,width,depth ) {
+    create3dview(ren,vol,cardslice,width,depth ) {
         
         var scene = new THREE.Scene();
         var light = new THREE.AmbientLight(0xffffff);
         scene.add(light);
         scene.doubleSided=true;
         
-        cardslice.addtoscene(scene);
-        
+
         var camera = new THREE.OrthographicCamera(-width,width,-width,width,0.01,2.0*depth);
+        
+        cardslice.addtoscene(scene,ren,camera);
+        
+
         var lkv=cardslice.positioncamera(camera);
         
         var controls = new BISCameraControls(camera,3,lkv,ren.domElement);
@@ -239,6 +243,25 @@ class OrthogonalViewerElement extends BaseViewerElement {
             camera : camera,
             controls : controls,
         };
+    }
+
+
+    /** create the 3d element */
+    create3DElement(volume,slices,decorations,transparent,drawimages) {
+
+        if (this.volumeRendering===false) {
+            return bis3dOrthogonalSlice.create3cardslice(volume,
+                                                         slices,
+                                                         decorations,
+                                                         transparent,
+                                                         drawimages);
+        } else {
+            return bis3dOrthogonalSlice.create3dvolume(volume,
+                                                       slices,
+                                                       decorations,
+                                                       transparent,
+                                                       drawimages,dat);
+        }
     }
     
     // ------------------------------------------------------------------------------------
@@ -380,6 +403,9 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 this.internal.overlayslices[3].updatecoordinatesinmm(this.internal.slices[pl],pl);
             }
         }
+        if (this.internal.overlayslices[3]!==null) {
+            this.internal.overlayslices[3].updateColormap(this.internal.objectmapfunction);
+        }
     }
     
     /** main update function -- updates slice views then calls updateobjectmapdisplay and drawcrosshairs
@@ -430,10 +456,15 @@ class OrthogonalViewerElement extends BaseViewerElement {
                                                                                  this.internal.imagetransferfunction);
                 this.internal.slices[pl].updatecameraclip(this.internal.subviewers[pl].camera,
                                                           this.internal.maxspa*0.5);
+
                 if (old[pl]!==this.internal.slicecoord[pl]) {
                     this.internal.slices[3].updatecoordinates(pl);
                 }
             }
+
+            this.internal.slices[3].updateColormap(this.internal.imagetransferfunction);
+                
+
             this.updateobjectmapdisplay();
             this.drawcrosshairs();
         }
@@ -1094,12 +1125,14 @@ class OrthogonalViewerElement extends BaseViewerElement {
         let drawimages=true;
         if (this.internal.simplemode)
             drawimages=false;
-        this.internal.slices[3]=bis3dOrthogonalSlice.create3cardslice(this.internal.volume,
-                                                                      this.internal.slices,true,
-                                                                      false,drawimages);
+        this.internal.slices[3]=this.create3DElement(this.internal.volume,
+                                                     this.internal.slices,true,
+                                                     false,drawimages);
         if (samesize===false) {
-            this.internal.subviewers[3]=this.createcardview(this.internal.layoutcontroller.renderer,
-                                                            this.internal.volume,this.internal.slices[3],s_width,s_depth);
+            this.internal.subviewers[3]=this.create3dview(this.internal.layoutcontroller.renderer,
+                                                            this.internal.volume,
+                                                            this.internal.slices[3],
+                                                            s_width,s_depth);
         } else {
             this.internal.slices[3].addtoscene(this.internal.subviewers[3].scene);
         }                
@@ -1216,11 +1249,11 @@ class OrthogonalViewerElement extends BaseViewerElement {
         if (this.internal.simplemode)
             drawimages=false;
         
-        this.internal.overlayslices[3]=bis3dOrthogonalSlice.create3cardslice(this.internal.volume,
-                                                                             this.internal.overlayslices,
-                                                                             true,
-                                                                             true,
-                                                                             drawimages);
+        this.internal.overlayslices[3]=this.create3DElement(this.internal.volume,
+                                                            this.internal.overlayslices,
+                                                            true,
+                                                            true,
+                                                            drawimages);
         for (i=0;i<=2;i++) {
             this.internal.overlayslices[3].updatecoordinatesinmm(this.internal.slices[i],i);
         }
@@ -1595,6 +1628,11 @@ class OrthogonalViewerElement extends BaseViewerElement {
 
     connectedCallback() {
         super.connectedCallbackBase();
+        let volren=this.getAttribute('bis-volumerendering');
+        if (volren)
+            this.volumeRendering=true;
+        else
+            this.volumeRendering=false;
     }
 
     

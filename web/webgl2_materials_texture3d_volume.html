@@ -151,8 +151,8 @@
 					gray: new THREE.TextureLoader().load( 'https://threejs.org/examples/textures/cm_gray.png', render )
 				};
 
-        setTimeout( ()=> {
-                 console.log("gray=",cmtextures.gray);
+setTimeout( ()=> {
+console.log("gray=",cmtextures.gray);
         },1000);
         
 				// Material
@@ -164,9 +164,10 @@
 				uniforms.u_size.value.set( volume.xLength, volume.yLength, volume.zLength );
 				uniforms.u_clim.value.set( volconfig.clim1, volconfig.clim2 );
 				uniforms.u_renderstyle.value = volconfig.renderstyle == 'mip' ? 0 : 1; // 0: MIP, 1: ISO
-				uniforms.u_renderthreshold.value = volconfig.isothreshold; // For ISO renderstyle
+                uniforms.u_renderthreshold.value = volconfig.isothreshold; // For ISO renderstyle
 		        uniforms.u_cmdata.value = cmtextures[ volconfig.colormap ];
 
+               console.log('Uniforms=',JSON.stringify(uniforms,null,2));
 				material = new THREE.ShaderMaterial( {
 					uniforms: uniforms,
 					vertexShader: shader.vertexShader,
@@ -174,7 +175,7 @@
 					side: THREE.BackSide // The volume shader uses the backface as its "reference point"
 				} );
 
-				// Mesh
+// Mesh
 				var geometry = new THREE.BoxBufferGeometry( volume.xLength, volume.yLength, volume.zLength );
 				geometry.translate( volume.xLength / 2 - 0.5, volume.yLength / 2 - 0.5, volume.zLength / 2 - 0.5 );
 
