@@ -39,6 +39,7 @@ const THREE = require('three');
 const util=require('bis_util');
 const BisImageSlicer= require('bis_imageslicer');
 const BIS3dImageSliceGeometry=require('bis_3dimageslicegeometry');
+const BIS3dImageVolumeGeometry=require('bis_3dimagevolumegeometry');
 const volrenutils=require('bis_3dvolrenutils');
 const $=require('jquery');
 
@@ -790,8 +791,8 @@ exportobj.create3dvolume=function(image,in_slices,decorations,transparent,imagep
     let internal = {
         slices : in_slices,
         volumebox : null,
-        box: [ null,null,null,null,null,null ],
-        hasdecorations : false, //decorations || false,
+        box: [ null,null,null,null,null,null,null ],
+        hasdecorations : decorations,
         hasimageplane : imageplane,
         istransparent : transparent || false,
         texture : null,
@@ -836,14 +837,42 @@ exportobj.create3dvolume=function(image,in_slices,decorations,transparent,imagep
             // Also see https://www.khronos.org/registry/webgl/specs/latest/2.0/#TEXTURE_TYPES_FORMATS_FROM_DOM_ELEMENTS_TABLE
             // TODO: look the dtype up in the volume metadata
             let dim=image.getDimensions();
+            let spa=image.getSpacing();
 
+            let p_dim=[2,2,2];
+            for (let i=0;i<=2;i++) {
+                while (p_dim[i]<dim[i])
+                    p_dim[i]*=2;
+            }
+
+            let range=image.getIntensityRange();
+            let scale=255.0/(range[1]-range[0]);
+            
+            p_dim= dim;
+            console.log('New Volume = ',p_dim);
+
+            let data=image.getImageData();
+            let p_data=new Uint8Array(p_dim[0]*p_dim[1]*p_dim[2]);
+            let slicesize=dim[0]*dim[1];
+            let p_slicesize=p_dim[0]*p_dim[1];
+            for (let k=0;k<dim[2];k++) {
+                for (let j=0;j<dim[1];j++) {
+                    for (let i=0;i<dim[0];i++) {
+                        let v=data[i+j*dim[0]+k*slicesize];
+                        let y=(v-range[0])*scale;
+                        p_data[i+j*p_dim[0]+k*p_slicesize]=y;
+                    }
+                }
+            }
+                        
+            
             let volume = {
-                xLength : dim[0],
-                yLength : dim[1],
-                zLength : dim[2],
-                data : image.getImageData()
+                xLength : p_dim[0],
+                yLength : p_dim[1],
+                zLength : p_dim[2],
+                data : p_data
             };
-
+            
             internal.volconfig = { clim1: 0, clim2: 1, renderstyle: 'iso', isothreshold: 0.15, colormap: 'viridis' };
             
             var updateUniforms=function() {
@@ -882,10 +911,12 @@ exportobj.create3dvolume=function(image,in_slices,decorations,transparent,imagep
             // TODO: look the dtype up in the volume metadata
             internal.texture = new THREE.DataTexture3D( volume.data, volume.xLength, volume.yLength, volume.zLength );
             internal.texture.format = THREE.RedFormat;
-            internal.texture.minFilter = internal.texture.magFilter = THREE.LinearFilter;
+            internal.texture.minFilter = internal.texture.magFilter = THREE.NearestFilter;//THREE.LinearFilter;
             internal.texture.unpackAlignment = 1;
             internal.texture.needsUpdate = true;
             // internal.texture.type = THREE.FloatType;
+
+            console.log('Texture=',JSON.stringify(internal.texture,null,2));
             
             // Colormap textures
             internal.cmtextures = {
@@ -911,23 +942,31 @@ exportobj.create3dvolume=function(image,in_slices,decorations,transparent,imagep
                 uniforms: uniforms,
                 vertexShader: shader.vertexShader,
                 fragmentShader: shader.fragmentShader,
-                side: THREE.BackSide // The volume shader uses the backface as its "reference point"
+                //                side: THREE.BackSide // The volume shader uses the backface as its "reference point"
             } );
             
             // Mesh
-            let geometry = new THREE.BoxBufferGeometry( volume.xLength, volume.yLength, volume.zLength );
-            //geometry.translate( volume.xLength / 2 - 0.5, volume.yLength / 2 - 0.5, volume.zLength / 2 - 0.5 );
+            let sz=[ 0,0,0];
+            for (let i=0;i<=2;i++) {
+                sz[i]=(p_dim[i]*spa[i]);
+            }
+            let geometry = new BIS3dImageVolumeGeometry(p_dim[0],p_dim[1],p_dim[2]);
+            geometry.scale(spa[0],spa[1],spa[2]);
+            //            console.log(JSON.stringify(geometry,null,2));
+            //            geometry.translate(sz[0]/2,sz[1]/2,sz[2]/2);
+            //            geometry.scale(spa[0],spa[1],spa[2]);
+            //this.addAttribute( 'uv', new THREE.BufferAttribute( uvs, 2 ) );
+            //geometry.scale(sz[0],sz[1],sz[2]);
             internal.volumebox = new THREE.Mesh( geometry, internal.material );
+            internal.box[6]= new THREE.Mesh(geometry,new THREE.MeshBasicMaterial(  {color: 0xffffff, wireframe:true}));
         },
 
         /** clean up all elements (i.e. set them to null)
          * @memberof Bis_3DOrthogonalSlice.Bis3DVolume
          */
         cleanup : function() {
-            for (let i=0;i<=2;i++) {
-                internal.box[2*i]=null;
-                internal.box[2*i+1]=null;
-            }
+            for (let i=0;i<internal.box.length;i++) 
+                internal.box[i]=null;
             internal.volumebox=null;
             internal.texture=null;
         },
@@ -949,10 +988,9 @@ exportobj.create3dvolume=function(image,in_slices,decorations,transparent,imagep
                     internal.renderer.render( internal.scene, internal.camera );
             }
             
-            for (let i=0;i<=2;i++) {
+            for (let i=0;i<internal.box.length;i++) {
                 if (internal.hasdecorations) {
-                    scene.add(internal.box[2*i]);
-                    scene.add(internal.box[2*i+1]);
+                    scene.add(internal.box[i]);
                 }
             }
         },
