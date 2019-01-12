@@ -24,6 +24,7 @@ const THREE = require('three');
 const util=require('bis_util');
 const BISCameraControls = require('bis_3dorthographiccameracontrols');
 const bis3dOrthogonalSlice=require('bis_3dorthogonalslice');
+const bis3dVolume=require('bis_3dvolume');
 const bisCrossHair=require('bis_3dcrosshairgeometry');
 const webutil=require('bis_webutil');
 const $=require('jquery');
@@ -122,6 +123,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         this.internal.displaymodes=null;
         this.setObjectMapFunction=null;
         this.volumeRendering=false;
+        this.internal.origin=null;
     }
     
     /** get the coordinates of the overlay given current image coordinates.
@@ -233,9 +235,9 @@ class OrthogonalViewerElement extends BaseViewerElement {
         var wd=this.internal.imagespa[0] * 4;
         
         if (!this.internal.simplemode) {
-            var origin=new THREE.Mesh(bisCrossHair.createcrosshair(wd,this.internal.imagespa[0],false), 
+            this.internal.origin=new THREE.Mesh(bisCrossHair.createcrosshair(wd,this.internal.imagespa[0],false), 
                                       new THREE.MeshBasicMaterial( {color: 0xffffff, wireframe:false}));
-            scene.add(origin);
+            scene.add(this.internal.origin);
         }
         
         return {
@@ -247,7 +249,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
 
 
     /** create the 3d element */
-    create3DElement(volume,slices,decorations,transparent,drawimages) {
+    create3DElement(volume,slices,decorations,transparent,drawimages,isoverlay=false) {
 
         if (this.volumeRendering===false) {
             return bis3dOrthogonalSlice.create3cardslice(volume,
@@ -256,11 +258,12 @@ class OrthogonalViewerElement extends BaseViewerElement {
                                                          transparent,
                                                          drawimages);
         } else {
-            return bis3dOrthogonalSlice.create3dvolume(volume,
-                                                       slices,
-                                                       decorations,
-                                                       transparent,
-                                                       drawimages,dat);
+            return bis3dVolume(volume,
+                               slices,
+                               decorations,
+                               transparent,
+                               drawimages,
+                               isoverlay);
         }
     }
     
@@ -444,6 +447,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
             this.internal.slicecoord[3]=sl[3];
             if (plane>=0 && plane<=2) 
                 sl[plane]=this.internal.slicecoord[plane];
+
+
             
             var old=[0,0,0],pl=0;
             for (pl=0;pl<=2;pl++) {
@@ -462,9 +467,15 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 }
             }
 
-            this.internal.slices[3].updateColormap(this.internal.imagetransferfunction);
+            if (this.internal.slices[3]) {
+                this.internal.slices[3].updateColormap(this.internal.imagetransferfunction);
+                this.internal.slices[3].showdecorations(this.internal.showdecorations);
+            }
+            if (this.internal.origin)
+                this.internal.origin.visible=this.internal.showdecorations;
+            
                 
-
+            
             this.updateobjectmapdisplay();
             this.drawcrosshairs();
         }
@@ -1130,9 +1141,9 @@ class OrthogonalViewerElement extends BaseViewerElement {
                                                      false,drawimages);
         if (samesize===false) {
             this.internal.subviewers[3]=this.create3dview(this.internal.layoutcontroller.renderer,
-                                                            this.internal.volume,
-                                                            this.internal.slices[3],
-                                                            s_width,s_depth);
+                                                          this.internal.volume,
+                                                          this.internal.slices[3],
+                                                          s_width,s_depth);
         } else {
             this.internal.slices[3].addtoscene(this.internal.subviewers[3].scene);
         }                
@@ -1251,9 +1262,10 @@ class OrthogonalViewerElement extends BaseViewerElement {
         
         this.internal.overlayslices[3]=this.create3DElement(this.internal.volume,
                                                             this.internal.overlayslices,
+                                                            false,
                                                             true,
-                                                            true,
-                                                            drawimages);
+                                                            drawimages,
+                                                            true);
         for (i=0;i<=2;i++) {
             this.internal.overlayslices[3].updatecoordinatesinmm(this.internal.slices[i],i);
         }
