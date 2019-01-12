@@ -791,7 +791,7 @@ exportobj.create3dvolume=function(image,in_slices,decorations,transparent,imagep
     let internal = {
         slices : in_slices,
         volumebox : null,
-        box: [ null,null,null,null,null,null,null ],
+        box: [ null,null,null,null,null,null ],
         hasdecorations : decorations,
         hasimageplane : imageplane,
         istransparent : transparent || false,
@@ -873,7 +873,7 @@ exportobj.create3dvolume=function(image,in_slices,decorations,transparent,imagep
                 data : p_data
             };
             
-            internal.volconfig = { clim1: 0, clim2: 1, renderstyle: 'iso', isothreshold: 0.15, colormap: 'viridis' };
+            internal.volconfig = { clim1: 0, clim2: 1, renderstyle: 'iso', isothreshold: 0.15, colormap: 'gray' };
             
             var updateUniforms=function() {
                 
@@ -955,13 +955,9 @@ exportobj.create3dvolume=function(image,in_slices,decorations,transparent,imagep
             }
             let geometry = new BIS3dImageVolumeGeometry(p_dim[0],p_dim[1],p_dim[2]);
             geometry.scale(spa[0],spa[1],spa[2]);
-            //            console.log(JSON.stringify(geometry,null,2));
-            //            geometry.translate(sz[0]/2,sz[1]/2,sz[2]/2);
-            //            geometry.scale(spa[0],spa[1],spa[2]);
-            //this.addAttribute( 'uv', new THREE.BufferAttribute( uvs, 2 ) );
-            //geometry.scale(sz[0],sz[1],sz[2]);
+            geometry.translate(-0.5*spa[0],-0.5*spa[1],-0.5*spa[2]);
             internal.volumebox = new THREE.Mesh( geometry, internal.material );
-            internal.box[6]= new THREE.Mesh(geometry,new THREE.MeshBasicMaterial(  {color: 0xffffff, wireframe:true}));
+            //internal.box.push(new THREE.Mesh(geometry,new THREE.MeshBasicMaterial(  {color: 0xffffff, wireframe:true}));
         },
 
         /** clean up all elements (i.e. set them to null)
@@ -986,9 +982,8 @@ exportobj.create3dvolume=function(image,in_slices,decorations,transparent,imagep
             internal.scene=scene;
             if (internal.volumebox) {
                 scene.add(internal.volumebox);
-                console.log('Rendering');
-                if (internal.renderer)
-                    internal.renderer.render( internal.scene, internal.camera );
+                //                if (internal.renderer)
+                //  internal.renderer.render( internal.scene, internal.camera );
             }
             
             for (let i=0;i<internal.box.length;i++) {
@@ -1052,10 +1047,6 @@ exportobj.create3dvolume=function(image,in_slices,decorations,transparent,imagep
          * @returns {BisF.ColorMapperFunction} - function to perform colormapping
          */
         updateColormap : function (transferfunction) {
-            this.count=this.count+1;
-            if (this.count<3)
-                console.log('Updating colormap');
-
             internal.texture.needsUpdate = true;
             // Essentially update texture
             /*
