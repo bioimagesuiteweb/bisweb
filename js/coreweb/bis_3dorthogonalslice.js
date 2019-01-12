@@ -912,8 +912,9 @@ exportobj.create3dvolume=function(image,in_slices,decorations,transparent,imagep
             internal.texture = new THREE.DataTexture3D( volume.data, volume.xLength, volume.yLength, volume.zLength );
             internal.texture.format = THREE.RedFormat;
             internal.texture.minFilter = internal.texture.magFilter = THREE.NearestFilter;//THREE.LinearFilter;
-            internal.texture.unpackAlignment = 1;
+            //internal.texture.unpackAlignment = 1;
             internal.texture.needsUpdate = true;
+            
             // internal.texture.type = THREE.FloatType;
 
             console.log('Texture=',JSON.stringify(internal.texture,null,2));
