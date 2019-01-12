@@ -51,7 +51,7 @@ const volrenutils=require('bis_3dvolrenutils');
  * To create use (no need to `new')
  * var new3card=bis3d_OrthogonalSlice.create3dvolume(volume,slices,decorations,transparent);
  */
-module.exports=function(image,in_slices,decorations,transparent,imageplane,dat) {
+module.exports=function(image,in_slices,decorations,transparent,imageplane,isoverlay) {
     
     if (imageplane!==false)
         imageplane=true;
@@ -66,7 +66,7 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,dat) 
         texture : null,
         uniforms : null,
         renderer : null,
-        dat : dat,
+        isoverlay : isoverlay,
     };
     
     
@@ -157,14 +157,15 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,dat) 
                 }
             };
             
-            let gui = new internal.dat.GUI({autoPlace : false});
-            console.log(gui);
-            gui.add( internal.volconfig, 'clim1', 0, 1, 0.01 ).onChange( updateUniforms );
-            gui.add( internal.volconfig, 'clim2', 0, 1, 0.01 ).onChange( updateUniforms );
-            gui.add( internal.volconfig, 'colormap', { gray: 'gray', viridis: 'viridis' } ).onChange( updateUniforms );
-            gui.add( internal.volconfig, 'renderstyle', { mip: 'mip', iso: 'iso' } ).onChange( updateUniforms );
-            gui.add( internal.volconfig, 'isothreshold', 0, 1, 0.01 ).onChange( updateUniforms );
-
+            /*
+              let gui = new internal.dat.GUI({autoPlace : false});
+              console.log(gui);
+              gui.add( internal.volconfig, 'clim1', 0, 1, 0.01 ).onChange( updateUniforms );
+              gui.add( internal.volconfig, 'clim2', 0, 1, 0.01 ).onChange( updateUniforms );
+              gui.add( internal.volconfig, 'colormap', { gray: 'gray', viridis: 'viridis' } ).onChange( updateUniforms );
+              gui.add( internal.volconfig, 'renderstyle', { mip: 'mip', iso: 'iso' } ).onChange( updateUniforms );
+              gui.add( internal.volconfig, 'isothreshold', 0, 1, 0.01 ).onChange( updateUniforms );
+              */
 
             
             // Texture to hold the volume. We have scalars, so we put our data in the red channel.
@@ -215,11 +216,11 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,dat) 
             for (let i=0;i<=2;i++) {
                 sz[i]=(p_dim[i]*spa[i]);
             }
-            let geometry = new BIS3dImageVolumeGeometry(p_dim[0],p_dim[1],p_dim[2]);
-            geometry.scale(spa[0],spa[1],spa[2]);
-            geometry.translate(-0.5*spa[0],-0.5*spa[1],-0.5*spa[2]);
+            let geometry = new BIS3dImageVolumeGeometry(p_dim,spa);
+            //            geometry.scale(spa[0],spa[1],spa[2]);
+            //            geometry.translate(-0.5*spa[0],-0.5*spa[1],-0.5*spa[2]);
             internal.volumebox = new THREE.Mesh( geometry, internal.material );
-            //internal.box.push(new THREE.Mesh(geometry,new THREE.MeshBasicMaterial(  {color: 0xffffff, wireframe:true}));
+            internal.box.push(new THREE.Mesh(geometry,new THREE.MeshBasicMaterial(  {color: 0xffffff, wireframe:true})));
         },
 
         /** clean up all elements (i.e. set them to null)
@@ -247,9 +248,8 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,dat) 
                 //                if (internal.renderer)
                 //  internal.renderer.render( internal.scene, internal.camera );
             }
-            
-            for (let i=0;i<internal.box.length;i++) {
-                if (internal.hasdecorations) {
+            if (internal.hasdecorations) {
+                for (let i=0;i<internal.box.length;i++) {
                     scene.add(internal.box[i]);
                 }
             }
@@ -266,10 +266,8 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,dat) 
                 scene.remove(internal.volumebox);
 
             if (internal.hasdecorations) {
-                for (let i=0;i<=2;i++) {
-                    scene.remove(internal.box[2*i]);
-                    scene.remove(internal.box[2*i+1]);
-                }
+                for (let i=0;i<internal.box.length;i++) 
+                    scene.remove(internal.box[i]);
             }
         },
 
@@ -300,9 +298,41 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,dat) 
             return internal.slices[i].positioncamera(camera,fromback);
         },
 
-        /** Dummy functions for compatibility with 2D Slice */
+
+        /** Show decorations if true show axis/outline (if they exist) else hide
+         * @memberof Bis_3DOrthogonalSlice.Bis2DImageSlice.prototype
+         * @param {boolean} show - if true show, else hide
+         */
+        showdecorations : function(show) {
+
+            show = show || false;
+            if (internal.hasdecorations) {
+                for (let i=0;i<internal.box.length;i++) {
+                    internal.box[i].visible=show;
+                }
+            }
+        },
+
+        /** dummy function */
         setnexttimeforce : function() { },
-        interpolate : function () { },
+
+        
+        /** Interpoalte texture or not
+         * @memberof Bis_3DOrthogonalSlice.Bis3DVolume.prototype
+         * @param {boolean} dointerpolate - if true interpolate (set texture.minFilter=THREE.LinearFilter) else (texture.minFilter=THREE.NearestFilter);
+         */
+        interpolate : function (dointerpolate) {
+
+            console.log('In vol interpolate');
+            if (internal.texture) {
+                if (dointerpolate) 
+                    internal.texture.minFilter = internal.texture.magFilter = THREE.LinearFilter;
+                else
+                    internal.texture.minFilter = internal.texture.magFilter = THREE.NearestFilter;
+                
+                internal.texture.needsUpdate = true;
+            }
+        },
 
         /**
          * update the colormap with new transfer function

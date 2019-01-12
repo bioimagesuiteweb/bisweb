@@ -5,26 +5,41 @@
 
 const THREE=require('three');
 
-function ImageVolumeGeometry( width, height, depth, spa ) {
+function ImageVolumeGeometry( dim, spa ) {
 
 	THREE.BufferGeometry.call( this );
 
 	this.type = 'ImageVolumeGeometry';
 
+
+    let offset=[0,0,0];
+    let sz=[0,0,0];
+    
+    for (let ia=0;ia<=2;ia++) {
+        sz[ia]=(dim[ia]*spa[ia]);
+        offset[ia]=0.5*((dim[ia]-1)*spa[ia]);
+    }
+
+    let width=sz[0];
+    let height=sz[1];
+    let depth=sz[2];
+    
 	this.parameters = {
-		width: width,
-		height: height,
-		depth: depth,
-		widthSegments: 1,
-		heightSegments: 1,
-		depthSegments: 1
+        dim : dim,
+        spa : spa,
+        width : width,
+        height : height,
+        depth : depth,
+        widthSegments : 1,
+	    heightSegments : 1,
+	    depthSegments : 1,
+
 	};
 
+    //    console.log('Sz=',depth,height,width,'off=',offset,'sz=',sz,'dim=',dim,'spa=',spa);
+    
 	var scope = this;
 
-	width = width || 1;
-	height = height || 1;
-	depth = depth || 1;
 
 	// segments
 
@@ -55,27 +70,20 @@ function ImageVolumeGeometry( width, height, depth, spa ) {
 
 	// build geometry
 
-    let offset=[0,0,0];
-    let sz=[width,height,depth];
-    
-    for (let ia=0;ia<=2;ia++) {
-        let dim=sz[ia]/1.0;//spa[ia];
-        offset[ia]=0.5*sz[ia];//(dim-1)*spa[ia];
-    }
 
     console.log('Offset=',offset);
     
     for (let plane=0;plane<=5;plane++) {
-        if (plane===0 || plane===3)
-            console.log('Plane=',plane);
+        //        if (plane===0 || plane===3)
+          //  console.log('Plane=',plane);
         for (let pt=0;pt<=3;pt++) {
             let index=plane*12+pt*3;
             let uindex=plane*8+pt*2;
             vertices[index]+=offset[0];
             vertices[index+1]+=offset[1];
             vertices[index+2]+=offset[2];
-            if (plane===0 || plane===3)
-                console.log(' V t=',[ vertices[index],vertices[index+1],vertices[index+2] ], [ uvs[uindex],uvs[uindex+1] ]);
+            //            if (plane===0 || plane===3)
+              //  console.log(' V t=',[ vertices[index],vertices[index+1],vertices[index+2] ], [ uvs[uindex],uvs[uindex+1] ]);
         }
     }
 	this.setIndex( indices );
