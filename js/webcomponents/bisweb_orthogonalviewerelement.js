@@ -407,7 +407,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
             }
         }
         if (this.internal.overlayslices[3]!==null) {
-            this.internal.overlayslices[3].updateColormap(this.internal.objectmapfunction);
+            this.internal.overlayslices[3].updateColormap(this.internal.colormapControllerPayload);
         }
     }
     
@@ -468,7 +468,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
             }
 
             if (this.internal.slices[3]) {
-                this.internal.slices[3].updateColormap(this.internal.imagetransferfunction);
+                this.internal.slices[3].updateColormap(this.internal.colormapControllerPayload);
                 this.internal.slices[3].showdecorations(this.internal.showdecorations);
             }
             if (this.internal.origin)
@@ -1389,7 +1389,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
 
         if (samesize) {
             //let gui=this.internal.datgui.gui;
-            let cmapfolder=this.internal.cmapcontroller.creategui(null);
+            let cmapfolder=this.internal.cmapcontroller.creategui(null,this.volumeRendering);
             if (this.internal.simplemode) {
                 cmapfolder.open();
             }
@@ -1525,7 +1525,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         let cgui=gui;
         if (!creatingnew) 
             cgui=null;
-        let cmapfolder=this.internal.cmapcontroller.creategui(cgui);
+        let cmapfolder=this.internal.cmapcontroller.creategui(cgui,this.volumeRendering);
 
         //if (createmovie)
         //            this.createmoviecontrols(this.internal.moviefolder);
@@ -1641,10 +1641,16 @@ class OrthogonalViewerElement extends BaseViewerElement {
     connectedCallback() {
         super.connectedCallbackBase();
         let volren=this.getAttribute('bis-volumerendering');
+
         if (volren)
             this.volumeRendering=true;
         else
             this.volumeRendering=false;
+
+        if (!this.internal.layoutcontroller.usesWEBGL2())
+            this.volumeRendering=false;
+                    
+
     }
 
     

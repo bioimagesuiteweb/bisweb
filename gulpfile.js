@@ -106,7 +106,7 @@ if (options.tensorflow === false) {
         options.dopack=3;
 }
 
-console.log('Tensorflow=',options.tensorflow,options.dopack);
+//console.log('Tensorflow=',options.tensorflow,options.dopack);
 
 
 

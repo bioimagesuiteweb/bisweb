@@ -244,6 +244,10 @@ class ViewerLayoutElement extends HTMLElement {
         if (!this.fixed)
             this.createOrShowLines(wide*sidewidth,wide*dockwidth);
     }
+
+    usesWEBGL2() {
+        return this.webgl2;
+    }
     
     
     connectedCallback() {

@@ -159,6 +159,7 @@ class ColormapControllerElement extends HTMLElement {
      * @param {BisImage} volume -  image to manage
      * @param {function} callback - function to call (on viewer) to update it
      * @param {number} opacity = 0.8 - the initial opacity
+     * @param {Boolean} volumerendering - if true, add vol ren controls;
      */
 
     setimage(volume,updatefunction,defaultopacity=0.8) {
@@ -179,7 +180,11 @@ class ColormapControllerElement extends HTMLElement {
         this.data.minth=1.0;
         this.data.maxth=100.0;
         this.data.clustersize=0;
+        this.data.mip=false;
+        this.data.isothreshold=0.86*this.data.minintensity+0.14*this.data.maxintensity;
 
+
+        
         this.olddata={};
         Object.keys(this.data).forEach((key) => {
             this.olddata[key]=this.data[key];
@@ -218,6 +223,8 @@ class ColormapControllerElement extends HTMLElement {
         let dr=this.internal.robustrange[1]-this.internal.robustrange[0];
         let da=this.internal.imagerange[1]-this.internal.imagerange[0];
 
+
+        
         if (dr<0.25*da) {
             this.data.autocontrast=false;
             this.internal.robustrange=this.internal.imagerange;
@@ -233,6 +240,8 @@ class ColormapControllerElement extends HTMLElement {
         } else {
             this.data.maxintensity=this.internal.imagerange[1];
         }
+
+        this.data.isothreshold=0.86*this.data.minintensity+0.14*this.data.maxintensity;
         
         if (update) {
             if (this.internal.anatomicalcontrollers) {
@@ -431,6 +440,13 @@ class ColormapControllerElement extends HTMLElement {
             objectmap : null,
             objinterpolate : !this.inObjectmapMode(),
             isfunctional : false,
+            volumerendering : {
+                mip : this.data.mip,
+                isothreshold : this.data.isothreshold,
+                min : this.data.minintensity,
+                max : this.data.maxintensity,
+                opacity : this.data.opacity,
+            },
         };
         
         this.updateAnatomicalMappingFunction(force,output);
@@ -712,8 +728,10 @@ class ColormapControllerElement extends HTMLElement {
     }
 
     /**
-     * @param{dat.gui} basegui - if null hat means it is fine */
-    creategui(basegui) {
+     * @param{dat.gui} basegui - if null hat means it is fine 
+     * @param{Boolean} volren - if true create volume rendering controls
+     */
+    creategui(basegui,volren) {
 
         let f2=null;
         if (basegui!==null) {
@@ -725,6 +743,16 @@ class ColormapControllerElement extends HTMLElement {
             let a1=f2.add(this.data,'minintensity',this.internal.imagerange[0],this.internal.imagerange[1]).name("Min Int");
             let a2=f2.add(this.data,'maxintensity',this.internal.imagerange[0],this.internal.imagerange[1]).name("Max Int");
             let a3=f2.add(this.data,'interpolate').name('Interpolate');
+            let a4=f2.add(this.data,'autocontrast').name('Auto-Contrast');
+            this.internal.anatomicalcontrollers=[a1,a2,a3,a4];
+            
+            if (volren) {
+                f2.add(this.data,'mip').name('MIP');
+                let a5=f2.add(this.data,'isothreshold',this.internal.imagerange[0],this.internal.imagerange[1]).name("Vol Min");
+                this.internal.anatomicalcontrollers.push(a5);
+
+            }
+            
             const self=this;
             
             let clb=function() {
@@ -732,16 +760,16 @@ class ColormapControllerElement extends HTMLElement {
             };
             
             for (let i in f2.__controllers) {
-                f2.__controllers[i].onChange(clb);
+                let c=f2.__controllers[i];
+                if (c!==a4) {
+                    c.onChange(clb);
+                } else {
+                    c.onChange( function() {
+                        self.setAutoContrast(true);
+                        self.updateTransferFunctionsInternal(false);
+                    });
+                }
             }
-            
-            let a4=f2.add(this.data,'autocontrast').name('Auto-Contrast');
-            this.internal.anatomicalcontrollers=[a1,a2,a3,a4];
-            a4.onChange( function() {
-                self.setAutoContrast(true);
-                self.updateTransferFunctionsInternal(false);
-            });
-
         } else {
             f2=this.internal.folder[0];
             for (let i=0;i<=1;i++) {

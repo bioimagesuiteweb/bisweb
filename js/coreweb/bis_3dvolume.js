@@ -32,7 +32,7 @@ const THREE = require('three');
 const BIS3dImageSliceGeometry=require('bis_3dimageslicegeometry');
 const BIS3dImageVolumeGeometry=require('bis_3dimagevolumegeometry');
 const volrenutils=require('bis_3dvolrenutils');
-
+const webutil=require('bis_webutil');
 /**
  * A classes that create  a volume rendering as collection of ThreeJS objects and/remove these from a scene.
  * @namespace Bis_3DVolume
@@ -67,6 +67,8 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
         uniforms : null,
         renderer : null,
         isoverlay : isoverlay,
+        minintensity : 0.0,
+        intensityscale : 1.0,
     };
     
     
@@ -115,7 +117,9 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
 
             let range=image.getIntensityRange();
             let scale=255.0/(range[1]-range[0]);
-            
+
+            internal.minintensity=range[0];
+            internal.intensityscale=scale;
             p_dim= dim;
             console.log('New Volume = ',p_dim);
 
@@ -143,19 +147,7 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
             
             internal.volconfig = { clim1: 0, clim2: 1, renderstyle: 'iso', isothreshold: 0.15, colormap: 'gray' };
             
-            var updateUniforms=function() {
-                
-                internal.material.uniforms.u_clim.value.set( internal.volconfig.clim1, internal.volconfig.clim2 );
-                internal.material.uniforms.u_renderstyle.value = internal.volconfig.renderstyle == 'mip' ? 0 : 1; // 0: MIP, 1: ISO
-                internal.material.uniforms.u_renderthreshold.value = internal.volconfig.isothreshold; // For ISO renderstyle
-                internal.material.uniforms.u_cmdata.value = internal.cmtextures[ internal.volconfig.colormap ];
-                if (internal.renderer) {
-                    console.log('Rendering');
-                    internal.renderer.render( internal.scene, internal.camera );
-                } else {
-                    console.log('Not Rendering');
-                }
-            };
+            
             
             /*
               let gui = new internal.dat.GUI({autoPlace : false});
@@ -181,28 +173,24 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
             
             // internal.texture.type = THREE.FloatType;
 
-            console.log('Texture=',JSON.stringify(internal.texture,null,2));
-            
             // Colormap textures
-            internal.cmtextures = {
-                viridis: new THREE.TextureLoader().load('https://threejs.org/examples/textures/cm_viridis.png',
-                                                        updateUniforms),
-                gray:    new THREE.TextureLoader().load('https://threejs.org/examples/textures/cm_gray.png',
-                                                        updateUniforms)
-            };
+            
+            let cmtexture= new THREE.TextureLoader().load(webutil.getWebPageImagePath()+'/cm_gray.png');
+
             
             // Material
             let shader = volrenutils.VolumeRenderShader;
+
+            console.log('Values=',JSON.stringify(internal.volconfig,null,2));
             
             let uniforms = THREE.UniformsUtils.clone( shader.uniforms );
-            
             uniforms.u_data.value = internal.texture;
             uniforms.u_spacing.value.set( 1.0/spa[0],1.0/spa[1],1.0/spa[2]);
             uniforms.u_size.value.set( volume.xLength, volume.yLength, volume.zLength );
             uniforms.u_clim.value.set( internal.volconfig.clim1, internal.volconfig.clim2 );
             uniforms.u_renderstyle.value = internal.volconfig.renderstyle == 'mip' ? 0 : 1; // 0: MIP, 1: ISO
             uniforms.u_renderthreshold.value = internal.volconfig.isothreshold; // For ISO renderstyle
-            uniforms.u_cmdata.value = internal.cmtextures[ internal.volconfig.colormap ];
+            uniforms.u_cmdata.value = cmtexture;
             
             internal.material = new THREE.ShaderMaterial( {
                 uniforms: uniforms,
@@ -220,7 +208,7 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
             //            geometry.scale(spa[0],spa[1],spa[2]);
             //            geometry.translate(-0.5*spa[0],-0.5*spa[1],-0.5*spa[2]);
             internal.volumebox = new THREE.Mesh( geometry, internal.material );
-            internal.box.push(new THREE.Mesh(geometry,new THREE.MeshBasicMaterial(  {color: 0xffffff, wireframe:true})));
+            //internal.box.push(new THREE.Mesh(geometry,new THREE.MeshBasicMaterial(  {color: 0xffffff, wireframe:true})));
         },
 
         /** clean up all elements (i.e. set them to null)
@@ -316,22 +304,18 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
         /** dummy function */
         setnexttimeforce : function() { },
 
+
         
-        /** Interpoalte texture or not
-         * @memberof Bis_3DOrthogonalSlice.Bis3DVolume.prototype
-         * @param {boolean} dointerpolate - if true interpolate (set texture.minFilter=THREE.LinearFilter) else (texture.minFilter=THREE.NearestFilter);
-         */
         interpolate : function (dointerpolate) {
 
-            console.log('In vol interpolate');
-            if (internal.texture) {
-                if (dointerpolate) 
-                    internal.texture.minFilter = internal.texture.magFilter = THREE.LinearFilter;
-                else
-                    internal.texture.minFilter = internal.texture.magFilter = THREE.NearestFilter;
-                
-                internal.texture.needsUpdate = true;
-            }
+            if (dointerpolate) 
+                internal.texture.minFilter = internal.texture.magFilter = THREE.LinearFilter;
+            else
+                internal.texture.minFilter = internal.texture.magFilter = THREE.NearestFilter;
+            
+            internal.texture.needsUpdate = true;
+            if (internal.renderer)
+                internal.renderer.render( internal.scene, internal.camera );
         },
 
         /**
@@ -339,15 +323,25 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
          * @returns {BisF.ColorMapperFunction} - function to perform colormapping
          */
         updateColormap : function (transferfunction) {
-            internal.texture.needsUpdate = true;
-            // Essentially update texture
-            /*
-              material.uniforms.u_clim.value.set( internal.volconfig.clim1, internal.volconfig.clim2 );
-              material.uniforms.u_renderstyle.value = internal.volconfig.renderstyle == 'mip' ? 0 : 1; // 0: MIP, 1: ISO
-              material.uniforms.u_renderthreshold.value = internal.volconfig.isothreshold; // For ISO renderstyle
-              material.uniforms.u_cmdata.value = internal.cmtextures[ internal.volconfig.colormap ];
-            */
-        }
+
+            let volinfo=transferfunction.volumerendering;
+            //            console.log('volinfo=',JSON.stringify(transferfunction,null,2));
+            
+            if (volinfo.mip)
+                internal.material.uniforms.u_renderstyle.value = 0;
+            else
+                internal.material.uniforms.u_renderstyle.value = 1;
+            
+            let minv=(volinfo.min-internal.minintensity)*internal.intensityscale/255.0;
+            let maxv=(volinfo.max-internal.minintensity)*internal.intensityscale/255.0;
+            internal.material.uniforms.u_clim.value.set( minv,maxv);
+            
+            let thr=(volinfo.isothreshold-internal.minintensity)*internal.intensityscale/255.0;
+            internal.material.uniforms.u_renderthreshold.value = thr;
+
+            //console.log('Values=', JSON.stringify({'min' : minv, 'max' : maxv,       'thr' : thr},null,3));
+            
+        },
     };
     output.initialize();
     output.createVolume();
