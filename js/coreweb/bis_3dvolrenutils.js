@@ -118,6 +118,7 @@ const WEBGL = {
 const VolumeRenderShader = {
     uniforms: {
         "u_size": { value: new THREE.Vector3( 1, 1, 1 ) },
+        "u_spacing": { value: new THREE.Vector3( 2.0, 2.0, 2.0 ) },
         "u_renderstyle": { value: 0 },
         "u_renderthreshold": { value: 0.5 },
         "u_clim": { value: new THREE.Vector2( 1, 1 ) },
@@ -189,10 +190,14 @@ const VolumeRenderShader = {
         // Intersection of ray and near clipping plane (z = -1 in clip coords)
         'pos_in_cam.z = -pos_in_cam.w;',
         'v_nearpos = viewtransformi * pos_in_cam;',
+        //'v_nearpos = vec4(nearpos.x*u_spacing.x,nearpos.y*u_spacing.y,nearpos.z*u_spacing.z,nearpos.w);',
 
         // Intersection of ray and far clipping plane (z = +1 in clip coords)
         'pos_in_cam.z = pos_in_cam.w;',
         'v_farpos = viewtransformi * pos_in_cam;',
+        //        'v_farpos = vec4(farpos.x*u_spacing.x,farpos.y*u_spacing.y,farpos.z*u_spacing.z,farpos.w);',
+
+        // Scale by spacing
 
         // Set varyings and output pos
         'v_position = position;',
@@ -210,6 +215,7 @@ const VolumeRenderShader = {
 
         'uniform sampler3D u_data;',
         'uniform sampler2D u_cmdata;',
+        'uniform vec3 u_spacing;',
 
         'varying vec3 v_position;',
         'varying vec4 v_nearpos;',
@@ -230,57 +236,63 @@ const VolumeRenderShader = {
         'float sample1(vec3 texcoords);',
         'vec4 apply_colormap(float val);',
         'vec4 add_lighting(float val, vec3 loc, vec3 step, vec3 view_ray);',
-
-
+        
+        
         'void main() {',
         // Normalize clipping plane info
-        'vec3 farpos = v_farpos.xyz / v_farpos.w;',
-        'vec3 nearpos = v_nearpos.xyz / v_nearpos.w;',
+        '  vec3 farpos_in = v_farpos.xyz / v_farpos.w;',
+        '  vec3 nearpos_in = v_nearpos.xyz / v_nearpos.w;',
+        //
+        // Normalize to spacing now -- this allows for non 1mm sized images
+        // XP Jan 2018
+        '  vec3 farpos=      farpos_in*u_spacing;',
+        '  vec3 nearpos =    nearpos_in *u_spacing;',
+        '  vec3 s_position = v_position*u_spacing;',
 
         // Calculate unit vector pointing in the view direction through this fragment.
-        'vec3 view_ray = normalize(nearpos.xyz - farpos.xyz);',
+        '  vec3 view_ray = normalize(nearpos.xyz - farpos.xyz);',
 
         // Compute the (negative) distance to the front surface or near clipping plane.
         // v_position is the back face of the cuboid, so the initial distance calculated in the dot
         // product below is the distance from near clip plane to the back of the cuboid
-        'float distance = dot(nearpos - v_position, view_ray);',
-        'distance = max(distance, min((-0.5 - v_position.x) / view_ray.x,',
-        '(u_size.x - 0.5 - v_position.x) / view_ray.x));',
-        'distance = max(distance, min((-0.5 - v_position.y) / view_ray.y,',
-        '(u_size.y - 0.5 - v_position.y) / view_ray.y));',
-        'distance = max(distance, min((-0.5 - v_position.z) / view_ray.z,',
-        '(u_size.z - 0.5 - v_position.z) / view_ray.z));',
+        '  float distance = dot(nearpos - s_position, view_ray);',
+        '  distance = max(distance, min((-0.5 - s_position.x) / view_ray.x,',
+        '     (u_size.x - 0.5 - s_position.x) / view_ray.x));',
+        '  distance = max(distance, min((-0.5 - s_position.y) / view_ray.y,',
+        '     (u_size.y - 0.5 - s_position.y) / view_ray.y));',
+        '  distance = max(distance, min((-0.5 - s_position.z) / view_ray.z,',
+        '     (u_size.z - 0.5 - s_position.z) / view_ray.z));',
 
         // Now we have the starting position on the front surface
-        'vec3 front = v_position + view_ray * distance;',
+        '  vec3 front = s_position + view_ray * distance;',
 
         // Decide how many steps to take
-        'int nsteps = int(-distance / relative_step_size + 0.5);',
-        'if ( nsteps < 1 )',
-        'discard;',
+        '  int nsteps = int(-distance / relative_step_size + 0.5);',
+        '  if ( nsteps < 1 )',
+        '    discard;',
 
         // Get starting location and step vector in texture coordinates
-        'vec3 step = ((v_position - front) / u_size) / float(nsteps);',
-        'vec3 start_loc = front / u_size;',
+        '  vec3 step = ((s_position - front) / u_size) / float(nsteps);',
+        '  vec3 start_loc = front / u_size;',
 
         // For testing: show the number of steps. This helps to establish
         // whether the rays are correctly oriented
         //'gl_FragColor = vec4(0.0, float(nsteps) / 1.0 / u_size.x, 1.0, 1.0);',
         //'return;',
 
-        'if (u_renderstyle == 0)',
-        'cast_mip(start_loc, step, nsteps, view_ray);',
-        'else if (u_renderstyle == 1)',
-        'cast_iso(start_loc, step, nsteps, view_ray);',
+        ' if (u_renderstyle == 0)',
+        '   cast_mip(start_loc, step, nsteps, view_ray);',
+        ' else if (u_renderstyle == 1)',
+        '   cast_iso(start_loc, step, nsteps, view_ray);',
 
-        'if (gl_FragColor.a < 0.05)',
-        'discard;',
+        ' if (gl_FragColor.a < 0.05)',
+        '   discard;',
         '}',
 
 
         'float sample1(vec3 texcoords) {',
-        '/* Sample float value from a 3D texture. Assumes intensity data. */',
-        'return texture(u_data, texcoords.xyz).r;',
+        '  /* Sample float value from a 3D texture. Assumes intensity data. */',
+        '   return texture(u_data, texcoords.xyz).r;',
         '}',
 
 

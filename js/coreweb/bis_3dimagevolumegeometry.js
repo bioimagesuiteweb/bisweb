@@ -66,16 +66,14 @@ function ImageVolumeGeometry( width, height, depth, spa ) {
     console.log('Offset=',offset);
     
     for (let plane=0;plane<=5;plane++) {
-        console.log('Plane=',plane);
+        if (plane===0 || plane===3)
+            console.log('Plane=',plane);
         for (let pt=0;pt<=3;pt++) {
             let index=plane*12+pt*3;
             let uindex=plane*8+pt*2;
             vertices[index]+=offset[0];
             vertices[index+1]+=offset[1];
             vertices[index+2]+=offset[2];
-            uvs[uindex]/=4.0;
-            uvs[uindex+1]/=4.0;
-            
             if (plane===0 || plane===3)
                 console.log(' V t=',[ vertices[index],vertices[index+1],vertices[index+2] ], [ uvs[uindex],uvs[uindex+1] ]);
         }
