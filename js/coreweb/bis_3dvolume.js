@@ -33,6 +33,11 @@ const BIS3dImageSliceGeometry=require('bis_3dimageslicegeometry');
 const BIS3dImageVolumeGeometry=require('bis_3dimagevolumegeometry');
 const volrenutils=require('bis_3dvolrenutils');
 const webutil=require('bis_webutil');
+
+console.log('volrenutils=',volrenutils);
+
+//import txt from 'raw-loader!./test.txt';
+
 /**
  * A classes that create  a volume rendering as collection of ThreeJS objects and/remove these from a scene.
  * @namespace Bis_3DVolume

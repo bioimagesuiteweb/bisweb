@@ -153,9 +153,13 @@ if (output === "bislib.js" || output ==="index.js") {
             new webpack.NormalModuleReplacementPlugin(/(.*)__BISWEB_EXTERNAL(\.*)/, function(resource) {
                 resource.request = resource.request.replace(/__BISWEB_EXTERNAL/, `${bisWebExternalFile}`);
             }),
-        ]
+        ],
+        module : {
+            rules : [  { 'test': /\.txt$/, 'use': 'raw-loader' } ]
+        }
     };
 
+    
     module.exports.resolve.modules.push(extrapath);
     console.log(`${output}:++++ Appending ${extrapath} to module path`);
     if (extrapath2) {
