@@ -5,6 +5,9 @@ precision mediump sampler3D;
 uniform float u_opacity; // added xp
 uniform float u_stepsize; // added xp
 
+uniform vec3 u_boundsmin; // added xp
+uniform vec3 u_boundsmax; // added xp
+
 uniform vec3 u_size;
 uniform int u_renderstyle;
 uniform float u_renderthreshold;
@@ -17,6 +20,8 @@ uniform vec3 u_spacing;
 varying vec3 v_position;
 varying vec4 v_nearpos;
 varying vec4 v_farpos;
+
+
 
 // The maximum distance through our rendering volume is sqrt(3).
 const int MAX_STEPS = 443;  // 887 for 512^3, 1774 for 1024^3

@@ -108,97 +108,56 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
             // Texture to hold the volume. We have scalars, so we put our data in the red channel.
             // THREEJS will select R32F (33326) based on the RedFormat and FloatType.
             // Also see https://www.khronos.org/registry/webgl/specs/latest/2.0/#TEXTURE_TYPES_FORMATS_FROM_DOM_ELEMENTS_TABLE
-            // TODO: look the dtype up in the volume metadata
+
             let dim=image.getDimensions();
             let spa=image.getSpacing();
-
-            let p_dim=[2,2,2];
-            for (let i=0;i<=2;i++) {
-                while (p_dim[i]<dim[i])
-                    p_dim[i]*=2;
-            }
-
             let range=image.getIntensityRange();
             let scale=255.0/(range[1]-range[0]);
-
             internal.minintensity=range[0];
             internal.intensityscale=scale;
-            p_dim= dim;
-            console.log('New Volume = ',p_dim);
-
+            
             let data=image.getImageData();
-            let p_data=new Uint8Array(p_dim[0]*p_dim[1]*p_dim[2]);
-            let slicesize=dim[0]*dim[1];
-            let p_slicesize=p_dim[0]*p_dim[1];
-            for (let k=0;k<dim[2];k++) {
-                for (let j=0;j<dim[1];j++) {
-                    for (let i=0;i<dim[0];i++) {
-                        let v=data[i+j*dim[0]+k*slicesize];
-                        let y=(v-range[0])*scale;
-                        p_data[i+j*p_dim[0]+k*p_slicesize]=y;
-                    }
-                }
+            let p_data=new Uint8Array(dim[0]*dim[1]*dim[2]);
+            let volsize=dim[0]*dim[1]*dim[2];
+            for(let k=0;k<volsize;k++) {
+                let v=data[k];
+                let y=(v-range[0])*scale;
+                p_data[k]=y;
             }
-                        
             
-            let volume = {
-                xLength : p_dim[0],
-                yLength : p_dim[1],
-                zLength : p_dim[2],
-                data : p_data
-            };
-            
-            internal.volconfig = { clim1: 0, clim2: 1, renderstyle: 'iso', isothreshold: 0.15, colormap: 'gray' };
-            
-            
-            
-            /*
-              let gui = new internal.dat.GUI({autoPlace : false});
-              console.log(gui);
-              gui.add( internal.volconfig, 'clim1', 0, 1, 0.01 ).onChange( updateUniforms );
-              gui.add( internal.volconfig, 'clim2', 0, 1, 0.01 ).onChange( updateUniforms );
-              gui.add( internal.volconfig, 'colormap', { gray: 'gray', viridis: 'viridis' } ).onChange( updateUniforms );
-              gui.add( internal.volconfig, 'renderstyle', { mip: 'mip', iso: 'iso' } ).onChange( updateUniforms );
-              gui.add( internal.volconfig, 'isothreshold', 0, 1, 0.01 ).onChange( updateUniforms );
-              */
-
-            
-            // Texture to hold the volume. We have scalars, so we put our data in the red channel.
-            // THREEJS will select R32F (33326) based on the RedFormat and FloatType.
-            // Also see https://www.khronos.org/registry/webgl/specs/latest/2.0/#TEXTURE_TYPES_FORMATS_FROM_DOM_ELEMENTS_TABLE
-            // TODO: look the dtype up in the volume metadata
-            internal.texture = new THREE.DataTexture3D( volume.data, volume.xLength, volume.yLength, volume.zLength );
+            internal.texture = new THREE.DataTexture3D( p_data, dim[0],dim[1],dim[2]);
             internal.texture.format = THREE.RedFormat;
             internal.texture.minFilter = internal.texture.magFilter = THREE.NearestFilter;//THREE.LinearFilter;
             internal.texture.unpackAlignment = 1;
             internal.texture.repeat=[0,0];
             internal.texture.needsUpdate = true;
             
-            // internal.texture.type = THREE.FloatType;
-
             // Colormap textures
-            
             let cmtexture= new THREE.TextureLoader().load(webutil.getWebPageImagePath()+'/cm_gray.png');
 
             
-            // Material
+            // Material Properties
             let shader = volrenutils.VolumeRenderShader;
 
-            console.log('Values=',JSON.stringify(internal.volconfig,null,2));
-            
-            let uniforms = THREE.UniformsUtils.clone( shader.uniforms );
+            let uniforms = THREE.UniformsUtils.clone({
+                "u_size": { value: new THREE.Vector3( dim[0],dim[1],dim[2]) },
+                "u_spacing": { value: new THREE.Vector3( 1.0/spa[0],1.0/spa[1],1.0/spa[2] )},
+                "u_renderstyle": { value: 1 },
+                "u_renderthreshold": { value: 0.15 },
+                "u_clim": { value: new THREE.Vector2( 0, 1 ) },
+                "u_data": { value: null },
+                "u_cmdata": { value: null },
+                "u_opacity": { value : 0.8 },
+                "u_stepsize": { value : 1.0 },
+                "u_boundsmin": { value: new THREE.Vector3( 0, 0, 0 ) },
+                "u_boundsmax": { value: new THREE.Vector3( dim[0]-1,dim[1]-1,dim[2]-1 ) }
+            });
+
             if (internal.isoverlay)
                 uniforms.u_opacity.value=1.0;
-            else
-                uniforms.u_opacity.value=0.8;
-            uniforms.u_stepsize.value=1.0;
-            uniforms.u_data.value = internal.texture;
-            uniforms.u_spacing.value.set( 1.0/spa[0],1.0/spa[1],1.0/spa[2]);
-            uniforms.u_size.value.set( volume.xLength, volume.yLength, volume.zLength );
-            uniforms.u_clim.value.set( internal.volconfig.clim1, internal.volconfig.clim2 );
-            uniforms.u_renderstyle.value = internal.volconfig.renderstyle == 'mip' ? 0 : 1; // 0: MIP, 1: ISO
-            uniforms.u_renderthreshold.value = internal.volconfig.isothreshold; // For ISO renderstyle
+            console.log("unif=",JSON.stringify(uniforms,null,2));
             uniforms.u_cmdata.value = cmtexture;
+            uniforms.u_data.value = internal.texture;
             
             internal.material = new THREE.ShaderMaterial( {
                 uniforms: uniforms,
@@ -210,11 +169,9 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
             // Mesh
             let sz=[ 0,0,0];
             for (let i=0;i<=2;i++) {
-                sz[i]=(p_dim[i]*spa[i]);
+                sz[i]=(dim[i]*spa[i]);
             }
-            let geometry = new BIS3dImageVolumeGeometry(p_dim,spa);
-            //            geometry.scale(spa[0],spa[1],spa[2]);
-            //            geometry.translate(-0.5*spa[0],-0.5*spa[1],-0.5*spa[2]);
+            let geometry = new BIS3dImageVolumeGeometry(dim,spa);
             internal.volumebox = new THREE.Mesh( geometry, internal.material );
             //internal.box.push(new THREE.Mesh(geometry,new THREE.MeshBasicMaterial(  {color: 0xffffff, wireframe:true})));
         },
