@@ -319,7 +319,6 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
 
             let minc = [ 0,0,0];
             let maxc = [ 0,0,0];
-            console.log('Input=',volinfo.crop,internal.dimensions);
             for (let i=0;i<=2;i++) {
                 minc[i]=volinfo.crop[2*i]/ (internal.dimensions[i]-1);
                 maxc[i]=volinfo.crop[2*i+1]/ (internal.dimensions[i]-1);
@@ -328,7 +327,14 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
                     minc[i]=maxc[i];
                     maxc[i]=tmp;
                 }
+                if (i==0) {
+                    let tmp=1.0-minc[i];
+                    minc[i]=1.0-maxc[i];
+                    maxc[i]=tmp;
+                }
+                                    
             }
+            
             uniforms['u_boundsmin'].value.set(minc[0],minc[1],minc[2]);
             uniforms['u_boundsmax'].value.set(maxc[0],maxc[1],maxc[2]);
 

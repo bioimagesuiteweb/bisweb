@@ -120,9 +120,12 @@ const cleanstring=function(input) {
 
     // somehow the require ads module.exports = " ..." around the text
     // removing this first
-    input=input.replace(/module.exports = /g,'').replace(/"/g,'');
+    input=input.replace(/module.exports = /g,'').replace(/"/g,'')
+    input=input.replace(/\\r/g,'');
     
     let lines=input.split('\\n');
+    console.log('lines[4]=',lines[4],lines[27]);
+    
     let out='';
     for (let i=0;i<lines.length;i++) {
         let a=lines[i].trim();
