@@ -119,11 +119,20 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
             
             let data=image.getImageData();
             let p_data=new Uint8Array(dim[0]*dim[1]*dim[2]);
-            let volsize=dim[0]*dim[1]*dim[2];
-            for(let k=0;k<volsize;k++) {
-                let v=data[k];
-                let y=(v-range[0])*scale;
-                p_data[k]=y;
+            let slicesize=dim[0]*dim[1];
+            let index=0;
+            for(let k=0;k<dim[2];k++) {
+                let offset=k*slicesize;
+                for (let j=0;j<dim[1];j++) {
+                    for (let i=0;i<dim[0];i++) {
+                        let v=data[index];
+                        index++;
+                        let y=(v-range[0])*scale;
+                        // flip x -- seems to need this
+                        p_data[offset+(dim[0]-1-i)]=y;
+                    }
+                    offset+=dim[0];
+                }
             }
             
             internal.texture = new THREE.DataTexture3D( p_data, dim[0],dim[1],dim[2]);
@@ -131,11 +140,12 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
             internal.texture.minFilter = internal.texture.magFilter = THREE.NearestFilter;//THREE.LinearFilter;
             internal.texture.unpackAlignment = 1;
             internal.texture.repeat=[0,0];
+            internal.texture.flipY=false;
             internal.texture.needsUpdate = true;
+            console.log('Internal.texture=',internal.texture);
             
             // Colormap textures
             let cmtexture= new THREE.TextureLoader().load(webutil.getWebPageImagePath()+'/cm_gray.png');
-
             
             // Material Properties
             let shader = volrenutils.VolumeRenderShader;
