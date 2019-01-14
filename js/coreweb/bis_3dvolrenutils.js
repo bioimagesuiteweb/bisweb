@@ -142,7 +142,9 @@ const VolumeRenderShader = {
         "u_renderthreshold": { value: 0.5 },
         "u_clim": { value: new THREE.Vector2( 1, 1 ) },
         "u_data": { value: null },
-        "u_cmdata": { value: null }
+        "u_cmdata": { value: null },
+        "u_opacity": { value : 1.0 },
+        "u_stepsize": { value : 1.0 },
     },
     vertexShader: cleanstring(volume_vertex_shader),
     fragmentShader: cleanstring(volume_fragment_shader)

@@ -181,6 +181,7 @@ class ColormapControllerElement extends HTMLElement {
         this.data.maxth=100.0;
         this.data.clustersize=0;
         this.data.mip=false;
+        this.data.volquality=0.25;
         this.data.isothreshold=0.86*this.data.minintensity+0.14*this.data.maxintensity;
 
 
@@ -445,7 +446,7 @@ class ColormapControllerElement extends HTMLElement {
                 isothreshold : this.data.isothreshold,
                 min : this.data.minintensity,
                 max : this.data.maxintensity,
-                opacity : this.data.opacity,
+                stepsize : this.data.volquality,
             },
         };
         
@@ -749,8 +750,9 @@ class ColormapControllerElement extends HTMLElement {
             if (volren) {
                 f2.add(this.data,'mip').name('MIP');
                 let a5=f2.add(this.data,'isothreshold',this.internal.imagerange[0],this.internal.imagerange[1]).name("Vol Min");
+                let a7=f2.add(this.data,'volquality',0.1,1.0).name("Quality");
                 this.internal.anatomicalcontrollers.push(a5);
-
+                this.internal.anatomicalcontrollers.push(a7);
             }
             
             const self=this;

@@ -61,14 +61,10 @@ void main() {
     // Intersection of ray and near clipping plane (z = -1 in clip coords)
     pos_in_cam.z = -pos_in_cam.w;
     v_nearpos = viewtransformi * pos_in_cam;
-    //v_nearpos = vec4(nearpos.x*u_spacing.x,nearpos.y*u_spacing.y,nearpos.z*u_spacing.z,nearpos.w);
     
     // Intersection of ray and far clipping plane (z = +1 in clip coords)
     pos_in_cam.z = pos_in_cam.w;
     v_farpos = viewtransformi * pos_in_cam;
-    //        v_farpos = vec4(farpos.x*u_spacing.x,farpos.y*u_spacing.y,farpos.z*u_spacing.z,farpos.w);
-    
-    // Scale by spacing
     
     // Set varyings and output pos
     v_position = position;

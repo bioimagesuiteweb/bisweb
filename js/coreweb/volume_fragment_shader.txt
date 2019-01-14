@@ -2,6 +2,9 @@
 precision highp float;
 precision mediump sampler3D;
 
+uniform float u_opacity; // added xp
+uniform float u_stepsize; // added xp
+
 uniform vec3 u_size;
 uniform int u_renderstyle;
 uniform float u_renderthreshold;
@@ -16,7 +19,7 @@ varying vec4 v_nearpos;
 varying vec4 v_farpos;
 
 // The maximum distance through our rendering volume is sqrt(3).
-const int MAX_STEPS = 887;  // 887 for 512^3, 1774 for 1024^3
+const int MAX_STEPS = 443;  // 887 for 512^3, 1774 for 1024^3
 const int REFINEMENT_STEPS = 4;
 const float relative_step_size = 1.0;
 const vec4 ambient_color = vec4(0.2, 0.4, 0.2, 1.0);
@@ -61,7 +64,7 @@ void main() {
     vec3 front = s_position + view_ray * distance;
     
     // Decide how many steps to take
-    int nsteps = int(-distance / relative_step_size + 0.5);
+    int nsteps = int(-distance / u_stepsize + 0.5);
     if ( nsteps < 1 )
         discard;
     
@@ -78,6 +81,13 @@ void main() {
         cast_mip(start_loc, step, nsteps, view_ray);
     else if (u_renderstyle == 1)
         cast_iso(start_loc, step, nsteps, view_ray);
+
+    if (gl_FragColor.a < 0.05)
+        discard;
+
+    // Make more transparent
+    float b=gl_FragColor.a*u_opacity;
+    gl_FragColor.a= b;
     
     if (gl_FragColor.a < 0.05)
         discard;

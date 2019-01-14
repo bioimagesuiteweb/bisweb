@@ -34,9 +34,7 @@ const BIS3dImageVolumeGeometry=require('bis_3dimagevolumegeometry');
 const volrenutils=require('bis_3dvolrenutils');
 const webutil=require('bis_webutil');
 
-console.log('volrenutils=',volrenutils);
 
-//import txt from 'raw-loader!./test.txt';
 
 /**
  * A classes that create  a volume rendering as collection of ThreeJS objects and/remove these from a scene.
@@ -189,6 +187,11 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
             console.log('Values=',JSON.stringify(internal.volconfig,null,2));
             
             let uniforms = THREE.UniformsUtils.clone( shader.uniforms );
+            if (internal.isoverlay)
+                uniforms.u_opacity.value=1.0;
+            else
+                uniforms.u_opacity.value=0.8;
+            uniforms.u_stepsize.value=1.0;
             uniforms.u_data.value = internal.texture;
             uniforms.u_spacing.value.set( 1.0/spa[0],1.0/spa[1],1.0/spa[2]);
             uniforms.u_size.value.set( volume.xLength, volume.yLength, volume.zLength );
@@ -330,8 +333,6 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
         updateColormap : function (transferfunction) {
 
             let volinfo=transferfunction.volumerendering;
-            //            console.log('volinfo=',JSON.stringify(transferfunction,null,2));
-            
             if (volinfo.mip)
                 internal.material.uniforms.u_renderstyle.value = 0;
             else
@@ -344,8 +345,8 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
             let thr=(volinfo.isothreshold-internal.minintensity)*internal.intensityscale/255.0;
             internal.material.uniforms.u_renderthreshold.value = thr;
 
-            //console.log('Values=', JSON.stringify({'min' : minv, 'max' : maxv,       'thr' : thr},null,3));
-            
+            let q=2.0*Math.pow(volinfo.stepsize-1.0,2.0)+0.5;
+            internal.material.uniforms.u_stepsize.value=q;
         },
     };
     output.initialize();
