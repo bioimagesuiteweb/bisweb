@@ -183,7 +183,7 @@ class ColormapControllerElement extends HTMLElement {
         this.data.maxth=100.0;
         this.data.clustersize=0;
         this.data.mip=false;
-        this.data.volquality=0.25;
+        this.data.volquality=2;
         this.data.isothreshold=0.86*this.data.minintensity+0.14*this.data.maxintensity;
         this.internal.imagedim=volume.getDimensions();
 
@@ -458,7 +458,7 @@ class ColormapControllerElement extends HTMLElement {
                 isothreshold : this.data.isothreshold,
                 min : this.data.minintensity,
                 max : this.data.maxintensity,
-                stepsize : this.data.volquality,
+                quality : this.data.volquality,
                 crop : crop,
             },
         };
@@ -771,7 +771,7 @@ class ColormapControllerElement extends HTMLElement {
             if (volren) {
                 f4.add(this.data,'mip').name('MIP').onChange(clb);
                 let a5=f4.add(this.data,'isothreshold',this.internal.imagerange[0],this.internal.imagerange[1]).name("Vol Min").onChange(clb);
-                f4.add(this.data,'volquality',0.1,1.0).name("Quality").onChange(clb);
+                f4.add(this.data,'volquality',1,3).name("Quality").onChange(clb).step(1.0);
                 this.internal.anatomicalcontrollers.push(a5);
                 
                 let names=['i','j','k' ];
@@ -785,7 +785,6 @@ class ColormapControllerElement extends HTMLElement {
                     for (let j=0;j<=1;j++) {
                         let iname= `volcrop${names[i]}${names2[j]}`;
                         let lname= `${cnames2[j]}-${cnames[i]}`;
-                        console.log(' mapping ',iname,lname);
                         let s=f4.add(this.data,iname,0,this.internal.imagedim[i]-1).name(lname).onChange(clb);
                         this.internal.cropcontrollers.push(s);
                     }

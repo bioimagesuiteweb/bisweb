@@ -1,3 +1,14 @@
+// ---------------------------------------------------------------------------------------
+// <script src="https://threejs.org/examples/js/shaders/VolumeShader.js"></script>
+// ---------------------------------------------------------------------------------------
+//
+// * @author Almar Klein / http://almarklein.org
+// *
+// * & Shaders to render 3D volumes using raycasting.
+// * The applied techniques are based on similar implementations in the Visvis and Vispy projects.
+// * This is not the only approach, therefore it's marked 1.
+//
+
 
 precision highp float;
 precision mediump sampler3D;
@@ -109,12 +120,6 @@ float sample_3d_texture(vec3 texcoords) {
             if (texcoords.y<=u_boundsmax.y)
               if (texcoords.x<=u_boundsmax.x)
                 return texture(u_data, texcoords.xyz).r;
-      /*      texcoords.y>=u_boundsmin.y &&
-              texcoords.z>=u_boundsmin.z &&
-              texcoords.x<=u_boundsmax.x &&
-              texcoords.y<=u_boundsmax.y &&
-              texcoords.z<=u_boundsmax.z )*/
-
   return 0.0;
 }
 
