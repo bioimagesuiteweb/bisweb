@@ -76,6 +76,7 @@ void main() {
     // Get starting location and step vector in texture coordinates
     vec3 step = ((s_position - front) / u_size) / float(nsteps);
     vec3 start_loc = front / u_size;
+
     
     // For testing: show the number of steps. This helps to establish
     // whether the rays are correctly oriented
@@ -99,9 +100,22 @@ void main() {
 }
 
 
-float sample1(vec3 texcoords) {
-    /* Sample float value from a 3D texture. Assumes intensity data. */
-    return texture(u_data, texcoords.xyz).r;
+float sample_3d_texture(vec3 texcoords) {
+  /* Sample float value from a 3D texture. Assumes intensity data. */
+  if (texcoords.z>=u_boundsmin.z)
+    if (texcoords.y>=u_boundsmin.y)
+      if (texcoords.x>=u_boundsmin.x)
+          if (texcoords.z<=u_boundsmax.z)
+            if (texcoords.y<=u_boundsmax.y)
+              if (texcoords.x<=u_boundsmax.x)
+                return texture(u_data, texcoords.xyz).r;
+      /*      texcoords.y>=u_boundsmin.y &&
+              texcoords.z>=u_boundsmin.z &&
+              texcoords.x<=u_boundsmax.x &&
+              texcoords.y<=u_boundsmax.y &&
+              texcoords.z<=u_boundsmax.z )*/
+
+  return 0.0;
 }
 
 
@@ -124,7 +138,7 @@ void cast_mip(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray) {
         if (iter >= nsteps)
             break;
         // Sample from the 3D texture
-        float val = sample1(loc);
+        float val = sample_3d_texture(loc);
         // Apply MIP operation
         if (val > max_val) {
             max_val = val;
@@ -138,7 +152,7 @@ void cast_mip(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray) {
     vec3 iloc = start_loc + step * (float(max_i) - 0.5);
     vec3 istep = step / float(REFINEMENT_STEPS);
     for (int i=0; i<REFINEMENT_STEPS; i++) {
-        max_val = max(max_val, sample1(iloc));
+        max_val = max(max_val, sample_3d_texture(iloc));
         iloc += istep;
     }
 
@@ -164,14 +178,14 @@ void cast_iso(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray) {
             break;
         
         // Sample from the 3D texture
-        float val = sample1(loc);
+        float val = sample_3d_texture(loc);
         
         if (val > low_threshold) {
             // Take the last interval in smaller steps
             vec3 iloc = loc - 0.5 * step;
             vec3 istep = step / float(REFINEMENT_STEPS);
             for (int i=0; i<REFINEMENT_STEPS; i++) {
-                val = sample1(iloc);
+                val = sample_3d_texture(iloc);
                 if (val > u_renderthreshold) {
                     gl_FragColor = add_lighting(val, iloc, dstep, view_ray);
                     return;
@@ -196,16 +210,16 @@ vec4 add_lighting(float val, vec3 loc, vec3 step, vec3 view_ray)
     // calculate normal vector from gradient
         vec3 N;
     float val1, val2;
-    val1 = sample1(loc + vec3(-step[0], 0.0, 0.0));
-    val2 = sample1(loc + vec3(+step[0], 0.0, 0.0));
+    val1 = sample_3d_texture(loc + vec3(-step[0], 0.0, 0.0));
+    val2 = sample_3d_texture(loc + vec3(+step[0], 0.0, 0.0));
     N[0] = val1 - val2;
     val = max(max(val1, val2), val);
-    val1 = sample1(loc + vec3(0.0, -step[1], 0.0));
-    val2 = sample1(loc + vec3(0.0, +step[1], 0.0));
+    val1 = sample_3d_texture(loc + vec3(0.0, -step[1], 0.0));
+    val2 = sample_3d_texture(loc + vec3(0.0, +step[1], 0.0));
     N[1] = val1 - val2;
     val = max(max(val1, val2), val);
-    val1 = sample1(loc + vec3(0.0, 0.0, -step[2]));
-    val2 = sample1(loc + vec3(0.0, 0.0, +step[2]));
+    val1 = sample_3d_texture(loc + vec3(0.0, 0.0, -step[2]));
+    val2 = sample_3d_texture(loc + vec3(0.0, 0.0, +step[2]));
     N[2] = val1 - val2;
     val = max(max(val1, val2), val);
     

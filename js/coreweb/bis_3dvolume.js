@@ -72,6 +72,7 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
         isoverlay : isoverlay,
         minintensity : 0.0,
         intensityscale : 1.0,
+        dimensions : image.getDimensions(),
     };
     
     
@@ -149,13 +150,12 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
                 "u_cmdata": { value: null },
                 "u_opacity": { value : 0.8 },
                 "u_stepsize": { value : 1.0 },
-                "u_boundsmin": { value: new THREE.Vector3( 0, 0, 0 ) },
-                "u_boundsmax": { value: new THREE.Vector3( dim[0]-1,dim[1]-1,dim[2]-1 ) }
+                "u_boundsmin": { value: new THREE.Vector3( 0.0, 0.0, 0.0 ) },
+                "u_boundsmax": { value: new THREE.Vector3( 1.0,1.0,1.0)},
             });
 
             if (internal.isoverlay)
                 uniforms.u_opacity.value=1.0;
-            console.log("unif=",JSON.stringify(uniforms,null,2));
             uniforms.u_cmdata.value = cmtexture;
             uniforms.u_data.value = internal.texture;
             
@@ -289,21 +289,44 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
          */
         updateColormap : function (transferfunction) {
 
+            const uniforms=internal.material.uniforms;
+
             let volinfo=transferfunction.volumerendering;
             if (volinfo.mip)
-                internal.material.uniforms.u_renderstyle.value = 0;
+                uniforms.u_renderstyle.value = 0;
             else
-                internal.material.uniforms.u_renderstyle.value = 1;
+                uniforms.u_renderstyle.value = 1;
             
             let minv=(volinfo.min-internal.minintensity)*internal.intensityscale/255.0;
             let maxv=(volinfo.max-internal.minintensity)*internal.intensityscale/255.0;
-            internal.material.uniforms.u_clim.value.set( minv,maxv);
+            uniforms.u_clim.value.set( minv,maxv);
             
             let thr=(volinfo.isothreshold-internal.minintensity)*internal.intensityscale/255.0;
-            internal.material.uniforms.u_renderthreshold.value = thr;
+            uniforms.u_renderthreshold.value = thr;
 
             let q=2.0*Math.pow(volinfo.stepsize-1.0,2.0)+0.5;
-            internal.material.uniforms.u_stepsize.value=q;
+            uniforms.u_stepsize.value=q;
+
+            let minc = [ 0,0,0];
+            let maxc = [ 0,0,0];
+            console.log('Input=',volinfo.crop,internal.dimensions);
+            for (let i=0;i<=2;i++) {
+                minc[i]=volinfo.crop[2*i]/ (internal.dimensions[i]-1);
+                maxc[i]=volinfo.crop[2*i+1]/ (internal.dimensions[i]-1);
+                if (maxc[i]<minc[i]) {
+                    let tmp=minc[i];
+                    minc[i]=maxc[i];
+                    maxc[i]=tmp;
+                }
+            }
+            uniforms['u_boundsmin'].value.set(minc[0],minc[1],minc[2]);
+            uniforms['u_boundsmax'].value.set(maxc[0],maxc[1],maxc[2]);
+
+            volinfo['bounds']= {
+                'min' : minc,
+                'max' : maxc
+            };
+            //            console.log(JSON.stringify(volinfo,null,2));
         },
     };
     output.initialize();

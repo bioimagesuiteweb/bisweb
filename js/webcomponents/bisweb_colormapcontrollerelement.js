@@ -79,6 +79,7 @@ class ColormapControllerElement extends HTMLElement {
             
             // Image range
             imagerange : null,
+            imagedim : null,
             objectmaprange : [ 0,1],
             
             // objectmap and clusterinfo
@@ -97,11 +98,12 @@ class ColormapControllerElement extends HTMLElement {
             maxobjectmap : null,
             clusterslider : null,
             interpolatecheck : null,
-            folder : [ null, null],
+            folder : [ null, null,null],
             opacityslider : null,
             overlaymodeselector : null,
             functionalcontrollers : null,
-            anatomicalcontrollers : null,                                               
+            anatomicalcontrollers : null,
+            cropcontrollers : null,                                               
             
             // base dom
             basegui : null,
@@ -183,8 +185,14 @@ class ColormapControllerElement extends HTMLElement {
         this.data.mip=false;
         this.data.volquality=0.25;
         this.data.isothreshold=0.86*this.data.minintensity+0.14*this.data.maxintensity;
+        this.internal.imagedim=volume.getDimensions();
 
-
+        this.data.volcropimin=0;
+        this.data.volcropimax=this.internal.imagedim[0]-1;
+        this.data.volcropjmin=0;
+        this.data.volcropjmax=this.internal.imagedim[1]-1;
+        this.data.volcropkmin=0;
+        this.data.volcropkmax=this.internal.imagedim[2]-1;
         
         this.olddata={};
         Object.keys(this.data).forEach((key) => {
@@ -435,6 +443,10 @@ class ColormapControllerElement extends HTMLElement {
     updateTransferFunctions(force=false) {
 
 
+        let crop= [ this.data.volcropimin, this.data.volcropimax,
+                    this.data.volcropjmin, this.data.volcropjmax,
+                    this.data.volcropkmin, this.data.volcropkmax ];
+
         let output = {
             image : null,
             interpolate : this.data.interpolate,
@@ -447,6 +459,7 @@ class ColormapControllerElement extends HTMLElement {
                 min : this.data.minintensity,
                 max : this.data.maxintensity,
                 stepsize : this.data.volquality,
+                crop : crop,
             },
         };
         
@@ -734,32 +747,56 @@ class ColormapControllerElement extends HTMLElement {
      */
     creategui(basegui,volren) {
 
-        let f2=null;
+        let f2=null,f4=null;
         if (basegui!==null) {
             this.internal.basegui=basegui;
             f2 = basegui.addFolder('Image Color Mapping');
             this.internal.folder[0]=f2;
+            if (volren) {
+                f4 = this.internal.basegui.addFolder('Volume Rendering');
+                this.internal.folder[2] = f4;
+            }
             this.internal.folder[1]= this.internal.basegui.addFolder('Overlay Color Mapping');
+
             
             let a1=f2.add(this.data,'minintensity',this.internal.imagerange[0],this.internal.imagerange[1]).name("Min Int");
             let a2=f2.add(this.data,'maxintensity',this.internal.imagerange[0],this.internal.imagerange[1]).name("Max Int");
             let a3=f2.add(this.data,'interpolate').name('Interpolate');
             let a4=f2.add(this.data,'autocontrast').name('Auto-Contrast');
-            this.internal.anatomicalcontrollers=[a1,a2,a3,a4];
-            
+            this.internal.anatomicalcontrollers=[a1,a2];
+
+            let clb=function() {  self.updateTransferFunctionsInternal(false); };
+
+
             if (volren) {
-                f2.add(this.data,'mip').name('MIP');
-                let a5=f2.add(this.data,'isothreshold',this.internal.imagerange[0],this.internal.imagerange[1]).name("Vol Min");
-                let a7=f2.add(this.data,'volquality',0.1,1.0).name("Quality");
+                f4.add(this.data,'mip').name('MIP').onChange(clb);
+                let a5=f4.add(this.data,'isothreshold',this.internal.imagerange[0],this.internal.imagerange[1]).name("Vol Min").onChange(clb);
+                f4.add(this.data,'volquality',0.1,1.0).name("Quality").onChange(clb);
                 this.internal.anatomicalcontrollers.push(a5);
-                this.internal.anatomicalcontrollers.push(a7);
+                
+                let names=['i','j','k' ];
+                let names2= [ 'min','max' ];
+
+                let cnames=['I','J','K' ];
+                let cnames2= [ 'Min','Max' ];
+
+                this.internal.cropcontrollers=[];
+                for (let i=0;i<=2;i++) {
+                    for (let j=0;j<=1;j++) {
+                        let iname= `volcrop${names[i]}${names2[j]}`;
+                        let lname= `${cnames2[j]}-${cnames[i]}`;
+                        console.log(' mapping ',iname,lname);
+                        let s=f4.add(this.data,iname,0,this.internal.imagedim[i]-1).name(lname).onChange(clb);
+                        this.internal.cropcontrollers.push(s);
+                    }
+                }
             }
+
+            this.internal.anatomicalcontrollers.push(a3);
+            this.internal.anatomicalcontrollers.push(a4);
             
             const self=this;
             
-            let clb=function() {
-                self.updateTransferFunctionsInternal(false);
-            };
             
             for (let i in f2.__controllers) {
                 let c=f2.__controllers[i];
@@ -773,10 +810,23 @@ class ColormapControllerElement extends HTMLElement {
                 }
             }
         } else {
-            f2=this.internal.folder[0];
-            for (let i=0;i<=1;i++) {
+
+            // Just updating ...
+            let max=2;
+            if (volren)
+                max=3;
+            for (let i=0;i<max;i++) {
                 this.internal.anatomicalcontrollers[i].min(this.internal.imagerange[0]).max(this.internal.imagerange[1]);
                 this.internal.anatomicalcontrollers[i].updateDisplay();
+            }
+
+            if (volren) {
+                for (let i=0;i<=2;i++) {
+                    for (let j=0;j<=1;j++) {
+                        this.internal.cropcontrollers[2*i+j].min(0).max(this.internal.imagedim[i]-1);
+                        this.internal.cropcontrollers[2*i+j].updateDisplay();
+                    }
+                }
             }
         }
         
