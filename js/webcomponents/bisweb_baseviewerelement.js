@@ -87,6 +87,7 @@ class BaseViewerElement extends HTMLElement {
             preservesnapshot : false,
             
             // colormaps
+            colormapControllerPayload : null,
             objectmaptransferfunction : util.mapobjectmapfactory(255),
             objectmaptransferinfo : { isfunctional : false, colormode : 'Overlay' },
 
@@ -563,6 +564,8 @@ class BaseViewerElement extends HTMLElement {
     updatetransferfunctions(input) {
 
         let num=this.internal.slices.length;
+
+        this.internal.colormapControllerPayload=input;
         
         if (input.image!==null) {
             this.internal.imagetransferfunction=input.image;

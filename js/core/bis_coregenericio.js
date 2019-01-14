@@ -753,8 +753,10 @@ var readtextdata = function (url, loadedcallback, errorcallback) {
         return;
     }
 
-    if (url.indexOf('http')===0) {
-        return readtextdatafromurl(url, loadedcallback, errorcallback);
+    if (typeof url === 'string') {
+        if (url.indexOf('http')===0) {
+            return readtextdatafromurl(url, loadedcallback, errorcallback);
+        }
     }
 
 
@@ -789,8 +791,10 @@ var readbinarydata = function (url, loadedcallback, errorcallback) {
         return;
     }
 
-    if (url.indexOf('http')===0) {
-        return readbinarydatafromurl(url, loadedcallback, errorcallback);
+    if (typeof url === 'string') {
+        if (url.indexOf('http')===0) {
+            return readbinarydatafromurl(url, loadedcallback, errorcallback);
+        }
     }
 
 

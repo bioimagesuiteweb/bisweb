@@ -190,54 +190,54 @@ class ModuleManagerElement extends HTMLElement {
         else
             usesgpl=false;
 
-        this.createModule('Smooth Image',1, false, modules.smoothImage, moduleoptions);
+        this.createModule('Smooth Image',1, false, modules.getModule('smoothImage'),moduleoptions);
         userPreferences.safeGetItem("internal").then( (f) => {
             if (f) {
                 webutil.createMenuItem(this.moduleMenu[1],'');
-                this.createModule('Quality Measures',1, false, modules.qualityMeasures, moduleoptions);
-                this.createModule('Change Header Spacing',1, false, modules.changeImageSpacing, moduleoptions);
+                this.createModule('Quality Measures',1, false, modules.getModule('qualityMeasures'), moduleoptions);
+                this.createModule('Change Header Spacing',1, false, modules.getModule('changeImageSpacing'), moduleoptions);
             }
         });
-        this.createModule('Normalize Image',1, false, modules.normalizeImage, moduleoptions);
-        this.createModule('Threshold Image',1, false, modules.thresholdImage, moduleoptions);
-        this.createModule('Cluster Threshold',1, false, modules.clusterThreshold, moduleoptions);
-        this.createModule('Correct Bias Field',1, true, modules.sliceBiasFieldCorrect, moduleoptions);
+        this.createModule('Normalize Image',1, false, modules.getModule('normalizeImage'), moduleoptions);
+        this.createModule('Threshold Image',1, false, modules.getModule('thresholdImage'), moduleoptions);
+        this.createModule('Cluster Threshold',1, false, modules.getModule('clusterThreshold'), moduleoptions);
+        this.createModule('Correct Bias Field',1, true, modules.getModule('sliceBiasCorrect'), moduleoptions);
         
 
-        this.createModule('Resample Image',1, false, modules.resampleImage, moduleoptions);
-        this.createModule('Shift+Scale(+Cast) Image',1, false, modules.shiftScaleImage, moduleoptions);
-        this.createModule('Reorient Image',1, false, modules.reorientImage, moduleoptions);
-        this.createModule('Flip Image',1, false, modules.flipImage, moduleoptions);
-        this.createModule('Crop Image',1, false, modules.cropImage, moduleoptions);
-        this.createModule('Blank Image',1, false, modules.blankImage, moduleoptions);
-        this.createModule('Extract Frame',1, true, modules.extractFrame, moduleoptions);
+        this.createModule('Resample Image',1, false, modules.getModule('resampleImage'), moduleoptions);
+        this.createModule('Shift+Scale(+Cast) Image',1, false, modules.getModule('shiftScaleImage'), moduleoptions);
+        this.createModule('Reorient Image',1, false, modules.getModule('reorientImage'), moduleoptions);
+        this.createModule('Flip Image',1, false, modules.getModule('flipImage'), moduleoptions);
+        this.createModule('Crop Image',1, false, modules.getModule('cropImage'), moduleoptions);
+        this.createModule('Blank Image',1, false, modules.getModule('blankImage'), moduleoptions);
+        this.createModule('Extract Frame',1, true, modules.getModule('extractFrame'), moduleoptions);
         
         let dosep=(this.mode === 'paravision');
         
-        this.createModule('Combine Images',1, false, modules.combineImages, moduleoptions);
-        this.createModule('Process 4D Image',1, dosep, modules.process4DImage, moduleoptions);
-        this.createModule('Create Mask',2, false, modules.binaryThresholdImage, moduleoptions);
-        this.createModule('Morphology Filter',2, false, modules.morphologyFilter, moduleoptions);
+        this.createModule('Combine Images',1, false, modules.getModule('combineImages'), moduleoptions);
+        this.createModule('Process 4D Image',1, dosep, modules.getModule('process4DImage'), moduleoptions);
+        this.createModule('Create Mask',2, false, modules.getModule('binaryThresholdImage'), moduleoptions);
+        this.createModule('Morphology Filter',2, false, modules.getModule('morphologyFilter'), moduleoptions);
         if (usesgpl) {
-            this.createModule('Segment Image',2, true, modules.segmentImage, moduleoptions);
-            this.createModule('Deface Head Image',2, true, modules.defaceImage, moduleoptions);
+            this.createModule('Segment Image',2, true, modules.getModule('segmentImage'), moduleoptions);
+            this.createModule('Deface Head Image',2, true, modules.getModule('defaceImage'), moduleoptions);
         }
-        this.createModule('Regularize Objectmap',2, true, modules.regularizeObjectmap, moduleoptions);
-        this.createModule('Mask Image', 2, false, modules.maskImage, moduleoptions);
+        this.createModule('Regularize Objectmap',2, true, modules.getModule('regularizeObjectmap'), moduleoptions);
+        this.createModule('Mask Image', 2, false, modules.getModule('maskImage'), moduleoptions);
 
         if (this.mode!=='single') {
             this.attachTransformationController(3);
-            this.createModule('Reslice Image',3, true, modules.resliceImage, moduleoptions);
+            this.createModule('Reslice Image',3, true, modules.getModule('resliceImage'), moduleoptions);
             
-            this.createModule('Manual Registration',3, true, modules.manualRegistration, moduleoptions);
+            this.createModule('Manual Registration',3, true, modules.getModule('manualRegistration'), moduleoptions);
             if (usesgpl) {
-                this.createModule('Linear Registration',3, false, modules.linearRegistration, moduleoptions);
-                this.createModule('Non Linear Registration',3, true, modules.nonlinearRegistration, moduleoptions);
+                this.createModule('Linear Registration',3, false, modules.getModule('linearRegistration'), moduleoptions);
+                this.createModule('Non Linear Registration',3, true, modules.getModule('nonlinearRegistration'), moduleoptions);
             }
-            this.createModule('Project Image',3, false, modules.projectImage, moduleoptions);
-            this.createModule('Back-Project Image',3, usesgpl, modules.backProjectImage, moduleoptions);
+            this.createModule('Project Image',3, false, modules.getModule('projectImage'), moduleoptions);
+            this.createModule('Back-Project Image',3, usesgpl, modules.getModule('backProjectImage'), moduleoptions);
             if (usesgpl) {
-                this.createModule('Motion Correction',3, false, modules.motionCorrection, moduleoptions);
+                this.createModule('Motion Correction',3, false, modules.getModule('motionCorrection'), moduleoptions);
             }
         } 
         return this.moduleMenu[0];
