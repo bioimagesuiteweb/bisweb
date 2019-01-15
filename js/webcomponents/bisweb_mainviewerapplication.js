@@ -210,6 +210,7 @@ class ViewerApplicationElement extends HTMLElement {
         obj.sidetools={};
         const atlastoolid=this.getAttribute('bis-atlastoolid') || null;
         const blobanalyzerid=this.getAttribute('bis-blobanalyzerid') || null;
+        const landmarkcontrolid=this.getAttribute('bis-landmarkcontrolid') || null;
         
         if (atlastoolid) {
             let atlascontrol=document.querySelector(atlastoolid);
@@ -220,6 +221,12 @@ class ViewerApplicationElement extends HTMLElement {
             let blobcontrol=document.querySelector(blobanalyzerid);
             if (blobcontrol.isOpen())
                 obj.sidetools.clustertool=true;
+        }
+        if (landmarkcontrolid) {
+            let landmarkcontrol=document.querySelector(landmarkcontrolid);
+            if (landmarkcontrol.isOpen()) {
+                obj.sidetools.landmarkcontrol=true;
+            }
         }
         
         return obj;
@@ -249,19 +256,26 @@ class ViewerApplicationElement extends HTMLElement {
 
         const atlastoolid=this.getAttribute('bis-atlastoolid') || null;
         const blobanalyzerid=this.getAttribute('bis-blobanalyzerid') || null;
-
+        const landmarkcontrolid=this.getAttribute('bis-landmarkcontrolid') || null;
         
         if (sidetools.atlascontrol && atlastoolid) {
             let atlascontrol=document.querySelector(atlastoolid);
             setTimeout(()=> {
                 atlascontrol.show();
-            },100);
+            },500);
         }
         
         if (sidetools.clustertool && blobanalyzerid) {
             let blobcontrol=document.querySelector(blobanalyzerid);
             setTimeout( ()=> {
                 blobcontrol.show();
+            },500);
+        }
+
+        if (sidetools.landmarkcontrol && landmarkcontrolid) {
+            let landmarkcontrol=document.querySelector(landmarkcontrolid);
+            setTimeout( ()=> {
+                landmarkcontrol.show();
             },500);
         }
     }
@@ -1046,12 +1060,13 @@ class ViewerApplicationElement extends HTMLElement {
         },null,4);
 
         fobj=genericio.getFixedSaveFileName(fobj,self.getApplicationStateFilename(storeimages));
-        //        console.log('Fobj=',fobj);
         
         return new Promise(function (resolve, reject) {
             genericio.write(fobj, output).then((f) => {
-                if (!genericio.isSaveDownload())
+                if (!genericio.isSaveDownload()) {
                     webutil.createAlert('Application State saved '+f);
+                    resolve();
+                } 
             }).catch((e) => {
                 webutil.createAlert('Failed to save Application State '+e);
                 reject(e);

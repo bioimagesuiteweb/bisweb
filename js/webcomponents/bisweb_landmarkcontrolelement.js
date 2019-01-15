@@ -1058,6 +1058,10 @@ class LandmarkControlElement extends HTMLElement {
             this.internal.mousestate=mousestate;
         }         
     }
+
+    isOpen() {
+        return this.panel.isOpen();
+    }
 }
 
 webutil.defineElement('bisweb-landmarkcontrolelement', LandmarkControlElement);
