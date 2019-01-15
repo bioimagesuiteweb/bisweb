@@ -520,11 +520,21 @@ class LandmarkControlElement extends HTMLElement {
     getInitialSaveFilename() {
         return this.internal.landmarkset[this.internal.currentsetindex].filename;
     }
-    
+
+    /** Returns the internal set of landmarks, usually to be formatted for saving */
+    getlandmarks() {
+        return this.internal.landmarkset[this.internal.currentsetindex];
+    }
+
+    /** Serializes the internal landmarks for export */
+    serializelandmarks() {
+        return this.getlandmarks().serialize();
+    }
+
     /** Export landmarks to a .land file.  */
     exportlandmarks(fobj) {
         this.picklandmark(false);
-        var outstring=this.internal.landmarkset[this.internal.currentsetindex].legacyserialize();
+        var outstring=this.getlandmarks().legacyserialize();
 
         let fname=bisgenericio.getFixedSaveFileName(fobj,this.internal.landmarkset[this.internal.currentsetindex].filename);
         let index=fname.lastIndexOf('.');
@@ -532,7 +542,6 @@ class LandmarkControlElement extends HTMLElement {
         bisgenericio.write(newname,outstring);
         return false;
     }
-
     
     /** Save landmarks to a .ljson file. */
     savelandmarks(fobj) {
@@ -540,7 +549,7 @@ class LandmarkControlElement extends HTMLElement {
         // webutil.createAlert('Landmarks loaded from ' +filename+' numpoints='+pset.getnumpoints());
         
         this.picklandmark(false);
-        var a=this.internal.landmarkset[this.internal.currentsetindex].serialize();
+        let a = this.serializelandmarks();
         fobj=bisgenericio.getFixedSaveFileName(fobj,this.internal.landmarkset[this.internal.currentsetindex].filename);
         bisgenericio.write(fobj,a);
         return false;
@@ -564,23 +573,26 @@ class LandmarkControlElement extends HTMLElement {
         return false;
     }
 
+    displaylandmarks(obj, fileextension = obj.filename.split('.').pop()) {
+
+        let pset = this.internal.landmarkset[this.internal.currentsetindex];
+        console.log('obj', obj);
+        var ok = pset.deserialize(obj.data, fileextension, loaderror);
+        if (ok) {
+            pset.filename = obj.filename;
+            this.updatedisplay(true);
+            this.updategui();
+            this.picklandmark(false);
+            webutil.createAlert('Landmarks loaded from' + pset.filename + ' numpoints=' + pset.getnumpoints());
+        }
+    }
     /** Load landmarks. Called from input=File element 
      * @param {string} filename - filename
      */
     loadlandmarks(filename) {
 
-        const self=this;
-
         bisgenericio.read(filename).then( (obj) => {
-            let pset=this.internal.landmarkset[this.internal.currentsetindex];
-            var ok=pset.deserialize(obj.data,obj.filename,loaderror);
-            if (ok) {
-                pset.filename=obj.filename;
-                self.updatedisplay(true);
-                self.updategui();
-                self.picklandmark(false);
-                webutil.createAlert('Landmarks loaded from' +pset.filename+' numpoints='+pset.getnumpoints());
-            }
+            this.displaylandmarks(obj);
         }).catch( (e) => { loaderror(e) ; });
         return false;
     }

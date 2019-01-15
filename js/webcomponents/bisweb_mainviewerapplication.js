@@ -226,6 +226,11 @@ class ViewerApplicationElement extends HTMLElement {
             let landmarkcontrol=document.querySelector(landmarkcontrolid);
             if (landmarkcontrol.isOpen()) {
                 obj.sidetools.landmarkcontrol=true;
+
+                //serialization removes unnecessary fields, so serialize and deserialize to sanitize the object
+                let serializedlandmarks = landmarkcontrol.serializelandmarks();
+                obj.landmarks = { 'data': serializedlandmarks };
+                console.log('landmarks', obj.landmarks);
             }
         }
         
@@ -274,6 +279,12 @@ class ViewerApplicationElement extends HTMLElement {
 
         if (sidetools.landmarkcontrol && landmarkcontrolid) {
             let landmarkcontrol=document.querySelector(landmarkcontrolid);
+            //load landmarks if they're contained in the state file
+            console.log('dt', dt);
+            if (dt.landmarks) {
+                //landmarks stored in the app state are formatted as 'ljson' files so let the landmark editor know so
+                landmarkcontrol.displaylandmarks(dt.landmarks, '.ljson');
+            }
             setTimeout( ()=> {
                 landmarkcontrol.show();
             },500);
