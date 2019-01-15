@@ -283,6 +283,8 @@ class ViewerApplicationElement extends HTMLElement {
             console.log('dt', dt);
             if (dt.landmarks) {
                 //landmarks stored in the app state are formatted as 'ljson' files so let the landmark editor know so
+                landmarkcontrol.clearallpoints(true);
+                landmarkcontrol.enablemouse(false);
                 landmarkcontrol.displaylandmarks(dt.landmarks, '.ljson');
             }
             setTimeout( ()=> {

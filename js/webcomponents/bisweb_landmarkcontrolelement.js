@@ -556,7 +556,7 @@ class LandmarkControlElement extends HTMLElement {
     }
 
     /** delete all points -- pops up dialog first to make sure. No undo possible. */
-    clearallpoints() {
+    clearallpoints(force = false) {
 
         const self=this;
         var fn=function(result) {
@@ -569,7 +569,7 @@ class LandmarkControlElement extends HTMLElement {
         };
         
         this.picklandmark(false);
-        bootbox.confirm("Are you sure you want to delete all points?", fn);
+        if (!force) { bootbox.confirm("Are you sure you want to delete all points?", fn); }
         return false;
     }
 
