@@ -45,7 +45,7 @@ let run_tf_module=async function(img) {
     if (window.BISELECTRON) {
         batchsize=64;
     }
-    tfrecon.execute( { input : img }, {  padding : 8, batchsize : batchsize, modelname : URL, forceBrowser : true }).then( () => { 
+    tfrecon.execute( { input : img }, {  padding : 8, batchsize : batchsize, modelname : URL, forcebrowser : true }).then( () => { 
         let output=tfrecon.getOutputObject('output');
         
         if (viewer) {
