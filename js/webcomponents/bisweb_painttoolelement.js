@@ -1108,7 +1108,7 @@ class PaintToolElement extends HTMLElement {
                 moduleoptions.name='Create Objectmap';
                 this.internal.thresholdModule=biscustom.createCustom(this.internal.layoutcontroller,
                                                                      this.internal.algocontroller,
-                                                                     new modules.binaryThresholdImage(),
+                                                                     modules.getModule('binaryThresholdImage'),
                                                                      moduleoptions);
                 webutil.createMenuItem(tmenu, moduleoptions.name,function() {
                     self.internal.thresholdModule.show();
@@ -1119,7 +1119,7 @@ class PaintToolElement extends HTMLElement {
                 biswrap.initialize().then( () => {
                     if (biswrap.uses_gpl()) {
                         moduleoptions.name='Deface Head Image';
-                        let mod=new modules.defaceImage();
+                        let mod=modules.getModule('defaceImage');
                         mod.outputmask=true;
                         this.internal.defaceModule=biscustom.createCustom(this.internal.layoutcontroller,
                                                                           this.internal.algocontroller,
@@ -1133,7 +1133,7 @@ class PaintToolElement extends HTMLElement {
                         moduleoptions.name='Morphology Operations';
                         this.internal.morphologyModule=biscustom.createCustom(this.internal.layoutcontroller,
                                                                               this.internal.algocontroller,
-                                                                              new modules.morphologyFilter(),
+                                                                              modules.getModule('morphologyFilter'),
                                                                               moduleoptions);
                         webutil.createMenuItem(tmenu, moduleoptions.name, () => {
                             self.internal.morphologyModule.show();
@@ -1142,7 +1142,7 @@ class PaintToolElement extends HTMLElement {
                         moduleoptions.name='Regularize Objectmap';
                         this.internal.regularizeModule=biscustom.createCustom(this.internal.layoutcontroller,
                                                                               this.internal.algocontroller,
-                                                                              new modules.regularizeObjectmap(),
+                                                                              modules.getModule('regularizeObjectmap'),
                                                                               moduleoptions);
                         webutil.createMenuItem(tmenu, moduleoptions.name,function() {
                             self.internal.regularizeModule.show();
@@ -1152,7 +1152,7 @@ class PaintToolElement extends HTMLElement {
                         moduleoptions.name='Mask Image';
                         this.internal.maskModule=biscustom.createCustom(this.internal.layoutcontroller,
                                                                         this.internal.algocontroller,
-                                                                        new modules.maskImage(),
+                                                                        modules.getModule('maskImage'),
                                                                         moduleoptions);
                         webutil.createMenuItem(tmenu, moduleoptions.name,function() {
                             self.internal.maskModule.show();

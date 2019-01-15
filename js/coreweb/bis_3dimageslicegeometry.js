@@ -26,7 +26,6 @@
 
 const THREE=require('three');
 
-
 /** 
  * A class that inherits from {@link ThreeJS-BufferGeometry} to create a plane on which to render an image texture or an image outline.
  * This is hidden behind a factory function -- see examples below. <BR> <BR>
