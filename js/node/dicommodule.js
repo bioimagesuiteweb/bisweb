@@ -26,7 +26,7 @@
     const fs = require('fs');
     const exec = require('child_process').exec;
     
-    class InfoModule extends BaseModule {
+    class DicomModule extends BaseModule {
       constructor() {
         super();
         this.name = 'Info';
@@ -35,7 +35,7 @@
         createDescription() {
             
             return {
-                "name": "Info",
+                "name": "Dicom Conversion",
                 "description": "This module converts raw DICOM data into NIFTI form using dcm2niix, then formats it to BIDS specifications",
                 "author": "Zach Saltzman",
                 "version": "1.0",
@@ -58,7 +58,8 @@
                         "description": "Input directory for the DICOM conversion",
                         "advanced": true,
                         "type": "string",
-                        "varname": "indir"
+                        "varname": "inputDirectory",
+                        "default" : "Error: no input directory specified"
                     },
                     baseutils.getDebugParam()
                 ]
@@ -82,7 +83,7 @@
                     return false;
                 });
                 
-                let indir=vals.indir || '';
+                let indir=vals.inputDirectory || '';
                 
                 if (path.sep==='\\') {
                     indir=bis_util.filenameUnixToWindows(indir);
@@ -130,5 +131,5 @@
         }
     }
     
-    module.exports = InfoModule;
+    module.exports = DicomModule;
     

@@ -736,54 +736,6 @@ class BisFileServerClient extends BisBaseServerClient {
         });
     }
 
-    /** performs DICOM conversion by having the server run dcm2nii
-     * @param{String} indir -- the input directory
-     * @param{Function} upd - function to call for progress messages
-     * @param{Boolean} debug - if true run dummy function
-     * @returns {Promise} payload is the result
-     */
-    dicomConversion(indir,upd,debug=false) {
-
-        if (indir.indexOf('\\')>=0)
-            indir=util.filenameWindowsToUnix(indir);
-
-        let outstring="";
-        
-        this.updateCallback= ((msg) => {
-            outstring+=msg;
-            if (upd)
-                upd(msg);
-        });
-
-        
-        return new Promise( (resolve,reject) => {
-            
-            let res=((obj) => {
-                this.updateCallback= console.log;
-                resolve({
-                    output : obj.output,
-                    log  : outstring
-                });
-            });
-
-            let rej=() => {
-                this.updateCallback= console.log;
-                reject();
-            };
-            
-            let serverEvent=bisasyncutil.addServerEvent(res,rej,'runModule');
-            this.sendCommand({
-                'command': 'runModule',
-                'modulename': 'dicomconversion',
-                'operation': 'Running a module',
-                'indir': indir,
-                'debug': debug,
-                'id': serverEvent.id,
-                'timeout': 300000
-            });
-        });
-    }
-
     /** performs DICOM 2 BIDS on the output of dcm2nii
      * @param{String} indir -- the input directory (output of dcm2nii)
      * @param{String} outdir -- the output directory
@@ -843,8 +795,7 @@ class BisFileServerClient extends BisBaseServerClient {
             if (upd)
                 upd(msg);
         });
-
-        
+   
         return new Promise( (resolve,reject) => {
             
             let res=((obj) => {

@@ -615,7 +615,7 @@ let runFileConversion = (params) => {
     return new Promise( (resolve, reject) => {
         if (fileServerClient) {
             if (params.fileType === 'dicom') {
-                fileServerClient.dicomConversion(params.inputDirectory, updateFn)
+                fileServerClient.runModule('dicomconversion', params, console.log, true)
                     .then((obj) => {
                         console.log('Conversion done');
                         resolve(obj);

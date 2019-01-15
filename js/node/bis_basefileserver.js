@@ -868,11 +868,11 @@ class BaseFileServer {
      */
 
     runModule(socket, opts) {
-
         let id = opts.id;
         let modulename = opts.modulename;
         let moduleparams = opts.params;
 
+        console.log('run module', opts);
 
         let done = (success, text) => {
             if (!success)
@@ -897,7 +897,6 @@ class BaseFileServer {
         //module.setListenFunction(listen);
 
         // Run Module and call done when it is done
-        console.log('opts', opts);
         let module = moduleindex.getModule(modulename, false);
 
         module.execute({}, moduleparams).then((m) => {

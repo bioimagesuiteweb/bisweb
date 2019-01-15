@@ -7,6 +7,7 @@ const os = require('os');
 // ......................... Filename Validation Code .............................................
 
 const baseDirectoriesList = [ os.homedir(), os.tmpdir() ? os.tmpdir() : 'No temporary directory'];
+const indent = '.....';
 /**
  * Takes a path specifying a file to load on the server machine and determines whether the path is clean, i.e. specifies a file that exists, does not contain symbolic links.
  * Recursively checks every file and directory on the path.
@@ -87,7 +88,7 @@ validateFilename = (filepath, debug = false) => {
  * @params{String} - name of list for debugging
  * @returns{Array} - fixed array
  */
-validateDirectories = (lst, name = "") => {
+validateDirectories = (lst, name = "", verbose = true) => {
 
     let newlist = [];
     for (let i = 0; i < lst.length; i++) {
@@ -143,8 +144,8 @@ validateDirectories = (lst, name = "") => {
             }
         }
     }
-    if (this.opts.verbose)
-        console.log(this.indent, 'Validating ' + name + ' directory list=', lst.join(','), '-->\n' + this.indent + '\t ', newlist.join(','));
+    if (verbose)
+        console.log(indent, 'Validating ' + name + ' directory list=', lst.join(','), '-->\n' + indent + '\t ', newlist.join(','));
     return newlist;
 }
 
