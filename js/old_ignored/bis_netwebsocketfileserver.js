@@ -5,6 +5,7 @@ const path=require('path');
 const timers = require('timers');
 const util = require('bis_util');
 const coregenericio = require('bis_coregenericio.js');
+const bis_filesystemutils.js = require('bis_filesystemutils.js');
 const { StringDecoder } = require('string_decoder');
 
 // TODO: IP Filtering
@@ -718,7 +719,7 @@ class BisNetWebSocketFileServer extends BaseFileServer {
         //spawn a new server to handle the data transfer
         console.log(this.indent+' '+this.indent+' Beginning data transfer', this.portNumber+1,'upload=',upload.filename);
 
-        if (!this.validateFilename(upload.filename)) {
+        if (!bis_filesystemutils.validateFilename(upload.filename)) {
             this.sendCommand(socket,'uploadmessage', {
                 name : 'badfilename',
                 payload : 'filename '+upload.filename+' is not valid',

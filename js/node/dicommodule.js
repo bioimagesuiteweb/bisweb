@@ -120,12 +120,13 @@
         
                 console.log('indir', indir, 'outdir', outdir);
                 let cmd = dcm2nii + ' -z y ' + ' -o ' + outdir + ' -ba y -c bisweb ' + indir;
-                exec(cmd, (err, stdout, stderr) => {
+                exec(cmd, (err, stdout) => {
                     if (err) { console.log('An error occured while running dcm2nii', err); reject(err); }
 
+                    console.log(stdout);
                     //TODO: take temp directory and reorganize files into BIDS structure
                     done(stdout);
-                    resolve(stdout);
+                    resolve(outdir);
                 });
             });
         }
