@@ -827,6 +827,8 @@ class ColormapControllerElement extends HTMLElement {
                     }
                 }
             }
+
+            f2=this.internal.folder[0];
         }
         
         this.updateTransferFunctions();

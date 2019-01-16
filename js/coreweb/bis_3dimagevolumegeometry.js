@@ -188,7 +188,8 @@ function ImageVolumeGeometry( dim, spa ) {
 
 }
 
-ImageVolumeGeometry.prototype = Object.create( THREE.BufferGeometry.prototype );
-ImageVolumeGeometry.prototype.constructor = ImageVolumeGeometry;
-
-module.exports = ImageVolumeGeometry;
+if (typeof THREE !== 'undefined') {
+    ImageVolumeGeometry.prototype = Object.create( THREE.BufferGeometry.prototype );
+    ImageVolumeGeometry.prototype.constructor = ImageVolumeGeometry;
+    module.exports = ImageVolumeGeometry;
+}
