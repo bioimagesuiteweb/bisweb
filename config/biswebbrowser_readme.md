@@ -1,23 +1,69 @@
 ## BioImage Suite Web -- Browser Package
 
-This is a Browser package that exports some of the low level
-algorithmic and IO functionality in BioImage Suite Web as an npm package. 
+This is package exports much of functionality in BioImage Suite Web as an npm
+package for use inside a Browser (or Electron). For more on BioImage Suite Web
+see:
+
+* The source repository --
+  [https://github.com/bioimagesuiteweb/bisweb](https://github.com/bioimagesuiteweb/bisweb)
+* The actual web application --
+  [https://bioimagesuiteweb.github.io/webapp/](https://bioimagesuiteweb.github.io/webapp/)
+  
+You may also take a look at the examples repository
+[https://github.com/bioimagesuiteweb/examples](https://github.com/bioimagesuiteweb/examples).
 
 
+BioImage Suite Web (bisweb) is a web-based medical image analysis suite
+primarily geared towards Neuroimaging Analysis. We gratefully acknowledge
+support from the NIH Brain Initiative under grant R24 MH114805 (Papademetris
+X. and Scheinost D. PIs).
 
 ### Installation
 
-Simply type
+Simply type:
 
     npm install biswebbrowser
 
-### Using this as a library
+### Including in your application's html header
 
-In your code (assuming you are doing this via webpack)
+In the header of your html file include: (Replace `node_modules` with the
+relative path from your `.html` file to `node_modules`)
 
-    const bisweb=require('biswebbrowser');
+a. The CSS dependencies (only needed if you will use BioImage Suite Web UI Components)
+
+Either the slightly customized BioImage Suite Web `dark` bootstrap style (this
+is bootstrap 3.4.0)
+
+    <link rel="stylesheet" type="text/css href="node_modules/biswebbrowser/dist/bootstrap_dark_edited.css">
+    
+or a standard `light` style:
+
+    <link rel="stylesheet" type="text/css href="node_modules/biswebbrowser/dist/css/bootstrap.min.css">
+
+b. The external JS dependencies (jQuery 3.3.1, THREE.js 0.100.0, Bootstrap 3.4.0 and
+the Polymer webcomponents package)
+
+    <script src="node_modules/biswebbrowser/dist/webcomponents-lite.js"></script>
+    <script src="node_modules/biswebbrowser/dist/jquery.min.js"></script>
+    <script src="node_modules/biswebbrowser/dist/bootstrap.min.js"></script>
+    <script src="node_modules/biswebbrowser/dist/three.min.js"></script>
+    
+c. The BioImage Suite Web Files JS/WASM files
+
+    <script src="node_modules/biswebbrowser/dist/libbiswasm_wasm.js"></script>
+    <script src="node_modules/biswebbrowser/dist/bislib.js"></script>
+
+If you would like (for whatever reason) not to include GPL licensed code, then
+include the non-GPL WASM code (Apache) script instead of `libbiswasm_wasm.js`.
+
+    <script src="node_modules/bisweb/dist/libbiswasm_nongpl_wasm.js"></script>
+
+
+### Example JS Code
 
 Here is some sample js code that uses this:
+
+    const bisweb=window.bioimagesuiteweb;
 
     window.onload = function() {
     
@@ -40,29 +86,19 @@ Here is some sample js code that uses this:
         });
      };
 
-### using this directly in the browser (not via webpack)
+For more, see the [./dist/exportexample.html](./dist/exportexample) that is part of
+this npm package or the examples repository linked to above.
 
-#### In the header add the scripts (somehow)
+### Electron
 
-    <script src="./node_modules/bisweb/dist/jquery.min.js"></script>
-    <script src="./node_modules/bisweb/dist/boostrap.min.js"></script>
-    <script src="./node_modules/bisweb/dist/three.min.js"></script>
-    <script src="./node_modules/bisweb/dist/libbiswasm_wasm.js"></script>
-    <script src="./node_modules/bisweb/dist/bislib.js"></script>
+If you are planning to use this code in an electron application, you will need
+to include the file
+[./electron/electronpreload.js](./electron/electronpreload) in your electron
+preload script for as to allow access to lower level code. 
 
-If you would like (for whatever reason) not to include GPL licensed code, then
-include the non-GPL WASM code script instead of `libbiswasm_wasm.js`.
-
-    <script src="./node_modules/bisweb/dist/libbiswasm_nongpl_wasm.js"></script>
+You will also need to install the node.js pre-requisites specified in
+[./electron/electrondependencies.json](./electron/electrondependencies.json)
+appropriately.  The tensorflow package (tfjs-node) is optional.
 
 
-#### JS Code
 
-This is the same above but you will need to replace the `require` line with
-
-    const bisweb=window.bioimagesuiteweb;
-    
-
-#### More Examples
-
-See the examples repository [https://github.com/bioimagesuiteweb/examples](https://github.com/bioimagesuiteweb/examples).

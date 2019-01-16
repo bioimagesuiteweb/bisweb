@@ -660,7 +660,7 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
             "homepage": "www.bioimagesuite.org",
             "main" : "dist/bioimagesuiteweb.js",
             "author": "Xenios Papademetris",
-            "license": "GPL V2 or Apache V2)",
+            "license": "GPL v2 or Apache",
             "repository": {
                 "type" : "git",
                 "url" : "https://github.com/bioimagesuiteweb/bisweb",
