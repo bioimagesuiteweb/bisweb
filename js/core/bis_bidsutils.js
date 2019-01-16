@@ -1,7 +1,7 @@
 'use strict';
 
 const bis_genericio=require('bis_genericio');
-const bis_util = require('bis_util.js');
+//const bis_util = require('bis_util.js');
 
 // DICOM2BIDS
 /**
@@ -49,7 +49,7 @@ let dicom2BIDS=async function(opts)  {
 
     //filter supplemental files by looking for files without '.nii'.
     //once you find a file and move it, record its name 
-    let filteredsuppfiles = [], movedsuppfiles = [], suppmatch = undefined;
+    let filteredsuppfiles = [], movedsuppfiles = [];
     for (let file of suppfiles) {
         if (!file.includes('.nii')) filteredsuppfiles.push(file);
     }
@@ -240,8 +240,8 @@ let calculateChecksums = (inputFiles) => {
     
         Promise.all(promises)
         .then( () => { resolve(checksums); })
-        .catch( (e) => { reject(e); })
-    })
+        .catch( (e) => { reject(e); });
+    });
 
 };
 

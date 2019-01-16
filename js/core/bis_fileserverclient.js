@@ -1,3 +1,4 @@
+/* global Atomics */
 'use strict';
 
 const wsUtilInitialPort = require('bis_wsutil').initialPort;
@@ -828,7 +829,7 @@ class BisFileServerClient extends BisBaseServerClient {
             
             let res = ( (checksum) => {
                 Atomics.add(checksums, { 'filename' : url, 'checksum' : checksum });
-                resolve('Calculated checksum for', filename, checksum);
+                resolve('Calculated checksum for', url, checksum);
             });
             
             let rej=(e) => {
@@ -838,8 +839,8 @@ class BisFileServerClient extends BisBaseServerClient {
             let serverEvent=bisasyncutil.addServerEvent(res,rej,'makeChecksum');
             this.sendCommand({ 'command' : 'filesystemoperation',
                                'operation' : 'makeChecksum',
-                               'params' : { 'url' : filename },
-                               'debug' : debug,
+                               'params' : { 'url' : url },
+                               'debug' : false,
                                'id' : serverEvent.id,
                                'timeout' : 300000}); 
         });

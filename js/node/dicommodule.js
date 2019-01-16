@@ -77,11 +77,7 @@ class DicomModule extends BaseModule {
 
             let errorfn = ((msg, e = 'No available error message') => {
                 console.log('error in dicom conversion', msg, e);
-                this.sendCommand(socket, 'dicomConversionError', {
-                    'output': msg,
-                    'id': id
-                });
-                return false;
+                reject(e);
             });
 
             let indir = vals.inputDirectory || '';

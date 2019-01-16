@@ -608,9 +608,9 @@ let isSaveDownload =function() {
  */
 let runFileConversion = (params) => {
 
-    let updateFn = (obj) => {
+    /*let updateFn = (obj) => {
         console.log('update fn', obj);
-    };
+    };*/
 
     return new Promise( (resolve, reject) => {
         if (fileServerClient) {
@@ -643,13 +643,13 @@ let runFileConversion = (params) => {
 let makeFileChecksum = (url) => {
 
     if (fileServerClient) {
-        return fileServerClient.makeFileChecksum(url, checksums);
+        return fileServerClient.makeFileChecksum(url);
     } else if (inBrowser) {
         console.log('Cannot perform makeFileChecksum in a browser');
         return false;
     }
 
-}
+};
 
 /**
  * Splits a filename concatenated by the symbol '&&' into two names.

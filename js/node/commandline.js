@@ -202,7 +202,7 @@ let loadParse = function (args, toolname,basedirectory='') {
                 } else {
                     reject('---- Type checking of Arguements failed');
                 }
-            })
+            });
         }).catch((e) => {
             console.log('error');
             reject('----- Bad param filename '+e);

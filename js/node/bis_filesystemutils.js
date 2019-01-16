@@ -15,7 +15,7 @@ const indent = '.....';
  * @param {String} filepath - Path to check.
  * @return {Boolean} true if OK, false if not OK,
  */
-validateFilename = (filepath, debug = false) => {
+let validateFilename = (filepath, debug = false) => {
 
     //some filepaths will be two filepaths conjoined by the symbol &&, check these separately
     if (filepath.indexOf('&&') >= 0) {
@@ -81,14 +81,14 @@ validateFilename = (filepath, debug = false) => {
     }
 
     return true;
-}
+};
 
  /** Validate Directories
  * @params{Array} - array of directories
  * @params{String} - name of list for debugging
  * @returns{Array} - fixed array
  */
-validateDirectories = (lst, name = "", verbose = true) => {
+let validateDirectories = (lst, name = "", verbose = true) => {
 
     let newlist = [];
     for (let i = 0; i < lst.length; i++) {
@@ -147,7 +147,7 @@ validateDirectories = (lst, name = "", verbose = true) => {
     if (verbose)
         console.log(indent, 'Validating ' + name + ' directory list=', lst.join(','), '-->\n' + indent + '\t ', newlist.join(','));
     return newlist;
-}
+};
 
 
 module.exports = {

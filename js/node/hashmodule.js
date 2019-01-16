@@ -3,8 +3,8 @@ const BaseModule = require('basemodule.js');
 const baseutils = require('baseutils.js');
 const bis_util = require('bis_util.js');
 const fs = require('fs');
-const zlib = require('zlib')
-const streamifier = require('streamifier');
+const zlib = require('zlib');
+//const streamifier = require('streamifier');
 
 class HashModule extends BaseModule {
     constructor() {
