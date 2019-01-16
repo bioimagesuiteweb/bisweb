@@ -1,6 +1,7 @@
 'use strict';
 
-const genericio=require('bis_genericio');
+const bis_genericio=require('bis_genericio');
+const bis_util = require('bis_util.js');
 
 // DICOM2BIDS
 /**
@@ -19,7 +20,7 @@ let dicom2BIDS=async function(opts)  {
 
     let makeDir=async function(f) {
         try {
-            await genericio.makeDirectory(f);
+            await bis_genericio.makeDirectory(f);
         } catch(e) {
             if (e.code !== 'EEXIST') {
                 errorfn('Error'+e);
@@ -37,11 +38,11 @@ let dicom2BIDS=async function(opts)  {
     console.log('opts=',opts,indir,outdir);
     
     
-    let matchniix=genericio.joinFilenames(indir, '*.nii.gz');
-    let matchsupp = genericio.joinFilenames(indir, '*');
+    let matchniix=bis_genericio.joinFilenames(indir, '*.nii.gz');
+    let matchsupp = bis_genericio.joinFilenames(indir, '*');
     
-    let flist = await genericio.getMatchingFiles(matchniix);
-    let suppfiles = await genericio.getMatchingFiles(matchsupp);
+    let flist = await bis_genericio.getMatchingFiles(matchniix);
+    let suppfiles = await bis_genericio.getMatchingFiles(matchsupp);
 
     console.log('Flist=',flist.join('\n\t'));
     console.log('supp files', suppfiles);
@@ -57,7 +58,7 @@ let dicom2BIDS=async function(opts)  {
         return errorfn('No data to convert in '+indir);
     }
     
-    let outputdirectory=genericio.joinFilenames(outdir,'derived');
+    let outputdirectory=bis_genericio.joinFilenames(outdir,'derived');
     try {
         await makeDir(outputdirectory);
     } catch (e) {
@@ -66,10 +67,10 @@ let dicom2BIDS=async function(opts)  {
 
     console.log('+++++','Created directory',outputdirectory);
 
-    let funcdir=genericio.joinFilenames(outputdirectory,'func'); 
-    let anatdir=genericio.joinFilenames(outputdirectory,'anat'); 
-    let locdir=genericio.joinFilenames(outputdirectory,'localizer');
-    let diffdir=genericio.joinFilenames(outputdirectory,'diff'); 
+    let funcdir=bis_genericio.joinFilenames(outputdirectory,'func'); 
+    let anatdir=bis_genericio.joinFilenames(outputdirectory,'anat'); 
+    let locdir=bis_genericio.joinFilenames(outputdirectory,'localizer');
+    let diffdir=bis_genericio.joinFilenames(outputdirectory,'diff'); 
 
     try {
         makeDir(funcdir);
@@ -104,28 +105,28 @@ let dicom2BIDS=async function(opts)  {
         }
 
         let origname=name;
-        let basename=genericio.getBaseName(name);
+        let basename=bis_genericio.getBaseName(name);
         
         let splitName = basename.split('.')[0];
 
         for (let suppfile of filteredsuppfiles) {
             //check if the trailing parts of one of the support files (without file type) match the image
             //strip out file extension and the name of the parent folder to match image
-            let splitsupp = genericio.getBaseName(suppfile).split('.');
+            let splitsupp = bis_genericio.getBaseName(suppfile).split('.');
             let filebasename = splitsupp[0];
 
             if (splitName.toLowerCase() === filebasename.toLowerCase()) {
                 //rejoin file extension to the formatted splitsupp
-                let suppTarget = genericio.joinFilenames(dirname, genericio.getBaseName(suppfile));
+                let suppTarget = bis_genericio.joinFilenames(dirname, bis_genericio.getBaseName(suppfile));
                 movedsuppfiles.push(suppTarget);
-                await genericio.copyFile(suppfile + '&&' + suppTarget);
+                await bis_genericio.copyFile(suppfile + '&&' + suppTarget);
             }
         }
 
-        let target=genericio.joinFilenames(dirname,basename);
+        let target=bis_genericio.joinFilenames(dirname,basename);
     
         try {
-            await genericio.copyFile(origname + '&&' + target);
+            await bis_genericio.copyFile(origname + '&&' + target);
         } catch (e) {
             return errorfn(e);
         }
@@ -141,7 +142,7 @@ let dicom2BIDS=async function(opts)  {
     //separate date string into individual chunks
     let year = date.substring(0,4), month = date.substring(4,6), day = date.substring(6,8), hour = date.substring(8,10), minute = date.substring(10,12);
     
-    let outfilename=genericio.joinFilenames(outputdirectory,'dicom_job.json');
+    let outfilename=bis_genericio.joinFilenames(outputdirectory,'dicom_job.json');
     let outobj = {
         "bisformat":"DICOMImport",
         "bidsversion": "1.1.0",
@@ -151,11 +152,11 @@ let dicom2BIDS=async function(opts)  {
     
     for (let i=0;i<tlist.length;i++) {
         let fname=tlist[i];
-        let name=genericio.getBaseName(tlist[i]);
+        let name=bis_genericio.getBaseName(tlist[i]);
         let infoname='';
         if (name.indexOf(".nii.gz")>0) {
 
-            let tagname=genericio.getBaseName(genericio.getDirectoryName(fname));
+            let tagname=bis_genericio.getBaseName(bis_genericio.getDirectoryName(fname));
             
             name=name.substr(0,name.length-7);
             let f2=fname.substr(0,fname.length-7)+'.bvec';
@@ -183,13 +184,26 @@ let dicom2BIDS=async function(opts)  {
             //find supporting files from file list 
             let basename = name.split('.')[0], suppfileArray = [];
             for (let file of movedsuppfiles) {
-                if (file.includes(basename)) { suppfileArray.push(file); }
+                if (file.includes(basename)) {
+                    let splitName = file.split('/'); 
+                    console.log('basename', basename, 'tlist name', tlist[i], 'split name', splitName);
+                    //parse the raw filename for only the BIDS components
+                    //BIDS structuring should produce a filepath at least two entries long (BIDS subdirectory and filename), so if this isn't the case we want to let the user know
+                    let bidsName = ( splitName.length >= 2 ? splitName.slice(splitName.length - 2, splitName.length).join('/') : 'Error: BIDS structure was not created correctly!');
+                    suppfileArray.push(bidsName); 
+                }
             }
+
+            //create checksum for the image file
+            //let filedata = await bis_genericio.read(tlist[i]);
+            //console.log('filedata', filedata);
+            //let hash = bis_util.SHA256(filedata);
 
             outobj.job.push({
                 name : name,
                 filename : fname.substr(outputdirectory.length+1,fname.length),
                 tag : tagname,
+                checksum : 'TODO: create this field!',
                 supportingfiles: suppfileArray,
                 details : infoname
             });
@@ -198,7 +212,7 @@ let dicom2BIDS=async function(opts)  {
     }
     
     try {
-        await genericio.write(outfilename,JSON.stringify(outobj,null,2),false);
+        await bis_genericio.write(outfilename,JSON.stringify(outobj,null,2),false);
     } catch(e) {
         return errorfn(e);
     }
@@ -211,7 +225,7 @@ let dicom2BIDS=async function(opts)  {
         //remove the top level folder in /tmp
         let containingFolder = splitindir.splice(0, 2).join('/');
         containingFolder = '/' + containingFolder;
-        genericio.deleteDirectory(containingFolder).then( () => {
+        bis_genericio.deleteDirectory(containingFolder).then( () => {
             console.log('Deleted', containingFolder, 'successfully');
         }).catch( (e) => {
             console.log('An Error occured trying to delete', containingFolder, e);
