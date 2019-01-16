@@ -113,12 +113,8 @@ let dicom2BIDS=async function(opts)  {
 
         let origname=name;
         let basename=genericio.getBaseName(name);
-
-        let regex = /[A-Za-z0-9]*_(.*)/g;
-        let regexMatch = regex.exec(basename);
-
-        name = regexMatch[1];
-        let splitName = name.split('.')[0];
+        
+        let splitName = basename.split('.')[0];
 
         for (let suppfile of filteredsuppfiles) {
             //check if the trailing parts of one of the support files (without file type) match the image
@@ -138,7 +134,7 @@ let dicom2BIDS=async function(opts)  {
             }
         }
 
-        let target=genericio.joinFilenames(dirname,genericio.getBaseName(name));
+        let target=genericio.joinFilenames(dirname,basename);
     
         try {
             await genericio.copyFile(origname + '&&' + target);
