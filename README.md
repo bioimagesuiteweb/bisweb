@@ -54,7 +54,7 @@ For browser/electron
 
 See the examples repository for examples:
 
-[https://github.com/bioimagesuiteweb/bisweb/examples]([https://github.com/bioimagesuiteweb/bisweb/examples)
+[https://github.com/bioimagesuiteweb/bisweb/examples](https://github.com/bioimagesuiteweb/bisweb/examples)
 
 __Code Acknoledgements:__ We have greatly benefited from reading the source
 code of [xtk](https://github.com/xtk/X). We also acknowledge the many posters
