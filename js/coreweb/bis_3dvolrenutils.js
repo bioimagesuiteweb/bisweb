@@ -3,15 +3,6 @@
 */
 
 
-// ---------------------------------------------------------------------------------------
-// <script src="https://threejs.org/examples/js/WebGL.js"></script> 
-// ---------------------------------------------------------------------------------------
-
-/**
- * @author alteredq / http://alteredqualia.com/
- * @author mr.doob / http://mrdoob.com/
- */
-
 const volume_vertex_shader=`
 // ---------------------------------------------------------------------------------------
 // <script src="https://threejs.org/examples/js/shaders/VolumeShader.js"></script>
@@ -370,6 +361,20 @@ vec4 add_lighting(float val, vec3 loc, vec3 step, vec3 view_ray)
     return final_color;
 }`;
 
+const VolumeRenderShader = {
+    vertexShader:   volume_vertex_shader,
+    fragmentShader: volume_fragment_shader,
+};
+
+
+// ---------------------------------------------------------------------------------------
+// <script src="https://threejs.org/examples/js/WebGL.js"></script> 
+// ---------------------------------------------------------------------------------------
+
+/**
+ * @author alteredq / http://alteredqualia.com/
+ * @author mr.doob / http://mrdoob.com/
+ */
 
 
 const WEBGL = {
@@ -404,39 +409,7 @@ const WEBGL = {
 
     }
 };
-// ---------------------------------------------------------------------------------------
-// <script src="https://threejs.org/examples/js/shaders/VolumeShader.js"></script>
-// ---------------------------------------------------------------------------------------
-/**
- * @author Almar Klein / http://almarklein.org
- *
- * Shaders to render 3D volumes using raycasting.
- * The applied techniques are based on similar implementations in the Visvis and Vispy projects.
- * This is not the only approach, therefore it's marked 1.
- */
 
-const cleanstring=function(input) {
-
-    // somehow the require ads module.exports = " ..." around the text
-    // removing this first
-    input=input.replace(/module.exports = /g,'').replace(/"/g,'');
-    input=input.replace(/\\r/g,'');
-    
-    let lines=input.split('\\n');
-    let out='';
-    for (let i=0;i<lines.length;i++) {
-        let a=lines[i].trim();
-        if (a.length>0 && a.indexOf('//')!==0)
-            out+=a+'\n';
-    }
-    return out;
-};
-
-
-const VolumeRenderShader = {
-    vertexShader: cleanstring(volume_vertex_shader),
-    fragmentShader: cleanstring(volume_fragment_shader)
-};
 
 // ---------------------------------------------------------------------------------------
 // Export

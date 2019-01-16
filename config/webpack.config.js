@@ -154,9 +154,6 @@ if (output === "bislib.js" || output ==="index.js") {
                 resource.request = resource.request.replace(/__BISWEB_EXTERNAL/, `${bisWebExternalFile}`);
             }),
         ],
-        module : {
-            rules : [  { 'test': /\.txt$/, 'use': 'raw-loader' } ]
-        }
     };
 
     
