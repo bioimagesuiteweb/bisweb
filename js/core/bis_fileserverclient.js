@@ -822,6 +822,29 @@ class BisFileServerClient extends BisBaseServerClient {
         });
     }
 
+    makeFileChecksum(url, checksums) {
+   
+        return new Promise( (resolve,reject) => {
+            
+            let res = ( (checksum) => {
+                Atomics.add(checksums, { 'filename' : url, 'checksum' : checksum });
+                resolve('Calculated checksum for', filename, checksum);
+            });
+            
+            let rej=(e) => {
+                reject('An error occured making the checksum', e);
+            };
+            
+            let serverEvent=bisasyncutil.addServerEvent(res,rej,'makeChecksum');
+            this.sendCommand({ 'command' : 'filesystemoperation',
+                               'operation' : 'makeChecksum',
+                               'params' : { 'url' : filename },
+                               'debug' : debug,
+                               'id' : serverEvent.id,
+                               'timeout' : 300000}); 
+        });
+    }
+
     // ------------------ Download file and helper routines -----------------------------------------------------------------
     /**
      * Handles the final download

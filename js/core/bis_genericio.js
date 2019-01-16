@@ -633,6 +633,23 @@ let runFileConversion = (params) => {
         }
     });
 };
+/**
+ * Makes a SHA256 checksum for a given image file. Currently only functional if a file server is specified.
+ * 
+ * @param {String} url - Filename of image to make checksum for.
+ * @param {Array} checksums - Array of checksums to add the calculated checksum to. Concatenation happens atomically since processes making checksums may live on different threads.
+ * @returns Promise that will resolve the checksum, or false if no file server client is specified.
+ */
+let makeFileChecksum = (url) => {
+
+    if (fileServerClient) {
+        return fileServerClient.makeFileChecksum(url, checksums);
+    } else if (inBrowser) {
+        console.log('Cannot perform makeFileChecksum in a browser');
+        return false;
+    }
+
+}
 
 /**
  * Splits a filename concatenated by the symbol '&&' into two names.
@@ -692,7 +709,8 @@ const bisgenericio = {
     getPathSeparator : getPathSeparator,
     //
     isSaveDownload : isSaveDownload,
-    runFileConversion : runFileConversion
+    runFileConversion : runFileConversion,
+    makeFileChecksum : makeFileChecksum,
 };
 
 

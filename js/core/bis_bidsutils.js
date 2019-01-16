@@ -194,16 +194,11 @@ let dicom2BIDS=async function(opts)  {
                 }
             }
 
-            //create checksum for the image file
-            //let filedata = await bis_genericio.read(tlist[i]);
-            //console.log('filedata', filedata);
-            //let hash = bis_util.SHA256(filedata);
-
             outobj.job.push({
                 name : name,
                 filename : fname.substr(outputdirectory.length+1,fname.length),
                 tag : tagname,
-                checksum : 'TODO: create this field!',
+                checksum : 'TODO: Make checksum field!',
                 supportingfiles: suppfileArray,
                 details : infoname
             });
@@ -234,6 +229,20 @@ let dicom2BIDS=async function(opts)  {
 
     return outputdirectory;
     
+};
+
+let calculateChecksums = (inputFiles) => {
+    return new Promise( (resolve, reject) => {
+        let promises = [], checksums = [];
+        for (let file of inputFiles) {
+            promises.push(bis_genericio.makeFileChecksum(file, checksums));
+        }
+    
+        Promise.all(promises)
+        .then( () => { resolve(checksums); })
+        .catch( (e) => { reject(e); })
+    })
+
 };
 
 

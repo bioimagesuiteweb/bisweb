@@ -22,7 +22,8 @@ const universalmodules=require('moduleindex');
 
 const moduleImports = {
     'infomodule': require('./infomodule.js'),
-    'dicomconversion' : require('./dicommodule.js')
+    'dicomconversion' : require('./dicommodule.js'),
+    'hash' : require('./hashmodule.js')
 };
 
 let moduleNames=universalmodules.createModuleNames(moduleImports);

@@ -779,6 +779,13 @@ class BaseFileServer {
                     prom = Promise.reject('In Read Only Mode');
                 break;
             }
+            case 'makeChecksum' : {
+                if (!this.opts.readonly) 
+                    prom = bisgenericio.makeFileChecksum(url);
+                else 
+                    prom = Promise.reject('In Read Only Mode');
+                break;
+            }
         }
 
         if (prom === null)

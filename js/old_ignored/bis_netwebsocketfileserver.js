@@ -5,7 +5,7 @@ const path=require('path');
 const timers = require('timers');
 const util = require('bis_util');
 const coregenericio = require('bis_coregenericio.js');
-const bis_filesystemutils.js = require('bis_filesystemutils.js');
+const bis_filesystemutils = require('bis_filesystemutils.js');
 const { StringDecoder } = require('string_decoder');
 
 // TODO: IP Filtering
