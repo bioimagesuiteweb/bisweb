@@ -29,7 +29,7 @@ const path=require('path');
 const program=require('commander');
 require('../config/bisweb_pathconfig.js');
 
-const bisdate=require('../build/web/bisdate.json');
+const bisdate=require(path.join(__dirname,'../build/web/bisdate.json'));
 console.log('date=',bisdate);
 
 var help = function() {
@@ -38,7 +38,6 @@ var help = function() {
 
 program.version('1.0.0')
     .option('-o, --output <s>', 'The output directory for the package.json file')
-    .option('--testing', 'if  set create test options')
     .on('--help',function() {
         help();
     })
@@ -47,7 +46,6 @@ program.version('1.0.0')
 
 
 let output = program.output || null;
-let testing = program.testing || false;
 
 if (output === null) {
     console.log('--- must specify an output file using -o flag');
@@ -55,7 +53,6 @@ if (output === null) {
 }
 
 let version=bisdate.version;
-console.log('++++ Testing=',testing, program.testing);
 
 let obj = { 
     "name": "biswebnode",
@@ -64,7 +61,7 @@ let obj = {
     "homepage": "www.bioimagesuite.org",
     "main" : "lib/bioimagesuiteweblib.js",
     "author": "Xenios Papademetris",
-    "license": "GPL V2 (most source code is Apache V2)",
+    "license": "GPL v2 or Apache",
     "bin" : "lib/bisweb.js",
     "dependencies": {
         "colors": "1.1.2",
@@ -77,16 +74,14 @@ let obj = {
         "type" : "git",
         "url" : "https://github.com/bioimagesuiteweb/bisweb"
     },
+    "devDependencies" : {
+        "mocha": "3.5.3",
+    },
+    "scripts" : {
+        "test": "mocha test/test_module.js"
+    }
 };
 
-if (testing) {
-    obj["devDependencies"] = {
-        "mocha": "3.5.3",
-    };
-    obj["scripts"]= {
-        "test": "mocha test/test_module.js"
-    };
-}
 
 
 let txt=JSON.stringify(obj,null,4)+"\n";

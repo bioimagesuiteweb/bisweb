@@ -217,6 +217,7 @@ ELSE (BIS_USEGPL)
 ENDIF (BIS_USEGPL)
 
 install (FILES ${LICENSE_FILE} DESTINATION bisweb/ RENAME LICENSE)
+install (FILES ${PROJECT_SOURCE_DIR}/ModuleList.txt DESTINATION bisweb/)
 install (DIRECTORY ${PROJECT_SOURCE_DIR}/../various/serverconfig  DESTINATION bisweb )
 install (FILES ${PROJECT_SOURCE_DIR}/../web/images/mean_reg2mean.nii.gz DESTINATION bisweb/images)
 install (FILES ${PROJECT_SOURCE_DIR}/../web/images/facemask_char.nii.gz DESTINATION bisweb/images)
@@ -336,16 +337,15 @@ IF (BIS_A_EMSCRIPTEN)
   install (FILES ${NPMREADME}  DESTINATION bisweb)
 
   MESSAGE("Installing tests")
-  SET(TFLAG "--testing")
   SET (OUTSCRIPT ${PROJECT_SOURCE_DIR}/../js/bin/bisweb-test.js)
   install (FILES ${OUTSCRIPT} DESTINATION bisweb/lib
     PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
 
   set (NPMPACKAGEFILE ${LIBRARY_OUTPUT_PATH}/package.json)
   add_custom_command(OUTPUT ${NPMPACKAGEFILE}
-    DEPENDS ${NPM_PACKAGE_SCRIPT} 
-    PRE_BUILD COMMENT "Creating package.json file ${TFLAG}"
-    COMMAND node ${NPM_PACKAGE_SCRIPT} -o ${LIBRARY_OUTPUT_PATH} ${TFLAG}
+    DEPENDS ${NPM_PACKAGE_SCRIPT} ${BISWEBLIBFILE} 
+    PRE_BUILD COMMENT "Creating package.json file"
+    COMMAND node ${NPM_PACKAGE_SCRIPT} -o ${LIBRARY_OUTPUT_PATH} 
     )
   add_custom_target(package.json ALL DEPENDS ${NPMPACKAGEFILE})
   install (FILES ${NPMPACKAGEFILE} DESTINATION bisweb PERMISSIONS OWNER_READ WORLD_READ)
