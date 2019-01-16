@@ -66,9 +66,9 @@ const inobounce=require('inobounce.js');
  * @param {Element} domElement - DomElement of underlying ThreeJs renderer (typically renderer.domElement)
  */
 
-const THREEJSREVISION=parseInt(THREE.REVISION);
-
 var bisOrthographicCameraControls = function ( camera, plane, target, domElement ) {
+
+    const THREEJSREVISION=parseInt(THREE.REVISION);
     
     var _this = this;
     var STATE = { NONE: -1, ROTATE: 0, ZOOM: 1, PAN: 2, TOUCH_ROTATE: 3, TOUCH_ZOOM_PAN: 4 };
@@ -834,7 +834,10 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
 
 
 
-bisOrthographicCameraControls.prototype = Object.create( THREE.EventDispatcher.prototype );
-bisOrthographicCameraControls.prototype.constructor = bisOrthographicCameraControls;
-
-module.exports = bisOrthographicCameraControls;
+if (typeof THREE !== 'undefined') {
+    bisOrthographicCameraControls.prototype = Object.create( THREE.EventDispatcher.prototype );
+    bisOrthographicCameraControls.prototype.constructor = bisOrthographicCameraControls;
+    module.exports = bisOrthographicCameraControls;
+} else {
+    console.log('----- No THREE.js loaded, hence no 3D rendering available');
+}

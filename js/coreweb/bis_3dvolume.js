@@ -32,8 +32,6 @@ const THREE = require('three');
 const BIS3dImageSliceGeometry=require('bis_3dimageslicegeometry');
 const BIS3dImageVolumeGeometry=require('bis_3dimagevolumegeometry');
 const volrenutils=require('bis_3dvolrenutils');
-const webutil=require('bis_webutil');
-
 
 
 /**
@@ -113,9 +111,32 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
             let dim=image.getDimensions();
             let spa=image.getSpacing();
             let range=image.getIntensityRange();
-            let scale=255.0/(range[1]-range[0]);
-            internal.minintensity=range[0];
-            internal.intensityscale=scale;
+            let tp=image.getImageType();
+            let intoffset=0;
+            let maxv=255;
+            if (internal.overlay) {
+                //maxv=253;
+                //intoffset=2;
+            }
+            
+            if (range[0]===0 && range[1]<=maxv && ( tp=='uchar' || tp ==='short' || tp ==='ushort' || tp==='char')) {
+                internal.minintensity=0;
+                internal.intensityscale=1.0;
+                console.log('Not scaling',intoffset,maxv);
+            } else if ( range[0] < 0 && range[1] > 0 && internal.overlay) {
+                let maxint=range[1];
+                if (Math.abs(range[0])>maxint)
+                    maxint=Math.abs(range[0]);
+                let scale=maxv/(2*maxint);
+                internal.minintensity=-maxint;
+                internal.intensityscale=scale;
+                console.log('Symmetric scaling',intoffset,maxv);
+            } else {
+                let scale=maxv/(range[1]-range[0]);
+                internal.minintensity=range[0];
+                internal.intensityscale=scale;
+                console.log('Normal scaling',internal.minintensity,internal.intensityscale,internal.isoverlay,' max=',maxv,intoffset);
+            }
             
             let data=image.getImageData();
             let p_data=new Uint8Array(dim[0]*dim[1]*dim[2]);
@@ -127,14 +148,15 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
                     for (let i=0;i<dim[0];i++) {
                         let v=data[index];
                         index++;
-                        let y=(v-range[0])*scale;
+                        let y=(v-internal.minintensity)*internal.intensityscale+intoffset;
                         // flip x -- seems to need this
                         p_data[offset+(dim[0]-1-i)]=y;
                     }
                     offset+=dim[0];
                 }
             }
-            
+
+            // Data Texture
             internal.texture = new THREE.DataTexture3D( p_data, dim[0],dim[1],dim[2]);
             internal.texture.format = THREE.RedFormat;
             internal.texture.minFilter = internal.texture.magFilter = THREE.NearestFilter;//THREE.LinearFilter;
@@ -142,14 +164,31 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
             internal.texture.repeat=[0,0];
             internal.texture.flipY=false;
             internal.texture.needsUpdate = true;
-            console.log('Internal.texture=',internal.texture);
+
             
-            // Colormap textures
-            let cmtexture= new THREE.TextureLoader().load(webutil.getWebPageImagePath()+'/cm_gray.png');
+            // Colormap texture
+            internal.canvas = document.createElement( 'canvas' );
+            internal.canvas.width=256;
+            internal.canvas.height=1;
+            internal.canvasdata=internal.canvas.getContext("2d").createImageData(256,1);
             
+            for (let i=0;i<=255;i++)  {
+                internal.canvasdata.data[i*4]=i;
+                internal.canvasdata.data[i*4+1]=i;
+                internal.canvasdata.data[i*4+2]=i;
+                internal.canvasdata.data[i*4+3]=i;
+            }
+            internal.canvasdata.data[3]=0.0; //background transparent
+            internal.canvas.getContext("2d").putImageData(internal.canvasdata,0,0);
+            internal.cmtexture = new THREE.Texture(internal.canvas);
+            internal.cmtexture.flipY=false;
+            internal.cmtexture.needsUpdate = true;
+            internal.cmtexture.minFilter = internal.cmtexture.magFilter = THREE.LinearFilter;
+
+
+                        
             // Material Properties
             let shader = volrenutils.VolumeRenderShader;
-
             let uniforms = THREE.UniformsUtils.clone({
                 "u_size": { value: new THREE.Vector3( dim[0],dim[1],dim[2]) },
                 "u_spacing": { value: new THREE.Vector3( 1.0/spa[0],1.0/spa[1],1.0/spa[2] )},
@@ -158,25 +197,30 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
                 "u_clim": { value: new THREE.Vector2( 0, 1 ) },
                 "u_data": { value: null },
                 "u_cmdata": { value: null },
-                "u_opacity": { value : 0.8 },
+                "u_opacity": { value : 0.5 },
                 "u_stepsize": { value : 1.0 },
                 "u_boundsmin": { value: new THREE.Vector3( 0.0, 0.0, 0.0 ) },
                 "u_boundsmax": { value: new THREE.Vector3( 1.0,1.0,1.0)},
             });
 
-            if (internal.isoverlay)
+            if (internal.isoverlay) {
                 uniforms.u_opacity.value=1.0;
-            uniforms.u_cmdata.value = cmtexture;
+                uniforms.u_renderthreshold.value=0.0;
+                uniforms.u_stepsize.value=2.0;
+            }
+                
+            uniforms.u_cmdata.value = internal.cmtexture;
             uniforms.u_data.value = internal.texture;
-            
+
+            // Create Material
             internal.material = new THREE.ShaderMaterial( {
                 uniforms: uniforms,
                 vertexShader: shader.vertexShader,
                 fragmentShader: shader.fragmentShader,
-                //                side: THREE.BackSide // The volume shader uses the backface as its "reference point"
+                //side: THREE.BackSide // The volume shader uses the backface as its "reference point"
             } );
             
-            // Mesh
+            // Create Geometry & Mesh
             let sz=[ 0,0,0];
             for (let i=0;i<=2;i++) {
                 sz[i]=(dim[i]*spa[i]);
@@ -185,7 +229,7 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
             internal.volumebox = new THREE.Mesh( geometry, internal.material );
             //internal.box.push(new THREE.Mesh(geometry,new THREE.MeshBasicMaterial(  {color: 0xffffff, wireframe:true})));
         },
-
+        
         /** clean up all elements (i.e. set them to null)
          * @memberof Bis_3DOrthogonalSlice.Bis3DVolume
          */
@@ -295,27 +339,34 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
 
         /**
          * update the colormap with new transfer function
-         * @returns {BisF.ColorMapperFunction} - function to perform colormapping
          */
-        updateColormap : function (transferfunction) {
+        updateColormap : function (cmapcontrolPayload,transferfunction) {
 
             const uniforms=internal.material.uniforms;
-
-            let volinfo=transferfunction.volumerendering;
-            if (volinfo.mip)
-                uniforms.u_renderstyle.value = 0;
-            else
-                uniforms.u_renderstyle.value = 1;
             
-            let minv=(volinfo.min-internal.minintensity)*internal.intensityscale/255.0;
-            let maxv=(volinfo.max-internal.minintensity)*internal.intensityscale/255.0;
-            uniforms.u_clim.value.set( minv,maxv);
+            let volinfo=cmapcontrolPayload.volumerendering;
+            if (!internal.isoverlay) {
+                if (volinfo.mip)
+                    uniforms.u_renderstyle.value = 0;
+                else
+                    uniforms.u_renderstyle.value = 1;
+                
+                let minv=(volinfo.min-internal.minintensity)*internal.intensityscale/255.0;
+                let maxv=(volinfo.max-internal.minintensity)*internal.intensityscale/255.0;
+                uniforms.u_clim.value.set( minv,maxv);
             
-            let thr=(volinfo.isothreshold-internal.minintensity)*internal.intensityscale/255.0;
-            uniforms.u_renderthreshold.value = thr;
+                let thr=(volinfo.isothreshold-internal.minintensity)*internal.intensityscale/255.0;
+                uniforms.u_renderthreshold.value = thr;
+            }
 
-            let q=2.0*Math.pow(volinfo.stepsize-1.0,2.0)+0.5;
-            uniforms.u_stepsize.value=q;
+            console.log('Quality=',volinfo.quality);
+            let step=1.0;
+            if (volinfo.quality<2)
+                step=3.0;
+            else if (volinfo.quality>2)
+                step=0.5;
+
+            uniforms['u_stepsize'].value=(step);
 
             let minc = [ 0,0,0];
             let maxc = [ 0,0,0];
@@ -338,11 +389,35 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
             uniforms['u_boundsmin'].value.set(minc[0],minc[1],minc[2]);
             uniforms['u_boundsmax'].value.set(maxc[0],maxc[1],maxc[2]);
 
-            volinfo['bounds']= {
-                'min' : minc,
-                'max' : maxc
-            };
-            //            console.log(JSON.stringify(volinfo,null,2));
+
+            // Change colormap
+            console.log('updating colormap',internal.isoverlay,internal.minintensity,internal.intensityscale);
+            if (internal.isoverlay) {
+                let dat=[0,0,0,0];
+                let idat=[0];
+                
+                for (let i=0;i<=255;i++) {
+                    idat[0]= i/internal.intensityscale+internal.minintensity;
+                    transferfunction(idat,0,dat);
+                    if (i===1 || i===2)
+                        console.log(i,'idat=',idat,'-->',dat);
+                    let index=i*4;
+                    let sum=dat[0]+dat[1]+dat[2];
+                    if (sum>0)
+                        dat[3]=255;
+                    else
+                        dat[3]=0;
+                    for (let j=0;j<=3;j++) 
+                        internal.canvasdata.data[index+j]=dat[j];
+                }
+                
+                internal.canvas.getContext("2d").putImageData(internal.canvasdata,0,0);
+                if (cmapcontrolPayload.isfunctional)
+                    internal.cmtexture.minFilter = internal.cmtexture.magFilter = THREE.LinearFilter;
+                else
+                    internal.cmtexture.minFilter = internal.cmtexture.magFilter = THREE.NearestFilter;
+                internal.cmtexture.needsUpdate = true;
+            }
         },
     };
     output.initialize();

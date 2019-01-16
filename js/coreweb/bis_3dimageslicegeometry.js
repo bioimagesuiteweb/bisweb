@@ -153,9 +153,10 @@ const bis3dimageslicegeometry = function ( p0,p1,p2,wireframe,flip ) {
 
 };
 
-bis3dimageslicegeometry.prototype = Object.create( THREE.BufferGeometry.prototype );
-bis3dimageslicegeometry.prototype.constructor = bis3dimageslicegeometry;
-
-module.exports = bis3dimageslicegeometry;
+if (typeof THREE !== 'undefined') {
+    bis3dimageslicegeometry.prototype = Object.create( THREE.BufferGeometry.prototype );
+    bis3dimageslicegeometry.prototype.constructor = bis3dimageslicegeometry;
+    module.exports = bis3dimageslicegeometry;
+}
 
 
