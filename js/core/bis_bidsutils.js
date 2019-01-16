@@ -37,28 +37,20 @@ let dicom2BIDS=async function(opts)  {
     console.log('opts=',opts,indir,outdir);
     
     
-    let match=genericio.joinFilenames(indir,'2*.nii.gz');
-    let matchuncompressed = genericio.joinFilenames(indir, '2*.nii');
     let matchniix=genericio.joinFilenames(indir, '*.nii.gz');
     let matchsupp = genericio.joinFilenames(indir, '*');
     
-    console.log('Match=',match);
-    
-    let flist = await genericio.getMatchingFiles(match);
-    let flist2 = await genericio.getMatchingFiles(matchuncompressed);
-    let flist3 = await genericio.getMatchingFiles(matchniix);
+    let flist = await genericio.getMatchingFiles(matchniix);
     let suppfiles = await genericio.getMatchingFiles(matchsupp);
 
-    flist=flist.concat(flist2);
-    flist=flist.concat(flist3);
     console.log('Flist=',flist.join('\n\t'));
+    console.log('supp files', suppfiles);
 
-    //filter supplemental files by looking for files without '.nii'. outer capture group will have the full name of the file
+    //filter supplemental files by looking for files without '.nii'.
     //once you find a file and move it, record its name 
-    let suppFilter = /^((?!.\.nii).)*$/gm, filteredsuppfiles = [], movedsuppfiles = [], suppmatch = undefined;
+    let filteredsuppfiles = [], movedsuppfiles = [], suppmatch = undefined;
     for (let file of suppfiles) {
-        suppmatch = suppFilter.exec(file);
-        if (suppmatch) filteredsuppfiles.push(suppmatch[0]);
+        if (!file.includes('.nii')) filteredsuppfiles.push(file);
     }
 
     if (flist.length<1) {
@@ -120,15 +112,11 @@ let dicom2BIDS=async function(opts)  {
             //check if the trailing parts of one of the support files (without file type) match the image
             //strip out file extension and the name of the parent folder to match image
             let splitsupp = genericio.getBaseName(suppfile).split('.');
-            let splitbasename = splitsupp[0].split('_');
-            splitbasename.shift();
-            let suppcomparename = splitbasename.join('_');
+            let filebasename = splitsupp[0];
 
-            if (splitName.toLowerCase() === suppcomparename.toLowerCase()) {
+            if (splitName.toLowerCase() === filebasename.toLowerCase()) {
                 //rejoin file extension to the formatted splitsupp
-                splitsupp[0] = suppcomparename;
-                let suppname = splitsupp.join('.');
-                let suppTarget = genericio.joinFilenames(dirname, genericio.getBaseName(suppname));
+                let suppTarget = genericio.joinFilenames(dirname, genericio.getBaseName(suppfile));
                 movedsuppfiles.push(suppTarget);
                 await genericio.copyFile(suppfile + '&&' + suppTarget);
             }
@@ -172,7 +160,7 @@ let dicom2BIDS=async function(opts)  {
             name=name.substr(0,name.length-7);
             let f2=fname.substr(0,fname.length-7)+'.bvec';
             let ind2=tlist.indexOf(f2);
-            console.log('Looking for ',f2,ind2);
+
             if (ind2>=0) {
                 infoname=tlist[ind2];
                 tagname="DTI";
