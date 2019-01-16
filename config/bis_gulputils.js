@@ -609,7 +609,7 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
     
     // Step 1 copy file
     // make directories
-    let odir=path.resolve(path.join(in_outdir,'bisweb'));
+    let odir=path.resolve(path.join(in_outdir,'biswebbrowser'));
     console.log(colors.red(getTime()+' .... Deleting ',odir));
     try {
         rimraf.sync(odir);
@@ -623,8 +623,10 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
     let distDir=path.join(odir,'dist');
     fs.mkdirSync(distDir);
 
+    console.log(colors.green(getTime()+' Copying from',indir));
     es.concat( 
         gulp.src([ `${indir}/build/web/bislib.js`,
+                   `${indir}/build/web/bootstrap_dark_edited.css`,
                    `${indir}/build/web/libbiswasm*wasm.js`,
                    `${indir}/build/web/webcomponents-lite.js`,
                    `${indir}/build/web/jquery.min.js`,
@@ -637,8 +639,13 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
         gulp.src([ 'node_modules/bootstrap/dist/css/*']).pipe(gulp.dest(distDir+'/css/')),
         gulp.src([ 'node_modules/bootstrap/dist/fonts/*']).pipe(gulp.dest(distDir+'/fonts/')),
         gulp.src([ 'lib/fonts/*']).pipe(gulp.dest(distDir+'/fonts/')),
-    
-        gulp.src([`${indir}/config/biswebbrowser_readme.md`])
+        gulp.src([ `${indir}/web/bispreload.js`])
+            .pipe(rename('electronpreload.js'))
+            .pipe(gulp.dest(distDir+'/electron/')),
+        gulp.src([ `${indir}/web/package.json`])
+            .pipe(rename('electrondependencies.json'))
+            .pipe(gulp.dest(distDir+'/electron/')),
+        gulp.src([ `${indir}/config/biswebbrowser_readme.md`])
             .pipe(rename('README.md'))
             .pipe(gulp.dest(odir))
     ).on('end', () => { 
@@ -646,14 +653,14 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
         
         // Step 2 create package.json
         let obj = { 
-            "private": true,
+            "private": false,
             "name": "biswebbrowser",
             "version": version,
             "description": "A web-based implementation of BioImage Suite in Javascript and WebAssembly",
             "homepage": "www.bioimagesuite.org",
             "main" : "dist/bioimagesuiteweb.js",
             "author": "Xenios Papademetris",
-            "license": "GPL V2 (most source code is Apache V2)",
+            "license": "GPL V2 or Apache V2)",
             "repository": {
                 "type" : "git",
                 "url" : "https://github.com/bioimagesuiteweb/bisweb",
@@ -675,19 +682,19 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
         
         // step 3
         // Master file
-        let txt2=`window.biswebpack=require('./libbiswasm_wasm.js');\nmodule.exports=require('./bislib.js');\n`;
-        
-        let output2=path.resolve(path.join(odir,"dist/bioimagesuiteweb.js"));
-        console.log(getTime()+' Creating '+output2);
-
-        
-        fs.writeFileSync(output2,txt2);
-        console.log('++++');
-        console.log('++++ main js file created in',output2);
-        console.log('++++');
-        
-        // Step 4 run npm pack
-        executeCommand('npm pack',odir,done);
+        let names=[ '', '_nongpl' ];
+        for (let i=0;i<=1;i++) {
+            let txt2=`window.biswebpack=require('./libbiswasm'+names[i]+'_wasm.js');\nmodule.exports=require('./bislib.js');\n`;
+            let output2=path.resolve(path.join(odir,"dist/bioimagesuiteweb"+names[i]+".js"));
+            console.log(getTime()+' Creating '+output2);
+            fs.writeFileSync(output2,txt2);
+            console.log('++++');
+            console.log(`++++ main js file ${i+1}/2 created in ${output2}`);
+            console.log('++++');
+        }
+        //        // Step 4 run npm pack
+        //executeCommand('npm pack',odir,done);
+        done();
     });
     
 };

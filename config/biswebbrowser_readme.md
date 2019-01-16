@@ -44,15 +44,25 @@ Here is some sample js code that uses this:
 
 #### In the header add the scripts (somehow)
 
-    <script src="./node_modules/jquery/dist/jquery.min.js"></script>
+    <script src="./node_modules/bisweb/dist/jquery.min.js"></script>
+    <script src="./node_modules/bisweb/dist/boostrap.min.js"></script>
+    <script src="./node_modules/bisweb/dist/three.min.js"></script>
     <script src="./node_modules/bisweb/dist/libbiswasm_wasm.js"></script>
     <script src="./node_modules/bisweb/dist/bislib.js"></script>
+
+If you would like (for whatever reason) not to include GPL licensed code, then
+include the non-GPL WASM code script instead of `libbiswasm_wasm.js`.
+
+    <script src="./node_modules/bisweb/dist/libbiswasm_nongpl_wasm.js"></script>
+
 
 #### JS Code
 
 This is the same above but you will need to replace the `require` line with
 
-    const bisweb=window.bioimagesuiteweb();
+    const bisweb=window.bioimagesuiteweb;
     
 
+#### More Examples
 
+See the examples repository [https://github.com/bioimagesuiteweb/examples](https://github.com/bioimagesuiteweb/examples).
