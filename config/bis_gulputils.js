@@ -635,6 +635,8 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
                    `${indir}/build/web/bislib.css`,
                    `${indir}/build/web/exportexample.html`,
                    `${indir}/build/web/exportexample.js`,
+                   `${indir}/js/core/bis_dummy.js`,
+                   `${indir}/build/web/bisdate.json`,
                  ]).pipe(gulp.dest(distDir)),
         gulp.src([ 'node_modules/bootstrap/dist/css/*']).pipe(gulp.dest(distDir+'/css/')),
         gulp.src([ 'node_modules/bootstrap/dist/fonts/*']).pipe(gulp.dest(distDir+'/fonts/')),
@@ -658,7 +660,7 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
             "version": version,
             "description": "A web-based implementation of BioImage Suite in Javascript and WebAssembly",
             "homepage": "www.bioimagesuite.org",
-            "main" : "dist/bioimagesuiteweb.js",
+            "main" : "dist/biswebbrowser.js",
             "author": "Xenios Papademetris",
             "license": "GPL v2 or Apache",
             "repository": {
@@ -684,8 +686,8 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
         // Master file
         let names=[ '', '_nongpl' ];
         for (let i=0;i<=1;i++) {
-            let txt2=`window.biswebpack=require('./libbiswasm'+names[i]+'_wasm.js');\nmodule.exports=require('./bislib.js');\n`;
-            let output2=path.resolve(path.join(odir,"dist/bioimagesuiteweb"+names[i]+".js"));
+            let txt2=`window.bioimagesuitewasmpack=require('./libbiswasm${names[i]}_wasm.js');\nmodule.exports=require('./bislib.js');\n`;
+            let output2=path.resolve(path.join(odir,"dist/biswebbrowser"+names[i]+".js"));
             console.log(getTime()+' Creating '+output2);
             fs.writeFileSync(output2,txt2);
             console.log('++++');

@@ -199,6 +199,7 @@ if (options.external) {
 // Get Tool List
 // ---------------------------
 
+internal.appinfo=require('./package.json');
 internal.setup=require('./web/images/tools.json');
 
 // Let example tools
@@ -208,8 +209,10 @@ for (let i=0;i<keys2.length;i++) {
     internal.setup.tools[keys2[i]]=internal.extra.tools[keys2[i]];
 }
 
+
+
 let keys=Object.keys(internal.setup.tools);
-console.log(getTime()+colors.cyan(' Config versiontag='+bis_gutil.getVersionTag(internal.setup.version)+' tools='+keys));
+console.log(getTime()+colors.cyan(' Config versiontag='+bis_gutil.getVersionTag(internal.appinfo.version)+' tools='+keys));
 
 if (options.inpfilename === "" || options.inpfilename === "all") {
     let obj=internal.setup.tools;
@@ -266,8 +269,8 @@ function createDate() {
     return new Promise( (resolve) => { 
         const git = require('git-rev');
         git.long( (str) => {
-            bis_gutil.createDateFile(path.resolve(options.outdir,'bisdate.json'),str,internal.setup.version);
-            bis_gutil.createDateFile(path.resolve(options.outdir,'../wasm/bisdate.js'),str,internal.setup.version);
+            bis_gutil.createDateFile(path.resolve(options.outdir,'bisdate.json'),str,internal.appinfo.version);
+            bis_gutil.createDateFile(path.resolve(options.outdir,'../wasm/bisdate.js'),str,internal.appinfo.version);
             resolve();
         });
     });
@@ -500,14 +503,14 @@ gulp.task('tools', ( (cb) => {
 
 gulp.task('zip', ((done) => {
     
-    bis_gutil.createZIPFile(options.baseoutput,options.outdir,internal.setup.version,options.distdir,done);
+    bis_gutil.createZIPFile(options.baseoutput,options.outdir,internal.appinfo.version,options.distdir,done);
 }));
 
 gulp.task('packageint', (done) => {
 
     bis_gutil.createPackage(options.dopack,
                             internal.setup.tools,
-                            __dirname,options.outdir,internal.setup.version,options.platform,options.distdir,done);
+                            __dirname,options.outdir,internal.appinfo.version,options.platform,options.distdir,done);
 });
 
 gulp.task('package', gulp.series('commonfiles','packageint'));
@@ -545,7 +548,7 @@ gulp.task('cdoc', (done) =>  {
 });
 
 gulp.task('npmpack', (done) => { 
-    bis_gutil.createnpmpackage(__dirname,internal.setup.version,'build/dist',done);
+    bis_gutil.createnpmpackage(__dirname,internal.appinfo.version,'build/dist',done);
 });
 
 

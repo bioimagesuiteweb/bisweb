@@ -134,8 +134,7 @@ const genericio= require('bis_genericio');
 
 const names = ["default", "primary", "success", "info", "warning", "danger", "link"];
 const directions = ["top", "bottom", "left", "right"];
-
-let tools=require('../../web/images/tools.json');
+const bisdate=require('bisdate.js');
 
 /** A JQuery object that is a wrapper around the DOM objects. 
  * See: {@link http://learn.jquery.com/using-jquery-core/jquery-object/}.
@@ -1255,7 +1254,7 @@ const webutil = {
                     gplextra=` (See also <a href="https://github.com/bioimagesuiteweb/gplcppcode" target="_blank">the plugin repository.</a>)`;
                 
                 
-                resolve(`<p>This application is part of BioImage Suite Web ${tools.version}.</p><p>BioImage Suite Web is an <a href="https://github.com/bioimagesuiteweb/bisweb" target="_blank">open source</a> software package.${gplextra}</p><p>We gratefully acknowledge
+                resolve(`<p>This application is part of BioImage Suite Web ${bisdate.version}.</p><p>BioImage Suite Web is an <a href="https://github.com/bioimagesuiteweb/bisweb" target="_blank">open source</a> software package.${gplextra}</p><p>We gratefully acknowledge
                           support from the <a href="https://www.braininitiative.nih.gov/" target="_blank">NIH Brain Initiative</a> under grant R24 MH114805 (Papademetris X. and Scheinost D. PIs).</p><p>${extra}</p>`);
             }).catch( (e) => { reject(e); });
         });

@@ -19,7 +19,7 @@ cmake_minimum_required(VERSION 3.5)
 
 PROJECT(BISWEB)
 
-SET (BISWEB_VERSION "1.1.1a1")
+SET (BISWEB_VERSION "1.1.1a")
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Core Project
@@ -312,7 +312,7 @@ IF (BIS_A_EMSCRIPTEN)
 
 
   add_custom_command(OUTPUT ${OUTSCRIPT}
-    DEPENDS ${MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JSFILES}  ${LIBNAME} ${INSCRIPT} ${JS_WRAP_OUTPUT} ${JS_DATE_OUTPUT} ${WEBPACK_WASM_MODULE} ${CONFIGFILE}
+    DEPENDS ${MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JSFILES}  ${LIBNAME} ${INSCRIPT} ${JS_WRAP_OUTPUT} ${JS_DATE_OUTPUT} ${WEBPACK_WASM_MODULE} ${CONFIGFILE} ${PROJECT_SOURCE_DIR}/../build/web/bisdate.json ${PROJECT_SOURCE_DIR}/../build/web/bislib.js
     PRE_BUILD COMMENT "Creating webpack-cli commandline library ${BISWEBLIBFILE}"
     COMMAND webpack-cli --entry ${INSCRIPT} --config ${CONFIGFILE} --output-path ${LIBRARY_OUTPUT_PATH} --output-filename ${BISWEBLIBFILE}
     )
@@ -343,7 +343,7 @@ IF (BIS_A_EMSCRIPTEN)
 
   set (NPMPACKAGEFILE ${LIBRARY_OUTPUT_PATH}/package.json)
   add_custom_command(OUTPUT ${NPMPACKAGEFILE}
-    DEPENDS ${NPM_PACKAGE_SCRIPT} ${BISWEBLIBFILE} 
+    DEPENDS ${NPM_PACKAGE_SCRIPT} ${BISWEBLIBFILE} ${PROJECT_SOURCE_DIR}/../build/web/bisdate.json
     PRE_BUILD COMMENT "Creating package.json file"
     COMMAND node ${NPM_PACKAGE_SCRIPT} -o ${LIBRARY_OUTPUT_PATH} 
     )
