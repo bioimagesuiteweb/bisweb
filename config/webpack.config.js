@@ -54,6 +54,7 @@ if (!found) {
 
 output=output.trim().replace(/_full.js/g,'');
 
+const appinfo=require(path.resolve(__dirname,'../package.json'));
 
 // -----------------------------------------------------------------------------------
 // Extra files for internal and external
@@ -133,15 +134,7 @@ if (output === "bislib.js" || output ==="index.js") {
         },
         mode : 'development',
         target : "web",
-        externals: {
-            "jquery": "jQuery",             // require("jquery") is external and available on the global var jQuery
-            "three": "THREE",               // require("three") is external and available on the global var jQuery
-            'request' : './bis_dummy',      // ignore this
-            "libbiswasm" : "./bis_dummy",   // this is not needed in this case and should be excluded
-            "@tensorflow/tfjs" : "./bis_dummy", // ignore tensor flow it will come from outside
-            "@tensorflow/tfjs-node" : "./bis_dummy", // ignore tensor flow it will come from outside
-            "@tensorflow/tfjs-node-gpu" : "./bis_dummy" // ignore tensor flow it will come from outside
-        },
+        externals: appinfo.bioimagesuiteweb.webexternals,
         watchOptions: {
             aggregateTimeout: 300,
             poll: 1000
@@ -194,12 +187,7 @@ if (output === "bislib.js" || output ==="index.js") {
         },
         mode : 'development',
         target : "web",
-        externals: {
-            'request' : 'console.log',      // ignore this
-            "@tensorflow/tfjs" : "console.log", // ignore tensor flow it will come from outside
-            "@tensorflow/tfjs-node" : "console.log", // ignore tensor flow it will come from outside
-            "@tensorflow/tfjs-node-gpu" : "console.log" // ignore tensor flow it will come from outside
-        },
+        externals: appinfo.bioimagesuiteweb.workerexternals,
         watchOptions: {
             aggregateTimeout: 300,
             poll: 1000
@@ -219,7 +207,7 @@ if (output === "bislib.js") {
     };
 }
 
-
+console.log('++++ Webpack externals=',Object.keys(module.exports.externals).join(','));
 
 
 

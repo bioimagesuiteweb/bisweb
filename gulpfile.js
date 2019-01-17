@@ -56,8 +56,8 @@ program
     .option('--internal <n>','if 1 use internal code, if 2 serve the internal directory as well',parseInt)
     .option('--external <n>','if 1 use extra external code (in ../external)',parseInt)
     .option('--verbose','verbose')
+    .option('--tasks','show all tasks')
     .parse(process.argv);
-
 
 if (program.dopack === undefined)
     program.dopack=2;
