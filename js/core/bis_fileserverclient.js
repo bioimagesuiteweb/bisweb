@@ -722,7 +722,7 @@ class BisFileServerClient extends BisBaseServerClient {
      * @returns {Promise} payload is the result
      */
     //TODO: Add second input for file move operation
-    fileSystemOperation(name,url) {
+    fileSystemOperation(name,url,timeout=10000) {
         if (url.indexOf('\\')>=0)
             url=util.filenameWindowsToUnix(url);
 
@@ -733,7 +733,8 @@ class BisFileServerClient extends BisBaseServerClient {
             this.sendCommand({ 'command' : 'filesystemoperation',
                                'operation' : name,
                                'url' : url,
-                               'id' : serverEvent.id }); 
+                               'id' : serverEvent.id,
+                               'timeout' : timeout}); 
         });
     }
 

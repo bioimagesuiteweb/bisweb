@@ -18,7 +18,7 @@ let dicom2BIDS=async function(opts)  {
         return msg;
     });
 
-    let makeDir=async function(f) {
+    let makeDir= async function(f) {
         try {
             await bis_genericio.makeDirectory(f);
         } catch(e) {
@@ -31,7 +31,6 @@ let dicom2BIDS=async function(opts)  {
         }
         return true;
     };
-
 
     let indir=opts.indir || '';
     let outdir=opts.outdir || '';
@@ -130,6 +129,7 @@ let dicom2BIDS=async function(opts)  {
         try {
             await bis_genericio.copyFile(origname + '&&' + target);
         } catch (e) {
+            console.log('copy file', e);
             return errorfn(e);
         }
         tlist.push(target);
@@ -200,7 +200,7 @@ let dicom2BIDS=async function(opts)  {
                 name : name,
                 filename : fname.substr(outputdirectory.length+1,fname.length),
                 tag : tagname,
-                checksum : 'TODO: Make checksum field!',
+                hash : 'TODO: fill this!',
                 supportingfiles: suppfileArray,
                 details : infoname
             });
@@ -209,25 +209,38 @@ let dicom2BIDS=async function(opts)  {
     }
     
     try {
-        Promise.all( [ bis_genericio.write(outfilename, JSON.stringify(outobj, null, 2), false), makeHash ] ).then( (vals) => {
+        makeHash.then((vals) => {
 
-            console.log('values', vals)
-            //delete input folder if it lives in /tmp
-            let splitindir = indir.split('/');
-            if (splitindir[0] === '') { splitindir.shift(); } //trim a leading slash if needs be
-            if (splitindir[0] === 'tmp') {
-
-                //remove the top level folder in /tmp
-                let containingFolder = splitindir.splice(0, 2).join('/');
-                containingFolder = '/' + containingFolder;
-                bis_genericio.deleteDirectory(containingFolder).then(() => {
-                    console.log('Deleted', containingFolder, 'successfully');
-                }).catch((e) => {
-                    console.log('An Error occured trying to delete', containingFolder, e);
-                });
+            //put checksums in dicom_job then write it to disk
+            for (let val of vals) {
+                for (let fileEntry of outobj.job) {
+                    if (val.filename.includes(fileEntry.name)) {
+                        fileEntry.hash = val.hash;
+                        break;
+                    }
+                }
             }
 
-            return outputdirectory;
+            bis_genericio.write(outfilename, JSON.stringify(outobj, null, 2), false).then(() => {
+                console.log('values', vals)
+                //delete input folder if it lives in /tmp
+                let splitindir = indir.split('/');
+                if (splitindir[0] === '') { splitindir.shift(); } //trim a leading slash if needs be
+                if (splitindir[0] === 'tmp') {
+
+                    //remove the top level folder in /tmp
+                    let containingFolder = splitindir.splice(0, 2).join('/');
+                    containingFolder = '/' + containingFolder;
+                    bis_genericio.deleteDirectory(containingFolder).then(() => {
+                        console.log('Deleted', containingFolder, 'successfully');
+                    }).catch((e) => {
+                        console.log('An Error occured trying to delete', containingFolder, e);
+                    });
+                }
+
+                console.log('----- output directory', outputdirectory);
+                return outputdirectory;
+            });
         });
     } catch (e) {
         return errorfn(e);
