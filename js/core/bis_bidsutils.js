@@ -46,6 +46,8 @@ let dicom2BIDS=async function(opts)  {
 
     console.log('Flist=',flist.join('\n\t'));
     console.log('supp files', suppfiles);
+    
+    let makeHash = calculateChecksums(flist);
 
     //filter supplemental files by looking for files without '.nii'.
     //once you find a file and move it, record its name 
@@ -207,39 +209,44 @@ let dicom2BIDS=async function(opts)  {
     }
     
     try {
-        await bis_genericio.write(outfilename,JSON.stringify(outobj,null,2),false);
-    } catch(e) {
+        Promise.all( [ bis_genericio.write(outfilename, JSON.stringify(outobj, null, 2), false), makeHash ] ).then( (vals) => {
+
+            console.log('values', vals)
+            //delete input folder if it lives in /tmp
+            let splitindir = indir.split('/');
+            if (splitindir[0] === '') { splitindir.shift(); } //trim a leading slash if needs be
+            if (splitindir[0] === 'tmp') {
+
+                //remove the top level folder in /tmp
+                let containingFolder = splitindir.splice(0, 2).join('/');
+                containingFolder = '/' + containingFolder;
+                bis_genericio.deleteDirectory(containingFolder).then(() => {
+                    console.log('Deleted', containingFolder, 'successfully');
+                }).catch((e) => {
+                    console.log('An Error occured trying to delete', containingFolder, e);
+                });
+            }
+
+            return outputdirectory;
+        });
+    } catch (e) {
         return errorfn(e);
     }
 
-    //delete input folder if it lives in /tmp
-    let splitindir = indir.split('/');
-    if (splitindir[0] === '') { splitindir.shift(); } //trim a leading slash if needs be
-    if (splitindir[0] === 'tmp') {
-
-        //remove the top level folder in /tmp
-        let containingFolder = splitindir.splice(0, 2).join('/');
-        containingFolder = '/' + containingFolder;
-        bis_genericio.deleteDirectory(containingFolder).then( () => {
-            console.log('Deleted', containingFolder, 'successfully');
-        }).catch( (e) => {
-            console.log('An Error occured trying to delete', containingFolder, e);
-        });
-    } 
-
-    return outputdirectory;
+    
     
 };
 
 let calculateChecksums = (inputFiles) => {
+
     return new Promise( (resolve, reject) => {
-        let promises = [], checksums = [];
+        let promises = []
         for (let file of inputFiles) {
-            promises.push(bis_genericio.makeFileChecksum(file, checksums));
+            promises.push(bis_genericio.makeFileChecksum(file));
         }
     
         Promise.all(promises)
-        .then( () => { resolve(checksums); })
+        .then( (values) => { resolve(values); })
         .catch( (e) => { reject(e); });
     });
 

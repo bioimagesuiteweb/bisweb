@@ -38,7 +38,7 @@ class HashModule extends BaseModule {
                     "description": "Name of the image to read from disk",
                     "advanced": false,
                     "type": "string",
-                    "varname": "image",
+                    "varname": "url",
                     "default": "Error: no image specified"
                 },
                 baseutils.getDebugParam()
@@ -49,7 +49,7 @@ class HashModule extends BaseModule {
     directInvokeAlgorithm(vals) {
         return new Promise((resolve, reject) => {
             const bufs = [];
-            const readStream = fs.createReadStream(vals.image);
+            const readStream = fs.createReadStream(vals.url);
             const gunzip = zlib.createGunzip();
 
             readStream
@@ -70,7 +70,7 @@ class HashModule extends BaseModule {
                 let image = Buffer.concat(bufs);
                 let hash = bis_util.SHA256(image);
                 console.log('Calculated hash', hash);
-                resolve({'hash' : hash});
+                resolve({'hash' : hash, 'filename' : vals.url});
             });
         });
 

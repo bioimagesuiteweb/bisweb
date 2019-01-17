@@ -5,7 +5,7 @@ const util = require('bis_util');
 const serverEventList = {};
 const binaryDataList = {};
 let serverEventId = 1;
-let verbose = false;
+let verbose = true;
 
 
 var printEvent = function (id) {

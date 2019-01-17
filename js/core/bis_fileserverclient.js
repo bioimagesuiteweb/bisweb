@@ -823,12 +823,11 @@ class BisFileServerClient extends BisBaseServerClient {
         });
     }
 
-    makeFileChecksum(url, checksums) {
+    /*makeFileChecksum(url) {
    
         return new Promise( (resolve,reject) => {
             
             let res = ( (checksum) => {
-                Atomics.add(checksums, { 'filename' : url, 'checksum' : checksum });
                 resolve('Calculated checksum for', url, checksum);
             });
             
@@ -837,14 +836,15 @@ class BisFileServerClient extends BisBaseServerClient {
             };
             
             let serverEvent=bisasyncutil.addServerEvent(res,rej,'makeChecksum');
-            this.sendCommand({ 'command' : 'filesystemoperation',
-                               'operation' : 'makeChecksum',
+            this.sendCommand({ 'command' : 'runModule',
+                               'operation' : 'runmodule',
+                               'modulename' : 'hash',
                                'params' : { 'url' : url },
                                'debug' : false,
                                'id' : serverEvent.id,
                                'timeout' : 300000}); 
         });
-    }
+    }*/
 
     // ------------------ Download file and helper routines -----------------------------------------------------------------
     /**

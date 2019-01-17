@@ -637,15 +637,14 @@ let runFileConversion = (params) => {
  * Makes a SHA256 checksum for a given image file. Currently only functional if a file server is specified.
  * 
  * @param {String} url - Filename of image to make checksum for.
- * @param {Array} checksums - Array of checksums to add the calculated checksum to. Concatenation happens atomically since processes making checksums may live on different threads.
  * @returns Promise that will resolve the checksum, or false if no file server client is specified.
  */
 let makeFileChecksum = (url) => {
 
     if (fileServerClient) {
-        return fileServerClient.makeFileChecksum(url);
-    } else if (inBrowser) {
-        console.log('Cannot perform makeFileChecksum in a browser');
+        return fileServerClient.runModule('makechecksum', { 'url' : url });
+    } else {
+        console.log('Cannot perform makeFileChecksum without a file server client');
         return false;
     }
 
