@@ -68,6 +68,8 @@ module.exports = {
         'images/yale_broadmann_ras.nii.gz',
         'images/yale_brod_xy.png',
         'images/youtube.png',
+        'images/bisweb_newlogo.png',
+        'images/bisweb_newlogo2.png',
         'index.css',
         'index.html',
         'index.js',
