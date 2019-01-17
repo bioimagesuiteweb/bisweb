@@ -644,10 +644,10 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
         gulp.src([ 'lib/fonts/*']).pipe(gulp.dest(distDir+'/fonts/')),
         gulp.src([ `${indir}/web/bispreload.js`])
             .pipe(rename('electronpreload.js'))
-            .pipe(gulp.dest(distDir+'/electron/')),
+            .pipe(gulp.dest(distDir+'/../electron/')),
         gulp.src([ `${indir}/web/package.json`])
             .pipe(rename('electrondependencies.json'))
-            .pipe(gulp.dest(distDir+'/electron/')),
+            .pipe(gulp.dest(distDir+'/../electron/')),
         gulp.src([ `${indir}/config/biswebbrowser_readme.md`])
             .pipe(rename('README.md'))
             .pipe(gulp.dest(odir))
@@ -657,6 +657,8 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
         // Step 2 create package.json
 
         let appinfo=require('../package.json');
+
+        
         
         let obj = { 
             "private": false,
@@ -664,7 +666,7 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
             "version": version,
             "description": appinfo.description,
             "homepage": appinfo.homepage,
-            "main" : "dist/biswebbrowser.js",
+            "main" : "dist/bislib.js",
             "author": appinfo.author,
             "license": "GPL v2 or Apache",
             "repository": {
@@ -687,18 +689,6 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
         console.log('++++ Package.json file created in',output);
         console.log('++++');
         
-        // step 3
-        // Master file
-        let names=[ '', '_nongpl' ];
-        for (let i=0;i<=1;i++) {
-            let txt2=`window.bioimagesuitewasmpack=require('./libbiswasm${names[i]}_wasm.js');\nmodule.exports=require('./bislib.js');\n`;
-            let output2=path.resolve(path.join(odir,"dist/biswebbrowser"+names[i]+".js"));
-            console.log(getTime()+' Creating '+output2);
-            fs.writeFileSync(output2,txt2);
-            console.log('++++');
-            console.log(`++++ main js file ${i+1}/2 created in ${output2}`);
-            console.log('++++');
-        }
         //        // Step 4 run npm pack
         //executeCommand('npm pack',odir,done);
         done();

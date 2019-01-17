@@ -89,6 +89,35 @@ Here is some sample js code that uses this:
 For more, see the [./dist/exportexample.html](./dist/exportexample) that is part of
 this npm package or the examples repository linked to above.
 
+### Using with Webpack
+
+If you are using Webpack in your own application and you would like to bundle
+bioimagesuite web within your bundle you will need to:
+
+1. Add the following to the externals part of your webpack configuration
+
+        externals: {
+            "jquery": "jQuery",
+            "jQuery": "jQuery",
+            "THREE": "THREE", 
+        },
+        
+2. Include bioimagesuiteweb using require (instead of the script tag), e.g.
+
+        const bioimagesuiteweb=require('biswebbrowser');
+    
+3. You will still need to include the following in the heaeder of your webpage
+   -- the only file not needed is `bislib.js`.
+
+        <script src="node_modules/biswebbrowser/dist/webcomponents-lite.js"></script>
+        <script src="node_modules/biswebbrowser/dist/jquery.min.js"></script>
+        <script src="node_modules/biswebbrowser/dist/bootstrap.min.js"></script>
+        <script src="node_modules/biswebbrowser/dist/three.min.js"></script>
+        <script src="node_modules/biswebbrowser/dist/libbiswasm_wasm.js"></script>
+
+
+compiletools
+
 ### Electron
 
 If you are planning to use this code in an electron application, you will need
