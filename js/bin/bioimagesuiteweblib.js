@@ -9,12 +9,13 @@ if (global.bioimagesuiteweblib !== false) {
 require('../../config/bisweb_pathconfig.js');
 const expobj=require('bisweb_exportobject');
 
-expobj.commandline = require('commandline');
-expobj.userPreferences = require('bisweb_userpreferences.js');
 expobj.commander=require('commander');
 expobj.tmp=require('tmp');
-expobj.bisnodecmd=require("bis_commandlineutils"),
 expobj.rimraf=require('rimraf');
+
+expobj.commandline = require('commandline');
+expobj.userPreferences = require('bisweb_userpreferences.js');
+expobj.bisnodecmd=require("bis_commandlineutils"),
 expobj.wsutil=require('bis_wsutil');
 expobj.loadParse=expobj.commandline.loadParse;
 expobj.loadUserPreferences=expobj.userPreferences.initialize;

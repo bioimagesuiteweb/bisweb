@@ -48,7 +48,6 @@ program
     .option('-m, --minify','flag to minify')
     .option('-l, --platform  <s>','platform')
     .option('-p, --dopack <s>','dopackage 0=electron-packager, 1=run inno or zip in addition, 2=using zip distribution for node_modules, 3 run npm install',parseInt)
-    .option('-e, --eslint <n>','if 0 use jshint instead of eslint',parseInt)
     .option('-w, --worker','if present build the webworker as well')
     .option('-s, --sworker','if present build the service worker and index.js as well')
     .option('--tf','if true package tensorfow in electron app')
@@ -277,33 +276,6 @@ function createDate() {
 }
 
 
-// ------------------ JSHint ------------------
-
-gulp.task('jshint',  (done) => {
-
-    const jshint = require('gulp-jshint');
-    for (let i=0;i<internal.lintscripts.length;i++) {
-        
-        gulp.src(internal.lintscripts[i])
-            .pipe(jshint({ sub:true, 
-                              node:true,
-                              unused:true,
-                              undef:true,
-                              globalstrict:true,
-                              esversion:6,
-                              "globals": {
-                                  "console": true,
-                                  "require": true,
-                                  "module" : true,
-                              },
-                            }))
-            .pipe(jshint.reporter('default'));
-    }
-    done();
-});
-
-
-
 gulp.task('eslint',  () => { 
     // ESLint ignores files with "node_modules" paths.
     // So, it's best to have gulp ignore the directory as well.
@@ -341,9 +313,7 @@ gulp.task('eslint',  () => {
 
 
 gulp.task('watch', () => { 
-    if (options.eslint)
-        return gulp.watch(internal.lintscripts, gulp.series('eslint'));
-    return gulp.watch(internal.lintscripts, gulp.series('jshint'));
+    return gulp.watch(internal.lintscripts, gulp.series('eslint'));
 });
 
 
