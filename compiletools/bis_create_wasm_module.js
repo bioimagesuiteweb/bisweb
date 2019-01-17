@@ -103,7 +103,7 @@ let arr=new Uint8Array(d);
 //console.log("++++ RAW Binary WASM Array length=",arr.length);
 let str=genericio.tozbase64(arr);
 
-//    console.log('++++ BisWASM loaded as zbase-64 string, length=',biswebpack.length);
+//    console.log('++++ BisWASM loaded as zbase-64 string, length=',bioimagesuitewasmpack.length);
 
 let a=getDate("/");
 let b=getTime(1);
@@ -118,7 +118,7 @@ let output_text=`
 (function () {
 
     ${txt};
-    const biswebpack= {
+    const bioimagesuitewasmpack= {
         binary: "${str}",
         date : "${a}, ${b}",
         filename : "external js module: ${inputfilename}",
@@ -126,9 +126,9 @@ let output_text=`
     };
 
     if (typeof module !== "undefined" && module.exports) {
-        module.exports = biswebpack;
+        module.exports = bioimagesuitewasmpack;
     } else {
-        window.biswebpack=biswebpack;
+        window.bioimagesuitewasmpack=bioimagesuitewasmpack;
     }
 })();
 `;

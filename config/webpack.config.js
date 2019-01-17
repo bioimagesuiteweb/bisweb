@@ -90,7 +90,7 @@ if (fs.existsSync(externalfile) && external>0) {
 
 let bisWebCustom=path.join(extrapath,"bisextra.js");
 if (internal<2) {
-    bisWebCustom="bis_util"; // dummy file
+    bisWebCustom="bis_dummy"; // dummy file
 } else {
     console.log(`${output}:++++ Using custom extra require file=${bisWebCustom}`);
 }
@@ -136,11 +136,11 @@ if (output === "bislib.js" || output ==="index.js") {
         externals: {
             "jquery": "jQuery",             // require("jquery") is external and available on the global var jQuery
             "three": "THREE",               // require("three") is external and available on the global var jQuery
-            'request' : 'console.log',      // ignore this
-            "libbiswasm" : "console.log",   // this is not needed in this case and should be excluded
-            "@tensorflow/tfjs" : "console.log", // ignore tensor flow it will come from outside
-            "@tensorflow/tfjs-node" : "console.log", // ignore tensor flow it will come from outside
-            "@tensorflow/tfjs-node-gpu" : "console.log" // ignore tensor flow it will come from outside
+            'request' : './bis_dummy',      // ignore this
+            "libbiswasm" : "./bis_dummy",   // this is not needed in this case and should be excluded
+            "@tensorflow/tfjs" : "./bis_dummy", // ignore tensor flow it will come from outside
+            "@tensorflow/tfjs-node" : "./bis_dummy", // ignore tensor flow it will come from outside
+            "@tensorflow/tfjs-node-gpu" : "./bis_dummy" // ignore tensor flow it will come from outside
         },
         watchOptions: {
             aggregateTimeout: 300,
