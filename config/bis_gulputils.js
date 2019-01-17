@@ -650,7 +650,8 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
             .pipe(gulp.dest(distDir+'/../electron/')),
         gulp.src([ `${indir}/config/biswebbrowser_readme.md`])
             .pipe(rename('README.md'))
-            .pipe(gulp.dest(odir))
+            .pipe(gulp.dest(odir)),
+        gulp.src(`${indir}/web/images/bisweb_newlogo.png`).pipe(gulp.dest(odir+"/logo"))
     ).on('end', () => { 
         console.log(getTime()+' .... Files copied in',distDir);
         

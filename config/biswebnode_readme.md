@@ -1,3 +1,6 @@
+![Logo](https://bioimagesuiteweb.github.io/bisweb-manual/bisweb_newlogo_small.png)
+
+---
 ## BioImage Suite Web -- Node.js Package
 
 This is package exports much of functionality in BioImage Suite Web as an npm

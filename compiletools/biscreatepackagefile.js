@@ -89,6 +89,7 @@ let obj = {
     "description": "A node.js implementation of BioImage Suite Web command line tools in Javascript and WebAssembly",
     "homepage": appinfo.homepage,
     "main" : "lib/bioimagesuiteweblib.js",
+    "keywords" : appinfo.keywords,
     "author": appinfo.author,
     "license": "GPL v2 or Apache",
     "bin" : "lib/bisweb.js",
