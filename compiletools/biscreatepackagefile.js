@@ -27,10 +27,8 @@ require('../config/bis_checknodeversion');
 const fs=require('fs');
 const path=require('path');
 const program=require('commander');
+const appinfo=require('../package.json');
 require('../config/bisweb_pathconfig.js');
-
-const bisdate=require(path.join(__dirname,'../build/web/bisdate.json'));
-console.log('date=',bisdate);
 
 var help = function() {
     console.log('\nThis program fixes the manifest file.\n');
@@ -52,15 +50,18 @@ if (output === null) {
     process.exit(0);
 }
 
-let version=bisdate.version;
+
+
+let devDependencies= appinfo.dependencies;
+devDependencies["mocha"]="3.5.3";
 
 let obj = { 
     "name": "biswebnode",
-    "version": version,
+    "version": appinfo.version,
     "description": "A node.js implementation of BioImage Suite Web command line tools in Javascript and WebAssembly",
-    "homepage": "www.bioimagesuite.org",
+    "homepage": appinfo.homepage,
     "main" : "lib/bioimagesuiteweblib.js",
-    "author": "Xenios Papademetris",
+    "author": appinfo.author,
     "license": "GPL v2 or Apache",
     "bin" : "lib/bisweb.js",
     "dependencies": {
@@ -70,13 +71,12 @@ let obj = {
         "websocket-stream": "5.1.2",
         "ws": "6.1.2"
     },
+
     "repository": {
         "type" : "git",
         "url" : "https://github.com/bioimagesuiteweb/bisweb"
     },
-    "devDependencies" : {
-        "mocha": "3.5.3",
-    },
+    "devDependencies" : devDependencies,
     "scripts" : {
         "test": "mocha test/test_module.js"
     }

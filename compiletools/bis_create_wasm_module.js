@@ -110,7 +110,11 @@ let b=getTime(1);
 
 let inputfilename=path.basename(path.normalize(fname2));
 
-txt='var biswasm_initialize_function=null;\n'+txt.trim().replace(/module.exports/g,'biswasm_initialize_function');
+//eliminate require statements that are used if this module is in node as it confuses webpack!
+txt=txt.trim().replace(/module.exports/g,'biswasm_initialize_function').replace(/require\(/g,'console.log(');
+
+
+txt='var biswasm_initialize_function=null;\n'+txt;
 
 let output_text=`
 
@@ -137,3 +141,4 @@ console.log(`++++ Writing webpack-wasm module to ${program.output}`);
 fs.writeFileSync(program.output,output_text);
 
 process.exit(0);
+

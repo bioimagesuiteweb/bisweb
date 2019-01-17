@@ -283,10 +283,11 @@ var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,
         tmpout=tmpout+'_full.js';
     
     let cmd='webpack-cli --entry '+source+' --output-filename '+tmpout+' --output-path '+outdir+' --config config'+join+'webpack.config_devel.js';
-    cmd+=' --sort-modules-by size ';
+    if (!debug)
+        cmd+=' --sort-modules-by size ';
 
     if (debug)
-        cmd+=' --display-modules --display-entrypoints --display-exclude';
+        cmd+=' --verbose --display-modules --display-origins';
     else
         cmd+=' --display-max-modules 20';
     
@@ -654,19 +655,23 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
         console.log(getTime()+' .... Files copied in',distDir);
         
         // Step 2 create package.json
+
+        let appinfo=require('../package.json');
+        
         let obj = { 
             "private": false,
             "name": "biswebbrowser",
             "version": version,
-            "description": "A web-based implementation of BioImage Suite in Javascript and WebAssembly",
-            "homepage": "www.bioimagesuite.org",
+            "description": appinfo.description,
+            "homepage": appinfo.homepage,
             "main" : "dist/biswebbrowser.js",
-            "author": "Xenios Papademetris",
+            "author": appinfo.author,
             "license": "GPL v2 or Apache",
             "repository": {
                 "type" : "git",
                 "url" : "https://github.com/bioimagesuiteweb/bisweb",
-            }
+            },
+            devDependencies : appinfo.dependencies
         };
         
         let txt=JSON.stringify(obj,null,4)+"\n";

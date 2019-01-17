@@ -7,7 +7,7 @@
     "scripts": {
         "test": "mocha test"
     },
-    "author": "Xenios Papademetris",
+    "author": "Yale BioImageSuite Web Team",
     "license": "Apache",
     "dependencies": {
         "@tensorflow/tfjs-node": "0.2.1",
