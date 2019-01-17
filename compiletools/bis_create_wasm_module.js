@@ -27,10 +27,14 @@
 // -----------------------------------------------------------------
 // Create command line
 // -----------------------------------------------------------------
-const program=require('commander');
-const genericio=require('../js/core/bis_genericio.js');
-const fs=require('fs');
 const path=require('path');
+const fs=require('fs');
+const program=require('commander');
+
+require(path.join(__dirname,'../config/bisweb_pathconfig.js'));
+const genericio=require('bis_genericio.js');
+
+
 
 var help = function() {
     console.log('\nThis program creates the biswasmmodule.js file\n');

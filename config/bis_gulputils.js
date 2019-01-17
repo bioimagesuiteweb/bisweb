@@ -636,7 +636,7 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
                    `${indir}/build/web/bislib.css`,
                    `${indir}/build/web/exportexample.html`,
                    `${indir}/build/web/exportexample.js`,
-                   `${indir}/js/core/bis_dummy.js`,
+                   `${indir}/js/coreweb/bis_dummy.js`,
                    `${indir}/build/web/bisdate.json`,
                  ]).pipe(gulp.dest(distDir)),
         gulp.src([ 'node_modules/bootstrap/dist/css/*']).pipe(gulp.dest(distDir+'/css/')),
