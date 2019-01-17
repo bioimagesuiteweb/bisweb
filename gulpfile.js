@@ -422,7 +422,9 @@ gulp.task('commonfiles', (done) => {
         gulp.src('./web/aws/biswebaws.html').pipe(gulp.dest(options.outdir)),
         gulp.src('./web/aws/awsparameters.js').pipe(gulp.dest(options.outdir)),
         gulp.src('./node_modules/bootstrap/dist/js/bootstrap.min.js').pipe(gulp.dest(options.outdir)),
-        gulp.src([ 'web/manifest.json']).pipe(gulp.dest(options.outdir))
+        gulp.src([ 'web/manifest.json']).pipe(gulp.dest(options.outdir)),
+        gulp.src('./web/bootstrap.min.css').pipe(gulp.dest(options.outdir)),
+        gulp.src('./web/binaries.html').pipe(gulp.dest(options.outdir))
     ).on('end', () => {
         bis_gutil.createHTML('console',options.outdir,'',internal.biscss);
         done();
