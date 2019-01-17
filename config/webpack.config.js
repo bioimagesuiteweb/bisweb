@@ -98,7 +98,7 @@ if (internal<2) {
 
 let bisWebExternalFile="";
 if (!external) {
-    bisWebExternalFile="bis_simplemat"; // dummy file
+    bisWebExternalFile="bis_dummy"; // dummy file
     //    console.log(`${output}:++++ Not using custom extra require file from external, using ${bisWebExternalFile} as placeholder.`);
 } else {
     bisWebExternalFile=path.join(externalpath,"bisextra.js");
@@ -182,6 +182,7 @@ if (output === "bislib.js" || output ==="index.js") {
                         path.resolve(mypath,'js/dataobjects'),
                         path.resolve(mypath,'js/legacy'),
                         path.resolve(mypath,'js/modules'),
+                        path.resolve(mypath,'js/webworker'),
                         path.resolve(mypath,'build/wasm'),
                         path.resolve(mypath,'build/web')]
         },
@@ -208,6 +209,7 @@ if (output === "bislib.js") {
 }
 
 console.log('++++ Webpack externals=',Object.keys(module.exports.externals).join(','));
+
 
 
 

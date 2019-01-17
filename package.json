@@ -93,9 +93,9 @@
             "@tensorflow/tfjs-node-gpu" : "./bis_dummy"
         },
         "workerexternals": {
-            "@tensorflow/tfjs" : "./bis_dummy", 
-            "@tensorflow/tfjs-node" : "./bis_dummy", 
-            "@tensorflow/tfjs-node-gpu" : "./bis_dummy" 
+            "@tensorflow/tfjs" : "console.log", 
+            "@tensorflow/tfjs-node" : "console.log", 
+            "@tensorflow/tfjs-node-gpu" : "console.log" 
         }
     }
 }

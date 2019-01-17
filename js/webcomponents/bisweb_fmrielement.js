@@ -12,7 +12,6 @@ const ResliceImage = require('resliceImage');
 const NonlinearRegistration = require('nonlinearRegistration');
 const BisWebPanel = require('bisweb_panel.js');
 const MotionCorrection = require('motionCorrection');
-const fs = require('fs');
 const TransformationCollection = require('bisweb_transformationcollection');
 require('jstree');
 
@@ -257,8 +256,8 @@ class FMRIElement extends HTMLElement {
             let selectedFile = document.getElementById('input').files[0];
 
             let filename = selectedFile.value;
-            let text = fs.readFileSync(filename).toString('utf-8');
-
+            //let text = fs.readFileSync(filename).toString('utf-8');
+            
             let jsonobj;
             try {
                 jsonobj = JSON.parse(text);
