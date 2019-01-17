@@ -37,13 +37,13 @@ const createTestingServer=function(timeout=500) {
 
     const serverpath= path.join(__dirname,'../bin');
     
-    let servername=path.resolve(serverpath,"bisfileserver.js");
+    let servername=path.resolve(serverpath,"bisweb.js");
 
     
     let infostr=[];
     let tmpDir=tempfs.mkdirSync('test_image');
     console.log(colors.blue('____ created temporary directory:'+tmpDir));
-    let cmd=`node ${servername} --tmpdir ${tmpDir}`;
+    let cmd=`node ${servername} bisserver --tmpdir ${tmpDir}`;
 
     return new Promise( (resolve,reject) => {
 
@@ -78,8 +78,9 @@ const createTestingServer=function(timeout=500) {
         };
 
         let listen=function(message) {
-            let ind=message.indexOf('ss');
-            let lind=message.lastIndexOf('ss');
+
+            let ind=message.indexOf('.ss');
+            let lind=message.lastIndexOf('.ss');
 
             if (ind>=0) {
                 infostr.push(message);
@@ -89,13 +90,14 @@ const createTestingServer=function(timeout=500) {
             }
             
             if (infostr.length>1) {
-
+                
                 let ind1=infostr[0].indexOf('hostname:');
                 let hostname=infostr[0].substr(ind1+9,50).split('\n')[0].trim();
+                console.log(colors.blue('____ Hostname=',hostname));
 
                 let ind2=infostr[1].indexOf('password:');
                 let password=infostr[1].substr(ind2+9,50).split('\n')[0].trim();
-
+                console.log(colors.blue('____ Password=',password));
                 infostr=[ hostname,password];
                 // Wait 1 second and then authenticate
                 setTimeout(fn,timeout);
