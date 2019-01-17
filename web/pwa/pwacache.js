@@ -8,6 +8,8 @@ module.exports = {
         'biswebaws.html',
         'bootstrap.min.js',
         'bootstrap_dark_edited.css',
+        'binaries.html',
+        'bootstrap.min.css',
         'connviewer.css',
         'connviewer.html',
         'console.html',
