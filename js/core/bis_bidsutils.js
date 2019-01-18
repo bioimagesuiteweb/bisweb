@@ -69,7 +69,7 @@ let dicom2BIDS = async function (opts) {
         return errorfn('No data to convert in ' + indir);
     }
 
-    let outputdirectory = bis_genericio.joinFilenames(outdir, 'derived');
+    let outputdirectory = bis_genericio.joinFilenames(outdir, 'source');
     try {
         await makeDir(outputdirectory);
     } catch (e) {

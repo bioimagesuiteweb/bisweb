@@ -94,7 +94,7 @@ class DicomModule extends BaseModule {
 
             //TODO: Make this generic
             let dicomtmpdir = path.join(sysutils.tempdir, 'dicom_' + Date.now());
-            let outdir = dicomtmpdir + '/derived';
+            let outdir = dicomtmpdir + '/source';
             try {
                 fs.mkdirSync(dicomtmpdir);
                 fs.mkdirSync(outdir);
