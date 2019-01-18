@@ -114,7 +114,7 @@ class BisBaseServerClient {
      * @returns {Promise} payload true or false
      */
     copyFile(url) {
-        return this.fileSystemOperation('copyFile', url);
+        return this.fileSystemOperation('copyFile', url, 60000);
     }
 
     /** getMatching Files
