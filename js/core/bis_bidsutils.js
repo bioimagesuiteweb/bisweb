@@ -1,7 +1,7 @@
 'use strict';
 
 const bis_genericio = require('bis_genericio');
-const bis_webutil = require('bis_webutil.js')
+//const bis_webutil = require('bis_webutil.js')
 //const bis_util = require('bis_util.js');
 
 // DICOM2BIDS
@@ -33,8 +33,6 @@ let dicom2BIDS = async function (opts) {
         }
         return true;
     };
-
-    bis_webutil.createAlert('Converting images to BIDS structure...', false, 0, 100000, { 'makeLoadSpinner' : true });
 
     let indir = opts.indir || '';
     let outdir = opts.outdir || '';
@@ -253,7 +251,6 @@ let dicom2BIDS = async function (opts) {
             });
         }
 
-        bis_webutil.dismissAlerts();
         console.log('----- output directory', outputdirectory);
         return outputdirectory;
 

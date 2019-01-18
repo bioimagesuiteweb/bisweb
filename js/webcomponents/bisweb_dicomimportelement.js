@@ -53,7 +53,19 @@ class DicomImportElement extends HTMLElement {
             parent : basediv,
             css : { 'width' : '90%' , 'margin' : '3px' },
             callback : (f) => {
-                this.importDicomStudy(f);
+                let saveFileCallback = (o) => { 
+                    console.log('input', f, 'output', o);
+                    this.importDicomStudy(f, o);
+                };
+
+                setTimeout( () => {
+                    bis_webfileutil.genericFileCallback( 
+                    {
+                        'title' : 'Choose output directory',
+                        'filters' : 'DIRECTORY',
+                        'save' : false
+                    }, saveFileCallback);
+                }, 1);
             },
         },{
             title: 'Directory to import study from',
@@ -63,7 +75,7 @@ class DicomImportElement extends HTMLElement {
         });
     }
 
-    importDicomStudy(inputDirectory) {
+    importDicomStudy(inputDirectory, outputDirectory) {
         bis_webutil.createAlert('Converting raw DICOM files to BIDS...', false, 0, 100000, { 'makeLoadSpinner' : true });
         let outdir = inputDirectory; //create derived folder in the same place as the input in accordance with BIDS
         if (!bis_webfileutil.candoComplexIO()) {
@@ -80,9 +92,10 @@ class DicomImportElement extends HTMLElement {
             'inputDirectory': inputDirectory
         }).then((fileConversionOutput) => {
             console.log('Conversion done, now converting files to BIDS format.');
+            bis_webutil.createAlert('Converting images to BIDS structure...', false, 0, 100000, { 'makeLoadSpinner' : true });
 
             //dicom files are in inputDirectory/derived
-            bis_bidsutils.dicom2BIDS({ 'indir': fileConversionOutput.output, 'outdir': outdir }).then((bidsDirectory) => {
+            bis_bidsutils.dicom2BIDS({ 'indir': fileConversionOutput.output, 'outdir': outputDirectory }).then((bidsDirectory) => {
 
                 console.log('output directory', bidsDirectory);
                 //parse folder name for containing folder (should be the folder before the .json file)
