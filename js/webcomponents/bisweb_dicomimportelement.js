@@ -64,6 +64,7 @@ class DicomImportElement extends HTMLElement {
     }
 
     importDicomStudy(inputDirectory) {
+        bis_webutil.createAlert('Converting raw DICOM files to BIDS...', false, 0, 100000, { 'makeLoadSpinner' : true });
         let outdir = inputDirectory; //create derived folder in the same place as the input in accordance with BIDS
         if (!bis_webfileutil.candoComplexIO()) {
             console.log('Error: cannot import DICOM study without access to file server.');
