@@ -19,8 +19,6 @@
 
 const genericio=require('bis_genericio');
 const webutil = require('bis_webutil');
-let imagepath=webutil.getWebPageImagePath();
-
 
 module.exports = {
 
@@ -28,10 +26,12 @@ module.exports = {
     createMNIImageLoadMenuEntries : function(fmenu,callback,viewerno=0) {
         webutil.createMenuItem(fmenu,'Load MNI T1 (1mm)',
                                function() {
+                                   let imagepath=webutil.getWebPageImagePath();
                                    callback(`${imagepath}/MNI_T1_1mm_stripped_ras.nii.gz`,viewerno);
                                });
         webutil.createMenuItem(fmenu,'Load MNI T1 (2mm)',
                                function() {
+                                   let imagepath=webutil.getWebPageImagePath();
                                    callback(`${imagepath}/MNI_T1_2mm_stripped_ras.nii.gz`,viewerno);
                                });
     },
@@ -40,11 +40,13 @@ module.exports = {
 
         webutil.createMenuItem(fmenu, 'Load Yale Brodmann Atlas (1mm)',
                                function () {
+                                   let imagepath=webutil.getWebPageImagePath();
                                    callback(`${imagepath}/yale_broadmann_ras.nii.gz`, viewerno);
                                });
         
         webutil.createMenuItem(fmenu, 'Load Yale Brodmann Atlas (2mm)',
                                function () {
+                                   let imagepath=webutil.getWebPageImagePath();
                                    callback(`${imagepath}/yale_broadmann_2mm_ras.nii.gz`, viewerno);
                                });
 

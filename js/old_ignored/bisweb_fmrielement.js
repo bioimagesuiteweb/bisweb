@@ -249,18 +249,18 @@ class FMRIElement extends HTMLElement {
 	// TODO: add electron check and directory loading
     loadDataFromJSON() {
 
-        return new Promise( (resolve, reject) => {
+        /*        return new Promise( (resolve, reject) => {
             let input = document.createElement('input');
             input.type = 'file';
             input.click();
-            let selectedFile = document.getElementById('input').files[0];
+            //let selectedFile = document.getElementById('input').files[0];
 
-            let filename = selectedFile.value;
+            //let filename = selectedFile.value;
             //let text = fs.readFileSync(filename).toString('utf-8');
             
-            let jsonobj;
+            //let jsonobj;
             try {
-                jsonobj = JSON.parse(text);
+                //  jsonobj = JSON.parse(text);
             } catch(e) {
                 bootbox.alert('Invalid File Type');
                 reject(e);
@@ -268,7 +268,7 @@ class FMRIElement extends HTMLElement {
 
             resolve(jsonobj);
             
-        });
+        });*/
     }
 
     populateTree(jsonobj) {

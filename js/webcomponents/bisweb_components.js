@@ -113,7 +113,7 @@ class BottomMenuBarElement extends HTMLElement {
         
         const bottommenubar=`<nav class="navbar navbar-default navbar-fixed-bottom" style=" min-height:25px; max-height:25px"></nav>`;
         
-        const bottomtext=`<div style="${st} float:left"><img src="${iconpath}/bisweb_newlogo2.png" id="bislogobottom" height="20px"/></div><div style="${st} float:right">This application is part of <a href="./index.html" target="_blank">Yale
+        const bottomtext=`<div style="${st} float:right">This application is part of <a href="./index.html" target="_blank">Yale
 BioImage Suite</a> (${bisversion.version}, ${bisversion.date})</div>`;
 
         let content=this.getAttribute('content') || '';

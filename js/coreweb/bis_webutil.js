@@ -148,6 +148,7 @@ const internal = {
     alertcount: 0,
     alerttimeout: 8000,
     alerttop: 70,
+    imagepath : null,
 };
 
 
@@ -1270,7 +1271,16 @@ const webutil = {
 
 
     /** get full path to html file */
+    setWebPageImagePath(name) {
+        internal.imagepath=name;
+        console.log('Setting BASE URL for images to '+name);
+    },
+    
+    
+    /** get full path to html file */
     getWebPageImagePath() {
+        if (internal.imagepath!==null)
+            return internal.imagepath;
         return genericio.getimagepath();
     },
     

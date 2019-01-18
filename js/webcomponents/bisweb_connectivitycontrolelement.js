@@ -37,7 +37,7 @@ const THREE=require('three');
 const BisWebPanel = require('bisweb_panel.js');
 import dat from 'dat.gui';
 
-const imagepath=webutil.getWebPageImagePath();
+
 
 // -------------------------------------------------------------------------
 const brain_vertexshader_text = 
@@ -1598,6 +1598,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             
             internal.subviewers=subviewers;
             onDemandCreateGUI();
+            const imagepath=webutil.getWebPageImagePath();
             loadparcellation(`${imagepath}/shen.json`);
             
             bisgenericio.read(`${imagepath}/lobes_right.json`).then( (obj) => {

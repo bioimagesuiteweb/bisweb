@@ -66,12 +66,14 @@ const clipboard=localforage.createInstance({
  *     bis-viewerid2 : the id of the second <bisweb-orthogonalviewer> element (must be for use as slave)
  *     bis-consoleid : the id of an optional <bisweb-console> element.
  *     bis-modulemanagerid : the id of an optional <bisweb-modulemanager> element that manages processing modules
+ *     bis-imagepath : if set the path to the images (used for external applications0
  */
 class ViewerApplicationElement extends HTMLElement {
 
     constructor() {
         super();
         this.extraManualHTML='';
+        this.externalMode=false;
         this.syncmode = false;
         this.simpleFileMenus=false;
         this.VIEWERS=[];
@@ -81,10 +83,7 @@ class ViewerApplicationElement extends HTMLElement {
         this.applicationName=webutil.getWebPageName();
         console.log("+++++ App name=",this.applicationName,this.applicationURL);
 
-        clipboard.setItem('appname',this.applicationName).catch( (e) => {
-            console.log('No database to store appname'+e);
-        });
-
+        
         // For dual tab apps
         this.tab1name=null;
         this.tab2name=null;
@@ -96,12 +95,8 @@ class ViewerApplicationElement extends HTMLElement {
 
         this.applicationInitializedPromiseList= [ ];
 
-        let p=userPreferences.initialize(bisdbase);
-        p.catch( (e) => {
-            console.log('No dbase available',e);
-        });
-        this.applicationInitializedPromiseList.push(p); // this is an async call to initialize. Use safe get later to make sure
-
+        
+        
     }
 
     // ----------------------------------------------------------------------------
@@ -854,7 +849,9 @@ class ViewerApplicationElement extends HTMLElement {
         
         let hmenu = webutil.createTopMenuBarMenu("Help", menubar);
 
-        let fn = (() => { this.welcomeMessage(true) ; });
+        let fn = (() => {
+            this.welcomeMessage(true) ;
+        });
         
         webutil.createMenuItem(hmenu,'About this application',fn);
 
@@ -1204,6 +1201,10 @@ class ViewerApplicationElement extends HTMLElement {
     // ---------------------------------------------------------------------------
     welcomeMessage(force=false) {
 
+        if (this.externalMode)
+            return;
+        
+        
         let show=force;
 
         let p=[ 
@@ -1308,8 +1309,37 @@ class ViewerApplicationElement extends HTMLElement {
     //  ---------------------------------------------------------------------------
     // Essentially the main function, called when element is attached to the page
     //  ---------------------------------------------------------------------------
+    setExternalAndImagePath() {
+
+        const imagepath = this.getAttribute('bis-imagepath') || null;
+        if (imagepath)
+            webutil.setWebPageImagePath(imagepath);
+        
+        let ext=this.getAttribute('bis-external');
+        if (ext) {
+            this.externalMode=true;
+            let a='';
+            if (imagepath)
+                a='using image path=' + imagepath;
+            console.log("BioImage Suite Web Application Element running in External Mode=",this.externalMode,a);
+        }
+
+        if (!this.externalMode) {
+            let p=userPreferences.initialize(bisdbase);
+            p.catch( (e) => {
+                console.log('No dbase available',e);
+            });
+            this.applicationInitializedPromiseList.push(p); // this is an async call to initialize. Use safe get later to make sure
+        }
+
+
+    }
+    
     connectedCallback() {
 
+        // Check if we are in external mode and if we have an imagepath
+        this.setExternalAndImagePath();
+        
         // -----------------------------------------------------------------------
         // Find other items
         // -----------------------------------------------------------------------
@@ -1428,22 +1458,24 @@ class ViewerApplicationElement extends HTMLElement {
         this.attachDragAndDrop();
 
         // ----------------------------------------------------------
-        // Console
+        // Help Menu
         // ----------------------------------------------------------
-        let hmenu=this.createHelpMenu(menubar);
-
-
-        // ----------------------------------------------------------------
-        // Add help sample data option
-        // ----------------------------------------------------------------
-        if (this.applicationName==='overlayviewer') {
-            webutil.createMenuItem(hmenu, ''); // separator
-            webutil.createMenuItem(hmenu, 'Load Sample Data',
-                                   function () {
-                                       let imagepath=webutil.getWebPageImagePath();
-                                       let f=`${imagepath}/viewer.biswebstate`;
-                                       self.loadApplicationState(f);
-                                   });
+        if (!this.externalMode) {
+            let hmenu=this.createHelpMenu(menubar);
+            
+            
+            // ----------------------------------------------------------------
+            // Add help sample data option
+            // ----------------------------------------------------------------
+            if (this.applicationName==='overlayviewer') {
+                webutil.createMenuItem(hmenu, ''); // separator
+                webutil.createMenuItem(hmenu, 'Load Sample Data',
+                                       function () {
+                                           let imagepath=webutil.getWebPageImagePath();
+                                           let f=`${imagepath}/viewer.biswebstate`;
+                                           self.loadApplicationState(f);
+                                       });
+            }
         }
 
         // ----------------------------------------------------------

@@ -634,6 +634,10 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
                    `${indir}/build/web/three.min.js`,
                    `${indir}/build/web/bootstrap.min.js`,
                    `${indir}/build/web/bislib.css`,
+                   `${indir}/build/web/biswebtest.css`,
+                   `${indir}/build/web/biswebtest.html`,
+                   `${indir}/build/web/biswebdisplaytest.css`,
+                   `${indir}/build/web/biswebdisplaytest.html`,
                    `${indir}/build/web/exportexample.html`,
                    `${indir}/build/web/exportexample.js`,
                    `${indir}/js/coreweb/bis_dummy.js`,
@@ -642,6 +646,7 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
         gulp.src([ 'node_modules/bootstrap/dist/css/*']).pipe(gulp.dest(distDir+'/css/')),
         gulp.src([ 'node_modules/bootstrap/dist/fonts/*']).pipe(gulp.dest(distDir+'/fonts/')),
         gulp.src([ 'lib/fonts/*']).pipe(gulp.dest(distDir+'/fonts/')),
+        gulp.src([ 'web/images/favicon.ico' , 'web/images/bioimagesuite.png']).pipe(gulp.dest(distDir+'/images/')),
         gulp.src([ `${indir}/web/bispreload.js`])
             .pipe(rename('electronpreload.js'))
             .pipe(gulp.dest(distDir+'/../electron/')),
@@ -654,6 +659,24 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
         gulp.src(`${indir}/web/images/bisweb_newlogo.png`).pipe(gulp.dest(odir+"/logo"))
     ).on('end', () => { 
         console.log(getTime()+' .... Files copied in',distDir);
+
+        // Step 1 fix displaytest2.html
+        //
+
+        let fname=`${indir}/build/web/biswebdisplaytest2.html`;
+        let lines=fs.readFileSync(fname,'utf-8').split('\n');
+        let i=0;
+        while (i<lines.length) {
+            if (lines[i].indexOf('bis-external')>0) {
+                lines[i]=lines[i]+'\n      bis-imagepath="https://bioimagesuiteweb.github.io/webapp/images/"';
+                console.log("fixed = ",lines[i]);
+                i=lines.length;
+            }
+            i=i+1;
+        }
+
+        
+        fs.writeFileSync(distDir+'/biswebdisplaytest2.html',lines.join('\n'));
         
         // Step 2 create package.json
 
