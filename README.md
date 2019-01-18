@@ -1,3 +1,6 @@
+![Logo](https://bioimagesuiteweb.github.io/bisweb-manual/bisweb_newlogo_small.png)
+
+---
 ## Welcome to BioImage Suite Web
 
 BioImage Suite Web (bisweb) is a web-based medical image analysis suite
