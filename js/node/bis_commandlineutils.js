@@ -79,8 +79,40 @@ let executeCommand=function(command,dir,done=0,printfn=0) {
     }
 };
 
+
+let executeCommandAndLog=function(command,dir,printfn=null) {
+
+    dir = dir || __dirname;
+    console.log(getTime()+" "+colors.green(dir+">")+colors.red(command+'\n'));
+    let log='';
+    
+    return new Promise( (resolve,reject) => {
+
+        try {
+            let proc=child_process.exec(command, { cwd : dir });
+            proc.stdout.on('data', function(data) {
+                if (printfn)
+                    printfn(data);
+                log+=data;
+                process.stdout.write(colors.yellow(data));
+            });
+            proc.stderr.on('data', function(data) {
+                if (printfn)
+                    printfn(data);
+                process.stdout.write(colors.red(data));
+                log+=data;
+            });
+            proc.on('exit', function(code) {
+                resolve(log+'\n exit code ='+code);
+            });
+        } catch (e) {
+            reject(e);
+        }
+    });
+};
+
 module.exports = {
     getTime : getTime,
-    executeCommand: executeCommand
-    
+    executeCommand: executeCommand,
+    executeCommandAndLog :  executeCommandAndLog,
 };

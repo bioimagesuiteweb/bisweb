@@ -1109,6 +1109,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             }
         };
         const img=new bisweb_image();
+        const imagepath=webutil.getWebPageImagePath();
         img.load(`${imagepath}/Reorder_Atlas.nii.gz`,false)
             .then(function() { internalreadatlas(img,save); })
             .catch( (e) => { myerror(e) ; });

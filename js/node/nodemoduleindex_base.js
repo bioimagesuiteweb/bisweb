@@ -22,6 +22,7 @@ const universalmodules=require('moduleindex');
 
 const moduleImports = {
     'infomodule': require('./infomodule.js'),
+    'regressiontests': require('./regressiontestmodule.js'),
 };
 
 let moduleNames=universalmodules.createModuleNames(moduleImports);

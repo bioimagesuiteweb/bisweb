@@ -22,13 +22,17 @@ primarily geared towards Neuroimaging Analysis. We gratefully acknowledge
 support from the NIH Brain Initiative under grant R24 MH114805 (Papademetris
 X. and Scheinost D. PIs).
 
-### Installation
+---
+
+## Installation
 
 Simply type:
 
     npm install biswebbrowser
 
-### Including in your application's html header
+---
+
+## Including in your application's html header
 
 In the header of your html file include: (Replace `node_modules` with the
 relative path from your `.html` file to `node_modules`)
@@ -62,8 +66,9 @@ include the non-GPL WASM code (Apache) script instead of `libbiswasm_wasm.js`.
 
     <script src="node_modules/bisweb/dist/libbiswasm_nongpl_wasm.js"></script>
 
+---
 
-### Example JS Code
+## Example JS Code
 
 Here is some sample js code that uses this:
 
@@ -93,7 +98,9 @@ Here is some sample js code that uses this:
 For more, see the [./dist/exportexample.html](./dist/exportexample) that is part of
 this npm package or the examples repository linked to above.
 
-### Using with Webpack
+----
+
+## Using with Webpack
 
 If you are using Webpack in your own application and you would like to bundle
 bioimagesuite web within your bundle you will need to:
@@ -120,9 +127,9 @@ bioimagesuite web within your bundle you will need to:
         <script src="node_modules/biswebbrowser/dist/libbiswasm_wasm.js"></script>
 
 
-compiletools
+---
 
-### Electron
+## Electron
 
 If you are planning to use this code in an electron application, you will need
 to include the file
@@ -134,4 +141,24 @@ You will also need to install the node.js pre-requisites specified in
 appropriately.  The tensorflow package (tfjs-node) is optional.
 
 
+---
+## Regression Testing
 
+I assume that you have some form of web server running. If you do not, you can
+use simple-server. See:
+[https://www.npmjs.com/package/simple-server](https://www.npmjs.com/package/simple-server)
+more information.
+
+Once you have a server up and running, simply navigate to one of
+the following:
+
+* [node_modules/biswebbrowser/dist/biswebtest.html](node_modules/biswebbrowser/dist/biswebtest.html) -- module  tests
+ 
+* [node_modules/biswebbrowser/dist/biswebdisplaytest.html](node_modules/biswebbrowser/dist/biswebdisplaytest.html)
+  -- display tests I
+
+* [node_modules/biswebbrowser/dist/biswebdisplaytest2.html](node_modules/biswebbrowser/dist/biswebdisplaytest2.html)
+  -- display tests II
+
+For more info on the tests see
+[https://bioimagesuiteweb.github.io/bisweb-manual/biswebtest.html](https://bioimagesuiteweb.github.io/bisweb-manual/biswebtest.html).
