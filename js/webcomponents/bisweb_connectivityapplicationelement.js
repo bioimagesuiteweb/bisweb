@@ -325,6 +325,7 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         Promise.all(this.applicationInitializedPromiseList).then( () => {
             webfileutil.initializeFromUserPrefs();
             this.parseQueryParameters();
+            this.fixColors();
             document.body.style.zoom =  1.0;
         }).catch( (e) => {
             console.log('Error ',e);

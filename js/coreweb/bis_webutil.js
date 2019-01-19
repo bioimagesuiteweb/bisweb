@@ -149,7 +149,19 @@ const internal = {
     alerttimeout: 8000,
     alerttop: 70,
     imagepath : null,
+    background : "#000000",
+    foreground : "#ffffff",
+    activecolor : "#440000",
+    passivecolor : "#303030",
+    passivecolor2 : "#383838",
+    bright_activecolor : "#bbffff",
+    bright_passivecolor : "#cfcfcf",
+    bright_passivecolor2 : "#c7c7c7",
+    bright_background : "#ffffff",
+    bright_foreground : "#000000",
+    darkmode : true,
 };
+
 
 
 /**
@@ -162,6 +174,13 @@ let deleteModal = (modal) => {
 };
 
 const webutil = {
+
+    /**
+     *
+     */
+    setDarkMode : function(d=true) {
+        internal.darkmode = d;
+    },
 
     /** set alert top 
      * @alias WebUtil.setAlertTop
@@ -568,6 +587,11 @@ const webutil = {
         } else
             throw (new Error(callback + ' is not a function in creating select ' + names));
 
+        let passive = "#bbbbbb", active = this.getforegroundcolor();
+        if (!internal.darkmode) {
+            passive="#33333";
+        }
+        
         var btn;
         var enablecallback = false;
         var mycallback = function () {
@@ -581,7 +605,7 @@ const webutil = {
             if (!state) {
                 btn.css({
                     'border-radius': '0px',
-                    'color': "#bbbbbb"
+                    'color': passive,
                 });
 
                 btn.removeClass('btn-success');
@@ -589,7 +613,7 @@ const webutil = {
             } else {
                 btn.css({
                     'border-radius': '20px',
-                    'color': "#ffffff"
+                    'color': active,
                 });
                 btn.addClass('btn-success');
                 btn.removeClass('btn-default');
@@ -747,12 +771,19 @@ const webutil = {
      */
     createselect: function (opts) {
 
+        let colors= [ "#505050", this.getforegroundcolor() ];
+        if (!internal.darkmode) {
+            colors[0]= "#afafaf";
+        }
+
+        
         opts = opts || {};
         var names = opts.values || ["none"];
         var index = opts.index || -1;
         var parent = opts.parent || null;
         var size = opts.size || 1;
-        var css = opts.css || { 'background-color': "#505050", 'color': "#ffffff" };
+        var css = opts.css || { 'background-color': colors[0], 'color': colors[1] };
+        console.log('css =',css);
         var cssclass = opts.class || "dg c select";
         var callback = opts.callback || undefined;
 
@@ -910,21 +941,26 @@ const webutil = {
      * @param {string} css - extra css attributes (as string)
      */
     createDropdownItem : function (dropdown,name,callback,css='') {
+
+        let colors = [ this.getactivecolor(),this.getforegroundcolor() ];
+        
         if (css==='')
-            css="background-color: #303030; color: #ffffff; font-size:13px; margin-bottom: 2px";
+            css="background-color: "+colors[0]+"; color: "+colors[1]+"; font-size:13px; margin-bottom: 2px";
         return this.createMenuItem(dropdown,name,callback,css);
     },
 
     createDropdownMenu : function (name,parent) {
 
+        let color=this.getpassivecolor();
         let nid=this.getuniqueid();
         
         let txt=$(`<div class="dropdown" style="display: inline-block">
                   <button id="${nid}" type="button" class="btn btn-default btn-sm" style="margin-left: 2px" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                   ${name} <span class="caret"></span></button>
-                  <ul class="dropdown-menu" class="label-info"  style="background-color : #303030" aria-labelledby="${nid}">
+                  <ul class="dropdown-menu" class="label-info"  style="background-color : ${color}" aria-labelledby="${nid}">
                   </ul>
                   </div>`);
+        console.log(txt);
         parent.append(txt);
         return txt.find('.dropdown-menu');
     },
@@ -946,7 +982,9 @@ const webutil = {
      * @returns {string} - color
      */
     getactivecolor: function () {
-        return "#440000";
+        if (internal.darkmode)
+            return internal.activecolor;
+        return internal.bright_activecolor;
     },
 
     /** get a passive color (e.g. gray background when control is inactive)
@@ -954,11 +992,40 @@ const webutil = {
      * @returns {string} - color
      */
     getpassivecolor: function () {
-        return "#303030";
+        if (internal.darkmode)
+            return internal.passivecolor;
+        return internal.bright_passivecolor;
     },
 
+    /** get a passive color (e.g. darker gray background when control is inactive)
+     * @alias WebUtil.getpassivecolor2
+     * @param{Boolean} dark -if true dark mode
+     * @returns {string} - color
+     */
     getpassivecolor2: function () {
-        return "#383838";
+        if (internal.darkmode)
+            return internal.passivecolor2;
+        return internal.bright_passivecolor2;
+    },
+
+    /** get the foreground color 
+     * @alias WebUtil.getforegroundcolor
+     * @returns {string} - color
+     */
+    getforegroundcolor: function () {
+        if (internal.darkmode)
+            return internal.foreground;
+        return internal.bright_foreground;
+    },
+
+    /** get the background color
+     * @alias WebUtil.getbackgroundcolor
+     * @returns {string} - color
+     */
+    getbackgroundcolor: function () {
+        if (internal.darkmode)
+            return internal.background;
+        return internal.bright_background;
     },
 
     // ------------------------------------------------------------------------

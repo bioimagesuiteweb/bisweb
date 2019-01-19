@@ -2020,7 +2020,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
  *      bis-layoutwidgetid :  the layout widget to create the GUI in
  */
 
-class ConnectivityControl extends HTMLElement {
+class ConnectivityControlElement extends HTMLElement {
 
     connectedCallback() {
         
@@ -2107,6 +2107,6 @@ class ConnectivityControl extends HTMLElement {
 }
 
 
-webutil.defineElement('bisweb-connectivitycontrolelement', ConnectivityControl);
-export default ConnectivityControl;
+webutil.defineElement('bisweb-connectivitycontrolelement', ConnectivityControlElement);
+export default ConnectivityControlElement;
 

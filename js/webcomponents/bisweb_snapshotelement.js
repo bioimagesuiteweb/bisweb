@@ -399,6 +399,9 @@ class SnapshotElement extends HTMLElement {
         let viewer = document.querySelector(viewerid);
         let layoutcontroller = document.querySelector(layoutid);
 
+        this.darkmode=layoutcontroller.usesDarkMode();
+        webutil.setDarkMode(this.darkmode);
+
         let simple=viewer.getAttribute('bis-simplemode');
         if (simple==="1" || simple==="true") {
             this.simplemode=true;
@@ -421,7 +424,7 @@ class SnapshotElement extends HTMLElement {
                                       'name' : 'Viewer Snapshot',
                                       'dual' : false,
                                       'permanent' : true,
-                                      'width' : '300px'
+                                      'width' : '300px',
                                   });
         panel.show();
 
@@ -444,7 +447,7 @@ class SnapshotElement extends HTMLElement {
         webutil.createlabel({
             name: "Scale:",
             type: "default",
-            css: { 'margin-left': '2px', 'background-color': bg },
+            css: { 'margin-left': '2px', 'background-color': bg, 'color' : webutil.getforegroundcolor() },
             parent: elem1
         });
 
@@ -509,10 +512,7 @@ class SnapshotElement extends HTMLElement {
 
         
 
-        console.log('SNAPSHOT ::: Requesting Scale=');
         userPreferences.safeGetItem('snapshotscale').then( (v) => {
-
-            console.log('SNAPSHOT ::: Received Scale=',v);
             if (v !== null) {
                 let v2 = parseFloat(v);
                 if (v2 !== Math.Nan) {

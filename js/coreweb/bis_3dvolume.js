@@ -359,7 +359,7 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
                 uniforms.u_renderthreshold.value = thr;
             }
 
-            console.log('Quality=',volinfo.quality);
+            //            console.log('Quality=',volinfo.quality);
             let step=1.0;
             if (volinfo.quality<2)
                 step=3.0;
@@ -391,7 +391,7 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
 
 
             // Change colormap
-            console.log('updating colormap',internal.isoverlay,internal.minintensity,internal.intensityscale);
+            //            console.log('updating colormap',internal.isoverlay,internal.minintensity,internal.intensityscale);
             if (internal.isoverlay) {
                 let dat=[0,0,0,0];
                 let idat=[0];

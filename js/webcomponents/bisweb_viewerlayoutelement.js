@@ -75,6 +75,7 @@ var detectWebGL = function() {
  *     bis-defaulttext : text to draw in. If length > 10 and first character is not space then sets "simple mode"
  *     bis-dualmode : if 1 then operates in dual mode
  *     bis-webgl   : if 2 then use webgl2 (if possible)
+ *     bis-bright   : if 1 then use bright colors
  */
 class ViewerLayoutElement extends HTMLElement {
 
@@ -90,6 +91,7 @@ class ViewerLayoutElement extends HTMLElement {
         this.fixed=0;
         this.noresize=0;
         this.webgl2=false;
+        this.darkmode=true;
     }
 
     getCSSLength(n='width') {
@@ -248,7 +250,10 @@ class ViewerLayoutElement extends HTMLElement {
     usesWEBGL2() {
         return this.webgl2;
     }
-    
+
+    usesDarkMode() {
+        return this.darkmode;
+    }
     
     connectedCallback() {
         this.viewertop=0;
@@ -266,7 +271,12 @@ class ViewerLayoutElement extends HTMLElement {
         if (webgl2===2) {
             this.webgl2=true;
         }
-        
+
+        let bright=parseInt(this.getAttribute('bis-bright') || 0);
+        if (bright)
+            this.darkmode=false;
+        webutil.setDarkMode(this.darkmode);
+    
         $(this).css({
             '-webkit-user-select': 'none',
             '-moz-user-select': 'none',

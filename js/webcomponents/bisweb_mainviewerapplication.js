@@ -34,6 +34,7 @@ const resliceImage = require('resliceImage');
 const BisWebLinearTransformation = require('bisweb_lineartransformation.js');
 const idb=require('idb-keyval');
 const localforage=require('localforage');
+const brightdatguicss=require('bisweb_datguibrightcss.js');
 
 const clipboard=localforage.createInstance({
     driver : localforage.INDEXEDDB,
@@ -1197,7 +1198,11 @@ class ViewerApplicationElement extends HTMLElement {
         }
     }
                                 
-
+    fixColors() {
+        if (!this.VIEWERS[0].getLayoutController().usesDarkMode())
+            brightdatguicss();    
+    }
+    
     // ---------------------------------------------------------------------------
     welcomeMessage(force=false) {
 
@@ -1496,6 +1501,7 @@ class ViewerApplicationElement extends HTMLElement {
             Promise.all(this.applicationInitializedPromiseList).then( () => {
                 webfileutil.initializeFromUserPrefs();
                 this.parseQueryParameters(painttoolid);
+                this.fixColors();
                 document.body.style.zoom =  1.0;
 
                 if (!istest) {
