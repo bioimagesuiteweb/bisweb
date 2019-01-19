@@ -149,6 +149,12 @@ let internal = {
         "./node_modules/jstree/dist/themes/default/style.css",
         "./web/biscommon.css"
     ],
+    dependcss2 : [ 
+        "./lib/css/bootstrap_bright_edited.css", 
+        "./lib/css/bootstrap-colorselector.css",
+        "./node_modules/jstree/dist/themes/default/style.css",
+        "./web/biscommon.css"
+    ], // Bright mode
     lintscripts : ['js/**/*.js','config/*.js','compiletools/*.js','*.js','web/**/*.js','test/**/*.js','fileserver/*.js'],
     toolarray : [ 'index'],
     htmlcounter : 0,
@@ -156,6 +162,7 @@ let internal = {
     jscounter   : 0,
     bislib     : 'bislib.js',
     biscss     : 'bislib.css',
+    biscss2     : 'bislib_bright.css', // Bright Mode
     indexlib   : 'index.js',
     serviceworkerlib : 'bisweb-sw.js',
     webworkerlib  : 'webworkermain.js',
@@ -371,10 +378,10 @@ gulp.task('buildtest', ((done) => {
     let maincss2    = './web/biswebdisplaytest.css';    
 
     Promise.all([
-        bis_gutil.createHTML('biswebtest',options.outdir,'bislib.js',internal.biscss),
+        bis_gutil.createHTML('biswebtest',options.outdir,'bislib.js',internal.biscss2),
         bis_gutil.createCSSCommon([maincss],'biswebtest.css',options.outdir),
-        bis_gutil.createHTML('biswebdisplaytest',options.outdir,'bislib.js',internal.biscss),
-        bis_gutil.createHTML('biswebdisplaytest2',options.outdir,'bislib.js',internal.biscss),
+        bis_gutil.createHTML('biswebdisplaytest',options.outdir,'bislib.js',internal.biscss2),
+        bis_gutil.createHTML('biswebdisplaytest2',options.outdir,'bislib.js',internal.biscss2),
         bis_gutil.createCSSCommon([maincss2],'biswebdisplaytest.css',options.outdir),
     ]).then( () => { done();});
     
@@ -416,6 +423,7 @@ gulp.task('commonfiles', (done) => {
         gulp.src('./web/biselectron.js').pipe(gulp.dest(options.outdir)),
         gulp.src('./web/'+name+'.json').pipe(rename({'basename' : 'package'})).pipe(gulp.dest(options.outdir)),
         gulp.src('./lib/css/bootstrap_dark_edited.css').pipe(gulp.dest(options.outdir)),
+        gulp.src('./lib/css/bootstrap_bright_edited.css').pipe(gulp.dest(options.outdir)),
         gulp.src('./lib/js/webcomponents-lite.js').pipe(gulp.dest(options.outdir)),
         gulp.src('./node_modules/jquery/dist/jquery.min.js').pipe(gulp.dest(options.outdir)),
         gulp.src('./node_modules/three/build/three.min.js').pipe(gulp.dest(options.outdir)),
@@ -442,6 +450,7 @@ gulp.task('tools', ( (cb) => {
     let promises=[];
     
     promises.push(bis_gutil.createCSSCommon(internal.dependcss,internal.biscss,options.outdir));
+    promises.push(bis_gutil.createCSSCommon(internal.dependcss2,internal.biscss2,options.outdir));
     
     for (let index=0;index<internal.toolarray.length;index++) {
         let toolname=internal.toolarray[index];

@@ -70,11 +70,22 @@ const Elements = {
     
 };
 
+
+
 let exportobj=require('bisweb_exportobject');
 exportobj.webutil=webutil;
 exportobj.webfileutil=webfileutil;
 exportobj.Elements=Elements;
+
+
+exportobj.setDarkMode=function(f) {
+    webutil.setDarkMode(f);
+};
+
+exportobj.setAutoColorMode=function() {
+    webutil.setAutoColorMode();
+};
+
+
 export default exportobj;
 
-
-console.log('Export = ',exportobj);

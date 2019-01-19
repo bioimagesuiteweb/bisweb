@@ -1,9 +1,46 @@
-module.exports=function() {
+const obj= {
 
 
-    // fixed rom data.gui source
-    const css=`
+    // -----------------------------------------------------------
+    // Common css stuff
+    // -----------------------------------------------------------
+    commoncss : function() {
 
+        return `
+.bisviewerwidget.hover {
+    border-style : solid;
+    box-shadow : inser 0 3px 4px #888;
+    color: #f00;
+    border-color : #f00;
+    background : #ff0000;
+}
+
+
+#viewerwidget {
+    top: 61px;
+    left: 0px;
+    width: 100vw;
+    height: calc(100%-93px);
+    position: relative;
+}
+
+@media (min-width: 768px) {
+    #bismenuparent {
+        height : 60px;
+        max-height : 60px;
+    }
+}
+
+`;
+    },
+
+    // -----------------------------------------------------------
+    // Override dat.gui css styles and some other changes
+    // -----------------------------------------------------------
+    brightmode : function() {
+
+        // fixed rom data.gui source
+        return `
 /** Main type */
  .dg {
 	 color: #111;
@@ -67,13 +104,15 @@ module.exports=function() {
 }
  .dg li.title {
 	 padding-left: 16px;
-	 background-color: #f0f0f0;
+    background: #d8d8d8 url(data:image/gif;base64,R0lGODlhBQAFAJEAAP////Pz8////////yH5BAEAAAIALAAAAAAFAAUAAAIIlI+hKgFxoCgAOw==) 6px 10px no-repeat;
 	 cursor: pointer;
-	 border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
  .dg .closed li.title {
-	background-color: #f0f0f0;
+    background: #d8d8d8 url(data:image/gif;base64,R0lGODlhBQAFAJEAAP////Pz8////////yH5BAEAAAIALAAAAAAFAAUAAAIIlI+hKgFxoCgAOw==) 6px 10px no-repeat;
+	 border-bottom: 1px solid rgba(128, 128, 128, 0.5);
+
 }
+
  .dg .cr.boolean {
 	 border-left: 3px solid #7f9878;
 }
@@ -148,14 +187,65 @@ body {
     margin-left : 5px;
 }
 
+.bisflip {
+    -moz-transform: scale(-1, 1);
+    -webkit-transform: scale(-1, 1);
+    -o-transform: scale(-1, 1);
+    -ms-transform: scale(-1, 1);
+    transform: scale(-1, 1);
+}`;                              
+    },
 
-`;
+    // ------------------------------- darmode -------------------
+    // Mostly defaults here so only minor changes
+    // -----------------------------------------------------------
+
+    darkmode : function() {
+
+        return `
+
+body {
+    background-color : #000000;
+}
 
 
-    let style = document.createElement('style');
-    
-    style.setAttribute('type', 'text/css');
-    style.innerHTML = css;
-    document.head.appendChild(style);
-    console.log('++++ dat.gui bright theme applied');
+.dg .c select {
+    background-color: #222222;
+}
+
+.dg .cr.number input[type=text] {
+    color : #dddddd;
+}
+
+
+.bistoggle {
+    background-color : rgb(72,72,72);
+    float : right;
+    border : 2px;
+    border-color : rgb(24,24,24);
+    border-style : solid;
+    color : rgb(255,255,255);
+    position : relative;
+    font-size : 17px;
+    margin-left : 5px;
+}
+
+
+.bisflip {
+    -moz-transform: scale(-1, 1);
+    -webkit-transform: scale(-1, 1);
+    -o-transform: scale(-1, 1);
+    -ms-transform: scale(-1, 1);
+    transform: scale(-1, 1);
+}`;
+
+    },
+};
+
+module.exports=function(darkmode) {
+
+    if (darkmode)
+        return obj.commoncss()+obj.darkmode();
+
+    return obj.commoncss()+obj.brightmode();
 };

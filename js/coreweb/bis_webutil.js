@@ -130,6 +130,7 @@ const bisweb_templates = `
 const $ = require('jquery');
 const bootbox=require('bootbox');
 const biswrap = require('libbiswasm_wrapper');
+const biswebcss=require('bisweb_css.js');
 const genericio= require('bis_genericio');
 
 const names = ["default", "primary", "success", "info", "warning", "danger", "link"];
@@ -150,6 +151,7 @@ const internal = {
     alerttop: 70,
     imagepath : null,
     background : "#000000",
+    background2 : "#202020",
     foreground : "#ffffff",
     activecolor : "#440000",
     passivecolor : "#303030",
@@ -158,8 +160,10 @@ const internal = {
     bright_passivecolor : "#efefef",
     bright_passivecolor2 : "#e7e7e7",
     bright_background : "#ffffff",
+    bright_background2 : "#dddddd",
     bright_foreground : "#111111",
     darkmode : true,
+    cssapplied : false,
 };
 
 
@@ -176,10 +180,46 @@ let deleteModal = (modal) => {
 const webutil = {
 
     /**
-     *
+     * apply css styles in string css
+     * @param{String} css - a multiplne css file as a string
+     */
+    applycss : function(css) {
+        let style = document.createElement('style');
+        style.setAttribute('type', 'text/css');
+        style.innerHTML = css;
+        document.head.appendChild(style);
+    },
+
+    
+    /** set color mode
+     * @param{Boolean} d - if true use dark mode (default) , else bright mode
      */
     setDarkMode : function(d=true) {
+
+        if (internal.cssapplied)
+            return;
+
+        console.log('.... setting css mode=',d);
         internal.darkmode = d;
+        this.applycss(biswebcss(d));
+        internal.cssapplied=true;
+    },
+
+    /** Auto detect color mode based on background color */
+    setAutoColorMode : function() {
+
+        if (internal.cssapplied) {
+            console.log('.... css already applied');
+            return;
+        }
+        
+        let style = getComputedStyle(document.body);
+        let bg=style['background-color'];
+        console.log('In Auto Color Mode',bg);
+        if (bg.indexOf('255')>0)
+            this.setDarkMode(false);
+        else
+            this.setDarkMode(true);
     },
 
     /** set alert top 
@@ -783,7 +823,6 @@ const webutil = {
         var parent = opts.parent || null;
         var size = opts.size || 1;
         var css = opts.css || { 'background-color': colors[0], 'color': colors[1] };
-        console.log('css =',css);
         var cssclass = opts.class || "dg c select";
         var callback = opts.callback || undefined;
 
@@ -1026,6 +1065,16 @@ const webutil = {
         if (internal.darkmode)
             return internal.background;
         return internal.bright_background;
+    },
+
+    /** get the background color(2)
+     * @alias WebUtil.getbackgroundcolor2
+     * @returns {string} - color
+     */
+    getbackgroundcolor2: function () {
+        if (internal.darkmode)
+            return internal.background2;
+        return internal.bright_background2;
     },
 
     // ------------------------------------------------------------------------

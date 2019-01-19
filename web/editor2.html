@@ -20,8 +20,7 @@
 <html lang="en">
 
 <head>
-    <title>BioImage Suite Connectivity Viewer</title>
-    <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0"/> -->
+    <title>BioImage Suite Editor</title>
     <meta name="viewport" content="width=device-width, user-scalable=no">
     <meta name="theme-color" content="rgb(28,45,64)">
     <meta name="description" content="Yale BioImage Suite Medical Image
@@ -35,12 +34,14 @@
 
     <link rel="icon" href="images/favicon.ico">
 
+
     <!-- begin webpack/gulp modifications -->
     <!-- external css files -->
     <!-- build:css -->
     <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_bright.css">
-    <link rel="stylesheet" type="text/css"href="../lib/css/bootstrap-colorselector.css">
+    <link rel="stylesheet" type="text/css"  href="../lib/css/bootstrap-colorselector.css">
     <link rel="stylesheet" type="text/css" href="biscommon.css">
+    <link rel="stylesheet" href="../node_modules/jstree/dist/themes/default/style.css">
     <!-- endbuild -->
 
     <!-- all javascript files -->
@@ -56,8 +57,9 @@
     <!-- end webpack/gulp modifications -->
 
     <!-- begin stay as is -->
-    <link rel="stylesheet" type="text/css" href="connviewer.css">
+    <link rel="stylesheet" type="text/css" href="editor.css">
     <!-- end of stay as is -->
+
 </head>
 <body oncontextmenu="return false;" ondragstart="return false;" ondrop="return false;">
 
@@ -70,41 +72,51 @@
       bis-dockwidth="300"
       bis-coreopen="false"
       bis-wholescreen="1"
-      bis-defaulttext="Load Data to Begin">
+      bis-fixed="1"
+      bis-defaulttext="">
     </bisweb-viewerlayoutelement>
-
-    <bisweb-colormapcontrollerelement id="viewer_cmap">
-    </bisweb-colormapcontrollerelement>
+    
+    <bisweb-colormapcontrollerelement id="viewer_cmap"></bisweb-colormapcontrollerelement>
     
     <bisweb-orthogonalviewer
        id="viewer"
-       bis-simplemode="true"
        bis-layoutwidgetid="#viewer_layout"
        bis-colormapeditorid="#viewer_cmap">
     </bisweb-orthogonalviewer>
       
     <bisweb-snapshotelement
-       bis-layoutwidgetid="#viewer_layout"
-       bis-dowhite="true"
-       bis-viewerid="#viewer">
+      bis-layoutwidgetid="#viewer_layout"
+      bis-dowhite="false"
+      bis-viewerid="#viewer">
     </bisweb-snapshotelement>
-    
-    <bisweb-connectivitycontrolelement
-       id="conncontrol"
-       bis-layoutwidgetid="#viewer_layout"
-       bis-viewerid="#viewer">
-    </bisweb-connectivitycontrolelement>
-    
-    <bisweb-connectivityapplication
-       bis-menubarid="#viewer_menubar"
-       bis-connectivitycontrolid="#conncontrol"
-       bis-viewerid="#viewer">
-    </bisweb-connectivityapplication>
-    
-  </div>
 
+    <bisweb-simplealgorithmcontrollerelement
+       id="algoelement"
+       bis-viewerid="#viewer">
+    </bisweb-simplealgorithmcontrollerelement>
+
+    <bisweb-painttoolelement
+       id="painttool"
+       bis-layoutwidgetid="#viewer_layout"
+       bis-viewerid="#viewer"
+      bis-algorithmcontrollerid="#algoelement">
+    </bisweb-painttoolelement>
+
+    <bisweb-landmarkcontrolelement
+      id="landmarkcontrol"
+      bis-layoutwidgetid="#viewer_layout"
+      bis-viewerid="#viewer">
+    </bisweb-landmarkcontrolelement>
+    
+    <bisweb-viewerapplication
+      bis-menubarid="#viewer_menubar"
+      bis-painttoolid="#painttool"
+      bis-landmarkcontrolid="#landmarkcontrol"
+      bis-viewerid="#viewer">
+    </bisweb-viewerapplication>
+
+  </div>
   
   <bisweb-botmenubar></bisweb-botmenubar>
-
 </body>
 </html>

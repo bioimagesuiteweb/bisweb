@@ -4,10 +4,12 @@ module.exports = {
     
     'internal' : [
         'bislib.css',
+        'bislib_bright.css',
         'bislib.js',
         'biswebaws.html',
         'bootstrap.min.js',
         'bootstrap_dark_edited.css',
+        'bootstrap_bright_edited.css',
         'binaries.html',
         'bootstrap.min.css',
         'connviewer.css',

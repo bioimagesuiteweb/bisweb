@@ -20,8 +20,7 @@
 <html lang="en">
 
 <head>
-    <title>BioImage Suite Connectivity Viewer</title>
-    <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0"/> -->
+    <title>BioImage Suite Dual Viewer</title>
     <meta name="viewport" content="width=device-width, user-scalable=no">
     <meta name="theme-color" content="rgb(28,45,64)">
     <meta name="description" content="Yale BioImage Suite Medical Image
@@ -39,7 +38,8 @@
     <!-- external css files -->
     <!-- build:css -->
     <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_bright.css">
-    <link rel="stylesheet" type="text/css"href="../lib/css/bootstrap-colorselector.css">
+    <link rel="stylesheet" type="text/css"  href="../lib/css/bootstrap-colorselector.css">
+    <link rel="stylesheet" href="../node_modules/jstree/dist/themes/default/style.css">
     <link rel="stylesheet" type="text/css" href="biscommon.css">
     <!-- endbuild -->
 
@@ -56,55 +56,89 @@
     <!-- end webpack/gulp modifications -->
 
     <!-- begin stay as is -->
-    <link rel="stylesheet" type="text/css" href="connviewer.css">
+    <link rel="stylesheet" type="text/css" href="dualviewer.css">
     <!-- end of stay as is -->
 </head>
 <body oncontextmenu="return false;" ondragstart="return false;" ondrop="return false;">
 
+
   <bisweb-topmenubar   id="viewer_menubar"></bisweb-topmenubar> 
 
   <div id="viewerwidget">
-
+    
     <bisweb-viewerlayoutelement
       id="viewer_layout"
       bis-dockwidth="300"
-      bis-coreopen="false"
-      bis-wholescreen="1"
-      bis-defaulttext="Load Data to Begin">
+      bis-coreopen="true"
+      bis-dualmode="1"
+      bis-defaulttext="">
     </bisweb-viewerlayoutelement>
-
-    <bisweb-colormapcontrollerelement id="viewer_cmap">
-    </bisweb-colormapcontrollerelement>
+    
+    <bisweb-colormapcontrollerelement id="viewer_cmap"></bisweb-colormapcontrollerelement>
     
     <bisweb-orthogonalviewer
        id="viewer"
-       bis-simplemode="true"
        bis-layoutwidgetid="#viewer_layout"
        bis-colormapeditorid="#viewer_cmap">
     </bisweb-orthogonalviewer>
-      
+    
+
+    <bisweb-colormapcontrollerelement id="viewer_cmap2"></bisweb-colormapcontrollerelement>
+    
+    <bisweb-orthogonalviewer
+       id="viewer2"
+       bis-layoutwidgetid="#viewer_layout"
+       bis-colormapeditorid="#viewer_cmap2"
+       bis-otherviewer="#viewer">
+    </bisweb-orthogonalviewer>
+
+
     <bisweb-snapshotelement
        bis-layoutwidgetid="#viewer_layout"
-       bis-dowhite="true"
-       bis-viewerid="#viewer">
+       bis-dowhite="false"
+       bis-viewerid="#viewer2">
     </bisweb-snapshotelement>
-    
-    <bisweb-connectivitycontrolelement
-       id="conncontrol"
-       bis-layoutwidgetid="#viewer_layout"
-       bis-viewerid="#viewer">
-    </bisweb-connectivitycontrolelement>
-    
-    <bisweb-connectivityapplication
-       bis-menubarid="#viewer_menubar"
-       bis-connectivitycontrolid="#conncontrol"
-       bis-viewerid="#viewer">
-    </bisweb-connectivityapplication>
-    
-  </div>
 
+    <bisweb-collectionelement
+       id="transformelement"
+       bis-elementtype="transform"
+       bis-layoutwidgetid="#viewer_layout">
+    </bisweb-collectionelement>
+
+
+    <bisweb-simplealgorithmcontrollerelement
+       id="algoelement"
+       bis-matrixelementid="#matrixelement"
+       bis-transformelementid="#transformelement"
+       bis-viewerid="#viewer"
+       bis-viewerid2="#viewer2">
+    </bisweb-simplealgorithmcontrollerelement>
+
+    <bisweb-modulemanager
+      id="modulemanager"
+      bis-mode="dual"
+      bis-layoutwidgetid="#viewer_layout"
+      bis-algorithmcontrollerid="#algoelement">
+    </bisweb-modulemanager>
+    
+
+    <bisweb-viewerapplication
+       id="viewer_application"
+       bis-menubarid="#viewer_menubar"
+       bis-modulemanagerid="#modulemanager"
+       bis-viewerid="#viewer"
+       bis-viewerid2="#viewer2">
+    </bisweb-viewerapplication>
+    
+    <bisweb-filetreepanel
+        bis-layoutwidgetid="#viewer_layout" 
+        bis-viewerid="#viewer"
+        bis-viewerid2="#viewer2"
+        bis-menubarid="#viewer_menubar"
+        bis-viewerapplicationid="#viewer_application">
+    </bisweb-filetreepanel>
+  </div>
   
   <bisweb-botmenubar></bisweb-botmenubar>
-
 </body>
 </html>

@@ -20,7 +20,7 @@
 <html lang="en">
 
   <head>
-    <title>BioImage Suite Display Test</title>
+    <title>BioImage Suite Overlay Viewer</title>
     <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0"/> -->
     <meta name="viewport" content="width=device-width, user-scalable=no">
     <meta name="theme-color" content="rgb(28,45,64)">
@@ -56,61 +56,12 @@
     <!-- end webpack/gulp modifications -->
 
     <!-- these stays as is, dropbox and main css file -->
-    <link rel="stylesheet" type="text/css" href="biswebdisplaytest.css">
+    <link rel="stylesheet" type="text/css" href="overlayviewer.css">
     <!-- end of stay as is -->
   </head>
   <body oncontextmenu="return false;" ondragstart="return false;" ondrop="return false;">
 
-    <bisweb-topmenubar   id="viewer_menubar"></bisweb-topmenubar>
-
-    <div id="toph4">
-      <div id="midh4">
-
-        <H4> BioImage Suite Web Display Regression Test Runner</H4>
-        <form class="form-inline" id="form">
-          <label for="first">First:</label>
-          <input type="number" step="1"  id="first" placeholder="0">
-          <label for="last">Last:</label>
-          <div id="githubdiv" class="checkbox abc-checkbox info"
-               style="display: inline-block; visibility: hidden">
-            <input id="usegithub" class="styled" type="checkbox">
-            <label for="usegithub" id="usegithublab">Use Github Data</label>
-          </div>
-
-          <input type="number" step="1"  id="last" placeholder="5">
-          <button class="btn-small btn-success bisbtn" type="submit" id="computesingle">Run
-          Single Test</button>
-          <button class="btn-small btn-warning bisbtn bismultipletests" id="compute">Run
-          Multiple Tests</button>
-        </form>
-      </div>
-
-    </div> 
-
-    <div id="baseresults">
-      <div  id="resultimages">
-        <table>
-          <tr>
-            <td><span id="goldtd">Gold</span></td>
-            <td>&nbsp;&nbsp;&nbsp; </td>
-            <td><span id="resulttd">Result</span></td>
-          </tr>
-          <tr>
-            <td class="bisimg"><img id="imggold" height="292" width="250px"><img></td>
-            <td id="imgmiddle"> </td>
-            <td class="bisimg"><img id="imgoutput" height="292" width="250px"><img></td>
-          </tr>
-        </table>
-        <div id="comparison">0.0</div>
-      </div>
-      <HR>
-      <div id="displayresults">
-        <pre>Results will appear here ...</pre>
-      </div>
-    </div>
-
-
-    
+    <bisweb-topmenubar   id="viewer_menubar"></bisweb-topmenubar> 
     <div role="tabpanel" id="bistabs">
       <ul class="nav nav-tabs" role="tablist" id="viewers">
 	<li role="presentation" class="active"><a href="#ortho" aria-controls="ortho" role="tab" data-toggle="tab">Orthogonal</a></li>
@@ -121,17 +72,17 @@
 	  <div id="viewerwidget1">
 	    <bisweb-viewerlayoutelement
 	      id="viewer_layout1"
-	      bis-dockwidth="200"
-	      bis-topheight="200"
+	      bis-dockwidth="300"
+	      bis-topheight="55"
 	      bis-coreopen="true"
-              bis-noresize="1"
-              bis-fixed="1"
+	      bis-wholescreen="1"
+          bis-fixed="1"
 	      bis-defaulttext="">
 	    </bisweb-viewerlayoutelement>
 
-            <bisweb-colormapcontrollerelement id="viewer_cmap1"></bisweb-colormapcontrollerelement>
-
-            <bisweb-orthogonalviewer
+        <bisweb-colormapcontrollerelement id="viewer_cmap1"></bisweb-colormapcontrollerelement>
+        
+        <bisweb-orthogonalviewer
 	      id="viewer1"
 	      bis-layoutwidgetid="#viewer_layout1"
 	      bis-colormapeditorid="#viewer_cmap1">
@@ -142,6 +93,18 @@
 	      bis-dowhite="false"
 	      bis-viewerid="#viewer1">
 	    </bisweb-snapshotelement>
+            <bisweb-atlastoolelement
+              id="atlastool"
+              bis-layoutwidgetid="#viewer_layout1"
+              bis-viewerid="#viewer1">
+            </bisweb-atlastoolelement>
+
+            <bisweb-blobanalyzerelement
+              id="blobanalyzer"
+              bis-layoutwidgetid="#viewer_layout1"
+              bis-viewerid="#viewer1"
+              bis-atlastoolid="#atlastool">
+            </bisweb-blobanalyzerelement>
 
 
 	  </div>
@@ -149,13 +112,14 @@
 	<div role="tabpanel" class="tab-pane" id="mosaic">
 	  <div id="viewerwidget2">
 
-            <bisweb-viewerlayoutelement
+        <bisweb-viewerlayoutelement
+          bis-bright="1"
 	      id="viewer_layout2"
-	      bis-dockwidth="200"
-	      bis-topheight="200"
+	      bis-dockwidth="300"
+	      bis-topheight="55"
 	      bis-coreopen="true"
               bis-fixed="1"
-              bis-noresize="1"
+	      bis-wholescreen="1"
 	      bis-defaulttext="">
 	    </bisweb-viewerlayoutelement>
 
@@ -175,35 +139,21 @@
 	  </div>
 	</div>
       </div>
-      
     </div>
     
     <bisweb-dualviewerapplication
-      id="maindual"
-      bis-external="1"
-      bis-extrastatesave="1"
       bis-tabset="#viewers"
       bis-mode="overlay",
-      bis-testingmode="1"
       bis-tab1="#ortho"
       bis-tab2="#mosaic"
       bis-menubarid="#viewer_menubar"
+      bis-atlastoolid="#atlastool"
+      bis-blobanalyzerid="#blobanalyzer"
       bis-viewerid="#viewer1"
       bis-viewerid2="#viewer2">
     </bisweb-dualviewerapplication>
 
     <bisweb-botmenubar></bisweb-botmenubar>
-
-
-    <bisweb-displayregressionelement
-      bis-testlist="overlay"
-      bis-application="#maindual">
-    </bisweb-displayregressionelement>
-
-    
-    <nav class="navbar navbar-default navbar-fixed-bottom">
-      <span id="results"> A summary of the test results will appear here. </span>
-    </nav>
     
   </body>
 </html>

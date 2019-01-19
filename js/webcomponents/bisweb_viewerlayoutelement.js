@@ -272,10 +272,10 @@ class ViewerLayoutElement extends HTMLElement {
             this.webgl2=true;
         }
 
-        let bright=parseInt(this.getAttribute('bis-bright') || 0);
-        if (bright)
-            this.darkmode=false;
-        webutil.setDarkMode(this.darkmode);
+        // fix css
+        //console.log("Calling setAutoColorMode");
+        webutil.setAutoColorMode();
+
     
         $(this).css({
             '-webkit-user-select': 'none',
@@ -310,8 +310,7 @@ class ViewerLayoutElement extends HTMLElement {
             coreopen=true;
 
         let webglversion=detectWebGL();
-        console.log('++++ WEBGL Version=',webglversion,this.webgl2);
-        
+
         if (webglversion<1) {
             webutil.createAlert('Your browser does not support WEBGL (even v1).<BR> We can not proceeed.<BR> Try using a modern web browser.', true);
         } else if (this.webgl2===true  && webglversion<2) {

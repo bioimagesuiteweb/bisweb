@@ -628,12 +628,14 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
     es.concat( 
         gulp.src([ `${indir}/build/web/bislib.js`,
                    `${indir}/build/web/bootstrap_dark_edited.css`,
+                   `${indir}/build/web/bootstrap_bright_edited.css`,
                    `${indir}/build/web/libbiswasm*wasm.js`,
                    `${indir}/build/web/webcomponents-lite.js`,
                    `${indir}/build/web/jquery.min.js`,
                    `${indir}/build/web/three.min.js`,
                    `${indir}/build/web/bootstrap.min.js`,
                    `${indir}/build/web/bislib.css`,
+                   `${indir}/build/web/bislib_bright.css`,
                    `${indir}/build/web/biswebtest.css`,
                    `${indir}/build/web/biswebtest.html`,
                    `${indir}/build/web/biswebdisplaytest.css`,
@@ -643,10 +645,10 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
                    `${indir}/js/coreweb/bis_dummy.js`,
                    `${indir}/build/web/bisdate.json`,
                  ]).pipe(gulp.dest(distDir)),
-        gulp.src([ 'node_modules/bootstrap/dist/css/*']).pipe(gulp.dest(distDir+'/css/')),
         gulp.src([ 'node_modules/bootstrap/dist/fonts/*']).pipe(gulp.dest(distDir+'/fonts/')),
         gulp.src([ 'lib/fonts/*']).pipe(gulp.dest(distDir+'/fonts/')),
         gulp.src([ 'web/images/favicon.ico' , 'web/images/bioimagesuite.png']).pipe(gulp.dest(distDir+'/images/')),
+        gulp.src([ 'web/images/mean_reg2mean.nii.gz', 'web/images/facemask_char.nii.gz']).pipe(gulp.dest(distDir+'/images/')),
         gulp.src([ `${indir}/web/bispreload.js`])
             .pipe(rename('electronpreload.js'))
             .pipe(gulp.dest(distDir+'/../electron/')),
@@ -656,7 +658,6 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
         gulp.src([ `${indir}/config/biswebbrowser_readme.md`])
             .pipe(rename('README.md'))
             .pipe(gulp.dest(odir)),
-        gulp.src(`${indir}/web/images/bisweb_newlogo.png`).pipe(gulp.dest(odir+"/logo"))
     ).on('end', () => { 
         console.log(getTime()+' .... Files copied in',distDir);
 

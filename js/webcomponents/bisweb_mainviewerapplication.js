@@ -34,7 +34,7 @@ const resliceImage = require('resliceImage');
 const BisWebLinearTransformation = require('bisweb_lineartransformation.js');
 const idb=require('idb-keyval');
 const localforage=require('localforage');
-const brightdatguicss=require('bisweb_datguibrightcss.js');
+
 
 const clipboard=localforage.createInstance({
     driver : localforage.INDEXEDDB,
@@ -1199,8 +1199,10 @@ class ViewerApplicationElement extends HTMLElement {
     }
                                 
     fixColors() {
-        if (!this.VIEWERS[0].getLayoutController().usesDarkMode())
-            brightdatguicss();    
+        // This is probably already taken care of
+        // by a viewerlayoutelement but if not ...
+        //console.log("Calling setAutoColorMode");
+        webutil.setAutoColorMode();
     }
     
     // ---------------------------------------------------------------------------
