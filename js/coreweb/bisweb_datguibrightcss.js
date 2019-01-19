@@ -8,7 +8,6 @@ module.exports=function() {
  .dg {
 	 color: #111;
 	 font: 11px 'Lucida Grande', sans-serif;
-	 text-shadow: 0 -1px 0 #111;
 	/** Auto place */
 	/* Controller row, 
  */
@@ -51,7 +50,6 @@ module.exports=function() {
 	 padding: 4px 4px 5px 4px;
 	 background: #3a4252;
 	 color: #fff;
-	 text-shadow: 0 1px 0 #252a34;
 	 box-shadow: 0 -1px 0 #252a34;
 	 cursor: pointer;
 }
@@ -129,12 +127,25 @@ module.exports=function() {
 
 body {
     background-color : #ffffff;
+    color : #111111;
 }
 
 
 .dg .c select {
     background-color: #dddddd;
-    color : #222222;
+    color : #111111;
+}
+
+.bistoggle {
+    background-color : #efefef;
+    float : right;
+    border : 2px;
+    border-color : rgb(211,211,211);
+    border-style : solid;
+    color : rgb(0,0,0);
+    position : relative;
+    font-size : 17px;
+    margin-left : 5px;
 }
 
 

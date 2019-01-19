@@ -437,20 +437,9 @@ class SnapshotElement extends HTMLElement {
         let elem1 = webutil.creatediv({ parent: inlineform });
         let elem2 = webutil.creatediv({ parent: inlineform });
 
-        let bg = webutil.getpassivecolor();
-        try {
-            bg = basegui.parent().parent().css('background-color');
-        } catch (e) {
-            console.log('bad color sticking to defaults', e);
-        }
-
-        webutil.createlabel({
-            name: "Scale:",
-            type: "default",
-            css: { 'margin-left': '2px', 'background-color': bg, 'color' : webutil.getforegroundcolor() },
-            parent: elem1
-        });
-
+        let c=$('<span>Scale:</span>');
+        elem1.append(c);
+        c.css({ 'margin-left': '2px', 'margin-right' : '5px', 'font-size': '11px'});
 
         self.select = webutil.createselect({
             parent: elem1,

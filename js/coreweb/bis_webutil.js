@@ -154,11 +154,11 @@ const internal = {
     activecolor : "#440000",
     passivecolor : "#303030",
     passivecolor2 : "#383838",
-    bright_activecolor : "#bbffff",
-    bright_passivecolor : "#cfcfcf",
-    bright_passivecolor2 : "#c7c7c7",
+    bright_activecolor : "#ffcfcf",
+    bright_passivecolor : "#efefef",
+    bright_passivecolor2 : "#e7e7e7",
     bright_background : "#ffffff",
-    bright_foreground : "#000000",
+    bright_foreground : "#111111",
     darkmode : true,
 };
 
@@ -639,7 +639,7 @@ const webutil = {
 
     /** 
      * function that creates a radio button set element using Jquery/Bootstrap (for styling)
-     * @alias WebUtil.createselect
+     * @alias WebUtil.createradiobuttonset
      * @param {object} opts - the options object.
      * @param {array} opts.values - an array with all the options to create (e.g. [ "Red", "Green", "Blue" ]
      * @param {array} opts.value - the current value e.g. "Red"
