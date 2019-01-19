@@ -332,6 +332,7 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
     }
 }
 
+module.exports=ConnectivityApplicationElement;
 webutil.defineElement('bisweb-connectivityapplication', ConnectivityApplicationElement);
 
 

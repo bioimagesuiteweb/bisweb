@@ -1272,5 +1272,6 @@ class DiffSpectElement extends DualViewerApplicationElement {
     }
 }
 
+module.exports=DiffSpectElement;
 webutil.defineElement('bisweb-diffspectelement', DiffSpectElement);
 

@@ -27,7 +27,7 @@ const webutil=require('bis_webutil');
  * A class to create functionality for drag-and-drop file loading in the current window
  */
 
-class BisDragAndDropElement extends HTMLElement {
+class BisWebDragAndDropElement extends HTMLElement {
 
     constructor() {
         super();
@@ -121,7 +121,7 @@ class BisDragAndDropElement extends HTMLElement {
                                 function(e) { self.fileSelectHandler(e);},
                                 false);
     }
-
 }
 
-webutil.defineElement('bisweb-draganddropelement', BisDragAndDropElement);
+module.exports=BisWebDragAndDropElement;
+webutil.defineElement('bisweb-draganddropelement', BisWebDragAndDropElement);

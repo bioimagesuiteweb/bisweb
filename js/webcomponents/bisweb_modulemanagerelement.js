@@ -253,4 +253,5 @@ class ModuleManagerElement extends HTMLElement {
     }
 }
 
+module.exports=ModuleManagerElement;
 webutil.defineElement('bisweb-modulemanager', ModuleManagerElement);

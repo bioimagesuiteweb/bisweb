@@ -660,4 +660,5 @@ class SnapshotElement extends HTMLElement {
     
 }
 
+module.exports=SnapshotElement;
 webutil.defineElement('bisweb-snapshotelement', SnapshotElement);

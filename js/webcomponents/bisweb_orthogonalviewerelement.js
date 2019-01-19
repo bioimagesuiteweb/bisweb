@@ -1726,6 +1726,6 @@ class OrthogonalViewerElement extends BaseViewerElement {
 }
 
 webutil.defineElement('bisweb-orthogonalviewer', OrthogonalViewerElement);
-
+export default OrthogonalViewerElement;
 
 

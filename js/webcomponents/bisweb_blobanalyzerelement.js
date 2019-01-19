@@ -390,6 +390,8 @@ than zero.</LI> </OL></div>`));
 
 }
 
+
+module.exports=BlobAnalyzerElement;
 webutil.defineElement('bisweb-blobanalyzerelement', BlobAnalyzerElement);
 
 

@@ -484,6 +484,7 @@ class CollectionElement extends HTMLElement {
         
 }
 
+module.exports=CollectionElement;
 webutil.defineElement('bisweb-collectionelement', CollectionElement);
 
 

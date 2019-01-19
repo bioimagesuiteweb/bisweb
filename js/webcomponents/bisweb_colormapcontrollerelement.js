@@ -904,6 +904,7 @@ class ColormapControllerElement extends HTMLElement {
 }
 
 
+module.exports=ColormapControllerElement;
 webutil.defineElement('bisweb-colormapcontrollerelement', ColormapControllerElement);
 
 

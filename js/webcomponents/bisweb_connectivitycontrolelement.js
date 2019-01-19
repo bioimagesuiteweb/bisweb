@@ -2106,6 +2106,7 @@ class ConnectivityControl extends HTMLElement {
 
 }
 
-webutil.defineElement('bisweb-connectivitycontrolelement', ConnectivityControl);
 
+webutil.defineElement('bisweb-connectivitycontrolelement', ConnectivityControl);
+export default ConnectivityControl;
 

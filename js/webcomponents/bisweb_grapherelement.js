@@ -666,6 +666,7 @@ class GrapherModule extends HTMLElement {
 
 }
 
+module.exports=GrapherModule;
 webutil.defineElement('bisweb-graphelement', GrapherModule);
 
 

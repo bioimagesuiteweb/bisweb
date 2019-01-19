@@ -707,7 +707,7 @@ class ViewerLayoutElement extends HTMLElement {
 
 }
 
-
+module.exports=ViewerLayoutElement;
 webutil.defineElement('bisweb-viewerlayoutelement', ViewerLayoutElement);
 
 

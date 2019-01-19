@@ -145,6 +145,7 @@ class ParavisionApplicationElement extends ViewerApplicationElement {
     }
 }
 
+module.exports=ParavisionApplicationElement;
 webutil.defineElement('bisweb-paravisionapplication', ParavisionApplicationElement);
 
 

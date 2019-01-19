@@ -157,7 +157,7 @@ class RegressionTestModule extends BaseModule {
                 console.log("Error=",e);
                 this.outputs['logoutput']=new BisWebTextObject(e);
                 reject(e);
-            })
+            });
         });
     }
 }
