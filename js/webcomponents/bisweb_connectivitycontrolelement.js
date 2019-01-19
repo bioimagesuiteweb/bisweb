@@ -846,7 +846,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     var cleanmatrixdata = function() {
         internal.conndata.cleanup();
         if (internal.keynodedlg!==null) 
-            internal.keynodedlg.cleanup();
+            internal.keynodedlg.getWidget().empty();
         internal.keynodedlg=null;
         internal.posFileInfo=[ "NONE", 0 ];
         internal.negFileInfo=[ "NONE", 0 ];
