@@ -283,8 +283,8 @@ class ViewerLayoutElement extends HTMLElement {
             '-ms-user-select': 'none',
             'user-select': 'none',
             '-webkit-app-region': 'no-drag',
-            'background-color': webutil.getpassivecolor()
         });
+        $(this).addClass('biswebpanel');
         
         // Initialize defaults
         // Query Properties
@@ -346,8 +346,8 @@ class ViewerLayoutElement extends HTMLElement {
                                                         'border-style' : 'solid',
                                                         'padding-left' : '2px',
                                                         'z-index' : '4',
-                                                        'background-color': webutil.getpassivecolor()
-                                                       }
+                                                       },
+                                                 classname : 'biswebdock'
                                                }),
             sidebar     :   webutil.creatediv({ parent : this.domElement,
                                                  css : {'position':'absolute',
@@ -362,8 +362,8 @@ class ViewerLayoutElement extends HTMLElement {
                                                         'border-color' : '#888888',
                                                         'border-style' : 'solid',
                                                         'width' : `${this.sidebarwidth}px`,
-                                                        'background-color':  webutil.getpassivecolor()
-                                                       }
+                                                       },
+                                                classname : 'biswebdock'
                                                }),
         };
         
@@ -464,17 +464,17 @@ class ViewerLayoutElement extends HTMLElement {
                                                       css : { 'width' : '99%',
                                                               'padding-bottom' : '10px',
                                                               'height' : '5px',
-                                                              'background-color': webutil.getpassivecolor2()
-                                                            }
+                                                            },
+                                                        classname : 'biswebpanel2'
                                                     });
         
         this.sidebarElements.widget=webutil.creatediv({ parent : this.elements.sidebar,
-                                                      css : {
-                                                          'width' : '99%',
-                                                          'height' : '5px',
-                                                          "overflow-y": "auto",
-                                                          'background-color': webutil.getpassivecolor()
-                                                      }
+                                                        css : {
+                                                            'width' : '99%',
+                                                            'height' : '5px',
+                                                            "overflow-y": "auto",
+                                                        },
+                                                        classname : 'biswebpanel'
                                                       });
         this.handleresize();
         webutil.runAfterAllLoaded( () => {

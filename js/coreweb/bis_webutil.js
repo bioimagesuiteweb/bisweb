@@ -512,12 +512,10 @@ const webutil = {
         var css = opts.css || null;
         var classname = opts.classname || null;
 
-        var bbar;
-        if (classname === null)
-            bbar = $("<div></div>");
-        else
-            bbar = $("<div class=\"" + classname + "\"></div>");
-
+        let bbar = $("<div></div>");
+        if (classname !== null)
+            bbar.addClass(classname);
+        
         if (css !== null)
             bbar.css(css);
         if (parent !== null)
@@ -999,7 +997,6 @@ const webutil = {
                   <ul class="dropdown-menu" class="label-info"  style="background-color : ${color}" aria-labelledby="${nid}">
                   </ul>
                   </div>`);
-        console.log(txt);
         parent.append(txt);
         return txt.find('.dropdown-menu');
     },

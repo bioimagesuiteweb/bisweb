@@ -333,3 +333,27 @@ input[type="radio"] .styled:checked + label::after {
     border : 1px solid #707070;
 }
 
+
+#viewerwidget {
+    top: 61px;
+    left: 0px;
+    width: 100vw;
+    height: calc(100%-93px);
+    position: relative;
+}
+
+.bisviewerwidget.hover {
+    border-style : solid;
+    box-shadow : inser 0 3px 4px #888;
+    color: #f00;
+    border-color : #f00;
+    background : #ff0000;
+}
+
+
+@media (min-width: 768px) {
+    #bismenuparent {
+        height : 60px;
+        max-height : 60px;
+    }
+}

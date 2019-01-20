@@ -1,37 +1,67 @@
+const darkcolors= {
+    "background" : "#000000",
+    "background2" : "#202020",
+    "foreground" : "#ffffff",
+    "activecolor" : "#440000",
+    "passivecolor0" : "#282828",
+    "passivecolor" : "#303030",
+    "passivecolor2" : "#383838",
+};
+
+const brightcolors = {
+    "activecolor" : "#ffcfcf",
+    "passivecolor0" : "#f8f8f8",
+    "passivecolor" : "#efefef",
+    "passivecolor2" : "#e7e7e7",
+    "background" : "#ffffff",
+    "background2" : "#dddddd",
+    "foreground" : "#111111",
+};
+
+
 const obj= {
 
 
     // -----------------------------------------------------------
     // Common css stuff
     // -----------------------------------------------------------
-    commoncss : function() {
+    commoncss : function(colors) {
 
-        return `
-.bisviewerwidget.hover {
-    border-style : solid;
-    box-shadow : inser 0 3px 4px #888;
-    color: #f00;
-    border-color : #f00;
-    background : #ff0000;
+        
+        let st=`
+
+.bisflip {
+    -moz-transform: scale(-1, 1);
+    -webkit-transform: scale(-1, 1);
+    -o-transform: scale(-1, 1);
+    -ms-transform: scale(-1, 1);
+    transform: scale(-1, 1);
 }
 
-
-#viewerwidget {
-    top: 61px;
-    left: 0px;
-    width: 100vw;
-    height: calc(100%-93px);
-    position: relative;
+.biswebdock {
+  background-color: ${colors.passivecolor0}
 }
 
-@media (min-width: 768px) {
-    #bismenuparent {
-        height : 60px;
-        max-height : 60px;
-    }
+.biswebpanel {
+  background-color: ${colors.passivecolor}
 }
+
+.biswebpanel2 {
+  background-color: ${colors.passivecolor2}
+}
+
+.biswebactive {
+  background-color: ${colors.activecolor}
+}
+
 
 `;
+
+        console.log(st);
+        return st;
+
+        
+
     },
 
     // -----------------------------------------------------------
@@ -187,13 +217,12 @@ body {
     margin-left : 5px;
 }
 
-.bisflip {
-    -moz-transform: scale(-1, 1);
-    -webkit-transform: scale(-1, 1);
-    -o-transform: scale(-1, 1);
-    -ms-transform: scale(-1, 1);
-    transform: scale(-1, 1);
-}`;                              
+         .bispassive {
+             
+
+     
+
+`;                              
     },
 
     // ------------------------------- darmode -------------------
@@ -229,23 +258,20 @@ body {
     font-size : 17px;
     margin-left : 5px;
 }
+`;
 
-
-.bisflip {
-    -moz-transform: scale(-1, 1);
-    -webkit-transform: scale(-1, 1);
-    -o-transform: scale(-1, 1);
-    -ms-transform: scale(-1, 1);
-    transform: scale(-1, 1);
-}`;
-
-    },
+    }
 };
 
+
+/**
+ * @param {Boolean} darkmode - if true set darkmode
+ */
+
 module.exports=function(darkmode) {
-
+    
     if (darkmode)
-        return obj.commoncss()+obj.darkmode();
+        return obj.commoncss(darkcolors)+obj.darkmode();
 
-    return obj.commoncss()+obj.brightmode();
+    return obj.commoncss(brightcolors)+obj.brightmode();
 };
