@@ -14,12 +14,12 @@ const brightcolors = {
     "activecolor" : "#ffcfcf",
     "background" : "#ffffff",
     "background2" : "#dddddd",
-    "background3" : "#afafaf",
+    "background3" : "#cecece",
     "background4" : "#bbbbbb",
     "foreground" : "#111111",
-    "passivecolor" : "#dfdfdf",
-    "passivecolor0" : "#e8e8e8",
-    "passivecolor2" : "#d7d7d7",
+    "passivecolor" : "#e8dfdf",
+    "passivecolor0" : "#f0e8e8",
+    "passivecolor2" : "#e0d7d7",
 };
 
 
@@ -83,6 +83,7 @@ const obj= {
 	 font: 11px "Helvetica Neue",Helvetica,Arial,sans-serif;
 }
 `;
+        console.log(st);
         return st;
 
         
@@ -94,8 +95,14 @@ const obj= {
     // -----------------------------------------------------------
     brightmode : function() {
 
+
         // fixed rom data.gui source
         return `
+
+body {
+    background-color : #cccccc;
+}
+
 /** Main type */
  .dg {
 	 color: #111;
@@ -160,7 +167,7 @@ const obj= {
 }
  .dg li.title {
 	 padding-left: 16px;
-    background: #d8d8d8 url(data:image/gif;base64,R0lGODlhBQAFAJEAAP////Pz8////////yH5BAEAAAIALAAAAAAFAAUAAAIIlI+hKgFxoCgAOw==) 6px 10px no-repeat;
+    background: #c8c8c8 url(data:image/gif;base64,R0lGODlhBQAFAJEAAP////Pz8////////yH5BAEAAAIALAAAAAAFAAUAAAIIlI+hKgFxoCgAOw==) 6px 10px no-repeat;
 	 cursor: pointer;
 }
  .dg .closed li.title {
@@ -218,11 +225,6 @@ const obj= {
 }
  .dg .c .slider:hover .slider-fg {
 	 background: #2fa1d6;
-}
-
-body {
-    background-color : #ffffff;
-    color : #111111;
 }
 
 
@@ -299,7 +301,7 @@ body {
 module.exports=function(darkmode) {
     
     if (darkmode)
-        return obj.darkmode()+obj.commoncss(darkcolors);
+        return obj.commoncss(darkcolors)+obj.darkmode();
 
-    return obj.brightmode()+obj.commoncss(brightcolors);
+    return obj.commoncss(brightcolors)+obj.brightmode();
 };

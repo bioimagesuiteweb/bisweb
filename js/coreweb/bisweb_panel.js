@@ -86,6 +86,7 @@ class BisWebPanel {
         
         this.widget=webutil.creatediv({
             parent : this.widgetbase,
+            classname : 'biswebpanel' 
         });
         
         this.header=null;
