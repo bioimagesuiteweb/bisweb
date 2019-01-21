@@ -1,20 +1,32 @@
 {
     "tools" : {	
-	    "exportexample" : {
-	        "title" : "Image Resampling Example",
-	        "url"   : "exportexample",
-            "nogpl" : true
-	    },
+	"exportexample" : {
+	    "title" : "Image Resampling Example",
+	    "url"   : "exportexample",
+            "nogpl" : true,
+            "bright" : true,
+            "noinno" : true
+	},
         "tfjsexample" : {
-	        "title" : "Tensorflow.js Example",
-	        "url"   : "tfjsexample",
-            "nogpl" : false
-	    },
+	    "title" : "Tensorflow.js Example",
+	    "url"   : "tfjsexample",
+            "bright" : true,
+            "nogpl" : false,
+            "noinno" : true
+	},
         "viewerexample" : {
-	        "title" : "Viewer Example",
-	        "url"   : "viewerexample",
-            "nogpl" : true
-	    }
+	    "title" : "Viewer Example",
+	    "url"   : "viewerexample",
+            "nogpl" : true,
+            "noinno" : true
+	},
+        "binaries" : {
+	    "title" : "Download Page",
+	    "url"   : "binaries",
+            "nogpl" : true,
+            "bright" : true,
+            "noinno" : true
+	}
     }
 }
 

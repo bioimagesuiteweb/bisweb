@@ -381,22 +381,36 @@ var inno=function(tools, version, indir , distdir ) {
     const template=require('gulp-template');
     let obj=tools;
     
-    var i_odir    = path.resolve(indir, distdir);
-    var i_icon    = path.resolve(indir, 'web/images/bioimagesuite.png.ico');
-    var i_license = path.resolve(indir, 'build/web/LICENSE');
-    var i_indir   = path.resolve(indir, distdir+'/BioImageSuiteWeb-win32-x64');
-    var i_date    = getDate();
+    let i_odir    = path.resolve(indir, distdir);
+    let i_icon    = path.resolve(indir, 'web/images/bioimagesuite.png.ico');
+    let i_license = path.resolve(indir, 'build/web/LICENSE');
+    let i_indir   = path.resolve(indir, distdir+'/BioImageSuiteWeb-win32-x64');
+    let i_date    = getDate();
 
 
     
-    var i_tools = "";
-    var keys=Object.keys(obj);
-    var max=keys.length;
-    for (var i=0;i<max;i++) {
-        var elem=obj[keys[i]];
-        var title=elem.title;
-        var url=elem.url;
-        i_tools+='Name: "{group}\\Tools\\'+title+'"; Filename: "{app}\\BioImageSuiteWeb.exe"; Parameters: "'+url+'"';
+    let i_tools = "";
+    let keys=Object.keys(obj);
+
+    let newkeys=[];
+    for (let i=0;i<keys.length;i++) {
+        let elem=obj[keys[i]];
+        let include=true;
+        if (elem.noinno) {
+            include=false;
+        }
+        if (include) {
+            newkeys.push(keys[i]);
+        }
+    }
+
+    
+    let max=newkeys.length;
+    for (let i=0;i<max;i++) {
+        let elem=obj[newkeys[i]];
+        let title=elem.title;
+            let url=elem.url;
+            i_tools+='Name: "{group}\\Tools\\'+title+'"; Filename: "{app}\\BioImageSuiteWeb.exe"; Parameters: "'+url+'"';
         if (i<(max-1))
             i_tools+='\n';
     }

@@ -1,8 +1,12 @@
 <head>
     <title>BioImage Suite Web Binaries</title>
     <meta name="viewport" content="width=device-width, user-scalable=no">
-    <link rel="icon" href="favicon.ico">
-    <link rel="stylesheet" type="text/css" href="bootstrap.min.css">
+    <link rel="icon" href="images/favicon.ico">
+    <!-- external css files -->
+    <!-- build:css -->
+    <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_bright.css">
+    <!-- endbuild -->
+
 </head>
 <body>
 
@@ -29,7 +33,7 @@
             support from the <a href="https://www.braininitiative.nih.gov/"  target="_blank">NIH Brain Initiative</a> under grant R24 MH114805 (Papademetris X. and Scheinost D. PIs).</p>
         </div>
         <div class="col-xs-6 col-md-6">
-          <iframe width="347" height="195" src="https://www.youtube.com/embed/CnbdaQ0O52k" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+          <iframe width="520" height="293" src="https://www.youtube.com/embed/CnbdaQ0O52k" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
         </div>
       </div>
       
@@ -82,18 +86,17 @@
           
         <p>(On Ms-Wndows omit the sudo part).</p><BR>
         
-        <p>To run any command line tool then simply type:</p>
+        <p>To run any command line tool then simply type:
+          <PRE> biswebnode modulename</PRE></p>
         
-        <PRE> biswebnode modulename</PRE>
+        <P>or        
+          <PRE> biswebnode</PRE>
         
-        <P>or</P>
+        to get a list of all the modules.</p>
         
-        <PRE> biswebnode</PRE>
-        
-        <p>to get a list of all the modules.</p>
-        
-        <p> To uninstalll type sudo npm remove -g biswebnode.</p>
-        
+        <p> To uninstalll type:
+          <PRE>sudo npm remove -g biswebnode</PRE>
+        </p>
         <HR>
         
         <p> You may obtain the source code for this application from
@@ -102,15 +105,23 @@
                                                                         target="_blank">the plugin repository</a>.</p> 
         </div>
     </div>
-    <HR>
-    <div class="container-fluid">
-      <div class="row">
-        <div class="col-xs-12 col-md-6">
 
+    <div class="container-fluid">
+
+      <HR>
+
+      <div class="row">
+        <div class="col-xs-12 col-sm-6 col-md-5"   style="background-color:rgb(192,128,128); height:90px;">
+          <img src="./images/bislogomed.png" height="60px" style="margin:10px" alt="oldlogo">
+        </div>
+        <div class="col-xs-12 col-sm-6 col-md-7" style="background-color:rgb(192,128,128); color:white; height:90px;">
+          <H4>
           If you are looking for the desktop C++/TCL 
-          of <a href="https://medicine.yale.edu/bioimaging/suite/">legacy version of
+          <a href="https://medicine.yale.edu/bioimaging/suite/">legacy version of
             Yale BioImage Suite</a> it may be
           downloaded from this <a href="https://medicine.yale.edu/bioimaging/suite/lands/">webpage</a>.
+          <BR> <BR>
+          </H4>
         </div>
       </div>
     </div>

@@ -455,17 +455,23 @@ gulp.task('tools', ( (cb) => {
     for (let index=0;index<internal.toolarray.length;index++) {
         let toolname=internal.toolarray[index];
         let gpl=true;
+        let maincss=internal.biscss;
         if (toolname!=='index') {
             if (internal.setup.tools[toolname].nogpl)
                 gpl=false;
+            if (internal.setup.tools[toolname].bright) {
+                maincss=internal.biscss2;
+            }
+            console.log(' Tool=',internal.setup.tools[toolname],maincss);
         }
+        
         console.log(getTime()+colors.green(' Building tool '+(index+1)+'/'+internal.toolarray.length+' : '+toolname));
         internal.jscounter+=1;
 
         let jsname =internal.bislib;
         if (index===0)
             jsname=internal.indexlib;
-        promises.push(bis_gutil.createHTML(toolname,options.outdir,jsname,internal.biscss,gpl));
+        promises.push(bis_gutil.createHTML(toolname,options.outdir,jsname,maincss,gpl));
 
         let customcss='./web/'+toolname+'.css';
         if (fs.existsSync(customcss))
