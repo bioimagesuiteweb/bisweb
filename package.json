@@ -7,7 +7,19 @@
     "scripts": {
         "test": "mocha test"
     },
-    "keywords" : [ "Neuroimaging", "Medical Image Analysis", "Medical Image Viewer", "fMRI", "nifti" , "visualization", "MRI", "image processing", "browser", "node" , "webassembly"],
+    "keywords": [
+        "Neuroimaging",
+        "Medical Image Analysis",
+        "Medical Image Viewer",
+        "fMRI",
+        "nifti",
+        "visualization",
+        "MRI",
+        "image processing",
+        "browser",
+        "node",
+        "webassembly"
+    ],
     "author": "Yale BioImageSuite Web Team",
     "license": "Apache",
     "dependencies": {
@@ -86,17 +98,17 @@
             "three": "0.100.0"
         },
         "webexternals": {
-            "jquery": "jQuery",          
-            "three": "THREE",            
-            "libbiswasm" : "./bis_dummy",
-            "@tensorflow/tfjs" : "./bis_dummy", 
-            "@tensorflow/tfjs-node" : "./bis_dummy",
-            "@tensorflow/tfjs-node-gpu" : "./bis_dummy"
+            "jquery": "jQuery",
+            "three": "THREE",
+            "libbiswasm": "./bis_dummy",
+            "@tensorflow/tfjs": "./bis_dummy",
+            "@tensorflow/tfjs-node": "./bis_dummy",
+            "@tensorflow/tfjs-node-gpu": "./bis_dummy"
         },
         "workerexternals": {
-            "@tensorflow/tfjs" : "console.log", 
-            "@tensorflow/tfjs-node" : "console.log", 
-            "@tensorflow/tfjs-node-gpu" : "console.log" 
+            "@tensorflow/tfjs": "console.log",
+            "@tensorflow/tfjs-node": "console.log",
+            "@tensorflow/tfjs-node-gpu": "console.log"
         }
     }
 }
