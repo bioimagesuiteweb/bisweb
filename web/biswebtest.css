@@ -1,5 +1,6 @@
 #form {
     margin-top: 10px;
+    margin-bottom: 10px;
 }
 
 .testhead {
@@ -8,7 +9,6 @@
 
 
 #first,#last, #testname, #testselect {
-/*    background-color: #183748;
     color : #ffffff;*/
     width : 40px;
     margin-left: 5px;
@@ -29,19 +29,13 @@
 
 }
 
-
-
-
 #top {
     left : 2vw;
     width : 98vw;
 }
 
 #help {
-    position : relative;
-    top : 60px;
-    height: calc(100%-30px);
-    padding : 5px;
+    padding : 1px;
 }
 
 #helptext {
@@ -52,10 +46,7 @@
 }
 
 #main {
-    height: calc(100%-30px);
-    position : relative;
     padding : 5px;
-    top : 50px;
     margin-left : 20px;
     margin-right : 20px;
     margin-bottom: 100px;
@@ -64,10 +55,9 @@
 
 
 #results {
-    margin-left : 5vw;
+    margin-left : 20px;
     font-family: monospace;
     font-size: 14px;
-    color : green
 }
 
 details {
@@ -89,7 +79,7 @@ pre {
 
 .failed {
     color : red
-o}
+}
 
 #computemem {
     margin-left: 50px;

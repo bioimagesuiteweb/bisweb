@@ -91,7 +91,6 @@ class ViewerLayoutElement extends HTMLElement {
         this.fixed=0;
         this.noresize=0;
         this.webgl2=false;
-        this.darkmode=true;
     }
 
     getCSSLength(n='width') {
@@ -251,10 +250,6 @@ class ViewerLayoutElement extends HTMLElement {
         return this.webgl2;
     }
 
-    usesDarkMode() {
-        return this.darkmode;
-    }
-    
     connectedCallback() {
         this.viewertop=0;
         this.viewerwidth=800;

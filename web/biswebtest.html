@@ -37,7 +37,7 @@
     <!-- begin webpack/gulp modifications -->
     <!-- external css files -->
     <!-- build:css -->
-    <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_dark.css">
+    <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_bright.css">
     <link rel="stylesheet" type="text/css" href="./biscommon.css">
     <!-- endbuild -->
 
@@ -75,8 +75,8 @@
 	</button>
 	<a href="./index.html" target="_blank"><img src="images/bioimagesuite.png" height="50px" id="bislogo" style="margin-top:5px; margin-right:20px"></a>
       </div>  <!-- Collect the nav links, forms, and other content for toggling -->
-      <div class="collapse navbar-collapse" id="bismenu">
-        <H4 id="toph4" class="biswebpanel2">BioImage Suite Web Regression Test Runner</H4>
+      <div class="collapse navbar-collapse" id="bismenu"class="biswebpanel2">
+        <H4 id="toph4" >BioImage Suite Web Regression Test Runner</H4>
         <div id="top">
           <form class="form-inline" id="form">
             <label for="weight">First:</label>
@@ -84,9 +84,9 @@
             <label for="height">Last:</label>
             <input type="number" step="1"  id="last" placeholder="5">
             <label for="">Testname:</label>
-            <select id="testselect">
-              <option value="None" style="color:#dddddd">List (but not run) tests</option>
-              <option value="All"  style="color:red">Test all modules</option>
+            <select id="testselect" class="biswebselect">
+              <option value="None">List (but not run) tests</option>
+              <option value="All"  style="color:red;">Test all modules</option>
             </select>
 
             <div id="githubdiv" class="checkbox abc-checkbox info"
@@ -112,53 +112,59 @@
         </div>
       </div>
   </nav>
-  
-  <div id="help"   class="biswebactive">
-    <div id="helptext">
-      <BR> <BR>
-      
-      <H4>Welcome to the BioImage Suite Web Regression Test Runner</H4>
-      
-      <p>Select the tests you would like to run from the controls above and then
-        press `Run Tests` (or Enter) to run the tests.</P>
-      
-      <details><summary><B> Additional Help</B></summary>
-        <p> The options above have the following functionality. </p>
-        
-        <UL>
-          <LI> "First" : This sets the first test (beginning at zero) to run. </LI>
-          <LI> "Last" : This sets the last test (beginning at zero) to run. </LI>
-          <LI> "Testname": This allows you to select an additional filter to only
-            run tests for a single module.</LI>
-          <OL>
-            <LI>If you select <EM>'List (but not run) tests'</EM>, then all tests in the range first:last will be listed but not
-              run.</LI>
-            <LI>If you select <EM>'Test all Modules'</EM>, then all tests in the range
-              first:last will be run.</LI>
-            <LI>If you select an individual module (e.g. blankImage) then only the
-              tests in the range first:last that are for the selected module will be
-              run.
-            </LI>
-          </OL>
-        </UL>
-      </details>
-      
-      <BR>
-      
-      <p id='cnote'>
-        <B>Note:</B> You may, before running tests, like to open
-        the JavaScript console under Developer Tools (on Chrome simply press
-        'Control-Shift-I' or 'Apple-Option-I') to observe the print outs from the algorithms.</p>
 
-      <BR> 
-      
+  <div style="margin-left:20px; margin-right:20px; position:relative;
+              margin-top:0px; top: 90px">
+
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-xs-10 biswebpanel" id="help">
+          <BR> <BR>
+          
+          <H4>Welcome to the BioImage Suite Web Regression Test Runner</H4>
+          
+          <p>Select the tests you would like to run from the controls above and then
+            press `Run Tests` (or Enter) to run the tests.</P>
+          
+          <details><summary><B> Additional Help</B></summary>
+            <p> The options above have the following functionality. </p>
+            
+            <UL>
+              <LI> "First" : This sets the first test (beginning at zero) to run. </LI>
+              <LI> "Last" : This sets the last test (beginning at zero) to run. </LI>
+              <LI> "Testname": This allows you to select an additional filter to only
+                run tests for a single module.</LI>
+              <OL>
+                <LI>If you select <EM>'List (but not run) tests'</EM>, then all tests in the range first:last will be listed but not
+                  run.</LI>
+                <LI>If you select <EM>'Test all Modules'</EM>, then all tests in the range
+                  first:last will be run.</LI>
+                <LI>If you select an individual module (e.g. blankImage) then only the
+                  tests in the range first:last that are for the selected module will be
+                  run.
+                </LI>
+                </OL>
+            </UL>
+          </details>
+          
+          <BR>
+          
+          <p id='cnote'>
+            <B>Note:</B> You may, before running tests, like to open
+            the JavaScript console under Developer Tools (on Chrome simply press
+            'Control-Shift-I' or 'Apple-Option-I') to observe the print outs from the algorithms.</p>
+          
+          <BR> 
+          
+        </div>
+      </div>
+      <HR>
+      <div class="row">
+        <div class="col-xs-12" id="main">
+        </div>
+      </div>
     </div>
   </div>
-  
-
-  <div id="main">
-  </div>
-
 
   <bisweb-regressiontestelement></bisweb-regressiontestelement>
     

@@ -399,9 +399,6 @@ class SnapshotElement extends HTMLElement {
         let viewer = document.querySelector(viewerid);
         let layoutcontroller = document.querySelector(layoutid);
 
-        this.darkmode=layoutcontroller.usesDarkMode();
-        webutil.setDarkMode(this.darkmode);
-
         let simple=viewer.getAttribute('bis-simplemode');
         if (simple==="1" || simple==="true") {
             this.simplemode=true;

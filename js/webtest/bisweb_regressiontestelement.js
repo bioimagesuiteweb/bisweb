@@ -800,7 +800,7 @@ var startFunction = (() => {
         $('#cnote').remove();
     }
 
-
+    webutil.setAutoColorMode();
     /*
     
     if (typeof window.BIS !=='undefined')  {
