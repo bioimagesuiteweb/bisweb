@@ -1204,6 +1204,33 @@ class ViewerApplicationElement extends HTMLElement {
         //console.log("Calling setAutoColorMode");
         webutil.setAutoColorMode();
     }
+
+
+    finalizeConnectedEvent() {
+        //signal other modules waiting for top bar to render
+        let mainViewerDoneEvent = new CustomEvent('mainViewerDone');
+        document.dispatchEvent(mainViewerDoneEvent);
+        
+        let istest = this.getAttribute('bis-testingmode') || false;
+        webutil.runAfterAllLoaded( () => {
+            Promise.all(this.applicationInitializedPromiseList).then( () => {
+                webfileutil.initializeFromUserPrefs();
+                const painttoolid = this.getAttribute('bis-painttoolid') || null;
+                this.parseQueryParameters(painttoolid);
+                this.fixColors();
+                document.body.style.zoom =  1.0;
+
+                if (!istest) {
+                    this.welcomeMessage(false);
+                } else {
+                    webutil.createAlert('In Test Mode',false);
+                }
+            }).catch( (e) => {
+                console.log('Error ',e);
+            });
+        });
+    }
+
     
     // ---------------------------------------------------------------------------
     welcomeMessage(force=false) {
@@ -1494,28 +1521,8 @@ class ViewerApplicationElement extends HTMLElement {
         if (this.num_independent_viewers > 1)
             self.VIEWERS[1].setDualViewerMode(0.5);
 
-        //signal other modules waiting for top bar to render
-        let mainViewerDoneEvent = new CustomEvent('mainViewerDone');
-        document.dispatchEvent(mainViewerDoneEvent);
-
-        let istest = this.getAttribute('bis-testingmode') || false;
-        webutil.runAfterAllLoaded( () => {
-            Promise.all(this.applicationInitializedPromiseList).then( () => {
-                webfileutil.initializeFromUserPrefs();
-                this.parseQueryParameters(painttoolid);
-                this.fixColors();
-                document.body.style.zoom =  1.0;
-
-                if (!istest) {
-                    this.welcomeMessage(false);
-                } else {
-                    webutil.createAlert('In Test Mode',false);
-                }
-            }).catch( (e) => {
-                console.log('Error ',e);
-            });
-        });
-
+        // Clean up at the end
+        this.finalizeConnectedEvent();
     }
 }
 

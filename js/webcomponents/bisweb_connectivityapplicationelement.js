@@ -322,6 +322,9 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         const imagepath=webutil.getWebPageImagePath();
         this.applicationInitializedPromiseList.push(loadatlas(`${imagepath}/gray_highres_groupncut150_right5_left1_emily_reord_new.nii.gz`));
 
+
+        this.finalizeConnectedEvent();
+        /*
         Promise.all(this.applicationInitializedPromiseList).then( () => {
             webfileutil.initializeFromUserPrefs();
             this.parseQueryParameters();
@@ -329,7 +332,7 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
             document.body.style.zoom =  1.0;
         }).catch( (e) => {
             console.log('Error ',e);
-        });
+        });*/
     }
 }
 

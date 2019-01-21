@@ -83,7 +83,6 @@ const obj= {
 	 font: 11px "Helvetica Neue",Helvetica,Arial,sans-serif;
 }
 `;
-        console.log(st);
         return st;
 
         

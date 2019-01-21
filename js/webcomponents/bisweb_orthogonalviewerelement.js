@@ -1647,9 +1647,10 @@ class OrthogonalViewerElement extends BaseViewerElement {
         else
             this.volumeRendering=false;
 
-        if (!this.internal.layoutcontroller.usesWEBGL2())
-            this.volumeRendering=false;
-                    
+        webutil.runAfterAllLoaded( () => {
+            if (!this.internal.layoutcontroller.usesWEBGL2())
+                this.volumeRendering=false;
+        });
 
     }
 
