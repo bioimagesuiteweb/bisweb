@@ -10,7 +10,6 @@
     width: 805px;
     margin-left: 0px;
     min-height: 50px;
-    background-color : #cccccc;
     padding : 5px;
 
                            
@@ -97,7 +96,6 @@
     margin-top: 0px;
     top: 65px;
     left : 820px;
-    background-color : #dddddd;
     width: calc(100% - 830px);
     height: calc(100% - 140px);
 }
@@ -107,7 +105,6 @@
     margin-top: 0px;
     top: 65px;
     left : 930px;
-    background-color : #888888;
     width: calc(100% - 930px);
     height: calc(100% - 140px);
 }
@@ -122,8 +119,7 @@
     overflow-y : auto;
     font-size : 14px;
     padding : 2 2 2 2;
-    background-color: #ffdddd;
-}
+c}
 
 #resultimages {
     position: relative;
@@ -150,7 +146,7 @@
     height: 339px;
     min-width : 127px;
     border-style: ridge;
-    border-color: #cccccc;
+    border-color: #888888;
     border-radius: 1px;
 }
 

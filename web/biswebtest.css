@@ -38,18 +38,24 @@
 }
 
 #help {
-    background-color : #eeeeee;
+    position : relative;
+    top : 60px;
+    height: calc(100%-30px);
+    padding : 5px;
 }
 
 #helptext {
-    margin-top: 40px;
+    margin-top: 2px;
     margin-left : 20px;
     margin-right : 20px;
     margin-bottom: 10px;
 }
 
 #main {
-    margin-top: 10px;
+    height: calc(100%-30px);
+    position : relative;
+    padding : 5px;
+    top : 50px;
     margin-left : 20px;
     margin-right : 20px;
     margin-bottom: 100px;
@@ -58,7 +64,6 @@
 
 
 #results {
-    margin-top : 15px;
     margin-left : 5vw;
     font-family: monospace;
     font-size: 14px;
@@ -84,7 +89,7 @@ pre {
 
 .failed {
     color : red
-}
+o}
 
 #computemem {
     margin-left: 50px;

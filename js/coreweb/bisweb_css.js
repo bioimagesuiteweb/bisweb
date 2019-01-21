@@ -83,7 +83,6 @@ const obj= {
 	 font: 11px "Helvetica Neue",Helvetica,Arial,sans-serif;
 }
 `;
-        console.log(st);
         return st;
 
         
@@ -260,11 +259,6 @@ body {
     darkmode : function() {
 
         return `
-
-body {
-    background-color : #000000;
-}
-
 
 .dg .c select {
     background-color: #222222;

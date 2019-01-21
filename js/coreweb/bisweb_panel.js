@@ -82,11 +82,12 @@ class BisWebPanel {
                 'margin-left' : '2px',
                 'margin-right' : '2px',
                 'margin-bottom' : '5px',
-            }, classname : 'biswebpanel' });
+            },
+            classname : 'biswebpanel' 
+        });
         
         this.widget=webutil.creatediv({
             parent : this.widgetbase,
-            classname : 'biswebpanel' 
         });
         
         this.header=null;
