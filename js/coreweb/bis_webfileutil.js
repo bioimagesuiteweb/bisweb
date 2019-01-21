@@ -577,13 +577,17 @@ const webfileutils = {
      * @alias WebFileUtil.createMenuItem
      * @returns {JQueryElement} - The element created by the function.
      */
-    createFileMenuItem: function (parent, name="", callback=null, fileopts={},css='') {
+    createFileMenuItem: function (parent, name="", callback=null, fileopts={},css='',classname='') {
 
         let style='';
         if (css.length>1)
             style=` style="${css}"`;
-        
-        let menuitem = $(`<li><a href="#" ${style}>${name}</a></li>`);
+
+        let menuitem = $(`<li></li>`);
+        let linkitem=$(`<a href="#" ${style}>${name}</a></li>`);
+        if (classname.length>0)
+            linkitem.addClass(classname);
+        menuitem.append(linkitem);
         parent.append(menuitem);
         webutil.disableDrag(menuitem,true);
         this.attachFileCallback(menuitem,callback,fileopts);
@@ -595,10 +599,12 @@ const webfileutils = {
      * Creates a file menu item with standard BioImageSuite styling. 
      * See parameters for createFileMenuItem.
      */
-    createDropdownFileItem : function (dropdown,name,callback,fileopts) {
+    createDropdownFileItem : function (dropdown,name,callback,fileopts,classname='') {
+        /*return this.createFileMenuItem(dropdown,name,callback,fileopts,
+-                                       "background-color: #303030; color: #ffffff; font-size:13px; margin-bottom: 2px");*/
 
-        return this.createFileMenuItem(dropdown,name,callback,fileopts,
-                                       "background-color: #303030; color: #ffffff; font-size:13px; margin-bottom: 2px");
+        classname= classname || 'biswebdropdownitem';
+        return this.createFileMenuItem(dropdown,name,callback,fileopts,'',classname);
     },
 
     /**

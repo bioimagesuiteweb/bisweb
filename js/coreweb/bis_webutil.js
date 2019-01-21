@@ -150,18 +150,6 @@ const internal = {
     alerttimeout: 8000,
     alerttop: 70,
     imagepath : null,
-    background : "#000000",
-    background2 : "#202020",
-    foreground : "#ffffff",
-    activecolor : "#440000",
-    passivecolor : "#303030",
-    passivecolor2 : "#383838",
-    bright_activecolor : "#ffcfcf",
-    bright_passivecolor : "#efefef",
-    bright_passivecolor2 : "#e7e7e7",
-    bright_background : "#ffffff",
-    bright_background2 : "#dddddd",
-    bright_foreground : "#111111",
     darkmode : true,
     cssapplied : false,
 };
@@ -601,79 +589,6 @@ const webutil = {
     },
 
 
-    /** 
-     * function that creates a checkbox using Jquery/Bootstrap (for styling)
-     * @alias WebUtil.createtogglecheckbox
-     * @param {object} opts - the options object.
-     * @param {string} opts.name - the name (text) of the element
-     * @param {string} opts.parent - the parent element. If specified the new button will be appended to it.
-     * @param {object} opts.css - if specified set the value of the `bis' attribute to this
-     * @param {string} opts.type - type of button (for bootstrap styling). One of "default", "primary", "success", "info", "warning", "danger", "link". This is used for the label that is part of the checkbox.
-     * @param {string} opts.tooltip - string to use for tooltip
-     * @param {string} opts.position - position of tooltip (one of top,bottom,left,right)
-     * @param {function} opts.callback - if specified adds this is a callback ``on change''. The event (e) is passed as argument.
-     * @returns {JQueryElement} 
-     */
-    createtogglecheckbox: function (opts) {
-        opts = opts || {};
-        var checked = opts.checked || false;
-        var callback = opts.callback || undefined;
-
-        if (callback !== undefined) {
-            if (typeof callback !== "function")
-                throw (new Error(callback + ' is not a function in creating select ' + names));
-        } else
-            throw (new Error(callback + ' is not a function in creating select ' + names));
-
-        let passive = "#bbbbbb", active = this.getforegroundcolor();
-        if (!internal.darkmode) {
-            passive="#33333";
-        }
-        
-        var btn;
-        var enablecallback = false;
-        var mycallback = function () {
-            var state = btn.data('state');
-            if (enablecallback) {
-                state = !state;
-                btn.data('state', state);
-            }
-            btn.blur();
-
-            if (!state) {
-                btn.css({
-                    'border-radius': '0px',
-                    'color': passive,
-                });
-
-                btn.removeClass('btn-success');
-                btn.addClass('btn-default');
-            } else {
-                btn.css({
-                    'border-radius': '20px',
-                    'color': active,
-                });
-                btn.addClass('btn-success');
-                btn.removeClass('btn-default');
-            }
-
-            if (enablecallback)
-                callback(state);
-        };
-        if (checked)
-            opts.type = "success";
-        else
-            opts.type = "default";
-
-
-        opts.callback = mycallback;
-        btn = this.createbutton(opts);
-        btn.css({ 'outline': '0px' });
-        btn.data('state', checked);
-        mycallback();
-        enablecallback = true;
-        return btn;
-    },
 
     /** 
      * function that creates a radio button set element using Jquery/Bootstrap (for styling)
@@ -809,21 +724,16 @@ const webutil = {
      */
     createselect: function (opts) {
 
-        let colors= [ "#505050", this.getforegroundcolor() ];
-        if (!internal.darkmode) {
-            colors[0]= "#afafaf";
-        }
-
-        
         opts = opts || {};
         var names = opts.values || ["none"];
         var index = opts.index || -1;
         var parent = opts.parent || null;
         var size = opts.size || 1;
-        var css = opts.css || { 'background-color': colors[0], 'color': colors[1] };
+        var css = opts.css || { };
         var cssclass = opts.class || "dg c select";
         var callback = opts.callback || undefined;
-
+        cssclass +=" biswebselect";
+        
         var select = $("<select class=\"" + cssclass + "\" + size=\"" + size + "\"></select>");
         var np = names.length;
         for (var i = 0; i < np; i++) {
@@ -977,24 +887,22 @@ const webutil = {
      * @param {function} callback - the callback for item
      * @param {string} css - extra css attributes (as string)
      */
-    createDropdownItem : function (dropdown,name,callback,css='') {
+    createDropdownItem : function (dropdown,name,callback,classname='') {
+        classname= classname || 'biswebdropdownitem';
+        //        let colors = [ this.getactivecolor(),this.getforegroundcolor() ];
+        //css="background-color: "+colors[0]+"; color: "+colors[1]+"; font-size:13px; margin-bottom: 2px";
 
-        let colors = [ this.getactivecolor(),this.getforegroundcolor() ];
-        
-        if (css==='')
-            css="background-color: "+colors[0]+"; color: "+colors[1]+"; font-size:13px; margin-bottom: 2px";
-        return this.createMenuItem(dropdown,name,callback,css);
+        return this.createMenuItem(dropdown,name,callback,'',classname);
     },
 
     createDropdownMenu : function (name,parent) {
 
-        let color=this.getpassivecolor();
         let nid=this.getuniqueid();
         
         let txt=$(`<div class="dropdown" style="display: inline-block">
                   <button id="${nid}" type="button" class="btn btn-default btn-sm" style="margin-left: 2px" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                   ${name} <span class="caret"></span></button>
-                  <ul class="dropdown-menu" class="label-info"  style="background-color : ${color}" aria-labelledby="${nid}">
+                  <ul class="dropdown-menu" class="label-info"  style="biswebpanel" aria-labelledby="${nid}">
                   </ul>
                   </div>`);
         parent.append(txt);
@@ -1011,67 +919,6 @@ const webutil = {
      */
     removedatclose: function (folder) {
         $(folder.domElement).find(".close-button").remove();
-    },
-
-    /** get an active color (e.g. red background when control is live)
-     * @alias WebUtil.getactivecolor
-     * @returns {string} - color
-     */
-    getactivecolor: function () {
-        if (internal.darkmode)
-            return internal.activecolor;
-        return internal.bright_activecolor;
-    },
-
-    /** get a passive color (e.g. gray background when control is inactive)
-     * @alias WebUtil.getpassivecolor
-     * @returns {string} - color
-     */
-    getpassivecolor: function () {
-        if (internal.darkmode)
-            return internal.passivecolor;
-        return internal.bright_passivecolor;
-    },
-
-    /** get a passive color (e.g. darker gray background when control is inactive)
-     * @alias WebUtil.getpassivecolor2
-     * @param{Boolean} dark -if true dark mode
-     * @returns {string} - color
-     */
-    getpassivecolor2: function () {
-        if (internal.darkmode)
-            return internal.passivecolor2;
-        return internal.bright_passivecolor2;
-    },
-
-    /** get the foreground color 
-     * @alias WebUtil.getforegroundcolor
-     * @returns {string} - color
-     */
-    getforegroundcolor: function () {
-        if (internal.darkmode)
-            return internal.foreground;
-        return internal.bright_foreground;
-    },
-
-    /** get the background color
-     * @alias WebUtil.getbackgroundcolor
-     * @returns {string} - color
-     */
-    getbackgroundcolor: function () {
-        if (internal.darkmode)
-            return internal.background;
-        return internal.bright_background;
-    },
-
-    /** get the background color(2)
-     * @alias WebUtil.getbackgroundcolor2
-     * @returns {string} - color
-     */
-    getbackgroundcolor2: function () {
-        if (internal.darkmode)
-            return internal.background2;
-        return internal.bright_background2;
     },
 
     // ------------------------------------------------------------------------
@@ -1109,11 +956,12 @@ const webutil = {
      * @param {string} name - the menu name (if '') adds separator
      * @param {function} callback - the callback for item
      * @param {string} css - styling info for link element
+     * @param {string} classname - extra class info for link element
      * activated by pressing this menu
      * @alias WebUtil.createMenuItem
      * @returns {JQueryElement} -- the  element
      */
-    createMenuItem: function (parent, name, callback,css='') {
+    createMenuItem: function (parent, name, callback,css='',classname='') {
 
         var menuitem;
         name = name || '';
@@ -1129,8 +977,12 @@ const webutil = {
         if (css.length>1)
             style=` style="${css}"`;
         
-        menuitem = $(`<li><a href="#" ${style}>${name}</a></li>`);
+        menuitem = $(`<li></li>`);
+        let linkitem=$(`<a href="#" ${style}>${name}</a></li>`);
+        menuitem.append(linkitem);
         parent.append(menuitem);
+        if (classname.length>0)
+            linkitem.addClass(classname);
 
         this.disableDrag(menuitem,true);
 
@@ -1537,6 +1389,8 @@ if (typeof (document) !== "undefined") {
         bisdialog: newDiv.querySelector('#bisdialog'),
         bisscrolltable: newDiv.querySelector('#bisscrolltable'),
     };
+
+
 }
 
 module.exports = webutil;

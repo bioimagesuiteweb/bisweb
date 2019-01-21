@@ -322,6 +322,7 @@ class SimpleFileDialog {
             
             let filter_label=$("<span>Filter Files: </span>");
             filter_label.css({'padding':'10px'});
+            filter_label.addClass("dg c select");
             filterbar.append(filter_label);
             let sel=webutil.createselect({
                 parent : filterbar,
@@ -436,9 +437,10 @@ class SimpleFileDialog {
         tmain.css({ 'max-height' : '300px',
                     'height'     : '300px',
                     'max-width'  : '600px',
-                    "color" : "#0ce3ac",
-                    "background-color": "#444444"
-                     });
+
+                  });
+
+        tmain.addClass('biswebfiledialog');
 
 
         thead.empty();
@@ -624,10 +626,8 @@ class SimpleFileDialog {
                           'height'     : '300px',
                           'max-width'  : '250px',
                           "overflow-y": "auto",
-                          "overflow-x": "auto",
-                          "color" : "#0ce3ac",
-                          "background-color": "#444444"
-                    });
+                          "overflow-x": "auto"});
+        favoriteBar.addClass('biswebfiledialog');
 
         let favoriteButton = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-star-empty'></span>Bookmark</button>`);
         favoriteButtons.append(favoriteButton);
@@ -757,116 +757,5 @@ class SimpleFileDialog {
 
 
 }
-
- /**
-     * Creates the visual representation of the files specified by list. Called from createFileList (see notes there for format of file entries).
-     * Uses jstree to render the list.
-     * 
-     * Sorts contents before display so that folders are shown first.
-     * @param {Array} list - An array of file entries. 
-     * @param {String} lastfilename - the last selected filename
-     * @param {String} rootDirectory - "the drive" we are looking in
-
-     */
-   /* updateTreeOld(list,lastfilename=null,rootDirectory=null) {
-
-        this.previousList=JSON.parse(JSON.stringify(list));
-        
-        let fileList = this.container.find('.bisweb-file-list');
-        fileList.remove();
-        fileList = $(`<div class='bisweb-file-list'></div>`);
-
-
-        let fileDisplay = this.container.find('.bisweb-file-display');
-        fileList.empty();
-        fileList.css({ 'max-height' : '300px',
-                       'height'     : '300px',
-                       'max-width'  : '600px',
-                       "overflow-y": "auto",
-                       "overflow-x": "auto",
-                       "color" : "#0ce3ac",
-                       "background-color": "#444444"
-                     });
-
-
-        if (this.activeFilterList.length>0) {
-            let len=list.length-1;
-            for (let i = len; i >=0; i=i-1) {
-                if (list[i].type !== 'directory') {
-                    let ok=this.checkFilenameForFilter(list[i].text,this.activeFilterList);
-                    if (!ok) {
-                        list.splice(i,1);
-                    }
-                }
-            }
-        }
-        
-        //sort folders ahead of files
-        list.sort( (a, b) => {
-
-            let isadir=(a.type === 'directory');
-            let isbdir=(b.type === 'directory');
-
-            if (isadir && !isbdir)
-                return -1;
-            if (isbdir && !isadir)
-                return 1;
-
-            let at=a.text.toLowerCase();
-            let bt=b.text.toLowerCase();
-            
-            if (at>bt)
-                return 1;
-            if (at<bt)
-                return -1;
-            return 0;
-        });
-
-        
-        fileList.jstree({
-            'core': {
-                'data': list,
-                'dblclick_toggle': true
-            },
-            'types': {
-                'default': {
-                    'icon': 'glyphicon glyphicon-file'
-                },
-                'file': {
-                    'icon': 'glyphicon glyphicon-file'
-                },
-                'root': {
-                    'icon': 'glyphicon glyphicon-home'
-                },
-                'directory': {
-                    'icon': 'glyphicon glyphicon-folder-close'
-                },
-                'picture': {
-                    'icon': 'glyphicon glyphicon-picture'
-                },
-            },
-            'plugins': ["types"]
-        });
-
-        //determine based on the type of the node what should happen when the user clicks on it
-        $(fileList).on('select_node.jstree', (event, data) => {
-
-            let fname=data.node.original.path;
-            if (data.node.type === 'file' || data.node.type ==='picture') {
-
-                let ind=fname.lastIndexOf(this.separator);
-                let dname=fname;
-                if (ind>0)
-                    dname=fname.substr(ind+1,fname.length);
-                this.filenameEntry.val(dname);
-            } else if ( data.node.type=== 'directory') {
-                this.changeDirectory(fname);
-            }
-        });
-
-
-        fileDisplay.append(fileList);
-        this.updateFileNavbar(lastfilename,rootDirectory);
-    } */
 
 module.exports = SimpleFileDialog;

@@ -1,21 +1,25 @@
 const darkcolors= {
+    "activecolor" : "#440000",
     "background" : "#000000",
     "background2" : "#202020",
+    "background3" : "#505050",
+    "background4" : "#444444",
     "foreground" : "#ffffff",
-    "activecolor" : "#440000",
-    "passivecolor0" : "#282828",
     "passivecolor" : "#303030",
+    "passivecolor0" : "#282828",
     "passivecolor2" : "#383838",
 };
 
 const brightcolors = {
     "activecolor" : "#ffcfcf",
-    "passivecolor0" : "#f8f8f8",
-    "passivecolor" : "#efefef",
-    "passivecolor2" : "#e7e7e7",
     "background" : "#ffffff",
     "background2" : "#dddddd",
+    "background3" : "#afafaf",
+    "background4" : "#bbbbbb",
     "foreground" : "#111111",
+    "passivecolor" : "#dfdfdf",
+    "passivecolor0" : "#e8e8e8",
+    "passivecolor2" : "#d7d7d7",
 };
 
 
@@ -39,24 +43,46 @@ const obj= {
 }
 
 .biswebdock {
-  background-color: ${colors.passivecolor0}
+  background-color: ${colors.passivecolor0};
 }
 
 .biswebpanel {
-  background-color: ${colors.passivecolor}
+  background-color: ${colors.passivecolor};
 }
 
 .biswebpanel2 {
-  background-color: ${colors.passivecolor2}
+  background-color: ${colors.passivecolor2};
 }
 
 .biswebactive {
-  background-color: ${colors.activecolor}
+  background-color: ${colors.activecolor};
 }
 
+.biswebelement {
+  color : ${colors.foreground};
+  background-color : ${colors.background2};
+  font-size:11px;
+}
 
+.biswebselect { 
+  background-color : ${colors.background3};
+  color : ${colors.foreground};
+}
+
+.biswebdropdownitem {
+  font-size: 13px; 
+  margin-bottom: 2px;
+}
+
+.biswebfiledialog {
+  color : ${colors.foreground};
+  background-color": ${colors.background4};
+}
+
+.dg {
+	 font: 11px "Helvetica Neue",Helvetica,Arial,sans-serif;
+}
 `;
-
         console.log(st);
         return st;
 
@@ -74,7 +100,8 @@ const obj= {
 /** Main type */
  .dg {
 	 color: #111;
-	 font: 11px 'Lucida Grande', sans-serif;
+	 font: 11px "Helvetica Neue",Helvetica,Arial,sans-serif;
+     text-shadow: 0 0px 0 #eeeeee;
 	/** Auto place */
 	/* Controller row, 
  */
@@ -258,6 +285,8 @@ body {
     font-size : 17px;
     margin-left : 5px;
 }
+
+
 `;
 
     }
@@ -271,7 +300,7 @@ body {
 module.exports=function(darkmode) {
     
     if (darkmode)
-        return obj.commoncss(darkcolors)+obj.darkmode();
+        return obj.darkmode()+obj.commoncss(darkcolors);
 
-    return obj.commoncss(brightcolors)+obj.brightmode();
+    return obj.brightmode()+obj.commoncss(brightcolors);
 };

@@ -120,7 +120,7 @@ class BisWebDialogElement extends HTMLElement {
             this.mousedata.topoffset=e.screenY-arr['top'];
             this.mousedata.moving=true;
             this.mousedata.firstmove=true;
-            this.header.css({ 'background-color': webutil.getactivecolor() });
+            this.header.addClass('biswebactive');
             return;
         }
 
@@ -129,7 +129,7 @@ class BisWebDialogElement extends HTMLElement {
         
         if (state === 2)  {
             this.mousedata.moving = false;
-            this.header.css({ 'background-color': webutil.getpassivecolor() });
+            this.header.removeClass('biswebactive');
             return;
         }
 
@@ -157,7 +157,7 @@ class BisWebDialogElement extends HTMLElement {
             if (posx!==oldposx || posy!==oldposy) {
                 if (!this.mousedata.firstmove)
                     this.mousedata.moving=false;
-                this.header.css({ 'background-color': webutil.getpassivecolor() });
+                this.header.removeClass('biswebactive');
             }
 
             this.mousedata.firstmove=false;
@@ -338,10 +338,9 @@ class BisWebDialogElement extends HTMLElement {
         
 
         this.header.css({
-            'background-color': "#303030",
-            "color": "#ffffff",
             "margin": "0px",
         });
+        this.header.addClass('biswebpanel');
 
         this.closecallback=closecallback || null;
         

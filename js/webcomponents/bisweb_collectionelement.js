@@ -356,17 +356,17 @@ class CollectionElement extends HTMLElement {
         let basediv=webutil.creatediv({ parent : this.internal.parentDomElement,
                                         css : {
                                             'width' : '100%',
-                                            'background-color' : webutil.getpassivecolor()
-                                        }
+                                        },
+                                        'classname' : 'biswebpanel'
                                       });
+
         this.internal.domElement=basediv;
         
         // --------------------------------------------
         let sbar=webutil.creatediv({ parent: basediv});
         this.internal.inlineForm=webutil.creatediv({ parent: sbar});
-        let colors= [ webutil.getforegroundcolor(), webutil.getbackgroundcolor2() ];
         
-        const console_html=`<div style="margin:5px; margin-top:10px; overflow: auto; position:relative; color:${colors[0]}; width:99%; height:97%; background-color:${colors[1]}; font-size:11px;"></div>`;
+        const console_html=`<div class="biswebelement" style="margin:5px; margin-top:10px; overflow: auto; position:relative; width:95%; height:97%;"></div>`;
 
         this.internal.currentInfo=$(console_html);
         sbar.append(this.internal.currentInfo);
