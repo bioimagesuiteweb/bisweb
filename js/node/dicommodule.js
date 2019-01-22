@@ -111,12 +111,17 @@ class DicomModule extends BaseModule {
                 return;
             };
 
+            // TODO add the listen method from outside somehow
+            // So if it exists it sends update to browser
             /*let listen= (message) => {
                 this.sendCommand(socket,'dicomConversionProgress', message);
             };*/
 
             console.log('indir', indir, 'outdir', outdir);
             let cmd = dcm2nii + ' -z y ' + ' -o ' + outdir + ' -ba y -c bisweb ' + indir;
+
+            // TODO:
+            // Replace exec with commandutils.executeCommandAndLog(command).then( (m) => {
             exec(cmd, (err, stdout) => {
                 if (err) { console.log('An error occured while running dcm2nii', err); reject(err); }
 

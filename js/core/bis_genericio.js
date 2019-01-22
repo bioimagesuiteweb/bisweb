@@ -597,6 +597,7 @@ let isSaveDownload =function() {
 };
 
 
+// TODO: Let's rename this to dicomConversion
 /**
  * Runs file conversion for a given filetype using server utilities. 
  * 
@@ -622,6 +623,9 @@ let runFileConversion = (params) => {
                 reject('Error: unsupported file type', params.fileType);
             }
         } else {
+            //TODO:
+            // Electron stuff here
+            
             /*if (params.fileType === 'dicom') {
                 let outputDirectories = bis_dcm2niiutils.makeDicomConversionDirectories();
                 rundcm2nii(params.inputDirectory, outputDirectories.dicomTempDirectory, () => {

@@ -67,11 +67,11 @@
   <div id="viewerwidget">
     
     <bisweb-viewerlayoutelement
-      id="viewer_layout"
-      bis-dockwidth="300"
-      bis-coreopen="true"
-      bis-dualmode="1"
-      bis-defaulttext="">
+       id="viewer_layout"
+       bis-dockwidth="300"
+       bis-coreopen="true"
+       bis-dualmode="1"
+       bis-defaulttext="">
     </bisweb-viewerlayoutelement>
     
     <bisweb-colormapcontrollerelement id="viewer_cmap"></bisweb-colormapcontrollerelement>
@@ -131,12 +131,20 @@
     </bisweb-viewerapplication>
     
     <bisweb-filetreepanel
+    	id="bis_filetreepanel"
         bis-layoutwidgetid="#viewer_layout" 
         bis-viewerid="#viewer"
         bis-viewerid2="#viewer2"
         bis-menubarid="#viewer_menubar"
         bis-viewerapplicationid="#viewer_application">
     </bisweb-filetreepanel>
+
+    <bisweb-dicomimportelement
+        id="dicom_import"
+        bis-viewerid="#viewer"
+        bis-layoutwidgetid="#viewer_layout"
+        bis-filetreepanelid="#bis_filetreepanel">
+    </bisweb-dicomimportelement>
   </div>
   
   <bisweb-botmenubar></bisweb-botmenubar>

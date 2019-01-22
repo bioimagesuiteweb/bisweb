@@ -1238,7 +1238,6 @@ class ViewerApplicationElement extends HTMLElement {
         if (this.externalMode)
             return;
         
-        
         let show=force;
 
         let p=[ 
@@ -1259,7 +1258,8 @@ class ViewerApplicationElement extends HTMLElement {
             lst[3]=lst[3] || '';
             
             let offline=false;
-            if ( lst[3] && lst[3].indexOf('offline')>=0)
+            // TODO: Check that this works
+            if (lst[3].indexOf('offline')>=0)
                 offline=true;
             
             if (firsttime === undefined)

@@ -42,7 +42,6 @@
     <link rel="stylesheet" type="text/css" href="../node_modules/jstree/dist/themes/default/style.css">
     <link rel="stylesheet" type="text/css" href="biscommon.css">
     <!-- endbuild -->
-    
 
     <!-- all javascript files -->
     <!-- build:js -->
@@ -119,6 +118,20 @@
        bis-viewerid="#viewer">
     </bisweb-viewerapplication>
     
+    <bisweb-filetreepanel
+        id="bis_filetreepanel"
+        bis-layoutwidgetid="#viewer_layout" 
+        bis-viewerid="#viewer"
+        bis-menubarid="#viewer_menubar"
+        bis-viewerapplicationid="#viewer_application">
+    </bisweb-filetreepanel>
+
+    <bisweb-dicomimportelement
+        id="dicom_import"
+        bis-viewerid="#viewer"
+        bis-layoutwidgetid="#viewer_layout"
+        bis-filetreepanelid="#bis_filetreepanel">
+    </bisweb-dicomimportelement>
   </div>
 
   

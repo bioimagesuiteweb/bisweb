@@ -51,7 +51,6 @@
         "png.js": "0.2.1",
         "request": "2.88.0",
         "rimraf": "2.6.2",
-        "streamifier": "^0.1.1",
         "three": "0.100.0",
         "tmp": "0.0.33",
         "websocket-stream": "5.1.2",
