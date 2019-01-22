@@ -75,9 +75,17 @@ class DicomImportElement extends HTMLElement {
         });
     }
 
+
+    /**
+     * Invokes the program DCM2NII to parse raw DICOM images to NIFTI format.
+     * Relies on the server for file system operations, e.g. running DCM2NII, creating temporary directories(see bin/bisfileserver.js for more details). 
+     * When finished, this function will automatically invoke bis_bidsutils.dicom2BIDS to organize the flat file structure in the temp directory into BIDS format.
+     * 
+     * @param {String} inputDirectory 
+     * @param {String} outputDirectory 
+     */
     importDicomStudy(inputDirectory, outputDirectory) {
         bis_webutil.createAlert('Converting raw DICOM files to BIDS...', false, 0, 100000, { 'makeLoadSpinner' : true });
-        let outdir = inputDirectory; //create derived folder in the same place as the input in accordance with BIDS
         if (!bis_webfileutil.candoComplexIO()) {
             console.log('Error: cannot import DICOM study without access to file server.');
             return;
@@ -85,6 +93,9 @@ class DicomImportElement extends HTMLElement {
 
         if (!bis_genericio.isDirectory(inputDirectory)) {
             inputDirectory = bis_genericio.getDirectoryName(bis_genericio.getNormalizedFilename(inputDirectory));
+        }
+        if (!bis_genericio.isDirectory(outputDirectory)) {
+            outputDirectory = bis_genericio.getDirectoryName(bis_genericio.getNormalizedFilename(outputDirectory));
         }
 
         bis_genericio.runFileConversion({

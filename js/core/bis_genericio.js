@@ -25,8 +25,6 @@
 
 const biscoreio=require('./bis_coregenericio');
 const util=require('./bis_util');
-//const bis_dcm2niiutils = require('bis_dcm2niiutils.js');
-//const bis_bidsutils = require('bis_bidsutils.js');
 
 const glob=biscoreio.getglobmodule();
 const fs=biscoreio.getfsmodule();
