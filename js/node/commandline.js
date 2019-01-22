@@ -186,6 +186,7 @@ let loadParse = function (args, toolname,basedirectory='') {
                 let modArguments = mod.parseValuesAndAddDefaults(program, loadedArguments);
                 console.log('oooo\noooo Parsed :',JSON.stringify(modArguments));
                 if (mod.typeCheckParams(modArguments)) {
+                    console.log('oooo\noooo Invoking module', mod.getDescription().name, '....');
                     mod.directInvokeAlgorithm(modArguments).then(() => {
                         console.log('oooo -------------------------------------------------------');
                         mod.storeCommentsInOutputs(args.join(" "),modArguments,baseutils.getSystemInfo(biswrap));
@@ -202,8 +203,6 @@ let loadParse = function (args, toolname,basedirectory='') {
                 } else {
                     reject('---- Type checking of Arguements failed');
                 }
-            }).catch((e) => {
-                reject('----- Bad input filenames '+e);
             });
         }).catch((e) => {
             console.log('error');

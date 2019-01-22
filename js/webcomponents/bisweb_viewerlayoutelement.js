@@ -348,7 +348,7 @@ class ViewerLayoutElement extends HTMLElement {
                                                  css : {'position':'absolute',
                                                         'top' : '0px',
                                                         'left' : '0px',
-                                                        'z-index' : '4',
+                                                        'z-index' : '25',
                                                         'margin-top' : '0px',
                                                         'padding-right' : '2px',
                                                         'margin-bottom' : '0px',

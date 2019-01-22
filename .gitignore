@@ -15,6 +15,7 @@ build/*
 **/*.o.*
 data/*
 **/package-lock.json
+package-lock.json
 *.pem
 **/dcm2nii*
 **/screenshots

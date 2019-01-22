@@ -7,9 +7,10 @@ const StreamingWebSocket=require('websocket-stream');
 const genericio = require('bis_genericio.js');
 const coregenericio = require('bis_coregenericio.js');
 const wsutil = require('bis_wsutil');
-const globalInitialServerPort=require('bis_wsutil').initialPort;
-const BaseFileServer=require('bis_basefileserver');
-const net = require('net'); // needed for find free port
+const globalInitialServerPort = require('bis_wsutil').initialPort;
+const BaseFileServer = require('bis_basefileserver');
+const bis_filesystemutils = require('bis_filesystemutils.js');
+const net = require('net'); // needed to find a free port
 
 const portsInUse=[];
 // .................................................. This is the class ........................................
@@ -485,7 +486,7 @@ class BisWSWebSocketFileServer extends BaseFileServer {
         //spawn a new server to handle the data transfer
         console.log('.... \tBeginning data transfer', this.portNumber+1,'upload=',upload.filename);
 
-        if (!this.validateFilename(upload.filename)) {
+        if (!bis_filesystemutils.validateFilename(upload.filename)) {
             this.sendCommand(socket,'uploadmessage', {
                 name : 'badfilename',
                 payload : 'filename '+upload.filename+' is not valid',

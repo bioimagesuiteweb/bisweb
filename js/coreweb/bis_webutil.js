@@ -1002,7 +1002,7 @@ const webutil = {
     },
     // ------------------------------------------------------------------------
     /** create alert message
-     * @param {string} text - 
+     * @param {string} text - text to display in the alert message
      * @param {boolean} error  - if true this is an error else info;
      * @param {JQueryElement} parent - the parent to add this to. Uses $('body') if not specified.
      * @param {Object} options - additional options for the alert.
@@ -1053,6 +1053,14 @@ const webutil = {
                 }
             }, timeout );
         }
+    },
+
+    /**
+     * Dismisses any alerts visible on the screen.
+     */
+    dismissAlerts() {
+        $('.alert-success').remove();
+        $('.alert-info').remove();
     },
 
     // ---------------- drag and drop controller ----------------
@@ -1309,6 +1317,7 @@ const webutil = {
         //https://stackoverflow.com/questions/807878/javascript-that-executes-after-page-load
         if (window.attachEvent) {
             window.attachEvent('onload', clb);
+            window.attachEvent('onerror', clb);
         } else {
             if (window.onload) {
                 let currentOnLoad = window.onload;
@@ -1317,8 +1326,10 @@ const webutil = {
                     clb();
                 };
                 window.onload = newOnload;
+                window.onerror = newOnload;
             } else {
                 window.onload = clb;
+                window.onerror = clb;
             }
         }
     },

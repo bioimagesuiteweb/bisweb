@@ -47,12 +47,25 @@ class DicomImportElement extends HTMLElement {
             },
         });
 
-        bis_webfileutil.createFileButton({ type : 'danger',
+        bis_webfileutil.createFileButton({ 
+            type : 'danger',
             name : 'Import Images from DICOM Study',
             parent : basediv,
             css : { 'width' : '90%' , 'margin' : '3px' },
             callback : (f) => {
-                this.importDicomStudy(f);
+                let saveFileCallback = (o) => { 
+                    console.log('input', f, 'output', o);
+                    this.importDicomStudy(f, o);
+                };
+
+                setTimeout( () => {
+                    bis_webfileutil.genericFileCallback( 
+                    {
+                        'title' : 'Choose output directory',
+                        'filters' : 'DIRECTORY',
+                        'save' : false
+                    }, saveFileCallback);
+                }, 1);
             },
         },{
             title: 'Directory to import study from',
@@ -62,9 +75,17 @@ class DicomImportElement extends HTMLElement {
         });
     }
 
-    async importDicomStudy(inputDirectory) {
-        let outputDirectory = null;
 
+    /**
+     * Invokes the program DCM2NII to parse raw DICOM images to NIFTI format.
+     * Relies on the server for file system operations, e.g. running DCM2NII, creating temporary directories(see bin/bisfileserver.js for more details). 
+     * When finished, this function will automatically invoke bis_bidsutils.dicom2BIDS to organize the flat file structure in the temp directory into BIDS format.
+     * 
+     * @param {String} inputDirectory 
+     * @param {String} outputDirectory 
+     */
+    importDicomStudy(inputDirectory, outputDirectory) {
+        bis_webutil.createAlert('Converting raw DICOM files to BIDS...', false, 0, 100000, { 'makeLoadSpinner' : true });
         if (!bis_webfileutil.candoComplexIO()) {
             console.log('Error: cannot import DICOM study without access to file server.');
             return;
@@ -73,31 +94,28 @@ class DicomImportElement extends HTMLElement {
         if (!bis_genericio.isDirectory(inputDirectory)) {
             inputDirectory = bis_genericio.getDirectoryName(bis_genericio.getNormalizedFilename(inputDirectory));
         }
+        if (!bis_genericio.isDirectory(outputDirectory)) {
+            outputDirectory = bis_genericio.getDirectoryName(bis_genericio.getNormalizedFilename(outputDirectory));
+        }
 
-        let outputFileCallback = (f) => {
-            outputDirectory = f;
-            bis_genericio.runFileConversion({ 
-                'fileType' : 'dicom',
-                'inputDirectory' : inputDirectory
-            }).then( (fileConversionOutput) => {
-                console.log('Conversion done, now converting files to BIDS format.');
-                bis_bidsutils.dicom2BIDS({ 'indir' : fileConversionOutput.output, 'outdir' : outputDirectory }).then( (obj) => {
-                    console.log('obj', obj);
-                });
-            }).catch( (e) => {
-                console.log('An error occured during file conversion', e);
+        bis_genericio.runFileConversion({
+            'fileType': 'dicom',
+            'inputDirectory': inputDirectory
+        }).then((fileConversionOutput) => {
+            console.log('Conversion done, now converting files to BIDS format.');
+            bis_webutil.createAlert('Converting images to BIDS structure...', false, 0, 100000, { 'makeLoadSpinner' : true });
+
+            //dicom files are in inputDirectory/derived
+            bis_bidsutils.dicom2BIDS({ 'indir': fileConversionOutput.output, 'outdir': outputDirectory }).then((bidsDirectory) => {
+
+                console.log('output directory', bidsDirectory);
+                //parse folder name for containing folder (should be the folder before the .json file)
+                this.filetreepanel.importFilesFromDirectory(bidsDirectory);
+                this.filetreepanel.showTreePanel();
+            }).catch((e) => {
+                console.log('An error occured during BIDS file conversion', e);
             });
-        };
-
-        setTimeout( () => {
-            bis_webfileutil.genericFileCallback({
-                filters : "DIRECTORY",
-                suffix : "DIRECTORY",
-                title : "Select an output directory for the conversion",
-                save : false,
-            }, outputFileCallback);
         });
-
     }
 }
 
