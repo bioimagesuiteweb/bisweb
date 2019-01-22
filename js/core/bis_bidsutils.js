@@ -274,7 +274,7 @@ let dicom2BIDS = async function (opts) {
 let calculateChecksums = (inputFiles) => {
 
     return new Promise((resolve, reject) => {
-        let promises = []
+        let promises = [];
         for (let file of inputFiles) {
             promises.push(bis_genericio.makeFileChecksum(file));
         }

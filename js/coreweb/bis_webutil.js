@@ -194,25 +194,23 @@ const webutil = {
     },
 
     isDark : function() {
-        let style = getComputedStyle(document.body);
-        let bg=style['background-color'];
-        if (bg.indexOf('255')>0)
-            return false;
-        return true;
+        return internal.darkmode;
     },
     
     /** Auto detect color mode based on background color */
     setAutoColorMode : function() {
-
+        
         if (internal.cssapplied) {
             console.log('.... css already applied');
             return;
         }
-        
-        if (this.isDark())
-            this.setDarkMode(true);
-        else
+        let style = getComputedStyle(document.body);
+        let bg=style['background-color'];
+        if (bg.indexOf('255')>0)
             this.setDarkMode(false);
+        else
+            this.setDarkMode(true);
+            
     },
 
     /** set alert top 

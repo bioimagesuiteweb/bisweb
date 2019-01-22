@@ -82,6 +82,8 @@ class ViewerApplicationElement extends HTMLElement {
         this.saveState=null;
         this.applicationURL=webutil.getWebPageURL();
         this.applicationName=webutil.getWebPageName();
+        if (this.applicationName.lastIndexOf("2")===this.applicationName.length-1)
+            this.applicationName=this.applicationName.substr(0,this.applicationName.length-1);
         console.log("+++++ App name=",this.applicationName,this.applicationURL);
 
         
@@ -89,11 +91,11 @@ class ViewerApplicationElement extends HTMLElement {
         this.tab1name=null;
         this.tab2name=null;
 
-        if (this.applicationName=="overlayviewer") 
+        if (this.applicationName==="overlayviewer")
             this.extraManualHTML='overlayviewer.html';
         else if (this.applicationName==="editor")
             this.extraManualHTML='imageeditor.html';
-
+        
         this.applicationInitializedPromiseList= [ ];
 
         

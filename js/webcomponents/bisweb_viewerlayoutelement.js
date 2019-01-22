@@ -56,6 +56,7 @@ var detectWebGL = function() {
  *    bis-coreopen="true"
  *    bis-minimizedockpanel="0"
  *    bis-fixed="1"
+ *    bis-brightcanvas="0"
  *    bis-noresize="0"
  *    bis-defaulttext="">
  * </bisweb-viewerlayoutelement>
@@ -91,6 +92,7 @@ class ViewerLayoutElement extends HTMLElement {
         this.fixed=0;
         this.noresize=0;
         this.webgl2=false;
+        this.darkcanvas=true;
     }
 
     getCSSLength(n='width') {
@@ -103,7 +105,10 @@ class ViewerLayoutElement extends HTMLElement {
         }
         return parseFloat(v.replace(/px/g,''));
     }
-            
+
+    isCanvasDark() {
+        return this.darkcanvas;
+    }
 
     getInnerWidth() {
         if (!this.noresize)
@@ -289,6 +294,9 @@ class ViewerLayoutElement extends HTMLElement {
 
         this.fixed=parseInt(this.getAttribute('bis-fixed') || 0 );
         this.noresize=parseInt(this.getAttribute('bis-noresize') || 0 );
+        let bright=parseInt(this.getAttribute('bis-brightcanvas') || 0 );
+        if (bright)
+            this.darkcanvas=false;
         
         this.minimizedockpanel=parseInt(this.getAttribute('bis-minimizedockpanel') || 0 );
         if (this.minimizedockpanel!==0)
@@ -364,8 +372,7 @@ class ViewerLayoutElement extends HTMLElement {
         
         this.elements.dockbar.attr('aria-label', 'viewer_dockbar');
         
-        let b1=this.defaulttext.substr(0,1) || "";
-        if (this.defaulttext.length>10 && b1!=" ")
+        if (!this.darkcanvas)
             this.elements.canvasbase.css({'background-color' : "#fefefe"});
         
         let zt=webutil.creatediv({ parent : this.elements.dockbar,
@@ -474,14 +481,23 @@ class ViewerLayoutElement extends HTMLElement {
         this.handleresize();
         webutil.runAfterAllLoaded( () => {
 
+            //            let fnsize=webutil.getfontsize(this.context.canvas);
+            this.context.font="20px Arial";
+            this.context.textAlign="left";
+            
+            if (!this.darkcanvas)
+                this.context.fillStyle = "#000000";
+            else
+                this.context.fillStyle = "#ffffff";
+            
             if (this.defaulttext.length<4) {
-                this.context.fillText('Load (or Drag) an Image (.nii.gz or .nii)',100,100);
-                this.context.fillText(' or an application viewer file (.biswebstate)',100,180);
-                this.context.fillText('and it will appear here!',120,260);
+                this.context.fillText('Load (or Drag) an Image (.nii.gz or .nii)',20,100);
+                this.context.fillText(' or an application viewer file (.biswebstate)',20,140);
+                this.context.fillText('and it will appear here!',30,180);
             } else {
                 let ch=this.context.canvas.height;
                 let cw=this.context.canvas.width;
-                this.context.textAlign="center";
+                this.context.fillStyle = "#888888";
                 this.context.fillText(this.defaulttext,cw/2,ch/2);
             }
         });
