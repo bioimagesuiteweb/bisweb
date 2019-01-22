@@ -345,7 +345,6 @@ gulp.task('testdata', ((done) => {
 
     const gulpzip = require('gulp-zip');
 
-    console.log(gulpzip);
     let outdir=path.resolve(path.join(options.distdir,'test'));
     let outfile=path.resolve(path.join(options.distdir,'testdata.zip'));
     rimraf.sync(outdir);
@@ -460,10 +459,9 @@ gulp.task('tools', ( (cb) => {
             if (internal.setup.tools[toolname].bright) {
                 maincss=internal.biscss2;
             }
-            console.log(' Tool=',internal.setup.tools[toolname],maincss);
         }
         
-        console.log(getTime()+colors.green(' Building tool '+(index+1)+'/'+internal.toolarray.length+' : '+toolname));
+        console.log(getTime()+colors.green(' Building tool '+(index+1)+'/'+internal.toolarray.length+' : '+toolname+' using '+maincss));
         internal.jscounter+=1;
 
         let jsname =internal.bislib;
