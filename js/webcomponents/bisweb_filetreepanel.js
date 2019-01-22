@@ -45,6 +45,7 @@ class FileTreePanel extends HTMLElement {
                 this.popoverDisplayed = false;
                 this.staticTagSelectMenu = null;
 
+                
                 this.panel = new bisweb_panel(this.layout,
                     {
                         name: 'Files',

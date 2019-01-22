@@ -24,6 +24,7 @@ const moduleImports = {
     'infomodule': require('./infomodule.js'),
     'dicomconversion' : require('./dicommodule.js'),
     'makechecksum' : require('./bis_hashmodule.js'),
+    'bidsconversion' : require('./bis_bidsmodule.js'),
     'regressiontests': require('./regressiontestmodule.js'),
 };
 

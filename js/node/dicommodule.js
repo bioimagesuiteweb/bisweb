@@ -29,7 +29,7 @@ const exec = require('child_process').exec;
 class DicomModule extends BaseModule {
     constructor() {
         super();
-        this.name = 'Info';
+        this.name = 'Dicom Conversion';
     }
 
     createDescription() {
@@ -60,6 +60,24 @@ class DicomModule extends BaseModule {
                     "type": "string",
                     "varname": "inputDirectory",
                     "default": "Error: no input directory specified"
+                },
+                {
+                    "name": "Output Directory",
+                    "description": "Output directory for the DICOM conversion. Optional, saves in /tmp if not specified",
+                    "advanced": true,
+                    "required": false,
+                    "type": "string",
+                    "varname": "outputDirectory",
+                    "default": sysutils.tempdir
+                },
+                {
+                    "name": "Convert to BIDS",
+                    "description": "Whether or not to format the DCM2NII converted files to BIDS. Optional, defaults to true",
+                    "advanced": true,
+                    "required": false,
+                    "type": "boolean",
+                    "varname": "convertbids",
+                    "default": true
                 },
                 baseutils.getDebugParam()
             ]
@@ -92,8 +110,8 @@ class DicomModule extends BaseModule {
                 return errorfn(indir + ' is not valid');
             }
 
-            //TODO: Make this generic
-            let dicomtmpdir = path.join(sysutils.tempdir, 'dicom_' + Date.now());
+
+            let dicomtmpdir = path.join(vals.outputDirectory, 'dicom_' + Date.now());
             let outdir = dicomtmpdir + '/source';
             try {
                 fs.mkdirSync(dicomtmpdir);
@@ -126,8 +144,11 @@ class DicomModule extends BaseModule {
                 if (err) { console.log('An error occured while running dcm2nii', err); reject(err); }
 
                 console.log(stdout);
-                //TODO: take temp directory and reorganize files into BIDS structure
                 done(stdout);
+
+                if (vals.convertbids) {
+
+                }
                 resolve(outdir);
             });
         });

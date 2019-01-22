@@ -1,8 +1,6 @@
 'use strict';
 
 const bis_genericio = require('bis_genericio');
-//const bis_webutil = require('bis_webutil.js')
-//const bis_util = require('bis_util.js');
 
 // DICOM2BIDS
 /**
@@ -15,7 +13,7 @@ const bis_genericio = require('bis_genericio');
  * @param {String} opts.outdir - the output directory (output of this function)
  * @returns {Promise} -- when done with payload the list of converted files
  */
-let dicom2BIDS = async function (opts) {
+let dicom2BIDS = async function (opts, checksumFn = null) {
 
 
     let errorfn = ((msg) => {
@@ -54,6 +52,7 @@ let dicom2BIDS = async function (opts) {
 
 
     //wait for all files to move and hashes to finish calculating
+    //note that some environments may provide their own checksum functions
     let makeHash = calculateChecksums(flist);
     let moveImageFiles = [], moveSupportingFiles = [];
 
@@ -219,14 +218,11 @@ let dicom2BIDS = async function (opts) {
     }
 
     try {
-        //makeHash is the first item in the array so it'll have its resolved values first
         let promiseArray = Array.apply(moveImageFiles, moveSupportingFiles);
 
         console.log('promise array', promiseArray);
         let checksums = await makeHash;
         for (let prom of promiseArray) { await prom; }
-
-        console.log('checksums', checksums);
 
         //put checksums in dicom_job then write it to disk
         for (let val of checksums) {
@@ -274,13 +270,13 @@ let dicom2BIDS = async function (opts) {
 let calculateChecksums = (inputFiles) => {
 
     return new Promise((resolve, reject) => {
-        let promises = []
+        let promises = [];
         for (let file of inputFiles) {
             promises.push(bis_genericio.makeFileChecksum(file));
         }
 
         Promise.all(promises)
-            .then((values) => { console.log('calculate checksums resolving'); resolve(values); })
+            .then((values) => { console.log('calculate checksums resolving', values); resolve(values); })
             .catch((e) => { reject(e); });
     });
 

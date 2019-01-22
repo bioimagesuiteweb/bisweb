@@ -637,6 +637,7 @@ let runFileConversion = (params) => {
 };
 /**
  * Makes a SHA256 checksum for a given image file. Currently only functional if a file server is specified.
+ * Note that this function only works when calling from the web environment. Bisweb modules calculate their own checksums due to genericio not being directly compatible with modules.
  * 
  * @param {String} url - Filename of image to make checksum for.
  * @returns Promise that will resolve the checksum, or false if no file server client is specified.
@@ -645,11 +646,22 @@ let makeFileChecksum = (url) => {
 
     if (fileServerClient) {
         return fileServerClient.runModule('makechecksum', { 'url' : url });
-    } else {
-        console.log('Cannot perform makeFileChecksum without a file server client');
+    } else if (inBrowser) {
+        console.log('Cannot perform makeFileChecksum without a file server client.');
         return false;
-    }
+    } 
 
+    return new Promise( (resolve, reject) => {
+        read(url, true).then( (obj) => {
+            let hash = util.SHA256(obj.data);
+            //resolves data structure in an 'output' field for cross-compatibility with objects returned by the server
+            if (hash) { resolve( { 'output' : { 'hash' : hash, 'filename' : url } } ); };
+
+            reject(hash);
+        }).catch( (e) => {
+            reject(e);
+        });
+    });
 };
 
 /**

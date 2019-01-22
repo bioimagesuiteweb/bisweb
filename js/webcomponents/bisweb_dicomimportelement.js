@@ -98,6 +98,7 @@ class DicomImportElement extends HTMLElement {
             outputDirectory = bis_genericio.getDirectoryName(bis_genericio.getNormalizedFilename(outputDirectory));
         }
 
+        //TODO: change name to 'runDicomConversion'
         bis_genericio.runFileConversion({
             'fileType': 'dicom',
             'inputDirectory': inputDirectory

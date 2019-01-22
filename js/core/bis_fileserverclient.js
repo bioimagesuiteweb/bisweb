@@ -1,4 +1,3 @@
-/* global Atomics */
 'use strict';
 
 const wsUtilInitialPort = require('bis_wsutil').initialPort;
