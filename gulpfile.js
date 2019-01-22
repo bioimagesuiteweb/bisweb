@@ -145,13 +145,11 @@ if (options.verbose) {
 let internal = {
     dependcss : [ 
         "./lib/css/bootstrap_dark_edited.css", 
-        "./lib/css/bootstrap-colorselector.css",
         "./node_modules/jstree/dist/themes/default/style.css",
         "./web/biscommon.css"
     ],
     dependcss2 : [ 
         "./lib/css/bootstrap_bright_edited.css", 
-        "./lib/css/bootstrap-colorselector.css",
         "./node_modules/jstree/dist/themes/default/style.css",
         "./web/biscommon.css"
     ], // Bright mode

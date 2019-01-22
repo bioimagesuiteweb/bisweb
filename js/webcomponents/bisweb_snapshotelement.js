@@ -35,8 +35,6 @@ const userPreferences = require('bisweb_userpreferences.js');
 const BisWebPanel = require('bisweb_panel.js');
 const BisWebImage = require('bisweb_image.js');
 const pngReader=require('png.js');
-require('bootstrap-colorselector.js');
-
 
 /**
  * A class to create snapshots from a viewer.
