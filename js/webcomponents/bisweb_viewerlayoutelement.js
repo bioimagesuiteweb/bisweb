@@ -75,6 +75,7 @@ var detectWebGL = function() {
  *     bis-defaulttext : text to draw in. If length > 10 and first character is not space then sets "simple mode"
  *     bis-dualmode : if 1 then operates in dual mode
  *     bis-webgl   : if 2 then use webgl2 (if possible)
+ *     bis-bright   : if 1 then use bright colors
  */
 class ViewerLayoutElement extends HTMLElement {
 
@@ -248,8 +249,7 @@ class ViewerLayoutElement extends HTMLElement {
     usesWEBGL2() {
         return this.webgl2;
     }
-    
-    
+
     connectedCallback() {
         this.viewertop=0;
         this.viewerwidth=800;
@@ -266,15 +266,20 @@ class ViewerLayoutElement extends HTMLElement {
         if (webgl2===2) {
             this.webgl2=true;
         }
-        
+
+        // fix css
+        //console.log("Calling setAutoColorMode");
+        webutil.setAutoColorMode();
+
+    
         $(this).css({
             '-webkit-user-select': 'none',
             '-moz-user-select': 'none',
             '-ms-user-select': 'none',
             'user-select': 'none',
             '-webkit-app-region': 'no-drag',
-            'background-color': webutil.getpassivecolor()
         });
+        $(this).addClass('biswebpanel');
         
         // Initialize defaults
         // Query Properties
@@ -300,8 +305,7 @@ class ViewerLayoutElement extends HTMLElement {
             coreopen=true;
 
         let webglversion=detectWebGL();
-        console.log('++++ WEBGL Version=',webglversion,this.webgl2);
-        
+
         if (webglversion<1) {
             webutil.createAlert('Your browser does not support WEBGL (even v1).<BR> We can not proceeed.<BR> Try using a modern web browser.', true);
         } else if (this.webgl2===true  && webglversion<2) {
@@ -337,8 +341,8 @@ class ViewerLayoutElement extends HTMLElement {
                                                         'border-style' : 'solid',
                                                         'padding-left' : '2px',
                                                         'z-index' : '4',
-                                                        'background-color': webutil.getpassivecolor()
-                                                       }
+                                                       },
+                                                 classname : 'biswebdock'
                                                }),
             sidebar     :   webutil.creatediv({ parent : this.domElement,
                                                  css : {'position':'absolute',
@@ -353,8 +357,8 @@ class ViewerLayoutElement extends HTMLElement {
                                                         'border-color' : '#888888',
                                                         'border-style' : 'solid',
                                                         'width' : `${this.sidebarwidth}px`,
-                                                        'background-color':  webutil.getpassivecolor()
-                                                       }
+                                                       },
+                                                classname : 'biswebdock'
                                                }),
         };
         
@@ -455,17 +459,17 @@ class ViewerLayoutElement extends HTMLElement {
                                                       css : { 'width' : '99%',
                                                               'padding-bottom' : '10px',
                                                               'height' : '5px',
-                                                              'background-color': webutil.getpassivecolor2()
-                                                            }
+                                                            },
+                                                        classname : 'biswebpanel2'
                                                     });
         
         this.sidebarElements.widget=webutil.creatediv({ parent : this.elements.sidebar,
-                                                      css : {
-                                                          'width' : '99%',
-                                                          'height' : '5px',
-                                                          "overflow-y": "auto",
-                                                          'background-color': webutil.getpassivecolor()
-                                                      }
+                                                        css : {
+                                                            'width' : '99%',
+                                                            'height' : '5px',
+                                                            "overflow-y": "auto",
+                                                        },
+                                                        classname : 'biswebpanel'
                                                       });
         this.handleresize();
         webutil.runAfterAllLoaded( () => {
@@ -707,7 +711,7 @@ class ViewerLayoutElement extends HTMLElement {
 
 }
 
-
+module.exports=ViewerLayoutElement;
 webutil.defineElement('bisweb-viewerlayoutelement', ViewerLayoutElement);
 
 

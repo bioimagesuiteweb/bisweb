@@ -38,7 +38,7 @@
     <!-- begin webpack/gulp modifications -->
     <!-- external css files -->
     <!-- build:css -->
-    <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_dark.css">
+    <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_bright.css">
     <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap-colorselector.css">
     <link rel="stylesheet" type="text/css" href="biscommon.css">
     <!-- endbuild -->
@@ -63,7 +63,7 @@
 
     <bisweb-topmenubar   id="viewer_menubar"></bisweb-topmenubar>
 
-    <div id="toph4">
+    <div id="toph4" style="width:800px; left:5px" class="biswebpanel2">
       <div id="midh4">
 
         <H4> BioImage Suite Web Display Regression Test Runner</H4>
@@ -87,7 +87,7 @@
 
     </div> 
 
-    <div id="baseresults">
+    <div id="baseresults" style="left: 820px; width: calc(100% - 830px)" class="biswebpanel2">
       <div  id="resultimages">
         <table>
           <tr>
@@ -104,7 +104,7 @@
         <div id="comparison">0.0</div>
       </div>
       <HR>
-      <div id="displayresults">
+      <div id="displayresults" class="biswebpanel">
         <pre>Results will appear here ...</pre>
       </div>
     </div>
@@ -180,6 +180,7 @@
     
     <bisweb-dualviewerapplication
       id="maindual"
+      bis-external="1"
       bis-extrastatesave="1"
       bis-tabset="#viewers"
       bis-mode="overlay",

@@ -54,6 +54,7 @@ if (!found) {
 
 output=output.trim().replace(/_full.js/g,'');
 
+const appinfo=require(path.resolve(__dirname,'../package.json'));
 
 // -----------------------------------------------------------------------------------
 // Extra files for internal and external
@@ -90,14 +91,14 @@ if (fs.existsSync(externalfile) && external>0) {
 
 let bisWebCustom=path.join(extrapath,"bisextra.js");
 if (internal<2) {
-    bisWebCustom="bis_util"; // dummy file
+    bisWebCustom="bis_dummy"; // dummy file
 } else {
     console.log(`${output}:++++ Using custom extra require file=${bisWebCustom}`);
 }
 
 let bisWebExternalFile="";
 if (!external) {
-    bisWebExternalFile="bis_simplemat"; // dummy file
+    bisWebExternalFile="bis_dummy"; // dummy file
     //    console.log(`${output}:++++ Not using custom extra require file from external, using ${bisWebExternalFile} as placeholder.`);
 } else {
     bisWebExternalFile=path.join(externalpath,"bisextra.js");
@@ -133,15 +134,7 @@ if (output === "bislib.js" || output ==="index.js") {
         },
         mode : 'development',
         target : "web",
-        externals: {
-            "jquery": "jQuery",             // require("jquery") is external and available on the global var jQuery
-            "three": "THREE",               // require("three") is external and available on the global var jQuery
-            'request' : 'console.log',      // ignore this
-            "libbiswasm" : "console.log",   // this is not needed in this case and should be excluded
-            "@tensorflow/tfjs" : "console.log", // ignore tensor flow it will come from outside
-            "@tensorflow/tfjs-node" : "console.log", // ignore tensor flow it will come from outside
-            "@tensorflow/tfjs-node-gpu" : "console.log" // ignore tensor flow it will come from outside
-        },
+        externals: appinfo.bioimagesuiteweb.webexternals,
         watchOptions: {
             aggregateTimeout: 300,
             poll: 1000
@@ -154,9 +147,6 @@ if (output === "bislib.js" || output ==="index.js") {
                 resource.request = resource.request.replace(/__BISWEB_EXTERNAL/, `${bisWebExternalFile}`);
             }),
         ],
-        module : {
-            rules : [  { 'test': /\.txt$/, 'use': 'raw-loader' } ]
-        }
     };
 
     
@@ -192,17 +182,13 @@ if (output === "bislib.js" || output ==="index.js") {
                         path.resolve(mypath,'js/dataobjects'),
                         path.resolve(mypath,'js/legacy'),
                         path.resolve(mypath,'js/modules'),
+                        path.resolve(mypath,'js/webworker'),
                         path.resolve(mypath,'build/wasm'),
                         path.resolve(mypath,'build/web')]
         },
         mode : 'development',
         target : "web",
-        externals: {
-            'request' : 'console.log',      // ignore this
-            "@tensorflow/tfjs" : "console.log", // ignore tensor flow it will come from outside
-            "@tensorflow/tfjs-node" : "console.log", // ignore tensor flow it will come from outside
-            "@tensorflow/tfjs-node-gpu" : "console.log" // ignore tensor flow it will come from outside
-        },
+        externals: appinfo.bioimagesuiteweb.workerexternals,
         watchOptions: {
             aggregateTimeout: 300,
             poll: 1000
@@ -222,6 +208,7 @@ if (output === "bislib.js") {
     };
 }
 
+console.log('++++ Webpack externals=',Object.keys(module.exports.externals).join(','));
 
 
 

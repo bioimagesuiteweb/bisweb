@@ -24,6 +24,7 @@ const moduleImports = {
     'infomodule': require('./infomodule.js'),
     'dicomconversion' : require('./dicommodule.js'),
     'makechecksum' : require('./hashmodule.js')
+    'regressiontests': require('./regressiontestmodule.js'),
 };
 
 let moduleNames=universalmodules.createModuleNames(moduleImports);

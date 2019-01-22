@@ -232,6 +232,9 @@ const util = {
             opacity = opacity || 255;
 
         var mapobjectmap = function(data,index,map) {
+
+            if (index<0)
+                index=0;
             
             var v=Math.round(data[index]);
             if (v<0)
@@ -283,6 +286,8 @@ const util = {
         };
 
         var internalmapfunction = function(data,index,map) {
+            if (index<0)
+                index=0;
             var v=data[index];
             var c=util.range(Math.round(params.scale*(v-params.shift)),0.0,255.0);
             map[0]=c;  map[1]=c;   map[2]=c; map[3]=params.opacity;
@@ -291,7 +296,11 @@ const util = {
         };
 
         var internalmapfunction2 = function(data,index,map) {
+            
+            if (index<0)
+                index=0;
             var v=data[index];
+            
             var c=util.range(Math.round(params.scale*(v-params.shift)),0.0,255.0);
             if (params.mode===1 || params.mode===3 || params.mode ===5) 
                 map[0]=c;
@@ -365,11 +374,15 @@ const util = {
 
         var fun=function(data,index,map) {
 
-            var val;
-            if (params.internalarray!==null)
-                val=params.internalarray[index];
-            else
-                val=data[index];
+            let val=0;
+            if (index>=0) {
+                if (params.internalarray!==null)
+                    val=params.internalarray[index];
+                else
+                    val=data[index];
+            } else {
+                val=data[0];
+            }
             var donothing=false;
             if (val>-params.minth && val<params.minth) {
                 donothing=true;

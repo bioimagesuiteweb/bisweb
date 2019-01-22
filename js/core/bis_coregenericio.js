@@ -38,21 +38,23 @@ if (typeof (window) !== "undefined") {
 
 let pako = require('pako');
 let webpack = process.browser || false;
+const bisexternals=require('bis_externals');
 
 if (!webpack) {
-    fs = require('fs');
-    zlib = require('zlib');
-    path = require('path');
-    os = require('os');
-    noderequest = require('request');
-    glob = require('glob');
-    rimraf= require('rimraf');
+
+    fs = bisexternals['fs'];
+    zlib = bisexternals['zlib'];
+    path = bisexternals['path'];
+    os = bisexternals['os'];
+    noderequest = bisexternals['request'];
+    glob = bisexternals['glob'];
+    rimraf= bisexternals['rimraf'];
+    nodewin.atob = bisexternals['atob'];
+    nodewin.btoa = bisexternals['btoa'];
     environment = 'node';
-    nodewin.atob = require('atob');
-    nodewin.btoa = require('btoa');
 } else {
     try  {
-        filesaver = require('FileSaver');
+        filesaver = bisexternals['FileSaver'];
         console.log("++++ In Browser");
     }
     catch(e)  {

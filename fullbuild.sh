@@ -1,1 +1,1 @@
-gulp build -m 1; gulp zip; gulp package
+gulp build -m ; gulp zip; gulp package

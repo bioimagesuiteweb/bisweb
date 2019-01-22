@@ -407,7 +407,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
             }
         }
         if (this.internal.overlayslices[3]!==null) {
-            this.internal.overlayslices[3].updateColormap(this.internal.colormapControllerPayload);
+            this.internal.overlayslices[3].updateColormap(this.internal.colormapControllerPayload,this.internal.objectmaptransferfunction);
         }
     }
     
@@ -468,7 +468,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
             }
 
             if (this.internal.slices[3]) {
-                this.internal.slices[3].updateColormap(this.internal.colormapControllerPayload);
+                this.internal.slices[3].updateColormap(this.internal.colormapControllerPayload,this.internal.imagetransferfunction);
                 this.internal.slices[3].showdecorations(this.internal.showdecorations);
             }
             if (this.internal.origin)
@@ -1260,7 +1260,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         if (this.internal.simplemode)
             drawimages=false;
         
-        this.internal.overlayslices[3]=this.create3DElement(this.internal.volume,
+        this.internal.overlayslices[3]=this.create3DElement(this.internal.objectmap,
                                                             this.internal.overlayslices,
                                                             false,
                                                             true,
@@ -1647,9 +1647,10 @@ class OrthogonalViewerElement extends BaseViewerElement {
         else
             this.volumeRendering=false;
 
-        if (!this.internal.layoutcontroller.usesWEBGL2())
-            this.volumeRendering=false;
-                    
+        webutil.runAfterAllLoaded( () => {
+            if (!this.internal.layoutcontroller.usesWEBGL2())
+                this.volumeRendering=false;
+        });
 
     }
 
@@ -1726,6 +1727,6 @@ class OrthogonalViewerElement extends BaseViewerElement {
 }
 
 webutil.defineElement('bisweb-orthogonalviewer', OrthogonalViewerElement);
-
+export default OrthogonalViewerElement;
 
 

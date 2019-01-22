@@ -1,0 +1,131 @@
+<head>
+    <title>BioImage Suite Web Binaries</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no">
+    <link rel="icon" href="images/favicon.ico">
+    <!-- external css files -->
+    <!-- build:css -->
+    <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_bright.css">
+    <!-- endbuild -->
+
+</head>
+<body>
+
+  <nav class="navbar navbar-default navbar-fixed-top" style="background-color:#ffffff">
+    <a href="./index.html" target="_blank"><img src="./images/bisweb_newlogo.png" height="80px" alt="logo"
+    style="margin-left: 20px; margin-top:10 px"></a>
+  </nav>
+
+  
+  <div style="margin-left:30px; margin-right:50px; position:relative;
+              margin-top:0px; top: 100px">
+
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-xs-12 col-md-6">
+          <H2>Download Page.</H2>
+          
+          
+          <p>This page contains desktop and commandline versions of the tools in
+            BioImage Suite web. BioImage Suite Web also works directly in your browser
+            and <a href="http://bisweb.yale.edu/">can be accessed from this webpage.</a></p>
+          
+          <p>We gratefully acknowledge
+            support from the <a href="https://www.braininitiative.nih.gov/"  target="_blank">NIH Brain Initiative</a> under grant R24 MH114805 (Papademetris X. and Scheinost D. PIs).</p>
+        </div>
+        <div class="col-xs-6 col-md-6">
+          <iframe width="520" height="293" src="https://www.youtube.com/embed/CnbdaQ0O52k" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+      </div>
+      
+        <div class="col-xs-12 col-md-12">
+        <H3>Current Version</H3>
+        <H4>Version 1.0, Dec 12, 2018</H4>
+        
+        <OL>
+          <LI> Desktop Applications</LI>
+          <UL>
+            <LI><a href="http://bisweb.yale.edu/binaries/BioImageSuiteWebInstaller-1.0.0-2018_12_12.exe">Microsoft
+                Windows installer</a> (~ 140 MB)</LI>
+            <LI><a href="http://bisweb.yale.edu/binaries/bisweb_macos_1.0.0_2018_12_12.app.zip">MacOS
+                zipped .app file</a> (~ 140 MB)</LI>
+            <LI><a href="http://bisweb.yale.edu/binaries/bisweb_linux_1.0.0_2018_12_12.zip">Linux
+                (Ubuntu) zip file</a> (~ 140 MB)</LI>
+            
+          </UL>
+          
+          <BR><p>The desktop applications are based on (and
+            include) <a href="https://electronjs.org/">Electron</a>. </p>
+          
+          <LI> Command Line Tools</LI>
+          <UL>
+            <LI> <a href="http://bisweb.yale.edu/binaries/bisweb-1.0.0-js-wasm-12_Dec_2018.tar.gz">All-platform
+                command line tools package.</a> (~ 10 MB)</LI>
+            <LI> <a href="http://bisweb.yale.edu/binaries/bisweb-1.0.0-js-wasm-withtestdata-12_Dec_2018.tar.gz">All-platform
+                command line tools package <EM>with test data</EM>.</a> (~ 50 MB)</LI>
+          </UL>
+          <BR><p>Please note that these distribution should work on both
+            Windows, Mac OS and Ubuntu. In all three cases you will need to install
+            <a href="https://nodejs.org/en/">Node.js v8.x or v10.x LTS</a>.</p>
+          
+        </OL>
+        <HR>
+        
+
+        <H4>Developement Version 1.1.0a, Jan 2019</H4>
+        
+        <LI> Command Line Tools</LI>
+        <BR>
+        <p>Please note that these distribution should work on both
+          Windows, Mac OS and Ubuntu. In all three cases you will need to install
+          <a href="https://nodejs.org/en/">Node.js v10.x LTS</a>.</p>
+        <p> To install, use npm. To install this globally (recommanded), open a
+          console and then type:
+          <PRE>
+            sudo npm install -g biswebnode
+          </PRE>
+          
+        <p>(On Ms-Wndows omit the sudo part).</p><BR>
+        
+        <p>To run any command line tool then simply type:
+          <PRE> biswebnode modulename</PRE></p>
+        
+        <P>or        
+          <PRE> biswebnode</PRE>
+        
+        to get a list of all the modules.</p>
+        
+        <p> To uninstalll type:
+          <PRE>sudo npm remove -g biswebnode</PRE>
+        </p>
+        <HR>
+        
+        <p> You may obtain the source code for this application from
+          our <a href="https://github.com/bioimagesuiteweb/bisweb"
+                 target="_blank">main github repository</a> and from <a href="https://github.com/bioimagesuiteweb/gplcppcode"
+                                                                        target="_blank">the plugin repository</a>.</p> 
+        </div>
+    </div>
+
+    <div class="container-fluid">
+
+      <HR>
+
+      <div class="row">
+        <div class="col-xs-12 col-sm-6 col-md-5 col-lg-4"   style="background-color:rgb(192,128,128); height:90px;">
+          <img src="./images/bislogomed.png" height="60px" style="margin:10px" alt="oldlogo">
+        </div>
+        <div class="col-xs-12 col-sm-6 col-md-7 col-lg-7" style="background-color:rgb(192,128,128); color:white; height:90px;">
+          <H4>
+          If you are looking for the desktop C++/TCL 
+          <a href="https://medicine.yale.edu/bioimaging/suite/">legacy version of
+            Yale BioImage Suite</a> it may be
+          downloaded from this <a href="https://medicine.yale.edu/bioimaging/suite/lands/">webpage</a>.
+          <BR> <BR>
+          </H4>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+  
+      

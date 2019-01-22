@@ -37,7 +37,7 @@ const THREE=require('three');
 const BisWebPanel = require('bisweb_panel.js');
 import dat from 'dat.gui';
 
-const imagepath=webutil.getWebPageImagePath();
+
 
 // -------------------------------------------------------------------------
 const brain_vertexshader_text = 
@@ -846,7 +846,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     var cleanmatrixdata = function() {
         internal.conndata.cleanup();
         if (internal.keynodedlg!==null) 
-            internal.keynodedlg.cleanup();
+            internal.keynodedlg.getWidget().empty();
         internal.keynodedlg=null;
         internal.posFileInfo=[ "NONE", 0 ];
         internal.negFileInfo=[ "NONE", 0 ];
@@ -1109,6 +1109,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             }
         };
         const img=new bisweb_image();
+        const imagepath=webutil.getWebPageImagePath();
         img.load(`${imagepath}/Reorder_Atlas.nii.gz`,false)
             .then(function() { internalreadatlas(img,save); })
             .catch( (e) => { myerror(e) ; });
@@ -1598,6 +1599,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             
             internal.subviewers=subviewers;
             onDemandCreateGUI();
+            const imagepath=webutil.getWebPageImagePath();
             loadparcellation(`${imagepath}/shen.json`);
             
             bisgenericio.read(`${imagepath}/lobes_right.json`).then( (obj) => {
@@ -2018,7 +2020,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
  *      bis-layoutwidgetid :  the layout widget to create the GUI in
  */
 
-class ConnectivityControl extends HTMLElement {
+class ConnectivityControlElement extends HTMLElement {
 
     connectedCallback() {
         
@@ -2104,6 +2106,7 @@ class ConnectivityControl extends HTMLElement {
 
 }
 
-webutil.defineElement('bisweb-connectivitycontrolelement', ConnectivityControl);
 
+webutil.defineElement('bisweb-connectivitycontrolelement', ConnectivityControlElement);
+export default ConnectivityControlElement;
 

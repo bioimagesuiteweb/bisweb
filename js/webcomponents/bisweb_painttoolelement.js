@@ -1183,6 +1183,5 @@ class PaintToolElement extends HTMLElement {
     }
 }
 
-
-
 webutil.defineElement('bisweb-painttoolelement', PaintToolElement);
+export default PaintToolElement;

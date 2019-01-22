@@ -27,10 +27,14 @@
 // -----------------------------------------------------------------
 // Create command line
 // -----------------------------------------------------------------
-const program=require('commander');
-const genericio=require('../js/core/bis_genericio.js');
-const fs=require('fs');
 const path=require('path');
+const fs=require('fs');
+const program=require('commander');
+
+require(path.join(__dirname,'../config/bisweb_pathconfig.js'));
+const genericio=require('bis_genericio.js');
+
+
 
 var help = function() {
     console.log('\nThis program creates the biswasmmodule.js file\n');
@@ -103,14 +107,18 @@ let arr=new Uint8Array(d);
 //console.log("++++ RAW Binary WASM Array length=",arr.length);
 let str=genericio.tozbase64(arr);
 
-//    console.log('++++ BisWASM loaded as zbase-64 string, length=',biswebpack.length);
+//    console.log('++++ BisWASM loaded as zbase-64 string, length=',bioimagesuitewasmpack.length);
 
 let a=getDate("/");
 let b=getTime(1);
 
 let inputfilename=path.basename(path.normalize(fname2));
 
-txt='var biswasm_initialize_function=null;\n'+txt.trim().replace(/module.exports/g,'biswasm_initialize_function');
+//eliminate require statements that are used if this module is in node as it confuses webpack!
+txt=txt.trim().replace(/module.exports/g,'biswasm_initialize_function').replace(/require\(/g,'console.log(');
+
+
+txt='var biswasm_initialize_function=null;\n'+txt;
 
 let output_text=`
 
@@ -118,7 +126,7 @@ let output_text=`
 (function () {
 
     ${txt};
-    const biswebpack= {
+    const bioimagesuitewasmpack= {
         binary: "${str}",
         date : "${a}, ${b}",
         filename : "external js module: ${inputfilename}",
@@ -126,9 +134,9 @@ let output_text=`
     };
 
     if (typeof module !== "undefined" && module.exports) {
-        module.exports = biswebpack;
+        module.exports = bioimagesuitewasmpack;
     } else {
-        window.biswebpack=biswebpack;
+        window.bioimagesuitewasmpack=bioimagesuitewasmpack;
     }
 })();
 `;
@@ -137,3 +145,4 @@ console.log(`++++ Writing webpack-wasm module to ${program.output}`);
 fs.writeFileSync(program.output,output_text);
 
 process.exit(0);
+

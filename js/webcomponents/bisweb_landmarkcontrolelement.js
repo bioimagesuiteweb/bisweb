@@ -1060,6 +1060,7 @@ class LandmarkControlElement extends HTMLElement {
     }
 }
 
-webutil.defineElement('bisweb-landmarkcontrolelement', LandmarkControlElement);
 
+webutil.defineElement('bisweb-landmarkcontrolelement', LandmarkControlElement);
+export default LandmarkControlElement;
 

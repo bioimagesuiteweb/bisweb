@@ -1,3 +1,6 @@
+![Logo](https://bioimagesuiteweb.github.io/bisweb-manual/bisweb_newlogo_small.png)
+
+---
 This document contains developer documentation for
 [BioImage Suite Web](https://bioimagesuiteweb.github.io/webapp/). Follow this
 link

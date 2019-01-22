@@ -72,8 +72,8 @@ class BisWebPanel {
             'border-width' : '2 0 0 0',
             'padding-top'  : '10px',
             'width' : '100%',
-            'background-color' : webutil.getpassivecolor(),
-        }});
+        }, classname : 'biswebpanel' });
+
 
         this.widgetbase=webutil.creatediv({
             css  : {
@@ -82,8 +82,9 @@ class BisWebPanel {
                 'margin-left' : '2px',
                 'margin-right' : '2px',
                 'margin-bottom' : '5px',
-                'background-color' : webutil.getpassivecolor(),
-            }});
+            },
+            classname : 'biswebpanel' 
+        });
         
         this.widget=webutil.creatediv({
             parent : this.widgetbase,
@@ -169,10 +170,9 @@ class BisWebPanel {
         let w=this.widgetbase;
         
         if (flag) {
-            w.css({'background-color': webutil.getactivecolor()});
+            w.addClass('biswebactive');
         } else {
-            let x = w.parent().css('backgroundColor');
-            w.css({'background-color':x});
+            w.removeClass('biswebactive');
         }
     }
 
@@ -252,9 +252,7 @@ class BisWebPanel {
             this.header.css({'height' : '50px'});
 
         this.minimalHeader=$('<div></div>');
-        this.header.css({
-            'background-color' : webutil.getpassivecolor2(),
-        });
+        this.header.addClass('biswebpanel2');
 
         let buttonbar=webutil.creatediv({
             parent : this.header,

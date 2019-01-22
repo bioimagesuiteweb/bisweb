@@ -612,6 +612,7 @@ class ParavisionImportElement extends HTMLElement {
 
 }
 
+module.exports=ParavisionImportElement;
 webutil.defineElement('bisweb-paravisionimportelement', ParavisionImportElement);
 
 

@@ -483,7 +483,7 @@ var aboutApplication=async function() {// jshint ignore:line
     if (dosimple)  {
         let m=getModal();
         m.title.text('About this Application');
-        let s=`<p>This is the main page of BioImage Suite Web ${tools.version} ( current build= ${bisdate.version}, ${bisdate.date}, ${bisdate.time}).</p>`;
+        let s=`<p>This is the main page of BioImage Suite Web ${bisdate.version} ( current build= ${bisdate.version}, ${bisdate.date}, ${bisdate.time}).</p>`;
         if (internal.hasServiceWorker) {
             if (offline)
                 s+=`<p>This application is running in offline mode.</p>`;
@@ -723,14 +723,14 @@ var createVersionBoxes=async function() {
     let extra="";
     
     let color="#ffffff";
-    if (tools.version.indexOf("a")>1 || tools.version.indexOf("b")>1) {
+    if (bisdate.version.indexOf("a")>1 || bisdate.version.indexOf("b")>1) {
         internal.unstable=true;
         extra=`, ${bisdate.time}`;
         color="#ff2222";
     }
 
     let bb=$(`<div align="right" style="right:5.5vw; top:624px;  z-index:50; position: absolute; color:${color}">
-             Version:  ${tools.version} (${bisdate.date}${extra})</div>`);
+             Version:  ${bisdate.version} (${bisdate.date}${extra})</div>`);
     $('body').append(bb);
 
 

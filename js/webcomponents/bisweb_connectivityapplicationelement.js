@@ -28,7 +28,6 @@ const numeric=require('numeric');
 const util=require('bis_util');
 const webfileutil = require('bis_webfileutil');
 const ViewerApplicationElement = require('bisweb_mainviewerapplication');
-const imagepath=webutil.getWebPageImagePath();
 
 /**
  * A Application Level Element that creates a Connectivity Application
@@ -88,6 +87,10 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
 
     connectedCallback() {
 
+        // Set external stuff first
+        this.setExternalAndImagePath();
+
+        // Now on to this one
         this.savelightstate = this.getAttribute('bis-extrastatesave') || null;
         
         var VIEWER = {
@@ -127,6 +130,7 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
 
             return new Promise( (resolve,reject) => {
                 let image0 = new BisWebImage();
+                const imagepath=webutil.getWebPageImagePath();
                 image0.load(`${imagepath}/MNI_T1_1mm_stripped_ras.nii.gz`,"RAS")
                     .then(function() {
                         VIEWER.viewer.setimage(image0);
@@ -246,11 +250,13 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         webutil.createMenuItem(imenu,'Use the Shen Atlas',
                                function() {
                                    control.clearmatrices();
+                                   const imagepath=webutil.getWebPageImagePath();
                                    loadatlas(`${imagepath}/gray_highres_groupncut150_right5_left1_emily_reord_new.nii.gz`,'RAS');
                                });
         webutil.createMenuItem(imenu,'Use the AAL Atlas',
                                function() {
                                    let img=new BisWebImage();
+                                   const imagepath=webutil.getWebPageImagePath();
                                    img.load(`${imagepath}/AAL_1mm_ras.nii.gz`,'RAS').then( () => {
                                        control.clearmatrices();
                                        control.importparcellation(img,'AAL Atlas');
@@ -284,13 +290,16 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         
         // ------------------------------------ Help Menu ----------------------------
 
-        let helpmenu=this.createHelpMenu(menubar);
-        webutil.createMenuItem(helpmenu,''); // separator
-        helpmenu.append($("<li><a href=\"https://www.nitrc.org/frs/?group_id=51\" target=\"_blank\" rel=\"noopener\" \">Download Parcellation</a></li>"));
-        webutil.createMenuItem(helpmenu,''); // separator
-        webutil.createMenuItem(helpmenu,'Load Sample Matrices',function() {
-            control.loadsamplematrices([`${imagepath}/pos_mat.txt`,`${imagepath}/neg_mat.txt`]);
-        });
+        if (!this.externalMode) {
+            let helpmenu=this.createHelpMenu(menubar);
+            webutil.createMenuItem(helpmenu,''); // separator
+            helpmenu.append($("<li><a href=\"https://www.nitrc.org/frs/?group_id=51\" target=\"_blank\" rel=\"noopener\" \">Download Parcellation</a></li>"));
+            webutil.createMenuItem(helpmenu,''); // separator
+            webutil.createMenuItem(helpmenu,'Load Sample Matrices',function() {
+                const imagepath=webutil.getWebPageImagePath();
+                control.loadsamplematrices([`${imagepath}/pos_mat.txt`,`${imagepath}/neg_mat.txt`]);
+            });
+        }
         
         // ------------------------------------ Initialize ---------------------------
         
@@ -310,19 +319,24 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         };
         webutil.createDragAndCropController(HandleFiles);
 
-
+        const imagepath=webutil.getWebPageImagePath();
         this.applicationInitializedPromiseList.push(loadatlas(`${imagepath}/gray_highres_groupncut150_right5_left1_emily_reord_new.nii.gz`));
 
+
+        this.finalizeConnectedEvent();
+        /*
         Promise.all(this.applicationInitializedPromiseList).then( () => {
             webfileutil.initializeFromUserPrefs();
             this.parseQueryParameters();
+            this.fixColors();
             document.body.style.zoom =  1.0;
         }).catch( (e) => {
             console.log('Error ',e);
-        });
+        });*/
     }
 }
 
+module.exports=ConnectivityApplicationElement;
 webutil.defineElement('bisweb-connectivityapplication', ConnectivityApplicationElement);
 
 

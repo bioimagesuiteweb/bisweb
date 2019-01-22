@@ -123,4 +123,5 @@ class WebWorkerController extends HTMLElement {
     }
 }
 
+module.exports=WebWorkerController;
 webutil.defineElement('bisweb-webworkercontroller', WebWorkerController);

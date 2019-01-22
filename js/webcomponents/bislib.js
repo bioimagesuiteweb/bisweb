@@ -22,47 +22,70 @@ require("__BISWEB_CUSTOM");
 require("__BISWEB_EXTERNAL");
 require("bisweb_regressiontestelement.js");
 require("bisweb_displayregressionelement.js");
-require("bisweb_dialogelement.js");
-require("bisweb_collectionelement.js");
-require("bisweb_draganddropelement.js");
 require("bisweb_components.js");
-require("bisweb_viewerlayoutelement.js");
-require("bisweb_colormapcontrollerelement.js");
-require("bisweb_mosaicviewerelement.js");
-require("bisweb_orthogonalviewerelement.js");
-require("bisweb_landmarkcontrolelement.js");
-require("bisweb_atlastoolelement.js");
-require("bisweb_blobanalyzerelement.js");
-require("bisweb_painttoolelement.js");
-require("bisweb_snapshotelement.js");
-require("bisweb_console.js");
-require("bisweb_grapherelement.js");
-require('bisweb_simplealgorithmcontroller.js');
-require("bisweb_modulemanagerelement.js");
-require("bisweb_connectivitycontrolelement.js");
-require("bisweb_paravisionimportelement.js");
-require("bisweb_mni2talelement.js");
-require("bisweb_paravisionapplicationelement.js");
-require("bisweb_connectivityapplicationelement.js");
-require("bisweb_mainviewerapplication.js");
-require("bisweb_dualviewerapplication.js");
-require("bisweb_webworkercontroller.js");
-require("bisweb_diffspectelement.js");
-require("bisweb_fmrielement.js");
 require("bisweb_awsmodule.js");
 require("bisweb_fileserverclient.js");
 require("bisweb_misactool.js");
 require("bisweb_filetreepanel.js");
 require("bisweb_dicomimportelement.js");
 
-
 const webutil = require('bis_webutil');
 const webfileutil = require('bis_webfileutil');
+
+// ES6 Imports for modules that need that
+
+import ConnectivityControlElement from "bisweb_connectivitycontrolelement.js";
+import LandmarkControlElement from "bisweb_landmarkcontrolelement.js";
+import MosaicViewerElement from "bisweb_mosaicviewerelement.js";
+import OrthogonalViewerElement from "bisweb_orthogonalviewerelement.js";
+import PaintToolElement from "bisweb_painttoolelement.js";
+
+const Elements = {
+    DialogElement : require("bisweb_dialogelement.js"),
+    CollectionElement : require("bisweb_collectionelement.js"),
+    DragAndDropElement : require("bisweb_draganddropelement.js"),
+    ViewerLayoutElement : require("bisweb_viewerlayoutelement.js"),
+    ColormapControllerElement : require("bisweb_colormapcontrollerelement.js"),
+    AtlasToolElement : require("bisweb_atlastoolelement.js"),
+    BlobAnalyzerElement : require("bisweb_blobanalyzerelement.js"),
+    SnapshotElement : require("bisweb_snapshotelement.js"),
+    ConsoleElement : require("bisweb_console.js"),
+    GrapherElement : require("bisweb_grapherelement.js"),
+    SimpleAlgorithmControllerElement : require('bisweb_simplealgorithmcontroller.js'),
+    ModuleManagerElement : require("bisweb_modulemanagerelement.js"),
+    ParavisionImportElement: require("bisweb_paravisionimportelement.js"),
+    MNI2TalElement : require("bisweb_mni2talelement.js"),
+    ParavisionApplicationElement : require("bisweb_paravisionapplicationelement.js"),
+    MainViewerApplicationElement : require("bisweb_mainviewerapplication.js"),
+    ConnectivityApplicationElement : require("bisweb_connectivityapplicationelement.js"),
+    DualViewerApplicationElement : require("bisweb_dualviewerapplication.js"),
+    WebWorkerControllerElement : require("bisweb_webworkercontroller.js"),
+    DiffSPECTElement : require("bisweb_diffspectelement.js"),
+    ConnectivityControlElement:    ConnectivityControlElement,
+    LandmarkControlElement :     LandmarkControlElement,
+    MosaicViewerElement :    MosaicViewerElement,
+    OrthogonalViewerElement : OrthogonalViewerElement,
+    PaintToolElement :    PaintToolElement,
+
+    
+};
+
+
 
 let exportobj=require('bisweb_exportobject');
 exportobj.webutil=webutil;
 exportobj.webfileutil=webfileutil;
+exportobj.Elements=Elements;
+
+
+exportobj.setDarkMode=function(f) {
+    webutil.setDarkMode(f);
+};
+
+exportobj.setAutoColorMode=function() {
+    webutil.setAutoColorMode();
+};
+
 
 export default exportobj;
-
 

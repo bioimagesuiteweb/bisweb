@@ -176,4 +176,6 @@ class ConsoleElement extends BisWebDialogElement {
     
 }
 
+
 webutil.defineElement('bisweb-console', ConsoleElement);
+module.exports=ConsoleElement;

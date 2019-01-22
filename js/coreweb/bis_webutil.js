@@ -130,12 +130,12 @@ const bisweb_templates = `
 const $ = require('jquery');
 const bootbox=require('bootbox');
 const biswrap = require('libbiswasm_wrapper');
+const biswebcss=require('bisweb_css.js');
 const genericio= require('bis_genericio');
 
 const names = ["default", "primary", "success", "info", "warning", "danger", "link"];
 const directions = ["top", "bottom", "left", "right"];
-
-let tools=require('../../web/images/tools.json');
+const bisdate=require('bisdate.js');
 
 /** A JQuery object that is a wrapper around the DOM objects. 
  * See: {@link http://learn.jquery.com/using-jquery-core/jquery-object/}.
@@ -149,7 +149,11 @@ const internal = {
     alertcount: 0,
     alerttimeout: 8000,
     alerttop: 70,
+    imagepath : null,
+    darkmode : true,
+    cssapplied : false,
 };
+
 
 
 /**
@@ -162,6 +166,49 @@ let deleteModal = (modal) => {
 };
 
 const webutil = {
+
+    /**
+     * apply css styles in string css
+     * @param{String} css - a multiplne css file as a string
+     */
+    applycss : function(css) {
+        let style = document.createElement('style');
+        style.setAttribute('type', 'text/css');
+        style.innerHTML = css;
+        document.head.appendChild(style);
+    },
+
+    
+    /** set color mode
+     * @param{Boolean} d - if true use dark mode (default) , else bright mode
+     */
+    setDarkMode : function(d=true) {
+
+        if (internal.cssapplied)
+            return;
+
+        console.log('.... setting css mode=',d);
+        internal.darkmode = d;
+        this.applycss(biswebcss(d));
+        internal.cssapplied=true;
+    },
+
+    /** Auto detect color mode based on background color */
+    setAutoColorMode : function() {
+
+        if (internal.cssapplied) {
+            console.log('.... css already applied');
+            return;
+        }
+        
+        let style = getComputedStyle(document.body);
+        let bg=style['background-color'];
+        console.log('In Auto Color Mode',bg);
+        if (bg.indexOf('255')>0)
+            this.setDarkMode(false);
+        else
+            this.setDarkMode(true);
+    },
 
     /** set alert top 
      * @alias WebUtil.setAlertTop
@@ -453,12 +500,10 @@ const webutil = {
         var css = opts.css || null;
         var classname = opts.classname || null;
 
-        var bbar;
-        if (classname === null)
-            bbar = $("<div></div>");
-        else
-            bbar = $("<div class=\"" + classname + "\"></div>");
-
+        let bbar = $("<div></div>");
+        if (classname !== null)
+            bbar.addClass(classname);
+        
         if (css !== null)
             bbar.css(css);
         if (parent !== null)
@@ -544,78 +589,10 @@ const webutil = {
     },
 
 
-    /** 
-     * function that creates a checkbox using Jquery/Bootstrap (for styling)
-     * @alias WebUtil.createtogglecheckbox
-     * @param {object} opts - the options object.
-     * @param {string} opts.name - the name (text) of the element
-     * @param {string} opts.parent - the parent element. If specified the new button will be appended to it.
-     * @param {object} opts.css - if specified set the value of the `bis' attribute to this
-     * @param {string} opts.type - type of button (for bootstrap styling). One of "default", "primary", "success", "info", "warning", "danger", "link". This is used for the label that is part of the checkbox.
-     * @param {string} opts.tooltip - string to use for tooltip
-     * @param {string} opts.position - position of tooltip (one of top,bottom,left,right)
-     * @param {function} opts.callback - if specified adds this is a callback ``on change''. The event (e) is passed as argument.
-     * @returns {JQueryElement} 
-     */
-    createtogglecheckbox: function (opts) {
-        opts = opts || {};
-        var checked = opts.checked || false;
-        var callback = opts.callback || undefined;
-
-        if (callback !== undefined) {
-            if (typeof callback !== "function")
-                throw (new Error(callback + ' is not a function in creating select ' + names));
-        } else
-            throw (new Error(callback + ' is not a function in creating select ' + names));
-
-        var btn;
-        var enablecallback = false;
-        var mycallback = function () {
-            var state = btn.data('state');
-            if (enablecallback) {
-                state = !state;
-                btn.data('state', state);
-            }
-            btn.blur();
-
-            if (!state) {
-                btn.css({
-                    'border-radius': '0px',
-                    'color': "#bbbbbb"
-                });
-
-                btn.removeClass('btn-success');
-                btn.addClass('btn-default');
-            } else {
-                btn.css({
-                    'border-radius': '20px',
-                    'color': "#ffffff"
-                });
-                btn.addClass('btn-success');
-                btn.removeClass('btn-default');
-            }
-
-            if (enablecallback)
-                callback(state);
-        };
-        if (checked)
-            opts.type = "success";
-        else
-            opts.type = "default";
-
-
-        opts.callback = mycallback;
-        btn = this.createbutton(opts);
-        btn.css({ 'outline': '0px' });
-        btn.data('state', checked);
-        mycallback();
-        enablecallback = true;
-        return btn;
-    },
 
     /** 
      * function that creates a radio button set element using Jquery/Bootstrap (for styling)
-     * @alias WebUtil.createselect
+     * @alias WebUtil.createradiobuttonset
      * @param {object} opts - the options object.
      * @param {array} opts.values - an array with all the options to create (e.g. [ "Red", "Green", "Blue" ]
      * @param {array} opts.value - the current value e.g. "Red"
@@ -752,10 +729,11 @@ const webutil = {
         var index = opts.index || -1;
         var parent = opts.parent || null;
         var size = opts.size || 1;
-        var css = opts.css || { 'background-color': "#505050", 'color': "#ffffff" };
+        var css = opts.css || { };
         var cssclass = opts.class || "dg c select";
         var callback = opts.callback || undefined;
-
+        cssclass +=" biswebselect";
+        
         var select = $("<select class=\"" + cssclass + "\" + size=\"" + size + "\"></select>");
         var np = names.length;
         for (var i = 0; i < np; i++) {
@@ -909,10 +887,12 @@ const webutil = {
      * @param {function} callback - the callback for item
      * @param {string} css - extra css attributes (as string)
      */
-    createDropdownItem : function (dropdown,name,callback,css='') {
-        if (css==='')
-            css="background-color: #303030; color: #ffffff; font-size:13px; margin-bottom: 2px";
-        return this.createMenuItem(dropdown,name,callback,css);
+    createDropdownItem : function (dropdown,name,callback,classname='') {
+        classname= classname || 'biswebdropdownitem';
+        //        let colors = [ this.getactivecolor(),this.getforegroundcolor() ];
+        //css="background-color: "+colors[0]+"; color: "+colors[1]+"; font-size:13px; margin-bottom: 2px";
+
+        return this.createMenuItem(dropdown,name,callback,'',classname);
     },
 
     createDropdownMenu : function (name,parent) {
@@ -922,7 +902,7 @@ const webutil = {
         let txt=$(`<div class="dropdown" style="display: inline-block">
                   <button id="${nid}" type="button" class="btn btn-default btn-sm" style="margin-left: 2px" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                   ${name} <span class="caret"></span></button>
-                  <ul class="dropdown-menu" class="label-info"  style="background-color : #303030" aria-labelledby="${nid}">
+                  <ul class="dropdown-menu" class="label-info"  style="biswebpanel" aria-labelledby="${nid}">
                   </ul>
                   </div>`);
         parent.append(txt);
@@ -939,26 +919,6 @@ const webutil = {
      */
     removedatclose: function (folder) {
         $(folder.domElement).find(".close-button").remove();
-    },
-
-    /** get an active color (e.g. red background when control is live)
-     * @alias WebUtil.getactivecolor
-     * @returns {string} - color
-     */
-    getactivecolor: function () {
-        return "#440000";
-    },
-
-    /** get a passive color (e.g. gray background when control is inactive)
-     * @alias WebUtil.getpassivecolor
-     * @returns {string} - color
-     */
-    getpassivecolor: function () {
-        return "#303030";
-    },
-
-    getpassivecolor2: function () {
-        return "#383838";
     },
 
     // ------------------------------------------------------------------------
@@ -996,11 +956,12 @@ const webutil = {
      * @param {string} name - the menu name (if '') adds separator
      * @param {function} callback - the callback for item
      * @param {string} css - styling info for link element
+     * @param {string} classname - extra class info for link element
      * activated by pressing this menu
      * @alias WebUtil.createMenuItem
      * @returns {JQueryElement} -- the  element
      */
-    createMenuItem: function (parent, name, callback,css='') {
+    createMenuItem: function (parent, name, callback,css='',classname='') {
 
         var menuitem;
         name = name || '';
@@ -1016,8 +977,12 @@ const webutil = {
         if (css.length>1)
             style=` style="${css}"`;
         
-        menuitem = $(`<li><a href="#" ${style}>${name}</a></li>`);
+        menuitem = $(`<li></li>`);
+        let linkitem=$(`<a href="#" ${style}>${name}</a></li>`);
+        menuitem.append(linkitem);
         parent.append(menuitem);
+        if (classname.length>0)
+            linkitem.addClass(classname);
 
         this.disableDrag(menuitem,true);
 
@@ -1263,7 +1228,7 @@ const webutil = {
                     gplextra=` (See also <a href="https://github.com/bioimagesuiteweb/gplcppcode" target="_blank">the plugin repository.</a>)`;
                 
                 
-                resolve(`<p>This application is part of BioImage Suite Web ${tools.version}.</p><p>BioImage Suite Web is an <a href="https://github.com/bioimagesuiteweb/bisweb" target="_blank">open source</a> software package.${gplextra}</p><p>We gratefully acknowledge
+                resolve(`<p>This application is part of BioImage Suite Web ${bisdate.version}.</p><p>BioImage Suite Web is an <a href="https://github.com/bioimagesuiteweb/bisweb" target="_blank">open source</a> software package.${gplextra}</p><p>We gratefully acknowledge
                           support from the <a href="https://www.braininitiative.nih.gov/" target="_blank">NIH Brain Initiative</a> under grant R24 MH114805 (Papademetris X. and Scheinost D. PIs).</p><p>${extra}</p>`);
             }).catch( (e) => { reject(e); });
         });
@@ -1279,7 +1244,16 @@ const webutil = {
 
 
     /** get full path to html file */
+    setWebPageImagePath(name) {
+        internal.imagepath=name;
+        console.log('Setting BASE URL for images to '+name);
+    },
+    
+    
+    /** get full path to html file */
     getWebPageImagePath() {
+        if (internal.imagepath!==null)
+            return internal.imagepath;
         return genericio.getimagepath();
     },
     
@@ -1426,6 +1400,8 @@ if (typeof (document) !== "undefined") {
         bisdialog: newDiv.querySelector('#bisdialog'),
         bisscrolltable: newDiv.querySelector('#bisscrolltable'),
     };
+
+
 }
 
 module.exports = webutil;

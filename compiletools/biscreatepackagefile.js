@@ -23,14 +23,13 @@
 
 global.bioimagesuiteweblib=true;
 
-require('../config/bis_checknodeversion');
-const fs=require('fs');
 const path=require('path');
+const fs=require('fs');
 const program=require('commander');
-require('../config/bisweb_pathconfig.js');
+require(path.join(__dirname,'../config/bis_checknodeversion'));
+const appinfo=require(path.join(__dirname,'../package.json'));
 
-const bisdate=require('../build/web/bisdate.json');
-console.log('date=',bisdate);
+require(path.join(__dirname,'../config/bisweb_pathconfig.js'));
 
 var help = function() {
     console.log('\nThis program fixes the manifest file.\n');
@@ -38,7 +37,7 @@ var help = function() {
 
 program.version('1.0.0')
     .option('-o, --output <s>', 'The output directory for the package.json file')
-    .option('--testing', 'if  set create test options')
+    .option('-c, --webpackconfig <s>', 'The webpack configuration file')
     .on('--help',function() {
         help();
     })
@@ -47,56 +46,71 @@ program.version('1.0.0')
 
 
 let output = program.output || null;
-let testing = program.testing || false;
+let config = program.webpackconfig || null;
 
-if (output === null) {
-    console.log('--- must specify an output file using -o flag');
+if (output === null || config===null) {
+    console.log('--- must specify an output file using -o flag and a config file using the -c flag');
     process.exit(0);
 }
 
-let version=bisdate.version;
-console.log('++++ Testing=',testing, program.testing);
+let webpackconfig=require(config);
+let webonlydependencies=appinfo.bioimagesuiteweb.webonly;
+
+
+// ------------------------------------------------------------
+
+
+console.log("++++\n++++ Invoking biscreatepackagefile "+output+" "+config+"\n++++\n++++");
+
+let excludelist=Object.keys(webonlydependencies);
+// Exclude this
+excludelist.push("@tensorflow/tfjs-node");
+
+
+// these are the explicit node.js dependencies
+let includelist = Object.keys(webpackconfig.externals);
+
+excludelist=excludelist.concat(includelist);
+
+// ------------------------------------------------------------
+let devDependencies= {};
+devDependencies["mocha"]="3.5.3";
+
+let dependencies={};
+for (let i=0;i<includelist.length;i++) {
+    let key=includelist[i];
+    dependencies[key]=appinfo.dependencies[key];
+}
+
 
 let obj = { 
     "name": "biswebnode",
-    "version": version,
+    "version": appinfo.version,
     "description": "A node.js implementation of BioImage Suite Web command line tools in Javascript and WebAssembly",
-    "homepage": "www.bioimagesuite.org",
+    "homepage": appinfo.homepage,
     "main" : "lib/bioimagesuiteweblib.js",
-    "author": "Xenios Papademetris",
-    "license": "GPL V2 (most source code is Apache V2)",
+    "keywords" : appinfo.keywords,
+    "author": appinfo.author,
+    "license": "GPL v2 or Apache",
     "bin" : "lib/bisweb.js",
-    "dependencies": {
-        "colors": "1.1.2",
-        "http-proxy": "1.17.0",
-        "request": "2.88.0",
-        "websocket-stream": "5.1.2",
-        "ws": "6.1.2"
-    },
+    "dependencies": dependencies,
+    "devDependencies" : devDependencies,
     "repository": {
         "type" : "git",
         "url" : "https://github.com/bioimagesuiteweb/bisweb"
     },
-};
-
-if (testing) {
-    obj["devDependencies"] = {
-        "mocha": "3.5.3",
-    };
-    obj["scripts"]= {
+    "scripts" : {
         "test": "mocha test/test_module.js"
-    };
-}
+    }
+};
 
 
 let txt=JSON.stringify(obj,null,4)+"\n";
-
 console.log('++++ Output = \n'+txt+'++++');
 
-
 output=path.resolve(path.join(output,"package.json"));
-
 fs.writeFileSync(output,txt);
+
 console.log('++++');
 console.log('++++ Package.json file updated in',output);
 console.log('++++ Once you "make install", run "npm pack" to create the package');

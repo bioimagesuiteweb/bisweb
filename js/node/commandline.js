@@ -190,8 +190,9 @@ let loadParse = function (args, toolname,basedirectory='') {
                     mod.directInvokeAlgorithm(modArguments).then(() => {
                         console.log('oooo -------------------------------------------------------');
                         mod.storeCommentsInOutputs(args.join(" "),modArguments,baseutils.getSystemInfo(biswrap));
-                        mod.saveOutputs(program).then(() => {
-                            console.log('oooo\noooo Saved outputs.');
+                        mod.saveOutputs(program).then((m) => {
+                            if (m.length>0)
+                                console.log('oooo\noooo Saved outputs.');
                             resolve( 'Done Saving');
                         }).catch((e) => {
                             reject('An error occured saving'+e);

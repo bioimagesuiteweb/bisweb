@@ -19,7 +19,7 @@ cmake_minimum_required(VERSION 3.5)
 
 PROJECT(BISWEB)
 
-SET (BISWEB_VERSION "1.1.1a1")
+SET (BISWEB_VERSION "1.1.1a")
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Core Project
@@ -37,6 +37,7 @@ SET (BISWEB_PYTHON_INIT ${PROJECT_SOURCE_DIR}/../config/__init__.py)
 SET (BISWEB_PYTHON_PATH ${PROJECT_SOURCE_DIR}/../config/bis_path.py)
 SET (MODULE_LIST_FILENAME ${PROJECT_SOURCE_DIR}/ModuleList.txt)
 SET (PYTHON_MODULE_LIST_FILENAME ${PROJECT_SOURCE_DIR}/PythonModuleList.txt)
+GET_FILENAME_COMPONENT(WEBPLIBCONFIG ${PROJECT_SOURCE_DIR}/../config/lib.config.js ABSOLUTE)
 FIND_PROGRAM(NodeInterp node)
 
 
@@ -217,6 +218,7 @@ ELSE (BIS_USEGPL)
 ENDIF (BIS_USEGPL)
 
 install (FILES ${LICENSE_FILE} DESTINATION bisweb/ RENAME LICENSE)
+install (FILES ${PROJECT_SOURCE_DIR}/ModuleList.txt DESTINATION bisweb/)
 install (DIRECTORY ${PROJECT_SOURCE_DIR}/../various/serverconfig  DESTINATION bisweb )
 install (FILES ${PROJECT_SOURCE_DIR}/../web/images/mean_reg2mean.nii.gz DESTINATION bisweb/images)
 install (FILES ${PROJECT_SOURCE_DIR}/../web/images/facemask_char.nii.gz DESTINATION bisweb/images)
@@ -293,9 +295,7 @@ IF (BIS_A_EMSCRIPTEN)
   FILE(GLOB H3 ${PROJECT_SOURCE_DIR}/../js/modules/*.js)
   SET(JSFILES ${H1} ${H2} ${H3})
 
-  GET_FILENAME_COMPONENT(WEBPCONFIG ${PROJECT_SOURCE_DIR}/../config/app.config.js ABSOLUTE)
-  GET_FILENAME_COMPONENT(WEBPLIBCONFIG ${PROJECT_SOURCE_DIR}/../config/lib.config.js ABSOLUTE)
-  GET_FILENAME_COMPONENT(WEBPCONFIGMOCHA ${PROJECT_SOURCE_DIR}/../config/mocha.config.js ABSOLUTE)
+
 
   # bioimagesuiteweblib.js
   SET (BISWEBLIBFILE bioimagesuiteweblib.js)
@@ -303,17 +303,13 @@ IF (BIS_A_EMSCRIPTEN)
   GET_FILENAME_COMPONENT(OUTSCRIPT ${OUTSCRIPT} ABSOLUTE)
   SET (INSCRIPT ${PROJECT_SOURCE_DIR}/../js/bin/${BISWEBLIBFILE})
   GET_FILENAME_COMPONENT(INSCRIPT ${INSCRIPT} ABSOLUTE)
-  SET (CONFIGFILE ${WEBPCONFIG})
-  IF (${BISWEBLIBFILE} MATCHES "bioimagesuiteweblib.js")
-    SET (CONFIGFILE ${WEBPLIBCONFIG})
-    MESSAGE("++ Using ${CONFIGFILE}")
-  ENDIF (${BISWEBLIBFILE} MATCHES "bioimagesuiteweblib.js")
-
+  SET (CONFIGFILE ${WEBPLIBCONFIG})
+  MESSAGE("++ Using ${CONFIGFILE}")
 
   add_custom_command(OUTPUT ${OUTSCRIPT}
-    DEPENDS ${MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JSFILES}  ${LIBNAME} ${INSCRIPT} ${JS_WRAP_OUTPUT} ${JS_DATE_OUTPUT} ${WEBPACK_WASM_MODULE} ${CONFIGFILE}
+    DEPENDS ${MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JSFILES}  ${LIBNAME} ${INSCRIPT} ${JS_WRAP_OUTPUT} ${JS_DATE_OUTPUT} ${WEBPACK_WASM_MODULE} ${CONFIGFILE} ${PROJECT_SOURCE_DIR}/../build/web/bisdate.json ${PROJECT_SOURCE_DIR}/../build/web/bislib.js
     PRE_BUILD COMMENT "Creating webpack-cli commandline library ${BISWEBLIBFILE}"
-    COMMAND webpack-cli --entry ${INSCRIPT} --config ${CONFIGFILE} --output-path ${LIBRARY_OUTPUT_PATH} --output-filename ${BISWEBLIBFILE}
+    COMMAND webpack-cli --entry ${INSCRIPT} --config ${CONFIGFILE} --output-path ${LIBRARY_OUTPUT_PATH} --output-filename ${BISWEBLIBFILE} 
     )
   add_custom_target(${BISWEBLIBFILE} ALL DEPENDS ${OUTSCRIPT})
 
@@ -336,16 +332,15 @@ IF (BIS_A_EMSCRIPTEN)
   install (FILES ${NPMREADME}  DESTINATION bisweb)
 
   MESSAGE("Installing tests")
-  SET(TFLAG "--testing")
   SET (OUTSCRIPT ${PROJECT_SOURCE_DIR}/../js/bin/bisweb-test.js)
   install (FILES ${OUTSCRIPT} DESTINATION bisweb/lib
     PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
 
   set (NPMPACKAGEFILE ${LIBRARY_OUTPUT_PATH}/package.json)
   add_custom_command(OUTPUT ${NPMPACKAGEFILE}
-    DEPENDS ${NPM_PACKAGE_SCRIPT} 
-    PRE_BUILD COMMENT "Creating package.json file ${TFLAG}"
-    COMMAND node ${NPM_PACKAGE_SCRIPT} -o ${LIBRARY_OUTPUT_PATH} ${TFLAG}
+    DEPENDS ${NPM_PACKAGE_SCRIPT} ${BISWEBLIBFILE} ${PROJECT_SOURCE_DIR}/../package.json ${CONFIGFILE}
+    PRE_BUILD COMMENT "Creating package.json file"
+    COMMAND node ${NPM_PACKAGE_SCRIPT} -o ${LIBRARY_OUTPUT_PATH} -c ${WEBPLIBCONFIG}
     )
   add_custom_target(package.json ALL DEPENDS ${NPMPACKAGEFILE})
   install (FILES ${NPMPACKAGEFILE} DESTINATION bisweb PERMISSIONS OWNER_READ WORLD_READ)
@@ -376,7 +371,7 @@ IF (BIS_A_EMSCRIPTEN)
     IF(BIS_MODULETEST)
       SET (COUNT 0)
       FOREACH (item ${MODULES})
-	add_test(NAME "js-module-${item}" COMMAND mocha test_module.js --tpath ${LIBRARY_OUTPUT_PATH} --testname ${item} --input ${TEST_DIR}/module_tests.json WORKING_DIRECTORY ${TEST_DIR} )
+	add_test(NAME "js-module-${item}" COMMAND mocha test_module.js --testname ${item} --input ${TEST_DIR}/module_tests.json WORKING_DIRECTORY ${TEST_DIR} )
 	MATH (EXPR COUNT "${COUNT}+1")
       ENDFOREACH (item ${TLIST})
       MESSAGE("~~~~~ Added ${COUNT} javascript/mocha module tests ${LIBRARY_OUTPUT_PATH}")

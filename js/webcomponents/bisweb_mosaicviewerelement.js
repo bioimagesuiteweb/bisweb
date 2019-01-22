@@ -948,8 +948,8 @@ class MosaicViewerElement extends BaseViewerElement {
 
 }
 
-
 webutil.defineElement('bisweb-mosaicviewer', MosaicViewerElement);
+export default MosaicViewerElement;
 
 
 

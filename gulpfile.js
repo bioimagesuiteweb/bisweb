@@ -48,7 +48,6 @@ program
     .option('-m, --minify','flag to minify')
     .option('-l, --platform  <s>','platform')
     .option('-p, --dopack <s>','dopackage 0=electron-packager, 1=run inno or zip in addition, 2=using zip distribution for node_modules, 3 run npm install',parseInt)
-    .option('-e, --eslint <n>','if 0 use jshint instead of eslint',parseInt)
     .option('-w, --worker','if present build the webworker as well')
     .option('-s, --sworker','if present build the service worker and index.js as well')
     .option('--tf','if true package tensorfow in electron app')
@@ -57,8 +56,8 @@ program
     .option('--internal <n>','if 1 use internal code, if 2 serve the internal directory as well',parseInt)
     .option('--external <n>','if 1 use extra external code (in ../external)',parseInt)
     .option('--verbose','verbose')
+    .option('--tasks','show all tasks')
     .parse(process.argv);
-
 
 if (program.dopack === undefined)
     program.dopack=2;
@@ -150,6 +149,12 @@ let internal = {
         "./node_modules/jstree/dist/themes/default/style.css",
         "./web/biscommon.css"
     ],
+    dependcss2 : [ 
+        "./lib/css/bootstrap_bright_edited.css", 
+        "./lib/css/bootstrap-colorselector.css",
+        "./node_modules/jstree/dist/themes/default/style.css",
+        "./web/biscommon.css"
+    ], // Bright mode
     lintscripts : ['js/**/*.js','config/*.js','compiletools/*.js','*.js','web/**/*.js','test/**/*.js','fileserver/*.js'],
     toolarray : [ 'index'],
     htmlcounter : 0,
@@ -157,6 +162,7 @@ let internal = {
     jscounter   : 0,
     bislib     : 'bislib.js',
     biscss     : 'bislib.css',
+    biscss2     : 'bislib_bright.css', // Bright Mode
     indexlib   : 'index.js',
     serviceworkerlib : 'bisweb-sw.js',
     webworkerlib  : 'webworkermain.js',
@@ -199,6 +205,7 @@ if (options.external) {
 // Get Tool List
 // ---------------------------
 
+internal.appinfo=require('./package.json');
 internal.setup=require('./web/images/tools.json');
 
 // Let example tools
@@ -208,8 +215,10 @@ for (let i=0;i<keys2.length;i++) {
     internal.setup.tools[keys2[i]]=internal.extra.tools[keys2[i]];
 }
 
+
+
 let keys=Object.keys(internal.setup.tools);
-console.log(getTime()+colors.cyan(' Config versiontag='+bis_gutil.getVersionTag(internal.setup.version)+' tools='+keys));
+console.log(getTime()+colors.cyan(' Config versiontag='+bis_gutil.getVersionTag(internal.appinfo.version)+' tools='+keys));
 
 if (options.inpfilename === "" || options.inpfilename === "all") {
     let obj=internal.setup.tools;
@@ -266,39 +275,12 @@ function createDate() {
     return new Promise( (resolve) => { 
         const git = require('git-rev');
         git.long( (str) => {
-            bis_gutil.createDateFile(path.resolve(options.outdir,'bisdate.json'),str,internal.setup.version);
-            bis_gutil.createDateFile(path.resolve(options.outdir,'../wasm/bisdate.js'),str,internal.setup.version);
+            bis_gutil.createDateFile(path.resolve(options.outdir,'bisdate.json'),str,internal.appinfo.version);
+            bis_gutil.createDateFile(path.resolve(options.outdir,'../wasm/bisdate.js'),str,internal.appinfo.version);
             resolve();
         });
     });
 }
-
-
-// ------------------ JSHint ------------------
-
-gulp.task('jshint',  (done) => {
-
-    const jshint = require('gulp-jshint');
-    for (let i=0;i<internal.lintscripts.length;i++) {
-        
-        gulp.src(internal.lintscripts[i])
-            .pipe(jshint({ sub:true, 
-                              node:true,
-                              unused:true,
-                              undef:true,
-                              globalstrict:true,
-                              esversion:6,
-                              "globals": {
-                                  "console": true,
-                                  "require": true,
-                                  "module" : true,
-                              },
-                            }))
-            .pipe(jshint.reporter('default'));
-    }
-    done();
-});
-
 
 
 gulp.task('eslint',  () => { 
@@ -338,9 +320,7 @@ gulp.task('eslint',  () => {
 
 
 gulp.task('watch', () => { 
-    if (options.eslint)
-        return gulp.watch(internal.lintscripts, gulp.series('eslint'));
-    return gulp.watch(internal.lintscripts, gulp.series('jshint'));
+    return gulp.watch(internal.lintscripts, gulp.series('eslint'));
 });
 
 
@@ -398,10 +378,10 @@ gulp.task('buildtest', ((done) => {
     let maincss2    = './web/biswebdisplaytest.css';    
 
     Promise.all([
-        bis_gutil.createHTML('biswebtest',options.outdir,'bislib.js',internal.biscss),
+        bis_gutil.createHTML('biswebtest',options.outdir,'bislib.js',internal.biscss2),
         bis_gutil.createCSSCommon([maincss],'biswebtest.css',options.outdir),
-        bis_gutil.createHTML('biswebdisplaytest',options.outdir,'bislib.js',internal.biscss),
-        bis_gutil.createHTML('biswebdisplaytest2',options.outdir,'bislib.js',internal.biscss),
+        bis_gutil.createHTML('biswebdisplaytest',options.outdir,'bislib.js',internal.biscss2),
+        bis_gutil.createHTML('biswebdisplaytest2',options.outdir,'bislib.js',internal.biscss2),
         bis_gutil.createCSSCommon([maincss2],'biswebdisplaytest.css',options.outdir),
     ]).then( () => { done();});
     
@@ -443,13 +423,16 @@ gulp.task('commonfiles', (done) => {
         gulp.src('./web/biselectron.js').pipe(gulp.dest(options.outdir)),
         gulp.src('./web/'+name+'.json').pipe(rename({'basename' : 'package'})).pipe(gulp.dest(options.outdir)),
         gulp.src('./lib/css/bootstrap_dark_edited.css').pipe(gulp.dest(options.outdir)),
+        gulp.src('./lib/css/bootstrap_bright_edited.css').pipe(gulp.dest(options.outdir)),
         gulp.src('./lib/js/webcomponents-lite.js').pipe(gulp.dest(options.outdir)),
         gulp.src('./node_modules/jquery/dist/jquery.min.js').pipe(gulp.dest(options.outdir)),
         gulp.src('./node_modules/three/build/three.min.js').pipe(gulp.dest(options.outdir)),
         gulp.src('./web/aws/biswebaws.html').pipe(gulp.dest(options.outdir)),
         gulp.src('./web/aws/awsparameters.js').pipe(gulp.dest(options.outdir)),
         gulp.src('./node_modules/bootstrap/dist/js/bootstrap.min.js').pipe(gulp.dest(options.outdir)),
-        gulp.src([ 'web/manifest.json']).pipe(gulp.dest(options.outdir))
+        gulp.src([ 'web/manifest.json']).pipe(gulp.dest(options.outdir)),
+        gulp.src('./web/bootstrap.min.css').pipe(gulp.dest(options.outdir)),
+        gulp.src('./web/binaries.html').pipe(gulp.dest(options.outdir))
     ).on('end', () => {
         bis_gutil.createHTML('console',options.outdir,'',internal.biscss);
         done();
@@ -467,21 +450,28 @@ gulp.task('tools', ( (cb) => {
     let promises=[];
     
     promises.push(bis_gutil.createCSSCommon(internal.dependcss,internal.biscss,options.outdir));
+    promises.push(bis_gutil.createCSSCommon(internal.dependcss2,internal.biscss2,options.outdir));
     
     for (let index=0;index<internal.toolarray.length;index++) {
         let toolname=internal.toolarray[index];
         let gpl=true;
+        let maincss=internal.biscss;
         if (toolname!=='index') {
             if (internal.setup.tools[toolname].nogpl)
                 gpl=false;
+            if (internal.setup.tools[toolname].bright) {
+                maincss=internal.biscss2;
+            }
+            console.log(' Tool=',internal.setup.tools[toolname],maincss);
         }
+        
         console.log(getTime()+colors.green(' Building tool '+(index+1)+'/'+internal.toolarray.length+' : '+toolname));
         internal.jscounter+=1;
 
         let jsname =internal.bislib;
         if (index===0)
             jsname=internal.indexlib;
-        promises.push(bis_gutil.createHTML(toolname,options.outdir,jsname,internal.biscss,gpl));
+        promises.push(bis_gutil.createHTML(toolname,options.outdir,jsname,maincss,gpl));
 
         let customcss='./web/'+toolname+'.css';
         if (fs.existsSync(customcss))
@@ -500,14 +490,14 @@ gulp.task('tools', ( (cb) => {
 
 gulp.task('zip', ((done) => {
     
-    bis_gutil.createZIPFile(options.baseoutput,options.outdir,internal.setup.version,options.distdir,done);
+    bis_gutil.createZIPFile(options.baseoutput,options.outdir,internal.appinfo.version,options.distdir,done);
 }));
 
 gulp.task('packageint', (done) => {
 
     bis_gutil.createPackage(options.dopack,
                             internal.setup.tools,
-                            __dirname,options.outdir,internal.setup.version,options.platform,options.distdir,done);
+                            __dirname,options.outdir,internal.appinfo.version,options.platform,options.distdir,done);
 });
 
 gulp.task('package', gulp.series('commonfiles','packageint'));
@@ -545,7 +535,7 @@ gulp.task('cdoc', (done) =>  {
 });
 
 gulp.task('npmpack', (done) => { 
-    bis_gutil.createnpmpackage(__dirname,internal.setup.version,'build/dist',done);
+    bis_gutil.createnpmpackage(__dirname,internal.appinfo.version,'build/dist',done);
 });
 
 

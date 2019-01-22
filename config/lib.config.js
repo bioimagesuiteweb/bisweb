@@ -17,13 +17,60 @@
 
 "use strict";
 
-const base=require('./app.config.js');
+const path=require('path');
+const mypath=path.normalize(path.resolve(__dirname,'..'));
 
-base.output = {
-    library: 'bioimagesuiteweblib',
-    libraryTarget : 'umd'
+let appinfo=require(path.resolve(__dirname,'../package.json'));
+let webonlydependencies=appinfo.bioimagesuiteweb.webonly;
+
+
+
+
+const obj = {
+    node: {
+	__filename: false,
+	__dirname: false,
+    },
+    mode : 'development',
+    resolve: {
+	extensions: [ '.js'],
+	modules : [ path.resolve(mypath,'node_modules'),
+                    path.resolve(mypath,'lib/js'),
+                    path.resolve(mypath,'js'),
+                    path.resolve(mypath,'js/legacy'),
+                    path.resolve(mypath,'js/core'),
+                    path.resolve(mypath,'js/dataobjects'),
+                    path.resolve(mypath,'js/node'),
+                    path.resolve(mypath,'js/export'),
+                    path.resolve(mypath,'js/modules'),
+                    path.resolve(mypath,'build/wasm') ]
+    },
+    target : "node",
+    output : {
+        library: 'bioimagesuiteweblib',
+        libraryTarget : 'umd'
+    }
 };
 
-base.externals = undefined;
-base.plugins = undefined;
-module.exports = base;
+
+let dependencies=Object.keys(appinfo.dependencies);
+let webdeps=Object.keys(webonlydependencies);
+
+// Make sure this is external
+dependencies.push("colors/safe");
+// Exclude this
+webdeps.push("@tensorflow/tfjs-node");
+
+
+let externals = {};
+for (let i=0;i<dependencies.length;i++) {
+    let key=dependencies[i];
+    if (webdeps.indexOf(key)<0)
+        externals[key]=key;
+}
+
+obj.externals=externals;
+//console.log('--------------------------- Running Webpack -------------------------');
+//console.log("externals=",JSON.stringify(externals,null,2));
+
+module.exports=obj;

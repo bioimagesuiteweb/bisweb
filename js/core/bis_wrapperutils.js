@@ -64,13 +64,13 @@ var initialize_wasm=function(obj=null) {
         }
 
         let done=function(m) {
-            m.bisdate=window.biswebpack.date;
+            m.bisdate=window.bioimagesuitewasmpack.date;
             resolve(m);
         };
         let clb=function() {
-            let dname=window.biswebpack.filename;
-            let binary=genericio.fromzbase64(window.biswebpack.binary);
-            window.biswebpack.initialize(done,dname,binary);
+            let dname=window.bioimagesuitewasmpack.filename;
+            let binary=genericio.fromzbase64(window.bioimagesuitewasmpack.binary);
+            window.bioimagesuitewasmpack.initialize(done,dname,binary);
         };
         
         if (document.readyState == 'complete') {

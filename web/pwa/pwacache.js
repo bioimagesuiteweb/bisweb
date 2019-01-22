@@ -4,10 +4,14 @@ module.exports = {
     
     'internal' : [
         'bislib.css',
+        'bislib_bright.css',
         'bislib.js',
         'biswebaws.html',
         'bootstrap.min.js',
         'bootstrap_dark_edited.css',
+        'bootstrap_bright_edited.css',
+        'binaries.html',
+        'bootstrap.min.css',
         'connviewer.css',
         'connviewer.html',
         'console.html',
@@ -68,6 +72,8 @@ module.exports = {
         'images/yale_broadmann_ras.nii.gz',
         'images/yale_brod_xy.png',
         'images/youtube.png',
+        'images/bisweb_newlogo.png',
+        'images/bisweb_newlogo2.png',
         'index.css',
         'index.html',
         'index.js',

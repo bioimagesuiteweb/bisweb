@@ -386,6 +386,10 @@ var run_memory_test=function() {
     let imgnames = [ 'thr.nii.gz',
                      'thr_sm.nii.gz',
                    ];
+
+    let forcegithub= $('#usegithub').is(":checked") || false;
+    testDataRootDirectory=gettestdata.getbase(forcegithub,false);
+    console.log('++++ Test Data Directory=',testDataRootDirectory);
     
     let fullnames = [ '','','','' ];
     for (let i=0;i<=1;i++)
@@ -796,7 +800,7 @@ var startFunction = (() => {
         $('#cnote').remove();
     }
 
-
+    webutil.setAutoColorMode();
     /*
     
     if (typeof window.BIS !=='undefined')  {

@@ -379,6 +379,7 @@ class AtlasControlElement extends HTMLElement {
 
 }
 
+module.exports=AtlasControlElement;
 webutil.defineElement('bisweb-atlastoolelement', AtlasControlElement);
 
 

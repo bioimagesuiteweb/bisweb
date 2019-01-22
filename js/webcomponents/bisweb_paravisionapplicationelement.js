@@ -57,6 +57,10 @@ class ParavisionApplicationElement extends ViewerApplicationElement {
     
     connectedCallback() {
 
+        // Check if we are in external mode and if we have an imagepath
+        this.setExternalAndImagePath();
+
+        
         const self=this;
         
         const menubarid=this.getAttribute('bis-menubarid');
@@ -141,10 +145,13 @@ class ParavisionApplicationElement extends ViewerApplicationElement {
         if (this.num_independent_viewers > 1)
             self.VIEWERS[1].setDualViewerMode(0.5);
 
-        
+        // Clean up at the end
+        this.finalizeConnectedEvent();
+
     }
 }
 
+module.exports=ParavisionApplicationElement;
 webutil.defineElement('bisweb-paravisionapplication', ParavisionApplicationElement);
 
 

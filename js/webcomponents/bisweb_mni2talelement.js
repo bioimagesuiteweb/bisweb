@@ -75,4 +75,5 @@ class Mni2TalElement extends HTMLElement {
 
 // register element
 
+module.exports=Mni2TalElement;
 webutil.defineElement('bisweb-mni2tal', Mni2TalElement);

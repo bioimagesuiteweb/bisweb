@@ -355,16 +355,19 @@ class CollectionElement extends HTMLElement {
         this.internal.parentDomElement.empty();
         let basediv=webutil.creatediv({ parent : this.internal.parentDomElement,
                                         css : {
-                                            'width' : '100%'
-                                        }
+                                            'width' : '100%',
+                                        },
+                                        'classname' : 'biswebpanel'
                                       });
+
         this.internal.domElement=basediv;
         
         // --------------------------------------------
         let sbar=webutil.creatediv({ parent: basediv});
         this.internal.inlineForm=webutil.creatediv({ parent: sbar});
         
-        const console_html=`<div style="margin:5px; margin-top:10px; overflow: auto; position:relative; color:#fefefe; width:99%; height:97%; background-color:#101010; font-size:11px;"></div>`;
+        const console_html=`<div class="biswebelement" style="margin:5px; margin-top:10px; overflow: auto; position:relative; width:95%; height:97%;"></div>`;
+
         this.internal.currentInfo=$(console_html);
         sbar.append(this.internal.currentInfo);
         this.internal.currentInfo.append("No "+this.specific.name+" in memory.");
@@ -484,6 +487,7 @@ class CollectionElement extends HTMLElement {
         
 }
 
+module.exports=CollectionElement;
 webutil.defineElement('bisweb-collectionelement', CollectionElement);
 
 

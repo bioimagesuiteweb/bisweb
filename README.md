@@ -1,3 +1,6 @@
+![Logo](https://bioimagesuiteweb.github.io/bisweb-manual/bisweb_newlogo_small.png)
+
+---
 ## Welcome to BioImage Suite Web
 
 BioImage Suite Web (bisweb) is a web-based medical image analysis suite
@@ -14,10 +17,10 @@ command line tools, and desktop and web applications. In addition the code is
 modular/componentized and may be useful as a basis for other applications as
 well.
 
-The software is currently in late beta version. A fully working (beta) version
-can be found
-at [https://bioimagesuiteweb.github.io/webapp/](https://bioimagesuiteweb.github.io/webapp/).
-You may also download desktop and command line versions from [our download side](http://bisweb.yale.edu/binaries).
+The software can be accessed from
+[https://bioimagesuiteweb.github.io/webapp/](https://bioimagesuiteweb.github.io/webapp/).
+You may also download desktop and command line versions from
+[our download side](http://bisweb.yale.edu/binaries).
 
 For end-user documentation please see the [User Manual (_Draft_)](https://bioimagesuiteweb.github.io/bisweb-manual/). (The sources for this are also on github at [the manual repository](https://github.com/bioimagesuiteweb/bisweb-manual).)
 
@@ -39,6 +42,22 @@ BIS_USEGPL to `ON`) any resulting binary distribution must comply with the
 terms of the GPL v2. (This is the case with the supplied binary versions of
 BioImage Suite Web.)
 
+__To use as a library:__
+
+
+To use (parts of) BioImage Suite Web as a library you can install it via npm:
+
+For node.js
+
+    npm install biswebnode
+    
+For browser/electron
+
+    npm install biswebbrowser
+
+See the examples repository for examples:
+
+[https://github.com/bioimagesuiteweb/examples](https://github.com/bioimagesuiteweb/examples)
 
 __Code Acknoledgements:__ We have greatly benefited from reading the source
 code of [xtk](https://github.com/xtk/X). We also acknowledge the many posters

@@ -283,10 +283,11 @@ var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,
         tmpout=tmpout+'_full.js';
     
     let cmd='webpack-cli --entry '+source+' --output-filename '+tmpout+' --output-path '+outdir+' --config config'+join+'webpack.config_devel.js';
-    cmd+=' --sort-modules-by size ';
+    if (!debug)
+        cmd+=' --sort-modules-by size ';
 
     if (debug)
-        cmd+=' --display-modules --display-entrypoints --display-exclude';
+        cmd+=' --verbose --display-modules --display-origins';
     else
         cmd+=' --display-max-modules 20';
     
@@ -380,22 +381,36 @@ var inno=function(tools, version, indir , distdir ) {
     const template=require('gulp-template');
     let obj=tools;
     
-    var i_odir    = path.resolve(indir, distdir);
-    var i_icon    = path.resolve(indir, 'web/images/bioimagesuite.png.ico');
-    var i_license = path.resolve(indir, 'build/web/LICENSE');
-    var i_indir   = path.resolve(indir, distdir+'/BioImageSuiteWeb-win32-x64');
-    var i_date    = getDate();
+    let i_odir    = path.resolve(indir, distdir);
+    let i_icon    = path.resolve(indir, 'web/images/bioimagesuite.png.ico');
+    let i_license = path.resolve(indir, 'build/web/LICENSE');
+    let i_indir   = path.resolve(indir, distdir+'/BioImageSuiteWeb-win32-x64');
+    let i_date    = getDate();
 
 
     
-    var i_tools = "";
-    var keys=Object.keys(obj);
-    var max=keys.length;
-    for (var i=0;i<max;i++) {
-        var elem=obj[keys[i]];
-        var title=elem.title;
-        var url=elem.url;
-        i_tools+='Name: "{group}\\Tools\\'+title+'"; Filename: "{app}\\BioImageSuiteWeb.exe"; Parameters: "'+url+'"';
+    let i_tools = "";
+    let keys=Object.keys(obj);
+
+    let newkeys=[];
+    for (let i=0;i<keys.length;i++) {
+        let elem=obj[keys[i]];
+        let include=true;
+        if (elem.noinno) {
+            include=false;
+        }
+        if (include) {
+            newkeys.push(keys[i]);
+        }
+    }
+
+    
+    let max=newkeys.length;
+    for (let i=0;i<max;i++) {
+        let elem=obj[newkeys[i]];
+        let title=elem.title;
+            let url=elem.url;
+            i_tools+='Name: "{group}\\Tools\\'+title+'"; Filename: "{app}\\BioImageSuiteWeb.exe"; Parameters: "'+url+'"';
         if (i<(max-1))
             i_tools+='\n';
     }
@@ -609,7 +624,7 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
     
     // Step 1 copy file
     // make directories
-    let odir=path.resolve(path.join(in_outdir,'bisweb'));
+    let odir=path.resolve(path.join(in_outdir,'biswebbrowser'));
     console.log(colors.red(getTime()+' .... Deleting ',odir));
     try {
         rimraf.sync(odir);
@@ -623,41 +638,81 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
     let distDir=path.join(odir,'dist');
     fs.mkdirSync(distDir);
 
+    console.log(colors.green(getTime()+' Copying from',indir));
     es.concat( 
         gulp.src([ `${indir}/build/web/bislib.js`,
+                   `${indir}/build/web/bootstrap_dark_edited.css`,
+                   `${indir}/build/web/bootstrap_bright_edited.css`,
                    `${indir}/build/web/libbiswasm*wasm.js`,
                    `${indir}/build/web/webcomponents-lite.js`,
                    `${indir}/build/web/jquery.min.js`,
                    `${indir}/build/web/three.min.js`,
                    `${indir}/build/web/bootstrap.min.js`,
                    `${indir}/build/web/bislib.css`,
+                   `${indir}/build/web/bislib_bright.css`,
+                   `${indir}/build/web/biswebtest.css`,
+                   `${indir}/build/web/biswebtest.html`,
+                   `${indir}/build/web/biswebdisplaytest.css`,
+                   `${indir}/build/web/biswebdisplaytest.html`,
                    `${indir}/build/web/exportexample.html`,
                    `${indir}/build/web/exportexample.js`,
+                   `${indir}/js/coreweb/bis_dummy.js`,
+                   `${indir}/build/web/bisdate.json`,
                  ]).pipe(gulp.dest(distDir)),
-        gulp.src([ 'node_modules/bootstrap/dist/css/*']).pipe(gulp.dest(distDir+'/css/')),
         gulp.src([ 'node_modules/bootstrap/dist/fonts/*']).pipe(gulp.dest(distDir+'/fonts/')),
         gulp.src([ 'lib/fonts/*']).pipe(gulp.dest(distDir+'/fonts/')),
-    
-        gulp.src([`${indir}/config/biswebbrowser_readme.md`])
+        gulp.src([ 'web/images/favicon.ico' , 'web/images/bioimagesuite.png']).pipe(gulp.dest(distDir+'/images/')),
+        gulp.src([ 'web/images/mean_reg2mean.nii.gz', 'web/images/facemask_char.nii.gz']).pipe(gulp.dest(distDir+'/images/')),
+        gulp.src([ `${indir}/web/bispreload.js`])
+            .pipe(rename('electronpreload.js'))
+            .pipe(gulp.dest(distDir+'/../electron/')),
+        gulp.src([ `${indir}/web/package.json`])
+            .pipe(rename('electrondependencies.json'))
+            .pipe(gulp.dest(distDir+'/../electron/')),
+        gulp.src([ `${indir}/config/biswebbrowser_readme.md`])
             .pipe(rename('README.md'))
-            .pipe(gulp.dest(odir))
+            .pipe(gulp.dest(odir)),
     ).on('end', () => { 
         console.log(getTime()+' .... Files copied in',distDir);
+
+        // Step 1 fix displaytest2.html
+        //
+
+        let fname=`${indir}/build/web/biswebdisplaytest2.html`;
+        let lines=fs.readFileSync(fname,'utf-8').split('\n');
+        let i=0;
+        while (i<lines.length) {
+            if (lines[i].indexOf('bis-external')>0) {
+                lines[i]=lines[i]+'\n      bis-imagepath="https://bioimagesuiteweb.github.io/webapp/images/"';
+                console.log("fixed = ",lines[i]);
+                i=lines.length;
+            }
+            i=i+1;
+        }
+
+        
+        fs.writeFileSync(distDir+'/biswebdisplaytest2.html',lines.join('\n'));
         
         // Step 2 create package.json
+
+        let appinfo=require('../package.json');
+
+        
+        
         let obj = { 
-            "private": true,
+            "private": false,
             "name": "biswebbrowser",
             "version": version,
-            "description": "A web-based implementation of BioImage Suite in Javascript and WebAssembly",
-            "homepage": "www.bioimagesuite.org",
-            "main" : "dist/bioimagesuiteweb.js",
-            "author": "Xenios Papademetris",
-            "license": "GPL V2 (most source code is Apache V2)",
+            "description": appinfo.description,
+            "homepage": appinfo.homepage,
+            "main" : "dist/bislib.js",
+            "author": appinfo.author,
+            "license": "GPL v2 or Apache",
             "repository": {
                 "type" : "git",
                 "url" : "https://github.com/bioimagesuiteweb/bisweb",
-            }
+            },
+            devDependencies : appinfo.dependencies
         };
         
         let txt=JSON.stringify(obj,null,4)+"\n";
@@ -673,21 +728,9 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
         console.log('++++ Package.json file created in',output);
         console.log('++++');
         
-        // step 3
-        // Master file
-        let txt2=`window.biswebpack=require('./libbiswasm_wasm.js');\nmodule.exports=require('./bislib.js');\n`;
-        
-        let output2=path.resolve(path.join(odir,"dist/bioimagesuiteweb.js"));
-        console.log(getTime()+' Creating '+output2);
-
-        
-        fs.writeFileSync(output2,txt2);
-        console.log('++++');
-        console.log('++++ main js file created in',output2);
-        console.log('++++');
-        
-        // Step 4 run npm pack
-        executeCommand('npm pack',odir,done);
+        //        // Step 4 run npm pack
+        //executeCommand('npm pack',odir,done);
+        done();
     });
     
 };

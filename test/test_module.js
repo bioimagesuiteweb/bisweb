@@ -219,7 +219,7 @@ let list_modules_and_exit=function(testlist) {
 // -----------------------------------------------------------
 describe(getTime()+` Beginning module tests `,function() {
 
-    this.timeout(50000);
+    this.timeout(500000);
     
     before(function() {
         
