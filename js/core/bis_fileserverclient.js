@@ -1,3 +1,4 @@
+/* global Atomics */
 'use strict';
 
 const wsUtilInitialPort = require('bis_wsutil').initialPort;
@@ -192,7 +193,6 @@ class BisFileServerClient extends BisBaseServerClient {
         // We have handle file download events (i.e. server sending large data to us)
         // From here on it is commands
         
-        
         let success=true;
         let ignore=false;
         
@@ -282,7 +282,7 @@ class BisFileServerClient extends BisBaseServerClient {
             }
 
             case 'dicomConversionError': {
-                console.log('Dicom Conversion/Tidying up Failed');
+                console.log('Dicom Conversion/Tidying up Failed', data.payload.output);
                 success=false;
                 break;
             }
@@ -722,8 +722,7 @@ class BisFileServerClient extends BisBaseServerClient {
      * @returns {Promise} payload is the result
      */
     //TODO: Add second input for file move operation
-    fileSystemOperation(name,url) {
-        console.log('file system operation', name, url);
+    fileSystemOperation(name,url,timeout=10000) {
         if (url.indexOf('\\')>=0)
             url=util.filenameWindowsToUnix(url);
 
@@ -734,52 +733,8 @@ class BisFileServerClient extends BisBaseServerClient {
             this.sendCommand({ 'command' : 'filesystemoperation',
                                'operation' : name,
                                'url' : url,
-                               'id' : serverEvent.id }); 
-        });
-    }
-
-    /** performs DICOM conversion by having the server run dcm2nii
-     * @param{String} indir -- the input directory
-     * @param{Function} upd - function to call for progress messages
-     * @param{Boolean} debug - if true run dummy function
-     * @returns {Promise} payload is the result
-     */
-    dicomConversion(indir,upd,debug=false) {
-
-        if (indir.indexOf('\\')>=0)
-            indir=util.filenameWindowsToUnix(indir);
-
-        let outstring="";
-        
-        this.updateCallback= ((msg) => {
-            outstring+=msg;
-            if (upd)
-                upd(msg);
-        });
-
-        
-        return new Promise( (resolve,reject) => {
-            
-            let res=((obj) => {
-                this.updateCallback= console.log;
-                resolve({
-                    output : obj.output,
-                    log  : outstring
-                });
-            });
-
-            let rej=() => {
-                this.updateCallback= console.log;
-                reject();
-            };
-            
-            let serverEvent=bisasyncutil.addServerEvent(res,rej,'dicomConversion');
-            this.sendCommand({ 'command' : 'dicomConversion',
-                               'operation' : 'dicomConversion',
-                               'indir' : indir,
-                               'debug' : debug,
                                'id' : serverEvent.id,
-                               'timeout' : 300000}); 
+                               'timeout' : timeout}); 
         });
     }
 
@@ -842,8 +797,7 @@ class BisFileServerClient extends BisBaseServerClient {
             if (upd)
                 upd(msg);
         });
-
-        
+   
         return new Promise( (resolve,reject) => {
             
             let res=((obj) => {
@@ -869,6 +823,29 @@ class BisFileServerClient extends BisBaseServerClient {
                                'timeout' : 300000}); 
         });
     }
+
+    /*makeFileChecksum(url) {
+   
+        return new Promise( (resolve,reject) => {
+            
+            let res = ( (checksum) => {
+                resolve('Calculated checksum for', url, checksum);
+            });
+            
+            let rej=(e) => {
+                reject('An error occured making the checksum', e);
+            };
+            
+            let serverEvent=bisasyncutil.addServerEvent(res,rej,'makeChecksum');
+            this.sendCommand({ 'command' : 'runModule',
+                               'operation' : 'runmodule',
+                               'modulename' : 'hash',
+                               'params' : { 'url' : url },
+                               'debug' : false,
+                               'id' : serverEvent.id,
+                               'timeout' : 300000}); 
+        });
+    }*/
 
     // ------------------ Download file and helper routines -----------------------------------------------------------------
     /**
@@ -930,7 +907,6 @@ class BisFileServerClient extends BisBaseServerClient {
             bisasyncutil.resolveServerEvent(id,data);
         }
     }
-
 
 
     /**

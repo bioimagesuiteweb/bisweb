@@ -1259,7 +1259,7 @@ class ViewerApplicationElement extends HTMLElement {
             lst[3]=lst[3] || '';
             
             let offline=false;
-            if (lst[3].indexOf('offline')>=0)
+            if ( lst[3] && lst[3].indexOf('offline')>=0)
                 offline=true;
             
             if (firsttime === undefined)

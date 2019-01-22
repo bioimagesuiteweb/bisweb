@@ -20,7 +20,6 @@
 const universalmodules=require('moduleindex');
 const base=require('nodemoduleindex_base');
 
-
 const moduleImports = {
     'bisserver' : require('./fileservermodule.js')
 };
@@ -35,8 +34,6 @@ let getModule = function(toolname) {
     }
     return new newmodulecommand();
 };
-
-
 
 let getModuleNames = function() {
     let a=Object.keys(moduleNames);

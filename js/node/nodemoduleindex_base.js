@@ -22,16 +22,20 @@ const universalmodules=require('moduleindex');
 
 const moduleImports = {
     'infomodule': require('./infomodule.js'),
+    'dicomconversion' : require('./dicommodule.js'),
+    'makechecksum' : require('./hashmodule.js')
     'regressiontests': require('./regressiontestmodule.js'),
 };
 
 let moduleNames=universalmodules.createModuleNames(moduleImports);
 
-let getModule = function(toolname) {
+let getModule = function(toolname, searchParent = true) {
     
     let newmodulecommand=moduleImports[toolname.toLowerCase()];
     if (newmodulecommand===undefined) {
-        return universalmodules.getModule(toolname);
+        if (searchParent) 
+            return universalmodules.getModule(toolname);
+        return null;
     }
     return new newmodulecommand();
 };

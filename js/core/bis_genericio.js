@@ -25,10 +25,12 @@
 
 const biscoreio=require('./bis_coregenericio');
 const util=require('./bis_util');
+
 const glob=biscoreio.getglobmodule();
 const fs=biscoreio.getfsmodule();
 const path=biscoreio.getpathmodule();
 const rimraf=biscoreio.getrimrafmodule();
+
 // -------------------------------------------------------------------------------------------------------
 // File server stuff
 
@@ -360,7 +362,7 @@ let deleteDirectory=function(url) {
  * @returns {Promise} - the payload is true or false
  */
 let moveDirectory=function(url) {
-    console.log('moveDirectory', url);
+
     if (fileServerClient) {
         return fileServerClient.moveDirectory(url);
     }
@@ -603,21 +605,47 @@ let isSaveDownload =function() {
  * @param {String} params.inputDirectory - The input directory to run file conversions in. 
  */
 let runFileConversion = (params) => {
-    let updateFn = (obj) => {
+
+    /*let updateFn = (obj) => {
         console.log('update fn', obj);
-    };
+    };*/
 
     return new Promise( (resolve, reject) => {
         if (fileServerClient) {
             if (params.fileType === 'dicom') {
-                fileServerClient.dicomConversion(params.inputDirectory, updateFn)
-                    .then( (obj) => {
+                fileServerClient.runModule('dicomconversion', params, console.log, true)
+                    .then((obj) => {
                         console.log('Conversion done');
                         resolve(obj);
-                     }).catch( (e) => { reject(e); });
+                    }).catch((e) => { reject(e); });
+            } else {
+                reject('Error: unsupported file type', params.fileType);
             }
+        } else {
+            /*if (params.fileType === 'dicom') {
+                let outputDirectories = bis_dcm2niiutils.makeDicomConversionDirectories();
+                rundcm2nii(params.inputDirectory, outputDirectories.dicomTempDirectory, () => {
+                    bis_bidsutils.dicom2BIDS({ 'indir' : outputDirectories.dicomTempDirectory, 'outdir' : outputDirectories.BIDSOutputDirectory});
+                });
+            }*/
         }
     });
+};
+/**
+ * Makes a SHA256 checksum for a given image file. Currently only functional if a file server is specified.
+ * 
+ * @param {String} url - Filename of image to make checksum for.
+ * @returns Promise that will resolve the checksum, or false if no file server client is specified.
+ */
+let makeFileChecksum = (url) => {
+
+    if (fileServerClient) {
+        return fileServerClient.runModule('makechecksum', { 'url' : url });
+    } else {
+        console.log('Cannot perform makeFileChecksum without a file server client');
+        return false;
+    }
+
 };
 
 /**
@@ -678,7 +706,8 @@ const bisgenericio = {
     getPathSeparator : getPathSeparator,
     //
     isSaveDownload : isSaveDownload,
-    runFileConversion : runFileConversion
+    runFileConversion : runFileConversion,
+    makeFileChecksum : makeFileChecksum,
 };
 
 
