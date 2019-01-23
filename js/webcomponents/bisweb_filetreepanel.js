@@ -18,7 +18,6 @@ require('jstree');
  *      bis-viewerid : the orthogonal viewer to draw in 
  *      bis-viewerid2 : the second orthagonal viewer to draw in. Optional.
  *      bis-layoutwidgetid :  the layout widget to create the GUI in
- *      bis-menubarid: menu to which to add a tab that will open the panel
  */
 class FileTreePanel extends HTMLElement {
 
@@ -31,39 +30,30 @@ class FileTreePanel extends HTMLElement {
         this.viewerid = this.getAttribute('bis-viewerid');
         this.viewertwoid = this.getAttribute('bis-viewerid2');
         this.layoutid = this.getAttribute('bis-layoutwidgetid');
-        this.menubarid = this.getAttribute('bis-menubarid');
         this.viewerappid = this.getAttribute('bis-viewerapplicationid');
 
         bis_webutil.runAfterAllLoaded(() => {
-            console.log('run after all loaded');
-            userPreferences.safeGetItem("internal").then((f) => {
-                this.viewer = document.querySelector(this.viewerid);
-                this.viewertwo = document.querySelector(this.viewertwoid) || null;
-                this.layout = document.querySelector(this.layoutid);
-                this.menubar = document.querySelector(this.menubarid);
-                this.viewerapplication = document.querySelector(this.viewerappid);
-                this.popoverDisplayed = false;
-                this.staticTagSelectMenu = null;
-
-                this.panel = new bisweb_panel(this.layout,
-                    {
-                        name: 'Files',
-                        permanent: false,
-                        width: '400',
-                        dual: true,
-                        mode: 'sidebar',
-                    });
-
-                if (f) {
-                    this.addMenuItem(this.menubar.getMenuBar());
-                }
-
-                let listElement = this.panel.getWidget();
-                let biswebElementMenu = $(`<div class='bisweb-elements-menu'></div>`);
-
-                listElement.append(biswebElementMenu);
-                this.makeButtons(listElement);
+            this.viewer = document.querySelector(this.viewerid);
+            this.viewertwo = document.querySelector(this.viewertwoid) || null;
+            this.layout = document.querySelector(this.layoutid);
+            this.viewerapplication = document.querySelector(this.viewerappid);
+            this.popoverDisplayed = false;
+            this.staticTagSelectMenu = null;
+            
+            this.panel = new bisweb_panel(this.layout, {
+                name: 'Files',
+                permanent: false,
+                width: '400',
+                dual: true,
+                    mode: 'sidebar',
             });
+            
+                
+            let listElement = this.panel.getWidget();
+            let biswebElementMenu = $(`<div class='bisweb-elements-menu'></div>`);
+            
+            listElement.append(biswebElementMenu);
+            this.makeButtons(listElement);
 
             //https://stackoverflow.com/questions/11703093/how-to-dismiss-a-twitter-bootstrap-popover-by-clicking-outside
             let dismissPopoverFn = (e) => {
@@ -112,37 +102,6 @@ class FileTreePanel extends HTMLElement {
      */
     showTreePanel() {
         this.panel.show();
-    }
-
-    /**
-     * Inspects the top menubar for a 'File' item and adds the 'Show File Tree Panel' menu item under it. 
-     * @param {JQuery} menubar - The menubar at the top of the document.
-     */
-    addMenuItem(menubar) {
-        let menuItems = menubar[0].children;
-
-        for (let item of menuItems) {
-
-            //Look for the word 'File' in the menu item
-            if (item.innerText.indexOf('File') !== -1) {
-                //get .dropdown-menu from HTMLCollection item.children
-                for (let childItem of item.children) {
-                    if (childItem.className.indexOf('dropdown-menu') !== -1) {
-
-                        let dropdownItem = bis_webutil.createMenuItem($(childItem), 'File Tree Panel');
-                        dropdownItem.on('click', (e) => {
-                            e.preventDefault();
-                            this.panel.show();
-                        });
-
-                        return true;
-                    }
-                }
-            }
-        }
-
-        console.log('could not find \'File\' menu item, cannot add File Tree Panel item to it');
-        return false;
     }
 
     importFilesFromDirectory(filename) {

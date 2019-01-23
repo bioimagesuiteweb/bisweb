@@ -175,7 +175,6 @@ const webutil = {
     applycss : function(css) {
 
         if (internal.cssstyle!==null) {
-            console.log('Removing',internal.cssstyle);
             document.head.removeChild(internal.cssstyle);
         }
         
@@ -195,7 +194,7 @@ const webutil = {
         if (internal.cssapplied && !force)
             return;
 
-        console.log('.... setting css mode=',d);
+        //        console.log('.... setting css mode=',d);
         internal.darkmode = d;
         this.applycss(biswebcss(d));
         internal.cssapplied=true;
@@ -209,7 +208,7 @@ const webutil = {
     setAutoColorMode : function() {
         
         if (internal.cssapplied) {
-            console.log('.... css already applied');
+            //console.log('.... css already applied');
             return;
         }
         let style = getComputedStyle(document.body);
@@ -226,6 +225,7 @@ const webutil = {
 
         let isDark=this.isDark();
         let needbootstrap=false;
+        let toremove=null;
         let lst=$('link');
         for (let i=0;i<lst.length;i++) {
             let tp=lst[i].type;
@@ -233,10 +233,10 @@ const webutil = {
                 let href=lst[i].href;
                 if (href.indexOf('bootstrap')>=0) {
                     needbootstrap=true;
-                    lst[i].remove();
+                    toremove=lst[i];//.remove();
                 }
                 if (href.indexOf('bislib')>=0) {
-                    lst[i].remove();
+                    toremove=lst[i];//.remove();
                     needbootstrap=false;
                 }
             }
@@ -253,10 +253,28 @@ const webutil = {
                 url="bislib_bright.css";
             }
         }
-        $('head').append(`<link rel="stylesheet" type="text/css" href="${url}">`);
+
+        //
+        //        $('head').prepend(`<link rel="stylesheet" type="text/css" href="${url}">`);
         let newmode=!isDark;
-        webutil.setDarkMode(newmode,true);
-        return internal.darkmode;
+        let apiTag = document.createElement('link');
+        apiTag.rel  = 'stylesheet';
+        apiTag.type = 'text/css';
+        apiTag.href = url;
+        
+        return new Promise( (resolve,reject) => {
+            apiTag.onload = ( () => {
+                toremove.remove();
+                webutil.setDarkMode(newmode,true);
+                resolve(internal.darkmode);
+            });
+            apiTag.onerror=( (e) => {
+                console.log("Error ="+e);
+                reject(internal.darkmode);
+            });
+            document.head.appendChild(apiTag);
+        });
+        
     },
 
 

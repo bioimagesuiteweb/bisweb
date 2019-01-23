@@ -1232,13 +1232,17 @@ class ViewerApplicationElement extends HTMLElement {
     }
 
     /** Toggle color mode */
-    toggleColorMode() {
+    toggleColorMode(save=true) {
 
-        let m=webutil.toggleColorMode();
-        for (let i=0;i<this.VIEWERS.length;i++) {
-            this.VIEWERS[i].handleColorModeChange(m);
-        }
-        userPreferences.setItem('darkmode', m,true);
+        webutil.toggleColorMode().then( (m) => {
+            for (let i=0;i<this.VIEWERS.length;i++) {
+                this.VIEWERS[i].handleColorModeChange(m);
+            }
+            if (save)
+                userPreferences.setItem('darkmode', m,true);
+        }).catch( (m) => {
+            console.log("Failed to switch colors, staying with",m);
+        });
     }
     
 
@@ -1265,7 +1269,7 @@ class ViewerApplicationElement extends HTMLElement {
                 userPreferences.safeGetItem('darkmode').then( (m) => {
                     let s=webutil.isDark();
                     if (m!==s) 
-                        this.toggleColorMode();
+                        this.toggleColorMode(false);
                 });
                 
             }).catch( (e) => {

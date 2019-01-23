@@ -10,10 +10,10 @@
         
     Module['onRuntimeInitialized'] = function() {
 	    const usingWasm =  Module["usingWasm"] || false;
-	    if (binary===false)
+/*	    if (binary===false)
 		    console.log('==== \tModule loaded, ',mode,' usingWasm='+usingWasm.toString()+' wasmname='+wasmname);
 	    else
-		    console.log('==== \tModule ready,',mode,' usingWasm='+usingWasm.toString()+' preloaded from '+wasmname);
+		    console.log('==== \tModule ready,',mode,' usingWasm='+usingWasm.toString()+' preloaded from '+wasmname);*/
 	    callback(Module);
 	};
 

@@ -105,7 +105,7 @@ let parseUserPreferences=function(obj) {
         userPreferences['showwelcome']=true;
 
     if (genericio.getmode() === 'browser')
-        console.log('---- Loaded userPreferences:',JSON.stringify(userPreferences));
+        console.log('---- Loaded userPreferences');//,JSON.stringify(userPreferences));
     
     return true;
 };
