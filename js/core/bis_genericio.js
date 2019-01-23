@@ -686,6 +686,8 @@ const bisgenericio = {
     getpathmodule : biscoreio.getpathmodule,
     getosmodule : biscoreio.getosmodule,
     getglobmodule : biscoreio.getglobmodule,
+    getcolorsmodule : biscoreio.getcolorsmodule,
+    getchildprocessmodule : biscoreio.getchildprocessmodule,
     tozbase64 :  biscoreio.tozbase64,
     fromzbase64 : biscoreio.fromzbase64,
     string2binary : biscoreio.string2binary ,

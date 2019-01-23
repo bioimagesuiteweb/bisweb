@@ -25,7 +25,7 @@
  */
 
 
-let filesaver, fs = null, zlib, nodewin = {}, path = null, os=null,glob=null,rimraf=null,noderequest=null;
+let filesaver, fs = null, zlib, nodewin = {}, path = null, os=null,glob=null,rimraf=null,noderequest=null,colors=null,child_process=null;
 let environment = '';
 let inelectron = false;
 let webWorkerScope;
@@ -51,6 +51,8 @@ if (!webpack) {
     rimraf= bisexternals['rimraf'];
     nodewin.atob = bisexternals['atob'];
     nodewin.btoa = bisexternals['btoa'];
+    child_process= bisexternals['child_process'];
+    colors= bisexternals['colors'];
     environment = 'node';
 } else {
     try  {
@@ -87,6 +89,8 @@ if (inelectron) {
     path = window.BISELECTRON.path;
     os = window.BISELECTRON.os;
     glob = window.BISELECTRON.glob;
+    child_process= window.BISELECTRON['child_process'];
+    colors= window.BISELECTRON['colors'];
     environment = 'electron';
     createBuffer = function (cdata) {
         return new window.BISELECTRON.Buffer(cdata);
@@ -1004,6 +1008,25 @@ var getrimrafmodule = function () {
     return rimraf;
 };
 
+
+/* Return the colors package to use
+ * @alias BisCoreGenericIO#getcolorsmodule
+ * @returns{Module} 
+ */
+var getcolorsmodule = function () {
+    return colors;
+};
+
+
+/* Return the child process package to use
+ * @alias BisCoreGenericIO#getchildprocessmodule
+ * @returns{Module} 
+ */
+var getchildprocessmodule = function () {
+    return child_process;
+};
+
+// --------------------------------------------------------------------
 /** returns the image path for bisweb */
 let getimagepath=function() {
 
@@ -1058,6 +1081,8 @@ const biscoregenericio = {
     getpathmodule : getpathmodule,
     getosmodule : getosmodule,
     getglobmodule : getglobmodule,
+    getcolorsmodule : getcolorsmodule,
+    getchildprocessmodule : getchildprocessmodule,
     getrimrafmodule :     getrimrafmodule,
     tozbase64 : tozbase64,
     fromzbase64 : fromzbase64,
