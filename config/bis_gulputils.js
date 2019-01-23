@@ -301,13 +301,13 @@ var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,
         cmdlist.push(cmd2);
         
         if (os.platform()==='win32') {
-            cmdlist.push(`dir -p ${ijob} ${ojob}`);
+            cmdlist.push(`dir ${ijob} ${ojob}`);
         } else {
             cmdlist.push(`ls -lrth ${ijob} ${ojob}`);
         }
     } else {
         if (os.platform()==='win32') {
-            cmdlist.push(`dir -p ${ojob}`);
+            cmdlist.push(`dir ${ojob}`);
         } else {
             cmdlist.push(`ls -lrth ${ojob}`);
         }
