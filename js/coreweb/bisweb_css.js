@@ -20,7 +20,7 @@ const brightcolors = {
     "background4" : "#bbbbbb",
     "foreground" : "#111111",
     "passivecolor" : "#e8dfdf",
-    "passivecolor0" : "#f0e8e8",
+    "passivecolor0" : "#f8f0f0",
     "passivecolor2" : "#e0d7d7",
 };
 
@@ -246,8 +246,10 @@ body {
     margin-left : 5px;
 }
 
-     
 
+body {
+         background-color: #f0e8e8;
+}
 `;                              
     },
 

@@ -4,7 +4,6 @@ const bisweb_panel = require('bisweb_panel.js');
 const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
 const bis_genericio = require('bis_genericio.js');
-const userPreferences = require('bisweb_userpreferences.js');
 
 require('jstree');
 

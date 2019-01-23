@@ -860,8 +860,6 @@ class ViewerApplicationElement extends HTMLElement {
 
         let link=`a href="https://bioimagesuiteweb.github.io/bisweb-manual/${extrahtml}" target="_blank" rel="noopener"`; 
         hmenu.append($(`<li><${link}>BioImage Suite Web Online Manual</a></li>`));
-        webutil.createMenuItem(hmenu, ''); // separator
-
         webutil.createMenuItem(hmenu, 'Toggle Dark/Bright Mode', () => {   this.toggleColorMode();  });
         webutil.createMenuItem(hmenu, ''); // separator
 
@@ -1148,25 +1146,29 @@ class ViewerApplicationElement extends HTMLElement {
         // ----------------------------------------------------------
         // DICOM
         // ----------------------------------------------------------
-        const dicomid = this.getAttribute('bis-dicomimportid') || null;
-        if (dicomid) {
-            let dicommodule = document.querySelector(dicomid) || null;
+        userPreferences.safeGetItem("internal").then( (f) =>  {
+            if (f) {
+                const dicomid = this.getAttribute('bis-dicomimportid') || null;
+                if (dicomid) {
+                    let dicommodule = document.querySelector(dicomid) || null;
+                    webutil.createMenuItem(bmenu,'');
+                    webutil.createMenuItem(bmenu, 'Import DICOM', () => {
+                        dicommodule.show();
+                    });
+                }
+            }
+                                                              
             webutil.createMenuItem(bmenu,'');
-            webutil.createMenuItem(bmenu, 'Import DICOM', () => {
-                dicommodule.show();
-            });
-        }
-
-        webutil.createMenuItem(bmenu,'');
-        webutil.createMenuItem(bmenu, 'Restart Application',
-                               function () {
-                                   bootbox.confirm("Are you sure? You will lose all unsaved data.",
-                                                   function(e) {
-                                                       if (e)
-                                                           window.open(self.applicationURL,'_self');
-                                                   }
-                                                  );
-                               });
+            webutil.createMenuItem(bmenu, 'Restart Application',
+                                   function () {
+                                       bootbox.confirm("Are you sure? You will lose all unsaved data.",
+                                                       function(e) {
+                                                           if (e)
+                                                               window.open(self.applicationURL,'_self');
+                                                       }
+                                                      );
+                                   });
+        });
         return bmenu;
     }
 
