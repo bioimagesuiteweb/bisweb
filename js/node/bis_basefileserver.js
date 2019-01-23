@@ -898,7 +898,7 @@ class BaseFileServer {
         //module.setListenFunction(listen);
 
         // Run Module and call done when it is done
-        let module = moduleindex.getModule(modulename, false);
+        let module = moduleindex.getModule(modulename, true);
 
         module.execute({}, moduleparams).then((m) => {
             console.log('M=', m);
