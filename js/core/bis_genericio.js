@@ -655,7 +655,7 @@ let makeFileChecksum = (url) => {
         read(url, true).then( (obj) => {
             let hash = util.SHA256(obj.data);
             //resolves data structure in an 'output' field for cross-compatibility with objects returned by the server
-            if (hash) { resolve( { 'output' : { 'hash' : hash, 'filename' : url } } ); };
+            if (hash) { resolve( { 'output' : { 'hash' : hash, 'filename' : url } } ); }
 
             reject(hash);
         }).catch( (e) => {
