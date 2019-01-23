@@ -110,6 +110,16 @@ class ViewerLayoutElement extends HTMLElement {
         return this.darkcanvas;
     }
 
+    setDarkMode(m) {
+        if (m) {
+            this.elements.canvasbase.css({'background-color': '#000000'});
+            this.darkcanvas=true;
+        } else {
+            this.elements.canvasbase.css({'background-color' : "#fefefe"});
+            this.darkcanvas=false;
+        }
+    }
+
     getInnerWidth() {
         if (!this.noresize)
             return window.innerWidth;

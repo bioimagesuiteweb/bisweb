@@ -31,8 +31,7 @@ const bootbox=require('bootbox');
 const webfileutil = require('bis_webfileutil');
 const inobounce=require('inobounce.js');
 const BisWebPanel = require('bisweb_panel.js');
-
-import dat from 'dat.gui';
+const dat = require('bisweb_datgui');
 
 
 var loaderror = function(msg) {

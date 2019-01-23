@@ -26,8 +26,7 @@ const bis3dOrthogonalSlice=require('bis_3dorthogonalslice');
 const webutil=require('bis_webutil');
 const $=require('jquery');
 const BaseViewerElement=require('bisweb_baseviewerelement');
-
-import dat from 'dat.gui';
+const dat = require('bisweb_datgui');
 
 // maxviewer size
 const MAXROWS=8, MAXCOLS=8;
@@ -278,7 +277,8 @@ class MosaicViewerElement extends BaseViewerElement {
             let imageorientinvaxis = this.internal.volume.getOrientation().invaxis;
             let imageorientaxis = this.internal.volume.getOrientation().axis;
             
-            context.font="12px Arial";
+            let fnsize=webutil.getfontsize(context.canvas);
+            context.font=fnsize+"px Arial";
             context.fillStyle = "#dd7700";
             
             let numslices=this.internal.numrows*this.internal.numcols;

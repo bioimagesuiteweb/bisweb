@@ -30,8 +30,8 @@ const webutil=require('bis_webutil');
 const $=require('jquery');
 const bootbox=require('bootbox');
 const BaseViewerElement=require('bisweb_baseviewerelement');
+const dat = require('bisweb_datgui');
 
-import dat from 'dat.gui';
 
 
 

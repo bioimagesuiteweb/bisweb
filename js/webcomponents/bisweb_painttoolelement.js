@@ -19,8 +19,7 @@
 
 "use strict";
 
-import dat from 'dat.gui';
-
+const dat = require('bisweb_datgui');
 const util=require('bis_util');
 const bisweb_image = require('bisweb_image');
 const UndoStack=require('bis_undostack');

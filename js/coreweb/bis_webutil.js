@@ -151,6 +151,7 @@ const internal = {
     alerttop: 70,
     imagepath : null,
     darkmode : true,
+    cssstyle : null,
     cssapplied : false,
 };
 
@@ -172,19 +173,24 @@ const webutil = {
      * @param{String} css - a multiplne css file as a string
      */
     applycss : function(css) {
+
+        if (internal.cssstyle!==null)
+            $(this.internalcssstyle).remove();
+        
         let style = document.createElement('style');
         style.setAttribute('type', 'text/css');
         style.innerHTML = css;
         document.head.appendChild(style);
+        internal.cssstyle=style;
     },
 
     
     /** set color mode
      * @param{Boolean} d - if true use dark mode (default) , else bright mode
      */
-    setDarkMode : function(d=true) {
+    setDarkMode : function(d=true,force=false) {
 
-        if (internal.cssapplied)
+        if (internal.cssapplied && !force)
             return;
 
         console.log('.... setting css mode=',d);
@@ -1368,6 +1374,7 @@ const webutil = {
             document.head.appendChild(apiTag);
         });
     },
+    
     
     /**
      * Searches query string of URL for a value given by 'name'.

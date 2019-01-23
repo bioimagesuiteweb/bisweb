@@ -52,7 +52,7 @@
 
 const $ = require('jquery');
 const webutil = require('bis_webutil');
-const dat=require('dat.gui/build/dat.gui.js');
+const dat = require('bisweb_datgui');
 
 
 // -------------------------------------------------------------------------------------

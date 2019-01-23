@@ -883,6 +883,7 @@ class ViewerApplicationElement extends HTMLElement {
         if (!webutil.inElectronApp()) { 
             userPreferences.safeGetItem("internal").then( (f) =>  {
                 if (f) {
+                    webutil.createMenuItem(hmenu, ''); // separator
                     webutil.createMenuItem(hmenu, 'Open AWS Selector', 
                                            () => {
                                                webfileutil.createAWSMenu();
@@ -890,6 +891,13 @@ class ViewerApplicationElement extends HTMLElement {
                 }
             }).catch( () => { });
         }
+
+        webutil.createMenuItem(hmenu, ''); // separator
+        webutil.createMenuItem(hmenu, 'Toggle Mode', 
+                               () => {
+                                   this.toggleMode();
+                               });
+
         return hmenu;
     }
 
@@ -1002,6 +1010,10 @@ class ViewerApplicationElement extends HTMLElement {
                     return;
                 }
 
+                // Account for viewer and viewer2 being the same thing
+                if (obj.app.lastIndexOf("2")===obj.app.length-1)
+                    obj.app=obj.app.substr(0,obj.app.length-1);
+                
                 if (obj.app !== this.applicationName) {
                     clipboard.setItem('lastappstate',obj).then( () => {
 
@@ -1207,6 +1219,52 @@ class ViewerApplicationElement extends HTMLElement {
         webutil.setAutoColorMode();
     }
 
+    /** Toggle color mode */
+    toggleMode() {
+
+        let isDark=webutil.isDark();
+        let needbootstrap=false;
+        let lst=$('link');
+        console.log('Lst=',lst);
+        for (let i=0;i<lst.length;i++) {
+            let tp=lst[i].type;
+            if (tp==='text/css') {
+                let href=lst[i].href;
+                console.log('Scanning ',href);
+                if (href.indexOf('bootstrap')>=0) {
+                    needbootstrap=true;
+                    console.log(lst[i].href);
+                    console.log('Removing ',lst[i].href);
+                    lst[i].remove();
+                }
+                if (href.indexOf('bislib')>=0) {
+                    console.log('Removing ',lst[i].href);
+                    lst[i].remove();
+                    needbootstrap=false;
+                }
+            }
+        }
+        let url="";
+        if (needbootstrap) {
+            url="../lib/css/bootstrap_dark.css";
+            if (isDark) {
+                url="../lib/css/bootstrap_bright.css";
+            }
+        } else {
+            url="bislib.css";
+            if (isDark) {
+                url="bislib_bright.css";
+            }
+        }
+    //    url=webutil.getScope()+url;
+
+        console.log('Loading', url, 'and forcing to dark=',!isDark);
+        $('head').append(`<link rel="stylesheet" type="text/css" href="${url}">`);
+        let newmode=!isDark;
+        console.log('Calling set Dark Mode',newmode);
+        webutil.setDarkMode(newmode,true);
+    }
+    
 
     finalizeConnectedEvent() {
         //signal other modules waiting for top bar to render
