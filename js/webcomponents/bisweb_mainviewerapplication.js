@@ -861,7 +861,10 @@ class ViewerApplicationElement extends HTMLElement {
         let link=`a href="https://bioimagesuiteweb.github.io/bisweb-manual/${extrahtml}" target="_blank" rel="noopener"`; 
         hmenu.append($(`<li><${link}>BioImage Suite Web Online Manual</a></li>`));
         webutil.createMenuItem(hmenu, ''); // separator
-        
+
+        webutil.createMenuItem(hmenu, 'Toggle Dark/Bright Mode', () => {   this.toggleColorMode();  });
+        webutil.createMenuItem(hmenu, ''); // separator
+
         this.addOrientationSelectToMenu(hmenu);
 
         if (webutil.inElectronApp()) {
@@ -892,11 +895,7 @@ class ViewerApplicationElement extends HTMLElement {
             }).catch( () => { });
         }
 
-        webutil.createMenuItem(hmenu, ''); // separator
-        webutil.createMenuItem(hmenu, 'Toggle Mode', 
-                               () => {
-                                   this.toggleMode();
-                               });
+
 
         return hmenu;
     }
@@ -985,6 +984,8 @@ class ViewerApplicationElement extends HTMLElement {
         } else {
             webutil.createMenuItem(gmenu, 'Viewer Info', function () { self.VIEWERS[0].viewerInformation(); });
         }
+        
+
         
     }
 
@@ -1143,8 +1144,19 @@ class ViewerApplicationElement extends HTMLElement {
                                            });
 
 
-
         
+        // ----------------------------------------------------------
+        // DICOM
+        // ----------------------------------------------------------
+        const dicomid = this.getAttribute('bis-dicomimportid') || null;
+        if (dicomid) {
+            let dicommodule = document.querySelector(dicomid) || null;
+            webutil.createMenuItem(bmenu,'');
+            webutil.createMenuItem(bmenu, 'Import DICOM', () => {
+                dicommodule.show();
+            });
+        }
+
         webutil.createMenuItem(bmenu,'');
         webutil.createMenuItem(bmenu, 'Restart Application',
                                function () {
@@ -1220,49 +1232,13 @@ class ViewerApplicationElement extends HTMLElement {
     }
 
     /** Toggle color mode */
-    toggleMode() {
+    toggleColorMode() {
 
-        let isDark=webutil.isDark();
-        let needbootstrap=false;
-        let lst=$('link');
-        console.log('Lst=',lst);
-        for (let i=0;i<lst.length;i++) {
-            let tp=lst[i].type;
-            if (tp==='text/css') {
-                let href=lst[i].href;
-                console.log('Scanning ',href);
-                if (href.indexOf('bootstrap')>=0) {
-                    needbootstrap=true;
-                    console.log(lst[i].href);
-                    console.log('Removing ',lst[i].href);
-                    lst[i].remove();
-                }
-                if (href.indexOf('bislib')>=0) {
-                    console.log('Removing ',lst[i].href);
-                    lst[i].remove();
-                    needbootstrap=false;
-                }
-            }
+        let m=webutil.toggleColorMode();
+        for (let i=0;i<this.VIEWERS.length;i++) {
+            this.VIEWERS[i].handleColorModeChange(m);
         }
-        let url="";
-        if (needbootstrap) {
-            url="../lib/css/bootstrap_dark.css";
-            if (isDark) {
-                url="../lib/css/bootstrap_bright.css";
-            }
-        } else {
-            url="bislib.css";
-            if (isDark) {
-                url="bislib_bright.css";
-            }
-        }
-    //    url=webutil.getScope()+url;
-
-        console.log('Loading', url, 'and forcing to dark=',!isDark);
-        $('head').append(`<link rel="stylesheet" type="text/css" href="${url}">`);
-        let newmode=!isDark;
-        console.log('Calling set Dark Mode',newmode);
-        webutil.setDarkMode(newmode,true);
+        userPreferences.setItem('darkmode', m,true);
     }
     
 
@@ -1285,6 +1261,13 @@ class ViewerApplicationElement extends HTMLElement {
                 } else {
                     webutil.createAlert('In Test Mode',false);
                 }
+
+                userPreferences.safeGetItem('darkmode').then( (m) => {
+                    let s=webutil.isDark();
+                    if (m!==s) 
+                        this.toggleColorMode();
+                });
+                
             }).catch( (e) => {
                 console.log('Error ',e);
             });
@@ -1551,6 +1534,7 @@ class ViewerApplicationElement extends HTMLElement {
         // ----------------------------------------------------------
         this.attachDragAndDrop();
 
+        
         // ----------------------------------------------------------
         // Help Menu
         // ----------------------------------------------------------

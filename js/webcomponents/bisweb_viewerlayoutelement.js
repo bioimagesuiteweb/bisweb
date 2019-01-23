@@ -93,6 +93,7 @@ class ViewerLayoutElement extends HTMLElement {
         this.noresize=0;
         this.webgl2=false;
         this.darkcanvas=true;
+        this.forcebright=false;
     }
 
     getCSSLength(n='width') {
@@ -111,8 +112,12 @@ class ViewerLayoutElement extends HTMLElement {
     }
 
     setDarkMode(m) {
+        
+        if (this.forcebright)
+            m=false;
+
         if (m) {
-            this.elements.canvasbase.css({'background-color': '#000000'});
+            this.elements.canvasbase.css({'background-color': '#222222'});
             this.darkcanvas=true;
         } else {
             this.elements.canvasbase.css({'background-color' : "#fefefe"});
@@ -305,8 +310,10 @@ class ViewerLayoutElement extends HTMLElement {
         this.fixed=parseInt(this.getAttribute('bis-fixed') || 0 );
         this.noresize=parseInt(this.getAttribute('bis-noresize') || 0 );
         let bright=parseInt(this.getAttribute('bis-brightcanvas') || 0 );
-        if (bright)
+        if (bright) {
             this.darkcanvas=false;
+            this.forcebright=true;
+        }
         
         this.minimizedockpanel=parseInt(this.getAttribute('bis-minimizedockpanel') || 0 );
         if (this.minimizedockpanel!==0)
@@ -494,11 +501,7 @@ class ViewerLayoutElement extends HTMLElement {
             //            let fnsize=webutil.getfontsize(this.context.canvas);
             this.context.font="20px Arial";
             this.context.textAlign="left";
-            
-            if (!this.darkcanvas)
-                this.context.fillStyle = "#000000";
-            else
-                this.context.fillStyle = "#ffffff";
+            this.context.fillStyle = "#dd7700";
             
             if (this.defaulttext.length<4) {
                 this.context.fillText('Load (or Drag) an Image (.nii.gz or .nii)',20,100);

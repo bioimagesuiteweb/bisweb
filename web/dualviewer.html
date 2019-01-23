@@ -120,15 +120,6 @@
       bis-algorithmcontrollerid="#algoelement">
     </bisweb-modulemanager>
     
-
-    <bisweb-viewerapplication
-       id="viewer_application"
-       bis-menubarid="#viewer_menubar"
-       bis-modulemanagerid="#modulemanager"
-       bis-viewerid="#viewer"
-       bis-viewerid2="#viewer2">
-    </bisweb-viewerapplication>
-    
     <bisweb-filetreepanel
     	id="bis_filetreepanel"
         bis-layoutwidgetid="#viewer_layout" 
@@ -144,6 +135,16 @@
         bis-layoutwidgetid="#viewer_layout"
         bis-filetreepanelid="#bis_filetreepanel">
     </bisweb-dicomimportelement>
+
+    <bisweb-viewerapplication
+      id="viewer_application"
+      bis-menubarid="#viewer_menubar"
+      bis-modulemanagerid="#modulemanager"
+      bis-dicomimportid="#dicom_import"
+      bis-viewerid="#viewer"
+      bis-viewerid2="#viewer2">
+    </bisweb-viewerapplication>
+    
   </div>
   
   <bisweb-botmenubar></bisweb-botmenubar>

@@ -8,6 +8,12 @@ const BisWebPanel = require('bisweb_panel.js');
 class DicomImportElement extends HTMLElement {
     constructor() {
         super();
+        this.panel=null;
+    }
+
+    show() {
+        if (this.panel)
+            this.panel.show();
     }
     
     connectedCallback() {
@@ -24,13 +30,12 @@ class DicomImportElement extends HTMLElement {
 
         
         this.layoutcontroller=document.querySelector(layoutid);
-        let panel=new BisWebPanel(this.layoutcontroller,
-                                  { name : "DICOM Import",
-                                    permanent : true,
-                                  });
-        panel.show();
-
-        this.parentDomElement=panel.getWidget();
+        this.panel=new BisWebPanel(this.layoutcontroller,
+                                   { name : "DICOM Import",
+                                     permanent : false,
+                                     dual : false
+                                   });
+        this.parentDomElement=this.panel.getWidget();
         let basediv=$('<div></div>');
         this.parentDomElement.append(basediv);
 

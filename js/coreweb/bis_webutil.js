@@ -174,8 +174,10 @@ const webutil = {
      */
     applycss : function(css) {
 
-        if (internal.cssstyle!==null)
-            $(this.internalcssstyle).remove();
+        if (internal.cssstyle!==null) {
+            console.log('Removing',internal.cssstyle);
+            document.head.removeChild(internal.cssstyle);
+        }
         
         let style = document.createElement('style');
         style.setAttribute('type', 'text/css');
@@ -184,7 +186,7 @@ const webutil = {
         internal.cssstyle=style;
     },
 
-    
+
     /** set color mode
      * @param{Boolean} d - if true use dark mode (default) , else bright mode
      */
@@ -216,8 +218,47 @@ const webutil = {
             this.setDarkMode(false);
         else
             this.setDarkMode(true);
-            
+        return internal.darkmode;            
     },
+
+    /** Toggle color mode  from dark to bright and back*/
+    toggleColorMode() {
+
+        let isDark=this.isDark();
+        let needbootstrap=false;
+        let lst=$('link');
+        for (let i=0;i<lst.length;i++) {
+            let tp=lst[i].type;
+            if (tp==='text/css') {
+                let href=lst[i].href;
+                if (href.indexOf('bootstrap')>=0) {
+                    needbootstrap=true;
+                    lst[i].remove();
+                }
+                if (href.indexOf('bislib')>=0) {
+                    lst[i].remove();
+                    needbootstrap=false;
+                }
+            }
+        }
+        let url="";
+        if (needbootstrap) {
+            url="../lib/css/bootstrap_dark.css";
+            if (isDark) {
+                url="../lib/css/bootstrap_bright.css";
+            }
+        } else {
+            url="bislib.css";
+            if (isDark) {
+                url="bislib_bright.css";
+            }
+        }
+        $('head').append(`<link rel="stylesheet" type="text/css" href="${url}">`);
+        let newmode=!isDark;
+        webutil.setDarkMode(newmode,true);
+        return internal.darkmode;
+    },
+
 
     /** set alert top 
      * @alias WebUtil.setAlertTop

@@ -42,6 +42,7 @@ const userPreferences = {
     showwelcome : true,
     favoriteFolders : [],
     internal : false,
+    darkmode : true,
     enables3 : false,
 };
 

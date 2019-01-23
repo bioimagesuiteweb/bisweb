@@ -143,11 +143,19 @@ if (options.verbose) {
 // -----------------------------------------------------------------------------------------
 
 let internal = {
+    // JS Bundles
+    bislib     : 'bislib.js',
+    indexlib   : 'index.js',
+    serviceworkerlib : 'bisweb-sw.js',
+    webworkerlib  : 'webworkermain.js',
+    // CSS Bundles
+    biscss     : 'bislib.css',   // Dark Mode
     dependcss : [ 
         "./lib/css/bootstrap_dark_edited.css", 
         "./node_modules/jstree/dist/themes/default/style.css",
         "./web/biscommon.css"
     ],
+    biscss2     : 'bislib_bright.css', // Bright Mode
     dependcss2 : [ 
         "./lib/css/bootstrap_bright_edited.css", 
         "./node_modules/jstree/dist/themes/default/style.css",
@@ -155,15 +163,6 @@ let internal = {
     ], // Bright mode
     lintscripts : ['js/**/*.js','config/*.js','compiletools/*.js','*.js','web/**/*.js','test/**/*.js','fileserver/*.js'],
     toolarray : [ 'index'],
-    htmlcounter : 0,
-    csscounter  : 0,
-    jscounter   : 0,
-    bislib     : 'bislib.js',
-    biscss     : 'bislib.css',
-    biscss2     : 'bislib_bright.css', // Bright Mode
-    indexlib   : 'index.js',
-    serviceworkerlib : 'bisweb-sw.js',
-    webworkerlib  : 'webworkermain.js',
     serveroptions : { },
     setwebpackwatch : 0,
 };
@@ -411,25 +410,19 @@ gulp.task('commonfiles', (done) => {
     console.log(getTime()+' Copying css,fonts,images etc. . tensorflow=',options.tensorflow);
 
     es.concat(
-        gulp.src([ 'node_modules/bootstrap/dist/css/*']).pipe(gulp.dest(options.outdir+'css/')),
-        gulp.src([ 'node_modules/bootstrap/dist/fonts/*']).pipe(gulp.dest(options.outdir+'fonts/')),
-        gulp.src([ 'web/images/**/*']).pipe(gulp.dest(options.outdir+'/images/')),
-        gulp.src([ 'lib/fonts/*']).pipe(gulp.dest(options.outdir+'/fonts/')),
         gulp.src([ 'web/manifest.json']).pipe(gulp.dest(options.outdir)),
         gulp.src('./web/bispreload.js').pipe(gulp.dest(options.outdir)),
         gulp.src('./web/biselectron.js').pipe(gulp.dest(options.outdir)),
         gulp.src('./web/'+name+'.json').pipe(rename({'basename' : 'package'})).pipe(gulp.dest(options.outdir)),
-        gulp.src('./lib/css/bootstrap_dark_edited.css').pipe(gulp.dest(options.outdir)),
-        gulp.src('./lib/css/bootstrap_bright_edited.css').pipe(gulp.dest(options.outdir)),
+        gulp.src([ 'web/images/**/*']).pipe(gulp.dest(options.outdir+'/images/')),
+        gulp.src(["./lib/css/bootstrap_*_edited.css" ]).pipe(gulp.dest(options.outdir+'/css/')),
+        gulp.src([ 'lib/fonts/*']).pipe(gulp.dest(options.outdir+'/fonts/')),
         gulp.src('./lib/js/webcomponents-lite.js').pipe(gulp.dest(options.outdir)),
         gulp.src('./node_modules/jquery/dist/jquery.min.js').pipe(gulp.dest(options.outdir)),
         gulp.src('./node_modules/three/build/three.min.js').pipe(gulp.dest(options.outdir)),
+        gulp.src('./node_modules/bootstrap/dist/js/bootstrap.min.js').pipe(gulp.dest(options.outdir)),
         gulp.src('./web/aws/biswebaws.html').pipe(gulp.dest(options.outdir)),
         gulp.src('./web/aws/awsparameters.js').pipe(gulp.dest(options.outdir)),
-        gulp.src('./node_modules/bootstrap/dist/js/bootstrap.min.js').pipe(gulp.dest(options.outdir)),
-        gulp.src([ 'web/manifest.json']).pipe(gulp.dest(options.outdir)),
-        gulp.src('./web/bootstrap.min.css').pipe(gulp.dest(options.outdir)),
-        gulp.src('./web/binaries.html').pipe(gulp.dest(options.outdir))
     ).on('end', () => {
         bis_gutil.createHTML('console',options.outdir,'',internal.biscss);
         done();
@@ -459,10 +452,9 @@ gulp.task('tools', ( (cb) => {
             if (internal.setup.tools[toolname].bright) {
                 maincss=internal.biscss2;
             }
-        }
+        } 
         
         console.log(getTime()+colors.green(' Building tool '+(index+1)+'/'+internal.toolarray.length+' : '+toolname+' using '+maincss));
-        internal.jscounter+=1;
 
         let jsname =internal.bislib;
         if (index===0)
@@ -474,7 +466,7 @@ gulp.task('tools', ( (cb) => {
             promises.push(bis_gutil.createCSSCommon([customcss],toolname+'.css',options.outdir));
 
         let customjs='web/'+toolname+'.js';
-        if (fs.existsSync(customjs)) {
+        if (fs.existsSync(customjs) &&  toolname!=='index') { 
             console.log(getTime()+'\tCopying  JS '+customjs);
             promises.push( new Promise((resolve) => {
                 gulp.src([ customjs ]).pipe(gulp.dest(options.outdir)).on('end', () => { resolve();});
@@ -498,28 +490,37 @@ gulp.task('packageint', (done) => {
 
 gulp.task('package', gulp.series('commonfiles','packageint'));
 
-gulp.task('clean', () => { 
+gulp.task('clean', (done) => { 
 
-    const del = require('del');
-    let arr = [options.outdir+'#*',
-               options.outdir+'*~',
-               options.outdir+'*.js*',
-               options.outdir+'*.zip',
-               options.outdir+'*.wasm',
-               options.outdir+'*.png',
-               options.outdir+'*.html*',
-               options.outdir+'*.css*',
-               options.outdir+'css/*',
-               options.outdir+'fonts/*',
-               options.outdir+'images/*',
-               options.outdir+'doc/*',
-               options.outdir+'node_modules',
-               options.outdir+'test',
-               options.distdir+"/*",
-              ];
-    
-    console.log(getTime()+' Cleaning files ***** .');
-    return del(arr);
+    rimraf.sync(options.outdir+'tmp');
+    gulp.src([ options.outdir+'libbiswasm*.js', options.outdir+'LICENSE' ]).
+        pipe(gulp.dest(options.outdir+'/tmp')).on('end', () => {
+            const del = require('del');
+            let arr = [options.outdir+'#*',
+                       options.outdir+'*~',
+                       options.outdir+'*.txt',
+                       options.outdir+'*.js*',
+                       options.outdir+'*.zip',
+                       options.outdir+'*.wasm',
+                       options.outdir+'*.png',
+                       options.outdir+'*.html*',
+                       options.outdir+'*.css*',
+                       options.outdir+'css',
+                       options.outdir+'fonts',
+                       options.outdir+'images',
+                       options.outdir+'doc/*',
+                           options.outdir+'node_modules',
+                       options.outdir+'test',
+                       options.distdir+"/*",
+                      ];
+            console.log(getTime()+' Cleaning files ***** .');
+            del(arr).then( () => {
+                gulp.src([ options.outdir+'tmp/*']).pipe(gulp.dest(options.outdir)).on('end', () => {
+                    rimraf.sync(options.outdir+'tmp');
+                    done();
+                });
+            });
+        });
 });
 
 gulp.task('jsdoc', (done) => { 
