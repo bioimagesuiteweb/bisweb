@@ -553,6 +553,8 @@ class BaseViewerElement extends HTMLElement {
             }
         }
     }
+
+    
     
     // ------------------------------------------------------------------------
     // Respond to sub-controllers
@@ -1133,6 +1135,13 @@ class BaseViewerElement extends HTMLElement {
             dim[4]=1;
         }
     }
+
+    /** handle color mode change */
+    handleColorModeChange(dark=true) {
+        this.getLayoutController().setDarkMode(dark);
+        this.handleresize();
+    }
+
 }
 
 

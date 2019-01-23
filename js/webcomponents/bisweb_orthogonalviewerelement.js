@@ -30,8 +30,8 @@ const webutil=require('bis_webutil');
 const $=require('jquery');
 const bootbox=require('bootbox');
 const BaseViewerElement=require('bisweb_baseviewerelement');
+const dat = require('bisweb_datgui');
 
-import dat from 'dat.gui';
 
 
 
@@ -352,7 +352,11 @@ class OrthogonalViewerElement extends BaseViewerElement {
             fnsize=Math.round(r*fnsize);
         
         context.font=fnsize+"px Arial";
-        context.fillStyle = "#dddddd";
+        if (this.internal.layoutcontroller.isCanvasDark())
+            context.fillStyle = "#dddddd";
+        else
+            context.fillStyle = "#222222";
+        
         context.clearRect(this.cleararea[0]*fullwidth+2,y0,0.5*dw-4,dh-y0);
         context.textAlign="left";
         context.fillText(s,(this.cleararea[0]+0.01)*fullwidth,0.99*dh);
@@ -814,6 +818,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
             fnsize=Math.round(webutil.getfontsize(context.canvas)*this.cleararea[1]);
 
         context.font=fnsize+"px Arial";
+
         if (this.internal.simplemode)
             context.fillStyle = "#884400";
         else
@@ -899,11 +904,12 @@ class OrthogonalViewerElement extends BaseViewerElement {
                         }
                     }
                 }
-                if (this.internal.simplemode)
+                if (!this.internal.layoutcontroller.isCanvasDark())
                     context.strokeStyle = "#dddddd";
                 else
                     context.strokeStyle = "#222222";
-                
+
+
                 context.lineWidth=1;
                 context.beginPath();
                 

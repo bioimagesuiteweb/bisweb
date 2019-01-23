@@ -251,7 +251,7 @@ var runTests= async function(multiple=false,isconnviewer=false) {
             fail="["+badlist.join(',')+"]";
 
         
-        webconsole.append(`Tests for version=${bisdate}: completed=${run}/${numtests}, passed=${good}/${numtests}, failed=${bad}/${numtests}.&nbsp;&nbsp;&nbsp; <EM>D e t a i l s :</EM> Passed=${ps}, Failed=${fail}, Intentionally Failed=${ifail}`);
+        webconsole.append(`<p>Tests for version=${bisdate}: completed=${run}/${numtests}, passed=${good}/${numtests}, failed=${bad}/${numtests}.&nbsp;&nbsp;&nbsp; <EM>D e t a i l s :</EM> Passed=${ps}, Failed=${fail}, Intentionally Failed=${ifail}</p>`);
 
     }
 

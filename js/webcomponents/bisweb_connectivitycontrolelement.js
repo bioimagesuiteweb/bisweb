@@ -35,7 +35,7 @@ const bismni2tal=require('bis_mni2tal');
 const BisWebMatrix=require('bisweb_matrix');
 const THREE=require('three');
 const BisWebPanel = require('bisweb_panel.js');
-import dat from 'dat.gui';
+const dat = require('bisweb_datgui');
 
 
 

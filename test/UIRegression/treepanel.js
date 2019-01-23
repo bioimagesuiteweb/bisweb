@@ -1,7 +1,7 @@
-/* globals test, fixture, $*/
+/* globals test, fixture */
 
 import { Selector, t } from 'testcafe';
-import { ClientFunction } from 'testcafe';
+//import { ClientFunction } from 'testcafe';
 import process from 'process';
 import fs from 'fs';
 import child_process from 'child_process';

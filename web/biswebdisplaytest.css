@@ -117,8 +117,14 @@
     max-height: calc(100% - 430px);
     overflow-x : auto;
     overflow-y : auto;
-    font-size : 14px;
+    font-size : 16px;
     padding : 2 2 2 2;
+}
+
+
+#results {
+    color : white;
+    font-size : 20px;
 }
 
 #resultimages {

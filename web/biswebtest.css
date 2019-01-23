@@ -35,13 +35,14 @@
 
 #help {
     padding : 1px;
+    font-size : 18px;
 }
 
 #helptext {
     margin-top: 2px;
     margin-left : 20px;
     margin-right : 20px;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
 }
 
 #main {
@@ -49,14 +50,15 @@
     margin-left : 20px;
     margin-right : 20px;
     margin-bottom: 100px;
-    font-size : 14px;
+    font-size : 16px;
 }
 
 
 #results {
     margin-left : 20px;
     font-family: monospace;
-    font-size: 14px;
+    font-size: 20px;
+    color : white;
 }
 
 details {

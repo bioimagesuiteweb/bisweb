@@ -1,4 +1,5 @@
 const darkcolors= {
+    "name" : "dark",
     "activecolor" : "#440000",
     "background" : "#000000",
     "background2" : "#202020",
@@ -11,6 +12,7 @@ const darkcolors= {
 };
 
 const brightcolors = {
+    "name" : "bright",
     "activecolor" : "#ffcfcf",
     "background" : "#ffffff",
     "background2" : "#dddddd",
@@ -18,7 +20,7 @@ const brightcolors = {
     "background4" : "#bbbbbb",
     "foreground" : "#111111",
     "passivecolor" : "#e8dfdf",
-    "passivecolor0" : "#f0e8e8",
+    "passivecolor0" : "#f8f0f0",
     "passivecolor2" : "#e0d7d7",
 };
 
@@ -34,6 +36,7 @@ const obj= {
         
         let st=`
 
+/* biswebinternal ${colors.name} */
 .bisflip {
     -moz-transform: scale(-1, 1);
     -webkit-transform: scale(-1, 1);
@@ -102,6 +105,10 @@ body {
     background-color : #cccccc;
 }
 
+.navbar-default {
+     background-color : #375a7f;
+}
+
 /** Main type */
  .dg {
 	 color: #111;
@@ -168,11 +175,6 @@ body {
 	 padding-left: 16px;
     background: #c8c8c8 url(data:image/gif;base64,R0lGODlhBQAFAJEAAP////Pz8////////yH5BAEAAAIALAAAAAAFAAUAAAIIlI+hKgFxoCgAOw==) 6px 10px no-repeat;
 	 cursor: pointer;
-}
- .dg .closed li.title {
-    background: #d8d8d8 url(data:image/gif;base64,R0lGODlhBQAFAJEAAP////Pz8////////yH5BAEAAAIALAAAAAAFAAUAAAIIlI+hKgFxoCgAOw==) 6px 10px no-repeat;
-	 border-bottom: 1px solid rgba(128, 128, 128, 0.5);
-
 }
 
  .dg .cr.boolean {
@@ -244,11 +246,10 @@ body {
     margin-left : 5px;
 }
 
-         .bispassive {
-             
 
-     
-
+body {
+         background-color: #f0e8e8;
+}
 `;                              
     },
 
@@ -293,9 +294,13 @@ body {
  */
 
 module.exports=function(darkmode) {
+
+    let st='';
     
     if (darkmode)
-        return obj.commoncss(darkcolors)+obj.darkmode();
+        st=obj.commoncss(darkcolors)+obj.darkmode();
+    else
+        st=obj.commoncss(brightcolors)+obj.brightmode();
 
-    return obj.commoncss(brightcolors)+obj.brightmode();
+    return st;
 };

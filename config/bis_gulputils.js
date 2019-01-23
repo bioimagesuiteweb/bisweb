@@ -189,7 +189,6 @@ var createHTML=function(toolname,outdir,libjs,commoncss,gpl=true) {
         let mainhtml   = path.normalize(path.join(__dirname,'../web/'+toolname+'.html'));
         let bundlecss  = commoncss;
 
-        console.log(getTime()+colors.green('\tBuilding HTML '+mainhtml));
         let alljs;
         if (libjs!=='') {
             if (toolname!=="index") {
@@ -199,20 +198,14 @@ var createHTML=function(toolname,outdir,libjs,commoncss,gpl=true) {
                     alljs=[ 'webcomponents-lite.js', 'jquery.min.js', 'three.min.js', 'bootstrap.min.js', 'libbiswasm_nongpl_wasm.js', libjs  ];
             } else {
                 alljs=[ 'jquery.min.js', 'bootstrap.min.js', libjs  ];
-                bundlecss=[ "./bootstrap_dark_edited.css" ];
             }
         } else {
             alljs = [ 'jquery.min.js', 'bootstrap.min.js' ];
         }
-        
+
+        console.log(getTime()+colors.green('\tBuilding HTML '+mainhtml +' '+alljs));
+
         let repljs=alljs;
-        
-        /*  
-            Cache busting one day
-            let t= new Date().getTime()
-            
-            for (let i=0;i<alljs.length;i++)
-            repljs.push(`${alljs[i]}?v=${t}`);*/
         
         return gulp.src([ mainhtml ])
             .pipe(htmlreplace({
@@ -641,8 +634,8 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
     console.log(colors.green(getTime()+' Copying from',indir));
     es.concat( 
         gulp.src([ `${indir}/build/web/bislib.js`,
-                   `${indir}/build/web/bootstrap_dark_edited.css`,
-                   `${indir}/build/web/bootstrap_bright_edited.css`,
+                   `${indir}/build/web/css/bootstrap_dark_edited.css`,
+                   `${indir}/build/web/css/bootstrap_bright_edited.css`,
                    `${indir}/build/web/libbiswasm*wasm.js`,
                    `${indir}/build/web/webcomponents-lite.js`,
                    `${indir}/build/web/jquery.min.js`,
@@ -659,7 +652,6 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
                    `${indir}/js/coreweb/bis_dummy.js`,
                    `${indir}/build/web/bisdate.json`,
                  ]).pipe(gulp.dest(distDir)),
-        gulp.src([ 'node_modules/bootstrap/dist/fonts/*']).pipe(gulp.dest(distDir+'/fonts/')),
         gulp.src([ 'lib/fonts/*']).pipe(gulp.dest(distDir+'/fonts/')),
         gulp.src([ 'web/images/favicon.ico' , 'web/images/bioimagesuite.png']).pipe(gulp.dest(distDir+'/images/')),
         gulp.src([ 'web/images/mean_reg2mean.nii.gz', 'web/images/facemask_char.nii.gz']).pipe(gulp.dest(distDir+'/images/')),

@@ -82,6 +82,8 @@ class ViewerApplicationElement extends HTMLElement {
         this.saveState=null;
         this.applicationURL=webutil.getWebPageURL();
         this.applicationName=webutil.getWebPageName();
+        if (this.applicationName.lastIndexOf("2")===this.applicationName.length-1)
+            this.applicationName=this.applicationName.substr(0,this.applicationName.length-1);
         console.log("+++++ App name=",this.applicationName,this.applicationURL);
 
         
@@ -89,11 +91,11 @@ class ViewerApplicationElement extends HTMLElement {
         this.tab1name=null;
         this.tab2name=null;
 
-        if (this.applicationName=="overlayviewer") 
+        if (this.applicationName==="overlayviewer")
             this.extraManualHTML='overlayviewer.html';
         else if (this.applicationName==="editor")
             this.extraManualHTML='imageeditor.html';
-
+        
         this.applicationInitializedPromiseList= [ ];
 
         
@@ -858,8 +860,9 @@ class ViewerApplicationElement extends HTMLElement {
 
         let link=`a href="https://bioimagesuiteweb.github.io/bisweb-manual/${extrahtml}" target="_blank" rel="noopener"`; 
         hmenu.append($(`<li><${link}>BioImage Suite Web Online Manual</a></li>`));
+        webutil.createMenuItem(hmenu, 'Toggle Dark/Bright Mode', () => {   this.toggleColorMode();  });
         webutil.createMenuItem(hmenu, ''); // separator
-        
+
         this.addOrientationSelectToMenu(hmenu);
 
         if (webutil.inElectronApp()) {
@@ -881,6 +884,7 @@ class ViewerApplicationElement extends HTMLElement {
         if (!webutil.inElectronApp()) { 
             userPreferences.safeGetItem("internal").then( (f) =>  {
                 if (f) {
+                    webutil.createMenuItem(hmenu, ''); // separator
                     webutil.createMenuItem(hmenu, 'Open AWS Selector', 
                                            () => {
                                                webfileutil.createAWSMenu();
@@ -888,6 +892,9 @@ class ViewerApplicationElement extends HTMLElement {
                 }
             }).catch( () => { });
         }
+
+
+
         return hmenu;
     }
 
@@ -976,6 +983,8 @@ class ViewerApplicationElement extends HTMLElement {
             webutil.createMenuItem(gmenu, 'Viewer Info', function () { self.VIEWERS[0].viewerInformation(); });
         }
         
+
+        
     }
 
     //  ---------------------------------------------------------------------------
@@ -1000,6 +1009,10 @@ class ViewerApplicationElement extends HTMLElement {
                     return;
                 }
 
+                // Account for viewer and viewer2 being the same thing
+                if (obj.app.lastIndexOf("2")===obj.app.length-1)
+                    obj.app=obj.app.substr(0,obj.app.length-1);
+                
                 if (obj.app !== this.applicationName) {
                     clipboard.setItem('lastappstate',obj).then( () => {
 
@@ -1129,18 +1142,33 @@ class ViewerApplicationElement extends HTMLElement {
                                            });
 
 
-
         
-        webutil.createMenuItem(bmenu,'');
-        webutil.createMenuItem(bmenu, 'Restart Application',
-                               function () {
-                                   bootbox.confirm("Are you sure? You will lose all unsaved data.",
-                                                   function(e) {
-                                                       if (e)
-                                                           window.open(self.applicationURL,'_self');
-                                                   }
-                                                  );
-                               });
+        // ----------------------------------------------------------
+        // DICOM
+        // ----------------------------------------------------------
+        userPreferences.safeGetItem("internal").then( (f) =>  {
+            if (f) {
+                const dicomid = this.getAttribute('bis-dicomimportid') || null;
+                if (dicomid) {
+                    let dicommodule = document.querySelector(dicomid) || null;
+                    webutil.createMenuItem(bmenu,'');
+                    webutil.createMenuItem(bmenu, 'Import DICOM', () => {
+                        dicommodule.show();
+                    });
+                }
+            }
+                                                              
+            webutil.createMenuItem(bmenu,'');
+            webutil.createMenuItem(bmenu, 'Restart Application',
+                                   function () {
+                                       bootbox.confirm("Are you sure? You will lose all unsaved data.",
+                                                       function(e) {
+                                                           if (e)
+                                                               window.open(self.applicationURL,'_self');
+                                                       }
+                                                      );
+                                   });
+        });
         return bmenu;
     }
 
@@ -1205,6 +1233,20 @@ class ViewerApplicationElement extends HTMLElement {
         webutil.setAutoColorMode();
     }
 
+    /** Toggle color mode */
+    toggleColorMode(save=true) {
+
+        webutil.toggleColorMode().then( (m) => {
+            for (let i=0;i<this.VIEWERS.length;i++) {
+                this.VIEWERS[i].handleColorModeChange(m);
+            }
+            if (save)
+                userPreferences.setItem('darkmode', m,true);
+        }).catch( (m) => {
+            console.log("Failed to switch colors, staying with",m);
+        });
+    }
+    
 
     finalizeConnectedEvent() {
         //signal other modules waiting for top bar to render
@@ -1225,6 +1267,13 @@ class ViewerApplicationElement extends HTMLElement {
                 } else {
                     webutil.createAlert('In Test Mode',false);
                 }
+
+                userPreferences.safeGetItem('darkmode').then( (m) => {
+                    let s=webutil.isDark();
+                    if (m!==s) 
+                        this.toggleColorMode(false);
+                });
+                
             }).catch( (e) => {
                 console.log('Error ',e);
             });
@@ -1491,6 +1540,7 @@ class ViewerApplicationElement extends HTMLElement {
         // ----------------------------------------------------------
         this.attachDragAndDrop();
 
+        
         // ----------------------------------------------------------
         // Help Menu
         // ----------------------------------------------------------

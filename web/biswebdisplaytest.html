@@ -39,7 +39,6 @@
     <!-- external css files -->
     <!-- build:css -->
     <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_bright.css">
-    <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap-colorselector.css">
     <link rel="stylesheet" type="text/css" href="biscommon.css">
     <!-- endbuild -->
 
@@ -71,13 +70,14 @@
           <label for="first">First:</label>
           <input type="number" step="1"  id="first" placeholder="0">
           <label for="last">Last:</label>
+          <input type="number" step="1"  id="last" placeholder="5">
+          
           <div id="githubdiv" class="checkbox abc-checkbox info"
                style="display: inline-block; visibility: hidden">
             <input id="usegithub" class="styled" type="checkbox">
             <label for="usegithub" id="usegithublab">Use Github Data</label>
           </div>
 
-          <input type="number" step="1"  id="last" placeholder="5">
           <button class="btn-small btn-success bisbtn" type="submit" id="computesingle">Run
           Single Test</button>
           <button class="btn-small btn-warning bisbtn bismultipletests" id="compute">Run
@@ -113,8 +113,8 @@
     
     <div role="tabpanel" id="bistabs">
       <ul class="nav nav-tabs" role="tablist" id="viewers">
-	<li role="presentation" class="active"><a href="#ortho" aria-controls="ortho" role="tab" data-toggle="tab">Orthogonal</a></li>
-	<li role="presentation"><a href="#mosaic" aria-controls="mosaic" role="tab" data-toggle="tab">Mosaic</a></li>
+	    <li role="presentation" class="active"><a href="#ortho" aria-controls="ortho" role="tab" data-toggle="tab">Orthogonal</a></li>
+	    <li role="presentation"><a href="#mosaic" aria-controls="mosaic" role="tab" data-toggle="tab">Mosaic</a></li>
       </ul>
       <div class="tab-content">
 	<div role="tabpanel" class="tab-pane active" id="ortho">
@@ -124,8 +124,9 @@
 	      bis-dockwidth="200"
 	      bis-topheight="200"
 	      bis-coreopen="true"
-              bis-noresize="1"
-              bis-fixed="1"
+          bis-noresize="1"
+          bis-fixed="1"
+          bis-brightcanvas="0"
 	      bis-defaulttext="">
 	    </bisweb-viewerlayoutelement>
 

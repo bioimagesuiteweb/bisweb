@@ -11,8 +11,6 @@ const BisBaseServerClient= require('bis_baseserverclient');
 // Debug Mode
 let uploadcount=0;
 
-
-
 class BisFileServerClient extends BisBaseServerClient { 
 
     constructor(nodesocket=null) {

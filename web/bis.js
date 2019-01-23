@@ -114,4 +114,4 @@ window.BIS={
  * @param {BisWebImage} image - the image that is read
  */
 
-console.log('.... Loaded bis.js -- operating in development mode ');
+//console.log('.... Loaded bis.js -- operating in development mode ');
