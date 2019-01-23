@@ -34,7 +34,7 @@ const bootbox = require('bootbox');
 const userPreferences = require('bisweb_userpreferences.js');
 const BisWebPanel = require('bisweb_panel.js');
 const BisWebImage = require('bisweb_image.js');
-const pngReader=require('png.js');
+const pngReader=require('pngreader_bundle.js');
 
 /**
  * A class to create snapshots from a viewer.
