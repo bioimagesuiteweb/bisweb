@@ -32,7 +32,7 @@ class FileTreePanel extends HTMLElement {
         this.viewerappid = this.getAttribute('bis-viewerapplicationid');
 
         bis_webutil.runAfterAllLoaded(() => {
-            
+
             this.viewer = document.querySelector(this.viewerid);
             this.viewertwo = document.querySelector(this.viewertwoid) || null;
             this.layout = document.querySelector(this.layoutid);
@@ -245,7 +245,7 @@ class FileTreePanel extends HTMLElement {
         listElement.find('.file-container').remove();
 
         let listContainer = $(`<div class='file-container'></div>`);
-        listContainer.css({ 'color': 'rgb(12, 227, 172)' });
+        //listContainer.css({ 'color': 'rgb(12, 227, 172)' });
         listElement.prepend(listContainer);
 
 

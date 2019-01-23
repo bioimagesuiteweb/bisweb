@@ -246,6 +246,9 @@ body {
     margin-left : 5px;
 }
 
+.jstree-item {
+    background-color : hsl(118, 92%, 40%);
+}
 
 body {
          background-color: #f0e8e8;
