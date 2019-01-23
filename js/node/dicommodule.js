@@ -23,9 +23,10 @@ const baseutils = require('baseutils.js');
 const sysutils = require('bis_filesystemutils.js');
 const bis_util = require('bis_util.js');
 const bis_commandlineutils = require('bis_commandlineutils.js');
+const bis_genericio = require('bis_genericio.js');
 const BidsModule = require('./bis_bidsmodule.js');
-const path = require('path');
-const fs = require('fs');
+const path = bis_genericio.getpathmodule();
+const fs = bis_genericio.getfsmodule();
 
 class DicomModule extends BaseModule {
     constructor() {

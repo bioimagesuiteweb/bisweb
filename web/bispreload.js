@@ -37,6 +37,8 @@ window.BISELECTRON = {
     os : require('os'),
     glob : require('glob'),
     rimraf : require('rimraf'),
+    child_process : require('child_process'),
+    colors : require('colors/safe'),
     ipc : electron.ipcRenderer,
     dialog : remote.require('electron').dialog,
     remote : remote,

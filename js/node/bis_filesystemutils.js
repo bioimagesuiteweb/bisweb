@@ -1,9 +1,10 @@
 require('../../config/bisweb_pathconfig.js');
 
-const fs = require('fs');
+const bis_genericio = require('bis_genericio.js');
 const util = require('bis_util');
-const path = require('path');
-const os = require('os');
+const fs = bis_genericio.getfsmodule();
+const path = bis_genericio.getpathmodule();
+const os = bis_genericio.getosmodule();
 // ......................... Filename Validation Code .............................................
 
 const baseDirectoriesList = [ os.homedir(), os.tmpdir() ? os.tmpdir() : 'No temporary directory'];

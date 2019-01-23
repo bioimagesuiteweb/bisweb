@@ -120,7 +120,7 @@ class ViewerLayoutElement extends HTMLElement {
             this.elements.canvasbase.css({'background-color': '#000000'});
             this.darkcanvas=true;
         } else {
-            this.elements.canvasbase.css({'background-color' : "#ffffff"});
+            this.elements.canvasbase.css({'background-color' : "rgb(219, 219, 224)"});
             this.darkcanvas=false;
         }
     }
