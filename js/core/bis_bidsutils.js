@@ -13,7 +13,7 @@ const bis_genericio = require('bis_genericio');
  * @param {String} opts.outdir - the output directory (output of this function)
  * @returns {Promise} -- when done with payload the list of converted files
  */
-let dicom2BIDS = async function (opts, checksumFn = null) {
+let dicom2BIDS = async function (opts) {
 
 
     let errorfn = ((msg) => {
@@ -52,7 +52,6 @@ let dicom2BIDS = async function (opts, checksumFn = null) {
 
 
     //wait for all files to move and hashes to finish calculating
-    //note that some environments may provide their own checksum functions
     let makeHash = calculateChecksums(flist);
     let moveImageFiles = [], moveSupportingFiles = [];
 
@@ -220,7 +219,6 @@ let dicom2BIDS = async function (opts, checksumFn = null) {
     try {
         let promiseArray = Array.apply(moveImageFiles, moveSupportingFiles);
 
-        console.log('promise array', promiseArray);
         let checksums = await makeHash;
         for (let prom of promiseArray) { await prom; }
 
@@ -235,22 +233,27 @@ let dicom2BIDS = async function (opts, checksumFn = null) {
         }
 
         await bis_genericio.write(outfilename, JSON.stringify(outobj, null, 2), false);
+
+        console.log('----- output directory', outputdirectory);
+
         //delete input folder if it lives in /tmp
         let splitindir = indir.split('/');
         if (splitindir[0] === '') { splitindir.shift(); } //trim a leading slash if needs be
         if (splitindir[0] === 'tmp') {
 
-            //remove the top level folder in /tmp
+            //remove the top level folder in /tmp, i.e. /home/[username]
             let containingFolder = splitindir.splice(0, 2).join('/');
             containingFolder = '/' + containingFolder;
+
+
+            //TODO: Figure out inconsistency between Promises and async / await here (doesn't delete on node)
             bis_genericio.deleteDirectory(containingFolder).then(() => {
                 console.log('Deleted', containingFolder, 'successfully');
             }).catch((e) => {
                 console.log('An Error occured trying to delete', containingFolder, e);
             });
         }
-
-        console.log('----- output directory', outputdirectory);
+        
         return outputdirectory;
 
     } catch (e) {

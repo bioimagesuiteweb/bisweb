@@ -22,9 +22,10 @@ const BaseModule = require('basemodule.js');
 const baseutils = require('baseutils.js');
 const sysutils = require('bis_filesystemutils.js');
 const bis_util = require('bis_util.js');
+const bis_commandlineutils = require('bis_commandlineutils.js');
+const BidsModule = require('./bis_bidsmodule.js');
 const path = require('path');
 const fs = require('fs');
-const exec = require('child_process').exec;
 
 class DicomModule extends BaseModule {
     constructor() {
@@ -88,37 +89,50 @@ class DicomModule extends BaseModule {
         return '/usr/bin/dcm2niix';
     }
 
-    directInvokeAlgorithm(vals) {
+    async directInvokeAlgorithm(vals) {
 
         return new Promise((resolve, reject) => {
             console.log('oooo invoking: dicommodule with vals', JSON.stringify(vals));
 
             let errorfn = ((msg, e = 'No available error message') => {
-                console.log('error in dicom conversion', msg, e);
-                reject(e);
+                if (e.code === 'EEXIST') {
+                    console.log('Directory', e.path, 'already exists, continuing...');
+                } else {
+                    console.log('An error occured while making DICOM directories', e);
+                    reject(e);
+                }
             });
 
-            let indir = vals.inputDirectory || '';
+            let indir = vals.inputDirectory, outdir = vals.outputDirectory, tmpdir = null;
+            let dcm2nii = this.getdcm2niimodule();
 
             if (path.sep === '\\') {
                 indir = bis_util.filenameUnixToWindows(indir);
             }
-
-            let dcm2nii = this.getdcm2niimodule();
-
             if (!sysutils.validateFilename(indir)) {
                 return errorfn(indir + ' is not valid');
+            } 
+            if (!sysutils.validateFilename(outdir)) {
+                return errorfn(outdir + ' is not valid');
             }
 
 
-            let dicomtmpdir = path.join(vals.outputDirectory, 'dicom_' + Date.now());
-            let outdir = dicomtmpdir + '/source';
+            if (vals.convertbids) { 
+                tmpdir = path.join(sysutils.tempdir, 'dicom_' + Date.now());
+            }
+
             try {
-                fs.mkdirSync(dicomtmpdir);
                 fs.mkdirSync(outdir);
             } catch (e) {
-                console.log('An error occured while making DICOM directories', e);
-                return false;
+                errorfn('', e);
+            }
+
+            if (tmpdir) {
+                try {
+                    fs.mkdirSync(tmpdir);
+                } catch (e) {
+                    errorfn('', e);
+                }
             }
 
             let done = (status, code) => {
@@ -135,21 +149,28 @@ class DicomModule extends BaseModule {
                 this.sendCommand(socket,'dicomConversionProgress', message);
             };*/
 
-            console.log('indir', indir, 'outdir', outdir);
-            let cmd = dcm2nii + ' -z y ' + ' -o ' + outdir + ' -ba y -c bisweb ' + indir;
+            let cmd = dcm2nii + ' -z y ' + ' -o ' + (vals.convertbids ?  tmpdir : outdir) + ' -ba y -c bisweb ' + indir;
 
-            // TODO:
-            // Replace exec with commandutils.executeCommandAndLog(command).then( (m) => {
-            exec(cmd, (err, stdout) => {
-                if (err) { console.log('An error occured while running dcm2nii', err); reject(err); }
-
-                console.log(stdout);
-                done(stdout);
-
+            bis_commandlineutils.executeCommandAndLog(cmd, process.cwd()).then( (m) => {
+                console.log(m);
+                done(m);
+                
+                let bidsmodule = new BidsModule();
                 if (vals.convertbids) {
-
+                    bidsmodule.directInvokeAlgorithm({ 'inputDirectory' : tmpdir, 'outputDirectory' : outdir}).then( () => {
+                        resolve(outdir);
+                    }).catch( (e) => {
+                        console.log('An error occred in the BIDS conversion process', e);
+                        reject(e);
+                    });
+                } else {
+                    resolve(outdir);  
                 }
-                resolve(outdir);
+
+                
+            }).catch( (e) => {
+                console.log('An error occurred during conversion', e);
+                reject(e);
             });
         });
     }
