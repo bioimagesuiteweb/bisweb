@@ -31,9 +31,6 @@ const bisdate=require('bisdate.js');
 const idb=require('idb-keyval');
 const localforage=require('localforage');
 import tools from './images/tools.json';
-const webcss=require('bisweb_css');
-const userPreferences = require('bisweb_userpreferences.js');
-const bisdbase = require('bisweb_dbase');
 
 const clipboard=localforage.createInstance({
     driver : localforage.INDEXEDDB,
@@ -891,8 +888,6 @@ const fileSelectHandler=function(e) {
 
 window.onload = (() => {
 
-    webcss.setAutoColorMode();
-    
     // Only register if not in electron and not in development mode
     if (typeof (window.BIS) === "undefined") {
         if (!inelectron) {
@@ -959,13 +954,6 @@ window.onload = (() => {
     },false);
 
 
-    userPreferences.initialize(bisdbase).then( () => {
-        userPreferences.safeGetItem('darkmode').then( (m) => {
-            let s=webcss.isDark();
-            if (m!==s) 
-                webcss.toggleColorMode();
-        });
-    });
 
 });
 

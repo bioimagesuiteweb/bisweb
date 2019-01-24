@@ -285,7 +285,7 @@ bisweb_mni2tal.SliceViewer=class {
         for (let i=0;i<l;i+=4) {
             let sum=dat[i]+dat[i+1]+dat[i+2];
             if (sum<1) {
-                dat[i+3]=0;
+                dat[i+3]=10;
             }
         }
         this.myCanvasContext.putImageData(imgdata, 0, 0);
