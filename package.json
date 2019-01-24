@@ -106,7 +106,10 @@
         "workerexternals": {
             "@tensorflow/tfjs": "console.log",
             "@tensorflow/tfjs-node": "console.log",
-            "@tensorflow/tfjs-node-gpu": "console.log"
+            "@tensorflow/tfjs-node-gpu": "console.log",
+            "crypto" : "console.log",
+            "path" : "console.log",
+            "fs" : "console.log"
         }
     }
 }

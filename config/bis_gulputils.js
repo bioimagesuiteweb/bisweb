@@ -250,7 +250,7 @@ var createDateFile=function(datefile,hash='',version='') {
     if (datefile.indexOf('json')<0) {
         output_text=`module.exports = ${output_text};`;
     }
-    console.log(getTime()+" "+colors.cyan(`++++ Creating ${datefile} : ${output_text}\n+++++`));
+    //console.log(getTime()+" "+colors.cyan(`++++ Creating ${datefile} : ${output_text}\n+++++`));
     fs.writeFileSync(datefile,output_text+'\n');
 };
 

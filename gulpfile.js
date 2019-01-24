@@ -1,5 +1,3 @@
-
-
 /*  LICENSE
     
     _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
@@ -50,6 +48,7 @@ program
     .option('-p, --dopack <s>','dopackage 0=electron-packager, 1=run inno or zip in addition, 2=using zip distribution for node_modules, 3 run npm install',parseInt)
     .option('-w, --worker','if present build the webworker as well')
     .option('-s, --sworker','if present build the service worker and index.js as well')
+    .option('--nomain','if present do not build the main bislib.js bundle')
     .option('--tf','if true package tensorfow in electron app')
     .option('--localhost','only local access')
     .option('--portno <s>','port for server (8080 is default)')
@@ -74,6 +73,7 @@ let options = {
     webworker : program.worker || false,
     eslint : program.eslint,
     sworker : program.sworker || false,
+    nomain : program.nomain || false,
     internal : program.internal,
     external : program.external || 0 ,
     portno : parseInt(program.portno) || 8080,
@@ -234,7 +234,7 @@ if (mainoption==="build") {
 
 
 internal.webpackjobs = [ { path: './js/webcomponents/' , name: internal.bislib } ];
-if (options.inpfilename === 'index') {
+if (options.inpfilename === 'index' || options.nomain) {
     internal.webpackjobs=[];
 }
 
