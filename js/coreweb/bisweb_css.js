@@ -1,3 +1,38 @@
+
+/*  LICENSE
+    
+    _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+    
+    BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+    
+    - you may not use this software except in compliance with the License.
+    - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+    
+    __Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.__
+    
+    ENDLICENSE */
+
+/* global window,document,$ */
+"use strict";
+
+/**
+ * @file A Broswer module. Contains {@link WebCSS}.
+ * @author Xenios Papademetris
+ * @version 1.0
+ */
+
+
+
+const internal = {
+    darkmode : true,
+    cssstyle : null,
+    cssapplied : false,
+};
+
 const darkcolors= {
     "name" : "dark",
     "activecolor" : "#440000",
@@ -9,6 +44,7 @@ const darkcolors= {
     "passivecolor" : "#303030",
     "passivecolor0" : "#282828",
     "passivecolor2" : "#383838",
+    "canvascolor" : "#000000",
 };
 
 const brightcolors = {
@@ -22,10 +58,11 @@ const brightcolors = {
     "passivecolor" : "#e8dfdf",
     "passivecolor0" : "#f8f0f0",
     "passivecolor2" : "#e0d7d7",
+    "canvascolor" : "rgb(219,219,224)"
 };
 
 
-const obj= {
+const biswebcss= {
 
 
     // -----------------------------------------------------------
@@ -37,13 +74,12 @@ const obj= {
         let st=`
 
 /* biswebinternal ${colors.name} */
-.bisflip {
-    -moz-transform: scale(-1, 1);
-    -webkit-transform: scale(-1, 1);
-    -o-transform: scale(-1, 1);
-    -ms-transform: scale(-1, 1);
-    transform: scale(-1, 1);
+
+
+.biswebmniviewer {
+    background-color : ${colors.canvascolor};
 }
+
 
 .biswebdock {
   background-color: ${colors.passivecolor0};
@@ -103,6 +139,10 @@ const obj= {
 
 body {
     background-color : #cccccc;
+}
+
+.biswebmnislider {
+    background-color : #888888;
 }
 
 .navbar-default {
@@ -269,6 +309,10 @@ body {
     color : #dddddd;
 }
 
+.biswebmnislider {
+    background-color : #000000;
+}
+
 
 .bistoggle {
     background-color : rgb(72,72,72);
@@ -285,22 +329,133 @@ body {
 
 `;
 
+    },
+
+    
+    /**
+     * @param {Boolean} darkmode - if true set darkmode
+     */
+    
+    getDarkModeCSSString : function(darkmode) {
+        
+        let st='';
+        
+        if (darkmode)
+            st=this.commoncss(darkcolors)+this.darkmode();
+        else
+            st=this.commoncss(brightcolors)+this.brightmode();
+        
+        return st;
+    },
+
+
+    /**
+     * apply css styles in string css
+     * @param{String} css - a multiplne css file as a string
+     */
+    applycss : function(css) {
+
+        if (internal.cssstyle!==null) {
+            document.head.removeChild(internal.cssstyle);
+        }
+        
+        let style = document.createElement('style');
+        style.setAttribute('type', 'text/css');
+        style.innerHTML = css;
+        document.head.appendChild(style);
+        internal.cssstyle=style;
+    },
+
+
+    /** set color mode
+     * @param{Boolean} d - if true use dark mode (default) , else bright mode
+     */
+    setDarkMode : function(d=true,force=false) {
+
+        if (internal.cssapplied && !force)
+            return;
+
+        //        console.log('.... setting css mode=',d);
+        internal.darkmode = d;
+        this.applycss(this.getDarkModeCSSString(d));
+        internal.cssapplied=true;
+    },
+
+    isDark : function() {
+        return internal.darkmode;
+    },
+    
+    /** Auto detect color mode based on background color */
+    setAutoColorMode : function() {
+        
+        if (internal.cssapplied) {
+            //console.log('.... css already applied');
+            return internal.darkmode;
+        }
+        let style = getComputedStyle(document.body);
+        let bg=style['background-color'];
+        if (bg.indexOf('255')>0)
+            this.setDarkMode(false);
+        else
+            this.setDarkMode(true);
+        return internal.darkmode;            
+    },
+
+    /** Toggle color mode  from dark to bright and back*/
+    toggleColorMode() {
+
+        let isDark=this.isDark();
+        let needbootstrap=false;
+        let toremove=null;
+        let lst=$('link');
+
+        for (let i=0;i<lst.length;i++) {
+            let href=lst[i].href;
+            if (href.indexOf('css')>0) {
+                if (href.indexOf('bootstrap')>=0) {
+                    needbootstrap=true;
+                    toremove=lst[i];//.remove();
+                }
+                if (href.indexOf('bislib')>=0) {
+                    toremove=lst[i];//.remove();
+                    needbootstrap=false;
+                }
+            }
+        }
+        let url="";
+        if (needbootstrap) {
+            url="../lib/css/bootstrap_dark.css";
+            if (isDark) {
+                url="../lib/css/bootstrap_bright.css";
+            }
+        } else {
+            url="bislib.css";
+            if (isDark) {
+                url="bislib_bright.css";
+            }
+        }
+
+        let newmode=!isDark;
+        let apiTag = document.createElement('link');
+        apiTag.rel  = 'stylesheet';
+        apiTag.type = 'text/css';
+        apiTag.href = url;
+        
+        return new Promise( (resolve,reject) => {
+            apiTag.onload = ( () => {
+                if (toremove) 
+                    toremove.remove();
+                this.setDarkMode(newmode,true);
+                resolve(internal.darkmode);
+            });
+            apiTag.onerror=( (e) => {
+                console.log("Error ="+e);
+                reject(internal.darkmode);
+            });
+            document.head.appendChild(apiTag);
+        });
+        
     }
 };
 
-
-/**
- * @param {Boolean} darkmode - if true set darkmode
- */
-
-module.exports=function(darkmode) {
-
-    let st='';
-    
-    if (darkmode)
-        st=obj.commoncss(darkcolors)+obj.darkmode();
-    else
-        st=obj.commoncss(brightcolors)+obj.brightmode();
-
-    return st;
-};
+module.exports=biswebcss;

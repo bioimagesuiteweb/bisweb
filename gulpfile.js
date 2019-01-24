@@ -400,20 +400,10 @@ gulp.task('webserver', ()=> {
 
 gulp.task('commonfiles', (done) => { 
 
-    const rename = require('gulp-rename');
-
-    let name='package_notf';
-
-    if (options.tensorflow)
-        name='package';
-    
-    console.log(getTime()+' Copying css,fonts,images etc. . tensorflow=',options.tensorflow);
+    console.log(getTime()+' Copying css,fonts,images');
 
     es.concat(
         gulp.src([ 'web/manifest.json']).pipe(gulp.dest(options.outdir)),
-        gulp.src('./web/bispreload.js').pipe(gulp.dest(options.outdir)),
-        gulp.src('./web/biselectron.js').pipe(gulp.dest(options.outdir)),
-        gulp.src('./web/'+name+'.json').pipe(rename({'basename' : 'package'})).pipe(gulp.dest(options.outdir)),
         gulp.src([ 'web/images/**/*']).pipe(gulp.dest(options.outdir+'/images/')),
         gulp.src(["./lib/css/bootstrap_*_edited.css" ]).pipe(gulp.dest(options.outdir+'/css/')),
         gulp.src([ 'lib/fonts/*']).pipe(gulp.dest(options.outdir+'/fonts/')),
@@ -425,6 +415,26 @@ gulp.task('commonfiles', (done) => {
         gulp.src('./web/aws/awsparameters.js').pipe(gulp.dest(options.outdir)),
     ).on('end', () => {
         bis_gutil.createHTML('console',options.outdir,'',internal.biscss);
+        done();
+    });
+});
+
+gulp.task('commonfileselectron', (done) => { 
+
+    const rename = require('gulp-rename');
+
+    let name='package_notf';
+
+    if (options.tensorflow)
+        name='package';
+    
+    console.log(getTime()+' Copying extra common files for electron. tensorflow=',options.tensorflow);
+
+    es.concat(
+        gulp.src('./web/bispreload.js').pipe(gulp.dest(options.outdir)),
+        gulp.src('./web/biselectron.js').pipe(gulp.dest(options.outdir)),
+        gulp.src('./web/'+name+'.json').pipe(rename({'basename' : 'package'})).pipe(gulp.dest(options.outdir)),
+    ).on('end', () => {
         done();
     });
 });
@@ -488,7 +498,7 @@ gulp.task('packageint', (done) => {
                             __dirname,options.outdir,internal.appinfo.version,options.platform,options.distdir,done);
 });
 
-gulp.task('package', gulp.series('commonfiles','packageint'));
+gulp.task('package', gulp.series('commonfiles','commonfileselectron','packageint'));
 
 gulp.task('clean', (done) => { 
 
@@ -539,10 +549,11 @@ gulp.task('npmpack', (done) => {
 // -------------------- Straight compound tasks
 gulp.task('buildint', gulp.series('commonfiles','tools','buildtest'));
 
-gulp.task('build',gulp.parallel(
-    'webpack',
-    gulp.series('commonfiles','tools','buildtest'),
-));
+gulp.task('build',
+          gulp.series('clean',
+                      gulp.parallel('webpack',
+                                    gulp.series('commonfiles','tools','buildtest'))));
+         
 
 
 

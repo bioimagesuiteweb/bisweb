@@ -57,120 +57,151 @@
   </head>
   <body oncontextmenu="return false;" ondragstart="return false;" ondrop="return false;">
 
-    <div class="btop"><span id="blogo"></span><b>MNI &larr;&rarr; Talairach Converter with Brodmann Areas (1.3)</B></div>
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container-fluid" id="bismenucontainer">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header" id="bismenuheader" >
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bismenu">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <span id="blogo"></span>
+        </div>  <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bismenu">
+          <H4><span id="blogo"></span><span style="color:#ffffff;">MNI &larr;&rarr; Talairach Converter
+              with Brodmann Areas (1.4)</span></H4>
+        </div>
+      </div>
+    </nav>
 
     <div id="tempviewer"> Loading Data</div>
     
-    <div id="viewer">
-      <div id="topleft">
-        <input type="range" id="ycontrols" min="0" max="216" class="celement">
-        <canvas id="yviewer" class="celement"></canvas>
-        <canvas id="ylines" class="celement"></canvas>
+    <div class="container-fluid biswebmniviewer" id="viewer">
+      <div id="toprow">      
+        <div id="topleft" class="biswebmniviewer">
+          <div id="ycontrolsdiv" class="biswebmnislider">
+            <input type="range" id="ycontrols" min="0" max="216">
+          </div>
+          <canvas id="yviewer" class="celement"></canvas>
+          <canvas id="ylines" class="celement"></canvas>
+        </div>
+        
+        <div id="topright" class="biswebmniviewer">
+          <div id="xcontrolsdiv" class="biswebmnislider">
+            <input type="range" id="xcontrols" min="0" max="180">
+          </div>
+          <canvas id="xviewer" class="celement"></canvas>
+          <canvas id="xlines" class="celement"></canvas>
+        </div>
       </div>
-      <div id="topright">
-        <input type="range" id="xcontrols" min="0" max="180" class="celement">
-        <canvas id="xviewer" class="celement"></canvas>
-        <canvas id="xlines" class="celement"></canvas>
-      </div>
-      
-      <div id="bottomleft">
-        <input type="range" id="zcontrols" min="0" max="180" class="celement">
-        <canvas id="zviewer" class="celement"></canvas>
-        <canvas id="zlines" class="celement"></canvas>
-      </div>
-      
-      <div id="bottomright">
 
-        <div class="dataframe" >
-          <div class="xcol-sm-2"></div>
-          <div class="xcol-sm-10" id="showlabel" class="labelid2">
-            <input type="checkbox" id="showoverlaybutton" value=false>
-            <label>Show Brodmann areas overlay</label>
+      <div id="bottomrow">      
+        
+        <div id="bottomleft" class="biswebmniviewer">
+          <div id="zcontrolsdiv" class="biswebmnislider">
+            <input type="range" id="zcontrols" min="0" max="180">
           </div>
+          <canvas id="zviewer" class="celement"></canvas>
+          <canvas id="zlines" class="celement"></canvas>
         </div>
         
-        <div class="dataframe">
-          <div class="xcol-sm-2">
-            <label class="labelid" id="mnilabel">MNI:</label>
+        <div id="bottomright">
+          
+          <div class="dataframe" >
+            <div class="xcol-sm-2"></div>
+            <div class="xcol-sm-10" id="showlabel" class="labelid2">
+              <input type="checkbox" id="showoverlaybutton" value=false>
+              <label>Show Brodmann areas overlay</label>
           </div>
-          <div class="xcol-sm-7">
-            <input type="number" class="numberid" id="mnix" value="0"
-                   min="-90" max="90" step="1">
-            <input type="number" class="numberid" id="mniy" value="0"
-                   min="-90" max="90" step="1">
-            <input type="number" class="numberid" id="mniz" value="0"
-                   min="-72" max="108" step="1">
           </div>
-          <div class="xcol-sm-1"></div>
-          <div class="xcol-sm-3">
-            <button type="button" class="buttonid" id="mnigo">Go</button>
+          
+          <div class="dataframe">
+            <div class="xcol-sm-2">
+              <label class="labelid" id="mnilabel">MNI:</label>
+            </div>
+            <div class="xcol-sm-7">
+              <input type="number" class="numberid biswebselect" id="mnix" value="0"
+                     min="-90" max="90" step="1">
+              <input type="number" class="numberid biswebselect" id="mniy" value="0"
+                     min="-90" max="90" step="1">
+              <input type="number" class="numberid biswebselect" id="mniz" value="0"
+                     min="-72" max="108" step="1">
+            </div>
+            <div class="xcol-sm-1"></div>
+            <div class="xcol-sm-3">
+              <button type="button" class="btn btn-info btn-xs buttonid" id="mnigo">Go</button>
+            </div>
           </div>
-        </div>
-        
-        <div class="dataframe">
-          <div class="xcol-sm-2">
-            <label  class="labelid" id="talabel">TAL:</label>
+          
+          <div class="dataframe">
+            <div class="xcol-sm-2">
+              <label  class="labelid" id="talabel">TAL:</label>
+            </div>
+            <div class="xcol-sm-7">
+              <input type="number" class="numberid biswebselect" id="talx" value="0" min="-90" max="90" step="1">
+              <input type="number" class="numberid biswebselect" id="taly" value="0" min="-90" max="126" step="1">
+              <input type="number" class="numberid biswebselect" id="talz" value="0" min="-72" max="108" step="1">
+            </div>
+            <div class="xcol-sm-1"></div>
+            <div class="xcol-sm-3">
+              <button type="button" class="btn btn-info btn-xs buttonid" id="talgo">Go</button>
+            </div>
           </div>
-          <div class="xcol-sm-7">
-            <input type="number" class="numberid" id="talx" value="0" min="-90" max="90" step="1">
-            <input type="number" class="numberid" id="taly" value="0" min="-90" max="126" step="1">
-            <input type="number" class="numberid" id="talz" value="0" min="-72" max="108" step="1">
+          
+          <div id="baframe" class="dataframe">
+            <div class="xcol-sm-2">Area:</div>
+            <div class="xcol-sm-7">
+              <select  id="baselectbox" class="biswebselect"></select>
+            </div>
+            <div class="xcol-sm-1"></div>
+            <div class="xcol-sm-3">
+              <button type="button" class="btn btn-info btn-xs buttonid" id="resetbutton">Reset</button>
+            </div>
           </div>
-          <div class="xcol-sm-1"></div>
-          <div class="xcol-sm-3">
-            <button type="button" class="buttonid" id="talgo">Go</button>
+          
+          <div id="batchframe" class="dataframe">
+            <div class="xcol-sm-1"></div>
+            <div class="xcol-sm-1"></div>
+            <div class="xcol-sm-5">
+              <button type="button" class="btn btn-success btn-xs buttonid" id="batch2">TAL&rarr;MNI
+                Batch Convert</button>
+            </div>
+            <div class="xcol-sm-1"></div>
+            <div class="xcol-sm-1"></div>
+            <div class="xcol-sm-5">
+              <button type="button" class="btn btn-success btn-xs buttonid" id="batch">MNI&rarr;TAL Batch Convert</button>
+            </div>
           </div>
-        </div>
-        
-        <div id="baframe" class="dataframe">
-          <div class="xcol-sm-2">Area:</div>
-          <div class="xcol-sm-7">
-            <select  id="baselectbox"></select>
+          
+          
+          <div id="aboutframe" class="dataframe">
+            <div class="xcol-sm-12">
+              <details id="detailsframe"><summary id="sumlabel"><B>About this application</B></summary>
+                <p>This application consists of components of the 
+                  <a href="http://www.bioimagesuite.org" target="_newwindow">Yale BioImage Suite Package</a>. The MNI to Talairach mapping is from 
+                  <a href="http://www.ncbi.nlm.nih.gov/pmc/articles/PMC2603575/" target="_newwindow">Lacadie et al. NeuroImage 2008</a>.
+                  The Brodmann area definitions are from the following abstract: C.M. Lacadie, R. K. Fulbright, J. Arora, 
+                  R.T.Constable, and X. Papademetris. <EM>Brodmann Areas defined in MNI space using a new Tracing Tool in BioImage Suite</EM>.
+                  Human Brain Mapping, 2008.
+                  
+                <p>This application works best in <a href="http://www.google.com/chrome" target="_newwindow">Chrome</a> or Safari. 
+                  (c) Xenios Papademetris, Yale University, 2014-9. </details>
+              
+            </div>
           </div>
-          <div class="xcol-sm-1"></div>
-          <div class="xcol-sm-3">
-            <button type="button" class="buttonid" id="resetbutton">Reset</button>
-          </div>
-        </div>
-        
-        <div id="batchframe" class="dataframe">
-          <div class="xcol-sm-1"></div>
-          <div class="xcol-sm-1"></div>
-          <div class="xcol-sm-5">
-            <button type="button" class="buttonid" id="batch2">TAL&rarr;MNI
-              Batch Convert</button>
-          </div>
-          <div class="xcol-sm-1"></div>
-          <div class="xcol-sm-1"></div>
-          <div class="xcol-sm-5">
-            <button type="button" class="buttonid" id="batch">MNI&rarr;TAL Batch Convert</button>
-          </div>
-        </div>
-        
-        
-        <div id="aboutframe" class="dataframe">
-          <div class="xcol-sm-12">
-            <details id="detailsframe"><summary id="sumlabel"><B>About this application</B></summary>
-              <p>This application consists of components of the 
-                <a href="http://www.bioimagesuite.org" target="_newwindow">Yale BioImage Suite Package</a>. The MNI to Talairach mapping is from 
-                <a href="http://www.ncbi.nlm.nih.gov/pmc/articles/PMC2603575/" target="_newwindow">Lacadie et al. NeuroImage 2008</a>.
-                The Brodmann area definitions are from the following abstract: C.M. Lacadie, R. K. Fulbright, J. Arora, 
-                R.T.Constable, and X. Papademetris. <EM>Brodmann Areas defined in MNI space using a new Tracing Tool in BioImage Suite</EM>.
-                Human Brain Mapping, 2008.
-                
-              <p>This application works best in <a href="http://www.google.com/chrome" target="_newwindow">Chrome</a> or Safari. 
-                (c) Xenios Papademetris, Yale University, 2014-8. </details>
-            
-          </div>
-        </div>
 
-        <div id="manual">
-          <p>More information can be found in the <a href="https://bioimagesuiteweb.github.io/bisweb-manual/tools/mni2tal.html"
-                                                     target="_blank"
-                                                     rel="noopener">BioImage Suite Online User Manual</a></p>
+          <div id="manual">
+            <p>More information can be found in the <a href="https://bioimagesuiteweb.github.io/bisweb-manual/tools/mni2tal.html"
+                                                       target="_blank"
+                                                       rel="noopener">BioImage Suite Online User Manual</a></p>
+          </div>
         </div>
-        <bisweb-mni2tal>    </bisweb-mni2tal>
-        <bisweb-botmenubar></bisweb-botmenubar>
+      </div>
+    </div>
+    <bisweb-mni2tal>    </bisweb-mni2tal>
+    <bisweb-botmenubar></bisweb-botmenubar>
 
   </body>
 </html>

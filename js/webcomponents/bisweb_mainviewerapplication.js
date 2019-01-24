@@ -22,6 +22,7 @@
 const bisweb_apputil = require("bisweb_apputilities.js");
 const BisWebImage = require('bisweb_image');
 const webutil = require('bis_webutil');
+const webcss = require('bisweb_css');
 const webfileutil = require('bis_webfileutil');
 const FastClick = require('fastclick');
 const userPreferences = require('bisweb_userpreferences.js');
@@ -1230,13 +1231,13 @@ class ViewerApplicationElement extends HTMLElement {
         // This is probably already taken care of
         // by a viewerlayoutelement but if not ...
         //console.log("Calling setAutoColorMode");
-        webutil.setAutoColorMode();
+        webcss.setAutoColorMode();
     }
 
     /** Toggle color mode */
     toggleColorMode(save=true) {
 
-        webutil.toggleColorMode().then( (m) => {
+        webcss.toggleColorMode().then( (m) => {
             for (let i=0;i<this.VIEWERS.length;i++) {
                 this.VIEWERS[i].handleColorModeChange(m);
             }
@@ -1269,7 +1270,7 @@ class ViewerApplicationElement extends HTMLElement {
                 }
 
                 userPreferences.safeGetItem('darkmode').then( (m) => {
-                    let s=webutil.isDark();
+                    let s=webcss.isDark();
                     if (m!==s) 
                         this.toggleColorMode(false);
                 });

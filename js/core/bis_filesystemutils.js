@@ -165,8 +165,6 @@ if (bis_genericio.getmode() === 'node' ||
         validateDirectories: validateDirectories,
         tempdir: os.tmpdir()
     };
-} else {
-    console.log('--- Ignoring filesystemutils mode= ',bis_genericio.getmode());
 }
 
     

@@ -24,7 +24,9 @@
 const $ = require('jquery');
 const bisweb_mni2talbase=require('bisweb_mni2talbase');
 const webutil=require('bis_webutil');
-
+const webcss=require('bisweb_css');
+const userPreferences = require('bisweb_userpreferences.js');
+const bisdbase = require('bisweb_dbase');
 
 class Mni2TalElement extends HTMLElement {
 
@@ -37,6 +39,8 @@ class Mni2TalElement extends HTMLElement {
     
     // Fires when an instance was inserted into the document.
     connectedCallback() {
+
+        webcss.setAutoColorMode();
         
         let main=document.querySelector("#viewer");
         this.viewer=new bisweb_mni2talbase.OrthoViewer(main);
@@ -55,9 +59,9 @@ class Mni2TalElement extends HTMLElement {
                                          'width':'80vmin',
                                          'left': '95vmin'});
             } else {
-                $("#bottomright").css( { 'top' :  '43vmin',
+                $("#bottomright").css( { 'top' :  '47vmin',
                                          'width': '50vmin',
-                                         'left':  '40vmin'});
+                                         'left':  '47vmin'});
             }
         };
 
@@ -67,7 +71,14 @@ class Mni2TalElement extends HTMLElement {
         
         window.addEventListener( 'resize', rs);
         webutil.runAfterAllLoaded(rs);
-        
+
+        userPreferences.initialize(bisdbase).then( () => {
+            userPreferences.safeGetItem('darkmode').then( (m) => {
+                let s=webcss.isDark();
+                if (m!==s) 
+                    webcss.toggleColorMode();
+            });
+        });
     }
     
     getviewer() { return this.viewer;}

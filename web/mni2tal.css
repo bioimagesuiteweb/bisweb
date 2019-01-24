@@ -4,31 +4,6 @@
     width: 100vw;
 }
 
-
-body {
-    background-color : #000000
-}
-
-.btop {
-    background-color : #375a7f;
-    position: absolute;
-    top: 0px;
-    left: 0px;
-    width: 100vw;
-    padding-top: 5px;
-    height:60px;
-    font-size:20px;
-    min-height:50px;
-    white-space: nowrap;
-}
-
-#viewer {
-    top: 65px;
-    margin-left: 5vmin;
-    background-color: #000000;
-    position:absolute;
-}
-
 #tempviewer {
   position: absolute;
   z-index:4;
@@ -40,33 +15,46 @@ body {
   text-align: center;
 }
 
+
+#viewer {
+    top: 0px;
+    left: 0px;
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+}
+
+
 #topleft {
-    height :40vmin;
-    top:0vmin;
-    left:0vmin;
+    top:65px;
+    left:5vmin;
     position:absolute;
+    width: 38vmin;
+    height: 39vmin;
 }
 
 #topright {
-    height: 40vmin;
-    top:0vmin;
-    left: 42vmin;
+    top:65px;
+    left: 47vmin;
     position:relative;
-    width: 44vmin;
+    width: 46vmin;
+    height:39vmin;
 }
 
 #bottomleft {
-    top:40vmin;
-    left:0vmin;
-    width:44vmin;
+    top: 45vmin;
+    left:5vmin;
+    width:38vmin;
+    height:46.5vmin;
     position:absolute;
 }
 
 #bottomright {
-    top:43vmin;
-    left:40vmin;
+    top:47vmin;
+    left:45vmin;
     width:50vmin;
     position:absolute;
+    height: 43.0vmin;
     margin-bottom: 50px;
 }
 
@@ -83,35 +71,47 @@ body {
 #xlines,#ylines,#zlines {
   z-index:3;
   display: inline-block;
-  
 }
 
-#xcontrols,#ycontrols,#zcontrols {
+#xcontrolsdiv,#zcontrolsdiv, #ycontrolsdiv {
     z-index:2;
     display: inline-block;
     left:3.0vmin;
-    top: 1.0vmin;
+    top: 0.0vmin;
     width:31.9vmin;
 }
 
+#xcontrols,#ycontrols,#zcontrols {
+    margin-top: 2.5px;
+    height: 15px;
+}    
 
+.biswebmnislider {
+    position: absolute;
+    height: 20px;
+}
+
+#ycontrols {
+    width: 31.9vmin;
+    top : 1.0vmin;
+}
 
 
 #ylines, #yviewer {
-  top: 2.5vmin;
+  top: 3vmin;
   left: 1vmin;
   width:35.9vmin;
   height: 35.9vmin;
 }
 
 #xlines, #xviewer {
-  top:2.5vmin;
+  top:3vmin;
   left: 1.0vmin;
   width:43.0vmin;
   height:35.9vmin;
 }
 
-#xcontrols {
+#xcontrols,#xcontrolsdiv {
     width:39.0vmin;
 }
 
@@ -123,8 +123,8 @@ body {
     height: 43.0vmin;
 }
 
-#zcontrols {
-    top:45vmin;
+#zcontrolsdiv {
+    top:44.5vmin;
 }
 
 .dataframe {
@@ -141,36 +141,34 @@ body {
 }
 
 .numberid {
-    background-color: #444444;
-    color: #ffffff;
     padding-right:2px;
     text-align: center;
     width:30%;
+    height: 25px;
 }
 
 .buttonid {
-    background-color : #444444;
-    color : #ffffff;
     width:100%;
+    height : 24px;
+        
 }
 
 #manual {
     padding: 10px;
     text-align : center;
-    background-color : #0000000;
-    color : #ffffff;
 }
 
 #baselectbox {
     width:92%;
-    background-color: #444444;
-    color : #ffffff;
     margin-right:3px;
+}
+
+#batchframe {
+    margin-top: 20px;
 }
 
 #batch,#batch2 {
     width:100%;
-    font-size:85%
 }
 
 .xcol-sm-2 {

@@ -16,7 +16,7 @@
  ENDLICENSE */
 
 "use strict";
-const genericio = require('bis_genericio');
+const externals=require('bis_externals');
 
 /**
  * biswebUserPreferences namespace. Utility code to read/write user preferences
@@ -69,12 +69,12 @@ expobj.loadedPromise=new Promise( (resolve,reject) => {
  */
 let getDefaultFileName=function() {
     
-    if (genericio.getmode() === 'browser') 
+    if (externals['environment'] === 'browser') 
         return null;
 
     
-    const os = genericio.getosmodule();
-    const path = genericio.getpathmodule();
+    const os = externals['os'];
+    const path = externals['path'];
     let homedir=os.homedir();
     return path.join(homedir,'.bisweb');
 };
@@ -104,7 +104,7 @@ let parseUserPreferences=function(obj) {
     if (userPreferences['showwelcome']!==false)
         userPreferences['showwelcome']=true;
 
-    if (genericio.getmode() === 'browser')
+    if (externals['environment'] === 'browser')
         console.log('---- Loaded userPreferences');//,JSON.stringify(userPreferences));
     
     return true;
@@ -118,14 +118,14 @@ let parseUserPreferences=function(obj) {
  */
 let nodeLoadUserPreferences=function(fname=null) {
 
-    if (genericio.getmode() === 'browser')  {
+    if (externals['environment'] === 'browser')  {
         return null;
     }
 
     if (fname===null)
         fname=getDefaultFileName();
     
-    const fs = genericio.getfsmodule();
+    const fs = externals['fs'];
     let d1 = "";
     try {
         d1=fs.readFileSync(fname, 'utf-8');
@@ -266,7 +266,7 @@ expobj.saveUserPreferences=function(fname=null) {
     userPreferences['bisformat']="BisWebUserPreferences";
     let opt=JSON.stringify(userPreferences,null,2);
     delete userPreferences.bisformat;
-    const fs = genericio.getfsmodule();
+    const fs = externals['fs'];
 
     try {
         console.log('Saving user preferences in ',fname);
@@ -289,7 +289,7 @@ expobj.printUserPreferences=function() {
  */
 
 expobj.storeUserPreferences=function(dbase) {
-    if (genericio.getenvironment()!=='browser') {
+    if (externals['environment']!=='browser') {
         if (expobj.saveUserPreferences())
             return Promise.resolve();
         return Promise.reject();
@@ -359,7 +359,7 @@ expobj.setItem=function(key,value,save=false) {
 
     
     if (save) {
-        if (genericio.getmode() === 'browser')  {
+        if (externals['environment'] === 'browser')  {
             expobj.storeUserPreferences().then( () => {
                 console.log('--- User prefs saved');
             }).catch( () => { });
@@ -435,7 +435,7 @@ expobj.initialize=function(dbase) {
         return expobj.loadedPromise;
     }
     
-    if (genericio.getmode() === 'browser')  {
+    if (externals['environment'] === 'browser')  {
 
         webLoadUserPreferences(dbase).then( () => {
             expobj.storeUserPreferences(dbase).catch( (e) => {

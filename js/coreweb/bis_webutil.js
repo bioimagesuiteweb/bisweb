@@ -130,7 +130,6 @@ const bisweb_templates = `
 const $ = require('jquery');
 const bootbox=require('bootbox');
 const biswrap = require('libbiswasm_wrapper');
-const biswebcss=require('bisweb_css.js');
 const genericio= require('bis_genericio');
 
 const names = ["default", "primary", "success", "info", "warning", "danger", "link"];
@@ -150,9 +149,6 @@ const internal = {
     alerttimeout: 8000,
     alerttop: 70,
     imagepath : null,
-    darkmode : true,
-    cssstyle : null,
-    cssapplied : false,
 };
 
 
@@ -168,114 +164,6 @@ let deleteModal = (modal) => {
 
 const webutil = {
 
-    /**
-     * apply css styles in string css
-     * @param{String} css - a multiplne css file as a string
-     */
-    applycss : function(css) {
-
-        if (internal.cssstyle!==null) {
-            document.head.removeChild(internal.cssstyle);
-        }
-        
-        let style = document.createElement('style');
-        style.setAttribute('type', 'text/css');
-        style.innerHTML = css;
-        document.head.appendChild(style);
-        internal.cssstyle=style;
-    },
-
-
-    /** set color mode
-     * @param{Boolean} d - if true use dark mode (default) , else bright mode
-     */
-    setDarkMode : function(d=true,force=false) {
-
-        if (internal.cssapplied && !force)
-            return;
-
-        //        console.log('.... setting css mode=',d);
-        internal.darkmode = d;
-        this.applycss(biswebcss(d));
-        internal.cssapplied=true;
-    },
-
-    isDark : function() {
-        return internal.darkmode;
-    },
-    
-    /** Auto detect color mode based on background color */
-    setAutoColorMode : function() {
-        
-        if (internal.cssapplied) {
-            //console.log('.... css already applied');
-            return;
-        }
-        let style = getComputedStyle(document.body);
-        let bg=style['background-color'];
-        if (bg.indexOf('255')>0)
-            this.setDarkMode(false);
-        else
-            this.setDarkMode(true);
-        return internal.darkmode;            
-    },
-
-    /** Toggle color mode  from dark to bright and back*/
-    toggleColorMode() {
-
-        let isDark=this.isDark();
-        let needbootstrap=false;
-        let toremove=null;
-        let lst=$('link');
-        for (let i=0;i<lst.length;i++) {
-            let tp=lst[i].type;
-            if (tp==='text/css') {
-                let href=lst[i].href;
-                if (href.indexOf('bootstrap')>=0) {
-                    needbootstrap=true;
-                    toremove=lst[i];//.remove();
-                }
-                if (href.indexOf('bislib')>=0) {
-                    toremove=lst[i];//.remove();
-                    needbootstrap=false;
-                }
-            }
-        }
-        let url="";
-        if (needbootstrap) {
-            url="../lib/css/bootstrap_dark.css";
-            if (isDark) {
-                url="../lib/css/bootstrap_bright.css";
-            }
-        } else {
-            url="bislib.css";
-            if (isDark) {
-                url="bislib_bright.css";
-            }
-        }
-
-        //
-        //        $('head').prepend(`<link rel="stylesheet" type="text/css" href="${url}">`);
-        let newmode=!isDark;
-        let apiTag = document.createElement('link');
-        apiTag.rel  = 'stylesheet';
-        apiTag.type = 'text/css';
-        apiTag.href = url;
-        
-        return new Promise( (resolve,reject) => {
-            apiTag.onload = ( () => {
-                toremove.remove();
-                webutil.setDarkMode(newmode,true);
-                resolve(internal.darkmode);
-            });
-            apiTag.onerror=( (e) => {
-                console.log("Error ="+e);
-                reject(internal.darkmode);
-            });
-            document.head.appendChild(apiTag);
-        });
-        
-    },
 
 
     /** set alert top 

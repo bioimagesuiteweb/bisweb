@@ -175,8 +175,6 @@ var createHTML=function(toolname,outdir,libjs,commoncss,gpl=true) {
 
     if (htmlreplace===null)
         htmlreplace = require('gulp-html-replace');
-    if (replace===null)
-        replace = require('gulp-replace');
 
 
     return new Promise( (resolve) => {
@@ -525,16 +523,9 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
             if (dopackage===3)
                 cmdlist.push(cleancmd);
             if (dopackage>0)  {
-                if (!inwin32) {
-                    ziplist.push( {
-                        zipfile : zipfile,
-                        zipdir  : zipindir
-                    });
-                } else {
-                    inno(tools,version,indir,distdir);
-                    let innofile=path.resolve(distdir,'biselectron.iss');
-                    cmdlist.push('c:\\unix\\innosetup5\\ISCC.exe '+innofile);
-                }
+                inno(tools,version,indir,distdir);
+                let innofile=path.resolve(distdir,'biselectron.iss');
+                cmdlist.push('c:\\unix\\innosetup5\\ISCC.exe '+innofile);
             }
         } else {
             if (n==="linux") 
@@ -581,6 +572,9 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
                 dozip();
         });
     };
+
+    if (ziplist.length<1)
+        dozip=done;
 
     if (cmdlist.length>1) 
         executeCommandList(cmdlist,outdir,dozip);

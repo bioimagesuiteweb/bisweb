@@ -22,6 +22,7 @@
 
 const $=require('jquery');
 const webutil=require('bis_webutil');
+const webcss = require('bisweb_css');
 const THREE = require('three');
 const volrenutils = require('bis_3dvolrenutils');
 
@@ -112,9 +113,13 @@ class ViewerLayoutElement extends HTMLElement {
     }
 
     setDarkMode(m) {
+
         
-        if (this.forcebright)
-            m=false;
+        if (this.forcebright) {
+            this.elements.canvasbase.css({'background-color': '#ffffff'});
+            this.darkcanvas=false;
+            return;
+        }
 
         if (m) {
             this.elements.canvasbase.css({'background-color': '#000000'});
@@ -289,7 +294,7 @@ class ViewerLayoutElement extends HTMLElement {
 
         // fix css
         //console.log("Calling setAutoColorMode");
-        webutil.setAutoColorMode();
+        webcss.setAutoColorMode();
 
     
         $(this).css({
