@@ -55,10 +55,15 @@ class TFWrapper {
         }
         
         return new Promise( (resolve) => {
-            if (debug)
-                console.log('++++ creating tensor',shape,'patch=',patch.length);
+            //            if (debug)
+            //console.log('++++ creating tensor',shape,'patch=',patch.length);
             const tensor= this.tf.tensor(patch, shape);
             const output=this.models[model.index].predict(tensor);
+            /*const tmp=this.tf.split(tensor,5,3);
+              console.log('Num elements=',tmp.length,tmp[0].shape);
+              const output=tmp[0];//this.tf.slice(tensor,5,3);*/
+            if (debug)
+                console.log('\t\t prediction done: shapes=',tensor.shape,'--->',output.shape);
             tensor.dispose();
             resolve(output);
         });
@@ -104,9 +109,10 @@ class BisWebTensorFlowRecon {
      * @param{Model} model - tensorflow model
      * @param{Number} padding - padding for stride increment
      */
-    constructor(tfwrapper,input,model,padding=16) {
+    constructor(tfwrapper,input,model,padding=16,debug=false) {
 
-        this.debug=false;
+        this.debug=debug;
+        console.log('Debug=',this.debug, ' debug');
         this.input=input;
         this.output=new BisWebImage();
         this.output.cloneImage(this.input);
@@ -117,6 +123,7 @@ class BisWebTensorFlowRecon {
         let width=shape[1];
         let height=shape[2];
         let numslices=shape[3] || 1;
+        //        console.log('NUMSLICES=',numslices);
 
         let stridex=width-padding;
         let stridey=height-padding;
@@ -151,7 +158,7 @@ class BisWebTensorFlowRecon {
             'numframes' : dims[3]*dims[4],
             'dims' : dims,
         };
-        //        console.log('PatchInfo=',this.patchinfo);
+        console.log('PatchInfo=',this.patchinfo);
         this.patch=null;
     }
 
@@ -162,7 +169,7 @@ class BisWebTensorFlowRecon {
         this.patchinfo.batchsize=b;
         this.patchinfo.patchslicesize=this.patchinfo.width*this.patchinfo.height;
         this.patchinfo.patchvolumesize=this.patchinfo.patchslicesize*this.patchinfo.numslices;
-        this.patch= new Float32Array(this.patchinfo.patchslicesize*this.patchinfo.batchsize);//this.internal.imginfo.type(width*height*numslices);
+        this.patch= new Float32Array(this.patchinfo.patchvolumesize*this.patchinfo.batchsize);//this.internal.imginfo.type(width*height*numslices);
         if (this.debug)
             console.log('+++ Created patch temp array ',this.patch.length,'( ',this.patchinfo.patchvolumesize,'*',this.patchinfo.batchsize,')');
     }
@@ -288,30 +295,33 @@ class BisWebTensorFlowRecon {
         }
         
         let imagedata=this.input.getImageData();
-        
+        if (this.debug) {
+            console.log('+++ Beginning slices ',minslice,'to',maxslice, ' numslices=',this.patchinfo.numslices);
+        }
+
         for (let slice=minslice;slice<=maxslice;slice++) {
             let sl=slice;
             if (sl<0)
                 sl=0;
             if (sl>=dims[2])
                 sl=dims[2]-1;
-
+            
             let limits=this.getPatchLimits(sl,frame,row,col,false);
             let index=(slice-minslice)+batchindex*this.patchinfo.patchvolumesize;
             if (this.debug)
-                console.log(`+++ read patch  ${slice}/${frame}/${row}/${col}, sl=${sl}, i=${limits.begini}:${limits.endi}, j=${limits.beginj}:${limits.endj}, batchindex=${batchindex}`);
+                console.log(`+++ read patch  sl=${slice} fr=${frame} row=${row} col${col}, sl=${sl}, i=${limits.begini}:${limits.endi}, j=${limits.beginj}:${limits.endj}, batchindex=${batchindex}`);
 
             let iextra=0;
             if (limits.endi>=dims[0]) {
                 iextra=(limits.endi-(dims[0]-1))*this.patchinfo.numslices;
                 limits.endi=dims[0]-1;
             }
-            
+
             for (let j=limits.beginj;j<=limits.endj;j++) {
-                let joffset=j*dims[0]+limits.offset+limits.begini;
+                let input_index=limits.offset+j*dims[0]+limits.begini;
                 for (let i=limits.begini;i<=limits.endi;i++) {
-                    this.patch[index]=imagedata[joffset];
-                    joffset++;
+                    this.patch[index]=imagedata[input_index];
+                    input_index++;
                     index+=this.patchinfo.numslices;
                 }
                 index+=iextra;
@@ -361,7 +371,7 @@ class BisWebTensorFlowRecon {
         index+=(jminextra*this.patchinfo.width);
 
         if (this.debug)
-            console.log(`+++ write patch i=${limits.imin}:${limits.imax}, j=${limits.jmin}:${limits.jmax}, slice=${slice}/${frame}/${row}/${col} index=${batchindex}`);
+            console.log(`+++ storing patch i=${limits.imin}:${limits.imax}, j=${limits.jmin}:${limits.jmax}, slice=${slice}/${frame}/${row}/${col} index=${batchindex}`);
         
         let imagedata=this.output.getImageData();
 
@@ -455,7 +465,6 @@ class BisWebTensorFlowRecon {
 
                 const output=await tfwrapper.predict(this.model,patch,shape,this.debug);
                 let predict=output.dataSync();
-
                 
                 for (let inner=0;inner<numpatches;inner++) {
                     let elem=patchindexlist[pindex+inner];
