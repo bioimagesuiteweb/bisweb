@@ -45,6 +45,8 @@ const darkcolors= {
     "passivecolor0" : "#282828",
     "passivecolor2" : "#383838",
     "canvascolor" : "#000000",
+    "indexbg" : "rgb(28,45,64)",
+    "carouselbg" : "#000011",
 };
 
 const brightcolors = {
@@ -58,7 +60,9 @@ const brightcolors = {
     "passivecolor" : "#e8dfdf",
     "passivecolor0" : "#f8f0f0",
     "passivecolor2" : "#e0d7d7",
-    "canvascolor" : "rgb(219,219,224)"
+    "canvascolor" : "rgb(219,219,224)",
+    "indexbg" : "rgb(228,210,192)",
+    "carouselbg" : "#222211",
 };
 
 
@@ -80,6 +84,15 @@ const biswebcss= {
     background-color : ${colors.canvascolor};
 }
 
+
+.biswebindexbg { 
+    background-color : ${colors.indexbg};
+}
+
+.biswebcarousel {
+    color : ${colors.foreground};
+    background-color : ${colors.carouselbg};
+}
 
 .biswebdock {
   background-color: ${colors.passivecolor0};

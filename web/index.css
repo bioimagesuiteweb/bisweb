@@ -28,7 +28,6 @@
     width : 90vw;
     height : 525px;
     position: absolute;
-    background-color : #000011
 }
 
 #bottom {
@@ -84,7 +83,6 @@ h2 {
 }
 
 body {
-/*    background-color :   rgb(28,45,64);*/
     font-size : 16px;
 }
 

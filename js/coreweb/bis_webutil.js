@@ -845,9 +845,6 @@ const webutil = {
      */
     createDropdownItem : function (dropdown,name,callback,classname='') {
         classname= classname || 'biswebdropdownitem';
-        //        let colors = [ this.getactivecolor(),this.getforegroundcolor() ];
-        //css="background-color: "+colors[0]+"; color: "+colors[1]+"; font-size:13px; margin-bottom: 2px";
-
         return this.createMenuItem(dropdown,name,callback,'',classname);
     },
 
