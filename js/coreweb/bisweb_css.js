@@ -77,7 +77,7 @@ const obj= {
   margin-bottom: 2px;
 }
 
-.biswebfiledialog {
+.bisweb-file-dialog {
   color : ${colors.foreground};
   background-color": ${colors.background4};
 }
@@ -246,12 +246,29 @@ body {
     margin-left : 5px;
 }
 
-.jstree-item {
-    background-color : hsl(118, 92%, 40%);
+.bisweb-file-list {
+    border-color : rgb(229, 229, 229);
+    border-style : solid;
+    border-width : 1px; 
+}
+
+.bisweb-favorite-bar {
+    border-color : rgb(229, 229, 229);
+    border-style : solid;
+    border-width : 1px; 
+}
+
+.bisweb-file-dialog {
+    color : hsl(160, 70%, 40%);
+}
+
+
+.jstree-node {
+    color : hsl(160, 70%, 40%);
 }
 
 body {
-         background-color: #f0e8e8;
+    background-color: #f0e8e8;
 }
 `;                              
     },

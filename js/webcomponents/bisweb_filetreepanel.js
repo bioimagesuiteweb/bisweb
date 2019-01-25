@@ -39,19 +39,19 @@ class FileTreePanel extends HTMLElement {
             this.viewerapplication = document.querySelector(this.viewerappid);
             this.popoverDisplayed = false;
             this.staticTagSelectMenu = null;
-            
+
             this.panel = new bisweb_panel(this.layout, {
                 name: 'Files',
                 permanent: false,
                 width: '400',
                 dual: true,
-                    mode: 'sidebar',
+                mode: 'sidebar',
             });
-            
-                
+
+
             let listElement = this.panel.getWidget();
             let biswebElementMenu = $(`<div class='bisweb-elements-menu'></div>`);
-            
+
             listElement.append(biswebElementMenu);
             this.makeButtons(listElement);
 
