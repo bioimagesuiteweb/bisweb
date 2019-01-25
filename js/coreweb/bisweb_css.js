@@ -315,7 +315,6 @@ body {
     color : hsl(160, 70%, 40%);
 }
 
-
 .jstree-node {
     color : hsl(160, 70%, 40%);
 }
@@ -357,6 +356,14 @@ body {
     position : relative;
     font-size : 17px;
     margin-left : 5px;
+}
+
+.bisweb-file-dialog {
+    color : #0ce3ac;
+}
+
+.jstree-node {
+    color : #0ce3ac;
 }
 
 
