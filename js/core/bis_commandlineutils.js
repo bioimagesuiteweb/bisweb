@@ -65,13 +65,13 @@ let executeCommand=function(command,dir,done=0,printfn=0) {
                 if (!ok)
                     printfn=false;
             }
-            process.stdout.write(colors.yellow(data.trim()+'\n'));
+            if (process.stdout) { process.stdout.write(colors.yellow(data.trim()+'\n')); }      
         });
         proc.stderr.on('data', function(data) {
             if (printfn) {
                 printfn(data,1);
             }
-            process.stdout.write(colors.red(data+'\n'));
+            if (process.stdout) { process.stdout.write(colors.red(data+'\n')) };
         });
         proc.on('exit', function(code) { done(true,code);});
     } catch(e) {

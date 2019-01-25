@@ -3,6 +3,7 @@ const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
 const bis_genericio = require('bis_genericio.js');
 const bis_bidsutils = require('bis_bidsutils.js');
+const DicomModule = require('dicommodule.js');
 const BisWebPanel = require('bisweb_panel.js');
 
 class DicomImportElement extends HTMLElement {
@@ -90,7 +91,7 @@ class DicomImportElement extends HTMLElement {
      * @param {String} outputDirectory 
      */
     importDicomStudy(inputDirectory, outputDirectory) {
-        bis_webutil.createAlert('Converting raw DICOM files to BIDS...', false, 0, 100000, { 'makeLoadSpinner' : true });
+        bis_webutil.createAlert('Converting raw DICOM files to NII format...', false, 0, 100000, { 'makeLoadSpinner' : true });
         if (!bis_webfileutil.candoComplexIO()) {
             console.log('Error: cannot import DICOM study without access to file server.');
             return;
@@ -105,25 +106,26 @@ class DicomImportElement extends HTMLElement {
 
 
         let promise=null;
-        if (bis_genericio.getenvironment === 'browser') {
+        console.log('input directory', inputDirectory, 'output directory', outputDirectory);
+        if (bis_genericio.getenvironment() === 'browser') {
         
             promise=bis_genericio.runFileConversion({
                 'fileType': 'dicom',
-                'inputDirectory': inputDirectory
+                'inputDirectory': inputDirectory,
+                'outputDirectory' : outputDirectory,
+                'convertbids' : true
             });
         } else {
-
-            // create module
-            // promise is output of module.execute
-            //promise=module.execute();
+            //if on electron just run the module directly
+            let dicomModule = new DicomModule();
+            promise = dicomModule.execute( {}, { 'inputDirectory' : inputDirectory, 'outputDirectory' : outputDirectory, 'convertbids' : true });
         }
 
         promise.then((fileConversionOutput) => {
-            console.log('Conversion done, now converting files to BIDS format.');
-            bis_webutil.createAlert('Converting images to BIDS structure...', false, 0, 100000, { 'makeLoadSpinner' : true });
-
+            this.filetreepanel.importFilesFromDirectory(fileConversionOutput.output);
+            this.filetreepanel.showTreePanel();
             //dicom files are in inputDirectory/derived
-            bis_bidsutils.dicom2BIDS({ 'indir': fileConversionOutput.output, 'outdir': outputDirectory }).then((bidsDirectory) => {
+            /*bis_bidsutils.dicom2BIDS({ 'indir': fileConversionOutput.output, 'outdir': outputDirectory }).then((bidsDirectory) => {
 
                 console.log('output directory', bidsDirectory);
                 //parse folder name for containing folder (should be the folder before the .json file)
@@ -131,7 +133,7 @@ class DicomImportElement extends HTMLElement {
                 this.filetreepanel.showTreePanel();
             }).catch((e) => {
                 console.log('An error occured during BIDS file conversion', e);
-            });
+            });*/
         });
     }
 }
