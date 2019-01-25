@@ -30,6 +30,10 @@ const $=require('jquery');
 const bisdate=require('bisdate.js');
 const idb=require('idb-keyval');
 const localforage=require('localforage');
+const webcss=require('bisweb_css');
+const userPreferences = require('bisweb_userpreferences.js');
+const bisdbase = require('bisweb_dbase');
+
 import tools from './images/tools.json';
 
 const clipboard=localforage.createInstance({
@@ -66,6 +70,16 @@ const internal = {
     debug : false,
 };
 
+// ------------------------------------------------------------------------------
+let toggleColor=function() {
+    console.log('Toggling');
+    webcss.toggleColorMode().then( (m) => {
+        userPreferences.setItem('darkmode', m,true);
+    }).catch( (e) => {
+        console.log('Error',e);
+    });
+};
+
 // ----------------------------------- GUI Utility Functions -------------------------------------
 //
 // Modal Dialog
@@ -91,6 +105,7 @@ var getModal=function() {
          </div><!-- /.modal-dialog -->
        </div><!-- /.modal -->
     `);
+
         internal.modal= {
             dlg : m,
             title : m.find('.modal-title'),
@@ -110,6 +125,7 @@ var getModal=function() {
             hide : ( () => {
                 $('#mycarousel').carousel('cycle');
                 m.modal('hide');
+                $('.modal-backdrop').remove();
             }),
         };
         internal.modal.addButton = function(name,type,clb=null) {
@@ -133,7 +149,7 @@ var getModal=function() {
 
     }
 
-    internal.modal.body.parent().css({ "background-color" : "rgb(28,45,64)"});
+    internal.modal.body.parent().addClass('biswebindexbg');
     internal.modal.title.empty();
     internal.modal.body.empty();
     internal.modal.footer.empty();
@@ -432,7 +448,6 @@ var showHelpVideo=function() {
 
     let m=getModal();
     m.title.text('BioImage Suite Web Introductory Video');
-    m.body.parent().css({ "background-color" : "#202020"});
     m.body.append(`<iframe width="550" height="310" src="https://www.youtube.com/embed/CnbdaQ0O52k?rel=0;&autoplay=1" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`);
     m.addButton('Close','default');
     m.show();
@@ -479,6 +494,8 @@ var aboutApplication=async function() {// jshint ignore:line
                 dosimple=false;
         }
     }
+
+    console.log('This far ');
     
     if (dosimple)  {
         let m=getModal();
@@ -619,6 +636,14 @@ var createApplicationSelector=async function(externalobj) {
             e.preventDefault();
             e.stopPropagation();
             aboutApplication();
+        },10);
+    });
+
+    $("#togglecolor").click( (e) => {
+        setTimeout( () => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleColor();
         },10);
     });
 
@@ -843,13 +868,13 @@ const fileSelectHandler=function(e) {
 
     reader.onerror = function () {
         $('#appmenu').removeClass('open');
+        $('body').removeClass('biswebactive');
         showAlert('Failed to read file from '+url,'danger');
-        $('body').css({'background-color' : 'rgb(28,45,64)'});
         return;
     };
     
     reader.onload = function (e) {
-        $('body').css({'background-color' : 'rgb(28,45,64)'});
+        $('body').removeClass('biswebactive');
         let obj=null;
         try {
             obj=JSON.parse(e.target.result);
@@ -886,8 +911,13 @@ const fileSelectHandler=function(e) {
 //
 // ------------------------------------------------------------------------------
 
+
+
 window.onload = (() => {
 
+    webcss.setAutoColorMode();
+    $('body').addClass('biswebindexbg');
+    
     // Only register if not in electron and not in development mode
     if (typeof (window.BIS) === "undefined") {
         if (!inelectron) {
@@ -937,22 +967,31 @@ window.onload = (() => {
         e.stopPropagation();
         e.preventDefault();
         $('#appmenu').removeClass('open');
-        $('body').css({'background-color' : 'rgb(28,45,128)'});
-
+        $('body').addClass('biswebactive');
+        
     },false);
     
     window.addEventListener("dragleave", (e) => {
         e.stopPropagation();
         e.preventDefault();
-        $('body').css({'background-color' : 'rgb(28,45,64)'});
+        $('body').removeClass('biswebactive');
     },false);
 
     window.addEventListener("drop", (e) => {
+        $('body').removeClass('biswebactive');
         e.stopPropagation();
         e.preventDefault();
         fileSelectHandler(e);
     },false);
 
+
+    userPreferences.initialize(bisdbase).then( () => {
+        userPreferences.safeGetItem('darkmode').then( (m) => {
+            let s=webcss.isDark();
+            if (m!==s) 
+                toggleColor();
+        });
+    });
 });
 
 

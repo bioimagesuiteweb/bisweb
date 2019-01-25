@@ -175,8 +175,6 @@ var createHTML=function(toolname,outdir,libjs,commoncss,gpl=true) {
 
     if (htmlreplace===null)
         htmlreplace = require('gulp-html-replace');
-    if (replace===null)
-        replace = require('gulp-replace');
 
 
     return new Promise( (resolve) => {
@@ -250,7 +248,7 @@ var createDateFile=function(datefile,hash='',version='') {
     if (datefile.indexOf('json')<0) {
         output_text=`module.exports = ${output_text};`;
     }
-    console.log(getTime()+" "+colors.cyan(`++++ Creating ${datefile} : ${output_text}\n+++++`));
+    //console.log(getTime()+" "+colors.cyan(`++++ Creating ${datefile} : ${output_text}\n+++++`));
     fs.writeFileSync(datefile,output_text+'\n');
 };
 
@@ -301,13 +299,13 @@ var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,
         cmdlist.push(cmd2);
         
         if (os.platform()==='win32') {
-            cmdlist.push(`dir -p ${ijob} ${ojob}`);
+            cmdlist.push(`dir ${ijob} ${ojob}`);
         } else {
             cmdlist.push(`ls -lrth ${ijob} ${ojob}`);
         }
     } else {
         if (os.platform()==='win32') {
-            cmdlist.push(`dir -p ${ojob}`);
+            cmdlist.push(`dir ${ojob}`);
         } else {
             cmdlist.push(`ls -lrth ${ojob}`);
         }
@@ -525,16 +523,9 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
             if (dopackage===3)
                 cmdlist.push(cleancmd);
             if (dopackage>0)  {
-                if (!inwin32) {
-                    ziplist.push( {
-                        zipfile : zipfile,
-                        zipdir  : zipindir
-                    });
-                } else {
-                    inno(tools,version,indir,distdir);
-                    let innofile=path.resolve(distdir,'biselectron.iss');
-                    cmdlist.push('c:\\unix\\innosetup5\\ISCC.exe '+innofile);
-                }
+                inno(tools,version,indir,distdir);
+                let innofile=path.resolve(distdir,'biselectron.iss');
+                cmdlist.push('c:\\unix\\innosetup5\\ISCC.exe '+innofile);
             }
         } else {
             if (n==="linux") 
@@ -581,6 +572,9 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
                 dozip();
         });
     };
+
+    if (ziplist.length<1)
+        dozip=done;
 
     if (cmdlist.length>1) 
         executeCommandList(cmdlist,outdir,dozip);

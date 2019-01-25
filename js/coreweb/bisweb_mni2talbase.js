@@ -133,8 +133,10 @@ bisweb_mni2tal.SliceViewer=class {
 
         this.parentWidget=parent;
         this.myCanvas=null;
+        this.tempCanvas=null;
         this.lineCanvas=null;
         this.myCanvasContext=null;
+        this.tempCanvasContext=null;        
         this.lineCanvasContext=null;
         
         this.width=-1;
@@ -165,6 +167,10 @@ bisweb_mni2tal.SliceViewer=class {
         this.myCanvasContext=this.myCanvas.getContext("2d");
         this.myCanvasContext.fillStyle="#777000";
         this.myCanvasContext.fillRect(0,0,width,height);
+        this.tempCanvas = document.createElement('canvas');
+        this.tempCanvas.width=width;
+        this.tempCanvas.height=height;
+        this.tempCanvasContext=this.myCanvas.getContext("2d");
     }
     
     CreateLineCanvas(name) {
@@ -219,12 +225,12 @@ bisweb_mni2tal.SliceViewer=class {
             let sourceWidth=this.imgwidth;
             let sourceHeight=this.imgheight;
             if (this.drawoverlay && this.overlayopacity>0.1) {
-                this.myCanvasContext.drawImage(this.overlayImage,
+                this.tempCanvasContext.drawImage(this.overlayImage,
                                                sourceX, sourceY, sourceWidth, sourceHeight,
                                                0,0,this.width,this.height);
                 
             } else if (this.drawimage) {
-                this.myCanvasContext.drawImage(this.myImage,
+                this.tempCanvasContext.drawImage(this.myImage,
                                                sourceX, sourceY, sourceWidth, sourceHeight, 
                                                0,0,this.width,this.height);
             }
@@ -236,11 +242,11 @@ bisweb_mni2tal.SliceViewer=class {
             for (let i=0;i<this.imgheight;i++) {
                 let sourceX=i*this.imgwidth;
                 if (this.drawoverlay && this.overlayopacity>0.1)  {
-                    this.myCanvasContext.drawImage(this.overlayImage,
+                    this.tempCanvasContext.drawImage(this.overlayImage,
                                                    sourceX, sourceY, sourceWidth, 1, 
                                                    0,this.imgheight-i-1,this.width,1);
                 } else if (this.drawimage) {
-                    this.myCanvasContext.drawImage(this.myImage,
+                    this.tempCanvasContext.drawImage(this.myImage,
                                                    sourceX, sourceY, sourceWidth, 1, 
                                                    0,this.imgheight-i-1,this.width,1);
                 }
@@ -252,29 +258,44 @@ bisweb_mni2tal.SliceViewer=class {
             let ty=this.imgheight;
             let theta=-0.5*3.141592685;
             
-            this.myCanvasContext.translate(tx, ty);
-            this.myCanvasContext.rotate(theta);
+            this.tempCanvasContext.translate(tx, ty);
+            this.tempCanvasContext.rotate(theta);
             
             for (let i=0;i<this.imgslices;i++) {
                 let sourceX=i*this.imgwidth+this.current_slice;
                 if (this.drawoverlay && this.overlayopacity>0.1)  {
-                    this.myCanvasContext.drawImage(this.overlayImage,
+                    this.tempCanvasContext.drawImage(this.overlayImage,
                                                    sourceX, sourceY, 1, sourceHeight, 
                                                    i,0,1,sourceHeight);
                 } else if (this.drawimage) {
-                    this.myCanvasContext.drawImage(this.myImage,
+                    this.tempCanvasContext.drawImage(this.myImage,
                                                    sourceX, sourceY, 1, sourceHeight, 
                                                    i,0,1,sourceHeight);
                 }
             }
-            this.myCanvasContext.rotate(-theta);
-            this.myCanvasContext.translate(-tx,-ty);
-            
+            this.tempCanvasContext.rotate(-theta);
+            this.tempCanvasContext.translate(-tx,-ty);
         }
+
+
+        // Copy canvas over;
+        let imgdata = this.tempCanvasContext.getImageData(0, 0, this.tempCanvas.width, this.tempCanvas.height);
+        let dat=imgdata.data;
+        let l=dat.length;
+        for (let i=0;i<l;i+=4) {
+            let sum=dat[i]+dat[i+1]+dat[i+2];
+            if (sum<1) {
+                dat[i+3]=10;
+            }
+        }
+        this.myCanvasContext.putImageData(imgdata, 0, 0);
+        
+        
         
         let mni=bisweb_mni2tal.convertSliceToMNI(this.myplane,this.current_slice);
         let axisname = [ "X", "Y", "Z"];
-        this.myCanvasContext.fillStyle = "#eeeeee";
+
+        this.myCanvasContext.fillStyle = "#cc6600";
         this.myCanvasContext.font="14px Arial";
         if (this.myplane!=0) {
             this.myCanvasContext.textAlign="right";

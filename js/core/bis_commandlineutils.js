@@ -17,8 +17,9 @@
 
 "use strict";
 
-const colors=require('colors/safe'),
-      child_process = require('child_process');
+const genericio=require('bis_genericio');
+const colors=genericio.getcolorsmodule(),
+      child_process = genericio.getchildprocessmodule();
 
 
 let getTime=function() {

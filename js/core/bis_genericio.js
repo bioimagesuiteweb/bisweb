@@ -31,6 +31,7 @@ const fs=biscoreio.getfsmodule();
 const path=biscoreio.getpathmodule();
 const rimraf=biscoreio.getrimrafmodule();
 
+
 // -------------------------------------------------------------------------------------------------------
 // File server stuff
 
@@ -623,15 +624,7 @@ let runFileConversion = (params) => {
                 reject('Error: unsupported file type', params.fileType);
             }
         } else {
-            //TODO:
-            // Electron stuff here
-            
-            /*if (params.fileType === 'dicom') {
-                let outputDirectories = bis_dcm2niiutils.makeDicomConversionDirectories();
-                rundcm2nii(params.inputDirectory, outputDirectories.dicomTempDirectory, () => {
-                    bis_bidsutils.dicom2BIDS({ 'indir' : outputDirectories.dicomTempDirectory, 'outdir' : outputDirectories.BIDSOutputDirectory});
-                });
-            }*/
+            reject('No fileserver client defined');
         }
     });
 };
@@ -686,6 +679,8 @@ const bisgenericio = {
     getpathmodule : biscoreio.getpathmodule,
     getosmodule : biscoreio.getosmodule,
     getglobmodule : biscoreio.getglobmodule,
+    getcolorsmodule : biscoreio.getcolorsmodule,
+    getchildprocessmodule : biscoreio.getchildprocessmodule,
     tozbase64 :  biscoreio.tozbase64,
     fromzbase64 : biscoreio.fromzbase64,
     string2binary : biscoreio.string2binary ,

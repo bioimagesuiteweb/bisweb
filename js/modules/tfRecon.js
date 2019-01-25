@@ -148,7 +148,7 @@ class BisWebTFJSReconModule extends BaseModule {
             }
 
             console.log('----------------------------------------------------------');
-            let recon=new bistfutil.BisWebTensorFlowRecon(this.tfjsModule,input,model,padding);
+            let recon=new bistfutil.BisWebTensorFlowRecon(this.tfjsModule,input,model,padding,vals.debug);
             recon.reconstruct(this.tfjsModule,bistfutil.fixBatchSize(batchsize)).then( (output) => {
                 console.log('----------------------------------------------------------');
                 this.tfjsModule.disposeVariables(model).then( (num) => {

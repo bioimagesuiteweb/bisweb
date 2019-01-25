@@ -103,11 +103,22 @@ class DicomImportElement extends HTMLElement {
             outputDirectory = bis_genericio.getDirectoryName(bis_genericio.getNormalizedFilename(outputDirectory));
         }
 
-        //TODO: change name to 'runDicomConversion'
-        bis_genericio.runFileConversion({
-            'fileType': 'dicom',
-            'inputDirectory': inputDirectory
-        }).then((fileConversionOutput) => {
+
+        let promise=null;
+        if (bis_genericio.getenvironment === 'browser') {
+        
+            promise=bis_genericio.runFileConversion({
+                'fileType': 'dicom',
+                'inputDirectory': inputDirectory
+            });
+        } else {
+
+            // create module
+            // promise is output of module.execute
+            //promise=module.execute();
+        }
+
+        promise.then((fileConversionOutput) => {
             console.log('Conversion done, now converting files to BIDS format.');
             bis_webutil.createAlert('Converting images to BIDS structure...', false, 0, 100000, { 'makeLoadSpinner' : true });
 

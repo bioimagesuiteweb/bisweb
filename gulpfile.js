@@ -1,5 +1,3 @@
-
-
 /*  LICENSE
     
     _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
@@ -50,6 +48,7 @@ program
     .option('-p, --dopack <s>','dopackage 0=electron-packager, 1=run inno or zip in addition, 2=using zip distribution for node_modules, 3 run npm install',parseInt)
     .option('-w, --worker','if present build the webworker as well')
     .option('-s, --sworker','if present build the service worker and index.js as well')
+    .option('--nomain','if present do not build the main bislib.js bundle')
     .option('--tf','if true package tensorfow in electron app')
     .option('--localhost','only local access')
     .option('--portno <s>','port for server (8080 is default)')
@@ -74,6 +73,7 @@ let options = {
     webworker : program.worker || false,
     eslint : program.eslint,
     sworker : program.sworker || false,
+    nomain : program.nomain || false,
     internal : program.internal,
     external : program.external || 0 ,
     portno : parseInt(program.portno) || 8080,
@@ -234,7 +234,7 @@ if (mainoption==="build") {
 
 
 internal.webpackjobs = [ { path: './js/webcomponents/' , name: internal.bislib } ];
-if (options.inpfilename === 'index') {
+if (options.inpfilename === 'index' || options.nomain) {
     internal.webpackjobs=[];
 }
 
@@ -400,20 +400,10 @@ gulp.task('webserver', ()=> {
 
 gulp.task('commonfiles', (done) => { 
 
-    const rename = require('gulp-rename');
-
-    let name='package_notf';
-
-    if (options.tensorflow)
-        name='package';
-    
-    console.log(getTime()+' Copying css,fonts,images etc. . tensorflow=',options.tensorflow);
+    console.log(getTime()+' Copying css,fonts,images');
 
     es.concat(
         gulp.src([ 'web/manifest.json']).pipe(gulp.dest(options.outdir)),
-        gulp.src('./web/bispreload.js').pipe(gulp.dest(options.outdir)),
-        gulp.src('./web/biselectron.js').pipe(gulp.dest(options.outdir)),
-        gulp.src('./web/'+name+'.json').pipe(rename({'basename' : 'package'})).pipe(gulp.dest(options.outdir)),
         gulp.src([ 'web/images/**/*']).pipe(gulp.dest(options.outdir+'/images/')),
         gulp.src(["./lib/css/bootstrap_*_edited.css" ]).pipe(gulp.dest(options.outdir+'/css/')),
         gulp.src([ 'lib/fonts/*']).pipe(gulp.dest(options.outdir+'/fonts/')),
@@ -425,6 +415,26 @@ gulp.task('commonfiles', (done) => {
         gulp.src('./web/aws/awsparameters.js').pipe(gulp.dest(options.outdir)),
     ).on('end', () => {
         bis_gutil.createHTML('console',options.outdir,'',internal.biscss);
+        done();
+    });
+});
+
+gulp.task('commonfileselectron', (done) => { 
+
+    const rename = require('gulp-rename');
+
+    let name='package_notf';
+
+    if (options.tensorflow)
+        name='package';
+    
+    console.log(getTime()+' Copying extra common files for electron. tensorflow=',options.tensorflow);
+
+    es.concat(
+        gulp.src('./web/bispreload.js').pipe(gulp.dest(options.outdir)),
+        gulp.src('./web/biselectron.js').pipe(gulp.dest(options.outdir)),
+        gulp.src('./web/'+name+'.json').pipe(rename({'basename' : 'package'})).pipe(gulp.dest(options.outdir)),
+    ).on('end', () => {
         done();
     });
 });
@@ -488,7 +498,7 @@ gulp.task('packageint', (done) => {
                             __dirname,options.outdir,internal.appinfo.version,options.platform,options.distdir,done);
 });
 
-gulp.task('package', gulp.series('commonfiles','packageint'));
+gulp.task('package', gulp.series('commonfiles','commonfileselectron','packageint'));
 
 gulp.task('clean', (done) => { 
 
@@ -539,10 +549,11 @@ gulp.task('npmpack', (done) => {
 // -------------------- Straight compound tasks
 gulp.task('buildint', gulp.series('commonfiles','tools','buildtest'));
 
-gulp.task('build',gulp.parallel(
-    'webpack',
-    gulp.series('commonfiles','tools','buildtest'),
-));
+gulp.task('build',
+          gulp.series('clean',
+                      gulp.parallel('webpack',
+                                    gulp.series('commonfiles','tools','buildtest'))));
+         
 
 
 
