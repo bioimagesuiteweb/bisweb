@@ -157,7 +157,6 @@ class DicomModule extends BaseModule {
                 done(m);
                 
                 let bidsmodule = new BidsModule();
-                console.log('converting to BIDS', vals.convertbids);
 
                 if (vals.convertbids) {
                     bidsmodule.directInvokeAlgorithm({ 'inputDirectory' : tmpdir, 'outputDirectory' : outdir}).then( (bidsoutput) => {

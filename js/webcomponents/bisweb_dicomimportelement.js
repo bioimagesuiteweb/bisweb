@@ -91,7 +91,7 @@ class DicomImportElement extends HTMLElement {
      * @param {String} outputDirectory 
      */
     importDicomStudy(inputDirectory, outputDirectory) {
-        bis_webutil.createAlert('Converting raw DICOM files to NII format...', false, 0, 100000, { 'makeLoadSpinner' : true });
+        bis_webutil.createAlert('Converting raw DICOM files to NII/BIDS format...', false, 0, 100000, { 'makeLoadSpinner' : true });
         if (!bis_webfileutil.candoComplexIO()) {
             console.log('Error: cannot import DICOM study without access to file server.');
             return;
@@ -122,18 +122,14 @@ class DicomImportElement extends HTMLElement {
         }
 
         promise.then((fileConversionOutput) => {
-            this.filetreepanel.importFilesFromDirectory(fileConversionOutput.output);
-            this.filetreepanel.showTreePanel();
-            //dicom files are in inputDirectory/derived
-            /*bis_bidsutils.dicom2BIDS({ 'indir': fileConversionOutput.output, 'outdir': outputDirectory }).then((bidsDirectory) => {
+            console.log('file conversion output', fileConversionOutput);
+            let output = fileConversionOutput.output ? fileConversionOutput.output : fileConversionOutput;
 
-                console.log('output directory', bidsDirectory);
-                //parse folder name for containing folder (should be the folder before the .json file)
-                this.filetreepanel.importFilesFromDirectory(bidsDirectory);
-                this.filetreepanel.showTreePanel();
-            }).catch((e) => {
-                console.log('An error occured during BIDS file conversion', e);
-            });*/
+            bis_webutil.dismissAlerts();
+            this.filetreepanel.importFilesFromDirectory(output);
+            this.filetreepanel.showTreePanel();
+        }).catch( (e) => {
+            console.log('An error occured during file conversion', e);
         });
     }
 }

@@ -41,8 +41,7 @@ let dicom2BIDS = async function (opts) {
 
 
     console.log('Conversion done, now converting files to BIDS format.');
-    bis_webutil.createAlert('Converting images to BIDS structure...', false, 0, 100000, { 'makeLoadSpinner' : true });
-    
+
     let matchniix = bis_genericio.joinFilenames(indir, '*.nii.gz');
     let matchsupp = bis_genericio.joinFilenames(indir, '*');
 
