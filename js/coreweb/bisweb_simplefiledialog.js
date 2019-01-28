@@ -174,7 +174,7 @@ class SimpleFileDialog {
              </div>
 
              <div class='row justify-content-start content-box'>
-                <div class='col-sm-3 favorite-bar'></div>
+                <div class='col-sm-3 bisweb-favorite-bar'></div>
                 <div class='col-sm-9 bisweb-file-display'>
                 <div class='bisweb-file-list'><p>Content goes here...</p></div>
              </div>
@@ -440,7 +440,7 @@ class SimpleFileDialog {
 
                   });
 
-        tmain.addClass('biswebfiledialog');
+        tmain.addClass('bisweb-file-dialog');
 
 
         thead.empty();
@@ -619,7 +619,7 @@ class SimpleFileDialog {
     
     createFavorites() {
 
-        let favoriteBar = this.container.find('.favorite-bar');
+        let favoriteBar = this.container.find('.bisweb-favorite-bar');
         let favoriteButtons = this.container.find('.favorite-buttons');
 
         favoriteBar.css({ 'max-height' : '300px',
@@ -627,7 +627,7 @@ class SimpleFileDialog {
                           'max-width'  : '250px',
                           "overflow-y": "auto",
                           "overflow-x": "auto"});
-        favoriteBar.addClass('biswebfiledialog');
+        favoriteBar.addClass('bisweb-file-dialog');
 
         let favoriteButton = $(`<button type='button' class='btn btn-sm btn-link'><span class='glyphicon glyphicon-star-empty'></span>Bookmark</button>`);
         favoriteButtons.append(favoriteButton);

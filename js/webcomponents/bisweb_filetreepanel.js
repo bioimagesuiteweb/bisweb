@@ -32,26 +32,26 @@ class FileTreePanel extends HTMLElement {
         this.viewerappid = this.getAttribute('bis-viewerapplicationid');
 
         bis_webutil.runAfterAllLoaded(() => {
-            
+
             this.viewer = document.querySelector(this.viewerid);
             this.viewertwo = document.querySelector(this.viewertwoid) || null;
             this.layout = document.querySelector(this.layoutid);
             this.viewerapplication = document.querySelector(this.viewerappid);
             this.popoverDisplayed = false;
             this.staticTagSelectMenu = null;
-            
+
             this.panel = new bisweb_panel(this.layout, {
                 name: 'Files',
                 permanent: false,
                 width: '400',
                 dual: true,
-                    mode: 'sidebar',
+                mode: 'sidebar',
             });
-            
-                
+
+
             let listElement = this.panel.getWidget();
             let biswebElementMenu = $(`<div class='bisweb-elements-menu'></div>`);
-            
+
             listElement.append(biswebElementMenu);
             this.makeButtons(listElement);
 
@@ -245,7 +245,7 @@ class FileTreePanel extends HTMLElement {
         listElement.find('.file-container').remove();
 
         let listContainer = $(`<div class='file-container'></div>`);
-        listContainer.css({ 'color': 'rgb(12, 227, 172)' });
+        //listContainer.css({ 'color': 'rgb(12, 227, 172)' });
         listElement.prepend(listContainer);
 
 
