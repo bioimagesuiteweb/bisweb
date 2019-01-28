@@ -168,10 +168,10 @@ class BisWebTensorFlowRecon {
     createPatch(b=1) {
         this.patchinfo.batchsize=b;
         this.patchinfo.patchslicesize=this.patchinfo.width*this.patchinfo.height;
-        this.patchinfo.patchvolumesize=this.patchinfo.patchslicesize*this.patchinfo.numslices;
-        this.patch= new Float32Array(this.patchinfo.patchvolumesize*this.patchinfo.batchsize);//this.internal.imginfo.type(width*height*numslices);
+        this.patchinfo.patchslabsize=this.patchinfo.patchslicesize*this.patchinfo.numslices;
+        this.patch= new Float32Array(this.patchinfo.patchslabsize*this.patchinfo.batchsize);//this.internal.imginfo.type(width*height*numslices);
         if (this.debug)
-            console.log('+++ Created patch temp array ',this.patch.length,'( ',this.patchinfo.patchvolumesize,'*',this.patchinfo.batchsize,')');
+            console.log('+++ Created patch temp array ',this.patch.length,'( ',this.patchinfo.patchslabsize,'*',this.patchinfo.batchsize,')');
     }
 
     /** clean up internal objects */
@@ -307,9 +307,9 @@ class BisWebTensorFlowRecon {
                 sl=dims[2]-1;
             
             let limits=this.getPatchLimits(sl,frame,row,col,false);
-            let index=(slice-minslice)+batchindex*this.patchinfo.patchvolumesize;
+            let index=(slice-minslice)+batchindex*this.patchinfo.patchslabsize;
             if (this.debug)
-                console.log(`+++ read patch  sl=${slice} fr=${frame} row=${row} col${col}, sl=${sl}, i=${limits.begini}:${limits.endi}, j=${limits.beginj}:${limits.endj}, batchindex=${batchindex}`);
+                console.log(`+++ read patch  sl=${slice} fr=${frame} row=${row} col${col}, sl=${sl}, i=${limits.begini}:${limits.endi}, j=${limits.beginj}:${limits.endj}, batchindex=${batchindex}, index=${index}`);
 
             let iextra=0;
             if (limits.endi>=dims[0]) {
@@ -366,12 +366,12 @@ class BisWebTensorFlowRecon {
             imaxextra=(limits.endi-limits.imax);
 
         // Start at start of batch slice
-        let index=batchindex*this.patchinfo.patchvolumesize;
+        let index=batchindex*this.patchinfo.patchslicesize;
         // Increment to take account of low rows that are not stored
         index+=(jminextra*this.patchinfo.width);
 
         if (this.debug)
-            console.log(`+++ storing patch i=${limits.imin}:${limits.imax}, j=${limits.jmin}:${limits.jmax}, slice=${slice}/${frame}/${row}/${col} index=${batchindex}`);
+            console.log(`+++ storing patch i=${limits.imin}:${limits.imax}, j=${limits.jmin}:${limits.jmax}, slice=${slice}/${frame}/${row}/${col} batchindex=${batchindex} index=${index}`);
         
         let imagedata=this.output.getImageData();
 

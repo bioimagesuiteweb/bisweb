@@ -1,0 +1,1 @@
+[{"weights": [{"shape": [], "dtype": "float32", "name": "Model/Const"}, {"shape": [4], "dtype": "int32", "name": "Model/Slice/begin"}, {"shape": [4], "dtype": "int32", "name": "Model/Slice/size"}, {"shape": [], "dtype": "float32", "name": "Model/Const_1"}], "paths": ["group1-shard1of1"]}]
