@@ -534,6 +534,13 @@
             "result"   : true,
             "dopython" : false,
             "webworker": false
+        },
+        {
+            "command"  : "tfrecon -i testdata/sanitytf/0001_1_Y__crp.nii.gz --modelname testdata/sanitytf --padding 16 --batchsize 4",
+            "test"     : "--test_target testdata/sanitytf/0001_1_Y__shsc__crp.nii.gz --test_type tfjs --test_comparison ssd --test_threshold 0.01",
+            "result"   : true,
+            "dopython" : false,
+            "webworker": false
         }
     ]
 }
