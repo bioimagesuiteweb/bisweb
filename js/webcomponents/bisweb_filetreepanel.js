@@ -53,7 +53,7 @@ class FileTreePanel extends HTMLElement {
             let biswebElementMenu = $(`<div class='bisweb-elements-menu'></div>`);
 
             listElement.append(biswebElementMenu);
-            this.makeButtons(listElement);
+            this.makeStaticButtons(listElement);
 
             //https://stackoverflow.com/questions/11703093/how-to-dismiss-a-twitter-bootstrap-popover-by-clicking-outside
             let dismissPopoverFn = (e) => {
@@ -320,14 +320,22 @@ class FileTreePanel extends HTMLElement {
 
         if (!this.renderedTagSelectMenu) {
 
-            //append the tag selecting menu to the bottom of the file tree div
+            //create load button and static tag select menu
             let tagSelectDiv = $(`<div></div>`);
             this.staticTagSelectMenu = this.createTagSelectMenu({ 'setDefaultValue': false, 'listenForTagEvents': true });
             tagSelectDiv.append(this.staticTagSelectMenu);
 
             let elementsDiv = $('.bisweb-elements-menu');
-            elementsDiv.prepend(tagSelectDiv);
-            elementsDiv.prepend($(`<br><label>Tag Selected Element:</label></br>`));
+
+            let loadImageButton = $(`<br><button type='button' class='btn btn-success btn-sm load-image-button'>Load image</button><br>`);
+            loadImageButton.on('click', () => {
+                this.loadImageFromTree();
+            });
+
+            elementsDiv.append(loadImageButton);
+            elementsDiv.append($(`<br><label>Tag Selected Element:</label></br>`));
+            elementsDiv.append(tagSelectDiv);
+
             this.renderedTagSelectMenu = true;
         } else {
             $('.bisweb-elements-menu').find('select').prop('disabled', 'disabled');
@@ -343,7 +351,7 @@ class FileTreePanel extends HTMLElement {
      * 
      * @param {HTMLElement} listElement - The element of the files tab where the buttons should be created.
      */
-    makeButtons(listElement) {
+    makeStaticButtons(listElement) {
         let buttonGroupDisplay = $(`
             <div class='btn-group'>
                 <div class='btn-group top-bar' role='group' aria-label='Viewer Buttons' style='float: left;'>
@@ -372,7 +380,7 @@ class FileTreePanel extends HTMLElement {
 
         //Route study load and save through bis_webfileutil file callbacks
         let loadStudyJSONButton = bis_webfileutil.createFileButton({
-            'type': 'info',
+            'type': 'primary',
             'name': 'Import study from JSON',
             'callback': (f) => {
                 this.importFilesFromJSON(f);
@@ -387,7 +395,7 @@ class FileTreePanel extends HTMLElement {
             });
 
         let saveStudyButton = bis_webfileutil.createFileButton({
-            'type': 'primary',
+            'type': 'info',
             'name': 'Export study',
             'callback': (f) => {
                 this.exportStudy(f);
@@ -405,14 +413,8 @@ class FileTreePanel extends HTMLElement {
         saveStudyButton.prop('disabled', 'true');
 
 
-        let loadImageButton = $(`<button type='button' class='btn btn-success btn-sm load-image-button' disabled>Load image</button>`);
-        loadImageButton.on('click', () => {
-            this.loadImageFromTree();
-        });
-
-        topButtonBar.append(loadImageButton);
         topButtonBar.append(loadStudyDirectoryButton);
-        bottomButtonBar.append(loadStudyJSONButton);
+        topButtonBar.append(loadStudyJSONButton);
         bottomButtonBar.append(saveStudyButton);
 
         listElement.append(buttonGroupDisplay);

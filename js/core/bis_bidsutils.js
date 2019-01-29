@@ -281,7 +281,7 @@ let calculateChecksums = (inputFiles) => {
         }
 
         Promise.all(promises)
-            .then((values) => { console.log('calculate checksums resolving', values); resolve(values); })
+            .then((values) => { console.log('done calculating checksums'); resolve(values); })
             .catch((e) => { reject(e); });
     });
 

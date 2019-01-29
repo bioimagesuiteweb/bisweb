@@ -27,6 +27,7 @@ const bis_genericio = require('bis_genericio.js');
 const BidsModule = require('./bis_bidsmodule.js');
 const path = bis_genericio.getpathmodule();
 const fs = bis_genericio.getfsmodule();
+const os = bis_genericio.getosmodule();
 
 class DicomModule extends BaseModule {
     constructor() {
@@ -86,12 +87,24 @@ class DicomModule extends BaseModule {
         };
     }
 
-    getdcm2niimodule() {
-        return '/usr/bin/dcm2niix';
+    async getdcm2niimodule() {
+
+        let dcmBinaryFolder = path.resolve('../../various/dcm2nii_binaries'), dcmbinary = '';
+
+        console.log('dcmBinaryFolder', dcmBinaryFolder);
+        switch (os.platform()) {
+            case 'win32' : dcmbinary = dcmBinaryFolder + '/windows/dcm2niix.exe'; break;
+            case 'darwin' : dcmbinary = dcmBinaryFolder + '/mac/dcm2niix'; break;
+            case 'linux' : dcmbinary = dcmBinaryFolder + '/linux/dcm2niix'; break;
+            default : console.log('Cannot process dcm2nii for unknown architecture', os.platform(), 'returned by os.platform'); return false;
+        }
+
+        return dcmbinary;
     }
 
     async directInvokeAlgorithm(vals) {
 
+        let dcm2nii = await this.getdcm2niimodule();
         return new Promise((resolve, reject) => {
             console.log('oooo invoking: dicommodule with vals', JSON.stringify(vals));
 
@@ -105,7 +118,6 @@ class DicomModule extends BaseModule {
             });
 
             let indir = vals.inputDirectory, outdir = vals.outputDirectory, tmpdir = null;
-            let dcm2nii = this.getdcm2niimodule();
 
             if (path.sep === '\\') {
                 indir = bis_util.filenameUnixToWindows(indir);

@@ -71,7 +71,7 @@ let executeCommand=function(command,dir,done=0,printfn=0) {
             if (printfn) {
                 printfn(data,1);
             }
-            if (process.stdout) { process.stdout.write(colors.red(data+'\n')) };
+            if (process.stdout) { process.stdout.write(colors.red(data+'\n')); }
         });
         proc.on('exit', function(code) { done(true,code);});
     } catch(e) {

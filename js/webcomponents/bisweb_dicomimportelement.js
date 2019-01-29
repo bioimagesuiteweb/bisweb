@@ -2,7 +2,6 @@ const $ = require('jquery');
 const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
 const bis_genericio = require('bis_genericio.js');
-const bis_bidsutils = require('bis_bidsutils.js');
 const DicomModule = require('dicommodule.js');
 const BisWebPanel = require('bisweb_panel.js');
 
@@ -60,7 +59,6 @@ class DicomImportElement extends HTMLElement {
             css : { 'width' : '90%' , 'margin' : '3px' },
             callback : (f) => {
                 let saveFileCallback = (o) => { 
-                    console.log('input', f, 'output', o);
                     this.importDicomStudy(f, o);
                 };
 
