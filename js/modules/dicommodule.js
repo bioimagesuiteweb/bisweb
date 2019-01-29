@@ -89,7 +89,25 @@ class DicomModule extends BaseModule {
 
     async getdcm2niimodule() {
 
-        let dcmBinaryFolder = path.resolve('../../various/dcm2nii_binaries'), dcmbinary = '';
+        // Source version
+        let dcmpath=path.resolve(path.join(__dirname,'dcm2nii_binaries'));
+        console.log('Original dcmpath=',dcmpath,__dirname);
+        let installed=false;
+        if (typeof window !== "undefined") {
+            let scope=window.document.URL.split("?")[0];
+            let index=scope.lastIndexOf("/");
+            // First 8 characters are file:///
+            if (os.platform()==='win32')
+                scope=scope.substr(8,index-8)+"/dcm2nii_binaries";
+            else
+                scope=scope.substr(7,index-7)+"/dcm2nii_binaries";
+            dcmpath=path.resolve(scope);
+        } else if (!fs.existsSync(dcmpath)) {
+            console.log("It does not exist", dcmpath);
+            dcmpath=path.resolve(path.join(__dirname,'../../web/dcm2nii_binaries'));
+        }
+
+        let dcmBinaryFolder = dcmpath, dcmbinary = '';
 
         console.log('dcmBinaryFolder', dcmBinaryFolder);
         switch (os.platform()) {
@@ -99,6 +117,8 @@ class DicomModule extends BaseModule {
             default : console.log('Cannot process dcm2nii for unknown architecture', os.platform(), 'returned by os.platform'); return false;
         }
 
+        let stats = fs.statSync(dcmbinary);
+        console.log('+++ dcm2niix binary found=',dcmbinary, 'size=', stats.size/1024, 'Kb');
         return dcmbinary;
     }
 

@@ -41,3 +41,6 @@ defaceImage
 tfRecon
 bisserver
 regressionTests
+makechecksum
+dicomconversion
+bidsconversion
