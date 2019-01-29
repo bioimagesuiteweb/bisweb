@@ -222,6 +222,7 @@ install (FILES ${PROJECT_SOURCE_DIR}/ModuleList.txt DESTINATION bisweb/)
 install (DIRECTORY ${PROJECT_SOURCE_DIR}/../various/serverconfig  DESTINATION bisweb )
 install (FILES ${PROJECT_SOURCE_DIR}/../web/images/mean_reg2mean.nii.gz DESTINATION bisweb/images)
 install (FILES ${PROJECT_SOURCE_DIR}/../web/images/facemask_char.nii.gz DESTINATION bisweb/images)
+install (DIRECTORY ${PROJECT_SOURCE_DIR}/../various/dcm2nii_binaries DESTINATION bisweb/lib )
 
 
 IF (BIS_A_EMSCRIPTEN)
