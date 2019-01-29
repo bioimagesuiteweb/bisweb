@@ -380,7 +380,7 @@ class FileTreePanel extends HTMLElement {
 
         //Route study load and save through bis_webfileutil file callbacks
         let loadStudyJSONButton = bis_webfileutil.createFileButton({
-            'type': 'info',
+            'type': 'primary',
             'name': 'Import study from JSON',
             'callback': (f) => {
                 this.importFilesFromJSON(f);
@@ -395,7 +395,7 @@ class FileTreePanel extends HTMLElement {
             });
 
         let saveStudyButton = bis_webfileutil.createFileButton({
-            'type': 'primary',
+            'type': 'info',
             'name': 'Export study',
             'callback': (f) => {
                 this.exportStudy(f);
