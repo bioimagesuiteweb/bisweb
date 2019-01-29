@@ -407,6 +407,7 @@ gulp.task('commonfiles', (done) => {
         gulp.src([ 'web/images/**/*']).pipe(gulp.dest(options.outdir+'/images/')),
         gulp.src(["./lib/css/bootstrap_*_edited.css" ]).pipe(gulp.dest(options.outdir+'/css/')),
         gulp.src([ 'lib/fonts/*']).pipe(gulp.dest(options.outdir+'/fonts/')),
+        gulp.src([ 'web/dcm2nii_binaries/**/*']).pipe(gulp.dest(options.outdir+'/dcm2nii_binaries')),
         gulp.src('./lib/js/webcomponents-lite.js').pipe(gulp.dest(options.outdir)),
         gulp.src('./node_modules/jquery/dist/jquery.min.js').pipe(gulp.dest(options.outdir)),
         gulp.src('./node_modules/three/build/three.min.js').pipe(gulp.dest(options.outdir)),
