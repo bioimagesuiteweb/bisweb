@@ -28,6 +28,7 @@ require("bisweb_fileserverclient.js");
 require("bisweb_misactool.js");
 require("bisweb_filetreepanel.js");
 require("bisweb_dicomimportelement.js");
+require("bisweb_brukerimportelement.js");
 
 const webutil = require('bis_webutil');
 const webfileutil = require('bis_webfileutil');

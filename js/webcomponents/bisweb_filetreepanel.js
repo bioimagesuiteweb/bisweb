@@ -506,26 +506,8 @@ class FileTreePanel extends HTMLElement {
                     'contents': reconstructedTree
                 };
 
+                console.log('tree metadata container', treeMetadataContainer);
                 let stringifiedFiles = JSON.stringify(treeMetadataContainer);
-                //set the correct file extension if it isn't set yet
-                let splitPath = filepath.split('.');
-                if (splitPath.length < 2 || splitPath[1] !== 'JSON' || splitPath[1] !== 'json') {
-                    splitPath[1] = 'json';
-                }
-
-                filepath = splitPath.join('.');
-                bis_genericio.write(filepath, stringifiedFiles, false);
-            });
-
-            //all BIDS files are presumably created at the same time so just use the timestamp for one of them
-            bis_genericio.getFileStats(this.baseDirectory).then((stats) => {
-                let date = new Date(stats.birthtimeMs);
-                let dataContainer = {
-                    'date': parseDate(date),
-                    'study': reconstructedTree
-                };
-
-                let stringifiedFiles = JSON.stringify(dataContainer);
                 //set the correct file extension if it isn't set yet
                 let splitPath = filepath.split('.');
                 if (splitPath.length < 2 || splitPath[1] !== 'JSON' || splitPath[1] !== 'json') {
