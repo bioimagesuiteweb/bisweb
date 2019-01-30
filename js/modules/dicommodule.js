@@ -92,10 +92,11 @@ class DicomModule extends BaseModule {
         // Source version
         let dcmpath=path.resolve(path.join(__dirname,'dcm2nii_binaries'));
         console.log('Original dcmpath=',dcmpath,__dirname);
-        let installed=false;
+
         if (typeof window !== "undefined") {
             let scope=window.document.URL.split("?")[0];
             let index=scope.lastIndexOf("/");
+            
             // First 8 characters are file:///
             if (os.platform()==='win32')
                 scope=scope.substr(8,index-8)+"/dcm2nii_binaries";
