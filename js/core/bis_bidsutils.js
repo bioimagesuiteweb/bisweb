@@ -157,9 +157,9 @@ let dicom2BIDS = async function (opts) {
 
     let outfilename = bis_genericio.joinFilenames(outputdirectory, 'dicom_job.json');
     let outobj = {
-        "bisformat": "DICOMImport",
+        "acquisition": 'DICOM',
         "bidsversion": "1.1.0",
-        "description": `DICOM Dataset generated on ${month}/${day}, ${year} at ${hour}:${minute}`,
+        "description": `Dataset generated on ${month}/${day}, ${year} at ${hour}:${minute}`,
         "job": [],
     };
 
