@@ -1,0 +1,35 @@
+diff --git a/js/webcomponents/bisweb_connectivitycontrolelement.js b/js/webcomponents/bisweb_connectivitycontrolelement.js
+index 30940fe..c2ba7de 100644
+--- a/js/webcomponents/bisweb_connectivitycontrolelement.js
++++ b/js/webcomponents/bisweb_connectivitycontrolelement.js
+@@ -52,9 +52,11 @@ const brain_vertexshader_text =
+       '     vec3 transformed = vec3( position );\n'+
+       '     vec4 mvPosition = modelViewMatrix * vec4( transformed, 1.0 );\n'+
+       '     gl_Position = projectionMatrix * mvPosition;\n'+
+-      '     gl_Position.z=0.99+0.01*gl_Position.z;\n'+
+       '}\n';
+ 
++//      '     gl_Position.z=0.99+0.01*gl_Position.z;\n'+
++
++
+ const brain_fragmentshader_text=
+       'uniform float opacity;\n'+
+       'uniform vec3 diffuse;\n'+
+@@ -62,7 +64,7 @@ const brain_fragmentshader_text=
+       //        'varying vec3 vLookup;\n'+
+       'void main() {\n'+
+       '   float v=max(0.0,-vNormal.z)*0.7+0.3;\n'+
+-      '   gl_FragColor = vec4( v*diffuse.x,v*diffuse.y,v*diffuse.z, opacity );\n'+
++      '   gl_FragColor = vec4( v*diffuse.x,v*diffuse.y,v*diffuse.z, 0.5 );\n'+
+       '}';
+ 
+ const sphere_vertexshader_text = 
+@@ -1559,7 +1561,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
+                 //                  console.log('Spheres '+j+' length='+sph.positions.length+' color='+[ cl.r,cl.g,cl.b]+' scale='+scale);
+ 
+                 let spherematerial = new THREE.ShaderMaterial({
+-                    transparent : true,
++                    transparent : false,
+                     "uniforms": {
+                         "diffuse": {  "type":"c","value":
+                                       {"r":cl.r/scale,
