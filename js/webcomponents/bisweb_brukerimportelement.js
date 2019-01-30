@@ -1,15 +1,44 @@
+const $ = require('jquery');
+const bis_webutil = require('bis_webutil.js');
+const bis_webfileutil = require('bis_webfileutil.js');
+const bis_genericio = require('bis_genericio.js');
+const BisWebPanel = require('bisweb_panel.js');
+
 class BrukerImportElement extends HTMLElement {
 
     constructor() {
+        super();
+        this.panel = null;
+    }
+
+    show() {
+        this.panel.show();
+    }
+
+    connectedCallback() {
         let viewerid = this.getAttribute('bis-viewerid');
         let viewerid2 = this.getAttribute('bis-viewerid2');
         let layoutid = this.getAttribute('bis-layoutwidgetid');
         let filetreepanelid = this.getAttribute('bis-filetreepanelid');
 
+        this.filetreepanel = document.querySelector(filetreepanelid);
+
         this.viewers = [
             document.querySelector(viewerid),
             document.querySelector(viewerid2)
         ];
+
+
+        this.layoutcontroller=document.querySelector(layoutid);
+        this.panel=new BisWebPanel(this.layoutcontroller,
+                                   { name : "DICOM Import",
+                                     permanent : false,
+                                     dual : false
+                                   });
+
+        this.parentDomElement=this.panel.getWidget();
+        let basediv=$('<div></div>');
+        this.parentDomElement.append(basediv);
 
         bis_webutil.createbutton({
             type: 'info',
@@ -29,7 +58,7 @@ class BrukerImportElement extends HTMLElement {
             css : { 'width' : '90%' , 'margin' : '3px' },
             callback : (f) => {
                 let saveFileCallback = (o) => { 
-                    this.importDicomStudy(f, o);
+                    this.importBrukerStudy(f, o);
                 };
 
                 setTimeout( () => {
@@ -47,5 +76,14 @@ class BrukerImportElement extends HTMLElement {
             suffix:  'DIRECTORY',
             save : false,
         });
+
+        this.show();
     }
+
+    importBrukerStudy() {
+
+    }
+        
 }
+
+bis_webutil.defineElement('bisweb-brukerimportelement', BrukerImportElement);
