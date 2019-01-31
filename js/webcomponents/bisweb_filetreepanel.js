@@ -117,24 +117,29 @@ class FileTreePanel extends HTMLElement {
                 queryString = filename + '/*/*.nii*';
             }
         }
+        
+        readParamsFile(filename).then((data) => {
+            //if it does then update the file tree with just that file. otherwise look one level deeper for the whole study
+            bis_genericio.getMatchingFiles(queryString).then((files) => {
 
-        //if it does then update the file tree with just that file. otherwise look one level deeper for the whole study
-        bis_genericio.getMatchingFiles(queryString).then((files) => {
+                console.log('params', data);
 
-            if (files.length > 0) {
-                this.updateFileTree(files, filename);
-                bis_webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
-                return;
-            }
+                let type = data.acquisition || data.bisformat || 'Unknown type';
+                if (files.length > 0) {
+                    this.updateFileTree(files, filename, type);
+                    bis_webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
+                    return;
+                }
 
-            queryString = filename + '/*.nii*';
-            bis_genericio.getMatchingFiles(queryString).then((newFiles) => {
-                console.log('filename', filename);
+                queryString = filename + '/*.nii*';
+                bis_genericio.getMatchingFiles(queryString).then((newFiles) => {
+                    console.log('filename', filename);
 
-                bis_webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
-                this.updateFileTree(newFiles, filename);
+                    bis_webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
+                    this.updateFileTree(newFiles, filename, type);
+                });
+
             });
-
         });
     }
 
@@ -148,7 +153,8 @@ class FileTreePanel extends HTMLElement {
                 console.log('An error occured trying to parse the exported study file', filename, e);
             }
 
-            this.updateFileTree(parsedData.contents, parsedData.baseDirectory);
+            let type = parsedData.type || parsedData.acquisition || parsedData.bisformat || 'Unknown type';
+            this.updateFileTree(parsedData.contents, parsedData.baseDirectory, type);
         });
     }
 
@@ -156,8 +162,9 @@ class FileTreePanel extends HTMLElement {
      * Populates the file tree panel with a list of files.
      * @param {Array} files - A list of file names, or a fully parsed tree. 
      * @param {String} baseDirectory - The directory which importFiles was originally called on.
+     * @param {String} type - The type of study being loaded.
      */
-    updateFileTree(files, baseDirectory) {
+    updateFileTree(files, baseDirectory, type) {
 
         let parseFileList = (files) => {
             let fileTree = [];
@@ -230,6 +237,8 @@ class FileTreePanel extends HTMLElement {
         };
 
         this.baseDirectory = baseDirectory;
+        this.studyType = type;
+
         let fileTree;
 
         //check what type of list this is, a list of names or a fully parsed directory
@@ -333,12 +342,14 @@ class FileTreePanel extends HTMLElement {
             });
 
             elementsDiv.append(loadImageButton);
-            elementsDiv.append($(`<br><label>Tag Selected Element:</label></br>`));
+            elementsDiv.append(`<br><p class = "bisweb-file-import-label" style="font-size:80%; font-style:italic">Currently loaded — ${type}</p>`);
+            elementsDiv.append($(`<label>Tag Selected Element:</label></br>`));
             elementsDiv.append(tagSelectDiv);
 
             this.renderedTagSelectMenu = true;
         } else {
             $('.bisweb-elements-menu').find('select').prop('disabled', 'disabled');
+            $('.bisweb-file-import-label').text(`Currently loaded — ${type}`);
         }
 
         //attach listeners to new file tree
@@ -493,15 +504,16 @@ class FileTreePanel extends HTMLElement {
             let rawTreeJSON = rawTree.get_json('#');
             let reconstructedTree = [];
 
-            console.log('rawTree', rawTree);
             for (let item of rawTreeJSON) { fillTreeNode(rawTree, item, reconstructedTree); }
 
             console.log('reconstructed tree', reconstructedTree);
+
             bis_genericio.getFileStats(this.baseDirectory).then((stats) => {
 
                 let dateCreated = new Date(stats.birthtimeMs);
                 let treeMetadataContainer = {
                     'baseDirectory': this.baseDirectory,
+                    'type' : this.studyType,
                     'dateCreated': parseDate(dateCreated),
                     'contents': reconstructedTree
                 };
@@ -721,7 +733,6 @@ let fillTreeNode = (rawTree, node, parentNode = null) => {
     let item = rawTree.get_node(node.id);
     let newNode = item.original;
 
-    console.log('item', item, 'parent node', parentNode);
     if (item.children.length > 0) {
         newNode.children = [];
         for (let child of node.children) {
@@ -737,6 +748,11 @@ let fillTreeNode = (rawTree, node, parentNode = null) => {
 
 };
 
+/**
+ * Parses a javascript date object and returns a properly formatted BIDS date.
+ * 
+ * @param {Date} date - Javascript date object to parse.
+ */
 let parseDate = (date) => {
     return date.getFullYear() + '-' + date.getMonth() + 1 + '-' + zeroPadLeft(date.getDate()) + 'T' + zeroPadLeft(date.getHours()) + ':' + zeroPadLeft(date.getMinutes()) + ':' + zeroPadLeft(date.getSeconds());
 
@@ -745,5 +761,33 @@ let parseDate = (date) => {
         return pad.substring(0, pad.length - numStr.length) + numStr;
     }
 };
+
+/**
+ * Reads the parameters file in the BIDS source directory and returns its data. The parameter file should be the only JSON file in the directory.
+ * 
+ * @param {String} sourceDirectory - The source directory of the study.
+ */
+let readParamsFile = (sourceDirectory) => {
+
+    //find the parameters file in the source directory
+    return new Promise( (resolve, reject) => {
+        bis_genericio.getMatchingFiles(sourceDirectory + '/*.json').then( (paramFile) => {
+            
+            bis_genericio.read(paramFile[0]).then( (obj) => {
+                let jsonData;
+                try {
+                    jsonData = JSON.parse(obj.data);
+                    resolve(jsonData);
+                } catch (e) {
+                    console.log('An error occured while reading parameters file', paramFile[0], e);
+                    reject(e);
+                }
+            });
+        }).catch( (e) => {
+            reject(e);
+        });
+    });
+
+}
 
 bis_webutil.defineElement('bisweb-filetreepanel', FileTreePanel);

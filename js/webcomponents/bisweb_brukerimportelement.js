@@ -32,7 +32,7 @@ class BrukerImportElement extends HTMLElement {
 
         this.layoutcontroller=document.querySelector(layoutid);
         this.panel=new BisWebPanel(this.layoutcontroller,
-                                   { name : "DICOM Import",
+                                   { name : "Bruker Import",
                                      permanent : false,
                                      dual : false
                                    });
@@ -86,6 +86,7 @@ class BrukerImportElement extends HTMLElement {
         console.log('matching files', matchingFiles);
 
         await bis_bruker.readMultiple(inputFilepath, outputFilepath, false, () => {}, console.log, true);
+
     }
         
 }
