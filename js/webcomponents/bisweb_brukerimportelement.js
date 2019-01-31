@@ -2,6 +2,7 @@ const $ = require('jquery');
 const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
 const bis_genericio = require('bis_genericio.js');
+const bis_bruker = require('bis_asyncreadbruker.js');
 const BisWebPanel = require('bisweb_panel.js');
 
 class BrukerImportElement extends HTMLElement {
@@ -80,8 +81,11 @@ class BrukerImportElement extends HTMLElement {
         this.show();
     }
 
-    importBrukerStudy() {
+    async importBrukerStudy(inputFilepath, outputFilepath) {
+        let matchingFiles = await bis_bruker.getMatchingFilenames(inputFilepath);
+        console.log('matching files', matchingFiles);
 
+        await bis_bruker.readMultiple(inputFilepath, outputFilepath, false, () => {}, console.log, true);
     }
         
 }
