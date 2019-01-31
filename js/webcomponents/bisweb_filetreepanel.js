@@ -93,6 +93,14 @@ class FileTreePanel extends HTMLElement {
                 'action': (node) => {
                     this.openTagSettingPopover(node);
                 }
+            },
+            'Chart' : {
+                'separator_before': false,
+                'separator_after': false,
+                'label': 'Show VOI Chart',
+                'action': (node) => {
+                    this.createVolumeChart(node);
+                }
             }
         };
     }
@@ -595,7 +603,7 @@ class FileTreePanel extends HTMLElement {
                 console.log('accessed time', accessedTime.toDateString(), 'created time', createdTime, 'modified time', modifiedTime);
 
                 //make info dialog
-                let infoDisplay = `File Size: ${roundedSize}${filetype}<br> First Created: ${createdTime}<br> Last Modified: ${modifiedTime}<br> Last Accessed: ${accessedTime} <br> Is a Directory: ${parsedIsDirectory} <br> Tag: ${this.currentlySelectedNode.original.tag}`;
+                let infoDisplay = `File Size: ${roundedSize}${filetype}<br> First Created: ${createdTime}<br> Last Modified: ${modifiedTime}<br> Last Accessed: ${accessedTime} <br> Is a Directory: ${parsedIsDirectory} <br> Tag: ${this.currentlySelectedNode.original.tag || 'None'}`;
 
                 bootbox.dialog({
                     'title': 'File Info',
@@ -667,8 +675,10 @@ class FileTreePanel extends HTMLElement {
         let tagSelectMenu = $(
             `<select class='form-control' disabled> 
             <option value='none'></option>
-            <option value='sagittal'>Sagittal</option>
-            <option value='coronal'>Coronal</option>
+            <option value='anatomical'>Anatomical</option>
+            <option value='functional'>Functional</option>
+            <option value='diffusion'>Diffusion</option>
+            <option value='localizer'>Localizer</option>
         </select>`
         );
 
@@ -788,6 +798,10 @@ let readParamsFile = (sourceDirectory) => {
         });
     });
 
-}
+};
+
+let createVolumeChart = () => {
+
+};
 
 bis_webutil.defineElement('bisweb-filetreepanel', FileTreePanel);
