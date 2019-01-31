@@ -508,7 +508,12 @@ class ViewerLayoutElement extends HTMLElement {
             this.context.textAlign="left";
             this.context.fillStyle = "#dd7700";
             
-            if (this.defaulttext.length<4) {
+            let ch=this.context.canvas.height;
+            let cw=this.context.canvas.width;
+            this.context.fillStyle = "#888888";
+            this.context.fillText(this.defaulttext,cw/2,ch/2);
+
+            /*if (this.defaulttext.length<4) {
                 this.context.fillText('Load (or Drag) an Image (.nii.gz or .nii)',20,100);
                 this.context.fillText(' or an application viewer file (.biswebstate)',20,140);
                 this.context.fillText('and it will appear here!',30,180);
@@ -517,7 +522,7 @@ class ViewerLayoutElement extends HTMLElement {
                 let cw=this.context.canvas.width;
                 this.context.fillStyle = "#888888";
                 this.context.fillText(this.defaulttext,cw/2,ch/2);
-            }
+            }*/
         });
 
         
