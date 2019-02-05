@@ -52,15 +52,8 @@ class GrapherModule extends HTMLElement {
         this.graphWindow=null;
         this.resizingTimer=null;
         this.buttons=[];
+        this.extrawidth = 0;
     }
-
-    connectedCallback() {
-        let orthoviewerid = this.getAttribute('bis-viewerid');
-        webutil.runAfterAllLoaded( () => {
-            this.orthoViewer = document.querySelector(orthoviewerid);
-        });
-    }
-
 
     /** create the GUI (or modifiy it if it exists)
      * @param{Boolean} showbuttons -- if true show the 'Plot VOI Values' and 'Plot VOI Volumes' buttons, else hide them (as we may only have values!)
@@ -159,14 +152,18 @@ class GrapherModule extends HTMLElement {
     /** Main Function 1 as called by the editor tool
      * Graphs the time-averaged mean of fMRI intensity in the area painted by {@link bisweb_painttoolelement} using 
      * {@link bis_fmrimatrixconnectivity.js}. Uses chart.js for the graphics. 
-     * Calls plot Graph for the actual plotting
+     * Calls plot Graph for the actual plotting.
+     * Opening the file tree panel will shrink the canvas, so we need to add the width to the desired size of the graph window to render properly.
+     * 
+     * @param {HTMLElement} orthoElement - The orthagonal element to take image data from.
+     * @param {Number} extraWidth - Extra width to add to the container that will hold the graph. 
      */
-    parsePaintedAreaAverageTimeSeries(orthoElement = null) {
+    parsePaintedAreaAverageTimeSeries(orthoElement, extraWidth = 0) {
 
         if (!orthoElement)
-            orthoElement = this.orthoViewer;
-        
-        console.log('orthoElement', orthoElement);
+            return;
+
+        this.extrawidth = extraWidth; //set the extra width for the graph drawing and future resize events
         this.lastdata = null;
         let image = orthoElement.getimage();
         let objectmap = orthoElement.getobjectmap();
@@ -202,21 +199,16 @@ class GrapherModule extends HTMLElement {
             }
         }
         
-        this.plotGraph(x, y, matrix.numvoxels,orthoElement);
+        this.plotGraph(x, y, matrix.numvoxels, orthoElement);
     }
 
     /** Main Function 2 plots a Graph directly from data!
-     * @param{Array} x - x-axis
-     * @param{Array} y - y-axis data (values)
-     * @param{Array} numvoxels - y-axis data 2 (optional, these are the "volumes" of ROI if specified)
-     * @param{orthoElement} viewer - the viewer to attach to for resizing info (defaults to looking for an ortho-viewer)
+     * @param {Array} x - x-axis
+     * @param {Array} y - y-axis data (values)
+     * @param {Array} numvoxels - y-axis data 2 (optional, these are the "volumes" of ROI if specified)
+     * @param {orthoElement} viewer - the viewer to attach to for resizing info (defaults to looking for an ortho-viewer).
      */
     plotGraph(x, y, numvoxels=null,orthoElement=null) {
-
-        if (!orthoElement)
-            orthoElement = document.getElementsByClassName('bisweb-orthogonalviewer').item(0);
-        if (!orthoElement)
-            return;
         
         let changedViewer=false;
         
@@ -232,8 +224,6 @@ class GrapherModule extends HTMLElement {
             y: y,
             numvoxels: numvoxels
         };
-
-        console.log('orthoelement', orthoElement);
 
         this.replotGraph(false).then( () => {
             if (changedViewer)
@@ -351,11 +341,12 @@ class GrapherModule extends HTMLElement {
         if (!dm) {
             return Promise.reject("Bad Dimensions");
         }
+
+        console.log('dm', dm);
         let cw=dm[0];
         let ch=dm[1];
         
-
-        let cnv=$(`<canvas id="${this.graphcanvasid}" width="${cw}" height="${ch}"></canvas></div>`);
+        let cnv=$(`<div id="${this.graphcanvasid}" width="${cw}" height="${ch}"></div>`);
         this.graphWindow.widget.append(cnv);
         cnv.css({
             'background-color' : '#555555',
@@ -369,9 +360,7 @@ class GrapherModule extends HTMLElement {
         });
 
 
-        let canvas = document.getElementById(this.graphcanvasid);
-        let context = canvas.getContext("2d");
-        context.clearRect(0, 0, canvas.width, canvas.height);
+        let frame = document.getElementById(this.graphcanvasid);
 
         if (this.graph !== null)
             this.graph.destroy();
@@ -380,7 +369,7 @@ class GrapherModule extends HTMLElement {
         return new Promise( (resolve) => {
             setTimeout(() => {
                 console.log('create chart');
-                this.createChart();
+                this.createChart(frame);
                 /*this.graph = new Chart(canvas, {
                     type: d_type,
                     data: data,
@@ -475,7 +464,7 @@ class GrapherModule extends HTMLElement {
         }
     }
 
-    createChart(xdata, ydata) {
+    createChart(frame, xdata, ydata) {
         let length = 100;
         let data = () => {
             return Array.from({ length: length })
@@ -490,7 +479,7 @@ class GrapherModule extends HTMLElement {
         };
 
         let chartdata = data();
-        console.log('taucharts', Taucharts);
+        console.log('taucharts', this.graphcanvasid);
 
         new Taucharts.Chart({
             data: chartdata,
@@ -503,7 +492,7 @@ class GrapherModule extends HTMLElement {
                     brewer: { increase: '#ff0000', decrease: '#00ff00' }
                 }
             }
-        }).renderTo('#' + this.graphcanvasid);
+        }).renderTo(frame);
     }
 
     show() {
@@ -656,7 +645,7 @@ class GrapherModule extends HTMLElement {
     }
 
 
-    /** Resizes elements and returns the canvas dimensions
+    /** Resizes elements and returns the canvas dimensions. Adds file tree panel width if necessary
      * @returns {array} - [ canvaswidth,canvasheight ]
      */
     getCanvasDimensions() {
@@ -668,7 +657,9 @@ class GrapherModule extends HTMLElement {
         } else if (dim===null) {
             dim=[ window.innerWidth,window.innerHeight ];
         }
-        
+
+        dim[0] += this.extrawidth;
+
         let width=dim[0]-20;
         let height=dim[1]-20;
         let left=10;

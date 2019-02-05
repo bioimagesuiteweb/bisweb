@@ -34,7 +34,6 @@ class FileTreePanel extends HTMLElement {
         this.viewerappid = this.getAttribute('bis-viewerapplicationid');
         this.graphelementid = this.getAttribute('bis-graphelement');
 
-        console.log('graph element id', this.graphelementid);
         bis_webutil.runAfterAllLoaded(() => {
 
             this.viewer = document.querySelector(this.viewerid);
@@ -734,9 +733,13 @@ class FileTreePanel extends HTMLElement {
         return parsedDate + '.json';
     }
 
+    getPanelWidth() {
+        return parseInt(this.panel.getWidget().css('width'), 10);
+    }
+
     createVolumeChart() {
-        console.log('graph element', this.graphelement);
-        this.graphelement.parsePaintedAreaAverageTimeSeries();
+        console.log('graph element', this.getPanelWidth());
+        this.graphelement.parsePaintedAreaAverageTimeSeries(this.viewer, this.getPanelWidth());
     }
 }
 
