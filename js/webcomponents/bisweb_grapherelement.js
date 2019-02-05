@@ -28,6 +28,10 @@ const bootbox = require('bootbox');
 const filesaver = require('FileSaver');
 const Taucharts = require('taucharts');
 
+//taucharts plugins
+require('../../node_modules/taucharts/dist/plugins/tooltip.js');
+require('../../node_modules/taucharts/dist/plugins/legend.js');
+
 Chart.defaults.global.defaultFontColor = 'white';
 Chart.defaults.global.defaultFontSize = '16';
 
@@ -346,10 +350,10 @@ class GrapherModule extends HTMLElement {
         let cw=dm[0];
         let ch=dm[1];
         
-        let cnv=$(`<div id="${this.graphcanvasid}" width="${cw}" height="${ch}"></div>`);
+        let cnv=$(`<div id="${this.graphcanvasid}" class='bisweb-taucharts-container' width="${cw}" height="${ch}"></div>`);
         this.graphWindow.widget.append(cnv);
         cnv.css({
-            'background-color' : '#555555',
+            'background-color' : 'rgb(60, 67, 67)',
             'position' : 'absolute',
             'left' : '5px',
             'top'  : '8px',
@@ -479,7 +483,6 @@ class GrapherModule extends HTMLElement {
         };
 
         let chartdata = data();
-        console.log('taucharts', this.graphcanvasid);
 
         new Taucharts.Chart({
             data: chartdata,
@@ -491,7 +494,8 @@ class GrapherModule extends HTMLElement {
                 color: {
                     brewer: { increase: '#ff0000', decrease: '#00ff00' }
                 }
-            }
+            },
+            plugins: [Taucharts.api.plugins.get('tooltip')(), Taucharts.api.plugins.get('legend')()]
         }).renderTo(frame);
     }
 

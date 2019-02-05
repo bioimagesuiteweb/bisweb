@@ -738,7 +738,6 @@ class FileTreePanel extends HTMLElement {
     }
 
     createVolumeChart() {
-        console.log('graph element', this.getPanelWidth());
         this.graphelement.parsePaintedAreaAverageTimeSeries(this.viewer, this.getPanelWidth());
     }
 }

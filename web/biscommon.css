@@ -365,3 +365,7 @@ input[type="radio"] .styled:checked + label::after {
     -ms-transform: scale(-1, 1);
     transform: scale(-1, 1);
 }
+
+.bisweb-taucharts-container { 
+    display: block;
+}
