@@ -26,6 +26,7 @@ const numeric = require('numeric');
 const bisgenericio = require('bis_genericio');
 const bootbox = require('bootbox');
 const filesaver = require('FileSaver');
+const Taucharts = require('taucharts');
 
 Chart.defaults.global.defaultFontColor = 'white';
 Chart.defaults.global.defaultFontSize = '16';
@@ -51,6 +52,13 @@ class GrapherModule extends HTMLElement {
         this.graphWindow=null;
         this.resizingTimer=null;
         this.buttons=[];
+    }
+
+    connectedCallback() {
+        let orthoviewerid = this.getAttribute('bis-viewerid');
+        webutil.runAfterAllLoaded( () => {
+            this.orthoViewer = document.querySelector(orthoviewerid);
+        });
     }
 
 
@@ -108,7 +116,7 @@ class GrapherModule extends HTMLElement {
                 },
                 position: "right",
                 parent: bbar
-            }).click(() => { this.rePlotGraph(false).catch( () => { } ); }));
+            }).click(() => { this.replotGraph(false).catch( () => { } ); }));
             
             this.buttons.push(webutil.createbutton({
                 name: 'Plot VOI Volumes',
@@ -119,7 +127,7 @@ class GrapherModule extends HTMLElement {
                 },
                 position: "left",
                 parent: bbar
-            }).click(() => { this.rePlotGraph(true).catch( () => { } );}));
+            }).click(() => { this.replotGraph(true).catch( () => { } );}));
         }
         
         webutil.createbutton({
@@ -153,11 +161,12 @@ class GrapherModule extends HTMLElement {
      * {@link bis_fmrimatrixconnectivity.js}. Uses chart.js for the graphics. 
      * Calls plot Graph for the actual plotting
      */
-    parsePaintedAreaAverageTimeSeries(orthoElement) {
+    parsePaintedAreaAverageTimeSeries(orthoElement = null) {
 
         if (!orthoElement)
-            return;
+            orthoElement = this.orthoViewer;
         
+        console.log('orthoElement', orthoElement);
         this.lastdata = null;
         let image = orthoElement.getimage();
         let objectmap = orthoElement.getobjectmap();
@@ -223,7 +232,10 @@ class GrapherModule extends HTMLElement {
             y: y,
             numvoxels: numvoxels
         };
-        this.rePlotGraph(false).then( () => {
+
+        console.log('orthoelement', orthoElement);
+
+        this.replotGraph(false).then( () => {
             if (changedViewer)
                 this.lastviewer.addResizeObserver(this);
         }).catch( (e) => {
@@ -236,7 +248,7 @@ class GrapherModule extends HTMLElement {
      * @param {Boolean} showVolume -- if true show the volumes (if they exist), else the values
      * @returns {Promise} - when done
      */
-    rePlotGraph(showVolume = false) {
+    replotGraph(showVolume = false) {
 
         let showbuttons=true;
         this.lastShowVolume=showVolume;
@@ -367,11 +379,13 @@ class GrapherModule extends HTMLElement {
 
         return new Promise( (resolve) => {
             setTimeout(() => {
-                this.graph = new Chart(canvas, {
+                console.log('create chart');
+                this.createChart();
+                /*this.graph = new Chart(canvas, {
                     type: d_type,
                     data: data,
                     options: options
-                });
+                });*/
                 resolve();
             },1);
         });
@@ -459,6 +473,41 @@ class GrapherModule extends HTMLElement {
                 datasets: parsedDataSet
             };
         }
+    }
+
+    createChart(xdata, ydata) {
+        let length = 100;
+        let data = () => {
+            return Array.from({ length: length })
+                .map((e, i) => { return i; })
+                .reduce((memo, x) => {
+                    let i = x;
+                    return memo.concat([
+                        { type: 'increase', formula: 'i', frame: i, intensity: i },
+                        { type: 'decrease', formula: 'length - i', frame: i, intensity: length - i }
+                    ])
+                }, []);
+        };
+
+        let chartdata = data();
+        console.log('taucharts', Taucharts);
+
+        new Taucharts.Chart({
+            data: chartdata,
+            type: 'line',
+            x: 'frame',
+            y: 'intensity',
+            color: 'type',
+            guide: {
+                color: {
+                    brewer: { increase: '#ff0000', decrease: '#00ff00' }
+                }
+            }
+        }).renderTo('#' + this.graphcanvasid);
+    }
+
+    show() {
+        this.chart.dialog.modal('show');
     }
 
     /** create a snapshot of the current plot */
@@ -599,7 +648,7 @@ class GrapherModule extends HTMLElement {
 
         const self=this;
         this.resizingTimer=setTimeout( () => {
-            self.rePlotGraph(self.lastShowVolume).catch( (e) => {
+            self.replotGraph(self.lastShowVolume).catch( (e) => {
                 console.log(e,e.stack);
             });
         },200);

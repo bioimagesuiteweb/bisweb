@@ -2,6 +2,7 @@ const $ = require('jquery');
 const bootbox = require('bootbox');
 const bisweb_panel = require('bisweb_panel.js');
 const bisweb_chartelement = require('bisweb_chartelement.js');
+const bisweb_grapherelement = require('bisweb_grapherelement.js');
 const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
 const bis_genericio = require('bis_genericio.js');
@@ -31,13 +32,16 @@ class FileTreePanel extends HTMLElement {
         this.viewertwoid = this.getAttribute('bis-viewerid2');
         this.layoutid = this.getAttribute('bis-layoutwidgetid');
         this.viewerappid = this.getAttribute('bis-viewerapplicationid');
+        this.graphelementid = this.getAttribute('bis-graphelement');
 
+        console.log('graph element id', this.graphelementid);
         bis_webutil.runAfterAllLoaded(() => {
 
             this.viewer = document.querySelector(this.viewerid);
             this.viewertwo = document.querySelector(this.viewertwoid) || null;
             this.layout = document.querySelector(this.layoutid);
             this.viewerapplication = document.querySelector(this.viewerappid);
+            this.graphelement = document.querySelector(this.graphelementid);
             this.popoverDisplayed = false;
             this.staticTagSelectMenu = null;
 
@@ -731,10 +735,8 @@ class FileTreePanel extends HTMLElement {
     }
 
     createVolumeChart() {
-        let chart = new bisweb_chartelement();
-        chart.createChart();
-        chart.show();
-
+        console.log('graph element', this.graphelement);
+        this.graphelement.parsePaintedAreaAverageTimeSeries();
     }
 }
 

@@ -110,12 +110,17 @@
       bis-algorithmcontrollerid="#algoelement">
     </bisweb-modulemanager>
 
-    
+    <bisweb-graphelement
+      id="bisweb_grapherelement"
+      bis-viewerid="viewer">
+    </bisweb-grapherelement>
+
     <bisweb-filetreepanel
       id="bis_filetreepanel"
       bis-layoutwidgetid="#viewer_layout" 
       bis-viewerid="#viewer"
-      bis-viewerapplicationid="#viewer_application">
+      bis-viewerapplicationid="#viewer_application"
+      bis-graphelement="#bisweb_grapherelement">
     </bisweb-filetreepanel>
 
     <bisweb-dicomimportelement

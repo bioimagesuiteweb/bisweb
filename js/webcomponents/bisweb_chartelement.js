@@ -9,43 +9,78 @@ class ChartElement {
     }
 
     createChartFrame() {
-        let chart = bis_webutil.createmodal('Volume Chart', 'modal-lg');
-        this.chart = chart;
-
-        let container = $(`<div class=bis-chart-container></div>`);
-        this.chart.body.append(container);
-    }
-
-    createChart(xdata, ydata) {
-        let length = 100;
-        let data = () => {
-            return Array.from({length : length})
-            .map((e,i) => { return i;})
-            .reduce( (memo, x) => {
-                let i = x;
-                return memo.concat([
-                    { type: 'increase', formula: 'i', i: i, val: i},
-                    { type: 'decrease', formula: 'length - i', i: i, val: length - i}
-                ])
-            }, []);
-        };
-
-        new Taucharts.Chart({
-            data : data(),
-            type : 'line',
-            x : 'i', 
-            y : 'val',
-            color : 'type',
-            guide : {
-                color : {
-                    brewer : { increase : '#ff0000', decrease : '#00ff00'}
+        this.graphWindow = document.createElement('bisweb-dialogelement');
+        this.graphWindow.create("VOI Tool", this.desired_width, this.desired_height, 20, 100, 100, false);
+        this.graphWindow.widget.css({ "background-color": "#222222" });
+        this.graphWindow.setCloseCallback(() => {
+            if (this.buttons.length > 0) {
+                for (let i = 0; i < this.buttons.length; i++) {
+                    this.buttons[i].css({ "visibility": "hidden" });
                 }
             }
-        }).renderTo('.bis-chart-container');
-    }
-    
-    show() {
-        this.chart.dialog.modal('show');
+            this.graphWindow.hide();
+        });
+
+        let bbar = this.graphWindow.getFooter();
+
+        let self = this;
+        this.graphWindow.close.remove();
+        bbar.empty();
+
+        let fn3 = function (e) {
+            e.preventDefault();
+            self.exportLastData();
+        };
+
+        if (showbuttons) {
+
+            this.buttons = [];
+            this.buttons.push(webutil.createbutton({
+                name: 'Plot VOI Values',
+                type: "primary",
+                tooltip: '',
+                css: {
+                    'margin-left': '10px',
+                },
+                position: "right",
+                parent: bbar
+            }).click(() => { this.rePlotGraph(false).catch(() => { }); }));
+
+            this.buttons.push(webutil.createbutton({
+                name: 'Plot VOI Volumes',
+                type: "default",
+                tooltip: '',
+                css: {
+                    'margin-left': '10px',
+                },
+                position: "left",
+                parent: bbar
+            }).click(() => { this.rePlotGraph(true).catch(() => { }); }));
+        }
+
+        webutil.createbutton({
+            name: 'Export as CSV',
+            type: "info",
+            tooltip: 'Export Data',
+            css: {
+                'margin-left': '10px',
+            },
+            position: "left",
+            parent: bbar
+        }).click(fn3);
+
+        webutil.createbutton({
+            name: 'Save Snapshot',
+            type: "warning",
+            tooltip: '',
+            css: {
+                'margin-left': '10px',
+            },
+            position: "left",
+            parent: bbar
+        }).click(() => { this.saveSnapshot(); });
+
+        bbar.tooltip();
     }
 }
 
