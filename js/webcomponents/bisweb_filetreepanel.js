@@ -1,6 +1,7 @@
 const $ = require('jquery');
 const bootbox = require('bootbox');
 const bisweb_panel = require('bisweb_panel.js');
+const bisweb_chartelement = require('bisweb_chartelement.js');
 const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
 const bis_genericio = require('bis_genericio.js');
@@ -728,6 +729,13 @@ class FileTreePanel extends HTMLElement {
         console.log('date', parsedDate);
         return parsedDate + '.json';
     }
+
+    createVolumeChart() {
+        let chart = new bisweb_chartelement();
+        chart.createChart();
+        chart.show();
+
+    }
 }
 
 
@@ -800,8 +808,5 @@ let readParamsFile = (sourceDirectory) => {
 
 };
 
-let createVolumeChart = () => {
-
-};
 
 bis_webutil.defineElement('bisweb-filetreepanel', FileTreePanel);
