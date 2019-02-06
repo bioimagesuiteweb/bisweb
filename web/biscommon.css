@@ -366,6 +366,7 @@ input[type="radio"] .styled:checked + label::after {
     transform: scale(-1, 1);
 }
 
-.bisweb-taucharts-container { 
-    display: block;
+.tau-chart__layout {
+    height : inherit;
 }
+

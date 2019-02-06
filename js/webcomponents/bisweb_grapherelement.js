@@ -495,8 +495,15 @@ class GrapherModule extends HTMLElement {
                     brewer: { increase: '#ff0000', decrease: '#00ff00' }
                 }
             },
+            settings: {
+                fitModel: 'entire-view'
+            },
             plugins: [Taucharts.api.plugins.get('tooltip')(), Taucharts.api.plugins.get('legend')()]
         }).renderTo(frame);
+
+        //set size of rendered tauchart to fit container explicitly
+        //let containerHeight = $('.bisweb-taucharts-container').prop('height');
+        //$('.tau-chart__svg').prop('height', containerHeight * 0.8);
     }
 
     show() {
