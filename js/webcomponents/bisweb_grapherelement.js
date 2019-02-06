@@ -353,7 +353,6 @@ class GrapherModule extends HTMLElement {
         let cnv=$(`<div id="${this.graphcanvasid}" class='bisweb-taucharts-container' width="${cw}" height="${ch}"></div>`);
         this.graphWindow.widget.append(cnv);
         cnv.css({
-            'background-color' : 'rgb(60, 67, 67)',
             'position' : 'absolute',
             'left' : '5px',
             'top'  : '8px',
@@ -372,7 +371,6 @@ class GrapherModule extends HTMLElement {
 
         return new Promise( (resolve) => {
             setTimeout(() => {
-                console.log('create chart');
                 this.createChart(frame);
                 /*this.graph = new Chart(canvas, {
                     type: d_type,
@@ -474,36 +472,44 @@ class GrapherModule extends HTMLElement {
             return Array.from({ length: length })
                 .map((e, i) => { return i; })
                 .reduce((memo, x) => {
-                    let i = x;
                     return memo.concat([
-                        { type: 'increase', formula: 'i', frame: i, intensity: i },
-                        { type: 'decrease', formula: 'length - i', frame: i, intensity: length - i }
+                        { type: 'increase', xAxis: 'frames', yAxis: 'intensity (pixel value)', frame: x, intensity: x },
+                        { type: 'decrease', xAxis: 'frames', yAxis: 'intensity (pixel value)', frame: x, intensity: length - x }
                     ])
                 }, []);
         };
 
         let chartdata = data();
-
         new Taucharts.Chart({
+            guide: {
+                showAnchors : true,
+                x : {
+                    padding : 10,
+                    label : { text : 'frames' }
+                },
+                y: {
+                    padding: 10,
+                    label: { text: 'intensity (pixel value)'},
+                },
+                color: {
+                    brewer: { increase: '#ff0000', decrease: '#00ff00' }
+                }
+            },
             data: chartdata,
             type: 'line',
             x: 'frame',
             y: 'intensity',
             color: 'type',
-            guide: {
-                color: {
-                    brewer: { increase: '#ff0000', decrease: '#00ff00' }
-                }
-            },
+            title : 'Intensity by Selected Region',
             settings: {
-                fitModel: 'entire-view'
+                fitModel: 'normal'
             },
-            plugins: [Taucharts.api.plugins.get('tooltip')(), Taucharts.api.plugins.get('legend')()]
+            plugins: [Taucharts.api.plugins.get('tooltip')( {
+                fields: ['formula', 'frame', 'intensity', 'type']
+            }), Taucharts.api.plugins.get('legend')( {
+                'position' : 'right'
+            })]
         }).renderTo(frame);
-
-        //set size of rendered tauchart to fit container explicitly
-        //let containerHeight = $('.bisweb-taucharts-container').prop('height');
-        //$('.tau-chart__svg').prop('height', containerHeight * 0.8);
     }
 
     show() {
