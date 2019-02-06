@@ -502,12 +502,12 @@ class GrapherModule extends HTMLElement {
             color: 'type',
             title : 'Intensity by Selected Region',
             settings: {
-                fitModel: 'normal'
+                fitModel: 'fill-height'
             },
             plugins: [Taucharts.api.plugins.get('tooltip')( {
                 fields: ['formula', 'frame', 'intensity', 'type']
             }), Taucharts.api.plugins.get('legend')( {
-                'position' : 'right'
+                'position' : 'top'
             })]
         }).renderTo(frame);
     }

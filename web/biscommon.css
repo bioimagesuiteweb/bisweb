@@ -375,9 +375,24 @@ input[type="radio"] .styled:checked + label::after {
     width : 100%;
 }
 
+.tau-chart__layout__content {
+    width : 85%;
+    height : 100%
+}
+
+.tau-chart__legend {
+    width : 15%;
+    float : right;
+    z-index : -1;
+}
+
 tspan {
     fill : white;
     font-weight : bold;
     font-size : 12px;
+}
+
+.tau-chart__tooltip__content {
+    z-index: 10000;
 }
 
