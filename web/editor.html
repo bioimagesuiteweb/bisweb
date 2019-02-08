@@ -101,6 +101,25 @@
       bis-algorithmcontrollerid="#algoelement">
     </bisweb-painttoolelement>
 
+    <bisweb-graphelement
+      id="bisweb_graphelement">
+    </bisweb-grapherelement>
+
+    <bisweb-filetreepanel
+      id="bis_filetreepanel"
+      bis-layoutwidgetid="#viewer_layout" 
+      bis-viewerid="#viewer"
+      bis-viewerapplicationid="#viewer_application"
+      bis-graphelement="#bisweb_graphelement">
+    </bisweb-filetreepanel>
+
+    <bisweb-dicomimportelement
+      id="dicom_import"
+      bis-viewerid="#viewer"
+      bis-layoutwidgetid="#viewer_layout"
+      bis-filetreepanelid="#bis_filetreepanel">
+    </bisweb-dicomimportelement>
+
     <bisweb-landmarkcontrolelement
       id="landmarkcontrol"
       bis-layoutwidgetid="#viewer_layout"
@@ -111,6 +130,7 @@
       bis-menubarid="#viewer_menubar"
       bis-painttoolid="#painttool"
       bis-landmarkcontrolid="#landmarkcontrol"
+      bis-dicomimportid="#dicom_import"
       bis-viewerid="#viewer">
     </bisweb-viewerapplication>
 

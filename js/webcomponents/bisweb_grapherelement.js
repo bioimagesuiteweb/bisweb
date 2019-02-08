@@ -459,6 +459,7 @@ class GrapherModule extends HTMLElement {
                 borderWidth: 1,
                 pointRadius: 0
             });
+
             return {
                 colors : parsedColors,
                 datasets: parsedDataSet
@@ -468,20 +469,16 @@ class GrapherModule extends HTMLElement {
 
     createChart(frame, chartData) {
 
-        let length = 100;
-        let data = () => {
-            return Array.from({ length: length })
-                .map((e, i) => { return i; })
-                .reduce((memo, x) => {
-                    return memo.concat([
-                        { type: 'increase', xAxis: 'frames', yAxis: 'intensity (pixel value)', frame: x, intensity: x },
-                        { type: 'decrease', xAxis: 'frames', yAxis: 'intensity (pixel value)', frame: x, intensity: length - x }
-                    ])
-                }, []);
-        };
+        if (chartData.datasets.length === 1) {
+            this.createBarChart(chartData.datasets[0].data, chartData.colors, frame);
+        } else {
+            this.createLineChart(charData.datasets, chartData.colors, frame);
+        }
+        
+    }
 
-        console.log('data', chartData, 'sample data', data());
 
+    createBarChart(data, colors, frame) {
         new Taucharts.Chart({
             guide: {
                 showAnchors : true,
@@ -494,7 +491,7 @@ class GrapherModule extends HTMLElement {
                     label: { text: 'intensity (pixel value)'},
                 },
                 color : {
-                    brewer : chartData.colors
+                    brewer : colors
                 }
             },
             type: 'bar',
@@ -510,10 +507,14 @@ class GrapherModule extends HTMLElement {
             }), Taucharts.api.plugins.get('legend')( {
                 'position' : 'top'
             })],
-            data: chartData.datasets[0].data,
+            data: data,
         }).renderTo(frame);
     }
 
+    createLineChart(data, colors, frame) {
+
+    }
+    
     show() {
         this.chart.dialog.modal('show');
     }
