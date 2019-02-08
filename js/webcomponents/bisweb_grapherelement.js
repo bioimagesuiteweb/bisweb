@@ -395,7 +395,6 @@ class GrapherModule extends HTMLElement {
         let mx = util.objectmapcolormap.length;
         let dim = numeric.dim(y);
         let numframes = dim[1];
-        let labels = [];
 
         if (numframes > 1 && showVolume === false) {
             let parsedDataSets = [];
@@ -407,23 +406,20 @@ class GrapherModule extends HTMLElement {
                     let cl = util.objectmapcolormap[index];
                     cl = 'rgb(' + cl[0] + ', ' + cl[1] + ', ' + cl[2] + ')';
 
-                    parsedDataSets[i] = {
-                        label: "Region " + i,
-                        data: y[i],
-                        backgroundColor: cl,
-                        borderColor: cl,
-                        borderWidth: 1,
-                        pointRadius: 0,
-                        fill: false
-                    };
+                    parsedDataSets[i] = [];
+
+                    for (let j = 0; j < y[i].length; j++) 
+                        parsedDataSets[i].push({ 'intensity' : y[i][j], 'frame' : j, 'label' : 'Region ' + i, 'color' : cl });
+                    
 
                 }
             }
-            labels = x;
+
             parsedDataSets = parsedDataSets.filter(Boolean);
+
             return {
-                labels: labels,
-                datasets: parsedDataSets
+                datasets: parsedDataSets,
+                chartType: 'line'
             };
         } else {
             // Bar Chart
@@ -448,7 +444,7 @@ class GrapherModule extends HTMLElement {
                     parsedColors[label] = cl;
 
                     if (showVolume === false)
-                        data.push({ 'intensity' : y[i][0], 'index' : index, 'label' : label, 'color' : cl });
+                        data.push({ 'intensity' : y[i][0], 'x' : index, 'label' : label, 'color' : cl });
                     else
                         data.push({ 'intensity' : numVoxels[i], 'index' : index, 'label' : label, 'color' : cl });
                 }
@@ -462,29 +458,34 @@ class GrapherModule extends HTMLElement {
 
             return {
                 colors : parsedColors,
-                datasets: parsedDataSet
+                datasets : parsedDataSet,
+                chartType : 'bar'
             };
         }
     }
 
     createChart(frame, chartData) {
 
-        if (chartData.datasets.length === 1) {
+        if (chartData.chartType === 'bar') {
             this.createBarChart(chartData.datasets[0].data, chartData.colors, frame);
+        } else if (chartData.chartType === 'line') {
+            this.createLineChart(chartData.datasets, chartData.colors, frame);
         } else {
-            this.createLineChart(charData.datasets, chartData.colors, frame);
+            console.log('Error: unrecognized chart type', chartData.chartType);
         }
         
     }
 
 
     createBarChart(data, colors, frame) {
+        console.log('data', data);
+
         new Taucharts.Chart({
             guide: {
                 showAnchors : true,
                 x : {
                     padding : 10,
-                    label : { text : 'frames' }
+                    label : { text : 'region' }
                 },
                 y: {
                     padding: 10,
@@ -498,7 +499,6 @@ class GrapherModule extends HTMLElement {
             x: 'index',
             y: 'intensity',
             color: 'label',
-            title : 'Intensity by Selected Region',
             settings: {
                 fitModel: 'fill-height'
             },
@@ -513,8 +513,36 @@ class GrapherModule extends HTMLElement {
 
     createLineChart(data, colors, frame) {
 
+        console.log('data', data);
+        new Taucharts.Chart({
+            guide: {
+                showAnchors : true,
+                x : {
+                    padding : 10,
+                    label : { text : 'frame' }
+                },
+                y: {
+                    padding: 10,
+                    label: { text: 'intensity (pixel value)'},
+                },
+                color : {
+                    brewer : colors
+                }
+            },
+            type: 'line',
+            x: 'x',
+            y: 'intensity',
+            color: 'label',
+            settings: {
+                fitModel: 'fill-height'
+            },
+            plugins: [Taucharts.api.plugins.get('legend') ({
+                'position' : 'top'
+            })],
+            data: data
+        }).renderTo(frame);
     }
-    
+
     show() {
         this.chart.dialog.modal('show');
     }
