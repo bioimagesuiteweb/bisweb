@@ -371,7 +371,7 @@ class GrapherModule extends HTMLElement {
 
         return new Promise( (resolve) => {
             setTimeout(() => {
-                this.createChart(frame);
+                this.createChart(frame, data);
                 /*this.graph = new Chart(canvas, {
                     type: d_type,
                     data: data,
@@ -427,7 +427,7 @@ class GrapherModule extends HTMLElement {
             };
         } else {
             // Bar Chart
-            let parsedDataSet = [], data = [], backgroundColor = [];
+            let parsedDataSet = [], data = [], parsedColors = {}, label;
             for (let i = 0; i < y.length; i++) {
 
                 let doshow=false;
@@ -436,6 +436,7 @@ class GrapherModule extends HTMLElement {
                 } else if (numVoxels[i] > 0) {
                     doshow=true;
                 }
+
                 if (doshow) {
                     let index = i + 1;
                     let colorindex = index;
@@ -443,30 +444,30 @@ class GrapherModule extends HTMLElement {
 
                     let cl = util.objectmapcolormap[colorindex];
                     cl = 'rgb(' + cl[0] + ', ' + cl[1] + ', ' + cl[2] + ')';
-                    backgroundColor.push(cl);
-                    let out = 'R' + index;
-                    labels.push(out);
+                    label = 'R' + index;
+                    parsedColors[label] = cl;
+
                     if (showVolume === false)
-                        data.push(y[i]);
+                        data.push({ 'intensity' : y[i][0], 'index' : index, 'label' : label, 'color' : cl });
                     else
-                        data.push(numVoxels[i]);
+                        data.push({ 'intensity' : numVoxels[i], 'index' : index, 'label' : label, 'color' : cl });
                 }
             }
 
             parsedDataSet.push({
                 data: data,
-                backgroundColor: backgroundColor,
                 borderWidth: 1,
                 pointRadius: 0
             });
             return {
-                labels: labels,
+                colors : parsedColors,
                 datasets: parsedDataSet
             };
         }
     }
 
-    createChart(frame, xdata, ydata) {
+    createChart(frame, chartData) {
+
         let length = 100;
         let data = () => {
             return Array.from({ length: length })
@@ -479,7 +480,8 @@ class GrapherModule extends HTMLElement {
                 }, []);
         };
 
-        let chartdata = data();
+        console.log('data', chartData, 'sample data', data());
+
         new Taucharts.Chart({
             guide: {
                 showAnchors : true,
@@ -491,15 +493,15 @@ class GrapherModule extends HTMLElement {
                     padding: 10,
                     label: { text: 'intensity (pixel value)'},
                 },
-                color: {
-                    brewer: { increase: '#ff0000', decrease: '#00ff00' }
+                color : {
+                    brewer : chartData.colors
                 }
             },
-            data: chartdata,
-            type: 'line',
-            x: 'frame',
+            data: chartData.datasets[0].data,
+            type: 'bar',
+            x: 'index',
             y: 'intensity',
-            color: 'type',
+            color: 'label',
             title : 'Intensity by Selected Region',
             settings: {
                 fitModel: 'fill-height'
