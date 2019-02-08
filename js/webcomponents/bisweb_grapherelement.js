@@ -350,7 +350,7 @@ class GrapherModule extends HTMLElement {
         let cw=dm[0];
         let ch=dm[1];
         
-        let cnv=$(`<div id="${this.graphcanvasid}" class='bisweb-taucharts-container' width="${cw}" height="${ch}"></div>`);
+        let cnv=$(`<div id="${this.graphcanvasid}" class='bisweb-taucharts-container' width="${cw}" height="${ch}" style="overflow: auto"></div>`);
         this.graphWindow.widget.append(cnv);
         cnv.css({
             'position' : 'absolute',
@@ -497,7 +497,6 @@ class GrapherModule extends HTMLElement {
                     brewer : chartData.colors
                 }
             },
-            data: chartData.datasets[0].data,
             type: 'bar',
             x: 'index',
             y: 'intensity',
@@ -510,7 +509,8 @@ class GrapherModule extends HTMLElement {
                 fields: ['formula', 'frame', 'intensity', 'type']
             }), Taucharts.api.plugins.get('legend')( {
                 'position' : 'top'
-            })]
+            })],
+            data: chartData.datasets[0].data,
         }).renderTo(frame);
     }
 

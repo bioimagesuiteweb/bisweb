@@ -383,7 +383,7 @@ input[type="radio"] .styled:checked + label::after {
 .tau-chart__legend {
     width : 15%;
     float : right;
-    z-index : -1;
+    padding-left : 30px;
 }
 
 tspan {
@@ -394,5 +394,13 @@ tspan {
 
 .tau-chart__tooltip__content {
     z-index: 10000;
+}
+
+.tau-chart__legend__item {
+    padding: 5px;
+}
+
+.tau-chart__legend__guide--color {
+    height : 5px;
 }
 
