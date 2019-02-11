@@ -406,10 +406,8 @@ class GrapherModule extends HTMLElement {
                     let cl = util.objectmapcolormap[index];
                     cl = 'rgb(' + cl[0] + ', ' + cl[1] + ', ' + cl[2] + ')';
 
-                    parsedDataSets[i] = [];
-
                     for (let j = 0; j < y[i].length; j++) 
-                        parsedDataSets[i].push({ 'intensity' : y[i][j], 'frame' : j, 'label' : 'Region ' + i, 'color' : cl });
+                        parsedDataSets.push({ 'intensity' : y[i][j], 'frame' : j, 'label' : 'Region ' + i, 'color' : cl });
                     
 
                 }
@@ -444,7 +442,7 @@ class GrapherModule extends HTMLElement {
                     parsedColors[label] = cl;
 
                     if (showVolume === false)
-                        data.push({ 'intensity' : y[i][0], 'x' : index, 'label' : label, 'color' : cl });
+                        data.push({ 'intensity' : y[i][0], 'index' : index, 'label' : label, 'color' : cl });
                     else
                         data.push({ 'intensity' : numVoxels[i], 'index' : index, 'label' : label, 'color' : cl });
                 }
@@ -530,7 +528,7 @@ class GrapherModule extends HTMLElement {
                 }
             },
             type: 'line',
-            x: 'x',
+            x: 'frame',
             y: 'intensity',
             color: 'label',
             settings: {
