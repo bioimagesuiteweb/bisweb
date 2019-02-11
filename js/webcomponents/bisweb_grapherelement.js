@@ -264,81 +264,7 @@ class GrapherModule extends HTMLElement {
                                         this.lastdata.numvoxels,
                                         showVolume);
 
-        let options = null;
-        let d_type = '';
-
-        if (numframes > 1 && showVolume === false) {
-            options = {
-                title: {
-                    display: true,
-                    text: 'Average Intensity in each Region vs Time'
-                },
-                elements: {
-                    line: {
-                        tension: 0, // disables bezier curves
-                    }
-                },
-                scales: {
-                    xAxes: [{
-                        scaleLabel: {
-                            display: true,
-                            labelString: 'Time (s)',
-                            fontSize: 20
-                        }
-                    }],
-                    yAxes: [{
-                        ticks: {
-                            beginAtZero: false
-                        },
-                        scaleLabel: {
-                            display: true,
-                            labelString: 'Intensity',
-                            fontSize: 20
-                        }
-                    }]
-                },
-                legend: {
-                    position: 'right',
-                    display: false
-                }
-            };
-            d_type = 'line';
-        } else {
-            let heading = "Volume of each Region";
-            if (showVolume === false)
-                heading = "Average Intensity in each Region";
-
-            options = {
-                title: {
-                    display: true,
-                    text: heading,
-                },
-                legend: {
-                    position: 'right',
-                    display: false
-                },
-                scales: {
-                    yAxes: [{
-                        scaleLabel: {
-                            display: true,
-                            labelString: 'Volume (mm^3)',
-                            fontSize: 10
-                        }
-                    }],
-                    xAxes: [{
-                        scaleLabel: {
-                            display: true,
-                            labelString: 'Region Index',
-                            fontSize: 10
-                        }
-                    }]
-                }
-            };
-            d_type = 'bar';
-        }
-
         this.createGUI(showbuttons);
-        
         
         this.graphWindow.show();
         let dm=this.getCanvasDimensions();
@@ -516,10 +442,15 @@ class GrapherModule extends HTMLElement {
 
     createLineChart(data, colors, frame) {
 
+        //line chart seems to fill lines because the data is spikier? Doesn't do it for smooth datasets
         console.log('data', data, 'colors', colors);
         new Taucharts.Chart({
             guide: {
-                showAnchors : true,
+                showAnchors : 'never',
+                split : false,
+                showGridLines: 'xy',
+                nice : true,
+                interpolate : 'linear',
                 x : {
                     padding : 10,
                     label : { text : 'frame' }
