@@ -395,9 +395,10 @@ class GrapherModule extends HTMLElement {
         let mx = util.objectmapcolormap.length;
         let dim = numeric.dim(y);
         let numframes = dim[1];
+        let parsedDataSet = [], parsedColors = {}, label;
 
         if (numframes > 1 && showVolume === false) {
-            let parsedDataSets = [];
+            
             for (let i = 0; i < y.length; i++) {
                 if (numVoxels[i] != 0) {
                     let index = i + 1;
@@ -406,22 +407,26 @@ class GrapherModule extends HTMLElement {
                     let cl = util.objectmapcolormap[index];
                     cl = 'rgb(' + cl[0] + ', ' + cl[1] + ', ' + cl[2] + ')';
 
-                    for (let j = 0; j < y[i].length; j++) 
-                        parsedDataSets.push({ 'intensity' : y[i][j], 'frame' : j, 'label' : 'Region ' + i, 'color' : cl });
-                    
+                    //numbering starts from '1' in viewer so add one to index
+                    let regionNumber = i + 1;
+                    let label = 'R' + regionNumber;
+                    parsedColors[label] = cl;
 
+                    for (let j = 0; j < y[i].length; j++)
+                        parsedDataSet.push({ 'intensity' : y[i][j], 'frame' : j, 'label' : label, 'color' : cl });
                 }
             }
 
-            parsedDataSets = parsedDataSets.filter(Boolean);
+            parsedDataSet = parsedDataSet.filter(Boolean);
 
             return {
-                datasets: parsedDataSets,
+                datasets: parsedDataSet,
+                colors : parsedColors,
                 chartType: 'line'
             };
         } else {
             // Bar Chart
-            let parsedDataSet = [], data = [], parsedColors = {}, label;
+            let data = [];
             for (let i = 0; i < y.length; i++) {
 
                 let doshow=false;
@@ -511,7 +516,7 @@ class GrapherModule extends HTMLElement {
 
     createLineChart(data, colors, frame) {
 
-        console.log('data', data);
+        console.log('data', data, 'colors', colors);
         new Taucharts.Chart({
             guide: {
                 showAnchors : true,
