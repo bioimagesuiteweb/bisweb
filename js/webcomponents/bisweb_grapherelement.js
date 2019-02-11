@@ -50,9 +50,9 @@ class GrapherModule extends HTMLElement {
         this.lastviewer = null;
         this.desired_width=500;
         this.desired_height=500;
-        this.lastdata = null;
+        this.currentdata = null;
         this.graphcanvasid = null;
-        this.lastShowVolume=false;
+        this.lastPlotFrame=false;
         this.graphWindow=null;
         this.resizingTimer=null;
         this.buttons=[];
@@ -105,7 +105,7 @@ class GrapherModule extends HTMLElement {
 
             this.buttons=[];
             this.buttons.push(webutil.createbutton({
-                name: 'Plot VOI Values',
+                name: 'Plot Timecourse',
                 type: "primary",
                 tooltip: '',
                 css: {
@@ -116,7 +116,7 @@ class GrapherModule extends HTMLElement {
             }).click(() => { this.replotGraph(false).catch( () => { } ); }));
             
             this.buttons.push(webutil.createbutton({
-                name: 'Plot VOI Volumes',
+                name: 'Plot Single Frame',
                 type: "default",
                 tooltip: '',
                 css: {
@@ -124,7 +124,7 @@ class GrapherModule extends HTMLElement {
                 },
                 position: "left",
                 parent: bbar
-            }).click(() => { this.replotGraph(true).catch( () => { } );}));
+            }).click(() => { this.createFrameSelectorModal().catch( () => { } );}));
         }
         
         webutil.createbutton({
@@ -168,7 +168,7 @@ class GrapherModule extends HTMLElement {
             return;
 
         this.extrawidth = extraWidth; //set the extra width for the graph drawing and future resize events
-        this.lastdata = null;
+        this.currentdata = null;
         let image = orthoElement.getimage();
         let objectmap = orthoElement.getobjectmap();
 
@@ -223,7 +223,7 @@ class GrapherModule extends HTMLElement {
             this.lastviewer=orthoElement;
         }
         
-        this.lastdata = {
+        this.currentdata = {
             x: x,
             y: y,
             numvoxels: numvoxels
@@ -239,30 +239,29 @@ class GrapherModule extends HTMLElement {
     }
 
     /** replots the current values
-     * @param {Boolean} showVolume -- if true show the volumes (if they exist), else the values
+     * @param {Number} singleFrame - If set to be a number, plots a VOI for the single frame. If false, plots the timecourse.
      * @returns {Promise} - when done
      */
-    replotGraph(showVolume = false) {
+    replotGraph(singleFrame = false) {
 
         let showbuttons=true;
-        this.lastShowVolume=showVolume;
+        this.lastPlotFrame=singleFrame;
 
-        if (this.lastdata.numvoxels===null) {
-            showVolume=false;
+        if (this.currentdata.numvoxels===null) {
+            singleFrame=false;
             showbuttons=false;
         }
         
-        if (this.lastdata.y < 1) {
+        if (this.currentdata.y < 1) {
             webutil.createAlert('No  objecmap in memory', true);
             return Promise.reject();
         }
 
-        let dim = numeric.dim(this.lastdata.y);
+        let dim = numeric.dim(this.currentdata.y);
         let numframes = dim[1];
-        let data = this.formatChartData(this.lastdata.x,
-                                        this.lastdata.y,
-                                        this.lastdata.numvoxels,
-                                        showVolume);
+        let data = this.formatChartData(this.currentdata.y,
+                                        this.currentdata.numvoxels,
+                                        singleFrame);
 
         this.createGUI(showbuttons);
         
@@ -289,7 +288,7 @@ class GrapherModule extends HTMLElement {
         });
 
 
-        let frame = document.getElementById(this.graphcanvasid);
+        let graphFrame = document.getElementById(this.graphcanvasid);
 
         if (this.graph !== null)
             this.graph.destroy();
@@ -297,12 +296,7 @@ class GrapherModule extends HTMLElement {
 
         return new Promise( (resolve) => {
             setTimeout(() => {
-                this.createChart(frame, data);
-                /*this.graph = new Chart(canvas, {
-                    type: d_type,
-                    data: data,
-                    options: options
-                });*/
+                this.createChart(graphFrame, data);
                 resolve();
             },1);
         });
@@ -311,19 +305,18 @@ class GrapherModule extends HTMLElement {
     /**
      * Reformats the means returned by {@link bis_fmrimatrixconnectivity}.roimean to a format readable by chart.js.
      * Internal use only. 
-     * @param{Array} x - x-axis
-     * @param{Array} y - y-axis data (values)
-     * @param{Array} numVoxels - y-axis data 2 (optional, these are the "volumes" of ROI if specified)
-     * @param{Boolean} showVolume - if true then show the second y-axis data (numVoxels) if they exist
+     * @param {Array} y - y-axis data (values)
+     * @param {Array} numVoxels - y-axis data 2 (optional, these are the "volumes" of ROI if specified)
+     * @param {Number|Boolean} singleFrame - If a positive number, plot the VOI intensity for that frame. Otherwise plot the timecourse.
      */
-    formatChartData(x, y, numVoxels, showVolume) {
+    formatChartData(y, numVoxels, singleFrame) {
 
         let mx = util.objectmapcolormap.length;
         let dim = numeric.dim(y);
         let numframes = dim[1];
         let parsedDataSet = [], parsedColors = {}, label;
 
-        if (numframes > 1 && showVolume === false) {
+        if (numframes > 1 && singleFrame === false) {
             
             for (let i = 0; i < y.length; i++) {
                 if (numVoxels[i] != 0) {
@@ -351,9 +344,13 @@ class GrapherModule extends HTMLElement {
                 chartType: 'line'
             };
         } else {
-            // Bar Chart
-            let data = [];
-            for (let i = 0; i < y.length; i++) {
+            console.log('y', y);
+            // Select a single data frame from within y and plot the frame as a bar chart
+            let dataframe = [], data = [];
+            for (let i = 0; i < y.length; i++) { dataframe.push(y[i][singleFrame])}
+
+            console.log('dataframe', dataframe);
+            for (let i = 0; i < dataframe.length; i++) {
 
                 let doshow=false;
                 if (numVoxels===null) {
@@ -372,10 +369,7 @@ class GrapherModule extends HTMLElement {
                     label = 'R' + index;
                     parsedColors[label] = cl;
 
-                    if (showVolume === false)
-                        data.push({ 'intensity' : y[i][0], 'index' : index, 'label' : label, 'color' : cl });
-                    else
-                        data.push({ 'intensity' : numVoxels[i], 'index' : index, 'label' : label, 'color' : cl });
+                    data.push({ 'intensity' : dataframe[i], 'index' : index, 'label' : label, 'color' : cl });
                 }
             }
 
@@ -418,7 +412,7 @@ class GrapherModule extends HTMLElement {
                 },
                 y: {
                     padding: 10,
-                    label: { text: 'intensity (pixel value)'},
+                    label: { text: 'intensity (average per-pixel value)'},
                 },
                 color : {
                     brewer : colors
@@ -457,7 +451,7 @@ class GrapherModule extends HTMLElement {
                 },
                 y: {
                     padding: 10,
-                    label: { text: 'intensity (pixel value)'},
+                    label: { text: 'intensity (average per-pixel value)'},
                 },
                 color : {
                     brewer : colors
@@ -544,10 +538,10 @@ class GrapherModule extends HTMLElement {
     /** save the last data to csv */
     exportLastData() {
 
-        if (this.lastdata === null)
+        if (this.currentdata === null)
             return;
 
-        let dim = numeric.dim(this.lastdata.y);
+        let dim = numeric.dim(this.currentdata.y);
         let numrows = dim[1];
         let numcols = dim[0];
 
@@ -560,11 +554,11 @@ class GrapherModule extends HTMLElement {
                 out += "\nFrame,";
 
             for (let col = 0; col < numcols; col++) {
-                if (this.lastdata.numvoxels[col]>0) {
+                if (this.currentdata.numvoxels[col]>0) {
                     if (pass === 0 || pass === 2)
                         out += `Region ${col + 1}`;
                     else
-                        out += `${this.lastdata.numvoxels[col]}`;
+                        out += `${this.currentdata.numvoxels[col]}`;
                     if (col < numcols - 1)
                         out += ',';
                 }
@@ -574,10 +568,10 @@ class GrapherModule extends HTMLElement {
 
 
         for (let row = 0; row < numrows; row++) {
-            let line = `${this.lastdata.x[row]}, `;
+            let line = `${this.currentdata.x[row]}, `;
             for (let col = 0; col < numcols; col++) {
-                if (this.lastdata.numvoxels[col]>0) {
-                    line += `${this.lastdata.y[col][row]}`;
+                if (this.currentdata.numvoxels[col]>0) {
+                    line += `${this.currentdata.y[col][row]}`;
                     if (col < numcols - 1)
                         line += ',';
                 }
@@ -619,7 +613,7 @@ class GrapherModule extends HTMLElement {
 
         const self=this;
         this.resizingTimer=setTimeout( () => {
-            self.replotGraph(self.lastShowVolume).catch( (e) => {
+            self.replotGraph(self.lastPlotFrame).catch( (e) => {
                 console.log(e,e.stack);
             });
         },200);
@@ -686,6 +680,26 @@ class GrapherModule extends HTMLElement {
         return [ innerw, innerh-15 ];
     }
 
+    createFrameSelectorModal() {
+
+        let sliderInput = $(`<input class='bootstrap-frame-slider'></input>`);
+        $('.bootstrap-frame-slider').slider();
+
+        let frameSelectorBox = bootbox.confirm({
+            'size': 'small',
+            'title': 'Select a frame',
+            'message': `<p>Select a frame to plot intensities for</p><br>`,
+            'show': false,
+            'callback': () => {
+                console.log('slider value', sliderInput.val());
+            }
+        });
+
+        console.log('frame selector box', frameSelectorBox);
+        $('.bootstrap-frame-slider').find('.bootbox-body').append(sliderInput);
+        frameSelectorBox.modal('show');
+
+    }
 }
 
 module.exports=GrapherModule;
