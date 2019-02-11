@@ -36,7 +36,7 @@ class ChartElement {
 
             this.buttons = [];
             this.buttons.push(webutil.createbutton({
-                name: 'Plot VOI Values',
+                name: 'Plot Intensity Over Time',
                 type: "primary",
                 tooltip: '',
                 css: {
@@ -47,7 +47,7 @@ class ChartElement {
             }).click(() => { this.rePlotGraph(false).catch(() => { }); }));
 
             this.buttons.push(webutil.createbutton({
-                name: 'Plot VOI Volumes',
+                name: 'Plot Intensity by Frame',
                 type: "default",
                 tooltip: '',
                 css: {

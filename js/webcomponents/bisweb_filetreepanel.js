@@ -734,6 +734,7 @@ class FileTreePanel extends HTMLElement {
     }
 
     getPanelWidth() {
+        console.log('width', parseInt(this.panel.getWidget().css('width'), 10));
         return parseInt(this.panel.getWidget().css('width'), 10);
     }
 
@@ -794,7 +795,6 @@ let readParamsFile = (sourceDirectory) => {
     //find the parameters file in the source directory
     return new Promise( (resolve, reject) => {
         bis_genericio.getMatchingFiles(sourceDirectory + '/*.json').then( (paramFile) => {
-            
             bis_genericio.read(paramFile[0]).then( (obj) => {
                 let jsonData;
                 try {
