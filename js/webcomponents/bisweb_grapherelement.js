@@ -28,6 +28,8 @@ const bootbox = require('bootbox');
 const filesaver = require('FileSaver');
 const Taucharts = require('taucharts');
 
+require('bootstrap-slider');
+
 //taucharts plugins
 require('../../node_modules/taucharts/dist/plugins/tooltip.js');
 require('../../node_modules/taucharts/dist/plugins/legend.js');
@@ -124,7 +126,18 @@ class GrapherModule extends HTMLElement {
                 },
                 position: "left",
                 parent: bbar
-            }).click(() => { this.createFrameSelectorModal().catch( () => { } );}));
+            }).click(() => { 
+                let cb = (frame) => {
+                    this.replotGraph(frame).catch ( () => { });
+                };
+
+                let eb = (e) => { 
+                    console.log('An error occured', e);
+                };
+
+                this.createFrameSelectorModal(cb, eb);
+                
+            }));
         }
         
         webutil.createbutton({
@@ -412,6 +425,7 @@ class GrapherModule extends HTMLElement {
                 },
                 y: {
                     padding: 10,
+                    rotate: -90,
                     label: { text: 'intensity (average per-pixel value)'},
                 },
                 color : {
@@ -680,25 +694,62 @@ class GrapherModule extends HTMLElement {
         return [ innerw, innerh-15 ];
     }
 
-    createFrameSelectorModal() {
+    createFrameSelectorModal(cb) {
 
-        let sliderInput = $(`<input class='bootstrap-frame-slider'></input>`);
-        $('.bootstrap-frame-slider').slider();
+        let modal = webutil.createmodal('Select a frame', 'modal-sm');
+        let sliderInput = $(`
+            <p><input 
+                class='bootstrap-frame-slider'
+                data-provide='slider'
+                data-slider-min='0'
+                data-slider-max='255'>
+            </input></p>`);
+        
+        modal.body.append(sliderInput);
+        modal.dialog.find('.bootstrap-frame-slider').slider();
+        modal.dialog.modal('show');
+        
+        /*
 
-        let frameSelectorBox = bootbox.confirm({
+        let frameSelectorBox = bootbox.prompt({
             'size': 'small',
             'title': 'Select a frame',
             'message': `<p>Select a frame to plot intensities for</p><br>`,
             'show': false,
-            'callback': () => {
+            'callback': (result) => {
                 console.log('slider value', sliderInput.val());
+                if (result) { cb(sliderInput.val()); }
+                else { return; }
+                
             }
         });
+        
+        let bootboxPrompt = frameSelectorBox.find('.modal-body').find('.bootbox-input');
+        console.log('bootboxPrompt', bootboxPrompt);
+        formatSlider();
 
-        console.log('frame selector box', frameSelectorBox);
-        $('.bootstrap-frame-slider').find('.bootbox-body').append(sliderInput);
+
+
+        //$('.bootstrap-frame-slider').slider().on('slide', () => { console.log('slide event'); }).data('slider');
+
         frameSelectorBox.modal('show');
 
+
+        function formatSlider() {
+            bootboxPrompt.css('data-slider-min', '0');
+            bootboxPrompt.css('data-slider-max', '255');
+            bootboxPrompt.css('data-slider-step', '1');
+            bootboxPrompt.slider();
+
+            let slider = frameSelectorBox.find('.slider').css('height', '300px');
+            let sliderTrack = frameSelectorBox.find('.slider-track');
+            sliderTrack.css('height', 'inherit');
+            sliderTrack.find('.slider-track-low').css('height', '33%');
+            sliderTrack.find('.slider-selection').css('height', '33%');
+            sliderTrack.find('.slider-track-high').css('height', '33%');
+
+            console.log('slider', slider);
+        }*/
     }
 }
 
