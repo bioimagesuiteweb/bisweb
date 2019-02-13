@@ -135,7 +135,7 @@ class GrapherModule extends HTMLElement {
                     console.log('An error occured', e);
                 };
 
-                this.createFrameSelectorModal(cb, eb);
+                this.createFrameSelectorModal(cb);
                 
             }));
         }
@@ -201,10 +201,10 @@ class GrapherModule extends HTMLElement {
         let y = numeric.transpose(matrix.means);
 
         let dim = numeric.dim(y);
-        let numframes = dim[1];
+        this.numframes = dim[1];
         let x = null;
 
-        if (numframes > 1) {
+        if (this.numframes > 1) {
             x = numeric.rep([matrix.means.length], 0);
             for (let i = 0; i < matrix.means.length; i++) {
                 x[i] = i;
@@ -271,7 +271,7 @@ class GrapherModule extends HTMLElement {
         }
 
         let dim = numeric.dim(this.currentdata.y);
-        let numframes = dim[1];
+        this.numframes = dim[1];
         let data = this.formatChartData(this.currentdata.y,
                                         this.currentdata.numvoxels,
                                         singleFrame);
@@ -326,10 +326,10 @@ class GrapherModule extends HTMLElement {
 
         let mx = util.objectmapcolormap.length;
         let dim = numeric.dim(y);
-        let numframes = dim[1];
+        this.numframes = dim[1];
         let parsedDataSet = [], parsedColors = {}, label;
 
-        if (numframes > 1 && singleFrame === false) {
+        if (this.numframes > 1 && singleFrame === false) {
             
             for (let i = 0; i < y.length; i++) {
                 if (numVoxels[i] != 0) {
@@ -695,23 +695,20 @@ class GrapherModule extends HTMLElement {
     }
 
     createFrameSelectorModal(cb) {
-
-        let modal = webutil.createmodal('Select a frame', 'modal-sm');
+        
         let sliderInput = $(`
-            <p><input 
+            <input 
                 class='bootstrap-frame-slider'
-                data-provide='slider'
                 data-slider-min='0'
-                data-slider-max='255'>
-            </input></p>`);
+                data-slider-max='${this.numframes-1}'
+                data-slider-value='0'
+                data-slider-step='1'>
+            </input>`);
         
-        modal.body.append(sliderInput);
-        modal.dialog.find('.bootstrap-frame-slider').slider();
-        modal.dialog.modal('show');
-        
-        /*
 
-        let frameSelectorBox = bootbox.prompt({
+        console.log('frames', this.numframes);
+
+        let frameSelectorBox = bootbox.confirm({
             'size': 'small',
             'title': 'Select a frame',
             'message': `<p>Select a frame to plot intensities for</p><br>`,
@@ -723,33 +720,15 @@ class GrapherModule extends HTMLElement {
                 
             }
         });
-        
-        let bootboxPrompt = frameSelectorBox.find('.modal-body').find('.bootbox-input');
-        console.log('bootboxPrompt', bootboxPrompt);
-        formatSlider();
 
-
-
-        //$('.bootstrap-frame-slider').slider().on('slide', () => { console.log('slide event'); }).data('slider');
-
+        frameSelectorBox.find('.modal-body').append(sliderInput);
+        $('.bootstrap-frame-slider').slider({
+            'formatter' : (value) => {
+                return 'Current frame: ' + value;
+            }
+        });
         frameSelectorBox.modal('show');
 
-
-        function formatSlider() {
-            bootboxPrompt.css('data-slider-min', '0');
-            bootboxPrompt.css('data-slider-max', '255');
-            bootboxPrompt.css('data-slider-step', '1');
-            bootboxPrompt.slider();
-
-            let slider = frameSelectorBox.find('.slider').css('height', '300px');
-            let sliderTrack = frameSelectorBox.find('.slider-track');
-            sliderTrack.css('height', 'inherit');
-            sliderTrack.find('.slider-track-low').css('height', '33%');
-            sliderTrack.find('.slider-selection').css('height', '33%');
-            sliderTrack.find('.slider-track-high').css('height', '33%');
-
-            console.log('slider', slider);
-        }*/
     }
 }
 
