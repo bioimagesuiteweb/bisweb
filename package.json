@@ -32,6 +32,7 @@
         "colors": "1.1.2",
         "commander": "2.16.0",
         "crypto-js": "3.1.9-1",
+        "d3": "3",
         "dat.gui": "0.7.3",
         "dropbox": "2.5.13",
         "electron-debug": "1.5.0",
@@ -107,9 +108,9 @@
             "@tensorflow/tfjs": "console.log",
             "@tensorflow/tfjs-node": "console.log",
             "@tensorflow/tfjs-node-gpu": "console.log",
-            "crypto" : "console.log",
-            "path" : "console.log",
-            "fs" : "console.log"
+            "crypto": "console.log",
+            "path": "console.log",
+            "fs": "console.log"
         }
     }
 }

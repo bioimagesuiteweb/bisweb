@@ -353,7 +353,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             return;
         }
         let numrows=internal.parcellation.rois.length;
-        let cw=internal.context.canvas.width*0.9;
+        let cw=internal.ontext.canvas.width*0.9;
         let padding_x=30;
         let padding_y=30;
         let scalefactor=((cw-3*padding_x)/(2*numrows));
@@ -687,6 +687,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             for (let i=0;i<internal.linestack.length;i++) {
                 ok=1;
                 if (!skip2d)
+                    //ok=drawchords(internal.linestack[i]);
                     ok=drawlines(internal.linestack[i]);
                 if (ok===0)
                     i=internal.linestack.length;
@@ -1412,6 +1413,52 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         update();
     };
     
+    var drawchords=function(state) {
+
+        let ok=internal.conndata.createFlagMatrix(internal.parcellation,
+                                                  state.mode, // mode
+                                                  state.singlevalue, // singlevalue
+                                                  state.attribcomponent, // attribcomponent
+                                                  state.degreethreshold, // metric threshold
+                                                  state.filter); // sum
+        if (ok===0) {
+            bootbox.alert('Failed to create flag matrix for connectivity data!');
+            return 0;
+        }
+        
+
+        let total=0;
+
+        if (state.linestodraw == gui_Lines[0] ||
+            state.linestodraw == gui_Lines[2] ) {
+            let pos=internal.conndata.createLinePairs(0,state.matrixthreshold);
+            //console.log('\n\n +++ Created '+pos.length+' positive linepairs\n'+JSON.stringify(pos));
+            total+=pos.length;
+            internal.conndata.drawChords(internal.parcellation,pos,
+                                        state.poscolor,
+                                        internal.context,
+                                        state.length*internal.parcellation.scalefactor,
+                                        state.thickness);
+        }
+        /*if (state.linestodraw == gui_Lines[1] ||
+            state.linestodraw == gui_Lines[2] ) {
+
+            let neg=internal.conndata.createLinePairs(1,state.matrixthreshold);
+            //          console.log('+++ Created '+neg.length+' negagive linepairs\n'+JSON.stringify(neg)+'\n');
+            total+=neg.length;
+            internal.conndata.drawLines(internal.parcellation,neg,
+                                        state.negcolor,
+                                        internal.context,
+                                        state.length*internal.parcellation.scalefactor,
+                                        state.thickness);
+        }*/
+
+        if (total===0)
+            return -1;
+        return total;
+    };
+    
+
     var drawlines=function(state) {
 
         let ok=internal.conndata.createFlagMatrix(internal.parcellation,
@@ -1434,7 +1481,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             let pos=internal.conndata.createLinePairs(0,state.matrixthreshold);
             //console.log('\n\n +++ Created '+pos.length+' positive linepairs\n'+JSON.stringify(pos));
             total+=pos.length;
-            internal.conndata.drawLines(internal.parcellation,pos,
+            internal.conndata.drawChords(internal.parcellation,pos,
                                         state.poscolor,
                                         internal.context,
                                         state.length*internal.parcellation.scalefactor,
