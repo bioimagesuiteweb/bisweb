@@ -103,6 +103,15 @@ class GrapherModule extends HTMLElement {
             self.exportLastData();
         };
 
+        //settings button should be attached next to close button
+        let settingsButton = $(`<button type='button' class='bistoggle' style='float:right; -webkit-user-drag: none;'></button>'`);
+        let gearIcon = $(`<span class='glyphicon glyphicon-cog'></span>`);
+        settingsButton.append(gearIcon);
+
+        let closeButton = this.graphWindow.getHeader().find('.bistoggle');
+        settingsButton.insertAfter(closeButton);
+        settingsButton.on('click', () => { this.createSettingsModal(); })
+
         if (showbuttons) {
 
             this.buttons=[];
@@ -129,10 +138,6 @@ class GrapherModule extends HTMLElement {
             }).click(() => { 
                 let cb = (frame) => {
                     this.replotGraph(frame).catch ( () => { });
-                };
-
-                let eb = (e) => { 
-                    console.log('An error occured', e);
                 };
 
                 this.createFrameSelectorModal(cb);
@@ -344,8 +349,20 @@ class GrapherModule extends HTMLElement {
                     let label = 'R' + regionNumber;
                     parsedColors[label] = cl;
 
-                    for (let j = 0; j < y[i].length; j++)
-                        parsedDataSet.push({ 'intensity' : y[i][j], 'frame' : j, 'label' : label, 'color' : cl });
+                    //if the polarity should be reversed you want to transpose the graph over the trendline
+                    let trendlineSlope = (y[i][0] - y[i][this.numframes - 1]) / this.numframes;
+
+                    for (let j = 0; j < y[i].length; j++) {
+                        let intensity = y[i][j], trendlineAtFrame = trendlineSlope * j + y[i][0];
+                        if (this.polarity === 'negative') {
+                            let trendlineAtFrame = trendlineSlope * j + y[i][0];
+                            intensity = trendlineAtFrame + (y[i][j] - trendlineAtFrame) * -1;
+                        }
+
+                        parsedDataSet.push({ 'intensity' : intensity, 'frame' : j, 'label' : label, 'color' : cl });
+                        parsedDataSet.push({ 'intensity' : trendlineAtFrame, 'frame' : j, 'label' : 'trendline' + label, 'color' : 'rgb(255, 255, 255)' })
+                    }
+                        
                 }
             }
 
@@ -717,7 +734,6 @@ class GrapherModule extends HTMLElement {
                 console.log('slider value', sliderInput.val());
                 if (result) { cb(sliderInput.val()); }
                 else { return; }
-                
             }
         });
 
@@ -729,6 +745,30 @@ class GrapherModule extends HTMLElement {
         });
         frameSelectorBox.modal('show');
 
+    }
+
+    createSettingsModal() {
+        let settingsModal = webutil.createmodal('Change settings');
+        let flipPolarityButton = $(`<div class='custom-control custom-radio'> 
+                                        <input id='polarity-check' class='form-check-input' type='checkbox'></input>
+                                        <label for='polarity-check'>Reverse polarity</label>
+                                    </div>`);
+
+        settingsModal.body.append(flipPolarityButton);
+        settingsModal.dialog.modal('show');
+
+        if (this.polarity === 'negative') { flipPolarityButton.find('.form-check-input').prop('checked', true); }
+        settingsModal.dialog.on('hide.bs.modal', () => {
+
+            let flipPolarity = flipPolarityButton.find('.form-check-input').prop('checked');
+            if (flipPolarity) {
+                this.polarity = 'negative';
+            } else {
+                this.polarity = 'positive';
+            }
+
+            this.replotGraph(false);
+        });
     }
 }
 
