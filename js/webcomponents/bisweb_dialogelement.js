@@ -88,6 +88,9 @@ class BisWebDialogElement extends HTMLElement {
 
     /** returns the widget base */
     getWidgetBase() { return this.widgetbase; }
+
+    /** returns the containing div */
+    getContainingFrame() { return this.div; }
     
     /** sets a function to call when the dialog is closed
      * @param {function} clb - the function to call 
@@ -293,6 +296,7 @@ class BisWebDialogElement extends HTMLElement {
         var newid = webutil.createWithTemplate(webutil.getTemplates().bisdialog, $('body'));
         var div = $('#' + newid);
 
+        this.div = div;
         this.headertext=div.find('.modal-title');
         this.headertext.text(name);
         this.dialog=div.find('.modal-dialog');

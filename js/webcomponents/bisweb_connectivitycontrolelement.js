@@ -639,6 +639,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     // Update Display skip3d -- if true skip 3d updates
     var update = function(skip3d) {
 
+        console.log('update');
         skip3d=skip3d || false;
         if (internal.parcellation===null)
             return;
@@ -682,22 +683,25 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 internal.axisline[axis].visible=false;
         }
         
+        let savedlinestack = JSON.parse(JSON.stringify(internal.linestack));
         if (internal.linestack.length>0) {
             
-            for (let i=0;i<internal.linestack.length;i++) {
+            while(internal.linestack.length > 0) {
                 ok=1;
                 if (!skip2d)
-                    //ok=drawchords(internal.linestack[i]);
-                    ok=drawlines(internal.linestack[i]);
+                    ok=drawlines(internal.linestack[0]);
                 if (ok===0)
-                    i=internal.linestack.length;
+                    break;
                 else if (!skip3d)
-                    drawlines3d(internal.linestack[i],true);
+                    drawlines3d(internal.linestack[0],true);
+
+                internal.linestack.shift();
             }
 
             
             if (max>=0 ) {
-                let state=internal.linestack[max];
+                let state=savedlinestack[max];
+                console.log('state', state, 'saved stack', savedlinestack);
                 let mode=state.mode;
                 if (mode===1) {
                     setnode(Math.round(internal.parameters.node-1));
@@ -709,7 +713,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 donewithmatrices=true;
             }
 
-            
         }
 
         //if (internal.showlegend === true)
@@ -1460,7 +1463,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     
 
     var drawlines=function(state) {
-
         let ok=internal.conndata.createFlagMatrix(internal.parcellation,
                                                   state.mode, // mode
                                                   state.singlevalue, // singlevalue

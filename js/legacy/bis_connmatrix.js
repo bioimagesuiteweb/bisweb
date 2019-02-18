@@ -27,6 +27,7 @@
 const util=require('bis_util');
 const numeric=require('numeric');
 const d3=require('d3');
+const bis_webutil = require('bis_webutil.js');
 
 // -------------------------------------------------------------------------
 // First ConnMatrix Structure
@@ -476,7 +477,7 @@ class ConnMatrix {
 			context.moveTo(x1,y1);
 			context.bezierCurveTo(x2,y2,x3,y3,x4,y4);
 			context.stroke();
-			console.log(x1,y1,x2,y2,x3,y3,x4,y4);
+			//console.log(x1,y1,x2,y2,x3,y3,x4,y4);
 		}
 	}
 
@@ -487,8 +488,8 @@ class ConnMatrix {
 			return 0;
 		}
 
-		var width = 920,
-			height = 920,
+		var width = 720,
+			height = 720,
 			outerRadius = Math.min(width, height) / 2 - 10,
 			innerRadius = outerRadius - 24;
 
@@ -608,7 +609,15 @@ class ConnMatrix {
 			});
 		});
 
-		var svg = d3.select("body").append("svg")
+
+        let chordDialog = bis_webutil.createdialog('Chords', width + 200, height + 200, 0, 0, 100, () => {
+            let frame = chordDialog.getContainingFrame();
+            console.log('frame', frame);
+
+            frame.remove();
+        });
+
+        var svg = d3.select('.modal-body').append("svg")
 			.attr("width", width)
 			.attr("height", height)
 			.append("g")
@@ -616,9 +625,10 @@ class ConnMatrix {
 			.attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 
 		svg.append("circle")
-			.attr("r", outerRadius);
-
-
+            .attr("r", outerRadius);
+            
+        chordDialog.getWidget().find('.modal-body').append(svg);
+        chordDialog.show();
 
 	}
 
