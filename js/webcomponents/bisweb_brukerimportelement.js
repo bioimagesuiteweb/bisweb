@@ -1,7 +1,6 @@
 const $ = require('jquery');
 const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
-const bis_genericio = require('bis_genericio.js');
 const bis_bruker = require('bis_asyncreadbruker.js');
 const BisWebPanel = require('bisweb_panel.js');
 

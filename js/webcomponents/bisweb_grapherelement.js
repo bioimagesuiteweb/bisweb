@@ -110,7 +110,7 @@ class GrapherModule extends HTMLElement {
 
         let closeButton = this.graphWindow.getHeader().find('.bistoggle');
         settingsButton.insertAfter(closeButton);
-        settingsButton.on('click', () => { this.createSettingsModal(); })
+        settingsButton.on('click', () => { this.createSettingsModal(); });
 
         if (showbuttons) {
 
@@ -353,14 +353,13 @@ class GrapherModule extends HTMLElement {
                     let trendlineSlope = (y[i][0] - y[i][this.numframes - 1]) / this.numframes;
 
                     for (let j = 0; j < y[i].length; j++) {
-                        let intensity = y[i][j], trendlineAtFrame = trendlineSlope * j + y[i][0];
+                        let intensity = y[i][j];
                         if (this.polarity === 'negative') {
                             let trendlineAtFrame = trendlineSlope * j + y[i][0];
                             intensity = trendlineAtFrame + (y[i][j] - trendlineAtFrame) * -1;
                         }
 
                         parsedDataSet.push({ 'intensity' : intensity, 'frame' : j, 'label' : label, 'color' : cl });
-                        parsedDataSet.push({ 'intensity' : trendlineAtFrame, 'frame' : j, 'label' : 'trendline' + label, 'color' : 'rgb(255, 255, 255)' })
                     }
                         
                 }
@@ -374,10 +373,13 @@ class GrapherModule extends HTMLElement {
                 chartType: 'line'
             };
         } else {
-            console.log('y', y);
+
+            //if we're in bar chart territory and single frame isn't set, that means there's only 1 frame of data.
+            if (!singleFrame) { singleFrame = 0; }
+
             // Select a single data frame from within y and plot the frame as a bar chart
             let dataframe = [], data = [];
-            for (let i = 0; i < y.length; i++) { dataframe.push(y[i][singleFrame])}
+            for (let i = 0; i < y.length; i++) { dataframe.push(y[i][singleFrame]); }
 
             console.log('dataframe', dataframe);
             for (let i = 0; i < dataframe.length; i++) {
