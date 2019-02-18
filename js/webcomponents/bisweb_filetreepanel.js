@@ -95,14 +95,6 @@ class FileTreePanel extends HTMLElement {
                 'action': (node) => {
                     this.openTagSettingPopover(node);
                 }
-            },
-            'Chart' : {
-                'separator_before': false,
-                'separator_after': false,
-                'label': 'Show VOI Chart',
-                'action': (node) => {
-                    this.createVolumeChart(node);
-                }
             }
         };
     }
@@ -736,9 +728,9 @@ class FileTreePanel extends HTMLElement {
         return parseInt(this.panel.getWidget().css('width'), 10);
     }
 
-    createVolumeChart() {
+    /*createVolumeChart() {
         this.graphelement.parsePaintedAreaAverageTimeSeries(this.viewer, this.getPanelWidth());
-    }
+    }*/
 }
 
 
