@@ -228,6 +228,8 @@ let write = function (url, data,isbinary=false) {
             reject(e);
         };
 
+        //TODO: Add save image dialog
+
         if (isbinary)
             biscoreio.writebinarydata(url, data, success, failure);
         else

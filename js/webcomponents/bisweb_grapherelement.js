@@ -458,11 +458,10 @@ class GrapherModule extends HTMLElement {
             settings: {
                 fitModel: 'fill-height'
             },
-            plugins: [Taucharts.api.plugins.get('tooltip')( {
-                fields: ['formula', 'frame', 'intensity', 'type']
-            }), Taucharts.api.plugins.get('legend')( {
-                'position' : 'top'
-            })],
+            plugins: [
+                Taucharts.api.plugins.get('legend')({
+                    'position': 'top'
+                })],
             data: data,
         }).renderTo(frame);
     }
@@ -771,6 +770,10 @@ class GrapherModule extends HTMLElement {
 
             this.replotGraph(false);
         });
+    }
+
+    renderTooltip() {
+        
     }
 }
 
