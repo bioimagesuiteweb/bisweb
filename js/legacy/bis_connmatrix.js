@@ -481,6 +481,8 @@ class ConnMatrix {
 		}
 	}
 
+    //didn't remove the unused parameters because they might be used later? 
+    // -Zach
 	drawChords(parc,pairs,scolor,context,normallength,thickness) {
 
 		if (parc===null || pairs===null || context===null) {
@@ -512,8 +514,6 @@ class ConnMatrix {
 		var matrix = [];
 		var nets = new Set();
 		d3.csv("../data/network.csv",function(data) {
-			var net_map = {};
-
 			var net_map = {};
 			var nets = new Set();
 			data.map(function(d)
@@ -609,8 +609,8 @@ class ConnMatrix {
 			});
 		});
 
-
-        let chordDialog = bis_webutil.createdialog('Chords', width + 200, height + 200, 0, 0, 100, () => {
+        //create modal to get dimensions of header and footer
+        let chordDialog = bis_webutil.createdialog('Chords', width + 60, height + 150, 0, 0, 100, () => {
             let frame = chordDialog.getContainingFrame();
             console.log('frame', frame);
 

@@ -1416,7 +1416,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         update();
     };
     
-    var drawchords=function(state) {
+    /*var drawchords=function(state) {
 
         let ok=internal.conndata.createFlagMatrix(internal.parcellation,
                                                   state.mode, // mode
@@ -1454,13 +1454,13 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                                         internal.context,
                                         state.length*internal.parcellation.scalefactor,
                                         state.thickness);
-        }*/
+        } 
 
         if (total===0)
             return -1;
         return total;
     };
-    
+    */
 
     var drawlines=function(state) {
         let ok=internal.conndata.createFlagMatrix(internal.parcellation,
