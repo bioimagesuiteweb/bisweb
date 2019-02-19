@@ -392,8 +392,10 @@ tspan {
     font-size : 12px;
 }
 
-.tau-chart__tooltip__content {
-    z-index: 10000;
+.tau-chart__tooltip {
+    display : block; 
+    position : absolute;
+    z-index : 1000;
 }
 
 .tau-chart__legend__item {
@@ -403,4 +405,6 @@ tspan {
 .tau-chart__legend__guide--color {
     height : 5px;
 }
+
+
 
