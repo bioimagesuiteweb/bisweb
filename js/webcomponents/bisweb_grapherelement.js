@@ -420,7 +420,6 @@ class GrapherModule extends HTMLElement {
     }
 
     createChart(frame, chartData) {
-        this.moveTooltip();
 
         if (chartData.chartType === 'bar') {
             this.createBarChart(chartData.datasets[0].data, chartData.colors, frame);
@@ -464,7 +463,7 @@ class GrapherModule extends HTMLElement {
                     'position': 'top'
                 }),
                 Taucharts.api.plugins.get('tooltip')({
-                    'fields' : ['intensity', 'frame', 'regionNumber'],
+                    'fields' : ['intensity', 'label'],
                     'align' : 'right'
                 })],
             data: data,
@@ -478,9 +477,7 @@ class GrapherModule extends HTMLElement {
         new Taucharts.Chart({
             guide: {
                 showAnchors : 'never',
-                split : false,
                 showGridLines: 'xy',
-                nice : true,
                 interpolate : 'linear',
                 x : {
                     padding : 10,
@@ -501,12 +498,14 @@ class GrapherModule extends HTMLElement {
             settings: {
                 fitModel: 'fill-height'
             },
-            plugins: [Taucharts.api.plugins.get('legend') ({
+            plugins: [
+                Taucharts.api.plugins.get('legend') ({
                 'position' : 'top'
-            }),
-            Taucharts.api.plugins.get('tooltip')({
-                'fields' : ['intensity', 'frame', 'regionNumber']
-            })],
+                }),
+                Taucharts.api.plugins.get('tooltip')({
+                    'fields' : ['intensity', 'frame', 'label'],
+                    'align' : 'right'
+                })],
             data: data
         }).renderTo(frame);
     }
