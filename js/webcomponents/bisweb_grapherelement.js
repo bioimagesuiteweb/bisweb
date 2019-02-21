@@ -58,7 +58,6 @@ class GrapherModule extends HTMLElement {
         this.graphWindow=null;
         this.resizingTimer=null;
         this.buttons=[];
-        this.extrawidth = 0;
     }
 
     /** create the GUI (or modifiy it if it exists)
@@ -88,6 +87,7 @@ class GrapherModule extends HTMLElement {
                     this.buttons[i].css({ "visibility": "hidden" });
                 }
             }
+            $('.bisweb-taucharts-container').empty();
             this.graphWindow.hide();
         });
 
@@ -177,14 +177,12 @@ class GrapherModule extends HTMLElement {
      * Opening the file tree panel will shrink the canvas, so we need to add the width to the desired size of the graph window to render properly.
      * 
      * @param {HTMLElement} orthoElement - The orthagonal element to take image data from.
-     * @param {Number} extraWidth - Extra width to add to the container that will hold the graph. 
      */
-    parsePaintedAreaAverageTimeSeries(orthoElement, extraWidth = 0) {
+    parsePaintedAreaAverageTimeSeries(orthoElement) {
 
         if (!orthoElement)
             return;
 
-        this.extrawidth = extraWidth; //set the extra width for the graph drawing and future resize events
         this.currentdata = null;
         let image = orthoElement.getimage();
         let objectmap = orthoElement.getobjectmap();
@@ -425,7 +423,6 @@ class GrapherModule extends HTMLElement {
         }
         
         //set chart to fade slightly on hover so the tooltip is more visible
-        console.log('tau chart svg', $('svg.tau-chart__svg'));
         $('svg.tau-chart__svg').hover(() => {
             $('.tau-chart__svg').css('opacity', 0.5);
         }, () => {
@@ -675,7 +672,16 @@ class GrapherModule extends HTMLElement {
             dim=[ window.innerWidth,window.innerHeight ];
         }
 
-        dim[0] += this.extrawidth;
+
+        //search HTML for a dock open on the left
+        //if it exists, we want to make sure the graph is displayed over it so we add extra width
+        let docks = $('.biswebdock');
+        for (let dock of docks) { 
+            console.log('dock', $(dock));
+            if ( $(dock).css('left') === '0px') {
+                dim[0] += parseInt( $(dock).css('width'));
+            }
+        }
 
         let width=dim[0]-20;
         let height=dim[1]-20;
