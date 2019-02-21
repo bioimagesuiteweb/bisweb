@@ -357,7 +357,7 @@ class GrapherModule extends HTMLElement {
                         
                 }
             }
-
+            
             parsedDataSet = parsedDataSet.filter(Boolean);
 
             return {
@@ -475,12 +475,12 @@ class GrapherModule extends HTMLElement {
         console.log('data', data, 'colors', colors);
         new Taucharts.Chart({
             guide: {
-                showAnchors : 'never',
+                showAnchors : 'hover',
                 showGridLines: 'xy',
                 interpolate : 'linear',
                 x : {
                     padding : 10,
-                    label : { text : 'frame' }
+                    label : { text : 'frame' },
                 },
                 y: {
                     padding: 10,
@@ -488,14 +488,14 @@ class GrapherModule extends HTMLElement {
                 },
                 color : {
                     brewer : colors
-                }
+                },
             },
             type: 'line',
             x: 'frame',
             y: 'intensity',
             color: 'label',
             settings: {
-                fitModel: 'fill-height'
+                fitModel: 'fill-height',
             },
             plugins: [
                 Taucharts.api.plugins.get('legend') ({
@@ -677,7 +677,6 @@ class GrapherModule extends HTMLElement {
         //if it exists, we want to make sure the graph is displayed over it so we add extra width
         let docks = $('.biswebdock');
         for (let dock of docks) { 
-            console.log('dock', $(dock));
             if ( $(dock).css('left') === '0px') {
                 dim[0] += parseInt( $(dock).css('width'));
             }
