@@ -307,13 +307,6 @@ class GrapherModule extends HTMLElement {
 
         let graphFrame = document.getElementById(this.graphcanvasid);        
 
-        //set chart to fade slightly on hover so the tooltip is more visible
-        $('div.bisweb-taucharts-container').hover(() => {
-            $('.tau-chart__svg').css('opacity', 0.5);
-        }, () => {
-            $('.tau-chart__svg').css('opacity', 1.0);
-        });
-
         return new Promise( (resolve) => {
             setTimeout(() => {
                 this.createChart(graphFrame, data);
@@ -431,6 +424,13 @@ class GrapherModule extends HTMLElement {
             console.log('Error: unrecognized chart type', chartData.chartType);
         }
         
+        //set chart to fade slightly on hover so the tooltip is more visible
+        console.log('tau chart svg', $('svg.tau-chart__svg'));
+        $('svg.tau-chart__svg').hover(() => {
+            $('.tau-chart__svg').css('opacity', 0.5);
+        }, () => {
+            $('.tau-chart__svg').css('opacity', 1.0);
+        });
     }
 
 
