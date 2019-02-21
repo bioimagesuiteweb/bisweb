@@ -79,7 +79,6 @@ class GrapherModule extends HTMLElement {
         }
 
         this.graphcanvasid = webutil.getuniqueid();
-        this.graph = null;
         this.graphWindow = document.createElement('bisweb-dialogelement');                          
         this.graphWindow.create("VOI Tool", this.desired_width, this.desired_height, 20,100,100,false);
         this.graphWindow.widget.css({ "background-color": "#222222" });
@@ -306,11 +305,14 @@ class GrapherModule extends HTMLElement {
         });
 
 
-        let graphFrame = document.getElementById(this.graphcanvasid);
+        let graphFrame = document.getElementById(this.graphcanvasid);        
 
-        if (this.graph !== null)
-            this.graph.destroy();
-        
+        //set chart to fade slightly on hover so the tooltip is more visible
+        $('div.bisweb-taucharts-container').hover(() => {
+            $('.tau-chart__svg').css('opacity', 0.5);
+        }, () => {
+            $('.tau-chart__svg').css('opacity', 1.0);
+        });
 
         return new Promise( (resolve) => {
             setTimeout(() => {
