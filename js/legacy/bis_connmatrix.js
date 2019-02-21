@@ -607,10 +607,14 @@ class ConnMatrix {
 				}
 
 			});
-		});
+        });
+        
 
         //create modal to get dimensions of header and footer
-        let chordDialog = bis_webutil.createdialog('Chords', width + 60, height + 150, 0, 0, 100, () => {
+        let viewer = $('canvas');
+        let dim = [parseInt(viewer.css('width')), parseInt(viewer.css('height'))];
+        console.log('dim', dim);
+        let chordDialog = bis_webutil.createdialog('Chords', dim[0] - 100, dim[1] - 100, 0, 0, 100, () => {
             let frame = chordDialog.getContainingFrame();
             console.log('frame', frame);
 
