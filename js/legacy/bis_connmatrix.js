@@ -490,25 +490,6 @@ class ConnMatrix {
 			return 0;
 		}
 
-		var width = 720,
-			height = 720,
-			outerRadius = Math.min(width, height) / 2 - 10,
-			innerRadius = outerRadius - 24;
-
-		var formatPercent = d3.format(".1%");
-
-		var arc = d3.svg.arc()
-			.innerRadius(innerRadius)
-			.outerRadius(outerRadius);
-
-		var layout = d3.layout.chord()
-			.padding(.04)
-			.sortSubgroups(d3.descending)
-			.sortChords(d3.ascending);
-
-		var path = d3.svg.chord()
-			.radius(innerRadius);
-
 		var connectome = [];
 		var net_map = {};
 		var matrix = [];
@@ -610,23 +591,44 @@ class ConnMatrix {
         });
         
 
-        //create modal to get dimensions of header and footer
-        let viewer = $('canvas');
-        let dim = [parseInt(viewer.css('width')), parseInt(viewer.css('height'))];
+        //create modal the size of the doc and size chord drawing to it
+        let dim = [parseInt($('canvas').width() - 50), parseInt($('canvas').height() - 50)];
         console.log('dim', dim);
-        let chordDialog = bis_webutil.createdialog('Chords', dim[0] - 100, dim[1] - 100, 0, 0, 100, () => {
-            let frame = chordDialog.getContainingFrame();
-            console.log('frame', frame);
 
+        let chordDialog = bis_webutil.createdialog('Chords', dim[0], dim[1], 0, 0, 100, () => {
+            let frame = chordDialog.getContainingFrame();
             frame.remove();
         });
 
+        let width = dim[0] - 50,
+        height = dim[1] - 50,
+        svgModal = $(chordDialog.getContainingFrame().find('.modal-body')),
+        svgWidth = svgModal.width(),
+        svgHeight = svgModal.height(),
+        outerRadius = Math.min(svgWidth, svgHeight) / 2 - 10,
+        innerRadius = outerRadius - 24;
+
+        console.log('width', width, 'height', height, 'svg width', svgWidth, 'svg height', svgHeight);
+        var formatPercent = d3.format(".1%");
+
+        var arc = d3.svg.arc()
+            .innerRadius(innerRadius)
+            .outerRadius(outerRadius);
+
+        var layout = d3.layout.chord()
+            .padding(.04)
+            .sortSubgroups(d3.descending)
+            .sortChords(d3.ascending);
+
+        var path = d3.svg.chord()
+            .radius(innerRadius);
+
         var svg = d3.select('.modal-body').append("svg")
-			.attr("width", width)
-			.attr("height", height)
+			.attr("width", svgWidth)
+			.attr("height", svgHeight)
 			.append("g")
 			.attr("id", "circle")
-			.attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+			.attr("transform", "translate(" + svgWidth / 2 + "," + svgHeight / 2 + ")");
 
 		svg.append("circle")
             .attr("r", outerRadius);

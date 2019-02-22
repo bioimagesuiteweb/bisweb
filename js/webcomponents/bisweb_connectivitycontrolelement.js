@@ -241,6 +241,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         inrestorestate : false,
         parcellationtext : null,
         lastnode : 0,
+        laststate : null,
     };
 
 
@@ -1335,6 +1336,15 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                                callback : removelines,
                              });
 
+        let bbar3 = webutil.createbuttonbar({ parent : basediv });
+        webutil.createbutton({ type : "info",
+                               name : "Draw Chords",
+                               position : "bottom",
+                               css : { "margin": "5px"},
+                               tooltip : "Click this to draw a chord diagram from the lines on screen",
+                               parent : bbar3,
+                               callback : drawchords,
+                             });
 
 
         webutil.tooltip(internal.parentDomElement);
@@ -1416,6 +1426,20 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         update();
     };
     
+    var drawchords = function() {
+        if (internal.laststate === null) {
+            bootbox.alert('Please create lines before attempting to draw a chord diagram');
+        }
+
+        let pos=internal.conndata.createLinePairs(0,internal.laststate.matrixthreshold);
+        internal.conndata.drawChords(internal.parcellation,
+            pos,
+            internal.laststate.poscolor,
+            internal.context,
+            internal.laststate.length*internal.parcellation.scalefactor,
+            internal.laststate.thickness);
+    };
+
     /*var drawchords=function(state) {
 
         let ok=internal.conndata.createFlagMatrix(internal.parcellation,
@@ -1483,11 +1507,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             let pos=internal.conndata.createLinePairs(0,state.matrixthreshold);
             //console.log('\n\n +++ Created '+pos.length+' positive linepairs\n'+JSON.stringify(pos));
             total+=pos.length;
-            internal.conndata.drawChords(internal.parcellation,pos,
-                                        state.poscolor,
-                                        internal.context,
-                                        state.length*internal.parcellation.scalefactor,
-                                        state.thickness);
+            internal.laststate = state;
         }
         if (state.linestodraw == gui_Lines[1] ||
             state.linestodraw == gui_Lines[2] ) {
@@ -1518,7 +1538,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         internal.linestack = [];
         update();
     };
-
 
     
     var drawlines3d=function(state,doNotUpdateFlagMatrix) {     
