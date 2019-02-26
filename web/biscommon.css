@@ -395,7 +395,15 @@ tspan {
 .tau-chart__tooltip {
     display : block; 
     position : absolute;
+    border-width : 1px;
+    border-style : solid;
+    border-color : white;
+    background-color : rgba(50, 50, 50, 0.5);
     z-index : 1000;
+}
+
+.tau-chart__tooltip__clickable:hover {
+    background-color : rgba(47, 12, 102, 0.5);
 }
 
 .tau-chart__legend__item {
