@@ -1014,11 +1014,11 @@ let readMultiple = function (filename,outprefix,forceorient,addcallback,debug) {
     
     let jobname="";
     if (forceorient==="RAS")
-        jobname=path.join(outprefix,"paravisionconvert_RAS.json");
+        jobname=path.join(outprefix,"settings_RAS.json");
     else if (forceorient==="LPS")
-        jobname=path.join(outprefix,"paravisionconvert_LPS.json");
+        jobname=path.join(outprefix,"settings_LPS.json");
     else
-        jobname=(path.join(outprefix,"paravisionconvert.json"));
+        jobname=(path.join(outprefix,"settings.json"));
 
 
     let outobj = {

@@ -148,7 +148,6 @@ class FileTreePanel extends HTMLElement {
     importFilesFromJSON(filename) {
         bis_genericio.read(filename).then((obj) => {
             let jsonData = obj.data, parsedData;
-            console.log('json data', jsonData);
             try {
                 parsedData = JSON.parse(jsonData);
             } catch (e) {
@@ -293,32 +292,7 @@ class FileTreePanel extends HTMLElement {
             bis_genericio.moveDirectory(moveNodes.src + '&&' + moveNodes.dest);
         });
 
-        let newSettings = this.contextMenuDefaultSettings;
-
-        //add viewer one and viewer two options to pages with multiple viewers
-        if (this.viewertwo) {
-            delete newSettings.Load;
-
-            console.log('new settings', newSettings);
-            newSettings = Object.assign(newSettings, {
-                'Viewer1': {
-                    'separator_before': false,
-                    'separator_after': false,
-                    'label': 'Load Image to Viewer 1',
-                    'action': () => {
-                        this.loadImageFromTree(0);
-                    }
-                },
-                'Viewer2': {
-                    'separator_before': false,
-                    'separator_after': false,
-                    'label': 'Load Image to Viewer 2',
-                    'action': () => {
-                        this.loadImageFromTree(1);
-                    }
-                }
-            });
-        }
+        let newSettings = this.createContextmenuItems(type)
 
         tree.jstree(true).settings.contextmenu.items = newSettings;
         tree.jstree(true).redraw(true);
@@ -483,6 +457,55 @@ class FileTreePanel extends HTMLElement {
     }
 
     /**
+     * Adds jstree contextmenu items depending on what type of data is loaded and which viewer the application is in.
+     * 
+     * @param {String} type - The type of the data being loaded.
+     */
+    createContextmenuItems(type) {
+        let newSettings = this.contextMenuDefaultSettings;
+
+        //add viewer one and viewer two options to pages with multiple viewers
+        if (this.viewertwo) {
+            delete newSettings.Load;
+
+            console.log('new settings', newSettings);
+            newSettings = Object.assign(newSettings, {
+                'Viewer1': {
+                    'separator_before': false,
+                    'separator_after': false,
+                    'label': 'Load Image to Viewer 1',
+                    'action': () => {
+                        this.loadImageFromTree(0);
+                    }
+                },
+                'Viewer2': {
+                    'separator_before': false,
+                    'separator_after': false,
+                    'label': 'Load Image to Viewer 2',
+                    'action': () => {
+                        this.loadImageFromTree(1);
+                    }
+                }
+            });
+        }
+
+        if (type === 'ParavisionJob') {
+            newSettings = Object.assign(newSettings, {
+                'LoadTask': {
+                    'separator_before': false,
+                    'separator_after': false,
+                    'label': 'Load Study Task Info',
+                    'action': () => {
+                        this.loadStudyTaskData();
+                    }
+                }
+            });
+        }
+
+        return newSettings;
+    }
+
+    /**
      * Loads an image selected in the file tree and displays it on the viewer. 
      * 
      * @param {Number} - The number of the viewer to load to. Optional, defaults to viewer one. 
@@ -490,6 +513,20 @@ class FileTreePanel extends HTMLElement {
     loadImageFromTree(viewer = 0) {
         let nodeName = this.constructNodeName();
         this.viewerapplication.loadImage(nodeName, viewer);
+    }
+
+    loadStudyTaskData() {
+        bis_webfileutil.webFileCallback( {
+            'title' : 'Load Settings',
+            'filters': [
+                { 'name': 'Settings Files', extensions: ['json'] }
+            ]
+        }, (name) => {
+            bis_genericio.read(name, false).then( (data) => {
+                console.log('data', data);
+                this.studyTaskData = data;
+            });
+        });
     }
 
     /**
@@ -784,7 +821,7 @@ let readParamsFile = (sourceDirectory) => {
 
     //find the parameters file in the source directory
     return new Promise( (resolve, reject) => {
-        bis_genericio.getMatchingFiles(sourceDirectory + '/*.json').then( (paramFile) => {
+        bis_genericio.getMatchingFiles(sourceDirectory + '/settings*.json').then( (paramFile) => {
             bis_genericio.read(paramFile[0]).then( (obj) => {
                 let jsonData;
                 try {
