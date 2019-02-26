@@ -516,17 +516,44 @@ class FileTreePanel extends HTMLElement {
     }
 
     loadStudyTaskData() {
+        let lowRange = -1, highRange = -1;
         bis_webfileutil.webFileCallback( {
             'title' : 'Load Settings',
             'filters': [
                 { 'name': 'Settings Files', extensions: ['json'] }
             ]
         }, (name) => {
-            bis_genericio.read(name, false).then( (data) => {
-                console.log('data', data);
-                this.studyTaskData = data;
+            bis_genericio.read(name, false).then( (obj) => {
+
+                //parse raw task data
+                try {
+                    let parsedData = JSON.parse(obj.data);
+                    this.studyTaskData = parsedData;
+
+                    let keys = Object.keys(parsedData.tasks);
+
+                    console.log('keys', keys, 'parsed data tasks', parsedData.tasks);
+                   
+                    for (let key of keys) {
+                        let range = parsedData.tasks[key];
+                        
+                        //data is sometimes formatted as an array
+                        if (Array.isArray(range)) {
+                            for (let entry of range) {
+                                parseEntry(entry);
+                            }
+                        }
+                    }
+
+                } catch(e) {
+                    console.log('An error occured while parsing the task file', e);
+                }
             });
         });
+
+        function parseEntry(entry) {
+            let range = entry.split('-');
+        }
     }
 
     /**
@@ -765,9 +792,6 @@ class FileTreePanel extends HTMLElement {
         return parseInt(this.panel.getWidget().css('width'), 10);
     }
 
-    /*createVolumeChart() {
-        this.graphelement.parsePaintedAreaAverageTimeSeries(this.viewer, this.getPanelWidth());
-    }*/
 }
 
 
