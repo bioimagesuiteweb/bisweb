@@ -359,12 +359,17 @@ class GrapherModule extends HTMLElement {
             }
             
             parsedDataSet = parsedDataSet.filter(Boolean);
-
-            return {
+            let x = Array.from({ length: y[0].length }).map( function(e,i) { return i; });
+            this.currentdata = {
+                x : x,
+                y : y,
+                numvoxels : numVoxels,
                 datasets: parsedDataSet,
                 colors : parsedColors,
                 chartType: 'line'
             };
+
+            console.log('chart data', this.currentdata);
         } else {
 
             //if we're in bar chart territory and single frame isn't set, that means there's only 1 frame of data.
@@ -404,15 +409,19 @@ class GrapherModule extends HTMLElement {
                 pointRadius: 0
             });
 
-            return {
-                colors : parsedColors,
+            this.currentdata = {
+                x : y[0].length,
+                y : y,
+                numVoxels : numVoxels,
                 datasets : parsedDataSet,
+                colors : parsedColors,
                 chartType : 'bar'
             };
         }
     }
 
-    createChart(chartData) {
+    createChart() {
+        let chartData = this.currentdata;
         let frame = document.getElementById(this.graphcanvasid);   
 
         if (chartData.chartType === 'bar') {
@@ -577,6 +586,7 @@ class GrapherModule extends HTMLElement {
     /** save the last data to csv */
     exportLastData() {
 
+        console.log('current data', this.currentdata);
         if (this.currentdata === null)
             return;
 
