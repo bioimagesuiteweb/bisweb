@@ -221,7 +221,7 @@ class GrapherModule extends HTMLElement {
         this.plotGraph(x, y, matrix.numvoxels, orthoElement);
     }
 
-    /** Main Function 2 plots a Graph directly from data!
+    /** Main Function 2 plots a Graph directly from data
      * @param {Array} x - x-axis
      * @param {Array} y - y-axis data (values)
      * @param {Array} numvoxels - y-axis data 2 (optional, these are the "volumes" of ROI if specified)
@@ -276,6 +276,7 @@ class GrapherModule extends HTMLElement {
         this.numframes = dim[1];
         let data = this.formatChartData(this.currentdata.y,
                                         this.currentdata.numvoxels,
+                                        null,
                                         singleFrame);
 
         this.createGUI(showbuttons);
@@ -302,12 +303,10 @@ class GrapherModule extends HTMLElement {
             'width'  : `${cw}px`,
         });
 
-
-        let graphFrame = document.getElementById(this.graphcanvasid);        
-
+     
         return new Promise( (resolve) => {
             setTimeout(() => {
-                this.createChart(graphFrame, data);
+                this.createChart(data);
                 resolve();
             },1);
         });
@@ -316,11 +315,12 @@ class GrapherModule extends HTMLElement {
     /**
      * Reformats the means returned by {@link bis_fmrimatrixconnectivity}.roimean to a format readable by chart.js.
      * Internal use only. 
-     * @param {Array} y - y-axis data (values)
-     * @param {Array} numVoxels - y-axis data 2 (optional, these are the "volumes" of ROI if specified)
+     * @param {Array|Object} y - y-axis data (values)
+     * @param {Array} numVoxels - Number of voxels included in a painted region. Also used to designate which regions should be included in the chart.
+     * @param {Array} labelsArray - Names to use for each region. Should be arranged in the same order as the data array.
      * @param {Number|Boolean} singleFrame - If a positive number, plot the VOI intensity for that frame. Otherwise plot the timecourse.
      */
-    formatChartData(y, numVoxels, singleFrame) {
+    formatChartData(y, numVoxels, labelsArray, singleFrame) {
 
         let mx = util.objectmapcolormap.length;
         let dim = numeric.dim(y);
@@ -412,7 +412,8 @@ class GrapherModule extends HTMLElement {
         }
     }
 
-    createChart(frame, chartData) {
+    createChart(chartData) {
+        let frame = document.getElementById(this.graphcanvasid);   
 
         if (chartData.chartType === 'bar') {
             this.createBarChart(chartData.datasets[0].data, chartData.colors, frame);

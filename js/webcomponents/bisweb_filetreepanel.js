@@ -528,8 +528,6 @@ class FileTreePanel extends HTMLElement {
                 //parse raw task data
                 try {
                     let parsedData = JSON.parse(obj.data);
-                    this.studyTaskData = parsedData;
-
                     let keys = Object.keys(parsedData.tasks);
 
                     console.log('keys', keys, 'parsed data tasks', parsedData.tasks);
@@ -540,11 +538,28 @@ class FileTreePanel extends HTMLElement {
                         let range = parsedData.tasks[key];
 
                         //data may sometimes come as an array, so parse each entry
-                        parsedRange[key] = parseEntry(range)
+                        parsedRange[key] = parseEntry(range);
 
                     }
 
-                    console.log('parsed range', parsedRange);
+                    this.parsedData = parsedRange;
+                    console.log('parsed range', parsedRange, 'low range', lowRange, 'high range', highRange);
+                    
+                    let rangeArray = [], labelsArray = [];
+                    for (let key of keys) {
+                        rangeArray.push(createArray(parsedRange[key]));
+                        labelsArray.push(key);
+                    }
+
+                    console.log('labels array', labelsArray);
+                    //array to designate that all the arrays are meant to be included while formatting data
+                    let includeArray = new Array(rangeArray.length).fill(1);
+                    let dataset = this.graphelement.formatChartData(rangeArray, includeArray, labelsArray, false);
+
+                    let xdata = Array.from({ length : highRange - lowRange + 1 }).map( function(e, i) { return lowRange + i + 1; });
+                    this.graphelement.createChart(xdata, dataset, includeArray);
+
+                    console.log('dataset', dataset);
 
                 } catch(e) {
                     console.log('An error occured while parsing the task file', e);
@@ -556,10 +571,9 @@ class FileTreePanel extends HTMLElement {
 
             if (Array.isArray(entry)) {
                 let entryArray = [];
-                for (let item of entry) {
-                    console.log('item', item);
+                for (let item of entry) 
                     entryArray.push(parseEntry(item));
-                }
+                
                 return entryArray;
             }
             
@@ -570,6 +584,30 @@ class FileTreePanel extends HTMLElement {
             if (highRange < range[1]) { highRange = range[1]; }
 
             return range;
+        }
+
+        function createArray(range) {
+            if (Array.isArray(range[0])) {
+                let taskArrays = [];
+                for (let item of range)
+                    taskArrays.push(createArray(item));
+                
+                let mergedTaskArray = new Array( (highRange - lowRange) + 1).fill(0);
+
+                for (let i = lowRange; i < highRange; i++) {
+                    for (let array of taskArrays) {
+                        if (array[i]) { mergedTaskArray[i] = 1; break; }
+                    }
+                }
+                return mergedTaskArray;
+            }
+
+            //ranges are inclusive, so we have to add one to the task fill range
+            let leftPad = new Array(range[0]).fill(0);
+            let taskFill = new Array(range[1] - range[0] + 1).fill(1);
+            let rightPad = new Array(highRange - range[1]).fill(0);
+
+            return leftPad.concat(taskFill, rightPad);
         }
     }
 
