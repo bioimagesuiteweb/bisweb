@@ -259,7 +259,6 @@ class GrapherModule extends HTMLElement {
      */
     replotGraph(singleFrame = false) {
 
-        let showbuttons=true;
         this.lastPlotFrame=singleFrame;
 
         if (this.currentdata.numvoxels===null) {
@@ -279,30 +278,7 @@ class GrapherModule extends HTMLElement {
                                         null,
                                         singleFrame);
 
-        this.createGUI(showbuttons);
-        
-        this.graphWindow.show();
-        let dm=this.getCanvasDimensions();
-        if (!dm) {
-            return Promise.reject("Bad Dimensions");
-        }
-
-        console.log('dm', dm);
-        let cw=dm[0];
-        let ch=dm[1];
-        
-        let cnv=$(`<div id="${this.graphcanvasid}" class='bisweb-taucharts-container' width="${cw}" height="${ch}" style="overflow: auto"></div>`);
-        this.graphWindow.widget.append(cnv);
-        cnv.css({
-            'position' : 'absolute',
-            'left' : '5px',
-            'top'  : '8px',
-            'margin' : '0 0 0 0',
-            'padding' : '0 0 0 0',
-            'height' : `${ch}px`,
-            'width'  : `${cw}px`,
-        });
-
+        this.renderGraphFrame();
      
         return new Promise( (resolve) => {
             setTimeout(() => {
@@ -422,7 +398,10 @@ class GrapherModule extends HTMLElement {
 
     createChart() {
         let chartData = this.currentdata;
+        this.renderGraphFrame();
         let frame = document.getElementById(this.graphcanvasid);   
+
+        console.log('frame', frame);
 
         if (chartData.chartType === 'bar') {
             this.createBarChart(chartData.datasets[0].data, chartData.colors, frame);
@@ -521,6 +500,33 @@ class GrapherModule extends HTMLElement {
 
     show() {
         this.chart.dialog.modal('show');
+    }
+
+    renderGraphFrame() {
+        this.createGUI(true);
+        let dm=this.getCanvasDimensions();
+
+        if (!dm) {
+            return Promise.reject("Bad Dimensions");
+        }
+
+        this.graphWindow.show();
+        
+        console.log('dm', dm);
+        let cw=dm[0];
+        let ch=dm[1];
+        
+        let cnv=$(`<div id="${this.graphcanvasid}" class='bisweb-taucharts-container' width="${cw}" height="${ch}" style="overflow: auto"></div>`);
+        this.graphWindow.widget.append(cnv);
+        cnv.css({
+            'position' : 'absolute',
+            'left' : '5px',
+            'top'  : '8px',
+            'margin' : '0 0 0 0',
+            'padding' : '0 0 0 0',
+            'height' : `${ch}px`,
+            'width'  : `${cw}px`,
+        });
     }
 
     /** create a snapshot of the current plot */

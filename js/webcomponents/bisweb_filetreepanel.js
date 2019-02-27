@@ -557,7 +557,7 @@ class FileTreePanel extends HTMLElement {
                     let dataset = this.graphelement.formatChartData(rangeArray, includeArray, labelsArray, false);
 
                     let xdata = Array.from({ length : highRange - lowRange + 1 }).map( function(e, i) { return lowRange + i + 1; });
-                    this.graphelement.createChart(xdata, dataset, includeArray);
+                    this.graphelement.createChart();
 
                     console.log('dataset', dataset);
 
