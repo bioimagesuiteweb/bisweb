@@ -556,10 +556,7 @@ class FileTreePanel extends HTMLElement {
                     let includeArray = new Array(rangeArray.length).fill(1);
                     let dataset = this.graphelement.formatChartData(rangeArray, includeArray, labelsArray, false);
 
-                    let xdata = Array.from({ length : highRange - lowRange + 1 }).map( function(e, i) { return lowRange + i + 1; });
                     this.graphelement.createChart();
-
-                    console.log('dataset', dataset);
 
                 } catch(e) {
                     console.log('An error occured while parsing the task file', e);

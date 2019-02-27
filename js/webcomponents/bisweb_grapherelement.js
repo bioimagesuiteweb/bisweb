@@ -681,14 +681,15 @@ class GrapherModule extends HTMLElement {
      */
     getCanvasDimensions() {
 
-        let dim=[200,200];
+        let dim=[-1,-1];
         
         if (this.lastviewer) {
             dim=this.lastviewer.getViewerDimensions();
-        } else if (dim===null) {
+            console.log('last viewer', this.lastviewer.getViewerDimensions());
+        } else {
             dim=[ window.innerWidth,window.innerHeight ];
+            console.log('no last viewer', window.innerWidth, window.innerHeight);
         }
-
 
         //search HTML for a dock open on the left
         //if it exists, we want to make sure the graph is displayed over it so we add extra width
