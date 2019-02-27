@@ -533,17 +533,18 @@ class FileTreePanel extends HTMLElement {
                     let keys = Object.keys(parsedData.tasks);
 
                     console.log('keys', keys, 'parsed data tasks', parsedData.tasks);
-                   
+                    
+                    let parsedRange = {};
                     for (let key of keys) {
+
                         let range = parsedData.tasks[key];
-                        
-                        //data is sometimes formatted as an array
-                        if (Array.isArray(range)) {
-                            for (let entry of range) {
-                                parseEntry(entry);
-                            }
-                        }
+
+                        //data may sometimes come as an array, so parse each entry
+                        parsedRange[key] = parseEntry(range)
+
                     }
+
+                    console.log('parsed range', parsedRange);
 
                 } catch(e) {
                     console.log('An error occured while parsing the task file', e);
@@ -552,7 +553,23 @@ class FileTreePanel extends HTMLElement {
         });
 
         function parseEntry(entry) {
+
+            if (Array.isArray(entry)) {
+                let entryArray = [];
+                for (let item of entry) {
+                    console.log('item', item);
+                    entryArray.push(parseEntry(item));
+                }
+                return entryArray;
+            }
+            
             let range = entry.split('-');
+            for (let i = 0; i < range.length; i++) { range[i] = parseInt(range[i]); }
+
+            if (lowRange < 0 || lowRange > range[0]) { lowRange = range[0]; }
+            if (highRange < range[1]) { highRange = range[1]; }
+
+            return range;
         }
     }
 
