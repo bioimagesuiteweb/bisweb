@@ -410,6 +410,10 @@ tspan {
     padding: 5px;
 }
 
+.tau-chart__legend__item:hover {
+    background-color :  rgba(27, 35, 83, 0.8);
+}
+
 .tau-chart__legend__guide--color {
     height : 5px;
 }

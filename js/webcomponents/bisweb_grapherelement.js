@@ -60,6 +60,16 @@ class GrapherModule extends HTMLElement {
         this.buttons = [];
     }
 
+    connectedCallback() {
+        this.viewerid = this.getAttribute('bis-viewerid');
+        this.viewerid2 = this.getAttribute('bis-viewerid2');
+
+        webutil.runAfterAllLoaded( () => {
+            this.viewer = document.querySelector(this.viewerid);
+            if (this.viewerid2) { document.querySelector(this.viewerid2); }
+        });
+    }
+
     /** create the GUI (or modifiy it if it exists)
      * @param{Boolean} showbuttons -- if true show the 'Plot VOI Values' and 'Plot VOI Volumes' buttons, else hide them (as we may only have values!)
      */
@@ -218,7 +228,14 @@ class GrapherModule extends HTMLElement {
             }
         }
 
-        this.plotGraph(x, y, matrix.numvoxels, orthoElement);
+        if (orthoElement !== this.lastviewer) {
+            if (this.lastviewer)
+                this.lastviewer.removeResizeObserver(this);
+            this.lastviewer = orthoElement;
+        }
+
+        this.formatChartData(y, matrix.numvoxels, null, false);
+        this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)' });
     }
 
     /** Main Function 2 plots a Graph directly from data
@@ -273,7 +290,7 @@ class GrapherModule extends HTMLElement {
 
         let dim = numeric.dim(this.currentdata.y);
         this.numframes = dim[1];
-        let data = this.formatChartData(this.currentdata.y,
+        this.formatChartData(this.currentdata.y,
             this.currentdata.numvoxels,
             null,
             singleFrame);
@@ -282,7 +299,7 @@ class GrapherModule extends HTMLElement {
 
         return new Promise((resolve) => {
             setTimeout(() => {
-                this.createChart(data);
+                this.createChart();
                 resolve();
             }, 1);
         });
@@ -314,9 +331,13 @@ class GrapherModule extends HTMLElement {
                     cl = 'rgb(' + cl[0] + ', ' + cl[1] + ', ' + cl[2] + ')';
 
                     //numbering starts from '1' in viewer so add one to index
-                    let regionNumber = i + 1;
-                    let label = 'R' + regionNumber;
-                    parsedColors[label] = cl;
+                    if (!labelsArray) {
+                        let regionNumber = i + 1;
+                        let label = 'R' + regionNumber;
+                        parsedColors[label] = cl;
+                    } else {
+                        parsedColors[labelsArray[i]] = cl;
+                    }
 
                     //if the polarity should be reversed you want to transpose the graph over the trendline
                     let trendlineSlope = (y[i][0] - y[i][this.numframes - 1]) / this.numframes;
@@ -328,7 +349,7 @@ class GrapherModule extends HTMLElement {
                             intensity = trendlineAtFrame + (y[i][j] - trendlineAtFrame) * -1;
                         }
 
-                        parsedDataSet.push({ 'intensity': intensity, 'frame': j, 'label': label, 'color': cl });
+                        parsedDataSet.push({ 'intensity': intensity, 'frame': j, 'label': labelsArray[i], 'color': cl });
                     }
 
                 }
@@ -345,7 +366,6 @@ class GrapherModule extends HTMLElement {
                 chartType: 'line'
             };
 
-            console.log('chart data', this.currentdata);
         } else {
 
             //if we're in bar chart territory and single frame isn't set, that means there's only 1 frame of data.
@@ -355,7 +375,6 @@ class GrapherModule extends HTMLElement {
             let dataframe = [], data = [];
             for (let i = 0; i < y.length; i++) { dataframe.push(y[i][singleFrame]); }
 
-            console.log('dataframe', dataframe);
             for (let i = 0; i < dataframe.length; i++) {
 
                 let doshow = false;
@@ -396,17 +415,21 @@ class GrapherModule extends HTMLElement {
         }
     }
 
-    createChart() {
+    createChart(settings = null) {
+
         let chartData = this.currentdata;
+
+        //when redrawing graph settings should be the same as the last time (no settings will be provided on redraw)
+        if (settings === null) { settings = this.settings; }
+        else { this.settings = settings; }
+
         this.renderGraphFrame();
         let frame = document.getElementById(this.graphcanvasid);
 
-        console.log('frame', frame);
-
         if (chartData.chartType === 'bar') {
-            this.createBarChart(chartData.datasets[0].data, chartData.colors, frame);
+            this.createBarChart(chartData.datasets[0].data, chartData.colors, frame, settings);
         } else if (chartData.chartType === 'line') {
-            this.createLineChart(chartData.datasets, chartData.colors, frame);
+            this.createLineChart(chartData.datasets, chartData.colors, frame, settings);
         } else {
             console.log('Error: unrecognized chart type', chartData.chartType);
         }
@@ -421,7 +444,6 @@ class GrapherModule extends HTMLElement {
 
 
     createBarChart(data, colors, frame) {
-        console.log('data', data);
 
         new Taucharts.Chart({
             guide: {
@@ -458,22 +480,23 @@ class GrapherModule extends HTMLElement {
         }).renderTo(frame);
     }
 
-    createLineChart(data, colors, frame) {
+    createLineChart(data, colors, frame, settings) {
 
-        //line chart seems to fill lines because the data is spikier? Doesn't do it for smooth datasets
-        console.log('data', data, 'colors', colors);
+        console.log('settings', settings);
+        let split = settings.split ? 'label' : false;
         new Taucharts.Chart({
             guide: {
                 showAnchors: 'hover',
                 showGridLines: 'xy',
                 interpolate: 'linear',
+                split  : split,
                 x: {
                     padding: 10,
-                    label: { text: 'frame' },
+                    label: { text: settings.xaxisLabel },
                 },
                 y: {
                     padding: 10,
-                    label: { text: 'intensity (average per-pixel value)' },
+                    label: { text: settings.yaxisLabel },
                 },
                 color: {
                     brewer: colors
@@ -681,14 +704,13 @@ class GrapherModule extends HTMLElement {
      */
     getCanvasDimensions() {
 
-        let dim = [-1, -1];
-
+        let dim;
         if (this.lastviewer) {
             dim = this.lastviewer.getViewerDimensions();
-            console.log('last viewer', this.lastviewer.getViewerDimensions());
         } else {
-            dim = [window.innerWidth, window.innerHeight];
-            console.log('no last viewer', window.innerWidth, window.innerHeight);
+            //use the dimensions of added viewer instead
+            console.log('dimensions', this.viewer.getViewerDimensions());
+            dim = this.viewer.getViewerDimensions();
         }
 
         //search HTML for a dock open on the left

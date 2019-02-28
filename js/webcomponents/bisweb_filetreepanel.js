@@ -517,7 +517,7 @@ class FileTreePanel extends HTMLElement {
 
     loadStudyTaskData() {
         let lowRange = -1, highRange = -1;
-        bis_webfileutil.webFileCallback( {
+        bis_webfileutil.webFileCallback({
             'title' : 'Load Settings',
             'filters': [
                 { 'name': 'Settings Files', extensions: ['json'] }
@@ -529,8 +529,6 @@ class FileTreePanel extends HTMLElement {
                 try {
                     let parsedData = JSON.parse(obj.data);
                     let keys = Object.keys(parsedData.tasks);
-
-                    console.log('keys', keys, 'parsed data tasks', parsedData.tasks);
                     
                     let parsedRange = {};
                     for (let key of keys) {
@@ -543,7 +541,6 @@ class FileTreePanel extends HTMLElement {
                     }
 
                     this.parsedData = parsedRange;
-                    console.log('parsed range', parsedRange, 'low range', lowRange, 'high range', highRange);
                     
                     let rangeArray = [], labelsArray = [];
                     for (let key of keys) {
@@ -551,12 +548,11 @@ class FileTreePanel extends HTMLElement {
                         labelsArray.push(key);
                     }
 
-                    console.log('labels array', labelsArray);
                     //array to designate that all the arrays are meant to be included while formatting data
                     let includeArray = new Array(rangeArray.length).fill(1);
-                    let dataset = this.graphelement.formatChartData(rangeArray, includeArray, labelsArray, false);
+                    this.graphelement.formatChartData(rangeArray, includeArray, labelsArray, false);
 
-                    this.graphelement.createChart();
+                    this.graphelement.createChart({ xaxisLabel : 'frame', yaxisLabel : 'On', split : 'label' });
 
                 } catch(e) {
                     console.log('An error occured while parsing the task file', e);
