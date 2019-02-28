@@ -47,7 +47,7 @@ class TopMenuBarElement extends HTMLElement {
         // Move the children out
 
 
-        const logoheight=this.getAttribute('logoheight') || '50px';
+        const logoheight=this.getAttribute('logoheight') || '40px';
         const logo=this.getAttribute('logo') || `${iconpath}/bioimagesuite.png`;
         let logolink=this.getAttribute('logolink') || "./index.html";
         
@@ -62,7 +62,7 @@ class TopMenuBarElement extends HTMLElement {
       <span class="icon-bar"></span>
       <span class="icon-bar"></span>
             </button>
-        <a href="${logolink}" target="_blank"><img src="${logo}" height="${logoheight}" id="bislogo" style="margin-top:5px"></a>
+        <a class="navbar-collapse" href="${logolink}" target="_blank"><img src="${logo}" height="${logoheight}" id="bislogo" style="margin-top:10px"></a>
     </div>  <!-- Collect the nav links, forms, and other content for toggling -->
     <div class="collapse navbar-collapse" id="bismenu">
         <ul class="nav navbar-nav" id="bismenuparent">
