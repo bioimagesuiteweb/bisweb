@@ -50,25 +50,25 @@ class GrapherModule extends HTMLElement {
         super();
 
         this.lastviewer = null;
-        this.desired_width=500;
-        this.desired_height=500;
+        this.desired_width = 500;
+        this.desired_height = 500;
         this.currentdata = null;
         this.graphcanvasid = null;
-        this.lastPlotFrame=false;
-        this.graphWindow=null;
-        this.resizingTimer=null;
-        this.buttons=[];
+        this.lastPlotFrame = false;
+        this.graphWindow = null;
+        this.resizingTimer = null;
+        this.buttons = [];
     }
 
     /** create the GUI (or modifiy it if it exists)
      * @param{Boolean} showbuttons -- if true show the 'Plot VOI Values' and 'Plot VOI Volumes' buttons, else hide them (as we may only have values!)
      */
-    createGUI(showbuttons=true) {
+    createGUI(showbuttons = true) {
 
-        if (this.graphcanvasid!==null) {
-            if (this.buttons.length>0) {
-                for (let i=0;i<this.buttons.length;i++) {
-                    if (showbuttons) 
+        if (this.graphcanvasid !== null) {
+            if (this.buttons.length > 0) {
+                for (let i = 0; i < this.buttons.length; i++) {
+                    if (showbuttons)
                         this.buttons[i].css({ "visibility": "visible" });
                     else
                         this.buttons[i].css({ "visibility": "hidden" });
@@ -78,12 +78,12 @@ class GrapherModule extends HTMLElement {
         }
 
         this.graphcanvasid = webutil.getuniqueid();
-        this.graphWindow = document.createElement('bisweb-dialogelement');                          
-        this.graphWindow.create("VOI Tool", this.desired_width, this.desired_height, 20,100,100,false);
+        this.graphWindow = document.createElement('bisweb-dialogelement');
+        this.graphWindow.create("VOI Tool", this.desired_width, this.desired_height, 20, 0, 100, false);
         this.graphWindow.widget.css({ "background-color": "#222222" });
-        this.graphWindow.setCloseCallback( () => {
-            if (this.buttons.length>0) {
-                for (let i=0;i<this.buttons.length;i++) {
+        this.graphWindow.setCloseCallback(() => {
+            if (this.buttons.length > 0) {
+                for (let i = 0; i < this.buttons.length; i++) {
                     this.buttons[i].css({ "visibility": "hidden" });
                 }
             }
@@ -91,12 +91,12 @@ class GrapherModule extends HTMLElement {
             this.graphWindow.hide();
         });
 
-        let bbar=this.graphWindow.getFooter();
+        let bbar = this.graphWindow.getFooter();
 
         let self = this;
         this.graphWindow.close.remove();
         bbar.empty();
-        
+
         let fn3 = function (e) {
             e.preventDefault();
             self.exportLastData();
@@ -113,7 +113,7 @@ class GrapherModule extends HTMLElement {
 
         if (showbuttons) {
 
-            this.buttons=[];
+            this.buttons = [];
             this.buttons.push(webutil.createbutton({
                 name: 'Plot Timecourse',
                 type: "primary",
@@ -123,8 +123,8 @@ class GrapherModule extends HTMLElement {
                 },
                 position: "right",
                 parent: bbar
-            }).click(() => { this.replotGraph(false).catch( () => { } ); }));
-            
+            }).click(() => { this.replotGraph(false).catch(() => { }); }));
+
             this.buttons.push(webutil.createbutton({
                 name: 'Plot Single Frame',
                 type: "default",
@@ -134,16 +134,16 @@ class GrapherModule extends HTMLElement {
                 },
                 position: "left",
                 parent: bbar
-            }).click(() => { 
+            }).click(() => {
                 let cb = (frame) => {
-                    this.replotGraph(frame).catch ( () => { });
+                    this.replotGraph(frame).catch(() => { });
                 };
 
                 this.createFrameSelectorModal(cb);
-                
+
             }));
         }
-        
+
         webutil.createbutton({
             name: 'Export as CSV',
             type: "info",
@@ -192,14 +192,14 @@ class GrapherModule extends HTMLElement {
             return;
         }
 
-        let matrix=null;
+        let matrix = null;
         try {
             matrix = fmriutil.roimean(image, objectmap);
-        } catch(e) {
-            webutil.createAlert('Cannot create roi:'+e, true);
+        } catch (e) {
+            webutil.createAlert('Cannot create roi:' + e, true);
             return;
         }
-        
+
         let y = numeric.transpose(matrix.means);
 
         let dim = numeric.dim(y);
@@ -217,7 +217,7 @@ class GrapherModule extends HTMLElement {
                 x[i] = i + 1;
             }
         }
-        
+
         this.plotGraph(x, y, matrix.numvoxels, orthoElement);
     }
 
@@ -227,28 +227,28 @@ class GrapherModule extends HTMLElement {
      * @param {Array} numvoxels - y-axis data 2 (optional, these are the "volumes" of ROI if specified)
      * @param {orthoElement} viewer - the viewer to attach to for resizing info (defaults to looking for an ortho-viewer).
      */
-    plotGraph(x, y, numvoxels=null,orthoElement=null) {
-        
-        let changedViewer=false;
-        
-        if (orthoElement!==this.lastviewer) {
+    plotGraph(x, y, numvoxels = null, orthoElement = null) {
+
+        let changedViewer = false;
+
+        if (orthoElement !== this.lastviewer) {
             if (this.lastviewer)
                 this.lastviewer.removeResizeObserver(this);
-            changedViewer=true;
-            this.lastviewer=orthoElement;
+            changedViewer = true;
+            this.lastviewer = orthoElement;
         }
-        
+
         this.currentdata = {
             x: x,
             y: y,
             numvoxels: numvoxels
         };
 
-        this.replotGraph(false).then( () => {
+        this.replotGraph(false).then(() => {
             if (changedViewer)
                 this.lastviewer.addResizeObserver(this);
-        }).catch( (e) => {
-            console.log(e,e.stack);
+        }).catch((e) => {
+            console.log(e, e.stack);
         });
 
     }
@@ -259,13 +259,13 @@ class GrapherModule extends HTMLElement {
      */
     replotGraph(singleFrame = false) {
 
-        this.lastPlotFrame=singleFrame;
+        this.lastPlotFrame = singleFrame;
 
-        if (this.currentdata.numvoxels===null) {
-            singleFrame=false;
-            showbuttons=false;
+        if (this.currentdata.numvoxels === null) {
+            singleFrame = false;
+            showbuttons = false;
         }
-        
+
         if (this.currentdata.y < 1) {
             webutil.createAlert('No  objecmap in memory', true);
             return Promise.reject();
@@ -274,17 +274,17 @@ class GrapherModule extends HTMLElement {
         let dim = numeric.dim(this.currentdata.y);
         this.numframes = dim[1];
         let data = this.formatChartData(this.currentdata.y,
-                                        this.currentdata.numvoxels,
-                                        null,
-                                        singleFrame);
+            this.currentdata.numvoxels,
+            null,
+            singleFrame);
 
         this.renderGraphFrame();
-     
-        return new Promise( (resolve) => {
+
+        return new Promise((resolve) => {
             setTimeout(() => {
                 this.createChart(data);
                 resolve();
-            },1);
+            }, 1);
         });
     }
 
@@ -304,7 +304,7 @@ class GrapherModule extends HTMLElement {
         let parsedDataSet = [], parsedColors = {}, label;
 
         if (this.numframes > 1 && singleFrame === false) {
-            
+
             for (let i = 0; i < y.length; i++) {
                 if (numVoxels[i] != 0) {
                     let index = i + 1;
@@ -328,20 +328,20 @@ class GrapherModule extends HTMLElement {
                             intensity = trendlineAtFrame + (y[i][j] - trendlineAtFrame) * -1;
                         }
 
-                        parsedDataSet.push({ 'intensity' : intensity, 'frame' : j, 'label' : label, 'color' : cl });
+                        parsedDataSet.push({ 'intensity': intensity, 'frame': j, 'label': label, 'color': cl });
                     }
-                        
+
                 }
             }
-            
+
             parsedDataSet = parsedDataSet.filter(Boolean);
-            let x = Array.from({ length: y[0].length }).map( function(e,i) { return i; });
+            let x = Array.from({ length: y[0].length }).map(function (e, i) { return i; });
             this.currentdata = {
-                x : x,
-                y : y,
-                numvoxels : numVoxels,
+                x: x,
+                y: y,
+                numvoxels: numVoxels,
                 datasets: parsedDataSet,
-                colors : parsedColors,
+                colors: parsedColors,
                 chartType: 'line'
             };
 
@@ -358,11 +358,11 @@ class GrapherModule extends HTMLElement {
             console.log('dataframe', dataframe);
             for (let i = 0; i < dataframe.length; i++) {
 
-                let doshow=false;
-                if (numVoxels===null) {
-                    doshow=true;
+                let doshow = false;
+                if (numVoxels === null) {
+                    doshow = true;
                 } else if (numVoxels[i] > 0) {
-                    doshow=true;
+                    doshow = true;
                 }
 
                 if (doshow) {
@@ -375,7 +375,7 @@ class GrapherModule extends HTMLElement {
                     label = 'R' + index;
                     parsedColors[label] = cl;
 
-                    data.push({ 'intensity' : dataframe[i], 'index' : index, 'label' : label, 'color' : cl });
+                    data.push({ 'intensity': dataframe[i], 'index': index, 'label': label, 'color': cl });
                 }
             }
 
@@ -386,12 +386,12 @@ class GrapherModule extends HTMLElement {
             });
 
             this.currentdata = {
-                x : y[0].length,
-                y : y,
-                numVoxels : numVoxels,
-                datasets : parsedDataSet,
-                colors : parsedColors,
-                chartType : 'bar'
+                x: y[0].length,
+                y: y,
+                numVoxels: numVoxels,
+                datasets: parsedDataSet,
+                colors: parsedColors,
+                chartType: 'bar'
             };
         }
     }
@@ -399,7 +399,7 @@ class GrapherModule extends HTMLElement {
     createChart() {
         let chartData = this.currentdata;
         this.renderGraphFrame();
-        let frame = document.getElementById(this.graphcanvasid);   
+        let frame = document.getElementById(this.graphcanvasid);
 
         console.log('frame', frame);
 
@@ -410,7 +410,7 @@ class GrapherModule extends HTMLElement {
         } else {
             console.log('Error: unrecognized chart type', chartData.chartType);
         }
-        
+
         //set chart to fade slightly on hover so the tooltip is more visible
         $('svg.tau-chart__svg').hover(() => {
             $('.tau-chart__svg').css('opacity', 0.5);
@@ -425,18 +425,18 @@ class GrapherModule extends HTMLElement {
 
         new Taucharts.Chart({
             guide: {
-                showAnchors : true,
-                x : {
-                    padding : 10,
-                    label : { text : 'region' }
+                showAnchors: true,
+                x: {
+                    padding: 10,
+                    label: { text: 'region' }
                 },
                 y: {
                     padding: 10,
                     rotate: -90,
-                    label: { text: 'intensity (average per-pixel value)'},
+                    label: { text: 'intensity (average per-pixel value)' },
                 },
-                color : {
-                    brewer : colors
+                color: {
+                    brewer: colors
                 }
             },
             type: 'bar',
@@ -451,8 +451,8 @@ class GrapherModule extends HTMLElement {
                     'position': 'top'
                 }),
                 Taucharts.api.plugins.get('tooltip')({
-                    'fields' : ['intensity', 'label'],
-                    'align' : 'right'
+                    'fields': ['intensity', 'label'],
+                    'align': 'right'
                 })],
             data: data,
         }).renderTo(frame);
@@ -464,19 +464,19 @@ class GrapherModule extends HTMLElement {
         console.log('data', data, 'colors', colors);
         new Taucharts.Chart({
             guide: {
-                showAnchors : 'hover',
+                showAnchors: 'hover',
                 showGridLines: 'xy',
-                interpolate : 'linear',
-                x : {
-                    padding : 10,
-                    label : { text : 'frame' },
+                interpolate: 'linear',
+                x: {
+                    padding: 10,
+                    label: { text: 'frame' },
                 },
                 y: {
                     padding: 10,
-                    label: { text: 'intensity (average per-pixel value)'},
+                    label: { text: 'intensity (average per-pixel value)' },
                 },
-                color : {
-                    brewer : colors
+                color: {
+                    brewer: colors
                 },
             },
             type: 'line',
@@ -487,12 +487,12 @@ class GrapherModule extends HTMLElement {
                 fitModel: 'fill-height',
             },
             plugins: [
-                Taucharts.api.plugins.get('legend') ({
-                'position' : 'top'
+                Taucharts.api.plugins.get('legend')({
+                    'position': 'top'
                 }),
                 Taucharts.api.plugins.get('tooltip')({
-                    'fields' : ['intensity', 'frame', 'label'],
-                    'align' : 'right'
+                    'fields': ['intensity', 'frame', 'label'],
+                    'align': 'right'
                 })],
             data: data
         }).renderTo(frame);
@@ -504,28 +504,28 @@ class GrapherModule extends HTMLElement {
 
     renderGraphFrame() {
         this.createGUI(true);
-        let dm=this.getCanvasDimensions();
+        let dm = this.getCanvasDimensions();
 
         if (!dm) {
             return Promise.reject("Bad Dimensions");
         }
 
         this.graphWindow.show();
-        
+
         console.log('dm', dm);
-        let cw=dm[0];
-        let ch=dm[1];
-        
-        let cnv=$(`<div id="${this.graphcanvasid}" class='bisweb-taucharts-container' width="${cw}" height="${ch}" style="overflow: auto"></div>`);
+        let cw = dm[0];
+        let ch = dm[1];
+
+        let cnv = $(`<div id="${this.graphcanvasid}" class='bisweb-taucharts-container' width="${cw}" height="${ch}" style="overflow: auto"></div>`);
         this.graphWindow.widget.append(cnv);
         cnv.css({
-            'position' : 'absolute',
-            'left' : '5px',
-            'top'  : '8px',
-            'margin' : '0 0 0 0',
-            'padding' : '0 0 0 0',
-            'height' : `${ch}px`,
-            'width'  : `${cw}px`,
+            'position': 'absolute',
+            'left': '5px',
+            'top': '8px',
+            'margin': '0 0 0 0',
+            'padding': '0 0 0 0',
+            'height': `${ch}px`,
+            'width': `${cw}px`,
         });
     }
 
@@ -536,8 +536,8 @@ class GrapherModule extends HTMLElement {
 
 
         let outcanvas = document.createElement('canvas');
-        outcanvas.width=canvas.width;
-        outcanvas.height=canvas.height;
+        outcanvas.width = canvas.width;
+        outcanvas.height = canvas.height;
 
         let ctx = outcanvas.getContext('2d');
         ctx.fillStyle = "#555555";
@@ -545,8 +545,8 @@ class GrapherModule extends HTMLElement {
         ctx.fillRect(0, 0, outcanvas.width, outcanvas.height);
         ctx.drawImage(canvas, 0, 0, outcanvas.width, outcanvas.height);
 
-        let outimg = outcanvas.toDataURL("image/png");        
-        
+        let outimg = outcanvas.toDataURL("image/png");
+
         let dispimg = $('<img id="dynamic">');
         dispimg.attr('src', outimg);
         dispimg.width(300);
@@ -609,7 +609,7 @@ class GrapherModule extends HTMLElement {
                 out += "\nFrame,";
 
             for (let col = 0; col < numcols; col++) {
-                if (this.currentdata.numvoxels[col]>0) {
+                if (this.currentdata.numvoxels[col] > 0) {
                     if (pass === 0 || pass === 2)
                         out += `Region ${col + 1}`;
                     else
@@ -625,7 +625,7 @@ class GrapherModule extends HTMLElement {
         for (let row = 0; row < numrows; row++) {
             let line = `${this.currentdata.x[row]}, `;
             for (let col = 0; col < numcols; col++) {
-                if (this.currentdata.numvoxels[col]>0) {
+                if (this.currentdata.numvoxels[col] > 0) {
                     line += `${this.currentdata.y[col][row]}`;
                     if (col < numcols - 1)
                         line += ',';
@@ -653,10 +653,10 @@ class GrapherModule extends HTMLElement {
 
         if (this.resizingTimer) {
             clearTimeout(this.resizingTimer);
-            this.resizingTimer=null;
+            this.resizingTimer = null;
         }
 
-        if (this.graphWindow===null) {
+        if (this.graphWindow === null) {
             return;
         }
 
@@ -666,13 +666,13 @@ class GrapherModule extends HTMLElement {
         }
 
 
-        const self=this;
-        this.resizingTimer=setTimeout( () => {
-            self.replotGraph(self.lastPlotFrame).catch( (e) => {
-                console.log(e,e.stack);
+        const self = this;
+        this.resizingTimer = setTimeout(() => {
+            self.replotGraph(self.lastPlotFrame).catch((e) => {
+                console.log(e, e.stack);
             });
-        },200);
-        
+        }, 200);
+
     }
 
 
@@ -681,80 +681,80 @@ class GrapherModule extends HTMLElement {
      */
     getCanvasDimensions() {
 
-        let dim=[-1,-1];
-        
+        let dim = [-1, -1];
+
         if (this.lastviewer) {
-            dim=this.lastviewer.getViewerDimensions();
+            dim = this.lastviewer.getViewerDimensions();
             console.log('last viewer', this.lastviewer.getViewerDimensions());
         } else {
-            dim=[ window.innerWidth,window.innerHeight ];
+            dim = [window.innerWidth, window.innerHeight];
             console.log('no last viewer', window.innerWidth, window.innerHeight);
         }
 
         //search HTML for a dock open on the left
         //if it exists, we want to make sure the graph is displayed over it so we add extra width
         let docks = $('.biswebdock');
-        for (let dock of docks) { 
-            if ( $(dock).css('left') === '0px') {
-                dim[0] += parseInt( $(dock).css('width'));
+        for (let dock of docks) {
+            if ($(dock).css('left') === '0px') {
+                dim[0] += parseInt($(dock).css('width'));
             }
         }
 
-        let width=dim[0]-20;
-        let height=dim[1]-20;
-        let left=10;
-        let top=40;
+        let width = dim[0] - 20;
+        let height = dim[1] - 20;
+        let left = 10;
+        let top = 40;
 
         this.graphWindow.dialog.css({
             'left': `${left}px`,
-            'width' :`${width}px`,
-            'top' : `${top}px`,
-            'height' : `${height}px`,
+            'width': `${width}px`,
+            'top': `${top}px`,
+            'height': `${height}px`,
         });
 
-        let innerh=height-120;
-        let innerw=width-10;
+        let innerh = height - 120;
+        let innerw = width - 10;
         this.graphWindow.widget.css({
-            'margin' : '0 0 0 0',
-            'padding' : '0 0 0 0',
-            'height' : `${innerh}px`,
-            'width'  : `${innerw}px`,
+            'margin': '0 0 0 0',
+            'padding': '0 0 0 0',
+            'height': `${innerh}px`,
+            'width': `${innerw}px`,
             "overflow-y": "hidden",
-            "overflow-x": "hidden" ,
+            "overflow-x": "hidden",
         });
         this.graphWindow.widgetbase.css({
-            'height' : `${innerh}px`,
-            'width'  : `${innerw}px`,
-            'background-color' : '#222222',
-            'margin' : '0 0 0 0',
-            'padding' : '0 0 0 0',
+            'height': `${innerh}px`,
+            'width': `${innerw}px`,
+            'background-color': '#222222',
+            'margin': '0 0 0 0',
+            'padding': '0 0 0 0',
             "overflow-y": "hidden",
-            "overflow-x": "hidden" ,
+            "overflow-x": "hidden",
         });
 
         this.graphWindow.footer.css({
-            "height" : "40px",
-            'margin' : '3 3 3 3',
-            'padding' : '0 0 0 0',
+            "height": "40px",
+            'margin': '3 3 3 3',
+            'padding': '0 0 0 0',
             "overflow-y": "hidden",
-            "overflow-x": "hidden" ,
+            "overflow-x": "hidden",
         });
 
         this.graphWindow.widget.empty();
-        return [ innerw, innerh-15 ];
+        return [innerw, innerh - 15];
     }
 
     createFrameSelectorModal(cb) {
-        
+
         let sliderInput = $(`
             <input 
                 class='bootstrap-frame-slider'
                 data-slider-min='0'
-                data-slider-max='${this.numframes-1}'
+                data-slider-max='${this.numframes - 1}'
                 data-slider-value='0'
                 data-slider-step='1'>
             </input>`);
-        
+
 
         console.log('frames', this.numframes);
 
@@ -772,7 +772,7 @@ class GrapherModule extends HTMLElement {
 
         frameSelectorBox.find('.modal-body').append(sliderInput);
         $('.bootstrap-frame-slider').slider({
-            'formatter' : (value) => {
+            'formatter': (value) => {
                 return 'Current frame: ' + value;
             }
         });
@@ -805,7 +805,7 @@ class GrapherModule extends HTMLElement {
     }
 }
 
-module.exports=GrapherModule;
+module.exports = GrapherModule;
 webutil.defineElement('bisweb-graphelement', GrapherModule);
 
 
