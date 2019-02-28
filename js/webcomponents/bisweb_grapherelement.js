@@ -519,6 +519,14 @@ class GrapherModule extends HTMLElement {
                 })],
             data: data
         }).renderTo(frame);
+
+        //disable line fill on lines in svg
+        let lines = $(frame).find('.tau-chart__line');
+        console.log('lines', lines);
+        for (let line of lines) {
+            console.log('line', $(line));
+            $(line).attr('fill', 'none');
+        }
     }
 
     show() {
