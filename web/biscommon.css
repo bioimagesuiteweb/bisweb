@@ -366,6 +366,10 @@ input[type="radio"] .styled:checked + label::after {
     transform: scale(-1, 1);
 }
 
+.bisweb-taucharts-container {
+    background-color : rgb(12,12,12);
+}
+
 .bisweb-taucharts-container > svg {
     display : block;
 }

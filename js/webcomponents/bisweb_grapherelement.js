@@ -510,6 +510,9 @@ class GrapherModule extends HTMLElement {
                 fitModel: 'fill-height',
             },
             plugins: [
+                this.fillPlugin({
+                    'frame' : frame
+                }),
                 Taucharts.api.plugins.get('legend')({
                     'position': 'top'
                 }),
@@ -520,13 +523,6 @@ class GrapherModule extends HTMLElement {
             data: data
         }).renderTo(frame);
 
-        //disable line fill on lines in svg
-        let lines = $(frame).find('.tau-chart__line');
-        console.log('lines', lines);
-        for (let line of lines) {
-            console.log('line', $(line));
-            $(line).attr('fill', 'none');
-        }
     }
 
     show() {
@@ -832,6 +828,26 @@ class GrapherModule extends HTMLElement {
 
             this.replotGraph(false);
         });
+    }
+
+    /**
+     * Creates a custom Taucharts plugin to disable line fill.
+     */
+    fillPlugin(settings) {
+        let frame = settings.frame;
+        return {
+            init : () => { 
+                console.log('initialized fill plugin'); 
+            },
+            onRender: () => {
+                //disable line fill on lines in svg
+                let lines = $(frame).find('.tau-chart__line');
+                for (let line of lines) {
+                    $(line).attr('fill', 'none');
+                }
+            }
+
+        };
     }
 }
 

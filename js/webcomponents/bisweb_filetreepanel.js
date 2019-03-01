@@ -292,7 +292,7 @@ class FileTreePanel extends HTMLElement {
             bis_genericio.moveDirectory(moveNodes.src + '&&' + moveNodes.dest);
         });
 
-        let newSettings = this.createContextmenuItems(type)
+        let newSettings = this.createContextmenuItems(type);
 
         tree.jstree(true).settings.contextmenu.items = newSettings;
         tree.jstree(true).redraw(true);
