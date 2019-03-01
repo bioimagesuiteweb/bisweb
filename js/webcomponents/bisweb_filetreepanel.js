@@ -554,6 +554,9 @@ class FileTreePanel extends HTMLElement {
 
                     this.graphelement.createChart({ xaxisLabel : 'frame', yaxisLabel : 'On', split : 'label' });
 
+                    //set the task range for the graph element to use in future images
+                    this.graphelement.taskdata = rangeArray;
+
                 } catch(e) {
                     console.log('An error occured while parsing the task file', e);
                 }

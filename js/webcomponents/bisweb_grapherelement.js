@@ -58,6 +58,7 @@ class GrapherModule extends HTMLElement {
         this.graphWindow = null;
         this.resizingTimer = null;
         this.buttons = [];
+        this.taskdata = null;
     }
 
     connectedCallback() {
@@ -238,38 +239,6 @@ class GrapherModule extends HTMLElement {
         this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)' });
     }
 
-    /** Main Function 2 plots a Graph directly from data
-     * @param {Array} x - x-axis
-     * @param {Array} y - y-axis data (values)
-     * @param {Array} numvoxels - y-axis data 2 (optional, these are the "volumes" of ROI if specified)
-     * @param {orthoElement} viewer - the viewer to attach to for resizing info (defaults to looking for an ortho-viewer).
-     */
-    plotGraph(x, y, numvoxels = null, orthoElement = null) {
-
-        let changedViewer = false;
-
-        if (orthoElement !== this.lastviewer) {
-            if (this.lastviewer)
-                this.lastviewer.removeResizeObserver(this);
-            changedViewer = true;
-            this.lastviewer = orthoElement;
-        }
-
-        this.currentdata = {
-            x: x,
-            y: y,
-            numvoxels: numvoxels
-        };
-
-        this.replotGraph(false).then(() => {
-            if (changedViewer)
-                this.lastviewer.addResizeObserver(this);
-        }).catch((e) => {
-            console.log(e, e.stack);
-        });
-
-    }
-
     /** replots the current values
      * @param {Number} singleFrame - If set to be a number, plots a VOI for the single frame. If false, plots the timecourse.
      * @returns {Promise} - when done
@@ -320,6 +289,10 @@ class GrapherModule extends HTMLElement {
         this.numframes = dim[1];
         let parsedDataSet = [], parsedColors = {}, label;
 
+        //if labels are provided in signature leave them alone, otherwise we need to make them
+        let makeLabels = labelsArray ? false : true;
+        if (makeLabels) labelsArray = [];
+
         if (this.numframes > 1 && singleFrame === false) {
 
             for (let i = 0; i < y.length; i++) {
@@ -331,9 +304,10 @@ class GrapherModule extends HTMLElement {
                     cl = 'rgb(' + cl[0] + ', ' + cl[1] + ', ' + cl[2] + ')';
 
                     //numbering starts from '1' in viewer so add one to index
-                    if (!labelsArray) {
+                    if (makeLabels) {
                         let regionNumber = i + 1;
                         let label = 'R' + regionNumber;
+                        labelsArray.push(label);
                         parsedColors[label] = cl;
                     } else {
                         parsedColors[labelsArray[i]] = cl;
@@ -349,13 +323,16 @@ class GrapherModule extends HTMLElement {
                             intensity = trendlineAtFrame + (y[i][j] - trendlineAtFrame) * -1;
                         }
 
-                        parsedDataSet.push({ 'intensity': intensity, 'frame': j, 'label': labelsArray[i], 'color': cl });
+                        //if labels are already generated then it will include regions with no voxels, if not then they will be created above. 
+                        //this will create a disparity in which labelsArray[i] will not exist for the generated labels and the correct label will be at the end
+                        parsedDataSet.push({ 'intensity': intensity, 'frame': j, 'label': labelsArray[i] || labelsArray[labelsArray.length - 1], 'color': cl });
                     }
 
                 }
             }
 
             parsedDataSet = parsedDataSet.filter(Boolean);
+            console.log('parsed data set', parsedDataSet, labelsArray);
             let x = Array.from({ length: y[0].length }).map(function (e, i) { return i; });
             this.currentdata = {
                 x: x,
@@ -429,7 +406,8 @@ class GrapherModule extends HTMLElement {
         if (chartData.chartType === 'bar') {
             this.createBarChart(chartData.datasets[0].data, chartData.colors, frame, settings);
         } else if (chartData.chartType === 'line') {
-            this.createLineChart(chartData.datasets, chartData.colors, frame, settings);
+            if (this.taskdata) { this.createTaskChart(chartData.datasets, chartData.colors, frame, settings); }
+            else { this.createLineChart(chartData.datasets, chartData.colors, frame, settings); }
         } else {
             console.log('Error: unrecognized chart type', chartData.chartType);
         }
@@ -482,14 +460,11 @@ class GrapherModule extends HTMLElement {
 
     createLineChart(data, colors, frame, settings) {
 
-        console.log('settings', settings);
-        let split = settings.split ? 'label' : false;
         new Taucharts.Chart({
             guide: {
                 showAnchors: 'hover',
                 showGridLines: 'xy',
                 interpolate: 'linear',
-                split  : split,
                 x: {
                     padding: 10,
                     label: { text: settings.xaxisLabel },
@@ -526,6 +501,49 @@ class GrapherModule extends HTMLElement {
             data: data
         }).renderTo(frame);
 
+    }
+
+    createTaskChart(data, colors, frame, settings) {
+        new Taucharts.Chart({
+            guide: {
+                showAnchors: 'hover',
+                showGridLines: 'xy',
+                interpolate: 'linear',
+                x: {
+                    padding: 10,
+                    label: { text: settings.xaxisLabel },
+                },
+                y: {
+                    padding: 10,
+                    label: { text: settings.yaxisLabel },
+                },
+                color: {
+                    brewer: colors
+                },
+            },
+            type: 'line',
+            x: 'frame',
+            y: 'intensity',
+            color: 'label',
+            settings: {
+                fitModel: 'fill-height',
+            },
+            plugins: [
+                this.fillPlugin({
+                    'frame' : frame
+                }),
+                this.lineHoverPlugin( { 
+                    'frame' : frame
+                }),
+                Taucharts.api.plugins.get('legend')({
+                    'position': 'top'
+                }),
+                Taucharts.api.plugins.get('tooltip')({
+                    'fields': ['intensity', 'frame', 'label'],
+                    'align': 'right'
+                })],
+            data: data
+        }).renderTo(frame);
     }
 
     show() {
