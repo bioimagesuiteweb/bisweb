@@ -58,7 +58,6 @@ class GrapherModule extends HTMLElement {
         this.graphWindow = null;
         this.resizingTimer = null;
         this.buttons = [];
-        this.taskdata = null;
     }
 
     connectedCallback() {
@@ -396,6 +395,8 @@ class GrapherModule extends HTMLElement {
 
         let chartData = this.currentdata;
 
+        console.log('taskdata', this.taskdata);
+
         //when redrawing graph settings should be the same as the last time (no settings will be provided on redraw)
         if (settings === null) { settings = this.settings; }
         else { this.settings = settings; }
@@ -504,6 +505,7 @@ class GrapherModule extends HTMLElement {
     }
 
     createTaskChart(data, colors, frame, settings) {
+        console.log('task chart');
         new Taucharts.Chart({
             guide: {
                 showAnchors: 'hover',
