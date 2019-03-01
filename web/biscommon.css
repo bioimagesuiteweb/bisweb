@@ -422,7 +422,11 @@ tspan {
     height : 5px;
 }
 
-.tau-chart__svg {
+.tau-chart__line {
+    transition : opacity 1s;
+}
+
+.tau-chart__bar {
     transition : opacity 1s;
 }
 

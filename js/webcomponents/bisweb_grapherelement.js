@@ -435,11 +435,11 @@ class GrapherModule extends HTMLElement {
         }
 
         //set chart to fade slightly on hover so the tooltip is more visible
-        $('svg.tau-chart__svg').hover(() => {
+        /*$('svg.tau-chart__svg').hover(() => {
             $('.tau-chart__svg').css('opacity', 0.5);
         }, () => {
             $('.tau-chart__svg').css('opacity', 1.0);
-        });
+        });*/
     }
 
 
@@ -511,6 +511,9 @@ class GrapherModule extends HTMLElement {
             },
             plugins: [
                 this.fillPlugin({
+                    'frame' : frame
+                }),
+                this.lineHoverPlugin( { 
                     'frame' : frame
                 }),
                 Taucharts.api.plugins.get('legend')({
@@ -848,6 +851,33 @@ class GrapherModule extends HTMLElement {
             }
 
         };
+    }
+
+    lineHoverPlugin(settings) {
+        let chart = settings.frame;
+        return {
+            init : () => {
+                console.log('initialized hover plugin');
+            },
+            onRender : () => {
+                let lines = $(chart).find('.tau-chart__line');
+                for (let node of lines) {
+                    //clear opacity on render
+
+                    $(node).css('opacity', '');
+                    $(node).hover( () => {
+
+                        //change opacity of other lines in the set
+                        for (let otherNode of lines) {
+                            $(otherNode).css('opacity', 0.3);
+                        }
+                        $(node).css('opacity', '1.0');
+                    }, () => {
+                        console.log('hover out');
+                    });
+                }   
+            }
+        }
     }
 }
 
