@@ -151,9 +151,13 @@ FILE (STRINGS ${MODULE_LIST_FILENAME} MODULES)
 
 set (JSMODULES )
 foreach(item ${MODULES})
-  SET (JSMODULES ${JSMODULES} "${JSMODULES_DIR}/${item}.js")
+  SET (jtem "${JSMODULES_DIR}/${item}.js")
+  IF(EXISTS ${jtem})
+    SET (JSMODULES ${JSMODULES} ${jtem})
+  ENDIF(EXISTS ${jtem})
 endforeach(item ${MODULES})
-
+  
+MESSAGE(${JSMODULES})
 
 # ---------------------------------------------------------------------------------------------
 # PARSE HEADERS

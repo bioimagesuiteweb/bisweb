@@ -23,7 +23,7 @@ regularizeObjectmap
 resampleImage
 resliceImage
 segmentImage
-sliceBiasFieldCorrect
+sliceBiasCorrect
 shiftScaleImage
 smoothImage
 thresholdImage
