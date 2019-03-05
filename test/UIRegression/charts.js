@@ -1,3 +1,4 @@
+/* globals test, fixture */
 import { Selector, t } from 'testcafe';
 
 import * as BisSetup from './bissetup';
@@ -48,12 +49,31 @@ export default class Page {
             .click(this.objectmapDropdown)
             .click(this.voiAnalysis);
     }
+
+    async displayBarChart() {
+        await this.loadImage();
+        await this.loadOverlay();
+        await this.loadVOIAnalysis();
+    }
 }
 
-test('Open VOI', async t => {
+test('Open Bar VOI', async t => {
     const page = new Page();
     await page.dismissInitialAlert();
-    await page.loadImage();
-    await page.loadOverlay();
-    await page.loadVOIAnalysis();
+    await page.displayBarChart();
+    await t.takeScreenshot('charts/open_voi_tool.png');
 });
+
+test('Click Legend', async t => {
+    const page = new Page();
+    await page.dismissInitialAlert();
+    await page.displayBarChart();
+    
+    const regionLabel = Selector('span').withText('R1');
+
+    await t
+        .click(regionLabel)
+        .wait(1000)
+        .takeScreenshot('charts/click_legend.png');
+});
+
