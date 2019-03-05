@@ -266,7 +266,7 @@ class GrapherModule extends HTMLElement {
 
         return new Promise((resolve) => {
             setTimeout(() => {
-                this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)'});
+                this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', makeTaskChart : this.taskdata ? true : false});
                 resolve();
             }, 1);
         });
@@ -878,9 +878,7 @@ class GrapherModule extends HTMLElement {
     fillPlugin(settings) {
         let frame = settings.frame;
         return {
-            init : () => { 
-                console.log('initialized fill plugin'); 
-            },
+            init : () => {},
             onRender: () => {
                 //disable line fill on lines in svg
                 let lines = $(frame).find('.tau-chart__line');
@@ -895,9 +893,7 @@ class GrapherModule extends HTMLElement {
     lineHoverPlugin(settings) {
         let chart = settings.frame;
         return {
-            init : () => {
-                console.log('initialized hover plugin');
-            },
+            init : () => {},
             onRender : () => {
                 let lines = $(chart).find('.tau-chart__line');
                 for (let node of lines) {
