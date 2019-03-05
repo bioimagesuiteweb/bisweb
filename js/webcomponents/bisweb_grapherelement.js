@@ -560,7 +560,7 @@ class GrapherModule extends HTMLElement {
                         'frame' : frame
                     }),
                     Taucharts.api.plugins.get('legend')({
-                        'align' : 'right'
+                        'position' : 'top'
                     }),
                     Taucharts.api.plugins.get('tooltip')({
                         'fields': ['intensity', 'frame', 'label'],
