@@ -497,31 +497,37 @@ class GrapherModule extends HTMLElement {
 
     createTaskChart(data, colors, frame, tasks, settings) {
 
-        console.log('colors', colors);
+        //construct complete colors object
+        //this will be each task name combined with each region
+        let parsedColors = {};
+        let colorKeys = Object.keys(colors);
+        for (let key of colorKeys) {
+            for (let task of tasks) {
+                let taskColor = task.label + '_' +  key;
+                parsedColors[taskColor] = colors[key];
+            }
+        }
+
         //data is formatted as a single array for a regular chart, so decompile that into separate arrays
         let separatedArrays = [], taskFrames = tasks[0].data.length;
         while (data.length > 0) {
             separatedArrays.push(data.splice(0, taskFrames));
         }
 
-        console.log('separated arrays', separatedArrays);
-
         for (let task of tasks) {
-            console.log('task', task);
             let parsedData = [];
             for (let region of separatedArrays) {
                 let regionArray = [];
                 for (let i = 0; i < task.data.length; i++) {
                     let unit = {}; 
                     Object.assign(unit, region[i]);
-                    unit.label = task.label + '' + unit.label;
+                    unit.label = task.label + '_' + unit.label;
                     if (task.data[i] === 0) { unit.intensity = 0; }
                     regionArray.push(unit);
                 }
                 parsedData = parsedData.concat(regionArray);
             }
             
-            console.log('task data', parsedData);
             new Taucharts.Chart({
                 guide: {
                     showAnchors: 'hover',
@@ -536,11 +542,7 @@ class GrapherModule extends HTMLElement {
                         label: { text: settings.yaxisLabel },
                     },
                     color: {
-                        brewer: {
-                            'taskR1' : 'rgb(255,0,0)',
-                            'taskR3' : 'rgb(255,255,0)',
-                            'taskR5' : 'rgb(0,0,255)'
-                        }
+                        brewer: parsedColors
                     },
                 },
                 type: 'line',
