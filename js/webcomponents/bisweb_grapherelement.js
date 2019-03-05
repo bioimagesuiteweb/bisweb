@@ -66,7 +66,11 @@ class GrapherModule extends HTMLElement {
 
         webutil.runAfterAllLoaded( () => {
             this.viewer = document.querySelector(this.viewerid);
-            if (this.viewerid2) { document.querySelector(this.viewerid2); }
+            this.viewer.addResizeObserver(this);
+            if (this.viewerid2) { 
+                document.querySelector(this.viewerid2); 
+                this.viewer.addResizeObserver(this);
+            }
         });
     }
 
@@ -406,15 +410,7 @@ class GrapherModule extends HTMLElement {
             else { this.createLineChart(chartData.datasets, chartData.colors, frame, settings); }
         } else {
             console.log('Error: unrecognized chart type', chartData.chartType);
-        }
-
-        if (settings.orthoElement !== this.lastviewer) {
-            if (this.lastviewer)
-                this.lastviewer.removeResizeObserver(this);
-            this.lastviewer = settings.orthoElement;
-
-            settings.orthoElement.addResizeObserver(this);
-        } 
+        }   
     }
 
 
