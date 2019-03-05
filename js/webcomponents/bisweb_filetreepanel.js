@@ -542,10 +542,12 @@ class FileTreePanel extends HTMLElement {
 
                     this.parsedData = parsedRange;
                     
-                    let rangeArray = [], labelsArray = [];
+                    let rangeArray = [], labelsArray = [], tasks = [], range;
                     for (let key of keys) {
-                        rangeArray.push(createArray(parsedRange[key]));
+                        range = createArray(parsedRange[key]);
+                        rangeArray.push(range);
                         labelsArray.push(key);
+                        tasks.push({ 'data' : range , 'label' : key });
                     }
 
                     //array to designate that all the arrays are meant to be included while formatting data
@@ -553,7 +555,7 @@ class FileTreePanel extends HTMLElement {
                     this.graphelement.formatChartData(rangeArray, includeArray, labelsArray, false);
 
                     //set the task range for the graph element to use in future images
-                    this.graphelement.taskdata = rangeArray;
+                    this.graphelement.taskdata =  tasks;
                     this.graphelement.createChart({ xaxisLabel : 'frame', yaxisLabel : 'On', split : 'label' });
                 } catch(e) {
                     console.log('An error occured while parsing the task file', e);

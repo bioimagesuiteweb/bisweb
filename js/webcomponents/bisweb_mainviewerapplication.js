@@ -1525,7 +1525,6 @@ class ViewerApplicationElement extends HTMLElement {
 
         if (graphtoolid) {
             this.graphtool = document.querySelector(graphtoolid);
-            console.log('graph tool', this.graphtool);
         }
         
 

@@ -233,7 +233,7 @@ class GrapherModule extends HTMLElement {
         }
 
         this.formatChartData(y, matrix.numvoxels, null, false);
-        this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', orthoElement : orthoElement });
+        this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', orthoElement : orthoElement, makeTaskChart : (this.taskdata) ? true : false });
     }
 
     /** replots the current values
@@ -330,7 +330,6 @@ class GrapherModule extends HTMLElement {
             }
 
             parsedDataSet = parsedDataSet.filter(Boolean);
-            console.log('parsed data set', parsedDataSet, labelsArray);
             let x = Array.from({ length: y[0].length }).map(function (e, i) { return i; });
             this.currentdata = {
                 x: x,
@@ -394,8 +393,6 @@ class GrapherModule extends HTMLElement {
 
         let chartData = this.currentdata;
 
-        console.log('taskdata', this.taskdata);
-
         //when redrawing graph settings should be the same as the last time (no settings will be provided on redraw)
         if (settings === null) { settings = this.settings; }
         else { this.settings = settings; }
@@ -403,14 +400,15 @@ class GrapherModule extends HTMLElement {
         this.renderGraphFrame();
         let frame = document.getElementById(this.graphcanvasid);
 
-        if (chartData.chartType === 'bar') {
+        if (settings.makeTaskChart) {
+            this.createTaskChart(chartData.datasets, chartData.colors, frame, this.taskdata, settings);
+        } else if (chartData.chartType === 'bar') {
             this.createBarChart(chartData.datasets[0].data, chartData.colors, frame, settings);
         } else if (chartData.chartType === 'line') {
-            if (this.taskdata) { this.createTaskChart(chartData.datasets, chartData.colors, frame, settings); }
-            else { this.createLineChart(chartData.datasets, chartData.colors, frame, settings); }
+            this.createLineChart(chartData.datasets, chartData.colors, frame, settings); 
         } else {
             console.log('Error: unrecognized chart type', chartData.chartType);
-        }   
+        }
     }
 
 
@@ -453,6 +451,7 @@ class GrapherModule extends HTMLElement {
 
     createLineChart(data, colors, frame, settings) {
 
+        console.log('line data', data);
         new Taucharts.Chart({
             guide: {
                 showAnchors: 'hover',
@@ -496,48 +495,78 @@ class GrapherModule extends HTMLElement {
 
     }
 
-    createTaskChart(data, colors, frame, settings) {
-        console.log('task chart');
-        new Taucharts.Chart({
-            guide: {
-                showAnchors: 'hover',
-                showGridLines: 'xy',
-                interpolate: 'linear',
-                x: {
-                    padding: 10,
-                    label: { text: settings.xaxisLabel },
+    createTaskChart(data, colors, frame, tasks, settings) {
+
+        console.log('colors', colors);
+        //data is formatted as a single array for a regular chart, so decompile that into separate arrays
+        let separatedArrays = [], taskFrames = tasks[0].data.length;
+        while (data.length > 0) {
+            separatedArrays.push(data.splice(0, taskFrames));
+        }
+
+        console.log('separated arrays', separatedArrays);
+
+        for (let task of tasks) {
+            console.log('task', task);
+            let parsedData = [];
+            for (let region of separatedArrays) {
+                let regionArray = [];
+                for (let i = 0; i < task.data.length; i++) {
+                    let unit = {}; 
+                    Object.assign(unit, region[i]);
+                    unit.label = task.label + '' + unit.label;
+                    if (task.data[i] === 0) { unit.intensity = 0; }
+                    regionArray.push(unit);
+                }
+                parsedData = parsedData.concat(regionArray);
+            }
+            
+            console.log('task data', parsedData);
+            new Taucharts.Chart({
+                guide: {
+                    showAnchors: 'hover',
+                    showGridLines: 'xy',
+                    interpolate: 'linear',
+                    x: {
+                        padding: 10,
+                        label: { text: settings.xaxisLabel },
+                    },
+                    y: {
+                        padding: 10,
+                        label: { text: settings.yaxisLabel },
+                    },
+                    color: {
+                        brewer: {
+                            'taskR1' : 'rgb(255,0,0)',
+                            'taskR3' : 'rgb(255,255,0)',
+                            'taskR5' : 'rgb(0,0,255)'
+                        }
+                    },
                 },
-                y: {
-                    padding: 10,
-                    label: { text: settings.yaxisLabel },
+                type: 'line',
+                x: 'frame',
+                y: 'intensity',
+                color: 'label',
+                settings: {
+                    fitModel: 'fill-height',
                 },
-                color: {
-                    brewer: colors
-                },
-            },
-            type: 'line',
-            x: 'frame',
-            y: 'intensity',
-            color: 'label',
-            settings: {
-                fitModel: 'fill-height',
-            },
-            plugins: [
-                this.fillPlugin({
-                    'frame' : frame
-                }),
-                this.lineHoverPlugin( { 
-                    'frame' : frame
-                }),
-                Taucharts.api.plugins.get('legend')({
-                    'position': 'top'
-                }),
-                Taucharts.api.plugins.get('tooltip')({
-                    'fields': ['intensity', 'frame', 'label'],
-                    'align': 'right'
-                })],
-            data: data
-        }).renderTo(frame);
+                plugins: [
+                    this.fillPlugin({
+                        'frame' : frame
+                    }),
+                    this.lineHoverPlugin( { 
+                        'frame' : frame
+                    }),
+                    Taucharts.api.plugins.get('legend')({
+                        'align' : 'right'
+                    }),
+                    Taucharts.api.plugins.get('tooltip')({
+                        'fields': ['intensity', 'frame', 'label'],
+                        'align': 'right'
+                    })],
+                data: parsedData
+            }).renderTo(frame);
+        }
     }
 
     show() {
@@ -675,8 +704,6 @@ class GrapherModule extends HTMLElement {
             }
             out += line + '\n';
         }
-
-
 
         bisgenericio.write({
             filename: 'voidata.csv',
@@ -887,7 +914,7 @@ class GrapherModule extends HTMLElement {
                     });
                 }   
             }
-        }
+        };
     }
 }
 
