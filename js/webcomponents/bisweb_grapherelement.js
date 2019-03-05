@@ -228,14 +228,8 @@ class GrapherModule extends HTMLElement {
             }
         }
 
-        if (orthoElement !== this.lastviewer) {
-            if (this.lastviewer)
-                this.lastviewer.removeResizeObserver(this);
-            this.lastviewer = orthoElement;
-        }
-
         this.formatChartData(y, matrix.numvoxels, null, false);
-        this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)' });
+        this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', orthoElement : orthoElement });
     }
 
     /** replots the current values
@@ -413,12 +407,13 @@ class GrapherModule extends HTMLElement {
             console.log('Error: unrecognized chart type', chartData.chartType);
         }
 
-        //set chart to fade slightly on hover so the tooltip is more visible
-        /*$('svg.tau-chart__svg').hover(() => {
-            $('.tau-chart__svg').css('opacity', 0.5);
-        }, () => {
-            $('.tau-chart__svg').css('opacity', 1.0);
-        });*/
+        if (settings.orthoElement !== this.lastviewer) {
+            if (this.lastviewer)
+                this.lastviewer.removeResizeObserver(this);
+            this.lastviewer = settings.orthoElement;
+
+            settings.orthoElement.addResizeObserver(this);
+        } 
     }
 
 
@@ -716,9 +711,8 @@ class GrapherModule extends HTMLElement {
         }
 
 
-        const self = this;
         this.resizingTimer = setTimeout(() => {
-            self.replotGraph(self.lastPlotFrame).catch((e) => {
+            this.replotGraph(self.lastPlotFrame).catch((e) => {
                 console.log(e, e.stack);
             });
         }, 200);
@@ -731,6 +725,7 @@ class GrapherModule extends HTMLElement {
      */
     getCanvasDimensions() {
 
+        console.log('this', this);
         let dim;
         if (this.lastviewer) {
             dim = this.lastviewer.getViewerDimensions();
