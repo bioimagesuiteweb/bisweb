@@ -250,6 +250,7 @@ class GrapherModule extends HTMLElement {
             return Promise.reject();
         }
 
+        console.log('currentdata', this.currentdata);
         let dim = numeric.dim(this.currentdata.y);
         this.numframes = dim[1];
         this.formatChartData(this.currentdata.y,
@@ -261,7 +262,7 @@ class GrapherModule extends HTMLElement {
 
         return new Promise((resolve) => {
             setTimeout(() => {
-                this.createChart();
+                this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)'});
                 resolve();
             }, 1);
         });
@@ -377,7 +378,7 @@ class GrapherModule extends HTMLElement {
             this.currentdata = {
                 x: y[0].length,
                 y: y,
-                numVoxels: numVoxels,
+                numvoxels: numVoxels,
                 datasets: parsedDataSet,
                 colors: parsedColors,
                 chartType: 'bar'
@@ -725,13 +726,11 @@ class GrapherModule extends HTMLElement {
      */
     getCanvasDimensions() {
 
-        console.log('this', this);
         let dim;
         if (this.lastviewer) {
             dim = this.lastviewer.getViewerDimensions();
         } else {
             //use the dimensions of added viewer instead
-            console.log('dimensions', this.viewer.getViewerDimensions());
             dim = this.viewer.getViewerDimensions();
         }
 
