@@ -413,7 +413,6 @@ class FileTreePanel extends HTMLElement {
             });
 
         let clearTaskButton = bis_webutil.createbutton({ 'name' : 'Clear tasks', 'type' : 'primary' });
-        console.log('clear task button', clearTaskButton);
         clearTaskButton.on('click', () => {
             bootbox.confirm({
                 'message' : 'Clear loaded task data?',
@@ -428,7 +427,6 @@ class FileTreePanel extends HTMLElement {
                     }
                 },
                 'callback' : (result) => {
-                    console.log('result', result);
                     if (result) { this.graphelement.taskdata = null; }
                 }
             });

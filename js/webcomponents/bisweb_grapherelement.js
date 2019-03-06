@@ -919,12 +919,10 @@ class GrapherModule extends HTMLElement {
 
                         //change opacity of other lines in the set
                         for (let otherNode of lines) {
-                            $(otherNode).css('opacity', 0.3);
+                            //$(otherNode).css('opacity', 0.3);
                         }
-                        $(node).css('opacity', '1.0');
-                    }, () => {
-                        console.log('hover out');
-                    });
+                        //$(node).css('opacity', '1.0');
+                    }, () => {});
                 }   
             }
         };
