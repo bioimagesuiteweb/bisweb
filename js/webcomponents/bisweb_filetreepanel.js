@@ -396,12 +396,54 @@ class FileTreePanel extends HTMLElement {
                 initialCallback: () => { return this.getDefaultFilename(); },
             });
 
+        let importTaskButton = bis_webfileutil.createFileButton({
+                'type' : 'info',
+                'name' : 'Import task file',
+                'callback' : (f) => {
+                        this.loadStudyTaskData(f);
+                },
+            },
+            {
+                'title': 'Import task file',
+                'filters': [
+                    { 'name': 'Task Files', extensions: ['json'] }
+                ],
+                'suffix': 'json',
+                'save': false,
+            });
+
+        let clearTaskButton = bis_webutil.createbutton({ 'name' : 'Clear tasks', 'type' : 'primary' });
+        console.log('clear task button', clearTaskButton);
+        clearTaskButton.on('click', () => {
+            bootbox.confirm({
+                'message' : 'Clear loaded task data?',
+                'buttons' : {
+                    'confirm' : {
+                        'label' : 'Yes',
+                        'className' : 'btn-success'
+                    },
+                    'cancel': {
+                        'label' : 'No',
+                        'className' : 'btn-danger'
+                    }
+                },
+                'callback' : (result) => {
+                    console.log('result', result);
+                    if (result) { this.graphelement.taskdata = null; }
+                }
+            });
+            this.graphelement.taskdata = null;
+        });
+
+
         saveStudyButton.addClass('save-study-button');
         saveStudyButton.prop('disabled', 'true');
 
 
         topButtonBar.append(loadStudyDirectoryButton);
         topButtonBar.append(loadStudyJSONButton);
+        bottomButtonBar.append(importTaskButton);
+        bottomButtonBar.append(clearTaskButton);
         bottomButtonBar.append(saveStudyButton);
 
         listElement.append(buttonGroupDisplay);
@@ -489,7 +531,7 @@ class FileTreePanel extends HTMLElement {
             });
         }
 
-        if (type === 'ParavisionJob') {
+        /*if (type === 'ParavisionJob') {
             newSettings = Object.assign(newSettings, {
                 'LoadTask': {
                     'separator_before': false,
@@ -500,7 +542,7 @@ class FileTreePanel extends HTMLElement {
                     }
                 }
             });
-        }
+        }*/
 
         return newSettings;
     }
@@ -515,52 +557,45 @@ class FileTreePanel extends HTMLElement {
         this.viewerapplication.loadImage(nodeName, viewer);
     }
 
-    loadStudyTaskData() {
+    loadStudyTaskData(name) {
         let lowRange = -1, highRange = -1;
-        bis_webfileutil.webFileCallback({
-            'title' : 'Load Settings',
-            'filters': [
-                { 'name': 'Settings Files', extensions: ['json'] }
-            ]
-        }, (name) => {
-            bis_genericio.read(name, false).then( (obj) => {
+        bis_genericio.read(name, false).then((obj) => {
 
-                //parse raw task data
-                try {
-                    let parsedData = JSON.parse(obj.data);
-                    let keys = Object.keys(parsedData.tasks);
-                    
-                    let parsedRange = {};
-                    for (let key of keys) {
+            //parse raw task data
+            try {
+                let parsedData = JSON.parse(obj.data);
+                let keys = Object.keys(parsedData.tasks);
 
-                        let range = parsedData.tasks[key];
+                let parsedRange = {};
+                for (let key of keys) {
 
-                        //data may sometimes come as an array, so parse each entry
-                        parsedRange[key] = parseEntry(range);
+                    let range = parsedData.tasks[key];
 
-                    }
+                    //data may sometimes come as an array, so parse each entry
+                    parsedRange[key] = parseEntry(range);
 
-                    this.parsedData = parsedRange;
-                    
-                    let rangeArray = [], labelsArray = [], tasks = [], range;
-                    for (let key of keys) {
-                        range = createArray(parsedRange[key]);
-                        rangeArray.push(range);
-                        labelsArray.push(key);
-                        tasks.push({ 'data' : range , 'label' : key });
-                    }
-
-                    //array to designate that all the arrays are meant to be included while formatting data
-                    let includeArray = new Array(rangeArray.length).fill(1);
-                    this.graphelement.formatChartData(rangeArray, includeArray, labelsArray, false);
-
-                    //set the task range for the graph element to use in future images
-                    this.graphelement.taskdata =  tasks;
-                    this.graphelement.createChart({ xaxisLabel : 'frame', yaxisLabel : 'On', split : 'label' });
-                } catch(e) {
-                    console.log('An error occured while parsing the task file', e);
                 }
-            });
+
+                this.parsedData = parsedRange;
+
+                let rangeArray = [], labelsArray = [], tasks = [], range;
+                for (let key of keys) {
+                    range = createArray(parsedRange[key]);
+                    rangeArray.push(range);
+                    labelsArray.push(key);
+                    tasks.push({ 'data': range, 'label': key });
+                }
+
+                //array to designate that all the arrays are meant to be included while formatting data
+                let includeArray = new Array(rangeArray.length).fill(1);
+                this.graphelement.formatChartData(rangeArray, includeArray, labelsArray, false);
+
+                //set the task range for the graph element to use in future images
+                this.graphelement.taskdata = tasks;
+                this.graphelement.createChart({ xaxisLabel: 'frame', yaxisLabel: 'On', split: 'label' });
+            } catch (e) {
+                console.log('An error occured while parsing the task file', e);
+            }
         });
 
         function parseEntry(entry) {
