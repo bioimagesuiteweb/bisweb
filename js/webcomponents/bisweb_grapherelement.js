@@ -414,7 +414,7 @@ class GrapherModule extends HTMLElement {
 
     createBarChart(data, colors, frame) {
 
-        new Taucharts.Chart({
+        let chart = new Taucharts.Chart({
             guide: {
                 showAnchors: true,
                 x: {
@@ -446,13 +446,19 @@ class GrapherModule extends HTMLElement {
                     'align': 'right'
                 })],
             data: data,
-        }).renderTo(frame);
+        });
+
+        chart.renderTo(frame);
+
+        let layout = $(frame).find('.tau-chart__layout');
+        layout.addClass('single-chart');
+
+        chart.refresh();
     }
 
     createLineChart(data, colors, frame, settings) {
 
-        console.log('line data', data);
-        new Taucharts.Chart({
+        let chart = new Taucharts.Chart({
             guide: {
                 showAnchors: 'hover',
                 showGridLines: 'xy',
@@ -491,8 +497,14 @@ class GrapherModule extends HTMLElement {
                     'align': 'right'
                 })],
             data: data
-        }).renderTo(frame);
+        });
 
+        chart.renderTo(frame);
+
+        let layout = $(frame).find('.tau-chart__layout');
+        layout.addClass('single-chart');
+
+        chart.refresh();
     }
 
     createTaskChart(data, colors, frame, tasks, settings) {
@@ -550,7 +562,7 @@ class GrapherModule extends HTMLElement {
                 y: 'intensity',
                 color: 'label',
                 settings: {
-                    fitModel: 'fill-height',
+                    fitModel: 'fit-width',
                 },
                 plugins: [
                     this.fillPlugin({
@@ -569,6 +581,9 @@ class GrapherModule extends HTMLElement {
                 data: parsedData
             }).renderTo(frame);
         }
+
+        let layout = $(frame).find('.tau-chart__layout');
+        layout.addClass('task-chart');
     }
 
     show() {

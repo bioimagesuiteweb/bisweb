@@ -374,8 +374,13 @@ input[type="radio"] .styled:checked + label::after {
     display : block;
 }
 
-.tau-chart__layout {
+.single-chart {
     height : 100%;
+    width : 100%;
+}
+
+.task-chart {
+    height : 40%;
     width : 100%;
 }
 
