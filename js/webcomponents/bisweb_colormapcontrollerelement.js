@@ -576,7 +576,7 @@ class ColormapControllerElement extends HTMLElement {
         if (modemap!==null)
             modemap.onChange(clbtrue);
         this.internal.minobjectmap.onChange(clbtrue);
-        this.internal.maxobjectmap.onFinishChange(clbfalse);
+        this.internal.maxobjectmap.onChange(clbfalse);
         if (this.internal.clusterslider!==null)
             this.internal.clusterslider.onFinishChange(clbfalse);
         
