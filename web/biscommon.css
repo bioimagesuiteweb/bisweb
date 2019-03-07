@@ -436,10 +436,6 @@ tspan {
     transition : opacity 1s;
 }
 
-.tau-chart__line > circle.tau-chart__highlighted {
-    opacity : 1.0;
-}
-
 .tau-chart__highlighted {
     opacity : 1.0;
 }

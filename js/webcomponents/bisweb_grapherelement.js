@@ -458,7 +458,7 @@ class GrapherModule extends HTMLElement {
 
     createLineChart(data, colors, frame, settings) {
 
-        let chart = new Taucharts.Chart({
+        let chartParams = {
             guide: {
                 showAnchors: 'hover',
                 showGridLines: 'xy',
@@ -497,8 +497,12 @@ class GrapherModule extends HTMLElement {
                     'align': 'right'
                 })],
             data: data
-        });
+        }
+      
 
+        if (settings.isFrameChart) { chartParams.guide.y.min = 0; chartParams.guide.y.max = 1.1; }
+
+        let chart = new Taucharts.Chart(chartParams);
         chart.renderTo(frame);
 
         let layout = $(frame).find('.tau-chart__layout');
