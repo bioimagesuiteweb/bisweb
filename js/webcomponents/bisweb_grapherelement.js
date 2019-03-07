@@ -232,8 +232,10 @@ class GrapherModule extends HTMLElement {
             }
         }
 
-        this.formatChartData(y, matrix.numvoxels, null, false);
-        this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', orthoElement : orthoElement, makeTaskChart : (this.taskdata) ? true : false });
+        if (this.formatChartData(y, matrix.numvoxels, null, false)) { 
+            this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', orthoElement : orthoElement, makeTaskChart : (this.taskdata) ? true : false });
+        }
+       
     }
 
     /** replots the current values
@@ -291,6 +293,8 @@ class GrapherModule extends HTMLElement {
         let makeLabels = labelsArray ? false : true;
         if (makeLabels) labelsArray = [];
 
+        if ( !y || y.length === 0) { webutil.createAlert('Error: no objectmap loaded', true); return; }
+
         if (this.numframes > 1 && singleFrame === false) {
 
             for (let i = 0; i < y.length; i++) {
@@ -330,6 +334,7 @@ class GrapherModule extends HTMLElement {
             }
 
             parsedDataSet = parsedDataSet.filter(Boolean);
+
             let x = Array.from({ length: y[0].length }).map(function (e, i) { return i; });
             this.currentdata = {
                 x: x,
@@ -387,6 +392,8 @@ class GrapherModule extends HTMLElement {
                 chartType: 'bar'
             };
         }
+
+        return true;
     }
 
     createChart(settings = null) {
@@ -400,7 +407,7 @@ class GrapherModule extends HTMLElement {
         this.renderGraphFrame();
         let frame = document.getElementById(this.graphcanvasid);
 
-        if (settings.makeTaskChart) {
+        if (settings.makeTaskChart && chartData.chartType === 'line') {
             this.createTaskChart(chartData.datasets, chartData.colors, frame, this.taskdata, settings);
         } else if (chartData.chartType === 'bar') {
             this.createBarChart(chartData.datasets[0].data, chartData.colors, frame, settings);
@@ -414,15 +421,16 @@ class GrapherModule extends HTMLElement {
 
     createBarChart(data, colors, frame) {
 
+        console.log('data', data);
         let chart = new Taucharts.Chart({
             guide: {
                 showAnchors: true,
                 x: {
-                    padding: 10,
+                    padding: 0,
                     label: { text: 'region' }
                 },
                 y: {
-                    padding: 10,
+                    padding: 0,
                     rotate: -90,
                     label: { text: 'intensity (average per-pixel value)' },
                 },
@@ -434,6 +442,7 @@ class GrapherModule extends HTMLElement {
             x: 'index',
             y: 'intensity',
             color: 'label',
+            size : 'size',
             settings: {
                 fitModel: 'fill-height'
             },
@@ -452,6 +461,9 @@ class GrapherModule extends HTMLElement {
 
         let layout = $(frame).find('.tau-chart__layout');
         layout.addClass('single-chart');
+
+        let svg = layout.find('.tau-chart__svg');
+        svg[0].setAttribute('transform', 'rotate(90)');
 
         chart.refresh();
     }
@@ -512,7 +524,59 @@ class GrapherModule extends HTMLElement {
     }
 
     createTaskChart(data, colors, frame, tasks, settings) {
+        
+        console.log('tasks', tasks.rawTasks);
 
+        let chart = new Taucharts.Chart({
+            guide: {
+                showAnchors: 'hover',
+                showGridLines: 'xy',
+                interpolate: 'linear',
+                x: {
+                    padding: 10,
+                    label: { text: settings.xaxisLabel },
+                },
+                y: {
+                    padding: 10,
+                    label: { text: settings.yaxisLabel },
+                },
+                color: {
+                    brewer: colors
+                },
+            },
+            type: 'line',
+            x: 'frame',
+            y: 'intensity',
+            color: 'label',
+            settings: {
+                fitModel: 'fit-width',
+            },
+            plugins: [
+                this.fillPlugin({
+                    'frame' : frame
+                }),
+                this.lineHoverPlugin( { 
+                    'frame' : frame
+                }),
+                Taucharts.api.plugins.get('legend')({
+                    'position' : 'top'
+                }),
+                Taucharts.api.plugins.get('tooltip')({
+                    'fields': ['intensity', 'frame', 'label'],
+                    'align': 'right'
+                })],
+            data: data
+        });
+        
+        chart.renderTo(frame);
+
+        let layout = $(frame).find('.tau-chart__layout');
+        layout.addClass('single-chart');
+    }
+
+    createSeparatedTaskChart(data, colors, frame, tasks, settings) {
+
+        console.log('tasks', tasks.formattedTasks);
         //construct complete colors object
         //this will be each task name combined with each region
         let parsedColors = {};
@@ -575,6 +639,7 @@ class GrapherModule extends HTMLElement {
                     this.lineHoverPlugin( { 
                         'frame' : frame
                     }),
+                    this.highlightDiffThresholdPlugin({}),
                     Taucharts.api.plugins.get('legend')({
                         'position' : 'top'
                     }),
@@ -930,6 +995,106 @@ class GrapherModule extends HTMLElement {
                 }   
             }
         };
+    }
+
+
+    // Plug-in function
+    // ----------------
+    highlightDiffThresholdPlugin(xSettings) {
+        let utils = Taucharts.api.utils;
+        // Setup plug-in settings defaults.
+        // --------------------------------
+        var settings = utils.defaults(xSettings || {}, {
+            threshold: null,
+        });
+        var threshold = settings.threshold;
+        if (isNaN(threshold)) {
+            throw new Error('Threshold is not specified');
+        }
+
+
+        // Return plug-in instance.
+        // Be careful when using class instances:
+        // event handlers (like `onRender` or `onSpecReady`)
+        // should be own object properties.
+        // ---------------------------------------------
+        return {
+
+            // `onSpecReady` handler is the best place for
+            // extending parsed chart configuration.
+            // -----------------------------------------
+            onSpecReady: function (chart, specRef) {
+
+                // Transformations are applied to incoming data.
+                // The name (`diffThreshold` in this case) should
+                // be specified in unit config.
+                // ----------------------------------------------
+                specRef.transformations = specRef.tramsformations || {};
+                specRef.transformations.diffThreshold = function (data, props) {
+                    var x = props.x.dim;
+                    var y = props.y.dim;
+                    var g = props.g.dim;
+                    var sign = Math.sign(threshold);
+
+                    var groups = utils.groupBy(data, function (d) {
+                        return d[g];
+                    });
+
+                    return Object.keys(groups).reduce(function (memo, key) {
+                        var points = [];
+                        var group = groups[key];
+                        utils.range(group.length - 1).forEach(function (i) {
+                            var a = group[i][y];
+                            var b = group[i + 1][y];
+                            var diff = (b - a) / Math.max(a, b);
+                            if (Math.sign(diff) === sign && Math.abs(diff) >= Math.abs(threshold)) {
+                                points.push(group[i + 1]);
+                            }
+                        });
+                        return memo.concat(points);
+                    }, []);
+                };
+
+                // Search for necessary units
+                // --------------------------
+                chart.traverseSpec(specRef, function (unit, parent) {
+
+                    var xScale = specRef.scales[unit.x];
+                    var yScale = specRef.scales[unit.y];
+                    var colorScale = specRef.scales[unit.color] || {};
+
+                    // Create new unit.
+                    // Here we reuse Taucharts Point element.
+                    // It is possible to create and use custom elements.
+                    // -------------------------------------------------
+                    var highlight = JSON.parse(JSON.stringify(unit));
+                    highlight.type = 'ELEMENT.POINT';
+                    highlight.size = 'size_null';
+                    highlight.namespace = 'diff-threshold';
+
+                    // We have defined `diffThreshold` transformation earlier.
+                    // -------------------------------------------------------
+                    highlight.transformation = highlight.transformations || [];
+                    highlight.transformation.push({
+                        type: 'diffThreshold',
+                        args: {
+                            x: xScale,
+                            y: yScale,
+                            g: colorScale
+                        }
+                    });
+                    highlight.guide = utils.defaults({}, highlight.guide || {});
+                    delete highlight.guide.label;
+                    delete highlight.label;
+
+                    // Add new unit into units list.
+                    // -----------------------------
+                    parent.units.push(highlight);
+                });
+            }
+        };
+
+
     }
 }
 
