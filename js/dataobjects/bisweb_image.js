@@ -1281,11 +1281,10 @@ class BisWebImage extends BisWebDataObject {
      * @param {String} filename -- the original filename
      * @param {String} forceorient -- if set to force orientation (e.g. LPS, RAS)
      */
-    parseNRRD(inputbuffer,filename,forceorient) {
+    parseNRRD(inputbuffer,filename,forceorient_in) {
         
         this.debug=1;
         const dat=nrrd.parse(inputbuffer);
-        let data=dat.buffer;
         let keys=Object.keys(dat);
         let obj={};
         for (let i=0;i<keys.length;i++) {
@@ -1295,7 +1294,6 @@ class BisWebImage extends BisWebDataObject {
             }
         }
         obj['data']=dat['data'].length;
-
         
         console.log(obj);
 
@@ -1311,6 +1309,7 @@ class BisWebImage extends BisWebDataObject {
             numcomponentes:  1,
             dimensions :  [ obj.sizes[0], obj.sizes[1], obj.sizes[2] ],
             spacing :  [ obj.spaceDirections[0][0], obj.spaceDirections[1][1], obj.spaceDirections[2][2] ],
+            orientation : 'RAS'
         };
 
         this.createImage(opts);
@@ -1319,23 +1318,41 @@ class BisWebImage extends BisWebDataObject {
         console.log('Len=',len,dat.data.length,dat.data.constructor.name);
         for (let i=0;i<imgdata.length;i++)
             imgdata[i]=dat.data[i];
+
+        let internal=this.internal;
+        
+        internal.header.struct.srow_x[1]=-opts.spacing[0];
+        internal.header.struct.srow_x[0]=0.0;
+        internal.header.struct.srow_x[2]=0.0;
+        internal.header.struct.srow_x[3]=0.0;
+        
+        internal.header.struct.srow_y[1]=0.0;
+        internal.header.struct.srow_y[0]=opts.spacing[1];
+        internal.header.struct.srow_y[2]=0.0;
+        internal.header.struct.srow_y[3]=0.0;
+        
+        internal.header.struct.srow_z[0]=0.0;
+        internal.header.struct.srow_z[1]=0.0;
+        internal.header.struct.srow_z[2]=-opts.spacing[2];
+        internal.header.struct.srow_z[3]=0.0;
+        internal.header.struct.qform_code=0;
+        internal.header.struct.sform_code=1;
+            
+        BisWebImage.parseHeaderAndComputeOrientation(internal);
+        
+        let forceorient=userPreferences.sanitizeOrientationOnLoad(forceorient_in);
+        
+        if (forceorient !== "None" && forceorient !== internal.orient.name) {
+            let debug=true;
+            let origdata=dat.data;
+            if (debug)
+                console.log('+++++ permuting data ',forceorient);
+            BisWebImage.permuteDataToMatchDesiredOrientation(internal,origdata,0,internal.imgdata,forceorient,debug);
+            internal.forcedorientationchange=true;
+        }
         
         this.computeIntensityRange();
         this.setFilename(filename);
-    }
-
-    /** Legacy Debug Print Function */
-    printinfo(comment) {
-        const internal=this.internal;
-        comment = comment || "";
-        let a='+++++ Printing image info:'+comment+"\n";
-        a+="+++++ dimensions= :"+internal.dimensions+", spacing="+internal.spacing+", orient=" + internal.orient.name +' ' +internal.orient.axis+' ' +internal.orient.flip +"(inv="+internal.orient.invaxis+','+internal.orient.invflip+')';
-        a+=" range "+internal.range + ' data type='+internal.header.struct.datatype+'('+internal.imginfo.name+")\n";
-        if (internal.imgdata!==null) {
-            let b=Object.prototype.toString.call(internal.imgdata);
-            a+="+++++ type of imgdata:"+b+", size of imgdata:" + internal.imgdata.length+ "("+internal._rawdata.length+"), bitpix="+internal.header.struct.bitpix;
-        }
-        return a;
     }
 
 
@@ -1804,7 +1821,6 @@ class BisWebImage extends BisWebDataObject {
 
         // Finally axis is done
         internal.orient.axis=[0,1,2];
-
     }
 
 }
