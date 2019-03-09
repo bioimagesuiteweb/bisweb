@@ -462,9 +462,6 @@ class GrapherModule extends HTMLElement {
         let layout = $(frame).find('.tau-chart__layout');
         layout.addClass('single-chart');
 
-        let svg = layout.find('.tau-chart__svg');
-        svg[0].setAttribute('transform', 'rotate(90)');
-
         chart.refresh();
     }
 
@@ -525,8 +522,15 @@ class GrapherModule extends HTMLElement {
 
     createTaskChart(data, colors, frame, tasks, settings) {
         
-        console.log('tasks', tasks.rawTasks);
+        console.log('tasks', tasks.formattedTasks, 'data', data);
 
+        for (let task of tasks.formattedTasks) {
+            for (let item of data) {
+                if (task.data[item.frame] === 1) { item.task = task.label; }
+            }
+        }
+
+        console.log('data', data);
         let chart = new Taucharts.Chart({
             guide: {
                 showAnchors: 'hover',
@@ -549,7 +553,7 @@ class GrapherModule extends HTMLElement {
             y: 'intensity',
             color: 'label',
             settings: {
-                fitModel: 'fit-width',
+                fitModel: 'entire-view',
             },
             plugins: [
                 this.fillPlugin({
@@ -562,7 +566,7 @@ class GrapherModule extends HTMLElement {
                     'position' : 'top'
                 }),
                 Taucharts.api.plugins.get('tooltip')({
-                    'fields': ['intensity', 'frame', 'label'],
+                    'fields': ['intensity', 'frame', 'label', 'task'],
                     'align': 'right'
                 })],
             data: data
@@ -572,6 +576,8 @@ class GrapherModule extends HTMLElement {
 
         let layout = $(frame).find('.tau-chart__layout');
         layout.addClass('single-chart');
+
+        chart.refresh();
     }
 
     createSeparatedTaskChart(data, colors, frame, tasks, settings) {
