@@ -33,6 +33,7 @@ require('bootstrap-slider');
 //taucharts plugins
 require('../../node_modules/taucharts/dist/plugins/tooltip.js');
 require('../../node_modules/taucharts/dist/plugins/legend.js');
+require('../../node_modules/taucharts/dist/plugins/annotations.js');
 
 Chart.defaults.global.defaultFontColor = 'white';
 Chart.defaults.global.defaultFontSize = '16';
@@ -522,12 +523,40 @@ class GrapherModule extends HTMLElement {
 
     createTaskChart(data, colors, frame, tasks, settings) {
         
-        console.log('tasks', tasks.formattedTasks, 'data', data);
+        console.log('tasks', tasks);
 
+        //construct task labels and regions for tauchart
         for (let task of tasks.formattedTasks) {
             for (let item of data) {
                 if (task.data[item.frame] === 1) { item.task = task.label; }
             }
+        }
+
+        let annotations = [], keys = Object.keys(tasks.rawTasks.tasks), index = 1;
+        for (let key of keys) {
+            let task = tasks.rawTasks.tasks[key];
+            let cl = util.objectmapcolormap[index];
+            cl = 'rgba(' + cl[0] + ', ' + cl[1] + ', ' + cl[2] + ', 0.2)';
+
+            if (Array.isArray(task)) { 
+                for (let subTask of task) {
+                    annotations.push({
+                        'dim' : 'frame',
+                        'val' : parseTask(subTask),
+                        'text' : key,
+                        'color' : cl
+                    });
+                }
+            } else {
+                annotations.push({
+                    'dim' : 'frame', 
+                    'val' : parseTask(task),
+                    'text' : key,
+                    'color' : cl
+                });
+            }
+
+            index = index + 1;
         }
 
         console.log('data', data);
@@ -568,6 +597,9 @@ class GrapherModule extends HTMLElement {
                 Taucharts.api.plugins.get('tooltip')({
                     'fields': ['intensity', 'frame', 'label', 'task'],
                     'align': 'right'
+                }),
+                Taucharts.api.plugins.get('annotations')({
+                    items : annotations
                 })],
             data: data
         });
@@ -578,6 +610,13 @@ class GrapherModule extends HTMLElement {
         layout.addClass('single-chart');
 
         chart.refresh();
+
+        function parseTask(task) {
+            let parsedTask = task.split('-');
+            parsedTask[0] = parseInt(parsedTask[0]);
+            parsedTask[1] = parseInt(parsedTask[1]);
+            return parsedTask;
+        }
     }
 
     createSeparatedTaskChart(data, colors, frame, tasks, settings) {

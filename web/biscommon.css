@@ -374,6 +374,10 @@ input[type="radio"] .styled:checked + label::after {
     display : block;
 }
 
+.bisweb-taucharts-container text {
+    fill : black;
+}
+
 .single-chart {
     height : 100%;
     width : 100%;
