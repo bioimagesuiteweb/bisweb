@@ -134,3 +134,4 @@ img.load(inpfilename).then( async () => {
     console.log(e);
     process.exit(1);
 });
+
