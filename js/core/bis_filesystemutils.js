@@ -13,11 +13,21 @@ if (bis_genericio.getmode() === 'node' ||
 
     
     // In browser or webworker this will not run 
+    // Not valid ... XENIOS -- this hard codes user home directory
+    // os.homedir(), os.tmpdir() ? os.tmpdir() : 'No temporary directory'];
     
-    const baseDirectoriesList = [ os.homedir(), os.tmpdir() ? os.tmpdir() : 'No temporary directory'];
+    const baseDirectoriesList = [ ]; 
     const indent = '.....';
+    
+    // TODO: Xenios added this to set the paths explicitly if filtering
+    let addFilterDirectories=function(in_baseDirectories) {
+        for (let i=0;i<in_baseDirectories.length;i++)
+            baseDirectoriesList.push(in_baseDirectories[i]);
+        
+        console.log(indent,' Using filesystemutils mode= ',bis_genericio.getmode(),baseDirectoriesList);                                       
+    };
 
-    console.log('+++ using filesystemutils mode= ',bis_genericio.getmode(),baseDirectoriesList);
+
     /**
      * Takes a path specifying a file to load on the server machine and determines whether the path is clean, i.e. specifies a file that exists, does not contain symbolic links.
      * Recursively checks every file and directory on the path.
@@ -27,6 +37,8 @@ if (bis_genericio.getmode() === 'node' ||
      */
     let validateFilename = (filepath, debug = false) => {
 
+        console.log('Validating ',filepath,debug);
+        
         //some filepaths will be two filepaths conjoined by the symbol &&, check these separately
         if (filepath.indexOf('&&') >= 0) {
             const filepaths = filepath.split('&&');
@@ -47,33 +59,32 @@ if (bis_genericio.getmode() === 'node' ||
         if (debug)
             console.log('filepath=', filepath, ' ', baseDirectoriesList);
 
-        let i = 0, found = false;
-        while (i < baseDirectoriesList.length && found === false) {
-            if (path.sep === '\\') {
-                if (filepath.indexOf(baseDirectoriesList[i].toLowerCase()) === 0) {
+        if (baseDirectoriesList.length>0) {
+            let i = 0, found = false;
+            while (i < baseDirectoriesList.length && found === false) {
+                if (path.sep === '\\') {
+                    if (filepath.indexOf(baseDirectoriesList[i].toLowerCase()) === 0) {
+                        found = true;
+                    }
+                } else if (filepath.indexOf(baseDirectoriesList[i]) === 0) {
                     found = true;
+                } else {
+                    i = i + 1;
                 }
-            } else if (filepath.indexOf(baseDirectoriesList[i]) === 0) {
-                found = true;
-            } else {
-                i = i + 1;
+            }
+            
+            if (found === false) {
+                return false;
             }
         }
 
-        if (found === false) {
-            return false;
-        }
-
         let realname = filepath;
-        if (path.sep === '\\')
-            realname = util.filenameUnixToWindows(filepath);
-
-
-
-        if (fs.existsSync(realname)) {
-            let stats = fs.lstatSync(realname);
-            if (stats.isSymbolicLink()) {
-                return false;
+        if (path.sep === '\\') {
+            if (fs.existsSync(realname)) {
+                let stats = fs.lstatSync(realname);
+                if (stats.isSymbolicLink()) {
+                    return false;
+                }
             }
         } else {
             let dirname = path.dirname(realname);
@@ -163,7 +174,8 @@ if (bis_genericio.getmode() === 'node' ||
     exportobj = {
         validateFilename: validateFilename,
         validateDirectories: validateDirectories,
-        tempdir: os.tmpdir()
+        tempdir: os.tmpdir(),
+        addFilterDirectories : addFilterDirectories,
     };
 }
 

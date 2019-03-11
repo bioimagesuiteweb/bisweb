@@ -126,15 +126,19 @@ class DicomModule extends BaseModule {
     async directInvokeAlgorithm(vals) {
 
         let dcm2nii = await this.getdcm2niimodule();
+
         return new Promise((resolve, reject) => {
             console.log('oooo invoking: dicommodule with vals', JSON.stringify(vals));
 
             let errorfn = ((msg, e = 'No available error message') => {
+                console.log('In Error fun Msg=',msg,e);
                 if (e.code === 'EEXIST') {
                     console.log('Directory', e.path, 'already exists, continuing...');
+                    return false;
                 } else {
                     console.log('An error occured while making DICOM directories', e);
                     reject(e);
+                    return true;
                 }
             });
 
@@ -143,13 +147,18 @@ class DicomModule extends BaseModule {
             if (path.sep === '\\') {
                 indir = bis_util.filenameUnixToWindows(indir);
             }
+
+            
             if (!sysutils.validateFilename(indir)) {
                 return errorfn(indir + ' is not valid');
-            } 
-            if (!sysutils.validateFilename(outdir)) {
-                return errorfn(outdir + ' is not valid');
             }
 
+            console.log('indir=',indir,outdir);
+            
+            if (!sysutils.validateFilename(outdir)) {
+                if (errorfn(outdir + ' is not valid'))
+                    return;
+            }
 
             if (vals.convertbids) { 
                 tmpdir = path.join(sysutils.tempdir, 'dicom_' + Date.now());
@@ -158,14 +167,15 @@ class DicomModule extends BaseModule {
             try {
                 fs.mkdirSync(outdir);
             } catch (e) {
-                errorfn('', e);
+                if (errorfn('', e))
+                    return;
             }
 
             if (tmpdir) {
                 try {
                     fs.mkdirSync(tmpdir);
                 } catch (e) {
-                    errorfn('', e);
+                    return errorfn('', e);
                 }
             }
 
@@ -184,6 +194,7 @@ class DicomModule extends BaseModule {
             };*/
 
             let cmd = dcm2nii + ' -z y ' + ' -o ' + (vals.convertbids ?  tmpdir : outdir) + ' -ba y -c bisweb ' + indir;
+            console.log('Invoking' ,cmd);
 
             bis_commandlineutils.executeCommandAndLog(cmd, process.cwd()).then( (m) => {
                 console.log(m);
@@ -201,8 +212,6 @@ class DicomModule extends BaseModule {
                 } else {
                     resolve(outdir);  
                 }
-
-                
             }).catch( (e) => {
                 console.log('An error occurred during conversion', e);
                 reject(e);
