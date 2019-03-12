@@ -54,11 +54,14 @@ class BidsModule extends BaseModule {
     }
 
     async directInvokeAlgorithm(vals) {
+        
         let msg = await bidsutils.dicom2BIDS({ 'indir': vals.inputDirectory, 'outdir': vals.outputDirectory });
         return new Promise((resolve, reject) => {
-            console.log('msg', msg);
-            if (msg.split(' ').length > 1) { reject('An error occured during conversion', msg); }
-            else { resolve(msg); }
+            if (msg.split(' ').length > 1) {
+                reject('An error occured during conversion', msg);
+            }  else {
+                resolve(msg);
+            }
         });
     }
 
