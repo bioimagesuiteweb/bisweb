@@ -347,14 +347,22 @@ class FileTreePanel extends HTMLElement {
 
             let elementsDiv = $('.bisweb-elements-menu');
 
-            let loadImageButton = $(`<br><button type='button' class='btn btn-success btn-sm load-image-button'>Load image</button><br>`);
+            let loadImageButton = $(`<button type='button' class='btn btn-success btn-sm load-image-button'>Load image</button>`);
             loadImageButton.on('click', () => {
                 this.loadImageFromTree();
             });
 
+            let div=$('<div></div>');
+            elementsDiv.append(div);
+            let lab=$(`<label>Tag Selected Element:</label>`);
+            div.append(lab);
+            div.append(tagSelectDiv);
             elementsDiv.append(loadImageButton);
-            elementsDiv.append($(`<br><label>Tag Selected Element:</label></br>`));
-            elementsDiv.append(tagSelectDiv);
+            loadImageButton.css({'margin' : '10px'});
+            lab.css({'margin-left' : '10px'});
+            elementsDiv.append($('<HR>'));
+            
+
 
             this.renderedTagSelectMenu = true;
         } else {
@@ -403,12 +411,12 @@ class FileTreePanel extends HTMLElement {
         //Route study load and save through bis_webfileutil file callbacks
         let loadStudyJSONButton = bis_webfileutil.createFileButton({
             'type': 'primary',
-            'name': 'Import study from JSON',
+            'name': 'Import study',
             'callback': (f) => {
                 this.importFilesFromJSON(f);
             },
         }, {
-                'title': 'Import study from JSON',
+                'title': 'Import study',
                 'filters': [
                     { 'name': 'Study Files', extensions: ['study'] }
                 ],
@@ -510,60 +518,50 @@ class FileTreePanel extends HTMLElement {
      * @param {String} filepath - The path to save the file to. 
      */
     exportStudy(filepath) {
-        try {
 
-            //reconstruct tree from jstree
-            let rawTree = this.fileTree.jstree(true);
-            let rawTreeJSON = rawTree.get_json('#');
-            let reconstructedTree = [];
 
-            //console.log('rawTree', rawTree);
-            for (let item of rawTreeJSON) { fillTreeNode(rawTree, item, reconstructedTree); }
-
-            //            console.log('reconstructed tree', reconstructedTree);
-            bis_genericio.getFileStats(this.baseDirectory).then((stats) => {
-
-                let dateCreated = new Date(stats.birthtimeMs);
-                let treeMetadataContainer = {
-                    'baseDirectory': this.baseDirectory,
-                    'dateCreated': parseDate(dateCreated),
-                    'contents': reconstructedTree
-                };
-
-                let stringifiedFiles = JSON.stringify(treeMetadataContainer);
-                //set the correct file extension if it isn't set yet
-                let splitPath = filepath.split('.');
-                if (splitPath.length < 2 || splitPath[1] !== 'JSON' || splitPath[1] !== 'json') {
-                    splitPath[1] = 'json';
-                }
-
-                filepath = splitPath.join('.');
-                bis_genericio.write(filepath, stringifiedFiles, false);
-            });
-
-            //all BIDS files are presumably created at the same time so just use the timestamp for one of them
-            bis_genericio.getFileStats(this.baseDirectory).then((stats) => {
-                let date = new Date(stats.birthtimeMs);
-                let dataContainer = {
-                    'date': parseDate(date),
-                    'study': reconstructedTree
-                };
-
-                let stringifiedFiles = JSON.stringify(dataContainer);
-                //set the correct file extension if it isn't set yet
-                let splitPath = filepath.split('.');
-                if (splitPath.length < 2 || splitPath[1] !== 'JSON' || splitPath[1] !== 'json') {
-                    splitPath[1] = 'json';
-                }
-
-                filepath = splitPath.join('.');
-                bis_genericio.write(filepath, stringifiedFiles, false);
-            });
-
-        } catch (e) {
-            //console.log('an error occured while saving to disk', e);
-            bis_webutil.createAlert('An error occured while saving the study files to disk.', false);
+        console.log('Filepath=',filepath);
+        
+        
+        //reconstruct tree from jstree
+        let rawTree = this.fileTree.jstree(true);
+        let rawTreeJSON = rawTree.get_json('#');
+        let reconstructedTree = [];
+        
+        //console.log('rawTree', rawTree);
+        for (let item of rawTreeJSON) {
+            fillTreeNode(rawTree, item, reconstructedTree);
         }
+        
+        //console.log('reconstructed tree', reconstructedTree);
+        console.log('Base Directory', this.baseDirectory,filepath);
+
+        let base=this.baseDirectory;
+        if (bis_genericio.getPathSeparator() === '\\') 
+            base= util.filenameUnixToWindows(base);
+        
+        bis_genericio.getFileStats(base).then((stats) => {
+            
+            let dateCreated = new Date(stats.birthtimeMs);
+            let treeMetadataContainer = {
+                'baseDirectory': this.baseDirectory,
+                'dateCreated': parseDate(dateCreated),
+                'contents': reconstructedTree
+            };
+            
+            let stringifiedFiles = JSON.stringify(treeMetadataContainer,null,2);
+            //set the correct file extension if it isn't set yet
+            let splitPath = filepath.split('.');
+            if (splitPath.length < 2 || splitPath[1] !== 'STUDY' || splitPath[1] !== 'study') {
+                splitPath[1] = 'study';
+            }
+            
+            filepath = splitPath.join('.');
+            bis_genericio.write(filepath, stringifiedFiles, false);
+        }).catch( (e) => {
+            console.log('an error occured while saving to disk', e);
+            bis_webutil.createAlert('An error occured while saving the study files to disk.', false);
+        });
     }
 
     /**
@@ -701,14 +699,31 @@ class FileTreePanel extends HTMLElement {
 
         let tagSelectMenu = $(
             `<select class='form-control' disabled> 
-            <option value='none'></option>
-            <option value='sagittal'>Sagittal</option>
-            <option value='coronal'>Coronal</option>
-        </select>`
-        );
+            <option value='image'>Image</option>
+            <option value='task'>Task Run</option>
+            <option value='rest'>Rest Run</option>
+            <option value='dwi'>DWI</option>
+            <option value='3danat'>3DAnat</option>
+            <option value='2danat'>2DAnat</option>
+        </select>`);
+        let tagSelectMenu2=$(`<select class='form-control' disabled> 
+                             <option value='none'></option>
+                             <option value='1'>1</option>
+                             <option value='2'>2</option>
+                             <option value='3'>3</option>
+                             <option value='4'>4</option>
+                             <option value='5'>5</option>
+                             <option value='6'>6</option>
+                             <option value='7'>7</option>
+                             <option value='8'>8</option>
+                             <option value='9'>9</option>
+                             </select>`);
 
         console.log('options', options, 'tag select menu', tagSelectMenu);
-        if (options.enabled) { tagSelectMenu.prop('disabled', ''); }
+        if (options.enabled) { 
+            tagSelectMenu.prop('disabled', '');
+            tagSelectMenu2.prop('disabled', '');
+        }
 
         if (options.setDefaultValue) {
             this.changeTagSelectMenu(tagSelectMenu, this.currentlySelectedNode);
@@ -730,11 +745,11 @@ class FileTreePanel extends HTMLElement {
             document.dispatchEvent(tagChangedEvent);
         });
 
-        return tagSelectMenu;
+        return tagSelectMenu; //TODO: Remeber to return tagSelectMenu2 and add it as second tag etc_etc_etc
     }
 
     changeTagSelectMenu(menu, node) {
-        let defaultSelection = node.original.tag || "none";
+        let defaultSelection = node.original.tag || "image";
 
         //clear selected options
         let options = menu.find('option');
@@ -768,7 +783,7 @@ let fillTreeNode = (rawTree, node, parentNode = null) => {
     let item = rawTree.get_node(node.id);
     let newNode = item.original;
 
-    console.log('item', item, 'parent node', parentNode);
+    //    console.log('item', item, 'parent node', parentNode);
     if (item.children.length > 0) {
         newNode.children = [];
         for (let child of node.children) {
@@ -785,7 +800,7 @@ let fillTreeNode = (rawTree, node, parentNode = null) => {
 };
 
 let parseDate = (date) => {
-    return date.getFullYear() + '-' + date.getMonth() + 1 + '-' + zeroPadLeft(date.getDate()) + 'T' + zeroPadLeft(date.getHours()) + ':' + zeroPadLeft(date.getMinutes()) + ':' + zeroPadLeft(date.getSeconds());
+    return date.getFullYear() + '-' + date.getMonth() + 1 + '-' + zeroPadLeft(date.getDate()) + 'T' + zeroPadLeft(date.getHours()) + '_' + zeroPadLeft(date.getMinutes()) + '_' + zeroPadLeft(date.getSeconds());
 
     function zeroPadLeft(num) {
         let pad = '00', numStr = '' + num;
