@@ -177,15 +177,24 @@ const webfileutils = {
      * @alias WebFileUtil.candoComplexIO
      * @returns{Boolean} true or false
      */
-    candoComplexIO: function() {
+    candoComplexIO: function(serveronly=false) {
+
+        console.log('In cando complex');
         
         if (genericio.getmode()!=='browser')
             return true;
-        
-        if (fileMode==='server' || fileMode==='amazonaws')
+
+        if (fileMode==='server')
             return true;
         
-        webutil.createAlert('You need to connect to a local fileserver on an S3 share before this operation.',true);
+        if (fileMode==='amazonaws' && serveronly===false)
+            return true;
+
+        if (serveronly)
+            webutil.createAlert('You need to connect to a local fileserver before this operation.',true);
+        else
+            webutil.createAlert('You need to connect to a local fileserver on an S3 share before this operation.',true);
+        
         return false;
     },
 
@@ -277,6 +286,7 @@ const webfileutils = {
      * @param {String} fileopts.defaultpath - if in file mode and web use this as original filename
      * @param {String} fileopts.suffix - if in file mode and web use this to filter web style
      * @param {String} fileopts.force - force file selection mode (e.g. 'local');
+     * @param {string}  fileopts.serveronly - if true only for server operations (or electron)
      * @param {Function} callback - Callback to call when done. Typically this is provided by bis_genericio and will put the loaded image onto the viewer or perform any necessary actions after saving an image. 
      */
     webFileCallback: function (fileopts, callback) {
@@ -284,7 +294,7 @@ const webfileutils = {
         fileopts.suffix=fileopts.suffix || null;
         fileopts.filters=fileopts.filters || null;
         fileopts.force=fileopts.force || null;
-
+        fileopts.serveronly=fileopts.serveronly || false;
         let suffix = fileopts.suffix || '';
         let title = fileopts.title || '';
         let defaultpath=fileopts.defaultpath || '';
@@ -296,7 +306,6 @@ const webfileutils = {
             }
         }
 
-        //        console.log('Suffix =',fileopts.suffix,suffix,fileopts.filters);
         
         if (suffix === "NII" || fileopts.filters === "NII") {
             suffix = '.nii.gz,.nii,.gz,.tiff';
@@ -329,8 +338,11 @@ const webfileutils = {
             cbopts.initialFilename= '';
             cbopts.mode='directory';
             cbopts.suffix='';
-
-            if (fmode !== 'server' && fmode !== 'amazonaws') {
+            
+            if (fileopts.serveronly && fmode !== 'server') {
+                webutil.createAlert('You need to connect to a local fileserver before this operation.',true);
+                return false;
+            } else if (fmode !== 'server' && fmode !== 'amazonaws') {
                 webutil.createAlert('You need to connect to a local fileserver on an S3 share before this operation.',true);
                 return false;
             }
@@ -503,6 +515,7 @@ const webfileutils = {
      * @param {string}  fileopts.defaultpath -  use this as original filename
      * @param {string}  fileopts.filter - use this as filter (if in electron)
      * @param {string}  fileopts.suffix - List of file types to accept as a comma-separated string e.g. ".ljson,.land" (simplified version filter)
+     * @param {string}  fileopts.serveronly - if true only for server operations (or electron)
      */
     attachFileCallback : function(button,callback,fileopts={}) {
 
