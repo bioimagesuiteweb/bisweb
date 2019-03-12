@@ -89,10 +89,6 @@ let executeCommand=function(command,dir,done=0,printfn=console.log) {
 
 
 let executeCommandAndLog=function(command,dir,printfn=0) {
-
-
-    
-    console.log('Process=',process);
     
     printfn = printfn || console.log;
     if (!inelectron)
@@ -116,6 +112,7 @@ let executeCommandAndLog=function(command,dir,printfn=0) {
                 log+=data;
 
             });
+
             proc.stderr.on('data', function(data) {
                 if (printfn)
                     printfn(data);
@@ -123,6 +120,7 @@ let executeCommandAndLog=function(command,dir,printfn=0) {
                     process.stdout.write(colors.red(data));
                 log+=data;
             });
+            
             proc.on('exit', function(code) {
                 resolve(log+'\n exit code ='+code);
             });
