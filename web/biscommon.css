@@ -448,6 +448,10 @@ tspan {
     opacity : 0.3;
 }
 
+.i-role-label {
+    fill : rgba(255,255,255,1.0) !important;
+    font-size : 12px !important;
+}
 
 
 
