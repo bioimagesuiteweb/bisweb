@@ -270,7 +270,8 @@ class GrapherModule extends HTMLElement {
 
         return new Promise((resolve) => {
             setTimeout(() => {
-                this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', makeTaskChart : this.taskdata ? true : false});
+                //this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', makeTaskChart : this.taskdata ? true : false});
+                this.createChart();
                 resolve();
             }, 1);
         });
@@ -404,6 +405,10 @@ class GrapherModule extends HTMLElement {
 
     createChart(settings = null) {
 
+        //if no settings are provided, the graph should use the last available settings when redrawing
+        if (settings) { this.currentSettings = settings; }
+        else { settings = this.currentSettings; }
+
         let chartData = this.currentdata;
 
         //when redrawing graph settings should be the same as the last time (no settings will be provided on redraw)
@@ -425,7 +430,7 @@ class GrapherModule extends HTMLElement {
     }
 
 
-    createBarChart(data, colors, frame) {
+    createBarChart(data, colors, frame, settings) {
 
         console.log('data', data);
         let chart = new Taucharts.Chart({
@@ -581,7 +586,7 @@ class GrapherModule extends HTMLElement {
             },
             type: 'line',
             x: 'frame',
-            y: 'intensity',
+            y: (this.usesmoothdata ? 'smoothedintensity' : 'intensity'),
             color: 'label',
             settings: {
                 fitModel: 'entire-view',
