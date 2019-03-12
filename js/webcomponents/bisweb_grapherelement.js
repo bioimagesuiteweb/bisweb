@@ -58,6 +58,7 @@ class GrapherModule extends HTMLElement {
         this.lastPlotFrame = false;
         this.graphWindow = null;
         this.resizingTimer = null;
+        this.usesmoothdata = false;
         this.buttons = [];
     }
 
@@ -346,6 +347,10 @@ class GrapherModule extends HTMLElement {
                 chartType: 'line'
             };
 
+            if (this.usesmoothdata) {
+                this.makeSmoothChartData();
+            }
+
         } else {
 
             //if we're in bar chart territory and single frame isn't set, that means there's only 1 frame of data.
@@ -487,7 +492,7 @@ class GrapherModule extends HTMLElement {
             },
             type: 'line',
             x: 'frame',
-            y: 'intensity',
+            y: (this.usesmoothdata ? 'smoothedintensity' : 'intensity'),
             color: 'label',
             settings: {
                 fitModel: 'fill-height',
@@ -496,9 +501,9 @@ class GrapherModule extends HTMLElement {
                 this.fillPlugin({
                     'frame' : frame
                 }),
-                this.lineHoverPlugin( { 
+                /*this.lineHoverPlugin( { 
                     'frame' : frame
-                }),
+                }),*/
                 Taucharts.api.plugins.get('legend')({
                     'position': 'top'
                 }),
@@ -522,8 +527,6 @@ class GrapherModule extends HTMLElement {
     }
 
     createTaskChart(data, colors, frame, tasks, settings) {
-        
-        console.log('tasks', tasks);
 
         //construct task labels and regions for tauchart
         for (let task of tasks.formattedTasks) {
@@ -559,7 +562,6 @@ class GrapherModule extends HTMLElement {
             index = index + 1;
         }
 
-        console.log('data', data);
         let chart = new Taucharts.Chart({
             guide: {
                 showAnchors: 'hover',
@@ -588,9 +590,9 @@ class GrapherModule extends HTMLElement {
                 this.fillPlugin({
                     'frame' : frame
                 }),
-                this.lineHoverPlugin( { 
+                /*this.lineHoverPlugin( { 
                     'frame' : frame
-                }),
+                }),*/
                 Taucharts.api.plugins.get('legend')({
                     'position' : 'top'
                 }),
@@ -684,7 +686,6 @@ class GrapherModule extends HTMLElement {
                     this.lineHoverPlugin( { 
                         'frame' : frame
                     }),
-                    this.highlightDiffThresholdPlugin({}),
                     Taucharts.api.plugins.get('legend')({
                         'position' : 'top'
                     }),
@@ -979,15 +980,13 @@ class GrapherModule extends HTMLElement {
 
     createSettingsModal() {
         let settingsModal = webutil.createmodal('Change settings');
-        let flipPolarityButton = $(`<div class='custom-control custom-radio'> 
-                                        <input id='polarity-check' class='form-check-input' type='checkbox'></input>
-                                        <label for='polarity-check'>Reverse polarity</label>
-                                    </div>`);
+        let flipPolarityButton = createCheck('Reverse polarity');
+        let smoothButton = createCheck('Smooth input');
 
-        settingsModal.body.append(flipPolarityButton);
         settingsModal.dialog.modal('show');
 
         if (this.polarity === 'negative') { flipPolarityButton.find('.form-check-input').prop('checked', true); }
+        if (this.usesmoothdata) { smoothButton.find('.form-check-input').prop('checked', true); }
         settingsModal.dialog.on('hide.bs.modal', () => {
 
             let flipPolarity = flipPolarityButton.find('.form-check-input').prop('checked');
@@ -997,8 +996,60 @@ class GrapherModule extends HTMLElement {
                 this.polarity = 'positive';
             }
 
+            let smoothChart = smoothButton.find('.form-check-input').prop('checked');
+            if (smoothChart) {
+                this.makeSmoothChartData();
+                this.usesmoothdata = true;
+            } else {
+                this.usesmoothdata = false;
+            }
+
             this.replotGraph(false);
         });
+
+        function createCheck(name) {
+            let id = webutil.getuniqueid();
+            let button = $(`<div class='custom-control custom-radio'> 
+                                <input id=${id} class='form-check-input' type='checkbox'></input>
+                                <label for='polarity-check'>${name}</label>
+                            </div>`);
+            
+            settingsModal.body.append(button);
+            return button;
+        }
+    }
+
+    makeSmoothChartData() {
+        //edge case of smoothing isn't handled, i.e. the values are left as-is
+        let datasets = this.currentdata.y, smoothdata = []; 
+
+        for (let i = 0; i < datasets.length; i++) {
+
+            let dataset = datasets[i];
+            //skip arrays that are all empty elements
+            if (dataset.every( ele => ele === 0 )) { continue; }
+
+            let smoothDataset = [ dataset[0], dataset[1] ];
+            for (let j = 2; j < dataset.length - 2; j++) {
+                let smoothPoint = 0.05 * dataset[j - 2] + 0.25 * dataset[j - 1] + 0.4 * dataset[j] + 0.25 * dataset[j + 1] + 0.05 * dataset[j + 2];
+                smoothDataset.push(smoothPoint);
+            }
+
+            //add the last two points
+            smoothDataset.push(dataset[dataset.length-2], dataset[dataset.length-1]);
+            smoothdata.push(smoothDataset);
+        }
+
+        //add a smooth data field to the taucharts-formatted data
+        let joinedSmoothArray = []; 
+        for (let dataset of smoothdata) { joinedSmoothArray = joinedSmoothArray.concat(dataset); }
+
+        //NOTE: sets in currentdata.y are assumed to be listed in the same order as currentdata.datasets
+        for (let i = 0; i < joinedSmoothArray.length; i++) {
+            this.currentdata.datasets[i].smoothedintensity = joinedSmoothArray[i];
+        }
+
+        this.currentdata.smoothdata = smoothdata;
     }
 
     /**
@@ -1042,105 +1093,6 @@ class GrapherModule extends HTMLElement {
         };
     }
 
-
-    // Plug-in function
-    // ----------------
-    highlightDiffThresholdPlugin(xSettings) {
-        let utils = Taucharts.api.utils;
-        // Setup plug-in settings defaults.
-        // --------------------------------
-        var settings = utils.defaults(xSettings || {}, {
-            threshold: null,
-        });
-        var threshold = settings.threshold;
-        if (isNaN(threshold)) {
-            throw new Error('Threshold is not specified');
-        }
-
-
-        // Return plug-in instance.
-        // Be careful when using class instances:
-        // event handlers (like `onRender` or `onSpecReady`)
-        // should be own object properties.
-        // ---------------------------------------------
-        return {
-
-            // `onSpecReady` handler is the best place for
-            // extending parsed chart configuration.
-            // -----------------------------------------
-            onSpecReady: function (chart, specRef) {
-
-                // Transformations are applied to incoming data.
-                // The name (`diffThreshold` in this case) should
-                // be specified in unit config.
-                // ----------------------------------------------
-                specRef.transformations = specRef.tramsformations || {};
-                specRef.transformations.diffThreshold = function (data, props) {
-                    var x = props.x.dim;
-                    var y = props.y.dim;
-                    var g = props.g.dim;
-                    var sign = Math.sign(threshold);
-
-                    var groups = utils.groupBy(data, function (d) {
-                        return d[g];
-                    });
-
-                    return Object.keys(groups).reduce(function (memo, key) {
-                        var points = [];
-                        var group = groups[key];
-                        utils.range(group.length - 1).forEach(function (i) {
-                            var a = group[i][y];
-                            var b = group[i + 1][y];
-                            var diff = (b - a) / Math.max(a, b);
-                            if (Math.sign(diff) === sign && Math.abs(diff) >= Math.abs(threshold)) {
-                                points.push(group[i + 1]);
-                            }
-                        });
-                        return memo.concat(points);
-                    }, []);
-                };
-
-                // Search for necessary units
-                // --------------------------
-                chart.traverseSpec(specRef, function (unit, parent) {
-
-                    var xScale = specRef.scales[unit.x];
-                    var yScale = specRef.scales[unit.y];
-                    var colorScale = specRef.scales[unit.color] || {};
-
-                    // Create new unit.
-                    // Here we reuse Taucharts Point element.
-                    // It is possible to create and use custom elements.
-                    // -------------------------------------------------
-                    var highlight = JSON.parse(JSON.stringify(unit));
-                    highlight.type = 'ELEMENT.POINT';
-                    highlight.size = 'size_null';
-                    highlight.namespace = 'diff-threshold';
-
-                    // We have defined `diffThreshold` transformation earlier.
-                    // -------------------------------------------------------
-                    highlight.transformation = highlight.transformations || [];
-                    highlight.transformation.push({
-                        type: 'diffThreshold',
-                        args: {
-                            x: xScale,
-                            y: yScale,
-                            g: colorScale
-                        }
-                    });
-                    highlight.guide = utils.defaults({}, highlight.guide || {});
-                    delete highlight.guide.label;
-                    delete highlight.label;
-
-                    // Add new unit into units list.
-                    // -----------------------------
-                    parent.units.push(highlight);
-                });
-            }
-        };
-
-
-    }
 }
 
 module.exports = GrapherModule;
