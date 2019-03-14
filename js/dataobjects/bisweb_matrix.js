@@ -37,7 +37,7 @@ const numeric=require('numeric');
 
 class BisWebMatrix extends BisWebDataObject{
     
-    constructor(dtype,inputmat=null) {
+    constructor(dtype='matrix',inputmat=null) {
 
         if (dtype!=='vector')
             dtype='matrix';
@@ -49,6 +49,7 @@ class BisWebMatrix extends BisWebDataObject{
         this.dimensions=[0,0];
         this.data=null;
         this.wasmtype=dtype;
+        this.datatype="float";
         if (inputmat!==null) {
             if (inputmat.constructor.name === "Float32Array")
                 this.linkToTypedArray(inputmat);
@@ -128,6 +129,7 @@ class BisWebMatrix extends BisWebDataObject{
         let bytesarr=new Uint8Array(this.data.buffer);
         let b=genericio.tozbase64(bytesarr);
         obj.dimensions=this.dimensions;
+        obj.datatype=this.datatype;
         obj.matrix=b;
         return obj;
     }
@@ -139,7 +141,16 @@ class BisWebMatrix extends BisWebDataObject{
     parseFromDictionary(b) {
         let bytesarr=genericio.fromzbase64(b.matrix);
         this.dimensions=b.dimensions;
-        this.data=new Float32Array(bytesarr.buffer);
+        this.datatype=b.datatype || 'float';
+
+        if (this.datatype === 'int') {
+            this.data=new Int32Array(bytesarr.buffer);
+        } else if (type==='uint') {
+            this.data=new Uint32Array(bytesarr.buffer);
+        } else {
+            this.data=new Float32Array(bytesarr.buffer);
+            this.datatype = 'float'
+        }
         super.parseFromDictionary(b);
         return true;
     }
@@ -240,9 +251,19 @@ class BisWebMatrix extends BisWebDataObject{
      * @param {number} numcols  - number of cols
      * @param {number} value    - value to fill =0
      */
-    allocate(numrows,numcolumns,value=0) {
+    allocate(numrows,numcolumns,value=0,type='float') {
         this.dimensions=[numrows,numcolumns];
-        this.data=new Float32Array(numrows*numcolumns);
+        if (type==='int') {
+            this.datatype='int';
+            this.data=new Int32Array(numrows*numcolumns);
+        } else if (type==='uint') {
+            this.datatype='uint';
+            this.data=new Uint32Array(numrows*numcolumns);
+        } else {
+            this.datatype='float';
+            this.data=new Float32Array(numrows*numcolumns);
+        }
+        
         for (let i=0;i<numrows*numcolumns;i++)
             this.data[i]=value;
     }
@@ -275,7 +296,7 @@ class BisWebMatrix extends BisWebDataObject{
 
     
     /** getDataArray 
-     * @returns {Float32Array} - the data
+     * @returns {TypedArray} - the data
      */
     getDataArray() {
         return this.data;
@@ -301,6 +322,8 @@ class BisWebMatrix extends BisWebDataObject{
     /** setFromNumericMatrix 
      * @param{Matrix} mat - a 2d numeric.js matrix */
     setFromNumericMatrix(mat) {
+
+        this.datatype='float';
         let sz=numeric.dim(mat);
         if (sz.length===2) {
             let rows=0;

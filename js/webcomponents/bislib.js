@@ -31,6 +31,9 @@ require("bisweb_dicomimportelement.js");
 
 const webutil = require('bis_webutil');
 const webfileutil = require('bis_webfileutil');
+const BisWebPanel = require('bisweb_panel');
+const dat = require('bisweb_datgui');
+
 
 // ES6 Imports for modules that need that
 
@@ -75,6 +78,9 @@ const Elements = {
 let exportobj=require('bisweb_exportobject');
 exportobj.webutil=webutil;
 exportobj.webfileutil=webfileutil;
+exportobj.biswebpanel=BisWebPanel;
+exportobj.dat=dat;
+
 exportobj.Elements=Elements;
 
 
