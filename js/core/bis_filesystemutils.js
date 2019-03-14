@@ -37,7 +37,8 @@ if (bis_genericio.getmode() === 'node' ||
      */
     let validateFilename = (filepath, debug = false) => {
 
-        console.log('Validating ',filepath,debug);
+        if (debug)
+            console.log('Validating ',filepath);
         
         //some filepaths will be two filepaths conjoined by the symbol &&, check these separately
         if (filepath.indexOf('&&') >= 0) {

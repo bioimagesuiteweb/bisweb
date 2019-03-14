@@ -42,8 +42,11 @@ let getTime=function() {
     return  "[" + hour + ":" + min + ":" + sec +"]";
 };
 
-let executeCommand=function(command,dir,done=0,printfn=console.log) {
-    dir = dir || __dirname;
+let executeCommand=function(command,dir,done=0,printfn=null) {
+    if (inelectron)
+        printfn = printfn || console.log;
+    else
+        dir = dir || __dirname;
     console.log(getTime()+" "+colors.green(dir+">")+colors.red(command+'\n'));
 
     
@@ -89,9 +92,10 @@ let executeCommand=function(command,dir,done=0,printfn=console.log) {
 
 
 let executeCommandAndLog=function(command,dir,printfn=0) {
-    
-    printfn = printfn || console.log;
-    if (!inelectron)
+
+    if (inelectron)
+        printfn = printfn || console.log;
+    else
         dir = dir || __dirname;
     
     if (!inelectron)

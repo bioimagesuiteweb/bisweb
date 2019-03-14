@@ -1,6 +1,7 @@
 'use strict';
 
 const bis_genericio = require('bis_genericio');
+const colors=bis_genericio.getcolorsmodule();
 
 // DICOM2BIDS
 /**
@@ -40,7 +41,7 @@ let dicom2BIDS = async function (opts) {
     console.log('opts=', opts);
 
 
-    console.log('Conversion done, now converting files to BIDS format.');
+    console.log(colors.yellow('.... Now converting files to BIDS format.'));
 
     let matchniix = bis_genericio.joinFilenames(indir, '*.nii.gz');
     let matchsupp = bis_genericio.joinFilenames(indir, '*');
@@ -48,10 +49,8 @@ let dicom2BIDS = async function (opts) {
     let flist = await bis_genericio.getMatchingFiles(matchniix);
     let suppfiles = await bis_genericio.getMatchingFiles(matchsupp);
 
-    console.log('Flist=', flist.join('\n\t'));
-    console.log('supp files', suppfiles);
-
-
+    console.log(colors.green('.... Flist : '+flist.join('\n\t')));
+    console.log(colors.yellow('... Supporting files : '+suppfiles.join('\n\t')));
 
     //wait for all files to move and hashes to finish calculating
     let makeHash = calculateChecksums(flist);
@@ -73,11 +72,12 @@ let dicom2BIDS = async function (opts) {
     let outputdirectory = bis_genericio.joinFilenames(outdir, 'source');
     try {
         await makeDir(outputdirectory);
+        console.log(colors.green('....\nCreated output directory : '+outputdirectory));
     } catch (e) {
         return errorfn('Failed to make directory ' + e);
     }
 
-    console.log('+++++', 'Created directory', outputdirectory);
+
 
     let funcdir = bis_genericio.joinFilenames(outputdirectory, 'func');
     let anatdir = bis_genericio.joinFilenames(outputdirectory, 'anat');
@@ -237,24 +237,6 @@ let dicom2BIDS = async function (opts) {
         await bis_genericio.write(outfilename, JSON.stringify(outobj, null, 2), false);
 
         console.log('----- output directory', outputdirectory);
-
-        //delete input folder if it lives in /tmp
-        let splitindir = indir.split('/');
-        if (splitindir[0] === '') { splitindir.shift(); } //trim a leading slash if needs be
-        if (splitindir[0] === 'tmp') {
-
-            //remove the top level folder in /tmp, i.e. /home/[username]
-            let containingFolder = splitindir.splice(0, 2).join('/');
-            containingFolder = '/' + containingFolder;
-
-
-            //TODO: Figure out inconsistency between Promises and async / await here (doesn't delete on node)
-            bis_genericio.deleteDirectory(containingFolder).then(() => {
-                console.log('Deleted', containingFolder, 'successfully');
-            }).catch((e) => {
-                console.log('An Error occured trying to delete', containingFolder, e);
-            });
-        }
 
         return outputdirectory;
 

@@ -5,6 +5,7 @@ const bis_genericio = require('bis_genericio.js');
 const DicomModule = require('dicommodule.js');
 const BisWebPanel = require('bisweb_panel.js');
 
+
 class DicomImportElement extends HTMLElement {
     constructor() {
         super();
@@ -39,6 +40,14 @@ class DicomImportElement extends HTMLElement {
         let basediv=$('<div></div>');
         this.parentDomElement.append(basediv);
 
+        
+
+        let a=`<P> This invokes <a target="_blank" href="https://github.com/rordenlab/dcm2niix">dcm2niix</a> as an external process.`;
+        
+        if (bis_genericio.getmode()==='browser')
+            a+=`<EM> You need to use <a target="_blank" href="https://bioimagesuiteweb.github.io/bisweb-manual/tools/fileserver.html"> the BISWEB File Server</a> for this to work as we need direct filesystem access for this task.</EM>`;
+
+        basediv.append($(a+'</p><HR>'));
         this.filetreepanel = document.querySelector(filetreepanelid);
 
         bis_webutil.createbutton({
@@ -52,23 +61,24 @@ class DicomImportElement extends HTMLElement {
             },
         });
 
+        
         bis_webfileutil.createFileButton({ 
-            type : 'danger',
-            name : 'Import Images from DICOM Study',
+            type : 'info',
+            name : 'Import DICOM Images',
             parent : basediv,
             css : { 'width' : '90%' , 'margin' : '3px' },
             callback : (f) => {
                 let saveFileCallback = (o) => { 
-                    this.importDicomStudy(f, o);
+                    this.importDICOMImages(f, o,false);
                 };
-
+                
                 setTimeout( () => {
                     bis_webfileutil.genericFileCallback( 
-                    {
-                        'title' : 'Choose output directory',
-                        'filters' : 'DIRECTORY',
-                        'save' : false
-                    }, saveFileCallback);
+                        {
+                            'title' : 'Choose output directory',
+                            'filters' : 'DIRECTORY',
+                            'save' : false
+                        }, saveFileCallback);
                 }, 1);
             },
         },{
@@ -76,8 +86,39 @@ class DicomImportElement extends HTMLElement {
             filters:  'DIRECTORY',
             suffix:  'DIRECTORY',
             save : false,
+            serveronly : true,
         });
+        
+
+        bis_webfileutil.createFileButton({ 
+            type : 'danger',
+            name : 'Import DICOM Images as BIDS',
+            parent : basediv,
+            css : { 'width' : '90%' , 'margin' : '3px' },
+            callback : (f) => {
+                let saveFileCallback = (o) => { 
+                    this.importDICOMImages(f, o,true);
+                };
+                
+                setTimeout( () => {
+                    bis_webfileutil.genericFileCallback( 
+                        {
+                            'title' : 'Choose output directory',
+                            'filters' : 'DIRECTORY',
+                            'save' : false
+                        }, saveFileCallback);
+                }, 1);
+            },
+        },{
+            title: 'Directory to import study from',
+            filters:  'DIRECTORY',
+            suffix:  'DIRECTORY',
+            save : false,
+            serveronly : true,
+        });
+        
     }
+    
 
 
     /**
@@ -88,12 +129,17 @@ class DicomImportElement extends HTMLElement {
      * @param {String} inputDirectory 
      * @param {String} outputDirectory 
      */
-    importDicomStudy(inputDirectory, outputDirectory) {
-        bis_webutil.createAlert('Converting raw DICOM files to NII/BIDS format...', false, 0, 100000, { 'makeLoadSpinner' : true });
-        if (!bis_webfileutil.candoComplexIO()) {
+    importDICOMImages(inputDirectory, outputDirectory,doBIDS=true) {
+        if (!bis_webfileutil.candoComplexIO(true)) {
             console.log('Error: cannot import DICOM study without access to file server.');
             return;
         }
+
+        let a='';
+        if (doBIDS)
+            a='/BIDS';
+        
+        bis_webutil.createAlert('Converting raw DICOM files to NII'+a+' format...', false, 0, 1000000000, { 'makeLoadSpinner' : true });
 
         if (!bis_genericio.isDirectory(inputDirectory)) {
             inputDirectory = bis_genericio.getDirectoryName(bis_genericio.getNormalizedFilename(inputDirectory));
@@ -111,12 +157,12 @@ class DicomImportElement extends HTMLElement {
                 'fileType': 'dicom',
                 'inputDirectory': inputDirectory,
                 'outputDirectory' : outputDirectory,
-                'convertbids' : true
+                'convertbids' : doBIDS
             });
         } else {
             //if on electron just run the module directly
             let dicomModule = new DicomModule();
-            promise = dicomModule.execute( {}, { 'inputDirectory' : inputDirectory, 'outputDirectory' : outputDirectory, 'convertbids' : true });
+            promise = dicomModule.execute( {}, { 'inputDirectory' : inputDirectory, 'outputDirectory' : outputDirectory, 'convertbids' : doBIDS });
         }
 
         promise.then((fileConversionOutput) => {
