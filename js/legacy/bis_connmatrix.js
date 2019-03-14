@@ -482,7 +482,233 @@ class ConnMatrix {
 	}
 
     //didn't remove the unused parameters because they might be used later? 
-    // -Zach
+	// -Zach
+	plotCorrMap(parc,pairs,scolor,context,normallength,thickness) {
+		function readTextFile(file){
+			var rawFile = new XMLHttpRequest();
+			rawFile.open("GET", file, false);
+			var matrix ;
+			rawFile.onreadystatechange = function ()
+			{
+				if(rawFile.readyState === 4)
+				{
+					if(rawFile.status === 200 || rawFile.status == 0)
+					{
+						var rows = rawFile.responseText.split('\n');
+						matrix = new Array(rows.length-1);
+						for(i=0;i<rows.length-1;i++){
+							matrix[i] = new Array(rows.length-1);
+							tokens = rows[i].split(',');
+							for(j=0;j<rows.length-1;j++){
+								matrix[i][j]=parseInt(tokens[j]);
+							}
+
+						}
+					}
+				}
+			}
+			rawFile.send(null);
+			return matrix;
+		}
+		//var correlationMatrix = readTextFile('data/heatMat.mask.NBSFDR.ucla.175.antiDepression.csv');
+		var correlationMatrix = [
+			[1, 0.3, 0, 0.8, 0, 0.2, 1, 0.5, 0, 0.75],
+			[0.3, 1, 0.5, 0.2, 0.4, 0.3, 0.8, 0.1, 1, 0],
+			[0, 0.5, 1, 0.4, 0, 0.9, 0, 0.2, 1, 0.3],
+			[0.8, 0.2, 0.4, 1, 0.3, 0.4, 0.1, 1, 0.2, 0.9],
+			[0, 0.4, 0, 0.3, 1, 0.1, 0.4, 0, 0.6, 0.7],
+			[0.2, 0.3, 0.9, 0.4, 0.1, 1, 0, 0.1, 0.4, 0.1],
+			[1, 0.8, 0, 0.1, 0.4, 0, 1, 0.5, 0, 1],
+			[0.5, 0.1, 0.2, 1, 0.1, 0, 0.5, 1, 0, 0.4],
+			[0, 1, 1, 0.2, 0.6, 0.4, 0, 0, 1, 0.6],
+			[0.75, 0, 0.3, 0.9, 0.7, 0.1, 1, 0.4, 0.6, 1]
+		];
+
+		var labels = ['MF', 'FP', 'DMN', 'Mot', 'VI', 'VII', 'VAs', 'Limb', 'BG', 'CBL'];
+
+		Matrix({
+			container : '#container',
+			data      : correlationMatrix,
+			labels    : labels,
+			start_color : '#ffffff',
+			end_color : '#ff0000'// #3498db'
+		});
+
+		function Matrix(options) {
+			var margin = {top: 50, right: 50, bottom: 100, left: 100},
+				width = 350,
+				height = 350,
+				data = options.data,
+				container = options.container,
+				labelsData = options.labels,
+				startColor = options.start_color,
+				endColor = options.end_color;
+
+			var widthLegend = 100;
+
+			if(!data){
+				throw new Error('Please pass data');
+			}
+
+			if(!Array.isArray(data) || !data.length || !Array.isArray(data[0])){
+				throw new Error('It should be a 2-D array');
+			}
+
+			var maxValue = d3.max(data, function(layer) { return d3.max(layer, function(d) { return d; }); });
+			var minValue = d3.min(data, function(layer) { return d3.min(layer, function(d) { return d; }); });
+
+			var numrows = data.length;
+			var numcols = data[0].length;
+
+			var svg = d3.select(container).append("svg")
+				.attr("width", width + margin.left + margin.right)
+				.attr("height", height + margin.top + margin.bottom)
+				.append("g")
+				.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+			var background = svg.append("rect")
+				.style("stroke", "white")
+				.style("stroke-width", "2px")
+				.attr("width", width)
+				.attr("height", height);
+
+			var x = d3.scale.ordinal()
+				.domain(d3.range(numcols))
+				.rangeBands([0, width]);
+
+			var y = d3.scale.ordinal()
+				.domain(d3.range(numrows))
+				.rangeBands([0, height]);
+
+			var colorMap = d3.scale.linear()
+				.domain([minValue,maxValue])
+				.range([startColor, endColor]);
+
+			var row = svg.selectAll(".row")
+				.data(data)
+				.enter().append("g")
+				.attr("class", "row")
+				.attr("transform", function(d, i) {return "translate(0," + y(i) + ")"; });
+
+			var cell = row.selectAll(".cell")
+				.data(function(d) { return d; })
+				.enter().append("g")
+				.attr("class", "cell")
+				.attr("transform", function(d, i) { return "translate(" + x(i) + ", 0)"; });
+
+			cell.append('rect')
+				.attr("width", x.rangeBand())
+				.attr("height", y.rangeBand())
+				.style("stroke-width", 0);
+
+			cell.append("text")
+				.attr("dy", ".32em")
+				.attr("x", x.rangeBand() / 2)
+				.attr("y", y.rangeBand() / 2)
+				.attr("text-anchor", "middle")
+				.style("fill", function(d, i) {if(d== 0 && x(i)==y(i)) return  'white';return d >= maxValue/2 ? 'white' : 'black'; })
+				.text(function(d, i) { return d; });
+
+			row.selectAll(".cell")
+				.data(function(d, i) { return data[i]; })
+				.style("fill", colorMap);
+
+			var labels = svg.append('g')
+				.attr('class', "labels");
+
+			var columnLabels = labels.selectAll(".column-label")
+				.data(labelsData)
+				.enter().append("g")
+				.attr("class", "column-label")
+				.attr("transform", function(d, i) { return "translate(" + x(i) + "," + height + ")"; });
+
+			columnLabels.append("line")
+				.style("stroke", "black")
+				.style("stroke-width", "1px")
+				.attr("x1", x.rangeBand() / 2)
+				.attr("x2", x.rangeBand() / 2)
+				.attr("y1", 0)
+				.attr("y2", 5);
+
+			columnLabels.append("text")
+				.attr("x", 0)
+				.attr("y", y.rangeBand() / 2)
+				.attr("dy", ".82em")
+				.attr("text-anchor", "end")
+				.attr("transform", "rotate(-60)")
+				.text(function(d, i) { return d; });
+
+			var rowLabels = labels.selectAll(".row-label")
+				.data(labelsData)
+				.enter().append("g")
+				.attr("class", "row-label")
+				.attr("transform", function(d, i) { return "translate(" + 0 + "," + y(i) + ")"; });
+
+			rowLabels.append("line")
+				.style("stroke", "black")
+				.style("stroke-width", "1px")
+				.attr("x1", 0)
+				.attr("x2", -5)
+				.attr("y1", y.rangeBand() / 2)
+				.attr("y2", y.rangeBand() / 2);
+
+			rowLabels.append("text")
+				.attr("x", -8)
+				.attr("y", y.rangeBand() / 2)
+				.attr("dy", ".32em")
+				.attr("text-anchor", "end")
+				.text(function(d, i) { return d; });
+
+			var key = d3.select("#legend")
+				.append("svg")
+				.attr("width", widthLegend)
+				.attr("height", height + margin.top + margin.bottom);
+
+			var legend = key
+				.append("defs")
+				.append("svg:linearGradient")
+				.attr("id", "gradient")
+				.attr("x1", "100%")
+				.attr("y1", "0%")
+				.attr("x2", "100%")
+				.attr("y2", "100%")
+				.attr("spreadMethod", "pad");
+
+			legend
+				.append("stop")
+				.attr("offset", "0%")
+				.attr("stop-color", endColor)
+				.attr("stop-opacity", 1);
+
+			legend
+				.append("stop")
+				.attr("offset", "100%")
+				.attr("stop-color", startColor)
+				.attr("stop-opacity", 1);
+
+			key.append("rect")
+				.attr("width", widthLegend/2-10)
+				.attr("height", height)
+				.style("fill", "url(#gradient)")
+				.attr("transform", "translate(0," + margin.top + ")");
+
+			var y = d3.scale.linear()
+				.range([height, 0])
+				.domain([minValue, maxValue]);
+
+			var yAxis = d3.svg.axis()
+				.scale(y)
+				.orient("right");
+
+			key.append("g")
+				.attr("class", "y axis")
+				.attr("transform", "translate(41," + margin.top + ")")
+				.call(yAxis)
+		}
+
+
+	}
+
 	drawChords(parc,pairs,scolor,context,normallength,thickness) {
 
 		if (parc===null || pairs===null || context===null) {
@@ -520,16 +746,6 @@ class ConnMatrix {
 			}
 
 
-			//			d3.csv("data/sample.20.csv",function(sample) {
-			//				for(var i = 0; i < sample.length; i++)
-			//				{
-			//					for(var j = 0; j < sample.length; j++){
-			//						if(sample[i][j]==1)
-			//							matrix[net_map[i]][net_map[j]]+=1;
-			//					}
-			//				}
-			//			});
-			//
 			d3.csv("../data/network_names.csv", function(cities) {
 				console.log(matrix);
 				layout.matrix(matrix);
@@ -588,42 +804,42 @@ class ConnMatrix {
 				}
 
 			});
-        });
-        
+		});
 
-        //create modal the size of the doc and size chord drawing to it
-        let dim = [parseInt($('canvas').width() - 50), parseInt($('canvas').height() - 50)];
-        console.log('dim', dim);
 
-        let chordDialog = bis_webutil.createdialog('Chords', dim[0], dim[1], 0, 0, 100, () => {
-            let frame = chordDialog.getContainingFrame();
-            frame.remove();
-        });
+		//create modal the size of the doc and size chord drawing to it
+		let dim = [parseInt($('canvas').width() - 50), parseInt($('canvas').height() - 50)];
+		console.log('dim', dim);
 
-        let width = dim[0] - 50,
-        height = dim[1] - 50,
-        svgModal = $(chordDialog.getContainingFrame().find('.modal-body')),
-        svgWidth = svgModal.width(),
-        svgHeight = svgModal.height(),
-        outerRadius = Math.min(svgWidth, svgHeight) / 2 - 10,
-        innerRadius = outerRadius - 24;
+		let chordDialog = bis_webutil.createdialog('Chords', dim[0], dim[1], 0, 0, 100, () => {
+			let frame = chordDialog.getContainingFrame();
+			frame.remove();
+		});
 
-        console.log('width', width, 'height', height, 'svg width', svgWidth, 'svg height', svgHeight);
-        var formatPercent = d3.format(".1%");
+		let width = dim[0] - 50,
+			height = dim[1] - 50,
+			svgModal = $(chordDialog.getContainingFrame().find('.modal-body')),
+			svgWidth = svgModal.width(),
+			svgHeight = svgModal.height(),
+			outerRadius = Math.min(svgWidth, svgHeight) / 2 - 10,
+			innerRadius = outerRadius - 24;
 
-        var arc = d3.svg.arc()
-            .innerRadius(innerRadius)
-            .outerRadius(outerRadius);
+		console.log('width', width, 'height', height, 'svg width', svgWidth, 'svg height', svgHeight);
+		var formatPercent = d3.format(".1%");
 
-        var layout = d3.layout.chord()
-            .padding(.04)
-            .sortSubgroups(d3.descending)
-            .sortChords(d3.ascending);
+		var arc = d3.svg.arc()
+			.innerRadius(innerRadius)
+			.outerRadius(outerRadius);
 
-        var path = d3.svg.chord()
-            .radius(innerRadius);
+		var layout = d3.layout.chord()
+			.padding(.04)
+			.sortSubgroups(d3.descending)
+			.sortChords(d3.ascending);
 
-        var svg = d3.select('.modal-body').append("svg")
+		var path = d3.svg.chord()
+			.radius(innerRadius);
+
+		var svg = d3.select('.modal-body').append("svg")
 			.attr("width", svgWidth)
 			.attr("height", svgHeight)
 			.append("g")
@@ -631,10 +847,10 @@ class ConnMatrix {
 			.attr("transform", "translate(" + svgWidth / 2 + "," + svgHeight / 2 + ")");
 
 		svg.append("circle")
-            .attr("r", outerRadius);
-            
-        chordDialog.getWidget().find('.modal-body').append(svg);
-        chordDialog.show();
+			.attr("r", outerRadius);
+
+		chordDialog.getWidget().find('.modal-body').append(svg);
+		chordDialog.show();
 
 	}
 

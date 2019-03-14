@@ -1346,6 +1346,16 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                                callback : drawchords,
                              });
 
+	webutil.createbutton({ type : "info",
+                               name : "Corr Map",
+                               position : "bottom",
+                               css : { "margin": "5px"},
+                               tooltip : "Click this to draw a chord diagram from the lines on screen",
+                               parent : bbar3,
+                               callback : corrmap,
+                             });
+
+
 
         webutil.tooltip(internal.parentDomElement);
 
@@ -1440,51 +1450,19 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             internal.laststate.thickness);
     };
 
-    /*var drawchords=function(state) {
-
-        let ok=internal.conndata.createFlagMatrix(internal.parcellation,
-                                                  state.mode, // mode
-                                                  state.singlevalue, // singlevalue
-                                                  state.attribcomponent, // attribcomponent
-                                                  state.degreethreshold, // metric threshold
-                                                  state.filter); // sum
-        if (ok===0) {
-            bootbox.alert('Failed to create flag matrix for connectivity data!');
-            return 0;
+    var corrmap = function() {
+        if (internal.laststate === null) {
+            bootbox.alert('Please create lines before attempting to draw a chord diagram');
         }
-        
 
-        let total=0;
-
-        if (state.linestodraw == gui_Lines[0] ||
-            state.linestodraw == gui_Lines[2] ) {
-            let pos=internal.conndata.createLinePairs(0,state.matrixthreshold);
-            //console.log('\n\n +++ Created '+pos.length+' positive linepairs\n'+JSON.stringify(pos));
-            total+=pos.length;
-            internal.conndata.drawChords(internal.parcellation,pos,
-                                        state.poscolor,
-                                        internal.context,
-                                        state.length*internal.parcellation.scalefactor,
-                                        state.thickness);
-        }
-        /*if (state.linestodraw == gui_Lines[1] ||
-            state.linestodraw == gui_Lines[2] ) {
-
-            let neg=internal.conndata.createLinePairs(1,state.matrixthreshold);
-            //          console.log('+++ Created '+neg.length+' negagive linepairs\n'+JSON.stringify(neg)+'\n');
-            total+=neg.length;
-            internal.conndata.drawLines(internal.parcellation,neg,
-                                        state.negcolor,
-                                        internal.context,
-                                        state.length*internal.parcellation.scalefactor,
-                                        state.thickness);
-        } 
-
-        if (total===0)
-            return -1;
-        return total;
+        let pos = internal.conndata.createLinePairs(0,internal.laststate.matrixthreshold);
+        internal.conndata.plotCorrMap(internal.parcellation,
+            pos,
+            internal.laststate.poscolor,
+            internal.context,
+            internal.laststate.length*internal.parcellation.scalefactor,
+            internal.laststate.thickness);
     };
-    */
 
     var drawlines=function(state) {
         let ok=internal.conndata.createFlagMatrix(internal.parcellation,
