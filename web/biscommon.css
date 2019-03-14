@@ -453,5 +453,10 @@ tspan {
     font-size : 12px !important;
 }
 
+.btn-group {
+    margin-left : 10px;
+    margin-bottom : 5px;
+}
+
 
 

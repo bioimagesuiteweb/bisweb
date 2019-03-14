@@ -153,7 +153,7 @@ class FileTreePanel extends HTMLElement {
                     } else {
                         bis_webutil.createAlert('Could not find nifti files in ' + filename + ' or any of the folders it contains. Are you sure this is the directory?');
                     }
-                })
+                });
             });
         });
     }
@@ -424,7 +424,6 @@ class FileTreePanel extends HTMLElement {
             'save': false,
             'serveronly' : true,
         });
-        loadStudyDirectoryButton.css({ 'margin-left' : '10px'});
 
         //Route study load and save through bis_webfileutil file callbacks
         let loadStudyJSONButton = bis_webfileutil.createFileButton({
@@ -441,7 +440,6 @@ class FileTreePanel extends HTMLElement {
                 'suffix': 'study',
                 'save': false,
         });
-        loadStudyJSONButton.css({ 'margin-left' : '10px'});
 
         let saveStudyButton = bis_webfileutil.createFileButton({
             'type': 'info',
@@ -496,10 +494,8 @@ class FileTreePanel extends HTMLElement {
         });
 
 
-        saveStudyButton.css({ 'margin' : '10px'});
         saveStudyButton.addClass('save-study-button');
         saveStudyButton.prop('disabled', 'true');
-
 
         topButtonBar.append(loadStudyDirectoryButton);
         topButtonBar.append(loadStudyJSONButton);
@@ -814,7 +810,7 @@ class FileTreePanel extends HTMLElement {
                 console.log('accessed time', accessedTime.toDateString(), 'created time', createdTime, 'modified time', modifiedTime);
 
                 //make info dialog
-                let infoDisplay = `File Size: ${roundedSize}${filetype}<br> First Created: ${createdTime}<br> Last Modified: ${modifiedTime}<br> Last Accessed: ${accessedTime} <br> Is a Directory: ${parsedIsDirectory} <br> Tag: ${this.currentlySelectedNode.original.tag || 'None'}`;
+                let infoDisplay = `Name: ${this.currentlySelectedNode.text}<br> File Size: ${roundedSize}${filetype}<br> First Created: ${createdTime}<br> Last Modified: ${modifiedTime}<br> Last Accessed: ${accessedTime} <br> Is a Directory: ${parsedIsDirectory} <br> Tag: ${this.currentlySelectedNode.original.tag || 'None'}`;
 
                 bootbox.dialog({
                     'title': 'File Info',
@@ -897,23 +893,9 @@ class FileTreePanel extends HTMLElement {
             <option value='3danat'>3DAnat</option>
             <option value='2danat'>2DAnat</option>
         </select>`);
-        let tagSelectMenu2=$(`<select class='form-control' disabled> 
-                             <option value='none'></option>
-                             <option value='1'>1</option>
-                             <option value='2'>2</option>
-                             <option value='3'>3</option>
-                             <option value='4'>4</option>
-                             <option value='5'>5</option>
-                             <option value='6'>6</option>
-                             <option value='7'>7</option>
-                             <option value='8'>8</option>
-                             <option value='9'>9</option>
-                             </select>`);
 
-        console.log('options', options, 'tag select menu', tagSelectMenu);
         if (options.enabled) { 
             tagSelectMenu.prop('disabled', '');
-            tagSelectMenu2.prop('disabled', '');
         }
 
         if (options.setDefaultValue) {
@@ -930,17 +912,30 @@ class FileTreePanel extends HTMLElement {
             let selectedValue = tagSelectMenu.val();
             this.currentlySelectedNode.original.tag = selectedValue;
 
+            console.log('selected value', selectedValue);
+            if (selectedValue.includes('task')) {
+                //create secondary menu to select task number
+                bootbox.prompt({ 
+                    title : 'Enter a task number', 
+                    inputType: 'number', 
+                    callback: (result) => {
+                        console.log('result', result);
+                        this.currentlySelectedNode.original.tag = selectedValue + '_' + result;
+                    }
+                })
+            }
+
             //tag select menus can be created by popovers or statically in the file bar
             //in order for one to change when the other does, they should emit and listen to each other's events
             let tagChangedEvent = new CustomEvent('bisweb.tag.changed', { 'bubbles': true });
-            document.dispatchEvent(tagChangedEvent);
+            document.dispatchEvent(tagChangedEvent);     
         });
 
-        return tagSelectMenu; //TODO: Remeber to return tagSelectMenu2 and add it as second tag etc_etc_etc
+        return tagSelectMenu;
     }
 
     changeTagSelectMenu(menu, node) {
-        let defaultSelection = node.original.tag || "image";
+        let selection = node.original.tag || "image";
 
         //clear selected options
         let options = menu.find('option');
@@ -948,9 +943,9 @@ class FileTreePanel extends HTMLElement {
             options[i].removeAttribute('selected');
         }
 
-        menu.find(`option[value=${defaultSelection}]`).prop('selected', true);
-        //menu.html(defaultSelection);
-        console.log('default selection', defaultSelection);
+        if (selection.includes('task')) { selection = 'task'; }
+        menu.find(`option[value=${selection}]`).prop('selected', true);
+        console.log('selection', selection);
     }
 
     getDefaultFilename() {
