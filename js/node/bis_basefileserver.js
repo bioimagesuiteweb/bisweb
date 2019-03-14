@@ -89,7 +89,8 @@ class BaseFileServer {
                 this.opts.tempDirectory = '/tmp';
             }
         } else {
-            this.opts.tempDirectory = sysutils.validateDirectories([this.opts.tempDirectory], 'temp')[0];
+            // XENIOS: These are valid by default
+            //this.opts.tempDirectory = sysutils.validateDirectories([this.opts.tempDirectory], 'temp')[0];
         }
 
         if (!this.opts.baseDirectoriesList) {
@@ -100,7 +101,6 @@ class BaseFileServer {
             }
         }
 
-        this.opts.baseDirectoriesList = sysutils.validateDirectories(this.opts.baseDirectoriesList, 'base');
 
 
         let temp = this.opts.tempDirectory.trim();
@@ -118,6 +118,12 @@ class BaseFileServer {
         if (!found) {
             this.opts.baseDirectoriesList.push(this.opts.tempDirectory);
         }
+        
+        // TODO Xenios -- this is a problem. These are valid by default
+        //this.opts.baseDirectoriesList = sysutils.validateDirectories(this.opts.baseDirectoriesList, 'base');
+        // Set the filter at this point
+        sysutils.addFilterDirectories(this.opts.baseDirectoriesList);
+        
 
         if (opts.createconfig || this.opts.verbose) {
             console.log('\n.................................');
@@ -128,7 +134,7 @@ class BaseFileServer {
                 this.callback(true);
         }
 
-
+        
 
 
         // Former global variables

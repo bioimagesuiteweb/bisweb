@@ -62,7 +62,7 @@ class DicomModule extends BaseModule {
                     "advanced": true,
                     "type": "string",
                     "varname": "inputDirectory",
-                    "default": "Error: no input directory specified"
+                    "default": ""
                 },
                 {
                     "name": "Output Directory",
@@ -71,7 +71,7 @@ class DicomModule extends BaseModule {
                     "required": false,
                     "type": "string",
                     "varname": "outputDirectory",
-                    "default": sysutils.tempdir
+                    "default": ""
                 },
                 {
                     "name": "Convert to BIDS",
@@ -87,11 +87,15 @@ class DicomModule extends BaseModule {
         };
     }
 
-    async getdcm2niimodule() {
+    // ---------------------------------------------------------------------------------
+    /** getdcm2ni
+     * @returns {String} -- string to dcm2niix dcmbinary
+     */
+    async getdcm2niibinary() {
 
         // Source version
         let dcmpath=path.resolve(path.join(__dirname,'dcm2nii_binaries'));
-        console.log('Original dcmpath=',dcmpath,__dirname);
+        //console.log('Original dcmpath=',dcmpath,__dirname);
 
         if (typeof window !== "undefined") {
             let scope=window.document.URL.split("?")[0];
@@ -104,13 +108,13 @@ class DicomModule extends BaseModule {
                 scope=scope.substr(7,index-7)+"/dcm2nii_binaries";
             dcmpath=path.resolve(scope);
         } else if (!fs.existsSync(dcmpath)) {
-            console.log("It does not exist", dcmpath);
+            //console.log("It does not exist", dcmpath);
             dcmpath=path.resolve(path.join(__dirname,'../../web/dcm2nii_binaries'));
         }
 
         let dcmBinaryFolder = dcmpath, dcmbinary = '';
 
-        console.log('dcmBinaryFolder', dcmBinaryFolder);
+        //console.log('dcmBinaryFolder', dcmBinaryFolder);
         switch (os.platform()) {
             case 'win32' : dcmbinary = dcmBinaryFolder + '/windows/dcm2niix.exe'; break;
             case 'darwin' : dcmbinary = dcmBinaryFolder + '/mac/dcm2niix'; break;
@@ -119,94 +123,112 @@ class DicomModule extends BaseModule {
         }
 
         let stats = fs.statSync(dcmbinary);
-        console.log('+++ dcm2niix binary found=',dcmbinary, 'size=', stats.size/1024, 'Kb');
+        console.log('....\n.... dcm2niix binary found=',dcmbinary, 'size=', stats.size/1024, 'Kb');
         return dcmbinary;
     }
 
+
+
+    
+    // ---------------------------------------------------------------------------------
+    /** Run Algorithm */
+    
     async directInvokeAlgorithm(vals) {
 
-        let dcm2nii = await this.getdcm2niimodule();
-        return new Promise((resolve, reject) => {
-            console.log('oooo invoking: dicommodule with vals', JSON.stringify(vals));
+        console.log('oooo invoking: dicommodule with vals', JSON.stringify(vals));
 
-            let errorfn = ((msg, e = 'No available error message') => {
-                if (e.code === 'EEXIST') {
-                    console.log('Directory', e.path, 'already exists, continuing...');
-                } else {
-                    console.log('An error occured while making DICOM directories', e);
-                    reject(e);
-                }
-            });
+        // -------------------- Check Directories and create as needed --------------------
+        let indir = vals.inputDirectory, outdir = vals.outputDirectory, tmpdir = null;
 
-            let indir = vals.inputDirectory, outdir = vals.outputDirectory, tmpdir = null;
+        if (indir.length<1 || outdir.length<1) {
+            return Promise.reject('No input or output directory specified.');
+        }
+        
+        if (path.sep === '\\')  {
+            indir = bis_util.filenameUnixToWindows(indir);
+        }
+        
+        // Input directory
+        // --------------------------------------------
+        if (!sysutils.validateFilename(indir)) 
+            return Promise.reject('Bad Input directory '+indir);
+        
+        // Output Directory
+        // --------------------------------------------
+        let outdir2 = outdir;
+        if (path.sep === '\\')  
+            outdir2=bis_util.filenameUnixToWindows(outdir);
+        
+        if (!sysutils.validateFilename(outdir2)) 
+            return Promise.reject('Bad output directory '+outdir);
 
-            if (path.sep === '\\') {
-                indir = bis_util.filenameUnixToWindows(indir);
+        // Create this
+        try {
+            fs.mkdirSync(outdir);
+        } catch (e) {
+            if (e.code !== 'EEXIST') {
+                return Promise.reject('Failed to create output directory ' + outdir);
             }
-            if (!sysutils.validateFilename(indir)) {
-                return errorfn(indir + ' is not valid');
-            } 
-            if (!sysutils.validateFilename(outdir)) {
-                return errorfn(outdir + ' is not valid');
-            }
+        }
 
-
-            if (vals.convertbids) { 
-                tmpdir = path.join(sysutils.tempdir, 'dicom_' + Date.now());
-            }
+        
+        // Temp Dir 
+        // --------------------------------------------
+        
+        if (vals.convertbids) { 
+            tmpdir = path.join(sysutils.tempdir, 'dicom_' + Date.now());
 
             try {
-                fs.mkdirSync(outdir);
+                fs.mkdirSync(tmpdir);
             } catch (e) {
-                errorfn('', e);
-            }
-
-            if (tmpdir) {
-                try {
-                    fs.mkdirSync(tmpdir);
-                } catch (e) {
-                    errorfn('', e);
+                if (e.code !== 'EEXIST') {
+                    return Promise.reject('Failed to create temporary directory ' + tmpdir);
                 }
             }
+        }
 
-            let done = (status, code) => {
-                if (status === false) {
-                    return errorfn('dcm2nii failed' + code);
-                }
+        // Now all systems go
+        // ----------------------------------------------------------------------------
 
-                return;
-            };
+        return new Promise( async (resolve,reject) => { 
 
             // TODO add the listen method from outside somehow
             // So if it exists it sends update to browser
             /*let listen= (message) => {
-                this.sendCommand(socket,'dicomConversionProgress', message);
-            };*/
-
+              this.sendCommand(socket,'dicomConversionProgress', message);
+              };*/
+            
+            let dcm2nii = await this.getdcm2niibinary();
             let cmd = dcm2nii + ' -z y ' + ' -o ' + (vals.convertbids ?  tmpdir : outdir) + ' -ba y -c bisweb ' + indir;
+            console.log('.... executing :'+cmd+'\n....');
 
-            bis_commandlineutils.executeCommandAndLog(cmd, process.cwd()).then( (m) => {
-                console.log(m);
-                done(m);
-                
-                let bidsmodule = new BidsModule();
-
-                if (vals.convertbids) {
-                    bidsmodule.directInvokeAlgorithm({ 'inputDirectory' : tmpdir, 'outputDirectory' : outdir}).then( (bidsoutput) => {
-                        resolve(bidsoutput);
-                    }).catch( (e) => {
-                        console.log('An error occured in the BIDS conversion process', e);
-                        reject(e);
-                    });
-                } else {
-                    resolve(outdir);  
-                }
-
-                
-            }).catch( (e) => {
-                console.log('An error occurred during conversion', e);
+            try { 
+                let m = await bis_commandlineutils.executeCommandAndLog(cmd, process.cwd());
+                if (bis_genericio.getmode() !== 'node' )
+                    console.log(m);
+            } catch(e) {
                 reject(e);
-            });
+                return false;
+            }
+                
+            if (vals.convertbids) {
+                let bidsmodule = new BidsModule();
+                try {
+                    let bidsoutput = await bidsmodule.directInvokeAlgorithm({ 'inputDirectory' : tmpdir,
+                                                                              'outputDirectory' : outdir});
+                    console.log('.... removing temporary directory = '+tmpdir);
+                    await bis_genericio.deleteDirectory(tmpdir);
+                    console.log('.... all done (bids), returning output path = '+outdir);
+                    resolve(bidsoutput);
+                    return true;
+                } catch (e) {
+                    reject(e);
+                    return false;
+                }
+            }
+            console.log('.... all done (no bids), returning output path = '+outdir);
+            resolve(outdir);
+            return true;
         });
     }
 }

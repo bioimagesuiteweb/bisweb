@@ -209,6 +209,7 @@ class ViewerApplicationElement extends HTMLElement {
         obj.sidetools={};
         const atlastoolid=this.getAttribute('bis-atlastoolid') || null;
         const blobanalyzerid=this.getAttribute('bis-blobanalyzerid') || null;
+        const landmarkcontrolid=this.getAttribute('bis-landmarkcontrolid') || null;
         
         if (atlastoolid) {
             let atlascontrol=document.querySelector(atlastoolid);
@@ -220,6 +221,13 @@ class ViewerApplicationElement extends HTMLElement {
             if (blobcontrol.isOpen())
                 obj.sidetools.clustertool=true;
         }
+
+        
+        if (landmarkcontrolid) {
+            let landmarkcontrol=document.querySelector(landmarkcontrolid);
+            obj['landmarkcontrol']=landmarkcontrol.getElementState();
+        }
+
         
         return obj;
     }
@@ -248,7 +256,7 @@ class ViewerApplicationElement extends HTMLElement {
 
         const atlastoolid=this.getAttribute('bis-atlastoolid') || null;
         const blobanalyzerid=this.getAttribute('bis-blobanalyzerid') || null;
-
+        const landmarkcontrolid=this.getAttribute('bis-landmarkcontrolid') || null;
         
         if (sidetools.atlascontrol && atlastoolid) {
             let atlascontrol=document.querySelector(atlastoolid);
@@ -263,6 +271,12 @@ class ViewerApplicationElement extends HTMLElement {
                 blobcontrol.show();
             },500);
         }
+
+        if (landmarkcontrolid) {
+            let landmarkcontrol=document.querySelector(landmarkcontrolid);
+            landmarkcontrol.setElementState(dt['landmarkcontrol'] || null);
+        }
+
     }
 
     

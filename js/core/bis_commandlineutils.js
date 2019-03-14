@@ -21,28 +21,35 @@ const genericio=require('bis_genericio');
 const colors=genericio.getcolorsmodule(),
       child_process = genericio.getchildprocessmodule();
 
+let inelectron=false;
+if (genericio.getmode() === 'electron' )
+    inelectron=true;
 
 let getTime=function() {
     //    http://stackoverflow.com/questions/7357734/how-do-i-get-the-time-of-day-in-javascript-node-js
 
-    var date = new Date();
+    let date = new Date();
 
-    var hour = date.getHours();
+    let hour = date.getHours();
     hour = (hour < 10 ? "0" : "") + hour;
 
-    var min  = date.getMinutes();
+    let min  = date.getMinutes();
     min = (min < 10 ? "0" : "") + min;
 
-    var sec  = date.getSeconds();
+    let sec  = date.getSeconds();
     sec = (sec < 10 ? "0" : "") + sec;
 
     return  "[" + hour + ":" + min + ":" + sec +"]";
 };
 
-let executeCommand=function(command,dir,done=0,printfn=0) {
-    dir = dir || __dirname;
+let executeCommand=function(command,dir,done=0,printfn=null) {
+    if (inelectron)
+        printfn = printfn || console.log;
+    else
+        dir = dir || __dirname;
     console.log(getTime()+" "+colors.green(dir+">")+colors.red(command+'\n'));
 
+    
     //    if (printfn) {
     //        printfn('Initializing output from '+command,0);
     //  }
@@ -65,13 +72,16 @@ let executeCommand=function(command,dir,done=0,printfn=0) {
                 if (!ok)
                     printfn=false;
             }
-            if (process.stdout) { process.stdout.write(colors.yellow(data.trim()+'\n')); }      
+            if (!inelectron) 
+                process.stdout.write(colors.yellow(data.trim()+'\n')); 
         });
         proc.stderr.on('data', function(data) {
             if (printfn) {
                 printfn(data,1);
             }
-            if (process.stdout) { process.stdout.write(colors.red(data+'\n')); }
+            if (!inelectron)
+                process.stdout.write(colors.red(data+'\n'));
+            
         });
         proc.on('exit', function(code) { done(true,code);});
     } catch(e) {
@@ -81,10 +91,17 @@ let executeCommand=function(command,dir,done=0,printfn=0) {
 };
 
 
-let executeCommandAndLog=function(command,dir,printfn=null) {
+let executeCommandAndLog=function(command,dir,printfn=0) {
 
-    dir = dir || __dirname;
-    console.log(getTime()+" "+colors.green(dir+">")+colors.red(command+'\n'));
+    if (inelectron)
+        printfn = printfn || console.log;
+    else
+        dir = dir || __dirname;
+    
+    if (!inelectron)
+        console.log(getTime()+" "+colors.green(dir+">")+colors.red(command+'\n'));
+    else
+        console.log(getTime()+" "+dir+">"+command+'\n');
     let log='';
     
     return new Promise( (resolve,reject) => {
@@ -94,15 +111,20 @@ let executeCommandAndLog=function(command,dir,printfn=null) {
             proc.stdout.on('data', function(data) {
                 if (printfn)
                     printfn(data);
+                if (!inelectron)
+                    process.stdout.write(colors.yellow(data));
                 log+=data;
-                process.stdout.write(colors.yellow(data));
+
             });
+
             proc.stderr.on('data', function(data) {
                 if (printfn)
                     printfn(data);
-                process.stdout.write(colors.red(data));
+                if (!inelectron)
+                    process.stdout.write(colors.red(data));
                 log+=data;
             });
+            
             proc.on('exit', function(code) {
                 resolve(log+'\n exit code ='+code);
             });
