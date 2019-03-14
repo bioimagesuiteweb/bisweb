@@ -135,7 +135,6 @@ class FileTreePanel extends HTMLElement {
             let type = data.acquisition || data.bisformat || 'Unknown type';
 
             bis_genericio.getMatchingFiles(queryString).then((files) => {
-                console.log('files', files);
 
                 if (files.length > 0) {
                     this.updateFileTree(files, filename, type);
@@ -202,6 +201,7 @@ class FileTreePanel extends HTMLElement {
                 //find the entry in file tree
                 while (index < splitName.length) {
 
+                    console.log('current directory', currentDirectory, 'split name', splitName[index]);
                     nextDirectory = findParentAtTreeLevel(splitName[index], currentDirectory);
 
                     //if the next directory doesn't exist, create it, otherwise return it.
@@ -231,12 +231,13 @@ class FileTreePanel extends HTMLElement {
 
                     index = index + 1;
                 }
-
-                return fileTree;
             }
 
+
+            console.log('file tree', fileTree);
+
             //if the file tree is empty, display an error message and return
-            if (!fileTree[0] || !fileTree[0].children) {
+            if (fileTree.length === 0) {
                 bis_webutil.createAlert('No study files could be found in the chosen directory, try a different directory.', false);
                 return;
             }
@@ -259,6 +260,7 @@ class FileTreePanel extends HTMLElement {
 
                 return null;
             }
+
         };
 
         this.baseDirectory = baseDirectory;
@@ -617,6 +619,7 @@ class FileTreePanel extends HTMLElement {
     }
 
     loadStudyTaskData(name) {
+
         let lowRange = -1, highRange = -1;
         bis_genericio.read(name, false).then((obj) => {
 
@@ -1016,16 +1019,20 @@ let readParamsFile = (sourceDirectory) => {
     //find the parameters file in the source directory
     return new Promise( (resolve, reject) => {
         bis_genericio.getMatchingFiles(sourceDirectory + '/settings*.json').then( (paramFile) => {
-            bis_genericio.read(paramFile[0]).then( (obj) => {
-                let jsonData;
-                try {
-                    jsonData = JSON.parse(obj.data);
-                    resolve(jsonData);
-                } catch (e) {
-                    console.log('An error occured while reading parameters file', paramFile[0], e);
-                    reject(e);
-                }
-            });
+            if (paramFile[0]) {
+                bis_genericio.read(paramFile[0]).then( (obj) => {
+                    let jsonData;
+                    try {
+                        jsonData = JSON.parse(obj.data);
+                        resolve(jsonData);
+                    } catch (e) {
+                        console.log('An error occured while reading parameters file', paramFile[0], e);
+                        reject(e);
+                    }
+                });
+            } else {
+                resolve('no params file');
+            }
         }).catch( (e) => {
             reject(e);
         });
