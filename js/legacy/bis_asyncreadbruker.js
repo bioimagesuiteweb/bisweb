@@ -1048,7 +1048,7 @@ let readMultiple= async function (filename,outprefix,forceorient,addcallback,inf
         bisformat : "ParavisionJob",
         job : joblist,
     };
-    let txt=JSON.stringify(outobj);
+    let txt=JSON.stringify(outobj, null, 2);
     await bisgenericio.write(jobname,txt);
     return [ true, 'saved job in '+jobname ];
 };

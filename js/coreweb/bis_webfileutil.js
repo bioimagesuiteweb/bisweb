@@ -178,8 +178,6 @@ const webfileutils = {
      * @returns{Boolean} true or false
      */
     candoComplexIO: function(serveronly=false) {
-
-        console.log('In cando complex');
         
         if (genericio.getmode()!=='browser')
             return true;

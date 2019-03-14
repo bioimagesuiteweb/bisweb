@@ -201,7 +201,6 @@ class FileTreePanel extends HTMLElement {
                 //find the entry in file tree
                 while (index < splitName.length) {
 
-                    console.log('current directory', currentDirectory, 'split name', splitName[index]);
                     nextDirectory = findParentAtTreeLevel(splitName[index], currentDirectory);
 
                     //if the next directory doesn't exist, create it, otherwise return it.
@@ -1013,7 +1012,7 @@ let readParamsFile = (sourceDirectory) => {
 
     //find the parameters file in the source directory
     return new Promise( (resolve, reject) => {
-        bis_genericio.getMatchingFiles(sourceDirectory + '/settings*.json').then( (paramFile) => {
+        bis_genericio.getMatchingFiles(sourceDirectory + '/+(settings|dicom_job)*.json').then( (paramFile) => {
             if (paramFile[0]) {
                 bis_genericio.read(paramFile[0]).then( (obj) => {
                     let jsonData;

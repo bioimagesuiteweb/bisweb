@@ -155,8 +155,8 @@ let dicom2BIDS = async function (opts) {
     //separate date string into individual chunks
     let year = date.substring(0, 4), month = date.substring(4, 6), day = date.substring(6, 8), hour = date.substring(8, 10), minute = date.substring(10, 12);
 
-    let outfilename = bis_genericio.joinFilenames(outputdirectory, 'dicom_job.json');
-    let outobj = {
+    let dicomjobfilename = bis_genericio.joinFilenames(outputdirectory, 'dicom_job.json');
+    let dicomobj = {
         "acquisition": 'DICOM',
         "bidsversion": "1.1.0",
         "description": `Dataset generated on ${month}/${day}, ${year} at ${hour}:${minute}`,
@@ -234,8 +234,7 @@ let dicom2BIDS = async function (opts) {
             }
         }
 
-        await bis_genericio.write(outfilename, JSON.stringify(outobj, null, 2), false);
-
+        await bis_genericio.write(dicomjobfilename, JSON.stringify(dicomobj, null, 2), false);
         console.log('----- output directory', outputdirectory);
 
         return outputdirectory;
