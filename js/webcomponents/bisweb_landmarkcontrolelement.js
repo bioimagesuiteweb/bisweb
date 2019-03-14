@@ -1057,6 +1057,60 @@ class LandmarkControlElement extends HTMLElement {
             this.internal.mousestate=mousestate;
         }         
     }
+
+
+    /** Store State in to an Object
+     * @returns{Object} -- state dictionary
+     */
+    getElementState() {
+
+        
+        let obj = { };
+        obj.data = this.internal.data;
+        obj.currentpoint= this.internal.currentpoint;
+        obj.currentset=this.internal.currentsetindex;
+        console.log(JSON.stringify(obj,null,1), this.internal.currentsetindex);
+        let sets=[];
+        for (let i=0;i<this.internal.landmarkset.length;i++) {
+            sets.push(this.internal.landmarkset[i].serialize());
+        }
+        obj.sets=sets;
+        obj.isopen=this.panel.isOpen();
+        
+        return obj;
+    }
+
+    /** Get State from Object
+     * @param{Object} dt -- state dictionary
+     */
+    setElementState(dt) {
+        if (!dt)
+            return;
+
+        let ptsets=dt.sets || [];
+        for (let i=0;i<ptsets.length;i++) {
+            let str=ptsets[i];
+            let pset=this.internal.landmarkset[i];
+            let fname=pset.filename;
+            if (fname.length<2)
+                fname=`points_${i+1}.ljson`;
+            pset.deserialize(str,fname,console.log);
+        }
+
+        this.updatedisplay(false);
+        this.internal.data.showmode=dt.data.showmode;
+        this.showhidemeshes();
+        
+        this.setcurrentset(dt.currentset || 0);
+        this.selectlandmark(dt.currentpoint);
+        if (dt.isopen) {
+            this.panel.show();
+        } else {
+            this.panel.hide();
+        }
+        this.enablemouse(false);
+    }
+
 }
 
 

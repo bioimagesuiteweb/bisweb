@@ -23,6 +23,7 @@ const $=require('jquery');
 const moduleindex=require('moduleindex');
 const biswrap = require('libbiswasm_wrapper');
 const BisWebDataObjectCollection = require('bisweb_dataobjectcollection.js');
+const webcss=require('bisweb_css');
 const webutil=require('bis_webutil');
 const systemprint=console.log;
 const bis_genericio=require('bis_genericio');
@@ -800,7 +801,7 @@ var startFunction = (() => {
         $('#cnote').remove();
     }
 
-    webutil.setAutoColorMode();
+    webcss.setAutoColorMode();
     /*
     
     if (typeof window.BIS !=='undefined')  {

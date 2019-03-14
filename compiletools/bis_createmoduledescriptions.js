@@ -67,8 +67,7 @@ let lst=[];
 for (let i=0;i<modulelist.length;i++) {
 
     let modulename=modulelist[i];
-    let moduleclass=modules[modulename];
-    let module=new moduleclass();
+    let module=modules.getModule(modulename);
     if (! module.JSOnly) {
         let desc = module.getDescription();
         let name = module.name;
