@@ -539,6 +539,9 @@ exportobj.create2dslice=function(volume,in_plane,decorationmode,objectmap,transp
         showimage : function(show) {
             show = show || false;
             internal.imageplane.visible=show;
+            if (show===false) 
+                this.showdecorations(false);
+
         },
         
         /** Show decorations if true show axis/outline (if they exist) else hide
@@ -552,11 +555,21 @@ exportobj.create2dslice=function(volume,in_plane,decorationmode,objectmap,transp
                 show=false;
             
             if (internal.outline!==null) {
-                internal.outline.visible=show;
+                if (internal.imageplane.visible) {
+                    internal.outline.visible=show;
+                } else {
+                    internal.outline.visible=false;
+                }
             }
-            if (internal.axis1!==null) { 
-                internal.axis1.visible=show;
-                internal.axis2.visible=show;
+            
+            if (internal.axis1!==null) {
+                if (internal.imageplane.visible) {
+                    internal.axis1.visible=show;
+                    internal.axis2.visible=show;
+                } else {
+                    internal.axis1.visible=false;
+                    internal.axis2.visible=false;
+                }
             }
 
             
@@ -786,8 +799,10 @@ exportobj.create3cardslice=function(vol,in_slices,
             show = show || false;
             for (let i=0;i<=2;i++) {
                 if (internal.imageplane[i]!==null) {
-                    console.log('in Show Image',show,internal.imageplane[i]);
                     internal.imageplane[i].visible=show;
+                    if (!show && internal.hasdecorations) {
+                        internal.outlineplane[i].visible=false;
+                    }
                 }
             }
         },

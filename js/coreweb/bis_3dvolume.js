@@ -337,6 +337,17 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
                 internal.renderer.render( internal.scene, internal.camera );
         },
 
+
+        showimage(mode) {
+            if (mode===undefined)
+                mode=true;
+            if (mode!==true)
+                mode=false;
+            if (internal.volumebox)
+                internal.volumebox.visible=mode;
+        },
+            
+        
         /**
          * update the colormap with new transfer function
          */
