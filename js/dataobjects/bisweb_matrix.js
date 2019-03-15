@@ -70,7 +70,7 @@ class BisWebMatrix extends BisWebDataObject{
      * @returns {string} description
      */
     getDescription() {
-        return "Matrix: "+this.dimensions.join(" ");
+        return "Matrix: ["+this.dimensions.join("*")+'], tp='+this.datatype;
     }
 
     /** compute hash 
@@ -100,8 +100,9 @@ class BisWebMatrix extends BisWebDataObject{
             genericio.read(fobj, false).then((contents) => {
                 self.parseFromText(contents.data,contents.filename,reject);
                 self.setFilename(contents.filename);
-                console.log('++++\t loaded matrix from '+contents.filename+', '+self.dimensions.join(" "));
+                console.log('++++\t loaded matrix  '+this.getDescription());
                 resolve('loaded matrix transformation from '+contents.filename);
+                
             }).catch( (e) => { reject(e); });
         });
     }
@@ -145,11 +146,11 @@ class BisWebMatrix extends BisWebDataObject{
 
         if (this.datatype === 'int') {
             this.data=new Int32Array(bytesarr.buffer);
-        } else if (type==='uint') {
+        } else if (this.datatype==='uint') {
             this.data=new Uint32Array(bytesarr.buffer);
         } else {
             this.data=new Float32Array(bytesarr.buffer);
-            this.datatype = 'float'
+            this.datatype = 'float';
         }
         super.parseFromDictionary(b);
         return true;

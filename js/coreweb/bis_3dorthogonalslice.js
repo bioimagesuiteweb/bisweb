@@ -531,7 +531,16 @@ exportobj.create2dslice=function(volume,in_plane,decorationmode,objectmap,transp
             internal.imageslicer.setnexttimeforce();
         },
 
+        /** Show image slice if true else hide
+         * @memberof Bis_3DOrthogonalSlice.Bis2DImageSlice.prototype
+         * @param {boolean} show - if true show, else hide
+         */
 
+        showimage : function(show) {
+            show = show || false;
+            internal.imageplane.visible=show;
+        },
+        
         /** Show decorations if true show axis/outline (if they exist) else hide
          * @memberof Bis_3DOrthogonalSlice.Bis2DImageSlice.prototype
          * @param {boolean} show - if true show, else hide
@@ -549,6 +558,8 @@ exportobj.create2dslice=function(volume,in_plane,decorationmode,objectmap,transp
                 internal.axis1.visible=show;
                 internal.axis2.visible=show;
             }
+
+            
         },
 
         /** Interpoalte texture or not
@@ -766,6 +777,20 @@ exportobj.create3cardslice=function(vol,in_slices,
         updateColormap : function () { },
 
         
+        /** Show image slice if true else hide
+         * @memberof Bis_3DOrthogonalSlice.Bis2DImageSlice.prototype
+         * @param {boolean} show - if true show, else hide
+         */
+
+        showimage : function(show) {
+            show = show || false;
+            for (let i=0;i<=2;i++) {
+                if (internal.imageplane[i]!==null) {
+                    console.log('in Show Image',show,internal.imageplane[i]);
+                    internal.imageplane[i].visible=show;
+                }
+            }
+        },
         /** Show decorations if true show axis/outline (if they exist) else hide
          * @memberof Bis_3DOrthogonalSlice.Bis2DImageSlice.prototype
          * @param {boolean} show - if true show, else hide

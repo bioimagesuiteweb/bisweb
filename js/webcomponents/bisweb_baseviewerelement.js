@@ -862,6 +862,20 @@ class BaseViewerElement extends HTMLElement {
         let w=this.internal.layoutcontroller.getcorecontrols();
         $(w[0]).removeClass('in');
     }
+
+
+    // -----------------------------------------------------------------------------
+    // Get Slices
+    // -----------------------------------------------------------------------------
+    /** return slices array */
+    getSliceMeshes() {
+        return this.internal.slices;
+    }
+
+    /** return overlay slices array */
+    getOverlaySliceMeshes() {
+        return this.internal.overlayslices;
+    }
     
     // -----------------------------------------------------------------------------
     // Reset
