@@ -166,6 +166,7 @@ class DicomImportElement extends HTMLElement {
         }
 
         promise.then((fileConversionOutput) => {
+            console.log('output', fileConversionOutput);
             let output = fileConversionOutput.output ? fileConversionOutput.output : fileConversionOutput;
 
             bis_webutil.dismissAlerts();

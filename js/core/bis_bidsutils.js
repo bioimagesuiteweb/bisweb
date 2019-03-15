@@ -24,6 +24,7 @@ let dicom2BIDS = async function (opts) {
 
     let makeDir = async function (f) {
         try {
+            console.log('making directory', f);
             await bis_genericio.makeDirectory(f);
         } catch (e) {
             if (e.code !== 'EEXIST') {
@@ -44,7 +45,7 @@ let dicom2BIDS = async function (opts) {
     console.log(colors.yellow('.... Now converting files to BIDS format.'));
 
     let matchniix = bis_genericio.joinFilenames(indir, '*.nii.gz');
-    let matchsupp = bis_genericio.joinFilenames(indir, '*');
+    let matchsupp = bis_genericio.joinFilenames(indir, '!(*.nii.gz)');
 
     let flist = await bis_genericio.getMatchingFiles(matchniix);
     let suppfiles = await bis_genericio.getMatchingFiles(matchsupp);
@@ -85,10 +86,10 @@ let dicom2BIDS = async function (opts) {
     let diffdir = bis_genericio.joinFilenames(outputdirectory, 'diff');
 
     try {
-        makeDir(funcdir);
-        makeDir(anatdir);
-        makeDir(diffdir);
-        makeDir(locdir);
+        await makeDir(funcdir);
+        await makeDir(anatdir);
+        await makeDir(diffdir);
+        await makeDir(locdir);
     } catch (e) {
         return errorfn('failed to make directory' + e);
     }
@@ -151,7 +152,7 @@ let dicom2BIDS = async function (opts) {
     let fileString = flist[0];
     let dateMatch = dateRegex.exec(fileString);
     let date = dateMatch[0];
-
+    
     //separate date string into individual chunks
     let year = date.substring(0, 4), month = date.substring(4, 6), day = date.substring(6, 8), hour = date.substring(8, 10), minute = date.substring(10, 12);
 
@@ -165,7 +166,7 @@ let dicom2BIDS = async function (opts) {
 
     for (let i = 0; i < tlist.length; i++) {
         let fname = tlist[i];
-        let name = bis_genericio.getBaseName(tlist[i]);
+        let name = bis_genericio.getBaseName(fname);
         let infoname = '';
         if (name.indexOf(".nii.gz") > 0) {
 
@@ -206,7 +207,7 @@ let dicom2BIDS = async function (opts) {
                 }
             }
 
-            outobj.job.push({
+            dicomobj.job.push({
                 name: name,
                 filename: fname.substr(outputdirectory.length + 1, fname.length),
                 tag: tagname,
@@ -224,9 +225,13 @@ let dicom2BIDS = async function (opts) {
         let checksums = await makeHash;
         for (let prom of promiseArray) { await prom; }
 
+        //let joinedPromiseArray = promiseArray.push(makeHash);
+        //await Promise.all(joinedPromiseArray);
+
         //put checksums in dicom_job then write it to disk
         for (let val of checksums) {
-            for (let fileEntry of outobj.job) {
+            console.log('val', val);
+            for (let fileEntry of dicomobj.job) {
                 if (val.output.filename.includes(fileEntry.name)) {
                     fileEntry.hash = val.output.hash;
                     break;
