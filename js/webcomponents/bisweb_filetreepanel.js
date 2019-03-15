@@ -359,7 +359,7 @@ class FileTreePanel extends HTMLElement {
 
             let elementsDiv = $('.bisweb-elements-menu');
 
-            let loadImageButton = $(`<button type='button' class='btn btn-success btn-sm load-image-button'>Load image</button>`);
+            let loadImageButton = $(`<button type='button' class='btn btn-success btn-sm load-image-button' disabled>Load image</button>`);
             loadImageButton.on('click', () => {
                 this.loadImageFromTree();
             });
@@ -535,8 +535,10 @@ class FileTreePanel extends HTMLElement {
         };
 
         listContainer.on('select_node.jstree', (event, data) => {
-            //console.log('select_node', data);
+
             $('.bisweb-elements-menu').find('select').prop('disabled', '');
+            $('.load-image-button').prop('disabled', '');
+            
             this.currentlySelectedNode = data.node;
 
             this.changeTagSelectMenu(this.staticTagSelectMenu, data.node);
