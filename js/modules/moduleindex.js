@@ -44,6 +44,7 @@ const moduleImports = {
     regularizeobjectmap : require('regularizeObjectmap.js'),
     projectimage : require('projectImage.js'),
     preprocessoptical : require('preprocessOptical.js'),
+    diffspect : require('diffSpect.js'),
     backprojectimage : require('backProjectImage.js'),
 
 

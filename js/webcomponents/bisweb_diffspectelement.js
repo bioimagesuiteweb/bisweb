@@ -322,7 +322,7 @@ class DiffSpectElement extends DualViewerApplicationElement {
                 this.app_state.ATLAS_mri = images[1];
                 this.app_state.ATLAS_stdspect = images[2];
                 this.app_state.ATLAS_mask = images[3];
-                this.VIEWERS[0].setimage(this.app_state.ATLAS_mri);
+                //                this.VIEWERS[0].setimage(this.app_state.ATLAS_mri);
                 webutil.createAlert('The SPECT Tool is now ready. The core data has been loaded.');//<BR> Click either "Create New Patient" or "Load Existing Patient" to begin.');
             });
             

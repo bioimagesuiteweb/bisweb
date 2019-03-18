@@ -37,7 +37,7 @@ class PreprocessOpticalModule extends BaseModule {
         super();
         this.name = 'preprocessOptical';
         this.JSOnly=true;
-        this.useworker=true;
+        this.useworker=false;
     }
 
     getDescription() {
