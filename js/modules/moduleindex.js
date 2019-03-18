@@ -43,8 +43,11 @@ const moduleImports = {
     segmentimage : require('segmentImage.js'),
     regularizeobjectmap : require('regularizeObjectmap.js'),
     projectimage : require('projectImage.js'),
+    preprocessoptical : require('preprocessOptical.js'),
     backprojectimage : require('backProjectImage.js'),
 
+
+    
     butterworthfilter : require('butterworthFilter.js'),
     regressglobal : require('regressGlobal.js'),
     regressout : require('regressOut.js'),

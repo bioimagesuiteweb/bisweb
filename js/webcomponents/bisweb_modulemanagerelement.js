@@ -196,6 +196,7 @@ class ModuleManagerElement extends HTMLElement {
                 webutil.createMenuItem(this.moduleMenu[1],'');
                 this.createModule('Quality Measures',1, false, modules.getModule('qualityMeasures'), moduleoptions);
                 this.createModule('Change Header Spacing',1, false, modules.getModule('changeImageSpacing'), moduleoptions);
+                this.createModule('Fix Zebra Fish Images',1, false, modules.getModule('preprocessOptical'), moduleoptions);
             }
         });
         this.createModule('Normalize Image',1, false, modules.getModule('normalizeImage'), moduleoptions);
