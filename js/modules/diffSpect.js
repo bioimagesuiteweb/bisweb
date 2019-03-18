@@ -341,8 +341,8 @@ class diffSpectModule extends BaseModule {
         let target=this.app_state[params['target']];
 
         if (reference === null || target === null) {
-            this.alertFunction('No images in memore (either '+params['reference']+' or '+params['target']+'). Can not execute registration');
-            return Promise.reject('no images');
+            return Promise.reject('No images in memore (either '+params['reference']+' or '+params['target']+'). Can not execute registration');
+            
         }
 
         
@@ -465,8 +465,11 @@ class diffSpectModule extends BaseModule {
                 this.registerImages('atlas2interictal').then( () => {
                     this.registerImages('interictal2ictal').then( ()=> {
                         resolve('Done computing registrations in no_mri mode');
-                    });
-                }).catch( (e) => { reject(e,e.stack);});
+                    }).catch( (e) => { reject(e); });
+                }).catch( (e) => {
+                    console.log(e.stack);
+                    reject(e);
+                });
             });
         }
 
@@ -476,9 +479,12 @@ class diffSpectModule extends BaseModule {
                 this.registerImages('mri2interictal').then( () => {
                     this.registerImages('interictal2ictal').then( () => {
                         resolve('Done computing registrations in with_mri mode');
-                    });
-                });
-            }).catch( (e) => { reject(e,e.stack);});
+                    }).catch( (e) => { reject(e); });
+                }).catch( (e) => { reject(e); });
+            }).catch( (e) => {
+                console.log(e.stack);
+                reject(e);
+            });
         });
     }
 
@@ -615,9 +621,10 @@ class diffSpectModule extends BaseModule {
                 this.resliceImages('inter2Atlas').then( () => {
                     this.alertFunction('Computing diff SPECT analysis',"progress",30);
                     this.computeSpectNoMRI();
-                    resolve();
+                    resolve('Compute diff SPECT analysis done');
                 });
             }).catch( (e) => {
+                console.log(e.stack);
                 reject(e);
             });
         });
@@ -672,8 +679,8 @@ class diffSpectModule extends BaseModule {
                         console.log('Hyper=',this.app_state.hyper);
                         this.outputs['logoutput']=new BisWebTextObject(this.createTables());
                         resolve();
-                    });
-                });
+                    }).catch( (e) => { reject(e); });
+                }).catch( (e) => { reject(e); });
             }).catch( (e) => { reject(e); });
         });
     }

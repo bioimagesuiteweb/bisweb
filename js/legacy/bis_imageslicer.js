@@ -167,7 +167,7 @@ class BisImageSlicer {
             if (sz>d)
                 d=sz;
         }
-        this.internal.cameradepth=2*Math.round(d*2.0);
+        this.internal.cameradepth=Math.round(d*2.0);
 
         var rng=[0,255];
         if ( typeof(bisimage.getIntensityRange) === "function")
