@@ -17,7 +17,6 @@
 
 'use strict';
 
-const biswrap = require('libbiswasm_wrapper');
 const baseutils=require("baseutils");
 const BaseModule = require('basemodule.js');
 const BisWebLinearTransformation = require('bisweb_lineartransformation.js');
@@ -175,7 +174,7 @@ class InvertTransformationModule extends BaseModule {
                     reject(e.stack);
                 });
             }).catch( (e) => {        reject(e.stack);              });
-        }).catch( (e) => {        reject(e.stack);              });
+        });
     }
 }
     
