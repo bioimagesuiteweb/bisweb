@@ -28,6 +28,12 @@ const genericio= require('bis_genericio');
 const bisimagealgo = require('bis_imagealgorithms');
 const BisWebTextObject = require('bisweb_textobject.js');
 
+
+// TODO: Inverse transformation stuff
+// Add a module to create inverse xforms as needed.
+
+
+
 /**
  * Runs linear registration on an image set given a reference image and returns the set of transformations required
  * to align the image set to the reference image. Applies only affine (linear) transformations (no stretch/shear).

@@ -59,6 +59,7 @@ const moduleImports = {
     computeglm : require('computeGLM.js'),
     approximatefield : require('approximateField.js'),
     displacementfield : require('displacementField.js'),
+    inverttransformation : require('invertTransformation.js'),
     resliceimage : require('resliceImage.js'),
     motionreslice : require('motionReslice.js'),
     manualregistration : require('manualRegistration.js'),
