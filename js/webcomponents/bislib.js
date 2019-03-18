@@ -64,6 +64,7 @@ const Elements = {
     DualViewerApplicationElement : require("bisweb_dualviewerapplication.js"),
     WebWorkerControllerElement : require("bisweb_webworkercontroller.js"),
     DiffSPECTElement : require("bisweb_diffspectelement.js"),
+    DiffSPECTElement2 : require("bisweb_diffspectelement2.js"),
     ConnectivityControlElement:    ConnectivityControlElement,
     LandmarkControlElement :     LandmarkControlElement,
     MosaicViewerElement :    MosaicViewerElement,
