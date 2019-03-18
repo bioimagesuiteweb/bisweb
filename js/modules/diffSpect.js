@@ -622,10 +622,34 @@ class diffSpectModule extends BaseModule {
             });
         });
     }
+
+
+    // ---------------------------------------------------------------
+    //create log output
+    createTables() {
+
+        let arr =[ { name: 'hypo', table:this.app_state.hypo },
+                   { name:'hyper', table:this.app_state.hyper }
+                 ];
+
+        let txt='type, #, X,Y,Z, ClusterP, CorrectP, MaxT\n';
+        for (let i=0;i<arr.length;i++) {
+            let obj=arr[i].table;
+            for (let j=0;j<obj.length;j++) {
+                let l=obj[j].string.trim().replace(/\t/g,',');
+                txt+=arr[i].name+','+l+'\n';
+            }
+        }
+        console.log(txt);
+        return txt;
+    }
+
     
     // ---------------------------------------------------------------
     // Master Function
     // ---------------------------------------------------------------
+
+
     
     directInvokeAlgorithm(vals) {
         console.log('diffSpect invoking with vals', JSON.stringify(vals));
@@ -645,11 +669,8 @@ class diffSpectModule extends BaseModule {
                 this.computeAllRegistrations().then( () => {
                     this.computeSpect().then( () => {
                         this.outputs['output']=this.app_state.tmap;
-                        let message=JSON.stringify({
-                            'hypo' : this.app_state.hypo,
-                            'hyper' : this.app_state.hyper
-                        },null,2);
-                        this.outputs['logoutput']=new BisWebTextObject(message);
+                        console.log('Hyper=',this.app_state.hyper);
+                        this.outputs['logoutput']=new BisWebTextObject(this.createTables());
                         resolve();
                     });
                 });
