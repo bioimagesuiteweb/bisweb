@@ -484,7 +484,7 @@ class ConnMatrix {
     //didn't remove the unused parameters because they might be used later? 
 	// -Zach
 	plotCorrMap(parc,pairs,scolor,context,normallength,thickness) {
-		function readTextFile(file){
+		/*function readTextFile(file){
 			var rawFile = new XMLHttpRequest();
 			rawFile.open("GET", file, false);
 			var matrix ;
@@ -509,7 +509,7 @@ class ConnMatrix {
 			}
 			rawFile.send(null);
 			return matrix;
-		}
+		}*/
 		//var correlationMatrix = readTextFile('data/heatMat.mask.NBSFDR.ucla.175.antiDepression.csv');
 		var correlationMatrix = [
 			[1, 0.3, 0, 0.8, 0, 0.2, 1, 0.5, 0, 0.75],
@@ -526,8 +526,33 @@ class ConnMatrix {
 
 		var labels = ['MF', 'FP', 'DMN', 'Mot', 'VI', 'VII', 'VAs', 'Limb', 'BG', 'CBL'];
 
-		Matrix({
-			container : '#container',
+		
+		/*var arc = d3.svg.arc()
+			.innerRadius(innerRadius)
+			.outerRadius(outerRadius);
+
+		var layout = d3.layout.chord()
+			.padding(.04)
+			.sortSubgroups(d3.descending)
+			.sortChords(d3.ascending);
+
+		var path = d3.svg.chord()
+			.radius(innerRadius);
+		*/
+		/*var svg = d3.select('.modal-body').append("svg")
+			.attr("width", svgWidth)
+			.attr("height", svgHeight)
+			.append("g")
+			.attr("id", "circle")
+			.attr("transform", "translate(" + svgWidth / 2 + "," + svgHeight / 2 + ")");
+
+		svg.append("circle")
+			.attr("r", outerRadius);
+		*/
+			
+		// heatMap part
+		var svg  = Matrix({
+			container : '#visualcontainer',
 			data      : correlationMatrix,
 			labels    : labels,
 			start_color : '#ffffff',
@@ -559,8 +584,8 @@ class ConnMatrix {
 
 			var numrows = data.length;
 			var numcols = data[0].length;
-
-			var svg = d3.select(container).append("svg")
+			
+			var svg = d3.select('.modal-body').append("svg")
 				.attr("width", width + margin.left + margin.right)
 				.attr("height", height + margin.top + margin.bottom)
 				.append("g")
@@ -659,7 +684,7 @@ class ConnMatrix {
 				.attr("text-anchor", "end")
 				.text(function(d, i) { return d; });
 
-			var key = d3.select("#legend")
+			var key = d3.select("#visuallegend")
 				.append("svg")
 				.attr("width", widthLegend)
 				.attr("height", height + margin.top + margin.bottom);
@@ -703,10 +728,10 @@ class ConnMatrix {
 			key.append("g")
 				.attr("class", "y axis")
 				.attr("transform", "translate(41," + margin.top + ")")
-				.call(yAxis)
+				.call(yAxis);
+			return svg;
 		}
-
-
+		return svg;
 	}
 
 	drawChords(parc,pairs,scolor,context,normallength,thickness) {
