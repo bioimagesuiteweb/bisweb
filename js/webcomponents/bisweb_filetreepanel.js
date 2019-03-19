@@ -918,6 +918,7 @@ class FileTreePanel extends HTMLElement {
             let selectedValue = tagSelectMenu.val();
             this.currentlySelectedNode.original.tag = selectedValue;
 
+            //create bootbox modal with task select slider
             if (selectedValue.includes('task')) {
                 let sliderInput = $(`<input 
                         class='bootstrap-task-slider'
@@ -928,11 +929,13 @@ class FileTreePanel extends HTMLElement {
                     </input>`);
     
                 //create secondary menu to select task number
-                let box = bootbox.prompt({ 
+                let box = bootbox.alert({ 
                     title : 'Enter a task number', 
-                    inputType: 'number', 
-                    show : false,
-                    callback: (result) => {
+                    message : 'Please enter the task number.',
+                    size : 'small',
+                    callback: () => {
+                        //textbox input should override slider 
+                        let result =  box.find('.tag-input')[0].value || box.find('.bootstrap-task-slider').val();
                         console.log('result', result);
                         this.currentlySelectedNode.original.tag = selectedValue + '_' + result;
                     }
@@ -941,11 +944,15 @@ class FileTreePanel extends HTMLElement {
                 box.init( () => {
                     console.log('box', box);
                     box.find('.modal-body').append(sliderInput);
-                    sliderInput.slider({
+                    box.find('.bootstrap-task-slider').slider({
                         'formatter': (value) => {
                             return value;
                         }
                     });
+
+                    box.find('.slider.slider-horizontal').css('width', '75%');                    
+                    let numberInput = $(`<input type='number' class='form-control-sm tag-input' style='display: inline; width: 20%'>`);
+                    box.find('.modal-body').append(numberInput);
                 });
 
                 box.modal('show');

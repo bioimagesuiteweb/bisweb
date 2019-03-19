@@ -958,16 +958,12 @@ class GrapherModule extends HTMLElement {
                 data-slider-step='1'>
             </input>`);
 
-
-        console.log('frames', this.numframes);
-
         let frameSelectorBox = bootbox.confirm({
             'size': 'small',
             'title': 'Select a frame',
             'message': `<p>Select a frame to plot intensities for</p><br>`,
             'show': false,
             'callback': (result) => {
-                console.log('slider value', sliderInput.val());
                 if (result) { cb(sliderInput.val()); }
                 else { return; }
             }
