@@ -516,7 +516,7 @@ class FileTreePanel extends HTMLElement {
             }
             //node is already selected by select_node event handler so nothing to do for selecting a picture
         };
-        
+
 
         let handleRightClick = (data) => {
             if (data.node.original.type === 'directory') {
@@ -558,7 +558,7 @@ class FileTreePanel extends HTMLElement {
      * 
      * @param {String} type - The type of the data being loaded.
      */
-    createContextmenuItems(type) {
+    createContextmenuItems(/*type*/) {
         let newSettings = this.contextMenuDefaultSettings;
 
         //add viewer one and viewer two options to pages with multiple viewers
@@ -960,9 +960,8 @@ class FileTreePanel extends HTMLElement {
                         let tagName = selectedValue + '_' + result, displayedName = '(' + tagName + ')';
                         this.currentlySelectedNode.original.tag = tagName;
 
-                        console.log('currently selected node', this.currentlySelectedNode);
                         //update name for underlying data structure and jstree object
-                        this.currentlySelectedNode.original.text = displayedName + this.currentlySelectedNode.text
+                        this.currentlySelectedNode.original.text = displayedName + this.currentlySelectedNode.text;
                         this.currentlySelectedNode.text = this.currentlySelectedNode.original.text;
 
                         //update name displayed on file tree panel

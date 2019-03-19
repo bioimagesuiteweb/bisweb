@@ -250,7 +250,7 @@ class GrapherModule extends HTMLElement {
 
         if (this.currentdata.numvoxels === null) {
             singleFrame = false;
-            showbuttons = false;
+            //showbuttons = false;
         }
 
         if (this.currentdata.y < 1) {
@@ -517,7 +517,7 @@ class GrapherModule extends HTMLElement {
                     'align': 'right'
                 })],
             data: data
-        }
+        };
       
 
         if (settings.isFrameChart) { chartParams.guide.y.min = 0; chartParams.guide.y.max = 1.1; }
@@ -688,9 +688,9 @@ class GrapherModule extends HTMLElement {
                     this.fillPlugin({
                         'frame' : frame
                     }),
-                    this.lineHoverPlugin( { 
+                    /*this.lineHoverPlugin( { 
                         'frame' : frame
-                    }),
+                    }),*/
                     Taucharts.api.plugins.get('legend')({
                         'position' : 'top'
                     }),
@@ -1071,7 +1071,7 @@ class GrapherModule extends HTMLElement {
         };
     }
 
-    lineHoverPlugin(settings) {
+    /*lineHoverPlugin(settings) {
         let chart = settings.frame;
         return {
             init : () => {},
@@ -1085,14 +1085,14 @@ class GrapherModule extends HTMLElement {
 
                         //change opacity of other lines in the set
                         for (let otherNode of lines) {
-                            //$(otherNode).css('opacity', 0.3);
+                            $(otherNode).css('opacity', 0.3);
                         }
-                        //$(node).css('opacity', '1.0');
+                        $(node).css('opacity', '1.0');
                     }, () => {});
                 }   
             }
         };
-    }
+    }*/
 
 }
 
