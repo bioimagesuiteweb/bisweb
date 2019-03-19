@@ -7,6 +7,7 @@ const util=require('bis_util');
 const bis_genericio = require('bis_genericio.js');
 
 require('jstree');
+require('bootstrap-slider');
 
 /**
  * <bisweb-treepanel
@@ -538,7 +539,7 @@ class FileTreePanel extends HTMLElement {
 
             $('.bisweb-elements-menu').find('select').prop('disabled', '');
             $('.load-image-button').prop('disabled', '');
-            
+
             this.currentlySelectedNode = data.node;
 
             this.changeTagSelectMenu(this.staticTagSelectMenu, data.node);
@@ -839,6 +840,10 @@ class FileTreePanel extends HTMLElement {
             this.popoverDisplayed = true;
         });
 
+        dropdownMenu[0].addEventListener('change', () => {
+            popover.popover('hide');
+        });
+
         popover.popover('show');
     }
 
@@ -913,17 +918,37 @@ class FileTreePanel extends HTMLElement {
             let selectedValue = tagSelectMenu.val();
             this.currentlySelectedNode.original.tag = selectedValue;
 
-            console.log('selected value', selectedValue);
             if (selectedValue.includes('task')) {
+                let sliderInput = $(`<input 
+                        class='bootstrap-task-slider'
+                        data-slider-min='1'
+                        data-slider-max='10'
+                        data-slider-value='1'
+                        data-slider-step='1'>
+                    </input>`);
+    
                 //create secondary menu to select task number
-                bootbox.prompt({ 
+                let box = bootbox.prompt({ 
                     title : 'Enter a task number', 
                     inputType: 'number', 
+                    show : false,
                     callback: (result) => {
                         console.log('result', result);
                         this.currentlySelectedNode.original.tag = selectedValue + '_' + result;
                     }
-                })
+                });
+
+                box.init( () => {
+                    console.log('box', box);
+                    box.find('.modal-body').append(sliderInput);
+                    sliderInput.slider({
+                        'formatter': (value) => {
+                            return value;
+                        }
+                    });
+                });
+
+                box.modal('show');
             }
 
             //tag select menus can be created by popovers or statically in the file bar
@@ -946,7 +971,6 @@ class FileTreePanel extends HTMLElement {
 
         if (selection.includes('task')) { selection = 'task'; }
         menu.find(`option[value=${selection}]`).prop('selected', true);
-        console.log('selection', selection);
     }
 
     getDefaultFilename() {
