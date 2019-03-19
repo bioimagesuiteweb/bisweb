@@ -541,7 +541,13 @@
             "result"   : true,
             "dopython" : false,
             "webworker": false
-        }
+        },
+        {
+	    "command" : "inverttransformation -r testdata/MNI_6mm.nii.gz -i testdata/MNI_2mm_scaled.grd --spacing 12 --lambda 0.01",
+	    "test"    : "--test_target testdata/inv.grd --test_type gridtransform",
+	    "result"  : true,
+	    "dopython": false
+	}
     ]
 }
 

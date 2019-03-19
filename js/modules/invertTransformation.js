@@ -129,7 +129,7 @@ class InvertTransformationModule extends BaseModule {
 
         console.log('oooo invoking: displacementField', JSON.stringify(vals));
 
-        let ref = this.inputs['reference'] || null;
+        let ref = this.inputs['ref'] || null;
         let xform=this.inputs['input'] || null;        
 
         return new Promise((resolve, reject) => {

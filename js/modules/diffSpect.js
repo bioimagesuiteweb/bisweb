@@ -58,11 +58,11 @@ class diffSpectModule extends BaseModule {
             'atlastointer_xform'
         ];
         this.tempImageList = [
-            'atlastointer_reslice',
-            'atlastoictal_reslice',
-            'intertoictal_reslice',
-            'atlastomri_reslice',
-            'mritointerictal_reslice',
+            'inter_in_atlas_reslice',
+            'ictal_in_atlas_reslice',
+            'ictal_in_inter_reslice',
+            'mri_in_atlas_reslice',
+            'interictal_in_mri_reslice',
         ];
         this.resultsList = [
             'hyper',
@@ -95,6 +95,7 @@ class diffSpectModule extends BaseModule {
             patient_name: "No Name",
             patient_number: "0",
             does_have_mri: false,
+            nativespace : false,
             nonlinear: false,
         };
         
@@ -303,27 +304,27 @@ class diffSpectModule extends BaseModule {
                 'reference' :  'interictal',
                 'target'    :  'ictal',
                 'xform'     :  'intertoictal_xform',
-                'output'    :  'intertoictal_reslice',
+                'output'    :  'ictal_in_inter_reslice',
                 'nonlinear' : false,
             },
             'atlas2mri' : {
                 'reference' : 'ATLAS_spect',
                 'target'    : 'mri',
                 'xform'     : 'atlastomri_xform',
-                'output'    : 'atlastomri_reslice',
+                'output'    : 'mri_in_atlas_reslice',
                 'nonlinear' : true,
             },
             'mri2interictal' : {
                 'reference' : 'mri',
                 'target'    : 'interictal',
-                'output'    : 'mritointerictal_reslice',
+                'output'    : 'interictal_in_mri_reslice',
                 'xform'     : 'mritointerictal_xform',
                 'nonlinear' : false
             },
             'atlas2interictal' : {
                 'reference' : 'ATLAS_spect',
                 'target'    : 'interictal',
-                'output'    : 'atlastointer_reslice',
+                'output'    : 'inter_in_atlas_reslice',
                 'xform'     : 'atlastointer_xform',
                 'nonlinear' : true,
             },
@@ -387,26 +388,27 @@ class diffSpectModule extends BaseModule {
                 'input'    : 'ictal',
                 'xforms'   : [ 'atlastointer_xform', 'intertoictal_xform' ],
                 'reference': 'ATLAS_spect',
-                'output' : 'atlastoictal_reslice',
+                'output' : 'ictal_in_atlas_reslice',
             };
             resliceList['inter2Atlas']= {
                 'input'    : 'interictal',
                 'xforms'   : [ 'atlastointer_xform' ],
                 'reference': 'ATLAS_spect',
-                'output' : 'atlastointer_reslice',
+                'output' : 'inter_in_atlas_reslice',
             };
+
         } else {
             resliceList['ictal2Atlas']=  {
                 'input' : 'ictal',
                 'xforms' : [ 'atlastomri_xform', 'mritointer_xform', 'intertoictal_xform' ],
                 'reference': 'ATLAS_spect',
-                'output' : 'atlastoictal_reslice'
+                'output' : 'ictal_in_atlas_reslice'
             };
             resliceList['inter2Atlas']= {
                 'input' : 'interictal',
                 'xforms' : [ 'atlastomri_xform', 'mritointer_xform' ],
                 'reference': 'ATLAS_spect',
-                'output' : 'atlastointer_reslice',
+                'output' : 'inter_in_atlas_reslice',
             };
         }
 
@@ -414,7 +416,7 @@ class diffSpectModule extends BaseModule {
             'reference' : 'interictal',
             'input' : 'ictal',
             'xforms' : [ 'intertoictal_xform' ],
-            'output' : 'intertoictal_reslice',
+            'output' : 'ictal_in_inter_reslice',
         };
         
         operation =operation || 'ictal2Atlas';
@@ -609,10 +611,15 @@ class diffSpectModule extends BaseModule {
     // processes registered SPECT images and generates hyperperfusion and hypoperfusion stats
     computeSpectNoMRI() {
 
-        let resliced_inter = this.app_state.atlastointer_reslice;
-        let resliced_ictal = this.app_state.atlastoictal_reslice;
-        
-        var results = this.processSpect(resliced_inter, resliced_ictal, this.app_state.ATLAS_stdspect, this.app_state.ATLAS_mask);
+        let results=null;
+        if (!this.app_state.nativespace) {
+            
+            let resliced_inter = this.app_state.inter_in_atlas_reslice;
+            let resliced_ictal = this.app_state.ictal_in_atlas_reslice;
+            results = this.processSpect(resliced_inter, resliced_ictal, this.app_state.ATLAS_stdspect, this.app_state.ATLAS_mask);
+        } else {
+            
+        }
         this.app_state.hyper = results.hyper;
         this.app_state.hypo = results.hypo;
         this.app_state.tmap = results.tmap;

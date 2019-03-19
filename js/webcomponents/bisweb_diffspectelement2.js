@@ -606,7 +606,7 @@ class DiffSpectElement2 extends DualViewerApplicationElement {
         this.spectModule.resliceImages('inter2Atlas',false).then( () => {
             webutil.createAlert('Displaying resliced interictal image over atlas SPECT image');
             this.VIEWERS[0].setimage(this.spectModule.app_state.ATLAS_spect);
-            this.VIEWERS[0].setobjectmap(this.spectModule.app_state.atlastointer_reslice,false,'overlay');
+            this.VIEWERS[0].setobjectmap(this.spectModule.app_state.inter_in_atlas_reslice,false,'overlay');
             this.setViewerOpacity(0.5);
         }).catch( (e) => { errormessage(e); });
                            
@@ -617,7 +617,7 @@ class DiffSpectElement2 extends DualViewerApplicationElement {
         this.spectModule.resliceImages('ictal2Atlas',false).then( () => {
             webutil.createAlert('Displaying resliced ictal image over atlas SPECT image');
             this.VIEWERS[0].setimage(this.spectModule.app_state.ATLAS_spect);
-            this.VIEWERS[0].setobjectmap(this.spectModule.app_state.atlastoictal_reslice,false,'overlay');
+            this.VIEWERS[0].setobjectmap(this.spectModule.app_state.ictal_in_atlas_reslice,false,'overlay');
             this.setViewerOpacity(0.5);
         }).catch( (e) => { errormessage(e); });
     }
@@ -626,7 +626,7 @@ class DiffSpectElement2 extends DualViewerApplicationElement {
         this.spectModule.resliceImages('inter2ictal',false).then( () => {
             webutil.createAlert('Displaying resliced ictal image over interictal image');
             this.VIEWERS[0].setimage(this.spectModule.app_state.interictal);
-            this.VIEWERS[0].setobjectmap(this.spectModule.app_state.intertoictal_reslice,false,'overlay');
+            this.VIEWERS[0].setobjectmap(this.spectModule.app_state.ictal_in_inter_reslice,false,'overlay');
             this.setViewerOpacity(0.5);
         }).catch( (e) => { errormessage(e); });
     }
