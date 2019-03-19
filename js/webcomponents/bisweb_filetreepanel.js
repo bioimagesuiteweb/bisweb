@@ -920,10 +920,14 @@ class FileTreePanel extends HTMLElement {
 
             //create bootbox modal with task select slider
             if (selectedValue.includes('task')) {
+
+                let minSliderValue = 1;
+                let maxSliderValue = 10;
+
                 let sliderInput = $(`<input 
                         class='bootstrap-task-slider'
-                        data-slider-min='1'
-                        data-slider-max='10'
+                        data-slider-min='${minSliderValue}'
+                        data-slider-max='${maxSliderValue}'
                         data-slider-value='1'
                         data-slider-step='1'>
                     </input>`);
@@ -951,8 +955,20 @@ class FileTreePanel extends HTMLElement {
                     });
 
                     box.find('.slider.slider-horizontal').css('width', '75%');                    
-                    let numberInput = $(`<input type='number' class='form-control-sm tag-input' style='display: inline; width: 20%'>`);
+                    let numberInput = $(`<input type='number' class='form-control-sm tag-input' style='float: right; display: inline; width: 20%;'>`);
                     box.find('.modal-body').append(numberInput);
+                    
+                    numberInput.on('keyup change', () => {
+                        console.log('val', numberInput.val());
+                        let val = Math.abs(parseInt(numberInput.val(), 10) || minSliderValue);
+                        val = val > maxSliderValue ? maxSliderValue : val;
+                        box.find('.bootstrap-task-slider').slider('setValue', val);
+                    });
+
+                    box.find('.bootstrap-task-slider').on('slide', (event) => {
+                        console.log('value', event.value);
+                        numberInput.val(event.value);
+                    });
                 });
 
                 box.modal('show');
