@@ -724,25 +724,32 @@ class DiffSpectElement2 extends DualViewerApplicationElement {
         webutil.createMenuItem(sMenu,'');
         
         webutil.createMenuItem(sMenu, 'Register Images using Linear Registration (fast,incaccurate)', () =>  {
-            self.computeAllRegistrations(false);
+            webutil.createAlert('Computing all registrations (linear)','progress',30,0, { 'makeLoadSpinner' : true });
+            setTimeout( () => {
+                self.computeAllRegistrations(false);
+            },100);
         });
 
         webutil.createMenuItem(sMenu, 'Register Images With Nonlinear Registration (slow,accurate)', () =>  {
-            self.computeAllRegistrations(true);
+            webutil.createAlert('Computing all registrations (nonlinear)','progress',30,0, { 'makeLoadSpinner' : true });
+            setTimeout( () => {
+                self.computeAllRegistrations(true);
+            },100);
         });
 
         
         webutil.createMenuItem(sMenu,'');
         webutil.createMenuItem(sMenu, 'Compute Diff Spect MAPS', () =>  {
-            self.spectModule.computeSpect().then( (m) => {
-                webutil.createAlert(m);
-                setTimeout( () => {
+            webutil.createAlert('Computing diff SPECT Maps','progress',30,0, { 'makeLoadSpinner' : true });
+            setTimeout( () => {
+                self.spectModule.computeSpect().then( (m) => {
+                    webutil.createAlert(m);
                     self.showTmapImage();
                     self.generateCharts();
                     self.resultsPanel.show();
+                }).catch( (e) => {
+                    webutil.createAlert(e,true);
                 });
-            }).catch( (e) => {
-                webutil.createAlert(e,true);
             },100);
         });
 

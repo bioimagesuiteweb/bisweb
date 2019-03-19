@@ -26,7 +26,7 @@ const resampleModule = require("resampleImage");
 const biasCorrectModule = require("sliceBiasFieldCorrect");
 const normalizeModule= require('normalizeImage');
 const shiftScaleModule=require('shiftScaleImage');
-
+const smreslice=require('bis_imagesmoothreslice');
 
 /**
  * Runs linear registration on an image set given a reference image and returns the set of transformations required
@@ -47,7 +47,7 @@ class PreprocessOpticalModule extends BaseModule {
             "author": "Xenios Papademetris",
             "version": "1.0",
             "buttonName": "Execute",
-            "shortname" : "mot",
+            "shortname" : "optfixed",
             "inputs": baseutils.getImageToImageInputs('Load the image to be fixed'),
             "outputs": baseutils.getImageToImageOutputs(),
             "params": [
@@ -61,7 +61,8 @@ class PreprocessOpticalModule extends BaseModule {
                     "default": 1.0,
                     "type": 'float',
                     "low":  0.0,
-                    "high": 8.0
+                    "high": 8.0,
+                    "step": 0.5,
                 },
                 {
                     "name": "BiasCorrect",
@@ -84,6 +85,20 @@ class PreprocessOpticalModule extends BaseModule {
                     "default": true,
                 },
                 {
+                    "name": "Resample Factor",
+                    "description": "Resample to this x z resolution",
+                    "priority": 5,
+                    "advanced": false,
+                    "gui": "slider",
+                    "varname": "factor",
+                    "default": 1.0,
+                    "type": 'float',
+                    "low":  1.0,
+                    "high": 4.0,
+                    "step": 0.5,
+                },
+
+                {
                     "name": "RAS",
                     "description": "If true reorient the image to RAS",
                     "priority": 1,
@@ -96,7 +111,7 @@ class PreprocessOpticalModule extends BaseModule {
                 {
                     "name": "Normalize",
                     "description": "If true normalize intensities",
-                    "priority": 5,
+                    "priority": 6,
                     "advanced": false,
                     "gui": "check",
                     "varname": "normalize",
@@ -115,19 +130,37 @@ class PreprocessOpticalModule extends BaseModule {
         return new Promise( (resolve, reject) => {
             let input = this.inputs['input'];
             let debug=vals['debug'];
+            let output=input;
+            
+            let d=input.getDimensions();
+            if (d[0]>512 || d[1]>512 || d[2]>512) {
+
+                let spa=input.getSpacing();
+                for (let i=0;i<=2;i++) {
+                    if (d[i]>512)
+                        spa[i]=spa[i]*d[i]/512;
+                }
+                console.log(' = = = = = = = = = = = = = = = = = = = = = =');
+                console.log('JS Resampling to go below 512 x 512 from',d.join(','));
+                output=smreslice.resampleImage(input,spa,1);
+                console.log(' \t\t output =',output.getDimensions().join(','));
+            }
+            
             biswrap.initialize().then( async () => {
 
                 console.log(' = = = = = = = = = = = = = = = = = = = = = =');
-                console.log('Image Loaded beginning processing ');
+                console.log('Image reorient first ');
 
                 let mod0=new reorientModule();
-                await mod0.execute( {'input' : input },
+                mod0.makeInternal();
+                await mod0.execute( {'input' : output },
                                     { 'orient' : 'RAS', 'debug' : debug });
-                let output=mod0.getOutputObject('output');
+                output=mod0.getOutputObject('output');
     
                 if (vals['biascorrect']>0) {
                     console.log(' = = = = = = = = = = = = = = = = = = = = = =');
                     let mod1=new biasCorrectModule();
+                    mod1.makeInternal();
                     await mod1.execute( { 'input' : output },
                                         { 'axis' : 'z', 'debug' : debug });
                     output=mod1.getOutputObject('output');
@@ -136,6 +169,7 @@ class PreprocessOpticalModule extends BaseModule {
                 if (vals['sigma']>0.1) {
                     console.log(' = = = = = = = = = = = = = = = = = = = = = =');
                     let mod2=new smoothModule();
+                    mod2.makeInternal();
                     let spa=output.getSpacing();
                     await mod2.execute( {'input' : output },
                                         { 'sigma' : spa[0] , 'inmm' : true ,'debug' :debug});
@@ -147,10 +181,13 @@ class PreprocessOpticalModule extends BaseModule {
                     console.log(' = = = = = = = = = = = = = = = = = = = = = =');
                     let spa=output.getSpacing();
                     let mod25=new resampleModule();
+                    mod25.makeInternal();
+                    let s=vals['factor']*spa[2];
                     await mod25.execute( {'input' : output },
-                                         { 'xsp' : spa[2],
-                                           'ysp' : spa[2],
-                                           'zsp' : spa[2], 'debug' :debug });
+                                         { 'xsp' : s,
+                                           'ysp' : s,
+                                           'zsp' : s,
+                                           'debug' :debug });
                     output=mod25.getOutputObject('output');
                 } 
                 
@@ -158,20 +195,23 @@ class PreprocessOpticalModule extends BaseModule {
                 if (vals['normalize']) {
                     console.log(' = = = = = = = = = = = = = = = = = = = = = =');
                     let mod3=new normalizeModule();
+                    mod3.makeInternal();
                     await mod3.execute( {'input' : output },
-                                        {'perhigh' : 0.99,'debug' :debug });
+                                        {'perhigh' : 0.995,'debug' :debug });
                     output=mod3.getOutputObject('output');
                 }
                 
                 console.log(' = = = = = = = = = = = = = = = = = = = = = =');
                 let mod4=new shiftScaleModule();
+                mod4.makeInternal();
                 await mod4.execute( {'input' : output },
                                     { 'shift' : 0,
                                       'scale' : 1.0,
                                       'outtype' : 'UChar'
                                     });
                 output=mod4.getOutputObject('output');
-                
+                console.log(' = = = = = = = = = = = = = = = = = = = = = =');
+                console.log('Output = ',output.getDescription());
                 
                 this.outputs['output'] = output;
                 resolve();

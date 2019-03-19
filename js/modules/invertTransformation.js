@@ -150,6 +150,7 @@ class InvertTransformationModule extends BaseModule {
             }
             
             let dispF=new displacementField();
+            dispF.makeInternal();
             dispF.execute({
                 xform :  xform,
                 input : ref,
@@ -158,6 +159,7 @@ class InvertTransformationModule extends BaseModule {
             }).then( () => {
                 
                 let approx=new approximateField();
+                approx.makeInternal();
                 approx.execute({
                     'input' : dispF.getOutputObject('output')
                 }, {

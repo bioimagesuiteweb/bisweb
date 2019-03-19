@@ -221,6 +221,7 @@ class diffSpectModule extends BaseModule {
         let input = {'reference': reference,
                      'target'   : target}; 
         let linear = new LinearRegistration();
+        linear.makeInternal();
         let output = {
             transformation: null,
             reslice: null
@@ -251,7 +252,8 @@ class diffSpectModule extends BaseModule {
     
     computeNonlinearRegistration(reference, target) {
         
-        let nonlinearRegModule = new NonlinearRegistration();   
+        let nonlinearRegModule = new NonlinearRegistration();
+        nonlinearRegModule.makeInternal();
         let input = { 'reference': reference,
                       'target'   : target};
         
@@ -454,6 +456,7 @@ class diffSpectModule extends BaseModule {
             }
                 
             let reslicer = new ResliceImage();
+            reslicer.makeInternal();
             reslicer.execute(inpObjects).then( () => {
                 this.app_state[outputKey] = reslicer.getOutputObject('output');
                 resolve('Done reslicing');
@@ -618,6 +621,7 @@ class diffSpectModule extends BaseModule {
             let resliced_ictal = this.app_state.ictal_in_atlas_reslice;
             results = this.processSpect(resliced_inter, resliced_ictal, this.app_state.ATLAS_stdspect, this.app_state.ATLAS_mask);
         } else {
+            console.log('Not implemented yet');
             
         }
         this.app_state.hyper = results.hyper;
