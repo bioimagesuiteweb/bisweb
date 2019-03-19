@@ -879,13 +879,33 @@ class FileTreePanel extends HTMLElement {
             currentNode = parentNode;
         }
 
+        name = this.stripTaskName(name);
         let finalname=this.baseDirectory + name;
         if (bis_genericio.getPathSeparator() === '\\') 
             finalname= util.filenameUnixToWindows(finalname);
 
         return finalname;
 
+    }
 
+    /**
+     * 
+     * @param {String} name - A full path for an image file, separated by slashes.
+     */
+    stripTaskName(name) {
+
+        let splitName = name.split('/');
+        let imageName = splitName[splitName.length - 1];
+        let matchString = /^(\(task_\d+|rest_\d+)\)/;
+        let match = matchString.exec(imageName);
+
+        console.log('match', match);
+        if (match) {
+            imageName = imageName.replace(match[0], '');
+            splitName[splitName.length - 1] = imageName;
+        }
+
+        return splitName.join('/');
     }
 
     createTagSelectMenu(options = {}) {
@@ -893,8 +913,8 @@ class FileTreePanel extends HTMLElement {
         let tagSelectMenu = $(
             `<select class='form-control' disabled> 
             <option value='image'>Image</option>
-            <option value='task'>Task Run</option>
-            <option value='rest'>Rest Run</option>
+            <option value='task'>Task</option>
+            <option value='rest'>Rest</option>
             <option value='dwi'>DWI</option>
             <option value='3danat'>3DAnat</option>
             <option value='2danat'>2DAnat</option>
@@ -941,7 +961,11 @@ class FileTreePanel extends HTMLElement {
                         //textbox input should override slider 
                         let result =  box.find('.tag-input')[0].value || box.find('.bootstrap-task-slider').val();
                         console.log('result', result);
-                        this.currentlySelectedNode.original.tag = selectedValue + '_' + result;
+                        let name = selectedValue + '_' + result;
+                        this.currentlySelectedNode.original.tag = name;
+
+                        console.log('currently selected node', this.currentlySelectedNode);
+                        this.currentlySelectedNode.text = '(' + name + ')' + this.currentlySelectedNode.text
                     }
                 });
 
