@@ -53,8 +53,6 @@ class FileTreePanel extends HTMLElement {
             });
 
 
-
-            
             let listElement = this.panel.getWidget();
             let biswebElementMenu = $(`<div class='bisweb-elements-menu'></div>`);
             biswebElementMenu.css({'margin-top' : '15px'});
@@ -233,8 +231,6 @@ class FileTreePanel extends HTMLElement {
                 }
             }
 
-
-            console.log('file tree', fileTree);
 
             //if the file tree is empty, display an error message and return
             if (fileTree.length === 0) {
@@ -520,6 +516,7 @@ class FileTreePanel extends HTMLElement {
             }
             //node is already selected by select_node event handler so nothing to do for selecting a picture
         };
+        
 
         let handleRightClick = (data) => {
             if (data.node.original.type === 'directory') {
@@ -552,7 +549,6 @@ class FileTreePanel extends HTMLElement {
         });
 
         tree.bind('dblclick.jstree', () => {
-            //console.log('dblclick', e);
             handleDblClick();
         });
     }
@@ -958,14 +954,20 @@ class FileTreePanel extends HTMLElement {
                     message : 'Please enter the task number.',
                     size : 'small',
                     callback: () => {
-                        //textbox input should override slider 
+                        //textbox input should override if it's different 
                         let result =  box.find('.tag-input')[0].value || box.find('.bootstrap-task-slider').val();
                         console.log('result', result);
-                        let name = selectedValue + '_' + result;
-                        this.currentlySelectedNode.original.tag = name;
+                        let tagName = selectedValue + '_' + result, displayedName = '(' + tagName + ')';
+                        this.currentlySelectedNode.original.tag = tagName;
 
                         console.log('currently selected node', this.currentlySelectedNode);
-                        this.currentlySelectedNode.text = '(' + name + ')' + this.currentlySelectedNode.text
+                        //update name for underlying data structure and jstree object
+                        this.currentlySelectedNode.original.text = displayedName + this.currentlySelectedNode.text
+                        this.currentlySelectedNode.text = this.currentlySelectedNode.original.text;
+
+                        //update name displayed on file tree panel
+                        let tree = this.panel.widget.find('.file-container').jstree();
+                        tree.redraw(true);
                     }
                 });
 
