@@ -113,11 +113,11 @@ If it returns a descriptive answer, e.g. ``v8.9.0``, then Node is correctly inst
 
 Once both Git and Node are set up, install the rest of the tools as follows: on MacOS or Linux open a terminal and type
 
-    sudo npm install -g gulp mocha jsdoc eslint modclean webpack webpack-cli uglify-es rimraf 
+    sudo npm install -g gulp mocha 
 
 or on Windows type
 
-    npm install -g gulp mocha jsdoc eslint modclean webpack webpack-cli uglify-es rimraf
+    npm install -g gulp mocha rimraf
 
 This will install the core
 tools. Please note that the '-g' flag stands for 'global', which means these
@@ -130,7 +130,7 @@ Next install Electron and its associated tools. As of April 2018 there is bug in
 the electron installer which requires a more complex command:
 
      sudo npm install -g electron --unsafe-perm=true --allow-root
-     sudo npm install -g electron-packager
+
 
 The JS development environment is now complete.
 
