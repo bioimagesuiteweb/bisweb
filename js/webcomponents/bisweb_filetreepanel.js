@@ -5,6 +5,7 @@ const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
 const util=require('bis_util');
 const bis_genericio = require('bis_genericio.js');
+const BiswebMatrix = require('bisweb_matrix.js');
 
 require('jstree');
 require('bootstrap-slider');
@@ -612,39 +613,52 @@ class FileTreePanel extends HTMLElement {
         this.viewerapplication.loadImage(nodeName, viewer);
     }
 
+
+    /**
+     * Loads the data for each task from a file on disk. 
+     * Turns a JSON file into an array of 1's and zeroes denoting regions of task and rest.
+     * 
+     * @param {String} name - The name of the task file.
+     */
     loadStudyTaskData(name) {
 
-        let lowRange = -1, highRange = -1;
+        let lowRange = -1, highRange = -1, parsedData;
         bis_genericio.read(name, false).then((obj) => {
 
             //parse raw task data
             try {
-                let parsedData = JSON.parse(obj.data);
-                let keys = Object.keys(parsedData.tasks);
+                parsedData = JSON.parse(obj.data);
+                let runs = Object.keys(parsedData.runs);
 
-                let parsedRange = {};
-                for (let key of keys) {
+                let parsedRuns = {};
+                for (let key of runs) {
 
-                    let range = parsedData.tasks[key];
-
-                    //data may sometimes come as an array, so parse each entry
-                    parsedRange[key] = parseEntry(range);
-
+                    //parse data for each run
+                    let tasks = Object.keys(parsedData.runs[key]);
+                    for (let task of tasks) {
+                        let range = parsedData.runs[key][task];
+                        if (!parsedRuns[key]) { parsedRuns[key] = {}; }
+                        parsedRuns[key][task] = parseEntry(range);
+                    }
                 }
 
-                this.parsedData = parsedRange;
+                console.log('parsed runs', parsedRuns)
+                this.parsedData = parsedRuns;
 
-                let rangeArray = [], labelsArray = [], tasks = [], range;
-                for (let key of keys) {
-                    range = createArray(parsedRange[key]);
-                    rangeArray.push(range);
-                    labelsArray.push(key);
-                    tasks.push({ 'data': range, 'label': key });
+                //parse ranges into 0 and 1 array
+                let parsedRanges = [], labelsArray = [], tasks = [], range;
+                for (let run of runs) {
+                    range = createArray(parsedRuns[run]);
+                    parsedRanges.push(range);
+                    labelsArray.push(run);
+                    tasks.push({ 'data': range, 'label': run });
                 }
+
+                console.log('parsedRanges', parsedRanges, labelsArray, tasks);
 
                 //array to designate that all the arrays are meant to be included while formatting data
-                let includeArray = new Array(rangeArray.length).fill(1);
-                this.graphelement.formatChartData(rangeArray, includeArray, labelsArray, false);
+                let includeArray = new Array(parsedRanges[0].length).fill(0);
+                this.graphelement.formatChartData(parsedRanges[0], includeArray, labelsArray, false);
 
                 //set the task range for the graph element to use in future images
                 this.graphelement.taskdata =  { 'formattedTasks' : tasks, 'rawTasks' : parsedData};
@@ -673,30 +687,31 @@ class FileTreePanel extends HTMLElement {
             return range;
         }
 
-        function createArray(range) {
-            if (Array.isArray(range[0])) {
-                let taskArrays = [];
-                for (let item of range)
-                    taskArrays.push(createArray(item));
-                
-                let mergedTaskArray = new Array( (highRange - lowRange) + 1).fill(0);
-
-                for (let i = lowRange; i < highRange; i++) {
-                    for (let array of taskArrays) {
-                        if (array[i]) { mergedTaskArray[i] = 1; break; }
-                    }
+        function createArray(run) {
+            let taskArray = new Array(highRange).fill(0);
+            let keys = Object.keys(run);
+            for (let task of keys) {
+                if (Array.isArray(run[task][0])) {
+                    for (let item of run[task])
+                        addToArray(item);
+                } else {
+                    addToArray(run[task]);
                 }
-                return mergedTaskArray;
             }
 
-            //ranges are inclusive, so we have to add one to the task fill range
-            let leftPad = new Array(range[0]).fill(0);
-            let taskFill = new Array(range[1] - range[0] + 1).fill(1);
-            let rightPad = new Array(highRange - range[1]).fill(0);
+            //take the offset from the front before returning
+            taskArray = taskArray.slice(parsedData.offset);
+            return taskArray;
 
-            return leftPad.concat(taskFill, rightPad);
+            function addToArray(range) {
+                for (let i = range[0]; i < range[1]; i++) {
+                    taskArray[i] = 1;
+                }
+            }
         }
+
     }
+
 
     /**
      * Saves a the current list of study files to whichever storage service the user has selected, e.g. the local file system, Amazon AWS, etc.

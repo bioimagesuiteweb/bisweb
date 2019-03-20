@@ -348,6 +348,7 @@ class GrapherModule extends HTMLElement {
                 chartType: 'line'
             };
 
+            console.log('current data', this.currentdata);
             if (this.usesmoothdata) {
                 this.makeSmoothChartData();
             }
