@@ -101,13 +101,13 @@ If it returns a descriptive answer (e.g. ``git version ...``) then Git is proper
 
 It it recommended the install the latest version of Node.js from the
 [Node.js webpage](https://nodejs.org/en/) (download the latest stable version which should be
-8.9.x or newer). The ``node`` and ``npm`` binary may need to be added to ``PATH``.
+10.x LTS). The ``node`` and ``npm`` binary may need to be added to ``PATH``.
 
 To test a correct installation type
 
     node -v
 
-If it returns a descriptive answer, e.g. ``v8.9.0``, then Node is correctly installed.
+If it returns a descriptive answer, e.g. ``v10.15.0``, then Node is correctly installed.
 
 ### Setting up
 
@@ -119,14 +119,13 @@ or on Windows type
 
     npm install -g gulp mocha rimraf
 
-This will install the core
-tools. Please note that the '-g' flag stands for 'global', which means these
-modules are installed in the global package directory
-(e.g. /usr/local/node_modules) instead of the local package directory. If there is an error or the server times out,
-simply re-run the same command until
-it is complete.
+This will install the core tools. Please note that the '-g' flag stands for
+'global', which means these modules are installed in the global package
+directory (e.g. /usr/local/node_modules) instead of the local package
+directory. If there is an error or the server times out, simply re-run the
+same command until it is complete.
 
-Next install Electron and its associated tools. As of April 2018 there is bug in
+Next install Electron and its associated tools. As of April 2018, there is bug in
 the electron installer which requires a more complex command:
 
      sudo npm install -g electron --unsafe-perm=true --allow-root
