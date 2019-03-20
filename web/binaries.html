@@ -39,50 +39,59 @@
       
         <div class="col-xs-12 col-md-12">
         <H3>Current Version</H3>
-        <H4>Version 1.0, Dec 12, 2018</H4>
+        <H3>Version 1.0, Dec 12, 2018</H3>
         
-        <OL>
-          <LI> Desktop Applications</LI>
-          <UL>
-            <LI><a href="http://bisweb.yale.edu/binaries/BioImageSuiteWebInstaller-1.0.0-2018_12_12.exe">Microsoft
-                Windows installer</a> (~ 140 MB)</LI>
-            <LI><a href="http://bisweb.yale.edu/binaries/bisweb_macos_1.0.0_2018_12_12.app.zip">MacOS
-                zipped .app file</a> (~ 140 MB)</LI>
-            <LI><a href="http://bisweb.yale.edu/binaries/bisweb_linux_1.0.0_2018_12_12.zip">Linux
-                (Ubuntu) zip file</a> (~ 140 MB)</LI>
-            
-          </UL>
+        <H4> Desktop Applications</H4>
+        <UL>
+          <LI><a href="http://bisweb.yale.edu/binaries/BioImageSuiteWebInstaller-1.0.0-2018_12_12.exe">Microsoft
+              Windows installer</a> (~ 90 MB)</LI>
+          <LI><a href="http://bisweb.yale.edu/binaries/bisweb_macos_1.0.0_2018_12_12.app.zip">MacOS
+              zipped .app file</a> (~ 170 MB)</LI>
+          <LI><a href="http://bisweb.yale.edu/binaries/bisweb_linux_1.0.0_2018_12_12.zip">Linux
+              (Ubuntu) zip file</a> (~ 106 MB)</LI>
           
-          <BR><p>The desktop applications are based on (and
+        </UL>
+        
+        <BR><p>The desktop applications are based on (and
             include) <a href="https://electronjs.org/">Electron</a>. </p>
-          
-          <LI> Command Line Tools</LI>
-          <UL>
-            <LI> <a href="http://bisweb.yale.edu/binaries/bisweb-1.0.0-js-wasm-12_Dec_2018.tar.gz">All-platform
-                command line tools package.</a> (~ 10 MB)</LI>
-            <LI> <a href="http://bisweb.yale.edu/binaries/bisweb-1.0.0-js-wasm-withtestdata-12_Dec_2018.tar.gz">All-platform
-                command line tools package <EM>with test data</EM>.</a> (~ 50 MB)</LI>
-          </UL>
-          <BR><p>Please note that these distribution should work on both
+        
+        <H4> Command Line Tools</H4>
+        <UL>
+          <LI> <a href="http://bisweb.yale.edu/binaries/bisweb-1.0.0-js-wasm-12_Dec_2018.tar.gz">All-platform
+              command line tools package.</a> (~ 10 MB)</LI>
+          <LI> <a href="http://bisweb.yale.edu/binaries/bisweb-1.0.0-js-wasm-withtestdata-12_Dec_2018.tar.gz">All-platform
+              command line tools package <EM>with test data</EM>.</a> (~ 50 MB)</LI>
+        </UL>
+        <BR><p>Please note that these distribution should work on both
             Windows, Mac OS and Ubuntu. In all three cases you will need to install
             <a href="https://nodejs.org/en/">Node.js v8.x or v10.x LTS</a>.</p>
           
-        </OL>
         <HR>
         
-
-        <H4>Developement Version 1.1.0a, Jan 2019</H4>
+        <H3>Developement Version 1.1.0a9, March 2019</H3>
         
-        <LI> Command Line Tools</LI>
+        
+        <H4> Desktop Applications</H4>
+        <P>These may be obtained
+        from <a href="https://www.nitrc.org/frs/?group_id=51">our NITRC page</a>.</P>
+        <BR><UL>
+            <LI><a href="https://www.nitrc.org/frs/download.php/11168/BioImageSuiteWebInstaller-1.1.0a9-2019_03_20.exe">Microsoft
+                Windows installer</a> (~ 90 MB)</LI>
+            <LI><a href="https://www.nitrc.org/frs/download.php/11170/bisweb_macos_1.1.0a9_2019_03_20.app.zip">MacOS
+                zipped .app file</a> (~ 175 MB)</LI>
+            <LI><a href="https://www.nitrc.org/frs/download.php/11169/bisweb_linux_1.1.0a9_2019_03_20.zip">Linux
+                (Ubuntu) zip file</a> (~ 105 MB)</LI>
+            
+          </UL>
+        <HR width="50%">
+        <H4> Command Line Tools</H4>
         <BR>
         <p>Please note that these distribution should work on both
           Windows, Mac OS and Ubuntu. In all three cases you will need to install
           <a href="https://nodejs.org/en/">Node.js v10.x LTS</a>.</p>
         <p> To install, use npm. To install this globally (recommanded), open a
           console and then type:
-          <PRE>
-            sudo npm install -g biswebnode
-          </PRE>
+          <PRE>sudo npm install -g biswebnode</PRE>
           
         <p>(On Ms-Wndows omit the sudo part).</p><BR>
         
@@ -97,7 +106,7 @@
         <p> To uninstalll type:
           <PRE>sudo npm remove -g biswebnode</PRE>
         </p>
-        <HR>
+        <HR width="50%">
         
         <p> You may obtain the source code for this application from
           our <a href="https://github.com/bioimagesuiteweb/bisweb"
@@ -106,22 +115,23 @@
         </div>
     </div>
 
+    <HR>
+
     <div class="container-fluid">
 
-      <HR>
 
       <div class="row">
         <div class="col-xs-12 col-sm-6 col-md-5 col-lg-4"   style="background-color:rgb(192,128,128); height:90px;">
           <img src="./images/bislogomed.png" height="60px" style="margin:10px" alt="oldlogo">
         </div>
         <div class="col-xs-12 col-sm-6 col-md-7 col-lg-7" style="background-color:rgb(192,128,128); color:white; height:90px;">
-          <H4>
+          <H3>
           If you are looking for the desktop C++/TCL 
           <a href="https://medicine.yale.edu/bioimaging/suite/">legacy version of
             Yale BioImage Suite</a> it may be
           downloaded from this <a href="https://medicine.yale.edu/bioimaging/suite/lands/">webpage</a>.
           <BR> <BR>
-          </H4>
+          </H3>
         </div>
       </div>
     </div>
