@@ -30,7 +30,7 @@ const numeric=require('numeric');
 class InvertTransformationModule extends BaseModule {
     constructor() {
         super();
-        this.name = 'displacementField';
+        this.name = 'invertTransformation';
     }
 
     createDescription() {
@@ -39,7 +39,7 @@ class InvertTransformationModule extends BaseModule {
             "description": "Calculates the inverse transformatio for a given transformation",
             "author": "Xenios Papademetris",
             "version": "1.0",
-            "buttonName": "Calculate",
+            "buttonName": "Invert",
             "shortname" : "inv",
             "params": [
                 {
@@ -98,7 +98,22 @@ class InvertTransformationModule extends BaseModule {
                     'varname': 'input',
                     'required' : true,
                     'shortname' : 'i'
+                }, {
+                    'type': 'transform',
+                    'name': 'Transformation 2',
+                    'description': 'The second transformation to combine with first',
+                    'varname': 'xform2',
+                    'required' : false,
+                    'shortname' : 'y'
                 },{
+                    'type': 'transform',
+                    'name': 'Transformation 3',
+                    'description': 'The third transformation to combine with first and second',
+                    'varname': 'xform3',
+                    'required' : false,
+                    'shortname' : 'z'
+                },
+                {
                     'type': 'image',
                     'name': 'Ref Image',
                     'description': 'The Reference image (defines the coordinate space)',
@@ -134,11 +149,39 @@ class InvertTransformationModule extends BaseModule {
 
         return new Promise((resolve, reject) => {
             console.log('Name = ',xform.constructor.name);
-            
-            if (xform.constructor.name==="BisWebLinearTransformation") {
+
+            let xform2=this.inputs['xform2'] || null;
+            let xform3=this.inputs['xform3'] || null;
+
+            let coll=[ xform];
+            if (xform2!==null)
+                coll.push(xform2);
+            if (xform3!==null)
+                coll.push(xform2);
+
+            let score=0;
+            for (let i=0;i<coll.length;i++) {
+                if (coll[i].constructor.name==="BisWebLinearTransformation") {
+                    score++;
+                }
+            }
+
+            if (score===coll.length) {
+                console.log('All linear numxforms=',coll.length,'score=',score);
+
+                let out=coll[0].getMatrix();
+                if (coll.length>1)  {
+                    out=numeric.dot(coll[1].getMatrix(),coll[0].getMatrix());
+
+                    
+                    if (coll.length>2) {
+                        let tmp=out;
+                        out=numeric.dot(coll[2].getMatrix(),tmp);
+                    }
+                }
                 
                 this.outputs['output']=new BisWebLinearTransformation();
-                let minv=numeric.inv(xform.getMatrix());
+                let minv=numeric.inv(out);
                 this.outputs['output'].setMatrix(minv);
                 resolve();
                 return;
@@ -153,6 +196,8 @@ class InvertTransformationModule extends BaseModule {
             dispF.makeInternal();
             dispF.execute({
                 xform :  xform,
+                xform2: xform2,
+                xform3: xform3,
                 input : ref,
             },{
                 debug : vals['debug']

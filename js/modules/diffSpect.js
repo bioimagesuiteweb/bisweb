@@ -22,6 +22,7 @@ const baseutils = require('baseutils.js');
 const LinearRegistration = require('linearRegistration');
 const ResliceImage = require('resliceImage');
 const NonlinearRegistration = require('nonlinearRegistration');
+const invertTransformation = require('invertTransformation');
 const bisimagesmoothreslice = require('bis_imagesmoothreslice');
 const BisWebImage = require('bisweb_image');
 const genericio= require('bis_genericio');
@@ -49,7 +50,8 @@ class diffSpectModule extends BaseModule {
             'ictal',
             'interictal',
             'tmap',
-            'mri'
+            'mri',
+            'nativetmap'
         ];
         this.xformList = [
             'intertoictal_xform',
@@ -95,7 +97,6 @@ class diffSpectModule extends BaseModule {
             patient_name: "No Name",
             patient_number: "0",
             does_have_mri: false,
-            nativespace : false,
             nonlinear: false,
         };
         
@@ -141,42 +142,50 @@ class diffSpectModule extends BaseModule {
                 'required': false,
                 'guiviewerinput' : 'image',
                 'guiviewer'  : 'viewer1',
-            }],
-            "outputs": baseutils.getImageToImageOutputs(),
-            "params": [
-                {
-                    "name": "NonLinear",
-                    "description": "If true use nonlinear registration",
-                    "priority": 4,
-                    "advanced": false,
-                    "gui": "check",
-                    "varname": "nonlinear",
-                    "type": 'boolean',
-                    "default": false,
-                },
-                {
-                    "name": "UseMRI",
-                    "description": "If true use MRI image",
-                    "priority": 1,
-                    "advanced": false,
-                    "gui": "check",
-                    "varname": "usemri",
-                    "type": 'boolean',
-                    "default": false,
-                },
-                {
-                    "name": "Native",
-                    "description": "If true output tmap in native space",
-                    "priority": 2,
-                    "advanced": false,
-                    "gui": "check",
-                    "varname": "native",
-                    "type": 'boolean',
-                    "default": false,
-                }
-            ],
+            }]
         };
 
+        let out= baseutils.getImageToImageOutputs('diff SPECT Tmap in Atlas Space')[0];
+        let out2=baseutils.getImageToImageOutputs('diff SPECT Tmap in Native Space')[0];
+
+        out2['required']=false;
+        out2['varname']='output2';
+        delete out2.shortname;
+        des.outputs = [  out,out2];
+
+        des.params= [
+            {
+                "name": "NonLinear",
+                "description": "If true use nonlinear registration",
+                "priority": 4,
+                "advanced": false,
+                "gui": "check",
+                "varname": "nonlinear",
+                "type": 'boolean',
+                "default": false,
+            },
+            {
+                "name": "UseMRI",
+                "description": "If true use MRI image",
+                "priority": 1,
+                "advanced": false,
+                "gui": "check",
+                "varname": "usemri",
+                "type": 'boolean',
+                "default": false,
+            },
+            {
+                "name": "Native",
+                "description": "If true output tmap in native space",
+                "priority": 2,
+                "advanced": false,
+                "gui": "check",
+                "varname": "native",
+                "type": 'boolean',
+                "default": false,
+            }
+        ];
+        
         des.outputs.push({
             'type' : 'text',
             'name' : 'Results',
@@ -610,25 +619,46 @@ class diffSpectModule extends BaseModule {
         };
     }
 
-    // ---------------------------------------------------------------------------------------
-    // processes registered SPECT images and generates hyperperfusion and hypoperfusion stats
-    computeSpectNoMRI() {
+    mapTmapToNativeSpace() {
 
-        let results=null;
-        if (!this.app_state.nativespace) {
+        return new Promise( (resolve,reject) => {
+
+            if (this.app_state.tmap === null) {
+                console.log('No tmap in memory');
+                reject('No tmap in memory. Compute this first.');
+                return;
+            }
             
-            let resliced_inter = this.app_state.inter_in_atlas_reslice;
-            let resliced_ictal = this.app_state.ictal_in_atlas_reslice;
-            results = this.processSpect(resliced_inter, resliced_ictal, this.app_state.ATLAS_stdspect, this.app_state.ATLAS_mask);
-        } else {
-            console.log('Not implemented yet');
+            let hasmri=this.app_state.does_have_mri;
             
-        }
-        this.app_state.hyper = results.hyper;
-        this.app_state.hypo = results.hypo;
-        this.app_state.tmap = results.tmap;
+            let inputs= {};
+            if (hasmri) {
+                inputs['input']=this.app_state['atlastomri_xform'];
+                inputs['xform2']=this.app_state['mritointer_xform'];
+                inputs['ref']=this.app_state.mri;
+            } else {
+                inputs['input']=this.app_state['atlastointer_xform'];
+                inputs['ref']=this.app_state.interictal;
+            }
+            
+            let invModule=new invertTransformation();
+            invModule.execute(inputs).then( () => {
+
+                let inverse=invModule.getOutputObject('output');
+                let reslicer = new ResliceImage();
+                reslicer.makeInternal();
+                reslicer.execute({ 'input' : this.app_state.tmap ,
+                                   'reference' : inputs['ref'],
+                                   'xform' : inverse
+                                 },{ 'interpolation' : 1 }).then(
+                                     () => {
+                                         this.app_state['nativetmap'] = reslicer.getOutputObject('output');
+                                         this.outputs['output2']=this.app_state['nativetmap'];
+                                         resolve('Mapped tmap to native space done');
+                                     }).catch( (e) => {  console.log(e,e.stack);         reject(e);          });
+            }).catch( (e) => {  console.log(e,e.stack);         reject(e);          });
+        });
     }
-    
     
     // button callback for computing diff spect data
     computeSpect() {
@@ -637,7 +667,14 @@ class diffSpectModule extends BaseModule {
             this.resliceImages('ictal2Atlas').then( () => {
                 this.resliceImages('inter2Atlas').then( () => {
                     this.alertFunction('Computing diff SPECT analysis',"progress",30);
-                    this.computeSpectNoMRI();
+                    let resliced_inter = this.app_state.inter_in_atlas_reslice;
+                    let resliced_ictal = this.app_state.ictal_in_atlas_reslice;
+                    let results = this.processSpect(resliced_inter, resliced_ictal, this.app_state.ATLAS_stdspect, this.app_state.ATLAS_mask);
+                    
+                    this.app_state.hyper = results.hyper;
+                    this.app_state.hypo = results.hypo;
+                    this.app_state.tmap = results.tmap;
+
                     resolve('Compute diff SPECT analysis done');
                 });
             }).catch( (e) => {
@@ -677,6 +714,9 @@ class diffSpectModule extends BaseModule {
     
     directInvokeAlgorithm(vals) {
         console.log('diffSpect invoking with vals', JSON.stringify(vals));
+        if (vals['native']) {
+            console.log('Will do native');
+        }
 
         // Set Inputs
         this.app_state.interictal=this.inputs['interictal'];
@@ -695,7 +735,18 @@ class diffSpectModule extends BaseModule {
                         this.outputs['output']=this.app_state.tmap;
                         console.log('Hyper=',this.app_state.hyper);
                         this.outputs['logoutput']=new BisWebTextObject(this.createTables());
-                        resolve();
+                        console.log('-----------------------------------------');
+                        console.log('-----------------------------------------');
+                        console.log('Out2=',this.outputs['output2']);
+                        if (vals['native']) {
+                            this.mapTmapToNativeSpace().then( (m) => {
+                                console.log('Mapped',m);
+                                console.log('Out2=',this.outputs['output2'].getDescription());
+                                resolve();
+                            }).catch( (e) => { reject(e); });
+                        } else {
+                            resolve();
+                        }
                     }).catch( (e) => { reject(e); });
                 }).catch( (e) => { reject(e); });
             }).catch( (e) => { reject(e); });

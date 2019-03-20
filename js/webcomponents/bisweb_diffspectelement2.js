@@ -336,6 +336,9 @@ class DiffSpectElement2 extends DualViewerApplicationElement {
                             {
                                 'text': 'Tmap Image'
                             },
+                            {
+                                'text': 'Tmap Image (Native Space)'
+                            },
                             
                         ]
                     }
@@ -417,6 +420,14 @@ class DiffSpectElement2 extends DualViewerApplicationElement {
                             bootbox.alert('No diff-SPECT tmap image. You need to compute this first.');
                         }
                     }
+
+                    if (node.text === 'Tmap Image (Native Space)') {
+                        if (self.spectModule.app_state.nativetmap !== null) {
+                            self.showNativeTmapImage();
+                        } else  {
+                            bootbox.alert('No diff-SPECT tmap image in native space in memory. You need to compute this first.');
+                        }
+                    }
                     
                 },
             },
@@ -448,6 +459,7 @@ class DiffSpectElement2 extends DualViewerApplicationElement {
         if (node.text !== 'Interictal'  &&
             node.text !== 'Ictal'       &&
             node.text !== 'Tmap Image'  &&
+            node.text !== 'Tmap Image (Native Space)' &&
             node.text !== 'MRI')        delete items.showimage;
         
         if (node.text !== 'ATLAS to Interictal' &&
@@ -646,6 +658,27 @@ class DiffSpectElement2 extends DualViewerApplicationElement {
         }
     }
 
+    showNativeTmapImage() {
+        if (this.spectModule.app_state.nativetmap) {
+
+            if (this.spectModule.app_state.does_have_mri) {
+                webutil.createAlert('Displaying diff-spect TMAP over Native MRI image');
+                this.VIEWERS[0].setimage(this.spectModule.app_state.mri);
+            } else {
+                webutil.createAlert('Displaying diff-spect TMAP over Interictal image');
+                this.VIEWERS[0].setimage(this.spectModule.app_state.interictal);
+            }
+            this.VIEWERS[0].setobjectmap(this.spectModule.app_state.nativetmap, false, "Overlay");
+            let cmapcontrol=this.VIEWERS[0].getColormapController();
+            let elem=cmapcontrol.getElementState();
+            elem.minth=1.0;
+            cmapcontrol.setElementState(elem);
+            cmapcontrol.updateTransferFunctions(true);
+        } else {
+            errormessage('No native space tmap in memory');
+        }
+    }
+
     computeAllRegistrations(nonlinear=false) {
 
         this.spectModule.app_state.nonlinear = nonlinear;
@@ -752,6 +785,20 @@ class DiffSpectElement2 extends DualViewerApplicationElement {
                 });
             },100);
         });
+        webutil.createMenuItem(sMenu, 'Map TMAP to Native Space', () =>  {
+            webutil.createAlert('Mapping TMAP to Native Space','progress',30,0, { 'makeLoadSpinner' : true });
+            setTimeout( () => {
+                self.spectModule.mapTmapToNativeSpace().then( (m) => {
+                    webutil.createAlert(m);
+                    self.showNativeTmapImage();
+                    self.resultsPanel.hide();
+                }).catch( (e) => {
+                    webutil.createAlert(e,true);
+                });
+            },100);
+        });
+                    
+
 
         webutil.createMenuItem(sMenu,'');
         webutil.createMenuItem(sMenu,'Show diff SPECT Data Tree(Images)',() => {
