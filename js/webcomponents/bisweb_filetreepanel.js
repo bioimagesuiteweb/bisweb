@@ -648,6 +648,7 @@ class FileTreePanel extends HTMLElement {
                 //parse ranges into 0 and 1 array
                 let parsedRanges = [], labelsArray = [], tasks = [], range;
                 for (let run of runs) {
+                    console.log('run', run);
                     range = createArray(parsedRuns[run]);
                     parsedRanges.push(range);
                     labelsArray.push(run);
@@ -657,8 +658,8 @@ class FileTreePanel extends HTMLElement {
                 console.log('parsedRanges', parsedRanges, labelsArray, tasks);
 
                 //array to designate that all the arrays are meant to be included while formatting data
-                let includeArray = new Array(parsedRanges[0].length).fill(0);
-                this.graphelement.formatChartData(parsedRanges[0], includeArray, labelsArray, false);
+                let includeArray = new Array(parsedRanges.length).fill(1);
+                this.graphelement.formatChartData(parsedRanges, includeArray, labelsArray, false);
 
                 //set the task range for the graph element to use in future images
                 this.graphelement.taskdata =  { 'formattedTasks' : tasks, 'rawTasks' : parsedData};
