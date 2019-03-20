@@ -161,9 +161,8 @@ class InvertTransformationModule extends BaseModule {
 
             let score=0;
             for (let i=0;i<coll.length;i++) {
-                if (coll[i].constructor.name==="BisWebLinearTransformation") {
+                if (coll[i].getMatrix !== undefined)
                     score++;
-                }
             }
 
             if (score===coll.length) {

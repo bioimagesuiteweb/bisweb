@@ -305,7 +305,7 @@ var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,
     
     if (minify) {
         let ijob=outdir+tmpout;
-        let cmd2=`${uglifycmd} ${ijob} -c  -o ${ojob}`;
+        let cmd2=`${uglifycmd} ${ijob} --keep-classnames --keep-fnames -c  -o ${ojob}`;
         if (debug)
             cmd2+=' --verbose';
         cmdlist.push(cmd2);
