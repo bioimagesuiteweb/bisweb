@@ -120,11 +120,27 @@ class GrapherModule extends HTMLElement {
 
         //settings button should be attached next to close button
         let settingsButton = $(`<button type='button' class='bistoggle' style='float:right; -webkit-user-drag: none;'></button>'`);
+        let dropdownButton = $(`
+        <div class='btn-group dropleft' style='float: right;'>
+            <button type='button dropdown-toggle' data-toggle='dropdown' class='bistoggle task-selector' style='float:right; -webkit-user-drag: none;'>
+            <span class='glyphicon glyphicon-chevron-down'></span>
+            </button>    
+            <div class='dropdown-menu'>
+                <a class='dropdown-item' href='#'>Item<br></a>
+                <a class='dropdown-item' href='#'>Another Item<br></a>
+                <a class='dropdown-item' href='#'>Yet Another Item<br></a>
+                <a class='dropdown-item' href='#'>Just One More Item<br></a>
+            </div> 
+        </div>
+        `);
+
         let gearIcon = $(`<span class='glyphicon glyphicon-cog'></span>`);
         settingsButton.append(gearIcon);
 
         let closeButton = this.graphWindow.getHeader().find('.bistoggle');
         settingsButton.insertAfter(closeButton);
+        dropdownButton.insertAfter(settingsButton);
+
         settingsButton.on('click', () => { this.createSettingsModal(); });
 
         if (showbuttons) {
@@ -541,7 +557,6 @@ class GrapherModule extends HTMLElement {
             }
         }
 
-        console.log('tasks', tasks);
         let annotations = [], keys = Object.keys(tasks.rawTasks.runs[tasks.formattedTasks[0].label]), index = 1;
         for (let key of keys) {
             let task = tasks.formattedTasks[0].regions[key];
