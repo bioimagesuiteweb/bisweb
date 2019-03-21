@@ -541,9 +541,10 @@ class GrapherModule extends HTMLElement {
             }
         }
 
-        let annotations = [], keys = Object.keys(tasks.rawTasks.tasks), index = 1;
+        console.log('tasks', tasks);
+        let annotations = [], keys = Object.keys(tasks.rawTasks.runs[tasks.formattedTasks[0].label]), index = 1;
         for (let key of keys) {
-            let task = tasks.rawTasks.tasks[key];
+            let task = tasks.formattedTasks[0].regions[key];
             let cl = util.objectmapcolormap[index];
             cl = 'rgba(' + cl[0] + ', ' + cl[1] + ', ' + cl[2] + ', 0.2)';
 
@@ -596,9 +597,6 @@ class GrapherModule extends HTMLElement {
                 this.fillPlugin({
                     'frame' : frame
                 }),
-                /*this.lineHoverPlugin( { 
-                    'frame' : frame
-                }),*/
                 Taucharts.api.plugins.get('legend')({
                     'position' : 'top'
                 }),

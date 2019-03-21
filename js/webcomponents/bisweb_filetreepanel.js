@@ -652,7 +652,7 @@ class FileTreePanel extends HTMLElement {
                     range = createArray(parsedRuns[run]);
                     parsedRanges.push(range);
                     labelsArray.push(run);
-                    tasks.push({ 'data': range, 'label': run });
+                    tasks.push({ 'data': range, 'label': run, 'regions' :  parsedData.runs[run]});
                 }
 
                 console.log('parsedRanges', parsedRanges, labelsArray, tasks);
