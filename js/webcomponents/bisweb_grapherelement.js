@@ -125,11 +125,11 @@ class GrapherModule extends HTMLElement {
             <button type='button dropdown-toggle' data-toggle='dropdown' class='bistoggle task-selector' style='float:right; -webkit-user-drag: none;'>
             <span class='glyphicon glyphicon-chevron-down'></span>
             </button>    
-            <div class='dropdown-menu'>
-                <a class='dropdown-item' href='#'>Item<br></a>
-                <a class='dropdown-item' href='#'>Another Item<br></a>
-                <a class='dropdown-item' href='#'>Yet Another Item<br></a>
-                <a class='dropdown-item' href='#'>Just One More Item<br></a>
+            <ul class='dropdown-menu'>
+                <li><a class='dropdown-item' href='#'>Item<br></a></li>
+                <li><a class='dropdown-item' href='#'>Another Item<br></a></li>
+                <li><a class='dropdown-item' href='#'>One More Item<br></a></li>
+                <li><a class='dropdown-item' href='#'>An Item Too<br></a></li>
             </div> 
         </div>
         `);
