@@ -122,7 +122,7 @@ class GrapherModule extends HTMLElement {
         let settingsButton = $(`<button type='button' class='bistoggle' style='float:right; -webkit-user-drag: none;'></button>'`);
         let dropdownButton = $(`
         <div class='btn-group dropleft' style='float: right;'>
-            <button type='button dropdown-toggle' data-toggle='dropdown' class='bistoggle task-selector' style='float:right; -webkit-user-drag: none;'>
+            <button type='button dropdown-toggle' data-toggle='dropdown' class='bistoggle task-selector' style='float: right; visibility: hidden; -webkit-user-drag: none;'>
             <span class='glyphicon glyphicon-chevron-down'></span>
             </button>    
             <ul class='dropdown-menu'>
@@ -433,6 +433,10 @@ class GrapherModule extends HTMLElement {
         else { this.settings = settings; }
 
         this.renderGraphFrame();
+        
+        console.log('settings.chart', settings.charts);
+        console.log('window', this.graphWindow.getHeader());
+
         let frame = document.getElementById(this.graphcanvasid);
 
         if (settings.makeTaskChart && chartData.chartType === 'line') {
@@ -549,6 +553,11 @@ class GrapherModule extends HTMLElement {
     }
 
     createTaskChart(data, colors, frame, tasks, settings) {
+
+        //hide dropdown menu if it shouldn't be used
+        if (settings.charts) { $(this.graphWindow.getHeader()).find('.task-selector').css('visibility', 'inherit'); }
+        else {$(this.graphWindow.getHeader()).find('.task-selector').css('visibility', 'hidden'); }
+
 
         //construct task labels and regions for tauchart
         for (let task of tasks.formattedTasks) {

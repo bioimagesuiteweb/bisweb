@@ -34,6 +34,7 @@ class FileTreePanel extends HTMLElement {
         this.layoutid = this.getAttribute('bis-layoutwidgetid');
         this.viewerappid = this.getAttribute('bis-viewerapplicationid');
         this.graphelementid = this.getAttribute('bis-graphelement');
+        this.painttoolid = this.getAttribute('bis-painttool');
 
         bis_webutil.runAfterAllLoaded(() => {
 
@@ -42,6 +43,7 @@ class FileTreePanel extends HTMLElement {
             this.layout = document.querySelector(this.layoutid);
             this.viewerapplication = document.querySelector(this.viewerappid);
             this.graphelement = document.querySelector(this.graphelementid);
+            this.painttool = document.querySelector(this.painttoolid) || null;
             this.popoverDisplayed = false;
             this.staticTagSelectMenu = null;
 
@@ -342,11 +344,8 @@ class FileTreePanel extends HTMLElement {
         tree.jstree(true).settings.contextmenu.items = newSettings;
         tree.jstree(true).redraw(true);
 
-        let loadImageButton = this.panel.widget.find('.load-image-button');
-        loadImageButton.prop('disabled', false);
-
-        let saveStudyButton = this.panel.widget.find('.save-study-button');
-        saveStudyButton.prop('disabled', false);
+        let enabledButtons = this.panel.widget.find('.bisweb-load-enable');
+        enabledButtons.prop('disabled', false);
 
         if (!this.renderedTagSelectMenu) {
 
@@ -357,7 +356,7 @@ class FileTreePanel extends HTMLElement {
 
             let elementsDiv = $('.bisweb-elements-menu');
 
-            let loadImageButton = $(`<button type='button' class='btn btn-success btn-sm load-image-button' disabled>Load image</button>`);
+            let loadImageButton = $(`<button type='button' class='btn btn-success btn-sm bisweb-load-enable' disabled>Load image</button>`);
             loadImageButton.on('click', () => {
                 this.loadImageFromTree();
             });
@@ -400,12 +399,17 @@ class FileTreePanel extends HTMLElement {
                 <div class='btn-group top-bar' role='group' aria-label='Viewer Buttons' style='float: left;'>
                 </div>
                 <br>
+                <div class='btn-group middle-bar' role='group' aria-label='Viewer Buttons' style='float: left;'>
+                </div>
+                <br> 
                 <div class='btn-group bottom-bar' role='group' aria-label='Viewer Buttons' style='float: left;'>
                 </div>
             </div>
         `);
         let topButtonBar = buttonGroupDisplay.find('.top-bar');
+        let middleButtonBar = buttonGroupDisplay.find('.middle-bar');
         let bottomButtonBar = buttonGroupDisplay.find('.bottom-bar');
+
 
         //Route study load and save through bis_webfileutil file callbacks
         let loadStudyDirectoryButton = bis_webfileutil.createFileButton({
@@ -490,15 +494,23 @@ class FileTreePanel extends HTMLElement {
             this.graphelement.taskdata = null;
         });
 
+        let plotTasksButton = bis_webutil.createbutton({ 'name' : 'Plot task charts', 'type' : 'info'});
+        plotTasksButton.on('click', () => {
+            this.parseTaskImagesFromTree();
+        });
 
-        saveStudyButton.addClass('save-study-button');
+
+        saveStudyButton.addClass('bisweb-load-enable');
+        plotTasksButton.addClass('bisweb-load-enable')
         saveStudyButton.prop('disabled', 'true');
+        plotTasksButton.prop('disabled', 'true');
 
         topButtonBar.append(loadStudyDirectoryButton);
         topButtonBar.append(loadStudyJSONButton);
-        bottomButtonBar.append(importTaskButton);
-        bottomButtonBar.append(clearTaskButton);
-        bottomButtonBar.append(saveStudyButton);
+        middleButtonBar.append(importTaskButton);
+        middleButtonBar.append(clearTaskButton);
+        middleButtonBar.append(saveStudyButton);
+        bottomButtonBar.append(plotTasksButton);
 
         listElement.append(buttonGroupDisplay);
     }
@@ -763,6 +775,11 @@ class FileTreePanel extends HTMLElement {
             console.log('an error occured while saving to disk', e);
             bis_webutil.createAlert('An error occured while saving the study files to disk.', false);
         });
+    }
+
+    parseTaskImagesFromTree() {
+        let tree = this.fileTree;
+        console.log('tree', tree);
     }
 
     /**
