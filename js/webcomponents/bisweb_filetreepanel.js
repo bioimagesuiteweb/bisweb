@@ -345,6 +345,7 @@ class FileTreePanel extends HTMLElement {
         tree.jstree(true).redraw(true);
 
         let enabledButtons = this.panel.widget.find('.bisweb-load-enable');
+        console.log('widget', this.panel.widget);
         enabledButtons.prop('disabled', false);
 
         if (!this.renderedTagSelectMenu) {
@@ -733,18 +734,8 @@ class FileTreePanel extends HTMLElement {
      * @param {String} filepath - The path to save the file to. 
      */
     exportStudy(filepath) {
-
-        console.log('Filepath=',filepath);        
         
-        //reconstruct tree from jstree
-        let rawTree = this.fileTree.jstree(true);
-        let rawTreeJSON = rawTree.get_json('#');
-        let reconstructedTree = [];
-        
-        //console.log('rawTree', rawTree);
-        for (let item of rawTreeJSON) {
-            fillTreeNode(rawTree, item, reconstructedTree);
-        }
+        let reconstructedTree = this.parseTreeToJSON();
         
         //console.log('reconstructed tree', reconstructedTree);
         console.log('Base Directory', this.baseDirectory,filepath);
@@ -778,8 +769,57 @@ class FileTreePanel extends HTMLElement {
     }
 
     parseTaskImagesFromTree() {
-        let tree = this.fileTree;
-        console.log('tree', tree);
+        let reconstructedTree = this.parseTreeToJSON();
+        console.log('tree', reconstructedTree);
+        let taglist = {}, duplicateTags = false;
+
+        checkForDuplicateTags(reconstructedTree);
+        console.log('tags', duplicateTags, taglist);
+
+        if (duplicateTags) { 
+            bis_webutil.createAlert('Some files in the study have the same tag, e.g. there might be two tagged as \'task_2\'. Please correct this before continuing.', true);
+        }
+
+        //TODO: Change prepending '(task)' to image so that clearing the tag clears the name too
+
+        for (let key of Object.keys(taglist)) {
+            let img = bis_genericio.read(this.constructNodeName(taglist[key]));
+            console.log('img', img);
+        }
+        
+        //Checks for duplicate tags by filling a dictionary with the tags seen so far. If it encounters a duplicate it returns false.
+        function checkForDuplicateTags(node) {
+            console.log('node', node);
+            
+            for (let item of node) {
+                if (item.tag) { 
+                    if (!taglist[item.tag]) { taglist[item.tag] = item; }
+                    else if (item.tag.includes('task') || item.tag.includes('rest')) { duplicateTags = true; return; }
+                }
+
+                if (item.children) {
+                    checkForDuplicateTags(item.children);
+                }
+            }
+        }
+    }
+
+    /**
+     * Parses the jstree object into a hierarchical object in which child objects are stored recursively inside their parent nodes. 
+     * Used when exporting the file tree or when the tree needs to be traversed to ensure certain properties, e.g. to determine which nodes are tagged.
+     */
+    parseTreeToJSON() {
+        //reconstruct tree from jstree
+        let rawTree = this.fileTree.jstree(true);
+        let rawTreeJSON = rawTree.get_json('#');
+        let reconstructedTree = [];
+        
+        //console.log('rawTree', rawTree);
+        for (let item of rawTreeJSON) {
+            fillTreeNode(rawTree, item, reconstructedTree);
+        }
+
+        return reconstructedTree;
     }
 
     /**
@@ -895,10 +935,20 @@ class FileTreePanel extends HTMLElement {
         }
     }
 
-    constructNodeName() {
+    /**
+     * Constructs the full filename of the node based on
+     * @param {Object} node - Object describing the jstree node. If not specified this will infer that the currently selected node is to be used. 
+     */
+    constructNodeName(node = null) {
+
         //construct the full name out of the current node 
         let name = '', currentNode = this.currentlySelectedNode;
         let tree = this.panel.widget.find('.file-container').jstree();
+
+        if (node) { 
+            currentNode = tree.get_node(node.id);
+            console.log('current node', currentNode);
+        }  
 
         while (currentNode.parent) {
             name = '/' + currentNode.text + name;
@@ -1081,6 +1131,7 @@ let fillTreeNode = (rawTree, node, parentNode = null) => {
     let item = rawTree.get_node(node.id);
     let newNode = item.original;
 
+    newNode.id = node.id;
     if (item.children.length > 0) {
         newNode.children = [];
         for (let child of node.children) {
