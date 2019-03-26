@@ -549,7 +549,7 @@ class FileTreePanel extends HTMLElement {
         listContainer.on('select_node.jstree', (event, data) => {
 
             $('.bisweb-elements-menu').find('select').prop('disabled', '');
-            $('.load-image-button').prop('disabled', '');
+            $('.bisweb-load-enable').prop('disabled', '');
 
             this.currentlySelectedNode = data.node;
 
@@ -781,15 +781,22 @@ class FileTreePanel extends HTMLElement {
         }
 
         //TODO: Change prepending '(task)' to image so that clearing the tag clears the name too
-
+        let imgdata = {};
+        bis_webutil.createAlert('Reading study files marked as \'task\'; this may take a while!', false, 0, 0, { 'makeLoadSpinner' : true });
+        let promiseArray =  [];
         for (let key of Object.keys(taglist)) {
             let img = bis_genericio.read(this.constructNodeName(taglist[key]));
-            console.log('img', img);
+            promiseArray.push(img);
         }
+
+        Promise.all(promiseArray).then( (vals) => {
+            bis_webutil.dismissAlerts();
+            console.log('done loading images', vals);
+            this.graphelement.parsePaintedAreaAverageTimeSeries(this.viewer, imgdata);
+        });
         
         //Checks for duplicate tags by filling a dictionary with the tags seen so far. If it encounters a duplicate it returns false.
         function checkForDuplicateTags(node) {
-            console.log('node', node);
             
             for (let item of node) {
                 if (item.tag) { 
@@ -947,14 +954,12 @@ class FileTreePanel extends HTMLElement {
 
         if (node) { 
             currentNode = tree.get_node(node.id);
-            console.log('current node', currentNode);
         }  
 
         while (currentNode.parent) {
             name = '/' + currentNode.text + name;
             let parentNode = tree.get_node(currentNode.parent);
 
-            console.log('parentNode', parentNode);
             currentNode = parentNode;
         }
 
@@ -978,7 +983,6 @@ class FileTreePanel extends HTMLElement {
         let matchString = /^(\(task_\d+|rest_\d+)\)/;
         let match = matchString.exec(imageName);
 
-        console.log('match', match);
         if (match) {
             imageName = imageName.replace(match[0], '');
             splitName[splitName.length - 1] = imageName;

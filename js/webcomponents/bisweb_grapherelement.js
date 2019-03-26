@@ -209,49 +209,65 @@ class GrapherModule extends HTMLElement {
      * Opening the file tree panel will shrink the canvas, so we need to add the width to the desired size of the graph window to render properly.
      * 
      * @param {HTMLElement} orthoElement - The orthagonal element to take image data from.
+     * @param {Object|BiswebImage} imgdata - An object containing one or more images. May be used to specify image data not specifically displayed on screen, e.g. when loading a task set.
      */
-    parsePaintedAreaAverageTimeSeries(orthoElement) {
+    parsePaintedAreaAverageTimeSeries(orthoElement = null, imgdata = null) {
 
-        if (!orthoElement)
+        let self = this;
+        if (!orthoElement && !imgdata)
             return;
 
         this.currentdata = null;
-        let image = orthoElement.getimage();
-        let objectmap = orthoElement.getobjectmap();
+        let image, objectmap;
 
-        if (image === null || objectmap === null) {
-            webutil.createAlert('No image or objecmap in memory', true);
-            return;
-        }
-
-        let matrix = null;
-        try {
-            matrix = fmriutil.roimean(image, objectmap);
-        } catch (e) {
-            webutil.createAlert('Cannot create roi:' + e, true);
-            return;
-        }
-
-        let y = numeric.transpose(matrix.means);
-
-        let dim = numeric.dim(y);
-        this.numframes = dim[1];
-        let x = null;
-
-        if (this.numframes > 1) {
-            x = numeric.rep([matrix.means.length], 0);
-            for (let i = 0; i < matrix.means.length; i++) {
-                x[i] = i;
-            }
-        } else {
-            x = numeric.rep([dim[0]], 0);
-            for (let i = 0; i < dim[0]; i++) {
-                x[i] = i + 1;
-            }
-        }
-
-        if (this.formatChartData(y, matrix.numvoxels, null, false)) { 
+        console.log('ortho element', orthoElement, 'imgdata', imgdata);
+        if (orthoElement && !imgdata) {
+            image = orthoElement.getimage();
+            objectmap = orthoElement.getobjectmap();
+            formatChart(image, objectmap);
             this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', orthoElement : orthoElement, makeTaskChart : (this.taskdata) ? true : false });
+        } else if (orthoElement && imgdata) {
+            for (let key of Object.keys(imgdata)) {
+                imgdata[key] = formatChart(imgdata[key], orthoElement.objectmap);
+            }
+
+        }
+
+        function formatChart(image, objectmap) {
+            if (image === null || objectmap === null) {
+                webutil.createAlert('No image or objecmap in memory', true);
+                return;
+            }
+    
+            let matrix = null;
+            try {
+                matrix = fmriutil.roimean(image, objectmap);
+            } catch (e) {
+                webutil.createAlert('Cannot create roi:' + e, true);
+                return;
+            }
+    
+            let y = numeric.transpose(matrix.means);
+    
+            let dim = numeric.dim(y);
+
+            console.log('dim', dim, this);
+            self.numframes = dim[1];
+            let x = null;
+    
+            if (self.numframes > 1) {
+                x = numeric.rep([matrix.means.length], 0);
+                for (let i = 0; i < matrix.means.length; i++) {
+                    x[i] = i;
+                }
+            } else {
+                x = numeric.rep([dim[0]], 0);
+                for (let i = 0; i < dim[0]; i++) {
+                    x[i] = i + 1;
+                }
+            }
+
+            self.formatChartData(y, matrix.numvoxels, null, false);
         }
        
     }
@@ -368,6 +384,8 @@ class GrapherModule extends HTMLElement {
             if (this.usesmoothdata) {
                 this.makeSmoothChartData();
             }
+
+            return this.currentdata;
 
         } else {
 
