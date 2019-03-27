@@ -226,12 +226,16 @@ class GrapherModule extends HTMLElement {
             formatChart(image, objectmap);
             this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', makeTaskChart : (this.taskdata) ? true : false });
         } else if (orthoElement && imgdata) {
+            let startingKey = 99;
             for (let key of Object.keys(imgdata)) {
+                let keyNum = key.split('_')[1];
+                if (keyNum < startingKey) { startingKey = keyNum; console.log('starting key', startingKey); }
+
                 imgdata[key] = formatChart(imgdata[key], orthoElement.getobjectmap());
                 console.log('chart', imgdata[key]);
             }
 
-            this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', makeTaskChart : true, charts: imgdata });
+            this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', makeTaskChart : true, charts: imgdata, displayChart : startingKey });
         } else {
             console.log('cannot parse time series without an ortho element');
             return;
@@ -254,8 +258,6 @@ class GrapherModule extends HTMLElement {
             let y = numeric.transpose(matrix.means);
     
             let dim = numeric.dim(y);
-
-            console.log('dim', dim, this);
             self.numframes = dim[1];
             let x = null;
     
@@ -473,7 +475,6 @@ class GrapherModule extends HTMLElement {
 
     createBarChart(data, colors, frame, /* settings --currently unused */) {
 
-        console.log('data', data);
         let chart = new Taucharts.Chart({
             guide: {
                 showAnchors: true,
