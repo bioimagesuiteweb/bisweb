@@ -228,9 +228,14 @@ class GrapherModule extends HTMLElement {
             this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', orthoElement : orthoElement, makeTaskChart : (this.taskdata) ? true : false });
         } else if (orthoElement && imgdata) {
             for (let key of Object.keys(imgdata)) {
-                imgdata[key] = formatChart(imgdata[key], orthoElement.objectmap);
-            }
+                imgdata[key] = formatChart(imgdata[key], orthoElement.getobjectmap());
+                console.log('chart', imgdata[key]);
 
+                this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', orthoElement : orthoElement, makeTaskChart : true, charts: imgdata });
+            }
+        } else {
+            console.log('cannot parse time series without an ortho element');
+            return;
         }
 
         function formatChart(image, objectmap) {
@@ -267,7 +272,7 @@ class GrapherModule extends HTMLElement {
                 }
             }
 
-            self.formatChartData(y, matrix.numvoxels, null, false);
+            return self.formatChartData(y, matrix.numvoxels, null, false);
         }
        
     }
@@ -435,7 +440,7 @@ class GrapherModule extends HTMLElement {
             };
         }
 
-        return true;
+        return this.currentdata;
     }
 
     createChart(settings = null) {

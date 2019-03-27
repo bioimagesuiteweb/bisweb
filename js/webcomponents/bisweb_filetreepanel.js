@@ -6,6 +6,7 @@ const bis_webfileutil = require('bis_webfileutil.js');
 const util=require('bis_util');
 const bis_genericio = require('bis_genericio.js');
 const BiswebMatrix = require('bisweb_matrix.js');
+const BiswebImage = require('bisweb_image.js');
 
 require('jstree');
 require('bootstrap-slider');
@@ -781,18 +782,19 @@ class FileTreePanel extends HTMLElement {
         }
 
         //TODO: Change prepending '(task)' to image so that clearing the tag clears the name too
-        let imgdata = {};
-        bis_webutil.createAlert('Reading study files marked as \'task\'; this may take a while!', false, 0, 0, { 'makeLoadSpinner' : true });
+        window.imgdata = {};
+        bis_webutil.createAlert('Reading study files marked as \'task\'; this may take a while!', false, 0, 1000000000, { 'makeLoadSpinner' : true });
         let promiseArray =  [];
         for (let key of Object.keys(taglist)) {
-            let img = bis_genericio.read(this.constructNodeName(taglist[key]));
-            promiseArray.push(img);
+            let img = new BiswebImage(); 
+            promiseArray.push(img.load(this.constructNodeName(taglist[key])));
+            window.imgdata[key] = img;
         }
 
-        Promise.all(promiseArray).then( (vals) => {
+        Promise.all(promiseArray).then( () => {
             bis_webutil.dismissAlerts();
-            console.log('done loading images', vals);
-            this.graphelement.parsePaintedAreaAverageTimeSeries(this.viewer, imgdata);
+            console.log('imgdata', window.imgdata);
+            this.graphelement.parsePaintedAreaAverageTimeSeries(this.viewer, window.imgdata);
         });
         
         //Checks for duplicate tags by filling a dictionary with the tags seen so far. If it encounters a duplicate it returns false.
