@@ -220,19 +220,18 @@ class GrapherModule extends HTMLElement {
         this.currentdata = null;
         let image, objectmap;
 
-        console.log('ortho element', orthoElement, 'imgdata', imgdata);
         if (orthoElement && !imgdata) {
             image = orthoElement.getimage();
             objectmap = orthoElement.getobjectmap();
             formatChart(image, objectmap);
-            this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', orthoElement : orthoElement, makeTaskChart : (this.taskdata) ? true : false });
+            this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', makeTaskChart : (this.taskdata) ? true : false });
         } else if (orthoElement && imgdata) {
             for (let key of Object.keys(imgdata)) {
                 imgdata[key] = formatChart(imgdata[key], orthoElement.getobjectmap());
                 console.log('chart', imgdata[key]);
-
-                this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', orthoElement : orthoElement, makeTaskChart : true, charts: imgdata });
             }
+
+            this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', makeTaskChart : true, charts: imgdata });
         } else {
             console.log('cannot parse time series without an ortho element');
             return;
@@ -458,11 +457,11 @@ class GrapherModule extends HTMLElement {
         this.renderGraphFrame();
         
         console.log('settings.chart', settings.charts);
-        console.log('window', this.graphWindow.getHeader());
 
         let frame = document.getElementById(this.graphcanvasid);
 
         if (settings.makeTaskChart && chartData.chartType === 'line') {
+            console.log('taskdata', this.taskdata);
             this.createTaskChart(chartData.datasets, chartData.colors, frame, this.taskdata, settings);
         } else if (chartData.chartType === 'bar') {
             this.createBarChart(chartData.datasets[0].data, chartData.colors, frame, settings);
@@ -577,11 +576,27 @@ class GrapherModule extends HTMLElement {
 
     createTaskChart(data, colors, frame, tasks, settings) {
 
-        //hide dropdown menu if it shouldn't be used
-        if (settings.charts) { $(this.graphWindow.getHeader()).find('.task-selector').css('visibility', 'inherit'); }
-        else {$(this.graphWindow.getHeader()).find('.task-selector').css('visibility', 'hidden'); }
+        //hide dropdown menu if it shouldn't be used, otherwise fill it with the names of the charts
+        if (settings.charts) { 
+            $(this.graphWindow.getHeader()).find('.task-selector').css('visibility', 'inherit'); 
+            let dropdownMenu = $(this.graphWindow.getHeader()).find('.task-selector').siblings('.dropdown-menu');
+            dropdownMenu.empty();
+
+            for (let key of Object.keys(settings.charts)) {
+                let button = $(`<a class='dropdown-item' href='#'>${key}<br></a>`);
+                dropdownMenu.append(`<li></li>`).append(button);
+                dropdownMenu.find('a').on('click', () => { 
+                    console.log('click', key);
+                    this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', makeTaskChart : true, charts: settings.charts });
+                });
+            }
+
+        } else {
+            $(this.graphWindow.getHeader()).find('.task-selector').css('visibility', 'hidden'); 
+        }
 
 
+        console.log('formatted tasks', tasks.formattedTasks, 'datasets', data);
         //construct task labels and regions for tauchart
         for (let task of tasks.formattedTasks) {
             for (let item of data) {
