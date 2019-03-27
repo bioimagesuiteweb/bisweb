@@ -455,8 +455,6 @@ class GrapherModule extends HTMLElement {
         else { this.settings = settings; }
 
         this.renderGraphFrame();
-        
-        console.log('settings.chart', settings.charts);
 
         let frame = document.getElementById(this.graphcanvasid);
 
@@ -473,7 +471,7 @@ class GrapherModule extends HTMLElement {
     }
 
 
-    createBarChart(data, colors, frame, settings) {
+    createBarChart(data, colors, frame, /* settings --currently unused */) {
 
         console.log('data', data);
         let chart = new Taucharts.Chart({
@@ -585,12 +583,16 @@ class GrapherModule extends HTMLElement {
             for (let key of Object.keys(settings.charts)) {
                 let button = $(`<a class='dropdown-item' href='#'>${key}<br></a>`);
                 dropdownMenu.append(`<li></li>`).append(button);
-                dropdownMenu.find('a').on('click', () => { 
+                button.on('click', () => { 
                     console.log('click', key);
-                    this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', makeTaskChart : true, charts: settings.charts });
+                    this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', makeTaskChart : true, charts: settings.charts, displayChart : key });
                 });
             }
 
+            //hook to change the displayed chart 
+            if (settings.displayChart) {
+                data = settings.charts[settings.displayChart].datasets;
+            }
         } else {
             $(this.graphWindow.getHeader()).find('.task-selector').css('visibility', 'hidden'); 
         }
