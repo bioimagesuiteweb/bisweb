@@ -346,7 +346,6 @@ class FileTreePanel extends HTMLElement {
         tree.jstree(true).redraw(true);
 
         let enabledButtons = this.panel.widget.find('.bisweb-load-enable');
-        console.log('widget', this.panel.widget);
         enabledButtons.prop('disabled', false);
 
         if (!this.renderedTagSelectMenu) {
@@ -503,7 +502,7 @@ class FileTreePanel extends HTMLElement {
 
 
         saveStudyButton.addClass('bisweb-load-enable');
-        plotTasksButton.addClass('bisweb-load-enable')
+        plotTasksButton.addClass('bisweb-load-enable');
         saveStudyButton.prop('disabled', 'true');
         plotTasksButton.prop('disabled', 'true');
 
@@ -656,7 +655,7 @@ class FileTreePanel extends HTMLElement {
                     }
                 }
 
-                console.log('parsed runs', parsedRuns)
+                console.log('parsed runs', parsedRuns);
                 this.parsedData = parsedRuns;
 
                 //parse ranges into 0 and 1 array
@@ -666,7 +665,10 @@ class FileTreePanel extends HTMLElement {
                     range = createArray(parsedRuns[run]);
                     parsedRanges.push(range);
                     labelsArray.push(run);
-                    tasks.push({ 'data': range, 'label': run, 'regions' :  parsedData.runs[run]});
+
+                    //change label to match the format of the other labels, e.g. 'task_1' instead of 'task1'
+                    let reformattedString = run.replace(/(\d)/, (match, m1) => { return '_' + m1; });
+                    tasks.push({ 'data': range, 'label': reformattedString, 'regions' :  parsedData.runs[run]});
                 }
 
                 console.log('parsedRanges', parsedRanges, labelsArray, tasks);

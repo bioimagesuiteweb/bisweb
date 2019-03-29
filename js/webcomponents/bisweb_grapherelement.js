@@ -228,11 +228,11 @@ class GrapherModule extends HTMLElement {
         } else if (orthoElement && imgdata) {
             let startingKey = 99;
             for (let key of Object.keys(imgdata)) {
-                let keyNum = key.split('_')[1];
-                if (keyNum < startingKey) { startingKey = keyNum; console.log('starting key', startingKey); }
+                let splitKey = key.split('_');
+                let keyNum = splitKey[1];
+                if (keyNum < startingKey.split('_')[1]) { startingKey = splitKey.join('_'); console.log('starting key', startingKey); }
 
                 imgdata[key] = formatChart(imgdata[key], orthoElement.getobjectmap());
-                console.log('chart', imgdata[key]);
             }
 
             this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', makeTaskChart : true, charts: imgdata, displayChart : startingKey });
@@ -461,7 +461,6 @@ class GrapherModule extends HTMLElement {
         let frame = document.getElementById(this.graphcanvasid);
 
         if (settings.makeTaskChart && chartData.chartType === 'line') {
-            console.log('taskdata', this.taskdata);
             this.createTaskChart(chartData.datasets, chartData.colors, frame, this.taskdata, settings);
         } else if (chartData.chartType === 'bar') {
             this.createBarChart(chartData.datasets[0].data, chartData.colors, frame, settings);
@@ -591,6 +590,7 @@ class GrapherModule extends HTMLElement {
             }
 
             //hook to change the displayed chart 
+            console.log('settings', settings);
             if (settings.displayChart) {
                 data = settings.charts[settings.displayChart].datasets;
             }
@@ -599,7 +599,7 @@ class GrapherModule extends HTMLElement {
         }
 
 
-        console.log('formatted tasks', tasks.formattedTasks, 'datasets', data);
+        console.log('formatted tasks', tasks.formattedTasks);
         //construct task labels and regions for tauchart
         for (let task of tasks.formattedTasks) {
             for (let item of data) {
