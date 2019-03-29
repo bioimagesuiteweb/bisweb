@@ -309,7 +309,6 @@ class GrapherModule extends HTMLElement {
 
         return new Promise((resolve) => {
             setTimeout(() => {
-                //this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', makeTaskChart : this.taskdata ? true : false});
                 this.createChart();
                 resolve();
             }, 1);
@@ -600,39 +599,47 @@ class GrapherModule extends HTMLElement {
         }
 
 
-        console.log('formatted tasks', tasks.formattedTasks, 'datasets', data);
+        console.log('formatted tasks', tasks.formattedTasks, 'settings', settings);
         //construct task labels and regions for tauchart
         for (let task of tasks.formattedTasks) {
             for (let item of data) {
                 if (task.data[item.frame] === 1) { item.task = task.label; }
             }
         }
+        //find task regions corresponding to the labeled image
+        let taskIndex = null, taskLabel = null, annotations = [];
+        for (let i = 0; i < tasks.formattedTasks.length; i++) {
+            if (tasks.formattedTasks[i].label === settings.displayChart) { taskIndex = i; taskLabel = settings.displayChart; break; }
+        }
 
-        let annotations = [], keys = Object.keys(tasks.rawTasks.runs[tasks.formattedTasks[0].label]), index = 1;
-        for (let key of keys) {
-            let task = tasks.formattedTasks[0].regions[key];
-            let cl = util.objectmapcolormap[index];
-            cl = 'rgba(' + cl[0] + ', ' + cl[1] + ', ' + cl[2] + ', 0.2)';
+        //if there's a valid task region paint it in the image, otherwise ignore it
+        if (taskIndex) {
+            let keys = Object.keys(tasks.rawTasks.runs[taskLabel]), index = 1;
+            for (let key of keys) {
+                let task = tasks.formattedTasks[taskIndex].regions[key];
+                let cl = util.objectmapcolormap[index];
+                cl = 'rgba(' + cl[0] + ', ' + cl[1] + ', ' + cl[2] + ', 0.2)';
 
-            if (Array.isArray(task)) { 
-                for (let subTask of task) {
+                if (Array.isArray(task)) { 
+                    for (let subTask of task) {
+                        annotations.push({
+                            'dim' : 'frame',
+                            'val' : parseTask(subTask),
+                            'text' : key,
+                            'color' : cl
+                        });
+                    }
+                } else {
                     annotations.push({
-                        'dim' : 'frame',
-                        'val' : parseTask(subTask),
+                        'dim' : 'frame', 
+                        'val' : parseTask(task),
                         'text' : key,
                         'color' : cl
                     });
                 }
-            } else {
-                annotations.push({
-                    'dim' : 'frame', 
-                    'val' : parseTask(task),
-                    'text' : key,
-                    'color' : cl
-                });
-            }
 
-            index = index + 1;
+                index = index + 1;
+            }
         }
 
         let chart = new Taucharts.Chart({
