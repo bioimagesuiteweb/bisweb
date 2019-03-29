@@ -656,7 +656,6 @@ class FileTreePanel extends HTMLElement {
                     }
                 }
 
-                console.log('parsed runs', parsedRuns)
                 this.parsedData = parsedRuns;
 
                 //parse ranges into 0 and 1 array
@@ -782,19 +781,19 @@ class FileTreePanel extends HTMLElement {
         }
 
         //TODO: Change prepending '(task)' to image so that clearing the tag clears the name too
-        window.imgdata = {};
+        let imgdata = {};
         bis_webutil.createAlert('Reading study files marked as \'task\'; this may take a while!', false, 0, 1000000000, { 'makeLoadSpinner' : true });
         let promiseArray =  [];
         for (let key of Object.keys(taglist)) {
             let img = new BiswebImage(); 
             promiseArray.push(img.load(this.constructNodeName(taglist[key])));
-            window.imgdata[key] = img;
+            imgdata[key] = img;
         }
 
         Promise.all(promiseArray).then( () => {
             bis_webutil.dismissAlerts();
-            console.log('imgdata', window.imgdata);
-            this.graphelement.parsePaintedAreaAverageTimeSeries(this.viewer, window.imgdata);
+            console.log('imgdata', imgdata);
+            this.graphelement.parsePaintedAreaAverageTimeSeries(this.viewer, imgdata);
         });
         
         //Checks for duplicate tags by filling a dictionary with the tags seen so far. If it encounters a duplicate it returns false.

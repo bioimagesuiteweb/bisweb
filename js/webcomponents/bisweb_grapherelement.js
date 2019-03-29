@@ -228,8 +228,9 @@ class GrapherModule extends HTMLElement {
         } else if (orthoElement && imgdata) {
             let startingKey = 99;
             for (let key of Object.keys(imgdata)) {
-                let keyNum = key.split('_')[1];
-                if (keyNum < startingKey) { startingKey = keyNum; console.log('starting key', startingKey); }
+                let splitKey = key.split('_');
+                let keyNum = splitKey[1];
+                if (keyNum < startingKey) { startingKey = splitKey.join('_'); console.log('starting key', startingKey); }
 
                 imgdata[key] = formatChart(imgdata[key], orthoElement.getobjectmap());
                 console.log('chart', imgdata[key]);
