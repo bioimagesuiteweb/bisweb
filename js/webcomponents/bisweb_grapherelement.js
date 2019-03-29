@@ -613,7 +613,7 @@ class GrapherModule extends HTMLElement {
         }
 
         //if there's a valid task region paint it in the image, otherwise ignore it
-        if (taskIndex) {
+        if (taskIndex !== null) {
             let keys = Object.keys(tasks.rawTasks.runs[taskLabel]), index = 1;
             for (let key of keys) {
                 let task = tasks.formattedTasks[taskIndex].regions[key];
