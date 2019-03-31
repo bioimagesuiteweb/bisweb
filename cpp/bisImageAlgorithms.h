@@ -360,6 +360,13 @@ namespace bisImageAlgorithms {
    */
   template<class T> std::unique_ptr<bisSimpleImage<T> >  blankImage(bisSimpleImage<T>* input,int bounds[6]);
 
+  /** median normalize an image -- set values so that median = 0 and interquartile range = 1
+   * @param input the input image
+   * @param debug a debug flag
+   * @returns the normalized image (float)
+   */
+  template<class T> std::unique_ptr<bisSimpleImage<float> >  medianNormalizeImage(bisSimpleImage<T>* input,int debug=0);
+
 }
 
 

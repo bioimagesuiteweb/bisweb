@@ -1604,3 +1604,36 @@ unsigned char* shiftScaleImageWASM(unsigned char* input,const char* jsonstring,i
   return 0;
 }
 
+
+/** MedianNormalize an image using \link bisImageAlgorithms::medianNormalizeImage \endlink
+ * @param input serialized input as unsigned char array 
+ * @param debug if > 0 print debug messages
+ * @returns a pointer to a serialized image
+ */
+// BIS: { 'medianNormalizeImageWASM', 'bisImage', [ 'bisImage', 'debug' ] } 
+template <class BIS_TT> unsigned char* medianNormalizeImageTemplate(unsigned char* input,int debug,BIS_TT*) {
+
+  std::unique_ptr<bisSimpleImage<BIS_TT> > inp_image(new bisSimpleImage<BIS_TT>("inp_image"));
+  if (!inp_image->linkIntoPointer(input))
+    return 0;
+
+  std::unique_ptr<bisSimpleImage<float> > out_image=bisImageAlgorithms::medianNormalizeImage<BIS_TT>(inp_image.get(),debug);
+  
+  if (debug)
+    std::cout << "MedianNormalizing Done" << std::endl;
+  
+  return out_image->releaseAndReturnRawArray();
+}
+
+unsigned char* medianNormalizeImageWASM(unsigned char* input,int debug)
+{
+  int* header=(int*)input;
+  int target_type=header[1];
+  
+  switch (target_type)
+    {
+      bisvtkTemplateMacro( return medianNormalizeImageTemplate(input,debug, static_cast<BIS_TT*>(0)));
+    }
+  return 0;
+}
+
