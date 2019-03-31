@@ -23,7 +23,7 @@
     "author": "Yale BioImageSuite Web Team",
     "license": "Apache",
     "dependencies": {
-        "@tensorflow/tfjs-node": "0.2.1",
+        "@tensorflow/tfjs-node": "^0.2.1",
         "atob": "2.1.2",
         "bootbox": "4.4.0",
         "bootstrap": "3.4.0",

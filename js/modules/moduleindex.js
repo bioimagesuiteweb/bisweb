@@ -67,6 +67,7 @@ const moduleImports = {
     nonlinearregistration : require('nonlinearRegistration.js'),
     motioncorrection : require('motionCorrection.js'),
 
+    skullstrip:require('skullStrip.js'),
     defaceimage:require('defaceImage.js'),
     reorientimage:require('reorientImage.js'),
     tfrecon:require('tfRecon.js'),
