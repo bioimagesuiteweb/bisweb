@@ -249,14 +249,24 @@ class SkullStripImageModule extends BaseModule {
                             if (mdat[i]<1)
                                 rdat[i]=0;
                         }
+                    } else {
+                        console.log('---- Not Masking');
                     }
+                } else {
+                    console.log('---- Not Registering');
                 }
 
                 let tfOutput=reslicedInput;
                 if (this.parseBoolean(vals.usetf)) {
                     // Step 2
-                    console.log('oooo median Normalize Image');
-                    let normalized=biswrap.medianNormalizeImageWASM(reslicedInput,1);
+                    let normalized=null;
+                    if (this.parseBoolean(vals.mednorm)) {
+                        console.log('oooo median Normalize Image');
+                        normalized=biswrap.medianNormalizeImageWASM(reslicedInput,1);
+                    } else {
+                        console.log('---- Not median Normalize Image');
+                        normalized=reslicedInput;
+                    }
                     
                     // Step 3 TF
                     console.log('oooo deep Learning Now');

@@ -27,7 +27,8 @@ const biasCorrectModule = require("sliceBiasFieldCorrect");
 const normalizeModule= require('normalizeImage');
 const shiftScaleModule=require('shiftScaleImage');
 const smreslice=require('bis_imagesmoothreslice');
-
+const segmentModule=require('segmentImage');
+const maskModule=require('maskImage');
 /**
  * Runs linear registration on an image set given a reference image and returns the set of transformations required
  * to align the image set to the reference image. Applies only affine (linear) transformations (no stretch/shear).
@@ -118,6 +119,16 @@ class PreprocessOpticalModule extends BaseModule {
                     "type": 'boolean',
                     "default": true,
                 },
+                {
+                    "name": "Mask",
+                    "description": "If true masks background",
+                    "priority": 7,
+                    "advanced": false,
+                    "gui": "check",
+                    "varname": "mask",
+                    "type": 'boolean',
+                    "default": true,
+                },
                 baseutils.getDebugParam(),
             ],
 
@@ -148,14 +159,16 @@ class PreprocessOpticalModule extends BaseModule {
             
             biswrap.initialize().then( async () => {
 
-                console.log(' = = = = = = = = = = = = = = = = = = = = = =');
-                console.log('Image reorient first ');
-
-                let mod0=new reorientModule();
-                mod0.makeInternal();
-                await mod0.execute( {'input' : output },
-                                    { 'orient' : 'RAS', 'debug' : debug });
-                output=mod0.getOutputObject('output');
+                if (vals['ras']) {
+                    console.log(' = = = = = = = = = = = = = = = = = = = = = =');
+                    console.log('Image reorient first ');
+                    
+                    let mod0=new reorientModule();
+                    mod0.makeInternal();
+                    await mod0.execute( {'input' : output },
+                                        { 'orient' : 'RAS', 'debug' : debug });
+                    output=mod0.getOutputObject('output');
+                }
     
                 if (vals['biascorrect']>0) {
                     console.log(' = = = = = = = = = = = = = = = = = = = = = =');
@@ -199,6 +212,28 @@ class PreprocessOpticalModule extends BaseModule {
                     await mod3.execute( {'input' : output },
                                         {'perhigh' : 0.995,'debug' :debug });
                     output=mod3.getOutputObject('output');
+                }
+
+                if (vals['mask']) {
+                    let mod4=new segmentModule();
+                    mod4.makeInternal();
+                    await mod4.execute({ 'input': output },
+                                       { 'numclasses' : 3 ,
+                                         'smoothness' : 0.0 ,
+                                         'debug' : debug
+                                       });
+                    let tmp=mod4.getOutputObject('output');
+
+                    let mod5=new maskModule();
+                    mod5.makeInternal();
+                    await mod5.execute({
+                        'input': output,
+                        'mask' : tmp
+                    }, {
+                        'threshold' : 1.0 ,
+                        'debug' : debug
+                    });
+                    output=mod5.getOutputObject('output');
                 }
                 
                 console.log(' = = = = = = = = = = = = = = = = = = = = = =');
