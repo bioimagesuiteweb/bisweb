@@ -140,7 +140,7 @@ class SkullStripImageModule extends BaseModule {
                     "gui": "check",
                     "varname": "mnimask",
                     "type": 'boolean',
-                    "default": true,
+                    "default": false,
                 },
                 {
                     "name": "Use TF",
@@ -165,7 +165,15 @@ class SkullStripImageModule extends BaseModule {
                     "step" : 1,
                     "default": 2,
                 },
-
+                {
+                    "name": "Model name",
+                    "description": "Location of Model to use",
+                    "priority": 20,
+                    "advanced": true,
+                    "varname": 'modelname',
+                    "type": 'string',
+                    "default" : '',
+                },
                 baseutils.getDebugParam()
             ]
         };
@@ -270,10 +278,14 @@ class SkullStripImageModule extends BaseModule {
                     
                     // Step 3 TF
                     console.log('oooo deep Learning Now');
+                    let modelname = vals.modelname;
+                    if (modelname.length<2)
+                        modelname='http://bisweb.yale.edu/models/abcd_leave_out_site01_tfjs/';
+
                     let mod0=new tfRecon();
                     mod0.makeInternal();
                     await mod0.execute( {'input' : normalized },
-                                        {'modelname' : 'http://bisweb.yale.edu/models/abcd_leave_out_site01_tfjs/' ,
+                                        {'modelname' : modelname,
                                          'debug' : debug
                                         });
                     tfOutput=mod0.getOutputObject('output');
