@@ -589,6 +589,9 @@ class GrapherModule extends HTMLElement {
                 });
             }
 
+            //TODO: fix displayChart thing (e.g. what if tasks started at task_2?)
+            //let selectedItem = 
+
             //hook to change the displayed chart 
             if (settings.displayChart) {
                 data = settings.charts[settings.displayChart].datasets;
