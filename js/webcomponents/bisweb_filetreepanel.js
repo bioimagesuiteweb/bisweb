@@ -71,7 +71,7 @@ class FileTreePanel extends HTMLElement {
             this.makeStaticButtons(listElement);
 
             //https://stackoverflow.com/questions/11703093/how-to-dismiss-a-twitter-bootstrap-popover-by-clicking-outside
-            let dismissPopoverFn = (e) => {
+            this.dismissPopoverFn = (e) => {
                 if (typeof $(e.target).data('original-title') == 'undefined' && !$(e.target).parents().is('.popover.in')) {
                     if (this.popoverDisplayed) {
                         $('[data-original-title]').popover('hide');
@@ -80,8 +80,8 @@ class FileTreePanel extends HTMLElement {
                 }
             };
 
-            $('html').on('click', dismissPopoverFn);
-            $('html').on('contextmenu', dismissPopoverFn);
+            $('html').on('click', this.dismissPopoverFn);
+            $('html').on('contextmenu', this.dismissPopoverFn);
         });
 
         this.contextMenuDefaultSettings = {
@@ -1135,13 +1135,17 @@ class FileTreePanel extends HTMLElement {
              let splitName = node.text.split(/\(.*\)/);
              if (splitName.length > 1) {
                 let trimmedName = splitName.slice(1).join('');
-                console.log('trimmed name', trimmedName);
                 node.original.text = trimmedName;
                 node.text = node.original.text;
+
+                console.log('node', node);
    
                 //update name displayed on file tree panel
                 let tree = panel.widget.find('.file-container').jstree();
                 tree.redraw(true);
+
+                //dismiss popover manually 
+                $('html').find('.popover').popover('hide');
              }
         }
     }
