@@ -235,7 +235,6 @@ class FileTreePanel extends HTMLElement {
                 }
             }
 
-
             //if the file tree is empty, display an error message and return
             if (fileTree.length === 0) {
                 bis_webutil.createAlert('No study files could be found in the chosen directory, try a different directory.', false);
@@ -279,7 +278,6 @@ class FileTreePanel extends HTMLElement {
         listElement.find('.file-container').remove();
 
         let listContainer = $(`<div class='file-container'></div>`);
-        //listContainer.css({ 'color': 'rgb(12, 227, 172)' });
         listElement.prepend(listContainer);
 
         let tree = listContainer.jstree({
@@ -342,6 +340,10 @@ class FileTreePanel extends HTMLElement {
             });
         }
 
+        console.log('file tree', fileTree);
+        //alpabetize tree entries
+        sortEntries(fileTree);
+        
         tree.jstree(true).settings.contextmenu.items = newSettings;
         tree.jstree(true).redraw(true);
 
@@ -385,9 +387,41 @@ class FileTreePanel extends HTMLElement {
             $('.bisweb-file-import-label').text(`Currently loaded — ${type}`);
         }
 
+
         //attach listeners to new file tree
         this.setOnClickListeners(tree, listContainer);
         this.fileTree = tree;
+
+
+        //sort the tree into alphabetical order, with directories and labeled items first
+        function sortEntries(children) {
+            console.log('children', children);
+            if (children) {
+                children.sort((a, b) => {
+                    if (a.type === 'directory') {
+                        if (b.type === 'directory') {
+                            return a.text.localeCompare(b.text);
+                        } else {
+                            return a;
+                        }
+                    }
+
+                    if (b.type === 'directory') {
+                        return b;
+                    }
+
+                    return a.text.localeCompare(b.text);
+                });
+
+
+                //sort all nodes below this level in the tree
+                for (let node of children) {
+                    sortEntries(node.children);
+                }
+            }
+
+
+        }
     }
 
     /**
@@ -792,7 +826,6 @@ class FileTreePanel extends HTMLElement {
 
         Promise.all(promiseArray).then( () => {
             bis_webutil.dismissAlerts();
-            console.log('imgdata', imgdata);
             this.graphelement.parsePaintedAreaAverageTimeSeries(this.viewer, imgdata);
         });
         
