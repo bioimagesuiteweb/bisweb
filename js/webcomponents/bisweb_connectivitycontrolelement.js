@@ -1617,836 +1617,896 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     // -Zach
     var plotCorrMap=function(parentDiv,id1,id2,parc,pairs,scolor,context,normallength,thickness) {
 
-        //var correlationMatrix = readTextFile('data/heatMat.mask.NBSFDR.ucla.175.antiDepression.csv');
-        var correlationMatrix = [
-            [1, 0.3, 0, 0.8, 0, 0.2, 1, 0.5, 0, 0.75],
-            [0.3, 1, 0.5, 0.2, 0.4, 0.3, 0.8, 0.1, 1, 0],
-            [0, 0.5, 1, 0.4, 0, 0.9, 0, 0.2, 1, 0.3],
-            [0.8, 0.2, 0.4, 1, 0.3, 0.4, 0.1, 1, 0.2, 0.9],
-            [0, 0.4, 0, 0.3, 1, 0.1, 0.4, 0, 0.6, 0.7],
-            [0.2, 0.3, 0.9, 0.4, 0.1, 1, 0, 0.1, 0.4, 0.1],
-            [1, 0.8, 0, 0.1, 0.4, 0, 1, 0.5, 0, 1],
-            [0.5, 0.1, 0.2, 1, 0.1, 0, 0.5, 1, 0, 0.4],
-            [0, 1, 1, 0.2, 0.6, 0.4, 0, 0, 1, 0.6],
-            [0.75, 0, 0.3, 0.9, 0.7, 0.1, 1, 0.4, 0.6, 1]
-        ];
+	    //var correlationMatrix = readTextFile('data/heatMat.mask.NBSFDR.ucla.175.antiDepression.csv');
+	    function readTextFile(file){
+		    var rawFile = new XMLHttpRequest();
+		    rawFile.open("GET", file, false);
+		    var matrix ;
+		    rawFile.onreadystatechange = function ()
+		    {
+			    if(rawFile.readyState === 4)
+			    {
+				    if(rawFile.status === 200 || rawFile.status == 0)
+				    {
+					    var rows = rawFile.responseText.split('\n');
+					    matrix = new Array(rows.length-1);
+					    for(i=0;i<rows.length-1;i++){
+						    matrix[i] = new Array(rows.length-1);
+						    tokens = rows[i].split(',');
+						    for(j=0;j<rows.length-1;j++){
+							    matrix[i][j]=parseInt(tokens[j]);
+						    }
 
-        var labels = ['MF', 'FP', 'DMN', 'Mot', 'VI', 'VII', 'VAs', 'Limb', 'BG', 'CBL'];
-        // heatMap part
-        var svg  = Matrix({
-            container : '#'+id1,
-            data      : correlationMatrix,
-            labels    : labels,
-            start_color : '#ffffff',
-            end_color : '#ff0000'// #3498db'
-        });
+					    }
+				    }
+			    }
+		    }
+		    rawFile.send(null);
+		    return matrix;
+	    }
 
-        function Matrix(options) {
-            var margin = {top: 50, right: 50, bottom: 100, left: 100},
-                width = 350,
-                height = 350,
-                data = options.data,
-                container = options.container,
-                labelsData = options.labels,
-                startColor = options.start_color,
-                endColor = options.end_color;
+	    d3.csv("../data/network.csv",function(data) {
+		    var net_map = {};
+		    var nets = new Set();
+		    data.map(function(d)
+			    {       
+				    net_map[d.node-1] = d.network-1;
+				    nets.add(d.network-1);
+			    });
+		    var matrix =  new Array(nets.size);
+		    for(var i = 0; i < nets.size; i++){
+			    matrix[i] = new Array(nets.size);
+			    for(var j = 0; j < nets.size; j++){
+				    matrix[i][j]=0; 
+			    }
+		    }
+		    var n=pairs.length;
+		    for (var index=0;index<n;index++) {
+			    var a_node=pairs[index][0];
+			    var b_node=pairs[index][1];
 
-            var widthLegend = 100;
+			    var node=Math.floor(parc.indexmap[a_node]);
+			    var othernode=Math.floor(parc.indexmap[b_node]);
+			    matrix[net_map[node-1]][net_map[othernode-1]]+=1;
+			    matrix[net_map[othernode-1]][net_map[node-1]]+=1;
+		    }
+		    for(var i = 0; i < nets.size; i++){
+			    for(var j = 0; j < nets.size; j++){
+				    if(j>i)
+					    matrix[i][j]=0.01; 
+			    }
+		    }
+		    var correlationMatrix = matrix; 
+		    /*var correlationMatrix = [
+			    [1, 0.3, 0, 0.8, 0, 0.2, 1, 0.5, 0, 0.75],
+			    [0.3, 1, 0.5, 0.2, 0.4, 0.3, 0.8, 0.1, 1, 0],
+			    [0, 0.5, 1, 0.4, 0, 0.9, 0, 0.2, 1, 0.3],
+			    [0.8, 0.2, 0.4, 1, 0.3, 0.4, 0.1, 1, 0.2, 0.9],
+			    [0, 0.4, 0, 0.3, 1, 0.1, 0.4, 0, 0.6, 0.7],
+			    [0.2, 0.3, 0.9, 0.4, 0.1, 1, 0, 0.1, 0.4, 0.1],
+			    [1, 0.8, 0, 0.1, 0.4, 0, 1, 0.5, 0, 1],
+			    [0.5, 0.1, 0.2, 1, 0.1, 0, 0.5, 1, 0, 0.4],
+			    [0, 1, 1, 0.2, 0.6, 0.4, 0, 0, 1, 0.6],
+			    [0.75, 0, 0.3, 0.9, 0.7, 0.1, 1, 0.4, 0.6, 1]
+		    ];*/
 
-            if(!data){
-                throw new Error('Please pass data');
-            }
+		    var labels = ['MF', 'FP', 'DMN', 'Mot', 'VI', 'VII', 'VAs', 'Limb', 'BG', 'CBL'];
+		    // heatMap part
+		    var svg  = Matrix({
+			    container : '#'+id1,
+			    data      : correlationMatrix,
+			    labels    : labels,
+			    start_color : '#ffffff',
+			    end_color : '#ff0000'// #3498db'
+		    });
 
-            if(!Array.isArray(data) || !data.length || !Array.isArray(data[0])){
-                throw new Error('It should be a 2-D array');
-            }
+		    function Matrix(options) {
+			    var margin = {top: 50, right: 50, bottom: 100, left: 100},
+				    width = 350,
+				    height = 350,
+				    data = options.data,
+				    container = options.container,
+				    labelsData = options.labels,
+				    startColor = options.start_color,
+				    endColor = options.end_color;
 
-            var maxValue = d3.max(data, function(layer) { return d3.max(layer, function(d) { return d; }); });
-            var minValue = d3.min(data, function(layer) { return d3.min(layer, function(d) { return d; }); });
+			    var widthLegend = 100;
 
-            var numrows = data.length;
-            var numcols = data[0].length;
+			    if(!data){
+				    throw new Error('Please pass data');
+			    }
 
-            var svg = d3.select(parentDiv).append("svg")
-                .attr("width", width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom)
-                .append("g")
-                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+			    if(!Array.isArray(data) || !data.length || !Array.isArray(data[0])){
+				    throw new Error('It should be a 2-D array');
+			    }
 
-            var background = svg.append("rect")
-                .style("stroke", "white")
-                .style("stroke-width", "2px")
-                .attr("width", width)
-                .attr("height", height);
+			    var maxValue = d3.max(data, function(layer) { return d3.max(layer, function(d) { return d; }); });
+			    var minValue = d3.min(data, function(layer) { return d3.min(layer, function(d) { return d; }); });
 
-            var x = d3.scale.ordinal()
-                .domain(d3.range(numcols))
-                .rangeBands([0, width]);
+			    var numrows = data.length;
+			    var numcols = data[0].length;
 
-            var y = d3.scale.ordinal()
-                .domain(d3.range(numrows))
-                .rangeBands([0, height]);
+			    var svg = d3.select(parentDiv).append("svg")
+				    .attr("width", width + margin.left + margin.right)
+				    .attr("height", height + margin.top + margin.bottom)
+				    .append("g")
+				    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-            var colorMap = d3.scale.linear()
-                .domain([minValue,maxValue])
-                .range([startColor, endColor]);
+			    var background = svg.append("rect")
+				    .style("stroke", "white")
+				    .style("stroke-width", "2px")
+				    .attr("width", width)
+				    .attr("height", height);
 
-            var row = svg.selectAll(".row")
-                .data(data)
-                .enter().append("g")
-                .attr("class", "row")
-                .attr("transform", function(d, i) {return "translate(0," + y(i) + ")"; });
+			    var x = d3.scale.ordinal()
+				    .domain(d3.range(numcols))
+				    .rangeBands([0, width]);
 
-            var cell = row.selectAll(".cell")
-                .data(function(d) { return d; })
-                .enter().append("g")
-                .attr("class", "cell")
-                .attr("transform", function(d, i) { return "translate(" + x(i) + ", 0)"; });
+			    var y = d3.scale.ordinal()
+				    .domain(d3.range(numrows))
+				    .rangeBands([0, height]);
 
-            cell.append('rect')
-                .attr("width", x.rangeBand())
-                .attr("height", y.rangeBand())
-                .style("stroke-width", 0);
+			    var colorMap = d3.scale.linear()
+				    .domain([minValue,maxValue])
+				    .range([startColor, endColor]);
 
-            cell.append("text")
-                .attr("dy", ".32em")
-                .attr("x", x.rangeBand() / 2)
-                .attr("y", y.rangeBand() / 2)
-                .attr("text-anchor", "middle")
-                .style("fill", function(d, i) {if(d== 0 && x(i)==y(i)) return  'white';return d >= maxValue/2 ? 'white' : 'black'; })
-                .text(function(d, i) { return d; });
+			    var row = svg.selectAll(".row")
+				    .data(data)
+				    .enter().append("g")
+				    .attr("class", "row")
+				    .attr("transform", function(d, i) {return "translate(0," + y(i) + ")"; });
 
-            row.selectAll(".cell")
-                .data(function(d, i) { return data[i]; })
-                .style("fill", colorMap);
+			    var cell = row.selectAll(".cell")
+				    .data(function(d) { return d; })
+				    .enter().append("g")
+				    .attr("class", "cell")
+				    .attr("transform", function(d, i) { return "translate(" + x(i) + ", 0)"; });
 
-            var labels = svg.append('g')
-                .attr('class', "labels");
+			    cell.append('rect')
+				    .attr("width", x.rangeBand())
+				    .attr("height", y.rangeBand())
+				    .style("stroke-width", 0);
 
-            var columnLabels = labels.selectAll(".column-label")
-                .data(labelsData)
-                .enter().append("g")
-                .attr("class", "column-label")
-                .attr("transform", function(d, i) { return "translate(" + x(i) + "," + height + ")"; });
+			    cell.append("text")
+				    .attr("dy", ".32em")
+				    .attr("x", x.rangeBand() / 2)
+				    .attr("y", y.rangeBand() / 2)
+				    .attr("text-anchor", "middle")
+				    .style("fill", function(d, i) {if(d== 0.01) return  'white';return d >= maxValue/2 ? 'white' : 'black'; })
+				    .text(function(d, i) { return d; });
 
-            columnLabels.append("line")
-                .style("stroke", "black")
-                .style("stroke-width", "1px")
-                .attr("x1", x.rangeBand() / 2)
-                .attr("x2", x.rangeBand() / 2)
-                .attr("y1", 0)
-                .attr("y2", 5);
+			    row.selectAll(".cell")
+				    .data(function(d, i) { return data[i]; })
+				    .style("fill", colorMap);
 
-            columnLabels.append("text")
-                .attr("x", 0)
-                .attr("y", y.rangeBand() / 2)
-                .attr("dy", ".82em")
-                .attr("text-anchor", "end")
-                .attr("transform", "rotate(-60)")
-                .text(function(d, i) { return d; });
+			    var labels = svg.append('g')
+				    .attr('class', "labels");
 
-            var rowLabels = labels.selectAll(".row-label")
-                .data(labelsData)
-                .enter().append("g")
-                .attr("class", "row-label")
-                .attr("transform", function(d, i) { return "translate(" + 0 + "," + y(i) + ")"; });
+			    var columnLabels = labels.selectAll(".column-label")
+				    .data(labelsData)
+				    .enter().append("g")
+				    .attr("class", "column-label")
+				    .attr("transform", function(d, i) { return "translate(" + x(i) + "," + height + ")"; });
 
-            rowLabels.append("line")
-                .style("stroke", "black")
-                .style("stroke-width", "1px")
-                .attr("x1", 0)
-                .attr("x2", -5)
-                .attr("y1", y.rangeBand() / 2)
-                .attr("y2", y.rangeBand() / 2);
+			    columnLabels.append("line")
+				    .style("stroke", "black")
+				    .style("stroke-width", "1px")
+				    .attr("x1", x.rangeBand() / 2)
+				    .attr("x2", x.rangeBand() / 2)
+				    .attr("y1", 0)
+				    .attr("y2", 5);
 
-            rowLabels.append("text")
-                .attr("x", -8)
-                .attr("y", y.rangeBand() / 2)
-                .attr("dy", ".32em")
-                .attr("text-anchor", "end")
-                .text(function(d, i) { return d; });
+			    columnLabels.append("text")
+				    .attr("x", 0)
+				    .attr("y", y.rangeBand() / 2)
+				    .attr("dy", ".82em")
+				    .attr("text-anchor", "end")
+				    .attr("transform", "rotate(-60)")
+				    .text(function(d, i) { return d; });
 
-            var key = d3.select("#"+id2)
-                .append("svg")
-                .attr("width", widthLegend)
-                .attr("height", height + margin.top + margin.bottom);
+			    var rowLabels = labels.selectAll(".row-label")
+				    .data(labelsData)
+				    .enter().append("g")
+				    .attr("class", "row-label")
+				    .attr("transform", function(d, i) { return "translate(" + 0 + "," + y(i) + ")"; });
 
-            var legend = key
-                .append("defs")
-                .append("svg:linearGradient")
-                .attr("id", "gradient")
-                .attr("x1", "100%")
-                .attr("y1", "0%")
-                .attr("x2", "100%")
-                .attr("y2", "100%")
-                .attr("spreadMethod", "pad");
+			    rowLabels.append("line")
+				    .style("stroke", "black")
+				    .style("stroke-width", "1px")
+				    .attr("x1", 0)
+				    .attr("x2", -5)
+				    .attr("y1", y.rangeBand() / 2)
+				    .attr("y2", y.rangeBand() / 2);
 
-            legend
-                .append("stop")
-                .attr("offset", "0%")
-                .attr("stop-color", endColor)
-                .attr("stop-opacity", 1);
+			    rowLabels.append("text")
+				    .attr("x", -8)
+				    .attr("y", y.rangeBand() / 2)
+				    .attr("dy", ".32em")
+				    .attr("text-anchor", "end")
+				    .text(function(d, i) { return d; });
 
-            legend
-                .append("stop")
-                .attr("offset", "100%")
-                .attr("stop-color", startColor)
-                .attr("stop-opacity", 1);
+			    var key = d3.select("#"+id2)
+				    .append("svg")
+				    .attr("width", widthLegend)
+				    .attr("height", height + margin.top + margin.bottom);
 
-            key.append("rect")
-                .attr("width", widthLegend/2-10)
-                .attr("height", height)
-                .style("fill", "url(#gradient)")
-                .attr("transform", "translate(0," + margin.top + ")");
+			    var legend = key
+				    .append("defs")
+				    .append("svg:linearGradient")
+				    .attr("id", "gradient")
+				    .attr("x1", "100%")
+				    .attr("y1", "0%")
+				    .attr("x2", "100%")
+				    .attr("y2", "100%")
+				    .attr("spreadMethod", "pad");
 
-            var y = d3.scale.linear()
-                .range([height, 0])
-                .domain([minValue, maxValue]);
+			    legend
+				    .append("stop")
+				    .attr("offset", "0%")
+				    .attr("stop-color", endColor)
+				    .attr("stop-opacity", 1);
 
-            var yAxis = d3.svg.axis()
-                .scale(y)
-                .orient("right");
+			    legend
+				    .append("stop")
+				    .attr("offset", "100%")
+				    .attr("stop-color", startColor)
+				    .attr("stop-opacity", 1);
 
-            key.append("g")
-                .attr("class", "y axis")
-                .attr("transform", "translate(41," + margin.top + ")")
-                .call(yAxis);
-            return svg;
-        }
-        return svg;
+			    key.append("rect")
+				    .attr("width", widthLegend/2-10)
+				    .attr("height", height)
+				    .style("fill", "url(#gradient)")
+				    .attr("transform", "translate(0," + margin.top + ")");
+
+			    var y = d3.scale.linear()
+				    .range([height, 0])
+				    .domain([minValue, maxValue]);
+
+			    var yAxis = d3.svg.axis()
+				    .scale(y)
+				    .orient("right");
+
+			    key.append("g")
+				    .attr("class", "y axis")
+				    .attr("transform", "translate(41," + margin.top + ")")
+				    .call(yAxis);
+			    return svg;
+		    }
+	    return svg;
+	    });
     };
 
-    var corrmap = function() {
-        if (internal.laststate === null) {
-            bootbox.alert('Please create lines before attempting to draw a chord diagram');
-        }
-
-        if (internal.laststate.guimode!=='All') {
-            name='Choords for '+internal.laststate.guimode;
-        }
-        let dim=createChordDialog(name,650,650);
-
-        internal.chordDialog.show();
-        let svgModal=internal.chordDialog.getWidgetBase();
-        console.log('Svg Modal=',svgModal);
-        let pos = internal.conndata.createLinePairs(0,internal.laststate.matrixthreshold);
-
-        let id1=webutil.getuniqueid();
-        let id2=webutil.getuniqueid();
-        
-        let container=$(`<div style="display:inline-block; float:right" id="${id1}"></div>`);
-        svgModal.append(container);
-        let legend=$(`<div style="display:inline-block; float:left" id="${id2}"></div>`);
-        svgModal.append(legend);
-
-        svgModal.css({'background-color':"#ffffff"});
-        
-        let svg = plotCorrMap(svgModal[0],id1,id2,
-                              internal.parcellation,
-                              pos,
-                              internal.laststate.poscolor,
-                              internal.context,
-                              internal.laststate.length*internal.parcellation.scalefactor,
-                              internal.laststate.thickness);
-        
-        let width = dim[0] - 50,
-            height = dim[1] - 50;
-
-
-        let svgWidth = svgModal.width(),
-            svgHeight = svgModal.height(),
-            outerRadius = Math.min(svgWidth, svgHeight) / 2 - 10,
-            innerRadius = outerRadius - 24;
-        
-        console.log('width', width, 'height', height, 'svg width', svgWidth, 'svg height', svgHeight);
-        var formatPercent = d3.format(".1%");
-        
-        internal.chordDialog.getWidget().find('.modal-body').append(svg);
-        internal.chordDialog.show();
-    };
-
-    var drawlines=function(state) {
-        let ok=internal.conndata.createFlagMatrix(internal.parcellation,
-                                                  state.mode, // mode
-                                                  state.singlevalue, // singlevalue
-                                                  state.attribcomponent, // attribcomponent
-                                                  state.degreethreshold, // metric threshold
-                                                  state.filter); // sum
-
-        if (ok===0) {
-            bootbox.alert('Failed to create flag matrix for connectivity data!');
-            return 0;
-        }
-
-
-        let total=0;
-
-        if (state.linestodraw == gui_Lines[0] ||
-            state.linestodraw == gui_Lines[2] ) {
-            let pos=internal.conndata.createLinePairs(0,state.matrixthreshold);
-            //console.log('\n\n +++ Created '+pos.length+' positive linepairs\n'+JSON.stringify(pos));
-            total+=pos.length;
-            internal.laststate = state;
-        }
-        if (state.linestodraw == gui_Lines[1] ||
-            state.linestodraw == gui_Lines[2] ) {
-
-            let neg=internal.conndata.createLinePairs(1,state.matrixthreshold);
-            //          console.log('+++ Created '+neg.length+' negagive linepairs\n'+JSON.stringify(neg)+'\n');
-            total+=neg.length;
-            internal.conndata.drawLines(internal.parcellation,neg,
-                                        state.negcolor,
-                                        internal.context,
-                                        state.length*internal.parcellation.scalefactor,
-                                        state.thickness);
-        }
-
-        if (total===0)
-            return -1;
-        return total;
-    };
-
-
-    var removelines = function() {
-        if (internal.conndata.statMatrix===null) {
-            bootbox.alert('No connectivity data loaded');
-            return;
-        }
-
-        addStateToUndo();
-        internal.linestack = [];
-        update();
-    };
-
-
-    var drawlines3d=function(state,doNotUpdateFlagMatrix) {     
-
-
-        doNotUpdateFlagMatrix=doNotUpdateFlagMatrix || false;
-
-        //        console.log('Rendermode=',internal.rendermode);
-        if (internal.rendermode===6)
-            doNotUpdateFlagMatrix=false;
-
-        if (internal.parcellations=== null ||
-            internal.subviewers === null)
-            return 0;
-
-
-        if (!doNotUpdateFlagMatrix) {
-            console.log('Updating Flag Matrix\n');
-            let ok=internal.conndata.createFlagMatrix(internal.parcellation,
-                                                      state.mode, // mode
-                                                      state.singlevalue, // singlevalue
-                                                      state.attribcomponent, // attribcomponent
-                                                      state.degreethreshold, // metric threshold
-                                                      state.filter); // sum
-
-            if (ok===0) {
-                bootbox.alert('Failed to create flag matrix for 3D connectivity data!');
-                return 0;
-            }
-        }
-
-
-
-        // Now add lines
-        let pos=[],neg=[],total=0;
-        if (state.linestodraw == gui_Lines[0] ||
-            state.linestodraw == gui_Lines[2] ) {
-            pos=internal.conndata.createLinePairs(0,state.matrixthreshold);
-            total+=pos.length;
-        }
-        if (state.linestodraw == gui_Lines[1] ||
-            state.linestodraw == gui_Lines[2] ) {
-
-            neg=internal.conndata.createLinePairs(1,state.matrixthreshold);
-            total+=neg.length;
-        }
-        if (total===0)
-            return 0;
-
-
-        let color = [ state.poscolor, 
-                      state.negcolor,
-                      state.poscolor,
-                      state.negcolor  ];
-
-        //        console.log('Drawing 3D',state.poscolor,state.negcolor);
-
-        let lparr = internal.conndata.draw3DLines(internal.parcellation,pos,neg);
-        for (let i=0;i<=1;i++) {
-            let lp=lparr[i];
-            if (lp.indices!==null) {
-                let buf=new THREE.BufferGeometry();
-                buf.setIndex(  new THREE.BufferAttribute( lp.indices, 1 ) );
-                buf.addAttribute( 'position', new THREE.BufferAttribute( lp.vertices, 3 ) );
-                let linemesh = new THREE.LineSegments(buf,
-                                                      new THREE.LineBasicMaterial( {
-                                                          color: color[i],
-                                                          linewidth : 1,
-                                                          linecap : "square",
-                                                      }));
-                linemesh.visbile=true;
-                internal.subviewers[3].scene.add(linemesh);
-                internal.meshes.push(linemesh);
-            }
-        }
-
-        let sphere = new THREE.SphereGeometry(state.radius,16,16);
-        let presphere = bisCrossHair.createpregeometry([sphere]);
-
-        for (let j=2;j<=5;j++) {
-            let sph=lparr[j];
-            let scale=255.0;
-            if (sph.positions.length>0) {
-                let cl=util.hexToRgb(color[j-2]);
-                if (j>3)
-                    scale=500.0;
-                //                  console.log('Spheres '+j+' length='+sph.positions.length+' color='+[ cl.r,cl.g,cl.b]+' scale='+scale);
-
-                let spherematerial = new THREE.ShaderMaterial({
-                    transparent : true,
-                    "uniforms": {
-                        "diffuse": {  "type":"c","value":
-                                      {"r":cl.r/scale,
-                                       "g":cl.g/scale,
-                                       "b":cl.b/scale}},
-                        "opacity": {"type":"f","value":0.5},
-                    },
-                    vertexShader : sphere_vertexshader_text,
-                    fragmentShader : sphere_fragmentshader_text,
-                });
-                let geom=bisCrossHair.createcopies(presphere,sph.positions,sph.scales);
-                geom.computeVertexNormals();
-                let spheremesh=new THREE.Mesh(geom,spherematerial);
-                spheremesh.visbile=true;
-                internal.subviewers[3].scene.add(spheremesh);
-                internal.meshes.push(spheremesh);
-            }
-        }
-
-
-        return total;
-    };
-
-    // -------------------------------------------------------------------------------------------
-    // Public Interface from here on
-    // -------------------------------------------------------------------------------------------
-    let control= {
-
-        // initialize (or reinitialize landmark control). Called from viewer when image changes. This actually creates (or recreates the GUI) as well.(This implements a function from the {@link BisMouseObserver} interface.)
-        // @memberof BisGUIConnectivityControl.prototype
-        // @param {Bis_SubViewer} subviewers - subviewers to place info in
-        // @param {BisWebImage} volume - new image (not used)
-        initialize : function(subviewers) { 
-
-            if (internal.inrestorestate)
-                return;
-
-            internal.subviewers=subviewers;
-            onDemandCreateGUI();
-            const imagepath=webutil.getWebPageImagePath();
-            loadparcellation(`${imagepath}/shen.json`);
-
-            bisgenericio.read(`${imagepath}/lobes_right.json`).then( (obj) => {
-                parsebrainsurface(obj.data,obj.filename);
-            }).catch( (e) => { console.log(e); });
-
-            bisgenericio.read(`${imagepath}/lobes_left.json`).then( (obj) => {
-                parsebrainsurface(obj.data,obj.filename);
-            }).catch( (e) => { console.log(e); });
-
-            update(false);
-            setTimeout(function() {
-                window.dispatchEvent(new Event('resize'));
-            },10);
-        },
-
-
-        // Loads a parcellation from fname (json or txt)
-        // @memberof BisGUIConnectivityControl.prototype
-        loadparcellationfile : function(fname) {
-            console.log('Loading from'+fname);
-            loadparcellation(fname);
-        },
-
-
-        // receive mousecoordinates and act appropriately!
-        // (This implements a function from the {@link BisMouseObserver} interface.)
-        // @memberof BisGUIConnectivityControl.prototype
-        // @param {array} mm - [ x,y,z ] array with current point
-        // @param {number} plane - 0,1,2 to signify whether click was on YZ,XZ or XY image plane (-1,3 mean 3D click)
-        // @param {number} mousestate - 0=click 1=move 2=release
-        //
-        updatemousecoordinates : function (mm,plane,mousestate) {
-            if (mousestate<0 || mousestate === undefined || mousestate===2)
-                return;
-
-            internal.mni=internal.mni2tal.getMNICoordinates(mm);
-            internal.mni[3]=-1;
-            if (internal.mni===null)
-                return;
-
-            if (internal.parcellation!==null) {
-                internal.mni[3]=internal.parcellation.findMNIPoint(internal.mni[0],internal.mni[1],internal.mni[2],
-                                                                   internal.overlaycontext);
-            } 
-
-            draw3dcrosshairs();
-            updatetext();
-        },
-
-        // receive window resize events and redraw 
-        // (This implements a function from the {@link BisResizeObserver} interface.)
-        // @memberof BisGUIConnectivityControl.prototype
-        handleresize : function() {
-            update(false);
-            if (internal.showlegend)
-                setnode(Math.round(internal.parameters.node-1));
-
-        },
-
-        loadmatrix : function(index,fname) {
-            return loadmatrix(index,fname);
-        },
-
-
-        loadsamplematrices : function(filenames) {
-
-            let loadnext = function() {
-                loadmatrix(1,filenames[1],null,true);
-                webutil.createAlert('Sample connectivity matrices loaded.');
-                //window.dispatchEvent(new Event('resize'));
-            };
-            loadmatrix(0,filenames[0],loadnext,true);
-
-        },
-
-        info : function() {
-            let s="Using node definitions from "+internal.parcellation.description+" with "+internal.parcellation.rois.length+" regions. <BR>";
-            s+='Positive matrix info = ('+internal.posFileInfo+'). <BR>';
-            s+='Negative matrix info = ('+internal.negFileInfo+'). <BR>';
-            s+='The Broadmann areas use the BioImage Suite internal definition.<BR>The Networks are as defined in Power et al. Neuron 2011.';
-            webutil.createAlert(s);
-        },
-
-        handleMouseEvent : function(e) {
-
-            if (internal.parcellation===null)
-                return;
-            let point=internal.parcellation.findPoint(e.offsetX,e.offsetY,internal.overlaycontext);
-            if (point==-1) {
-                return;
-            }
-            setnode(point);
-        },
-
-        handleKeyEvent : function(event) {
-            let key=event.keyCode;
-            let offset=0;
-            if (key===80)
-                offset=-1;
-            else if (key===78)
-                offset=+1;
-            if (offset===0)
-                return;
-
-            let domap=(event.shiftKey);
-
-            let nodenumber=Math.round(internal.parameters.node)-1 || 0;
-            let maxnode= internal.parcellation.rois.length-1;
-            let intnode;
-
-            if (domap) {
-                intnode=internal.parcellation.indexmap[nodenumber]+offset;
-            } else {
-                intnode=nodenumber+offset;
-            }
-
-            if (intnode<0)
-                intnode=maxnode;
-            else if (intnode>maxnode)
-                intnode=0;
-
-            let newnode=0;
-            if (domap) {
-                newnode=internal.parcellation.rois[intnode].index;
-            } else {
-                newnode=intnode;
-            }
-            setnode(newnode);
-        },
-
-        clearmatrices : function() {
-            cleanmatrixdata();
-        },
-
-        undo : function() {
-            getStateFromUndoOrRedo(false);
-        },
-
-        redo : function() {
-            getStateFromUndoOrRedo(true);
-        },
-
-        resetdefault : function() {
-            internal.parameters.length = 50;
-            internal.parameters.thickness=2;
-            internal.parameters.radius=1.0;
-            internal.parameters.poscolor= "#ff0000";
-            internal.parameters.negcolor= "#00dddd";
-            for (let ia=0;ia<internal.datgui_controllers.length;ia++) 
-                internal.datgui_controllers[ia].updateDisplay();
-        },
-
-        showmatrices : function() {
-            drawMatricesInWindow();
-        },
-
-        about : function() {
-
-            webutil.aboutDialog(' If you use this for a publication please cite Finn et. al Nature Neuro 2015.');
-        },
-
-        importparcellation : function(image,atlasdesc=null) {
-            console.log('at=',atlasdesc);
-            importParcellationImage(image,atlasdesc);
-        },
-
-        importparcellationtext : function(filename) {
-            importParcellationText(filename);
-        },
-
-
-        viewInteresting : function() {
-
-            if (internal.conndata.statMatrix===null) {
-                bootbox.alert('No connectivity data loaded');
-                return;
-            }
-
-            if (internal.keynodedlg!==null) {
-                //                  console.log('Calling show on '+internal.keynodedlg);
-                internal.keynodedlg.show();
-                return;
-            }
-
-
-            let c_data=internal.conndata.getSortedNodesByDegree(2);
-            let numnodes=c_data.length-1;
-            let maxnodes=Math.round(0.1*numnodes);
-
-            let ch=internal.context.canvas.height;
-            let cw=internal.context.canvas.width;
-            let vp=internal.parcellation.viewport;
-            let width  = 350;
-            console.log('vp='+[vp.x0,vp.x1,vp.y0,vp.y1]+' w*h'+[cw,ch]);
-
-            let showdialog=new BisWebPanel(internal.layoutmanager,
-                                           {
-                                               name :"Top "+maxnodes+" Nodes<BR>(sorted by degree)",
-                                               width : width,
-                                               mode : 'sidebar',
-                                               dual : false,
-                                           });
-
-
-            let templates=webutil.getTemplates();
-            let newid=webutil.createWithTemplate(templates.bisscrolltable,$('body'));
-            let stable=$('#'+newid);
-
-            let buttonnodepairs = [];
-            let callback = function(e) {
-                let id=e.target.id;
-                let node=buttonnodepairs[id];
-                internal.parameters.mode="Single Node";
-                console.log('Node=',node);
-                setnode(node);
-            };
-
-            let thead = stable.find(".bisthead");
-            let tbody = stable.find(".bistbody",stable);
-
-            thead.empty();
-            tbody.empty();
-            tbody.css({'font-size':'12px',
-                       'user-select': 'none'});
-            thead.css({'font-size':'12px',
-                       'user-select': 'none'});
-
-            let hd=$('<tr>'+
-                     ' <td width="5%">#</th>'+
-                     ' <td width="15%">Node</th>'+
-                     ' <td width="80%">Details</th>'+
-                     '</tr>');
-            thead.append(hd);
-            thead.css({ font: "Arial 12px"});
-
-
-            for (let i=0;i<maxnodes;i++) {
-
-                let node=c_data[numnodes-i].node;
-                let degree=c_data[numnodes-i].degree;
-                if (degree>0) {
-                    let c = [ internal.parcellation.rois[node].x,
-                              internal.parcellation.rois[node].y,
-                              internal.parcellation.rois[node].z];
-
-                    let s0= i+1+".";
-                    let s1= node+1;
-                    let lobe=gui_Lobes[internal.parcellation.rois[node].attr[0]];
-
-                    let s2= 'Degree='+degree+'\t(MNI='+c+', Lobe='+lobe+')';
-                    let nid=webutil.getuniqueid();
-
-                    let w=$(`<tr>
-                            <td width="5%">${s0}</td>
-                            <td width="15%">${s1}</td>
-                            <td width="80%" id="${nid}" class="btn-link">${s2}</td>
-                            </tr>`);
-                    tbody.append(w);
-                    $('#'+nid).click(callback);
-                    buttonnodepairs[nid]=(node);
-                }
-            }
-
-            showdialog.getWidget().append(stable);
-            showdialog.show();
-            window.dispatchEvent(new Event('resize'));
-            internal.keynodedlg=showdialog;
-        },
-
-        // -------------------------------------------------------------------
-        /** Set the element state from a dictionary object 
-            @param {object} state -- the state of the element */
-        setElementState : function (dt=null) {
-
-            //            console.log('Cleaning up');
-            internal.context.clearRect(0,0,internal.canvas.width,internal.canvas.height);
-            internal.overlaycontext.clearRect(0,0,internal.canvas.width,internal.canvas.height);
-            internal.rendermode=dt.rendermode;
-            //console.log('New Render mode=',dt.rendermode);
-            togglemode(false);
-
-            internal.posFileInfo=[ "NONE", 0 ];
-            internal.negFileInfo=[ "NONE", 0 ];
-
-            if (dt.parcellation) 
-                parseparcellation(dt.parcellation.text,dt.parcellation.filename,false,true);
-
-
-            if (dt.posmatrix) {
-                let neg=null;
-                let pos=new BisWebMatrix();
-                pos.parseFromJSON(dt['posmatrix'].matrix);
-                internal.posFileInfo=dt['posmatrix'].info;
-
-                pos=pos.getNumericMatrix();
-
-                if (dt.negmatrix) {
-                    neg=new BisWebMatrix();
-                    neg.parseFromJSON(dt['negmatrix'].matrix);
-                    neg=neg.getNumericMatrix();
-                    internal.negFileInfo=dt['negmatrix'].info;
-                }
-                internal.conndata.setMatrices(pos,neg);
-            }
-
-            for (let attr in dt.parameters) {
-                if (internal.parameters.hasOwnProperty(attr)) {
-                    internal.parameters[attr] = dt.parameters[attr];
-                } 
-            }
-            console.log('retrieving params(1)=',JSON.stringify(dt.parameters,null,3));
-            console.log('retrieving params(2)=',JSON.stringify(internal.parameters,null,3));
-            for (let ia=0;ia<internal.datgui_controllers.length;ia++) 
-                internal.datgui_controllers[ia].updateDisplay();
-
-            if (dt.linestack) {
-                internal.linestack=dt.linestack;
-                update();
-            }
-
-            internal.showlegend=!dt.showlegend;
-            toggleshowlegend();
-
-            internal.inrestorestate=false;
-        },
-
-        /** Get State as Object 
-            @returns {object} -- the state of the element as a dictionary*/
-        getElementState : function() {
-
-            let obj = {  };
-
-            let mat=[ internal.conndata.posMatrix, internal.conndata.negMatrix ];
-            let matnames = [ 'posmatrix','negmatrix' ];
-            let nummatrices=0;
-            for (let i=0;i<=1;i++) {
-                let info=internal.posFileInfo;
-                if (i==1)
-                    info=internal.negFileInfo;
-                if (mat[i]) {
-                    nummatrices=nummatrices+1;
-                    let newmat=new BisWebMatrix();
-                    newmat.setFromNumericMatrix(mat[i]);
-                    console.log('Matrix ',matnames[i],newmat.getDescription());
-                    obj[matnames[i]]= {
-                        matrix : newmat.serializeToJSON(false),
-                        info : info,
-                    };
-                }
-            }
-
-            if (nummatrices>0) {
-                obj.linestack=internal.linestack;
-            }
-
-            obj.parameters=JSON.parse(JSON.stringify(internal.parameters));
-            console.log('storing params=',JSON.stringify(obj.parameters,null,2));
-
-            obj.parcellation = internal.parcellationtext;
-            obj.lastnode=internal.lastnode;
-            obj.showlegend=internal.showlegend;
-            obj.rendermode=internal.rendermode;
-            console.log('Storing Render mode=',obj.rendermode);
-            return obj;
-        },
-
-        /** Disable Mouse Updates */
-        disableMouseUpdates : function() {
-            internal.inrestorestate=true;
-        }
-
-    };
-
-    internal.this=control;
-    internal.parentDomElement=parent;
-    let basediv=$("<div>To appear...</div>");
-    internal.parentDomElement.append(basediv);
-    internal.orthoviewer=orthoviewer;
-    internal.orthoviewer.addMouseObserver(internal.this);
-    internal.orthoviewer.addResizeObserver(internal.this);
-
-    internal.canvas=internal.layoutmanager.getcanvas();
-    internal.context=internal.canvas.getContext("2d");
-    internal.mni2tal=bismni2tal();
-
-    internal.overlaycanvas = internal.layoutmanager.getoverlaycanvas();
-    internal.overlaycontext=internal.overlaycanvas.getContext("2d");
-
-    // Why this needs to be bound to renderer beats me ...
-    let w=internal.layoutmanager.getrenderer().domElement;
-    w.addEventListener('mousedown',function(fe) {
-        internal.this.handleMouseEvent(fe);});
-
-    window.addEventListener('keydown',function(fe) {
-        internal.this.handleKeyEvent(fe);
-    },true);
-
-
-    return control;
+	var corrmap = function() {
+		if (internal.laststate === null) {
+			bootbox.alert('Please create lines before attempting to draw a chord diagram');
+		}
+
+		if (internal.laststate.guimode!=='All') {
+			name='Choords for '+internal.laststate.guimode;
+		}
+		let dim=createChordDialog(name,650,650);
+
+		internal.chordDialog.show();
+		let svgModal=internal.chordDialog.getWidgetBase();
+		console.log('Svg Modal=',svgModal);
+		let pos = internal.conndata.createLinePairs(0,internal.laststate.matrixthreshold);
+
+		let id1=webutil.getuniqueid();
+		let id2=webutil.getuniqueid();
+
+		let container=$(`<div style="display:inline-block; float:right" id="${id1}"></div>`);
+		svgModal.append(container);
+		let legend=$(`<div style="display:inline-block; float:left" id="${id2}"></div>`);
+		svgModal.append(legend);
+
+		svgModal.css({'background-color':"#ffffff"});
+
+		let svg = plotCorrMap(svgModal[0],id1,id2,
+			internal.parcellation,
+			pos,
+			internal.laststate.poscolor,
+			internal.context,
+			internal.laststate.length*internal.parcellation.scalefactor,
+			internal.laststate.thickness);
+
+		let width = dim[0] - 50,
+			height = dim[1] - 50;
+
+
+		let svgWidth = svgModal.width(),
+			svgHeight = svgModal.height(),
+			outerRadius = Math.min(svgWidth, svgHeight) / 2 - 10,
+			innerRadius = outerRadius - 24;
+
+		console.log('width', width, 'height', height, 'svg width', svgWidth, 'svg height', svgHeight);
+		var formatPercent = d3.format(".1%");
+
+		internal.chordDialog.getWidget().find('.modal-body').append(svg);
+		internal.chordDialog.show();
+	};
+
+	var drawlines=function(state) {
+		let ok=internal.conndata.createFlagMatrix(internal.parcellation,
+			state.mode, // mode
+			state.singlevalue, // singlevalue
+			state.attribcomponent, // attribcomponent
+			state.degreethreshold, // metric threshold
+			state.filter); // sum
+
+		if (ok===0) {
+			bootbox.alert('Failed to create flag matrix for connectivity data!');
+			return 0;
+		}
+
+
+		let total=0;
+
+		if (state.linestodraw == gui_Lines[0] ||
+			state.linestodraw == gui_Lines[2] ) {
+			let pos=internal.conndata.createLinePairs(0,state.matrixthreshold);
+			//console.log('\n\n +++ Created '+pos.length+' positive linepairs\n'+JSON.stringify(pos));
+			total+=pos.length;
+			internal.laststate = state;
+		}
+		if (state.linestodraw == gui_Lines[1] ||
+			state.linestodraw == gui_Lines[2] ) {
+
+			let neg=internal.conndata.createLinePairs(1,state.matrixthreshold);
+			//          console.log('+++ Created '+neg.length+' negagive linepairs\n'+JSON.stringify(neg)+'\n');
+			total+=neg.length;
+			internal.conndata.drawLines(internal.parcellation,neg,
+				state.negcolor,
+				internal.context,
+				state.length*internal.parcellation.scalefactor,
+				state.thickness);
+		}
+
+		if (total===0)
+			return -1;
+		return total;
+	};
+
+
+	var removelines = function() {
+		if (internal.conndata.statMatrix===null) {
+			bootbox.alert('No connectivity data loaded');
+			return;
+		}
+
+		addStateToUndo();
+		internal.linestack = [];
+		update();
+	};
+
+
+	var drawlines3d=function(state,doNotUpdateFlagMatrix) {     
+
+
+		doNotUpdateFlagMatrix=doNotUpdateFlagMatrix || false;
+
+		//        console.log('Rendermode=',internal.rendermode);
+		if (internal.rendermode===6)
+			doNotUpdateFlagMatrix=false;
+
+		if (internal.parcellations=== null ||
+			internal.subviewers === null)
+			return 0;
+
+
+		if (!doNotUpdateFlagMatrix) {
+			console.log('Updating Flag Matrix\n');
+			let ok=internal.conndata.createFlagMatrix(internal.parcellation,
+				state.mode, // mode
+				state.singlevalue, // singlevalue
+				state.attribcomponent, // attribcomponent
+				state.degreethreshold, // metric threshold
+				state.filter); // sum
+
+			if (ok===0) {
+				bootbox.alert('Failed to create flag matrix for 3D connectivity data!');
+				return 0;
+			}
+		}
+
+
+
+		// Now add lines
+		let pos=[],neg=[],total=0;
+		if (state.linestodraw == gui_Lines[0] ||
+			state.linestodraw == gui_Lines[2] ) {
+			pos=internal.conndata.createLinePairs(0,state.matrixthreshold);
+			total+=pos.length;
+		}
+		if (state.linestodraw == gui_Lines[1] ||
+			state.linestodraw == gui_Lines[2] ) {
+
+			neg=internal.conndata.createLinePairs(1,state.matrixthreshold);
+			total+=neg.length;
+		}
+		if (total===0)
+			return 0;
+
+
+		let color = [ state.poscolor, 
+			state.negcolor,
+			state.poscolor,
+			state.negcolor  ];
+
+		//        console.log('Drawing 3D',state.poscolor,state.negcolor);
+
+		let lparr = internal.conndata.draw3DLines(internal.parcellation,pos,neg);
+		for (let i=0;i<=1;i++) {
+			let lp=lparr[i];
+			if (lp.indices!==null) {
+				let buf=new THREE.BufferGeometry();
+				buf.setIndex(  new THREE.BufferAttribute( lp.indices, 1 ) );
+				buf.addAttribute( 'position', new THREE.BufferAttribute( lp.vertices, 3 ) );
+				let linemesh = new THREE.LineSegments(buf,
+					new THREE.LineBasicMaterial( {
+						color: color[i],
+						linewidth : 1,
+						linecap : "square",
+					}));
+				linemesh.visbile=true;
+				internal.subviewers[3].scene.add(linemesh);
+				internal.meshes.push(linemesh);
+			}
+		}
+
+		let sphere = new THREE.SphereGeometry(state.radius,16,16);
+		let presphere = bisCrossHair.createpregeometry([sphere]);
+
+		for (let j=2;j<=5;j++) {
+			let sph=lparr[j];
+			let scale=255.0;
+			if (sph.positions.length>0) {
+				let cl=util.hexToRgb(color[j-2]);
+				if (j>3)
+					scale=500.0;
+				//                  console.log('Spheres '+j+' length='+sph.positions.length+' color='+[ cl.r,cl.g,cl.b]+' scale='+scale);
+
+				let spherematerial = new THREE.ShaderMaterial({
+					transparent : true,
+					"uniforms": {
+						"diffuse": {  "type":"c","value":
+							{"r":cl.r/scale,
+								"g":cl.g/scale,
+								"b":cl.b/scale}},
+						"opacity": {"type":"f","value":0.5},
+					},
+					vertexShader : sphere_vertexshader_text,
+					fragmentShader : sphere_fragmentshader_text,
+				});
+				let geom=bisCrossHair.createcopies(presphere,sph.positions,sph.scales);
+				geom.computeVertexNormals();
+				let spheremesh=new THREE.Mesh(geom,spherematerial);
+				spheremesh.visbile=true;
+				internal.subviewers[3].scene.add(spheremesh);
+				internal.meshes.push(spheremesh);
+			}
+		}
+
+
+		return total;
+	};
+
+	// -------------------------------------------------------------------------------------------
+	// Public Interface from here on
+	// -------------------------------------------------------------------------------------------
+	let control= {
+
+		// initialize (or reinitialize landmark control). Called from viewer when image changes. This actually creates (or recreates the GUI) as well.(This implements a function from the {@link BisMouseObserver} interface.)
+		// @memberof BisGUIConnectivityControl.prototype
+		// @param {Bis_SubViewer} subviewers - subviewers to place info in
+		// @param {BisWebImage} volume - new image (not used)
+		initialize : function(subviewers) { 
+
+			if (internal.inrestorestate)
+				return;
+
+			internal.subviewers=subviewers;
+			onDemandCreateGUI();
+			const imagepath=webutil.getWebPageImagePath();
+			loadparcellation(`${imagepath}/shen.json`);
+
+			bisgenericio.read(`${imagepath}/lobes_right.json`).then( (obj) => {
+				parsebrainsurface(obj.data,obj.filename);
+			}).catch( (e) => { console.log(e); });
+
+			bisgenericio.read(`${imagepath}/lobes_left.json`).then( (obj) => {
+				parsebrainsurface(obj.data,obj.filename);
+			}).catch( (e) => { console.log(e); });
+
+			update(false);
+			setTimeout(function() {
+				window.dispatchEvent(new Event('resize'));
+			},10);
+		},
+
+
+		// Loads a parcellation from fname (json or txt)
+		// @memberof BisGUIConnectivityControl.prototype
+		loadparcellationfile : function(fname) {
+			console.log('Loading from'+fname);
+			loadparcellation(fname);
+		},
+
+
+		// receive mousecoordinates and act appropriately!
+		// (This implements a function from the {@link BisMouseObserver} interface.)
+		// @memberof BisGUIConnectivityControl.prototype
+		// @param {array} mm - [ x,y,z ] array with current point
+		// @param {number} plane - 0,1,2 to signify whether click was on YZ,XZ or XY image plane (-1,3 mean 3D click)
+		// @param {number} mousestate - 0=click 1=move 2=release
+		//
+		updatemousecoordinates : function (mm,plane,mousestate) {
+			if (mousestate<0 || mousestate === undefined || mousestate===2)
+				return;
+
+			internal.mni=internal.mni2tal.getMNICoordinates(mm);
+			internal.mni[3]=-1;
+			if (internal.mni===null)
+				return;
+
+			if (internal.parcellation!==null) {
+				internal.mni[3]=internal.parcellation.findMNIPoint(internal.mni[0],internal.mni[1],internal.mni[2],
+					internal.overlaycontext);
+			} 
+
+			draw3dcrosshairs();
+			updatetext();
+		},
+
+		// receive window resize events and redraw 
+		// (This implements a function from the {@link BisResizeObserver} interface.)
+		// @memberof BisGUIConnectivityControl.prototype
+		handleresize : function() {
+			update(false);
+			if (internal.showlegend)
+				setnode(Math.round(internal.parameters.node-1));
+
+		},
+
+		loadmatrix : function(index,fname) {
+			return loadmatrix(index,fname);
+		},
+
+
+		loadsamplematrices : function(filenames) {
+
+			let loadnext = function() {
+				loadmatrix(1,filenames[1],null,true);
+				webutil.createAlert('Sample connectivity matrices loaded.');
+				//window.dispatchEvent(new Event('resize'));
+			};
+			loadmatrix(0,filenames[0],loadnext,true);
+
+		},
+
+		info : function() {
+			let s="Using node definitions from "+internal.parcellation.description+" with "+internal.parcellation.rois.length+" regions. <BR>";
+			s+='Positive matrix info = ('+internal.posFileInfo+'). <BR>';
+			s+='Negative matrix info = ('+internal.negFileInfo+'). <BR>';
+			s+='The Broadmann areas use the BioImage Suite internal definition.<BR>The Networks are as defined in Power et al. Neuron 2011.';
+			webutil.createAlert(s);
+		},
+
+		handleMouseEvent : function(e) {
+
+			if (internal.parcellation===null)
+				return;
+			let point=internal.parcellation.findPoint(e.offsetX,e.offsetY,internal.overlaycontext);
+			if (point==-1) {
+				return;
+			}
+			setnode(point);
+		},
+
+		handleKeyEvent : function(event) {
+			let key=event.keyCode;
+			let offset=0;
+			if (key===80)
+				offset=-1;
+			else if (key===78)
+				offset=+1;
+			if (offset===0)
+				return;
+
+			let domap=(event.shiftKey);
+
+			let nodenumber=Math.round(internal.parameters.node)-1 || 0;
+			let maxnode= internal.parcellation.rois.length-1;
+			let intnode;
+
+			if (domap) {
+				intnode=internal.parcellation.indexmap[nodenumber]+offset;
+			} else {
+				intnode=nodenumber+offset;
+			}
+
+			if (intnode<0)
+				intnode=maxnode;
+			else if (intnode>maxnode)
+				intnode=0;
+
+			let newnode=0;
+			if (domap) {
+				newnode=internal.parcellation.rois[intnode].index;
+			} else {
+				newnode=intnode;
+			}
+			setnode(newnode);
+		},
+
+		clearmatrices : function() {
+			cleanmatrixdata();
+		},
+
+		undo : function() {
+			getStateFromUndoOrRedo(false);
+		},
+
+		redo : function() {
+			getStateFromUndoOrRedo(true);
+		},
+
+		resetdefault : function() {
+			internal.parameters.length = 50;
+			internal.parameters.thickness=2;
+			internal.parameters.radius=1.0;
+			internal.parameters.poscolor= "#ff0000";
+			internal.parameters.negcolor= "#00dddd";
+			for (let ia=0;ia<internal.datgui_controllers.length;ia++) 
+				internal.datgui_controllers[ia].updateDisplay();
+		},
+
+		showmatrices : function() {
+			drawMatricesInWindow();
+		},
+
+		about : function() {
+
+			webutil.aboutDialog(' If you use this for a publication please cite Finn et. al Nature Neuro 2015.');
+		},
+
+		importparcellation : function(image,atlasdesc=null) {
+			console.log('at=',atlasdesc);
+			importParcellationImage(image,atlasdesc);
+		},
+
+		importparcellationtext : function(filename) {
+			importParcellationText(filename);
+		},
+
+
+		viewInteresting : function() {
+
+			if (internal.conndata.statMatrix===null) {
+				bootbox.alert('No connectivity data loaded');
+				return;
+			}
+
+			if (internal.keynodedlg!==null) {
+				//                  console.log('Calling show on '+internal.keynodedlg);
+				internal.keynodedlg.show();
+				return;
+			}
+
+
+			let c_data=internal.conndata.getSortedNodesByDegree(2);
+			let numnodes=c_data.length-1;
+			let maxnodes=Math.round(0.1*numnodes);
+
+			let ch=internal.context.canvas.height;
+			let cw=internal.context.canvas.width;
+			let vp=internal.parcellation.viewport;
+			let width  = 350;
+			console.log('vp='+[vp.x0,vp.x1,vp.y0,vp.y1]+' w*h'+[cw,ch]);
+
+			let showdialog=new BisWebPanel(internal.layoutmanager,
+				{
+					name :"Top "+maxnodes+" Nodes<BR>(sorted by degree)",
+					width : width,
+					mode : 'sidebar',
+					dual : false,
+				});
+
+
+			let templates=webutil.getTemplates();
+			let newid=webutil.createWithTemplate(templates.bisscrolltable,$('body'));
+			let stable=$('#'+newid);
+
+			let buttonnodepairs = [];
+			let callback = function(e) {
+				let id=e.target.id;
+				let node=buttonnodepairs[id];
+				internal.parameters.mode="Single Node";
+				console.log('Node=',node);
+				setnode(node);
+			};
+
+			let thead = stable.find(".bisthead");
+			let tbody = stable.find(".bistbody",stable);
+
+			thead.empty();
+			tbody.empty();
+			tbody.css({'font-size':'12px',
+				'user-select': 'none'});
+			thead.css({'font-size':'12px',
+				'user-select': 'none'});
+
+			let hd=$('<tr>'+
+				' <td width="5%">#</th>'+
+				' <td width="15%">Node</th>'+
+				' <td width="80%">Details</th>'+
+				'</tr>');
+			thead.append(hd);
+			thead.css({ font: "Arial 12px"});
+
+
+			for (let i=0;i<maxnodes;i++) {
+
+				let node=c_data[numnodes-i].node;
+				let degree=c_data[numnodes-i].degree;
+				if (degree>0) {
+					let c = [ internal.parcellation.rois[node].x,
+						internal.parcellation.rois[node].y,
+						internal.parcellation.rois[node].z];
+
+					let s0= i+1+".";
+					let s1= node+1;
+					let lobe=gui_Lobes[internal.parcellation.rois[node].attr[0]];
+
+					let s2= 'Degree='+degree+'\t(MNI='+c+', Lobe='+lobe+')';
+					let nid=webutil.getuniqueid();
+
+					let w=$(`<tr>
+						<td width="5%">${s0}</td>
+						<td width="15%">${s1}</td>
+						<td width="80%" id="${nid}" class="btn-link">${s2}</td>
+						</tr>`);
+					tbody.append(w);
+					$('#'+nid).click(callback);
+					buttonnodepairs[nid]=(node);
+				}
+			}
+
+			showdialog.getWidget().append(stable);
+			showdialog.show();
+			window.dispatchEvent(new Event('resize'));
+			internal.keynodedlg=showdialog;
+		},
+
+		// -------------------------------------------------------------------
+		/** Set the element state from a dictionary object 
+	    @param {object} state -- the state of the element */
+		setElementState : function (dt=null) {
+
+			//            console.log('Cleaning up');
+			internal.context.clearRect(0,0,internal.canvas.width,internal.canvas.height);
+			internal.overlaycontext.clearRect(0,0,internal.canvas.width,internal.canvas.height);
+			internal.rendermode=dt.rendermode;
+			//console.log('New Render mode=',dt.rendermode);
+			togglemode(false);
+
+			internal.posFileInfo=[ "NONE", 0 ];
+			internal.negFileInfo=[ "NONE", 0 ];
+
+			if (dt.parcellation) 
+				parseparcellation(dt.parcellation.text,dt.parcellation.filename,false,true);
+
+
+			if (dt.posmatrix) {
+				let neg=null;
+				let pos=new BisWebMatrix();
+				pos.parseFromJSON(dt['posmatrix'].matrix);
+				internal.posFileInfo=dt['posmatrix'].info;
+
+				pos=pos.getNumericMatrix();
+
+				if (dt.negmatrix) {
+					neg=new BisWebMatrix();
+					neg.parseFromJSON(dt['negmatrix'].matrix);
+					neg=neg.getNumericMatrix();
+					internal.negFileInfo=dt['negmatrix'].info;
+				}
+				internal.conndata.setMatrices(pos,neg);
+			}
+
+			for (let attr in dt.parameters) {
+				if (internal.parameters.hasOwnProperty(attr)) {
+					internal.parameters[attr] = dt.parameters[attr];
+				} 
+			}
+			console.log('retrieving params(1)=',JSON.stringify(dt.parameters,null,3));
+			console.log('retrieving params(2)=',JSON.stringify(internal.parameters,null,3));
+			for (let ia=0;ia<internal.datgui_controllers.length;ia++) 
+				internal.datgui_controllers[ia].updateDisplay();
+
+			if (dt.linestack) {
+				internal.linestack=dt.linestack;
+				update();
+			}
+
+			internal.showlegend=!dt.showlegend;
+			toggleshowlegend();
+
+			internal.inrestorestate=false;
+		},
+
+		/** Get State as Object 
+	    @returns {object} -- the state of the element as a dictionary*/
+		getElementState : function() {
+
+			let obj = {  };
+
+			let mat=[ internal.conndata.posMatrix, internal.conndata.negMatrix ];
+			let matnames = [ 'posmatrix','negmatrix' ];
+			let nummatrices=0;
+			for (let i=0;i<=1;i++) {
+				let info=internal.posFileInfo;
+				if (i==1)
+					info=internal.negFileInfo;
+				if (mat[i]) {
+					nummatrices=nummatrices+1;
+					let newmat=new BisWebMatrix();
+					newmat.setFromNumericMatrix(mat[i]);
+					console.log('Matrix ',matnames[i],newmat.getDescription());
+					obj[matnames[i]]= {
+						matrix : newmat.serializeToJSON(false),
+						info : info,
+					};
+				}
+			}
+
+			if (nummatrices>0) {
+				obj.linestack=internal.linestack;
+			}
+
+			obj.parameters=JSON.parse(JSON.stringify(internal.parameters));
+			console.log('storing params=',JSON.stringify(obj.parameters,null,2));
+
+			obj.parcellation = internal.parcellationtext;
+			obj.lastnode=internal.lastnode;
+			obj.showlegend=internal.showlegend;
+			obj.rendermode=internal.rendermode;
+			console.log('Storing Render mode=',obj.rendermode);
+			return obj;
+		},
+
+		/** Disable Mouse Updates */
+		disableMouseUpdates : function() {
+			internal.inrestorestate=true;
+		}
+
+	};
+
+internal.this=control;
+internal.parentDomElement=parent;
+let basediv=$("<div>To appear...</div>");
+internal.parentDomElement.append(basediv);
+internal.orthoviewer=orthoviewer;
+internal.orthoviewer.addMouseObserver(internal.this);
+internal.orthoviewer.addResizeObserver(internal.this);
+
+internal.canvas=internal.layoutmanager.getcanvas();
+internal.context=internal.canvas.getContext("2d");
+internal.mni2tal=bismni2tal();
+
+internal.overlaycanvas = internal.layoutmanager.getoverlaycanvas();
+internal.overlaycontext=internal.overlaycanvas.getContext("2d");
+
+// Why this needs to be bound to renderer beats me ...
+let w=internal.layoutmanager.getrenderer().domElement;
+w.addEventListener('mousedown',function(fe) {
+	internal.this.handleMouseEvent(fe);});
+
+window.addEventListener('keydown',function(fe) {
+	internal.this.handleKeyEvent(fe);
+},true);
+
+
+return control;
 };
 
 /** 
@@ -2469,86 +2529,86 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
 class ConnectivityControlElement extends HTMLElement {
 
-    connectedCallback() {
+	connectedCallback() {
 
-        let viewerid=this.getAttribute('bis-viewerid');
-        let layoutid=this.getAttribute('bis-layoutwidgetid');
-        let viewer=document.querySelector(viewerid);
-        let layoutcontroller=document.querySelector(layoutid);
+		let viewerid=this.getAttribute('bis-viewerid');
+		let layoutid=this.getAttribute('bis-layoutwidgetid');
+		let viewer=document.querySelector(viewerid);
+		let layoutcontroller=document.querySelector(layoutid);
 
-        let panel=new BisWebPanel(layoutcontroller,
-                                  { name : "Connectivity Control",
-                                    permanent : "true",
-                                  });
-        panel.show();
-        this.innercontrol=bisGUIConnectivityControl(panel.getWidget(),viewer,layoutcontroller);
-    }
+		let panel=new BisWebPanel(layoutcontroller,
+			{ name : "Connectivity Control",
+				permanent : "true",
+			});
+		panel.show();
+		this.innercontrol=bisGUIConnectivityControl(panel.getWidget(),viewer,layoutcontroller);
+	}
 
-    /** load parcellation file 
-     * @param {string} fname - the url or filename or file object or an electron object with members 
-     */
-    loadparcellationfile(fname) { this.innercontrol.loadparcellationfile(fname); }
+	/** load parcellation file 
+	 * @param {string} fname - the url or filename or file object or an electron object with members 
+	 */
+	loadparcellationfile(fname) { this.innercontrol.loadparcellationfile(fname); }
 
-    /** loads a a matrix file 
-     * @param {string} fname - the url or filename or file object or an electron object with members 
-     */
-    loadmatrix(index,fname) { this.innercontrol.loadmatrix(index,fname); }
+	/** loads a a matrix file 
+	 * @param {string} fname - the url or filename or file object or an electron object with members 
+	 */
+	loadmatrix(index,fname) { this.innercontrol.loadmatrix(index,fname); }
 
-    /** Loads sample matrices
-     * @param {array} fnames - an array of (the url or filename or file object or an electron object with members)
-     */
-    loadsamplematrices(fnames) { this.innercontrol.loadsamplematrices(fnames);  }
+	/** Loads sample matrices
+	 * @param {array} fnames - an array of (the url or filename or file object or an electron object with members)
+	 */
+	loadsamplematrices(fnames) { this.innercontrol.loadsamplematrices(fnames);  }
 
-    /** clears matrices */
-    clearmatrices() { this.innercontrol.clearmatrices(); }
+	/** clears matrices */
+	clearmatrices() { this.innercontrol.clearmatrices(); }
 
-    /* undo last draw operations */
-    undo() { this.innercontrol.undo(); }
+	/* undo last draw operations */
+	undo() { this.innercontrol.undo(); }
 
-    /* redo last draw operations */
-    redo() { this.innercontrol.redo(); }
+	/* redo last draw operations */
+	redo() { this.innercontrol.redo(); }
 
-    /* prints info about current data */
-    info() { this.innercontrol.info(); }
+	/* prints info about current data */
+	info() { this.innercontrol.info(); }
 
-    /* reset default display parameters */
-    resetdefault() { this.innercontrol.resetdefault(); }
+	/* reset default display parameters */
+	resetdefault() { this.innercontrol.resetdefault(); }
 
-    /* shows a popup dialog listing the most "interesting" nodes */
-    viewInteresting() { this.innercontrol.viewInteresting(); }
+	/* shows a popup dialog listing the most "interesting" nodes */
+	viewInteresting() { this.innercontrol.viewInteresting(); }
 
-    /* displays the matrices */
-    showmatrices() { this.innercontrol.showmatrices(); }
+	/* displays the matrices */
+	showmatrices() { this.innercontrol.showmatrices(); }
 
-    /** Imports a parcellation as text file 
-     * @param {array} fnames - an array of (the url or filename or file object or an electron object with members)
-     */
-    importparcellationtext(f) { this.innercontrol.importparcellationtext(f); }
+	/** Imports a parcellation as text file 
+	 * @param {array} fnames - an array of (the url or filename or file object or an electron object with members)
+	 */
+	importparcellationtext(f) { this.innercontrol.importparcellationtext(f); }
 
-    /** Imports a parcellation as json file 
-     * @param {array} fnames - an array of (the url or filename or file object or an electron object with members)
-     */
-    importparcellation(f,desc) { this.innercontrol.importparcellation(f,desc); }
+	/** Imports a parcellation as json file 
+	 * @param {array} fnames - an array of (the url or filename or file object or an electron object with members)
+	 */
+	importparcellation(f,desc) { this.innercontrol.importparcellation(f,desc); }
 
-    /** popups a dialog showing info about this control */
-    about() { this.innercontrol.about(); }
+	/** popups a dialog showing info about this control */
+	about() { this.innercontrol.about(); }
 
-    /** Set the element state from a dictionary object 
-        @param {object} state -- the state of the element */
-    setElementState(dt=null) {
-        this.innercontrol.setElementState(dt);
-    }
+	/** Set the element state from a dictionary object 
+	@param {object} state -- the state of the element */
+	setElementState(dt=null) {
+		this.innercontrol.setElementState(dt);
+	}
 
-    /** Get State as Object 
-        @returns {object} -- the state of the element as a dictionary*/
-    getElementState() {
-        return this.innercontrol.getElementState();
-    }
+	/** Get State as Object 
+	@returns {object} -- the state of the element as a dictionary*/
+	getElementState() {
+		return this.innercontrol.getElementState();
+	}
 
-    /** disable mouse updates until setElementState is called */
-    disableMouseUpdates() {
-        this.innercontrol.disableMouseUpdates();
-    }
+	/** disable mouse updates until setElementState is called */
+	disableMouseUpdates() {
+		this.innercontrol.disableMouseUpdates();
+	}
 
 
 }
