@@ -130,7 +130,7 @@ class GrapherModule extends HTMLElement {
                 <li><a class='dropdown-item' href='#'>Another Item<br></a></li>
                 <li><a class='dropdown-item' href='#'>One More Item<br></a></li>
                 <li><a class='dropdown-item' href='#'>An Item Too<br></a></li>
-            </div> 
+            </ul> 
         </div>
         `);
 
@@ -230,10 +230,9 @@ class GrapherModule extends HTMLElement {
             for (let key of Object.keys(imgdata)) {
                 let splitKey = key.split('_');
                 let keyNum = splitKey[1];
-                if (keyNum < startingKey) { startingKey = splitKey.join('_'); console.log('starting key', startingKey); }
+                if (parseInt(keyNum) < startingKey) { startingKey = splitKey.join('_'); }
 
                 imgdata[key] = formatChart(imgdata[key], orthoElement.getobjectmap());
-                console.log('chart', imgdata[key]);
             }
 
             this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', makeTaskChart : true, charts: imgdata, displayChart : startingKey });
@@ -598,8 +597,6 @@ class GrapherModule extends HTMLElement {
             $(this.graphWindow.getHeader()).find('.task-selector').css('visibility', 'hidden'); 
         }
 
-
-        console.log('formatted tasks', tasks.formattedTasks, 'settings', settings);
         //construct task labels and regions for tauchart
         for (let task of tasks.formattedTasks) {
             for (let item of data) {
