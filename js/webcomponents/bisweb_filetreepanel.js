@@ -274,10 +274,8 @@ class FileTreePanel extends HTMLElement {
             fileTree = files;
         }
 
-        console.log('file tree', fileTree);
         //alpabetize tree entries
         sortEntries(fileTree);
-
 
         let listElement = this.panel.getWidget();
         listElement.find('.file-container').remove();
@@ -814,7 +812,6 @@ class FileTreePanel extends HTMLElement {
             bis_webutil.createAlert('Some files in the study have the same tag, e.g. there might be two tagged as \'task_2\'. Please correct this before continuing.', true);
         }
 
-        //TODO: Change prepending '(task)' to image so that clearing the tag clears the name too
         let imgdata = {};
         bis_webutil.createAlert('Reading study files marked as \'task\'; this may take a while!', false, 0, 1000000000, { 'makeLoadSpinner' : true });
         let promiseArray =  [];
@@ -1057,67 +1054,9 @@ class FileTreePanel extends HTMLElement {
 
             //create bootbox modal with task select slider
             if (selectedValue.includes('task')) {
-
-                let minSliderValue = 1;
-                let maxSliderValue = 10;
-
-                let sliderInput = $(`<input 
-                        class='bootstrap-task-slider'
-                        data-slider-min='${minSliderValue}'
-                        data-slider-max='${maxSliderValue}'
-                        data-slider-value='1'
-                        data-slider-step='1'>
-                    </input>`);
-    
-                //create secondary menu to select task number
-                let box = bootbox.alert({ 
-                    title : 'Enter a task number', 
-                    message : 'Please enter the task number.',
-                    size : 'small',
-                    callback: () => {
-                        //textbox input should override if it's different 
-                        let result =  box.find('.tag-input')[0].value || box.find('.bootstrap-task-slider').val();
-                        console.log('result', result);
-                        let tagName = selectedValue + '_' + result, displayedName = '(' + tagName + ')';
-                        this.currentlySelectedNode.original.tag = tagName;
-
-                        //update name for underlying data structure and jstree object
-                        this.currentlySelectedNode.original.text = displayedName + this.currentlySelectedNode.text;
-                        this.currentlySelectedNode.text = this.currentlySelectedNode.original.text;
-
-                        //update name displayed on file tree panel
-                        let tree = this.panel.widget.find('.file-container').jstree();
-                        tree.redraw(true);
-                    }
-                });
-
-                box.init( () => {
-                    console.log('box', box);
-                    box.find('.modal-body').append(sliderInput);
-                    box.find('.bootstrap-task-slider').slider({
-                        'formatter': (value) => {
-                            return value;
-                        }
-                    });
-
-                    box.find('.slider.slider-horizontal').css('width', '75%');                    
-                    let numberInput = $(`<input type='number' class='form-control-sm tag-input' style='float: right; display: inline; width: 20%;'>`);
-                    box.find('.modal-body').append(numberInput);
-                    
-                    numberInput.on('keyup change', () => {
-                        console.log('val', numberInput.val());
-                        let val = Math.abs(parseInt(numberInput.val(), 10) || minSliderValue);
-                        val = val > maxSliderValue ? maxSliderValue : val;
-                        box.find('.bootstrap-task-slider').slider('setValue', val);
-                    });
-
-                    box.find('.bootstrap-task-slider').on('slide', (event) => {
-                        console.log('value', event.value);
-                        numberInput.val(event.value);
-                    });
-                });
-
-                box.modal('show');
+                createTaskSelectorWindow(this.currentlySelectedNode, this.panel);
+            } else if (selectedValue.includes('rest')) {
+                clearTagFromTree(this.currentlySelectedNode, this.panel);
             }
 
             //tag select menus can be created by popovers or statically in the file bar
@@ -1127,6 +1066,84 @@ class FileTreePanel extends HTMLElement {
         });
 
         return tagSelectMenu;
+
+        function createTaskSelectorWindow(node, panel) {
+            let minSliderValue = 1;
+            let maxSliderValue = 10;
+
+            let sliderInput = $(`<input 
+                    class='bootstrap-task-slider'
+                    data-slider-min='${minSliderValue}'
+                    data-slider-max='${maxSliderValue}'
+                    data-slider-value='1'
+                    data-slider-step='1'>
+                </input>`);
+
+            //create secondary menu to select task number
+            let box = bootbox.alert({ 
+                title : 'Enter a task number', 
+                message : 'Please enter the task number.',
+                size : 'small',
+                callback: () => {
+                    //textbox input should override if it's different 
+                    let result =  box.find('.tag-input')[0].value || box.find('.bootstrap-task-slider').val();
+                    console.log('result', result);
+                    let tagName = 'task_' + result, displayedName = '(' + tagName + ')';
+                    node.original.tag = tagName;
+
+                    //update name for underlying data structure and jstree object
+                    node.original.text = displayedName + node.text;
+                    node.text = node.original.text;
+
+                    //update name displayed on file tree panel
+                    let tree = panel.widget.find('.file-container').jstree();
+                    tree.redraw(true);
+                }
+            });
+
+            box.init( () => {
+                console.log('box', box);
+                box.find('.modal-body').append(sliderInput);
+                box.find('.bootstrap-task-slider').slider({
+                    'formatter': (value) => {
+                        return value;
+                    }
+                });
+
+                box.find('.slider.slider-horizontal').css('width', '75%');                    
+                let numberInput = $(`<input type='number' class='form-control-sm tag-input' style='float: right; display: inline; width: 20%;'>`);
+                box.find('.modal-body').append(numberInput);
+                
+                numberInput.on('keyup change', () => {
+                    console.log('val', numberInput.val());
+                    let val = Math.abs(parseInt(numberInput.val(), 10) || minSliderValue);
+                    val = val > maxSliderValue ? maxSliderValue : val;
+                    box.find('.bootstrap-task-slider').slider('setValue', val);
+                });
+
+                box.find('.bootstrap-task-slider').on('slide', (event) => {
+                    console.log('value', event.value);
+                    numberInput.val(event.value);
+                });
+            });
+
+            box.modal('show');
+        }
+
+        function clearTagFromTree(node, panel) {
+             //trim parenthetical tag from name
+             let splitName = node.text.split(/\(.*\)/);
+             if (splitName.length > 1) {
+                let trimmedName = splitName.slice(1).join('');
+                console.log('trimmed name', trimmedName);
+                node.original.text = trimmedName;
+                node.text = node.original.text;
+   
+                //update name displayed on file tree panel
+                let tree = panel.widget.find('.file-container').jstree();
+                tree.redraw(true);
+             }
+        }
     }
 
     changeTagSelectMenu(menu, node) {
