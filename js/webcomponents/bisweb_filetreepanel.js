@@ -274,6 +274,11 @@ class FileTreePanel extends HTMLElement {
             fileTree = files;
         }
 
+        console.log('file tree', fileTree);
+        //alpabetize tree entries
+        sortEntries(fileTree);
+
+
         let listElement = this.panel.getWidget();
         listElement.find('.file-container').remove();
 
@@ -340,10 +345,6 @@ class FileTreePanel extends HTMLElement {
             });
         }
 
-        console.log('file tree', fileTree);
-        //alpabetize tree entries
-        sortEntries(fileTree);
-        
         tree.jstree(true).settings.contextmenu.items = newSettings;
         tree.jstree(true).redraw(true);
 
@@ -395,7 +396,6 @@ class FileTreePanel extends HTMLElement {
 
         //sort the tree into alphabetical order, with directories and labeled items first
         function sortEntries(children) {
-            console.log('children', children);
             if (children) {
                 children.sort((a, b) => {
                     if (a.type === 'directory') {
