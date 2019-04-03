@@ -690,9 +690,12 @@ class GrapherModule extends HTMLElement {
         chart.renderTo(frame);
 
         let layout = $(frame).find('.tau-chart__layout');
-        layout.addClass('single-chart');
+        layout.addClass('short-chart');
 
         chart.refresh();
+
+        let selectedItemLabel = $(`<div class='tau-chart__label'><label><i>Currently displayed — ${settings.displayChart}</i></label></div>`);
+        $('.bisweb-taucharts-container').append(selectedItemLabel);
 
         function parseTask(task) {
             let parsedTask = task.split('-');
