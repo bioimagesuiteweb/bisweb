@@ -458,5 +458,8 @@ tspan {
     margin-bottom : 5px;
 }
 
+.bs-dropdown-selected {
+    background-color : rgba(29, 224, 150, 0.4);
+}
 
 

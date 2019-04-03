@@ -235,6 +235,7 @@ class GrapherModule extends HTMLElement {
                 imgdata[key] = formatChart(imgdata[key], orthoElement.getobjectmap());
             }
 
+            console.log('starting key', startingKey);
             this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', makeTaskChart : true, charts: imgdata, displayChart : startingKey });
         } else {
             console.log('cannot parse time series without an ortho element');
@@ -574,6 +575,7 @@ class GrapherModule extends HTMLElement {
 
     createTaskChart(data, colors, frame, tasks, settings) {
 
+        console.log('settings', settings);
         //hide dropdown menu if it shouldn't be used, otherwise fill it with the names of the charts
         if (settings.charts) { 
             $(this.graphWindow.getHeader()).find('.task-selector').css('visibility', 'inherit'); 
@@ -582,19 +584,21 @@ class GrapherModule extends HTMLElement {
 
             for (let key of Object.keys(settings.charts)) {
                 let button = $(`<a class='dropdown-item' href='#'>${key}<br></a>`);
-                dropdownMenu.append(`<li></li>`).append(button);
+                let buttonItem = $(`<li></li>`);
+                buttonItem.append(button);
+                dropdownMenu.append(buttonItem);
                 button.on('click', () => { 
                     console.log('click', key);
                     this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', makeTaskChart : true, charts: settings.charts, displayChart : key });
                 });
             }
 
-            //TODO: fix displayChart thing (e.g. what if tasks started at task_2?)
-            //let selectedItem = 
-
-            //hook to change the displayed chart 
+            //find data corresponding to the chart to be displayed and highlight selected item in dropdown
             if (settings.displayChart) {
                 data = settings.charts[settings.displayChart].datasets;
+                
+                let selectedItem = dropdownMenu.find(`li:contains(${settings.displayChart})`);
+                selectedItem.addClass('bs-dropdown-selected');
             }
         } else {
             $(this.graphWindow.getHeader()).find('.task-selector').css('visibility', 'hidden'); 
