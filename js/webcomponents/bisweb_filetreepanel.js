@@ -1087,12 +1087,17 @@ class FileTreePanel extends HTMLElement {
                 callback: () => {
                     //textbox input should override if it's different 
                     let result =  box.find('.tag-input')[0].value || box.find('.bootstrap-task-slider').val();
-                    console.log('result', result);
+
                     let tagName = 'task_' + result, displayedName = '(' + tagName + ')';
                     node.original.tag = tagName;
 
-                    //update name for underlying data structure and jstree object
-                    node.original.text = displayedName + node.text;
+
+                    //split off old task name, if any, then update name for underlying data structure and jstree object
+                    let splitName = node.text.split(/\(.*\)/), parsedName;
+                    if (splitName.length > 1) { parsedName = splitName.slice(1).join(''); }
+                    else { parsedName = node.text; }
+                    
+                    node.original.text = displayedName + parsedName;
                     node.text = node.original.text;
 
                     //update name displayed on file tree panel
@@ -1102,7 +1107,6 @@ class FileTreePanel extends HTMLElement {
             });
 
             box.init( () => {
-                console.log('box', box);
                 box.find('.modal-body').append(sliderInput);
                 box.find('.bootstrap-task-slider').slider({
                     'formatter': (value) => {
