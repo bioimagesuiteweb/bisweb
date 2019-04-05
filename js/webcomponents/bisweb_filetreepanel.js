@@ -690,9 +690,8 @@ class FileTreePanel extends HTMLElement {
 
                 this.parsedData = parsedRuns;
 
-                console.log('parsed data', parsedData, 'parsed runs', parsedRuns);
                 //parse ranges into 0 and 1 array
-                let parsedRanges = [], labelsArray = [], tasks = [], range;
+                let parsedRanges = [], labelsArray = [], tasks = [], taskNames = {}, range;
                 for (let run of runs) {
                     console.log('run', run);
                     range = createArray(parsedRuns[run]);
@@ -701,15 +700,12 @@ class FileTreePanel extends HTMLElement {
 
                     //parse regions into their own array 
                     let regions = {};
-                    for (let task of Object.keys(parsedRuns)) {
-                        regions[task] = {};
-                        console.log('region', parsedRuns[task]);
-                        for (let region of Object.keys(parsedRuns[task])) {
-                            regions[task][region] = createArray(parsedRuns[task][region]);
-                        }
-                    }
+                    for (let region of Object.keys(parsedRuns[run])) {
+                        if (!taskNames[region]) { taskNames[region] = true; }
+                        regions[region] = createArray(parsedRuns[run][region]);
+                    }    
 
-                    console.log('regions', regions);
+                    parsedRuns[run].parsedRegions = regions;
                     tasks.push({ 'data': range, 'label': run, 'regions' :  parsedData.runs[run]});
                 }
 
@@ -721,7 +717,8 @@ class FileTreePanel extends HTMLElement {
 
                 //set the task range for the graph element to use in future images
                 let taskObject = { 'formattedTasks' : tasks, 'rawTasks' : parsedData };
-                let taskMatrix = this.parseTaskMatrix(taskObject); 
+                let taskMatrix = this.parseTaskMatrix(parsedRuns, Object.keys(taskNames)); 
+                taskObject.matrix = taskMatrix;
                 this.graphelement.taskdata = taskObject;
                 this.graphelement.createChart({ xaxisLabel: 'frame', yaxisLabel: 'On', isFrameChart : true});
             } catch (e) {
@@ -788,11 +785,43 @@ class FileTreePanel extends HTMLElement {
 
     }
 
-    parseTaskMatrix(taskdata) {
-        console.log('taskdata', taskdata);
+    parseTaskMatrix(taskdata, taskNames) {
         let taskMatrix = new BiswebMatrix();
-        let cols = taskdata.tasks.length();
-        let rows = taskdata.runs.length() * taskdata.data[0].length(); // runs get appended as extra rows, so there should be a set of rows for every run
+        let cols = taskNames.length; 
+
+        console.log('taskdata', taskdata, 'tasknames', taskNames);
+        let runNames = Object.keys(taskdata);
+        let randomRun = taskdata[runNames[0]].parsedRegions;
+        let numRuns = runNames.length, runLength = randomRun[Object.keys(randomRun)[0]].length;
+        let rows = numRuns * runLength; // runs get appended as extra rows, so there should be a set of rows for every run
+
+        console.log('cols', cols, 'rows', rows, numRuns, runLength);
+
+        //sort run names so tasks are created in order
+        runNames.sort( (a, b) => {
+            let aIndex = a.split('_')[1], bIndex = b.split('_')[1];
+            if (aIndex && !bIndex) { return a; }
+            if (bIndex && !aIndex) { return b; }
+            if (!aIndex && !bIndex) { return a.localeCompare(b); }
+            else { return aIndex - bIndex; }
+        });
+
+        console.log('run names', runNames);
+
+        taskMatrix.allocate(rows, cols);
+        let currentRun;
+        for (let i = 0 ; i < rows; i++) {
+            currentRun = runNames[Math.floor(i / runLength)]; 
+            console.log('current run', currentRun);
+            for (let j = 0; j < cols; j++) {
+                //some runs will not have every task defined. in that case just set the entry in the appropriate col to 0;
+                let taskArray = taskdata[currentRun].parsedRegions[taskNames[j]];
+                let datapoint = taskArray ? taskArray[i % runLength] : 0;
+                taskMatrix.setElement(i, j, datapoint);
+            }
+        }
+
+        return taskMatrix;
     }
 
     /**
