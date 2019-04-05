@@ -690,6 +690,7 @@ class FileTreePanel extends HTMLElement {
 
                 this.parsedData = parsedRuns;
 
+                console.log('parsed data', parsedData, 'parsed runs', parsedRuns);
                 //parse ranges into 0 and 1 array
                 let parsedRanges = [], labelsArray = [], tasks = [], range;
                 for (let run of runs) {
@@ -697,6 +698,18 @@ class FileTreePanel extends HTMLElement {
                     range = createArray(parsedRuns[run]);
                     parsedRanges.push(range);
                     labelsArray.push(run);
+
+                    //parse regions into their own array 
+                    let regions = {};
+                    for (let task of Object.keys(parsedRuns)) {
+                        regions[task] = {};
+                        console.log('region', parsedRuns[task]);
+                        for (let region of Object.keys(parsedRuns[task])) {
+                            regions[task][region] = createArray(parsedRuns[task][region]);
+                        }
+                    }
+
+                    console.log('regions', regions);
                     tasks.push({ 'data': range, 'label': run, 'regions' :  parsedData.runs[run]});
                 }
 
@@ -707,7 +720,9 @@ class FileTreePanel extends HTMLElement {
                 this.graphelement.formatChartData(parsedRanges, includeArray, labelsArray, false);
 
                 //set the task range for the graph element to use in future images
-                this.graphelement.taskdata =  { 'formattedTasks' : tasks, 'rawTasks' : parsedData};
+                let taskObject = { 'formattedTasks' : tasks, 'rawTasks' : parsedData };
+                let taskMatrix = this.parseTaskMatrix(taskObject); 
+                this.graphelement.taskdata = taskObject;
                 this.graphelement.createChart({ xaxisLabel: 'frame', yaxisLabel: 'On', isFrameChart : true});
             } catch (e) {
                 console.log('An error occured while parsing the task file', e);
@@ -733,16 +748,31 @@ class FileTreePanel extends HTMLElement {
             return range;
         }
 
+        //Creates an array of 1's and 0's designating whether the task is on or off from either the list of task regions in a run or a single task region in a run
         function createArray(run) {
             let taskArray = new Array(highRange).fill(0);
-            let keys = Object.keys(run);
-            for (let task of keys) {
-                if (Array.isArray(run[task][0])) {
-                    for (let item of run[task])
+
+            //the data for each individual run will be formatted as an array while the structure for each task will be an object
+            if (Array.isArray(run)) {
+                if (Array.isArray(run[0])) {
+                    for (let item of run) {
                         addToArray(item);
+                    }
                 } else {
-                    addToArray(run[task]);
+                    addToArray(run);
                 }
+            } else if (typeof run === 'object') {
+                let keys = Object.keys(run);
+                for (let task of keys) {
+                    if (Array.isArray(run[task][0])) {
+                        for (let item of run[task])
+                            addToArray(item);
+                    } else {
+                        addToArray(run[task]);
+                    }
+                }
+            } else {
+                console.log('unrecognized run object', run);
             }
 
             //take the offset from the front before returning
@@ -758,6 +788,12 @@ class FileTreePanel extends HTMLElement {
 
     }
 
+    parseTaskMatrix(taskdata) {
+        console.log('taskdata', taskdata);
+        let taskMatrix = new BiswebMatrix();
+        let cols = taskdata.tasks.length();
+        let rows = taskdata.runs.length() * taskdata.data[0].length(); // runs get appended as extra rows, so there should be a set of rows for every run
+    }
 
     /**
      * Saves a the current list of study files to whichever storage service the user has selected, e.g. the local file system, Amazon AWS, etc.
@@ -1096,7 +1132,7 @@ class FileTreePanel extends HTMLElement {
                     let splitName = node.text.split(/\(.*\)/), parsedName;
                     if (splitName.length > 1) { parsedName = splitName.slice(1).join(''); }
                     else { parsedName = node.text; }
-                    
+
                     node.original.text = displayedName + parsedName;
                     node.text = node.original.text;
 
