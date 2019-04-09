@@ -71,7 +71,7 @@ class FileTreePanel extends HTMLElement {
             this.makeStaticButtons(listElement);
 
             //https://stackoverflow.com/questions/11703093/how-to-dismiss-a-twitter-bootstrap-popover-by-clicking-outside
-            let dismissPopoverFn = (e) => {
+            this.dismissPopoverFn = (e) => {
                 if (typeof $(e.target).data('original-title') == 'undefined' && !$(e.target).parents().is('.popover.in')) {
                     if (this.popoverDisplayed) {
                         $('[data-original-title]').popover('hide');
@@ -80,8 +80,8 @@ class FileTreePanel extends HTMLElement {
                 }
             };
 
-            $('html').on('click', dismissPopoverFn);
-            $('html').on('contextmenu', dismissPopoverFn);
+            $('html').on('click', this.dismissPopoverFn);
+            $('html').on('contextmenu', this.dismissPopoverFn);
         });
 
         this.contextMenuDefaultSettings = {
@@ -235,7 +235,6 @@ class FileTreePanel extends HTMLElement {
                 }
             }
 
-
             //if the file tree is empty, display an error message and return
             if (fileTree.length === 0) {
                 bis_webutil.createAlert('No study files could be found in the chosen directory, try a different directory.', false);
@@ -275,11 +274,13 @@ class FileTreePanel extends HTMLElement {
             fileTree = files;
         }
 
+        //alpabetize tree entries
+        sortEntries(fileTree);
+
         let listElement = this.panel.getWidget();
         listElement.find('.file-container').remove();
 
         let listContainer = $(`<div class='file-container'></div>`);
-        //listContainer.css({ 'color': 'rgb(12, 227, 172)' });
         listElement.prepend(listContainer);
 
         let tree = listContainer.jstree({
@@ -384,9 +385,40 @@ class FileTreePanel extends HTMLElement {
             $('.bisweb-file-import-label').text(`Currently loaded — ${type}`);
         }
 
+
         //attach listeners to new file tree
         this.setOnClickListeners(tree, listContainer);
         this.fileTree = tree;
+
+
+        //sort the tree into alphabetical order, with directories and labeled items first
+        function sortEntries(children) {
+            if (children) {
+                children.sort((a, b) => {
+                    if (a.type === 'directory') {
+                        if (b.type === 'directory') {
+                            return a.text.localeCompare(b.text);
+                        } else {
+                            return a;
+                        }
+                    }
+
+                    if (b.type === 'directory') {
+                        return b;
+                    }
+
+                    return a.text.localeCompare(b.text);
+                });
+
+
+                //sort all nodes below this level in the tree
+                for (let node of children) {
+                    sortEntries(node.children);
+                }
+            }
+
+
+        }
     }
 
     /**
@@ -579,7 +611,6 @@ class FileTreePanel extends HTMLElement {
         if (this.viewertwo) {
             delete newSettings.Load;
 
-            console.log('new settings', newSettings);
             newSettings = Object.assign(newSettings, {
                 'Viewer1': {
                     'separator_before': false,
@@ -623,6 +654,7 @@ class FileTreePanel extends HTMLElement {
      */
     loadImageFromTree(viewer = 0) {
         let nodeName = this.constructNodeName();
+        this.currentlyLoadedNode = this.currentlySelectedNode;
         this.viewerapplication.loadImage(nodeName, viewer);
     }
 
@@ -655,19 +687,28 @@ class FileTreePanel extends HTMLElement {
                     }
                 }
 
-                console.log('parsed runs', parsedRuns);
                 this.parsedData = parsedRuns;
 
                 //parse ranges into 0 and 1 array
-                let parsedRanges = [], labelsArray = [], tasks = [], range;
+                let parsedRanges = [], labelsArray = [], tasks = [], taskNames = {}, range;
                 for (let run of runs) {
-                    console.log('run', run);
+                    
+                     //change label to match the format of the other labels, e.g. 'task_1' instead of 'task1'
+                    let reformattedString = run.replace(/(\d)/, (match, m1) => { return '_' + m1; });
+
                     range = createArray(parsedRuns[run]);
                     parsedRanges.push(range);
-                    labelsArray.push(run);
+                    labelsArray.push(reformattedString);
 
-                    //change label to match the format of the other labels, e.g. 'task_1' instead of 'task1'
-                    let reformattedString = run.replace(/(\d)/, (match, m1) => { return '_' + m1; });
+
+                    //parse regions into their own array 
+                    let regions = {};
+                    for (let region of Object.keys(parsedRuns[run])) {
+                        if (!taskNames[region]) { taskNames[region] = true; }
+                        regions[region] = createArray(parsedRuns[run][region]);
+                    }    
+
+                    parsedRuns[run].parsedRegions = regions;
                     tasks.push({ 'data': range, 'label': reformattedString, 'regions' :  parsedData.runs[run]});
                 }
 
@@ -678,7 +719,10 @@ class FileTreePanel extends HTMLElement {
                 this.graphelement.formatChartData(parsedRanges, includeArray, labelsArray, false);
 
                 //set the task range for the graph element to use in future images
-                this.graphelement.taskdata =  { 'formattedTasks' : tasks, 'rawTasks' : parsedData};
+                let taskObject = { 'formattedTasks' : tasks, 'rawTasks' : parsedData };
+                let taskMatrix = this.parseTaskMatrix(parsedRuns, Object.keys(taskNames)); 
+                taskObject.matrix = taskMatrix;
+                this.graphelement.taskdata = taskObject;
                 this.graphelement.createChart({ xaxisLabel: 'frame', yaxisLabel: 'On', isFrameChart : true});
             } catch (e) {
                 console.log('An error occured while parsing the task file', e);
@@ -704,16 +748,31 @@ class FileTreePanel extends HTMLElement {
             return range;
         }
 
+        //Creates an array of 1's and 0's designating whether the task is on or off from either the list of task regions in a run or a single task region in a run
         function createArray(run) {
             let taskArray = new Array(highRange).fill(0);
-            let keys = Object.keys(run);
-            for (let task of keys) {
-                if (Array.isArray(run[task][0])) {
-                    for (let item of run[task])
+
+            //the data for each individual run will be formatted as an array while the structure for each task will be an object
+            if (Array.isArray(run)) {
+                if (Array.isArray(run[0])) {
+                    for (let item of run) {
                         addToArray(item);
+                    }
                 } else {
-                    addToArray(run[task]);
+                    addToArray(run);
                 }
+            } else if (typeof run === 'object') {
+                let keys = Object.keys(run);
+                for (let task of keys) {
+                    if (Array.isArray(run[task][0])) {
+                        for (let item of run[task])
+                            addToArray(item);
+                    } else {
+                        addToArray(run[task]);
+                    }
+                }
+            } else {
+                console.log('unrecognized run object', run);
             }
 
             //take the offset from the front before returning
@@ -729,6 +788,44 @@ class FileTreePanel extends HTMLElement {
 
     }
 
+    parseTaskMatrix(taskdata, taskNames) {
+        let taskMatrix = new BiswebMatrix();
+        let cols = taskNames.length; 
+
+        console.log('taskdata', taskdata, 'tasknames', taskNames);
+        let runNames = Object.keys(taskdata);
+        let randomRun = taskdata[runNames[0]].parsedRegions;
+        let numRuns = runNames.length, runLength = randomRun[Object.keys(randomRun)[0]].length;
+        let rows = numRuns * runLength; // runs get appended as extra rows, so there should be a set of rows for every run
+
+        console.log('cols', cols, 'rows', rows, numRuns, runLength);
+
+        //sort run names so tasks are created in order
+        runNames.sort( (a, b) => {
+            let aIndex = a.split('_')[1], bIndex = b.split('_')[1];
+            if (aIndex && !bIndex) { return a; }
+            if (bIndex && !aIndex) { return b; }
+            if (!aIndex && !bIndex) { return a.localeCompare(b); }
+            else { return aIndex - bIndex; }
+        });
+
+        console.log('run names', runNames);
+
+        taskMatrix.allocate(rows, cols);
+        let currentRun;
+        for (let i = 0 ; i < rows; i++) {
+            currentRun = runNames[Math.floor(i / runLength)]; 
+            console.log('current run', currentRun);
+            for (let j = 0; j < cols; j++) {
+                //some runs will not have every task defined. in that case just set the entry in the appropriate col to 0;
+                let taskArray = taskdata[currentRun].parsedRegions[taskNames[j]];
+                let datapoint = taskArray ? taskArray[i % runLength] : 0;
+                taskMatrix.setElement(i, j, datapoint);
+            }
+        }
+
+        return taskMatrix;
+    }
 
     /**
      * Saves a the current list of study files to whichever storage service the user has selected, e.g. the local file system, Amazon AWS, etc.
@@ -784,19 +881,18 @@ class FileTreePanel extends HTMLElement {
         }
 
         //TODO: Change prepending '(task)' to image so that clearing the tag clears the name too
-        window.imgdata = {};
+        let imgdata = {};
         bis_webutil.createAlert('Reading study files marked as \'task\'; this may take a while!', false, 0, 1000000000, { 'makeLoadSpinner' : true });
         let promiseArray =  [];
         for (let key of Object.keys(taglist)) {
             let img = new BiswebImage(); 
             promiseArray.push(img.load(this.constructNodeName(taglist[key])));
-            window.imgdata[key] = img;
+            imgdata[key] = img;
         }
 
         Promise.all(promiseArray).then( () => {
             bis_webutil.dismissAlerts();
-            console.log('imgdata', window.imgdata);
-            this.graphelement.parsePaintedAreaAverageTimeSeries(this.viewer, window.imgdata);
+            this.graphelement.parsePaintedAreaAverageTimeSeries(this.viewer, imgdata);
         });
         
         //Checks for duplicate tags by filling a dictionary with the tags seen so far. If it encounters a duplicate it returns false.
@@ -1027,67 +1123,9 @@ class FileTreePanel extends HTMLElement {
 
             //create bootbox modal with task select slider
             if (selectedValue.includes('task')) {
-
-                let minSliderValue = 1;
-                let maxSliderValue = 10;
-
-                let sliderInput = $(`<input 
-                        class='bootstrap-task-slider'
-                        data-slider-min='${minSliderValue}'
-                        data-slider-max='${maxSliderValue}'
-                        data-slider-value='1'
-                        data-slider-step='1'>
-                    </input>`);
-    
-                //create secondary menu to select task number
-                let box = bootbox.alert({ 
-                    title : 'Enter a task number', 
-                    message : 'Please enter the task number.',
-                    size : 'small',
-                    callback: () => {
-                        //textbox input should override if it's different 
-                        let result =  box.find('.tag-input')[0].value || box.find('.bootstrap-task-slider').val();
-                        console.log('result', result);
-                        let tagName = selectedValue + '_' + result, displayedName = '(' + tagName + ')';
-                        this.currentlySelectedNode.original.tag = tagName;
-
-                        //update name for underlying data structure and jstree object
-                        this.currentlySelectedNode.original.text = displayedName + this.currentlySelectedNode.text;
-                        this.currentlySelectedNode.text = this.currentlySelectedNode.original.text;
-
-                        //update name displayed on file tree panel
-                        let tree = this.panel.widget.find('.file-container').jstree();
-                        tree.redraw(true);
-                    }
-                });
-
-                box.init( () => {
-                    console.log('box', box);
-                    box.find('.modal-body').append(sliderInput);
-                    box.find('.bootstrap-task-slider').slider({
-                        'formatter': (value) => {
-                            return value;
-                        }
-                    });
-
-                    box.find('.slider.slider-horizontal').css('width', '75%');                    
-                    let numberInput = $(`<input type='number' class='form-control-sm tag-input' style='float: right; display: inline; width: 20%;'>`);
-                    box.find('.modal-body').append(numberInput);
-                    
-                    numberInput.on('keyup change', () => {
-                        console.log('val', numberInput.val());
-                        let val = Math.abs(parseInt(numberInput.val(), 10) || minSliderValue);
-                        val = val > maxSliderValue ? maxSliderValue : val;
-                        box.find('.bootstrap-task-slider').slider('setValue', val);
-                    });
-
-                    box.find('.bootstrap-task-slider').on('slide', (event) => {
-                        console.log('value', event.value);
-                        numberInput.val(event.value);
-                    });
-                });
-
-                box.modal('show');
+                createTaskSelectorWindow(this.currentlySelectedNode, this.panel);
+            } else if (selectedValue.includes('rest')) {
+                clearTagFromTree(this.currentlySelectedNode, this.panel);
             }
 
             //tag select menus can be created by popovers or statically in the file bar
@@ -1097,6 +1135,92 @@ class FileTreePanel extends HTMLElement {
         });
 
         return tagSelectMenu;
+
+        function createTaskSelectorWindow(node, panel) {
+            let minSliderValue = 1;
+            let maxSliderValue = 10;
+
+            let sliderInput = $(`<input 
+                    class='bootstrap-task-slider'
+                    data-slider-min='${minSliderValue}'
+                    data-slider-max='${maxSliderValue}'
+                    data-slider-value='1'
+                    data-slider-step='1'>
+                </input>`);
+
+            //create secondary menu to select task number
+            let box = bootbox.alert({ 
+                title : 'Enter a task number', 
+                message : 'Please enter the task number.',
+                size : 'small',
+                callback: () => {
+                    //textbox input should override if it's different 
+                    let result =  box.find('.tag-input')[0].value || box.find('.bootstrap-task-slider').val();
+
+                    let tagName = 'task_' + result, displayedName = '(' + tagName + ')';
+                    node.original.tag = tagName;
+
+
+                    //split off old task name, if any, then update name for underlying data structure and jstree object
+                    let splitName = node.text.split(/\(.*\)/), parsedName;
+                    if (splitName.length > 1) { parsedName = splitName.slice(1).join(''); }
+                    else { parsedName = node.text; }
+
+                    node.original.text = displayedName + parsedName;
+                    node.text = node.original.text;
+
+                    //update name displayed on file tree panel
+                    let tree = panel.widget.find('.file-container').jstree();
+                    tree.redraw(true);
+                }
+            });
+
+            box.init( () => {
+                box.find('.modal-body').append(sliderInput);
+                box.find('.bootstrap-task-slider').slider({
+                    'formatter': (value) => {
+                        return value;
+                    }
+                });
+
+                box.find('.slider.slider-horizontal').css('width', '75%');                    
+                let numberInput = $(`<input type='number' class='form-control-sm tag-input' style='float: right; display: inline; width: 20%;'>`);
+                box.find('.modal-body').append(numberInput);
+                
+                numberInput.on('keyup change', () => {
+                    console.log('val', numberInput.val());
+                    let val = Math.abs(parseInt(numberInput.val(), 10) || minSliderValue);
+                    val = val > maxSliderValue ? maxSliderValue : val;
+                    box.find('.bootstrap-task-slider').slider('setValue', val);
+                });
+
+                box.find('.bootstrap-task-slider').on('slide', (event) => {
+                    console.log('value', event.value);
+                    numberInput.val(event.value);
+                });
+            });
+
+            box.modal('show');
+        }
+
+        function clearTagFromTree(node, panel) {
+             //trim parenthetical tag from name
+             let splitName = node.text.split(/\(.*\)/);
+             if (splitName.length > 1) {
+                let trimmedName = splitName.slice(1).join('');
+                node.original.text = trimmedName;
+                node.text = node.original.text;
+
+                console.log('node', node);
+   
+                //update name displayed on file tree panel
+                let tree = panel.widget.find('.file-container').jstree();
+                tree.redraw(true);
+
+                //dismiss popover manually 
+                $('html').find('.popover').popover('hide');
+             }
+        }
     }
 
     changeTagSelectMenu(menu, node) {

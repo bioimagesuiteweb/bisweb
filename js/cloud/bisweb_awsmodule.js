@@ -1231,7 +1231,6 @@ class AWSModule extends BaseServerClient {
     attachImportFileCallback(importButton, webfileutil, awsmodal) {
         webfileutil.attachFileCallback(importButton, (file) => {
 
-            console.log('file', file);
             //the file object will differ between data sources, e.g. if it comes from Google Drive it will be a parsed response, if it comes from disk it will be a Blob, etc.
             //so some disambiguation is required.
             file = file.data ? (file.data.result ? file.data.result : file.data) : file;
