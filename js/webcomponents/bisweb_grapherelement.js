@@ -60,6 +60,8 @@ class GrapherModule extends HTMLElement {
         this.resizingTimer = null;
         this.usesmoothdata = false;
         this.buttons = [];
+
+        this.taskdata = null;
     }
 
     connectedCallback() {
@@ -617,7 +619,9 @@ class GrapherModule extends HTMLElement {
 
         //if there's a valid task region paint it in the image, otherwise ignore it
         if (taskIndex !== null) {
-            let keys = Object.keys(tasks.rawTasks.runs[taskLabel]), index = 1;
+            //convert underscore separated task name back to work with raw task index
+            let convertedLabel = taskLabel.indexOf('_') ? taskLabel.split('_').join('') : taskLabel;
+            let keys = Object.keys(tasks.rawTasks.runs[convertedLabel]), index = 1;
             for (let key of keys) {
                 let task = tasks.formattedTasks[taskIndex].regions[key];
                 let cl = util.objectmapcolormap[index];

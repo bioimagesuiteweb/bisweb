@@ -675,6 +675,7 @@ class FileTreePanel extends HTMLElement {
                 parsedData = JSON.parse(obj.data);
                 let runs = Object.keys(parsedData.runs);
 
+                //parsedRuns is the new 
                 let parsedRuns = {};
                 for (let key of runs) {
 
@@ -689,18 +690,19 @@ class FileTreePanel extends HTMLElement {
 
                 this.parsedData = parsedRuns;
 
+                console.log('parsed runs', parsedRuns, 'runs', runs);
                 //parse ranges into 0 and 1 array
                 let parsedRanges = [], labelsArray = [], tasks = [], taskNames = {}, range;
-                for (let run of runs) {
-                    
-                     //change label to match the format of the other labels, e.g. 'task_1' instead of 'task1'
-                    let reformattedString = run.replace(/(\d)/, (match, m1) => { return '_' + m1; });
+                for (let run of Object.keys(parsedRuns)) {
+
+                    //change label to match the format of the other labels, e.g. 'task_1' instead of 'task1'
+                    let reformattedRun = run.replace(/(\d)/, (match, m1) => { return '_' + m1; });
 
                     range = createArray(parsedRuns[run]);
                     parsedRanges.push(range);
-                    labelsArray.push(reformattedString);
+                    labelsArray.push(reformattedRun);
 
-
+                    console.log('run', run);
                     //parse regions into their own array 
                     let regions = {};
                     for (let region of Object.keys(parsedRuns[run])) {
@@ -709,19 +711,18 @@ class FileTreePanel extends HTMLElement {
                     }    
 
                     parsedRuns[run].parsedRegions = regions;
-                    tasks.push({ 'data': range, 'label': reformattedString, 'regions' :  parsedData.runs[run]});
+                    tasks.push({ 'data': range, 'label': reformattedRun, 'regions' :  parsedData.runs[run]});
                 }
-
-                console.log('parsedRanges', parsedRanges, labelsArray, tasks);
 
                 //array to designate that all the arrays are meant to be included while formatting data
                 let includeArray = new Array(parsedRanges.length).fill(1);
                 this.graphelement.formatChartData(parsedRanges, includeArray, labelsArray, false);
 
                 //set the task range for the graph element to use in future images
-                let taskObject = { 'formattedTasks' : tasks, 'rawTasks' : parsedData };
                 let taskMatrix = this.parseTaskMatrix(parsedRuns, Object.keys(taskNames)); 
-                taskObject.matrix = taskMatrix;
+                let taskObject = { 'formattedTasks' : tasks, 'rawTasks' : parsedData, 'matrix' : taskMatrix };
+                console.log('task object', taskObject);
+
                 this.graphelement.taskdata = taskObject;
                 this.graphelement.createChart({ xaxisLabel: 'frame', yaxisLabel: 'On', isFrameChart : true});
             } catch (e) {
@@ -792,13 +793,10 @@ class FileTreePanel extends HTMLElement {
         let taskMatrix = new BiswebMatrix();
         let cols = taskNames.length; 
 
-        console.log('taskdata', taskdata, 'tasknames', taskNames);
         let runNames = Object.keys(taskdata);
         let randomRun = taskdata[runNames[0]].parsedRegions;
         let numRuns = runNames.length, runLength = randomRun[Object.keys(randomRun)[0]].length;
         let rows = numRuns * runLength; // runs get appended as extra rows, so there should be a set of rows for every run
-
-        console.log('cols', cols, 'rows', rows, numRuns, runLength);
 
         //sort run names so tasks are created in order
         runNames.sort( (a, b) => {
@@ -809,13 +807,10 @@ class FileTreePanel extends HTMLElement {
             else { return aIndex - bIndex; }
         });
 
-        console.log('run names', runNames);
-
         taskMatrix.allocate(rows, cols);
         let currentRun;
         for (let i = 0 ; i < rows; i++) {
             currentRun = runNames[Math.floor(i / runLength)]; 
-            console.log('current run', currentRun);
             for (let j = 0; j < cols; j++) {
                 //some runs will not have every task defined. in that case just set the entry in the appropriate col to 0;
                 let taskArray = taskdata[currentRun].parsedRegions[taskNames[j]];
@@ -869,12 +864,14 @@ class FileTreePanel extends HTMLElement {
     }
 
     parseTaskImagesFromTree() {
+
+        if (this.fileTree === null) {
+            bis_webutil.createAlert('Error: No study has been loaded. Please load a study before trying to parse task charts.', true);
+        }
         let reconstructedTree = this.parseTreeToJSON();
-        console.log('tree', reconstructedTree);
         let taglist = {}, duplicateTags = false;
 
         checkForDuplicateTags(reconstructedTree);
-        console.log('tags', duplicateTags, taglist);
 
         if (duplicateTags) { 
             bis_webutil.createAlert('Some files in the study have the same tag, e.g. there might be two tagged as \'task_2\'. Please correct this before continuing.', true);
@@ -882,16 +879,24 @@ class FileTreePanel extends HTMLElement {
 
         //TODO: Change prepending '(task)' to image so that clearing the tag clears the name too
         let imgdata = {};
-        bis_webutil.createAlert('Reading study files marked as \'task\'; this may take a while!', false, 0, 1000000000, { 'makeLoadSpinner' : true });
         let promiseArray =  [];
         for (let key of Object.keys(taglist)) {
             let img = new BiswebImage(); 
             promiseArray.push(img.load(this.constructNodeName(taglist[key])));
             imgdata[key] = img;
         }
+        if (this.viewer.getobjectmap() === null) { 
+            bis_webutil.createAlert('Error: Cannot create VOI map of task regions without painted regions. Please create an overlay first (e.g. using the paint tool)', true); return;
+        } else if (this.graphelement.taskdata === null) {
+            bis_webutil.createAlert('Error: Parsing task regions requires information about runs and task timings and durations. Please load a task file using the \'Import task file\' button.', true); return;
+        }
 
+        bis_webutil.createAlert('Reading study files marked as \'task\'; this may take a while!', false, 0, 1000000000, { 'makeLoadSpinner' : true });
         Promise.all(promiseArray).then( () => {
             bis_webutil.dismissAlerts();
+
+            //safety checks before beginning the long process of loading all the images
+            console.log('overlay', this.viewer.getobjectmap());
             this.graphelement.parsePaintedAreaAverageTimeSeries(this.viewer, imgdata);
         });
         
