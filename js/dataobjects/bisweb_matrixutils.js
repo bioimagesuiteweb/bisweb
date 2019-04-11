@@ -14,24 +14,70 @@ let tr = 1.0;
  * Creates the matrix of task regions convolved with the hemodynamic response function. 
  * 
  * @param {BiswebMatrix} matrix - Matrix representing the task regions of a given set of runs. 
- * @param {Array} breaks - Array designating where each 'break' in the matrix is, i.e. where each run begins and ends.
+ * @param {Number} runs - Number of runs in the matrix. 
+ * @param {Number} period - TR for the scan, i.e. number of seconds per scanner picture (period).
  */
-let createStackedWaveform = (matrix, breaks) => {
+let createStackedWaveform = (matrix, runs, period) => {
 
+    tr = period;
+    let numericMatrix = matrix.getNumericMatrix();
+
+    /*console.log('unparsed numeric', unparsedNumericMatrix);
+    for (let i = 0; i < unparsedNumericMatrix.length; i++) {
+        if (unparsedNumericMatrix[i].includes(1)) {
+            parsedNumericMatrix.push([i, 1]);
+        } else {
+            parsedNumericMatrix.push([i, 0]);
+        }
+    }*/
+
+    let runLength = numericMatrix.length / runs;
+    let constructedMatrix = [];
+    for (let i = 0; i < runs; i++) {
+        constructedMatrix = constructedMatrix.concat(createWaveform(numericMatrix.slice(i * runLength, (i + 1) * runLength)));
+    }
+
+    console.log('constructed matrix', constructedMatrix);
+    return constructedMatrix;
 };
 
 /**
  * Convolves a single scanner run with the hemodynamic response function and returns the result. 
  * 
- * @param {BiswebMatrix} task - The matrix corresponding to a single run in a matrix of all runs 
+ * @param {Array} task - Array corresponding to a single run in a matrix of all runs.
  */
 let createWaveform = (task) => {
 
-    task = [0,0,0,0,1,1,1,1,0,0];
-    let hdrf = generateHDRF(tr);
+    //console.log('task', task);
+    let responseFunc = generateHDRF(tr);
+    
+    let outPoints = task.length +  responseFunc.length; 
+    let out = [];
+    for (let row = 0; row < outPoints; row++){
+        out.push(Array(task[0].length).fill(0));
+    }
+        
+    for (let col = 0; col < task[0].length; col++) {
+        for (let j = 0; j < task.length; j++) {
+            let val = task[j][col];
+            if (val === 0 || Math.abs(val) >= 33333.0) {
+                continue;
+            }
 
-    console.log('hdrf', hdrf);
+            for (let i = 0; i < responseFunc.length && (i + j) < outPoints; i++) {
+                out[i+j][col] = out[i+j][col] + responseFunc[i] * val;
+            }
+        }
 
+        for (let j = 0; j < task.length; j++) {
+            let val = task[j][col];
+            if ( Math.abs(val) >= 33333.0 ) {
+                out[col][j] = 99999.0;
+            }
+        }
+    } 
+
+    return out;
 };
 
 /**
@@ -50,11 +96,12 @@ let generateHDRF = (tr) => {
 
     let WAVArray = [];
     for (let i = 0; i < nPoints; i++) {
-        WAVArray.push( [i, peak * getTimepoint(tr * i)]);
+        WAVArray.push( peak * getTimepoint(tr * i));
     }
 
     return WAVArray; 
 
+    //Generates a point for a WAV style HDRF. This array will be WAVDuration / TR entries long.
     function getTimepoint(t) {
         if (t < WAVRiseStart) return 0; 
         if (t < WAVFallStart) return ztone( (t - WAVRiseStart) / WAVRiseTime );

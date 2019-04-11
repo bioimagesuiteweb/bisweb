@@ -31,8 +31,6 @@ class FileTreePanel extends HTMLElement {
 
     connectedCallback() {
 
-        bisweb_matrixutils.createWaveform(1);
-        
         this.viewerid = this.getAttribute('bis-viewerid');
         this.viewertwoid = this.getAttribute('bis-viewerid2');
         this.layoutid = this.getAttribute('bis-layoutwidgetid');
@@ -728,6 +726,11 @@ class FileTreePanel extends HTMLElement {
 
                 this.graphelement.taskdata = taskObject;
                 this.graphelement.createChart({ xaxisLabel: 'frame', yaxisLabel: 'On', isFrameChart : true});
+
+                let tr = parseInt(taskObject.rawTasks['TR']);
+                console.log('tr', tr);
+                let stackedWaveform = bisweb_matrixutils.createStackedWaveform(taskMatrix, taskObject.formattedTasks.length, tr);
+                console.log('hdrf task matrix', stackedWaveform);
             } catch (e) {
                 console.log('An error occured while parsing the task file', e);
             }
