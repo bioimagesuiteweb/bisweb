@@ -5,6 +5,7 @@ const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
 const util=require('bis_util');
 const bis_genericio = require('bis_genericio.js');
+const bisweb_matrixutils = require('bisweb_matrixutils.js');
 const BiswebMatrix = require('bisweb_matrix.js');
 const BiswebImage = require('bisweb_image.js');
 
@@ -30,6 +31,8 @@ class FileTreePanel extends HTMLElement {
 
     connectedCallback() {
 
+        bisweb_matrixutils.createWaveform(1);
+        
         this.viewerid = this.getAttribute('bis-viewerid');
         this.viewertwoid = this.getAttribute('bis-viewerid2');
         this.layoutid = this.getAttribute('bis-layoutwidgetid');
