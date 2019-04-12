@@ -53,7 +53,7 @@ class GrapherModule extends HTMLElement {
         this.lastviewer = null;
         this.desired_width = 500;
         this.desired_height = 500;
-        this.currentdata = null;
+        this.currentdata = {};
         this.graphcanvasid = null;
         this.lastPlotFrame = false;
         this.graphWindow = null;
@@ -318,14 +318,14 @@ class GrapherModule extends HTMLElement {
     }
 
     /**
-     * Reformats the means returned by {@link bis_fmrimatrixconnectivity}.roimean to a format readable by chart.js.
-     * Internal use only. 
+     * Reformats the y-axis values to a format readable by chart.js. Often these are the values returned by {@link bis_fmrimatrixconnectivity}.roimean.
      * @param {Array|Object} y - y-axis data (values)
      * @param {Array} numVoxels - Number of voxels included in a painted region. Also used to designate which regions should be included in the chart.
      * @param {Array} labelsArray - Names to use for each region. Should be arranged in the same order as the data array.
      * @param {Number|Boolean} singleFrame - If a positive number, plot the VOI intensity for that frame. Otherwise plot the timecourse.
+     * @param {Boolean} setCurrentData - If true, set this.currentdata to be the data that formatChartData parses, otherwise don't. True by default.
      */
-    formatChartData(y, numVoxels, labelsArray, singleFrame) {
+    formatChartData(y, numVoxels, labelsArray, singleFrame, setCurrentData = true) {
 
         let mx = util.objectmapcolormap.length;
         let dim = numeric.dim(y);
@@ -379,7 +379,7 @@ class GrapherModule extends HTMLElement {
             parsedDataSet = parsedDataSet.filter(Boolean);
 
             let x = Array.from({ length: y[0].length }).map(function (e, i) { return i; });
-            this.currentdata = {
+            let currentData = {
                 x: x,
                 y: y,
                 numvoxels: numVoxels,
@@ -388,12 +388,10 @@ class GrapherModule extends HTMLElement {
                 chartType: 'line'
             };
 
-            console.log('current data', this.currentdata);
-            if (this.usesmoothdata) {
-                this.makeSmoothChartData();
-            }
+            if (setCurrentData) { this.currentdata = currentData; }
+            if (this.usesmoothdata) { this.makeSmoothChartData(); }
 
-            return this.currentdata;
+            return currentData;
 
         } else {
 
@@ -462,10 +460,9 @@ class GrapherModule extends HTMLElement {
 
         let frame = document.getElementById(this.graphcanvasid);
 
-        console.log('settings', settings);
-         //hide dropdown menu if it shouldn't be used, otherwise fill it with the names of the charts
-         if (settings.charts) { 
-            $(this.graphWindow.getHeader()).find('.task-selector').css('visibility', 'inherit'); 
+        //hide dropdown menu if it shouldn't be used, otherwise fill it with the names of the charts
+        if (settings.charts) {
+            $(this.graphWindow.getHeader()).find('.task-selector').css('visibility', 'inherit');
             let dropdownMenu = $(this.graphWindow.getHeader()).find('.task-selector').siblings('.dropdown-menu');
             dropdownMenu.empty();
 
@@ -474,24 +471,27 @@ class GrapherModule extends HTMLElement {
                 let buttonItem = $(`<li></li>`);
                 buttonItem.append(button);
                 dropdownMenu.append(buttonItem);
-                button.on('click', () => { 
+                button.on('click', () => {
                     console.log('click', key);
-                    this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', makeTaskChart : true, charts: settings.charts, displayChart : key });
+                    let newSettings = settings;
+                    newSettings.displayChart = key;
+                    this.createChart(newSettings);
                 });
             }
 
         } else {
-            $(this.graphWindow.getHeader()).find('.task-selector').css('visibility', 'hidden'); 
+            $(this.graphWindow.getHeader()).find('.task-selector').css('visibility', 'hidden');
         }
 
-        if (settings.makeTaskChart && chartData.chartType === 'line') {
+        let chartType = settings.chartType || chartData.chartType;  
+        if (settings.makeTaskChart && chartType === 'line') {
             this.createTaskChart(chartData.datasets, chartData.colors, frame, this.taskdata, settings);
-        } else if (chartData.chartType === 'bar') {
+        } else if (chartType === 'bar') {
             this.createBarChart(chartData.datasets[0].data, chartData.colors, frame, settings);
-        } else if (chartData.chartType === 'line') {
+        } else if (chartType === 'line') {
             this.createLineChart(chartData.datasets, chartData.colors, frame, settings); 
         } else {
-            console.log('Error: unrecognized chart type', chartData.chartType);
+            console.log('Error: unrecognized chart type', chartType);
         }
     }
 
@@ -543,10 +543,12 @@ class GrapherModule extends HTMLElement {
 
     createLineChart(data, colors, frame, settings) {
 
+        console.log('settings', settings);
         //find data corresponding to the chart to be displayed and highlight selected item in dropdown
         if (settings.displayChart) {
             let dropdownMenu = $(this.graphWindow.getHeader()).find('.task-selector').siblings('.dropdown-menu');
             data = settings.charts[settings.displayChart].datasets;
+            colors = settings.charts[settings.displayChart].colors;
 
             let selectedItem = dropdownMenu.find(`li:contains(${settings.displayChart})`);
             selectedItem.addClass('bs-dropdown-selected');
@@ -580,9 +582,6 @@ class GrapherModule extends HTMLElement {
                 this.fillPlugin({
                     'frame' : frame
                 }),
-                /*this.lineHoverPlugin( { 
-                    'frame' : frame
-                }),*/
                 Taucharts.api.plugins.get('legend')({
                     'position': 'top'
                 }),

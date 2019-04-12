@@ -23,15 +23,6 @@ let createStackedWaveform = (matrix, runs, period) => {
     tr = period;
     let numericMatrix = matrix.getNumericMatrix();
 
-    /*console.log('unparsed numeric', unparsedNumericMatrix);
-    for (let i = 0; i < unparsedNumericMatrix.length; i++) {
-        if (unparsedNumericMatrix[i].includes(1)) {
-            parsedNumericMatrix.push([i, 1]);
-        } else {
-            parsedNumericMatrix.push([i, 0]);
-        }
-    }*/
-
     let runLength = numericMatrix.length / runs;
     let constructedMatrix = [];
     for (let i = 0; i < runs; i++) {

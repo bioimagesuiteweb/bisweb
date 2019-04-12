@@ -691,7 +691,6 @@ class FileTreePanel extends HTMLElement {
 
                 this.parsedData = parsedRuns;
 
-                console.log('parsed runs', parsedRuns, 'runs', runs);
                 //parse ranges into 0 and 1 array
                 let parsedRanges = [], labelsArray = [], tasks = [], taskNames = {}, range;
                 for (let run of Object.keys(parsedRuns)) {
@@ -703,7 +702,6 @@ class FileTreePanel extends HTMLElement {
                     parsedRanges.push(range);
                     labelsArray.push(reformattedRun);
 
-                    console.log('run', run);
                     //parse regions into their own array 
                     let regions = {};
                     for (let region of Object.keys(parsedRuns[run])) {
@@ -717,17 +715,36 @@ class FileTreePanel extends HTMLElement {
 
                 //array to designate that all the arrays are meant to be included while formatting data
                 let includeArray = new Array(parsedRanges.length).fill(1);
-                this.graphelement.formatChartData(parsedRanges, includeArray, labelsArray, false);
+                let blockChart = this.graphelement.formatChartData(parsedRanges, includeArray, labelsArray, false, false);
 
                 //set the task range for the graph element to use in future images
-                let taskMatrix = this.parseTaskMatrix(parsedRuns, Object.keys(taskNames)); 
+                let alphabetizedTaskNames = Object.keys(taskNames).sort();
+                console.log('alphabetized taks names', alphabetizedTaskNames);  
+                let taskMatrix = this.parseTaskMatrix(parsedRuns, alphabetizedTaskNames); 
                 
                 let tr = parseInt(parsedData['TR']);
                 let stackedWaveform = bisweb_matrixutils.createStackedWaveform(taskMatrix, tasks.length, tr);
 
                 let taskObject = { 'formattedTasks' : tasks, 'rawTasks' : parsedData, 'matrix' : taskMatrix, 'stackedWaveform' : stackedWaveform };
                 this.graphelement.taskdata = taskObject;
-                this.graphelement.createChart({ xaxisLabel: 'frame', yaxisLabel: 'On', isFrameChart : true});
+
+                //construct charts array from matrix where each entry is the HDRF-convolved chart for each task (e.g. motor, visual, etc)
+                let taskCharts = {};
+                for (let key of alphabetizedTaskNames) { taskCharts[key] = []; }
+                let numericStackedWaveform = stackedWaveform.getNumericMatrix();
+                for (let i = 0; i < numericStackedWaveform.length; i++) {
+                    for (let j = 0; j < alphabetizedTaskNames.length; j++) {
+                        taskCharts[alphabetizedTaskNames[j]].push(numericStackedWaveform[i][j]);
+                    }
+                }
+
+                for (let key of alphabetizedTaskNames) {
+                    console.log('key', key);
+                    taskCharts[key] = this.graphelement.formatChartData([taskCharts[key]], [1], [key], false, false);
+                }
+
+                taskCharts['block_chart'] = blockChart;
+                this.graphelement.createChart({ xaxisLabel: 'frame', yaxisLabel: 'On', isFrameChart : true, 'charts' : taskCharts, 'makeTaskChart' : false, 'displayChart' : 'block_chart', 'chartType' : 'line'});
             } catch (e) {
                 console.log('An error occured while parsing the task file', e);
             }
@@ -885,7 +902,7 @@ class FileTreePanel extends HTMLElement {
         } else if (this.graphelement.taskdata === null) {
             bis_webutil.createAlert('Error: Parsing task regions requires information about runs and task timings and durations. Please load a task file using the \'Import task file\' button.', true); return;
         }
-        
+
         //TODO: Change prepending '(task)' to image so that clearing the tag clears the name too
         let imgdata = {};
         let promiseArray =  [];
