@@ -720,27 +720,40 @@ class FileTreePanel extends HTMLElement {
                 //set the task range for the graph element to use in future images
                 let alphabetizedTaskNames = Object.keys(taskNames).sort();
                 console.log('alphabetized taks names', alphabetizedTaskNames);  
-                let taskMatrix = this.parseTaskMatrix(parsedRuns, alphabetizedTaskNames); 
+                let taskMatrixInfo = this.parseTaskMatrix(parsedRuns, alphabetizedTaskNames); 
                 
                 let tr = parseInt(parsedData['TR']);
-                let stackedWaveform = bisweb_matrixutils.createStackedWaveform(taskMatrix, tasks.length, tr);
+                let stackedWaveform = bisweb_matrixutils.createStackedWaveform(taskMatrixInfo.matrix, tasks.length, tr);
 
-                let taskObject = { 'formattedTasks' : tasks, 'rawTasks' : parsedData, 'matrix' : taskMatrix, 'stackedWaveform' : stackedWaveform };
+                let taskObject = { 'formattedTasks' : tasks, 'rawTasks' : parsedData, 'matrix' : taskMatrixInfo.matrix, 'stackedWaveform' : stackedWaveform };
                 this.graphelement.taskdata = taskObject;
 
-                //construct charts array from matrix where each entry is the HDRF-convolved chart for each task (e.g. motor, visual, etc)
-                let taskCharts = {};
-                for (let key of alphabetizedTaskNames) { taskCharts[key] = []; }
+                //matrixes are stacked on top of each other for each scanner run in alphabetical order, so slice them up to parse
                 let numericStackedWaveform = stackedWaveform.getNumericMatrix();
-                for (let i = 0; i < numericStackedWaveform.length; i++) {
-                    for (let j = 0; j < alphabetizedTaskNames.length; j++) {
-                        taskCharts[alphabetizedTaskNames[j]].push(numericStackedWaveform[i][j]);
-                    }
+                let slicedMatrices = [], runLength = numericStackedWaveform.length / taskMatrixInfo.runs.length;
+                for (let i = 0; i < taskMatrixInfo.runs.length; i++) {
+                    let matrixSlice = numericStackedWaveform.slice( i * runLength, (i+1) * runLength );
+                    slicedMatrices.push(matrixSlice);
                 }
 
+                //construct charts array from matrix where each entry is the HDRF-convolved chart for each task (e.g. motor, visual, etc)
+                //note that sliced matrices are already in alphabetical order by run
+                let taskChartLabelsArray = taskMatrixInfo.runs, taskCharts = {};
+                for (let k = 0; k < alphabetizedTaskNames.length; k++) {
+                    let key = alphabetizedTaskNames[k];
+                    taskCharts[key] = [];
+                    for (let i = 0; i < slicedMatrices.length; i++) {
+                        taskCharts[key].push([]);
+                        for (let j = 0; j < slicedMatrices[i].length; j++) {
+                            taskCharts[key][taskCharts[key].length - 1].push(slicedMatrices[i][j][k]);
+                        }
+                    }
+                }
+                
+                console.log('task charts', taskCharts);
+
                 for (let key of alphabetizedTaskNames) {
-                    console.log('key', key);
-                    taskCharts[key] = this.graphelement.formatChartData([taskCharts[key]], [1], [key], false, false);
+                    taskCharts[key] = this.graphelement.formatChartData(taskCharts[key], [1], taskChartLabelsArray, false, false);
                 }
 
                 taskCharts['block_chart'] = blockChart;
@@ -839,7 +852,7 @@ class FileTreePanel extends HTMLElement {
             }
         }
 
-        return taskMatrix;
+        return  { 'matrix' : taskMatrix, 'runs' : runNames };
     }
 
     /**

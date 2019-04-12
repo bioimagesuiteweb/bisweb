@@ -29,7 +29,6 @@ let createStackedWaveform = (matrix, runs, period) => {
         constructedMatrix = constructedMatrix.concat(createWaveform(numericMatrix.slice(i * runLength, (i + 1) * runLength)));
     }
 
-    console.log('constructed matrix', constructedMatrix);
     let matOut = new BiswebMatrix();
     matOut.setFromNumericMatrix(constructedMatrix);
     return matOut ;

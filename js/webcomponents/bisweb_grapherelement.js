@@ -326,7 +326,7 @@ class GrapherModule extends HTMLElement {
      * @param {Boolean} setCurrentData - If true, set this.currentdata to be the data that formatChartData parses, otherwise don't. True by default.
      */
     formatChartData(y, numVoxels, labelsArray, singleFrame, setCurrentData = true) {
-
+        console.log('y', y, 'numVoxels', numVoxels, 'labels array', labelsArray);
         let mx = util.objectmapcolormap.length;
         let dim = numeric.dim(y);
         this.numframes = dim[1];
