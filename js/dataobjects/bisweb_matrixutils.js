@@ -16,6 +16,7 @@ let tr = 1.0;
  * @param {BiswebMatrix} matrix - Matrix representing the task regions of a given set of runs. 
  * @param {Number} runs - Number of runs in the matrix. 
  * @param {Number} period - TR for the scan, i.e. number of seconds per scanner picture (period).
+ * @returns BiswebMatrix containing the stacked waveform. 
  */
 let createStackedWaveform = (matrix, runs, period) => {
 
@@ -38,7 +39,9 @@ let createStackedWaveform = (matrix, runs, period) => {
     }
 
     console.log('constructed matrix', constructedMatrix);
-    return constructedMatrix;
+    let matOut = new BiswebMatrix();
+    matOut.setFromNumericMatrix(constructedMatrix);
+    return matOut ;
 };
 
 /**

@@ -721,16 +721,13 @@ class FileTreePanel extends HTMLElement {
 
                 //set the task range for the graph element to use in future images
                 let taskMatrix = this.parseTaskMatrix(parsedRuns, Object.keys(taskNames)); 
-                let taskObject = { 'formattedTasks' : tasks, 'rawTasks' : parsedData, 'matrix' : taskMatrix };
-                console.log('task object', taskObject);
+                
+                let tr = parseInt(parsedData['TR']);
+                let stackedWaveform = bisweb_matrixutils.createStackedWaveform(taskMatrix, tasks.length, tr);
 
+                let taskObject = { 'formattedTasks' : tasks, 'rawTasks' : parsedData, 'matrix' : taskMatrix, 'stackedWaveform' : stackedWaveform };
                 this.graphelement.taskdata = taskObject;
                 this.graphelement.createChart({ xaxisLabel: 'frame', yaxisLabel: 'On', isFrameChart : true});
-
-                let tr = parseInt(taskObject.rawTasks['TR']);
-                console.log('tr', tr);
-                let stackedWaveform = bisweb_matrixutils.createStackedWaveform(taskMatrix, taskObject.formattedTasks.length, tr);
-                console.log('hdrf task matrix', stackedWaveform);
             } catch (e) {
                 console.log('An error occured while parsing the task file', e);
             }
@@ -883,6 +880,12 @@ class FileTreePanel extends HTMLElement {
             bis_webutil.createAlert('Some files in the study have the same tag, e.g. there might be two tagged as \'task_2\'. Please correct this before continuing.', true);
         }
 
+        if (this.viewer.getobjectmap() === null) { 
+            bis_webutil.createAlert('Error: Cannot create VOI map of task regions without painted regions. Please create an overlay first (e.g. using the paint tool)', true); return;
+        } else if (this.graphelement.taskdata === null) {
+            bis_webutil.createAlert('Error: Parsing task regions requires information about runs and task timings and durations. Please load a task file using the \'Import task file\' button.', true); return;
+        }
+        
         //TODO: Change prepending '(task)' to image so that clearing the tag clears the name too
         let imgdata = {};
         let promiseArray =  [];
@@ -890,11 +893,6 @@ class FileTreePanel extends HTMLElement {
             let img = new BiswebImage(); 
             promiseArray.push(img.load(this.constructNodeName(taglist[key])));
             imgdata[key] = img;
-        }
-        if (this.viewer.getobjectmap() === null) { 
-            bis_webutil.createAlert('Error: Cannot create VOI map of task regions without painted regions. Please create an overlay first (e.g. using the paint tool)', true); return;
-        } else if (this.graphelement.taskdata === null) {
-            bis_webutil.createAlert('Error: Parsing task regions requires information about runs and task timings and durations. Please load a task file using the \'Import task file\' button.', true); return;
         }
 
         bis_webutil.createAlert('Reading study files marked as \'task\'; this may take a while!', false, 0, 1000000000, { 'makeLoadSpinner' : true });
