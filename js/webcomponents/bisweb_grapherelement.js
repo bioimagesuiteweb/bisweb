@@ -326,7 +326,6 @@ class GrapherModule extends HTMLElement {
      * @param {Boolean} setCurrentData - If true, set this.currentdata to be the data that formatChartData parses, otherwise don't. True by default.
      */
     formatChartData(y, numVoxels, labelsArray, singleFrame, setCurrentData = true) {
-        console.log('y', y, 'numVoxels', numVoxels, 'labels array', labelsArray);
         let mx = util.objectmapcolormap.length;
         let dim = numeric.dim(y);
         this.numframes = dim[1];
@@ -466,14 +465,17 @@ class GrapherModule extends HTMLElement {
             let dropdownMenu = $(this.graphWindow.getHeader()).find('.task-selector').siblings('.dropdown-menu');
             dropdownMenu.empty();
 
-            for (let key of Object.keys(settings.charts)) {
-                let button = $(`<a class='dropdown-item' href='#'>${key}<br></a>`);
+            //alphabetize keys so that they display in order in the dropdown
+            let keys = Object.keys(settings.charts); 
+            keys.sort();
+            for (let i = 0 ; i < keys.length; i++) {
+                let button = $(`<a class='dropdown-item' href='#'>${keys[i]}<br></a>`);
                 let buttonItem = $(`<li></li>`);
                 buttonItem.append(button);
                 dropdownMenu.append(buttonItem);
                 button.on('click', () => {
                     let newSettings = settings;
-                    newSettings.displayChart = key;
+                    newSettings.displayChart = keys[i];
                     this.createChart(newSettings);
                 });
             }
@@ -542,7 +544,6 @@ class GrapherModule extends HTMLElement {
 
     createLineChart(data, colors, frame, settings) {
 
-        console.log('settings', settings);
         //find data corresponding to the chart to be displayed and highlight selected item in dropdown
         if (settings.displayChart) {
             let dropdownMenu = $(this.graphWindow.getHeader()).find('.task-selector').siblings('.dropdown-menu');
@@ -811,7 +812,6 @@ class GrapherModule extends HTMLElement {
 
         this.graphWindow.show();
 
-        console.log('dm', dm);
         let cw = dm[0];
         let ch = dm[1];
 

@@ -924,7 +924,6 @@ class FileTreePanel extends HTMLElement {
             bis_webutil.createAlert('Error: Parsing task regions requires information about runs and task timings and durations. Please load a task file using the \'Import task file\' button.', true); return;
         }
 
-        //TODO: Change prepending '(task)' to image so that clearing the tag clears the name too
         let imgdata = {};
         let promiseArray =  [];
         for (let key of Object.keys(taglist)) {
@@ -1209,7 +1208,7 @@ class FileTreePanel extends HTMLElement {
 
 
                     //split off old task name, if any, then update name for underlying data structure and jstree object
-                    let splitName = node.text.split(/\(.*\)/), parsedName;
+                    let splitName = node.text.split(/^\(.*\).*$/), parsedName;
                     if (splitName.length > 1) { parsedName = splitName.slice(1).join(''); }
                     else { parsedName = node.text; }
 
@@ -1252,7 +1251,8 @@ class FileTreePanel extends HTMLElement {
 
         function clearTagFromTree(node, panel) {
              //trim parenthetical tag from name
-             let splitName = node.text.split(/\(.*\)/);
+             let splitName = node.text.split(/^\(task_\d+\)/);
+             console.log('split name', splitName);
              if (splitName.length > 1) {
                 let trimmedName = splitName.slice(1).join('');
                 node.original.text = trimmedName;
