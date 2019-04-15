@@ -749,11 +749,19 @@ class FileTreePanel extends HTMLElement {
                         }
                     }
                 }
-                
-                console.log('task charts', taskCharts);
 
-                for (let key of alphabetizedTaskNames) {
-                    taskCharts[key] = this.graphelement.formatChartData(taskCharts[key], [1], taskChartLabelsArray, false, false);
+                for (let key of Object.keys(taskCharts)) {
+
+                    //exclude plots of all zeroes
+                    let includeArray = [];
+                    for (let i = 0; i < taskCharts[key].length; i++)
+                    if (taskCharts[key][i].every( (element) => { return element === 0; })) {
+                        includeArray.push(0);
+                    } else {
+                        includeArray.push(1);
+                    }
+
+                    taskCharts[key] = this.graphelement.formatChartData(taskCharts[key], includeArray, taskChartLabelsArray, false, false);
                 }
 
                 taskCharts['block_chart'] = blockChart;

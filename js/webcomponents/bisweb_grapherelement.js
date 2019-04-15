@@ -472,7 +472,6 @@ class GrapherModule extends HTMLElement {
                 buttonItem.append(button);
                 dropdownMenu.append(buttonItem);
                 button.on('click', () => {
-                    console.log('click', key);
                     let newSettings = settings;
                     newSettings.displayChart = key;
                     this.createChart(newSettings);
