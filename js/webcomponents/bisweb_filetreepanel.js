@@ -723,7 +723,7 @@ class FileTreePanel extends HTMLElement {
                 let taskMatrixInfo = this.parseTaskMatrix(parsedRuns, alphabetizedTaskNames); 
                 
                 let tr = parseInt(parsedData['TR']);
-                let stackedWaveform = bisweb_matrixutils.createStackedWaveform(taskMatrixInfo.matrix, tasks.length, tr);
+                let stackedWaveform = bisweb_matrixutils.createStackedWaveform(taskMatrixInfo.matrix, tasks.length, tr, 2);
 
                 let taskObject = { 'formattedTasks' : tasks, 'rawTasks' : parsedData, 'matrix' : taskMatrixInfo.matrix, 'stackedWaveform' : stackedWaveform };
                 this.graphelement.taskdata = taskObject;
