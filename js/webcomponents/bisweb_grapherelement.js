@@ -60,6 +60,7 @@ class GrapherModule extends HTMLElement {
         this.resizingTimer = null;
         this.usesmoothdata = false;
         this.buttons = [];
+        this.chartInvokedFrom = null; //flag used to determine which buttons should be shown in the graph frame (e.g. plot timecourse.)
 
         this.taskdata = null;
     }
@@ -72,7 +73,7 @@ class GrapherModule extends HTMLElement {
             this.viewer = document.querySelector(this.viewerid);
             this.viewer.addResizeObserver(this);
             if (this.viewerid2) { 
-                document.querySelector(this.viewerid2); 
+                this.viewer2 = document.querySelector(this.viewerid2); 
                 this.viewer.addResizeObserver(this);
             }
         });
@@ -82,6 +83,8 @@ class GrapherModule extends HTMLElement {
      * @param{Boolean} showbuttons -- if true show the 'Plot VOI Values' and 'Plot VOI Volumes' buttons, else hide them (as we may only have values!)
      */
     createGUI(showbuttons = true) {
+
+        //TODO: rework GUI and buttons for task charts
 
         if (this.graphcanvasid !== null) {
             if (this.buttons.length > 0) {
@@ -106,19 +109,14 @@ class GrapherModule extends HTMLElement {
                 }
             }
             $('.bisweb-taucharts-container').empty();
+            this.chartInvokedFrom = null;
             this.graphWindow.hide();
         });
 
         let bbar = this.graphWindow.getFooter();
 
-        let self = this;
         this.graphWindow.close.remove();
         bbar.empty();
-
-        let fn3 = function (e) {
-            e.preventDefault();
-            self.exportLastData();
-        };
 
         //settings button should be attached next to close button
         let settingsButton = $(`<button type='button' class='bistoggle' style='float:right; -webkit-user-drag: none;'></button>'`);
@@ -178,30 +176,55 @@ class GrapherModule extends HTMLElement {
             }));
         }
 
-        webutil.createbutton({
-            name: 'Export as CSV',
-            type: "info",
-            tooltip: 'Export Data',
-            css: {
-                'margin-left': '10px',
-            },
-            position: "left",
-            parent: bbar
-        }).click(fn3);
+        //check to see if current data exists and isn't an empty object
+        if (this.currentdata && Object.entries(this.currentdata).length !== 0) {
+            webutil.createbutton({
+                name: 'Export as CSV',
+                type: "info",
+                tooltip: 'Export Data',
+                css: {
+                    'margin-left': '10px',
+                },
+                position: "left",
+                parent: bbar
+            }).click( (e) => {
+                e.preventDefault();
+                this.exportLastData();
+            });
+        }
 
-        webutil.createbutton({
-            name: 'Save Snapshot',
-            type: "warning",
-            tooltip: '',
-            css: {
-                'margin-left': '10px',
-            },
-            position: "left",
-            parent: bbar
-        }).click(() => { this.saveSnapshot(); });
-
+        if (this.taskdata && Object.entries(this.taskdata).length !== 0) {
+            webutil.createbutton({
+                name: 'Export task info',
+                type: "info",
+                tooltip: 'Saves the info about the task matrix imported with \'Import task file\'',
+                css: {
+                    'margin-left': '10px',
+                },
+                position: "left",
+                parent: bbar
+            }).click( (e) => {
+                e.preventDefault();
+                this.exportLastData();
+            });
+        }
+       
+        //TODO: this only loads the first time I open the frame? not sure why. 
+        console.log('get image', this.viewer.getimage());
+        if (this.viewer.getimage() || (this.viewer2 && this.viewer2.getimage())) {
+            webutil.createbutton({
+                name: 'Save Snapshot',
+                type: "warning",
+                tooltip: '',
+                css: {
+                    'margin-left': '10px',
+                },
+                position: "left",
+                parent: bbar
+            }).click(() => { this.saveSnapshot(); });
+        }
+        
         bbar.tooltip();
-
     }
 
     /** Main Function 1 as called by the editor tool
@@ -299,7 +322,6 @@ class GrapherModule extends HTMLElement {
             return Promise.reject();
         }
 
-        console.log('currentdata', this.currentdata);
         let dim = numeric.dim(this.currentdata.y);
         this.numframes = dim[1];
         this.formatChartData(this.currentdata.y,
@@ -544,6 +566,7 @@ class GrapherModule extends HTMLElement {
 
     createLineChart(data, colors, frame, settings) {
 
+        console.log('current data', this.currentdata, 'task data', this.taskdata);
         //find data corresponding to the chart to be displayed and highlight selected item in dropdown
         if (settings.displayChart) {
             let dropdownMenu = $(this.graphWindow.getHeader()).find('.task-selector').siblings('.dropdown-menu');
@@ -602,6 +625,11 @@ class GrapherModule extends HTMLElement {
         layout.addClass('single-chart');
 
         chart.refresh();
+
+        if (settings.displayChart) {
+            let selectedItemLabel = $(`<div class='tau-chart__label'><label><i>Currently displayed — ${settings.displayChart}</i></label></div>`);
+            $('.bisweb-taucharts-container').append(selectedItemLabel);
+        }
     }
 
     createTaskChart(data, colors, frame, tasks, settings) {
@@ -707,9 +735,11 @@ class GrapherModule extends HTMLElement {
 
         chart.refresh();
 
-        let selectedItemLabel = $(`<div class='tau-chart__label'><label><i>Currently displayed — ${settings.displayChart}</i></label></div>`);
-        $('.bisweb-taucharts-container').append(selectedItemLabel);
-
+        if (settings.displayChart) {
+            let selectedItemLabel = $(`<div class='tau-chart__label'><label><i>Currently displayed — ${settings.displayChart}</i></label></div>`);
+            $('.bisweb-taucharts-container').append(selectedItemLabel);
+        }
+       
         function parseTask(task) {
             let parsedTask = task.split('-');
             parsedTask[0] = parseInt(parsedTask[0]);
@@ -833,7 +863,6 @@ class GrapherModule extends HTMLElement {
 
         let canvas = document.getElementById(this.graphcanvasid);
 
-
         let outcanvas = document.createElement('canvas');
         outcanvas.width = canvas.width;
         outcanvas.height = canvas.height;
@@ -891,7 +920,6 @@ class GrapherModule extends HTMLElement {
     /** save the last data to csv */
     exportLastData() {
 
-        console.log('current data', this.currentdata);
         if (this.currentdata === null)
             return;
 

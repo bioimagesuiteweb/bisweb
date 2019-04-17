@@ -495,7 +495,8 @@ class FileTreePanel extends HTMLElement {
                 'type' : 'info',
                 'name' : 'Import task file',
                 'callback' : (f) => {
-                        this.loadStudyTaskData(f);
+                    this.graphelement.chartInvokedFrom = 'task';
+                    this.loadStudyTaskData(f);
                 },
             },
             {
@@ -530,6 +531,7 @@ class FileTreePanel extends HTMLElement {
 
         let plotTasksButton = bis_webutil.createbutton({ 'name' : 'Plot task charts', 'type' : 'info'});
         plotTasksButton.on('click', () => {
+            this.graphelement.chartInvokedFrom = 'task';
             this.parseTaskImagesFromTree();
         });
 
@@ -689,6 +691,9 @@ class FileTreePanel extends HTMLElement {
                     }
                 }
 
+                let maxFrames = parseInt(parsedData['frames']);
+                if (maxFrames) { highRange = maxFrames; }
+
                 this.parsedData = parsedRuns;
 
                 //parse ranges into 0 and 1 array
@@ -719,9 +724,9 @@ class FileTreePanel extends HTMLElement {
 
                 //set the task range for the graph element to use in future images
                 let alphabetizedTaskNames = Object.keys(taskNames).sort();
-                console.log('alphabetized taks names', alphabetizedTaskNames);  
                 let taskMatrixInfo = this.parseTaskMatrix(parsedRuns, alphabetizedTaskNames); 
-                
+
+                console.log('matrix', taskMatrixInfo.matrix);
                 let tr = parseInt(parsedData['TR']);
                 let stackedWaveform = bisweb_matrixutils.createStackedWaveform(taskMatrixInfo.matrix, tasks.length, tr, 2);
 
@@ -730,6 +735,7 @@ class FileTreePanel extends HTMLElement {
 
                 //matrixes are stacked on top of each other for each scanner run in alphabetical order, so slice them up to parse
                 let numericStackedWaveform = stackedWaveform.getNumericMatrix();
+
                 let slicedMatrices = [], runLength = numericStackedWaveform.length / taskMatrixInfo.runs.length;
                 for (let i = 0; i < taskMatrixInfo.runs.length; i++) {
                     let matrixSlice = numericStackedWaveform.slice( i * runLength, (i+1) * runLength );
@@ -822,7 +828,7 @@ class FileTreePanel extends HTMLElement {
             return taskArray;
 
             function addToArray(range) {
-                for (let i = range[0]; i < range[1]; i++) {
+                for (let i = range[0]; i <= range[1]; i++) {
                     taskArray[i] = 1;
                 }
             }

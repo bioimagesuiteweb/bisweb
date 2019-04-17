@@ -44,7 +44,6 @@ let createStackedWaveform = (matrix, runs, period, order = -1) => {
  */
 let createWaveform = (task) => {
 
-    //console.log('task', task);
     let responseFunc = generateHDRF(tr);
     
     let outPoints = task.length +  responseFunc.length; 
@@ -73,7 +72,9 @@ let createWaveform = (task) => {
         }
     } 
 
-    return out;
+    //trim extra data off the end
+    let trimmedWaveform = out.slice(0, task.length);
+    return trimmedWaveform;
 };
 
 /**
@@ -143,9 +144,6 @@ let addDriftTerms = (matrix, runs, order = 1) => {
 
     let numTerms = order + 1;
     let numExtra = runs * numTerms; 
-    let numCols = dim[1] + numExtra;
-
-    console.log('num cols', numCols, 'original dims', dim);
 
     let out = [];
     //copy matrix by copying rows
@@ -156,7 +154,6 @@ let addDriftTerms = (matrix, runs, order = 1) => {
         out.push(matRow);
     } 
 
-    console.log('out', out);
     for (let i = 0; i < runs; i++) {
         let minRow = i * runLength, maxRow = (i + 1) * runLength; 
         let region = out.slice(minRow, maxRow);
