@@ -20,6 +20,7 @@
 const $ = require('jquery');
 const Chart = require('chart.js');
 const webutil = require('bis_webutil');
+const webfileutil = require('bis_webfileutil');
 const util = require('bis_util');
 const fmriutil = require('bis_fmrimatrixconnectivity');
 const numeric = require('numeric');
@@ -194,18 +195,21 @@ class GrapherModule extends HTMLElement {
         }
 
         if (this.taskdata && Object.entries(this.taskdata).length !== 0) {
-            webutil.createbutton({
-                name: 'Export task info',
-                type: "info",
-                tooltip: 'Saves the info about the task matrix imported with \'Import task file\'',
-                css: {
-                    'margin-left': '10px',
+            
+            webfileutil.createFileButton({
+                'type': 'info',
+                'name': 'Export task info',
+                'parent' : bbar,
+                'callback': (f) => {
+                    this.taskdata.matrix.save(f);
                 },
-                position: "left",
-                parent: bbar
-            }).click( (e) => {
-                e.preventDefault();
-                this.exportLastData();
+            }, {
+                'title': 'Select a directory to save matrix info in',
+                'filters': 'DIRECTORY',
+                'suffix': 'DIRECTORY',
+                'save': true,
+                'serveronly' : true,
+                initialCallback: () => { return 'tasks.matr'; },
             });
         }
        
