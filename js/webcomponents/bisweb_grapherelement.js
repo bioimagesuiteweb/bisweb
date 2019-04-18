@@ -149,13 +149,6 @@ class GrapherModule extends HTMLElement {
 
         let graphWindow = document.createElement('bisweb-dialogelement').create('VOI Tool', width, height, left, top, 200, false);
 
-        /*graphWindow.dialog.css({
-            'left': `${left}px`,
-            'width': `${width}px`,
-            'top': `${top}px`,
-            'height': `${height}px`,
-        });*/
-
         let innerh = height - 120;
         let innerw = width - 10;
         graphWindow.widget.css({
@@ -1088,11 +1081,19 @@ class GrapherModule extends HTMLElement {
         let flipPolarityButton = createCheck('Reverse polarity');
         let smoothButton = createCheck('Smooth input');
 
-        settingsModal.dialog.modal('show');
+        let submitButton = $(`<button type='button' class='btn btn-sm btn-success'>Ok</button>`);
+        let cancelButton = $(`<button type='button' class='btn btn-sm btn-primary'>Cancel</button>`);
 
+        //TODO: footer.clear not a function
+        let footer = settingsModal.footer;
+        footer.empty(); 
+        footer.append(submitButton); 
+        footer.append(cancelButton);
+        
         if (this.polarity === 'negative') { flipPolarityButton.find('.form-check-input').prop('checked', true); }
         if (this.usesmoothdata) { smoothButton.find('.form-check-input').prop('checked', true); }
-        settingsModal.dialog.on('hide.bs.modal', () => {
+
+        submitButton.on('click', () => {
 
             let flipPolarity = flipPolarityButton.find('.form-check-input').prop('checked');
             if (flipPolarity) {
@@ -1109,8 +1110,15 @@ class GrapherModule extends HTMLElement {
                 this.usesmoothdata = false;
             }
 
+            settingsModal.dialog.modal('hide');
             this.replotGraph(false);
         });
+
+        cancelButton.on('click', () => {
+            settingsModal.dialog.modal('hide');
+        });
+
+        settingsModal.dialog.modal('show');
 
         function createCheck(name) {
             let id = webutil.getuniqueid();
