@@ -1594,9 +1594,9 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             return;
         }
 
-        let name = 'All Choords';
+        let name = 'All Chords';
         if (internal.laststate.guimode!=='All') {
-            name='Choords for '+internal.laststate.guimode;
+            name='Chords for '+internal.laststate.guimode;
         }
         let dim=createChordDialog(name);
 
@@ -1882,7 +1882,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 		}
 
 		if (internal.laststate.guimode!=='All') {
-			name='Choords for '+internal.laststate.guimode;
+			name='Heatmap for '+internal.laststate.guimode;
 		}
 		let dim=createChordDialog(name,650,650);
 
