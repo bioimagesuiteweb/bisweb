@@ -358,6 +358,8 @@ class BisWebDialogElement extends HTMLElement {
 
         if (motion)
             this.bindMouseEvents();
+
+        return this;
     }
     
 }

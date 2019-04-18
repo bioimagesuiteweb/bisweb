@@ -52,15 +52,12 @@ class GrapherModule extends HTMLElement {
         super();
 
         this.lastviewer = null;
-        this.desired_width = 500;
-        this.desired_height = 500;
         this.currentdata = {};
         this.graphcanvasid = null;
         this.lastPlotFrame = false;
         this.graphWindow = null;
         this.resizingTimer = null;
         this.usesmoothdata = false;
-        this.buttons = [];
         this.chartInvokedFrom = null; //flag used to determine which buttons should be shown in the graph frame (e.g. plot timecourse.)
 
         this.taskdata = null;
@@ -80,43 +77,130 @@ class GrapherModule extends HTMLElement {
         });
     }
 
-    /** create the GUI (or modifiy it if it exists)
-     * @param{Boolean} showbuttons -- if true show the 'Plot VOI Values' and 'Plot VOI Volumes' buttons, else hide them (as we may only have values!)
+    show() {
+        this.chart.dialog.modal('show');
+    }
+
+    /**
+     * Creates the frame which will contain the VOI plot graph, creating the graph window if necessary. Sizes itself to not overlap the dockbar on the right, but will overlap the one on the left. 
      */
-    createGUI(showbuttons = true) {
-
-        //TODO: rework GUI and buttons for task charts
-
-        if (this.graphcanvasid !== null) {
-            if (this.buttons.length > 0) {
-                for (let i = 0; i < this.buttons.length; i++) {
-                    if (showbuttons)
-                        this.buttons[i].css({ "visibility": "visible" });
-                    else
-                        this.buttons[i].css({ "visibility": "hidden" });
-                }
-            }
-            return;
-        }
+    renderGraphFrame() {
 
         this.graphcanvasid = webutil.getuniqueid();
-        this.graphWindow = document.createElement('bisweb-dialogelement');
-        this.graphWindow.create("VOI Tool", this.desired_width, this.desired_height, 20, 0, 100, false);
-        this.graphWindow.widget.css({ "background-color": "#222222" });
-        this.graphWindow.setCloseCallback(() => {
-            if (this.buttons.length > 0) {
-                for (let i = 0; i < this.buttons.length; i++) {
-                    this.buttons[i].css({ "visibility": "hidden" });
-                }
-            }
+        let windowobj = this.createGraphWindow();
+        let graphWindow = windowobj.window, dm = windowobj.dimensions;
+
+        graphWindow.widget.css({ "background-color": "#222222" });
+        graphWindow.setCloseCallback(() => {
             $('.bisweb-taucharts-container').empty();
             this.chartInvokedFrom = null;
-            this.graphWindow.hide();
+            graphWindow.hide();
         });
 
-        let bbar = this.graphWindow.getFooter();
+        let cw = dm[0];
+        let ch = dm[1];
 
-        this.graphWindow.close.remove();
+        let cnv = $(`<div id="${this.graphcanvasid}" class='bisweb-taucharts-container' width="${cw}" height="${ch}" style="overflow: auto"></div>`);
+        cnv.css({
+            'position': 'absolute',
+            'left': '5px',
+            'top': '8px',
+            'margin': '0 0 0 0',
+            'padding': '0 0 0 0',
+            'height': `${ch}px`,
+            'width': `${cw}px`,
+        });
+
+        graphWindow.widget.append(cnv);
+
+        this.createGUI(graphWindow);
+
+        graphWindow.show();
+        this.graphWindow = graphWindow;
+    }
+
+    /** 
+     * Creates a bisweb_dialogelement to hold the graph, sizes it, and returns itself.
+     * @returns {bisweb_dialogelement} - Appropriately sized element to contain the graph. 
+     */
+    createGraphWindow() {
+
+        let dim;
+        if (this.lastviewer) {
+            dim = this.lastviewer.getViewerDimensions();
+        } else {
+            //use the dimensions of added viewer instead
+            dim = this.viewer.getViewerDimensions();
+        }
+
+        //search HTML for a dock open on the left
+        //if it exists, we want to make sure the graph is displayed over it so we add extra width
+        let docks = $('.biswebdock');
+        for (let dock of docks) {
+            if ($(dock).css('left') === '0px') {
+                dim[0] += parseInt($(dock).css('width'));
+            }
+        }
+
+        let width = dim[0] - 20;
+        let height = dim[1] - 20;
+        let left = 10;
+        let top = 40;
+
+        let graphWindow = document.createElement('bisweb-dialogelement').create('VOI Tool', width, height, left, top, 200, false);
+
+        /*graphWindow.dialog.css({
+            'left': `${left}px`,
+            'width': `${width}px`,
+            'top': `${top}px`,
+            'height': `${height}px`,
+        });*/
+
+        let innerh = height - 120;
+        let innerw = width - 10;
+        graphWindow.widget.css({
+            'margin': '0 0 0 0',
+            'padding': '0 0 0 0',
+            'height': `${innerh}px`,
+            'width': `${innerw}px`,
+            "overflow-y": "hidden",
+            "overflow-x": "hidden",
+        });
+
+        graphWindow.widgetbase.css({
+            'height': `${innerh}px`,
+            'width': `${innerw}px`,
+            'background-color': '#222222',
+            'margin': '0 0 0 0',
+            'padding': '0 0 0 0',
+            "overflow-y": "hidden",
+            "overflow-x": "hidden",
+        });
+
+        graphWindow.footer.css({
+            "height": "40px",
+            'margin': '3 3 3 3',
+            'padding': '0 0 0 0',
+            "overflow-y": "hidden",
+            "overflow-x": "hidden",
+        });
+
+        graphWindow.widget.empty();
+        return  { 
+            'window' : graphWindow, 
+            'dimensions' : [innerw, innerh - 15] 
+        };
+    }
+
+    /**
+     * Creates UI elements inside the graph frame created by renderGraphFrame.
+     * @param {Object} settings — Parameter object for the GUI
+     * @param {bisweb_dialogelement} graphWindow — Dialog window containing the graph.
+     * @param {String} settings.chartType — Type of chart to render, one of 'bar', 'line', or 'task'. Renders different buttons for different tasks.
+     */
+    createGUI(graphWindow, settings) {
+
+        let bbar = graphWindow.getFooter();
         bbar.empty();
 
         //settings button should be attached next to close button
@@ -127,10 +211,6 @@ class GrapherModule extends HTMLElement {
             <span class='glyphicon glyphicon-chevron-down'></span>
             </button>    
             <ul class='dropdown-menu'>
-                <li><a class='dropdown-item' href='#'>Item<br></a></li>
-                <li><a class='dropdown-item' href='#'>Another Item<br></a></li>
-                <li><a class='dropdown-item' href='#'>One More Item<br></a></li>
-                <li><a class='dropdown-item' href='#'>An Item Too<br></a></li>
             </ul> 
         </div>
         `);
@@ -138,44 +218,42 @@ class GrapherModule extends HTMLElement {
         let gearIcon = $(`<span class='glyphicon glyphicon-cog'></span>`);
         settingsButton.append(gearIcon);
 
-        let closeButton = this.graphWindow.getHeader().find('.bistoggle');
+        let closeButton = graphWindow.getHeader().find('.bistoggle');
         settingsButton.insertAfter(closeButton);
         dropdownButton.insertAfter(settingsButton);
 
         settingsButton.on('click', () => { this.createSettingsModal(); });
 
-        if (showbuttons) {
+        let buttons = [];
+        buttons.push(webutil.createbutton({
+            name: 'Plot Timecourse',
+            type: "primary",
+            tooltip: '',
+            css: {
+                'margin-left': '10px',
+            },
+            position: "right",
+            parent: bbar
+        }).click(() => { this.replotGraph(false).catch(() => { }); }));
 
-            this.buttons = [];
-            this.buttons.push(webutil.createbutton({
-                name: 'Plot Timecourse',
-                type: "primary",
-                tooltip: '',
-                css: {
-                    'margin-left': '10px',
-                },
-                position: "right",
-                parent: bbar
-            }).click(() => { this.replotGraph(false).catch(() => { }); }));
+        buttons.push(webutil.createbutton({
+            name: 'Plot Single Frame',
+            type: "default",
+            tooltip: '',
+            css: {
+                'margin-left': '10px',
+            },
+            position: "left",
+            parent: bbar
+        }).click(() => {
+            let cb = (frame) => {
+                this.replotGraph(frame).catch(() => { });
+            };
 
-            this.buttons.push(webutil.createbutton({
-                name: 'Plot Single Frame',
-                type: "default",
-                tooltip: '',
-                css: {
-                    'margin-left': '10px',
-                },
-                position: "left",
-                parent: bbar
-            }).click(() => {
-                let cb = (frame) => {
-                    this.replotGraph(frame).catch(() => { });
-                };
+            this.createFrameSelectorModal(cb);
 
-                this.createFrameSelectorModal(cb);
+        }));
 
-            }));
-        }
 
         //check to see if current data exists and isn't an empty object
         if (this.currentdata && Object.entries(this.currentdata).length !== 0) {
@@ -626,7 +704,7 @@ class GrapherModule extends HTMLElement {
         chart.renderTo(frame);
 
         let layout = $(frame).find('.tau-chart__layout');
-        layout.addClass('single-chart');
+        layout.addClass('short-chart');
 
         chart.refresh();
 
@@ -832,36 +910,6 @@ class GrapherModule extends HTMLElement {
         layout.addClass('task-chart');
     }
 
-    show() {
-        this.chart.dialog.modal('show');
-    }
-
-    renderGraphFrame() {
-        this.createGUI(true);
-        let dm = this.getCanvasDimensions();
-
-        if (!dm) {
-            return Promise.reject("Bad Dimensions");
-        }
-
-        this.graphWindow.show();
-
-        let cw = dm[0];
-        let ch = dm[1];
-
-        let cnv = $(`<div id="${this.graphcanvasid}" class='bisweb-taucharts-container' width="${cw}" height="${ch}" style="overflow: auto"></div>`);
-        this.graphWindow.widget.append(cnv);
-        cnv.css({
-            'position': 'absolute',
-            'left': '5px',
-            'top': '8px',
-            'margin': '0 0 0 0',
-            'padding': '0 0 0 0',
-            'height': `${ch}px`,
-            'width': `${cw}px`,
-        });
-    }
-
     /** create a snapshot of the current plot */
     saveSnapshot() {
 
@@ -990,7 +1038,7 @@ class GrapherModule extends HTMLElement {
         }
 
         if (!this.graphWindow.isVisible()) {
-            this.getCanvasDimensions();
+            this.createGraphWindow();
             return;
         }
 
@@ -1001,73 +1049,6 @@ class GrapherModule extends HTMLElement {
             });
         }, 200);
 
-    }
-
-
-    /** Resizes elements and returns the canvas dimensions. Adds file tree panel width if necessary
-     * @returns {array} - [ canvaswidth,canvasheight ]
-     */
-    getCanvasDimensions() {
-
-        let dim;
-        if (this.lastviewer) {
-            dim = this.lastviewer.getViewerDimensions();
-        } else {
-            //use the dimensions of added viewer instead
-            dim = this.viewer.getViewerDimensions();
-        }
-
-        //search HTML for a dock open on the left
-        //if it exists, we want to make sure the graph is displayed over it so we add extra width
-        let docks = $('.biswebdock');
-        for (let dock of docks) {
-            if ($(dock).css('left') === '0px') {
-                dim[0] += parseInt($(dock).css('width'));
-            }
-        }
-
-        let width = dim[0] - 20;
-        let height = dim[1] - 20;
-        let left = 10;
-        let top = 40;
-
-        this.graphWindow.dialog.css({
-            'left': `${left}px`,
-            'width': `${width}px`,
-            'top': `${top}px`,
-            'height': `${height}px`,
-        });
-
-        let innerh = height - 120;
-        let innerw = width - 10;
-        this.graphWindow.widget.css({
-            'margin': '0 0 0 0',
-            'padding': '0 0 0 0',
-            'height': `${innerh}px`,
-            'width': `${innerw}px`,
-            "overflow-y": "hidden",
-            "overflow-x": "hidden",
-        });
-        this.graphWindow.widgetbase.css({
-            'height': `${innerh}px`,
-            'width': `${innerw}px`,
-            'background-color': '#222222',
-            'margin': '0 0 0 0',
-            'padding': '0 0 0 0',
-            "overflow-y": "hidden",
-            "overflow-x": "hidden",
-        });
-
-        this.graphWindow.footer.css({
-            "height": "40px",
-            'margin': '3 3 3 3',
-            'padding': '0 0 0 0',
-            "overflow-y": "hidden",
-            "overflow-x": "hidden",
-        });
-
-        this.graphWindow.widget.empty();
-        return [innerw, innerh - 15];
     }
 
     createFrameSelectorModal(cb) {
