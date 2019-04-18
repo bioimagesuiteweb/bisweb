@@ -70,20 +70,22 @@ let dicom2BIDS = async function (opts) {
         return errorfn('No data to convert in ' + indir);
     }
 
-    let outputdirectory = bis_genericio.joinFilenames(outdir, 'source');
+    let outputdirectory = bis_genericio.joinFilenames(outdir, 'sourcedata');
+    let subjectdirectory = bis_genericio.joinFilenames(outputdirectory,'sub-01');
+
     try {
         await makeDir(outputdirectory);
+        await makeDir(subjectdirectory);
         console.log(colors.green('....\nCreated output directory : '+outputdirectory));
     } catch (e) {
         return errorfn('Failed to make directory ' + e);
     }
 
 
-
-    let funcdir = bis_genericio.joinFilenames(outputdirectory, 'func');
-    let anatdir = bis_genericio.joinFilenames(outputdirectory, 'anat');
-    let locdir = bis_genericio.joinFilenames(outputdirectory, 'localizer');
-    let diffdir = bis_genericio.joinFilenames(outputdirectory, 'diff');
+    let funcdir = bis_genericio.joinFilenames(subjectdirectory, 'func');
+    let anatdir = bis_genericio.joinFilenames(subjectdirectory, 'anat');
+    let locdir = bis_genericio.joinFilenames(subjectdirectory, 'localizer');
+    let diffdir = bis_genericio.joinFilenames(subjectdirectory, 'dwi');
 
     try {
         await makeDir(funcdir);
@@ -130,13 +132,18 @@ let dicom2BIDS = async function (opts) {
 
             if (splitName.toLowerCase() === filebasename.toLowerCase()) {
                 //rejoin file extension to the formatted splitsupp
-                let suppTarget = bis_genericio.joinFilenames(dirname, bis_genericio.getBaseName(suppfile));
+                let suppBasename = bis_genericio.getBaseName(suppfile);
+                let formattedSuppfile = makeBIDSFilename(suppBasename);
+                let suppTarget = bis_genericio.joinFilenames(dirname, formattedSuppfile);
+
+                console.log('supp target', suppTarget);
                 movedsuppfiles.push(suppTarget);
                 moveSupportingFiles.push(bis_genericio.copyFile(suppfile + '&&' + suppTarget));
             }
         }
 
-        let target = bis_genericio.joinFilenames(dirname, basename);
+        let formattedBasename = makeBIDSFilename(basename);
+        let target = bis_genericio.joinFilenames(dirname, formattedBasename);
 
         try {
             moveImageFiles.push(bis_genericio.copyFile(origname + '&&' + target));
@@ -248,6 +255,15 @@ let dicom2BIDS = async function (opts) {
         return errorfn(e);
     }
 
+    function makeBIDSFilename(filename) {
+        let splitsubdirectory = subjectdirectory.split('/');
+
+        //BIDS uses underscores as separator characters to show hierarchy in filenames, so change underscores to hyphens to avoid ambiguity
+        filename = filename.split('_').join('-');
+
+        let namesArray = [ splitsubdirectory[splitsubdirectory.length - 1], filename];
+        return namesArray.join('_');
+    }
 };
 
 
