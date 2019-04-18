@@ -52,8 +52,8 @@ class ManualRegistrationModule extends BaseModule {
                     "varname": "shifti",
                     "default": 0.0,
                     "type": 'float',
-                    "low": -90.0,
-                    "high": 90.0,
+                    "low": -256.0,
+                    "high": 256.0,
                     "step" : 0.1,
                 },
                 {
@@ -65,8 +65,8 @@ class ManualRegistrationModule extends BaseModule {
                     "varname": "shiftj",
                     "default": 0.0,
                     "type": 'float',
-                    "low": -90.0,
-                    "high": 90.0,
+                    "low": -256.0,
+                    "high": 256.0,
                     "step" : 0.1,
                 },
                 {
@@ -78,8 +78,8 @@ class ManualRegistrationModule extends BaseModule {
                     "varname": "shiftk",
                     "default": 0.0,
                     "type": 'float',
-                    "low": -90.0,
-                    "high": 90.0,
+                    "low": -256.0,
+                    "high": 256.0,
                     "step" : 0.1,
                 },
                 {
@@ -135,13 +135,31 @@ class ManualRegistrationModule extends BaseModule {
                     "step" : 1.0,
                 },
                 {
-                    "name": "Use Header",
+                    "name": "Header Orient",
                     "description": "use header orientation for initial rotation matrix",
                     "priority": 9,
                     "advanced": true,
                     "type": "boolean",
                     "default": true,
                     "varname": "useheader"
+                },
+                {
+                    "name": "Header Trans",
+                    "description": "use header to compute initial matrix (incl translation)",
+                    "priority": 10,
+                    "advanced": true,
+                    "type": "boolean",
+                    "default": false,
+                    "varname": "usefullheader"
+                },
+                {
+                    "name": "No Header Tz",
+                    "description": "use header to compute initial matrix (incl xy-translation but not z-translation)",
+                    "priority": 10,
+                    "advanced": true,
+                    "type": "boolean",
+                    "default": false,
+                    "varname": "usefullheaderxy"
                 },
                 {
                     "name": "Interpolation",
@@ -184,25 +202,40 @@ class ManualRegistrationModule extends BaseModule {
 
         let interp=parseInt(vals.interpolation);
         
-        let useheader=this.parseBoolean(vals.useheader);            
+        let useheader=this.parseBoolean(vals.useheader);
+        let usefullheader=this.parseBoolean(vals.usefullheader);
+        let usefullheaderxy=this.parseBoolean(vals.usefullheaderxy);
         let o1=reference.getOrientationName();
         let o2=target.getOrientationName();
         let headertransform=null;
-        if (o1!==o2 && useheader) {
-            headertransform=xformutil.computeHeaderTransformation(reference,target);
+        let mode=0;
+        if (!usefullheader && !usefullheaderxy) {
+            if (o1!==o2 && useheader) {
+                mode=1;
+            }
+        } else {
+            mode=2;
+        }
+
+        if (mode>0) {
+            let usetranslation=false;
+            if (mode>1)
+                usetranslation=true;
+            console.log('Creating manual transformation uset=',usetranslation,!usefullheaderxy); 
+            headertransform=xformutil.computeHeaderTransformation(reference,target,usetranslation,!usefullheaderxy);
+            
             // Center about resliced version of image not original
             dim2=dim;
             spa2=spa;
-        } else {
-            useheader=false;
-        }
+            console.log('Header=',headertransform.getMatrix());
+        } 
         
         linear.setShifts(dim,spa,dim2,spa2);
         linear.setParameterVector( [ tx,ty,tz,rx,ry,rz,sc], { scale:true, rigidOnly:false });
 
 
         
-        if (useheader) {
+        if (mode>0) {
             this.outputs['output']=xformutil.computeCombinedTransformation(linear,headertransform);
             linear=this.outputs['output'];
         }  else {
