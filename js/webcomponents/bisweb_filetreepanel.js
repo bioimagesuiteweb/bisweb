@@ -146,7 +146,7 @@ class FileTreePanel extends HTMLElement {
                     return;
                 }
 
-                queryString = filename + '/*.nii*';
+                queryString = filename + '/**/*.nii*';
                 bis_genericio.getMatchingFiles(queryString).then( (newfiles) => {
 
                     if (newfiles.length > 0) { 

@@ -125,6 +125,8 @@ class GrapherModule extends HTMLElement {
      */
     createGraphWindow() {
 
+        if (this.graphWindow) { this.graphWindow.cleanup(); }
+
         let dim;
         if (this.lastviewer) {
             dim = this.lastviewer.getViewerDimensions();
@@ -1084,7 +1086,6 @@ class GrapherModule extends HTMLElement {
         let submitButton = $(`<button type='button' class='btn btn-sm btn-success'>Ok</button>`);
         let cancelButton = $(`<button type='button' class='btn btn-sm btn-primary'>Cancel</button>`);
 
-        //TODO: footer.clear not a function
         let footer = settingsModal.footer;
         footer.empty(); 
         footer.append(submitButton); 
