@@ -41,9 +41,6 @@ let dicom2BIDS = async function (opts) {
     let outdir = opts.outdir || '';
     console.log('opts=', opts);
 
-
-    console.log(colors.yellow('.... Now converting files to BIDS format.'));
-
     let matchniix = bis_genericio.joinFilenames(indir, '*.nii.gz');
     let matchsupp = bis_genericio.joinFilenames(indir, '!(*.nii.gz)');
 
@@ -56,7 +53,6 @@ let dicom2BIDS = async function (opts) {
     //wait for all files to move and hashes to finish calculating
     let makeHash = calculateChecksums(flist);
     let moveImageFiles = [], moveSupportingFiles = [];
-
 
 
     //filter supplemental files by looking for files without '.nii'.
@@ -96,6 +92,7 @@ let dicom2BIDS = async function (opts) {
         return errorfn('failed to make directory' + e);
     }
 
+
     let maxindex = flist.length;
     let tlist = [];
     for (let i = 0; i < maxindex; i++) {
@@ -114,14 +111,16 @@ let dicom2BIDS = async function (opts) {
         } else if (tname.indexOf('.nii.gz') > 0) {
             let f2 = name.substr(0, name.length - 7);
             let f3 = f2 + '.bval';
-            console.log(name, ',', f2, '->', f3);
+            //console.log(name, ',', f2, '->', f3);
             if (flist.indexOf(f3) >= 0)
                 dirname = diffdir;
         }
 
         let origname = name;
         let basename = bis_genericio.getBaseName(name);
+        let dirbasename = bis_genericio.getBaseName(dirname);
 
+        console.log('name', name, '\n');
         let splitName = basename.split('.')[0];
 
         for (let suppfile of filteredsuppfiles) {
@@ -133,16 +132,15 @@ let dicom2BIDS = async function (opts) {
             if (splitName.toLowerCase() === filebasename.toLowerCase()) {
                 //rejoin file extension to the formatted splitsupp
                 let suppBasename = bis_genericio.getBaseName(suppfile);
-                let formattedSuppfile = makeBIDSFilename(suppBasename);
+                let formattedSuppfile = makeBIDSFilename(suppBasename, dirbasename);
                 let suppTarget = bis_genericio.joinFilenames(dirname, formattedSuppfile);
 
-                console.log('supp target', suppTarget);
                 movedsuppfiles.push(suppTarget);
                 moveSupportingFiles.push(bis_genericio.copyFile(suppfile + '&&' + suppTarget));
             }
         }
 
-        let formattedBasename = makeBIDSFilename(basename);
+        let formattedBasename = makeBIDSFilename(basename, dirbasename);
         let target = bis_genericio.joinFilenames(dirname, formattedBasename);
 
         try {
@@ -255,14 +253,24 @@ let dicom2BIDS = async function (opts) {
         return errorfn(e);
     }
 
-    function makeBIDSFilename(filename) {
+    function makeBIDSFilename(filename, directory) {
         let splitsubdirectory = subjectdirectory.split('/');
+        let fileExtension = filename.split('.');
+        fileExtension = fileExtension[fileExtension.length - 1];
 
         //BIDS uses underscores as separator characters to show hierarchy in filenames, so change underscores to hyphens to avoid ambiguity
         filename = filename.split('_').join('-');
 
-        let namesArray = [ splitsubdirectory[splitsubdirectory.length - 1], filename];
-        return namesArray.join('_');
+        let nameComponents = parseNameComponents(filename, directory), namesArray;
+        if (directory === 'anat') {
+            namesArray = [ splitsubdirectory[splitsubdirectory.length - 1], nameComponents.modality];
+        } else if (directory === 'func') {
+            namesArray = [ splitsubdirectory[splitsubdirectory.length - 1], nameComponents.contrast];
+        }
+        
+        console.log(colors.green('BIDS filename', namesArray.join('_'), '\n'));
+        let joinedName = namesArray.join('_');
+        return joinedName.concat(fileExtension);
     }
 };
 
@@ -286,6 +294,50 @@ let calculateChecksums = (inputFiles) => {
             .catch((e) => { reject(e); });
     });
 
+};
+
+/**
+ * Parses name into a set of BIDS compliant name components. Currently only supports images acquired by MRI.
+ * 
+ * @param {String} name - Name of the file.
+ * @param {String} directory - Name of the directory the file will be contained in, one of 'anat', 'func', 'diff', or 'localizer'   
+ */
+let parseNameComponents = (name, directory) => {
+    let modLabel, contrastLabel; //TODO: add more labels? 
+    name = name.toLowerCase();
+
+    if (directory === 'anatomical' || directory === 'anat') {
+        if (name.includes('t1') && name.includes('weight')) { modLabel = 'T1w'; }
+        else if (name.includes('t2') && name.includes('weight')) { modLabel = 'T2w'; }
+        else if (name.includes('t1') && name.includes('rho')) { modLabel = 'T1rho'; }
+        else if (name.includes('t1') && name.includes('map')) { modLabel = 'T1map'; } 
+        else if (name.includes('t1') && name.includes('plane')) { modLabel = 'inplaneT1'; }
+        else if (name.includes('t2') && name.includes('map')) { modLabel = 'T2map'; }  
+        else if (name.includes('t2') && name.includes('plane')) { modLabel = 'inplaneT2'; }
+        else if (name.includes('star')) { modLabel = 'T2star'; }  
+        else if (name.includes('flair')) { modLabel = 'FLAIR'; }
+        else if (name.includes('flash')) { modLabel = 'FLASH'; }  
+        else if (name.includes('pd') && name.includes('map')) { modLabel = 'PDmap'; }
+        else if (name.includes('pd') && name.includes('t2')) { modLabel = 'PDT2'; } 
+        else if (name.includes('pd')) { modLabel = 'PD'; }
+        else if (name.includes('angio')) { modLabel = 'angio'; }
+        else { modLabel = 'unknown'; }   
+    }
+
+    if (directory === 'functional' || directory === 'func') {
+         //parse contrast label
+        if (name.includes('bold')) { contrastLabel = 'bold'; }
+        else if (name.includes('cbv')) {  contrastLabel = 'cbv'; }
+        else if (name.includes('phase')) { contrastLabel = 'phase'; }
+        else { contrastLabel = 'unknown'; }
+    }
+
+    console.log('mod label', modLabel, 'contrast label', contrastLabel, 'directory', directory);
+
+    return {
+        'contrast' : contrastLabel,
+        'modality' : modLabel
+    };
 };
 
 
