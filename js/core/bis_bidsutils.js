@@ -44,8 +44,8 @@ let dicom2BIDS = async function (opts) {
     let outdir = opts.outdir || '';
     console.log('opts=', opts);
 
-    let matchniix = bis_genericio.joinFilenames(indir, '*.nii.gz');
-    let matchsupp = bis_genericio.joinFilenames(indir, '!(*.nii.gz)');
+    let matchniix = bis_genericio.joinFilenames(indir, '*(*.nii.gz|*.nii)');
+    let matchsupp = bis_genericio.joinFilenames(indir, '!(*.nii.gz|*.nii)');
 
     let flist = await bis_genericio.getMatchingFiles(matchniix);
     let suppfiles = await bis_genericio.getMatchingFiles(matchsupp);
@@ -54,15 +54,6 @@ let dicom2BIDS = async function (opts) {
     console.log(colors.yellow('... Supporting files : '+suppfiles.join('\n\t')));
 
     let moveImageFiles = [], moveSupportingFiles = [];
-
-
-    console.log('suppfiles', suppfiles);
-    //filter supplemental files by looking for files without '.nii'.
-    //once you find a file and move it, record its name 
-    let filteredsuppfiles = [], movedsuppfiles = [];
-    for (let file of suppfiles) {
-        if (!file.includes('.nii')) filteredsuppfiles.push(file);
-    }
 
     if (flist.length < 1) {
         return errorfn('No data to convert in ' + indir);
@@ -96,7 +87,7 @@ let dicom2BIDS = async function (opts) {
 
 
     let maxindex = flist.length;
-    let tlist = [], parsedFilenames = [];
+    let tlist = [], parsedFilenames = [], movedsuppfiles = [];
     for (let i = 0; i < maxindex; i++) {
 
         let name = flist[i];
@@ -124,22 +115,20 @@ let dicom2BIDS = async function (opts) {
         console.log('name', name, '\n');
         let splitName = basename.split('.')[0];
 
+        let filteredsuppfiles = suppfiles.filter( (file) => {
+            return file.toLowerCase().includes(splitName.toLowerCase());
+        });
+
         for (let suppfile of filteredsuppfiles) {
-            //check if the trailing parts of one of the support files (without file type) match the image
-            //strip out file extension and the name of the parent folder to match image
-            let splitsupp = bis_genericio.getBaseName(suppfile).split('.');
-            let filebasename = splitsupp[0];
+            let suppBasename = bis_genericio.getBaseName(suppfile);
+            let formattedSuppfile = makeBIDSFilename(suppBasename, dirbasename);
+            let suppTarget = bis_genericio.joinFilenames(dirname, formattedSuppfile);
 
-            if (splitName.toLowerCase() === filebasename.toLowerCase()) {
-                //rejoin file extension to the formatted splitsupp
-                let suppBasename = bis_genericio.getBaseName(suppfile);
-                let formattedSuppfile = makeBIDSFilename(suppBasename, dirbasename);
-                let suppTarget = bis_genericio.joinFilenames(dirname, formattedSuppfile);
 
-                movedsuppfiles.push(suppTarget);
-                moveSupportingFiles.push(bis_genericio.copyFile(suppfile + '&&' + suppTarget));
-            }
+            movedsuppfiles.push(suppTarget);
+            moveSupportingFiles.push(bis_genericio.copyFile(suppfile + '&&' + suppTarget));
         }
+
 
         let formattedBasename = makeBIDSFilename(basename, dirbasename);
         let target = bis_genericio.joinFilenames(dirname, formattedBasename);
@@ -261,6 +250,7 @@ let dicom2BIDS = async function (opts) {
     }
 
     function makeBIDSFilename(filename, directory) {
+        console.log('make bids filename', filename, directory);
         let splitsubdirectory = subjectdirectory.split('/');
         let fileExtension = filename.split('.');
         if (fileExtension.length > 2 && fileExtension[fileExtension.length - 2] === 'nii' && fileExtension[fileExtension.length - 1] === 'gz') {
@@ -304,8 +294,10 @@ let dicom2BIDS = async function (opts) {
             let num;
             if (labelsMap[nameComponents[key]]) {
                 if (fileExtension.includes('nii')) { 
-                    labelsMap[nameComponents[key]] = labelsMap[nameComponents[key]] + 1;
+                    //supporting files are moved before the image file in the code above
+                    //so once we find the image we can safely increment the label in labelsMap
                     num = labelsMap[nameComponents[key]]; 
+                    labelsMap[nameComponents[key]] = labelsMap[nameComponents[key]] + 1;
                 } else {
                     num = labelsMap[nameComponents[key]];
                 } 
