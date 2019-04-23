@@ -181,8 +181,8 @@ const webutil = {
      * @param {boolean} large -- if true base is 14px instead of 12px
      * returns{number} -- font size
      */
-    getfontsize: function (canvas, large) {
-        large = large || false;
+    getfontsize: function (canvas, large=false) {
+
         var dw = canvas.width || 600.0;
         if (dw > 900)
             dw = 900;

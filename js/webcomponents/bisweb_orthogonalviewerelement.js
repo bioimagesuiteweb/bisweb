@@ -365,10 +365,10 @@ class OrthogonalViewerElement extends BaseViewerElement {
             context.fillStyle = "#dddddd";
         else
             context.fillStyle = "#222222";
-        
         context.clearRect(this.cleararea[0]*fullwidth+2,y0,0.5*dw-4,dh-y0);
         context.textAlign="left";
-        context.fillText(s,(this.cleararea[0]+0.01)*fullwidth,0.99*dh);
+        context.textBaseline="bottom";
+        context.fillText(s,(this.cleararea[0]+0.01)*fullwidth,dh-1);
         
     }
 
@@ -878,12 +878,16 @@ class OrthogonalViewerElement extends BaseViewerElement {
                     let ymax=Math.round((1.0-vp.y0)*dh)+dy;
                     if (ymax>0.9*dh)
                         ymax=0.9*dh;
-                    
-                    context.textAlign="center";
-                    context.textBaseline="top";
-                    context.fillText(lab[2],xmid,ymin);
-                    context.textBaseline="alphabetic";
-                    context.fillText(lab[3],xmid,ymax);
+
+                    if (!this.internal.simplemode) {
+                        context.textAlign="center";
+                        context.textBaseline="top";
+                        context.fillText(lab[2],xmid,ymin);
+                        context.textBaseline="alphabetic";
+                        context.fillText(lab[3],xmid,ymax);
+                    } else {
+                        context.textBaseline="alphabetic";
+                    }
                     
                     let name=names[trueplane]+axes[orientaxis[trueplane]];
                     context.textAlign="start";
@@ -913,6 +917,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                     context.strokeStyle = "#dddddd";
                 else
                     context.strokeStyle = "#222222";
+
 
 
                 context.lineWidth=1;

@@ -24,7 +24,7 @@ const BisWebImage = require('bisweb_image.js');
 const genericio= require('bis_genericio');
 const xformutil=require('bis_transformationutil.js');
 const tfRecon=require('tfRecon');
-
+const numeric=require('numeric');
 
 /**
  * Performs skull strip of  an image with the ability to specify both a low and a high deface. 
@@ -307,13 +307,13 @@ class SkullStripImageModule extends BaseModule {
                                                                           "do3d" : true }, debug);
                     }
                     for (let i=0;i<2*nume;i++) {
-                        console.log('oooo Dilate ',i+1,'/',nume*2)
+                        console.log('oooo Dilate ',i+1,'/',nume*2);
                         temp= biswrap.morphologyOperationWASM(temp, {     "operation" : "dilate",
                                                                           "radius" : 1,
                                                                           "do3d" : true }, debug);
                     }
                     for (let i=0;i<nume;i++) {
-                        console.log('oooo Erode ',i+1,'/',nume)
+                        console.log('oooo Erode ',i+1,'/',nume);
                         temp= biswrap.morphologyOperationWASM(temp, {     "operation" : "erode",
                                                                           "radius" : 1,
                                                                           "do3d" : true }, debug);
