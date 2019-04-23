@@ -282,7 +282,6 @@ class MosaicViewerElement extends BaseViewerElement {
             
             let fnsize=webutil.getfontsize(context.canvas);
             context.font=fnsize+"px Arial";
-            console.log('Font (Labels)=',context.font,context.canvas.width);
             context.fillStyle = "#dd7700";
             
             let numslices=this.internal.numrows*this.internal.numcols;
