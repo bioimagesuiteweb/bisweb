@@ -157,7 +157,6 @@ let dicom2BIDS = async function (opts) {
     //separate date string into individual chunks
     let year = date.substring(0, 4), month = date.substring(4, 6), day = date.substring(6, 8), hour = date.substring(8, 10), minute = date.substring(10, 12);
 
-    let dicomjobfilename = bis_genericio.joinFilenames(outputdirectory, 'dicom_job.json');
     let dicomobj = {
         "acquisition": 'DICOM',
         "bidsversion": "1.1.0",
@@ -240,7 +239,24 @@ let dicom2BIDS = async function (opts) {
             }
         }
 
+        let bidsignore = '**/localizer\n**/dicom_job.json';
+        let date = new Date();
+        date = new Date().toLocaleDateString() + ' at ' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
+        let datasetDescription = {
+            'Name' : 'DICOM dataset converted on ' + date,
+            'BIDSVersion': "1.2.0",
+            "License" : "",
+            "Authors" : "",
+            "Funding" : ""
+        };
+
+        let bidsignorefilename = bis_genericio.joinFilenames(outputdirectory, '.bidsignore');
+        let dicomjobfilename = bis_genericio.joinFilenames(outputdirectory, 'dicom_job_info.json');
+        let datasetdescriptionfilename = bis_genericio.joinFilenames(outputdirectory, 'dataset_description.json');
+
+        await bis_genericio.write(bidsignorefilename, bidsignore, false);
         await bis_genericio.write(dicomjobfilename, JSON.stringify(dicomobj, null, 2), false);
+        await bis_genericio.write(datasetdescriptionfilename, JSON.stringify(datasetDescription, null, 2), false);
         console.log('----- output directory', outputdirectory);
 
         labelsMap = {};
@@ -265,7 +281,7 @@ let dicom2BIDS = async function (opts) {
         filename = filename.split('_').join('-');
 
         let bidsLabel = parseBIDSLabel(filename, directory), namesArray;
-        let runNumber = getRunNumber(directory, bidsLabel, fileExtension);
+        let runNumber = getRunNumber(bidsLabel, fileExtension);
 
         //may change in the future, though currently looks a bit more specific than needed
         // -Zach
@@ -289,8 +305,10 @@ let dicom2BIDS = async function (opts) {
     //Returns the number of runs with the same name name component for a directory type and updates the count in labelsMap (global map of keys seen so far)
     function getRunNumber(bidsLabel, fileExtension) {
         let runNum;
-       
+        
+        console.log('bidsLabel', bidsLabel);
         if (labelsMap[bidsLabel]) {
+            console.log('collision on', bidsLabel);
             if (fileExtension.includes('nii')) {
                 //supporting files are moved before the image file in the code above
                 //so once we find the image we can safely increment the label in labelsMap
