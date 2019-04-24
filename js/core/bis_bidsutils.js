@@ -101,7 +101,7 @@ let dicom2BIDS = async function (opts) {
         } else if (tname.includes('.bval') || tname.includes('.bvec')) {
             // DTI helper files
             dirname = diffdir;
-        } else if (tname.includes('dti') || tname.includes('dwi')) {
+        } else if (tname.includes('dti') || tname.includes('dwi') || tname.includes('diff')) {
             dirname = diffdir;
         } else if (tname.includes('.nii.gz')) {
             let f2 = name.substr(0, name.length - 7);
@@ -239,15 +239,15 @@ let dicom2BIDS = async function (opts) {
             }
         }
 
-        let bidsignore = '**/localizer\n**/dicom_job.json';
+        let bidsignore = '**/localizer\n**/dicom_job_info.json';
         let date = new Date();
         date = new Date().toLocaleDateString() + ' at ' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
         let datasetDescription = {
             'Name' : 'DICOM dataset converted on ' + date,
             'BIDSVersion': "1.2.0",
             "License" : "",
-            "Authors" : "",
-            "Funding" : ""
+            "Authors" : [],
+            "Funding" : []
         };
 
         let bidsignorefilename = bis_genericio.joinFilenames(outputdirectory, '.bidsignore');
