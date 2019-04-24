@@ -94,17 +94,19 @@ let dicom2BIDS = async function (opts) {
         let dirname = anatdir;
         let tname = name.toLowerCase();
 
-        if (tname.indexOf('bold') > 0 || tname.indexOf('asl') > 0) {
+        if (tname.includes('bold') || tname.includes('asl') || tname.includes('rest') || tname.includes('task')) {
             dirname = funcdir;
-        } else if (tname.indexOf('localizer') > 0) {
+        } else if (tname.includes('localizer') || tname.includes('loc')) {
             dirname = locdir;
-        } else if (tname.indexOf('.bval') > 0 || tname.indexOf('.bvec') > 0) {
+        } else if (tname.includes('.bval') || tname.includes('.bvec')) {
             // DTI helper files
             dirname = diffdir;
-        } else if (tname.indexOf('.nii.gz') > 0) {
+        } else if (tname.includes('dti') || tname.includes('dwi')) {
+            dirname = diffdir;
+        } else if (tname.includes('.nii.gz')) {
             let f2 = name.substr(0, name.length - 7);
             let f3 = f2 + '.bval';
-            if (flist.indexOf(f3) >= 0)
+            if (flist.includes(f3))
                 dirname = diffdir;
         }
 
@@ -167,7 +169,7 @@ let dicom2BIDS = async function (opts) {
         let fname = tlist[i];
         let name = bis_genericio.getBaseName(fname);
         let infoname = '';
-        if (name.indexOf(".nii.gz") > 0) {
+        if (name.includes(".nii.gz")) {
 
             let tagname = bis_genericio.getBaseName(bis_genericio.getDirectoryName(fname));
 
@@ -184,7 +186,7 @@ let dicom2BIDS = async function (opts) {
                 } else if (tagname === 'diffusion') {
                     tagname = 'DTI';
                 } else if (tagname === 'anatomical') {
-                    if (fname.indexOf('3D') >= 0 || fname.indexOf('3d') > 0) {
+                    if (fname.includes('3D') || fname.includes('3d')) {
                         tagname = '3DAnatomical';
                     } else {
                         tagname = 'Anatomical';
@@ -262,13 +264,19 @@ let dicom2BIDS = async function (opts) {
         //BIDS uses underscores as separator characters to show hierarchy in filenames, so change underscores to hyphens to avoid ambiguity
         filename = filename.split('_').join('-');
 
-        let nameComponents = parseNameComponents(filename, directory), namesArray;
+        let bidsLabel = parseBIDSLabel(filename, directory), namesArray;
+        let runNumber = getRunNumber(directory, bidsLabel, fileExtension);
 
-        let runNumber = getRunNumber(directory, nameComponents, fileExtension);
+        //may change in the future, though currently looks a bit more specific than needed
+        // -Zach
         if (directory === 'anat') {
-            namesArray = [ splitsubdirectory[splitsubdirectory.length - 1], runNumber, nameComponents.modality];
+            namesArray = [ splitsubdirectory[splitsubdirectory.length - 1], runNumber, bidsLabel];
         } else if (directory === 'func') {
-            namesArray = [ splitsubdirectory[splitsubdirectory.length - 1], runNumber, nameComponents.contrast];
+            namesArray = [ splitsubdirectory[splitsubdirectory.length - 1], runNumber, bidsLabel];
+        } else if (directory === 'localizer') {
+            namesArray = [ splitsubdirectory[splitsubdirectory.length - 1], runNumber, bidsLabel];
+        } else if (directory === 'dwi') {
+            namesArray = [ splitsubdirectory[splitsubdirectory.length - 1], runNumber, bidsLabel];
         }
         
         console.log(colors.green('BIDS filename', namesArray.join('_'), '\n'));
@@ -279,36 +287,25 @@ let dicom2BIDS = async function (opts) {
     
 
     //Returns the number of runs with the same name name component for a directory type and updates the count in labelsMap (global map of keys seen so far)
-    function getRunNumber(directoryType, nameComponents, fileExtension) {
+    function getRunNumber(bidsLabel, fileExtension) {
         let runNum;
-        //nameComponents will contain the name of the contrast agent for functional images and the imaging modality for anatomical
-        if (directoryType === 'anat' || directoryType === 'anatomical') {
-            runNum = checkLabelsMap('modality');
-        } else if (directoryType === 'func' || directoryType === 'functional') {
-            runNum = checkLabelsMap('contrast');
+       
+        if (labelsMap[bidsLabel]) {
+            if (fileExtension.includes('nii')) {
+                //supporting files are moved before the image file in the code above
+                //so once we find the image we can safely increment the label in labelsMap
+                runNum = labelsMap[bidsLabel];
+                labelsMap[bidsLabel] = labelsMap[bidsLabel] + 1;
+            } else {
+                runNum = labelsMap[bidsLabel];
+            }
+        } else {
+            labelsMap[bidsLabel] = 1;
+            runNum = 1;
         }
 
-        return runNum;
-        
-        function checkLabelsMap(key) {
-            let num;
-            if (labelsMap[nameComponents[key]]) {
-                if (fileExtension.includes('nii')) { 
-                    //supporting files are moved before the image file in the code above
-                    //so once we find the image we can safely increment the label in labelsMap
-                    num = labelsMap[nameComponents[key]]; 
-                    labelsMap[nameComponents[key]] = labelsMap[nameComponents[key]] + 1;
-                } else {
-                    num = labelsMap[nameComponents[key]];
-                } 
-            } else {
-                labelsMap[nameComponents[key]] = 1;
-                num = 1;
-            }
-            
-            if (num < 10) { num = '0' + num;}
-            return 'run-' + num;
-        }
+        if (runNum < 10) { runNum = '0' + runNum; }
+        return 'run-' + runNum; 
     }
 };
 
@@ -340,42 +337,53 @@ let calculateChecksums = (inputFiles) => {
  * @param {String} name - Name of the file.
  * @param {String} directory - Name of the directory the file will be contained in, one of 'anat', 'func', 'diff', or 'localizer'   
  */
-let parseNameComponents = (name, directory) => {
-    let modLabel, contrastLabel; //TODO: add more labels? 
+let parseBIDSLabel = (name, directory) => {
+    let bidsLabel;
     name = name.toLowerCase();
 
     if (directory === 'anatomical' || directory === 'anat') {
-        if (name.includes('t1') && name.includes('weight')) { modLabel = 'T1w'; }
-        else if (name.includes('t2') && name.includes('weight')) { modLabel = 'T2w'; }
-        else if (name.includes('t1') && name.includes('rho')) { modLabel = 'T1rho'; }
-        else if (name.includes('t1') && name.includes('map')) { modLabel = 'T1map'; } 
-        else if (name.includes('t1') && name.includes('plane')) { modLabel = 'inplaneT1'; }
-        else if (name.includes('t2') && name.includes('map')) { modLabel = 'T2map'; }  
-        else if (name.includes('t2') && name.includes('plane')) { modLabel = 'inplaneT2'; }
-        else if (name.includes('star')) { modLabel = 'T2star'; }  
-        else if (name.includes('flair')) { modLabel = 'FLAIR'; }
-        else if (name.includes('flash')) { modLabel = 'FLASH'; }  
-        else if (name.includes('pd') && name.includes('map')) { modLabel = 'PDmap'; }
-        else if (name.includes('pd') && name.includes('t2')) { modLabel = 'PDT2'; } 
-        else if (name.includes('pd')) { modLabel = 'PD'; }
-        else if (name.includes('angio')) { modLabel = 'angio'; }
-        else { modLabel = 'unknown'; }   
+        if ( (name.includes('t1') && name.includes('weight') ) || name.includes('mprage')) { bidsLabel = 'T1w'; }
+        else if (name.includes('t2') && name.includes('weight')) { bidsLabel = 'T2w'; }
+        else if (name.includes('t1') && name.includes('rho')) { bidsLabel = 'T1rho'; }
+        else if (name.includes('t1') && name.includes('map')) { bidsLabel = 'T1map'; } 
+        else if (name.includes('t1') && name.includes('plane')) { bidsLabel = 'inplaneT1'; }
+        else if (name.includes('t2') && name.includes('map')) { bidsLabel = 'T2map'; }  
+        else if (name.includes('t2') && name.includes('plane')) { bidsLabel = 'inplaneT2'; }
+        else if (name.includes('star')) { bidsLabel = 'T2star'; }  
+        else if (name.includes('flair')) { bidsLabel = 'FLAIR'; }
+        else if (name.includes('flash')) { bidsLabel = 'FLASH'; }  
+        else if (name.includes('pd') && name.includes('map')) { bidsLabel = 'PDmap'; }
+        else if (name.includes('pd') && name.includes('t2')) { bidsLabel = 'PDT2'; } 
+        else if (name.includes('pd')) { bidsLabel = 'PD'; }
+        else if (name.includes('angio')) { bidsLabel = 'angio'; }
+        else { bidsLabel = 'unknown'; }   
     }
 
     if (directory === 'functional' || directory === 'func') {
-         //parse contrast label
-        if (name.includes('bold')) { contrastLabel = 'bold'; }
-        else if (name.includes('cbv')) {  contrastLabel = 'cbv'; }
-        else if (name.includes('phase')) { contrastLabel = 'phase'; }
-        else { contrastLabel = ''; }
+        //parse contrast label
+        if (name.includes('bold')) { bidsLabel = 'bold'; }
+        else if (name.includes('cbv')) {  bidsLabel = 'cbv'; }
+        else if (name.includes('phase')) { bidsLabel = 'phase'; }
+        else { bidsLabel = 'unknown'; }
     }
 
-    console.log('mod label', modLabel, 'contrast label', contrastLabel, 'directory', directory);
+    if (directory === 'localizer') {
+        //trim number at the end of the localizer to use as the label
+        let splitName = name.split('-');
+        bidsLabel = splitName[splitName.length - 1];
 
-    return {
-        'contrast' : contrastLabel,
-        'modality' : modLabel
-    };
+        //split off the file extension too
+        let trimmedLabel = bidsLabel.split('.');
+        bidsLabel = trimmedLabel[0];
+    }
+
+    if (directory === 'dwi' || directory === 'diff') {
+        bidsLabel = 'dwi';
+    }
+
+    console.log('bids label', bidsLabel, 'directory', directory);
+
+    return bidsLabel;
 };
 
 
