@@ -2,6 +2,7 @@
 
 const bis_genericio = require('bis_genericio');
 const colors=bis_genericio.getcolorsmodule();
+const async = require('async');
 
 //Need to keep track of labels to know if there are repeats, in which case they should be given a run number
 let labelsMap = {};
@@ -44,6 +45,11 @@ let dicom2BIDS = async function (opts) {
     let outdir = opts.outdir || '';
     console.log('opts=', opts);
 
+    //read size of directory to determine whether or not to calculate checksums
+    readSizeRecursive(indir, (err, size) => {
+        if (err) { console.log('An error occured in read size recursive', err); }
+        console.log('size', size);
+    });
     let matchniix = bis_genericio.joinFilenames(indir, '*(*.nii.gz|*.nii)');
     let matchsupp = bis_genericio.joinFilenames(indir, '!(*.nii.gz|*.nii)');
 
@@ -306,9 +312,7 @@ let dicom2BIDS = async function (opts) {
     function getRunNumber(bidsLabel, fileExtension) {
         let runNum;
         
-        console.log('bidsLabel', bidsLabel);
         if (labelsMap[bidsLabel]) {
-            console.log('collision on', bidsLabel);
             if (fileExtension.includes('nii')) {
                 //supporting files are moved before the image file in the code above
                 //so once we find the image we can safely increment the label in labelsMap
@@ -402,6 +406,44 @@ let parseBIDSLabel = (name, directory) => {
     console.log('bids label', bidsLabel, 'directory', directory);
 
     return bidsLabel;
+};
+
+/**
+ * Recursively reads the size of a directory (by reading the size of all its contents).
+ * https://stackoverflow.com/questions/7529228/how-to-get-totalsize-of-files-in-directory
+ * 
+ * @param {String} item - The name of the root directory when invoking 
+ * @param {Function} cb - Callback for root level function.
+ */
+let readSizeRecursive = (item, cb) => {
+    let path = bis_genericio.getpathmodule();
+    let fs = bis_genericio.getfsmodule();
+
+    fs.lstat(item, function (err, stats) {
+        if (!err && stats.isDirectory()) {
+            let total = stats.size;
+
+            fs.readdir(item, function (err, list) {
+                if (err) return cb(err);
+
+                async.forEach(
+                    list,
+                    function (diritem, callback) {
+                        readSizeRecursive(path.join(item, diritem), function (err, size) {
+                            total += size;
+                            callback(err);
+                        });
+                    },
+                    function (err) {
+                        cb(err, total);
+                    }
+                );
+            });
+        }
+        else {
+            cb(err);
+        }
+    });
 };
 
 

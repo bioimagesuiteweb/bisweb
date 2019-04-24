@@ -938,7 +938,7 @@ class FileTreePanel extends HTMLElement {
             imgdata[key] = img;
         }
 
-        bis_webutil.createAlert('Reading study files marked as \'task\'; this may take a while!', false, 0, 1000000000, { 'makeLoadSpinner' : true });
+        bis_webutil.createAlert('Reading all runs marked as \'task\'; this may take a while!', false, 0, 1000000000, { 'makeLoadSpinner' : true });
         Promise.all(promiseArray).then( () => {
             bis_webutil.dismissAlerts();
 
