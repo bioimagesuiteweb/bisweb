@@ -1690,7 +1690,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 			    [0.75, 0, 0.3, 0.9, 0.7, 0.1, 1, 0.4, 0.6, 1]
 		    ];*/
 
-		    var labels = ['MF', 'FP', 'DMN', 'Mot', 'VI', 'VII', 'VAs', 'Limb', 'BG', 'CBL'];
+		    var labels = ['MF', 'FP', 'DMN', 'Mot', 'VI', 'VII', 'VAs', 'SAL', 'SC', 'CBL'];
 		    // heatMap part
 		    var svg  = Matrix({
 			    container : '#'+id1,
