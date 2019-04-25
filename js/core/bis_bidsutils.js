@@ -62,7 +62,7 @@ let dicom2BIDS = async function (opts) {
     console.log(colors.green('.... Flist : '+flist.join('\n\t')));
     console.log(colors.yellow('... Supporting files : '+suppfiles.join('\n\t')));
 
-    let moveImageFiles = [], moveSupportingFiles = [];
+    let moveImageFiles = [], moveSupportingFiles = [], changedNames = [];
 
     if (flist.length < 1) {
         return errorfn('No data to convert in ' + indir);
@@ -137,6 +137,7 @@ let dicom2BIDS = async function (opts) {
 
 
             movedsuppfiles.push(suppTarget);
+            changedNames.push(bis_genericio.getBaseName(suppfile) + ' -> ' + bis_genericio.getBaseName(suppTarget));
             moveSupportingFiles.push(bis_genericio.copyFile(suppfile + '&&' + suppTarget));
         }
 
@@ -146,6 +147,7 @@ let dicom2BIDS = async function (opts) {
         parsedFilenames.push(target);
 
         try {
+            changedNames.push(bis_genericio.getBaseName(origname) + ' -> ' + bis_genericio.getBaseName(target));
             moveImageFiles.push(bis_genericio.copyFile(origname + '&&' + target));
         } catch (e) {
             console.log('copy file', e);
@@ -251,7 +253,8 @@ let dicom2BIDS = async function (opts) {
         }
        
 
-        let bidsignore = '**/localizer\n**/dicom_job_info.json';
+        let bidsignore = '**/localizer\n**/dicom_job_info.json\n**/name_change_log.txt';
+
         let date = new Date();
         date = new Date().toLocaleDateString() + ' at ' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
         let datasetDescription = {
@@ -261,11 +264,14 @@ let dicom2BIDS = async function (opts) {
             "Authors" : [],
             "Funding" : []
         };
-
+        
+        //write record of name changes to disk
+        let namechangefilename = bis_genericio.joinFilenames(outputdirectory, 'name_change_log.txt');
         let bidsignorefilename = bis_genericio.joinFilenames(outputdirectory, '.bidsignore');
         let dicomjobfilename = bis_genericio.joinFilenames(outputdirectory, 'dicom_job_info.json');
         let datasetdescriptionfilename = bis_genericio.joinFilenames(outputdirectory, 'dataset_description.json');
 
+        await bis_genericio.write(namechangefilename, changedNames.join('\n'), false);
         await bis_genericio.write(bidsignorefilename, bidsignore, false);
         await bis_genericio.write(dicomjobfilename, JSON.stringify(dicomobj, null, 2), false);
         await bis_genericio.write(datasetdescriptionfilename, JSON.stringify(datasetDescription, null, 2), false);
@@ -296,11 +302,10 @@ let dicom2BIDS = async function (opts) {
         let runNumber = getRunNumber(bidsLabel, fileExtension);
 
         //may change in the future, though currently looks a bit more specific than needed
-        // -Zach
         if (directory === 'anat') {
             namesArray = [ splitsubdirectory[splitsubdirectory.length - 1], runNumber, bidsLabel];
         } else if (directory === 'func') {
-            namesArray = [ splitsubdirectory[splitsubdirectory.length - 1], runNumber, bidsLabel];
+            namesArray = [ splitsubdirectory[splitsubdirectory.length - 1], 'task-unnamed', runNumber, bidsLabel];
         } else if (directory === 'localizer') {
             namesArray = [ splitsubdirectory[splitsubdirectory.length - 1], runNumber, bidsLabel];
         } else if (directory === 'dwi') {
@@ -370,7 +375,7 @@ let parseBIDSLabel = (name, directory) => {
     name = name.toLowerCase();
 
     if (directory === 'anatomical' || directory === 'anat') {
-        if ( (name.includes('t1') && name.includes('weight') ) || name.includes('mprage')) { bidsLabel = 'T1w'; }
+        if ( (name.includes('t1') && name.includes('weight') ) || name.includes('mprage') || name.includes('t1w')) { bidsLabel = 'T1w'; }
         else if (name.includes('t2') && name.includes('weight')) { bidsLabel = 'T2w'; }
         else if (name.includes('t1') && name.includes('rho')) { bidsLabel = 'T1rho'; }
         else if (name.includes('t1') && name.includes('map')) { bidsLabel = 'T1map'; } 
@@ -408,8 +413,6 @@ let parseBIDSLabel = (name, directory) => {
     if (directory === 'dwi' || directory === 'diff') {
         bidsLabel = 'dwi';
     }
-
-    console.log('bids label', bidsLabel, 'directory', directory);
 
     return bidsLabel;
 };

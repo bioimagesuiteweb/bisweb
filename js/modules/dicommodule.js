@@ -223,6 +223,9 @@ class DicomModule extends BaseModule {
                     resolve(bidsoutput);
                     return true;
                 } catch (e) {
+                    console.log('.... removing temporary directory', tmpdir);
+                    await bis_genericio.deleteDirectory(tmpdir);
+
                     reject(e);
                     return false;
                 }
