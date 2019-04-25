@@ -61,7 +61,7 @@ class DicomImportElement extends HTMLElement {
             },
         });
 
-        
+        //TODO: investigate error where files in user's home directory don't prompt second window to appear        
         bis_webfileutil.createFileButton({ 
             type : 'info',
             name : 'Import DICOM Images',

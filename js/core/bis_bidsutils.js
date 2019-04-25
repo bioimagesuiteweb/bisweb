@@ -50,6 +50,7 @@ let dicom2BIDS = async function (opts) {
         if (err) { console.log('An error occured in read size recursive', err); }
         console.log('size', size);
     });
+
     let matchniix = bis_genericio.joinFilenames(indir, '*(*.nii.gz|*.nii)');
     let matchsupp = bis_genericio.joinFilenames(indir, '!(*.nii.gz|*.nii)');
 
@@ -151,8 +152,12 @@ let dicom2BIDS = async function (opts) {
         tlist.push(target);
     }
 
+
+
     console.log('parsed filenames', parsedFilenames);
-    let makeHash = calculateChecksums(parsedFilenames);
+    let calcHash = false;
+    let makeHash = ( calcHash ? calculateChecksums(parsedFilenames) : [ Promise.resolve()]);
+
 
     //date will be a 14 character string in the middle of a filename
     let dateRegex = /\d{14}/g;
@@ -217,7 +222,7 @@ let dicom2BIDS = async function (opts) {
                 name: name,
                 filename: fname.substr(outputdirectory.length + 1, fname.length),
                 tag: tagname,
-                hash: 'TODO: fill this!',
+                hash: 'no checksums',
                 supportingfiles: suppfileArray,
                 details: infoname
             });
@@ -231,19 +236,19 @@ let dicom2BIDS = async function (opts) {
         let checksums = await makeHash;
         for (let prom of promiseArray) { await prom; }
 
-        //let joinedPromiseArray = promiseArray.push(makeHash);
-        //await Promise.all(joinedPromiseArray);
-
-        //put checksums in dicom_job then write it to disk
-        for (let val of checksums) {
-            console.log('val', val);
-            for (let fileEntry of dicomobj.job) {
-                if (val.output.filename.includes(fileEntry.name)) {
-                    fileEntry.hash = val.output.hash;
-                    break;
+        //put checksums in dicom_job then write it to disk (if checksums have been calculated)
+        if (calcHash) {
+            for (let val of checksums) {
+                console.log('val', val);
+                for (let fileEntry of dicomobj.job) {
+                    if (val.output.filename.includes(fileEntry.name)) {
+                        fileEntry.hash = val.output.hash;
+                        break;
+                    }
                 }
             }
         }
+       
 
         let bidsignore = '**/localizer\n**/dicom_job_info.json';
         let date = new Date();
