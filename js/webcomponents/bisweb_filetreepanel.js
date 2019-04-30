@@ -109,6 +109,14 @@ class FileTreePanel extends HTMLElement {
                 'action': (node) => {
                     this.openTagSettingPopover(node);
                 }
+            },
+            'RenameTask' : {
+                'separator_before': false,
+                'separator_after': false,
+                'label': 'Set Tag',
+                'action': (node) => {
+                    this.openTaskRenamingPopover(node);
+                }
             }
         };
     }
@@ -988,31 +996,15 @@ class FileTreePanel extends HTMLElement {
      * @returns Source and destination directory.
      */
     parseSourceAndDestination(data) {
-        let srcName, destName;
-
-        let movingNode = $(`#${data.node.id}`);
-        let nodeName = movingNode.find(`#${data.node.id}_anchor`).text();
-
-        //id of the base directory will be '#', so if we see that we don't have to resolve it
-        console.log('data.old_parent', data.old_parent, 'data.parent', data.parent);
-        if (data.old_parent === '#') {
-            srcName = this.baseDirectory + '/' + nodeName;
-        } else {
-            let oldParentNode = $(`#${data.old_parent}`);
-            let oldParentName = oldParentNode.find(`#${data.old_parent}_anchor`).text();
-            srcName = this.baseDirectory + '/' + oldParentName + '/' + nodeName;
-        }
-
-        if (data.parent === '#') {
-            destName = this.baseDirectory + '/' + nodeName;
-        } else {
-            let newParentNode = $(`#${data.parent}`);
-            let newParentName = newParentNode.find(`#${data.parent}_anchor`).text();
-            destName = this.baseDirectory + '/' + newParentName + '/' + nodeName;
-        }
+       
+        //old_instance seems to be a copy of new_instance? i.e. they are exactly the same tree
+        //so making the name is a little more complicated than just calling get_path twice
+        let srcName = this.baseDirectory + '/' + data.old_instance.get_path(data.old_parent, '/', false) + '/' + data.node.text;
+        let destName = this.baseDirectory + '/' + data.new_instance.get_path(data.node, '/', false);
 
         console.log('srcName', srcName, 'destName', destName);
         return { 'src': srcName, 'dest': destName };
+
     }
 
     showInfoModal() {
@@ -1051,6 +1043,18 @@ class FileTreePanel extends HTMLElement {
 
     }
 
+    openTaskRenamingModal(node) {
+        let taskModal = bootbox.prompt({
+            'size' : 'large',
+            'title' : 'Set task name', 
+            'message' : 'Enter the name for the chosen task(s). Note that you can select multiple tasks by holding shift or ctrl.',
+            'show' : false,
+            'callback' : () => {
+                //TODO: finish task renaming interface
+            }
+        });
+    }
+
     openTagSettingPopover(node) {
         let popover = $(`<a href='#' data-toggle='popover' title='Select Tag'></a>`);
         let dropdownMenu = this.createTagSelectMenu({ 'enabled': true, 'setDefaultValue': true });
@@ -1074,6 +1078,7 @@ class FileTreePanel extends HTMLElement {
 
         popover.popover('show');
     }
+
 
     toggleContextMenuLoadButtons(tree, toggle) {
         let existingTreeSettings = tree.jstree(true).settings.contextmenu.items;
