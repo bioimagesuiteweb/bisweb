@@ -113,9 +113,9 @@ class FileTreePanel extends HTMLElement {
             'RenameTask' : {
                 'separator_before': false,
                 'separator_after': false,
-                'label': 'Set Tag',
+                'label': 'Rename Task',
                 'action': (node) => {
-                    this.openTaskRenamingPopover(node);
+                    this.openTaskRenamingModal(node);
                 }
             }
         };
@@ -374,8 +374,6 @@ class FileTreePanel extends HTMLElement {
 
             let div=$('<div></div>');
             elementsDiv.append(div);
-            let lab=$(`<label>Tag Selected Element:</label>`);
-            div.append(lab);
             div.append(tagSelectDiv);
             
             elementsDiv.append(loadImageButton);
@@ -383,11 +381,8 @@ class FileTreePanel extends HTMLElement {
             elementsDiv.append($(`<label>Tag Selected Element:</label></br>`));
             elementsDiv.append(tagSelectDiv);
             loadImageButton.css({'margin' : '10px'});
-            lab.css({'margin-left' : '10px'});
             elementsDiv.append($('<HR>'));
-            
-
-
+        
             this.renderedTagSelectMenu = true;
         } else {
             $('.bisweb-elements-menu').find('select').prop('disabled', 'disabled');
@@ -438,13 +433,13 @@ class FileTreePanel extends HTMLElement {
     makeStaticButtons(listElement) {
         let buttonGroupDisplay = $(`
             <div class='btn-group'>
-                <div class='btn-group top-bar' role='group' aria-label='Viewer Buttons' style='float: left;'>
+                <div class='btn-group top-bar' role='group' aria-label='Viewer Buttons' style='float: left; margin-left : 0px;'>
                 </div>
                 <br>
-                <div class='btn-group middle-bar' role='group' aria-label='Viewer Buttons' style='float: left;'>
+                <div class='btn-group middle-bar' role='group' aria-label='Viewer Buttons' style='float: left; margin-left : 0px;'>
                 </div>
                 <br> 
-                <div class='btn-group bottom-bar' role='group' aria-label='Viewer Buttons' style='float: left;'>
+                <div class='btn-group bottom-bar' role='group' aria-label='Viewer Buttons' style='float: left; margin-left : 0px;'>
                 </div>
             </div>
         `);
@@ -1043,14 +1038,50 @@ class FileTreePanel extends HTMLElement {
 
     }
 
-    openTaskRenamingModal(node) {
-        let taskModal = bootbox.prompt({
+    openTaskRenamingModal() {
+        
+        console.log('rename modal');
+        let tree = this.fileTree.jstree(true);
+        console.log('tree', tree);
+        bootbox.prompt({
             'size' : 'large',
             'title' : 'Set task name', 
             'message' : 'Enter the name for the chosen task(s). Note that you can select multiple tasks by holding shift or ctrl.',
-            'show' : false,
-            'callback' : () => {
-                //TODO: finish task renaming interface
+            'show' : true,
+            'callback' : (newName) => {
+                //get all selected nodes to rename as a group
+                let selectedNodes = tree.get_selected(true);
+                console.log('selected nodes', selectedNodes);
+
+                for (let node of selectedNodes) {
+                    let originalName = node.text, splitName = node.text.split('_'), taskName = null, index;
+                    //task names should be the second or third bullet, so if it's not there then we know not to change them
+                    if (splitName.length >= 2 && splitName[1].includes('task')) {
+                        taskName = splitName[1];
+                        index = 1;
+                    } else if (splitName.length >= 3 && splitName[2].includes('task')) {
+                        taskName = splitName[2];
+                        index = 2;
+                    } 
+
+                    if (taskName) {
+                        //split off the second part of the task tag to change it
+                        let splitTag = taskName.split('-');
+                        splitTag[1] = newName;
+                        splitName[index] = splitTag.join('-');
+                        let reconstructedName = splitName.join('_');
+
+                        node.original.text = reconstructedName; 
+                        node.text = reconstructedName;
+
+                        //move the file on disk 
+                        let basePath = tree.get_path(node.parent, '/');
+                        let srcFile = this.baseDirectory + '/' + basePath + '/' + originalName, dstFile = this.baseDirectory + '/' + basePath + '/' + reconstructedName;
+                        bis_genericio.moveDirectory(srcFile + '&&' + dstFile);
+                    }
+                }
+
+                tree.redraw(true);
             }
         });
     }
