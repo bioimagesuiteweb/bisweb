@@ -41,6 +41,7 @@ class BisWebTextObject extends BisWebDataObject{
         this.legacyextension="txt";
         this.extension=".bistxt";
         this.data="";
+        this.forcetextsave=false;
         this.setText(txt);
     }
 
@@ -111,7 +112,8 @@ class BisWebTextObject extends BisWebDataObject{
 
         let ext = filename.name ? filename.name.split('.').pop() : filename.split('.').pop();
         let output="";
-        if (ext==='csv' || ext==="txt") {
+        console.log('Ext=',ext);
+        if (ext==='csv' || ext==="txt" || this.forcetextsave===true) {
             output=this.data;
         } else {
             output = this.serializeToJSON();
@@ -209,6 +211,11 @@ class BisWebTextObject extends BisWebDataObject{
      */
     getText() {
         return this.data.slice(0);
+    }
+
+    /** force save to text */
+    forceTextSave() {
+        this.forcetextsave=true;
     }
         
     
