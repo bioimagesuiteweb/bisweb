@@ -62,7 +62,9 @@ let dicom2BIDS = async function (opts) {
     console.log(colors.green('.... Flist : '+flist.join('\n\t')));
     console.log(colors.yellow('... Supporting files : '+suppfiles.join('\n\t')));
 
-    let moveImageFiles = [], moveSupportingFiles = [], changedNames = [];
+    //Promise arrays
+    let moveImageFiles = [], moveSupportingFiles = [];
+    let changedNames = [];
 
     if (flist.length < 1) {
         return errorfn('No data to convert in ' + indir);
@@ -96,6 +98,7 @@ let dicom2BIDS = async function (opts) {
 
 
     let maxindex = flist.length;
+    //name arrays
     let tlist = [], parsedFilenames = [], movedsuppfiles = [];
     for (let i = 0; i < maxindex; i++) {
 
@@ -213,11 +216,7 @@ let dicom2BIDS = async function (opts) {
             let basename = name.split('.')[0], suppfileArray = [];
             for (let file of movedsuppfiles) {
                 if (file.includes(basename)) {
-                    let splitName = file.split('/');
-                    //parse the raw filename for only the BIDS components
-                    //BIDS structuring should produce a filepath at least two entries long (BIDS subdirectory and filename), so if this isn't the case we want to let the user know
-                    let bidsName = (splitName.length >= 2 ? splitName.slice(splitName.length - 2, splitName.length).join('/') : 'Error: BIDS structure was not created correctly!');
-                    suppfileArray.push(bidsName);
+                    suppfileArray.push(file.substr(outputdirectory.length + 1, file.length));
                 }
             }
 

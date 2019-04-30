@@ -1040,11 +1040,9 @@ class FileTreePanel extends HTMLElement {
 
     openTaskRenamingModal() {
         
-        console.log('rename modal');
         let tree = this.fileTree.jstree(true);
-        console.log('tree', tree);
         bootbox.prompt({
-            'size' : 'large',
+            'size' : 'small',
             'title' : 'Set task name', 
             'message' : 'Enter the name for the chosen task(s). Note that you can select multiple tasks by holding shift or ctrl.',
             'show' : true,
@@ -1075,6 +1073,7 @@ class FileTreePanel extends HTMLElement {
                         node.text = reconstructedName;
 
                         //move the file on disk 
+                        //TODO: move the supporting files too
                         let basePath = tree.get_path(node.parent, '/');
                         let srcFile = this.baseDirectory + '/' + basePath + '/' + originalName, dstFile = this.baseDirectory + '/' + basePath + '/' + reconstructedName;
                         bis_genericio.moveDirectory(srcFile + '&&' + dstFile);
