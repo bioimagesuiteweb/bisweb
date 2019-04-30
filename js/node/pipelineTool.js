@@ -16,6 +16,7 @@
  ENDLICENSE */
 
 const io = require('bis_genericio');
+const path=require('path');
 let endASCII = 'z'.charCodeAt(0);
 
 /**
@@ -24,11 +25,11 @@ let endASCII = 'z'.charCodeAt(0);
  * @param {String} obj - Data File Input as JSON dictionary
  * @return {String}  The Makefile for the set of jobs.
  */
-let makePipeline = function(obj) {
+let makePipeline = function(obj,odir='') {
 
-    let parsedFile=obj;
-
+    console.log('Odir=',odir);
     
+    let parsedFile=obj;
     let defaultCommand = parsedFile.command ? parsedFile.command : "";
     
     //--------------------------------------------------------------------------------------------------------
@@ -164,6 +165,8 @@ let makePipeline = function(obj) {
                 let outputFilenames = [], currentASCII = 'a';
                 for (let i = 0; i < numOutputs; i++) {
                     let outputFilename = currentASCII + '_' + job.appendText + '.o' + fileExtension;
+                    if (odir.length>0)
+                        outputFilename=(path.join(odir,path.basename(outputFilename)));
                     outputFilenames.push(outputFilename);
                     currentASCII = getNextASCIIChar(currentASCII);
                 }
@@ -219,36 +222,48 @@ let makePipeline = function(obj) {
     }
     
     //add 'make all' 
-    let makefile = '.PHONY: all\nall : ';
+    let makefile = '#-----------------------------------------------\n#\n';
+    makefile+="# All Jobs\n#\nall : ";
     for (let o of allJobOutputs) {
         for (let output of o.outputs) { 
             makefile = makefile + output + ' ';
         }
     }
+    makefile+="\n\n";
     
-    //add 'make clean'
-    makefile = makefile + '\n\n.PHONY: clean\nclean:\n\trm -f *.o.*\n\n';
     
     //add 'make [job]' for each job
     for (let job of jobsWithOutputs) {
         console.log('job', job);
         let name = job.name.toLowerCase();
-        makefile += '.PHONY: ' + name + '\n' + name + ' : ';
+        makefile +='#-----------------------------------------------\n#\n';
+        makefile += '# execute job '+name+'\n#\n';
+        makefile +=  name + ' : ';
         
         for (let output of job.outputs) {
             makefile += output + ' ';
         }
         makefile += '\n\n';
     }
-    
+
+    makefile +='#-----------------------------------------------\n#\n';
+    makefile +='# Create individual output files\n#\n';
     //make the rest of the commands with job names set to the name of outputs
+    let onames='';
     for (let o of allJobOutputs) {
         for (let output of o.outputs) {
-            makefile += output + ' : ' + o.inputs.join(' ') + '\n\t' + o.command + '\n\n';
+            let outlog=output+'.results';
+            makefile += output + ' : ' + o.inputs.join(' ') + '\n\t' + o.command + ' > '+outlog +' 2>&1 \n\n';
+            onames=onames+' '+output+' '+outlog;
         }
     }
+
+    //add 'make clean'
+    makefile += '#----------------------------------- \n# clean all outputs\n#\n';
+    makefile = makefile + 'clean:\n\t rimraf '+onames+'\n\n';
+
     
-    console.log('makefile', makefile);
+//    console.log('makefile', makefile);
     return makefile;
 };
 
