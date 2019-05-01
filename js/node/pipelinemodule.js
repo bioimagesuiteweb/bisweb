@@ -1,4 +1,5 @@
 
+
 const BaseModule = require('basemodule.js');
 const bis_genericio = require('bis_genericio');
 const BisWebTextObject = require('bisweb_textobject.js');
@@ -372,9 +373,9 @@ class PipelineModule extends BaseModule {
                     'type': 'text',
                     'shortname' : 'o',
                     'name': 'Results',
-                    'description': 'log file',
+                    'description': 'output makefile',
                     'varname': 'output',
-                    'required': false,
+                    'required': true,
                     'extension': '.txt'
                 },
             ],
