@@ -1077,7 +1077,7 @@ class FileTreePanel extends HTMLElement {
                         let basePath = tree.get_path(node.parent, '/');
                         let srcFile = this.baseDirectory + '/' + basePath + '/' + originalName, dstFile = this.baseDirectory + '/' + basePath + '/' + reconstructedName;
                         bis_genericio.moveDirectory(srcFile + '&&' + dstFile);
-                        movedFiles.push(dstFile);
+                        movedFiles.push({ 'old' : srcFile, 'new' : dstFile });
                     }
                 }
 
