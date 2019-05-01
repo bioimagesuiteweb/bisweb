@@ -254,7 +254,7 @@ let makePipeline = function(pipelineOptions,odir='') {
             //if names have already been generated then the output is produced by a node upstream, so don't overwrite the names
             if (expandedVariables[variable.name].length === 0) {
                 let dependencies = pipelineOptions.variables[variable.index].depends;
-                console.log('__ Depedencies=',dependencies);
+                console.log('__ Dependencies=',dependencies,'\n__ Naming',variableNaming[variable.name],'-->',job.prefix+variableNaming[variable.name].join('__')+'__op__'+job.suffix);
                 for (let dependency of dependencies) {
                     dependency = stripVariable(dependency);
                     //console.log('Processing dependency=',dependency);
@@ -272,10 +272,10 @@ let makePipeline = function(pipelineOptions,odir='') {
                     inputsUsedByJob.forEach( (input) => {
 
                         let ind=variableNaming[variable.name].indexOf(`%${input.name}%`);
-                        console.log('Naming=',variable.name,'list=',variableNaming[variable.name], `looking for %${input.name}% ind=${ind}`);
+                        //console.log('Naming=',variable.name,'list=',variableNaming[variable.name], `looking for %${input.name}% ind=${ind}`);
                         
                         if (ind>=0) {
-                            console.log('Found ',ind);
+                            //  console.log('Found ',ind);
                             let fn=(expandedVariables[input.name].length > 1 ? expandedVariables[input.name][i] : expandedVariables[input.name][0]);
                             let lst=fn.split('.');
                             if (lst[lst.length-1]==='gz')
@@ -284,7 +284,7 @@ let makePipeline = function(pipelineOptions,odir='') {
                             let fname=lst.join('.');
                             fname=fname.trim().replace(/__op__/,'_').replace(/__/g,'_');
                             inplist.push(path.basename(fname));
-                            console.log('Inputlist=',inplist);
+                            //console.log('Inputlist=',inplist);
                         }
                     });
                     if (inplist.length===0) {
