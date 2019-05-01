@@ -14,6 +14,7 @@ const sourceDirectoryName = 'sourcedata';
 //Some operations the user does will modify the file tree, so we want to update dicom_job_info.json with it to ensure it's up to date. 
 //This will get written back to disk about every minute.
 let transientDicomJobInfo = null;
+let scheduledWriteback = null;
 
 // DICOM2BIDS
 /**
@@ -430,7 +431,7 @@ let syncSupportingFiles = (changedFiles, baseDirectory) => {
         }
 
         console.log('new settings', settings);
-        scheduleWriteback(settings);
+        scheduleWriteback(settingsFilename, settings);
 
     });
 
@@ -464,8 +465,18 @@ let getSettingsFile = (filename = '') => {
 };
 
 //TODO: implement function
-let scheduleWriteback = () => {
-    console.log('TODO: implement scheduleWriteback!');
+let scheduleWriteback = (filename, settings) => {
+    transientDicomJobInfo = settings;
+
+    if (!scheduledWriteback) {
+        setTimeout( () => {
+            console.log('scheduled writeback firing');
+            let writebackFile = JSON.stringify(transientDicomJobInfo);
+            bis_genericio.write(filename, writebackFile, false);
+            scheduledWriteback = null;
+        }, 60000);
+    }
+
 };
 
 /**
