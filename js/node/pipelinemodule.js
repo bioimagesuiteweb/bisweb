@@ -9,7 +9,7 @@ const path=require('path');
 
 const longhelptext =`
 {
-    "command" : "node bisweb",
+    "command" : "biswebnode",
     "variables": [
         {
             "name" : "input",
@@ -21,31 +21,36 @@ const longhelptext =`
         },
         {
             "name" : "out1",
-            "extension" : ".nii.gz",
-            "depends": [
-                "%input%"
-            ]
+            "depends": [  "%input%" ]
         },
         {
             "name": "out2",
-            "extension" : ".nii.gz", 
-            "depends": [
-                "%out1%"
-            ]
+            "depends": [ "%out1%" ]
+        },
+        {
+            "name": "out3",
+            "depends": [ "%out2%" ,"%input%" ]
         }
     ],
     "jobs": [
         {
             "name": "Smooth",
             "subcommand": "smoothImage",
-            "appendText": "smoothed",
-            "options": "--debug true --input %input% --output %out1%" 
+            "suffix": "smoothed.nii.gz",
+            "options": "--debug true --input %input% --output %out1%"
         },
         {
             "name": "Threshold",
             "subcommand": "thresholdImage",
-            "appendText": "thresholded",
-            "options": "--debug true --input %out1% --output %out2% --low 50 --high 100"
+            "suffix": "thresholded.nii.gz",
+            "options": "--input %out1% --output %out2%",
+            "paramfile" : "t.param"
+        },
+        {
+            "name": "Add",
+            "subcommand": "combineImages",
+            "suffix": "added.nii",
+            "options": "--input %input% --second %out2% --output %out3% --mode add --weight1 1.0 --weight2 1.0"
         }
     ]
 }`;
