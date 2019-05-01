@@ -112,7 +112,7 @@ class BisWebTextObject extends BisWebDataObject{
 
         let ext = filename.name ? filename.name.split('.').pop() : filename.split('.').pop();
         let output="";
-        console.log('Ext=',ext);
+
         if (ext==='csv' || ext==="txt" || this.forcetextsave===true) {
             output=this.data;
         } else {
