@@ -228,7 +228,7 @@ let dicom2BIDS = async function (opts) {
                 }
             }
 
-            dicomobj.job.push({
+            dicomobj.files.push({
                 name: name,
                 filename: fname.substr(outputdirectory.length + 1, fname.length),
                 tag: tagname,
@@ -293,7 +293,6 @@ let dicom2BIDS = async function (opts) {
     }
 
     function makeBIDSFilename(filename, directory) {
-        console.log('make bids filename', filename, directory);
         let splitsubdirectory = subjectdirectory.split('/');
         let fileExtension = filename.split('.');
         if (fileExtension.length > 2 && fileExtension[fileExtension.length - 2] === 'nii' && fileExtension[fileExtension.length - 1] === 'gz') {
@@ -380,10 +379,11 @@ let syncSupportingFiles = (changedFiles, baseDirectory) => {
             for (let i = 0; i < settings.files.length; i++) {
 
                 let settingsFilename = settings.files[i].name;
-                console.log('settings filename', settingsFilename, oldFilename);
                 if (settingsFilename.includes(oldFilename)) {
                     let supportingFiles = settings.files[i].supportingfiles;
 
+                    //new supporting file list for writeback
+                    let newSupportingFileList = [];
                     for (let supportingFile of supportingFiles) {
 
                         //file extension could be in two parts, e.g. like '.nii.gz' 
@@ -406,18 +406,31 @@ let syncSupportingFiles = (changedFiles, baseDirectory) => {
                         console.log('old location', oldFilepath, 'new location', newFilepath);
 
                         bis_genericio.moveDirectory(oldFilepath + '&&' + newFilepath);
-
-                        //TODO: update settings
+                        newSupportingFileList.push(newFilepath);
                     }
 
-                    
+                    //'name' should be the base filename without an extension, 'filename' and 'supportingfiles' should be the last three files in the path (the location within the bids directory)
+                    let splitNewPath = file.new.split('/');
+                    for (let i = 0; i < newSupportingFileList.length; i++) {
+                        let splitSuppPath = newSupportingFileList[i].split('/');
+                        newSupportingFileList[i] = splitSuppPath.slice(splitSuppPath.length - 3).join('/');
+                    }
 
-                    
+                    let filename = splitNewPath.slice(splitNewPath.length - 3).join('/');
+                    let name = splitNewPath.slice(splitNewPath.length - 1);
+                    name = name[0].split('.')[0];
+
+                    let settingsEntry = settings.files[i];
+                    settingsEntry.name = name; 
+                    settingsEntry.filename = filename;
+                    settingsEntry.supportingfiles = newSupportingFileList;
+
                 }
             }
         }
 
-        scheduleWriteback(settingsFilename);
+        console.log('new settings', settings);
+        scheduleWriteback(settings);
 
     });
 
@@ -452,8 +465,9 @@ let getSettingsFile = (filename = '') => {
 
 //TODO: implement function
 let scheduleWriteback = () => {
+    console.log('TODO: implement scheduleWriteback!');
+};
 
-}
 /**
  * Calculates checksums for each of the NIFTI files in the BIDS directory.
  * 
