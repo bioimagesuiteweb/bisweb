@@ -11,7 +11,7 @@ const fs=bis_genericio.getfsmodule();
 const longhelptext =`
 {
     "command" : "biswebnode",
-    "variables": [
+    "inputs": [
         {
             "name" : "input",
             "files" : [
@@ -19,18 +19,6 @@ const longhelptext =`
                 "MNI_2mm_resliced.nii.gz", 
                 "MNI_2mm_scaled.nii.gz"
             ]
-        },
-        {
-            "name" : "out1",
-            "depends": [  "%input%" ]
-        },
-        {
-            "name": "out2",
-            "depends": [ "%out1%" ]
-        },
-        {
-            "name": "out3",
-            "depends": [ "%out2%" ,"%input%" ]
         }
     ],
     "jobs": [
@@ -38,20 +26,37 @@ const longhelptext =`
             "name": "Smooth",
             "subcommand": "smoothImage",
             "suffix": "smoothed.nii.gz",
-            "options": "--debug true --input %input% --output %out1%"
+            "options": "--debug true --input %input% --output %out1%",
+            "outputs" : [
+                { "name" : "out1",
+                  "depends": [  "%input%" ]
+                }
+            ]
         },
         {
             "name": "Threshold",
             "subcommand": "thresholdImage",
             "suffix": "thresholded.nii.gz",
             "options": "--input %out1% --output %out2%",
-            "paramfile" : "t.param"
+            "paramfile" : "t.param",
+            "outputs" : [
+                {
+                    "name": "out2",
+                    "depends": [ "%out1%" ]
+                }
+            ]
         },
         {
             "name": "Add",
             "subcommand": "combineImages",
             "suffix": "added.nii",
-            "options": "--input %input% --second %out2% --output %out3% --mode add --weight1 1.0 --weight2 1.0"
+            "options": "--input %input% --second %out2% --output %out3% --mode add --weight1 1.0 --weight2 1.0",
+            "outputs" : [
+                {
+                    "name": "out3",
+                    "depends": [ "%out2%" ,"%input%" ]
+                }
+            ]
         }
     ]
 }`;
@@ -124,7 +129,7 @@ let makePipeline = function(pipelineOptions,odir='') {
                 try {
                     let flist=JSON.parse(dat);
                     let fnames=flist.filenames || [];
-                    let comment = flist.comment || 'no comment provided';
+                    let comment = flist.name || 'no name provided';
                     console.log('+++ Read ',fnames.length,'filenames from file', variable.filename, ' for variable', variable.name);
                     console.log('+++ Comment = ',comment);
                     variable.files=fnames;
@@ -340,6 +345,9 @@ let makePipeline = function(pipelineOptions,odir='') {
         makefile = makefile + job.name + ' ';
     }
     makefile+="\n\n";
+
+    let resultsfile = { 'Outputs': [] };
+    
     
     
     //add 'make [job]' for each job
@@ -349,11 +357,16 @@ let makePipeline = function(pipelineOptions,odir='') {
         makefile +='#-----------------------------------------------\n#\n';
         makefile += '# execute job '+name+'\n#\n';
         makefile +=  name + ' : ';
+
+        let res= { 'name' : name , 'filenames' : [] };
+
         
         for (let output of job.outputs) {
             makefile += output + ' ';
+            res.filenames.push(output);
         }
         makefile += '\n\n';
+        resultsfile['Outputs'].push(res);
     }
 
     makefile +='#-----------------------------------------------\n#\n';
@@ -372,8 +385,16 @@ let makePipeline = function(pipelineOptions,odir='') {
     makefile += '#----------------------------------- \n# clean all outputs\n#\n';
     makefile = makefile + 'clean:\n\t rimraf '+onames+'\n\n';
 
-    
-//    console.log('makefile', makefile);
+    let log=JSON.stringify(resultsfile,null,4).split("\n");
+
+    makefile+='\n#----------------------------------- \n# log output files\n#\n';
+    makefile+= "log : \n\t @echo ''; echo ''; echo ''; ";
+    for (let i=0;i<log.length;i++) {
+        console.log(log[i]);
+        makefile+=`echo '${log[i]}'; `
+    }
+    makefile+="echo ' '\n";
+
     return makefile;
 };
 
