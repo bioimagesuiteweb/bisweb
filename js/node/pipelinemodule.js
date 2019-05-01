@@ -94,27 +94,12 @@ let makePipeline = function(pipelineOptions,odir='') {
     // Store jobs in appendTexts
     let appendTexts = {}, names = {};
     for (let job of pipelineOptions.jobs) {
-        job.prefix=job.prefix || '';
-        if (job.prefix.length>0)
-            job.prefix+='_';
-        let appendText = job.suffix, name = job.name, subcommand = job.subcommand || '';
+        let name = job.name, subcommand = job.subcommand || '';
         
-        if (!name) {
-            if (appendText) {
-                console.log('Error: job with appendText', appendText, 'does not have a name');
-            } else {
-                console.log('Error: job', job, 'does not have a name or appendText');
-            }
-            
-            return null;
-        } 
-
-        if (!appendTexts[appendText] && !names[name]) {
-            appendTexts[appendText] = { 'text' : appendText, 'subcommand' : subcommand, 'name' : name};
+        if (!names[name]) {
             names[name] = name;
         } else {
-            let duplicate = appendTexts[appendText] ? appendTexts[appendText].name : names[name];
-            console.log('Error: appendTexts and names of jobs must be unique. Jobs', duplicate, 'and', job.name, 'have same appendText or name.');
+            console.log('Error: names of jobs must be unique. Jobs', job.name, ' is duplicated');
             return null;
         }
     }
@@ -124,7 +109,7 @@ let makePipeline = function(pipelineOptions,odir='') {
     
     // -------------- replace variable file lists with filenames ---------------
     // ------
-    console.log('+++ checking for external files in variables');
+    console.log('__\n__ Checking for external files in variables');
     for (let variable of pipelineOptions.variables) {
         if (variable.filename) {
             try {
@@ -133,8 +118,8 @@ let makePipeline = function(pipelineOptions,odir='') {
                     let flist=JSON.parse(dat);
                     let fnames=flist.filenames || [];
                     let comment = flist.name || 'no name provided';
-                    console.log('+++ Read ',fnames.length,'filenames from file', variable.filename, ' for variable', variable.name);
-                    console.log('+++ Comment = ',comment);
+                    console.log('____ Read ',fnames.length,'filenames from file', variable.filename, ' for variable', variable.name);
+                    console.log('____ Comment = ',comment);
                     variable.files=fnames;
                 } catch(e) {
                     console.log('Failed to parse', variable.filename,'error=',e);
@@ -146,16 +131,28 @@ let makePipeline = function(pipelineOptions,odir='') {
             }
         }
     }
+    console.log('__');
 
     // Add more variables from jobs
     // ----------------------------
 
     let variableNaming={};
+    let variableSuffix={};
     
     for (let job of pipelineOptions.jobs) {
         for (let output of job.outputs) {
             pipelineOptions.variables.push({ 'name' : output.name, 'depends': output.depends});
-            variableNaming[output.name]=output.naming || output.depends.join('__');
+            variableSuffix[output.name]=output.suffix || '';
+            if (output.naming === undefined) {
+                if (output.suffix === undefined) {
+                    console.log(`Must specify either 'naming' or 'suffix' for variable ${output}`);
+                    return null;
+                }
+                variableNaming[output.name]=output.depends.join('__');
+            } else {
+                variableNaming[output.name]=output.naming;
+            }
+
         }
     }
     //console.log('variables=',JSON.stringify(pipelineOptions.variables,null,2));
@@ -168,7 +165,7 @@ let makePipeline = function(pipelineOptions,odir='') {
     
     //the commands associated with EACH job in object form { 'job' : [job name], 'outputs' : [output files produced by job]}
     let jobsWithOutputs = [];
-    
+
     for (let job of pipelineOptions.jobs) {
         
         //the entry in jobsWithOutputs for this job
@@ -199,7 +196,8 @@ let makePipeline = function(pipelineOptions,odir='') {
                 }
             }
         }
-        console.log('____________________\n__ J O B   N A M E =',job.name,'\n__\n__   All Variables=',variablesReferencedByCurrentJob);
+        console.log('__ Parsing jobs');
+        console.log('____________________\n__ J O B   N A M E =',job.name,'\n__\n__   All Variables=',variablesReferencedByCurrentJob,'\n__');
         
         //expand variable names into arrays
 
@@ -250,12 +248,11 @@ let makePipeline = function(pipelineOptions,odir='') {
         for (let variable of variablesWithDependencies) {
 
             //console.log('\n\n-----------------------------\n');
-            console.log('__ \t computed Variable = ',variable);
             //if names have already been generated then the output is produced by a node upstream, so don't overwrite the names
             if (expandedVariables[variable.name].length === 0) {
                 let dependencies = pipelineOptions.variables[variable.index].depends;
-                let tn= job.prefix+variableNaming[variable.name]+'__op__'+job.suffix;
-                console.log('__   Output variable '+variable.name+'\n__\t Dependencies='+dependencies+'\n__\t Naming: '+tn);
+                let tn= variableNaming[variable.name]+variableSuffix[variable.name];
+                console.log('__   Output variable: '+variable.name+'\n__\t Dependencies='+dependencies+'\n__\t Naming: '+tn);
                 for (let dependency of dependencies) {
                     dependency = stripVariable(dependency);
                     //console.log('Processing dependency=',dependency);
@@ -269,10 +266,11 @@ let makePipeline = function(pipelineOptions,odir='') {
                 for (let i = 0; i < numOutputs; i++) {
                     
                     let inplist=[];
-                    let outname= job.prefix+variableNaming[variable.name]+'__op__'+job.suffix;
+                    let outname= variableNaming[variable.name]+variableSuffix[variable.name];
+                    outname=outname.trim().replace(/ /g,'-');
                     
                     inputsUsedByJob.forEach( (input) => {
-
+                        
                         let marker=`%${input.name}%`
                         let ind=outname.indexOf(marker);
                         //console.log('Naming=',variable.name,'list=',variableNaming[variable.name], `looking for %${input.name}% ind=${ind}`);
@@ -285,7 +283,7 @@ let makePipeline = function(pipelineOptions,odir='') {
                                 lst.pop();
                             lst.pop();
                             let fname=lst.join('.');
-                            fname=fname.trim().replace(/__op__/,'_').replace(/__/g,'_');
+                            fname=fname.trim().replace(/__/g,'_');
                             let l=marker.length;
                             let o=outname;
                             fname=path.basename(fname);
@@ -295,7 +293,7 @@ let makePipeline = function(pipelineOptions,odir='') {
                         }
                     });
                     if (inplist.length===0) {
-                        outname=`${job.prefix}output_${variable.name}_${i}__op__${job.suffix}`;
+                        outname=`output_${variable.name}_${i}_${outname}`;
                     }
 
                     //                    console.log('Inputs used by Job=',inputsUsedByJob,inplist,outname);
@@ -303,7 +301,7 @@ let makePipeline = function(pipelineOptions,odir='') {
                     //generate output names
                     let outputFilename=path.join(odir,path.basename(outname));
                     outputFilenames.push(outputFilename);
-                    console.log('__ \t output '+i+' --> '+outputFilename);
+                    console.log('__ \t created name for '+(i+1)+' --> '+outputFilename);
                 }
                 expandedVariables[variable.name] = outputFilenames;
                 variablesGeneratedByJob.push(variable);
@@ -325,6 +323,8 @@ let makePipeline = function(pipelineOptions,odir='') {
         
         //construct the inputs, outputs, and command in the way that 'make' expects
         for (let i = 0; i < numOutputs; i++) {
+
+            //            console.log('___\n___ Output ',i,'_____\n');
             let commandArray = [], formattedJobOutput = { 'inputs' : [], 'outputs' : [], 'command' : undefined };
             for (let option of optionsArray) {
                 //add appropriate entry from expanded variable if necessary
@@ -334,13 +334,14 @@ let makePipeline = function(pipelineOptions,odir='') {
             
             inputsUsedByJob.forEach( (input) => {
                 input = expandedVariables[input.name].length > 1 ? expandedVariables[input.name][i] : expandedVariables[input.name][0];
-                //console.log('Input=',input);
                 formattedJobOutput.inputs.push(input);
+                //console.log('Input=',input);
             });
             
             variablesGeneratedByJob.forEach( (output) => {
                 output = expandedVariables[output.name].length > 1 ? expandedVariables[output.name][i] : expandedVariables[output.name][0];
                 formattedJobOutput.outputs.push(output);
+                //                console.log('Output=',output);
                 jobWithOutputs.outputs.push(output);
             });
             
@@ -357,12 +358,16 @@ let makePipeline = function(pipelineOptions,odir='') {
             
             formattedJobOutput.command = command + ' ' + subcommand + ' ' + commandArray.join(' ')+paramfile;
             allJobOutputs.push(formattedJobOutput);
+            //            console.log('job output=',formattedJobOutput);
         }
+        //        console.log(' ---------------------------------------- \n -------------\n');
         
         jobsWithOutputs.push(jobWithOutputs);
     }
-    
-    //add 'make all' 
+
+
+    console.log('__\n____________________\n__ C r e a t i n g   M a k e f i l e\n__');
+
     let makefile = '#-----------------------------------------------\n#\n';
     makefile+="# All Jobs\n#\nall : ";
     for (let job of jobsWithOutputs) {
@@ -370,6 +375,8 @@ let makePipeline = function(pipelineOptions,odir='') {
     }
     makefile+="\n\n";
 
+    console.log('__ Added: make all');
+    
     let resultsfile = { 'Outputs': [] };
     
     
@@ -382,6 +389,8 @@ let makePipeline = function(pipelineOptions,odir='') {
         makefile += '# execute job '+name+'\n#\n';
         makefile +=  name + ' : ';
 
+        console.log('__ Added: make '+name);
+        
         let res= { 'name' : name , 'filenames' : [] };
 
         
@@ -397,15 +406,26 @@ let makePipeline = function(pipelineOptions,odir='') {
     makefile +='# Create individual output files\n#\n';
     //make the rest of the commands with job names set to the name of outputs
     let onames='';
+    console.log('__\n__ Adding output file commands\n');
     for (let o of allJobOutputs) {
-        for (let output of o.outputs) {
-            let outlog=output+'__results.txt';
-            makefile += output + ' : ' + o.inputs.join(' ') + '\n\t' + o.command + ' > '+outlog +' 2>&1 \n\n';
-            onames=onames+' '+output+' '+outlog;
+        console.log('__');
+        for (let i=0;i<o.outputs.length;i++) {
+            let output=o.outputs[i];
+            if (i===0) {
+                let outlog=output+'__results.txt';
+                makefile += output + ' : ' + o.inputs.join(' ') + '\n\t' + o.command + ' > '+outlog +' 2>&1 \n\n';
+                onames=onames+' '+output+' '+outlog;
+                console.log('__ \t Added command for '+output+'\n__\t\t dep=',o.inputs.join(' '));
+            } else {
+                makefile += output + ' : ' + o.outputs[0] + '\n\n';
+                console.log('__ \t Added dummy command for '+output+'\n\t\t dep='+o.outputs[0]);
+            }
         }
-    }
 
+    }
+    console.log('__');
     //add 'make clean'
+    console.log('__ Added: make clean');
     makefile += '#----------------------------------- \n# clean all outputs\n#\n';
     makefile = makefile + 'clean:\n\t rimraf '+onames+'\n\n';
 
@@ -417,6 +437,7 @@ let makePipeline = function(pipelineOptions,odir='') {
         makefile+=`echo '${log[i]}'; `
     }
     makefile+="echo ' '\n";
+    console.log('__ Added: make log');
 
     makefile+='\n#----------------------------------- \n# log output files (windows)\n#\n';
     makefile+= "logwin : \n\t @echo -- &";
@@ -424,8 +445,8 @@ let makePipeline = function(pipelineOptions,odir='') {
         makefile+=`echo ${log[i]}& `
     }
     makefile+="\n";
-
-
+    console.log('__ Added: make logwin');
+    console.log('__');
 
     return makefile;
 };
