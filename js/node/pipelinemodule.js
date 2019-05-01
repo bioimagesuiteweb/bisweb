@@ -111,6 +111,9 @@ let makePipeline = function(pipelineOptions,odir='') {
         }
     }
 
+    // Rest of code expects .variables so move
+    pipelineOptions.variables=pipelineOptions.inputs;
+    
     // -------------- replace variable file lists with filenames ---------------
     // ------
     console.log('+++ checking for external files in variables');
@@ -136,6 +139,14 @@ let makePipeline = function(pipelineOptions,odir='') {
         }
     }
 
+    // Add more variables from jobs
+    // ----------------------------
+    for (let job of pipelineOptions.jobs) {
+        for (let output of job.outputs) {
+            pipelineOptions.variables.push({ 'name' : output.name, 'depends': output.depends });
+        }
+    }
+    console.log('variables=',JSON.stringify(pipelineOptions.variables,null,2));
     
     let expandedVariables = {};
     
