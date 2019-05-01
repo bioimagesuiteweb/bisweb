@@ -3,8 +3,8 @@
 const BaseModule = require('basemodule.js');
 const bis_genericio = require('bis_genericio');
 const BisWebTextObject = require('bisweb_textobject.js');
-const path=require('path');
-
+const path=bis_genericio.getpathmodule();
+const fs=bis_genericio.getfsmodule();
 // -------------------------------------------------------------------------
 
 
@@ -111,6 +111,32 @@ let makePipeline = function(pipelineOptions,odir='') {
         }
     }
 
+    // -------------- replace variable file lists with filenames ---------------
+    // ------
+    console.log('+++ checking for external files in variables');
+    for (let variable of pipelineOptions.variables) {
+        if (variable.filename) {
+            try {
+                let dat=fs.readFileSync(variable.filename, 'utf-8');
+                try {
+                    let flist=JSON.parse(dat);
+                    let fnames=flist.filenames || [];
+                    let comment = flist.comment || 'no comment provided';
+                    console.log('+++ Read ',fnames.length,'filenames from file', variable.filename, ' for variable', variable.name);
+                    console.log('+++ Comment = ',comment);
+                    variable.files=fnames;
+                } catch(e) {
+                    console.log('Failed to parse', variable.filename,'error=',e);
+                    return null;
+                }
+            } catch(e) {
+                console.log('Failed to read',variable.filename,'error',e);
+                return null;
+            }
+        }
+    }
+
+    
     let expandedVariables = {};
     
     //inputs, outputs, and formatted commands for EACH command produced by EACH job
@@ -148,7 +174,7 @@ let makePipeline = function(pipelineOptions,odir='') {
                 }
             }
         }
-        console.log('____________________ Job Name=',job.name,'vars=',variablesReferencedByCurrentJob);
+        console.log('____________________\n___ Job Name=',job.name,'\n__ Variables=',variablesReferencedByCurrentJob);
         
         //expand variable names into arrays
 
@@ -200,14 +226,14 @@ let makePipeline = function(pipelineOptions,odir='') {
         for (let variable of variablesWithDependencies) {
 
             //console.log('\n\n-----------------------------\n');
-            console.log('Variable = ',variable,'job=',job.name);
+            console.log('__ Variable = ',variable);
             //if names have already been generated then the output is produced by a node upstream, so don't overwrite the names
             if (expandedVariables[variable.name].length === 0) {
                 let dependencies = pipelineOptions.variables[variable.index].depends;
-                console.log('Depedencies=',dependencies);
+                console.log('__ Depedencies=',dependencies);
                 for (let dependency of dependencies) {
                     dependency = stripVariable(dependency);
-                    console.log('Processing dependency=',dependency);
+                    //console.log('Processing dependency=',dependency);
                     if (!expandedVariables[dependency]) {
                         console.log("Error: dependency", dependency, "cannot be resolved by job", job.command);
                         return null;
@@ -218,7 +244,7 @@ let makePipeline = function(pipelineOptions,odir='') {
                 for (let i = 0; i < numOutputs; i++) {
                     
                     let inplist=[];
-                    console.log('Inputs used by Job=',inputsUsedByJob);
+                    //                    console.log('Inputs used by Job=',inputsUsedByJob);
                     inputsUsedByJob.forEach( (input) => {
                         let fn=(expandedVariables[input.name].length > 1 ? expandedVariables[input.name][i] : expandedVariables[input.name][0]);
                         let lst=fn.split('.');
@@ -230,7 +256,7 @@ let makePipeline = function(pipelineOptions,odir='') {
                         inplist.push(path.basename(fname));
                     });
 
-                    console.log('Inputs used by Job=',inputsUsedByJob,inplist);
+                    //console.log('Inputs used by Job=',inputsUsedByJob,inplist);
                     
                     //generate output names
                     let outputFilename = inplist.join('__') + '__op__'+job.suffix;
@@ -445,7 +471,7 @@ class PipelineModule extends BaseModule {
                 bis_genericio.read(vals.input).then( (obj) => {
                     let dat=null;
                     try { 
-                        dat=JSON.parse(obj.data,vals.odir);
+                        dat=JSON.parse(obj.data);
                     } catch(e) {
                         console.log(e);
                         reject(e);
