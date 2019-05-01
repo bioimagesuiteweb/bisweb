@@ -155,7 +155,7 @@ let makePipeline = function(pipelineOptions,odir='') {
     for (let job of pipelineOptions.jobs) {
         for (let output of job.outputs) {
             pipelineOptions.variables.push({ 'name' : output.name, 'depends': output.depends});
-            variableNaming[output.name]=output.naming || output.depends;
+            variableNaming[output.name]=output.naming || output.depends.join('__');
         }
     }
     //console.log('variables=',JSON.stringify(pipelineOptions.variables,null,2));
@@ -199,7 +199,7 @@ let makePipeline = function(pipelineOptions,odir='') {
                 }
             }
         }
-        console.log('____________________\n___ Job Name=',job.name,'\n__ Variables=',variablesReferencedByCurrentJob);
+        console.log('____________________\n__ J O B   N A M E =',job.name,'\n__\n__   All Variables=',variablesReferencedByCurrentJob);
         
         //expand variable names into arrays
 
@@ -250,11 +250,12 @@ let makePipeline = function(pipelineOptions,odir='') {
         for (let variable of variablesWithDependencies) {
 
             //console.log('\n\n-----------------------------\n');
-            console.log('__ Variable = ',variable);
+            console.log('__ \t computed Variable = ',variable);
             //if names have already been generated then the output is produced by a node upstream, so don't overwrite the names
             if (expandedVariables[variable.name].length === 0) {
                 let dependencies = pipelineOptions.variables[variable.index].depends;
-                console.log('__ Dependencies=',dependencies,'\n__ Naming',variableNaming[variable.name],'-->',job.prefix+variableNaming[variable.name].join('__')+'__op__'+job.suffix);
+                let tn= job.prefix+variableNaming[variable.name]+'__op__'+job.suffix;
+                console.log('__   Output variable '+variable.name+'\n__\t Dependencies='+dependencies+'\n__\t Naming: '+tn);
                 for (let dependency of dependencies) {
                     dependency = stripVariable(dependency);
                     //console.log('Processing dependency=',dependency);
@@ -268,10 +269,12 @@ let makePipeline = function(pipelineOptions,odir='') {
                 for (let i = 0; i < numOutputs; i++) {
                     
                     let inplist=[];
-                    //                    console.log('Inputs used by Job=',inputsUsedByJob);
+                    let outname= job.prefix+variableNaming[variable.name]+'__op__'+job.suffix;
+                    
                     inputsUsedByJob.forEach( (input) => {
 
-                        let ind=variableNaming[variable.name].indexOf(`%${input.name}%`);
+                        let marker=`%${input.name}%`
+                        let ind=outname.indexOf(marker);
                         //console.log('Naming=',variable.name,'list=',variableNaming[variable.name], `looking for %${input.name}% ind=${ind}`);
                         
                         if (ind>=0) {
@@ -283,22 +286,24 @@ let makePipeline = function(pipelineOptions,odir='') {
                             lst.pop();
                             let fname=lst.join('.');
                             fname=fname.trim().replace(/__op__/,'_').replace(/__/g,'_');
-                            inplist.push(path.basename(fname));
-                            //console.log('Inputlist=',inplist);
+                            let l=marker.length;
+                            let o=outname;
+                            fname=path.basename(fname);
+                            outname=o.substr(0,ind)+fname+o.substr(ind+l,o.length);
+                            inplist.push(fname);
+                            //                            console.log('\t outname=',outname);
                         }
                     });
                     if (inplist.length===0) {
-                        inplist.push(`output_${variable.name}_${i}`);
+                        outname=`${job.prefix}output_${variable.name}_${i}__op__${job.suffix}`;
                     }
 
-                    //console.log('Inputs used by Job=',inputsUsedByJob,inplist);
+                    //                    console.log('Inputs used by Job=',inputsUsedByJob,inplist,outname);
                     
                     //generate output names
-                    let outputFilename = job.prefix+inplist.join('__') + '__op__'+job.suffix;
-                    if (odir.length>0)
-                        outputFilename=(path.join(odir,path.basename(outputFilename)));
+                    let outputFilename=path.join(odir,path.basename(outname));
                     outputFilenames.push(outputFilename);
-                    //console.log('Output=',outputFilenames,'deps=',dependencies,'inplist=',inplist);
+                    console.log('__ \t output '+i+' --> '+outputFilename);
                 }
                 expandedVariables[variable.name] = outputFilenames;
                 variablesGeneratedByJob.push(variable);
