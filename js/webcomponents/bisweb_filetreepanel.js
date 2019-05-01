@@ -6,6 +6,7 @@ const bis_webfileutil = require('bis_webfileutil.js');
 const util=require('bis_util');
 const bis_genericio = require('bis_genericio.js');
 const bisweb_matrixutils = require('bisweb_matrixutils.js');
+const bis_bidsutils = require('bis_bidsutils.js');
 const BiswebMatrix = require('bisweb_matrix.js');
 const BiswebImage = require('bisweb_image.js');
 
@@ -1048,7 +1049,7 @@ class FileTreePanel extends HTMLElement {
             'show' : true,
             'callback' : (newName) => {
                 //get all selected nodes to rename as a group
-                let selectedNodes = tree.get_selected(true);
+                let selectedNodes = tree.get_selected(true), movedFiles = [];
                 console.log('selected nodes', selectedNodes);
 
                 for (let node of selectedNodes) {
@@ -1073,14 +1074,16 @@ class FileTreePanel extends HTMLElement {
                         node.text = reconstructedName;
 
                         //move the file on disk 
-                        //TODO: move the supporting files too
                         let basePath = tree.get_path(node.parent, '/');
                         let srcFile = this.baseDirectory + '/' + basePath + '/' + originalName, dstFile = this.baseDirectory + '/' + basePath + '/' + reconstructedName;
                         bis_genericio.moveDirectory(srcFile + '&&' + dstFile);
+                        movedFiles.push(dstFile);
                     }
                 }
 
                 tree.redraw(true);
+
+                bis_bidsutils.syncSupportingFiles(movedFiles, this.baseDirectory);
             }
         });
     }
