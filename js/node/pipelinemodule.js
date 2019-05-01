@@ -83,7 +83,7 @@ let makePipeline = function(pipelineOptions,odir='') {
     // Store jobs in appendTexts
     let appendTexts = {}, names = {};
     for (let job of pipelineOptions.jobs) {
-        let appendText = job.appendText, name = job.name, subcommand = job.subcommand || '';
+        let appendText = job.suffix, name = job.name, subcommand = job.subcommand || '';
         
         if (!name) {
             if (appendText) {
@@ -142,10 +142,13 @@ let makePipeline = function(pipelineOptions,odir='') {
                 }
             }
         }
+        console.log('____________________ Job Name=',job.name,'vars=',variablesReferencedByCurrentJob);
         
         //expand variable names into arrays
+
         for (let variableName of variablesReferencedByCurrentJob) {
-            
+
+            //            console.log('.... Looking for variableName=',variableName,' referenced by current job',job.name);
             //find appropriate entry in variables specified in JSON
             for (let j = 0; j <= pipelineOptions.variables.length; j++) {
                 
@@ -157,20 +160,23 @@ let makePipeline = function(pipelineOptions,odir='') {
                 
                 if (pipelineOptions.variables[j].name === variableName) {
                     //let variable = pipelineOptions.variables[j];
+
                     
                     //a variable with its files specified should be added to the dictionary of expanded variables
                     //the fact that its files are present already also indicates that it is an input 
-                    if (pipelineOptions.variables[j].files && expandedVariables[variableName].length === 0) {
+                    if (pipelineOptions.variables[j].files) { // && expandedVariables[variableName].length === 0) {
                         expandedVariables[variableName] = pipelineOptions.variables[j].files;
                         inputsUsedByJob.push({ 'name' : variableName, 'index' : j});
-                    } 
-                    
-                    //expand list of dependencies, if necessary.
-                    else if (pipelineOptions.variables[j].depends) {
+                    } else if (pipelineOptions.variables[j].depends) {
+                        //expand list of dependencies, if necessary.
                         variablesWithDependencies.push({ 'name': variableName, 'index': j });
+
+                    } else {
+                        console.log('____ Not Adding variableName as depenency',variableName);
+                        console.log("Files=",pipelineOptions.variables[j].files);
+                        console.log("Expanded=",expandedVariables[variableName]);
                     }
-                    
-                    j = pipelineOptions.variables.length + 1;
+                    j+= pipelineOptions.variables.length + 1;
                 }
             }
         }
@@ -187,25 +193,26 @@ let makePipeline = function(pipelineOptions,odir='') {
 
         for (let variable of variablesWithDependencies) {
 
-            //            console.log('\n\n-----------------------------\n');
-            //            console.log('Variable = ',variable);
+            //console.log('\n\n-----------------------------\n');
+            console.log('Variable = ',variable,'job=',job.name);
             //if names have already been generated then the output is produced by a node upstream, so don't overwrite the names
             if (expandedVariables[variable.name].length === 0) {
                 let dependencies = pipelineOptions.variables[variable.index].depends;
-                let fileExtension = pipelineOptions.variables[variable.index].extension;
+                console.log('Depedencies=',dependencies);
                 for (let dependency of dependencies) {
                     dependency = stripVariable(dependency);
-                    
+                    console.log('Processing dependency=',dependency);
                     if (!expandedVariables[dependency]) {
                         console.log("Error: dependency", dependency, "cannot be resolved by job", job.command);
                         return null;
-                        }
                     }
+                }
 
                 let outputFilenames = [];
                 for (let i = 0; i < numOutputs; i++) {
                     
                     let inplist=[];
+                    console.log('Inputs used by Job=',inputsUsedByJob);
                     inputsUsedByJob.forEach( (input) => {
                         let fn=(expandedVariables[input.name].length > 1 ? expandedVariables[input.name][i] : expandedVariables[input.name][0]);
                         let lst=fn.split('.');
@@ -213,13 +220,14 @@ let makePipeline = function(pipelineOptions,odir='') {
                             lst.pop();
                         lst.pop();
                         let fname=lst.join('.');
-                        inplist.push(fname);
+                        fname=fname.trim().replace(/__op__/,'_').replace(/__/g,'_');
+                        inplist.push(path.basename(fname));
                     });
 
-
+                    console.log('Inputs used by Job=',inputsUsedByJob,inplist);
                     
                     //generate output names
-                    let outputFilename = inplist.join('__') + '_'+job.appendText + fileExtension;
+                    let outputFilename = inplist.join('__') + '__op__'+job.suffix;
                     if (odir.length>0)
                         outputFilename=(path.join(odir,path.basename(outputFilename)));
                     outputFilenames.push(outputFilename);
@@ -268,8 +276,14 @@ let makePipeline = function(pipelineOptions,odir='') {
             //the command for an individual job takes highest precedence, then the command for the set, then the default.
             let command = job.command ? job.command : defaultCommand;
             let subcommand = job.subcommand ? job.subcommand : '';
+            let paramfile = job.paramfile || '';
+            if (paramfile.length>0) {
+                formattedJobOutput.inputs.push(paramfile);
+                paramfile=' --paramfile '+paramfile;
+             
+            }
             
-            formattedJobOutput.command = command + ' ' + subcommand + ' ' + commandArray.join(' ');
+            formattedJobOutput.command = command + ' ' + subcommand + ' ' + commandArray.join(' ')+paramfile;
             allJobOutputs.push(formattedJobOutput);
         }
         
