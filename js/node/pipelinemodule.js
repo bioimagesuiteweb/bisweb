@@ -6,7 +6,7 @@ const BisWebTextObject = require('bisweb_textobject.js');
 const path=bis_genericio.getpathmodule();
 const fs=bis_genericio.getfsmodule();
 const parser = require("jsonlint").parser;
-
+const baseutils=require("baseutils");
 // -------------------------------------------------------------------------
 
 
@@ -57,7 +57,7 @@ const longhelptext =`
                 {
                     "name": "out3",
                     "depends": [ "%out2%" ,"%input%" ],
-                    "suffix": "__added.nii"
+                    "naming": "%out2%__%input%__added.nii"
                 }
             ]
         }
@@ -80,7 +80,7 @@ let stripVariable = function (variable) {
  * @param {String} pipelineOptions - Data File Input as JSON dictionary
  * @return {String}  The Makefile for the set of jobs (null if failed);
  */
-let makePipeline = function(pipelineOptions,odir='') {
+let makePipeline = function(pipelineOptions,odir='',debug=false) {
 
     if (odir.length<1) {
         console.log('Error: no output directory specified');
@@ -112,6 +112,7 @@ let makePipeline = function(pipelineOptions,odir='') {
     
     // -------------- replace variable file lists with filenames ---------------
     // ------
+    
     console.log('__\n__ Checking for external files in variables');
     for (let variable of pipelineOptions.variables) {
         if (variable.filename) {
@@ -173,7 +174,7 @@ let makePipeline = function(pipelineOptions,odir='') {
     
     //the commands associated with EACH job in object form { 'job' : [job name], 'outputs' : [output files produced by job]}
     let jobsWithOutputs = [];
-
+    console.log('__ Parsing jobs');
     for (let job of pipelineOptions.jobs) {
         
         //the entry in jobsWithOutputs for this job
@@ -204,8 +205,9 @@ let makePipeline = function(pipelineOptions,odir='') {
                 }
             }
         }
-        console.log('__ Parsing jobs');
-        console.log('____________________\n__ J O B   N A M E =',job.name,'\n__\n__   All Variables=',variablesReferencedByCurrentJob,'\n__');
+
+        if (debug)
+            console.log('____________________\n__ J O B   N A M E =',job.name,'\n__\n__   All Variables=',variablesReferencedByCurrentJob,'\n__');
         
         //expand variable names into arrays
 
@@ -260,7 +262,8 @@ let makePipeline = function(pipelineOptions,odir='') {
             if (expandedVariables[variable.name].length === 0) {
                 let dependencies = pipelineOptions.variables[variable.index].depends;
                 let tn= variableNaming[variable.name]+variableSuffix[variable.name];
-                console.log('__   Output variable: '+variable.name+'\n__\t Dependencies='+dependencies+'\n__\t Naming: '+tn);
+                if (debug)
+                    console.log('__   Output variable: '+variable.name+'\n__\t Dependencies='+dependencies+'\n__\t Naming: '+tn);
                 for (let dependency of dependencies) {
                     dependency = stripVariable(dependency);
                     //console.log('Processing dependency=',dependency);
@@ -309,7 +312,8 @@ let makePipeline = function(pipelineOptions,odir='') {
                     //generate output names
                     let outputFilename=path.join(odir,path.basename(outname));
                     outputFilenames.push(outputFilename);
-                    console.log('__ \t created name for '+(i+1)+' --> '+outputFilename);
+                    if (debug)
+                        console.log('__ \t created name for '+(i+1)+' --> '+outputFilename);
                 }
                 expandedVariables[variable.name] = outputFilenames;
                 variablesGeneratedByJob.push(variable);
@@ -417,24 +421,27 @@ let makePipeline = function(pipelineOptions,odir='') {
     makefile +='# Create individual output files\n#\n';
     //make the rest of the commands with job names set to the name of outputs
     let onames='';
-    console.log('__\n__ Adding output file commands\n');
+    if (debug)
+        console.log('__ Adding output file commands');
     for (let o of allJobOutputs) {
-        console.log('__');
+
         for (let i=0;i<o.outputs.length;i++) {
             let output=o.outputs[i];
             if (i===0) {
                 let outlog=output+'__results.txt';
                 makefile += output + ' : ' + o.inputs.join(' ') + '\n\t' + o.command + ' > '+outlog +' 2>&1 \n\n';
                 onames=onames+' '+output+' '+outlog;
-                console.log('__ \t Added command for '+output+'\n__\t\t dep=',o.inputs.join(' '));
+                if (debug)
+                    console.log('__ \t Added command for '+output+'\n__\t\t dep=',o.inputs.join(' '));
             } else {
                 makefile += output + ' : ' + o.outputs[0] + '\n\n';
-                console.log('__ \t Added dummy command for '+output+'\n\t\t dep='+o.outputs[0]);
+                if (debug)
+                    console.log('__ \t Added dummy command for '+output+'\n\t\t dep='+o.outputs[0]);
             }
         }
 
     }
-    console.log('__');
+
     //add 'make clean'
     console.log('__ Added: make clean');
     makefile += '#----------------------------------- \n# clean all outputs\n#\n';
@@ -457,7 +464,7 @@ let makePipeline = function(pipelineOptions,odir='') {
     }
     makefile+="\n";
     console.log('__ Added: make logwin');
-    console.log('__');
+
 
     makefile+='\n#----------------------------------- \n# list of jobs \n#\n';
     makefile+= "list : \n\t @echo "+joblist.join(" ")+"\n";
@@ -538,6 +545,7 @@ class PipelineModule extends BaseModule {
                     "varname": "sample",
                     "default": false,
                 },
+                baseutils.getDebugParam()
             ]
         };
     }
@@ -565,12 +573,19 @@ class PipelineModule extends BaseModule {
                 
             };
 
-            bis_genericio.makeDirectory(vals.odir).then( (m) => {
-                let d=path.resolve(path.normalize(vals.odir));
-                if (m)
-                    console.log('++++ Created output directory',d);
-                else
-                    console.log('++++ Output directory',d,'already exists, use with care.');
+            let p=Promise.resolve('Not creating');
+            if (vals.odir!=='none')  
+                p=bis_genericio.makeDirectory(vals.odir);
+            p.then( (m) => {
+                if (vals.odir==='none') {
+                    console.log('---- Not creating dummy directory none');
+                } else {
+                    let d=path.resolve(path.normalize(vals.odir));
+                    if (m)
+                        console.log('++++ Created output directory',d);
+                    else
+                        console.log('++++ Output directory',d,'already exists, use with care.');
+                }
                 
                 bis_genericio.read(vals.input).then( (obj) => {
                     let dat=null;
@@ -585,7 +600,7 @@ class PipelineModule extends BaseModule {
                         reject(e);
                         return;
                     }
-                    let out=makePipeline(dat,vals.odir);
+                    let out=makePipeline(dat,vals.odir,vals.debug);
                     if (out!==null) {
                         this.outputs['output']=new BisWebTextObject(out);
                         this.outputs['output'].forceTextSave(); // No JSON!
