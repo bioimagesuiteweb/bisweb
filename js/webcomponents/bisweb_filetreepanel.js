@@ -133,8 +133,9 @@ class FileTreePanel extends HTMLElement {
 
         getFileList(filename).then( (fileinfo) => {
             if (fileinfo.files.length > 0) { 
-                let obj = formatBaseDirectory(filename, fileinfo.files);
-                this.updateFileTree(obj.contents, obj.baseDirectory, fileinfo.type);
+                console.log('contents', fileinfo);
+                let baseDir = formatBaseDirectory(filename, fileinfo.files);
+                this.updateFileTree(fileinfo.files, baseDir, fileinfo.type);
                 bis_webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
                 return;
             } else {
@@ -152,10 +153,10 @@ class FileTreePanel extends HTMLElement {
                 console.log('An error occured trying to parse the exported study file', filename, e);
             }
 
-            let dir = formatBaseDirectory(parsedData.baseDirectory, parsedData.contents);
-
-            getFileList(dir.baseDirectory).then( (listObj) => {
-                this.updateFileTree(listObj.contents, parsedData.baseDirectory, listObj.type);
+            getFileList(parsedData.baseDirectory).then( (fileinfo) => {
+                console.log('contents', fileinfo);
+                let baseDir = formatBaseDirectory(parsedData.baseDirectory, fileinfo.files);
+                this.updateFileTree(fileinfo.files, baseDir, fileinfo.type);
             });
         });
     }
@@ -174,14 +175,14 @@ class FileTreePanel extends HTMLElement {
         this.baseDirectory = baseDirectory;
 
         this.studyType = type;
-        let fileTree;
+        let fileTree = parseFileList(files);
 
         //check what type of list this is, a list of names or a fully parsed directory
-        if (typeof files[0] === 'string') {
+        /*if (typeof files[0] === 'string') {
             fileTree = parseFileList(files);
         } else {
             fileTree = files;
-        }
+        }*/
 
         //alpabetize tree entries
         sortEntries(fileTree);
@@ -1414,7 +1415,6 @@ let getFileList = (filename) => {
             bis_genericio.getMatchingFiles(queryString).then((files) => {
 
                 if (files.length > 0) {
-                    //let obj = formatBaseDirectory(filename, files);
                     resolve({ 'files' : files, 'type' : type });
                 }
 
@@ -1431,18 +1431,22 @@ let getFileList = (filename) => {
  * Changes the format of the provided base directory to be rooted at 'sourcedata', modifies the file list appropriately.
  * 
  * @param {String} baseDirectory - Unformatted base directory.
- * @param {Array} contents - Array of unparsed file names, or a parsed tree.
+ * @param {Array} contents - Flat list of files, or a jstree style list of files.
  * @returns Base directory rooted at 'sourcedata'. 
  */
 let formatBaseDirectory = (baseDirectory, contents) => {
-    let splitBase = baseDirectory.split('/');
-    /*for (let i = 0; i < splitBase.length; i++) {
+    let splitBase = baseDirectory.split('/'), formattedBase = null;
+    for (let i = 0; i < splitBase.length; i++) {
         if (splitBase[i] === 'sourcedata') {
-            baseDirectory = splitBase.slice(0, i + 1).join('/');
+            formattedBase = splitBase.slice(0, i + 1).join('/');
         }
-    }*/
+    }
 
-    return { 'baseDirectory' : baseDirectory, 'contents' : contents };
+    if (!formattedBase) {
+        
+    }
+
+    return formattedBase;
 };
 
 
