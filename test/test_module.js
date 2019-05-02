@@ -34,7 +34,8 @@ try {
 const assert = require("assert"),
       colors=require('colors/safe'),
       path = require('path'),
-      fs = require('fs');
+      fs = require('fs'),
+      parser = require("jsonlint").parser;
 
 const program= bisweb.commander,
       bisnodecmd = bisweb.bisnodecmd,
@@ -111,6 +112,11 @@ let get_testlist=function(testfilename)  {
                 let obj = JSON.parse(testfile);
                 resolve(obj['testlist']);
             } catch (e) {
+                try {
+                    parser.parse(testfile);
+                } catch (f) {
+                    e=f;
+                }
                 console.log('Failed to parse testfile from',testfilename,e);
                 reject('Failed to parse from '+testfilename);
             }

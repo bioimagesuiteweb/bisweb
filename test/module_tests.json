@@ -547,7 +547,13 @@
 	    "test"    : "--test_target testdata/inv.grd --test_type gridtransform",
 	    "result"  : true,
 	    "dopython": false
-	}
+	},
+        {
+            "command" : "concatenateImages --debug false testdata/MNI_6mm.nii.gz testdata/MNI_6mm_flipz.nii.gz testdata/MNI_6mm_flipy.nii.gz testdata/MNI_6mm_flipx.nii.gz",
+            "test"    : "--test_target  testdata/MNI_4D.nii.gz ",
+            "result"  : true,
+            "dopython": false
+        }
     ]
 }
 

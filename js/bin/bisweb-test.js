@@ -118,7 +118,7 @@ if (test_type==="tfjs") {
 console.log('.... Testing module '+toolname);
 console.log('................................................');
 
-commandline.loadParse(args, bisModule, basedirectory).then(() => {
+commandline.loadParse(args.slice(3), bisModule, basedirectory).then(() => {
     console.log('.... -------------------------------------------------------');
     commandline.processTestResult(toolname,tempName,
                                   basedirectory+program.test_target,
