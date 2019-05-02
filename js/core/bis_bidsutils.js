@@ -464,14 +464,21 @@ let getSettingsFile = (filename = '') => {
     });
 };
 
-//TODO: implement function
+/**
+ * Schedules a disk write for a time after this function is called. Note that this function may not save the file passed to the function by 'settings' initially.
+ * It will save the latest copy passed to the function before the write is triggered. 
+ * 
+ * @param {String} filename - Name of the settings file to save.
+ * @param {Object} settings - New settings file to write over transientDicomJobInfo.
+ */
 let scheduleWriteback = (filename, settings) => {
     transientDicomJobInfo = settings;
 
     if (!scheduledWriteback) {
-        setTimeout( () => {
-            console.log('scheduled writeback firing');
-            let writebackFile = JSON.stringify(transientDicomJobInfo);
+        scheduledWriteback = setTimeout( () => {
+            let currentInfo = getJobInfo(); 
+            console.log('scheduled writeback firing', currentInfo);
+            let writebackFile = JSON.stringify(currentInfo, null, 2);
             bis_genericio.write(filename, writebackFile, false);
             scheduledWriteback = null;
         }, 60000);
@@ -588,6 +595,13 @@ let readSizeRecursive = (filepath) => {
     }).catch( (err) => {
         console.log('Read size recursive encountered an error', err); 
     });
+};
+
+/**
+ * Returns transientDicomJobInfo. Necessary because otherwise scheduleWriteback will bind the most recent version of transientDicomJobInfo at the first time it's called and won't check for the most recent version.
+ */
+let getJobInfo = () => {
+    return transientDicomJobInfo;
 };
 
 
