@@ -5,6 +5,8 @@ const bis_genericio = require('bis_genericio');
 const BisWebTextObject = require('bisweb_textobject.js');
 const path=bis_genericio.getpathmodule();
 const fs=bis_genericio.getfsmodule();
+const parser = require("jsonlint").parser;
+
 // -------------------------------------------------------------------------
 
 
@@ -25,36 +27,37 @@ const longhelptext =`
         {
             "name": "Smooth",
             "subcommand": "smoothImage",
-            "suffix": "smoothed.nii.gz",
             "options": "--debug true --input %input% --output %out1%",
             "outputs" : [
                 { "name" : "out1",
-                  "depends": [  "%input%" ]
+                  "depends": [  "%input%" ],
+                  "suffix": "_smoothed.nii.gz"
                 }
             ]
         },
         {
             "name": "Threshold",
             "subcommand": "thresholdImage",
-            "suffix": "thresholded.nii.gz",
             "options": "--input %out1% --output %out2%",
             "paramfile" : "t.param",
             "outputs" : [
                 {
                     "name": "out2",
-                    "depends": [ "%out1%" ]
+                    "depends": [ "%out1%" ],
+                    "naming": "thresholded_%out1%.nii.gz"
+
                 }
             ]
         },
         {
             "name": "Add",
             "subcommand": "combineImages",
-            "suffix": "added.nii",
             "options": "--input %input% --second %out2% --output %out3% --mode add --weight1 1.0 --weight2 1.0",
             "outputs" : [
                 {
                     "name": "out3",
-                    "depends": [ "%out2%" ,"%input%" ]
+                    "depends": [ "%out2%" ,"%input%" ],
+                    "suffix": "__added.nii"
                 }
             ]
         }
@@ -122,6 +125,11 @@ let makePipeline = function(pipelineOptions,odir='') {
                     console.log('____ Comment = ',comment);
                     variable.files=fnames;
                 } catch(e) {
+                    try {
+                        parser.parse(dat);
+                    } catch(f) {
+                        e=f;
+                    }
                     console.log('Failed to parse', variable.filename,'error=',e);
                     return null;
                 }
@@ -366,12 +374,14 @@ let makePipeline = function(pipelineOptions,odir='') {
     }
 
 
+    let joblist=[];
     console.log('__\n____________________\n__ C r e a t i n g   M a k e f i l e\n__');
 
     let makefile = '#-----------------------------------------------\n#\n';
     makefile+="# All Jobs\n#\nall : ";
     for (let job of jobsWithOutputs) {
         makefile = makefile + job.name + ' ';
+        joblist.push(job.name);
     }
     makefile+="\n\n";
 
@@ -379,7 +389,7 @@ let makePipeline = function(pipelineOptions,odir='') {
     
     let resultsfile = { 'Outputs': [] };
     
-    
+
     
     //add 'make [job]' for each job
     for (let job of jobsWithOutputs) {
@@ -397,6 +407,7 @@ let makePipeline = function(pipelineOptions,odir='') {
         for (let output of job.outputs) {
             makefile += output + ' ';
             res.filenames.push(output);
+
         }
         makefile += '\n\n';
         resultsfile['Outputs'].push(res);
@@ -447,6 +458,14 @@ let makePipeline = function(pipelineOptions,odir='') {
     makefile+="\n";
     console.log('__ Added: make logwin');
     console.log('__');
+
+    makefile+='\n#----------------------------------- \n# list of jobs \n#\n';
+    makefile+= "list : \n\t @echo "+joblist.join(" ")+"\n";
+    console.log('__ Added: make list');
+    console.log('__');
+
+
+    
 
     return makefile;
 };
@@ -558,7 +577,11 @@ class PipelineModule extends BaseModule {
                     try { 
                         dat=JSON.parse(obj.data);
                     } catch(e) {
-                        console.log(e);
+                        try {
+                            parser.parse(obj.data);
+                        } catch (f) {
+                            e=f;
+                        }
                         reject(e);
                         return;
                     }

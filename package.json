@@ -41,6 +41,7 @@
         "idb-keyval": "3.0.5",
         "iobuffer": "3.2.0",
         "jquery": "3.3.1",
+        "jsonlint": "^1.6.3",
         "jstree": "3.3.7",
         "localforage": "1.7.3",
         "moment": "2.22.1",
