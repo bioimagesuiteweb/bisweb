@@ -131,43 +131,15 @@ class FileTreePanel extends HTMLElement {
 
     importFilesFromDirectory(filename) {
 
-        //filter filename before calling getMatchingFiles
-        let queryString = filename;
-        if (queryString === '') {
-            queryString = '*/*.nii*';
-        } else {
-            if (queryString[queryString.length - 1] === '/') {
-                queryString = queryString.slice(0, filename.length - 1) + '/*/*.nii*';
+        getFileList(filename).then( (fileinfo) => {
+            if (fileinfo.files.length > 0) { 
+                let obj = formatBaseDirectory(filename, fileinfo.files);
+                this.updateFileTree(obj.contents, obj.baseDirectory, fileinfo.type);
+                bis_webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
+                return;
             } else {
-                queryString = filename + '/*/*.nii*';
+                bis_webutil.createAlert('Could not find nifti files in ' + filename + ' or any of the folders it contains. Are you sure this is the directory?');
             }
-        }
-
-        readParamsFile(filename).then((data) => {
-
-            let type = data.acquisition || data.bisformat || 'Unknown type';
-
-            bis_genericio.getMatchingFiles(queryString).then((files) => {
-
-                if (files.length > 0) {
-                    this.updateFileTree(files, filename, type);
-                    bis_webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
-                    return;
-                }
-
-                queryString = filename + '/**/*.nii*';
-                bis_genericio.getMatchingFiles(queryString).then( (newfiles) => {
-
-                    if (newfiles.length > 0) { 
-                        console.log('new files', newfiles);
-                        this.updateFileTree(newfiles, filename, type);
-                        bis_webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
-                        return;
-                    } else {
-                        bis_webutil.createAlert('Could not find nifti files in ' + filename + ' or any of the folders it contains. Are you sure this is the directory?');
-                    }
-                });
-            });
         });
     }
 
@@ -180,8 +152,11 @@ class FileTreePanel extends HTMLElement {
                 console.log('An error occured trying to parse the exported study file', filename, e);
             }
 
-            let type = parsedData.type || parsedData.acquisition || parsedData.bisformat || 'Unknown type';
-            this.updateFileTree(parsedData.contents, parsedData.baseDirectory, type);
+            let dir = formatBaseDirectory(parsedData.baseDirectory, parsedData.contents);
+
+            getFileList(dir.baseDirectory).then( (listObj) => {
+                this.updateFileTree(listObj.contents, parsedData.baseDirectory, listObj.type);
+            });
         });
     }
 
@@ -195,86 +170,10 @@ class FileTreePanel extends HTMLElement {
 
         if (bis_genericio.getPathSeparator() === '\\') 
             baseDirectory= util.filenameWindowsToUnix(baseDirectory);
-        
-        let parseFileList = (files) => {
-            let fileTree = [];
-
-            for (let file of files) {
-                //trim the common directory name from the filtered out name
-                if (bis_genericio.getPathSeparator() === '\\') 
-                    file= util.filenameWindowsToUnix(file);
-
-                let trimmedName = file.replace(baseDirectory, '');
-                let splitName = trimmedName.split('/');
-                if (splitName[0]==='') 
-                    splitName.shift();
-
-                let index = 0, currentDirectory = fileTree, nextDirectory = null;
-
-                //find the entry in file tree
-                while (index < splitName.length) {
-
-                    nextDirectory = findParentAtTreeLevel(splitName[index], currentDirectory);
-
-                    //if the next directory doesn't exist, create it, otherwise return it.
-                    if (!nextDirectory) {
-
-                        //type will be file if the current name is at the end of the name (after all the slashes), directory otherwise
-                        let newEntry = {
-                            'text': splitName[index]
-                        };
-
-                        if (index === splitName.length - 1) {
-                            let splitEntry = newEntry.text.split('.');
-                            if (splitEntry[splitEntry.length - 1] === 'gz' || splitEntry[splitEntry.length - 1] === 'nii')
-                                newEntry.type = 'picture';
-                            else
-                                newEntry.type = 'file';
-                        } else {
-                            newEntry.type = 'directory';
-                            newEntry.children = [];
-                        }
-
-                        currentDirectory.push(newEntry);
-                        currentDirectory = newEntry.children;
-                    } else {
-                        currentDirectory = nextDirectory;
-                    }
-
-                    index = index + 1;
-                }
-            }
-
-            //if the file tree is empty, display an error message and return
-            if (fileTree.length === 0) {
-                bis_webutil.createAlert('No study files could be found in the chosen directory, try a different directory.', false);
-                return;
-            }
-
-            //some data sources produce trees where the files are contained in an empty directory, so unwrap those if necessary.
-            if (fileTree.length === 1 && fileTree[0].text === '') {
-                fileTree = fileTree[0].children;
-            }
-
-            return fileTree;
-
-            //Searches for the directory that should contain a file given the file's path, e.g. 'a/b/c' should be contained in folders a and b.
-            //Returns the children 
-            function findParentAtTreeLevel(name, entries) {
-                for (let entry of entries) {
-                    if (entry.text === name) {
-                        return entry.children;
-                    }
-                }
-
-                return null;
-            }
-
-        };
 
         this.baseDirectory = baseDirectory;
-        this.studyType = type;
 
+        this.studyType = type;
         let fileTree;
 
         //check what type of list this is, a list of names or a fully parsed directory
@@ -396,6 +295,82 @@ class FileTreePanel extends HTMLElement {
         this.fileTree = tree;
 
 
+        function parseFileList(files) {
+            let fileTree = [];
+
+            for (let file of files) {
+                //trim the common directory name from the filtered out name
+                if (bis_genericio.getPathSeparator() === '\\') 
+                    file= util.filenameWindowsToUnix(file);
+
+                let trimmedName = file.replace(baseDirectory, '');
+                let splitName = trimmedName.split('/');
+                if (splitName[0]==='') 
+                    splitName.shift();
+
+                let index = 0, currentDirectory = fileTree, nextDirectory = null;
+
+                //find the entry in file tree
+                while (index < splitName.length) {
+
+                    nextDirectory = findParentAtTreeLevel(splitName[index], currentDirectory);
+
+                    //if the next directory doesn't exist, create it, otherwise return it.
+                    if (!nextDirectory) {
+
+                        //type will be file if the current name is at the end of the name (after all the slashes), directory otherwise
+                        let newEntry = {
+                            'text': splitName[index]
+                        };
+
+                        if (index === splitName.length - 1) {
+                            let splitEntry = newEntry.text.split('.');
+                            if (splitEntry[splitEntry.length - 1] === 'gz' || splitEntry[splitEntry.length - 1] === 'nii')
+                                newEntry.type = 'picture';
+                            else
+                                newEntry.type = 'file';
+                        } else {
+                            newEntry.type = 'directory';
+                            newEntry.children = [];
+                        }
+
+                        currentDirectory.push(newEntry);
+                        currentDirectory = newEntry.children;
+                    } else {
+                        currentDirectory = nextDirectory;
+                    }
+
+                    index = index + 1;
+                }
+            }
+
+            //if the file tree is empty, display an error message and return
+            if (fileTree.length === 0) {
+                bis_webutil.createAlert('No study files could be found in the chosen directory, try a different directory.', false);
+                return;
+            }
+
+            //some data sources produce trees where the files are contained in an empty directory, so unwrap those if necessary.
+            if (fileTree.length === 1 && fileTree[0].text === '') {
+                fileTree = fileTree[0].children;
+            }
+
+            return fileTree;
+
+            //Searches for the directory that should contain a file given the file's path, e.g. 'a/b/c' should be contained in folders a and b.
+            //Returns the children 
+            function findParentAtTreeLevel(name, entries) {
+                for (let entry of entries) {
+                    if (entry.text === name) {
+                        return entry.children;
+                    }
+                }
+
+                return null;
+            }
+
+        }
+
         //sort the tree into alphabetical order, with directories and labeled items first
         function sortEntries(children) {
             if (children) {
@@ -421,9 +396,8 @@ class FileTreePanel extends HTMLElement {
                     sortEntries(node.children);
                 }
             }
-
-
         }
+
     }
 
     /**
@@ -883,7 +857,6 @@ class FileTreePanel extends HTMLElement {
         
         let reconstructedTree = this.parseTreeToJSON();
         
-        //console.log('reconstructed tree', reconstructedTree);
         console.log('Base Directory', this.baseDirectory,filepath);
 
         let base=this.baseDirectory;
@@ -1413,6 +1386,63 @@ let readParamsFile = (sourceDirectory) => {
         });
     });
 
+};
+
+/**
+ * Takes the raw directory path returned by the import buttons and calls getmatchingfiles to return the study files. 
+ * 
+ * @param {String} directory - The name of the directory on which import study is called
+ * @returns A promise resolving the study files
+ */
+let getFileList = (filename) => {
+    return new Promise( (resolve, reject) => {
+        //filter filename before calling getMatchingFiles
+        let queryString = filename;
+        if (queryString === '') {
+            queryString = '*/*.nii*';
+        } else {
+            if (queryString[queryString.length - 1] === '/') {
+                queryString = queryString.slice(0, filename.length - 1) + '/*/*.nii*';
+            } else {
+                queryString = filename + '/*/*.nii*';
+            }
+        }
+
+        readParamsFile(filename).then((data) => {
+
+            let type = data.type || data.acquisition || data.bisformat || 'Unknown type';
+            bis_genericio.getMatchingFiles(queryString).then((files) => {
+
+                if (files.length > 0) {
+                    //let obj = formatBaseDirectory(filename, files);
+                    resolve({ 'files' : files, 'type' : type });
+                }
+
+                queryString = filename + '/**/*.nii*';
+                bis_genericio.getMatchingFiles(queryString).then( (newfiles) => {
+                    resolve({ 'files' : newfiles, 'type' : type });
+                });
+            });
+        }).catch( (e) => { reject(e); });
+    });
+};
+
+/**
+ * Changes the format of the provided base directory to be rooted at 'sourcedata', modifies the file list appropriately.
+ * 
+ * @param {String} baseDirectory - Unformatted base directory.
+ * @param {Array} contents - Array of unparsed file names, or a parsed tree.
+ * @returns Base directory rooted at 'sourcedata'. 
+ */
+let formatBaseDirectory = (baseDirectory, contents) => {
+    let splitBase = baseDirectory.split('/');
+    /*for (let i = 0; i < splitBase.length; i++) {
+        if (splitBase[i] === 'sourcedata') {
+            baseDirectory = splitBase.slice(0, i + 1).join('/');
+        }
+    }*/
+
+    return { 'baseDirectory' : baseDirectory, 'contents' : contents };
 };
 
 
