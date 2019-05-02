@@ -181,6 +181,8 @@ class BisWebTextObject extends BisWebDataObject{
         
         let out = {
             testresult : false,
+            value : 0.0,
+            metric: "direct comparison",
         };
 
         if (other.constructor.name !== this.constructor.name)  {

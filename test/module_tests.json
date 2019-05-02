@@ -450,7 +450,7 @@
             "dopython": false
         },
         {
-	    "command" : "resliceImage -i testdata/MNI_6mm.nii.gz --r testdata/MNI_6mm.nii.gz -x testdata/resample.matr -y testdata/2dreslice.matr --interpolation 1 --debug true --backgroundvalue 0.0",
+	    "command" : "resliceImage -i testdata/MNI_6mm.nii.gz -r testdata/MNI_6mm.nii.gz -x testdata/resample.matr -y testdata/2dreslice.matr --interpolation 1 --debug true --backgroundvalue 0.0",
 	    "test"    : "--test_target testdata/dualreslice.nii.gz --test_threshold 0.999 --test_type image --test_comparison cc",
 	    "result"  : true,
 	    "dopython": false
@@ -551,6 +551,12 @@
         {
             "command" : "concatenateImages --debug false testdata/MNI_6mm.nii.gz testdata/MNI_6mm_flipz.nii.gz testdata/MNI_6mm_flipy.nii.gz testdata/MNI_6mm_flipx.nii.gz",
             "test"    : "--test_target  testdata/MNI_4D.nii.gz ",
+            "result"  : true,
+            "dopython": false
+        },
+        {
+            "command" : "pipeline --input testdata/batch.json --odir none --debug false",
+            "test"    : "--test_target  testdata/Makefile.txt --test_type text",
             "result"  : true,
             "dopython": false
         }
