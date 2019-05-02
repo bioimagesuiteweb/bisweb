@@ -1435,18 +1435,28 @@ let getFileList = (filename) => {
  * @returns Base directory rooted at 'sourcedata'. 
  */
 let formatBaseDirectory = (baseDirectory, contents) => {
-    let splitBase = baseDirectory.split('/'), formattedBase = null;
-    for (let i = 0; i < splitBase.length; i++) {
-        if (splitBase[i] === 'sourcedata') {
-            formattedBase = splitBase.slice(0, i + 1).join('/');
-        }
-    }
+    let formattedBase = findBaseDirectory(baseDirectory);
 
     if (!formattedBase) {
-        
+        //look for sourcedata in one of the entries in contents (these should be the full path)
+        console.log('cannot find sourcedata in', baseDirectory, contents);
+        let file = contents[0]; 
+        formattedBase = findBaseDirectory(file);
     }
 
+    console.log('formatted base', formattedBase);
     return formattedBase;
+
+    function findBaseDirectory(directory) { 
+        let splitBase = directory.split('/'), formattedBase = null;
+        for (let i = 0; i < splitBase.length; i++) {
+            if (splitBase[i] === 'sourcedata') {
+                formattedBase = splitBase.slice(0, i + 1).join('/');
+            }
+        }
+
+        return formattedBase;
+    }
 };
 
 
