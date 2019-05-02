@@ -92,6 +92,7 @@ SET (HEADER_SCRIPT ${TOOLS_DIR}/bis_create_matlab_header_file.js)
 
 OPTION(BIS_USEGPL "Include the GPL-licensed C++ files (plugin)" OFF)
 OPTION(BIS_USEEXTERNAL "Include additional external C++ files (plugin)" OFF)
+OPTION(BIS_USEINDIV "Include additional files from individualized parcellation" OFF)
 MARK_AS_ADVANCED(BIS_USEGPL)
 MARK_AS_ADVANCED(BIS_USEEXTERNAL)
 
@@ -167,8 +168,21 @@ SET(PARSE_HEADERS
   ${CPP_SOURCE_DIR}/bisExportedFunctions.h
   ${CPP_SOURCE_DIR}/bisExportedFunctions2.h
   ${CPP_SOURCE_DIR}/bisTesting.h
-  ) 
+  )
 
+IF (BIS_USEINDIV)
+  SET (PARSE_HEADERS
+    ${PARSE_HEADERS}
+    ${CPP_SOURCE_DIR}/bisExportedFunctions3.h
+    )
+  SET (KITSRCS
+    ${KITSRCS}
+    bisExportedFunctions3.cpp
+    bisIndividualizedParcellation.cpp
+    )
+  FIND_PACKAGE(IGL REQUIRED)
+ENDIF (BIS_USEINDIV)
+    
 IF (BIS_USEGPL)
   SET(PARSE_HEADERS
     ${PARSE_HEADERS}
@@ -257,6 +271,11 @@ IF (BIS_A_EMSCRIPTEN)
   ENDIF(BIS_WEB_WASM)
   
   SET( COMPILE_FLAGS "-Wall  -DBISWASM ${BIS_WEB_OPT} ${WASM_STRING} -I ${EIGEN3_INCLUDE_DIRS} -I ${PROJECT_SOURCE_DIR}")
+  IF (BIS_USEINDIV)
+    SET( COMPILE_FLAGS "${COMPILE_FLAGS} -I ${IGL_INCLUDE_DIRS}")
+  ENDIF (BIS_USEINDIV)
+
+    
   SET (CMAKE_CXX_FLAGS ${COMPILE_FLAGS} CACHE STRING "" FORCE)
   SET (CMAKE_C_FLAGS ${COMPILE_FLAGS} CACHE STRING "" FORCE)
   SET (CMAKE_EXE_LINKER_FLAGS "--pre-js ${PRE_JS} --post-js ${POST_JS}" CACHE STRING "" FORCE)
@@ -435,7 +454,12 @@ ELSE(BIS_A_EMSCRIPTEN)
   
   
   include_directories ( ${EIGEN3_INCLUDE_DIRS} )
+
+  IF (BIS_USEINDIV)
+    include_directories ( ${IGL_INCLUDE_DIRS} )
+  ENDIF (BIS_USEINDIV)
   include_directories (${PROJECT_SOURCE_DIR})
+
       
   SET (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/ CACHE PATH "Single output directory for building all libraries.")
   ADD_LIBRARY (${CLIBNAME} SHARED ${KITSRCS})

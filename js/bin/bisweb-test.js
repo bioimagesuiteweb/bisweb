@@ -90,6 +90,8 @@ else if (test_type==="gridtransform")
     tempName=dirname+'/out.grd';
 else if (test_type==="registration")
     tempName=dirname+'/out.json';
+else if (test_type==="text")
+    tempName=dirname+'/makefile.txt';
 args.push('--output', tempName);
 
 if (test_type==="registration") {
@@ -115,10 +117,17 @@ if (test_type==="tfjs") {
 //console.log('++++ Disabling auto-reorient of images on load.\n+++++');
 //userPreferences.setImageOrientationOnLoad('None');
 
-console.log('.... Testing module '+toolname);
+console.log('.... Testing module '+toolname+' ');
 console.log('................................................');
 
-commandline.loadParse(args.slice(3), bisModule, basedirectory).then(() => {
+// remove module name from args -- argument 2
+let newargs=[];
+for (let i=0;i<args.length;i++) {
+    if (i!==2)
+        newargs.push(args[i]);
+}
+
+commandline.loadParse(args, bisModule, basedirectory).then(() => {
     console.log('.... -------------------------------------------------------');
     commandline.processTestResult(toolname,tempName,
                                   basedirectory+program.test_target,
