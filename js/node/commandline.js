@@ -63,7 +63,7 @@ let attachSingleFlag=function(param,cmd) {
     else
         cmd = cmd.option(`${shortname}--${param.varname.toLowerCase()} ${bstr}s${estr}`, optdesc + param.description);
     return cmd;
-}
+};
 
 /**
  * Attaches the flags and parameters to an instance of commander and returns the instance. 
@@ -84,6 +84,7 @@ let attachFlags = function (module, cmd) {
     for (let i = 0; i <= 2; i++) {
         for (let j=0;j<lst[i].length;j++) {
             let param=lst[i][j];
+            //            console.log('i=',i,'j',j,param);
             if (param.type !== "extra")
                 cmd=attachSingleFlag(param,cmd);
         }
@@ -129,7 +130,7 @@ let loadParse = function (args, toolname,basedirectory='') {
         if (a!==null) {
             attachSingleFlag(a, program);
         }
-            
+        
         
         program.on('-h, --help', function () {
             console.log('This program is part of the commandline suite of tools from BioImage Suite Web. See https://github.com/bioimagesuiteweb/bisweb for more information.\n');
@@ -196,7 +197,10 @@ let loadParse = function (args, toolname,basedirectory='') {
             mod.loadInputs(program,basedirectory).then( () => {
                 console.log('oooo\noooo Loaded all inputs.');
                 let modArguments = mod.parseValuesAndAddDefaults(program, loadedArguments);
-                modArguments.extraArgs=program.args;
+                modArguments.extraArgs=[];
+                for (let i=0;i<program.args.length;i++)
+                    modArguments.extraArgs.push(basedirectory+program.args[i]);
+                
                 console.log('oooo\noooo Parsed :',JSON.stringify(modArguments));
                 if (mod.typeCheckParams(modArguments)) {
                     console.log('oooo\noooo Invoking module', mod.getDescription().name, '....');

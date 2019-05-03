@@ -15,11 +15,8 @@
 # 
 # ENDLICENSE
 
-import math
 import os
 import sys
-import numpy as np
-import unittest
 
 my_path=os.path.dirname(os.path.realpath(__file__));
 sys.path.append(os.path.abspath(my_path+'/../../build/native'));

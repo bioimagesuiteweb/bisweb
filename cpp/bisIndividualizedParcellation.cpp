@@ -76,7 +76,7 @@ namespace bisIndividualizedParcellation {
   int runIndividualizedParcellation(bisSimpleImage<float>* FMRIImage, bisSimpleImage<short>* groupparcellation, bisSimpleImage<short>* indiv,
                                     int numexemplars)
   {
-
+    // Zero everything
     indiv->fill(0);
     
     

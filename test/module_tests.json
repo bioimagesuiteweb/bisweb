@@ -1,4 +1,5 @@
 {
+    "version" : "1.1",
     "testlist" : [
 	{ 
 	    "command" : "smoothImage --sigma 2.0 --radiusfactor 2.0 --debug true --inmm true --input testdata/MNI_2mm_resliced.nii.gz ",
@@ -552,13 +553,15 @@
             "command" : "concatenateImages --debug false testdata/MNI_6mm.nii.gz testdata/MNI_6mm_flipz.nii.gz testdata/MNI_6mm_flipy.nii.gz testdata/MNI_6mm_flipx.nii.gz",
             "test"    : "--test_target  testdata/MNI_4D.nii.gz ",
             "result"  : true,
-            "dopython": false
+            "dopython": false,
+            "noweb"   : true
         },
         {
-            "command" : "pipeline --input testdata/batch.json --odir none --debug false",
+            "command" : "pipeline --input testdata/batch.json --odir none --debug false --unixstyle true",
             "test"    : "--test_target  testdata/Makefile.txt --test_type text",
             "result"  : true,
-            "dopython": false
+            "dopython": false,
+            "noweb"   : true
         }
     ]
 }

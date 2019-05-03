@@ -181,11 +181,12 @@ class BisWebTextObject extends BisWebDataObject{
         
         let out = {
             testresult : false,
-            value : 0.0,
+            value : 1000.0,
             metric: "direct comparison",
         };
 
         if (other.constructor.name !== this.constructor.name)  {
+            out.value=1000.0;
             console.log('different constructors');
             return out;
         }
@@ -194,7 +195,8 @@ class BisWebTextObject extends BisWebDataObject{
 
         if (this.data.trim()===other.data.trim()) {
             out.testresult=true;
-        }
+            out.value=0.0;
+        } 
         return out;
     }
 

@@ -53,7 +53,7 @@ class ConcatenateImageModule extends BaseModule {
             "description": "List of input images",
             "type": "extra",
             "default": [],
-        }
+        };
     }
 
     directInvokeAlgorithm(vals) {
@@ -82,7 +82,7 @@ class ConcatenateImageModule extends BaseModule {
                 numframes+=dim[3]*dim[4];
 
                 for (let j=1;j<imagelist.length;j++) {
-                    let second = imagelist[j]
+                    let second = imagelist[j];
                     let dim2=second.getDimensions();
                     numframes+=dim2[3]*dim2[4];
                     
@@ -106,7 +106,7 @@ class ConcatenateImageModule extends BaseModule {
                 this.outputs['output']=output;
                 console.log('++++ Concatenated image '+this.outputs['output'].getDescription());
                 resolve("Concatenated");
-            });
+            }).catch( (e) => { reject(e); });
         });
     }
                                          

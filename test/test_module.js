@@ -45,25 +45,19 @@ const program= bisweb.commander,
 
 
 
-const githuburl='https://bioimagesuiteweb.github.io/test/';
-const githuburlfile='https://bioimagesuiteweb.github.io/test/module_tests.json';
+const githuburl='https://bioimagesuiteweb.github.io/test/1.1/';
+const githuburlfile='https://bioimagesuiteweb.github.io/test/1.1/module_tests.json';
 const getTime=util.getTime;
 
 // ---------------------------------------------------------------------------------
-const help = function() {
-    console.log('\nThis program runs the bisweb module tests');
-};
-
 program.version('1.0.0')
     .option('--input <s>','filename of the tests to run')
     .option('--first <n>','first test to run. If negative count from the end.',parseInt)
     .option('--last <n>','last test to run. If negative count from the end.',parseInt)
     .option('--testname <items>','comma separated list of names of tests to run. If not specified all are run (subject to first:last)')
     .option('--list','if set then print list of all modules and their tests')
-    .option('--tpath <s>','path to bisweb-test.js').
-    on('--help',function() {
-        help();
-    }).parse(process.argv);
+    .option('--tpath <s>','path to bisweb-test.js')
+    .parse(process.argv);
 
 
 // -----------------------------------------------------------
@@ -115,9 +109,9 @@ let get_testlist=function(testfilename)  {
                 try {
                     parser.parse(testfile);
                 } catch (f) {
-                    e=f;
+                    console.log('Failed to parse testfile from',testfilename,f);
                 }
-                console.log('Failed to parse testfile from',testfilename,e);
+                console.log(e);
                 reject('Failed to parse from '+testfilename);
             }
         } else {
