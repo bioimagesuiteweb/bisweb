@@ -1,10 +1,9 @@
+#include <memory>
 #include <algorithm>
 #include <vector>
 #include <queue>
 #include <unordered_map>
 #include <functional>
-
-
 #include "Eigen/Dense"
 #include "Eigen/Sparse"
 using Eigen::MatrixXd;
@@ -23,14 +22,15 @@ using igl::mat_max;
 using igl::find;
 
 
-
+#include "bisJSONParameterList.h"
+#include "bisDataObjectFactory.h"
 #include "bisIndividualizedParcellation.h"
 
 namespace bisIndividualizedParcellation {
 
   bool isAnyFalse(std::vector<bool> &v)
   {
-    for (int i=0; i<v.size(); i++)
+    for (unsigned int i=0; i<v.size(); i++)
       if (v[i] == false)
         return true;
     return false;
@@ -77,21 +77,22 @@ namespace bisIndividualizedParcellation {
                                     int numexemplars)
   {
 
-    indiv->copyStructure(groupparcellation);
     indiv->fill(0);
     
     
     int dim[5], dim2[5];
     FMRIImage->getDimensions(dim);
     groupparcellation->getDimensions(dim2);
-    fprintf(stderr,"fMRI Image dim = %dx%dx%d\n",dim[0],dim[1],dim[2]);
-    fprintf(stderr,"input Image dim = %dx%dx%d\n",dim2[0],dim2[1],dim2[2]);
+    std::cout << "++++ Beginning Indiv Parc internal " << std::endl;
+    std::cout << "++++ \t fMRI Image dim = " << dim[0] << "," << dim[1] << "," << dim[2] << "  " << dim[3] << std::endl;
+    std::cout << "++++ \t Group Parcellation Image dim2 = " << dim2[0] << "," << dim2[1] << "," << dim2[2] << "  " << dim2[3] << std::endl;
+
     int sum=0;
     for (int ia=0;ia<=2;ia++)
       sum+=abs(dim[ia]-dim2[ia]);
     if (sum>0)
       {
-        fprintf(stderr,"Bad FMRI Input to vtkbisIndividualizeParcellation SimpleExecute - sum = %d\n",sum);
+        std::cerr << "---- Bad FMRI Input to runIndividualizedParcelllation sum = " << sum << " > 0 " << std::endl;
         return 0;
       }
     
@@ -107,16 +108,16 @@ namespace bisIndividualizedParcellation {
     int RangeMax=int(range[1]);
     
     if (Pmax != RangeMax) {
-      fprintf(stderr,"Bad Group Parcellation Input to vtkbisIndividualizeParcellation SimpleExecute - pmax = %d, range[1] = %d\n",Pmax,RangeMax);
+      std::cerr << "---- Bad Group Parcellation Input to vtkbisIndividualizeParcellation pmax = " << Pmax << "range[1] = " << RangeMax << std::endl;
       return 0;
     }
 
-    fprintf(stderr,"number of frames is %d\n",t);
-    fprintf(stderr,"number of voxels is %d x %d x %d = %d\n",dim[0],dim[1],dim[2],N);
-    fprintf(stderr,"number of exemplars is %d\n",Pmax);
-    //    fprintf(stderr,"lambda is %f\n",lambda);
+    std::cout << "++++ \t number of frames is " << t << std::endl;
+    std::cout << "++++ \t number of voxels is " << dim[0] << "x" << dim[1] << "x" << dim[2] << " = " << N << std::endl;
+    std::cout << "++++ \t number of exemplars is " << Pmax << std::endl;
+    //    fprintf(stdout,"lambda is %f\n",lambda);
     
-    //fprintf(stderr,"START: the elapsed time is = %f s \n",float(clock()-begin_time)/CLOCKS_PER_SEC);
+    //fprintf(stdout,"START: the elapsed time is = %f s \n",float(clock()-begin_time)/CLOCKS_PER_SEC);
 
   
 
@@ -155,15 +156,15 @@ namespace bisIndividualizedParcellation {
       if (group[voxel]>0)
         {
           parcel(count) = group[voxel]; // this is the group label for all the nonzero voxels
-          ntoNvoxel.insert( std::make_pair<int,int>(count,voxel) );
-          Ntonvoxel.insert( std::make_pair<int,int>(voxel,count) );
+          ntoNvoxel.insert( std::make_pair(count,voxel) );
+          Ntonvoxel.insert( std::make_pair(voxel,count) );
           count++;
         }
     
     int n = count;
     
-    fprintf(stderr,"COPYING DATA TO EIGEN MATRIX & VECTOR");
-    fprintf(stderr,"number of non-zero voxels n = %d\n",n);
+    std::cout << "++++ COPYING DATA TO EIGEN MATRIX & VECTOR" << std::endl;
+    std::cout << "++++ \t number of non-zero voxels n = " << n << std::endl;
     
     VectorXd mean_subtract(t);
     mean_subtract = (X.rowwise().sum())/double(n);
@@ -187,7 +188,7 @@ namespace bisIndividualizedParcellation {
     //  double maxValue = twoNorm.maxCoeff();
     ////  Normalizing data points to a unit ball sphere
     //  MatrixXd v = V/maxValue;
-    //  fprintf(stderr,"NORMALIZATION INTO UNIT SPHERE (DIVIDE BY MAX NORM): the elapsed time is = %f s \n",float(clock()-timebegin11)/CLOCKS_PER_SEC);
+    //  fprintf(stdout,"NORMALIZATION INTO UNIT SPHERE (DIVIDE BY MAX NORM): the elapsed time is = %f s \n",float(clock()-timebegin11)/CLOCKS_PER_SEC);
     
     ////////////////////////////////////////////////  2- Normalizing to the unit norm (all vectors norm = 1)
     MatrixXd v = V.array().rowwise()* inverse_twoNorm.transpose().array();
@@ -196,9 +197,9 @@ namespace bisIndividualizedParcellation {
     //  VectorXd test_ii(t);
     //  test_ii = (V.rowwise().sum())/double(n);
     //  for (int ii=0; ii<t; ii++)
-    //	  fprintf(stderr,"V norm = %f\n",twoNorm(ii)); 
+    //	  fprintf(stdout,"V norm = %f\n",twoNorm(ii)); 
     
-    fprintf(stderr,"NORMALIZATION ONTO UNIT SPHERE (ALL NORM=1):");
+    std::cout << "++++ NORMALIZATION ONTO UNIT SPHERE (ALL NORM=1)" << std::endl;
     
     
     ////////// Finding the voxels within each parcel ///////////////
@@ -214,7 +215,7 @@ namespace bisIndividualizedParcellation {
 	p_vector.clear(); // p_vector's size is 0 [VERIFIED]
       }
     
-    fprintf(stderr,"FINDING VOXELS:");
+    std::cout << "++++ FINDING VOXELS:" << std::endl;
 
     // Calculating the squared distance matrix between voxels within each parcel
     std::vector<MatrixXd> sqrDist;
@@ -235,7 +236,7 @@ namespace bisIndividualizedParcellation {
       sqrDist.push_back( sqrMatrix );
     }
     
-    fprintf(stderr,"SQUARED DISTANCES:\n");
+    std::cout << "++++ SQUARED DISTANCES" << std::endl;
 
     
     // Calculating the distance between auxiliary exemplar and the rest of the voxels
@@ -258,10 +259,10 @@ namespace bisIndividualizedParcellation {
     }
     //	for (int pp1=0;pp1<indice_p[p].size();pp1++)
     //		for (int pp2=0;pp2<indice_p[p].size();pp2++)
-    //			fprintf(stderr,"p=%d, pp1=%d, pp2=%d, sqrDist[p][pp1][pp2] = %f\n",p,pp1,pp2,sqrDist[p][pp1][pp2]);
+    //			fprintf(stdout,"p=%d, pp1=%d, pp2=%d, sqrDist[p][pp1][pp2] = %f\n",p,pp1,pp2,sqrDist[p][pp1][pp2]);
     
     
-    fprintf(stderr,"AUXILIARY DISTANCES:\n");
+    std::cout << "++++ AUXILIARY DISTANCES" << std::endl;
 
     //  Calculating the exemplar within each parcel
     VectorXi Sopt(Pmax);
@@ -284,10 +285,10 @@ namespace bisIndividualizedParcellation {
         SoptN(p) = voxelN->second;
     }
     
-    fprintf(stderr,"EXEMPLAR IDENTIFICATION\n");
+    std::cout << "++++ EXEMPLAR IDENTIFICATION" << std::endl;
     
     //  for (int p=0; p<Pmax; p++)
-    //	fprintf(stderr,"Sopt(%f) = %d, ", group->GetComponent(SoptN(p),0),SoptN(p));
+    //	fprintf(stdout,"Sopt(%f) = %d, ", group->GetComponent(SoptN(p),0),SoptN(p));
     
     // Assigning each voxel to the closest exemplar using the priority queue algorithm
     
@@ -304,7 +305,7 @@ namespace bisIndividualizedParcellation {
     distvSopt = ((v.transpose()*vSopt*-2).colwise() + v.colwise().squaredNorm().transpose()).rowwise() + vSopt.colwise().squaredNorm();	
     
     
-    const unsigned int neighbors = 6;
+    const int neighbors = 6;
     int incr[neighbors]; ComputeMRFIncrements(dim,incr);
     
     int sumVisited = 0;
@@ -357,7 +358,7 @@ namespace bisIndividualizedParcellation {
             
           }
         // selected exemplar queue (min_idx) is correct [VERIFIED]
-        // fprintf(stderr,"\n(selected queue,min_val)=(%d,%f)\n",min_idx,min_val);
+        // fprintf(stdout,"\n(selected queue,min_val)=(%d,%f)\n",min_idx,min_val);
         
         if (min_idx >=0)
           {
@@ -369,7 +370,7 @@ namespace bisIndividualizedParcellation {
                 label[chosenVoxel] = min_idx;
                 VISITED[chosenVoxel] = 1;
                 sumVisited ++;
-                //      fprintf(stderr,"number of visited = %d\n", sumVisited);
+                //      fprintf(stdout,"number of visited = %d\n", sumVisited);
                 std::unordered_map<int,int>::const_iterator voxelN = ntoNvoxel.find (chosenVoxel);
                 if (voxelN != ntoNvoxel.end())
                   {
@@ -401,16 +402,16 @@ namespace bisIndividualizedParcellation {
            std::pair<double,int> testNode = exemplar_min_heaps[min_idx].top();
            tteesstt.push(testNode);
            exemplar_min_heaps[min_idx].pop();
-           fprintf(stderr,"(%d,%f), ",testNode.second,testNode.first);
+           fprintf(stdout,"(%d,%f), ",testNode.second,testNode.first);
            }
-           fprintf(stderr,"next...\n");
+           fprintf(stdout,"next...\n");
 	*/
 
         if (min_idx < 0)
           break;
       }
 
-    fprintf(stderr,"ASSIGNING VOXELS TO EXEMPLARS\n");
+    std::cout << "++++ Finally ASSIGNING VOXELS TO EXEMPLARS" << std::endl;
     //int Voxel_indices[N];
     count = 0;
 
@@ -428,4 +429,54 @@ namespace bisIndividualizedParcellation {
       }
     return 1;
   }
+}
+
+// -------------------------------------------------------------
+// Main Function
+// -------------------------------------------------------------
+// individualizeParcellation adjust parcellation for a specific input fmri image 
+
+unsigned char* individualizeParcellationWASM(unsigned char* input, unsigned char* groupparcellation,const char* jsonstring,int debug)
+{
+  std::unique_ptr<bisJSONParameterList> params(new bisJSONParameterList());
+  int ok=params->parseJSONString(jsonstring);
+  if (!ok) 
+    return 0;
+
+  if (debug)
+    params->print();
+
+  std::unique_ptr<bisSimpleImage<float> > inp_image(new bisSimpleImage<float>("inp_image"));
+  if (!inp_image->linkIntoPointer(input))
+    return 0;
+
+  std::unique_ptr<bisSimpleImage<short> > parc_image(new bisSimpleImage<short>("parc_image"));
+  if (!parc_image->linkIntoPointer(groupparcellation))
+    return 0;
+
+  int numexemplars=params->getIntValue("numberofexemplars",268);
+  
+  if (debug)  {
+    std::cout << "........................" << std::endl;
+    std::cout << ".... Beginning actual individualizedparcellation : numexemplars=" << numexemplars <<   std::endl;
+    int dim[5]; inp_image->getDimensions(dim);
+    std::cout << ".... \t Input  dimensions=" << dim[0] << "," << dim[1] << "," << dim[2] << "," << dim[3] << "," << dim[4] << std::endl;
+    parc_image->getDimensions(dim);
+    std::cout << ".... \t Parc  dimensions=" << dim[0] << "," << dim[1] << "," << dim[2] << "," << dim[3] << "," << dim[4] << std::endl;
+    std::cout << "........................" << std::endl << std::endl;
+  }
+
+  std::unique_ptr<bisSimpleImage<short> > out_image(new bisSimpleImage<short>("out_parc"));
+  out_image->copyStructure(parc_image.get());
+  
+  int result=bisIndividualizedParcellation::runIndividualizedParcellation(inp_image.get(),parc_image.get(),out_image.get(),numexemplars);
+  
+  if (debug)
+    std::cout << "individualized Parcellation Done " <<  result << " " << std::endl;
+
+  if (result==0)
+    return NULL;
+
+  return out_image->releaseAndReturnRawArray();
+
 }

@@ -46,3 +46,5 @@ regressionTests
 makechecksum
 dicomconversion
 bidsconversion
+concatenateImages
+pipeline

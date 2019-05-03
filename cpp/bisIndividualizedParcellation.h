@@ -21,6 +21,7 @@
 
 #include "bisDataTypes.h"
 #include "bisSimpleDataStructures.h"
+#include "bisDefinitions.h"
 #include "bisUtil.h"
 #include "math.h"
 #include <vector>
@@ -30,6 +31,31 @@ namespace bisIndividualizedParcellation {
   int runIndividualizedParcellation(bisSimpleImage<float>* FMRIImage, bisSimpleImage<short>* groupparcelllation, bisSimpleImage<short>* indiv,
                                     int numexemplars=268);
 }
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+  /** @file bisExportedFunctions3.h
+      Functions exported to JS and Python 
+  */
+
+    /** Individualizes a group parcellation using a new 4D fmri Image
+   * @param input serialized 4D input file as unsigned char array 
+   * @param groupparcellation serialized input (group) parcellation as unsigned char array 
+   * @param jsonstring the parameter string for the algorithm 
+   * { "numberorexemplars" : 268 }
+   * @param debug if > 0 print debug messages
+   * @returns a pointer to a serialized image
+   */
+  // BIS: { 'individualizeParcellationWASM', 'bisImage', [ 'bisImage', 'bisImage', 'ParamObj', 'debug' ] }
+  BISEXPORT unsigned char* individualizeParcellationWASM(unsigned char* input, unsigned char* groupparcellation,const char* jsonstring,int debug);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif

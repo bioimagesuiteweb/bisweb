@@ -170,14 +170,14 @@ SET(PARSE_HEADERS
   ${CPP_SOURCE_DIR}/bisTesting.h
   )
 
+
 IF (BIS_USEINDIV)
   SET (PARSE_HEADERS
     ${PARSE_HEADERS}
-    ${CPP_SOURCE_DIR}/bisExportedFunctions3.h
+    ${CPP_SOURCE_DIR}/bisIndividualizedParcellation.h
     )
   SET (KITSRCS
     ${KITSRCS}
-    bisExportedFunctions3.cpp
     bisIndividualizedParcellation.cpp
     )
   FIND_PACKAGE(IGL REQUIRED)
