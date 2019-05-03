@@ -57,6 +57,14 @@ resl_group=libbiswasm.resliceImageWASM(group,matr,resl_paramobj,2);
 print('++++ \t group resliced dims=',resl_group.dimensions);
 
 
+#   smoutput = libbiswasm.gaussianSmoothImageWASM(fmri,
+#                                                 paramobj={
+#                                                    "sigmas": [s, s, s],
+#                                                     "inmm": True,
+#                                                     "radiusfactor": 1.5,
+#                                                 }, debug=2);
+        
+
 paramobj= { 'numberofexemplars' : 368 };
 
 out_img=libbiswasm.individualizeParcellationWASM(fmri,resl_group,paramobj,2);
