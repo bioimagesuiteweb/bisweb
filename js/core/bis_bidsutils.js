@@ -156,16 +156,15 @@ let dicom2BIDS = async function (opts) {
 
         let formattedBasename = makeBIDSFilename(basename, dirbasename);
         let target = bis_genericio.joinFilenames(dirname, formattedBasename);
-        parsedFilenames.push(target);
 
-        try {
+        console.log('formatted base name', formattedBasename);
+        if (!formattedBasename.includes('DISCARD')) {
+            parsedFilenames.push(target);
+
             changedNames.push(bis_genericio.getBaseName(origname) + ' -> ' + bis_genericio.getBaseName(target));
             moveImageFiles.push(bis_genericio.copyFile(origname + '&&' + target));
-        } catch (e) {
-            console.log('copy file', e);
-            return errorfn(e);
-        }
-        tlist.push(target);
+            tlist.push(target);
+        } 
     }
 
 
@@ -477,7 +476,6 @@ let scheduleWriteback = (filename, settings) => {
     if (!scheduledWriteback) {
         scheduledWriteback = setTimeout( () => {
             let currentInfo = getJobInfo(); 
-            console.log('scheduled writeback firing', currentInfo);
             let writebackFile = JSON.stringify(currentInfo, null, 2);
             bis_genericio.write(filename, writebackFile, false);
             scheduledWriteback = null;
@@ -516,6 +514,11 @@ let calculateChecksums = (inputFiles) => {
 let parseBIDSLabel = (name, directory) => {
     let bidsLabel;
     name = name.toLowerCase();
+
+    //some files should not be propagated, so simply indicate to discard them
+    if (name.includes('phoenix') && name.includes('document')) {
+        return 'DISCARD';
+    }
 
     if (directory === 'anatomical' || directory === 'anat') {
         if ( (name.includes('t1') && name.includes('weight') ) || name.includes('mprage') || name.includes('t1w')) { bidsLabel = 'T1w'; }
