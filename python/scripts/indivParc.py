@@ -27,14 +27,15 @@ import bis_objects as bis
 
 a=len(sys.argv);
 
-if a<4 :
-    print('\n Not enough argmments specified\n\tUsage: indivParc indivfmri groupparc numexemplar output');
+if a<5 :
+    print('\n Not enough argmments specified\n\tUsage: indivParc indivfmri groupparc numexemplar smooth output');
     sys.exit(1)
 
 imagename1=sys.argv[1];
 imagename2=sys.argv[2];
 numexemplar=int(sys.argv[3]);
-output=sys.argv[4];
+smooth=int(sys.argv[4]);
+output=sys.argv[5];
 
 print('++++ Beginning image names',imagename1,imagename2,output,'\n\n');
 
@@ -43,10 +44,9 @@ fmri=bis.bisImage().load(imagename1); print('++++ \t fmri loaded from',imagename
 group=bis.bisImage().load(imagename2); print('++++ \t group loaded from',imagename2,' dims=',group.dimensions);
 print('++++\n calling C++ code\n');
 
-paramobj1= { 'numberofexemplars' : numexemplar };
-#paramobj2= { 'smooth' : blursigma };
+paramobj= { 'numberofexemplars' : numexemplar, 'smooth' : smooth};
 
-out_img=libbiswasm.individualizeParcellationWASM(fmri,group,paramobj1,2);
+out_img=libbiswasm.individualizeParcellationWASM(fmri,group,paramobj,2);
 
 out_img.save(output);
 print('++++\n output saved in ',output);

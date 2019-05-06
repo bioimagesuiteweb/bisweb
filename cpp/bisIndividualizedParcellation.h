@@ -45,7 +45,7 @@ extern "C" {
    * @param input serialized 4D input file as unsigned char array 
    * @param groupparcellation serialized input (group) parcellation as unsigned char array 
    * @param jsonstring the parameter string for the algorithm 
-   * { "numberorexemplars" : 268 }
+   * { "numberorexemplars" : 268, "smooth" : 4}
    * @param debug if > 0 print debug messages
    * @returns a pointer to a serialized image
    */
