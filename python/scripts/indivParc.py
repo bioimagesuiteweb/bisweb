@@ -17,6 +17,7 @@
 
 import os
 import sys
+import numpy as np
 
 my_path=os.path.dirname(os.path.realpath(__file__));
 sys.path.append(os.path.abspath(my_path+'/../../build/native'));
@@ -24,6 +25,7 @@ sys.path.append(os.path.abspath(my_path+'/../../python'));
 
 import biswrapper as libbiswasm;
 import bis_objects as bis
+
 
 a=len(sys.argv);
 
@@ -46,7 +48,29 @@ print('++++\n calling C++ code\n');
 
 paramobj= { 'numberofexemplars' : numexemplar, 'smooth' : smooth};
 
-out_img=libbiswasm.individualizeParcellationWASM(fmri,group,paramobj,2);
+resl_paramobj = {
+    "interpolation" : 0,
+    "dimensions" : fmri.dimensions,
+    "spacing" : fmri.spacing,
+    "datatype" : "short",
+    "backgroundValue" : 0.0,
+};
+
+matr=np.eye(4,dtype=np.float32);
+resl_group=libbiswasm.resliceImageWASM(group,matr,resl_paramobj,2);
+
+print('++++ \t group resliced dims=',resl_group.dimensions);
+
+
+#   smoutput = libbiswasm.gaussianSmoothImageWASM(fmri,
+#                                                 paramobj={
+#                                                    "sigmas": [s, s, s],
+#                                                     "inmm": True,
+#                                                     "radiusfactor": 1.5,
+#                                                 }, debug=2);
+        
+
+out_img=libbiswasm.individualizeParcellationWASM(fmri,resl_group,paramobj,2);
 
 out_img.save(output);
 print('++++\n output saved in ',output);
