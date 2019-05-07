@@ -473,15 +473,23 @@ let getSettingsFile = (filename = '') => {
 let scheduleWriteback = (filename, settings) => {
     transientDicomJobInfo = settings;
 
+    let writebackFn = () => {
+        let currentInfo = getJobInfo(); 
+        let writebackFile = JSON.stringify(currentInfo, null, 2);
+        bis_genericio.write(filename, writebackFile, false);
+        scheduledWriteback = null;
+    };
+
     if (!scheduledWriteback) {
-        scheduledWriteback = setTimeout( () => {
-            let currentInfo = getJobInfo(); 
-            let writebackFile = JSON.stringify(currentInfo, null, 2);
-            bis_genericio.write(filename, writebackFile, false);
-            scheduledWriteback = null;
-        }, 60000);
+        scheduledWriteback = setTimeout(writebackFn, 60000);
     }
 
+    //fire event if window is closed too
+    if (window) {
+        window.addEventListener('beforeunload', () => {
+            writebackFn();
+        });
+    }
 };
 
 /**
