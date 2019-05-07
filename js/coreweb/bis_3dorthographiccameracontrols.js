@@ -23,6 +23,7 @@ const THREE = require('three');
 const $=require('jquery');
 const inobounce=require('inobounce.js');
 
+
 /** 
  * @file Browser module. Contains {@link Bis_3dOrthographicCameraControls}
  * @author Xenios Papademetris (but derives from original work from  Eberhard Graether / http://egraether.com/, Mark Lundin     / http://mark-lundin.com and Patrick Fuller / http://patrick-fuller.com from Three.JS demo code)
@@ -306,6 +307,10 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
                 axis.crossVectors( _rotateStart, _rotateEnd ).normalize();
                 
                 angle *= _this.rotateSpeed;
+                if (_this.plane === 3) {
+                    // In 3D Mode Flip
+                    angle=-angle;
+                }
                 
                 quaternion.setFromAxisAngle( axis, -angle );
                 
@@ -367,10 +372,17 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
             if ( mouseChange.lengthSq() ) {
                 
                 mouseChange.multiplyScalar( _eye.length() * _this.panSpeed );
-                
-                pan.copy( _eye ).cross( _this.camera.up ).setLength( mouseChange.x );
-                // -mouseChange.y is a Xenios EDIT
-                pan.add( cameraUp.copy( _this.camera.up ).setLength( -mouseChange.y ) );
+
+                if (_this.plane === 3) {
+                    // In 3D Mode Flip
+                    pan.copy( _eye ).cross( _this.camera.up ).setLength( -mouseChange.x );
+                    pan.add( cameraUp.copy( _this.camera.up ).setLength( mouseChange.y ) );
+                } else {
+                    pan.copy( _eye ).cross( _this.camera.up ).setLength( mouseChange.x );
+                    pan.add( cameraUp.copy( _this.camera.up ).setLength( -mouseChange.y ) );
+                }
+
+
                 
                 _this.camera.position.add( pan );
                 _this.target.add( pan );
@@ -406,6 +418,7 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
             _this.dispatchEvent( changeEvent );
             lastPosition.copy( _this.camera.position );
         }
+
 
         if (renderer !== null) {
             var v=this.normViewport;
@@ -822,8 +835,8 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
         removeeventlisteners();
         _this.enabled=false;
     };
-    
 
+    
     addeventlisteners();
     _this.handleResize();
 

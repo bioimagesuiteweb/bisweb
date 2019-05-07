@@ -25,6 +25,11 @@ const webutil=require('bis_webutil');
 const $=require('jquery');
 const bootbox=require('bootbox');
 const BisWebImage = require('bisweb_image');
+const THREE = require('three');
+
+const tempMatrix = new THREE.Matrix4();
+const tempMatrix2 = new THREE.Matrix4();
+
 
 /**
  *
@@ -356,9 +361,20 @@ class BaseViewerElement extends HTMLElement {
                     if ((vp.x1-vp.x0)>0.01 && (vp.y1-vp.y0>0.01) &&
                         subviewers[i].controls.update(this.internal.layoutcontroller.renderer)===true &&
                         i<numviewers)  {
+                        let cam=subviewers[i].camera;
+                        if (subviewers[i].controls.plane === 3) {
+                            // In 3D Mode Flip left-right
+                            tempMatrix.copy(cam.projectionMatrix);
+                            tempMatrix2.copy(cam.projectionMatrix);
+                            tempMatrix2.elements[0]=-tempMatrix2.elements[0];
+                            cam.projectionMatrix.copy(tempMatrix2);
+                        }
                         renderer.render( subviewers[i].scene,
                                          subviewers[i].camera);
                         subviewers[i].controls.enabled=true;
+                        if (subviewers[i].controls.plane === 3) {
+                            cam.projectionMatrix.copy(tempMatrix);
+                        }
                     } else {
                         subviewers[i].controls.enabled=false;
                     }
@@ -384,7 +400,7 @@ class BaseViewerElement extends HTMLElement {
         return 0;
     }
 
-    /** removes the colorscale */
+        /** removes the colorscale */
     clearcolorscale() {
 
         if (this.internal.simplemode)
