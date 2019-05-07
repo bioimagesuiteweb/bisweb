@@ -3,7 +3,7 @@ const bootbox = require('bootbox');
 const bisweb_panel = require('bisweb_panel.js');
 const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
-const util=require('bis_util');
+const util = require('bis_util');
 const bis_genericio = require('bis_genericio.js');
 const bisweb_matrixutils = require('bisweb_matrixutils.js');
 const bis_bidsutils = require('bis_bidsutils.js');
@@ -61,14 +61,14 @@ class FileTreePanel extends HTMLElement {
 
             let listElement = this.panel.getWidget();
             let biswebElementMenu = $(`<div class='bisweb-elements-menu'></div>`);
-            biswebElementMenu.css({'margin-top' : '15px'});
-            
+            biswebElementMenu.css({ 'margin-top': '15px' });
+
             let listContainer = $(`<div class='file-container biswebpanel2'></div>`);
-            listContainer.css({ 'height' : '100px', 'width': '100%' });
+            listContainer.css({ 'height': '100px', 'width': '100%' });
             listElement.append(listContainer);
             listElement.append($('<HR>'));
 
-            
+
             listElement.append(biswebElementMenu);
             this.makeStaticButtons(listElement);
 
@@ -111,7 +111,7 @@ class FileTreePanel extends HTMLElement {
                     this.openTagSettingPopover(node);
                 }
             },
-            'RenameTask' : {
+            'RenameTask': {
                 'separator_before': false,
                 'separator_after': false,
                 'label': 'Rename Task',
@@ -131,8 +131,8 @@ class FileTreePanel extends HTMLElement {
 
     importFilesFromDirectory(filename) {
 
-        getFileList(filename).then( (fileinfo) => {
-            if (fileinfo.files.length > 0) { 
+        getFileList(filename).then((fileinfo) => {
+            if (fileinfo.files.length > 0) {
                 console.log('contents', fileinfo);
                 let baseDir = formatBaseDirectory(filename, fileinfo.files);
                 this.updateFileTree(fileinfo.files, baseDir, fileinfo.type);
@@ -153,7 +153,7 @@ class FileTreePanel extends HTMLElement {
                 console.log('An error occured trying to parse the exported study file', filename, e);
             }
 
-            getFileList(parsedData.baseDirectory).then( (fileinfo) => {
+            getFileList(parsedData.baseDirectory).then((fileinfo) => {
                 console.log('contents', fileinfo);
                 let baseDir = formatBaseDirectory(parsedData.baseDirectory, fileinfo.files);
                 this.updateFileTree(fileinfo.files, baseDir, fileinfo.type);
@@ -169,8 +169,8 @@ class FileTreePanel extends HTMLElement {
      */
     updateFileTree(files, baseDirectory, type) {
 
-        if (bis_genericio.getPathSeparator() === '\\') 
-            baseDirectory= util.filenameWindowsToUnix(baseDirectory);
+        if (bis_genericio.getPathSeparator() === '\\')
+            baseDirectory = util.filenameWindowsToUnix(baseDirectory);
 
         this.baseDirectory = baseDirectory;
 
@@ -273,17 +273,17 @@ class FileTreePanel extends HTMLElement {
                 this.loadImageFromTree();
             });
 
-            let div=$('<div></div>');
+            let div = $('<div></div>');
             elementsDiv.append(div);
             div.append(tagSelectDiv);
-            
+
             elementsDiv.append(loadImageButton);
             elementsDiv.append(`<br><p class = "bisweb-file-import-label" style="font-size:80%; font-style:italic">Currently loaded — ${type}</p>`);
             elementsDiv.append($(`<label>Tag Selected Element:</label></br>`));
             elementsDiv.append(tagSelectDiv);
-            loadImageButton.css({'margin' : '10px'});
+            loadImageButton.css({ 'margin': '10px' });
             elementsDiv.append($('<HR>'));
-        
+
             this.renderedTagSelectMenu = true;
         } else {
             $('.bisweb-elements-menu').find('select').prop('disabled', 'disabled');
@@ -301,12 +301,12 @@ class FileTreePanel extends HTMLElement {
 
             for (let file of files) {
                 //trim the common directory name from the filtered out name
-                if (bis_genericio.getPathSeparator() === '\\') 
-                    file= util.filenameWindowsToUnix(file);
+                if (bis_genericio.getPathSeparator() === '\\')
+                    file = util.filenameWindowsToUnix(file);
 
                 let trimmedName = file.replace(baseDirectory, '');
                 let splitName = trimmedName.split('/');
-                if (splitName[0]==='') 
+                if (splitName[0] === '')
                     splitName.shift();
 
                 let index = 0, currentDirectory = fileTree, nextDirectory = null;
@@ -432,12 +432,12 @@ class FileTreePanel extends HTMLElement {
                 this.importFilesFromDirectory(f);
             },
         }, {
-            'title': 'Import study from directory',
-            'filters': 'DIRECTORY',
-            'suffix': 'DIRECTORY',
-            'save': false,
-            'serveronly' : true,
-        });
+                'title': 'Import study from directory',
+                'filters': 'DIRECTORY',
+                'suffix': 'DIRECTORY',
+                'save': false,
+                'serveronly': true,
+            });
 
         //Route study load and save through bis_webfileutil file callbacks
         let loadStudyJSONButton = bis_webfileutil.createFileButton({
@@ -453,7 +453,7 @@ class FileTreePanel extends HTMLElement {
                 ],
                 'suffix': 'study',
                 'save': false,
-        });
+            });
 
         let saveStudyButton = bis_webfileutil.createFileButton({
             'type': 'info',
@@ -471,13 +471,13 @@ class FileTreePanel extends HTMLElement {
             });
 
         let importTaskButton = bis_webfileutil.createFileButton({
-                'type' : 'info',
-                'name' : 'Import task file',
-                'callback' : (f) => {
-                    this.graphelement.chartInvokedFrom = 'task';
-                    this.loadStudyTaskData(f);
-                },
+            'type': 'info',
+            'name': 'Import task file',
+            'callback': (f) => {
+                this.graphelement.chartInvokedFrom = 'task';
+                this.loadStudyTaskData(f);
             },
+        },
             {
                 'title': 'Import task file',
                 'filters': [
@@ -487,28 +487,28 @@ class FileTreePanel extends HTMLElement {
                 'save': false,
             });
 
-        let clearTaskButton = bis_webutil.createbutton({ 'name' : 'Clear tasks', 'type' : 'primary' });
+        let clearTaskButton = bis_webutil.createbutton({ 'name': 'Clear tasks', 'type': 'primary' });
         clearTaskButton.on('click', () => {
             bootbox.confirm({
-                'message' : 'Clear loaded task data?',
-                'buttons' : {
-                    'confirm' : {
-                        'label' : 'Yes',
-                        'className' : 'btn-success'
+                'message': 'Clear loaded task data?',
+                'buttons': {
+                    'confirm': {
+                        'label': 'Yes',
+                        'className': 'btn-success'
                     },
                     'cancel': {
-                        'label' : 'No',
-                        'className' : 'btn-danger'
+                        'label': 'No',
+                        'className': 'btn-danger'
                     }
                 },
-                'callback' : (result) => {
+                'callback': (result) => {
                     if (result) { this.graphelement.taskdata = null; }
                 }
             });
             this.graphelement.taskdata = null;
         });
 
-        let plotTasksButton = bis_webutil.createbutton({ 'name' : 'Plot task charts', 'type' : 'info'});
+        let plotTasksButton = bis_webutil.createbutton({ 'name': 'Plot task charts', 'type': 'info' });
         plotTasksButton.on('click', () => {
             this.graphelement.chartInvokedFrom = 'task';
             this.parseTaskImagesFromTree();
@@ -547,11 +547,31 @@ class FileTreePanel extends HTMLElement {
 
 
         let handleRightClick = (data) => {
-            if (data.node.original.type === 'directory') {
-                this.toggleContextMenuLoadButtons(tree, 'off');
+            let tree = this.fileTree.jstree(true);
+            let existingTreeSettings = tree.settings.contextmenu.items;
+            let enabledButtons = { 'RenameTask': true };
+
+            console.log('node', tree.get_node(data.node.parent), data.node, existingTreeSettings);
+            //dual viewer applications have a 'load to viewer 1' and 'load to viewer 2' button instead of just one load
+            if (existingTreeSettings.Load) {
+                enabledButtons.Load = true;
             } else {
-                this.toggleContextMenuLoadButtons(tree, 'on');
+                enabledButtons.Viewer1 = true;
+                enabledButtons.Viewer2 = true;
             }
+
+            if (data.node.original.type === 'directory') {
+                if (enabledButtons.Load) { 
+                    enabledButtons.Load = false; 
+                } else { 
+                    enabledButtons.Viewer1 = false; 
+                    enabledButtons.Viewer2 = false;
+                }
+            } if (tree.get_node(data.node.parent).original.text !== 'func') {
+                enabledButtons.RenameTask = false;
+            }
+
+            this.toggleContextMenuLoadButtons(tree, enabledButtons);
         };
 
         let handleDblClick = () => {
@@ -691,10 +711,10 @@ class FileTreePanel extends HTMLElement {
                     for (let region of Object.keys(parsedRuns[run])) {
                         if (!taskNames[region]) { taskNames[region] = true; }
                         regions[region] = createArray(parsedRuns[run][region]);
-                    }    
+                    }
 
                     parsedRuns[run].parsedRegions = regions;
-                    tasks.push({ 'data': range, 'label': reformattedRun, 'regions' :  parsedData.runs[run]});
+                    tasks.push({ 'data': range, 'label': reformattedRun, 'regions': parsedData.runs[run] });
                 }
 
                 //array to designate that all the arrays are meant to be included while formatting data
@@ -703,13 +723,13 @@ class FileTreePanel extends HTMLElement {
 
                 //set the task range for the graph element to use in future images
                 let alphabetizedTaskNames = Object.keys(taskNames).sort();
-                let taskMatrixInfo = this.parseTaskMatrix(parsedRuns, alphabetizedTaskNames); 
+                let taskMatrixInfo = this.parseTaskMatrix(parsedRuns, alphabetizedTaskNames);
 
                 console.log('matrix', taskMatrixInfo.matrix);
                 let tr = parseInt(parsedData['TR']);
                 let stackedWaveform = bisweb_matrixutils.createStackedWaveform(taskMatrixInfo.matrix, tasks.length, tr, 2);
 
-                let taskObject = { 'formattedTasks' : tasks, 'rawTasks' : parsedData, 'matrix' : taskMatrixInfo.matrix, 'stackedWaveform' : stackedWaveform };
+                let taskObject = { 'formattedTasks': tasks, 'rawTasks': parsedData, 'matrix': taskMatrixInfo.matrix, 'stackedWaveform': stackedWaveform };
                 this.graphelement.taskdata = taskObject;
 
                 //matrixes are stacked on top of each other for each scanner run in alphabetical order, so slice them up to parse
@@ -717,7 +737,7 @@ class FileTreePanel extends HTMLElement {
 
                 let slicedMatrices = [], runLength = numericStackedWaveform.length / taskMatrixInfo.runs.length;
                 for (let i = 0; i < taskMatrixInfo.runs.length; i++) {
-                    let matrixSlice = numericStackedWaveform.slice( i * runLength, (i+1) * runLength );
+                    let matrixSlice = numericStackedWaveform.slice(i * runLength, (i + 1) * runLength);
                     slicedMatrices.push(matrixSlice);
                 }
 
@@ -740,17 +760,17 @@ class FileTreePanel extends HTMLElement {
                     //exclude plots of all zeroes
                     let includeArray = [];
                     for (let i = 0; i < taskCharts[key].length; i++)
-                    if (taskCharts[key][i].every( (element) => { return element === 0; })) {
-                        includeArray.push(0);
-                    } else {
-                        includeArray.push(1);
-                    }
+                        if (taskCharts[key][i].every((element) => { return element === 0; })) {
+                            includeArray.push(0);
+                        } else {
+                            includeArray.push(1);
+                        }
 
                     taskCharts[key] = this.graphelement.formatChartData(taskCharts[key], includeArray, taskChartLabelsArray, false, false);
                 }
 
                 taskCharts['block_chart'] = blockChart;
-                this.graphelement.createChart({ xaxisLabel: 'frame', yaxisLabel: 'On', isFrameChart : true, 'charts' : taskCharts, 'makeTaskChart' : false, 'displayChart' : 'block_chart', 'chartType' : 'line'});
+                this.graphelement.createChart({ xaxisLabel: 'frame', yaxisLabel: 'On', isFrameChart: true, 'charts': taskCharts, 'makeTaskChart': false, 'displayChart': 'block_chart', 'chartType': 'line' });
             } catch (e) {
                 console.log('An error occured while parsing the task file', e);
             }
@@ -760,12 +780,12 @@ class FileTreePanel extends HTMLElement {
 
             if (Array.isArray(entry)) {
                 let entryArray = [];
-                for (let item of entry) 
+                for (let item of entry)
                     entryArray.push(parseEntry(item));
-                
+
                 return entryArray;
             }
-            
+
             let range = entry.split('-');
             for (let i = 0; i < range.length; i++) { range[i] = parseInt(range[i]); }
 
@@ -817,7 +837,7 @@ class FileTreePanel extends HTMLElement {
 
     parseTaskMatrix(taskdata, taskNames) {
         let taskMatrix = new BiswebMatrix();
-        let cols = taskNames.length; 
+        let cols = taskNames.length;
 
         let runNames = Object.keys(taskdata);
         let randomRun = taskdata[runNames[0]].parsedRegions;
@@ -825,7 +845,7 @@ class FileTreePanel extends HTMLElement {
         let rows = numRuns * runLength; // runs get appended as extra rows, so there should be a set of rows for every run
 
         //sort run names so tasks are created in order
-        runNames.sort( (a, b) => {
+        runNames.sort((a, b) => {
             let aIndex = a.split('_')[1], bIndex = b.split('_')[1];
             if (aIndex && !bIndex) { return a; }
             if (bIndex && !aIndex) { return b; }
@@ -835,8 +855,8 @@ class FileTreePanel extends HTMLElement {
 
         taskMatrix.allocate(rows, cols);
         let currentRun;
-        for (let i = 0 ; i < rows; i++) {
-            currentRun = runNames[Math.floor(i / runLength)]; 
+        for (let i = 0; i < rows; i++) {
+            currentRun = runNames[Math.floor(i / runLength)];
             for (let j = 0; j < cols; j++) {
                 //some runs will not have every task defined. in that case just set the entry in the appropriate col to 0;
                 let taskArray = taskdata[currentRun].parsedRegions[taskNames[j]];
@@ -845,7 +865,7 @@ class FileTreePanel extends HTMLElement {
             }
         }
 
-        return  { 'matrix' : taskMatrix, 'runs' : runNames };
+        return { 'matrix': taskMatrix, 'runs': runNames };
     }
 
     /**
@@ -855,34 +875,34 @@ class FileTreePanel extends HTMLElement {
      * @param {String} filepath - The path to save the file to. 
      */
     exportStudy(filepath) {
-        
-        let reconstructedTree = this.parseTreeToJSON();
-        
-        console.log('Base Directory', this.baseDirectory,filepath);
 
-        let base=this.baseDirectory;
-        if (bis_genericio.getPathSeparator() === '\\') 
-            base= util.filenameUnixToWindows(base);
-        
+        let reconstructedTree = this.parseTreeToJSON();
+
+        console.log('Base Directory', this.baseDirectory, filepath);
+
+        let base = this.baseDirectory;
+        if (bis_genericio.getPathSeparator() === '\\')
+            base = util.filenameUnixToWindows(base);
+
         bis_genericio.getFileStats(base).then((stats) => {
-            
+
             let dateCreated = new Date(stats.birthtimeMs);
             let treeMetadataContainer = {
                 'baseDirectory': this.baseDirectory,
                 'dateCreated': parseDate(dateCreated),
                 'contents': reconstructedTree
             };
-            
-            let stringifiedFiles = JSON.stringify(treeMetadataContainer,null,2);
+
+            let stringifiedFiles = JSON.stringify(treeMetadataContainer, null, 2);
             //set the correct file extension if it isn't set yet
             let splitPath = filepath.split('.');
             if (splitPath.length < 2 || splitPath[1] !== 'STUDY' || splitPath[1] !== 'study') {
                 splitPath[1] = 'study';
             }
-            
+
             filepath = splitPath.join('.');
             bis_genericio.write(filepath, stringifiedFiles, false);
-        }).catch( (e) => {
+        }).catch((e) => {
             console.log('an error occured while saving to disk', e);
             bis_webutil.createAlert('An error occured while saving the study files to disk.', false);
         });
@@ -898,38 +918,38 @@ class FileTreePanel extends HTMLElement {
 
         checkForDuplicateTags(reconstructedTree);
 
-        if (duplicateTags) { 
+        if (duplicateTags) {
             bis_webutil.createAlert('Some files in the study have the same tag, e.g. there might be two tagged as \'task_2\'. Please correct this before continuing.', true);
         }
 
-        if (this.viewer.getobjectmap() === null) { 
+        if (this.viewer.getobjectmap() === null) {
             bis_webutil.createAlert('Error: Cannot create VOI map of task regions without painted regions. Please create an overlay first (e.g. using the paint tool)', true); return;
         } else if (this.graphelement.taskdata === null) {
             bis_webutil.createAlert('Error: Parsing task regions requires information about runs and task timings and durations. Please load a task file using the \'Import task file\' button.', true); return;
         }
 
         let imgdata = {};
-        let promiseArray =  [];
+        let promiseArray = [];
         for (let key of Object.keys(taglist)) {
-            let img = new BiswebImage(); 
+            let img = new BiswebImage();
             promiseArray.push(img.load(this.constructNodeName(taglist[key])));
             imgdata[key] = img;
         }
 
-        bis_webutil.createAlert('Reading all runs marked as \'task\'; this may take a while!', false, 0, 1000000000, { 'makeLoadSpinner' : true });
-        Promise.all(promiseArray).then( () => {
+        bis_webutil.createAlert('Reading all runs marked as \'task\'; this may take a while!', false, 0, 1000000000, { 'makeLoadSpinner': true });
+        Promise.all(promiseArray).then(() => {
             bis_webutil.dismissAlerts();
 
             //safety checks before beginning the long process of loading all the images
             console.log('overlay', this.viewer.getobjectmap());
             this.graphelement.parsePaintedAreaAverageTimeSeries(this.viewer, imgdata);
         });
-        
+
         //Checks for duplicate tags by filling a dictionary with the tags seen so far. If it encounters a duplicate it returns false.
         function checkForDuplicateTags(node) {
-            
+
             for (let item of node) {
-                if (item.tag) { 
+                if (item.tag) {
                     if (!taglist[item.tag]) { taglist[item.tag] = item; }
                     else if (item.tag.includes('task') || item.tag.includes('rest')) { duplicateTags = true; return; }
                 }
@@ -950,7 +970,7 @@ class FileTreePanel extends HTMLElement {
         let rawTree = this.fileTree.jstree(true);
         let rawTreeJSON = rawTree.get_json('#');
         let reconstructedTree = [];
-        
+
         //console.log('rawTree', rawTree);
         for (let item of rawTreeJSON) {
             fillTreeNode(rawTree, item, reconstructedTree);
@@ -966,7 +986,7 @@ class FileTreePanel extends HTMLElement {
      * @returns Source and destination directory.
      */
     parseSourceAndDestination(data) {
-       
+
         //old_instance seems to be a copy of new_instance? i.e. they are exactly the same tree
         //so making the name is a little more complicated than just calling get_path twice
         let srcName = this.baseDirectory + '/' + data.old_instance.get_path(data.old_parent, '/', false) + '/' + data.node.text;
@@ -1014,14 +1034,14 @@ class FileTreePanel extends HTMLElement {
     }
 
     openTaskRenamingModal() {
-        
+
         let tree = this.fileTree.jstree(true);
         bootbox.prompt({
-            'size' : 'small',
-            'title' : 'Set task name', 
-            'message' : 'Enter the name for the chosen task(s). Note that you can select multiple tasks by holding shift or ctrl.',
-            'show' : true,
-            'callback' : (newName) => {
+            'size': 'small',
+            'title': 'Set task name',
+            'message': 'Enter the name for the chosen task(s). Note that you can select multiple tasks by holding shift or ctrl.',
+            'show': true,
+            'callback': (newName) => {
                 //get all selected nodes to rename as a group
                 let selectedNodes = tree.get_selected(true), movedFiles = [];
                 console.log('selected nodes', selectedNodes);
@@ -1035,7 +1055,7 @@ class FileTreePanel extends HTMLElement {
                     } else if (splitName.length >= 3 && splitName[2].includes('task')) {
                         taskName = splitName[2];
                         index = 2;
-                    } 
+                    }
 
                     if (taskName) {
                         //split off the second part of the task tag to change it
@@ -1044,14 +1064,14 @@ class FileTreePanel extends HTMLElement {
                         splitName[index] = splitTag.join('-');
                         let reconstructedName = splitName.join('_');
 
-                        node.original.text = reconstructedName; 
+                        node.original.text = reconstructedName;
                         node.text = reconstructedName;
 
                         //move the file on disk 
                         let basePath = tree.get_path(node.parent, '/');
                         let srcFile = this.baseDirectory + '/' + basePath + '/' + originalName, dstFile = this.baseDirectory + '/' + basePath + '/' + reconstructedName;
                         bis_genericio.moveDirectory(srcFile + '&&' + dstFile);
-                        movedFiles.push({ 'old' : srcFile, 'new' : dstFile });
+                        movedFiles.push({ 'old': srcFile, 'new': dstFile });
                     }
                 }
 
@@ -1087,9 +1107,19 @@ class FileTreePanel extends HTMLElement {
     }
 
 
-    toggleContextMenuLoadButtons(tree, toggle) {
-        let existingTreeSettings = tree.jstree(true).settings.contextmenu.items;
-        if (toggle === 'on') {
+    /**
+     * Changes the context menu buttons (right-click menu) for the file tree currently being displayed according to the keys specified in settings. 
+     * 
+     * @param {jstree} tree - The file tree that is currently displayed on screen.
+     * @param {Object} settings - An object containing the list of settings to set or unset. These keys must be identical to the keys designated for the buttons in the contextmenu.
+     */
+    toggleContextMenuLoadButtons(tree, settings) {
+        let existingTreeSettings = tree.settings.contextmenu.items;
+        for (let key of Object.keys(settings)) {
+            existingTreeSettings[key]._disabled = !settings[key]; //settings are provided as 'which ones should be enabled'
+        }
+        
+        /*if (toggle === 'on') {
             if (existingTreeSettings.Load) {
                 existingTreeSettings.Load._disabled = false;
             } else {
@@ -1103,7 +1133,7 @@ class FileTreePanel extends HTMLElement {
                 existingTreeSettings.Viewer1._disabled = true;
                 existingTreeSettings.Viewer2._disabled = true;
             }
-        }
+        }*/
     }
 
     /**
@@ -1116,9 +1146,9 @@ class FileTreePanel extends HTMLElement {
         let name = '', currentNode = this.currentlySelectedNode;
         let tree = this.panel.widget.find('.file-container').jstree();
 
-        if (node) { 
+        if (node) {
             currentNode = tree.get_node(node.id);
-        }  
+        }
 
         while (currentNode.parent) {
             name = '/' + currentNode.text + name;
@@ -1128,9 +1158,9 @@ class FileTreePanel extends HTMLElement {
         }
 
         name = this.stripTaskName(name);
-        let finalname=this.baseDirectory + name;
-        if (bis_genericio.getPathSeparator() === '\\') 
-            finalname= util.filenameUnixToWindows(finalname);
+        let finalname = this.baseDirectory + name;
+        if (bis_genericio.getPathSeparator() === '\\')
+            finalname = util.filenameUnixToWindows(finalname);
 
         return finalname;
 
@@ -1167,7 +1197,7 @@ class FileTreePanel extends HTMLElement {
             <option value='2danat'>2DAnat</option>
         </select>`);
 
-        if (options.enabled) { 
+        if (options.enabled) {
             tagSelectMenu.prop('disabled', '');
         }
 
@@ -1195,7 +1225,7 @@ class FileTreePanel extends HTMLElement {
             //tag select menus can be created by popovers or statically in the file bar
             //in order for one to change when the other does, they should emit and listen to each other's events
             let tagChangedEvent = new CustomEvent('bisweb.tag.changed', { 'bubbles': true });
-            document.dispatchEvent(tagChangedEvent);     
+            document.dispatchEvent(tagChangedEvent);
         });
 
         return tagSelectMenu;
@@ -1213,13 +1243,13 @@ class FileTreePanel extends HTMLElement {
                 </input>`);
 
             //create secondary menu to select task number
-            let box = bootbox.alert({ 
-                title : 'Enter a task number', 
-                message : 'Please enter the task number.',
-                size : 'small',
+            let box = bootbox.alert({
+                title: 'Enter a task number',
+                message: 'Please enter the task number.',
+                size: 'small',
                 callback: () => {
                     //textbox input should override if it's different 
-                    let result =  box.find('.tag-input')[0].value || box.find('.bootstrap-task-slider').val();
+                    let result = box.find('.tag-input')[0].value || box.find('.bootstrap-task-slider').val();
 
                     let tagName = 'task_' + result, displayedName = '(' + tagName + ')';
                     node.original.tag = tagName;
@@ -1239,7 +1269,7 @@ class FileTreePanel extends HTMLElement {
                 }
             });
 
-            box.init( () => {
+            box.init(() => {
                 box.find('.modal-body').append(sliderInput);
                 box.find('.bootstrap-task-slider').slider({
                     'formatter': (value) => {
@@ -1247,10 +1277,10 @@ class FileTreePanel extends HTMLElement {
                     }
                 });
 
-                box.find('.slider.slider-horizontal').css('width', '75%');                    
+                box.find('.slider.slider-horizontal').css('width', '75%');
                 let numberInput = $(`<input type='number' class='form-control-sm tag-input' style='float: right; display: inline; width: 20%;'>`);
                 box.find('.modal-body').append(numberInput);
-                
+
                 numberInput.on('keyup change', () => {
                     console.log('val', numberInput.val());
                     let val = Math.abs(parseInt(numberInput.val(), 10) || minSliderValue);
@@ -1268,23 +1298,23 @@ class FileTreePanel extends HTMLElement {
         }
 
         function clearTagFromTree(node, panel) {
-             //trim parenthetical tag from name
-             let splitName = node.text.split(/^\(task_\d+\)/);
-             console.log('split name', splitName);
-             if (splitName.length > 1) {
+            //trim parenthetical tag from name
+            let splitName = node.text.split(/^\(task_\d+\)/);
+            console.log('split name', splitName);
+            if (splitName.length > 1) {
                 let trimmedName = splitName.slice(1).join('');
                 node.original.text = trimmedName;
                 node.text = node.original.text;
 
                 console.log('node', node);
-   
+
                 //update name displayed on file tree panel
                 let tree = panel.widget.find('.file-container').jstree();
                 tree.redraw(true);
 
                 //dismiss popover manually 
                 $('html').find('.popover').popover('hide');
-             }
+            }
         }
     }
 
@@ -1366,10 +1396,10 @@ let parseDate = (date) => {
 let readParamsFile = (sourceDirectory) => {
 
     //find the parameters file in the source directory
-    return new Promise( (resolve, reject) => {
-        bis_genericio.getMatchingFiles(sourceDirectory + '/+(settings|dicom_job)*.json').then( (paramFile) => {
+    return new Promise((resolve, reject) => {
+        bis_genericio.getMatchingFiles(sourceDirectory + '/+(settings|dicom_job)*.json').then((paramFile) => {
             if (paramFile[0]) {
-                bis_genericio.read(paramFile[0]).then( (obj) => {
+                bis_genericio.read(paramFile[0]).then((obj) => {
                     let jsonData;
                     try {
                         jsonData = JSON.parse(obj.data);
@@ -1382,7 +1412,7 @@ let readParamsFile = (sourceDirectory) => {
             } else {
                 resolve('no params file');
             }
-        }).catch( (e) => {
+        }).catch((e) => {
             reject(e);
         });
     });
@@ -1396,7 +1426,7 @@ let readParamsFile = (sourceDirectory) => {
  * @returns A promise resolving the study files
  */
 let getFileList = (filename) => {
-    return new Promise( (resolve, reject) => {
+    return new Promise((resolve, reject) => {
         //filter filename before calling getMatchingFiles
         let queryString = filename;
         if (queryString === '') {
@@ -1415,15 +1445,15 @@ let getFileList = (filename) => {
             bis_genericio.getMatchingFiles(queryString).then((files) => {
 
                 if (files.length > 0) {
-                    resolve({ 'files' : files, 'type' : type });
+                    resolve({ 'files': files, 'type': type });
                 }
 
                 queryString = filename + '/**/*.nii*';
-                bis_genericio.getMatchingFiles(queryString).then( (newfiles) => {
-                    resolve({ 'files' : newfiles, 'type' : type });
+                bis_genericio.getMatchingFiles(queryString).then((newfiles) => {
+                    resolve({ 'files': newfiles, 'type': type });
                 });
             });
-        }).catch( (e) => { reject(e); });
+        }).catch((e) => { reject(e); });
     });
 };
 
@@ -1440,14 +1470,14 @@ let formatBaseDirectory = (baseDirectory, contents) => {
     if (!formattedBase) {
         //look for sourcedata in one of the entries in contents (these should be the full path)
         console.log('cannot find sourcedata in', baseDirectory, contents);
-        let file = contents[0]; 
+        let file = contents[0];
         formattedBase = findBaseDirectory(file);
     }
 
     console.log('formatted base', formattedBase);
     return formattedBase;
 
-    function findBaseDirectory(directory) { 
+    function findBaseDirectory(directory) {
         let splitBase = directory.split('/'), formattedBase = null;
         for (let i = 0; i < splitBase.length; i++) {
             if (splitBase[i] === 'sourcedata') {
