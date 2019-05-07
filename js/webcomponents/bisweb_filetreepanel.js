@@ -1040,48 +1040,59 @@ class FileTreePanel extends HTMLElement {
     openTaskRenamingModal() {
 
         let tree = this.fileTree.jstree(true);
+        let confirmName;
+        let renameFn = (name) => {
+            //get all selected nodes to rename as a group
+            let selectedNodes = tree.get_selected(true), movedFiles = [];
+            console.log('selected nodes', selectedNodes);
+
+            for (let node of selectedNodes) {
+                let originalName = node.text, splitName = node.text.split('_'), taskName = null, index;
+                //task names should be the second or third bullet, so if it's not there then we know not to change them
+                if (splitName.length >= 2 && splitName[1].includes('task')) {
+                    taskName = splitName[1];
+                    index = 1;
+                } else if (splitName.length >= 3 && splitName[2].includes('task')) {
+                    taskName = splitName[2];
+                    index = 2;
+                }
+
+                if (taskName) {
+                    //split off the second part of the task tag to change it
+                    let splitTag = taskName.split('-');
+                    splitTag[1] = name;
+                    splitName[index] = splitTag.join('-');
+                    let reconstructedName = splitName.join('_');
+
+                    node.original.text = reconstructedName;
+                    node.text = reconstructedName;
+
+                    //move the file on disk 
+                    let basePath = tree.get_path(node.parent, '/');
+                    let srcFile = this.baseDirectory + '/' + basePath + '/' + originalName, dstFile = this.baseDirectory + '/' + basePath + '/' + reconstructedName;
+                    bis_genericio.moveDirectory(srcFile + '&&' + dstFile);
+                    movedFiles.push({ 'old': srcFile, 'new': dstFile });
+                }
+            }
+
+            tree.redraw(true);
+
+            bis_bidsutils.syncSupportingFiles(movedFiles, this.baseDirectory);
+       };
+
         bootbox.prompt({
             'size': 'small',
             'title': 'Set task name',
             'message': 'Enter the name for the chosen task(s). Note that you can select multiple tasks by holding shift or ctrl.',
             'show': true,
             'callback': (newName) => {
-                //get all selected nodes to rename as a group
-                let selectedNodes = tree.get_selected(true), movedFiles = [];
-                console.log('selected nodes', selectedNodes);
-
-                for (let node of selectedNodes) {
-                    let originalName = node.text, splitName = node.text.split('_'), taskName = null, index;
-                    //task names should be the second or third bullet, so if it's not there then we know not to change them
-                    if (splitName.length >= 2 && splitName[1].includes('task')) {
-                        taskName = splitName[1];
-                        index = 1;
-                    } else if (splitName.length >= 3 && splitName[2].includes('task')) {
-                        taskName = splitName[2];
-                        index = 2;
-                    }
-
-                    if (taskName) {
-                        //split off the second part of the task tag to change it
-                        let splitTag = taskName.split('-');
-                        splitTag[1] = newName;
-                        splitName[index] = splitTag.join('-');
-                        let reconstructedName = splitName.join('_');
-
-                        node.original.text = reconstructedName;
-                        node.text = reconstructedName;
-
-                        //move the file on disk 
-                        let basePath = tree.get_path(node.parent, '/');
-                        let srcFile = this.baseDirectory + '/' + basePath + '/' + originalName, dstFile = this.baseDirectory + '/' + basePath + '/' + reconstructedName;
-                        bis_genericio.moveDirectory(srcFile + '&&' + dstFile);
-                        movedFiles.push({ 'old': srcFile, 'new': dstFile });
-                    }
-                }
-
-                tree.redraw(true);
-
-                bis_bidsutils.syncSupportingFiles(movedFiles, this.baseDirectory);
+                confirmName = newName;
+                bootbox.confirm({
+                    'size' : 'small',
+                    'title' : 'Confirm task rename',
+                    'message' : 'Rename task to ' + confirmName + '?',
+                    'callback' : renameFn.bind(this, newName)
+                });
             }
         });
     }
