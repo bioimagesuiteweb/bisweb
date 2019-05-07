@@ -56,6 +56,7 @@ class FileTreePanel extends HTMLElement {
                 width: '400',
                 dual: true,
                 mode: 'sidebar',
+                helpButton: true
             });
 
 
@@ -71,6 +72,8 @@ class FileTreePanel extends HTMLElement {
 
             listElement.append(biswebElementMenu);
             this.makeStaticButtons(listElement);
+
+            this.setHelpModalMessage();
 
             //https://stackoverflow.com/questions/11703093/how-to-dismiss-a-twitter-bootstrap-popover-by-clicking-outside
             this.dismissPopoverFn = (e) => {
@@ -120,6 +123,7 @@ class FileTreePanel extends HTMLElement {
                 }
             }
         };
+
     }
 
     /**
@@ -1341,6 +1345,18 @@ class FileTreePanel extends HTMLElement {
     getPanelWidth() {
         console.log('width', parseInt(this.panel.getWidget().css('width'), 10));
         return parseInt(this.panel.getWidget().css('width'), 10);
+    }
+
+    setHelpModalMessage() {
+        this.panel.setHelpModalMessage(`
+            This panel can help to load and display a variety of studies, especially DICOM and Bruker.
+            <br><br>
+            To load a study from a set of nested directories, use the 'Import study from directory' button. Note that this will look for any files that are suffixed with .nii under the chosen directory, and will not work with raw image files (BioImage Suite is currently capable of converting DICOM and Bruker image sets, look for those tabs in the right sidebar).
+            <br><br>
+            Import and export study deal with a special kind of metadata file marked with '.study'. 'Export study' will create one of these files from a file tree that has already been loaded and 'Import study' will load one of these study files into the panel. Any information added to the study will be conserved in the .study file. 
+            <br><br>
+            'Import task file' and 'Clear tasks' and 'Plot task charts' deal with loading timing charts for studies, see <a href="https://bioimagesuiteweb.github.io/bisweb-manual">the manual</a> for more details.
+        `);
     }
 
 }
