@@ -121,6 +121,14 @@ class FileTreePanel extends HTMLElement {
                 'action': (node) => {
                     this.openTaskRenamingModal(node);
                 }
+            },
+            'StudySettings' : {
+                'separator_before': false,
+                'separator_after': false,
+                'label': 'Show Study Settings',
+                'action': () => {
+                    this.showStudySettingsModal();
+                }
             }
         };
 
@@ -555,7 +563,7 @@ class FileTreePanel extends HTMLElement {
             let existingTreeSettings = tree.settings.contextmenu.items;
             let enabledButtons = { 'RenameTask': true };
 
-            console.log('node', tree.get_node(data.node.parent), data.node, existingTreeSettings);
+            //console.log('node', tree.get_node(data.node.parent), data.node, existingTreeSettings);
             //dual viewer applications have a 'load to viewer 1' and 'load to viewer 2' button instead of just one load
             if (existingTreeSettings.Load) {
                 enabledButtons.Load = true;
@@ -1359,6 +1367,7 @@ class FileTreePanel extends HTMLElement {
         return parseInt(this.panel.getWidget().css('width'), 10);
     }
 
+    /** Sets the help modal message for the file tree panel. */
     setHelpModalMessage() {
         this.panel.setHelpModalMessage(`
             This panel can help to load and display a variety of studies, especially DICOM and Bruker.
@@ -1372,6 +1381,33 @@ class FileTreePanel extends HTMLElement {
             <b>Important Note</b>Certain operations with the file tree panel will modify files on disk, e.g. the 'Rename task' option in the right-click menu will change the name of the image file's supporting files and will change the name in dicom_job_info.json. 
             To ensure these files save properly, make sure the relevant files are not open on your machine, i.e. are not open in a file editor or other such software. 
         `);
+    }
+
+    /** Loads dicom_job_info.json (or whatever the most recent settings file is) and displays it. */
+    showStudySettingsModal() {
+        let settingsFilename = this.baseDirectory + '/dicom_job_info.json';
+        bis_bidsutils.getSettingsFile(settingsFilename).then( (settings) => {
+            let settingsString;
+            try {
+                settingsString = JSON.stringify(settings, null, 2);
+            } catch(e) {
+                console.log('An error occured while trying to display settings', e);
+            }
+
+            let settingsModal = bootbox.alert({
+               'size' : 'large',
+               'title' : 'DICOM Blob Settings',
+               'message' : `<pre>${settingsString}</pre>`,
+               'backdrop' : true,
+               'scrollable' : true,
+            });
+
+
+            settingsModal.on('shown.bs.modal', () => {
+                console.log('modal shown', settingsModal);
+                $(settingsModal).scrollTop(0);
+            });
+        });
     }
 
 }

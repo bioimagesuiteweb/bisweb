@@ -618,5 +618,6 @@ let getJobInfo = () => {
 
 module.exports = {
     dicom2BIDS: dicom2BIDS,
-    syncSupportingFiles : syncSupportingFiles
+    syncSupportingFiles : syncSupportingFiles,
+    getSettingsFile : getSettingsFile
 };
