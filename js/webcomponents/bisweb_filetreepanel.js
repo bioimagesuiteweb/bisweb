@@ -571,7 +571,8 @@ class FileTreePanel extends HTMLElement {
                     enabledButtons.Viewer1 = false; 
                     enabledButtons.Viewer2 = false;
                 }
-            } if (tree.get_node(data.node.parent).original.text !== 'func') {
+            } if (data.node.parent === '#' || tree.get_node(data.node.parent).original.text !== 'func') {
+                //'#' is the parent of the top level node in the tree
                 enabledButtons.RenameTask = false;
             }
 
@@ -1367,6 +1368,9 @@ class FileTreePanel extends HTMLElement {
             Import and export study deal with a special kind of metadata file marked with '.study'. 'Export study' will create one of these files from a file tree that has already been loaded and 'Import study' will load one of these study files into the panel. Any information added to the study will be conserved in the .study file. 
             <br><br>
             'Import task file' and 'Clear tasks' and 'Plot task charts' deal with loading timing charts for studies, see <a href="https://bioimagesuiteweb.github.io/bisweb-manual">the manual</a> for more details.
+            <br><br>
+            <b>Important Note</b>Certain operations with the file tree panel will modify files on disk, e.g. the 'Rename task' option in the right-click menu will change the name of the image file's supporting files and will change the name in dicom_job_info.json. 
+            To ensure these files save properly, make sure the relevant files are not open on your machine, i.e. are not open in a file editor or other such software. 
         `);
     }
 
