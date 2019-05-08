@@ -1,0 +1,79 @@
+#-----------------------------------------------
+#
+# All Jobs
+#
+all : Smooth Threshold Combine 
+
+#-----------------------------------------------
+#
+# execute job Smooth
+#
+Smooth : ../../../../Desktop/pipeline_output/MNI_2mm_orig_smoothed.nii.gz ../../../../Desktop/pipeline_output/MNI_2mm_resliced_smoothed.nii.gz ../../../../Desktop/pipeline_output/MNI_2mm_scaled_smoothed.nii.gz 
+
+#-----------------------------------------------
+#
+# execute job Threshold
+#
+Threshold : ../../../../Desktop/pipeline_output/thresholded_MNI_2mm_orig_smoothed.nii.gz ../../../../Desktop/pipeline_output/thresholded_MNI_2mm_resliced_smoothed.nii.gz ../../../../Desktop/pipeline_output/thresholded_MNI_2mm_scaled_smoothed.nii.gz 
+
+#-----------------------------------------------
+#
+# execute job Combine
+#
+Combine : ../../../../Desktop/pipeline_output/output_out3_0_combined.nii.gz ../../../../Desktop/pipeline_output/output_out3_1_combined.nii.gz ../../../../Desktop/pipeline_output/output_out3_2_combined.nii.gz 
+
+#-----------------------------------------------
+#
+# Create individual output files
+#
+../../../../Desktop/pipeline_output/MNI_2mm_orig_smoothed.nii.gz : MNI_2mm_orig.nii.gz
+	biswebnode smoothImage --debug true --input MNI_2mm_orig.nii.gz --output ../../../../Desktop/pipeline_output/MNI_2mm_orig_smoothed.nii.gz > ../../../../Desktop/pipeline_output/MNI_2mm_orig_smoothed.nii.gz__results.txt 2>&1 
+
+../../../../Desktop/pipeline_output/MNI_2mm_resliced_smoothed.nii.gz : MNI_2mm_resliced.nii.gz
+	biswebnode smoothImage --debug true --input MNI_2mm_resliced.nii.gz --output ../../../../Desktop/pipeline_output/MNI_2mm_resliced_smoothed.nii.gz > ../../../../Desktop/pipeline_output/MNI_2mm_resliced_smoothed.nii.gz__results.txt 2>&1 
+
+../../../../Desktop/pipeline_output/MNI_2mm_scaled_smoothed.nii.gz : MNI_2mm_scaled.nii.gz
+	biswebnode smoothImage --debug true --input MNI_2mm_scaled.nii.gz --output ../../../../Desktop/pipeline_output/MNI_2mm_scaled_smoothed.nii.gz > ../../../../Desktop/pipeline_output/MNI_2mm_scaled_smoothed.nii.gz__results.txt 2>&1 
+
+../../../../Desktop/pipeline_output/thresholded_MNI_2mm_orig_smoothed.nii.gz : ../../../../Desktop/pipeline_output/MNI_2mm_orig_smoothed.nii.gz t.param
+	biswebnode thresholdImage --input ../../../../Desktop/pipeline_output/MNI_2mm_orig_smoothed.nii.gz --output ../../../../Desktop/pipeline_output/thresholded_MNI_2mm_orig_smoothed.nii.gz --paramfile t.param > ../../../../Desktop/pipeline_output/thresholded_MNI_2mm_orig_smoothed.nii.gz__results.txt 2>&1 
+
+../../../../Desktop/pipeline_output/thresholded_MNI_2mm_resliced_smoothed.nii.gz : ../../../../Desktop/pipeline_output/MNI_2mm_resliced_smoothed.nii.gz t.param
+	biswebnode thresholdImage --input ../../../../Desktop/pipeline_output/MNI_2mm_resliced_smoothed.nii.gz --output ../../../../Desktop/pipeline_output/thresholded_MNI_2mm_resliced_smoothed.nii.gz --paramfile t.param > ../../../../Desktop/pipeline_output/thresholded_MNI_2mm_resliced_smoothed.nii.gz__results.txt 2>&1 
+
+../../../../Desktop/pipeline_output/thresholded_MNI_2mm_scaled_smoothed.nii.gz : ../../../../Desktop/pipeline_output/MNI_2mm_scaled_smoothed.nii.gz t.param
+	biswebnode thresholdImage --input ../../../../Desktop/pipeline_output/MNI_2mm_scaled_smoothed.nii.gz --output ../../../../Desktop/pipeline_output/thresholded_MNI_2mm_scaled_smoothed.nii.gz --paramfile t.param > ../../../../Desktop/pipeline_output/thresholded_MNI_2mm_scaled_smoothed.nii.gz__results.txt 2>&1 
+
+../../../../Desktop/pipeline_output/output_out3_0_combined.nii.gz : 
+	biswebnode concatenateimages --input #out2# --output ../../../../Desktop/pipeline_output/output_out3_0_combined.nii.gz > ../../../../Desktop/pipeline_output/output_out3_0_combined.nii.gz__results.txt 2>&1 
+
+../../../../Desktop/pipeline_output/output_out3_1_combined.nii.gz : 
+	biswebnode concatenateimages --input #out2# --output ../../../../Desktop/pipeline_output/output_out3_1_combined.nii.gz > ../../../../Desktop/pipeline_output/output_out3_1_combined.nii.gz__results.txt 2>&1 
+
+../../../../Desktop/pipeline_output/output_out3_2_combined.nii.gz : 
+	biswebnode concatenateimages --input #out2# --output ../../../../Desktop/pipeline_output/output_out3_2_combined.nii.gz > ../../../../Desktop/pipeline_output/output_out3_2_combined.nii.gz__results.txt 2>&1 
+
+#----------------------------------- 
+# clean all outputs
+#
+clean:
+	 rimraf  ../../../../Desktop/pipeline_output/MNI_2mm_orig_smoothed.nii.gz ../../../../Desktop/pipeline_output/MNI_2mm_orig_smoothed.nii.gz__results.txt ../../../../Desktop/pipeline_output/MNI_2mm_resliced_smoothed.nii.gz ../../../../Desktop/pipeline_output/MNI_2mm_resliced_smoothed.nii.gz__results.txt ../../../../Desktop/pipeline_output/MNI_2mm_scaled_smoothed.nii.gz ../../../../Desktop/pipeline_output/MNI_2mm_scaled_smoothed.nii.gz__results.txt ../../../../Desktop/pipeline_output/thresholded_MNI_2mm_orig_smoothed.nii.gz ../../../../Desktop/pipeline_output/thresholded_MNI_2mm_orig_smoothed.nii.gz__results.txt ../../../../Desktop/pipeline_output/thresholded_MNI_2mm_resliced_smoothed.nii.gz ../../../../Desktop/pipeline_output/thresholded_MNI_2mm_resliced_smoothed.nii.gz__results.txt ../../../../Desktop/pipeline_output/thresholded_MNI_2mm_scaled_smoothed.nii.gz ../../../../Desktop/pipeline_output/thresholded_MNI_2mm_scaled_smoothed.nii.gz__results.txt ../../../../Desktop/pipeline_output/output_out3_0_combined.nii.gz ../../../../Desktop/pipeline_output/output_out3_0_combined.nii.gz__results.txt ../../../../Desktop/pipeline_output/output_out3_1_combined.nii.gz ../../../../Desktop/pipeline_output/output_out3_1_combined.nii.gz__results.txt ../../../../Desktop/pipeline_output/output_out3_2_combined.nii.gz ../../../../Desktop/pipeline_output/output_out3_2_combined.nii.gz__results.txt
+
+
+#----------------------------------- 
+# log output files
+#
+log : 
+	 @echo ''; echo ''; echo ''; echo '{'; echo '    "Outputs": ['; echo '        {'; echo '            "name": "Smooth",'; echo '            "filenames": ['; echo '                "../../../../Desktop/pipeline_output/MNI_2mm_orig_smoothed.nii.gz",'; echo '                "../../../../Desktop/pipeline_output/MNI_2mm_resliced_smoothed.nii.gz",'; echo '                "../../../../Desktop/pipeline_output/MNI_2mm_scaled_smoothed.nii.gz"'; echo '            ]'; echo '        },'; echo '        {'; echo '            "name": "Threshold",'; echo '            "filenames": ['; echo '                "../../../../Desktop/pipeline_output/thresholded_MNI_2mm_orig_smoothed.nii.gz",'; echo '                "../../../../Desktop/pipeline_output/thresholded_MNI_2mm_resliced_smoothed.nii.gz",'; echo '                "../../../../Desktop/pipeline_output/thresholded_MNI_2mm_scaled_smoothed.nii.gz"'; echo '            ]'; echo '        },'; echo '        {'; echo '            "name": "Combine",'; echo '            "filenames": ['; echo '                "../../../../Desktop/pipeline_output/output_out3_0_combined.nii.gz",'; echo '                "../../../../Desktop/pipeline_output/output_out3_1_combined.nii.gz",'; echo '                "../../../../Desktop/pipeline_output/output_out3_2_combined.nii.gz"'; echo '            ]'; echo '        }'; echo '    ]'; echo '}'; echo ' '
+
+#----------------------------------- 
+# log output files (windows)
+#
+logwin : 
+	 @echo -- &echo {& echo     "Outputs": [& echo         {& echo             "name": "Smooth",& echo             "filenames": [& echo                 "../../../../Desktop/pipeline_output/MNI_2mm_orig_smoothed.nii.gz",& echo                 "../../../../Desktop/pipeline_output/MNI_2mm_resliced_smoothed.nii.gz",& echo                 "../../../../Desktop/pipeline_output/MNI_2mm_scaled_smoothed.nii.gz"& echo             ]& echo         },& echo         {& echo             "name": "Threshold",& echo             "filenames": [& echo                 "../../../../Desktop/pipeline_output/thresholded_MNI_2mm_orig_smoothed.nii.gz",& echo                 "../../../../Desktop/pipeline_output/thresholded_MNI_2mm_resliced_smoothed.nii.gz",& echo                 "../../../../Desktop/pipeline_output/thresholded_MNI_2mm_scaled_smoothed.nii.gz"& echo             ]& echo         },& echo         {& echo             "name": "Combine",& echo             "filenames": [& echo                 "../../../../Desktop/pipeline_output/output_out3_0_combined.nii.gz",& echo                 "../../../../Desktop/pipeline_output/output_out3_1_combined.nii.gz",& echo                 "../../../../Desktop/pipeline_output/output_out3_2_combined.nii.gz"& echo             ]& echo         }& echo     ]& echo }& 
+
+#----------------------------------- 
+# list of jobs 
+#
+list : 
+	 @echo Smooth Threshold Combine
