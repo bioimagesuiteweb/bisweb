@@ -262,7 +262,7 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
             let listMatchString = new RegExp('#(' + key + ')#', 'g');
             let listMatch = listMatchString.exec(job.options);
             if (listMatch) { 
-                listMatches[key] = listMatch; console.log('match', listMatch);
+                listMatches[key] = listMatch; 
             } else if (expandedVariables[key].length > numOutputs) {
                 numOutputs = expandedVariables[key].length;
             }
@@ -291,15 +291,23 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
                 for (let i = 0; i < numOutputs; i++) {
                     
                     let outname= variableNaming[variable.name]+variableSuffix[variable.name];
-                    outname=outname.trim().replace(/ /g,'-');
                     
+                    outname=outname.trim().replace(/ /g,'-');
+                    console.log('preemptive outname', outname);
                     inputsUsedByJob.forEach( (input) => {
                         if (listMatches[input.name]) {
                             //mark entry as a list
                             input.isList = true;
-                            console.log('outname', outname);
-                            let matchString = `%${input.name}%`;
-                            outname = outname.replace(matchString, expandedVariables[input.name][0]); 
+                            let filename = expandedVariables[input.name][0];
+                            let splitString = filename.split('/');
+                            let basename = splitString[splitString.length - 1];
+                            let matchString = new RegExp('%' + input.name + '%');
+                            
+                            //need to trim off outname's .nii.gz to avoid having two
+                            basename = outname.replace(matchString, basename);
+                            splitString[splitString.length - 1] = basename;
+                            outname = splitString.join('/');
+                            console.log('outname', outname, basename);
                         } else {
                             let marker=`%${input.name}%`;
                             let ind=outname.indexOf(marker);
