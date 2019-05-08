@@ -185,7 +185,7 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
             'name' : job.name,
             'outputs' : [],
             'variableKeyedOutputs' : {},
-            'referencedVariables' : []
+            'outputsGenerated' : []
         };
         
         let variablesReferencedByCurrentJob = []; //variables resolved in scope of current job are used to generate output names appropriate to the current job
@@ -256,7 +256,8 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
         //determine the number of commands to produce for the job based on the variables, e.g. if a variable contains five names five commands should be produced
         //note that a variable that does not contain one name will contain exactly the same number of names as any other variable that does not specify one name, e.g. %output1% will always have the same number of names as %output2%
         let numOutputs = 1, listMatches = {};
-        for (let key of Object.keys(expandedVariables)) {
+        for (let key of variablesReferencedByCurrentJob) {
+            //console.log('expanded variables', expandedVariables);
             //options with the list designator (#{name}#) should be counted as one input, so we should ignore them here
             let listMatchString = new RegExp('#(' + key + ')#', 'g');
             let listMatch = listMatchString.exec(job.options);
@@ -289,19 +290,21 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
                 let outputFilenames = [];
                 for (let i = 0; i < numOutputs; i++) {
                     
-                    let inplist=[];
                     let outname= variableNaming[variable.name]+variableSuffix[variable.name];
                     outname=outname.trim().replace(/ /g,'-');
                     
                     inputsUsedByJob.forEach( (input) => {
-                        console.log('jobs with outputs', jobsWithOutputs);
                         if (listMatches[input.name]) {
-                            console.log('input', input);
+                            //mark entry as a list
+                            input.isList = true;
+                            console.log('outname', outname);
+                            let matchString = `%${input.name}%`;
+                            outname = outname.replace(matchString, expandedVariables[input.name][0]); 
                         } else {
                             let marker=`%${input.name}%`;
                             let ind=outname.indexOf(marker);
                             //console.log('Naming=',variable.name,'list=',variableNaming[variable.name], `looking for %${input.name}% ind=${ind}`);
-                            
+                            //console.log('expandedVariables', expandedVariables[input.name]);
                             if (ind>=0) {
                                 //  console.log('Found ',ind);
                                 let fn=(expandedVariables[input.name].length > 1 ? expandedVariables[input.name][i] : expandedVariables[input.name][0]);
@@ -315,20 +318,17 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
                                 let o=outname;
                                 fname=path.basename(fname);
                                 outname=o.substr(0,ind)+fname+o.substr(ind+l,o.length);
-                                inplist.push(fname);
                             }
                         } 
                     });
 
-                    if (inplist.length===0) {
-                        outname=`output_${variable.name}_${i}_${outname}`;
-                    }
-
-                    let outputFilename=path.join(odir,path.basename(outname));
+                    let outputFilename = path.join(odir, path.basename(outname));
                     outputFilenames.push(outputFilename);
+
                     if (debug)
                         console.log('__ \t created name for '+(i+1)+' --> '+outputFilename);
                 }
+
                 expandedVariables[variable.name] = outputFilenames;
                 variablesGeneratedByJob.push(variable);
             } else {
@@ -340,7 +340,11 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
         for (let i = 0; i < optionsArray.length; i++) {
             let option = optionsArray[i];
             
-            if (option.charAt(0) === '%' && option.charAt(option.length-1) === '%') {
+            //console.log('expanded variables', option, expandedVariables[stripVariable(option)]);
+            if (option.charAt(0) === '#' && option.charAt(option.length-1) === '#') {
+                let variable = stripVariable(option);
+                optionsArray[i] = expandedVariables[variable].join(' ');
+            } else if (option.charAt(0) === '%' && option.charAt(option.length-1) === '%' ) {
                 let variable = stripVariable(option);
                 optionsArray[i] = expandedVariables[variable];
             }
@@ -358,13 +362,16 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
             }
             
             inputsUsedByJob.forEach( (input) => {
-                
-                input = expandedVariables[input.name].length > 1 ? expandedVariables[input.name][i] : expandedVariables[input.name][0];
+                console.log('input', input);
+                //if list is included then combine all the inputs
+                if (input.isList) {
+                    input = expandedVariables[input.name];
+                } else {
+                    input = expandedVariables[input.name].length > 1 ? expandedVariables[input.name][i] : expandedVariables[input.name][0];
+                }
                 formattedJobOutput.inputs.push(input);
-                //console.log('Input=',input);
             });
             
-            //console.log('variables generated by job', variablesGeneratedByJob);
             variablesGeneratedByJob.forEach( (output) => {
                 let varname = output.name;
                 output = expandedVariables[output.name].length > 1 ? expandedVariables[output.name][i] : expandedVariables[output.name][0];
@@ -373,13 +380,12 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
                 let keyedOutput = jobWithOutputs.variableKeyedOutputs;
                 if (!keyedOutput[varname]) {
                     keyedOutput[varname] = [output];
-                    jobWithOutputs.referencedVariables.push(varname);
+                    jobWithOutputs.outputsGenerated.push(varname);
                 } else {
                     keyedOutput[varname].push(output);
                 }
             });
             
-            console.log('keyed output', jobWithOutputs);
             //command can either be the default command, the command specified for the set of jobs, or the command specified for an individual job.
             //the command for an individual job takes highest precedence, then the command for the set, then the default.
             let command = job.command ? job.command : defaultCommand;
@@ -391,6 +397,7 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
              
             }
             
+            console.log('command', command, subcommand, commandArray);
             formattedJobOutput.command = command + ' ' + subcommand + ' ' + commandArray.join(' ')+paramfile;
             allJobOutputs.push(formattedJobOutput);
         }
