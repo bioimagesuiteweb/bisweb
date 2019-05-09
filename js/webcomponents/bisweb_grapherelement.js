@@ -287,7 +287,7 @@ class GrapherModule extends HTMLElement {
         }
        
         //TODO: this only loads the first time I open the frame? not sure why. 
-        console.log('get image', this.viewer.getimage());
+        //console.log('get image', this.viewer.getimage());
         if (this.viewer.getimage() || (this.viewer2 && this.viewer2.getimage())) {
             webutil.createbutton({
                 name: 'Save Snapshot',

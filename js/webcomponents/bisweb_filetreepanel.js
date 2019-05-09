@@ -759,6 +759,7 @@ class FileTreePanel extends HTMLElement {
                 let taskChartLabelsArray = taskMatrixInfo.runs, HDRFCharts = {}, taskCharts = {};
                 for (let k = 0; k < alphabetizedTaskNames.length; k++) {
                     let key = alphabetizedTaskNames[k];
+                    key = key + '_hdrf';
                     HDRFCharts[key] = [];
                     for (let i = 0; i < slicedMatrices.length; i++) {
                         HDRFCharts[key].push([]);
@@ -768,35 +769,6 @@ class FileTreePanel extends HTMLElement {
                     }
                 }
 
-                console.log('parsed runs', parsedRuns);
-                //now construct non-HDRF matrices
-                for (let regionKey of Object.keys(HDRFCharts)) {
-                    let regions = {};
-                    for (let key of Object.keys(parsedRuns)) {
-                        //create the union of all regions with a given name
-                        if (parsedRuns[key].parsedRegions[regionKey]) {
-                            /*if (!regionArray) { regionArray = parsedRuns[key].parsedRegions[regionKey]; }
-                            else {
-                                //all region arrays are the same length
-                                console.log('key', key, 'region key', regionKey);
-                                for (let i = 0; i < regionArray.length; i++) {
-                                    if (parsedRuns[key].parsedRegions[regionKey][i] === 1) {
-                                        regionArray[i] = parsedRuns[key].parsedRegions[regionKey][i] = 1;
-                                    }
-                                }
-                            }*/
-
-                            regions[key] = parsedRuns[key].parsedRegions[regionKey];
-                        }
-                    }
-                    let labelsArray = Object.keys(regions).sort(), regionsArray = [];
-                    for (let i = 0; i < labelsArray.length; i++) { regionsArray.push(regions[labelsArray[i]]); }
-                    taskCharts[regionKey] = this.graphelement.formatChartData(regionsArray, new Array(labelsArray.length).fill(1), labelsArray, false, false);
-                }
-
-
-                console.log('parsed ranges', taskCharts);
-                console.log('task charts', HDRFCharts);
                 for (let key of Object.keys(HDRFCharts)) {
 
                     //exclude plots of all zeroes
@@ -810,9 +782,27 @@ class FileTreePanel extends HTMLElement {
 
                     HDRFCharts[key] = this.graphelement.formatChartData(HDRFCharts[key], includeArray, taskChartLabelsArray, false, false);
                 }
+                
+                //now construct non-HDRF matrices
+                for (let regionKey of Object.keys(HDRFCharts)) {
+                    let regions = {};
+                    for (let key of Object.keys(parsedRuns)) {
+                        //create the union of all regions with a given name
+                        if (parsedRuns[key].parsedRegions[regionKey]) {
+                            regions[key] = parsedRuns[key].parsedRegions[regionKey];
+                        }
+                    }
+                    let labelsArray = Object.keys(regions).sort(), regionsArray = [];
+                    for (let i = 0; i < labelsArray.length; i++) { regionsArray.push(regions[labelsArray[i]]); }
+                    taskCharts[regionKey] = this.graphelement.formatChartData(regionsArray, new Array(labelsArray.length).fill(1), labelsArray, false, false);
+                }
+
+
+                console.log('task charts', taskCharts);
+               
 
                 //TODO: add HDRF charts to taskCharts
-                //Object.assign(taskCharts, HDRFCharts)
+                taskCharts = Object.assign({}, taskCharts, HDRFCharts);
                 taskCharts['block_chart'] = blockChart;
 
                 this.graphelement.createChart({ xaxisLabel: 'frame', yaxisLabel: 'On', isFrameChart: true, 'charts': taskCharts, 'makeTaskChart': false, 'displayChart': 'block_chart', 'chartType': 'line' });
