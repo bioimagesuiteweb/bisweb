@@ -271,7 +271,6 @@ class BisWebDialogElement extends HTMLElement {
      */
     create(name, w=400, h=400, x=100, y=100, zindex=5000,motion=true,closecallback=null) {
 
-        console.log('x', x, 'y', y);
         if (y<40)
             y=40;
         if (x<20)

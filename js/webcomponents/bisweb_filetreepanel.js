@@ -756,33 +756,65 @@ class FileTreePanel extends HTMLElement {
 
                 //construct charts array from matrix where each entry is the HDRF-convolved chart for each task (e.g. motor, visual, etc)
                 //note that sliced matrices are already in alphabetical order by run
-                let taskChartLabelsArray = taskMatrixInfo.runs, taskCharts = {};
+                let taskChartLabelsArray = taskMatrixInfo.runs, HDRFCharts = {}, taskCharts = {};
                 for (let k = 0; k < alphabetizedTaskNames.length; k++) {
                     let key = alphabetizedTaskNames[k];
-                    taskCharts[key] = [];
+                    HDRFCharts[key] = [];
                     for (let i = 0; i < slicedMatrices.length; i++) {
-                        taskCharts[key].push([]);
+                        HDRFCharts[key].push([]);
                         for (let j = 0; j < slicedMatrices[i].length; j++) {
-                            taskCharts[key][taskCharts[key].length - 1].push(slicedMatrices[i][j][k]);
+                            HDRFCharts[key][HDRFCharts[key].length - 1].push(slicedMatrices[i][j][k]);
                         }
                     }
                 }
 
-                for (let key of Object.keys(taskCharts)) {
+                console.log('parsed runs', parsedRuns);
+                //now construct non-HDRF matrices
+                for (let regionKey of Object.keys(HDRFCharts)) {
+                    let regions = {};
+                    for (let key of Object.keys(parsedRuns)) {
+                        //create the union of all regions with a given name
+                        if (parsedRuns[key].parsedRegions[regionKey]) {
+                            /*if (!regionArray) { regionArray = parsedRuns[key].parsedRegions[regionKey]; }
+                            else {
+                                //all region arrays are the same length
+                                console.log('key', key, 'region key', regionKey);
+                                for (let i = 0; i < regionArray.length; i++) {
+                                    if (parsedRuns[key].parsedRegions[regionKey][i] === 1) {
+                                        regionArray[i] = parsedRuns[key].parsedRegions[regionKey][i] = 1;
+                                    }
+                                }
+                            }*/
+
+                            regions[key] = parsedRuns[key].parsedRegions[regionKey];
+                        }
+                    }
+                    let labelsArray = Object.keys(regions).sort(), regionsArray = [];
+                    for (let i = 0; i < labelsArray.length; i++) { regionsArray.push(regions[labelsArray[i]]); }
+                    taskCharts[regionKey] = this.graphelement.formatChartData(regionsArray, new Array(labelsArray.length).fill(1), labelsArray, false, false);
+                }
+
+
+                console.log('parsed ranges', taskCharts);
+                console.log('task charts', HDRFCharts);
+                for (let key of Object.keys(HDRFCharts)) {
 
                     //exclude plots of all zeroes
                     let includeArray = [];
-                    for (let i = 0; i < taskCharts[key].length; i++)
-                        if (taskCharts[key][i].every((element) => { return element === 0; })) {
+                    for (let i = 0; i < HDRFCharts[key].length; i++)
+                        if (HDRFCharts[key][i].every((element) => { return element === 0; })) {
                             includeArray.push(0);
                         } else {
                             includeArray.push(1);
                         }
 
-                    taskCharts[key] = this.graphelement.formatChartData(taskCharts[key], includeArray, taskChartLabelsArray, false, false);
+                    HDRFCharts[key] = this.graphelement.formatChartData(HDRFCharts[key], includeArray, taskChartLabelsArray, false, false);
                 }
 
+                //TODO: add HDRF charts to taskCharts
+                //Object.assign(taskCharts, HDRFCharts)
                 taskCharts['block_chart'] = blockChart;
+
                 this.graphelement.createChart({ xaxisLabel: 'frame', yaxisLabel: 'On', isFrameChart: true, 'charts': taskCharts, 'makeTaskChart': false, 'displayChart': 'block_chart', 'chartType': 'line' });
             } catch (e) {
                 console.log('An error occured while parsing the task file', e);
@@ -1142,22 +1174,6 @@ class FileTreePanel extends HTMLElement {
         for (let key of Object.keys(settings)) {
             existingTreeSettings[key]._disabled = !settings[key]; //settings are provided as 'which ones should be enabled'
         }
-        
-        /*if (toggle === 'on') {
-            if (existingTreeSettings.Load) {
-                existingTreeSettings.Load._disabled = false;
-            } else {
-                existingTreeSettings.Viewer1._disabled = false;
-                existingTreeSettings.Viewer2._disabled = false;
-            }
-        } else if (toggle === 'off') {
-            if (existingTreeSettings.Load) {
-                existingTreeSettings.Load._disabled = true;
-            } else {
-                existingTreeSettings.Viewer1._disabled = true;
-                existingTreeSettings.Viewer2._disabled = true;
-            }
-        }*/
     }
 
     /**
@@ -1396,7 +1412,7 @@ class FileTreePanel extends HTMLElement {
 
             let settingsModal = bootbox.alert({
                'size' : 'large',
-               'title' : 'DICOM Blob Settings',
+               'title' : 'DICOM Job Settings',
                'message' : `<pre>${settingsString}</pre>`,
                'backdrop' : true,
                'scrollable' : true,

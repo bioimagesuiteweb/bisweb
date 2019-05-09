@@ -337,7 +337,6 @@ class GrapherModule extends HTMLElement {
                 imgdata[key] = formatChart(imgdata[key], orthoElement.getobjectmap());
             }
 
-            console.log('starting key', startingKey);
             this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', makeTaskChart : true, charts: imgdata, displayChart : startingKey });
         } else {
             console.log('cannot parse time series without an ortho element');
@@ -643,7 +642,6 @@ class GrapherModule extends HTMLElement {
 
     createLineChart(data, colors, frame, settings) {
 
-        console.log('current data', this.currentdata, 'task data', this.taskdata);
         //find data corresponding to the chart to be displayed and highlight selected item in dropdown
         if (settings.displayChart) {
             let dropdownMenu = $(this.graphWindow.getHeader()).find('.task-selector').siblings('.dropdown-menu');
