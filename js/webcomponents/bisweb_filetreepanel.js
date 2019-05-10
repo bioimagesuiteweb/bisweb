@@ -784,28 +784,36 @@ class FileTreePanel extends HTMLElement {
                 }
                 
                 //now construct non-HDRF matrices
-                for (let regionKey of Object.keys(HDRFCharts)) {
+                for (let regionKey of Object.keys(taskNames)) {
                     let regions = {};
                     for (let key of Object.keys(parsedRuns)) {
-                        //create the union of all regions with a given name
                         if (parsedRuns[key].parsedRegions[regionKey]) {
                             regions[key] = parsedRuns[key].parsedRegions[regionKey];
                         }
                     }
                     let labelsArray = Object.keys(regions).sort(), regionsArray = [];
+                    console.log('regions', regions);
                     for (let i = 0; i < labelsArray.length; i++) { regionsArray.push(regions[labelsArray[i]]); }
                     taskCharts[regionKey] = this.graphelement.formatChartData(regionsArray, new Array(labelsArray.length).fill(1), labelsArray, false, false);
                 }
 
 
                 console.log('task charts', taskCharts);
-               
-
-                //TODO: add HDRF charts to taskCharts
-                taskCharts = Object.assign({}, taskCharts, HDRFCharts);
                 taskCharts['block_chart'] = blockChart;
 
-                this.graphelement.createChart({ xaxisLabel: 'frame', yaxisLabel: 'On', isFrameChart: true, 'charts': taskCharts, 'makeTaskChart': false, 'displayChart': 'block_chart', 'chartType': 'line' });
+                this.graphelement.createChart({ 
+                    'xaxisLabel': 'frame', 
+                    'yaxisLabel': 'On', 
+                    'isFrameChart': true, 
+                    'charts': taskCharts, 
+                    'makeTaskChart': false, 
+                    'displayChart': 'block_chart', 
+                    'chartType': 'line',
+                    'chartSettings' : {
+                        'optionalCharts' : { 'hdrf' : HDRFCharts},
+                    }
+                });
+
             } catch (e) {
                 console.log('An error occured while parsing the task file', e);
             }

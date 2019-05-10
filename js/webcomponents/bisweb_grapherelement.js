@@ -83,8 +83,9 @@ class GrapherModule extends HTMLElement {
 
     /**
      * Creates the frame which will contain the VOI plot graph, creating the graph window if necessary. Sizes itself to not overlap the dockbar on the right, but will overlap the one on the left. 
+     * @param {Object} settings - Settings for createSettingsModal. 
      */
-    renderGraphFrame() {
+    renderGraphFrame(settings) {
 
         this.graphcanvasid = webutil.getuniqueid();
         let windowobj = this.createGraphWindow();
@@ -113,7 +114,7 @@ class GrapherModule extends HTMLElement {
 
         graphWindow.widget.append(cnv);
 
-        this.createGUI(graphWindow);
+        this.createGUI(graphWindow, settings);
 
         graphWindow.show();
         this.graphWindow = graphWindow;
@@ -217,7 +218,8 @@ class GrapherModule extends HTMLElement {
         settingsButton.insertAfter(closeButton);
         dropdownButton.insertAfter(settingsButton);
 
-        settingsButton.on('click', () => { this.createSettingsModal(); });
+        console.log('create gui settings', settings);
+        settingsButton.on('click', () => { this.createSettingsModal(settings); });
 
         let buttons = [];
         buttons.push(webutil.createbutton({
@@ -553,7 +555,7 @@ class GrapherModule extends HTMLElement {
         if (settings === null) { settings = this.settings; }
         else { this.settings = settings; }
 
-        this.renderGraphFrame();
+        this.renderGraphFrame(settings.chartSettings);
 
         let frame = document.getElementById(this.graphcanvasid);
 
@@ -1076,10 +1078,8 @@ class GrapherModule extends HTMLElement {
 
     }
 
-    createSettingsModal() {
+    createSettingsModal(settings = {}) {
         let settingsModal = webutil.createmodal('Change settings');
-        let flipPolarityButton = createCheck('Reverse polarity');
-        let smoothButton = createCheck('Smooth input');
 
         let submitButton = $(`<button type='button' class='btn btn-sm btn-success'>Ok</button>`);
         let cancelButton = $(`<button type='button' class='btn btn-sm btn-primary'>Cancel</button>`);
@@ -1089,25 +1089,31 @@ class GrapherModule extends HTMLElement {
         footer.append(submitButton); 
         footer.append(cancelButton);
         
-        if (this.polarity === 'negative') { flipPolarityButton.find('.form-check-input').prop('checked', true); }
-        if (this.usesmoothdata) { smoothButton.find('.form-check-input').prop('checked', true); }
+        let polarityButton = null, smoothButton = null, optionalChartsButton = null;
 
+        if (settings.optionalCharts) { optionalChartsButton = createCheck('Display optional charts'); }
+        if (settings.flipPolarity) { polarityButton = createCheck('Reverse polarity'); }
+        if (settings.smooth) { smoothButton = createCheck('Smooth input'); }
+
+        if (polarityButton && this.polarity === 'negative') { flipPolarityButton.find('.form-check-input').prop('checked', true); }
+        if (smoothButton && this.usesmoothdata) { smoothButton.find('.form-check-input').prop('checked', true); }
+        if (optionalChartsButton && this.showOptionalCharts) { smoothButton.find('.form-check-input').prop('checked', true); }
+
+
+        //callbacks for individual toggles
         submitButton.on('click', () => {
 
-            let flipPolarity = flipPolarityButton.find('.form-check-input').prop('checked');
-            if (flipPolarity) {
-                this.polarity = 'negative';
-            } else {
-                this.polarity = 'positive';
-            }
-
-            let smoothChart = smoothButton.find('.form-check-input').prop('checked');
-            if (smoothChart) {
-                this.makeSmoothChartData();
-                this.usesmoothdata = true;
-            } else {
-                this.usesmoothdata = false;
-            }
+            checkEnable(smoothButton, 
+                () => { this.makeSmoothChartData(); this.usesmoothdata = true; }, 
+                () => { this.usesmoothdata = false; });
+            
+            checkEnable(polarityButton, 
+                () => { this.polarity = 'negative'; },
+                () => { this.polarity = 'positive'; });
+            
+            checkEnable(optionalChartsButton, 
+                () => { },
+                () => { });
 
             settingsModal.dialog.modal('hide');
             this.replotGraph(false);
@@ -1128,6 +1134,16 @@ class GrapherModule extends HTMLElement {
             
             settingsModal.body.append(button);
             return button;
+        }
+
+        function checkEnable(button, enablecb, disablecb) {
+            if (button) { 
+                let enable = button.find('.form-check-input').prop('checked');
+                if (enable) { enablecb(); }
+                else { disablecb(); }
+            } else { 
+                disablecb(); 
+            }
         }
     }
 
