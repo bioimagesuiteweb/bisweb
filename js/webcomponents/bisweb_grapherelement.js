@@ -207,6 +207,7 @@ class GrapherModule extends HTMLElement {
             <span class='glyphicon glyphicon-chevron-down'></span>
             </button>    
             <ul class='dropdown-menu'>
+                <li style='visibility: hidden;'> hello!</li>
             </ul> 
         </div>
         `);
@@ -556,7 +557,6 @@ class GrapherModule extends HTMLElement {
         else { this.settings = settings; }
 
         this.renderGraphFrame(settings.chartSettings);
-
         let frame = document.getElementById(this.graphcanvasid);
 
         //hide dropdown menu if it shouldn't be used, otherwise fill it with the names of the charts
@@ -565,19 +565,19 @@ class GrapherModule extends HTMLElement {
             let dropdownMenu = $(this.graphWindow.getHeader()).find('.task-selector').siblings('.dropdown-menu');
             dropdownMenu.empty();
 
-            //alphabetize keys so that they display in order in the dropdown
-            let keys = Object.keys(settings.charts); 
+            //check for optional charts in settings and alphabetize keys so that they display in order in the dropdown
+            let keys, optionalChartKeys = {};
+            if (settings.chartSettings && settings.chartSettings.optionalCharts) {
+
+                optionalChartKeys = settings.chartSettings.optionalCharts;
+                keys = Object.keys(settings.charts).concat(optionalChartKeys); 
+            } else {
+                keys = Object.keys(settings.charts);
+            }
+            
             keys.sort();
             for (let i = 0 ; i < keys.length; i++) {
-                let button = $(`<a class='dropdown-item' href='#'>${keys[i]}<br></a>`);
-                let buttonItem = $(`<li></li>`);
-                buttonItem.append(button);
-                dropdownMenu.append(buttonItem);
-                button.on('click', () => {
-                    let newSettings = settings;
-                    newSettings.displayChart = keys[i];
-                    this.createChart(newSettings);
-                });
+                addItemToDropdown(keys[i], dropdownMenu, optionalChartKeys);
             }
 
         } else {
@@ -593,6 +593,26 @@ class GrapherModule extends HTMLElement {
             this.createLineChart(chartData.datasets, chartData.colors, frame, settings); 
         } else {
             console.log('Error: unrecognized chart type', chartType);
+        }
+
+        let self = this;
+        function addItemToDropdown(key, dropdownMenu, optionalCharts) {
+            console.log('optional charts', optionalCharts, 'key', key);
+            let button; 
+            if (optionalCharts.includes(key)) {
+                button = $(`<a class='dropdown-item bisweb-optional' style='visibility: hidden' href='#'>${key}<br></a>`);
+            } else {
+                button = $(`<a class='dropdown-item' href='#'>${key}<br></a>`);
+            }
+
+            let buttonItem = $(`<li></li>`);
+            buttonItem.append(button);
+            dropdownMenu.append(buttonItem);
+            button.on('click', () => {
+                let newSettings = settings;
+                newSettings.displayChart = key;
+                self.createChart(newSettings);
+            });
         }
     }
 

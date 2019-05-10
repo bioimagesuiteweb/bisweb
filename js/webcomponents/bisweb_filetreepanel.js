@@ -797,8 +797,8 @@ class FileTreePanel extends HTMLElement {
                     taskCharts[regionKey] = this.graphelement.formatChartData(regionsArray, new Array(labelsArray.length).fill(1), labelsArray, false, false);
                 }
 
-
-                console.log('task charts', taskCharts);
+                console.log('HDRF charts', HDRFCharts);
+                taskCharts = Object.assign(taskCharts, HDRFCharts);
                 taskCharts['block_chart'] = blockChart;
 
                 this.graphelement.createChart({ 
@@ -810,7 +810,7 @@ class FileTreePanel extends HTMLElement {
                     'displayChart': 'block_chart', 
                     'chartType': 'line',
                     'chartSettings' : {
-                        'optionalCharts' : { 'hdrf' : HDRFCharts},
+                        'optionalCharts' : Object.keys(HDRFCharts)
                     }
                 });
 
