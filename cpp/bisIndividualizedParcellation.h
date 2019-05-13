@@ -33,9 +33,7 @@ namespace bisIndividualizedParcellation {
 }
 
 
-#ifdef __cplusplus
 extern "C" {
-#endif
 
   /** @file bisExportedFunctions3.h
       Functions exported to JS and Python 
@@ -52,10 +50,7 @@ extern "C" {
   // BIS: { 'individualizeParcellationWASM', 'bisImage', [ 'bisImage', 'bisImage', 'ParamObj', 'debug' ] }
   BISEXPORT unsigned char* individualizeParcellationWASM(unsigned char* input, unsigned char* groupparcellation,const char* jsonstring,int debug);
 
-
-#ifdef __cplusplus
 }
-#endif
 
 
 #endif

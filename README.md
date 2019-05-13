@@ -1,4 +1,4 @@
-![Logo](https://bioimagesuiteweb.github.io/bisweb-manual/bisweb_newlogo_small.png)
+[![Logo](web/images/bisweb_newlogo_white_small.png)](https://bioimagesuiteweb.github.io/bisweb-manual/)
 
 ---
 ## Welcome to BioImage Suite Web
