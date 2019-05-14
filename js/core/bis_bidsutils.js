@@ -366,7 +366,7 @@ let syncSupportingFiles = (changedFiles, baseDirectory) => {
 
         //open dicom settings file 
         getSettingsFile(settingsFilename).then((settings) => {
-            let compiledSupportingFileList = [];
+            let compiledSupportingFileList = [], movePromiseArray = [];
 
             for (let file of changedFiles) {
 
@@ -402,7 +402,7 @@ let syncSupportingFiles = (changedFiles, baseDirectory) => {
 
                             console.log('old location', oldFilepath, 'new location', newFilepath);
 
-                            bis_genericio.moveDirectory(oldFilepath + '&&' + newFilepath);
+                            movePromiseArray.push(bis_genericio.moveDirectory(oldFilepath + '&&' + newFilepath));
                             newSupportingFileList.push(newFilepath);
                         }
 
@@ -429,9 +429,14 @@ let syncSupportingFiles = (changedFiles, baseDirectory) => {
 
             console.log('new supporting file list', compiledSupportingFileList);
             console.log('new settings', settings);
-            writeSettingsFile(settingsFilename, settings);
 
-            resolve(compiledSupportingFileList);
+            let writeSettingsFileFn = writeSettingsFile(settingsFilename, settings);
+            movePromiseArray.push(writeSettingsFileFn)
+
+            Promise.all(movePromiseArray).then( () => {
+                resolve(compiledSupportingFileList);
+            });
+            
         }).catch( (e) => { reject(e);});
 
     });
@@ -441,19 +446,22 @@ let syncSupportingFiles = (changedFiles, baseDirectory) => {
 
 
 /**
- * Schedules a disk write for a time after this function is called. Note that this function may not save the file passed to the function by 'settings' initially.
- * It will save the latest copy passed to the function before the write is triggered. 
+ * Writes dicom settings file to disk. 
  * 
  * @param {String} filename - Name of the settings file to save.
  * @param {Object} settings - New settings file to write over transientDicomJobInfo.
  */
 let writeSettingsFile = (filename, settings) => {
-    if (typeof settings !== 'string') { 
-        settings = JSON.stringify(settings, null, 2);
-    }
-
-    console.log('settings', settings);
-    bis_genericio.write(filename, settings, false);
+    return new Promise( (resolve, reject) => {
+        if (typeof settings !== 'string') { 
+            settings = JSON.stringify(settings, null, 2);
+        }
+    
+        console.log('settings', settings);
+        bis_genericio.write(filename, settings, false)
+            .then( () => { resolve(); })
+            .catch( () => { reject(); });
+    });
 };
 
 /**
