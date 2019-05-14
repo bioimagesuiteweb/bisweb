@@ -1115,7 +1115,7 @@ class GrapherModule extends HTMLElement {
         if (settings.flipPolarity) { polarityButton = createCheck('Reverse polarity'); }
         if (settings.smooth) { smoothButton = createCheck('Smooth input'); }
 
-        if (polarityButton && this.polarity === 'negative') { flipPolarityButton.find('.form-check-input').prop('checked', true); }
+        if (polarityButton && this.polarity === 'negative') { polarityButton.find('.form-check-input').prop('checked', true); }
         if (smoothButton && this.usesmoothdata) { smoothButton.find('.form-check-input').prop('checked', true); }
         if (optionalChartsButton && this.showOptionalCharts) { smoothButton.find('.form-check-input').prop('checked', true); }
 
