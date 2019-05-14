@@ -1116,7 +1116,31 @@ class FileTreePanel extends HTMLElement {
 
             tree.redraw(true);
 
-            bis_bidsutils.syncSupportingFiles(movedFiles, this.baseDirectory);
+            //update TaskName fields in supporting files, then sync the names
+            console.log('moved files', movedFiles);
+
+            bis_bidsutils.syncSupportingFiles(movedFiles, this.baseDirectory).then( (supportingFiles) => {
+                for (let file of supportingFiles) {
+                    let fileExtension = bis_genericio.getBaseName(file).split('.'); fileExtension = fileExtension[fileExtension.length - 1];
+                    if (fileExtension.toLowerCase() === 'json') {
+                        //open file, update 'TaskName', then write it to disk
+                        let fullname = this.baseDirectory + '/' + file;
+                        bis_genericio.read(fullname).then( (obj) => {
+                            console.log('file', obj);
+                            try {
+                                let parsedJSON = JSON.parse(obj.data);
+                                parsedJSON.TaskName = name;
+                                console.log('parsed JSON', parsedJSON);
+                                let stringifiedJSON = JSON.stringify(parsedJSON, null, 2);
+                                console.log('stringified json', stringifiedJSON);
+                                bis_genericio.write(fullname, stringifiedJSON, false).then( () => { console.log('write for', file, 'done'); });
+                            } catch(e) {
+                                console.log('an error occured during conversion to/from JSON', e);
+                            }
+                        });
+                    }
+                }
+            });
        };
 
         bootbox.prompt({
@@ -1550,7 +1574,6 @@ let formatBaseDirectory = (baseDirectory, contents) => {
 
     if (!formattedBase) {
         //look for sourcedata in one of the entries in contents (these should be the full path)
-        console.log('cannot find sourcedata in', baseDirectory, contents);
         let file = contents[0];
         formattedBase = findBaseDirectory(file);
     }
