@@ -43,8 +43,12 @@ const moduleImports = {
     segmentimage : require('segmentImage.js'),
     regularizeobjectmap : require('regularizeObjectmap.js'),
     projectimage : require('projectImage.js'),
+    preprocessoptical : require('preprocessOptical.js'),
+    diffspect : require('diffSpect.js'),
     backprojectimage : require('backProjectImage.js'),
 
+
+    
     butterworthfilter : require('butterworthFilter.js'),
     regressglobal : require('regressGlobal.js'),
     regressout : require('regressOut.js'),
@@ -55,6 +59,7 @@ const moduleImports = {
     computeglm : require('computeGLM.js'),
     approximatefield : require('approximateField.js'),
     displacementfield : require('displacementField.js'),
+    inverttransformation : require('invertTransformation.js'),
     resliceimage : require('resliceImage.js'),
     motionreslice : require('motionReslice.js'),
     manualregistration : require('manualRegistration.js'),
@@ -62,6 +67,7 @@ const moduleImports = {
     nonlinearregistration : require('nonlinearRegistration.js'),
     motioncorrection : require('motionCorrection.js'),
 
+    skullstrip:require('skullStrip.js'),
     defaceimage:require('defaceImage.js'),
     reorientimage:require('reorientImage.js'),
     tfrecon:require('tfRecon.js'),

@@ -10,10 +10,12 @@ computeCorrelation
 computeGLM
 computeROI
 cropImage
+diffSpect
 displacementField
 extractFrame
 extractSlice
 flipImage
+invertTransformation
 gradientImage
 linearRegistration
 manualRegistration
@@ -44,3 +46,5 @@ regressionTests
 makechecksum
 dicomconversion
 bidsconversion
+concatenateImages
+pipeline

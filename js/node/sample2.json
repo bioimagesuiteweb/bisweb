@@ -1,0 +1,47 @@
+{
+    "command" : "node ~/winhome/bisweb/src/js/bin/bisweb.js",
+    "inputs": [
+        {
+            "name" : "input",
+            "filename" : "list.json"
+        }
+    ],
+    "jobs": [
+        {
+            "name": "Smooth",
+            "subcommand": "smoothImage",
+            "suffix": "smoothed.nii.gz",
+            "options": "--debug true --input %input% --output %out1%",
+            "outputs" : [
+                { "name" : "out1",
+                  "depends": [  "%input%" ]
+                }
+            ]
+        },
+        {
+            "name": "Threshold",
+            "subcommand": "thresholdImage",
+            "suffix": "thresholded.nii.gz",
+            "options": "--input %out1% --output %out2%",
+            "paramfile" : "t.param",
+            "outputs" : [
+                {
+                    "name": "out2",
+                    "depends": [ "%out1%" ]
+                }
+            ]
+        },
+        {
+            "name": "Add",
+            "subcommand": "combineImages",
+            "suffix": "added.nii",
+            "options": "--input %input% --second %out2% --output %out3% --mode add --weight1 1.0 --weight2 1.0",
+            "outputs" : [
+                {
+                    "name": "out3",
+                    "depends": [ "%out2%" ,"%input%" ]
+                }
+            ]
+        }
+    ]
+}

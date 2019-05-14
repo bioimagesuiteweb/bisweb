@@ -33,6 +33,9 @@ require('bisweb_grapherelement.js');
 
 const webutil = require('bis_webutil');
 const webfileutil = require('bis_webfileutil');
+const BisWebPanel = require('bisweb_panel');
+const dat = require('bisweb_datgui');
+
 
 // ES6 Imports for modules that need that
 
@@ -63,6 +66,7 @@ const Elements = {
     DualViewerApplicationElement : require("bisweb_dualviewerapplication.js"),
     WebWorkerControllerElement : require("bisweb_webworkercontroller.js"),
     DiffSPECTElement : require("bisweb_diffspectelement.js"),
+    DiffSPECTElement2 : require("bisweb_diffspectelement2.js"),
     ConnectivityControlElement:    ConnectivityControlElement,
     LandmarkControlElement :     LandmarkControlElement,
     MosaicViewerElement :    MosaicViewerElement,
@@ -77,6 +81,9 @@ const Elements = {
 let exportobj=require('bisweb_exportobject');
 exportobj.webutil=webutil;
 exportobj.webfileutil=webfileutil;
+exportobj.biswebpanel=BisWebPanel;
+exportobj.dat=dat;
+
 exportobj.Elements=Elements;
 
 

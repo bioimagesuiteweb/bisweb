@@ -216,10 +216,11 @@ let parseTransformationFromJSON=function(text) {
  * @param{BisWebImage} reference - the image to reslice to
  * @param{BisWebImage} transform - the image to be resliced
  * @param{Boolean} usetranslation - if the translation component of the header is to be trusted (default=false)
+ * @param{Boolean} useztranslation - if the translation component of the header in the z-direction is to be trusted (default=true). Only used if usetranslation===true
  * @returns {BisWebLinearTransformation} - the actual linear transformation
  */
 
-let computeHeaderTransformation=function(reference,target,usetranslation=false) {
+let computeHeaderTransformation=function(reference,target,usetranslation=false,useztranslation=true) {
 
     let h = [ reference.getHeader(), target.getHeader() ];
     let dm = [ reference.getDimensions(), target.getDimensions() ];
@@ -259,7 +260,10 @@ let computeHeaderTransformation=function(reference,target,usetranslation=false) 
     let comb=numeric.dot(numeric.inv(mat[1]),mat[0]);
 
     if (usetranslation) {
+        if (!useztranslation)
+            comb[2][3]=0.0;
         transform.setMatrix(comb);
+        console.log('oooo Using Header, I created an initial transformation that uses translation = ',transform.getDescription());
         return transform;
     }
         

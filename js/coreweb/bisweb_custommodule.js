@@ -372,7 +372,8 @@ class CustomModule {
                 e.preventDefault();
                 enableUI(false);
                 this.panel.makeActive(true);
-                webutil.createAlert('Invoking Module '+self.module.name,'progress',10,100000);
+                webutil.createAlert('Invoking Module '+self.module.name,'progress',10,100000, { 'makeLoadSpinner' : true });
+
                 setTimeout(() => {
                     this.executeModule().then(() => {
                         this.panel.makeActive(false);

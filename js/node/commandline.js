@@ -35,6 +35,36 @@ let initialError = function (extra) {
     console.log('\tThe list of available modules is :\n', outstring);
 };
 
+
+let attachSingleFlag=function(param,cmd) {
+
+    let shortname = "";
+    if (param.shortname !== undefined)
+        shortname = `-${param.shortname} `;
+    
+    let optdesc = "";
+    let bstr = '[';
+    let estr = ']';
+    
+    let required = param.required;
+    if (required === false)
+        optdesc = "(optional) ";
+    if (required === true) {
+        bstr = '<';
+        estr = '>';
+    }
+    
+    if (param.type === "float")
+        cmd = cmd.option(`${shortname}--${param.varname.toLowerCase()} ${bstr}n${estr}`, optdesc + param.description, parseFloat);
+    else if (param.type === "int")
+        cmd = cmd.option(`${shortname}--${param.varname.toLowerCase()} ${bstr}n${estr}`, optdesc + param.description, parseInt);
+    else if (param.type === "extra")
+        cmd = cmd.option(`filename1 filename2 filename3 ...`, optdesc + param.description, parseInt);
+    else
+        cmd = cmd.option(`${shortname}--${param.varname.toLowerCase()} ${bstr}s${estr}`, optdesc + param.description);
+    return cmd;
+};
+
 /**
  * Attaches the flags and parameters to an instance of commander and returns the instance. 
  * Should be called only from command line scripts.
@@ -49,33 +79,15 @@ let attachFlags = function (module, cmd) {
     cmd = cmd || null;
     /* jshint ignore:start */
     let des = module.getDescription();
-    let lst = [des.params, des.inputs, des.outputs];
+
+    let lst = [ des.inputs, des.outputs, des.params];
     for (let i = 0; i <= 2; i++) {
-
-        lst[i].forEach((param) => {
-            let shortname = "";
-            if (param.shortname !== undefined)
-                shortname = `-${param.shortname} `;
-
-            let optdesc = "";
-            let bstr = '[';
-            let estr = ']';
-
-            let required = param.required;
-            if (required === false)
-                optdesc = "(optional) ";
-            if (required === true) {
-                bstr = '<';
-                estr = '>';
-            }
-
-            if (param.type === "float")
-                cmd = cmd.option(`${shortname}--${param.varname.toLowerCase()} ${bstr}n${estr}`, optdesc + param.description, parseFloat);
-            else if (param.type === "int")
-                cmd = cmd.option(`${shortname}--${param.varname.toLowerCase()} ${bstr}n${estr}`, optdesc + param.description, parseInt);
-            else
-                cmd = cmd.option(`${shortname}--${param.varname.toLowerCase()} ${bstr}s${estr}`, optdesc + param.description);
-        });
+        for (let j=0;j<lst[i].length;j++) {
+            let param=lst[i][j];
+            //            console.log('i=',i,'j',j,param);
+            if (param.type !== "extra")
+                cmd=attachSingleFlag(param,cmd);
+        }
     }
     /* jshint ignore:end */
 };
@@ -112,12 +124,18 @@ let loadParse = function (args, toolname,basedirectory='') {
         program.version('1.0.0');
         attachFlags(mod, program);
         program
-            .option('--paramfile [s]', 'Specifies that parameters should be read from a file as opposed to parsed from the command line.')
-            .option('--silent', 'Run in silent mode (no output on the console)')
-            .on('-h, --help', function () {
-                console.log('This program is part of the commandline suite of tools from BioImage Suite Web. See https://github.com/bioimagesuiteweb/bisweb for more information.\n');
-            });
+            .option('--paramfile [s]', 'Specifies that parameters should be read from a file as opposed to parsed from the command line.');
 
+        let a=mod.getExtraArgument();
+        if (a!==null) {
+            attachSingleFlag(a, program);
+        }
+        
+        
+        program.on('-h, --help', function () {
+            console.log('This program is part of the commandline suite of tools from BioImage Suite Web. See https://github.com/bioimagesuiteweb/bisweb for more information.\n');
+        });
+        
         let ln = args.length;
         let outargs = [];
         for (let i = 0; i < ln; i++) {
@@ -128,7 +146,6 @@ let loadParse = function (args, toolname,basedirectory='') {
                 outargs.push(args[i]);
         }
         program.parse(outargs);
-
         let objinputs=mod.getDescription().inputs;
         let max=3;
         if (objinputs.length<1)
@@ -139,10 +156,6 @@ let loadParse = function (args, toolname,basedirectory='') {
             program.help();
             reject("");
         }
-
-
-        if (program.silent) console.log = function () { };
-
 
         //---------------------------------------------------------------------------------------------------------------
         //  Uninteractive Parser
@@ -184,12 +197,17 @@ let loadParse = function (args, toolname,basedirectory='') {
             mod.loadInputs(program,basedirectory).then( () => {
                 console.log('oooo\noooo Loaded all inputs.');
                 let modArguments = mod.parseValuesAndAddDefaults(program, loadedArguments);
+                modArguments.extraArgs=[];
+                for (let i=0;i<program.args.length;i++)
+                    modArguments.extraArgs.push(basedirectory+program.args[i]);
+                
                 console.log('oooo\noooo Parsed :',JSON.stringify(modArguments));
                 if (mod.typeCheckParams(modArguments)) {
                     console.log('oooo\noooo Invoking module', mod.getDescription().name, '....');
                     mod.directInvokeAlgorithm(modArguments).then(() => {
                         console.log('oooo -------------------------------------------------------');
                         mod.storeCommentsInOutputs(args.join(" "),modArguments,baseutils.getSystemInfo(biswrap));
+                        console.log('oooo');
                         mod.saveOutputs(program).then((m) => {
                             if (m.length>0)
                                 console.log('oooo\noooo Saved outputs.');

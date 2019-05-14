@@ -672,16 +672,23 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
 
 };  // jshint ignore:line
 
+
 let initialize=function(data) {
     
-    let testlist=data.testlist;
+    let in_testlist=data.testlist;
+    let testlist=[];
     let names=[];
-    for (let i=0;i<testlist.length;i++) {
-        let cmd=testlist[i].command.replace(/\t/g,' ').replace(/ +/g,' ');
-        let command=cmd.split(' ');
-        let modulename=command[0];
-        if (names.indexOf(modulename)<0)
-            names.push(modulename);
+    for (let i=0;i<in_testlist.length;i++) {
+        let noweb=in_testlist[i].noweb || false;
+        console.log('in_=',in_testlist[i],noweb);
+        if (!noweb) {
+            testlist.push(in_testlist[i]);
+            let cmd=in_testlist[i].command.replace(/\t/g,' ').replace(/ +/g,' ');
+            let command=cmd.split(' ');
+            let modulename=command[0];
+            if (names.indexOf(modulename)<0)
+                names.push(modulename);
+        }
     }
     
     names=names.sort();

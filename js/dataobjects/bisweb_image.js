@@ -151,20 +151,19 @@ class BisWebImage extends BisWebDataObject {
                     else
                         self.parseTIFF(obj.data,obj.filename,forceorient);
                     
-                    self.commentlist=[ 'read from tiff '+fobj ];                                        
+                    self.commentlist.push({ 'Import' : 'read from tiff '+obj.filename });                                        
                     self.internal.header.setExtensionsFromArray(self.commentlist);
                 } else if (ext==="nrrd") {
-                    console.log("Name=",obj.data.constructor.name);
+                    //console.log("Name=",obj.data.constructor.name);
                     if (obj.data.constructor.name === "Uint8Array")
                         self.parseNRRD(obj.data.buffer,obj.filename,forceorient);
                     else
                         self.parseNRRD(obj.data,obj.filename,forceorient);
                     
-                    self.commentlist=[ 'read from nrrd '+fobj ];                                        
+                    self.commentlist.push({'Import' : '... read from nrrd '+obj.filename});                                        
                     self.internal.header.setExtensionsFromArray(self.commentlist);
                 }else {
                     try {
-                        //    console.log('\n Parse NII\n+++',fobj);
                         self.parseNII(obj.data.buffer,forceorient);
                     } catch(e) {
                         reject('Failed to load from '+fobj + '('+e+')');
@@ -1283,7 +1282,7 @@ class BisWebImage extends BisWebDataObject {
      */
     parseNRRD(inputbuffer,filename,forceorient_in) {
         
-        this.debug=1;
+
         const dat=nrrd.parse(inputbuffer);
         let keys=Object.keys(dat);
         let obj={};
@@ -1295,13 +1294,13 @@ class BisWebImage extends BisWebDataObject {
         }
         obj['data']=dat['data'].length;
         
-        console.log(obj);
+        //console.log(obj);
 
         if (obj.version !== 4 || obj.type !== 'uint8' || obj.encoding !=='raw' ) {
             throw new Error('Not Microscope NRRD ');
         }
 
-        console.log("SZ=", obj.sizes[0]*obj.sizes[1]*obj.sizes[2]);
+        //console.log("SZ=", obj.sizes[0]*obj.sizes[1]*obj.sizes[2]);
 
         let opts = {
             type : 'uchar',
@@ -1314,8 +1313,8 @@ class BisWebImage extends BisWebDataObject {
 
         this.createImage(opts);
         let imgdata=this.internal.imgdata;
-        let len=imgdata.length;
-        console.log('Len=',len,dat.data.length,dat.data.constructor.name);
+        //let len=imgdata.length;
+        //console.log('Len=',len,dat.data.length,dat.data.constructor.name);
         for (let i=0;i<imgdata.length;i++)
             imgdata[i]=dat.data[i];
 

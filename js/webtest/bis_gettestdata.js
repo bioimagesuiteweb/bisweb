@@ -27,7 +27,7 @@ module.exports={
 
 
         if (forcegithub)
-            return 'https://bioimagesuiteweb.github.io/test'+extra;
+            return 'https://bioimagesuiteweb.github.io/test/1.1'+extra;
         
         let testDataRootDirectory='';
         
@@ -45,7 +45,7 @@ module.exports={
         
         if (testDataRootDirectory.length<2) {
             // Not in development mode
-            testDataRootDirectory='https://bioimagesuiteweb.github.io/test'+extra;
+            testDataRootDirectory='https://bioimagesuiteweb.github.io/test/1.1'+extra;
         }
         return testDataRootDirectory;
     }

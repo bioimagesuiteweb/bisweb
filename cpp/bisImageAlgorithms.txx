@@ -24,6 +24,7 @@
 #include <memory>
 #include <vector>
 #include <stack>
+#include <algorithm>
 
 namespace bisImageAlgorithms {
   
@@ -2037,7 +2038,62 @@ namespace bisImageAlgorithms {
     return std::move(out);
   }
 
-  
+  /** median normalize an image -- set values so that median = 0 and interquartile range = 1
+   * @param input the input image
+   * @param debug - a debug flag
+   * @returns the normalized image
+   */
+  template<class T> std::unique_ptr<bisSimpleImage<float> >  medianNormalizeImage(bisSimpleImage<T>* input,int debug)
+  {
+    int dim[5]; input->getDimensions(dim);
+    float spa[5];  input->getSpacing(spa);
+    int slicesize=dim[0]*dim[1];
+    int volsize=slicesize*dim[2];
+
+    std::unique_ptr<bisSimpleImage<float> >output(new bisSimpleImage<float>("normalized_image"));
+    output->allocate(dim,spa);
+
+    float* odata=output->getData();
+    T* idata=input->getData();
+    int datasize=dim[0]*dim[1]*dim[2]*dim[3]*dim[4];
+
+    // Copy data first as nth largest is destructive
+    for (int i=0;i<datasize;i++)
+      odata[i]=idata[i];
+
+    
+    int quarter=(volsize/4);
+    int middle=(volsize/2);
+    int threequarter=(volsize*3/4);
+
+    /*        
+    if (debug>1) {
+      std::cout << "Image Size = " << volsize << " indices="<< quarter << ":" << middle << ":" << threequarter << std::endl;
+      std::cout << "Image Values = " << idata[quarter] << ":" << idata[middle] << ":" << idata[threequarter] << std::endl;
+      }*/
+
+    std::nth_element(odata,odata+quarter,odata+volsize);
+    float s1=odata[quarter];
+    std::nth_element(odata,odata+middle,odata+volsize);
+    float m=odata[middle];
+    std::nth_element(odata,odata+threequarter,odata+volsize);
+    float s2=odata[threequarter];
+
+    if (debug) {
+      std::cout << "Image Size = " << volsize << " indices="<< quarter << ":" << middle << ":" << threequarter << std::endl;
+      std::cout << "Image Values = " << s1 << ":" << m << ":" << s2 << std::endl;
+    }
+    
+    float range=s2-s1;
+    if (range<0.001)
+      range=0.001;
+
+    for (int i=0;i<datasize;i++) 
+      odata[i]=(idata[i]-m)/range;
+    
+    return std::move(output);
+  }
+
 
     // ---------------------- -------------------
 
