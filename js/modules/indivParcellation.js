@@ -93,43 +93,46 @@ class IndivParcellationModule extends BaseModule {
 
     directInvokeAlgorithm(vals) {
         console.log('oooo invoking: computeGLM with vals', JSON.stringify(vals));
-      
 
 
-        return new Promise( (resolve, reject) => {
+
+        return new Promise((resolve, reject) => {
             let fmri = this.inputs['fmri'];
 
-	let fmriDim = fmri.getDimensions(), groupDim = group.getDimensions();  
-	if (fmriDim[0] !== groupDim[0] || fmriDim[1] !== groupDim[1] || fmriDim[2] !== groupDim[2] ) {
-		console.log('++++ \t Group parcellation being resliced to match the fMRI image dimension...');
-		let resl_paramobj = {
-		    "interpolation" : 0,
-		    "dimensions" : fmri.dimensions,
-		    "spacing" : fmri.spacing,
-		    "datatype" : "short",
-		    "backgroundValue" : 0.0,
-		};
-		let matr=numeric.identity(4);
-		group=libbiswasm.resliceImageWASM(group,matr,resl_paramobj,2);
-	}
+            let fmriDim = fmri.getDimensions(), groupDim = group.getDimensions();
+            if (fmriDim[0] !== groupDim[0] || fmriDim[1] !== groupDim[1] || fmriDim[2] !== groupDim[2]) {
+                console.log('++++ \t Group parcellation being resliced to match the fMRI image dimension...');
+                let resl_paramobj = {
+                    "interpolation": 0,
+                    "dimensions": fmri.dimensions,
+                    "spacing": fmri.spacing,
+                    "datatype": "short",
+                    "backgroundValue": 0.0,
+                };
 
-	console.log('++++ \t Group parcellation dims=',group_resliced.dimensions);
+                let matr = numeric.identity(4);
+                biswrap.initialize().then(() => {
+                    group = libbiswasm.resliceImageWASM(group, matr, resl_paramobj, 2);
+                });
+            }
 
-	if (smooth !== 0){
-		console.log('++++ \t Smoothing fMRI image...');
-		let c = smooth * 0.4247;
-		let smooth_paramobj={
-				 "sigmas": [c, c, c],
-				 "inmm": True,
-				 "radiusfactor": 1.5,
-				 }
-		let debug = 2;
-		fmri = libbiswasm.gaussianSmoothImageWASM(fmri,smooth_paramobj,debug);
-	}
+            console.log('++++ \t Group parcellation dims=', group_resliced.dimensions);
+
+            if (smooth !== 0) {
+                console.log('++++ \t Smoothing fMRI image...');
+                let c = smooth * 0.4247;
+                let smooth_paramobj = {
+                    "sigmas": [c, c, c],
+                    "inmm": True,
+                    "radiusfactor": 1.5,
+                }
+                let debug = 2;
+                fmri = libbiswasm.gaussianSmoothImageWASM(fmri, smooth_paramobj, debug);
+            }
 
 
 
-	out_img=libbiswasm.individualizeParcellationWASM(fmri,group,paramobj,2);
+            out_img = libbiswasm.individualizeParcellationWASM(fmri, group, paramobj, 2);
 
             
             //'0' indicates no mask
@@ -161,4 +164,4 @@ class IndivParcellationModule extends BaseModule {
 
 }
 
-module.exports = ComputeGLMModule;
+module.exports = IndivParcellationModule;
