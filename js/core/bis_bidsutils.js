@@ -147,10 +147,11 @@ let dicom2BIDS = async function (opts) {
             let formattedSuppfile = makeBIDSFilename(suppBasename, dirbasename);
             let suppTarget = bis_genericio.joinFilenames(dirname, formattedSuppfile);
 
-
-            movedsuppfiles.push(suppTarget);
-            changedNames.push(bis_genericio.getBaseName(suppfile) + ' -> ' + bis_genericio.getBaseName(suppTarget));
-            moveSupportingFiles.push(bis_genericio.copyFile(suppfile + '&&' + suppTarget));
+            if (!formattedSuppfile.includes('DISCARD')) {
+                movedsuppfiles.push(suppTarget);
+                changedNames.push(bis_genericio.getBaseName(suppfile) + ' -> ' + bis_genericio.getBaseName(suppTarget));
+                moveSupportingFiles.push(bis_genericio.copyFile(suppfile + '&&' + suppTarget));
+            }
         }
 
 
