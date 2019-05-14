@@ -431,12 +431,12 @@ let syncSupportingFiles = (changedFiles, baseDirectory) => {
             console.log('new settings', settings);
 
             let writeSettingsFileFn = writeSettingsFile(settingsFilename, settings);
-            movePromiseArray.push(writeSettingsFileFn)
+            movePromiseArray.push(writeSettingsFileFn);
 
             Promise.all(movePromiseArray).then( () => {
                 resolve(compiledSupportingFileList);
             });
-            
+
         }).catch( (e) => { reject(e);});
 
     });

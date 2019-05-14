@@ -178,6 +178,8 @@ const webfileutils = {
      * @returns{Boolean} true or false
      */
     candoComplexIO: function(serveronly=false) {
+
+        console.log('In cando complex');
         
         if (genericio.getmode()!=='browser')
             return true;
@@ -653,8 +655,8 @@ const webfileutils = {
 
         //TODO: debug dropbox, googledrive and one dirve to make sure they work
         
-        //TODO: hacky workaround for while i don't have keys
-        if (!webutil.inElectronApp() /*&& this.needModes()*/) {
+
+        if (!webutil.inElectronApp() && this.needModes()) {
             if (separator)
                 webutil.createMenuItem(bmenu,'');
             webutil.createMenuItem(bmenu, name, fn);

@@ -753,7 +753,6 @@ var writebinarydatabrowser = function (filename, data, donecallback) {
  */
 var readtextdata = function (url, loadedcallback, errorcallback) {
 
-    console.log('url', url);
     url = url || null;
     if (url === null) {
         errorcallback('no filename/url specified');
