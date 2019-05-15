@@ -51,7 +51,7 @@ class FileTreePanel extends HTMLElement {
             this.staticTagSelectMenu = null;
 
             this.panel = new bisweb_panel(this.layout, {
-                name: 'File Tree Panel',
+                name: 'Imported Study Files',
                 permanent: false,
                 width: '400',
                 dual: true,
@@ -146,7 +146,8 @@ class FileTreePanel extends HTMLElement {
         getFileList(filename).then((fileinfo) => {
             if (fileinfo.files.length > 0) {
                 console.log('contents', fileinfo);
-                let baseDir = formatBaseDirectory(filename, fileinfo.files);
+                let baseDir = formatBaseDirectory(filename, fileinfo.files) || filename;
+
                 this.updateFileTree(fileinfo.files, baseDir, fileinfo.type);
                 bis_webutil.createAlert('Loaded study from ' + filename, false, 0, 3000);
                 return;
@@ -1083,7 +1084,6 @@ class FileTreePanel extends HTMLElement {
         let renameFn = (name) => {
             //get all selected nodes to rename as a group
             let selectedNodes = tree.get_selected(true), movedFiles = [];
-            console.log('selected nodes', selectedNodes);
 
             for (let node of selectedNodes) {
                 let originalName = node.text, splitName = node.text.split('_'), taskName = null, index;
@@ -1116,23 +1116,19 @@ class FileTreePanel extends HTMLElement {
 
             tree.redraw(true);
 
-            //update TaskName fields in supporting files, then sync the names
-            console.log('moved files', movedFiles);
-
-            bis_bidsutils.syncSupportingFiles(movedFiles, this.baseDirectory).then( (supportingFiles) => {
+            bis_bidsutils.syncSupportingFiles(movedFiles, this.baseDirectory).then( (supportingFiles) => 
+            {
                 for (let file of supportingFiles) {
                     let fileExtension = bis_genericio.getBaseName(file).split('.'); fileExtension = fileExtension[fileExtension.length - 1];
                     if (fileExtension.toLowerCase() === 'json') {
+
                         //open file, update 'TaskName', then write it to disk
                         let fullname = this.baseDirectory + '/' + file;
                         bis_genericio.read(fullname).then( (obj) => {
-                            console.log('file', obj);
                             try {
                                 let parsedJSON = JSON.parse(obj.data);
                                 parsedJSON.TaskName = name;
-                                console.log('parsed JSON', parsedJSON);
                                 let stringifiedJSON = JSON.stringify(parsedJSON, null, 2);
-                                console.log('stringified json', stringifiedJSON);
                                 bis_genericio.write(fullname, stringifiedJSON, false).then( () => { console.log('write for', file, 'done'); });
                             } catch(e) {
                                 console.log('an error occured during conversion to/from JSON', e);
@@ -1566,8 +1562,8 @@ let getFileList = (filename) => {
  * Changes the format of the provided base directory to be rooted at 'sourcedata', modifies the file list appropriately.
  * 
  * @param {String} baseDirectory - Unformatted base directory.
- * @param {Array} contents - Flat list of files, or a jstree style list of files.
- * @returns Base directory rooted at 'sourcedata'. 
+ * @param {Array} contents - Flat list of files.
+ * @returns Base directory rooted at 'sourcedata', or null if sourcedata is not in any file's path (not a BIDS directory).
  */
 let formatBaseDirectory = (baseDirectory, contents) => {
     let formattedBase = findBaseDirectory(baseDirectory);

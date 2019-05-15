@@ -63,12 +63,12 @@ class DicomImportElement extends HTMLElement {
       
         bis_webfileutil.createFileButton({ 
             type : 'info',
-            name : 'Import DICOM Images',
+            name : 'Convert DICOM Images',
             parent : basediv,
             css : { 'width' : '90%' , 'margin' : '3px' },
             callback : (f) => {
                 let saveFileCallback = (o) => { 
-                    this.importDICOMImages(f, o,false);
+                    this.importDICOMImages(f, o, false);
                 };
                 
                 setTimeout( () => {
