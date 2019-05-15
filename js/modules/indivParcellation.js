@@ -17,10 +17,10 @@
 
 'use strict';
 
-const biswrap = require('libbiswasm_wrapper');
+const libbiswasm = require('libbiswasm_wrapper');
 const baseutils=require("baseutils");
 const BaseModule = require('basemodule.js');
-const numeric=require('numeric');
+const BisWebLinearTransformation = require('bisweb_lineartransformation.js');
 
 /**
  * Calculates the Generalized Linear Model (GLM) of an fMRI data set. Takes a regressor (independent variable), 
@@ -94,12 +94,21 @@ class IndivParcellationModule extends BaseModule {
     directInvokeAlgorithm(vals) {
         console.log('oooo invoking: computeGLM with vals', JSON.stringify(vals));
 
+        let fmri = this.inputs['input'];
+        let group = this.inputs['group'];
+        let fmriDim = fmri.getDimensions(), groupDim = group.getDimensions();
 
+        return new Promise( async (resolve, reject) => {
 
-        return new Promise((resolve, reject) => {
-            let fmri = this.inputs['fmri'];
+            // Initialize C++ / WASM Library
+            try {
+                await libbiswasm.initialize();
+            } catch(e) {
+                reject(e);
+                return;
+            }
 
-            let fmriDim = fmri.getDimensions(), groupDim = group.getDimensions();
+            // Reslice Group Parcellation if needed
             if (fmriDim[0] !== groupDim[0] || fmriDim[1] !== groupDim[1] || fmriDim[2] !== groupDim[2]) {
                 console.log('++++ \t Group parcellation being resliced to match the fMRI image dimension...');
                 let resl_paramobj = {
@@ -110,54 +119,45 @@ class IndivParcellationModule extends BaseModule {
                     "backgroundValue": 0.0,
                 };
 
-                let matr = numeric.identity(4);
-                biswrap.initialize().then(() => {
-                    group = libbiswasm.resliceImageWASM(group, matr, resl_paramobj, 2);
-                });
+                try {
+                    let linear=new BisWebLinearTransformation(0);
+                    linear.identity();
+                    group = await libbiswasm.resliceImageWASM(group, linear, resl_paramobj, vals.debug);
+                } catch(e) {
+                    reject('Resliced failed'+e);
+                    return;
+                }
             }
 
-            console.log('++++ \t Group parcellation dims=', group_resliced.dimensions);
+            console.log('++++ \t Group parcellation dims=', group.getDimensions());
 
-            if (smooth !== 0) {
+            // Smooth fMRI  if needed
+            let smooth=vals.smooth;
+            if (smooth < 0.001 ) {
                 console.log('++++ \t Smoothing fMRI image...');
                 let c = smooth * 0.4247;
                 let smooth_paramobj = {
                     "sigmas": [c, c, c],
-                    "inmm": True,
+                    "inmm": true,
                     "radiusfactor": 1.5,
+                };
+                try { 
+                    fmri = await libbiswasm.gaussianSmoothImageWASM(fmri, smooth_paramobj, vals.debug);
+                } catch(e) {
+                    reject(e);
+                    return;
                 }
-                let debug = 2;
-                fmri = libbiswasm.gaussianSmoothImageWASM(fmri, smooth_paramobj, debug);
             }
 
-
-
-            out_img = libbiswasm.individualizeParcellationWASM(fmri, group, paramobj, 2);
-
-            
-            //'0' indicates no mask
-            /*let mask = this.inputs['mask'] || 0;
-
-            let usemask=false;
-            if (mask)
-                usemask=true;
-            
-            let regressor = this.inputs['regressor'];
-
-            let sz=numeric.dim(regressor);
-            let numtasks=parseInt(vals.numtasks);
-            if (numtasks<=0 || numtasks>=sz[1])
-                numtasks=sz[1];
-            
-            biswrap.initialize().then( () => {
-                this.outputs['output'] = biswrap.computeGLMWASM(input, mask, regressor, {
-                    'numtasks' : numtasks,
-                    'usemask' : usemask 
-                }, vals.debug);
+            // Run Individualized Parcellation Code
+            try {
+                let paramobj= { 'numberofexemplars' : vals.numexemplars };
+                this.outputs['output']= await libbiswasm.individualizeParcellationWASM(fmri, group, paramobj, vals.debug);
                 resolve();
-            }).catch( (e) => {
-                reject(e.stack);
-            });*/
+            } catch(e) {
+                reject(e);
+                return;
+            }
         });
     }
     
