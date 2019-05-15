@@ -271,9 +271,9 @@ class BisWebDialogElement extends HTMLElement {
      */
     create(name, w=400, h=400, x=100, y=100, zindex=5000,motion=true,closecallback=null) {
 
-        if (y<40)
-            y=40;
-        if (x<20)
+        if (y<100)
+            y=100;
+        if (x<40)
             x=40;
 
         let grow=false;
@@ -285,8 +285,8 @@ class BisWebDialogElement extends HTMLElement {
         this.name=name;
         
         const self=this;
-        this.dimensions.left = x;
-        this.dimensions.top = y;
+        this.dimensions.left = x || 100;
+        this.dimensions.top = y || 100;
         this.dimensions.width = Math.round(w || 400);
         this.dimensions.height = Math.round(h || 400);
 
@@ -357,8 +357,6 @@ class BisWebDialogElement extends HTMLElement {
 
         if (motion)
             this.bindMouseEvents();
-
-        return this;
     }
     
 }
