@@ -43,7 +43,7 @@ let toolname=process.argv[2] || '';
 
 bisweb.loadUserPreferences().then( () => {
     console.log('++++++++++++++++++++++++++++++++++++++++++++++++');
-    console.log('++++ '+toolname);
+    console.log('++++ Executing module '+toolname);
     console.log('++++++++++++++++++++++++++++++++++++++++++++++++');
     bisweb.loadParse(args, toolname).then( () => {
         console.log('++++++++++++++++++++++++++++++++++++++++++++++++');
