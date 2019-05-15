@@ -103,6 +103,7 @@ class BisWebPanel {
 
         this.dockToggleButton=null;
         this.dockCloseButton=null;
+        this.dockHelpButton=null;
         
         this.sidebarToggleButton=null;
         this.sidebarMinimizeButton=null;
@@ -210,6 +211,7 @@ class BisWebPanel {
         if (this.options.initialstate === "docked" && this.options.dual===false) {
             return;
         }
+
         
         this.dockToggleButton=$(`<button type="button" class="bistoggle bisflip"><span class="glyphicon glyphicon-log-out"></span></button>`);
         
@@ -222,14 +224,7 @@ class BisWebPanel {
             return false;
         });
 
-        this.helpButton=$(`<button type="button" class="bistoggle bisflip"><span class="glyphicon glyphicon-info-sign"></span></button>`);
-
-        this.helpButton.click( (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            self.displayHelpModal();
-        });
-
+        
         if (this.options.dual) {
             this.sidebarToggleButton=$(`<button type="button" class="bistoggle"><span class="glyphicon glyphicon-log-out"></span></button>`);
             this.sidebarToggleButton.click( (e) => {
@@ -285,11 +280,31 @@ class BisWebPanel {
         
 
         buttonbar.append(this.sidebarCloseButton);
+
+        if (this.options.helpButton) {
+            this.helpButton=$(`<button type="button" class="bistoggle bisflip"><span class="glyphicon glyphicon-info-sign"></span></button>`);
+            
+            this.helpButton.click( (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                self.displayHelpModal();
+            });
+            buttonbar.append(this.helpButton);
+        }
         buttonbar.append(this.sidebarMinimizeButton);
         if (this.options.dual) {
             buttonbar.append(this.sidebarToggleButton);
         }
-        buttonbar.append(this.helpButton);
+
+        
+        if (this.options.helpButton) {
+            this.dockHelpButton=$(`<button type="button" class="bistoggle bisflip"><span class="glyphicon glyphicon-info-sign"></span></button>`);
+            this.dockHelpButton.click( (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                self.displayHelpModal();
+            });
+        }
 
         this.minimalHeader.append(this.sidebarMaximizeButton);
 
@@ -325,10 +340,16 @@ class BisWebPanel {
                 this.dockToggleButton.css({'border' : '0px', 'font-size' : '17px'});
                 t.prepend(this.dockToggleButton);
             }
+            if (this.dockHelpButton) {
+                this.dockHelpButton.css({'border' : '0px', 'font-size' : '17px'});
+                t.prepend(this.dockHelpButton);
+            }
+
             if (this.dockCloseButton) {
                 this.dockCloseButton.css({'border' : '0px', 'font-size' : '17px'});
                 t.prepend(this.dockCloseButton);
             }
+
          
         }
         this.widgetbase.css({'opacity' : '1.0'});
