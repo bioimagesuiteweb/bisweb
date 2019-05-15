@@ -4,6 +4,9 @@ const bis_genericio = require('bis_genericio');
 const colors=bis_genericio.getcolorsmodule();
 const fs = bis_genericio.getfsmodule();
 
+const biswrap = require('libbiswasm_wrapper.js');
+const baseutil = require('baseutils.js');
+
 //Need to keep track of labels to know if there are repeats, in which case they should be given a run number
 let labelsMap = {};
 
@@ -19,6 +22,7 @@ const sourceDirectoryName = 'sourcedata';
  * @param {Dictionary} opts  - the parameter object
  * @param {String} opts.indir - the input directory (output of dcm2nii)
  * @param {String} opts.outdir - the output directory (output of this function)
+ * @param {Boolean} opts.dcm2nii - whether or not this function was invoked at the end of a dcm2niix conversion process. false by default.
  * @returns {Promise} -- when done with payload the list of converted files
  */
 let dicom2BIDS = async function (opts) {
@@ -46,6 +50,8 @@ let dicom2BIDS = async function (opts) {
 
     let indir = opts.indir || '';
     let outdir = opts.outdir || '';
+    let dcm2nii = opts.dcm2nii || false;
+
     console.log('opts=', opts);
 
     //read size of directory to determine whether or not to calculate checksums
@@ -178,7 +184,9 @@ let dicom2BIDS = async function (opts) {
     let year = date.substring(0, 4), month = date.substring(4, 6), day = date.substring(6, 8), hour = date.substring(8, 10), minute = date.substring(10, 12);
 
     let dicomobj = {
-        "acquisition": 'DICOM',
+        "source": dcm2nii ? 'dcm2nii' : 'BIDS import',
+        'platform' : baseutil.getSystemInfo(biswrap),
+        'location' : baseutil.getExecutableArguments('bids_utils'),
         "bidsversion": "1.1.0",
         "description": `Dataset generated on ${month}/${day}, ${year} at ${hour}:${minute}`,
         "files": [],
