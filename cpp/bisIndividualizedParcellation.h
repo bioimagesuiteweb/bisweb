@@ -30,6 +30,12 @@
 namespace bisIndividualizedParcellation {
   int runIndividualizedParcellation(bisSimpleImage<float>* FMRIImage, bisSimpleImage<short>* groupparcelllation, bisSimpleImage<short>* indiv,
                                     int numexemplars=268);
+
+  int runIndividualizedParcellationFloat(bisSimpleImage<float>* FMRIImage,
+                                         bisSimpleImage<short>* groupparcellation,
+                                         bisSimpleImage<short>* indiv,
+                                         int numexemplars=268);
+
 }
 
 

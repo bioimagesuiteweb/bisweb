@@ -155,7 +155,7 @@ class IndivParcellationModule extends BaseModule {
 
             // Run Individualized Parcellation Code
             try {
-                let paramobj= { 'numberofexemplars' : vals.numexemplars };
+                let paramobj= { 'numberofexemplars' : vals.numexemplars, "usefloat" : true };
                 this.outputs['output']= await biswrap.individualizeParcellationWASM(fmri, group, paramobj, vals.debug);
                 resolve();
             } catch(e) {
