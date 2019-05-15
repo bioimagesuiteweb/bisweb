@@ -54,7 +54,7 @@ class FileTreePanel extends HTMLElement {
                 name: 'Imported Study Files',
                 permanent: false,
                 width: '400',
-                dual: true,
+                dual: false,
                 mode: 'sidebar',
                 helpButton: true
             });

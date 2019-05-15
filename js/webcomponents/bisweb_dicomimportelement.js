@@ -52,7 +52,7 @@ class DicomImportElement extends HTMLElement {
 
         bis_webutil.createbutton({
             type: 'info',
-            name: 'Open File Tree Panel',
+            name: 'Open Study File Panel',
             tooltip: 'Opens a panel which can display DICOM studies.',
             parent: basediv,
             css: { 'width': '90%', 'margin': '3px' },
