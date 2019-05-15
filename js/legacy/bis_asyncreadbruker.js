@@ -1037,18 +1037,18 @@ let readMultiple= async function (filename,outprefix,forceorient,addcallback,inf
     
     let jobname="";
     if (forceorient==="RAS")
-        jobname=bisgenericio.joinFilenames(outprefix,"paravisionconvert_RAS.json");
+        jobname=bisgenericio.joinFilenames(outprefix,"settings_RAS.json");
     else if (forceorient==="LPS")
-        jobname=bisgenericio.joinFilenames(outprefix,"paravisionconvert_LPS.json");
+        jobname=bisgenericio.joinFilenames(outprefix,"settings_LPS.json");
     else
-        jobname=(bisgenericio.joinFilenames(outprefix,"paravisionconvert.json"));
+        jobname=(bisgenericio.joinFilenames(outprefix,"settings.json"));
 
 
     let outobj = {
         bisformat : "ParavisionJob",
         job : joblist,
     };
-    let txt=JSON.stringify(outobj);
+    let txt=JSON.stringify(outobj, null, 2);
     await bisgenericio.write(jobname,txt);
     return [ true, 'saved job in '+jobname ];
 };

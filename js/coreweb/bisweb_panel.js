@@ -19,6 +19,7 @@
 "use strict";
 
 const $=require('jquery');
+const bootbox=require('bootbox');
 const webutil=require('bis_webutil');
 
 /** Panels that are open are stored in the dock
@@ -57,6 +58,9 @@ class BisWebPanel {
         this.options.dual = options.dual || false;
         this.options.hasfooter=options.hasfooter || false;
         this.options.permanent=options.permanent || false;
+        this.options.helpButton = options.helpButton || false;
+
+        this.helpModalMessage = 'This is a sample help modal message';
 
         if (this.options.permanent) {
             this.options.dual=false;
@@ -99,6 +103,7 @@ class BisWebPanel {
 
         this.dockToggleButton=null;
         this.dockCloseButton=null;
+        this.dockHelpButton=null;
         
         this.sidebarToggleButton=null;
         this.sidebarMinimizeButton=null;
@@ -206,6 +211,7 @@ class BisWebPanel {
         if (this.options.initialstate === "docked" && this.options.dual===false) {
             return;
         }
+
         
         this.dockToggleButton=$(`<button type="button" class="bistoggle bisflip"><span class="glyphicon glyphicon-log-out"></span></button>`);
         
@@ -218,6 +224,7 @@ class BisWebPanel {
             return false;
         });
 
+        
         if (this.options.dual) {
             this.sidebarToggleButton=$(`<button type="button" class="bistoggle"><span class="glyphicon glyphicon-log-out"></span></button>`);
             this.sidebarToggleButton.click( (e) => {
@@ -273,9 +280,30 @@ class BisWebPanel {
         
 
         buttonbar.append(this.sidebarCloseButton);
+
+        if (this.options.helpButton) {
+            this.helpButton=$(`<button type="button" class="bistoggle bisflip"><span class="glyphicon glyphicon-info-sign"></span></button>`);
+            
+            this.helpButton.click( (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                self.displayHelpModal();
+            });
+            buttonbar.append(this.helpButton);
+        }
         buttonbar.append(this.sidebarMinimizeButton);
         if (this.options.dual) {
             buttonbar.append(this.sidebarToggleButton);
+        }
+
+        
+        if (this.options.helpButton) {
+            this.dockHelpButton=$(`<button type="button" class="bistoggle bisflip"><span class="glyphicon glyphicon-info-sign"></span></button>`);
+            this.dockHelpButton.click( (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                self.displayHelpModal();
+            });
         }
 
         this.minimalHeader.append(this.sidebarMaximizeButton);
@@ -312,10 +340,16 @@ class BisWebPanel {
                 this.dockToggleButton.css({'border' : '0px', 'font-size' : '17px'});
                 t.prepend(this.dockToggleButton);
             }
+            if (this.dockHelpButton) {
+                this.dockHelpButton.css({'border' : '0px', 'font-size' : '17px'});
+                t.prepend(this.dockHelpButton);
+            }
+
             if (this.dockCloseButton) {
                 this.dockCloseButton.css({'border' : '0px', 'font-size' : '17px'});
                 t.prepend(this.dockCloseButton);
             }
+
          
         }
         this.widgetbase.css({'opacity' : '1.0'});
@@ -416,6 +450,16 @@ class BisWebPanel {
 
         this.state="empty";
         return true;
+    }
+
+    /** Display a modal containing information specific to whichever panel this is meant to represent. This should be assigned by whichever context creates the bisweb_panel. */
+    displayHelpModal() {
+        bootbox.alert(this.helpModalMessage);
+    }
+
+    /** Sets the help modal for this context. */
+    setHelpModalMessage(message) {
+        this.helpModalMessage = message;
     }
 
     static setMaxDockedPanels(n) {

@@ -214,6 +214,7 @@ class DicomModule extends BaseModule {
             if (vals.convertbids) {
                 let bidsmodule = new BidsModule();
                 try {
+                    console.log('converting to bids...');
                     let bidsoutput = await bidsmodule.directInvokeAlgorithm({ 'inputDirectory' : tmpdir,
                                                                               'outputDirectory' : outdir});
                     console.log('.... removing temporary directory = '+tmpdir);
@@ -222,6 +223,9 @@ class DicomModule extends BaseModule {
                     resolve(bidsoutput);
                     return true;
                 } catch (e) {
+                    console.log('.... removing temporary directory', tmpdir);
+                    await bis_genericio.deleteDirectory(tmpdir);
+
                     reject(e);
                     return false;
                 }

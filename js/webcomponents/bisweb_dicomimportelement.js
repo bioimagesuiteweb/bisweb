@@ -60,8 +60,7 @@ class DicomImportElement extends HTMLElement {
                 this.filetreepanel.showTreePanel();
             },
         });
-
-        
+      
         bis_webfileutil.createFileButton({ 
             type : 'info',
             name : 'Import DICOM Images',
@@ -117,6 +116,8 @@ class DicomImportElement extends HTMLElement {
             serveronly : true,
         });
         
+        console.log('show');
+        this.show();
     }
     
 
@@ -166,6 +167,7 @@ class DicomImportElement extends HTMLElement {
         }
 
         promise.then((fileConversionOutput) => {
+            console.log('output', fileConversionOutput);
             let output = fileConversionOutput.output ? fileConversionOutput.output : fileConversionOutput;
 
             bis_webutil.dismissAlerts();

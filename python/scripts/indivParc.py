@@ -29,13 +29,15 @@ import bis_objects as bis
 
 a=len(sys.argv);
 
-if a<3 :
-    print('\n Not enough argmments specified\n\tUsage: indivParc indivfmri groupparc output');
+if a<5 :
+    print('\n Not enough argmments specified\n\tUsage: indivParc indivfmri groupparc numexemplar smooth output');
     sys.exit(1)
 
 imagename1=sys.argv[1];
 imagename2=sys.argv[2];
-output=sys.argv[3];
+numexemplar=int(sys.argv[3]);
+smooth=int(sys.argv[4]);
+output=sys.argv[5];
 
 print('++++ Beginning image names',imagename1,imagename2,output,'\n\n');
 
@@ -44,31 +46,50 @@ fmri=bis.bisImage().load(imagename1); print('++++ \t fmri loaded from',imagename
 group=bis.bisImage().load(imagename2); print('++++ \t group loaded from',imagename2,' dims=',group.dimensions);
 print('++++\n calling C++ code\n');
 
-resl_paramobj = {
-    "interpolation" : 0,
-    "dimensions" : fmri.dimensions,
-    "spacing" : fmri.spacing,
-    "datatype" : "short",
-    "backgroundValue" : 0.0,
-};
-
-matr=np.eye(4,dtype=np.float32);
-resl_group=libbiswasm.resliceImageWASM(group,matr,resl_paramobj,2);
-print('++++ \t group resliced dims=',resl_group.dimensions);
+paramobj= { 'numberofexemplars' : numexemplar };
 
 
-#   smoutput = libbiswasm.gaussianSmoothImageWASM(fmri,
-#                                                 paramobj={
-#                                                    "sigmas": [s, s, s],
-#                                                     "inmm": True,
-#                                                     "radiusfactor": 1.5,
-#                                                 }, debug=2);
+if (fmri.dimensions != group.dimensions):
+	group_resliced = group;
+	print('++++ \t No reslicing required...');
+else:   
+	print('++++ \t Group parcellation being resliced to match the fMRI image dimension...');
+	resl_paramobj = {
+            "interpolation" : 0,
+            "dimensions" : fmri.dimensions,
+            "spacing" : fmri.spacing,
+            "datatype" : "short",
+            "backgroundValue" : 0.0,
+        };
+	matr=np.eye(4,dtype=np.float32);
+	group_resliced=libbiswasm.resliceImageWASM(group,matr,resl_paramobj,2);
+
+
+print('++++ \t Group parcellation dims=',group_resliced.dimensions);
+
+if (smooth == 0):
+	fmri_smoothed = fmri;
+	print('++++ \t No smoothing required...');
+else:
+	print('++++ \t Smoothing fMRI image...');
+	c = smooth * 0.4247;
+	fmri_smoothed = libbiswasm.gaussianSmoothImageWASM(fmri,
+                                              paramobj={
+                                              "sigmas": [c, c, c],
+                                              "inmm": True,
+                                              "radiusfactor": 1.5,
+                                               }, debug=2);
         
 
-paramobj= { 'numberofexemplars' : 368 };
 
-out_img=libbiswasm.individualizeParcellationWASM(fmri,resl_group,paramobj,2);
+out_img=libbiswasm.individualizeParcellationWASM(fmri_smoothed,group_resliced,paramobj,2);
 
 out_img.save(output);
-print('++++\n output saved in ',output);
+print('++++\n Output image is saved in ',output);
+
+output_sm = output.replace('.nii','') + '_sm.nii'
+fmri_smoothed.save(output_sm);
 sys.exit();
+
+
+

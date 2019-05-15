@@ -28,6 +28,8 @@ require("bisweb_fileserverclient.js");
 require("bisweb_misactool.js");
 require("bisweb_filetreepanel.js");
 require("bisweb_dicomimportelement.js");
+require("bisweb_brukerimportelement.js");
+require('bisweb_grapherelement.js');
 
 const webutil = require('bis_webutil');
 const webfileutil = require('bis_webfileutil');
@@ -53,7 +55,6 @@ const Elements = {
     BlobAnalyzerElement : require("bisweb_blobanalyzerelement.js"),
     SnapshotElement : require("bisweb_snapshotelement.js"),
     ConsoleElement : require("bisweb_console.js"),
-    GrapherElement : require("bisweb_grapherelement.js"),
     SimpleAlgorithmControllerElement : require('bisweb_simplealgorithmcontroller.js'),
     ModuleManagerElement : require("bisweb_modulemanagerelement.js"),
     ParavisionImportElement: require("bisweb_paravisionimportelement.js"),
@@ -70,8 +71,6 @@ const Elements = {
     MosaicViewerElement :    MosaicViewerElement,
     OrthogonalViewerElement : OrthogonalViewerElement,
     PaintToolElement :    PaintToolElement,
-
-    
 };
 
 

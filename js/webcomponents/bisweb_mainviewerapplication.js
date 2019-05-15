@@ -87,7 +87,6 @@ class ViewerApplicationElement extends HTMLElement {
             this.applicationName=this.applicationName.substr(0,this.applicationName.length-1);
         console.log("+++++ App name=",this.applicationName,this.applicationURL);
 
-        
         // For dual tab apps
         this.tab1name=null;
         this.tab2name=null;
@@ -737,7 +736,8 @@ class ViewerApplicationElement extends HTMLElement {
                     
                     painttool.createMenu(objmenu[viewerno]);
                     
-                    const graphtool = document.createElement('bisweb-graphelement');
+                    let graphtoolid = self.getAttribute('bis-graphtoolid');
+                    let graphtool = document.querySelector(graphtoolid);
                     webutil.createMenuItem(objmenu[viewerno], 'VOI Analysis',
                                            function () {
                                                graphtool.parsePaintedAreaAverageTimeSeries(self.VIEWERS[paintviewerno]);
@@ -1449,8 +1449,9 @@ class ViewerApplicationElement extends HTMLElement {
         const atlastoolid=this.getAttribute('bis-atlastoolid') || null;
         const blobanalyzerid=this.getAttribute('bis-blobanalyzerid') || null;
         const managerid = this.getAttribute('bis-modulemanagerid') || null;
+        const graphtoolid = this.getAttribute('bis-graphtoolid') || null;
         this.savelightstate = this.getAttribute('bis-extrastatesave') || null;
-
+        
         this.findViewers();
         
 
@@ -1534,6 +1535,10 @@ class ViewerApplicationElement extends HTMLElement {
                     this.setVisibleTab(1);
                 });
             }   
+        }
+
+        if (graphtoolid) {
+            this.graphtool = document.querySelector(graphtoolid);
         }
         
 
