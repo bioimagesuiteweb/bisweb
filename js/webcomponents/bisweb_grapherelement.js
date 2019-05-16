@@ -19,7 +19,7 @@
 
 const $ = require('jquery');
 const Chart = require('chart.js');
-const webutil = require('bis_webutil');
+const bis_webutil = require('bis_webutil');
 const webfileutil = require('bis_webfileutil');
 const util = require('bis_util');
 const fmriutil = require('bis_fmrimatrixconnectivity');
@@ -67,7 +67,7 @@ class GrapherModule extends HTMLElement {
         this.viewerid = this.getAttribute('bis-viewerid');
         this.viewerid2 = this.getAttribute('bis-viewerid2');
 
-        webutil.runAfterAllLoaded( () => {
+        bis_webutil.runAfterAllLoaded( () => {
             this.viewer = document.querySelector(this.viewerid);
             this.viewer.addResizeObserver(this);
             if (this.viewerid2) { 
@@ -87,7 +87,7 @@ class GrapherModule extends HTMLElement {
      */
     renderGraphFrame(settings) {
 
-        this.graphcanvasid = webutil.getuniqueid();
+        this.graphcanvasid = bis_webutil.getuniqueid();
         let windowobj = this.createGraphWindow();
         let graphWindow = windowobj.window, dm = windowobj.dimensions;
 
@@ -146,7 +146,7 @@ class GrapherModule extends HTMLElement {
         }
 
         let width = dim[0] - 20;
-        let height = dim[1] - 20;
+        let height = dim[1] * 0.85;
         let left = 10;
         let top = 40;
 
@@ -154,6 +154,7 @@ class GrapherModule extends HTMLElement {
 
         let innerh = height - 120;
         let innerw = width - 10;
+
         graphWindow.widget.css({
             'margin': '0 0 0 0',
             'padding': '0 0 0 0',
@@ -190,14 +191,19 @@ class GrapherModule extends HTMLElement {
 
     /**
      * Creates UI elements inside the graph frame created by renderGraphFrame.
-     * @param {Object} settings — Parameter object for the GUI
+     * 
      * @param {bisweb_dialogelement} graphWindow — Dialog window containing the graph.
+     * @param {Object} settings — Parameter object for the GUI
      * @param {String} settings.chartType — Type of chart to render, one of 'bar', 'line', or 'task'. Renders different buttons for different tasks.
      */
     createGUI(graphWindow, settings) {
 
-        let bbar = graphWindow.getFooter();
-        bbar.empty();
+        let footer = graphWindow.getContent().find('.modal-footer');
+        $(footer).empty();
+
+        console.log('footer', footer, $(footer).find('.btn'));
+
+        let bbar = bis_webutil.createbuttonbar({ 'css' : 'width: 80%;'});
 
         //settings button should be attached next to close button
         let settingsButton = $(`<button type='button' class='bistoggle' style='float:right; -webkit-user-drag: none;'></button>'`);
@@ -219,11 +225,9 @@ class GrapherModule extends HTMLElement {
         settingsButton.insertAfter(closeButton);
         dropdownButton.insertAfter(settingsButton);
 
-        console.log('create gui settings', settings);
         settingsButton.on('click', () => { this.createSettingsModal(settings); });
 
-        let buttons = [];
-        buttons.push(webutil.createbutton({
+        let timecourseButton = bis_webutil.createbutton({
             name: 'Plot Timecourse',
             type: "primary",
             tooltip: '',
@@ -231,10 +235,9 @@ class GrapherModule extends HTMLElement {
                 'margin-left': '10px',
             },
             position: "right",
-            parent: bbar
-        }).click(() => { this.replotGraph(false).catch(() => { }); }));
+        }).click(() => { this.replotGraph(false).catch(() => { }); });
 
-        buttons.push(webutil.createbutton({
+        let singleFrameButton = bis_webutil.createbutton({
             name: 'Plot Single Frame',
             type: "default",
             tooltip: '',
@@ -242,20 +245,20 @@ class GrapherModule extends HTMLElement {
                 'margin-left': '10px',
             },
             position: "left",
-            parent: bbar
         }).click(() => {
             let cb = (frame) => {
                 this.replotGraph(frame).catch(() => { });
             };
 
             this.createFrameSelectorModal(cb);
+        });
 
-        }));
-
+        bbar.append(timecourseButton);
+        bbar.append(singleFrameButton);
 
         //check to see if current data exists and isn't an empty object
         if (this.currentdata && Object.entries(this.currentdata).length !== 0) {
-            webutil.createbutton({
+            let exportButton = bis_webutil.createbutton({
                 name: 'Export as CSV',
                 type: "info",
                 tooltip: 'Export Data',
@@ -263,19 +266,22 @@ class GrapherModule extends HTMLElement {
                     'margin-left': '10px',
                 },
                 position: "left",
-                parent: bbar
             }).click( (e) => {
                 e.preventDefault();
                 this.exportLastData();
             });
+
+            bbar.append(exportButton);
         }
 
         if (this.taskdata && Object.entries(this.taskdata).length !== 0) {
             
-            webfileutil.createFileButton({
+            let exportButton = webfileutil.createFileButton({
                 'type': 'info',
                 'name': 'Export task info',
-                'parent' : bbar,
+                'css' : { 
+                    'margin-left' : '10px'
+                },
                 'callback': (f) => {
                     this.taskdata.matrix.save(f);
                 },
@@ -287,12 +293,14 @@ class GrapherModule extends HTMLElement {
                 'serveronly' : true,
                 initialCallback: () => { return 'tasks.matr'; },
             });
+
+            bbar.append(exportButton);
         }
        
         //TODO: this only loads the first time I open the frame? not sure why. 
         //console.log('get image', this.viewer.getimage());
         if (this.viewer.getimage() || (this.viewer2 && this.viewer2.getimage())) {
-            webutil.createbutton({
+            let screenshotButton = bis_webutil.createbutton({
                 name: 'Save Snapshot',
                 type: "warning",
                 tooltip: '',
@@ -300,11 +308,13 @@ class GrapherModule extends HTMLElement {
                     'margin-left': '10px',
                 },
                 position: "left",
-                parent: bbar
             }).click(() => { this.saveSnapshot(); });
+
+            bbar.append(screenshotButton);
         }
         
         bbar.tooltip();
+        footer.append(bbar);
     }
 
     /** Main Function 1 as called by the editor tool
@@ -348,7 +358,7 @@ class GrapherModule extends HTMLElement {
 
         function formatChart(image, objectmap) {
             if (image === null || objectmap === null) {
-                webutil.createAlert('No image or objecmap in memory', true);
+                bis_webutil.createAlert('No image or objecmap in memory', true);
                 return;
             }
     
@@ -356,7 +366,7 @@ class GrapherModule extends HTMLElement {
             try {
                 matrix = fmriutil.roimean(image, objectmap);
             } catch (e) {
-                webutil.createAlert('Cannot create roi:' + e, true);
+                bis_webutil.createAlert('Cannot create roi:' + e, true);
                 return;
             }
     
@@ -397,7 +407,7 @@ class GrapherModule extends HTMLElement {
         }
 
         if (this.currentdata.y < 1) {
-            webutil.createAlert('No  objecmap in memory', true);
+            bis_webutil.createAlert('No  objecmap in memory', true);
             return Promise.reject();
         }
 
@@ -407,8 +417,6 @@ class GrapherModule extends HTMLElement {
             this.currentdata.numvoxels,
             null,
             singleFrame);
-
-        this.renderGraphFrame();
 
         return new Promise((resolve) => {
             setTimeout(() => {
@@ -436,7 +444,7 @@ class GrapherModule extends HTMLElement {
         let makeLabels = labelsArray ? false : true;
         if (makeLabels) labelsArray = [];
 
-        if ( !y || y.length === 0) { webutil.createAlert('Error: no objectmap loaded', true); return; }
+        if ( !y || y.length === 0) { bis_webutil.createAlert('Error: no objectmap loaded', true); return; }
 
         if (this.numframes > 1 && singleFrame === false) {
 
@@ -946,7 +954,7 @@ class GrapherModule extends HTMLElement {
         dispimg.attr('src', outimg);
         dispimg.width(300);
 
-        let a = webutil.creatediv();
+        let a = bis_webutil.creatediv();
         a.append(dispimg);
 
         bootbox.dialog({
@@ -958,7 +966,7 @@ class GrapherModule extends HTMLElement {
                     className: "btn-success",
                     callback: function () {
                         let blob = bisgenericio.dataURLToBlob(outimg);
-                        if (webutil.inElectronApp()) {
+                        if (bis_webutil.inElectronApp()) {
                             let reader = new FileReader();
                             reader.onload = function () {
                                 let buf = this.result;
@@ -1099,7 +1107,7 @@ class GrapherModule extends HTMLElement {
     }
 
     createSettingsModal(settings = {}) {
-        let settingsModal = webutil.createmodal('Change settings');
+        let settingsModal = bis_webutil.createmodal('Change settings');
 
         let submitButton = $(`<button type='button' class='btn btn-sm btn-success'>Ok</button>`);
         let cancelButton = $(`<button type='button' class='btn btn-sm btn-primary'>Cancel</button>`);
@@ -1146,7 +1154,7 @@ class GrapherModule extends HTMLElement {
         settingsModal.dialog.modal('show');
 
         function createCheck(name) {
-            let id = webutil.getuniqueid();
+            let id = bis_webutil.getuniqueid();
             let button = $(`<div class='custom-control custom-radio'> 
                                 <input id=${id} class='form-check-input' type='checkbox'></input>
                                 <label for='polarity-check'>${name}</label>
@@ -1244,6 +1252,6 @@ class GrapherModule extends HTMLElement {
 }
 
 module.exports = GrapherModule;
-webutil.defineElement('bisweb-graphelement', GrapherModule);
+bis_webutil.defineElement('bisweb-graphelement', GrapherModule);
 
 
