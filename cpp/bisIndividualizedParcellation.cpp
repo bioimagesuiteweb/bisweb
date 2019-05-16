@@ -170,6 +170,8 @@ namespace bisIndividualizedParcellation {
     
     VectorXd mean_subtract(t);
     mean_subtract = (X.rowwise().sum())/double(n);
+
+    
     
 
     // Normalizing data points to 0 mean
@@ -177,7 +179,7 @@ namespace bisIndividualizedParcellation {
     MatrixXd V = MatrixXd(t,n);
     V = X.colwise()-mean_subtract; // mean of V is all 0 [VERIFIED]
     
-    
+    X.resize(0,0);
     
     // Calculating the l2-norm
     VectorXd twoNorm(n);
@@ -195,6 +197,7 @@ namespace bisIndividualizedParcellation {
     ////////////////////////////////////////////////  2- Normalizing to the unit norm (all vectors norm = 1)
     MatrixXd v = V.array().rowwise()* inverse_twoNorm.transpose().array();
     twoNorm = v.colwise().norm(); // twoNorm is all 1 [VERIFIED]
+    V.resize(0,0);
     
     //  VectorXd test_ii(t);
     //  test_ii = (V.rowwise().sum())/double(n);
@@ -446,7 +449,7 @@ namespace bisIndividualizedParcellation {
     int dim[5], dim2[5];
     FMRIImage->getDimensions(dim);
     groupparcellation->getDimensions(dim2);
-    std::cout << "++++ Beginning Indiv Parc internal " << std::endl;
+    std::cout << "++++ Beginning (FLOAT) Indiv Parc internal " << std::endl;
     std::cout << "++++ \t fMRI Image dim = " << dim[0] << "," << dim[1] << "," << dim[2] << "  " << dim[3] << std::endl;
     std::cout << "++++ \t Group Parcellation Image dim2 = " << dim2[0] << "," << dim2[1] << "," << dim2[2] << "  " << dim2[3] << std::endl;
 
@@ -475,7 +478,7 @@ namespace bisIndividualizedParcellation {
       return 0;
     }
 
-    std::cout << "++++ FLOAT \t number of frames is " << t << std::endl;
+    std::cout << "++++ \t number of frames is " << t << std::endl;
     std::cout << "++++ \t number of voxels is " << dim[0] << "x" << dim[1] << "x" << dim[2] << " = " << N << std::endl;
     std::cout << "++++ \t number of exemplars is " << Pmax << std::endl;
     //    fprintf(stdout,"lambda is %f\n",lambda);
@@ -601,7 +604,8 @@ namespace bisIndividualizedParcellation {
     
     for (int p=0;p<Pmax;p++) {
       int psize = indice_p[p].size();
-      std::cout << "p=" << p << "/" << Pmax << " , " << psize << std::endl;
+      if (p%20 == 0) 
+        std::cout << "p=" << p << "/" << Pmax << " , " << psize << std::endl;
 
       int* ptr = &indice_p[p][0];
       Map<VectorXi> C(ptr,psize);
@@ -617,20 +621,21 @@ namespace bisIndividualizedParcellation {
 
     
     // Calculating the distance between auxiliary exemplar and the rest of the voxels
-    std::vector<VectorXf> e0sqrDist;
+    std::vector<float> e0sqrDist(Pmax);
     VectorXf e0 = VectorXf::Zero(t);
     e0(0) = 3;
 
     for (int p=0;p<Pmax;p++) {
       int psize = indice_p[p].size();
-      std::cout << "p=" << p << ", " << psize << std::endl;
+      if (p%20 == 0) 
+        std::cout << "p=" << p << ", " << psize << std::endl;
       VectorXf sqrArray(psize);
       int* ptr = &indice_p[p][0];
       Map<VectorXi> C(ptr,psize);
       MatrixXf vP(t,psize);
       slice(v,R,C,vP);		
       sqrArray = ((vP.transpose()*e0*-2).colwise() + vP.colwise().squaredNorm().transpose()).rowwise() + e0.colwise().squaredNorm();	
-      e0sqrDist.push_back( sqrArray );
+      e0sqrDist[p]=sqrArray.sum();
       
       
       //	delete [] sqrArray;
@@ -648,7 +653,7 @@ namespace bisIndividualizedParcellation {
     //double loss;
     for (int p=0;p<Pmax;p++) {
       int psize = indice_p[p].size();
-      double sumd0 = e0sqrDist[p].sum();
+      float sumd0 = e0sqrDist[p];//.sum();
       MatrixXf::Index maxFindex;
       VectorXf sumD(psize);	
       sumD = sqrDist[p];//.colwise().sum();
