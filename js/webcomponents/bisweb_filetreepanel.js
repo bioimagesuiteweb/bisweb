@@ -1589,5 +1589,4 @@ let formatBaseDirectory = (baseDirectory, contents) => {
     }
 };
 
-
 bis_webutil.defineElement('bisweb-filetreepanel', FileTreePanel);
