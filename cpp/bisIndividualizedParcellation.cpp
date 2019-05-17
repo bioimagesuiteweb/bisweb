@@ -818,9 +818,9 @@ namespace bisIndividualizedParcellation {
 // -------------------------------------------------------------
 // Main Function
 // -------------------------------------------------------------
-// individualizeParcellation adjust parcellation for a specific input fmri image 
+// individualizedParcellation adjust parcellation for a specific input fmri image 
 
-unsigned char* individualizeParcellationWASM(unsigned char* input, unsigned char* groupparcellation,const char* jsonstring,int debug)
+unsigned char* individualizedParcellationWASM(unsigned char* input, unsigned char* groupparcellation,const char* jsonstring,int debug)
 {
   std::unique_ptr<bisJSONParameterList> params(new bisJSONParameterList());
   int ok=params->parseJSONString(jsonstring);
