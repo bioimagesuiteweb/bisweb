@@ -41,12 +41,12 @@ class IndivParcellationModule extends BaseModule {
             "description": "Calculates the Individualized parcellation starting from a group parcellation",
             "author": "Mehraveh Salehi",
             "version": "1.0",
-            "outputs":  baseutils.getImageToImageOutputs("Output the individualized parcellation"),
+            "outputs":  baseutils.getImageToImageOutputs("Output the individualized parcellation",'viewer1','overlay'),
             "buttonName": "Individualize!",
             "shortname" : "indiv",
             "params": [
                 {
-                    "name": "Number of Exemplars",
+                    "name": "Num Regions",
                     "description": "The number of exemplars in the group parcellation",
                     "priority": 1,
                     "advanced": false,
@@ -58,7 +58,7 @@ class IndivParcellationModule extends BaseModule {
                     "high": 5000,
                 },
                 {
-                    "name": "Smoothing Kernel BW",
+                    "name": "Smoothing",
                     "description": "Kernel size [mm] of FWHM filter size",
                     "priority": 1,
                     "advanced": false,
@@ -77,19 +77,24 @@ class IndivParcellationModule extends BaseModule {
         des.inputs.push(
             {
                 'type': 'image',
-                'name': 'Load fMRI Image',
-                'description': 'Load the fMRI for the input',
+                'name': 'fMRI Image',
+                'description': 'The fMRI image to parcellate',
                 'varname': 'fmri',
                 'required' : true,
+                'guiviewer' : 'viewer1',
+                'guiviewertype'  : 'image',
             });
 
         des.inputs.push(
             {
                 'type': 'image',
-                'name': 'Load group parcellation Image',
-                'description': 'Load the group parcellation for the input',
+                'name': 'Input Parcellation',
+                'description': 'The original (group) parcellation to individualize',
                 'varname': 'group',
                 'required' : true,
+                'guiviewer' : 'viewer1',
+                'guiviewertype'  : 'overlay',
+
             });
         return des;
     }
