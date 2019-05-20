@@ -664,6 +664,7 @@ class FileTreePanel extends HTMLElement {
 
     parseTaskImagesFromTree() {
 
+        //TODO: Figure out why this function hangs sometimes
         if (this.fileTree === null) {
             bis_webutil.createAlert('Error: No study has been loaded. Please load a study before trying to parse task charts.', true);
         }
@@ -792,62 +793,64 @@ class FileTreePanel extends HTMLElement {
         let tree = this.fileTree.jstree(true);
         let confirmName;
         let renameFn = (name) => {
-            //get all selected nodes to rename as a group
-            let selectedNodes = tree.get_selected(true), movedFiles = [];
+            console.log('name', name);
+            if (name) {
+                //get all selected nodes to rename as a group
+                let selectedNodes = tree.get_selected(true), movedFiles = [];
 
-            for (let node of selectedNodes) {
-                let originalName = node.text, splitName = node.text.split('_'), taskName = null, index;
-                //task names should be the second or third bullet, so if it's not there then we know not to change them
-                if (splitName.length >= 2 && splitName[1].includes('task')) {
-                    taskName = splitName[1];
-                    index = 1;
-                } else if (splitName.length >= 3 && splitName[2].includes('task')) {
-                    taskName = splitName[2];
-                    index = 2;
-                }
+                for (let node of selectedNodes) {
+                    let originalName = node.text, splitName = node.text.split('_'), taskName = null, index;
+                    //task names should be the second or third bullet, so if it's not there then we know not to change them
+                    if (splitName.length >= 2 && splitName[1].includes('task')) {
+                        taskName = splitName[1];
+                        index = 1;
+                    } else if (splitName.length >= 3 && splitName[2].includes('task')) {
+                        taskName = splitName[2];
+                        index = 2;
+                    }
 
-                if (taskName) {
-                    //split off the second part of the task tag to change it
-                    let splitTag = taskName.split('-');
-                    splitTag[1] = name;
-                    splitName[index] = splitTag.join('-');
-                    let reconstructedName = splitName.join('_');
+                    if (taskName) {
+                        //split off the second part of the task tag to change it
+                        let splitTag = taskName.split('-');
+                        splitTag[1] = name;
+                        splitName[index] = splitTag.join('-');
+                        let reconstructedName = splitName.join('_');
 
-                    node.original.text = reconstructedName;
-                    node.text = reconstructedName;
+                        node.original.text = reconstructedName;
+                        node.text = reconstructedName;
 
-                    //move the file on disk 
-                    let basePath = tree.get_path(node.parent, '/');
-                    let srcFile = this.baseDirectory + '/' + basePath + '/' + originalName, dstFile = this.baseDirectory + '/' + basePath + '/' + reconstructedName;
-                    bis_genericio.moveDirectory(srcFile + '&&' + dstFile);
-                    movedFiles.push({ 'old': srcFile, 'new': dstFile });
-                }
-            }
-
-            tree.redraw(true);
-
-            bis_bidsutils.syncSupportingFiles(movedFiles, this.baseDirectory).then( (supportingFiles) => 
-            {
-                for (let file of supportingFiles) {
-                    let fileExtension = bis_genericio.getBaseName(file).split('.'); fileExtension = fileExtension[fileExtension.length - 1];
-                    if (fileExtension.toLowerCase() === 'json') {
-
-                        //open file, update 'TaskName', then write it to disk
-                        let fullname = this.baseDirectory + '/' + file;
-                        bis_genericio.read(fullname).then( (obj) => {
-                            try {
-                                let parsedJSON = JSON.parse(obj.data);
-                                parsedJSON.TaskName = name;
-                                let stringifiedJSON = JSON.stringify(parsedJSON, null, 2);
-                                bis_genericio.write(fullname, stringifiedJSON, false).then( () => { console.log('write for', file, 'done'); });
-                            } catch(e) {
-                                console.log('an error occured during conversion to/from JSON', e);
-                            }
-                        });
+                        //move the file on disk 
+                        let basePath = tree.get_path(node.parent, '/');
+                        let srcFile = this.baseDirectory + '/' + basePath + '/' + originalName, dstFile = this.baseDirectory + '/' + basePath + '/' + reconstructedName;
+                        bis_genericio.moveDirectory(srcFile + '&&' + dstFile);
+                        movedFiles.push({ 'old': srcFile, 'new': dstFile });
                     }
                 }
-            });
-       };
+
+                tree.redraw(true);
+
+                bis_bidsutils.syncSupportingFiles(movedFiles, this.baseDirectory).then((supportingFiles) => {
+                    for (let file of supportingFiles) {
+                        let fileExtension = bis_genericio.getBaseName(file).split('.'); fileExtension = fileExtension[fileExtension.length - 1];
+                        if (fileExtension.toLowerCase() === 'json') {
+
+                            //open file, update 'TaskName', then write it to disk
+                            let fullname = this.baseDirectory + '/' + file;
+                            bis_genericio.read(fullname).then((obj) => {
+                                try {
+                                    let parsedJSON = JSON.parse(obj.data);
+                                    parsedJSON.TaskName = name;
+                                    let stringifiedJSON = JSON.stringify(parsedJSON, null, 2);
+                                    bis_genericio.write(fullname, stringifiedJSON, false).then(() => { console.log('write for', file, 'done'); });
+                                } catch (e) {
+                                    console.log('an error occured during conversion to/from JSON', e);
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        };
 
         bootbox.prompt({
             'size': 'small',
@@ -855,13 +858,15 @@ class FileTreePanel extends HTMLElement {
             'message': 'Enter the name for the chosen task(s). Note that you can select multiple tasks by holding shift or ctrl.',
             'show': true,
             'callback': (newName) => {
-                confirmName = newName;
-                bootbox.confirm({
-                    'size' : 'small',
-                    'title' : 'Confirm task rename',
-                    'message' : 'Rename task to ' + confirmName + '?',
-                    'callback' : renameFn.bind(this, newName)
-                });
+                if (newName) {
+                    confirmName = newName;
+                    bootbox.confirm({
+                        'size' : 'small',
+                        'title' : 'Confirm task rename',
+                        'message' : 'Rename task to ' + confirmName + '?',
+                        'callback' : renameFn.bind(this, newName)
+                    });
+                }
             }
         });
     }
