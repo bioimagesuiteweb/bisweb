@@ -5,12 +5,14 @@ const bisweb_matrixutils = require('bisweb_matrixutils.js');
 const BiswebMatrix = require('bisweb_matrix.js');
 
 const bootbox = require('bootbox');
+const $ = require('jquery');
 
 class FileTreePipeline extends HTMLElement {
     
     constructor() {
         super();
         this.panel = null;
+        this.pipelineModal = null;
     }
 
     connectedCallback() {
@@ -22,8 +24,6 @@ class FileTreePipeline extends HTMLElement {
             this.graphelement = document.querySelector(graphelementid);
             this.layout = document.querySelector(layoutid);      
             this.filetree = document.querySelector(filetreeid);
-
-            console.log('file tree', filetreeid);
         });
     }
     
@@ -34,15 +34,34 @@ class FileTreePipeline extends HTMLElement {
      */
     createPanel(parent) {
         let body = bis_webutil.createCollapseElement(parent, 'Study Tools', false);
-        let taskButtonBar = this.createTaskButtons();
 
-        body.append(taskButtonBar);
+        let panelBody = $(`
+            <div>
+                <div id='bisweb-panel-tasks'>
+                    <label>Tasks</label><br>
+                </div>
+                <div id='bisweb-panel-pipeline'>
+                    <label>Pipeline Tools</label><br>
+                </div> 
+            </div>
+        `);
+
+       
+        body.append(panelBody);
+
+        let taskButtonBar = this.createTaskElements();
+        panelBody.find('#bisweb-panel-tasks').append(taskButtonBar);
+
+        let pipelineButtonBar = this.createPipelineElements();
+        panelBody.find('#bisweb-panel-pipeline').append(pipelineButtonBar);
+        console.log('panel body', panelBody.find('#bisweb-panel-pipeline'));
+        
     }
 
     /**
      * Create the set of buttons used to manage loading and clearing task files. 
      */
-    createTaskButtons() {
+    createTaskElements() {
 
         let taskButtonBar = bis_webutil.createbuttonbar();
 
@@ -99,6 +118,39 @@ class FileTreePipeline extends HTMLElement {
 
 
         return taskButtonBar;
+    }
+
+    createPipelineElements() {
+        let pipelineButtonBar = bis_webutil.createbuttonbar();
+
+        let pipelineCreationButton = bis_webutil.createbutton({ 'name' : 'Create pipeline', 'type' : 'info'});
+        pipelineCreationButton.on('click', () => {
+            this.openPipelineCreationModal();
+        });
+
+        let pipelineBody = $(`<div></div>`);
+        let pipelineTable = $(`
+            <ul class='list-group bisweb-pipeline-list'>
+            </ul>
+        `);
+
+        pipelineButtonBar.append(pipelineCreationButton);
+        pipelineBody.append(pipelineButtonBar);
+        pipelineBody.append(pipelineTable);
+
+        return pipelineBody;
+    }
+
+    openPipelineCreationModal() {
+        if (!this.pipelineModal) {
+
+            let pipelineModal = bis_webutil.createmodal('Create a pipeline', 'modal-lg');
+
+
+            this.pipelineModal = pipelineModal;
+        }
+
+        this.pipelineModal.body.modal('show');
     }
 
     /**
