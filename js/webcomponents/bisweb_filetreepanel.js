@@ -138,7 +138,7 @@ class FileTreePanel extends HTMLElement {
      */
     showTreePanel() {
         this.panel.show();
-        createFileTreePipelinePanel();
+        this.createFileTreePipelinePanel();
     }
 
     importFilesFromDirectory(filename) {
@@ -428,13 +428,10 @@ class FileTreePanel extends HTMLElement {
                 <div class='btn-group middle-bar' role='group' aria-label='Viewer Buttons' style='float: left; margin-left : 0px;'>
                 </div>
                 <br> 
-                <div class='btn-group bottom-bar' role='group' aria-label='Viewer Buttons' style='float: left; margin-left : 0px;'>
-                </div>
             </div>
         `);
         let topButtonBar = buttonGroupDisplay.find('.top-bar');
         let middleButtonBar = buttonGroupDisplay.find('.middle-bar');
-        let bottomButtonBar = buttonGroupDisplay.find('.bottom-bar');
 
 
         //Route study load and save through bis_webfileutil file callbacks
@@ -484,22 +481,12 @@ class FileTreePanel extends HTMLElement {
             });
 
 
-        let plotTasksButton = bis_webutil.createbutton({ 'name': 'Plot task charts', 'type': 'info' });
-        plotTasksButton.on('click', () => {
-            this.graphelement.chartInvokedFrom = 'task';
-            this.parseTaskImagesFromTree();
-        });
-
-
         saveStudyButton.addClass('bisweb-load-enable');
-        plotTasksButton.addClass('bisweb-load-enable');
         saveStudyButton.prop('disabled', 'true');
-        plotTasksButton.prop('disabled', 'true');
 
         topButtonBar.append(loadStudyDirectoryButton);
         topButtonBar.append(loadStudyJSONButton);
         middleButtonBar.append(saveStudyButton);
-        bottomButtonBar.append(plotTasksButton);
 
         listElement.append(buttonGroupDisplay);
     }
@@ -966,6 +953,24 @@ class FileTreePanel extends HTMLElement {
         return splitName.join('/');
     }
 
+    /**
+     * Creates a bisweb-filetreepipeline element and appends it to the body. Also calls its 'createPanel' function. 
+     * This is written to avoid circular dependencies from requiring bisweb_filetreepanel in bisweb_filetreepipeline and vice versa. 
+     * If filetreepipeline did not require filetreepanel, then the element could exist statically in the DOM.
+     */
+    createFileTreePipelinePanel() {
+        let fileTreePipeline = document.createElement('bisweb-filetreepipeline');
+        let id = '#' + this.id;
+        fileTreePipeline.setAttribute('id', 'bis_filetreepipeline');
+        fileTreePipeline.setAttribute('bis-layoutwidgetid', this.layoutid);
+        fileTreePipeline.setAttribute('bis-graphelementid', this.graphelementid);
+        fileTreePipeline.setAttribute('bis-filetreepanelid', id);
+
+        document.body.appendChild(fileTreePipeline);
+
+        fileTreePipeline.createPanel(this.panel.getWidget());
+    }
+
     createTagSelectMenu(options = {}) {
 
         let tagSelectMenu = $(
@@ -1317,23 +1322,6 @@ let formatBaseDirectory = (baseDirectory, contents) => {
 
         return formattedBase;
     }
-};
-
-/**
- * Creates a bisweb-filetreepipeline element and appends it to the body. Also calls its 'createPanel' function. 
- * This is written to avoid circular dependencies from requiring bisweb_filetreepanel in bisweb_filetreepipeline and vice versa. 
- * If filetreepipeline did not require filetreepanel, then the element could exist statically in the DOM.
- */
-let createFileTreePipelinePanel = () => {
-      let fileTreePipeline = document.createElement('bisweb-filetreepipeline');
-      fileTreePipeline.setAttribute('id', 'bis_filetreepipeline');
-      fileTreePipeline.setAttribute('bis-layoutwidgetid', this.layoutid);
-      fileTreePipeline.setAttribute('bis-graphelementid', this.graphelementid);
-      fileTreePipeline.setAttribute('bis-filetreepanelid', this.id);
-
-      document.body.appendChild(fileTreePipeline);
-
-      fileTreePipeline.createPanel(this.panel.getWidget());
 };
 
 bis_webutil.defineElement('bisweb-filetreepanel', FileTreePanel);

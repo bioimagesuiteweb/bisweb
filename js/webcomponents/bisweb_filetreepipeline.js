@@ -17,12 +17,13 @@ class FileTreePipeline extends HTMLElement {
 
         let layoutid = this.getAttribute('bis-layoutwidgetid');
         let graphelementid = this.getAttribute('bis-graphelementid');
-        let filetreeid = this.getAttribute('bis-filetree');
-
+        let filetreeid = this.getAttribute('bis-filetreepanelid');
         bis_webutil.runAfterAllLoaded( () => {
             this.graphelement = document.querySelector(graphelementid);
             this.layout = document.querySelector(layoutid);      
             this.filetree = document.querySelector(filetreeid);
+
+            console.log('file tree', filetreeid);
         });
     }
     
@@ -83,10 +84,19 @@ class FileTreePipeline extends HTMLElement {
             this.graphelement.taskdata = null;
         });
 
+        let plotTasksButton = bis_webutil.createbutton({ 'name': 'Plot task charts', 'type': 'info' });
+        plotTasksButton.on('click', () => {
+            this.graphelement.chartInvokedFrom = 'task';
+            this.filetree.parseTaskImagesFromTree();
+        });
         
+        plotTasksButton.addClass('bisweb-load-enable');
+        plotTasksButton.prop('disabled', 'true');
 
         taskButtonBar.append(importTaskButton);
         taskButtonBar.append(clearTaskButton);
+        taskButtonBar.append(plotTasksButton);
+
 
         return taskButtonBar;
     }
