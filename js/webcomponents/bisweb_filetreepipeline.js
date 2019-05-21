@@ -17,6 +17,8 @@ class FileTreePipeline extends HTMLElement {
         super();
         this.panel = null;
         this.pipelineModal = null;
+        this.modules = [];
+        this.savedParameters = null;
     }
 
     connectedCallback() {
@@ -150,10 +152,12 @@ class FileTreePipeline extends HTMLElement {
     openPipelineCreationModal() {
         if (!this.pipelineModal) {
 
-            let pipelineModal = bis_webutil.createmodal('Create a pipeline', 'modal-lg');
+            let pipelineModal = bis_webutil.createmodal('Create a pipeline');
             pipelineModal.footer.empty();
+            pipelineModal.body.addClass('bisweb-pipeline-modal');
 
             let addModuleButton = bis_webutil.createbutton({ 'name' : 'Add module', 'type' : 'success' });
+            let saveModulesButton = bis_webutil.createbutton({ 'name' : 'Save pipeline', 'type' : 'primary'});
             addModuleButton.on('click', () => {
                 let moduleIndexKeys = moduleIndex.getModuleNames();
                 let moduleIndexArray = [];
@@ -170,18 +174,46 @@ class FileTreePipeline extends HTMLElement {
                     'callback' : (moduleName) => {
                         if (moduleName) {
                             let mod = moduleIndex.getModule(moduleName);
-                            console.log('module', mod, 'module index', moduleIndex);
 
-                            let customModule = bisweb_custommodule.createCustom(null, this.algocontroller, mod, { 'numViewers': 0, 'dual' : false });
+                            let customModule = bisweb_custommodule.createCustom(null, this.algocontroller, mod, { 'numViewers': 0, 'dual' : false, 'paramsMargin' : '5px', 'buttonsMargin' : '0px' });
                             customModule.createOrUpdateGUI();
-                            console.log('custom module', customModule, 'panel widget', customModule.panel.widget);
+
+                            this.modules.push(customModule);
+
+                            //set style for parameters to display properly in modal
+                            $(customModule.panel.widget).css('margin', '0 auto');
+                            $(customModule.panel.widget).css('width', '50%');
+
                             pipelineModal.body.append(customModule.panel.widget);
                         }
                     }
                 });
             });
 
-            pipelineModal.body.append(addModuleButton);
+            saveModulesButton.on('click', () => {
+                let params = [];
+                for (let i = 0; i < this.modules.length; i++) {
+                    params.push(this.modules[i].getVars());
+                }
+
+                console.log('params', params);
+                this.savedParameters = params;
+                pipelineModal.dialog.modal('hide');
+
+                bis_webutil.createAlert('Pipeline saved.');
+            });
+
+            //set pipeline modal to update its modules when it's hidden and shown
+            pipelineModal.dialog.on('show.bs.modal', () => {
+                if (!this.savedParameters) {
+                    for (let mod of this.modules) {
+                        mod.createOrUpdateGUI();
+                    }
+                }
+            });
+
+            pipelineModal.footer.append(addModuleButton);
+            pipelineModal.footer.append(saveModulesButton);
             this.pipelineModal = pipelineModal;
         }
 
