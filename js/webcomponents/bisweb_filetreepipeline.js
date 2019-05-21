@@ -152,7 +152,7 @@ class FileTreePipeline extends HTMLElement {
     openPipelineCreationModal() {
         if (!this.pipelineModal) {
 
-            let pipelineModal = bis_webutil.createmodal('Create a pipeline');
+            let pipelineModal = bis_webutil.createmodal('Create a pipeline', 'modal-lg');
             pipelineModal.footer.empty();
             pipelineModal.body.addClass('bisweb-pipeline-modal');
 
@@ -180,10 +180,30 @@ class FileTreePipeline extends HTMLElement {
 
                             this.modules.push(customModule);
 
-                            //set style for parameters to display properly in modal
-                            $(customModule.panel.widget).css('margin', '0 auto');
-                            $(customModule.panel.widget).css('width', '50%');
+                            let moduleLocation = this.modules.length - 1; //index of module in array at time of adding
+                            console.log('module location', moduleLocation);
 
+                            //set style for parameters to display properly in modal
+                            let id = bis_webutil.getuniqueid();
+                            $(customModule.panel.widget).attr('id', id);
+
+                            //add 'remove' button to modal button bar
+                            let removeButton = bis_webutil.createbutton({ 'name': 'Remove', 'type' : 'danger' });
+                            removeButton.on('click', () => {
+                                bootbox.confirm({
+                                    'message' : `Remove element ${moduleName}?`,
+                                    'size' : 'small',
+                                    'callback' : (result) => {
+                                        if (result) {
+                                            console.log('module location', moduleLocation);
+                                            this.modules.splice(moduleLocation, 1);
+                                            pipelineModal.body.find(`#${id}`).remove();
+                                        }
+                                    }
+                                });
+                            });
+
+                            $(customModule.panel.widget).find('.bisweb-customelement-footer').append(removeButton);
                             pipelineModal.body.append(customModule.panel.widget);
                         }
                     }
