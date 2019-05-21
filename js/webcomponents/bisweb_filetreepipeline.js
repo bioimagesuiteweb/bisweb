@@ -3,6 +3,7 @@ const bis_webfileutil = require('bis_webfileutil.js');
 const bis_genericio = require('bis_genericio.js');
 const bisweb_matrixutils = require('bisweb_matrixutils.js');
 const BiswebMatrix = require('bisweb_matrix.js');
+const moduleIndex = require('moduleindex.js');
 
 const bootbox = require('bootbox');
 const $ = require('jquery');
@@ -145,12 +146,42 @@ class FileTreePipeline extends HTMLElement {
         if (!this.pipelineModal) {
 
             let pipelineModal = bis_webutil.createmodal('Create a pipeline', 'modal-lg');
+            pipelineModal.footer.empty();
 
+            let addModuleButton = bis_webutil.createbutton({ 'name' : 'Add module', 'type' : 'success' });
+            let moduleIndexDict = moduleIndex.createModuleNames();
+            console.log('module index dict', moduleIndexDict);
+            
+            addModuleButton.on('click', () => {
+                bootbox.prompt({
+                    'size' : 'small', 
+                    'title' : 'Choose a module',
+                    'inputType' : 'select',
+                    'inputOptions' : [
+                        {
+                            'text' : 'hello!',
+                            'value' : 'hello'
+                        },
+                        {
+                            'text' : 'world',
+                            'value': 'world'
+                        }
+                    ],
+                    'callback' : (moduleName) => {
+                        if (moduleName) {
+                            let mod = moduleIndex.getModule(moduleName);
+                            console.log('module', mod, 'module index', moduleIndex);
+                        }
+                    }
+                });
+            });
 
+            pipelineModal.body.append(addModuleButton);
             this.pipelineModal = pipelineModal;
         }
 
-        this.pipelineModal.body.modal('show');
+        console.log('pipeline modal', this.pipelineModal.dialog);
+        this.pipelineModal.dialog.modal('show');
     }
 
     /**
