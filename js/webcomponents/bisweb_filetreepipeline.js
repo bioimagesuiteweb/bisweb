@@ -1,9 +1,12 @@
 const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
 const bis_genericio = require('bis_genericio.js');
+
 const bisweb_matrixutils = require('bisweb_matrixutils.js');
 const BiswebMatrix = require('bisweb_matrix.js');
+
 const moduleIndex = require('moduleindex.js');
+const bisweb_custommodule = require('bisweb_custommodule.js');
 
 const bootbox = require('bootbox');
 const $ = require('jquery');
@@ -21,10 +24,12 @@ class FileTreePipeline extends HTMLElement {
         let layoutid = this.getAttribute('bis-layoutwidgetid');
         let graphelementid = this.getAttribute('bis-graphelementid');
         let filetreeid = this.getAttribute('bis-filetreepanelid');
+        let algocontrollerid = this.getAttribute('bis-algocontrollerid');
         bis_webutil.runAfterAllLoaded( () => {
             this.graphelement = document.querySelector(graphelementid);
             this.layout = document.querySelector(layoutid);      
             this.filetree = document.querySelector(filetreeid);
+            this.algocontroller = document.querySelector(algocontrollerid);
         });
     }
     
@@ -149,28 +154,28 @@ class FileTreePipeline extends HTMLElement {
             pipelineModal.footer.empty();
 
             let addModuleButton = bis_webutil.createbutton({ 'name' : 'Add module', 'type' : 'success' });
-            let moduleIndexDict = moduleIndex.createModuleNames();
-            console.log('module index dict', moduleIndexDict);
-            
             addModuleButton.on('click', () => {
+                let moduleIndexKeys = moduleIndex.getModuleNames();
+                let moduleIndexArray = [];
+                
+                for (let key of moduleIndexKeys) {
+                    moduleIndexArray.push({ 'text' : key, 'value' : key });
+                }
+
                 bootbox.prompt({
                     'size' : 'small', 
                     'title' : 'Choose a module',
                     'inputType' : 'select',
-                    'inputOptions' : [
-                        {
-                            'text' : 'hello!',
-                            'value' : 'hello'
-                        },
-                        {
-                            'text' : 'world',
-                            'value': 'world'
-                        }
-                    ],
+                    'inputOptions' : moduleIndexArray,
                     'callback' : (moduleName) => {
                         if (moduleName) {
                             let mod = moduleIndex.getModule(moduleName);
                             console.log('module', mod, 'module index', moduleIndex);
+
+                            let customModule = bisweb_custommodule.createCustom(null, this.algocontroller, mod, { 'numViewers': 0, 'dual' : false });
+                            customModule.createOrUpdateGUI();
+                            console.log('custom module', customModule, 'panel widget', customModule.panel.widget);
+                            pipelineModal.body.append(customModule.panel.widget);
                         }
                     }
                 });
