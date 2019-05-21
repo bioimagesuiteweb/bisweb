@@ -35,8 +35,9 @@ class FileTreePanel extends HTMLElement {
         this.viewertwoid = this.getAttribute('bis-viewerid2');
         this.layoutid = this.getAttribute('bis-layoutwidgetid');
         this.viewerappid = this.getAttribute('bis-viewerapplicationid');
-        this.graphelementid = this.getAttribute('bis-graphelement');
-        this.painttoolid = this.getAttribute('bis-painttool');
+        this.graphelementid = this.getAttribute('bis-graphelementid');
+        this.painttoolid = this.getAttribute('bis-painttoolid');
+        this.algoelementid = this.getAttribute('bis-algocontrollerid');
 
         bis_webutil.runAfterAllLoaded(() => {
 
@@ -969,6 +970,7 @@ class FileTreePanel extends HTMLElement {
         fileTreePipeline.setAttribute('id', 'bis_filetreepipeline');
         fileTreePipeline.setAttribute('bis-layoutwidgetid', this.layoutid);
         fileTreePipeline.setAttribute('bis-graphelementid', this.graphelementid);
+        filetreePipeline.setAttribute('bis-algocontrollerid', this.algoelementid);
         fileTreePipeline.setAttribute('bis-filetreepanelid', id);
 
         document.body.appendChild(fileTreePipeline);
