@@ -152,7 +152,7 @@ class FileTreePipeline extends HTMLElement {
     openPipelineCreationModal() {
         if (!this.pipelineModal) {
 
-            let pipelineModal = bis_webutil.createmodal('Create a pipeline', 'modal-lg');
+            let pipelineModal = bis_webutil.createmodal('Create a pipeline');
             pipelineModal.footer.empty();
             pipelineModal.body.addClass('bisweb-pipeline-modal');
 
@@ -163,9 +163,10 @@ class FileTreePipeline extends HTMLElement {
                 let moduleIndexArray = [];
                 
                 for (let key of moduleIndexKeys) {
-                    moduleIndexArray.push({ 'text' : key, 'value' : key });
+                    moduleIndexArray.push({ 'text' : moduleIndex.getModule(key).getDescription().name, 'value' : key });
                 }
 
+                //TODO: Fix positioning issue of element inside modal
                 bootbox.prompt({
                     'size' : 'small', 
                     'title' : 'Choose a module',
@@ -181,7 +182,7 @@ class FileTreePipeline extends HTMLElement {
                             this.modules.push(customModule);
 
                             let moduleLocation = this.modules.length - 1; //index of module in array at time of adding
-                            console.log('module location', moduleLocation);
+                            let prettyModuleName = moduleIndex.getModule(moduleName).getDescription().name;
 
                             //set style for parameters to display properly in modal
                             let id = bis_webutil.getuniqueid();
@@ -191,11 +192,10 @@ class FileTreePipeline extends HTMLElement {
                             let removeButton = bis_webutil.createbutton({ 'name': 'Remove', 'type' : 'danger' });
                             removeButton.on('click', () => {
                                 bootbox.confirm({
-                                    'message' : `Remove element ${moduleName}?`,
+                                    'message' : `Remove module ${prettyModuleName}?`,
                                     'size' : 'small',
                                     'callback' : (result) => {
                                         if (result) {
-                                            console.log('module location', moduleLocation);
                                             this.modules.splice(moduleLocation, 1);
                                             pipelineModal.body.find(`#${id}`).remove();
                                         }
@@ -223,7 +223,7 @@ class FileTreePipeline extends HTMLElement {
                 bis_webutil.createAlert('Pipeline saved.');
             });
 
-            //set pipeline modal to update its modules when it's hidden and shown
+            //set pipeline modal to update its modules when it's hidden and shown, so long as no settings are saved so far.
             pipelineModal.dialog.on('show.bs.modal', () => {
                 if (!this.savedParameters) {
                     for (let mod of this.modules) {
@@ -237,7 +237,6 @@ class FileTreePipeline extends HTMLElement {
             this.pipelineModal = pipelineModal;
         }
 
-        console.log('pipeline modal', this.pipelineModal.dialog);
         this.pipelineModal.dialog.modal('show');
     }
 
