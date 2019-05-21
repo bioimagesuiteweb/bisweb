@@ -95,15 +95,18 @@ class CustomModule {
             dual : this.dual,
         });
 
+        let paramsMargin = opts.paramsMargin || '10px';
+        let buttonsMargin = opts.buttonsMargin || '20px';
+
         this.basewidget=webutil.creatediv({  parent: this.panel.getWidget(),
                                              css : {
-                                                 'padding-top' : '10px',
+                                                 'padding-top' : paramsMargin,
                                                  'padding-left' : '2px'
                                              }
                                           });
         this.footer=webutil.creatediv({  parent: this.panel.getWidget(),
                                          css : {
-                                             'padding-top' : '20px',
+                                             'padding-top' : buttonsMargin,
                                              'padding-left' : '2px'
                                          }
                                       });
