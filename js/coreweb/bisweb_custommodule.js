@@ -104,12 +104,16 @@ class CustomModule {
                                                  'padding-left' : '2px'
                                              }
                                           });
+        this.basewidget.addClass('bisweb-customelement-widget');
+
         this.footer=webutil.creatediv({  parent: this.panel.getWidget(),
                                          css : {
                                              'padding-top' : buttonsMargin,
                                              'padding-left' : '2px'
                                          }
                                       });
+        this.footer.addClass('bisweb-customelement-footer');
+
         ModuleList[this.name]=this;
         this.threadmanager = $("bisweb-webworkercontroller")[0] || null;
     }
