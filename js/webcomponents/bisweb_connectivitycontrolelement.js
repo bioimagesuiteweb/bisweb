@@ -1341,7 +1341,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         let bbar3 = webutil.createbuttonbar({ parent : basediv });
         webutil.createbutton({ type : "info",
-                               name : "Draw Chords",
+                               name : "Chord Plot",
                                position : "bottom",
                                css : { "margin": "5px"},
                                tooltip : "Click this to draw a chord diagram from the lines on screen",
@@ -1351,7 +1351,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
 
         webutil.createbutton({ type : "info",
-                               name : "Corr Map",
+                               name : "Summary Matrix",
                                position : "bottom",
                                css : { "margin": "5px"},
                                tooltip : "Click this to draw a chord diagram from the lines on screen",
@@ -1477,8 +1477,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             }
 
 
-            d3.csv("../data/network_names.csv", function(cities) {
-                console.log(matrix);
+            d3.csv("../data/network_names.csv", function(network_labels) {
+                //console.log(matrix);
                 layout.matrix(matrix);
 
                 // Add a group per neighborhood.
@@ -1492,7 +1492,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 var groupPath = group.append("path")
                     .attr("id", function(d, i) { return "group" + i; })
                     .attr("d", arc)
-                    .style("fill", function(d, i) { return cities[i].color; });
+                    .style("fill", function(d, i) { return network_labels[i].color; });
 
                 // Add a text label.
                 var groupText = group.append("text")
@@ -1502,28 +1502,56 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
                 groupText.append("textPath")
                     .attr("xlink:href", function(d, i) { return "#group" + i; })
-                    .text(function(d, i) { return cities[i].name; });
+                    .text(function(d, i) { return network_labels[i].name; });
 
                 // Remove the labels that don't fit. :(
                 groupText.filter(function(d, i) { return groupPath[0][i].getTotalLength() / 2 - 16 < this.getComputedTextLength(); })
                     .remove();
 
-                // Add the chords.
+		// Create the fill gradient for the chords (based on https://bl.ocks.org/JulienAssouline/2847e100ac7d4d3981b0f49111e185fe)
+		function getGradID(d){console.log('d:',d); return "linkGrad-" + d.source.index + "-" + d.target.index; }
+
+		var grads = svg.append("defs")
+		    .selectAll("linearGradient")
+		    .data(layout.chords)
+		    .enter()
+		    .append("linearGradient")
+		    .attr("id", getGradID)
+		    .attr("gradientUnits", "userSpaceOnUse")
+		    .attr("x1", function(d, i){ return innerRadius * Math.cos((d.source.endAngle-d.source.startAngle) / 2 + d.source.startAngle - Math.PI/2); })
+		    .attr("y1", function(d, i){ return innerRadius * Math.sin((d.source.endAngle-d.source.startAngle) / 2 + d.source.startAngle - Math.PI/2); })
+		    .attr("x2", function(d,i){ return innerRadius * Math.cos((d.target.endAngle-d.target.startAngle) / 2 + d.target.startAngle - Math.PI/2); })
+		    .attr("y2", function(d,i){ return innerRadius * Math.sin((d.target.endAngle-d.target.startAngle) / 2 + d.target.startAngle - Math.PI/2); })
+
+		// Set the starting color (at 0%)
+		grads.append("stop")
+		      .attr("offset", "-50%")
+		      .attr("stop-color", function(d){ return network_labels[d.source.index].color})
+
+		// Set the ending color (at 100%)
+		grads.append("stop")
+		      .attr("offset", "150%")
+		      .attr("stop-color", function(d){ return network_labels[d.target.index].color})
+		 
+               
+		// Add the chords 
                 var chord = svg.selectAll(".chord")
                     .data(layout.chords)
-                    .enter().append("path")
-                    .attr("class", "chord")
-                    .style("fill", function(d) { return cities[d.source.index].color; })
+                    .enter()
+		    .append("path")
+                    .attr("class", function(d) {
+                       return "chord chord-" + d.source.index + " chord-" + d.target.index // The first chord allows us to select all of them. The second chord allows us to select each individual one. 
+		    })    
+		    .style("fill", function(d){ return "url(#" + getGradID(d) + ")"; })
                     .attr("d", path);
-
 
                 // Add an elaborate mouseover title for each chord.
                 chord.append("title").text(function(d) {
-                    return cities[d.source.index].name
-                        + " → " + cities[d.target.index].name
+                    return network_labels[d.source.index].name
+                        + " → " + network_labels[d.target.index].name
                         + ": " + formatPercent(d.source.value)
-                        + "\n" + cities[d.target.index].name
-                        + " → " + cities[d.source.index].name
+                        + "\n" + network_labels[d.target.index].name
+                        + " → " + network_labels[d.source.index].name
                         + ": " + formatPercent(d.target.value);
                 });
 
@@ -1676,8 +1704,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 					    matrix[i][j]=0.01; 
 			    }
 		    }
-		    var correlationMatrix = matrix; 
-		    /*var correlationMatrix = [
+		    /*var correlationMatrix = matrix; */
+		    var correlationMatrix = [
 			    [1, 0.3, 0, 0.8, 0, 0.2, 1, 0.5, 0, 0.75],
 			    [0.3, 1, 0.5, 0.2, 0.4, 0.3, 0.8, 0.1, 1, 0],
 			    [0, 0.5, 1, 0.4, 0, 0.9, 0, 0.2, 1, 0.3],
@@ -1688,7 +1716,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 			    [0.5, 0.1, 0.2, 1, 0.1, 0, 0.5, 1, 0, 0.4],
 			    [0, 1, 1, 0.2, 0.6, 0.4, 0, 0, 1, 0.6],
 			    [0.75, 0, 0.3, 0.9, 0.7, 0.1, 1, 0.4, 0.6, 1]
-		    ];*/
+		    ];
 
 		    var labels = ['MF', 'FP', 'DMN', 'Mot', 'VI', 'VII', 'VAs', 'SAL', 'SC', 'CBL'];
 		    // heatMap part
