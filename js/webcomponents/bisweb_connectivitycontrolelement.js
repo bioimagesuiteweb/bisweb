@@ -1341,7 +1341,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         let bbar3 = webutil.createbuttonbar({ parent : basediv });
         webutil.createbutton({ type : "info",
-                               name : "Draw Chords",
+                               name : "Chord Plot",
                                position : "bottom",
                                css : { "margin": "5px"},
                                tooltip : "Click this to draw a chord diagram from the lines on screen",
@@ -1351,7 +1351,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
 
         webutil.createbutton({ type : "info",
-                               name : "Corr Map",
+                               name : "Summary Matrix",
                                position : "bottom",
                                css : { "margin": "5px"},
                                tooltip : "Click this to draw a chord diagram from the lines on screen",
@@ -1477,9 +1477,15 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             }
 
 
+<<<<<<< HEAD
             d3.csv("../data/network_names.csv", function(cities) {
                 //console.log(matrix);
                 //layout.matrix(matrix);
+=======
+            d3.csv("../data/network_names.csv", function(network_labels) {
+                //console.log(matrix);
+                layout.matrix(matrix);
+>>>>>>> b17c00aee3e6e6320e85988f7f6f6db2efe66a27
 
                 // Add a group per neighborhood.
                 /*var group = svg.selectAll(".group")
@@ -1492,7 +1498,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 var groupPath = group.append("path")
                     .attr("id", function(d, i) { return "group" + i; })
                     .attr("d", arc)
-                    .style("fill", function(d, i) { return cities[i].color; });
+                    .style("fill", function(d, i) { return network_labels[i].color; });
 
                 // Add a text label.
                 var groupText = group.append("text")
@@ -1502,23 +1508,58 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
                 groupText.append("textPath")
                     .attr("xlink:href", function(d, i) { return "#group" + i; })
-                    .text(function(d, i) { return cities[i].name; });
+                    .text(function(d, i) { return network_labels[i].name; });
 
                 // Remove the labels that don't fit. :(
                 groupText.filter(function(d, i) { return groupPath[0][i].getTotalLength() / 2 - 16 < this.getComputedTextLength(); })
                     .remove();
 
-                // Add the chords.
+		// Create the fill gradient for the chords (based on https://bl.ocks.org/JulienAssouline/2847e100ac7d4d3981b0f49111e185fe)
+		function getGradID(d){console.log('d:',d); return "linkGrad-" + d.source.index + "-" + d.target.index; }
+
+		var grads = svg.append("defs")
+		    .selectAll("linearGradient")
+		    .data(layout.chords)
+		    .enter()
+		    .append("linearGradient")
+		    .attr("id", getGradID)
+		    .attr("gradientUnits", "userSpaceOnUse")
+		    .attr("x1", function(d, i){ return innerRadius * Math.cos((d.source.endAngle-d.source.startAngle) / 2 + d.source.startAngle - Math.PI/2); })
+		    .attr("y1", function(d, i){ return innerRadius * Math.sin((d.source.endAngle-d.source.startAngle) / 2 + d.source.startAngle - Math.PI/2); })
+		    .attr("x2", function(d,i){ return innerRadius * Math.cos((d.target.endAngle-d.target.startAngle) / 2 + d.target.startAngle - Math.PI/2); })
+		    .attr("y2", function(d,i){ return innerRadius * Math.sin((d.target.endAngle-d.target.startAngle) / 2 + d.target.startAngle - Math.PI/2); })
+
+		// Set the starting color (at 0%)
+		grads.append("stop")
+		      .attr("offset", "-50%")
+		      .attr("stop-color", function(d){ return network_labels[d.source.index].color})
+
+		// Set the ending color (at 100%)
+		grads.append("stop")
+		      .attr("offset", "150%")
+		      .attr("stop-color", function(d){ return network_labels[d.target.index].color})
+		 
+               
+		// Add the chords 
                 var chord = svg.selectAll(".chord")
                     .data(layout.chords)
+<<<<<<< HEAD
                     .enter().append("path")
                     .attr("class", "chord")
                     .style("fill", function(d) { return cities[d.source.index].color; })
 		    .style("opacity",0.7)
+=======
+                    .enter()
+		    .append("path")
+                    .attr("class", function(d) {
+                       return "chord chord-" + d.source.index + " chord-" + d.target.index // The first chord allows us to select all of them. The second chord allows us to select each individual one. 
+		    })    
+		    .style("fill", function(d){ return "url(#" + getGradID(d) + ")"; })
+>>>>>>> b17c00aee3e6e6320e85988f7f6f6db2efe66a27
                     .attr("d", path);
 
-
                 // Add an elaborate mouseover title for each chord.
+<<<<<<< HEAD
 		chord.append("title").text(function(d) {
 		    return cities[d.source.index].name
 			+ " → " + cities[d.target.index].name
@@ -1540,6 +1581,16 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 					    && p.target.index != i;
 			    });
 		    }
+=======
+                chord.append("title").text(function(d) {
+                    return network_labels[d.source.index].name
+                        + " → " + network_labels[d.target.index].name
+                        + ": " + formatPercent(d.source.value)
+                        + "\n" + network_labels[d.target.index].name
+                        + " → " + network_labels[d.source.index].name
+                        + ": " + formatPercent(d.target.value);
+                });
+>>>>>>> b17c00aee3e6e6320e85988f7f6f6db2efe66a27
 
 			    var w = dim[0]*0.8;//dim[0];//1050;
 			    var h = dim[1]*0.8;//dim[1];//700;
@@ -1777,6 +1828,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
     };
 
+<<<<<<< HEAD
 	var createChordDialog=function(name,height=-1,width=-1) {
 
 		let dim = [parseInt($('canvas').width() - 100), parseInt($('canvas').height() - 100)];
@@ -1905,6 +1957,73 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 			}
 			var correlationMatrix = matrix; 
 			/*var correlationMatrix = [
+=======
+    //didn't remove the unused parameters because they might be used later? 
+    // -Zach
+    var plotCorrMap=function(parentDiv,id1,id2,parc,pairs,scolor,context,normallength,thickness) {
+
+	    //var correlationMatrix = readTextFile('data/heatMat.mask.NBSFDR.ucla.175.antiDepression.csv');
+	    function readTextFile(file){
+		    var rawFile = new XMLHttpRequest();
+		    rawFile.open("GET", file, false);
+		    var matrix ;
+		    rawFile.onreadystatechange = function ()
+		    {
+			    if(rawFile.readyState === 4)
+			    {
+				    if(rawFile.status === 200 || rawFile.status == 0)
+				    {
+					    var rows = rawFile.responseText.split('\n');
+					    matrix = new Array(rows.length-1);
+					    for(i=0;i<rows.length-1;i++){
+						    matrix[i] = new Array(rows.length-1);
+						    tokens = rows[i].split(',');
+						    for(j=0;j<rows.length-1;j++){
+							    matrix[i][j]=parseInt(tokens[j]);
+						    }
+
+					    }
+				    }
+			    }
+		    }
+		    rawFile.send(null);
+		    return matrix;
+	    }
+
+	    d3.csv("../data/network.csv",function(data) {
+		    var net_map = {};
+		    var nets = new Set();
+		    data.map(function(d)
+			    {       
+				    net_map[d.node-1] = d.network-1;
+				    nets.add(d.network-1);
+			    });
+		    var matrix =  new Array(nets.size);
+		    for(var i = 0; i < nets.size; i++){
+			    matrix[i] = new Array(nets.size);
+			    for(var j = 0; j < nets.size; j++){
+				    matrix[i][j]=0; 
+			    }
+		    }
+		    var n=pairs.length;
+		    for (var index=0;index<n;index++) {
+			    var a_node=pairs[index][0];
+			    var b_node=pairs[index][1];
+
+			    var node=Math.floor(parc.indexmap[a_node]);
+			    var othernode=Math.floor(parc.indexmap[b_node]);
+			    matrix[net_map[node-1]][net_map[othernode-1]]+=1;
+			    matrix[net_map[othernode-1]][net_map[node-1]]+=1;
+		    }
+		    for(var i = 0; i < nets.size; i++){
+			    for(var j = 0; j < nets.size; j++){
+				    if(j>i)
+					    matrix[i][j]=0.01; 
+			    }
+		    }
+		    /*var correlationMatrix = matrix; */
+		    var correlationMatrix = [
+>>>>>>> b17c00aee3e6e6320e85988f7f6f6db2efe66a27
 			    [1, 0.3, 0, 0.8, 0, 0.2, 1, 0.5, 0, 0.75],
 			    [0.3, 1, 0.5, 0.2, 0.4, 0.3, 0.8, 0.1, 1, 0],
 			    [0, 0.5, 1, 0.4, 0, 0.9, 0, 0.2, 1, 0.3],
@@ -1915,7 +2034,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 			    [0.5, 0.1, 0.2, 1, 0.1, 0, 0.5, 1, 0, 0.4],
 			    [0, 1, 1, 0.2, 0.6, 0.4, 0, 0, 1, 0.6],
 			    [0.75, 0, 0.3, 0.9, 0.7, 0.1, 1, 0.4, 0.6, 1]
-		    ];*/
+		    ];
 
 			var labels = ['MF', 'FP', 'DMN', 'Mot', 'VI', 'VII', 'VAs', 'SAL', 'SC', 'CBL'];
 			// heatMap part
