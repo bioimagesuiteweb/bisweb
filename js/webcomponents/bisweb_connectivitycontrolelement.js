@@ -134,30 +134,32 @@ const gui_Lobes_Values = [ 'R-Prefrontal', 'R-MotorStrip',  'R-Insula',
                            'L-Cerebellum', 'L-Subcortical',
                            'L-Brainstem' ];
 
+
 const gui_Networks = {
-    1:  'Somato-Motor',
-    3:  'Cingular-opercular',
-    4:  'Auditory',
-    5:  'Default Mode',
-    7:  'Visual',
-    8:  'Frontal-Parietal',
-    9:  'Salience',
-    10: 'Subcortical',
-    11: 'Ventral-Attention',
-    12: 'Dorsal-Attention'
+    "1" : "Medial Frontal",
+    "2" : "Fronto-parietal",
+    "3" : "Default Mode",
+    "4" : "Motor",
+    "5" : "Visual I",
+    "6" : "Visual II",
+    "7" : "Visual Association",
+    "8" : "Limbic",
+    "9" : "Basal Ganglia",
+    "10": "Cerebellum"              
 };
 
 const gui_Networks_Values = [
-    'Somato-Motor',
-    'Cingular-opercular',
-    'Auditory',
-    'Default Mode',
-    'Visual',
-    'Frontal-Parietal',
-    'Salience',
-    'Subcortical',
-    'Ventral-Attention',
-    'Dorsal-Attention'];
+    "Medial Frontal",         
+    "Fronto-parietal",        
+    "Default Mode",           
+    "Motor",                  
+    "Visual I",               
+    "Visual II",              
+    "Visual Association",     
+    "Limbic",                 
+    "Basal Ganglia",          
+    "Cerebellum"
+];
 
 
 const gui_Lines = [ 'Positive', 'Negative', 'Both'];
@@ -792,7 +794,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             let lobe=gui_Lobes[internal.parcellation.rois[orignode].attr[0]];
             internal.parameters.lobe=lobe;
             
-            let n=internal.parcellation.rois[orignode].attr[2];
+            let n=internal.parcellation.rois[orignode].attr[4]; // switch to shen network
             let network=gui_Networks[n];
             if (network===undefined) {
                 network="unknown";
@@ -804,7 +806,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             if (brod===undefined) {
                 brod="n/a";
             } 
-            s_text='Node:'+humannumber+' ( '+lobe+', '+network+', '+brod+').';
+            s_text='Node:'+humannumber+' ( '+lobe+', NTW='+network+', BA='+brod+').';
             s_text2=' MNI=('+internal.mni[0]+','+internal.mni[1]+','+internal.mni[2]+')';
 
             if (internal.conndata.statMatrix!==null) {
@@ -1378,7 +1380,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 attribcomponent=0;
                 singlevalue=getKeyByValue(gui_Lobes,internal.parameters.lobe,1);
             } else {
-                attribcomponent=2;
+                // Siwtch this to xilin networks 2->4
+                attribcomponent=4;
                 singlevalue=getKeyByValue(gui_Networks,internal.parameters.network,1);
             }
         }

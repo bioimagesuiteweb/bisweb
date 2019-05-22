@@ -457,6 +457,7 @@ let makePipeline = function(pipelineOptions,odir='',debug=false) {
     makefile +='# Create individual output files\n#\n';
     //make the rest of the commands with job names set to the name of outputs
     let onames='';
+    //let tempnames='';
     if (debug)
         console.log('__ Adding output file commands');
     for (let o of allJobOutputs) {

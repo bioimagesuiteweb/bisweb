@@ -39,7 +39,7 @@
                 "name" : ""
             },
             {
-                "name" : "Networks",
+                "name" : "WASHU Networks",
                 "description" : "Networks as defined by Power et al. Neuron 2011.",
                 "labels" : {
                     "1" :  "Somato-Motor",
@@ -102,6 +102,22 @@
                     "55" : "Hypothalamus (55)",
                     "58" : "BrainStem",
                     "57" : "Cerebellum"
+                }
+            },
+            {
+                "name" : "Yale Networks",
+                "description" : "Networks defined on the Shen 268 atlas",
+                "labels" : {
+                    "1" : "Medial Frontal",
+                    "2" : "Fronto-parietal",
+                    "3" : "Default Mode",
+                    "4" : "Motor",
+                    "5" : "Visual I",
+                    "6" : "Visual II",
+                    "7" : "Visual Association",
+                    "8" : "Limbic",
+                    "9" : "Basal Ganglia",
+                    "10" : "Cerebellum"
                 }
             }
         ]
