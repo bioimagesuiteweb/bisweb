@@ -34,6 +34,7 @@
         "commander": "2.16.0",
         "crypto-js": "3.1.9-1",
         "dat.gui": "0.7.3",
+        "d3": "3",
         "dropbox": "2.5.13",
         "electron-debug": "1.5.0",
         "fastclick": "1.0.6",

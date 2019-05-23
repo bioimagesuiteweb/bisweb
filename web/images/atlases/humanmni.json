@@ -13,26 +13,26 @@
                 "name"  : "Lobes",
                 "description" : "Anatomically Defined Brain Lobes",
                 "labels": {
-                    "1" : "Right Prefrontal",
-                    "2" : "Right MotorStrip",
-                    "3" : "Right Insula",
-                    "4" : "Right Parietal",
-                    "5" : "Right Temporal",
-                    "6" : "Right Occipital",
-                    "7" : "Right Limbic",
-                    "8" : "Right Cerebellum",
-                    "9" : "Right Subcortical",
-                    "10" : "Right Brainstem",
-                    "11" : "Left Prefrontal",
-                    "12" : "Left MotorStrip",
-                    "13" : "Left Insula",
-                    "14" : "Left Parietal",
-                    "15" : "Left Temporal",
-                    "16" : "Left Occipital",
-                    "17" : "Left Limbic",
-                    "18" : "Left Cerebellum",
-                    "19" : "Left Subcortical",
-                    "20" : "Left Brainstem"
+                    "1" : "R-Prefrontal",
+                    "2" : "R-MotorStrip",
+                    "3" : "R-Insula",
+                    "4" : "R-Parietal",
+                    "5" : "R-Temporal",
+                    "6" : "R-Occipital",
+                    "7" : "R-Limbic",
+                    "8" : "R-Cerebellum",
+                    "9" : "R-Subcortical",
+                    "10" : "R-Brainstem",
+                    "11" : "L-Prefrontal",
+                    "12" : "L-MotorStrip",
+                    "13" : "L-Insula",
+                    "14" : "L-Parietal",
+                    "15" : "L-Temporal",
+                    "16" : "L-Occipital",
+                    "17" : "L-Limbic",
+                    "18" : "L-Cerebellum",
+                    "19" : "L-Subcortical",
+                    "20" : "L-Brainstem"
                 }
             },
             {
@@ -52,6 +52,18 @@
                     "10" : "Subcortical",
                     "11" : "Ventral-Attention",
                     "12" : "Dorsal-Attention"
+                },
+                "shortlabels" : {
+                    "1" :  "SMot",
+                    "3" :  "C-o",
+                    "4" :  "Aud",
+                    "5" :  "DMN",
+                    "7" :  "Vis",
+                    "8" :  "FPa",
+                    "9" :  "Sal",
+                    "10" : "Subc",
+                    "11" : "V-At",
+                    "12" : "D-At"
                 }
             },
             {
@@ -161,6 +173,18 @@
                     "8" : "Limbic",
                     "9" : "Basal Ganglia",
                     "10" : "Cerebellum"
+                },
+                "shortlabels" : {
+                    "1" : "MF",
+                    "2" : "FP",
+                    "3" : "DMN",
+                    "4" : "Mot",
+                    "5" : "VI",
+                    "6" : "VII",
+                    "7" : "VAs",
+                    "8" : "SAL",
+                    "9" : "SC",
+                    "10" : "CBL"
                 }
             }
         ]

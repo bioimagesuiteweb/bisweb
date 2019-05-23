@@ -35,7 +35,7 @@ class BisWebDialogElement extends HTMLElement {
         this.name="";
         this.closecallback=null;
         this.dialog=null;
-
+        this.div=null;
         this.widget=null;
         this.header=null;
         this.footer=null;
@@ -85,6 +85,9 @@ class BisWebDialogElement extends HTMLElement {
      * @returns {JQueryElement} 
      */
     getContent() { return this.content; }
+
+    /** returns the containing div */
+    getContainingFrame() { return this.div; }
 
     /** returns the widget base */
     getWidgetBase() { return this.widgetbase; }
@@ -293,6 +296,7 @@ class BisWebDialogElement extends HTMLElement {
         var newid = webutil.createWithTemplate(webutil.getTemplates().bisdialog, $('body'));
         var div = $('#' + newid);
 
+        this.div = div;
         this.headertext=div.find('.modal-title');
         this.headertext.text(name);
         this.dialog=div.find('.modal-dialog');
