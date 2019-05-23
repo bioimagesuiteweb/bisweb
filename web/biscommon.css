@@ -365,3 +365,7 @@ input[type="radio"] .styled:checked + label::after {
     -ms-transform: scale(-1, 1);
     transform: scale(-1, 1);
 }
+.chart{
+    background-color: #F5F2EB;
+    border: 1px solid #F5F2EB;
+}
