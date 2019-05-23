@@ -85,7 +85,6 @@ class CustomModule {
         this.name = opts.name || description.dialogname || description.name;
         this.dual = opts.dual || false;
 
-        
         // Three states
 
         this.panel=new BisWebPanel(layoutcontroller,{

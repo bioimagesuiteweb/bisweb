@@ -176,17 +176,15 @@ class FileTreePipeline extends HTMLElement {
                         if (moduleName) {
                             let mod = moduleIndex.getModule(moduleName);
 
+                            
                             let customModule = bisweb_custommodule.createCustom(null, this.algocontroller, mod, { 'numViewers': 0, 'dual' : false, 'paramsMargin' : '5px', 'buttonsMargin' : '0px' });
                             customModule.createOrUpdateGUI();
+                            setDgWidth($(customModule.panel.widget));
 
                             this.modules.push(customModule);
 
                             let moduleLocation = this.modules.length - 1; //index of module in array at time of adding
                             let prettyModuleName = moduleIndex.getModule(moduleName).getDescription().name;
-
-                            //set style for parameters to display properly in modal
-                            let id = bis_webutil.getuniqueid();
-                            $(customModule.panel.widget).attr('id', id);
 
                             //add 'remove' button to modal button bar
                             let removeButton = bis_webutil.createbutton({ 'name': 'Remove', 'type' : 'danger' });
@@ -203,7 +201,13 @@ class FileTreePipeline extends HTMLElement {
                                 });
                             });
 
+                            //put label and element inside a containing div
+                            let id = bis_webutil.getuniqueid();
+                            let moduleLabel = $(`<span>${prettyModuleName}</span>`);
+
                             $(customModule.panel.widget).find('.bisweb-customelement-footer').append(removeButton);
+                            $(customModule.panel.widget).prepend(moduleLabel);
+                            $(customModule.panel.widget).attr('id', id);
                             pipelineModal.body.append(customModule.panel.widget);
                         }
                     }
@@ -238,6 +242,11 @@ class FileTreePipeline extends HTMLElement {
         }
 
         this.pipelineModal.dialog.modal('show');
+
+        //A bit hacky but sets the width of the dg to 50%
+        function setDgWidth(widget) {
+            widget.find('.dg.main').width('50%');
+        }
     }
 
     /**
