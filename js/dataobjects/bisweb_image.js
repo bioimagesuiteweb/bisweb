@@ -33,7 +33,7 @@ const tiff=require('tiff2');
 const bisheader = require("bis_header.js");
 const simplemat=require('bis_simplemat');
 const numeric=require('numeric');
-
+const nrrd=require('nrrd');
 
 /** Class representing a medical image */
 class BisWebImage extends BisWebDataObject { 
@@ -151,11 +151,19 @@ class BisWebImage extends BisWebDataObject {
                     else
                         self.parseTIFF(obj.data,obj.filename,forceorient);
                     
-                    self.commentlist=[ 'read from tiff '+fobj ];                                        
+                    self.commentlist.push({ 'Import' : 'read from tiff '+obj.filename });                                        
                     self.internal.header.setExtensionsFromArray(self.commentlist);
-                } else {
+                } else if (ext==="nrrd") {
+                    //console.log("Name=",obj.data.constructor.name);
+                    if (obj.data.constructor.name === "Uint8Array")
+                        self.parseNRRD(obj.data.buffer,obj.filename,forceorient);
+                    else
+                        self.parseNRRD(obj.data,obj.filename,forceorient);
+                    
+                    self.commentlist.push({'Import' : '... read from nrrd '+obj.filename});                                        
+                    self.internal.header.setExtensionsFromArray(self.commentlist);
+                }else {
                     try {
-                        //    console.log('\n Parse NII\n+++',fobj);
                         self.parseNII(obj.data.buffer,forceorient);
                     } catch(e) {
                         reject('Failed to load from '+fobj + '('+e+')');
@@ -1267,6 +1275,86 @@ class BisWebImage extends BisWebDataObject {
         return a;
     }
 
+    /** parse nrrd file -- 
+     * @param {Uint8Array} arr -- the raw data
+     * @param {String} filename -- the original filename
+     * @param {String} forceorient -- if set to force orientation (e.g. LPS, RAS)
+     */
+    parseNRRD(inputbuffer,filename,forceorient_in) {
+        
+
+        const dat=nrrd.parse(inputbuffer);
+        let keys=Object.keys(dat);
+        let obj={};
+        for (let i=0;i<keys.length;i++) {
+            let key=keys[i];
+            if (key!=='data' && key!=='buffer') {
+                obj[key]=dat[key];
+            }
+        }
+        obj['data']=dat['data'].length;
+        
+        //console.log(obj);
+
+        if (obj.version !== 4 || obj.type !== 'uint8' || obj.encoding !=='raw' ) {
+            throw new Error('Not Microscope NRRD ');
+        }
+
+        //console.log("SZ=", obj.sizes[0]*obj.sizes[1]*obj.sizes[2]);
+
+        let opts = {
+            type : 'uchar',
+            numframes :  1,
+            numcomponentes:  1,
+            dimensions :  [ obj.sizes[0], obj.sizes[1], obj.sizes[2] ],
+            spacing :  [ obj.spaceDirections[0][0], obj.spaceDirections[1][1], obj.spaceDirections[2][2] ],
+            orientation : 'RAS'
+        };
+
+        this.createImage(opts);
+        let imgdata=this.internal.imgdata;
+        //let len=imgdata.length;
+        //console.log('Len=',len,dat.data.length,dat.data.constructor.name);
+        for (let i=0;i<imgdata.length;i++)
+            imgdata[i]=dat.data[i];
+
+        let internal=this.internal;
+        
+        internal.header.struct.srow_x[1]=-opts.spacing[0];
+        internal.header.struct.srow_x[0]=0.0;
+        internal.header.struct.srow_x[2]=0.0;
+        internal.header.struct.srow_x[3]=0.0;
+        
+        internal.header.struct.srow_y[1]=0.0;
+        internal.header.struct.srow_y[0]=opts.spacing[1];
+        internal.header.struct.srow_y[2]=0.0;
+        internal.header.struct.srow_y[3]=0.0;
+        
+        internal.header.struct.srow_z[0]=0.0;
+        internal.header.struct.srow_z[1]=0.0;
+        internal.header.struct.srow_z[2]=-opts.spacing[2];
+        internal.header.struct.srow_z[3]=0.0;
+        internal.header.struct.qform_code=0;
+        internal.header.struct.sform_code=1;
+            
+        BisWebImage.parseHeaderAndComputeOrientation(internal);
+        
+        let forceorient=userPreferences.sanitizeOrientationOnLoad(forceorient_in);
+        
+        if (forceorient !== "None" && forceorient !== internal.orient.name) {
+            let debug=true;
+            let origdata=dat.data;
+            if (debug)
+                console.log('+++++ permuting data ',forceorient);
+            BisWebImage.permuteDataToMatchDesiredOrientation(internal,origdata,0,internal.imgdata,forceorient,debug);
+            internal.forcedorientationchange=true;
+        }
+        
+        this.computeIntensityRange();
+        this.setFilename(filename);
+    }
+
+
     /** Adds Quaternion Info to header
      * @param{EmscriptenModule} Module
      */
@@ -1732,7 +1820,6 @@ class BisWebImage extends BisWebDataObject {
 
         // Finally axis is done
         internal.orient.axis=[0,1,2];
-
     }
 
 }

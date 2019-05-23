@@ -45,8 +45,14 @@ class BaseModule {
         this.useworker=false;
         this.mouseobserver=false;
         this.recreateGUI = false;
+        this.donotaddcomment=false;
     }
 
+    /** make module is internal, hence no metadata stored in comments */
+    makeInternal() {
+        this.donotaddcomment=true;
+    }
+    
     /**
      * Return the JSON description associated with a module. 
      * See bisweb_webparser.js for the complete list of description parameters.
@@ -58,6 +64,9 @@ class BaseModule {
         }
         return this.description;
     }
+
+    /** Get Extra Argument */
+    getExtraArgument() { return null; }
 
     /** Runs the module programmatically 
      * @param {dictionary} inputs -- input objects
@@ -71,7 +80,7 @@ class BaseModule {
 
         let error = [];
         des.inputs.forEach((param) => {
-            let name = param['varname'];
+            let name = param['varname'] || null;
             this.inputs[name] = inputs[name] || null;
             if (this.inputs[name] === null && param.required === true) {
                 console.log("No/empty " + param.name + " specified.");
@@ -245,17 +254,21 @@ class BaseModule {
             return false;
         }
 
-        switch (param.type.toLowerCase()) {
-        case 'bool':
-        case 'boolean': return (['0', '1', true, false, 'true', 'false', 'on', 'off'].indexOf(val)) >= 0;
-        case 'float': return (isNaN(parseFloat(val)) === false);
-        case 'int':
-        case 'integer': return (isNaN(parseFloat(val, 10)) === false);
-        case 'string':
-        case '': break;
-        default: console.log('warning: could not interpret param', val);
+        switch (param.type.toLowerCase())
+        {
+            case 'bool':
+            case 'boolean': return (['0', '1', true, false, 'true', 'false', 'on', 'off'].indexOf(val)) >= 0;
+            case 'float': return (isNaN(parseFloat(val)) === false);
+            case 'int':
+            case 'integer': return (isNaN(parseFloat(val, 10)) === false);
+            case 'string':
+            case 'extra':
+            case '': break;
+            default: console.log('warning: could not interpret param', val);
         }
 
+
+        
         let restrict = param.restrict || param.restrictAnswer || null;
         let lowval = param.lowval || param.low || null;
         let highval = param.highval || param.high || null;
@@ -474,7 +487,9 @@ class BaseModule {
             if (systeminfo)
                 cmt['systeminfo']=JSON.parse(JSON.stringify(systeminfo));
             if (this.outputs[name]) {
-                this.outputs[name].addComment({ "ModuleOutput" : cmt});
+                if (!this.donotaddcomment) {
+                    this.outputs[name].addComment({ "ModuleOutput" : cmt});
+                }
                 let fn=this.getOutputFilename(name);
                 this.outputs[name].setFilename(fn);
             }

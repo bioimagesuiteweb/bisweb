@@ -6,6 +6,8 @@ const bisutil = require('bis_util');
 const genericio = require('bis_genericio');
 const moduleindex=require('moduleindex');
 const bistfutil=require('bis_tfutil');
+const bisxformutil = require('bis_transformationutil.js');
+const BisWebDataObject = require('bisweb_dataobject');
 const BisWebImage = require('bisweb_image');
 const BisWebMatrix = require('bisweb_matrix');
 const BisWebTextObject = require('bisweb_textobject');
@@ -76,6 +78,7 @@ module.exports= {
     bisdate : bisdate,
     userPreferences :     userPreferences,
     // Core Data Structures
+    BisWebDataObject : BisWebDataObject,
     BisWebImage : BisWebImage,
     BisWebMatrix : BisWebMatrix,
     BisWebTextObject : BisWebTextObject,
@@ -84,8 +87,11 @@ module.exports= {
     BisWebComboTransformation : BisWebComboTransformation,
     BisWebDataObjectCollection :     BisWebDataObjectCollection,
     BisWebTransformationCollection :     BisWebTransformationCollection,
+    // Transformation Utilities
+    bisxformutil : bisxformutil,
     // Tensor Flow
-    bistfutil: bistfutil
+    bistfutil: bistfutil,
+
     
 };
 

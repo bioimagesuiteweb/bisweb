@@ -10,10 +10,12 @@ computeCorrelation
 computeGLM
 computeROI
 cropImage
+diffSpect
 displacementField
 extractFrame
 extractSlice
 flipImage
+invertTransformation
 gradientImage
 linearRegistration
 manualRegistration
@@ -33,7 +35,7 @@ regularizeObjectmap
 resampleImage
 resliceImage
 segmentImage
-sliceBiasFieldCorrect
+sliceBiasCorrect
 shiftScaleImage
 smoothImage
 thresholdImage
@@ -44,3 +46,5 @@ regressionTests
 makechecksum
 dicomconversion
 bidsconversion
+concatenateImages
+pipeline

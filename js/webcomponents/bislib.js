@@ -28,9 +28,14 @@ require("bisweb_fileserverclient.js");
 require("bisweb_misactool.js");
 require("bisweb_filetreepanel.js");
 require("bisweb_dicomimportelement.js");
+require("bisweb_brukerimportelement.js");
+require('bisweb_grapherelement.js');
 
 const webutil = require('bis_webutil');
 const webfileutil = require('bis_webfileutil');
+const BisWebPanel = require('bisweb_panel');
+const dat = require('bisweb_datgui');
+
 
 // ES6 Imports for modules that need that
 
@@ -50,7 +55,6 @@ const Elements = {
     BlobAnalyzerElement : require("bisweb_blobanalyzerelement.js"),
     SnapshotElement : require("bisweb_snapshotelement.js"),
     ConsoleElement : require("bisweb_console.js"),
-    GrapherElement : require("bisweb_grapherelement.js"),
     SimpleAlgorithmControllerElement : require('bisweb_simplealgorithmcontroller.js'),
     ModuleManagerElement : require("bisweb_modulemanagerelement.js"),
     ParavisionImportElement: require("bisweb_paravisionimportelement.js"),
@@ -61,13 +65,12 @@ const Elements = {
     DualViewerApplicationElement : require("bisweb_dualviewerapplication.js"),
     WebWorkerControllerElement : require("bisweb_webworkercontroller.js"),
     DiffSPECTElement : require("bisweb_diffspectelement.js"),
+    DiffSPECTElement2 : require("bisweb_diffspectelement2.js"),
     ConnectivityControlElement:    ConnectivityControlElement,
     LandmarkControlElement :     LandmarkControlElement,
     MosaicViewerElement :    MosaicViewerElement,
     OrthogonalViewerElement : OrthogonalViewerElement,
     PaintToolElement :    PaintToolElement,
-
-    
 };
 
 
@@ -75,6 +78,9 @@ const Elements = {
 let exportobj=require('bisweb_exportobject');
 exportobj.webutil=webutil;
 exportobj.webfileutil=webfileutil;
+exportobj.biswebpanel=BisWebPanel;
+exportobj.dat=dat;
+
 exportobj.Elements=Elements;
 
 

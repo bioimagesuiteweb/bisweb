@@ -1,0 +1,56 @@
+
+{
+    "command" : "",
+    "inputs": [
+        {
+            "name" : "input",
+            "files" : [
+                "MNI_2mm_orig.nii.gz",
+                "MNI_2mm_resliced.nii.gz", 
+                "MNI_2mm_scaled.nii.gz"
+            ]
+        }
+    ],
+    "jobs": [
+        {
+            "name": "Smooth",
+            "subcommand": "biswebnode smoothImage",
+            "options": "--debug true --input %input% --output %out1%",
+            "outputs" : [
+                { "name" : "out1",
+                  "depends": [  "%input%" ],
+                  "suffix": "_smoothed.nii.gz"
+                }
+            ]
+        },
+        {
+            "name": "Threshold",
+            "subcommand": "biswebnode thresholdImage",
+            "options": "--input %out1% --output %out2%",
+            "paramfile" : "t.param",
+            "outputs" : [
+                {
+                    "name": "out2",
+                    "depends": [ "%out1%" ],
+                    "naming": "thresholded_%out1%.nii.gz"
+
+                }
+            ]
+        },
+        {
+            "name": "Add",
+            "subcommand": "biswebnode combineImages",
+            "options": "--input %input% --second %out2% --output %out3% --mode add --weight1 1.0 --weight2 1.0",
+            "outputs" : [
+                {
+                    "name": "out3",
+                    "depends": [ "%out2%" ,"%input%" ],
+                    "naming": "%out2%__%input%__added.nii"
+                }
+            ]
+        }
+    ]
+}
+
+
+

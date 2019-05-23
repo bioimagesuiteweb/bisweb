@@ -153,12 +153,14 @@ let internal = {
     dependcss : [ 
         "./lib/css/bootstrap_dark_edited.css", 
         "./node_modules/jstree/dist/themes/default/style.css",
+        "./node_modules/bootstrap-slider/dist/css/bootstrap-slider.min.css",
         "./web/biscommon.css"
     ],
     biscss2     : 'bislib_bright.css', // Bright Mode
     dependcss2 : [ 
         "./lib/css/bootstrap_bright_edited.css", 
         "./node_modules/jstree/dist/themes/default/style.css",
+        "./node_modules/bootstrap-slider/dist/css/bootstrap-slider.min.css",
         "./web/biscommon.css"
     ], // Bright mode
     lintscripts : ['js/**/*.js','config/*.js','compiletools/*.js','*.js','web/**/*.js','test/**/*.js','fileserver/*.js'],

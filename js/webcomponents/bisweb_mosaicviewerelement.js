@@ -257,6 +257,7 @@ class MosaicViewerElement extends BaseViewerElement {
             return;
         
         let context=this.internal.layoutcontroller.context;
+        context.save();
         let domwidth=this.internal.layoutcontroller.getviewerwidth();
         let domheight=this.internal.layoutcontroller.getviewerheight();
         let dw=domwidth;
@@ -276,6 +277,8 @@ class MosaicViewerElement extends BaseViewerElement {
             
             let imageorientinvaxis = this.internal.volume.getOrientation().invaxis;
             let imageorientaxis = this.internal.volume.getOrientation().axis;
+
+
             
             let fnsize=webutil.getfontsize(context.canvas);
             context.font=fnsize+"px Arial";
@@ -323,6 +326,7 @@ class MosaicViewerElement extends BaseViewerElement {
                 } 
             }
         }
+        context.restore();
         this.drawcolorscale();
     }
     
@@ -463,7 +467,7 @@ class MosaicViewerElement extends BaseViewerElement {
         }
 
         //      this.handleresize();
-        this.updatescene();
+        
         this.updateColormapObservers(input);
         this.drawcolorscale();
     }

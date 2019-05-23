@@ -41,6 +41,7 @@
     <link rel="stylesheet" type="text/css" href="../lib/css/bootstrap_dark.css">
     <link rel="stylesheet" type="text/css" href="biscommon.css">
     <link rel="stylesheet" href="../node_modules/jstree/dist/themes/default/style.css">
+    <link rel="stylesheet" type="text/css" href="../node_modules/bootstrap-slider/dist/css/bootstrap-slider.min.css">
     <!-- endbuild -->
 
     <!-- all javascript files -->
@@ -101,6 +102,27 @@
       bis-algorithmcontrollerid="#algoelement">
     </bisweb-painttoolelement>
 
+    <bisweb-graphelement
+      id="bisweb_graphelement"
+      bis-viewerid="#viewer">
+    </bisweb-grapherelement>
+
+    <bisweb-filetreepanel
+      id="bis_filetreepanel"
+      bis-layoutwidgetid="#viewer_layout" 
+      bis-viewerid="#viewer"
+      bis-viewerapplicationid="#viewer_application"
+      bis-graphelement="#bisweb_graphelement"
+      bis-painttool="#painttool">
+    </bisweb-filetreepanel>
+
+    <bisweb-dicomimportelement
+      id="dicom_import"
+      bis-viewerid="#viewer"
+      bis-layoutwidgetid="#viewer_layout"
+      bis-filetreepanelid="#bis_filetreepanel">
+    </bisweb-dicomimportelement>
+
     <bisweb-landmarkcontrolelement
       id="landmarkcontrol"
       bis-layoutwidgetid="#viewer_layout"
@@ -108,10 +130,13 @@
     </bisweb-landmarkcontrolelement>
     
     <bisweb-viewerapplication
+      id="viewer_application"
       bis-menubarid="#viewer_menubar"
       bis-painttoolid="#painttool"
       bis-landmarkcontrolid="#landmarkcontrol"
-      bis-viewerid="#viewer">
+      bis-dicomimportid="#dicom_import"
+      bis-viewerid="#viewer"
+      bis-graphtoolid="#bisweb_graphelement">
     </bisweb-viewerapplication>
 
   </div>

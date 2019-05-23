@@ -1,0 +1,79 @@
+#-----------------------------------------------
+#
+# All Jobs
+#
+all : Smooth Threshold Add 
+
+#-----------------------------------------------
+#
+# execute job Smooth
+#
+Smooth : none/MNI_2mm_orig_smoothed.nii.gz none/MNI_2mm_resliced_smoothed.nii.gz none/MNI_2mm_scaled_smoothed.nii.gz 
+
+#-----------------------------------------------
+#
+# execute job Threshold
+#
+Threshold : none/thresholded_MNI_2mm_orig_smoothed.nii.gz none/thresholded_MNI_2mm_resliced_smoothed.nii.gz none/thresholded_MNI_2mm_scaled_smoothed.nii.gz 
+
+#-----------------------------------------------
+#
+# execute job Add
+#
+Add : none/thresholded_MNI_2mm_orig_smoothed__MNI_2mm_orig__added.nii none/thresholded_MNI_2mm_resliced_smoothed__MNI_2mm_resliced__added.nii none/thresholded_MNI_2mm_scaled_smoothed__MNI_2mm_scaled__added.nii 
+
+#-----------------------------------------------
+#
+# Create individual output files
+#
+none/MNI_2mm_orig_smoothed.nii.gz : MNI_2mm_orig.nii.gz
+	 biswebnode smoothImage --debug true --input MNI_2mm_orig.nii.gz --output none/MNI_2mm_orig_smoothed.nii.gz > none/MNI_2mm_orig_smoothed.nii.gz__results.txt 2>&1 
+
+none/MNI_2mm_resliced_smoothed.nii.gz : MNI_2mm_resliced.nii.gz
+	 biswebnode smoothImage --debug true --input MNI_2mm_resliced.nii.gz --output none/MNI_2mm_resliced_smoothed.nii.gz > none/MNI_2mm_resliced_smoothed.nii.gz__results.txt 2>&1 
+
+none/MNI_2mm_scaled_smoothed.nii.gz : MNI_2mm_scaled.nii.gz
+	 biswebnode smoothImage --debug true --input MNI_2mm_scaled.nii.gz --output none/MNI_2mm_scaled_smoothed.nii.gz > none/MNI_2mm_scaled_smoothed.nii.gz__results.txt 2>&1 
+
+none/thresholded_MNI_2mm_orig_smoothed.nii.gz : none/MNI_2mm_orig_smoothed.nii.gz t.param
+	 biswebnode thresholdImage --input none/MNI_2mm_orig_smoothed.nii.gz --output none/thresholded_MNI_2mm_orig_smoothed.nii.gz --paramfile t.param > none/thresholded_MNI_2mm_orig_smoothed.nii.gz__results.txt 2>&1 
+
+none/thresholded_MNI_2mm_resliced_smoothed.nii.gz : none/MNI_2mm_resliced_smoothed.nii.gz t.param
+	 biswebnode thresholdImage --input none/MNI_2mm_resliced_smoothed.nii.gz --output none/thresholded_MNI_2mm_resliced_smoothed.nii.gz --paramfile t.param > none/thresholded_MNI_2mm_resliced_smoothed.nii.gz__results.txt 2>&1 
+
+none/thresholded_MNI_2mm_scaled_smoothed.nii.gz : none/MNI_2mm_scaled_smoothed.nii.gz t.param
+	 biswebnode thresholdImage --input none/MNI_2mm_scaled_smoothed.nii.gz --output none/thresholded_MNI_2mm_scaled_smoothed.nii.gz --paramfile t.param > none/thresholded_MNI_2mm_scaled_smoothed.nii.gz__results.txt 2>&1 
+
+none/thresholded_MNI_2mm_orig_smoothed__MNI_2mm_orig__added.nii : MNI_2mm_orig.nii.gz none/thresholded_MNI_2mm_orig_smoothed.nii.gz
+	 biswebnode combineImages --input MNI_2mm_orig.nii.gz --second none/thresholded_MNI_2mm_orig_smoothed.nii.gz --output none/thresholded_MNI_2mm_orig_smoothed__MNI_2mm_orig__added.nii --mode add --weight1 1.0 --weight2 1.0 > none/thresholded_MNI_2mm_orig_smoothed__MNI_2mm_orig__added.nii__results.txt 2>&1 
+
+none/thresholded_MNI_2mm_resliced_smoothed__MNI_2mm_resliced__added.nii : MNI_2mm_resliced.nii.gz none/thresholded_MNI_2mm_resliced_smoothed.nii.gz
+	 biswebnode combineImages --input MNI_2mm_resliced.nii.gz --second none/thresholded_MNI_2mm_resliced_smoothed.nii.gz --output none/thresholded_MNI_2mm_resliced_smoothed__MNI_2mm_resliced__added.nii --mode add --weight1 1.0 --weight2 1.0 > none/thresholded_MNI_2mm_resliced_smoothed__MNI_2mm_resliced__added.nii__results.txt 2>&1 
+
+none/thresholded_MNI_2mm_scaled_smoothed__MNI_2mm_scaled__added.nii : MNI_2mm_scaled.nii.gz none/thresholded_MNI_2mm_scaled_smoothed.nii.gz
+	 biswebnode combineImages --input MNI_2mm_scaled.nii.gz --second none/thresholded_MNI_2mm_scaled_smoothed.nii.gz --output none/thresholded_MNI_2mm_scaled_smoothed__MNI_2mm_scaled__added.nii --mode add --weight1 1.0 --weight2 1.0 > none/thresholded_MNI_2mm_scaled_smoothed__MNI_2mm_scaled__added.nii__results.txt 2>&1 
+
+#----------------------------------- 
+# clean all outputs
+#
+clean:
+	 rimraf  none/MNI_2mm_orig_smoothed.nii.gz none/MNI_2mm_orig_smoothed.nii.gz__results.txt none/MNI_2mm_resliced_smoothed.nii.gz none/MNI_2mm_resliced_smoothed.nii.gz__results.txt none/MNI_2mm_scaled_smoothed.nii.gz none/MNI_2mm_scaled_smoothed.nii.gz__results.txt none/thresholded_MNI_2mm_orig_smoothed.nii.gz none/thresholded_MNI_2mm_orig_smoothed.nii.gz__results.txt none/thresholded_MNI_2mm_resliced_smoothed.nii.gz none/thresholded_MNI_2mm_resliced_smoothed.nii.gz__results.txt none/thresholded_MNI_2mm_scaled_smoothed.nii.gz none/thresholded_MNI_2mm_scaled_smoothed.nii.gz__results.txt none/thresholded_MNI_2mm_orig_smoothed__MNI_2mm_orig__added.nii none/thresholded_MNI_2mm_orig_smoothed__MNI_2mm_orig__added.nii__results.txt none/thresholded_MNI_2mm_resliced_smoothed__MNI_2mm_resliced__added.nii none/thresholded_MNI_2mm_resliced_smoothed__MNI_2mm_resliced__added.nii__results.txt none/thresholded_MNI_2mm_scaled_smoothed__MNI_2mm_scaled__added.nii none/thresholded_MNI_2mm_scaled_smoothed__MNI_2mm_scaled__added.nii__results.txt
+
+
+#----------------------------------- 
+# log output files
+#
+log : 
+	 @echo ''; echo ''; echo ''; echo '{'; echo '    "Outputs": ['; echo '        {'; echo '            "name": "Smooth",'; echo '            "filenames": ['; echo '                "none/MNI_2mm_orig_smoothed.nii.gz",'; echo '                "none/MNI_2mm_resliced_smoothed.nii.gz",'; echo '                "none/MNI_2mm_scaled_smoothed.nii.gz"'; echo '            ]'; echo '        },'; echo '        {'; echo '            "name": "Threshold",'; echo '            "filenames": ['; echo '                "none/thresholded_MNI_2mm_orig_smoothed.nii.gz",'; echo '                "none/thresholded_MNI_2mm_resliced_smoothed.nii.gz",'; echo '                "none/thresholded_MNI_2mm_scaled_smoothed.nii.gz"'; echo '            ]'; echo '        },'; echo '        {'; echo '            "name": "Add",'; echo '            "filenames": ['; echo '                "none/thresholded_MNI_2mm_orig_smoothed__MNI_2mm_orig__added.nii",'; echo '                "none/thresholded_MNI_2mm_resliced_smoothed__MNI_2mm_resliced__added.nii",'; echo '                "none/thresholded_MNI_2mm_scaled_smoothed__MNI_2mm_scaled__added.nii"'; echo '            ]'; echo '        }'; echo '    ]'; echo '}'; echo ' '
+
+#----------------------------------- 
+# log output files (windows)
+#
+logwin : 
+	 @echo -- &echo {& echo     "Outputs": [& echo         {& echo             "name": "Smooth",& echo             "filenames": [& echo                 "none/MNI_2mm_orig_smoothed.nii.gz",& echo                 "none/MNI_2mm_resliced_smoothed.nii.gz",& echo                 "none/MNI_2mm_scaled_smoothed.nii.gz"& echo             ]& echo         },& echo         {& echo             "name": "Threshold",& echo             "filenames": [& echo                 "none/thresholded_MNI_2mm_orig_smoothed.nii.gz",& echo                 "none/thresholded_MNI_2mm_resliced_smoothed.nii.gz",& echo                 "none/thresholded_MNI_2mm_scaled_smoothed.nii.gz"& echo             ]& echo         },& echo         {& echo             "name": "Add",& echo             "filenames": [& echo                 "none/thresholded_MNI_2mm_orig_smoothed__MNI_2mm_orig__added.nii",& echo                 "none/thresholded_MNI_2mm_resliced_smoothed__MNI_2mm_resliced__added.nii",& echo                 "none/thresholded_MNI_2mm_scaled_smoothed__MNI_2mm_scaled__added.nii"& echo             ]& echo         }& echo     ]& echo }& 
+
+#----------------------------------- 
+# list of jobs 
+#
+list : 
+	 @echo Smooth Threshold Add

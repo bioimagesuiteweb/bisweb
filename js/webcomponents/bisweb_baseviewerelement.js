@@ -356,9 +356,17 @@ class BaseViewerElement extends HTMLElement {
                     if ((vp.x1-vp.x0)>0.01 && (vp.y1-vp.y0>0.01) &&
                         subviewers[i].controls.update(this.internal.layoutcontroller.renderer)===true &&
                         i<numviewers)  {
+                        let cam=subviewers[i].camera;
+                        if (subviewers[i].controls.plane === 3) {
+                            // In 3D Mode Flip left-right
+                            cam.projectionMatrix.elements[0]=-cam.projectionMatrix.elements[0];
+                        }
                         renderer.render( subviewers[i].scene,
                                          subviewers[i].camera);
                         subviewers[i].controls.enabled=true;
+                        if (subviewers[i].controls.plane === 3) {
+                            cam.projectionMatrix.elements[0]=-cam.projectionMatrix.elements[0];
+                        }
                     } else {
                         subviewers[i].controls.enabled=false;
                     }
@@ -384,8 +392,11 @@ class BaseViewerElement extends HTMLElement {
         return 0;
     }
 
-    /** removes the colorscale */
+        /** removes the colorscale */
     clearcolorscale() {
+
+        if (this.internal.simplemode)
+            return;
 
         let context=this.internal.layoutcontroller.overlaycontext;
         let fullwidth=this.internal.layoutcontroller.getviewerwidth();
@@ -393,7 +404,6 @@ class BaseViewerElement extends HTMLElement {
         
         if (dw<500)
             return;
-
         
         let dh=this.internal.layoutcontroller.getviewerheight();
         let y0=0.92*dh;
@@ -432,7 +442,7 @@ class BaseViewerElement extends HTMLElement {
         let fnsize=webutil.getfontsize(context.canvas);
         if (dw<1700)
             fnsize=Math.round((dw/1700)*fnsize);
-
+        
         let colorfunction=this.internal.objectmaptransferfunction;
         if (this.internal.objectmaptransferinfo.clustersize > 0) 
             colorfunction=this.internal.objectmaptransferinfo.mapfunction;
@@ -481,6 +491,10 @@ class BaseViewerElement extends HTMLElement {
             power=100.0;
         
         
+        context.font=fnsize+"px Arial";
+        context.textAlign="center";
+        context.textBaseline="top";
+
         for (let pass=0;pass<numpass;pass++) {
             context.fillStyle="#888888";
             context.fillRect(x0-2,y0-2,wd*(numsteps+1)+3,ht+4);
@@ -494,6 +508,7 @@ class BaseViewerElement extends HTMLElement {
                 colorfunction(data,0,map);
                 context.fillStyle=(util.rgbToHex(map[0],map[1],map[2]));
                 context.fillRect(x0+1,y0,wd-2,ht);
+
                 if (i===0 || i===numsteps || i===numsteps/2) {
                     context.strokeStyle="#888888";
                     context.lineWidth=3;
@@ -501,27 +516,13 @@ class BaseViewerElement extends HTMLElement {
                     context.moveTo(x0+0.5*(wd-1),y0+0.9*ht);
                     context.lineTo(x0+0.5*(wd-1),y0+1.4*ht);
                     context.stroke();
-                    context.lineWidth=1;
+                    let w0=context.measureText('-').width*-0.5;
                     context.fillStyle = "#888888";
-                    context.fontSize=`${fnsize}px Arial`;
-
-                    if (i===0) {
-                        if (pass===0 || numpass===1)
-                            context.textAlign="center";
-                        else
-                            context.textAlign="left";
-                        context.fillText(util.scaledround(data[0],power),x0+0.1*(wd-1),dh-4);
-                    } else if (i===numsteps) {
-                        if (pass===0 && numpass==2)
-                            context.textAlign="right";
-                        else
-                            context.textAlign="center";
-                        context.fillText(util.scaledround(data[0],power),x0+0.9*(wd-1),dh-4);
-                    } else {
-                        context.textAlign="center";
-                        context.fillText(util.scaledround(data[0],power),x0+0.5*(wd-1),dh-4);
-                    }
+                    if (data[0]>=0.0)
+                        w0=0;
+                    context.fillText(util.scaledround(data[0],power),x0+w0+0.5*(wd-1),y0+1.5*ht);
                 }
+
                 x0+=wd;
             }
             x0+=wd;
@@ -637,8 +638,6 @@ class BaseViewerElement extends HTMLElement {
         
         this.internal.ignorecolormapobservers = true;
 
-        //        console.log('Updating colormap observers',this.id);
-        
         this.internal.colormapobservers.forEach(function(f) {
             f.updatecmap(self.internal.cmapcontroller,input);
         });
@@ -658,8 +657,6 @@ class BaseViewerElement extends HTMLElement {
             this.internal.ignoreimageobservers === true)
             return;
 
-        //        console.log('COlormap Update',this.id);
-        
         if (this.internal.cmapcontroller!==null && this.internal.volume!==null) {
             this.internal.cmapcontroller.setElementState(other.getElementState());
             this.updatetransferfunctions(input);
@@ -861,6 +858,20 @@ class BaseViewerElement extends HTMLElement {
     collapseCore() {
         let w=this.internal.layoutcontroller.getcorecontrols();
         $(w[0]).removeClass('in');
+    }
+
+
+    // -----------------------------------------------------------------------------
+    // Get Slices
+    // -----------------------------------------------------------------------------
+    /** return slices array */
+    getSliceMeshes() {
+        return this.internal.slices;
+    }
+
+    /** return overlay slices array */
+    getOverlaySliceMeshes() {
+        return this.internal.overlayslices;
     }
     
     // -----------------------------------------------------------------------------

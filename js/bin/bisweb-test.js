@@ -43,9 +43,8 @@ let cleanupAndExit=function(code=0) {
     process.exit(code);
 };
 
-let args=process.argv;
-let len=args.length;
-let toolname=args[2] || '';
+let len=process.argv.length;
+let toolname=process.argv[2] || '';
 
 if (len<=3 || toolname ==='-h' || toolname ==='--help') {
     console.log('\n Specify the module to test...');
@@ -63,7 +62,13 @@ program
     .option('--test_base_directory [s]', 'Base Directory for files');
 
 
-let bisModule = args[2];
+let args=[];
+for (let i=0;i<process.argv.length;i++) {
+    if (i!==2 && i!==1)
+        args.push(process.argv[i]);
+    else if (i===1)
+        args.push(process.argv[i]+" "+process.argv[i+1]);
+}
 
 let basedirectory='';
 for (let i=0;i<args.length;i++) {
@@ -90,6 +95,8 @@ else if (test_type==="gridtransform")
     tempName=dirname+'/out.grd';
 else if (test_type==="registration")
     tempName=dirname+'/out.json';
+else if (test_type==="text")
+    tempName=dirname+'/makefile.txt';
 args.push('--output', tempName);
 
 if (test_type==="registration") {
@@ -115,10 +122,11 @@ if (test_type==="tfjs") {
 //console.log('++++ Disabling auto-reorient of images on load.\n+++++');
 //userPreferences.setImageOrientationOnLoad('None');
 
-console.log('.... Testing module '+toolname);
+console.log('.... Testing module '+toolname+' base='+basedirectory);
 console.log('................................................');
 
-commandline.loadParse(args, bisModule, basedirectory).then(() => {
+
+commandline.loadParse(args, toolname, basedirectory).then(() => {
     console.log('.... -------------------------------------------------------');
     commandline.processTestResult(toolname,tempName,
                                   basedirectory+program.test_target,

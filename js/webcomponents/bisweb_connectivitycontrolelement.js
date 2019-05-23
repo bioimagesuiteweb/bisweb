@@ -1,19 +1,19 @@
 /*  LICENSE
- 
- _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
- 
- BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
- 
- - you may not use this software except in compliance with the License.
- - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
- 
- __Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.__
- 
- ENDLICENSE */
+    
+    _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+    
+    BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+    
+    - you may not use this software except in compliance with the License.
+    - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+    
+    __Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.__
+    
+    ENDLICENSE */
 
 /* global window,document,setTimeout,HTMLElement,Event,Image*/
 
@@ -36,8 +36,8 @@ const BisWebMatrix=require('bisweb_matrix');
 const THREE=require('three');
 const BisWebPanel = require('bisweb_panel.js');
 const dat = require('bisweb_datgui');
-
-
+const humanmni=require('atlases/humanmni.json');
+const connectvis=require('bisweb_connectivityvis');
 
 // -------------------------------------------------------------------------
 const brain_vertexshader_text = 
@@ -52,7 +52,7 @@ const brain_vertexshader_text =
       '     vec3 transformed = vec3( position );\n'+
       '     vec4 mvPosition = modelViewMatrix * vec4( transformed, 1.0 );\n'+
       '     gl_Position = projectionMatrix * mvPosition;\n'+
-      '     gl_Position.z=0.99+0.01*gl_Position.z;\n'+
+      //      '     gl_Position.z=0.99+0.01*gl_Position.z;\n'+
       '}\n';
 
 const brain_fragmentshader_text=
@@ -61,7 +61,7 @@ const brain_fragmentshader_text=
       'varying vec3 vNormal;\n'+
       //        'varying vec3 vLookup;\n'+
       'void main() {\n'+
-      '   float v=max(0.0,-vNormal.z)*0.7+0.3;\n'+
+      '   float v=max(0.0,vNormal.z);\n'+
       '   gl_FragColor = vec4( v*diffuse.x,v*diffuse.y,v*diffuse.z, opacity );\n'+
       '}';
 
@@ -79,93 +79,69 @@ const sphere_fragmentshader_text=
       'uniform vec3 diffuse;\n'+
       'varying vec3 vNormal;\n'+
       'void main() {\n'+
-      '   float v=max(0.0,-vNormal.z);\n'+
+      '   float v=max(0.0,vNormal.z);\n'+
       '   gl_FragColor = vec4( v*diffuse.x,v*diffuse.y,v*diffuse.z, opacity );\n'+
       '}';
 
 // -------------------------------------------------------------------------
+// Parse Data
+// -------------------------------------------------------------------------
 
-const gui_Lobes = {
-    1: 'R-Prefrontal',
-    2: 'R-MotorStrip',  3: 'R-Insula',
-    4: 'R-Parietal',    5: 'R-Temporal',
-    6: 'R-Occipital',   7: 'R-Limbic',
-    8: 'R-Cerebellum',  9: 'R-Subcortical',
-    10: 'R-Brainstem', 11: 'L-Prefrontal',
-    12: 'L-MotorStrip',13: 'L-Insula',
-    14: 'L-Parietal',  15: 'L-Temporal',
-    16: 'L-Occipital', 17: 'L-Limbic',
-    18: 'L-Cerebellum',19: 'L-Subcortical',
-    20: 'L-Brainstem' };
+const gui_Lobes = humanmni.labels.data[0].labels;
+const gui_BrodLabels = humanmni.labels.data[3].labels;
+const gui_Lobes_Values = [];
+let keys=Object.keys(gui_Lobes);
+for (let i=0;i<keys.length;i++) {
+    gui_Lobes_Values.push(gui_Lobes[keys[i]]);
+}
 
-const gui_BrodLabels = {
-    1 : 'PrimSensory (1)',   4 : 'PrimMotor (4)',
-    5 : 'SensoryAssoc (5)',  6 : 'BA6',
-    7 : 'BA7',              8 : 'BA8',
-    9 : 'BA9',              10 : 'BA10',
-    11 : 'BA11',            13 : 'Insula (13)',
-    14 : 'BA14',            17 : 'PrimVisual (17)',
-    18 : 'VisualAssoc (18)', 19 : 'BA19',
-    20 : 'BA20',            21 : 'BA21',
-    22 : 'BA22',            23 : 'BA23',
-    24 : 'BA24',            25 : 'BA25',
-    30 : 'BA30',            31 : 'BA31',
-    32 : 'BA32',            34 : 'BA34',
-    36 : 'Parahip (36)',     37 : 'Fusiform (37)',
-    38 : 'BA38',            39 : 'BA39',
-    40 : 'BA40',            41 : 'PrimAuditory (41)',
-    44 : 'BA44',            45 : 'BA45',
-    46 : 'BA46',            47 : 'BA47',
-    48 : 'Caudate (48)',     49 : 'Putamen (49)',
-    50 : 'Thalamus (50)',    51 : 'GlobPal (51)',
-    52 : 'NucAccumb (52)',   53 : 'Amygdala (53)',
-    54 : 'Hippocampus (54)', 55 : 'Hypothalamus (55)',
-    58 : 'BrainStem',        57 : 'Cerebellum',
-};
+const gui_Networks_Array = [
+    humanmni.labels.data[2].labels,
+    humanmni.labels.data[4].labels
+];
 
-const gui_Lobes_Values = [ 'R-Prefrontal', 'R-MotorStrip',  'R-Insula',
-                           'R-Parietal',   'R-Temporal',
-                           'R-Occipital',   'R-Limbic',
-                           'R-Cerebellum',  'R-Subcortical',
-                           'R-Brainstem',  'L-Prefrontal',
-                           'L-MotorStrip', 'L-Insula',
-                           'L-Parietal',   'L-Temporal',
-                           'L-Occipital',  'L-Limbic',
-                           'L-Cerebellum', 'L-Subcortical',
-                           'L-Brainstem' ];
+const gui_Networks_ArrayShort = [
+    humanmni.labels.data[2].shortlabels,
+    humanmni.labels.data[4].shortlabels
+];
 
-const gui_Networks = {
-    1:  'Somato-Motor',
-    3:  'Cingular-opercular',
-    4:  'Auditory',
-    5:  'Default Mode',
-    7:  'Visual',
-    8:  'Frontal-Parietal',
-    9:  'Salience',
-    10: 'Subcortical',
-    11: 'Ventral-Attention',
-    12: 'Dorsal-Attention'
-};
+// Critical flag for now, eventually make it an option
+let useYaleNetworks=true; // false = WasHU
 
-const gui_Networks_Values = [
-    'Somato-Motor',
-    'Cingular-opercular',
-    'Auditory',
-    'Default Mode',
-    'Visual',
-    'Frontal-Parietal',
-    'Salience',
-    'Subcortical',
-    'Ventral-Attention',
-    'Dorsal-Attention'];
 
 
 const gui_Lines = [ 'Positive', 'Negative', 'Both'];
-
 const gui_Modes = [ 'All', 'Single Node', 'Single Lobe','Single Network'];
-
 const lobeoffset=10.0;
 const axisoffset=[0,5.0,20.0];
+
+const createNetworkNames = function(useyale=true,internal=null) {
+        
+    let index=0;
+    
+    if (useyale) {
+        index=1;
+        internal.networkAttributeIndex=4;
+    } else {
+        index=0;
+        internal.networkAttributeIndex=2;
+    }
+    
+    internal.gui_Networks=gui_Networks_Array[index];
+        let keys=Object.keys(internal.gui_Networks);
+    internal.gui_Networks_Names=[];
+    internal.gui_Networks_ShortNames=[];
+    for (let i=0;i<keys.length;i++) { 
+        internal.gui_Networks_Names.push(internal.gui_Networks[keys[i]]);
+        internal.gui_Networks_ShortNames.push(gui_Networks_ArrayShort[index][keys[i]]);
+    }
+    console.log("Network Names created",internal.gui_Networks_Names,internal.gui_Networks_ShortNames);
+    
+    internal.parameters.lobe=gui_Lobes[19];
+    internal.parameters.mode=gui_Modes[1];
+    internal.parameters.network=internal.gui_Networks[10];
+};
+
 
 
 // --------------------------------------------------------------------------------
@@ -177,8 +153,17 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     // Control State variables
     // -------------------------------------------------------------------------
 
+
+    
     let internal = {
 
+        // Network stuff
+        networkAttributeIndex : 4,
+        gui_Networks : null,
+        gui_Networks_Names : null,
+        gui_Networks_ShortNames : null,
+
+        
         // global stuff
         initialized : false,
         this : null,
@@ -204,9 +189,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         // DAT
         datgui : null,
         parameters : {
-            lobe : gui_Lobes[19],
-            mode : gui_Modes[1],
-            network : gui_Networks[10],
             node  : 200,
             linestodraw : gui_Lines[2],
             degreethreshold : 10,
@@ -241,11 +223,18 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         inrestorestate : false,
         parcellationtext : null,
         lastnode : 0,
+
+        // Extra dialogs
+        laststate : null,
+        chordDialog : null,
+
     };
 
 
     internal.conndata.offset=lobeoffset;
 
+    createNetworkNames(useYaleNetworks,internal);
+    
     // -------------------------------------------------------------------------
     // Undo Stuff
     // -------------------------------------------------------------------------
@@ -330,8 +319,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         if (doupdate) {
             internal.rendermode=internal.rendermode+1;
             if (internal.rendermode>8)
-                internal.rendermode=6;
-        } 
+                internal.rendermode=5;
+            if (internal.rendermode===6)
+                internal.rendermode+=1;
+        }
+        //console.log('Rendermode=',internal.rendermode);
         let vp=internal.orthoviewer.setRenderMode(internal.rendermode,true);
         let parcvp=vp[4];
         internal.parcellation.viewport.x0=parcvp.x0;
@@ -443,7 +435,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         }
         actualcontext.restore();
 
-    
+        
     };
     
     var drawMatricesAndLegendsAsImages = function() {
@@ -535,6 +527,10 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 let y0_0=internal.parcellation.box[1]-0.5*(internal.parcellation.box[1]-fnsize2);
                 internal.overlaycontext.fillText('Using node definitions from '+internal.parcellation.description+' with '+(internal.parcellation.rois.length)+' nodes.',
                                                  midx,y0_0);
+                if (useYaleNetworks)
+                    internal.overlaycontext.fillText('Using Yale network definitions from Shen at al 2017',midx,y0_0+20);
+                else
+                    internal.overlaycontext.fillText('Using Network definitions from Power at al. Neuron 2011.',midx,y0_0+20);
             }
             
             internal.overlaycontext.restore();
@@ -573,7 +569,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             
             
             if (internal.showlegend && image!==null) {
-                    
+                
                 internal.overlaycontext.save();
                 internal.overlaycontext.lineWidth=1;
                 internal.overlaycontext.fillStyle="rgb(0,0,0)";
@@ -753,10 +749,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             return;
         
         let coords = internal.mni2tal.getMMCoordinates(internal.mni);
+        //        console.log('MNI=',internal.mni,' --> Coords=',coords);
         if (internal.mni[0]<0.0)
-            coords[0]=(-coords[0]);
+            coords[0]-=lobeoffset;
         else
-            coords[0]=(-coords[0]-2*lobeoffset);
+            coords[0]+=lobeoffset;
         coords[1]+=axisoffset[1];
         coords[2]+=axisoffset[2];
         
@@ -791,9 +788,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
             let lobe=gui_Lobes[internal.parcellation.rois[orignode].attr[0]];
             internal.parameters.lobe=lobe;
+
+            // 
             
-            let n=internal.parcellation.rois[orignode].attr[2];
-            let network=gui_Networks[n];
+            let n=internal.parcellation.rois[orignode].attr[internal.networkAttributeIndex]; // switch to shen network
+            let network=internal.gui_Networks[n];
             if (network===undefined) {
                 network="unknown";
             } else {
@@ -804,7 +803,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             if (brod===undefined) {
                 brod="n/a";
             } 
-            s_text='Node:'+humannumber+' ( '+lobe+', '+network+', '+brod+').';
+            s_text='Node:'+humannumber+' ( '+lobe+', NTW='+network+', BA='+brod+').';
             s_text2=' MNI=('+internal.mni[0]+','+internal.mni[1]+','+internal.mni[2]+')';
 
             if (internal.conndata.statMatrix!==null) {
@@ -986,18 +985,18 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             meshindex=1;
         
         let obj= JSON.parse(textstring);
-        let values=[0.8,0.9];
+        let values=[0.6,0.9];
         
         let vertices = new Float32Array(obj.points.length);
         let indices = new Uint16Array(obj.triangles.length);
 
         console.log('+++++ Brain surface loaded from '+filename+' '+[ obj.points.length,obj.triangles.length]);
         for (let i=0;i<obj.points.length;i+=3) {
-            vertices[i+0]=180.0-obj.points[i+0];
-            if (meshindex===1)
-                vertices[i]-=lobeoffset;
-            else
+            vertices[i+0]=obj.points[i+0];
+            if (meshindex===1) // right
                 vertices[i]+=lobeoffset;
+            else // left
+                vertices[i]-=lobeoffset;
             vertices[i+1]=obj.points[i+1];
             vertices[i+2]=obj.points[i+2];
         }
@@ -1021,7 +1020,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                               {"r":values[meshindex],
                                "g":values[meshindex],
                                "b":values[meshindex]}},
-                "opacity": {"type":"f","value":1.0}
+                "opacity": {"type":"f","value":0.7}
             },
             vertexShader : brain_vertexshader_text,
             fragmentShader : brain_fragmentshader_text,
@@ -1033,14 +1032,15 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         if (internal.axisline[0]===null) {
             // create axis line meshes
+            
             let p_indices = new Uint16Array(2);
             p_indices[ 0 ] = 0;   p_indices[ 1 ] = 1; 
             for (let axis=0;axis<=2;axis++) {
                 let p_vertices = new Float32Array(6);
-                p_vertices[0]=180.0+lobeoffset-axisoffset[0]; p_vertices[1]=-axisoffset[1]; p_vertices[2]=-axisoffset[2];
-                p_vertices[3]=180.0+lobeoffset-axisoffset[0]; p_vertices[4]=-axisoffset[1]; p_vertices[5]=-axisoffset[2];
+                p_vertices[0]=-axisoffset[0]; p_vertices[1]=-axisoffset[1]; p_vertices[2]=-axisoffset[2];
+                p_vertices[3]=-axisoffset[0]; p_vertices[4]=-axisoffset[1]; p_vertices[5]=-axisoffset[2];
                 if (axis===0) {
-                    p_vertices[3]=-lobeoffset+axisoffset[0];
+                    p_vertices[3]=180+lobeoffset+axisoffset[0];
                 } else if (axis===1) {
                     p_vertices[4]=216.0+axisoffset[1];
                 } else {
@@ -1271,7 +1271,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         internal.datgui_nodecontroller=a1;
         
         clist.push(coords.add(data,'lobe',gui_Lobes_Values).name("Lobe"));
-        clist.push(coords.add(data,'network',gui_Networks_Values).name("Network"));
+        clist.push(coords.add(data,'network',internal.gui_Networks_Names).name("Network"));
         internal.datgui_degreethresholdcontroller=coords.add(data,'degreethreshold',1,100).name("Degree Thrshld");
         clist.push(internal.datgui_degreethresholdcontroller);
         clist.push(coords.add(data,'linestodraw',gui_Lines).name("Lines to Draw"));
@@ -1331,10 +1331,36 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                                callback : removelines,
                              });
 
+        let bbar3 = webutil.createbuttonbar({ parent : basediv });
+        webutil.createbutton({ type : "info",
+                               name : "Chord Plot",
+                               position : "bottom",
+                               css : { "margin": "5px"},
+                               tooltip : "Click this to draw a chord diagram from the lines on screen",
+                               parent : bbar3,
+                               callback : () => {
+                                   console.log('Internal=',internal);
+                                   connectvis.drawchords(internal);
+                               },
+                             });
+        
+        
+        webutil.createbutton({ type : "info",
+                               name : "Summary Matrix",
+                               position : "bottom",
+                               css : { "margin": "5px"},
+                               tooltip : "Click this to draw a chord diagram from the lines on screen",
+                               parent : bbar3,
+                               callback : () => {
+                                   console.log('Internal=',internal);
+                                   connectvis.corrmap(internal);
+                               },
+                             });
 
+
+        
 
         webutil.tooltip(internal.parentDomElement);
-
 
         // ------------------------------------------------
         // On to interesting dialog
@@ -1378,8 +1404,9 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 attribcomponent=0;
                 singlevalue=getKeyByValue(gui_Lobes,internal.parameters.lobe,1);
             } else {
-                attribcomponent=2;
-                singlevalue=getKeyByValue(gui_Networks,internal.parameters.network,1);
+                // Siwtch this to xilin networks 2->4
+                attribcomponent=internal.networkAttributeIndex;
+                singlevalue=getKeyByValue(internal.gui_Networks,internal.parameters.network,1);
             }
         }
 
@@ -1434,6 +1461,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             let pos=internal.conndata.createLinePairs(0,state.matrixthreshold);
             //console.log('\n\n +++ Created '+pos.length+' positive linepairs\n'+JSON.stringify(pos));
             total+=pos.length;
+            internal.laststate = state;
             internal.conndata.drawLines(internal.parcellation,pos,
                                         state.poscolor,
                                         internal.context,
@@ -1559,13 +1587,13 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 //                  console.log('Spheres '+j+' length='+sph.positions.length+' color='+[ cl.r,cl.g,cl.b]+' scale='+scale);
 
                 let spherematerial = new THREE.ShaderMaterial({
-                    transparent : true,
+                    transparent : false,
                     "uniforms": {
                         "diffuse": {  "type":"c","value":
                                       {"r":cl.r/scale,
                                        "g":cl.g/scale,
                                        "b":cl.b/scale}},
-                        "opacity": {"type":"f","value":0.5},
+                        "opacity": {"type":"f","value":1.0},
                     },
                     vertexShader : sphere_vertexshader_text,
                     fragmentShader : sphere_fragmentshader_text,
@@ -1573,6 +1601,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 let geom=bisCrossHair.createcopies(presphere,sph.positions,sph.scales);
                 geom.computeVertexNormals();
                 let spheremesh=new THREE.Mesh(geom,spherematerial);
+                spheremesh.renderOrder=1000;
                 spheremesh.visbile=true;
                 internal.subviewers[3].scene.add(spheremesh);
                 internal.meshes.push(spheremesh);
@@ -1582,6 +1611,9 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         
         return total;
     };
+
+
+
     
     // -------------------------------------------------------------------------------------------
     // Public Interface from here on
@@ -1609,7 +1641,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             bisgenericio.read(`${imagepath}/lobes_left.json`).then( (obj) => {
                 parsebrainsurface(obj.data,obj.filename);
             }).catch( (e) => { console.log(e); });
-                              
+            
             update(false);
             setTimeout(function() {
                 window.dispatchEvent(new Event('resize'));
@@ -1926,7 +1958,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
             internal.inrestorestate=false;
         },
-    
+        
         /** Get State as Object 
             @returns {object} -- the state of the element as a dictionary*/
         getElementState : function() {
@@ -1970,8 +2002,19 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         /** Disable Mouse Updates */
         disableMouseUpdates : function() {
             internal.inrestorestate=true;
+        },
+
+        setRenderMode(md) {
+            internal.rendermode=md-1;
+            togglemode(true);
+        },
+
+        /** get the rendermode externally */
+        getRenderMode() {
+            return internal.rendermode;
         }
 
+        
     };
 
     internal.this=control;
@@ -2103,7 +2146,15 @@ class ConnectivityControlElement extends HTMLElement {
         this.innercontrol.disableMouseUpdates();
     }
 
-
+    /** set the rendermode externally */
+    setRenderMode(md) {
+        this.innercontrol.setRenderMode(md);
+    }
+    
+    getRenderMode() {
+        return this.innercontrol.getRenderMode();
+    }
+    
 }
 
 

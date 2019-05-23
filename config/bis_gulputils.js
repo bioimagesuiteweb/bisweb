@@ -32,6 +32,12 @@ let htmlreplace=null,
     child_process=null;
 
 
+const exepath= path.resolve(path.join(path.join(path.join(__dirname,'..'),'node_modules','.bin')));
+
+var getToolPath = function(name) {
+
+    return path.join(exepath,name);
+};
 
 var getFileSize=function(outfile) {
 
@@ -272,8 +278,14 @@ var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,
     let tmpout=out;
     if (minify)
         tmpout=tmpout+'_full.js';
+
+
+
+    let webpackcmd=getToolPath('webpack-cli');
+    let uglifycmd=getToolPath('uglifyjs');
+
     
-    let cmd='webpack-cli --entry '+source+' --output-filename '+tmpout+' --output-path '+outdir+' --config config'+join+'webpack.config_devel.js';
+    let cmd= webpackcmd+' --entry '+source+' --output-filename '+tmpout+' --output-path '+outdir+' --config config'+join+'webpack.config_devel.js';
     if (!debug)
         cmd+=' --sort-modules-by size ';
 
@@ -293,7 +305,7 @@ var getWebpackCommand=function(source,internal,external,out,indir,minify,outdir,
     
     if (minify) {
         let ijob=outdir+tmpout;
-        let cmd2=`uglifyjs ${ijob} -c  -o ${ojob}`;
+        let cmd2=`${uglifycmd} ${ijob} --keep-classnames --keep-fnames -c  -o ${ojob}`;
         if (debug)
             cmd2+=' --verbose';
         cmdlist.push(cmd2);
@@ -422,12 +434,14 @@ var inno=function(tools, version, indir , distdir ) {
 var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",outdir="build",version=1.0,platform="linux",distdir="builddist",done=0) {
 
     const gulpzip = require('gulp-zip');
+    const rimrafname=getToolPath('rimraf');
     
     let cmdlist = ['pwd'];
     let ziplist = [];
     let inwin32=false;
     if (os.platform()==='win32') {
         inwin32=true;
+        cmdlist=['cd'];
     }
 
     console.log('In win 32=',inwin32,outdir,path.resolve(outdir));
@@ -457,13 +471,16 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
         let zipindir='BioImageSuiteWeb-'+n+'-x64';
         let appdir=path.join(absdistdir,zipindir);
 
-        cmdlist.push(`rimraf ${appdir}`);
+
+        
+        cmdlist.push(`${rimrafname} ${appdir}`);
         
         if (dopackage>=2) {
-            cmdlist.push(`rimraf ${path.resolve(idir,'node_modules')}`);
+            cmdlist.push(`${rimrafname} ${path.resolve(idir,'node_modules')}`);
             if (dopackage===3) {
                 cmdlist.push('npm install -d');
-                cmdlist.push('modclean -r -a *.ts ');
+                let modclean=getToolPath('modclean');
+                cmdlist.push(modclean+' -r -a *.ts ');
             } else if (dopackage===2) {
                 let zname=path.resolve(path.join(outdir,path.join('..',`electrondist/bisweb_${n}.zip`)));
                 try {
@@ -484,7 +501,9 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
         
         
         let eversion ="4.0.1";
-        let cmdline='electron-packager '+path.resolve(outdir)+' BioImageSuiteWeb --arch=x64 --electron-version '+eversion+' --out '+path.resolve(distdir)+' --overwrite '+
+        let ep=getToolPath('electron-packager');
+        
+        let cmdline=ep+' '+path.resolve(outdir)+' BioImageSuiteWeb --arch=x64 --electron-version '+eversion+' --out '+path.resolve(distdir)+' --overwrite '+
             '--app-version '+version;
         
         try {
@@ -512,7 +531,7 @@ var createPackageInternal=function(dopackage=1,tools=[],indir=_dirname+"../",out
         ];
 
         console.log('To Delete = ',JSON.stringify(todelete,null,2));
-        let cleancmd='rimraf '+todelete.join(' ');
+        let cleancmd=rimrafname+' '+todelete.join(' ');
         
         if (n==="win32") {
             let ifile=path.resolve(indir,'web/images/bioimagesuite.png.ico');
@@ -593,7 +612,8 @@ var createPackage=function(dopackage=1,tools=[],indir=_dirname+"../",outdir="bui
 var jsDOC=function(indir,conffile,done) {
 
     console.log(typeof(done));
-    var cmd='jsdoc -c '+conffile+' --verbose';
+    let jsdoc=getToolPath('jsdoc');
+    var cmd=jsdoc+' -c '+conffile+' --verbose';
     executeCommandList([ cmd ],indir,done);
 };
 
@@ -726,6 +746,7 @@ var createnpmpackage=function(indir,version,in_outdir,done) {
 // -----------------------------------------------------------------------------------------
 
 module.exports = {
+
     getTime: getTime,
     getFileSize: getFileSize,
     getData: getDate,

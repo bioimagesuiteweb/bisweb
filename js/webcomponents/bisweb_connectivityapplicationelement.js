@@ -240,8 +240,8 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         webutil.createMenuItem(viewmenu,'Set 3D View To Top',function() { viewer.set3dview(2,false); });
         webutil.createMenuItem(viewmenu,'Set 3D View To Bottom',function() { viewer.set3dview(2,true); });
         webutil.createMenuItem(viewmenu,''); // separator
-        webutil.createMenuItem(viewmenu,'Set 3D View To Left',function() { viewer.set3dview(0,false); });
-        webutil.createMenuItem(viewmenu,'Set 3D View To Right',function() { viewer.set3dview(0,true); });
+        webutil.createMenuItem(viewmenu,'Set 3D View To Left',function() { viewer.set3dview(0,true); });
+        webutil.createMenuItem(viewmenu,'Set 3D View To Right',function() { viewer.set3dview(0,false); });
         
 
         // ------------------------------------ Parcellations Menu ----------------------------

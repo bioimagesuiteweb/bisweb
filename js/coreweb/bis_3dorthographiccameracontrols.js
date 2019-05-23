@@ -23,6 +23,7 @@ const THREE = require('three');
 const $=require('jquery');
 const inobounce=require('inobounce.js');
 
+
 /** 
  * @file Browser module. Contains {@link Bis_3dOrthographicCameraControls}
  * @author Xenios Papademetris (but derives from original work from  Eberhard Graether / http://egraether.com/, Mark Lundin     / http://mark-lundin.com and Patrick Fuller / http://patrick-fuller.com from Three.JS demo code)
@@ -77,6 +78,10 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
     this.plane  = plane;
     this.domElement = ( domElement !== undefined ) ? domElement : document;
 
+    this.flipmode=false;
+    if (this.plane===3)
+        this.flipmode=true;
+    
     // API
     
     this.enabled = true;
@@ -284,7 +289,9 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
             vector.copy( _this.camera.up ).setLength( mouseOnBall.y );
             vector.add( cameraUp.copy( _this.camera.up ).cross( _eye ).setLength( mouseOnBall.x ) );
             vector.add( _eye.setLength( mouseOnBall.z ) );
-            
+            if (_this.flipmode === 3) {
+                  vector['x']=-vector['x'];
+            }
             return vector;
             
         };
@@ -306,7 +313,6 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
                 axis.crossVectors( _rotateStart, _rotateEnd ).normalize();
                 
                 angle *= _this.rotateSpeed;
-                
                 quaternion.setFromAxisAngle( axis, -angle );
                 
                 _eye.applyQuaternion( quaternion );
@@ -367,10 +373,11 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
             if ( mouseChange.lengthSq() ) {
                 
                 mouseChange.multiplyScalar( _eye.length() * _this.panSpeed );
-                
                 pan.copy( _eye ).cross( _this.camera.up ).setLength( mouseChange.x );
-                // -mouseChange.y is a Xenios EDIT
                 pan.add( cameraUp.copy( _this.camera.up ).setLength( -mouseChange.y ) );
+
+                if (_this.flipmode)
+                    pan['x']=-pan['x'];
                 
                 _this.camera.position.add( pan );
                 _this.target.add( pan );
@@ -406,6 +413,7 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
             _this.dispatchEvent( changeEvent );
             lastPosition.copy( _this.camera.position );
         }
+
 
         if (renderer !== null) {
             var v=this.normViewport;
@@ -622,6 +630,8 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
         
         document.removeEventListener( 'mousemove', mousemove );
         document.removeEventListener( 'mouseup', mouseup );
+
+        console.log('Mouseup flip=',_this.flipmode);
         
         _this.dispatchEvent( endEvent );
         
@@ -822,8 +832,8 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
         removeeventlisteners();
         _this.enabled=false;
     };
-    
 
+    
     addeventlisteners();
     _this.handleResize();
 

@@ -526,11 +526,10 @@ class ConnMatrix {
                     
                     for (i=0;i<=1;i++) {
                         for (j=0;j<=2;j++) {
-                            if (j!==0) {
-                                vertices[v_index]=pt[i][j]+MNI[j];
-                            } else {
-                                vertices[v_index]=180.0-(pt[i][j]+MNI[j]);
-                                if (lobe[i]<11)
+
+                            vertices[v_index]=pt[i][j]+MNI[j];
+                            if (j===0) {
+                                if (lobe[i]>10)
                                     vertices[v_index]-=this.offset;
                                 else
                                     vertices[v_index]+=this.offset;
@@ -598,12 +597,9 @@ class ConnMatrix {
                              parc.rois[int_nd].z ];
                     var lb=parc.rois[int_nd].attr[0];
                     for (var ia=0;ia<=2;ia++) {
-                        if (ia!==0)
-                            px[ia]=px[ia]+MNI[ia];
-                        else
-                            px[ia]=180.0-(px[ia]+MNI[ia]);
+                        px[ia]=px[ia]+MNI[ia];
                     }
-                    if (lb<11)
+                    if (lb>10)
                         px[0]-=this.offset;
                     else
                         px[0]+=this.offset;

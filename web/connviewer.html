@@ -1,25 +1,25 @@
 <!---  LICENSE
- 
- _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
- 
- BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
- 
- - you may not use this software except in compliance with the License.
- - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
- 
- __Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.__
- 
- ENDLICENSE -->
+    
+    _This file is Copyright 2018 by the Image Processing and Analysis Group (BioImage Suite Team). Dept. of Radiology & Biomedical Imaging, Yale School of Medicine._
+    
+    BioImage Suite Web is licensed under the Apache License, Version 2.0 (the "License");
+    
+    - you may not use this software except in compliance with the License.
+    - You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+    
+    __Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.__
+    
+    ENDLICENSE -->
 
 <!DOCTYPE html>
 
 <html lang="en">
 
-<head>
+  <head>
     <title>BioImage Suite Connectivity Viewer</title>
     <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0"/> -->
     <meta name="viewport" content="width=device-width, user-scalable=no">
@@ -57,54 +57,56 @@
     <!-- begin stay as is -->
     <link rel="stylesheet" type="text/css" href="connviewer.css">
     <!-- end of stay as is -->
-</head>
-<body oncontextmenu="return false;" ondragstart="return false;" ondrop="return false;">
+  </head>
+  <body oncontextmenu="return false;" ondragstart="return false;" ondrop="return false;">
 
-  <bisweb-topmenubar   id="viewer_menubar"></bisweb-topmenubar> 
+    <bisweb-topmenubar   id="viewer_menubar"></bisweb-topmenubar> 
 
-  <div class="bisviewerwidget">
+    <div class="bisviewerwidget">
 
-    <bisweb-viewerlayoutelement
-      id="viewer_layout"
-      bis-dockwidth="300"
-      bis-brightcanvas="1"
-      bis-coreopen="false"
-      bis-wholescreen="1"
-      bis-defaulttext="Load Data to Begin">
-    </bisweb-viewerlayoutelement>
+      <bisweb-viewerlayoutelement
+        id="viewer_layout"
+        bis-dockwidth="300"
+        bis-brightcanvas="1"
+        bis-coreopen="false"
+        bis-wholescreen="1"
+        bis-defaulttext="Load Data to Begin">
+      </bisweb-viewerlayoutelement>
 
-    <bisweb-colormapcontrollerelement id="viewer_cmap">
-    </bisweb-colormapcontrollerelement>
-    
-    <bisweb-orthogonalviewer
-       id="viewer"
-       bis-simplemode="true"
-       bis-layoutwidgetid="#viewer_layout"
-       bis-colormapeditorid="#viewer_cmap">
-    </bisweb-orthogonalviewer>
+      <bisweb-colormapcontrollerelement id="viewer_cmap">
+      </bisweb-colormapcontrollerelement>
       
-    <bisweb-snapshotelement
-       bis-layoutwidgetid="#viewer_layout"
-       bis-dowhite="true"
-       bis-viewerid="#viewer">
-    </bisweb-snapshotelement>
-    
-    <bisweb-connectivitycontrolelement
-       id="conncontrol"
-       bis-layoutwidgetid="#viewer_layout"
-       bis-viewerid="#viewer">
-    </bisweb-connectivitycontrolelement>
-    
-    <bisweb-connectivityapplication
-       bis-menubarid="#viewer_menubar"
-       bis-connectivitycontrolid="#conncontrol"
-       bis-viewerid="#viewer">
-    </bisweb-connectivityapplication>
-    
-  </div>
+      <bisweb-orthogonalviewer
+        id="viewer"
+        bis-simplemode="true"
+        bis-layoutwidgetid="#viewer_layout"
+        bis-colormapeditorid="#viewer_cmap">
+      </bisweb-orthogonalviewer>
+      
+      <bisweb-snapshotelement
+        bis-layoutwidgetid="#viewer_layout"
+        bis-enablepanorama="true"
+        bis-conncontrol="#conncontrol"
+        bis-dowhite="true"
+        bis-viewerid="#viewer">
+      </bisweb-snapshotelement>
+      
+      <bisweb-connectivitycontrolelement
+        id="conncontrol"
+        bis-layoutwidgetid="#viewer_layout"
+        bis-viewerid="#viewer">
+      </bisweb-connectivitycontrolelement>
+      
+      <bisweb-connectivityapplication
+        bis-menubarid="#viewer_menubar"
+        bis-connectivitycontrolid="#conncontrol"
+        bis-viewerid="#viewer">
+      </bisweb-connectivityapplication>
+      
+    </div>
 
-  
-  <bisweb-botmenubar></bisweb-botmenubar>
+    
+    <bisweb-botmenubar></bisweb-botmenubar>
 
-</body>
+  </body>
 </html>

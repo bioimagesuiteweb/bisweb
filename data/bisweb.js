@@ -1,1 +1,0 @@
-../js/bin/bisweb.js

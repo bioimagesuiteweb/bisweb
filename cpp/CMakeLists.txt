@@ -92,6 +92,7 @@ SET (HEADER_SCRIPT ${TOOLS_DIR}/bis_create_matlab_header_file.js)
 
 OPTION(BIS_USEGPL "Include the GPL-licensed C++ files (plugin)" OFF)
 OPTION(BIS_USEEXTERNAL "Include additional external C++ files (plugin)" OFF)
+OPTION(BIS_USEINDIV "Include additional files from individualized parcellation" OFF)
 MARK_AS_ADVANCED(BIS_USEGPL)
 MARK_AS_ADVANCED(BIS_USEEXTERNAL)
 
@@ -151,9 +152,13 @@ FILE (STRINGS ${MODULE_LIST_FILENAME} MODULES)
 
 set (JSMODULES )
 foreach(item ${MODULES})
-  SET (JSMODULES ${JSMODULES} "${JSMODULES_DIR}/${item}.js")
+  SET (jtem "${JSMODULES_DIR}/${item}.js")
+  IF(EXISTS ${jtem})
+    SET (JSMODULES ${JSMODULES} ${jtem})
+  ENDIF(EXISTS ${jtem})
 endforeach(item ${MODULES})
-
+  
+MESSAGE(${JSMODULES})
 
 # ---------------------------------------------------------------------------------------------
 # PARSE HEADERS
@@ -163,8 +168,21 @@ SET(PARSE_HEADERS
   ${CPP_SOURCE_DIR}/bisExportedFunctions.h
   ${CPP_SOURCE_DIR}/bisExportedFunctions2.h
   ${CPP_SOURCE_DIR}/bisTesting.h
-  ) 
+  )
 
+
+IF (BIS_USEINDIV)
+  SET (PARSE_HEADERS
+    ${PARSE_HEADERS}
+    ${CPP_SOURCE_DIR}/bisIndividualizedParcellation.h
+    )
+  SET (KITSRCS
+    ${KITSRCS}
+    bisIndividualizedParcellation.cpp
+    )
+  FIND_PACKAGE(IGL REQUIRED)
+ENDIF (BIS_USEINDIV)
+    
 IF (BIS_USEGPL)
   SET(PARSE_HEADERS
     ${PARSE_HEADERS}
@@ -222,6 +240,14 @@ install (FILES ${PROJECT_SOURCE_DIR}/ModuleList.txt DESTINATION bisweb/)
 install (DIRECTORY ${PROJECT_SOURCE_DIR}/../various/serverconfig  DESTINATION bisweb )
 install (FILES ${PROJECT_SOURCE_DIR}/../web/images/mean_reg2mean.nii.gz DESTINATION bisweb/images)
 install (FILES ${PROJECT_SOURCE_DIR}/../web/images/facemask_char.nii.gz DESTINATION bisweb/images)
+install (FILES ${PROJECT_SOURCE_DIR}/../web/images/ISAS_SPECT_Template.nii.gz DESTINATION bisweb/images)
+install (FILES ${PROJECT_SOURCE_DIR}/../web/images/MNI_T1_1mm_ras.nii.gz DESTINATION bisweb/images)
+install (FILES ${PROJECT_SOURCE_DIR}/../web/images/MNI_T1_1mm_mask.nii.gz DESTINATION bisweb/images)
+install (FILES ${PROJECT_SOURCE_DIR}/../web/images/MNI_T1_2mm_stripped_ras.nii.gz DESTINATION bisweb/images)
+install (FILES ${PROJECT_SOURCE_DIR}/../web/images/ISASHN_Standard_Deviation.nii.gz DESTINATION bisweb/images)
+install (FILES ${PROJECT_SOURCE_DIR}/../web/images/ISAS_SPECT_Mask.nii.gz DESTINATION bisweb/images)
+
+
 install (DIRECTORY ${PROJECT_SOURCE_DIR}/../web/dcm2nii_binaries DESTINATION bisweb/lib )
 
 
@@ -245,6 +271,11 @@ IF (BIS_A_EMSCRIPTEN)
   ENDIF(BIS_WEB_WASM)
   
   SET( COMPILE_FLAGS "-Wall  -DBISWASM ${BIS_WEB_OPT} ${WASM_STRING} -I ${EIGEN3_INCLUDE_DIRS} -I ${PROJECT_SOURCE_DIR}")
+  IF (BIS_USEINDIV)
+    SET( COMPILE_FLAGS "${COMPILE_FLAGS} -I ${IGL_INCLUDE_DIRS}")
+  ENDIF (BIS_USEINDIV)
+
+    
   SET (CMAKE_CXX_FLAGS ${COMPILE_FLAGS} CACHE STRING "" FORCE)
   SET (CMAKE_C_FLAGS ${COMPILE_FLAGS} CACHE STRING "" FORCE)
   SET (CMAKE_EXE_LINKER_FLAGS "--pre-js ${PRE_JS} --post-js ${POST_JS}" CACHE STRING "" FORCE)
@@ -423,7 +454,12 @@ ELSE(BIS_A_EMSCRIPTEN)
   
   
   include_directories ( ${EIGEN3_INCLUDE_DIRS} )
+
+  IF (BIS_USEINDIV)
+    include_directories ( ${IGL_INCLUDE_DIRS} )
+  ENDIF (BIS_USEINDIV)
   include_directories (${PROJECT_SOURCE_DIR})
+
       
   SET (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/ CACHE PATH "Single output directory for building all libraries.")
   ADD_LIBRARY (${CLIBNAME} SHARED ${KITSRCS})

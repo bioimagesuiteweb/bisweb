@@ -78,13 +78,13 @@ class OrthogonalViewerElement extends BaseViewerElement {
               { x0:0.05, y0:0.09, x1:0.95, y1:0.99},   { x0:0.0, y0:0.6,  x1:0.01, y1:0.61}, { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
             // 3D +Slices=4
             [ { x0:0.6, y0:0.81, x1:0.79, y1:1.0},  { x0:0.0, y0:0.81, x1:0.19, y1:1.0},
-              { x0:0.0, y0:0.2, x1:0.19,  y1:0.39},  { x0:0.21, y0:0.0,  x1:1.0, y1:0.8} , { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
+              { x0:0.0, y0:0.2, x1:0.19,  y1:0.39},  { x0:0.25, y0:0.1,  x1:0.95, y1:0.8} , { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
             // 3D Only=5
             [ { x0:0.0, y0:0.0,  x1:0.01, y1:0.01}, { x0:0.0, y0:0.3,  x1:0.01, y1:0.31},
-              { x0:0.0, y0:0.6,  x1:0.01, y1:0.61}, { x0:0.01, y0:0.01, x1:1.0, y1:1.0}, { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
+              { x0:0.0, y0:0.6,  x1:0.01, y1:0.61}, { x0:0.05, y0:0.1, x1:0.95, y1:1.0}, { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
             // Conn 1=6
             [ { x0:0.01, y0:0.06, x1:0.26, y1:0.32},  { x0:0.01, y0:0.38, x1:0.26, y1:0.63},
-              { x0:0.01, y0:0.74, x1:0.26,  y1:0.99},  { x0:0.29, y0:0.01,  x1:0.99, y1:0.99},  { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
+              { x0:0.01, y0:0.74, x1:0.26,  y1:0.99},  { x0:0.29, y0:0.1,  x1:0.99, y1:0.99},  { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
             // Conn 2=7
             [ { x0:0.05, y0:0.01, x1:0.31, y1:0.27},  { x0:0.37, y0:0.01, x1:0.63, y1:0.27},
               { x0:0.69, y0:0.0, x1:0.95,  y1:0.27},  { x0:0.6, y0:0.30,  x1:0.99, y1:0.99 }, { x0:0.01, y0:0.30,  x1:0.59, y1:0.99}],
@@ -93,7 +93,11 @@ class OrthogonalViewerElement extends BaseViewerElement {
               { x0:0.69, y0:0.0, x1:0.95,  y1:0.27},  { x0:0.99, y0:0.0,  x1:0.995, y1:0.01}, { x0:0.00,y0:0.29,x1:1.0,y1:1.0}],
             // Simple Mode=9
             [ { x0:0.05, y0:0.10, x1:0.31, y1:0.9},  { x0:0.37, y0:0.10, x1:0.63, y1:0.90},
-              { x0:0.69, y0:0.10, x1:0.95, y1:0.9},  { x0:0.99, y0:0.0,  x1:0.995, y1:0.01}, { x0:0.99, y0:0.0,  x1:0.995, y1:0.01} ]
+              { x0:0.69, y0:0.10, x1:0.95, y1:0.9},  { x0:0.99, y0:0.0,  x1:0.995, y1:0.01}, { x0:0.99, y0:0.0,  x1:0.995, y1:0.01} ],
+            // Simple Mode=10
+            [ { x0:0.05, y0:0.1, x1:0.36, y1:0.31},  { x0:0.37, y0:0.1, x1:0.63, y1:0.31},
+              { x0:0.69, y0:0.1, x1:0.95, y1:0.31},  { x0:0.01, y0:0.33, x1:0.99, y1:0.99}, { x0:0.99, y0:0.0,  x1:0.995, y1:0.01} ]
+            
 
         ];
 
@@ -120,7 +124,12 @@ class OrthogonalViewerElement extends BaseViewerElement {
             left : -1,
             origx: -1,
         };
-        this.internal.displaymodes=null;
+        this.internal.guidisplaynames = [
+            'Slices', 'Sagittal', 'Coronal', 'Axial' , 'Slices+3D','3D Only','Simple Mode', 'Simple + 3D','Simple + 3D 2'];
+        
+        this.internal.displaymodes= [ 'Slices', 'Sagittal', 'Coronal', 'Axial' , 'Slices+3D','3D Only',
+                                      'Simple + 3D','Conn 2','Conn 3' ,
+                                      'Simple Mode', 'Simple + 3D 2'];
         this.setObjectMapFunction=null;
         this.volumeRendering=false;
         this.internal.origin=null;
@@ -356,10 +365,10 @@ class OrthogonalViewerElement extends BaseViewerElement {
             context.fillStyle = "#dddddd";
         else
             context.fillStyle = "#222222";
-        
         context.clearRect(this.cleararea[0]*fullwidth+2,y0,0.5*dw-4,dh-y0);
         context.textAlign="left";
-        context.fillText(s,(this.cleararea[0]+0.01)*fullwidth,0.99*dh);
+        context.textBaseline="bottom";
+        context.fillText(s,(this.cleararea[0]+0.01)*fullwidth,dh-1);
         
     }
 
@@ -381,13 +390,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
             this.internal.datgui.data.ycoord = this.internal.slicecoord[1];
             this.internal.datgui.data.zcoord = this.internal.slicecoord[2];
             this.internal.datgui.data.tcoord = this.internal.slicecoord[3];
-            var gui=this.internal.datgui.coords;
-            
-            if (gui!==null) {
-                for (var ia=0;ia<gui.__controllers.length;ia++) {
-                    gui.__controllers[ia].updateDisplay();
-                }
-            }
+            this.updateDatGUIControllers();
         }
         this.drawtext();
     }
@@ -412,6 +415,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         }
         if (this.internal.overlayslices[3]!==null) {
             this.internal.overlayslices[3].updateColormap(this.internal.colormapControllerPayload,this.internal.objectmaptransferfunction);
+            this.internal.overlayslices[3].showimage(this.internal.show3dslices);
         }
     }
     
@@ -474,6 +478,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
             if (this.internal.slices[3]) {
                 this.internal.slices[3].updateColormap(this.internal.colormapControllerPayload,this.internal.imagetransferfunction);
                 this.internal.slices[3].showdecorations(this.internal.showdecorations);
+                this.internal.slices[3].showimage(this.internal.show3dslices);
             }
             if (this.internal.origin)
                 this.internal.origin.visible=this.internal.showdecorations;
@@ -873,12 +878,16 @@ class OrthogonalViewerElement extends BaseViewerElement {
                     let ymax=Math.round((1.0-vp.y0)*dh)+dy;
                     if (ymax>0.9*dh)
                         ymax=0.9*dh;
-                    
-                    context.textAlign="center";
-                    context.textBaseline="top";
-                    context.fillText(lab[2],xmid,ymin);
-                    context.textBaseline="alphabetic";
-                    context.fillText(lab[3],xmid,ymax);
+
+                    if (!this.internal.simplemode) {
+                        context.textAlign="center";
+                        context.textBaseline="top";
+                        context.fillText(lab[2],xmid,ymin);
+                        context.textBaseline="alphabetic";
+                        context.fillText(lab[3],xmid,ymax);
+                    } else {
+                        context.textBaseline="alphabetic";
+                    }
                     
                     let name=names[trueplane]+axes[orientaxis[trueplane]];
                     context.textAlign="start";
@@ -908,6 +917,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                     context.strokeStyle = "#dddddd";
                 else
                     context.strokeStyle = "#222222";
+
 
 
                 context.lineWidth=1;
@@ -966,7 +976,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
     handleresize() {
 
         super.handleresize();
-        this.setrendermode(this.internal.rendermode,true);
+        this.setrendermodeinternal(this.internal.rendermode,true);
         this.drawcrosshairs();
         this.updateResizeObservers();
         this.drawtext();
@@ -981,7 +991,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
      * @param {number} mode - 0='Slices',  1='Sagittal', 2='Coronal', 3='Axial', 4='3D+slices', 5='3D Only', 9='Simple Mode'
      * @param {boolean} force - force update otherwise do as needed
      */
-    setrendermode(mode,force) {
+    setrendermodeinternal(mode,force) {
         
         force = force || false;
         mode  = mode ||  0;
@@ -991,11 +1001,14 @@ class OrthogonalViewerElement extends BaseViewerElement {
         
         if (this.internal.subviewers[0] === null)
             return;
-        
+
         var invorientaxis = [ 0,1,2];
         if (this.internal.volume!==null)
             invorientaxis= this.internal.volume.getOrientation().invaxis;
         this.internal.rendermode=util.range(mode,0,this.internal.viewports.length-1);
+        let ind=this.internal.rendermode;
+        this.internal.datgui.data.displaymode=this.internal.displaymodes[ind];
+
         for (var pl=0;pl<this.internal.subviewers.length;pl++) {
             var trueplane=pl;
             // For axial,coronal and Sagittal remap
@@ -1169,7 +1182,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
             for (let j=0;j<this.internal.subviewers.length;j++)
                 this.internal.subviewers[j].controls.coordinateChangeCallback=mousefn;
             
-            this.setrendermode(this.internal.rendermode,true);
+            this.setrendermodeinternal(this.internal.rendermode,true);
         }
         
         this.drawcrosshairs();
@@ -1404,7 +1417,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         
         //this.internal.layoutcontroller.getcorecontrols().empty();
         
-        let dpname = [ 'Slices', 'Sagittal', 'Coronal', 'Axial' , 'Slices+3D','3D Only','Simple Mode'];
+        let dpname=this.internal.guidisplaynames;
         let data = this.internal.datgui.data;
         
         data.displaymode = dpname[0];
@@ -1412,15 +1425,23 @@ class OrthogonalViewerElement extends BaseViewerElement {
             this.internal.rendermode=3;
             data.displaymode=dpname[3];
         }
-        
-        data.decorations = true;
+
+        if (this.internal.showdecorations === undefined)
+            this.internal.showdecorations =true;
+        if (this.internal.show3dslices === undefined) {
+            if (this.volumeRendering) 
+                this.internal.show3dslices = false;
+            else
+                this.internal.show3dslices = true;
+        }
+        data.show3dslices = this.internal.show3dslices;
+        data.decorations = this.internal.showdecorations;
         data.xcoord = this.internal.slicecoord[0];
         data.ycoord = this.internal.slicecoord[1];
         data.zcoord = this.internal.slicecoord[2];
         data.tcoord = this.internal.slicecoord[3] || 0;
         data.rate=25;
         data.playing=false;
-        data.decorations=this.internal.showdecorations || true;
         data.lockcursor=this.internal.lockcursor || false;
         
         let creatingnew=false;
@@ -1467,14 +1488,11 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 }*/
             }
             let dmode=this.internal.datgui.coords.add(data,'displaymode', dpname).name("Mode");
-            this.internal.displaymodes=dpname;
-
             
-            dmode.onChange(function(val) {
-                let ind=dpname.indexOf(val);
-                if (ind===6)
-                    ind=9;
-                self.setrendermode(ind);
+            dmode.onChange( (val) => {
+                let ind=this.internal.displaymodes.indexOf(val);
+                //console.log('Val = ',val);
+                self.setrendermodeinternal(ind);
             });
             
             let coordchange = function() {
@@ -1518,6 +1536,12 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 self.setcoordinates();
             });
 
+            let deco2=this.internal.datgui.coords.add(data, 'show3dslices').name("Show 3D Image");
+            deco2.onChange(function(val) {
+                self.internal.show3dslices=val;
+                self.setcoordinates();
+            });
+
 
 
             let lock=this.internal.datgui.coords.add(data, 'lockcursor').name("Disable Mouse");
@@ -1532,7 +1556,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         if (!creatingnew) 
             cgui=null;
         let cmapfolder=this.internal.cmapcontroller.creategui(cgui,this.volumeRendering);
-
+        
         //if (createmovie)
         //            this.createmoviecontrols(this.internal.moviefolder);
 
@@ -1602,15 +1626,28 @@ class OrthogonalViewerElement extends BaseViewerElement {
             return;
         this.updatescene(mm,plane,mousestate);
     }
-    
-    
+
+
+    // ------------------------------
+    // set show 3d images externally 
+    // ------------------------------
+    setShow3DImage(mode) {
+        if (mode===undefined)
+            mode=true;
+        this.internal.show3dslices = mode;
+        if (this.internal.datgui !==null )
+            this.internal.datgui.data.show3dslices=mode;
+        this.setcoordinates();
+        this.updateDatGUIControllers();
+    }
     // -----------------------------------------------------------------------------
     // Set Render mode externally
     // -----------------------------------------------------------------------------
     /** sets the rendermode from outside and return current viewports!
      */
-    setRenderMode(mode) {
-        this.setrendermode(mode,true);
+    setRenderMode(mode=3) {
+        this.setrendermodeinternal(mode,true);
+        this.updateDatGUIControllers();
         return this.internal.viewports[this.internal.rendermode];
     }
 
@@ -1640,7 +1677,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 this.internal.viewports.push(toadd);
             }
         }
-        this.setRenderMode(this.internal.rendermode,true);
+        this.setRenderMode(this.internal.rendermode);
         return mode;
     }
 
@@ -1692,21 +1729,16 @@ class OrthogonalViewerElement extends BaseViewerElement {
         try {
             if (this.internal.displaymodes) {
                 let ind=this.internal.displaymodes.indexOf(sanedata['displaymode']);
-                if (ind>=0) {
-                    this.internal.datgui.data.displaymode=this.internal.displaymodes[ind];
-                    if (ind===6) // Simple Mode
-                        ind=9;
-                    this.setrendermode(ind);
-                }
+                this.internal.datgui.data.displaymode=this.internal.displaymodes[ind];
+                this.setrendermodeinternal(ind);
             }
-            
-            
+
             this.internal.showdecorations=sanedata['decorations'];
             this.internal.lockcursor=sanedata['lockcustor'];
+            this.internal.show3dslices=sanedata['show3dslices'];
             this.internal.datgui.data.decorations=this.internal.showdecorations;
-            this.internal.datgui.data.lockcursor=this.internal.lockcursor=sanedata['lockcustor'];
-            
-            
+            this.internal.datgui.data.lockcursor=this.internal.lockcursor;
+            this.internal.datgui.data.show3dslices =  this.internal.show3dslices;
             
             this.setcoordinates([ parseInt(sanedata['xcoord']),
                                   parseInt(sanedata['ycoord']),
@@ -1718,8 +1750,11 @@ class OrthogonalViewerElement extends BaseViewerElement {
         }
         
         this.setElementStateCameras(dt);
-        
-        // The end update the controllers
+        this.updateDatGUIControllers();
+    }
+
+    // Update controllers
+    updateDatGUIControllers() {
         setTimeout( () => {
             let gui=this.internal.datgui.coords;
             if (gui!==null) {
@@ -1729,6 +1764,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
             }
         },100);
     }
+
     
 }
 

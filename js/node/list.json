@@ -1,0 +1,7 @@
+{
+    "filenames" : [
+        "MNI_2mm_orig.nii.gz",
+        "MNI_2mm_resliced.nii.gz"
+    ],
+    "name" : "some files"
+}
