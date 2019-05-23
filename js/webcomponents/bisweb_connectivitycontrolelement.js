@@ -1982,8 +1982,19 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         /** Disable Mouse Updates */
         disableMouseUpdates : function() {
             internal.inrestorestate=true;
+        },
+
+        setRenderMode(md) {
+            internal.rendermode=md-1;
+            togglemode(true);
+        },
+
+        /** get the rendermode externally */
+        getRenderMode() {
+            return internal.rendermode;
         }
 
+        
     };
 
     internal.this=control;
@@ -2115,7 +2126,15 @@ class ConnectivityControlElement extends HTMLElement {
         this.innercontrol.disableMouseUpdates();
     }
 
-
+    /** set the rendermode externally */
+    setRenderMode(md) {
+        this.innercontrol.setRenderMode(md);
+    }
+    
+    getRenderMode() {
+        return this.innercontrol.getRenderMode();
+    }
+    
 }
 
 
