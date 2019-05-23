@@ -22,9 +22,11 @@ const genericio=require('bis_genericio');
 const webfileutil=require('bis_webfileutil');
 const webutil=require('bis_webutil');
 const BisWebMatrix=require('bisweb_matrix.js');
+const humanmni=require('atlases/humanmni.json');
 const $=require('jquery');
 
 const imagepath=webutil.getWebPageImagePath();
+
 // ---------------------------------------------------------------------------------
 //  GLOBAL UTILITIES
 // ---------------------------------------------------------------------------------
@@ -53,95 +55,17 @@ bisweb_mni2tal.convertSliceToMNI=function(plane, value) {
     return mni;
 };
 
-bisweb_mni2tal.BRODMANNLABELS = {
-    1 : 'PrimSensory (1)',
-    4 : 'PrimMotor (4)',
-    5 : 'SensoryAssoc (5)',
-    6 : 'PreMot+SuppMot (6)',
-    7 : 'VisMotor (7)',
-    8 : 'FrontEyeFields (8)',
-    9 : 'dlPFC(dorsal) (9)',
-    10 : 'AntPFC (10)',
-    11 : 'OrbFrontal (11)',
-    13 : 'Insula (13)',
-    14 : 'vmPFC (14)',
-    17 : 'PrimVisual (17)',
-    18 : 'SecVisual (18)',
-    19 : 'VisualAssoc (19)',
-    20 : 'InfTempGyrus (20)',
-    21 : 'MedTempGyrus (21)',
-    22 : 'SupTempGyrus (22)',
-    23 : 'VentPostCing (23)',
-    24 : 'VentAntCing (24)',
-    25 : 'Subgenual (25)',
-    30 : 'AgrRetrolimb (30)',
-    31 : 'DorsalPCC (31)',
-    32 : 'DorsalACC (32)',
-    34 : 'DorEntorhinal (34)',
-    36 : 'Parahipp (36)',
-    37 : 'Fusiform (37)',
-    38 : 'Temporopol (38)',
-    39 : 'AngGyrus (39)',
-    40 : 'SupramargGyr (40)',
-    41 : 'PrimAuditory (41)',
-    44 : 'Broca-Operc (44)',
-    45 : 'Broca-Triang (45)',
-    46 : 'dlPFC(lat) (46)',
-    47 : 'ParsOrbitalis (47)',
-    48 : 'Caudate',
-    49 : 'Putamen',
-    50 : 'Thalamus',
-    51 : 'GlobPal',
-    52 : 'NucAccumb',
-    53 : 'Amygdala',
-    54 : 'Hippocampus',
-    55 : 'Hypothalamus',
-};
 
-bisweb_mni2tal.BRODMANINDICES = [ 1, 4, 5, 6, 7, 8, 9, 10, 11, 13, 17, 18, 19, 20, 21, 22, 23, 24, 25, 30, 31, 32, 34, 36, 37, 38, 39, 40, 41, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55];
 
-bisweb_mni2tal.BRODLOCATIONS = [
-    1,131,117,119,50,117,119,
-    4,128,108,117,54,109,120,
-    5,105,123,120,76,123,120,
-    6,118,91,123,62,92,124,
-    7,113,150,133,72,151,127,
-    8,112,64,117,67,66,116,
-    9,125,51,103,51,56,109,
-    10,113,35,79,67,35,76,
-    11,102,53,53,79,52,53,
-    13,134,86,72,48,86,71,
-    17,101,168,81,79,171,79,
-    18,119,182,74,71,182,74,
-    19,134,165,77,45,165,83,
-    20,138,107,41,43,104,38,
-    21,150,117,63,31,115,59,
-    22,144,109,73,33,110,73,
-    23,99,135,96,80,135,96,
-    24,95,85,103,85,89,104,
-    25,97,73,58,85,73,59,
-    30,102,135,80,78,133,80,
-    31,98,138,111,82,139,110,
-    32,96,57,88,85,51,92,
-    34,121,87,57,62,87,55,
-    36,116,109,47,64,110,50,
-    37,137,141,58,43,142,60,
-    38,130,79,42,47,77,42,
-    39,136,149,103,44,150,105,
-    40,141,123,106,37,122,105,
-    41,140,111,79,38,109,79,
-    44,139,78,89,42,77,89,
-    45,136,64,79,43,63,78,
-    46,133,52,84,44,52,80,
-    47,128,60,60,50,59,59,
-    48,104,77,83,79,77,82,
-    49,115,87,71,64,87,71,
-    50,100,109,78,81,107,78,
-    51,109,90,70,70,90,70,
-    52,100,80,60,79,81,61,
-    53,111,91,50,66,90,51,
-    54,118,112,58,61,109,57,
-    55,93,91,61,86,92,61];
+bisweb_mni2tal.BRODMANNLABELS = humanmni.labels.data[3].labels;
+bisweb_mni2tal.BRODMANINDICES = Object.keys(humanmni.labels.data[3].centroids);
+
+// Make centroid indices integers
+for (let i=0;i<bisweb_mni2tal.BRODMANINDICES.length;i++) {
+    bisweb_mni2tal.BRODMANINDICES[i]=parseInt(bisweb_mni2tal.BRODMANINDICES[i]);
+}
+
+bisweb_mni2tal.BRODLOCATIONS = humanmni.labels.data[3].centroids;
 
 // ---------------------------------------------------------------------------------
 //  S L I C E    V I E W E R
@@ -247,13 +171,13 @@ bisweb_mni2tal.SliceViewer=class {
             let sourceHeight=this.imgheight;
             if (this.drawoverlay && this.overlayopacity>0.1) {
                 this.tempCanvasContext.drawImage(this.overlayImage,
-                                               sourceX, sourceY, sourceWidth, sourceHeight,
-                                               0,0,this.width,this.height);
+                                                 sourceX, sourceY, sourceWidth, sourceHeight,
+                                                 0,0,this.width,this.height);
                 
             } else if (this.drawimage) {
                 this.tempCanvasContext.drawImage(this.myImage,
-                                               sourceX, sourceY, sourceWidth, sourceHeight, 
-                                               0,0,this.width,this.height);
+                                                 sourceX, sourceY, sourceWidth, sourceHeight, 
+                                                 0,0,this.width,this.height);
             }
         } else if (this.myplane==1) {
             let sourceWidth=this.imgwidth;
@@ -264,12 +188,12 @@ bisweb_mni2tal.SliceViewer=class {
                 let sourceX=i*this.imgwidth;
                 if (this.drawoverlay && this.overlayopacity>0.1)  {
                     this.tempCanvasContext.drawImage(this.overlayImage,
-                                                   sourceX, sourceY, sourceWidth, 1, 
-                                                   0,this.imgheight-i-1,this.width,1);
+                                                     sourceX, sourceY, sourceWidth, 1, 
+                                                     0,this.imgheight-i-1,this.width,1);
                 } else if (this.drawimage) {
                     this.tempCanvasContext.drawImage(this.myImage,
-                                                   sourceX, sourceY, sourceWidth, 1, 
-                                                   0,this.imgheight-i-1,this.width,1);
+                                                     sourceX, sourceY, sourceWidth, 1, 
+                                                     0,this.imgheight-i-1,this.width,1);
                 }
             }
         } else if (this.myplane==0) {
@@ -286,12 +210,12 @@ bisweb_mni2tal.SliceViewer=class {
                 let sourceX=i*this.imgwidth+this.current_slice;
                 if (this.drawoverlay && this.overlayopacity>0.1)  {
                     this.tempCanvasContext.drawImage(this.overlayImage,
-                                                   sourceX, sourceY, 1, sourceHeight, 
-                                                   i,0,1,sourceHeight);
+                                                     sourceX, sourceY, 1, sourceHeight, 
+                                                     i,0,1,sourceHeight);
                 } else if (this.drawimage) {
                     this.tempCanvasContext.drawImage(this.myImage,
-                                                   sourceX, sourceY, 1, sourceHeight, 
-                                                   i,0,1,sourceHeight);
+                                                     sourceX, sourceY, 1, sourceHeight, 
+                                                     i,0,1,sourceHeight);
                 }
             }
             this.tempCanvasContext.rotate(-theta);
@@ -533,8 +457,6 @@ class OrthoViewer {
                 self.setTalairach();
             }
 
-            //            console.log('Showing ',x,y,z ,' mni2tal=',mni2tal);
-            
             return new Promise( (resolve) => {
                 setTimeout( () => { 
                     let v= parseInt(self.BrodmanElement.value);
@@ -687,14 +609,16 @@ class OrthoViewer {
         for (let i=0;i<n;i++) {
             let opt = document.createElement('option');
             let opt2 = document.createElement('option');
-            let ind=bisweb_mni2tal.BRODMANINDICES[i];
+            let ind=Math.floor(bisweb_mni2tal.BRODMANINDICES[i]);
             let s=bisweb_mni2tal.BRODMANNLABELS[ind];
-            opt.value=i;
+
+
+            opt.value=ind;
             opt.innerHTML = 'Right-'+s;
-            this.brodlist.push([i,"Right-"+s]);
-            opt2.value=i+100;
+            this.brodlist.push([ind,"Right-"+s]);
+            opt2.value=ind+100;
             opt2.innerHTML = 'Left-'+s;
-            this.brodlist.push([i+100,"Left-"+s]);
+            this.brodlist.push([ind+100,"Left-"+s]);
             this.BrodmanElement.appendChild(opt);
             this.BrodmanElement.appendChild(opt2);
         }
@@ -703,8 +627,6 @@ class OrthoViewer {
     
     gotoBrodmannCentroid() {
         
-        //  console.log('Brodman=',this.BrodmanElement.value);      
-        
         let a=Math.round(this.BrodmanElement.value);
         
         if (a<0) {
@@ -712,18 +634,17 @@ class OrthoViewer {
             return;
         }
         
-        let isleft=0;
+        let offset=0;
         if (a>=100) {
             a=a-100;
-            isleft=1;
+            offset=3;
         }
-        
-        let row=a;
-        let col=1+isleft*3;
-        let index=row*7+col;
-        this.CrossHairLocation[0]=180-bisweb_mni2tal.BRODLOCATIONS[index];
-        this.CrossHairLocation[1]=bisweb_mni2tal.BRODLOCATIONS[index+1];
-        this.CrossHairLocation[2]=bisweb_mni2tal.BRODLOCATIONS[index+2];
+
+
+        let row=bisweb_mni2tal.BRODLOCATIONS[`${a}`];
+        this.CrossHairLocation[0]=180-row[offset];
+        this.CrossHairLocation[1]=row[offset+1];
+        this.CrossHairLocation[2]=row[offset+2];
         this.setSliceLocations(-1,true);
     }
     
@@ -1020,6 +941,7 @@ class OrthoViewer {
         let brod = imgdata.data[4];
         //        let s="(Outside defined Brodmann Area)";
         let origbrod=brod;
+
         if (brod>0) {
             if (brod<100) {
                 //                s="BA=Left ";
