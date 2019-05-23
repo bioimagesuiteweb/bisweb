@@ -365,12 +365,6 @@ input[type="radio"] .styled:checked + label::after {
     -ms-transform: scale(-1, 1);
     transform: scale(-1, 1);
 }
-<<<<<<< HEAD
-.chart{
-    background-color: #F5F2EB;
-    border: 1px solid #F5F2EB;
-}
-=======
 
 .bisweb-taucharts-container {
     background-color : rgb(12,12,12);
@@ -487,4 +481,3 @@ tspan {
 }
 
 
->>>>>>> 0ed76af0e84b3e280583d51adf73f3aa0cef3c68
