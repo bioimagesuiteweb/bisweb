@@ -61,7 +61,7 @@ const brain_fragmentshader_text=
       'varying vec3 vNormal;\n'+
       //        'varying vec3 vLookup;\n'+
       'void main() {\n'+
-      '   float v=max(0.0,-vNormal.z)*0.7+0.3;\n'+
+      '   float v=max(0.0,vNormal.z);\n'+
       '   gl_FragColor = vec4( v*diffuse.x,v*diffuse.y,v*diffuse.z, opacity );\n'+
       '}';
 
@@ -79,7 +79,7 @@ const sphere_fragmentshader_text=
       'uniform vec3 diffuse;\n'+
       'varying vec3 vNormal;\n'+
       'void main() {\n'+
-      '   float v=max(0.0,-vNormal.z);\n'+
+      '   float v=max(0.0,vNormal.z);\n'+
       '   gl_FragColor = vec4( v*diffuse.x,v*diffuse.y,v*diffuse.z, opacity );\n'+
       '}';
 
