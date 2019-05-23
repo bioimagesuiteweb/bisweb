@@ -287,20 +287,30 @@ class CustomModule {
      * @param{FileObject} fobj - the file object to load from
      */
     loadParameters(fobj) {
-        let description = this.module.getDescription();
         this.module.loadParameters(fobj).then( (obj) => {
-            description.params.forEach((param) => {
-                let varname=param.varname;
-                if (obj[varname]) {
-                    this.guiVars[varname] = obj[varname];
-                    this.parameterControllers[varname].updateDisplay();
-                }
-            });
+            this.updateParams(obj);
             this.updateModuleGUIFromInputObjects();
         }).catch( (e) => {
             let fname=bisgenericio.getFixedLoadFileName(fobj);
             webutil.createAlert(`Failed to load parameters from ${fname} (${e})`,true);
         });
+    }
+
+    /**
+     * Updates internal parameters with params dictionary.
+     * 
+     * @param {Object} obj - Parameters object.
+     */
+    updateParams(obj) {
+        let description = this.module.getDescription();
+        description.params.forEach((param) => {
+            let varname=param.varname;
+            if (obj[varname]) {
+                this.guiVars[varname] = obj[varname];
+                this.parameterControllers[varname].updateDisplay();
+            }
+        });
+        this.updateModuleGUIFromInputObjects();
     }
 
 
