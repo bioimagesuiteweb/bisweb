@@ -61,7 +61,7 @@
         "eslint": "4.19.1",
         "event-stream": "3.3.4",
         "git-rev": "0.2.1",
-        "gulp": "4.0.0",
+        "gulp": "^4.0.0",
         "gulp-concat-css": "3.1.0",
         "gulp-eslint": "4.0.2",
         "gulp-html-replace": "1.6.2",
