@@ -490,4 +490,6 @@ tspan {
     width: 50%;
 }
 
-
+.bisweb-pipeline-list-item:hover {
+    background-color : rgba(10, 63, 143, 0.5);
+}

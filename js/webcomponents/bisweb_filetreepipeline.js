@@ -166,7 +166,6 @@ class FileTreePipeline extends HTMLElement {
                     moduleIndexArray.push({ 'text' : moduleIndex.getModule(key).getDescription().name, 'value' : key });
                 }
 
-                //TODO: Fix positioning issue of element inside modal
                 bootbox.prompt({
                     'size' : 'small', 
                     'title' : 'Choose a module',
@@ -181,7 +180,7 @@ class FileTreePipeline extends HTMLElement {
                             customModule.createOrUpdateGUI();
                             setDgWidth($(customModule.panel.widget));
 
-                            this.modules.push(customModule);
+                            this.modules.push({ 'name' : moduleName, 'module' : customModule});
 
                             let moduleLocation = this.modules.length - 1; //index of module in array at time of adding
                             let prettyModuleName = moduleIndex.getModule(moduleName).getDescription().name;
@@ -216,8 +215,15 @@ class FileTreePipeline extends HTMLElement {
 
             saveModulesButton.on('click', () => {
                 let params = [];
+                $('.bisweb-pipeline-list').empty();
                 for (let i = 0; i < this.modules.length; i++) {
-                    params.push(this.modules[i].getVars());
+                    let param = {'name' : this.modules[i].name, 'params' : this.modules[i].module.getVars()};
+                    params.push(param);
+
+                    //update pipeline list 
+                    let moduleName = moduleIndex.getModule(this.modules[i].name).getDescription().name;
+                    let listItem = this.createPipelineListItem(moduleName);
+                    $('.bisweb-pipeline-list').append(listItem);
                 }
 
                 console.log('params', params);
@@ -247,6 +253,54 @@ class FileTreePipeline extends HTMLElement {
         function setDgWidth(widget) {
             widget.find('.dg.main').width('50%');
         }
+    }
+
+    /**
+     * Creates a list item to represent an entry in the current saved pipeline. 
+     * 
+     * @returns A formatted bootstrap list item.
+     */
+    createPipelineListItem(moduleName) {
+        let listItemId = bis_webutil.getuniqueid();
+        let listItem = $(`<li id='${listItemId}' class='list-group-item bisweb-pipeline-list-item'>${moduleName}</li>`);
+        listItem.on('click', (e) => {
+            e.preventDefault(); 
+            e.stopPropagation();
+            this.openModuleEditingModal(listItem);
+        });
+
+        return listItem;
+    }
+
+    //TODO: Fix bug with params spacing
+    /**
+     * Opens a small bootstrap modal to edit the parameters of a module in the currently saved pipeline. 
+     * 
+     */
+    openModuleEditingModal(item) {
+        let modal = bis_webutil.createmodal(`Change parameters for ${name}`, 'modal-sm');
+
+        //generate custom element gui with current params 
+        //note that index in visual list will match index in internal list, so we can determine which internal list item to use by finding this element in the visual list
+        let listItems = $('#bisweb-panel-pipeline').find('.bisweb-pipeline-list').children();
+        let index = null;
+
+        console.log('item id', $(item).attr('id'));
+        for (let i = 0; i < listItems.length; i++) {
+            console.log('list items id', listItems[i], $(listItems[i]).attr('id'));
+            if ($(listItems[i]).attr('id') === $(item).attr('id')) { index = i; i = listItems.length; }
+        }
+
+        console.log('module', this.modules[index]);
+        let baseMod = moduleIndex.getModule(this.modules[index].name);
+
+        let customModule = bisweb_custommodule.createCustom(null, this.algocontroller, baseMod, { 'numViewers' : 0, 'dual' : false, 'paramsMargin' : '5px', 'buttonsMargin' : '0px' });
+        customModule.createOrUpdateGUI();
+        customModule.updateParams(this.savedParameters[index]);
+        customModule.createOrUpdateGUI();
+
+        modal.body.append(customModule.panel.widget);
+        modal.dialog.modal('show');
     }
 
     /**
