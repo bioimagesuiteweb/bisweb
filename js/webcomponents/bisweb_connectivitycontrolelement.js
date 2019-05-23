@@ -52,7 +52,7 @@ const brain_vertexshader_text =
       '     vec3 transformed = vec3( position );\n'+
       '     vec4 mvPosition = modelViewMatrix * vec4( transformed, 1.0 );\n'+
       '     gl_Position = projectionMatrix * mvPosition;\n'+
-      '     gl_Position.z=0.99+0.01*gl_Position.z;\n'+
+//      '     gl_Position.z=0.99+0.01*gl_Position.z;\n'+
       '}\n';
 
 const brain_fragmentshader_text=
@@ -332,8 +332,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         if (doupdate) {
             internal.rendermode=internal.rendermode+1;
             if (internal.rendermode>8)
-                internal.rendermode=6;
-        } 
+                internal.rendermode=5;
+            if (internal.rendermode===6)
+                internal.rendermode+=1;
+        }
+        //console.log('Rendermode=',internal.rendermode);
         let vp=internal.orthoviewer.setRenderMode(internal.rendermode,true);
         let parcvp=vp[4];
         internal.parcellation.viewport.x0=parcvp.x0;
@@ -755,10 +758,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             return;
         
         let coords = internal.mni2tal.getMMCoordinates(internal.mni);
+        //        console.log('MNI=',internal.mni,' --> Coords=',coords);
         if (internal.mni[0]<0.0)
-            coords[0]=(-coords[0]);
+            coords[0]-=lobeoffset;
         else
-            coords[0]=(-coords[0]-2*lobeoffset);
+            coords[0]+=lobeoffset;
         coords[1]+=axisoffset[1];
         coords[2]+=axisoffset[2];
         
@@ -988,20 +992,23 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             meshindex=1;
         
         let obj= JSON.parse(textstring);
-        let values=[0.8,0.9];
+        let values=[0.6,0.9];
         
         let vertices = new Float32Array(obj.points.length);
         let indices = new Uint16Array(obj.triangles.length);
 
         console.log('+++++ Brain surface loaded from '+filename+' '+[ obj.points.length,obj.triangles.length]);
         for (let i=0;i<obj.points.length;i+=3) {
-            vertices[i+0]=180.0-obj.points[i+0];
-            if (meshindex===1)
-                vertices[i]-=lobeoffset;
-            else
+            vertices[i+0]=obj.points[i+0];
+            if (meshindex===1) // right
                 vertices[i]+=lobeoffset;
+            else // left
+                vertices[i]-=lobeoffset;
             vertices[i+1]=obj.points[i+1];
             vertices[i+2]=obj.points[i+2];
+            if (i===0) {
+                console.log('obj.points=',obj.points[0],obj.points[1],obj.points[2], vertices[i],vertices[i+1],vertices[i+2]);
+            }
         }
         for (let i=0;i<obj.triangles.length;i++) 
             indices[i]=obj.triangles[i];
@@ -1023,7 +1030,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                               {"r":values[meshindex],
                                "g":values[meshindex],
                                "b":values[meshindex]}},
-                "opacity": {"type":"f","value":1.0}
+                "opacity": {"type":"f","value":0.7}
             },
             vertexShader : brain_vertexshader_text,
             fragmentShader : brain_fragmentshader_text,
@@ -1035,14 +1042,15 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         if (internal.axisline[0]===null) {
             // create axis line meshes
+            console.log('Axis offset=',axisoffset);
             let p_indices = new Uint16Array(2);
             p_indices[ 0 ] = 0;   p_indices[ 1 ] = 1; 
             for (let axis=0;axis<=2;axis++) {
                 let p_vertices = new Float32Array(6);
-                p_vertices[0]=180.0+lobeoffset-axisoffset[0]; p_vertices[1]=-axisoffset[1]; p_vertices[2]=-axisoffset[2];
-                p_vertices[3]=180.0+lobeoffset-axisoffset[0]; p_vertices[4]=-axisoffset[1]; p_vertices[5]=-axisoffset[2];
+                p_vertices[0]=-axisoffset[0]; p_vertices[1]=-axisoffset[1]; p_vertices[2]=-axisoffset[2];
+                p_vertices[3]=-axisoffset[0]; p_vertices[4]=-axisoffset[1]; p_vertices[5]=-axisoffset[2];
                 if (axis===0) {
-                    p_vertices[3]=-lobeoffset+axisoffset[0];
+                    p_vertices[3]=180+lobeoffset+axisoffset[0];
                 } else if (axis===1) {
                     p_vertices[4]=216.0+axisoffset[1];
                 } else {
@@ -1562,13 +1570,13 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 //                  console.log('Spheres '+j+' length='+sph.positions.length+' color='+[ cl.r,cl.g,cl.b]+' scale='+scale);
 
                 let spherematerial = new THREE.ShaderMaterial({
-                    transparent : true,
+                    transparent : false,
                     "uniforms": {
                         "diffuse": {  "type":"c","value":
                                       {"r":cl.r/scale,
                                        "g":cl.g/scale,
                                        "b":cl.b/scale}},
-                        "opacity": {"type":"f","value":0.5},
+                        "opacity": {"type":"f","value":1.0},
                     },
                     vertexShader : sphere_vertexshader_text,
                     fragmentShader : sphere_fragmentshader_text,
@@ -1576,6 +1584,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 let geom=bisCrossHair.createcopies(presphere,sph.positions,sph.scales);
                 geom.computeVertexNormals();
                 let spheremesh=new THREE.Mesh(geom,spherematerial);
+                spheremesh.renderOrder=1000;
                 spheremesh.visbile=true;
                 internal.subviewers[3].scene.add(spheremesh);
                 internal.meshes.push(spheremesh);

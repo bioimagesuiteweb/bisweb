@@ -78,6 +78,10 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
     this.plane  = plane;
     this.domElement = ( domElement !== undefined ) ? domElement : document;
 
+    this.flipmode=false;
+    if (this.plane===3)
+        this.flipmode=true;
+    
     // API
     
     this.enabled = true;
@@ -285,7 +289,9 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
             vector.copy( _this.camera.up ).setLength( mouseOnBall.y );
             vector.add( cameraUp.copy( _this.camera.up ).cross( _eye ).setLength( mouseOnBall.x ) );
             vector.add( _eye.setLength( mouseOnBall.z ) );
-            
+            if (_this.flipmode === 3) {
+                  vector['x']=-vector['x'];
+            }
             return vector;
             
         };
@@ -307,11 +313,6 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
                 axis.crossVectors( _rotateStart, _rotateEnd ).normalize();
                 
                 angle *= _this.rotateSpeed;
-                if (_this.plane === 3) {
-                    // In 3D Mode Flip
-                    angle=-angle;
-                }
-                
                 quaternion.setFromAxisAngle( axis, -angle );
                 
                 _eye.applyQuaternion( quaternion );
@@ -372,17 +373,11 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
             if ( mouseChange.lengthSq() ) {
                 
                 mouseChange.multiplyScalar( _eye.length() * _this.panSpeed );
+                pan.copy( _eye ).cross( _this.camera.up ).setLength( mouseChange.x );
+                pan.add( cameraUp.copy( _this.camera.up ).setLength( -mouseChange.y ) );
 
-                if (_this.plane === 3) {
-                    // In 3D Mode Flip
-                    pan.copy( _eye ).cross( _this.camera.up ).setLength( -mouseChange.x );
-                    pan.add( cameraUp.copy( _this.camera.up ).setLength( mouseChange.y ) );
-                } else {
-                    pan.copy( _eye ).cross( _this.camera.up ).setLength( mouseChange.x );
-                    pan.add( cameraUp.copy( _this.camera.up ).setLength( -mouseChange.y ) );
-                }
-
-
+                if (_this.flipmode)
+                    pan['x']=-pan['x'];
                 
                 _this.camera.position.add( pan );
                 _this.target.add( pan );
@@ -635,6 +630,8 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
         
         document.removeEventListener( 'mousemove', mousemove );
         document.removeEventListener( 'mouseup', mouseup );
+
+        console.log('Mouseup flip=',_this.flipmode);
         
         _this.dispatchEvent( endEvent );
         

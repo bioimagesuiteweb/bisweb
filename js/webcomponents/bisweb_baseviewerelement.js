@@ -25,11 +25,6 @@ const webutil=require('bis_webutil');
 const $=require('jquery');
 const bootbox=require('bootbox');
 const BisWebImage = require('bisweb_image');
-const THREE = require('three');
-
-const tempMatrix = new THREE.Matrix4();
-const tempMatrix2 = new THREE.Matrix4();
-
 
 /**
  *
@@ -364,16 +359,13 @@ class BaseViewerElement extends HTMLElement {
                         let cam=subviewers[i].camera;
                         if (subviewers[i].controls.plane === 3) {
                             // In 3D Mode Flip left-right
-                            tempMatrix.copy(cam.projectionMatrix);
-                            tempMatrix2.copy(cam.projectionMatrix);
-                            tempMatrix2.elements[0]=-tempMatrix2.elements[0];
-                            cam.projectionMatrix.copy(tempMatrix2);
+                            cam.projectionMatrix.elements[0]=-cam.projectionMatrix.elements[0];
                         }
                         renderer.render( subviewers[i].scene,
                                          subviewers[i].camera);
                         subviewers[i].controls.enabled=true;
                         if (subviewers[i].controls.plane === 3) {
-                            cam.projectionMatrix.copy(tempMatrix);
+                            cam.projectionMatrix.elements[0]=-cam.projectionMatrix.elements[0];
                         }
                     } else {
                         subviewers[i].controls.enabled=false;
