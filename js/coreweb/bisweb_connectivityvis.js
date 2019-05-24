@@ -1,32 +1,140 @@
 const $=require('jquery');
 const bootbox=require('bootbox');
-
+const genericio=require('bis_genericio');
 const d3=require('d3');
 const webutil=require('bis_webutil');
 const saveSvgAsPng=require('save-svg-as-png');
-
-console.log(saveSvgAsPng);
-
+const filesaver = require('FileSaver');
 
 let internal=null;
 let displayDialog=null;
 let globalSVGId=null;
-
+let globalSVGId2=null;
+let globalMode='chord';
 // -----------------------------------------------------
 // Save as PNG
 // -----------------------------------------------------
+var saveSnapshot=function(inimglist,initialfilename='snapshot.png') {
+
+    let w=inimglist[0].width;
+    let h=inimglist[0].height;
+    let x=0;
+    
+    if (inimglist.length>1) {
+        for (let i=1;i<inimglist.length;i++) {
+            w+=inimglist[i].width+10;
+            if (inimglist[i].height>h)
+                h=inimglist[i].height;
+        }
+        w=w+10;
+        x=10;
+    }
+    
+    let outcanvas = document.createElement('canvas');
+    outcanvas.width = w;
+    outcanvas.height = h;
+    
+    let ctx = outcanvas.getContext('2d');
+    if (globalMode==='chord') 
+        ctx.fillStyle = "#000000";
+    else
+        ctx.fillStyle = "#ffffff";
+    ctx.globalCompositeOperation = "source-over";
+    ctx.fillRect(0, 0, outcanvas.width, outcanvas.height);
+
+
+    for (let i=0;i<inimglist.length;i++) {
+        let w=inimglist[i].width;
+        let h=inimglist[i].height;
+        ctx.drawImage(inimglist[i], x, 0, w,h);
+        x=x+w+10;
+    }
+
+    let outimg = outcanvas.toDataURL("image/png");
+
+    let dispimg = $('<img id="dynamic">');
+    dispimg.attr('src', outimg);
+    dispimg.width(300);
+    
+    let a = webutil.creatediv();
+    a.append(dispimg);
+    
+    bootbox.dialog({
+        title: 'Save snapshot (size=' + outcanvas.width + 'x' + outcanvas.height + ').<BR> Click SAVE to output as png.',
+        message: a.html(),
+        buttons: {
+            ok: {
+                label: "Save To File",
+                className: "btn-success",
+                callback: function () {
+                    let blob = genericio.dataURLToBlob(outimg);
+                    if (webutil.inElectronApp()) {
+                        let reader = new FileReader();
+                        reader.onload = function () {
+                            let buf = this.result;
+                            let arr = new Int8Array(buf);
+                            genericio.write({
+                                filename: initialfilename,
+                                title: 'Select file to save snapshot in',
+                                filters: [{ name: 'PNG Files', extensions: ['png'] }],
+                            }, arr, true);
+                        };
+                        reader.readAsArrayBuffer(blob);
+                    } else {
+                        filesaver(blob, 'snapshot.png');
+                    }
+                }
+            },
+            cancel: {
+                label: "Cancel",
+                className: "btn-danger",
+            },
+        }
+    });
+    return false;
+};
+
 var saveAsPNG = function() {
 
     const globalw=document.getElementById(globalSVGId) || null;
+    
     
     if (globalw===null) {
         bootbox.alert('Please create a plot before attempting to save it');
         return;
     }
 
-    console.log(globalw);
-    
-    saveSvgAsPng.saveSvgAsPng(globalw, "plot.png");
+    if (globalMode==='chord')  {
+        let par=$('#'+globalSVGId).parent();
+        saveSvgAsPng.svgAsDataUri(par[0], "plot.png").then( (p) => {
+            let img = document.createElement('img');
+            img.onload=function() { saveSnapshot([img]); };
+            img.src=p;
+        }).catch( (e) => {
+            console.log(e,e.stack);
+        });
+    } else {
+        let par=$('#'+globalSVGId);
+        let par2=$('#'+globalSVGId2);
+        
+        saveSvgAsPng.svgAsDataUri(par[0], "plot.png").then( (p) => {
+            let img = document.createElement('img');
+            img.onload=function() {
+                saveSvgAsPng.svgAsDataUri(par2[0], "plot2.png").then( (q) => {
+                    let img2 = document.createElement('img');
+                    img2.onload=function() {
+                        saveSnapshot([img2,img]); };
+                    img2.src=q;
+                }).catch( (e) => {
+                    console.log(e,e.stack);
+                });
+            };
+            img.src=p;
+        }).catch( (e) => {
+            console.log(e,e.stack);
+        });
+    }
+        
 };
 
 // -----------------------------------------------------
@@ -35,7 +143,7 @@ var saveAsPNG = function() {
 //
 // -----------------------------------------------------
 
-var createChordsSVG=function(parc,pairs,scolor,context,normallength,thickness,dim) {
+var createChordsSVG=function(parentDiv,parc,pairs,scolor,context,normallength,thickness,dim) {
     
     if (parc===null || pairs===null || context===null) {
         console.log("Bad inputs in drawLines");
@@ -51,7 +159,7 @@ var createChordsSVG=function(parc,pairs,scolor,context,normallength,thickness,di
         outerRadius = Math.min(svgWidth, svgHeight) / 2 - 10,
         innerRadius = outerRadius - 24;
     
-    console.log('width', width, 'height', height, 'svg width', svgWidth, 'svg height', svgHeight);
+    //    console.log('width', width, 'height', height, 'svg width', svgWidth, 'svg height', svgHeight);
     let formatPercent = d3.format(".1%");
     
     let arc = d3.svg.arc()
@@ -66,7 +174,7 @@ var createChordsSVG=function(parc,pairs,scolor,context,normallength,thickness,di
     let path = d3.svg.chord()
         .radius(innerRadius);
     
-    let svg = d3.select('.modal-body').append("svg")
+    let svg = d3.select(parentDiv[0]).append("svg")
         .attr("width", svgWidth)
         .attr("height", svgHeight)
         .append("g")
@@ -88,7 +196,7 @@ var createChordsSVG=function(parc,pairs,scolor,context,normallength,thickness,di
         let n=rois[i].attr[internal.networkAttributeIndex];
         nets.add(n);
     }
-    console.log('net size=',nets.size);
+    //    console.log('net size=',nets.size);
     
     let matrix =  new Array(nets.size);
     for(let i = 0; i < nets.size; i++){
@@ -99,7 +207,7 @@ var createChordsSVG=function(parc,pairs,scolor,context,normallength,thickness,di
     }
     let n=pairs.length;
 
-    console.log('Node 238=',JSON.stringify(rois[238]), 'Pairs=',n);
+    //    console.log('Node 238=',JSON.stringify(rois[238]), 'Pairs=',n);
     
     for (let index=0;index<n;index++) {
         let a_node=pairs[index][0];
@@ -238,8 +346,6 @@ var createDisplayDialog=function(name,height=-1,width=-1) {
 
 
     let canvas=internal.layoutmanager.getcanvas();
-    console.log('Layout=',internal.layoutmanager,canvas);
-    
     let dim = [parseInt(canvas.width) - 100, parseInt(canvas.height) - 100];
     if (height>0)
         dim[1]=height;
@@ -282,27 +388,32 @@ var drawchords = function(out_internal) {
     let dim=createDisplayDialog(name);
     
     let pos=internal.conndata.createLinePairs(0,internal.laststate.matrixthreshold);
-    // This call returns svg
-    let svg=createChordsSVG(internal.parcellation,
-                       pos,
-                       internal.laststate.poscolor,
-                       internal.context,
-                       internal.laststate.length*internal.parcellation.scalefactor,
-                       internal.laststate.thickness,dim);
+    let svgModal=displayDialog.getWidgetBase();
 
-    displayDialog.getWidget().find('.modal-body').append(svg);
+    globalMode='chord';
+    
+    // This call returns svg
+    createChordsSVG(svgModal,
+                    internal.parcellation,
+                    pos,
+                    internal.laststate.poscolor,
+                    internal.context,
+                    internal.laststate.length*internal.parcellation.scalefactor,
+                    internal.laststate.thickness,dim);
+
     displayDialog.show();
 };
 
 //didn't remove the unused parameters because they might be used later? 
 // -Zach
 var createCorrMapSVG=function(parentDiv,
-                         svgWidth,svgHeight,
-                         id1,id2,parc,pairs,scolor,context,normallength,thickness) {
+                              svgWidth,svgHeight,
+                              id1,id2,parc,pairs,scolor,context,normallength,thickness) {
 
     console.log('Thickness=',thickness);
     const rois=internal.parcellation.rois;
     globalSVGId=webutil.getuniqueid();
+    globalSVGId2=webutil.getuniqueid();
     
     let nets = new Set();
     
@@ -353,7 +464,7 @@ var createCorrMapSVG=function(parentDiv,
         end_color : '#ff0000'// #3498db'
     });
 
-    console.log("Heights=",svgWidth,svgHeight);
+    //    console.log("Heights=",svgWidth,svgHeight);
     
     function Matrix(options) {
         let margin = {top: 50, right: 50, bottom: 50, left: 50},
@@ -484,6 +595,7 @@ var createCorrMapSVG=function(parentDiv,
         
         let key = d3.select("#"+id2)
             .append("svg")
+            .attr("id",globalSVGId2)
             .attr("width", widthLegend)
             .attr("height", height + margin.top + margin.bottom);
         
@@ -553,7 +665,8 @@ var corrmap = function(out_internal) {
     }
     let dim=createDisplayDialog(name,650,650);
     
-    displayDialog.show();
+
+
     let svgModal=displayDialog.getWidgetBase();
     //    console.log('Svg Modal=',svgModal);
     let pos = internal.conndata.createLinePairs(0,internal.laststate.matrixthreshold);
@@ -567,18 +680,19 @@ var corrmap = function(out_internal) {
     svgModal.append(legend);
     
     svgModal.css({'background-color':"#ffffff"});
+
+    globalMode='corr';
     
-    let svg = createCorrMapSVG(svgModal[0],
-                               dim[0],dim[1],
-                               id1,id2,
-                               internal.parcellation,
-                               pos,
-                               internal.laststate.poscolor,
-                               internal.context,
-                               internal.laststate.length*internal.parcellation.scalefactor,
-                               internal.laststate.thickness);
+    createCorrMapSVG(svgModal[0],
+                     dim[0],dim[1],
+                     id1,id2,
+                     internal.parcellation,
+                     pos,
+                     internal.laststate.poscolor,
+                     internal.context,
+                     internal.laststate.length*internal.parcellation.scalefactor,
+                     internal.laststate.thickness);
     
-    displayDialog.getWidget().find('.modal-body').append(svg);
     displayDialog.show();
 };
 
