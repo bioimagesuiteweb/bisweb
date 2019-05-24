@@ -3,9 +3,29 @@ const bootbox=require('bootbox');
 
 const d3=require('d3');
 const webutil=require('bis_webutil');
+const saveSvgAsPng=require('save-svg-as-png');
+
+console.log(saveSvgAsPng);
+
 
 let internal=null;
-let chordDialog=null;
+let displayDialog=null;
+let globalSVG=null;
+
+// -----------------------------------------------------
+// Save as PNG
+// -----------------------------------------------------
+var saveAsPNG = function() {
+
+    if (globalSVG===null) {
+        bootbox.alert('Please create a plot before attempting to save it');
+        return;
+    }
+
+    console.log('Global ',globalSVG,JSON.stringify(globalSVG));
+    
+    saveSvgAsPng.saveSvgAsPng(globalSVG, "plot.png");
+};
 
 // -----------------------------------------------------
 //
@@ -28,18 +48,18 @@ var drawChords=function(parc,pairs,scolor,context,normallength,thickness,dim) {
         innerRadius = outerRadius - 24;
     
     console.log('width', width, 'height', height, 'svg width', svgWidth, 'svg height', svgHeight);
-    var formatPercent = d3.format(".1%");
+    let formatPercent = d3.format(".1%");
     
-    var arc = d3.svg.arc()
+    let arc = d3.svg.arc()
         .innerRadius(innerRadius)
         .outerRadius(outerRadius);
     
-    var layout = d3.layout.chord()
+    let layout = d3.layout.chord()
         .padding(.04)
         .sortSubgroups(d3.descending)
         .sortChords(d3.ascending);
     
-    var path = d3.svg.chord()
+    let path = d3.svg.chord()
         .radius(innerRadius);
     
     let svg = d3.select('.modal-body').append("svg")
@@ -59,14 +79,14 @@ var drawChords=function(parc,pairs,scolor,context,normallength,thickness,dim) {
 
     const rois=internal.parcellation.rois;
     //let data=[];
-    var nets = new Set();
+    let nets = new Set();
     for (let i=0;i<rois.length;i++) {
         let n=rois[i].attr[internal.networkAttributeIndex];
         nets.add(n);
     }
     console.log('net size=',nets.size);
     
-    var matrix =  new Array(nets.size);
+    let matrix =  new Array(nets.size);
     for(let i = 0; i < nets.size; i++){
         matrix[i] = new Array(nets.size);
         for(let j = 0; j < nets.size; j++){
@@ -115,20 +135,20 @@ var drawChords=function(parc,pairs,scolor,context,normallength,thickness,dim) {
     layout.matrix(matrix);
     
     // Add a group per neighborhood.
-    var group = svg.selectAll(".group")
+    let group = svg.selectAll(".group")
         .data(layout.groups)
         .enter().append("g")
         .attr("class", "group")
         .on("mouseover", mouseover);
     
     // Add the group arc.
-    var groupPath = group.append("path")
+    let groupPath = group.append("path")
         .attr("id", function(d, i) { return "group" + i; })
         .attr("d", arc)
         .style("fill", function(d, i) { return network_labels[i].color; });
     
     // Add a text label.
-    var groupText = group.append("text")
+    let groupText = group.append("text")
         .attr("x", 6)
         .attr("dy", 15)
         .style("text-align", "center");
@@ -144,7 +164,7 @@ var drawChords=function(parc,pairs,scolor,context,normallength,thickness,dim) {
     // Create the fill gradient for the chords (based on https://bl.ocks.org/JulienAssouline/2847e100ac7d4d3981b0f49111e185fe)
     function getGradID(d){ return "linkGrad-" + d.source.index + "-" + d.target.index; }
     
-    var grads = svg.append("defs")
+    let grads = svg.append("defs")
         .selectAll("linearGradient")
         .data(layout.chords)
         .enter()
@@ -168,7 +188,7 @@ var drawChords=function(parc,pairs,scolor,context,normallength,thickness,dim) {
     
     
     // Add the chords 
-    var chord = svg.selectAll(".chord")
+    let chord = svg.selectAll(".chord")
         .data(layout.chords)
         .enter()
         .append("path")
@@ -201,16 +221,16 @@ var drawChords=function(parc,pairs,scolor,context,normallength,thickness,dim) {
     return svg;
 };
 
-var destroyChordDialog=function() {
-    if (chordDialog) {
-        if (chordDialog.getContainingFrame()) {
-            chordDialog.getContainingFrame().remove();
+var destroyDisplayDialog=function() {
+    if (displayDialog) {
+        if (displayDialog.getContainingFrame()) {
+            displayDialog.getContainingFrame().remove();
         }
-        chordDialog=null;
+        displayDialog=null;
     }
 };
 
-var createChordDialog=function(name,height=-1,width=-1) {
+var createDisplayDialog=function(name,height=-1,width=-1) {
 
 
     let canvas=internal.layoutmanager.getcanvas();
@@ -221,12 +241,24 @@ var createChordDialog=function(name,height=-1,width=-1) {
         dim[1]=height;
     if (width>0)
         dim[0]=width;
-    if (chordDialog) {
-        destroyChordDialog();
+    if (displayDialog) {
+        destroyDisplayDialog();
     }
-    chordDialog = webutil.createdialog(name, dim[0], dim[1], 0, 0, 50);
-    chordDialog.getContainingFrame().css( { 'z-index' : 5000 });
-    chordDialog.setCloseCallback( () => { destroyChordDialog(); });
+    displayDialog = webutil.createdialog(name, dim[0], dim[1], 0, 0, 50);
+    displayDialog.getContainingFrame().css( { 'z-index' : 5000 });
+    displayDialog.setCloseCallback( () => { destroyDisplayDialog(); });
+    displayDialog.removeCloseButton();
+    
+    webutil.createbutton({
+        name: 'Export as PNG',
+        type: "info",
+        parent: displayDialog.getFooter(),
+    }).click( (e) => {
+        e.preventDefault();
+        saveAsPNG();
+    });
+    
+    
     return dim;
 };
 
@@ -243,7 +275,7 @@ var drawchords = function(out_internal) {
     if (internal.laststate.guimode!=='All') {
         name='Chords for '+internal.laststate.guimode;
     }
-    let dim=createChordDialog(name);
+    let dim=createDisplayDialog(name);
     
     let pos=internal.conndata.createLinePairs(0,internal.laststate.matrixthreshold);
     // This call returns svg
@@ -253,9 +285,10 @@ var drawchords = function(out_internal) {
                        internal.context,
                        internal.laststate.length*internal.parcellation.scalefactor,
                        internal.laststate.thickness,dim);
-    
-    chordDialog.getWidget().find('.modal-body').append(svg);
-    chordDialog.show();
+
+    globalSVG=svg;
+    displayDialog.getWidget().find('.modal-body').append(svg);
+    displayDialog.show();
 };
 
 //didn't remove the unused parameters because they might be used later? 
@@ -267,7 +300,7 @@ var plotCorrMap=function(parentDiv,
     console.log('Thickness=',thickness);
     const rois=internal.parcellation.rois;
     
-    var nets = new Set();
+    let nets = new Set();
     
     for (let i=0;i<rois.length;i++) {
         let n=rois[i].attr[internal.networkAttributeIndex];
@@ -284,8 +317,8 @@ var plotCorrMap=function(parentDiv,
 
     let n=pairs.length;
     for (let index=0;index<n;index++) {
-        var a_node=pairs[index][0];
-        var b_node=pairs[index][1];
+        let a_node=pairs[index][0];
+        let b_node=pairs[index][1];
         
         let node=Math.floor(parc.indexmap[a_node]);
         let othernode=Math.floor(parc.indexmap[b_node]);
@@ -303,24 +336,12 @@ var plotCorrMap=function(parentDiv,
                 matrix[i][j]=0.01; 
         }
     }
-    var correlationMatrix = matrix; 
-        /*    var correlationMatrix = [
-        [1, 0.3, 0, 0.8, 0, 0.2, 1, 0.5, 0, 0.75],
-        [0.3, 1, 0.5, 0.2, 0.4, 0.3, 0.8, 0.1, 1, 0],
-        [0, 0.5, 1, 0.4, 0, 0.9, 0, 0.2, 1, 0.3],
-        [0.8, 0.2, 0.4, 1, 0.3, 0.4, 0.1, 1, 0.2, 0.9],
-        [0, 0.4, 0, 0.3, 1, 0.1, 0.4, 0, 0.6, 0.7],
-        [0.2, 0.3, 0.9, 0.4, 0.1, 1, 0, 0.1, 0.4, 0.1],
-        [1, 0.8, 0, 0.1, 0.4, 0, 1, 0.5, 0, 1],
-        [0.5, 0.1, 0.2, 1, 0.1, 0, 0.5, 1, 0, 0.4],
-        [0, 1, 1, 0.2, 0.6, 0.4, 0, 0, 1, 0.6],
-        [0.75, 0, 0.3, 0.9, 0.7, 0.1, 1, 0.4, 0.6, 1]
-    ];*/
+    let correlationMatrix = matrix; 
 
     let labels=internal.gui_Networks_ShortNames;
 
     // heatMap part
-    var svg  = Matrix({
+    let svg  = Matrix({
         container : '#'+id1,
         data      : correlationMatrix,
         labels    : labels,
@@ -331,7 +352,7 @@ var plotCorrMap=function(parentDiv,
     console.log("Heights=",svgWidth,svgHeight);
     
     function Matrix(options) {
-        var margin = {top: 50, right: 50, bottom: 50, left: 50},
+        let margin = {top: 50, right: 50, bottom: 50, left: 50},
             width = 350,
             height = 350,
             data = options.data,
@@ -340,7 +361,7 @@ var plotCorrMap=function(parentDiv,
             startColor = options.start_color,
             endColor = options.end_color;
         
-        var widthLegend = 100;
+        let widthLegend = 100;
         
         if(!data){
             throw new Error('Please pass data');
@@ -350,13 +371,13 @@ var plotCorrMap=function(parentDiv,
             throw new Error('It should be a 2-D array');
         }
         
-        var maxValue = d3.max(data, function(layer) { return d3.max(layer, function(d) { return d; }); });
-        var minValue = d3.min(data, function(layer) { return d3.min(layer, function(d) { return d; }); });
+        let maxValue = d3.max(data, function(layer) { return d3.max(layer, function(d) { return d; }); });
+        let minValue = d3.min(data, function(layer) { return d3.min(layer, function(d) { return d; }); });
         
-        var numrows = data.length;
-        var numcols = data[0].length;
+        let numrows = data.length;
+        let numcols = data[0].length;
         
-        var svg = d3.select(parentDiv).append("svg")
+        let svg = d3.select(parentDiv).append("svg")
             .attr("width", width + margin.left + margin.right)
             .attr("height", height + margin.top + margin.bottom)
             .append("g")
@@ -369,25 +390,25 @@ var plotCorrMap=function(parentDiv,
             .attr("width", width)
             .attr("height", height);
         
-        var x = d3.scale.ordinal()
+        let x = d3.scale.ordinal()
             .domain(d3.range(numcols))
             .rangeBands([0, width]);
         
-        var y = d3.scale.ordinal()
+        let y = d3.scale.ordinal()
             .domain(d3.range(numrows))
             .rangeBands([0, height]);
         
-        var colorMap = d3.scale.linear()
+        let colorMap = d3.scale.linear()
             .domain([minValue,maxValue])
             .range([startColor, endColor]);
         
-        var row = svg.selectAll(".row")
+        let row = svg.selectAll(".row")
             .data(data)
             .enter().append("g")
             .attr("class", "row")
             .attr("transform", function(d, i) {return "translate(0," + y(i) + ")"; });
         
-        var cell = row.selectAll(".cell")
+        let cell = row.selectAll(".cell")
             .data(function(d) { return d; })
             .enter().append("g")
             .attr("class", "cell")
@@ -410,10 +431,10 @@ var plotCorrMap=function(parentDiv,
             .data(function(d, i) { return data[i]; })
             .style("fill", colorMap);
         
-        var labels = svg.append('g')
+        let labels = svg.append('g')
             .attr('class', "labels");
         
-        var columnLabels = labels.selectAll(".column-label")
+        let columnLabels = labels.selectAll(".column-label")
             .data(labelsData)
             .enter().append("g")
             .attr("class", "column-label")
@@ -435,7 +456,7 @@ var plotCorrMap=function(parentDiv,
             .attr("transform", "rotate(-60)")
             .text(function(d) { return d; });
         
-        var rowLabels = labels.selectAll(".row-label")
+        let rowLabels = labels.selectAll(".row-label")
             .data(labelsData)
             .enter().append("g")
             .attr("class", "row-label")
@@ -456,12 +477,12 @@ var plotCorrMap=function(parentDiv,
             .attr("text-anchor", "end")
             .text(function(d) { return d; });
         
-        var key = d3.select("#"+id2)
+        let key = d3.select("#"+id2)
             .append("svg")
             .attr("width", widthLegend)
             .attr("height", height + margin.top + margin.bottom);
         
-        var legend = key
+        let legend = key
             .append("defs")
             .append("svg:linearGradient")
             .attr("id", "gradient")
@@ -493,7 +514,7 @@ var plotCorrMap=function(parentDiv,
             .range([height, 0])
             .domain([minValue, maxValue]);
         
-        var yAxis = d3.svg.axis()
+        let yAxis = d3.svg.axis()
             .scale(y)
             .orient("right");
         
@@ -505,6 +526,12 @@ var plotCorrMap=function(parentDiv,
     }
     return svg;
 };
+
+// ------------------------------------------------------------------------------
+//
+//  Corr Map Table
+//
+// ------------------------------------------------------------------------------
 
 var corrmap = function(out_internal) {
     internal=out_internal;
@@ -519,10 +546,10 @@ var corrmap = function(out_internal) {
     if (internal.laststate.guimode !=='All') {
         name='Heatmap for '+internal.laststate.guimode;
     }
-    let dim=createChordDialog(name,650,650);
+    let dim=createDisplayDialog(name,650,650);
     
-    chordDialog.show();
-    let svgModal=chordDialog.getWidgetBase();
+    displayDialog.show();
+    let svgModal=displayDialog.getWidgetBase();
     //    console.log('Svg Modal=',svgModal);
     let pos = internal.conndata.createLinePairs(0,internal.laststate.matrixthreshold);
     
@@ -555,9 +582,10 @@ var corrmap = function(out_internal) {
     
     //console.log('width', width, 'height', height, 'svg width', svgWidth, 'svg height', svgHeight);
     //    var formatPercent = d3.format(".1%");
-    
-    chordDialog.getWidget().find('.modal-body').append(svg);
-    chordDialog.show();
+
+    globalSVG=svg;
+    displayDialog.getWidget().find('.modal-body').append(svg);
+    displayDialog.show();
 };
 
 // ----------------------------------
