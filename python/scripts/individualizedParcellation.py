@@ -75,6 +75,8 @@ else:
                                               "sigmas": [c, c, c],
                                               "inmm": True,
                                               "radiusfactor": 1.5,
+					      "fwhmax" : False,
+					      "vtkboundary" : True,
                                                }, debug=2);
         
 

@@ -124,6 +124,7 @@ namespace bisIndividualizedParcellation {
   
 
     // Copying data to matrixXd and VectorXd
+    std::cout << "++++ COPYING DATA TO EIGEN MATRIX & VECTOR" << std::endl;
     
     int count=0;
 
@@ -165,7 +166,6 @@ namespace bisIndividualizedParcellation {
     
     int n = count;
     
-    std::cout << "++++ COPYING DATA TO EIGEN MATRIX & VECTOR" << std::endl;
     std::cout << "++++ \t number of non-zero voxels n = " << n << std::endl;
     
     VectorXd mean_subtract(t);
@@ -195,6 +195,8 @@ namespace bisIndividualizedParcellation {
     //  fprintf(stdout,"NORMALIZATION INTO UNIT SPHERE (DIVIDE BY MAX NORM): the elapsed time is = %f s \n",float(clock()-timebegin11)/CLOCKS_PER_SEC);
     
     ////////////////////////////////////////////////  2- Normalizing to the unit norm (all vectors norm = 1)
+    std::cout << "++++ NORMALIZATION ONTO UNIT SPHERE (ALL NORM=1)" << std::endl;
+
     MatrixXd v = V.array().rowwise()* inverse_twoNorm.transpose().array();
     twoNorm = v.colwise().norm(); // twoNorm is all 1 [VERIFIED]
     V.resize(0,0);
@@ -204,10 +206,10 @@ namespace bisIndividualizedParcellation {
     //  for (int ii=0; ii<t; ii++)
     //	  fprintf(stdout,"V norm = %f\n",twoNorm(ii)); 
     
-    std::cout << "++++ NORMALIZATION ONTO UNIT SPHERE (ALL NORM=1)" << std::endl;
     
     
     ////////// Finding the voxels within each parcel ///////////////
+    std::cout << "++++ FINDING VOXELS:" << std::endl;
     
     std::vector< std::vector<int> > indice_p;
     std::vector<int> p_vector;
@@ -220,10 +222,13 @@ namespace bisIndividualizedParcellation {
 	p_vector.clear(); // p_vector's size is 0 [VERIFIED]
       }
     
-    std::cout << "++++ FINDING VOXELS:" << std::endl;
 
     // Calculating the squared distance matrix between voxels within each parcel
-    std::vector<MatrixXd> sqrDist;
+    std::cout << "++++ SQUARED DISTANCES" << std::endl;
+
+//    std::vector<MatrixXd> sqrDist;
+    std::vector<VectorXd> sqrDist;
+
     MatrixXd D;
     VectorXi R(t);
     
@@ -238,13 +243,17 @@ namespace bisIndividualizedParcellation {
       MatrixXd vP(t,psize);
       slice(v,R,C,vP);		
       sqrMatrix = ((vP.transpose()*vP*-2).colwise() + vP.colwise().squaredNorm().transpose()).rowwise() + vP.colwise().squaredNorm();
-      sqrDist.push_back( sqrMatrix );
+//      sqrDist.push_back( sqrMatrix );
+      sqrDist.push_back( sqrMatrix.colwise().sum() );
+      vP.resize(0,0);
+      sqrMatrix.resize(0,0);
     }
     
-    std::cout << "++++ SQUARED DISTANCES" << std::endl;
 
     
     // Calculating the distance between auxiliary exemplar and the rest of the voxels
+    std::cout << "++++ AUXILIARY DISTANCES" << std::endl;
+
     std::vector<VectorXd> e0sqrDist;
     VectorXd e0 = VectorXd::Zero(t);
     e0(0) = 3;
@@ -267,9 +276,10 @@ namespace bisIndividualizedParcellation {
     //			fprintf(stdout,"p=%d, pp1=%d, pp2=%d, sqrDist[p][pp1][pp2] = %f\n",p,pp1,pp2,sqrDist[p][pp1][pp2]);
     
     
-    std::cout << "++++ AUXILIARY DISTANCES" << std::endl;
 
     //  Calculating the exemplar within each parcel
+    std::cout << "++++ EXEMPLAR IDENTIFICATION" << std::endl;
+
     VectorXi Sopt(Pmax);
     VectorXi SoptN(Pmax);
     //double loss;
@@ -278,7 +288,8 @@ namespace bisIndividualizedParcellation {
       double sumd0 = e0sqrDist[p].sum();
       MatrixXd::Index maxFindex;
       VectorXd sumD(psize);	
-      sumD = sqrDist[p].colwise().sum();
+//      sumD = sqrDist[p].colwise().sum();
+      sumD = sqrDist[p];
 
       
       VectorXd pFunc(psize);
@@ -288,14 +299,15 @@ namespace bisIndividualizedParcellation {
       std::unordered_map<int,int>::const_iterator voxelN = ntoNvoxel.find (Sopt(p));
       if (voxelN != ntoNvoxel.end())
         SoptN(p) = voxelN->second;
+	std::cout << "p=" << SoptN(p) << std::endl;
     }
     
-    std::cout << "++++ EXEMPLAR IDENTIFICATION" << std::endl;
     
     //  for (int p=0; p<Pmax; p++)
     //	fprintf(stdout,"Sopt(%f) = %d, ", group->GetComponent(SoptN(p),0),SoptN(p));
     
     // Assigning each voxel to the closest exemplar using the priority queue algorithm
+    std::cout << "++++ FINAL STEP: ASSIGNING VOXELS TO EXEMPLARS" << std::endl;
     
     
     std::vector<double> label(n,-1);
@@ -416,7 +428,6 @@ namespace bisIndividualizedParcellation {
           break;
       }
 
-    std::cout << "++++ Finally ASSIGNING VOXELS TO EXEMPLARS" << std::endl;
     //int Voxel_indices[N];
     count = 0;
 
@@ -488,6 +499,7 @@ namespace bisIndividualizedParcellation {
   
 
     // Copying data to matrixXd and VectorXf
+    std::cout << "++++ COPYING DATA TO EIGEN MATRIX & VECTOR" << std::endl;
     
     int count=0;
 
@@ -531,7 +543,6 @@ namespace bisIndividualizedParcellation {
     
     int n = count;
     
-    std::cout << "++++ COPYING DATA TO EIGEN MATRIX & VECTOR" << std::endl;
     std::cout << "++++ \t number of non-zero voxels n = " << n << std::endl;
     
     VectorXf mean_subtract(t);
@@ -559,6 +570,8 @@ namespace bisIndividualizedParcellation {
     //  fprintf(stdout,"NORMALIZATION INTO UNIT SPHERE (DIVIDE BY MAX NORM): the elapsed time is = %f s \n",float(clock()-timebegin11)/CLOCKS_PER_SEC);
     
     ////////////////////////////////////////////////  2- Normalizing to the unit norm (all vectors norm = 1)
+    std::cout << "++++ NORMALIZATION ONTO UNIT SPHERE (ALL NORM=1)" << std::endl;
+    
     MatrixXf v = V.array().rowwise()* inverse_twoNorm.transpose().array();
     twoNorm = v.colwise().norm(); // twoNorm is all 1 [VERIFIED]
 
@@ -569,10 +582,10 @@ namespace bisIndividualizedParcellation {
     //  for (int ii=0; ii<t; ii++)
     //	  fprintf(stdout,"V norm = %f\n",twoNorm(ii)); 
     
-    std::cout << "++++ NORMALIZATION ONTO UNIT SPHERE (ALL NORM=1)" << std::endl;
     
     
     ////////// Finding the voxels within each parcel ///////////////
+    std::cout << "++++ FINDING VOXELS:" << std::endl;
     
     std::vector< std::vector<int> > indice_p;
     std::vector<int> p_vector;
@@ -585,50 +598,52 @@ namespace bisIndividualizedParcellation {
 	p_vector.clear(); // p_vector's size is 0 [VERIFIED]
       }
     
-    std::cout << "++++ FINDING VOXELS:" << std::endl;
 
     // Calculating the squared distance matrix between voxels within each parcel
+    std::cout << "++++ SQUARED DISTANCES" << std::endl;
+    
     std::vector<VectorXf> sqrDist;
     MatrixXf D;
     VectorXi R(t);
     
     colon(0,1,t-1,R);
 
-    int maxPsize=-1;
-    for (int p=0;p<Pmax;p++) {
-      int psize = indice_p[p].size();
-      if (psize>maxPsize)
-        maxPsize=psize;
-    }
-    std::cout << "Max P Size =" << maxPsize << std::endl;
+//    int maxPsize=-1;
+//    for (int p=0;p<Pmax;p++) {
+//     int psize = indice_p[p].size();
+//      if (psize>maxPsize)
+//        maxPsize=psize;
+//    }
+//    std::cout << "Max P Size =" << maxPsize << std::endl;
     
     for (int p=0;p<Pmax;p++) {
       int psize = indice_p[p].size();
-      if (p%20 == 0) 
-        std::cout << "p=" << p << "/" << Pmax << " , " << psize << std::endl;
-
+//      if (p%20 == 0) 
+//        std::cout << "p=" << p << "/" << Pmax << " , " << psize << std::endl;
+      MatrixXf sqrMatrix(psize,psize);
       int* ptr = &indice_p[p][0];
       Map<VectorXi> C(ptr,psize);
       MatrixXf vP(t,psize);
       slice(v,R,C,vP);		
-      MatrixXf sqrMatrix = ((vP.transpose()*vP*-2).colwise() + vP.colwise().squaredNorm().transpose()).rowwise() + vP.colwise().squaredNorm();
+      sqrMatrix = ((vP.transpose()*vP*-2).colwise() + vP.colwise().squaredNorm().transpose()).rowwise() + vP.colwise().squaredNorm();
       sqrDist.push_back( sqrMatrix.colwise().sum() );
       vP.resize(0,0);
       sqrMatrix.resize(0,0);
     }
 
-    std::cout << "++++ SQUARED DISTANCES" << std::endl;
 
     
     // Calculating the distance between auxiliary exemplar and the rest of the voxels
+    std::cout << "++++ AUXILIARY DISTANCES" << std::endl;
+    
     std::vector<float> e0sqrDist(Pmax);
     VectorXf e0 = VectorXf::Zero(t);
     e0(0) = 3;
 
     for (int p=0;p<Pmax;p++) {
       int psize = indice_p[p].size();
-      if (p%20 == 0) 
-        std::cout << "p=" << p << ", " << psize << std::endl;
+//      if (p%20 == 0) 
+//        std::cout << "p=" << p << ", " << psize << std::endl;
       VectorXf sqrArray(psize);
       int* ptr = &indice_p[p][0];
       Map<VectorXi> C(ptr,psize);
@@ -645,9 +660,10 @@ namespace bisIndividualizedParcellation {
     //			fprintf(stdout,"p=%d, pp1=%d, pp2=%d, sqrDist[p][pp1][pp2] = %f\n",p,pp1,pp2,sqrDist[p][pp1][pp2]);
     
     
-    std::cout << "++++ AUXILIARY DISTANCES" << std::endl;
 
     //  Calculating the exemplar within each parcel
+    std::cout << "++++ EXEMPLAR IDENTIFICATION" << std::endl;
+
     VectorXi Sopt(Pmax);
     VectorXi SoptN(Pmax);
     //double loss;
@@ -666,14 +682,15 @@ namespace bisIndividualizedParcellation {
       std::unordered_map<int,int>::const_iterator voxelN = ntoNvoxel.find (Sopt(p));
       if (voxelN != ntoNvoxel.end())
         SoptN(p) = voxelN->second;
+	std::cout << "p=" << SoptN(p) << std::endl;
     }
     
-    std::cout << "++++ EXEMPLAR IDENTIFICATION" << std::endl;
     
     //  for (int p=0; p<Pmax; p++)
     //	fprintf(stdout,"Sopt(%f) = %d, ", group->GetComponent(SoptN(p),0),SoptN(p));
     
     // Assigning each voxel to the closest exemplar using the priority queue algorithm
+    std::cout << "++++ FINAL STEP: ASSIGNING VOXELS TO EXEMPLARS" << std::endl;
     
     
     std::vector<float> label(n,-1);
@@ -794,7 +811,6 @@ namespace bisIndividualizedParcellation {
           break;
       }
 
-    std::cout << "++++ Finally ASSIGNING VOXELS TO EXEMPLARS" << std::endl;
     //int Voxel_indices[N];
     count = 0;
 

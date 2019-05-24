@@ -91,6 +91,7 @@ class individualizedParcellation(bis_basemodule.baseModule):
                 "sigmas": [c, c, c],
                 "inmm": True,
                 "radiusfactor": 1.5,
+		"fwhmax" : False,
                 "vtkboundary" : True,
             };
 
