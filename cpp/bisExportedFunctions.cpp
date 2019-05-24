@@ -105,6 +105,7 @@ unsigned char*  gaussianSmoothImageWASM(unsigned char* input,const char* jsonstr
       sigmas[2]=s;
     }
   int inmm=params->getBooleanValue("inmm");
+  int vtkboundary=params->getBooleanValue("vtkboundary",0);
   float radiusfactor=params->getFloatValue("radiusfactor",1.5);
 
   
@@ -115,7 +116,7 @@ unsigned char*  gaussianSmoothImageWASM(unsigned char* input,const char* jsonstr
   std::unique_ptr<bisSimpleImage<float> > out_image(new bisSimpleImage<float>("smooth_output_float"));
   out_image->copyStructure(in_image.get());
   float outsigmas[3];
-  bisImageAlgorithms::gaussianSmoothImage(in_image.get(),out_image.get(),sigmas,outsigmas,inmm,radiusfactor);
+  bisImageAlgorithms::gaussianSmoothImage(in_image.get(),out_image.get(),sigmas,outsigmas,inmm,radiusfactor,vtkboundary);
   if (debug)
     std::cout << "outsigmas=" << outsigmas[0] << "," << outsigmas[1] << "," << outsigmas[2] << std::endl;
   return out_image->releaseAndReturnRawArray();

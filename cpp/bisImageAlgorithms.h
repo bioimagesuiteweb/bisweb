@@ -101,10 +101,11 @@ namespace bisImageAlgorithms {
    * @param outsigmas the sigmas actually used (this is an output parameter)
    * @param inmm if 1 the input sigmas are in mm else in voxels
    * @param radiusfactor use to determine the size of the smoothing kernel
+   * @param vtkboundary if true use normalizing kernel to handle edge if not just tile (default)
    * @returns smoothed image
    */
   template<class T> static std::unique_ptr<bisSimpleImage<T> > gaussianSmoothImage(bisSimpleImage<T>* input,float sigmas[3],
-                                                                                   float outsigmas[3],int inmm=0,float radiusfactor=1.5);
+                                                                                   float outsigmas[3],int inmm=0,float radiusfactor=1.5,int vtkboundary=0);
 
 
   /** Gaussian smooth image storing in existing output
@@ -114,9 +115,10 @@ namespace bisImageAlgorithms {
    * @param outsigmas the sigmas actually used (this is an output parameter)
    * @param inmm if 1 the input sigmas are in mm else in voxels
    * @param radiusfactor use to determine the size of the smoothing kernel
+   * @param vtkboundary if true use normalizing kernel to handle edge if not just tile (default)
    */
   template<class T> static void gaussianSmoothImage(bisSimpleImage<T>* input,bisSimpleImage<T>* output,float sigmas[3],
-                                                    float outsigmas[3],int inmm=0,float radiusfactor=1.5);
+                                                    float outsigmas[3],int inmm=0,float radiusfactor=1.5,int vtkboundary=0);
 
   // ------------------------------------------------- Normalize Image ---------------------------------
   /** Compute image Gradient by gaussian gradient convolution -- this blurs the other directions in addition to computing 

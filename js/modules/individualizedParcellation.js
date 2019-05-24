@@ -150,6 +150,7 @@ class IndivParcellationModule extends BaseModule {
                     "sigmas": [c, c, c],
                     "inmm": true,
                     "radiusfactor": 1.5,
+                    "vtkboundary" : true,
                 };
                 try { 
                     fmri = await biswrap.gaussianSmoothImageWASM(fmri, smooth_paramobj, vals.debug);

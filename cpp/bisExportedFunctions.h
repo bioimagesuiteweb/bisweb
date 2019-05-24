@@ -199,7 +199,7 @@ extern "C" {
 
   /** Smooth image using \link bisImageAlgorithms::gaussianSmoothImage \endlink
    * @param input serialized input as unsigned char array 
-   * @param jsonstring the parameter string for the algorithm { "sigma" : 1.0, "inmm" :  true, "radiusfactor" : 1.5 },
+   * @param jsonstring the parameter string for the algorithm { "sigma" : 1.0, "inmm" :  true, "radiusfactor" : 1.5 , "vtkboundary": false},
    * @param debug if > 0 print debug messages
    * @returns a pointer to a serialized image
    */
