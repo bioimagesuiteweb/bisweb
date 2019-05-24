@@ -33,7 +33,7 @@ const BisWebLinearTransformation = require('bisweb_lineartransformation.js');
 class IndivParcellationModule extends BaseModule {
     constructor() {
         super();
-        this.name = 'computeGLM';
+        this.name = 'individualizedParcellation';
     }
 
     createDescription() {
@@ -64,7 +64,7 @@ class IndivParcellationModule extends BaseModule {
                     "priority": 1,
                     "advanced": false,
                     "gui": "slider",
-                    "type": "int",
+                    "type": "float",
                     "varname": "smooth",
                     "default" : 4,
                     "low" : 0,

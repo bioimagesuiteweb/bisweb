@@ -41,6 +41,7 @@ smoothImage
 thresholdImage
 defaceImage
 tfRecon
+individualizedParcellation
 bisserver
 regressionTests
 makechecksum
@@ -48,3 +49,4 @@ dicomconversion
 bidsconversion
 concatenateImages
 pipeline
+
