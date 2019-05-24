@@ -26,6 +26,12 @@
 #include "math.h"
 #include <vector>
 
+/** @file bisIndividualizedParcellation.h
+
+    Implements the invidualized parcellation method ...
+
+*/
+
 
 namespace bisIndividualizedParcellation {
   int runIndividualizedParcellation(bisSimpleImage<float>* FMRIImage, bisSimpleImage<short>* groupparcelllation, bisSimpleImage<short>* indiv,
@@ -40,10 +46,6 @@ namespace bisIndividualizedParcellation {
 
 
 extern "C" {
-
-  /** @file bisExportedFunctions3.h
-      Functions exported to JS and Python 
-  */
 
     /** Individualizes a group parcellation using a new 4D fmri Image
    * @param input serialized 4D input file as unsigned char array 
