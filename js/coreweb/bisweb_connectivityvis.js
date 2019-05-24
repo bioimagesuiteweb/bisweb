@@ -10,21 +10,23 @@ console.log(saveSvgAsPng);
 
 let internal=null;
 let displayDialog=null;
-let globalSVG=null;
+let globalSVGId=null;
 
 // -----------------------------------------------------
 // Save as PNG
 // -----------------------------------------------------
 var saveAsPNG = function() {
 
-    if (globalSVG===null) {
+    const globalw=document.getElementById(globalSVGId) || null;
+    
+    if (globalw===null) {
         bootbox.alert('Please create a plot before attempting to save it');
         return;
     }
 
-    console.log('Global ',globalSVG,JSON.stringify(globalSVG));
+    console.log(globalw);
     
-    saveSvgAsPng.saveSvgAsPng(globalSVG, "plot.png");
+    saveSvgAsPng.saveSvgAsPng(globalw, "plot.png");
 };
 
 // -----------------------------------------------------
@@ -33,13 +35,15 @@ var saveAsPNG = function() {
 //
 // -----------------------------------------------------
 
-var drawChords=function(parc,pairs,scolor,context,normallength,thickness,dim) {
+var createChordsSVG=function(parc,pairs,scolor,context,normallength,thickness,dim) {
     
     if (parc===null || pairs===null || context===null) {
         console.log("Bad inputs in drawLines");
         return 0;
     }
 
+    globalSVGId=webutil.getuniqueid();
+    
     let width = dim[0] - 50,
         height = dim[1] - 150;
     let svgWidth = width,
@@ -66,10 +70,10 @@ var drawChords=function(parc,pairs,scolor,context,normallength,thickness,dim) {
         .attr("width", svgWidth)
         .attr("height", svgHeight)
         .append("g")
-        .attr("id", "circle")
+        .attr("id", globalSVGId)
         .attr("transform", "translate(" + svgWidth / 2 + "," + svgHeight / 2 + ")");
     
-    svg.append("circle")
+    svg.append(globalSVGId)
         .attr("r", outerRadius);
 
     //var connectome = [];
@@ -279,26 +283,26 @@ var drawchords = function(out_internal) {
     
     let pos=internal.conndata.createLinePairs(0,internal.laststate.matrixthreshold);
     // This call returns svg
-    let svg=drawChords(internal.parcellation,
+    let svg=createChordsSVG(internal.parcellation,
                        pos,
                        internal.laststate.poscolor,
                        internal.context,
                        internal.laststate.length*internal.parcellation.scalefactor,
                        internal.laststate.thickness,dim);
 
-    globalSVG=svg;
     displayDialog.getWidget().find('.modal-body').append(svg);
     displayDialog.show();
 };
 
 //didn't remove the unused parameters because they might be used later? 
 // -Zach
-var plotCorrMap=function(parentDiv,
+var createCorrMapSVG=function(parentDiv,
                          svgWidth,svgHeight,
                          id1,id2,parc,pairs,scolor,context,normallength,thickness) {
 
     console.log('Thickness=',thickness);
     const rois=internal.parcellation.rois;
+    globalSVGId=webutil.getuniqueid();
     
     let nets = new Set();
     
@@ -380,6 +384,7 @@ var plotCorrMap=function(parentDiv,
         let svg = d3.select(parentDiv).append("svg")
             .attr("width", width + margin.left + margin.right)
             .attr("height", height + margin.top + margin.bottom)
+            .attr("id", globalSVGId)
             .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
         
@@ -563,27 +568,16 @@ var corrmap = function(out_internal) {
     
     svgModal.css({'background-color':"#ffffff"});
     
-    let svg = plotCorrMap(svgModal[0],
-                          dim[0],dim[1],
-                          id1,id2,
-                          internal.parcellation,
-                          pos,
-                          internal.laststate.poscolor,
-                          internal.context,
-                          internal.laststate.length*internal.parcellation.scalefactor,
-                          internal.laststate.thickness);
+    let svg = createCorrMapSVG(svgModal[0],
+                               dim[0],dim[1],
+                               id1,id2,
+                               internal.parcellation,
+                               pos,
+                               internal.laststate.poscolor,
+                               internal.context,
+                               internal.laststate.length*internal.parcellation.scalefactor,
+                               internal.laststate.thickness);
     
-    //let width = dim[0] - 50,
-    //        height = dim[1] - 50;
-    
-    
-    //outerRadius = Math.min(svgWidth, svgHeight) / 2 - 10;
-    //innerRadius = outerRadius - 24;
-    
-    //console.log('width', width, 'height', height, 'svg width', svgWidth, 'svg height', svgHeight);
-    //    var formatPercent = d3.format(".1%");
-
-    globalSVG=svg;
     displayDialog.getWidget().find('.modal-body').append(svg);
     displayDialog.show();
 };
