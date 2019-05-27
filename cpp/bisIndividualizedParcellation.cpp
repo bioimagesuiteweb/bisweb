@@ -312,7 +312,7 @@ namespace bisIndividualizedParcellation {
     
     std::vector<double> label(n,-1);
     
-    // minDistIndexR and minDistIndexL need to be double, otherwise the result differs from MATLAB. It is perhaps because of the SetComponent() command.
+    // minDistIndexR and inDistIndexL need to be double, otherwise the result differs from MATLAB. It is perhaps because of the SetComponent() command.
     
     MatrixXd vSopt(t,Pmax);
     slice(v,R,Sopt,vSopt);
@@ -511,7 +511,7 @@ namespace bisIndividualizedParcellation {
       }
     }
     
-    MatrixXf X(t,count);
+    MatrixXd X(t,count);
     count=0;
     //double position[3];
 
@@ -528,7 +528,7 @@ namespace bisIndividualizedParcellation {
     
     delete FMRIImage;
   
-    VectorXf parcel(count);
+    VectorXd parcel(count);
     std::unordered_map<int,int> ntoNvoxel;
     std::unordered_map<int,int> Ntonvoxel;
     count=0;
@@ -545,21 +545,25 @@ namespace bisIndividualizedParcellation {
     
     std::cout << "++++ \t number of non-zero voxels n = " << n << std::endl;
     
-    VectorXf mean_subtract(t);
+    VectorXd mean_subtract(t);
     mean_subtract = (X.rowwise().sum())/double(n);
+	
     
 
     // Normalizing data points to 0 mean
     //double newValue;
-    MatrixXf V = MatrixXf(t,n);
-    V = X.colwise()-mean_subtract; // mean of V is all 0 [VERIFIED]
-    X.resize(0,0);
+//    MatrixXd V = MatrixXd(t,n);
+//    V = X.colwise()-mean_subtract; // mean of V is all 0 [VERIFIED]
+//    X.resize(0,0);
+
     
+    X = X.colwise()-mean_subtract; // mean of V is all 0 [VERIFIED]
     
     // Calculating the l2-norm
-    VectorXf twoNorm(n);
-    twoNorm =V.colwise().norm();
-    VectorXf inverse_twoNorm(n);
+    VectorXd twoNorm(n);
+//    twoNorm = V.colwise().norm();
+    twoNorm = X.colwise().norm();
+    VectorXd inverse_twoNorm(n);
     inverse_twoNorm = twoNorm.array().inverse();
     
     ////////////////////////////////////////////////  1- Dividing with the maximum norm 
@@ -572,10 +576,12 @@ namespace bisIndividualizedParcellation {
     ////////////////////////////////////////////////  2- Normalizing to the unit norm (all vectors norm = 1)
     std::cout << "++++ NORMALIZATION ONTO UNIT SPHERE (ALL NORM=1)" << std::endl;
     
-    MatrixXf v = V.array().rowwise()* inverse_twoNorm.transpose().array();
-    twoNorm = v.colwise().norm(); // twoNorm is all 1 [VERIFIED]
+//    MatrixXd v = V.array().rowwise()* inverse_twoNorm.transpose().array();
+//    MatrixXd v = X.array().rowwise()* inverse_twoNorm.transpose().array();
+//    twoNorm = v.colwise().norm(); // twoNorm is all 1 [VERIFIED]
+      X = X.array().rowwise()* inverse_twoNorm.transpose().array();
+//    V.resize(0,0);
 
-    V.resize(0,0);
     
     //  VectorXf test_ii(t);
     //  test_ii = (V.rowwise().sum())/double(n);
@@ -602,10 +608,9 @@ namespace bisIndividualizedParcellation {
     // Calculating the squared distance matrix between voxels within each parcel
     std::cout << "++++ SQUARED DISTANCES" << std::endl;
     
-    std::vector<VectorXf> sqrDist;
-    MatrixXf D;
+    std::vector<VectorXd> sqrDist;
+//    MatrixXd D;
     VectorXi R(t);
-    
     colon(0,1,t-1,R);
 
 //    int maxPsize=-1;
@@ -618,13 +623,13 @@ namespace bisIndividualizedParcellation {
     
     for (int p=0;p<Pmax;p++) {
       int psize = indice_p[p].size();
-//      if (p%20 == 0) 
-//        std::cout << "p=" << p << "/" << Pmax << " , " << psize << std::endl;
-      MatrixXf sqrMatrix(psize,psize);
+      if (p%20 == 0) 
+        std::cout << "p=" << p << "/" << Pmax << " , " << psize << std::endl;
+      MatrixXd sqrMatrix(psize,psize);
       int* ptr = &indice_p[p][0];
       Map<VectorXi> C(ptr,psize);
-      MatrixXf vP(t,psize);
-      slice(v,R,C,vP);		
+      MatrixXd vP(t,psize);
+      slice(X,R,C,vP);		
       sqrMatrix = ((vP.transpose()*vP*-2).colwise() + vP.colwise().squaredNorm().transpose()).rowwise() + vP.colwise().squaredNorm();
       sqrDist.push_back( sqrMatrix.colwise().sum() );
       vP.resize(0,0);
@@ -636,23 +641,23 @@ namespace bisIndividualizedParcellation {
     // Calculating the distance between auxiliary exemplar and the rest of the voxels
     std::cout << "++++ AUXILIARY DISTANCES" << std::endl;
     
-    std::vector<float> e0sqrDist(Pmax);
-    VectorXf e0 = VectorXf::Zero(t);
+    std::vector<double> e0sqrDist(Pmax);
+    VectorXd e0 = VectorXd::Zero(t);
     e0(0) = 3;
 
     for (int p=0;p<Pmax;p++) {
       int psize = indice_p[p].size();
 //      if (p%20 == 0) 
 //        std::cout << "p=" << p << ", " << psize << std::endl;
-      VectorXf sqrArray(psize);
+      VectorXd sqrArray(psize);
       int* ptr = &indice_p[p][0];
       Map<VectorXi> C(ptr,psize);
-      MatrixXf vP(t,psize);
-      slice(v,R,C,vP);		
+      MatrixXd vP(t,psize);
+      slice(X,R,C,vP);		
       sqrArray = ((vP.transpose()*e0*-2).colwise() + vP.colwise().squaredNorm().transpose()).rowwise() + e0.colwise().squaredNorm();	
       e0sqrDist[p]=sqrArray.sum();
-      
-      
+      vP.resize(0,0);
+      sqrArray.resize(0);
       //	delete [] sqrArray;
     }
     //	for (int pp1=0;pp1<indice_p[p].size();pp1++)
@@ -669,20 +674,22 @@ namespace bisIndividualizedParcellation {
     //double loss;
     for (int p=0;p<Pmax;p++) {
       int psize = indice_p[p].size();
-      float sumd0 = e0sqrDist[p];//.sum();
-      MatrixXf::Index maxFindex;
-      VectorXf sumD(psize);	
-      sumD = sqrDist[p];//.colwise().sum();
 
-      
-      VectorXf pFunc(psize);
-      pFunc = sumd0 - sumD.array();  // we should divide by n but does not matter as it does not change the maximum!
+//      double sumd0 = e0sqrDist[p];//.sum();
+      MatrixXd::Index maxFindex;
+//      VectorXd sumD(psize);	
+//      sumD = sqrDist[p];//.colwise().sum();
+
+      VectorXd pFunc(psize);
+//      pFunc = sumd0 - sumD.array();  // we should divide by n but does not matter as it does not change the maximum!
+      pFunc = e0sqrDist[p] - sqrDist[p].array();
       pFunc.maxCoeff(&maxFindex);
       Sopt(p) = indice_p[p][maxFindex];
       std::unordered_map<int,int>::const_iterator voxelN = ntoNvoxel.find (Sopt(p));
       if (voxelN != ntoNvoxel.end())
         SoptN(p) = voxelN->second;
-	std::cout << "p=" << SoptN(p) << std::endl;
+//	std::cout << "p=" << SoptN(p) << std::endl;
+      
     }
     
     
@@ -697,13 +704,20 @@ namespace bisIndividualizedParcellation {
     
     // minDistIndexR and minDistIndexL need to be double, otherwise the result differs from MATLAB. It is perhaps because of the SetComponent() command.
     
+    MatrixXf Xf = X.cast<float>();
+    X.resize(0,0); 
     MatrixXf vSopt(t,Pmax);
-    slice(v,R,Sopt,vSopt);
+    std::cout << "++++ \t TEST1" << std::endl;
+    slice(Xf,R,Sopt,vSopt);
+    std::cout << "++++ \t TEST2" << std::endl;
     
-    MatrixXf distvSopt(n,Pmax);
-    
-    distvSopt = ((v.transpose()*vSopt*-2).colwise() + v.colwise().squaredNorm().transpose()).rowwise() + vSopt.colwise().squaredNorm();	
-    
+//    MatrixXf distvSopt(n,Pmax);
+
+//    distvSopt = ((X.transpose()*vSopt*-2).colwise() + X.colwise().squaredNorm().transpose()).rowwise() + vSopt.colwise().squaredNorm();
+    Xf = ((Xf.transpose()*vSopt*-2).colwise() + Xf.colwise().squaredNorm().transpose()).rowwise() + vSopt.colwise().squaredNorm();
+//    X = ((X.transpose()*vSopt*-2).colwise() + X.colwise().squaredNorm().transpose()).rowwise() + vSopt.colwise().squaredNorm();	
+    std::cout << "++++ \t TEST4" << std::endl;
+
     
     const int neighbors = 6;
     int incr[neighbors]; ComputeMRFIncrements(dim,incr);
@@ -733,7 +747,9 @@ namespace bisIndividualizedParcellation {
                 if (voxeln != Ntonvoxel.end())
                   {
                     int currVox = voxeln->second; 
-                    exemplar_min_heaps[p].push(std::make_pair(distvSopt(currVox,p),currVox));
+//                    exemplar_min_heaps[p].push(std::make_pair(distvSopt(currVox,p),currVox));
+                    exemplar_min_heaps[p].push(std::make_pair(Xf(currVox,p),currVox));
+
                   }
               }
           }  
@@ -786,7 +802,9 @@ namespace bisIndividualizedParcellation {
                               {
 				int currVox = voxeln->second;
 				if (VISITED[currVox] == 0){
-                                  exemplar_min_heaps[min_idx].push(std::make_pair(distvSopt(currVox,min_idx),currVox));
+//                                  exemplar_min_heaps[min_idx].push(std::make_pair(distvSopt(currVox,min_idx),currVox));
+                                  exemplar_min_heaps[min_idx].push(std::make_pair(Xf(currVox,min_idx),currVox));
+
 				}
                               }
                           }
