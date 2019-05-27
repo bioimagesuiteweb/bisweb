@@ -75,7 +75,6 @@ else:
                                               "sigmas": [c, c, c],
                                               "inmm": True,
                                               "radiusfactor": 1.5,
-					      "fwhmax" : False,
 					      "vtkboundary" : True,
                                                }, debug=2);
         
@@ -86,8 +85,8 @@ out_img=libbiswasm.individualizedParcellationWASM(fmri_smoothed,group_resliced,p
 out_img.save(output);
 print('++++\n Output image is saved in ',output);
 
-#output_sm = output.replace('.nii','') + '_sm.nii'
-#fmri_smoothed.save(output_sm);
+output_sm = output.replace('.nii','') + '_sm.nii'
+fmri_smoothed.save(output_sm);
 
 sys.exit();
 
