@@ -776,7 +776,7 @@ var createlines = function() {
     let degreethreshold=Math.round(globalParams.internal.parameters.degreethreshold);
     let matrixthreshold=globalParams.internal.parameters.matrixthreshold;
     let filter=2;
-    
+   
 
     let state = { mode: mode,
                   guimode : globalParams.internal.parameters.mode,

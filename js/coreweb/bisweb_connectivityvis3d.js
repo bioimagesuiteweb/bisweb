@@ -192,8 +192,7 @@ var draw3dcrosshairs = function () {
 // ---------------------------------------------------------------------------------------------
 
 var drawlines3d=function(state,doNotUpdateFlagMatrix) {     
-
-    
+   
 
     doNotUpdateFlagMatrix=doNotUpdateFlagMatrix || false;
 
