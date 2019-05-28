@@ -235,7 +235,6 @@ class FileTreePipeline extends HTMLElement {
             //set pipeline modal to update its modules when it's hidden and shown, so long as no settings are saved so far.
             pipelineModal.dialog.on('show.bs.modal', () => {
                 if (!this.savedParameters) {
-                    console.log('mod', this.modules);
                     for (let obj of this.modules) {
                         obj.module.createOrUpdateGUI();
                     }
@@ -267,33 +266,36 @@ class FileTreePipeline extends HTMLElement {
         return listItem;
     }
 
-    //TODO: Fix bug with params spacing
     /**
      * Opens a small bootstrap modal to edit the parameters of a module in the currently saved pipeline. 
      * 
      */
     openModuleEditingModal(item) {
-        let modal = bis_webutil.createmodal(`Change parameters for ${name}`);
+        let name = $(item).html();
+        let modal = bis_webutil.createmodal(`Change parameters for ${name}`, 'modal-sm');
 
         //generate custom element gui with current params 
         //note that index in visual list will match index in internal list, so we can determine which internal list item to use by finding this element in the visual list
         let listItems = $('#bisweb-panel-pipeline').find('.bisweb-pipeline-list').children();
         let index = null;
 
-        console.log('item id', $(item).attr('id'));
         for (let i = 0; i < listItems.length; i++) {
-            console.log('list items id', listItems[i], $(listItems[i]).attr('id'));
             if ($(listItems[i]).attr('id') === $(item).attr('id')) { index = i; i = listItems.length; }
         }
 
         let baseMod = moduleIndex.getModule(this.modules[index].name);
-
-        let customModule = bisweb_custommodule.createCustom(null, this.algocontroller, baseMod, { 'numViewers' : 0, 'dual' : false, 'paramsMargin' : '5px', 'buttonsMargin' : '0px' });
-        customModule.createOrUpdateGUI();
-        customModule.updateParams(this.savedParameters[index]);
-        customModule.createOrUpdateGUI();
-
-        modal.body.append(customModule.panel.widget);
+        
+        //modal has to be displayed before width can be read.
+        modal.dialog.on('shown.bs.modal', () => {
+            //modal body padding is 20px by default
+            let width = $(modal.body).outerWidth() - 40;
+            console.log('width', width);
+            let customModule = bisweb_custommodule.createCustom(null, this.algocontroller, baseMod, { 'numViewers' : 0, 'dual' : false, 'paramsMargin' : '0px', 'buttonsMargin' : '0px', 'width' : width });
+            modal.body.append(customModule.panel.widget);
+            customModule.createOrUpdateGUI( {'width' : width});
+            customModule.updateParams(this.savedParameters[index]);
+        });
+        
         modal.dialog.modal('show');
     }
 
