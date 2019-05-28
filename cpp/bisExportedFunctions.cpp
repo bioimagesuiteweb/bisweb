@@ -113,15 +113,10 @@ unsigned char*  gaussianSmoothImageWASM(unsigned char* input,const char* jsonstr
   if (!in_image->linkIntoPointer(input))
     return 0;
 
-  std::cout << "In Smooth Image 0" << std::endl;
   std::unique_ptr<bisSimpleImage<float> > out_image(new bisSimpleImage<float>("smooth_output_float"));
-  std::cout << "In Smooth Image 0.2" << std::endl;
   out_image->copyStructure(in_image.get());
-  std::cout << "In Smooth Image 0.4" << std::endl;
   float outsigmas[3];
-  std::cout << "In Smooth Image 1" << std::endl;
   bisImageAlgorithms::gaussianSmoothImage(in_image.get(),out_image.get(),sigmas,outsigmas,inmm,radiusfactor,vtkboundary);
-  std::cout << "In Smooth Image 2" << std::endl;
   if (debug)
     std::cout << "outsigmas=" << outsigmas[0] << "," << outsigmas[1] << "," << outsigmas[2] << std::endl;
   return out_image->releaseAndReturnRawArray();
