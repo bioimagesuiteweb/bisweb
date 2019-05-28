@@ -322,7 +322,6 @@ let parseDescriptionAndCreateGUI = function(frame, buttonFrame,description, numV
     let gui = new dat.GUI( { autoPlace: false } );
     webutil.removeallchildren(frame);
 
-    console.log('gui width', gui.width, frame);
     if (opts.width) { gui.width = opts.width; }
 
     let dict= { };
