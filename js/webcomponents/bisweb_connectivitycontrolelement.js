@@ -1192,7 +1192,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                                tooltip : "Click this to draw a chord diagram from the lines on screen",
                                parent : bbar3,
                                callback : () => {
-                                   console.log('Internal=',internal);
+                                   //                                   console.log('Internal=',internal);
                                    connectvis.drawchords();
                                },
                              });
@@ -1205,7 +1205,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                                tooltip : "Click this to draw a chord diagram from the lines on screen",
                                parent : bbar3,
                                callback : () => {
-                                   console.log('Internal=',internal);
+                                   //console.log('Internal=',internal);
                                    connectvis.corrmap();
                                },
                              });
