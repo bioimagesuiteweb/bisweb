@@ -64,7 +64,6 @@ const gui_Networks_ArrayShort = [
 ];
 
 // Critical flag for now, eventually make it an option
-let useYaleNetworks=true; // false = WasHU
 
 
 
@@ -84,7 +83,7 @@ const createNetworkNames = function(useyale=true,internal=null) {
     }
     
     internal.gui_Networks=gui_Networks_Array[index];
-        let keys=Object.keys(internal.gui_Networks);
+    let keys=Object.keys(internal.gui_Networks);
     internal.gui_Networks_Names=[];
     internal.gui_Networks_ShortNames=[];
     for (let i=0;i<keys.length;i++) { 
@@ -93,9 +92,9 @@ const createNetworkNames = function(useyale=true,internal=null) {
     }
     console.log("Network Names created",internal.gui_Networks_Names,internal.gui_Networks_ShortNames);
     
-    internal.parameters.lobe=gui_Lobes[19];
+    internal.parameters.lobe=gui_Lobes[1];
     internal.parameters.mode=gui_Modes[1];
-    internal.parameters.network=internal.gui_Networks[10];
+    internal.parameters.network=internal.gui_Networks[1];
 };
 
 
@@ -196,7 +195,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
     connectvis.initialize(internal);
     connectvis3d.initialize(internal);
-    createNetworkNames(useYaleNetworks,internal);
+    //    createNetworkNames(useYaleNetworks,internal);
     
     // -------------------------------------------------------------------------
     // Undo Stuff
@@ -234,7 +233,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             elem=internal.undostack.getRedo();
         else
             elem=internal.undostack.getUndo();
-
+        
         if (elem === null) 
             return;
         
@@ -490,7 +489,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 let y0_0=internal.parcellation.box[1]-0.5*(internal.parcellation.box[1]-fnsize2);
                 internal.overlaycontext.fillText('Using node definitions from '+internal.parcellation.description+' with '+(internal.parcellation.rois.length)+' nodes.',
                                                  midx,y0_0);
-                if (useYaleNetworks)
+                if (internal.networkAttributeIndex===4)
                     internal.overlaycontext.fillText('Using Yale network definitions from Shen at al 2017',midx,y0_0+20);
                 else
                     internal.overlaycontext.fillText('Using Network definitions from Power at al. Neuron 2011.',midx,y0_0+20);
@@ -1094,7 +1093,9 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
     // actual GUI creation when main class is ready
     // The parent element is internal.parentDomElement
-    var onDemandCreateGUI = function () {
+    var onDemandCreateGUI = function (useYale=true) {
+
+        createNetworkNames(useYale,internal);
         
         if (internal.parentDomElement===null)
             return;
@@ -1241,7 +1242,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 return;
             
             internal.subviewers=subviewers;
-            onDemandCreateGUI();
+            onDemandCreateGUI(true);
             const imagepath=webutil.getWebPageImagePath();
             loadparcellation(`${imagepath}/shen.json`);
             
@@ -1259,7 +1260,18 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             },10);
         },
 
+        // recreate gui
+        setNetworksToYale(flag=true) {
 
+            if (flag && internal.networkAttributeIndex===4)
+                return;
+            if (!flag && internal.networkAttributeIndex===2)
+                return;
+            onDemandCreateGUI(flag);
+            setnode(Math.round(internal.parameters.node-1));
+            this.handleresize();
+        },
+        
         // Loads a parcellation from fname (json or txt)
         // @memberof BisGUIConnectivityControl.prototype
         loadparcellationfile : function(fname) {
@@ -1768,7 +1780,10 @@ class ConnectivityControlElement extends HTMLElement {
     getRenderMode() {
         return this.innercontrol.getRenderMode();
     }
-    
+
+    setNetworksToYale(flag=true) {
+        return this.innercontrol.setNetworksToYale(flag);
+    }
 }
 
 

@@ -7,6 +7,14 @@ const saveSvgAsPng=require('save-svg-as-png');
 const filesaver = require('FileSaver');
 
 // -------------------------------
+// Todo ---
+// Which lines pos, neg, both ??
+// Need summary by lobe in addition to network?
+// nets and matrix fix
+// -------------------------------
+
+
+// -------------------------------
 // Global State
 // -------------------------------
 
@@ -19,9 +27,36 @@ const globalParams = {
     mode : 'chord'
 };
 
+const network_colors=[
+    "#9ACD32",
+    "#377DB8",
+    "#F5DEB3",
+    "#EE82EE",
+    "#40E0D0",
+    "#FF6347",
+    "#D8BFD8",
+    "#D2B48C",
+    "#4682B4",
+    "#00FF7F",
+    "#FFCC22",
+];
 
 var initialize=function(internal) {
     globalParams.internal=internal;
+};
+
+// Fix gaps in WSHU network indices
+var fixNetworkIndex=function(n) {
+
+    // Yale networks are OK
+    if (globalParams.internal.networkAttributeIndex===4)
+        return n;
+    
+    if (n<=1)
+        return n;
+    if (n<=5)
+        return n-1;
+    return n-2;
 };
 
 
@@ -152,14 +187,96 @@ var saveAsPNG = function() {
 };
 
 // -----------------------------------------------------
+// Create Nets and Matrix
+// -----------------------------------------------------
+var createNets=function() {
+
+
+    let nets = new Set();
+    const rois=globalParams.internal.parcellation.rois;
+    console.log('Creating nets attr=',globalParams.internal.networkAttributeIndex);
+
+    for (let i=0;i<rois.length;i++) {
+        let n=rois[i].attr[globalParams.internal.networkAttributeIndex];
+        nets.add(fixNetworkIndex(n));
+    }
+
+    return nets;
+};
+
+var createMatrix=function(nets,pairs,symm=false) {
+
+    const parc=globalParams.internal.parcellation;
+    const rois=globalParams.internal.parcellation.rois;
+    
+    let matrix =  new Array(nets.size);
+    for(let i = 0; i < nets.size; i++){
+        matrix[i] = new Array(nets.size);
+        for(let j = 0; j < nets.size; j++){
+            matrix[i][j]=0; 
+        }
+    }
+    let n=pairs.length;
+    
+    for (let index=0;index<n;index++) {
+        let a_node=pairs[index][0];
+        let b_node=pairs[index][1];
+        
+        let node=Math.floor(parc.indexmap[a_node]);
+        let othernode=Math.floor(parc.indexmap[b_node]);
+
+        let network1=fixNetworkIndex(rois[node].attr[globalParams.internal.networkAttributeIndex]);
+        let network2=fixNetworkIndex(rois[othernode].attr[globalParams.internal.networkAttributeIndex]);
+
+        matrix[network1-1][network2-1]+=1;
+        if (symm)
+            matrix[network2-1][network1-1]+=1;
+    }
+
+    if (symm) {
+        for(let i = 0; i < nets.size; i++) {
+            for(let j = 0; j < nets.size; j++){
+                if(j>i)
+                    matrix[i][j]=0.01; 
+            }
+        }
+    }
+    
+    return matrix;
+};
+
+
+var createLinePairsFromLastState=function() {
+
+    let lset=[];
+    let linestodraw =globalParams.internal.laststate.linestodraw;
+
+    if (linestodraw == globalParams.internal.gui_Lines[0] ||
+        linestodraw == globalParams.internal.gui_Lines[2] ) {
+        lset.push(globalParams.internal.conndata.createLinePairs(0,globalParams.internal.laststate.matrixthreshold));
+
+    }
+    if (linestodraw == globalParams.internal.gui_Lines[1] ||
+        linestodraw == globalParams.internal.gui_Lines[2] ) {
+        lset.push(globalParams.internal.conndata.createLinePairs(1,globalParams.internal.laststate.matrixthreshold));
+
+    }
+
+    if (lset.length<2)
+        return lset[0];
+
+    return lset[0].concat(lset[1]);
+};
+
+// -----------------------------------------------------
 //
 // Javid's added code
 //
 // -----------------------------------------------------
 
-var createChordsSVG=function(parentDiv,parc,pairs,scolor,context,normallength,thickness,dim) {
+var createChordsSVG=function(parentDiv,parc,pairs,dim) {
     
-    if (parc===null || pairs===null || context===null) {
+    if (parc===null || pairs===null ) {
         console.log("Bad inputs in createChordSVG");
         return 0;
     }
@@ -203,58 +320,16 @@ var createChordsSVG=function(parentDiv,parc,pairs,scolor,context,normallength,th
     //var matrix = [];
     //        var nets = new Set();
 
-    const rois=globalParams.internal.parcellation.rois;
-    //let data=[];
-    let nets = new Set();
-    for (let i=0;i<rois.length;i++) {
-        let n=rois[i].attr[globalParams.internal.networkAttributeIndex];
-        nets.add(n);
-    }
-    //    console.log('net size=',nets.size);
-    
-    let matrix =  new Array(nets.size);
-    for(let i = 0; i < nets.size; i++){
-        matrix[i] = new Array(nets.size);
-        for(let j = 0; j < nets.size; j++){
-            matrix[i][j]=0; 
-        }
-    }
-    let n=pairs.length;
-
-    //    console.log('Node 238=',JSON.stringify(rois[238]), 'Pairs=',n);
-    
-    for (let index=0;index<n;index++) {
-        let a_node=pairs[index][0];
-        let b_node=pairs[index][1];
-        
-        let node=Math.floor(parc.indexmap[a_node]);
-        let othernode=Math.floor(parc.indexmap[b_node]);
-
-        let network1=rois[node].attr[globalParams.internal.networkAttributeIndex];
-        let network2=rois[othernode].attr[globalParams.internal.networkAttributeIndex];
-
-        matrix[network1-1][network2-1]+=1;
-    }
-    // console.log('here',matrix);
+    const nets=createNets();
+    const matrix=createMatrix(nets,pairs);
     
     let network_labels= [];
-    let n_colors=[
-        "#9ACD32",
-        "#377DB8",
-        "#F5DEB3",
-        "#EE82EE",
-        "#40E0D0",
-        "#FF6347",
-        "#D8BFD8",
-        "#D2B48C",
-        "#4682B4",
-        "#00FF7F",
-    ];
+    
 
     for (let i=0;i<globalParams.internal.gui_Networks_Names.length;i++) {
         network_labels.push({
             "name" : globalParams.internal.gui_Networks_Names[i],
-            "color": n_colors[i]
+            "color": network_colors[i],
         });
     }
 
@@ -368,6 +443,10 @@ var createDisplayDialog=function(name,height=-1,width=-1) {
     if (globalParams.displayDialog) {
         destroyDisplayDialog();
     }
+
+    let linestodraw =globalParams.internal.laststate.linestodraw;
+    name+=' ( mode='+linestodraw+')';
+    
     globalParams.displayDialog = webutil.createdialog(name, dim[0], dim[1], 0, 0, 50);
     globalParams.displayDialog.getContainingFrame().css( { 'z-index' : 5000 });
     globalParams.displayDialog.setCloseCallback( () => { destroyDisplayDialog(); });
@@ -398,8 +477,8 @@ var drawchords = function() {
         name='Chords for '+globalParams.internal.laststate.guimode;
     }
     let dim=createDisplayDialog(name);
-    
-    let pos=globalParams.internal.conndata.createLinePairs(0,globalParams.internal.laststate.matrixthreshold);
+
+    let linePairs=createLinePairsFromLastState();
     let svgModal=globalParams.displayDialog.getWidgetBase();
 
     globalParams.mode='chord';
@@ -407,11 +486,8 @@ var drawchords = function() {
     // This call returns svg
     createChordsSVG(svgModal,
                     globalParams.internal.parcellation,
-                    pos,
-                    globalParams.internal.laststate.poscolor,
-                    globalParams.internal.context,
-                    globalParams.internal.laststate.length*globalParams.internal.parcellation.scalefactor,
-                    globalParams.internal.laststate.thickness,dim);
+                    linePairs,
+                    dim);
 
     globalParams.displayDialog.show();
 };
@@ -420,50 +496,14 @@ var drawchords = function() {
 // -Zach
 var createCorrMapSVG=function(parentDiv,
                               svgWidth,svgHeight,
-                              id1,id2,parc,pairs,scolor,context,normallength,thickness) {
+                              id1,id2,parc,pairs) {
 
-    console.log('Thickness=',thickness);
-    const rois=globalParams.internal.parcellation.rois;
+
     globalParams.Id=webutil.getuniqueid();
     globalParams.Id2=webutil.getuniqueid();
     
-    let nets = new Set();
-    
-    for (let i=0;i<rois.length;i++) {
-        let n=rois[i].attr[globalParams.internal.networkAttributeIndex];
-        nets.add(n);
-    }
-
-    let matrix =  new Array(nets.size);
-    for(let i = 0; i < nets.size; i++){
-        matrix[i] = new Array(nets.size);
-        for(let j = 0; j < nets.size; j++){
-            matrix[i][j]=0; 
-        }
-    }
-
-    let n=pairs.length;
-    for (let index=0;index<n;index++) {
-        let a_node=pairs[index][0];
-        let b_node=pairs[index][1];
-        
-        let node=Math.floor(parc.indexmap[a_node]);
-        let othernode=Math.floor(parc.indexmap[b_node]);
-        
-        let network1=rois[node].attr[globalParams.internal.networkAttributeIndex];
-        let network2=rois[othernode].attr[globalParams.internal.networkAttributeIndex];
-        
-        matrix[network1-1][network2-1]+=1;
-        matrix[network2-1][network1-1]+=1;
-    }
-    
-    for(let i = 0; i < nets.size; i++) {
-        for(let j = 0; j < nets.size; j++){
-            if(j>i)
-                matrix[i][j]=0.01; 
-        }
-    }
-    let correlationMatrix = matrix; 
+    const nets=createNets();
+    let correlationMatrix=createMatrix(nets,pairs,true);
 
     let labels=globalParams.internal.gui_Networks_ShortNames;
 
@@ -678,9 +718,7 @@ var corrmap = function() {
 
 
     let svgModal=globalParams.displayDialog.getWidgetBase();
-    //    console.log('Svg Modal=',svgModal);
-    let pos = globalParams.internal.conndata.createLinePairs(0,globalParams.internal.laststate.matrixthreshold);
-    
+    let linePairs=createLinePairsFromLastState();
     let id1=webutil.getuniqueid();
     let id2=webutil.getuniqueid();
     
@@ -697,11 +735,8 @@ var corrmap = function() {
                      dim[0],dim[1],
                      id1,id2,
                      globalParams.internal.parcellation,
-                     pos,
-                     globalParams.internal.laststate.poscolor,
-                     globalParams.internal.context,
-                     globalParams.internal.laststate.length*globalParams.internal.parcellation.scalefactor,
-                     globalParams.internal.laststate.thickness);
+                     linePairs);
+
     
     globalParams.displayDialog.show();
 };
@@ -805,7 +840,6 @@ var drawlines=function(state) {
         let pos=globalParams.internal.conndata.createLinePairs(0,state.matrixthreshold);
         //console.log('\n\n +++ Created '+pos.length+' positive linepairs\n'+JSON.stringify(pos));
         total+=pos.length;
-        globalParams.internal.laststate = state;
         globalParams.internal.conndata.drawLines(globalParams.internal.parcellation,pos,
                                     state.poscolor,
                                     globalParams.internal.context,
@@ -825,6 +859,8 @@ var drawlines=function(state) {
                                     state.thickness);
     }
 
+    globalParams.internal.laststate = state;
+    
     if (total===0)
         return -1;
     return total;

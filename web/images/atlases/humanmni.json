@@ -51,7 +51,8 @@
                     "9" :  "Salience",
                     "10" : "Subcortical",
                     "11" : "Ventral-Attention",
-                    "12" : "Dorsal-Attention"
+                    "12" : "Dorsal-Attention",
+                    "13" : "Unknown"
                 },
                 "shortlabels" : {
                     "1" :  "SMot",
@@ -63,7 +64,8 @@
                     "9" :  "Sal",
                     "10" : "Subc",
                     "11" : "V-At",
-                    "12" : "D-At"
+                    "12" : "D-At",
+                    "13" : "Unk"
                 }
             },
             {

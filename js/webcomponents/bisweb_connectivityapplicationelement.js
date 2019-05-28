@@ -262,6 +262,14 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
                                        control.importparcellation(img,'AAL Atlas');
                                    });
                                });
+        webutil.createMenuItem(imenu,''); // separator
+        webutil.createMenuItem(imenu,'Use the Yale Network Definitions', function() {
+            control.setNetworksToYale(true);
+        });
+        webutil.createMenuItem(imenu,'Use the WSHU Network Definitions', function() {
+            control.setNetworksToYale(false);
+        });
+        
         // ------------------------------------ Advanced Menu ----------------------------
         
         var advmenu=webutil.createTopMenuBarMenu("Advanced",menubar);
