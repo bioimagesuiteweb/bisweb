@@ -85,11 +85,11 @@ class CustomModule {
         this.name = opts.name || description.dialogname || description.name;
         this.dual = opts.dual || false;
 
+        let width = opts.width || 250;
         // Three states
-
         this.panel=new BisWebPanel(layoutcontroller,{
             name : this.name,
-            width : 250,
+            width : width,
             hasfooter : false,
             dual : this.dual,
         });
@@ -103,7 +103,6 @@ class CustomModule {
                                                  'padding-left' : '2px'
                                              }
                                           });
-        this.basewidget.addClass('bisweb-customelement-widget');
 
         this.footer=webutil.creatediv({  parent: this.panel.getWidget(),
                                          css : {
@@ -111,8 +110,10 @@ class CustomModule {
                                              'padding-left' : '2px'
                                          }
                                       });
-        this.footer.addClass('bisweb-customelement-footer');
 
+        $(this.basewidget).addClass('bisweb-customelement-body');
+        $(this.footer).addClass('bisweb-customelement-footer');
+        
         ModuleList[this.name]=this;
         this.threadmanager = $("bisweb-webworkercontroller")[0] || null;
     }
