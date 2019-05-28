@@ -6,11 +6,25 @@ const webutil=require('bis_webutil');
 const saveSvgAsPng=require('save-svg-as-png');
 const filesaver = require('FileSaver');
 
-let internal=null;
-let displayDialog=null;
-let globalSVGId=null;
-let globalSVGId2=null;
-let globalMode='chord';
+// -------------------------------
+// Global State
+// -------------------------------
+
+
+const globalParams = {
+    internal : null,
+    displayDialog : null,
+    Id : null,
+    Id2: null,
+    mode : 'chord'
+};
+
+
+var initialize=function(internal) {
+    globalParams.internal=internal;
+};
+
+
 // -----------------------------------------------------
 // Save as PNG
 // -----------------------------------------------------
@@ -35,7 +49,7 @@ var saveSnapshot=function(inimglist,initialfilename='snapshot.png') {
     outcanvas.height = h;
     
     let ctx = outcanvas.getContext('2d');
-    if (globalMode==='chord') 
+    if (globalParams.mode==='chord') 
         ctx.fillStyle = "#000000";
     else
         ctx.fillStyle = "#ffffff";
@@ -96,7 +110,7 @@ var saveSnapshot=function(inimglist,initialfilename='snapshot.png') {
 
 var saveAsPNG = function() {
 
-    const globalw=document.getElementById(globalSVGId) || null;
+    const globalw=document.getElementById(globalParams.Id) || null;
     
     
     if (globalw===null) {
@@ -104,8 +118,8 @@ var saveAsPNG = function() {
         return;
     }
 
-    if (globalMode==='chord')  {
-        let par=$('#'+globalSVGId).parent();
+    if (globalParams.mode==='chord')  {
+        let par=$('#'+globalParams.Id).parent();
         saveSvgAsPng.svgAsDataUri(par[0], "plot.png").then( (p) => {
             let img = document.createElement('img');
             img.onload=function() { saveSnapshot([img]); };
@@ -114,8 +128,8 @@ var saveAsPNG = function() {
             console.log(e,e.stack);
         });
     } else {
-        let par=$('#'+globalSVGId);
-        let par2=$('#'+globalSVGId2);
+        let par=$('#'+globalParams.Id);
+        let par2=$('#'+globalParams.Id2);
         
         saveSvgAsPng.svgAsDataUri(par[0], "plot.png").then( (p) => {
             let img = document.createElement('img');
@@ -146,11 +160,11 @@ var saveAsPNG = function() {
 var createChordsSVG=function(parentDiv,parc,pairs,scolor,context,normallength,thickness,dim) {
     
     if (parc===null || pairs===null || context===null) {
-        console.log("Bad inputs in drawLines");
+        console.log("Bad inputs in createChordSVG");
         return 0;
     }
 
-    globalSVGId=webutil.getuniqueid();
+    globalParams.Id=webutil.getuniqueid();
     
     let width = dim[0] - 50,
         height = dim[1] - 150;
@@ -178,10 +192,10 @@ var createChordsSVG=function(parentDiv,parc,pairs,scolor,context,normallength,th
         .attr("width", svgWidth)
         .attr("height", svgHeight)
         .append("g")
-        .attr("id", globalSVGId)
+        .attr("id", globalParams.Id)
         .attr("transform", "translate(" + svgWidth / 2 + "," + svgHeight / 2 + ")");
     
-    svg.append(globalSVGId)
+    svg.append(globalParams.Id)
         .attr("r", outerRadius);
 
     //var connectome = [];
@@ -189,11 +203,11 @@ var createChordsSVG=function(parentDiv,parc,pairs,scolor,context,normallength,th
     //var matrix = [];
     //        var nets = new Set();
 
-    const rois=internal.parcellation.rois;
+    const rois=globalParams.internal.parcellation.rois;
     //let data=[];
     let nets = new Set();
     for (let i=0;i<rois.length;i++) {
-        let n=rois[i].attr[internal.networkAttributeIndex];
+        let n=rois[i].attr[globalParams.internal.networkAttributeIndex];
         nets.add(n);
     }
     //    console.log('net size=',nets.size);
@@ -216,8 +230,8 @@ var createChordsSVG=function(parentDiv,parc,pairs,scolor,context,normallength,th
         let node=Math.floor(parc.indexmap[a_node]);
         let othernode=Math.floor(parc.indexmap[b_node]);
 
-        let network1=rois[node].attr[internal.networkAttributeIndex];
-        let network2=rois[othernode].attr[internal.networkAttributeIndex];
+        let network1=rois[node].attr[globalParams.internal.networkAttributeIndex];
+        let network2=rois[othernode].attr[globalParams.internal.networkAttributeIndex];
 
         matrix[network1-1][network2-1]+=1;
     }
@@ -237,9 +251,9 @@ var createChordsSVG=function(parentDiv,parc,pairs,scolor,context,normallength,th
         "#00FF7F",
     ];
 
-    for (let i=0;i<internal.gui_Networks_Names.length;i++) {
+    for (let i=0;i<globalParams.internal.gui_Networks_Names.length;i++) {
         network_labels.push({
-            "name" : internal.gui_Networks_Names[i],
+            "name" : globalParams.internal.gui_Networks_Names[i],
             "color": n_colors[i]
         });
     }
@@ -334,35 +348,35 @@ var createChordsSVG=function(parentDiv,parc,pairs,scolor,context,normallength,th
 };
 
 var destroyDisplayDialog=function() {
-    if (displayDialog) {
-        if (displayDialog.getContainingFrame()) {
-            displayDialog.getContainingFrame().remove();
+    if (globalParams.displayDialog) {
+        if (globalParams.displayDialog.getContainingFrame()) {
+            globalParams.displayDialog.getContainingFrame().remove();
         }
-        displayDialog=null;
+        globalParams.displayDialog=null;
     }
 };
 
 var createDisplayDialog=function(name,height=-1,width=-1) {
 
 
-    let canvas=internal.layoutmanager.getcanvas();
+    let canvas=globalParams.internal.layoutmanager.getcanvas();
     let dim = [parseInt(canvas.width) - 100, parseInt(canvas.height) - 100];
     if (height>0)
         dim[1]=height;
     if (width>0)
         dim[0]=width;
-    if (displayDialog) {
+    if (globalParams.displayDialog) {
         destroyDisplayDialog();
     }
-    displayDialog = webutil.createdialog(name, dim[0], dim[1], 0, 0, 50);
-    displayDialog.getContainingFrame().css( { 'z-index' : 5000 });
-    displayDialog.setCloseCallback( () => { destroyDisplayDialog(); });
-    displayDialog.removeCloseButton();
+    globalParams.displayDialog = webutil.createdialog(name, dim[0], dim[1], 0, 0, 50);
+    globalParams.displayDialog.getContainingFrame().css( { 'z-index' : 5000 });
+    globalParams.displayDialog.setCloseCallback( () => { destroyDisplayDialog(); });
+    globalParams.displayDialog.removeCloseButton();
     
     webutil.createbutton({
         name: 'Export as PNG',
         type: "info",
-        parent: displayDialog.getFooter(),
+        parent: globalParams.displayDialog.getFooter(),
     }).click( (e) => {
         e.preventDefault();
         saveAsPNG();
@@ -372,36 +386,34 @@ var createDisplayDialog=function(name,height=-1,width=-1) {
     return dim;
 };
 
-var drawchords = function(out_internal) {
+var drawchords = function() {
 
-    internal=out_internal;
-    
-    if (internal.laststate === null) {
+    if (globalParams.internal.laststate === null) {
         bootbox.alert('Please create lines before attempting to draw a chord diagram');
         return;
     }
     
     let name = 'All Chords';
-    if (internal.laststate.guimode!=='All') {
-        name='Chords for '+internal.laststate.guimode;
+    if (globalParams.internal.laststate.guimode!=='All') {
+        name='Chords for '+globalParams.internal.laststate.guimode;
     }
     let dim=createDisplayDialog(name);
     
-    let pos=internal.conndata.createLinePairs(0,internal.laststate.matrixthreshold);
-    let svgModal=displayDialog.getWidgetBase();
+    let pos=globalParams.internal.conndata.createLinePairs(0,globalParams.internal.laststate.matrixthreshold);
+    let svgModal=globalParams.displayDialog.getWidgetBase();
 
-    globalMode='chord';
+    globalParams.mode='chord';
     
     // This call returns svg
     createChordsSVG(svgModal,
-                    internal.parcellation,
+                    globalParams.internal.parcellation,
                     pos,
-                    internal.laststate.poscolor,
-                    internal.context,
-                    internal.laststate.length*internal.parcellation.scalefactor,
-                    internal.laststate.thickness,dim);
+                    globalParams.internal.laststate.poscolor,
+                    globalParams.internal.context,
+                    globalParams.internal.laststate.length*globalParams.internal.parcellation.scalefactor,
+                    globalParams.internal.laststate.thickness,dim);
 
-    displayDialog.show();
+    globalParams.displayDialog.show();
 };
 
 //didn't remove the unused parameters because they might be used later? 
@@ -411,14 +423,14 @@ var createCorrMapSVG=function(parentDiv,
                               id1,id2,parc,pairs,scolor,context,normallength,thickness) {
 
     console.log('Thickness=',thickness);
-    const rois=internal.parcellation.rois;
-    globalSVGId=webutil.getuniqueid();
-    globalSVGId2=webutil.getuniqueid();
+    const rois=globalParams.internal.parcellation.rois;
+    globalParams.Id=webutil.getuniqueid();
+    globalParams.Id2=webutil.getuniqueid();
     
     let nets = new Set();
     
     for (let i=0;i<rois.length;i++) {
-        let n=rois[i].attr[internal.networkAttributeIndex];
+        let n=rois[i].attr[globalParams.internal.networkAttributeIndex];
         nets.add(n);
     }
 
@@ -438,8 +450,8 @@ var createCorrMapSVG=function(parentDiv,
         let node=Math.floor(parc.indexmap[a_node]);
         let othernode=Math.floor(parc.indexmap[b_node]);
         
-        let network1=rois[node].attr[internal.networkAttributeIndex];
-        let network2=rois[othernode].attr[internal.networkAttributeIndex];
+        let network1=rois[node].attr[globalParams.internal.networkAttributeIndex];
+        let network2=rois[othernode].attr[globalParams.internal.networkAttributeIndex];
         
         matrix[network1-1][network2-1]+=1;
         matrix[network2-1][network1-1]+=1;
@@ -453,7 +465,7 @@ var createCorrMapSVG=function(parentDiv,
     }
     let correlationMatrix = matrix; 
 
-    let labels=internal.gui_Networks_ShortNames;
+    let labels=globalParams.internal.gui_Networks_ShortNames;
 
     // heatMap part
     let svg  = Matrix({
@@ -495,7 +507,7 @@ var createCorrMapSVG=function(parentDiv,
         let svg = d3.select(parentDiv).append("svg")
             .attr("width", width + margin.left + margin.right)
             .attr("height", height + margin.top + margin.bottom)
-            .attr("id", globalSVGId)
+            .attr("id", globalParams.Id)
             .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
         
@@ -595,7 +607,7 @@ var createCorrMapSVG=function(parentDiv,
         
         let key = d3.select("#"+id2)
             .append("svg")
-            .attr("id",globalSVGId2)
+            .attr("id",globalParams.Id2)
             .attr("width", widthLegend)
             .attr("height", height + margin.top + margin.bottom);
         
@@ -650,26 +662,24 @@ var createCorrMapSVG=function(parentDiv,
 //
 // ------------------------------------------------------------------------------
 
-var corrmap = function(out_internal) {
-    internal=out_internal;
+var corrmap = function() {
     
-    
-    if (internal.laststate === null) {
+    if (globalParams.internal.laststate === null) {
         bootbox.alert('Please create lines before attempting to draw a chord diagram');
         return;
     }
 
     let name = 'All Nodes';
-    if (internal.laststate.guimode !=='All') {
-        name='Heatmap for '+internal.laststate.guimode;
+    if (globalParams.internal.laststate.guimode !=='All') {
+        name='Heatmap for '+globalParams.internal.laststate.guimode;
     }
     let dim=createDisplayDialog(name,650,650);
     
 
 
-    let svgModal=displayDialog.getWidgetBase();
+    let svgModal=globalParams.displayDialog.getWidgetBase();
     //    console.log('Svg Modal=',svgModal);
-    let pos = internal.conndata.createLinePairs(0,internal.laststate.matrixthreshold);
+    let pos = globalParams.internal.conndata.createLinePairs(0,globalParams.internal.laststate.matrixthreshold);
     
     let id1=webutil.getuniqueid();
     let id2=webutil.getuniqueid();
@@ -681,25 +691,167 @@ var corrmap = function(out_internal) {
     
     svgModal.css({'background-color':"#ffffff"});
 
-    globalMode='corr';
+    globalParams.mode='corr';
     
     createCorrMapSVG(svgModal[0],
                      dim[0],dim[1],
                      id1,id2,
-                     internal.parcellation,
+                     globalParams.internal.parcellation,
                      pos,
-                     internal.laststate.poscolor,
-                     internal.context,
-                     internal.laststate.length*internal.parcellation.scalefactor,
-                     internal.laststate.thickness);
+                     globalParams.internal.laststate.poscolor,
+                     globalParams.internal.context,
+                     globalParams.internal.laststate.length*globalParams.internal.parcellation.scalefactor,
+                     globalParams.internal.laststate.thickness);
     
-    displayDialog.show();
+    globalParams.displayDialog.show();
 };
+
+// ------------------------------------------------------------------------------
+// Regular 2D Lines
+// ------------------------------------------------------------------------------
+
+var createlines = function() {
+
+    if (globalParams.internal.conndata.statMatrix===null) {
+        bootbox.alert('No connectivity data loaded');
+        return;
+    }
+
+
+    let getKeyByValue = function( obj,value,base ) {
+        for( let prop in obj ) {
+            if( obj.hasOwnProperty( prop ) ) {
+                if( obj[prop ] === value )
+                    return prop;
+            }
+        }
+        return base;
+    };
+    globalParams.internal.lastopisclear = false;
+    //          globalParams.internal.parcellation.drawCircles(globalParams.internal.context);
+    
+    
+    
+    let mode=2;
+    if (globalParams.internal.parameters.mode===globalParams.internal.gui_Modes[0]) // All
+        mode=0;
+    if (globalParams.internal.parameters.mode==globalParams.internal.gui_Modes[1]) // Single Node
+        mode=1;
+
+    let singlevalue=-1,attribcomponent=0;
+    if (mode === 1) {
+        singlevalue=Math.round(globalParams.internal.parameters.node)-1;
+        //          console.log('GUI Input singlevalue='+singlevalue+' HUMAN = '+(singlevalue+1));
+    } else if (mode===2 ) {
+        if (globalParams.internal.parameters.mode===globalParams.internal.gui_Modes[2]) { // Lobe
+            attribcomponent=0;
+            singlevalue=getKeyByValue(globalParams.internal.gui_Lobes,globalParams.internal.parameters.lobe,1);
+        } else {
+            // Siwtch this to xilin networks 2->4
+            attribcomponent=globalParams.internal.networkAttributeIndex;
+            singlevalue=getKeyByValue(globalParams.internal.gui_Networks,globalParams.internal.parameters.network,1);
+        }
+    }
+    
+
+    let degreethreshold=Math.round(globalParams.internal.parameters.degreethreshold);
+    let matrixthreshold=globalParams.internal.parameters.matrixthreshold;
+    let filter=2;
+    
+
+    let state = { mode: mode,
+                  guimode : globalParams.internal.parameters.mode,
+                  node : globalParams.internal.parameters.node,
+                  lobe : globalParams.internal.parameters.lobe,
+                  network : globalParams.internal.parameters.network,
+                  degreethreshold : degreethreshold,
+                  poscolor : globalParams.internal.parameters.poscolor,
+                  negcolor : globalParams.internal.parameters.negcolor,
+                  length : globalParams.internal.parameters.length,
+                  thickness: globalParams.internal.parameters.thickness,
+                  linestodraw : globalParams.internal.parameters.linestodraw,
+                  singlevalue: singlevalue,
+                  attribcomponent : attribcomponent,
+                  filter: filter,
+                  radius : globalParams.internal.parameters.radius,
+                  matrixthreshold : matrixthreshold};
+
+    if (globalParams.internal.hadlinesonce)
+        globalParams.internal.addStateToUndo();
+    globalParams.internal.hadlinesonce=true;
+    globalParams.internal.linestack.push(state);
+    globalParams.internal.updateFn();
+};
+
+var drawlines=function(state) {
+
+    let ok=globalParams.internal.conndata.createFlagMatrix(globalParams.internal.parcellation,
+                                              state.mode, // mode
+                                              state.singlevalue, // singlevalue
+                                              state.attribcomponent, // attribcomponent
+                                              state.degreethreshold, // metric threshold
+                                              state.filter); // sum
+
+    if (ok===0) {
+        bootbox.alert('Failed to create flag matrix for connectivity data!');
+        return 0;
+    }
+    
+
+    let total=0;
+
+    if (state.linestodraw == globalParams.internal.gui_Lines[0] ||
+        state.linestodraw == globalParams.internal.gui_Lines[2] ) {
+        let pos=globalParams.internal.conndata.createLinePairs(0,state.matrixthreshold);
+        //console.log('\n\n +++ Created '+pos.length+' positive linepairs\n'+JSON.stringify(pos));
+        total+=pos.length;
+        globalParams.internal.laststate = state;
+        globalParams.internal.conndata.drawLines(globalParams.internal.parcellation,pos,
+                                    state.poscolor,
+                                    globalParams.internal.context,
+                                    state.length*globalParams.internal.parcellation.scalefactor,
+                                    state.thickness);
+    }
+    if (state.linestodraw == globalParams.internal.gui_Lines[1] ||
+        state.linestodraw == globalParams.internal.gui_Lines[2] ) {
+
+        let neg=globalParams.internal.conndata.createLinePairs(1,state.matrixthreshold);
+        //          console.log('+++ Created '+neg.length+' negagive linepairs\n'+JSON.stringify(neg)+'\n');
+        total+=neg.length;
+        globalParams.internal.conndata.drawLines(globalParams.internal.parcellation,neg,
+                                    state.negcolor,
+                                    globalParams.internal.context,
+                                    state.length*globalParams.internal.parcellation.scalefactor,
+                                    state.thickness);
+    }
+
+    if (total===0)
+        return -1;
+    return total;
+};
+
+
+var removelines = function() {
+    if (globalParams.internal.conndata.statMatrix===null) {
+        bootbox.alert('No connectivity data loaded');
+        return;
+    }
+
+    globalParams.internal.addStateToUndo();
+    globalParams.internal.linestack = [];
+    globalParams.internal.updateFn();
+};
+
+
 
 // ----------------------------------
 // export stuf
 // ----------------------------------
 module.exports = {
+    initialize : initialize,
     drawchords : drawchords,
-    corrmap : corrmap
+    corrmap : corrmap,
+    createlines : createlines,
+    drawlines : drawlines,
+    removelines : removelines
 };

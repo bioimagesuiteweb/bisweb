@@ -27,61 +27,19 @@ const util=require('bis_util');
 const BisConnectivityMatrix=require('bis_connmatrix');
 const webutil=require('bis_webutil');
 const bisgenericio=require('bis_genericio');
-const bisCrossHair=require('bis_3dcrosshairgeometry');
+
 const BisParcellation=require('bis_parcellation');
 const $=require('jquery');
 const bootbox=require('bootbox');
 const bismni2tal=require('bis_mni2tal');
 const BisWebMatrix=require('bisweb_matrix');
-const THREE=require('three');
+
 const BisWebPanel = require('bisweb_panel.js');
 const dat = require('bisweb_datgui');
 const humanmni=require('atlases/humanmni.json');
 const connectvis=require('bisweb_connectivityvis');
+const connectvis3d=require('bisweb_connectivityvis3d');
 
-// -------------------------------------------------------------------------
-const brain_vertexshader_text = 
-      'attribute vec3 lookupScalar;\n'+
-      'varying vec3 vNormal;\n'+
-      //        'varying vec3 vLookup;\n'+
-      'void main() {\n'+
-      //        '     vLookup.x=lookupScalar.x;\n'+
-      //        '     vLookup.y=lookupScalar.y;\n'+
-      //        '     vLookup.z=lookupScalar.z;\n'+
-      '     vNormal = normalize( normalMatrix * normal );\n'+
-      '     vec3 transformed = vec3( position );\n'+
-      '     vec4 mvPosition = modelViewMatrix * vec4( transformed, 1.0 );\n'+
-      '     gl_Position = projectionMatrix * mvPosition;\n'+
-      //      '     gl_Position.z=0.99+0.01*gl_Position.z;\n'+
-      '}\n';
-
-const brain_fragmentshader_text=
-      'uniform float opacity;\n'+
-      'uniform vec3 diffuse;\n'+
-      'varying vec3 vNormal;\n'+
-      //        'varying vec3 vLookup;\n'+
-      'void main() {\n'+
-      '   float v=max(0.0,vNormal.z);\n'+
-      '   gl_FragColor = vec4( v*diffuse.x,v*diffuse.y,v*diffuse.z, opacity );\n'+
-      '}';
-
-const sphere_vertexshader_text = 
-      'varying vec3 vNormal;\n'+
-      'void main() {\n'+
-      '     vNormal = normalize( normalMatrix * normal );\n'+
-      '     vec3 transformed = vec3( position );\n'+
-      '     vec4 mvPosition = modelViewMatrix * vec4( transformed, 1.0 );\n'+
-      '     gl_Position = projectionMatrix * mvPosition;\n'+
-      '}\n';
-
-const sphere_fragmentshader_text=
-      'uniform float opacity;\n'+
-      'uniform vec3 diffuse;\n'+
-      'varying vec3 vNormal;\n'+
-      'void main() {\n'+
-      '   float v=max(0.0,vNormal.z);\n'+
-      '   gl_FragColor = vec4( v*diffuse.x,v*diffuse.y,v*diffuse.z, opacity );\n'+
-      '}';
 
 // -------------------------------------------------------------------------
 // Parse Data
@@ -112,8 +70,6 @@ let useYaleNetworks=true; // false = WasHU
 
 const gui_Lines = [ 'Positive', 'Negative', 'Both'];
 const gui_Modes = [ 'All', 'Single Node', 'Single Lobe','Single Network'];
-const lobeoffset=10.0;
-const axisoffset=[0,5.0,20.0];
 
 const createNetworkNames = function(useyale=true,internal=null) {
         
@@ -157,6 +113,12 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     
     let internal = {
 
+        // store here
+        gui_Lines : gui_Lines,
+        gui_Modes : gui_Modes,
+        gui_Lobes : gui_Lobes,
+
+        
         // Network stuff
         networkAttributeIndex : 4,
         gui_Networks : null,
@@ -212,33 +174,34 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         //
         showlegend : true,
         rendermode : 7,
-        meshes : [ ],
-        brainmesh : [ null,null],
-        axisline  : [ null,null,null],
-        planemesh : null,
         subviewers : null,
-        // dialogs
+        // meshes
+        meshes : [],
+        axisline : [null,null,null ],
         
         // state stuff
         inrestorestate : false,
         parcellationtext : null,
         lastnode : 0,
 
-        // Extra dialogs
+        // Info for external use
         laststate : null,
-        chordDialog : null,
+
 
     };
 
 
-    internal.conndata.offset=lobeoffset;
+    
+    internal.conndata.offset=connectvis3d.lobeoffset;
 
+    connectvis.initialize(internal);
+    connectvis3d.initialize(internal);
     createNetworkNames(useYaleNetworks,internal);
     
     // -------------------------------------------------------------------------
     // Undo Stuff
     // -------------------------------------------------------------------------
-    var addStateToUndo = function() {
+    internal.addStateToUndo = function() {
         var undoobj = {
             stack : internal.linestack
         };
@@ -633,9 +596,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
     
     // Update Display skip3d -- if true skip 3d updates
-    var update = function(skip3d) {
+    var update = function(skip3d=false) {
 
-        skip3d=skip3d || false;
         if (internal.parcellation===null)
             return;
 
@@ -683,11 +645,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             for (let i=0;i<internal.linestack.length;i++) {
                 ok=1;
                 if (!skip2d)
-                    ok=drawlines(internal.linestack[i]);
+                    ok=connectvis.drawlines(internal.linestack[i]);
                 if (ok===0)
                     i=internal.linestack.length;
                 else if (!skip3d)
-                    drawlines3d(internal.linestack[i],true);
+                    connectvis3d.drawlines3d(internal.linestack[i],true);
             }
 
             
@@ -714,6 +676,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             internal.layoutmanager.getrenderer().render(internal.subviewers[3].scene,
                                                         internal.subviewers[3].camera);
     };
+
     
     var setnode = function(node) {
 
@@ -734,7 +697,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         internal.orthoviewer.setcoordinates(coords);
         drawMatricesAndLegendsAsImages();
         if (internal.showlegend) {
-            draw3dcrosshairs();
+            connectvis3d.draw3dcrosshairs();
         } else {
             internal.axisline[0].visible=false;
             internal.axisline[1].visible=false;
@@ -744,26 +707,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         updatetext();
     };
 
-    var draw3dcrosshairs = function () {
-        if (internal.axisline[0]===null)
-            return;
-        
-        let coords = internal.mni2tal.getMMCoordinates(internal.mni);
-        //        console.log('MNI=',internal.mni,' --> Coords=',coords);
-        if (internal.mni[0]<0.0)
-            coords[0]-=lobeoffset;
-        else
-            coords[0]+=lobeoffset;
-        coords[1]+=axisoffset[1];
-        coords[2]+=axisoffset[2];
-        
-        internal.axisline[0].position.set(0.0,coords[1],coords[2]);
-        internal.axisline[1].position.set(coords[0],0.0,coords[2]);
-        internal.axisline[2].position.set(coords[0],coords[1],0.0);
-        internal.axisline[0].visible=true;
-        internal.axisline[1].visible=true;
-        internal.axisline[2].visible=true;
-    };
     
     // Update Text
     var updatetext = function() {
@@ -943,7 +886,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         return false;
     };
 
-
+    
     // Parses Parcellation
     // @param {string} text - parcellation text
     // @param {string} filename - file to load from (either .json or .txt)
@@ -972,97 +915,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         if (!keepobjectmap)
             internal.orthoviewer.clearobjectmap();
         cleanmatrixdata();
-    };
-
-    // Parses Brain Surface
-    // @alias BisGUIConnectivityControls~parsebrainsurface from json file
-    // @param {array} text - brain surfaces  to parse (as json)
-    var parsebrainsurface = function(textstring,filename) {
-
-        let meshindex=0;
-        let isright=filename.lastIndexOf("right");
-        if (isright>=0)
-            meshindex=1;
-        
-        let obj= JSON.parse(textstring);
-        let values=[0.6,0.9];
-        
-        let vertices = new Float32Array(obj.points.length);
-        let indices = new Uint16Array(obj.triangles.length);
-
-        console.log('+++++ Brain surface loaded from '+filename+' '+[ obj.points.length,obj.triangles.length]);
-        for (let i=0;i<obj.points.length;i+=3) {
-            vertices[i+0]=obj.points[i+0];
-            if (meshindex===1) // right
-                vertices[i]+=lobeoffset;
-            else // left
-                vertices[i]-=lobeoffset;
-            vertices[i+1]=obj.points[i+1];
-            vertices[i+2]=obj.points[i+2];
-        }
-        for (let i=0;i<obj.triangles.length;i++) 
-            indices[i]=obj.triangles[i];
-
-        if (internal.brainmesh[meshindex]!==null) {
-            internal.brainmesh[meshindex].visible=false;
-            internal.subviewers[3].scene.remove(internal.brainmesh[meshindex]);
-        }
-        
-        let buf=new THREE.BufferGeometry();
-        buf.setIndex( new THREE.BufferAttribute( indices, 1));
-        buf.addAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
-        buf.computeVertexNormals();
-
-        let material = new THREE.ShaderMaterial({
-            transparent : true,
-            "uniforms": {
-                "diffuse": {  "type":"c","value":
-                              {"r":values[meshindex],
-                               "g":values[meshindex],
-                               "b":values[meshindex]}},
-                "opacity": {"type":"f","value":0.7}
-            },
-            vertexShader : brain_vertexshader_text,
-            fragmentShader : brain_fragmentshader_text,
-        });
-        
-        internal.brainmesh[meshindex] = new THREE.Mesh(buf,material);
-        internal.brainmesh[meshindex].visible=true;
-        internal.subviewers[3].scene.add(internal.brainmesh[meshindex]);
-
-        if (internal.axisline[0]===null) {
-            // create axis line meshes
-            
-            let p_indices = new Uint16Array(2);
-            p_indices[ 0 ] = 0;   p_indices[ 1 ] = 1; 
-            for (let axis=0;axis<=2;axis++) {
-                let p_vertices = new Float32Array(6);
-                p_vertices[0]=-axisoffset[0]; p_vertices[1]=-axisoffset[1]; p_vertices[2]=-axisoffset[2];
-                p_vertices[3]=-axisoffset[0]; p_vertices[4]=-axisoffset[1]; p_vertices[5]=-axisoffset[2];
-                if (axis===0) {
-                    p_vertices[3]=180+lobeoffset+axisoffset[0];
-                } else if (axis===1) {
-                    p_vertices[4]=216.0+axisoffset[1];
-                } else {
-                    p_vertices[5]=170.0;
-                }
-                let pbuf=new THREE.BufferGeometry();
-                pbuf.setIndex( new THREE.BufferAttribute( p_indices, 1));
-                pbuf.addAttribute( 'position', new THREE.BufferAttribute( p_vertices, 3 ) );
-                internal.axisline[axis] = new THREE.Line(pbuf,
-                                                         new THREE.LineBasicMaterial( {
-                                                             color: 0xff8800, 
-                                                             transparent: false,
-                                                             opacity: 1.0,
-                                                         }));
-                internal.axisline[axis].visible=false;
-                internal.subviewers[3].scene.add(internal.axisline[axis]);
-            }
-            if (internal.showlegend)
-                setnode(Math.round(internal.parameters.node-1));
-
-            window.dispatchEvent(new Event('resize'));
-        }
     };
     // Loads Parcellation. 
     // @param {string} in_filename - file to load from (either .json or .txt)
@@ -1319,7 +1171,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                                css : { "margin": "5px"},
                                tooltip : "Click this to create lines",
                                parent : bbar2,
-                               callback : createlines,
+                               callback : connectvis.createlines,
                              });
 
         webutil.createbutton({ type : "default",
@@ -1328,7 +1180,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                                css : { "margin": "5px"},
                                tooltip : "Click this to clear the lines",
                                parent : bbar2,
-                               callback : removelines,
+                               callback : connectvis.removelines,
                              });
 
         let bbar3 = webutil.createbuttonbar({ parent : basediv });
@@ -1340,7 +1192,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                                parent : bbar3,
                                callback : () => {
                                    console.log('Internal=',internal);
-                                   connectvis.drawchords(internal);
+                                   connectvis.drawchords();
                                },
                              });
         
@@ -1353,7 +1205,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                                parent : bbar3,
                                callback : () => {
                                    console.log('Internal=',internal);
-                                   connectvis.corrmap(internal);
+                                   connectvis.corrmap();
                                },
                              });
 
@@ -1367,258 +1219,17 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         // ------------------------------------------------
     };
 
-    var createlines = function() {
-
-        if (internal.conndata.statMatrix===null) {
-            bootbox.alert('No connectivity data loaded');
-            return;
-        }
-
-
-        let getKeyByValue = function( obj,value,base ) {
-            for( let prop in obj ) {
-                if( obj.hasOwnProperty( prop ) ) {
-                    if( obj[prop ] === value )
-                        return prop;
-                }
-            }
-            return base;
-        };
-        internal.lastopisclear = false;
-        //          internal.parcellation.drawCircles(internal.context);
-        
-        
-        
-        let mode=2;
-        if (internal.parameters.mode===gui_Modes[0]) // All
-            mode=0;
-        if (internal.parameters.mode==gui_Modes[1]) // Single Node
-            mode=1;
-
-        let singlevalue=-1,attribcomponent=0;
-        if (mode === 1) {
-            singlevalue=Math.round(internal.parameters.node)-1;
-            //          console.log('GUI Input singlevalue='+singlevalue+' HUMAN = '+(singlevalue+1));
-        } else if (mode===2 ) {
-            if (internal.parameters.mode===gui_Modes[2]) { // Lobe
-                attribcomponent=0;
-                singlevalue=getKeyByValue(gui_Lobes,internal.parameters.lobe,1);
-            } else {
-                // Siwtch this to xilin networks 2->4
-                attribcomponent=internal.networkAttributeIndex;
-                singlevalue=getKeyByValue(internal.gui_Networks,internal.parameters.network,1);
-            }
-        }
-
-        let degreethreshold=Math.round(internal.parameters.degreethreshold);
-        let matrixthreshold=internal.parameters.matrixthreshold;
-        let filter=2;
-        
-
-        let state = { mode: mode,
-                      guimode : internal.parameters.mode,
-                      node : internal.parameters.node,
-                      lobe : internal.parameters.lobe,
-                      network : internal.parameters.network,
-                      degreethreshold : degreethreshold,
-                      poscolor : internal.parameters.poscolor,
-                      negcolor : internal.parameters.negcolor,
-                      length : internal.parameters.length,
-                      thickness: internal.parameters.thickness,
-                      linestodraw : internal.parameters.linestodraw,
-                      singlevalue: singlevalue,
-                      attribcomponent : attribcomponent,
-                      filter: filter,
-                      radius : internal.parameters.radius,
-                      matrixthreshold : matrixthreshold};
-
-        if (internal.hadlinesonce)
-            addStateToUndo();
-        internal.hadlinesonce=true;
-        internal.linestack.push(state);
-        update();
-    };
-    
-    var drawlines=function(state) {
-
-        let ok=internal.conndata.createFlagMatrix(internal.parcellation,
-                                                  state.mode, // mode
-                                                  state.singlevalue, // singlevalue
-                                                  state.attribcomponent, // attribcomponent
-                                                  state.degreethreshold, // metric threshold
-                                                  state.filter); // sum
-
-        if (ok===0) {
-            bootbox.alert('Failed to create flag matrix for connectivity data!');
-            return 0;
-        }
-        
-
-        let total=0;
-
-        if (state.linestodraw == gui_Lines[0] ||
-            state.linestodraw == gui_Lines[2] ) {
-            let pos=internal.conndata.createLinePairs(0,state.matrixthreshold);
-            //console.log('\n\n +++ Created '+pos.length+' positive linepairs\n'+JSON.stringify(pos));
-            total+=pos.length;
-            internal.laststate = state;
-            internal.conndata.drawLines(internal.parcellation,pos,
-                                        state.poscolor,
-                                        internal.context,
-                                        state.length*internal.parcellation.scalefactor,
-                                        state.thickness);
-        }
-        if (state.linestodraw == gui_Lines[1] ||
-            state.linestodraw == gui_Lines[2] ) {
-
-            let neg=internal.conndata.createLinePairs(1,state.matrixthreshold);
-            //          console.log('+++ Created '+neg.length+' negagive linepairs\n'+JSON.stringify(neg)+'\n');
-            total+=neg.length;
-            internal.conndata.drawLines(internal.parcellation,neg,
-                                        state.negcolor,
-                                        internal.context,
-                                        state.length*internal.parcellation.scalefactor,
-                                        state.thickness);
-        }
-
-        if (total===0)
-            return -1;
-        return total;
-    };
-    
-
-    var removelines = function() {
-        if (internal.conndata.statMatrix===null) {
-            bootbox.alert('No connectivity data loaded');
-            return;
-        }
-
-        addStateToUndo();
-        internal.linestack = [];
-        update();
-    };
-
-
-    
-    var drawlines3d=function(state,doNotUpdateFlagMatrix) {     
-
-
-        doNotUpdateFlagMatrix=doNotUpdateFlagMatrix || false;
-
-        //        console.log('Rendermode=',internal.rendermode);
-        if (internal.rendermode===6)
-            doNotUpdateFlagMatrix=false;
-        
-        if (internal.parcellations=== null ||
-            internal.subviewers === null)
-            return 0;
-        
-
-        if (!doNotUpdateFlagMatrix) {
-            console.log('Updating Flag Matrix\n');
-            let ok=internal.conndata.createFlagMatrix(internal.parcellation,
-                                                      state.mode, // mode
-                                                      state.singlevalue, // singlevalue
-                                                      state.attribcomponent, // attribcomponent
-                                                      state.degreethreshold, // metric threshold
-                                                      state.filter); // sum
-            
-            if (ok===0) {
-                bootbox.alert('Failed to create flag matrix for 3D connectivity data!');
-                return 0;
-            }
-        }
-        
-
-
-        // Now add lines
-        let pos=[],neg=[],total=0;
-        if (state.linestodraw == gui_Lines[0] ||
-            state.linestodraw == gui_Lines[2] ) {
-            pos=internal.conndata.createLinePairs(0,state.matrixthreshold);
-            total+=pos.length;
-        }
-        if (state.linestodraw == gui_Lines[1] ||
-            state.linestodraw == gui_Lines[2] ) {
-
-            neg=internal.conndata.createLinePairs(1,state.matrixthreshold);
-            total+=neg.length;
-        }
-        if (total===0)
-            return 0;
-
-        
-        let color = [ state.poscolor, 
-                      state.negcolor,
-                      state.poscolor,
-                      state.negcolor  ];
-
-        //        console.log('Drawing 3D',state.poscolor,state.negcolor);
-        
-        let lparr = internal.conndata.draw3DLines(internal.parcellation,pos,neg);
-        for (let i=0;i<=1;i++) {
-            let lp=lparr[i];
-            if (lp.indices!==null) {
-                let buf=new THREE.BufferGeometry();
-                buf.setIndex(  new THREE.BufferAttribute( lp.indices, 1 ) );
-                buf.addAttribute( 'position', new THREE.BufferAttribute( lp.vertices, 3 ) );
-                let linemesh = new THREE.LineSegments(buf,
-                                                      new THREE.LineBasicMaterial( {
-                                                          color: color[i],
-                                                          linewidth : 1,
-                                                          linecap : "square",
-                                                      }));
-                linemesh.visbile=true;
-                internal.subviewers[3].scene.add(linemesh);
-                internal.meshes.push(linemesh);
-            }
-        }
-
-        let sphere = new THREE.SphereGeometry(state.radius,16,16);
-        let presphere = bisCrossHair.createpregeometry([sphere]);
-
-        for (let j=2;j<=5;j++) {
-            let sph=lparr[j];
-            let scale=255.0;
-            if (sph.positions.length>0) {
-                let cl=util.hexToRgb(color[j-2]);
-                if (j>3)
-                    scale=500.0;
-                //                  console.log('Spheres '+j+' length='+sph.positions.length+' color='+[ cl.r,cl.g,cl.b]+' scale='+scale);
-
-                let spherematerial = new THREE.ShaderMaterial({
-                    transparent : false,
-                    "uniforms": {
-                        "diffuse": {  "type":"c","value":
-                                      {"r":cl.r/scale,
-                                       "g":cl.g/scale,
-                                       "b":cl.b/scale}},
-                        "opacity": {"type":"f","value":1.0},
-                    },
-                    vertexShader : sphere_vertexshader_text,
-                    fragmentShader : sphere_fragmentshader_text,
-                });
-                let geom=bisCrossHair.createcopies(presphere,sph.positions,sph.scales);
-                geom.computeVertexNormals();
-                let spheremesh=new THREE.Mesh(geom,spherematerial);
-                spheremesh.renderOrder=1000;
-                spheremesh.visbile=true;
-                internal.subviewers[3].scene.add(spheremesh);
-                internal.meshes.push(spheremesh);
-            }
-        }
-        
-        
-        return total;
-    };
-
-
 
     
     // -------------------------------------------------------------------------------------------
     // Public Interface from here on
     // -------------------------------------------------------------------------------------------
     let control= {
+
+        // Internal stuff
+        internal : internal,
+        setnode : setnode,
+        
         
         // initialize (or reinitialize landmark control). Called from viewer when image changes. This actually creates (or recreates the GUI) as well.(This implements a function from the {@link BisMouseObserver} interface.)
         // @memberof BisGUIConnectivityControl.prototype
@@ -1635,11 +1246,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             loadparcellation(`${imagepath}/shen.json`);
             
             bisgenericio.read(`${imagepath}/lobes_right.json`).then( (obj) => {
-                parsebrainsurface(obj.data,obj.filename);
+                connectvis3d.parsebrainsurface(obj.data,obj.filename);
             }).catch( (e) => { console.log(e); });
             
             bisgenericio.read(`${imagepath}/lobes_left.json`).then( (obj) => {
-                parsebrainsurface(obj.data,obj.filename);
+                connectvis3d.parsebrainsurface(obj.data,obj.filename);
             }).catch( (e) => { console.log(e); });
             
             update(false);
@@ -1678,7 +1289,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                                                                    internal.overlaycontext);
             } 
 
-            draw3dcrosshairs();
+            connectvis3d.draw3dcrosshairs();
             updatetext();
         },
         
@@ -1804,103 +1415,6 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         },
 
         
-        viewInteresting : function() {
-
-            if (internal.conndata.statMatrix===null) {
-                bootbox.alert('No connectivity data loaded');
-                return;
-            }
-
-            if (internal.keynodedlg!==null) {
-                //                  console.log('Calling show on '+internal.keynodedlg);
-                internal.keynodedlg.show();
-                return;
-            }
-            
-            
-            let c_data=internal.conndata.getSortedNodesByDegree(2);
-            let numnodes=c_data.length-1;
-            let maxnodes=Math.round(0.1*numnodes);
-
-            let ch=internal.context.canvas.height;
-            let cw=internal.context.canvas.width;
-            let vp=internal.parcellation.viewport;
-            let width  = 350;
-            console.log('vp='+[vp.x0,vp.x1,vp.y0,vp.y1]+' w*h'+[cw,ch]);
-
-            let showdialog=new BisWebPanel(internal.layoutmanager,
-                                           {
-                                               name :"Top "+maxnodes+" Nodes<BR>(sorted by degree)",
-                                               width : width,
-                                               mode : 'sidebar',
-                                               dual : false,
-                                           });
-
-
-            let templates=webutil.getTemplates();
-            let newid=webutil.createWithTemplate(templates.bisscrolltable,$('body'));
-            let stable=$('#'+newid);
-            
-            let buttonnodepairs = [];
-            let callback = function(e) {
-                let id=e.target.id;
-                let node=buttonnodepairs[id];
-                internal.parameters.mode="Single Node";
-                console.log('Node=',node);
-                setnode(node);
-            };
-
-            let thead = stable.find(".bisthead");
-            let tbody = stable.find(".bistbody",stable);
-
-            thead.empty();
-            tbody.empty();
-            tbody.css({'font-size':'12px',
-                       'user-select': 'none'});
-            thead.css({'font-size':'12px',
-                       'user-select': 'none'});
-            
-            let hd=$('<tr>'+
-                     ' <td width="5%">#</th>'+
-                     ' <td width="15%">Node</th>'+
-                     ' <td width="80%">Details</th>'+
-                     '</tr>');
-            thead.append(hd);
-            thead.css({ font: "Arial 12px"});
-
-
-            for (let i=0;i<maxnodes;i++) {
-
-                let node=c_data[numnodes-i].node;
-                let degree=c_data[numnodes-i].degree;
-                if (degree>0) {
-                    let c = [ internal.parcellation.rois[node].x,
-                              internal.parcellation.rois[node].y,
-                              internal.parcellation.rois[node].z];
-                    
-                    let s0= i+1+".";
-                    let s1= node+1;
-                    let lobe=gui_Lobes[internal.parcellation.rois[node].attr[0]];
-                    
-                    let s2= 'Degree='+degree+'\t(MNI='+c+', Lobe='+lobe+')';
-                    let nid=webutil.getuniqueid();
-                    
-                    let w=$(`<tr>
-                              <td width="5%">${s0}</td>
-                              <td width="15%">${s1}</td>
-                              <td width="80%" id="${nid}" class="btn-link">${s2}</td>
-                            </tr>`);
-                    tbody.append(w);
-                    $('#'+nid).click(callback);
-                    buttonnodepairs[nid]=(node);
-                }
-            }
-
-            showdialog.getWidget().append(stable);
-            showdialog.show();
-            window.dispatchEvent(new Event('resize'));
-            internal.keynodedlg=showdialog;
-        },
 
         // -------------------------------------------------------------------
         /** Set the element state from a dictionary object 
@@ -2017,6 +1531,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         
     };
 
+    internal.updateFn=update;
+    internal.setnodeFn=setnode;
     internal.this=control;
     internal.parentDomElement=parent;
     let basediv=$("<div>To appear...</div>");
@@ -2111,7 +1627,105 @@ class ConnectivityControlElement extends HTMLElement {
     resetdefault() { this.innercontrol.resetdefault(); }
     
     /* shows a popup dialog listing the most "interesting" nodes */
-    viewInteresting() { this.innercontrol.viewInteresting(); }
+    viewInteresting() {
+
+        const internal=this.innercontrol.internal;
+        
+        if (internal.conndata.statMatrix===null) {
+            bootbox.alert('No connectivity data loaded');
+            return;
+        }
+
+        if (internal.keynodedlg!==null) {
+            //                  console.log('Calling show on '+internal.keynodedlg);
+            internal.keynodedlg.show();
+            return;
+        }
+        
+        
+        let c_data=internal.conndata.getSortedNodesByDegree(2);
+        let numnodes=c_data.length-1;
+        let maxnodes=Math.round(0.1*numnodes);
+
+        let ch=internal.context.canvas.height;
+        let cw=internal.context.canvas.width;
+        let vp=internal.parcellation.viewport;
+        let width  = 350;
+        console.log('vp='+[vp.x0,vp.x1,vp.y0,vp.y1]+' w*h'+[cw,ch]);
+
+        let showdialog=new BisWebPanel(internal.layoutmanager,
+                                       {
+                                           name :"Top "+maxnodes+" Nodes<BR>(sorted by degree)",
+                                           width : width,
+                                           mode : 'sidebar',
+                                           dual : false,
+                                       });
+
+
+        let templates=webutil.getTemplates();
+        let newid=webutil.createWithTemplate(templates.bisscrolltable,$('body'));
+        let stable=$('#'+newid);
+        
+        let buttonnodepairs = [];
+
+        let callback = (e) => {
+            let id=e.target.id;
+            let node=buttonnodepairs[id];
+            internal.parameters.mode="Single Node";
+            this.innercontrol.setnode(node);
+        };
+
+        let thead = stable.find(".bisthead");
+        let tbody = stable.find(".bistbody",stable);
+
+        thead.empty();
+        tbody.empty();
+        tbody.css({'font-size':'12px',
+                   'user-select': 'none'});
+        thead.css({'font-size':'12px',
+                   'user-select': 'none'});
+        
+        let hd=$('<tr>'+
+                 ' <td width="5%">#</th>'+
+                 ' <td width="15%">Node</th>'+
+                 ' <td width="80%">Details</th>'+
+                 '</tr>');
+        thead.append(hd);
+        thead.css({ font: "Arial 12px"});
+
+
+        for (let i=0;i<maxnodes;i++) {
+
+            let node=c_data[numnodes-i].node;
+            let degree=c_data[numnodes-i].degree;
+            if (degree>0) {
+                let c = [ internal.parcellation.rois[node].x,
+                          internal.parcellation.rois[node].y,
+                          internal.parcellation.rois[node].z];
+                
+                let s0= i+1+".";
+                let s1= node+1;
+                let lobe=gui_Lobes[internal.parcellation.rois[node].attr[0]];
+                
+                let s2= 'Degree='+degree+'\t(MNI='+c+', Lobe='+lobe+')';
+                let nid=webutil.getuniqueid();
+                
+                let w=$(`<tr>
+                              <td width="5%">${s0}</td>
+                              <td width="15%">${s1}</td>
+                              <td width="80%" id="${nid}" class="btn-link">${s2}</td>
+                            </tr>`);
+                tbody.append(w);
+                $('#'+nid).click(callback);
+                buttonnodepairs[nid]=(node);
+            }
+        }
+
+        showdialog.getWidget().append(stable);
+        showdialog.show();
+        window.dispatchEvent(new Event('resize'));
+        internal.keynodedlg=showdialog;
+    }
 
     /* displays the matrices */
     showmatrices() { this.innercontrol.showmatrices(); }
