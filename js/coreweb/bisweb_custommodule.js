@@ -44,6 +44,7 @@ let ModuleList={};
  * @param {Number} opts.numViewers - Number of Image Viewers attached
  * @param {String} opts.name - Name of the panel / panel (if set)
  * @param {Boolean} opts.dual - If true allow dock and side bar (default false)
+ * @param {Number} opts.width - Size for the width of the custom element controller.
  */
 
 class CustomModule {
@@ -86,6 +87,7 @@ class CustomModule {
         this.dual = opts.dual || false;
 
         let width = opts.width || 250;
+
         // Three states
         this.panel=new BisWebPanel(layoutcontroller,{
             name : this.name,
@@ -113,7 +115,7 @@ class CustomModule {
 
         $(this.basewidget).addClass('bisweb-customelement-body');
         $(this.footer).addClass('bisweb-customelement-footer');
-        
+
         ModuleList[this.name]=this;
         this.threadmanager = $("bisweb-webworkercontroller")[0] || null;
     }
@@ -341,8 +343,11 @@ class CustomModule {
     
     /**
      * If needed creates the GUI. It then updates this with any new inputs
+     * 
+     * @param {Object} opts - Options for GUI creation.
+     * @param {Number} opts.width - Desired width for the container.
      */
-    createOrUpdateGUI() {
+    createOrUpdateGUI(opts = {}) {
         //if the module has modifications to its parameters add them, otherwise ignore them
 
         const self = this;
@@ -354,7 +359,8 @@ class CustomModule {
             let generatedContent = parser.parseDescriptionAndCreateGUI(this.basewidget,
                                                                        this.footer,
                                                                        description,
-                                                                       this.moduleOptions['numViewers']);
+                                                                       this.moduleOptions['numViewers'],
+                                                                       opts);
             
             // Gui Event Handling for Input stuff
             this.generatedContent=generatedContent;

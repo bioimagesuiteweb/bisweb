@@ -317,10 +317,13 @@ let recreateParameterGUI = function(dict, description) {
  * @param {Number} numViewers - how many image viewers (1 or 2)
  * @returns A dictionary containing information about the added element.
  */
-let parseDescriptionAndCreateGUI = function(frame, buttonFrame,description, numViewers) {
+let parseDescriptionAndCreateGUI = function(frame, buttonFrame,description, numViewers, opts = {}) {
 
     let gui = new dat.GUI( { autoPlace: false } );
     webutil.removeallchildren(frame);
+
+    console.log('gui width', gui.width, frame);
+    if (opts.width) { gui.width = opts.width; }
 
     let dict= { };
     createInputsGUI(gui,description,numViewers,dict);
