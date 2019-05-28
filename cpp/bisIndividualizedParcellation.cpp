@@ -299,7 +299,7 @@ namespace bisIndividualizedParcellation {
       std::unordered_map<int,int>::const_iterator voxelN = ntoNvoxel.find (Sopt(p));
       if (voxelN != ntoNvoxel.end())
         SoptN(p) = voxelN->second;
-	std::cout << "p=" << SoptN(p) << std::endl;
+//	std::cout << "p=" << SoptN(p) << std::endl;
     }
     
     
@@ -709,16 +709,13 @@ namespace bisIndividualizedParcellation {
     MatrixXf Xf = X.cast<float>();
     X.resize(0,0); 
     MatrixXf vSopt(t,Pmax);
-    std::cout << "++++ \t TEST1" << std::endl;
     slice(Xf,R,Sopt,vSopt);
-    std::cout << "++++ \t TEST2" << std::endl;
     
 //    MatrixXf distvSopt(n,Pmax);
 
 //    distvSopt = ((X.transpose()*vSopt*-2).colwise() + X.colwise().squaredNorm().transpose()).rowwise() + vSopt.colwise().squaredNorm();
     Xf = ((Xf.transpose()*vSopt*-2).colwise() + Xf.colwise().squaredNorm().transpose()).rowwise() + vSopt.colwise().squaredNorm();
 //    X = ((X.transpose()*vSopt*-2).colwise() + X.colwise().squaredNorm().transpose()).rowwise() + vSopt.colwise().squaredNorm();	
-    std::cout << "++++ \t TEST4" << std::endl;
 
     
     const int neighbors = 6;
@@ -850,16 +847,13 @@ namespace bisIndividualizedParcellation {
 
     // Second frame
     int i_dim[5]; indiv->getDimensions(i_dim);
-    if (i_dim[3]>1) {
-      // Stick exemplars into second frame
-
-      // exemplar1=(10,20,30);
-      // for (int i=0;i<num_exemplars;i++) {
-      //  exemplarijk[]
-      //let index=exemplar_[0]+*i_dim[0]+30*i_dim[0]*i_dim[1]+N;
-      //indivdata[index]= no_of_exemplar;
-    }
-      
+    if (i_dim[3]>1) {   
+	for (int p=0; p<Pmax; p++)
+	 {
+	   int index = int(SoptN(p));
+	   indivdata[index + N] = p+1;
+	 }
+    }     
     
     return 1;
   }
