@@ -23,7 +23,7 @@
 
 function moduleOutput = bis_wasmutils()
 
-  Module='biswasm';
+  Module='libbiswasm';
   internal.name='xenios';
 
   
@@ -69,12 +69,12 @@ function moduleOutput = bis_wasmutils()
 
 
     if ~exist('pathname')
-      pathname=strcat(mfilename('fullpath'),'\..\..\build\native');
+      pathname=strcat(mfilename('fullpath'),'/../../build/native');
     end
     
    
-    libname= strcat(pathname,strcat('\',Module));
-    headerfile=strcat(pathname,'\bis_matlab.h');
+    libname= strcat(pathname,strcat('/',Module));
+    headerfile=strcat(pathname,'/bis_matlab.h');
 
     disp(['__biswasm loading library']);
     disp(['__libname=',libname]);
