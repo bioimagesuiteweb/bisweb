@@ -480,12 +480,7 @@ tspan {
     background-color : rgba(29, 224, 150, 0.4);
 }
 
-.bisweb-customelement-widget {
-    margin: 0 auto;
-    width: 50%;
-}
-
-.bisweb-customelement-footer {
+.bisweb-centered {
     margin: 0 auto;
     width: 50%;
 }

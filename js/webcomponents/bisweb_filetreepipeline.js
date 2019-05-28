@@ -154,7 +154,6 @@ class FileTreePipeline extends HTMLElement {
 
             let pipelineModal = bis_webutil.createmodal('Create a pipeline');
             pipelineModal.footer.empty();
-            pipelineModal.body.addClass('bisweb-pipeline-modal');
 
             let addModuleButton = bis_webutil.createbutton({ 'name' : 'Add module', 'type' : 'success' });
             let saveModulesButton = bis_webutil.createbutton({ 'name' : 'Save pipeline', 'type' : 'primary'});
@@ -175,10 +174,11 @@ class FileTreePipeline extends HTMLElement {
                         if (moduleName) {
                             let mod = moduleIndex.getModule(moduleName);
 
-                            
-                            let customModule = bisweb_custommodule.createCustom(null, this.algocontroller, mod, { 'numViewers': 0, 'dual' : false, 'paramsMargin' : '5px', 'buttonsMargin' : '0px' });
-                            customModule.createOrUpdateGUI();
-                            setDgWidth($(customModule.panel.widget));
+                            //modal is centered to 50% of the width of the modal, so size it to this too
+                            let width = pipelineModal.body.width() / 2;
+                            let customModule = bisweb_custommodule.createCustom(null, this.algocontroller, mod, { 'numViewers': 0, 'dual' : false, 'paramsMargin' : '5px', 'buttonsMargin' : '0px', 'width' : width });
+                            customModule.createOrUpdateGUI({ 'width' : width });
+                            centerCustomElement($(customModule.panel.widget));
 
                             this.modules.push({ 'name' : moduleName, 'module' : customModule});
 
@@ -226,7 +226,6 @@ class FileTreePipeline extends HTMLElement {
                     $('.bisweb-pipeline-list').append(listItem);
                 }
 
-                console.log('params', params);
                 this.savedParameters = params;
                 pipelineModal.dialog.modal('hide');
 
@@ -236,8 +235,9 @@ class FileTreePipeline extends HTMLElement {
             //set pipeline modal to update its modules when it's hidden and shown, so long as no settings are saved so far.
             pipelineModal.dialog.on('show.bs.modal', () => {
                 if (!this.savedParameters) {
-                    for (let mod of this.modules) {
-                        mod.createOrUpdateGUI();
+                    console.log('mod', this.modules);
+                    for (let obj of this.modules) {
+                        obj.module.createOrUpdateGUI();
                     }
                 }
             });
@@ -248,11 +248,6 @@ class FileTreePipeline extends HTMLElement {
         }
 
         this.pipelineModal.dialog.modal('show');
-
-        //A bit hacky but sets the width of the dg to 50%
-        function setDgWidth(widget) {
-            widget.find('.dg.main').width('50%');
-        }
     }
 
     /**
@@ -278,7 +273,7 @@ class FileTreePipeline extends HTMLElement {
      * 
      */
     openModuleEditingModal(item) {
-        let modal = bis_webutil.createmodal(`Change parameters for ${name}`, 'modal-sm');
+        let modal = bis_webutil.createmodal(`Change parameters for ${name}`);
 
         //generate custom element gui with current params 
         //note that index in visual list will match index in internal list, so we can determine which internal list item to use by finding this element in the visual list
@@ -291,7 +286,6 @@ class FileTreePipeline extends HTMLElement {
             if ($(listItems[i]).attr('id') === $(item).attr('id')) { index = i; i = listItems.length; }
         }
 
-        console.log('module', this.modules[index]);
         let baseMod = moduleIndex.getModule(this.modules[index].name);
 
         let customModule = bisweb_custommodule.createCustom(null, this.algocontroller, baseMod, { 'numViewers' : 0, 'dual' : false, 'paramsMargin' : '5px', 'buttonsMargin' : '0px' });
@@ -537,8 +531,13 @@ class FileTreePipeline extends HTMLElement {
         return { 'matrix': taskMatrix, 'runs': runNames };
     }
 
-
 }
+
+//Adds 'bisweb-centered-customelement' class to custom element
+let centerCustomElement = (widget) => { 
+    $(widget).find('.bisweb-customelement-body').addClass('bisweb-centered');
+    $(widget).find('.bisweb-customelement-footer').addClass('bisweb-centered');
+};
 
 bis_webutil.defineElement('bisweb-filetreepipeline', FileTreePipeline);
 module.exports = FileTreePipeline;
