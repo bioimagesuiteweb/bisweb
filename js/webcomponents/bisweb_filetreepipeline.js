@@ -48,9 +48,9 @@ class FileTreePipeline extends HTMLElement {
                 <div id='bisweb-panel-tasks'>
                     <label>Tasks</label><br>
                 </div>
-                <div id='bisweb-panel-pipeline'>
+                <!--div id='bisweb-panel-pipeline'>
                     <label>Pipeline Tools</label><br>
-                </div> 
+                </div--> 
             </div>
         `);
 
@@ -284,18 +284,35 @@ class FileTreePipeline extends HTMLElement {
         }
 
         let baseMod = moduleIndex.getModule(this.modules[index].name);
-        
+        let customModule;
+
         //modal has to be displayed before width can be read.
         modal.dialog.on('shown.bs.modal', () => {
             //modal body padding is 20px by default
             let width = $(modal.body).outerWidth() - 40;
             console.log('width', width);
-            let customModule = bisweb_custommodule.createCustom(null, this.algocontroller, baseMod, { 'numViewers' : 0, 'dual' : false, 'paramsMargin' : '0px', 'buttonsMargin' : '0px', 'width' : width });
+            customModule = bisweb_custommodule.createCustom(null, this.algocontroller, baseMod, { 'numViewers' : 0, 'dual' : false, 'paramsMargin' : '0px', 'buttonsMargin' : '0px', 'width' : width });
             modal.body.append(customModule.panel.widget);
             customModule.createOrUpdateGUI( {'width' : width});
             customModule.updateParams(this.savedParameters[index]);
         });
         
+
+        //add save button to modal
+        modal.footer.empty();
+        let saveButton = bis_webutil.createbutton({ 'name' : 'Save', 'type' : 'btn-primary' });
+        saveButton.on('click', () => {
+            this.modules[index].module = customModule;
+            console.log('module', this.modules[index]);
+            modal.dialog.modal('hide');
+        });
+
+        let closeButton = bis_webutil.createButton({ 'name' : 'Close'});
+        closeButton.on('click', () => {
+            modal.dialog.modal('hide');
+        });
+
+        modal.footer.prepend(saveButton);
         modal.dialog.modal('show');
     }
 
