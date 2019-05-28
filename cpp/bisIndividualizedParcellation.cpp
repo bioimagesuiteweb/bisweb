@@ -1,4 +1,5 @@
 #include <memory>
+#include <cmath>
 #include <algorithm>
 #include <vector>
 #include <queue>
@@ -37,10 +38,24 @@ namespace bisIndividualizedParcellation {
         return true;
     return false;
   }
-  
+
+
+  int computeXYZ (float index, int dim[5], int xyz[3])
+  {
+	double ia, ib, ic;
+	int slicesize=dim[0]*dim[1];
+	ic = floor(index / slicesize);
+	ib = floor((index - (ic*slicesize)) / dim[0]);
+	ia = index - ib * dim[0] - ic*slicesize;
+	xyz[0] = ia;
+	xyz[1] = ib;
+	xyz[2] = ic;
+	return 1;
+	
+  }  
 
   // Remember to pass dim not image
-  int  ComputeMRFIncrements(int dim[5],int incr[6])
+  int  computeMRFIncrements(int dim[5],int incr[6])
   {
     int slicesize=dim[0]*dim[1];
     int index=0;
@@ -323,7 +338,7 @@ namespace bisIndividualizedParcellation {
     
     
     const int neighbors = 6;
-    int incr[neighbors]; ComputeMRFIncrements(dim,incr);
+    int incr[neighbors]; computeMRFIncrements(dim,incr);
     
     int sumVisited = 0;
     std::vector<int> VISITED(n,0);
@@ -457,6 +472,7 @@ namespace bisIndividualizedParcellation {
     indiv->fill(0);
     
     
+    std::cout << "Dimension of the parcellation = " << std::endl;
     int dim[5], dim2[5];
     FMRIImage->getDimensions(dim);
     groupparcellation->getDimensions(dim2);
@@ -719,7 +735,7 @@ namespace bisIndividualizedParcellation {
 
     
     const int neighbors = 6;
-    int incr[neighbors]; ComputeMRFIncrements(dim,incr);
+    int incr[neighbors]; computeMRFIncrements(dim,incr);
     
     int sumVisited = 0;
     std::vector<int> VISITED(n,0);
@@ -754,6 +770,7 @@ namespace bisIndividualizedParcellation {
           }  
       }
     
+    std::cout << "Dimension of the parcellation = " << std::endl;
     
     while (sumVisited < n)
       {
@@ -831,6 +848,7 @@ namespace bisIndividualizedParcellation {
     //int Voxel_indices[N];
     count = 0;
 
+    std::cout << "Dimension of the parcellation = " << std::endl;
 
     short* indivdata=indiv->getImageData();
     
@@ -847,11 +865,19 @@ namespace bisIndividualizedParcellation {
 
     // Second frame
     int i_dim[5]; indiv->getDimensions(i_dim);
+    std::cout << "Dimension of the parcellation = " << i_dim[3] << std::endl;
     if (i_dim[3]>1) {   
 	for (int p=0; p<Pmax; p++)
 	 {
 	   int index = int(SoptN(p));
 	   indivdata[index + N] = p+1;
+
+	   int xyz[3];
+	   computeXYZ(index, dim, xyz);
+    	   std::cout << "x = " << xyz[0] << ", y = " << xyz[1] << ", z = " << xyz[2] << std::endl;
+	   indivdata[index + 2*N] = xyz[0];
+	   indivdata[index + 3*N] = xyz[1];
+	   indivdata[index + 4*N] = xyz[2];		
 	 }
     }     
     
@@ -902,7 +928,7 @@ unsigned char* individualizedParcellationWASM(unsigned char* input, unsigned cha
   int out_dim[5]; parc_image->getDimensions(out_dim);
   float out_spa[5]; parc_image->getSpacing(out_spa);
   if (saveexemplars)
-    out_dim[3]=2;
+    out_dim[3]=5;
   else
     out_dim[3]=1;
   out_image->allocate(out_dim,out_spa);
