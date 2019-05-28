@@ -159,6 +159,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             negcolor : "#00dddd",
             radius : 1.0,
             matrixthreshold : 0.1,
+            opacity : 0.7,
         },
         datgui_controllers : null,
         datgui_nodecontroller : null,
@@ -1114,6 +1115,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         let coords = gui.addFolder('Core');
         coords.open();
         let disp = gui.addFolder('Display');
+        let disp2 = gui.addFolder('Display 3D');
         let clist = [];
         clist.push(coords.add(data,'mode',gui_Modes).name("Mode"));
         let a1=coords.add(data,'node',1,400).name("Node");
@@ -1135,6 +1137,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         clist.push(disp.addColor(data, 'poscolor').name("Pos-Color"));
         clist.push(disp.addColor(data, 'negcolor').name("Neg-Color"));
 
+        let da1=disp2.add(data,'opacity',0.0,1.0).name('Opacity').onFinishChange( () => {
+            connectvis3d.createAndDisplayBrainSurface(0, connectvis3d.brain_colors[0],data.opacity);
+            connectvis3d.createAndDisplayBrainSurface(1, connectvis3d.brain_colors[1],data.opacity);
+        });
+        clist.push(da1);
 
         internal.datgui_controllers=clist;
         
@@ -1469,8 +1476,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                     internal.parameters[attr] = dt.parameters[attr];
                 } 
             }
-            console.log('retrieving params(1)=',JSON.stringify(dt.parameters,null,3));
-            console.log('retrieving params(2)=',JSON.stringify(internal.parameters,null,3));
+            //console.log('retrieving params(1)=',JSON.stringify(dt.parameters,null,3));
+            //console.log('retrieving params(2)=',JSON.stringify(internal.parameters,null,3));
             for (let ia=0;ia<internal.datgui_controllers.length;ia++) 
                 internal.datgui_controllers[ia].updateDisplay();
 
@@ -1481,7 +1488,9 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             
             internal.showlegend=!dt.showlegend;
             toggleshowlegend();
-
+            connectvis3d.createAndDisplayBrainSurface(0, connectvis3d.brain_colors[0],internal.parameters.opacity);
+            connectvis3d.createAndDisplayBrainSurface(1, connectvis3d.brain_colors[1],internal.parameters.opacity);
+            
             internal.inrestorestate=false;
         },
         

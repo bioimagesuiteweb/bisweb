@@ -297,7 +297,7 @@ var createDisplayDialog=function(name,height=-1,width=-1) {
     let linestodraw =globalParams.internal.laststate.linestodraw;
     name+=' (mode='+linestodraw+')';
     
-    globalParams.displayDialog = webutil.createdialog(name, dim[0], dim[1], 0, 0, 5000,false);
+    globalParams.displayDialog = webutil.createdialog(name, dim[0], dim[1], 0, 0, 800,false);
     globalParams.displayDialog.setCloseCallback( () => { destroyDisplayDialog(); });
     globalParams.displayDialog.removeCloseButton();
     
@@ -789,6 +789,7 @@ var createlines = function() {
                   length : globalParams.internal.parameters.length,
                   thickness: globalParams.internal.parameters.thickness,
                   linestodraw : globalParams.internal.parameters.linestodraw,
+                  opacity : globalParams.internal.parameters.opacity,
                   singlevalue: singlevalue,
                   attribcomponent : attribcomponent,
                   filter: filter,

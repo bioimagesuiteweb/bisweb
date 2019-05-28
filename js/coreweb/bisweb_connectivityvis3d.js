@@ -7,11 +7,17 @@ const globalParams={
 
     internal : null,
     brainmesh : [ null,null],
+    braingeom : [ null,null],
 };
 
 const lobeoffset=10.0;
 const axisoffset=[0,5.0,20.0];
 
+const brain_colors = [
+    [ 0.7,0.52,0.52 ],
+    [ 0.8,0.6,0.6 ]
+];
+    
 
 // ---------------------------------------------------------------------------------------------------
 // Shaders
@@ -78,8 +84,32 @@ var initialize=function(internal) {
 // @param {array} textstring - brain surfaces  to parse (as json)
 // @param {String} FileName - filename to read from
 
-var parsebrainsurface = function(textstring,filename) {
+var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8) {
 
+    if (globalParams.brainmesh[index] !==null) { 
+        globalParams.brainmesh[index].visible=false;
+        globalParams.internal.subviewers[3].scene.remove(globalParams.brainmesh[index]);
+    }
+    
+    let material = new THREE.ShaderMaterial({
+        transparent : true,
+        "uniforms": {
+            "diffuse": {  "type":"c","value":
+                          {"r":color[0],
+                           "g":color[1],
+                           "b":color[2]}},
+            "opacity": {"type":"f","value":opacity}
+        },
+        vertexShader : brain_vertexshader_text,
+        fragmentShader : brain_fragmentshader_text,
+    });
+    
+    globalParams.brainmesh[index] = new THREE.Mesh(globalParams.braingeom[index],material);
+    globalParams.brainmesh[index].visible=true;
+    globalParams.internal.subviewers[3].scene.add(globalParams.brainmesh[index]);
+};
+
+var parsebrainsurface = function(textstring,filename) {
     
     let meshindex=0;
     let isright=filename.lastIndexOf("right");
@@ -87,7 +117,6 @@ var parsebrainsurface = function(textstring,filename) {
         meshindex=1;
     
     let obj= JSON.parse(textstring);
-    let values=[0.6,0.9];
     
     let vertices = new Float32Array(obj.points.length);
     let indices = new Uint16Array(obj.triangles.length);
@@ -105,32 +134,13 @@ var parsebrainsurface = function(textstring,filename) {
     for (let i=0;i<obj.triangles.length;i++) 
         indices[i]=obj.triangles[i];
     
-    if (globalParams.brainmesh[meshindex]!==null) {
-        globalParams.brainmesh[meshindex].visible=false;
-        globalParams.internal.subviewers[3].scene.remove(globalParams.brainmesh[meshindex]);
-    }
-    
     let buf=new THREE.BufferGeometry();
     buf.setIndex( new THREE.BufferAttribute( indices, 1));
     buf.addAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
     buf.computeVertexNormals();
-    
-    let material = new THREE.ShaderMaterial({
-        transparent : true,
-        "uniforms": {
-            "diffuse": {  "type":"c","value":
-                          {"r":values[meshindex],
-                           "g":values[meshindex],
-                           "b":values[meshindex]}},
-            "opacity": {"type":"f","value":0.7}
-        },
-        vertexShader : brain_vertexshader_text,
-        fragmentShader : brain_fragmentshader_text,
-    });
-    
-    globalParams.brainmesh[meshindex] = new THREE.Mesh(buf,material);
-    globalParams.brainmesh[meshindex].visible=true;
-    globalParams.internal.subviewers[3].scene.add(globalParams.brainmesh[meshindex]);
+
+    globalParams.braingeom[meshindex]=buf;
+    createAndDisplayBrainSurface(meshindex, brain_colors[meshindex],0.7);
     
     if (globalParams.internal.axisline[0]===null) {
         // create axis line meshes
@@ -312,4 +322,6 @@ module.exports = {
     draw3dcrosshairs : draw3dcrosshairs,
     drawlines3d : drawlines3d,
     lobeoffset : lobeoffset,
+    createAndDisplayBrainSurface : createAndDisplayBrainSurface,
+    brain_colors : brain_colors,
 };
