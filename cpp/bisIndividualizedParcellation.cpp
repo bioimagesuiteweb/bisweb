@@ -450,8 +450,8 @@ namespace bisIndividualizedParcellation {
   // ----------------------------------------------------------------------------------------------------------------
   // ----------------------------------------------------------------------------------------------------------------
   /// float
-    int runIndividualizedParcellationFloat(bisSimpleImage<float>* FMRIImage, bisSimpleImage<short>* groupparcellation, bisSimpleImage<short>* indiv,
-                                    int numexemplars)
+  int runIndividualizedParcellationFloat(bisSimpleImage<float>* FMRIImage, bisSimpleImage<short>* groupparcellation, bisSimpleImage<short>* indiv,
+                                         int numexemplars)
   {
     // Zero everything
     indiv->fill(0);
@@ -525,8 +525,10 @@ namespace bisIndividualizedParcellation {
         count++;
       }
     }
-    
-    delete FMRIImage;
+
+    int dummy_dim[5]= { 1,1,1,1,1 };
+    float dummy_spa[5]={ 1.0,1.0,1.0,1.0,1.0 };
+    FMRIImage->allocate(dummy_dim,dummy_spa);
   
     VectorXd parcel(count);
     std::unordered_map<int,int> ntoNvoxel;
@@ -832,6 +834,7 @@ namespace bisIndividualizedParcellation {
     //int Voxel_indices[N];
     count = 0;
 
+
     short* indivdata=indiv->getImageData();
     
     for (int voxel=0;voxel<N;voxel++)
@@ -844,6 +847,20 @@ namespace bisIndividualizedParcellation {
           }
         }
       }
+
+    // Second frame
+    int i_dim[5]; indiv->getDimensions(i_dim);
+    if (i_dim[3]>1) {
+      // Stick exemplars into second frame
+
+      // exemplar1=(10,20,30);
+      // for (int i=0;i<num_exemplars;i++) {
+      //  exemplarijk[]
+      //let index=exemplar_[0]+*i_dim[0]+30*i_dim[0]*i_dim[1]+N;
+      //indivdata[index]= no_of_exemplar;
+    }
+      
+    
     return 1;
   }
 
@@ -874,6 +891,7 @@ unsigned char* individualizedParcellationWASM(unsigned char* input, unsigned cha
 
   int numexemplars=params->getIntValue("numberofexemplars",268);
   int usefloat=params->getBooleanValue("usefloat");
+  int saveexemplars=params->getBooleanValue("saveexemplars",false);
   
   if (debug)  {
     std::cout << "........................" << std::endl;
@@ -886,7 +904,14 @@ unsigned char* individualizedParcellationWASM(unsigned char* input, unsigned cha
   }
 
   std::unique_ptr<bisSimpleImage<short> > out_image(new bisSimpleImage<short>("out_parc"));
-  out_image->copyStructure(parc_image.get());
+  //
+  int out_dim[5]; parc_image->getDimensions(out_dim);
+  float out_spa[5]; parc_image->getSpacing(out_spa);
+  if (saveexemplars)
+    out_dim[3]=2;
+  else
+    out_dim[3]=1;
+  out_image->allocate(out_dim,out_spa);
 
   int result=0;
   if (usefloat)

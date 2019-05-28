@@ -25,6 +25,7 @@ const biswrap = require('libbiswasm_wrapper');
 const baseutils=require("baseutils");
 const BaseModule = require('basemodule.js');
 const BisWebLinearTransformation = require('bisweb_lineartransformation.js');
+const smreslice=require('bis_imagesmoothreslice');
 
 /**
  * Calculates the Generalized Linear Model (GLM) of an fMRI data set. Takes a regressor (independent variable), 
@@ -70,6 +71,16 @@ class IndivParcellationModule extends BaseModule {
                     "low" : 0,
                     "high": 20,
                 },
+                {
+                    "name": "Save Exemplars?",
+                    "description": "Saves exemplars in second frame",
+                    "priority": 20,
+                    "advanced": true,
+                    "gui": "check",
+                    "varname": "saveexemplars",
+                    "type": 'boolean',
+                    "default": false,
+                },
                 baseutils.getDebugParam()
             ]
         };
@@ -105,7 +116,7 @@ class IndivParcellationModule extends BaseModule {
 
         let fmri = this.inputs['fmri'];
         let group = this.inputs['parc'];
-
+        let saveexemplars=super.parseBoolean(vals.saveexemplars);
         let fmriDim = fmri.getDimensions(), groupDim = group.getDimensions();
 
         return new Promise( async (resolve, reject) => {
@@ -144,28 +155,38 @@ class IndivParcellationModule extends BaseModule {
             // Smooth fMRI  if needed
             let smooth=vals.smooth;
             if (smooth > 0.001 ) {
-                console.log('++++ \t Smoothing fMRI image...');
+                let d=fmri.getDimensions();
                 let c = smooth * 0.4247;
-                let smooth_paramobj = {
-                    "sigmas": [c, c, c],
-                    "inmm": true,
-                    "radiusfactor": 1.5,
-                    "vtkboundary" : true,
-                };
-                try { 
-                    fmri = await biswrap.gaussianSmoothImageWASM(fmri, smooth_paramobj, vals.debug);
-                } catch(e) {
-                    reject(e);
-                    return;
+                if (d[3]<128) {
+                    console.log('++++ \t Smoothing fMRI image using WASM...');
+                    let smooth_paramobj = {
+                        "sigmas": [c, c, c],
+                        "inmm": true,
+                        "radiusfactor": 1.5,
+                        "vtkboundary" : true,
+                    };
+                    try { 
+                        fmri = await biswrap.gaussianSmoothImageWASM(fmri, smooth_paramobj, vals.debug);
+                    } catch(e) {
+                        reject(e);
+                        return;
+                    }
+                } else {
+                    let outdata={};
+                    console.log('++++ \t Smoothing fMRI image using JS ...');
+                    fmri=smreslice.smoothImage(fmri, [c,c,c], true, 1.5, outdata,true);
+                    console.log('++++ \t outdata = ',JSON.stringify(outdata));
                 }
             }
+                
 
             // Run Individualized Parcellation Code
             try {
-                let paramobj= { 'numberofexemplars' : vals.numregions, "usefloat" : true };
+                let paramobj= { 'numberofexemplars' : vals.numregions, "usefloat" : true , "saveexemplars": saveexemplars };
                 this.outputs['output']= await biswrap.individualizedParcellationWASM(fmri, group, paramobj, vals.debug);
                 resolve();
             } catch(e) {
+                console.log('error=',e);
                 reject(e);
                 return;
             }

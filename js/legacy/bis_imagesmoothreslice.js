@@ -56,7 +56,7 @@ var generateKernel = function (sigma,radius) {
 };
 
 // axis=0 (X),1=Y, 2=Z
-var oneDConvolution = function(imagedata_in,imagedata_out,dim,kernel,radius,axis) {
+var oneDConvolution = function(imagedata_in,imagedata_out,dim,kernel,radius,axis,vtkboundary=false) {
 
     var sum,index=0,coord,ia,ib,ic,tau,fixedtau;
     var slicesize=dim[0]*dim[1];
@@ -91,7 +91,7 @@ var oneDConvolution = function(imagedata_in,imagedata_out,dim,kernel,radius,axis
                             var v=kernel[tau+radius]*imagedata_in[index+tau*newoffsets[0]];
                             sum+=v;
                         }
-                    } else {
+                    } else if (vtkboundary===false) {
                         for (tau=-radius;tau<=radius;tau++) {
                             coord=tau+ia;
                             fixedtau=tau;
@@ -103,8 +103,20 @@ var oneDConvolution = function(imagedata_in,imagedata_out,dim,kernel,radius,axis
                             
                             sum+=kernel[tau+radius]*imagedata_in[index+fixedtau*newoffsets[0]];
                         }
+                    } else {
+                        let sumw=0.0;
+                        for (let tau=-radius;tau<=radius;tau++) {
+                            coord=tau+ia;
+                            if (coord>=0 && coord<=newdim0minus)  {
+                                let fixedtau=tau;
+                                sum+=kernel[tau+radius]*imagedata_in[index+fixedtau*newoffsets[0]];
+                                sumw+=kernel[tau+radius];
+                            }
+                        }
+                        if (sumw>0.0)
+                            sum=sum/sumw;
                     }
-                    imagedata_out[index]=sum;
+                    imagedata_out[index]=sum; 
                     index=index+newoffsets[0];
                 }
             }
@@ -122,13 +134,15 @@ var oneDConvolution = function(imagedata_in,imagedata_out,dim,kernel,radius,axis
  * @param {object} outdata - diagnostic output data
  * @returns {BisImage} out - Smooth image
  */
-var smoothImage = function(input, sigmas, inmm, radiusfactor,outdata) {
+var smoothImage = function(input, sigmas, inmm, radiusfactor,outdata,vtkboundary=false) {
 
     sigmas = sigmas || [ 1.0,1.0,1.0 ];
     inmm = inmm || false;
     radiusfactor = radiusfactor || 1.5;
     outdata = outdata || { };
 
+    console.log('Sigmas=',sigmas,inmm,radiusfactor,vtkboundary);
+    
     let output=new BisWebImage();
     let temp=new BisWebImage();
     output.cloneImage(input,{ type : 'float'});
@@ -161,13 +175,13 @@ var smoothImage = function(input, sigmas, inmm, radiusfactor,outdata) {
     var kernely=generateKernel(stdev[1],radii[1]);
     var kernelz=generateKernel(stdev[2],radii[2]);
 
-    oneDConvolution(input_data,temp_data,dim,kernelx,radii[0],0);
-    oneDConvolution(temp_data,output_data,dim,kernely,radii[1],1);
+    oneDConvolution(input_data,temp_data,dim,kernelx,radii[0],0,vtkboundary);
+    oneDConvolution(temp_data,output_data,dim,kernely,radii[1],1,vtkboundary);
 
     if (dim[2]>1) {
         for(var j=0;j<len;j++)
             temp_data[j]=output_data[j];
-        oneDConvolution(temp_data,output_data,dim,kernelz,radii[2],2);
+        oneDConvolution(temp_data,output_data,dim,kernelz,radii[2],2,vtkboundary);
     } else {
         console.log('2d smoothing ...');
     }

@@ -107,6 +107,7 @@ class individualizedParcellation(bis_basemodule.baseModule):
         paramobj= {
             'numberofexemplars' : vals['numregions'],
             'usefloat' : self.parseBoolean(vals['usefloat']),
+            'saveexemplars' : self.parseBoolean(vals['saveexemplars']),
         };
         try: 
             self.outputs['output']=libbis.individualizedParcellationWASM(fmri,group,paramobj,debug);
