@@ -201,8 +201,6 @@ class GrapherModule extends HTMLElement {
         let footer = graphWindow.getContent().find('.modal-footer');
         $(footer).empty();
 
-        console.log('footer', footer, $(footer).find('.btn'));
-
         let bbar = bis_webutil.createbuttonbar({ 'css' : 'width: 80%;'});
 
         //settings button should be attached next to close button
@@ -605,7 +603,6 @@ class GrapherModule extends HTMLElement {
 
         let self = this;
         function addItemToDropdown(key, dropdownMenu, optionalCharts) {
-            console.log('optional charts', optionalCharts, 'key', key);
             let button; 
             if (optionalCharts.includes(key)) {
                 button = $(`<a class='dropdown-item bisweb-optional' style='visibility: hidden' href='#'>${key}<br></a>`);
