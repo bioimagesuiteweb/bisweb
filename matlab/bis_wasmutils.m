@@ -73,7 +73,9 @@ function moduleOutput = bis_wasmutils()
 
     if ~exist('pathname')
       m=mfilename('fullpath')
-      pathname=[ m  filesep '..' filesep '..' filesep 'build' filesep 'native'];
+      [filepath,name,ext] = fileparts(m)
+      [filepath,name,ext] = fileparts(filepath)
+      pathname=[ filepath filesep 'build' filesep 'native'];
     end
     
    
