@@ -271,7 +271,7 @@ class ConnMatrix {
         //var s= [ "Pos", "Neg","Sum","Diff" ];
         //var s2= [ "Lobe","EBA","Network","Broadmann","","",""];
 
-        console.log('+++++ Drawing lines, mode='+mode+' singlevalue='+singlevalue+', attribcomponent='+attribcomponent);
+
         
         this.flagMatrix=util.zero(np,4);
         
@@ -280,6 +280,8 @@ class ConnMatrix {
         var component=util.range(attribcomponent,0,numcomp);
         if (component===1)
             component=3;
+
+        console.log('+++++ Drawing lines, mode='+mode+' singlevalue='+singlevalue+', attribcomponent='+attribcomponent);
         
         var compvalue=0;
         if (mode===1)
