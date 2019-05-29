@@ -581,8 +581,6 @@ class FileTreePipeline extends HTMLElement {
             }
 
             console.log('parsed data', parsedData);
-            let tr = parsedData['tr'];
-            let offset = parsedData['offset'];
             let orderedRuns = {}, range = { lowRange: -1, highRange: -1 };
 
             for (let runName of Object.keys(parsedData.runs)) {
@@ -616,7 +614,32 @@ class FileTreePipeline extends HTMLElement {
                 });
 
                 console.log('sorted run', orderedRuns[runName]);
+
             }
+
+            let baseDirectory = this.filetree.baseDirectory;
+            let tr = parsedData['TR'];
+            let offset = parsedData['offset'];
+            let promiseArray = [];
+            for (let runName of Object.keys(orderedRuns)) {
+                let tsvFile = "ONSET\tDURATION\tEVENT_TYPE\n\r", tsvFilename = ''; 
+                for (let task of orderedRuns[runName]) {
+                    let lowRange = (task.value[0] - offset) * tr, highRange = (task.value[1] - offset) * tr;
+                    let duration = (highRange - lowRange); 
+
+                    tsvFile = tsvFile + '' + lowRange + '\t' + duration + '\t' + task.task + '\n\r';
+                }
+
+                tsvFilename = baseDirectory + '/' + runName + '.tsv';
+                console.log('filename', tsvFilename, 'contents', tsvFile);
+                promiseArray.push( bis_genericio.write(tsvFilename, tsvFile));
+            }
+
+            Promise.all(promiseArray).then( () => {
+                console.log('write done');
+                bis_webutil.createAlert('TSV file write done. You may want to rename these!');
+            })
+
         });
     }
 }
