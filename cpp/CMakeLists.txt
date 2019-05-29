@@ -38,6 +38,7 @@ SET (BISWEB_PYTHON_PATH ${PROJECT_SOURCE_DIR}/../config/bis_path.py)
 SET (MODULE_LIST_FILENAME ${PROJECT_SOURCE_DIR}/ModuleList.txt)
 SET (PYTHON_MODULE_LIST_FILENAME ${PROJECT_SOURCE_DIR}/PythonModuleList.txt)
 GET_FILENAME_COMPONENT(WEBPLIBCONFIG ${PROJECT_SOURCE_DIR}/../config/lib.config.js ABSOLUTE)
+GET_FILENAME_COMPONENT(WEBPPACK ${PROJECT_SOURCE_DIR}/../node_modules/.bin/webpack-cli ABSOLUTE)
 FIND_PROGRAM(NodeInterp node)
 
 
@@ -341,7 +342,7 @@ IF (BIS_A_EMSCRIPTEN)
   add_custom_command(OUTPUT ${OUTSCRIPT}
     DEPENDS ${MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JSFILES}  ${LIBNAME} ${INSCRIPT} ${JS_WRAP_OUTPUT} ${JS_DATE_OUTPUT} ${WEBPACK_WASM_MODULE} ${CONFIGFILE} ${PROJECT_SOURCE_DIR}/../build/web/bisdate.json ${PROJECT_SOURCE_DIR}/../build/web/bislib.js
     PRE_BUILD COMMENT "Creating webpack-cli commandline library ${BISWEBLIBFILE}"
-    COMMAND webpack-cli --entry ${INSCRIPT} --config ${CONFIGFILE} --output-path ${LIBRARY_OUTPUT_PATH} --output-filename ${BISWEBLIBFILE} 
+    COMMAND ${WEBPPACK} --entry ${INSCRIPT} --config ${CONFIGFILE} --output-path ${LIBRARY_OUTPUT_PATH} --output-filename ${BISWEBLIBFILE} 
     )
   add_custom_target(${BISWEBLIBFILE} ALL DEPENDS ${OUTSCRIPT})
 
@@ -451,7 +452,6 @@ ELSE(BIS_A_EMSCRIPTEN)
     SET (CMAKE_CXX_FLAGS "${COMPILE_FLAGS} -std=c++11" CACHE STRING "" FORCE)
     SET (CMAKE_C_FLAGS ${COMPILE_FLAGS} CACHE STRING "" FORCE)
   ENDIF(WIN32)
-
   
   
   include_directories ( ${EIGEN3_INCLUDE_DIRS} )
