@@ -20,6 +20,9 @@ function pathname = bispath()
   [filepath,name,ext] = fileparts(m);
   [filepath,name,ext] = fileparts(filepath);
   pathname=[ filepath filesep  'build' filesep 'native' ];
-  disp(['Adding:',pathname]);
+  if( ~exist([ pathname filesep 'biswrapper.m'] , 'file'))
+      pathname= [ filepath filesep 'lib' ];
+  end
   addpath(pathname);
+ 
 end
