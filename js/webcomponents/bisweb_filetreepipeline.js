@@ -588,16 +588,36 @@ class FileTreePipeline extends HTMLElement {
             for (let runName of Object.keys(parsedData.runs)) {
                 orderedRuns[runName] = [];
                 for (let task of Object.keys(parsedData.runs[runName])) {
-                    orderedRuns[runName].push(this.parseEntry(parsedData.runs[runName][task], range));
+                    orderedRuns[runName].push({ 'task' : task, 'value' : this.parseEntry(parsedData.runs[runName][task], range) });
                 }
 
-                console.log('ordered runs', orderedRuns);
+                //sort ordered runs by their ranges (note that this assumes that ranges do not overlap)
+                //ensure that all arrays are fully expanded before sorting
+                let newVals = [];
+                for (let i = 0; i < orderedRuns[runName].length; i++) {
+                    if (Array.isArray(orderedRuns[runName][i].value[0])) {
+                        let expandedVals = orderedRuns[runName].splice(i, 1);
+                        
+                        for (let val of expandedVals[0].value) {
+                            newVals.push({ 'task' : expandedVals[0].task, 'value' : val});
+                        }
+
+                        
+                        i = i - 1;
+                    }
+                }
+
+                orderedRuns[runName] = orderedRuns[runName].concat(newVals);
+
+                orderedRuns[runName].sort( (a,b) => {
+                    if (a.value[0] < b.value[0]) { return -1;}
+                    if (a.value[0] > b.value[0]) { return 1; }
+                    return 0;
+                });
+
+                console.log('sorted run', orderedRuns[runName]);
             }
         });
-
-        function parseAndOrderTask(task) {
-
-        }
     }
 }
 
