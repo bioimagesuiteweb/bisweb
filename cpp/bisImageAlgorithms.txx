@@ -1228,7 +1228,7 @@ namespace bisImageAlgorithms {
     // ---------------------------------------------------------------------------
   // Compute ROI Mean
   // ---------------------------------------------------------------------------
-  template<class T> int computeROIMean(bisSimpleImage<T>* input,bisSimpleImage<short>* roi,Eigen::MatrixXf& output)
+  template<class T> int computeROIMean(bisSimpleImage<T>* input,bisSimpleImage<short>* roi,Eigen::MatrixXf& output,int storecentroids)
   {
     
     if (doImagesHaveSameSize<T,short>(input,roi,0)==0)
@@ -1242,11 +1242,15 @@ namespace bisImageAlgorithms {
       }
 
     int dim[5]; input->getDimensions(dim);
+
     int volsize = dim[0]*dim[1]*dim[2];
     int numframes = dim[3];
     int numrois=int(r[1]);
-
-    int mat_dim[2] = { numframes,numrois };
+    int extra=0;
+    if (storecentroids)
+      extra=5;
+    
+    int mat_dim[2] = { numframes+extra,numrois };
 
     bisEigenUtil::resizeZeroMatrix(output,mat_dim);
     
@@ -1256,25 +1260,45 @@ namespace bisImageAlgorithms {
     
     T* inpdata= input->getImageData();
     short* roidata= roi->getImageData();
-
+    
     std::cout << "\t Computing ROI: volsize=" << volsize << " numrois=" << numrois << " numframes=" << numframes << " range=" << r[0] << ":" << r[1] << std::endl;
 
-    for (int voxel=0;voxel<volsize;voxel++)
-      {
-	int region=int(roidata[voxel])-1;
-	if (region>=0)
-	  {
-	    num[region]+=1;
-	    for (int frame=0;frame<numframes;frame++)  {
-	      output(frame,region)=output(frame,region)+inpdata[voxel+frame*volsize];
-	    }
-	  }
+    int voxel=0;
+
+    for (int k=0;k<dim[2];k++) {
+      for (int j=0;j<dim[1];j++) {
+        for (int i=0;i<dim[0];i++) {
+          int region=int(roidata[voxel])-1;
+          if (region>=0)
+            {
+              num[region]+=1;
+              for (int frame=0;frame<numframes;frame++)  {
+                output(frame,region)=output(frame,region)+inpdata[voxel+frame*volsize];
+              }
+              if (storecentroids) {
+                output(numframes+2,region)=output(numframes+2,region)+i;
+                output(numframes+3,region)=output(numframes+3,region)+j;
+                output(numframes+4,region)=output(numframes+4,region)+k;
+              }
+            }
+          voxel++;
+        }
       }
+    }
     
     for (int region=0;region<numrois;region++) {
-      for (int frame=0;frame<numframes;frame++) 
-	if (num[region]>0)
+      if (num[region]>0) {
+        for (int frame=0;frame<numframes;frame++) 
 	  output(frame,region)=output(frame,region)/float(num[region]);
+        if (extra>0) {
+          for (int frame=numframes+2; frame<numframes+extra;frame++)
+            output(frame,region)=output(frame,region)/float(num[region]);
+          output(numframes+1,region)=num[region];
+          output(numframes,region)=-1.0;
+        }
+      } else if (extra>0) {
+        output(numframes,region)=-1.0;
+      }
     }
     
     return 1;
