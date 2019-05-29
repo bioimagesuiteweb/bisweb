@@ -24,12 +24,12 @@
 function moduleOutput = bis_wasmutils()
 
   Module='libbiswasm';
+
   if filesep =='\'
     Module='biswasm';
   end
   internal.name='xenios';
 
-  
   moduleOutput.Module=Module;
   moduleOutput.loadlib=@initialize;
   moduleOutput.unload=@unload;
@@ -63,7 +63,7 @@ function moduleOutput = bis_wasmutils()
 
   % Master calls
   moduleOutput.wrapper_serialize=@wrapper_serialize;
-  moduleOutput.wrapper_deserialize_and_delete=@wrapper_deserialize_and_delete
+  moduleOutput.wrapper_deserialize_and_delete=@wrapper_deserialize_and_delete;
   
 
 % -----------------------------------------------------
@@ -72,13 +72,13 @@ function moduleOutput = bis_wasmutils()
 
 
     if ~exist('pathname')
-      m=mfilename('fullpath')
-      [filepath,name,ext] = fileparts(m)
-      [filepath,name,ext] = fileparts(filepath)
-      pathname=[ filepath filesep 'build' filesep 'native'];
+      m=mfilename('fullpath');
+      [filepath,name,ext] = fileparts(m);
+      [filepath,name,ext] = fileparts(filepath);
+      disp('Auto setting pathname');
+      pathname=[ filepath filesep 'build' filesep 'native']
     end
     
-   
     libname= strcat(pathname,strcat(filesep,Module));
 
     headerfile=strcat(pathname,strcat(filesep,'bis_matlab.h'));
@@ -438,10 +438,12 @@ function moduleOutput = bis_wasmutils()
 	  case get_image_magic_code()
 	    out={ };
 	    dimensions=typecast(rawdata(17+offset:36+offset,:),'int32');
-	    out.spacing=typecast(rawdata(37+offset:56+offset,:),'single');
+
 	    tmp=typecast(rawdata(57+offset:total_length+offset,1:1),typename);
-	    out.data=reshape(tmp,dimensions(1),dimensions(2),dimensions(3),dimensions(4),dimensions(5));
-	    out.dimensions=dimensions;
+	    out.img=reshape(tmp,dimensions(1),dimensions(2),dimensions(3),dimensions(4),dimensions(5));
+	    out.hdr.dime.dim=[ 5, dimensions(1),dimensions(2),dimensions(3),dimensions(4),dimensions(5) ];
+            sp=typecast(rawdata(37+offset:56+offset,:),'single');
+            out.hdr.dime.pixdim=[ 1.0, sp(1), sp(2), sp(3), sp(4), sp(5) ];
 	  case get_grid_magic_code()
 	    out={ };
 	    out.usebspline=typecast(rawdata(17+offset:20+offset,:),'int32');

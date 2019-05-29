@@ -16,10 +16,10 @@
 % ENDLICENSE
 
 function pathname = bispath()
-  m=mfilename('fullpath')
-  [filepath,name,ext] = fileparts(m)
-  [filepath,name,ext] = fileparts(filepath)
-  pathname=[ filepath filesep  'build' filesep 'native' ]
+  m=mfilename('fullpath');
+  [filepath,name,ext] = fileparts(m);
+  [filepath,name,ext] = fileparts(filepath);
+  pathname=[ filepath filesep  'build' filesep 'native' ];
   disp(['Adding:',pathname]);
   addpath(pathname);
 end
