@@ -116,6 +116,24 @@ class FileTreePipeline extends HTMLElement {
             this.graphelement.chartInvokedFrom = 'task';
             this.filetree.parseTaskImagesFromTree();
         });
+
+        let convertTSVButton = bis_webfileutil.createFileButton({ 
+            'name': 'Convert task file to .tsv', 
+            'type' : 'primary', 
+            'callback': (f) => {
+                this.graphelement.chartInvokedFrom = 'task';
+                this.parseTaskFileToTSV(f);
+            },
+        },
+            {
+                'title': 'Choose task file',
+                'filters': [
+                    { 'name': 'Task Files', extensions: ['json'] }
+                ],
+                'suffix': 'json',
+                'save': false,
+        });
+
         
         plotTasksButton.addClass('bisweb-load-enable');
         plotTasksButton.prop('disabled', 'true');
@@ -123,6 +141,7 @@ class FileTreePipeline extends HTMLElement {
         taskButtonBar.append(importTaskButton);
         taskButtonBar.append(clearTaskButton);
         taskButtonBar.append(plotTasksButton);
+        taskButtonBar.append(convertTSVButton);
 
 
         return taskButtonBar;
@@ -324,7 +343,7 @@ class FileTreePipeline extends HTMLElement {
      */
     loadStudyTaskData(name) {
 
-        let lowRange = -1, highRange = -1, parsedData;
+        let chartRanges = { 'lowRange' : -1, 'highRange' : -1}, parsedData;
         bis_genericio.read(name, false).then((obj) => {
 
             //parse raw task data
@@ -332,21 +351,20 @@ class FileTreePipeline extends HTMLElement {
                 parsedData = JSON.parse(obj.data);
                 let runs = Object.keys(parsedData.runs);
 
-                //parsedRuns is the new 
                 let parsedRuns = {};
-                for (let key of runs) {
+                for (let run of runs) {
 
                     //parse data for each run
-                    let tasks = Object.keys(parsedData.runs[key]);
+                    let tasks = Object.keys(parsedData.runs[run]);
                     for (let task of tasks) {
-                        let range = parsedData.runs[key][task];
-                        if (!parsedRuns[key]) { parsedRuns[key] = {}; }
-                        parsedRuns[key][task] = parseEntry(range);
+                        let range = parsedData.runs[run][task];
+                        if (!parsedRuns[run]) { parsedRuns[run] = {}; }
+                        parsedRuns[run][task] = this.parseEntry(range, chartRanges);
                     }
                 }
 
                 let maxFrames = parseInt(parsedData['frames']);
-                if (maxFrames) { highRange = maxFrames; }
+                if (maxFrames) { chartRanges.highRange = maxFrames; }
 
                 //parse ranges into 0 and 1 array
                 let parsedRanges = [], labelsArray = [], tasks = [], taskNames = {}, range;
@@ -355,7 +373,7 @@ class FileTreePipeline extends HTMLElement {
                     //change label to match the format of the other labels, e.g. 'task_1' instead of 'task1'
                     let reformattedRun = run.replace(/(\d)/, (match, m1) => { return '_' + m1; });
 
-                    range = createArray(parsedRuns[run]);
+                    range = createArray(parsedRuns[run], chartRanges);
                     parsedRanges.push(range);
                     labelsArray.push(reformattedRun);
 
@@ -363,7 +381,7 @@ class FileTreePipeline extends HTMLElement {
                     let regions = {};
                     for (let region of Object.keys(parsedRuns[run])) {
                         if (!taskNames[region]) { taskNames[region] = true; }
-                        regions[region] = createArray(parsedRuns[run][region]);
+                        regions[region] = createArray(parsedRuns[run][region], chartRanges);
                     }
 
                     parsedRuns[run].parsedRegions = regions;
@@ -459,29 +477,12 @@ class FileTreePipeline extends HTMLElement {
             }
         });
 
-        function parseEntry(entry) {
-
-            if (Array.isArray(entry)) {
-                let entryArray = [];
-                for (let item of entry)
-                    entryArray.push(parseEntry(item));
-
-                return entryArray;
-            }
-
-            let range = entry.split('-');
-            for (let i = 0; i < range.length; i++) { range[i] = parseInt(range[i]); }
-
-            if (lowRange < 0 || lowRange > range[0]) { lowRange = range[0]; }
-            if (highRange < range[1]) { highRange = range[1]; }
-
-            return range;
-        }
 
         //Creates an array of 1's and 0's designating whether the task is on or off from either the list of task regions in a run or a single task region in a run
-        function createArray(run) {
-            let taskArray = new Array(highRange).fill(0);
+        function createArray(run, chartRange) {
+            let taskArray = new Array(chartRange.highRange).fill(0);
 
+            console.log('run', run);
             //the data for each individual run will be formatted as an array while the structure for each task will be an object
             if (Array.isArray(run)) {
                 if (Array.isArray(run[0])) {
@@ -507,14 +508,34 @@ class FileTreePipeline extends HTMLElement {
 
             //take the offset from the front before returning
             taskArray = taskArray.slice(parsedData.offset);
+            //console.log('task array', taskArray);
             return taskArray;
 
             function addToArray(range) {
-                for (let i = range[0]; i <= range[1]; i++) {
+                for (let i = range[0]; i < range[1]; i++) {
                     taskArray[i] = 1;
                 }
             }
         }
+    }
+
+    parseEntry(entry, range) {
+
+        if (Array.isArray(entry)) {
+            let entryArray = [];
+            for (let item of entry)
+                entryArray.push(this.parseEntry(item, range));
+
+            return entryArray;
+        }
+
+        let entryRange = entry.split('-');
+        for (let i = 0; i < entryRange.length; i++) { entryRange[i] = parseInt(entryRange[i]); }
+
+        if (range.lowRange < 0 || range.lowRange > entryRange[0]) { range.lowRange = entryRange[0]; }
+        if (range.highRange < entryRange[1]) { range.highRange = entryRange[1]; }
+
+        return entryRange;
     }
 
     parseTaskMatrix(taskdata, taskNames) {
@@ -550,6 +571,34 @@ class FileTreePipeline extends HTMLElement {
         return { 'matrix': taskMatrix, 'runs': runNames };
     }
 
+    parseTaskFileToTSV(filename) {
+        bis_genericio.read(filename).then( (obj) => {
+            let parsedData;
+            try {
+                parsedData = JSON.parse(obj.data);
+            } catch(e) {
+                console.log('An error occured when parsing JSON', e);
+            }
+
+            console.log('parsed data', parsedData);
+            let tr = parsedData['tr'];
+            let offset = parsedData['offset'];
+            let orderedRuns = {}, range = { lowRange: -1, highRange: -1 };
+
+            for (let runName of Object.keys(parsedData.runs)) {
+                orderedRuns[runName] = [];
+                for (let task of Object.keys(parsedData.runs[runName])) {
+                    orderedRuns[runName].push(this.parseEntry(parsedData.runs[runName][task], range));
+                }
+
+                console.log('ordered runs', orderedRuns);
+            }
+        });
+
+        function parseAndOrderTask(task) {
+
+        }
+    }
 }
 
 //Adds 'bisweb-centered-customelement' class to custom element
