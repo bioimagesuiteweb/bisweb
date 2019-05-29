@@ -512,8 +512,17 @@ var createCorrMapSVG=function(parentDiv,
     const height = 350;
     const data = createMatrix(nets,pairs,true);
     const labelsData = globalParams.internal.gui_Networks_ShortNames;
-    const startColor = '#ffffff';
-    const endColor =  '#ff0000';// #3498db'
+    let startColor = '#ffffff';
+    let endColor =  '#ff0000';
+    let linestodraw =globalParams.internal.laststate.linestodraw;
+    if (linestodraw == globalParams.internal.gui_Lines[2] ) {
+        endColor="#ff8800";
+    } else if (linestodraw == globalParams.internal.gui_Lines[1] ) {
+        endColor =  '#0044ff';
+    }    
+
+    
+    
     const widthLegend = 100;
     
     if(!data){
