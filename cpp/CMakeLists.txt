@@ -31,15 +31,13 @@ SET (BISWEB_VERSION "1.1.1a")
 SET (CPP_SOURCE_DIR ${PROJECT_SOURCE_DIR})
 GET_FILENAME_COMPONENT(TOOLS_DIR ${PROJECT_SOURCE_DIR}/../compiletools ABSOLUTE)
 GET_FILENAME_COMPONENT(TEST_DIR ${PROJECT_SOURCE_DIR}/../test ABSOLUTE)
-GET_FILENAME_COMPONENT(JSMODULES_DIR ${PROJECT_SOURCE_DIR}/../js/modules ABSOLUTE)
-GET_FILENAME_COMPONENT(PYTHONMODULE_DIR ${PROJECT_SOURCE_DIR}/../python/modules ABSOLUTE)
 GET_FILENAME_COMPONENT(SCRIPT_DIR ${PROJECT_SOURCE_DIR}/bin ABSOLUTE)
 SET (WRAP_SCRIPT ${TOOLS_DIR}/bis_create_wrappers.js)
 SET (NPM_PACKAGE_SCRIPT ${TOOLS_DIR}/biscreatepackagefile.js)
+SET (MODULE_LIST_SCRIPT ${TOOLS_DIR}/bis_createmodulelist.js)
 SET (DESCRIPTION_SCRIPT ${TOOLS_DIR}/bis_createmoduledescriptions.js)
 SET (BISWEB_PYTHON_INIT ${PROJECT_SOURCE_DIR}/../config/__init__.py)
 SET (BISWEB_PYTHON_PATH ${PROJECT_SOURCE_DIR}/../config/bis_path.py)
-SET (MODULE_LIST_FILENAME ${PROJECT_SOURCE_DIR}/ModuleList.txt)
 SET (PYTHON_MODULE_LIST_FILENAME ${PROJECT_SOURCE_DIR}/PythonModuleList.txt)
 GET_FILENAME_COMPONENT(WEBPLIBCONFIG ${PROJECT_SOURCE_DIR}/../config/lib.config.js ABSOLUTE)
 GET_FILENAME_COMPONENT(WEBPPACK ${PROJECT_SOURCE_DIR}/../node_modules/.bin/webpack-cli ABSOLUTE)
@@ -152,18 +150,7 @@ FILE(GLOB H1 ${CPP_SOURCE_DIR}/b*.h)
 FILE(GLOB H2 ${CPP_SOURCE_DIR}/b*.txx)
 SET(HEADERS ${H1} ${H2})
 
-# Read the modules
-FILE (STRINGS ${MODULE_LIST_FILENAME} MODULES)
 
-set (JSMODULES )
-foreach(item ${MODULES})
-  SET (jtem "${JSMODULES_DIR}/${item}.js")
-  IF(EXISTS ${jtem})
-    SET (JSMODULES ${JSMODULES} ${jtem})
-  ENDIF(EXISTS ${jtem})
-endforeach(item ${MODULES})
-  
-#MESSAGE(${JSMODULES})
 
 # ---------------------------------------------------------------------------------------------
 # PARSE HEADERS
@@ -330,8 +317,10 @@ IF (BIS_A_EMSCRIPTEN)
   GET_FILENAME_COMPONENT(INSCRIPT ${INSCRIPT} ABSOLUTE)
   SET (CONFIGFILE ${WEBPLIBCONFIG})
 
+
+  
   add_custom_command(OUTPUT ${OUTSCRIPT}
-    DEPENDS ${MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JSFILES}  ${LIBNAME} ${INSCRIPT} ${JS_WRAP_OUTPUT} ${JS_DATE_OUTPUT} ${WEBPACK_WASM_MODULE} ${CONFIGFILE} ${PROJECT_SOURCE_DIR}/../build/web/bisdate.json ${PROJECT_SOURCE_DIR}/../build/web/bislib.js
+    DEPENDS  ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JSFILES}  ${LIBNAME} ${INSCRIPT} ${JS_WRAP_OUTPUT} ${JS_DATE_OUTPUT} ${WEBPACK_WASM_MODULE} ${CONFIGFILE} ${PROJECT_SOURCE_DIR}/../build/web/bisdate.json ${PROJECT_SOURCE_DIR}/../build/web/bislib.js
     PRE_BUILD COMMENT "Creating webpack-cli commandline library ${BISWEBLIBFILE} using ${CONFIGFILE}"
     COMMAND ${WEBPPACK} --entry ${INSCRIPT} --config ${CONFIGFILE} --output-path ${LIBRARY_OUTPUT_PATH} --output-filename ${BISWEBLIBFILE} 
     )
@@ -375,6 +364,12 @@ IF (BIS_A_EMSCRIPTEN)
   install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.bat DESTINATION bisweb)
 
   # ---- create scripts for command line  -----------
+  # Read the modules
+  SET (MODULE_LIST_FILENAME ${LIBRARY_OUTPUT_PATH}/ModuleList.txt)
+  execute_process(COMMAND node ${MODULE_LIST_SCRIPT} -o ${MODULE_LIST_FILENAME})
+  install (FILES ${MODULE_LIST_FILENAME} DESTINATION bisweb/)
+  FILE (STRINGS ${MODULE_LIST_FILENAME} JSMODULES)
+
   IF(BIS_BUILDSCRIPTS)
 
     # ---- Tests -------------------------------
@@ -382,14 +377,14 @@ IF (BIS_A_EMSCRIPTEN)
     MESSAGE("++++ Creating individual node.js script files")
     SET(OUTFILES "")
     SET(OUTFILESWIN "")
-    foreach(item ${MODULES})
+    foreach(item ${JSMODULES})
       SET (OFILE ${LIBRARY_OUTPUT_PATH}/bw_${item})
       SET (OFILE2 ${LIBRARY_OUTPUT_PATH}/bw_${item}.bat)
       configure_file( ${PROJECT_SOURCE_DIR}/../config/runscript.in ${OFILE} @ONLY )
       configure_file( ${PROJECT_SOURCE_DIR}/../config/runscript.bat.in ${OFILE2} @ONLY )
       SET(OUTFILES ${OUTFILES} ${OFILE})
       SET(OUTFILESWIN ${OUTFILESWIN} ${OFILE2})
-    endforeach(item ${MODULES})
+    endforeach(item ${JSMODULES})
     install (FILES ${OUTFILES} DESTINATION bisweb/bin 
       PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
     install (FILES ${OUTFILESWIN} DESTINATION bisweb/winbin
@@ -400,7 +395,7 @@ IF (BIS_A_EMSCRIPTEN)
     # ------------------ module tests ---------------------------
     IF(BIS_MODULETEST)
       SET (COUNT 0)
-      FOREACH (item ${MODULES})
+      FOREACH (item ${JSMODULES})
 	add_test(NAME "js-module-${item}" COMMAND mocha test_module.js --testname ${item} --input ${TEST_DIR}/module_tests.json WORKING_DIRECTORY ${TEST_DIR} )
 	MATH (EXPR COUNT "${COUNT}+1")
       ENDFOREACH (item ${TLIST})
@@ -433,7 +428,7 @@ IF (BIS_A_EMSCRIPTEN)
     PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
 
   # Other stuff
-  install (FILES ${PROJECT_SOURCE_DIR}/ModuleList.txt DESTINATION bisweb/)
+
   install (DIRECTORY ${PROJECT_SOURCE_DIR}/../various/serverconfig  DESTINATION bisweb )
   install (FILES ${PROJECT_SOURCE_DIR}/../web/images/mean_reg2mean.nii.gz DESTINATION bisweb/images)
   install (FILES ${PROJECT_SOURCE_DIR}/../web/images/facemask_char.nii.gz DESTINATION bisweb/images)
@@ -505,12 +500,13 @@ ELSE(BIS_A_EMSCRIPTEN)
 
     # ------------------ create module descriptions -------------
 
-    FILE (STRINGS ${PYTHON_MODULE_LIST_FILENAME} PMODULES)
+    FILE (STRINGS ${PYTHON_MODULE_LIST_FILENAME} PYTHONMODULES)
     
     SET (PYTHON_MODULE_DESC ${LIBRARY_OUTPUT_PATH}/modules_desc.py)
+    FILE(GLOB JMODS ${PROJECT_SOURCE_DIR}/../js/modules/*.js)
     
     add_custom_command(OUTPUT ${PYTHON_MODULE_DESC}
-      DEPENDS ${MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JSMODULES}
+      DEPENDS ${MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JMODS}
       PRE_BUILD COMMENT "Creating Python Module Descriptions"
       COMMAND ${NodeInterp} ${DESCRIPTION_SCRIPT} -i ${PYTHON_MODULE_LIST_FILENAME} -o ${PYTHON_MODULE_DESC} }
       )
@@ -546,12 +542,11 @@ ELSE(BIS_A_EMSCRIPTEN)
 	  
     # ------------------ module tests ---------------------------
     IF(BIS_MODULETEST)
-#      FILE (STRINGS ${PYTHON_MODULE_LIST} MODULES)
       SET (COUNT 0)
-      FOREACH (item ${PMODULES})
+      FOREACH (item ${PYTHONMODULES})
 	add_test(NAME "py-module-${item}" COMMAND python3 test_module.py --testname ${item} WORKING_DIRECTORY ${TEST_DIR})
 	MATH (EXPR COUNT "${COUNT}+1")
-      ENDFOREACH (item ${PMODULES})
+      ENDFOREACH (item ${PYTHONMODULES})
       MESSAGE("~~~~~ Added ${COUNT} python module tests")
     
     ENDIF(BIS_MODULETEST)
