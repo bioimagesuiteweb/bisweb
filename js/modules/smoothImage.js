@@ -63,6 +63,26 @@ class SmoothImageModule extends BaseModule {
                     "default": true,
                 },
                 {
+                    "name": "FWHMAX?",
+                    "description": "If true treat kernel in FHWM (not as Gaussian sigma)",
+                    "priority": 8,
+                    "advanced": false,
+                    "gui": "check",
+                    "varname": "fwhmax",
+                    "type": 'boolean',
+                    "default": false,
+                },
+                {
+                    "name": "vtkboundary",
+                    "description": "If true mimic how VTK handles boundary conditions for smoothing (instead of tiling default)",
+                    "priority": 10,
+                    "advanced": true,
+                    "gui": "check",
+                    "varname": "vtkboundary",
+                    "type": 'boolean',
+                    "default": false,
+                },
+                {
                     "name": "Radius Factor",
                     "description": "This affects the size of the convolution kernel which is computed as sigma*radius+1",
                     "priority": 2,
@@ -85,12 +105,16 @@ class SmoothImageModule extends BaseModule {
         return new Promise( (resolve, reject) => {
             let input = this.inputs['input'];
             let s = parseFloat(vals.sigma);
+            if (super.parseBoolean(vals.fwhmax)) {
+                s=s*0.4247;
+            }
             
             biswrap.initialize().then(() => {
                 this.outputs['output'] = biswrap.gaussianSmoothImageWASM(input, {
                     "sigmas": [s, s, s],
                     "inmm": super.parseBoolean(vals.inmm),
-                    "radiusfactor": parseFloat(vals.radiusfactor)
+                    "radiusfactor": parseFloat(vals.radiusfactor),
+                    "vtkboundary" : super.parseBoolean(vals.vtkboundary)
                 }, super.parseBoolean(vals.debug));
                 resolve();
             }).catch( (e) => {

@@ -43,6 +43,16 @@ class ComputeROIModule extends BaseModule {
             "buttonName": "Calculate",
             "shortname" : "roi",
             "params": [
+                {
+                    "name": "Store Centroids?",
+                    "description": "If true store the centroid of each roi as last three columns",
+                    "priority": 7,
+                    "advanced": false,
+                    "gui": "check",
+                    "varname": "storecentroids",
+                    "type": 'boolean',
+                    "default": false,
+                },
                 baseutils.getDebugParam()
             ]
         };
@@ -63,7 +73,11 @@ class ComputeROIModule extends BaseModule {
         return new Promise((resolve, reject) => {
             let input = this.inputs['input'];
             biswrap.initialize().then(() => {
-                this.outputs['output'] = biswrap.computeROIWASM(input, this.inputs['roi'], super.parseBoolean(vals.debug));
+                let store=super.parseBoolean(vals.storecentroids);
+                
+                this.outputs['output'] = biswrap.computeROIWASM(input, this.inputs['roi'],
+                                                                { 'storecentroids' : store },
+                                                                super.parseBoolean(vals.debug));
                 resolve();
             }).catch( (e) => {
                 reject(e.stack);

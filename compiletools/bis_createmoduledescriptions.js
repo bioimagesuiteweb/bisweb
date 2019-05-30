@@ -70,6 +70,29 @@ for (let i=0;i<modulelist.length;i++) {
     let module=modules.getModule(modulename);
     if (! module.JSOnly) {
         let desc = module.getDescription();
+        delete desc['buttonName']
+        delete desc['shortname']
+
+        if (desc['inputs']) {
+            desc['inputs'].forEach( (inp) => {
+                delete inp['guiviewer'];
+                delete inp['guiviewertype'];
+            });
+        }
+        if (desc['outputs']) {
+            desc['outputs'].forEach( (out) => {
+                delete out['guiviewer'];
+                delete out['guiviewertype'];
+            });
+        }
+        if (desc['params']) {
+            desc['params'].forEach( (param) => {
+                delete param['gui'];
+                delete param['priority'];
+                delete param['advanced'];
+            });
+        }
+            
         let name = module.name;
         outobj[name]=desc;
         console.log('++++\t Processed module ',modulename,'-->' , name);

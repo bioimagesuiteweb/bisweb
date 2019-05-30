@@ -9,7 +9,7 @@ endif
 
 set DIR = `cd $rootdir && pwd`
 
-setenv PATH ${DIR}/bin:${DIR}/server;${DIR}/python/modules:${PATH}
+setenv PATH ${DIR}/bin:${DIR}/lib:${DIR}/server;${DIR}/python/modules:${PATH}
 
 echo "------------------------------------------------------------------------------------"
 echo "BISWEB scripts are now in your path ($DIR)"

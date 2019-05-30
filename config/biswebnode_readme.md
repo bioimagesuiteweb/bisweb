@@ -64,9 +64,7 @@ To load, resample, and save an image, for example, do
 
 ## Using the `biswebnode` command line tool(s)
 
-### Global Install
-
-#### 1. Running the Modules
+### 1. Running the modules
 
 If you install biswebnode as a global package (i.e. npm install -g
 biswebnode), then there will an executable in your path called `biswebnode`
@@ -86,7 +84,7 @@ e.g.
     biswebnode smoothImage -i someimage.nii.gz -o output.nii.gz
 
 
-#### 2. Regression Tests
+### 2. Regression Tests
 
 __Mocha:__
 
@@ -111,43 +109,3 @@ To run ALL the tests simply type (this will take a while):
 
     biswebnode regressionTests --run 1
    
----   
-    
-### Local Installation of the Command Line Tools
-
-In this scenario you can use scripts to run the modules directly. The scripts
-are located in the directories `biswebnode/bin` (Linux/MacOS) or
-`biswebnode/winbin` (MS-Windows). 
-
-To run the scripts:
-
-1. Optionally set your paths
-
-On Mac/Linux type
-
-    source biswebnode/setpaths.sh
-    
-or more likely
-
-    source node_modules/biswebnode/setpaths.sh
-
-(Use `setpaths.csh` if you are running csh/tcsh)
-
-On MS-Windows type
-
-     biswebnode/setpaths.bat
-
-2. Then execute the tool of your choice. As an example to run the smooth image
-script (and get its help page) type:
-
-        bw_smoothImage -h
-   
-3. For regression testing (assuming `mocha` is installed on your
-   system, see above for instructions) type:
-
-        bw_regressionTests -h
-
-
-
-
-

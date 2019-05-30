@@ -71,7 +71,7 @@ const moduleImports = {
     defaceimage:require('defaceImage.js'),
     reorientimage:require('reorientImage.js'),
     tfrecon:require('tfRecon.js'),
-    indivparcellation: require('indivParcellation.js'),
+    individualizedparcellation : require('individualizedParcellation.js'),
 
     // these are here so that can be accessed by electron
     'dicomconversion' : require('./dicommodule.js'),

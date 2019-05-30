@@ -15,12 +15,17 @@
  
  ENDLICENSE */
 
+
+ //node invocation: node --max-old-space-size=8192 bisweb.js individualziedParcellation --fmri ~/Desktop/mehraveh_data/pa0430_S004_bis_matrix_new_1_preprocessed_output.nii.gz  --parc ~/Desktop/mehraveh_data/pa0430_S004_bis_matrix_new_1_voi.nii.gz --numregions 268 --smooth 0 --debug true
+ //python invocation: python3 individualizedParcellation.py  ~/Desktop/mehraveh_data/pa0430_S004_bis_matrix_new_1_preprocessed_output.nii.gz  ~/Desktop/mehraveh_data/pa0430_S004_bis_matrix_new_1_voi.nii.gz   268 0 ~/Desktop/out.nii.gz
+
 'use strict';
 
-const libbiswasm = require('libbiswasm_wrapper');
+const biswrap = require('libbiswasm_wrapper');
 const baseutils=require("baseutils");
 const BaseModule = require('basemodule.js');
 const BisWebLinearTransformation = require('bisweb_lineartransformation.js');
+const smreslice=require('bis_imagesmoothreslice');
 
 /**
  * Calculates the Generalized Linear Model (GLM) of an fMRI data set. Takes a regressor (independent variable), 
@@ -29,42 +34,52 @@ const BisWebLinearTransformation = require('bisweb_lineartransformation.js');
 class IndivParcellationModule extends BaseModule {
     constructor() {
         super();
-        this.name = 'computeGLM';
+        this.name = 'individualizedParcellation';
     }
 
     createDescription() {
         let des= {
             "name": "Compute Individualized parcellation",
-            "description": "Calculates the Individualized parcellation starting from a group parcellation",
+            "description": "Calculates the individualized parcellation starting from an original (group) parcellation",
             "author": "Mehraveh Salehi",
             "version": "1.0",
-            "outputs":  baseutils.getImageToImageOutputs("Output the individualized parcellation"),
+            "outputs":  baseutils.getImageToImageOutputs("Output: the individualized parcellation",'viewer1','overlay'),
             "buttonName": "Individualize!",
             "shortname" : "indiv",
             "params": [
                 {
-                    "name": "Number of Exemplars",
-                    "description": "The number of exemplars in the group parcellation",
+                    "name": "Num Regions",
+                    "description": "The number of regions in the original (group) parcellation",
                     "priority": 1,
                     "advanced": false,
                     "gui": "slider",
                     "type": "int",
-                    "varname": "numexemplars",
+                    "varname": "numregions",
                     "default" : 268,
                     "low" : 1,
                     "high": 5000,
                 },
                 {
-                    "name": "Smoothing Kernel BW",
+                    "name": "Smoothing",
                     "description": "Kernel size [mm] of FWHM filter size",
                     "priority": 1,
                     "advanced": false,
                     "gui": "slider",
-                    "type": "int",
+                    "type": "float",
                     "varname": "smooth",
                     "default" : 4,
                     "low" : 0,
                     "high": 20,
+                },
+                {
+                    "name": "Save Exemplars?",
+                    "description": "Saves exemplars in second frame",
+                    "priority": 20,
+                    "advanced": true,
+                    "gui": "check",
+                    "varname": "saveexemplars",
+                    "type": 'boolean',
+                    "default": false,
                 },
                 baseutils.getDebugParam()
             ]
@@ -74,35 +89,41 @@ class IndivParcellationModule extends BaseModule {
         des.inputs.push(
             {
                 'type': 'image',
-                'name': 'Load fMRI Image',
-                'description': 'Load the fMRI for the input',
+                'name': 'fMRI Image',
+                'description': 'The fMRI image to parcellate',
                 'varname': 'fmri',
                 'required' : true,
+                'guiviewer' : 'viewer1',
+                'guiviewertype'  : 'image',
             });
 
         des.inputs.push(
             {
                 'type': 'image',
-                'name': 'Load group parcellation Image',
-                'description': 'Load the group parcellation for the input',
-                'varname': 'group',
+                'name': 'Input Parcellation',
+                'description': 'The original (group) parcellation to individualize',
+                'varname': 'parc',
                 'required' : true,
+                'guiviewer' : 'viewer1',
+                'guiviewertype'  : 'overlay',
+
             });
         return des;
     }
 
     directInvokeAlgorithm(vals) {
-        console.log('oooo invoking: computeGLM with vals', JSON.stringify(vals));
+        console.log('oooo invoking: individualze parcellation with vals', JSON.stringify(vals));
 
-        let fmri = this.inputs['input'];
-        let group = this.inputs['group'];
+        let fmri = this.inputs['fmri'];
+        let group = this.inputs['parc'];
+        let saveexemplars=super.parseBoolean(vals.saveexemplars);
         let fmriDim = fmri.getDimensions(), groupDim = group.getDimensions();
 
         return new Promise( async (resolve, reject) => {
 
             // Initialize C++ / WASM Library
             try {
-                await libbiswasm.initialize();
+                await biswrap.initialize();
             } catch(e) {
                 reject(e);
                 return;
@@ -122,7 +143,7 @@ class IndivParcellationModule extends BaseModule {
                 try {
                     let linear=new BisWebLinearTransformation(0);
                     linear.identity();
-                    group = await libbiswasm.resliceImageWASM(group, linear, resl_paramobj, vals.debug);
+                    group = await biswrap.resliceImageWASM(group, linear, resl_paramobj, vals.debug);
                 } catch(e) {
                     reject('Resliced failed'+e);
                     return;
@@ -133,28 +154,39 @@ class IndivParcellationModule extends BaseModule {
 
             // Smooth fMRI  if needed
             let smooth=vals.smooth;
-            if (smooth < 0.001 ) {
-                console.log('++++ \t Smoothing fMRI image...');
+            if (smooth > 0.001 ) {
+                let d=fmri.getDimensions();
                 let c = smooth * 0.4247;
-                let smooth_paramobj = {
-                    "sigmas": [c, c, c],
-                    "inmm": true,
-                    "radiusfactor": 1.5,
-                };
-                try { 
-                    fmri = await libbiswasm.gaussianSmoothImageWASM(fmri, smooth_paramobj, vals.debug);
-                } catch(e) {
-                    reject(e);
-                    return;
+                if (d[3]<128) {
+                    console.log('++++ \t Smoothing fMRI image using WASM...');
+                    let smooth_paramobj = {
+                        "sigmas": [c, c, c],
+                        "inmm": true,
+                        "radiusfactor": 1.5,
+                        "vtkboundary" : true,
+                    };
+                    try { 
+                        fmri = await biswrap.gaussianSmoothImageWASM(fmri, smooth_paramobj, vals.debug);
+                    } catch(e) {
+                        reject(e);
+                        return;
+                    }
+                } else {
+                    let outdata={};
+                    console.log('++++ \t Smoothing fMRI image using JS ...');
+                    fmri=smreslice.smoothImage(fmri, [c,c,c], true, 1.5, outdata,true);
+                    console.log('++++ \t outdata = ',JSON.stringify(outdata));
                 }
             }
+                
 
             // Run Individualized Parcellation Code
             try {
-                let paramobj= { 'numberofexemplars' : vals.numexemplars };
-                this.outputs['output']= await libbiswasm.individualizeParcellationWASM(fmri, group, paramobj, vals.debug);
+                let paramobj= { 'numberofexemplars' : vals.numregions, "usefloat" : true , "saveexemplars": saveexemplars };
+                this.outputs['output']= await biswrap.individualizedParcellationWASM(fmri, group, paramobj, vals.debug);
                 resolve();
             } catch(e) {
+                console.log('error=',e);
                 reject(e);
                 return;
             }

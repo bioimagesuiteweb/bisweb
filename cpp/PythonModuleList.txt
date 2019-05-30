@@ -27,3 +27,4 @@ sliceBiasCorrect
 shiftScaleImage
 smoothImage
 thresholdImage
+individualizedParcellation
