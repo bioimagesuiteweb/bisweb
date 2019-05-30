@@ -199,7 +199,7 @@ extern "C" {
 
   /** Smooth image using \link bisImageAlgorithms::gaussianSmoothImage \endlink
    * @param input serialized input as unsigned char array 
-   * @param jsonstring the parameter string for the algorithm { "sigma" : 1.0, "inmm" :  true, "radiusfactor" : 1.5 },
+   * @param jsonstring the parameter string for the algorithm { "sigma" : 1.0, "inmm" :  true, "radiusfactor" : 1.5 , "vtkboundary": false},
    * @param debug if > 0 print debug messages
    * @returns a pointer to a serialized image
    */
@@ -348,11 +348,12 @@ extern "C" {
   /** Computes ROI Mean for a timeseries
    * @param input input image time series as serialized array
    * @param roi   input roi image
+   * @param jsonstring  the parameter string for the algorithm { "storecentroids" : 0 }
    * @param debug if > 0 print debug messages
    * @returns a pointer to the roi matrix (rows=frames,cols=rois)
    */
-  // BIS: { 'computeROIWASM', 'Matrix', [ 'bisImage', 'bisImage',  'debug' ] } 
-  BISEXPORT unsigned char* computeROIWASM(unsigned char* input,unsigned char* roi,int debug);
+  // BIS: { 'computeROIWASM', 'Matrix', [ 'bisImage', 'bisImage', 'ParamObj',  'debug' ] } 
+  BISEXPORT unsigned char* computeROIWASM(unsigned char* input,unsigned char* roi,const char* jsonstring,int debug);
 
   /** Compute butterworthFilter Output 
    * @param input the input matrix to filter (time = rows)

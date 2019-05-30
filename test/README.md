@@ -15,3 +15,12 @@ For python type
 
 These tests are also invoked using `make test` in both `build/wasm` (JS) and
 `build/native` (Python).
+
+---
+
+To add
+
+smooth -- vtkboundary
+computeroi -- storecentroids
+smooth -- jsmode
+reslice -- jsmode

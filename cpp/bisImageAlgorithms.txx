@@ -150,7 +150,7 @@ namespace bisImageAlgorithms {
   
 
   
-  template<class T> void oneDConvolution(T* imagedata_in,T* imagedata_out,int dim[5],std::vector<float>& kernel,int axis)
+  template<class T> void oneDConvolution(T* imagedata_in,T* imagedata_out,int dim[5],std::vector<float>& kernel,int axis,int vtkboundary=0)
   {
     int slicesize=dim[0]*dim[1];
 
@@ -195,24 +195,37 @@ namespace bisImageAlgorithms {
 	  for (int ia=0;ia<outdim[0];ia++)
 	    {
 	      double sum=0.0;
+
 	      if (ia>=radius && ia<maxia) {
 		for (int tau=-radius;tau<=radius;tau++) {
 		  sum+=kernel[tau+radius]*imagedata_in[index+tau*outoffsets[0]];
-
 		}
-	      } else {
+	      } else if (vtkboundary==0) {
 		for (int tau=-radius;tau<=radius;tau++) {
 		  int coord=tau+ia;
 		  int fixedtau=tau;
-				
+                  
 		  if (coord<0) 
 		    fixedtau=-ia;
 		  else if (coord>outdim0minus) 
 		    fixedtau=outdim0minus-ia;
-		  
-		  sum+=kernel[tau+radius]*imagedata_in[index+fixedtau*outoffsets[0]];
+                  
+                  sum+=kernel[tau+radius]*imagedata_in[index+fixedtau*outoffsets[0]];
 		}
-	      }
+	      } else {
+                
+                double sumw=0.0;
+                for (int tau=-radius;tau<=radius;tau++) {
+		  int coord=tau+ia;
+                  if (coord>=0 && coord<=outdim0minus)  {
+                    int fixedtau=tau;
+                    sum+=kernel[tau+radius]*imagedata_in[index+fixedtau*outoffsets[0]];
+                    sumw+=kernel[tau+radius];
+                  }
+                }
+                if (sumw>0.0)
+                  sum=sum/sumw;
+              }
 	      imagedata_out[index]=(T)sum;
 	      index=index+outoffsets[0];
 	    }
@@ -221,19 +234,19 @@ namespace bisImageAlgorithms {
     }
   }
   
-  template<class T> std::unique_ptr<bisSimpleImage<T> > gaussianSmoothImage(bisSimpleImage<T>* input,float sigmas[3], float outsigmas[3],int inmm,float radiusfactor)
+  template<class T> std::unique_ptr<bisSimpleImage<T> > gaussianSmoothImage(bisSimpleImage<T>* input,float sigmas[3], float outsigmas[3],int inmm,float radiusfactor,int vtkboundary)
   {
     std::unique_ptr<bisSimpleImage<T> >output(new bisSimpleImage<T>("gradImage"));
     int ok=output->copyStructure(input);
     if (ok) {
-      gaussianSmoothImage(input,output.get(),sigmas,outsigmas,inmm,radiusfactor);
+      gaussianSmoothImage(input,output.get(),sigmas,outsigmas,inmm,radiusfactor,vtkboundary);
     }
     return std::move(output);
   }
 
 
   template<class T> void gaussianSmoothImage(bisSimpleImage<T>* input,
-                                             bisSimpleImage<T>* output,float sigmas[3], float outsigmas[3],int inmm,float radiusfactor)
+                                             bisSimpleImage<T>* output,float sigmas[3], float outsigmas[3],int inmm,float radiusfactor,int vtkboundary)
   {
 
 
@@ -266,8 +279,8 @@ namespace bisImageAlgorithms {
     std::vector<float> kernelx=internal::generateSmoothingKernel(outsigmas[0],radii[0]);
     std::vector<float> kernely=internal::generateSmoothingKernel(outsigmas[1],radii[1]);
 
-    oneDConvolution(input_data,temp_data,dim,kernelx,0);
-    oneDConvolution(temp_data,output_data,dim,kernely,1);
+    oneDConvolution(input_data,temp_data,dim,kernelx,0,vtkboundary);
+    oneDConvolution(temp_data,output_data,dim,kernely,1,vtkboundary);
 
     if (dim[2]>1)
       {
@@ -275,7 +288,7 @@ namespace bisImageAlgorithms {
 	int len=input->getLength();
 	for(int j=0;j<len;j++)
 	  temp_data[j]=output_data[j];
-	oneDConvolution(temp_data,output_data,dim,kernelz,2);
+	oneDConvolution(temp_data,output_data,dim,kernelz,2,vtkboundary);
       }
 
   }
@@ -1215,7 +1228,7 @@ namespace bisImageAlgorithms {
     // ---------------------------------------------------------------------------
   // Compute ROI Mean
   // ---------------------------------------------------------------------------
-  template<class T> int computeROIMean(bisSimpleImage<T>* input,bisSimpleImage<short>* roi,Eigen::MatrixXf& output)
+  template<class T> int computeROIMean(bisSimpleImage<T>* input,bisSimpleImage<short>* roi,Eigen::MatrixXf& output,int storecentroids)
   {
     
     if (doImagesHaveSameSize<T,short>(input,roi,0)==0)
@@ -1229,11 +1242,15 @@ namespace bisImageAlgorithms {
       }
 
     int dim[5]; input->getDimensions(dim);
+
     int volsize = dim[0]*dim[1]*dim[2];
     int numframes = dim[3];
     int numrois=int(r[1]);
-
-    int mat_dim[2] = { numframes,numrois };
+    int extra=0;
+    if (storecentroids)
+      extra=5;
+    
+    int mat_dim[2] = { numframes+extra,numrois };
 
     bisEigenUtil::resizeZeroMatrix(output,mat_dim);
     
@@ -1243,25 +1260,45 @@ namespace bisImageAlgorithms {
     
     T* inpdata= input->getImageData();
     short* roidata= roi->getImageData();
-
+    
     std::cout << "\t Computing ROI: volsize=" << volsize << " numrois=" << numrois << " numframes=" << numframes << " range=" << r[0] << ":" << r[1] << std::endl;
 
-    for (int voxel=0;voxel<volsize;voxel++)
-      {
-	int region=int(roidata[voxel])-1;
-	if (region>=0)
-	  {
-	    num[region]+=1;
-	    for (int frame=0;frame<numframes;frame++)  {
-	      output(frame,region)=output(frame,region)+inpdata[voxel+frame*volsize];
-	    }
-	  }
+    int voxel=0;
+
+    for (int k=0;k<dim[2];k++) {
+      for (int j=0;j<dim[1];j++) {
+        for (int i=0;i<dim[0];i++) {
+          int region=int(roidata[voxel])-1;
+          if (region>=0)
+            {
+              num[region]+=1;
+              for (int frame=0;frame<numframes;frame++)  {
+                output(frame,region)=output(frame,region)+inpdata[voxel+frame*volsize];
+              }
+              if (storecentroids) {
+                output(numframes+2,region)=output(numframes+2,region)+i;
+                output(numframes+3,region)=output(numframes+3,region)+j;
+                output(numframes+4,region)=output(numframes+4,region)+k;
+              }
+            }
+          voxel++;
+        }
       }
+    }
     
     for (int region=0;region<numrois;region++) {
-      for (int frame=0;frame<numframes;frame++) 
-	if (num[region]>0)
+      if (num[region]>0) {
+        for (int frame=0;frame<numframes;frame++) 
 	  output(frame,region)=output(frame,region)/float(num[region]);
+        if (extra>0) {
+          for (int frame=numframes+2; frame<numframes+extra;frame++)
+            output(frame,region)=output(frame,region)/float(num[region]);
+          output(numframes+1,region)=num[region];
+          output(numframes,region)=-1.0;
+        }
+      } else if (extra>0) {
+        output(numframes,region)=-1.0;
+      }
     }
     
     return 1;

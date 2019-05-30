@@ -257,7 +257,8 @@ function moduleOutput = biswrapper(bwasm)
 
     if ~exist('bwasm')
        bwasm=bis_wasmutils();
-       bwasm.loadlib();
+       [filepath,name,ext] = fileparts(mfilename('fullpath'));
+       bwasm.loadlib(filepath);
     end
 
 `;
