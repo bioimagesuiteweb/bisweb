@@ -588,13 +588,13 @@
             "command" : "gradientImage --input testdata/gradin.nii.gz --sigma 2.0 --inmm true --debug true",
             "test"    : "--test_target testdata/grad.nii.gz",
             "result"  : true,
-            "dopython": false
+            "dopython": true
         },
         {
             "command" : "gradientImage --input testdata/badimage.nii.gz --sigma 2.0 --inmm true --debug true",
             "test"    : "--test_target testdata/grad.nii.gz",
             "result"  : false,
-            "dopython": false
+            "dopython": true
         },
         {
             "command" : "smoothimage --input testdata/indiv/prep.nii.gz --sigma 4.0 --inmm true --fwhmax true --vtkboundary true",
@@ -612,7 +612,7 @@
             "command" : "smoothimage --input testdata/indiv/prep.nii.gz --sigma 4.0 --inmm true --fwhmax true --vtkboundary true --usejs true",
             "test"    : "--test_target testdata/indiv/prep_sm.nii.gz",
             "result"  : true,
-            "dopython": true
+            "dopython": false
         },
         {
             "command" : "individualizedParcellation --fmri testdata/indiv/prep.nii.gz --smooth 4.0 --parc testdata/indiv/group.nii.gz --debug true",
