@@ -18,9 +18,24 @@ These tests are also invoked using `make test` in both `build/wasm` (JS) and
 
 ---
 
+Module tests JS and Python. To run type something like:
+
+    mocha test_module.js --input local --testname smoothImage
+    
+or
+  
+    mocha test_module.js --input local --first 2 --last 20
+
+or (syntax is same other than for the `--input local` part)
+
+    python3 test_module.py  --testname smoothImage
+    
+Not all tests work in python. To get a list of the tests
+
+    mocha tet_module.js --input local --list
+
+---
+
 To add
 
-smooth -- vtkboundary
 computeroi -- storecentroids
-smooth -- jsmode
-reslice -- jsmode
