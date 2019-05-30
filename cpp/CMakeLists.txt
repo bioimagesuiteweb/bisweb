@@ -19,6 +19,10 @@ cmake_minimum_required(VERSION 3.5)
 
 PROJECT(BISWEB)
 
+MESSAGE("----------------------------------------------------")
+MESSAGE("-- Building BISWEB")
+MESSAGE("----------------------------------------------------")
+
 SET (BISWEB_VERSION "1.1.1a")
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
@@ -159,7 +163,7 @@ foreach(item ${MODULES})
   ENDIF(EXISTS ${jtem})
 endforeach(item ${MODULES})
   
-MESSAGE(${JSMODULES})
+#MESSAGE(${JSMODULES})
 
 # ---------------------------------------------------------------------------------------------
 # PARSE HEADERS
@@ -173,6 +177,7 @@ SET(PARSE_HEADERS
 
 
 IF (BIS_USEINDIV)
+  MESSAGE("-- Also Building Individualized Parcellation Code")
   SET (PARSE_HEADERS
     ${PARSE_HEADERS}
     ${CPP_SOURCE_DIR}/bisIndividualizedParcellation.h
@@ -237,19 +242,6 @@ ELSE (BIS_USEGPL)
 ENDIF (BIS_USEGPL)
 
 install (FILES ${LICENSE_FILE} DESTINATION bisweb/ RENAME LICENSE)
-install (FILES ${PROJECT_SOURCE_DIR}/ModuleList.txt DESTINATION bisweb/)
-install (DIRECTORY ${PROJECT_SOURCE_DIR}/../various/serverconfig  DESTINATION bisweb )
-install (FILES ${PROJECT_SOURCE_DIR}/../web/images/mean_reg2mean.nii.gz DESTINATION bisweb/images)
-install (FILES ${PROJECT_SOURCE_DIR}/../web/images/facemask_char.nii.gz DESTINATION bisweb/images)
-install (FILES ${PROJECT_SOURCE_DIR}/../web/images/ISAS_SPECT_Template.nii.gz DESTINATION bisweb/images)
-install (FILES ${PROJECT_SOURCE_DIR}/../web/images/MNI_T1_1mm_ras.nii.gz DESTINATION bisweb/images)
-install (FILES ${PROJECT_SOURCE_DIR}/../web/images/MNI_T1_1mm_mask.nii.gz DESTINATION bisweb/images)
-install (FILES ${PROJECT_SOURCE_DIR}/../web/images/MNI_T1_2mm_stripped_ras.nii.gz DESTINATION bisweb/images)
-install (FILES ${PROJECT_SOURCE_DIR}/../web/images/ISASHN_Standard_Deviation.nii.gz DESTINATION bisweb/images)
-install (FILES ${PROJECT_SOURCE_DIR}/../web/images/ISAS_SPECT_Mask.nii.gz DESTINATION bisweb/images)
-
-
-install (DIRECTORY ${PROJECT_SOURCE_DIR}/../web/dcm2nii_binaries DESTINATION bisweb/lib )
 
 
 IF (BIS_A_EMSCRIPTEN)
@@ -262,6 +254,9 @@ IF (BIS_A_EMSCRIPTEN)
   SET (BIS_WEB_OPT "-O2" CACHE STRING "BIS Compiler Optimization")
   #  SET (BIS_WEB_MEMORY "1024" CACHE STRING "BIS Initial Memory in MB")
 
+
+  OPTION(BIS_BUILDSCRIPTS "Create individual scripts for node.js modules" OFF)
+  MARK_AS_ADVANCED(BIS_BUILDSCRIPTS)
   
   # SET VARIABLES
  
@@ -313,7 +308,7 @@ IF (BIS_A_EMSCRIPTEN)
   SET (README_FILE "${PROJECT_SOURCE_DIR}/../various/txt/README_js.txt")
   install (FILES ${README_FILE} DESTINATION bisweb/)
   configure_file( ${LICENSE_FILE} "${EXECUTABLE_OUTPUT_PATH}/../web/LICENSE" @ONLY ) 
-
+  
   # ------------------ create wrapper ---------------------------
 
   add_custom_command(OUTPUT ${JS_WRAP_OUTPUT}
@@ -321,14 +316,11 @@ IF (BIS_A_EMSCRIPTEN)
     PRE_BUILD COMMENT "Creating JS Wrappers"
     COMMAND ${NodeInterp} ${WRAP_SCRIPT} -i ${PARSE_LIST} -o ${JS_WRAP_OUTPUT} --extra ${BIS_EXTRAPATH})
   add_custom_target(wrappers ALL DEPENDS ${JS_WRAP_OUTPUT})
-
-  # ---- create scripts and library for command line  -----------
+  
+  # ---- create library for command line  -----------
   FILE(GLOB H1 ${PROJECT_SOURCE_DIR}/../legacy/*.js)
-  FILE(GLOB H2 ${PROJECT_SOURCE_DIR}/../js/*.js)
-  FILE(GLOB H3 ${PROJECT_SOURCE_DIR}/../js/modules/*.js)
-  SET(JSFILES ${H1} ${H2} ${H3})
-
-
+  FILE(GLOB H2 ${PROJECT_SOURCE_DIR}/../js/*/*.js)
+  SET(JSFILES ${H1} ${H2})
 
   # bioimagesuiteweblib.js
   SET (BISWEBLIBFILE bioimagesuiteweblib.js)
@@ -337,11 +329,10 @@ IF (BIS_A_EMSCRIPTEN)
   SET (INSCRIPT ${PROJECT_SOURCE_DIR}/../js/bin/${BISWEBLIBFILE})
   GET_FILENAME_COMPONENT(INSCRIPT ${INSCRIPT} ABSOLUTE)
   SET (CONFIGFILE ${WEBPLIBCONFIG})
-  MESSAGE("++ Using ${CONFIGFILE}")
 
   add_custom_command(OUTPUT ${OUTSCRIPT}
     DEPENDS ${MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JSFILES}  ${LIBNAME} ${INSCRIPT} ${JS_WRAP_OUTPUT} ${JS_DATE_OUTPUT} ${WEBPACK_WASM_MODULE} ${CONFIGFILE} ${PROJECT_SOURCE_DIR}/../build/web/bisdate.json ${PROJECT_SOURCE_DIR}/../build/web/bislib.js
-    PRE_BUILD COMMENT "Creating webpack-cli commandline library ${BISWEBLIBFILE}"
+    PRE_BUILD COMMENT "Creating webpack-cli commandline library ${BISWEBLIBFILE} using ${CONFIGFILE}"
     COMMAND ${WEBPPACK} --entry ${INSCRIPT} --config ${CONFIGFILE} --output-path ${LIBRARY_OUTPUT_PATH} --output-filename ${BISWEBLIBFILE} 
     )
   add_custom_target(${BISWEBLIBFILE} ALL DEPENDS ${OUTSCRIPT})
@@ -354,6 +345,11 @@ IF (BIS_A_EMSCRIPTEN)
   SET (MAINSCRIPT  ${PROJECT_SOURCE_DIR}/../js/bin/bisweb.js )
   install (FILES ${MAINSCRIPT} DESTINATION bisweb/lib PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
 
+  SET (OUTSCRIPT ${PROJECT_SOURCE_DIR}/../js/bin/bisweb-test.js)
+  install (FILES ${OUTSCRIPT} DESTINATION bisweb/lib
+    PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
+  
+  # ---- create npm package stuff  -----------
   SET (NPMREADME
     ${LIBRARY_OUTPUT_PATH}/README.md )
   add_custom_command(OUTPUT ${NPMREADME}
@@ -364,11 +360,6 @@ IF (BIS_A_EMSCRIPTEN)
   add_custom_target(npmreadme ALL DEPENDS ${NPMREADME})
   install (FILES ${NPMREADME}  DESTINATION bisweb)
 
-  MESSAGE("Installing tests")
-  SET (OUTSCRIPT ${PROJECT_SOURCE_DIR}/../js/bin/bisweb-test.js)
-  install (FILES ${OUTSCRIPT} DESTINATION bisweb/lib
-    PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
-
   set (NPMPACKAGEFILE ${LIBRARY_OUTPUT_PATH}/package.json)
   add_custom_command(OUTPUT ${NPMPACKAGEFILE}
     DEPENDS ${NPM_PACKAGE_SCRIPT} ${BISWEBLIBFILE} ${PROJECT_SOURCE_DIR}/../package.json ${CONFIGFILE}
@@ -378,27 +369,33 @@ IF (BIS_A_EMSCRIPTEN)
   add_custom_target(package.json ALL DEPENDS ${NPMPACKAGEFILE})
   install (FILES ${NPMPACKAGEFILE} DESTINATION bisweb PERMISSIONS OWNER_READ WORLD_READ)
 
-
-  SET(OUTFILES "")
-  SET(OUTFILESWIN "")
-  foreach(item ${MODULES})
-    SET (OFILE ${LIBRARY_OUTPUT_PATH}/bw_${item})
-    SET (OFILE2 ${LIBRARY_OUTPUT_PATH}/bw_${item}.bat)
-    configure_file( ${PROJECT_SOURCE_DIR}/../config/runscript.in ${OFILE} @ONLY )
-    configure_file( ${PROJECT_SOURCE_DIR}/../config/runscript.bat.in ${OFILE2} @ONLY )
-    SET(OUTFILES ${OUTFILES} ${OFILE})
-    SET(OUTFILESWIN ${OUTFILESWIN} ${OFILE2})
-  endforeach(item ${MODULES})
+  # Path Files
   install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.sh  DESTINATION bisweb)
   install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.csh DESTINATION bisweb)
   install (FILES ${PROJECT_SOURCE_DIR}/../config/setpaths.bat DESTINATION bisweb)
 
-  
-  install (FILES ${OUTFILES} DESTINATION bisweb/bin 
-    PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
-  install (FILES ${OUTFILESWIN} DESTINATION bisweb/winbin
-    PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
+  # ---- create scripts for command line  -----------
+  IF(BIS_BUILDSCRIPTS)
 
+    # ---- Tests -------------------------------
+
+    MESSAGE("++++ Creating individual node.js script files")
+    SET(OUTFILES "")
+    SET(OUTFILESWIN "")
+    foreach(item ${MODULES})
+      SET (OFILE ${LIBRARY_OUTPUT_PATH}/bw_${item})
+      SET (OFILE2 ${LIBRARY_OUTPUT_PATH}/bw_${item}.bat)
+      configure_file( ${PROJECT_SOURCE_DIR}/../config/runscript.in ${OFILE} @ONLY )
+      configure_file( ${PROJECT_SOURCE_DIR}/../config/runscript.bat.in ${OFILE2} @ONLY )
+      SET(OUTFILES ${OUTFILES} ${OFILE})
+      SET(OUTFILESWIN ${OUTFILESWIN} ${OFILE2})
+    endforeach(item ${MODULES})
+    install (FILES ${OUTFILES} DESTINATION bisweb/bin 
+      PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
+    install (FILES ${OUTFILESWIN} DESTINATION bisweb/winbin
+      PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
+  ENDIF()
+  
   MESSAGE("-- TEST_DIR=${TEST_DIR}")
     # ------------------ module tests ---------------------------
     IF(BIS_MODULETEST)
@@ -434,7 +431,21 @@ IF (BIS_A_EMSCRIPTEN)
   SET (INSCRIPT ${PROJECT_SOURCE_DIR}/../test/test_module.js)
   install (FILES ${INSCRIPT} DESTINATION bisweb/test
     PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE WORLD_READ WORLD_EXECUTE)
-  
+
+  # Other stuff
+  install (FILES ${PROJECT_SOURCE_DIR}/ModuleList.txt DESTINATION bisweb/)
+  install (DIRECTORY ${PROJECT_SOURCE_DIR}/../various/serverconfig  DESTINATION bisweb )
+  install (FILES ${PROJECT_SOURCE_DIR}/../web/images/mean_reg2mean.nii.gz DESTINATION bisweb/images)
+  install (FILES ${PROJECT_SOURCE_DIR}/../web/images/facemask_char.nii.gz DESTINATION bisweb/images)
+  install (FILES ${PROJECT_SOURCE_DIR}/../web/images/ISAS_SPECT_Template.nii.gz DESTINATION bisweb/images)
+  install (FILES ${PROJECT_SOURCE_DIR}/../web/images/MNI_T1_1mm_ras.nii.gz DESTINATION bisweb/images)
+  install (FILES ${PROJECT_SOURCE_DIR}/../web/images/MNI_T1_1mm_mask.nii.gz DESTINATION bisweb/images)
+  install (FILES ${PROJECT_SOURCE_DIR}/../web/images/MNI_T1_2mm_stripped_ras.nii.gz DESTINATION bisweb/images)
+  install (FILES ${PROJECT_SOURCE_DIR}/../web/images/ISASHN_Standard_Deviation.nii.gz DESTINATION bisweb/images)
+  install (FILES ${PROJECT_SOURCE_DIR}/../web/images/ISAS_SPECT_Mask.nii.gz DESTINATION bisweb/images)
+
+  install (DIRECTORY ${PROJECT_SOURCE_DIR}/../web/dcm2nii_binaries DESTINATION bisweb/lib )
+
 ELSE(BIS_A_EMSCRIPTEN)
 
  # ---------------------------------------------------------------------------------------------
@@ -457,6 +468,7 @@ ELSE(BIS_A_EMSCRIPTEN)
   include_directories ( ${EIGEN3_INCLUDE_DIRS} )
 
   IF (BIS_USEINDIV)
+    
     include_directories ( ${IGL_INCLUDE_DIRS} )
   ENDIF (BIS_USEINDIV)
   include_directories (${PROJECT_SOURCE_DIR})
@@ -467,7 +479,7 @@ ELSE(BIS_A_EMSCRIPTEN)
   install (TARGETS ${CLIBNAME} DESTINATION bisweb/lib)
   IF (BIS_A_DEVEL)
     install (FILES ${HEADERS} DESTINATION bisweb/include)
-    install (FILES ../config/UseBISWASM.cmake ../config/BISWASMConfig.cmake DESTINATION bisweb/lib)
+    install (FILES ../config/UseBISWEB.cmake ../config/BISWEBConfig.cmake DESTINATION bisweb/lib)
   ENDIF (BIS_A_DEVEL)
   # ---------------
   # Python
@@ -509,8 +521,7 @@ ELSE(BIS_A_EMSCRIPTEN)
     GET_FILENAME_COMPONENT(PYTHON_SOURCE_DIR ${PROJECT_SOURCE_DIR}/../python ABSOLUTE)
     FILE(GLOB PYLIST ${PYTHON_SOURCE_DIR}/bis*.py)
     FILE(GLOB PYLIST2 ${PYTHON_SOURCE_DIR}/modules/*.py)
-    list(REMOVE_ITEM PYLIST2 ${PYTHON_SOURCE_DIR}/bis_path.py)
-
+    list(REMOVE_ITEM PYLIST2 ${PYTHON_SOURCE_DIR}/modules/bis_path.py)
     install (FILES ${BISWEB_PYTHON_INIT} DESTINATION bisweb)
     install (FILES ${PYLIST} DESTINATION bisweb/python)
     install (FILES ${PYLIST2} DESTINATION bisweb/python/modules
@@ -530,7 +541,7 @@ ELSE(BIS_A_EMSCRIPTEN)
     install (FILES ${README_FILE} DESTINATION bisweb/)
 
     # This overwrites bis_path.py with one suitable for install purposes
-    MESSAGE("Installing ${BISWEB_PYTHON_PATH}")
+    MESSAGE("-- Installing ${BISWEB_PYTHON_PATH}")
     install (FILES ${BISWEB_PYTHON_PATH} DESTINATION bisweb/python/modules)
 	  
     # ------------------ module tests ---------------------------
@@ -568,9 +579,13 @@ ELSE(BIS_A_EMSCRIPTEN)
   # ---------------
   # Matlab
   # ---------------
-  MESSAGE("Matlab is ${BIS_A_MATLAB}")
   
   IF (BIS_A_MATLAB)
+    MESSAGE("++ Building Matlab Prerequisites")
+
+    SET (README_FILE "${PROJECT_SOURCE_DIR}/../various/txt/README_matlab.txt")
+    install (FILES ${README_FILE} DESTINATION bisweb/)
+
     SET (MATLAB_WRAP_OUTPUT ${LIBRARY_OUTPUT_PATH}/biswrapper.m)
     add_custom_command(OUTPUT ${MATLAB_WRAP_OUTPUT}
       DEPENDS ${PARSE_HEADERS} ${WRAP_SCRIPT}
@@ -589,7 +604,6 @@ ELSE(BIS_A_EMSCRIPTEN)
 
     GET_FILENAME_COMPONENT(MATLAB_SOURCE_DIR ${PROJECT_SOURCE_DIR}/../matlab ABSOLUTE)
     FILE(GLOB MLIST ${MATLAB_SOURCE_DIR}/bis*.m)
-    MESSAGE("Here ${MLIST}")
     install (FILES ${MLIST} DESTINATION bisweb/matlab)
   ENDIF(BIS_A_MATLAB)
   
