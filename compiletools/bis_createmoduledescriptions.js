@@ -85,12 +85,19 @@ for (let i=0;i<modulelist.length;i++) {
                 delete out['guiviewertype'];
             });
         }
+
         if (desc['params']) {
-            desc['params'].forEach( (param) => {
+            for (let i=desc['params'].length-1;i>=0;i=i-1) {
+                let param=desc['params'][i];
                 delete param['gui'];
                 delete param['priority'];
                 delete param['advanced'];
-            });
+                let js=param.jsonly || false;
+                if (js) {
+                    // Remove jsonly parameter
+                    desc['params'].splice(i,1);
+                }
+            }
         }
             
         let name = module.name;

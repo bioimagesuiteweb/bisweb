@@ -609,13 +609,66 @@
             "dopython": true
         },
         {
+            "command" : "smoothimage --input testdata/indiv/prep.nii.gz --sigma 4.0 --inmm true --fwhmax true --vtkboundary true --usejs true",
+            "test"    : "--test_target testdata/indiv/prep_sm.nii.gz",
+            "result"  : true,
+            "dopython": true
+        },
+        {
             "command" : "individualizedParcellation --fmri testdata/indiv/prep.nii.gz --smooth 4.0 --parc testdata/indiv/group.nii.gz --debug true",
             "test"    : "--test_target testdata/indiv/indivp.nii.gz",
             "result"  : true,
             "dopython": true
-        }
+        },
+        {
+	    "command" : "resampleImage -i testdata/avg152T1_LR_nifti.nii.gz --interpolation 1 --debug false --backgroundvalue 0.0 --xsp 2.5 --ysp 4.5 --zsp 6.5 --usejs true",
+	    "test"    : "--test_target testdata/avg152T1_LR_nifti_resampled.nii.gz --test_threshold 0.999 --test_type image --test_comparison cc",
+	    "result"  : true,
+	    "dopython": false
+	},
         
+	{
+	    "command" : "resliceImage -i testdata/avg152T1_LR_nifti.nii.gz -r testdata/avg152T1_LR_nifti_resampled.nii.gz -x testdata/newtests/reslice_transform.matr --interpolation 1 --debug true --backgroundvalue 0.0 --usejs true",
+	    "test"    : "--test_target testdata/avg152T1_LR_nifti_resampled_resliced.nii.gz --test_threshold 0.999 --test_type image --test_comparison cc",
+	    "result"  : true,
+	    "dopython": false
+	},
+	{
+	    "command" : "resliceImage -i testdata/avg152T1_LR_nifti.nii.gz -r testdata/avg152T1_LR_nifti_resampled.nii.gz -x testdata/newtests/reslice_transform.matr --interpolation 0 --debug false --backgroundvalue 0.0 --usejs true",
+	    "test"    : "--test_target testdata/avg152T1_LR_nifti_resampled_resliced_NN.nii.gz --test_threshold 0.999 --test_type image --test_comparison cc",
+	    "result"  : true,
+	    "dopython": false
+	},
+	{
+	    "command" : "resliceImage -i testdata/avg152T1_LR_nifti.nii.gz -r testdata/avg152T1_LR_nifti_resampled.nii.gz -x testdata/newtests/reslice_transform.matr --interpolation 3 --debug false --backgroundvalue 0.0 --forcefloat true --usejs true",
+	    "test"    : "--test_target testdata/avg152T1_LR_nifti_resampled_resliced_Cubic.nii.gz --test_threshold 0.999 --test_type image --test_comparison cc",
+	    "result"  : true,
+	    "dopython": false
+	},
+        {
+            "command" : "resliceImage -i testdata/MNI_6mm.nii.gz -r testdata/MNI_6mm.nii.gz -x testdata/MNI_2mm_scaled.grd -y testdata/resample.matr --forcefloat true --interpolation 1",
+            "test" : " --test_target testdata/comboreslice.nii.gz",
+            "result" : true,
+            "dopython": false
+        },
+        {
+            "command" : "resliceImage -i testdata/MNI_6mm.nii.gz -r testdata/MNI_6mm.nii.gz -x testdata/MNI_2mm_scaled.grd -y testdata/resample.matr --usejs true --forcefloat true",
+            "test" : " --test_target testdata/comboreslice.nii.gz",
+            "result" : true,
+            "dopython": false
+        },
+        {
+            "command" : "resliceImage -i testdata/MNI_6mm.nii.gz -r testdata/MNI_6mm.nii.gz -x testdata/MNI_2mm_scaled.grd --forcefloat true --interpolation 1",
+            "test" : " --test_target testdata/gridreslice.nii.gz",
+            "result" : true,
+            "dopython": true
+        },
+        {
+            "command" : "resliceImage -i testdata/MNI_6mm.nii.gz -r testdata/MNI_6mm.nii.gz -x testdata/MNI_2mm_scaled.grd --forcefloat true --interpolation 1 --usejs true",
+            "test" : " --test_target testdata/gridreslice.nii.gz",
+            "result" : true,
+            "dopython": false
+        }
     ]
 }
-
 

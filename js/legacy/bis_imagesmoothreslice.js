@@ -477,9 +477,10 @@ var cubicInterpolationFunction = function(cache) {
  * @param {BisTransformation} transformation - the transformation 
  * @param {number} interpolation - 0=NN, 3=Cubic, else linear
  * @param {array} bounds - 6 array for specifying a piece to reslice (in-place). Default = [ 0,odim[0]-1,0,odim[1]-1,0,odim[2]-1 ], where odim=output.getDimensions().
+ * @param {Number} background - fill in outside the range
  */
 
-var resliceImage = function(input, output, transformation, interpolation,bounds) {
+var resliceImage = function(input, output, transformation, interpolation,bounds,background=0) {
     
     bounds = bounds || null;
     transformation = transformation || null;
@@ -511,6 +512,8 @@ var resliceImage = function(input, output, transformation, interpolation,bounds)
     if (bounds===null) 
         bounds = [ 0,newdim[0]-1,0,newdim[1]-1,0,newdim[2]-1 ];
 
+    console.log('Using bounds=',bounds,'interp=',interpolation,'back=',background,'outspa=',newspa,'outdim=',newdim);
+    
     var interpolateFunction=linearInterpolationFunction;
     if (dim[2]<2)
         interpolateFunction=linearInterpolationFunction2D;
@@ -524,7 +527,10 @@ var resliceImage = function(input, output, transformation, interpolation,bounds)
     if (interpolation === 0)
         interpolateFunction=nearestInterpolationFunction;
 
-    transformation.optimize(spa);
+    try {
+        transformation.optimize(spa);
+    } catch(e) {
+    }
     var X=[0,0,0],i,j,k,outindex=0,outbase,frame;
 
 
@@ -538,8 +544,6 @@ var resliceImage = function(input, output, transformation, interpolation,bounds)
                 for (i=bounds[0];i<=bounds[1];i++) {
                     X[0]=i*newspa[0];
                     transformation.transformPointToVoxel(X,cache.TX,spa);
-
-                    
                     if (cache.TX[2]>=0 && cache.TX[2] < maxdvox[2] &&
                         cache.TX[1]>=0 && cache.TX[1] < maxdvox[1] &&
                         cache.TX[0]>=0 && cache.TX[0] < maxdvox[0]) {
@@ -562,7 +566,7 @@ var resliceImage = function(input, output, transformation, interpolation,bounds)
                         }
                     } else {
                         for (frame=0;frame<dim[3];frame++)
-                            output_data[outindex+frame*newvolsize]=0;
+                            output_data[outindex+frame*newvolsize]=background;
                     }
                     outindex++;
                 }
@@ -593,7 +597,7 @@ var resliceImage = function(input, output, transformation, interpolation,bounds)
                             cache.TX[2]=cache.TX[2]-0.00001;
                         output_data[outindex]=interpolateFunction(cache);
                     } else  {
-                        output_data[outindex]=0;
+                        output_data[outindex]=background;
                     }
                     outindex++;
                 }
@@ -614,9 +618,10 @@ var resliceImage = function(input, output, transformation, interpolation,bounds)
  * @param {BisImage} input - the input image
  * @param {array} newspa - the new spacing of the image
  * @param {number} interpolation - 0=NN, 3=Cubic, else linear
+ * @param {Number} background - fill in outside the range
  * @returns {BisImage} out - resampled image
  */
-var resampleImage = function(input, newspa, interpolation) {
+var resampleImage = function(input, newspa, interpolation,background=0) {
 
     var dim=input.getDimensions();
     var spa=input.getSpacing();
@@ -628,7 +633,7 @@ var resampleImage = function(input, newspa, interpolation) {
     var output=new BisWebImage();   output.cloneImage(input, { dimensions : newdim,  spacing : newspa });
     resliceImage(input,output,
                  transformationFactory.createLinearTransformation(),
-                 interpolation);
+                 interpolation,background);
     return output;
 };
 
