@@ -79,7 +79,10 @@ let get_pathspec=function(inp) {
 
     let testfilename='';
     let basedir='';
-    if (inp.length > 0) {
+    if (inp === "local") {
+        testfilename=path.join(__dirname,'module_tests.json');
+        basedir=__dirname+"/";
+    } else if (inp.length > 0) {
         testfilename=inp;
         basedir=path.resolve(path.dirname(inp))+'/';
     } else {
@@ -252,10 +255,12 @@ describe(getTime()+` Beginning module tests `,function() {
                             
                             let expected_result=testlist[i].result;
                             command=command+' --test_base_directory '+pathspec.basedirectory;
-                            console.log(colors.green('\n'+getTime()+' -------------------- test',i,'----------------------------------------------\n'));
+                            console.log(colors.green('\n'+getTime()+' -------------------- test',i,'-----------------------------------------\n'));
                             bisnodecmd.executeCommand(testscript+' '+command,__dirname, ((completed,exitcode) => {
                                 let success= (parseInt(exitcode) ===0);
+                                console.log('___________________________________________________________________________________');
                                 console.log('\t Returning, completed =',completed, 'exitcode=',exitcode,'success=', success, ' expected=', expected_result);
+                                console.log('___________________________________________________________________________________');
                                 if (completed===false)
                                     success=false;
                                 

@@ -197,14 +197,14 @@ describe('Testing parcellation (bis_parcellation.js) class that describes parcel
             let mat2=parc2.creatematrix();
 
             materror=0.0;
-            let poserr=0.0;
+
             for (let ia=0;ia<mat1.length;ia++) {
-                let e_row=0.0;
+
                 let diff=0;
                 for (let ja=0;ja<=2;ja++) 
                     diff+=Math.abs(mat1[ia][ja]-mat2[ia][ja]);
                 let e_pos=Math.abs(mat1[ia][3]-mat2[ia][3]);
-                poserr+=diff;
+                
                 if (e_pos>0.01) {
                     console.log('\t\t\t Non identical row '+ia+' diff='+e_pos+' (  '+mat1[ia] + ' vs '+ mat2[ia]+') ('+diff+')');
                     materror+=1;
@@ -231,14 +231,14 @@ describe('Testing parcellation (bis_parcellation.js) class that describes parcel
             let mat2=parc2.creatematrix();
 
             materror=0.0;
-            let poserr=0.0;
+
             for (let ia=0;ia<mat1.length;ia++) {
-                let e_row=0.0;
+
                 let diff=0;
                 for (let ja=0;ja<=2;ja++) 
                     diff+=Math.abs(mat1[ia][ja]-mat2[ia][ja]);
                 let e_pos=Math.abs(mat1[ia][3]-mat2[ia][3]);
-                poserr+=diff;
+
                 if (e_pos>0.01) {
                     console.log('\t\t\t Non identical row '+ia+' diff='+e_pos+' (  '+mat1[ia] + ' vs '+ mat2[ia]+') ('+diff+')');
                     materror+=1;

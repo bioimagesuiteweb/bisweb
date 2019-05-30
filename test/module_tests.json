@@ -562,7 +562,59 @@
             "result"  : true,
             "dopython": false,
             "noweb"   : true
+        },
+        {
+            "command" : "infomodule",
+            "test"    : "--test_type smoketest",
+            "result"  : true,
+            "dopython": false,
+            "noweb"   : true
+        },
+        {
+            "command" : "bisserver --createconfig",
+            "test"    : "--test_type smoketest",
+            "result"  : true,
+            "dopython": false,
+            "noweb"   : true
+        },
+        {
+            "command" : "regressiontests --testname infomodule --run 1",
+            "test"    : "--test_type smoketest",
+            "result"  : true,
+            "dopython": false,
+            "noweb"   : true
+        },
+        {
+            "command" : "gradientImage --input testdata/gradin.nii.gz --sigma 2.0 --inmm true --debug true",
+            "test"    : "--test_target testdata/grad.nii.gz",
+            "result"  : true,
+            "dopython": false
+        },
+        {
+            "command" : "gradientImage --input testdata/badimage.nii.gz --sigma 2.0 --inmm true --debug true",
+            "test"    : "--test_target testdata/grad.nii.gz",
+            "result"  : false,
+            "dopython": false
+        },
+        {
+            "command" : "smoothimage --input testdata/indiv/prep.nii.gz --sigma 4.0 --inmm true --fwhmax true --vtkboundary true",
+            "test"    : "--test_target testdata/indiv/prep_sm.nii.gz",
+            "result"  : true,
+            "dopython": true
+        },
+        {
+            "command" : "smoothimage --input testdata/indiv/prep.nii.gz --sigma 4.0 --inmm true --fwhmax true --vtkboundary false",
+            "test"    : "--test_target testdata/indiv/prep_sm.nii.gz",
+            "result"  : false,
+            "dopython": true
+        },
+        {
+            "command" : "individualizedParcellation --fmri testdata/indiv/prep.nii.gz --smooth 4.0 --parc testdata/indiv/group.nii.gz --debug true",
+            "test"    : "--test_target testdata/indiv/indivp.nii.gz",
+            "result"  : true,
+            "dopython": true
         }
+        
     ]
 }
 

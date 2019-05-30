@@ -43,6 +43,9 @@ class smoothImage(bis_basemodule.baseModule):
 
         input = self.inputs['input'];
         s = (vals['sigma']);
+        if (self.parseBoolean(vals['fwhmax'])):
+            s=s*0.4247;
+
 
         try:
             self.outputs['output'] = libbis.gaussianSmoothImageWASM(input,
@@ -50,6 +53,7 @@ class smoothImage(bis_basemodule.baseModule):
                                                                         "sigmas": [s, s, s],
                                                                         "inmm": self.parseBoolean(vals['inmm']),
                                                                         "radiusfactor": vals['radiusfactor'],
+                                                                        "vtkboundary" : self.parseBoolean(vals['vtkboundary']),
                                                                     }, debug=self.parseBoolean(vals['debug']))
         except:
             e = sys.exc_info()[0]

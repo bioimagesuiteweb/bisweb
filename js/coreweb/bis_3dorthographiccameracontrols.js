@@ -631,7 +631,7 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
         document.removeEventListener( 'mousemove', mousemove );
         document.removeEventListener( 'mouseup', mouseup );
 
-        console.log('Mouseup flip=',_this.flipmode);
+        //console.log('Mouseup flip=',_this.flipmode);
         
         _this.dispatchEvent( endEvent );
         

@@ -54,7 +54,7 @@ const moduleImports = {
     regressout : require('regressOut.js'),
     computecorrelation : require('computeCorrelation.js'),
     computeroi : require('computeROI.js'),
-    functionalconnectivitypreprocessing: require('functionalConnectivityPreprocessing'),
+//    functionalconnectivitypreprocessing: require('functionalConnectivityPreprocessing'),
 
     computeglm : require('computeGLM.js'),
     approximatefield : require('approximateField.js'),
@@ -67,7 +67,7 @@ const moduleImports = {
     nonlinearregistration : require('nonlinearRegistration.js'),
     motioncorrection : require('motionCorrection.js'),
 
-    skullstrip:require('skullStrip.js'),
+    //    skullstrip:require('skullStrip.js'),
     defaceimage:require('defaceImage.js'),
     reorientimage:require('reorientImage.js'),
     tfrecon:require('tfRecon.js'),
