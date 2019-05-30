@@ -70,8 +70,8 @@ for (let i=0;i<modulelist.length;i++) {
     let module=modules.getModule(modulename);
     if (! module.JSOnly) {
         let desc = module.getDescription();
-        delete desc['buttonName']
-        delete desc['shortname']
+        delete desc['buttonName'];
+        delete desc['shortname'];
 
         if (desc['inputs']) {
             desc['inputs'].forEach( (inp) => {

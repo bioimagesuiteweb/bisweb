@@ -27,7 +27,6 @@
 // -----------------------------------------------------------------
 require('../config/bisweb_pathconfig.js');
 const program=require('commander');
-const path=require('path');
 const modules = require('nodemoduleindex.js');
 const fs=require('fs');
 const outstring = modules.getModuleNames().join("\n");
