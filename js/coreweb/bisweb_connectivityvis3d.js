@@ -15,10 +15,6 @@ const globalParams={
 const lobeoffset=20.0;
 const axisoffset=[0,5.0,20.0];
 
-const brain_colors = [
-    [ 1.0,1.0,1.0 ],
-    [ 1.0,1.0,1.0 ]
-];
     
 const color_modes = [ 'Uniform', 'PosDegree', 'NegDegree', 'Sum', 'Difference' ];
 const display_modes = [ 'None', 'Left', 'Right', 'Both' ];
@@ -119,7 +115,7 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
     
     if (attributeIndex<0) {
         for (let i=0;i<parcels.length;i++) {
-            attributes[i]=10+index*10;
+            attributes[i]=1;
         }
     } else {
         for (let i=0;i<parcels.length;i++) {
@@ -226,7 +222,7 @@ var parsebrainsurface = function(textstring,filename) {
     globalParams.braingeom[meshindex]=buf;
     globalParams.brainindices[meshindex]=parcels;
     
-    createAndDisplayBrainSurface(meshindex, brain_colors[meshindex],0.7,-1);
+    createAndDisplayBrainSurface(meshindex, [1.0,1.0,1.0],0.7,-1);
     
     if (globalParams.internal.axisline[0]===null) {
         // create axis line meshes
@@ -404,8 +400,8 @@ var update3DMeshes=function(opacity=0.5,modename='uniform',displaymode='Both') {
     let mode=color_modes.indexOf(modename)-1;
     let dmode=display_modes.indexOf(displaymode);
 
-    createAndDisplayBrainSurface(0, brain_colors[0],opacity,mode);
-    createAndDisplayBrainSurface(1, brain_colors[1],opacity,mode);
+    createAndDisplayBrainSurface(0, [1.0,1.0,1.0],opacity,mode);
+    createAndDisplayBrainSurface(1, [1.0,1.0,1.0],opacity,mode);
 
     let show=[true,true];
     if (dmode<=0) 
@@ -430,7 +426,6 @@ module.exports = {
     drawlines3d : drawlines3d,
     lobeoffset : lobeoffset,
     createAndDisplayBrainSurface : createAndDisplayBrainSurface,
-    brain_colors : brain_colors,
     color_modes  : color_modes,
     display_modes  : display_modes,
     update3DMeshes :     update3DMeshes,
