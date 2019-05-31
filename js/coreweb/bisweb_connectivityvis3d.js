@@ -10,7 +10,7 @@ const globalParams={
     braingeom : [ null,null],
 };
 
-const lobeoffset=10.0;
+const lobeoffset=20.0;
 const axisoffset=[0,5.0,20.0];
 
 const brain_colors = [
@@ -80,9 +80,10 @@ var initialize=function(internal) {
 // ---------------------------------------------------------------------------------------------------
 
 // Parses Brain Surface
-// @alias BisWebConnectivityVis3D1~parsebrainsurface from json file
-// @param {array} textstring - brain surfaces  to parse (as json)
-// @param {String} FileName - filename to read from
+// @alias BisWebConnectivityVis3D1~createAndDisplayBrainSurface from json file
+// @param {Number} index - 0=left, 1=right
+// @param {Array} color - the color
+// @param {Number} opacity - the opacity
 
 var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8) {
 
@@ -120,6 +121,11 @@ var parsebrainsurface = function(textstring,filename) {
     
     let vertices = new Float32Array(obj.points.length);
     let indices = new Uint16Array(obj.triangles.length);
+    let parcels=null;
+
+    if (obj.indices)
+        parcels = new Uint16Array(obj.indices.length);
+
     
     console.log('+++++ Brain surface loaded from '+filename+' '+[ obj.points.length,obj.triangles.length]);
     for (let i=0;i<obj.points.length;i+=3) {
@@ -133,6 +139,11 @@ var parsebrainsurface = function(textstring,filename) {
     }
     for (let i=0;i<obj.triangles.length;i++) 
         indices[i]=obj.triangles[i];
+
+    if (obj.indices) {
+        for (let i=0;i<parcels.length;i++)
+            parcels[i]=obj.indices[i];
+    }
     
     let buf=new THREE.BufferGeometry();
     buf.setIndex( new THREE.BufferAttribute( indices, 1));
@@ -140,7 +151,7 @@ var parsebrainsurface = function(textstring,filename) {
     buf.computeVertexNormals();
 
     globalParams.braingeom[meshindex]=buf;
-    createAndDisplayBrainSurface(meshindex, brain_colors[meshindex],0.7);
+    createAndDisplayBrainSurface(meshindex, brain_colors[meshindex],0.7,parcels);
     
     if (globalParams.internal.axisline[0]===null) {
         // create axis line meshes

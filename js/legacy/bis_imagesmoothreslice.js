@@ -530,6 +530,7 @@ var resliceImage = function(input, output, transformation, interpolation,bounds,
     try {
         transformation.optimize(spa);
     } catch(e) {
+        console.log('');
     }
     var X=[0,0,0],i,j,k,outindex=0,outbase,frame;
 
