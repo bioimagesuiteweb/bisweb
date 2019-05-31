@@ -160,6 +160,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             radius : 1.0,
             matrixthreshold : 0.1,
             opacity : 0.7,
+            mode3d : 'Uniform',
+            display3d : 'Both',
         },
         datgui_controllers : null,
         datgui_nodecontroller : null,
@@ -802,8 +804,9 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     // @param {string} filename - file to load from
     // @param {callback} done - call this when loaded (used for sample)
     // @param {boolean} sample - if sample then no alert
+    // @param {boolean} updatemeshes - if true then update surface
     //
-    var loadmatrix = function(index,filename,done,sample) {
+    var loadmatrix = function(index,filename,done,sample,updatemeshes=true) {
 
         done= done || null;
         sample = sample || false;
@@ -846,6 +849,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             internal.undostack.initialize();
             internal.linestack=[];
 
+
+
             if (n>0) {
                 if (index===0) {
                     internal.posFileInfo[0]=filename;
@@ -865,6 +870,14 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                     internal.datgui_degreethresholdcontroller.updateDisplay();
                     update();
                     setnode(internal.conndata.maxsumnode);
+
+                    
+                    if (updatemeshes) {
+                        connectvis3d.update3DMeshes(internal.parameters.opacity,
+                                                    internal.parameters.mode3d,
+                                                    internal.parameters.display3d);
+                    }
+                    
                     if (!sample) {
                         if (filename.name)
                             filename=filename.name;
@@ -1133,15 +1146,25 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         
         clist.push(disp.add(data,'length',10,100).name("Length"));
         clist.push(disp.add(data,'thickness',1,4).name("Thickness"));
-        clist.push(disp.add(data,'radius',0.2,4.0).name("Radius (3D)"));
         clist.push(disp.addColor(data, 'poscolor').name("Pos-Color"));
         clist.push(disp.addColor(data, 'negcolor').name("Neg-Color"));
 
         let da1=disp2.add(data,'opacity',0.0,1.0).name('Opacity').onFinishChange( () => {
-            connectvis3d.createAndDisplayBrainSurface(0, connectvis3d.brain_colors[0],data.opacity);
-            connectvis3d.createAndDisplayBrainSurface(1, connectvis3d.brain_colors[1],data.opacity);
+            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d);
         });
+        let da2=disp2.add(data,'mode3d',connectvis3d.color_modes).name("Mesh Color Mode");
+        da2.onChange( () => {
+            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d);
+        });
+        let da3=disp2.add(data,'display3d',connectvis3d.display_modes).name("Show Meshes");
+        da3.onChange( () => {
+            connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d);
+        });
+        clist.push(disp2.add(data,'radius',0.2,4.0).name("Radius (3D)"));
+        
         clist.push(da1);
+        clist.push(da2);
+        clist.push(da3);
 
         internal.datgui_controllers=clist;
         
@@ -1330,11 +1353,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         loadsamplematrices : function(filenames) {
 
             let loadnext = function() {
-                loadmatrix(1,filenames[1],null,true);
+                loadmatrix(1,filenames[1],null,true,true);
                 webutil.createAlert('Sample connectivity matrices loaded.');
                 //window.dispatchEvent(new Event('resize'));
             };
-            loadmatrix(0,filenames[0],loadnext,true);
+            loadmatrix(0,filenames[0],loadnext,true,false);
 
         },
 
@@ -1488,9 +1511,10 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             
             internal.showlegend=!dt.showlegend;
             toggleshowlegend();
-            connectvis3d.createAndDisplayBrainSurface(0, connectvis3d.brain_colors[0],internal.parameters.opacity);
-            connectvis3d.createAndDisplayBrainSurface(1, connectvis3d.brain_colors[1],internal.parameters.opacity);
-            
+            connectvis3d.update3DMeshes(internal.parameters.opacity,
+                                        internal.parameters.mode3d,
+                                        internal.parameters.display3d
+                                       );
             internal.inrestorestate=false;
         },
         

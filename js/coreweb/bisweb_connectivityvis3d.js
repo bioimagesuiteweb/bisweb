@@ -8,63 +8,79 @@ const globalParams={
     internal : null,
     brainmesh : [ null,null],
     braingeom : [ null,null],
+    brainmaterial : [ null,null],
+    brainindices : [ null,null ],
 };
 
 const lobeoffset=20.0;
 const axisoffset=[0,5.0,20.0];
 
 const brain_colors = [
-    [ 0.7,0.52,0.52 ],
-    [ 0.8,0.6,0.6 ]
+    [ 1.0,1.0,1.0 ],
+    [ 1.0,1.0,1.0 ]
 ];
     
+const color_modes = [ 'Uniform', 'PosDegree', 'NegDegree', 'Sum', 'Difference' ];
+const display_modes = [ 'None', 'Left', 'Right', 'Both' ];
+
+
 
 // ---------------------------------------------------------------------------------------------------
 // Shaders
 // ---------------------------------------------------------------------------------------------------
 
-const brain_vertexshader_text = 
-      'attribute vec3 lookupScalar;\n'+
-      'varying vec3 vNormal;\n'+
-      //        'varying vec3 vLookup;\n'+
-      'void main() {\n'+
-      //        '     vLookup.x=lookupScalar.x;\n'+
-      //        '     vLookup.y=lookupScalar.y;\n'+
-      //        '     vLookup.z=lookupScalar.z;\n'+
-      '     vNormal = normalize( normalMatrix * normal );\n'+
-      '     vec3 transformed = vec3( position );\n'+
-      '     vec4 mvPosition = modelViewMatrix * vec4( transformed, 1.0 );\n'+
-      '     gl_Position = projectionMatrix * mvPosition;\n'+
-      //      '     gl_Position.z=0.99+0.01*gl_Position.z;\n'+
-      '}\n';
+const brain_vertexshader_text = `
+      varying vec3  vNormal;
+      varying float vColor;
+      attribute float parcels;
+      uniform float minValue;
+      uniform float maxValue;      
 
-const brain_fragmentshader_text=
-      'uniform float opacity;\n'+
-      'uniform vec3 diffuse;\n'+
-      'varying vec3 vNormal;\n'+
-      //        'varying vec3 vLookup;\n'+
-      'void main() {\n'+
-      '   float v=max(0.0,vNormal.z);\n'+
-      '   gl_FragColor = vec4( v*diffuse.x,v*diffuse.y,v*diffuse.z, opacity );\n'+
-      '}';
+      void main() {
 
-const sphere_vertexshader_text = 
-      'varying vec3 vNormal;\n'+
-      'void main() {\n'+
-      '     vNormal = normalize( normalMatrix * normal );\n'+
-      '     vec3 transformed = vec3( position );\n'+
-      '     vec4 mvPosition = modelViewMatrix * vec4( transformed, 1.0 );\n'+
-      '     gl_Position = projectionMatrix * mvPosition;\n'+
-      '}\n';
+           vColor=0.5+0.5*(parcels)/maxValue;           
+           vNormal = normalize( normalMatrix * normal );
+           vec3 transformed = vec3( position );
+           vec4 mvPosition = modelViewMatrix * vec4( transformed, 1.0 );
+           gl_Position = projectionMatrix * mvPosition;
+      }
+`;
 
-const sphere_fragmentshader_text=
-      'uniform float opacity;\n'+
-      'uniform vec3 diffuse;\n'+
-      'varying vec3 vNormal;\n'+
-      'void main() {\n'+
-      '   float v=max(0.0,vNormal.z);\n'+
-      '   gl_FragColor = vec4( v*diffuse.x,v*diffuse.y,v*diffuse.z, opacity );\n'+
-      '}';
+const brain_fragmentshader_text=`
+      uniform float opacity;
+      uniform vec3 diffuse;
+      varying vec3 vNormal;
+      varying float vColor;
+      
+
+      void main() {
+         float v=max(0.0,vNormal.z);
+         gl_FragColor = vec4( v*vColor*diffuse.x,
+                              v*vColor*diffuse.y,
+                              v*vColor*diffuse.z, 
+                              opacity );
+      }
+`;
+
+const sphere_vertexshader_text = `
+      varying vec3 vNormal;
+      void main() {
+           vNormal = normalize( normalMatrix * normal );
+           vec3 transformed = vec3( position );
+           vec4 mvPosition = modelViewMatrix * vec4( transformed, 1.0 );
+           gl_Position = projectionMatrix * mvPosition;
+      }
+`;
+
+const sphere_fragmentshader_text=`
+      uniform float opacity;
+      uniform vec3 diffuse;
+      varying vec3 vNormal;
+      void main() {
+         float v=max(0.0,vNormal.z);
+         gl_FragColor = vec4( v*diffuse.x,v*diffuse.y,v*diffuse.z, opacity );
+      }
+`;
 
 
 // ---------------------------------------------------------------------------------------------------
@@ -74,8 +90,8 @@ const sphere_fragmentshader_text=
 var initialize=function(internal) {
     globalParams.internal=internal;
 };
-
 // ---------------------------------------------------------------------------------------------------
+
 // 3D Rendering
 // ---------------------------------------------------------------------------------------------------
 
@@ -85,26 +101,82 @@ var initialize=function(internal) {
 // @param {Array} color - the color
 // @param {Number} opacity - the opacity
 
-var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8) {
+var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeIndex=2) {
 
     if (globalParams.brainmesh[index] !==null) { 
         globalParams.brainmesh[index].visible=false;
         globalParams.internal.subviewers[3].scene.remove(globalParams.brainmesh[index]);
     }
+
+    let parcels=globalParams.brainindices[index];
     
+
+    const matrix=globalParams.internal.conndata.statMatrix || null;
+    if (matrix===null)
+        attributeIndex=-1;
+
+    let attributes=new Float32Array(parcels.length);
+    
+    if (attributeIndex<0) {
+        for (let i=0;i<parcels.length;i++) {
+            attributes[i]=10+index*10;
+        }
+    } else {
+        for (let i=0;i<parcels.length;i++) {
+            attributes[i]=matrix[parcels[i]-1][attributeIndex];
+        }
+        
+        if (attributeIndex===0) {
+            color[0]=1.0;
+            color[1]=0.3;
+            color[2]=0.3;
+            opacity=1.0;
+        } else if (attributeIndex===1) {
+            color[0]=0.3;
+            color[1]=0.6;
+            color[2]=1.0;
+            opacity=1.0;
+        } else if (attributeIndex===2) {
+            color[0]=1.0;
+            color[1]=0.6;
+            color[2]=0.3;
+            opacity=1.0;
+        } else if (attributeIndex===3) {
+            color[0]=0.3;
+            color[1]=0.7;
+            color[2]=0.7;
+            opacity=1.0;
+        }
+    }
+    
+    let mina=attributes[0];
+    let maxa=attributes[0];
+    for (let i=1;i<attributes.length;i++) {
+        if (attributes[i]<mina) mina=attributes[i];
+        if (attributes[i]>maxa) maxa=attributes[i];
+    }
+
+
+
     let material = new THREE.ShaderMaterial({
         transparent : true,
         "uniforms": {
+            "minValue" : { "type": "f", "value" : mina },
+            "maxValue" : { "type": "f", "value" : maxa },
             "diffuse": {  "type":"c","value":
                           {"r":color[0],
                            "g":color[1],
-                           "b":color[2]}},
-            "opacity": {"type":"f","value":opacity}
+                           "b":color[2]}
+                       },
+            "opacity": {"type":"f","value":opacity},
         },
         vertexShader : brain_vertexshader_text,
         fragmentShader : brain_fragmentshader_text,
     });
+
+    globalParams.braingeom[index].addAttribute( 'parcels', new THREE.BufferAttribute( attributes, 1 ) );
     
+    globalParams.brainmaterial[index]=material;
     globalParams.brainmesh[index] = new THREE.Mesh(globalParams.braingeom[index],material);
     globalParams.brainmesh[index].visible=true;
     globalParams.internal.subviewers[3].scene.add(globalParams.brainmesh[index]);
@@ -123,6 +195,7 @@ var parsebrainsurface = function(textstring,filename) {
     let indices = new Uint16Array(obj.triangles.length);
     let parcels=null;
 
+    
     if (obj.indices)
         parcels = new Uint16Array(obj.indices.length);
 
@@ -151,7 +224,9 @@ var parsebrainsurface = function(textstring,filename) {
     buf.computeVertexNormals();
 
     globalParams.braingeom[meshindex]=buf;
-    createAndDisplayBrainSurface(meshindex, brain_colors[meshindex],0.7,parcels);
+    globalParams.brainindices[meshindex]=parcels;
+    
+    createAndDisplayBrainSurface(meshindex, brain_colors[meshindex],0.7,-1);
     
     if (globalParams.internal.axisline[0]===null) {
         // create axis line meshes
@@ -324,7 +399,28 @@ var drawlines3d=function(state,doNotUpdateFlagMatrix) {
     return total;
 };
 // ---------------------------------------------------------------------------------------------
+var update3DMeshes=function(opacity=0.5,modename='uniform',displaymode='Both') {
 
+    let mode=color_modes.indexOf(modename)-1;
+    let dmode=display_modes.indexOf(displaymode);
+
+    createAndDisplayBrainSurface(0, brain_colors[0],opacity,mode);
+    createAndDisplayBrainSurface(1, brain_colors[1],opacity,mode);
+
+    let show=[true,true];
+    if (dmode<=0) 
+        show=[false,false];
+    else if (dmode==1)
+        show[1]=false;
+    else if (dmode==2)
+        show[0]=false;
+
+    for (let i=0;i<=1;i++) {
+        if (globalParams.brainmesh[i] !==null) { 
+            globalParams.brainmesh[i].visible=show[i];
+        }
+    }
+};
 
 module.exports = {
 
@@ -335,4 +431,7 @@ module.exports = {
     lobeoffset : lobeoffset,
     createAndDisplayBrainSurface : createAndDisplayBrainSurface,
     brain_colors : brain_colors,
+    color_modes  : color_modes,
+    display_modes  : display_modes,
+    update3DMeshes :     update3DMeshes,
 };
