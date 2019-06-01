@@ -41,6 +41,8 @@ const network_colors=[
     "#FFCC22",
 ];
 
+const filter_modes = [ 'PosDegree', 'NegDegree', 'Sum', 'Difference' ];
+
 var initialize=function(internal) {
     globalParams.internal=internal;
 };
@@ -784,9 +786,11 @@ var createlines = function() {
 
     let degreethreshold=Math.round(globalParams.internal.parameters.degreethreshold);
     let matrixthreshold=globalParams.internal.parameters.matrixthreshold;
-    let filter=2;
-   
-
+    let filter=filter_modes.indexOf(globalParams.internal.parameters.filter);
+    if (filter<0)
+        filter=2;
+    console.log('Filter',filter);
+    
     let state = { mode: mode,
                   guimode : globalParams.internal.parameters.mode,
                   node : globalParams.internal.parameters.node,
@@ -883,5 +887,6 @@ module.exports = {
     corrmap : corrmap,
     createlines : createlines,
     drawlines : drawlines,
-    removelines : removelines
+    removelines : removelines,
+    filter_modes : filter_modes,
 };

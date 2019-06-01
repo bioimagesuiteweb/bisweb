@@ -159,6 +159,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             negcolor : "#00dddd",
             radius : 1.0,
             matrixthreshold : 0.1,
+            filter : 'Sum',
             opacity : 0.7,
             mode3d : 'Uniform',
             display3d : 'Both',
@@ -799,6 +800,11 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         internal.negFileInfo=[ "NONE", 0 ];
         internal.undostack.initialize();
         internal.linestack=[];
+        connectvis3d.createAndDisplayBrainSurface(0, [1.0,1.0,1.0],0.7,-1);
+        connectvis3d.createAndDisplayBrainSurface(1, [1.0,1.0,1.0],0.7,-1);
+        internal.parameters.mode3d='Uniform';
+        for (let ia=0;ia<internal.datgui_controllers.length;ia++) 
+            internal.datgui_controllers[ia].updateDisplay();
         update();
     };
     
@@ -941,6 +947,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         bisgenericio.read(in_filename).then( (obj) => {
             parseparcellation( obj.data,obj.filename);
         }).catch( (msg) => {
+            console.log('msg=',msg,in_filename);
             bootbox.alert(msg);
         });
         return false;
@@ -1131,8 +1138,12 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         
         let coords = gui.addFolder('Core');
         coords.open();
+
+
+        
         let disp = gui.addFolder('Display');
         let disp2 = gui.addFolder('Display 3D');
+        let adv = gui.addFolder('Advanced');
         let clist = [];
         clist.push(coords.add(data,'mode',gui_Modes).name("Mode"));
         let a1=coords.add(data,'node',1,400).name("Node");
@@ -1153,12 +1164,20 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         clist.push(disp.addColor(data, 'poscolor').name("Pos-Color"));
         clist.push(disp.addColor(data, 'negcolor').name("Neg-Color"));
 
+
+
+        clist.push(adv.add(data,'matrixthreshold',0.0,1.0).name('Matrix Threshold'));
+        clist.push(adv.add(data,'filter',connectvis.filter_modes).name('Threshold by'));
+
         let da1=disp2.add(data,'opacity',0.0,1.0).name('Opacity').onFinishChange( () => {
             connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d);
         });
         let da2=disp2.add(data,'mode3d',connectvis3d.color_modes).name("Mesh Color Mode");
         da2.onChange( () => {
             connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d);
+            if (data.mode3d!=='Uniform')
+                data.opacity=1.0;
+            da1.updateDisplay();
             setTimeout( () => { drawColorScale(); },200);
         });
         let da3=disp2.add(data,'display3d',connectvis3d.display_modes).name("Show Meshes");
@@ -1502,6 +1521,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         clearmatrices : function() {
             cleanmatrixdata();
+
         },
 
         undo : function() {

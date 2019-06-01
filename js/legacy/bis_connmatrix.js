@@ -281,7 +281,7 @@ class ConnMatrix {
         if (component===1)
             component=3;
 
-        console.log('+++++ Drawing lines, mode='+mode+' singlevalue='+singlevalue+', attribcomponent='+attribcomponent);
+        console.log('+++++ Drawing lines, mode='+mode+' singlevalue='+singlevalue+', attribcomponent='+attribcomponent+' filtering by'+in_column+' (2=sum,0=pos,1=neg)');
         
         var compvalue=0;
         if (mode===1)
@@ -412,7 +412,7 @@ class ConnMatrix {
         if (negative)
             column=1;
 
-        //console.log("+++++ Creating Line pairs numnodes="+n+" column="+column+' val(matrix) threshold > abs('+matrixthreshold+')');
+        console.log("+++++ Creating Line pairs numnodes="+n+" column="+column+' val(matrix) threshold > abs('+matrixthreshold+')');
         
         for (var row=0;row<n-1;row++) {
             var rowval=this.flagMatrix[row][column];

@@ -3,6 +3,7 @@ const bisCrossHair=require('bis_3dcrosshairgeometry');
 const util=require('bis_util');
 const bootbox=require('bootbox');
 const $=require('jquery');
+const numeric=require('numeric');
 
 const globalParams={
 
@@ -20,6 +21,7 @@ const axisoffset=[0,5.0,20.0];
 
     
 const color_modes = [ 'Uniform', 'PosDegree', 'NegDegree', 'Sum', 'Difference' ];
+
 const display_modes = [ 'None', 'Left', 'Right', 'Both' ];
 const displayimg= $('<img>');
 const transferfunction = {
@@ -39,6 +41,7 @@ const brain_vertexshader_text = `
       uniform float minValue;
       uniform float maxValue;      
       uniform sampler2D cmTexture;
+      uniform float opacity;
 
       void main() {
 
@@ -48,6 +51,9 @@ const brain_vertexshader_text = `
            vec3 transformed = vec3( position );
            vec4 mvPosition = modelViewMatrix * vec4( transformed, 1.0 );
            gl_Position = projectionMatrix * mvPosition;
+           if (opacity>0.99)
+               gl_Position.z=0.99+0.01*gl_Position.z;
+
       }
 `;
 
@@ -167,21 +173,33 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
     }
 
     let parcels=globalParams.brainindices[index];
-    
+    if (parcels===null)
+        return;
+
 
     const matrix=globalParams.internal.conndata.statMatrix || null;
     if (matrix===null)
         attributeIndex=-1;
 
     let attributes=new Float32Array(parcels.length);
-    
+    let mina=0,maxa=1;
     if (attributeIndex<0) {
         for (let i=0;i<parcels.length;i++) {
             attributes[i]=1;
         }
+
     } else {
         for (let i=0;i<parcels.length;i++) {
             attributes[i]=matrix[parcels[i]-1][attributeIndex];
+        }
+
+        mina=matrix[0][attributeIndex];
+        maxa=matrix[0][attributeIndex];
+        let dim=numeric.dim(matrix);
+        for (let i=1;i<dim[0];i++) {
+            let a=matrix[i][attributeIndex];
+            if (a<mina) mina=a;
+            if (a>maxa) maxa=a;
         }
     }
         
@@ -213,12 +231,6 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
         createTexture(-2.0);
     }
     
-    let mina=attributes[0];
-    let maxa=attributes[0];
-    for (let i=1;i<attributes.length;i++) {
-        if (attributes[i]<mina) mina=attributes[i];
-        if (attributes[i]>maxa) maxa=attributes[i];
-    }
 
     transferfunction.minth=0;
     transferfunction.maxth=maxa;
