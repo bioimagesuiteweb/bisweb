@@ -326,10 +326,14 @@ class SnapshotElement extends HTMLElement {
     createsnapshot(img, hasOverlayColorbar = false) {
 
         // Store scale
+
         userPreferences.setItem('snapshotscale', this.data.scale);
         if (!this.simplemode)
             userPreferences.setItem('snapshotdowhite', this.data.dowhite);
-        userPreferences.storeUserPreferences();
+        userPreferences.storeUserPreferences().catch( (e) => {
+            console.log('Failed to save userprefs '+e);
+        });
+        
 
         let outcanvas=this.createOutputCanvas(img,hasOverlayColorbar,this.data.scale,this.data.dowhite,this.data.crop);
         this.createsnapshot_internal(outcanvas);

@@ -48,11 +48,11 @@
                         "y": 108,
                         "z": 90
                     },
-                    "zoomFactor": 0.9340073593750001,
-                    "bottom": 135.43106710937502,
-                    "top": -135.43106710937502,
-                    "left": -135.43106710937502,
-                    "right": 135.43106710937502
+                    "zoomFactor": 0.934007359375,
+                    "bottom": 135.431067109375,
+                    "top": -135.431067109375,
+                    "left": -135.431067109375,
+                    "right": 135.431067109375
                 },
                 {
                     "position": {
@@ -70,11 +70,11 @@
                         "y": 108,
                         "z": 90
                     },
-                    "zoomFactor": 0.9340073593750001,
-                    "bottom": 135.43106710937502,
-                    "top": -135.43106710937502,
-                    "left": -135.43106710937502,
-                    "right": 135.43106710937502
+                    "zoomFactor": 0.934007359375,
+                    "bottom": 135.431067109375,
+                    "top": -135.431067109375,
+                    "left": -135.431067109375,
+                    "right": 135.431067109375
                 },
                 {
                     "position": {
@@ -92,11 +92,11 @@
                         "y": 108,
                         "z": 90
                     },
-                    "zoomFactor": 0.9340073593750001,
-                    "bottom": 135.43106710937502,
-                    "top": -135.43106710937502,
-                    "left": -135.43106710937502,
-                    "right": 135.43106710937502
+                    "zoomFactor": 0.934007359375,
+                    "bottom": 135.431067109375,
+                    "top": -135.431067109375,
+                    "left": -135.431067109375,
+                    "right": 135.431067109375
                 },
                 {
                     "position": {
@@ -149,80 +149,7 @@
                     268
                 ]
             },
-            "linestack": [
-                {
-                    "mode": 1,
-                    "guimode": "Single Node",
-                    "node": 238,
-                    "lobe": "L-Cerebellum",
-                    "network": "Default Mode",
-                    "degreethreshold": 10,
-                    "poscolor": "#ff0000",
-                    "negcolor": "#00dddd",
-                    "length": 50,
-                    "thickness": 2,
-                    "linestodraw": "Both",
-                    "singlevalue": 237,
-                    "attribcomponent": 0,
-                    "filter": 2,
-                    "radius": 1,
-                    "matrixthreshold": 0.1
-                },
-                {
-                    "mode": 1,
-                    "guimode": "Single Node",
-                    "node": 97,
-                    "lobe": "R-Limbic",
-                    "network": "Default Mode",
-                    "degreethreshold": 10,
-                    "poscolor": "#ff0000",
-                    "negcolor": "#00dddd",
-                    "length": 50,
-                    "thickness": 2,
-                    "linestodraw": "Both",
-                    "singlevalue": 96,
-                    "attribcomponent": 0,
-                    "filter": 2,
-                    "radius": 1,
-                    "matrixthreshold": 0.1
-                },
-                {
-                    "mode": 1,
-                    "guimode": "Single Node",
-                    "node": 97,
-                    "lobe": "R-Limbic",
-                    "network": "Default Mode",
-                    "degreethreshold": 10,
-                    "poscolor": "#ff0000",
-                    "negcolor": "#00dddd",
-                    "length": 50,
-                    "thickness": 2,
-                    "linestodraw": "Both",
-                    "singlevalue": 96,
-                    "attribcomponent": 0,
-                    "filter": 2,
-                    "radius": 1,
-                    "matrixthreshold": 0.1
-                },
-                {
-                    "mode": 1,
-                    "guimode": "Single Node",
-                    "node": 108,
-                    "lobe": "R-Cerebellum",
-                    "network": "Default Mode",
-                    "degreethreshold": 10,
-                    "poscolor": "#ff0000",
-                    "negcolor": "#00dddd",
-                    "length": 50,
-                    "thickness": 2,
-                    "linestodraw": "Both",
-                    "singlevalue": 107,
-                    "attribcomponent": 0,
-                    "filter": 2,
-                    "radius": 1,
-                    "matrixthreshold": 0.1
-                }
-            ],
+            "linestack": [],
             "parameters": {
                 "node": 108,
                 "linestodraw": "Both",
@@ -234,8 +161,8 @@
                 "radius": 1,
                 "matrixthreshold": 0.1,
                 "filter": "Sum",
-                "opacity": 0.2695763404434766,
-                "mode3d": "Uniform",
+                "opacity": 1,
+                "mode3d": "PosDegree",
                 "display3d": "Both",
                 "lobe": "R-Cerebellum",
                 "mode": "Single Node",

@@ -440,8 +440,8 @@ class BaseViewerElement extends HTMLElement {
         let y0=0.92*dh;
 
         let fnsize=webutil.getfontsize(context.canvas);
-        if (dw<1700)
-            fnsize=Math.round((dw/1700)*fnsize);
+        if (dw<1000)
+            fnsize=Math.round((dw/1000)*fnsize);
         
         let colorfunction=this.internal.objectmaptransferfunction;
         if (this.internal.objectmaptransferinfo.clustersize > 0) 

@@ -48,11 +48,11 @@
                         "y": 108,
                         "z": 90
                     },
-                    "zoomFactor": 0.9340073593750001,
-                    "bottom": 135.43106710937502,
-                    "top": -135.43106710937502,
-                    "left": -135.43106710937502,
-                    "right": 135.43106710937502
+                    "zoomFactor": 0.934007359375,
+                    "bottom": 135.431067109375,
+                    "top": -135.431067109375,
+                    "left": -135.431067109375,
+                    "right": 135.431067109375
                 },
                 {
                     "position": {
@@ -70,11 +70,11 @@
                         "y": 108,
                         "z": 90
                     },
-                    "zoomFactor": 0.9340073593750001,
-                    "bottom": 135.43106710937502,
-                    "top": -135.43106710937502,
-                    "left": -135.43106710937502,
-                    "right": 135.43106710937502
+                    "zoomFactor": 0.934007359375,
+                    "bottom": 135.431067109375,
+                    "top": -135.431067109375,
+                    "left": -135.431067109375,
+                    "right": 135.431067109375
                 },
                 {
                     "position": {
@@ -92,38 +92,38 @@
                         "y": 108,
                         "z": 90
                     },
-                    "zoomFactor": 0.9340073593750001,
-                    "bottom": 135.43106710937502,
-                    "top": -135.43106710937502,
-                    "left": -135.43106710937502,
-                    "right": 135.43106710937502
+                    "zoomFactor": 0.934007359375,
+                    "bottom": 135.431067109375,
+                    "top": -135.431067109375,
+                    "left": -135.431067109375,
+                    "right": 135.431067109375
                 },
                 {
                     "position": {
-                        "x": 376.6628082184438,
-                        "y": -11.852324378990005,
-                        "z": 185.31450427541978
+                        "x": -142.76750636344383,
+                        "y": 255.2268818567936,
+                        "z": 107.87549272243554
                     },
                     "up": {
-                        "x": -0.0010603290721661251,
-                        "y": -0.6239852604042456,
-                        "z": -0.781435391123606
+                        "x": 0.004364254010836532,
+                        "y": 0.12732518162043857,
+                        "z": -0.9918514260776425
                     },
                     "target": {
                         "x": 90,
                         "y": 108,
                         "z": 90
                     },
-                    "zoomFactor": 0.647214625,
-                    "bottom": 93.84612062500001,
-                    "top": -93.84612062500001,
-                    "left": -93.84612062500001,
-                    "right": 93.84612062500001
+                    "zoomFactor": 0.7689556959625001,
+                    "bottom": 111.49857591456252,
+                    "top": -111.49857591456252,
+                    "left": -111.49857591456252,
+                    "right": 111.49857591456252
                 }
             ],
             "data": {
                 "playing": false,
-                "displaymode": "Conn 2",
+                "displaymode": "3D Only",
                 "show3dslices": true,
                 "decorations": true,
                 "xcoord": 106,
@@ -149,80 +149,7 @@
                     268
                 ]
             },
-            "linestack": [
-                {
-                    "mode": 1,
-                    "guimode": "Single Node",
-                    "node": 238,
-                    "lobe": "L-Cerebellum",
-                    "network": "Default Mode",
-                    "degreethreshold": 10,
-                    "poscolor": "#ff0000",
-                    "negcolor": "#00dddd",
-                    "length": 50,
-                    "thickness": 2,
-                    "linestodraw": "Both",
-                    "singlevalue": 237,
-                    "attribcomponent": 0,
-                    "filter": 2,
-                    "radius": 1,
-                    "matrixthreshold": 0.1
-                },
-                {
-                    "mode": 1,
-                    "guimode": "Single Node",
-                    "node": 97,
-                    "lobe": "R-Limbic",
-                    "network": "Default Mode",
-                    "degreethreshold": 10,
-                    "poscolor": "#ff0000",
-                    "negcolor": "#00dddd",
-                    "length": 50,
-                    "thickness": 2,
-                    "linestodraw": "Both",
-                    "singlevalue": 96,
-                    "attribcomponent": 0,
-                    "filter": 2,
-                    "radius": 1,
-                    "matrixthreshold": 0.1
-                },
-                {
-                    "mode": 1,
-                    "guimode": "Single Node",
-                    "node": 97,
-                    "lobe": "R-Limbic",
-                    "network": "Default Mode",
-                    "degreethreshold": 10,
-                    "poscolor": "#ff0000",
-                    "negcolor": "#00dddd",
-                    "length": 50,
-                    "thickness": 2,
-                    "linestodraw": "Both",
-                    "singlevalue": 96,
-                    "attribcomponent": 0,
-                    "filter": 2,
-                    "radius": 1,
-                    "matrixthreshold": 0.1
-                },
-                {
-                    "mode": 1,
-                    "guimode": "Single Node",
-                    "node": 108,
-                    "lobe": "R-Cerebellum",
-                    "network": "Default Mode",
-                    "degreethreshold": 10,
-                    "poscolor": "#ff0000",
-                    "negcolor": "#00dddd",
-                    "length": 50,
-                    "thickness": 2,
-                    "linestodraw": "Both",
-                    "singlevalue": 107,
-                    "attribcomponent": 0,
-                    "filter": 2,
-                    "radius": 1,
-                    "matrixthreshold": 0.1
-                }
-            ],
+            "linestack": [],
             "parameters": {
                 "node": 108,
                 "linestodraw": "Both",
@@ -234,8 +161,8 @@
                 "radius": 1,
                 "matrixthreshold": 0.1,
                 "filter": "Sum",
-                "opacity": 0.2695763404434766,
-                "mode3d": "Uniform",
+                "opacity": 1,
+                "mode3d": "Sum",
                 "display3d": "Both",
                 "lobe": "R-Cerebellum",
                 "mode": "Single Node",
@@ -247,7 +174,7 @@
             },
             "lastnode": 107,
             "showlegend": false,
-            "rendermode": 7
+            "rendermode": 5
         }
     }
 }
