@@ -879,7 +879,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                         connectvis3d.update3DMeshes(internal.parameters.opacity,
                                                     internal.parameters.mode3d,
                                                     internal.parameters.display3d);
-                        drawColorScale();
+                        setTimeout( () => { drawColorScale(); },1000);
                     }
                     
                     if (!sample) {
@@ -1159,7 +1159,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         let da2=disp2.add(data,'mode3d',connectvis3d.color_modes).name("Mesh Color Mode");
         da2.onChange( () => {
             connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d);
-            drawColorScale();
+            setTimeout( () => { drawColorScale(); },200);
         });
         let da3=disp2.add(data,'display3d',connectvis3d.display_modes).name("Show Meshes");
         da3.onChange( () => {
@@ -1302,8 +1302,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         if (connectvis3d.transferfunction.map===null)
             return;
-
         context.drawImage(connectvis3d.displayimg[0],x0,y0,wd*15,ht);
+
         context.strokeStyle="#888888";
         context.lineWidth=1;
         context.beginPath();
