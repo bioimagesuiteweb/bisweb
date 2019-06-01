@@ -1651,6 +1651,10 @@ class OrthogonalViewerElement extends BaseViewerElement {
         return this.internal.viewports[this.internal.rendermode];
     }
 
+    getRenderModeViewports() {
+        return this.internal.viewports[this.internal.rendermode];
+    }
+
     /** sets the viewer mode one of full,left,right 
      * @param{mode} - on of left,right or full (default)
      * @param{size} - width (fraction) of this viewer

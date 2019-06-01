@@ -2,6 +2,7 @@ const THREE=require('three');
 const bisCrossHair=require('bis_3dcrosshairgeometry');
 const util=require('bis_util');
 const bootbox=require('bootbox');
+const $=require('jquery');
 
 const globalParams={
 
@@ -10,16 +11,22 @@ const globalParams={
     braingeom : [ null,null],
     brainmaterial : [ null,null],
     brainindices : [ null,null ],
+    braintexture : null,
 };
 
+let lasttexturehue=-1.0;
 const lobeoffset=20.0;
 const axisoffset=[0,5.0,20.0];
 
     
 const color_modes = [ 'Uniform', 'PosDegree', 'NegDegree', 'Sum', 'Difference' ];
 const display_modes = [ 'None', 'Left', 'Right', 'Both' ];
-
-
+const displayimg= $('<img>');
+const transferfunction = {
+    map : null,
+    minth : null,
+    maxth : null
+};
 
 // ---------------------------------------------------------------------------------------------------
 // Shaders
@@ -27,14 +34,16 @@ const display_modes = [ 'None', 'Left', 'Right', 'Both' ];
 
 const brain_vertexshader_text = `
       varying vec3  vNormal;
-      varying float vColor;
+      varying vec4  vColor;
       attribute float parcels;
       uniform float minValue;
       uniform float maxValue;      
+      uniform sampler2D cmTexture;
 
       void main() {
 
-           vColor=0.5+0.5*(parcels)/maxValue;           
+           float c=(parcels)/maxValue;           
+           vColor= texture2D(cmTexture, vec2(c, 0));
            vNormal = normalize( normalMatrix * normal );
            vec3 transformed = vec3( position );
            vec4 mvPosition = modelViewMatrix * vec4( transformed, 1.0 );
@@ -46,14 +55,14 @@ const brain_fragmentshader_text=`
       uniform float opacity;
       uniform vec3 diffuse;
       varying vec3 vNormal;
-      varying float vColor;
+      varying vec4 vColor;
       
 
       void main() {
          float v=max(0.0,vNormal.z);
-         gl_FragColor = vec4( v*vColor*diffuse.x,
-                              v*vColor*diffuse.y,
-                              v*vColor*diffuse.z, 
+         gl_FragColor = vec4( v*vColor.x,
+                              v*vColor.y,
+                              v*vColor.z, 
                               opacity );
       }
 `;
@@ -90,6 +99,59 @@ var initialize=function(internal) {
 
 // 3D Rendering
 // ---------------------------------------------------------------------------------------------------
+let createTexture=function(hue) {
+
+
+    if (Math.abs(hue-lasttexturehue)<0.01 && globalParams.brainTexture!==null)
+        return 0;
+    
+    // Colormap texture
+    lasttexturehue=hue;
+    let canvas = document.createElement( 'canvas' );
+
+
+    canvas.width=256;
+    canvas.height=1;
+    let canvasdata=canvas.getContext("2d").createImageData(256,1);
+
+    if (hue>0.0 && hue<=1.0) { 
+        let cmap=util.mapconstanthuecolormap(0.0,255.0,1.0,hue,1.0);
+        transferfunction.map=cmap;
+        transferfunction.minth=0;
+        transferfunction.maxth=1;
+        let map=[0,0,0,0];
+        let data=[0];
+        
+        for (let i=0;i<=255;i++)  {
+            data[0]=i;
+            cmap(data,0,map);
+            for (let j=0;j<=3;j++)
+                canvasdata.data[i*4+j]=map[j];
+        }
+    } else {
+        transferfunction.map=null;
+        for (let i=0;i<=255;i++)  {
+            for (let j=0;j<=2;j++)
+                canvasdata.data[i*4+j]=224;
+            canvasdata.data[i*4+3]=255.0;
+        }
+    }
+
+    canvas.getContext("2d").putImageData(canvasdata,0,0);
+    let outimg=canvas.toDataURL("image/png");
+    displayimg.attr('src', outimg);
+    displayimg.width(256);
+    displayimg.height(16);
+    
+    if  (globalParams.braintexture)
+        globalParams.braintexture.dispose();
+    
+    let cmtexture = new THREE.Texture(canvas);
+    cmtexture.needsUpdate = true;
+    cmtexture.minFilter = cmtexture.magFilter = THREE.LinearFilter;
+    globalParams.braintexture=cmtexture;
+    return 1;
+};
 
 // Parses Brain Surface
 // @alias BisWebConnectivityVis3D1~createAndDisplayBrainSurface from json file
@@ -121,28 +183,34 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
         for (let i=0;i<parcels.length;i++) {
             attributes[i]=matrix[parcels[i]-1][attributeIndex];
         }
+    }
         
-        if (attributeIndex===0) {
-            color[0]=1.0;
-            color[1]=0.3;
-            color[2]=0.3;
-            opacity=1.0;
-        } else if (attributeIndex===1) {
-            color[0]=0.3;
-            color[1]=0.6;
-            color[2]=1.0;
-            opacity=1.0;
-        } else if (attributeIndex===2) {
-            color[0]=1.0;
-            color[1]=0.6;
-            color[2]=0.3;
-            opacity=1.0;
-        } else if (attributeIndex===3) {
-            color[0]=0.3;
-            color[1]=0.7;
-            color[2]=0.7;
-            opacity=1.0;
-        }
+    if (attributeIndex===0) {
+        createTexture(0.02);
+        color[0]=1.0;
+        color[1]=0.3;
+        color[2]=0.3;
+        opacity=1.0;
+    } else if (attributeIndex===1) {
+        createTexture(0.58);
+        color[0]=0.3;
+        color[1]=0.6;
+        color[2]=1.0;
+        opacity=1.0;
+    } else if (attributeIndex===2) {
+        createTexture(0.07);
+        color[0]=1.0;
+        color[1]=0.6;
+        color[2]=0.3;
+        opacity=1.0;
+    } else if (attributeIndex===3) {
+        createTexture(0.3);
+        color[0]=0.3;
+        color[1]=0.7;
+        color[2]=0.7;
+        opacity=1.0;
+    } else {
+        createTexture(-2.0);
     }
     
     let mina=attributes[0];
@@ -152,13 +220,15 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
         if (attributes[i]>maxa) maxa=attributes[i];
     }
 
-
+    transferfunction.minth=0;
+    transferfunction.maxth=maxa;
 
     let material = new THREE.ShaderMaterial({
         transparent : true,
         "uniforms": {
             "minValue" : { "type": "f", "value" : mina },
             "maxValue" : { "type": "f", "value" : maxa },
+            "cmTexture" : { "value" : globalParams.braintexture },
             "diffuse": {  "type":"c","value":
                           {"r":color[0],
                            "g":color[1],
@@ -170,6 +240,7 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
         fragmentShader : brain_fragmentshader_text,
     });
 
+    globalParams.braingeom[index].removeAttribute( 'parcels');
     globalParams.braingeom[index].addAttribute( 'parcels', new THREE.BufferAttribute( attributes, 1 ) );
     
     globalParams.brainmaterial[index]=material;
@@ -427,6 +498,8 @@ module.exports = {
     lobeoffset : lobeoffset,
     createAndDisplayBrainSurface : createAndDisplayBrainSurface,
     color_modes  : color_modes,
+    displayimg : displayimg,
+    transferfunction : transferfunction,
     display_modes  : display_modes,
     update3DMeshes :     update3DMeshes,
 };

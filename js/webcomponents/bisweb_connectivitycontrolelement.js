@@ -116,7 +116,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         gui_Lines : gui_Lines,
         gui_Modes : gui_Modes,
         gui_Lobes : gui_Lobes,
-
+        
         
         // Network stuff
         networkAttributeIndex : 4,
@@ -288,7 +288,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             if (internal.rendermode===6)
                 internal.rendermode+=1;
         }
-        //console.log('Rendermode=',internal.rendermode);
+
         let vp=internal.orthoviewer.setRenderMode(internal.rendermode,true);
         let parcvp=vp[4];
         internal.parcellation.viewport.x0=parcvp.x0;
@@ -612,6 +612,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             skip2d=true;
         }
 
+        drawColorScale();
+        
         if (skip2d && skip3d)
             return;
         
@@ -673,6 +675,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         //if (internal.showlegend === true)
         drawMatricesAndLegendsAsImages();
+
 
         if (!skip3d)
             internal.layoutmanager.getrenderer().render(internal.subviewers[3].scene,
@@ -876,6 +879,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                         connectvis3d.update3DMeshes(internal.parameters.opacity,
                                                     internal.parameters.mode3d,
                                                     internal.parameters.display3d);
+                        drawColorScale();
                     }
                     
                     if (!sample) {
@@ -1080,7 +1084,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         d[3]=truedim[3];
         s[3]=truespa[3];
 
-        console.log('\n\n\n\n\n'+numeric.sub(d,truedim));
+
         let diff=numeric.norminf(numeric.sub(d,truedim));
 
         console.log(numeric.sub(s,truespa));
@@ -1155,6 +1159,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         let da2=disp2.add(data,'mode3d',connectvis3d.color_modes).name("Mesh Color Mode");
         da2.onChange( () => {
             connectvis3d.update3DMeshes(data.opacity,data.mode3d,data.display3d);
+            drawColorScale();
         });
         let da3=disp2.add(data,'display3d',connectvis3d.display_modes).name("Show Meshes");
         da3.onChange( () => {
@@ -1250,7 +1255,86 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         // ------------------------------------------------
     };
 
+    var drawColorScale=function() {
 
+        if (internal.rendermode===8)
+            return;
+        
+        let context=internal.layoutmanager.overlaycontext;
+        let fullwidth=internal.layoutmanager.getviewerwidth();
+        let dw=fullwidth*internal.orthoviewer.cleararea[1];
+        let dh=internal.layoutmanager.getviewerheight();
+        let y0=30;
+        
+        let fnsize=webutil.getfontsize(context.canvas);
+        if (dw<1700)
+            fnsize=Math.round((dw/1000)*fnsize);
+        
+        let minv=connectvis3d.transferfunction.minth;
+        let maxv=connectvis3d.transferfunction.maxth;
+        let numsteps=14;
+
+        let wd=(0.25*dw)/(numsteps+1);
+        let dvalue=maxv-minv;
+        let dv=dvalue/numsteps;
+        
+        let x0=0.7*dw;
+        x0=x0+internal.orthoviewer.cleararea[0]*fullwidth;
+        
+        y0+=2;
+        let ht=0.5*(dh-y0);
+        if (ht>wd)
+            ht=wd;
+        
+        let power=10.0;
+        if (dvalue>100)
+            power=1.0;
+        if (dvalue<0.1)
+            power=100.0;
+        
+        
+        context.font=fnsize+"px Arial";
+        context.textAlign="center";
+        context.textBaseline="top";
+
+        context.fillStyle="#ffffff";
+        context.fillRect(x0-2,y0-2,wd*(numsteps+1)+3,3.0*ht);
+
+        if (connectvis3d.transferfunction.map===null)
+            return;
+
+        context.drawImage(connectvis3d.displayimg[0],x0,y0,wd*15,ht);
+        context.strokeStyle="#888888";
+        context.lineWidth=1;
+        context.beginPath();
+        context.moveTo(x0,y0);
+        context.lineTo(x0+wd*15,y0);
+        context.lineTo(x0+wd*15,y0+ht);
+        context.lineTo(x0,y0+ht);
+        context.lineTo(x0,y0);
+        context.stroke();
+
+        context.strokeStyle="#000000";
+        context.lineWidth=2;
+
+        for (let i=0;i<=numsteps;i++) {
+            if (i===0 || i===numsteps || i===numsteps/2) {
+
+
+                context.beginPath();
+                context.moveTo(x0+0.5*(wd-1),y0+0.5*ht);
+                context.lineTo(x0+0.5*(wd-1),y0+1.3*ht);
+                context.stroke();
+                let w0=context.measureText('-').width*-0.5;
+                context.fillStyle = "#000000";
+                let data=i*dv+minv;
+                context.fillText(util.scaledround(data,power),x0+w0+0.5*(wd-1),y0+1.5*ht);
+            }
+            
+            x0+=wd;
+        }
+    };
+    
     
     // -------------------------------------------------------------------------------------------
     // Public Interface from here on
@@ -1270,7 +1354,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
             if (internal.inrestorestate)
                 return;
-            
+
             internal.subviewers=subviewers;
             onDemandCreateGUI(true);
             const imagepath=webutil.getWebPageImagePath();
@@ -1565,6 +1649,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
 
         setRenderMode(md) {
             internal.rendermode=md-1;
+
             togglemode(true);
         },
 
