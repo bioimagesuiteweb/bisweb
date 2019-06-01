@@ -90,7 +90,7 @@ const createNetworkNames = function(useyale=true,internal=null) {
         internal.gui_Networks_Names.push(internal.gui_Networks[keys[i]]);
         internal.gui_Networks_ShortNames.push(gui_Networks_ArrayShort[index][keys[i]]);
     }
-    console.log("Network Names created",internal.gui_Networks_Names,internal.gui_Networks_ShortNames);
+    //    console.log("Network Names created",internal.gui_Networks_Names,internal.gui_Networks_ShortNames);
     
     internal.parameters.lobe=gui_Lobes[1];
     internal.parameters.mode=gui_Modes[1];
@@ -494,7 +494,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 internal.overlaycontext.fillText('Using node definitions from '+internal.parcellation.description+' with '+(internal.parcellation.rois.length)+' nodes.',
                                                  midx,y0_0);
                 if (internal.networkAttributeIndex===4)
-                    internal.overlaycontext.fillText('Using Yale network definitions from Shen at al 2017',midx,y0_0+20);
+                    internal.overlaycontext.fillText('Using Yale network definitions from Noble at al 2018.',midx,y0_0+20);
                 else
                     internal.overlaycontext.fillText('Using Network definitions from Power at al. Neuron 2011.',midx,y0_0+20);
             }
@@ -1620,6 +1620,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                                         internal.parameters.display3d
                                        );
             internal.inrestorestate=false;
+            setTimeout( () => { drawColorScale();},20);
+
         },
         
         /** Get State as Object 

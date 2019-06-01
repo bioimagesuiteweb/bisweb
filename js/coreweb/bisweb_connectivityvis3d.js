@@ -172,21 +172,25 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
         globalParams.internal.subviewers[3].scene.remove(globalParams.brainmesh[index]);
     }
 
+
     let parcels=globalParams.brainindices[index];
     if (parcels===null)
         return;
 
-
     const matrix=globalParams.internal.conndata.statMatrix || null;
-    if (matrix===null)
+    let dim=[0,0];
+    if (matrix===null) 
         attributeIndex=-1;
+    else
+        dim=numeric.dim(matrix);
 
     let attributes=new Float32Array(parcels.length);
     let mina=0,maxa=1;
-    if (attributeIndex<0) {
+    if (attributeIndex<0 || dim[0]!==268) {
         for (let i=0;i<parcels.length;i++) {
             attributes[i]=1;
         }
+        attributeIndex=-1;
 
     } else {
         for (let i=0;i<parcels.length;i++) {
@@ -195,7 +199,7 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
 
         mina=matrix[0][attributeIndex];
         maxa=matrix[0][attributeIndex];
-        let dim=numeric.dim(matrix);
+
         for (let i=1;i<dim[0];i++) {
             let a=matrix[i][attributeIndex];
             if (a<mina) mina=a;
