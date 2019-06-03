@@ -142,6 +142,8 @@ let createTexture=function(hue) {
             canvasdata.data[i*4+3]=255.0;
         }
     }
+    // Eliminate no opacity color
+    canvasdata.data[3]=canvasdata.data[7];
 
     canvas.getContext("2d").putImageData(canvasdata,0,0);
     let outimg=canvas.toDataURL("image/png");
