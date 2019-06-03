@@ -89,7 +89,7 @@ class BaseViewerElement extends HTMLElement {
             // colormaps
             colormapControllerPayload : null,
             objectmaptransferfunction : util.mapobjectmapfactory(255),
-            objectmaptransferinfo : { isfunctional : false, colormode : 'Overlay' },
+            objectmaptransferinfo : { 'showcolorbar' : false, colormode : 'Overlay' },
 
             // movie playing
             framecontroller : null,
@@ -425,8 +425,8 @@ class BaseViewerElement extends HTMLElement {
     drawcolorscale() {
         
         this.clearcolorscale();
-        
-        if (this.internal.objectmap===null || this.internal.objectmaptransferinfo.isfunctional!==true)
+
+        if (this.internal.objectmap===null || this.internal.objectmaptransferinfo.showcolorbar!==true)
             return;
 
         let context=this.internal.layoutcontroller.overlaycontext;
@@ -495,6 +495,7 @@ class BaseViewerElement extends HTMLElement {
         context.textAlign="center";
         context.textBaseline="top";
 
+
         for (let pass=0;pass<numpass;pass++) {
             context.fillStyle="#888888";
             context.fillRect(x0-2,y0-2,wd*(numsteps+1)+3,ht+4);
@@ -506,7 +507,9 @@ class BaseViewerElement extends HTMLElement {
                     data[0]=-(maxv-dv*i);
                 }
                 colorfunction(data,0,map);
-                context.fillStyle=(util.rgbToHex(map[0],map[1],map[2]));
+                let cl=util.rgbToHex(map[0],map[1],map[2]);
+                context.fillStyle=cl;
+                
                 context.fillRect(x0+1,y0,wd-2,ht);
 
                 if (i===0 || i===numsteps || i===numsteps/2) {
@@ -527,6 +530,7 @@ class BaseViewerElement extends HTMLElement {
             }
             x0+=wd;
         }
+
     }
     
     
@@ -599,7 +603,7 @@ class BaseViewerElement extends HTMLElement {
         this.drawcolorscale();
     }
     
-    
+
     // ------------------------------------------------------------------------
     // get/set image
     // ------------------------------------------------------------------------

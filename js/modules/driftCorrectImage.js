@@ -49,11 +49,11 @@ class DriftCorrectImageModule extends BaseModule {
                     "priority": 1,
                     "advanced": false,
                     "gui": "slider",
-                    "type": "int",
-                    "default" : "3",
                     "varname": "order",
+                    "type": "int",
+                    "default" : 3,
                     "low" : 0,
-                    "high" : 3,
+                    "high" : 3
                 },
                 baseutils.getDebugParam()
             ],
@@ -79,22 +79,22 @@ class DriftCorrectImageModule extends BaseModule {
             power=6;
         
         if (power===0) 
-	    return 1.0;
+            return 1.0;
 
 
-	if (power===1)
-	    return t;
+        if (power===1)
+            return t;
 
-	if (power===2)
-	    return 1.5*t*t-0.5;
+        if (power===2)
+            return 1.5*t*t-0.5;
 
-	//case 3: // P_3(x) =0.5*(5x^3-3x)
-	return 2.5*t*t*t-1.5*t;
+        //case 3: // P_3(x) =0.5*(5x^3-3x)
+        return 2.5*t*t*t-1.5*t;
     }
 
     computeTime(col, numframes) {
-	if ((numframes-1)<0.00001)
-	    return (col)-(numframes-1)*0.5;
+        if ((numframes-1)<0.00001)
+            return (col)-(numframes-1)*0.5;
 
         return ((col)-(numframes-1)*0.5)/((numframes-1)*0.5);
     }

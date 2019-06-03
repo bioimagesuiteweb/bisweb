@@ -218,6 +218,8 @@ class ModuleManagerElement extends HTMLElement {
         
         this.createModule('Combine Images',1, false, modules.getModule('combineImages'), moduleoptions);
         this.createModule('Process 4D Image',1, dosep, modules.getModule('process4DImage'), moduleoptions);
+        this.createModule('Drift Correct 4D Image',1, dosep, modules.getModule('driftCorrectImage'), moduleoptions);
+        this.createModule('Temporal Filter 4D Image',1, dosep, modules.getModule('butterworthFilterImage'), moduleoptions);
         this.createModule('Create Mask',2, false, modules.getModule('binaryThresholdImage'), moduleoptions);
         this.createModule('Morphology Filter',2, false, modules.getModule('morphologyFilter'), moduleoptions);
         if (usesgpl) {

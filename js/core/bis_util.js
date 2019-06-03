@@ -172,7 +172,7 @@ const util = {
             return hex.length == 1 ? "0" + hex : hex;
         }
         
-        return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+        return "#" + componentToHex(Math.floor(r)) + componentToHex(Math.floor(g)) + componentToHex(Math.floor(b));
     },
 
     /** This functions converts hex to rgb. 
@@ -637,21 +637,25 @@ const util = {
             intensity : intensity
         };
 
+
+        console.log('Params=',params);
         
         var internalmapfunction = function(data,index,map) {
 
             if (index<0)
                 index=0;
             
-            let val=data[index];
-            let s=util.range(Math.round(params.scale*(val-params.shift)),0.0,255.0)/255.0;
+            let val=data[index],s=0.0;
+            if (val>params.shift)
+                s=util.range(Math.round(params.scale*(val-params.shift)),0.0,255.0)/255.0;
+
 
             let v=params.intensity;
             let h=params.hue*6.0;
-
             let i=Math.floor(h);
 
             let f=h-i;
+            
             let aa= v*(1.0-s);
             let bb= v*(1.0- (s*f));
             let cc= v*(1.0- (s* (1.0-f)));
@@ -678,8 +682,12 @@ const util = {
                 break;
             }
 
-            map[0]=255*r; map[1]=255*g; map[2]=255*b; map[3]=opacity*255.0;
+            map[0]=Math.round(255*r); map[1]=Math.round(255*g); map[2]=Math.round(255*b); map[3]=Math.round(opacity*255.0);
+            if (s<0.0001)
+                map[3]=0.0;
+            
         };
+
 
         
         return internalmapfunction;

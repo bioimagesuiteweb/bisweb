@@ -81,7 +81,7 @@ class ButterworthFilterImageModule extends BaseModule {
                     "default": 0.01,
                 },
                 {
-                    "name": "Sample Rate",
+                    "name": "Sample Rate (TR)",
                     "description": "Data time of repetition (Data TR). If <0.0 use spacing from image header",
                     "priority": 3,
                     "advanced": false,

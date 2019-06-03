@@ -87,7 +87,7 @@ mat.load(inpfilename).then( async () => {
             imgdata[index]=matrix[frame][j]*scale;
             ++index;
         }
-    };
+    }
     let outname=inpfilename+'.nii.gz';
     img.save(outname).then( () => {
         console.log('Output saved in',outname);
