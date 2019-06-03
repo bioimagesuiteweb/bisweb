@@ -18,30 +18,31 @@
 'use strict';
 
 const biswrap = require('libbiswasm_wrapper');
-const baseutils=require("baseutils");
 const BaseModule = require('basemodule.js');
+const baseutils=require("baseutils");
 
+// Three Matrix to Matrix 
+// Input + Regressor + Weights --> Output = Input Orthogonalized to Regressor
 /**
- * Calculates the correlation matrix for a dataset given a Z-score for the underlying data. 
- * Weights for individual data points may be specified as well .
+ * Applies one time series to another to find a regression line with the option to specify weights on 
+ * a frame by frame basis, i.e. orthagonalizes the two time series.
  */
-class ComputeCorrelationModule extends BaseModule {
+class SeedCorrelationImageModule extends BaseModule {
     constructor() {
         super();
-        this.name = 'computeCorrelation';
+        this.name = 'seedCorrelationImage';
     }
 
-    
     createDescription() {
-        return {
-            "name": "Compute Correlation",
-            "description": "Computes the correlation matrix for an input matrix (pairwise) with weights",
-            "author": "Zach Saltzman",
+        let des={
+            "name": "Seed Correlation Image" ,
+            "description": "Computes a Seed Correlation Map",
+            "author": "Xenios Papademetris",
             "version": "1.0",
-            "inputs": baseutils.getMatrixToMatrixInputs(true),
-            "outputs":  baseutils.getMatrixToMatrixOutputs(),
-            "buttonName": "Calculate",
-            "shortname" : "cor",
+            "inputs": baseutils.getImageToImageInputs(),
+            "outputs":  baseutils.getImageToImageOutputs(),
+            "buttonName": "Seed Map",
+            "shortname" : "seed",
             "params": [
                 {
                     "name": "Z-Score",
@@ -54,23 +55,35 @@ class ComputeCorrelationModule extends BaseModule {
                     "default" : true,
                 },
                 baseutils.getDebugParam()
-            ]
+            ],
         };
+
+        des.inputs.push({
+            'type': 'vector',
+            'name': 'Weights',
+            'description': '(Optional). The framewise weight vector',
+            'varname': 'weight',
+            'shortname': 'w',
+            'required': false,
+        });
+        
+        des.inputs.push(baseutils.getRegressorInput());
+        return des;
     }
 
+    
     directInvokeAlgorithm(vals) {
-        console.log('oooo invoking: computeCorrelation with vals', JSON.stringify(vals));
-        //0 indicates even weighting
-        let weightMatrix = this.inputs['weight'] || 0;
-        let input = this.inputs['input'];
-
+        console.log('oooo invoking: seedCorrelationImage with vals', JSON.stringify(vals));
         return new Promise((resolve, reject) => {
+            let input = this.inputs['input'];
+            let regressor = this.inputs['regressor'];
+            let weight = this.inputs['weight'] || 0;
+            
             biswrap.initialize().then(() => {
-                this.outputs['output'] = biswrap.computeCorrelationMatrixWASM(input, weightMatrix, {
-                    "toz" : super.parseBoolean(vals.zscore)
+                this.outputs['output'] = biswrap.computeSeedCorrelationImageWASM(input, regressor, weight, {
+                    "toz" : super.parseBoolean(vals.zscore),
                 }, vals.debug);
-
-                resolve(); 
+                resolve();
             }).catch( (e) => {
                 reject(e.stack);
             });
@@ -79,4 +92,4 @@ class ComputeCorrelationModule extends BaseModule {
 
 }
 
-module.exports = ComputeCorrelationModule;
+module.exports = SeedCorrelationImageModule;

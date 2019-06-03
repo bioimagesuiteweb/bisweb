@@ -1750,3 +1750,45 @@ unsigned char* weightedRegressOutImageWASM(unsigned char* input_ptr,unsigned cha
    return out_image->releaseAndReturnRawArray();
 }
 
+
+
+unsigned char* computeSeedCorrelationImageWASM(unsigned char* input_ptr,unsigned char* roi_ptr,unsigned char* weights_ptr,const char* jsonstring,int debug) {
+
+
+  std::unique_ptr<bisJSONParameterList> params(new bisJSONParameterList());
+  if (!params->parseJSONString(jsonstring))
+    return 0;
+
+  if(debug)
+    params->print("computeSeedCorrelationImageJSON","_____");
+
+  int toz=params->getBooleanValue("toz",0);
+
+  Eigen::MatrixXf seeds;
+  std::unique_ptr<bisSimpleMatrix<float> > s_matrix(new bisSimpleMatrix<float>("matrix"));
+  if (!bisEigenUtil::deserializeAndMapToEigenMatrix(s_matrix.get(),roi_ptr,seeds,debug))
+    return 0;
+  
+  
+  Eigen::VectorXf weights;
+  std::unique_ptr<bisSimpleVector<float> > s_vector(new bisSimpleVector<float>("vector"));
+  if (bisEigenUtil::deserializeAndMapToEigenVector(s_vector.get(),weights_ptr,weights,seeds.rows(),1.0,1)<1)
+    return 0;
+  
+  if (debug)
+    std::cout << "To Z = " << toz << std::endl;
+
+  std::unique_ptr<bisSimpleImage<float> > in_image(new bisSimpleImage<float>("input"));
+  if (!in_image->linkIntoPointer(input_ptr))
+    return 0;
+  
+  std::unique_ptr<bisSimpleImage<float> > out_image(new bisSimpleImage<float>("filtered_output_float"));
+
+
+  int ok=bisfMRIAlgorithms::computeSeedMapImage(in_image.get(),seeds,toz,weights,out_image.get());
+  if (debug)
+    std::cout << "SeedCorrelationMapping done " << ok << std::endl;
+
+  return out_image->releaseAndReturnRawArray();
+  
+}

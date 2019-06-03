@@ -411,7 +411,18 @@ extern "C" {
    */
   // BIS: { 'weightedRegressGlobalSignalWASM', 'Matrix', [ 'Matrix', 'Vector_opt',  'debug' ] } 
   BISEXPORT  unsigned char* weightedRegressGlobalSignalWASM(unsigned char* input_ptr,unsigned char* weights_ptr,int debug);
-  
+
+  /** Compute Seed map correlation image
+   * @param input_ptr the input image
+   * @param roi_ptr the input roi timeseries matrix (roi output, rows=frames) (the seed timecourses)
+   * @param weights_ptr the input weight vector ( rows=frames) or 0 ;
+   * @param jsonstring the parameters { "zscore": "false" }
+   * @param debug if > 0 print debug messages
+   * @returns a pointer to the seed map image 
+   */
+  // BIS: { 'computeSeedCorrelationImageWASM', 'bisImage', [ 'bisImage', 'Matrix', 'Vector_opt',  'ParamObj', 'debug' ] } 
+  BISEXPORT  unsigned char* computeSeedCorrelationImageWASM(unsigned char* input_ptr,unsigned char* roi_ptr,unsigned char* weights_ptr,const char* jsonstring,int debug);
+
     
 #ifdef __cplusplus
 }

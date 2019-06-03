@@ -716,7 +716,19 @@
 	    "test"    : "--test_target testdata/newtests/weighted_drift_gold.csv.nii.gz --test_type image --test_comparison ssd --test_threshold 0.01",
 	    "result"  : true,
 	    "dopython": true
-	}
+	},
+        {
+            "command" : "seedcorrelation -i testdata/imagefmri/Brain_Test.nii.gz -r testdata/imagefmri/seeds.matr --zscore false",
+            "test"    : "--test_target testdata/imagefmri/Seed_raw.nii.gz --test_type image --test_comparison ssd --test_threshold 0.01",
+            "result"  : true,
+            "dopython": false
+        },
+        {
+            "command" : "seedcorrelation -i testdata/imagefmri/Brain_Test.nii.gz -r testdata/imagefmri/seeds.matr --zscore true",
+            "test"    : "--test_target testdata/imagefmri/Seed_zscore.nii.gz --test_type image --test_comparison ssd --test_threshold 0.01",
+            "result"  : true,
+            "dopython": false
+        }
     ]
 }
 
