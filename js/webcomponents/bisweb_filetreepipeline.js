@@ -123,7 +123,7 @@ class FileTreePipeline extends HTMLElement {
             'type' : 'primary', 
             'callback': (f) => {
                 this.graphelement.chartInvokedFrom = 'task';
-                this.parseTaskFileToTSV(f);
+                this.createTSVParseModal(f);
             },
         },
             {
@@ -683,6 +683,27 @@ class FileTreePipeline extends HTMLElement {
             });
             
 
+        });
+    }
+
+    createTSVParseModal(f) {
+        bootbox.confirm({
+            'message' : 'Overwrite any existing .tsv files with ones parsed from ' + f + '?',
+            'buttons' : {
+                'confirm' : {
+                    'label' : 'Yes',
+                    'className' : 'btn-success'
+                },
+                'cancel' : {
+                    'label' : 'No', 
+                    'className' : 'btn-danger'
+                }
+            },
+            'callback' : (result) => {
+                if (result) {
+                    this.parseTaskFileToTSV(f);
+                }
+            }
         });
     }
 }
