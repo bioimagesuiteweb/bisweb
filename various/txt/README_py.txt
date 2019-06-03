@@ -4,7 +4,7 @@ of the BioImage Suite Web package. See the LICENSE file in this directory for mo
 Before you do anything else you must:
 
 1. Install Python v 3.5 or newer.
-2. Install the numpy and nibabel packages using pip3. On MacOS or Ubtuntu this
+2. Install the numpy and nibabel packages using pip3. On MacOS or Ubuntu this
 can be done by typing
 
      sudo pip3 install numpy nibabel

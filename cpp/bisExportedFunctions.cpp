@@ -813,8 +813,14 @@ unsigned char* computeGLMWASM(unsigned char* input_ptr,unsigned char* mask_ptr,u
 // ROI Mean
 // -----------------------
 
-template<class BIS_TT> unsigned char* computeROITemplate(unsigned char* input_ptr,unsigned char* roi_ptr,int debug,BIS_TT* )
+template<class BIS_TT> unsigned char* computeROITemplate(unsigned char* input_ptr,unsigned char* roi_ptr,const char* jsonstring,int debug,BIS_TT* )
 {
+  std::unique_ptr<bisJSONParameterList> params(new bisJSONParameterList());
+  if (!params->parseJSONString(jsonstring))
+    return 0;
+
+  int storecentroids=params->getBooleanValue("storecentroids",0);
+  
   std::unique_ptr<bisSimpleImage<BIS_TT> > timeseries(new bisSimpleImage<BIS_TT>("timeseries_json"));
   if (!timeseries->linkIntoPointer(input_ptr))
     return 0;
@@ -823,11 +829,13 @@ template<class BIS_TT> unsigned char* computeROITemplate(unsigned char* input_pt
   if (!roi->linkIntoPointer(roi_ptr))
     return 0;
 
-  if (debug)
+  if (debug) {
+    params->print();
     std::cout << "Beginning ROI Analysis " << std::endl;
+  }
   
   Eigen::MatrixXf output;
-  int ok=bisImageAlgorithms::computeROIMean<BIS_TT>(timeseries.get(),roi.get(),output);
+  int ok=bisImageAlgorithms::computeROIMean<BIS_TT>(timeseries.get(),roi.get(),output,storecentroids);
 
   if (debug)
     std::cout << "ROI Analysis done " << ok << std::endl;
@@ -836,14 +844,14 @@ template<class BIS_TT> unsigned char* computeROITemplate(unsigned char* input_pt
 }
 
 
-unsigned char* computeROIWASM(unsigned char* input_ptr,unsigned char* roi_ptr,int debug)
+unsigned char* computeROIWASM(unsigned char* input_ptr,unsigned char* roi_ptr,const char* jsonstring,int debug)
 {
   int* header=(int*)input_ptr;
   int in_type=header[1];
 
   switch (in_type)
       {
-	bisvtkTemplateMacro( return computeROITemplate(input_ptr,roi_ptr, debug,static_cast<BIS_TT*>(0)));
+	bisvtkTemplateMacro( return computeROITemplate(input_ptr,roi_ptr, jsonstring,debug,static_cast<BIS_TT*>(0)));
       }
   return 0;
 }
