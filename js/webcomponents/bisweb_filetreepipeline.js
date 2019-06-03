@@ -623,14 +623,14 @@ class FileTreePipeline extends HTMLElement {
             let offset = parsedData['offset'];
             let promiseArray = [], tsvData = {};
             for (let runName of Object.keys(orderedRuns)) {
-                let tsvFile = "ONSET\tDURATION\tEVENT_TYPE\n\r";
+                let tsvFile = "onset\tduration\tevent_type\n\r";
                 for (let task of orderedRuns[runName]) {
                     let lowRange = (task.value[0] - offset) * tr, highRange = (task.value[1] - offset) * tr;
                     let duration = (highRange - lowRange); 
 
                     tsvFile = tsvFile + '' + lowRange + '\t' + duration + '\t' + task.task + '\n\r';
                 }
-                
+
                 tsvData[runName] = tsvFile;
             }
 
@@ -649,8 +649,13 @@ class FileTreePipeline extends HTMLElement {
                 let filteredFiles = jobInfo.files.filter( (file) => { return file.filename.includes('func'); });
 
                 for (let file of filteredFiles) {
+
                     //construct full path for tsv file using the name of the task file
-                    let tsvFilename = file.name + '.tsv';
+                    //start by splitting the modality off the end of the image file and replacing it with 'events' 
+                    let splitFilename = file.name.split('_');
+                    splitFilename[splitFilename.length - 1] = 'events';
+                    let tsvFilename = splitFilename.join('_') + '.tsv';
+
                     let bidsTsvFilename = file.filename.split('/'); 
                     bidsTsvFilename[bidsTsvFilename.length - 1] = tsvFilename;
                     bidsTsvFilename = bidsTsvFilename.join('/');
