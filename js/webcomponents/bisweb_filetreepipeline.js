@@ -623,19 +623,15 @@ class FileTreePipeline extends HTMLElement {
             let offset = parsedData['offset'];
             let promiseArray = [], tsvData = {};
             for (let runName of Object.keys(orderedRuns)) {
-                let tsvFile = "ONSET\tDURATION\tEVENT_TYPE\n\r", tsvFilename = ''; 
+                let tsvFile = "ONSET\tDURATION\tEVENT_TYPE\n\r";
                 for (let task of orderedRuns[runName]) {
                     let lowRange = (task.value[0] - offset) * tr, highRange = (task.value[1] - offset) * tr;
                     let duration = (highRange - lowRange); 
 
                     tsvFile = tsvFile + '' + lowRange + '\t' + duration + '\t' + task.task + '\n\r';
                 }
-
-                tsvFilename = baseDirectory + '/' + runName + '.tsv';
-                console.log('filename', tsvFilename, 'contents', tsvFile);
-
+                
                 tsvData[runName] = tsvFile;
-                //promiseArray.push( bis_genericio.write(tsvFilename, tsvFile));
             }
 
             //find tasks scans to associate with each run (e.g. a scan named 'sub-01_task_unnamed_run-01' would be associated with 'run1' in the .json file)
@@ -650,7 +646,6 @@ class FileTreePipeline extends HTMLElement {
                     console.log('An error occured while parsing JSON', e);   
                 }
 
-                console.log('job info', jobInfo);
                 let filteredFiles = jobInfo.files.filter( (file) => { return file.filename.includes('func'); });
 
                 for (let file of filteredFiles) {
@@ -661,12 +656,11 @@ class FileTreePipeline extends HTMLElement {
                     bidsTsvFilename = bidsTsvFilename.join('/');
 
                     //get rid of the other tsv files associated with this file given that a new one is being uploaded
-                    file.supportingfiles = file.supportingfiles.filter( (supportingfile) => { let splitsupp = supportingfile.split('.'); return splitsupp[splitsupp.lengtg] !== 'tsv'; })
+                    file.supportingfiles = file.supportingfiles.filter( (supportingfile) => { let splitsupp = supportingfile.split('.'); return splitsupp[splitsupp.length - 1] !== 'tsv'; });
                     file.supportingfiles.push(bidsTsvFilename);
 
                     let runNumRegex = /run-0*(\d+)/g;
                     let runNumber = runNumRegex.exec(file.name);
-                    console.log('run key', runNumber, file.name);
                     let runKey = 'run' + runNumber[1]; //key in the tsvData dictionary
 
                     let fullTsvFilename = baseDirectory + '/' + bidsTsvFilename;
@@ -674,8 +668,7 @@ class FileTreePipeline extends HTMLElement {
                 }
 
                 //since jobInfo has had supporting files updated for all func keys, write it too
-                console.log('job info', jobInfo.files);
-                let stringifiedJobInfo = JSON.stringify(jobInfo);
+                let stringifiedJobInfo = JSON.stringify(jobInfo, null, 2);
                 promiseArray.push(bis_genericio.write(jobInfoFilename, stringifiedJobInfo));
 
                 Promise.all(promiseArray).then( () => {
