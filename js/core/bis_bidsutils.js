@@ -609,5 +609,6 @@ let getSettingsFile = (filename) => {
 module.exports = {
     dicom2BIDS: dicom2BIDS,
     syncSupportingFiles : syncSupportingFiles,
-    getSettingsFile : getSettingsFile
+    getSettingsFile : getSettingsFile,
+    dicomParametersFilename : dicomParametersFilename
 };

@@ -1154,7 +1154,7 @@ class FileTreePanel extends HTMLElement {
 
     /** Loads dicom_job_info.json (or whatever the most recent settings file is) and displays it. */
     showStudySettingsModal() {
-        let settingsFilename = this.baseDirectory + '/dicom_job_info.json';
+        let settingsFilename = this.baseDirectory + '/' + bis_bidsutils.dicomParametersFilename;
         bis_bidsutils.getSettingsFile(settingsFilename).then( (settings) => {
             let settingsString;
             try {
