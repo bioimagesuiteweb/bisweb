@@ -1,6 +1,7 @@
 const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
 const bis_genericio = require('bis_genericio.js');
+const bis_bidsutils = require('bis_bidsutils.js');
 
 const bisweb_matrixutils = require('bisweb_matrixutils.js');
 const BiswebMatrix = require('bisweb_matrix.js');
@@ -620,7 +621,7 @@ class FileTreePipeline extends HTMLElement {
             let baseDirectory = this.filetree.baseDirectory;
             let tr = parsedData['TR'];
             let offset = parsedData['offset'];
-            let promiseArray = [];
+            let promiseArray = [], tsvData = {};
             for (let runName of Object.keys(orderedRuns)) {
                 let tsvFile = "ONSET\tDURATION\tEVENT_TYPE\n\r", tsvFilename = ''; 
                 for (let task of orderedRuns[runName]) {
@@ -632,13 +633,57 @@ class FileTreePipeline extends HTMLElement {
 
                 tsvFilename = baseDirectory + '/' + runName + '.tsv';
                 console.log('filename', tsvFilename, 'contents', tsvFile);
-                promiseArray.push( bis_genericio.write(tsvFilename, tsvFile));
+
+                tsvData[runName] = tsvFile;
+                //promiseArray.push( bis_genericio.write(tsvFilename, tsvFile));
             }
 
-            Promise.all(promiseArray).then( () => {
-                console.log('write done');
-                bis_webutil.createAlert('TSV file write done. You may want to rename these!');
-            })
+            //find tasks scans to associate with each run (e.g. a scan named 'sub-01_task_unnamed_run-01' would be associated with 'run1' in the .json file)
+            let jobInfoFilename = baseDirectory + '/' + bis_bidsutils.dicomParametersFilename;
+            bis_genericio.read(jobInfoFilename).then( (obj) => {
+
+                //filter filenames by looking for 'func' 
+                let jobInfo;
+                try {
+                    jobInfo = JSON.parse(obj.data);
+                } catch(e) {
+                    console.log('An error occured while parsing JSON', e);   
+                }
+
+                console.log('job info', jobInfo);
+                let filteredFiles = jobInfo.files.filter( (file) => { return file.filename.includes('func'); });
+
+                for (let file of filteredFiles) {
+                    //construct full path for tsv file using the name of the task file
+                    let tsvFilename = file.name + '.tsv';
+                    let bidsTsvFilename = file.filename.split('/'); 
+                    bidsTsvFilename[bidsTsvFilename.length - 1] = tsvFilename;
+                    bidsTsvFilename = bidsTsvFilename.join('/');
+
+                    //get rid of the other tsv files associated with this file given that a new one is being uploaded
+                    file.supportingfiles = file.supportingfiles.filter( (supportingfile) => { let splitsupp = supportingfile.split('.'); return splitsupp[splitsupp.lengtg] !== 'tsv'; })
+                    file.supportingfiles.push(bidsTsvFilename);
+
+                    let runNumRegex = /run-0*(\d+)/g;
+                    let runNumber = runNumRegex.exec(file.name);
+                    console.log('run key', runNumber, file.name);
+                    let runKey = 'run' + runNumber[1]; //key in the tsvData dictionary
+
+                    let fullTsvFilename = baseDirectory + '/' + bidsTsvFilename;
+                    promiseArray.push(bis_genericio.write(fullTsvFilename, tsvData[runKey]));
+                }
+
+                //since jobInfo has had supporting files updated for all func keys, write it too
+                console.log('job info', jobInfo.files);
+                let stringifiedJobInfo = JSON.stringify(jobInfo);
+                promiseArray.push(bis_genericio.write(jobInfoFilename, stringifiedJobInfo));
+
+                Promise.all(promiseArray).then( () => {
+                    console.log('write done');
+                    bis_webutil.createAlert('TSV file write done. Please ensure these names match what you expect!');
+                });
+            });
+            
 
         });
     }
