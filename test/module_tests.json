@@ -704,6 +704,18 @@
 	    "test"    : "--test_target testdata/newtests/weighted_drift_gold.csv.nii.gz --test_type image --test_comparison ssd --test_threshold 0.01",
 	    "result"  : false,
 	    "dopython": true
+	},
+	{
+	    "command" : "driftCorrectImage -i testdata/newtests/drift_input.csv.nii.gz --order 1",
+	    "test"    : "--test_target testdata/simpleregress.csv.nii.gz --test_type image --test_comparison ssd --test_threshold 0.1",
+	    "result"  : true,
+	    "dopython": true
+	},
+	{
+	    "command" : "driftCorrectImage -i testdata/newtests/driftw_input.csv.nii.gz --order 1 -w testdata/newtests/drift_weights.matr",
+	    "test"    : "--test_target testdata/newtests/weighted_drift_gold.csv.nii.gz --test_type image --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": true
 	}
     ]
 }

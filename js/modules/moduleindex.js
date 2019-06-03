@@ -52,6 +52,7 @@ const moduleImports = {
     regressglobal : require('regressGlobal.js'),
     regressout : require('regressOut.js'),
     regressoutimage : require('regressOutImage.js'),
+    driftcorrectimage : require('driftCorrectImage.js'),
     computecorrelation : require('computeCorrelation.js'),
     computeroi : require('computeROI.js'),
 //    functionalconnectivitypreprocessing: require('functionalConnectivityPreprocessing'),

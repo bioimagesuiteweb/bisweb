@@ -82,14 +82,14 @@ class ButterworthFilterImageModule extends BaseModule {
                 },
                 {
                     "name": "Sample Rate",
-                    "description": "Data time of repetition (Data TR)",
+                    "description": "Data time of repetition (Data TR). If <0.0 use spacing from image header",
                     "priority": 3,
                     "advanced": false,
                     "gui": "slider",
                     "type": "float",
                     "varname": "tr",
-                    "default" : 1.0,
-                    "low" : 0.01,
+                    "default" : -1.0,
+                    "low" : -1.0,
                     "high" : 5.0
                 },
                 baseutils.getDebugParam(),
@@ -100,6 +100,11 @@ class ButterworthFilterImageModule extends BaseModule {
     directInvokeAlgorithm(vals) {
         console.log('oooo invoking: butterworthFilterImage with vals', JSON.stringify(vals));
         let input = this.inputs['input'];
+
+        if (vals.tr<0.0) {
+            vals.tr = input.getSpacing()[3] || 1.0;
+            console.log('+++ Using TR=',vals.tr);
+        }
         
         return new Promise( (resolve, reject) => {
             biswrap.initialize().then(() => {
@@ -126,7 +131,7 @@ class ButterworthFilterImageModule extends BaseModule {
                     "cutoff": parseFloat(vals.high),
                     "samplerate": parseFloat(vals.tr)
                 }, vals.debug);
-                console.log('Output=',this.outputs['output'].getDescription());
+                
                 resolve();
             }).catch((e) => {
                 reject(e.stack);
