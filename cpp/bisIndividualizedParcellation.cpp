@@ -659,7 +659,7 @@ namespace bisIndividualizedParcellation {
     
     for (int p=0;p<Pmax;p++) {
       int psize = indice_p[p].size();
-      if (p%20 == 0) 
+//      if (p%20 == 0) 
 //        std::cout << "p=" << p << "/" << Pmax << " , " << psize << std::endl;
       MatrixXd sqrMatrix(psize,psize);
       int* ptr = &indice_p[p][0];
