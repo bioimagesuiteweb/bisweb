@@ -458,6 +458,25 @@ namespace bisIndividualizedParcellation {
           }
         }
       }
+
+    // Second frame
+    int i_dim[5]; indiv->getDimensions(i_dim);
+    if (i_dim[3]>1) 
+      {   
+	for (int p=0; p<Pmax; p++)
+	 {
+	   int index = int(SoptN(p));
+	   indivdata[index + N] = p+1;
+
+	   int xyz[3];
+	   computeXYZ(index, dim, xyz);
+//    	   std::cout << "x = " << xyz[0] << ", y = " << xyz[1] << ", z = " << xyz[2] << std::endl;
+	   indivdata[index + (2 * N)] = xyz[0];
+	   indivdata[index + (3 * N)] = xyz[1];
+	   indivdata[index + (4 * N)] = xyz[2];		
+	 }
+       }     
+
     return 1;
   }
 
@@ -472,7 +491,6 @@ namespace bisIndividualizedParcellation {
     indiv->fill(0);
     
     
-    std::cout << "Dimension of the parcellation = " << std::endl;
     int dim[5], dim2[5];
     FMRIImage->getDimensions(dim);
     groupparcellation->getDimensions(dim2);
@@ -642,7 +660,7 @@ namespace bisIndividualizedParcellation {
     for (int p=0;p<Pmax;p++) {
       int psize = indice_p[p].size();
       if (p%20 == 0) 
-        std::cout << "p=" << p << "/" << Pmax << " , " << psize << std::endl;
+//        std::cout << "p=" << p << "/" << Pmax << " , " << psize << std::endl;
       MatrixXd sqrMatrix(psize,psize);
       int* ptr = &indice_p[p][0];
       Map<VectorXi> C(ptr,psize);
@@ -770,7 +788,6 @@ namespace bisIndividualizedParcellation {
           }  
       }
     
-    std::cout << "Dimension of the parcellation = " << std::endl;
     
     while (sumVisited < n)
       {
@@ -848,8 +865,6 @@ namespace bisIndividualizedParcellation {
     //int Voxel_indices[N];
     count = 0;
 
-    std::cout << "Dimension of the parcellation = " << std::endl;
-
     short* indivdata=indiv->getImageData();
     
     for (int voxel=0;voxel<N;voxel++)
@@ -865,8 +880,8 @@ namespace bisIndividualizedParcellation {
 
     // Second frame
     int i_dim[5]; indiv->getDimensions(i_dim);
-    std::cout << "Dimension of the parcellation = " << i_dim[3] << std::endl;
-    if (i_dim[3]>1) {   
+    if (i_dim[3]>1) 
+      {   
 	for (int p=0; p<Pmax; p++)
 	 {
 	   int index = int(SoptN(p));
@@ -874,12 +889,12 @@ namespace bisIndividualizedParcellation {
 
 	   int xyz[3];
 	   computeXYZ(index, dim, xyz);
-    	   std::cout << "x = " << xyz[0] << ", y = " << xyz[1] << ", z = " << xyz[2] << std::endl;
-	   indivdata[index + 2*N] = xyz[0];
-	   indivdata[index + 3*N] = xyz[1];
-	   indivdata[index + 4*N] = xyz[2];		
+//    	   std::cout << "x = " << xyz[0] << ", y = " << xyz[1] << ", z = " << xyz[2] << std::endl;
+	   indivdata[index + (2 * N)] = xyz[0];
+	   indivdata[index + (3 * N)] = xyz[1];
+	   indivdata[index + (4 * N)] = xyz[2];		
 	 }
-    }     
+       }     
     
     return 1;
   }
