@@ -857,9 +857,9 @@ unsigned char* computeROIWASM(unsigned char* input_ptr,unsigned char* roi_ptr,co
 }
 
 
-// -----------------------
-// Butterworth Filter
-// -----------------------
+// -------------------------
+// Butterworth Filter Matrix
+// -------------------------
 
 unsigned char* butterworthFilterWASM(unsigned char* input_ptr,const char* jsonstring,int debug)
 {
@@ -897,6 +897,10 @@ unsigned char* butterworthFilterWASM(unsigned char* input_ptr,const char* jsonst
 
 }
 
+// ------------------------
+// Butterworth Filter Image
+// ------------------------
+
 
 unsigned char* butterworthFilterImageWASM(unsigned char* input_ptr,const char* jsonstring,int debug)
 {
@@ -913,7 +917,7 @@ unsigned char* butterworthFilterImageWASM(unsigned char* input_ptr,const char* j
     return 0;
 
   if(debug)
-    params->print("from butterworthFilterJSON","_____");
+    params->print("from butterworthFilterImage","_____");
 
 
   std::string ftype=params->getValue("type","low");
@@ -923,12 +927,33 @@ unsigned char* butterworthFilterImageWASM(unsigned char* input_ptr,const char* j
   if (debug)
     std::cout << "Filter type=" << ftype << ", cutoff=" << cutoff << ", samplerate=" << samplerate << std::endl;
 
+
+  int dim[5]; in_image->getDimensions(dim);
+  
+  
   Eigen::MatrixXf temp;
   Eigen::VectorXf w;
-  Eigen::MatrixXf input=  bisEigenUtil::mapImageToEigenMatrix(in_image.get());
-  Eigen::MatrixXf output=  bisEigenUtil::mapImageToEigenMatrix(out_image.get());
-    
-  int ok=bisfMRIAlgorithms::butterworthFilter(input,output,w,temp,ftype,cutoff,samplerate,debug);
+
+
+  Eigen::MatrixXf input=  Eigen::MatrixXf::Zero(dim[3],1);
+  Eigen::MatrixXf output=  Eigen::MatrixXf::Zero(dim[3],1);
+  int numvoxels=dim[0]*dim[1]*dim[2];
+  float* indata=in_image->getImageData();
+  float* outdata=out_image->getImageData();
+
+  int ok=1;
+
+  
+  for (int i=0;i<numvoxels;i++) {
+    for (int f=0;f<dim[3];f++) {
+      input(f,0)=indata[numvoxels*f+i];
+    }
+
+    ok*=bisfMRIAlgorithms::butterworthFilter(input,output,w,temp,ftype,cutoff,samplerate,debug);
+    for (int f=0;f<dim[3];f++) {
+      outdata[numvoxels*f+i]=output(f,0);
+    }
+  }
 
   if (debug)
     std::cout << "Butterworth Filter done " << ok << std::endl;
@@ -1644,5 +1669,84 @@ unsigned char* medianNormalizeImageWASM(unsigned char* input,int debug)
       bisvtkTemplateMacro( return medianNormalizeImageTemplate(input,debug, static_cast<BIS_TT*>(0)));
     }
   return 0;
+}
+
+// --------------------------------------------------------------- ------------------------------------------------------------------
+// weighted (optionally) Regress Out
+// --------------------------------------------------------------- ------------------------------------------------------------------
+unsigned char* weightedRegressOutImageWASM(unsigned char* input_ptr,unsigned char* regressor_ptr,unsigned char* weights_ptr,int debug)
+{
+  if (debug)
+    std::cout << std::endl << "______ in weighted RegressOutImage  weights=" << (long)weights_ptr << std::endl;
+  
+  std::unique_ptr<bisSimpleImage<float> > in_image(new bisSimpleImage<float>("input"));
+  if (!in_image->linkIntoPointer(input_ptr))
+    return 0;
+  
+  std::unique_ptr<bisSimpleImage<float> > out_image(new bisSimpleImage<float>("filtered_output_float"));
+  out_image->copyStructure(in_image.get());
+  
+  std::unique_ptr<bisSimpleMatrix<float> > s_regressors(new bisSimpleMatrix<float>("regrmatrix"));
+  if (!s_regressors->linkIntoPointer(regressor_ptr))
+    {
+      std::cerr << "Failed to deserialize regressor matrix" << std::endl;
+      return 0;
+    }
+  
+  int useweights=0;
+  Eigen::VectorXf weights;
+  std::unique_ptr<bisSimpleVector<float> > s_vector(new bisSimpleVector<float>("vector"));
+  if (bisEigenUtil::deserializeAndMapToEigenVector(s_vector.get(),weights_ptr,weights,0,1.0,1)<1)
+    return 0;
+  if (weights.rows()>=2)
+    useweights=1;
+  
+  
+  Eigen::MatrixXf regressors=bisEigenUtil::mapToEigenMatrix(s_regressors.get());
+
+
+  int dim[5]; in_image->getDimensions(dim);
+  Eigen::MatrixXf input=  Eigen::MatrixXf::Zero(dim[3],1);
+  Eigen::MatrixXf output=  Eigen::MatrixXf::Zero(dim[3],1);
+  int ok=1;
+
+  Eigen::MatrixXf LSQ;
+  Eigen::MatrixXf temp;
+  Eigen::MatrixXf weightedR;
+  
+   if (useweights==0)
+     {
+       LSQ=bisEigenUtil::createLSQMatrix(regressors);
+     }
+   else
+     {
+       LSQ=bisfMRIAlgorithms::createWeightedLSQ(regressors,weights,weightedR);
+     }
+   
+   
+   int numvoxels=dim[0]*dim[1]*dim[2];
+   float* indata=in_image->getImageData();
+   float* outdata=out_image->getImageData();
+   
+   for (int i=0;i<numvoxels;i++)
+     {
+       for (int f=0;f<dim[3];f++) {
+         input(f,0)=indata[numvoxels*f+i];
+       }
+       
+       if (useweights==0)
+         ok*=bisfMRIAlgorithms::regressOut(input,regressors,LSQ,output);
+       else
+         ok*=bisfMRIAlgorithms::weightedRegressOut(input,weightedR,weights,LSQ,
+                                                   temp, output);
+       for (int f=0;f<dim[3];f++) {
+         outdata[numvoxels*f+i]=output(f,0);
+       }
+     }
+   
+   if (debug)
+     std::cout << "regressedOUTImage done " << ok << std::endl;
+
+   return out_image->releaseAndReturnRawArray();
 }
 

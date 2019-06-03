@@ -364,11 +364,11 @@ extern "C" {
   // BIS: { 'butterworthFilterWASM', 'Matrix', [ 'Matrix', 'ParamObj',  'debug' ] } 
   BISEXPORT  unsigned char* butterworthFilterWASM(unsigned char* input,const char* jsonstring,int debug);
 
-  /** Compute butterworthFilter Output 
-   * @param input the input image to filter (time = rows)
+  /** Compute butterworthFilter Output applied to images
+   * @param input the input image to filter
    * @param jsonstring the parameters { "type": "low", "cutoff": 0.15, 'sampleRate': 1.5 };
    * @param debug if > 0 print debug messages
-   * @returns a pointer to the filtered image (rows=frames,cols=rois)
+   * @returns a pointer to the filtered image
    */
   // BIS: { 'butterworthFilterImageWASM', 'bisImage', [ 'bisImage', 'ParamObj',  'debug' ] } 
   BISEXPORT  unsigned char* butterworthFilterImageWASM(unsigned char* input,const char* jsonstring,int debug);
@@ -392,6 +392,16 @@ extern "C" {
    */
   // BIS: { 'weightedRegressOutWASM', 'Matrix', [ 'Matrix', 'Matrix', 'Vector_opt',  'debug' ] } 
   BISEXPORT  unsigned char* weightedRegressOutWASM(unsigned char* input_ptr,unsigned char* regressor_ptr,unsigned char* weights_ptr,int debug);
+
+  /** Regress out a time series from another (with optional weights)
+   * @param input_ptr the input timeseries image
+   * @param regressor_ptr the regression timeseries matrix (roi output, rows=frames);
+   * @param weights_ptr the input weight vector ( rows=frames) or 0 ;
+   * @param debug if > 0 print debug messages
+   * @returns a pointer to the filtered image
+   */
+  // BIS: { 'weightedRegressOutImageWASM', 'bisImage', [ 'bisImage', 'Matrix', 'Vector_opt',  'debug' ] } 
+  BISEXPORT  unsigned char* weightedRegressOutImageWASM(unsigned char* input_ptr,unsigned char* regressor_ptr,unsigned char* weights_ptr,int debug);
 
   /** Regress out global signal from a  time series (with optional weights)
    * @param input_ptr the input timeseries matrix (roi output, rows=frames);

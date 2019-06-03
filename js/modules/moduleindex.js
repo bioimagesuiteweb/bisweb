@@ -46,12 +46,12 @@ const moduleImports = {
     preprocessoptical : require('preprocessOptical.js'),
     diffspect : require('diffSpect.js'),
     backprojectimage : require('backProjectImage.js'),
-
-
-    
+// FIltering
     butterworthfilter : require('butterworthFilter.js'),
+    butterworthfilterimage : require('butterworthFilterImage.js'),
     regressglobal : require('regressGlobal.js'),
     regressout : require('regressOut.js'),
+    regressoutimage : require('regressOutImage.js'),
     computecorrelation : require('computeCorrelation.js'),
     computeroi : require('computeROI.js'),
 //    functionalconnectivitypreprocessing: require('functionalConnectivityPreprocessing'),
