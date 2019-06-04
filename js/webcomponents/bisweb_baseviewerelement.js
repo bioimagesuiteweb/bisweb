@@ -353,9 +353,7 @@ class BaseViewerElement extends HTMLElement {
             for (let i=0;i<subviewers.length;i++) {
                 if (this.internal.subviewers[i]!==null) {
                     let vp  =this.internal.subviewers[i].controls.normViewport;
-                    if ((vp.x1-vp.x0)>0.01 && (vp.y1-vp.y0>0.01) &&
-                        subviewers[i].controls.update(this.internal.layoutcontroller.renderer)===true &&
-                        i<numviewers)  {
+                    if ((vp.x1-vp.x0)>0.01 && (vp.y1-vp.y0>0.01) &&  i<numviewers)  {
                         this.renderSubViewer(i);
                         subviewers[i].controls.enabled=true;
                     } else {
@@ -388,20 +386,24 @@ class BaseViewerElement extends HTMLElement {
      */
     renderSubViewer(index) {
 
-
         let renderer=this.internal.layoutcontroller.renderer;
-        let fl=this.internal.subviewers[index].controls.getFlipMode();
+
         let cam=this.internal.subviewers[index].camera;
-
-        if (fl)
-            cam.projectionMatrix.elements[0]=-cam.projectionMatrix.elements[0];
-
-        renderer.render(this.internal.subviewers[index].scene,cam);
-
+        let scene=this.internal.subviewers[index].scene;
+        let controls=this.internal.subviewers[index].controls;
         
-        if (fl)
-            cam.projectionMatrix.elements[0]=-cam.projectionMatrix.elements[0];
-
+        if (controls.update(renderer)===true) {
+            let fl=controls.getFlipMode();
+            
+            if (fl)
+                cam.projectionMatrix.elements[0]=-cam.projectionMatrix.elements[0];
+            
+            renderer.render(scene,cam);
+            renderer.setScissorTest(false);
+            
+            if (fl)
+                cam.projectionMatrix.elements[0]=-cam.projectionMatrix.elements[0];
+        }
     }
     
     /** removes the colorscale */

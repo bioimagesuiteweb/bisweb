@@ -69,7 +69,7 @@ const inobounce=require('inobounce.js');
 
 var bisOrthographicCameraControls = function ( camera, plane, target, domElement ) {
 
-    const THREEJSREVISION=parseInt(THREE.REVISION);
+    //    const THREEJSREVISION=parseInt(THREE.REVISION);
     
     var _this = this;
     var STATE = { NONE: -1, ROTATE: 0, ZOOM: 1, PAN: 2, TOUCH_ROTATE: 3, TOUCH_ZOOM_PAN: 4 };
@@ -88,7 +88,6 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
 
     /** viewport of controller of type {@link Bis_Viewport}. This is set when layout is changed etc.*/
     this.normViewport = { x0:0.0,y0:0.0,x1:1.0,y1:1.0 };
-
     
     this.screen = { left: 0, top: 0, width: 0, height: 0 };
     
@@ -414,22 +413,44 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
 
 
         if (renderer !== null) {
-            var v=this.normViewport;
-            var vp = [1+v.x0*this.screen.width,
+            let v=this.normViewport;
+            v.old= v.old || v;
+            let vp = [1+v.x0*this.screen.width,
                       1+v.y0*this.screen.height,
                       (v.x1-v.x0)*this.screen.width,
                       (v.y1-v.y0)*this.screen.height];
+            let vps = [1+v.old.x0*this.screen.width,
+                       1+v.old.y0*this.screen.height,
+                       (v.old.x1-v.old.x0)*this.screen.width,
+                       (v.old.y1-v.old.y0)*this.screen.height];
+            
             if (vp[0]>0 && vp[1]>0 && vp[2] >0 && vp[3] > 0) {
-                let top=vp[1];
-                if (THREEJSREVISION>86) {
-                    // Swapped y in setViewport() and setScissor(). 43ae8e4 277c706 (@mrdoob)
-                    // In Three.js code
-                    // -- _viewport.set( x, y, width, height )
-                    // ++ _viewport.set( x, _height - y - height, width, height )
-                    // Our fix to map this 
-                    top=this.screen.height-vp[1]-vp[3];
+                
+                // if (THREEJSREVISION>86) { Always the case
+                // Swapped y in setViewport() and setScissor(). 43ae8e4 277c706 (@mrdoob)
+                // In Three.js code
+                // -- _viewport.set( x, y, width, height )
+                // ++ _viewport.set( x, _height - y - height, width, height )
+                // Our fix to map this 
+                vp[1]=this.screen.height-vp[1]-vp[3];
+                vps[1]=this.screen.height-vps[1]-vps[3];
+                
+                if (_this.plane===3) {
+
+                    let maxvp=vps[2];
+                    if (vps[3]>vps[2])
+                        maxvp=vps[3];
+                    vp[0]=Math.round(vp[0]-0.5*(maxvp-vp[2]));
+                    vp[1]=Math.round(vp[1]-0.5*(maxvp-vp[3]));
+                    vp[2]=maxvp;
+                    vp[3]=maxvp;
+                    renderer.setViewport(vp[0],vp[1],vp[2],vp[2]);
+                    renderer.setScissor(vps[0],vps[1],vps[2],vps[3]);
+                    renderer.setScissorTest(true);
+                }  else {
+                    renderer.setViewport(vp[0],vp[1],vp[2],vp[3]);
+                    renderer.setScissorTest(false);
                 }
-                renderer.setViewport(vp[0],top,vp[2],vp[3]);
                 return true;
             }
             return false;
@@ -556,10 +577,6 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
         if (!mouseinviewport(event))
             return;
 
-        console.log('Mousedown');
-        //event.preventDefault();
-        //event.stopPropagation();
-        
         if ( _state === STATE.NONE ) {
             _state = event.button;
         }

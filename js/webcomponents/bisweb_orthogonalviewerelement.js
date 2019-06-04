@@ -81,7 +81,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
               { x0:0.0, y0:0.2, x1:0.19,  y1:0.39},  { x0:0.25, y0:0.1,  x1:0.95, y1:0.8} , { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
             // 3D Only=5
             [ { x0:0.0, y0:0.0,  x1:0.01, y1:0.01}, { x0:0.0, y0:0.3,  x1:0.01, y1:0.31},
-              { x0:0.0, y0:0.6,  x1:0.01, y1:0.61}, { x0:0.05, y0:0.1, x1:0.95, y1:1.0}, { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
+              { x0:0.0, y0:0.6,  x1:0.01, y1:0.61}, { x0:0.0, y0:0.1, x1:1.0, y1:1.0}, { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
             // Conn 1=6
             [ { x0:0.01, y0:0.06, x1:0.26, y1:0.32},  { x0:0.01, y0:0.38, x1:0.26, y1:0.63},
               { x0:0.01, y0:0.74, x1:0.26,  y1:0.99},  { x0:0.29, y0:0.1,  x1:0.99, y1:0.99},  { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
@@ -991,10 +991,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
      * @param {number} mode - 0='Slices',  1='Sagittal', 2='Coronal', 3='Axial', 4='3D+slices', 5='3D Only', 9='Simple Mode'
      * @param {boolean} force - force update otherwise do as needed
      */
-    setrendermodeinternal(mode,force) {
-        
-        force = force || false;
-        mode  = mode ||  0;
+    setrendermodeinternal(mode=0,force=false) {
         
         if (mode===this.internal.rendermode && force===false)
             return;
@@ -1009,6 +1006,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
         let ind=this.internal.rendermode;
         this.internal.datgui.data.displaymode=this.internal.displaymodes[ind];
 
+        //console.log('Rendermode=',this.internal.rendermode);
+        
         for (var pl=0;pl<this.internal.subviewers.length;pl++) {
             var trueplane=pl;
             // For axial,coronal and Sagittal remap
@@ -1046,7 +1045,6 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 vp.y1=ratio*vp.y1+(midy-scalemidy);
                 vp.shifty=(midy-scalemidy);
                 vp.shiftx=0;
-                
             }
             this.internal.subviewers[pl].controls.normViewport=vp;
         }
