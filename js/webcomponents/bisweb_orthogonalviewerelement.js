@@ -1047,6 +1047,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 vp.shiftx=0;
             }
             this.internal.subviewers[pl].controls.normViewport=vp;
+            // When switching mode force a resize
+            this.internal.subviewers[pl].controls.handleResize();
         }
         
         this.drawlabels();

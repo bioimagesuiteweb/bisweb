@@ -145,6 +145,10 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
     this.right0 = this.camera.right;
     this.top0 = this.camera.top;
     this.bottom0 = this.camera.bottom;
+
+    if (_this.plane===3)
+        console.log('Original=',this.left0,this.right0,this.top0,this.bottom0);
+    
     this.center0 = new THREE.Vector2((this.left0 + this.right0) / 2.0, (this.top0 + this.bottom0) / 2.0);
 
     /*    if (plane===2)
@@ -224,9 +228,6 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
         this.top0 = this.camera.top;
         this.bottom0 = this.camera.bottom;
         this.center0.set((this.left0 + this.right0) / 2.0, (this.top0 + this.bottom0) / 2.0);
-        /*      if (this.plane===2) {
-                console.log('Handle resize plane=',this.plane,' left0=',this.left0);
-                }*/
     };
     
     // methods
@@ -348,10 +349,7 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
             _this.camera.right = _zoomFactor * _this.right0 + ( 1 - _zoomFactor ) *  _this.center0.x;
             _this.camera.top = _zoomFactor * _this.top0 + ( 1 - _zoomFactor ) *  _this.center0.y;
             _this.camera.bottom = _zoomFactor * _this.bottom0 + ( 1 - _zoomFactor ) *  _this.center0.y;
-            /*      if (_this.plane===2) {
-                    console.log('Updating zooms = ',_zoomFactor, ' from factor');
-                    console.log('Zooming resize plane=',this.plane,' left0=',_this.left0,' left=',_this.camera.left);
-                    }*/
+
             _zoomStart.copy( _zoomEnd );
             _touchZoomDistanceStart = _touchZoomDistanceEnd;
         }
@@ -460,7 +458,6 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
     
     /** reset -- reset all parameters */
     this.reset = function () {
-        
         _state = STATE.NONE;
         _prevState = STATE.NONE;
         
