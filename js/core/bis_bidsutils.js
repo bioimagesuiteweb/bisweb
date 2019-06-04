@@ -357,9 +357,10 @@ let dicom2BIDS = async function (opts) {
  * Call this function after image files have been altered in some way, e.g. by a user changing where files are in the file tree. 
  * 
  * @param {Array} changedFiles - Names of files that have already been moved. Each entry is an object with a field 'old' that has the old name of the image and 'new' with the changed name. These should be the full paths for the files. 
+ * @param {String} taskName - Name of the new task entered by the user.
  * @param {String} baseDirectory - Name of the base directory of the study. 
  */
-let syncSupportingFiles = (changedFiles, baseDirectory) => {
+let syncSupportingFiles = (changedFiles, taskName, baseDirectory) => {
 
     return new Promise((resolve, reject) => {
         //dicom params file is in source so trim base directory to there
@@ -392,21 +393,15 @@ let syncSupportingFiles = (changedFiles, baseDirectory) => {
                         let newSupportingFileList = [];
                         for (let supportingFile of supportingFiles) {
 
-                            //file extension could be in two parts, e.g. like '.nii.gz' 
-                            let fileExtension = bis_genericio.getBaseName(supportingFile).split('.');
-                            if (fileExtension.length > 2) { fileExtension = fileExtension.slice(1).join('.'); }
-                            else { fileExtension = fileExtension[1]; }
-
-                            //construct the full name of the destination using the new location of the image
-                            let newFilename = bis_genericio.getBaseName(file.new).split('.')[0];
+                            let newFilename = replaceTaskName(supportingFile, taskName);
                             let newFilepath = file.new.split('/');
                             newFilepath = newFilepath.slice(0, newFilepath.length - 1);
-                            newFilepath.push(newFilename + '.' + fileExtension);
+                            newFilepath.push(newFilename);
                             newFilepath = newFilepath.join('/');
 
                             //file.old will hold the old location of the image, so trim off the file extension and add the extension of the supporting file to get its location
                             let splitOldPath = file.old.split('/');
-                            splitOldPath[splitOldPath.length - 1] = splitOldPath[splitOldPath.length - 1].split('.')[0] + '.' + fileExtension;
+                            splitOldPath[splitOldPath.length - 1] = bis_genericio.getBaseName(supportingFile);
                             let oldFilepath = splitOldPath.join('/');
 
                             console.log('old location', oldFilepath, 'new location', newFilepath);
@@ -436,9 +431,6 @@ let syncSupportingFiles = (changedFiles, baseDirectory) => {
                 }
             }
 
-            console.log('new supporting file list', compiledSupportingFileList);
-            console.log('new settings', settings);
-
             let writeSettingsFileFn = writeSettingsFile(settingsFilename, settings);
             movePromiseArray.push(writeSettingsFileFn);
 
@@ -451,6 +443,17 @@ let syncSupportingFiles = (changedFiles, baseDirectory) => {
     });
 
 
+    function replaceTaskName(filename, taskname) {
+        let basename = bis_genericio.getBaseName(filename);
+        let splitbase = basename.split('_');
+
+        //task name could be at index 1 or 2 according to BIDS specification
+        //https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html
+        if (splitbase[1].includes('task')) { splitbase[1] = 'task-' + taskname; }
+        else if (splitbase[2].includes('task')) { splitbase[2] = 'task-' + taskname; }
+
+        return splitbase.join('_');
+    }
 };
 
 
@@ -466,7 +469,6 @@ let writeSettingsFile = (filename, settings) => {
             settings = JSON.stringify(settings, null, 2);
         }
     
-        console.log('settings', settings);
         bis_genericio.write(filename, settings, false)
             .then( () => { resolve(); })
             .catch( () => { reject(); });
