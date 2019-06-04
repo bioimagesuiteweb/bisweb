@@ -678,9 +678,10 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         drawMatricesAndLegendsAsImages();
 
 
-        if (!skip3d)
-            internal.layoutmanager.getrenderer().render(internal.subviewers[3].scene,
-                                                        internal.subviewers[3].camera);
+        if (!skip3d) {
+            internal.orthoviewer.renderSubViewer(3);
+        }
+
     };
 
     

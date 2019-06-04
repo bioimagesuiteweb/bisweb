@@ -356,17 +356,8 @@ class BaseViewerElement extends HTMLElement {
                     if ((vp.x1-vp.x0)>0.01 && (vp.y1-vp.y0>0.01) &&
                         subviewers[i].controls.update(this.internal.layoutcontroller.renderer)===true &&
                         i<numviewers)  {
-                        let cam=subviewers[i].camera;
-                        if (subviewers[i].controls.plane === 3) {
-                            // In 3D Mode Flip left-right
-                            cam.projectionMatrix.elements[0]=-cam.projectionMatrix.elements[0];
-                        }
-                        renderer.render( subviewers[i].scene,
-                                         subviewers[i].camera);
+                        this.renderSubViewer(i);
                         subviewers[i].controls.enabled=true;
-                        if (subviewers[i].controls.plane === 3) {
-                            cam.projectionMatrix.elements[0]=-cam.projectionMatrix.elements[0];
-                        }
                     } else {
                         subviewers[i].controls.enabled=false;
                     }
@@ -392,7 +383,28 @@ class BaseViewerElement extends HTMLElement {
         return 0;
     }
 
-        /** removes the colorscale */
+    /** render an individual subviewer 
+     * @param{number} index - subviewer index
+     */
+    renderSubViewer(index) {
+
+
+        let renderer=this.internal.layoutcontroller.renderer;
+        let fl=this.internal.subviewers[index].controls.getFlipMode();
+        let cam=this.internal.subviewers[index].camera;
+
+        if (fl)
+            cam.projectionMatrix.elements[0]=-cam.projectionMatrix.elements[0];
+
+        renderer.render(this.internal.subviewers[index].scene,cam);
+
+        
+        if (fl)
+            cam.projectionMatrix.elements[0]=-cam.projectionMatrix.elements[0];
+
+    }
+    
+    /** removes the colorscale */
     clearcolorscale() {
 
         if (this.internal.simplemode)

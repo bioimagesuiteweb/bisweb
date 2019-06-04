@@ -158,6 +158,10 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
     var startEvent = { type: 'start'};
     var endEvent = { type: 'end'};
 
+    this.getFlipMode=function() {
+        return _this.flipmode;
+    };
+    
     this.getZoomFactor = function() {
         return _zoomFactor;
     };
@@ -289,9 +293,6 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
             vector.copy( _this.camera.up ).setLength( mouseOnBall.y );
             vector.add( cameraUp.copy( _this.camera.up ).cross( _eye ).setLength( mouseOnBall.x ) );
             vector.add( _eye.setLength( mouseOnBall.z ) );
-            if (_this.flipmode === 3) {
-                  vector['x']=-vector['x'];
-            }
             return vector;
             
         };
@@ -365,7 +366,8 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
         var mouseChange = new THREE.Vector2(),
             cameraUp = new THREE.Vector3(),
             pan = new THREE.Vector3();
-        
+
+
         return function () {
             
             mouseChange.copy( _panEnd ).sub( _panStart );
@@ -375,17 +377,13 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
                 mouseChange.multiplyScalar( _eye.length() * _this.panSpeed );
                 pan.copy( _eye ).cross( _this.camera.up ).setLength( mouseChange.x );
                 pan.add( cameraUp.copy( _this.camera.up ).setLength( -mouseChange.y ) );
-
-                if (_this.flipmode)
-                    pan['x']=-pan['x'];
-                
                 _this.camera.position.add( pan );
                 _this.target.add( pan );
                 _panStart.copy( _panEnd );
             }
         };
     }());
-
+    
     
     /** update -- updates the renderer's viewport among other things
      */
@@ -558,7 +556,7 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
         if (!mouseinviewport(event))
             return;
 
-
+        console.log('Mousedown');
         //event.preventDefault();
         //event.stopPropagation();
         
@@ -567,7 +565,8 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
         }
         
         if ( _state === STATE.ROTATE && !_this.noRotate ) {
-            _rotateStart.copy( getMouseProjectionOnBall( _this.lastNormalizedCoordinates[0],_this.lastNormalizedCoordinates[1] ) );
+            let x=getMouseProjectionOnBall( _this.lastNormalizedCoordinates[0],_this.lastNormalizedCoordinates[1] );
+            _rotateStart.copy( x);
             _rotateEnd.copy( _rotateStart );
             
         } else if ( _state === STATE.ZOOM && !_this.noZoom ) {
@@ -631,8 +630,6 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
         document.removeEventListener( 'mousemove', mousemove );
         document.removeEventListener( 'mouseup', mouseup );
 
-        //console.log('Mouseup flip=',_this.flipmode);
-        
         _this.dispatchEvent( endEvent );
         
     }

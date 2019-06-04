@@ -1390,9 +1390,10 @@ class OrthogonalViewerElement extends BaseViewerElement {
             return;
         
         this.internal.slices[3].positioncamera(this.internal.subviewers[3].camera,plane,back);
-        var renderer=this.internal.layoutcontroller.renderer;
-        renderer.render(this.internal.subviewers[3].scene,
-                        this.internal.subviewers[3].camera);
+        this.renderSubViewer(3);
+        //var renderer=this.internal.layoutcontroller.renderer;
+        //        renderer.render(this.internal.subviewers[3].scene,
+        //                        this.internal.subviewers[3].camera);
     }
     
     
@@ -1571,7 +1572,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
 
         let s="Reset Slices";
         if (this.internal.simplemode) {
-            s="Reset 2D/3D Views";
+            s="Reset Views";
             cmapfolder.open();
         }
         
