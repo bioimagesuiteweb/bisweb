@@ -275,13 +275,12 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     // ----------------------------------------------------------------------------
     // Toggle Mode
     // ----------------------------------------------------------------------------
-    var togglemode = function(doupdate) {
+    var togglemode = function(doupdate=true) {
 
-        if (doupdate!==false)
-            doupdate=true;
         
         if (internal.parcellation===null)
             return;
+        
         if (doupdate) {
             internal.rendermode=internal.rendermode+1;
             if (internal.rendermode>8)
@@ -289,9 +288,9 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             if (internal.rendermode===6)
                 internal.rendermode+=1;
         }
-
-        let vp=internal.orthoviewer.setRenderMode(internal.rendermode,true);
-        let parcvp=vp[4];
+        internal.orthoviewer.setRenderMode(internal.rendermode,doupdate);
+        
+        let parcvp=internal.orthoviewer.getRenderModeViewports()[4];
         internal.parcellation.viewport.x0=parcvp.x0;
         internal.parcellation.viewport.x1=parcvp.x1;
         internal.parcellation.viewport.y0=1.0-parcvp.y1;
@@ -1613,7 +1612,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 internal.linestack=dt.linestack;
                 update();
             }
-            
+
             internal.showlegend=!dt.showlegend;
             toggleshowlegend();
             connectvis3d.update3DMeshes(internal.parameters.opacity,

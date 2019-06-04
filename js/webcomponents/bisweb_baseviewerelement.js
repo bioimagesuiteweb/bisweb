@@ -352,7 +352,7 @@ class BaseViewerElement extends HTMLElement {
                 renderer.clear();
             for (let i=0;i<subviewers.length;i++) {
                 if (this.internal.subviewers[i]!==null) {
-                    let vp  =this.internal.subviewers[i].controls.normViewport;
+                    let vp  =this.internal.subviewers[i].controls.getNormViewport();
                     if ((vp.x1-vp.x0)>0.01 && (vp.y1-vp.y0>0.01) &&  i<numviewers)  {
                         this.renderSubViewer(i);
                         subviewers[i].controls.enabled=true;
@@ -568,7 +568,7 @@ class BaseViewerElement extends HTMLElement {
         if (this.internal.subviewers !== null) {
             for (let i=0;i<this.internal.subviewers.length;i++) {
                 if (this.internal.subviewers[i] !== null)
-                    this.internal.subviewers[i].controls.handleResize();
+                    this.internal.subviewers[i].controls.handleResize(false);
             }
         }
     }

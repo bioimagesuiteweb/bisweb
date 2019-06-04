@@ -141,14 +141,17 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
     this.target0 = this.target.clone();
     this.position0 = this.camera.position.clone();
     this.up0 = this.camera.up.clone();
-    this.left0 = this.camera.left;
-    this.right0 = this.camera.right;
-    this.top0 = this.camera.top;
+
+    this.left0   = this.camera.left;
+    this.right0  = this.camera.right;
+    this.top0    = this.camera.top;
     this.bottom0 = this.camera.bottom;
 
-    if (_this.plane===3)
-        console.log('Original=',this.left0,this.right0,this.top0,this.bottom0);
-    
+    this.leftOrig  = this.camera.left;
+    this.rightOrig = this.camera.right;
+    this.topOrig  = this.camera.top;
+    this.bottomOrig= this.camera.bottom;
+
     this.center0 = new THREE.Vector2((this.left0 + this.right0) / 2.0, (this.top0 + this.bottom0) / 2.0);
 
     /*    if (plane===2)
@@ -216,18 +219,21 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
     /** handles resizing of dom
      */
     this.handleResize = function () {
-        
+
         var box = this.domElement.getBoundingClientRect();
         this.screen.left = box.left;
         this.screen.top = box.top;
         this.screen.width = box.width;
         this.screen.height = box.height;
+
+        if (_this.plane!==3) {
         
-        this.left0 = this.camera.left;
-        this.right0 = this.camera.right;
-        this.top0 = this.camera.top;
-        this.bottom0 = this.camera.bottom;
-        this.center0.set((this.left0 + this.right0) / 2.0, (this.top0 + this.bottom0) / 2.0);
+            this.left0 = this.camera.left;
+            this.right0 = this.camera.right;
+            this.top0 = this.camera.top;
+            this.bottom0 = this.camera.bottom;
+            this.center0.set((this.left0 + this.right0) / 2.0, (this.top0 + this.bottom0) / 2.0);
+        }
     };
     
     // methods
@@ -349,7 +355,7 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
             _this.camera.right = _zoomFactor * _this.right0 + ( 1 - _zoomFactor ) *  _this.center0.x;
             _this.camera.top = _zoomFactor * _this.top0 + ( 1 - _zoomFactor ) *  _this.center0.y;
             _this.camera.bottom = _zoomFactor * _this.bottom0 + ( 1 - _zoomFactor ) *  _this.center0.y;
-
+            
             _zoomStart.copy( _zoomEnd );
             _touchZoomDistanceStart = _touchZoomDistanceEnd;
         }
@@ -380,7 +386,55 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
             }
         };
     }());
+
+    this.setNormViewport=function(vp,resize=true) {
+        _this.normViewport=vp;
+        
+        if (_this.plane===3 && resize===true) {
+            let v=_this.normViewport;
+
+            
+            var box = this.domElement.getBoundingClientRect();
+            this.screen.left = box.left;
+            this.screen.top = box.top;
+            this.screen.width = box.width;
+            this.screen.height = box.height;
+
+            v.old= v.old || v;
+            let w=(v.x1-v.x0)*_this.screen.width;
+
+            if (w<50)
+                return;
+            
+            let h1=(v.old.x1-v.old.x0)*_this.screen.width;
+            let h2=(v.old.y1-v.old.y0)*_this.screen.height;
+            let h=h2;
+            if (h1>h)
+                h=h1;
+            
+            let rx=0.5*(_this.rightOrig-_this.leftOrig);
+            let cx=0.5*(_this.leftOrig+_this.rightOrig);
+            let ry=0.5*(_this.bottomOrig-_this.topOrig);
+            let cy=0.5*(_this.topOrig+_this.bottomOrig);
+            
+            let scale=h/w;
+            
+            _this.left0  =cx-scale*rx;
+            _this.right0 =cx+scale*rx;
+            _this.top0   =cy-scale*ry;
+            _this.bottom0=cy+scale*ry;
+            _this.center0.set(cx,cy);
+
+         
+        }
+
+    };
+
+    this.getNormViewport=function() {
+        return _this.normViewport;
+    };
     
+
     
     /** update -- updates the renderer's viewport among other things
      */
