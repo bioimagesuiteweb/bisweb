@@ -120,5 +120,20 @@ class BisWebFileServerClient extends BisFileServerClient {
         opts.server = 'server';
         this.fileDialog.openDialog(payload.data,opts);
     }
+
+    downloadFile(url, isbinary) {
+
+        return new Promise( (resolve, reject) => {
+            super.downloadFile(url, isbinary).then( (obj) => {
+                console.log('file downloaded successfully');
+                resolve(obj);
+            }).catch( (e) => {
+                webutil.dismissAlerts();
+                webutil.createAlert('An error occured while downloading ' + url + ' from the file server.', true);
+                console.log('an error occured downloading', url, e);
+                reject(e);
+            });
+        });
+    }
 }
 module.exports = BisWebFileServerClient;

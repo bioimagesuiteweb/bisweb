@@ -372,7 +372,10 @@ class ViewerApplicationElement extends HTMLElement {
                         webutil.createAlert('Image loaded from ' + img.getDescription());
                         self.VIEWERS[viewer].setimage(img);
                         resolve();
-                    }).catch( (e) => { reject(e); });
+                    }).catch( (e) => { 
+                        webutil.createAlert('An error occured while displaying image ' + fname, true);
+                        reject(e); 
+                    });
             },10);
         });
     }
