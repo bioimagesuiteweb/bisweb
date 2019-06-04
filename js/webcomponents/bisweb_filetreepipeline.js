@@ -624,7 +624,7 @@ class FileTreePipeline extends HTMLElement {
             let offset = parsedData['offset'];
             let promiseArray = [], tsvData = {};
             for (let runName of Object.keys(orderedRuns)) {
-                let tsvFile = "onset\tduration\tevent_type\n\r";
+                let tsvFile = "onset\tduration\ttrial_type\n\r";
                 for (let task of orderedRuns[runName]) {
                     let lowRange = (task.value[0] - offset) * tr, highRange = (task.value[1] - offset) * tr;
                     let duration = (highRange - lowRange); 
@@ -676,6 +676,13 @@ class FileTreePipeline extends HTMLElement {
                 //since jobInfo has had supporting files updated for all func keys, write it too
                 let stringifiedJobInfo = JSON.stringify(jobInfo, null, 2);
                 promiseArray.push(bis_genericio.write(jobInfoFilename, stringifiedJobInfo));
+
+                //finally, generate events.json, which contains the keys of all custom fields generated in the .tsv file 
+                //as of 6-4-19 we have no custom fields but i left this field here as a gesture towards the future.
+                // -Zach
+                /*let eventsJson = {
+
+                };*/
 
                 Promise.all(promiseArray).then( () => {
                     console.log('write done');
