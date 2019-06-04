@@ -28,6 +28,7 @@ class FileTreePipeline extends HTMLElement {
         let graphelementid = this.getAttribute('bis-graphelementid');
         let filetreeid = this.getAttribute('bis-filetreepanelid');
         let algocontrollerid = this.getAttribute('bis-algocontrollerid');
+
         bis_webutil.runAfterAllLoaded( () => {
             this.graphelement = document.querySelector(graphelementid);
             this.layout = document.querySelector(layoutid);      
@@ -55,7 +56,7 @@ class FileTreePipeline extends HTMLElement {
             </div>
         `);
 
-       
+
         body.append(panelBody);
 
         let taskButtonBar = this.createTaskElements();
@@ -63,8 +64,8 @@ class FileTreePipeline extends HTMLElement {
 
         let pipelineButtonBar = this.createPipelineElements();
         panelBody.find('#bisweb-panel-pipeline').append(pipelineButtonBar);
-        console.log('panel body', panelBody.find('#bisweb-panel-pipeline'));
-        
+
+        this.panel = body;
     }
 
     /**

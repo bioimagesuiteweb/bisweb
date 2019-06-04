@@ -49,6 +49,7 @@ class FileTreePanel extends HTMLElement {
             this.painttool = document.querySelector(this.painttoolid) || null;
             this.popoverDisplayed = false;
             this.staticTagSelectMenu = null;
+            this.fileTreePipeline = null;
 
             this.panel = new bisweb_panel(this.layout, {
                 name: 'Imported Study Files',
@@ -139,7 +140,10 @@ class FileTreePanel extends HTMLElement {
      */
     showTreePanel() {
         this.panel.show();
-        this.createFileTreePipelinePanel();
+
+        if (!this.fileTreePipeline) {
+            this.createFileTreePipelinePanel();
+        }
     }
 
     importFilesFromDirectory(filename) {
@@ -830,7 +834,7 @@ class FileTreePanel extends HTMLElement {
 
                 tree.redraw(true);
 
-                bis_bidsutils.syncSupportingFiles(movedFiles, this.baseDirectory).then((supportingFiles) => {
+                bis_bidsutils.syncSupportingFiles(movedFiles, name, this.baseDirectory).then((supportingFiles) => {
                     for (let file of supportingFiles) {
                         let fileExtension = bis_genericio.getBaseName(file).split('.'); fileExtension = fileExtension[fileExtension.length - 1];
                         if (fileExtension.toLowerCase() === 'json') {
@@ -976,6 +980,7 @@ class FileTreePanel extends HTMLElement {
         document.body.appendChild(fileTreePipeline);
 
         fileTreePipeline.createPanel(this.panel.getWidget());
+        this.fileTreePipeline = fileTreePipeline;
     }
 
     createTagSelectMenu(options = {}) {
