@@ -116,8 +116,8 @@ class DicomImportElement extends HTMLElement {
             serveronly : true,
         });
         
-        console.log('show');
-        this.show();
+        //console.log('show');
+        //this.show();
     }
     
 
