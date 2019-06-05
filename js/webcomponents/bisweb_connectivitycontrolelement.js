@@ -288,9 +288,9 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             if (internal.rendermode===6)
                 internal.rendermode+=1;
         }
-        internal.orthoviewer.setRenderMode(internal.rendermode,doupdate);
-        
-        let parcvp=internal.orthoviewer.getRenderModeViewports()[4];
+
+        let vp=internal.orthoviewer.setRenderMode(internal.rendermode,true);
+        let parcvp=vp[4];
         internal.parcellation.viewport.x0=parcvp.x0;
         internal.parcellation.viewport.x1=parcvp.x1;
         internal.parcellation.viewport.y0=1.0-parcvp.y1;

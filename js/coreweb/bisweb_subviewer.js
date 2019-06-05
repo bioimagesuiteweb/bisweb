@@ -141,12 +141,7 @@ class BisWebSubviewer {
         this.enabled = true;
         this.initialize();
 
-        /*this.eventDispatcher={
-            dispatchEvent: function() { }
-        };*/
-
         this.eventListeners={};
-        
         this.createEventListeners();
         this.addEventListeners();
         this.handleResize();
@@ -204,11 +199,12 @@ class BisWebSubviewer {
         this.right0  = this.camera.right;
         this.top0    = this.camera.top;
         this.bottom0 = this.camera.bottom;
-        
+
         this.leftOrig  = this.camera.left;
         this.rightOrig = this.camera.right;
         this.topOrig  = this.camera.top;
         this.bottomOrig= this.camera.bottom;
+        
         
         this.center0 = new THREE.Vector2((this.left0 + this.right0) / 2.0, (this.top0 + this.bottom0) / 2.0);
         
@@ -240,7 +236,7 @@ class BisWebSubviewer {
     
     /** @returns {String} -- Json string serialization of camera */
     serializeCamera() {
-        
+
         let p = { };
         p.position = this.camera.position.clone();
         p.up=this.camera.up.clone();
@@ -262,7 +258,7 @@ class BisWebSubviewer {
     parseCamera(obj,debug=0) {
 
         if (debug)
-            console.log('Input=',JSON.stringify(obj,null,2));
+            console.log('Plane=',this.plane,'Input=',JSON.stringify(obj));
         
         this.target.copy( obj.target );
         this.camera.position.copy( obj.position );
@@ -274,15 +270,26 @@ class BisWebSubviewer {
         this.camera.right = obj.right;
         this.camera.top =  obj.top;
         this.camera.bottom = obj.bottom;
+
+        this.leftOrig=obj.left;
+        this.rightOrig=obj.right;
+        this.topOrig=obj.top;
+        this.bottomOrig=obj.bottom;
+
+        
+        console.log('In Parse Camera',this.plane);
+        this.handleResize();
+
         this.camera.lookAt( this.target );
-        //        this.eventDispatcher.dispatchEvent( CHANGE_EVENT );
         this.lastPosition.copy( this.camera.position );
         this.zoomCamera(obj.zoomFactor);
 
-        let p=this.serializeCamera();
-        if (debug)
+        if (debug) {
+            let p=this.serializeCamera();
             console.log('Output=',JSON.stringify(p,null,2));
-        
+        }
+
+
     }
     
     
@@ -290,7 +297,8 @@ class BisWebSubviewer {
     /** handles resizing of dom
      */
     handleResize() {
-
+        
+        //console.log('Handling Resize',this.plane);
         let box = this.domElement.getBoundingClientRect();
         this.screen.left = box.left;
         this.screen.top = box.top;
@@ -331,14 +339,11 @@ class BisWebSubviewer {
             this.top0   =cy-scale*ry;
             this.bottom0=cy+scale*ry;
             this.center0.set(cx,cy);
-
             this.camera.left = this.left0;
             this.camera.right = this.right0;
             this.camera.top = this.top0;
             this.camera.bottom = this.bottom0;
-
         }
-
     }
     
     /** check if mouse is on screen
@@ -510,7 +515,6 @@ class BisWebSubviewer {
         this.camera.lookAt( this.target );
 
         if ( this.lastPosition.distanceToSquared( this.camera.position ) > EPS ) {
-            //            this.eventDispatcher.dispatchEvent( CHANGE_EVENT );
             this.lastPosition.copy( this.camera.position );
         }
 
@@ -569,8 +573,6 @@ class BisWebSubviewer {
         this.camera.bottom = this.bottom0;
         
         this.camera.lookAt( this.target );
-        
-        //this.eventDispatcher.dispatchEvent( CHANGE_EVENT );
         
         this.lastPosition.copy( this.camera.position );
         this.zoomCamera(1.0/(this.internal._zoomFactor||1.0));
@@ -685,8 +687,6 @@ class BisWebSubviewer {
         document.addEventListener( 'mousemove', this.eventListeners.mousemove, false );
         document.addEventListener( 'mouseup', this.eventListeners.mouseup, false );
         
-        //this.eventDispatcher.dispatchEvent( START_EVENT );
-        
         if ( this.internal._state === STATE.ROTATE && this.noRotate) {
             this.coordinateCallback(0);
         }
@@ -733,8 +733,6 @@ class BisWebSubviewer {
         document.removeEventListener( 'mousemove', this.eventListeners.mousemove );
         document.removeEventListener( 'mouseup', this.eventListeners.mouseup );
         
-        //        this.eventDispatcher.dispatchEvent( END_EVENT );
-        
     }
 
     /* mouse wheel handler*/
@@ -754,8 +752,6 @@ class BisWebSubviewer {
         }
         
         this.internal._zoomStart.y += delta * 0.01;
-        //this.eventDispatcher.dispatchEvent( START_EVENT );
-        //this.eventDispatcher.dispatchEvent( END_EVENT );
     }
 
     /* touch start handler*/
@@ -795,7 +791,6 @@ class BisWebSubviewer {
         } else {
             this.internal._state = STATE.NONE;
         }
-        //        this.eventDispatcher.dispatchEvent( START_EVENT );
     }
     
     /* touch move handler*/
@@ -843,7 +838,6 @@ class BisWebSubviewer {
 
         inobounce.disable();
         this.internal._state = STATE.NONE;
-        //this.eventDispatcher.dispatchEvent( END_EVENT );
     }
 
     /** remove all event listeners */ 
