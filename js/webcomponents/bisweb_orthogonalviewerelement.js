@@ -22,7 +22,7 @@
 
 const THREE = require('three');
 const util=require('bis_util');
-const BISCameraControls = require('bis_3dorthographiccameracontrols');
+
 const bis3dOrthogonalSlice=require('bis_3dorthogonalslice');
 const bis3dVolume=require('bis_3dvolume');
 const bisCrossHair=require('bis_3dcrosshairgeometry');
@@ -31,7 +31,7 @@ const $=require('jquery');
 const bootbox=require('bootbox');
 const BaseViewerElement=require('bisweb_baseviewerelement');
 const dat = require('bisweb_datgui');
-
+const BisWebSubViewer=require('bisweb_subviewer');
 
 
 
@@ -172,36 +172,33 @@ class OrthogonalViewerElement extends BaseViewerElement {
      */
     createsliceview(renderer,vol,orthoslice,width,depth) {
         
-        var plane=orthoslice.getplane();
+        let plane=orthoslice.getplane();
         this.internal.slicecoord[plane]=orthoslice.getsliceno();
+
+        let zs=1.0;
+        if (this.internal.simplemode)
+            zs = 0.5;
+
+
+        let subviewer=new BisWebSubViewer(renderer,plane,this.internal.viewports[1][plane],
+                                          orthoslice,
+                                          {
+                                              width : width,
+                                              depth : depth,
+                                              rotateSpeed : 10.0,
+                                              zoomSpeed : zs,
+                                              panSpeed : 5.0,
+                                              noZoom : false,
+                                              noPan : false,
+                                              noRotate : true,
+                                          });
         
-        var scene = new THREE.Scene();
-        var light = new THREE.AmbientLight(0xffffff);
-        scene.add(light);
+        
+        let scene=subviewer.getScene();
         scene.doubleSided=true;
         orthoslice.addtoscene(scene);
         
-        var camera = new THREE.OrthographicCamera(-width,width,-width,width,0.01,2.0*depth);
-        var lkv=orthoslice.positioncamera(camera);
-        
-        var controls = new BISCameraControls(camera,plane,lkv,renderer.domElement);
-        controls.rotateSpeed = 10.0;
-        if (this.internal.simplemode)
-            controls.zoomSpeed = 0.5;
-        else
-            controls.zoomSpeed = 1.0;
-        controls.panSpeed = 5.0;
-        controls.noZoom=false;
-        controls.noPan=false;
-        //
-        controls.setNormViewport(this.internal.viewports[1][plane],true);
-        
-        
-        return  {
-            scene : scene,
-            controls: controls,
-            camera : camera,
-        };
+        return subviewer;
     }
     
     // ------------------------------------------------------------------------------------
@@ -216,44 +213,35 @@ class OrthogonalViewerElement extends BaseViewerElement {
      * @returns {Bis_SubViewer} the subviewer collection object
      */
     create3dview(ren,vol,cardslice,width,depth ) {
-        
-        var scene = new THREE.Scene();
-        var light = new THREE.AmbientLight(0xffffff);
-        scene.add(light);
-        scene.doubleSided=true;
-        
 
-        var camera = new THREE.OrthographicCamera(-width,width,-width,width,0.01,2.0*depth);
-        
-        cardslice.addtoscene(scene,ren,camera);
-        
-
-        var lkv=cardslice.positioncamera(camera);
-        
-        var controls = new BISCameraControls(camera,3,lkv,ren.domElement);
-        controls.rotateSpeed = 4.0;
+        let zoom=1.0;
         if (this.internal.simplemode)
-            controls.zoomSpeed = 3.0;
-        else
-            controls.zoomSpeed = 1.0;
-        controls.panSpeed = 5.0;
-        controls.noZoom=false;
-        controls.noPan=false;
-        controls.setNormViewport(this.internal.viewports[1][3],true);
+            zoom = 3.0;
+
+        
+        let subviewer=new BisWebSubViewer(ren,3,this.internal.viewports[1][3],
+                                          cardslice,
+                                          {
+                                              width : width,
+                                              depth : depth,
+                                              rotateSpeed : 4.0,
+                                              zoomSpeed : zoom,
+                                              panSpeed : 5.0,
+                                              noZoom : false,
+                                              noPan : false
+                                          });
+
+        cardslice.addtoscene(subviewer.getScene(),ren,subviewer.getCamera());
         
         var wd=this.internal.imagespa[0] * 4;
         
         if (!this.internal.simplemode) {
             this.internal.origin=new THREE.Mesh(bisCrossHair.createcrosshair(wd,this.internal.imagespa[0],false), 
                                       new THREE.MeshBasicMaterial( {color: 0xffffff, wireframe:false}));
-            scene.add(this.internal.origin);
+            subviewer.getScene().add(this.internal.origin);
         }
         
-        return {
-            scene : scene,
-            camera : camera,
-            controls : controls,
-        };
+        return subviewer;
     }
 
 
@@ -844,7 +832,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         for (var pl=0;pl<=3;pl++) {
             var trueplane=invorientaxis[pl];
             var lab=labels[trueplane];
-            var vp  =this.internal.subviewers[pl].controls.getNormViewport();
+            var vp  =this.internal.subviewers[pl].getNormViewport();
             if ((vp.x1-vp.x0)*dw>200) {
                 if (pl<=2) {
 
@@ -924,7 +912,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 context.beginPath();
                 
                 if (pl===3)
-                    vp=this.internal.subviewers[pl].controls.getNormViewport().old;
+                    vp=this.internal.subviewers[pl].getNormViewport().old;
 
                 
                 context.moveTo(vp.x0*dw,(1-vp.y0)*dh);
@@ -1052,7 +1040,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 vp.shiftx=0;
                 vp.ratio=ratio;
             }
-            this.internal.subviewers[pl].controls.setNormViewport(vp,updateviewportsize);
+            this.internal.subviewers[pl].setNormViewport(vp,updateviewportsize);
             //this.internal.subviewers[pl].controls.this.reset();
             // When switching mode force a resize
             //this.internal.subviewers[pl].controls.handleResize();
@@ -1187,7 +1175,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
             };
             
             for (let j=0;j<this.internal.subviewers.length;j++)
-                this.internal.subviewers[j].controls.coordinateChangeCallback=mousefn;
+                this.internal.subviewers[j].coordinateChangeCallback=mousefn;
             
             this.setrendermodeinternal(this.internal.rendermode,true,true);
         }

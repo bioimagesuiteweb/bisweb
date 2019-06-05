@@ -19,14 +19,14 @@
 
 "use strict";
 
-const THREE = require('three');
+
 const util=require('bis_util');
-const BISCameraControls = require('bis_3dorthographiccameracontrols');
 const bis3dOrthogonalSlice=require('bis_3dorthogonalslice');
 const webutil=require('bis_webutil');
 const $=require('jquery');
 const BaseViewerElement=require('bisweb_baseviewerelement');
 const dat = require('bisweb_datgui');
+const BisWebSubViewer=require('bisweb_subviewer');
 
 // maxviewer size
 const MAXROWS=8, MAXCOLS=8;
@@ -166,30 +166,27 @@ class MosaicViewerElement extends BaseViewerElement {
      */
     createsliceview(renderer,vol,orthoslice,index,width,depth) {
         
-        var plane=orthoslice.getplane();
+        let plane=orthoslice.getplane();
+        let subviewer=new BisWebSubViewer(renderer,plane,
+                                          this.computeviewport(index),
+                                          orthoslice,
+                                          {
+                                              width : width,
+                                              depth : depth,
+                                              rotateSpeed : 10.0,
+                                              zoomSpeed : 1.0,
+                                              panSpeed : 5.0,
+                                              noZoom : false,
+                                              noPan : false,
+                                              noRotate : true,
+                                          });
+
         
-        var scene = new THREE. Scene();
-        var light = new THREE.AmbientLight(0xffffff);
-        scene.add(light);
+        let scene=subviewer.getScene();
         scene.doubleSided=true;
         orthoslice.addtoscene(scene);
-        
-        var camera = new THREE.OrthographicCamera(-width,width,-width,width,0.01,2.0*depth);
-        var lkv=orthoslice.positioncamera(camera);
-        
-        var controls = new BISCameraControls(camera,plane,lkv,renderer.domElement);
-        controls.rotateSpeed = 10.0;
-        controls.zoomSpeed = 1.0;
-        controls.panSpeed = 5.0;
-        controls.noZoom=false;
-        controls.noPan=false;
-        //
-        controls.setNormViewport(this.computeviewport(index));
-        return  {
-            scene : scene,
-            controls: controls,
-            camera : camera,
-        };
+
+        return  subviewer;
     }
     
     // ------------------------------------------------------------------------------------
@@ -290,7 +287,7 @@ class MosaicViewerElement extends BaseViewerElement {
             let maxslice=this.internal.imagedim[this.internal.plane]-1;
             for (let i=0;i<numslices;i++) {
                 
-                let vp  =this.internal.subviewers[i].controls.getNormViewport();
+                let vp  =this.internal.subviewers[i].getNormViewport();
                 let sliceno=this.computeslice(i);
 
 
@@ -407,8 +404,8 @@ class MosaicViewerElement extends BaseViewerElement {
         
         for (var index=0;index<this.internal.subviewers.length;index++) {
             if (this.internal.subviewers[index]!==null) {
-                this.internal.subviewers[index].controls.setNormViewport(this.computeviewport(index));
-                this.internal.subviewers[index].controls.reset();
+                this.internal.subviewers[index].setNormViewport(this.computeviewport(index));
+                this.internal.subviewers[index].reset();
             }
         }
 
@@ -499,7 +496,7 @@ class MosaicViewerElement extends BaseViewerElement {
         }
 
         if (samesize)
-            this.internal.lastzoom=this.internal.subviewers[0].controls.getZoomFactor();
+            this.internal.lastzoom=this.internal.subviewers[0].getZoomFactor();
         
         if (this.internal.volume!==null) {
             this.deleteoldimage_artifacts();
