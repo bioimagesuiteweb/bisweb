@@ -10,6 +10,7 @@ const bisweb_custommodule = require('bisweb_custommodule.js');
 
 const bootbox = require('bootbox');
 const $ = require('jquery');
+const paper = require('paper');
 
 class FileTreePipeline extends HTMLElement {
     
@@ -48,9 +49,9 @@ class FileTreePipeline extends HTMLElement {
                 <div id='bisweb-panel-tasks'>
                     <label>Tasks</label><br>
                 </div>
-                <!--div id='bisweb-panel-pipeline'>
+                <div id='bisweb-panel-pipeline'>
                     <label>Pipeline Tools</label><br>
-                </div--> 
+                </div> 
             </div>
         `);
 
@@ -152,7 +153,7 @@ class FileTreePipeline extends HTMLElement {
     openPipelineCreationModal() {
         if (!this.pipelineModal) {
 
-            let pipelineModal = bis_webutil.createmodal('Create a pipeline');
+            let pipelineModal = bis_webutil.createmodal('Create a pipeline', 'modal-lg');
             pipelineModal.footer.empty();
 
             let addModuleButton = bis_webutil.createbutton({ 'name' : 'Add module', 'type' : 'success' });
@@ -174,8 +175,7 @@ class FileTreePipeline extends HTMLElement {
                         if (moduleName) {
                             let mod = moduleIndex.getModule(moduleName);
 
-                            //modal is centered to 50% of the width of the modal, so size it to this too
-                            let width = pipelineModal.body.width() / 2;
+                            let width = pipelineModal.body.width() / 4;
                             let customModule = bisweb_custommodule.createCustom(null, this.algocontroller, mod, { 'numViewers': 0, 'dual' : false, 'paramsMargin' : '5px', 'buttonsMargin' : '0px', 'width' : width });
                             customModule.createOrUpdateGUI({ 'width' : width });
                             centerCustomElement($(customModule.panel.widget));
@@ -241,6 +241,7 @@ class FileTreePipeline extends HTMLElement {
                 }
             });
 
+            this.startDrawingInterface(pipelineModal.body);
             pipelineModal.footer.append(addModuleButton);
             pipelineModal.footer.append(saveModulesButton);
             this.pipelineModal = pipelineModal;
@@ -548,6 +549,10 @@ class FileTreePipeline extends HTMLElement {
         }
 
         return { 'matrix': taskMatrix, 'runs': runNames };
+    }
+
+    startDrawingInterface(element) {
+        
     }
 
 }
