@@ -65,38 +65,71 @@ class OrthogonalViewerElement extends BaseViewerElement {
         this.internal.rendermode=8;
         this.internal.origviewports = [
             // Slices=0
-            [ { x0:0.52, y0:0.55, x1:0.97,  y1:1.0},  { x0:0.03, y0:0.55, x1:0.48, y1:1.0},
-              { x0:0.03, y0:0.09, x1:0.48,  y1:0.54}, { x0:0.99, y0:0.0,  x1:0.995, y1:0.01 } , { x0:0.0,y0:0.0,x1:0.0,y1:0.0 } ],
+            [ { x0:0.52, y0:0.55, x1:0.97,  y1:1.0 },
+              { x0:0.03, y0:0.55, x1:0.48,  y1:1.0 },
+              { x0:0.03, y0:0.09, x1:0.48,  y1:0.54},
+              { x0:0.99, y0:0.0,  x1:0.991, y1:0.01} ,
+              { x0:0.00, y0:0.0,  x1:0.0,   y1:0.0 } ],
             // Sagittal=1
-            [ { x0:0.05, y0:0.09, x1:0.95, y1:0.99},  { x0:0.0, y0:0.0,  x1:0.01, y1:0.01},
-              { x0:0.0, y0:0.3,  x1:0.01, y1:0.31},  { x0:0.0, y0:0.6,  x1:0.01, y1:0.61}, { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
+            [ { x0:0.05, y0:0.09, x1:0.95, y1:1.00},
+              { x0:0.0,  y0:0.0,  x1:0.01, y1:0.01},
+              { x0:0.0,  y0:0.3,  x1:0.01, y1:0.31},
+              { x0:0.0,  y0:0.6,  x1:0.01, y1:0.61},
+              { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
             // Coronal=2
-            [ { x0:0.0, y0:0.0,  x1:0.01, y1:0.01}, { x0:0.05, y0:0.09, x1:0.95, y1:0.99},
-              { x0:0.0, y0:0.3,  x1:0.01, y1:0.31},  { x0:0.0, y0:0.6,  x1:0.01, y1:0.61}, { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
+            [ { x0:0.0,  y0:0.0,  x1:0.01, y1:0.01},
+              { x0:0.05, y0:0.09, x1:0.95, y1:1.00},
+              { x0:0.0,  y0:0.3,  x1:0.01, y1:0.31},
+              { x0:0.0,  y0:0.6,  x1:0.01, y1:0.61},
+              { x0:0.0,  y0:0.0,  x1:0.0,  y1:0.0 }],
             // Axial=3
-            [ { x0:0.0, y0:0.0,  x1:0.01, y1:0.01}, { x0:0.0, y0:0.3,  x1:0.01, y1:0.31},
-              { x0:0.05, y0:0.09, x1:0.95, y1:0.99},   { x0:0.0, y0:0.6,  x1:0.01, y1:0.61}, { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
+            [ { x0:0.0,  y0:0.0,  x1:0.01, y1:0.01},
+              { x0:0.0,  y0:0.3,  x1:0.01, y1:0.31},
+              { x0:0.05, y0:0.09, x1:0.95, y1:1.00},
+              { x0:0.0,  y0:0.6,  x1:0.01, y1:0.61},
+              { x0:0.0, y0:0.0,x1:0.0,y1:0.0 }],
             // 3D +Slices=4
-            [ { x0:0.6, y0:0.81, x1:0.79, y1:1.0},  { x0:0.0, y0:0.81, x1:0.19, y1:1.0},
-              { x0:0.0, y0:0.2, x1:0.19,  y1:0.39},  { x0:0.25, y0:0.1,  x1:0.95, y1:0.8} , { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
+            [ { x0:0.6,  y0:0.81, x1:0.79, y1:1.0 },
+              { x0:0.0,  y0:0.81, x1:0.19, y1:1.0 },
+              { x0:0.0,  y0:0.2 , x1:0.19, y1:0.39},
+              { x0:0.20, y0:0.1,  x1:1.00, y1:0.8 } ,
+              { x0:0.0,  y0:0.0,  x1:0.0,  y1:0.0 }],
             // 3D Only=5
-            [ { x0:0.0, y0:0.0,  x1:0.01, y1:0.01}, { x0:0.0, y0:0.3,  x1:0.01, y1:0.31},
-              { x0:0.0, y0:0.6,  x1:0.01, y1:0.61}, { x0:0.0, y0:0.1, x1:1.0, y1:1.0}, { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
-            // Conn 1=6
-            [ { x0:0.01, y0:0.06, x1:0.26, y1:0.32},  { x0:0.01, y0:0.38, x1:0.26, y1:0.63},
-              { x0:0.01, y0:0.74, x1:0.26,  y1:0.99},  { x0:0.29, y0:0.1,  x1:0.99, y1:0.99},  { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
-            // Conn 2=7
-            [ { x0:0.05, y0:0.01, x1:0.31, y1:0.27},  { x0:0.37, y0:0.01, x1:0.63, y1:0.27},
-              { x0:0.69, y0:0.0, x1:0.95,  y1:0.27},  { x0:0.6, y0:0.30,  x1:0.99, y1:0.99 }, { x0:0.01, y0:0.30,  x1:0.59, y1:0.99}],
-            // Conn 3=8
-            [ { x0:0.05, y0:0.01, x1:0.31, y1:0.27},  { x0:0.37, y0:0.01, x1:0.63, y1:0.27},
-              { x0:0.69, y0:0.0, x1:0.95,  y1:0.27},  { x0:0.99, y0:0.0,  x1:0.995, y1:0.01}, { x0:0.00,y0:0.29,x1:1.0,y1:1.0}],
+            [ { x0:0.0, y0:0.0,  x1:0.01, y1:0.01},
+              { x0:0.0, y0:0.3,  x1:0.01, y1:0.31},
+              { x0:0.0, y0:0.6,  x1:0.01, y1:0.61},
+              { x0:0.0, y0:0.1,  x1:1.0,  y1:1.0 },
+              { x0:0.0, y0:0.0,  x1:0.0,  y1:0.0 }],
+            // Simple + 3D = 6
+            [ { x0:0.01, y0:0.07, x1:0.26, y1:0.32},
+              { x0:0.01, y0:0.38, x1:0.26, y1:0.63},
+              { x0:0.01, y0:0.69, x1:0.26, y1:0.94},
+              { x0:0.27, y0:0.1,  x1:1.00, y1:1.00},
+              { x0:0.0,  y0:0.0,  x1:0.0,  y1:0.0 }],
+            // Conn 1 = 7
+            [ { x0:0.05, y0:0.01, x1:0.31, y1:0.27},
+              { x0:0.37, y0:0.01, x1:0.63, y1:0.27},
+              { x0:0.69, y0:0.0,  x1:0.95, y1:0.27},
+              { x0:0.6,  y0:0.30, x1:1.00, y1:1.00},
+              { x0:0.00, y0:0.30, x1:0.59, y1:1.00}],
+            // Conn 2= 8
+            [ { x0:0.05, y0:0.01, x1:0.31,  y1:0.27},
+              { x0:0.37, y0:0.01, x1:0.63,  y1:0.27},
+              { x0:0.69, y0:0.0,  x1:0.95,  y1:0.27},
+              { x0:0.99, y0:0.0,  x1:0.991, y1:0.01},
+              { x0:0.00, y0:0.29, x1:1.0,   y1:1.0}],
             // Simple Mode=9
-            [ { x0:0.05, y0:0.10, x1:0.31, y1:0.9},  { x0:0.37, y0:0.10, x1:0.63, y1:0.90},
-              { x0:0.69, y0:0.10, x1:0.95, y1:0.9},  { x0:0.99, y0:0.0,  x1:0.995, y1:0.01}, { x0:0.99, y0:0.0,  x1:0.995, y1:0.01} ],
+            [ { x0:0.01, y0:0.10, x1:0.32,  y1:1.00},
+              { x0:0.34, y0:0.10, x1:0.65,  y1:1.00},
+              { x0:0.67, y0:0.10, x1:0.99,  y1:1.00},
+              { x0:0.99, y0:0.0,  x1:0.991, y1:0.01},
+              { x0:0.99, y0:0.0,  x1:0.991, y1:0.01}],
             // Simple Mode=10
-            [ { x0:0.05, y0:0.1, x1:0.36, y1:0.31},  { x0:0.37, y0:0.1, x1:0.63, y1:0.31},
-              { x0:0.69, y0:0.1, x1:0.95, y1:0.31},  { x0:0.01, y0:0.33, x1:0.99, y1:0.99}, { x0:0.99, y0:0.0,  x1:0.995, y1:0.01} ]
+            [ { x0:0.05, y0:0.1,  x1:0.36,  y1:0.31},
+              { x0:0.37, y0:0.1,  x1:0.63,  y1:0.31},
+              { x0:0.69, y0:0.1,  x1:0.95,  y1:0.31},
+              { x0:0.00, y0:0.33, x1:1.00,  y1:1.00},
+              { x0:0.99, y0:0.0,  x1:0.991, y1:0.01}]
             
 
         ];
@@ -127,12 +160,16 @@ class OrthogonalViewerElement extends BaseViewerElement {
         this.internal.guidisplaynames = [
             'Slices', 'Sagittal', 'Coronal', 'Axial' , 'Slices+3D','3D Only','Simple Mode', 'Simple + 3D','Simple + 3D 2'];
         
-        this.internal.displaymodes= [ 'Slices', 'Sagittal', 'Coronal', 'Axial' , 'Slices+3D','3D Only',
-                                      'Simple + 3D','Conn 2','Conn 3' ,
+        this.internal.displaymodes= [ 'Slices',
+                                      'Sagittal', 'Coronal', 'Axial',
+                                      'Slices+3D','3D Only',  'Simple + 3D',
+                                      'Conn 1','Conn 2' ,
                                       'Simple Mode', 'Simple + 3D 2'];
         this.setObjectMapFunction=null;
         this.volumeRendering=false;
         this.internal.origin=null;
+        this.minLabelWidth=250;
+        this.extraWidth3D=0;
     }
     
     /** get the coordinates of the overlay given current image coordinates.
@@ -832,7 +869,10 @@ class OrthogonalViewerElement extends BaseViewerElement {
             var trueplane=invorientaxis[pl];
             var lab=labels[trueplane];
             var vp  =this.internal.subviewers[pl].getNormViewport();
-            if ((vp.x1-vp.x0)*dw>200) {
+
+            //console.log('Lab=',lab,(vp.x1-vp.x0)*dw,this.minLabelWidth);
+            
+            if ((vp.x1-vp.x0)*dw>this.minLabelWidth) {
                 if (pl<=2) {
 
                     let dx=0.25*vp.shiftx*dw;
@@ -1156,7 +1196,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
             this.internal.subviewers[3]=this.create3dview(this.internal.layoutcontroller.renderer,
                                                           this.internal.volume,
                                                           this.internal.slices[3],
-                                                          s_width,s_depth);
+                                                          s_width+this.extraWidth3D,s_depth);
         } else {
             this.internal.slices[3].addtoscene(this.internal.subviewers[3].getScene());
         }                

@@ -73,6 +73,7 @@ class MosaicViewerElement extends BaseViewerElement {
         this.internal.slices=[null];
         this.internal.displaymodes=null;
         this.internal.corefolder=null;
+        this.minLabelWidth=250;
     }
 
     // ------------------------------------------------------------------------------------
@@ -274,8 +275,6 @@ class MosaicViewerElement extends BaseViewerElement {
             let imageorientinvaxis = this.internal.volume.getOrientation().invaxis;
             let imageorientaxis = this.internal.volume.getOrientation().axis;
 
-
-            
             let fnsize=webutil.getfontsize(context.canvas);
             context.font=fnsize+"px Arial";
             context.fillStyle = "#dd7700";
@@ -290,7 +289,7 @@ class MosaicViewerElement extends BaseViewerElement {
                 let sliceno=this.computeslice(i);
 
 
-                if (sliceno>=0 && sliceno <=maxslice && (vp.x1-vp.x0)*domwidth>150) {
+                if (sliceno>=0 && sliceno <=maxslice && (vp.x1-vp.x0)*domwidth>=this.minLabelWidth) {
                     let xmin=Math.round((f[0]*vp.x0+f[1]*vp.x1)*domwidth);
                     let xmax=Math.round((f[0]*vp.x1+f[1]*vp.x0)*domwidth);
                     let ymid=Math.round( domheight*(1.0-0.5*(vp.y0+vp.y1)));

@@ -33,7 +33,7 @@ try {
     console.log('.... running in commandline probably a regression test as I can not load bis_webutil.');
 }
 
-
+const DEBUG=false;
 
 const computemode=function(array,debug) {
     debug= debug || false;
@@ -218,7 +218,7 @@ class BisParcellation {
         var numpoints=obj.numpoints;
         var numattr=obj.numattr;
         this.description=obj.description;
-        console.log('++++ Parcellation created from jsonfile:'+filename+', points='+numpoints+' attr='+numattr+' description='+this.description);
+        if (DEBUG) console.log('++++ Parcellation created from jsonfile:'+filename+', points='+numpoints+' attr='+numattr+' description='+this.description);
 
         this.rois= new Array(numpoints);
         var i,j;
@@ -295,7 +295,7 @@ class BisParcellation {
         else
             this.description="unknown";
 
-        console.log('++++ Node definition created from textfile:'+filename+', points='+numpoints+' attr='+numattr+' description='+this.description);
+        if (DEBUG) console.log('++++ Node definition created from textfile:'+filename+', points='+numpoints+' attr='+numattr+' description='+this.description);
         return numpoints;
     }
     
@@ -340,7 +340,7 @@ class BisParcellation {
             this.indexmap[idx]=i;
         }
 
-        console.log("++++ Node definition mapping to lobes: Number of rois="+this.rois.length);
+        if (DEBUG) console.log("++++ Node definition mapping to lobes: Number of rois="+this.rois.length);
         var maxv=this.rois[0].attr[0];
         for (i=1;i<this.rois.length;i++) {
             var a=this.rois[i].attr[0];
@@ -832,7 +832,7 @@ class BisParcellation {
         if (r[1]>999 || r[0] < 0 || r[1]<2) 
             throw new Error('Bad Node definition image. It has largest value > 999 (max='+r[1]+') or max value < 2 or min value <0 ( min='+r[0]+')');
 
-        console.log('++++ Image range ='+r+' data type='+dt);
+        if (DEBUG) console.log('++++ Image range ='+r+' data type='+dt);
         var maxvoi=r[1];
 
         var volsize=dim_a[0]*dim_a[1]*dim_a[2];

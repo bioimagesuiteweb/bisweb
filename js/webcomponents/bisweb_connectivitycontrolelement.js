@@ -1690,6 +1690,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     let basediv=$("<div>To appear...</div>");
     internal.parentDomElement.append(basediv);
     internal.orthoviewer=orthoviewer;
+    internal.orthoviewer.extraWidth3D=connectvis3d.lobeoffset;
     internal.orthoviewer.addMouseObserver(internal.this);
     internal.orthoviewer.addResizeObserver(internal.this);
 

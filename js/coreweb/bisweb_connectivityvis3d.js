@@ -324,6 +324,7 @@ var parsebrainsurface = function(textstring,filename) {
             p_vertices[3]=-axisoffset[0]; p_vertices[4]=-axisoffset[1]; p_vertices[5]=-axisoffset[2];
             if (axis===0) {
                 p_vertices[3]=180+lobeoffset+axisoffset[0];
+                p_vertices[0]-=lobeoffset;
             } else if (axis===1) {
                 p_vertices[4]=216.0+axisoffset[1];
             } else {

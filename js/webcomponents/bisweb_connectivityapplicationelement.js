@@ -166,6 +166,7 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         const controlid=this.getAttribute('bis-connectivitycontrolid');
         
         VIEWER.viewer=document.querySelector(viewerid);
+        VIEWER.viewer.setMinLabelWidth(150);
         VIEWER.viewer.finalizeTools();
 
         var viewer=VIEWER.viewer;

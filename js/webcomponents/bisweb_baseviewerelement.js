@@ -107,6 +107,7 @@ class BaseViewerElement extends HTMLElement {
         // save state stuff
         this.internal.saveState=null;
         this.internal.viewerleft=null;
+        this.minLabelWidth=150;
     }
 
 
@@ -123,6 +124,21 @@ class BaseViewerElement extends HTMLElement {
      */
     getName() {
         return this.internal.name;
+    }
+    
+    // ------------------------------------------------------------------------------------
+    /* set the minimum width to draw labels
+     * @param{Number} width 
+     */
+    setMinLabelWidth(n) {
+        this.minLabelWidth=n || 150;
+    }
+
+    /* return the min Label Width
+     * @returns{Number} -- the label width
+     */
+    getMinLabelWidth() {
+        return this.minLabelWidth;
     }
 
     /* returns last cross hairs (null) */
@@ -887,7 +903,7 @@ class BaseViewerElement extends HTMLElement {
         this.internal.subviewers.forEach(function(f) {
             if (f!==null) {
                 f.zoomCamera(factor);
-                f.update();
+                f.render();
             }
         });
     }

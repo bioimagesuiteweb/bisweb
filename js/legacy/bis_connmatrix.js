@@ -27,6 +27,7 @@
 const util=require('bis_util');
 const numeric=require('numeric');
 
+const DEBUG=false;
 // -------------------------------------------------------------------------
 // First ConnMatrix Structure
 // -------------------------------------------------------------------------
@@ -73,7 +74,7 @@ class ConnMatrix {
      */
     parsematrix(inpstring,mode,filename,doerror) {
 
-        console.log('\n\n\n+++++ Parsing matrix '+mode+' from '+filename);
+        if (DEBUG) console.log('\n\n\n+++++ Parsing matrix '+mode+' from '+filename);
 
 
         if (mode!==0 && this.posMatrix===null) {
@@ -91,7 +92,7 @@ class ConnMatrix {
 
         var numcols=out_lines.length,j=0,i=0;
 
-        console.log('+++++ Read square matrix of size '+numcols+'*'+numcols);
+        if (DEBUG) console.log('+++++ Read square matrix of size '+numcols+'*'+numcols);
 
         if (mode!==0) {
             var npos=numeric.dim(this.posMatrix)[0];
@@ -167,7 +168,7 @@ class ConnMatrix {
         }
 
         var numnodes=numeric.dim(this.posMatrix)[0];
-        console.log('+++++ creating measure meatrix numnodes='+numnodes);
+        if (DEBUG) console.log('+++++ creating measure meatrix numnodes='+numnodes);
         
         if (this.negMatrix===null) 
             this.negMatrix=util.zero(numnodes,numnodes);
@@ -191,7 +192,7 @@ class ConnMatrix {
                 maxnode=row;
             }
         }
-        console.log('+++++ Done computing sums, maxsum='+maxsum+' at node='+maxnode);
+        if (DEBUG) console.log('+++++ Done computing sums, maxsum='+maxsum+' at node='+maxnode);
         this.maxsum =maxsum;
         this.maxsumnode=maxnode;
         return numnodes;
@@ -281,7 +282,7 @@ class ConnMatrix {
         if (component===1)
             component=3;
 
-        console.log('+++++ Drawing lines, mode='+mode+' singlevalue='+singlevalue+', attribcomponent='+attribcomponent+' filtering by'+in_column+' (2=sum,0=pos,1=neg)');
+        if (DEBUG) console.log('+++++ Drawing lines, mode='+mode+' singlevalue='+singlevalue+', attribcomponent='+attribcomponent+' filtering by'+in_column+' (2=sum,0=pos,1=neg)');
         
         var compvalue=0;
         if (mode===1)
@@ -295,7 +296,7 @@ class ConnMatrix {
         for (i=1;i<np;i++) 
             maxsum=Math.max(maxsum, this.statMatrix[i][column]);
         
-        //console.log("+++++ Maximum Number of Connections in column "+s[column]+" = "+maxsum+" degreethreshold="+degreethreshold);
+        //if (DEBUG) console.log("+++++ Maximum Number of Connections in column "+s[column]+" = "+maxsum+" degreethreshold="+degreethreshold);
         if (degreethreshold>maxsum) {
             console.log("+++++ Reducing degreethreshold to "+maxsum);
             degreethreshold=maxsum;
@@ -310,7 +311,7 @@ class ConnMatrix {
                 att=Math.floor(parc.rois[row].attr[component]);
                 v=this.statMatrix[row][column];
                 if (row%10===0 && debug>0)
-                    console.log('row='+row+'\t v='+v+'\tdesired='+compvalue+'\tactual='+att+', all_att='+parc.rois[row].attr);
+                    if (DEBUG) console.log('row='+row+'\t v='+v+'\tdesired='+compvalue+'\tactual='+att+', all_att='+parc.rois[row].attr);
 
 
                 if (att===compvalue && v>=degreethreshold) {
@@ -412,7 +413,7 @@ class ConnMatrix {
         if (negative)
             column=1;
 
-        console.log("+++++ Creating Line pairs numnodes="+n+" column="+column+' val(matrix) threshold > abs('+matrixthreshold+')');
+        if (DEBUG) console.log("+++++ Creating Line pairs numnodes="+n+" column="+column+' val(matrix) threshold > abs('+matrixthreshold+')');
         
         for (var row=0;row<n-1;row++) {
             var rowval=this.flagMatrix[row][column];

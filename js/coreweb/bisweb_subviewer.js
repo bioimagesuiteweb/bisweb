@@ -69,10 +69,11 @@ const inobounce=require('inobounce.js');
 const STATE = { NONE: -1, ROTATE: 0, ZOOM: 1, PAN: 2, TOUCH_ROTATE: 3, TOUCH_ZOOM_PAN: 4 };
 const EPS = 0.000001;
 const KEYS = [ 65 /*A*/, 83 /*S*/, 68 /*D*/, 72 /*R*/ ];
-const CHANGE_EVENT = { type: 'change' };
-const START_EVENT = { type: 'start'};
-const END_EVENT = { type: 'end'};
-
+/*
+  const CHANGE_EVENT = { type: 'change' };
+  const START_EVENT = { type: 'start'};
+  const END_EVENT = { type: 'end'};
+*/
 
 /**
  *
@@ -140,10 +141,9 @@ class BisWebSubviewer {
         this.enabled = true;
         this.initialize();
 
-        this.eventDispatcher={
+        /*this.eventDispatcher={
             dispatchEvent: function() { }
-        };
-        //Object.create( THREE.EventDispatcher.prototype );
+        };*/
 
         this.eventListeners={};
         
@@ -275,7 +275,7 @@ class BisWebSubviewer {
         this.camera.top =  obj.top;
         this.camera.bottom = obj.bottom;
         this.camera.lookAt( this.target );
-        this.eventDispatcher.dispatchEvent( CHANGE_EVENT );
+        //        this.eventDispatcher.dispatchEvent( CHANGE_EVENT );
         this.lastPosition.copy( this.camera.position );
         this.zoomCamera(obj.zoomFactor);
 
@@ -304,20 +304,43 @@ class BisWebSubviewer {
             this.top0 = this.camera.top;
             this.bottom0 = this.camera.bottom;
             this.center0.set((this.left0 + this.right0) / 2.0, (this.top0 + this.bottom0) / 2.0);
-        }
-    }
-    
-    // methods
-    /** handles event (mouse, touch keyboard)
-     */
-    handleEvent( event ) {
-        
-        if ( typeof this[ event.type ] == 'function' ) {
-            this[ event.type ]( event );
-        }
-    }
-    
+        } else {
+            let v=JSON.parse(JSON.stringify(this.normViewport));
+            v.old= v.old || v;
+            let w=(v.x1-v.x0)*this.screen.width;
 
+            if (w<50) {
+                return;
+            }
+            
+            let h1=(v.old.x1-v.old.x0)*this.screen.width;
+            let h2=(v.old.y1-v.old.y0)*this.screen.height;
+            let h=h2;
+            if (h1>h)
+                h=h1;
+            
+            let rx=0.5*(this.rightOrig-this.leftOrig);
+            let cx=0.5*(this.leftOrig+this.rightOrig);
+            let ry=0.5*(this.bottomOrig-this.topOrig);
+            let cy=0.5*(this.topOrig+this.bottomOrig);
+            
+            let scale=h/w;
+            
+            this.left0  =cx-scale*rx;
+            this.right0 =cx+scale*rx;
+            this.top0   =cy-scale*ry;
+            this.bottom0=cy+scale*ry;
+            this.center0.set(cx,cy);
+
+            this.camera.left = this.left0;
+            this.camera.right = this.right0;
+            this.camera.top = this.top0;
+            this.camera.bottom = this.bottom0;
+
+        }
+
+    }
+    
     /** check if mouse is on screen
      */
     getMouseOnScreen(pageX,pageY) {
@@ -428,44 +451,10 @@ class BisWebSubviewer {
 
     /** set the normalized viewport */
     setNormViewport(vp,resize=true) {
-        
+
         this.normViewport=vp;
-        
-        if (this.plane===3 && resize===true) {
-
-            let v=this.normViewport;
-            let box = this.domElement.getBoundingClientRect();
-            this.screen.left = box.left;
-            this.screen.top = box.top;
-            this.screen.width = box.width;
-            this.screen.height = box.height;
-
-            v.old= v.old || v;
-            let w=(v.x1-v.x0)*this.screen.width;
-
-            if (w<50)
-                return;
-            
-            let h1=(v.old.x1-v.old.x0)*this.screen.width;
-            let h2=(v.old.y1-v.old.y0)*this.screen.height;
-            let h=h2;
-            if (h1>h)
-                h=h1;
-            
-            let rx=0.5*(this.rightOrig-this.leftOrig);
-            let cx=0.5*(this.leftOrig+this.rightOrig);
-            let ry=0.5*(this.bottomOrig-this.topOrig);
-            let cy=0.5*(this.topOrig+this.bottomOrig);
-            
-            let scale=h/w;
-            
-            this.left0  =cx-scale*rx;
-            this.right0 =cx+scale*rx;
-            this.top0   =cy-scale*ry;
-            this.bottom0=cy+scale*ry;
-            this.center0.set(cx,cy);
-        }
-
+        if (resize)
+            this.handleResize();
     }
     
 
@@ -521,7 +510,7 @@ class BisWebSubviewer {
         this.camera.lookAt( this.target );
 
         if ( this.lastPosition.distanceToSquared( this.camera.position ) > EPS ) {
-            this.eventDispatcher.dispatchEvent( CHANGE_EVENT );
+            //            this.eventDispatcher.dispatchEvent( CHANGE_EVENT );
             this.lastPosition.copy( this.camera.position );
         }
 
@@ -581,7 +570,7 @@ class BisWebSubviewer {
         
         this.camera.lookAt( this.target );
         
-        this.eventDispatcher.dispatchEvent( CHANGE_EVENT );
+        //this.eventDispatcher.dispatchEvent( CHANGE_EVENT );
         
         this.lastPosition.copy( this.camera.position );
         this.zoomCamera(1.0/(this.internal._zoomFactor||1.0));
@@ -696,7 +685,7 @@ class BisWebSubviewer {
         document.addEventListener( 'mousemove', this.eventListeners.mousemove, false );
         document.addEventListener( 'mouseup', this.eventListeners.mouseup, false );
         
-        this.eventDispatcher.dispatchEvent( START_EVENT );
+        //this.eventDispatcher.dispatchEvent( START_EVENT );
         
         if ( this.internal._state === STATE.ROTATE && this.noRotate) {
             this.coordinateCallback(0);
@@ -744,7 +733,7 @@ class BisWebSubviewer {
         document.removeEventListener( 'mousemove', this.eventListeners.mousemove );
         document.removeEventListener( 'mouseup', this.eventListeners.mouseup );
         
-        this.eventDispatcher.dispatchEvent( END_EVENT );
+        //        this.eventDispatcher.dispatchEvent( END_EVENT );
         
     }
 
@@ -765,8 +754,8 @@ class BisWebSubviewer {
         }
         
         this.internal._zoomStart.y += delta * 0.01;
-        this.eventDispatcher.dispatchEvent( START_EVENT );
-        this.eventDispatcher.dispatchEvent( END_EVENT );
+        //this.eventDispatcher.dispatchEvent( START_EVENT );
+        //this.eventDispatcher.dispatchEvent( END_EVENT );
     }
 
     /* touch start handler*/
@@ -806,7 +795,7 @@ class BisWebSubviewer {
         } else {
             this.internal._state = STATE.NONE;
         }
-        this.eventDispatcher.dispatchEvent( START_EVENT );
+        //        this.eventDispatcher.dispatchEvent( START_EVENT );
     }
     
     /* touch move handler*/
@@ -854,7 +843,7 @@ class BisWebSubviewer {
 
         inobounce.disable();
         this.internal._state = STATE.NONE;
-        this.eventDispatcher.dispatchEvent( END_EVENT );
+        //this.eventDispatcher.dispatchEvent( END_EVENT );
     }
 
     /** remove all event listeners */ 
