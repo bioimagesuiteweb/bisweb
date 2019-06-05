@@ -71,14 +71,12 @@ class DicomImportElement extends HTMLElement {
                     this.importDICOMImages(f, o, false);
                 };
                 
-                setTimeout( () => {
-                    bis_webfileutil.genericFileCallback( 
-                        {
-                            'title' : 'Choose output directory',
-                            'filters' : 'DIRECTORY',
-                            'save' : false
-                        }, saveFileCallback);
-                }, 1);
+                bis_webfileutil.genericFileCallback( 
+                    {
+                        'title' : 'Choose output directory',
+                        'filters' : 'DIRECTORY',
+                        'save' : false
+                    }, saveFileCallback);
             },
         },{
             title: 'Directory to import study from',
@@ -116,8 +114,8 @@ class DicomImportElement extends HTMLElement {
             serveronly : true,
         });
         
-        console.log('show');
-        this.show();
+        //console.log('show');
+        //this.show();
     }
     
 
@@ -131,17 +129,20 @@ class DicomImportElement extends HTMLElement {
      * @param {String} outputDirectory 
      */
     importDICOMImages(inputDirectory, outputDirectory,doBIDS=true) {
+        
         if (!bis_webfileutil.candoComplexIO(true)) {
             console.log('Error: cannot import DICOM study without access to file server.');
             return;
         }
+
+        
 
         let a='';
         if (doBIDS)
             a='/BIDS';
         
         bis_webutil.createAlert('Converting raw DICOM files to NII'+a+' format...', false, 0, 1000000000, { 'makeLoadSpinner' : true });
-
+        
         if (!bis_genericio.isDirectory(inputDirectory)) {
             inputDirectory = bis_genericio.getDirectoryName(bis_genericio.getNormalizedFilename(inputDirectory));
         }
