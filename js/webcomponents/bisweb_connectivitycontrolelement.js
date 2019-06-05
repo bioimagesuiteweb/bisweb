@@ -289,7 +289,8 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
                 internal.rendermode+=1;
         }
 
-        let vp=internal.orthoviewer.setRenderMode(internal.rendermode,true);
+        internal.orthoviewer.setRenderMode(internal.rendermode,doupdate);
+        let vp=internal.orthoviewer.getRenderModeViewports();
         let parcvp=vp[4];
         internal.parcellation.viewport.x0=parcvp.x0;
         internal.parcellation.viewport.x1=parcvp.x1;
@@ -298,6 +299,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         update(true);
         if (internal.showlegend)
             setnode(Math.round(internal.parameters.node-1));
+
     };
     
     // ----------------------------------------------------------------------------
@@ -1571,7 +1573,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             internal.context.clearRect(0,0,internal.canvas.width,internal.canvas.height);
             internal.overlaycontext.clearRect(0,0,internal.canvas.width,internal.canvas.height);
             internal.rendermode=dt.rendermode;
-            //console.log('New Render mode=',dt.rendermode);
+            console.log('New Render mode=',dt.rendermode);
             togglemode(false);
 
             internal.posFileInfo=[ "NONE", 0 ];

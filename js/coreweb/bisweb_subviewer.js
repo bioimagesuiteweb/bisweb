@@ -271,11 +271,6 @@ class BisWebSubviewer {
         this.camera.top =  obj.top;
         this.camera.bottom = obj.bottom;
 
-        this.leftOrig=obj.left;
-        this.rightOrig=obj.right;
-        this.topOrig=obj.top;
-        this.bottomOrig=obj.bottom;
-
         
         console.log('In Parse Camera',this.plane);
         this.handleResize();
@@ -304,46 +299,6 @@ class BisWebSubviewer {
         this.screen.top = box.top;
         this.screen.width = box.width;
         this.screen.height = box.height;
-        
-        if (this.plane!==3) {
-            
-            this.left0 = this.camera.left;
-            this.right0 = this.camera.right;
-            this.top0 = this.camera.top;
-            this.bottom0 = this.camera.bottom;
-            this.center0.set((this.left0 + this.right0) / 2.0, (this.top0 + this.bottom0) / 2.0);
-        } else {
-            let v=JSON.parse(JSON.stringify(this.normViewport));
-            v.old= v.old || v;
-            let w=(v.x1-v.x0)*this.screen.width;
-
-            if (w<50) {
-                return;
-            }
-            
-            let h1=(v.old.x1-v.old.x0)*this.screen.width;
-            let h2=(v.old.y1-v.old.y0)*this.screen.height;
-            let h=h2;
-            if (h1>h)
-                h=h1;
-            
-            let rx=0.5*(this.rightOrig-this.leftOrig);
-            let cx=0.5*(this.leftOrig+this.rightOrig);
-            let ry=0.5*(this.bottomOrig-this.topOrig);
-            let cy=0.5*(this.topOrig+this.bottomOrig);
-            
-            let scale=h/w;
-            
-            this.left0  =cx-scale*rx;
-            this.right0 =cx+scale*rx;
-            this.top0   =cy-scale*ry;
-            this.bottom0=cy+scale*ry;
-            this.center0.set(cx,cy);
-            this.camera.left = this.left0;
-            this.camera.right = this.right0;
-            this.camera.top = this.top0;
-            this.camera.bottom = this.bottom0;
-        }
     }
     
     /** check if mouse is on screen
@@ -458,8 +413,54 @@ class BisWebSubviewer {
     setNormViewport(vp,resize=true) {
 
         this.normViewport=vp;
-        if (resize)
-            this.handleResize();
+        
+        let box = this.domElement.getBoundingClientRect();
+        this.screen.left = box.left;
+        this.screen.top = box.top;
+        this.screen.width = box.width;
+        this.screen.height = box.height;
+        
+        if (this.plane!==3) {
+            
+            this.left0 = this.camera.left;
+            this.right0 = this.camera.right;
+            this.top0 = this.camera.top;
+            this.bottom0 = this.camera.bottom;
+            this.center0.set((this.left0 + this.right0) / 2.0, (this.top0 + this.bottom0) / 2.0);
+        } else {
+            let v=JSON.parse(JSON.stringify(this.normViewport));
+            v.old= v.old || v;
+            let w=(v.x1-v.x0)*this.screen.width;
+
+            if (w<50) {
+                return;
+            }
+            
+            let h1=(v.old.x1-v.old.x0)*this.screen.width;
+            let h2=(v.old.y1-v.old.y0)*this.screen.height;
+            let h=h2;
+            if (h1>h)
+                h=h1;
+            
+            let rx=0.5*(this.rightOrig-this.leftOrig);
+            let cx=0.5*(this.leftOrig+this.rightOrig);
+            let ry=0.5*(this.bottomOrig-this.topOrig);
+            let cy=0.5*(this.topOrig+this.bottomOrig);
+            
+            let scale=h/w;
+            
+            this.left0  =cx-scale*rx;
+            this.right0 =cx+scale*rx;
+            this.top0   =cy-scale*ry;
+            this.bottom0=cy+scale*ry;
+            this.center0.set(cx,cy);
+            this.camera.left = this.left0;
+            this.camera.right = this.right0;
+            this.camera.top = this.top0;
+            this.camera.bottom = this.bottom0;
+        }
+
+        
     }
     
 

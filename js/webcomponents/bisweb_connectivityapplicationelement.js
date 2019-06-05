@@ -80,6 +80,9 @@ class ConnectivityApplicationElement extends ViewerApplicationElement {
         this.connectivitycontrol.disableMouseUpdates();
         super.setElementState(dt);
         this.connectivitycontrol.setElementState(dt['connectivity']);
+        dt['viewer1'].image=null;
+        dt['viewer1'].overlay=null;
+        //super.setElementState(dt);
         return;
     }
 
