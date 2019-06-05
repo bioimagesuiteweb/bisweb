@@ -171,6 +171,10 @@ let dicom2BIDS = async function (opts) {
 
 
     console.log('parsed filenames', parsedFilenames);
+
+    //TODO: This seems to cause errors on Windows? Something about how it reads the raw data gives a strange error with toString()
+    //My instinct would say that the issue is in bis_util.SHA256 (which is invoked by bis_genericio from calculateChecksums())
+    // -Zach
     let makeHash = ( calcHash ? calculateChecksums(parsedFilenames) : [ Promise.resolve()]);
 
 
@@ -253,7 +257,7 @@ let dicom2BIDS = async function (opts) {
         if (calcHash) {
             for (let val of checksums) {
                 console.log('val', val);
-                for (let fileEntry of dicomobj.job) {
+                for (let fileEntry of dicomobj.files) {
                     if (val.output.filename.includes(fileEntry.name)) {
                         fileEntry.hash = val.output.hash;
                         break;
