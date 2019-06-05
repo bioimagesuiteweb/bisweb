@@ -122,6 +122,14 @@ class FileTreePanel extends HTMLElement {
                     this.openTaskRenamingModal(node);
                 }
             },
+            'ShowTaskChart': {
+                'separator_before': false,
+                'separator_after': false,
+                'label': 'Show Task Chart',
+                'action': (node) => {
+                    this.openTaskChart(node);
+                }
+            },
             'StudySettings' : {
                 'separator_before': false,
                 'separator_after': false,
@@ -511,9 +519,8 @@ class FileTreePanel extends HTMLElement {
         let handleRightClick = (data) => {
             let tree = this.fileTree.jstree(true);
             let existingTreeSettings = tree.settings.contextmenu.items;
-            let enabledButtons = { 'RenameTask': true };
+            let enabledButtons = { 'RenameTask': true, 'ShowTaskChart' : true };
 
-            //console.log('node', tree.get_node(data.node.parent), data.node, existingTreeSettings);
             //dual viewer applications have a 'load to viewer 1' and 'load to viewer 2' button instead of just one load
             if (existingTreeSettings.Load) {
                 enabledButtons.Load = true;
@@ -532,6 +539,7 @@ class FileTreePanel extends HTMLElement {
             } if (data.node.parent === '#' || tree.get_node(data.node.parent).original.text !== 'func') {
                 //'#' is the parent of the top level node in the tree
                 enabledButtons.RenameTask = false;
+                enabledButtons.ShowTaskChart = false;
             }
 
             this.toggleContextMenuLoadButtons(tree, enabledButtons);
@@ -680,7 +688,7 @@ class FileTreePanel extends HTMLElement {
 
         if (this.viewer.getobjectmap() === null) {
             bis_webutil.createAlert('Error: Cannot create VOI map of task regions without painted regions. Please create an overlay first (e.g. using the paint tool)', true); return;
-        } else if (this.graphelement.taskdata === null) {
+        } else if (!this.graphelement.hasTaskData()) {
             bis_webutil.createAlert('Error: Parsing task regions requires information about runs and task timings and durations. Please load a task file using the \'Import task file\' button.', true); return;
         }
 
@@ -896,6 +904,27 @@ class FileTreePanel extends HTMLElement {
         popover.popover('show');
     }
 
+    /**
+     * Loads task data from a given task image in the tree, finds the appropriate task timings from the imported task file, and graphs it. 
+     * Opened from the jstree context menu.
+     * 
+     * @param {Object} node - The node given by the contextmenu.
+     */
+    openTaskChart(node) {
+
+        if (this.graphelement.hasTaskData()) {
+                let parsedNode = this.fileTree.jstree(true).get_node(node.reference[0]);
+            let filename = this.constructNodeName(parsedNode);
+
+            console.log('filename', filename);
+            let img = new BiswebImage();
+            img.load(filename).then( () => {
+                this.graphelement.parsePaintedAreaAverageTimeSeries(this.viewer, img);
+            });
+        } else {
+            console.log('Could not find task data');
+        }
+    }    
 
     /**
      * Changes the context menu buttons (right-click menu) for the file tree currently being displayed according to the keys specified in settings. 
@@ -911,7 +940,8 @@ class FileTreePanel extends HTMLElement {
     }
 
     /**
-     * Constructs the full filename of the node based on
+     * Constructs the full filename of the node based on the nodes above it and the path of the base directory.
+     * 
      * @param {Object} node - Object describing the jstree node. If not specified this will infer that the currently selected node is to be used. 
      */
     constructNodeName(node = null) {

@@ -341,16 +341,25 @@ class GrapherModule extends HTMLElement {
             formatChart(image, objectmap);
             this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', makeTaskChart : (this.taskdata) ? true : false });
         } else if (orthoElement && imgdata) {
-            let startingKey = 99;
-            for (let key of Object.keys(imgdata)) {
-                let splitKey = key.split('_');
-                let keyNum = splitKey[1];
-                if (parseInt(keyNum) < startingKey) { startingKey = splitKey.join('_'); }
 
-                imgdata[key] = formatChart(imgdata[key], orthoElement.getobjectmap());
+            //plot the image if there's only one image, otherwise assemble the dictionary of task images
+            let objectmap = orthoElement.getobjectmap();
+            if (imgdata.jsonformatname) {
+                formatChart(imgdata, objectmap);
+                this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', makeTaskChart : (this.taskdata) ? true : false })
+            } else {
+                let startingKey = 99;
+                for (let key of Object.keys(imgdata)) {
+                    let splitKey = key.split('_');
+                    let keyNum = splitKey[1];
+                    if (parseInt(keyNum) < startingKey) { startingKey = splitKey.join('_'); }
+
+                    imgdata[key] = formatChart(imgdata[key], objectmap);
+                }
+
+                this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', makeTaskChart : true, charts: imgdata, displayChart : startingKey });
             }
-
-            this.createChart({ xaxisLabel : 'frame', yaxisLabel : 'intensity (average per-pixel value)', makeTaskChart : true, charts: imgdata, displayChart : startingKey });
+            
         } else {
             console.log('cannot parse time series without an ortho element');
             return;
@@ -592,6 +601,7 @@ class GrapherModule extends HTMLElement {
             $(this.graphWindow.getHeader()).find('.task-selector').css('visibility', 'hidden');
         }
 
+        console.log('settings', settings, 'chart data', chartData);
         let chartType = settings.chartType || chartData.chartType;  
         if (settings.makeTaskChart && chartType === 'line') {
             this.createTaskChart(chartData.datasets, chartData.colors, frame, this.taskdata, settings);
@@ -1249,6 +1259,9 @@ class GrapherModule extends HTMLElement {
         };
     }*/
 
+    hasTaskData() {
+        return this.taskdata ? true : false;
+    }
 }
 
 module.exports = GrapherModule;
