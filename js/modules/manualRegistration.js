@@ -161,6 +161,15 @@ class ManualRegistrationModule extends BaseModule {
                     "default": false,
                     "varname": "usefullheaderxy"
                 },
+		{
+                    "name": "Do Reslice",
+                    "description": "dummy option ignored",
+                    "priority": 100,
+                    "advanced": true,
+                    "type": "boolean",
+                    "default": true,
+                    "varname": "doreslice"
+                },
                 {
                     "name": "Interpolation",
                     "description": "Which type of interpolation to use (3 = cubic, 1 = linear, 0 = nearest-neighbor)",

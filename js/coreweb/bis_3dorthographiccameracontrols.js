@@ -69,7 +69,7 @@ const inobounce=require('inobounce.js');
 
 var bisOrthographicCameraControls = function ( camera, plane, target, domElement ) {
 
-    const THREEJSREVISION=parseInt(THREE.REVISION);
+    //    const THREEJSREVISION=parseInt(THREE.REVISION);
     
     var _this = this;
     var STATE = { NONE: -1, ROTATE: 0, ZOOM: 1, PAN: 2, TOUCH_ROTATE: 3, TOUCH_ZOOM_PAN: 4 };
@@ -88,7 +88,6 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
 
     /** viewport of controller of type {@link Bis_Viewport}. This is set when layout is changed etc.*/
     this.normViewport = { x0:0.0,y0:0.0,x1:1.0,y1:1.0 };
-
     
     this.screen = { left: 0, top: 0, width: 0, height: 0 };
     
@@ -142,10 +141,17 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
     this.target0 = this.target.clone();
     this.position0 = this.camera.position.clone();
     this.up0 = this.camera.up.clone();
-    this.left0 = this.camera.left;
-    this.right0 = this.camera.right;
-    this.top0 = this.camera.top;
+
+    this.left0   = this.camera.left;
+    this.right0  = this.camera.right;
+    this.top0    = this.camera.top;
     this.bottom0 = this.camera.bottom;
+
+    this.leftOrig  = this.camera.left;
+    this.rightOrig = this.camera.right;
+    this.topOrig  = this.camera.top;
+    this.bottomOrig= this.camera.bottom;
+
     this.center0 = new THREE.Vector2((this.left0 + this.right0) / 2.0, (this.top0 + this.bottom0) / 2.0);
 
     /*    if (plane===2)
@@ -158,6 +164,10 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
     var startEvent = { type: 'start'};
     var endEvent = { type: 'end'};
 
+    this.getFlipMode=function() {
+        return _this.flipmode;
+    };
+    
     this.getZoomFactor = function() {
         return _zoomFactor;
     };
@@ -209,21 +219,21 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
     /** handles resizing of dom
      */
     this.handleResize = function () {
-        
+
         var box = this.domElement.getBoundingClientRect();
         this.screen.left = box.left;
         this.screen.top = box.top;
         this.screen.width = box.width;
         this.screen.height = box.height;
+
+        if (_this.plane!==3) {
         
-        this.left0 = this.camera.left;
-        this.right0 = this.camera.right;
-        this.top0 = this.camera.top;
-        this.bottom0 = this.camera.bottom;
-        this.center0.set((this.left0 + this.right0) / 2.0, (this.top0 + this.bottom0) / 2.0);
-        /*      if (this.plane===2) {
-                console.log('Handle resize plane=',this.plane,' left0=',this.left0);
-                }*/
+            this.left0 = this.camera.left;
+            this.right0 = this.camera.right;
+            this.top0 = this.camera.top;
+            this.bottom0 = this.camera.bottom;
+            this.center0.set((this.left0 + this.right0) / 2.0, (this.top0 + this.bottom0) / 2.0);
+        }
     };
     
     // methods
@@ -289,9 +299,6 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
             vector.copy( _this.camera.up ).setLength( mouseOnBall.y );
             vector.add( cameraUp.copy( _this.camera.up ).cross( _eye ).setLength( mouseOnBall.x ) );
             vector.add( _eye.setLength( mouseOnBall.z ) );
-            if (_this.flipmode === 3) {
-                  vector['x']=-vector['x'];
-            }
             return vector;
             
         };
@@ -348,10 +355,7 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
             _this.camera.right = _zoomFactor * _this.right0 + ( 1 - _zoomFactor ) *  _this.center0.x;
             _this.camera.top = _zoomFactor * _this.top0 + ( 1 - _zoomFactor ) *  _this.center0.y;
             _this.camera.bottom = _zoomFactor * _this.bottom0 + ( 1 - _zoomFactor ) *  _this.center0.y;
-            /*      if (_this.plane===2) {
-                    console.log('Updating zooms = ',_zoomFactor, ' from factor');
-                    console.log('Zooming resize plane=',this.plane,' left0=',_this.left0,' left=',_this.camera.left);
-                    }*/
+            
             _zoomStart.copy( _zoomEnd );
             _touchZoomDistanceStart = _touchZoomDistanceEnd;
         }
@@ -365,7 +369,8 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
         var mouseChange = new THREE.Vector2(),
             cameraUp = new THREE.Vector3(),
             pan = new THREE.Vector3();
-        
+
+
         return function () {
             
             mouseChange.copy( _panEnd ).sub( _panStart );
@@ -375,16 +380,60 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
                 mouseChange.multiplyScalar( _eye.length() * _this.panSpeed );
                 pan.copy( _eye ).cross( _this.camera.up ).setLength( mouseChange.x );
                 pan.add( cameraUp.copy( _this.camera.up ).setLength( -mouseChange.y ) );
-
-                if (_this.flipmode)
-                    pan['x']=-pan['x'];
-                
                 _this.camera.position.add( pan );
                 _this.target.add( pan );
                 _panStart.copy( _panEnd );
             }
         };
     }());
+
+    this.setNormViewport=function(vp,resize=true) {
+        _this.normViewport=vp;
+        
+        if (_this.plane===3 && resize===true) {
+            let v=_this.normViewport;
+
+            
+            var box = this.domElement.getBoundingClientRect();
+            this.screen.left = box.left;
+            this.screen.top = box.top;
+            this.screen.width = box.width;
+            this.screen.height = box.height;
+
+            v.old= v.old || v;
+            let w=(v.x1-v.x0)*_this.screen.width;
+
+            if (w<50)
+                return;
+            
+            let h1=(v.old.x1-v.old.x0)*_this.screen.width;
+            let h2=(v.old.y1-v.old.y0)*_this.screen.height;
+            let h=h2;
+            if (h1>h)
+                h=h1;
+            
+            let rx=0.5*(_this.rightOrig-_this.leftOrig);
+            let cx=0.5*(_this.leftOrig+_this.rightOrig);
+            let ry=0.5*(_this.bottomOrig-_this.topOrig);
+            let cy=0.5*(_this.topOrig+_this.bottomOrig);
+            
+            let scale=h/w;
+            
+            _this.left0  =cx-scale*rx;
+            _this.right0 =cx+scale*rx;
+            _this.top0   =cy-scale*ry;
+            _this.bottom0=cy+scale*ry;
+            _this.center0.set(cx,cy);
+
+         
+        }
+
+    };
+
+    this.getNormViewport=function() {
+        return _this.normViewport;
+    };
+    
 
     
     /** update -- updates the renderer's viewport among other things
@@ -416,22 +465,44 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
 
 
         if (renderer !== null) {
-            var v=this.normViewport;
-            var vp = [1+v.x0*this.screen.width,
+            let v=this.normViewport;
+            v.old= v.old || v;
+            let vp = [1+v.x0*this.screen.width,
                       1+v.y0*this.screen.height,
                       (v.x1-v.x0)*this.screen.width,
                       (v.y1-v.y0)*this.screen.height];
+            let vps = [1+v.old.x0*this.screen.width,
+                       1+v.old.y0*this.screen.height,
+                       (v.old.x1-v.old.x0)*this.screen.width,
+                       (v.old.y1-v.old.y0)*this.screen.height];
+            
             if (vp[0]>0 && vp[1]>0 && vp[2] >0 && vp[3] > 0) {
-                let top=vp[1];
-                if (THREEJSREVISION>86) {
-                    // Swapped y in setViewport() and setScissor(). 43ae8e4 277c706 (@mrdoob)
-                    // In Three.js code
-                    // -- _viewport.set( x, y, width, height )
-                    // ++ _viewport.set( x, _height - y - height, width, height )
-                    // Our fix to map this 
-                    top=this.screen.height-vp[1]-vp[3];
+                
+                // if (THREEJSREVISION>86) { Always the case
+                // Swapped y in setViewport() and setScissor(). 43ae8e4 277c706 (@mrdoob)
+                // In Three.js code
+                // -- _viewport.set( x, y, width, height )
+                // ++ _viewport.set( x, _height - y - height, width, height )
+                // Our fix to map this 
+                vp[1]=this.screen.height-vp[1]-vp[3];
+                vps[1]=this.screen.height-vps[1]-vps[3];
+                
+                if (_this.plane===3) {
+
+                    let maxvp=vps[2];
+                    if (vps[3]>vps[2])
+                        maxvp=vps[3];
+                    vp[0]=Math.round(vp[0]-0.5*(maxvp-vp[2]));
+                    vp[1]=Math.round(vp[1]-0.5*(maxvp-vp[3]));
+                    vp[2]=maxvp;
+                    vp[3]=maxvp;
+                    renderer.setViewport(vp[0],vp[1],vp[2],vp[2]);
+                    renderer.setScissor(vps[0],vps[1],vps[2],vps[3]);
+                    renderer.setScissorTest(true);
+                }  else {
+                    renderer.setViewport(vp[0],vp[1],vp[2],vp[3]);
+                    renderer.setScissorTest(false);
                 }
-                renderer.setViewport(vp[0],top,vp[2],vp[3]);
                 return true;
             }
             return false;
@@ -441,7 +512,6 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
     
     /** reset -- reset all parameters */
     this.reset = function () {
-        
         _state = STATE.NONE;
         _prevState = STATE.NONE;
         
@@ -558,16 +628,13 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
         if (!mouseinviewport(event))
             return;
 
-
-        //event.preventDefault();
-        //event.stopPropagation();
-        
         if ( _state === STATE.NONE ) {
             _state = event.button;
         }
         
         if ( _state === STATE.ROTATE && !_this.noRotate ) {
-            _rotateStart.copy( getMouseProjectionOnBall( _this.lastNormalizedCoordinates[0],_this.lastNormalizedCoordinates[1] ) );
+            let x=getMouseProjectionOnBall( _this.lastNormalizedCoordinates[0],_this.lastNormalizedCoordinates[1] );
+            _rotateStart.copy( x);
             _rotateEnd.copy( _rotateStart );
             
         } else if ( _state === STATE.ZOOM && !_this.noZoom ) {
@@ -631,8 +698,6 @@ var bisOrthographicCameraControls = function ( camera, plane, target, domElement
         document.removeEventListener( 'mousemove', mousemove );
         document.removeEventListener( 'mouseup', mouseup );
 
-        console.log('Mouseup flip=',_this.flipmode);
-        
         _this.dispatchEvent( endEvent );
         
     }

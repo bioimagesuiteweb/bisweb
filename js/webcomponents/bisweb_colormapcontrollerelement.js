@@ -34,7 +34,7 @@
  * @property {boolean} interpolate - whether to interpolate image texture or not
  * @property {boolean} objinterpolate - whether to interpolate overlay texture or not (turn off for objectmaps!)
  * @property {object} functionalparams - extra info regarding functional image display
- * @property {Boolean} functionalparams.isfunctional - if true this ia functional image else objectmap
+ * @property {Boolean} functionalparams.showcolorbar - if true this ia functional image else objectmap
  * @property {String}  functionalparams.colormode - the colormode used to display the overlay
  */
 
@@ -74,7 +74,7 @@ class ColormapControllerElement extends HTMLElement {
 
         this.internal = {
             plainmode : true,
-            funcmodelist : [ "Objectmap","Overlay","Overlay2","Red","Green","Blue","Orange","Gray" ],
+            funcmodelist : [ "Objectmap","Overlay","Overlay2","Red","Green","Blue","Orange","Temperature","Gray" ],
             funcoutlist  : [ "Positive", "Negative", "Both" ],
             
             // Image range
@@ -96,6 +96,7 @@ class ColormapControllerElement extends HTMLElement {
             // Key controllers (dat.gui)
             minobjectmap : null,
             maxobjectmap : null,
+            checkshowcolorbar : null,
             clusterslider : null,
             interpolatecheck : null,
             folder : [ null, null,null],
@@ -180,6 +181,7 @@ class ColormapControllerElement extends HTMLElement {
         this.data.funcmode="Objectmap";
         this.data.outmode="Both";
         this.data.minth=1.0;
+        this.data.showcolorbar = false;
         this.data.maxth=100.0;
         this.data.clustersize=0;
         this.data.mip=false;
@@ -308,7 +310,7 @@ class ColormapControllerElement extends HTMLElement {
             this.olddata.opacity=this.data.opacity;
             this.olddata.funcmode=this.data.funcmode;
             output.objectmap=util.mapobjectmapfactory(255*this.data.opacity);
-            output.functionalparams = { isfunctional : false ,
+            output.functionalparams = { showcolorbar : false ,
                                         colormode     : 'Objectmap'
                                       };
         }
@@ -349,24 +351,27 @@ class ColormapControllerElement extends HTMLElement {
         let opa=Math.round(Math.sqrt(this.data.opacity)*255);
         
         if (this.data.funcmode=="Red" || this.data.funcmode=="Blue" || this.data.funcmode=="Green" ||
-            this.data.funcmode=="Orange" || this.data.funcmode=="Gray"
+            this.data.funcmode=="Orange" || this.data.funcmode=="Gray" || this.data.funcmode==="Temperature"
             
            ) {
-            this.internal.clusterinfo=null;
-            let mode=1;
-            if (this.data.funcmode==="Green")
-                mode=2;
-            else if (this.data.funcmode==="Blue")
-                mode=4;
-            else if (this.data.funcmode==="Orange")
-                mode=3;
-            else if (this.data.funcmode==="Gray")
-                mode=7;
 
-            output.objectmap=util.mapstepcolormapfactory(this.data.minth,this.data.maxth,opa,mode);
+            this.internal.clusterinfo=null;
+            if (this.data.funcmode==="Red")
+                output.objectmap=util.mapstepcolormapfactory(this.data.minth,this.data.maxth,opa,1);
+            else if (this.data.funcmode==="Green")
+                output.objectmap=util.mapstepcolormapfactory(this.data.minth,this.data.maxth,opa,2);
+            else if (this.data.funcmode==="Blue")
+                output.objectmap=util.mapstepcolormapfactory(this.data.minth,this.data.maxth,opa,4);
+            else if (this.data.funcmode==="Orange")
+                output.objectmap=util.mapstepcolormapfactory(this.data.minth,this.data.maxth,opa,3);
+            else if (this.data.funcmode==="Temperature")
+                output.objectmap=util.mapconstanthuecolormap(this.data.minth,this.data.maxth,1.0,0.10,opa/255.0);
+            else 
+                output.objectmap=util.mapstepcolormapfactory(this.data.minth,this.data.maxth,opa,7);
+            
             output.functionalparams = { minth : this.data.minth,
                                         maxth : this.data.maxth,
-                                        isfunctional : false,
+                                        showcolorbar : this.data.showcolorbar,
                                         colormode     : this.data.funcmode,
                                         overlay  : false,
                                         clustersize : 0 };
@@ -387,7 +392,7 @@ class ColormapControllerElement extends HTMLElement {
 
                 output.functionalparams = { minth : this.data.minth,
                                             maxth : this.data.maxth,
-                                            isfunctional : true,
+                                            showcolorbar : this.data.showcolorbar,
                                             overlay  : true,
                                             cmode :    cmode,
                                             colormode     : this.data.funcmode,
@@ -426,7 +431,7 @@ class ColormapControllerElement extends HTMLElement {
                 output.functionalparams = { minth : this.data.minth,
                                             maxth : this.data.maxth,
                                             overlay  : true,
-                                            isfunctional : true,
+                                            showcolorbar : this.data.showcolorbar,
                                             cmode :    cmode,
                                             clustersize : this.data.clustersize,
                                             mapfunction : util.mapoverlayfactory(this.data.minth,this.data.maxth,opa,cmode,usef4),
@@ -452,7 +457,7 @@ class ColormapControllerElement extends HTMLElement {
             interpolate : this.data.interpolate,
             objectmap : null,
             objinterpolate : !this.inObjectmapMode(),
-            isfunctional : false,
+            showcolorbar : false,
             volumerendering : {
                 mip : this.data.mip,
                 isothreshold : this.data.isothreshold,
@@ -557,9 +562,15 @@ class ColormapControllerElement extends HTMLElement {
         }
         this.internal.minobjectmap = folder.add(this.data,'minth',overlayrange[0],overlayrange[1]).name("Min Overlay");
         this.internal.maxobjectmap = folder.add(this.data,'maxth',overlayrange[0],overlayrange[1]).name("Max Overlay");
+        this.internal.checkshowcolorbar = folder.add(this.data,'showcolorbar').name("Show Colorbar");
+        this.internal.checkshowcolorbar.onChange( () => {
+            console.log('Check color bar changed');
+            this.updateTransferFunctions(true); 
+        });
 
         this.internal.functionalcontrollers.push(this.internal.minobjectmap);
         this.internal.functionalcontrollers.push(this.internal.maxobjectmap);
+        this.internal.functionalcontrollers.push(this.internal.checkshowcolorbar);
         if (this.showClusterControls()) {
             this.internal.clusterslider =  folder.add(this.data,'clustersize').min(0).max(2000).step(1).name("Cluster Size");
             this.internal.functionalcontrollers.push(this.internal.clusterslider);
@@ -579,7 +590,7 @@ class ColormapControllerElement extends HTMLElement {
         this.internal.maxobjectmap.onChange(clbfalse);
         if (this.internal.clusterslider!==null)
             this.internal.clusterslider.onFinishChange(clbfalse);
-        
+
     }
 
     /** Update functional GUI sliders based on updates */
@@ -648,10 +659,14 @@ class ColormapControllerElement extends HTMLElement {
 
 
         this.internal.overlaymodeselector=folder.add(this.data,'funcmode',this.internal.funcmodelist).name("Overlay Type:");
-        const self=this;
-        let clbm1=function(m) {
-            self.updateFunctionalGUI(m);
-            self.updateTransferFunctionsInternal();
+        let clbm1=(m) => {
+            if (m==='Overlay' || m==='Overlay2') {
+                this.data.showcolorbar=true;
+                if (this.internal.checkshowcolorbar)
+                    this.internal.checkshowcolorbar.updateDisplay();
+            }
+            this.updateFunctionalGUI(m);
+            this.updateTransferFunctionsInternal();
         };
         
         this.internal.overlaymodeselector.onChange(clbm1);
@@ -872,6 +887,17 @@ class ColormapControllerElement extends HTMLElement {
             }
         }
 
+        if (dt['showcolorbar'] === undefined) {
+            if (this.data['funcmode'] === 'Overlay' ||
+                this.data['funcmode'] === 'Overlay2') {
+                this.data['showcolorbar']=true;
+            } else {
+                this.data['showcolorbar']=false;
+            }
+        }
+               
+
+        
         for (let pass=0;pass<=1;pass++) {
             if (this.internal.folder[pass]!==null) {
                 for (let ia=0;ia<this.internal.folder[pass].__controllers.length;ia++) {

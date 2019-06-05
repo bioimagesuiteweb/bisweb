@@ -43,10 +43,12 @@ class computeROI(bis_basemodule.baseModule):
 
         input = self.inputs['input'];
         roi  = self.inputs['roi']
-
+        
+        
         try:
-            out = libbis.computeROIWASM(input, roi,
-                                        self.parseBoolean(vals['debug']));
+            out = libbis.computeROIWASM(input, roi, {
+                'storecentroids' :      self.parseBoolean(vals['storecentroids'])
+                },self.parseBoolean(vals['debug']));
             self.outputs['output']=bis_objects.bisMatrix();
             self.outputs['output'].create(out);
 

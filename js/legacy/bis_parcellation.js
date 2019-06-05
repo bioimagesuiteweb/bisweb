@@ -332,6 +332,7 @@ class BisParcellation {
 
         var i;
         var numpoints=this.rois.length;
+
         this.rois.sort(comparerois);
         this.indexmap = { };
         for (i=0;i<numpoints;i++) {
@@ -377,6 +378,18 @@ class BisParcellation {
             count++;
         }
         this.maxpoint=this.lobeStats[this.lobeStats.length-1][1];
+
+
+        let num=0;
+        let keys=Object.keys(this.indexmap);
+        for (let i=0;i<keys.length;i++) {
+            let a=Math.floor(keys[i]);
+            let b=this.indexmap[keys[i]];
+            if (a!==b) {
+                num++;
+            }
+        }
+        console.log('**** Node rearrange order=',num,' >0 is OK if this is not the Shen atlas');
     }
 
     /** Get the location of the center of the "circles" as [x,y] array
@@ -1036,6 +1049,7 @@ class BisParcellation {
             }
             if (attr[pt][0]===0) 
                 bad.push(pt);
+            //            console.log('attr',pt,'=',attr[pt]);
         }
         
         // Fix bad lobes
@@ -1058,7 +1072,10 @@ class BisParcellation {
             if (bestnode!==-1)  {
                 console.log('+++++ \t\t\t Mapped voi '+badnode+' to lobe '+attr[bestnode][0] +
                             ' by using the value from its closest good node ('+bestnode+' dist='+Math.sqrt(bestdist)+')');
-                attr[badnode][0]=attr[bestnode][0];
+                for (let i=0;i<attr[badnode].length;i++) {
+                    if (attr[badnode][i]<1)
+                        attr[badnode][i]=attr[bestnode][i];
+                }
                 //                  if (attr[badnode][1]===0)
                 //                      attr[badnode][1]=attr[bestnode][1];
             } else {

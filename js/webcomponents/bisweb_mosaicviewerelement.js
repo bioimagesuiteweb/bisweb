@@ -184,7 +184,7 @@ class MosaicViewerElement extends BaseViewerElement {
         controls.noZoom=false;
         controls.noPan=false;
         //
-        controls.normViewport=this.computeviewport(index);
+        controls.setNormViewport(this.computeviewport(index));
         return  {
             scene : scene,
             controls: controls,
@@ -290,7 +290,7 @@ class MosaicViewerElement extends BaseViewerElement {
             let maxslice=this.internal.imagedim[this.internal.plane]-1;
             for (let i=0;i<numslices;i++) {
                 
-                let vp  =this.internal.subviewers[i].controls.normViewport;
+                let vp  =this.internal.subviewers[i].controls.getNormViewport();
                 let sliceno=this.computeslice(i);
 
 
@@ -407,7 +407,7 @@ class MosaicViewerElement extends BaseViewerElement {
         
         for (var index=0;index<this.internal.subviewers.length;index++) {
             if (this.internal.subviewers[index]!==null) {
-                this.internal.subviewers[index].controls.normViewport=this.computeviewport(index);
+                this.internal.subviewers[index].controls.setNormViewport(this.computeviewport(index));
                 this.internal.subviewers[index].controls.reset();
             }
         }

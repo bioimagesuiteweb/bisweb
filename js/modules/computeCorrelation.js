@@ -67,7 +67,7 @@ class ComputeCorrelationModule extends BaseModule {
         return new Promise((resolve, reject) => {
             biswrap.initialize().then(() => {
                 this.outputs['output'] = biswrap.computeCorrelationMatrixWASM(input, weightMatrix, {
-                    "zscore" : super.parseBoolean(vals.zscore)
+                    "toz" : super.parseBoolean(vals.zscore)
                 }, vals.debug);
 
                 resolve(); 

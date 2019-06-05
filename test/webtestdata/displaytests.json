@@ -114,6 +114,36 @@
             "state" : "otest2.state",
             "comparison" : "otest5.png",
             "result" : false
+        },
+        {
+            "base" : "connstate.biswebstate",
+            "state" : "otest7.state",
+            "comparison" : "otest7.png",
+            "result" : true
+        },
+        {
+            "base" : "connstate.biswebstate",
+            "state" : "otest8.state",
+            "comparison" : "otest8.png",
+            "result" : true
+        },
+        {
+            "base" : "connstate.biswebstate",
+            "state" : "otest9.state",
+            "comparison" : "otest9.png",
+            "result" : true
+        },
+        {
+            "base" : "connstate.biswebstate",
+            "state" : "otest10.state",
+            "comparison" : "otest10.png",
+            "result" : true
+        },
+        {
+            "base" : "connstate.biswebstate",
+            "state" : "otest11.state",
+            "comparison" : "otest11.png",
+            "result" : true
         }
     ]
 }

@@ -89,7 +89,7 @@ class BaseViewerElement extends HTMLElement {
             // colormaps
             colormapControllerPayload : null,
             objectmaptransferfunction : util.mapobjectmapfactory(255),
-            objectmaptransferinfo : { isfunctional : false, colormode : 'Overlay' },
+            objectmaptransferinfo : { 'showcolorbar' : false, colormode : 'Overlay' },
 
             // movie playing
             framecontroller : null,
@@ -352,21 +352,10 @@ class BaseViewerElement extends HTMLElement {
                 renderer.clear();
             for (let i=0;i<subviewers.length;i++) {
                 if (this.internal.subviewers[i]!==null) {
-                    let vp  =this.internal.subviewers[i].controls.normViewport;
-                    if ((vp.x1-vp.x0)>0.01 && (vp.y1-vp.y0>0.01) &&
-                        subviewers[i].controls.update(this.internal.layoutcontroller.renderer)===true &&
-                        i<numviewers)  {
-                        let cam=subviewers[i].camera;
-                        if (subviewers[i].controls.plane === 3) {
-                            // In 3D Mode Flip left-right
-                            cam.projectionMatrix.elements[0]=-cam.projectionMatrix.elements[0];
-                        }
-                        renderer.render( subviewers[i].scene,
-                                         subviewers[i].camera);
+                    let vp  =this.internal.subviewers[i].controls.getNormViewport();
+                    if ((vp.x1-vp.x0)>0.01 && (vp.y1-vp.y0>0.01) &&  i<numviewers)  {
+                        this.renderSubViewer(i);
                         subviewers[i].controls.enabled=true;
-                        if (subviewers[i].controls.plane === 3) {
-                            cam.projectionMatrix.elements[0]=-cam.projectionMatrix.elements[0];
-                        }
                     } else {
                         subviewers[i].controls.enabled=false;
                     }
@@ -392,7 +381,32 @@ class BaseViewerElement extends HTMLElement {
         return 0;
     }
 
-        /** removes the colorscale */
+    /** render an individual subviewer 
+     * @param{number} index - subviewer index
+     */
+    renderSubViewer(index) {
+
+        let renderer=this.internal.layoutcontroller.renderer;
+
+        let cam=this.internal.subviewers[index].camera;
+        let scene=this.internal.subviewers[index].scene;
+        let controls=this.internal.subviewers[index].controls;
+        
+        if (controls.update(renderer)===true) {
+            let fl=controls.getFlipMode();
+            
+            if (fl)
+                cam.projectionMatrix.elements[0]=-cam.projectionMatrix.elements[0];
+            
+            renderer.render(scene,cam);
+            renderer.setScissorTest(false);
+            
+            if (fl)
+                cam.projectionMatrix.elements[0]=-cam.projectionMatrix.elements[0];
+        }
+    }
+    
+    /** removes the colorscale */
     clearcolorscale() {
 
         if (this.internal.simplemode)
@@ -425,8 +439,8 @@ class BaseViewerElement extends HTMLElement {
     drawcolorscale() {
         
         this.clearcolorscale();
-        
-        if (this.internal.objectmap===null || this.internal.objectmaptransferinfo.isfunctional!==true)
+
+        if (this.internal.objectmap===null || this.internal.objectmaptransferinfo.showcolorbar!==true)
             return;
 
         let context=this.internal.layoutcontroller.overlaycontext;
@@ -440,8 +454,8 @@ class BaseViewerElement extends HTMLElement {
         let y0=0.92*dh;
 
         let fnsize=webutil.getfontsize(context.canvas);
-        if (dw<1700)
-            fnsize=Math.round((dw/1700)*fnsize);
+        if (dw<1000)
+            fnsize=Math.round((dw/1000)*fnsize);
         
         let colorfunction=this.internal.objectmaptransferfunction;
         if (this.internal.objectmaptransferinfo.clustersize > 0) 
@@ -495,6 +509,7 @@ class BaseViewerElement extends HTMLElement {
         context.textAlign="center";
         context.textBaseline="top";
 
+
         for (let pass=0;pass<numpass;pass++) {
             context.fillStyle="#888888";
             context.fillRect(x0-2,y0-2,wd*(numsteps+1)+3,ht+4);
@@ -506,7 +521,9 @@ class BaseViewerElement extends HTMLElement {
                     data[0]=-(maxv-dv*i);
                 }
                 colorfunction(data,0,map);
-                context.fillStyle=(util.rgbToHex(map[0],map[1],map[2]));
+                let cl=util.rgbToHex(map[0],map[1],map[2]);
+                context.fillStyle=cl;
+                
                 context.fillRect(x0+1,y0,wd-2,ht);
 
                 if (i===0 || i===numsteps || i===numsteps/2) {
@@ -527,6 +544,7 @@ class BaseViewerElement extends HTMLElement {
             }
             x0+=wd;
         }
+
     }
     
     
@@ -550,7 +568,7 @@ class BaseViewerElement extends HTMLElement {
         if (this.internal.subviewers !== null) {
             for (let i=0;i<this.internal.subviewers.length;i++) {
                 if (this.internal.subviewers[i] !== null)
-                    this.internal.subviewers[i].controls.handleResize();
+                    this.internal.subviewers[i].controls.handleResize(false);
             }
         }
     }
@@ -599,7 +617,7 @@ class BaseViewerElement extends HTMLElement {
         this.drawcolorscale();
     }
     
-    
+
     // ------------------------------------------------------------------------
     // get/set image
     // ------------------------------------------------------------------------

@@ -85,7 +85,7 @@ describe('Testing WASM Matrix Connectivity (from bis_fmrimatrixconnectivity.js a
         
         let out=fmrimatrix.roimean(input,roi);
 
-        let outwasm=libbiswasm.computeROIWASM(input,roi,1).getNumericMatrix();
+        let outwasm=libbiswasm.computeROIWASM(input,roi,{},1).getNumericMatrix();
         
         console.log('computed means=\n',numeric.prettyPrint(out.means));
         console.log('gold (BIS)=\n',numeric.prettyPrint(gold));

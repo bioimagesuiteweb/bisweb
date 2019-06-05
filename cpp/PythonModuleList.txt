@@ -28,3 +28,4 @@ shiftScaleImage
 smoothImage
 thresholdImage
 individualizedParcellation
+gradientImage

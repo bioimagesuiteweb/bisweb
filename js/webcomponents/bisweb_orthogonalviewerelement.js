@@ -81,7 +81,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
               { x0:0.0, y0:0.2, x1:0.19,  y1:0.39},  { x0:0.25, y0:0.1,  x1:0.95, y1:0.8} , { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
             // 3D Only=5
             [ { x0:0.0, y0:0.0,  x1:0.01, y1:0.01}, { x0:0.0, y0:0.3,  x1:0.01, y1:0.31},
-              { x0:0.0, y0:0.6,  x1:0.01, y1:0.61}, { x0:0.05, y0:0.1, x1:0.95, y1:1.0}, { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
+              { x0:0.0, y0:0.6,  x1:0.01, y1:0.61}, { x0:0.0, y0:0.1, x1:1.0, y1:1.0}, { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
             // Conn 1=6
             [ { x0:0.01, y0:0.06, x1:0.26, y1:0.32},  { x0:0.01, y0:0.38, x1:0.26, y1:0.63},
               { x0:0.01, y0:0.74, x1:0.26,  y1:0.99},  { x0:0.29, y0:0.1,  x1:0.99, y1:0.99},  { x0:0.0,y0:0.0,x1:0.0,y1:0.0 }],
@@ -175,7 +175,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         var plane=orthoslice.getplane();
         this.internal.slicecoord[plane]=orthoslice.getsliceno();
         
-        var scene = new THREE. Scene();
+        var scene = new THREE.Scene();
         var light = new THREE.AmbientLight(0xffffff);
         scene.add(light);
         scene.doubleSided=true;
@@ -194,7 +194,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         controls.noZoom=false;
         controls.noPan=false;
         //
-        controls.normViewport=this.internal.viewports[1][plane];
+        controls.setNormViewport(this.internal.viewports[1][plane],true);
         
         
         return  {
@@ -239,7 +239,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         controls.panSpeed = 5.0;
         controls.noZoom=false;
         controls.noPan=false;
-        controls.normViewport=this.internal.viewports[1][3];
+        controls.setNormViewport(this.internal.viewports[1][3],true);
         
         var wd=this.internal.imagespa[0] * 4;
         
@@ -844,7 +844,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         for (var pl=0;pl<=3;pl++) {
             var trueplane=invorientaxis[pl];
             var lab=labels[trueplane];
-            var vp  =this.internal.subviewers[pl].controls.normViewport;
+            var vp  =this.internal.subviewers[pl].controls.getNormViewport();
             if ((vp.x1-vp.x0)*dw>200) {
                 if (pl<=2) {
 
@@ -924,7 +924,9 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 context.beginPath();
                 
                 if (pl===3)
-                    vp=this.internal.subviewers[pl].controls.normViewport.old;
+                    vp=this.internal.subviewers[pl].controls.getNormViewport().old;
+
+                
                 context.moveTo(vp.x0*dw,(1-vp.y0)*dh);
                 context.lineTo(vp.x0*dw,(1-vp.y1)*dh);
                 context.lineTo(vp.x1*dw,(1-vp.y1)*dh);
@@ -972,11 +974,12 @@ class OrthogonalViewerElement extends BaseViewerElement {
     // ------------------------------------------------------------------------------------
     /** handle window resize. Calls {@link ViewerLayoutElement}.handleresize.
      * to do most of the work and then adjusts the viewports
+     * @param{Boolean} resizecontrols -- if true update zooms also
      */
-    handleresize() {
+    handleresize(resizecontrols=true) {
 
         super.handleresize();
-        this.setrendermodeinternal(this.internal.rendermode,true);
+        this.setrendermodeinternal(this.internal.rendermode,true,resizecontrols);
         this.drawcrosshairs();
         this.updateResizeObservers();
         this.drawtext();
@@ -990,11 +993,9 @@ class OrthogonalViewerElement extends BaseViewerElement {
     /** gui callback. Set the rendermode to either single slice, three-slice view, three-slice +3D etc.
      * @param {number} mode - 0='Slices',  1='Sagittal', 2='Coronal', 3='Axial', 4='3D+slices', 5='3D Only', 9='Simple Mode'
      * @param {boolean} force - force update otherwise do as needed
+     * @param {boolean} updateviewportsize - update viewport sizes if true 
      */
-    setrendermodeinternal(mode,force) {
-        
-        force = force || false;
-        mode  = mode ||  0;
+    setrendermodeinternal(mode=0,force=false,updateviewportsize=true) {
         
         if (mode===this.internal.rendermode && force===false)
             return;
@@ -1009,6 +1010,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
         let ind=this.internal.rendermode;
         this.internal.datgui.data.displaymode=this.internal.displaymodes[ind];
 
+        console.log('Rendermode=',this.internal.rendermode,updateviewportsize);
+        
         for (var pl=0;pl<this.internal.subviewers.length;pl++) {
             var trueplane=pl;
             // For axial,coronal and Sagittal remap
@@ -1038,6 +1041,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 vp.x1=ratio*vp.x1+(midx-scalemidx);
                 vp.shiftx=(midx-scalemidx);
                 vp.shifty=0;
+                vp.ratio=ratio;
             } else if (fullh>fullw) {
                 ratio=fullw/fullh;
                 var midy=0.5*(vp.y0+vp.y1);
@@ -1046,9 +1050,12 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 vp.y1=ratio*vp.y1+(midy-scalemidy);
                 vp.shifty=(midy-scalemidy);
                 vp.shiftx=0;
-                
+                vp.ratio=ratio;
             }
-            this.internal.subviewers[pl].controls.normViewport=vp;
+            this.internal.subviewers[pl].controls.setNormViewport(vp,updateviewportsize);
+            //this.internal.subviewers[pl].controls.this.reset();
+            // When switching mode force a resize
+            //this.internal.subviewers[pl].controls.handleResize();
         }
         
         this.drawlabels();
@@ -1182,7 +1189,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
             for (let j=0;j<this.internal.subviewers.length;j++)
                 this.internal.subviewers[j].controls.coordinateChangeCallback=mousefn;
             
-            this.setrendermodeinternal(this.internal.rendermode,true);
+            this.setrendermodeinternal(this.internal.rendermode,true,true);
         }
         
         this.drawcrosshairs();
@@ -1195,7 +1202,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         if (samesize===false) {
             if (this.internal.imagedim[2]<2) 
                 this.internal.rendermode=3;
-            this.handleresize();
+            this.handleresize(true);
         }
 
         this.updateImageChangedObservers('image');
@@ -1321,7 +1328,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         
         this.deleteoldobjectmap();
         this.internal.cmapcontroller.removeobjectmap();
-        this.internal.objectmaptransferinfo={ isfunctional : false, 'colormode' : 'Objectmap' };
+        this.internal.objectmaptransferinfo={ showcolorbar : false, 'colormode' : 'Objectmap' };
         this.drawtext();
         this.updateImageChangedObservers('overlay');
     }
@@ -1390,9 +1397,10 @@ class OrthogonalViewerElement extends BaseViewerElement {
             return;
         
         this.internal.slices[3].positioncamera(this.internal.subviewers[3].camera,plane,back);
-        var renderer=this.internal.layoutcontroller.renderer;
-        renderer.render(this.internal.subviewers[3].scene,
-                        this.internal.subviewers[3].camera);
+        this.renderSubViewer(3);
+        //var renderer=this.internal.layoutcontroller.renderer;
+        //        renderer.render(this.internal.subviewers[3].scene,
+        //                        this.internal.subviewers[3].camera);
     }
     
     
@@ -1571,7 +1579,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
 
         let s="Reset Slices";
         if (this.internal.simplemode) {
-            s="Reset 2D/3D Views";
+            s="Reset Views";
             cmapfolder.open();
         }
         
@@ -1645,9 +1653,13 @@ class OrthogonalViewerElement extends BaseViewerElement {
     // -----------------------------------------------------------------------------
     /** sets the rendermode from outside and return current viewports!
      */
-    setRenderMode(mode=3) {
-        this.setrendermodeinternal(mode,true);
+    setRenderMode(mode=3,updateviewportsize=true) {
+        this.setrendermodeinternal(mode,true,updateviewportsize);
         this.updateDatGUIControllers();
+        return this.internal.viewports[this.internal.rendermode];
+    }
+
+    getRenderModeViewports() {
         return this.internal.viewports[this.internal.rendermode];
     }
 

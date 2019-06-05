@@ -263,11 +263,11 @@ class BisWebImage extends BisWebDataObject {
         let opts = {
             type : nifti_info[0],
             numframes :  wasmobj.dimensions[3] ,
-            numcomponentes:  wasmobj.dimensions[4] ,
+            numcomponents:  wasmobj.dimensions[4] ,
             dimensions :  [ wasmobj.dimensions[0], wasmobj.dimensions[1], wasmobj.dimensions[2] ],
             spacing :  [ wasmobj.spacing[0], wasmobj.spacing[1], wasmobj.spacing[2] ],
         };
-            
+
         if (baseimage !==0 ) {
             this.cloneImage(baseimage,opts);
             this.setCommentList(baseimage.getCommentList());
@@ -458,6 +458,7 @@ class BisWebImage extends BisWebDataObject {
         let headerdata=inputimage.getHeaderData(true);
         this.parseNII(headerdata.data.buffer,false,true);
         
+        
         let headerstruct=internal.header.struct;
         
         if(newniftitype!=='same') {
@@ -499,13 +500,18 @@ class BisWebImage extends BisWebDataObject {
                 newnumframes=util.range(newnumframes,1,9999);
                 internal.header.struct.dim[4]=newnumframes;
                 internal.dimensions[3]=newnumframes;
+                if (newnumframes>1)
+                    internal.header.struct.dim[0]=4;
+                else
+                    internal.header.struct.dim[0]=3;
             }
 
             if (newnumcomponents!==0) {
                 newnumcomponents=util.range(newnumcomponents,1,9999);
                 internal.header.struct.dim[5]=newnumcomponents;
                 internal.dimensions[4]=newnumcomponents;
-                
+                if (newnumcomponents>1)
+                    internal.header.struct.dim[0]=5;
             }
             internal.volsize=internal.dimensions[0]*internal.dimensions[1]*
                 internal.dimensions[2]*internal.dimensions[3]*internal.dimensions[4];
@@ -578,12 +584,18 @@ class BisWebImage extends BisWebDataObject {
                 newnumframes=util.range(newnumframes,1,9999);
                 internal.header.struct.dim[4]=newnumframes;
                 internal.dimensions[3]=newnumframes;
+                if (newnumframes>1)
+                    internal.header.struct.dim[0]=4;
+                else
+                    internal.header.struct.dim[0]=3;
             }
             
             if (newnumcomponents!==0) {
                 newnumcomponents=util.range(newnumcomponents,1,9999);
                 internal.header.struct.dim[5]=newnumcomponents;
                 internal.dimensions[4]=newnumcomponents;
+                if (newnumcomponents>1)
+                    internal.header.struct.dim[0]=5;
             }
         }
         internal.volsize=internal.dimensions[0]*internal.dimensions[1]*
@@ -838,8 +850,6 @@ class BisWebImage extends BisWebDataObject {
 
 
     
-    
-
     /** serialize to NII Binary array 
      * creates a uint8 array with all the data
      * @return {Uint8Array}
@@ -851,7 +861,8 @@ class BisWebImage extends BisWebDataObject {
         let typename=internal.header.getniftitype(dt);
         if (this.debug)
             console.log('+++++++ serialiazing dt=',dt,' tpname=',typename);
-        
+
+
         internal.header.setExtensionsFromArray(this.commentlist);
         let headerbin=this.getHeaderData(true);
         let rawdata=this.getRawData();

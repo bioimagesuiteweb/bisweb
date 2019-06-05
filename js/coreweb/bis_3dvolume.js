@@ -252,8 +252,6 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
             internal.scene=scene;
             if (internal.volumebox) {
                 scene.add(internal.volumebox);
-                //                if (internal.renderer)
-                //  internal.renderer.render( internal.scene, internal.camera );
             }
             if (internal.hasdecorations) {
                 for (let i=0;i<internal.box.length;i++) {
@@ -333,8 +331,12 @@ module.exports=function(image,in_slices,decorations,transparent,imageplane,isove
                 internal.texture.minFilter = internal.texture.magFilter = THREE.NearestFilter;
             
             internal.texture.needsUpdate = true;
-            if (internal.renderer)
-                internal.renderer.render( internal.scene, internal.camera );
+            if (internal.renderer) {
+                console.log('This must be fixed');
+                internal.camera.projectionMatrix.elements[0]=-internal.camera.projectionMatrix.elements[0];
+                internal.renderer.render( internal.scene, internal.camera ); // Fix this
+                internal.camera.projectionMatrix.elements[0]=-internal.camera.projectionMatrix.elements[0];
+            }
         },
 
 

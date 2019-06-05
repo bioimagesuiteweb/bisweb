@@ -158,6 +158,8 @@ for i in range(begin_test,end_test+1):
                                                            testtype.strip(),
                                                            float(testopts['test_threshold']),
                                                            testopts['test_comparison']);
+            else:
+                print('Failed probably');
 
             if (exitcode==0 and testpass==expected_result):
                 print('++++ returning testpass=',testpass,' expected=', expected_result,' exitcode=',exitcode);
