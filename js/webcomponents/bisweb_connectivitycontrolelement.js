@@ -631,7 +631,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         if (!skip3d) {
             internal.meshes.forEach(function(m) {
                 m.visible=false;
-                internal.subviewers[3].scene.remove(m);
+                internal.subviewers[3].getScene().remove(m);
             });
         }
 
@@ -1367,7 +1367,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         
         // initialize (or reinitialize landmark control). Called from viewer when image changes. This actually creates (or recreates the GUI) as well.(This implements a function from the {@link BisMouseObserver} interface.)
         // @memberof BisGUIConnectivityControl.prototype
-        // @param {Bis_SubViewer} subviewers - subviewers to place info in
+        // @param {BisWebSubViewer[]} subviewers - subviewers to place info in
         // @param {BisWebImage} volume - new image (not used)
         initialize : function(subviewers) { 
 

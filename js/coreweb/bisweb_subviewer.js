@@ -74,9 +74,30 @@ const START_EVENT = { type: 'start'};
 const END_EVENT = { type: 'end'};
 
 
+/**
+ *
+ * A class that renders in a part of a WebGLRenderer
+
+ */
+
 class BisWebSubviewer {
 
-
+    /**
+       * @param{WebGLRenderer} renderer -- the underlying THREE.JS WebGLRenderer
+       * @param{Number} plane - 0,1,2,3 to indicate the type of viewer (3=3D),0=YZ,1=XZ,2=XY
+       * @param{Object} viewport - the viewer { x0;, x1:, y0:,y1:} where in the renderer should I draw
+       * @param{Object} positioner - an object (e.g. bis3d_OrthogonalSlice ) that has a function positioncamera(camera)
+       * @param{Object} opts - the options
+       * @param{Number} rotateSpeed - the rotation speed (default=4.0)
+       * @param{Number} zoomSpeed - the zoom speed (default=3.0)
+       * @param{Number} panSpeed - the pan speed (default=5.0)
+       * @param{Boolean} noZoom - if true no zoom (default=false)
+       * @param{Boolean} noRotate - if true no rotate (default=false)
+       * @param{Boolean} noRoll - if true no roll (default=false)
+       * @param{Boolean} noPan - if true no pan (default=false)
+       * @param{Number} width - the default size of the biggest object (used to set initial zoom)
+       * @param{Number} depth - the maximum depth of the viewer (used to set initial clip planes)
+       */
     constructor(renderer,plane,viewport,positioner,opts={}) {
 
         // The renderer
@@ -93,10 +114,10 @@ class BisWebSubviewer {
         // The options
         this.opts={};
 
-        this.coordinateChangeCallback=opts.coordinateChangeCallback || null;
+        this.coordinateChangeCallback=null;
         this.rotateSpeed= opts.rotateSpeed || 4.0;
         this.zoomSpeed= opts.zoomSpeed || 3.0;
-        this.panSpeed=opts.spanSpeed || 5.0;
+        this.panSpeed=opts.panSpeed || 5.0;
 
         this.noZoom= opts.noZoom || false;
         this.noRoll= opts.noRoll || false;
@@ -894,7 +915,7 @@ class BisWebSubviewer {
 
 
     /*        it will still be bound to the dom and send callbacks even if we don't want them */
-    removefunction () {
+    remove () {
         this.removeEventListeners();
         this.enabled=false;
     }

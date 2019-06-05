@@ -171,7 +171,7 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
 
     if (globalParams.brainmesh[index] !==null) { 
         globalParams.brainmesh[index].visible=false;
-        globalParams.internal.subviewers[3].scene.remove(globalParams.brainmesh[index]);
+        globalParams.internal.subviewers[3].getScene().remove(globalParams.brainmesh[index]);
     }
 
 
@@ -264,7 +264,7 @@ var createAndDisplayBrainSurface=function(index=0,color,opacity=0.8,attributeInd
     globalParams.brainmaterial[index]=material;
     globalParams.brainmesh[index] = new THREE.Mesh(globalParams.braingeom[index],material);
     globalParams.brainmesh[index].visible=true;
-    globalParams.internal.subviewers[3].scene.add(globalParams.brainmesh[index]);
+    globalParams.internal.subviewers[3].getScene().add(globalParams.brainmesh[index]);
 };
 
 var parsebrainsurface = function(textstring,filename) {
@@ -339,7 +339,7 @@ var parsebrainsurface = function(textstring,filename) {
                                                          opacity: 1.0,
                                                      }));
             globalParams.internal.axisline[axis].visible=false;
-            globalParams.internal.subviewers[3].scene.add(globalParams.internal.axisline[axis]);
+            globalParams.internal.subviewers[3].getScene().add(globalParams.internal.axisline[axis]);
         }
         if (globalParams.internal.showlegend)
             globalParams.internal.setnodeFn(Math.round(globalParams.internal.parameters.node-1));
@@ -441,7 +441,7 @@ var drawlines3d=function(state,doNotUpdateFlagMatrix) {
                                                       linecap : "square",
                                                   }));
             linemesh.visbile=true;
-            globalParams.internal.subviewers[3].scene.add(linemesh);
+            globalParams.internal.subviewers[3].getScene().add(linemesh);
             globalParams.internal.meshes.push(linemesh);
         }
     }
@@ -475,7 +475,7 @@ var drawlines3d=function(state,doNotUpdateFlagMatrix) {
             let spheremesh=new THREE.Mesh(geom,spherematerial);
             spheremesh.renderOrder=1000;
             spheremesh.visbile=true;
-            globalParams.internal.subviewers[3].scene.add(spheremesh);
+            globalParams.internal.subviewers[3].getScene().add(spheremesh);
             globalParams.internal.meshes.push(spheremesh);
         }
     }

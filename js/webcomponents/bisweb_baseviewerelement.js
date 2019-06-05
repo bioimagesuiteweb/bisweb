@@ -230,7 +230,7 @@ class BaseViewerElement extends HTMLElement {
         
         for (let i=0;i<l;i++) {
             if (this.internal.overlayslices[i]!==null) {
-                this.internal.overlayslices[i].removefromscene(this.internal.subviewers[i].scene);
+                this.internal.overlayslices[i].removefromscene(this.internal.subviewers[i].getScene());
                 this.internal.overlayslices[i].cleanup();
                 this.internal.overlayslices[i]=null;
             }
@@ -258,7 +258,7 @@ class BaseViewerElement extends HTMLElement {
             
             if (this.internal.subviewers[i]!==null) {
                 if (this.internal.slices[i]!==null) {
-                    this.internal.slices[i].removefromscene(this.internal.subviewers[i].scene);
+                    this.internal.slices[i].removefromscene(this.internal.subviewers[i].getScene());
                     this.internal.slices[i].cleanup();
                     this.internal.slices[i]=null;
                 }

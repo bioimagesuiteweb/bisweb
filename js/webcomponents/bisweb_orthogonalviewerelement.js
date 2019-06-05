@@ -195,7 +195,6 @@ class OrthogonalViewerElement extends BaseViewerElement {
         
         
         let scene=subviewer.getScene();
-        scene.doubleSided=true;
         orthoslice.addtoscene(scene);
         
         return subviewer;
@@ -455,7 +454,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                 old[pl]=this.internal.slicecoord[pl];
                 this.internal.slicecoord[pl]=this.internal.slices[pl].setsliceno(sl[pl],imgframe,
                                                                                  this.internal.imagetransferfunction);
-                this.internal.slices[pl].updatecameraclip(this.internal.subviewers[pl].camera,
+                this.internal.slices[pl].updatecameraclip(this.internal.subviewers[pl].getCamera(),
                                                           this.internal.maxspa*0.5);
 
                 if (old[pl]!==this.internal.slicecoord[pl]) {
@@ -1143,7 +1142,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                                                                  this.internal.volume,this.internal.slices[i],
                                                                  s_width,s_depth);
             } else {
-                this.internal.slices[i].addtoscene(this.internal.subviewers[i].scene);
+                this.internal.slices[i].addtoscene(this.internal.subviewers[i].getScene());
             }
         }
         
@@ -1159,7 +1158,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
                                                           this.internal.slices[3],
                                                           s_width,s_depth);
         } else {
-            this.internal.slices[3].addtoscene(this.internal.subviewers[3].scene);
+            this.internal.slices[3].addtoscene(this.internal.subviewers[3].getScene());
         }                
         
         // Activate renderloop
@@ -1266,7 +1265,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
 
         for (i=0;i<=2;i++) {
             this.internal.overlayslices[i]=bis3dOrthogonalSlice.create2dslice(this.internal.objectmap,i,0,true);
-            this.internal.overlayslices[i].addtoscene(this.internal.subviewers[i].scene);
+            this.internal.overlayslices[i].addtoscene(this.internal.subviewers[i].getScene());
             this.internal.overlayslices[i].setsliceinmm(this.internal.slices[i],objcoord[i],
                                                         this.internal.slicecoord[3],this.internal.objectmaptransferfunction,true);
         }
@@ -1285,7 +1284,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         }
 
         
-        this.internal.overlayslices[3].addtoscene(this.internal.subviewers[3].scene);
+        this.internal.overlayslices[3].addtoscene(this.internal.subviewers[3].getScene());
 
         if (this.internal.maxnumframes>this.internal.imagedim[3]) {
             this.createdatgui(false);
@@ -1384,11 +1383,8 @@ class OrthogonalViewerElement extends BaseViewerElement {
         if (this.internal.slices[3]===null || this.internal.subviewers[3]===null)
             return;
         
-        this.internal.slices[3].positioncamera(this.internal.subviewers[3].camera,plane,back);
+        this.internal.slices[3].positioncamera(this.internal.subviewers[3].getCamera(),plane,back);
         this.renderSubViewer(3);
-        //var renderer=this.internal.layoutcontroller.renderer;
-        //        renderer.render(this.internal.subviewers[3].scene,
-        //                        this.internal.subviewers[3].camera);
     }
     
     

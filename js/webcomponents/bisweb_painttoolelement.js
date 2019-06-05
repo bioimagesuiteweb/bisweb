@@ -928,7 +928,7 @@ class PaintToolElement extends HTMLElement {
 
 
     /** initialize (or reinitialize the paint tool). Called from viewer when image changes. This actually creates (or recreates the GUI) as well.(This implements a function from the {@link BisMouseObserver} interface.
-     * @param {Bis_SubViewer} subviewers - subviewers to place info in
+     * @param {BisWebSubViewer[]} subviewers - subviewers to place info in
      * @param {BisWebImage} volume - new image
      * @param {Boolean} samesize - does new image have the same size as the old one
      */

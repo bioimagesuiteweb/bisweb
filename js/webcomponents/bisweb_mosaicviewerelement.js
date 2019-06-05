@@ -183,7 +183,6 @@ class MosaicViewerElement extends BaseViewerElement {
 
         
         let scene=subviewer.getScene();
-        scene.doubleSided=true;
         orthoslice.addtoscene(scene);
 
         return  subviewer;
@@ -344,7 +343,7 @@ class MosaicViewerElement extends BaseViewerElement {
                     this.internal.overlayslices[i]=bis3dOrthogonalSlice.create2dslice(this.internal.objectmap,this.internal.plane,0,true,true);
                     let sl=this.getmmsl(i);
                     this.internal.overlayslices[i].setsliceinmm(this.internal.slices[i],sl,this.internal.frame,this.internal.objectmaptransferfunction);
-                    this.internal.overlayslices[i].addtoscene(this.internal.subviewers[i].scene);
+                    this.internal.overlayslices[i].addtoscene(this.internal.subviewers[i].getScene());
                 }
             }
         }
