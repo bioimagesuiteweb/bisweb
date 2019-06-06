@@ -224,9 +224,6 @@ class BisWebSubviewer {
         // events
     }
 
-    /** @returns{boolean} - if true we are in flipmode */
-    getFlipMode() {  return this.flipmode;  }
-
     /** @returns{Number} - the zoom factor */
     getZoomFactor() {   return this.internal._zoomFactor; }
 
@@ -272,7 +269,7 @@ class BisWebSubviewer {
         this.camera.bottom = obj.bottom;
 
         
-        console.log('In Parse Camera',this.plane);
+        //console.log('In Parse Camera',this.plane,obj.zoomFactor);
         this.handleResize();
 
         this.camera.lookAt( this.target );
@@ -419,6 +416,8 @@ class BisWebSubviewer {
         this.screen.top = box.top;
         this.screen.width = box.width;
         this.screen.height = box.height;
+        if (!resize)
+            return;
         
         if (this.plane!==3) {
             
