@@ -441,6 +441,8 @@ IF (BIS_A_EMSCRIPTEN)
 
   install (DIRECTORY ${PROJECT_SOURCE_DIR}/../web/dcm2nii_binaries DESTINATION bisweb/lib )
 
+  install (FILES ${PROJECT_SOURCE_DIR}/../various/txt/README_test.md DESTINATION bisweb/test)
+  
 ELSE(BIS_A_EMSCRIPTEN)
 
  # ---------------------------------------------------------------------------------------------
@@ -566,7 +568,8 @@ ELSE(BIS_A_EMSCRIPTEN)
       MESSAGE("~~~~~ Added ${COUNT} python/unittest tests")
     ENDIF(BIS_UNITTEST)
 
-    install (FILES ${PROJECT_SOURCE_DIR}/../test/test_module.py DESTINATION bisweb/test)
+    # Do not install this just yet
+    #install (FILES ${PROJECT_SOURCE_DIR}/../test/test_module.py DESTINATION bisweb/test)
     
 
   ENDIF(BIS_A_PYTHON)
@@ -623,7 +626,7 @@ MARK_AS_ADVANCED(BIS_A_DEVEL)
 # ----------------------------------------------------------
 # If installing tests
 
-install (FILES ${PROJECT_SOURCE_DIR}/../various/txt/README_test.md DESTINATION bisweb/test)
+
 
 
 # ----------------------------------------------------------
