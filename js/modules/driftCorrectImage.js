@@ -120,6 +120,7 @@ class DriftCorrectImageModule extends BaseModule {
         console.log('oooo invoking: driftCorrectImage with vals', JSON.stringify(vals));
         return new Promise((resolve, reject) => {
             let input = this.inputs['input'];
+            vals.order=parseInt(vals.order);
             let regressor = this.createRegressor(input,vals.order);
             let weight = this.inputs['weight'] || 0;
             
