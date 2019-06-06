@@ -1,6 +1,7 @@
 approximateField
 blankImage
 butterworthFilter
+butterworthFilterImage
 changeImageSpacing
 clusterThreshold
 computeCorrelation
@@ -8,10 +9,12 @@ computeGLM
 computeROI
 cropImage
 displacementField
+driftCorrectImage
 extractFrame
 extractSlice
 flipImage
 gradientImage
+individualizedParcellation
 linearRegistration
 morphologyFilter
 nonlinearRegistration
@@ -19,13 +22,13 @@ normalizeImage
 prepareRegistration
 regressGlobal
 regressOut
+regressOutImage
 regularizeObjectmap
 resampleImage
 resliceImage
+seedCorrelation
 segmentImage
-sliceBiasCorrect
 shiftScaleImage
+sliceBiasCorrect
 smoothImage
 thresholdImage
-individualizedParcellation
-gradientImage

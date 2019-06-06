@@ -243,6 +243,7 @@ class bisImage(bisBaseObject):
         try:
             tmp = nib.load(fname);
             self.create(tmp.get_data(),tmp.header.get_zooms(),tmp.affine);
+            print('++++ loaded from',fname,' dims=',self.dimensions,' spa=',self.spacing);
             return self;
         except:
             e = sys.exc_info()[0]

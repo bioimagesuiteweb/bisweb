@@ -38,7 +38,7 @@ SET (MODULE_LIST_SCRIPT ${TOOLS_DIR}/bis_createmodulelist.js)
 SET (DESCRIPTION_SCRIPT ${TOOLS_DIR}/bis_createmoduledescriptions.js)
 SET (BISWEB_PYTHON_INIT ${PROJECT_SOURCE_DIR}/../config/__init__.py)
 SET (BISWEB_PYTHON_PATH ${PROJECT_SOURCE_DIR}/../config/bis_path.py)
-SET (PYTHON_MODULE_LIST_FILENAME ${PROJECT_SOURCE_DIR}/PythonModuleList.txt)
+SET (PYTHON_MODULE_LIST_FILENAME ${PROJECT_SOURCE_DIR}/../python/modules/PythonModuleList.txt)
 GET_FILENAME_COMPONENT(WEBPLIBCONFIG ${PROJECT_SOURCE_DIR}/../config/lib.config.js ABSOLUTE)
 GET_FILENAME_COMPONENT(WEBPPACK ${PROJECT_SOURCE_DIR}/../node_modules/.bin/webpack-cli ABSOLUTE)
 FIND_PROGRAM(NodeInterp node)
@@ -441,6 +441,8 @@ IF (BIS_A_EMSCRIPTEN)
 
   install (DIRECTORY ${PROJECT_SOURCE_DIR}/../web/dcm2nii_binaries DESTINATION bisweb/lib )
 
+  install (FILES ${PROJECT_SOURCE_DIR}/../various/txt/README_test.md DESTINATION bisweb/test)
+  
 ELSE(BIS_A_EMSCRIPTEN)
 
  # ---------------------------------------------------------------------------------------------
@@ -506,7 +508,7 @@ ELSE(BIS_A_EMSCRIPTEN)
     FILE(GLOB JMODS ${PROJECT_SOURCE_DIR}/../js/modules/*.js)
     
     add_custom_command(OUTPUT ${PYTHON_MODULE_DESC}
-      DEPENDS ${MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JMODS}
+      DEPENDS ${PYTHON_MODULE_LIST_FILENAME} ${DESCRIPTION_SCRIPT} CMakeLists.txt ${JMODS}
       PRE_BUILD COMMENT "Creating Python Module Descriptions"
       COMMAND ${NodeInterp} ${DESCRIPTION_SCRIPT} -i ${PYTHON_MODULE_LIST_FILENAME} -o ${PYTHON_MODULE_DESC} }
       )
@@ -566,7 +568,8 @@ ELSE(BIS_A_EMSCRIPTEN)
       MESSAGE("~~~~~ Added ${COUNT} python/unittest tests")
     ENDIF(BIS_UNITTEST)
 
-    install (FILES ${PROJECT_SOURCE_DIR}/../test/test_module.py DESTINATION bisweb/test)
+    # Do not install this just yet
+    #install (FILES ${PROJECT_SOURCE_DIR}/../test/test_module.py DESTINATION bisweb/test)
     
 
   ENDIF(BIS_A_PYTHON)
@@ -623,13 +626,12 @@ MARK_AS_ADVANCED(BIS_A_DEVEL)
 # ----------------------------------------------------------
 # If installing tests
 
-install (FILES ${PROJECT_SOURCE_DIR}/../various/txt/README_test.md DESTINATION bisweb/test)
+
 
 
 # ----------------------------------------------------------
 # Run Doxygen
 # ----------------------------------------------------------
 ADD_CUSTOM_TARGET(doc COMMAND doxygen config/Doxyfile WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/..)
-
 
 INCLUDE (${PROJECT_SOURCE_DIR}/CPackOptions.cmake)
