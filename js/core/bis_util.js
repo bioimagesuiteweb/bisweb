@@ -602,7 +602,9 @@ const util = {
         if (nobracket===0)
             return  "[" + hour + ":" + min + ":" + sec + "]";
         return  hour + ":" + min + ":" + sec ;
-    }
+    },
+
+    sleep : function(ms) {  return new Promise(resolve => setTimeout(resolve, ms));}
 };
 
 

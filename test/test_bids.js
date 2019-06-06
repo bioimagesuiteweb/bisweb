@@ -45,38 +45,6 @@ describe('Testing the DICOM 2 BIDS\n', function() {
 
     this.timeout(50000);
     
-    it('WS ...test bids conversion', async function() {
-
-        let module=new dicomModule();
-        try {
-            await module.execute({},{'inputDirectory' : indir,
-                                  'outputDirectory' : tmpDirPath,
-                                  'convertbids' : true});
-
-            const img1=new BisWebImage();
-            await img1.load(path.join(odir,tailname));
-            console.log(colors.cyan('Gold read='+img1.getDescription()));
-
-            const img2=new BisWebImage();
-            await img2.load(path.join(tmpDirPath,tailname));
-            console.log(colors.cyan('Output read='+img2.getDescription()));
-
-            let maxd=img1.maxabsdiff(img2,100);
-            console.log(colors.cyan('++++ Comparing BIDS'));
-            console.log(colors.cyan('++++ Maxd='+maxd));
-
-            if (maxd<1)
-                assert.equal(true,true);
-            else
-                assert.equal(true,false);
-            return Promise.resolve();
-        } catch (e) {
-            console.log('Error ',e,e.stack);
-            assert.equal(true,false);
-            return Promise.reject();
-        }
-    });
-
     it('WS ...test raw dicom conversion', async function() {
 
         let module=new dicomModule();
@@ -109,6 +77,39 @@ describe('Testing the DICOM 2 BIDS\n', function() {
             return Promise.reject();
         }
     });
+
+    it('WS ...test bids conversion', async function() {
+
+        let module=new dicomModule();
+        try {
+            await module.execute({},{'inputDirectory' : indir,
+                                  'outputDirectory' : tmpDirPath,
+                                  'convertbids' : true});
+
+            const img1=new BisWebImage();
+            await img1.load(path.join(odir,tailname));
+            console.log(colors.cyan('Gold read='+img1.getDescription()));
+
+            const img2=new BisWebImage();
+            await img2.load(path.join(tmpDirPath,tailname));
+            console.log(colors.cyan('Output read='+img2.getDescription()));
+
+            let maxd=img1.maxabsdiff(img2,100);
+            console.log(colors.cyan('++++ Comparing BIDS'));
+            console.log(colors.cyan('++++ Maxd='+maxd));
+
+            if (maxd<1)
+                assert.equal(true,true);
+            else
+                assert.equal(true,false);
+            return Promise.resolve();
+        } catch (e) {
+            console.log('Error ',e,e.stack);
+            assert.equal(true,false);
+            return Promise.reject();
+        }
+    });
+
 
 });
 

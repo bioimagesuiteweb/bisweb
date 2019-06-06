@@ -1,20 +1,25 @@
 'use strict';
 
 const bis_genericio = require('bis_genericio');
+const bis_util = require('bis_util');
 const colors=bis_genericio.getcolorsmodule();
 const fs = bis_genericio.getfsmodule();
 
 const biswrap = require('libbiswasm_wrapper.js');
 const baseutil = require('baseutils.js');
 
+const SEPARATOR=bis_genericio.getPathSeparator();
+
 //Need to keep track of labels to know if there are repeats, in which case they should be given a run number
 let labelsMap = {};
+
+
 
 const dicomParametersFilename = 'dicom_job_info.json';
 const sourceDirectoryName = 'sourcedata';
 const DEBUG=false;
 
-function timeout(ms) {  return new Promise(resolve => setTimeout(resolve, ms)); }
+function timeout(ms) {  return bis_util.sleep(ms); }
 
 // DICOM2BIDS
 /**
@@ -32,6 +37,8 @@ let dicom2BIDS = async function (opts) {
 
     try {
         let errorfn = ((msg) => {
+            timeout(100);
+            console.log('---- ERROR');
             console.log('---- dicom2BIDS Error=', msg);
             return msg;
         });
@@ -50,6 +57,8 @@ let dicom2BIDS = async function (opts) {
         let matchniix = bis_genericio.joinFilenames(indir, '*(*.nii.gz|*.nii)');
         let matchsupp = bis_genericio.joinFilenames(indir, '!(*.nii.gz|*.nii)');
         let imageFiles = await bis_genericio.getMatchingFiles(matchniix);
+        if (DEBUG)
+            console.log('Image Files=',JSON.stringify(imageFiles,null,2));
         let supportingFiles = await bis_genericio.getMatchingFiles(matchsupp);
 
 
@@ -64,18 +73,26 @@ let dicom2BIDS = async function (opts) {
         let subjectdirectory = bis_genericio.joinFilenames(outputdirectory, 'sub-01');
 
         //Create BIDS folders and filenames
+        if (DEBUG)
+            console.log('++++ BIDS:: Creating Directories');
         let dirnames = await makeBIDSDirectories(outputdirectory, subjectdirectory, errorfn);
         dirnames.outputdirectory = outputdirectory, dirnames.subjectdirectory = subjectdirectory;
 
+        timeout(500);
+        if (DEBUG)
+            console.log('++++ BIDS',dirnames.outputdirectory,dirnames.subjectdirectory,'\n\n\n------------------------');
 
         let fileArrayInfo = await generateMoveFilesArrays(imageFiles, supportingFiles, dirnames);
+
         let imageFilenames = fileArrayInfo.imageFilenames, supportingFilenames = fileArrayInfo.supportingFilenames, moveFilesPromiseArray = fileArrayInfo.moveFilesPromiseArray, changedFilenames = fileArrayInfo.changedFilenames;
 
 
         let jobFileSettings = { 'date': date, 'dcm2nii': dcm2nii, 'outputdirectory': outputdirectory };
         let dicomobj = makeDicomJobsFile(imageFilenames, supportingFilenames, jobFileSettings);
 
-        await timeout(200);
+        
+        
+        await timeout(2000);
         await Promise.all(moveFilesPromiseArray);
         await timeout(200);
         if (calcHash) {
@@ -168,7 +185,7 @@ let readSizeRecursive = (filepath) => {
 
                     let reads = [];
                     for (let child of children) {
-                        reads.push(readSizeRecursive([filepath, child].join('/')));
+                        reads.push(readSizeRecursive([filepath, child].join(SEPARATOR)));
                     }
 
                     Promise.all(reads).then( (values) => {
@@ -191,6 +208,13 @@ let readSizeRecursive = (filepath) => {
 let getBIDSDirname =  (filename, flist, dirs) => {
     let name = filename.toLowerCase(), dirname = 'anat';
 
+    let lst=name.split(SEPARATOR);
+    name=lst[lst.length-1];
+    if (DEBUG)
+        console.log('Name=',name,lst,'sep=',SEPARATOR);
+
+
+    
     if (name.includes('bold') || name.includes('asl') || name.includes('rest') || name.includes('task')) {
         dirname = dirs.funcdir;
     } else if (name.includes('localizer') || name.includes('loc')) {
@@ -207,6 +231,8 @@ let getBIDSDirname =  (filename, flist, dirs) => {
             dirname = dirs.diffdir;
     }
 
+    if (DEBUG)
+        console.log('Name --->=',dirname);
     return dirname;
 };
 
@@ -324,8 +350,13 @@ let generateMoveFilesArrays = (imagefiles, supportingfiles, dirs) => {
 
         let name = imagefiles[i];
         let dirname = getBIDSDirname(name, imagefiles, dirs);
+        if (DEBUG)
+            console.log('Name=',dirname,dirs.subjectdirectory);
         dirname = bis_genericio.joinFilenames(dirs.subjectdirectory, dirname);
 
+
+
+        
         let basename = bis_genericio.getBaseName(name);
         let dirbasename = bis_genericio.getBaseName(dirname);
 
@@ -338,16 +369,24 @@ let generateMoveFilesArrays = (imagefiles, supportingfiles, dirs) => {
         for (let suppfile of filteredsuppfiles) {
             let suppBasename = bis_genericio.getBaseName(suppfile);
             let formattedSuppfile = makeBIDSFilename(suppBasename, dirbasename, dirs.subjectdirectory);
+            if (DEBUG)
+                console.log('Joining ',dirname,'\n\t',formattedSuppfile,'\n');
             let suppTarget = bis_genericio.joinFilenames(dirname, formattedSuppfile);
 
             if (!formattedSuppfile.includes('DISCARD')) {
+
                 supportingFilenames.push(suppTarget);
                 changedNames.push(bis_genericio.getBaseName(suppfile) + ' -> ' + bis_genericio.getBaseName(suppTarget));
+                if (DEBUG) 
+                    console.log('Copying ',suppfile, '-->'+ suppTarget);
+
                 moveFilePromises.push(bis_genericio.copyFile(suppfile + '&&' + suppTarget));
             }
 
         }
 
+        timeout(100);
+        
         let formattedBasename = makeBIDSFilename(basename, dirbasename, dirs.subjectdirectory);
         let target = bis_genericio.joinFilenames(dirname, formattedBasename);
 
@@ -367,7 +406,14 @@ let generateMoveFilesArrays = (imagefiles, supportingfiles, dirs) => {
     //Local functions to parse BIDS filenames
 
     function makeBIDSFilename(filename, directory, subjectdirectory) {
-        let splitsubdirectory = subjectdirectory.split('/');
+
+        timeout(200);
+        let splitsubdirectory = subjectdirectory.split(SEPARATOR);
+        if (DEBUG) {
+            console.log('\n\n split=',splitsubdirectory);
+            timeout(1000);
+        }
+
         let fileExtension = filename.split('.');
         if (fileExtension.length > 2 && fileExtension[fileExtension.length - 2] === 'nii' && fileExtension[fileExtension.length - 1] === 'gz') {
             fileExtension = '.nii.gz';
@@ -527,15 +573,15 @@ let syncSupportingFiles = (changedFiles, taskName, baseDirectory) => {
 
     return new Promise((resolve, reject) => {
         //dicom params file is in source so trim base directory to there
-        let splitFilename = baseDirectory.split('/');
+        let splitFilename = baseDirectory.split(SEPARATOR);
         for (let i = 0; i < splitFilename.length; i++) {
             if (splitFilename[i] === sourceDirectoryName) {
-                baseDirectory = splitFilename.slice(0, i + 1).join('/');
+                baseDirectory = splitFilename.slice(0, i + 1).join(SEPARATOR);
                 i = splitFilename.length;
             }
         }
 
-        let settingsFilename = baseDirectory + '/' + dicomParametersFilename;
+        let settingsFilename = baseDirectory + SEPARATOR + dicomParametersFilename;
 
         //open dicom settings file 
         getSettingsFile(settingsFilename).then((settings) => {
@@ -557,15 +603,15 @@ let syncSupportingFiles = (changedFiles, taskName, baseDirectory) => {
                         for (let supportingFile of supportingFiles) {
 
                             let newFilename = replaceTaskName(supportingFile, taskName);
-                            let newFilepath = file.new.split('/');
+                            let newFilepath = file.new.split(SEPARATOR);
                             newFilepath = newFilepath.slice(0, newFilepath.length - 1);
                             newFilepath.push(newFilename);
-                            newFilepath = newFilepath.join('/');
+                            newFilepath = newFilepath.join(SEPARATOR);
 
                             //file.old will hold the old location of the image, so trim off the file extension and add the extension of the supporting file to get its location
-                            let splitOldPath = file.old.split('/');
+                            let splitOldPath = file.old.split(SEPARATOR);
                             splitOldPath[splitOldPath.length - 1] = bis_genericio.getBaseName(supportingFile);
-                            let oldFilepath = splitOldPath.join('/');
+                            let oldFilepath = splitOldPath.join(SEPARATOR);
 
                             console.log('old location', oldFilepath, 'new location', newFilepath);
 
@@ -574,13 +620,13 @@ let syncSupportingFiles = (changedFiles, taskName, baseDirectory) => {
                         }
 
                         //'name' should be the base filename without an extension, 'filename' and 'supportingfiles' should be the last three files in the path (the location within the bids directory)
-                        let splitNewPath = file.new.split('/');
+                        let splitNewPath = file.new.split(SEPARATOR);
                         for (let i = 0; i < newSupportingFileList.length; i++) {
-                            let splitSuppPath = newSupportingFileList[i].split('/');
-                            newSupportingFileList[i] = splitSuppPath.slice(splitSuppPath.length - 3).join('/');
+                            let splitSuppPath = newSupportingFileList[i].split(SEPARATOR);
+                            newSupportingFileList[i] = splitSuppPath.slice(splitSuppPath.length - 3).join(SEPARATOR);
                         }
 
-                        let filename = splitNewPath.slice(splitNewPath.length - 3).join('/');
+                        let filename = splitNewPath.slice(splitNewPath.length - 3).join(SEPARATOR);
                         let name = splitNewPath.slice(splitNewPath.length - 1);
                         name = name[0].split('.')[0];
 
