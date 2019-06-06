@@ -89,11 +89,11 @@ class OrthogonalViewerElement extends BaseViewerElement {
               { x0:0.0,  y0:0.6,  x1:0.01, y1:0.61},
               { x0:0.0, y0:0.0,x1:0.0,y1:0.0 }],
             // 3D +Slices=4
-            [ { x0:0.6,  y0:0.81, x1:0.79, y1:1.0 },
-              { x0:0.0,  y0:0.81, x1:0.19, y1:1.0 },
-              { x0:0.0,  y0:0.2 , x1:0.19, y1:0.39},
-              { x0:0.20, y0:0.1,  x1:1.00, y1:0.8 } ,
-              { x0:0.0,  y0:0.0,  x1:0.0,  y1:0.0 }],
+            [ { x0:0.52, y0:0.55, x1:0.97,  y1:1.0 },
+              { x0:0.03, y0:0.55, x1:0.48,  y1:1.0 },
+              { x0:0.03, y0:0.09, x1:0.48,  y1:0.54},
+              { x0:0.52, y0:0.09, x1:0.97,  y1:0.54} ,
+              { x0:0.00, y0:0.0,  x1:0.0,   y1:0.0 } ],
             // 3D Only=5
             [ { x0:0.0, y0:0.0,  x1:0.01, y1:0.01},
               { x0:0.0, y0:0.3,  x1:0.01, y1:0.31},
@@ -1037,7 +1037,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
         let ind=this.internal.rendermode;
         this.internal.datgui.data.displaymode=this.internal.displaymodes[ind];
 
-        console.log('Rendermode=',this.internal.rendermode,updateviewportsize);
+        //console.log('Rendermode=',this.internal.rendermode,updateviewportsize);
         
         for (var pl=0;pl<this.internal.subviewers.length;pl++) {
             var trueplane=pl;
