@@ -64,7 +64,7 @@ class BidsModule extends BaseModule {
                 }
             });
         });
-    };
+    }
 
 
 }

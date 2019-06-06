@@ -27,25 +27,10 @@ const sourceDirectoryName = 'sourcedata';
  */
 let dicom2BIDS = async function (opts) {
 
-    let errorfn = ((msg) => {
+    let errorfn = ( (msg) => {
         console.log('Error=', msg);
         return msg;
     });
-
-    let makeDir = async function (f) {
-        try {
-            console.log('making directory', f);
-            await bis_genericio.makeDirectory(f);
-        } catch (e) {
-            if (e.code !== 'EEXIST') {
-                errorfn('Error' + e);
-                return false;
-            } else {
-                console.log('Directory Exists Ignoring');
-            }
-        }
-        return true;
-    };
 
     let indir = opts.indir || '';
     let outdir = opts.outdir || '';
@@ -59,131 +44,41 @@ let dicom2BIDS = async function (opts) {
     let calcHash = true;
     if ( total > 2) { console.log('study too large to parse checksums, skipping'); calcHash = false; }
 
-    console.log(colors.red('total', total));
-    
     let matchniix = bis_genericio.joinFilenames(indir, '*(*.nii.gz|*.nii)');
     let matchsupp = bis_genericio.joinFilenames(indir, '!(*.nii.gz|*.nii)');
 
-    let flist = await bis_genericio.getMatchingFiles(matchniix);
-    let suppfiles = await bis_genericio.getMatchingFiles(matchsupp);
+    let imageFiles = await bis_genericio.getMatchingFiles(matchniix);
+    let supportingFiles = await bis_genericio.getMatchingFiles(matchsupp);
 
-    console.log(colors.green('.... Flist : '+flist.join('\n\t')));
-    console.log(colors.yellow('... Supporting files : '+suppfiles.join('\n\t')));
-
-    //Promise arrays
-    let moveImageFiles = [], moveSupportingFiles = [];
-    let changedNames = [];
-
-    if (flist.length < 1) {
+    if (imageFiles.length < 1) {
         return errorfn('No data to convert in ' + indir);
     }
 
     let outputdirectory = bis_genericio.joinFilenames(outdir, sourceDirectoryName);
     let subjectdirectory = bis_genericio.joinFilenames(outputdirectory,'sub-01');
 
-    try {
-        await makeDir(outputdirectory);
-        await makeDir(subjectdirectory);
-        console.log(colors.green('....\nCreated output directory : '+outputdirectory));
-    } catch (e) {
-        return errorfn('Failed to make directory ' + e);
-    }
-
-
-    let funcdir = bis_genericio.joinFilenames(subjectdirectory, 'func');
-    let anatdir = bis_genericio.joinFilenames(subjectdirectory, 'anat');
-    let locdir = bis_genericio.joinFilenames(subjectdirectory, 'localizer');
-    let diffdir = bis_genericio.joinFilenames(subjectdirectory, 'dwi');
-
-    try {
-        await makeDir(funcdir);
-        await makeDir(anatdir);
-        await makeDir(diffdir);
-        await makeDir(locdir);
-    } catch (e) {
-        return errorfn('failed to make directory' + e);
-    }
-
-
-    let maxindex = flist.length;
-    //name arrays
-    let tlist = [], parsedFilenames = [], movedsuppfiles = [];
-    for (let i = 0; i < maxindex; i++) {
-
-        let name = flist[i];
-        let dirname = anatdir;
-        let tname = name.toLowerCase();
-
-        if (tname.includes('bold') || tname.includes('asl') || tname.includes('rest') || tname.includes('task')) {
-            dirname = funcdir;
-        } else if (tname.includes('localizer') || tname.includes('loc')) {
-            dirname = locdir;
-        } else if (tname.includes('.bval') || tname.includes('.bvec')) {
-            // DTI helper files
-            dirname = diffdir;
-        } else if (tname.includes('dti') || tname.includes('dwi') || tname.includes('diff')) {
-            dirname = diffdir;
-        } else if (tname.includes('.nii.gz')) {
-            let f2 = name.substr(0, name.length - 7);
-            let f3 = f2 + '.bval';
-            if (flist.includes(f3))
-                dirname = diffdir;
-        }
-
-        let origname = name;
-        let basename = bis_genericio.getBaseName(name);
-        let dirbasename = bis_genericio.getBaseName(dirname);
-
-        console.log('name', name, '\n');
-        let splitName = basename.split('.')[0];
-
-        let filteredsuppfiles = suppfiles.filter( (file) => {
-            return file.toLowerCase().includes(splitName.toLowerCase());
-        });
-
-        for (let suppfile of filteredsuppfiles) {
-            let suppBasename = bis_genericio.getBaseName(suppfile);
-            let formattedSuppfile = makeBIDSFilename(suppBasename, dirbasename);
-            let suppTarget = bis_genericio.joinFilenames(dirname, formattedSuppfile);
-
-            if (!formattedSuppfile.includes('DISCARD')) {
-                movedsuppfiles.push(suppTarget);
-                changedNames.push(bis_genericio.getBaseName(suppfile) + ' -> ' + bis_genericio.getBaseName(suppTarget));
-                moveSupportingFiles.push(bis_genericio.copyFile(suppfile + '&&' + suppTarget));
-            }
-        }
-
-
-        let formattedBasename = makeBIDSFilename(basename, dirbasename);
-        let target = bis_genericio.joinFilenames(dirname, formattedBasename);
-
-        console.log('formatted base name', formattedBasename);
-        if (!formattedBasename.includes('DISCARD')) {
-            parsedFilenames.push(target);
-
-            changedNames.push(bis_genericio.getBaseName(origname) + ' -> ' + bis_genericio.getBaseName(target));
-            moveImageFiles.push(bis_genericio.copyFile(origname + '&&' + target));
-            tlist.push(target);
-        } 
-    }
+    //Create generate BIDS folders and create BIDS filename
+    let dirnames = await makeBIDSDirectories(outputdirectory, subjectdirectory);
+    dirnames.outputdirectory = outputdirectory, dirnames.subjectdirectory = subjectdirectory; 
 
 
 
-    console.log('parsed filenames', parsedFilenames);
+    //TODO: Ensure that fileArrayInfo and generateMoveFilesArray are good
+    let fileArrayInfo = await generateMoveFilesArrays(imageFiles, supportingFiles, dirnames);
+    let imageFilenames = fileArrayInfo.imageFilenames;
 
-    //TODO: This seems to cause errors on Windows? Something about how it reads the raw data gives a strange error with toString()
-    //My instinct would say that the issue is in bis_util.SHA256 (which is invoked by bis_genericio from calculateChecksums())
-    // -Zach
+    console.log('parsed filenames', imageFilenames);
+
     let makeHash = null;
-    if (calcHash)
-        makeHash=calculateChecksums(parsedFilenames);
-    else
+    if (calcHash) {
+        makeHash=calculateChecksums(imageFilenames);
+    } else {
         makeHash=[ Promise.resolve()];
-
+    }
 
     //date will be a 14 character string in the middle of a filename
     let dateRegex = /\d{14}/g;
-    let fileString = flist[0];
+    let fileString = imageFiles[0];
     let dateMatch = dateRegex.exec(fileString);
     let date = dateMatch[0];
 
@@ -199,8 +94,8 @@ let dicom2BIDS = async function (opts) {
         "files": [],
     };
 
-    for (let i = 0; i < tlist.length; i++) {
-        let fname = tlist[i];
+    for (let i = 0; i < imageFilenames.length; i++) {
+        let fname = imageFilenames[i];
         let name = bis_genericio.getBaseName(fname);
         let infoname = '';
         if (name.includes(".nii.gz")) {
@@ -209,10 +104,10 @@ let dicom2BIDS = async function (opts) {
 
             name = name.substr(0, name.length - 7);
             let f2 = fname.substr(0, fname.length - 7) + '.bvec';
-            let ind2 = tlist.indexOf(f2);
+            let ind2 = imageFilenames.indexOf(f2);
 
             if (ind2 >= 0) {
-                infoname = tlist[ind2];
+                infoname = imageFilenames[ind2];
                 tagname = "DTI";
             } else {
                 if (tagname === 'functional') {
@@ -232,7 +127,7 @@ let dicom2BIDS = async function (opts) {
 
             //find supporting files from file list 
             let basename = name.split('.')[0], suppfileArray = [];
-            for (let file of movedsuppfiles) {
+            for (let file of supportingFileNames) {
                 if (file.includes(basename)) {
                     suppfileArray.push(file.substr(outputdirectory.length + 1, file.length));
                 }
@@ -256,7 +151,7 @@ let dicom2BIDS = async function (opts) {
         let checksums=null;
         if (calcHash) {
             try {
-                checksums=await calculateChecksums(parsedFilenames);
+                checksums=await calculateChecksums(imageFilenames);
                 console.log('++++ Hashes computed',checksums);
             } catch(e) {
                 console.log('Error in making hashes',e);
@@ -265,7 +160,7 @@ let dicom2BIDS = async function (opts) {
         
         
         //put checksums in dicom_job then write it to disk (if checksums have been calculated)
-        if (calcHash && checksums ) {
+        if (calcHash && checksums) {
             console.log('Hashes next');
             for (let val of checksums) {
                 console.log('val', val);
@@ -313,9 +208,276 @@ let dicom2BIDS = async function (opts) {
         return errorfn(e);
     });
 
-    // --------------------------------- Closure Function ------------------------------------
+
+
+};
+
+
+/**
+ * Writes dicom settings file to disk. 
+ * 
+ * @param {String} filename - Name of the settings file to save.
+ * @param {Object} settings - New settings file to write over transientDicomJobInfo.
+ */
+let writeSettingsFile = (filename, settings) => {
+    return new Promise( (resolve, reject) => {
+        if (typeof settings !== 'string') { 
+            settings = JSON.stringify(settings, null, 2);
+        }
     
-    function makeBIDSFilename(filename, directory) {
+        bis_genericio.write(filename, settings, false)
+            .then( () => { resolve(); })
+            .catch( () => { reject(); });
+    });
+};
+
+/**
+ * Calculates checksums for each of the NIFTI files in the BIDS directory.
+ * 
+ * @param {Array} inputFiles - Names of NIFTI files 
+ * @returns Promise that will resolve once images have been checksummed.
+ */
+let calculateChecksums = (inputFiles) => {
+
+    return new Promise((resolve, reject) => {
+        let promises = [];
+        for (let filename of inputFiles) {
+            console.log("Adding test ",filename);
+            promises.push(bis_genericio.makeFileChecksum(filename));
+        }
+
+        Promise.all(promises)
+            .then((values) => { console.log('done calculating checksums'); resolve(values); })
+            .catch((e) => {
+                console.log('--------------- calc Checksums error');
+                reject(e);
+            });
+    });
+
+};
+
+
+let getBIDSDirname =  (filename, flist, dirs) => {
+    let name = filename.toLowerCase(), dirname = 'anat';
+
+    if (name.includes('bold') || name.includes('asl') || name.includes('rest') || name.includes('task')) {
+        dirname = dirs.funcdir;
+    } else if (name.includes('localizer') || name.includes('loc')) {
+        dirname = dirs.locdir;
+    } else if (name.includes('.bval') || name.includes('.bvec')) {
+        // DTI helper files
+        dirname = dirs.diffdir;
+    } else if (name.includes('dti') || name.includes('dwi') || name.includes('diff')) {
+        dirname = dirs.diffdir;
+    } else if (name.includes('.nii.gz')) {
+        let f2 = name.substr(0, name.length - 7);
+        let f3 = f2 + '.bval';
+        if (flist.includes(f3))
+            dirname = dirs.diffdir;
+    }
+
+    return dirname;
+};
+
+
+/**
+ * Parses name into a set of BIDS compliant name components. Currently only supports images acquired by MRI.
+ * 
+ * @param {String} name - Name of the file.
+ * @param {String} directory - Name of the directory the file will be contained in, one of 'anat', 'func', 'diff', or 'localizer'   
+ */
+let parseBIDSLabel = (name, directory) => {
+    let bidsLabel;
+    name = name.toLowerCase();
+
+    //some files should not be propagated, so simply indicate to discard them
+    if (name.includes('phoenix') && name.includes('document')) {
+        return 'DISCARD';
+    }
+
+    if (directory === 'anatomical' || directory === 'anat') {
+        if ( (name.includes('t1') && name.includes('weight') ) || name.includes('mprage') || name.includes('t1w')) { bidsLabel = 'T1w'; }
+        else if (name.includes('t2') && name.includes('weight')) { bidsLabel = 'T2w'; }
+        else if (name.includes('t1') && name.includes('rho')) { bidsLabel = 'T1rho'; }
+        else if (name.includes('t1') && name.includes('map')) { bidsLabel = 'T1map'; } 
+        else if (name.includes('t1') && name.includes('plane')) { bidsLabel = 'inplaneT1'; }
+        else if (name.includes('t2') && name.includes('map')) { bidsLabel = 'T2map'; }  
+        else if (name.includes('t2') && name.includes('plane')) { bidsLabel = 'inplaneT2'; }
+        else if (name.includes('star')) { bidsLabel = 'T2star'; }  
+        else if (name.includes('flair')) { bidsLabel = 'FLAIR'; }
+        else if (name.includes('flash')) { bidsLabel = 'FLASH'; }  
+        else if (name.includes('pd') && name.includes('map')) { bidsLabel = 'PDmap'; }
+        else if (name.includes('pd') && name.includes('t2')) { bidsLabel = 'PDT2'; } 
+        else if (name.includes('pd')) { bidsLabel = 'PD'; }
+        else if (name.includes('angio')) { bidsLabel = 'angio'; }
+        else { bidsLabel = 'unknown'; }   
+    }
+
+    if (directory === 'functional' || directory === 'func') {
+        //parse contrast label
+        if (name.includes('bold')) { bidsLabel = 'bold'; }
+        else if (name.includes('cbv')) {  bidsLabel = 'cbv'; }
+        else if (name.includes('phase')) { bidsLabel = 'phase'; }
+        else { bidsLabel = 'unknown'; }
+    }
+
+    if (directory === 'localizer') {
+        //trim number at the end of the localizer to use as the label
+        let splitName = name.split('-');
+        bidsLabel = splitName[splitName.length - 1];
+
+        //split off the file extension too
+        let trimmedLabel = bidsLabel.split('.');
+        bidsLabel = trimmedLabel[0];
+    }
+
+    if (directory === 'dwi' || directory === 'diff') {
+        bidsLabel = 'dwi';
+    }
+
+    return bidsLabel;
+};
+
+/**
+ * Recursively reads the size of a directory (by reading the size of all its contents).
+ * 
+ * @param {String} item - The name of the root directory when invoking 
+ */
+let readSizeRecursive = (filepath) => {
+    return new Promise( (resolve, reject) => {
+        fs.lstat(filepath, (err, stats) => {
+            if (err) { console.log('err', err); reject(err); return; }
+            if (stats.isDirectory()) {
+                let total = stats.size;
+
+                fs.readdir(filepath, (err, children) => {
+                    if (err) { reject(err); }
+
+                    let reads = [];
+                    for (let child of children) {
+                        reads.push(readSizeRecursive([filepath, child].join('/')));
+                    }
+
+                    Promise.all(reads).then( (values) => {
+
+                        for (let value of values) { total = total + value; }
+                        resolve(total);
+                    });
+                });
+    
+                
+            } else {
+                resolve(stats.size);
+            }
+        });
+    }).catch( (err) => {
+        console.log('Promise array failed Read size recursive encountered an error', err); 
+    });
+};
+
+/**
+ * Creates the set of directories needed for a BIDS compliant study, i.e. root folder, subject folder, and 'anat', 'func', 'localizer', and 'dwi' folders. 
+ * 
+ * @param {String} outputdirectory - Name of the base directory for the study.
+ * @param {String} subjectdirectory - Name of the subject directory for the study.
+ * @returns Object containing the paths of all the imaging type directories (e.g. path for anat, func, etc.)
+ */
+let makeBIDSDirectories = async (outputdirectory, subjectdirectory) => {
+    try {
+        await makeDir(outputdirectory);
+        await makeDir(subjectdirectory);
+        console.log(colors.green('....\nCreated output directory : '+outputdirectory));
+    } catch (e) {
+        return errorfn('Failed to make directory ' + e);
+    }
+
+
+    let funcdir = bis_genericio.joinFilenames(subjectdirectory, 'func');
+    let anatdir = bis_genericio.joinFilenames(subjectdirectory, 'anat');
+    let locdir = bis_genericio.joinFilenames(subjectdirectory, 'localizer');
+    let diffdir = bis_genericio.joinFilenames(subjectdirectory, 'dwi');
+
+    try {
+        await makeDir(funcdir);
+        await makeDir(anatdir);
+        await makeDir(diffdir);
+        await makeDir(locdir);
+    } catch (e) {
+        return errorfn('failed to make directory' + e);
+    }
+
+    return { 'funcdir' : funcdir, 'anatdir' : anatdir, 'locdir' : locdir, 'diffdir' : diffdir };
+};
+
+
+/**
+ * Parses the list of files generated by DMC2NIIx, formats them to be BIDS compliant, and generates an array of promises corresponding to disk operations that will perform the relevant moves.
+ * Also generates a list of the new filenames for the image and supporting files and a flat list of the changed names (i.e. the name produced by dcm2niix -> BIDS compliant name)
+ * 
+ * @param {Array} imagefiles - List of image files generated by dcm2niix (in a temporary directory).
+ * @param {Array} supportingfiles - List of non-image files generated by dcm2niix (in a temporary directory).
+ * @param {Object} dirs - The names of the BIDS directories.
+ * @returns Object containing the full list of Promises that will move the relevant files on disk, flat list of changed names, and lists of the new names for image and supporting files, respectively. 
+ */
+let generateMoveFilesArrays = (imagefiles, supportingfiles, dirs) => {
+    
+    //TODO: Fix file system operations being handed incomplete filenames, e.g. 'anat/filename' instead of '/home/zach/output_directory/sourcedata/sub-01/anat/filename'
+    //Array of bis_genericio.copyFile promises, changed names to be written to a utility file on disk later, and flat list of parsed filenames respectively
+    let moveFilePromises = [], changedNames = [], imageFilenames = [], supportingFilenames = [];
+
+    //Generate BIDS names for the files generated by DCM2NIIx
+    for (let i = 0; i < imagefiles.length; i++) {
+
+        let name = imagefiles[i];
+        let dirname = getBIDSDirname(name, imagefiles, dirs);
+        console.log('dirname', dirname);
+
+        let basename = bis_genericio.getBaseName(name);
+        let dirbasename = bis_genericio.getBaseName(dirname);
+
+        let splitName = basename.split('.')[0];
+
+        let filteredsuppfiles = supportingfiles.filter( (file) => {
+            return file.toLowerCase().includes(splitName.toLowerCase());
+        });
+
+        for (let suppfile of filteredsuppfiles) {
+            let suppBasename = bis_genericio.getBaseName(suppfile);
+            let formattedSuppfile = makeBIDSFilename(suppBasename, dirbasename, dirs.subjectdirectory);
+            let suppTarget = bis_genericio.joinFilenames(dirname, formattedSuppfile);
+
+            if (!formattedSuppfile.includes('DISCARD')) {
+                supportingFilenames.push(suppTarget);
+                changedNames.push(bis_genericio.getBaseName(suppfile) + ' -> ' + bis_genericio.getBaseName(suppTarget));
+                moveFilePromises.push(bis_genericio.copyFile(suppfile + '&&' + suppTarget));
+            }
+
+            console.log('supporting file target', suppTarget);
+        }
+
+
+        let formattedBasename = makeBIDSFilename(basename, dirbasename, dirs.subjectdirectory);
+        let target = bis_genericio.joinFilenames(dirname, formattedBasename);
+
+        if (!formattedBasename.includes('DISCARD')) {
+            changedNames.push(bis_genericio.getBaseName(name) + ' -> ' + bis_genericio.getBaseName(target));
+            moveFilePromises.push(bis_genericio.copyFile(name + '&&' + target));
+            imageFilenames.push(target);
+        } 
+
+        console.log('image filename', target);
+    }
+
+
+
+    return { 'moveFilesPromises' : moveFilesPromises, 'changedNames' : changedNames, 'imageFilenames' : imageFilenames, 'supportingFilesnames' : supportingFilenames };
+
+
+
+
+    //Local functions to parse BIDS filenames
+
+    function makeBIDSFilename(filename, directory, subjectdirectory) {
         let splitsubdirectory = subjectdirectory.split('/');
         let fileExtension = filename.split('.');
         if (fileExtension.length > 2 && fileExtension[fileExtension.length - 2] === 'nii' && fileExtension[fileExtension.length - 1] === 'gz') {
@@ -346,7 +508,6 @@ let dicom2BIDS = async function (opts) {
         return joinedName.concat(fileExtension);
     }
 
-    
 
     //Returns the number of runs with the same name name component for a directory type and updates the count in labelsMap (global map of keys seen so far)
     function getRunNumber(bidsLabel, fileExtension) {
@@ -370,6 +531,39 @@ let dicom2BIDS = async function (opts) {
         return 'run-' + runNum; 
     }
 };
+
+/**
+ * Reads settings file from disk and returns the contents.
+ */
+let getSettingsFile = (filename) => {
+    return new Promise( (resolve, reject) => {
+        bis_genericio.read(filename).then( (obj) => {
+            try {
+                console.log('obj', obj);
+                let fileInfo = JSON.parse(obj.data);
+                resolve(fileInfo);
+            } catch (e) {
+                reject(e);
+            }
+        });
+    });
+};
+
+let makeDir = async function (f) {
+    try {
+        console.log('making directory', f);
+        await bis_genericio.makeDirectory(f);
+    } catch (e) {
+        if (e.code !== 'EEXIST') {
+            errorfn('Error' + e);
+            return false;
+        } else {
+            console.log('Directory Exists Ignoring');
+        }
+    }
+    return true;
+};
+
 
 /**
  * Makes supporting files match the format of their parent image files which have been changed by another operation.
@@ -473,162 +667,6 @@ let syncSupportingFiles = (changedFiles, taskName, baseDirectory) => {
 
         return splitbase.join('_');
     }
-};
-
-
-/**
- * Writes dicom settings file to disk. 
- * 
- * @param {String} filename - Name of the settings file to save.
- * @param {Object} settings - New settings file to write over transientDicomJobInfo.
- */
-let writeSettingsFile = (filename, settings) => {
-    return new Promise( (resolve, reject) => {
-        if (typeof settings !== 'string') { 
-            settings = JSON.stringify(settings, null, 2);
-        }
-    
-        bis_genericio.write(filename, settings, false)
-            .then( () => { resolve(); })
-            .catch( () => { reject(); });
-    });
-};
-
-/**
- * Calculates checksums for each of the NIFTI files in the BIDS directory.
- * 
- * @param {Array} inputFiles - Names of NIFTI files 
- * @returns Promise that will resolve once images have been checksummed.
- */
-var calculateChecksums = (inputFiles) => {
-
-    return new Promise((resolve, reject) => {
-        let promises = [];
-        for (let filename of inputFiles) {
-            console.log("Adding test ",filename);
-            promises.push(bis_genericio.makeFileChecksum(filename));
-        }
-
-        Promise.all(promises)
-            .then((values) => { console.log('done calculating checksums'); resolve(values); })
-            .catch((e) => {
-                console.log('--------------- calc Checksums error');
-                reject(e);
-            });
-    });
-
-};
-
-/**
- * Parses name into a set of BIDS compliant name components. Currently only supports images acquired by MRI.
- * 
- * @param {String} name - Name of the file.
- * @param {String} directory - Name of the directory the file will be contained in, one of 'anat', 'func', 'diff', or 'localizer'   
- */
-let parseBIDSLabel = (name, directory) => {
-    let bidsLabel;
-    name = name.toLowerCase();
-
-    //some files should not be propagated, so simply indicate to discard them
-    if (name.includes('phoenix') && name.includes('document')) {
-        return 'DISCARD';
-    }
-
-    if (directory === 'anatomical' || directory === 'anat') {
-        if ( (name.includes('t1') && name.includes('weight') ) || name.includes('mprage') || name.includes('t1w')) { bidsLabel = 'T1w'; }
-        else if (name.includes('t2') && name.includes('weight')) { bidsLabel = 'T2w'; }
-        else if (name.includes('t1') && name.includes('rho')) { bidsLabel = 'T1rho'; }
-        else if (name.includes('t1') && name.includes('map')) { bidsLabel = 'T1map'; } 
-        else if (name.includes('t1') && name.includes('plane')) { bidsLabel = 'inplaneT1'; }
-        else if (name.includes('t2') && name.includes('map')) { bidsLabel = 'T2map'; }  
-        else if (name.includes('t2') && name.includes('plane')) { bidsLabel = 'inplaneT2'; }
-        else if (name.includes('star')) { bidsLabel = 'T2star'; }  
-        else if (name.includes('flair')) { bidsLabel = 'FLAIR'; }
-        else if (name.includes('flash')) { bidsLabel = 'FLASH'; }  
-        else if (name.includes('pd') && name.includes('map')) { bidsLabel = 'PDmap'; }
-        else if (name.includes('pd') && name.includes('t2')) { bidsLabel = 'PDT2'; } 
-        else if (name.includes('pd')) { bidsLabel = 'PD'; }
-        else if (name.includes('angio')) { bidsLabel = 'angio'; }
-        else { bidsLabel = 'unknown'; }   
-    }
-
-    if (directory === 'functional' || directory === 'func') {
-        //parse contrast label
-        if (name.includes('bold')) { bidsLabel = 'bold'; }
-        else if (name.includes('cbv')) {  bidsLabel = 'cbv'; }
-        else if (name.includes('phase')) { bidsLabel = 'phase'; }
-        else { bidsLabel = 'unknown'; }
-    }
-
-    if (directory === 'localizer') {
-        //trim number at the end of the localizer to use as the label
-        let splitName = name.split('-');
-        bidsLabel = splitName[splitName.length - 1];
-
-        //split off the file extension too
-        let trimmedLabel = bidsLabel.split('.');
-        bidsLabel = trimmedLabel[0];
-    }
-
-    if (directory === 'dwi' || directory === 'diff') {
-        bidsLabel = 'dwi';
-    }
-
-    return bidsLabel;
-};
-
-/**
- * Recursively reads the size of a directory (by reading the size of all its contents).
- * 
- * @param {String} item - The name of the root directory when invoking 
- */
-let readSizeRecursive = (filepath) => {
-    return new Promise( (resolve, reject) => {
-        fs.lstat(filepath, (err, stats) => {
-            if (err) { console.log('err', err); reject(err); return; }
-            if (stats.isDirectory()) {
-                let total = stats.size;
-
-                fs.readdir(filepath, (err, children) => {
-                    if (err) { reject(err); }
-
-                    let reads = [];
-                    for (let child of children) {
-                        reads.push(readSizeRecursive([filepath, child].join('/')));
-                    }
-
-                    Promise.all(reads).then( (values) => {
-
-                        for (let value of values) { total = total + value; }
-                        resolve(total);
-                    });
-                });
-    
-                
-            } else {
-                resolve(stats.size);
-            }
-        });
-    }).catch( (err) => {
-        console.log('Promise array failed Read size recursive encountered an error', err); 
-    });
-};
-
-/**
- * Reads settings file from disk and returns the contents.
- */
-let getSettingsFile = (filename) => {
-    return new Promise( (resolve, reject) => {
-        bis_genericio.read(filename).then( (obj) => {
-            try {
-                console.log('obj', obj);
-                let fileInfo = JSON.parse(obj.data);
-                resolve(fileInfo);
-            } catch (e) {
-                reject(e);
-            }
-        });
-    });
 };
 
 
