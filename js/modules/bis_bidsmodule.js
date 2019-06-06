@@ -53,17 +53,18 @@ class BidsModule extends BaseModule {
         };
     }
 
-    async directInvokeAlgorithm(vals) {
-        
-        let msg = await bidsutils.dicom2BIDS({ 'indir': vals.inputDirectory, 'outdir': vals.outputDirectory, 'dcm2nii' : vals.dcm2nii });
-        return new Promise((resolve, reject) => {
-            if (msg.split(' ').length > 1) {
-                reject('An error occured during conversion', msg);
-            }  else {
-                resolve(msg);
-            }
+    directInvokeAlgorithm(vals) {
+
+        return new Promise( (resolve,reject) => {
+            bidsutils.dicom2BIDS({ 'indir': vals.inputDirectory, 'outdir': vals.outputDirectory, 'dcm2nii' : vals.dcm2nii }).then( (msg) => {
+                if (msg.split(' ').length > 1) {
+                    reject('An error occured during conversion', msg);
+                }  else {
+                    resolve(msg);
+                }
+            });
         });
-    }
+    };
 
 
 }

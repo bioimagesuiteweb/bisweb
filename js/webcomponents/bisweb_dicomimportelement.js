@@ -155,8 +155,8 @@ class DicomImportElement extends HTMLElement {
         console.log('input directory', inputDirectory, 'output directory', outputDirectory);
         if (bis_genericio.getenvironment() === 'browser') {
         
-            promise=bis_genericio.runFileConversion({
-                'fileType': 'dicom',
+            promise=bis_genericio.runDICOMConversiong({
+                'fixpaths' : true,
                 'inputDirectory': inputDirectory,
                 'outputDirectory' : outputDirectory,
                 'convertbids' : doBIDS

@@ -27,7 +27,6 @@ const sourceDirectoryName = 'sourcedata';
  */
 let dicom2BIDS = async function (opts) {
 
-
     let errorfn = ((msg) => {
         console.log('Error=', msg);
         return msg;
@@ -61,7 +60,7 @@ let dicom2BIDS = async function (opts) {
     if ( total > 2) { console.log('study too large to parse checksums, skipping'); calcHash = false; }
 
     console.log(colors.red('total', total));
-
+    
     let matchniix = bis_genericio.joinFilenames(indir, '*(*.nii.gz|*.nii)');
     let matchsupp = bis_genericio.joinFilenames(indir, '!(*.nii.gz|*.nii)');
 
@@ -175,7 +174,11 @@ let dicom2BIDS = async function (opts) {
     //TODO: This seems to cause errors on Windows? Something about how it reads the raw data gives a strange error with toString()
     //My instinct would say that the issue is in bis_util.SHA256 (which is invoked by bis_genericio from calculateChecksums())
     // -Zach
-    let makeHash = ( calcHash ? calculateChecksums(parsedFilenames) : [ Promise.resolve()]);
+    let makeHash = null;
+    if (calcHash)
+        makeHash=calculateChecksums(parsedFilenames);
+    else
+        makeHash=[ Promise.resolve()];
 
 
     //date will be a 14 character string in the middle of a filename
@@ -243,23 +246,33 @@ let dicom2BIDS = async function (opts) {
                 supportingfiles: suppfileArray,
                 details: infoname
             });
-
         }
     }
-
-    try {
-        let promiseArray = Array.apply(moveImageFiles, moveSupportingFiles);
-
-        let checksums = await makeHash;
-        for (let prom of promiseArray) { await prom; }
-
-        //put checksums in dicom_job then write it to disk (if checksums have been calculated)
+    
+    let promiseArray = moveImageFiles.concat(moveSupportingFiles);
+    Promise.all(promiseArray).then( async (m) => {
+        
+        console.log('Files Moved',m);
+        let checksums=null;
         if (calcHash) {
+            try {
+                checksums=await calculateChecksums(parsedFilenames);
+                console.log('++++ Hashes computed',checksums);
+            } catch(e) {
+                console.log('Error in making hashes',e);
+            }
+        }
+        
+        
+        //put checksums in dicom_job then write it to disk (if checksums have been calculated)
+        if (calcHash && checksums ) {
+            console.log('Hashes next');
             for (let val of checksums) {
                 console.log('val', val);
                 for (let fileEntry of dicomobj.files) {
                     if (val.output.filename.includes(fileEntry.name)) {
                         fileEntry.hash = val.output.hash;
+                        console.log('Filename=',fileEntry.name, val.output.hash);
                         break;
                     }
                 }
@@ -268,7 +281,8 @@ let dicom2BIDS = async function (opts) {
        
 
         let bidsignore = '**/localizer\n**/dicom_job_info.json\n**/name_change_log.txt';
-
+        console.log('Bidsignore=',bidsignore);
+        
         let date = new Date();
         date = new Date().toLocaleDateString() + ' at ' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
         let datasetDescription = {
@@ -294,11 +308,13 @@ let dicom2BIDS = async function (opts) {
         labelsMap = {};
         return outputdirectory;
 
-    } catch (e) {
+    }).catch( (e) => {
         labelsMap = {};
         return errorfn(e);
-    }
+    });
 
+    // --------------------------------- Closure Function ------------------------------------
+    
     function makeBIDSFilename(filename, directory) {
         let splitsubdirectory = subjectdirectory.split('/');
         let fileExtension = filename.split('.');
@@ -484,17 +500,21 @@ let writeSettingsFile = (filename, settings) => {
  * @param {Array} inputFiles - Names of NIFTI files 
  * @returns Promise that will resolve once images have been checksummed.
  */
-let calculateChecksums = (inputFiles) => {
+var calculateChecksums = (inputFiles) => {
 
     return new Promise((resolve, reject) => {
         let promises = [];
-        for (let file of inputFiles) {
-            promises.push(bis_genericio.makeFileChecksum(file));
+        for (let filename of inputFiles) {
+            console.log("Adding test ",filename);
+            promises.push(bis_genericio.makeFileChecksum(filename));
         }
 
         Promise.all(promises)
             .then((values) => { console.log('done calculating checksums'); resolve(values); })
-            .catch((e) => { reject(e); });
+            .catch((e) => {
+                console.log('--------------- calc Checksums error');
+                reject(e);
+            });
     });
 
 };
@@ -590,7 +610,7 @@ let readSizeRecursive = (filepath) => {
             }
         });
     }).catch( (err) => {
-        console.log('Read size recursive encountered an error', err); 
+        console.log('Promise array failed Read size recursive encountered an error', err); 
     });
 };
 
