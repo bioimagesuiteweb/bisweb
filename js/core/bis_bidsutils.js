@@ -12,6 +12,9 @@ let labelsMap = {};
 
 const dicomParametersFilename = 'dicom_job_info.json';
 const sourceDirectoryName = 'sourcedata';
+const DEBUG=false;
+
+function timeout(ms) {  return new Promise(resolve => setTimeout(resolve, ms)); }
 
 // DICOM2BIDS
 /**
@@ -29,7 +32,7 @@ let dicom2BIDS = async function (opts) {
 
     try {
         let errorfn = ((msg) => {
-            console.log('Error=', msg);
+            console.log('---- dicom2BIDS Error=', msg);
             return msg;
         });
 
@@ -37,12 +40,12 @@ let dicom2BIDS = async function (opts) {
         let outdir = opts.outdir || '';
         let dcm2nii = opts.dcm2nii || false;
 
-        console.log('opts=', opts);
+        console.log('++++ dicom2BIDS opts=', opts);
 
         //read size of directory to determine whether or not to calculate checksums
         let total = await readSizeRecursive(indir) / 1024 / 1024 / 1024; //convert to gigabytes
         let calcHash = true;
-        if (total > 2) { console.log('study too large to parse checksums, skipping'); calcHash = false; }
+        if (total > 2) { console.log('---- dicom2BIDS: study too large to parse checksums, skipping'); calcHash = false; }
 
         let matchniix = bis_genericio.joinFilenames(indir, '*(*.nii.gz|*.nii)');
         let matchsupp = bis_genericio.joinFilenames(indir, '!(*.nii.gz|*.nii)');
@@ -68,27 +71,20 @@ let dicom2BIDS = async function (opts) {
         let fileArrayInfo = await generateMoveFilesArrays(imageFiles, supportingFiles, dirnames);
         let imageFilenames = fileArrayInfo.imageFilenames, supportingFilenames = fileArrayInfo.supportingFilenames, moveFilesPromiseArray = fileArrayInfo.moveFilesPromiseArray, changedFilenames = fileArrayInfo.changedFilenames;
 
-        console.log('parsed filenames', imageFilenames);
-
-        let makeHash = null;
-        if (calcHash) { makeHash = calculateChecksums(imageFilenames); } 
-        else { makeHash = [Promise.resolve()]; }
 
         let jobFileSettings = { 'date': date, 'dcm2nii': dcm2nii, 'outputdirectory': outputdirectory };
         let dicomobj = makeDicomJobsFile(imageFilenames, supportingFilenames, jobFileSettings);
 
+        await timeout(200);
         await Promise.all(moveFilesPromiseArray);
-
-        let checksums = null;
+        await timeout(200);
         if (calcHash) {
-            checksums = await makeHash;
-            console.log('++++ Hashes computed', checksums);
-
+            let checksums=await calculateChecksums(imageFilenames);
             for (let val of checksums) {
                 for (let fileEntry of dicomobj.files) {
                     if (val.output.filename.includes(fileEntry.name)) {
                         fileEntry.hash = val.output.hash;
-                        console.log('Filename=', fileEntry.name, val.output.hash);
+                        if (DEBUG) console.log('++++ BIDSOutput: Filename=', fileEntry.name, val.output.hash);
                         break;
                     }
                 }
@@ -116,13 +112,15 @@ let dicom2BIDS = async function (opts) {
 let calculateChecksums = (inputFiles) => {
 
     return new Promise((resolve, reject) => {
+
+        console.log('++++ BIDSUTIL: calculating checksums');
         let promises = [];
         for (let filename of inputFiles) {
             promises.push(bis_genericio.makeFileChecksum(filename));
         }
 
         Promise.all(promises)
-            .then((values) => { console.log('done calculating checksums'); resolve(values); })
+            .then((values) => { console.log('++++ BIDSUtil: done calculating checksums'); resolve(values); })
             .catch((e) => {
                 console.log('--------------- calc Checksums error');
                 reject(e);
@@ -140,7 +138,7 @@ let calculateChecksums = (inputFiles) => {
  */
 let makeDir = async function (filename, errorfn) {
     try {
-        console.log('making directory', filename);
+        console.log('++++ BIDSUTIL: making directory', filename);
         await bis_genericio.makeDirectory(filename);
     } catch (e) {
         if (e.code !== 'EEXIST') {
@@ -282,7 +280,7 @@ let makeBIDSDirectories = async (outputdirectory, subjectdirectory, errorfn) => 
     try {
         await makeDir(outputdirectory, errorfn);
         await makeDir(subjectdirectory, errorfn);
-        console.log(colors.green('....\nCreated output directory : '+outputdirectory));
+        console.log(colors.green('....\n.... BIDSUTIL:: Created output directory : '+outputdirectory));
     } catch (e) {
         return errorfn('Failed to make directory ' + e);
     }
@@ -362,7 +360,7 @@ let generateMoveFilesArrays = (imagefiles, supportingfiles, dirs) => {
     }
 
 
-    console.log('move file promises', moveFilePromises, 'image filenames', imageFilenames, 'supporting filenames', supportingFilenames);
+    //    console.log('move file promises', moveFilePromises, 'image filenames', imageFilenames, 'supporting filenames', supportingFilenames);
     return { 'moveFilesPromiseArray' : moveFilePromises, 'changedFilenames' : changedNames, 'imageFilenames' : imageFilenames, 'supportingFilenames' : supportingFilenames };
 
 
@@ -393,8 +391,9 @@ let generateMoveFilesArrays = (imagefiles, supportingfiles, dirs) => {
         } else if (directory === 'dwi') {
             namesArray = [ splitsubdirectory[splitsubdirectory.length - 1], runNumber, bidsLabel];
         }
-        
-        console.log(colors.green('BIDS filename', namesArray.join('_'), '\n'));
+
+        if (DEBUG)
+            console.log(colors.green('++++ BIDS filename', namesArray.join('_')));
         let joinedName = namesArray.join('_');
         return joinedName.concat(fileExtension);
     }
@@ -491,8 +490,6 @@ let parseDate = (dcm2niiImage) => {
 
 let writeDicomMetadataFiles = async (dicomJobs, outputdirectory, changedFilenames) => {
     let bidsignore = '**/localizer\n**/dicom_job_info.json\n**/name_change_log.txt';
-    console.log('Bidsignore=', bidsignore);
-
     let currentDate = new Date();
     currentDate = new Date().toLocaleDateString() + ' at ' + currentDate.getHours() + ':' + currentDate.getMinutes() + ':' + currentDate.getSeconds();
     let datasetDescription = {
@@ -513,7 +510,7 @@ let writeDicomMetadataFiles = async (dicomJobs, outputdirectory, changedFilename
     await bis_genericio.write(bidsignorefilename, bidsignore, false);
     await bis_genericio.write(dicomjobfilename, JSON.stringify(dicomJobs, null, 2), false);
     await bis_genericio.write(datasetdescriptionfilename, JSON.stringify(datasetDescription, null, 2), false);
-    console.log('----- output directory', outputdirectory);
+    console.log('++++ BIDSUTIL: output directory', outputdirectory);
 
     return;
 };
