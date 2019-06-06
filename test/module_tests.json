@@ -647,25 +647,25 @@
 	},
         {
             "command" : "resliceImage -i testdata/MNI_6mm.nii.gz -r testdata/MNI_6mm.nii.gz -x testdata/MNI_2mm_scaled.grd -y testdata/resample.matr --forcefloat true --interpolation 1",
-            "test" : " --test_target testdata/comboreslice.nii.gz",
+            "test" : "--test_target testdata/comboreslice.nii.gz --test_type image",
             "result" : true,
             "dopython": false
         },
         {
             "command" : "resliceImage -i testdata/MNI_6mm.nii.gz -r testdata/MNI_6mm.nii.gz -x testdata/MNI_2mm_scaled.grd -y testdata/resample.matr --usejs true --forcefloat true",
-            "test" : " --test_target testdata/comboreslice.nii.gz",
+            "test" : "--test_target testdata/comboreslice.nii.gz",
             "result" : true,
             "dopython": false
         },
         {
             "command" : "resliceImage -i testdata/MNI_6mm.nii.gz -r testdata/MNI_6mm.nii.gz -x testdata/MNI_2mm_scaled.grd --forcefloat true --interpolation 1",
-            "test" : " --test_target testdata/gridreslice.nii.gz",
+            "test" : "--test_target testdata/gridreslice.nii.gz",
             "result" : true,
             "dopython": true
         },
         {
             "command" : "resliceImage -i testdata/MNI_6mm.nii.gz -r testdata/MNI_6mm.nii.gz -x testdata/MNI_2mm_scaled.grd --forcefloat true --interpolation 1 --usejs true",
-            "test" : " --test_target testdata/gridreslice.nii.gz",
+            "test" : "--test_target testdata/gridreslice.nii.gz",
             "result" : true,
             "dopython": false
         },
@@ -706,25 +706,25 @@
 	    "dopython": true
 	},
 	{
-	    "command" : "driftCorrectImage -i testdata/newtests/drift_input.csv.nii.gz --order 1",
+	    "command" : "driftCorrectImage --input testdata/newtests/drift_input.csv.nii.gz --order 1 --debug true",
 	    "test"    : "--test_target testdata/simpleregress.csv.nii.gz --test_type image --test_comparison ssd --test_threshold 0.1",
 	    "result"  : true,
 	    "dopython": true
 	},
 	{
-	    "command" : "driftCorrectImage -i testdata/newtests/driftw_input.csv.nii.gz --order 1 -w testdata/newtests/drift_weights.matr",
+	    "command" : "driftCorrectImage --input testdata/newtests/driftw_input.csv.nii.gz --order 1 -w testdata/newtests/drift_weights.matr",
 	    "test"    : "--test_target testdata/newtests/weighted_drift_gold.csv.nii.gz --test_type image --test_comparison ssd --test_threshold 0.01",
 	    "result"  : true,
 	    "dopython": true
 	},
         {
-            "command" : "seedcorrelation -i testdata/imagefmri/Brain_Test.nii.gz -r testdata/imagefmri/seeds.matr --zscore false",
+            "command" : "seedcorrelation --input testdata/imagefmri/Brain_Test.nii.gz -r testdata/imagefmri/seeds.matr --zscore false",
             "test"    : "--test_target testdata/imagefmri/Seed_raw.nii.gz --test_type image --test_comparison ssd --test_threshold 0.01",
             "result"  : true,
             "dopython": false
         },
         {
-            "command" : "seedcorrelation -i testdata/imagefmri/Brain_Test.nii.gz -r testdata/imagefmri/seeds.matr --zscore true",
+            "command" : "seedcorrelation --input testdata/imagefmri/Brain_Test.nii.gz -r testdata/imagefmri/seeds.matr --zscore true",
             "test"    : "--test_target testdata/imagefmri/Seed_zscore.nii.gz --test_type image --test_comparison ssd --test_threshold 0.01",
             "result"  : true,
             "dopython": false

@@ -107,6 +107,7 @@ class BaseViewerElement extends HTMLElement {
         // save state stuff
         this.internal.saveState=null;
         this.internal.viewerleft=null;
+        this.minLabelWidth=150;
     }
 
 
@@ -123,6 +124,21 @@ class BaseViewerElement extends HTMLElement {
      */
     getName() {
         return this.internal.name;
+    }
+    
+    // ------------------------------------------------------------------------------------
+    /* set the minimum width to draw labels
+     * @param{Number} width 
+     */
+    setMinLabelWidth(n) {
+        this.minLabelWidth=n || 150;
+    }
+
+    /* return the min Label Width
+     * @returns{Number} -- the label width
+     */
+    getMinLabelWidth() {
+        return this.minLabelWidth;
     }
 
     /* returns last cross hairs (null) */
@@ -230,7 +246,7 @@ class BaseViewerElement extends HTMLElement {
         
         for (let i=0;i<l;i++) {
             if (this.internal.overlayslices[i]!==null) {
-                this.internal.overlayslices[i].removefromscene(this.internal.subviewers[i].scene);
+                this.internal.overlayslices[i].removefromscene(this.internal.subviewers[i].getScene());
                 this.internal.overlayslices[i].cleanup();
                 this.internal.overlayslices[i]=null;
             }
@@ -258,15 +274,12 @@ class BaseViewerElement extends HTMLElement {
             
             if (this.internal.subviewers[i]!==null) {
                 if (this.internal.slices[i]!==null) {
-                    this.internal.slices[i].removefromscene(this.internal.subviewers[i].scene);
+                    this.internal.slices[i].removefromscene(this.internal.subviewers[i].getScene());
                     this.internal.slices[i].cleanup();
                     this.internal.slices[i]=null;
                 }
                 if (samesize===false) {
-                    this.internal.subviewers[i].controls.remove();
-                    this.internal.subviewers[i].controls=null;
-                    this.internal.subviewers[i].scene=null;
-                    this.internal.subviewers[i].camera=null;
+                    this.internal.subviewers[i].remove();
                     this.internal.subviewers[i]=null;
                 }
             }
@@ -352,12 +365,10 @@ class BaseViewerElement extends HTMLElement {
                 renderer.clear();
             for (let i=0;i<subviewers.length;i++) {
                 if (this.internal.subviewers[i]!==null) {
-                    let vp  =this.internal.subviewers[i].controls.getNormViewport();
-                    if ((vp.x1-vp.x0)>0.01 && (vp.y1-vp.y0>0.01) &&  i<numviewers)  {
+                    if (i<numviewers) {
                         this.renderSubViewer(i);
-                        subviewers[i].controls.enabled=true;
                     } else {
-                        subviewers[i].controls.enabled=false;
+                        subviewers[i].enabled=false;
                     }
                 }
             }
@@ -385,25 +396,8 @@ class BaseViewerElement extends HTMLElement {
      * @param{number} index - subviewer index
      */
     renderSubViewer(index) {
-
-        let renderer=this.internal.layoutcontroller.renderer;
-
-        let cam=this.internal.subviewers[index].camera;
-        let scene=this.internal.subviewers[index].scene;
-        let controls=this.internal.subviewers[index].controls;
-        
-        if (controls.update(renderer)===true) {
-            let fl=controls.getFlipMode();
-            
-            if (fl)
-                cam.projectionMatrix.elements[0]=-cam.projectionMatrix.elements[0];
-            
-            renderer.render(scene,cam);
-            renderer.setScissorTest(false);
-            
-            if (fl)
-                cam.projectionMatrix.elements[0]=-cam.projectionMatrix.elements[0];
-        }
+        if (this.internal.subviewers[index])
+            this.internal.subviewers[index].render();
     }
     
     /** removes the colorscale */
@@ -568,7 +562,7 @@ class BaseViewerElement extends HTMLElement {
         if (this.internal.subviewers !== null) {
             for (let i=0;i<this.internal.subviewers.length;i++) {
                 if (this.internal.subviewers[i] !== null)
-                    this.internal.subviewers[i].controls.handleResize(false);
+                    this.internal.subviewers[i].handleResize(false);
             }
         }
     }
@@ -900,7 +894,7 @@ class BaseViewerElement extends HTMLElement {
     resetViewers() {
         this.internal.subviewers.forEach(function(f) {
             if (f!==null) {
-                f.controls.reset();
+                f.reset();
             }
         });
     }
@@ -908,8 +902,8 @@ class BaseViewerElement extends HTMLElement {
     zoomViewers(factor=0.9) {
         this.internal.subviewers.forEach(function(f) {
             if (f!==null) {
-                f.controls.zoomCamera(factor);
-                f.controls.update();
+                f.zoomCamera(factor);
+                f.render();
             }
         });
     }
@@ -1054,7 +1048,7 @@ class BaseViewerElement extends HTMLElement {
                 obj.subviewers = [];
                 for (let i=0;i<n;i++) {
                     if (this.internal.subviewers[i]) {
-                        let controls=this.internal.subviewers[i].controls;
+                        let controls=this.internal.subviewers[i];
                         let p=controls.serializeCamera();
                         obj.subviewers.push(p);
                     }
@@ -1122,11 +1116,10 @@ class BaseViewerElement extends HTMLElement {
             let num=subviewers.length;
             if (dt.subviewers.length<num)
                 num=dt.subviewers.length;
-            let renderer=this.internal.layoutcontroller.renderer;
             for (let i=0;i<num;i++) {
                 if (dt.subviewers[i] && subviewers[i]) {
-                    subviewers[i].controls.parseCamera(dt.subviewers[i]);
-                    renderer.render( subviewers[i].scene, subviewers[i].camera);
+                    subviewers[i].parseCamera(dt.subviewers[i]);
+                    subviewers[i].render();
                 }
             }
         } 

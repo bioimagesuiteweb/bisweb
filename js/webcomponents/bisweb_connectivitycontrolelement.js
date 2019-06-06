@@ -288,9 +288,10 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             if (internal.rendermode===6)
                 internal.rendermode+=1;
         }
+
         internal.orthoviewer.setRenderMode(internal.rendermode,doupdate);
-        
-        let parcvp=internal.orthoviewer.getRenderModeViewports()[4];
+        let vp=internal.orthoviewer.getRenderModeViewports();
+        let parcvp=vp[4];
         internal.parcellation.viewport.x0=parcvp.x0;
         internal.parcellation.viewport.x1=parcvp.x1;
         internal.parcellation.viewport.y0=1.0-parcvp.y1;
@@ -298,6 +299,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         update(true);
         if (internal.showlegend)
             setnode(Math.round(internal.parameters.node-1));
+
     };
     
     // ----------------------------------------------------------------------------
@@ -631,7 +633,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         if (!skip3d) {
             internal.meshes.forEach(function(m) {
                 m.visible=false;
-                internal.subviewers[3].scene.remove(m);
+                internal.subviewers[3].getScene().remove(m);
             });
         }
 
@@ -1367,7 +1369,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
         
         // initialize (or reinitialize landmark control). Called from viewer when image changes. This actually creates (or recreates the GUI) as well.(This implements a function from the {@link BisMouseObserver} interface.)
         // @memberof BisGUIConnectivityControl.prototype
-        // @param {Bis_SubViewer} subviewers - subviewers to place info in
+        // @param {BisWebSubViewer[]} subviewers - subviewers to place info in
         // @param {BisWebImage} volume - new image (not used)
         initialize : function(subviewers) { 
 
@@ -1571,7 +1573,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
             internal.context.clearRect(0,0,internal.canvas.width,internal.canvas.height);
             internal.overlaycontext.clearRect(0,0,internal.canvas.width,internal.canvas.height);
             internal.rendermode=dt.rendermode;
-            //console.log('New Render mode=',dt.rendermode);
+            console.log('New Render mode=',dt.rendermode);
             togglemode(false);
 
             internal.posFileInfo=[ "NONE", 0 ];
@@ -1690,6 +1692,7 @@ const bisGUIConnectivityControl = function(parent,orthoviewer,layoutmanager) {
     let basediv=$("<div>To appear...</div>");
     internal.parentDomElement.append(basediv);
     internal.orthoviewer=orthoviewer;
+    internal.orthoviewer.extraWidth3D=connectvis3d.lobeoffset;
     internal.orthoviewer.addMouseObserver(internal.this);
     internal.orthoviewer.addResizeObserver(internal.this);
 

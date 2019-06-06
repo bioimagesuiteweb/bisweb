@@ -311,6 +311,7 @@ const execute_compare=function(module,test) {
 
         //let testtrue=test.result;
         let tobj=get_test_object(test);
+        console.log(JSON.stringify(tobj,null,2));
         
         let threshold = tobj['test_threshold'] || 0.01;
         let comparison = tobj['test_comparison'] || "maxabs";
@@ -330,13 +331,15 @@ const execute_compare=function(module,test) {
 
         console.log('====\n============================================================\n');
         console.log(`==== C o m p a r i n g  ${test_type}  u s i n g  ${comparison} and  t h r e s h o l d=${threshold}.\n====`);
-        let c=`<B>Comparing   ${test_type} using ${comparison} and threshold=${threshold}</B>`;
+        let c=`<B>Comparing   ${test_type} using ${comparison} and threshold=${threshold}, ${testDataRootDirectory+test_target}</B>`;
 
         const orig_test_type=test_type;
         
         if (test_type === "matrixtransform" || test_type==="gridtransform") {
             test_type="transform";
         }
+
+        console.log('Loading :',testDataRootDirectory+test_target);
         
         BisWebDataObjectCollection.loadObject(testDataRootDirectory+test_target,test_type).then( (obj) => {
 
@@ -373,6 +376,7 @@ const execute_compare=function(module,test) {
                 });
             }
         }).catch((e) => {
+            console.log(e,e.stack);
             reject(e);
         });
     });

@@ -76,7 +76,50 @@
             "comparison" : "test10.png",
             "viewer" : 2,
             "result" : true
+        },
+        {
+            "base" : "4d.biswebstate",
+            "state" : "test11.state",
+            "comparison" : "test11.png",
+            "viewer" : 2,
+            "result" : true
+        },
+        {
+            "base" : "4d.biswebstate",
+            "state" : "test11.state",
+            "comparison" : "test11.png",
+            "viewer" : 2,
+            "result" : true
+        },
+        {
+            "base" : "4d.biswebstate",
+            "state" : "test12.state",
+            "comparison" : "test12.png",
+            "viewer" : 2,
+            "result" : true
+        },
+        {
+            "base" : "viewer.biswebstate",
+            "state" : "test13.state",
+            "comparison" : "test13.png",
+            "viewer" : 1,
+            "result" : true
+        },
+        {
+            "base" : "viewer.biswebstate",
+            "state" : "test14.state",
+            "comparison" : "test14.png",
+            "viewer" : 1,
+            "result" : true
+        },
+        {
+            "base" : "temperature.biswebstate",
+            "state" : "",
+            "comparison" : "test15.png",
+            "viewer" : 1,
+            "result" : true
         }
+
     ],
     "connviewer" : [
         {
@@ -111,12 +154,6 @@
         },
         {
             "base" : "connstate.biswebstate",
-            "state" : "otest2.state",
-            "comparison" : "otest5.png",
-            "result" : false
-        },
-        {
-            "base" : "connstate.biswebstate",
             "state" : "otest7.state",
             "comparison" : "otest7.png",
             "result" : true
@@ -144,6 +181,12 @@
             "state" : "otest11.state",
             "comparison" : "otest11.png",
             "result" : true
+        },
+        {
+            "base" : "connstate.biswebstate",
+            "state" : "otest2.state",
+            "comparison" : "otest5.png",
+            "result" : false
         }
     ]
 }
