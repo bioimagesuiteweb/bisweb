@@ -27,138 +27,75 @@ const sourceDirectoryName = 'sourcedata';
  */
 let dicom2BIDS = async function (opts) {
 
-    let errorfn = ( (msg) => {
-        console.log('Error=', msg);
-        return msg;
-    });
+    try {
+        let errorfn = ((msg) => {
+            console.log('Error=', msg);
+            return msg;
+        });
 
-    let indir = opts.indir || '';
-    let outdir = opts.outdir || '';
-    let dcm2nii = opts.dcm2nii || false;
+        let indir = opts.indir || '';
+        let outdir = opts.outdir || '';
+        let dcm2nii = opts.dcm2nii || false;
 
-    console.log('opts=', opts);
+        console.log('opts=', opts);
 
-    //read size of directory to determine whether or not to calculate checksums
-    let total = await readSizeRecursive(indir) / 1024 / 1024 / 1024; //convert to gigabytes
+        //read size of directory to determine whether or not to calculate checksums
+        let total = await readSizeRecursive(indir) / 1024 / 1024 / 1024; //convert to gigabytes
 
-    let calcHash = true;
-    if ( total > 2) { console.log('study too large to parse checksums, skipping'); calcHash = false; }
+        let calcHash = true;
+        if (total > 2) { console.log('study too large to parse checksums, skipping'); calcHash = false; }
 
-    let matchniix = bis_genericio.joinFilenames(indir, '*(*.nii.gz|*.nii)');
-    let matchsupp = bis_genericio.joinFilenames(indir, '!(*.nii.gz|*.nii)');
+        let matchniix = bis_genericio.joinFilenames(indir, '*(*.nii.gz|*.nii)');
+        let matchsupp = bis_genericio.joinFilenames(indir, '!(*.nii.gz|*.nii)');
 
-    let imageFiles = await bis_genericio.getMatchingFiles(matchniix);
-    let supportingFiles = await bis_genericio.getMatchingFiles(matchsupp);
+        let imageFiles = await bis_genericio.getMatchingFiles(matchniix);
+        let supportingFiles = await bis_genericio.getMatchingFiles(matchsupp);
 
-    if (imageFiles.length < 1) {
-        return errorfn('No data to convert in ' + indir);
-    }
+        //Parse date of the image out of a random dcm2nii image
+        let date = parseDate(imageFiles[0]);
 
-    let outputdirectory = bis_genericio.joinFilenames(outdir, sourceDirectoryName);
-    let subjectdirectory = bis_genericio.joinFilenames(outputdirectory,'sub-01');
-
-    //Create generate BIDS folders and create BIDS filename
-    let dirnames = await makeBIDSDirectories(outputdirectory, subjectdirectory);
-    dirnames.outputdirectory = outputdirectory, dirnames.subjectdirectory = subjectdirectory; 
-
-
-
-    //TODO: Ensure that fileArrayInfo and generateMoveFilesArray are good
-    let fileArrayInfo = await generateMoveFilesArrays(imageFiles, supportingFiles, dirnames);
-    let imageFilenames = fileArrayInfo.imageFilenames;
-
-    console.log('parsed filenames', imageFilenames);
-
-    let makeHash = null;
-    if (calcHash) {
-        makeHash=calculateChecksums(imageFilenames);
-    } else {
-        makeHash=[ Promise.resolve()];
-    }
-
-    //date will be a 14 character string in the middle of a filename
-    let dateRegex = /\d{14}/g;
-    let fileString = imageFiles[0];
-    let dateMatch = dateRegex.exec(fileString);
-    let date = dateMatch[0];
-
-    //separate date string into individual chunks
-    let year = date.substring(0, 4), month = date.substring(4, 6), day = date.substring(6, 8), hour = date.substring(8, 10), minute = date.substring(10, 12);
-
-    let dicomobj = {
-        "source": dcm2nii ? 'dcm2nii' : 'BIDS import',
-        'platform' : baseutil.getSystemInfo(biswrap),
-        'location' : baseutil.getExecutableArguments('bids_utils'),
-        "bidsversion": "1.1.0",
-        "description": `Dataset generated on ${month}/${day}, ${year} at ${hour}:${minute}`,
-        "files": [],
-    };
-
-    for (let i = 0; i < imageFilenames.length; i++) {
-        let fname = imageFilenames[i];
-        let name = bis_genericio.getBaseName(fname);
-        let infoname = '';
-        if (name.includes(".nii.gz")) {
-
-            let tagname = bis_genericio.getBaseName(bis_genericio.getDirectoryName(fname));
-
-            name = name.substr(0, name.length - 7);
-            let f2 = fname.substr(0, fname.length - 7) + '.bvec';
-            let ind2 = imageFilenames.indexOf(f2);
-
-            if (ind2 >= 0) {
-                infoname = imageFilenames[ind2];
-                tagname = "DTI";
-            } else {
-                if (tagname === 'functional') {
-                    tagname = 'Functional';
-                } else if (tagname === 'diffusion') {
-                    tagname = 'DTI';
-                } else if (tagname === 'anatomical') {
-                    if (fname.includes('3D') || fname.includes('3d')) {
-                        tagname = '3DAnatomical';
-                    } else {
-                        tagname = 'Anatomical';
-                    }
-                } else {
-                    tagname = 'None';
-                }
-            }
-
-            //find supporting files from file list 
-            let basename = name.split('.')[0], suppfileArray = [];
-            for (let file of supportingFileNames) {
-                if (file.includes(basename)) {
-                    suppfileArray.push(file.substr(outputdirectory.length + 1, file.length));
-                }
-            }
-
-            dicomobj.files.push({
-                name: name,
-                filename: fname.substr(outputdirectory.length + 1, fname.length),
-                tag: tagname,
-                hash: 'no checksums',
-                supportingfiles: suppfileArray,
-                details: infoname
-            });
+        if (imageFiles.length < 1) {
+            return errorfn('No data to convert in ' + indir);
         }
-    }
-    
-    let promiseArray = moveImageFiles.concat(moveSupportingFiles);
-    Promise.all(promiseArray).then( async (m) => {
-        
-        console.log('Files Moved',m);
-        let checksums=null;
+
+        let outputdirectory = bis_genericio.joinFilenames(outdir, sourceDirectoryName);
+        let subjectdirectory = bis_genericio.joinFilenames(outputdirectory, 'sub-01');
+
+        //Create BIDS folders and filenames
+        let dirnames = await makeBIDSDirectories(outputdirectory, subjectdirectory, errorfn);
+        dirnames.outputdirectory = outputdirectory, dirnames.subjectdirectory = subjectdirectory;
+
+
+        let fileArrayInfo = await generateMoveFilesArrays(imageFiles, supportingFiles, dirnames);
+        let imageFilenames = fileArrayInfo.imageFilenames, supportingFilenames = fileArrayInfo.supportingFilenames, moveFilesPromiseArray = fileArrayInfo.moveFilesPromiseArray, changedFilenames = fileArrayInfo.changedFilenames;
+
+        console.log('parsed filenames', imageFilenames);
+
+        let makeHash = null;
+        if (calcHash) {
+            makeHash = calculateChecksums(imageFilenames);
+        } else {
+            makeHash = [Promise.resolve()];
+        }
+
+        let jobFileSettings = { 'date': date, 'dcm2nii': dcm2nii, 'outputdirectory': outputdirectory };
+        let dicomobj = makeDicomJobsFile(imageFilenames, supportingFilenames, jobFileSettings);
+
+        console.log('dicom jobs file', dicomobj);
+
+        await Promise.all(moveFilesPromiseArray);
+
+        let checksums = null;
         if (calcHash) {
             try {
-                checksums=await calculateChecksums(imageFilenames);
-                console.log('++++ Hashes computed',checksums);
-            } catch(e) {
-                console.log('Error in making hashes',e);
+                checksums = await makeHash;
+                console.log('++++ Hashes computed', checksums);
+            } catch (e) {
+                console.log('Error in making hashes', e);
             }
         }
-        
-        
+
+
         //put checksums in dicom_job then write it to disk (if checksums have been calculated)
         if (calcHash && checksums) {
             console.log('Hashes next');
@@ -167,34 +104,34 @@ let dicom2BIDS = async function (opts) {
                 for (let fileEntry of dicomobj.files) {
                     if (val.output.filename.includes(fileEntry.name)) {
                         fileEntry.hash = val.output.hash;
-                        console.log('Filename=',fileEntry.name, val.output.hash);
+                        console.log('Filename=', fileEntry.name, val.output.hash);
                         break;
                     }
                 }
             }
         }
-       
+
 
         let bidsignore = '**/localizer\n**/dicom_job_info.json\n**/name_change_log.txt';
-        console.log('Bidsignore=',bidsignore);
-        
-        let date = new Date();
-        date = new Date().toLocaleDateString() + ' at ' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
+        console.log('Bidsignore=', bidsignore);
+
+        let currentDate = new Date();
+        currentDate = new Date().toLocaleDateString() + ' at ' + currentDate.getHours() + ':' + currentDate.getMinutes() + ':' + currentDate.getSeconds();
         let datasetDescription = {
-            'Name' : 'DICOM dataset converted on ' + date,
+            'Name': 'DICOM dataset converted on ' + currentDate,
             'BIDSVersion': "1.2.0",
-            "License" : "",
-            "Authors" : [],
-            "Funding" : []
+            "License": "",
+            "Authors": [],
+            "Funding": []
         };
-        
+
         //write record of name changes to disk
         let namechangefilename = bis_genericio.joinFilenames(outputdirectory, 'name_change_log.txt');
         let bidsignorefilename = bis_genericio.joinFilenames(outputdirectory, '.bidsignore');
         let dicomjobfilename = bis_genericio.joinFilenames(outputdirectory, dicomParametersFilename);
         let datasetdescriptionfilename = bis_genericio.joinFilenames(outputdirectory, 'dataset_description.json');
 
-        await bis_genericio.write(namechangefilename, changedNames.join('\n'), false);
+        await bis_genericio.write(namechangefilename, changedFilenames.join('\n'), false);
         await bis_genericio.write(bidsignorefilename, bidsignore, false);
         await bis_genericio.write(dicomjobfilename, JSON.stringify(dicomobj, null, 2), false);
         await bis_genericio.write(datasetdescriptionfilename, JSON.stringify(datasetDescription, null, 2), false);
@@ -202,34 +139,13 @@ let dicom2BIDS = async function (opts) {
 
         labelsMap = {};
         return outputdirectory;
-
-    }).catch( (e) => {
+    } catch (e) {
+        console.log('An error occured during BIDS conversion', e);
         labelsMap = {};
-        return errorfn(e);
-    });
-
-
+    }
 
 };
 
-
-/**
- * Writes dicom settings file to disk. 
- * 
- * @param {String} filename - Name of the settings file to save.
- * @param {Object} settings - New settings file to write over transientDicomJobInfo.
- */
-let writeSettingsFile = (filename, settings) => {
-    return new Promise( (resolve, reject) => {
-        if (typeof settings !== 'string') { 
-            settings = JSON.stringify(settings, null, 2);
-        }
-    
-        bis_genericio.write(filename, settings, false)
-            .then( () => { resolve(); })
-            .catch( () => { reject(); });
-    });
-};
 
 /**
  * Calculates checksums for each of the NIFTI files in the BIDS directory.
@@ -242,7 +158,6 @@ let calculateChecksums = (inputFiles) => {
     return new Promise((resolve, reject) => {
         let promises = [];
         for (let filename of inputFiles) {
-            console.log("Adding test ",filename);
             promises.push(bis_genericio.makeFileChecksum(filename));
         }
 
@@ -256,6 +171,58 @@ let calculateChecksums = (inputFiles) => {
 
 };
 
+
+let makeDir = async function (f, errorfn) {
+    try {
+        console.log('making directory', f);
+        await bis_genericio.makeDirectory(f);
+    } catch (e) {
+        if (e.code !== 'EEXIST') {
+            errorfn('Error' + e);
+            return false;
+        } else {
+            console.log('Directory Exists Ignoring');
+        }
+    }
+    return true;
+};
+
+/**
+ * Recursively reads the size of a directory (by reading the size of all its contents).
+ * 
+ * @param {String} item - The name of the root directory when invoking 
+ */
+let readSizeRecursive = (filepath) => {
+    return new Promise( (resolve, reject) => {
+        fs.lstat(filepath, (err, stats) => {
+            if (err) { console.log('err', err); reject(err); return; }
+            if (stats.isDirectory()) {
+                let total = stats.size;
+
+                fs.readdir(filepath, (err, children) => {
+                    if (err) { reject(err); }
+
+                    let reads = [];
+                    for (let child of children) {
+                        reads.push(readSizeRecursive([filepath, child].join('/')));
+                    }
+
+                    Promise.all(reads).then( (values) => {
+
+                        for (let value of values) { total = total + value; }
+                        resolve(total);
+                    });
+                });
+    
+                
+            } else {
+                resolve(stats.size);
+            }
+        });
+    }).catch( (err) => {
+        console.log('Promise array failed Read size recursive encountered an error', err); 
+    });
+};
 
 let getBIDSDirname =  (filename, flist, dirs) => {
     let name = filename.toLowerCase(), dirname = 'anat';
@@ -339,53 +306,16 @@ let parseBIDSLabel = (name, directory) => {
 };
 
 /**
- * Recursively reads the size of a directory (by reading the size of all its contents).
- * 
- * @param {String} item - The name of the root directory when invoking 
- */
-let readSizeRecursive = (filepath) => {
-    return new Promise( (resolve, reject) => {
-        fs.lstat(filepath, (err, stats) => {
-            if (err) { console.log('err', err); reject(err); return; }
-            if (stats.isDirectory()) {
-                let total = stats.size;
-
-                fs.readdir(filepath, (err, children) => {
-                    if (err) { reject(err); }
-
-                    let reads = [];
-                    for (let child of children) {
-                        reads.push(readSizeRecursive([filepath, child].join('/')));
-                    }
-
-                    Promise.all(reads).then( (values) => {
-
-                        for (let value of values) { total = total + value; }
-                        resolve(total);
-                    });
-                });
-    
-                
-            } else {
-                resolve(stats.size);
-            }
-        });
-    }).catch( (err) => {
-        console.log('Promise array failed Read size recursive encountered an error', err); 
-    });
-};
-
-/**
  * Creates the set of directories needed for a BIDS compliant study, i.e. root folder, subject folder, and 'anat', 'func', 'localizer', and 'dwi' folders. 
  * 
  * @param {String} outputdirectory - Name of the base directory for the study.
  * @param {String} subjectdirectory - Name of the subject directory for the study.
  * @returns Object containing the paths of all the imaging type directories (e.g. path for anat, func, etc.)
  */
-let makeBIDSDirectories = async (outputdirectory, subjectdirectory) => {
+let makeBIDSDirectories = async (outputdirectory, subjectdirectory, errorfn) => {
     try {
-        await makeDir(outputdirectory);
-        await makeDir(subjectdirectory);
+        await makeDir(outputdirectory, errorfn);
+        await makeDir(subjectdirectory, errorfn);
         console.log(colors.green('....\nCreated output directory : '+outputdirectory));
     } catch (e) {
         return errorfn('Failed to make directory ' + e);
@@ -398,10 +328,10 @@ let makeBIDSDirectories = async (outputdirectory, subjectdirectory) => {
     let diffdir = bis_genericio.joinFilenames(subjectdirectory, 'dwi');
 
     try {
-        await makeDir(funcdir);
-        await makeDir(anatdir);
-        await makeDir(diffdir);
-        await makeDir(locdir);
+        await makeDir(funcdir, errorfn);
+        await makeDir(anatdir, errorfn);
+        await makeDir(diffdir, errorfn);
+        await makeDir(locdir, errorfn);
     } catch (e) {
         return errorfn('failed to make directory' + e);
     }
@@ -430,7 +360,7 @@ let generateMoveFilesArrays = (imagefiles, supportingfiles, dirs) => {
 
         let name = imagefiles[i];
         let dirname = getBIDSDirname(name, imagefiles, dirs);
-        console.log('dirname', dirname);
+        dirname = bis_genericio.joinFilenames(dirs.subjectdirectory, dirname);
 
         let basename = bis_genericio.getBaseName(name);
         let dirbasename = bis_genericio.getBaseName(dirname);
@@ -452,9 +382,7 @@ let generateMoveFilesArrays = (imagefiles, supportingfiles, dirs) => {
                 moveFilePromises.push(bis_genericio.copyFile(suppfile + '&&' + suppTarget));
             }
 
-            console.log('supporting file target', suppTarget);
         }
-
 
         let formattedBasename = makeBIDSFilename(basename, dirbasename, dirs.subjectdirectory);
         let target = bis_genericio.joinFilenames(dirname, formattedBasename);
@@ -465,14 +393,11 @@ let generateMoveFilesArrays = (imagefiles, supportingfiles, dirs) => {
             imageFilenames.push(target);
         } 
 
-        console.log('image filename', target);
     }
 
 
-
-    return { 'moveFilesPromises' : moveFilesPromises, 'changedNames' : changedNames, 'imageFilenames' : imageFilenames, 'supportingFilesnames' : supportingFilenames };
-
-
+    console.log('move file promises', moveFilePromises, 'image filenames', imageFilenames, 'supporting filenames', supportingFilenames);
+    return { 'moveFilesPromiseArray' : moveFilePromises, 'changedFilenames' : changedNames, 'imageFilenames' : imageFilenames, 'supportingFilenames' : supportingFilenames };
 
 
     //Local functions to parse BIDS filenames
@@ -533,37 +458,64 @@ let generateMoveFilesArrays = (imagefiles, supportingfiles, dirs) => {
 };
 
 /**
- * Reads settings file from disk and returns the contents.
+ * Creates a JSON object containing metadata relevant to the study, including the date of the study's creation, the platform it was invoked from and the full structure of the study.
+ * This file will be written to disk at the same time as the other study metadate files. 
+ * 
+ * @param {Array} imageFilenames - List of the study's images in BIDS format.
+ * @param {Array} supportingFilenames - List of the study's supporting files in BIDS format.
+ * @param {Object} settings - Various parameters relevant to the job file, including the date the images were created and the context in which this function ran (e.g. directly from dcm2nii or from a separate process invoking BIDS conversion).
+ * @returns The full JSON for the DICOM job file. 
  */
-let getSettingsFile = (filename) => {
-    return new Promise( (resolve, reject) => {
-        bis_genericio.read(filename).then( (obj) => {
-            try {
-                console.log('obj', obj);
-                let fileInfo = JSON.parse(obj.data);
-                resolve(fileInfo);
-            } catch (e) {
-                reject(e);
-            }
-        });
-    });
-};
+let makeDicomJobsFile = (imageFilenames, supportingFilenames, settings) => {
 
-let makeDir = async function (f) {
-    try {
-        console.log('making directory', f);
-        await bis_genericio.makeDirectory(f);
-    } catch (e) {
-        if (e.code !== 'EEXIST') {
-            errorfn('Error' + e);
-            return false;
-        } else {
-            console.log('Directory Exists Ignoring');
+    let date = settings.date, dcm2nii = settings.dcm2nii, outputdirectory = settings.outputdirectory;
+
+    //separate date string into individual chunks
+    let year = date.substring(0, 4), month = date.substring(4, 6), day = date.substring(6, 8), hour = date.substring(8, 10), minute = date.substring(10, 12);
+
+    let dicomobj = {
+        "source": dcm2nii ? 'dcm2nii' : 'BIDS import',
+        'platform' : baseutil.getSystemInfo(biswrap),
+        'location' : baseutil.getExecutableArguments('bids_utils'),
+        "bidsversion": "1.1.0",
+        "description": `Dataset generated on ${month}/${day}, ${year} at ${hour}:${minute}`,
+        "files": [],
+    };
+
+    for (let i = 0; i < imageFilenames.length; i++) {
+        let fname = imageFilenames[i];
+        let name = bis_genericio.getBaseName(fname);
+        let infoname = '';
+        if (name.includes(".nii.gz")) {
+
+            //find supporting files from file list 
+            let basename = name.split('.')[0], suppfileArray = [];
+            for (let file of supportingFilenames) {
+                if (file.includes(basename)) {
+                    suppfileArray.push(file.substr(outputdirectory.length + 1, file.length));
+                }
+            }
+
+            dicomobj.files.push({
+                name: name,
+                filename: fname.substr(outputdirectory.length + 1, fname.length),
+                hash: 'no checksums',
+                supportingfiles: suppfileArray,
+                details: infoname
+            });
         }
     }
-    return true;
+
+    return dicomobj;
 };
 
+let parseDate = (dcm2niiImage) => {
+    //date will be a 14 character string in the middle of a filename
+    let dateRegex = /\d{14}/g;
+    let fileString = dcm2niiImage;
+    let dateMatch = dateRegex.exec(fileString);
+    return dateMatch[0];
+};
 
 /**
  * Makes supporting files match the format of their parent image files which have been changed by another operation.
@@ -669,6 +621,40 @@ let syncSupportingFiles = (changedFiles, taskName, baseDirectory) => {
     }
 };
 
+/**
+ * Writes dicom settings file to disk. 
+ * 
+ * @param {String} filename - Name of the settings file to save.
+ * @param {Object} settings - New settings file to write over transientDicomJobInfo.
+ */
+let writeSettingsFile = (filename, settings) => {
+    return new Promise( (resolve, reject) => {
+        if (typeof settings !== 'string') { 
+            settings = JSON.stringify(settings, null, 2);
+        }
+    
+        bis_genericio.write(filename, settings, false)
+            .then( () => { resolve(); })
+            .catch( () => { reject(); });
+    });
+};
+
+/**
+ * Reads settings file from disk and returns the contents.
+ */
+let getSettingsFile = (filename) => {
+    return new Promise( (resolve, reject) => {
+        bis_genericio.read(filename).then( (obj) => {
+            try {
+                console.log('obj', obj);
+                let fileInfo = JSON.parse(obj.data);
+                resolve(fileInfo);
+            } catch (e) {
+                reject(e);
+            }
+        });
+    });
+};
 
 module.exports = {
     dicom2BIDS: dicom2BIDS,
