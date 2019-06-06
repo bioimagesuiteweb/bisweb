@@ -41,15 +41,14 @@ let dicom2BIDS = async function (opts) {
 
         //read size of directory to determine whether or not to calculate checksums
         let total = await readSizeRecursive(indir) / 1024 / 1024 / 1024; //convert to gigabytes
-
         let calcHash = true;
         if (total > 2) { console.log('study too large to parse checksums, skipping'); calcHash = false; }
 
         let matchniix = bis_genericio.joinFilenames(indir, '*(*.nii.gz|*.nii)');
         let matchsupp = bis_genericio.joinFilenames(indir, '!(*.nii.gz|*.nii)');
-
         let imageFiles = await bis_genericio.getMatchingFiles(matchniix);
         let supportingFiles = await bis_genericio.getMatchingFiles(matchsupp);
+
 
         //Parse date of the image out of a random dcm2nii image
         let date = parseDate(imageFiles[0]);
@@ -72,35 +71,20 @@ let dicom2BIDS = async function (opts) {
         console.log('parsed filenames', imageFilenames);
 
         let makeHash = null;
-        if (calcHash) {
-            makeHash = calculateChecksums(imageFilenames);
-        } else {
-            makeHash = [Promise.resolve()];
-        }
+        if (calcHash) { makeHash = calculateChecksums(imageFilenames); } 
+        else { makeHash = [Promise.resolve()]; }
 
         let jobFileSettings = { 'date': date, 'dcm2nii': dcm2nii, 'outputdirectory': outputdirectory };
         let dicomobj = makeDicomJobsFile(imageFilenames, supportingFilenames, jobFileSettings);
-
-        console.log('dicom jobs file', dicomobj);
 
         await Promise.all(moveFilesPromiseArray);
 
         let checksums = null;
         if (calcHash) {
-            try {
-                checksums = await makeHash;
-                console.log('++++ Hashes computed', checksums);
-            } catch (e) {
-                console.log('Error in making hashes', e);
-            }
-        }
+            checksums = await makeHash;
+            console.log('++++ Hashes computed', checksums);
 
-
-        //put checksums in dicom_job then write it to disk (if checksums have been calculated)
-        if (calcHash && checksums) {
-            console.log('Hashes next');
             for (let val of checksums) {
-                console.log('val', val);
                 for (let fileEntry of dicomobj.files) {
                     if (val.output.filename.includes(fileEntry.name)) {
                         fileEntry.hash = val.output.hash;
@@ -111,31 +95,7 @@ let dicom2BIDS = async function (opts) {
             }
         }
 
-
-        let bidsignore = '**/localizer\n**/dicom_job_info.json\n**/name_change_log.txt';
-        console.log('Bidsignore=', bidsignore);
-
-        let currentDate = new Date();
-        currentDate = new Date().toLocaleDateString() + ' at ' + currentDate.getHours() + ':' + currentDate.getMinutes() + ':' + currentDate.getSeconds();
-        let datasetDescription = {
-            'Name': 'DICOM dataset converted on ' + currentDate,
-            'BIDSVersion': "1.2.0",
-            "License": "",
-            "Authors": [],
-            "Funding": []
-        };
-
-        //write record of name changes to disk
-        let namechangefilename = bis_genericio.joinFilenames(outputdirectory, 'name_change_log.txt');
-        let bidsignorefilename = bis_genericio.joinFilenames(outputdirectory, '.bidsignore');
-        let dicomjobfilename = bis_genericio.joinFilenames(outputdirectory, dicomParametersFilename);
-        let datasetdescriptionfilename = bis_genericio.joinFilenames(outputdirectory, 'dataset_description.json');
-
-        await bis_genericio.write(namechangefilename, changedFilenames.join('\n'), false);
-        await bis_genericio.write(bidsignorefilename, bidsignore, false);
-        await bis_genericio.write(dicomjobfilename, JSON.stringify(dicomobj, null, 2), false);
-        await bis_genericio.write(datasetdescriptionfilename, JSON.stringify(datasetDescription, null, 2), false);
-        console.log('----- output directory', outputdirectory);
+        await writeDicomMetadataFiles(dicomobj, outputdirectory, changedFilenames);
 
         labelsMap = {};
         return outputdirectory;
@@ -171,11 +131,17 @@ let calculateChecksums = (inputFiles) => {
 
 };
 
-
-let makeDir = async function (f, errorfn) {
+/**
+ * Makes a directory.
+ * 
+ * @param {String} filename - Name of the directory to create.
+ * @param {Function} errorfn - Function to call on error.
+ * @returns True if successful, false otherwise.
+ */
+let makeDir = async function (filename, errorfn) {
     try {
-        console.log('making directory', f);
-        await bis_genericio.makeDirectory(f);
+        console.log('making directory', filename);
+        await bis_genericio.makeDirectory(filename);
     } catch (e) {
         if (e.code !== 'EEXIST') {
             errorfn('Error' + e);
@@ -509,12 +475,47 @@ let makeDicomJobsFile = (imageFilenames, supportingFilenames, settings) => {
     return dicomobj;
 };
 
+/**
+ * Parses date and time from a dcm2niix image that has been converted with '%t' specified (i.e. with session date and time appended).
+ * 
+ * @param {String} dcm2niiImage - Name of an image generated by dcm2nii. 
+ * @returns The 14 character date and time string.
+ */
 let parseDate = (dcm2niiImage) => {
     //date will be a 14 character string in the middle of a filename
     let dateRegex = /\d{14}/g;
     let fileString = dcm2niiImage;
     let dateMatch = dateRegex.exec(fileString);
     return dateMatch[0];
+};
+
+let writeDicomMetadataFiles = async (dicomJobs, outputdirectory, changedFilenames) => {
+    let bidsignore = '**/localizer\n**/dicom_job_info.json\n**/name_change_log.txt';
+    console.log('Bidsignore=', bidsignore);
+
+    let currentDate = new Date();
+    currentDate = new Date().toLocaleDateString() + ' at ' + currentDate.getHours() + ':' + currentDate.getMinutes() + ':' + currentDate.getSeconds();
+    let datasetDescription = {
+        'Name': 'DICOM dataset converted on ' + currentDate,
+        'BIDSVersion': "1.2.0",
+        "License": "",
+        "Authors": [],
+        "Funding": []
+    };
+
+    //write record of name changes to disk
+    let namechangefilename = bis_genericio.joinFilenames(outputdirectory, 'name_change_log.txt');
+    let bidsignorefilename = bis_genericio.joinFilenames(outputdirectory, '.bidsignore');
+    let dicomjobfilename = bis_genericio.joinFilenames(outputdirectory, dicomParametersFilename);
+    let datasetdescriptionfilename = bis_genericio.joinFilenames(outputdirectory, 'dataset_description.json');
+
+    await bis_genericio.write(namechangefilename, changedFilenames.join('\n'), false);
+    await bis_genericio.write(bidsignorefilename, bidsignore, false);
+    await bis_genericio.write(dicomjobfilename, JSON.stringify(dicomJobs, null, 2), false);
+    await bis_genericio.write(datasetdescriptionfilename, JSON.stringify(datasetDescription, null, 2), false);
+    console.log('----- output directory', outputdirectory);
+
+    return;
 };
 
 /**
