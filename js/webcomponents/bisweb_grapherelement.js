@@ -572,15 +572,11 @@ class GrapherModule extends HTMLElement {
             dropdownMenu.empty();
 
             //check for optional charts in settings and alphabetize keys so that they display in order in the dropdown
-            let keys, optionalChartKeys = {};
+            let keys = Object.keys(settings.charts), optionalChartKeys = {};
             if (settings.chartSettings && settings.chartSettings.optionalCharts) {
-
                 optionalChartKeys = settings.chartSettings.optionalCharts;
-                keys = Object.keys(settings.charts).concat(optionalChartKeys); 
-            } else {
-                keys = Object.keys(settings.charts);
             }
-            
+
             keys.sort();
             for (let i = 0 ; i < keys.length; i++) {
                 addItemToDropdown(keys[i], dropdownMenu, optionalChartKeys);
@@ -605,7 +601,7 @@ class GrapherModule extends HTMLElement {
         function addItemToDropdown(key, dropdownMenu, optionalCharts) {
             let button; 
             if (optionalCharts.includes(key)) {
-                button = $(`<a class='dropdown-item bisweb-optional' style='visibility: hidden' href='#'>${key}<br></a>`);
+                button = $(`<a class='dropdown-item bisweb-optional' href='#'>${key}<br></a>`);
             } else {
                 button = $(`<a class='dropdown-item' href='#'>${key}<br></a>`);
             }

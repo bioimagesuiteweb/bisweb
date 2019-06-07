@@ -491,7 +491,6 @@ class FileTreePipeline extends HTMLElement {
                     taskCharts[regionKey] = this.graphelement.formatChartData(regionsArray, new Array(labelsArray.length).fill(1), labelsArray, false, false);
                 }
 
-                console.log('HDRF charts', HDRFCharts);
                 taskCharts = Object.assign(taskCharts, HDRFCharts);
                 taskCharts['block_chart'] = blockChart;
 
