@@ -224,6 +224,10 @@ class BisWebSubviewer {
         // events
     }
 
+    // ---------------------------------------------------------------------
+    // ------------------------ State Manipulation Code --------------------
+    // ---------------------------------------------------------------------
+
     /** @returns{Number} - the zoom factor */
     getZoomFactor() {   return this.internal._zoomFactor; }
 
@@ -283,128 +287,6 @@ class BisWebSubviewer {
 
 
     }
-    
-    
-    // methods
-    /** handles resizing of dom
-     */
-    handleResize() {
-        
-        //console.log('Handling Resize',this.plane);
-        let box = this.domElement.getBoundingClientRect();
-        this.screen.left = box.left;
-        this.screen.top = box.top;
-        this.screen.width = box.width;
-        this.screen.height = box.height;
-    }
-    
-    /** check if mouse is on screen
-     */
-    getMouseOnScreen(pageX,pageY) {
-        
-        this._temp.mouseOnScreenVector.set(
-            ( pageX - this.screen.left ) / this.screen.width,
-            ( pageY - this.screen.top )  / this.screen.height
-        );
-            
-        return this._temp.mouseOnScreenVector;
-    }
-    
-    /** getMouse Projection -- xenios fixed 
-     */
-    getMouseProjectionOnBall(nx,ny) {
-            
-        this._temp.mouseOnBall.set(nx,-ny,0.0);
-        let length = this._temp.mouseOnBall.length();
-            
-        if ( this.noRoll ) {
-            if ( length < Math.SQRT1_2 ) {
-                this._temp.mouseOnBall.z = Math.sqrt( 1.0 - length*length );
-            } else {
-                this._temp.mouseOnBall.z = 0.5 / length;
-            }
-        } else if ( length > 1.0 ) {
-            this._temp.mouseOnBall.normalize();
-        } else {
-            this._temp.mouseOnBall.z = Math.sqrt( 1.0 - length * length );
-        }
-            
-        this.internal._eye.copy( this.camera.position ).sub( this.target );
-        this._temp.projectVector.copy( this.camera.up ).setLength( this._temp.mouseOnBall.y );
-        this._temp.projectVector.add(this._temp.cameraUp.copy( this.camera.up ).cross( this.internal._eye ).setLength( this._temp.mouseOnBall.x ) );
-        this._temp.projectVector.add( this.internal._eye.setLength( this._temp.mouseOnBall.z ) );
-        return this._temp.projectVector;
-    }
-    
-    /** rotateCamera  */
-    rotateCamera() {
-
-        let angle = Math.acos( this.internal._rotateStart.dot( this.internal._rotateEnd ) / this.internal._rotateStart.length() / this.internal._rotateEnd.length() );
-        
-        if ( angle ) {
-            
-            this._temp.axis.crossVectors( this.internal._rotateStart, this.internal._rotateEnd ).normalize();
-            angle *= this.rotateSpeed;
-            this._temp.quaternion.setFromAxisAngle( this._temp.axis, -angle );
-                
-            this.internal._eye.applyQuaternion( this._temp.quaternion );
-            this.camera.up.applyQuaternion( this._temp.quaternion );
-            
-            this.internal._rotateEnd.applyQuaternion( this._temp.quaternion );
-            this.internal._rotateStart.copy( this.internal._rotateEnd );
-        }
-    }
-
-    /** zoomCamera  */
-    zoomCamera( manualfactor=null) {
-
-        let manual=manualfactor;
-        let factor=1.0;
-
-        if (manual === null) {
-            if ( this.internal._state === STATE.TOUCH_ZOOM_PAN ) {
-                factor = 1.0+  (this.internal._touchZoomDistanceStart - this.internal._touchZoomDistanceEnd)* 0.05*this.zoomSpeed;
-            } else {
-                factor = 1.0 + ( this.internal._zoomEnd.y - this.internal._zoomStart.y ) * this.zoomSpeed;
-            }
-        } else {
-            factor=manual;
-        }
-        
-        if ( factor !== 1.0 && factor > 0.0 ) {
-            this.internal._zoomFactor *= factor;
-
-            this.camera.left = this.internal._zoomFactor * this.left0 + ( 1 - this.internal._zoomFactor ) *  this.center0.x;
-            this.camera.right = this.internal._zoomFactor * this.right0 + ( 1 - this.internal._zoomFactor ) *  this.center0.x;
-            this.camera.top = this.internal._zoomFactor * this.top0 + ( 1 - this.internal._zoomFactor ) *  this.center0.y;
-            this.camera.bottom = this.internal._zoomFactor * this.bottom0 + ( 1 - this.internal._zoomFactor ) *  this.center0.y;
-            
-            this.internal._zoomStart.copy( this.internal._zoomEnd );
-            this.internal._touchZoomDistanceStart = this.internal._touchZoomDistanceEnd;
-        }
-        
-    }
-    
-    /** panCamera
-     */
-    panCamera() {
-
-        /*var mouseChange = new THREE.Vector2(),
-          cameraUp = new THREE.Vector3(),
-          pan = new THREE.Vector3();*/
-        
-        this._temp.mouseChange.copy( this.internal._panEnd ).sub( this.internal._panStart );
-            
-        if ( this._temp.mouseChange.lengthSq() ) {
-                
-            this._temp.mouseChange.multiplyScalar( this.internal._eye.length() * this.panSpeed );
-            this._temp.pan.copy( this.internal._eye ).cross( this.camera.up ).setLength( this._temp.mouseChange.x );
-            this._temp.pan.add( this._temp.cameraUp.copy( this.camera.up ).setLength( -this._temp.mouseChange.y ) );
-            this.camera.position.add( this._temp.pan );
-            this.target.add( this._temp.pan );
-            this.internal._panStart.copy( this.internal._panEnd );
-        }
-    }
 
     /** set the normalized viewport */
     setNormViewport(vp,resize=true) {
@@ -461,11 +343,27 @@ class BisWebSubviewer {
 
         
     }
-    
 
+    /** returns the viewport of the subviewer */
     getNormViewport() { return this.normViewport; }
     
 
+
+    // ---------------------------------------------------------------------
+    // ------------------------ High Level Rendering Code ------------------
+    // ---------------------------------------------------------------------
+
+    /** handles resizing of dom  */
+    handleResize() {
+        
+        //console.log('Handling Resize',this.plane);
+        let box = this.domElement.getBoundingClientRect();
+        this.screen.left = box.left;
+        this.screen.top = box.top;
+        this.screen.width = box.width;
+        this.screen.height = box.height;
+    }
+    
     
     /** Render -- invokes render on the subviewer  */
     render() {
@@ -578,6 +476,121 @@ class BisWebSubviewer {
         this.zoomCamera(1.0/(this.internal._zoomFactor||1.0));
     }
     
+    // ---------------------------------------------------------------------
+    // ----------------------------- Camera Manipulation -------------------
+    // ---------------------------------------------------------------------
+    
+    /** check if mouse is on screen
+     */
+    getMouseOnScreen(pageX,pageY) {
+        
+        this._temp.mouseOnScreenVector.set(
+            ( pageX - this.screen.left ) / this.screen.width,
+            ( pageY - this.screen.top )  / this.screen.height
+        );
+            
+        return this._temp.mouseOnScreenVector;
+    }
+    
+    /** getMouse Projection -- xenios fixed 
+     */
+    getMouseProjectionOnBall(nx,ny) {
+            
+        this._temp.mouseOnBall.set(nx,-ny,0.0);
+        let length = this._temp.mouseOnBall.length();
+            
+        if ( this.noRoll ) {
+            if ( length < Math.SQRT1_2 ) {
+                this._temp.mouseOnBall.z = Math.sqrt( 1.0 - length*length );
+            } else {
+                this._temp.mouseOnBall.z = 0.5 / length;
+            }
+        } else if ( length > 1.0 ) {
+            this._temp.mouseOnBall.normalize();
+        } else {
+            this._temp.mouseOnBall.z = Math.sqrt( 1.0 - length * length );
+        }
+
+        this.internal._eye.copy( this.camera.position ).sub( this.target );
+        this._temp.projectVector.copy( this.camera.up ).setLength( this._temp.mouseOnBall.y );
+        this._temp.projectVector.add(this._temp.cameraUp.copy( this.camera.up ).cross( this.internal._eye ).setLength( this._temp.mouseOnBall.x ) );
+        this._temp.projectVector.add( this.internal._eye.setLength( this._temp.mouseOnBall.z ) );
+        return this._temp.projectVector;
+    }
+    
+    /** rotateCamera  */
+    rotateCamera() {
+
+        let angle = Math.acos( this.internal._rotateStart.dot( this.internal._rotateEnd ) / this.internal._rotateStart.length() / this.internal._rotateEnd.length() );
+        
+        if ( angle ) {
+            
+            this._temp.axis.crossVectors( this.internal._rotateStart, this.internal._rotateEnd ).normalize();
+            angle *= this.rotateSpeed;
+            this._temp.quaternion.setFromAxisAngle( this._temp.axis, -angle );
+                
+            this.internal._eye.applyQuaternion( this._temp.quaternion );
+            this.camera.up.applyQuaternion( this._temp.quaternion );
+            
+            this.internal._rotateEnd.applyQuaternion( this._temp.quaternion );
+            this.internal._rotateStart.copy( this.internal._rotateEnd );
+        }
+    }
+
+    /** zoomCamera  */
+    zoomCamera( manualfactor=null) {
+
+        let manual=manualfactor;
+        let factor=1.0;
+
+        if (manual === null) {
+            if ( this.internal._state === STATE.TOUCH_ZOOM_PAN ) {
+                factor = 1.0+  (this.internal._touchZoomDistanceStart - this.internal._touchZoomDistanceEnd)* 0.05*this.zoomSpeed;
+            } else {
+                factor = 1.0 + ( this.internal._zoomEnd.y - this.internal._zoomStart.y ) * this.zoomSpeed;
+            }
+        } else {
+            factor=manual;
+        }
+        
+        if ( factor !== 1.0 && factor > 0.0 ) {
+            this.internal._zoomFactor *= factor;
+
+            this.camera.left = this.internal._zoomFactor * this.left0 + ( 1 - this.internal._zoomFactor ) *  this.center0.x;
+            this.camera.right = this.internal._zoomFactor * this.right0 + ( 1 - this.internal._zoomFactor ) *  this.center0.x;
+            this.camera.top = this.internal._zoomFactor * this.top0 + ( 1 - this.internal._zoomFactor ) *  this.center0.y;
+            this.camera.bottom = this.internal._zoomFactor * this.bottom0 + ( 1 - this.internal._zoomFactor ) *  this.center0.y;
+            
+            this.internal._zoomStart.copy( this.internal._zoomEnd );
+            this.internal._touchZoomDistanceStart = this.internal._touchZoomDistanceEnd;
+        }
+        
+    }
+    
+    /** panCamera
+     */
+    panCamera() {
+
+        /*var mouseChange = new THREE.Vector2(),
+          cameraUp = new THREE.Vector3(),
+          pan = new THREE.Vector3();*/
+        
+        this._temp.mouseChange.copy( this.internal._panEnd ).sub( this.internal._panStart );
+            
+        if ( this._temp.mouseChange.lengthSq() ) {
+                
+            this._temp.mouseChange.multiplyScalar( this.internal._eye.length() * this.panSpeed );
+            this._temp.pan.copy( this.internal._eye ).cross( this.camera.up ).setLength( this._temp.mouseChange.x );
+            this._temp.pan.add( this._temp.cameraUp.copy( this.camera.up ).setLength( -this._temp.mouseChange.y ) );
+            this.camera.position.add( this._temp.pan );
+            this.target.add( this._temp.pan );
+            this.internal._panStart.copy( this.internal._panEnd );
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // -----------------------------   Event Handling        ---------------
+    // ---------------------------------------------------------------------
     // listeners
     /** keydown listener */
     keydown(event ) {
