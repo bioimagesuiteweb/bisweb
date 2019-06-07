@@ -106,7 +106,7 @@ describe('Testing the Electrode Grids class (from bisweb_electrodemultigrid.js) 
                 console.log('---- Bad line',i,' ('+obj1[i]+') vs ('+obj2[i]+')');
                 same=false;
             } else if (i%(17*16) === 0) {
-                console.log('\y ++++ Same line',i,'('+obj1[i]+') vs ('+obj2[i]+')');
+                console.log('\t ++++ Same line',i,'('+obj1[i]+') vs ('+obj2[i]+')');
             }
         }
         

@@ -84,7 +84,6 @@ class BisWebElectrodeMultiGrid extends BisWebDataObject{
      * @return {Promise} a promise that is fuilfilled when the image is loaded
      */
     load(fobj) {
-        const self=this;
         let ext = fobj.name ? fobj.name.split('.').pop() : fobj.split('.').pop();
         if (ext==='MGRID' || ext==='mgrid')
             return this.loadMGRIDFile(fobj);
@@ -113,7 +112,7 @@ class BisWebElectrodeMultiGrid extends BisWebDataObject{
 
         let output = this.serializeToJSON();
         return new Promise( function(resolve,reject) {
-            genericio.write(fobj,output).then( (f) => {
+            genericio.write(fobj,output).then( () => {
                 console.log('++++\t saved grid json in '+fobj);
                 resolve('++++\t saved grid json in '+fobj);
             }).catch( (e) => { reject(e); });
@@ -229,8 +228,13 @@ class BisWebElectrodeMultiGrid extends BisWebDataObject{
     // ----------------------------------------------------------------------------------------
     // Local Extensions
     // ----------------------------------------------------------------------------------------
+
+    getNumGrids() {
+        return this.data.numgrids;
+    }
+    
     getGrid(i) {
-        if (i<0 || i>=this.numgrids)
+        if (i<0 || i>=this.data.numgrids)
             return null;
         return this.data.grids[i];
     }
@@ -287,7 +291,9 @@ class BisWebElectrodeMultiGrid extends BisWebDataObject{
         let electrodetype=txt[lineno+11];
         let radius=txt[lineno+13];
         let thickness=txt[lineno+15];
-        let color=txt[lineno+17];
+        let color=txt[lineno+17].trim().split(' ');
+        for (let i=0;i<=2;i++)
+            color[i]=parseFloat(color[i]);
         lineno=lineno+17;
         
         let dims=dimensions.split(" ");
@@ -345,7 +351,7 @@ class BisWebElectrodeMultiGrid extends BisWebDataObject{
                 this.data['patient']=pname;
                 this.data['comment']=comment;
                 this.data['numgrids']=numgrids,
-                this.data['grids']=egrid
+                this.data['grids']=egrid;
                 this.setFilename(fdataobj.filename);
                 console.log('++++\t loaded mgrid file from '+fdataobj.filename);
                 resolve('loaded mgrid file from '+fdataobj.filename);
@@ -387,7 +393,7 @@ ${grid.radius}
 #Thickeness
 ${grid.thickness}
 #Color
-${grid.color}`;
+${grid.color[0].toFixed(3)} ${grid.color[1].toFixed(3)} ${grid.color[2].toFixed(3)}`;
             let electrodes=grid.electrodes;
             let index=0;
             for (let ja=0;ja<grid.dimensions[1];ja++) {
@@ -443,7 +449,7 @@ ${elec.values.length}`;
         output+='\n';
         
         return new Promise( (resolve,reject) => {
-            genericio.write(fname,output).then( (f) => {
+            genericio.write(fname,output).then( () => {
                 console.log('++++\t saved in mgrid format in '+fname);
                 resolve('++++\t saved in mgrid format in '+fname);
             }).catch( (e) => { reject(e); });
