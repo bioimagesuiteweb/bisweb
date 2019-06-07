@@ -123,7 +123,6 @@ class FileTreePipeline extends HTMLElement {
             'name': 'Convert task file to .tsv', 
             'type' : 'primary', 
             'callback': (f) => {
-                this.graphelement.chartInvokedFrom = 'task';
                 this.createTSVParseModal(f);
             },
         },
@@ -134,7 +133,41 @@ class FileTreePipeline extends HTMLElement {
                 ],
                 'suffix': 'json',
                 'save': false,
-        });
+            }
+        );
+
+        let convertTasksButton = bis_webfileutil.createFileButton({
+            'name' : 'Convert .tsvs to task file',
+            'type' : 'info',
+            'callback' : (f) => {
+                let saveFileCallback = (o) => { 
+                    bootbox.prompt({
+                        'size' : 'small',
+                        'title' : 'Enter the TR for the study',
+                        'input' : 'number',
+                        'callback' : (result) => {
+                            bis_bidsutils.parseTaskFileFromTSV(f, o, result);
+                        }  
+                    });
+
+                };
+                    
+                setTimeout( () => {
+                    bis_webfileutil.genericFileCallback( 
+                        {
+                            'title' : 'Choose output directory',
+                            'filters' : 'DIRECTORY',
+                            'save' : false
+                        }, saveFileCallback);
+                }, 1);
+            }
+        },
+            {
+                'title' : 'Choose directory containing .tsv files',
+                'filters' : 'DIRECTORY',
+                'save' : false
+            }
+        );
 
         
         plotTasksButton.addClass('bisweb-load-enable');
@@ -144,6 +177,7 @@ class FileTreePipeline extends HTMLElement {
         taskButtonBar.append(clearTaskButton);
         taskButtonBar.append(plotTasksButton);
         taskButtonBar.append(convertTSVButton);
+        taskButtonBar.append(convertTasksButton);
 
 
         return taskButtonBar;

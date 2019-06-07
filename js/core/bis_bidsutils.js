@@ -743,12 +743,16 @@ let parseTaskFileToTSV = (filename, baseDirectory) => {
             // ------ Write tsv file with the parsed values and a few other parameters gleaned from the task file
             let tr = parsedData['TR'];
             let offset = parsedData['offset'];
+            let units = parsedData['units'];
+            if (units === 'seconds') { tr = 1; } //ignore TR if units are already in seconds
+
             let promiseArray = [], tsvData = {};
             for (let runName of Object.keys(orderedRuns)) {
                 let tsvFile = "onset\tduration\ttrial_type\n\r";
                 for (let task of orderedRuns[runName]) {
-                    let lowRange = (task.value[0] - offset) * tr, highRange = (task.value[1] - offset) * tr;
-                    let duration = (highRange - lowRange); 
+                    let lowRange = (task.value[0] - offset) * tr, 
+                        highRange = (task.value[1] - offset) * tr,
+                        duration = (highRange - lowRange); 
     
                     tsvFile = tsvFile + '' + lowRange + '\t' + duration + '\t' + task.task + '\n\r';
                 }
@@ -842,10 +846,77 @@ let parseTaskFileToTSV = (filename, baseDirectory) => {
     }
 };
 
+let parseTaskFileFromTSV = (tsvDirectory, outputDirectory, tr) => {
+    return new Promise ( (resolve, reject) => {
+        let matchstring = tsvDirectory + '/*.tsv';
+        bis_genericio.getMatchingFiles(matchstring).then( (files) => {
+            
+            let parsedJSON = { 'runs' : {} };
+
+            let loadFileFn = (filename) => {
+                return new Promise( (resolve, reject) => {
+                    bis_genericio.read(filename).then( (obj) => {
+                        let tsvData = obj.data, parsedData;
+                        
+                        //Split rows based on newline character to get each row
+                        let splitRows = tsvData.split('\n');
+                        console.log('split rows', splitRows);
+
+                        let cols = splitRows[0].split('\t');
+                        let onsetIndex = cols.findIndex ( (element) => { return element.toLowerCase() === 'onset'});
+                        let durationIndex = cols.findIndex( (element) => { return element.toLowerCase() === 'duration'});
+                        let typeIndex = cols.findIndex( (element) => { return element.toLowerCase() === 'event_type'});
+
+                        splitRows = splitRows.slice(1,-1);
+                        for (let row of splitRow) {
+                            let onset = row[onsetIndex];
+                            let duration = row[durationIndex]; 
+                            let type = row[typeIndex];
+
+                            addData(onset, duration, type, parsedData);
+                        }
+
+                        resolve(parsedData);
+                    }).catch( (e) => {
+                        reject(e);
+                    });
+                });
+            }; 
+
+            //load each file in turn and add its contents to the json file
+            let parseTSVPromiseArray = []
+            for (let file of files) {
+                parseTSVPromiseArray.push(loadFileFn(file));
+            }
+
+            Promise.all(parseTSVPromiseArray).then( (objs) => {
+                console.log('objs', objs);
+                resolve();
+            })
+        });
+    });
+
+    //Adds a row from the tsv file as an entry in parsedData
+    function addData(onset, duration, type, parsedData) {
+
+        //adding to an existing key may require making the data at the existing key an array
+        if (parsedData[type]) {
+            if (Array.isArray(parsedData[type])) {
+                let entry = formatEntry(onset, duration);
+            }
+        }
+    }
+
+    function formatEntry(onset, duration, type) {
+
+    }
+}
+
 module.exports = {
     dicom2BIDS: dicom2BIDS,
     syncSupportingFiles : syncSupportingFiles,
     getSettingsFile : getSettingsFile,
     parseTaskFileToTSV : parseTaskFileToTSV,
+    parseTaskFileFromTSV : parseTaskFileFromTSV,
     dicomParametersFilename : dicomParametersFilename
 };
