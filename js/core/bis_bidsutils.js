@@ -741,8 +741,8 @@ let parseTaskFileToTSV = (filename, baseDirectory) => {
             }
     
             // ------ Write tsv file with the parsed values and a few other parameters gleaned from the task file
-            let tr = parsedData['TR'];
-            let offset = parsedData['offset'];
+            let tr = parseInt(parsedData['TR']);
+            let offset = parseInt(parsedData['offset']);
             let units = parsedData['units'];
             if (units === 'seconds') { tr = 1; } //ignore TR if units are already in seconds
 
@@ -851,24 +851,30 @@ let parseTaskFileFromTSV = (tsvDirectory, outputDirectory, tr) => {
         let matchstring = tsvDirectory + '/*.tsv';
         bis_genericio.getMatchingFiles(matchstring).then( (files) => {
             
-            let parsedJSON = { 'runs' : {} };
+            //always parses with unit set to 'frame' and an offset of zero
+            let parsedJSON = { 
+                'unit' : 'frames', 
+                'TR' : tr, 
+                'offset' : 0, 
+                'runs' : {} 
+            };
 
             let loadFileFn = (filename) => {
                 return new Promise( (resolve, reject) => {
                     bis_genericio.read(filename).then( (obj) => {
-                        let tsvData = obj.data, parsedData;
+                        let tsvData = obj.data, parsedData = {};
                         
                         //Split rows based on newline character to get each row
                         let splitRows = tsvData.split('\n');
-                        console.log('split rows', splitRows);
-
                         let cols = splitRows[0].split('\t');
+
                         let onsetIndex = cols.findIndex ( (element) => { return element.toLowerCase() === 'onset'});
                         let durationIndex = cols.findIndex( (element) => { return element.toLowerCase() === 'duration'});
-                        let typeIndex = cols.findIndex( (element) => { return element.toLowerCase() === 'event_type'});
+                        let typeIndex = cols.findIndex( (element) => { return element.toLowerCase() === 'trial_type'});
 
                         splitRows = splitRows.slice(1,-1);
-                        for (let row of splitRow) {
+                        for (let row of splitRows) {
+                            row = row.split('\t');
                             let onset = row[onsetIndex];
                             let duration = row[durationIndex]; 
                             let type = row[typeIndex];
@@ -876,7 +882,8 @@ let parseTaskFileFromTSV = (tsvDirectory, outputDirectory, tr) => {
                             addData(onset, duration, type, parsedData);
                         }
 
-                        resolve(parsedData);
+                        console.log('parsed data for', filename, parsedData);
+                        resolve({ 'filename' : filename, 'data' : parsedData });
                     }).catch( (e) => {
                         reject(e);
                     });
@@ -884,31 +891,61 @@ let parseTaskFileFromTSV = (tsvDirectory, outputDirectory, tr) => {
             }; 
 
             //load each file in turn and add its contents to the json file
-            let parseTSVPromiseArray = []
+            let parseTSVPromiseArray = [];
             for (let file of files) {
                 parseTSVPromiseArray.push(loadFileFn(file));
             }
 
             Promise.all(parseTSVPromiseArray).then( (objs) => {
                 console.log('objs', objs);
-                resolve();
-            })
+                //get run number from filename and add that run to parsedJSON
+                for (let obj of objs) { 
+                    let runNumberRegex = /run-0*(\d+)/;
+                    let match = runNumberRegex.exec(obj.filename);
+
+                    let key = 'run' + match[1];
+                    parsedJSON.runs[key] = obj.data;
+                }
+
+                let stringifiedJSON = JSON.stringify(parsedJSON, null, 2);
+
+                let date = new Date();
+                let formattedLocaleDateString=  date.toLocaleDateString().replace(/\//g, '-');
+                let outputName = outputDirectory + '/task_file_' + formattedLocaleDateString + '.json';
+                bis_genericio.write(outputName, stringifiedJSON, false).then( () => {
+                    resolve();
+                });
+
+            }).catch( (e) => {
+                reject(e);
+            });
+
+        }).catch( (e) => {
+            reject(e);
         });
     });
 
     //Adds a row from the tsv file as an entry in parsedData
     function addData(onset, duration, type, parsedData) {
+        
+        let entry = formatEntry(onset, duration);
 
         //adding to an existing key may require making the data at the existing key an array
         if (parsedData[type]) {
             if (Array.isArray(parsedData[type])) {
-                let entry = formatEntry(onset, duration);
+                parsedData[type].push(entry);
+            } else {
+                parsedData[type] = [ parsedData[type] ];
+                parsedData[type].push(entry);
             }
+        } else {
+            parsedData[type] = entry;
         }
     }
 
     function formatEntry(onset, duration, type) {
-
+        let lowRange = onset / tr, highRange = lowRange + (duration / tr);
+        return `${lowRange}-${highRange}`;
     }
 }
 
