@@ -573,127 +573,6 @@ class FileTreePipeline extends HTMLElement {
         return { 'matrix': taskMatrix, 'runs': runNames };
     }
 
-    parseTaskFileToTSV(filename) {
-        bis_genericio.read(filename).then( (obj) => {
-            let parsedData;
-            try {
-                parsedData = JSON.parse(obj.data);
-            } catch(e) {
-                console.log('An error occured when parsing JSON', e);
-            }
-
-            console.log('parsed data', parsedData);
-            let orderedRuns = {}, range = { lowRange: -1, highRange: -1 };
-
-            for (let runName of Object.keys(parsedData.runs)) {
-                orderedRuns[runName] = [];
-                for (let task of Object.keys(parsedData.runs[runName])) {
-                    orderedRuns[runName].push({ 'task' : task, 'value' : this.parseEntry(parsedData.runs[runName][task], range) });
-                }
-
-                //sort ordered runs by their ranges (note that this assumes that ranges do not overlap)
-                //ensure that all arrays are fully expanded before sorting
-                let newVals = [];
-                for (let i = 0; i < orderedRuns[runName].length; i++) {
-                    if (Array.isArray(orderedRuns[runName][i].value[0])) {
-                        let expandedVals = orderedRuns[runName].splice(i, 1);
-                        
-                        for (let val of expandedVals[0].value) {
-                            newVals.push({ 'task' : expandedVals[0].task, 'value' : val});
-                        }
-
-                        
-                        i = i - 1;
-                    }
-                }
-
-                orderedRuns[runName] = orderedRuns[runName].concat(newVals);
-
-                orderedRuns[runName].sort( (a,b) => {
-                    if (a.value[0] < b.value[0]) { return -1;}
-                    if (a.value[0] > b.value[0]) { return 1; }
-                    return 0;
-                });
-
-                console.log('sorted run', orderedRuns[runName]);
-
-            }
-
-            let baseDirectory = this.filetree.baseDirectory;
-            let tr = parsedData['TR'];
-            let offset = parsedData['offset'];
-            let promiseArray = [], tsvData = {};
-            for (let runName of Object.keys(orderedRuns)) {
-                let tsvFile = "onset\tduration\ttrial_type\n\r";
-                for (let task of orderedRuns[runName]) {
-                    let lowRange = (task.value[0] - offset) * tr, highRange = (task.value[1] - offset) * tr;
-                    let duration = (highRange - lowRange); 
-
-                    tsvFile = tsvFile + '' + lowRange + '\t' + duration + '\t' + task.task + '\n\r';
-                }
-
-                tsvData[runName] = tsvFile;
-            }
-
-            //find tasks scans to associate with each run (e.g. a scan named 'sub-01_task_unnamed_run-01' would be associated with 'run1' in the .json file)
-            let jobInfoFilename = baseDirectory + '/' + bis_bidsutils.dicomParametersFilename;
-            bis_genericio.read(jobInfoFilename).then( (obj) => {
-
-                //filter filenames by looking for 'func' 
-                let jobInfo;
-                try {
-                    jobInfo = JSON.parse(obj.data);
-                } catch(e) {
-                    console.log('An error occured while parsing JSON', e);   
-                }
-
-                let filteredFiles = jobInfo.files.filter( (file) => { return file.filename.includes('func'); });
-
-                for (let file of filteredFiles) {
-
-                    //construct full path for tsv file using the name of the task file
-                    //start by splitting the modality off the end of the image file and replacing it with 'events' 
-                    let splitFilename = file.name.split('_');
-                    splitFilename[splitFilename.length - 1] = 'events';
-                    let tsvFilename = splitFilename.join('_') + '.tsv';
-
-                    let bidsTsvFilename = file.filename.split('/'); 
-                    bidsTsvFilename[bidsTsvFilename.length - 1] = tsvFilename;
-                    bidsTsvFilename = bidsTsvFilename.join('/');
-
-                    //get rid of the other tsv files associated with this file given that a new one is being uploaded
-                    file.supportingfiles = file.supportingfiles.filter( (supportingfile) => { let splitsupp = supportingfile.split('.'); return splitsupp[splitsupp.length - 1] !== 'tsv'; });
-                    file.supportingfiles.push(bidsTsvFilename);
-
-                    let runNumRegex = /run-0*(\d+)/g;
-                    let runNumber = runNumRegex.exec(file.name);
-                    let runKey = 'run' + runNumber[1]; //key in the tsvData dictionary
-
-                    let fullTsvFilename = baseDirectory + '/' + bidsTsvFilename;
-                    promiseArray.push(bis_genericio.write(fullTsvFilename, tsvData[runKey]));
-                }
-
-                //since jobInfo has had supporting files updated for all func keys, write it too
-                let stringifiedJobInfo = JSON.stringify(jobInfo, null, 2);
-                promiseArray.push(bis_genericio.write(jobInfoFilename, stringifiedJobInfo));
-
-                //finally, generate events.json, which contains the keys of all custom fields generated in the .tsv file 
-                //as of 6-4-19 we have no custom fields but i left this field here as a gesture towards the future.
-                // -Zach
-                /*let eventsJson = {
-
-                };*/
-
-                Promise.all(promiseArray).then( () => {
-                    console.log('write done');
-                    bis_webutil.createAlert('TSV file write done. Please ensure these names match what you expect!');
-                });
-            });
-            
-
-        });
-    }
-
     createTSVParseModal(f) {
         bootbox.confirm({
             'message' : 'Overwrite any existing .tsv files with ones parsed from ' + f + '?',
@@ -709,7 +588,10 @@ class FileTreePipeline extends HTMLElement {
             },
             'callback' : (result) => {
                 if (result) {
-                    this.parseTaskFileToTSV(f);
+                    let baseDirectory = this.filetree.baseDirectory;
+                    bis_bidsutils.parseTaskFileToTSV(f, baseDirectory).then( () => {
+                        bis_webutil.createAlert('Task parse successful. Please ensure that these files match what you expect!');
+                    });
                 }
             }
         });

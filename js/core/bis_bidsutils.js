@@ -698,9 +698,154 @@ let getSettingsFile = (filename) => {
     });
 };
 
+let parseTaskFileToTSV = (filename, baseDirectory) => {
+    return new Promise( (resolve, reject) => {
+        bis_genericio.read(filename).then( (obj) => {
+            let parsedData;
+            try {
+                parsedData = JSON.parse(obj.data);
+            } catch(e) {
+                console.log('An error occured when parsing JSON', e);
+            }
+    
+            // ------ Read the task file, parse it into an object, and organize task durations by start time 
+            let orderedRuns = {}, range = { lowRange: -1, highRange: -1 };
+    
+            for (let runName of Object.keys(parsedData.runs)) {
+                orderedRuns[runName] = [];
+                for (let task of Object.keys(parsedData.runs[runName])) {
+                    orderedRuns[runName].push({ 'task' : task, 'value' : parseEntry(parsedData.runs[runName][task], range) });
+                }
+    
+                //sort ordered runs by their ranges (note that this assumes that ranges do not overlap)
+                //ensure that all arrays are fully expanded before sorting
+                let newVals = [];
+                for (let i = 0; i < orderedRuns[runName].length; i++) {
+                    if (Array.isArray(orderedRuns[runName][i].value[0])) {
+                        let expandedVals = orderedRuns[runName].splice(i, 1);
+                        
+                        for (let val of expandedVals[0].value) {
+                            newVals.push({ 'task' : expandedVals[0].task, 'value' : val});
+                        }
+                        
+                        i = i - 1;
+                    }
+                }
+    
+                orderedRuns[runName] = orderedRuns[runName].concat(newVals);
+                orderedRuns[runName].sort( (a,b) => {
+                    if (a.value[0] < b.value[0]) { return -1;}
+                    if (a.value[0] > b.value[0]) { return 1; }
+                    return 0;
+                });
+            }
+    
+            // ------ Write tsv file with the parsed values and a few other parameters gleaned from the task file
+            let tr = parsedData['TR'];
+            let offset = parsedData['offset'];
+            let promiseArray = [], tsvData = {};
+            for (let runName of Object.keys(orderedRuns)) {
+                let tsvFile = "onset\tduration\ttrial_type\n\r";
+                for (let task of orderedRuns[runName]) {
+                    let lowRange = (task.value[0] - offset) * tr, highRange = (task.value[1] - offset) * tr;
+                    let duration = (highRange - lowRange); 
+    
+                    tsvFile = tsvFile + '' + lowRange + '\t' + duration + '\t' + task.task + '\n\r';
+                }
+    
+                tsvData[runName] = tsvFile;
+            }
+    
+            // ------ Correlate tsv files with their respective entries in the BIDS directory, e.g. the run marked 'run1' in the task file should go with the scan with 'run-01' in its name.
+            //        Note that tsv files will always go with func data.
+            let jobInfoFilename = baseDirectory + '/' + dicomParametersFilename;
+            bis_genericio.read(jobInfoFilename).then( (obj) => {
+    
+                //filter filenames by looking for 'func' 
+                let jobInfo;
+                try {
+                    jobInfo = JSON.parse(obj.data);
+                } catch(e) {
+                    console.log('An error occured while parsing JSON', e);   
+                    reject(e);
+                }
+    
+                let filteredFiles = jobInfo.files.filter( (file) => { return file.filename.includes('func'); });
+    
+                for (let file of filteredFiles) {
+    
+                    //construct full path for tsv file using the name of the task file
+                    //start by splitting the modality off the end of the image file and replacing it with 'events' 
+                    let splitFilename = file.name.split('_');
+                    splitFilename[splitFilename.length - 1] = 'events';
+                    let tsvFilename = splitFilename.join('_') + '.tsv';
+    
+                    let bidsTsvFilename = file.filename.split('/'); 
+                    bidsTsvFilename[bidsTsvFilename.length - 1] = tsvFilename;
+                    bidsTsvFilename = bidsTsvFilename.join('/');
+    
+                    //get rid of the other tsv files associated with this file given that a new one is being uploaded
+                    file.supportingfiles = file.supportingfiles.filter( (supportingfile) => { let splitsupp = supportingfile.split('.'); return splitsupp[splitsupp.length - 1] !== 'tsv'; });
+                    file.supportingfiles.push(bidsTsvFilename);
+    
+                    let runNumRegex = /run-0*(\d+)/g;
+                    let runNumber = runNumRegex.exec(file.name);
+                    let runKey = 'run' + runNumber[1]; //key in the tsvData dictionary
+    
+                    let fullTsvFilename = baseDirectory + '/' + bidsTsvFilename;
+                    promiseArray.push(bis_genericio.write(fullTsvFilename, tsvData[runKey]));
+                }
+    
+                //since jobInfo has had supporting files updated for all func keys, write it too
+                let stringifiedJobInfo = JSON.stringify(jobInfo, null, 2);
+                promiseArray.push(bis_genericio.write(jobInfoFilename, stringifiedJobInfo));
+    
+    
+    
+                //finally, generate events.json, which contains the keys of all custom fields generated in the .tsv file 
+                //as of 6-4-19 we have no custom fields but i left this field here as a gesture towards the future.
+                // -Zach
+                /*let eventsJson = {
+    
+                };*/
+    
+    
+    
+                Promise.all(promiseArray).then( () => {
+                    console.log('write done');
+                    resolve();
+                });
+            });
+        });
+    });
+   
+
+    // Splits an entry in the task file formatted as '[low range]-[high range]' into two integers 
+    // then checks the two numbers to see whether they are either lower than the lowest value seen so far or higher than the highest
+    function parseEntry(entry, range) {
+
+        if (Array.isArray(entry)) {
+            let entryArray = [];
+            for (let item of entry)
+                entryArray.push(parseEntry(item, range));
+
+            return entryArray;
+        }
+
+        let entryRange = entry.split('-');
+        for (let i = 0; i < entryRange.length; i++) { entryRange[i] = parseInt(entryRange[i]); }
+
+        if (range.lowRange < 0 || range.lowRange > entryRange[0]) { range.lowRange = entryRange[0]; }
+        if (range.highRange < entryRange[1]) { range.highRange = entryRange[1]; }
+
+        return entryRange;
+    }
+};
+
 module.exports = {
     dicom2BIDS: dicom2BIDS,
     syncSupportingFiles : syncSupportingFiles,
     getSettingsFile : getSettingsFile,
+    parseTaskFileToTSV : parseTaskFileToTSV,
     dicomParametersFilename : dicomParametersFilename
 };
