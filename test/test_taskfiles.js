@@ -20,27 +20,31 @@
 
 require('../config/bisweb_pathconfig.js');
 const bis_bidsutils = require('bis_bidsutils.js');
-const fs = require('fs');
+const bis_genericio = require('bis_genericio.js');
 const path = require('path');
 const colors = require('colors/safe');
 const assert = require('assert');
 
-const jsonPath = path.normalize('./testdata/tasks.json');
-const tsvPath = path.normalize('./testdata/task_events.tsv');
+const jsonPath = path.resolve('./testdata/task.json');
+const tsvPath = path.resolve('./testdata/task_events.tsv');
 
-let errFn = (e) => {
-    console.log(colors.red('---- An error occured while reading', jsonPath, err)); 
-    assert.equal(true, false);
+let errFn = (e, done) => {
+    console.log(colors.red('---- An error occured while reading', jsonPath, e)); 
+    done(e);
 };
 
 describe('Convert .json to .tsv', () => {
 
     it('Parses .json to .tsv', (done) => {
-        fs.readFile(jsonPath, (err, data) => {
-            if (err) { errFn(e); }
-
-            bis_bidsutils.parseTaskFileToTSV(jsonPath, null, false);
-            
+        bis_genericio.read(tsvPath).then( (obj) => {
+            bis_bidsutils.parseTaskFileToTSV(jsonPath, null, false).then( (tsvData) => {
+                assert.strictEqual(obj.data, tsvData.run1);
+                done();
+            }).catch( (e) => {
+                errFn(e, done);
+            });
+        }).catch( (e) => {
+            errFn(e, done);
         });
     });
 });
