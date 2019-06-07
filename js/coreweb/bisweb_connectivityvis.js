@@ -86,10 +86,10 @@ var saveSnapshot=function(inimglist,initialfilename='snapshot.png') {
     outcanvas.height = h;
     
     let ctx = outcanvas.getContext('2d');
-    if (globalParams.mode==='chord') 
-        ctx.fillStyle = "#000000";
-    else
-        ctx.fillStyle = "#ffffff";
+    //if (globalParams.mode==='chord') 
+    //ctx.fillStyle = "#000000";
+    //else
+    ctx.fillStyle = "#ffffff";
     ctx.globalCompositeOperation = "source-over";
     ctx.fillRect(0, 0, outcanvas.width, outcanvas.height);
 
@@ -486,6 +486,8 @@ var drawchords = function() {
     let linePairs=createLinePairsFromLastState();
     let svgModal=globalParams.displayDialog.getWidgetBase();
 
+    svgModal.css({'background-color':"#ffffff"});
+    
     globalParams.mode='chord';
     
     // This call returns svg

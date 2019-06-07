@@ -103,6 +103,7 @@ var replacesystemprint=function(doreplace=true) {
         const oldLog = console.log;
         replacing=true;
         logtext="";
+        console.log('Replacing console.log',console.log);
         console.log = function () {
             // DO MESSAGE HERE.
             let keys=Object.keys(arguments);
@@ -248,9 +249,9 @@ var execute_test=function(test,usethread=false) {
                 console.log('oooo Invoking Module with params=',JSON.stringify(params));
                 let newParams = module.parseValuesAndAddDefaults(params);
 
-
                 if (!usethread) {
-                    replacesystemprint(false);
+                    console.log('Replacing system print');
+                    replacesystemprint(true);
                     module.directInvokeAlgorithm(newParams).then(() => {
                         replacesystemprint(false);
                         console.log('oooo -------------------------------------------------------');
@@ -507,11 +508,11 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
 
     
     if (!usefileserver) {
-        console.log('Disabling File Server');
+        console.log('++++ Disabling File Server');
         disableServer();
     } else {
         try {
-            console.log('Enabling Disabling File Server');
+            console.log('++++ Enabling Disabling File Server');
             await enableServer();
         } catch(e) {
             //            webutil.createAlert('Server Error. Perhaps the server does not exist');
@@ -564,7 +565,6 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
             main.append(`<a name="${tname}"></a><H4 class="testhead">Test ${i}: ${name}</H4><p><UL><LI> Command: ${v.command}</LI><LI> Test details: ${v.test}</LI><LI> Should pass: ${v.result}</LI>`);
             if (usethread)
                 main.append(`<P> Running in WebWorker </P>`);
-            console.log(`-------------------------------`);
             console.log(`-------------------------------\nRunning test ${i}: ${v.command}, ${v.test},${v.result}\n------------------------`);
 
             try {
@@ -684,7 +684,7 @@ let initialize=function(data) {
     let names=[];
     for (let i=0;i<in_testlist.length;i++) {
         let noweb=in_testlist[i].noweb || false;
-        console.log('in_=',in_testlist[i],noweb);
+        //console.log('in_=',in_testlist[i],noweb);
         if (!noweb) {
             testlist.push(in_testlist[i]);
             let cmd=in_testlist[i].command.replace(/\t/g,' ').replace(/ +/g,' ');
@@ -841,7 +841,7 @@ class RegressionTestElement extends HTMLElement {
     connectedCallback() {
 
         if (gettestdata.islocal()) {
-            console.log('Islocal');
+            console.log('++++ Running tests with local data');
             $("#githubdiv").css({"visibility" : "visible"});
         }  else {
             $("#usegithublab").text('');
