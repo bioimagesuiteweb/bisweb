@@ -1,7 +1,6 @@
 'use strict';
 
 const bis_genericio = require('bis_genericio');
-const bis_util = require('bis_util');
 const colors=bis_genericio.getcolorsmodule();
 const fs = bis_genericio.getfsmodule();
 
@@ -19,7 +18,7 @@ const dicomParametersFilename = 'dicom_job_info.json';
 const sourceDirectoryName = 'sourcedata';
 const DEBUG=false;
 
-function timeout(ms) {  return bis_util.sleep(ms); }
+//function timeout(ms) {  return bis_util.sleep(ms); }
 
 // DICOM2BIDS
 /**
@@ -37,7 +36,6 @@ let dicom2BIDS = async function (opts) {
 
     try {
         let errorfn = ((msg) => {
-            timeout(100);
             console.log('---- ERROR');
             console.log('---- dicom2BIDS Error=', msg);
             return msg;
@@ -78,7 +76,6 @@ let dicom2BIDS = async function (opts) {
         let dirnames = await makeBIDSDirectories(outputdirectory, subjectdirectory, errorfn);
         dirnames.outputdirectory = outputdirectory, dirnames.subjectdirectory = subjectdirectory;
 
-        timeout(500);
         if (DEBUG)
             console.log('++++ BIDS',dirnames.outputdirectory,dirnames.subjectdirectory,'\n\n\n------------------------');
 
@@ -91,10 +88,7 @@ let dicom2BIDS = async function (opts) {
         let dicomobj = makeDicomJobsFile(imageFilenames, supportingFilenames, jobFileSettings);
 
         
-        
-        await timeout(2000);
         await Promise.all(moveFilesPromiseArray);
-        await timeout(200);
         if (calcHash) {
             let checksums=await calculateChecksums(imageFilenames);
             for (let val of checksums) {
@@ -385,7 +379,6 @@ let generateMoveFilesArrays = (imagefiles, supportingfiles, dirs) => {
 
         }
 
-        timeout(100);
         
         let formattedBasename = makeBIDSFilename(basename, dirbasename, dirs.subjectdirectory);
         let target = bis_genericio.joinFilenames(dirname, formattedBasename);
@@ -407,11 +400,9 @@ let generateMoveFilesArrays = (imagefiles, supportingfiles, dirs) => {
 
     function makeBIDSFilename(filename, directory, subjectdirectory) {
 
-        timeout(200);
         let splitsubdirectory = subjectdirectory.split(SEPARATOR);
         if (DEBUG) {
             console.log('\n\n split=',splitsubdirectory);
-            timeout(1000);
         }
 
         let fileExtension = filename.split('.');
