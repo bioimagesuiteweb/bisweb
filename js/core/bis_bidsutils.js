@@ -698,7 +698,7 @@ let getSettingsFile = (filename) => {
     });
 };
 
-let parseTaskFileToTSV = (filename, baseDirectory) => {
+let parseTaskFileToTSV = (filename, baseDirectory, save = true) => {
     return new Promise( (resolve, reject) => {
         bis_genericio.read(filename).then( (obj) => {
             let parsedData;
@@ -746,7 +746,7 @@ let parseTaskFileToTSV = (filename, baseDirectory) => {
             let units = parsedData['units'];
             if (units === 'seconds') { tr = 1; } //ignore TR if units are already in seconds
 
-            let promiseArray = [], tsvData = {};
+            let tsvData = {};
             for (let runName of Object.keys(orderedRuns)) {
                 let tsvFile = "onset\tduration\ttrial_type\n\r";
                 for (let task of orderedRuns[runName]) {
@@ -762,65 +762,81 @@ let parseTaskFileToTSV = (filename, baseDirectory) => {
     
             // ------ Correlate tsv files with their respective entries in the BIDS directory, e.g. the run marked 'run1' in the task file should go with the scan with 'run-01' in its name.
             //        Note that tsv files will always go with func data.
-            let jobInfoFilename = baseDirectory + '/' + dicomParametersFilename;
-            bis_genericio.read(jobInfoFilename).then( (obj) => {
+            //        This will be called only if save is specified at the top
+            let correlateAndWriteTSVFiles = () => {
+                return new Promise( (resolve, reject) => {
+                    let jobInfoFilename = baseDirectory + '/' + dicomParametersFilename, promiseArray = [];
+                    bis_genericio.read(jobInfoFilename).then( (obj) => {
+            
+                        //filter filenames by looking for 'func' 
+                        let jobInfo;
+                        try {
+                            jobInfo = JSON.parse(obj.data);
+                        } catch(e) {
+                            console.log('An error occured while parsing JSON', e);   
+                            reject(e);
+                        }
+            
+                        let filteredFiles = jobInfo.files.filter( (file) => { return file.filename.includes('func'); });
+            
+                        for (let file of filteredFiles) {
+            
+                            //construct full path for tsv file using the name of the task file
+                            //start by splitting the modality off the end of the image file and replacing it with 'events' 
+                            let splitFilename = file.name.split('_');
+                            splitFilename[splitFilename.length - 1] = 'events';
+                            let tsvFilename = splitFilename.join('_') + '.tsv';
+            
+                            let bidsTsvFilename = file.filename.split('/'); 
+                            bidsTsvFilename[bidsTsvFilename.length - 1] = tsvFilename;
+                            bidsTsvFilename = bidsTsvFilename.join('/');
+            
+                            //get rid of the other tsv files associated with this file given that a new one is being uploaded
+                            file.supportingfiles = file.supportingfiles.filter( (supportingfile) => { let splitsupp = supportingfile.split('.'); return splitsupp[splitsupp.length - 1] !== 'tsv'; });
+                            file.supportingfiles.push(bidsTsvFilename);
+            
+                            let runNumRegex = /run-0*(\d+)/g;
+                            let runNumber = runNumRegex.exec(file.name);
+                            let runKey = 'run' + runNumber[1]; //key in the tsvData dictionary
+            
+                            let fullTsvFilename = baseDirectory + '/' + bidsTsvFilename;
+                            promiseArray.push(bis_genericio.write(fullTsvFilename, tsvData[runKey]));
+                        }
+            
+                        //since jobInfo has had supporting files updated for all func keys, write it too
+                        let stringifiedJobInfo = JSON.stringify(jobInfo, null, 2);
+                        promiseArray.push(bis_genericio.write(jobInfoFilename, stringifiedJobInfo));
+            
     
-                //filter filenames by looking for 'func' 
-                let jobInfo;
-                try {
-                    jobInfo = JSON.parse(obj.data);
-                } catch(e) {
-                    console.log('An error occured while parsing JSON', e);   
-                    reject(e);
-                }
-    
-                let filteredFiles = jobInfo.files.filter( (file) => { return file.filename.includes('func'); });
-    
-                for (let file of filteredFiles) {
-    
-                    //construct full path for tsv file using the name of the task file
-                    //start by splitting the modality off the end of the image file and replacing it with 'events' 
-                    let splitFilename = file.name.split('_');
-                    splitFilename[splitFilename.length - 1] = 'events';
-                    let tsvFilename = splitFilename.join('_') + '.tsv';
-    
-                    let bidsTsvFilename = file.filename.split('/'); 
-                    bidsTsvFilename[bidsTsvFilename.length - 1] = tsvFilename;
-                    bidsTsvFilename = bidsTsvFilename.join('/');
-    
-                    //get rid of the other tsv files associated with this file given that a new one is being uploaded
-                    file.supportingfiles = file.supportingfiles.filter( (supportingfile) => { let splitsupp = supportingfile.split('.'); return splitsupp[splitsupp.length - 1] !== 'tsv'; });
-                    file.supportingfiles.push(bidsTsvFilename);
-    
-                    let runNumRegex = /run-0*(\d+)/g;
-                    let runNumber = runNumRegex.exec(file.name);
-                    let runKey = 'run' + runNumber[1]; //key in the tsvData dictionary
-    
-                    let fullTsvFilename = baseDirectory + '/' + bidsTsvFilename;
-                    promiseArray.push(bis_genericio.write(fullTsvFilename, tsvData[runKey]));
-                }
-    
-                //since jobInfo has had supporting files updated for all func keys, write it too
-                let stringifiedJobInfo = JSON.stringify(jobInfo, null, 2);
-                promiseArray.push(bis_genericio.write(jobInfoFilename, stringifiedJobInfo));
-    
-    
-    
-                //finally, generate events.json, which contains the keys of all custom fields generated in the .tsv file 
-                //as of 6-4-19 we have no custom fields but i left this field here as a gesture towards the future.
-                // -Zach
-                /*let eventsJson = {
-    
-                };*/
-    
-    
-    
-                Promise.all(promiseArray).then( () => {
+                        //finally, generate events.json, which contains the keys of all custom fields generated in the .tsv file 
+                        //as of 6-4-19 we have no custom fields but i left this field here as a gesture towards the future.
+                        // -Zach
+                        /*let eventsJson = {
+            
+                        };*/
+
+                        Promise.all(promiseArray).then( () => {
+                            console.log('write done');
+                            resolve();
+                        }).catch( (e) => {
+                            reject(e);
+                        });
+                    }).catch( (e) => { reject(e); });
+                });
+            };
+
+
+
+            if (save) {
+                correlateAndWriteTSVFiles().then( () => {
                     console.log('write done');
                     resolve();
                 });
-            });
-        });
+            } else {
+                console.log('Finished conversion');
+                resolve(tsvData);
+            }
+        }).catch( (e) => { reject(e); });
     });
    
 
@@ -846,6 +862,14 @@ let parseTaskFileToTSV = (filename, baseDirectory) => {
     }
 };
 
+/**
+ * Parses all .tsv files in a given directory into a .json task file (see parseTaskFileToTSV).
+ * Produces an output file in outputDirectory named 'task_file' with the current date appended.
+ * 
+ * @param {String} tsvDirectory - Filepath of directory containing .tsv files. 
+ * @param {String} outputDirectory - Filepath of the output directory.
+ * @param {Number} tr - TR for the study. This is necessary because the JSON file is stored with frames as the unit and the .tsv files are stored with seconds. 
+ */
 let parseTaskFileFromTSV = (tsvDirectory, outputDirectory, tr) => {
     return new Promise ( (resolve, reject) => {
         let matchstring = tsvDirectory + '/*.tsv';
@@ -868,9 +892,9 @@ let parseTaskFileFromTSV = (tsvDirectory, outputDirectory, tr) => {
                         let splitRows = tsvData.split('\n');
                         let cols = splitRows[0].split('\t');
 
-                        let onsetIndex = cols.findIndex ( (element) => { return element.toLowerCase() === 'onset'});
-                        let durationIndex = cols.findIndex( (element) => { return element.toLowerCase() === 'duration'});
-                        let typeIndex = cols.findIndex( (element) => { return element.toLowerCase() === 'trial_type'});
+                        let onsetIndex = cols.findIndex ( (element) => { return element.toLowerCase() === 'onset'; } );
+                        let durationIndex = cols.findIndex( (element) => { return element.toLowerCase() === 'duration'; });
+                        let typeIndex = cols.findIndex( (element) => { return element.toLowerCase() === 'trial_type'; });
 
                         splitRows = splitRows.slice(1,-1);
                         for (let row of splitRows) {
@@ -943,11 +967,11 @@ let parseTaskFileFromTSV = (tsvDirectory, outputDirectory, tr) => {
         }
     }
 
-    function formatEntry(onset, duration, type) {
+    function formatEntry(onset, duration) {
         let lowRange = onset / tr, highRange = lowRange + (duration / tr);
         return `${lowRange}-${highRange}`;
     }
-}
+};
 
 module.exports = {
     dicom2BIDS: dicom2BIDS,
