@@ -95,7 +95,7 @@ let dicom2BIDS = async function (opts) {
             }
         }
 
-        await writeDicomMetadataFiles(dicomobj, outputdirectory, changedFilenames);
+        await writeDicomMetadataFiles(outputdirectory, dicomobj, changedFilenames);
 
         labelsMap = {};
         return outputdirectory;
@@ -489,7 +489,14 @@ let parseDate = (dcm2niiImage) => {
     return dateMatch[0];
 };
 
-let writeDicomMetadataFiles = async (dicomJobs, outputdirectory, changedFilenames) => {
+/**
+ * Writes dicom_job_info.json, dataset_desciption.json, .bidsignore, and name_change_log.txt to disk. 
+ * 
+ * @param {String} outputdirectory - Location of the root directory of the study.
+ * @param {Object} dicomJobs - JSON representation of dicom_jobs.
+ * @param {Array} changedFilenames - The full list of filenames changed from their DCM2NIIx form to a BIDS formatted name (old name -> new name)
+ */
+let writeDicomMetadataFiles = async (outputdirectory, dicomJobs, changedFilenames) => {
     let bidsignore = '**/localizer\n**/dicom_job_info.json\n**/name_change_log.txt';
     console.log('Bidsignore=', bidsignore);
 
