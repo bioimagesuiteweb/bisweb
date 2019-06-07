@@ -1,12 +1,12 @@
 {
 	"units": "frames",
  	"TR": 2,
- 	"offset": 1,
+ 	"offset": 0,
  	"runs" : {
  		"run1": {
-			"motor": "1-51",
-			"visual": "51-101",
-			"auditory": "201-301"
+			"motor": "0-50",
+			"visual": "50-100",
+			"auditory": "200-300"
 		}
 	}
 }

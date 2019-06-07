@@ -26,7 +26,8 @@ const colors = require('colors/safe');
 const assert = require('assert');
 
 const jsonPath = path.resolve('./testdata/task.json');
-const tsvPath = path.resolve('./testdata/task_events.tsv');
+const tsvPath = path.resolve('./testdata/tasks/task-sample_run-01_events.tsv');
+const tsvDir = path.resolve('./testdata/tasks');
 
 let errFn = (e, done) => {
     console.log(colors.red('---- An error occured while reading', jsonPath, e)); 
@@ -39,6 +40,26 @@ describe('Convert .json to .tsv', () => {
         bis_genericio.read(tsvPath).then( (obj) => {
             bis_bidsutils.parseTaskFileToTSV(jsonPath, null, false).then( (tsvData) => {
                 assert.strictEqual(obj.data, tsvData.run1);
+                done();
+            }).catch( (e) => {
+                errFn(e, done);
+            });
+        }).catch( (e) => {
+            errFn(e, done);
+        });
+    });
+
+    it('Parses .tsv to .json', (done) => {
+        bis_genericio.read(jsonPath).then( (obj) => {
+            bis_bidsutils.parseTaskFileFromTSV(tsvDir, null, 2, false).then( (tsvData) => {
+               
+                let stringifiedData = JSON.stringify(tsvData);
+                
+                //remove spaces
+                stringifiedData = stringifiedData.replace(/[ \t\n]/g, ''); 
+                let despacedData = obj.data.replace(/[ \t\n]/g, '');
+                
+                assert.strictEqual(despacedData, stringifiedData);
                 done();
             }).catch( (e) => {
                 errFn(e, done);

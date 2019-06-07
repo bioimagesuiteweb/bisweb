@@ -870,14 +870,14 @@ let parseTaskFileToTSV = (filename, baseDirectory, save = true) => {
  * @param {String} outputDirectory - Filepath of the output directory.
  * @param {Number} tr - TR for the study. This is necessary because the JSON file is stored with frames as the unit and the .tsv files are stored with seconds. 
  */
-let parseTaskFileFromTSV = (tsvDirectory, outputDirectory, tr) => {
+let parseTaskFileFromTSV = (tsvDirectory, outputDirectory, tr, save = true) => {
     return new Promise ( (resolve, reject) => {
         let matchstring = tsvDirectory + '/*.tsv';
         bis_genericio.getMatchingFiles(matchstring).then( (files) => {
             
             //always parses with unit set to 'frame' and an offset of zero
             let parsedJSON = { 
-                'unit' : 'frames', 
+                'units' : 'frames', 
                 'TR' : tr, 
                 'offset' : 0, 
                 'runs' : {} 
@@ -906,7 +906,7 @@ let parseTaskFileFromTSV = (tsvDirectory, outputDirectory, tr) => {
                             addData(onset, duration, type, parsedData);
                         }
 
-                        console.log('parsed data for', filename, parsedData);
+                        //console.log('parsed data for', filename, parsedData);
                         resolve({ 'filename' : filename, 'data' : parsedData });
                     }).catch( (e) => {
                         reject(e);
@@ -921,7 +921,6 @@ let parseTaskFileFromTSV = (tsvDirectory, outputDirectory, tr) => {
             }
 
             Promise.all(parseTSVPromiseArray).then( (objs) => {
-                console.log('objs', objs);
                 //get run number from filename and add that run to parsedJSON
                 for (let obj of objs) { 
                     let runNumberRegex = /run-0*(\d+)/;
@@ -931,14 +930,19 @@ let parseTaskFileFromTSV = (tsvDirectory, outputDirectory, tr) => {
                     parsedJSON.runs[key] = obj.data;
                 }
 
-                let stringifiedJSON = JSON.stringify(parsedJSON, null, 2);
+                if (save) {
+                    let stringifiedJSON = JSON.stringify(parsedJSON, null, 2);
 
-                let date = new Date();
-                let formattedLocaleDateString=  date.toLocaleDateString().replace(/\//g, '-');
-                let outputName = outputDirectory + '/task_file_' + formattedLocaleDateString + '.json';
-                bis_genericio.write(outputName, stringifiedJSON, false).then( () => {
-                    resolve();
-                });
+                    let date = new Date();
+                    let formattedLocaleDateString=  date.toLocaleDateString().replace(/\//g, '-');
+                    let outputName = outputDirectory + '/task_file_' + formattedLocaleDateString + '.json';
+                    bis_genericio.write(outputName, stringifiedJSON, false).then( () => {
+                        resolve();
+                    });
+                } else {
+                    resolve(parsedJSON);
+                }
+                
 
             }).catch( (e) => {
                 reject(e);
