@@ -268,6 +268,10 @@ def deserialize_simpledataobject(wasm_pointer,offset=0,debug=0):
     datatype=get_dtype(header[1]);
     beginoffset=header[2]+16+offset;
     total=beginoffset+header[3];
+
+    if (dims[0]<1):
+        raise Exception('----- Zero Data Length');
+    
     if (debug>0):
         itemsize=np.dtype(datatype).itemsize
         print('__ dims=',dims,' spa=',spa,' dtype=',datatype,' totalsize=',total,'datasize=',total-(16+header[2]),itemsize);

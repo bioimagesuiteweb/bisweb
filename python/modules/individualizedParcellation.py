@@ -58,6 +58,10 @@ class individualizedParcellation(bis_basemodule.baseModule):
         fmri = self.inputs['fmri'];
         group = self.inputs['parc'];
 
+        if (fmri.hasSameOrientation(group,'fMRI Image','Group Parcellation',True)==False):
+            return False;
+
+
         fmriDim = fmri.dimensions;
         groupDim = group.dimensions;
         

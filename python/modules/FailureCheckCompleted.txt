@@ -1,0 +1,37 @@
+(single image => orientation is not a problem, zero length output taken care
+of centrally!)
+
+approximateField -- single Image
+blankImage -- single Image
+butterworthFilter -- single Image
+butterworthFilterImage -- single Image
+changeImageSpacing -- single Image
+clusterThreshold-- single Image
+computeCorrelation -- single Image
+computeGLM -- single Image
+computeROI -- tested
+cropImage -- single Image
+displacementField -- single Image
+driftCorrectImage-- single Image
+extractFrame-- single Image
+extractSlice-- single Image
+flipImage-- single Image
+gradientImage -- single Image
+individualizedParcellation  -- fixed
+linearRegistration -- fixed
+morphologyFilter-- single Image
+nonlinearRegistration --fixed
+normalizeImage-- single Image
+prepareRegistration-- single Image
+regressGlobal -- single Image
+regressOut-- single Image
+regressOutImage-- single Image
+regularizeObjectmap-- single Image
+resampleImage-- single Image
+resliceImage-- single Image
+seedCorrelation -- single image
+segmentImage - single image
+shiftScaleImage - single image
+sliceBiasCorrect- single image
+smoothImage - single image
+thresholdImage - single image

@@ -43,17 +43,30 @@ class computeROI(bis_basemodule.baseModule):
 
         input = self.inputs['input'];
         roi  = self.inputs['roi']
-        
+
+        if (roi.hasSameOrientation(input,'ROI','Input',True)==False):
+            return False
+
+        print('oooo');
+        print('oooo Input=',input.getDescription());
+        print('oooo ROI=',roi.getDescription());
         
         try:
             out = libbis.computeROIWASM(input, roi, {
                 'storecentroids' :      self.parseBoolean(vals['storecentroids'])
                 },self.parseBoolean(vals['debug']));
+            a=out.shape;
+            if (a[0]*a[1]<1):
+                print(' ----- Bad Input Images');
+                return False;
+
             self.outputs['output']=bis_objects.bisMatrix();
             self.outputs['output'].create(out);
 
+
         except:
-            print('---- Failed to invoke algorithm');
+            e = sys.exc_info()[0]
+            print('---- Failed to invoke algorithm '+str(e));
             return False
 
         return True
