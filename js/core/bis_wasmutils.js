@@ -397,6 +397,9 @@ var unpackStructure=function(Module,
     var sz=elem[2];
     var arr_name=elem[1];
 
+    if (data_size<1)
+        throw(' Bad WASM Array. Zero Size Data');
+    
     var numvox=Math.floor(data_size/sz);
 
     

@@ -2,16 +2,16 @@
 of centrally!)
 
 approximatefield -- single image
-backprojectimage
-bidsconversion 
+backprojectimage -- done
+bidsconversion  -- no need
 binarythresholdimage -- single image
 bisserver -- not image to image
 blankimage -- single image
-butterworthfilter 
+butterworthfilter  -- noneed
 butterworthfilterimage --single image
 changeimagespacing --single image
 clusterthreshold --single image
-combineimages
+combineimages -- was already OK
 computecorrelation -- OK
 computeglm -- OK
 computeroi -- check
@@ -19,7 +19,7 @@ concatenateimages -- check
 cropimage --single image
 defaceimage -- single image
 dicomconversion -- not an issue
-diffspect -- check
+diffspect -- check (OK Linear Registration handles this)
 displacementfield -- single image
 driftcorrectimage -- single image
 extractframe -- single image
@@ -29,20 +29,20 @@ gradientimage -- single image
 individualizedparcellation --check
 infomodule  -- not an issue
 inverttransformation -- single image
-linearregistration -- check
+linearregistration -- check (Handles this)
 makechecksum -- not an issue
-manualregistration -- check
-maskimage -- check
+manualregistration -- check (Handles this)
+maskimage -- check (handles this)
 morphologyfilter -- single image
-motioncorrection -- check
-motionreslice -- check
-nonlinearregistration -- check
+motioncorrection -- checked OK
+motionreslice -- checked OK
+nonlinearregistration -- check (handles this)
 normalizeimage -- single image
 pipeline -- not an issue
 prepareregistration -- single image
 preprocessoptical -- single image
 process4dimage --single image
-projectimage -- check
+projectimage -- checked
 qualitymeasures --single image
 regressglobal -- single image
 regressiontests -- not an issue
@@ -52,7 +52,7 @@ regularizeobjectmap --single image
 reorientimage -- single image
 resampleimage -- single image
 resliceimage -- single image
-seedcorrelation -- check
+seedcorrelation -- fine (image + matrix)
 segmentimage -- single image
 shiftscaleimage --single image
 slicebiascorrect -- single image

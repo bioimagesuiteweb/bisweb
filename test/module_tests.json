@@ -74,6 +74,18 @@
 	    "dopython": true
 	},
 	{
+	    "command" : "computeROI -i testdata/ras_avg152T1_LR_nifti.nii.gz -r testdata/avg152T1_LR_nifti.nii.gz --debug true",
+	    "test"    : "--test_target testdata/newtests/simpleroi_result.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : false,
+	    "dopython": true
+	},
+        {
+	    "command" : "computeROI -i testdata/MNI_6mm.nii.gz -r testdata/avg152T1_LR_nifti.nii.gz --debug true",
+	    "test"    : "--test_target testdata/newtests/simpleroi_result.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : false,
+	    "dopython": true
+	},
+	{
 	    "command" : "thresholdImage -i testdata/MNI_6mm.nii.gz --low 128.0 --high 1000 --debug 1",
 	    "test"    : "--test_target testdata/newtests/MNI_thr.nii.gz ",
 	    "result"  : true,
@@ -594,7 +606,7 @@
             "command" : "gradientImage --input testdata/badimage.nii.gz --sigma 2.0 --inmm true --debug true",
             "test"    : "--test_target testdata/grad.nii.gz",
             "result"  : false,
-            "dopython": false,
+            "dopython": true,
             "noweb"   : true
         },
         {

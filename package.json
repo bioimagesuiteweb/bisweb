@@ -5,7 +5,9 @@
     "description": "An Implementation of BioImage Suite in Javascript and WebAssembly",
     "homepage": "https://github.com/bioimagesuiteweb/bisweb",
     "scripts": {
-        "test": "mocha test"
+        "test": "mocha test",
+        "bisweb" : "node js/bin/bisweb.js",
+        "localtest" : "mocha test/test_module.js --input local"
     },
     "keywords": [
         "Neuroimaging",

@@ -757,7 +757,28 @@ class BisWebImage extends BisWebDataObject {
         return maxd;
     }
 
-    /** compare dimensions and spacing, return true if same 
+    /** compare orientation, return true if same 
+     * @param{BisWebImage} otherimage - the image to compare to
+     @returns {Boolean} true if this image and other image have same dimensions */
+    hasSameOrientation(otherimage,name1='',name2='',debug=false) {
+        let o1=this.getOrientationName();
+        let o2=otherimage.getOrientationName();
+
+        let same=false;
+        if (o1===o2)
+            same=true;
+
+        if (debug) {
+            if (same)
+                console.log(`++++ ${name1} and ${name2} have the same orientation ${o1} == ${o2}. Good!`);
+            else
+                console.log(`---- ${name1} and ${name2} have different orientations ${o1} vs ${o2}`);
+        }
+        return same;
+    }
+
+
+    /** compare dimensions, spacing and orientation return true if same 
      * @param{BisWebImage} otherimage - the image to compare to
      * @param{number} threshold - spacing comparison threshold (default=0.001)
      * @param{Boolean} spaceonly - if true (default=false) then only x,y,z dims are compared

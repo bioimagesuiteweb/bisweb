@@ -70,14 +70,27 @@ class ComputeROIModule extends BaseModule {
 
     directInvokeAlgorithm(vals) {
         console.log('oooo invoking: computeROI with values', JSON.stringify(vals));
+
+        let input = this.inputs['input'];
+        
+        if (!input.hasSameOrientation(this.inputs['roi'],'input image','roi image',true))
+            return Promise.reject('Failed');
+
+        
         return new Promise((resolve, reject) => {
-            let input = this.inputs['input'];
+
             biswrap.initialize().then(() => {
                 let store=super.parseBoolean(vals.storecentroids);
+
+                try {
+                    this.outputs['output'] = biswrap.computeROIWASM(input, this.inputs['roi'],
+                                                                    { 'storecentroids' : store },
+                                                                    super.parseBoolean(vals.debug));
+                } catch(e) {
+                    reject(e);
+                    return;
+                }
                 
-                this.outputs['output'] = biswrap.computeROIWASM(input, this.inputs['roi'],
-                                                                { 'storecentroids' : store },
-                                                                super.parseBoolean(vals.debug));
                 resolve();
             }).catch( (e) => {
                 reject(e.stack);
