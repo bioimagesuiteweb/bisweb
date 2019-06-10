@@ -606,8 +606,7 @@
             "command" : "gradientImage --input testdata/badimage.nii.gz --sigma 2.0 --inmm true --debug true",
             "test"    : "--test_target testdata/grad.nii.gz",
             "result"  : false,
-            "dopython": true,
-            "noweb"   : true
+            "dopython": true
         },
         {
             "command" : "smoothimage --input testdata/indiv/prep.nii.gz --sigma 4.0 --inmm true --fwhmax true --vtkboundary true",
