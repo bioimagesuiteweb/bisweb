@@ -609,19 +609,19 @@
             "dopython": true
         },
         {
-            "command" : "smoothimage --input testdata/indiv/prep.nii.gz --sigma 4.0 --inmm true --fwhmax true --vtkboundary true",
+            "command" : "smoothImage --input testdata/indiv/prep.nii.gz --sigma 4.0 --inmm true --fwhmax true --vtkboundary true",
             "test"    : "--test_target testdata/indiv/prep_sm.nii.gz",
             "result"  : true,
             "dopython": true
         },
         {
-            "command" : "smoothimage --input testdata/indiv/prep.nii.gz --sigma 4.0 --inmm true --fwhmax true --vtkboundary false",
+            "command" : "smoothImage --input testdata/indiv/prep.nii.gz --sigma 4.0 --inmm true --fwhmax true --vtkboundary false",
             "test"    : "--test_target testdata/indiv/prep_sm.nii.gz",
             "result"  : false,
             "dopython": true
         },
         {
-            "command" : "smoothimage --input testdata/indiv/prep.nii.gz --sigma 4.0 --inmm true --fwhmax true --vtkboundary true --usejs true",
+            "command" : "smoothImage --input testdata/indiv/prep.nii.gz --sigma 4.0 --inmm true --fwhmax true --vtkboundary true --usejs true",
             "test"    : "--test_target testdata/indiv/prep_sm.nii.gz",
             "result"  : true,
             "dopython": false
@@ -730,13 +730,13 @@
 	    "dopython": true
 	},
         {
-            "command" : "seedcorrelation -i testdata/imagefmri/Brain_Test.nii.gz -r testdata/imagefmri/seeds.matr --zscore false --debug true",
+            "command" : "seedCorrelation -i testdata/imagefmri/Brain_Test.nii.gz -r testdata/imagefmri/seeds.matr --zscore false --debug true",
             "test"    : "--test_target testdata/imagefmri/Seed_raw.nii.gz --test_type image --test_comparison ssd --test_threshold 0.01",
             "result"  : true,
             "dopython": true
         },
         {
-            "command" : "seedcorrelation -i testdata/imagefmri/Brain_Test.nii.gz -r testdata/imagefmri/seeds.matr --zscore true --debug true",
+            "command" : "seedCorrelation -i testdata/imagefmri/Brain_Test.nii.gz -r testdata/imagefmri/seeds.matr --zscore true --debug true",
             "test"    : "--test_target testdata/imagefmri/Seed_zscore.nii.gz --test_type image --test_comparison ssd --test_threshold 0.01",
             "result"  : true,
             "dopython": true
