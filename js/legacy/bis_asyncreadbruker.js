@@ -509,7 +509,7 @@ let directSaveImage=async function(part_img,part_imageoutname,forceorient) {
         let output=new BisWebImage();
         output.initialize();
         output.debug=0;
-        output.parseNII(dat.buffer,forceorient);
+        output.parseNIIModular(dat.buffer,forceorient);
         await output.save(part_imageoutname);
     } else {
         await part_img.save(part_imageoutname);
@@ -550,7 +550,7 @@ let saveRegularImage = async function (data,debug) {
 
     let img=new BisWebImage();
     img.initialize();
-    img.parseNII(c.buffer,data.forceorient);
+    img.parseNIIModular(c.buffer,data.forceorient);
     dualPrint("+++++ created image "+img.getDescription());
     
 

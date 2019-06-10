@@ -82,7 +82,7 @@ class ReorientImageModule extends BaseModule {
         let output=new BisWebImage();
         output.initialize();
         output.debug=debug;
-        output.parseNII(dat.buffer,vals.orient);
+        output.parseNIIModular(dat.buffer,vals.orient);
         output.debug=false;
         this.outputs['output']=output;
 
