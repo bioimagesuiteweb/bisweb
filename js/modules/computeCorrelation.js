@@ -20,6 +20,8 @@
 const biswrap = require('libbiswasm_wrapper');
 const baseutils=require("baseutils");
 const BaseModule = require('basemodule.js');
+const fmrimatrix   =require('bis_fmrimatrixconnectivity');
+const BisWebMatrix   =require('bisweb_matrix');
 
 /**
  * Calculates the correlation matrix for a dataset given a Z-score for the underlying data. 
@@ -53,6 +55,17 @@ class ComputeCorrelationModule extends BaseModule {
                     "varname": "zscore",
                     "default" : true,
                 },
+                {
+                    "name": "UseJS",
+                    "description": "Use the pure JS implementation of the algorithm",
+                    "priority": 28,
+                    "advanced": true,
+                    "gui": "check",
+                    "varname": "usejs",
+                    "type": 'boolean',
+                    "default": false,
+                    "jsonly" : true,
+                },
                 baseutils.getDebugParam()
             ]
         };
@@ -63,11 +76,29 @@ class ComputeCorrelationModule extends BaseModule {
         //0 indicates even weighting
         let weightMatrix = this.inputs['weight'] || 0;
         let input = this.inputs['input'];
+        let zscore=super.parseBoolean(vals.zscore);
+
+        if (super.parseBoolean(vals.usejs)) {
+            console.log('____ Using the JS Implementation of computeCorrelation');
+            if (weightMatrix)
+                weightMatrix=weightMatrix.getNumericMatrix();
+            else
+                weightMatrix= null; // js code needs null not 0
+            let out=fmrimatrix.computeCorrelationMatrix(input.getNumericMatrix(),weightMatrix,zscore);
+
+            this.outputs['output']=new BisWebMatrix();
+            try {
+                this.outputs['output'].setFromNumericMatrix(out);
+            } catch(e) {
+                console.log(e);
+            }
+            return Promise.resolve('done');
+        }
 
         return new Promise((resolve, reject) => {
             biswrap.initialize().then(() => {
                 this.outputs['output'] = biswrap.computeCorrelationMatrixWASM(input, weightMatrix, {
-                    "toz" : super.parseBoolean(vals.zscore)
+                    "toz" : zscore,
                 }, vals.debug);
 
                 resolve(); 

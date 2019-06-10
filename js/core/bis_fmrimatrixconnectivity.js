@@ -196,7 +196,7 @@ var roimean=function(input,roi) {
     var inpdata= input.getImageData();
     var roidata= roi.getImageData();
     var voxel=0,region=0,frame=0;
-    console.log('+++++ Computing ROI: volsize=',volsize,' numrois=',numrois,' numframes=',numframes,' range=',r);
+    console.log('++++ Computing ROI: volsize=',volsize,' numrois=',numrois,' numframes=',numframes,' range=',r);
 
     for (voxel=0;voxel<volsize;voxel++) {
         region=Math.floor(roidata[voxel])-1;
