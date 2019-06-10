@@ -524,9 +524,10 @@ class BisHeader {
 
     /** returns a rich dDescription of the header ala bis_headerinfo --detail full 
      * from BioImage Suite
+     * @returns {Boolean} extensions -- if true include extensions
      * @returns {String} -- full header descriptions 
      */
-    getDescription() {
+    getDescription(extensions=true) {
         
         let dt=this.struct.datatype;
         let typename=this.getniftitype(dt);
@@ -562,7 +563,7 @@ class BisHeader {
         }
 
         let cmt=this.parseExtensionsToArray();
-        if (cmt.length>0) {
+        if (cmt.length>0 && extensions) {
             s.push('\tExtensions:\n\t-----------');
             let s2=[];
             for (let i=0;i<cmt.length;i++) {
