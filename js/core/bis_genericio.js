@@ -676,6 +676,7 @@ const bisgenericio = {
     getenvironment : biscoreio.getenvironment,
     createBuffer : biscoreio.createBuffer,
     getfsmodule : biscoreio.getfsmodule,
+    getzlibmodule : biscoreio.getzlibmodule,
     getpathmodule : biscoreio.getpathmodule,
     getosmodule : biscoreio.getosmodule,
     getglobmodule : biscoreio.getglobmodule,
