@@ -57,9 +57,77 @@ let parseFile = (filename) => {
             let tr = parseInt(obj.data.tr), units = parseInt(obj.data.units), offset = parseInt(obj.data.offset), frames = parseInt(obj.data.frames);
             if (frames && frames < chartRanges.highRange) { chartRanges.highRange = frames; }
 
-            resolve({ 'runs' : parsedRuns, 'range' : chartRanges, 'tr' : tr, 'units' : units, 'offset' : offset, 'rawdata' : parsedData });
+            let tasks = parseRegionsFromRuns(parsedRuns, chartRanges, parsedData, offset);
+            let resObj = Object.assign(tasks, { 'runs' : parsedRuns, 'range' : chartRanges, 'tr' : tr, 'units' : units, 'offset' : offset });
+            resolve(resObj);
         }).catch( (e) => { reject(e); });
     });
+};
+
+let parseRegionsFromRuns = (runs, chartRange, rawdata, offset) => {
+    console.log('runs', runs);
+    let parsedRanges = [], labelsArray = [], tasks = [], taskNames = {}, range;
+    for (let run of Object.keys(runs)) {
+
+        //change label to match the format of the other labels, e.g. 'task_1' instead of 'task1'
+        let reformattedRun = run.replace(/(\d)/, (match, m1) => { return '_' + m1; });
+
+        range = createArray(runs[run], chartRange);
+        parsedRanges.push(range);
+        labelsArray.push(reformattedRun);
+
+        //parse regions into their own array 
+        let regions = {};
+        for (let region of Object.keys(runs[run])) {
+            if (!taskNames[region]) { taskNames[region] = true; }
+            regions[region] = createArray(runs[run][region], chartRange);
+        }
+
+        runs[run].parsedRegions = regions;
+        tasks.push({ 'data': range, 'label': reformattedRun, 'regions': rawdata.runs[run] });
+    }
+
+    return { 'taskArrays' : parsedRanges, 'taskLabels' : labelsArray, 'formattedTasks' : tasks, 'taskNames' : taskNames };
+
+    //Creates an array of 1's and 0's designating whether the task is on or off from either the list of task regions in a run or a single task region in a run
+    function createArray(run, chartRange) {
+        let taskArray = new Array(chartRange.highRange).fill(0);
+
+        console.log('run', run);
+        //the data for each individual run will be formatted as an array while the structure for each task will be an object
+        if (Array.isArray(run)) {
+            if (Array.isArray(run[0])) {
+                for (let item of run) {
+                    addToArray(item);
+                }
+            } else {
+                addToArray(run);
+            }
+        } else if (typeof run === 'object') {
+            let keys = Object.keys(run);
+            for (let task of keys) {
+                if (Array.isArray(run[task][0])) {
+                    for (let item of run[task])
+                        addToArray(item);
+                } else {
+                    addToArray(run[task]);
+                }
+            }
+        } else {
+            console.log('unrecognized run object', run);
+        }
+
+        //take the offset from the front before returning
+        taskArray = taskArray.slice(offset);
+        //console.log('task array', taskArray);
+        return taskArray;
+
+        function addToArray(range) {
+            for (let i = range[0]; i < range[1]; i++) {
+                taskArray[i] = 1;
+            }
+        }
+    }
 };
 
 module.exports = {

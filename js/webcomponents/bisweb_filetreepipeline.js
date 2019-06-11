@@ -380,38 +380,19 @@ class FileTreePipeline extends HTMLElement {
     loadStudyTaskData(name) {
 
         //declared here so they can be accessed by the functions below
-        let offset, tr;
+        let tr;
 
         bisweb_taskutils.parseFile(name).then( (data) => {
 
-            let chartRanges = data.range;
-            offset = data.offset, tr = data.tr;
+            tr = data.tr;
 
             //parse ranges into 0 and 1 array
-            let parsedRuns = data.runs, parsedRanges = [], labelsArray = [], tasks = [], taskNames = {}, range;
-            for (let run of Object.keys(parsedRuns)) {
+            let parsedRuns = data.runs, taskArrays = data.taskArrays, labelsArray = data.taskLabels, tasks = data.formattedTasks, taskNames = data.taskNames;
 
-                //change label to match the format of the other labels, e.g. 'task_1' instead of 'task1'
-                let reformattedRun = run.replace(/(\d)/, (match, m1) => { return '_' + m1; });
-
-                range = createArray(parsedRuns[run], chartRanges);
-                parsedRanges.push(range);
-                labelsArray.push(reformattedRun);
-
-                //parse regions into their own array 
-                let regions = {};
-                for (let region of Object.keys(parsedRuns[run])) {
-                    if (!taskNames[region]) { taskNames[region] = true; }
-                    regions[region] = createArray(parsedRuns[run][region], chartRanges);
-                }
-
-                parsedRuns[run].parsedRegions = regions;
-                tasks.push({ 'data': range, 'label': reformattedRun, 'regions': data.rawdata.runs[run] });
-            }
 
             //array to designate that all the arrays are meant to be included while formatting data
-            let includeArray = new Array(parsedRanges.length).fill(1);
-            let blockChart = this.graphelement.formatChartData(parsedRanges, includeArray, labelsArray, false, false);
+            let includeArray = new Array(taskArrays.length).fill(1);
+            let blockChart = this.graphelement.formatChartData(taskArrays, includeArray, labelsArray, false, false);
 
             //set the task range for the graph element to use in future images
             let alphabetizedTaskNames = Object.keys(taskNames).sort();
@@ -432,36 +413,9 @@ class FileTreePipeline extends HTMLElement {
                 slicedMatrices.push(matrixSlice);
             }
 
-            //construct charts array from matrix where each entry is the HDRF-convolved chart for each task (e.g. motor, visual, etc)
-            //note that sliced matrices are already in alphabetical order by run
-            let taskChartLabelsArray = taskMatrixInfo.runs, HDRFCharts = {}, taskCharts = {};
-            for (let k = 0; k < alphabetizedTaskNames.length; k++) {
-                let key = alphabetizedTaskNames[k];
-                key = key + '_hdrf';
-                HDRFCharts[key] = [];
-                for (let i = 0; i < slicedMatrices.length; i++) {
-                    HDRFCharts[key].push([]);
-                    for (let j = 0; j < slicedMatrices[i].length; j++) {
-                        HDRFCharts[key][HDRFCharts[key].length - 1].push(slicedMatrices[i][j][k]);
-                    }
-                }
-            }
-
-            for (let key of Object.keys(HDRFCharts)) {
-
-                //exclude plots of all zeroes
-                let includeArray = [];
-                for (let i = 0; i < HDRFCharts[key].length; i++)
-                    if (HDRFCharts[key][i].every((element) => { return element === 0; })) {
-                        includeArray.push(0);
-                    } else {
-                        includeArray.push(1);
-                    }
-
-                HDRFCharts[key] = this.graphelement.formatChartData(HDRFCharts[key], includeArray, taskChartLabelsArray, false, false);
-            }
-
-            //now construct non-HDRF matrices
+            let taskCharts = {};
+            
+            //now construct region matrices
             for (let regionKey of Object.keys(taskNames)) {
                 let regions = {};
                 for (let key of Object.keys(parsedRuns)) {
@@ -470,12 +424,11 @@ class FileTreePipeline extends HTMLElement {
                     }
                 }
                 let labelsArray = Object.keys(regions).sort(), regionsArray = [];
-                console.log('regions', regions);
                 for (let i = 0; i < labelsArray.length; i++) { regionsArray.push(regions[labelsArray[i]]); }
                 taskCharts[regionKey] = this.graphelement.formatChartData(regionsArray, new Array(labelsArray.length).fill(1), labelsArray, false, false);
             }
 
-            taskCharts = Object.assign(taskCharts, HDRFCharts);
+            //taskCharts = Object.assign(taskCharts, HDRFCharts);
             taskCharts['block_chart'] = blockChart;
 
             this.graphelement.createChart({
@@ -486,52 +439,8 @@ class FileTreePipeline extends HTMLElement {
                 'makeTaskChart': false,
                 'displayChart': 'block_chart',
                 'chartType': 'line',
-                'chartSettings': {
-                    'optionalCharts': Object.keys(HDRFCharts)
-                }
             });
         });
-
-
-        //Creates an array of 1's and 0's designating whether the task is on or off from either the list of task regions in a run or a single task region in a run
-        function createArray(run, chartRange) {
-            let taskArray = new Array(chartRange.highRange).fill(0);
-
-            console.log('run', run);
-            //the data for each individual run will be formatted as an array while the structure for each task will be an object
-            if (Array.isArray(run)) {
-                if (Array.isArray(run[0])) {
-                    for (let item of run) {
-                        addToArray(item);
-                    }
-                } else {
-                    addToArray(run);
-                }
-            } else if (typeof run === 'object') {
-                let keys = Object.keys(run);
-                for (let task of keys) {
-                    if (Array.isArray(run[task][0])) {
-                        for (let item of run[task])
-                            addToArray(item);
-                    } else {
-                        addToArray(run[task]);
-                    }
-                }
-            } else {
-                console.log('unrecognized run object', run);
-            }
-
-            //take the offset from the front before returning
-            taskArray = taskArray.slice(offset);
-            //console.log('task array', taskArray);
-            return taskArray;
-
-            function addToArray(range) {
-                for (let i = range[0]; i < range[1]; i++) {
-                    taskArray[i] = 1;
-                }
-            }
-        }
     }
 
     createTSVParseModal(f) {
