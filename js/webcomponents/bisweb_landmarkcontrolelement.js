@@ -563,21 +563,30 @@ class LandmarkControlElement extends HTMLElement {
         return false;
     }
 
+    /** Set landmarks from string
+     * @param {string} filename - filename
+     * @param {string} data - the file
+     */
+    setlandmarks(filename,data) {
+        let pset=this.internal.landmarkset[this.internal.currentsetindex];
+        let ok=pset.deserialize(data,filename,loaderror);
+        if (ok) {
+            pset.filename=filename;
+            this.updatedisplay(true);
+            this.updategui();
+            this.picklandmark(false);
+        }
+        return ok;
+    }
+
     /** Load landmarks. Called from input=File element 
      * @param {string} filename - filename
      */
     loadlandmarks(filename) {
 
-        const self=this;
-
         bisgenericio.read(filename).then( (obj) => {
-            let pset=this.internal.landmarkset[this.internal.currentsetindex];
-            var ok=pset.deserialize(obj.data,obj.filename,loaderror);
-            if (ok) {
-                pset.filename=obj.filename;
-                self.updatedisplay(true);
-                self.updategui();
-                self.picklandmark(false);
+            if (this.setlandmarks(obj.filename,obj.data)) {
+                let pset=this.internal.landmarkset[this.internal.currentsetindex];
                 webutil.createAlert('Landmarks loaded from' +pset.filename+' numpoints='+pset.getnumpoints());
             }
         }).catch( (e) => { loaderror(e) ; });

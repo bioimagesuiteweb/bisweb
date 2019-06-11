@@ -83,6 +83,12 @@ class MotionCorrectionModule extends BaseModule {
             if (reference===0) 
                 reference=target;
 
+            if (!reference.hasSameOrientation(target,'reference image','target image',true)) {
+                reject('Failed');
+                return;
+            }
+
+
             biswrap.initialize().then(() => {
                 //Open input file
 

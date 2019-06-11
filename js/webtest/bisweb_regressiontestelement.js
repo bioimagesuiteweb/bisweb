@@ -26,6 +26,7 @@ const BisWebDataObjectCollection = require('bisweb_dataobjectcollection.js');
 const webcss=require('bisweb_css');
 const webutil=require('bis_webutil');
 const systemprint=console.log;
+const systemerrprint=console.warn;
 const bis_genericio=require('bis_genericio');
 const userPreferences = require('bisweb_userpreferences.js');
 const bisdate=require('bisdate.js').date;
@@ -129,10 +130,36 @@ var replacesystemprint=function(doreplace=true) {
             logtext=logtext+s+'<BR>';
             oldLog.apply(console, arguments);
         };
+        console.warn = function () {
+            // DO MESSAGE HERE.
+            let keys=Object.keys(arguments);
+            let s='';
+            for(let i=0;i<keys.length;i++) {
+                let v=arguments[keys[i]];
+                if (typeof(v) === "object") {
+                    let l=v.length || null;
+                    if (l!==null) {
+                        s+=' [' + v.join(' ')+' ] ';
+                    } else  {
+                        let d=Object.keys(v);
+                        s+=' { ';
+                        for (let i=0;i<d.length;i++) {
+                            s+=`${d}: ${v[d]} `;
+                        }
+                        s+=' } ';
+                    }
+                } else {
+                    s+=v+' ';
+                }
+            }
+            logtext=logtext+'---- error: '+s+'<BR>';
+            oldLog.apply(console, arguments);
+        };
     }
 
     if (doreplace===false && replacing===true) {
         console.log=systemprint;
+        console.warn=systemerrprint;
         replacing=false;
     }
 };
@@ -158,7 +185,7 @@ var loadparamfile=function(paramfile,modulename,params) {
                 }
                 resolve('');
             } catch(e) {
-                reject('Network response was not ok.');
+                reject('Network response was not ok.'+e);
             }
         }).catch( (e) => {
             reject(e);
@@ -261,7 +288,12 @@ var execute_test=function(test,usethread=false) {
                         });
                     }).catch((e) => {
                         replacesystemprint(false);
-                        reject('---- Failed to invoke algorithm '+e);
+                        resolve( {
+                            result : ' Failed to execute. Check for intentional fail. ('+e+')',
+                            module : module,
+                            failed : true,
+                        });
+                        //reject('---- Failed to invoke algorithm '+e);
                     });
                 } else if (doworker) {
                     console.log('oooo ..........---Calling Web Worker ..............................-');
@@ -287,7 +319,12 @@ var execute_test=function(test,usethread=false) {
                     reject('---- Cannot invoke this test via thread manager '+JSON.stringify(test,null,2));
                 }
             }).catch((e) => {
-                reject('----- Bad input filenames in test '+e);
+                resolve( {
+                    result : ' Failed to load input data. Check for intentional fail. ('+e+')',
+                    module : module,
+                    failed : true,
+                });
+                //reject('----- Bad input filenames in test '+e);
             });
         }).catch((e) => {
             reject('----- Bad param file '+e);
@@ -581,11 +618,19 @@ var run_tests=async function(testlist,firsttest=0,lasttest=-1,testname='All',use
                 }
 
                 main.append(`<p>${obj.result}</p>`);
-                let obj2=await execute_compare(obj.module,v); // jshint ignore:line
-                let result=obj2.result;
-                let text=obj2.text;
+                let result,text;
+                try {
+                    let obj2=await execute_compare(obj.module,v); // jshint ignore:line
+                    result=obj2.result;
+                    text=obj2.text;
+                } catch(e) {
+                    result=false;
+                    text='Failed to compare ('+e+')';
+                }
                 
                 //                main.append(`.... result=${result}, expected=${v.result}`);
+
+                
                 
                 if (result && v.result)  {
                     main.append(`<p>${text}</p>`);

@@ -165,9 +165,15 @@ class BackProjectImageModule extends BaseModule {
 
     directInvokeAlgorithm(vals) {
         console.log('oooo invoking: backProjectImage with vals', JSON.stringify(vals));
+        let input = this.inputs['input'];
+        let threed= this.inputs['target'];
+        
+        if (!input.hasSameOrientation(threed,'image1','image2',true))
+            return Promise.reject('Failed');
+
         return new Promise( (resolve, reject) => {
-            let input = this.inputs['input'];
-            let threed= this.inputs['target'];
+
+            
             console.log('des=',input.getDescription(),threed.getDescription());
 
             let axis=-1;

@@ -41,9 +41,11 @@ const dat = require('bisweb_datgui');
 
 import ConnectivityControlElement from "bisweb_connectivitycontrolelement.js";
 import LandmarkControlElement from "bisweb_landmarkcontrolelement.js";
+import ElectrodeGridElement from "bisweb_electrodegridelement.js";
 import MosaicViewerElement from "bisweb_mosaicviewerelement.js";
 import OrthogonalViewerElement from "bisweb_orthogonalviewerelement.js";
 import PaintToolElement from "bisweb_painttoolelement.js";
+
 
 const Elements = {
     DialogElement : require("bisweb_dialogelement.js"),
@@ -68,6 +70,7 @@ const Elements = {
     DiffSPECTElement2 : require("bisweb_diffspectelement2.js"),
     ConnectivityControlElement:    ConnectivityControlElement,
     LandmarkControlElement :     LandmarkControlElement,
+    ElectrodeGridElement :     ElectrodeGridElement,
     MosaicViewerElement :    MosaicViewerElement,
     OrthogonalViewerElement : OrthogonalViewerElement,
     PaintToolElement :    PaintToolElement,

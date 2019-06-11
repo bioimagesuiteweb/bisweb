@@ -20,7 +20,8 @@
 const biswrap = require('libbiswasm_wrapper');
 const baseutils=require("baseutils");
 const BaseModule = require('basemodule.js');
-
+const fmrimatrix   =require('bis_fmrimatrixconnectivity');
+const BisWebMatrix   =require('bisweb_matrix');
 
 /**
  * Takes an input time series and object map detailing regions of interest (ROIs) and returns the mean activation for the region.
@@ -53,6 +54,17 @@ class ComputeROIModule extends BaseModule {
                     "type": 'boolean',
                     "default": false,
                 },
+                {
+                    "name": "UseJS",
+                    "description": "Use the pure JS implementation of the algorithm",
+                    "priority": 28,
+                    "advanced": true,
+                    "gui": "check",
+                    "varname": "usejs",
+                    "type": 'boolean',
+                    "default": false,
+                    "jsonly" : true,
+                },
                 baseutils.getDebugParam()
             ]
         };
@@ -70,14 +82,40 @@ class ComputeROIModule extends BaseModule {
 
     directInvokeAlgorithm(vals) {
         console.log('oooo invoking: computeROI with values', JSON.stringify(vals));
+
+        let input = this.inputs['input'];
+        
+        if (!input.hasSameOrientation(this.inputs['roi'],'input image','roi image',true))
+            return Promise.reject('Failed');
+
+
+        if (super.parseBoolean(vals.usejs)) {
+            console.log('____ Using the JS Implementation of computeROI');
+            let out=fmrimatrix.roimean(input,this.inputs['roi']);
+
+            this.outputs['output']=new BisWebMatrix();
+            try {
+                this.outputs['output'].setFromNumericMatrix(out['means']);
+            } catch(e) {
+                console.log(e);
+            }
+            return Promise.resolve('done');
+        }
+        
         return new Promise((resolve, reject) => {
-            let input = this.inputs['input'];
+
             biswrap.initialize().then(() => {
                 let store=super.parseBoolean(vals.storecentroids);
+
+                try {
+                    this.outputs['output'] = biswrap.computeROIWASM(input, this.inputs['roi'],
+                                                                    { 'storecentroids' : store },
+                                                                    super.parseBoolean(vals.debug));
+                } catch(e) {
+                    reject(e);
+                    return;
+                }
                 
-                this.outputs['output'] = biswrap.computeROIWASM(input, this.inputs['roi'],
-                                                                { 'storecentroids' : store },
-                                                                super.parseBoolean(vals.debug));
                 resolve();
             }).catch( (e) => {
                 reject(e.stack);
