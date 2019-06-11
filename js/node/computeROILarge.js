@@ -102,7 +102,6 @@ class ComputeROILargeModule extends BaseModule {
         
         
         let storeData=(in_offset,out_offset,length) => {
-            //console.log('\t\t Storing',out_offset,':',out_offset+length-1,' from',in_offset,':',in_offset+length-1);
             for (let i=0;i<length;i++)
                 params['temp'][out_offset+i]=newbuf[i+in_offset];
         };
@@ -110,16 +109,11 @@ class ComputeROILargeModule extends BaseModule {
         // How much can we add
         let done=false;
 
-            /*        console.log('--------------------------');
-                      console.log(colors.red('ADDING chunk='+len+', volumesize='+params['volumebytesize']));
-                      console.log('--------------------------');*/
-                      
         while (!done) {
             let available=len-params['offset'];
             let maxneeded=params['volumebytesize']-params['added'];
             let length=available;
             let in_offset=params['offset'];
-            //console.log('\t\t Available=',available,'maxneeded=',maxneeded,' offsets=',in_offset,params['offset']);
             
             if (maxneeded<available) {
                 length=maxneeded;
@@ -131,7 +125,6 @@ class ComputeROILargeModule extends BaseModule {
             storeData(in_offset,params['added'],length);
             params['added']=params['added']+length;
             let extraneeded=params['volumebytesize']-params['added'];
-            //console.log('\t\t added=',params['added'],' needed=',params['volumebytesize'],' stillneeded=',extraneeded);
 
             if (extraneeded<1) {
                 this.computeROI(roiimage,matrix,params['num'],params['frame'],new params['arraytype'](params['temp'].buffer));
@@ -145,8 +138,6 @@ class ComputeROILargeModule extends BaseModule {
                 done=true;
             }
         }
-        //console.log('\t\t\t returning');
-            
     }
 
 
@@ -157,8 +148,7 @@ class ComputeROILargeModule extends BaseModule {
             gzip=true;
         }
     
-        console.log('++++ Reading '+filename+' gzip='+gzip);
-        params['frame']=0;
+            params['frame']=0;
         params['offset']=params['headersize'];
         params['added']=0;
         params['leftover']=0;
@@ -175,7 +165,6 @@ class ComputeROILargeModule extends BaseModule {
 
                 const gunzip = zlib.createGunzip();
                 readstream.pipe(gunzip).on('finish', () => {
-                    console.log('Gunzip read done');
                     resolve('Done');
                 });
                 
@@ -188,7 +177,6 @@ class ComputeROILargeModule extends BaseModule {
             } else {
                 
                 readstream.on('end', async () => {
-                    console.log("Finished Reading");
                     resolve('Done');
                 });
                 
@@ -218,7 +206,6 @@ class ComputeROILargeModule extends BaseModule {
         let input=new BisWebImage();
         let headerinfo=null;
         try {
-            console.log('Reading',inputname);
             headerinfo=await input.loadHeaderOnly(inputname,debug);
         } catch(e) {
             return Promise.reject('Failed to read '+inputname);

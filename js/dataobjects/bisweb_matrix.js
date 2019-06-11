@@ -334,7 +334,7 @@ class BisWebMatrix extends BisWebDataObject{
                 else
                     i=sz[0];
             }
-            console.log('++++\t\t setting from Numeric Matrix. Input rows=',sz[0],'output=',rows);
+            console.log('++++\t\t setting from Numeric Matrix. Input rows=',sz[0],'output rows=',rows);
             sz[0]=rows;
 
             
