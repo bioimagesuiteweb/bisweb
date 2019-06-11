@@ -117,6 +117,11 @@ class FileTreePipeline extends HTMLElement {
             this.graphelement.chartInvokedFrom = 'task';
             this.filetree.parseTaskImagesFromTree();
         });
+
+        let drawingInterfaceButton = bis_webutil.createbutton({ 'name' : 'Open drawing interface', 'type' : 'primary' });
+        drawingInterfaceButton.on('click', () => {
+            this.startDrawingInterface();
+        });
         
         plotTasksButton.addClass('bisweb-load-enable');
         plotTasksButton.prop('disabled', 'true');
@@ -124,7 +129,7 @@ class FileTreePipeline extends HTMLElement {
         taskButtonBar.append(importTaskButton);
         taskButtonBar.append(clearTaskButton);
         taskButtonBar.append(plotTasksButton);
-
+        taskButtonBar.append(drawingInterfaceButton);
 
         return taskButtonBar;
     }
@@ -241,7 +246,6 @@ class FileTreePipeline extends HTMLElement {
                 }
             });
 
-            this.startDrawingInterface(pipelineModal.body);
             pipelineModal.footer.append(addModuleButton);
             pipelineModal.footer.append(saveModulesButton);
             this.pipelineModal = pipelineModal;
@@ -551,8 +555,34 @@ class FileTreePipeline extends HTMLElement {
         return { 'matrix': taskMatrix, 'runs': runNames };
     }
 
-    startDrawingInterface(element) {
-        
+    startDrawingInterface() {
+        let drawingModal = bis_webutil.createmodal('Add an element', 'modal-lg');
+
+        let canvas = $(`<canvas class='bisweb-paper-canvas'></canvas>`), htmlCanvas = canvas[0];
+        paper.setup(htmlCanvas);
+        /*new paper.Path({
+            segments: [[20, 20], [80, 80], [140, 20]],
+            strokeColor: 'red',
+            strokeWidth: 2,
+            strokeCap: 'round',
+            selected: false
+        });*/
+        paper.view.draw();
+        drawingModal.body.append(canvas);
+        drawingModal.dialog.modal('show');
+
+        let pointList = [];
+        paper.view.on('click', (e) => {
+            pointList.push(new paper.Point(e.point));
+            
+            if (pointList.length > 1) {
+               let line = new paper.Path.Line(pointList[pointList.length - 2], pointList[pointList.length - 1]);
+               line.strokeColor = 'blue';
+            }
+            console.log('hello!', e);
+        });
+
+        console.log('paper', paper);
     }
 
 }

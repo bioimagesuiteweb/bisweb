@@ -488,3 +488,11 @@ tspan {
 .bisweb-pipeline-list-item:hover {
     background-color : rgba(10, 63, 143, 0.5);
 }
+
+.bisweb-paper-canvas {
+    display : block;
+    margin-left : auto;
+    margin-right : auto;
+    width : 90%;
+    height : 100%;
+}
