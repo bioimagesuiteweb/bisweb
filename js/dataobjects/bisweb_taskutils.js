@@ -65,7 +65,6 @@ let parseFile = (filename) => {
 };
 
 let parseRegionsFromRuns = (runs, chartRange, rawdata, offset) => {
-    console.log('runs', runs);
     let parsedRanges = [], labelsArray = [], tasks = [], taskNames = {}, range;
     for (let run of Object.keys(runs)) {
 
@@ -93,7 +92,6 @@ let parseRegionsFromRuns = (runs, chartRange, rawdata, offset) => {
     function createArray(run, chartRange) {
         let taskArray = new Array(chartRange.highRange).fill(0);
 
-        console.log('run', run);
         //the data for each individual run will be formatted as an array while the structure for each task will be an object
         if (Array.isArray(run)) {
             if (Array.isArray(run[0])) {

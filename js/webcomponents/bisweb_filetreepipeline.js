@@ -1,6 +1,5 @@
 const bis_webutil = require('bis_webutil.js');
 const bis_webfileutil = require('bis_webfileutil.js');
-const bis_genericio = require('bis_genericio.js');
 const bis_bidsutils = require('bis_bidsutils.js');
 
 const bisweb_taskutils = require('bisweb_taskutils.js');
