@@ -24,7 +24,7 @@ const BisWebImage = require('bisweb_image.js');
 const util=require('bis_util');
 const fs=require('fs');
 const zlib=require('zlib');
-const colors=require('colors/safe');
+
 /**
  * Takes an input time series and object map detailing regions of interest (ROIs) and returns the mean activation for the region.
  */
@@ -74,7 +74,7 @@ class ComputeROILargeModule extends BaseModule {
 
         let roidata= roi.getImageData();
         let numrois=num.length;
-        let dim=roi.getDimensions();
+
         if (frame % 50 ===0) 
             console.log('++++ Computing Streaming ROI: frame=',frame);
 
@@ -118,7 +118,6 @@ class ComputeROILargeModule extends BaseModule {
             let available=len-params['offset'];
             let maxneeded=params['volumebytesize']-params['added'];
             let length=available;
-            let out_offset=params['added'];
             let in_offset=params['offset'];
             //console.log('\t\t Available=',available,'maxneeded=',maxneeded,' offsets=',in_offset,params['offset']);
             
