@@ -1942,7 +1942,7 @@ class BisWebImage extends BisWebDataObject {
 
 
             this.tmpheaderinfo = {
-                'type' : dt,
+                'type' : internal.imginfo,
                 'imgend' : headerlength+internal.rawsize,
                 'swap' : swap,
                 'headerlength' : headerlength,
