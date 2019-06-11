@@ -1,13 +1,14 @@
 #-----------------------------------------------------------
 # Macro definitions
-CXXFLAGS = -O1 -g -Wall -std=c++17
+CXXFLAGS = -O1 -g -Wall -std=c++17 -I../../build/eigen3/include/eigen3/
 OBJ = main.o tools.o CPM.o Group.o Subject.o predictory.o
 TARGET = cpm 
 #-----------------------------------------------------------
+
 # Rules
 all: $(TARGET)
 $(TARGET): $(OBJ)
-	$(CXX) -o $@ $(OBJ)
+	$(CXX) -o $@ $(OBJ) 
 clean:
 	rm -f $(OBJ) $(TARGET)
 #-----------------------------------------------------------
