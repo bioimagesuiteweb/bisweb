@@ -394,9 +394,7 @@ class FileTreePipeline extends HTMLElement {
             let includeArray = new Array(taskArrays.length).fill(1);
             let blockChart = this.graphelement.formatChartData(taskArrays, includeArray, labelsArray, false, false);
 
-            //set the task range for the graph element to use in future images
-            let alphabetizedTaskNames = Object.keys(taskNames).sort();
-            let taskMatrixInfo = bisweb_matrixutils.parseTaskMatrix(parsedRuns, alphabetizedTaskNames);
+            let taskMatrixInfo = bisweb_matrixutils.parseTaskMatrix(parsedRuns, taskNames);
 
             console.log('matrix', taskMatrixInfo.matrix);
             let stackedWaveform = bisweb_matrixutils.createStackedWaveform(taskMatrixInfo.matrix, tasks.length, tr, 2);
@@ -416,7 +414,7 @@ class FileTreePipeline extends HTMLElement {
             let taskCharts = {};
             
             //now construct region matrices
-            for (let regionKey of Object.keys(taskNames)) {
+            for (let regionKey of taskNames) {
                 let regions = {};
                 for (let key of Object.keys(parsedRuns)) {
                     if (parsedRuns[key].parsedRegions[regionKey]) {
@@ -428,7 +426,6 @@ class FileTreePipeline extends HTMLElement {
                 taskCharts[regionKey] = this.graphelement.formatChartData(regionsArray, new Array(labelsArray.length).fill(1), labelsArray, false, false);
             }
 
-            //taskCharts = Object.assign(taskCharts, HDRFCharts);
             taskCharts['block_chart'] = blockChart;
 
             this.graphelement.createChart({

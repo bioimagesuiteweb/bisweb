@@ -87,7 +87,7 @@ let parseRegionsFromRuns = (runs, chartRange, rawdata, offset) => {
         tasks.push({ 'data': range, 'label': reformattedRun, 'regions': rawdata.runs[run] });
     }
 
-    return { 'taskArrays' : parsedRanges, 'taskLabels' : labelsArray, 'formattedTasks' : tasks, 'taskNames' : taskNames };
+    return { 'taskArrays' : parsedRanges, 'taskLabels' : labelsArray, 'formattedTasks' : tasks, 'taskNames' : Object.keys(taskNames).sort() };
 
     //Creates an array of 1's and 0's designating whether the task is on or off from either the list of task regions in a run or a single task region in a run
     function createArray(run, chartRange) {
