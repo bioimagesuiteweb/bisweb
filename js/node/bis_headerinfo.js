@@ -98,9 +98,8 @@ class HeaderModule extends BaseModule {
             msg+=a+'\n';
 
             let img=new BisWebImage();
-            let out=null;
             try {
-                out=await img.loadHeaderOnly(inputlist[i],debug);
+                await img.loadHeaderOnly(inputlist[i],debug);
             } catch(e) {
                 return Promise.reject('Failed to read '+inputlist[i]);
             }
