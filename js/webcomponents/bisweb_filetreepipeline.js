@@ -4,7 +4,6 @@ const bis_genericio = require('bis_genericio.js');
 const bis_bidsutils = require('bis_bidsutils.js');
 
 const bisweb_matrixutils = require('bisweb_matrixutils.js');
-const BiswebMatrix = require('bisweb_matrix.js');
 
 const moduleIndex = require('moduleindex.js');
 const bisweb_custommodule = require('bisweb_custommodule.js');
@@ -430,7 +429,7 @@ class FileTreePipeline extends HTMLElement {
 
                 //set the task range for the graph element to use in future images
                 let alphabetizedTaskNames = Object.keys(taskNames).sort();
-                let taskMatrixInfo = this.parseTaskMatrix(parsedRuns, alphabetizedTaskNames);
+                let taskMatrixInfo = bisweb_matrixutils.parseTaskMatrix(parsedRuns, alphabetizedTaskNames);
 
                 console.log('matrix', taskMatrixInfo.matrix);
                 let tr = parseInt(parsedData['TR']);
@@ -571,39 +570,6 @@ class FileTreePipeline extends HTMLElement {
         if (range.highRange < entryRange[1]) { range.highRange = entryRange[1]; }
 
         return entryRange;
-    }
-
-    parseTaskMatrix(taskdata, taskNames) {
-        let taskMatrix = new BiswebMatrix();
-        let cols = taskNames.length;
-
-        let runNames = Object.keys(taskdata);
-        let randomRun = taskdata[runNames[0]].parsedRegions;
-        let numRuns = runNames.length, runLength = randomRun[Object.keys(randomRun)[0]].length;
-        let rows = numRuns * runLength; // runs get appended as extra rows, so there should be a set of rows for every run
-
-        //sort run names so tasks are created in order
-        runNames.sort((a, b) => {
-            let aIndex = a.split('_')[1], bIndex = b.split('_')[1];
-            if (aIndex && !bIndex) { return a; }
-            if (bIndex && !aIndex) { return b; }
-            if (!aIndex && !bIndex) { return a.localeCompare(b); }
-            else { return aIndex - bIndex; }
-        });
-
-        taskMatrix.allocate(rows, cols);
-        let currentRun;
-        for (let i = 0; i < rows; i++) {
-            currentRun = runNames[Math.floor(i / runLength)];
-            for (let j = 0; j < cols; j++) {
-                //some runs will not have every task defined. in that case just set the entry in the appropriate col to 0;
-                let taskArray = taskdata[currentRun].parsedRegions[taskNames[j]];
-                let datapoint = taskArray ? taskArray[i % runLength] : 0;
-                taskMatrix.setElement(i, j, datapoint);
-            }
-        }
-
-        return { 'matrix': taskMatrix, 'runs': runNames };
     }
 
     createTSVParseModal(f) {
