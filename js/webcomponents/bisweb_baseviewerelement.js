@@ -686,7 +686,7 @@ class BaseViewerElement extends HTMLElement {
     }
     
     /** update all mouse observers with new coordinates 
-     *  Called from {@link BisWebOrthogonalViewerElementElementThis.Internal.updatescene}.
+     *  Called from {@link BisWebOrthogonalViewerElementElement.updatescene}.
      * @param {array} mm - [ x,y,z ] array with current position in mm
      * @param {number} plane - 0,1,2 to signify whether click was on YZ,XZ or XY image plane (-1,3 mean 3D click)
      * @param {number} mousestate - 0=click 1=move 2=release

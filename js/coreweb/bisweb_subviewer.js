@@ -116,6 +116,7 @@ class BisWebSubviewer {
         this.opts={};
 
         this.coordinateChangeCallback=null;
+        this.coordinateChangeCallbackIndex=-1;
         this.rotateSpeed= opts.rotateSpeed || 4.0;
         this.zoomSpeed= opts.zoomSpeed || 3.0;
         this.panSpeed=opts.panSpeed || 5.0;
@@ -667,7 +668,10 @@ class BisWebSubviewer {
         
         if (this.plane>=0 && this.plane<=2) {
             if ( typeof this.coordinateChangeCallback == 'function' ) {
-                this.coordinateChangeCallback(this.lastCoordinates,this.plane,state);
+                this.coordinateChangeCallback(this.lastCoordinates,
+                                              this.plane,
+                                              state,
+                                              this.coordinateChangeCallbackIndex);
             }
         }
     }

@@ -61,12 +61,12 @@ const imageutils = {
                 if (params['swap']) {
                     let sizeoftype=params['voxelsize'];
                     let half=sizeoftype/2;
-                    let rawsize=params['temp'].length
-                    for (let i=0;i<internal.rawsize;i++) {
+                    let rawsize=params['temp'].length;
+                    for (let i=0;i<rawsize;i++) {
                         let offset=i*sizeoftype;
                         for (let j=0;j<half;j++) {
                             let j1=j+offset;
-                            const tmp1=_tmp[j1];
+                            const tmp1=params['temp'][j1];
                             const j2=offset+sizeoftype-(j+1);
                             params['temp'][j1]=params['temp'][j2];
                             params['temp'][j2]=tmp1;
