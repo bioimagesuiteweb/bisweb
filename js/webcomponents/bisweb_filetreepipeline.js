@@ -3,6 +3,7 @@ const bis_webfileutil = require('bis_webfileutil.js');
 const bis_genericio = require('bis_genericio.js');
 const bis_bidsutils = require('bis_bidsutils.js');
 
+const bisweb_taskutils = require('bisweb_taskutils.js');
 const bisweb_matrixutils = require('bisweb_matrixutils.js');
 
 const moduleIndex = require('moduleindex.js');
@@ -378,137 +379,117 @@ class FileTreePipeline extends HTMLElement {
      */
     loadStudyTaskData(name) {
 
-        let chartRanges = { 'lowRange' : -1, 'highRange' : -1}, parsedData;
-        bis_genericio.read(name, false).then((obj) => {
+        //declared here so they can be accessed by the functions below
+        let offset, tr;
 
-            //parse raw task data
-            try {
-                parsedData = JSON.parse(obj.data);
-                let runs = Object.keys(parsedData.runs);
+        bisweb_taskutils.parseFile(name).then( (data) => {
 
-                let parsedRuns = {};
-                for (let run of runs) {
+            let chartRanges = data.range;
+            offset = data.offset, tr = data.tr;
 
-                    //parse data for each run
-                    let tasks = Object.keys(parsedData.runs[run]);
-                    for (let task of tasks) {
-                        let range = parsedData.runs[run][task];
-                        if (!parsedRuns[run]) { parsedRuns[run] = {}; }
-                        parsedRuns[run][task] = this.parseEntry(range, chartRanges);
-                    }
+            //parse ranges into 0 and 1 array
+            let parsedRuns = data.runs, parsedRanges = [], labelsArray = [], tasks = [], taskNames = {}, range;
+            for (let run of Object.keys(parsedRuns)) {
+
+                //change label to match the format of the other labels, e.g. 'task_1' instead of 'task1'
+                let reformattedRun = run.replace(/(\d)/, (match, m1) => { return '_' + m1; });
+
+                range = createArray(parsedRuns[run], chartRanges);
+                parsedRanges.push(range);
+                labelsArray.push(reformattedRun);
+
+                //parse regions into their own array 
+                let regions = {};
+                for (let region of Object.keys(parsedRuns[run])) {
+                    if (!taskNames[region]) { taskNames[region] = true; }
+                    regions[region] = createArray(parsedRuns[run][region], chartRanges);
                 }
 
-                let maxFrames = parseInt(parsedData['frames']);
-                if (maxFrames) { chartRanges.highRange = maxFrames; }
-
-                //parse ranges into 0 and 1 array
-                let parsedRanges = [], labelsArray = [], tasks = [], taskNames = {}, range;
-                for (let run of Object.keys(parsedRuns)) {
-
-                    //change label to match the format of the other labels, e.g. 'task_1' instead of 'task1'
-                    let reformattedRun = run.replace(/(\d)/, (match, m1) => { return '_' + m1; });
-
-                    range = createArray(parsedRuns[run], chartRanges);
-                    parsedRanges.push(range);
-                    labelsArray.push(reformattedRun);
-
-                    //parse regions into their own array 
-                    let regions = {};
-                    for (let region of Object.keys(parsedRuns[run])) {
-                        if (!taskNames[region]) { taskNames[region] = true; }
-                        regions[region] = createArray(parsedRuns[run][region], chartRanges);
-                    }
-
-                    parsedRuns[run].parsedRegions = regions;
-                    tasks.push({ 'data': range, 'label': reformattedRun, 'regions': parsedData.runs[run] });
-                }
-
-                //array to designate that all the arrays are meant to be included while formatting data
-                let includeArray = new Array(parsedRanges.length).fill(1);
-                let blockChart = this.graphelement.formatChartData(parsedRanges, includeArray, labelsArray, false, false);
-
-                //set the task range for the graph element to use in future images
-                let alphabetizedTaskNames = Object.keys(taskNames).sort();
-                let taskMatrixInfo = bisweb_matrixutils.parseTaskMatrix(parsedRuns, alphabetizedTaskNames);
-
-                console.log('matrix', taskMatrixInfo.matrix);
-                let tr = parseInt(parsedData['TR']);
-                let stackedWaveform = bisweb_matrixutils.createStackedWaveform(taskMatrixInfo.matrix, tasks.length, tr, 2);
-
-                let taskObject = { 'formattedTasks': tasks, 'rawTasks': parsedData, 'matrix': taskMatrixInfo.matrix, 'stackedWaveform': stackedWaveform };
-                this.graphelement.taskdata = taskObject;
-
-                //matrixes are stacked on top of each other for each scanner run in alphabetical order, so slice them up to parse
-                let numericStackedWaveform = stackedWaveform.getNumericMatrix();
-
-                let slicedMatrices = [], runLength = numericStackedWaveform.length / taskMatrixInfo.runs.length;
-                for (let i = 0; i < taskMatrixInfo.runs.length; i++) {
-                    let matrixSlice = numericStackedWaveform.slice(i * runLength, (i + 1) * runLength);
-                    slicedMatrices.push(matrixSlice);
-                }
-
-                //construct charts array from matrix where each entry is the HDRF-convolved chart for each task (e.g. motor, visual, etc)
-                //note that sliced matrices are already in alphabetical order by run
-                let taskChartLabelsArray = taskMatrixInfo.runs, HDRFCharts = {}, taskCharts = {};
-                for (let k = 0; k < alphabetizedTaskNames.length; k++) {
-                    let key = alphabetizedTaskNames[k];
-                    key = key + '_hdrf';
-                    HDRFCharts[key] = [];
-                    for (let i = 0; i < slicedMatrices.length; i++) {
-                        HDRFCharts[key].push([]);
-                        for (let j = 0; j < slicedMatrices[i].length; j++) {
-                            HDRFCharts[key][HDRFCharts[key].length - 1].push(slicedMatrices[i][j][k]);
-                        }
-                    }
-                }
-
-                for (let key of Object.keys(HDRFCharts)) {
-
-                    //exclude plots of all zeroes
-                    let includeArray = [];
-                    for (let i = 0; i < HDRFCharts[key].length; i++)
-                        if (HDRFCharts[key][i].every((element) => { return element === 0; })) {
-                            includeArray.push(0);
-                        } else {
-                            includeArray.push(1);
-                        }
-
-                    HDRFCharts[key] = this.graphelement.formatChartData(HDRFCharts[key], includeArray, taskChartLabelsArray, false, false);
-                }
-                
-                //now construct non-HDRF matrices
-                for (let regionKey of Object.keys(taskNames)) {
-                    let regions = {};
-                    for (let key of Object.keys(parsedRuns)) {
-                        if (parsedRuns[key].parsedRegions[regionKey]) {
-                            regions[key] = parsedRuns[key].parsedRegions[regionKey];
-                        }
-                    }
-                    let labelsArray = Object.keys(regions).sort(), regionsArray = [];
-                    console.log('regions', regions);
-                    for (let i = 0; i < labelsArray.length; i++) { regionsArray.push(regions[labelsArray[i]]); }
-                    taskCharts[regionKey] = this.graphelement.formatChartData(regionsArray, new Array(labelsArray.length).fill(1), labelsArray, false, false);
-                }
-
-                taskCharts = Object.assign(taskCharts, HDRFCharts);
-                taskCharts['block_chart'] = blockChart;
-
-                this.graphelement.createChart({ 
-                    'xaxisLabel': 'frame', 
-                    'yaxisLabel': 'On', 
-                    'isFrameChart': true, 
-                    'charts': taskCharts, 
-                    'makeTaskChart': false, 
-                    'displayChart': 'block_chart', 
-                    'chartType': 'line',
-                    'chartSettings' : {
-                        'optionalCharts' : Object.keys(HDRFCharts)
-                    }
-                });
-
-            } catch (e) {
-                console.log('An error occured while parsing the task file', e);
+                parsedRuns[run].parsedRegions = regions;
+                tasks.push({ 'data': range, 'label': reformattedRun, 'regions': data.rawdata.runs[run] });
             }
+
+            //array to designate that all the arrays are meant to be included while formatting data
+            let includeArray = new Array(parsedRanges.length).fill(1);
+            let blockChart = this.graphelement.formatChartData(parsedRanges, includeArray, labelsArray, false, false);
+
+            //set the task range for the graph element to use in future images
+            let alphabetizedTaskNames = Object.keys(taskNames).sort();
+            let taskMatrixInfo = bisweb_matrixutils.parseTaskMatrix(parsedRuns, alphabetizedTaskNames);
+
+            console.log('matrix', taskMatrixInfo.matrix);
+            let stackedWaveform = bisweb_matrixutils.createStackedWaveform(taskMatrixInfo.matrix, tasks.length, tr, 2);
+
+            let taskObject = { 'formattedTasks': tasks, 'rawTasks': data.rawdata, 'matrix': taskMatrixInfo.matrix, 'stackedWaveform': stackedWaveform };
+            this.graphelement.taskdata = taskObject;
+
+            //matrixes are stacked on top of each other for each scanner run in alphabetical order, so slice them up to parse
+            let numericStackedWaveform = stackedWaveform.getNumericMatrix();
+
+            let slicedMatrices = [], runLength = numericStackedWaveform.length / taskMatrixInfo.runs.length;
+            for (let i = 0; i < taskMatrixInfo.runs.length; i++) {
+                let matrixSlice = numericStackedWaveform.slice(i * runLength, (i + 1) * runLength);
+                slicedMatrices.push(matrixSlice);
+            }
+
+            //construct charts array from matrix where each entry is the HDRF-convolved chart for each task (e.g. motor, visual, etc)
+            //note that sliced matrices are already in alphabetical order by run
+            let taskChartLabelsArray = taskMatrixInfo.runs, HDRFCharts = {}, taskCharts = {};
+            for (let k = 0; k < alphabetizedTaskNames.length; k++) {
+                let key = alphabetizedTaskNames[k];
+                key = key + '_hdrf';
+                HDRFCharts[key] = [];
+                for (let i = 0; i < slicedMatrices.length; i++) {
+                    HDRFCharts[key].push([]);
+                    for (let j = 0; j < slicedMatrices[i].length; j++) {
+                        HDRFCharts[key][HDRFCharts[key].length - 1].push(slicedMatrices[i][j][k]);
+                    }
+                }
+            }
+
+            for (let key of Object.keys(HDRFCharts)) {
+
+                //exclude plots of all zeroes
+                let includeArray = [];
+                for (let i = 0; i < HDRFCharts[key].length; i++)
+                    if (HDRFCharts[key][i].every((element) => { return element === 0; })) {
+                        includeArray.push(0);
+                    } else {
+                        includeArray.push(1);
+                    }
+
+                HDRFCharts[key] = this.graphelement.formatChartData(HDRFCharts[key], includeArray, taskChartLabelsArray, false, false);
+            }
+
+            //now construct non-HDRF matrices
+            for (let regionKey of Object.keys(taskNames)) {
+                let regions = {};
+                for (let key of Object.keys(parsedRuns)) {
+                    if (parsedRuns[key].parsedRegions[regionKey]) {
+                        regions[key] = parsedRuns[key].parsedRegions[regionKey];
+                    }
+                }
+                let labelsArray = Object.keys(regions).sort(), regionsArray = [];
+                console.log('regions', regions);
+                for (let i = 0; i < labelsArray.length; i++) { regionsArray.push(regions[labelsArray[i]]); }
+                taskCharts[regionKey] = this.graphelement.formatChartData(regionsArray, new Array(labelsArray.length).fill(1), labelsArray, false, false);
+            }
+
+            taskCharts = Object.assign(taskCharts, HDRFCharts);
+            taskCharts['block_chart'] = blockChart;
+
+            this.graphelement.createChart({
+                'xaxisLabel': 'frame',
+                'yaxisLabel': 'On',
+                'isFrameChart': true,
+                'charts': taskCharts,
+                'makeTaskChart': false,
+                'displayChart': 'block_chart',
+                'chartType': 'line',
+                'chartSettings': {
+                    'optionalCharts': Object.keys(HDRFCharts)
+                }
+            });
         });
 
 
@@ -541,7 +522,7 @@ class FileTreePipeline extends HTMLElement {
             }
 
             //take the offset from the front before returning
-            taskArray = taskArray.slice(parsedData.offset);
+            taskArray = taskArray.slice(offset);
             //console.log('task array', taskArray);
             return taskArray;
 
@@ -551,25 +532,6 @@ class FileTreePipeline extends HTMLElement {
                 }
             }
         }
-    }
-
-    parseEntry(entry, range) {
-
-        if (Array.isArray(entry)) {
-            let entryArray = [];
-            for (let item of entry)
-                entryArray.push(this.parseEntry(item, range));
-
-            return entryArray;
-        }
-
-        let entryRange = entry.split('-');
-        for (let i = 0; i < entryRange.length; i++) { entryRange[i] = parseInt(entryRange[i]); }
-
-        if (range.lowRange < 0 || range.lowRange > entryRange[0]) { range.lowRange = entryRange[0]; }
-        if (range.highRange < entryRange[1]) { range.highRange = entryRange[1]; }
-
-        return entryRange;
     }
 
     createTSVParseModal(f) {

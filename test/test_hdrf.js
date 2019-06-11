@@ -19,16 +19,19 @@
 /*global describe, it */
 
 require('../config/bisweb_pathconfig.js');
-const bis_bidsutils = require('bis_bidsutils.js');
 const bis_genericio = require('bis_genericio.js');
 const path = require('path');
+const bisweb_taskutils = require('bisweb_taskutils.js');
 const colors = require('colors/safe');
 const assert = require('assert');
 
 let glmDescriptionFilename = path.resolve('./testdata/glm_description.json');
 
 describe('Parse .json file to HDRF matrix', () => {
-    if ('Reads .json', (done) => {
-        bis_genericio.read(glmDescription).then()
+    it ('Reads .json', (done) => {
+        bisweb_taskutils.parseFile(glmDescriptionFilename).then( (data) => {
+            console.log(colors.cyan(' +++ Parsed glm', JSON.stringify(data.runs, null, 2)));
+            done();
+        }).catch( (e) => { done(e); });
     });
 });
