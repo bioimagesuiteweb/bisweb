@@ -778,6 +778,13 @@
 	    "result"  : true,
 	    "dopython": false,
             "noweb"   : true
+	},
+        {
+	    "command" : "computeROILarge -i testdata/glm/Test_allruns2.nii -r testdata/glm/objectmap.nii.gz",
+	    "test"    : "--test_target testdata/glm/roimap.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": false,
+            "noweb"   : true
 	}
     ]
 }
