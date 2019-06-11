@@ -65,7 +65,7 @@ class ComputeROILargeModule extends BaseModule {
                     "gui": "check",
                     "varname": "loadall",
                     "type": 'boolean',
-                    "default": false,
+                    "default": true,
                 },
                 baseutils.getDebugParam()
             ]
@@ -208,7 +208,6 @@ class ComputeROILargeModule extends BaseModule {
 
     async computeROIArray(inputname,roi,numrois,matrix) {
 
-        console.log('In compute ROI Array');
         try {
             let arr=await imageutils.readImageAsArray(inputname,false);
             

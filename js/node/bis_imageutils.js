@@ -58,6 +58,21 @@ const imageutils = {
 
             if (extraneeded<1) {
                 
+                if (params['swap']) {
+                    let sizeoftype=params['voxelsize'];
+                    let half=sizeoftype/2;
+                    let rawsize=params['temp'].length
+                    for (let i=0;i<internal.rawsize;i++) {
+                        let offset=i*sizeoftype;
+                        for (let j=0;j<half;j++) {
+                            let j1=j+offset;
+                            const tmp1=_tmp[j1];
+                            const j2=offset+sizeoftype-(j+1);
+                            params['temp'][j1]=params['temp'][j2];
+                            params['temp'][j2]=tmp1;
+                        }
+                    }
+                }
                 let arr=new params['arraytype'](params['temp'].buffer);
                 let img=new BisWebImage();
                 img.cloneImage(params['image'],{
@@ -76,7 +91,7 @@ const imageutils = {
 
                 img.setFilename(params['basename']+'_fr'+s+'.nii.gz');
                 
-                if (f%20 === 0 || debug) {
+                if (f% (Math.floor(params['numframes']/8)) === 0 || debug) {
                     console.log('++++ Added frame ',f, 'Length=',arr.length,imgdata.length,'desc=',img.getDescription());
                 }
                 img=null;
@@ -92,7 +107,7 @@ const imageutils = {
         }
     },
 
-
+    
     readAndProcessFile : function (filename,params,debug) {
 
         let gzip=false;
@@ -192,10 +207,6 @@ const imageutils = {
             basename : basename,
             numdigits : numdigits,
         };
-
-        if (params.swap) {
-            return Promise.reject('Can not handle byte swapped data');
-        }
 
         if (debug)
             console.log('Params=',params);
