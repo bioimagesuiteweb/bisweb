@@ -37,7 +37,7 @@ const loaderror = function(msg) {
 };
 
 const MAXGRIDS=30;
-
+const PROPERTIES=[ "Motor", "Sensory", "Visual", "Language", "Auditory", "User1", "SeizureOnset", "SpikesPresent" ];
 // -------------------------------------------------------------------------
 
 /** 
@@ -89,6 +89,7 @@ class ElectrodeGridElement extends HTMLElement {
             folders : null,
             gridPropertiesGUI : null,
             currentelectrodeselect : null,
+            checkbuttons : [],
             data : {
                 showmode : "Current",
                 allshowmodes : [ "Current", "All", "None" ],
@@ -115,23 +116,42 @@ class ElectrodeGridElement extends HTMLElement {
     /** Clean up meshes currently displayed
      * @param {boolean} currentonly - (default false). If true delete only current landmark mesh (for all viewers) instead of all.
      */
-    cleanupdisplayelements(currentonly=false) {
+    cleanUpMeshes(currentonly=false) {
 
         if (this.internal.subviewers===null || this.internal.mesh===null)
             return;
+
+        if (this.internal.mesh.length<1)
+            return;
         
-        for (let st=0;st<this.internal.multigrid.getNumGrids();st++) {
-            if ( (currentonly===false || st === this.internal.currentgridindex) &&
-                 (this.internal.mesh[st]!==null)) {
-                for (let i=0;i<this.internal.subviewers.length;i++)  {
-                    if (this.internal.subviewers[i]!==null && this.internal.mesh[st][i]!==null) {
-                        this.internal.mesh[st][i].visible=false;
-                        this.internal.subviewers[i].getScene().remove(this.internal.mesh[st][i]);
-                        this.internal.mesh[st][i]=null;
+        let min=0;
+        let max=this.internal.mesh.length-1;
+        if (currentonly) {
+            min=this.internal.currentgridindex;
+            max=this.internal.currentgridindex;
+        }
+
+        
+        
+        for (let st=min;st<=max;st++) {
+            if (this.internal.mesh[st]!==null) {
+                let elem=this.internal.mesh[st];
+                for (let i=0;i<elem.length;i++) {
+                    let vr=i;
+                    if (i>3)
+                        vr=3;
+                    if (this.internal.subviewers[vr]!==null && elem[i]!==null) {
+                        elem[i].visible=false;
+                        this.internal.subviewers[vr].getScene().remove(elem[i]);
+                        elem[i]=null;
                     }
                 }
                 this.internal.mesh[st]=null;
             }
+        }
+
+        if (!currentonly) {
+            this.internal.mesh=[];
         }
         
     }
@@ -145,12 +165,10 @@ class ElectrodeGridElement extends HTMLElement {
      * @param {boolean} smallsphere - (default false). If true make sphere small.
      * @returns {THREEJS-BufferGeometry} out
      */
-    createGridGeometry(grid,pointsize,smallsphere) {
-        if (grid.electrodes.length<1)
+    createGridGeometry(points,pointsize,smallsphere) {
+        if (points.length<1)
             return null;
 
-        console.log('PointSize=',pointsize+0.0001);
-        
         smallsphere= smallsphere || false;
 
         let sz=this.internal.volume.getImageSize();
@@ -160,12 +178,7 @@ class ElectrodeGridElement extends HTMLElement {
         let radius=0.5*length;
         if (smallsphere)
             radius=0.5*spa[0];
-
-        let points=[];
-        for (let i=0;i<grid.electrodes.length;i++) {
-            points.push(grid.electrodes[i].position);
-        }
-        console.log('points=',points);
+        
         let core=bisCrossHair.createcore(length,thickness,true,radius);
         let geometry=bisCrossHair.createcopies(core,points);
         //geometry.computeVertexNormals();
@@ -202,10 +215,16 @@ class ElectrodeGridElement extends HTMLElement {
             }
             return;
         }
+
+        let points=[];
+        for (let i=0;i<grid.electrodes.length;i++) {
+            points.push(grid.electrodes[i].position);
+        }
+
         
-        this.internal.mesh[st]=new Array(this.internal.subviewers.length);
-        let geometry=this.createGridGeometry(grid,0.2*parseFloat(grid.radius),true);
-        let geometry2=this.createGridGeometry(grid,0.2*parseFloat(grid.radius),false);
+        this.internal.mesh[st]=new Array(5);
+        let geometry=this.createGridGeometry(points,0.2*parseFloat(grid.radius),true);
+        let geometry2=this.createGridGeometry(points,0.2*parseFloat(grid.radius),false);
 
         let color=this.mapColor(grid.color);
         let mat=new THREE.MeshBasicMaterial( {color: color, wireframe:true});
@@ -221,6 +240,31 @@ class ElectrodeGridElement extends HTMLElement {
             this.internal.mesh[st][i].visible=false;
             this.internal.subviewers[i].getScene().add(this.internal.mesh[st][i]);
         }
+
+        // Create line mesh ... add add to 4
+        let fp=new Float32Array(points.length*3);
+        for (let i=0;i<points.length;i++) {
+            for (let j=0;j<=2;j++)
+                fp[i*3+j]=points[i][j];
+        }
+        let indices=new Uint16Array((points.length-1)*2);
+        for (let i=0;i<points.length;i++) {
+            indices[2*i]=i;
+            indices[2*i+1]=i+1;
+        }
+            
+        let buf=new THREE.BufferGeometry();
+        buf.setIndex(  new THREE.BufferAttribute( indices, 1 ) );
+        buf.addAttribute( 'position', new THREE.BufferAttribute( fp, 3 ) );
+        let linemesh = new THREE.LineSegments(buf,
+                                              new THREE.LineBasicMaterial( {
+                                                  color: color,
+                                                  linewidth : 1,
+                                                  linecap : "square",
+                                              }));
+        linemesh.visbile=true;
+        this.internal.subviewers[3].getScene().add(linemesh);
+        this.internal.mesh[st][4]=linemesh;
         return;
     }
     
@@ -234,8 +278,12 @@ class ElectrodeGridElement extends HTMLElement {
         if (this.internal.multigrid.getNumGrids()===0)
             return;
 
-        //let grid=this.internal.multigrid.getGrid(this.internal.currentgridindex);        
         let colorValue=this.internal.data.color.replace( '#','0x' );
+        let cl=util.hexToRgb(this.internal.data.color);
+
+        let grid=this.internal.multigrid.getGrid(this.internal.currentgridindex);
+        grid.color= [ cl.r/255,cl.g/255,cl.b/255];
+        
         
         let mesh=this.internal.mesh[this.internal.currentgridindex];
         if (mesh!==null) {
@@ -255,28 +303,28 @@ class ElectrodeGridElement extends HTMLElement {
     }
     
     /** updates display of elements based on changes from GUI/user
-     * @param {boolean} currentonly - if ture only update for current grid (default =false)
+     * @param {boolean} currentonly - (default false). If true delete only current landmark mesh (for all viewers) instead of all.
      */
-    updatedisplay(currentonly) {
-
-        if (this.internal.meshvisible[this.internal.currentgridindex]===false)
-            return;
+    updateMeshes(currentonly=false) {
         
-        currentonly=currentonly || false;
-        this.cleanupdisplayelements(false,currentonly);
-
         if (this.internal.subviewers===null)
             return;
-                
-        let numsets= this.internal.multigrid.getNumGrids();
-        for (let st=0;st<numsets;st++) {
+
+        this.cleanUpMeshes(currentonly);
+        
+        let min=0;
+        let max=this.internal.multigrid.getNumGrids()-1;
+        if (currentonly) {
+            min=this.internal.currentgridindex;
+            max=this.internal.currentgridindex;
+        }
+
+        
+        for (let st=min;st<=max;st++) {
             this.creategridmesh(st);
         }
 
-        const self=this;
-        let fn2=function() { self.showhidemeshes(); };
-        
-        setTimeout(fn2,2);
+        setTimeout( () => { this.showhidemeshes();},2);
         if (!this.internal.pickmode)
             this.updateelectrodeselector();
     }
@@ -330,9 +378,22 @@ class ElectrodeGridElement extends HTMLElement {
         let np=grid.electrodes.length;
         
         if (np>0 && e===-1) 
-            this.internal.currentelectrode=np-1;
+            this.internal.currentelectrode=0;
         else 
             this.internal.currentelectrode=util.range(e,0,np-1);
+
+        let electrode=this.internal.multigrid.getElectrode(this.internal.currentgridindex,
+                                                           this.internal.currentelectrode);
+        for (let i=0;i<PROPERTIES.length;i++) {
+            let prop=PROPERTIES[i];
+            let val=parseInt(electrode.props[prop]);
+            if (val>0)
+                val=true;
+            else
+                val=false;
+            this.internal.checkbuttons[prop].prop("checked", val);
+        }
+
         
         if (!noupd)
             this.internal.currentelectrodeselect.val(this.internal.currentelectrode);
@@ -344,9 +405,8 @@ class ElectrodeGridElement extends HTMLElement {
             return;
         
         this.internal.currentelectrodeselect.empty();
-        console.log('Current Index=',this.internal.currentgridindex);
         let grid=this.internal.multigrid.getGrid(this.internal.currentgridindex);
-        console.log('Grid=',grid);
+
         let np=grid.electrodes.length;
         if (np===0) {
             let a=("<option value=\"-1\">None</option>");
@@ -412,16 +472,18 @@ class ElectrodeGridElement extends HTMLElement {
      */
     loadMultiGrid(filename) {
 
-        this.internal.multigrid.load(filename).then( () => {
+        this.internal.multigrid.load(filename).catch( (e) => {
+            loaderror(e);
+        }).then( () => {
             let grid=this.internal.multigrid;
-
             this.internal.currentelectrodeselect.empty();
             this.onDemandCreateGUI();
-            this.updatedisplay(true);
+            this.updateMeshes(false);
             this.updategui();
+            this.selectElectrode(-1);
             this.centerOnElectrode();
             webutil.createAlert('Grid loaded from' +grid.filename+' numgrids='+grid.getNumGrids());
-        }).catch( (e) => { loaderror(e) ; });
+        });
         return false;
     }
 
@@ -490,17 +552,17 @@ class ElectrodeGridElement extends HTMLElement {
             return;
         
         this.internal.parentDomElement.empty();
+        
         let basediv=webutil.creatediv({ parent : this.internal.parentDomElement});
         this.internal.domElement=basediv;
         
         let f1 = new dat.GUI({autoPlace: false});
         basediv.append(f1.domElement);
 
-        const self=this;
         // Global Properties
-        let s1_on_cb=function(e) {
-            let ind=self.internal.data.allnames.indexOf(e);
-            self.setCurrentGrid(ind);
+        let s1_on_cb=(e) => {
+            let ind=this.internal.data.allnames.indexOf(e);
+            this.setCurrentGrid(ind);
         };
 
         this.internal.data.allnames=[];
@@ -512,9 +574,9 @@ class ElectrodeGridElement extends HTMLElement {
         sl.onChange(s1_on_cb);
 
         let dp=f1.add(this.internal.data,'showmode',this.internal.data.allshowmodes).name("Grids to Display");
-        let dp_on_cb=function() {
-            self.showhidemeshes();
-            self.updategui(true);
+        let dp_on_cb=() => {
+            this.showhidemeshes();
+            this.updategui(true);
         };
         dp.onChange(dp_on_cb);
 
@@ -538,29 +600,63 @@ class ElectrodeGridElement extends HTMLElement {
         elem1_label.css({'padding':'10px'});
         elem1.append(elem1_label);
         this.internal.currentelectrodeselect=webutil.createselect({parent : elem1,
-                                                               values : [ 'none' ],
-                                                                   callback : function(e) {
-                                                                   self.selectElectrode(e.target.value,true);
-                                                                   self.centerOnElectrode();
-                                                               },
-                                                              });
+                                                                   values : [ 'none' ],
+                                                                   callback : (e) => {
+                                                                       this.selectElectrode(e.target.value,true);
+                                                                       this.centerOnElectrode();
+                                                                   },
+                                                                  });
+
+        this.internal.checkbuttons={};
+
+        let sbar2=webutil.creatediv({ parent: basediv});
+        for (let i=0;i<PROPERTIES.length;i++) {
+            this.internal.checkbuttons[PROPERTIES[i]]=
+                webutil.createcheckbox({
+                    name: PROPERTIES[i],
+                    type: "info",
+                    checked: false,
+                    parent: sbar2,
+                    css: { 'margin-left': '5px' ,
+                           'margin-right': '5px',
+                           'width' : '100px'}
+                });
+        }
+            
+        
         
 
         // ----------- Landmark specific stuff
-        var f2 = new dat.GUI({autoPlace: false});
 
-        f2.add(self.internal.data, 'radius',0.5,4.0).name("Radius").step(0.5).onChange(function() {
-            let grid=self.internal.multigrid.getGrid(self.internal.currentgridindex);
-            grid.radius=0.2*self.internal.data.radius;
-            self.updatedisplay();
-        });
-        
-        f2.addColor(self.internal.data, 'color').name("Landmark Color").onChange(function() {  
-            self.updatecolors();
-        });
+        if (this.internal.gridPropertiesGUI===null) {
+            const f2 = new dat.GUI({autoPlace: false});
+            console.log('F2=',f2,JSON.stringify(this.internal.data));
+            
+            console.log('Creating modal');
+            let modal=webutil.createmodal("Grid Properties","modal-sm");
+            this.internal.gridPropertiesGUI=modal.dialog;
+            modal.body.append(f2.domElement);
 
-        webutil.removedatclose(f2);
-        self.internal.folders=[f1, f2];
+            
+            console.log('Radius=',this.internal.data.radius);
+            
+            f2.add(this.internal.data, 'radius',0.5,8.0).name("Radius").step(0.5).onChange(() => {
+                let grid=this.internal.multigrid.getGrid(this.internal.currentgridindex);
+                grid.radius=this.internal.data.radius;
+                this.updateMeshes(true);
+            });
+            
+            console.log('Color=',this.internal.data.color);
+            
+            f2.addColor(this.internal.data, 'color').name("Landmark Color").onChange(()=> {  
+                this.updatecolors();
+            });
+            
+            webutil.removedatclose(f2);
+            this.internal.folders=[f1, f2];
+        } else {
+            this.internal.folders[0]=f1;
+        }
         // Save self for later
         
         // ---------------
@@ -571,7 +667,7 @@ class ElectrodeGridElement extends HTMLElement {
                                             css : {'margin-top': '20px','margin-bottom': '10px'}});
 
         
-        let update_cb=function() { self.updateGridProperties();};
+        let update_cb=() => { this.updateGridProperties();};
         webutil.createbutton({ type : "primary",
                                name : "Display Properties",
                                position : "bottom",
@@ -580,7 +676,7 @@ class ElectrodeGridElement extends HTMLElement {
                                callback :  update_cb,
                              });
 
-        let load_cb=function(f) { self.loadMultiGrid(f); };
+        let load_cb=(f) => { this.loadMultiGrid(f); };
         webfileutil.createFileButton({ type : "warning",
                                        name : "Load",
                                        position : "bottom",
@@ -595,14 +691,14 @@ class ElectrodeGridElement extends HTMLElement {
                                          suffix : ".bisgrid,.mgrid",
                                      });
 
-        let save_cb=function(f) {
+        let save_cb=(f) => {
             f=f || 'landmarks.bisgrid';
             console.log('f=',f);
             let suffix=f.split(".").pop();
             if (suffix==="land")
-                return self.exportMultiGrid(f);
+                return this.exportMultiGrid(f);
             else
-                return self.saveMultiGrid(f);
+                return this.saveMultiGrid(f);
         };
 
 
@@ -620,7 +716,7 @@ class ElectrodeGridElement extends HTMLElement {
                                          filters  : [ { name: 'Landmark Files', extensions: ['bisgrid','land' ]}],
                                          save : true,
                                          suffix : ".bisgrid,.mgrid",
-                                         initialCallback : () => { return self.getInitialSaveFilename(); },
+                                         initialCallback : () => { return this.getInitialSaveFilename(); },
                                      });
         
         webutil.tooltip(this.internal.parentDomElement);
@@ -629,9 +725,7 @@ class ElectrodeGridElement extends HTMLElement {
         // Now create modal
         // ----------------------------------------
 
-        let modal=webutil.createmodal("Grid Properties","modal-sm");
-        modal.body.append(f2.domElement);
-        this.internal.gridPropertiesGUI=modal.dialog;
+        
 
     }
     
@@ -678,7 +772,7 @@ class ElectrodeGridElement extends HTMLElement {
             
             this.internal.currentgridindex=0;
             this.internal.intialized=true;
-            this.cleanupdisplayelements(true,true);
+
             
             this.internal.mesh=new Array(MAXGRIDS);
             this.internal.meshcustomvisible=new Array(MAXGRIDS);
@@ -698,7 +792,7 @@ class ElectrodeGridElement extends HTMLElement {
 
         }
         
-        this.updatedisplay();
+        this.updateMeshes(false);
         this.updatecolors();
         this.onDemandCreateGUI();
         this.updategui();
@@ -745,7 +839,7 @@ class ElectrodeGridElement extends HTMLElement {
         if (multigrid) {
             this.internal.multigrid.parseFromDictionary(multigrid);
         }
-        this.updatedisplay(false);
+        this.updateMeshes();
         this.internal.data.showmode=dt.data.showmode;
         this.showhidemeshes();
         
