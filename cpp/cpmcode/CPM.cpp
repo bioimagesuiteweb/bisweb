@@ -145,7 +145,7 @@ void CPM::run(){
 		}
 
 
-		double coefficients[order + 1]; // resulting array of coefs
+		double* coefficients=new double[order + 1]; // resulting array of coefs
 		//		// Perform the polyfit
 		int result = polyfit(train_sum,
 				ytrain,
@@ -167,9 +167,10 @@ void CPM::run(){
 		cout<<endl;
 		if(result==-1)
 			cout<<"polynomial fit before convergance.."<<endl;
-		delete[] xtrain;
-		delete[] xtest;
-		delete[] ytrain;
+		delete [] xtrain;
+		delete [] xtest;
+		delete [] ytrain;
+                delete [] coefficients;
 	}
 	cout<<"#########predicted############"<<endl;
 	for(int i=0;i<n;i++){
