@@ -440,8 +440,9 @@ class BisWebImage extends BisWebDataObject {
      * @param {string} opts.numcomponents - number of components in frame in clone (null or 0->same)
      * @param {array} opts.dimensions - new dimensions (null or 'same' ->same). This can be a 3 or a 4-array to also change frames. opts.numframes overrides this.
      * @param {array} opts.spacing - new spacing (null or 'same' ->same)
+     * @param {Boolean} force - if true ignore lack of pixeldata
      */
-    cloneImage(inputimage,opts={}) {
+    cloneImage(inputimage,opts={},force=false) {
 
         const internal=this.internal;
         
@@ -451,7 +452,7 @@ class BisWebImage extends BisWebDataObject {
         let newdims = opts.dimensions || 'same';
         let newspacing = opts.spacing || 'same';
         
-        if (inputimage.getRawData()===null) {
+        if (inputimage.getRawData()===null && !force) {
             console.log('bad image, can not clone');
             return null;
         }
@@ -2046,7 +2047,7 @@ class BisWebImage extends BisWebDataObject {
         }
         
         this.parseNIIModular(headerBuffer,false,0);
-        headerBuffer=null;
+        this.tmpheaderinfo['headerBuffer']=headerBuffer;
         return Promise.resolve(this.tmpheaderinfo);
     }
 

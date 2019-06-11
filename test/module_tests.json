@@ -134,10 +134,10 @@
 	    "dopython": true
 	},
 	{
-	    "command" : "extractFrame -i testdata/simple4dtest.nii.gz --frame 3 --usewasm false --debug true",
+	    "command" : "extractFrame -i testdata/simple4dtest.nii.gz --frame 3 --usejs true --debug true",
 	    "test"    : "--test_target testdata/simple4dtest_frame3.nii.gz",
 	    "result"  : true,
-	    "dopython": true
+	    "dopython": false
 	},
 	{
 	    "command" : "extractSlice -i testdata/ras_avg152T1_LR_nifti.nii.gz --plane 2 --slice 18 --frame 0 --component 0 --debug true",
@@ -781,6 +781,20 @@
 	},
         {
 	    "command" : "computeROILarge -i testdata/glm/Test_allruns2.nii -r testdata/glm/objectmap.nii.gz",
+	    "test"    : "--test_target testdata/glm/roimap.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": false,
+            "noweb"   : true
+	},
+        {
+	    "command" : "computeROILarge -i testdata/glm/Test_allruns.nii.gz -r testdata/glm/objectmap.nii.gz --loadall true",
+	    "test"    : "--test_target testdata/glm/roimap.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
+	    "result"  : true,
+	    "dopython": false,
+            "noweb"   : true
+	},
+        {
+	    "command" : "computeROILarge -i testdata/glm/Test_allruns2.nii -r testdata/glm/objectmap.nii.gz --loadall true",
 	    "test"    : "--test_target testdata/glm/roimap.matr --test_type matrix --test_comparison ssd --test_threshold 0.01",
 	    "result"  : true,
 	    "dopython": false,

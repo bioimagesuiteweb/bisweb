@@ -24,7 +24,8 @@ const BisWebImage = require('bisweb_image.js');
 const util=require('bis_util');
 const fs=require('fs');
 const zlib=require('zlib');
-
+const imageutils=require('bis_imageutils');
+const fmrimatrix   =require('bis_fmrimatrixconnectivity');
 /**
  * Takes an input time series and object map detailing regions of interest (ROIs) and returns the mean activation for the region.
  */
@@ -55,6 +56,16 @@ class ComputeROILargeModule extends BaseModule {
                     "shortname" : "i",
                     "type": 'string',
                     "default": '',
+                },
+                {
+                    "name": "loadall",
+                    "description": "If true (default=false), load all images first, then process",
+                    "priority": 10,
+                    "advanced": true,
+                    "gui": "check",
+                    "varname": "loadall",
+                    "type": 'boolean',
+                    "default": false,
                 },
                 baseutils.getDebugParam()
             ]
@@ -195,12 +206,36 @@ class ComputeROILargeModule extends BaseModule {
         });
     }
 
+    async computeROIArray(inputname,roi,numrois,matrix) {
 
+        console.log('In compute ROI Array');
+        try {
+            let arr=await imageutils.readImageAsArray(inputname,false);
+            
+            console.log("___ Read",arr.length,"Frames");
+            for (let i=0;i<arr.length;i++) {
+                let out=fmrimatrix.roimean(arr[i],roi,false)['means'];
+
+                for (let j=0;j<numrois;j++) {
+                    matrix[i][j]=out[0][j];
+                }
+                arr[i]=null;
+            }
+            return Promise.resolve('All set');
+        } catch (e) {
+            console.log('Error=',e);
+            return Promise.reject(e);
+        }
+        
+    }
+        
+    
     
     async directInvokeAlgorithm(vals) {
         console.log('oooo invoking: computeROILarge with values', JSON.stringify(vals));
 
         let debug=super.parseBoolean(vals.debug);
+        let loadall=super.parseBoolean(vals.loadall);        
         let roi=this.inputs['roi'];
         let inputname = vals['input'];
         let input=new BisWebImage();
@@ -215,7 +250,7 @@ class ComputeROILargeModule extends BaseModule {
         if (!input.hasSameOrientation(roi,'input image','roi image',true))
             return Promise.reject('Failed');
         
-
+        
         roi.computeIntensityRange();
         let r=roi.getIntensityRange();
 
@@ -230,30 +265,35 @@ class ComputeROILargeModule extends BaseModule {
         this.outputs['output']=new BisWebMatrix();
         let matrix=util.zero(numframes,numrois);
 
-
-        let data= {
-            numframes : numframes,
-            numrois : numrois,
-            num : new Int32Array(numrois),
-            voxelsize : headerinfo.type.size,
-            volumesize : dims[0]*dims[1]*dims[2],
-            arraytype : headerinfo.type.type,
-            headersize : headerinfo.headerlength,
-            swap : headerinfo.swap,
-        };
-
-        data['volumebytesize']=data.volumesize*data.voxelsize;
-        data['temp']=new Uint8Array(data['volumebytesize']);
-
-
-        try {
-            await this.readAndProcessFile(inputname,input,data,matrix,roi);
-        } catch(e) {
-            return Promise.reject(e);
+        if (loadall) {
+            await this.computeROIArray(inputname,roi,numrois,matrix);
+        } else {
+            let data= {
+                numframes : numframes,
+                numrois : numrois,
+                num : new Int32Array(numrois),
+                voxelsize : headerinfo.type.size,
+                volumesize : dims[0]*dims[1]*dims[2],
+                arraytype : headerinfo.type.type,
+                headersize : headerinfo.headerlength,
+                swap : headerinfo.swap,
+            };
+            
+            if (data.swap) {
+                return Promise.reject('Can not handle byte swapped data');
+            }
+            
+            data['volumebytesize']=data.volumesize*data.voxelsize;
+            data['temp']=new Uint8Array(data['volumebytesize']);
+            
+            
+            try {
+                await this.readAndProcessFile(inputname,input,data,matrix,roi);
+            } catch(e) {
+                return Promise.reject(e);
+            }
         }
-
         this.outputs['output'].setFromNumericMatrix(matrix);
-        
         return Promise.resolve('Done');
     }
 }
