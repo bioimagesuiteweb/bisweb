@@ -30,6 +30,7 @@ const bisweb_matrixutils = require('bisweb_matrixutils.js');
 const BiswebMatrix = require('bisweb_matrix.js');
 let glmDescriptionFilename = path.resolve('./testdata/hdrf/glm_description.json');
 let glmMatrixNoHDRFFilename = path.resolve('./testdata/hdrf/glm_matr_no_HDRF.bismatr');
+let glmMatrixHDRFFilename = path.resolve('./testdata/hdrf/glm_matr_HDRF.matr');
 
 
 //Formats stringify to print arrays in a single line
@@ -48,14 +49,28 @@ describe('Parse .json file to HDRF matrix', () => {
 
     it ('Parses matrix', (done) => {
         bisweb_taskutils.parseFile(glmDescriptionFilename).then( (data) => {
-
             let matrixObj = bisweb_matrixutils.parseTaskMatrix(data.runs, data.taskNames);
             let sampleMatr = new BiswebMatrix();
             sampleMatr.load(glmMatrixNoHDRFFilename).then( () => {
                 let result = matrixObj.matrix.compareWithOther(sampleMatr);
+                assert.equal(result.testresult, true);
+                done();
+            });
+        }).catch( (e) => { done(e); });
+    });
+
+    it ('Parses HDRF matrix', (done) => {
+        bisweb_taskutils.parseFile(glmDescriptionFilename).then( (data) => {
+            let tasks = data.formattedTasks, tr = data.tr, runs = data.runs, taskNames = data.taskNames;
+            let taskMatrixInfo = bisweb_matrixutils.parseTaskMatrix(runs, taskNames);
+            let stackedWaveform = bisweb_matrixutils.createStackedWaveform(taskMatrixInfo.matrix, tasks.length, tr, 2);
+            let sampleMatr = new BiswebMatrix();
+
+            sampleMatr.load(glmMatrixHDRFFilename).then( () => {
+                let result = stackedWaveform.compareWithOther(sampleMatr);
                 assert.equal(result.testresult, false);
                 done();
             });
         }).catch( (e) => { done(e); });
-    })
+    });
 });
