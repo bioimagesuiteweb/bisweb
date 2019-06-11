@@ -667,6 +667,81 @@ let splitFilenames = (url) => {
     return url.split('&&');
 };
 
+// ------------------------------------------------------------------------------
+/**
+ * Large File Support
+ */
+
+/** Read some data from front of a file
+ *  @param{String} fobj -- filename
+ *  @param{Number} end -- max num bytes
+ *  @returns{Promise} -- payload is an arraybuffer with the uncompressed (if gzipped) data
+ */
+var readPartialDataFromStartOfFile=function(filename,end=1024) {
+    
+    const zlib=biscoreio.getzlibmodule();
+    
+    if (bisgenericio.getmode() ==='browser') {
+        console.log('Load Header Only can only be used in Node or Electron');
+        return Promise.reject('Failed');
+    }
+
+    let gzip=false;
+    if (filename.split('.').pop()==='gz') {
+        gzip=true;
+    }
+    
+    console.log('++++ Reading '+filename+' end='+end+' gzip='+gzip);
+    const gunzip = zlib.createGunzip();
+    const bufs=[];
+    return new Promise( async (resolve,reject) => {
+        
+        let readstream = fs.createReadStream(filename, {
+            'start' : 0,
+            'end'   : end,
+        }).on('error', (e) => {
+            console.log('Error=',e);
+            reject('error'+e);
+        });
+        
+        
+        if (gzip) {
+            
+            readstream.pipe(gunzip).on('finish', () => {
+                let headerBuffer = new Uint8Array(Buffer.concat(bufs)).buffer;
+                resolve(headerBuffer);
+            });
+            
+            gunzip.on('data', (chunk) => {
+                bufs.push(chunk);
+            });
+            gunzip.on('error', () => {
+                // Ignore this
+            });
+        } else {
+            
+            readstream.on('end', async () => {
+                let headerBuffer = new Uint8Array(Buffer.concat(bufs)).buffer;
+                resolve(headerBuffer);
+            });
+            
+            readstream.on('readable', async () => {
+                let done=false;
+                while (!done) {
+                    let chunk = readstream.read();
+                    if (chunk) {
+                        bufs.push(chunk);
+                    } else {
+                        done=true;
+                    }
+                }
+            });
+        }
+    });
+};
+
+
+
 // -------------------------------------------------------------------------------------------------------
 
 // Export object
@@ -720,7 +795,8 @@ const bisgenericio = {
     isSaveDownload : isSaveDownload,
     runFileConversion : runFileConversion,
     makeFileChecksum : makeFileChecksum,
+    //
+    readPartialDataFromStartOfFile : readPartialDataFromStartOfFile
 };
-
 
 module.exports = bisgenericio;

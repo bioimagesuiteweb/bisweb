@@ -1854,64 +1854,6 @@ class BisWebImage extends BisWebDataObject {
     }
 
     // ------------------------------------------------------------------------------
-    /**
-     * Large File Support
-     */
-
-    static readSomeData(fobj,start=0,end=1024,gzip=true) {
-
-        console.log('++++ Reading '+fobj+' '+[ start,end]+' gzip='+gzip);
-        const fs=bisgenericio.getfsmodule();
-        const zlib=bisgenericio.getzlibmodule();
-        const gunzip = zlib.createGunzip();
-        const bufs=[];
-        return new Promise( async (resolve,reject) => {
-            
-            let readstream = fs.createReadStream(fobj, {
-                'start' : start,
-                'end'   : end,
-            }).on('error', (e) => {
-                console.log('Error=',e);
-                reject('error'+e);
-            });
-
-            
-            if (gzip) {
-            
-                readstream.pipe(gunzip).on('finish', () => {
-                    let headerBuffer = new Uint8Array(Buffer.concat(bufs)).buffer;
-                    resolve(headerBuffer);
-                });
-                
-                gunzip.on('data', (chunk) => {
-                    bufs.push(chunk);
-                });
-                gunzip.on('error', () => {
-                    // Ignore this
-                });
-            } else {
-
-                readstream.on('end', async () => {
-                    let headerBuffer = new Uint8Array(Buffer.concat(bufs)).buffer;
-                    resolve(headerBuffer);
-                });
-                
-                readstream.on('readable', async () => {
-                    let done=false;
-                    while (!done) {
-                        let chunk = readstream.read();
-                        if (chunk) {
-                            bufs.push(chunk);
-                        } else {
-                            done=true;
-                        }
-                    }
-                });
-            }
-        });
-    }
-
-    // ------------------------------------------------------------------------------
     /** parses a binary buffer (nifti image) to create the image
      * @param {ArrayBuffer} _inputbuffer - the raw array buffer that is read using some File I/O operation
      * @param {String} forceorient_in - if set to "RAS" or true the image will be repermuted to be RAS (axial) oriented. If set to LPS it will be mapped to LPS. If LAS it will be mapped to LAS. 
@@ -1997,11 +1939,13 @@ class BisWebImage extends BisWebDataObject {
             BisWebImage.parseHeaderAndComputeOrientation(internal,debug);
             let headerlength=internal.header.struct.vox_offset;
             internal.rawsize=internal.volsize*internal.header.struct.bitpix/8;
+
+
             this.tmpheaderinfo = {
-                imgend : headerlength+internal.rawsize,
-                swap : swap,
-                headerlength : headerlength,
-                len : len,
+                'type' : dt,
+                'imgend' : headerlength+internal.rawsize,
+                'swap' : swap,
+                'headerlength' : headerlength,
             };
         }
 
@@ -2013,7 +1957,7 @@ class BisWebImage extends BisWebDataObject {
         let imgend=this.tmpheaderinfo.end;
         let Imginfo=internal.imginfo.type;
         let swap=this.tmpheaderinfo.swap;
-        let len=this.tmpheaderinfo.len;
+        
 
         if (parseMode===1) {
             imgend=this.tmpheaderinfo.end-headerlength;
@@ -2040,26 +1984,11 @@ class BisWebImage extends BisWebDataObject {
 
         
         if (forceorient === "None" || forceorient === internal.orient.name) {
-            // Just link the data over
-            
-            if (forcecopy===true) {
-                internal._rawdata=new Uint8Array(_inputbuffer.slice(headerlength,imgend));
-                internal.imgdata=new Imginfo(internal._rawdata.buffer);
-            } else {
-                if (internal.singlebuffer===null) {
-                    // Reparse
-                    internal.header.parse(_inputbuffer,len);
-                    internal.singlebuffer=_inputbuffer;
-                }
-                internal.imgdata=new Imginfo(_inputbuffer,headerlength,internal.volsize);
-                internal._rawdata=new Uint8Array(_inputbuffer,headerlength,internal.rawsize);
-                internal._rawdata.bisbyteoffset=headerlength;
-                internal.imgdata.bisbyteoffset=headerlength;
-            }
             if (debug) console.log('++++++ not permuting data');
+            internal._rawdata=new Uint8Array(_inputbuffer.slice(headerlength,imgend));
+            internal.imgdata=new Imginfo(internal._rawdata.buffer);
             internal.forcedorientationchange=false;
         } else  {
-            // More complex as we need to repermute the data
             let newbuffer=new ArrayBuffer(internal.rawsize);
             internal._rawdata=new Uint8Array(newbuffer);
             internal.imgdata=new Imginfo(newbuffer);
@@ -2085,85 +2014,40 @@ class BisWebImage extends BisWebDataObject {
     
     // ---- Load part of a NIFTI image
     /**
-     * Loads part of an image from a filename or file object
-     * @param {fobj} - If in browser this is a File object, if in node.js this is the filename!
-     * @param {String} forceorient - if true or "RAS" force input image to be repermuted to Axial RAS. if "LPS" force LPS. If "LAS" force to LAS (.nii.gz only).  Else do nothing
-     * @param {Number} framebegin - the first frame of a 4D image (5D treated as large 4D)
-     * @param {Number} frameend - the last frame of a 4D image
-     * @return {Promise} a promise that is fuilfilled when the image is loaded
+     * Loads part of an image from a filename or file object (Node/Electron)
+     * @param {filename} - this is the filename of the file to read
+     * @param {Boolean} debug - if true turn debug on
+     * @return {Promise} a promise that is fuilfilled when the image is loaded. The payload is the image type
      */
-    async loadPartOfNII(fobj,forceorient,framebegin=0,frameend=0) {
+    async loadHeaderOnly(filename,debug=false) {
 
         if (bisgenericio.getmode() ==='browser') {
-            return Promise.rejct('Load Part can only be used in Node or Electron');
+            return Promise.reject('Load Header Only can only be used in Node or Electron');
 
         }
-        let debug=this.debug;
+
         let filesize=0;
         try {
-            filesize=await bisgenericio.getFileSize(fobj);
+            filesize=await bisgenericio.getFileSize(filename);
         } catch(e) {
             return Promise.reject(e);
         }
 
         if (debug)
-            console.log('++++ Reading ',fobj,' file size=',filesize);
+            console.log('++++ Reading ',filename,' file size=',filesize);
         
-        forceorient = userPreferences.sanitizeOrientationOnLoad(forceorient ||  userPreferences.getImageOrientationOnLoad());
-        if (this.debug) {
-            console.log('..... forceorient in loadPart=',forceorient);
-        }
-        
-
-        const internal=this.internal;
         this.initialize();
-
-        let gzip=false;
-        if (fobj.split('.').pop()==='gz') {
-            gzip=true;
-        }
         let headerBuffer=null;
         try {
-            headerBuffer=await BisWebImage.readSomeData(fobj,0,102400,gzip);
+            headerBuffer=await bisgenericio.readPartialDataFromStartOfFile(filename,65535);
         }  catch(e) {
+            console.log('e=',e);
             return Promise.reject(e);
         }
         
-        this.parseNIIModular(headerBuffer,forceorient,0);
-
-
-        if (debug)
-            console.log('Description=',this.getDescription());
-        
-        let numframes=internal.header.struct.dim[4];
-
-        if (framebegin<0)
-            return Promise.resolve('done header');
-        
-        framebegin=util.range(framebegin,0,numframes-1);
-        frameend=util.range(frameend,framebegin,numframes-1);
-        if (debug)
-            console.log('Frames=',framebegin,frameend,internal.header.struct.dim);
-
-        
-        if (!gzip) {
-            let headerlength=this.tmpheaderinfo.headerlength;
-            let beginoffset=framebegin*internal.imginfo.size*internal.volsize+headerlength;
-            let endoffset=(frameend-framebegin+1)*internal.imginfo.size*internal.volsize-1+headerlength;
-            if (debug)
-                console.log('Begin -> End=',[beginoffset,endoffset]);
-            
-            let databuffer=null;
-            try {
-                databuffer=await BisWebImage.readSomeData(fobj,beginoffset,endoffset,false);
-            } catch(e) {
-                return Promise.reject(e);
-            }
-            if (debug)
-                console.log('Data length=',databuffer,91*109*91);
-            this.parseNIIModular(databuffer,forceorient,1);
-        }
-        return Promise.resolve('Done');
+        this.parseNIIModular(headerBuffer,false,0);
+        headerBuffer=null;
+        return Promise.resolve(this.tmpheaderinfo);
     }
 
 
