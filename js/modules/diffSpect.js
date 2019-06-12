@@ -28,12 +28,12 @@ const BisWebImage = require('bisweb_image');
 const genericio= require('bis_genericio');
 const bisimagealgo = require('bis_imagealgorithms');
 const BisWebTextObject = require('bisweb_textobject.js');
-
+const BisWebTransformationCollection=require('bisweb_transformationcollection.js');
 
 // TODO: Inverse transformation stuff
 // Add a module to create inverse xforms as needed.
 
-
+const dummy=false;
 
 /**
  * Runs linear registration on an image set given a reference image and returns the set of transformations required
@@ -165,16 +165,6 @@ class diffSpectModule extends BaseModule {
                 "default": false,
             },
             {
-                "name": "UseMRI",
-                "description": "If true use MRI image",
-                "priority": 1,
-                "advanced": false,
-                "gui": "check",
-                "varname": "usemri",
-                "type": 'boolean',
-                "default": false,
-            },
-            {
                 "name": "Native",
                 "description": "If true output tmap in native space",
                 "priority": 2,
@@ -211,18 +201,29 @@ class diffSpectModule extends BaseModule {
     //
     computeLinearRegistration(reference, target,mode='Rigid') {
 
+        let iterations=10;
+        let resolution=1.5;
+        let levels=3;
+
+        if (dummy) {
+            console.log('Fast mode');
+            iterations=5;
+            levels=1;
+            resolution=3.0;
+        }
+        
         let lin_opts = {
             "intscale": 1,
             "numbins": 64,
-            "levels": 3,
+            "levels": levels,
             "imagesmoothing": 1,
             "optimization": "ConjugateGradient",
             "stepsize": 1,
             "metric": "NMI",
             "steps": 1,
-            "iterations": 10,
+            "iterations": iterations,
             "mode": mode,
-            "resolution": 1.5,
+            "resolution": resolution,
             "doreslice": true,
             "norm": true,
             "debug": true
@@ -319,7 +320,7 @@ class diffSpectModule extends BaseModule {
                 'nonlinear' : false,
             },
             'atlas2mri' : {
-                'reference' : 'ATLAS_spect',
+                'reference' : 'ATLAS_mri',
                 'target'    : 'mri',
                 'xform'     : 'atlastomri_xform',
                 'output'    : 'mri_in_atlas_reslice',
@@ -343,6 +344,7 @@ class diffSpectModule extends BaseModule {
 
         mode=mode || 'inter2ictal';
         let params=speclist[mode];
+        console.log('Registration',JSON.stringify(params,null,2));
         let nonlinear = params['nonlinear'];
         let text="nonlinear";
         let linearmode='Rigid';
@@ -385,15 +387,15 @@ class diffSpectModule extends BaseModule {
             }
         });
     }
-        
+
+
+    
     // --------------------------------------------------------------------------------
     // Reslice Images
     //
-
-    resliceImages(operation,force=true) {
+    getResliceList() {
 
         let resliceList = {};
-
         if (!this.app_state.does_have_mri) {
             resliceList['ictal2Atlas']= {
                 'input'    : 'ictal',
@@ -411,15 +413,33 @@ class diffSpectModule extends BaseModule {
         } else {
             resliceList['ictal2Atlas']=  {
                 'input' : 'ictal',
-                'xforms' : [ 'atlastomri_xform', 'mritointer_xform', 'intertoictal_xform' ],
+                'xforms' : [ 'atlastomri_xform', 'mritointerictal_xform', 'intertoictal_xform' ],
                 'reference': 'ATLAS_spect',
                 'output' : 'ictal_in_atlas_reslice'
             };
             resliceList['inter2Atlas']= {
                 'input' : 'interictal',
-                'xforms' : [ 'atlastomri_xform', 'mritointer_xform' ],
+                'xforms' : [ 'atlastomri_xform', 'mritointerictal_xform' ],
                 'reference': 'ATLAS_spect',
                 'output' : 'inter_in_atlas_reslice',
+            };
+            resliceList['inter2mri']= {
+                'input' : 'interictal',
+                'xforms' : [ 'mritointerictal_xform' ],
+                'reference': 'mri',
+                'output' : 'inter_in_mri_reslice',
+            };
+            resliceList['ictal2mri']= {
+                'input' : 'ictal',
+                'xforms' : [ 'mritointerictal_xform' , 'intertoictal_xform' ],
+                'reference': 'mri',
+                'output' : 'ictal_in_mri_reslice',
+            };
+            resliceList['mri2Atlas']= {
+                'input' : 'mri',
+                'xforms' : [ 'atlastomri_xform' ],
+                'reference': 'ATLAS_mri',
+                'output' : 'mri_in_atlas_reslice',
             };
         }
 
@@ -429,17 +449,22 @@ class diffSpectModule extends BaseModule {
             'xforms' : [ 'intertoictal_xform' ],
             'output' : 'ictal_in_inter_reslice',
         };
+        return resliceList;
+    }
+    
+    resliceImages(operation,force=true) {
         
-        operation =operation || 'ictal2Atlas';
+        let resliceList = this.getResliceList();
+        operation =operation || 'inter2ictal';
 
         let inputKey=resliceList[operation]['input'];
         let refKey=resliceList[operation]['reference'];
         let outputKey=resliceList[operation]['output'];
-
+        
         if (this.app_state[outputKey] && force===false) {
             return Promise.resolve('Reliced image in '+operation+' exists');
         }
-
+        
         if (!this.app_state[inputKey] ||  !this.app_state[refKey]) {
             return Promise.reject(`Missing images in reslice ${operation}. ${inputKey}=${this.app_state[inputKey]} ${refKey}=${this.app_state[refKey]}`);
         }
@@ -453,9 +478,9 @@ class diffSpectModule extends BaseModule {
                 return Promise.reject('Missing Transformation '+xformKeys[i]+' in reslice '+operation);
             xformlist.push(xform);
         }
-
+        
         return new Promise( (resolve,reject) => {
-
+            
             let inpObjects = {
                 'input'    : this.app_state[inputKey],
                 'reference': this.app_state[refKey]
@@ -463,7 +488,7 @@ class diffSpectModule extends BaseModule {
             for (let i=0;i<xformlist.length;i++) {
                 inpObjects[xformnames[i]]=xformlist[i];
             }
-                
+            
             let reslicer = new ResliceImage();
             reslicer.makeInternal();
             reslicer.execute(inpObjects).then( () => {
@@ -475,37 +500,59 @@ class diffSpectModule extends BaseModule {
             });
         });
     }
-    
-    // calls all of the above custom registration methods in correct order and reslices images as necessary
-    computeAllRegistrations() {
 
-        // execute registration order if MRI is not uploaded by user
-        if (!this.app_state.does_have_mri) {
-            return new Promise( (resolve,reject) => {
-                this.registerImages('atlas2interictal').then( () => {
-                    this.registerImages('interictal2ictal').then( ()=> {
-                        resolve('Done computing registrations in no_mri mode');
-                    }).catch( (e) => { reject(e); });
-                }).catch( (e) => {
-                    console.log(e.stack);
-                    reject(e);
-                });
-            });
+    getComboTransformation(operation) {
+        let resliceList = this.getResliceList();
+        let xformKeys=resliceList[operation]['xforms'];
+        let xformlist =[];
+        for (let i=0;i<xformKeys.length;i++) {
+            let xform=this.app_state[xformKeys[i]];
+            if (!xform) 
+                return Promise.reject('Missing Transformation '+xformKeys[i]+' in reslice '+operation);
+            xformlist.push(xform);
+        }
+        if (xformlist.length<2) {
+            return xformlist[0];
         }
 
+        let combo=new BisWebTransformationCollection();
+        for (let i=0;i<xformlist.length;i++)
+            combo.addTransformation(xformlist[i]);
         
-        return new Promise( (resolve,reject) => {
-            this.registerImages('atlas2mri').then( () => {
-                this.registerImages('mri2interictal').then( () => {
-                    this.registerImages('interictal2ictal').then( () => {
-                        resolve('Done computing registrations in with_mri mode');
-                    }).catch( (e) => { reject(e); });
-                }).catch( (e) => { reject(e); });
-            }).catch( (e) => {
-                console.log(e.stack);
-                reject(e);
-            });
-        });
+        return combo;
+    }
+                          
+    
+    // calls all of the above custom registration methods in correct order and reslices images as necessary
+    async computeAllRegistrations() {
+
+        console.log('oooo Computing Registrations. Has MRI=',this.app_state.does_have_mri);
+        
+        // execute registration order if MRI is not uploaded by user
+        if (!this.app_state.does_have_mri) {
+            try {
+                await this.registerImages('atlas2interictal');
+                await this.registerImages('interictal2ictal');
+                return Promise.resolve('Done computing registrations in no_mri mode');
+            } catch (e)  {
+                console.log(e);
+                return Promise.reject(e);
+            }
+        }
+
+        let f;
+        try {
+            await this.registerImages('atlas2mri');
+            await this.registerImages('mri2interictal');
+            await this.registerImages('interictal2ictal');
+            return Promise.resolve('Done computing registrations in with_mri mode');
+        } catch (e)  {
+            console.log(e);
+            f=e;
+        }
+
+        return Promise.reject(f);
+
     }
 
     // ---------------------------------------------------------------
@@ -513,7 +560,8 @@ class diffSpectModule extends BaseModule {
     loadAtlasData() {
 
         return new Promise( (resolve,reject) => {
-            
+
+            console.log('oooo Loading Atlas Data for diff SPECT');
             let imagepath=genericio.getimagepath();
             let imgnames = [ `${imagepath}/ISAS_SPECT_Template.nii.gz`,
                              `${imagepath}/MNI_T1_2mm_stripped_ras.nii.gz`,
@@ -630,11 +678,12 @@ class diffSpectModule extends BaseModule {
             }
             
             let hasmri=this.app_state.does_have_mri;
+            console.log("mapTmapToNative",hasmri);
             
             let inputs= {};
             if (hasmri) {
                 inputs['input']=this.app_state['atlastomri_xform'];
-                inputs['xform2']=this.app_state['mritointer_xform'];
+                inputs['xform2']=this.app_state['mritointerictal_xform'];
                 inputs['ref']=this.app_state.mri;
             } else {
                 inputs['input']=this.app_state['atlastointer_xform'];
@@ -645,6 +694,7 @@ class diffSpectModule extends BaseModule {
             invModule.execute(inputs).then( () => {
 
                 let inverse=invModule.getOutputObject('output');
+                console.log('Inverse transformation=',inverse.getDescription());
                 let reslicer = new ResliceImage();
                 reslicer.makeInternal();
                 reslicer.execute({ 'input' : this.app_state.tmap ,
@@ -654,7 +704,7 @@ class diffSpectModule extends BaseModule {
                                      () => {
                                          this.app_state['nativetmap'] = reslicer.getOutputObject('output');
                                          this.outputs['output2']=this.app_state['nativetmap'];
-                                         resolve('Mapped tmap to native space done');
+                                         resolve('oooo Mapped tmap to native space done');
                                      }).catch( (e) => {  console.log(e,e.stack);         reject(e);          });
             }).catch( (e) => {  console.log(e,e.stack);         reject(e);          });
         });
@@ -666,7 +716,7 @@ class diffSpectModule extends BaseModule {
         return new Promise( (resolve,reject) => {
             this.resliceImages('ictal2Atlas').then( () => {
                 this.resliceImages('inter2Atlas').then( () => {
-                    this.alertFunction('Computing diff SPECT analysis',"progress",30);
+                    this.alertFunction('oooo\noooo Computing diff SPECT analysis',"progress",30);
                     let resliced_inter = this.app_state.inter_in_atlas_reslice;
                     let resliced_ictal = this.app_state.ictal_in_atlas_reslice;
                     let results = this.processSpect(resliced_inter, resliced_ictal, this.app_state.ATLAS_stdspect, this.app_state.ATLAS_mask);
@@ -705,52 +755,104 @@ class diffSpectModule extends BaseModule {
         return txt;
     }
 
+
+    // ---------------------------------------------------------------
+    getDataDescription() {
+
+        let s='';
+        let lst=this.imageList;
+        for (let pass=0;pass<=1;pass++) {
+            for (let i=0;i<lst.length;i++) {
+                let key=lst[i];
+                let img=this.app_state[key];
+                if (img) {
+                    s+='\t'+key+':'+img.getDescription()+'\n';
+                } else {
+                    s+='\t'+key+': ___ nothing loaded\n';
+                }
+            }
+            lst=this.xformList;
+        }
+        return s;
+    }
     
     // ---------------------------------------------------------------
     // Master Function
     // ---------------------------------------------------------------
+    setAutoUseMRI() {
+        let flag=false;
+        let img=this.app_state['mri'];
+        if (img) {
+            let dat=img.getImageData();
+            if (dat) {
+                if (dat.length>0) {
+                    flag=true;
+                }
+            }
+        }
+        this.app_state.does_have_mri=flag;
+        return this.app_state.does_have_mri;
+    }
 
+    getUseMRI() {
+        return this.app_state.does_have_mri;
+    }
+    
+    async directInvokeAlgorithm(vals) {
+        console.log('oooo diffSpect invoking with vals', JSON.stringify(vals));
+
+        let native=this.parseBoolean(vals['native']);
 
     
-    directInvokeAlgorithm(vals) {
-        console.log('diffSpect invoking with vals', JSON.stringify(vals));
-        if (vals['native']) {
-            console.log('Will do native');
-        }
+    
 
         // Set Inputs
         this.app_state.interictal=this.inputs['interictal'];
         this.app_state.ictal=this.inputs['ictal'];
-        if (vals['usemri']) {
-            this.app_state.mri=this.inputs['mri'];
-            this.app_state.does_have_mri=true;
-        }
+        this.app_state.mri=this.inputs['mri'];
         this.app_state.nonlinear=vals['nonlinear'];
+        this.setAutoUseMRI();
 
+        console.log('oooo');
+        console.log('oooo Starting diffSPECT',this.getDataDescription());
+        console.log('oooo Using MRI=',this.getUseMRI());
+        console.log('oooo Output in Native Space=',native);
+        console.log('oooo');
+        
         // Step 2 loadatlases
-        return new Promise( (resolve,reject) => {
-            this.loadAtlasData().then( () => {
-                this.computeAllRegistrations().then( () => {
-                    this.computeSpect().then( () => {
-                        this.outputs['output']=this.app_state.tmap;
-                        console.log('Hyper=',this.app_state.hyper);
-                        this.outputs['logoutput']=new BisWebTextObject(this.createTables());
-                        console.log('-----------------------------------------');
-                        console.log('-----------------------------------------');
-                        console.log('Out2=',this.outputs['output2']);
-                        if (vals['native']) {
-                            this.mapTmapToNativeSpace().then( (m) => {
-                                console.log('Mapped',m);
-                                console.log('Out2=',this.outputs['output2'].getDescription());
-                                resolve();
-                            }).catch( (e) => { reject(e); });
-                        } else {
-                            resolve();
-                        }
-                    }).catch( (e) => { reject(e); });
-                }).catch( (e) => { reject(e); });
-            }).catch( (e) => { reject(e); });
-        });
+        try {
+            await this.loadAtlasData();
+        } catch(e) {
+            return Promise.reject(e);
+        }
+
+        try {
+            await this.computeAllRegistrations();
+        } catch(e) {
+            return Promise.reject(e);
+        }
+
+        try {
+            await this.computeSpect();
+        } catch(e) {
+            return Promise.reject(e);
+        }
+
+        this.outputs['output']=this.app_state.tmap;
+        console.log('Hyper=',this.app_state.hyper);
+        this.outputs['logoutput']=new BisWebTextObject(this.createTables());
+        console.log('-----------------------------------------');
+        console.log('-----------------------------------------');
+        if (native) {
+            try {
+                let m=await this.mapTmapToNativeSpace();
+                console.log('oooo Mapped',m);
+                console.log('oooo Native Outputqq=',this.outputs['output2'].getDescription());
+            } catch(e) {
+                return Promise.reject(e);
+            }
+        }
+        return Promise.resolve('All set');
     }
 }
 
