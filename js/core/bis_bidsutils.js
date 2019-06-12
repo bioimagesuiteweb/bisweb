@@ -748,13 +748,13 @@ let parseTaskFileToTSV = (filename, baseDirectory, save = true) => {
 
             let tsvData = {};
             for (let runName of Object.keys(orderedRuns)) {
-                let tsvFile = "onset\tduration\ttrial_type\n\r";
+                let tsvFile = "onset\tduration\ttrial_type\n";
                 for (let task of orderedRuns[runName]) {
                     let lowRange = (task.value[0] - offset) * tr, 
                         highRange = (task.value[1] - offset) * tr,
                         duration = (highRange - lowRange); 
     
-                    tsvFile = tsvFile + '' + lowRange + '\t' + duration + '\t' + task.task + '\n\r';
+                    tsvFile = tsvFile + '' + lowRange + '\t' + duration + '\t' + task.task + '\n';
                 }
     
                 tsvData[runName] = tsvFile;
@@ -862,6 +862,11 @@ let parseTaskFileToTSV = (filename, baseDirectory, save = true) => {
     }
 };
 
+
+let cleanRow=(line) => {
+    return line.trim().replace(/\t/g,' ').replace(/ +/g,' ').replace(/ /g,'\t');
+};
+
 /**
  * Parses all .tsv files in a given directory into a .json task file (see parseTaskFileToTSV).
  * Produces an output file in outputDirectory named 'task_file' with the current date appended.
@@ -890,7 +895,7 @@ let parseTaskFileFromTSV = (tsvDirectory, outputDirectory, tr, save = true) => {
                         
                         //Split rows based on newline character to get each row
                         let splitRows = tsvData.split('\n');
-                        let cols = splitRows[0].split('\t');
+                        let cols = cleanRow(splitRows[0]).split('\t');
 
                         let onsetIndex = cols.findIndex ( (element) => { return element.toLowerCase() === 'onset'; } );
                         let durationIndex = cols.findIndex( (element) => { return element.toLowerCase() === 'duration'; });
@@ -898,7 +903,7 @@ let parseTaskFileFromTSV = (tsvDirectory, outputDirectory, tr, save = true) => {
 
                         splitRows = splitRows.slice(1,-1);
                         for (let row of splitRows) {
-                            row = row.split('\t');
+                            row = cleanRow(row).split('\t');
                             let onset = row[onsetIndex];
                             let duration = row[durationIndex]; 
                             let type = row[typeIndex];
