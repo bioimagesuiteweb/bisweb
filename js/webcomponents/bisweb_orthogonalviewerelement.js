@@ -449,14 +449,10 @@ class OrthogonalViewerElement extends BaseViewerElement {
      * @param {array} coords - [ x,y,z ] array with current position in mm
      * @param {number} plane - 0,1,2 to signify whether click was on YZ,XZ or XY image plane (-1,3 mean 3D click)
      * @param {number} mousestate - 0=click 1=move 2=release
-     * @param {number} index - index of originating subviewer
      * @param {Boolean} force - if true overrides this.internal.lockcursor blocks
      */
-    updatescene(coords, plane,mousestate,index=-1,force=false) {
+    updatescene(coords, plane,mousestate,force=false) {
 
-        // Dummy code to silence warning
-        if (index<-1) index=-1;
-        
         if (coords.length<4) {
             coords.push(this.getframe());
         }
@@ -1212,16 +1208,14 @@ class OrthogonalViewerElement extends BaseViewerElement {
         // Add mouse updates
 
         if (samesize===false) {
-            let mousefn=function(coords,plane,mousestate,index) {
+            let mousefn=function(coords,plane,mousestate) {
                 let c=[ coords[0],coords[1],coords[2] ];
-                self.updatescene(c,plane,mousestate,index);
+                self.updatescene(c,plane,mousestate);
             };
             
-            for (let j=0;j<this.internal.subviewers.length;j++) {
+            for (let j=0;j<this.internal.subviewers.length;j++)
                 this.internal.subviewers[j].coordinateChangeCallback=mousefn;
-                this.internal.subviewers[j].coordinateChangeCallbackIndex=j;
-            }
-            
+
             this.setrendermodeinternal(this.internal.rendermode,true,true);
         }
         
@@ -1384,7 +1378,7 @@ class OrthogonalViewerElement extends BaseViewerElement {
             c[i]=c[i]*this.internal.imagespa[i];
         if (plane!==0 && plane!==1 && plane!==2)
             plane  = -1;
-        this.updatescene(c,plane,-1,-1,true);
+        this.updatescene(c,plane,-1,true);
         this.updateFrameChangedObservers();
     }
 
