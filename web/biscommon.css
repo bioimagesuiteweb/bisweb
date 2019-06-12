@@ -492,3 +492,17 @@ tspan {
 .bisweb-pipeline-list-item:hover {
     background-color : rgba(10, 63, 143, 0.5);
 }
+
+.bisweb-outline {
+    background-color : rgb(0,0,0,0);
+    transition : background-color 0.5s;
+}
+
+.bisweb-outline-primary {
+    border-color : dodgerblue;
+    color : dodgerblue;
+}
+
+.bisweb-outline-primary.active {
+    background-color : rgba(30, 144, 255, 0.5);
+}

@@ -39,36 +39,27 @@ class DicomImportElement extends HTMLElement {
     
     createFileImportCollapseElement() {
         let treePanelBody = this.filetreepanel.panel.getWidget();
-        let importButtonsContainer = bis_webutil.createCollapseElement(treePanelBody, 'Import DICOM Files', false);
-
-        console.log('import buttons container', importButtonsContainer);
-
-        /* let a=`<P> This invokes <a target="_blank" href="https://github.com/rordenlab/dcm2niix">dcm2niix</a> as an external process.`;
+        let importButtonsContainer = bis_webutil.createCollapseElement(treePanelBody, 'Import DICOM Files', true);
         
-        if (bis_genericio.getmode()==='browser')
-            a+=`<EM> You need to use <a target="_blank" href="https://bioimagesuiteweb.github.io/bisweb-manual/tools/fileserver.html"> the BISWEB File Server</a> for this to work as we need direct filesystem access for this task.</EM>`;
-        */
+        let inputGroup = $(`
+            <div class='btn-group' style='width: 90%; margin: 3px;'>
+                <button class='btn btn-sm bisweb-outline bisweb-outline-primary bisweb-bids-toggle active' data-toggle='button' style='width: 25%'>BIDS</button>
+            </div>
+        `);
 
-        //basediv.append($(a+'</p><HR>'));
+        //let BIDSCheck = $(`<input class='form-check-input' type='checkbox'`)
 
-        /*bis_webutil.createbutton({
-            type: 'info',
-            name: 'Open Study File Panel',
-            tooltip: 'Opens a panel which can display DICOM studies.',
-            parent: importButtonsContainer,
-            css: { 'width': '90%', 'margin': '3px' },
-            callback: () => {
-                this.filetreepanel.showTreePanel();
-            },
-        });*/
-      
-        bis_webfileutil.createFileButton({ 
+        importButtonsContainer.append(inputGroup);
+
+        let convertDicomButton = bis_webfileutil.createFileButton({ 
             type : 'info',
             name : 'Convert DICOM Images',
-            parent : importButtonsContainer,
-            css : { 'width' : '90%' , 'margin' : '3px' },
+            css : { 'width' : '75%' },
             callback : (f) => {
                 let saveFileCallback = (o) => { 
+                    //get whether to convert to BIDS or not from toggle
+                    let convertToBids = inputGroup.find('.bisweb-bids-toggle').hasClass('active');
+                    console.log('convert to bids', convertToBids);
                     this.importDICOMImages(f, o, false);
                 };
                 
@@ -90,12 +81,12 @@ class DicomImportElement extends HTMLElement {
 
         bis_webfileutil.createFileButton({ 
             type : 'danger',
-            name : 'Import DICOM Images as BIDS',
+            name : 'Import DICOM Images',
             parent : importButtonsContainer,
             css : { 'width' : '90%' , 'margin' : '3px' },
             callback : (f) => {
                 let saveFileCallback = (o) => { 
-                    this.importDICOMImages(f, o,true);
+                    this.importDICOMImages(f, o, true);
                 };
                 
                 setTimeout( () => {
@@ -114,6 +105,8 @@ class DicomImportElement extends HTMLElement {
             save : false,
             serveronly : true,
         });
+
+        inputGroup.prepend(convertDicomButton);
     }
 
 
