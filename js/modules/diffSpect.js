@@ -676,14 +676,14 @@ class diffSpectModule extends BaseModule {
                 reject('No tmap in memory. Compute this first.');
                 return;
             }
+
             
-            let hasmri=this.app_state.does_have_mri;
+            let hasmri=this.setAutoUseMRI();
             console.log("mapTmapToNative",hasmri);
             
             let inputs= {};
             if (hasmri) {
                 inputs['input']=this.app_state['atlastomri_xform'];
-                inputs['xform2']=this.app_state['mritointerictal_xform'];
                 inputs['ref']=this.app_state.mri;
             } else {
                 inputs['input']=this.app_state['atlastointer_xform'];
