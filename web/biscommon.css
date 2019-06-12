@@ -445,6 +445,10 @@ tspan {
     background-color :  rgba(27, 35, 83, 0.8);
 }
 
+.tau-chart__legend__reset:hover {
+    background-color : rgba(202, 0, 0, 0.4);
+}
+
 .tau-chart__legend__guide--color {
     height : 5px;
 }
