@@ -39,6 +39,7 @@ describe('Convert .json to .tsv', () => {
     it('Parses .json to .tsv', (done) => {
         bis_genericio.read(tsvPath).then( (obj) => {
             bis_bidsutils.parseTaskFileToTSV(jsonPath, null, false).then( (tsvData) => {
+                console.log(colors.cyan(' ++++ tsv data parsed from', jsonPath, JSON.stringify(tsvData, null, 2)));
                 assert.strictEqual(obj.data, tsvData.run1);
                 done();
             }).catch( (e) => {
@@ -51,10 +52,11 @@ describe('Convert .json to .tsv', () => {
 
     it('Parses .tsv to .json', (done) => {
         bis_genericio.read(jsonPath).then( (obj) => {
-            bis_bidsutils.parseTaskFileFromTSV(tsvDir, null, 2, false).then( (tsvData) => {
+            bis_bidsutils.parseTaskFileFromTSV(tsvDir, null, 2, false).then( (jsonData) => {
                
-                let stringifiedData = JSON.stringify(tsvData);
-                
+                let stringifiedData = JSON.stringify(jsonData);
+                console.log(colors.cyan(' ++++ json data parsed from tsv files in', tsvDir, JSON.stringify(jsonData, null, 2)));
+
                 //remove spaces
                 stringifiedData = stringifiedData.replace(/[ \t\n]/g, ''); 
                 let despacedData = obj.data.replace(/[ \t\n]/g, '');
