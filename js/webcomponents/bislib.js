@@ -83,6 +83,8 @@ exportobj.webutil=webutil;
 exportobj.webfileutil=webfileutil;
 exportobj.biswebpanel=BisWebPanel;
 exportobj.dat=dat;
+exportobj.SubViewer=require('bisweb_subviewer');
+exportobj.CrossHair=require('bis_3dcrosshairgeometry');
 
 exportobj.Elements=Elements;
 

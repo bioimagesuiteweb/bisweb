@@ -147,8 +147,10 @@ class LandmarkControlElement extends HTMLElement {
         if (docursor) {
             for (i=0;i<this.internal.subviewers.length;i++)  {
                 if (this.internal.cursormesh[i]!==null) {
-                    if (this.internal.subviewers[i]!==null) 
-                        this.internal.subviewers[i].getScene().remove(this.internal.cusormesh[i]);
+                    if (this.internal.subviewers[i]!==null) {
+                        let scene=this.internal.subviewers[i].getScene();
+                        scene.remove(this.internal.cursormesh[i]);
+                    }
                     this.internal.cursormesh[i].visible=false;
                     this.internal.cursormesh[i]=null;
                 }
@@ -1023,7 +1025,7 @@ class LandmarkControlElement extends HTMLElement {
                 
             }
             this.internal.data.currentname=this.internal.data.allnames[0];
-            this.internal.subviewers=subviewers;
+            this.internal.subviewers=[ subviewers[0],subviewers[1], subviewers[2], subviewers[3] ];
             this.internal.volume=volume;
 
         }
