@@ -232,7 +232,7 @@ class ElectrodeGridElement extends HTMLElement {
         let geometry2=this.createGridGeometry(points,0.2*parseFloat(grid.radius),false);
 
         let color=this.mapColor(grid.color);
-        let mat=new THREE.MeshBasicMaterial( {color: color, wireframe:true});
+        let mat=new THREE.MeshBasicMaterial( {color: color, wireframe:false});
         let mat2=new THREE.MeshBasicMaterial( {color: color , wireframe:false});
         
         for (let i=0;i<this.internal.subviewers.length;i++) {
@@ -728,8 +728,8 @@ class ElectrodeGridElement extends HTMLElement {
                                      });
 
         
-        webutil.createbutton({ type : "danger",
-                               name : "Multisnapshot->PNG",
+        webutil.createbutton({ type : "info",
+                               name : "Multisnapshot (Current Grid)",
                                parent : bbar0,
                                css : {
                                    'margin-top': '20px',
@@ -739,7 +739,7 @@ class ElectrodeGridElement extends HTMLElement {
                              });
 
         webutil.createbutton({ type : "danger",
-                               name : "Multisnapshot->ZIP",
+                               name : "Multisnapshot (All Grids)",
                                parent : bbar0,
                                css : {
                                    'margin-top': '20px',
@@ -889,82 +889,78 @@ class ElectrodeGridElement extends HTMLElement {
     }
 
     
-    async multisnapshot(dozip=false) {
+    async multisnapshot(allgrids=false) {
         
         if (this.internal.multigrid.getNumGrids()===0) {
             console.log('No Grids');
             return Promise.reject('None');
         }
-        
-        let grid=this.internal.multigrid.getGrid(this.internal.currentgridindex);
-        let numelectrodes=grid.electrodes.length;
-        if (numelectrodes<1) {
-            console.log('No Electrodes');
-            return Promise.reject('None');
+
+        let begin=0;
+        let end=this.internal.multigrid.getNumGrids()-1;
+        if (!allgrids) {
+            begin=this.internal.currentgridindex;
+            end=this.internal.currentgridindex;
         }
 
-        console.log('Num Electrodes=',numelectrodes);
         let snapshotElement=this.internal.orthoviewer.getSnapShotController();
         snapshotElement.data.dowhite=false;
+        const canvaslist=[];
+        const names=[];
+        let text='Grid,Electrode,I,J,J,X,Y,Z\n';
+        const spa=this.internal.volume.getSpacing();
         
-        let canvaslist=[];
-        let names=[];
+        let addzeros=( (num) => {
+            let s=`${num}`;
+            while (s.length<3) {
+                s=`0${s}`;
+            }
+            return s;
+        });
+
+        console.log('Beginning',begin,end,text);
         
-        for (let i=0;i<numelectrodes;i++) {
-            let electrode=this.internal.multigrid.getElectrode(this.internal.currentgridindex,i);
-            let mm = electrode.position;
-            console.log('i=',i,mm);
-            this.internal.orthoviewer.updatemousecoordinates(mm,-1,0);
-            let canvas=await snapshotElement.getTestImage();
-            let name=`${grid.description}:${i+1}`;
-            names.push(name);
-            let context=canvas.getContext("2d");
-            context.font='24px Arial';
-            context.fillStyle = "#ffffff";
-            context.textAlign="left";
-            context.textBaseline="bottom";
-            context.fillText(name,5,canvas.height-5);
-            canvaslist.push(canvas);
+        for (let gridindex=begin;gridindex<=end;gridindex++) {
+            this.setCurrentGrid(gridindex);
+            let grid=this.internal.multigrid.getGrid(gridindex);
+            console.log(JSON.stringify(grid));
+            let numelectrodes=grid.electrodes.length;
+            if (numelectrodes>0) {
+                console.log('Num Electrodes for grid',gridindex,'=',numelectrodes);
 
-        }
+                for (let i=0;i<numelectrodes;i++) {
+                    let electrode=this.internal.multigrid.getElectrode(gridindex,i);
+                    let mm = electrode.position;
+                    let ijk=[0,0,0];
+                    for (let ia=0;ia<=2;ia++) {
+                        ijk[ia]=Math.round(mm[ia]/spa[ia]);
+                    }
+                    this.internal.orthoviewer.updatemousecoordinates(mm,-1,0);
+                    let canvas=await snapshotElement.getTestImage();
+                    let number=addzeros(`${i+1}`);
+                    let name=`${grid.description}:${number}`;
+                    text+=`${grid.description},${i+1},${ijk[0]},${ijk[1]},${ijk[2]},${mm[0]},${mm[1]},${mm[2]}\n`;
+                    names.push(name);
+                    let context=canvas.getContext("2d");
 
-        if (!dozip) {
-            
-            let wd = canvaslist[0].width;
-            let ht = canvaslist[0].height;
-            for (let i=0;i<canvaslist.length;i++) {
-                if (wd< canvaslist[i].width)
-                    wd = canvaslist[i].width;
-                if (ht< canvaslist[i].height)
-                    ht = canvaslist[i].height;
+                    
+                    context.font='48px Arial';
+                    context.fillStyle = "#ffffff";
+                    context.textAlign="left";
+                    context.textBaseline="bottom";
+
+                    let h=context.measureText(name).width;
+                    let w=context.measureText(name).height;
+
+                    context.clearRect(0,canvas.height-(5+h),w+10,h+10);
+                    context.fillText(name,5,canvas.height-5);
+                    canvaslist.push(canvas);
+                }
             }
-            
-            let outcanvas = document.createElement("canvas");
-            outcanvas.height = ht;
-            outcanvas.width = wd*canvaslist.length;
-            
-            let fillcolor = "#000000";
-            let ctx = outcanvas.getContext('2d');
-            ctx.fillStyle = fillcolor;
-            ctx.globalCompositeOperation = "source-over";
-            ctx.fillRect(0, 0, outcanvas.width, outcanvas.height);
-            
-            for (let i=0;i<canvaslist.length;i++) {
-                let w = canvaslist[i].width;
-                let h = canvaslist[i].height;
-                let imgdata = canvaslist[i].getContext("2d").getImageData(0, 0, w, h);
-                let x0=Math.floor(wd-w)/2+wd*i;
-                let y0=Math.floor(ht-h)/2;
-                let context=outcanvas.getContext("2d");
-                context.putImageData(imgdata, x0, y0);
-            }
-            
-            snapshotElement.createsnapshot_internal(outcanvas);
-            return Promise.resolve('Done');
         }
 
         const zip = new JSZip();
-        zip.file("README.txt", "Electrode Snapshots");
+        zip.file("00LOGFILE.csv", text);
         
         for (let i=0;i<canvaslist.length;i++) {
             let outimg=canvaslist[i].toDataURL("image/png");
