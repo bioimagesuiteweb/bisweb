@@ -116,7 +116,8 @@ class BisWebSubviewer {
         this.opts={};
 
         this.coordinateChangeCallback=null;
-        this.coordinateChangeCallbackIndex=-1;
+        this.mouseMovedCallback=null;
+        this.callbackIndex=-1;
         this.rotateSpeed= opts.rotateSpeed || 4.0;
         this.zoomSpeed= opts.zoomSpeed || 3.0;
         this.panSpeed=opts.panSpeed || 5.0;
@@ -661,21 +662,27 @@ class BisWebSubviewer {
         return true;
     }
 
-    /** coordinate cllback -- calls the callback stored in this.coordinateChangeCallback on `click' update
+    /** coordinate callback -- calls the callback stored in this.coordinateChangeCallback on `click' update
         parameters are lastcoordinates [ x,y,z], the plane and the state
     */
-    coordinateCallback(state) {
+    sendCoordinatesChangedEvent(state) {
         
         if (this.plane>=0 && this.plane<=2) {
             if ( typeof this.coordinateChangeCallback == 'function' ) {
                 this.coordinateChangeCallback(this.lastCoordinates,
                                               this.plane,
-                                              state,
-                                              this.coordinateChangeCallbackIndex);
+                                              state);
             }
         }
     }
-    
+
+    sendMouseMovedEvent(state) {
+        
+        if ( typeof this.mouseMovedCallback == 'function' ) {
+            this.mouseMovedCallback(state,this.callbackIndex);
+        }
+    }
+
     
     /* mouse down handler*/
     mousedown( event ) {
@@ -705,7 +712,9 @@ class BisWebSubviewer {
         document.addEventListener( 'mouseup', this.eventListeners.mouseup, false );
         
         if ( this.internal._state === STATE.ROTATE && this.noRotate) {
-            this.coordinateCallback(0);
+            this.sendCoordinatesChangedEvent(0);
+        } else {
+            this.sendMouseMovedEvent(1);
         }
         
     }
@@ -728,7 +737,9 @@ class BisWebSubviewer {
         }
         
         if ( this.internal._state === STATE.ROTATE && this.noRotate) {
-            this.coordinateCallback(1);
+            this.sendCoordinatesChangedEvent(1);
+        } else if (this.internal._state !== STATE.ZOOM) {
+            this.sendMouseMovedEvent(1);
         }
     }
 
@@ -742,7 +753,9 @@ class BisWebSubviewer {
         event.stopPropagation();
 
         if ( this.internal._state === STATE.ROTATE && this.noRotate) {
-            this.coordinateCallback(2);
+            this.sendCoordinatesChangedEvent(2);
+        } else if (this.internal._state !== STATE.ZOOM) {
+            this.sendMouseMovedEvent(2);
         }
         
         this.internal._state = STATE.NONE;
@@ -789,8 +802,10 @@ class BisWebSubviewer {
         if (event.touches.length==1) {
             
             if ( this.noRotate) {
-                this.coordinateCallback(0);
+                this.sendCoordinatesChangedEvent(0);
                 return;
+            } else if (this.internal._state === STATE.TOUCH.ROTATE) {
+                this.sendMouseMovedEvent(0);
             }
         }
         
@@ -820,7 +835,10 @@ class BisWebSubviewer {
                 return;
 
             if ( this.noRotate) {
-                this.coordinateCallback(1);
+                this.sendCoordinatesChangedEvent(1);
+                return;
+            } else {
+                this.sendMouseMovedEvent(1);
                 return;
             }
         }

@@ -406,7 +406,9 @@ class ElectrodeGridElement extends HTMLElement {
         
         this.internal.currentelectrodeselect.empty();
         let grid=this.internal.multigrid.getGrid(this.internal.currentgridindex);
-
+        if (!grid)
+            return;
+        
         let np=grid.electrodes.length;
         if (np===0) {
             let a=("<option value=\"-1\">None</option>");
@@ -787,7 +789,12 @@ class ElectrodeGridElement extends HTMLElement {
                 this.internal.data.allnames[j]="Grid "+(j+1);
             }
             this.internal.data.currentname=this.internal.data.allnames[0];
-            this.internal.subviewers=subviewers;
+            this.internal.subviewers= subviewers;
+            if (subviewers) {
+                if (subviewers.length>4) {
+                    this.internal.subviewers=[ subviewers[0],subviewers[1], subviewers[2], subviewers[3] ];
+                }
+            }
             this.internal.volume=volume;
 
         }
