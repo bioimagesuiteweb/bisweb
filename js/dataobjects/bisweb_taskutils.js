@@ -54,11 +54,11 @@ let parseFile = (filename) => {
             }
 
             //return results with relevant metadata
-            let tr = parseInt(obj.data.tr), units = parseInt(obj.data.units), offset = parseInt(obj.data.offset), frames = parseInt(obj.data.frames);
+            let tr = parseInt(obj.data.tr), offset = parseInt(obj.data.offset), frames = parseInt(obj.data.frames);
             if (frames && frames < chartRanges.highRange) { chartRanges.highRange = frames; }
 
             let tasks = parseRegionsFromRuns(parsedRuns, chartRanges, parsedData, offset);
-            let resObj = Object.assign(tasks, { 'runs' : parsedRuns, 'range' : chartRanges, 'tr' : tr, 'units' : units, 'offset' : offset });
+            let resObj = Object.assign(tasks, { 'runs' : parsedRuns, 'range' : chartRanges, 'tr' : tr, 'offset' : offset });
             resolve(resObj);
         }).catch( (e) => { reject(e); });
     });
